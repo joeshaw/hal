@@ -1,5 +1,34 @@
 2003-12-22  David Zeuthen  <david@fubar.dk>
 
+	* libhal/libhal.c (hal_free_string): rename from hal_free_utf8 as
+	this name makes more sense and we don't yet support utf8 strings
+	(hal_device_get_all_properties): fix memory leak of dbus strings in
+	multiple places. Note: we have to audit hald as well :-/
+	(filter_func): fix dbus string memory leakages
+	(hal_initialize): add use_cache to preserve API compatilibility when
+	we actually get around to implement caching in libhal
+	(hal_get_all_devices): add check for oom
+	(hal_device_get_property_type): fix dbus string memory leakages
+
+	* libhal/libhal.h: change hal_initialize() prototype. Change name
+	of hal_free_utf8() to hal_free_string()
+
+	* tools/Makefile.am: rename hal_[s|g]et_property program to 
+	hal-[s|g]et-property.
+
+	* tools/hal_get_property.c (main): call hal_initialize with correct
+	number of arguments. Fix string leakage bug.
+
+	* tools/hal_set_property.c (main): call hal_initialize with correct
+	number of arguments
+
+	* tools/lshal.c (dump_devices): Call hal_free_string_array() instead
+	of dbus_free_string_array()
+	(print_property): fix string leakage
+	(main): call hal_initialize with correct number of arguments
+	
+2003-12-22  David Zeuthen  <david@fubar.dk>
+
 	* acinclude.m4: borrow AS_AC_EXPAND from gstreamer (Martin Waitz)
 
 	* configure.in: use AS_AC_EXPAND and define $(LN_S) and request

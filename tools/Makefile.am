@@ -9,7 +9,7 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = lshal hal_get_property hal_set_property
+bin_PROGRAMS = lshal hal-get-property hal-set-property
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = -ldbus-1 -ldbus-glib-1 -lglib-2.0 \

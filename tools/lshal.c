@@ -120,7 +120,7 @@ static void dump_devices()
         printf("\n");
     }
 
-    dbus_free_string_array(device_names);
+    hal_free_string_array(device_names);
 
     printf("\n"
            "Dumped %d device(s) from the Global Device List:\n"
@@ -173,14 +173,16 @@ static void device_new_capability(const char* udi, const char* capability)
 static void print_property(const char* udi, const char* key)
 {
     int type;
+    char* str;
 
     type = hal_device_get_property_type(udi, key);
 
     switch( type )
     {
     case DBUS_TYPE_STRING:
-        fprintf(stderr, "*** new value: '%s'  (string)\n", 
-                hal_device_get_property_string(udi, key));
+        str = hal_device_get_property_string(udi, key);
+        fprintf(stderr, "*** new value: '%s'  (string)\n", str);
+        hal_free_string(str);
         break;
     case DBUS_TYPE_INT32:
     {
@@ -341,7 +343,7 @@ int main(int argc, char* argv[])
     }
 
 
-    if( hal_initialize(&hal_functions)  )
+    if( hal_initialize(&hal_functions, FALSE)  )
     {
         fprintf(stderr, "error: hal_initialize failed\n");
         exit(1);

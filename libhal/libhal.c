@@ -53,21 +53,21 @@ void hal_free_string_array(char** str_array)
         int i;
 
         for(i=0; str_array[i]!=NULL; i++)
-	{
+        {
             free(str_array[i]);
-	}
+        }
         free(str_array);
     }
 }
 
-/** Frees a nul-terminated UTF8 string
+/** Frees a nul-terminated string
  *
- *  @param  utf8_string         The nul-terminated UTF8 sting to free
+ *  @param  str                 The nul-terminated sting to free
  */
-void hal_free_utf8(char* utf8_string)
+void hal_free_string(char* str)
 {
-    /** @todo: implement */
-    free(utf8_string);
+    /** @todo: implement for UTF8 */
+    free(str);
 }
 
 
@@ -99,7 +99,8 @@ struct LibHalProperty_s
 };
 
 static DBusConnection* connection;
-static int is_initialized = 0;
+static dbus_bool_t is_initialized = FALSE;
+static dbus_bool_t cache_enabled = FALSE;
 static const LibHalFunctions* functions;
 
 /** Retrieve all the properties on a device. 
@@ -151,6 +152,8 @@ LibHalPropertySet* hal_device_get_all_properties(const char* udi)
     result = malloc(sizeof(LibHalPropertySet));
     if( result==NULL )
     {
+        fprintf(stderr, "%s %d : error allocating memory\n", 
+                __FILE__, __LINE__);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return NULL;
@@ -172,13 +175,15 @@ LibHalPropertySet* hal_device_get_all_properties(const char* udi)
 
     do
     {
-
+        char* dbus_str;
         LibHalProperty* p;
 
         p = malloc(sizeof(LibHalProperty));
         if( p==NULL )
         {
-            // TODO: cleanup
+            fprintf(stderr, "%s %d : error allocating memory\n", 
+                __FILE__, __LINE__);
+            /** @todo FIXME cleanup */
             return NULL;
         }
 
@@ -187,15 +192,32 @@ LibHalPropertySet* hal_device_get_all_properties(const char* udi)
         p->next = NULL;
         result->num_properties++;
 
-        p->key = (char*) strdup(dbus_message_iter_get_dict_key(&dict_iter));
+        dbus_str = dbus_message_iter_get_dict_key(&dict_iter);
+        p->key = (char*) ((dbus_str!=NULL) ? strdup(dbus_str) : NULL);
+        if( p->key==NULL )
+        {
+            fprintf(stderr, "%s %d : error allocating memory\n", 
+                    __FILE__, __LINE__);
+            /** @todo FIXME cleanup */
+            return NULL;
+        }
+        dbus_free(dbus_str);
 
         p->type = dbus_message_iter_get_arg_type(&dict_iter);
 
         switch( p->type )
         {
         case DBUS_TYPE_STRING:
-            p->str_value = (char*) strdup(dbus_message_iter_get_string(
-                                              &dict_iter));
+            dbus_str = dbus_message_iter_get_string(&dict_iter);
+            p->str_value = (char*)((dbus_str!=NULL) ? strdup(dbus_str) : NULL);
+            if( p->str_value==NULL )
+            {
+                fprintf(stderr, "%s %d : error allocating memory\n", 
+                        __FILE__, __LINE__);
+                /** @todo FIXME cleanup */
+                return NULL;
+            }
+            dbus_free(dbus_str);
             break;
         case DBUS_TYPE_INT32:
             p->int_value = dbus_message_iter_get_int32(&dict_iter);
@@ -215,7 +237,6 @@ LibHalPropertySet* hal_device_get_all_properties(const char* udi)
         dbus_message_iter_next(&dict_iter);
     }
     while( dbus_message_iter_has_next(&dict_iter) );
-
 
     dbus_message_unref(message);
     dbus_message_unref(reply);
@@ -367,6 +388,7 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
             if( functions->device_added!=NULL )
             {
                 functions->device_added(udi);
+                dbus_free(udi);
             }
         }
     }
@@ -381,6 +403,7 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
             if( functions->device_removed!=NULL )
             {
                 functions->device_removed(udi);
+                dbus_free(udi);
             }
         }
     }
@@ -397,6 +420,8 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
             if( functions->device_new_capability!=NULL )
             {
                 functions->device_new_capability(udi, capability);
+                dbus_free(udi);
+                dbus_free(capability);
             }
         }
     }
@@ -411,6 +436,7 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
                                       DBUS_TYPE_INVALID) )
             {
                 functions->device_property_changed(object_path, key);
+                dbus_free(key);
             }
             else
             {
@@ -430,6 +456,7 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
                                       DBUS_TYPE_INVALID) )
             {
                 functions->device_property_added(object_path, key);
+                dbus_free(key);
             }
             else
             {
@@ -449,6 +476,7 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
                                       DBUS_TYPE_INVALID) )
             {
                 functions->device_property_removed(object_path, key);
+                dbus_free(key);
             }
             else
             {
@@ -476,10 +504,21 @@ static LibHalFunctions hal_null_functions = {
  *  @param  cb_functions          Callback functions. If this is set top #NULL
  *                                then the library will not listen for
  *                                notifications. 
+ *  @param  use_cache             Retrieve all device information and cache it.
+ *                                This is expensive both in terms of memory
+ *                                (there may be 50 device objects with 20
+ *                                properties each) and in terms of processing
+ *                                power (your process will be woken up every
+ *                                time a property is changed). 
+ *                                Use with caution.
+ *                                NOTE NOTE NOTE: Caching isn't actually
+ *                                implemented yet, this is just a placeholder
+ *                                to preserve API compatibility.
  *  @return                       zero if success, non-zero if an error 
  *                                occurred
  */
-int hal_initialize(const LibHalFunctions* cb_functions)
+int hal_initialize(const LibHalFunctions* cb_functions, 
+                   dbus_bool_t use_cache)
 {
     DBusError error;
 
@@ -488,6 +527,8 @@ int hal_initialize(const LibHalFunctions* cb_functions)
         fprintf(stderr,"%s %d : Is already initialized!\n",__FILE__, __LINE__);
         return 1;
     }
+
+    cache_enabled = use_cache;
 
     functions = cb_functions;
     /* allow caller to pass NULL */
@@ -534,7 +575,7 @@ int hal_initialize(const LibHalFunctions* cb_functions)
         return 1;
     }
 
-    is_initialized = 1;
+    is_initialized = TRUE;
     return 0;
 }
 
@@ -550,7 +591,7 @@ int hal_shutdown()
 
     /** @todo cleanup */
 
-    is_initialized = 0;
+    is_initialized = FALSE;
     return 0;
 }
 
@@ -625,7 +666,12 @@ char** hal_get_all_devices(int* num_devices)
     {
         hal_device_names[i] = strdup(device_names[i]);
         if( hal_device_names[i]==NULL )
-            return NULL; /** @todo: Handle OOM better */
+        {
+            fprintf(stderr, "%s %d : error allocating memory\n", 
+                __FILE__, __LINE__);
+            /** @todo FIXME cleanup */
+            return NULL;
+        }
     }
     hal_device_names[i] = NULL;
 
@@ -695,8 +741,9 @@ int hal_device_get_property_type(const char* udi,
  *  @param  key                 Name of the property
  *  @return                     UTF8 nul-terminated string. The caller is
  *                              responsible for freeing this string with the
- *                              function TODO. 
- *                              Returns #NULL if the property didn't exist.
+ *                              function #hal_free_string(). 
+ *                              Returns #NULL if the property didn't exist
+ *                              or we are OOM
  */
 char* hal_device_get_property_string(const char* udi, const char* key)
 {
@@ -705,6 +752,7 @@ char* hal_device_get_property_string(const char* udi, const char* key)
     DBusMessage* reply;
     DBusMessageIter iter;
     char* value;
+    char* dbus_str;
 
     message = dbus_message_new_method_call("org.freedesktop.Hal", udi,
                                            "org.freedesktop.Hal.Device",
@@ -754,7 +802,17 @@ char* hal_device_get_property_string(const char* udi, const char* key)
         dbus_message_unref(reply);
         return NULL;
     }
-    value = strdup(dbus_message_iter_get_string(&iter));
+
+    dbus_str = dbus_message_iter_get_string(&iter);
+    value = (char*)((dbus_str!=NULL) ? strdup(dbus_str) : NULL);
+    if( value==NULL )
+    {
+        fprintf(stderr, "%s %d : error allocating memory\n", 
+                __FILE__, __LINE__);
+        /** @todo FIXME cleanup */
+        return NULL;
+    }
+    dbus_free(dbus_str);
 
     dbus_message_unref(message);
     dbus_message_unref(reply);
@@ -1169,6 +1227,7 @@ char* hal_agent_new_device()
     DBusMessage* reply;
     DBusMessageIter iter;
     char* value;
+    char* dbus_str;
 
     message = dbus_message_new_method_call("org.freedesktop.Hal",
                                            "/org/freedesktop/Hal/Manager",
@@ -1210,7 +1269,16 @@ char* hal_agent_new_device()
         return NULL;
     }
 
-    value = strdup(dbus_message_iter_get_string(&iter));
+    dbus_str = dbus_message_iter_get_string(&iter);
+    value = (char*)((dbus_str!=NULL) ? strdup(dbus_str) : NULL);
+    if( value==NULL )
+    {
+        fprintf(stderr, "%s %d : error allocating memory\n", 
+                __FILE__, __LINE__);
+        /** @todo FIXME cleanup */
+        return NULL;
+    }
+    dbus_free(dbus_str);
 
     dbus_message_unref(message);
     dbus_message_unref(reply);
@@ -1959,7 +2027,7 @@ int hal_device_remove_property_watch(const char* udi)
     dbus_bus_remove_match(connection, buf, &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "%s %d : Error subscribing to signals, "
+        fprintf(stderr, "%s %d : Error unsubscribing to signals, "
                 "error=%s\r\n",
                 __FILE__, __LINE__, error.message);
         return 1;

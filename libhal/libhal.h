@@ -123,7 +123,7 @@ typedef struct LibHalFunctions_s
 
 } LibHalFunctions;
 
-int hal_initialize(const LibHalFunctions* functions);
+int hal_initialize(const LibHalFunctions* functions, dbus_bool_t use_cache);
 
 int hal_shutdown();
 
@@ -193,7 +193,7 @@ double hal_psi_get_double(LibHalPropertySetIterator* iter);
 dbus_bool_t hal_psi_get_bool(LibHalPropertySetIterator* iter);
 
 void hal_free_string_array(char** str_array);
-void hal_free_utf8(char* utf8_string);
+void hal_free_string(char* str);
 
 char* hal_agent_new_device();
 dbus_bool_t hal_agent_commit_to_gdl(const char* temp_udi, const char* udi);

@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
 
     fprintf(stderr, "\n");
 
-    if( hal_initialize(NULL)  )
+    if( hal_initialize(NULL, FALSE)  )
     {
         fprintf(stderr, "error: hal_initialize failed\n");
         return 1;

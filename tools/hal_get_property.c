@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
     int type;
     dbus_bool_t is_hex = FALSE;
     dbus_bool_t is_quiet = FALSE;
+    char* str;
 
     if( argc<=1 )
     {
@@ -157,7 +158,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if( hal_initialize(NULL)  )
+    if( hal_initialize(NULL, FALSE)  )
     {
         fprintf(stderr, "error: hal_initialize failed\n");
         return 1;
@@ -173,9 +174,11 @@ int main(int argc, char* argv[])
     switch( type )
     {
     case DBUS_TYPE_STRING:
+        str = hal_device_get_property_string(udi, key);
         if( !is_quiet )
             fprintf(stderr, "Type is string\n");
-        fprintf(stdout, "%s", hal_device_get_property_string(udi, key));
+        fprintf(stdout, "%s", str);
+        hal_free_string(str);
         break;
     case DBUS_TYPE_INT32:
         if( !is_quiet )
