@@ -1,5 +1,11 @@
 2004-04-10  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (block_class_post_process): 
+	Revert to setting the storage backing device to the top-level
+	block device
+
+2004-04-10  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/class_device.h: add got_udi() method
 
 	* hald/linux/class_device.c (class_device_final): move add/merge of

@@ -646,6 +646,11 @@ block_class_post_process (ClassDeviceHandler *self,
 							       "info.parent");
 		}
 
+		/* XXX HACK FIXME TODO : Always choose ourselves as the
+		 * device holding the storage.* properties otherwise optical
+		 * disc handling breaks */
+		stordev_udi = NULL;
+
 		if (stordev_udi == NULL) {
 			/* We couldn't find a storage device, use our own udi
 			 *
