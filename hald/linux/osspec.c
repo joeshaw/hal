@@ -402,10 +402,12 @@ remove_class_device (const char *path, const char *subsystem)
 		 * sysdevice it belongs to. Ughh.. It's only a big deal when
 		 * loading/unloading drivers and this should never happen
 		 * on a desktop anyway?
+		 *
+		 * @todo FIXME
 		 */
 
-		HAL_WARNING (("Cannot yet remove class device @ %s on "
-			      "hotplug remove", path));
+		HAL_WARNING (("Removal of class device @ %s on "
+			      "hotplug remove is not yet implemented", path));
 
 	} else {
 		/*HAL_INFO (("Removing device @ sysfspath %s, udi %s", 

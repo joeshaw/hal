@@ -298,8 +298,6 @@ class_device_got_sysdevice (HalDeviceStore *store,
 			    gpointer user_data)
 {
 	AsyncInfo *ai = user_data;
-	const char *parent_udi;
-	HalDevice *parent_device;
 	HalDevice *d = (HalDevice *) ai->device;
 	ClassDeviceHandler *self = ai->handler;
 
@@ -313,12 +311,16 @@ class_device_got_sysdevice (HalDeviceStore *store,
 		return;
 	}
 
-	/* if the sysdevice is virtual, ascent into the closest non-
-	 * virtual device */
-	while (hal_device_has_property (sysdevice, "info.virtual") &&
-	       hal_device_property_get_bool (sysdevice, "info.virtual") &&
-	       (parent_udi = 
-		hal_device_property_get_string (sysdevice, "info.parent")) != NULL ) {
+	/* special case : merge onto the usb device, not the usb interface */
+	if (hal_device_has_property (sysdevice, "info.bus") &&
+	    hal_device_has_property (sysdevice, "info.parent") &&
+	    (strcmp (hal_device_property_get_string (sysdevice, "info.bus"),
+						     "usbif") == 0)) {
+		const char *parent_udi;
+		HalDevice *parent_device;
+
+		parent_udi = hal_device_property_get_string (sysdevice, 
+							     "info.parent");
 		parent_device = hal_device_store_find (hald_get_gdl (),
 						       parent_udi);
 		if (parent_device != NULL) {

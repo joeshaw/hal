@@ -1,3 +1,21 @@
+2004-04-22  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/class_device.c (class_device_got_sysdevice): Instead
+	of refusing to merge onto a socalled virtual device (which is really
+	a HAL term, and thus quite crackful), just special-case the fact
+	that we don't want to merge onto a usb interface but we prefer to
+	merge onto the usb device. Which is sane and quite nice. 
+	This makes the scsi_device receive the scsi_generic class stuff and
+	thus the scsi_generic.device_file=sg0 property. Which is also sane
+	and quite nice (think SCSI multi-lun devices).
+
+	* hald/linux/osspec.c (remove_class_device): Make a more concise
+	statement in the log message about the fact that removal of class
+	devices is not yet implemented; add @todo tag so this is not
+	forgotton
+
+	* doc/TODO: Add note about removal of class devices
+
 2004-04-21  Joe Shaw  <joe@ximian.com>
 
 	* doc/TODO: Add a couple of callout-related items.

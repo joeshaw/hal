@@ -4,6 +4,11 @@ CVSID:$Id$
 This document is the TODO list for the HAL project. Feel free to add/remove
 entries if you get an idea or implement one of these.
 
+ -  Add support for removal of class devices - we should probably remove
+    the properties merged and send out a d-bus signal; see comments in 
+    hald/linux/osspec.c:remove_class_device(). This can now easily be tested
+    with modprobe and rmmod on the sg kernel module
+
  -  Persistent device store
     Device should be persistent (e.g. saved in a file) so i) we don't need
     to check fdi files each and every time we start up; and ii) device 
