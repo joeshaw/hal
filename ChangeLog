@@ -1,5 +1,17 @@
 2004-06-07  Joe Shaw  <joeshaw@novell.com>
 
+	* doc/TODO: Add an item about capability matching in FDI files.
+
+	* fdi/20freedesktop/Makefile.am: Add lucent-pcmcia-wireless.fdi
+
+	* fdi/20freedesktop/lucent-pcmcia-wireless.fdi: Added.  Matches
+	Lucent WaveLAN cards and sets info.bus to pcmcia and a sane vendor
+	and product.
+
+	* tools/device-manager/Const.py.in: Add PCMCIA as a bus type.
+
+2004-06-07  Joe Shaw  <joeshaw@novell.com>
+
 	* configure.in: Remove the iwlib dependency.
 
 	* hald/linux/net_class_device.c: Remove the wireless properties.

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="unknown">
+      <!-- FIXME: We need to be able to match capabilities -->
+      <match key="info.capabilities" string="net net.ethernet net.ethernet.80211">
+        <match key="net.ethernet.mac_addr_upper24" int="0x601d">
+          <merge key="info.bus" type="string">pcmcia</merge>
+          <merge key="info.vendor" type="string">Lucent Technologies"</merge>
+          <merge key="info.product" type="string">WaveLAN/IEEE</merge>
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>
