@@ -56,6 +56,10 @@ DBusHandlerResult device_property_exists            (DBusConnection *conn,
 						     DBusMessage    *msg);
 DBusHandlerResult device_query_capability           (DBusConnection *conn,
 						     DBusMessage    *msg);
+DBusHandlerResult device_lock                       (DBusConnection *conn,
+						     DBusMessage    *msg);
+DBusHandlerResult device_unlock                     (DBusConnection *conn,
+						     DBusMessage    *msg);
 DBusHandlerResult agent_manager_new_device          (DBusConnection *conn,
 						     DBusMessage    *msg);
 DBusHandlerResult agent_manager_commit_to_gdl       (DBusConnection *conn,

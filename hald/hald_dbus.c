@@ -186,6 +186,89 @@ raise_syntax (DBusConnection * connection,
 	dbus_message_unref (reply);
 }
 
+/** Raise the org.freedesktop.Hal.DeviceNotLocked error
+ *
+ *  @param  connection          D-Bus connection
+ *  @param  in_reply_to         message to report error on
+ *  @param  device              device which isn't locked
+ */
+static void
+raise_device_not_locked (DBusConnection *connection,
+			 DBusMessage    *in_reply_to,
+			 HalDevice      *device)
+{
+	char buf[512];
+	DBusMessage *reply;
+
+	snprintf (buf, 511, "The device %s is not locked",
+		  hal_device_get_udi (device));
+	HAL_WARNING ((buf));
+	reply = dbus_message_new_error (in_reply_to,
+					"org.freedesktop.Hal.DeviceNotLocked",
+					buf);
+
+	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+}
+
+/** Raise the org.freedesktop.Hal.DeviceAlreadyLocked error
+ *
+ *  @param  connection          D-Bus connection
+ *  @param  in_reply_to         message to report error on
+ *  @param  device              device which isn't locked
+ */
+static void
+raise_device_already_locked (DBusConnection *connection,
+			     DBusMessage    *in_reply_to,
+			     HalDevice      *device)
+{
+	DBusMessage *reply;
+	const char *reason;
+
+	reason = hal_device_property_get_string (device, "info.locked.reason");
+	HAL_WARNING (("Device %s is already locked: %s",
+		      hal_device_get_udi (device), reason));
+
+
+	reply = dbus_message_new_error (in_reply_to,
+					"org.freedesktop.Hal.DeviceAlreadyLocked",
+					
+					reason);
+
+	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+}
+
+/** Raise the org.freedesktop.Hal.PermissionDenied error
+ *
+ *  @param  connection          D-Bus connection
+ *  @param  in_reply_to         message to report error on
+ *  @param  message             what you're not allowed to do
+ */
+static void
+raise_permission_denied (DBusConnection *connection,
+			 DBusMessage    *in_reply_to,
+			 const char     *reason)
+{
+	char buf[512];
+	DBusMessage *reply;
+
+	snprintf (buf, 511, "Permission denied: %s", reason);
+	HAL_WARNING ((buf));
+	reply = dbus_message_new_error (in_reply_to,
+					"org.freedesktop.Hal.PermissionDenied",
+					buf);
+
+	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+}
+
 /** @} */
 
 /**
@@ -1176,7 +1259,7 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 }
 
 
-/** Determine if a device got a capability
+/** Determine if a device has a capability
  *
  *  <pre>
  *  bool Device.QueryCapability(string capability_name)
@@ -1229,13 +1312,202 @@ device_query_capability (DBusConnection * connection,
 	rc = FALSE;
 	caps = hal_device_property_get_string (d, "info.capabilities");
 	if (caps != NULL) {
-		if (strstr (caps, capability) != NULL)
-			rc = TRUE;
+		char **capsv, **iter;
+
+		capsv = g_strsplit (caps, " ", 0);
+		for (iter = capsv; iter != NULL; iter++) {
+			if (strcmp (*iter, capability) == 0) {
+				rc = TRUE;
+				break;
+			}
+		}
+
+		g_strfreev (capsv);
 	}
+
+	dbus_free (capability);
 
 	dbus_message_iter_init (reply, &iter);
 	dbus_message_iter_append_boolean (&iter, rc);
 
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static GHashTable *services_with_locks = NULL;
+
+/** Grab an advisory lock on a device.
+ *
+ *  <pre>
+ *  bool Device.Lock(string reason)
+ *
+ *    raises org.freedesktop.Hal.NoSuchDevice, 
+ *           org.freedesktop.Hal.DeviceAlreadyLocked
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+DBusHandlerResult
+device_lock (DBusConnection * connection,
+	     DBusMessage * message)
+{
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	dbus_bool_t already_locked;
+	DBusError error;
+	char *reason;
+	const char *sender;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	already_locked = hal_device_property_get_bool (d, "info.locked");
+
+	if (already_locked) {
+		raise_device_already_locked (connection, message, d);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &reason,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "Lock");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	sender = dbus_message_get_sender (message);
+
+	hal_device_property_set_bool (d, "info.locked", TRUE);
+	hal_device_property_set_string (d, "info.locked.reason", reason);
+	hal_device_property_set_string (d, "info.locked.dbus_service",
+					sender);
+
+	if (services_with_locks == NULL) {
+		services_with_locks =
+			g_hash_table_new_full (g_str_hash,
+					       g_str_equal,
+					       g_free,
+					       g_object_unref);
+	}
+
+	g_hash_table_insert (services_with_locks, g_strdup (sender),
+			     g_object_ref (d));
+
+	dbus_free (reason);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+/** Release an advisory lock on a device.
+ *
+ *  <pre>
+ *  bool Device.Unlock()
+ *
+ *    raises org.freedesktop.Hal.NoSuchDevice, 
+ *           org.freedesktop.Hal.DeviceNotLocked,
+ *           org.freedesktop.Hal.PermissionDenied
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+DBusHandlerResult
+device_unlock (DBusConnection * connection,
+	       DBusMessage * message)
+{
+	dbus_bool_t rc;
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	const char *sender;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "Unlock");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	rc = hal_device_property_get_bool (d, "info.locked");
+
+	if (!rc) {
+		raise_device_not_locked (connection, message, d);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	sender = dbus_message_get_sender (message);
+
+	if (strcmp (sender, hal_device_property_get_string (
+			    d, "info.locked.dbus_service")) != 0) {
+		char *reason;
+
+		reason = g_strdup_printf ("Service '%s' does not own the "
+					  "lock on %s", sender,
+					  hal_device_get_udi (d));
+
+		raise_permission_denied (connection, message, reason);
+
+		g_free (reason);
+
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (g_hash_table_lookup (services_with_locks, sender))
+		g_hash_table_remove (services_with_locks, sender);
+	else {
+		HAL_WARNING (("Service '%s' was not in the list of services "
+			      "with locks!", sender));
+	}
+
+	hal_device_property_remove (d, "info.locked");
+	hal_device_property_remove (d, "info.locked.reason");
+	hal_device_property_remove (d, "info.locked.dbus_service");
+
+	/* FIXME?  Pointless? */
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
 
@@ -1795,6 +2067,32 @@ reinit_dbus (gpointer user_data)
 		return TRUE;
 }
 
+static void
+service_deleted (DBusMessage *message)
+{
+	char *service_name;
+	HalDevice *d;
+
+	if (!dbus_message_get_args (message, NULL,
+				    DBUS_TYPE_STRING, &service_name,
+				    DBUS_TYPE_INVALID)) {
+		HAL_ERROR (("Invalid ServiceDeleted signal from bus!"));
+		return;
+	}
+
+	d = g_hash_table_lookup (services_with_locks, service_name);
+
+	if (d != NULL) {
+		hal_device_property_remove (d, "info.locked");
+		hal_device_property_remove (d, "info.locked.reason");
+		hal_device_property_remove (d, "info.locked.dbus_service");
+
+		g_hash_table_remove (services_with_locks, service_name);
+	}
+
+	dbus_free (service_name);
+}
+
 /** Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function.
  *
@@ -1807,20 +2105,28 @@ static DBusHandlerResult
 filter_function (DBusConnection * connection,
 		 DBusMessage * message, void *user_data)
 {
-/*
+
     HAL_INFO (("obj_path=%s interface=%s method=%s", 
     dbus_message_get_path(message), 
     dbus_message_get_interface(message),
     dbus_message_get_member(message)));
-*/
+
 
 	if (dbus_message_is_signal (message,
 				    DBUS_INTERFACE_ORG_FREEDESKTOP_LOCAL,
 				    "Disconnected") &&
 	    strcmp (dbus_message_get_path (message),
 		    DBUS_PATH_ORG_FREEDESKTOP_LOCAL) == 0) {
+
 		dbus_connection_unref (dbus_connection);
 		g_timeout_add (3000, reinit_dbus, NULL);
+
+	} else if (dbus_message_is_signal (message,
+					   DBUS_INTERFACE_ORG_FREEDESKTOP_DBUS,
+					   "ServiceDeleted")) {
+
+		if (services_with_locks != NULL)
+			service_deleted (message);
 	} else if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Manager",
 					 "GetAllDevices") &&
@@ -1947,6 +2253,14 @@ filter_function (DBusConnection * connection,
 						"org.freedesktop.Hal.Device",
 						"QueryCapability")) {
 		return device_query_capability (connection, message);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"Lock")) {
+		return device_lock (connection, message);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"Unlock")) {
+		return device_unlock (connection, message);
 	} else
 		osspec_filter_function (connection, message, user_data);
 
@@ -1980,6 +2294,13 @@ hald_dbus_init (void)
 
 	dbus_connection_add_filter (dbus_connection, filter_function, NULL,
 				    NULL);
+
+	dbus_bus_add_match (dbus_connection,
+			    "type='signal',"
+			    "interface='"DBUS_INTERFACE_ORG_FREEDESKTOP_DBUS"',"
+			    "sender='"DBUS_SERVICE_ORG_FREEDESKTOP_DBUS"',"
+			    "member='ServiceDeleted'",
+			    NULL);
 
 	return TRUE;
 }

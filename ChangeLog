@@ -1,3 +1,26 @@
+2004-09-17  Joe Shaw  <joeshaw@novell.com>
+
+	* doc/spec/hal-spec.xml.in: Add the Lock and Unlock methods to the
+	spec.
+
+	* hald/hald_dbus.c (raise_device_not_locked,
+	raise_device_already_locked): New errors for the locking methods.
+	(device_query_capability): Change the parsing to split up caps on
+	spaces rather than doing a substring match.
+	(device_lock): Implements the Lock dbus method, which grabs an
+	advisory lock on a device.
+	(device_unlock): Implements the Unlock dbus method.
+	(service_deleted): Callback which releases locks when the locking
+	service quits.
+	(filter_function): Add a ServiceDeleted handler, check for Lock
+	and Unlock methods.
+	(hald_dbus_init): Add a match for the ServiceDeleted signal so we
+	can see when things disconnect from the bus.
+
+	* libhal/libhal.c (hal_device_lock): Added.  Takes an advisory
+	lock for a device.
+	(hal_device_unlock): Releases the lock.
+
 2004-09-17  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_vfat):

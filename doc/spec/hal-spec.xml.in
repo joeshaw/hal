@@ -3223,6 +3223,23 @@ void AddCapability(string capability)
 # @raises                       org.freedesktop.Hal.NoSuchDevice
 #
 bool QueryCapability(string capability)
+
+# Take an advisory lock on the device.
+#
+# @param  reason                A user-presentable reason why the device
+#                               is locked.
+# @raises                       org.freedesktop.Hal.NoSuchDevice,
+#                               org.freedesktop.Hal.DeviceAlreadyLocked
+#
+void Lock(string reason)
+
+# Release an advisory lock on the device.
+#
+# @raises                       org.freedesktop.Hal.NoSuchDevice,
+#                               org.freedesktop.Hal.DeviceAlreadyLocked,
+#                               org.freedesktop.Hal.PermissionDenied
+#
+void Unlock()
 </programlisting>
 
       <para>

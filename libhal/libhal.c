@@ -1377,6 +1377,131 @@ hal_device_remove_property (LibHalContext *ctx,
 					       NULL, 0, 0, 0.0f, FALSE);
 }
 
+/** Take an advisory lock on the device.
+ *
+ *  @param  ctx                 The context for the connection to hald
+ *  @param  udi			Unique Device Id
+ *  @param  reason_to_lock      A user-presentable reason why the device
+ *                              is locked.l
+ *  @param  reason_why_locked   A pointer to store the reason why the
+ *                              device cannot be locked on failure, or
+ *                              NULL
+ *  @return			TRUE if the lock was obtained, FALSE
+ *                              otherwise
+ *
+ */
+dbus_bool_t
+hal_device_lock (LibHalContext *ctx,
+		 const char *udi,
+		 const char *reason_to_lock,
+		 char **reason_why_locked)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusError error;
+	DBusMessage *reply;
+
+	if (reason_why_locked != NULL)
+		*reason_why_locked = NULL;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"Lock");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init (message, &iter);
+	dbus_message_iter_append_string (&iter, reason_to_lock);
+
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   &error);
+
+	if (dbus_error_is_set (&error)) {
+		if (strcmp (error.name,
+			    "org.freedesktop.Hal.DeviceAlreadyLocked") == 0) {
+			if (reason_why_locked != NULL) {
+				*reason_why_locked =
+					dbus_malloc0 (strlen (error.message) + 1);
+				strcpy (*reason_why_locked, error.message);
+			}
+		} else {
+			fprintf (stderr, "%s %d: %s raised\n\"%s\"\n\n",
+				 __FILE__, __LINE__, error.name,
+				 error.message);
+		}
+
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_unref (reply);
+
+	return TRUE;
+}
+
+/** Release an advisory lock on the device.
+ *
+ *  @param  ctx                 The context for the connection to hald
+ *  @param  udi			Unique Device Id
+ *  @return			TRUE if the device was successfully unlocked,
+ *                              FALSE otherwise
+ *
+ */
+dbus_bool_t
+hal_device_unlock (LibHalContext *ctx,
+		   const char *udi)
+{
+	DBusMessage *message;
+	DBusError error;
+	DBusMessage *reply;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"Unlock");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   &error);
+
+	if (dbus_error_is_set (&error)) {
+		fprintf (stderr, "%s %d: %s raised\n\"%s\"\n\n", __FILE__,
+			 __LINE__, error.name, error.message);
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_unref (reply);
+
+	return TRUE;
+}
+
 
 /** Create a new device object which will be hidden from applications
  *  until the CommitToGdl(), ie. hal_agent_commit_to_gdl(), method is called.

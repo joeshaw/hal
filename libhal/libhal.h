@@ -297,6 +297,14 @@ int hal_device_add_property_watch (LibHalContext *ctx,
 int hal_device_remove_property_watch (LibHalContext *ctx, 
 				      const char *udi);
 
+dbus_bool_t hal_device_lock (LibHalContext *ctx,
+			     const char *udi,
+			     const char *reason_to_lock,
+			     char **reason_why_locked);
+
+dbus_bool_t hal_device_unlock (LibHalContext *ctx,
+			       const char *udi);
+
 /** @} */
 
 #if defined(__cplusplus)
