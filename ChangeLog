@@ -1,3 +1,10 @@
+2004-01-05  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_osspec.c (handle_hotplug): add some more debug
+
+	* hald/linux/linux_class_block.c 
+	(visit_class_device_block_got_parent): add some more debug
+
 2004-01-04  David Zeuthen  <david@fubar.dk>
 
 	* tools/linux/hal_hotplug.c: Don't include dbus-glib

@@ -221,7 +221,9 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
     HalDevice* new_d = NULL;
     HalDevice* d = (HalDevice*) data1;
 
-    /*HAL_INFO(("data2=0x%08x, d=0x%08x, d->udi=%s, parent->udi=%s, parent->in_gdl=%d", data2, d, d->udi, parent!=NULL ? parent->udi : "no parent", parent!=NULL ? parent->in_gdl : 42 ));*/
+    HAL_INFO(("data2=0x%08x, d=0x%08x, d->udi=%s, parent->udi=%s, parent->in_gdl=%d", data2, d, d->udi, parent!=NULL ? parent->udi : "no parent", parent!=NULL ? parent->in_gdl : 42 ));
+    HAL_INFO(("d: linux.sysfs_path=%s", ds_property_get_string(d, "linux.sysfs_path")));
+    HAL_INFO(("d: linux.sysfs_path_device=%s", ds_property_get_string(d, "linux.sysfs_path_device")));
 
     if( parent==NULL )
     {

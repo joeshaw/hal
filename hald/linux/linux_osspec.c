@@ -396,8 +396,9 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
             input_led = parse_hex(value);
     }
 
-    HAL_INFO(("HotplugEvent %s, subsystem=%s", 
-              (is_add ? "add" : "remove"), subsystem));
+    HAL_INFO(("HotplugEvent %s, subsystem=%s devpath=%s", 
+              (is_add ? "add" : "remove"), subsystem,
+              sysfs_devpath[0]!='\0' ? sysfs_devpath : "(none)"));
 
     if( sysfs_devpath[0]!='\0' && 
         (strcmp(subsystem, "usb")==0 ||
