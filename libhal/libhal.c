@@ -718,28 +718,31 @@ filter_func (DBusConnection * connection,
 			dbus_bool_t added;
 			int num_modifications;
 			DBusMessageIter iter;
-
+			DBusMessageIter iter_array;
+	
 			dbus_message_iter_init (message, &iter);
 			dbus_message_iter_get_basic (&iter, &num_modifications);
 			dbus_message_iter_next (&iter);
 
+			dbus_message_iter_recurse (&iter, &iter_array);
 
 			for (i = 0; i < num_modifications; i++) {
+				DBusMessageIter iter_struct;
 
-				dbus_message_iter_get_basic (&iter, &key);
-				dbus_message_iter_next (&iter);
-				dbus_message_iter_get_basic (&iter, &removed);
-				dbus_message_iter_next (&iter);
-				dbus_message_iter_get_basic (&iter, &added);
-				dbus_message_iter_next (&iter);
+				dbus_message_iter_recurse (&iter_array, &iter_struct);
 
-				ctx->
-				    device_property_modified (ctx, 
-							      object_path,
-							      key, removed,
-							      added);
+				dbus_message_iter_get_basic (&iter_struct, &key);
+				dbus_message_iter_next (&iter_struct);
+				dbus_message_iter_get_basic (&iter_struct, &removed);
+				dbus_message_iter_next (&iter_struct);
+				dbus_message_iter_get_basic (&iter_struct, &added);
 
-				dbus_free (key);
+				ctx->device_property_modified (ctx, 
+							       object_path,
+							       key, removed,
+							       added);
+
+				dbus_message_iter_next (&iter_array);
 			}
 
 		}

@@ -1856,6 +1856,7 @@ device_property_atomic_update_end (void)
 	if (atomic_count == 0 && num_pending_updates > 0) {
 		DBusMessage *message;
 		DBusMessageIter iter;
+		DBusMessageIter iter_array;
 
 		for (pu_iter = pending_updates_head;
 		     pu_iter != NULL; pu_iter = pu_iter_next) {
@@ -1882,21 +1883,38 @@ device_property_atomic_update_end (void)
 			dbus_message_iter_init_append (message, &iter);
 			dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32,
 							&num_updates_this);
+
+			dbus_message_iter_open_container (&iter, 
+							  DBUS_TYPE_ARRAY,
+							  DBUS_STRUCT_BEGIN_CHAR_AS_STRING
+							  DBUS_TYPE_STRING_AS_STRING
+							  DBUS_TYPE_BOOLEAN_AS_STRING
+							  DBUS_TYPE_BOOLEAN_AS_STRING
+							  DBUS_STRUCT_END_CHAR_AS_STRING,
+							  &iter_array);
+
 			for (pu_iter2 = pu_iter; pu_iter2 != NULL;
 			     pu_iter2 = pu_iter2->next) {
 				if (strcmp (pu_iter2->udi, pu_iter->udi) == 0) {
+					DBusMessageIter iter_struct;
+					dbus_message_iter_open_container (&iter_array,
+									  DBUS_TYPE_STRUCT,
+									  NULL,
+									  &iter_struct);
 					dbus_message_iter_append_basic
-					    (&iter, 
+					    (&iter_struct, 
 					     DBUS_TYPE_STRING,
 					     &(pu_iter2->key));
 					dbus_message_iter_append_basic
-					    (&iter,
+					    (&iter_struct,
 					     DBUS_TYPE_BOOLEAN,
 					     &(pu_iter2->removed));
 					dbus_message_iter_append_basic
-					    (&iter, 
+					    (&iter_struct, 
 					     DBUS_TYPE_BOOLEAN,
 					     &(pu_iter2->added));
+
+					dbus_message_iter_close_container (&iter_array, &iter_struct);
 
 					/* signal this is already processed */
 					if (pu_iter2 != pu_iter) {
@@ -1905,6 +1923,8 @@ device_property_atomic_update_end (void)
 					}
 				}
 			}
+
+			dbus_message_iter_close_container (&iter, &iter_array);
 
 
 			if (!dbus_connection_send
@@ -1955,6 +1975,8 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 		num_pending_updates++;
 	} else {
 		dbus_int32_t i;
+		DBusMessageIter iter_struct;
+		DBusMessageIter iter_array;
 		
 		message = dbus_message_new_signal (udi,
 						  "org.freedesktop.Hal.Device",
@@ -1963,11 +1985,28 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 		dbus_message_iter_init_append (message, &iter);
 		i = 1;
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &i);
+
+		dbus_message_iter_open_container (&iter, 
+						  DBUS_TYPE_ARRAY,
+						  DBUS_STRUCT_BEGIN_CHAR_AS_STRING
+						  DBUS_TYPE_STRING_AS_STRING
+						  DBUS_TYPE_BOOLEAN_AS_STRING
+						  DBUS_TYPE_BOOLEAN_AS_STRING
+						  DBUS_STRUCT_END_CHAR_AS_STRING,
+						  &iter_array);
+		
+		dbus_message_iter_open_container (&iter_array,
+						  DBUS_TYPE_STRUCT,
+						  NULL,
+						  &iter_struct);
+		
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
-		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, 
-		                                &removed);
-		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, 
-		                                &added);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &removed);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &added);
+
+		dbus_message_iter_close_container (&iter_array, &iter_struct);
+		dbus_message_iter_close_container (&iter, &iter_array);
+
 
 		if (!dbus_connection_send (dbus_connection, message, NULL))
 			DIE (("error broadcasting message"));

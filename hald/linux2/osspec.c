@@ -353,7 +353,9 @@ osspec_init (void)
 	sigio_iochn_listener_source_id = g_io_add_watch (sigio_iochn, G_IO_IN, sigio_iochn_data, NULL);
 	signal (SIGIO, sigio_handler);
 
-	/* hook up to netlink socket to receive events from the *Kernel Events Layer* */
+	/* hook up to netlink socket to receive events from the Kernel Events
+	 * Layer (available since 2.6.10) - TODO: Don't use the constant 15
+	 */
 	netlink_fd = socket (PF_NETLINK, SOCK_DGRAM, 15/*NETLINK_KOBJECT_UEVENT*/);
 
 	if (netlink_fd < 0) {

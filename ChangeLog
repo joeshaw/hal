@@ -1,4 +1,14 @@
-2005-02-22  David Zeuthen  <david@fubar.dk>
+2005-02-22  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald_dbus.c (device_property_atomic_update_end): Send changes
+	as an array to ensure that PropertyModified signal always has two 
+	parameters
+	(device_send_signal_property_modified): -do-
+
+	* libhal/libhal.c (filter_func): Fix up to receive PropertyModified
+	in the new format	
+
+2005-02-22  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/osspec.c (osspec_init): Small fix for the kobject_uevent
 	stuff
