@@ -45,15 +45,27 @@
  * @{
  */
 
+/** Maximum number of callbacks inside the HAL daemon */
+#define MAX_CB_FUNCS 32
 
 /** property changed callback */
-static HalDevicePropertyChangedCallback property_changed_cb = NULL;
+static HalDevicePropertyChangedCallback property_changed_cb[MAX_CB_FUNCS];
+
+/** gdl changed callback */
+static HalDeviceGDLChangedCallback gdl_changed_cb[MAX_CB_FUNCS];
 
 /** new capability callback */
-static HalDeviceGDLChangedCallback gdl_changed_cb = NULL;
+static HalDeviceNewCapabilityCallback new_capability_cb[MAX_CB_FUNCS];
+
+/** property changed callback */
+static int num_property_changed_cb = 0;
+
+/** gdl changed callback */
+static int num_gdl_changed_cb = 0;
 
 /** new capability callback */
-static HalDeviceNewCapabilityCallback new_capability_cb = NULL;
+static int num_new_capability_cb = 0;
+
 
 /** Number of devices */
 static unsigned int device_list_num = 0;
@@ -95,17 +107,48 @@ static char* xstrdup(const char* str)
  *  @param  _property_changed_cb  Function to invoke whenever a property
  *                                is changed
  */
-void ds_init(HalDevicePropertyChangedCallback _property_changed_cb,
-             HalDeviceGDLChangedCallback _gdl_changed_cb,
-             HalDeviceNewCapabilityCallback _new_capability_cb)
+void ds_init()
 {
     device_list_num = 0;
     device_list_head = NULL;
     temp_device_counter = 0;
-    property_changed_cb = _property_changed_cb;
-    gdl_changed_cb = _gdl_changed_cb;
-    new_capability_cb = _new_capability_cb;
+
+    num_property_changed_cb = 0;
+    num_gdl_changed_cb = 0;
+    num_new_capability_cb = 0;
 }
+
+/** Add a callback when a device has got a new capability
+ *
+ *  @param  cb                  Callback function
+ */
+void ds_add_cb_newcap(HalDeviceNewCapabilityCallback cb)
+{
+    if( num_property_changed_cb < MAX_CB_FUNCS )
+        new_capability_cb[num_new_capability_cb++] = cb;
+}
+
+/** Add a callback when a property of a device has changed
+ *
+ *  @param  cb                  Callback function
+ */
+void ds_add_cb_property_changed(HalDevicePropertyChangedCallback cb)
+{
+    if( num_property_changed_cb < MAX_CB_FUNCS )
+        property_changed_cb[num_property_changed_cb++] = cb;
+}
+
+/** Add a callback when the global device list changeds
+ *
+ *  @param  cb                  Callback function
+ */
+void ds_add_cb_gdl_changed(HalDeviceGDLChangedCallback cb)
+{
+    if( num_gdl_changed_cb < MAX_CB_FUNCS )
+        gdl_changed_cb[num_gdl_changed_cb++] = cb;
+}
+
+
 
 /** Shut down the device store.
  */
@@ -459,11 +502,12 @@ HalDevice* ds_device_new()
  */
 void ds_device_destroy(HalDevice* device)
 {
+    int i;
     HalProperty* prop;
     HalProperty* prop_next;
 
-    if( gdl_changed_cb!=NULL )
-        (*gdl_changed_cb)(device, FALSE);
+    for(i=0; i<num_gdl_changed_cb; i++)
+        (*(gdl_changed_cb[i]))(device, FALSE);
 
     // remove device from list
     if( device->next!=NULL )
@@ -495,10 +539,11 @@ void ds_device_destroy(HalDevice* device)
  */
 void ds_gdl_add(HalDevice* device)
 {
+    int i;
     device->in_gdl = TRUE;
 
-    if( gdl_changed_cb!=NULL )
-        (*gdl_changed_cb)(device, TRUE);
+    for(i=0; i<num_gdl_changed_cb; i++)
+        (*(gdl_changed_cb[i]))(device, TRUE);
 
     /* Ah, now check for the asynchronous outstanding finds whether this
      * device was the one someone is searching for
@@ -683,6 +728,7 @@ HalProperty* ds_property_iter_get(HalPropertyIterator* iterator)
 dbus_bool_t ds_property_set_string(HalDevice* device, const char* key, 
                                    const char* value)
 {
+    int i;
     HalProperty* prop;
 
     // check if property already exist
@@ -703,10 +749,9 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
             prop->str_value = (char*) xstrdup(value);
 
             // callback that the property changed
-            if( property_changed_cb!=NULL )
-                property_changed_cb(device,
-                                    key,
-                                    device->in_gdl, FALSE, FALSE);
+            for(i=0; i<num_property_changed_cb; i++)
+                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                            FALSE, FALSE);
             return TRUE;
         }
     }
@@ -729,10 +774,9 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
         prop->next->prev = prop;
 
     // callback that the property have been added
-    if( property_changed_cb!=NULL )
-        property_changed_cb(device,
-                            prop->key,
-                            device->in_gdl, FALSE, TRUE);
+    for(i=0; i<num_property_changed_cb; i++)
+        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                    FALSE, TRUE);
 
     return TRUE;
 }
@@ -748,6 +792,7 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
 dbus_bool_t ds_property_set_int(HalDevice* device, const char* key, 
                                 dbus_int32_t value)
 {
+    int i;
     HalProperty* prop;
 
     // check if property already exist
@@ -765,10 +810,9 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
             prop->int_value = value;
 
             // callback that the property changed
-            if( property_changed_cb!=NULL )
-                property_changed_cb(device,
-                                    key,
-                                    device->in_gdl, FALSE, FALSE);
+            for(i=0; i<num_property_changed_cb; i++)
+                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                            FALSE, FALSE);
             return TRUE;
         }
     }
@@ -791,10 +835,9 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
         prop->next->prev = prop;
 
     // callback that the property have been added
-    if( property_changed_cb!=NULL )
-        property_changed_cb(device,
-                            prop->key,
-                            device->in_gdl, FALSE, TRUE);
+    for(i=0; i<num_property_changed_cb; i++)
+        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                    FALSE, TRUE);
 
     return TRUE;
 }
@@ -810,6 +853,7 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
 dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key, 
                                  dbus_bool_t value)
 {
+    int i;
     HalProperty* prop;
 
     // check if property already exist
@@ -827,10 +871,9 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
             prop->bool_value = value;
 
             // callback that the property changed
-            if( property_changed_cb!=NULL )
-                property_changed_cb(device,
-                                    key,
-                                    device->in_gdl, FALSE, FALSE);
+            for(i=0; i<num_property_changed_cb; i++)
+                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                            FALSE, FALSE);
             return TRUE;
         }
     }
@@ -853,10 +896,9 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
         prop->next->prev = prop;
 
     // callback that the property have been added
-    if( property_changed_cb!=NULL )
-        property_changed_cb(device,
-                            prop->key,
-                            device->in_gdl, FALSE, TRUE);
+    for(i=0; i<num_property_changed_cb; i++)
+        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                    FALSE, TRUE);
 
     return TRUE;
 }
@@ -872,6 +914,7 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
 dbus_bool_t ds_property_set_double(HalDevice* device, const char* key, 
                                    double value)
 {
+    int i;
     HalProperty* prop;
 
     // check if property already exist
@@ -889,10 +932,9 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
             prop->double_value = value;
 
             // callback that the property changed
-            if( property_changed_cb!=NULL )
-                property_changed_cb(device,
-                                    key,
-                                    device->in_gdl, FALSE, FALSE);
+            for(i=0; i<num_property_changed_cb; i++)
+                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                            FALSE, FALSE);
             return TRUE;
         }
     }
@@ -915,10 +957,9 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
         prop->next->prev = prop;
 
     // callback that the property have been added
-    if( property_changed_cb!=NULL )
-        property_changed_cb(device,
-                            prop->key,
-                            device->in_gdl, FALSE, TRUE);
+    for(i=0; i<num_property_changed_cb; i++)
+        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
+                                    FALSE, TRUE);
 
     return TRUE;
 }
@@ -932,6 +973,7 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
 dbus_bool_t ds_property_remove(HalDevice* device, const char* key)
 {
     int i;
+    int j;
     HalProperty* prop;
 
     i=0;
@@ -970,11 +1012,9 @@ dbus_bool_t ds_property_remove(HalDevice* device, const char* key)
             free(prop);
             device->num_properties--;
 
-            // callback that the property have been removed
-            if( property_changed_cb!=NULL )
-                property_changed_cb(device,
-                                    key,
-                                    device->in_gdl, TRUE, FALSE);
+            for(j=0; j<num_property_changed_cb; j++)
+                (*(property_changed_cb[j]))(device, key, device->in_gdl, 
+                                            TRUE, FALSE);
             
             return TRUE;
         }
@@ -1050,13 +1090,16 @@ double ds_property_iter_get_double(HalProperty* property)
     return property->double_value;
 }
 
-/** Merge properties from one device to another. <p>
+/** Merge properties from one device to another. If the Capabilities property
+ *  is set in the source, then #new_capability_cb will be invoked for every
+ *  capability on the target device.
  *
  *  @param  target              Target device receiving properties
  *  @param  source              Source device contributing properties
  */
 void ds_device_merge(HalDevice* target, HalDevice* source)
 {
+    const char* caps;
     HalPropertyIterator iter;
 
     for(ds_property_iter_begin(source, &iter);
@@ -1092,6 +1135,23 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
             break;
         }
     }    
+
+    caps = ds_property_get_string(source, "Capabilities");
+    if( caps!=NULL )
+    {
+        int i;
+        char* tok;
+        char buf[256];
+        char* bufp = buf;
+    
+        tok = strtok_r((char*)caps, " ", &bufp);
+        while( tok!=NULL )
+        {
+            for(i=0; i<num_new_capability_cb; i++)
+                (*(new_capability_cb[i]))(target, tok, target->in_gdl);
+            tok = strtok_r(NULL, " ", &bufp);
+        }
+    }
 }
 
 /** Get the type of the value of a property.
@@ -1297,6 +1357,7 @@ dbus_bool_t ds_device_matches(HalDevice* device1, HalDevice* device2,
  */
 void ds_add_capability(HalDevice* device, const char* capability)
 {
+    int i;
     const char* caps;
     char buf[MAX_CAP_SIZE];
 
@@ -1315,8 +1376,30 @@ void ds_add_capability(HalDevice* device, const char* capability)
     }
 
 
-    if( new_capability_cb!=NULL )
-        (*new_capability_cb)(device, capability, device->in_gdl);
+    for(i=0; i<num_new_capability_cb; i++)
+        (*(new_capability_cb[i]))(device, capability, device->in_gdl);
 }
+
+/** Query a device for a capability
+ *
+ *  @param  device              Pointer to a #HalDevice object
+ *  @param  capability          Capability to query for, e.g. 'net.ethernet'
+ *  @return                     #TRUE if and only if the device got the 
+ *                              capablity
+ */
+dbus_bool_t ds_query_capability(HalDevice* device, const char* capability)
+{
+    const char* caps;
+
+    caps = ds_property_get_string(device, "Capabilities");
+    if( caps!=NULL )
+    {
+        LOG_INFO(("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡ caps=%s", caps));
+        if( strstr(caps, capability)!=NULL )
+            return TRUE;
+    }
+    return FALSE;
+}
+
 
 /** @} */

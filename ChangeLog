@@ -1,3 +1,38 @@
+2003-12-15  David Zeuthen  <david@fubar.dk>
+
+	* hald/device_store.c (ds_init): Don't require callback functions
+	(ds_add_cb_newcap): new function
+	(ds_add_cb_property_changed): new function
+	(ds_add_cb_gdl_changed): new function
+	(ds_device_destroy): call all registered callbacks
+	(ds_gdl_add): call all registered callbacks
+	(ds_property_set_string): call all registered callbacks
+	(ds_property_set_int): call all registered callbacks
+	(ds_property_set_bool): call all registered callbacks
+	(ds_property_set_double): call all registered callbacks
+	(ds_property_remove): call all registered callbacks
+	(ds_device_merge): call new capability on target for all capabilities
+	on source
+	(ds_add_capability): call all registered callbacks
+	(ds_query_capability): new function
+
+	* hald/device_store.h: Add new prototypes
+
+	* hald/main.c (main): Register callbacks we used to give to ds_init()
+
+	* hald/linux/linux_class_net (visit_class_device_net): Fixed bug where
+	the net.ethernet capability was set on "Experimental Ethernet" instead
+	on "Ethernet"
+	(mdio_read): new function
+	(link_detection_process): new function
+	(link_detection_timer_handler): new function
+	(link_detection_add): new function
+	(link_detection_remove): new function
+	(new_capability): new function
+	(gdl_changed): new function
+	(linux_class_net_init): Register callbacks for new_capability and 
+	gdl_changed. Add timer for checking link status every second 
+	
 2003-12-14  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: New file! Contains a high-level TODO list as a complement

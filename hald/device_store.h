@@ -125,11 +125,15 @@ typedef void (*HalDeviceNewCapabilityCallback)(HalDevice* device,
                                                const char* capability,
                                                dbus_bool_t in_gdl);
 
-void ds_init(HalDevicePropertyChangedCallback property_changed_cb,
-             HalDeviceGDLChangedCallback gdl_changed_cb,
-             HalDeviceNewCapabilityCallback new_capability_cb);
+void ds_init();
 void ds_shutdown();
 void ds_print(HalDevice* device);
+
+void ds_add_cb_newcap(HalDeviceNewCapabilityCallback cb);
+
+void ds_add_cb_property_changed(HalDevicePropertyChangedCallback cb);
+
+void ds_add_cb_gdl_changed(HalDeviceGDLChangedCallback cb);
 
 /**************************************************************************/
 
@@ -220,6 +224,7 @@ double ds_property_get_double(HalDevice* device, const char* key);
 
 void ds_add_capability(HalDevice* device, const char* capability);
 
+dbus_bool_t ds_query_capability(HalDevice* device, const char* capability);
 
 
 

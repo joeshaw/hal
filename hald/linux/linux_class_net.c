@@ -5,7 +5,8 @@
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
- * Licensed under the Academic Free License version 2.0
+ * Some parts of this file is based on mii-diag.c, Copyright 1997-2003 by
+ * Donald Becker <becker@scyld.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +36,13 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdarg.h>
+
+#include <glib.h>
+
+#include <errno.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
 
 #include <net/if_arp.h> /* for ARPHRD_ETHER etc. */
 
@@ -152,10 +160,10 @@ void visit_class_device_net(const char* path,
         break;
     case ARPHRD_ETHER: 
         media="Ethernet"; 
+        ds_add_capability(d, "net.ethernet");
         break;
     case ARPHRD_EETHER: 
         media="Experimenal Ethernet"; 
-        ds_add_capability(d, "net.ethernet");
         break;
     case ARPHRD_AX25: 
         media="AX.25 Level 2"; 
@@ -237,11 +245,288 @@ static void visit_class_device_net_got_sysdevice(HalDevice* sysdevice,
 }
 
 
+
+/** Structure for holding watching information for an ethernet interface */
+typedef struct link_detection_if_s
+{
+    HalDevice* device;                  /**< HalDevice* object */
+    int skfd;                           /**< File descriptor for socket */
+    struct ifreq ifr;                   /**< Structure used in ioctl() */
+    int new_ioctl_nums;                 /**< Is the new ioctl being used? */
+    dbus_uint16_t status_word_baseline; /**< Last status word read */
+    struct link_detection_if_s* next;    /**< Pointer to next element */
+} link_detection_if;
+
+/** Head of linked list of ethernet interfaces to watch */
+static link_detection_if* link_detection_list_head = NULL;
+
+/** Read a word from the MII transceiver management registers 
+ *
+ *  @param  iface               Which interface
+ *  @param  location            Which register
+ *  @return                     Word that is read
+ */
+static dbus_uint16_t mdio_read(link_detection_if* iface, int location)
+{
+    dbus_uint16_t *data = (dbus_uint16_t *)(&(iface->ifr.ifr_data));
+
+    data[1] = location;
+
+    if( ioctl(iface->skfd, 
+              iface->new_ioctl_nums ? 0x8948 : SIOCDEVPRIVATE+1, 
+              &(iface->ifr)) < 0)
+    {
+        fprintf(stderr, "SIOCGMIIREG on %s failed: %s\n", iface->ifr.ifr_name,
+                strerror(errno));
+        return -1;
+    }
+    return data[3];
+}
+
+/** Check whether status has changed.
+ *
+ *  @param  iface               Which interface
+ */
+static void link_detection_process(link_detection_if* iface)
+{
+    dbus_uint16_t status_word;
+    dbus_uint16_t link_word;
+    dbus_uint16_t status_word_new;
+
+    /*printf("iface = 0x%0x\n", iface);*/
+
+    status_word_new = mdio_read(iface, 1);
+    if( status_word_new!=iface->status_word_baseline )
+    {
+        iface->status_word_baseline = status_word_new;
+
+        LOG_INFO(("Ethernet link status change on hal udi %s)",
+                  iface->device->udi));
+
+        /* Read status_word again since some bits may be sticky */
+        status_word = mdio_read(iface, 1);
+
+        /* Refer to http://www.scyld.com/diag/mii-status.html for
+         * the full explanation of the numbers
+         *
+         * 0x8000  Capable of 100baseT4.
+         * 0x7800  Capable of 10/100 HD/FD (most common).
+         * 0x0040  Preamble suppression permitted.
+         * 0x0020  Autonegotiation complete.
+         * 0x0010  Remote fault.
+         * 0x0008  Capable of Autonegotiation.
+         * 0x0004  Link established ("sticky"* on link failure)
+         * 0x0002  Jabber detected ("sticky"* on transmit jabber)
+         * 0x0001  Extended MII register exist.
+         *
+         */
+
+        if( (status_word&0x0016)==0x0004 )
+        {
+            ds_property_set_bool(iface->device, 
+                                 "net.ethernet.link", TRUE);
+        }
+        else
+        {
+            ds_property_set_bool(iface->device, 
+                                 "net.ethernet.link", FALSE);
+        }
+
+        /* Read link word
+         *
+         * 0x8000  Link partner can send more info.
+         * 0x4000  Link partner got our advertised abilities.
+         * 0x2000  Fault detected by link partner (uncommon).
+         * 0x0400  Flow control supported (currently uncommon)
+         * 0x0200  100baseT4 supported (uncommon)
+         * 0x0100  100baseTx-FD (full duplex) supported
+         * 0x0080  100baseTx supported
+         * 0x0040  10baseT-FD supported
+         * 0x0020  10baseT supported
+         * 0x001F  Protocol selection bits, always 0x0001 for Ethernet.
+         */
+        link_word = mdio_read(iface, 1);
+
+        if( link_word&0x0300 )
+        {
+            ds_property_set_int(iface->device, "net.ethernet.rate", 
+                                100*1000*1000);
+        }
+        if( link_word&0x60 )
+        {
+            ds_property_set_int(iface->device, "net.ethernet.rate", 
+                                10*1000*1000);
+        }
+
+    }
+}
+
+/** Timeout handler for processing status on all watched interfaces
+ *
+ *  @param  data                User data when setting up timer
+ */
+static gboolean link_detection_timer_handler(gpointer data)
+{
+    link_detection_if* iface;
+
+    LOG_INFO(("here"));
+
+    for(iface=link_detection_list_head; iface!=NULL; iface=iface->next)
+        link_detection_process(iface);
+
+    return TRUE;
+}
+
+/** Add a watch for a HAL device; it must be a net.ethernet capable.
+ *
+ *  @param  device              HalDevice object
+ */
+static void link_detection_add(HalDevice* device)
+{
+    const char* interface_name;
+    link_detection_if* iface;
+
+    LOG_INFO(("************************ ENTERING **************"));
+
+    iface = malloc(sizeof(link_detection_if));
+    if( iface==NULL )
+        DIE(("No memory"));
+
+    interface_name = ds_property_get_string(device, "net.interface");
+    if( interface_name==NULL )
+    {
+        fprintf(stderr, "device '%s' does not have net.interface\n", 
+                device->udi);
+        free(iface);
+        return;
+    }
+
+    iface->device = device;
+
+    snprintf(iface->ifr.ifr_name, IFNAMSIZ, interface_name);
+
+    /* Open a basic socket. */
+    if( (iface->skfd = socket(AF_INET, SOCK_DGRAM,0))<0 )
+    {
+        fprintf(stderr, "cannot open socket on interface %s; errno=%d\n", 
+                interface_name, errno);
+        free(iface);
+        return;
+    }
+
+    if( ioctl(iface->skfd, 0x8947, &(iface->ifr))>=0 )
+    {
+        iface->new_ioctl_nums = 1;
+    } 
+    else if( ioctl(iface->skfd, SIOCDEVPRIVATE, &(iface->ifr))>=0 )
+    {
+        iface->new_ioctl_nums = 0;
+    } 
+    else
+    {
+        fprintf(stderr, "SIOCGMIIPHY on %s failed: %s\n", iface->ifr.ifr_name,
+                strerror(errno));
+        (void) close(iface->skfd);
+        free(iface);
+        return;
+    }
+
+    iface->status_word_baseline = 0x5555;
+
+
+    link_detection_process(iface);
+
+    iface->next = link_detection_list_head;
+    link_detection_list_head = iface;
+}
+
+/** Remove watch for a HAL device
+ *
+ */
+static void link_detection_remove(HalDevice* device)
+{
+    link_detection_if* iface;
+    link_detection_if* iface_prev = NULL;
+
+    for(iface=link_detection_list_head; iface!=NULL; iface=iface->next)
+    {
+        if( iface->device==device )
+        {
+            if( iface_prev!=NULL )
+            {
+                iface_prev->next = iface->next;
+            }
+            else
+            {
+                link_detection_list_head = iface->next;
+            }
+
+            close(iface->skfd);
+            free(iface);
+        }
+
+        iface_prev = iface;
+    }
+}
+
+
+/** Callback for when a new capability is added to a device.
+ *
+ *  @param  device              Pointer a #HalDevice object
+ *  @param  capability          Capability added
+ *  @param  in_gdl              True iff the device object in visible in the
+ *                              global device list
+ */
+static void new_capability(HalDevice* device, const char* capability,
+                           dbus_bool_t in_gdl)
+{
+    if( in_gdl )
+    {
+        if( strcmp(capability, "net.ethernet")==0 )
+        {
+            link_detection_add(device);
+        }
+    }
+}
+
+/** Callback for the global device list has changed
+ *
+ *  @param  device              Pointer a #HalDevice object
+ *  @param  is_added            True iff device was added
+ */
+static void gdl_changed(HalDevice* device, dbus_bool_t is_added)
+{
+    LOG_INFO(("½½½½½½½ is_added=%d, caps=%s", is_added,
+              ds_property_get_string(device, "Capabilities")));
+    if( is_added )
+    {
+        if( ds_query_capability(device, "net.ethernet") )
+        {
+            link_detection_add(device);
+        }
+    }
+    else
+    {
+        /* We may not have added this device yet, but the callee checks for
+         * for this
+         */
+        link_detection_remove(device);
+    }
+}
+
+
+
+
 /** Init function for block device handling
  *
  */
 void linux_class_net_init()
 {
+    g_timeout_add(1000, link_detection_timer_handler, NULL);
+
+    /* We want to know when net.ethernet devices appear and disappear */
+    ds_add_cb_newcap(new_capability);
+    ds_add_cb_gdl_changed(gdl_changed);    
 }
 
 /** Shutdown function for block device handling

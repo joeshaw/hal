@@ -2021,7 +2021,11 @@ int main(int argc, char* argv[])
     fprintf(stderr, "hald version " PACKAGE_VERSION "\r\n");
 
     // initialize the device store
-    ds_init(property_changed, gdl_changed, new_capability);
+    ds_init();
+
+    ds_add_cb_newcap(new_capability);
+    ds_add_cb_gdl_changed(gdl_changed);
+    ds_add_cb_property_changed(property_changed);
 
     loop = g_main_loop_new (NULL, FALSE);
 
