@@ -44,6 +44,7 @@ struct hald_helper_msg
 	char subsystem[HALD_HELPER_STRLEN];	/**< subsystem e.g. usb, pci (only for hotplug msg) */
 	char sysfs_path[HALD_HELPER_STRLEN];	/**< path into sysfs without sysfs mountpoint, e.g. /block/sda */
 	char device_name[HALD_HELPER_STRLEN];	/**< absolute path of device node (only for device msg) */
+	int net_ifindex;                       /**< For networking class devices only; the value of the ifindex file */
 };
 
 #endif /* HALD_HELPER_H */

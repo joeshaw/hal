@@ -100,6 +100,11 @@ void            hal_device_store_foreach    (HalDeviceStore *store,
 HalDevice      *hal_device_store_match_key_value_string (HalDeviceStore *store,
 							 const char *key,
 							 const char *value);
+
+HalDevice      *hal_device_store_match_key_value_int (HalDeviceStore *store,
+						      const char *key,
+						      int value);
+
 GSList         *hal_device_store_match_multiple_key_value_string (HalDeviceStore *store,
 								  const char *key,
 								  const char *value);

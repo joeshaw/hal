@@ -84,7 +84,12 @@ get_sysfs_mnt_path (void)
 	return ret;
 }
 
-static const char *file_list_class_device[] ={
+static const char *file_list_net[] = {
+	"ifindex",
+	NULL
+};
+
+static const char *file_list_class_device[] = {
 	"dev",
 	NULL
 };
@@ -150,7 +155,7 @@ static const char *file_list_pci[] = {
 } while(0)
 
 static int
-wait_for_sysfs_info (char *devpath, char *hotplug_type)
+wait_for_sysfs_info (char *devpath, char *hotplug_type, int *net_ifindex)
 {
 	size_t devpath_len;
 	const char **file_list;
@@ -192,6 +197,8 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 		file_list = file_list_scsi_host;
 	} else if (strcmp (hotplug_type, "block") == 0) {
 		file_list = file_list_block;
+	} else if (strcmp (hotplug_type, "net") == 0) {
+		file_list = file_list_net;
 	}
 
 	if (file_list == NULL) {
@@ -242,6 +249,24 @@ try_again:
 		if (rc != 0)
 			goto try_again;
 	}
+	
+	/* lip service for 'net' */
+	if (strcmp (hotplug_type, "net") == 0) {
+		FILE *f;
+		char buf[80];
+
+		strncpy (path, sysfs_mnt_path, PATH_MAX);
+		strcat_len (path, devpath);
+		strcat_len (path, "/ifindex");
+		if ((f = fopen (path, "r")) != NULL) {
+			memset (buf, 0, sizeof (buf));
+			fread (buf, sizeof (buf) - 1, 1, f);
+			fclose (f);
+
+			*net_ifindex = atoi(buf);
+		}		
+	}
+
 	return 0;
 }
 
@@ -263,6 +288,7 @@ main (int argc, char *argv[], char *envp[])
 	char *devpath;
 	char *action;
 	char *seqnum_str;
+	int net_ifindex = -1;
 	unsigned long long seqnum;
 
 	if (argc != 2)
@@ -308,7 +334,7 @@ main (int argc, char *argv[], char *envp[])
 
 	/* wait for information to be published in sysfs */
 	if (strcmp (action, "add") == 0)
-		wait_for_sysfs_info (devpath, subsystem);
+		wait_for_sysfs_info (devpath, subsystem, &net_ifindex);
 
 	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
 	saddr.sun_family = AF_LOCAL;
@@ -323,6 +349,7 @@ main (int argc, char *argv[], char *envp[])
 	strncpy (msg.action, action, HALD_HELPER_STRLEN-1);
 	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN-1);
 	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN-1);
+	msg.net_ifindex = net_ifindex;
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {

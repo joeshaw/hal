@@ -53,6 +53,7 @@
 #include "../logger.h"
 #include "../device_store.h"
 #include "../hald.h"
+#include "../hald_dbus.h"
 
 #include "class_device.h"
 #include "common.h"
@@ -187,11 +188,11 @@ mii_get_rate (HalDevice *d)
 	if (res < 0) {
 		HAL_WARNING (("Error reading rate info"));
 	} else if (link_word & 0x380) {
-		hal_device_property_set_int (d, "net.ethernet.rate",
-					     100 * 1000 * 1000);
+		hal_device_property_set_uint64 (d, "net.80203.rate",
+						100 * 1000 * 1000);
 	} else if (link_word & 0x60) {
-		hal_device_property_set_int (d, "net.ethernet.rate",
-					     10 * 1000 * 1000);
+		hal_device_property_set_uint64 (d, "net.80203.rate",
+						10 * 1000 * 1000);
 	}
 
 	close (sockfd);
@@ -251,54 +252,15 @@ mii_get_link (HalDevice *d)
 	if (res < 0)
 		HAL_WARNING (("Error reading link info"));
 	else if ((status_word & 0x0016) == 0x0004)
-		hal_device_property_set_bool (d, "net.ethernet.link", TRUE);
+		hal_device_property_set_bool (d, "net.80203.link", TRUE);
 	else
-		hal_device_property_set_bool (d, "net.ethernet.link", FALSE);
+		hal_device_property_set_bool (d, "net.80203.link", FALSE);
 
 	/* Also get the link rate */
 	mii_get_rate (d);
 
 	close (sockfd);
 }
-
-
-struct FindDevInfo {
-	gboolean link_up;
-	char *ifname;
-};
-
-static gboolean
-set_device_link_status (HalDeviceStore *store, HalDevice *device,
-			      gpointer user_data)
-{
-	struct FindDevInfo *info = user_data;
-	const char * dev_value;
-
-	/* no link check on 802.11x devices */
-	if (hal_device_has_capability (device, "net.ethernet.80211"))
-		return TRUE;
-
-	if (hal_device_property_get_type (device,
-					  "net.interface") != DBUS_TYPE_STRING)
-		return TRUE;
-
-	dev_value = hal_device_property_get_string (device, "net.interface");
-
-	if (dev_value != NULL && strcmp (dev_value, info->ifname) == 0) {
-		hal_device_property_set_bool (device, "net.ethernet.link",
-				      info->link_up);
-
-		/*
-		 * Check the MII registers to set our link rate if we haven't
-		 * set it previously.
-		 */
-		if (!hal_device_has_property (device, "net.ethernet.rate"))
-			mii_get_rate (device);
-	}
-
-	return TRUE;
-}
-
 
 static void
 link_detection_handle_message (struct nlmsghdr *hdr)
@@ -307,7 +269,8 @@ link_detection_handle_message (struct nlmsghdr *hdr)
 	char ifname[1024];
 	struct rtattr *attr;
 	int attr_len;
-	struct FindDevInfo dev_info;
+	HalDevice *d;
+	const char *hal_ifname;
 
 	ifinfo = NLMSG_DATA (hdr);
 
@@ -323,10 +286,10 @@ link_detection_handle_message (struct nlmsghdr *hdr)
 
 	while (RTA_OK (attr, attr_len)) {
 		if (attr->rta_type == IFLA_IFNAME) {
-			int l = RTA_PAYLOAD (attr);
+			unsigned int l = RTA_PAYLOAD (attr);
 
-			if (l > 1023)
-				l = 1023;
+			if (l > sizeof (ifname) - 1)
+				l = sizeof (ifname) - 1;
 
 			strncpy (ifname, RTA_DATA (attr), l);
 		}
@@ -334,15 +297,83 @@ link_detection_handle_message (struct nlmsghdr *hdr)
 		attr = RTA_NEXT (attr, attr_len);
 	}
 
-	if (strlen (ifname) > 0) {
-		dev_info.link_up = 
-			ifinfo->ifi_flags & IFF_RUNNING ? TRUE : FALSE;
-		dev_info.ifname = &ifname[0];
+	/* bail out if there is no interface name */
+	if (strlen (ifname) == 0)
+		goto out;
 
-		hal_device_store_foreach (hald_get_gdl (),
-					  set_device_link_status,
-					  &dev_info);
+	HAL_INFO (("type=0x%02x, SEQ=%d, ifi_flags=0x%04x, ifi_change=0x%04x, ifi_index=%d, ifname='%s'", 
+		   hdr->nlmsg_type, 
+		   hdr->nlmsg_seq,
+		   ifinfo->ifi_flags,
+		   ifinfo->ifi_change,
+		   ifinfo->ifi_index,
+		   ifname));
+
+	/* find hal device object this event applies to */
+	d = hal_device_store_match_key_value_int (hald_get_gdl (), "net.linux.ifindex", ifinfo->ifi_index);
+	if (d == NULL) {
+		HAL_WARNING (("No HAL device object corresponding to ifindex=%d, ifname='%s'",
+			      ifinfo->ifi_index, ifname));
+		goto out;
 	}
+
+	device_property_atomic_update_begin ();
+	{
+
+		/* handle link changes */
+		if (ifinfo->ifi_flags & IFF_RUNNING) {
+			if (hal_device_has_capability (d, "net.80203")) {
+				if (!hal_device_property_get_bool (d, "net.80203.link")) {
+					hal_device_property_set_bool (d, "net.80203.link", TRUE);
+					mii_get_rate (d);
+				}
+			}
+		} else {
+			if (hal_device_has_capability (d, "net.80203")) {
+				if (hal_device_property_get_bool (d, "net.80203.link")) {
+					hal_device_property_set_bool (d, "net.80203.link", FALSE);
+					/* only have rate when we have a link */
+					hal_device_property_remove (d, "net.80203.rate");
+				}
+			}
+		}
+		
+		/* handle events for renaming */
+		hal_ifname = hal_device_property_get_string (d, "net.interface");
+		if (hal_ifname != NULL && strcmp (hal_ifname, ifname) != 0) {
+			char new_sysfs_path[256];
+			const char *sysfs_path;
+			char *p;
+
+			HAL_INFO (("Net interface '%s' renamed to '%s'", hal_ifname, ifname));
+
+			hal_device_property_set_string (d, "net.interface", ifname);
+
+			sysfs_path = hal_device_property_get_string (d, "net.linux.sysfs_path");
+			strncpy (new_sysfs_path, sysfs_path, sizeof (new_sysfs_path) - 1);
+			p = strrchr (new_sysfs_path, '/');
+			if (p != NULL) {
+				strncpy (p + 1, ifname, sizeof (new_sysfs_path) - 1 - (p + 1 - new_sysfs_path));
+				hal_device_property_set_string (d, "net.linux.sysfs_path", new_sysfs_path);
+			}
+		}
+
+		/* handle up/down status */
+		if (ifinfo->ifi_flags & IFF_UP) {
+			if (!hal_device_property_get_bool (d, "net.interface_up")) {
+				hal_device_property_set_bool (d, "net.interface_up", TRUE);
+			}
+		} else {
+			if (hal_device_property_get_bool (d, "net.interface_up")) {
+				hal_device_property_set_bool (d, "net.interface_up", FALSE);
+			}
+		}
+		
+	}
+	device_property_atomic_update_end ();
+
+out:
+	return;
 }
 
 #define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
@@ -387,6 +418,7 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 
 		while (offset < total_read &&
 		       VALID_NLMSG (hdr, total_read - offset)) {
+
 			if (hdr->nlmsg_type == NLMSG_DONE)
 				break;
 
@@ -469,6 +501,8 @@ net_class_pre_process (ClassDeviceHandler *self,
 	char wireless_path[SYSFS_PATH_MAX];
 	struct sysfs_directory *wireless_dir;
 	dbus_bool_t is_80211 = FALSE;
+	int ifindex;
+	int flags;
 
 	hal_device_property_set_string (d, "net.linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "net.interface",
@@ -481,7 +515,7 @@ net_class_pre_process (ClassDeviceHandler *self,
 
 	if (sysfs_read_directory (wireless_dir) >= 0) {
 		if (wireless_dir->attributes != NULL) {
-			hal_device_add_capability (d, "net.ethernet.80211");
+			hal_device_add_capability (d, "net.80211");
 			is_80211 = TRUE;
 		}
 
@@ -490,47 +524,61 @@ net_class_pre_process (ClassDeviceHandler *self,
 
 
 	attr = sysfs_get_classdev_attr (class_device, "address");
-
 	if (attr != NULL) {
 		address = g_strstrip (g_strdup (attr->value));
 		hal_device_property_set_string (d, "net.address", address);
 	}
 
 	attr = sysfs_get_classdev_attr (class_device, "type");
-
-	if (attr != NULL)
+	if (attr != NULL) {
 		media_type = parse_dec (attr->value);
+	}
+
+	attr = sysfs_get_classdev_attr (class_device, "flags");
+	if (attr != NULL) {
+		flags = parse_hex (attr->value);
+		hal_device_property_set_bool (d, "net.interface_up", flags & IFF_UP);
+		if (!is_80211) {
+			/* TODO: for some reason IFF_RUNNING isn't exported in flags */
+			/*hal_device_property_set_bool (d, "net.80203.link", flags & IFF_RUNNING);*/
+			mii_get_link (d);
+		}
+	}
+
+	attr = sysfs_get_classdev_attr (class_device, "ifindex");
+	if (attr != NULL) {
+		ifindex = parse_dec (attr->value);
+		hal_device_property_set_int (d, "net.linux.ifindex", ifindex);
+	}
 
 	/* FIXME: Other address types for non-ethernet devices */
 	if (address != NULL && media_type == ARPHRD_ETHER) {
 		unsigned int a5, a4, a3, a2, a1, a0;
 
-		hal_device_property_set_string (d, "net.ethernet.mac_addr",
-						address);
-
 		if (sscanf (address, "%x:%x:%x:%x:%x:%x",
 			    &a5, &a4, &a3, &a2, &a1, &a0) == 6) {
-			dbus_uint32_t mac_upper, mac_lower;
+			dbus_uint64_t mac_address;
 
-			mac_upper = (a5 << 16) | (a4 << 8) | a3;
-			mac_lower = (a2 << 16) | (a1 << 8) | a0;
-
-			hal_device_property_set_int (d, "net.ethernet.mac_addr_upper24",
-						     (dbus_int32_t) mac_upper);
-			hal_device_property_set_int (d, "net.ethernet.mac_addr_lower24",
-						     (dbus_int32_t) mac_lower);
+			mac_address = 
+				((dbus_uint64_t)a5<<40) |
+				((dbus_uint64_t)a4<<32) | 
+				((dbus_uint64_t)a3<<24) | 
+				((dbus_uint64_t)a2<<16) | 
+				((dbus_uint64_t)a1<< 8) | 
+				((dbus_uint64_t)a0<< 0);
 
 			/* TODO: comment out when 64-bit python patch is in dbus */
-			/*hal_device_property_set_uint64 (d, "net.ethernet.address",
-			  (dbus_uint64_t) ((mac_upper<<24) | mac_lower));*/
+			hal_device_property_set_uint64 (d, is_80211 ? "net.80211.mac_address" : "net.80203.mac_address",
+							mac_address);
 		}
 
-		/* Get the initial link state from the MII registers */
-		if (!is_80211)
-			mii_get_link (d);
 	}
-
 	g_free (address);
+
+	if (hal_device_has_property (d, "net.80203.link") &&
+	    hal_device_property_get_bool (d, "net.80203.link")) {
+		mii_get_rate (d);
+	}
 
 	hal_device_property_set_int (d, "net.arp_proto_hw_id", media_type);
 
@@ -538,45 +586,62 @@ net_class_pre_process (ClassDeviceHandler *self,
 	hal_device_property_set_string (d, "net.media", media);
 
 	hal_device_add_capability (d, "net");
-	hal_device_add_capability (d, "net.ethernet");
-	hal_device_property_set_string (d, "info.category", "net.ethernet");
+	if (is_80211) {
+		hal_device_property_set_string (d, "info.category", "net.80211");
+		hal_device_add_capability (d, "net.80211");
+	} else {
+		hal_device_property_set_string (d, "info.category", "net.80203");
+		hal_device_add_capability (d, "net.80203");
+	}
 }
 
 static dbus_bool_t
 net_class_accept (ClassDeviceHandler *self, const char *path,
 		  struct sysfs_class_device *class_device)
 {
-	struct sysfs_attribute *attr;
+	gboolean accept;
+	struct sysfs_attribute *attr = NULL;
+
+	accept = TRUE;
 
 	/* If the class name isn't 'net', deny it. */
-	if (strcmp (class_device->classname, self->sysfs_class_name) != 0)
-		return FALSE;
+	if (strcmp (class_device->classname, self->sysfs_class_name) != 0) {
+		accept = FALSE;
+		goto out;
+	}
 
 	/* If we have a sysdevice, allow it. */
-	if (class_device->sysdevice != NULL)
-		return TRUE;
+	if (class_device->sysdevice != NULL) {
+		accept = TRUE;
+		goto out;
+	}
 
 	/*
 	 * Get the "type" attribute from sysfs to see if this is a
 	 * network device we're interested in.
 	 */
 	attr = sysfs_get_classdev_attr (class_device, "type");
-
-	if (attr == NULL || attr->value == NULL)
-		return FALSE;
+	if (attr == NULL || attr->value == NULL) {
+		accept = FALSE;
+		goto out;
+	}
 
 	/* 1 is the type for ethernet (incl. wireless) devices */
-	if (attr->value[0] == '1')
-		return TRUE;
-	else
-		return FALSE;
+	if (attr->value[0] == '1') {
+		accept = TRUE;
+		goto out;
+	} else {
+		accept = FALSE;
+	}
+
+out:
+	return accept;
 }
 
 static void
 net_class_post_merge (ClassDeviceHandler *self, HalDevice *d)
 {
-	if (hal_device_has_capability (d, "net.ethernet"))
-		link_detection_init (d);
+	link_detection_init (d);
 }
 
 static char *

@@ -117,11 +117,13 @@ static BusDeviceHandler* bus_device_handlers[] = {
 
 static void hotplug_sem_up (void);
 static void hotplug_sem_down (void);
-static void hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path);
-static void hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path, gchar *device_name);
+static void hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, 
+				 gchar *sysfs_path, struct hald_helper_msg *msg);
+static void hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem, 
+				     gchar *sysfs_path, gchar *device_name, struct hald_helper_msg *msg);
 static gboolean hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data);
 
-static HalDevice *add_device (const char *sysfs_path, const char *subsystem);
+static HalDevice *add_device (const char *sysfs_path, const char *subsystem, struct hald_helper_msg *msg);
 
 /** Mount path for sysfs */
 char sysfs_mount_path[SYSFS_PATH_MAX];
@@ -750,7 +752,7 @@ process_coldplug_list ()
 		coldplug_list = g_slist_delete_link (coldplug_list, coldplug_list);
 
 		HAL_INFO (("handling %s %s", path, subsystem));
-		device = add_device (path, subsystem);//visit_device (path, NULL, FALSE, 0);
+		device = add_device (path, subsystem, NULL);//visit_device (path, NULL, FALSE, 0);
 		g_free (path);
 		g_free (subsystem);
 		g_free (pair);
@@ -837,15 +839,62 @@ osspec_probe (void)
 	hal_callout_device (root, TRUE);
 }
 
+static gboolean
+recover_net_device (int net_ifindex, char *sysfs_path, size_t sysfs_path_size)
+{
+	GDir *dir;
+	char path[SYSFS_PATH_MAX];
+	char path1[SYSFS_PATH_MAX];
+	GError *err = NULL;
+	const gchar *f;
+
+	g_snprintf (path, SYSFS_PATH_MAX, "%s/class/net" , sysfs_mount_path);
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %/class/net: %s", sysfs_mount_path, err->message));
+		g_error_free (err);
+		return FALSE;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		FILE *file;
+
+		g_snprintf (path1, SYSFS_PATH_MAX, "%s/class/net/%s/ifindex" , sysfs_mount_path, f);
+		HAL_INFO (("Looking at %s", path1));
+
+		file = fopen (path1, "r");
+		if (file != NULL) {
+			char buf[80];
+			int found_ifindex;
+
+			memset (buf, 0, sizeof (buf));
+			fread (buf, sizeof (buf) - 1, 1, file);
+			fclose (file);
+
+			found_ifindex = atoi(buf);
+			if (found_ifindex == net_ifindex) {
+				g_snprintf (sysfs_path, sysfs_path_size, "%s/class/net/%s" , sysfs_mount_path, f);
+				g_dir_close (dir);
+				return TRUE;
+			}
+		}
+
+	}
+	g_dir_close (dir);	
+
+	return FALSE;
+}
+
 static HalDevice *
-add_device (const char *sysfs_path, const char *subsystem)
+add_device (const char *given_sysfs_path, const char *subsystem, struct hald_helper_msg *msg) /* msg may be NULL */
 {
 	int i;
 	int len1;
 	int len2;
 	char buf1[SYSFS_PATH_MAX];
 	char buf2[SYSFS_PATH_MAX];
+	char sysfs_path[SYSFS_PATH_MAX];
 	HalDevice *hal_device = NULL;
+
+	strncpy (sysfs_path, given_sysfs_path, SYSFS_PATH_MAX);
 
 	len1 = snprintf (buf1, SYSFS_PATH_MAX, "%s/block", sysfs_mount_path);
 	len2 = snprintf (buf2, SYSFS_PATH_MAX, "%s/class", sysfs_mount_path);
@@ -856,9 +905,32 @@ add_device (const char *sysfs_path, const char *subsystem)
 
 			class_device = sysfs_open_class_device_path (sysfs_path);
 			if (class_device == NULL) {
-				HAL_WARNING (("Coulnd't get sysfs class device object at "
-					      "path %s", sysfs_path));
-				return NULL;
+
+				if (msg != NULL && msg->net_ifindex >= 0 && strcmp (subsystem, "net") == 0) {
+					/* Hey, special case net devices; some hotplug script might have renamed it..
+					 * So, our hotplug helper reads the ifindex file for us so we can recover it.
+					 *
+					 * This is quite a hack; once hotplug and netlink networking messages are 
+					 * properly interleaved (with SEQNUM and stuff) this problem will go away;
+					 * until then we need to live with this hack :-/
+					 */
+					HAL_INFO (("Attempting to recover renamed netdevice with ifindex=%d",
+						   msg->net_ifindex));
+					/* traverse all /sys/class/net/<netdevice> and check ifindex file */
+					if (recover_net_device (msg->net_ifindex, sysfs_path, sizeof (sysfs_path))) {
+						class_device = sysfs_open_class_device_path (sysfs_path);
+						if (class_device == NULL) {
+							HAL_INFO (("%s didn't work...", sysfs_path));
+							return NULL;
+						} else {
+							HAL_INFO (("%s worked!", sysfs_path));
+						}
+					}
+
+				} else {
+					HAL_WARNING (("Coulnd't get sysfs class device object at path %s", sysfs_path));
+					return NULL;
+				}
 			}
 			sysfs_get_classdev_device(class_device);
 			sysfs_get_classdev_driver(class_device);
@@ -906,7 +978,7 @@ rem_device_callouts_finished (HalDevice *d, gpointer user_data)
 }
 
 static HalDevice *
-rem_device (const char *sysfs_path, const char *subsystem)
+rem_device (const char *sysfs_path, const char *subsystem, struct hald_helper_msg *msg) /* msg may be NULL */
 {
 	int i;
 	int len1;
@@ -1145,7 +1217,7 @@ reenable_hotplug_on_gdl_store_remove (HalDeviceStore *store, HalDevice *device, 
 
 
 static void
-hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path)
+hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path, struct hald_helper_msg *msg)
 {
 	HalDevice *d = NULL;
 	char sysfs_path_full[SYSFS_PATH_MAX];
@@ -1156,7 +1228,7 @@ hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sys
 		   action, seqnum, subsystem, sysfs_path_full));
 
 	if (strcmp(action, "add") == 0)  {
-		d = add_device (sysfs_path_full, subsystem);
+		d = add_device (sysfs_path_full, subsystem, msg);
 
 		/* if device is not already added, disable hotplug processing 
 		 * and enable it again when the device has processed all the
@@ -1182,7 +1254,8 @@ hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sys
 			}
 		}
 	} else if (strcmp(action, "remove") == 0){
-		d = rem_device (sysfs_path_full, subsystem);
+		d = rem_device (sysfs_path_full, subsystem, msg);
+
 		/* if device is not already removed, disable hotplug processing 
 		 * and enable it again when the device has processed all the
 		 * callouts
@@ -1203,7 +1276,8 @@ hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sys
 }
 
 static void
-hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path, gchar *device_name)
+hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem, 
+			 gchar *sysfs_path, gchar *device_name, struct hald_helper_msg *msg)
 {
 	char sysfs_path_full[SYSFS_PATH_MAX];
 
@@ -1267,7 +1341,7 @@ trynext:
 			/* yup, found it */
 			last_hotplug_seqnum = msg->seqnum;
 			hald_helper_hotplug (msg->action, msg->seqnum, g_strdup (msg->subsystem), 
-					     g_strdup (msg->sysfs_path));
+					     g_strdup (msg->sysfs_path), msg);
 			g_free (msg);
 			hotplug_queue = g_list_delete_link (hotplug_queue, i);
 			goto trynext;
@@ -1390,7 +1464,7 @@ hald_helper_data (GIOChannel *source,
 	switch (msg.type) {
 	case HALD_DEVD:
 		hald_helper_device_name (msg.action, msg.seqnum, g_strdup (msg.subsystem),
-					 g_strdup (msg.sysfs_path), g_strdup (msg.device_name));
+					 g_strdup (msg.sysfs_path), g_strdup (msg.device_name), &msg);
 		break;
 	case HALD_HOTPLUG:
 		/* need to process hotplug events in proper sequence */
@@ -1422,14 +1496,15 @@ hald_helper_data (GIOChannel *source,
 			/* have to process immediately other we may deadlock due to
 			 * the hotplug semaphore */
 			hald_helper_hotplug (msg.action, msg.seqnum, g_strdup (msg.subsystem), 
-					     g_strdup (msg.sysfs_path));
+					     g_strdup (msg.sysfs_path), &msg);
 			/* still need to process the queue though */
 			hald_helper_hotplug_process_queue ();
 			goto out;
 		}
 
 		/* Queue up this hotplug event and process the queue */
-		HAL_INFO (("Queing up seqnum=%llu, sysfspath=%s, subsys=%s", msg.seqnum, msg.sysfs_path, msg.subsystem));
+		HAL_INFO (("Queing up seqnum=%llu, sysfspath=%s, subsys=%s", 
+			   msg.seqnum, msg.sysfs_path, msg.subsystem));
 		hotplug_queue = g_list_append (hotplug_queue, g_memdup (&msg, sizeof (struct hald_helper_msg)));
 		hald_helper_hotplug_process_queue ();
 		break;

@@ -1,3 +1,59 @@
+2004-09-16  David Zeuthen  <david@fubar.dk>
+
+	Revisit networking. Basically a) split ethernet and wireless into
+	net.80203 and net.80211 properties; b) support renaming of
+	devices; c) use uint64 datatype; d) add property for whether an
+	interface is up and track this; and e) general cleanups when
+	properties are available and not
+
+	* doc/spec/hal-spec.xml.in: Update spec with changes made. Also
+	add uint64 property type
+
+	* hald/device_store.c (hal_device_store_match_key_value_int): New 
+	function
+	
+	* hald/device_store.h: Add prototype for function
+	hal_device_store_match_key_value_int
+	
+	* hald/linux/hald_helper.h: Add net_ifindex member
+	
+	* hald/linux/net_class_device.c:
+	(mii_get_rate): Rename net.ethernet.rate to net.80203.rate and make
+	the type uint64 
+	(mii_get_link): Rename net.ethernet.link to net.80203.link
+	(set_device_link_status): Remove function
+	(link_detection_handle_message): Also listen for interface up/down
+	messages on the netlink socket; maintains net.interface_up. Also
+	handle renaming messages. Remove net.80203.* properties if the
+	interface is down. Remove net.80203.rate if net.80203.link is FALSE.
+	Only check rate for net.80203 devices (fixes crasher for my new
+	Atheros card; remember?)
+	(net_class_pre_process): Rename from net.ethernet to net.80203 and
+	also have separate net.80211 namespace. Add net.interface_up and
+	net.linux.ifindex properties. Set net.{80203,80211}.mac_address
+	as a uint64 rather than net.ethernet.{mac_addr,mac_addr_upper24,
+	mac_addr_lower24}.
+	(net_class_accept): Small reorg of code
+	(net_class_post_merge): Always start listening to netlink socket
+	
+	* hald/linux/osspec.c:
+	(process_coldplug_list): Use NULL for hotplug_msg when invoking
+	add_device
+	(recover_net_device): New function
+	(add_device): Use net_ifindex and recover net device to handle
+	renaming of networking devices by udev and/or initscripts. Now
+	optionally uses the hotplug msg which may be NULL.
+	(rem_device): Optionally use the hotplug msg which may be NULL.
+	(hald_helper_hotplug): Pass on hotplug msg
+	(hald_helper_device_name): Pass on hotplug msg
+	(hald_helper_hotplug_process_queue): Pass on hotplug msg
+	(hald_helper_data): Pass on hotplug msg
+	
+	* tools/linux/hal_hotplug.c:
+	(wait_for_sysfs_info): Wait for ifindex for net devices and
+	extract the value
+	(main): pass on net_ifindex value to hotplug msg
+
 2004-09-15  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_hfs_hfsplus):

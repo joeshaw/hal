@@ -406,8 +406,10 @@
           <itemizedlist>
             <listitem><para><literal>string</literal> - 
 		UTF8 string</para></listitem>
-            <listitem><para><literal>int32</literal> - 
+            <listitem><para><literal>int</literal> - 
 		32-bit signed integer</para></listitem>
+            <listitem><para><literal>uint64</literal> - 
+		64-bit unsigned integer</para></listitem>
             <listitem><para><literal>bool</literal> - 
 		truth value</para></listitem>
             <listitem><para><literal>double</literal> - 
@@ -2312,7 +2314,7 @@
               <entry><literal>net.address</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>Hardware address as a string</entry>
+              <entry>Hardware address as a string. Is hardware dependant</entry>
             </row>
             <row>
               <entry><literal>net.arp_proto_hw_id</literal> (string)</entry>
@@ -2324,7 +2326,20 @@
               <entry><literal>net.interface</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>Name of the interface</entry>
+              <entry>Name of the interface; may change if an interface is
+	      renamed</entry>
+            </row>
+            <row>
+              <entry><literal>net.interface_up</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Whether the interface is up</entry>
+            </row>
+            <row>
+              <entry><literal>net.linux.ifindex</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes (only on Linux)</entry>
+              <entry>Index of the interface</entry>
             </row>
             <row>
               <entry><literal>net.linux.sysfs_path</literal> (string)</entry>
@@ -2346,15 +2361,15 @@
 
 
 
-    <sect2 id="device-properties-net-ethernet">
-      <title><literal>net.ethernet</literal> namespace</title>
+    <sect2 id="device-properties-net-80203">
+      <title><literal>net.80203</literal> namespace</title>
       <para>
 
 	Ethernet networking devices is described in this namespace
 	for device objects with the capability 
-	<literal>net.ethernet</literal>.
+	<literal>net.80203</literal>.
 	Note that device
-	objects can only have the <literal>net.ethernet</literal> capability
+	objects can only have the <literal>net.80203</literal> capability
 	if they already have the capability <literal>net</literal>.
 
       </para>
@@ -2372,45 +2387,81 @@
           <tbody>
 
             <row>
-              <entry><literal>net.ethernet.link</literal> (bool)</entry>
+              <entry><literal>net.80203.link</literal> (bool)</entry>
               <entry></entry>
-              <entry>Only if net.arp_proto_hw_id=1</entry>
+              <entry>
+		Only if the <literal>net.80203</literal> capability is set
+		and <literal>net.interface_up</literal> is
+		<literal>TRUE</literal>.
+	      </entry>
               <entry>True iff the ethernet adaptor is connected to a
               another transceiver</entry>
             </row>
             <row>
-              <entry><literal>net.ethernet.rate</literal> (int)</entry>
+              <entry><literal>net.80203.rate</literal> (uint64)</entry>
               <entry>example: 100000000</entry>
-              <entry>Only if net.arp_proto_hw_id=1</entry>
+              <entry>
+		Only if the <literal>net.80203</literal> capability is set
+		and <literal>net.80203.link</literal> is
+		<literal>TRUE</literal>.
+	      </entry>
               <entry>Bandwidth of connection, in bits/s</entry>
             </row>
             <row>
-              <entry><literal>net.ethernet.mac_addr</literal> (string)</entry>
-              <entry>example: 00:10:60:5d:8e:f4</entry>
-              <entry>Only if net.arp_proto_hw_id=1</entry>
-              <entry>Textual representation of MAC address</entry>
+              <entry><literal>net.80203.mac_address</literal> (uint64)</entry>
+              <entry>example: 0x0010605d8ef4</entry>
+              <entry>Only if the <literal>net.80203</literal> is set</entry>
+              <entry>48-bit address</entry>
             </row>
-            <row>
-              <entry><literal>net.ethernet.mac_addr_lower24</literal> (int)</entry>
-              <entry>example: 0x00001060</entry>
-              <entry>Only if net.arp_proto_hw_id=1</entry>
-              <entry>Binary representation of lower 24 bits of the MAC 
-              address</entry>
-            </row>
-            <row>
-              <entry><literal>net.ethernet.mac_addr_upper24</literal> (int)</entry>
-              <entry>example: 0x005d8ef4</entry>
-              <entry>Only if net.arp_proto_hw_id=1</entry>
-              <entry>Binary representation of the upper 24 bits of the MAC
-              address</entry>
-            </row>
-
           </tbody>
         </tgroup>
       </informaltable>
       <para>
       </para>
     </sect2>
+
+
+
+    <sect2 id="device-properties-net-80211">
+      <title><literal>net.80211</literal> namespace</title>
+      <para>
+
+	Wireless ethernet networking devices is described in this namespace
+	for device objects with the capability 
+	<literal>net.80211</literal>.
+	Note that device
+	objects can only have the <literal>net.80211</literal> capability
+	if they already have the capability <literal>net</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>net.80211.mac_address</literal> (uint64)</entry>
+              <entry>example: 0x0010605d8ef4</entry>
+              <entry>
+		Only if the <literal>net.80211</literal> capability is set
+	      </entry>
+              <entry>48-bit address</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+      </para>
+    </sect2>
+
+
 
     <sect2 id="device-properties-input">
       <title><literal>input</literal> namespace</title>

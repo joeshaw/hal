@@ -295,6 +295,34 @@ hal_device_store_match_key_value_string (HalDeviceStore *store,
 	return NULL;
 }
 
+HalDevice *
+hal_device_store_match_key_value_int (HalDeviceStore *store,
+				      const char *key,
+				      int value)
+{
+	GSList *iter;
+
+	g_return_val_if_fail (store != NULL, NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+
+	for (iter = store->devices; iter != NULL; iter = iter->next) {
+		HalDevice *d = HAL_DEVICE (iter->data);
+		int type;
+
+		if (!hal_device_has_property (d, key))
+			continue;
+
+		type = hal_device_property_get_type (d, key);
+		if (type != DBUS_TYPE_INT32)
+			continue;
+
+		if (hal_device_property_get_int (d, key) == value)
+			return d;
+	}
+
+	return NULL;
+}
+
 GSList *
 hal_device_store_match_multiple_key_value_string (HalDeviceStore *store,
 						  const char *key,

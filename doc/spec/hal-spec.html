@@ -304,10 +304,18 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
-HREF="#device-properties-net-ethernet"
+HREF="#device-properties-net-80203"
 ><TT
 CLASS="literal"
->net.ethernet</TT
+>net.80203</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-net-80211"
+><TT
+CLASS="literal"
+>net.80211</TT
 > namespace</A
 ></DT
 ><DT
@@ -392,26 +400,26 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1774"
+HREF="#AEN1808"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1785"
+HREF="#AEN1819"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1793"
+HREF="#AEN1827"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ><DT
 ><A
-HREF="#AEN1802"
+HREF="#AEN1836"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></DT
 ></DL
@@ -1028,9 +1036,17 @@ CLASS="literal"
 ><P
 ><TT
 CLASS="literal"
->int32</TT
+>int</TT
 > - 
 		32-bit signed integer</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>uint64</TT
+> - 
+		64-bit unsigned integer</P
 ></LI
 ><LI
 ><P
@@ -1350,7 +1366,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN198"
+NAME="AEN201"
 ></A
 ><TABLE
 BORDER="1"
@@ -1520,7 +1536,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN266"
+NAME="AEN269"
 ></A
 ><TABLE
 BORDER="1"
@@ -1659,7 +1675,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN310"
+NAME="AEN313"
 ></A
 ><TABLE
 BORDER="1"
@@ -1882,7 +1898,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN399"
+NAME="AEN402"
 ></A
 ><TABLE
 BORDER="1"
@@ -2274,7 +2290,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN562"
+NAME="AEN565"
 ></A
 ><TABLE
 BORDER="1"
@@ -2403,7 +2419,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN609"
+NAME="AEN612"
 ></A
 ><TABLE
 BORDER="1"
@@ -2488,7 +2504,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN637"
+NAME="AEN640"
 ></A
 ><TABLE
 BORDER="1"
@@ -2584,7 +2600,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN667"
+NAME="AEN670"
 ></A
 ><TABLE
 BORDER="1"
@@ -2653,7 +2669,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN688"
+NAME="AEN691"
 ></A
 ><TABLE
 BORDER="1"
@@ -2770,7 +2786,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN729"
+NAME="AEN732"
 ></A
 ><TABLE
 BORDER="1"
@@ -2892,7 +2908,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN774"
+NAME="AEN777"
 ></A
 ><TABLE
 BORDER="1"
@@ -3013,7 +3029,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN819"
+NAME="AEN822"
 ></A
 ><TABLE
 BORDER="1"
@@ -3086,7 +3102,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN841"
+NAME="AEN844"
 ></A
 ><TABLE
 BORDER="1"
@@ -3283,7 +3299,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN901"
+NAME="AEN904"
 ></A
 ><TABLE
 BORDER="1"
@@ -3506,7 +3522,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN997"
+NAME="AEN1000"
 ></A
 ><TABLE
 BORDER="1"
@@ -3644,7 +3660,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1040"
+NAME="AEN1043"
 ></A
 ><TABLE
 BORDER="1"
@@ -3755,7 +3771,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1076"
+NAME="AEN1079"
 ></A
 ><TABLE
 BORDER="1"
@@ -4017,7 +4033,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1183"
+NAME="AEN1186"
 ></A
 ><TABLE
 BORDER="1"
@@ -4436,7 +4452,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1352"
+NAME="AEN1355"
 ></A
 ><TABLE
 BORDER="1"
@@ -4635,7 +4651,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1432"
+NAME="AEN1435"
 ></A
 ><TABLE
 BORDER="1"
@@ -4667,7 +4683,7 @@ CLASS="literal"
 ><TD
 >Yes</TD
 ><TD
->Hardware address as a string</TD
+>Hardware address as a string. Is hardware dependant</TD
 ></TR
 ><TR
 ><TD
@@ -4693,7 +4709,34 @@ CLASS="literal"
 ><TD
 >Yes</TD
 ><TD
->Name of the interface</TD
+>Name of the interface; may change if an interface is
+	      renamed</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>net.interface_up</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Whether the interface is up</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>net.linux.ifindex</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes (only on Linux)</TD
+><TD
+>Index of the interface</TD
 ></TR
 ><TR
 ><TD
@@ -4732,10 +4775,10 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="device-properties-net-ethernet"
+NAME="device-properties-net-80203"
 ><TT
 CLASS="literal"
->net.ethernet</TT
+>net.80203</TT
 > namespace</A
 ></H3
 ><P
@@ -4744,12 +4787,12 @@ CLASS="literal"
 	for device objects with the capability 
 	<TT
 CLASS="literal"
->net.ethernet</TT
+>net.80203</TT
 >.
 	Note that device
 	objects can only have the <TT
 CLASS="literal"
->net.ethernet</TT
+>net.80203</TT
 > capability
 	if they already have the capability <TT
 CLASS="literal"
@@ -4762,7 +4805,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1478"
+NAME="AEN1493"
 ></A
 ><TABLE
 BORDER="1"
@@ -4787,12 +4830,24 @@ CLASS="CALSTABLE"
 ><TD
 ><TT
 CLASS="literal"
->net.ethernet.link</TT
+>net.80203.link</TT
 > (bool)</TD
 ><TD
 >&nbsp;</TD
 ><TD
->Only if net.arp_proto_hw_id=1</TD
+>&#13;		Only if the <TT
+CLASS="literal"
+>net.80203</TT
+> capability is set
+		and <TT
+CLASS="literal"
+>net.interface_up</TT
+> is
+		<TT
+CLASS="literal"
+>TRUE</TT
+>.
+	      </TD
 ><TD
 >True iff the ethernet adaptor is connected to a
               another transceiver</TD
@@ -4801,12 +4856,24 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->net.ethernet.rate</TT
-> (int)</TD
+>net.80203.rate</TT
+> (uint64)</TD
 ><TD
 >example: 100000000</TD
 ><TD
->Only if net.arp_proto_hw_id=1</TD
+>&#13;		Only if the <TT
+CLASS="literal"
+>net.80203</TT
+> capability is set
+		and <TT
+CLASS="literal"
+>net.80203.link</TT
+> is
+		<TT
+CLASS="literal"
+>TRUE</TT
+>.
+	      </TD
 ><TD
 >Bandwidth of connection, in bits/s</TD
 ></TR
@@ -4814,42 +4881,98 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->net.ethernet.mac_addr</TT
-> (string)</TD
+>net.80203.mac_address</TT
+> (uint64)</TD
 ><TD
->example: 00:10:60:5d:8e:f4</TD
+>example: 0x0010605d8ef4</TD
 ><TD
->Only if net.arp_proto_hw_id=1</TD
+>Only if the <TT
+CLASS="literal"
+>net.80203</TT
+> is set</TD
 ><TD
->Textual representation of MAC address</TD
+>48-bit address</TD
 ></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-net-80211"
+><TT
+CLASS="literal"
+>net.80211</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Wireless ethernet networking devices is described in this namespace
+	for device objects with the capability 
+	<TT
+CLASS="literal"
+>net.80211</TT
+>.
+	Note that device
+	objects can only have the <TT
+CLASS="literal"
+>net.80211</TT
+> capability
+	if they already have the capability <TT
+CLASS="literal"
+>net</TT
+>.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1535"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
 ><TR
 ><TD
 ><TT
 CLASS="literal"
->net.ethernet.mac_addr_lower24</TT
-> (int)</TD
+>net.80211.mac_address</TT
+> (uint64)</TD
 ><TD
->example: 0x00001060</TD
+>example: 0x0010605d8ef4</TD
 ><TD
->Only if net.arp_proto_hw_id=1</TD
-><TD
->Binary representation of lower 24 bits of the MAC 
-              address</TD
-></TR
-><TR
-><TD
-><TT
+>&#13;		Only if the <TT
 CLASS="literal"
->net.ethernet.mac_addr_upper24</TT
-> (int)</TD
+>net.80211</TT
+> capability is set
+	      </TD
 ><TD
->example: 0x005d8ef4</TD
-><TD
->Only if net.arp_proto_hw_id=1</TD
-><TD
->Binary representation of the upper 24 bits of the MAC
-              address</TD
+>48-bit address</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -4886,7 +5009,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1523"
+NAME="AEN1557"
 ></A
 ><TABLE
 BORDER="1"
@@ -4953,7 +5076,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1543"
+NAME="AEN1577"
 ></A
 ><TABLE
 BORDER="1"
@@ -5018,7 +5141,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1563"
+NAME="AEN1597"
 ></A
 ><TABLE
 BORDER="1"
@@ -5145,7 +5268,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1607"
+NAME="AEN1641"
 ></A
 ><TABLE
 BORDER="1"
@@ -5292,7 +5415,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1655"
+NAME="AEN1689"
 ></A
 ><TABLE
 BORDER="1"
@@ -5646,7 +5769,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1732"
+NAME="AEN1766"
 ></A
 ><TABLE
 BORDER="1"
@@ -5806,7 +5929,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1774"
+NAME="AEN1808"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -5922,7 +6045,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1785"
+NAME="AEN1819"
 >Example</A
 ></H3
 ><P
@@ -6040,7 +6163,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1793"
+NAME="AEN1827"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -6193,7 +6316,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1802"
+NAME="AEN1836"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></H2
 ><P
