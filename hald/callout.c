@@ -263,11 +263,12 @@ hal_callout_device (HalDevice *device, gboolean added)
 	GDir *dir;
 	GError *err = NULL;
 	const char *filename;
+	gboolean any_callouts = FALSE;
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
 	if (!g_file_test (DEVICE_CALLOUT_DIR, G_FILE_TEST_EXISTS))
-		return;
+		goto finish;
 
 	dir = g_dir_open (DEVICE_CALLOUT_DIR, 0, &err);
 
@@ -275,7 +276,7 @@ hal_callout_device (HalDevice *device, gboolean added)
 		HAL_WARNING (("Unable to open device callout directory: %s",
 			      err->message));
 		g_error_free (err);
-		return;
+		goto finish;
 	}
 
 	while ((filename = g_dir_read_name (dir)) != NULL) {
@@ -308,12 +309,23 @@ hal_callout_device (HalDevice *device, gboolean added)
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
 						    hal_device_get_udi (device));
 		add_pending_callout (callout->device, callout);
+
+		any_callouts = TRUE;
 	}
 
 	g_dir_close (dir);
 
 	if (!processing_callouts)
 		g_idle_add (process_callouts_idle, NULL);
+
+finish:
+	/*
+	 * If we're not executing any callouts for this device, go ahead
+	 * and emit the "callouts_finished" signal.
+	 */
+	if (!any_callouts)
+		hal_device_callouts_finished (device);
+		
 }
 
 void

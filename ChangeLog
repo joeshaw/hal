@@ -1,3 +1,18 @@
+2004-04-26  Joe Shaw  <joe@ximian.com>
+
+	* hald/callout.c (hal_callout_device): We still need to emit the
+	callouts_finished signal even if we have no callouts.  Whoops.
+
+	* hald/bus_device.c (bus_device_got_parent): We don't need to ref
+	the device being added, since it's no longer unconditionally being
+	unreffed immediately afterward.
+
+	* hald/class_device.c (class_device_final): Ditto.
+
+	* hald/common.c (device_move_from_tdl_to_gdl): Remove the ref note
+	in the comment, and call g_object_ref() at the top of the
+	function.
+
 2004-04-26  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: Added note about waiting for callouts to complete before

@@ -827,8 +827,7 @@ out:
 
 /** Removes the device from the TDL and adds it to the GDL when all
  *  all of the device's callouts have finished.  This is a gobject
- *  signal callback.  NOTE!  The device must be reffed, since this
- *  callback unrefs it, to ensure lifetime safety.
+ *  signal callback. 
  *
  *  @param  device              The device being moved
  *  @param  user_data           User data provided when connecting the signal
@@ -837,6 +836,7 @@ out:
 void
 device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
 {
+	g_object_ref (device);
 	hal_device_store_remove (hald_get_tdl (), device);
 	hal_device_store_add (hald_get_gdl (), device);
 	g_signal_handlers_disconnect_by_func (device,

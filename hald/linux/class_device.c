@@ -434,7 +434,7 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d)
 
 			self->got_udi (self, device_to_add, new_udi);
 
-			g_signal_connect (g_object_ref (device_to_add),
+			g_signal_connect (device_to_add,
 					  "callouts_finished",
 					  G_CALLBACK (device_move_from_tdl_to_gdl),
 					  NULL);
