@@ -186,7 +186,7 @@ static void visit_class_device_scsi_host_got_parent(HalDevice* parent,
 {
     HalDevice* d = (HalDevice*) data1;
 
-    printf("parent=0x%08x\n", parent);
+    /*printf("parent=0x%08x\n", parent);*/
 
     if( parent!=NULL )
     {

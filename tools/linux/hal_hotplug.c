@@ -101,14 +101,19 @@ int main(int argc, char* argv[], char* envp[])
         dbus_message_iter_append_string(&iter_dict, str+j+1);
     }
 
+    /* Do some sleep here so the kernel have time to publish it's
+     * stuff in sysfs
+     */
+    usleep(500*1000);
+
     if ( !dbus_connection_send(sysbus_connection, message, NULL) )
         return 1;
 
     dbus_message_unref(message);        
     dbus_connection_flush(sysbus_connection);
 
-    /* If I don't do this messages are lost.. */
-    sleep(1);
+    /* Do some sleep here so messages are not lost.. */
+    usleep(500*1000);
 
     dbus_connection_disconnect(sysbus_connection);
 

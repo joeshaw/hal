@@ -846,6 +846,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     /* USB interfaces are handled by a separate function */
     if( is_interface )
     {
+        HAL_INFO(("usb device @ %s is an interface", path));
         visit_device_usb_interface(path, device);
         return;
     }

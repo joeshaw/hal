@@ -218,6 +218,7 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
 void osspec_init(DBusConnection* dbus_connection)
 {
     int rc;
+    DBusError error;
 
     /* get mount path for sysfs */
     rc = sysfs_get_mnt_path(sysfs_mount_path, SYSFS_PATH_MAX);
@@ -233,6 +234,19 @@ void osspec_init(DBusConnection* dbus_connection)
     linux_class_scsi_init();
     linux_class_block_init();
     linux_class_net_init();
+
+    /* Add match for signals from udev */
+    dbus_error_init(&error);
+    dbus_bus_add_match(dbus_connection, 
+                       "type='signal',"
+                       "interface='org.kernel.udev.NodeMonitor',"
+                       /*"sender='org.kernel.udev'," until D-BUS is fixed*/
+                       "path='/org/kernel/udev/NodeMonitor'", &error);
+    if( dbus_error_is_set(&error) )
+    {
+        HAL_WARNING(("Cannot subscribe to udev signals, error=%s", 
+                     error.message));
+    }
 }
 
 /** This is set to #TRUE if we are probing and #FALSE otherwise */
@@ -309,7 +323,7 @@ void osspec_probe()
  *  @param  message             Message
  *  @return                     What to do with the message
  */
-static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
+static DBusHandlerResult handle_hotplug(DBusConnection* connection,
                                         DBusMessage* message)
 {
     DBusMessageIter iter;
@@ -467,6 +481,75 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+/* fwd decl */
+static void handle_udev_node_created_found_device(HalDevice* d, 
+                                                  void* data1, void* data2);
+
+/** Handle a org.freedesktop.Hal.HotplugEvent message. This message
+ *  origins from the hal.hotplug program, tools/linux/hal_hotplug.c,
+ *  and is basically just a D-BUS-ification of the hotplug event.
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult handle_udev_node_created(DBusConnection* connection,
+                                                  DBusMessage* message)
+{
+    char* filename;
+    char* sysfs_path;
+    char sysfs_dev_path[SYSFS_PATH_MAX];
+
+    if( dbus_message_get_args(message, NULL, 
+                              DBUS_TYPE_STRING, &filename,
+                              DBUS_TYPE_STRING, &sysfs_path,
+                              DBUS_TYPE_INVALID) )
+    {
+        strncpy(sysfs_dev_path, sysfs_mount_path, SYSFS_PATH_MAX);
+        strncat(sysfs_dev_path, sysfs_path, SYSFS_PATH_MAX);
+        HAL_INFO(("udev NodeCreated: %s %s\n", filename, sysfs_dev_path));
+        
+        /* Find block device; this happens asynchronously as our it might
+         * be added later..
+         */
+        ds_device_async_find_by_key_value_string(
+            "Linux.sysfs_path_device",
+            sysfs_dev_path, 
+            handle_udev_node_created_found_device,
+            (void*) filename, NULL, 
+            HAL_LINUX_HOTPLUG_TIMEOUT);
+
+        /* NOTE NOTE NOTE: we will free filename in async result function */
+
+        dbus_free(sysfs_path);
+    }
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+/** Callback when the block device is found or if there is none..
+ *
+ *  @param  d                   Async Return value from the find call
+ *  @param  data1               User data, in this case the filename
+ *  @param  data2               User data
+ */
+static void handle_udev_node_created_found_device(HalDevice* d, 
+                                                  void* data1, void* data2)
+{
+    char* filename = (char*) data1;
+    
+    if( d!=NULL )
+    {
+        ds_property_set_string(d, "block.device", filename);
+    }
+    else
+    {
+        HAL_WARNING(("No HAL device corresponding to device %s", filename));
+    }
+
+    dbus_free(filename);
+}
+
 /** Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function.
  *
@@ -479,6 +562,7 @@ DBusHandlerResult osspec_filter_function(DBusConnection* connection,
                                          DBusMessage* message,
                                          void* user_data)
 {
+
 /*
     HAL_INFO(("obj_path=%s interface=%s method=%s", 
               dbus_message_get_path(message), 
@@ -493,7 +577,20 @@ DBusHandlerResult osspec_filter_function(DBusConnection* connection,
         strcmp(dbus_message_get_path(message), 
                "/org/freedesktop/Hal/Linux/Hotplug")==0 )
     {
-        return osspec_hotplug(connection, message);
+        return handle_hotplug(connection, message);
+    }
+    else if( dbus_message_is_signal(message, 
+                                    "org.kernel.udev.NodeMonitor",
+                                    "NodeCreated") )
+    {
+        return handle_udev_node_created(connection, message);
+    }
+    else if( dbus_message_is_signal(message, "org.kernel.udev.NodeMonitor",
+                                    "NodeDeleted") )
+    {
+        /* This is left intentionally blank since this it means that a
+         * block device is removed and we'll catch that other places
+         */
     }
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

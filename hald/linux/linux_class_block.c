@@ -183,9 +183,13 @@ void visit_class_device_block(const char* path,
     ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
                                              parent_sysfs_path, 
                                          visit_class_device_block_got_parent,
-                                             (void*) d, NULL, 
+                                             (void*) d, 
+                                             (void*) parent_sysfs_path/*NULL*/, 
                                              is_probing ? 0 :
                                              HAL_LINUX_HOTPLUG_TIMEOUT);
+
+    HAL_INFO(("*** finding parent_sysfs_path=%s, 0x%08x", 
+              parent_sysfs_path, parent_sysfs_path));
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -202,6 +206,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
 
     if( parent==NULL )
     {
+        HAL_INFO(("data2=0x%08x", data2));
         HAL_WARNING(("No parent for block device!"));
         ds_device_destroy(d);
         return;

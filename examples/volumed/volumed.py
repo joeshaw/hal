@@ -10,10 +10,12 @@ import time
 #
 # A volume daemon should also support optical and floppy disks, it should
 # handle multi-session cdroms and much more. Maybe someone will write
-# this one day...
+# this one day... Maybe the disc change stuff should even be in HAL?
+#
+# This requires udev with D-BUS enabled and HAL to work correctly
 #
 
-def get_mount_point(udi, device_name):
+def get_mount_location(udi, device_name):
     """Given a the UDI for a device and the name of the device file,
     determine a name for the mount point"""
     return '/mnt/somewhere/unique%f'%(time.time())
@@ -23,19 +25,19 @@ def attempt_mount(udi):
     dobj = hal_service.get_object(udi, 'org.freedesktop.Hal.Device')
     if (not mount_dict.has_key(udi)) and dobj.PropertyExists('block.device'):
         device = dobj.GetProperty('block.device')
-        mount_point = get_mount_point(udi, device)
-        print "mounting device=%s at %s udi=%s"%(device, mount_point, udi)
-        mount_dict[udi] = mount_point
+        mount_location = get_mount_location(udi, device)
+        print "mounting device=%s at %s udi=%s"%(device, mount_location, udi)
+        mount_dict[udi] = mount_location
 
 def unmount(udi):
     """Unmount a device"""
-    mount_point = mount_dict[udi]
-    print "unmounting %s"%mount_point
+    mount_location = mount_dict[udi]
+    print "unmounting %s"%mount_location
     del mount_dict[udi]
 
 def device_changed(dbus_if, member, svc, obj_path, message):
     """Called when properties on a HAL device changes"""
-    print member
+    #print member
     udi = obj_path
     if udi in vol_list:
         attempt_mount(udi)
@@ -43,7 +45,7 @@ def device_changed(dbus_if, member, svc, obj_path, message):
 def gdl_changed(dbus_if, member, svc, obj_path, message):
     """Called when a HAL device is added, removed or it got a
     new capability"""
-    print member
+    #print member
     if member=='NewCapability':
         [udi, cap] = message.get_args_list()
         if cap=='volume':
@@ -55,7 +57,7 @@ def gdl_changed(dbus_if, member, svc, obj_path, message):
                                         udi)
                 attempt_mount(udi)
                 
-        print "  %s %s"%(cap,udi)
+        #print "  %s %s"%(cap,udi)
 
     elif member=='DeviceRemoved':
         [udi] = message.get_args_list()
@@ -70,6 +72,8 @@ def gdl_changed(dbus_if, member, svc, obj_path, message):
     elif member=='DeviceAdded':
         [udi] = message.get_args_list()
         dobj = hal_service.get_object(udi, 'org.freedesktop.Hal.Device')
+        #if dobj.PropertyExists('Capabilities'):
+        #    print '  caps=%s'%(dobj.GetProperty('Capabilities'))
         if dobj.QueryCapability('volume'):
             vol_list.append(udi)
             bus.add_signal_receiver(device_changed,

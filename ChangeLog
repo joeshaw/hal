@@ -1,5 +1,19 @@
 2003-12-21  David Zeuthen  <david@fubar.dk>
 
+	* examples/volumed/volumed.py: be less verbose
+
+	* hald/linux/linux_osspec (osspec_init): Add match for udev signals
+	(osspec_hotplug): renamed to handle_hotplug since old name didn't make
+	any sense
+	(handle_udev_node_created): new function
+	(handle_udev_node_created_found_device): new function
+	(osspec_filter_function): add check for udev signals
+
+	* tools/linux/hal_hotplug.c (main): sleep a while so the kernel has
+	time to populate sysfs (hmmm)
+	
+2003-12-21  David Zeuthen  <david@fubar.dk>
+
 	* Doxyfile.in: add tools directory
 
 	* hald/device_store.c: fixup doxygen grouping
