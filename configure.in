@@ -1,0 +1,282 @@
+dnl Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT(hal, 0.2, david@fubar.dk)
+AM_INIT_AUTOMAKE(hal, 0.2)
+AM_CONFIG_HEADER(config.h)
+AM_MAINTAINER_MODE
+
+AC_ISC_POSIX
+AC_PROG_CC
+AC_PROG_CXX
+AM_PROG_CC_STDC
+AC_HEADER_STDC
+AM_PROG_LIBTOOL
+AC_PROG_MAKE_SET
+
+AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is (default is /etc/dbus-1/system.d)])
+
+if ! test -z "$with_dbus_sys" ; then
+   DBUS_SYS_DIR="$with_dbus_sys"
+else
+   DBUS_SYS_DIR="/etc/dbus-1/system.d"
+fi
+AC_SUBST(DBUS_SYS_DIR)
+AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
+
+
+# Taken from dbus
+AC_ARG_ENABLE(ansi,             [  --enable-ansi         enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
+AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
+AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs     build DOXYGEN documentation (requires Doxygen)],enable_doxygen_docs=$enableval,enable_doxygen_docs=auto)
+
+if test x$enable_verbose_mode = xyes; then
+    AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
+fi
+
+BUILD_DIR=`pwd`
+AC_SUBST(BUILD_DIR)
+if test x$USE_MAINTAINER_MODE = xyes; then
+    AC_DEFINE(USE_MAINTAINER_MODE, 1 , [Building in maintainer mode])
+    AC_DEFINE_UNQUOTED(BUILD_DIR, "$BUILD_DIR", [Path to source of project])
+fi
+
+#### gcc warning flags
+
+if test "x$GCC" = "xyes"; then
+  changequote(,)dnl
+  case " $CFLAGS " in
+  *[\ \	]-Wall[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wall" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wchar-subscripts[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wchar-subscripts" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wmissing-declarations[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wmissing-declarations" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wnested-externs[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wnested-externs" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wpointer-arith[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wpointer-arith" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wcast-align[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wcast-align" ;;
+  esac
+
+  case " $CFLAGS " in
+  *[\ \	]-Wsign-compare[\ \	]*) ;;
+  *) CFLAGS="$CFLAGS -Wsign-compare" ;;
+  esac
+
+  if test "x$enable_ansi" = "xyes"; then
+    case " $CFLAGS " in
+    *[\ \	]-ansi[\ \	]*) ;;
+    *) CFLAGS="$CFLAGS -ansi" ;;
+    esac
+
+    case " $CFLAGS " in
+    *[\ \	]-D_POSIX_C_SOURCE*) ;;
+    *) CFLAGS="$CFLAGS -D_POSIX_C_SOURCE=199309L" ;;
+    esac
+
+    case " $CFLAGS " in
+    *[\ \	]-D_BSD_SOURCE[\ \	]*) ;;
+    *) CFLAGS="$CFLAGS -D_BSD_SOURCE" ;;
+    esac
+
+    case " $CFLAGS " in
+    *[\ \	]-pedantic[\ \	]*) ;;
+    *) CFLAGS="$CFLAGS -pedantic" ;;
+    esac
+  fi
+  if test x$enable_gcov = xyes; then
+    case " $CFLAGS " in
+    *[\ \	]-fprofile-arcs[\ \	]*) ;;
+    *) CFLAGS="$CFLAGS -fprofile-arcs" ;;
+    esac
+    case " $CFLAGS " in
+    *[\ \	]-ftest-coverage[\ \	]*) ;;
+    *) CFLAGS="$CFLAGS -ftest-coverage" ;;
+    esac
+
+    ## remove optimization
+    CFLAGS=`echo "$CFLAGS" | sed -e 's/-O[0-9]*//g'`
+  fi
+  changequote([,])dnl
+else
+  if test x$enable_gcov = xyes; then
+    AC_MSG_ERROR([--enable-gcov can only be used with gcc])
+  fi
+fi
+
+
+
+pkg_modules="glib-2.0 >= 2.2.2, dbus-glib-1 >= 0.11"
+PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
+
+AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
+                      [
+                      expat=$withval
+                      CPPFLAGS="$CPPFLAGS -I$withval/include"
+                      LDFLAGS="$LDFLAGS -L$withval/lib"
+                      ]
+                      )
+AC_CHECK_HEADERS(expat.h)
+AC_CHECK_LIB(expat,XML_ParserCreate)
+
+dnl Check for libpci
+AC_CHECK_HEADERS(pci/pci.h)
+AC_CHECK_LIB(pci, pci_init)
+
+dnl DBUS API is subject to changes
+AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
+AC_SUBST(PACKAGE_CFLAGS)
+AC_SUBST(PACKAGE_LIBS)
+
+
+
+### All this also from dbus
+
+### Doxygen Documentation
+
+AC_PATH_PROG(DOXYGEN, doxygen, no)
+
+AC_MSG_CHECKING([whether to build Doxygen documentation])
+
+if test x$DOXYGEN = xno ; then
+    have_doxygen=no
+else
+    have_doxygen=yes
+fi
+
+if test x$enable_doxygen_docs = xauto ; then
+    if test x$have_doxygen = xno ; then
+        enable_doxygen_docs=no
+    else
+        enable_doxygen_docs=yes
+    fi
+fi
+
+if test x$enable_doxygen_docs = xyes; then
+    if test x$have_doxygen = xno; then
+	AC_MSG_ERROR([Building Doxygen docs explicitly required, but Doxygen not found])
+    fi
+fi
+
+AM_CONDITIONAL(DBUS_DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
+AC_MSG_RESULT(yes)
+
+
+
+#### Have to go $localstatedir->$prefix/var->/usr/local/var   
+#### someone please fix this a better way...
+
+#### find the actual value for $prefix that we'll end up with
+##   (I know this is broken and should be done in the Makefile, but
+##    that's a major pain and almost nobody actually seems to care)
+REAL_PREFIX=
+if test "x$prefix" = "xNONE"; then
+  REAL_PREFIX=$ac_default_prefix
+else
+  REAL_PREFIX=$prefix
+fi
+
+## temporarily change prefix and exec_prefix
+old_prefix=$prefix
+prefix=$REAL_PREFIX
+
+if test "x$exec_prefix" = xNONE ; then
+   REAL_EXEC_PREFIX=$REAL_PREFIX
+else
+   REAL_EXEC_PREFIX=$exec_prefix
+fi
+old_exec_prefix=$exec_prefix
+exec_prefix=$REAL_EXEC_PREFIX
+
+## eval everything
+LOCALSTATEDIR_TMP="$localstatedir"
+EXPANDED_LOCALSTATEDIR=`eval echo $LOCALSTATEDIR_TMP`
+AC_SUBST(EXPANDED_LOCALSTATEDIR)
+
+SYSCONFDIR_TMP="$sysconfdir"
+EXPANDED_SYSCONFDIR=`eval echo $SYSCONFDIR_TMP`
+AC_SUBST(EXPANDED_SYSCONFDIR)
+
+DATADIR_TMP="$datadir"
+EXPANDED_DATADIR=`eval echo $DATADIR_TMP`
+AC_SUBST(EXPANDED_DATADIR)
+
+BINDIR_TMP="$bindir"
+EXPANDED_BINDIR=`eval echo $BINDIR_TMP`
+AC_SUBST(EXPANDED_BINDIR)
+
+LIBDIR_TMP="$libdir"
+EXPANDED_LIBDIR=`eval echo $LIBDIR_TMP`
+AC_SUBST(EXPANDED_LIBDIR)
+
+## put prefix and exec_prefix back
+prefix=$old_prefix
+exec_prefix=$old_exec_prefix
+
+AC_OUTPUT([
+hal.pc
+Doxyfile
+Makefile
+hald/Makefile
+libhal/Makefile
+agents/Makefile
+agents/linux/Makefile
+agents/linux/usb/Makefile
+])
+
+dnl ==========================================================================
+echo "
+                    HAL $VERSION
+                  ===========
+
+	prefix:                   ${prefix}
+	exec_prefix:              ${exec_prefix}
+        libdir:                   ${EXPANDED_LIBDIR}
+        bindir:                   ${EXPANDED_BINDIR}
+        datadir:                  ${EXPANDED_DATADIR}
+        sysconfdir:               ${EXPANDED_SYSCONFDIR}
+        localstatedir:            ${EXPANDED_LOCALSTATEDIR}
+        dbus-1 system.d dir:      ${DBUS_SYS_DIR}
+	compiler:		  ${CC}
+	cflags:		          ${CFLAGS}
+	cppflags:		  ${CPPFLAGS}"
+        Doxygen:                  ${DOXYGEN}
+
+echo "
+        Maintainer mode:          ${USE_MAINTAINER_MODE}
+        Building verbose mode:    ${enable_verbose_mode}
+        Building Doxygen docs:    ${enable_doxygen_docs}
+"
+
+if test x$enable_verbose_mode = xyes; then
+   echo "NOTE: building with verbose mode increases library size, may slightly increase security risk, and decreases performance."
+   echo
+fi
+
+dnl if test x${USE_MAINTAINER_MODE} = xyes; then
+dnl    echo "NOTE: device info files will be read from the device_info_files directory in the source distribution rather than from ${EXPANDED_LOCALSTATEDIR}/hal/fdi"
+dnl   echo
+dnl fi
+
+dnl if test x${USE_MAINTAINER_MODE} = xyes; then
+dnl    echo "NOTE: do NOT issue 'make install' when in maintainer mode"
+dnl    echo
+dnl fi
+
