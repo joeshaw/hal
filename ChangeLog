@@ -1,7 +1,7 @@
 2004-07-18  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: updated; changed the 
-	http://freedesktop.org/cgi-bin/viewcvs.cgi/hal/hal/doc/TODO
+	http://freedesktop.org/Software/HalTODO
 	page on fd.o Wiki to point to doc/TODO on HEAD.
 
 2004-07-18  David Zeuthen  <david@fubar.dk>
