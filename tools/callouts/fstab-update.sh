@@ -39,12 +39,23 @@ fi
 MEDIAROOT="/mnt"
 MOUNTPOINT="$MEDIAROOT/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR-"
 
+have_lock=false
 max_loops=10
 loop_times=0
-while [ -e /etc/fstab-lock -a $loop_times -lt $max_loops ]; do
+
+while [ $have_lock = false -a $loop_times -lt $max_loops ]; do
     loop_times=$((loop_times+1))
-    echo "waiting for fstab lock... ($HAL_PROP_BLOCK_DEVICE: $loop_times of $max_loops)"
-    sleep 1
+
+    if [ -n /etc/fstab-lock ]; then
+	echo "$$" >> /etc/fstab-lock
+    fi
+
+    if [ "`head -n 1 /etc/fstab-lock`" = "$$" ]; then
+	have_lock=true
+    else
+	echo "waiting for fstab lock... ($HAL_PROP_BLOCK_DEVICE: $loop_times of $max_loops)"
+	sleep 1
+    fi
 done
 
 # Took too long!
@@ -52,8 +63,6 @@ if [ $loop_times -eq $max_loops ]; then
     echo "couldn't get lock after $max_loops seconds.  bailing out!"
     exit 1
 fi
-
-touch /etc/fstab-lock
 
 if test "$1" = "add"; then
 
@@ -96,4 +105,4 @@ else
     echo "invalid action!"
 fi
 
-rm /etc/fstab-lock
+rm -f /etc/fstab-lock
