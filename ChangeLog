@@ -1,3 +1,11 @@
+2005-04-04  David Zeuthen  <davidz@redhat.com>
+	
+	* po/zh_TW.po: New file from chaoweilun@pcmail.com.tw
+
+	* po/ChangeLog: Updated
+
+	* configure.in: Added zh_TW to ALL_LINGUAS
+
 2005-03-30  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/information/10freedesktop/10-usb-pda.fdi: Match for info.
