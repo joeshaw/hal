@@ -225,7 +225,7 @@ class DeviceManager(LibGladeApplication):
     def update_tab_device(self, device):
         """Updates the 'Device' tab given a Device object"""
         bus = self.xml.get_widget("ns_device_bus")
-        state = self.xml.get_widget("ns_device_status")
+        #state = self.xml.get_widget("ns_device_status")
         vendor = self.xml.get_widget("ns_device_vendor")
         product = self.xml.get_widget("ns_device_name")
         category = self.xml.get_widget("ns_device_category")
@@ -233,7 +233,7 @@ class DeviceManager(LibGladeApplication):
 
         # we always have Bus and State
         bus.set_label(Const.BUS_NAMES[device.properties["Bus"]])
-        state.set_label(Const.STATE_NAMES[device.properties["State"]])
+        #state.set_label(Const.STATE_NAMES[device.properties["State"]])
 
         # guestimate product and vendor if we have no device information file
         if device.properties["GotDeviceInfo"]:
@@ -309,7 +309,7 @@ class DeviceManager(LibGladeApplication):
         prod_id = self.xml.get_widget("ns_usb_prod_id")
         revision = self.xml.get_widget("ns_usb_rev")
 
-        bcdVersion = device.properties["usb.bcdVersion"]
+        bcdVersion = device.properties["usb.bcdDevice"]
         version.set_label("%x.%x"%(bcdVersion>>8, bcdVersion&0xff))
 
         bcdSpeed = device.properties["usb.bcdSpeed"]

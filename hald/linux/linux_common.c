@@ -382,7 +382,7 @@ tryagain:
     {
         
         if( ds_property_get_int(computed_d, "State")!=
-            HAL_STATE_UNPLUGGED )
+            42 /** @todo: FIXME HAL_STATE_UNPLUGGED*/ )
         {
             /* Danger, Will Robinson! Danger!
              *
@@ -434,7 +434,7 @@ tryagain:
         ds_device_destroy(d);
         
         /* Set that the device is in the disabled state... */
-        ds_property_set_int(computed_d, "State", HAL_STATE_DISABLED);
+        /*ds_property_set_int(computed_d, "State", HAL_STATE_DISABLED);*/
         
         /* Now try to enable the device.. */
         if( ds_property_exists(computed_d, "RequireEnable") &&
@@ -450,7 +450,7 @@ tryagain:
         
         /* Set required parameters */
         ds_property_set_bool(d, "GotDeviceInfo", FALSE);
-        ds_property_set_int(d, "State", HAL_STATE_NEED_DEVICE_INFO);
+        /*ds_property_set_int(d, "State", HAL_STATE_NEED_DEVICE_INFO);*/
         
         /* commit the device to the Global Device List - give the
          * computed device name */

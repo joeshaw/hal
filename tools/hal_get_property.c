@@ -1,0 +1,187 @@
+/***************************************************************************
+ * CVSID: $Id$
+ *
+ * hal_get_property.c : Get property for a device
+ *
+ * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ *
+ * Licensed under the Academic Free License version 2.0
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ **************************************************************************/
+
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <getopt.h>
+
+#include <libhal/libhal.h>
+
+static void usage(int argc, char* argv[])
+{
+    fprintf(stderr, 
+"\n"
+"usage : %s --udi <udi> --key <key> [--hex] [--quiet] [--help]\n", 
+            argv[0]);
+    fprintf(stderr, 
+"\n"
+"        --udi            Unique Device Id\n"
+"        --key            Key of the property to get\n"
+"        --hex            Show integer values in hex (without leading 0x)\n"
+"        --quiet          Be quiet\n"
+"        --help           Show this information and exit\n"
+"\n"
+"This program retrieves a property from a device. If the property exist\n"
+"then it is printed on stdout and this program exits with exit code 0.\n"
+"On error, the program exits with an exit code different from 0\n"
+"\n");
+}
+
+int main(int argc, char* argv[])
+{
+    char* udi = NULL;
+    char* key = NULL;
+    int type;
+    dbus_bool_t is_hex = FALSE;
+    dbus_bool_t is_quiet = FALSE;
+
+    if( argc<=1 )
+    {
+        usage(argc, argv);
+        return 1;
+    }
+
+    while(1)
+    {
+        int c;
+        int option_index = 0;
+        const char* opt;
+        static struct option long_options[] = 
+        {
+            {"udi", 1, NULL, 0},
+            {"key", 1, NULL, 0},
+            {"hex", 0, NULL, 0},
+            {"quiet", 0, NULL, 0},
+            {"help", 0, NULL, 0},
+            {NULL, 0, NULL, 0}
+        };
+
+        c = getopt_long(argc, argv, "",
+                        long_options, &option_index);
+        if (c == -1)
+            break;
+        
+        switch(c)
+        {
+        case 0:
+            opt = long_options[option_index].name;
+
+            if( strcmp(opt, "help")==0 )
+            {
+                usage(argc, argv);
+                return 0;
+            }
+            else if( strcmp(opt, "hex")==0 )
+            {
+                is_hex = TRUE;
+            }
+            else if( strcmp(opt, "quiet")==0 )
+            {
+                is_quiet = TRUE;
+            }
+            else if( strcmp(opt, "key")==0 )
+            {
+                key = strdup(optarg);
+            }
+            else if( strcmp(opt, "udi")==0 )
+            {
+                udi = strdup(optarg);
+            }
+            break;        
+
+        default:
+            usage(argc, argv);
+            return 1;
+            break;
+        }         
+    }
+
+    if( !is_quiet )
+        fprintf(stderr, "%s " PACKAGE_VERSION "\n", argv[0]);
+
+    if( !is_quiet )
+        fprintf(stderr, "\n");
+
+    if( udi==NULL || key==NULL )
+    {
+        usage(argc, argv);
+        return 1;
+    }
+
+    if( hal_initialize(NULL)  )
+    {
+        fprintf(stderr, "error: hal_initialize failed\n");
+        return 1;
+    }
+
+    type = hal_device_get_property_type(udi, key);
+    if( type==DBUS_TYPE_NIL )
+    {
+        return 1;
+    }
+    
+    // emit the value to stdout
+    switch( type )
+    {
+    case DBUS_TYPE_STRING:
+        if( !is_quiet )
+            fprintf(stderr, "Type is string\n");
+        fprintf(stdout, "%s", hal_device_get_property_string(udi, key));
+        break;
+    case DBUS_TYPE_INT32:
+        if( !is_quiet )
+            fprintf(stderr, "Type is integer (shown in %s)\n",
+                    (is_hex ? "hexadecimal" : "decimal"));
+        fprintf(stdout, (is_hex ? "%x" : "%d"), 
+                hal_device_get_property_int(udi, key));
+        break;
+    case DBUS_TYPE_DOUBLE:
+        if( !is_quiet )
+            fprintf(stderr, "Type is double\n");
+        fprintf(stdout, "%f", hal_device_get_property_double(udi, key));
+        break;
+    case DBUS_TYPE_BOOLEAN:
+        if( !is_quiet )
+            fprintf(stderr, "Type is boolean\n");
+        fprintf(stdout, "%s", 
+                hal_device_get_property_bool(udi, key) ? "true" : "false");
+        break;
+
+    default:
+        fprintf(stderr, "Unknown type %d='%c'\n", type, type);
+        return 1;
+        break;
+    }
+
+    return 0;
+}
+
+

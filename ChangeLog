@@ -1,4 +1,55 @@
-2003-12-19  David Zeuthen  <david@fubar.dk>
+2003-12-21  David Zeuthen  <david@fubar.dk>
+
+	* hald/device_store.c (ds_device_destroy): Only call gdl_changed_cb's
+	if the device being destructed is in the GDL
+
+	* hald/main.c (raise_wrong_state): removed
+	(device_enable): removed
+	(device_disable): removed
+	(filter_function): remove call to device_enable() and device_disable()
+	(gdl_changed): fix really silly bug where added and removed signals
+	were switched
+
+	* hald/linux/linux_common.c (rename_and_maybe_add): since we don't
+	know anything about states, disable functionality for unplugged
+	persistent devices
+
+	* hald/linux/linux_usb.c (visit_device_usb): fixed segfault bug
+	where kernel didn't gave neither vendor nor product name (thanks
+	to testing on my powerbook that now finally runs 2.6.0, Yay!)
+
+	* libhal/libhal.c (hal_device_disable): removed
+	(hal_device_enable): removed
+	(filter_func): don't handle all DeviceBooting etc. signals. Splitted
+	PropertyChanged into PropertyChanged, PropertyAdded, PropertyRemoved
+	callbacks
+	(hal_device_property_watch_all): new function
+	(hal_device_add_property_watch): new function
+	(hal_device_remove_property_watch): new function
+
+	* libhal/libhal.h: Removed all common constants since they were all
+	state contstants. Removed LibHalDeviceBooting etc. typedefs. Added
+	typedefs for PropertyAdded, PropertyRemoved callbacks. Changed type
+	of LibHalFunctions. Added property for property_watch functions.
+
+	* tools/Makefile.am: Added rules to buils lshal, hal_get_property
+	and hal_set_property programs
+
+	* tools/lshal.c: new file
+
+	* tools/hal_get_property.c: new file
+
+	* tools/hal_set_property.c: new file
+
+	* tools/device-manager/DeviceManager.py: Don't reference State
+	property as it is not available anymore
+
+	* tools/linux/Makefile.am: Make sure hal.hotplug links statically,
+	otherwise libdbus-1.so cannot be found unless installed in /usr/lib
+
+	* tools/linux/hal_hotplug.c: Include unistd.h to shut up the compiler
+	
+2003-12-20  David Zeuthen  <david@fubar.dk>
 
 	* Doxyfile.in: Remove agents/linux26/sysfs, Add hald/linux and 
 	tools/linux. Change RECURSIVE to NO.

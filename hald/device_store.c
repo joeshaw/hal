@@ -506,8 +506,11 @@ void ds_device_destroy(HalDevice* device)
     HalProperty* prop;
     HalProperty* prop_next;
 
-    for(i=0; i<num_gdl_changed_cb; i++)
-        (*(gdl_changed_cb[i]))(device, FALSE);
+    if( device->in_gdl )
+    {
+        for(i=0; i<num_gdl_changed_cb; i++)
+            (*(gdl_changed_cb[i]))(device, FALSE);
+    }
 
     // remove device from list
     if( device->next!=NULL )

@@ -12,12 +12,14 @@ hal_hotplug_SOURCES = hal_hotplug.c
 
 hal_hotplug_LDADD = -ldbus-1
 
+hal_hotplug_LDFLAGS = -all-static
+
 clean-local :
 	rm -f *~
 
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
-	- /bin/ln -s $(DESTDIR)$(libexecdir)/hal.hotplug $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
+	- /bin/ln -sf $(DESTDIR)$(libexecdir)/hal.hotplug $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
 
 uninstall-local :
 	- rm -f $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default/hal.hotplug

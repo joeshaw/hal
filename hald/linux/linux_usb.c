@@ -812,6 +812,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     char* product_name_kernel = NULL;
     const char* driver;
     char* parent_sysfs_path;
+    char numeric_name[32];
 
     /*printf("usb: %s, bus_id=%s\n", path, device->bus_id);*/
 
@@ -946,11 +947,18 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
         ds_property_set_string(d, "usb.Vendor", vendor_name);
         ds_property_set_string(d, "Vendor", vendor_name);
     }
-    else
+    else if( vendor_name_kernel!=NULL )
     {
         /* fallback on name supplied from kernel */
         ds_property_set_string(d, "usb.Vendor", vendor_name_kernel);
         ds_property_set_string(d, "Vendor", vendor_name_kernel);
+    }
+    else
+    {
+        /* last resort; use numeric name */
+        snprintf(numeric_name, 32, "Unknown (0x%04x)", vendor_id);
+        ds_property_set_string(d, "usb.Vendor", numeric_name);
+        ds_property_set_string(d, "Vendor", numeric_name);
     }
 
     if( product_name!=NULL )
@@ -958,11 +966,18 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
         ds_property_set_string(d, "usb.Product", product_name);
         ds_property_set_string(d, "Product", product_name);
     }
-    else
+    else if( product_name_kernel!=NULL )
     {
-        /* fallback on name supplied from kernel */
+        /* name supplied from kernel (if available) */
         ds_property_set_string(d, "usb.Product", product_name_kernel);
         ds_property_set_string(d, "Product", product_name_kernel);
+    }
+    else
+    {
+        /* last resort; use numeric name */
+        snprintf(numeric_name, 32, "Unknown (0x%04x)", product_id);
+        ds_property_set_string(d, "usb.Product", numeric_name);
+        ds_property_set_string(d, "Product", numeric_name);
     }
 
     parent_sysfs_path = get_parent_sysfs_path(path);

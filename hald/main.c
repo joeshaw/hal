@@ -82,31 +82,6 @@ static void raise_no_such_device(DBusConnection* connection,
     dbus_message_unref(reply);
 }
 
-/** Raise the org.freedesktop.Hal.WrongState error
- *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  udi                 Unique device id given
- */
-static void raise_wrong_state(DBusConnection* connection,
-                              DBusMessage* in_reply_to,
-                              const char* udi)
-{
-    char buf[512];
-    DBusMessage *reply;
-
-    snprintf(buf, 511, "No device with id %s", udi);
-    HAL_WARNING((buf));
-    reply = dbus_message_new_error(in_reply_to, 
-                                   "org.freedesktop.Hal.WrongState", 
-                                   buf);
-    if( reply==NULL )
-        DIE(("No memory"));
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-    dbus_message_unref(reply);
-}
-
 /** Raise the org.freedesktop.Hal.UdiInUse error
  *
  *  @param  connection          D-Bus connection
@@ -1181,175 +1156,6 @@ static DBusHandlerResult device_query_capability(DBusConnection* connection,
 }
 
 
-/** Enable a device.
- *
- *  <pre>
- *  void Device.Enable()
- *
- *    raises org.freedesktop.Hal.NoSuchDevice
- *           org.freedesktop.Hal.WrongState
- *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult device_enable(DBusConnection* connection,
-                                       DBusMessage* message)
-{
-    const char* udi;
-    HalDevice* d;
-    DBusMessage *reply;
-    DBusMessageIter iter;
-    dbus_bool_t ok_to_enable;
-    int device_state;
-
-    HAL_TRACE(("entering"));
-
-    udi = dbus_message_get_path(message);
-
-    d = ds_device_find(udi);
-    if( d==NULL )
-    {
-        raise_no_such_device(connection, message, udi);
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    reply = dbus_message_new_method_return(message);
-    if( reply==NULL )
-        DIE(("No memory"));
-
-    ok_to_enable = FALSE;
-    if( ds_property_exists(d, "State") )
-    {
-        device_state = ds_property_get_int(d, "State");
-        if( device_state==HAL_STATE_ENABLED ||
-            device_state==HAL_STATE_UNPLUGGED )
-            ok_to_enable = FALSE;
-        else
-            ok_to_enable = TRUE;
-    }
-
-    if( !ok_to_enable )
-    {
-        raise_wrong_state(connection, message, udi);
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    /* Now enable device */
-    HAL_INFO(("Enabling device %s", udi));
-    
-    /* First, make sure we got an .fdi file */
-    if( (!ds_property_exists(d, "GotDeviceInfo")) || 
-        (!ds_property_get_bool(d, "GotDeviceInfo")) )
-    {
-        /* need to search for an .fdi file */
-        if( di_search_and_merge(d) )
-        {
-            /* Found .fdi file */
-
-            /** @todo Check for required properties */
-
-            ds_property_set_bool(d, "GotDeviceInfo", TRUE);
-        }
-        else
-            ds_property_set_bool(d, "GotDeviceInfo", FALSE);
-    }
-
-
-
-    if( ds_property_get_bool(d, "GotDeviceInfo") )
-    {
-        /** @todo boot device */
-        HAL_INFO(("Now booting device"));
-
-        ds_property_set_int(d, "State", HAL_STATE_ENABLED);        
-    }
-    else
-    {
-        /* giving up */
-        ds_property_set_int(d, "State", HAL_STATE_NEED_DEVICE_INFO);
-    }
-
-
-    dbus_message_iter_init(reply, &iter);
-    dbus_message_iter_append_boolean(&iter, ok_to_enable);
-
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-
-    dbus_message_unref(reply);
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-/** Disable a device.
- *
- *  <pre>
- *  void Device.Disable()
- *
- *    raises org.freedesktop.Hal.NoSuchDevice
- *           org.freedesktop.Hal.WrongState
- *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult device_disable(DBusConnection* connection,
-                                       DBusMessage* message)
-{
-    const char* udi;
-    HalDevice* d;
-    DBusMessage *reply;
-    DBusMessageIter iter;
-    dbus_bool_t ok_to_disable;
-    int device_state;
-
-    HAL_TRACE(("entering"));
-
-    udi = dbus_message_get_path(message);
-
-    d = ds_device_find(udi);
-    if( d==NULL )
-    {
-        raise_no_such_device(connection, message, udi);
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    reply = dbus_message_new_method_return(message);
-    if( reply==NULL )
-        DIE(("No memory"));
-
-    ok_to_disable = FALSE;
-    if( ds_property_exists(d, "State") )
-    {
-        device_state = ds_property_get_int(d, "State");
-        if( device_state==HAL_STATE_ENABLED )
-            ok_to_disable = FALSE;
-        else
-            ok_to_disable = TRUE;
-    }
-
-    if( !ok_to_disable )
-    {
-        raise_wrong_state(connection, message, udi);
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    /** @todo: disable device */
-    HAL_INFO(("Disabling device %s", udi));
-
-    dbus_message_iter_init(reply, &iter);
-    dbus_message_iter_append_boolean(&iter, ok_to_disable);
-
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-
-    dbus_message_unref(reply);
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-
 /** @} */
 
 
@@ -1793,18 +1599,6 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
 
     else if( dbus_message_is_method_call(message,
                                          "org.freedesktop.Hal.Device",
-                                         "Enable") )
-    {
-        return device_enable(connection, message);
-    }
-    else if( dbus_message_is_method_call(message,
-                                         "org.freedesktop.Hal.Device",
-                                         "Disable") )
-    {
-        return device_disable(connection, message);
-    }
-    else if( dbus_message_is_method_call(message,
-                                         "org.freedesktop.Hal.Device",
                                          "GetAllProperties") )
     {
         return device_get_all_properties(connection, message);
@@ -1963,7 +1757,7 @@ static void property_changed(HalDevice* device,
  */
 static void gdl_changed(HalDevice* device, dbus_bool_t is_added)
 {
-    if( !is_added )
+    if( is_added )
         manager_send_signal_device_added(device->udi);
     else
         manager_send_signal_device_removed(device->udi);

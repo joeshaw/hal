@@ -66,7 +66,7 @@ void hal_free_string_array(char** str_array)
  */
 void hal_free_utf8(char* utf8_string)
 {
-    /* @todo: implement */
+    /** @todo: implement */
     free(utf8_string);
 }
 
@@ -343,103 +343,6 @@ dbus_bool_t hal_psi_get_bool(LibHalPropertySetIterator* iter)
 }
 
 
-/** Disable a device. Note that this is an asynchronous operation - the only
- *  way to get notified is to wait for #LibHalDeviceDisabled callback.
- *
- *  @param  udi                 Unique id of device
- *  @return                     #TRUE iff the request was accepted, #FALSE if
- *                              device doesn't exist, the device is not enabled
- *                              or the operation failed for some reason.
- */
-dbus_bool_t hal_device_disable(const char* udi)
-{
-    DBusError error;
-    DBusMessage* message;
-    DBusMessage* reply;
-
-    message = dbus_message_new_method_call("org.freedesktop.Hal", udi,
-                                           "org.freedesktop.Hal.Device",
-                                           "Disable");
-    if( message==NULL )
-    {
-        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
-                __FILE__, __LINE__);
-        return FALSE;
-    }
-
-    dbus_error_init(&error);
-    reply = dbus_connection_send_with_reply_and_block(connection,
-                                                      message, -1,
-                                                      &error);
-    if( dbus_error_is_set(&error) )
-    {
-        fprintf(stderr, "%s %d: %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
-                error.name, error.message);
-        dbus_message_unref(message);
-        return FALSE;
-    }
-
-    if( reply==NULL )
-    {
-        dbus_message_unref(message);
-        return FALSE;
-    }
-
-    dbus_message_unref(reply);
-    dbus_message_unref(message);
-    return TRUE;
-}
-
-
-/** Enable a device. Note that this is an asynchronous operation.
- *
- *  @param  udi                 Unique id of device
- *  @return                     #TRUE iff the request was accepted, #FALSE if
- *                              the device doesn't exist, the device is already
- *                              enabled or the operation failed for some reason
- */
-dbus_bool_t hal_device_enable(const char* udi)
-{
-    DBusError error;
-    DBusMessage* message;
-    DBusMessage* reply;
-    DBusMessageIter iter;
-
-    message = dbus_message_new_method_call("org.freedesktop.Hal", udi,
-                                           "org.freedesktop.Hal.Device",
-                                           "Enable");
-    if( message==NULL )
-    {
-        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
-                __FILE__, __LINE__);
-        return FALSE;
-    }
-
-    dbus_message_iter_init(message, &iter);
-
-    dbus_error_init(&error);
-    reply = dbus_connection_send_with_reply_and_block(connection,
-                                                      message, -1,
-                                                      &error);
-    if( dbus_error_is_set(&error) )
-    {
-        fprintf(stderr, "%s %d : %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
-                error.name, error.message);
-        dbus_message_unref(message);
-        return FALSE;
-    }
-
-    if( reply==NULL )
-    {
-        dbus_message_unref(message);
-        return FALSE;
-    }
-
-    dbus_message_unref(reply);
-    dbus_message_unref(message);
-    return TRUE;
-}
-
 static DBusHandlerResult filter_func(DBusConnection* connection,
                                      DBusMessage*    message,
                                      void*           user_data)
@@ -498,67 +401,59 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
         }
     }
     else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceBooting") )
-    {
-        if( functions->device_booting!=NULL )
-            functions->device_booting(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceShuttingDown") )
-    {
-        if( functions->device_shutting_down!=NULL )
-            functions->device_shutting_down(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceDisabled") )
-    {
-        if( functions->device_disabled!=NULL )
-            functions->device_disabled(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceEnabled") )
-    {
-        if( functions->device_enabled!=NULL )
-            functions->device_enabled(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceNeedDeviceInfo") )
-    {
-        if( functions->device_need_device_info!=NULL )
-            functions->device_need_device_info(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceBootError") )
-    {
-        if( functions->device_boot_error!=NULL )
-            functions->device_boot_error(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "DeviceRequireUser") )
-    {
-        if( functions->device_req_user!=NULL )
-            functions->device_req_user(object_path);
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
                                     "PropertyChanged") )
     {
         if( functions->device_property_changed!=NULL )
         {
             char* key;
-            dbus_bool_t is_removed;
-
             if( dbus_message_get_args(message, &error, 
                                       DBUS_TYPE_STRING, &key,
-                                      DBUS_TYPE_BOOLEAN, &is_removed,
                                       DBUS_TYPE_INVALID) )
             {
-                functions->device_property_changed(object_path, 
-                                                   key, is_removed);
+                functions->device_property_changed(object_path, key);
             }
             else
             {
                 fprintf(stderr, "%s %d : error parsing PropertyChanged "
-                        "method\n", __FILE__, __LINE__);
+                        "signal\n", __FILE__, __LINE__);
+            }
+        }
+    }
+    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
+                                    "PropertyAdded") )
+    {
+        if( functions->device_property_added!=NULL )
+        {
+            char* key;
+            if( dbus_message_get_args(message, &error, 
+                                      DBUS_TYPE_STRING, &key,
+                                      DBUS_TYPE_INVALID) )
+            {
+                functions->device_property_added(object_path, key);
+            }
+            else
+            {
+                fprintf(stderr, "%s %d : error parsing PropertyAdded "
+                        "signal\n", __FILE__, __LINE__);
+            }
+        }
+    }
+    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
+                                    "PropertyRemoved") )
+    {
+        if( functions->device_property_removed!=NULL )
+        {
+            char* key;
+            if( dbus_message_get_args(message, &error, 
+                                      DBUS_TYPE_STRING, &key,
+                                      DBUS_TYPE_INVALID) )
+            {
+                functions->device_property_removed(object_path, key);
+            }
+            else
+            {
+                fprintf(stderr, "%s %d : error parsing PropertyRemoved "
+                        "signal\n", __FILE__, __LINE__);
             }
         }
     }
@@ -568,26 +463,19 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
 
 static LibHalFunctions hal_null_functions = {
     NULL /*mainloop_integration*/,
-    NULL /*property_changed*/,
     NULL /*device_added*/, 
-    NULL /*device_remove*/, 
-    NULL /*device_booting*/,
-    NULL /*device_shutting_down*/,
-    NULL /*device_disabled*/,
-    NULL /*device_need_device_info*/,
-    NULL /*device_boot_error*/,
-    NULL /*device_enabled*/,
-    NULL /*device_req_user*/ };
+    NULL /*device_removed*/, 
+    NULL /*device_new_capability*/,
+    NULL /*property_changed*/,
+    NULL /*property_added*/,
+    NULL /*property_removed*/,
+};
 
 /** Initialize the HAL library. 
  *
  *  @param  cb_functions          Callback functions. If this is set top #NULL
  *                                then the library will not listen for
- *                                notifications. Otherwise, notifications are
- *                                being watched for in a separate thread,
- *                                so whenever a notification is delivered
- *                                the user will note that it comes from another
- *                                thread.
+ *                                notifications. 
  *  @return                       zero if success, non-zero if an error 
  *                                occurred
  */
@@ -632,7 +520,6 @@ int hal_initialize(const LibHalFunctions* cb_functions)
         return 1;
     }
     
-    // TODO: narrow in instead of match *all* signals
     dbus_bus_add_match(connection, 
                        "type='signal',"
                        "interface='org.freedesktop.Hal.Manager',"
@@ -1988,6 +1875,97 @@ char** hal_find_device_by_capability(const char* capability, int* num_devices)
     return hal_device_names;    
 }
 
+/** Watch all devices, ie. the device_property_changed callback is
+ *  invoked when the properties on any device changes.
+ *
+ *  @return                     Zero if the operation succeeded, otherwise
+ *                              non-zero
+ */
+int hal_device_property_watch_all()
+{
+    DBusError error;
+
+    dbus_error_init(&error);
+
+    dbus_bus_add_match(connection, 
+                       "type='signal',"
+                       "interface='org.freedesktop.Hal.Device',"
+                       "sender='org.freedesktop.Hal'", &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error subscribing to signals, "
+                "error=%s\r\n",
+                __FILE__, __LINE__, error.message);
+        return 1;
+    }
+    return 0;
+}
+
+
+/** Add a watch on a device, so the device_property_changed callback is
+ *  invoked when the properties on the given device changes.
+ *
+ *  The application itself is responsible for deleting the watch, using
+ *  #hal_device_remove_property_watch, if the device is removed.
+ *
+ *  @param  udi                 Unique Device Id
+ *  @return                     Zero if the operation succeeded, otherwise
+ *                              non-zero
+ */
+int hal_device_add_property_watch(const char* udi)
+{
+    char buf[512];
+    DBusError error;
+
+    dbus_error_init(&error);
+
+    snprintf(buf, 512, 
+             "type='signal',"
+             "interface='org.freedesktop.Hal.Device',"
+             "sender='org.freedesktop.Hal',"
+             "path=%s", udi);
+
+    dbus_bus_add_match(connection, buf, &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error subscribing to signals, "
+                "error=%s\r\n",
+                __FILE__, __LINE__, error.message);
+        return 1;
+    }
+    return 0;
+}
+
+
+/** Remove a watch on a device.
+ *
+ *  @param  udi                 Unique Device Id
+ *  @return                     Zero if the operation succeeded, otherwise
+ *                              non-zero
+ */
+int hal_device_remove_property_watch(const char* udi)
+{
+    char buf[512];
+    DBusError error;
+
+    dbus_error_init(&error);
+
+    snprintf(buf, 512, 
+             "type='signal',"
+             "interface='org.freedesktop.Hal.Device',"
+             "sender='org.freedesktop.Hal',"
+             "path=%s", udi);
+
+    dbus_bus_remove_match(connection, buf, &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error subscribing to signals, "
+                "error=%s\r\n",
+                __FILE__, __LINE__, error.message);
+        return 1;
+    }
+    return 0;
+}
 
 
 /** @} */

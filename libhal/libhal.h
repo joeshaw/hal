@@ -32,39 +32,6 @@
 extern "C" {
 #endif
 
-
-/**
- * @defgroup Common Common HAL constants
- * @brief Common HAL constants and defines
- * @{
- */
-
-/** The device needs a device information file */
-#define HAL_STATE_NEED_DEVICE_INFO  0
-
-/** The device is currently booting */
-#define HAL_STATE_BOOTING           1
-
-/** The device requires more information in order to be operational */
-#define HAL_STATE_REQ_USER          2
-
-/** The device experienced an error booting */
-#define HAL_STATE_ERROR             3
-
-/** The device is enabled and operational */
-#define HAL_STATE_ENABLED           4
-
-/** The device is shutting down */
-#define HAL_STATE_SHUTDOWN          5
-
-/** The device is disabled */
-#define HAL_STATE_DISABLED          6
-
-/** The device is currently unplugged */
-#define HAL_STATE_UNPLUGGED         7
-
-/** @} */
-
 /**
  * @addtogroup LibHal
  *
@@ -97,67 +64,32 @@ typedef void (*LibHalDeviceRemoved)(const char* udi);
  */
 typedef void (*LibHalNewCapability)(const char* udi, const char* capability);
 
-/** Type for callback when a device is booting. 
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceBooting)(const char* udi);
-
-/** Type for callback when a device is shutting down. 
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceShuttingDown)(const char* udi);
-
-/** Type for callback when a device is disabled. 
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceDisabled)(const char* udi);
-
-/** Type for callback when a device needs a device info file. 
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceNeedDeviceInfo)(const char* udi);
-
-/** Type for callback when a device failed to boot due to a
- *  driver problem. 
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceBootError)(const char* udi);
-
-/** Type for callback when a device is enabled
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceEnabled)(const char* udi);
-
-/** Type for callback when a device needs user assistance to function properly
- *
- *  @param  udi                 Unique Device Id
- */
-typedef void (*LibHalDeviceRequireUser)(const char* udi);
-
-
 /** Type for callback when a property of a device changes. 
- *
- *  The device object is not updated when the callee returns, so the 
- *  application can inspect the old value through 
- *  #hal_device_get_property_string() or other functions.
  *
  *  @param  udi                 Unique Device Id
  *
  *  @param  key                 Name of the property that has changed
- *
- *  @param  value               Value of the named property that has changed.
- *                              If this is #NULL it means that the property
- *                              has been removed
  */
 typedef void (*LibHalDevicePropertyChanged)(const char* udi, 
-                                            const char* key,
-                                            dbus_bool_t is_removed);
+                                            const char* key);
+
+/** Type for callback when a property of a device is added. 
+ *
+ *  @param  udi                 Unique Device Id
+ *
+ *  @param  key                 Name of the property that was added
+ */
+typedef void (*LibHalDevicePropertyAdded)(const char* udi, 
+                                          const char* key);
+
+/** Type for callback when a property of a device is removed. 
+ *
+ *  @param  udi                 Unique Device Id
+ *
+ *  @param  key                 Name of the property that was removed
+ */
+typedef void (*LibHalDevicePropertyRemoved)(const char* udi, 
+                                            const char* key);
 
 /** Big convenience chunk for all callback function pointers. 
  *
@@ -170,29 +102,25 @@ typedef struct LibHalFunctions_s
      *  #DBusConnection into the main loop
      */
     LibHalIntegrateDBusIntoMainLoop    main_loop_integration;
-    /** A property of a device changed  */
-    LibHalDevicePropertyChanged        device_property_changed;
+
     /** Device added */
     LibHalDeviceAdded                  device_added;
+
     /** Device removed */
     LibHalDeviceRemoved                device_removed;
+
     /** Device got a new capability */
     LibHalNewCapability                device_new_capability;
 
-    /** Device is booting */
-    LibHalDeviceBooting                device_booting;
-    /** Device is shutting down */
-    LibHalDeviceShuttingDown           device_shutting_down;
-    /** Device is disabled */
-    LibHalDeviceDisabled               device_disabled;
-    /** Device doesn't have a driver */
-    LibHalDeviceNeedDeviceInfo         device_need_device_info;
-    /** Device experienced a problem booting */
-    LibHalDeviceBootError              device_boot_error;
-    /** Device is enabled */
-    LibHalDeviceEnabled                device_enabled;
-    /** Device requires user intervention to function properly*/
-    LibHalDeviceRequireUser            device_req_user;
+    /** A property of a device changed  */
+    LibHalDevicePropertyChanged        device_property_changed;
+
+    /** A property of a device was added  */
+    LibHalDevicePropertyAdded          device_property_added;
+
+    /** A property of a device was removed  */
+    LibHalDevicePropertyRemoved        device_property_removed;
+
 } LibHalFunctions;
 
 int hal_initialize(const LibHalFunctions* functions);
@@ -228,15 +156,11 @@ dbus_bool_t hal_device_remove_property(const char* udi, const char* key);
 int hal_device_get_property_type(const char* udi, const char* key);
 
 
-dbus_bool_t hal_device_disable(const char* udi);
-dbus_bool_t hal_device_enable(const char* udi);
-
 struct LibHalProperty_s;
 typedef struct LibHalProperty_s LibHalProperty;
 
 struct LibHalPropertySet_s;
 typedef struct LibHalPropertySet_s LibHalPropertySet;
-
 
 LibHalPropertySet* hal_device_get_all_properties(const char* udi);
 
@@ -292,7 +216,9 @@ dbus_bool_t hal_device_query_capability(const char* udi,
 
 char** hal_find_device_by_capability(const char* capability, int* num_devices);
 
-
+int hal_device_property_watch_all();
+int hal_device_add_property_watch(const char* udi);
+int hal_device_remove_property_watch(const char* udi);
 
 /** @} */
 
