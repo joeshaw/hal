@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb">
+      <match key="usb.vendor_id" int="0x066f">
+        <match key="usb.product_id" int="0x8000">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <merge key="info.capabilities" type="string">portable_audio_player</merge>
+          <merge key="portable_audio_player.output" type="string">mp3 wma</merge>
+          <merge key="portable_audio_player.input" type="string">wav</merge>
+          <merge key="portable_audio_player.localdb" type="bool">false</merge>
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>

@@ -1,3 +1,10 @@
+2004-06-26  David Zeuthen  <david@fubar.dk>
+
+	* fdi/20freedesktop/Makefile.am (dist_fdi20freedesktop_DATA): 
+	Install jetflash-mp3-player.fdi
+
+	* fdi/20freedesktop/jetflash-mp3-player.fdi: New file
+
 2004-06-24  David Zeuthen  <david@fubar.dk>
 
 	Add floppy support to HAL - tested with x86 legacy floppies and

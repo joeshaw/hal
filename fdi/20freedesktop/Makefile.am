@@ -6,5 +6,7 @@ dist_fdi20freedesktop_DATA = 		\
 	canon-digital-ixus-v.fdi	\
 	6in1-card-reader.fdi		\
 	lexar-media-cf-reader.fdi	\
-	lucent-pcmcia-wireless.fdi
+	lucent-pcmcia-wireless.fdi	\
+	jetflash-mp3-player.fdi
+
 
