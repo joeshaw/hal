@@ -11,6 +11,7 @@ INCLUDES = \
 sbin_PROGRAMS = hald
 
 hald_SOURCES =                                                          \
+        hald.h                                                          \
                                         main.c                          \
         osspec.h                                                        \
         logger.h                        logger.c                        \
