@@ -32,8 +32,8 @@ if HOTPLUG_MAP_ENABLED
 endif
 
 uninstall-local :
-	- rm -f $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default/hal.hotplug
-	- rm -f $(DESTDIR)/etc/dev.d/default/hal.dev
+	- rm -f $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default/20-hal.hotplug
+	- rm -f $(DESTDIR)/etc/dev.d/default/10-hal.dev
 if HOTPLUG_MAP_ENABLED
 	- rm -f $(DESTDIR)$(SYSCONFDIR)/hal/device.d/40-hal-hotplug-map.hal
 endif

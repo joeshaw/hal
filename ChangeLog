@@ -1,5 +1,10 @@
 2004-08-30  David Zeuthen  <david@fubar.dk>
 
+	* tools/linux/Makefile.am (uninstall-local): Get the uninstall rules
+	right for 10-hal.dev and 20-hal.hotplug 
+
+2004-08-30  David Zeuthen  <david@fubar.dk>
+
 	* tools/fstab-sync.c: (open_temp_fstab_file), (add_udi),
 	(remove_udi), (clean): Go back to creating the temporary
 	file in /etc. Add note about using /tmp (giving up atomicity)
