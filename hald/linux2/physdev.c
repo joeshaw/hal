@@ -663,6 +663,86 @@ scsi_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+mmc_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	gint host_num, rca, manfid, oemid;
+	gchar *scr;
+
+	if (parent == NULL) {
+		d = NULL;
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "mmc");
+	hal_device_property_set_string (d, "info.parent", parent->udi);
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	sscanf (bus_id, "mmc%d:%x", &host_num, &rca);
+	hal_device_property_set_int (d, "mmc.rca", rca);
+	
+	hal_util_set_string_from_file (d, "mmc.cid", sysfs_path, "cid");
+	hal_util_set_string_from_file (d, "mmc.csd", sysfs_path, "csd");
+	
+	scr = hal_util_get_string_from_file (sysfs_path, "scr");
+	if (scr != NULL) {
+		if (strcmp (scr, "0000000000000000") == 0)
+			scr = NULL;
+		else
+			hal_device_property_set_string (d, "mmc.scr", scr);
+	}
+
+	if (!hal_util_set_string_from_file (d, "info.product", sysfs_path, "name")) {
+		if (scr != NULL)
+			hal_device_property_set_string (d, "info.product", "SD Card");
+		else
+			hal_device_property_set_string (d, "info.product", "MMC Card");
+	}
+	
+	if (hal_util_get_int_from_file (sysfs_path, "manfid", &manfid, 16)) {
+		/* Here we should have a mapping to a name */
+		char vendor[256];
+		snprintf(vendor, 256, "Unknown (%d)", manfid);
+		hal_device_property_set_string (d, "info.vendor", vendor);
+	}
+	if (hal_util_get_int_from_file (sysfs_path, "oemid", &oemid, 16)) {
+		/* Here we should have a mapping to a name */
+		char oem[256];
+		snprintf(oem, 256, "Unknown (%d)", oemid);
+		hal_device_property_set_string (d, "mmc.oem", oem);
+	}
+
+	hal_util_set_string_from_file (d, "mmc.date", sysfs_path, "date");
+	hal_util_set_int_from_file (d, "mmc.hwrev", sysfs_path, "hwrev", 16);
+	hal_util_set_int_from_file (d, "mmc.fwrev", sysfs_path, "fwrev", 16);
+	hal_util_set_int_from_file (d, "mmc.serial", sysfs_path, "serial", 16);
+
+out:
+	return d;
+}
+
+static gboolean
+mmc_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_mmc_card_rca%d",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_int (d, "mmc.rca"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 physdev_remove (HalDevice *d)
 {
@@ -731,6 +811,13 @@ static PhysDevHandler physdev_handler_scsi = {
 	.compute_udi = scsi_compute_udi,
 	.remove      = physdev_remove
 };
+
+static PhysDevHandler physdev_handler_mmc = { 
+	.subsystem   = "mmc",
+	.add         = mmc_add,
+	.compute_udi = mmc_compute_udi,
+	.remove      = physdev_remove
+};
 	
 
 static PhysDevHandler *phys_handlers[] = {
@@ -741,6 +828,7 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_serio,
 	&physdev_handler_pcmcia,
 	&physdev_handler_scsi,
+	&physdev_handler_mmc,
 	NULL
 };
 

@@ -1,5 +1,15 @@
 2005-02-01  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Pierre Ossman <drzeus-list@drzeus.cx>. Basic MMC bus
+	support. Reads out all the information currently available. I also
+	need to add a mapping between vendor id:s an names, but I don't
+	currently have a list to base it upon.
+
+	* hald/linux2/physdev.c (mmc_add): New function
+	(mmc_compute_udi): New function
+
+2005-02-01  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Pierre Ossman <drzeus-list@drzeus.cx>.
 
 	* hald/linux2/util.c (hal_util_get_string_from_file): New function
