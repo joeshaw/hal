@@ -4,7 +4,6 @@
 on simplepy from Shannon -jj Behrens <jjinux@yahoo.com>"""
 
 import pygtk
-pygtk.require('2.0')
 import gtk
 import gnome
 

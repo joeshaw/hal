@@ -1,5 +1,14 @@
 2004-01-13  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: Bump version number to 0.2.4
+
+	* packaging/fedora/hal.spec (Release): Bump version number to 0.2.4
+
+	* tools/device-manager/hal-device-manager: Remove requirement for 
+	pygtk 2.0 since it broke some systems
+
+2004-01-13  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/linux_class_block.c 
 	(linux_class_block_check_if_ready_to_add): ioctl rc>=0 is also success
 	(detect_media): rewrite most of this function
