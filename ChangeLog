@@ -1,3 +1,32 @@
+2005-03-02  David Zeuthen  <davidz@redhat.com>
+
+	* tools/device-manager/DeviceManager.py: Move some things around
+	only to discover that D-BUS python bindings need fixing to actually
+	push signals we subscribe to without giving the path...
+
+	* tools/lshal.c (device_condition): Fix this function so it works
+	after the DeviceCondition format changes earlier
+
+	* libhal/libhal.h: Export prototype for libhal_device_emit_condition
+
+	* libhal/libhal.c (libhal_device_emit_condition): New function
+
+	* hald/linux2/addons/addon-storage.c (main): Fix that we should
+	be verbose
+
+	* hald/linux2/addons/addon-acpi.c (read_line): Rewrite this
+	to not malloc all over the place
+	(main): Try two places for ACPI events. Rework parsing of events
+	and send out DeviceConditions where appropriate
+
+	* hald/hald_dbus.c (device_emit_condition): New function
+	(hald_dbus_filter_function): Handle EmitCondition
+
+2005-03-01  Richard Hughes  <richard@hughsie.com>
+
+	* hald/linux2/addons/addon-acpi.c (main): Call
+	libhal_device_rescan for each ACPI event.
+
 2005-02-28  Richard Hughes  <richard@hughsie.com>
 
 	* doc/spec/hal-spec.xml.in: Added ALSA namespace

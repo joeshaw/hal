@@ -684,16 +684,17 @@ filter_func (DBusConnection * connection,
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "Condition")) {
-		char *udi;
 		char *condition_name;
 		char *condition_detail;
+		printf ("foo0\n");
 		if (dbus_message_get_args (message, &error,
-					   DBUS_TYPE_STRING, &udi,
 					   DBUS_TYPE_STRING, &condition_name,
 					   DBUS_TYPE_STRING, &condition_detail,
 					   DBUS_TYPE_INVALID)) {
+			printf ("foo1\n");
 			if (ctx->device_new_capability != NULL) {
-				ctx->device_condition (ctx, udi, condition_name, condition_detail);
+				printf ("foo2\n");
+				ctx->device_condition (ctx, object_path, condition_name, condition_detail);
 			}
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -2963,6 +2964,62 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 	dbus_message_unref (reply);
 
 	return result;
+}
+
+dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
+					  const char *udi,
+					  const char *condition_name,
+					  const char *condition_details,
+					  DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
+	DBusMessage *reply;
+	dbus_bool_t result;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"EmitCondition");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &condition_name);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &condition_details);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
+		   DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return FALSE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &result);
+
+	dbus_message_unref (reply);
+
+	return result;	
 }
 
 /** @} */

@@ -331,11 +331,11 @@ static void
 device_condition (LibHalContext *ctx,
 		  const char *udi, 
 		  const char *condition_name,
-		  DBusMessage * message)
+		  const char *condition_details)
 {
 	fprintf (stderr, "*** lshal: device_condition, udi=%s\n", udi);
 	fprintf (stderr, "           condition_name=%s\n", condition_name);
-	/** @todo FIXME print out message */
+	fprintf (stderr, "           condition_details=%s\n", condition_details);
 	fprintf (stderr, "\n");
 	/*dump_devices(); */
 }

@@ -352,6 +352,14 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
+HREF="#device-properties-alsa"
+><TT
+CLASS="literal"
+>alsa</TT
+> namespace</A
+></DT
+><DT
+><A
 HREF="#device-properties-camera"
 ><TT
 CLASS="literal"
@@ -512,21 +520,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2513"
+HREF="#AEN2583"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2524"
+HREF="#AEN2594"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2532"
+HREF="#AEN2602"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -5736,6 +5744,191 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
+NAME="device-properties-alsa"
+><TT
+CLASS="literal"
+>alsa</TT
+> namespace</A
+></H3
+><P
+>&#13;
+       Device objects with the capability <TT
+CLASS="literal"
+>alsa</TT
+>
+       represent all the streams available through ALSA on a soundcard.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1774"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>alsa.card</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;               Card number in system as registered by ALSA.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>alsa.device</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;               Device number assigned by ALSA for the current card.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>alsa.id</TT
+> (string)</TD
+><TD
+>&#13;                Examples: <TT
+CLASS="literal"
+>I82801DBICH4</TT
+>, <TT
+CLASS="literal"
+>MP3</TT
+>
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;               The ALSA ID used to represent the device.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>alsa.physical_device</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;               The physical device the ALSA stream is bound to.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>alsa.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;               The type of the stream.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>control</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is control device.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>capture</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is capture device.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>playback</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is playback device.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>unknown</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is unknown device.
+             </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
 NAME="device-properties-camera"
 ><TT
 CLASS="literal"
@@ -5766,7 +5959,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1774"
+NAME="AEN1844"
 ></A
 ><TABLE
 BORDER="1"
@@ -5909,7 +6102,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1821"
+NAME="AEN1891"
 ></A
 ><TABLE
 BORDER="1"
@@ -5977,7 +6170,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1841"
+NAME="AEN1911"
 ></A
 ><TABLE
 BORDER="1"
@@ -6371,7 +6564,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1988"
+NAME="AEN2058"
 ></A
 ><TABLE
 BORDER="1"
@@ -6485,7 +6678,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2032"
+NAME="AEN2102"
 ></A
 ><TABLE
 BORDER="1"
@@ -6550,7 +6743,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2052"
+NAME="AEN2122"
 ></A
 ><TABLE
 BORDER="1"
@@ -6644,7 +6837,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2084"
+NAME="AEN2154"
 ></A
 ><TABLE
 BORDER="1"
@@ -6755,7 +6948,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2126"
+NAME="AEN2196"
 ></A
 ><TABLE
 BORDER="1"
@@ -6907,7 +7100,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2184"
+NAME="AEN2254"
 ></A
 ><TABLE
 BORDER="1"
@@ -7066,7 +7259,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2236"
+NAME="AEN2306"
 ></A
 ><TABLE
 BORDER="1"
@@ -7195,7 +7388,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2277"
+NAME="AEN2347"
 ></A
 ><TABLE
 BORDER="1"
@@ -8263,7 +8456,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2471"
+NAME="AEN2541"
 ></A
 ><TABLE
 BORDER="1"
@@ -8423,7 +8616,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2513"
+NAME="AEN2583"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -8539,7 +8732,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2524"
+NAME="AEN2594"
 >Example</A
 ></H3
 ><P
@@ -8657,7 +8850,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2532"
+NAME="AEN2602"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

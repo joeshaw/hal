@@ -2160,6 +2160,66 @@ device_reprobe (DBusConnection * connection, DBusMessage * message)
 }
 
 
+static DBusHandlerResult
+device_emit_condition (DBusConnection * connection, DBusMessage * message)
+{
+	const char *udi;
+	HalDevice *device;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	DBusError error;
+	const char *condition_name;
+	const char *condition_details;
+	dbus_bool_t res;
+	
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	if (!sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "Reprobe: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	HAL_DEBUG (("udi=%s", udi));
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &condition_name,
+				    DBUS_TYPE_STRING, &condition_details,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "EmitCondition");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+
+	device = hal_device_store_find (hald_get_gdl (), udi);
+	if (device == NULL)
+		device = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (device == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	device_send_signal_condition (device, condition_name, condition_details);
+
+	res = TRUE;
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &res);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
 /** Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function.
  *
@@ -2313,6 +2373,10 @@ hald_dbus_filter_function (DBusConnection * connection,
 						"org.freedesktop.Hal.Device",
 						"Reprobe")) {
 		return device_reprobe (connection, message);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"EmitCondition")) {
+		return device_emit_condition (connection, message);
 	} else
 		osspec_filter_function (connection, message, user_data);
 

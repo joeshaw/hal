@@ -4,6 +4,7 @@ import sys
 import gobject
 import gtk
 import dbus
+import dbus_bindings
 
 try:
     import gnome.ui
@@ -67,6 +68,17 @@ class DeviceManager(LibGladeApplication):
                                      "/org/freedesktop/Hal/Manager",
 				     expand_args=False)
 
+	#self.bus.add_signal_receiver(self.property_modified,
+	#			     "PropertyModified",
+	#			     "org.freedesktop.Hal.Device",
+	#			     "org.freedesktop.Hal",
+	#			     None)#"/org/freedesktop/Hal/devices/acpi_LID")
+	#self.bus.add_signal_receiver(self.device_condition,
+	#			     "Condition",
+	#			     "org.freedesktop.Hal.Device",
+	#			     "org.freedesktop.Hal",
+	#			     None)#"/org/freedesktop/Hal/devices/acpi_LID")
+
         # Add listeners for all devices
         try:
             device_names = self.hal_manager.GetAllDevices()
@@ -86,26 +98,26 @@ class DeviceManager(LibGladeApplication):
         self.main_window.show()
 
     def add_device_signal_recv (self, udi):
-	self.bus.add_signal_receiver(self.device_changed,
+	return
+	self.bus.add_signal_receiver(self.property_modified,
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
-	return
-	self.bus.add_signal_receiver(self.device_changed,
+	self.bus.add_signal_receiver(self.device_condition,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 
     def remove_device_signal_recv (self, udi):
-	self.bus.remove_signal_receiver(self.device_changed,
+	return
+	self.bus.remove_signal_receiver(self.property_modified,
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
-	return
-	self.bus.remove_signal_receiver(self.device_changed,
+	self.bus.remove_signal_receiver(self.device_condition,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
@@ -129,47 +141,50 @@ class DeviceManager(LibGladeApplication):
             self.update_device_notebook(device)
 
 
-    def device_changed(self, sender, num_changes, change_list):
+    def device_condition(self, sender, condition_name, condition_details):
         """This method is called when signals on the Device interface is
         received"""
 
 	device_udi = sender.path
-        if sender.signal_name=="Condition":
-            print "\nCondition %s, device=%s"%(device, sender.path)
-            print "  message = ", args 
-        elif sender.signal_name=="PropertyModified":
-            print "\nPropertyModified, device=%s"%sender.path
-            #print "dbus_obj_path", sender.path
-            for i in change_list:
-                property_name = i[0]
-                removed = i[1]
-                added = i[2]
+	print "\nCondition device=%s"%sender.path
+	print "  (condition_name, condition_details) = ('%s', '%s')"%(condition_name, condition_details)
 
-                print "  key=%s, rem=%d, add=%d"%(property_name, removed, added)
-                if property_name=="info.parent":
-                    self.update_device_list()        
-                else:
-                    device_udi_obj = self.hal_service.get_object(device_udi,
+    def property_modified(self, sender, num_changes, change_list):
+        """This method is called when signals on the Device interface is
+        received"""
+
+	device_udi = sender.path
+	print "\nPropertyModified, device=%s"%sender.path
+	#print "dbus_obj_path", sender.path
+	for i in change_list:
+	    property_name = i[0]
+	    removed = i[1]
+	    added = i[2]
+
+	    print "  key=%s, rem=%d, add=%d"%(property_name, removed, added)
+	    if property_name=="info.parent":
+		self.update_device_list()        
+	    else:
+		device_udi_obj = self.hal_service.get_object(device_udi,
                                                    "org.freedesktop.Hal.Device")
-                    device_obj = self.udi_to_device(device_udi)
+		device_obj = self.udi_to_device(device_udi)
 
-                    if device_udi_obj.PropertyExists(property_name):
-                        device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
-                        print "  value=%s"%(device_obj.properties[property_name])
-                    else:
-                        if device_obj != None:
-                            try:
-                                del device_obj.properties[property_name]
-                            except:
-                                pass
+		if device_udi_obj.PropertyExists(property_name):
+		    device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
+		    print "  value=%s"%(device_obj.properties[property_name])
+		else:
+		    if device_obj != None:
+			try:
+			    del device_obj.properties[property_name]
+			except:
+			    pass
 
-                    device_focus_udi = self.get_current_focus_udi()
-                    if device_focus_udi != None:
-                        device = self.udi_to_device(device_udi)
-                        if device_focus_udi==device_udi:
-                            self.update_device_notebook(device)
-
-
+		device_focus_udi = self.get_current_focus_udi()
+		if device_focus_udi != None:
+		    device = self.udi_to_device(device_udi)
+		    if device_focus_udi==device_udi:
+			self.update_device_notebook(device)
+			
     def gdl_changed(self, sender):
         """This method is called when a HAL device is added or removed."""
 

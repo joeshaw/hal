@@ -386,6 +386,12 @@ dbus_bool_t libhal_device_reprobe (LibHalContext *ctx,
 				   const char *udi,
 				   DBusError *error);
 
+dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
+					  const char *udi,
+					  const char *condition_name,
+					  const char *condition_details,
+					  DBusError *error);
+
 /** @} */
 
 #if defined(__cplusplus)

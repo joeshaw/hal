@@ -169,6 +169,10 @@ main (int argc, char *argv[])
 		goto out;
 	if ((drive_type = getenv ("HAL_PROP_STORAGE_DRIVE_TYPE")) == NULL)
 		goto out;
+
+	if ((getenv ("HALD_VERBOSE")) != NULL)
+		is_verbose = TRUE;
+
 	storage_policy_should_mount_str = getenv ("HAL_PROP_STORAGE_POLICY_SHOULD_MOUNT");
 
 	support_media_changed_str = getenv ("HAL_PROP_STORAGE_CDROM_SUPPORT_MEDIA_CHANGED");
@@ -338,7 +342,7 @@ main (int argc, char *argv[])
 			media_status = MEDIA_STATUS_NO_MEDIA;
 		
 		
-		dbg ("polling %s; got media=%d", device_file, got_media);
+		/*dbg ("polling %s; got media=%d", device_file, got_media);*/
 		
 	skip_check:
 
