@@ -1,25 +1,25 @@
 %define expat_version           1.95.5
 %define glib2_version           2.2.0
-%define dbus_version            0.20
+%define dbus_version            0.21
 
 Summary: Hardware Abstraction Layer
 Name: hal
-Version: 0.2.6
-Release: 1
+Version: 0.2.90
+Release: 2
 URL: http://www.freedesktop.org/software/hal/
 Source0: %{name}-%{version}.tar.gz
 License: AFL/GPL
 Group: System Environment/Libraries
 BuildRoot: %{_tmppath}/%{name}-root
-PreReq: chkconfig
+PreReq: chkconfig /usr/sbin/useradd
 Packager: David Zeuthen <david@fubar.dk>
 BuildRequires: expat-devel >= %{expat_version}
 BuildRequires: glib2-devel >= %{glib2_version}
-BuildRequires: dbus-devel    >= %{dbus_version}
+BuildRequires: dbus-devel  >= %{dbus_version}
 BuildRequires: python python-devel
-Requires: dbus >= ${dbus_version}
-Requires: dbus-glib >= ${dbus_version}
-Requires: glib2 >= ${glib2_version}
+Requires: dbus >= %{dbus_version}
+Requires: dbus-glib >= %{dbus_version}
+Requires: glib2 >= %{glib2_version}
 
 %description
 
@@ -32,7 +32,7 @@ list through D-BUS.
 Summary: GNOME based device manager for HAL
 Group: Development/Libraries
 Requires: %name = %{version}-%{release}
-Requires: dbus-python >= ${dbus_version}
+Requires: dbus-python >= %{dbus_version}
 Requires: pygtk2 >= 2.0.0
 Requires: gnome-python2 >= 2.0.0
 
@@ -105,6 +105,7 @@ fi
 %{_libdir}/*hal*.so.*
 
 %{_libexecdir}/hal.hotplug
+%{_libexecdir}/hal.dev
 /etc/hotplug.d/default/hal.hotplug
 
 %dir %{_datadir}/hal
@@ -134,6 +135,9 @@ fi
 
 
 %changelog
+* Sat May 15 2004 Owen Fraser-Green <owen@discobabe.net> 0.2.90-1
+- updated to new version
+
 * Tue Dec 30 2003 David Zeuthen <david@fubar.dk> 0.2.1-1
 - initial build
 
