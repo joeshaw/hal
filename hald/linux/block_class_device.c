@@ -344,6 +344,8 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 	close (fd);
 }
 
+
+
 /** Force unmount of a patition. Must have block.volume=1 and valid
  *  block.device
  *

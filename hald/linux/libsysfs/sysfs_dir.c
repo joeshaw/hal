@@ -515,6 +515,7 @@ struct sysfs_link *sysfs_open_link(const char *linkpath)
 	    || (sysfs_get_link(linkpath, ln->target, SYSFS_PATH_MAX)) != 0) {
 		errno = EINVAL;
 		dprintf("Invalid link path %s\n", linkpath);
+		free (ln);
 		return NULL;
 	}
 

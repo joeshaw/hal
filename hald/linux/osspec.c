@@ -116,7 +116,7 @@ static BusDeviceHandler* bus_device_handlers[] = {
 static void hotplug_sem_up (void);
 static void hotplug_sem_down (void);
 static void hald_helper_hotplug (gboolean is_add, int seqnum, char *subsystem, char *sysfs_path);
-static void hald_helper_device_node (gboolean is_add, char *subsystem, char *sysfs_path, char *device_node);
+static void hald_helper_device_node (gboolean is_add, int seqnum, char *subsystem, char *sysfs_path, char *device_node);
 static gboolean hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data);
 
 static HalDevice *add_device (const char *sysfs_path, const char *subsystem);
@@ -771,6 +771,8 @@ add_computer_callouts_done (HalDevice *device, gpointer user_data)
 {
 	GSList *coldplug_list = user_data;
 
+	g_object_ref (device);
+	hal_device_store_remove (hald_get_tdl (), device);
 	hal_device_store_add (hald_get_gdl (), device);
 	g_signal_handlers_disconnect_by_func (device,
 					      add_computer_callouts_done,
@@ -814,6 +816,7 @@ osspec_probe (void)
 		hal_device_property_set_string (root, "kernel.machine",
 						un.machine);
 	}
+	hal_device_store_add (hald_get_tdl (), root);
 
 	/* begin processing the coldplug_list when computer is added */
 	g_signal_connect (root,
@@ -1149,14 +1152,14 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 }
 
 static void
-hald_helper_device_node (gboolean is_add, gchar *subsystem, gchar *sysfs_path, gchar *device_node)
+hald_helper_device_node (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs_path, gchar *device_node)
 {
 	char sysfs_path_full[SYSFS_PATH_MAX];
 
 	snprintf (sysfs_path_full, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, sysfs_path);
 
-	HAL_INFO (("entering %s, subsystem=%s devpath=%s devnode=%s",
-		   (is_add ? "add" : "rem"), subsystem, sysfs_path, device_node));
+	HAL_INFO (("entering %s, Seqnum=%d  subsystem=%s devpath=%s devnode=%s",
+		   (is_add ? "add" : "rem"), seqnum, subsystem, sysfs_path, device_node));
 
 	if (is_add ) {
 
@@ -1325,7 +1328,7 @@ hald_helper_data (GIOChannel *source,
 
 	if (!msg.is_hotplug_or_dev) {
 		/* device events doesn't have seqnum on them, however udev also respect sequence numbers */
-		hald_helper_device_node (msg.is_add, g_strdup (msg.subsystem), g_strdup (msg.sysfs_path), 
+		hald_helper_device_node (msg.is_add, msg.seqnum, g_strdup (msg.subsystem), g_strdup (msg.sysfs_path), 
 					 g_strdup (msg.device_node));
 		goto out;
 	}

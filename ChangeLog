@@ -1,3 +1,30 @@
+2004-08-27  David Zeuthen  <david@fubar.dk>
+
+	* AUTHORS: Add Kay Sievers <kay.sievers@vrfy.org> cause he rocks.
+	Sort the list in alphabetical order of surname (I'm just soo
+	political correct :-)
+
+	* fdi/20freedesktop/canon-digital-ixus-v.fdi: Merge onto usb_device
+	since we really don't know what interface to target
+
+	* hald/linux/hald_helper.h: Change comment about seqnum
+
+	* hald/linux/libsysfs/sysfs_dir.c (sysfs_open_link): Patch from
+	Steve Grubb <linux4_ever@yahoo.com> to fix leak on error condition.
+
+	* hald/linux/osspec.c: 
+	(add_computer_callouts_done): Move from TDL to GDL
+	(osspec_probe): Add to TDL; callouts may need it (seen by Kristof
+	Vansant <de_lupus@pandora.be>
+	(hald_helper_device_node): Print out seqnum
+	(hald_helper_data): Pass seqnum
+
+	* hald/logger.h: Ignore ENABLE_VERBOSE_MODE; always compile all
+	logging statements in (should take the heat of some bugreports)
+
+	* tools/linux/hal_dev.c (main): Pass seqnum if available; otherwise
+	pass -1.
+
 2004-08-26  Joe Shaw  <joeshaw@novell.com>
 
 	* configure.in: Don't check for a C++ compiler... we don't have

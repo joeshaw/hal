@@ -65,7 +65,9 @@ main (int argc, char *argv[], char *envp[])
 	char *devpath;
 	char *devnode;
 	char *action;
+	char *seqnum_str;
 	int is_add;
+	int seqnum;
 
 	if (argc != 2)
 		return 1;
@@ -100,6 +102,14 @@ main (int argc, char *argv[], char *envp[])
 	else
 		is_add = 0;
 
+	seqnum_str = getenv ("SEQNUM");
+	if (seqnum_str == NULL) {
+		seqnum = -1;
+	} else {
+		seqnum = atoi (seqnum_str);
+	}
+
+
 	fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
 	if (fd == -1) {
 		syslog (LOG_ERR, "error opening socket");
@@ -116,6 +126,7 @@ main (int argc, char *argv[], char *envp[])
 	msg.magic = HALD_HELPER_MAGIC; 
 	msg.is_hotplug_or_dev = 0;
 	msg.is_add = is_add;
+	msg.seqnum = seqnum;
 	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN);
 	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN);
 	strncpy (msg.device_node, devnode, HALD_HELPER_STRLEN);

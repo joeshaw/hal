@@ -2,9 +2,9 @@
 
 <deviceinfo version="0.2">
   <device>
-    <match key="info.bus" string="usb">
-      <match key="usb.vendor_id" int="0x04a9">
-        <match key="usb.product_id" int="0x3052">
+    <match key="info.bus" string="usb_device">
+      <match key="usb_device.vendor_id" int="0x04a9">
+        <match key="usb_device.product_id" int="0x3052">
           <merge key="info.category" type="string">camera</merge>
           <merge key="info.capabilities" type="string">camera</merge>
           <merge key="camera.access_method" type="string">user</merge>
