@@ -47,7 +47,6 @@
       <match key="storage.drive_type" string="cdrom">
 	<merge key="storage.policy.mount_filesystem" type="string">auto</merge>
 	<merge key="storage.policy.desired_mount_point" type="string">cdrom</merge>
-	<merge key="storage.policy.mount_option.ro" type="bool">true</merge>
 	<match key="storage.cdrom.cdr" bool="true">
 	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
 	</match>
@@ -73,10 +72,29 @@
 	  <merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
 	</match>
       </match>
+
       <!-- floppy drives -->
       <match key="storage.drive_type" string="floppy">
 	<merge key="storage.policy.mount_filesystem" type="string">auto</merge>
 	<merge key="storage.policy.desired_mount_point" type="string">floppy</merge>
+	<match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true">
+	  <merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
+	</match>
+      </match>
+
+      <!-- zip drives -->
+      <match key="storage.drive_type" string="zip">
+	<merge key="storage.policy.mount_filesystem" type="string">auto</merge>
+	<merge key="storage.policy.desired_mount_point" type="string">zip</merge>
+	<match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true">
+	  <merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
+	</match>
+      </match>
+
+      <!-- jaz drives -->
+      <match key="storage.drive_type" string="jaz">
+	<merge key="storage.policy.mount_filesystem" type="string">auto</merge>
+	<merge key="storage.policy.desired_mount_point" type="string">jaz</merge>
 	<match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true">
 	  <merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
 	</match>
@@ -96,6 +114,11 @@
 	       idedisk, scsidisk etc. -->
 	  <merge key="volume.policy.desired_mount_point" type="copy_property">@block.storage_device:storage.bus</merge>
 	  <append key="volume.policy.desired_mount_point" type="string">disk</append>
+
+         <!-- zip drives -->
+         <match key="storage.drive_type" string="zip">
+ 	   <merge key="storage.policy.desired_mount_point" type="string">zip</merge>
+         </match>
 	  
           <!-- Best: If available use filesystem label -->
           <match key="volume.label" empty="false">

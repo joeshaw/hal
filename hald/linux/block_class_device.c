@@ -71,8 +71,6 @@
  * @{
  */
 
-static void etc_mtab_process_all_block_devices (dbus_bool_t force);
-
 static char *block_class_compute_udi (HalDevice * d, int append_num);
 
 #if 0
@@ -198,7 +196,6 @@ block_class_visit (ClassDeviceHandler *self,
 {
 	HalDevice *d;
 	HalDevice *parent;
-	char *parent_sysfs_path;
 	ClassAsyncData *cad;
 	struct sysfs_device *sysdevice;
 
@@ -220,10 +217,12 @@ block_class_visit (ClassDeviceHandler *self,
 	sysdevice = sysfs_get_classdev_device (class_device);
 
 	if (sysdevice == NULL) {
-		parent_sysfs_path = get_parent_sysfs_path (path);
+		parent = find_closest_ancestor (path);
 		hal_device_property_set_bool (d, "block.is_volume", TRUE);
 	} else {
-		parent_sysfs_path = sysdevice->path;
+		parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
+								  "linux.sysfs_path_device", 
+								  sysdevice->path);
 		hal_device_property_set_bool (d, "block.is_volume", FALSE);
 	}
 
@@ -256,13 +255,19 @@ block_class_visit (ClassDeviceHandler *self,
 	 * sure to be added before us (we probe devices in the right order
 	 * and we reorder hotplug events)
 	 */
-	parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
-							  "linux.sysfs_path_device", 
-							  parent_sysfs_path);
 	if (parent == NULL) {
 		hal_device_store_remove (hald_get_tdl (), d);
 		d = NULL;
 		goto out;
+	}
+
+	/* Never add e.g. /dev/hdd4 as child of /dev/hdd if /dev/hdd is without partitions (e.g. zip disks) */
+	if (hal_device_has_property (parent, "storage.no_partitions_hint")) {
+		if (hal_device_property_get_bool (parent, "storage.no_partitions_hint")) {
+			hal_device_store_remove (hald_get_tdl (), d);
+			d = NULL;
+			goto out;			
+		}
 	}
 
 	class_device_got_parent_device (hald_get_tdl (), parent, cad);
@@ -349,7 +354,7 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 	}
 	
 	/* while we're at it, check if we support media changed */
-	if (ioctl (fd, CDROM_MEDIA_CHANGED) >= 0) {
+	if (capabilities & CDC_MEDIA_CHANGED) {
 		hal_device_property_set_bool (d, "storage.cdrom.support_media_changed", TRUE);
 	} else {
 		hal_device_property_set_bool (d, "storage.cdrom.support_media_changed", FALSE);
@@ -376,6 +381,8 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 static void
 force_unmount (HalDevice * d)
 {
+	const char *storudi;
+	HalDevice *stordev;
 	const char *device_file;
 	const char *device_mount_point;
 	const char *umount_argv[4] = { "/bin/umount", "-l", NULL, NULL };
@@ -384,8 +391,19 @@ force_unmount (HalDevice * d)
 	int umount_exitcode;
 
 	device_file = hal_device_property_get_string (d, "block.device");
-	device_mount_point =
-	    hal_device_property_get_string (d, "volume.mount_point");
+	device_mount_point = hal_device_property_get_string (d, "volume.mount_point");
+
+	/* Only attempt to 'umount -l' if some hal policy piece are performing policy on the device */
+	storudi = hal_device_property_get_string (d, "block.storage_device");
+	if (storudi == NULL)
+		return;
+	stordev = hal_device_store_find (hald_get_gdl (), storudi);
+	if (stordev == NULL)
+		return;
+	HAL_INFO (("foo = %d", hal_device_property_get_bool (stordev, "storage.policy.should_mount")));
+	if ((!hal_device_has_property (stordev, "storage.policy.should_mount")) ||
+	    (!hal_device_property_get_bool (stordev, "storage.policy.should_mount")))
+		return;
 
 	umount_argv[2] = device_file;
 
@@ -861,7 +879,17 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			break;
 			
 		case CDS_DISC_OK:
-			got_media = TRUE;
+			/* some CD-ROMs report CDS_DISK_OK even with an open
+			 * tray; if media check has the same value two times in
+			 * a row then this seems to be the case and we must not
+			 * report that there is a media in it. */
+			if (hal_device_property_get_bool (d, "storage.cdrom.support_media_changed") &&
+			    ioctl (fd, CDROM_MEDIA_CHANGED, CDSL_CURRENT) && 
+			    ioctl (fd, CDROM_MEDIA_CHANGED, CDSL_CURRENT)) {
+				/*HAL_INFO (("CD-ROM drive %s: media checking is broken, assuming no CD is inside.", device_file));*/
+			} else {
+			    got_media = TRUE;
+			}
 			break;
 			
 		case -1:
@@ -948,7 +976,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 
 	child = get_child_device_gdl (d);
 	if (child == NULL) {
-		get_child_device_tdl (d);
+		child = get_child_device_tdl (d);
 	}
 	if (child != NULL) {
 		return FALSE;
@@ -1366,43 +1394,19 @@ block_class_pre_process (ClassDeviceHandler *self,
 	HAL_INFO (("Bus type is %s!",
 		   hal_device_property_get_string (parent, "info.bus")));
 
-	if (strcmp (hal_device_property_get_string (parent, "info.bus"),
-			    "ide") == 0) {
+	if (strcmp (hal_device_property_get_string (parent, "info.bus"), "ide") == 0) {
 		const char *ide_name;
 		char *model;
 		char *media;
 
+		/* Be conservative and don't poll IDE drives at all */
+		hal_device_property_set_bool (d, "storage.media_check_enabled", FALSE);
 
-		/* blacklist the broken ide-cs driver */
-		if (physdev != NULL) {
-			size_t len;
-			char buf[256];
-			const char *physdev_sysfs_path;
-			
-			snprintf (buf, 256, "%s/devices/ide", sysfs_mount_path);
-			len = strlen (buf);
-			
-			physdev_sysfs_path = hal_device_property_get_string (physdev, "linux.sysfs_path");
-			
-			if (strncmp (physdev_sysfs_path, buf, len) == 0) {
-				hal_device_property_set_bool (stordev, "storage.media_check_enabled", FALSE);
-			}
-			
-			HAL_INFO (("Working around broken ide-cs driver for %s", physdev->udi));
-		}
-
-
-		ide_name = get_last_element (hal_device_property_get_string
-					     (d, "linux.sysfs_path"));
-
+		ide_name = get_last_element (hal_device_property_get_string (d, "linux.sysfs_path"));
 		model = read_single_line ("/proc/ide/%s/model", ide_name);
 		if (model != NULL) {
-			hal_device_property_set_string (stordev,
-							"storage.model",
-							model);
-			hal_device_property_set_string (d, 
-							"info.product",
-							model);
+			hal_device_property_set_string (stordev, "storage.model", model);
+			hal_device_property_set_string (d, "info.product", model);
 		}
 
 		/* According to the function proc_ide_read_media() in 
@@ -1411,38 +1415,21 @@ block_class_pre_process (ClassDeviceHandler *self,
 		 * "UNKNOWN"
 		 */
 		
-		/** @todo Given floppy how
-		 *        do we determine it's LS120?
-		 */
-			
-		media = read_single_line ("/proc/ide/%s/media",
-					  ide_name);
+		media = read_single_line ("/proc/ide/%s/media", ide_name);
 		if (media != NULL) {
-			hal_device_property_set_string (stordev, 
-							"storage.drive_type",
-							media);
+			hal_device_property_set_string (stordev, "storage.drive_type", media);
 			
 			/* Set for removable media */
 			if (strcmp (media, "disk") == 0) {
 				/* left blank */
 			} else if (strcmp (media, "cdrom") == 0) {
 				has_removable_media = TRUE;
+				/* cdroms are the only IDE devices that are safe to poll */
+				hal_device_property_set_bool (d, "storage.media_check_enabled", TRUE);
 			} else if (strcmp (media, "floppy") == 0) {
 				has_removable_media = TRUE;
-
-				/* I've got a LS120 that identifies as a
-				 * floppy; polling doesn't work so disable
-				 * media check and automount
-				 */
-				hal_device_property_set_bool (
-					d, "storage.media_check_enabled", FALSE);
-				hal_device_property_set_bool (
-					d, "storage.automount_enabled_hint", FALSE);
-
 			} else if (strcmp (media, "tape") == 0) {
 				has_removable_media = TRUE;
-
-				/* TODO: Someone test with tape drives! */
 			}			
 		}
 
@@ -1459,12 +1446,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 			did = drive_id_open_node(device_file);
 			if (drive_id_probe(did, DRIVE_ID_ATA) == 0) {
 				if (did->serial[0] != '\0')
-					hal_device_property_set_string (stordev, 
-									"storage.serial",
-									did->serial);
+					hal_device_property_set_string (stordev, "storage.serial", did->serial);
 				if (did->firmware[0] != '\0')
-					hal_device_property_set_string (stordev, 
-									"storage.firmware_version",
+					hal_device_property_set_string (stordev, "storage.firmware_version", 
 									did->firmware);
 			}
 			drive_id_close(did);
@@ -2020,6 +2004,7 @@ static dbus_bool_t have_setup_watcher = FALSE;
 static gboolean
 mtab_handle_storage (HalDevice *d)
 {
+	const char *device_file;
 	HalDevice *child;
 	int major, minor;
 	dbus_bool_t found_mount_point;
@@ -2037,11 +2022,15 @@ mtab_handle_storage (HalDevice *d)
 
 	major = hal_device_property_get_int (d, "block.major");
 	minor = hal_device_property_get_int (d, "block.minor");
+	device_file = hal_device_property_get_string (d, "block.device");
+
 
 	/* See if we already got children */
 	child = get_child_device_gdl (d);
-	if (child == NULL)
-		get_child_device_tdl (d);
+
+	if (child == NULL) {
+		child = get_child_device_tdl (d);
+	}
 
 	/* Search all mount points */
 	found_mount_point = FALSE;
@@ -2049,8 +2038,13 @@ mtab_handle_storage (HalDevice *d)
 
 		mp = &mount_points[i];
 
-		if (mp->major != major || mp->minor != minor)
-			continue;
+		if (strcmp (device_file, mp->device) == 0) {
+			/* looks good */
+		} else {
+			/* device file don't match; try matching up major/minor numbers */
+			if (mp->major != major || mp->minor != minor)
+				continue;
+		}
 
 		if (child != NULL ) {
 			found_mount_point = TRUE;
@@ -2073,6 +2067,7 @@ mtab_handle_storage (HalDevice *d)
 static gboolean
 mtab_handle_volume (HalDevice *d)
 {
+	const char *device_file;
 	int major, minor;
 	dbus_bool_t found_mount_point;
 	struct mount_point_s *mp;
@@ -2082,6 +2077,7 @@ mtab_handle_volume (HalDevice *d)
 
 	major = hal_device_property_get_int (d, "block.major");
 	minor = hal_device_property_get_int (d, "block.minor");
+	device_file = hal_device_property_get_string (d, "block.device");
 
 	/* these are handled in mtab_handle_storage */
 	storudi = hal_device_property_get_string (d, "block.storage_device");
@@ -2095,36 +2091,27 @@ mtab_handle_volume (HalDevice *d)
 	found_mount_point = FALSE;
 	for (i = 0; i < num_mount_points; i++) {
 		mp = &mount_points[i];
-			
-		if (mp->major == major && mp->minor == minor) {
+
+	
+		/* match on both device file and major/minor numbers */
+		if ((strcmp (device_file, mp->device) == 0) || (mp->major == major && mp->minor == minor)) {
 			const char *existing_block_device;
 			dbus_bool_t was_mounted;
 
 			device_property_atomic_update_begin ();
 
-			existing_block_device =
-				hal_device_property_get_string (d,
-								"block.device");
+			existing_block_device = hal_device_property_get_string (d, "block.device");
 
-			was_mounted =
-				hal_device_property_get_bool (d,
-							      "volume.is_mounted");
+			was_mounted = hal_device_property_get_bool (d, "volume.is_mounted");
 
 			/* Yay! Found a mount point; set properties accordingly */
-			hal_device_property_set_string (d,
-							"volume.mount_point",
-							mp->mount_point);
-			hal_device_property_set_string (d, "volume.fstype",
-							mp->fs_type);
-			hal_device_property_set_bool (d,
-						      "volume.is_mounted",
-						      TRUE);
+			hal_device_property_set_string (d, "volume.mount_point", mp->mount_point);
+			hal_device_property_set_string (d, "volume.fstype", mp->fs_type);
+			hal_device_property_set_bool (d, "volume.is_mounted", TRUE);
 
 			/* only overwrite block.device if it's not set */
-			if (existing_block_device == NULL ||
-			    (existing_block_device != NULL &&
-			     strcmp (existing_block_device,
-				     "") == 0)) {
+			if (existing_block_device == NULL || (existing_block_device != NULL &&
+			     strcmp (existing_block_device, "") == 0)) {
 				hal_device_property_set_string (d,
 								"block.device",
 								mp->
@@ -2239,7 +2226,7 @@ mtab_foreach_device (HalDeviceStore *store, HalDevice *d,
  *
  *  @param  force               Force reading of mtab
  */
-static void
+void
 etc_mtab_process_all_block_devices (dbus_bool_t force)
 {
 	/* Start or continue watching /etc */

@@ -260,10 +260,11 @@ mii_get_link (HalDevice *d)
 	else
 		hal_device_property_set_bool (d, "net.80203.link", FALSE);
 
+	close (sockfd);
+
 	/* Also get the link rate */
 	mii_get_rate (d);
 
-	close (sockfd);
 }
 
 static void

@@ -258,7 +258,7 @@ hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalSt
 
 
 		first = "CD-ROM";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_CDROM)
+		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_CDR)
 			first = "CD-R";
 		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_CDRW)
 			first = "CD-RW";
@@ -870,7 +870,16 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 			drive->type = HAL_DRIVE_TYPE_SMART_MEDIA;
 		} else if (strcmp (drive->type_textual, "sd_mmc") == 0) {
 			drive->type = HAL_DRIVE_TYPE_SD_MMC;
+/*
+		} else if (strcmp (drive->type_textual, "zip") == 0) {
+			drive->type = HAL_DRIVE_TYPE_ZIP;
+		} else if (strcmp (drive->type_textual, "jaz") == 0) {
+			drive->type = HAL_DRIVE_TYPE_JAZ;
+*/
+		} else {
+		        drive->type = HAL_DRIVE_TYPE_DISK; 
 		}
+
 	}
 
 	/* check if physical device is a camera or mp3 player */

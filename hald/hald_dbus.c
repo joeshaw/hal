@@ -1339,7 +1339,7 @@ device_query_capability (DBusConnection * connection,
 		char **capsv, **iter;
 
 		capsv = g_strsplit (caps, " ", 0);
-		for (iter = capsv; iter != NULL; iter++) {
+		for (iter = capsv; *iter != NULL; iter++) {
 			if (strcmp (*iter, capability) == 0) {
 				rc = TRUE;
 				break;

@@ -532,6 +532,48 @@ handle_match (ParsingContext * pc, const char **attr)
 			else
 				return TRUE;
 		}
+	} else if (strcmp (attr[2], "contains") == 0) {
+		const char *needle;
+		dbus_bool_t contains = FALSE;
+
+		needle = attr[3];
+
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+			return FALSE;
+
+		if (hal_device_has_property (d, prop_to_check)) {
+			const char *haystack;
+
+			haystack = hal_device_property_get_string (d, prop_to_check);
+			if (needle != NULL && haystack != NULL && strstr (haystack, needle)) {
+				contains = TRUE;
+			}
+
+		}
+		return contains;
+	} else if (strcmp (attr[2], "contains_ncase") == 0) {
+		const char *needle;
+		dbus_bool_t contains_ncase = FALSE;
+
+		needle = attr[3];
+
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+			return FALSE;
+
+		if (hal_device_has_property (d, prop_to_check)) {
+			char *needle_lowercase;
+			char *haystack_lowercase;
+
+			needle_lowercase   = g_utf8_strdown (needle, -1);
+			haystack_lowercase = g_utf8_strdown (hal_device_property_get_string (d, prop_to_check), -1);
+			if (needle_lowercase != NULL && haystack_lowercase != NULL && strstr (haystack_lowercase, needle_lowercase)) {
+				contains_ncase = TRUE;
+			}
+
+			g_free (needle_lowercase);
+			g_free (haystack_lowercase);
+		}
+		return contains_ncase;
 	} else if (strcmp (attr[2], "compare_lt") == 0) {
 		dbus_int64_t result;
 		if (!match_compare_property (d, prop_to_check, attr[3], &result)) {

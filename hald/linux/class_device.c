@@ -202,15 +202,11 @@ class_device_visit (ClassDeviceHandler *self,
 
 	} else {
 		if (sysdevice != NULL) {
-			what_to_find = get_parent_sysfs_path (sysdevice->path);
+			hal_target = find_closest_ancestor (sysdevice->path);
 		} else {
-			what_to_find = "(none)"; /* DZE: Yikes, hack to get added as a child to 'computer'? */
+			hal_target = find_computer ();
 		}
 
-		/* find the sysdevice we should be a child of */
-		hal_target = hal_device_store_match_key_value_string (hald_get_gdl (), 
-								      "linux.sysfs_path_device", 
-								      what_to_find);
 		if (hal_target == NULL)
 			goto error;
 

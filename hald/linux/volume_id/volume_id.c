@@ -571,7 +571,7 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 				p->partition_type_raw = part[i].sys_ind;
 
 				if (id->partition_count >= VOLUME_ID_PARTITIONS_MAX) {
-					dbg("to many partitions");
+					dbg("too many partitions");
 					next = 0;
 				}
 			}
@@ -2014,6 +2014,8 @@ int volume_id_probe(struct volume_id *id,
 {
 	int rc;
 
+	dbg("called with size=0x%llx", size);
+
 	if (id == NULL)
 		return -EINVAL;
 
@@ -2088,9 +2090,6 @@ int volume_id_probe(struct volume_id *id,
 			break;
 
 		/* signature in the first block, only small buffer needed */
-		rc = probe_msdos_part_table(id, off);
-		if (rc == 0)
-			break;
 		rc = probe_vfat(id, off);
 		if (rc == 0)
 			break;

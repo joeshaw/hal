@@ -87,7 +87,6 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 {
 	HalDevice *d;
 	HalDevice *parent;
-	char *parent_sysfs_path;
 	BusAsyncData *bad;
 	char buf[256];
 
@@ -107,8 +106,6 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 	snprintf (buf, sizeof(buf), "%s.linux.sysfs_path", self->hal_bus_name);
 	hal_device_property_set_string (d, buf, path);
 
-	parent_sysfs_path = get_parent_sysfs_path (path);
-
 	bad = g_new0 (BusAsyncData, 1);
 	bad->device = d;
 	bad->handler = self;
@@ -121,13 +118,13 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 		goto out;
 	} 
 
+
 	/* Find parent; this can happen synchronously as our parent is
 	 * sure to be added before us (we probe devices in the right order
 	 * and we reorder hotplug events)
 	 */
-	parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
-							  "linux.sysfs_path_device", 
-							  parent_sysfs_path);
+	parent = find_closest_ancestor (path);
+
 	if (parent == NULL) {
 		hal_device_store_remove (hald_get_tdl (), d);
 		d = NULL;
@@ -137,7 +134,6 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 	bus_device_got_parent (hald_get_gdl(), parent, bad);
 
 out:
-	free (parent_sysfs_path);
 	return d;
 }
 

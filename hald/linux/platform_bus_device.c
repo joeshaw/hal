@@ -204,6 +204,17 @@ platform_device_pre_process (BusDeviceHandler *self,
 					"storage");
 }
 
+static void 
+platform_device_in_gdl (BusDeviceHandler *self,
+		   	HalDevice *d,
+		   	const char *udi)
+{
+	if (hal_device_has_capability (d, "storage")) {
+		/* Check the mtab to see if the device is mounted */
+		etc_mtab_process_all_block_devices (TRUE);
+	}
+}
+
 
 /** Method specialisations for bustype pci */
 BusDeviceHandler platform_bus_handler = {
@@ -216,7 +227,7 @@ BusDeviceHandler platform_bus_handler = {
 	platform_device_compute_udi,  /**< UDI computing function */
 	platform_device_pre_process,  /**< add more properties */
 	platform_device_got_udi,      /**< got UDI */
-	bus_device_in_gdl,            /**< in GDL */
+	platform_device_in_gdl,       /**< in GDL */
 	"platform",                   /**< sysfs bus name */
 	"platform"                    /**< namespace */
 };

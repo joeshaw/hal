@@ -1,7 +1,162 @@
+2004-12-13  David Zeuthen  <davidz@redhat.com>
+
+	Merged all changes from the stable branch so HEAD is on par.
+
+2004-12-10  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/net_class_device.c (mii_get_link): Close the fd for link
+	detection before getting the rate	
+
 2004-12-08  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Add battery.* properties - Patch from
 	Sergey Udaltsov <sergey.udaltsov@gmail.com>; slightly mangled.
+
+2004-12-08  David Zeuthen  <davidz@redhat.com>
+
+	* tools/fstab-sync.c (fs_table_line_is_mounted): Patch from Sjoerd
+	Simons <sjoerd@luon.net>.  Running fclose on some random memory
+	will crash the program. Fixed in attached patch.
+
+2004-12-08  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/block_class_device.c (detect_media): Patch from
+	Martin Pitt <martin@piware.de>.
+	Media change detection for CD-ROMs does not work on some broken
+	CD-ROM devices. There are some devices where the
+	CDROM_DRIVE_STATUS ioctl returns CDS_DISK_OK even when the tray is
+	open. This has the consequence that the event of inserting a CD is
+	not recognized by hal.
+	If the CD-ROM reports CDS_DISK_OK, then CDROM_MEDIA_CHANGED should
+	be checked twice. If it returns two different values, then there
+	really was a media change and got_media can be set to true. OTOH,
+	if both CDROM_MEDIA_CHANGED events return the same value, then the
+	tray is still open and we must not assume that there is already a
+	CD in the drive.
+	Second, for deciding the value of storage.cdrom.support_media_changed
+	hald should not use the CDROM_MEDIA_CHANGED ioctl() (which returns
+	the current state), but the CDC_MEDIA_CHANGED capability.
+
+2004-12-08  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/block_class_device.c (block_class_pre_process): Only
+	poll IDE if they are CD-ROM drives and use a better criteria for 
+	finding out whether this is the case
+
+2004-12-08  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald_dbus.c (device_query_capability): Fix crasher; reported by
+	leon breedt <bitserf@gmail.com>.
+
+2004-12-06  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/20freedesktop/ide-drives.fdi: Fix <device> to be </device> so
+	we don't get errors evaluating the file. From Martin Pitt 
+	<martin@piware.de> and also RH bug #141771.
+
+2004-12-01  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Bump to 0.4.2
+
+2004-11-30  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/20freedesktop/ide-drives.fdi: Add blacklist for certain slave
+	IDE drives on Dell Laptops - stopgap solution for now (RH Bug #138148)
+
+	* fdi/20freedesktop/usb-zip-drives.fdi: Fix a syntax error
+
+	* hald/linux/osspec.c (compute_coldplug_visit_device): Don't spew
+	too much debug now that we ascent into the tree down to the leafs
+
+	* libhal-storage/libhal-storage.c (hal_drive_from_udi): Comment out
+	types for ZIP and JAZ drives since that will require ABI changes
+
+	* libhal-storage/libhal-storage.h: -do-
+
+2004-11-30  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/osspec.c (compute_coldplug_visit_device): Descent down
+	the to leafs of the /sys/devices tree but dont follow symlinks - done
+	such that we can process sysfs trees with holes in them (cf. SCSI
+	midlayer changes for kernel 2.6.10)
+
+	* hald/linux/common.h: Remove prototypes for get_parent_sysfs_path()
+	and add find_closest_ancestor(), find_computer()
+
+	* hald/linux/common.c (find_closest_ancestor): New function - such
+	that we can process sysfs trees with holes in them (cf. SCSI
+	midlayer changes for kernel 2.6.10)
+	(get_parent_sysfs_path): Make this static
+	(find_computer): New function
+
+	* hald/linux/class_device.c (class_device_visit): Use new function
+	find_closest_ancestor() instead of get_parent_sysfs_path
+
+	* hald/linux/bus_device.c (bus_device_visit): Use new function
+	find_closest_ancestor() instead of get_parent_sysfs_path
+
+	* hald/linux/block_class_device.c (block_class_visit): Use new
+	function find_closest_ancestor() instead of get_parent_sysfs_path
+
+2004-11-22  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/volume_id/volume_id.c (volume_id_probe): Add some
+	logging of what size we call volume_id_probe with
+
+	* hald/linux/block_class_device.c (force_unmount): Only attempt to
+	'umount -l' if some hal policy piece are performing policy on the
+	device
+
+2004-11-22  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c (hal_drive_from_udi): Detect Zip
+	and Jaz drives
+	(hal_drive_policy_compute_display_name): Fix an ugly bug where
+	CD-ROM drives were being named "CD-R" instead of "CD-ROM"
+
+	* libhal-storage/libhal-storage.h: Add enums for Zip and Jaz drives
+
+	* hald/linux/platform_bus_device.c (platform_device_in_gdl): New
+	function. Actually check the /etc/mtab for whether the floppy is
+	mounted
+
+	* hald/linux/common.h: Add prototype for 
+	etc_mtab_process_all_block_devices
+
+	* hald/linux/block_class_device.c (block_class_visit): Never add
+	child real childs (e.g. /dev/hdd4) if storage.no_partitions_hint is
+	set (for IDE Zip Drives)
+	(detect_media): Actually set child to what we find in the TDL
+	(mtab_handle_storage): Match on device file before attempting to
+	match on major/minor
+	(mtab_handle_volume): -do-
+
+	* hald/device_info.c (handle_match): Add the contains and 
+	contains_ncase matching operators.
+
+	* fdi/90defaultpolicy/storage-policy.fdi: Add some policy pieces for
+	IDE Zip, Jaz and USB Zip drives
+
+	* fdi/20freedesktop/usb-zip-drives.fdi: New file to identify USB
+	Zip Drives
+
+	* fdi/20freedesktop/ide-drives.fdi: New file to identify strange IDE
+	drives such as Zip and Jaz drives; note that rewriting the device
+	file from e.g. /dev/hdd to /dev/hdd4  is actually sane enough to
+	do given the abstraction that hal exports :-)
+
+2004-11-16  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/90defaultpolicy/storage-policy.fdi: Remove the "ro" option for
+	optical drives as it prevents mounting rw DVD-RAM media (RH bug #139600)
+
+	* hald/linux/volume_id/volume_id.h (VOLUME_ID_PARTITIONS_MAX): Increase
+	to 256 (RH bug #139227)
+
+	* hald/linux/volume_id/volume_id.c (probe_msdos_part_table): Fix a
+	typo ("to many partitions" -> "too many partitions"
+	(volume_id_probe): Do not probe for msdos_part_table since that doesn't
+	make sense (../block_class_device.c does that instead)
 
 2004-11-08  David Zeuthen  <davidz@redhat.com>
 

@@ -68,7 +68,9 @@ typedef char *(*ComputeFDI) (HalDevice * d, int append_num);
 
 char *rename_and_merge (HalDevice *d, ComputeFDI naming_func, const char *namespace);
 
-char *get_parent_sysfs_path (const char *path);
+HalDevice * find_closest_ancestor (const char *sysfs_path);
+
+HalDevice * find_computer ();
 
 dbus_bool_t class_device_get_major_minor (const char *sysfs_path, int *major, int *minor);
 
@@ -92,6 +94,8 @@ void drivers_collect (const char *bus_name);
 #define HAL_LINUX_HOTPLUG_TIMEOUT 60000
 
 dbus_bool_t got_parent (const char *sysfs_path);
+
+void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
 extern char sysfs_mount_path[SYSFS_PATH_MAX];
 

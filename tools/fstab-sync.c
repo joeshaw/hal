@@ -1506,7 +1506,7 @@ error:
 
 static boolean fs_table_line_is_mounted (FSTableLine *line)
 {
-  FILE *f;
+  FILE *f = NULL;
   boolean is_mounted = FALSE;
   struct mntent *m;
 

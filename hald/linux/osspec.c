@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include <glib.h>
@@ -630,7 +631,7 @@ compute_coldplug_visit_device (const gchar *path, GSList **coldplug_list)
 	GError *err;
 	GDir *dir;
 	const gchar *f;
-		
+
 	bus = g_hash_table_lookup (sysfs_to_bus_map, path);
 	if (bus != NULL) {
 		for (i = 0; bus_device_handlers[i] != NULL; i++) {	
@@ -681,22 +682,29 @@ compute_coldplug_visit_device (const gchar *path, GSList **coldplug_list)
 						 h_string_pair_new (g_strdup (path), g_strdup (bus)));
 		goto found;
 	}
-	return;
 
 found:
 
 	/* visit children */
+	err = NULL;
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-		HAL_ERROR (("Unable to open %: %s", path, err->message));
+		/*HAL_ERROR (("Unable to open directory: %s", path, err->message));*/
 		g_error_free (err);
 		goto error;
 	}
 	while ((f = g_dir_read_name (dir)) != NULL) {
 		gchar path_child[SYSFS_PATH_MAX];
-		
+		struct stat statbuf;
+	
 		g_snprintf (path_child, SYSFS_PATH_MAX, "%s/%s", path, f);
-		
-		compute_coldplug_visit_device (path_child, coldplug_list);
+
+		if (lstat (path_child, &statbuf) == 0) {
+
+			if (!S_ISLNK (statbuf.st_mode)) {
+				/* recursion fun */
+				compute_coldplug_visit_device (path_child, coldplug_list);
+			}
+		}
 	}
 	g_dir_close (dir);
 

@@ -590,13 +590,57 @@ tryagain:
 	return computed_udi;
 }
 
+/** Find the closest ancestor by looking at sysfs paths
+ *
+ *  @param  sysfs_path           Path into sysfs, e.g. /sys/devices/pci0000:00/0000:00:1d.7/usb1/1-0:1.0
+ *  @return                      Parent Hal Device Object or #NULL if there is none
+ */
+HalDevice *
+find_closest_ancestor (const char *sysfs_path)
+{	
+	char buf[512];
+	HalDevice *parent;
+
+	parent = NULL;
+
+	strncpy (buf, sysfs_path, sizeof (buf));
+	do {
+		char *p;
+
+		p = strrchr (buf, '/');
+		if (p == NULL)
+			break;
+		*p = '\0';
+
+		parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
+								  "linux.sysfs_path_device", 
+								  buf);
+		if (parent != NULL)
+			break;
+
+	} while (TRUE);
+
+	return parent;
+}
+
+HalDevice * find_computer ()
+{
+	HalDevice *d;
+	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
+						     "linux.sysfs_path_device", 
+						     "(none)");
+	return d;
+}
+
+
 /** Given a sysfs-path for a device, this functions finds the sysfs
  *  path representing the parent of the given device by truncation.
  *
  *  @param  path                Sysfs-path of device to find parent for
- *  @return                     Path for parent; must be freed by caller
+ *  @return                     Path for parent or NULL if there is no parent; 
+ *                              must be freed by caller
  */
-char *
+static char *
 get_parent_sysfs_path (const char *path)
 {
 	int i;

@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->HAL 0.4.0 Specification</TITLE
+>HAL 0.4.2 Specification</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
@@ -24,7 +24,7 @@ CLASS="TITLEPAGE"
 CLASS="title"
 ><A
 NAME="AEN2"
->HAL 0.4.0 Specification</A
+>HAL 0.4.2 Specification</A
 ></H1
 ><H3
 CLASS="author"
@@ -51,7 +51,7 @@ HREF="mailto:david@fubar.dk"
 ></DIV
 ><SPAN
 CLASS="releaseinfo"
->Version 0.4.0<BR></SPAN
+>Version 0.4.2<BR></SPAN
 ><HR></DIV
 ><DIV
 CLASS="TOC"
@@ -358,6 +358,14 @@ CLASS="literal"
 >camera</TT
 > namespace</A
 ></DT
+><DT
+><A
+HREF="#device-properties-battery"
+><TT
+CLASS="literal"
+>battery</TT
+> namespace</A
+></DT
 ></DL
 ></DD
 ><DT
@@ -456,21 +464,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2141"
+HREF="#AEN2281"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2152"
+HREF="#AEN2292"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2160"
+HREF="#AEN2300"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -634,7 +642,7 @@ CLASS="CALSTABLE"
 ></TR
 ><TR
 ><TD
->0.4.0</TD
+>0.4.2</TD
 ><TD
 >&nbsp;</TD
 ><TD
@@ -5791,6 +5799,388 @@ CLASS="literal"
 ></P
 ></DIV
 ></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-battery"
+><TT
+CLASS="literal"
+>battery</TT
+> namespace</A
+></H3
+><P
+>&#13;      
+	Device objects with the capability <TT
+CLASS="literal"
+>battery</TT
+>
+	represent all the devices having some battery (in many cases - 
+	rechargeable) inside. 
+	The following properties are available:
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1810"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		This property defines the type of the device holding the 
+	        battery. This property is defined for the development 
+		simplicity - battery indicators can use it to find the
+		proper iconic representation.
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>pda</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		The device containing the battery is a personal digital 
+		assistant, e.g. a device that looks like a handheld computer
+		to do specific tasks such as keeping notes or containing
+		a personal database
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>ups</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+> 
+		A battery powered power supply that is
+		guaranteed to provide power to a computer in the event of
+		interruptions in the incoming electrical power. Most of the
+		time this is an external device.
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>primary</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		The battery is a primary power source for the system - an
+		example are laptop batteries.
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>mouse</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		The device containing the battery is a mouse.
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>keyboard</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		The device containing the battery is a keyboard.
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>camera</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		The device containing the battery is a camera.
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>unknown</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		The device containing the battery is not covered by other types.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.charge_level.unit</TT
+> (string)</TD
+><TD
+>Examples: <TT
+CLASS="literal"
+>mWatt</TT
+>, <TT
+CLASS="literal"
+>VA</TT
+></TD
+><TD
+>No</TD
+><TD
+>&#13;		The physical unit used by the charge level properties 
+		(maximum and current). In many cases, this property is empty
+		- which indicates that the charge properties are measured in
+		some unknown units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.charge_level.maximum.specified</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The maximum level of charge which the device can hold. 
+	        Measured in <TT
+CLASS="literal"
+>"battery.charge_level.unit"</TT
+>
+		units. It should  represent theoretical limit as specified
+		in the documentation.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.charge_level.maximum.real</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The maximum level of charge which the device can hold, 
+	      	taking its age into account. Measured in 
+		<TT
+CLASS="literal"
+>"battery.charge_level.unit"</TT
+> units. As the 
+		battery gets older, this value can degrade - it should 
+		represent the practical limit, not the theoretical one. 
+		The user-level apps  should use this value, if present, 
+		in all the percentage calculations.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.charge_level.current</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The current level of charge which the device can hold. 
+	        Measured in <TT
+CLASS="literal"
+>"battery.charge_level.unit"</TT
+> 
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.is_rechargeable</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		True if the battery unit is rechargeable, false if its is 
+	        one-time (disposable after one usage).
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.rechargeable.is_charging</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if <TT
+CLASS="literal"
+>battery.is_rechargeable</TT
+> is TRUE</TD
+><TD
+>&#13;		True if the device is charging, false otherwise.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.rechargeable.time_to_charge</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The time (measured in seconds) necessary for the 
+                rechargeable device to charge fully.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.time_to_discharge</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The expected worktime of the device (measured in 
+                seconds), without recharging, from the current moment.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.command_interface</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The abstract name allowing daemons and/or user-level apps 
+	        to distinguish some groups of devices having similar 
+		programming  interface. Introduced mostly for the daemons' 
+		coding simplicity.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.vendor</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Vendor of the battery.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.model</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Make of the battery.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.serial</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		A string uniquely identifying the instance of the battery; 
+		it will be different for two (otherwise) identical batteries.
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
 ></DIV
 ><DIV
 CLASS="sect1"
@@ -5830,7 +6220,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1812"
+NAME="AEN1952"
 ></A
 ><TABLE
 BORDER="1"
@@ -5989,7 +6379,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1864"
+NAME="AEN2004"
 ></A
 ><TABLE
 BORDER="1"
@@ -6118,7 +6508,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1905"
+NAME="AEN2045"
 ></A
 ><TABLE
 BORDER="1"
@@ -6874,6 +7264,12 @@ CLASS="programlisting"
 	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
       &#60;/match&#62;
     &#60;/match&#62;
+    &#60;!-- Also add SCSI optical drives --&#62;
+    &#60;match key="storage.bus" string="scsi"&#62;
+      &#60;match key="storage.drive_type" string="cdrom"&#62;
+        &#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
 
     &#60;!-- Handle drives with non-partitioned media  --&#62;
     &#60;match key="storage.no_partitions_hint" bool="true"&#62;
@@ -6881,7 +7277,6 @@ CLASS="programlisting"
       &#60;match key="storage.drive_type" string="cdrom"&#62;
 	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
 	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrom&#60;/merge&#62;
-	&#60;merge key="storage.policy.mount_option.ro" type="bool"&#62;true&#60;/merge&#62;
 	&#60;match key="storage.cdrom.cdr" bool="true"&#62;
 	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
 	&#60;/match&#62;
@@ -6907,10 +7302,29 @@ CLASS="programlisting"
 	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
 	&#60;/match&#62;
       &#60;/match&#62;
+
       &#60;!-- floppy drives --&#62;
       &#60;match key="storage.drive_type" string="floppy"&#62;
 	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
 	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;floppy&#60;/merge&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+
+      &#60;!-- zip drives --&#62;
+      &#60;match key="storage.drive_type" string="zip"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+
+      &#60;!-- jaz drives --&#62;
+      &#60;match key="storage.drive_type" string="jaz"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;jaz&#60;/merge&#62;
 	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
 	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
 	&#60;/match&#62;
@@ -6930,6 +7344,11 @@ CLASS="programlisting"
 	       idedisk, scsidisk etc. --&#62;
 	  &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;@block.storage_device:storage.bus&#60;/merge&#62;
 	  &#60;append key="volume.policy.desired_mount_point" type="string"&#62;disk&#60;/append&#62;
+
+         &#60;!-- zip drives --&#62;
+         &#60;match key="storage.drive_type" string="zip"&#62;
+ 	   &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
+         &#60;/match&#62;
 	  
           &#60;!-- Best: If available use filesystem label --&#62;
           &#60;match key="volume.label" empty="false"&#62;
@@ -6966,11 +7385,11 @@ CLASS="programlisting"
 	       volumes smaller than 2GB --&#62;
 	  &#60;match key="volume.size" compare_lt="2147483648"&#62;
 	    &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
-	      &#60;merge key="volume.policy.mount_option.async" type="bool"&#62;true&#60;/merge&#62;
+	      &#60;merge key="volume.policy.mount_option.sync" type="bool"&#62;true&#60;/merge&#62;
 	      &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
 	    &#60;/match&#62;
 	    &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
-	      &#60;merge key="volume.policy.mount_option.async" type="bool"&#62;true&#60;/merge&#62;
+	      &#60;merge key="volume.policy.mount_option.sync" type="bool"&#62;true&#60;/merge&#62;
 	      &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
 	    &#60;/match&#62;
 	  &#60;/match&#62;
@@ -7011,10 +7430,20 @@ CLASS="programlisting"
 	    &#60;match key="volume.partition.msdos_part_table_type" int="0x0e"&#62;
 	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
 	    &#60;/match&#62;
-	  &#60;/match&#62;
-
-	  
+	  &#60;/match&#62;	  
 	&#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+    
+  &#60;/device&#62;
+
+  &#60;!-- Dont want to mount non-hotpluggable fixed disks since ideraid
+       detection isnt complete as hald wrongly detects e.g. partitions
+       from some IDE RAID controllers --&#62;
+  &#60;device&#62;
+    &#60;match key="storage.hotpluggable" bool="false"&#62;
+      &#60;match key="storage.removable" bool="false"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;false&#60;/merge&#62;
       &#60;/match&#62;
     &#60;/match&#62;
   &#60;/device&#62;
@@ -7118,7 +7547,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2099"
+NAME="AEN2239"
 ></A
 ><TABLE
 BORDER="1"
@@ -7278,7 +7707,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2141"
+NAME="AEN2281"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -7394,7 +7823,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2152"
+NAME="AEN2292"
 >Example</A
 ></H3
 ><P
@@ -7512,7 +7941,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2160"
+NAME="AEN2300"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
