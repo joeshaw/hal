@@ -1096,20 +1096,25 @@ rem_device (const char *sysfs_path, const char *subsystem, struct hald_helper_ms
 			HAL_WARNING (("Removal of class device at sysfs path %s is not yet implemented", sysfs_path));
 			goto out;
 		} else {
+			dbus_bool_t really_remove = TRUE;
 
 			for (i=0; class_device_handlers[i] != NULL; i++) {
 				ClassDeviceHandler *ch = class_device_handlers[i];
 				/** @todo TODO FIXME: just use ->accept() once we get rid of libsysfs */
 				if (strcmp (ch->hal_class_name, subsystem) == 0) {
-					ch->removed (ch, sysfs_path, hal_device);
+					really_remove = ch->removed (ch, sysfs_path, hal_device);
 				}
 
 			}
 
-			g_signal_connect (hal_device, "callouts_finished",
-					  G_CALLBACK (rem_device_callouts_finished), NULL);
-			HAL_INFO (("in remove_device for udi=%s", hal_device->udi));
-			hal_callout_device (hal_device, FALSE);
+			if (really_remove) {
+				g_signal_connect (hal_device, "callouts_finished",
+						  G_CALLBACK (rem_device_callouts_finished), NULL);
+				HAL_INFO (("in remove_device for udi=%s", hal_device->udi));
+				hal_callout_device (hal_device, FALSE);
+			} else {
+				hal_device = NULL;
+			}
 			goto out;
 		}
 	} else {

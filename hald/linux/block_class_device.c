@@ -157,13 +157,14 @@ ClassDeviceHandler block_class_handler;
 
 static dbus_bool_t
 block_class_accept (ClassDeviceHandler *self,
-		    const char *path,
+		    const char *sysfs_path,
 		    struct sysfs_class_device *class_device)
 {
 	int instance;
+	HalDevice *d;
 
 	/*HAL_INFO (("path = %s, classname = %s", 
-	  path, self->sysfs_class_name));*/
+	  sysfs_path, self->sysfs_class_name));*/
 
 	/* skip legacy floppies for now, until we get proper sysfs links to the
 	   platform device and switch over to merge floppies into that device.
@@ -171,10 +172,20 @@ block_class_accept (ClassDeviceHandler *self,
 	if (sscanf (class_device->name, "fd%d", &instance) == 1)
 		return FALSE;
 
+	/* ignore block devices we already have added (see where we refuse
+	 * to remove them in block_class_removed)
+	 */
+	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
+	if (d != NULL) {
+		HAL_INFO (("Ignoring block device add for %s since it is already in HAL (ide-cs?)", sysfs_path));
+		return FALSE;
+	}
+
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {
 		return TRUE;
 	}
+
 
 	return FALSE;
 }
@@ -492,6 +503,17 @@ volume_remove_from_gdl (HalDevice *device, gpointer user_data)
 	hal_device_store_remove (hald_get_gdl (), device);
 }
 
+static void
+volume_remove_from_gdl_sleep (HalDevice *device, gpointer user_data)
+{
+	g_signal_handlers_disconnect_by_func (device, volume_remove_from_gdl, 
+					      user_data);
+	/* extremely nasty hack */
+	HAL_INFO (("hnap 1"));
+	sleep (1);
+	hal_device_store_remove (hald_get_gdl (), device);
+}
+
 
 /** Check if a filesystem on a special device file is mounted
  *
@@ -578,27 +600,31 @@ volume_set_size (HalDevice *d, dbus_bool_t force)
 	storudi = hal_device_property_get_string (d, "block.storage_device");
 	stordev = hal_device_store_find (hald_get_gdl (), storudi);
 
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+	/* no-partition volumes don't have a sysfs path */
+	if (sysfs_path == NULL)
+		sysfs_path = hal_device_property_get_string (stordev, "linux.sysfs_path");
+	
+	if (sysfs_path == NULL)
+		return;
+
+	snprintf (attr_path, SYSFS_PATH_MAX, "%s/size", sysfs_path);
+	attr = sysfs_open_attribute (attr_path);
+	if (sysfs_read_attribute (attr) >= 0) {
+		num_blocks = atoi (attr->value);
+		
+		hal_device_property_set_int (d, "volume.num_blocks", num_blocks);
+		hal_device_property_set_int (d, "volume.block_size", 512);
+		HAL_INFO (("volume.num_blocks = %d", num_blocks));
+		sysfs_close_attribute (attr);
+
+		/* for some devices we can't open the device file (IDE devices) so assume one block is 512 bytes */
+		hal_device_property_set_uint64 (d, "volume.size", ((dbus_uint64_t)(512))*((dbus_uint64_t)num_blocks));
+	}
+
 	if (force || hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
 
-		sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
-		/* no-partition volumes don't have a sysfs path */
-		if (sysfs_path == NULL)
-			sysfs_path = hal_device_property_get_string (stordev, "linux.sysfs_path");
-
-		if (sysfs_path == NULL)
-			return;
-
 		device_file = hal_device_property_get_string (d, "block.device");
-
-		snprintf (attr_path, SYSFS_PATH_MAX, "%s/size", sysfs_path);
-		attr = sysfs_open_attribute (attr_path);
-		if (sysfs_read_attribute (attr) >= 0) {
-			num_blocks = atoi (attr->value);
-
-			hal_device_property_set_int (d, "volume.num_blocks", num_blocks);
-			HAL_INFO (("volume.num_blocks = %d", num_blocks));
-			sysfs_close_attribute (attr);
-		}
 
 		fd = open (device_file, O_RDONLY);
 		if (fd >= 0) {
@@ -1311,13 +1337,13 @@ block_class_pre_process (ClassDeviceHandler *self,
 			}
 
 		} else {
-			/* gee, so at least set volume.fstype vfat,msdos,auto so 
-			 * mount(1) doesn't screw up and causes hotplug events
+			/* gee, so at least set volume.fstype to auto..
 			 *
 			 * GRRRR!!!
 			 */
-			hal_device_property_set_string (d, "volume.fstype", "vfat,auto");
-			hal_device_property_set_string (d, "volume.usage", "filesystem");
+			hal_device_property_set_string (d, "volume.fstype", "auto");
+			hal_device_property_set_string (d, "volume.fsusage", "filesystem");
+			volume_set_size (d, FALSE);
 		}
 		return;
 	}
@@ -2258,16 +2284,39 @@ sigio_handler (int sig)
 }
 
 
-static void
+static dbus_bool_t
 block_class_removed (ClassDeviceHandler* self, 
 		     const char *sysfs_path, 
 		     HalDevice *d)
 {
 	HalDevice *child;
 
+	HAL_INFO (("entering, sysfs_path=%s", sysfs_path));
+
 	if (hal_device_has_property (d, "block.is_volume")) {
 		if (hal_device_property_get_bool (d, "block.is_volume")) {
+			const char *storudi;
+			HalDevice *stordev;
+			const char *storbus;
+
+			storudi = hal_device_property_get_string (d, "block.storage_device");
+			if (storudi != NULL) {
+				stordev = hal_device_store_find (hald_get_gdl (), storudi);
+				if (stordev != NULL) {
+					storbus = hal_device_property_get_string (stordev, "storage.bus");
+					if (storbus != NULL) {
+						if (strcmp (storbus, "ide") == 0) {
+							HAL_INFO (("Explicitly ignoring IDE block device remove for %s",
+								   sysfs_path));
+							return FALSE;
+						}
+					}
+				}
+			}
+
+
 			force_unmount (d);
+
 		} else {
 			force_unmount_of_all_childs (d);
 
@@ -2281,13 +2330,43 @@ block_class_removed (ClassDeviceHandler* self,
 
 				if (child != NULL) {
 					g_signal_connect (child, "callouts_finished",
-							  G_CALLBACK (volume_remove_from_gdl), NULL);
+							  G_CALLBACK (volume_remove_from_gdl_sleep), NULL);
 					hal_callout_device (child, FALSE);
 				}
+			} else {
+				GSList *children;
+
+				/* ensure all childs are gone (only applicable for block devices from IDE since 
+				 * they won't be deleted on hotplug remove we don't want that, cf. above)
+				 */
+				children = hal_device_store_match_multiple_key_value_string (
+					hald_get_gdl (),
+					"info.parent",
+					hal_device_get_udi (d));
+				
+				if (children != NULL) {
+					GSList *iter;
+
+					for (iter = children; iter != NULL; iter = iter->next) {
+						HalDevice *child = HAL_DEVICE (iter->data);
+
+						HAL_INFO (("Dumping child %s", child->udi));
+						if (child != NULL) {
+							g_signal_connect (child, "callouts_finished",
+									  G_CALLBACK (volume_remove_from_gdl_sleep), NULL);
+							hal_callout_device (child, FALSE);
+						}
+					}
+
+					g_slist_free (children);
+				}
+
 			}
 
 		}
 	}
+
+	return TRUE;
 }
 
 

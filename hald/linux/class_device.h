@@ -106,10 +106,12 @@ struct ClassDeviceHandler_s {
 	 *                        the class device in sysfs
 	 *  @param  d             The HalDevice object of the instance of
 	 *                        this device class
+	 *  @return               TRUE if the device should be removed; FALSE if
+	 *                        it shouldn't
 	 */
-	void (*removed) (ClassDeviceHandler* self, 
-			 const char *sysfs_path, 
-			 HalDevice *d);
+	dbus_bool_t (*removed) (ClassDeviceHandler* self, 
+				const char *sysfs_path, 
+				HalDevice *d);
 
 	/** Called when the device file (e.g. a file in /dev) have
 	 *  been created for a particual instance of this class device
@@ -250,9 +252,9 @@ HalDevice *class_device_visit (ClassDeviceHandler *self,
 			       const char *path,
 			       struct sysfs_class_device *class_device);
 
-void class_device_removed (ClassDeviceHandler* self, 
-			   const char *sysfs_path, 
-			   HalDevice *d);
+dbus_bool_t class_device_removed (ClassDeviceHandler* self, 
+				  const char *sysfs_path, 
+				  HalDevice *d);
 
 void class_device_udev_event (ClassDeviceHandler *self,
 			      HalDevice *d, char *dev_file);

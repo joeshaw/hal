@@ -1,3 +1,29 @@
+2004-10-19  David Zeuthen  <davidz@redhat.com>
+
+	Make PCMCIA card readers work by ignoring hotplug add and remove
+	on IDE partitions. Need to remove this code once the kernel is sane
+	again. For background (and some kernel hacker attitude :-) please see
+	https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=130232
+
+	* hald/linux/block_class_device.c:
+	(block_class_accept): Ignore block devices we already have added
+	(volume_remove_from_gdl_sleep): New function
+	(volume_set_size): Do a first estimate by assuming block size is 512
+	(block_class_pre_process): Set fstype to 'auto' and fsuage to 
+	'filesystem'
+	(block_class_removed): Don't remove if partition from IDE device.
+	Automatically remove volumes from a top-level block device if 
+	they indeed are not removed (which is the case for IDE hotplug)
+	
+	* hald/linux/class_device.c:
+	(class_device_removed): Return whether it should be removed
+	
+	* hald/linux/class_device.h: Changed return type from void to bool
+	for class_device_removed method
+	
+	* hald/linux/osspec.c:
+	(rem_device): Respect the return value of class_device_removed function
+
 2004-10-18  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Added ru and hu to ALL_LINGUAS

@@ -233,11 +233,12 @@ error:
  *  @param  d                  The HalDevice object of the instance of
  *                             this device class
  */
-void
+dbus_bool_t
 class_device_removed (ClassDeviceHandler* self, const char *sysfs_path, 
 		      HalDevice *d)
 {
 	HAL_INFO (("sysfs_path = '%s'", sysfs_path));
+	return TRUE;
 }
 
 /** Called when a device file (e.g. a file in /dev) have been created by udev 
