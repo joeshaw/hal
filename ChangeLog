@@ -1,3 +1,8 @@
+2004-03-28  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_class_block.c (visit_class_device_block): Remove
+	block.[size|start|block_size] properties
+
 2004-03-26  Robert Love  <rml@ximian.com>
 
 	* hald/linux/linux_class_block.c (media_detect_timer_handler): Comment

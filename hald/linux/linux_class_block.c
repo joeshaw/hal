@@ -145,20 +145,22 @@ visit_class_device_block (const char *path,
 				ds_property_set_int (d, "block.minor",
 						     minor);
 			}
+/*
 		} else if (strcmp (attr_name, "size") == 0) {
 			ds_property_set_int (d, "block.size",
 					     parse_dec (cur->value));
 		} else if (strcmp (attr_name, "start") == 0) {
 			ds_property_set_int (d, "block.start",
 					     parse_dec (cur->value));
+*/
 		} else if (strcmp (attr_name, "range") == 0) {
 			not_partition = TRUE;
 		}
 	}
 	ds_property_set_bool (d, "block.is_volume", !not_partition);
 
-    /** @todo FIXME is a block always 512 bytes?? Must check kernel source */
-	ds_property_set_int (d, "block.block_size", 512);
+	/** @todo FIXME a is not block always 512 bytes */
+	/*ds_property_set_int (d, "block.block_size", 512);*/
 
 	if (class_device->sysdevice == NULL) {
 		/* there is no sys device corresponding to us.. this means we
