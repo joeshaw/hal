@@ -1,5 +1,12 @@
 2004-04-12  Joe Shaw  <joe@ximian.com>
 
+	* tools/device-manager/DeviceManager.py: Wrap the gnome.ui import
+	in a try statement and desensitize the About menu item if it
+	fails.  This is to work around a broken python-gnome package on
+	SUSE 9.0.
+
+2004-04-12  Joe Shaw  <joe@ximian.com>
+
 	* hald/Makefile.am: Build the new net class device.
 
 	* hald/linux/*.c: Change "post_process" to "pre_process", since

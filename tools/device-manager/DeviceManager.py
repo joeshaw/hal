@@ -3,8 +3,14 @@
 import sys
 import gobject
 import gtk
-import gnome.ui
 import dbus
+
+try:
+    import gnome.ui
+except ImportError:
+    gnome_imported = 0
+else:
+    gnome_imported = 1
 
 import Const
 from Representation import Representation
@@ -28,6 +34,9 @@ class DeviceManager(LibGladeApplication):
     def __init__(self):
         """Init the GUI and connect to the HAL daemon."""
         LibGladeApplication.__init__(self, Const.DATADIR + "/hal-device-manager.glade")
+
+        if not gnome_imported:
+            self.xml.get_widget("about1").set_sensitive(0)
 
         self.representation = Representation()
 
