@@ -1,3 +1,14 @@
+2005-03-20  David Zeuthen  <davidz@redhat.com>
+
+	Teach hal about Firewire devices; tested with both my iPod and
+	my Powerbook in Target Disk Mode
+
+	* tools/device-manager/Const.py.in: Collapse ieee1394_host
+	and ieee1394_node into ieee1394
+
+	* hald/linux2/physdev.c (ieee1394_add): New function
+	(ieee1394_compute_udi): New function
+
 2005-03-17  David Zeuthen  <davidz@redhat.com>
 
 	* hald/util.c (hal_util_grep_file): Remove some debug spewage

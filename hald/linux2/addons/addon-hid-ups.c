@@ -48,6 +48,8 @@
 
 #include "libhal/libhal.h"
 
+#include "../probing/shared.h"
+
 #define UPS_USAGE		0x840000
 #define UPS_SERIAL		0x8400fe
 #define BAT_CHEMISTRY		0x850089

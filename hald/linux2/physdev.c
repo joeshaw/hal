@@ -742,6 +742,83 @@ mmc_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+ieee1394_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	long long unsigned int guid;
+	gint host_id;
+	const gchar *bus_id;
+	gchar buf[64];
+
+	d = NULL;
+
+	if (parent == NULL)
+		goto out;
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+
+	if (sscanf (bus_id, "fw-host%d", &host_id) == 1)
+		goto out;
+
+	if (sscanf (bus_id, "%llx-%d", &guid, &host_id) !=2 )
+		goto out;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "ieee1394");
+	hal_device_property_set_string (d, "info.parent", parent->udi);
+
+	hal_device_property_set_uint64 (d, "ieee1394.guid", guid);
+	hal_util_set_int_from_file    (d, "ieee1394.vendor_id", sysfs_path, "../vendor_id", 16);
+	hal_util_set_int_from_file    (d, "ieee1394.specifier_id", sysfs_path, "specifier_id", 16);
+	hal_util_set_int_from_file    (d, "ieee1394.version", sysfs_path, "version", 16);
+
+	if (!hal_util_set_string_from_file (d, "ieee1394.vendor", sysfs_path, "../vendor_oui")) {
+		g_snprintf (buf, sizeof (buf), "Unknown (0x%06x)", 
+			    hal_device_property_get_int (d, "ieee1394.vendor_id"));
+		hal_device_property_set_string (d, "ieee1394.vendor", buf);
+	}
+
+	/* not all devices have product_id */
+	if (hal_util_set_int_from_file    (d, "ieee1394.product_id", sysfs_path, "model_id", 16)) {
+		if (!hal_util_set_string_from_file (d, "ieee1394.product", sysfs_path, "model_name_kv")) {
+			g_snprintf (buf, sizeof (buf), "Unknown (0x%06x)", 
+				    hal_device_property_get_int (d, "ieee1394.product_id"));
+			hal_device_property_set_string (d, "ieee1394.product", buf);
+		}
+	} else {
+		hal_device_property_set_int (d, "ieee1394.product_id", 0x000000);
+		hal_device_property_set_string (d, "ieee1394.product",
+						hal_device_property_get_string (d, "ieee1394.vendor"));
+	}
+		
+	hal_device_property_set_string (d, "info.vendor",
+					hal_device_property_get_string (d, "ieee1394.vendor"));
+	hal_device_property_set_string (d, "info.product",
+					hal_device_property_get_string (d, "ieee1394.product"));
+
+out:
+	return d;
+}
+
+static gboolean
+ieee1394_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ieee1394_guid_%0llx",
+			      hal_device_property_get_uint64 (d, "ieee1394.guid"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 physdev_remove (HalDevice *d)
 {
@@ -813,6 +890,13 @@ static PhysDevHandler physdev_handler_mmc = {
 	.compute_udi = mmc_compute_udi,
 	.remove      = physdev_remove
 };
+
+static PhysDevHandler physdev_handler_ieee1394 = { 
+	.subsystem   = "ieee1394",
+	.add         = ieee1394_add,
+	.compute_udi = ieee1394_compute_udi,
+	.remove      = physdev_remove
+};
 	
 
 static PhysDevHandler *phys_handlers[] = {
@@ -824,6 +908,7 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_pcmcia,
 	&physdev_handler_scsi,
 	&physdev_handler_mmc,
+	&physdev_handler_ieee1394,
 	NULL
 };
 
