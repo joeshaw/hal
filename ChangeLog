@@ -1,5 +1,10 @@
 2003-11-11  David Zeuthen  <david@fubar.dk>
 
+	* Doxyfile: new file, added so we can generate doxygen documentation
+	without having to run autogen.sh
+	
+2003-11-11  David Zeuthen  <david@fubar.dk>
+
 	* tools/hal-device-manager: new file, GUI device manager using PyGTK
 
 	* tools/hal-device-manager.glade: new file
