@@ -1,5 +1,11 @@
 2004-04-11  David Zeuthen  <david@fubar.dk>
 
+	* tools/callouts/fstab-update.sh: Yuck, append a nondigit to 
+	MOUNTPOINT otherwise the removal of disk-8-1 (sda1) will also remove
+	disk-8-17 (sdb1)
+
+2004-04-11  David Zeuthen  <david@fubar.dk>
+
 	* tools/callouts/fstab-update.sh: Use HAL_PROP_BLOCK_FSTYPE if
 	available
 

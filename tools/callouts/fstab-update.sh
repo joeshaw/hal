@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This shell script updates your /etc/fstab with volumes when they
+# This shell script updates your /etc/fstab when volumes when they
 # appear and disappear from HAL.
 #
 # ** WARNING **
@@ -37,7 +37,7 @@ fi
 # available) but that would be a bad idea since it won't work for two
 # volumes with the same label
 MEDIAROOT="/mnt"
-MOUNTPOINT="$MEDIAROOT/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR"
+MOUNTPOINT="$MEDIAROOT/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR-"
 
 if test "$1" = "add"; then
 
