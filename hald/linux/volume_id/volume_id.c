@@ -947,7 +947,7 @@ fat32:
 		__u64 fat_entry_off;
 
 		dbg("next cluster %u", next);
-		next_sect_off = (next - 2) * le16_to_cpu(vs->sectors_per_cluster);
+		next_sect_off = (next - 2) * vs->sectors_per_cluster;
 		next_off = (start_data_sect + next_sect_off) * sector_size;
 		dbg("cluster offset 0x%x", next_off);
 

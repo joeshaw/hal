@@ -286,6 +286,7 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 	hal_device_property_set_bool (d, "storage.cdrom.cdrw", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvd", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdr", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.dvdrw", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdram", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdplusr", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", FALSE);
@@ -299,6 +300,10 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 	}
 	if (capabilities & CDC_DVD) {
 		int profile;
+
+		/** @todo FIXME BUG XXX: need to check for dvdrw (prolly need to rewrite much of 
+		 *  the linux_dvdrw_utils.c file)
+		 */
 		
 		hal_device_property_set_bool (d, "storage.cdrom.dvd", TRUE);
 		
@@ -308,8 +313,7 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 			hal_device_property_set_bool (d, "storage.cdrom.dvdplusr", TRUE);
 			hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", TRUE);
 		} else if (profile == 0) {
-			hal_device_property_set_bool(d, "storage.cdrom.dvdplusr",
-					     TRUE);
+			hal_device_property_set_bool(d, "storage.cdrom.dvdplusr", TRUE);
 		} else if (profile == 1) {
 			hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", TRUE);
 		}

@@ -1,3 +1,13 @@
+2004-09-14  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (cdrom_get_properties): Also set
+	storage.cdrom.dvdrw to FALSE. Add note about we should be giving 
+	the SCSI ioctl stuff some love soon.
+
+	* hald/linux/volume_id/volume_id.c (probe_vfat): Don't le16_to_cpu
+	for vs->sectors_per_cluster - it's a 8-bit quantity. Fixes bug with
+	one of my FAT32 volume labels
+
 2004-09-13  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/multimedia_class_device.c:
