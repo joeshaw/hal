@@ -134,7 +134,7 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		device_property_atomic_update_begin ();
 		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
 		hal_device_property_set_bool (d, "battery.present", TRUE);
-		hal_device_property_set_int (d, "battery.charge_level", i.battery_percentage);
+		hal_device_property_set_int (d, "battery.charge_level.current", i.battery_percentage);
 		hal_device_property_set_string (d, "battery.charge_level.unit", "percent");
 
 		hal_device_property_set_int (d, "battery.charge_level.design", 100);

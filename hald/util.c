@@ -695,7 +695,7 @@ hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *line
 
 	if (_grep_can_reuse && reuse && strcmp (oldfilename, filename) == 0) {
 		/* just reuse old file; e.g. bufsize, buf */
-		HAL_INFO (("hal_util_grep_file: reusing buf for %s", filename));
+		/*HAL_INFO (("hal_util_grep_file: reusing buf for %s", filename));*/
 	} else {
 		FILE *f;
 
@@ -706,7 +706,7 @@ hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *line
 		buf[bufsize] = '\0';
 		fclose (f);
 
-		HAL_INFO (("hal_util_grep_file: read %s of %d bytes", filename, bufsize));
+		/*HAL_INFO (("hal_util_grep_file: read %s of %d bytes", filename, bufsize));*/
 	}
 
 	/* book keeping */

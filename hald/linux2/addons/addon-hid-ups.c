@@ -162,12 +162,12 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 
 					case 0x850044: /* Charging */
 						libhal_device_set_property_bool (
-							ctx, udi, "battery.is_charging", uref.value != 0, &error);
+							ctx, udi, "battery.rechargeable.is_charging", uref.value != 0, &error);
 						break;
 
 					case 0x850045: /* Discharging */
 						libhal_device_set_property_bool (
-							ctx, udi, "battery.is_discharging", uref.value != 0, &error);
+							ctx, udi, "battery.rechargeable.is_discharging", uref.value != 0, &error);
 						break;
 
 					case 0x8500d1: /* BatteryPresent */
@@ -304,12 +304,12 @@ main (int argc, char *argv[])
 					
 				case 0x850044: /* Charging */
 					libhal_device_set_property_bool (
-						ctx, udi, "battery.is_charging", ev[i].value != 0, &error);
+						ctx, udi, "battery.rechargeable.is_charging", ev[i].value != 0, &error);
 					break;
 					
 				case 0x850045: /* Discharging */
 					libhal_device_set_property_bool (
-						ctx, udi, "battery.is_discharging", ev[i].value != 0, &error);
+						ctx, udi, "battery.rechargeable.is_discharging", ev[i].value != 0, &error);
 					break;
 					
 				default:

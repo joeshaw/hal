@@ -1,3 +1,24 @@
+2005-03-17  David Zeuthen  <davidz@redhat.com>
+
+	* hald/util.c (hal_util_grep_file): Remove some debug spewage
+
+2005-03-17  Richard hughes  <richard@hughsie.com>
+
+	* hald/linux2/apm.c (battery_refresh):
+	Fix a typo, s/battery.charge_level/battery.charge_level.current
+	so that matches ACPI (and HAL spec).
+
+	* hald/linux2/addons/addon-hid-ups.c:
+	Fix a typo, s/battery.is_charging/battery.rechargeable.is_charging
+	so that matches ACPI (and HAL spec).
+
+2005-03-17  David Zeuthen  <davidz@redhat.com>
+
+	* tools/linux/hal_hotplug.c: We need to look for the
+	sysfs_mount_path only if we read the ifindex from a network
+	interface. This safes us from parsing the proc file with every
+	hotplug event. From Kay Sievers <kay.sievers@vrfy.org>.
+
 2005-03-16  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Replace boolean action type of hotplug event with enum, cause

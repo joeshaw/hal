@@ -47,15 +47,12 @@
 
 #include "../../hald/linux2/hotplug_helper.h"
 
-static char sysfs_mnt_path[PATH_MAX];
-
-/** Get the mount path for sysfs. A side-effect is that sysfs_mnt_path
- *  is set on success.
+/** Get the mount path for sysfs.
  *
- *  @return                     0 on success, negative on error
+ *  @return	0 on success, negative on error
  */
 static int
-get_sysfs_mnt_path (void)
+get_sysfs_mnt_path (char *path, size_t len)
 {
 	FILE *mnt;
 	struct mntent *mntent;
@@ -70,11 +67,10 @@ get_sysfs_mnt_path (void)
 	       && (mntent = getmntent (mnt)) != NULL) {
 		if (strcmp (mntent->mnt_type, "sysfs") == 0) {
 			dirlen = strlen (mntent->mnt_dir);
-			if (dirlen <= (PATH_MAX - 1)) {
-				strcpy (sysfs_mnt_path, mntent->mnt_dir);
-			} else {
+			if (dirlen <= (len - 1))
+				strcpy (path, mntent->mnt_dir);
+			else
 				ret = -1;
-			}
 		}
 	}
 	endmntent (mnt);
@@ -122,11 +118,6 @@ main (int argc, char *argv[], char *envp[])
 	/*syslog (LOG_INFO, "ACTION=%s SUBSYS=%s SEQNUM=%s DEVPATH=%s PHYSDEVPATH=%s", 
 	  getenv ("ACTION"), argv[1], getenv ("SEQNUM"), getenv ("DEVPATH"), getenv ("PHYSDEVPATH"));*/
 
-	if (get_sysfs_mnt_path() != 0) {
-		syslog (LOG_ERR, "could not get mountpoint for sysfs");
-		goto out;
-	}
-
 	fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
 	if (fd == -1) {
 		syslog (LOG_ERR, "error opening socket");
@@ -165,19 +156,20 @@ main (int argc, char *argv[], char *envp[])
 	 * hotplug event handler will screw us otherwise */
 	if (strcmp (subsystem, "net") == 0) {
 		FILE *f;
-		char buf[80];
+		char buf[32];
 		char path[PATH_MAX];
 
-		strncpy (path, sysfs_mnt_path, PATH_MAX);
-		strcat_len (path, devpath);
-		strcat_len (path, "/ifindex");
-		if ((f = fopen (path, "r")) != NULL) {
-			memset (buf, 0, sizeof (buf));
-			fread (buf, sizeof (buf) - 1, 1, f);
-			fclose (f);
-
-			net_ifindex = atoi(buf);
-		}
+		if (get_sysfs_mnt_path(path, sizeof(path)) == 0) {
+			strcat_len (path, devpath);
+			strcat_len (path, "/ifindex");
+			if ((f = fopen (path, "r")) != NULL) {
+				memset (buf, 0, sizeof (buf));
+				fread (buf, sizeof (buf) - 1, 1, f);
+				fclose (f);
+				net_ifindex = atoi(buf);
+			}
+		} else
+			syslog (LOG_ERR, "could not get mountpoint for sysfs");
 	}
 
 	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
