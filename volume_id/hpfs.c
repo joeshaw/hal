@@ -51,14 +51,14 @@ int volume_id_probe_hpfs(struct volume_id *id, __u64 off)
 {
 	struct hpfs_super *hs;
 
-	dbg("probing at offset %llu", off);
+	dbg("probing at offset 0x%llx", (unsigned long long) off);
 
 	hs = (struct hpfs_super *) volume_id_get_buffer(id, off + HPFS_SUPERBLOCK_OFFSET, 0x200);
 	if (hs == NULL)
 		return -1;
 
 	if (memcmp(hs->magic, "\x49\xe8\x95\xf9", 4) == 0) {
-		snprintf(id->type_version, VOLUME_ID_FORMAT_SIZE-1, "%u", hs->version);
+		sprintf(id->type_version, "%u", hs->version);
 
 		volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
 		id->type = "hpfs";

@@ -1,3 +1,22 @@
+2005-03-11  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* volume_id/Makefile.am: add minix probing code
+
+	* volume_id/luks.c: 
+
+	* volume_id/minix.c: New file.
+
+	* volume_id/minix.h: New file.
+
+	* volume_id/util.c: (volume_id_set_unicode16),
+	(volume_id_set_label_unicode16): Export unicode converter.
+
+	* volume_id/util.h: Export unicode converter.
+
+	* volume_id/volume_id.c: (volume_id_probe_all): Add minix.
+
+	* volume_id/volume_id.h: Version 41.
+
 2005-03-10  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/acpi.c (battery_refresh_poll): Also set property

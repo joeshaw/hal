@@ -26,6 +26,7 @@ libvolume_id_la_SOURCES =				\
 	romfs.h			romfs.c			\
 	sysv.h			sysv.c			\
 	cramfs.h		cramfs.c		\
+	minix.h			minix.c			\
 	logging.h					\
 	util.h			util.c			\
 	volume_id.h		volume_id.c
