@@ -197,16 +197,6 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	}
 }
 
-/** This function is called when all device detection on startup is done
- *  in order to perform optional batch processing on devices
- *
- *  @param  self          Pointer to class members
- */
-void
-bus_device_detection_done (BusDeviceHandler *self)
-{
-}
-
 /** Init function for bus type
  *
  *  @param  self          Pointer to class members

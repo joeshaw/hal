@@ -1,3 +1,23 @@
+2004-05-01  David Zeuthen  <david@fubar.dk>
+
+	* hald/Makefile.am (install-data-local): create /etc/hal/property.d
+
+	* tools/callouts/fstab-update.sh: s/msdos/vfat/ if applicable
+
+	* hald/logger.h: include stdio.h, stdlib.h since DIE macro uses this
+
+	* doc/TODO: removed a TODO-note :-)
+
+	* hald/callout.c (wait_for_callout): removed
+	(handle_sigchld): new function
+	(iochn_data): new function
+	(process_callouts): install signal handler and setup GIOChannel
+	stuff; don't install timeout for waiting for child
+
+	* hald/linux/class_device.c (class_device_detection_done): removed
+
+	* hald/linux/bus_device.c (bus_device_detection_done): removed
+
 2004-04-30  Joe Shaw  <joe@ximian.com>
 
 	* hald/linux/block_class_device.c (block_class_pre_process):

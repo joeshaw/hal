@@ -53,7 +53,11 @@ if test "$1" = "add"; then
 	# HAL might have autodetected the filesystem type for us - in that
         # case use it...
 	if test $HAL_PROP_BLOCK_FSTYPE; then
-	    echo -ne "$HAL_PROP_BLOCK_FSTYPE\t" >> /etc/fstab
+	    if test $HAL_PROP_BLOCK_FSTYPE = "msdos"; then
+		echo -ne "vfat\t" >> /etc/fstab
+	    else
+		echo -ne "$HAL_PROP_BLOCK_FSTYPE\t" >> /etc/fstab
+	    fi
 	else
 	    echo -ne "auto\t" >> /etc/fstab
 	fi

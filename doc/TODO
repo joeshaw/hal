@@ -54,10 +54,6 @@ entries if you get an idea or implement one of these.
     dialog with the .fdi file is unsigned. Probably needs discussion on the
     mailling list.
 
- -  Callouts should listen for SIGCHLD and send a byte over a pipe which
-    is watched with a GIOChannel instead of using a 250ms timeout like
-    we do now.
-
  -  Callouts are currently called in order, so if a callout hangs then
     no others will be called.  There should be a timeout which kills the
     callout after a certain period of time.  (5 seconds?  10?  15?)

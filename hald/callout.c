@@ -31,6 +31,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "callout.h"
 #include "logger.h"
@@ -58,8 +59,14 @@ typedef struct {
 
 static void process_callouts (void);
 
-/* Key: HalDevice  Value: pointer to GSList of Callouts */
+/* Callouts that still needing to be processed
+ *
+ * Key: HalDevice  Value: pointer to GSList of Callouts */
 static GHashTable *pending_callouts = NULL;
+
+/* List of Callouts currently being processed */
+static GSList *active_callouts = NULL;
+
 static gboolean processing_callouts = FALSE;
 
 static void
@@ -152,37 +159,91 @@ add_property_to_env (HalDevice *device, HalProperty *property,
 	return TRUE;
 }
 
-static gboolean
-wait_for_callout (gpointer user_data)
+static gboolean have_installed_sigchild_handler = FALSE;
+static int unix_signal_pipe_fds[2];
+static GIOChannel *iochn;
+
+static void 
+handle_sigchld (int value)
 {
-	Callout *callout = user_data;
-	int status;
+	static char marker[1] = {'D'};
 
-	status = waitpid (callout->pid, NULL, WNOHANG);
+	/* write a 'D' character to the other end to tell that a child has
+	 * terminated. Note that 'the other end' is a GIOChannel thingy
+	 * that is only called from the mainloop - thus this is how we
+	 * defer this since UNIX signal handlers are evil
+	 *
+	 * Oh, and write(2) is indeed reentrant */
+	write (unix_signal_pipe_fds[1], marker, 1);
+}
 
-	if (status == 0) {
-		/* Not finished yet... */
-		return TRUE;
-	} else if (status == -1) {
-		if (errno == EINTR)
-			return TRUE;
-		else {
-			HAL_WARNING (("waitpid errno %d: %s", errno,
-				      strerror (errno)));
+static gboolean
+iochn_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
+{
+	gsize bytes_read;
+	gchar data[1];
+	GError *err = NULL;
+	pid_t child_pid;
+	Callout *callout;
+	GSList *it;
+
+
+	/* Empty the pipe; one character per dead child */
+	if (G_IO_STATUS_NORMAL != 
+	    g_io_channel_read_chars (source, data, 1, &bytes_read, &err)) {
+		HAL_ERROR (("Error emptying callout notify pipe: %s",
+				   err->message));
+		g_error_free (err);
+		goto out;
+	}
+
+	/* signals are not queued, so loop until no zombies are left */
+	while (TRUE) {
+		/* wait for any child - this is sane because the reason we got
+		 * invoked is the fact that a child has exited */
+		child_pid = waitpid (-1, NULL, WNOHANG);
+
+		if (child_pid == 0) {
+			/* no more childs */
+			goto out;
+		} else if (child_pid == -1) {
+			/* this can happen indeed since we loop */
+			goto out;
 		}
-	} else {
+	
+		/* Now find the corresponding Callout object */
+		callout = NULL;
+		for (it=g_slist_nth(active_callouts, 0); 
+		     it != NULL; 
+		     it = g_slist_next(it)) {
+			Callout *callout_it = (Callout *) it->data;
+			if (callout_it->pid == child_pid) {
+				callout = callout_it;
+				break;
+			}
+		}
+	
+		if (callout == NULL) {
+			/* this should never happen */
+			HAL_ERROR (("Cannot find callout for terminated "
+				    "child with pid %d", child_pid));
+			goto out;
+		}
+	
+
 		if (callout->last_of_device)
 			hal_device_callouts_finished (callout->device);
-
+		
 		g_free (callout->filename);
 		g_strfreev (callout->envp);
 		g_object_unref (callout->device);
 		g_free (callout);
-
+		
 		process_callouts ();
 	}
-
-	return FALSE;
+	
+out:
+	return TRUE;
 }
 
 static void
@@ -193,6 +254,28 @@ process_callouts (void)
 	char *argv[3];
 	GError *err = NULL;
 	int num_props;
+
+	if (!have_installed_sigchild_handler) {
+		guint iochn_listener_source_id;
+
+		/* create pipe */
+		if (pipe (unix_signal_pipe_fds) != 0) {
+			DIE (("Could not setup pipe, errno=%d", errno));
+		}
+
+		/* setup glib handler - 0 is for reading, 1 is for writing */
+		iochn = g_io_channel_unix_new (unix_signal_pipe_fds[0]);
+		if (iochn == NULL)
+			DIE (("Could not create GIOChannel"));
+
+		/* get callback when there is data to read */
+		iochn_listener_source_id = g_io_add_watch (
+			iochn, G_IO_IN, iochn_data, NULL);
+
+		/* setup unix signal handler */
+		signal(SIGCHLD, handle_sigchld);
+		have_installed_sigchild_handler = TRUE;
+	}
 
 	if (pending_callouts == NULL ||
 	    g_hash_table_size (pending_callouts) == 0) {
@@ -239,6 +322,8 @@ process_callouts (void)
 	 */
 	callout->envp[callout->envp_index] = NULL;
 
+	active_callouts = g_slist_append (active_callouts, callout);
+
 	if (!g_spawn_async (callout->working_dir, argv, callout->envp,
 			    G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 			    &callout->pid, &err)) {
@@ -246,8 +331,6 @@ process_callouts (void)
 			      err->message));
 		g_error_free (err);
 	}
-
-	g_timeout_add (250, wait_for_callout, callout);
 }
 
 static gboolean

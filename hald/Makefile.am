@@ -102,4 +102,5 @@ clean-local:
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/capability.d
+	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/property.d
 
