@@ -1,5 +1,11 @@
 2004-04-26  David Zeuthen  <david@fubar.dk>
 
+	* doc/TODO: Added note about waiting for callouts to complete before
+	removing a device and waiting for children to disappear before a
+	device is removed
+
+2004-04-26  David Zeuthen  <david@fubar.dk>
+
 	* hald/device.c (hal_device_print): Print out to stderr instead of
 	stdout.
 
