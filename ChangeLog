@@ -1,3 +1,17 @@
+2004-05-25  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (read_etc_mtab): hal doesn't
+	close the filedescriptor when it /etc/mtab wasn't changed of the
+	fstat failed. Also when closing a file stream opened with fdopen,
+	the original fd is also closed (the fdopen function doesn't dup
+	the fd). So the close after fclose is wrong. Patch from Sjoerd
+	Simons <sjoerd@luon.net>.
+	(detect_fs): When fs detection fails the volume_id struct wasn't
+	closed, causing a mem and fd leak. And as a side effect, causing
+	me to be unable to open my cd writer with the eject button when
+	there was a blank cd inside :). Patch from Sjoerd Simons
+	<sjoerd@luon.net>.
+
 2004-05-18  Joe shaw  <joeshaw@novell.com>
 
 	* tools/callouts/fstab-update.sh: Use /media as long as it's there

@@ -761,8 +761,10 @@ detect_fs (HalDevice *d)
 		return;
 
 	rc = volume_id_probe(vid, ALL);
-	if (rc != 0)
+	if (rc != 0) {
+		volume_id_close(vid);
 		return;
+	}
 
 	hal_device_property_set_string (d, "volume.fstype", vid->fs_name);
 	if (vid->label_string[0] != '\0')
@@ -1268,11 +1270,13 @@ read_etc_mtab (dbus_bool_t force)
 
 	if (fstat (fd, &stat_buf) != 0) {
 		HAL_ERROR (("Cannot fstat /etc/mtab fd, errno=%d", errno));
+		close(fd);
 		return FALSE;
 	}
 
 	if (!force && etc_mtab_mtime == stat_buf.st_mtime) {
 		/*printf("No modification, etc_mtab_mtime=%d\n", etc_mtab_mtime); */
+		close(fd);
 		return FALSE;
 	}
 
@@ -1295,9 +1299,6 @@ read_etc_mtab (dbus_bool_t force)
 	}
 
 	fclose (f);
-
-	close (fd);
-
 	return TRUE;
 }
 
