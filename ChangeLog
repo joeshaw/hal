@@ -1,5 +1,12 @@
 2004-08-12  David Zeuthen  <david@fubar.dk>
 
+	* tools/fstab-sync.c (udi_is_volume): Simplify this a bit given
+	that cap volume always implies cap block
+	(main): Check the HAL_INFO_PROP_INFO_CAPABILITIES which is set
+	when invoked from hald to exit if it's not a volume
+
+2004-08-12  David Zeuthen  <david@fubar.dk>
+
 	* tools/fstab-sync.c: Set emacs mode to GNU, include mntent.h
 	(volume_new): Add label field
 	(volume_free): Destroy label field

@@ -832,9 +832,6 @@ get_hal_string_property (const char *udi, const char *property)
 static boolean
 udi_is_volume (const char *udi)
 {
-  if (!hal_device_query_capability (hal_context, udi, "block"))
-    return FALSE;
-
   if (!hal_device_query_capability (hal_context, udi, "volume"))
     return FALSE;
 
@@ -842,8 +839,7 @@ udi_is_volume (const char *udi)
       !hal_device_get_property_bool (hal_context, udi, "volume.disc.has_data"))
     return FALSE;
 
-  return hal_device_property_exists (hal_context, udi, "block.is_volume") && 
-         hal_device_get_property_bool (hal_context, udi, "block.is_volume");
+  return TRUE;
 }
 
 static char *
@@ -1691,10 +1687,23 @@ main (int argc, const char *argv[])
    */
   left_over_args = poptGetArgs (popt_context);
 
-  hal_device_udi = getenv ("HAL_DEVICE_UDI");
-  
-  if (hal_device_udi == NULL)
-    hal_device_udi = getenv ("UDI");
+  hal_device_udi = getenv ("UDI");
+  if (hal_device_udi != NULL) {
+    char *caps;
+
+    /* when we are invoked by hald, make some early tests using the
+     * exported environment so we don't have to connect to hald */
+
+    caps = getenv ("HAL_PROP_INFO_CAPABILITIES");
+    if (caps != NULL) {
+
+      /* we only handle hal device objects of capability 'volume' */
+      if (strstr (caps, "volume") == NULL) {
+	retval = 0;
+	goto out;
+      }
+    }
+  }
 
   if (left_over_args)
   for (i = 0; left_over_args[i] != NULL; i++)
@@ -1735,5 +1744,6 @@ main (int argc, const char *argv[])
       return 1;
     }
 
+out:
   return retval;
 }
