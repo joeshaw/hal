@@ -2,7 +2,7 @@
 
 NAME = "hal-device-manager"
 NAME_LONG = "HAL Device Manager"
-VERSION = "VERSION_IN"
+VERSION = "@VERSION@"
 COPYRIGHT = "Copyright (C) 2003 David Zeuthen."
 INFO = "This application shows information about\nhardware on your system"""
 AUTHORS = [
@@ -10,7 +10,7 @@ AUTHORS = [
     "Shannon -jj Behrens <jjinux@yahoo.com> (for simplepy)"
 ]
 
-DATADIR = "DATADIR_IN"
+DATADIR = "@DEVICEMANAGER_DIR@"
 
 PIXBUF_COLUMN = 0
 TITLE_COLUMN  = 1

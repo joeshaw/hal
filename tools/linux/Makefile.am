@@ -10,7 +10,7 @@ libexec_PROGRAMS = hal.hotplug
 
 hal_hotplug_SOURCES = hal_hotplug.c
 
-hal_hotplug_LDADD = -ldbus-1
+hal_hotplug_LDADD = -ldbus-1 
 
 hal_hotplug_LDFLAGS = -all-static
 
@@ -19,7 +19,7 @@ clean-local :
 
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
-	- /bin/ln -sf $(DESTDIR)$(libexecdir)/hal.hotplug $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
+	- cd $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default && $(LN_S) $(libexecdir)/hal.hotplug hal.hotplug
 
 uninstall-local :
 	- rm -f $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default/hal.hotplug

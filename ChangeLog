@@ -1,5 +1,26 @@
 2003-12-22  David Zeuthen  <david@fubar.dk>
 
+	* acinclude.m4: borrow AS_AC_EXPAND from gstreamer (Martin Waitz)
+
+	* configure.in: use AS_AC_EXPAND and define $(LN_S) and request
+	generation of tools/device-manager/Const.py (Martin Waitz)
+
+	* hald/Makefile.am: add $(top_srcdir) to pass make distcheck (Martin
+	Waitz)
+
+	* tools/Makefile.am: add $(top_srcdir) to pass make distcheck, and
+	use direct path to libhal (Martin Waitz)
+
+	* tools/device-manager/Const.py.in: use autoconf vars (Martin Waitz)
+
+	* tools/device-manager/Makefile.am: simplify by removing manual
+	variable replacement and by using dist_ and nodist_ prefixes. Use
+	$(LN_S) to link (Martin Waitz)
+
+	* tools/linux/Makefile.am: Fix symlinking (Martin Waitz)
+	
+2003-12-22  David Zeuthen  <david@fubar.dk>
+
 	* tools/device-manager/*: Some changes due to the big rename patch
 	
 	* hald/*.c: The big property rename change patch

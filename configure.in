@@ -13,6 +13,7 @@ AM_PROG_CC_STDC
 AC_HEADER_STDC
 AM_PROG_LIBTOOL
 AC_PROG_MAKE_SET
+AC_PROG_LN_S
 AM_PATH_PYTHON
 
 AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
@@ -38,15 +39,6 @@ AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs     build DOXYGEN docum
 if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
 fi
-
-BUILD_DIR=`pwd`
-AC_SUBST(BUILD_DIR)
-#if test x$USE_MAINTAINER_MODE = xyes; then
-#    AC_DEFINE(USE_MAINTAINER_MODE, 1 , [Building in maintainer mode])
-#    AC_DEFINE_UNQUOTED(BUILD_DIR, "$BUILD_DIR", [Path to source of project])
-#fi
-AM_CONDITIONAL(USE_MAINTAINER_MODE, test x$USE_MAINTAINER_MODE = xyes)
-AC_DEFINE_UNQUOTED(BUILD_DIR, "$BUILD_DIR", [Path to source of build dir])
 
 #### gcc warning flags
 
@@ -182,52 +174,12 @@ AM_CONDITIONAL(DBUS_DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
 AC_MSG_RESULT(yes)
 
 
+AS_AC_EXPAND(LOCALSTATEDIR, $localstatedir)
+AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
+AS_AC_EXPAND(DATADIR, $datadir)
+AS_AC_EXPAND(BINDIR, $bindir)
+AS_AC_EXPAND(LIBDIR, $libdir)
 
-#### Have to go $localstatedir->$prefix/var->/usr/local/var   
-#### someone please fix this a better way...
-
-#### find the actual value for $prefix that we'll end up with
-##   (I know this is broken and should be done in the Makefile, but
-##    that's a major pain and almost nobody actually seems to care)
-REAL_PREFIX=
-if test "x$prefix" = "xNONE"; then
-  REAL_PREFIX=$ac_default_prefix
-else
-  REAL_PREFIX=$prefix
-fi
-
-## temporarily change prefix and exec_prefix
-old_prefix=$prefix
-prefix=$REAL_PREFIX
-
-if test "x$exec_prefix" = xNONE ; then
-   REAL_EXEC_PREFIX=$REAL_PREFIX
-else
-   REAL_EXEC_PREFIX=$exec_prefix
-fi
-old_exec_prefix=$exec_prefix
-exec_prefix=$REAL_EXEC_PREFIX
-
-## eval everything
-LOCALSTATEDIR_TMP="$localstatedir"
-EXPANDED_LOCALSTATEDIR=`eval echo $LOCALSTATEDIR_TMP`
-AC_SUBST(EXPANDED_LOCALSTATEDIR)
-
-SYSCONFDIR_TMP="$sysconfdir"
-EXPANDED_SYSCONFDIR=`eval echo $SYSCONFDIR_TMP`
-AC_SUBST(EXPANDED_SYSCONFDIR)
-
-DATADIR_TMP="$datadir"
-EXPANDED_DATADIR=`eval echo $DATADIR_TMP`
-AC_SUBST(EXPANDED_DATADIR)
-
-BINDIR_TMP="$bindir"
-EXPANDED_BINDIR=`eval echo $BINDIR_TMP`
-AC_SUBST(EXPANDED_BINDIR)
-
-LIBDIR_TMP="$libdir"
-EXPANDED_LIBDIR=`eval echo $LIBDIR_TMP`
-AC_SUBST(EXPANDED_LIBDIR)
 
 
 AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is])
@@ -235,7 +187,7 @@ AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory 
 if ! test -z "$with_dbus_sys" ; then
     DBUS_SYS_DIR="$with_dbus_sys"
 else
-    DBUS_SYS_DIR="$EXPANDED_SYSCONFDIR/dbus-1/system.d"
+    DBUS_SYS_DIR="$SYSCONFDIR/dbus-1/system.d"
 fi
 AC_SUBST(DBUS_SYS_DIR)
 AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
@@ -246,7 +198,7 @@ AC_ARG_WITH(hotplug-dir, [  --with-hotplug=<dir>    where hotplug.d directory is
 if ! test -z "$with_hotplug" ; then
     LINUX_HOTPLUG_DIR="$with_hotplug"
 else
-#    LINUX_HOTPLUG_DIR="$EXPANDED_SYSCONFDIR/hotplug.d"
+#    LINUX_HOTPLUG_DIR="$SYSCONFDIR/hotplug.d"
 # It's quite uncommon to have hotplug.d other places than this, so default
 # to it
     LINUX_HOTPLUG_DIR=/etc/hotplug.d
@@ -254,10 +206,13 @@ fi
 AC_SUBST(LINUX_HOTPLUG_DIR)
 AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d directory is])
 
+if test x$USE_MAINTAINER_MODE = xyes; then
+    DEVICEMANAGER_DIR=$(cd $top_srcdir; pwd)/tools/device-manager
+else
+    DEVICEMANAGER_DIR=$DATADIR/$PACKAGE/device-manager
+fi
+AC_SUBST(DEVICEMANAGER_DIR)
 
-## put prefix and exec_prefix back
-prefix=$old_prefix
-exec_prefix=$old_exec_prefix
 
 AC_OUTPUT([
 hal.pc
@@ -268,6 +223,7 @@ libhal/Makefile
 tools/Makefile
 tools/linux/Makefile
 tools/device-manager/Makefile
+tools/device-manager/Const.py
 ])
 
 dnl ==========================================================================
@@ -277,11 +233,11 @@ echo "
 
         prefix:                   ${prefix}
         exec_prefix:              ${REAL_EXEC_PREFIX}
-        libdir:                   ${EXPANDED_LIBDIR}
-        bindir:                   ${EXPANDED_BINDIR}
-        datadir:                  ${EXPANDED_DATADIR}
-        sysconfdir:               ${EXPANDED_SYSCONFDIR}
-        localstatedir:            ${EXPANDED_LOCALSTATEDIR}
+        libdir:                   ${LIBDIR}
+        bindir:                   ${BINDIR}
+        datadir:                  ${DATADIR}
+        sysconfdir:               ${SYSCONFDIR}
+        localstatedir:            ${LOCALSTATEDIR}
         dbus-1 system.d dir:      ${DBUS_SYS_DIR}
         pci.ids, usb.ids dir:     ${HWDATA_DIR}
         linux hotplug.d dir:      ${LINUX_HOTPLUG_DIR}
@@ -302,7 +258,7 @@ if test x$enable_verbose_mode = xyes; then
 fi
 
 dnl if test x${USE_MAINTAINER_MODE} = xyes; then
-dnl    echo "NOTE: device info files will be read from the device_info_files directory in the source distribution rather than from ${EXPANDED_LOCALSTATEDIR}/hal/fdi"
+dnl    echo "NOTE: device info files will be read from the device_info_files directory in the source distribution rather than from ${LOCALSTATEDIR}/hal/fdi"
 dnl   echo
 dnl fi
 
