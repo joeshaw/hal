@@ -1,3 +1,15 @@
+2004-08-29  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (detect_media): Set volume.fsusage
+	to empty string by default
+	(block_class_pre_process): Also set volume.fsusage to empty string by
+	default. Set storage.drive_type to disk by default (should now work
+	the the ub kernel driver instead of usb-storage)
+
+	* hald/hald.c (main): Print out version
+
+	* tools/linux/hal_dev.c (main): Put in option for more debug
+
 2004-08-28  David Zeuthen  <david@fubar.dk>
 
 	* tools/linux/hal_hotplug.c: Add some more files to wait for

@@ -931,6 +931,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 
 		/* set defaults */
 		hal_device_property_set_string (child, "volume.fstype", "");
+		hal_device_property_set_string (child, "volume.fsusage", "");
 		hal_device_property_set_string (child, "volume.fsversion", "");
 		hal_device_property_set_string (child, "volume.uuid", "");
 		hal_device_property_set_string (child, "volume.label", "");
@@ -1186,6 +1187,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "info.category", "volume");
 		hal_device_property_set_string (d, "info.product", "Volume");
 		hal_device_property_set_string (d, "volume.fstype", "");
+		hal_device_property_set_string (d, "volume.fsusage", "");
 		hal_device_property_set_string (d, "volume.fsversion", "");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.uuid", "");
@@ -1236,6 +1238,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 	 *       (e.g. for setting storage.* properties)
 	 ************************************************************/
 
+
+	/* defaults */
+	hal_device_property_set_string (stordev, "storage.drive_type", "disk");
 
 	/* We are a disk or cdrom drive; maybe we even offer 
 	 * removable media 

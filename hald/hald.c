@@ -314,7 +314,11 @@ main (int argc, char *argv[])
 	else
 		logger_disable ();
 
-	HAL_DEBUG (("opt_become_daemon = %d", opt_become_daemon));
+	HAL_INFO ((PACKAGE_STRING));
+	if (opt_become_daemon)
+		HAL_INFO (("Will daemonize"));
+	else
+		HAL_INFO (("Will not daemonize"));
 
 	if (opt_become_daemon) {
 		int child_pid;

@@ -47,6 +47,8 @@
 
 #include "../../hald/linux/hald_helper.h"
 
+/*#define HAL_DEVD_EXTRA_DEBUG 1*/
+
 /** Entry point
  *
  *  @param  argc                Number of arguments
@@ -69,10 +71,14 @@ main (int argc, char *argv[], char *envp[])
 	int is_add;
 	int seqnum;
 
+	openlog ("hal.dev", LOG_PID, LOG_USER);
+
+#ifdef HAL_DEVD_EXTRA_DEBUG
+	syslog (LOG_NOTICE, "entering for %s", getenv ("DEVPATH"));
+#endif
+
 	if (argc != 2)
 		return 1;
-
-	openlog ("hal.dev", LOG_PID, LOG_USER);
 
 	subsystem = argv[1];
 	if (subsystem == NULL) {
@@ -133,8 +139,17 @@ main (int argc, char *argv[], char *envp[])
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {
-		/*syslog (LOG_ERR, "error sending message to hald");*/
+#ifdef HAL_DEVD_EXTRA_DEBUG
+		syslog (LOG_ERR, "error sending message to hald for %s", devpath);
+#endif
+	} else {
+#ifdef HAL_DEVD_EXTRA_DEBUG
+		syslog (LOG_NOTICE, "sent message to hald for %s", devpath);
+#endif
 	}
 out:
+#ifdef HAL_DEVD_EXTRA_DEBUG
+	syslog (LOG_NOTICE, "exiting");
+#endif
 	return 0;
 }
