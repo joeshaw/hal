@@ -1,5 +1,21 @@
 2004-07-22  David Zeuthen  <david@fubar.dk>
 
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* tools/device-manager/hal-computer.png: New file
+	
+	* tools/device-manager/Representation.py: Use hal-computer.png
+
+	* tools/device-manager/Makefile.am (dist_devicemanager_DATA): Add
+	hal-computer.png
+
+2004-07-22  David Zeuthen  <david@fubar.dk>
+
+	* libhal/libhal.[ch]: Fixup documentation so doxygen no longer
+	complains
+
+2004-07-22  David Zeuthen  <david@fubar.dk>
+
 	Documentation love, part 1. Added the spec to the source tree because
 	we want closer sync between code and spec. Also generate doxygen
 	docs, but only for libhal.

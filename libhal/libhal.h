@@ -38,10 +38,11 @@ extern "C" {
  * @{
  */
 
-typedef struct LibHalContext_s
-LibHalContext;
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+typedef struct LibHalContext_s LibHalContext;
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-/** Type for function in application code that integrates a #DBusConnection 
+/** Type for function in application code that integrates a DBusConnection 
  *  object into it's own mainloop. 
  *
  *  @param  udi                 Unique Device Id
@@ -110,12 +111,12 @@ typedef void (*LibHalDeviceCondition) (LibHalContext *ctx,
 
 /** Big convenience chunk for all callback function pointers. 
  *
- *  Every function pointer can be set to #NULL to indicate that the
+ *  Every function pointer can be set to NULL to indicate that the
  *  callback is not requested.
  */
 typedef struct LibHalFunctions_s {
 	/** This is called when the application needs to integrate the 
-	 *  underlying #DBusConnection into the main loop
+	 *  underlying DBusConnection into the main loop
 	 */
 	LibHalIntegrateDBusIntoMainLoop main_loop_integration;
 
@@ -140,7 +141,7 @@ typedef struct LibHalFunctions_s {
 } LibHalFunctions;
 
 
-LibHalContext *hal_initialize (const LibHalFunctions * functions,
+LibHalContext *hal_initialize (const LibHalFunctions * cb_functions,
 			       dbus_bool_t use_cache);
 
 int hal_shutdown (LibHalContext *ctx);
@@ -202,11 +203,14 @@ int hal_device_get_property_type (LibHalContext *ctx,
 				  const char *key);
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 struct LibHalProperty_s;
 typedef struct LibHalProperty_s LibHalProperty;
 
 struct LibHalPropertySet_s;
 typedef struct LibHalPropertySet_s LibHalPropertySet;
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
 
 LibHalPropertySet *hal_device_get_all_properties (LibHalContext *ctx, 
 						  const char *udi);
@@ -215,15 +219,16 @@ void hal_free_property_set (LibHalPropertySet * set);
 
 /** Iterator for inspecting all properties */
 struct LibHalPropertySetIterator_s {
-	LibHalPropertySet *set;
-	unsigned int index;
-	LibHalProperty *cur_prop;
-	void *reservered0;
-	void *reservered1;
+	LibHalPropertySet *set;    /**< Property set we are iterating over */
+	unsigned int index;        /**< Index into current element */
+	LibHalProperty *cur_prop;  /**< Current property being visited */
+	void *reservered0;         /**< Reserved for future use */
+	void *reservered1;         /**< Reserved for future use */
 };
 
-typedef struct LibHalPropertySetIterator_s
-LibHalPropertySetIterator;
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+typedef struct LibHalPropertySetIterator_s LibHalPropertySetIterator;
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 void hal_psi_init (LibHalPropertySetIterator * iter,
 		   LibHalPropertySet * set);
@@ -250,8 +255,8 @@ dbus_bool_t hal_agent_commit_to_gdl (LibHalContext *ctx,
 dbus_bool_t hal_agent_remove_device (LibHalContext *ctx, 
 				     const char *udi);
 dbus_bool_t hal_agent_merge_properties (LibHalContext *ctx,
-					const char *udi,
-					const char *from_udi);
+					const char *target_udi,
+					const char *source_udi);
 
 dbus_bool_t hal_agent_device_matches (LibHalContext *ctx,
 				      const char *udi1,
@@ -265,7 +270,7 @@ char **hal_manager_find_device_string_match (LibHalContext *ctx,
 
 
 dbus_bool_t hal_device_add_capability (LibHalContext *ctx,
-				       const char *device,
+				       const char *udi,
 				       const char *capability);
 
 dbus_bool_t hal_device_query_capability (LibHalContext *ctx,
@@ -287,4 +292,5 @@ int hal_device_remove_property_watch (LibHalContext *ctx,
 #if defined(__cplusplus)
 }
 #endif
-#endif				/* LIBHAL_H */
+
+#endif /* LIBHAL_H */

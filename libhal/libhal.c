@@ -35,14 +35,14 @@
 #include "libhal.h"
 
 /**
- * @defgroup LibHal HAL library
+ * @defgroup LibHal HAL convenience library
  * @brief A convenience library used to communicate with the HAL daemon
  *	  using D-BUS
  *
  *  @{
  */
 
-/** Frees a #NULL-terminated array of strings. If passed #NULL, does nothing.
+/** Frees a NULL-terminated array of strings. If passed NULL, does nothing.
  *
  *  @param  str_array		The array to be freed
  */
@@ -66,7 +66,7 @@ hal_free_string_array (char **str_array)
 void
 hal_free_string (char *str)
 {
-	/** @todo: implement for UTF8 */
+	/** @todo implement for UTF8 */
 	free (str);
 }
 
@@ -75,7 +75,7 @@ hal_free_string (char *str)
 struct LibHalPropertySet_s {
 	unsigned int num_properties; /**< Number of properties in set */
 	LibHalProperty *properties_head;
-				     /**< Pointer to first property or #NULL
+				     /**< Pointer to first property or NULL
 				      *	  if there are no properties */
 };
 
@@ -94,11 +94,11 @@ struct LibHalProperty_s {
 				     /**< Truth value */
 	};
 
-	LibHalProperty *next;	     /**< Next property or #NULL if this is 
+	LibHalProperty *next;	     /**< Next property or NULL if this is 
 				      *	  the last */
 };
 
-/** Context for library instance */
+/** Context for connection to the HAL daemon */
 struct LibHalContext_s {
 	DBusConnection *connection;           /**< D-BUS connection */
 	dbus_bool_t is_initialized;           /**< Are we initialised */
@@ -107,12 +107,23 @@ struct LibHalContext_s {
 	void *user_data;                      /**< User data */
 };
 
+/** Set user data for the context
+ *
+ *  @param  ctx                 The context for the connection to hald
+ *  @param  user_data           Opaque pointer
+ */
 void 
 hal_ctx_set_user_data(LibHalContext *ctx, void *user_data)
 {
 	ctx->user_data = user_data;
 }
 
+/** Get user data for the context
+ *
+ *  @param  ctx                 The context for the connection to hald
+ *  @return                     Opaque pointer stored through 
+ *                              hal_ctx_set_user_data or NULL if not set
+ */
 void*
 hal_ctx_get_user_data(LibHalContext *ctx)
 {
@@ -122,9 +133,10 @@ hal_ctx_get_user_data(LibHalContext *ctx)
 
 /** Retrieve all the properties on a device. 
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique id of device
  *  @return			An object represent all properties. Must be
- *				freed with #hal_free_property_set
+ *				freed with hal_free_property_set
  */
 LibHalPropertySet *
 hal_device_get_all_properties (LibHalContext *ctx, const char *udi)
@@ -265,7 +277,7 @@ hal_device_get_all_properties (LibHalContext *ctx, const char *udi)
 	return result;
 }
 
-/** Free a property set earlier obtained with #hal_device_get_all_properties().
+/** Free a property set earlier obtained with hal_device_get_all_properties().
  *
  *  @param  set			Property-set to free
  */
@@ -301,7 +313,7 @@ hal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 /** Determine whether there are more properties to iterate over
  *
  *  @param  iter		Iterator object
- *  @return			#TRUE if there are more properties
+ *  @return			TRUE if there are more properties
  */
 dbus_bool_t
 hal_psi_has_more (LibHalPropertySetIterator * iter)
@@ -323,8 +335,8 @@ hal_psi_next (LibHalPropertySetIterator * iter)
 /** Get type of property.
  *
  *  @param  iter		Iterator object
- *  @return			One of #DBUS_TYPE_STRING, #DBUS_TYPE_INT32,
- *				#DBUS_TYPE_BOOL, #DBUS_TYPE_DOUBLE
+ *  @return			One of DBUS_TYPE_STRING, DBUS_TYPE_INT32,
+ *				DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE
  */
 int
 hal_psi_get_type (LibHalPropertySetIterator * iter)
@@ -336,7 +348,7 @@ hal_psi_get_type (LibHalPropertySetIterator * iter)
  *
  *  @param  iter		Iterator object
  *  @return			ASCII nul-terminated string. This pointer is
- *				only valid until #hal_free_property_set() is
+ *				only valid until hal_free_property_set() is
  *				invoked on the property set this property 
  *				belongs to
  */
@@ -350,7 +362,7 @@ hal_psi_get_key (LibHalPropertySetIterator * iter)
  *
  *  @param  iter		Iterator object
  *  @return			UTF8 nul-terminated string. This pointer is
- *				only valid until #hal_free_property_set() is
+ *				only valid until hal_free_property_set() is
  *				invoked on the property set this property 
  *				belongs to
  */
@@ -394,6 +406,7 @@ hal_psi_get_bool (LibHalPropertySetIterator * iter)
 }
 
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 static DBusHandlerResult
 filter_func (DBusConnection * connection,
 	     DBusMessage * message, void *user_data)
@@ -520,10 +533,11 @@ static LibHalFunctions hal_null_functions = {
 	NULL /*property_modified */ ,
 	NULL /*device_condition */
 };
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 /** Initialize the HAL library. 
  *
- *  @param  cb_functions	  Callback functions. If this is set top #NULL
+ *  @param  cb_functions	  Callback functions. If this is set top NULL
  *				  then the library will not listen for
  *				  notifications. 
  *  @param  use_cache		  Retrieve all device information and cache it.
@@ -605,8 +619,9 @@ hal_initialize (const LibHalFunctions * cb_functions,
 
 /** Shutdown the HAL library. All resources allocated are freed. 
  *
- *  @return			  Zero if the shutdown went well, otherwise
- *				  non-zero if an error occured
+ *  @param  ctx                 The context for the connection to hald
+ *  @return			Zero if the shutdown went well, otherwise
+ *				non-zero if an error occured
  */
 int
 hal_shutdown (LibHalContext *ctx)
@@ -621,11 +636,12 @@ hal_shutdown (LibHalContext *ctx)
 
 /** Get all devices in the Global Device List (GDL).
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  num_devices		The number of devices will be stored here
  *  @return			An array of device identifiers terminated
- *				with #NULL. It is the responsibility of the
- *				caller to free with #hal_free_string_array().
- *				If an error occurs #NULL is returned.
+ *				with NULL. It is the responsibility of the
+ *				caller to free with hal_free_string_array().
+ *				If an error occurs NULL is returned.
  */
 char **
 hal_get_all_devices (LibHalContext *ctx, int *num_devices)
@@ -685,7 +701,7 @@ hal_get_all_devices (LibHalContext *ctx, int *num_devices)
 	hal_device_names = malloc (sizeof (char *) * ((*num_devices) + 1));
 	if (hal_device_names == NULL)
 		return NULL;
-	/** @todo: Handle OOM better */
+	/** @todo Handle OOM better */
 
 	for (i = 0; i < (*num_devices); i++) {
 		hal_device_names[i] = strdup (device_names[i]);
@@ -706,11 +722,12 @@ hal_get_all_devices (LibHalContext *ctx, int *num_devices)
 
 /** Query a property type of a device.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
- *  @return			One of #DBUS_TYPE_STRING, #DBUS_TYPE_INT32,
- *				#DBUS_TYPE_BOOL, #DBUS_TYPE_DOUBLE or 
- *				#DBUS_TYPE_NIL if the property didn't exist.
+ *  @return			One of DBUS_TYPE_STRING, DBUS_TYPE_INT32,
+ *				DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE or 
+ *				DBUS_TYPE_NIL if the property didn't exist.
  */
 int
 hal_device_get_property_type (LibHalContext *ctx, 
@@ -760,12 +777,13 @@ hal_device_get_property_type (LibHalContext *ctx,
 
 /** Get the value of a property of type string. 
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @return			UTF8 nul-terminated string. The caller is
  *				responsible for freeing this string with the
- *				function #hal_free_string(). 
- *				Returns #NULL if the property didn't exist
+ *				function hal_free_string(). 
+ *				Returns NULL if the property didn't exist
  *				or we are OOM
  */
 char *
@@ -843,6 +861,7 @@ hal_device_get_property_string (LibHalContext *ctx,
 
 /** Get the value of a property of type integer. 
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @return			32-bit signed integer
@@ -914,6 +933,7 @@ hal_device_get_property_int (LibHalContext *ctx,
 
 /** Get the value of a property of type double. 
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @return			IEEE754 double precision float
@@ -984,6 +1004,7 @@ hal_device_get_property_double (LibHalContext *ctx,
 
 /** Get the value of a property of type bool. 
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @return			Truth value
@@ -1145,10 +1166,11 @@ hal_device_set_property_helper (LibHalContext *ctx,
 
 /** Set a property of type string.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @param  value		Value of the property; a UTF8 string
- *  @return			#TRUE if the property was set, #FALSE if
+ *  @return			TRUE if the property was set, FALSE if
  *				the device didn't exist or the property
  *				had a different type.
  */
@@ -1164,10 +1186,11 @@ hal_device_set_property_string (LibHalContext *ctx,
 
 /** Set a property of type integer.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @param  value		Value of the property
- *  @return			#TRUE if the property was set, #FALSE if
+ *  @return			TRUE if the property was set, FALSE if
  *				the device didn't exist or the property
  *				had a different type.
  */
@@ -1182,10 +1205,11 @@ hal_device_set_property_int (LibHalContext *ctx, const char *udi,
 
 /** Set a property of type double.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @param  value		Value of the property
- *  @return			#TRUE if the property was set, #FALSE if
+ *  @return			TRUE if the property was set, FALSE if
  *				the device didn't exist or the property
  *				had a different type.
  */
@@ -1200,10 +1224,11 @@ hal_device_set_property_double (LibHalContext *ctx, const char *udi,
 
 /** Set a property of type bool.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @param  value		Value of the property
- *  @return			#TRUE if the property was set, #FALSE if
+ *  @return			TRUE if the property was set, FALSE if
  *				the device didn't exist or the property
  *				had a different type.
  */
@@ -1219,9 +1244,10 @@ hal_device_set_property_bool (LibHalContext *ctx, const char *udi,
 
 /** Remove a property.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
- *  @return			#TRUE if the property was set, #FALSE if
+ *  @return			TRUE if the property was set, FALSE if
  *				the device didn't exist
  */
 dbus_bool_t
@@ -1235,12 +1261,13 @@ hal_device_remove_property (LibHalContext *ctx,
 
 
 /** Create a new device object which will be hidden from applications
- *  until the CommitToGdl(), ie. #hal_agent_commit_to_gdl(), method is called.
+ *  until the CommitToGdl(), ie. hal_agent_commit_to_gdl(), method is called.
  *
  *  Note that the program invoking this method needs to run with super user
  *  privileges.
  *
- *  @return			Tempoary device unique id or #NULL if there
+ *  @param  ctx                 The context for the connection to hald
+ *  @return			Tempoary device unique id or NULL if there
  *				was a problem. This string must be freed
  *				by the caller.
  */
@@ -1309,7 +1336,7 @@ hal_agent_new_device (LibHalContext *ctx)
 
 
 /** When a hidden device have been built using the NewDevice method, ie.
- *  #hal_agent_new_device(), and the org.freedesktop.Hal.Device interface
+ *  hal_agent_new_device(), and the org.freedesktop.Hal.Device interface
  *  this function will commit it to the global device list. 
  *
  *  This means that the device object will be visible to applications and
@@ -1319,10 +1346,11 @@ hal_agent_new_device (LibHalContext *ctx)
  *  Note that the program invoking this method needs to run with super user
  *  privileges.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  temp_udi		The tempoary unique device id as returned by
- *				#hal_agent_new_device()
+ *				hal_agent_new_device()
  *  @param  udi			The new unique device id.
- *  @return			#FALSE if the given unique device id is already
+ *  @return			FALSE if the given unique device id is already
  *				in use.
  */
 dbus_bool_t
@@ -1379,8 +1407,9 @@ hal_agent_commit_to_gdl (LibHalContext *ctx,
  *  Note that the program invoking this method needs to run with super user
  *  privileges.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			The new unique device id.
- *  @return			#TRUE if the device was removed
+ *  @return			TRUE if the device was removed
  */
 dbus_bool_t
 hal_agent_remove_device (LibHalContext *ctx, const char *udi)
@@ -1426,8 +1455,9 @@ hal_agent_remove_device (LibHalContext *ctx, const char *udi)
 
 /** Determine if a device exists.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique device id.
- *  @return			#TRUE if the device exists
+ *  @return			TRUE if the device exists
  */
 dbus_bool_t
 hal_device_exists (LibHalContext *ctx, const char *udi)
@@ -1488,9 +1518,10 @@ hal_device_exists (LibHalContext *ctx, const char *udi)
 
 /** Determine if a property on a device exists.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique device id.
  *  @param  key			Name of the property
- *  @return			#TRUE if the device exists
+ *  @return			TRUE if the device exists
  */
 dbus_bool_t
 hal_device_property_exists (LibHalContext *ctx, 
@@ -1550,9 +1581,10 @@ hal_device_property_exists (LibHalContext *ctx,
 
 /** Merge properties from one device to another.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  target_udi		Unique device id of target device to merge to
  *  @param  source_udi		Unique device id of device to merge from
- *  @return			#TRUE if the properties was merged
+ *  @return			TRUE if the properties was merged
  */
 dbus_bool_t
 hal_agent_merge_properties (LibHalContext *ctx, 
@@ -1611,10 +1643,11 @@ hal_agent_merge_properties (LibHalContext *ctx,
  *  (from the given namespace) in the second device not present in the 
  *  first device.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi1		Unique Device Id for device 1
  *  @param  udi2		Unique Device Id for device 2
  *  @param  namespace		Namespace for set of devices, e.g. "usb"
- *  @return			#TRUE if all properties starting
+ *  @return			TRUE if all properties starting
  *				with the given namespace parameter
  *				from one device is in the other and 
  *				have the same value.
@@ -1680,6 +1713,7 @@ hal_agent_device_matches (LibHalContext *ctx,
 
 /** Print a device to stdout; useful for debugging.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  */
 void
@@ -1728,11 +1762,12 @@ hal_device_print (LibHalContext *ctx, const char *udi)
 /** Find a device in the GDL where a single string property matches a
  *  given value.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  key			Name of the property
  *  @param  value		Value to match
  *  @param  num_devices		Pointer to store number of devices
  *  @return			UDI of devices; free with 
- *				#hal_free_string_array()
+ *				hal_free_string_array()
  */
 char **
 hal_manager_find_device_string_match (LibHalContext *ctx, 
@@ -1796,13 +1831,13 @@ hal_manager_find_device_string_match (LibHalContext *ctx,
 	hal_device_names = malloc (sizeof (char *) * ((*num_devices) + 1));
 	if (hal_device_names == NULL)
 		return NULL;
-		     /** @todo: Handle OOM better */
+		     /** @todo Handle OOM better */
 
 	for (i = 0; i < (*num_devices); i++) {
 		hal_device_names[i] = strdup (device_names[i]);
 		if (hal_device_names[i] == NULL)
 			return NULL;
-			 /** @todo: Handle OOM better */
+			 /** @todo Handle OOM better */
 	}
 	hal_device_names[i] = NULL;
 
@@ -1814,9 +1849,10 @@ hal_manager_find_device_string_match (LibHalContext *ctx,
 
 /** Assign a capability to a device.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  capability		Capability name
- *  @return			#TRUE if the capability was added, #FALSE if
+ *  @return			TRUE if the capability was added, FALSE if
  *				the device didn't exist
  */
 dbus_bool_t
@@ -1865,10 +1901,11 @@ hal_device_add_capability (LibHalContext *ctx,
 /** Check if a device got a capability. The result is undefined if the
  *  device doesn't exist.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  capability		Capability name
- *  @return			#TRUE if the device got the capability, 
- *				otherwise #FALSE
+ *  @return			TRUE if the device got the capability, 
+ *				otherwise FALSE
  */
 dbus_bool_t
 hal_device_query_capability (LibHalContext *ctx, 
@@ -1887,10 +1924,11 @@ hal_device_query_capability (LibHalContext *ctx,
 
 /** Find devices with a given capability. 
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  capability		Capability name
  *  @param  num_devices		Pointer to store number of devices
  *  @return			UDI of devices; free with 
- *				#hal_free_string_array()
+ *				hal_free_string_array()
  */
 char **
 hal_find_device_by_capability (LibHalContext *ctx, 
@@ -1952,13 +1990,13 @@ hal_find_device_by_capability (LibHalContext *ctx,
 	hal_device_names = malloc (sizeof (char *) * ((*num_devices) + 1));
 	if (hal_device_names == NULL)
 		return NULL;
-	/** @todo: Handle OOM better */
+	/** @todo Handle OOM better */
 
 	for (i = 0; i < (*num_devices); i++) {
 		hal_device_names[i] = strdup (device_names[i]);
 		if (hal_device_names[i] == NULL)
 			return NULL;
-		/** @todo: Handle OOM better */
+		/** @todo Handle OOM better */
 	}
 	hal_device_names[i] = NULL;
 
@@ -1970,6 +2008,7 @@ hal_find_device_by_capability (LibHalContext *ctx,
 /** Watch all devices, ie. the device_property_changed callback is
  *  invoked when the properties on any device changes.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @return			Zero if the operation succeeded, otherwise
  *				non-zero
  */
@@ -1998,8 +2037,9 @@ hal_device_property_watch_all (LibHalContext *ctx)
  *  invoked when the properties on the given device changes.
  *
  *  The application itself is responsible for deleting the watch, using
- *  #hal_device_remove_property_watch, if the device is removed.
+ *  hal_device_remove_property_watch, if the device is removed.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @return			Zero if the operation succeeded, otherwise
  *				non-zero
@@ -2030,6 +2070,7 @@ hal_device_add_property_watch (LibHalContext *ctx, const char *udi)
 
 /** Remove a watch on a device.
  *
+ *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @return			Zero if the operation succeeded, otherwise
  *				non-zero

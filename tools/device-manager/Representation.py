@@ -22,6 +22,7 @@ class Representation:
     def __init__(self):
         """Init the class and load neccessary resources."""
         self.icons = {}
+        self.icons["computer"] = self.load_and_scale_icon(Const.DATADIR + "/hal-computer.png")
         self.icons["bus_pci"] = self.load_and_scale_icon(Const.DATADIR + "/hal-bus-pci.png")
         self.icons["bus_usb"] = self.load_and_scale_icon(Const.DATADIR + "/hal-bus-usb.png")
         self.icons["abstract"] = self.load_and_scale_icon(Const.DATADIR + "/hal-abstract.png");
@@ -38,13 +39,17 @@ class Representation:
         self.icons["audio"] = self.load_and_scale_icon(Const.DATADIR + "/hal-audio.png")
         self.icons["camera"] = self.load_and_scale_icon(Const.DATADIR + "/hal-camera.png")
 
-        
+
     def get_icon(self, device):
         """Given a Device object return an icon to display"""
 
         # Default to abstract icon
         icon = self.icons["abstract"]
-            
+
+        product = device.properties["info.product"]
+        if product=="Computer":
+            return self.icons["computer"]
+
         # First look at bus type, every device got Bus property
         bus = device.properties["info.bus"]
         if bus=="usb":
