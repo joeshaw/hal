@@ -199,9 +199,8 @@ HalDevice* ds_device_new()
  *  or not.
  *
  *  @param  device              A pointer to a #HalDevice object
- *  @return                     #FALSE if the device didn't exist
  */
-dbus_bool_t ds_device_destroy(HalDevice* device)
+void ds_device_destroy(HalDevice* device)
 {
     HalProperty* prop;
     HalProperty* prop_next;

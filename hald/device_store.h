@@ -109,7 +109,7 @@ void ds_print(HalDevice* device);
 
 HalDevice* ds_device_find(const char* udi);
 HalDevice* ds_device_new();
-dbus_bool_t ds_device_destroy(HalDevice* device);
+void ds_device_destroy(HalDevice* device);
 
 void ds_device_merge(HalDevice* target, HalDevice* source);
 

@@ -1,3 +1,19 @@
+2003-11-09  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux/usb/usb_agent.c (usage): Fixed typo from --remove to
+	--probe. Cosmetic
+	(usb_device_set_parent): New function
+	(usb_compute_parents): New function
+	(usb_probe): Set Parent for devices after probe and filtering/renaming
+
+	* hald/device_store.h: ds_device_destroy now returns void
+
+	* hald/device_store.c (ds_device_destroy): now return void
+
+	* libhal/libhal.c: Tidied up error reporting to be  __FILE__ __LINE__
+
+	* COPYING: New file
+	
 2003-11-08  David Zeuthen  <david@fubar.dk>
 
 	* HACKING: Fixed typo

@@ -124,7 +124,8 @@ LibHalPropertySet* hal_device_get_all_properties(const char* udi)
                                            "GetAllProperties");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return NULL;
     }
 
@@ -134,7 +135,7 @@ LibHalPropertySet* hal_device_get_all_properties(const char* udi)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "** %s: %s raised\n\"%s\"\n\n", __FUNCTION__, 
+        fprintf(stderr, "%s %d: %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
                 error.name, error.message);
         dbus_message_unref(message);
         return NULL;
@@ -362,7 +363,8 @@ dbus_bool_t hal_device_disable(const char* udi)
                                            "Disable");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -372,7 +374,7 @@ dbus_bool_t hal_device_disable(const char* udi)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "** %s: %s raised\n\"%s\"\n\n", __FUNCTION__, 
+        fprintf(stderr, "%s %d: %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
                 error.name, error.message);
         dbus_message_unref(message);
         return FALSE;
@@ -409,7 +411,8 @@ dbus_bool_t hal_device_enable(const char* udi)
                                            "Enable");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -421,7 +424,7 @@ dbus_bool_t hal_device_enable(const char* udi)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "** %s: %s raised\n\"%s\"\n\n", __FUNCTION__, 
+        fprintf(stderr, "%s %d : %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
                 error.name, error.message);
         dbus_message_unref(message);
         return FALSE;
@@ -521,8 +524,8 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
             }
             else
             {
-                fprintf(stderr, "libhal : error parsing PropertyChanged "
-                        "method\n");
+                fprintf(stderr, "%s %d : error parsing PropertyChanged "
+                        "method\n", __FILE__, __LINE__);
             }
         }
     }
@@ -549,7 +552,7 @@ int hal_initialize(const LibHalFunctions* cb_functions)
 
     if( is_initialized )
     {
-        fprintf(stderr,  "libhal : Is already initialized!\n");
+        fprintf(stderr,"%s %d : Is already initialized!\n",__FILE__, __LINE__);
         return 1;
     }
 
@@ -561,8 +564,8 @@ int hal_initialize(const LibHalFunctions* cb_functions)
     if( connection==NULL )
     {
         fprintf(stderr, 
-                "libhal : Error connecting to system bus: %s\n",
-                error.message);
+                "%s %d : Error connecting to system bus: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_error_free(&error);
         return 1;
     }
@@ -574,7 +577,8 @@ int hal_initialize(const LibHalFunctions* cb_functions)
 
         if( !dbus_connection_add_filter(connection, filter_func, NULL, NULL) )
         {
-            fprintf(stderr, "libhal : Error creating connetion handler\r\n");
+            fprintf(stderr, "%s %d : Error creating connetion handler\r\n",
+                    __FILE__, __LINE__);
             // TODO: clean up
             return 1;
         }
@@ -626,7 +630,8 @@ char** hal_get_all_devices(int* num_devices)
                                            "GetAllDevices");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return NULL;
     }
     
@@ -636,7 +641,7 @@ char** hal_get_all_devices(int* num_devices)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "** %s: %s raised\n\"%s\"\n\n", __FUNCTION__, 
+        fprintf(stderr, "%s %d : %s raised\n\"%s\"\n\n", __FILE__, __LINE__,
                 error.name, error.message);
         dbus_message_unref(message);
         return NULL;
@@ -653,7 +658,7 @@ char** hal_get_all_devices(int* num_devices)
     if( !dbus_message_iter_get_string_array(&iter, 
                                             &device_names, num_devices) )
     {
-        fprintf(stderr, "libhal : wrong reply from hald\n");
+        fprintf(stderr, "%s %d : wrong reply from hald\n", __FILE__, __LINE__);
         return NULL;
     }
 
@@ -684,7 +689,8 @@ int hal_device_get_property_type(const char* udi,
                                            "GetPropertyType");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n", 
+                __FILE__, __LINE__);
         return DBUS_TYPE_NIL;
     }
 
@@ -696,7 +702,7 @@ int hal_device_get_property_type(const char* udi,
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "** %s: %s raised\n\"%s\"\n\n", __FUNCTION__, 
+        fprintf(stderr, "%s %d : %s raised\n\"%s\"\n\n", __FILE__, __LINE__,
                 error.name, error.message);
         dbus_message_unref(message);
         return DBUS_TYPE_NIL;
@@ -738,7 +744,8 @@ char* hal_device_get_property_string(const char* udi, const char* key)
                                            "GetPropertyString");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return NULL;
     }
 
@@ -750,7 +757,8 @@ char* hal_device_get_property_string(const char* udi, const char* key)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return NULL;
     }
@@ -765,16 +773,16 @@ char* hal_device_get_property_string(const char* udi, const char* key)
     // now analyze reply
     if( dbus_message_iter_get_arg_type(&iter)==DBUS_TYPE_NIL )
     {
-        fprintf(stderr, "libhal : property '%s' for device '%s' does not "
-                "exist\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' does not "
+                "exist\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return NULL;
     }
     else if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_STRING )
     {
-        fprintf(stderr, "libhal : property '%s' for device '%s' is not "
-                "of type string\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' is not "
+                "of type string\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return NULL;
@@ -805,7 +813,8 @@ dbus_int32_t hal_device_get_property_int(const char* udi, const char* key)
                                            "GetPropertyInteger");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return -1;
     }
 
@@ -817,7 +826,8 @@ dbus_int32_t hal_device_get_property_int(const char* udi, const char* key)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return -1;
     }
@@ -833,16 +843,16 @@ dbus_int32_t hal_device_get_property_int(const char* udi, const char* key)
     if( dbus_message_iter_get_arg_type(&iter)==DBUS_TYPE_NIL )
     {
         // property didn't exist
-        fprintf(stderr, "libhal : property '%s' for device '%s' does not "
-                "exist\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' does not "
+                "exist\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return -1;
     }
     else if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_INT32 )
     {
-        fprintf(stderr, "libhal : property '%s' for device '%s' is not "
-                "of type integer\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' is not "
+                "of type integer\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return -1;
@@ -873,7 +883,8 @@ double hal_device_get_property_double(const char* udi, const char* key)
                                            "GetPropertyDouble");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return -1.0f;
     }
 
@@ -885,7 +896,8 @@ double hal_device_get_property_double(const char* udi, const char* key)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return -1.0f;
     }
@@ -901,16 +913,16 @@ double hal_device_get_property_double(const char* udi, const char* key)
     if( dbus_message_iter_get_arg_type(&iter)==DBUS_TYPE_NIL )
     {
         // property didn't exist
-        fprintf(stderr, "libhal : property '%s' for device '%s' does not "
-                "exist\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' does not "
+                "exist\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return -1.0f;
     }
     else if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_DOUBLE )
     {
-        fprintf(stderr, "libhal : property '%s' for device '%s' is not "
-                "of type double\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' is not "
+                "of type double\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return -1.0f;
@@ -941,7 +953,8 @@ dbus_bool_t hal_device_get_property_bool(const char* udi, const char* key)
                                            "GetPropertyBoolean");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -953,7 +966,8 @@ dbus_bool_t hal_device_get_property_bool(const char* udi, const char* key)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -969,16 +983,16 @@ dbus_bool_t hal_device_get_property_bool(const char* udi, const char* key)
     if( dbus_message_iter_get_arg_type(&iter)==DBUS_TYPE_NIL )
     {
         // property didn't exist
-        fprintf(stderr, "libhal : property '%s' for device '%s' does not "
-                "exist\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' does not "
+                "exist\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return FALSE;
     }
     else if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_BOOLEAN )
     {
-        fprintf(stderr, "libhal : property '%s' for device '%s' is not "
-                "of type bool\n", key, udi);
+        fprintf(stderr, "%s %d : property '%s' for device '%s' is not "
+                "of type bool\n", __FILE__, __LINE__, key, udi);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return FALSE;
@@ -1036,7 +1050,8 @@ static int hal_device_set_property_helper(const char* udi,
                                            method_name);
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1067,7 +1082,7 @@ static int hal_device_set_property_helper(const char* udi,
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "** %s: %s raised\n\"%s\"\n\n", __FUNCTION__, 
+        fprintf(stderr, "%s %d: %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
                 error.name, error.message);
         dbus_message_unref(message);
         return FALSE;
@@ -1194,7 +1209,8 @@ char* hal_agent_new_device()
                                            "NewDevice");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return NULL;
     }
 
@@ -1204,7 +1220,8 @@ char* hal_agent_new_device()
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return NULL;
     }
@@ -1219,7 +1236,8 @@ char* hal_agent_new_device()
     // now analyze reply
     if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_STRING )
     {
-        fprintf(stderr, "libhal : expected a string in reply to NewDevice\n");
+        fprintf(stderr, "%s %d : expected a string in reply to NewDevice\n",
+                __FILE__, __LINE__);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return NULL;
@@ -1263,7 +1281,8 @@ dbus_bool_t hal_agent_commit_to_gdl(const char* temp_udi, const char* udi)
                                            "CommitToGdl");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1279,7 +1298,8 @@ dbus_bool_t hal_agent_commit_to_gdl(const char* temp_udi, const char* udi)
     {
         if( dbus_error_has_name(&error, "org.freedesktop.Hal.UdiInUse") )
             return FALSE;
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -1317,7 +1337,8 @@ dbus_bool_t hal_agent_remove_device(const char* udi)
                                            "Remove");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1330,7 +1351,8 @@ dbus_bool_t hal_agent_remove_device(const char* udi)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -1364,7 +1386,8 @@ dbus_bool_t hal_device_exists(const char* udi)
                                            "DeviceExists");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1377,7 +1400,8 @@ dbus_bool_t hal_device_exists(const char* udi)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -1392,7 +1416,8 @@ dbus_bool_t hal_device_exists(const char* udi)
     // now analyze reply
     if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_BOOLEAN )
     {
-        fprintf(stderr, "libhal : expected a bool in reply to DeviceExists\n");
+        fprintf(stderr, "%s %d : expected a bool in reply to DeviceExists\n",
+                __FILE__, __LINE__);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return FALSE;
@@ -1424,7 +1449,8 @@ dbus_bool_t hal_device_property_exists(const char* udi, const char* key)
                                            "PropertyExists");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1437,7 +1463,8 @@ dbus_bool_t hal_device_property_exists(const char* udi, const char* key)
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -1452,8 +1479,8 @@ dbus_bool_t hal_device_property_exists(const char* udi, const char* key)
     // now analyze reply
     if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_BOOLEAN )
     {
-        fprintf(stderr, "libhal : expected a bool in reply to "
-                "PropertyExists\n");
+        fprintf(stderr, "%s %d : expected a bool in reply to "
+                "PropertyExists\n", __FILE__, __LINE__);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return FALSE;
@@ -1486,7 +1513,8 @@ dbus_bool_t hal_agent_merge_properties(const char* target_udi,
                                            "MergeProperties");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1502,7 +1530,8 @@ dbus_bool_t hal_agent_merge_properties(const char* target_udi,
     {
         if( dbus_error_has_name(&error, "org.freedesktop.Hal.NoSuchDevice") )
             return FALSE;
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n",
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -1550,7 +1579,8 @@ dbus_bool_t hal_agent_device_matches(const char* udi1, const char* udi2,
                                            "DeviceMatches");
     if( message==NULL )
     {
-        fprintf(stderr, "libhal : Couldn't allocate D-BUS message\n");
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
     }
 
@@ -1565,7 +1595,8 @@ dbus_bool_t hal_agent_device_matches(const char* udi1, const char* udi2,
                                                       &error);
     if( dbus_error_is_set(&error) )
     {
-        fprintf(stderr, "libhal : Error sending msg: %s\n", error.message);
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
         dbus_message_unref(message);
         return FALSE;
     }
@@ -1579,7 +1610,8 @@ dbus_bool_t hal_agent_device_matches(const char* udi1, const char* udi2,
     dbus_message_iter_init(reply, &iter);
     if( dbus_message_iter_get_arg_type(&iter)!=DBUS_TYPE_BOOLEAN )
     {
-        fprintf(stderr,"libhal : expected a bool in reply to DeviceMatches\n");
+        fprintf(stderr,"%s %d : expected a bool in reply to DeviceMatches\n",
+                __FILE__, __LINE__);
         dbus_message_unref(message);
         dbus_message_unref(reply);
         return FALSE;

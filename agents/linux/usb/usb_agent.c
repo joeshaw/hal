@@ -80,7 +80,7 @@ static void usage()
 "\n"
 "usage : hal_agent.usb [--help] [--probe]\n"
 "\n"
-"        --remove         Probe devices on the bus\n"
+"        --probe          Probe devices on the bus\n"
 "        --help           Show this information and exit\n"
 "\n"
 "This program is supposed to only be invoked from the linux-hotplug package\n"
@@ -484,6 +484,88 @@ static void parse_line(char* s)
     }
 }
 
+/** Find a parent for a device.
+ *
+ *  @param  d                   UDI of device to find parent for; must
+ *                              represent an USB device
+ *  @param  devices             Array of UDI's for devices that may be parent
+ *                              the given device to find a parent for; if
+ *                              an UDI is #NULL it will be skipped
+ *  @param  num_devices         Number of elements in array
+ */
+static void usb_device_set_parent(char* d, char** devices, 
+                                  int num_devices)
+{
+    int i;
+
+    // Root hub, cannot have parent device
+    if( hal_device_get_property_int(d, "usb.levelNumber")==0 )
+    {
+        /** @todo Should set parent of the USB device to the corresponding
+         *        PCI bridge device (on a x86 legacy system at least)
+         */
+        return;
+    }
+
+    // Need to find parent of device; go search through all USB devices
+    for(i=0; i<num_devices; i++)
+    {
+        const char* c = devices[i]; // for Candidate
+       
+        // means it is not an USB device; see usb_compute_parents
+        if( c==NULL )
+            continue;
+
+        // only test against USB devices
+        if( strcmp(hal_device_get_property_string(c, "Bus"), "usb")!=0 )
+            continue;
+
+        if( hal_device_get_property_int(d, "usb.parentNumber")==
+            hal_device_get_property_int(c, "usb.deviceNumber")   &&
+            hal_device_get_property_int(d, "usb.busNumber")==
+            hal_device_get_property_int(c, "usb.busNumber")    )
+        {
+            hal_device_set_property_string(d, "Parent", c);
+            break;
+        }
+    }
+}
+
+/** Set Parent property for all USB devices in the GDL
+ */
+static void usb_compute_parents()
+{
+    int i;
+    int num_devices;
+    char** devices;
+
+    devices = hal_get_all_devices(&num_devices);
+
+    /* minimize set to USB devices */
+    for(i=0; i<num_devices; i++)
+    {
+        const char* bus;
+
+        bus = hal_device_get_property_string(devices[i], "Bus");
+
+        if( bus==NULL || strcmp(bus, "usb")!=0 )
+        {
+            /* not an USB device, remove from list.. */
+            free(devices[i]);
+            devices[i]=NULL;
+        }   
+    }
+
+    /* compute parent for each USB device */
+    for(i=0; i<num_devices; i++)
+    {
+        if( devices[i]==NULL )
+            continue;
+        usb_device_set_parent(devices[i], devices, num_devices);
+    }
+
+    hal_free_string_array(devices);
+}
 
 /** This function is called when the program is invoked to 
  *  probe the bus.
@@ -628,16 +710,10 @@ static void usb_probe()
         }
         
     } /* for all probed devices */
-}
 
-/*
-    char* temp_udi;
-
-    temp_udi = hal_agent_new_device();
-    hal_device_set_property_string(temp_udi, "foobar", "xyz");
-    printf("temp_udi = %s\n", temp_udi);
+    /* Now compute parents for all USB devices */
+    usb_compute_parents();
 }
-*/
 
 /** Entry point for USB agent for HAL on GNU/Linux
  *
