@@ -1,5 +1,11 @@
 2004-07-22  David Zeuthen  <david@fubar.dk>
 
+	* packaging/fedora/hal.spec (Version): Bump to 0.2.95
+
+	* configure.in: Bump to 0.2.95
+
+2004-07-22  David Zeuthen  <david@fubar.dk>
+
 	* tools/linux/hal_hotplug.c (main): Apply the same hack we did to
 	hal_dev.c some time ago; improves hotplugging speed; suggestion by
 	Sjoerd Simons.
