@@ -379,6 +379,7 @@ static void link_detection_process(link_detection_if* iface)
 /** Timeout handler for processing status on all watched interfaces
  *
  *  @param  data                User data when setting up timer
+ *  @return                     TRUE iff timer should be kept
  */
 static gboolean link_detection_timer_handler(gpointer data)
 {

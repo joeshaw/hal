@@ -54,6 +54,7 @@
 
 /* fwd decl */
 static void etc_mtab_process_all_block_devices(dbus_bool_t force);
+static dbus_bool_t detect_media(HalDevice* d);
 
 /**
  * @defgroup HalDaemonLinuxBlock Block class
@@ -473,6 +474,7 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
     ds_property_set_bool(d, "storage.dvd", FALSE);
     ds_property_set_bool(d, "storage.dvdr", FALSE);
     ds_property_set_bool(d, "storage.dvdram", FALSE);
+    ds_property_set_bool(d, "storage.cdrom.support_media_changed", FALSE);
 
     if( device_file!=NULL && strcmp(device_file, "")!=0 )
     {
@@ -487,13 +489,14 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
             int fd, capabilities;
 
 		    /* Check handling */
-		    fd = open(ds_property_get_string(d, "block.device"), 
-                      O_RDONLY|O_NONBLOCK);
-		    
+		    fd = open(device_file, O_RDONLY|O_NONBLOCK);
+
+            ioctl(fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS);
+
 		    if( fd>=0 )
 		    {
                 capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
-			
+
                 if (capabilities >= 0)
                 {
                     if (capabilities & CDC_CD_R)
@@ -523,6 +526,13 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
                     }
                 }
 
+                /* while we're at it, check if we support media changed */
+                if( ioctl(fd, CDROM_MEDIA_CHANGED)==0 )
+                {
+                    ds_property_set_bool(d, 
+                         "storage.cdrom.support_media_changed", TRUE);
+                }
+
                 close (fd);
 		    }
         }
@@ -544,6 +554,9 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
 
 
         ds_gdl_add(d);
+
+        /* check for media on the device */
+        detect_media(d);
     }
 }
 
@@ -768,7 +781,8 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
         d = ds_device_iter_get(&diter);
 
         bus = ds_property_get_string(d, "info.bus");
-        if( bus==NULL || strcmp(bus, "block")!=0 )
+        if( bus==NULL || strcmp(bus, "block")!=0 || 
+            !ds_property_get_bool(d, "block.is_volume") )
             continue;
 
         major = ds_property_get_int(d, "block.major");
@@ -782,7 +796,7 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 
             if( mp->major==major && mp->minor==minor )
             {
-		const char* existing_block_device;
+                const char* existing_block_device;
 
                 HAL_INFO((
                     "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
@@ -906,12 +920,173 @@ void linux_class_block_init()
     get_udev_root();
 }
 
+/** Check for media on a block device that is not a volume
+ *
+ *  @param  d                   Device to inspect; can be any device, but
+ *                              it will only have effect if the device is
+ *                              in the GDL and is of capability block and
+ *                              is not a volume
+ *  @param                      TRUE iff the GDL was modified
+ */
+static dbus_bool_t detect_media(HalDevice* d)
+{
+    int fd;
+    const char* device_file;
+
+    /* need to be in GDL, need to have block.deve and 
+     * have block.is_volume==FALSE 
+     */
+    if( !d->in_gdl ||
+        (!ds_property_exists(d, "block.is_volume")) ||
+        (!ds_property_exists(d, "block.device")) ||
+        ds_property_get_bool(d, "block.is_volume") )
+        return FALSE;
+
+    device_file = ds_property_get_string(d, "block.device");
+    if( device_file==NULL )
+        return FALSE;
+    
+    /* This is sufficient to invoke hotplug remove and hotplug add
+     * for partitions on the device; neat!
+     */
+    fd = open(device_file, O_RDONLY|O_NONBLOCK);
+
+    if( fd!=-1 )
+    {
+        /* special treatment for optical discs */
+        if( ds_property_exists(d, "storage.media") &&
+            strcmp(ds_property_get_string(d, "storage.media"), "cdrom")==0 &&
+            ds_property_get_bool(d, "storage.cdrom.support_media_changed")
+            )
+        {
+            int media_changed;
+            HalDevice* child;
+            
+            ioctl(fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS);
+            media_changed = ioctl(fd, CDROM_MEDIA_CHANGED);
+            close(fd);
+            
+            if( media_changed!=0 )
+            {
+                /* we get to here if there is no disc in the drive */
+                
+                child = ds_device_find_by_key_value_string("info.parent", 
+                                                           d->udi, 
+                                                           TRUE);
+                if( child!=NULL )
+                {
+                    HAL_INFO(("Removing volume for optical device %s", 
+                              device_file));
+                    ds_device_destroy(child);
+
+                    /* GDL was modified */
+                    return TRUE;
+                }
+            }
+            else
+            {
+                /* disc in drive; check if the HAL device representing
+                 * the optical drive already got a child (it can have
+                 * only one child)
+                 */
+
+                child = ds_device_find_by_key_value_string("info.parent", 
+                                                           d->udi, 
+                                                           TRUE);
+                if( child==NULL )
+                {
+                    char udi[256];
+                    
+                    /* nope, add child */
+                    HAL_INFO(("Adding volume for optical device %s", 
+                                  device_file));
+
+                    child = ds_device_new();
+                    
+                    /* copy from parent */
+                    ds_device_merge(child, d);
+                    
+                    /* modify some properties */
+                    ds_property_set_string(child, "info.parent", d->udi);
+                    ds_property_set_bool(child, "block.is_volume", TRUE);
+                    ds_property_set_string(child, "info.capabilities", 
+                                           "block volume");
+                    ds_property_set_string(child, "info.category", 
+                                           "volume");
+                    ds_property_set_string(child, "info.product", 
+                                           "Disc");
+                    
+                    /* set UDI as appropriate */
+                    strncpy(udi, ds_property_get_string(d, "info.udi"),
+                            256);
+                    strncat(udi, "-disc", 256);
+                    ds_property_set_string(child, "info.udi", udi);
+                    ds_device_set_udi(child, udi);
+                    
+                    /* add new device */
+                    ds_gdl_add(child);
+
+                    /* GDL was modified */
+                    return TRUE;
+                }
+            }
+        }
+        else
+        {
+            close(fd);
+        }
+        
+    }
+    else
+    {
+        /* open failed */
+        HAL_WARNING(("open(\"%s\", O_RDONLY|O_NONBLOCK) failed, "
+                     "errno=%d", device_file, errno));
+    }
+
+    return FALSE;
+}
+
+/** Timeout handler for polling for media on block devices
+ *
+ *  @param  data                User data when setting up timer
+ *  @return                     TRUE iff timer should be kept
+ */
+static gboolean media_detect_timer_handler(gpointer data)
+{
+    int fd;
+    const char* device_file;
+    HalDevice* d;
+    HalDeviceIterator iter;
+
+    /*HAL_INFO(("entering"));*/
+
+    /* Iterate all devices */
+    for(ds_device_iter_begin(&iter); 
+        ds_device_iter_has_more(&iter);
+        ds_device_iter_next(&iter))
+    {
+        d = ds_device_iter_get(&iter);
+
+        /** @todo FIXME GDL was modifed so we have to break here because we
+         *        are iterating over devices and this will break it
+         */
+        if( detect_media(d) )
+            break;
+    }
+
+    return TRUE;
+}
+
+
 /** This function is called when all device detection on startup is done
  *  in order to perform optional batch processing on devices
  *
  */
 void linux_class_block_detection_done()
 {
+    g_timeout_add(2000, media_detect_timer_handler, NULL);
+
     etc_mtab_process_all_block_devices(TRUE);
 }
 

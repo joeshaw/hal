@@ -1,3 +1,15 @@
+2004-01-12  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_class_block.c 
+	(linux_class_block_check_if_ready_to_add): Check whether optical
+	drive supports media changed signals
+	(etc_mtab_process_all_block_devices): Only merge information from
+	/etc/mtab if block.is_volume==TRUE
+	(detect_media): New function
+	(media_detect_timer_handler): New function
+	(linux_class_block_detection_done): Setup 2 sec timer for media
+	detection
+
 2004-01-10  David Zeuthen  <david@fubar.dk>
 
 	* tools/device-manager/hal-device-manager: add requirement for
