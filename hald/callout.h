@@ -34,5 +34,7 @@ void hal_callout_device     (HalDevice  *device,
 void hal_callout_capability (HalDevice  *device,
 			     const char *capability,
 			     gboolean    added);
+void hal_callout_property   (HalDevice	*device,
+			     const char	*key);
 
 #endif /* CALLOUT_H */

@@ -86,6 +86,10 @@ gdl_property_changed (HalDeviceStore *store, HalDevice *device,
 		      gpointer user_data)
 {
 	device_send_signal_property_modified (device, key, removed, added);
+
+	/* only execute the callouts if the property _changed_ */
+	if (added == FALSE && removed == FALSE)
+		hal_callout_property (device, key);
 }
 
 static void

@@ -37,11 +37,18 @@
 
 #define DEVICE_CALLOUT_DIR     PACKAGE_SYSCONF_DIR "/hal/device.d"
 #define CAPABILITY_CALLOUT_DIR PACKAGE_SYSCONF_DIR "/hal/capability.d"
+#define PROPERTY_CALLOUT_DIR   PACKAGE_SYSCONF_DIR "/hal/property.d"
+
+enum {
+	CALLOUT_ADD,	/* device or capability is being added */
+	CALLOUT_REMOVE,	/* device or capability is being removed */
+	CALLOUT_MODIFY,	/* property is being modified */
+};
 
 typedef struct {
 	const char *working_dir;
 	char *filename;
-	gboolean added;
+	int action;
 	HalDevice *device;
 	char **envp;
 	int envp_index;
@@ -133,7 +140,19 @@ process_callouts (void)
 	pending_callouts = g_slist_remove (pending_callouts, callout);
 
 	argv[0] = callout->filename;
-	argv[1] = callout->added == TRUE ? "add" : "remove";
+
+	switch (callout->action) {
+	case CALLOUT_ADD:
+		argv[1] = "add";
+		break;
+	case CALLOUT_REMOVE:
+		argv[1] = "remove";
+		break;
+	case CALLOUT_MODIFY:
+		argv[1] = "modify";
+		break;
+	}
+
 	argv[2] = NULL;
 
 	hal_device_property_foreach (callout->device, add_property_to_env,
@@ -190,14 +209,14 @@ hal_callout_device (HalDevice *device, gboolean added)
 
 		callout->working_dir = DEVICE_CALLOUT_DIR;
 		callout->filename = g_strdup (filename);
-		callout->added = added;
+		callout->action = added ? CALLOUT_ADD : CALLOUT_REMOVE;
 		callout->device = g_object_ref (device);
 
 		num_props = hal_device_num_properties (device);
 
 		/* Extra one for the UDI, extra one for NULL */
 		callout->envp = g_new0 (char *, num_props + 2);
-		
+
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
 						    hal_device_get_udi (device));
 		callout->envp_index = 1;
@@ -246,12 +265,12 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		}
 
 		g_free (full_filename);
-		
+
 		callout = g_new0 (Callout, 1);
 
 		callout->working_dir = CAPABILITY_CALLOUT_DIR;
 		callout->filename = g_strdup (filename);
-		callout->added = added;
+		callout->action = added ? CALLOUT_ADD : CALLOUT_REMOVE;
 		callout->device = g_object_ref (device);
 
 		num_props = hal_device_num_properties (device);
@@ -266,6 +285,73 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		callout->envp_index = 2;
 
 		pending_callouts = g_slist_append (pending_callouts, callout);
+	}
+
+	g_dir_close (dir);
+
+	if (pending_callouts != NULL && !processing_callouts)
+		process_callouts ();
+}
+
+void
+hal_callout_property (HalDevice *device, const char *key)
+{
+	GDir *dir;
+	GError *err = NULL;
+	const char *filename;
+
+	/* Directory doesn't exist.  This isn't an error, just exit
+	 * quietly. */
+	if (!g_file_test (PROPERTY_CALLOUT_DIR, G_FILE_TEST_EXISTS))
+		return;
+
+	dir = g_dir_open (PROPERTY_CALLOUT_DIR, 0, &err);
+
+	if (dir == NULL) {
+		HAL_WARNING (("Unable to open capability callout directory: "
+			      "%s", err->message));
+		g_error_free (err);
+		return;
+	}
+
+	while ((filename = g_dir_read_name (dir)) != NULL) {
+		char *full_filename, *value;
+		Callout *callout;
+		int num_props;
+
+		full_filename = g_build_filename (PROPERTY_CALLOUT_DIR,
+						  filename, NULL);
+
+		if (!g_file_test (full_filename, G_FILE_TEST_IS_EXECUTABLE)) {
+			g_free (full_filename);
+			continue;
+		}
+
+		g_free (full_filename);
+
+		callout = g_new0 (Callout, 1);
+
+		callout->working_dir = PROPERTY_CALLOUT_DIR;
+		callout->filename = g_strdup (filename);
+		callout->action = CALLOUT_MODIFY;
+		callout->device = g_object_ref (device);
+
+		num_props = hal_device_num_properties (device);
+
+		value = hal_device_property_to_string (device, key);
+
+		/* Extra one for UDI, two key/value, and one for NULL */
+		callout->envp = g_new0 (char *, num_props + 4);
+
+		callout->envp[0] = g_strdup_printf ("UDI=%s",
+					   hal_device_get_udi (device));
+		callout->envp[1] = g_strdup_printf ("PROPERTY=%s", key);
+		callout->envp[2] = g_strdup_printf ("VALUE=%s", value);
+		callout->envp_index = 3;
+
+		pending_callouts = g_slist_append (pending_callouts, callout);
+
+		g_free (value);
 	}
 
 	g_dir_close (dir);

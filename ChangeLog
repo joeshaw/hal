@@ -1,3 +1,10 @@
+2004-04-21  Robert Love  <rml@ximian.com>
+
+	* hald/callout.c: add property modified callout;
+	  change the action parameter to a tri-state and add appropriate enum
+	* hald/callout.h: add prototype for hal_property_callout
+	* hald/hald.c: invoke hal_property_callout on property modification
+
 2004-04-20  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO (CVSID): Updated
