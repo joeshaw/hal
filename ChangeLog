@@ -1,3 +1,28 @@
+2004-08-17  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Patch from Tim Gerla <tim@gerla.net>. It looks
+	like the configure script for hal doesn't properly handle
+	--with-pid-file as an argument, because of the glitch illustrated
+	by the patch I've attached.
+
+	* hald/linux/volume_id/volume_id.c (probe_msdos): Introduce a
+	hack where this is set to vfat instead.
+
+	* hald/linux/hald_helper.h (HALD_HELPER_SOCKET_PATH): Don't use
+	the local prefix, always use /var, cause otherwise it's difficult
+	when developing on hal and using a local prefix (we want to use
+	the installed hal.dev, hal.hotplug from a package)
+
+	* hald/linux/volume_id/volume_id.[ch]: Patch from Kay Sievers
+	<kay.sievers@vrfy.org>. Long weekend with a few rain showers, so
+	here is a update to volume_id :). We finally get the same uuid for
+	a ntfs volume on Windows and with HAL. Also msdos extended
+	partitons are handled now.
+
+2004-08-16  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Bump to 0.2.97
+
 2004-08-16  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Add the --enable-fstab-op to specify whether we

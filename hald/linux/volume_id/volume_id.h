@@ -21,7 +21,7 @@
 #ifndef _VOLUME_ID_H_
 #define _VOLUME_ID_H_
 
-#define VOLUME_ID_VERSION		009
+#define VOLUME_ID_VERSION		010
 
 #define VOLUME_ID_LABEL_SIZE		64
 #define VOLUME_ID_UUID_SIZE		16
@@ -29,6 +29,8 @@
 #define VOLUME_ID_PATH_MAX		255
 
 enum volume_id_type {
+	VOLUME_ID_UNKNOWN,
+	VOLUME_ID_UNPROBED,
 	VOLUME_ID_OTHER,
 	VOLUME_ID_FILESYSTEM,
 	VOLUME_ID_PARTITIONTABLE
@@ -40,7 +42,7 @@ enum volume_id_format {
 	VOLUME_ID_SWAP,
 	VOLUME_ID_EXT2,
 	VOLUME_ID_EXT3,
-	VOLUME_ID_REISER,
+	VOLUME_ID_REISERFS,
 	VOLUME_ID_XFS,
 	VOLUME_ID_JFS,
 	VOLUME_ID_MSDOS,
@@ -55,6 +57,7 @@ enum volume_id_format {
 };
 
 struct volume_id_partition {
+	enum volume_id_type type;
 	unsigned long long	off;
 	unsigned long long	len;
 };

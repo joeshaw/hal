@@ -83,7 +83,7 @@
 #define be32_to_cpu(x) (x)
 #endif
 
-/* size of superblock buffer, reiser block is at 64k */
+/* size of superblock buffer, reiserfs block is at 64k */
 #define SB_BUFFER_SIZE				0x11000
 /* size of seek buffer 4k */
 #define SEEK_BUFFER_SIZE			0x1000
@@ -161,6 +161,11 @@ set:
 	switch(count) {
 	case 4:
 		sprintf(id->uuid, "%02X%02X-%02X%02X",
+			buf[3], buf[2], buf[1], buf[0]);
+		break;
+	case 8:
+		sprintf(id->uuid,"%02X%02X-%02X%02X-%02X%02X-%02X%02X",
+			buf[7], buf[6], buf[5], buf[4],
 			buf[3], buf[2], buf[1], buf[0]);
 		break;
 	case 16:
@@ -244,7 +249,13 @@ static void free_buffer(struct volume_id *id)
 	}
 }
 
-#define MSDOS_MAGIC		"\x55\xaa"
+#define MSDOS_MAGIC			"\x55\xaa"
+#define MSDOS_PARTTABLE_OFFSET		0x1be
+#define MSDOS_EOS_SIG			0x1FE
+#define BSIZE				0x200
+#define DOS_EXTENDED_PARTITION		0x05
+#define LINUX_EXTENDED_PARTITION	0x85
+#define WIN98_EXTENDED_PARTITION	0x0f
 static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 {
 	struct msdos_partition_entry {
@@ -261,19 +272,17 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 	} __attribute__((packed)) *part;
 
 	const __u8 *buf;
-	unsigned int bsize = 0x200;
-	unsigned int part_count = 4;
 	int i;
 
 	buf = get_buffer(id, off, 0x200);
 	if (buf == NULL)
 		return -1;
 
-	if (strncmp(&buf[510], MSDOS_MAGIC, 2) != 0)
+	if (strncmp(&buf[MSDOS_EOS_SIG], MSDOS_MAGIC, 2) != 0)
 		return -1;
 
-	/* check flags on all entries to be sure to have partition table */
-	part = (struct msdos_partition_entry*) &buf[0x1be];
+	/* check flags on all entries for a valid partition table */
+	part = (struct msdos_partition_entry*) &buf[MSDOS_PARTTABLE_OFFSET];
 	for (i = 0; i < 4; i++) {
 		if (part[i].boot_ind != 0 &&
 		    part[i].boot_ind != 0x80)
@@ -282,31 +291,35 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 	if (id->partitions != NULL)
 		free(id->partitions);
-	id->partitions =
-		malloc(part_count * sizeof(struct volume_id_partition));
+	id->partitions = malloc(4 * sizeof(struct volume_id_partition));
 	if (id->partitions == NULL)
 		return -1;
-	memset(id->partitions, 0x00, sizeof(struct volume_id_partition));
+	memset(id->partitions, 0x00, 4 * sizeof(struct volume_id_partition));
 
 	for (i = 0; i < 4; i++) {
 		__u64 poff;
 		__u64 plen;
 
-		poff = (__u64) le32_to_cpu(part[i].start_sect) * bsize;
-		plen = (__u64) le32_to_cpu(part[i].nr_sects) * bsize;
-
-		dbg("found 0x%x partition entry at 0x%llx, len 0x%llx",
-		    part[i].sys_ind, poff, plen);
+		poff = (__u64) le32_to_cpu(part[i].start_sect) * BSIZE;
+		plen = (__u64) le32_to_cpu(part[i].nr_sects) * BSIZE;
 
 		if (plen == 0)
 			continue;
 
-		/* FIXME: parse logical partition and add entries */
-
-		id->partitions[i].off = poff;
-		id->partitions[i].len = plen;
+		if (part[i].sys_ind == DOS_EXTENDED_PARTITION ||
+		    part[i].sys_ind == WIN98_EXTENDED_PARTITION ||
+		    part[i].sys_ind == LINUX_EXTENDED_PARTITION) {
+			dbg("found extended partition at 0x%llx", poff);
+			id->partitions[i].type = VOLUME_ID_PARTITIONTABLE;
+		} else {
+			dbg("found 0x%x data partition at 0x%llx, len 0x%llx",
+			    part[i].sys_ind, poff, plen);
+			id->partitions[i].type = VOLUME_ID_UNPROBED;
+		}
+		id->partitions[i].off = off + poff;
+		id->partitions[i].len = off + plen;
+		id->partition_count = i+1;
 	}
-	id->partition_count = part_count;
 
 	id->type_id = VOLUME_ID_PARTITIONTABLE;
 	id->format_id = VOLUME_ID_MSDOSPARTTABLE;
@@ -366,11 +379,11 @@ static int probe_ext(struct volume_id *id, __u64 off)
 	return 0;
 }
 
-#define REISER1_SUPERBLOCK_OFFSET		0x2000
-#define REISER_SUPERBLOCK_OFFSET		0x10000
-static int probe_reiser(struct volume_id *id, __u64 off)
+#define REISERFS1_SUPERBLOCK_OFFSET		0x2000
+#define REISERFS_SUPERBLOCK_OFFSET		0x10000
+static int probe_reiserfs(struct volume_id *id, __u64 off)
 {
-	struct reiser_super_block {
+	struct reiserfs_super_block {
 		__u32	blocks_count;
 		__u32	free_blocks;
 		__u32	root_block;
@@ -386,8 +399,8 @@ static int probe_reiser(struct volume_id *id, __u64 off)
 		__u8	label[16];
 	} __attribute__((__packed__)) *rs;
 
-	rs = (struct reiser_super_block *)
-	     get_buffer(id, off + REISER_SUPERBLOCK_OFFSET, 0x200);
+	rs = (struct reiserfs_super_block *)
+	     get_buffer(id, off + REISERFS_SUPERBLOCK_OFFSET, 0x200);
 	if (rs == NULL)
 		return -1;
 
@@ -396,8 +409,8 @@ static int probe_reiser(struct volume_id *id, __u64 off)
 	if (strncmp(rs->magic, "ReIsEr3Fs", 9) == 0)
 		goto found;
 
-	rs = (struct reiser_super_block *)
-	     get_buffer(id, off + REISER1_SUPERBLOCK_OFFSET, 0x200);
+	rs = (struct reiserfs_super_block *)
+	     get_buffer(id, off + REISERFS1_SUPERBLOCK_OFFSET, 0x200);
 	if (rs == NULL)
 		return -1;
 
@@ -412,7 +425,7 @@ found:
 	set_uuid(id, rs->uuid, 16);
 
 	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_REISER;
+	id->format_id = VOLUME_ID_REISERFS;
 	id->format = "reiserfs";
 
 	return 0;
@@ -611,9 +624,14 @@ found:
 	set_label_string(id, ms->label, 11);
 	set_uuid(id, ms->serno, 4);
 
+/*
 	id->type_id = VOLUME_ID_FILESYSTEM;
 	id->format_id = VOLUME_ID_MSDOS;
 	id->format = "msdos";
+*/
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_VFAT;
+	id->format = "vfat";
 
 	return 0;
 }
@@ -1324,25 +1342,28 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 	struct ntfs_super_block {
 		__u8	jump[3];
 		__u8	oem_id[8];
-		struct bios_param_block {
-			__u16	bytes_per_sector;
-			__u8	sectors_per_cluster;
-			__u16	reserved_sectors;
-			__u8	fats;
-			__u16	root_entries;
-			__u16	sectors;
-			__u8	media_type;		/* 0xf8 = hard disk */
-			__u16	sectors_per_fat;
-			__u16	sectors_per_track;
-			__u16	heads;
-			__u32	hidden_sectors;
-			__u32	large_sectors;
-		} __attribute__((__packed__)) bpb;
-		__u8 unused[4];
+		__u16	bytes_per_sector;
+		__u8	sectors_per_cluster;
+		__u16	reserved_sectors;
+		__u8	fats;
+		__u16	root_entries;
+		__u16	sectors;
+		__u8	media_type;
+		__u16	sectors_per_fat;
+		__u16	sectors_per_track;
+		__u16	heads;
+		__u32	hidden_sectors;
+		__u32	large_sectors;
+		__u16	unused[2];
 		__u64	number_of_sectors;
 		__u64	mft_cluster_location;
 		__u64	mft_mirror_cluster_location;
 		__s8	cluster_per_mft_record;
+		__u8	reserved1[3];
+		__s8	cluster_per_index_record;
+		__u8	reserved2[3];
+		__u8	volume_serial[8];
+		__u16	checksum;
 	} __attribute__((__packed__)) *ns;
 
 	struct master_file_table_record {
@@ -1390,10 +1411,10 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 	if (strncmp(ns->oem_id, "NTFS", 4) != 0)
 		return -1;
 
-	dbg("+++++++++ 1");
+	set_uuid(id, ns->volume_serial, 8);
 
-	sector_size = le16_to_cpu(ns->bpb.bytes_per_sector);
-	cluster_size = ns->bpb.sectors_per_cluster * sector_size;
+	sector_size = le16_to_cpu(ns->bytes_per_sector);
+	cluster_size = ns->sectors_per_cluster * sector_size;
 	mft_cluster = le64_to_cpu(ns->mft_cluster_location);
 	mft_off = mft_cluster * cluster_size;
 
@@ -1417,10 +1438,7 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 
 	mftr = (struct master_file_table_record*) buf;
 
-	dbg("mftr->magic[0] = '%c' %03d, 0x%02x", mftr->magic[0], mftr->magic[0], mftr->magic[0]);
-	dbg("mftr->magic[1] = '%c' %03d, 0x%02x", mftr->magic[1], mftr->magic[1], mftr->magic[1]);
-	dbg("mftr->magic[2] = '%c' %03d, 0x%02x", mftr->magic[2], mftr->magic[2], mftr->magic[2]);
-	dbg("mftr->magic[3] = '%c' %03d, 0x%02x", mftr->magic[3], mftr->magic[3], mftr->magic[3]);
+	dbg("mftr->magic '%c%c%c%c'", mftr->magic[0], mftr->magic[1], mftr->magic[2], mftr->magic[3]);
 	if (strncmp(mftr->magic, "FILE", 4) != 0)
 		goto found;
 
@@ -1433,6 +1451,13 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 		attr_len = le16_to_cpu(attr->len);
 		val_off = le16_to_cpu(attr->value_offset);
 		val_len = le32_to_cpu(attr->value_len);
+		attr_off += attr_len;
+
+		if (attr_len == 0)
+			break;
+
+		if (attr_off >= mft_record_size)
+			break;
 
 		if (attr_type == MFT_RECORD_ATTR_END)
 			break;
@@ -1450,21 +1475,6 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 			set_label_unicode16(id, val, LE, val_len);
 		}
 
-		if (attr_type == MFT_RECORD_ATTR_OBJECT_ID) {
-			dbg("found uuid");
-			/* Not sure about the on-disk format of MS's uuid's
-			 * just assuming a byte stream, it should be unique
-			 * anyway.
-			 * Any authoritative information is welcome. */
-			val = &((__u8 *) attr)[val_off];
-			set_uuid(id, val, 16);
-		}
-
-		if (attr_len == 0)
-			break;
-		attr_off += attr_len;
-		if (attr_off >= mft_record_size)
-			break;
 	}
 
 found:
@@ -1519,8 +1529,8 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_EXT2:
 		rc = probe_ext(id, off);
 		break;
-	case VOLUME_ID_REISER:
-		rc = probe_reiser(id, off);
+	case VOLUME_ID_REISERFS:
+		rc = probe_reiserfs(id, off);
 		break;
 	case VOLUME_ID_XFS:
 		rc = probe_xfs(id, off);
@@ -1528,11 +1538,11 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_JFS:
 		rc = probe_jfs(id, off);
 		break;
-	case VOLUME_ID_MSDOS:
-		rc = probe_msdos(id, off);
-		break;
 	case VOLUME_ID_VFAT:
 		rc = probe_vfat(id, off);
+		break;
+	case VOLUME_ID_MSDOS:
+		rc = probe_msdos(id, off);
 		break;
 	case VOLUME_ID_UDF:
 		rc = probe_udf(id, off);
@@ -1578,7 +1588,7 @@ int volume_id_probe(struct volume_id *id,
 		rc = probe_ext(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_reiser(id, off);
+		rc = probe_reiserfs(id, off);
 		if (rc == 0)
 			break;
 		rc = probe_xfs(id, off);
