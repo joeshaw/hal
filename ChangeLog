@@ -1,3 +1,41 @@
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Add fstab-sync.8 to AC_OUTPUT
+	
+	* doc/conf/storage-non-fixed.fdi: New file, example
+
+	* doc/conf/storage-skip-all.fdi: New file, example
+
+	* doc/conf/Makefile.am: Dist and install two new .fdi files
+
+	* fdi/90defaultpolicy/storage-policy.fdi: Fix a typo in a comment
+
+	* hald/device_info.c:
+	(my_alphasort): New function 
+	(scan_fdi_files): Use my_alphasort to sort in the right order. Process
+	all .fdi files instead of bailing out on the first match.
+
+	* hald/linux/osspec.c:
+	(get_selinux_removable_context): New function, copied over from 
+	tools/fstab-sync.c (not currently used)
+	(osspec_probe): Use get_selinux_removable_context (not currently used)
+
+	* libhal-storage/libhal-storage.c:
+	(hal_drive_policy_get_mount_options): Check if mount_option property
+	is actually FALSE.
+	(hal_volume_policy_get_mount_options): Same
+
+	* libhal/libhal.c:
+	(hal_free_property_set): Check if object to free is NULL and just
+	return. Allows hal_free_property_set (NULL).
+
+	* tools/Makefile.am: Add rules for building fstab-sync.8 man page
+
+	* tools/fstab-sync.8.in: New file
+
+	* tools/fstab-sync.c: Much rewritten to use libhal-storage and the new
+	policy properties. See diff for details.
+
 2004-10-13  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Add docs for is_ascii attribute on the

@@ -6,7 +6,7 @@ INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
-	-I$(top_srcdir) \
+	-I$(top_srcdir) -I$(top_srcdir)/libhal \
 	@PACKAGE_CFLAGS@
 
 bin_PROGRAMS = lshal hal-get-property hal-set-property
@@ -22,11 +22,7 @@ hal_set_property_SOURCES = hal_set_property.c
 hal_set_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 fstab_sync_SOURCES = fstab-sync.c
-fstab_sync_LDADD = -lpopt $(top_builddir)/libhal/libhal.la
-
-if HAVE_SELINUX
-fstab_sync_LDADD += -lselinux
-endif
+fstab_sync_LDADD = -lpopt $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
 if FSTAB_SYNC_ENABLED
 install-data-local :
@@ -35,8 +31,14 @@ install-data-local :
 
 uninstall-local :
 	- rm -f $(DESTDIR)$(SYSCONFDIR)/hal/device.d/50-fstab-sync.hal
+
+MAN_IN_FILES = fstab-sync.8.in
+man_MANS = fstab-sync.8
+
 endif
 ## FSTAB_SYNC_ENABLED end
+
+EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES)
 
 clean-local :
 	rm -f *~

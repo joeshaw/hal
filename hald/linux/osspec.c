@@ -805,6 +805,44 @@ add_computer_callouts_done (HalDevice *device, gpointer user_data)
 
 #ifdef HAVE_SELINUX
 #include <selinux/selinux.h>
+
+#if 0
+static int get_selinux_removable_context(security_context_t *newcon)
+{
+	FILE *fp;
+	char buf[255], *ptr;
+	size_t plen;
+	
+	HAL_INFO (("selinux_removable_context_path '%s'", selinux_removable_context_path()));
+	fp = fopen(selinux_removable_context_path(), "r");
+	if (!fp)
+		return -1;
+	
+	ptr = fgets_unlocked(buf, sizeof buf, fp);
+	fclose(fp);
+	
+	if (!ptr)
+		return -1;
+	plen = strlen(ptr);
+	if (buf[plen-1] == '\n') 
+		buf[plen-1] = 0;
+	
+	*newcon=strdup(buf);
+	/* If possible, check the context to catch
+	   errors early rather than waiting until the
+	   caller tries to use setexeccon on the context.
+	   But this may not always be possible, e.g. if
+	   selinuxfs isn't mounted. */
+	if (security_check_context(*newcon) && errno != ENOENT) {
+		free(*newcon);
+		*newcon = 0;
+		return -1;
+	}
+	
+	HAL_INFO (("removable context is %s", *newcon));
+	return 0;
+}
+#endif
 #endif /* HAVE_SELINUX */
 
 /* This function is documented in ../osspec.h */
@@ -838,7 +876,23 @@ osspec_probe (void)
 	}
 
 #ifdef HAVE_SELINUX
-	hal_device_property_set_bool (root, "linux.is_selinux_enabled", is_selinux_enabled());
+	if (is_selinux_enabled()) {
+/*
+		char buf[256];
+		security_context_t scontext;
+*/
+		hal_device_property_set_bool (root, "linux.is_selinux_enabled", TRUE);
+
+/*
+		if (get_selinux_removable_context(&scontext)==0) {
+			snprintf (buf, sizeof (buf), "storage.policy.default.mount_option.fscontext=%s", scontext);
+			freecon(scontext);
+			hal_device_property_set_bool (root, buf, TRUE);
+		} else {
+			HAL_ERROR (("Could not get selinux removable fscontext"));
+		}
+*/
+	}
 #endif /* HAVE_SELINUX */
 
 	hal_device_store_add (hald_get_tdl (), root);

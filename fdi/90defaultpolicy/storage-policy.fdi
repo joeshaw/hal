@@ -135,7 +135,7 @@
 	    </match>
 	  </match>
 	  
-	  <!-- whitelist of partition table id, if from a msdos partition table -->
+	  <!-- whitelist of partition table id's, if from a msdos partition table -->
 	  <match key="volume.partition.msdos_part_table_type" exists="true">
 	    <!-- Default to no mount and punch holes -->
 	    <merge key="volume.policy.should_mount" type="bool">false</merge>

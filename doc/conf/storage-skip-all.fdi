@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<!-- This .fdi files will tag all storage devices as non mountable -->
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.category" string="storage">
+      <merge key="storage.policy.should_mount" type="bool">false</merge>
+    </match>
+  </device>
+</deviceinfo>

@@ -1,4 +1,3 @@
-/* -*- mode: C; c-file-style: "gnu" -*- */
 /* Copyright 2004 Red Hat, Inc.
  *
  * This software may be freely redistributed under the terms of the GNU
@@ -62,6 +61,7 @@
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include "libhal/libhal.h"
+#include "libhal-storage/libhal-storage.h"
 
 typedef int boolean;
 
@@ -74,21 +74,10 @@ static boolean verbose = FALSE;
 #define TEMP_FSTAB_PREFIX ".fstab.hal."
 #define TEMP_FSTAB_MAX_LENGTH 64
 
-#ifndef FSTAB_SYNC_MOUNT_ROOT
-#  define FSTAB_SYNC_MOUNT_ROOT "/media"
-#endif
-
-#ifndef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD
-#  define FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "managed"
-#endif
-
-#ifndef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC
-#  define FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC "kudzu"
-#endif
-
-#ifndef FSTAB_SYNC_MOUNT_ACCESS
-#  define FSTAB_SYNC_MOUNT_ACCESS "console"
-#endif
+#undef FSTAB_SYNC_MOUNT_ROOT
+#undef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD
+#undef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC
+#undef FSTAB_SYNC_MOUNT_ACCESS
 
 #ifndef TRUE
 #define TRUE 1
@@ -102,66 +91,10 @@ static boolean verbose = FALSE;
 
 static pid_t pid;
 
-
-#ifdef HAVE_SELINUX
-#include <selinux/selinux.h>
-
-static int get_removable_context(security_context_t *newcon)
-{
-  FILE *fp;
-  char buf[255], *ptr;
-  size_t plen;
-
-  fstab_update_debug (_("%d: selinux_removable_context_path %s\n"), pid, selinux_removable_context_path());
-  fp = fopen(selinux_removable_context_path(), "r");
-  if (!fp)
-    return -1;
-  
-  ptr = fgets_unlocked(buf, sizeof buf, fp);
-  fclose(fp);
-  
-  if (!ptr)
-    return -1;
-  plen = strlen(ptr);
-  if (buf[plen-1] == '\n') 
-    buf[plen-1] = 0;
-  
-  *newcon=strdup(buf);
-  /* If possible, check the context to catch
-     errors early rather than waiting until the
-     caller tries to use setexeccon on the context.
-     But this may not always be possible, e.g. if
-     selinuxfs isn't mounted. */
-  if (security_check_context(*newcon) && errno != ENOENT) {
-    free(*newcon);
-    *newcon = 0;
-    return -1;
-  }
-
-  fstab_update_debug (_("%d: removable context is %s\n"), pid, *newcon);  
-  return 0;
-}
-#endif
-
-/** This structure represents either a volume with a mountable filesystem
- *  or a drive that uses media without partition tables.
- *
- *  All fields needs to be non-NULL.
- */
-typedef struct
-{
-  char *udi;                      /**< UDI from HAL */
-  char *block_device;             /**< Special device file */
-  char *type;                     /**< Name used in mount point construction, e.g. "cdrw" */
-  char *fs_type;                  /**< Filesystem type or blank */
-  char *mount_point;              /**< Final unique mount point, e.g "/media/cdrw2" */
-  char *label;                    /**< Label of media or blank */
-  char *drive_type;               /**< The storage.drive_type value */
-  boolean is_hotpluggable;        /**< TRUE if the volume stems from a hotpluggable drive */
-  boolean is_removable;           /**< TRUE if the volume is from a drive with removable media */
-  dbus_int64_t size;              /**< Size in bytes of the volume or -1 if not available */
-  char *bus;                      /**< Type of bus the device is connected to */
-} Volume;
+static char   *fsy_mount_root;
+static boolean fsy_use_managed;
+static char   *fsy_managed_primary;
+static char   *fsy_managed_secondary;
 
 typedef enum 
 {
@@ -207,28 +140,22 @@ typedef struct
 
 static LibHalContext *hal_context = NULL;
 
-static void fs_table_line_add_field (FSTableLine *line, FSTableField *field);
-static boolean fs_table_line_is_generated (FSTableLine *line);
-static void fs_table_line_update_pointer (FSTableLine *line, FSTableField *field);
+static void    fs_table_line_add_field      (FSTableLine *line, FSTableField *field);
+static boolean fs_table_line_is_generated   (FSTableLine *line);
+static void    fs_table_line_update_pointer (FSTableLine *line, FSTableField *field);
 
-static FSTable *fs_table_new (const char *filename);
-static void fs_table_free (FSTable *table);
-static boolean fs_table_parse_data (FSTable    *table, 
-                                    const char *data, 
-                                    size_t      length);
+static FSTable *fs_table_new        (const char *filename);
+static void     fs_table_free       (FSTable *table);
+static boolean  fs_table_parse_data (FSTable *table, const char *data, size_t length);
 
 
 static inline int get_random_int_in_range (int low, int high);
-static int open_temp_fstab_file (const char *dir, char **filename);
+static int        open_temp_fstab_file (const char *dir, char **filename);
+static boolean    create_mount_point_for_volume (const char *full_mount_path);
+static boolean    fs_table_line_has_mount_option (FSTableLine *line, const char *option);
 
-static char *get_hal_string_property (const char *udi, const char *property);
-static boolean udi_is_volume_or_nonpartition_drive (const char *udi);
-static Volume *volume_new (const char *udi);
-static void volume_free (Volume *volume);
-static boolean create_mount_point_for_volume (Volume *volume);
-static boolean fs_table_add_volume (FSTable *table, Volume *volume);
-static FSTableLine *fs_table_remove_volume (FSTable *table, const char *volume);
-static boolean fs_table_line_has_mount_option (FSTableLine *line, const char *option);
+/*static boolean      fs_table_add_volume    (FSTable *table, const char *udi);*/
+static FSTableLine *fs_table_remove_volume (FSTable *table, const char *block_device);
 
 static boolean add_udi (const char *udi);
 static boolean remove_udi (const char *udi);
@@ -373,21 +300,20 @@ static boolean fs_table_line_is_generated (FSTableLine *line)
 
   has_managed_keyword = FALSE;
 
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
-  if (fs_table_line_has_mount_option (line, FSTAB_SYNC_MOUNT_MANAGED_KEYWORD))
-    has_managed_keyword = TRUE;
-#endif
-
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION_SEC
-  if (fs_table_line_has_mount_option (line, FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC))
-    has_managed_keyword = TRUE;
-#endif
+  if (fsy_use_managed) {
+	  if (fs_table_line_has_mount_option (line, fsy_managed_primary))
+		  has_managed_keyword = TRUE;
+	  if (fs_table_line_has_mount_option (line, fsy_managed_secondary))
+		  has_managed_keyword = TRUE;
+  }
 
   if (!has_managed_keyword)
     return FALSE;
 
+/*
   if (strncmp (line->mount_point, FSTAB_SYNC_MOUNT_ROOT "/", sizeof (FSTAB_SYNC_MOUNT_ROOT "/") -1) != 0)
     return FALSE;
+*/
 
   return TRUE;
 }
@@ -874,54 +800,9 @@ open_temp_fstab_file (const char *dir, char **filename)
   return fd;
 }
 
-static char *
-get_hal_string_property (const char *udi, const char *property)
-{
-  char *value;
-
-  value = NULL;
-
-  if (hal_device_property_exists (hal_context, udi, property))
-    value = hal_device_get_property_string (hal_context, udi, property);
-
-  return value;
-}
-
-static boolean
-udi_is_volume_or_nonpartition_drive (const char *udi)
-{
-  const char *fsusage;
-
-  if (hal_device_query_capability (hal_context, udi, "volume")) {
-
-    /* we accept volumes with data and known filesystems */
-
-    if (hal_device_property_exists (hal_context, udi, "volume.is_disc.has_data") &&
-	!hal_device_get_property_bool (hal_context, udi, "volume.disc.has_data"))
-      return FALSE;
-
-    fsusage = hal_device_get_property_string (hal_context, udi, "volume.fsusage");
-    if (fsusage == NULL || strcmp (fsusage, "filesystem") != 0)
-      return FALSE;
-
-    return TRUE;
-
-  } else if (hal_device_query_capability (hal_context, udi, "storage")) {
-
-    /* we accept storage drives with hints that they usually use media
-     * without partition tables (such as optical and floppy drives)
-     */
-
-    if (hal_device_property_exists (hal_context, udi, "storage.no_partitions_hint") &&
-	hal_device_get_property_bool (hal_context, udi, "storage.no_partitions_hint"))
-      return TRUE;
-  }
-
-  return FALSE;
-}
 
 static char *
-device_type_normalize (const char *device_type)
+fixup_mount_point (const char *device_type)
 {
   char *p, *q, *new_device_type;
 
@@ -935,11 +816,12 @@ device_type_normalize (const char *device_type)
         *q = '-';
       else
         {
-          *q = tolower (*p);
+          *q = *p;
 
-          if (*q < 'a' || *q > 'z')
-            *q = '.';
+          if (!isalpha(*q) && !isdigit(*q) && *q!='_' && *q!='-')
+            *q = '_';
         }
+
       q++;
     }
   *q = '\0';
@@ -947,200 +829,28 @@ device_type_normalize (const char *device_type)
   return new_device_type;
 }
 
-
-static char *
-compute_cdrom_name (const char *drive_udi)
-{
-  boolean cdr;
-  boolean cdrw;
-  boolean dvd;
-  boolean dvdplusr;
-  boolean dvdplusrw;
-  boolean dvdr;
-  boolean dvdram;
-  char *first;
-  char *second;
-  char *result;
-  
-  /* use the capabilities of the optical device */
-  
-  cdr = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.cdr");
-  cdrw = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.cdrw");
-  dvd = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvd");
-  dvdplusr = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdplusr");
-  dvdplusrw = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdplusrw");
-  dvdr = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdr");
-  dvdram = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdram");
-
-  first = NULL;
-  if (cdr)
-    first = "cdr";
-  if (cdrw)
-    first = "cdrw";
-  
-  second = NULL;
-  if (dvd)
-    second = "dvdrom";
-  if (dvdram)
-    second = "dvdram";
-  if (dvdplusr || dvdr)
-    second = "dvdr";
-  if (dvdplusrw)
-    second = "dvdrw";
-
-  if (first == NULL && second == NULL)
-    result = strdup ("cdrom");
-  else if (first == NULL)
-    result = strdup (second);
-  else if (second == NULL)
-    result = strdup (first);
-  else {
-    char buf[64];
-
-    snprintf (buf, 64, "%s_%s", first, second);
-    result = strdup (buf);
-  }
-
-  return result;
-}
-
-static Volume *
-volume_new (const char *udi)
-{
-  Volume *volume;
-  char *storudi;
-  dbus_int64_t num_blocks;
-  dbus_int64_t block_size;
-  char buf[64];
-
-  if (!udi_is_volume_or_nonpartition_drive (udi))
-    return NULL;
-
-  volume = calloc (sizeof (Volume), 1);
-
-  volume->udi = strdup (udi);
-
-  volume->block_device = get_hal_string_property (udi, "block.device");
-
-  if (volume->block_device == NULL)
-    {
-      volume_free (volume);
-      return NULL;
-    }
-
-  volume->type = NULL;
-
-  storudi = hal_device_get_property_string (hal_context, udi, "block.storage_device");
-  volume->is_hotpluggable = hal_device_get_property_bool (hal_context, storudi, "storage.hotpluggable");
-  volume->is_removable = hal_device_get_property_bool (hal_context, storudi, "storage.removable");
-  volume->drive_type = hal_device_get_property_string (hal_context, storudi, "storage.drive_type");
-  volume->bus = hal_device_get_property_string (hal_context, storudi, "storage.bus");
-
-  if (strcmp (volume->drive_type, "cdrom") == 0) {    
-    volume->type = compute_cdrom_name (storudi);
-  } else if (strcmp (volume->drive_type, "disk") == 0) {
-    snprintf (buf, 63, "%sdisk", volume->bus);
-    volume->type = strdup (buf);
-  } else {
-    volume->type = strdup (volume->drive_type);
-  }
-
-  free (storudi);
-
-  volume->fs_type = get_hal_string_property (udi, "volume.fstype");
-  if (volume->fs_type == NULL || strlen (volume->fs_type) == 0)
-    {
-      if (strcmp (volume->drive_type, "cdrom") == 0 || strcmp (volume->drive_type, "floppy") == 0) {
-	free (volume->fs_type);
-	volume->fs_type = strdup ("auto");
-      } else {
-	volume_free (volume);
-	return NULL;
-      }
-    }
-  if (strcmp (volume->fs_type, "msdos") == 0)
-    {
-      free (volume->fs_type);
-      volume->fs_type = strdup ("vfat");
-    }
-
-  volume->label = get_hal_string_property (udi, "volume.label");
-  if (volume->label == NULL)
-    volume->label = strdup ("");
-
-  if (hal_device_property_exists (hal_context, udi, "volume.block_size") &&
-      hal_device_property_exists (hal_context, udi, "volume.num_blocks")) {
-    block_size = (dbus_int64_t) hal_device_get_property_int (hal_context, udi, "volume.block_size");
-    num_blocks = (dbus_int64_t) hal_device_get_property_int (hal_context, udi, "volume.num_blocks");
-    volume->size = block_size * num_blocks;
-  } else {
-    volume->size = -1;
-  }
-
-  return volume;
-}
-
-static void
-volume_free (Volume *volume)
-{
-
-  if (!volume)
-    return;
-
-  if (volume->udi != NULL)
-    {
-      free (volume->udi);
-      volume->udi = NULL;
-    }
-
-  if (volume->block_device != NULL)
-    {
-      free (volume->block_device);
-      volume->block_device = NULL;
-    }
-
-  if (volume->fs_type != NULL)
-    {
-      free (volume->fs_type);
-      volume->fs_type = NULL;
-    }
-
-  if (volume->label != NULL)
-    {
-      free (volume->label);
-      volume->fs_type = NULL;
-    }
-
-  if (volume->type != NULL)
-    {
-      free (volume->type);
-      volume->type = NULL;
-    }
-
-  if (volume->bus != NULL)
-    {
-      free (volume->bus);
-      volume->bus = NULL;
-    }
-}
-
 /* FIXME: This function should be more fleshed out then it is
+ *
  */
 static boolean
-create_mount_point_for_volume (Volume *volume)
+create_mount_point_for_volume (const char *full_mount_path)
 {
 
   /* FIXME: Should only mkdir if we need to and should do so
    * recursively for each component of the mount root.
    */
-  mkdir (FSTAB_SYNC_MOUNT_ROOT "/", 0775);
+  mkdir (fsy_mount_root, 0775);
 
-  return (mkdir (volume->mount_point, 0775) != -1) || errno == EEXIST;
+  return (mkdir (full_mount_path, 0775) != -1) || errno == EEXIST;
 }
 
 
+/** See if the fstab already got this device listed. The parameter label
+ *  can be NULL.
+ *
+ */
 static boolean
-fs_table_has_volume (FSTable *table, Volume *volume)
+fs_table_has_device (FSTable *table, const char *block_device, const char *label, const char *udi)
 {
   FSTableLine *line;
   struct stat statbuf;
@@ -1158,7 +868,7 @@ fs_table_has_volume (FSTable *table, Volume *volume)
             {
 
 	      /* Easy, the device file is a match */
-              if (strcmp (field->value, volume->block_device) == 0)
+              if (strcmp (field->value, block_device) == 0)
                 return TRUE;
 
 	      /* Check if it's a symlink */
@@ -1182,10 +892,10 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 		      strncpy (p+1, buf1, buf+sizeof(buf)-p-1);
 		    }
 
-		    if (strcmp (volume->block_device, buf) == 0) {
+		    if (strcmp (block_device, buf) == 0) {
 		      /* update block.device with new value */
 		      fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), pid, field->value, buf);
-		      hal_device_set_property_string (hal_context, volume->udi, "block.device", field->value);
+		      hal_device_set_property_string (hal_context, udi, "block.device", field->value);
 		      return TRUE;
 		    }
 
@@ -1195,8 +905,8 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 
 	      /* Mount by label, more tricky, see below... */
 	      if (strncmp (field->value, "LABEL=", 6) == 0 &&
-		  strlen (field->value) > 6 &&
-		  strcmp (field->value + 6, volume->label) == 0) {
+		  strlen (field->value) > 6 && label != NULL &&
+		  strcmp (field->value + 6, label) == 0) {
 		FSTableField *i;
 		char *mount_point;
       
@@ -1245,7 +955,7 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 		  /* now see if it's the same device_file as our volume */
 		  if (device_file_from_mount_point != NULL &&
 		      strcmp (device_file_from_mount_point, 
-			      volume->block_device) == 0) {
+			      block_device) == 0) {
 		    /* Yah it is.. So we're already listed in the fstab */
 		    return TRUE;
 		  }
@@ -1269,71 +979,6 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 	dst[sizeof (dst) - 1] = '\0'; \
 	strncat (dst, src, sizeof (dst) - strlen (dst) - 1); \
 } while(0)
-
-static boolean
-fs_table_add_volume (FSTable *table, Volume *volume)
-{
-  FSTableLine *line;
-  char options[OPTIONS_SIZE];
-
-  if (fs_table_has_volume (table, volume))
-    {
-      fstab_update_debug (_("%d: Could not add entry to fstab file: "
-                            "block device already listed\n"), pid);
-      return FALSE;
-    }
-
-  options[0] = '\0';
-
-  strcat_len (options, "noauto");
-
-#ifdef FSTAB_SYNC_USE_ACCESS
-  strcat_len (options, "," FSTAB_SYNC_MOUNT_ACCESS);
-#endif
-
-  strcat_len (options, ",exec");
-
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
-  strcat_len (options, "," FSTAB_SYNC_MOUNT_MANAGED_KEYWORD);
-#endif
-
-
-#ifdef HAVE_SELINUX
-  if (is_selinux_enabled() > 0 && (volume->is_hotpluggable || volume->is_removable) ) {
-    security_context_t scontext;
-
-    fstab_update_debug (_("%d: SELinux is enabled\n"), pid);
-
-    if (get_removable_context(&scontext)==0) {
-      strcat_len (options, ",fscontext=");
-      strcat_len(options, scontext);
-      freecon(scontext);
-    } else {
-      fstab_update_debug (_("%d: Could not get fscontext\n"), pid);
-    }
-  } else {
-    fstab_update_debug (_("%d: SELinux is NOT enabled\n"), pid);
-  }
-#endif
-
-  if (strcmp (volume->drive_type, "cdrom") == 0)
-    strcat_len (options, ",ro");
-
-  /* cheeasy heuristic for memory sticks */
-  if (volume->size > 0 && 
-      volume->size < 1024*1024*1024 && /* 1GB */
-      volume->is_hotpluggable) {
-    strcat_len (options, ",noatime,sync");
-  }
-
-  line = fs_table_line_new_from_field_values (volume->block_device,
-                                              volume->mount_point,
-                                              volume->fs_type,
-                                              strdup (options), 0, 0); 
-  fs_table_add_line (table, line);
-
-  return TRUE;
-}
 
 static boolean
 fs_table_line_has_mount_option (FSTableLine *line, const char *option)
@@ -1409,8 +1054,55 @@ get_file_modification_time (const char *filename)
   return buf.st_mtime;
 }
 
-static boolean
-volume_determine_mount_point (Volume *volume, FSTable *table)
+#define FSTAB_SYNC_BOILER_PLATE_LINE "# This file is edited by fstab-sync - see 'man fstab-sync' for details"
+
+/** Add boilerplate about us editing the fstab file if not
+ *  already there
+ */
+static void 
+append_boilerplate (FSTable *table)
+{
+	FSTableLine *line, *previous_line; 
+	FSTableField *field;
+
+	previous_line = NULL;
+	line = table->lines;
+	while (line != NULL)
+	{
+		for (field = line->fields; field != NULL; field = field->next) {
+			if (field->type == FS_TABLE_FIELD_TYPE_WHITE_SPACE) {
+				if (strcmp (field->value, FSTAB_SYNC_BOILER_PLATE_LINE) == 0)
+					return;
+			}
+		}
+		line = line->next;
+	}
+
+	line = fs_table_line_new ();
+	if (line == NULL)
+		return;
+	field = fs_table_field_new (FS_TABLE_FIELD_TYPE_WHITE_SPACE, FSTAB_SYNC_BOILER_PLATE_LINE);
+	if (field == NULL)
+		return;
+	fs_table_line_add_field (line, field);
+
+	/* add to start of file */
+	if (table->lines == NULL)
+	{
+		table->lines = line;
+		table->tail = line;
+	}
+	else
+	{
+		line->next = table->lines;
+		table->lines = line;
+	}
+	
+	
+}
+
+static char *
+compute_mount_point (FSTable *table, const char *desired)
 {
   FSTableLine *line;
   char desired_name[256];
@@ -1422,14 +1114,13 @@ volume_determine_mount_point (Volume *volume, FSTable *table)
 tryagain:
   if (dev_number >= 16384) {
     /* to prevent looping; should never happen (unless you got more than 16k disks) */
-    volume->mount_point = NULL;
-    return FALSE;
+    return NULL;
   }
 
   if (dev_number == 0)
-    snprintf (desired_name, sizeof (desired_name), FSTAB_SYNC_MOUNT_ROOT "/%s", volume->type);
+    snprintf (desired_name, sizeof (desired_name), "%s/%s", fsy_mount_root, desired);
   else
-    snprintf (desired_name, sizeof (desired_name), FSTAB_SYNC_MOUNT_ROOT "/%s%d", volume->type, dev_number);
+    snprintf (desired_name, sizeof (desired_name), "%s/%s%d", fsy_mount_root, desired, dev_number);
 
   /* see if it's in fstab */
   for (line = table->lines; line != NULL; line = line->next) {
@@ -1438,137 +1129,268 @@ tryagain:
       goto tryagain;
     }
   }
-
+  
   /* see if the mount point physically exists */
   if (stat (desired_name, &statbuf) == 0 || errno != ENOENT) {
     dev_number++;
     goto tryagain;
   }
 
-  volume->mount_point = strdup (desired_name);
-  return TRUE;
+  return strdup (desired_name);
 }
+
+
+/** Add a hal device object to the fstab if applicable.
+ *
+ *  Returns NULL if we don't want to add this hal device. 
+ *  Otherwise the fully qualified mount point is returned and
+ *  it must be freed by the caller.
+ */
+static char* add_hal_device (FSTable *table, const char *udi)
+{
+	char *rc;
+	HalDrive *drive;
+	HalVolume *volume;
+	FSTableLine *line;
+	char final_options[256];
+	
+	drive = NULL;
+	volume = NULL;
+	rc = NULL;
+	
+	fstab_update_debug (_("%d: entering add_hal_device, udi='%s'\n"), pid, udi);
+	
+	drive  = hal_drive_from_udi (hal_context, udi);
+	/*fstab_update_debug (_("%d: drive=%x, volume=%x\n"), pid, drive, volume);*/
+	if (drive == NULL) {
+		char *udi_storage_device;
+		/* try block.storage_device */
+		udi_storage_device = hal_device_get_property_string (hal_context, udi, "block.storage_device");
+		if (udi_storage_device == NULL)
+			goto out;
+		drive = hal_drive_from_udi (hal_context, udi_storage_device);
+		hal_free_string (udi_storage_device);
+		if (drive == NULL)
+			goto out;
+	}
+
+	volume = hal_volume_from_udi (hal_context, udi);
+		
+	/* see if we are a drive */
+	if (volume == NULL) {
+		const char *device_file;
+		char *mount_point;
+		char *normalized_desired_mount_point;
+		const char *desired_mount_point;
+		const char *fstype;
+		const char *options;
+		
+		if (!hal_drive_policy_is_mountable (drive, NULL))
+			goto out;
+		
+		device_file = hal_drive_get_device_file (drive);
+		if (device_file == NULL)
+			goto out;
+
+		if (fs_table_has_device (table, device_file, NULL, udi)) /* no label */ {
+			fstab_update_debug (_("%d: Could not add entry to fstab file: "
+					      "block device %s already listed\n"), pid, device_file);
+			goto out;
+		}
+		
+		desired_mount_point = hal_drive_policy_get_desired_mount_point (drive, NULL);
+		if (desired_mount_point == NULL)
+			goto out;
+
+		normalized_desired_mount_point = fixup_mount_point (desired_mount_point);
+		if (normalized_desired_mount_point == NULL)
+			goto out;
+		
+		fstype = hal_drive_policy_get_mount_fs (drive, NULL);
+		if (fstype == NULL)
+			goto out;
+		options = hal_drive_policy_get_mount_options (drive, NULL);
+		if (options == NULL)
+			goto out;
+		
+		mount_point = compute_mount_point (table, normalized_desired_mount_point);
+		if (mount_point == NULL)
+			goto out;
+				
+		if (fsy_use_managed) {
+			snprintf (final_options, sizeof (final_options), "%s,%s", options, fsy_managed_primary);
+		} else {
+			snprintf (final_options, sizeof (final_options), "%s", options);
+		}
+
+		fstab_update_debug (_("%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
+				      "mount_point='%s', normalized_desired_mount_point='%s'\n"), 
+				    pid, desired_mount_point, fstype, options, mount_point, 
+				    normalized_desired_mount_point);
+
+		line = fs_table_line_new_from_field_values (device_file,
+							    mount_point,
+							    fstype,
+							    final_options, 0, 0);
+		if (line == NULL)
+			goto out;
+		fs_table_add_line (table, line);
+
+		rc = mount_point;
+	} else {
+		/* otherwise we're a volume */
+		const char *device_file;
+		char *mount_point;
+		char *normalized_desired_mount_point;
+		const char *desired_mount_point;
+		const char *label;
+		const char *fstype;
+		const char *options;
+		
+		/* means we are a volume */
+		if (!hal_volume_policy_is_mountable (drive, volume, NULL))
+			goto out;
+		
+		device_file = hal_volume_get_device_file (volume);
+		if (device_file == NULL)
+			goto out;
+		
+		label = hal_volume_get_label (volume);
+		if (device_file == NULL)
+			goto out;
+		
+		if (fs_table_has_device (table, device_file, label, udi)) /* no label */ {
+			fstab_update_debug (_("%d: Could not add entry to fstab file: "
+					      "block device %s already listed\n"), pid, device_file);
+			goto out;
+		}
+		
+		desired_mount_point = hal_volume_policy_get_desired_mount_point (drive, volume, NULL);
+		if (desired_mount_point == NULL)
+			goto out;
+
+		normalized_desired_mount_point = fixup_mount_point (desired_mount_point);
+		if (normalized_desired_mount_point == NULL)
+			goto out;
+		
+		fstype = hal_volume_policy_get_mount_fs (drive, volume, NULL);
+		if (fstype == NULL)
+			goto out;
+		options = hal_volume_policy_get_mount_options (drive, volume, NULL);
+		if (options == NULL)
+			goto out;
+		
+		mount_point = compute_mount_point (table, normalized_desired_mount_point);
+		if (mount_point == NULL)
+			goto out;
+		
+		fstab_update_debug (_("%d: volume: desired_mount_point='%s', fstype='%s', options='%s', mount_point='%s'\n"), 
+				    pid, desired_mount_point, fstype, options, mount_point);
+		
+		if (fsy_use_managed) {
+			snprintf (final_options, sizeof (final_options), "%s,%s", options, fsy_managed_primary);
+		} else {
+			snprintf (final_options, sizeof (final_options), "%s", options);
+		}
+		
+		fstab_update_debug (_("%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
+				      "mount_point='%s', normalized_desired_mount_point='%s'\n"), 
+				    pid, desired_mount_point, fstype, options, mount_point, 
+				    normalized_desired_mount_point);
+		
+		line = fs_table_line_new_from_field_values (device_file,
+							    mount_point,
+							    fstype,
+							    final_options, 0, 0);
+		if (line == NULL)
+			goto out;
+		fs_table_add_line (table, line);
+		
+		rc = mount_point;
+	}
+	
+	
+out:
+	hal_volume_free (volume);
+	hal_drive_free (drive);
+	return rc;
+}
+
 
 static boolean
 add_udi (const char *udi)
 {
-  Volume *volume;
-  FSTable *fs_table;
-  char *temp_filename = NULL;
-  time_t fstab_modification_time;
-  int fd = -1;
-  char *dir = NULL;
-  char *last_slash;
+	FSTable *fs_table;
+	char *temp_filename = NULL;
+	time_t fstab_modification_time;
+	int fd = -1;
+	char *dir = NULL;
+	char *last_slash;
+	char *mount_point;
+	
+	dir = strdup (_PATH_FSTAB); 	 
+	last_slash = strrchr (dir, '/'); 	 
+	if (last_slash) 
+		*last_slash = '\0';
+	fs_table = fs_table_new (_PATH_FSTAB);
+	if (fs_table == NULL)
+		goto error;
+	
+	fd = open_temp_fstab_file (dir, &temp_filename);
+	
+	if (fd < 0)
+		goto error;
+	
+	mount_point = add_hal_device (fs_table, udi);
+	if (mount_point == NULL)
+		goto error;
 
-  /* don't add an fstab entry if we were spawned of a device with
-   * storage.no_partitions_hint set to TRUE. Per the spec this is
-   * exactly when block.no_partitions is TRUE on the volume */
-  if (hal_device_query_capability (hal_context, udi, "volume") &&
-      hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
-    return FALSE;
-
-  if (hal_device_property_exists (hal_context, udi, "volume.partition.msdos_part_table_type")) {
-    unsigned int i;
-    int msdos_type;
-    int msdos_whitelist[] = {
-      0x01, /* FAT12 */
-      0x04, /* FAT16 <32M */
-      0x06, /* FAT16 */
-      0x07, /* HPFS/NTFS */
-      0x0b, /* W95 FAT32 */
-      0x0c, /* W95 FAT32 (LBA) */
-      0x0e, /* W95 FAT16 (LBA) */
-      0x83, /* Linux */
-      0x00};
-    
-    msdos_type = hal_device_get_property_int (hal_context, udi, "volume.partition.msdos_part_table_type");
-    fstab_update_debug (_("%d: msdos_part_table_type = 0x%02x\n"), pid, msdos_type);
-
-    for (i = 0; msdos_whitelist[i] != 0x00; i++) {
-      if (msdos_type == msdos_whitelist[i]) {
-	fstab_update_debug (_("%d: in whitelist\n"), pid);
-	goto in_white_list;
-      }
-    }    
-
-    fstab_update_debug (_("%d: not in whitelist; ignoring\n"), pid);
-    return FALSE;
-  }
-
-in_white_list:
-
-  volume = volume_new (udi);
-
-  if (volume == NULL)
-    return FALSE;
-
-  dir = strdup (_PATH_FSTAB); 	 
-  last_slash = strrchr (dir, '/'); 	 
-  if (last_slash) 
-    *last_slash = '\0';
-
-  fs_table = fs_table_new (_PATH_FSTAB);
-
-  if (fs_table == NULL)
-    goto error;
-
-  fd = open_temp_fstab_file (dir, &temp_filename);
-
-  if (fd < 0)
-    goto error;
-
-  fstab_modification_time = get_file_modification_time (_PATH_FSTAB);
-
-  if (fstab_modification_time == 0)
-    goto error;
-
-  if (!volume_determine_mount_point (volume, fs_table))
-    goto error;
-
-  if (!fs_table_add_volume (fs_table, volume))
-    goto error;
-
-  if (!fs_table_write (fs_table, fd))
-    goto error;
-
-  /* Someone changed the fs table under us, better start over.
-   */
-  if (get_file_modification_time (_PATH_FSTAB) != fstab_modification_time)
-    {
-      close (fd);
-      unlink (temp_filename);
-      volume_free (volume);
-      return add_udi (udi);
-    }
-
-  if (rename (temp_filename, _PATH_FSTAB) < 0)
-    {
-      fstab_update_debug (_("%d: Failed to rename '%s' to '%s': %s\n"),
-                          pid, temp_filename, _PATH_FSTAB, strerror (errno));
-      goto error;
-    }
-
-  if (!create_mount_point_for_volume (volume))
-    goto error;
-
-  fstab_update_debug (_("%d: added mount point '%s' for device '%s'\n"),
-		      pid, volume->mount_point, volume->block_device);
-  syslog (LOG_INFO, _("added mount point %s for %s"), volume->mount_point, volume->block_device);
-
-  close (fd);
-  volume_free (volume);
-
-  return TRUE;
-
+	append_boilerplate (fs_table);
+	
+	fstab_modification_time = get_file_modification_time (_PATH_FSTAB);
+	
+	if (fstab_modification_time == 0)
+		goto error;
+	
+	if (!fs_table_write (fs_table, fd))
+		goto error;
+	
+	/* Someone changed the fs table under us, better start over.
+	 */
+	if (get_file_modification_time (_PATH_FSTAB) != fstab_modification_time)
+	{
+		close (fd);
+		unlink (temp_filename);
+		return add_udi (udi);
+	}
+	
+	if (rename (temp_filename, _PATH_FSTAB) < 0)
+	{
+		fstab_update_debug (_("%d: Failed to rename '%s' to '%s': %s\n"),
+				    pid, temp_filename, _PATH_FSTAB, strerror (errno));
+		goto error;
+	}
+	
+	if (!create_mount_point_for_volume (mount_point))
+		goto error;
+	
+	fstab_update_debug (_("%d: added mount point '%s' for device '%s'\n"),
+			    pid, mount_point, "foo");
+	syslog (LOG_INFO, _("added mount point %s for %s"), 
+		mount_point, "foo");
+	
+	close (fd);
+	
+	return TRUE;
+	
 error:
-  if (fd >= 0)
-    close (fd);
-  volume_free (volume);
-  if (dir != NULL)
-    free (dir);
-  if (temp_filename != NULL)
-    unlink (temp_filename);
-  return FALSE;
+	if (fd >= 0)
+		close (fd);
+	if (dir != NULL)
+		free (dir);
+	if (temp_filename != NULL)
+		unlink (temp_filename);
+	return FALSE;
 }
 
 static boolean
@@ -1632,6 +1454,8 @@ remove_udi (const char *udi)
       goto error;
     }
 
+
+  append_boilerplate (fs_table);
 
   if (!fs_table_write (fs_table, fd))
     goto error;
@@ -1777,6 +1601,8 @@ clean (void)
 
   fs_table_remove_generated_entries (fs_table);
 
+  append_boilerplate (fs_table);
+
   if (!fs_table_write (fs_table, fd))
     goto error;
 
@@ -1903,13 +1729,6 @@ main (int argc, const char *argv[])
       fstab_update_debug (_("%d: ###################################\n"), pid);
       fstab_update_debug (_("%d: %s entering; %s udi=%s\n"), 
 			  pid, PROGRAM_NAME, argv[1], hal_device_udi);
-      fstab_update_debug (("%d: mount_root=" FSTAB_SYNC_MOUNT_ROOT 
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
-			   " use_managed=yes"
-#else
-			   " use_managed=no"
-#endif
-			   " managed_keyword=" FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "\n"), pid);
       
       lockfd = open (_PATH_FSTAB, O_RDONLY);
       if (lockfd < 0) {
@@ -1931,28 +1750,40 @@ main (int argc, const char *argv[])
   
 
   if (!should_clean && left_over_args)
-  for (i = 0; left_over_args[i] != NULL; i++)
-    {
-      if (strcmp (left_over_args[i], "add") == 0 && udi_to_add == NULL)
-        {
-          udi_to_add = strdup (hal_device_udi);
-          break;
-        }
-      
-      if (strcmp (left_over_args[i], "remove") == 0)
-        {
-          udi_to_remove = strdup (hal_device_udi);
-          break;
-        }
-    }
+	  for (i = 0; left_over_args[i] != NULL; i++)
+	  {
+		  if (strcmp (left_over_args[i], "add") == 0 && udi_to_add == NULL)
+		  {
+			  udi_to_add = strdup (hal_device_udi);
+			  break;
+		  }
+		  
+		  if (strcmp (left_over_args[i], "remove") == 0)
+		  {
+			  udi_to_remove = strdup (hal_device_udi);
+			  break;
+		  }
+	  }
   poptFreeContext (popt_context);
 
+  hal_context = hal_initialize (NULL, FALSE);
+  fsy_mount_root = hal_drive_policy_default_get_mount_root (hal_context);
+  if (fsy_mount_root == NULL)
+	  goto out;
+  fstab_update_debug (_("%d: mount_root='%s'\n"), pid, fsy_mount_root);
+  fsy_use_managed = hal_drive_policy_default_use_managed_keyword (hal_context);
+  fstab_update_debug (_("%d: use_managed=%d\n"), pid, fsy_use_managed);
+  if (fsy_use_managed) {
+	  if ((fsy_managed_primary   = hal_drive_policy_default_get_managed_keyword_primary (hal_context)) == NULL)
+		  goto out;
+	  if ((fsy_managed_secondary = hal_drive_policy_default_get_managed_keyword_secondary (hal_context)) == NULL)
+		  goto out;
+	  fstab_update_debug (_("%d: managed primary='%s'\n"), pid, fsy_managed_primary);
+	  fstab_update_debug (_("%d: managed secondary='%s'\n"), pid, fsy_managed_secondary);
+  }
+  
   if (!should_clean && (udi_to_add || udi_to_remove))
     {
-      LibHalFunctions halFunctions = { NULL };
-
-      hal_context = hal_initialize (&halFunctions, 0);
-
       if (udi_to_add)
         retval = !add_udi (udi_to_add);
 

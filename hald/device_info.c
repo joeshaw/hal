@@ -1062,6 +1062,13 @@ process_fdi_file (const char *dir, const char *filename,
 
 
 
+static int 
+my_alphasort(const void *a, const void *b)
+{
+	return -alphasort (a, b);
+}
+
+
 /** Scan all directories and subdirectories in the given directory and
  *  process each *.fdi file
  *
@@ -1080,7 +1087,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 
 	/*HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));*/
 
-	num_entries = scandir (dir, &name_list, 0, alphasort);
+	num_entries = scandir (dir, &name_list, 0, my_alphasort);
 	if (num_entries == -1) {
 		perror ("scandir");
 		return FALSE;
@@ -1108,14 +1115,11 @@ scan_fdi_files (const char *dir, HalDevice * d)
 			    filename[len - 3] == 'f' &&
 			    filename[len - 2] == 'd' &&
 			    filename[len - 1] == 'i') {
-				/*HAL_INFO (("scan_fdi_files: Processing "
-				  "file '%s'", filename));*/
-				found_fdi_file =
-				    process_fdi_file (dir, filename, d);
+				HAL_INFO (("scan_fdi_files: Processing file '%s'", filename));
+				found_fdi_file = process_fdi_file (dir, filename, d);
 				if (found_fdi_file) {
-					/*HAL_INFO (("*** Matched file %s/%s", 
-					  dir, filename));*/
-					break;
+					HAL_INFO (("*** Matched file %s/%s", dir, filename));
+					/*break;*/
 				}
 			}
 
@@ -1141,8 +1145,10 @@ scan_fdi_files (const char *dir, HalDevice * d)
 				  filename);
 			found_fdi_file = scan_fdi_files (dirname, d);
 			free (dirname);
+			/*
 			if (found_fdi_file)
 				break;
+			*/
 		}
 
 		g_free (full_path);

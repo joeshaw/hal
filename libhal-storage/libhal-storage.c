@@ -1468,7 +1468,8 @@ hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
 		
 		type = hal_psi_get_type (&it);
 		key = hal_psi_get_key (&it);
-		if (strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
+		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
+		    strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
 			if (strlen (drive->mount_options) > 0)
 				strcat_len (drive->mount_options, ",", MOUNT_OPTIONS_SIZE);
 			strcat_len (drive->mount_options, key + sizeof(stor_mount_option_default_begin)-1, MOUNT_OPTIONS_SIZE);
@@ -1485,7 +1486,8 @@ hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
 		char *key;		
 		type = hal_psi_get_type (&it);
 		key = hal_psi_get_key (&it);
-		if (strncmp (key, stor_mount_option_begin, sizeof (stor_mount_option_begin) - 1) == 0) {
+		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
+		    strncmp (key, stor_mount_option_begin, sizeof (stor_mount_option_begin) - 1) == 0) {
 			if (strlen (drive->mount_options) > 0)
 				strcat_len (drive->mount_options, ",", MOUNT_OPTIONS_SIZE);
 			strcat_len (drive->mount_options, key + sizeof (stor_mount_option_begin)-1, MOUNT_OPTIONS_SIZE);
@@ -1538,7 +1540,8 @@ const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *vol
 		
 		type = hal_psi_get_type (&it);
 		key = hal_psi_get_key (&it);
-		if (strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
+		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
+		    strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
 			if (strlen (volume->mount_options) > 0)
 				strcat_len (volume->mount_options, ",", MOUNT_OPTIONS_SIZE);
 			strcat_len (volume->mount_options, key + sizeof(stor_mount_option_default_begin)-1, MOUNT_OPTIONS_SIZE);
@@ -1555,7 +1558,8 @@ const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *vol
 		char *key;		
 		type = hal_psi_get_type (&it);
 		key = hal_psi_get_key (&it);
-		if (strncmp (key, vol_mount_option_begin, sizeof (vol_mount_option_begin) - 1) == 0) {
+		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
+		    strncmp (key, vol_mount_option_begin, sizeof (vol_mount_option_begin) - 1) == 0) {
 			if (strlen (volume->mount_options) > 0)
 				strcat_len (volume->mount_options, ",", MOUNT_OPTIONS_SIZE);
 			strcat_len (volume->mount_options, key + sizeof (vol_mount_option_begin)-1, MOUNT_OPTIONS_SIZE);

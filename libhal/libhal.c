@@ -313,6 +313,9 @@ hal_free_property_set (LibHalPropertySet * set)
 	LibHalProperty *p;
 	LibHalProperty *q;
 
+	if (set == NULL)
+		return;
+
 	for (p = set->properties_head; p != NULL; p = q) {
 		free (p->key);
 		if (p->type == DBUS_TYPE_STRING)
