@@ -1,3 +1,18 @@
+2004-03-14  Martin Waitz  <tali@admingilde.org>
+
+	* hald/linux/linux_usb.c (usb_proc_parse): Just ignore if we can't
+	open /proc/bus/usb/devices
+
+	* hald/linux/usb_bus_device.c (usb_proc_parse): Just ignore if we
+	can't open /proc/bus/usb/devices
+
+	* tools/device-manager/DeviceManager.py: Print out nice error if hald
+	is not running
+
+2004-03-14  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO: Updated TODO file
+
 2004-03-14  David Zeuthen  <david@fubar.dk>
 
 	Added first stab of rewrite of linux specific parts - the new

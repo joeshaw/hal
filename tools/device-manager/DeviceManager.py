@@ -1,5 +1,6 @@
 """This file contains the DeviceManager class."""
  
+import sys
 import gobject
 import gtk
 import gnome.ui
@@ -43,7 +44,11 @@ class DeviceManager(LibGladeApplication):
                                      "/org/freedesktop/Hal/Manager")
 
         # Add listeners for all devices
-        device_names = self.hal_manager.GetAllDevices()
+        try:
+            device_names = self.hal_manager.GetAllDevices()
+        except:
+            sys.exit("Could not get device list. Make sure hald is running")
+
         for name in device_names:
             self.bus.add_signal_receiver(self.device_changed,
                                          "org.freedesktop.Hal.Device",

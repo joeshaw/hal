@@ -476,7 +476,8 @@ usb_proc_parse ()
 		    ("/proc/bus/usb/devices_please-use-sysfs-instead",
 		     "r");
 	if (f == NULL) {
-		DIE (("Couldn't open /proc/bus/usb/devices"));
+		/*DIE (("Couldn't open /proc/bus/usb/devices"));*/
+		return;
 	}
 
 	while (!feof (f)) {
