@@ -467,6 +467,13 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
     device_file = ds_property_get_string(d, "block.device");
     HAL_INFO(("Entering, udi=%s, device_file=%s", d->udi, device_file));
 
+    /* be pessimistic */
+    ds_property_set_bool(d, "storage.cdr", FALSE);
+    ds_property_set_bool(d, "storage.cdrw", FALSE);
+    ds_property_set_bool(d, "storage.dvd", FALSE);
+    ds_property_set_bool(d, "storage.dvdr", FALSE);
+    ds_property_set_bool(d, "storage.dvdram", FALSE);
+
     if( device_file!=NULL && strcmp(device_file, "")!=0 )
     {
         char* media;
@@ -480,28 +487,59 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
             int fd, capabilities;
 
 		    /* Check handling */
-		    fd = open (ds_property_get_string (d, "block.device"), O_RDONLY);
+		    fd = open(ds_property_get_string(d, "block.device"), 
+                      O_RDONLY|O_NONBLOCK);
 		    
-		    if (fd >= 0)
+		    if( fd>=0 )
 		    {
                 capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
 			
                 if (capabilities >= 0)
                 {
                     if (capabilities & CDC_CD_R)
+                    {
                         ds_add_capability(d, "storage.cdr");
+                        ds_property_set_bool(d, "storage.cdr", TRUE);
+                    }
                     if (capabilities & CDC_CD_RW)
+                    {
                         ds_add_capability(d, "storage.cdrw");
+                        ds_property_set_bool(d, "storage.cdrw", TRUE);
+                    }
                     if (capabilities & CDC_DVD)
+                    {
                         ds_add_capability(d, "storage.dvd");
+                        ds_property_set_bool(d, "storage.dvd", TRUE);
+                    }
                     if (capabilities & CDC_DVD_R)
+                    {
                         ds_add_capability(d, "storage.dvdr");
+                        ds_property_set_bool(d, "storage.dvdr", TRUE);
+                    }
                     if (capabilities & CDC_DVD_RAM)
+                    {
                         ds_add_capability(d, "storage.dvdram");
+                        ds_property_set_bool(d, "storage.dvdram", TRUE);
+                    }
                 }
 
                 close (fd);
 		    }
+        }
+
+        if( ds_property_get_bool(d, "block.is_volume") )
+        {
+            /* the parent block device always carries storage.* */
+            ds_property_set_string(d, "block.storage_device", parent);
+        }
+        else
+        {
+            /* if we are not a volume we are the top block device and
+             * thus also carry the storage properties so we point to
+             * ourselves (this may change later; e.g. we want the
+             * physical USB device to carry the storage properties)
+             */
+            ds_property_set_string(d, "block.storage_device", d->udi);
         }
 
 

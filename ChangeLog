@@ -1,3 +1,23 @@
+2004-01-08  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_class_scsi.c
+	(visit_class_device_scsi_host): Set scsi_host.host
+	(visit_class_device_scsi_device): Set scsi_device.[host,bus,target,lun]
+	(scsi_host_compute_udi): Simplify UDI computation using only
+	scsi_host.host. This also makes it correct for multi-lun devices
+	(scsi_device_compute_udi): Simplify UDI computation using the tupple
+	{host, bus, target, lun}. This also makes it work with multi-lun
+	devices
+
+	* hald/linux/linux_class_block.c 
+	(linux_class_block_check_if_ready_to_add): Add O_NONBLOCK so
+	optical drive capability query works without a disc mounted.
+	Add capabilities (e.g. storage.cdr) as always present properties
+	as well. A bit redundant, but it makes is more easy obvious that
+	some devices might support this property.
+	Populate block.storage_device to point the device with the
+	storage.* properties
+	
 2004-01-05  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_osspec.c (handle_hotplug): add some more debug

@@ -49,8 +49,7 @@
 
 
 /** This function will compute the device uid based on other properties
- *  of the device. For SCSI hosts it is the parent name device UDI
- *  prepended with scsi_host_
+ *  of the device. For SCSI hosts it is the host number
  *
  *  @param  d                   HalDevice object
  *  @param  append_num          Number to append to name if not -1
@@ -59,25 +58,16 @@
  */
 static char* scsi_host_compute_udi(HalDevice* d, int append_num)
 {
-    int i, len;
     const char* format;
-    const char* pd;
-    const char* name;
     static char buf[256];
 
     if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/scsi_host_%s";
+        format = "/org/freedesktop/Hal/devices/scsi_host_%d";
     else
-        format = "/org/freedesktop/Hal/devices/scsi_host_%s-%d";
-
-    pd = ds_property_get_string(d, "info.parent");
-    len = strlen(pd);
-    for(i=len-1; pd[i]!='/' && i>=0; i--)
-        ;
-    name = pd+i+1;
+        format = "/org/freedesktop/Hal/devices/scsi_host_%d-%d";
 
     snprintf(buf, 256, format, 
-             name,
+             ds_property_get_int(d, "scsi_host.host"),
              append_num);
     
     return buf;
@@ -85,8 +75,8 @@ static char* scsi_host_compute_udi(HalDevice* d, int append_num)
 
 
 /** This function will compute the device uid based on other properties
- *  of the device. For SCSI device it is the parent name device UDI
- *  prepended with scsi_device_
+ *  of the device. For SCSI device it is the {host, bus, target, lun} 
+ *  tupple
  *
  *  @param  d                   HalDevice object
  *  @param  append_num          Number to append to name if not -1
@@ -95,25 +85,19 @@ static char* scsi_host_compute_udi(HalDevice* d, int append_num)
  */
 static char* scsi_device_compute_udi(HalDevice* d, int append_num)
 {
-    int i, len;
     const char* format;
-    const char* pd;
-    const char* name;
     static char buf[256];
 
     if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/scsi_device_%s";
+        format = "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d";
     else
-        format = "/org/freedesktop/Hal/devices/scsi_device_%s-%d";
-
-    pd = ds_property_get_string(d, "info.parent");
-    len = strlen(pd);
-    for(i=len-1; pd[i]!='/' && i>=0; i--)
-        ;
-    name = pd+i+1;
+        format = "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d-%d";
 
     snprintf(buf, 256, format, 
-             name,
+             ds_property_get_int(d, "scsi_device.host"),
+             ds_property_get_int(d, "scsi_device.bus"),
+             ds_property_get_int(d, "scsi_device.target"),
+             ds_property_get_int(d, "scsi_device.lun"),
              append_num);
     
     return buf;
@@ -137,6 +121,8 @@ void visit_class_device_scsi_host(const char* path,
 {
     HalDevice* d;
     char* parent_sysfs_path;
+    const char* last_elem;
+    int host_num;
 
     if( class_device->sysdevice==NULL )
     {
@@ -144,7 +130,7 @@ void visit_class_device_scsi_host(const char* path,
         return;
     }
 
-    /*printf("scsi_host: sysdevice_path=%s, path=%s\n", class_device->sysdevice->path, path);*/
+    HAL_INFO(("scsi_host: sysdevice_path=%s, path=%s\n", class_device->sysdevice->path, path));
 
     /** @todo: see if we already got this device */
 
@@ -153,6 +139,12 @@ void visit_class_device_scsi_host(const char* path,
     ds_property_set_string(d, "linux.sysfs_path", path);
     ds_property_set_string(d, "linux.sysfs_path_device", 
                            class_device->sysdevice->path);
+
+    /* Sets last_elem to host14 in path=/sys/class/scsi_host/host14 */
+    last_elem = get_last_element(path);
+    sscanf(last_elem, "host%d", &host_num);
+    ds_property_set_int(d, "scsi_host.host", host_num);
+
 
     /* guestimate product name */
     ds_property_set_string(d, "info.product", "SCSI Host Interface");
@@ -236,6 +228,8 @@ void visit_class_device_scsi_device(const char* path,
 {
     HalDevice* d;
     char* parent_sysfs_path;
+    const char* last_elem;
+    int host_num, bus_num, target_num, lun_num;
 
     if( class_device->sysdevice==NULL )
     {
@@ -252,6 +246,16 @@ void visit_class_device_scsi_device(const char* path,
     ds_property_set_string(d, "linux.sysfs_path", path);
     ds_property_set_string(d, "linux.sysfs_path_device", 
                            class_device->sysdevice->path);
+
+    /* Sets last_elem to 1:2:3:4 in path=/sys/class/scsi_host/host23/1:2:3:4 */
+    last_elem = get_last_element(path);
+    sscanf(last_elem, "%d:%d:%d:%d", 
+           &host_num, &bus_num, &target_num, &lun_num);
+    ds_property_set_int(d, "scsi_device.host", host_num);
+    ds_property_set_int(d, "scsi_device.bus", bus_num);
+    ds_property_set_int(d, "scsi_device.target", target_num);
+    ds_property_set_int(d, "scsi_device.lun", lun_num);
+
 
     /* guestimate product name */
     ds_property_set_string(d, "info.product", "SCSI Interface");
