@@ -338,9 +338,29 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 
 	if (!hal_device_property_get_bool (d, "storage.media_check_enabled") &&
 	    hal_device_property_get_bool (d, "storage.no_partitions_hint")) {
-		HAL_INFO (("Not probing storage device %s", hal_device_property_get_string (d, "block.device")));
-		add_blockdev_probing_helper_done (d, FALSE, 0, (gpointer) end_token, NULL, NULL);
-		goto out;
+
+
+		/* special probe for PC floppy drives */
+		if (strcmp (hal_device_property_get_string (d, "storage.bus"), "platform") == 0 &&
+		    strcmp (hal_device_property_get_string (d, "storage.drive_type"), "floppy") == 0) {
+			HAL_INFO (("Probing PC floppy %s to see if it is present", 
+				   hal_device_property_get_string (d, "block.device")));
+
+			if (hal_util_helper_invoke ("hald-probe-pc-floppy", NULL, d, (gpointer) end_token, 
+						    NULL, add_blockdev_probing_helper_done, 
+						    HAL_HELPER_TIMEOUT) == NULL) {
+				hal_device_store_remove (hald_get_tdl (), d);
+				hotplug_event_end (end_token);
+			}
+			goto out;
+
+		} else {
+			HAL_INFO (("Not probing storage device %s", 
+				   hal_device_property_get_string (d, "block.device")));
+
+			add_blockdev_probing_helper_done (d, FALSE, 0, (gpointer) end_token, NULL, NULL);
+			goto out;
+		}
 	}
 
 	/* run prober for 
@@ -479,7 +499,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	if (floppy_num >= 0) {
 		/* for now, just cheat here for floppy drives */
 
-		HAL_INFO (("doing floopy drive hack for floppy %d", floppy_num));
+		HAL_INFO (("doing floppy drive hack for floppy %d", floppy_num));
 
 		hal_device_property_set_string (d, "storage.bus", "platform");
 		hal_device_property_set_bool (d, "storage.no_partitions_hint", TRUE);

@@ -1,5 +1,19 @@
 2005-02-25  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/probing/probe-pc-floppy.c: New file; test for floppy
+	drive
+
+	* hald/linux2/probing/Makefile.am: Add build rules for hald-probe-
+	pc-floppy
+
+	* hald/linux2/blockdev.c (blockdev_callouts_preprobing_storage_done): 
+	Do a special probe to see if the PC Floppy Drive is actually there -
+	since many IDE laptops got the controller chip but not the drive.
+	(hotplug_event_begin_add_blockdev): Learn how to spell; floppy not
+	floopy :-/
+
+2005-02-25  David Zeuthen  <davidz@redhat.com>
+
 	Get IDE Zip drives and PC Style floppy drives to work.
 
 	* hald/linux2/blockdev.c (add_blockdev_probing_helper_done): Add a
