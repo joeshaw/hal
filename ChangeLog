@@ -1,3 +1,7 @@
+2003-12-14  Anders Carlsson  <andersca@gnome.org>
+
+	* configure.in: Fix config message
+
 2003-12-08  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26/sysfs/hal_monitor.c:

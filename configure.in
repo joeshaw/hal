@@ -259,8 +259,8 @@ echo "
         dbus-1 system.d dir:      ${DBUS_SYS_DIR}
 	compiler:		  ${CC}
 	cflags:		          ${CFLAGS}
-	cppflags:		  ${CPPFLAGS}"
-        Doxygen:                  ${DOXYGEN}
+	cppflags:		  ${CPPFLAGS}
+        Doxygen:                  ${DOXYGEN}"
 
 echo "
         Maintainer mode:          ${USE_MAINTAINER_MODE}
