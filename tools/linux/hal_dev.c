@@ -1,8 +1,8 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * hal_dev.c : Tiny program to transform an udev device event into
- *             a D-BUS message
+ * hal_dev.c : Tiny program to send the udev device event to
+ *             the hal daemon
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
@@ -28,70 +28,25 @@
 #  include <config.h>
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <getopt.h>
+#include <assert.h>
 #include <unistd.h>
+#include <stdarg.h>
+#include <errno.h>
 #include <mntent.h>
-/*#include <syslog.h>*/
-#include <linux/limits.h>
+#include <syslog.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 
-#include <dbus/dbus.h>
+#include "../../hald/linux/hald_helper.h"
 
-/**
- * @defgroup HalMisc  Misc tools for HAL
- * @brief  Misc. tools for HAL
- */
-
-
-/**
- * @defgroup HalLinuxDeviceEvent  HAL device event for Linux
- * @ingroup HalMisc
- * @brief A short program for translating linux-hotplug events into
- *        D-BUS messages. The messages are sent to the HAL daemon.
- * @{
- */
-
-
-static char sysfs_mnt_path[PATH_MAX];
-
-/** Get the mount path for sysfs. A side-effect is that sysfs_mnt_path
- *  is set on success.
- *
- *  @return                     0 on success, negative on error
- */
-static int
-get_sysfs_mnt_path ()
-{
-	FILE *mnt;
-	struct mntent *mntent;
-	int ret = 0;
-	size_t dirlen = 0;
-
-	if ((mnt = setmntent ("/proc/mounts", "r")) == NULL) {
-		return -1;
-	}
-
-	while (ret == 0 && dirlen == 0
-	       && (mntent = getmntent (mnt)) != NULL) {
-		if (strcmp (mntent->mnt_type, "sysfs") == 0) {
-			dirlen = strlen (mntent->mnt_dir);
-			if (dirlen <= (PATH_MAX - 1)) {
-				strcpy (sysfs_mnt_path, mntent->mnt_dir);
-			} else {
-				ret = -1;
-			}
-		}
-	}
-	endmntent (mnt);
-
-	if (dirlen == 0 && ret == 0) {
-		ret = -1;
-	}
-	return ret;
-}
 /** Entry point
  *
  *  @param  argc                Number of arguments
@@ -102,103 +57,73 @@ get_sysfs_mnt_path ()
 int
 main (int argc, char *argv[], char *envp[])
 {
-	int i, j, len;
-	char *str;
+	int fd;
+	struct hald_helper_msg msg;
+	struct sockaddr_un saddr;
+	socklen_t addrlen;
+	char *subsystem;
 	char *devpath;
-	char *devname;
+	char *devnode;
+	char *action;
 	int is_add;
-	DBusError error;
-	DBusConnection *sysbus_connection;
-	DBusMessage *message;
-	DBusMessageIter iter;
-	DBusMessageIter iter_dict;
-	pid_t rc;
 
 	if (argc != 2)
 		return 1;
 
-	/* fork a new process so we exit instantly and child is handling
-	 * the processing; fixes bug where udevstart takes a long time
-	 * to start since udev executes stuff in dev.d sequentially.
-	 *
-	 * TODO, FIXME, HACK, XXX : This is not the right way; we merely
-	 * work around the problem that D-BUS requires us to take a nap
-	 * before exiting because otherwise messages are lost
-	 */
-	rc = fork ();
-	if (rc == -1)
-		return 1;
-	if (rc != 0)
-		return 0;
+	openlog ("hal.dev", LOG_PID, LOG_USER);
 
-	if (get_sysfs_mnt_path () != 0)
-		return 1;
-
-	/*openlog ("hal.dev", LOG_PID, LOG_USER);*/
-
-	/* Connect to a well-known bus instance, the system bus */
-	dbus_error_init (&error);
-	sysbus_connection = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-	if (sysbus_connection == NULL)
-		return 1;
-
-	/* service, object, interface, member */
-	message = dbus_message_new_method_call (
-		"org.freedesktop.Hal",
-		"/org/freedesktop/Hal/Linux/Hotplug",
-		"org.freedesktop.Hal.Linux.Hotplug",
-		"DeviceEvent");
-
-	/* not interested in a reply */
-	dbus_message_set_no_reply (message, TRUE);
-
-	devpath = NULL;
-	devname = NULL;
-	is_add = FALSE;
-
-	dbus_message_iter_init (message, &iter);
-	for (i = 0; envp[i] != NULL; i++) {
-		str = envp[i];
-		len = strlen (str);
-		for (j = 0; j < len && str[j] != '='; j++);
-		str[j] = '\0';
-
-		if (strcmp (str, "DEVPATH") == 0) {
-			devpath = str + j + 1;
-		} else if (strcmp (str, "DEVNODE") == 0) {
-			devname = str + j + 1;
-		} else if (strcmp (str, "DEVNAME") == 0) {
-			devname = str + j + 1;
-		} else if (strcmp (str, "ACTION") == 0) {
-			if (strcmp (str + j + 1, "add") == 0) {
-				is_add = TRUE;
-			}
-		}
-	}
-
-	if (devname == NULL || devpath == NULL) {
-		/*syslog (LOG_ERR, "Missing devname or devpath");*/
+	subsystem = argv[1];
+	if (subsystem == NULL) {
+		syslog (LOG_ERR, "subsystem is not set");
 		goto out;
 	}
 
-	dbus_message_iter_append_boolean (&iter, is_add);
-	dbus_message_iter_append_string (&iter, devname);
-	dbus_message_iter_append_string (&iter, devpath);
+	devpath = getenv ("DEVPATH");
+	if (devpath == NULL) {
+		syslog (LOG_ERR, "DEVPATH is not set");
+		goto out;
+	}
 
-	if (!dbus_connection_send (sysbus_connection, message, NULL))
-		return 1;
+	devnode = getenv ("DEVNAME");
+	if (devnode == NULL) {
+		syslog (LOG_ERR, "DEVNAME is not set");
+		goto out;
+	}
 
-	dbus_message_unref (message);
+	action = getenv ("ACTION");
+	if (action == NULL) {
+		syslog (LOG_ERR, "ACTION is not set");
+		goto out;
+	}
+	if (strcmp (action, "add") == 0)
+		is_add = 1;
+	else
+		is_add = 0;
 
-	dbus_connection_flush (sysbus_connection);
+	fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+	if (fd == -1) {
+		syslog (LOG_ERR, "error opening socket");
+		goto out;
+	}
 
-	/* Do some sleep here so messages are not lost.. */
-	usleep (500 * 1000);
-	
+	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
+	saddr.sun_family = AF_LOCAL;
+	/* use abstract namespace for socket path */
+	strcpy (&saddr.sun_path[1], HALD_HELPER_SOCKET_PATH);
+	addrlen = offsetof (struct sockaddr_un, sun_path) + strlen (saddr.sun_path+1) + 1;
+
+	memset (&msg, 0x00, sizeof (msg));
+	msg.magic = HALD_HELPER_MAGIC; 
+	msg.is_hotplug_or_dev = 0;
+	msg.is_add = is_add;
+	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN);
+	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN);
+	strncpy (msg.device_node, devnode, HALD_HELPER_STRLEN);
+
+	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
+		    (struct sockaddr *)&saddr, addrlen) == -1) {
+		syslog (LOG_ERR, "error sending message to hald");
+	}
 out:
-	dbus_connection_disconnect (sysbus_connection);
-
 	return 0;
 }
-
-/** @} */

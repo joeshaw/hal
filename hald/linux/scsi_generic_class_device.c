@@ -76,6 +76,19 @@ scsi_generic_class_pre_process (ClassDeviceHandler *self,
 	hal_device_add_capability (d, "scsi_generic");
 }
 
+static void
+scsi_generic_get_device_file_target (ClassDeviceHandler *self,
+				     HalDevice *d,
+				     const char *sysfs_path,
+				     struct sysfs_class_device *class_device,
+				     char* dev_file_prop,
+				     int dev_file_prop_len)
+{
+	strncpy(dev_file_prop, "scsi.generic_device", dev_file_prop_len);
+}
+
+
+
 /** Method specialisations for input device class */
 ClassDeviceHandler scsi_generic_class_handler = {
 	class_device_init,                  /**< init function */
@@ -85,7 +98,7 @@ ClassDeviceHandler scsi_generic_class_handler = {
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
-	class_device_get_device_file_target,/**< where to store devfile name */
+	scsi_generic_get_device_file_target,/**< where to store devfile name */
 	scsi_generic_class_pre_process,     /**< add more properties */
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */

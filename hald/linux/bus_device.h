@@ -80,10 +80,11 @@ struct BusDeviceHandler_s {
 	 *                        the device in sysfs
 	 *  @param  device        Libsysfs object representing new device
 	 *                        instance
+	 *  @return               A pointer to the HalDevice* object created
 	 */
-	void (*visit) (BusDeviceHandler *self,
-		       const char *sysfs_path,
-		       struct sysfs_device *device);
+	HalDevice* (*visit) (BusDeviceHandler *self,
+			     const char *sysfs_path,
+			     struct sysfs_device *device);
 
 	/** Called when the class device instance have been removed
 	 *
@@ -163,8 +164,8 @@ struct BusDeviceHandler_s {
 dbus_bool_t bus_device_accept (BusDeviceHandler *self, const char *path, 
 			       struct sysfs_device *device);
 
-void bus_device_visit (BusDeviceHandler *self, const char *path, 
-		       struct sysfs_device *device);
+HalDevice *bus_device_visit (BusDeviceHandler *self, const char *path, 
+			     struct sysfs_device *device);
 
 void bus_device_init (BusDeviceHandler *self);
 

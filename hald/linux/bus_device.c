@@ -79,8 +79,9 @@ bus_device_accept (BusDeviceHandler *self, const char *path,
  *  @param  self                Pointer to class members
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
+ *  @return               A pointer to the HalDevice* object created
  */
-void
+HalDevice *
 bus_device_visit (BusDeviceHandler *self, const char *path, 
 		  struct sysfs_device *device)
 {
@@ -130,6 +131,8 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 	}
 
 	free (parent_sysfs_path);
+
+	return d;
 }
 
 

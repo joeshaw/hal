@@ -140,7 +140,7 @@ block_class_accept (ClassDeviceHandler *self,
 }
 
 
-static void
+static HalDevice *
 block_class_visit (ClassDeviceHandler *self,
 		   const char *path,
 		   struct sysfs_class_device *class_device)
@@ -152,7 +152,7 @@ block_class_visit (ClassDeviceHandler *self,
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, "block") != 0)
-		return;
+		return NULL;
 
 	d = hal_device_new ();
 	hal_device_store_add (hald_get_tdl (), d);
@@ -186,9 +186,9 @@ block_class_visit (ClassDeviceHandler *self,
 
 		if (!class_device_get_device_file (path, dev_file, 
 						   SYSFS_PATH_MAX)) {
-			HAL_WARNING (("Couldn't get device file for class "
-				      "device with sysfs path", path));
-			return;
+			/*HAL_WARNING (("Couldn't get device file for class "
+			  "device with sysfs path", path));*/
+			return NULL;
 		}
 
 		/* If we are not probing this function will be called upon
@@ -209,7 +209,9 @@ block_class_visit (ClassDeviceHandler *self,
 		class_device_got_parent_device, cad,
 		HAL_LINUX_HOTPLUG_TIMEOUT);
 
-	hal_device_print (d);
+	/*hal_device_print (d);*/
+
+	return d;
 }
 
 
@@ -1023,7 +1025,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 		/* walk up the device chain to find the physical device, 
 		 * start with our parent. On the way, optionally pick up
-		 * the scsi_device if it exists */
+		 * the scsi if it exists */
 		udi_it = parent->udi;
 
 		while (udi_it != NULL) {
@@ -1037,7 +1039,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			/* Check info.bus */
 			bus = hal_device_property_get_string (d_it,"info.bus");
 
-			if (strcmp (bus, "scsi_device") == 0) {
+			if (strcmp (bus, "scsi") == 0) {
 				scsidev = d_it;
 				physdev = d_it;
 				physdev_udi = udi_it;
@@ -1202,7 +1204,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		
 	} else if (strcmp (hal_device_property_get_string (parent,
 							 "info.bus"),
-			   "scsi_device") == 0) {
+			   "scsi") == 0) {
 		const char *device_file;
 		struct drive_id *did;
 		const char *sysfs_path;
@@ -1298,7 +1300,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		 * giving us the type of the SCSI device
 		 */
 		scsi_host = hal_device_property_get_int (
-			parent, "scsi_device.host");
+			parent, "scsi.host");
 		scsi_protocol = read_single_line_grep (
 			"     Protocol: ", 
 			"/proc/scsi/usb-storage/%d", 
@@ -1390,7 +1392,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			char propname[64];
 		
 			lun = hal_device_property_get_int (
-				scsidev, "scsi_device.lun");
+				scsidev, "scsi.lun");
 		
 			/* See 6in1-card-reader.fdi for an example */
 		       		
@@ -1466,8 +1468,8 @@ block_class_compute_udi (HalDevice * d, int append_num)
 					if (idev == NULL)
 						break;
 
-					if (hal_device_has_capability (idev, "scsi_device")) {
-						lun = hal_device_property_get_int (idev, "scsi_device.lun");
+					if (hal_device_has_capability (idev, "scsi")) {
+						lun = hal_device_property_get_int (idev, "scsi.lun");
 						break;
 					}
 
@@ -1851,8 +1853,6 @@ mtab_handle_volume (HalDevice *d)
 			const char *existing_block_device;
 			dbus_bool_t was_mounted;
 
-			HAL_INFO (("%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s", mp->device, mp->mount_point, mp->major, mp->minor, mp->fs_type, d->udi));
-
 			device_property_atomic_update_begin ();
 
 			existing_block_device =
@@ -1887,6 +1887,9 @@ mtab_handle_volume (HalDevice *d)
 			device_property_atomic_update_end ();
 
 			if (!was_mounted) {
+
+				HAL_INFO (("%s is mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s", mp->device, mp->mount_point, mp->major, mp->minor, mp->fs_type, d->udi));
+
 				device_send_signal_condition (
 					d,
 					"VolumeMount",
@@ -1981,8 +1984,9 @@ etc_mtab_process_all_block_devices (dbus_bool_t force)
 
 	if (!force)
 		HAL_INFO (("/etc/mtab changed, processing all block devices"));
-	else
-		HAL_INFO (("processing /etc/mtab"));
+	else {
+		/*HAL_INFO (("processing /etc/mtab"));*/
+	}
 
 	hal_device_store_foreach (hald_get_gdl (), mtab_foreach_device, NULL);
 }

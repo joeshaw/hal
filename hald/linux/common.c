@@ -560,7 +560,7 @@ tryagain:
 		/* Device is not in list... */
 
 		/* assign the computed device name */
-		HAL_INFO ((" ##### computed_udi=%s", computed_udi));
+		/*HAL_INFO ((" ##### computed_udi=%s", computed_udi));*/
 		hal_device_set_udi (d, computed_udi);
 		hal_device_property_set_string (d, "info.udi", computed_udi);
 
@@ -683,8 +683,8 @@ class_device_get_device_file (const char *sysfs_path,
 	}
 
 	if (udev_exitcode != 0) {
-		HAL_ERROR (("%s returned %d", udevinfo_path (),
-			    udev_exitcode));
+		HAL_ERROR (("%s returned %d for %s", udevinfo_path (),
+			    udev_exitcode, sysfs_path_trunc));
 		return FALSE;
 	}
 

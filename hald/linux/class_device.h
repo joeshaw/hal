@@ -90,10 +90,14 @@ struct ClassDeviceHandler_s {
 	 *                        the class device in sysfs
 	 *  @param  class_device  Libsysfs object representing new class device
 	 *                        instance
+	 *  @return               A pointer to the HalDevice* object created
+	 *                        if this class device is going to be a separate
+	 *                        object in the GDL rather than merged onto
+	 *                        another device object
 	 */
-	void (*visit) (ClassDeviceHandler* self,
-		       const char *sysfs_path,
-		       struct sysfs_class_device *class_device);
+	HalDevice* (*visit) (ClassDeviceHandler* self,
+			     const char *sysfs_path,
+			     struct sysfs_class_device *class_device);
 
 	/** Called when the class device instance have been removed
 	 *
@@ -242,9 +246,9 @@ dbus_bool_t class_device_accept (ClassDeviceHandler *self,
 				 const char *path,
 				 struct sysfs_class_device *class_device);
 
-void class_device_visit (ClassDeviceHandler *self,
-			 const char *path,
-			 struct sysfs_class_device *class_device);
+HalDevice *class_device_visit (ClassDeviceHandler *self,
+			       const char *path,
+			       struct sysfs_class_device *class_device);
 
 void class_device_removed (ClassDeviceHandler* self, 
 			   const char *sysfs_path, 

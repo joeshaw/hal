@@ -40,9 +40,9 @@ hald_SOURCES +=	\
 					linux/input_class_device.c	\
 					linux/net_class_device.c	\
 					linux/printer_class_device.c	\
+	                                linux/scsi_bus_device.c           \
 					linux/scsi_generic_class_device.c \
 					linux/scsi_host_class_device.c	\
-					linux/scsi_device_class_device.c \
 					linux/block_class_device.c	\
 					linux/ide_host_bus_device.c	\
 					linux/ide_bus_device.c		\
@@ -52,7 +52,8 @@ hald_SOURCES +=	\
 					linux/ieee1394_node_class_device.c \
 					linux/ieee1394_host_class_device.c \
 					linux/platform_bus_device.c	\
-	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c
+	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c \
+	linux/hald_helper.h
 
 #					linux/ieee1394_host_class_device.c
 

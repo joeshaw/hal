@@ -98,6 +98,7 @@ extern dbus_bool_t hald_is_initialising;
 
 extern char sysfs_mount_path[SYSFS_PATH_MAX];
 
+
 /* @} */
 
 #endif				/* COMMON_H */

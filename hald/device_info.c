@@ -163,7 +163,7 @@ handle_match (ParsingContext * pc, const char **attr)
 			    value) != 0)
 			return FALSE;
 
-		HAL_INFO (("*** string match for key %s", key));
+		/*HAL_INFO (("*** string match for key %s", key));*/
 		return TRUE;
 	} else if (strcmp (attr[2], "int") == 0) {
 		dbus_int32_t value;
@@ -173,8 +173,8 @@ handle_match (ParsingContext * pc, const char **attr)
 		
 		/** @todo Check error condition */
 
-		HAL_INFO (("Checking that key='%s' is a int that equals %d", 
-			   key, value));
+		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
+		  key, value));*/
 
 		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_INT32)
 			return FALSE;
@@ -196,8 +196,8 @@ handle_match (ParsingContext * pc, const char **attr)
 		else
 			return FALSE;
 
-		HAL_INFO (("Checking that key='%s' is a bool that equals %s", 
-			   key, value ? "TRUE" : "FALSE"));
+		/*HAL_INFO (("Checking that key='%s' is a bool that equals %s", 
+		  key, value ? "TRUE" : "FALSE"));*/
 
 		if (hal_device_property_get_type (pc->device, key) != 
 		    DBUS_TYPE_BOOLEAN)
@@ -206,7 +206,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		if (hal_device_property_get_bool (pc->device, key) != value)
 			return FALSE;
 
-		HAL_INFO (("*** bool match for key %s", key));
+		/*HAL_INFO (("*** bool match for key %s", key));*/
 		return TRUE;
 	}
 
@@ -627,8 +627,8 @@ scan_fdi_files (const char *dir, HalDevice * d)
 				found_fdi_file =
 				    process_fdi_file (dir, filename, d);
 				if (found_fdi_file) {
-					HAL_INFO (("*** Matched file %s/%s", 
-						   dir, filename));
+					/*HAL_INFO (("*** Matched file %s/%s", 
+					  dir, filename));*/
 					break;
 				}
 			}

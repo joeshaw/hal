@@ -98,7 +98,7 @@ class_device_accept (ClassDeviceHandler *self,
  *  @param  path                Sysfs-path for class device
  *  @param  class_device        Libsysfs object for device
  */
-void
+HalDevice *
 class_device_visit (ClassDeviceHandler *self,
 		    const char *path,
 		    struct sysfs_class_device *class_device)
@@ -172,7 +172,7 @@ class_device_visit (ClassDeviceHandler *self,
 							   SYSFS_PATH_MAX)) {
 				HAL_WARNING (("Couldn't get device file for "
 					      "sysfs path %s", path));
-				return;
+				return NULL;
 			}
 
 			/* If we are not probing this function will be called 
@@ -219,6 +219,11 @@ class_device_visit (ClassDeviceHandler *self,
 			class_device_got_parent_device, cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
+
+	if (!merge_or_add)
+		return d;
+	else
+		return NULL;
 }
 
 /** Called when the class device instance have been removed
@@ -331,7 +336,7 @@ class_device_got_sysdevice (HalDeviceStore *store,
 	ClassDeviceHandler *self = cad->handler;
 	gboolean merge_or_add = cad->merge_or_add;
 
-	HAL_INFO (("Entering d=0x%0x, sysdevice=0x%0x!", d, sysdevice));
+	/*HAL_INFO (("Entering d=0x%0x, sysdevice=0x%0x!", d, sysdevice));*/
 
 	if (sysdevice == NULL) {
 		HAL_WARNING (("Sysdevice for a class device never appeared!"));

@@ -583,7 +583,7 @@ net_class_compute_udi (HalDevice *d, int append_num)
 	const char *format;
 	static char buf[256];
 
-	hal_device_print (d);
+	/*hal_device_print (d);*/
 
 	if (append_num == -1)
 		format = "/org/freedesktop/Hal/devices/net-%s";
@@ -597,6 +597,15 @@ net_class_compute_udi (HalDevice *d, int append_num)
 	return buf;
 }
 
+static void
+net_class_udev_event (ClassDeviceHandler *self, HalDevice *d, 
+		      char *dev_file)
+{
+	/* how rude; udev sends us a device event for the networking device;
+	 * ignore it */
+	HAL_INFO (("Ignoring udev event for %s", dev_file));
+}
+
 /** Method specialisations for input device class */
 ClassDeviceHandler net_class_handler = {
 	class_device_init,                  /**< init function */
@@ -605,7 +614,7 @@ ClassDeviceHandler net_class_handler = {
 	net_class_accept,                   /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
-	class_device_udev_event,            /**< handle udev event */
+	net_class_udev_event,               /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	net_class_pre_process,              /**< add more properties */
 	net_class_post_merge,               /**< post merge function */

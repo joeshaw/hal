@@ -30,12 +30,18 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <getopt.h>
 #include <assert.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
+#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
@@ -45,6 +51,7 @@
 #include "../callout.h"
 
 #include "common.h"
+#include "hald_helper.h"
 #include "bus_device.h"
 #include "class_device.h"
 
@@ -67,6 +74,7 @@ extern BusDeviceHandler usb_bus_handler;
 extern BusDeviceHandler usbif_bus_handler;
 extern BusDeviceHandler ide_host_bus_handler;
 extern BusDeviceHandler ide_bus_handler;
+extern BusDeviceHandler scsi_bus_handler;
 extern BusDeviceHandler macio_bus_handler;
 extern BusDeviceHandler platform_bus_handler;
 
@@ -81,7 +89,7 @@ static ClassDeviceHandler* class_device_handlers[] = {
 	&net_class_handler,
 	&printer_class_handler,
 	&scsi_host_class_handler,
-	&scsi_device_class_handler,
+	/*&scsi_device_class_handler,*/
 	&scsi_generic_class_handler,
 	&block_class_handler,
 	&pcmcia_socket_class_handler,
@@ -99,8 +107,16 @@ static BusDeviceHandler* bus_device_handlers[] = {
         &ide_bus_handler,
 	&macio_bus_handler,
 	&platform_bus_handler,
+	&scsi_bus_handler,
 	NULL
 };
+
+
+static void hotplug_sem_up (void);
+static void hotplug_sem_down (void);
+static void hald_helper_hotplug (gboolean is_add, int seqnum, char *subsystem, char *sysfs_path);
+static void hald_helper_device_node (gboolean is_add, char *subsystem, char *sysfs_path, char *device_node);
+static gboolean hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data);
 
 /**
  * @defgroup HalDaemonLinux Linux 2.6 support
@@ -127,35 +143,47 @@ char sysfs_mount_path[SYSFS_PATH_MAX];
  *                              all devices. For hotplug events, it should
  *                              be set to #FALSE as each sysfs object will
  *                              generate a separate event.
+ *  @return                     A HalDevice pointer if the device is going
+ *                              to be added to the GDL. The caller can
+ *                              track the device by listening to signals
+ *                              from this object. Returns NULL if the
+ *                              device wasn't matched by any handler or
+ *                              if it isn't going to be a separate hal
+ *                              device object.
  */
-static void
+static HalDevice *
 visit_class_device (const char *path, ClassDeviceHandler *handler,
 		    dbus_bool_t visit_children)
 {
 	int i;
+	HalDevice *hal_device = NULL;
 	struct sysfs_class_device *class_device;
 
 	class_device = sysfs_open_class_device_path (path);
 	if (class_device == NULL) {
 		HAL_WARNING (("Coulnd't get sysfs class device object at "
 			      "path %s", path));
-		return;
+		return NULL;
 	}
 	sysfs_get_classdev_device(class_device);
 	sysfs_get_classdev_driver(class_device);
 
-	HAL_INFO (("*** classname=%s path=%s",
+	/*HAL_INFO (("*** classname=%s path=%s",
 		   class_device->classname,
-		   class_device->path));
+		   class_device->path));*/
 
 	if (handler != NULL) {
-		if (handler->accept (handler, path, class_device))
-			handler->visit (handler, path, class_device);
+		if (handler->accept (handler, path, class_device)) {
+			hal_device = handler->visit (handler, path, class_device);
+		}
 	} else {
 		for (i=0; class_device_handlers[i] != NULL; i++) {
 			ClassDeviceHandler *ch = class_device_handlers[i];
-			if (ch->accept (ch, path, class_device))
-				ch->visit (ch, path, class_device);
+			if (ch->accept (ch, path, class_device)) {
+				hal_device = ch->visit (ch, path, class_device);
+				if (hal_device != NULL)
+					break;
+			}
 		}
 	}
 
@@ -168,12 +196,12 @@ visit_class_device (const char *path, ClassDeviceHandler *handler,
 
 		dir = sysfs_open_directory(path);
 		if (dir == NULL)
-			return;
+			return NULL;
 
 		subdirs = sysfs_get_dir_subdirs(dir);
 		if (subdirs == NULL) {
 			sysfs_close_directory(dir);
-			return;
+			return NULL;
 		}
 
 		dlist_for_each_data (subdirs, subdir,
@@ -182,6 +210,8 @@ visit_class_device (const char *path, ClassDeviceHandler *handler,
 
 		sysfs_close_directory(dir);
 	}
+
+	return hal_device;
 }
 
 /** Visit all devices of a given class
@@ -236,28 +266,37 @@ visit_class (const char *class_name, ClassDeviceHandler *handler,
  *                              all devices. For hotplug events, it should
  *                              be set to #FALSE as each sysfs object will
  *                              generate a separate event.
+ *  @return                     A HalDevice pointer if the device is going
+ *                              to be added to the GDL. The caller can
+ *                              track the device by listening to signals
+ *                              from this object. Returns NULL if the
+ *                              device wasn't matched by any handler.
  */
-static void
+static HalDevice *
 visit_device (const char *path, BusDeviceHandler *handler, 
 	      dbus_bool_t visit_children)
 {
 	struct sysfs_device *device;
+	HalDevice *hal_device = NULL;
 
 	device = sysfs_open_device_path (path);
 	if (device == NULL) {
 		HAL_WARNING (("Coulnd't get sysfs device at path %s", path));
-		return;
+		return NULL;
 	}
 
 	if (handler != NULL ) {
 		if (handler->accept (handler, device->path, device))
-			handler->visit (handler, device->path, device);
+			hal_device = handler->visit (handler, device->path, device);
 	} else {
 		int i;
 		for (i=0; bus_device_handlers[i] != NULL; i++) {
 			BusDeviceHandler *bh = bus_device_handlers[i];
-			if (bh->accept (bh, device->path, device))
-				bh->visit (bh, device->path, device);
+			if (bh->accept (bh, device->path, device)) {
+				hal_device = bh->visit (bh, device->path, device);
+				if (hal_device != NULL)
+					break;
+			}
 		}
 	}
 	sysfs_close_device(device);
@@ -269,12 +308,12 @@ visit_device (const char *path, BusDeviceHandler *handler,
 
 		dir = sysfs_open_directory(path);
 		if (dir == NULL)
-			return;
+			return NULL;
 
 		subdirs = sysfs_get_dir_subdirs(dir);
 		if (subdirs == NULL) {
 			sysfs_close_directory(dir);
-			return;
+			return NULL;
 		}
 
 		dlist_for_each_data (subdirs, subdir,
@@ -283,6 +322,8 @@ visit_device (const char *path, BusDeviceHandler *handler,
 
 		sysfs_close_directory(dir);
 	}
+
+	return hal_device;
 }
 
 /** Timeout handler for polling
@@ -308,12 +349,44 @@ osspec_timer_handler (gpointer data)
 	return TRUE;
 }
 
+
 /* This function is documented in ../osspec.h */
 void
 osspec_init (void)
 {
 	int i;
 	int rc;
+	int socketfd;
+	struct sockaddr_un saddr;
+	socklen_t addrlen;
+	GIOChannel *channel;	
+	const int on = 1;
+
+	/* setup socket for listening from datagrams from the
+	 * hal.hotplug and hal.dev helpers.
+	 */
+	memset(&saddr, 0x00, sizeof(saddr));
+	saddr.sun_family = AF_LOCAL;
+	/* use abstract namespace for socket path */
+	strcpy(&saddr.sun_path[1], HALD_HELPER_SOCKET_PATH);
+	addrlen = offsetof(struct sockaddr_un, sun_path) + strlen(saddr.sun_path+1) + 1;
+
+	socketfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+	if (socketfd == -1) {
+		DIE (("Couldn't open socket"));
+	}
+
+	if (bind(socketfd, (struct sockaddr *) &saddr, addrlen) < 0) {
+		DIE (("bind failed, exit"));
+	}
+
+	/* enable receiving of the sender credentials */
+	setsockopt(socketfd, SOL_SOCKET, SO_PASSCRED, &on, sizeof(on));
+
+	channel = g_io_channel_unix_new (socketfd);
+	g_io_add_watch (channel, G_IO_IN, hald_helper_data, NULL);
+	g_io_channel_unref (channel);
+
 
 	/* get mount path for sysfs */
 	rc = sysfs_get_mnt_path (sysfs_mount_path, SYSFS_PATH_MAX);
@@ -413,10 +486,11 @@ remove_callouts_finished (HalDevice *d, gpointer user_data)
 	hal_device_store_remove (hald_get_gdl (), d);
 }
 
-static void
+static HalDevice *
 remove_device (const char *path, const char *subsystem)
 
-{	HalDevice *d;
+{
+	HalDevice *d;
 
 	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
 						     "linux.sysfs_path",
@@ -435,9 +509,11 @@ remove_device (const char *path, const char *subsystem)
 		HAL_INFO (("in remove_device for udi=%s", d->udi));
 		hal_callout_device (d, FALSE);
 	}
+
+	return d;
 }
 
-static void
+static HalDevice *
 remove_class_device (const char *path, const char *subsystem)
 {
 	int i;
@@ -486,97 +562,11 @@ remove_class_device (const char *path, const char *subsystem)
 	}
 
 	/* For now, just call the normal remove_device */
-	remove_device (path, subsystem);
+	/*remove_device (path, subsystem);*/
+
+	return d;
 }
 
-/** Handle a org.freedesktop.Hal.HotplugEvent message. This message
- *  origins from the hal.hotplug program, tools/linux/hal_hotplug.c,
- *  and is basically just a D-BUS-ification of the hotplug event.
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult
-handle_hotplug (DBusConnection * connection, DBusMessage * message)
-{
-	DBusMessageIter iter;
-	DBusMessageIter dict_iter;
-	dbus_bool_t is_add;
-	char *subsystem;
-	char sysfs_devpath[SYSFS_PATH_MAX];
-	char sysfs_devpath_wo_mp[SYSFS_PATH_MAX];
-
-	sysfs_devpath[0] = '\0';
-
-	dbus_message_iter_init (message, &iter);
-
-	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_STRING) {
-		/** @todo Report error */
-		dbus_message_unref (message);
-		return DBUS_HANDLER_RESULT_HANDLED;
-	}
-	subsystem = dbus_message_iter_get_string (&iter);
-
-	dbus_message_iter_next (&iter);
-	dbus_message_iter_init_dict_iterator (&iter, &dict_iter);
-
-	is_add = FALSE;
-
-	do {
-		char *key;
-		char *value;
-
-		key = dbus_message_iter_get_dict_key (&dict_iter);
-		value = dbus_message_iter_get_string (&dict_iter);
-
-		/*HAL_INFO (("key/value : %s=%s", key, value));*/
-
-		if (strcmp (key, "ACTION") == 0) {
-			if (strcmp (value, "add") == 0) {
-				is_add = TRUE;
-			}
-		} else if (strcmp (key, "DEVPATH") == 0) {
-			strncpy (sysfs_devpath, sysfs_mount_path,
-				 SYSFS_PATH_MAX);
-			strncat (sysfs_devpath, value, SYSFS_PATH_MAX);
-			strncpy (sysfs_devpath_wo_mp, value, SYSFS_PATH_MAX);
-		}
-	} while (dbus_message_iter_has_next (&dict_iter) &&
-		 dbus_message_iter_next (&dict_iter));
-
-	/* ignore events without DEVPATH */
-	if (sysfs_devpath[0] == '\0')
-		goto out;
-
-	HAL_INFO (("HotplugEvent %s, subsystem=%s devpath=%s foo=%s",
-		   (is_add ? "add" : "remove"), subsystem,
-		   sysfs_devpath[0] != '\0' ? sysfs_devpath : "(none)",
-		   sysfs_devpath_wo_mp));
-
-	/* See if this is a class device or a bus device */
-	if (strncmp (sysfs_devpath_wo_mp, "/block", 6)==0 ||
-	    strncmp (sysfs_devpath_wo_mp, "/class", 6)==0 ) {
-		/* handle class devices */
-		if (is_add)
-			/* dunno what handler to use; try all */
-			visit_class_device (sysfs_devpath, NULL, FALSE);
-		else
-			remove_class_device (sysfs_devpath, subsystem);
-	} else {
-		/* handle bus devices */
-		if (is_add) {
-			/* dunno what handler to use; try all */
-			visit_device (sysfs_devpath, NULL, FALSE);
-		} else {
-			remove_device (sysfs_devpath, subsystem);
-		}
-	}
-		
-
-out:
-	return DBUS_HANDLER_RESULT_HANDLED;
-}
 
 /* fwd decl */
 static void handle_udev_node_created_found_device (HalDevice * d,
@@ -592,56 +582,6 @@ udev_node_created_cb (HalDeviceStore *store, HalDevice *device,
 	handle_udev_node_created_found_device (device, (void*) filename, NULL);
 }
 
-
-/** Handle a org.freedesktop.Hal.DeviceEvent message. This message
- *  origins from the hal.dev program, tools/linux/hal_dev.c,
- *  and is basically just a D-BUS-ification of the device event from udev.
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult
-handle_device_event (DBusConnection * connection,
-		     DBusMessage * message)
-{
-	dbus_bool_t is_add;
-	char *filename;
-	char *sysfs_path;
-	char sysfs_dev_path[SYSFS_PATH_MAX];
-
-	if (dbus_message_get_args (message, NULL,
-				   DBUS_TYPE_BOOLEAN, &is_add,
-				   DBUS_TYPE_STRING, &filename,
-				   DBUS_TYPE_STRING, &sysfs_path,
-				   DBUS_TYPE_INVALID)) {
-		strncpy (sysfs_dev_path, sysfs_mount_path, SYSFS_PATH_MAX);
-		strncat (sysfs_dev_path, sysfs_path, SYSFS_PATH_MAX);
-
-		if (is_add ) {
-
-			HAL_INFO (("DeviceEvent add devpath=%s devfile=%s",
-				   sysfs_dev_path, filename));
-
-			hal_device_store_match_key_value_string_async (
-				hald_get_tdl (),
-				".udev.sysfs_path",
-				sysfs_dev_path,
-				udev_node_created_cb, filename,
-				HAL_LINUX_HOTPLUG_TIMEOUT);
-
-			/* NOTE NOTE NOTE: we will free filename in async 
-			 * result function 
-			 */
-		} else {
-			dbus_free (filename);
-		}
-
-		dbus_free (sysfs_path);
-	}
-
-	return DBUS_HANDLER_RESULT_HANDLED;
-}
 
 /** Callback when the block device is found or if there is none..
  *
@@ -660,7 +600,7 @@ handle_udev_node_created_found_device (HalDevice * d,
 	if (d != NULL) {
 		HAL_INFO (("dev_file=%s is for udi=%s", dev_file, d->udi));
 
-		hal_device_print (d);
+		/*hal_device_print (d);*/
 
 		sysfs_class_name = 
 			hal_device_property_get_string (d, ".udev.class_name");
@@ -693,22 +633,7 @@ DBusHandlerResult
 osspec_filter_function (DBusConnection * connection,
 			DBusMessage * message, void *user_data)
 {
-
-	if (dbus_message_is_method_call (message,
-					 "org.freedesktop.Hal.Linux.Hotplug",
-					 "HotplugEvent") &&
-	    strcmp (dbus_message_get_path (message),
-		    "/org/freedesktop/Hal/Linux/Hotplug") == 0) {
-		return handle_hotplug (connection, message);
-	} else if (dbus_message_is_method_call (message,
-						"org.freedesktop.Hal.Linux.Hotplug",
-						"DeviceEvent") &&
-	    strcmp (dbus_message_get_path (message),
-		    "/org/freedesktop/Hal/Linux/Hotplug") == 0) {
-		return handle_device_event (connection, message);
-	} 
-
-	return DBUS_HANDLER_RESULT_HANDLED;
+	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
 
@@ -755,6 +680,287 @@ osspec_shutdown ()
 	hal_device_store_foreach (hald_get_gdl (),
 				  do_shutdown_callouts,
 				  NULL);
+}
+
+
+static void
+reenable_hotplug_proc (HalDevice *d, gpointer user_data)
+{
+	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc, user_data);
+	hotplug_sem_down ();
+}
+
+static void
+hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs_path)
+{
+	HalDevice *d = NULL;
+	char sysfs_path_full[SYSFS_PATH_MAX];
+
+	snprintf (sysfs_path_full, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, sysfs_path);
+
+	HAL_INFO (("entering %s, SEQNUM=%d subsystem=%s devpath=%s devpath_full=%s",
+		   (is_add ? "add" : "rem"), seqnum, subsystem, sysfs_path, sysfs_path_full));
+
+	/* See if this is a class device or a bus device */
+	if (strncmp (sysfs_path, "/block", 6)==0 ||
+	    strncmp (sysfs_path, "/class", 6)==0 ) {
+		/* handle class devices */
+		if (is_add) {
+			/* dunno what handler to use; try all */
+			d = visit_class_device (sysfs_path_full, NULL, FALSE);
+		} else {
+			d = remove_class_device (sysfs_path_full, subsystem);
+		}
+	} else {
+		/* handle bus devices */
+		if (is_add) {
+			/* Try to add the device */
+			d = visit_device (sysfs_path_full, NULL, FALSE);
+		} else {
+			d = remove_device (sysfs_path_full, subsystem);
+		}
+	}
+
+	if (d != NULL) {
+		/* Ok, this leads to something; this hotplug event is going
+		 * to result in adding/removing a device object to the GDL.
+		 *
+		 * Disable hotplug processing for now
+		 */
+		hotplug_sem_up ();
+		
+		/* and enable it when our device has processed all the
+		 * callouts
+		 */
+		g_signal_connect (d, "callouts_finished",
+				  G_CALLBACK (reenable_hotplug_proc), NULL);
+	}
+
+
+	g_free (subsystem);
+	g_free (sysfs_path);
+}
+
+static void
+hald_helper_device_node (gboolean is_add, gchar *subsystem, gchar *sysfs_path, gchar *device_node)
+{
+	char sysfs_path_full[SYSFS_PATH_MAX];
+
+	snprintf (sysfs_path_full, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, sysfs_path);
+
+	HAL_INFO (("entering %s, subsystem=%s devpath=%s devnode=%s",
+		   (is_add ? "add" : "rem"), subsystem, sysfs_path, device_node));
+
+	if (is_add ) {
+		
+		hal_device_store_match_key_value_string_async (
+			hald_get_tdl (),
+			".udev.sysfs_path",
+			sysfs_path_full,
+			udev_node_created_cb, 
+			g_strdup (device_node),
+			HAL_LINUX_HOTPLUG_TIMEOUT);
+
+		/* NOTE: we will free the dupped device_node in the 
+		 * async result function */
+
+	} else {
+		/* TODO FIXME: do something here :-) */
+	}
+
+	g_free (subsystem);
+	g_free (sysfs_path);
+	g_free (device_node);
+}
+
+
+
+/** queue of hotplug events (struct hald_helper_msg pointers) */
+static GList *hotplug_queue = NULL;
+
+/** Last hotplug sequence number */
+static gint last_hotplug_seqnum = -1;
+
+/** Hotplug semaphore */
+static gint hotplug_counter = 0;
+
+static void 
+hald_helper_hotplug_process_queue (void)
+{
+	GList *i;
+	struct hald_helper_msg *msg;
+
+trynext:
+	if (hotplug_counter > 0)
+		return;
+
+	for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
+		msg = (struct hald_helper_msg *) i->data;
+
+		if (msg->seqnum == last_hotplug_seqnum + 1) {
+			/* yup, found it */
+			last_hotplug_seqnum = msg->seqnum;
+			hald_helper_hotplug (msg->is_add, msg->seqnum, g_strdup (msg->subsystem), 
+					     g_strdup (msg->sysfs_path));
+			g_free (msg);
+			hotplug_queue = g_list_delete_link (hotplug_queue, i);
+			goto trynext;
+		}
+	}
+}
+
+/** Increment the hotplug semaphore; useful when not wanting to process
+ *  hotplug events for a while, like when e.g. adding a hal device
+ *  object (which is an asynchronous operation).
+ *
+ *  Remember to release with hotplug_sem_down.
+ */
+static void 
+hotplug_sem_up (void)
+{
+	++hotplug_counter;
+}
+
+/** Decrement the hotplug semaphore. 
+ *
+ */
+static void 
+hotplug_sem_down (void)
+{
+	--hotplug_counter;
+
+	if (hotplug_counter < 0) {
+		HAL_ERROR (("****************************************"));
+		HAL_ERROR (("****************************************"));
+		HAL_ERROR (("DANGER WILL ROBISON! hotplug semaphore<0!"));
+		HAL_ERROR (("****************************************"));
+		HAL_ERROR (("****************************************"));
+		hotplug_counter = 0;
+	}
+
+	/* Process remaining hotplug events */
+	if (hotplug_counter == 0)
+		hald_helper_hotplug_process_queue ();
+}
+
+static gboolean
+hald_helper_first_hotplug_event (gpointer data)
+{
+	GList *i;
+	struct hald_helper_msg *msg;
+
+	last_hotplug_seqnum = G_MAXINT;
+	/* find the seqnum we should start with */
+	for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
+		msg = (struct hald_helper_msg *) i->data;
+		if (msg->seqnum < last_hotplug_seqnum)
+			last_hotplug_seqnum = msg->seqnum;
+	}
+	--last_hotplug_seqnum;
+
+	HAL_INFO (("Starting with SEQNUM=%d", last_hotplug_seqnum+1));
+
+	hotplug_sem_down ();
+
+	/* no further timer event */
+	return FALSE;
+}
+
+static gboolean
+hald_helper_data (GIOChannel *source, 
+		  GIOCondition condition, 
+		  gpointer user_data)
+{
+	struct hald_helper_msg msg;
+	int fd;
+	int retval;
+	struct msghdr smsg;
+	struct cmsghdr *cmsg;
+	struct iovec iov;
+	struct ucred *cred;
+	char cred_msg[CMSG_SPACE(sizeof(struct ucred))];
+
+	fd = g_io_channel_unix_get_fd (source);
+
+	iov.iov_base = &msg;
+	iov.iov_len = sizeof (struct hald_helper_msg);
+
+	memset(&smsg, 0x00, sizeof (struct msghdr));
+	smsg.msg_iov = &iov;
+	smsg.msg_iovlen = 1;
+	smsg.msg_control = cred_msg;
+	smsg.msg_controllen = sizeof (cred_msg);
+
+	retval = recvmsg (fd, &smsg, 0);
+	if (retval <  0) {
+		if (errno != EINTR)
+			HAL_INFO (("Unable to receive message, errno=%d", errno));
+		goto out;
+	}
+	cmsg = CMSG_FIRSTHDR (&smsg);
+	cred = (struct ucred *) CMSG_DATA (cmsg);
+
+	if (cmsg == NULL || cmsg->cmsg_type != SCM_CREDENTIALS) {
+		HAL_INFO (("No sender credentials received, message ignored"));
+		goto out;
+	}
+
+	if (cred->uid != 0) {
+		HAL_INFO (("Sender uid=%i, message ignored", cred->uid));
+		goto out;
+	}
+
+	if (msg.magic != HALD_HELPER_MAGIC) {
+		HAL_INFO (("Magic is wrong, message ignored", cred->uid));
+		goto out;
+	}
+
+	if (!msg.is_hotplug_or_dev) {
+		/* device events doesn't have seqnum on them, however udev also respect sequence numbers */
+		hald_helper_device_node (msg.is_add, g_strdup (msg.subsystem), g_strdup (msg.sysfs_path), 
+					 g_strdup (msg.device_node));
+		goto out;
+	}
+
+	/* need to process hotplug events in proper sequence */
+
+	/*HAL_INFO (("Before reordering, SEQNUM=%d, last_hotplug_seqnum=%d, subsystem=%s, sysfs=%s", 
+	  msg.seqnum, last_hotplug_seqnum, msg.subsystem, msg.sysfs_path));*/
+
+	if (last_hotplug_seqnum == -1 ) {
+		/* gotta start somewhere; however sleep one second to allow  
+		 * some more hotplug events to propagate so we know where
+		 * we're at.
+		 */
+
+		HAL_WARNING (("First SEQNUM=%d; sleeping 2500ms to get a few more events", msg.seqnum));
+
+		hotplug_sem_up ();
+		g_timeout_add (2500, hald_helper_first_hotplug_event, NULL);
+
+		/* so we only setup one timer */
+		last_hotplug_seqnum = -2;
+	}
+
+	if (msg.seqnum < last_hotplug_seqnum) {
+		/* yikes, this means were started during a hotplug */
+		HAL_WARNING (("Got SEQNUM=%d, but last_hotplug_seqnum=%d", msg.seqnum, last_hotplug_seqnum));
+
+		/* have to process immediately other we may deadlock due to
+		 * the hotplug semaphore */
+		hald_helper_hotplug (msg.is_add, msg.seqnum, g_strdup (msg.subsystem), 
+				     g_strdup (msg.sysfs_path));
+		/* still need to process the queue though */
+		hald_helper_hotplug_process_queue ();
+		goto out;
+	}
+
+	/* Queue up this hotplug event and process the queue */
+	hotplug_queue = g_list_append (hotplug_queue, g_memdup (&msg, sizeof (struct hald_helper_msg)));
+	hald_helper_hotplug_process_queue ();
+
+out:
+	return TRUE;
 }
 
 /** @} */

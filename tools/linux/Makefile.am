@@ -1,20 +1,17 @@
 ## Process this file with automake to produce Makefile.in
 
 INCLUDES = \
+	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
-	@DBUS_CFLAGS@
+	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\"
 
 libexec_PROGRAMS = hal.hotplug hal.dev
 
 hal_hotplug_SOURCES = hal_hotplug.c
 
-hal_hotplug_LDADD = @DBUS_LIBS@
-
 hal_dev_SOURCES = hal_dev.c
-
-hal_dev_LDADD = @DBUS_LIBS@
 
 clean-local :
 	rm -f *~

@@ -1,8 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * hal_hotplug.c : Tiny program to transform a linux-hotplug event into
- *                 a D-BUS message
+ * hal_hotplug.c : Tiny program to send the hotplug event to the HAL daemon
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
@@ -28,32 +27,24 @@
 #  include <config.h>
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <getopt.h>
+#include <assert.h>
 #include <unistd.h>
+#include <stdarg.h>
+#include <errno.h>
 #include <mntent.h>
 #include <syslog.h>
-#include <linux/limits.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 
-#include <dbus/dbus.h>
-
-/**
- * @defgroup HalMisc  Misc tools for HAL
- * @brief  Misc. tools for HAL
- */
-
-
-/**
- * @defgroup HalLinuxHotplug  HAL hotplug helper for Linux
- * @ingroup HalMisc
- * @brief A short program for translating linux-hotplug events into
- *        D-BUS messages. The messages are sent to the HAL daemon.
- * @{
- */
-
+#include "../../hald/linux/hald_helper.h"
 
 static char sysfs_mnt_path[PATH_MAX];
 
@@ -63,7 +54,7 @@ static char sysfs_mnt_path[PATH_MAX];
  *  @return                     0 on success, negative on error
  */
 static int
-get_sysfs_mnt_path ()
+get_sysfs_mnt_path (void)
 {
 	FILE *mnt;
 	struct mntent *mntent;
@@ -93,21 +84,22 @@ get_sysfs_mnt_path ()
 	return ret;
 }
 
+
 static const char *file_list_usb[] = {
-	 "idProduct",
-	 "idVendor",
-	 "bcdDevice",
-	 "bMaxPower",
-	 /*"serial", */
-	 "bmAttributes",
-	 /*"manufacturer",*/
-	 /*"product",*/
-	 "bDeviceClass",
-	 "bDeviceSubClass",
-	 "bDeviceProtocol",
-	 "bNumConfigurations",
-	 "bConfigurationValue",
-	 "bNumInterfaces",
+	"idProduct",
+	"idVendor",
+	"bcdDevice",
+	"bMaxPower",
+	/*"serial", */
+	"bmAttributes",
+	/*"manufacturer",*/
+	/*"product",*/
+	"bDeviceClass",
+	"bDeviceSubClass",
+	"bDeviceProtocol",
+	"bNumConfigurations",
+	"bConfigurationValue",
+	"bNumInterfaces",
 	NULL
 
 };
@@ -158,9 +150,6 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 	int i;
 	char path[PATH_MAX];
 
-	syslog (LOG_NOTICE, "waiting for %s info at %s",
-		hotplug_type, devpath);
-
 	devpath_len = strlen (devpath);
 
 	file_list = NULL;
@@ -172,14 +161,12 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 
 		for (i = devpath_len - 1; devpath[i] != '/' && i > 0; --i) {
 			if (devpath[i] == ':') {
-				is_interface = TRUE;
+				is_interface = 1;
 				break;
 			}
 		}
 
 		if (is_interface) {
-			syslog (LOG_NOTICE, "%s is an USB interface",
-				devpath);
 			file_list = file_list_usbif;
 		} else
 			file_list = file_list_usb;
@@ -194,15 +181,12 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 	}
 
 	if (file_list == NULL) {
-		syslog (LOG_WARNING, "Dont know how to wait for %s at %s; "
-			"sleeping 1000 ms", hotplug_type, devpath);
-		usleep (1000 * 1000);
 		return -1;
 	}
 
 	num_tries = 0;
 
-      try_again:
+try_again:
 	if (num_tries > 0) {
 		usleep (100 * 1000);
 	}
@@ -247,10 +231,9 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 
 	syslog (LOG_NOTICE, "got info for %s (waited %d ms)",
 		devpath, (num_tries - 1) * 100);
-
+	
 	return 0;
 }
-
 
 /** Entry point
  *
@@ -262,111 +245,96 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 int
 main (int argc, char *argv[], char *envp[])
 {
-	int i, j, len;
-	char *str;
-	char *hotplug_type;
+	int fd;
+	struct hald_helper_msg msg;
+	struct sockaddr_un saddr;
+	socklen_t addrlen;
+	char *subsystem;
 	char *devpath;
+	char *action;
+	char *seqnum_str;
 	int is_add;
-	DBusError error;
-	DBusConnection *sysbus_connection;
-	DBusMessage *message;
-	DBusMessageIter iter;
-	DBusMessageIter iter_dict;
-	int rc;
+	int seqnum;
 
 	if (argc != 2)
 		return 1;
 
-	if (get_sysfs_mnt_path () != 0)
-		return 1;
-
-	/* fork a new process so we exit instantly and child is handling
-	 * the processing; 
-	 *
-	 * TODO, FIXME, HACK, XXX : This is not the right way; we merely
-	 * work around the problem that D-BUS requires us to take a nap
-	 * before exiting because otherwise messages are lost
-	 */
-	rc = fork ();
-	if (rc == -1)
-		return 1;
-	if (rc != 0)
-		return 0;
-
-
 	openlog ("hal.hotplug", LOG_PID, LOG_USER);
 
-	/* Connect to a well-known bus instance, the system bus */
-	dbus_error_init (&error);
-	sysbus_connection = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-	if (sysbus_connection == NULL)
-		return 1;
-
-	/* service, object, interface, member */
-	message = dbus_message_new_method_call (
-		"org.freedesktop.Hal",
-		"/org/freedesktop/Hal/Linux/Hotplug",
-		"org.freedesktop.Hal.Linux.Hotplug",
-		"HotplugEvent");
-
-	/* not interested in a reply */
-	dbus_message_set_no_reply (message, TRUE);
-
-	hotplug_type = argv[1];
-	devpath = NULL;
-
-	is_add = FALSE;
-
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, hotplug_type);
-	dbus_message_iter_append_dict (&iter, &iter_dict);
-	for (i = 0; envp[i] != NULL; i++) {
-		str = envp[i];
-		len = strlen (str);
-		for (j = 0; j < len && str[j] != '='; j++);
-		str[j] = '\0';
-
-		dbus_message_iter_append_dict_key (&iter_dict, str);
-		dbus_message_iter_append_string (&iter_dict, str + j + 1);
-
-		if (strcmp (str, "DEVPATH") == 0) {
-			devpath = str + j + 1;
-		} else if (strcmp (str, "ACTION") == 0) {
-			if (strcmp (str + j + 1, "add") == 0) {
-				is_add = TRUE;
-			}
-		}
+	if (get_sysfs_mnt_path() != 0) {
+		syslog (LOG_ERR, "could not get mountpoint for sysfs");
+		goto out;
 	}
 
-	if (devpath != NULL && is_add) {
+	fd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+	if (fd == -1) {
+		syslog (LOG_ERR, "error opening socket");
+		goto out;
+	}
+
+	subsystem = argv[1];
+	if (subsystem == NULL) {
+		syslog (LOG_ERR, "subsystem is not set");
+		goto out;
+	}
+
+	devpath = getenv ("DEVPATH");
+	if (devpath == NULL) {
+		syslog (LOG_ERR, "DEVPATH is not set");
+		goto out;
+	}
+
+	action = getenv ("ACTION");
+	if (action == NULL) {
+		syslog (LOG_ERR, "ACTION is not set");
+		goto out;
+	}
+	if (strcmp (action, "add") == 0)
+		is_add = 1;
+	else
+		is_add = 0;
+
+	seqnum_str = getenv ("SEQNUM");
+	if (seqnum_str == NULL) {
+		syslog (LOG_ERR, "SEQNUM is not set");
+		goto out;
+	}
+	seqnum = atoi (seqnum_str);
+
+	if (is_add) {
 		int rc;
 
 		/* wait for information to be published in sysfs */
-		rc = wait_for_sysfs_info (devpath, hotplug_type);
+		rc = wait_for_sysfs_info (devpath, subsystem);
 		if (rc != 0) {
-	    /** @todo handle error */
+			/* Don't know how to wait, just sleep one econd */
+			syslog (LOG_WARNING, "Dont know how to wait for %s at %s; "
+				"sleeping 1000 ms", subsystem, devpath);
+			usleep (1000 * 1000);
 		}
-	} else {
-		/* Do some sleep here so the kernel have time to publish it's
-		 * stuff in sysfs
-		 */
-		/*usleep(1000*1000); */
 	}
 
-	usleep (1000 * 1000);
+	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
+	saddr.sun_family = AF_LOCAL;
+	/* use abstract namespace for socket path */
+	strcpy (&saddr.sun_path[1], HALD_HELPER_SOCKET_PATH);
+	addrlen = offsetof (struct sockaddr_un, sun_path) + strlen (saddr.sun_path+1) + 1;
 
-	if (!dbus_connection_send (sysbus_connection, message, NULL))
-		return 1;
+	memset (&msg, 0x00, sizeof (msg));
+	msg.magic = HALD_HELPER_MAGIC; 
+	msg.is_hotplug_or_dev = 1;
+	msg.is_add = is_add;
+	msg.seqnum = seqnum;
+	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN);
+	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN);
 
-	dbus_message_unref (message);
-	dbus_connection_flush (sysbus_connection);
+	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
+		    (struct sockaddr *)&saddr, addrlen) == -1) {
+		syslog (LOG_INFO, "error sending message to hald");
+		goto out;
+	}
 
-	/* Do some sleep here so messages are not lost.. */
-	usleep (500 * 1000);
-
-	dbus_connection_disconnect (sysbus_connection);
-
+out:
 	return 0;
 }
 
-/** @} */
