@@ -1625,15 +1625,21 @@
               <entry></entry>
             </row>
             <row>
+              <entry><literal>volume.fsversion</literal> (string)</entry>
+              <entry>example: FAT32</entry>
+              <entry></entry>
+              <entry>Version number or subtype of the filesystem</entry>
+            </row>
+            <row>
               <entry><literal>volume.label</literal> (string)</entry>
               <entry>example: 'Fedora Core 1.90' </entry>
-              <entry>Yes (is blank if the filesystem doesn't support labels)</entry>
-              <entry>The label of the media</entry>
+              <entry>Yes (is blank if no label is found)</entry>
+              <entry>The label of the volume</entry>
             </row>
             <row>
               <entry><literal>volume.uuid</literal> (string)</entry>
               <entry>example: 4060-6C11</entry>
-              <entry>Yes (is blank if there is no UUID)</entry>
+              <entry>Yes (is blank if no UUID is found)</entry>
               <entry>The Universal Unique Identifer for the volume</entry>
             </row>
             <row>
