@@ -56,6 +56,7 @@ AC_DEFINE_UNQUOTED(HAL_GROUP,"$HAL_GROUP", [Group for HAL])
 AC_ARG_ENABLE(ansi,             [  --enable-ansi         enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
 AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
 AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs     build DOXYGEN documentation (requires Doxygen)],enable_doxygen_docs=$enableval,enable_doxygen_docs=auto)
+AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs     build DocBook documentation (requires docbook2html)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
 
 if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
@@ -195,8 +196,41 @@ if test x$enable_doxygen_docs = xyes; then
     fi
 fi
 
-AM_CONDITIONAL(DBUS_DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
+AM_CONDITIONAL(DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
 AC_MSG_RESULT(yes)
+
+
+# DocBook Documentation
+
+AC_PATH_PROG(DOCBOOK, docbook2html, no)
+
+AC_MSG_CHECKING([whether to build DocBook documentation])
+
+if test x$DOCBOOK = xno ; then
+    have_docbook=no
+else
+    have_docbook=yes
+fi
+
+if test x$enable_docbook_docs = xauto ; then
+    if test x$have_docbook = xno ; then
+        enable_docbook_docs=no
+    else
+        enable_docbook_docs=yes
+    fi
+fi
+
+if test x$enable_docbook_docs = xyes; then
+    if test x$have_docbook = xno; then
+	AC_MSG_ERROR([Building DocBook docs explicitly required, but DocBook not found])
+    fi
+fi
+
+AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, test x$enable_docbook_docs = xyes)
+AC_MSG_RESULT(yes)
+
+
+
 
 
 AS_AC_EXPAND(LOCALSTATEDIR, $localstatedir)
@@ -268,7 +302,6 @@ AM_CONDITIONAL(INIT_SCRIPTS_RED_HAT, test x$with_init_scripts = xredhat)
 AC_OUTPUT([
 hal.pc
 hal.conf
-Doxyfile
 Makefile
 hald/Makefile
 hald/haldaemon
@@ -281,6 +314,10 @@ fdi/Makefile
 fdi/10generic/Makefile
 fdi/20freedesktop/Makefile
 doc/Makefile
+doc/api/Makefile
+doc/api/Doxyfile
+doc/spec/Makefile
+doc/spec/hal-spec.xml
 examples/Makefile
 examples/volumed/Makefile
 ])
@@ -304,6 +341,7 @@ echo "
         cflags:                   ${CFLAGS}
         cppflags:                 ${CPPFLAGS}
         Doxygen:                  ${DOXYGEN}
+        DocBook:                  ${DOCBOOK}
         User for HAL:             ${HAL_USER}
         Group for HAL:            ${HAL_GROUP}
         hald pidfile:             ${HALD_PID_FILE}
@@ -313,6 +351,7 @@ echo "
         Maintainer mode:          ${USE_MAINTAINER_MODE}
         Building verbose mode:    ${enable_verbose_mode}
         Building Doxygen docs:    ${enable_doxygen_docs}
+        Building docs:            ${enable_docbook_docs}
 "
 
 if test x$enable_verbose_mode = xyes; then

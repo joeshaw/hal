@@ -1,0 +1,3590 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<HTML
+><HEAD
+><TITLE
+>HAL 0.2.94</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+><BODY
+CLASS="article"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="ARTICLE"
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="title"
+><A
+NAME="AEN2"
+>HAL 0.2.94</A
+></H1
+><DIV
+CLASS="authorgroup"
+><A
+NAME="AEN6"
+></A
+><H4
+CLASS="author"
+><A
+NAME="AEN7"
+>David Zeuthen</A
+></H4
+><DIV
+CLASS="affiliation"
+><DIV
+CLASS="address"
+>&#13;	    <DIV
+CLASS="email"
+>david@fubar.dk</DIV
+>
+	  </DIV
+></DIV
+></DIV
+><HR
+WIDTH="75%"
+ALIGN="CENTER"
+COLOR="#000000"
+SIZE="1"></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="#introduction"
+>Introduction</A
+></DT
+><DT
+><A
+HREF="#overview"
+>Overview</A
+></DT
+><DT
+><A
+HREF="#AEN101"
+>Device Objects</A
+></DT
+><DT
+><A
+HREF="#AEN144"
+>D-BUS Network API</A
+></DT
+><DT
+><A
+HREF="#using-devices"
+>Using devices</A
+></DT
+><DT
+><A
+HREF="#capabilties"
+>Capabilities</A
+></DT
+><DT
+><A
+HREF="#device-properties"
+>Properties of a device</A
+></DT
+><DT
+><A
+HREF="#spec-device-info"
+>Specification of device info files</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="sect1"
+><H2
+CLASS="sect1"
+><A
+NAME="introduction"
+>Introduction</A
+></H2
+><P
+>&#13;      This is a specification of a hardware abstraction 
+      layer (HAL) that allows applications to enumerate and use devices
+      present in a typical desktop system, in an operating system independent
+      way.
+    </P
+><P
+>&#13;      A device, in the context of the HAL, is identified by a unique 
+      id and a set of properties (key/value pairs). 
+      This document specifies a set of known properties and gives them
+      well-defined meaning. This enables applications and desktop environments
+      to make a distinction between the different device objects and use 
+      the devices based on certain well-known properties.
+    </P
+><P
+>&#13;      For instance, the <I
+CLASS="emphasis"
+>info.category</I
+> property specifies 
+      what the device is (such as a digital camera or an audio device), and the
+      <I
+CLASS="emphasis"
+>block.mount_point</I
+> property
+      specifies where in the filesystem a storage device is mounted. 
+    </P
+><P
+>&#13;      In addition, the HAL provides generic device operations such as
+      locking devices for exclusive access.
+      Furthermore, hooks for non-generic operations (such as retrieve pictures
+      from a camera) is also provided.
+    </P
+><P
+>&#13;      Finally, this specification is concerned with so called 
+      <I
+CLASS="emphasis"
+>device information files</I
+>.
+      A device info file matches a subset of devices
+      (from properties derived from the physical bus the device is on) and
+      populates them with other, often well-defined, properties. Device info
+      files are by no means a substitute for driver software, they are simply
+      hints to the desktop environment / applications about what the device
+      is, what it does and how it can be used.
+    </P
+><P
+>&#13;      The HAL is built upon D-BUS which is a framework that, among other
+      things, provides a message-bus that allows applications to talk to
+      one another. Apart from D-BUS, HAL has no other major dependencies
+      which, in theory, allows it to work on many UNIX-like systems. The
+      major focus, initially, is systems running the Linux 2.6 kernel.
+    </P
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN24"
+>Version control</A
+></H3
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN26"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Version</TH
+><TH
+>Date</TH
+><TH
+>Comment</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>0.1</TD
+><TD
+>September 28, 2003</TD
+><TD
+>Still important things missing. Released with version
+                     0.1 of the implementation</TD
+></TR
+><TR
+><TD
+>0.2</TD
+><TD
+>December 22, 2003</TD
+><TD
+>A major rewrite.</TD
+></TR
+><TR
+><TD
+>0.3-beta</TD
+><TD
+>July 21, 2004</TD
+><TD
+>Updated to reflect the state of the code.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN46"
+>Acknowledgement</A
+></H3
+><P
+>&#13;      Havoc Pennington's article 
+      <A
+HREF="http://www.ometer.com/hardware.html"
+TARGET="_top"
+>"Making Hardware Just Work"</A
+> 
+      motivated this specification. This specification would not exist without
+      all the useful suggestions and comments on the Free Desktop mailing
+      list.
+
+      </P
+><P
+>&#13;
+      All trademarks mentioned belong to their respective owners.
+
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="overview"
+>Overview</A
+></H2
+><DIV
+CLASS="sect2"
+><H3
+CLASS="sect2"
+><A
+NAME="ov_halarch"
+>Architecture of HAL</A
+></H3
+><P
+>&#13;      The HAL consists of a number of components as outlined in the diagram
+      below
+    </P
+><P
+>&#13;      <IMG
+SRC="hal-arch.png">
+    </P
+><P
+>&#13;      Detail on components
+      <P
+></P
+><UL
+><LI
+><P
+>&#13;          <I
+CLASS="emphasis"
+>HAL daemon</I
+></P
+><P
+> 
+          A system-wide daemon that maintains a persistent database of device
+          objects. It is also responsible for merging information from the
+          device info file repository and managing the life cycle of device
+          objects.
+          The HAL daemon also contains detection and monitoring code for
+          standard busses (PCI, USB etc.) and devices.
+        </P
+></LI
+><LI
+><P
+>&#13;          <I
+CLASS="emphasis"
+>HAL agents</I
+></P
+><P
+> 
+
+          The term <I
+CLASS="emphasis"
+>HAL agent</I
+> is used to
+          characterize programs that is involved in the detection and
+          monitoring of devices not supported directly by the HAL
+          daemon.
+
+          </P
+><P
+>&#13;          Any program can be a HAL agent; all it means is that the program
+          communicates with the HAL daemon using a specific interface. 
+          Examples of use that come to mind are prototypes for supporting
+          new busses/devices, integration of existing device 
+          detection/monitoring frameworks etc.
+        </P
+></LI
+><LI
+><P
+>&#13;          <I
+CLASS="emphasis"
+>Applications</I
+></P
+><P
+> 
+          This represents the end consumers of the HAL and comprises both 
+          applications that need to search for a device, but also (existing)
+          device specific libraries and/or services that provide operations
+          on devices using HAL objects.
+          </P
+><P
+>&#13;          In addition, this group include desktop environments such as
+          GNOME or KDE. Specifically, using HAL, desktop environments
+          may include system- or session-daemons enforcing certain
+          policies when the device database managed by the HAL daemon
+          changes.
+          </P
+><P
+>&#13;          Such policies may include starting a photo management
+          application when a camera is plugged in, assisting the user in
+          finding driver software and device information files for a
+          new device, displaying link information about network
+          devices, mounting removable storage and so on.
+        </P
+></LI
+></UL
+>
+      </P
+><P
+>&#13;
+      The HAL uses D-BUS to provide a ''network API'' to both desktop
+      applications and the aforementioned HAL agents. As D-BUS is
+      designed to be language independent, potentially many languages
+      / runtime systems will be able to easily access the services
+      offered by HAL.
+
+      </P
+><P
+>&#13;
+      It is important to emphasize that both the HAL daemon and
+      programs acting as HAL agents are responsible for both
+      adding/creating device objects and monitoring devices. Examples
+      of monitoring includes network device link detection, optical
+      disc change detection, storage volume mount point detection etc.
+
+    </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="ov_scopearch"
+>Scope of HAL</A
+></H3
+><P
+>&#13;      
+      This section attempts to draw some line in the sand in terms of
+      what HAL is supposed to do and not to do. First of all, HAL is
+      concerned with
+
+      <P
+></P
+><UL
+><LI
+><P
+>&#13;        Maintaining a live list of device objects that correspond to
+        the list maintained by the operating system kernel. This
+        include bus specific information such as the PCI slot location
+        etc.
+        </P
+></LI
+><LI
+><P
+>&#13;        Merging class device information (derived from the hardware)
+        into a device object.  For example, for an USB mouse HAL will
+        merge well-defined properties describing the input-related
+        capabilities of the mouse (e.g. how many buttons etc.)
+        </P
+><P
+>&#13;        As device classes are mostly related to the nature of the
+        device rather than operating system, HAL can still be OS
+        independent. For example, both the USB and PCI standards
+        discuss devices classes.
+        </P
+></LI
+><LI
+><P
+>&#13;        Merging information (produced by human beings) into a device
+        from device information files.  This allows applications to
+        think in terms of ''capabilities'' rather than relying on
+        device class information derived from the hardware.
+        </P
+><P
+>&#13;        For example, this allows PIM applications to define a
+        capability called 'pda', define properties that characterizes
+        different PDA's they happen to support in their PIM library,
+        and finally (either the PIM authors or the PDA vendors)
+        provide device information files describing the particular PDA
+        being plugged in.
+        </P
+></LI
+><LI
+><P
+>&#13;        Provide monitoring of detected devices in a non-intrusive way. 
+        </P
+></LI
+><LI
+><P
+>&#13;        Provide space, such that applications can store data per device.
+        </P
+></LI
+><LI
+><P
+>&#13;        Providing a simple to use query/notification API for use in
+        applications.
+        </P
+></LI
+></UL
+>
+
+      HAL is not concerned with
+
+      <P
+></P
+><UL
+><LI
+><P
+>&#13;        Device configuration; that is the task of loading an operating
+        system driver, uploading firmware, mounting a disk or
+        configure/initiate a network connection.  It should be noted,
+        though, that HAL provides excellent infrastructure for doing
+        some of these tasks in an operating system independent way.
+        </P
+></LI
+><LI
+><P
+>&#13;        Providing device-specific operations such as extracting
+        pictures from a digital camera.  Naturally, there already
+        exists libraries and frameworks for dealing with hardware. The
+        motivation behind HAL is to get authors of said
+        libraries/frameworks to integrate HAL into their software (see
+        PIM example above).
+        </P
+></LI
+></UL
+>
+
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN101"
+>Device Objects</A
+></H2
+><P
+>&#13;      It is important to precisely define the term ''device object'' - it is
+      actually intended to mean two things:
+      <P
+></P
+><UL
+><LI
+><P
+>&#13;        A device as recognized by the USB, PCI etc. standards and treated as
+        such by the operating system kernel and base OS.
+        </P
+></LI
+><LI
+><P
+>&#13;        Storage volumes - e.g. partitions on a storage device. While partitions
+        are not real devices (they lend space on a real device such as a hard
+        disk or an optical disc), they are on the same conceptual level as 
+        hard disks or optical discs.
+        </P
+></LI
+></UL
+>
+
+      Note there is not necessarily a one-to-one relationship between
+      physical devices attached to a computer system and ''device objects''. 
+      A multi-function device, which appears (and is marketed) to users 
+      as a multi-function printer may show up as several device objects; e.g. 
+      printer, scanner, fax and storage. 
+      On the other hand, an USB keyboard with a scroll-wheel may appear as
+      a single USB device with multiple USB interfaces.
+
+      </P
+><P
+>&#13;
+      HAL is not concerned with this duality of either one-to-one or
+      many-to-one relationships between ''device objects'' and the actual iron
+      constituting what users normally understand as a single device.
+
+      </P
+><P
+>&#13;      A device object consist of the following information
+      <P
+></P
+><UL
+><LI
+><P
+>&#13;          <I
+CLASS="emphasis"
+>Unique Device ID (referred to as the UDI in the 
+          following)</I
+></P
+><P
+> 
+          This is an identifier that is unique for a device object - that
+          is, no other device object can have this ID at the same time.
+          This ID is computed from bus-specific information so it is unique
+          across device insertions and when multiple instances of the same
+          kind of device is plugged in.
+        </P
+></LI
+><LI
+><P
+>&#13;          <I
+CLASS="emphasis"
+>Properties</I
+></P
+><P
+> 
+          Each device got a set of properties which are key/value pairs.
+          The key is an ASCII string while the value can be one of several
+          types
+          <P
+></P
+><UL
+><LI
+><P
+>string - UTF8 string</P
+></LI
+><LI
+><P
+>int - 32-bit signed integer</P
+></LI
+><LI
+><P
+>bool - truth value</P
+></LI
+><LI
+><P
+>double - IEEE754 double precision
+                            floating point number</P
+></LI
+></UL
+>
+        </P
+></LI
+></UL
+>
+
+      Properties of a device object carry all the important information about
+      a device object; for example
+      <P
+></P
+><UL
+><LI
+><P
+>Bus specific information - 
+                        vendor, product ID etc.</P
+></LI
+><LI
+><P
+>Network link status, 
+                        Storage mount location etc.</P
+></LI
+><LI
+><P
+>User or application information related to the
+                        device, for instance which account to hotsync a
+                        PDA device with.</P
+></LI
+></UL
+>
+      This specification is concerned with precisely defining several 
+      properties; see 
+      <A
+HREF="#device-properties"
+>the Section called <I
+>Properties of a device</I
+></A
+> and onwards for more
+      information.
+
+      </P
+><P
+>&#13;
+      Below is a screenshot of a device manager application communicating
+      with the HAL daemon and displaying the devices. The shown properties
+      are for a device representing a partition on a harddisk:
+
+      </P
+><P
+>&#13;        <IMG
+SRC="hal-devices1.png">
+      </P
+><P
+>&#13;
+      Note that HAL also support device objects which doesn't represent a
+      device; these are marked with the boolean property info.virtual and
+      always contain a link to the physical device in question using the
+      property info.physical_device.
+      For USB devices, for instance, the USB interfaces are represented as
+      separate virtual devices. The following screenshot shows a software
+      SCSI host adaptor sitting in the chain between USB storage and a storage
+      volume.
+
+      </P
+><P
+>&#13;        <IMG
+SRC="hal-devices-virtual1.png">
+      </P
+><P
+>&#13;
+      The reason for supporting virtual devices is that it greatly simplies 
+      the implementation.
+
+      </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN144"
+>D-BUS Network API</A
+></H2
+><P
+> 
+
+      The HAL daemon is a system-wide process that keeps track of a
+      number of device objects. It communicates with the operating
+      system and intercepts hotplug events as devices are plugged in
+      and removed.
+      The daemon is also responsible for providing services to
+      applications that wants to locate devices and perform
+      generic operations them such as obtaining exclusive access.
+      Non-generic operations, such as obtaining pictures from a camera
+      device, is outside the scope of the HAL daemon; see <A
+HREF="#using-devices"
+>the Section called <I
+>Using devices</I
+></A
+> for more information.
+
+      </P
+><P
+>&#13;
+      Note that the HAL daemon has the concept of a Global Device List
+      (GDL in the following) that contains the devices that the
+      clients can search and subscribe on changes to. 
+
+      When a device have been detected, either from inside the HAL daemon 
+      or from an HAL agent, devices are not initially in the GDL; instead, 
+      they are added later when a number of properties have been merged.
+
+      </P
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN149"
+>Interface org.freedesktop.Hal.Manager</A
+></H3
+><P
+> 
+
+      Using D-BUS terminology, the HAL daemon provides the D-BUS service
+      org.freedesktop.Hal. This service offers a D-BUS object at a 
+      well-known location /org/freedesktop/Hal/Manager. This object
+      offers a D-BUS interface, org.freedesktop.Hal.Manager, for 
+      querying device objects with the following methods:
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;# Return a list of all devices in the GDL
+#
+# @return                       List of UDI's
+#
+array{string} GetAllDevices()
+
+# Determine if a device with a given Unique Device Id exists in the GDL
+#
+# @param  udi                   Device UDI, for example '/org/freedesktop/Hal/devices/pci_8086_7111'
+# @return                       TRUE iff the device with the given UDI exists
+#
+bool DeviceExists(string udi)
+
+# Find the set of devices in the GDL that has a given property matching
+# a given value
+#
+# @param  key                   Key, for example 'block.fstype'
+# @param  value                 Value, for example 'ext3'
+# @return                       List of UDI's
+#
+array{string} FindDeviceStringMatch(string key, string value)
+
+# Find the set of devices in the GDL that has a given capability
+#
+# @param  capability            Capability, for example 'volume'
+# @return                       List of UDI's
+#
+array{string} FindDeviceByCapability(string capability)
+  
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      This object also emits the following signals on the
+      org.freedesktop.Hal.Manager interface that applications can
+      subscribe to using D-BUS:
+
+<TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+# Notification that a new device have been added to the GDL
+#
+# @param  udi                   Unique Device Id
+#
+void DeviceAdded(string udi)
+
+# Notification that a new device have been removed from the GDL. The
+# application cannot use this UDI anymore.
+#
+# @param  udi                   Unique Device Id
+#
+void DeviceRemoved(string udi)
+
+# Notification that a device in the GDL have got a new capability. Note that
+# this is emitted even though the device already had the old capability
+#
+# @param  udi                   Unique Device Id
+#
+void NewCapability(string udi, string capability)
+
+</PRE
+></TD
+></TR
+></TABLE
+>
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN155"
+>Interface org.freedesktop.Hal.Device</A
+></H3
+><P
+>&#13;
+      Applications use the Manager interface to locate the device
+      objects they are interested in. When a device object (which is
+      really a D-BUS object, note that the UDI is the objects object_path)
+      is obtained, the HAL daemon provides the
+      org.freedesktop.Hal.Device interface with the following methods
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+# Set property
+#
+# @param  key                   Property to set
+# @param  value                 Value to set
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch)
+#
+void SetProperty(string key, any value)
+void SetPropertyString(string key, string value)
+void SetPropertyInteger(string key, int32 value)
+void SetPropertyBoolean(string key, bool value)
+void SetPropertyDouble(string key, double value)
+
+# Get property
+#
+# @param  key                   Property to get
+# @return                       The value of the property
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|TypeMismatch)
+#
+any GetProperty(string key)
+string GetPropertyString(string key)
+int32 GetPropertyInteger(string key)
+bool GetPropertyBoolean(string key)
+double GetPropertyDouble(string key)
+
+# Get all properties
+#
+# @return                       Dictionary from key to value
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+map{string, any} GetAllProperties()
+
+  
+# Remove a property
+#
+# @param  key                   Property to remove
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+#
+void RemoveProperty(string key)
+
+# Get the type of a property
+#
+# @param  key                   Property
+# @return                       D-BUS type of property
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+#
+int32 GetPropertyType(string key)
+
+# Determine if a property exists
+#
+# @param  key                   Property
+# @return                       TRUE iff the property exists
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool PropertyExists(string key)
+
+# Add a capability to a device. Note that this will trigger a NewCapability
+# signal to all client applications subscribing to signals from the Manager
+# interface.
+#
+# @param  capability            Capability, e.g. 'net.ethernet'
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+void AddCapability(string capability)
+
+# Determine if a device got a given capability
+#
+# @param  capability            Capability, e.g. 'video.vga'
+# @return                       TRUE iff the device got the given capability
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool QueryCapability(string capability)
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      The device objects also emits the following signals on the
+      org.freedesktop.Hal interface that applications can subscribe to 
+      using D-BUS
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;# Notification that property have been added
+#
+# @param  key                   Property
+#
+void PropertyAdded(string key)
+
+# Notification that property have been removed
+#
+# @param  key                   Property
+#
+void PropertyRemoved(string key)
+
+# Notification that property have changed value
+#
+# @param  key                   Property
+#
+void PropertyChanged(string key)
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      Note that D-BUS supports that applications can opt to receive
+      signals for only a subset of the devices available.
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN162"
+>Interface org.freedesktop.Hal.AgentManager</A
+></H3
+><P
+>&#13;
+      The API described above is available to all applications. There is 
+      an additional D-BUS interface on the /org/freedesktop/Hal/Manager
+      object called org.freedesktop.Hal.AgentManager which is only available
+      for processes running with administrative privileges. 
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+# Create a new device object not in the GDL (ie. hidden from 
+# applications). This object can be obtained using the given UDI as
+# as the D-BUS object reference. 
+#
+# The object implements the org.freedesktop.Hal.Device interface
+#
+# @return                       Temporary UDI for new device object
+#
+string NewDevice()
+
+# When a device have been built, an application can add it to the GDL.
+#
+# A side-effect of this call, is that the Manager object will emit the
+# signal DeviceAdded.
+# 
+# @param  tempUdi               Temporary UDI as obtained from the NewDevice call
+# @param  newUdi                New UDI to use.
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|UdiInUse)
+#
+void CommitToGDL(string tempUdi, string newUdi)
+
+# Remove a device object. 
+#
+# Depending on the info.persistent property, the device may not be removed but
+# rather acquire the property info.not_available with value true.
+#
+# @param  udi                   UDI of device
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+void Remove(string udi)
+
+# Merge all properties from one device to another device.
+#
+# If the source device got any capabilities, then the target device
+# will acquire these capabilities and a NewCapability signal will be
+# emitted for the target device for every capability in the source
+# device.
+#
+# @param  targetUdi             UDI of device to receive properties
+# @param  sourceUdi             UDI of device to copy properties from
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+void MergeProperties(string targetUdi, string sourceUdi)
+
+# Checks that all properties where keys, starting with a given value
+# (namespace), of the first device is present in the second device and that
+# they got the same value and type. 
+#
+# Note that the other inclusion isn't tested, so there could be
+# properties (from the given namespace) in the second device not present
+# in the first device.
+#
+# @param  udi1                  UDI of device 1
+# @param  udi2                  UDI of device 2
+# @param  namespace             Namespace used for matching, e.g. 'usb'
+# @return                       TRUE if, and only if, all properties starting
+#                               with the namespace parameter from udi1 is
+#                               in udi2 and assume the same value
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool DeviceMatches(string udi1, string udi2, string namespace)
+
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;      HAL Agents uses the org.freedesktop.Hal.AgentManager API when 
+      discovering devices either through detection, handling hotplug
+      events or through some other way.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="using-devices"
+>Using devices</A
+></H2
+><P
+>&#13;    One of the goals of the HAL is to provide easy access to devices on
+    a system. This includes obtaining device specific information, such
+    as CPU frequency, and invoking device specific methods such as
+    getting the pictures on a camera or changing the volume on a sound
+    device.
+
+    </P
+><P
+>&#13;
+    While the HAL daemon provides generic operations that apply to all
+    devices (though some may be no-ops) and provide some level of monitoring
+    for well-know class devices (such as networking devices), it is not
+    concerned with providing non-generic device operations. 
+
+    </P
+><P
+>&#13;
+    The architecture of the HAL allows a number of ways of dealing with
+    specific device information and operations
+
+    <P
+></P
+><UL
+><LI
+><P
+>&#13;        <I
+CLASS="emphasis"
+>Out-of-process D-BUS Service</I
+></P
+><P
+> 
+        For example, one could write a volume manager that manages the
+        different storage devices present on the system and mount the
+        partitions/volumes available on those into the filesystem 
+        according to certain rules. 
+        The volume manager would run as a daemon monitoring the device list
+        of the HAL daemon and act appropriately when devices having 
+        Storage and StorageVolume in the Capabilitites property appear and
+        disappear. 
+
+        </P
+><P
+>&#13;
+        The volume manager could also offer an operation for writing
+        ISO images to e.g. CD-R devices through a D-BUS interface
+        on HAL device object. In this scenario, a desktop file manager
+        would use the HAL daemon to query for the HAL device object
+        that is a CD recorder and pass the object reference to the
+        D-BUS service offered by the volume manager.
+      </P
+></LI
+><LI
+><P
+>&#13;        <I
+CLASS="emphasis"
+>In-process library</I
+></P
+><P
+> 
+
+        Another example is device objects having capability
+        camera. One could use an existing library, such as libgphoto2,
+        and make wrapper functions such that the application
+        programmer simple passes the HAL UDI to the library. The
+        library would then, via D-BUS, acquire the bus-specific
+        information required from the HAL daemon, and then interact
+        with the device.
+
+      </P
+></LI
+></UL
+>
+
+    Note that there are other ways of dealing with device-specific
+    operations - this list is not exhaustive.
+    
+    </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="capabilties"
+>Capabilities</A
+></H2
+><P
+>&#13;
+     As previously mentioned the capabilities of a device specify what
+     the device does. For instance, a CompactFlash card reader can be
+     thought of as a camera, a handheld music device and removable
+     storage.
+
+     </P
+><P
+>&#13;
+     HAL itself, assigns capabilities on device detection time by
+     inspecting the device class (if available, it depends on the bus
+     type) and looking at information from the operating system (most
+     OS'es has a concept of device classes). At this time the category
+     is also determined by selecting the most prominent
+     capability. However, both capabilities and category can be
+     overridden by either device information files or a desktop
+     environment policy daemon. This gives maximum flexibility, while
+     maintaining a base level of capability detection. 
+
+     </P
+><P
+>&#13;
+     Note that, for instance, a number of USB devices doesn't advertise
+     anything in their device class, so a repository of device
+     information files coupled with an interactive dialog (provided by a
+     desktop environment daemon) asking the user what he just plugged
+     in, will probably yield the best experience for users. Incidently,
+     this is how certain non-free operating systems appear to handle
+     hardware.
+
+     </P
+><P
+>&#13;
+     Returning to the example of the card reader, this might just
+     happen to be a digital camera with the only interface being a
+     card reader - HAL, or the base OS, wouldn't be able to tell the
+     difference - it's just looks like a storage device. So, to handle
+     hardware well to meet the expectation of the users, device
+     information files and desktop environment policy daemons need to
+     be available on top of HAL (notably, the desktop environment
+     daemon might look at the files on the device to infer whether
+     it's music, pictures or something else) and adjust the capabilities
+     and category of certain devices.
+
+     </P
+><P
+>&#13;
+     Finally, what a given capability means, needs to be precisely
+     defined. The idea of HAL is that existing device capability
+     specific libraries (such as libghoto2), would advertise what kind
+     of HAL capabilities they are able to handle. As this happens over
+     time, this specification will grow to precisely define what a
+     device with a given capability is supposed to do and what
+     library, or service, the application programmer can use to access
+     the device. At some point in time, we may define an uniform
+     in-process extension framework akin to e.g. OpenGL extensions for
+     accessing said libraries and services.
+     
+     </P
+><P
+>&#13;
+     Having a capability also means that part of the property
+     namespace, prefixed with the capability name, can (but it's not a
+     requirement) be populated with more specific information about
+     the capability. Virtual devices will not have any capabilities
+     assigned to them.
+
+     </P
+><P
+>&#13;
+     The following table define the capabilities supported in HAL at
+     the time of writing.
+
+     </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN191"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Capability</TH
+><TH
+>Description</TH
+><TH
+>Example Devices</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>input</TD
+><TD
+>A human input device</TD
+><TD
+>Keyboard, Mouse</TD
+></TR
+><TR
+><TD
+>input.mouse</TD
+><TD
+>A pointing device, such as a mouse</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>input.keyboard</TD
+><TD
+>A keyboard</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>storage</TD
+><TD
+>A storage device</TD
+><TD
+>Harddisk, USB storage</TD
+></TR
+><TR
+><TD
+>storage.removable</TD
+><TD
+>A storage device with removable media</TD
+><TD
+>CD-ROM, CR-R, Floppy, DVD, Zip-drive</TD
+></TR
+><TR
+><TD
+>storage_controller</TD
+><TD
+>A device for controlling storage devices</TD
+><TD
+>USB storage, IDE, SCSI, RAID controller</TD
+></TR
+><TR
+><TD
+>storage_controller.ide</TD
+><TD
+>A device for controlling IDE storage devices</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>storage_controller.scsi</TD
+><TD
+>A device for controlling SCSI storage devices</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>storage_controller.floppy</TD
+><TD
+>A device for controlling floppy storage devices</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>storage_controller.raid</TD
+><TD
+>A device for controlling RAID storage devices</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>bridge</TD
+><TD
+>The device is bridging one bus to another</TD
+><TD
+>Found in many PC's today</TD
+></TR
+><TR
+><TD
+>bridge.cardbus</TD
+><TD
+>PCI to CardBus bridge</TD
+><TD
+>The standard interface for PCMCIA formfactor cards</TD
+></TR
+><TR
+><TD
+>bridge.pcmcia</TD
+><TD
+>PCI to PCMCIA bridge</TD
+><TD
+>Used in old laptops, not very common anymore</TD
+></TR
+><TR
+><TD
+>bridge.pci</TD
+><TD
+>PCI to PCI bridge</TD
+><TD
+>Found in many PC's today</TD
+></TR
+><TR
+><TD
+>bridge.host</TD
+><TD
+>PCI host bridge</TD
+><TD
+>Found in many PC's today</TD
+></TR
+><TR
+><TD
+>video</TD
+><TD
+>Video adaptor</TD
+><TD
+>Found in many PC's today</TD
+></TR
+><TR
+><TD
+>video.vga</TD
+><TD
+>VGA comptible video adaptor</TD
+><TD
+>Almost all graphics adaptors in the market</TD
+></TR
+><TR
+><TD
+>multimedia</TD
+><TD
+>Multimedia device</TD
+><TD
+>Sound cards etc.</TD
+></TR
+><TR
+><TD
+>multimedia.audio</TD
+><TD
+>Sound card</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>comm</TD
+><TD
+>Communication adaptors</TD
+><TD
+>Serial and parallel port adaptors</TD
+></TR
+><TR
+><TD
+>comm.serial</TD
+><TD
+>Serial port adaptor</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>comm.parallel</TD
+><TD
+>Parallel port adaptor</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>modem</TD
+><TD
+>A PSTN modem</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>modem.hayes</TD
+><TD
+>A PSTN modem compatible with the Hayes command protocol</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>serial_controller</TD
+><TD
+>Modern serial communication controllers</TD
+><TD
+>USB, IEEE1394 (Firewire, i.Link)</TD
+></TR
+><TR
+><TD
+>serial_controller.ieee1394</TD
+><TD
+>IEEE1394 controller</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>serial_controller.usb</TD
+><TD
+>USB controller</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>net</TD
+><TD
+>Networking controller</TD
+><TD
+>Ethernet, ATM etc. controllers</TD
+></TR
+><TR
+><TD
+>net.ethernet</TD
+><TD
+>Ethernet controller</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>net.atm</TD
+><TD
+>ATM controller</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>net.tokenring</TD
+><TD
+>Token Ring controller</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>printer</TD
+><TD
+>Printer</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>hub</TD
+><TD
+>A device for multiplexing a number of devices of same bus-type on a single port </TD
+><TD
+>USB hub</TD
+></TR
+><TR
+><TD
+>bluetooth_adaptor</TD
+><TD
+>Bluetooth adaptor</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>block</TD
+><TD
+>Device represents a block device</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>volume</TD
+><TD
+>Device represents a partition of a block device that can 
+             be mounted in the filesystem</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>camera</TD
+><TD
+>Device is a camera where still pictures can be extracted from</TD
+><TD
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+     As evident, most of the capabilities in the above list is derived
+     directly from USB and PCI classes (the careful reader will even
+     note that not all classes from the USB and PCI standards are
+     mentioned), and as such, are not very interesting to desktop
+     applications.
+
+     </P
+><P
+>&#13;
+     However, if HAL becomes adopted by applications, new and
+     interesting capabilities (for example <I
+CLASS="emphasis"
+>pda</I
+>,
+     <I
+CLASS="emphasis"
+>camera</I
+> or
+     <I
+CLASS="emphasis"
+>handheld_music_player</I
+>), based on what the
+     device is used for, can begin to appear.
+
+     </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="device-properties"
+>Properties of a device</A
+></H2
+><P
+>&#13;      Properties are arranged in a namespaces using . (dot) as a separator
+      and are key/value pairs. The value may assume different types; currently
+      int32, double, bool and UTF8 strings are supported. The key of a property
+      is always an ASCII string without any whitespace.
+    </P
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-info"
+>info namespace</A
+></H3
+><P
+>&#13;      The info namespace of the properties can be considered meta-data about
+      a device. The following properties are defined:
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN358"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>info.bus (string)</TD
+><TD
+>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi_device</TD
+><TD
+>Yes</TD
+><TD
+>Describes what ''physical'' bus the device is on</TD
+></TR
+><TR
+><TD
+>info.udi (string)</TD
+><TD
+>example: /org/freedesktop/Hal/devices/block_22_0</TD
+><TD
+>Yes</TD
+><TD
+>The HAL unique device id</TD
+></TR
+><TR
+><TD
+>info.persistent (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No, but required if info.not_available is set to true</TD
+><TD
+>If this property is set, the device will remain in the
+                     the GDL even if the device is unplugged</TD
+></TR
+><TR
+><TD
+>info.not_available (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>The device is currently not available (it may be unplugged
+                     or powered down)</TD
+></TR
+><TR
+><TD
+>info.capabilities (string)</TD
+><TD
+>example: block storage storage.removable</TD
+><TD
+>No</TD
+><TD
+>A white-space separated list of capabilities describing what the devices does</TD
+></TR
+><TR
+><TD
+>info.category (string)</TD
+><TD
+>example: storage.removable</TD
+><TD
+>No</TD
+><TD
+>The prominent capability describing what the device is</TD
+></TR
+><TR
+><TD
+>info.product (string)</TD
+><TD
+>examples: SleekKeyboard, MouseMan 2003, Volume, LS-120 SLIM3 00 UHD Floppy</TD
+><TD
+>No</TD
+><TD
+>The name of the product or class, the device is an instance of</TD
+></TR
+><TR
+><TD
+>info.vendor (string)</TD
+><TD
+>example: Logitch</TD
+><TD
+>No</TD
+><TD
+>The name of the vendor of the device</TD
+></TR
+><TR
+><TD
+>info.parent (string)</TD
+><TD
+>example: /org/freedesktop/Hal/devices/ide_1_0</TD
+><TD
+>Yes, for all non-root devices</TD
+><TD
+>The UDI of the parent of the device, connection-wise; 
+                     see screenshots of device manager</TD
+></TR
+><TR
+><TD
+>info.virtual (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>If available and set to true, it means that the HAL 
+                     device object doesn't represent a device per se, and
+                     as such should be ignored </TD
+></TR
+><TR
+><TD
+>info.physical_device (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Must only be set if, and only if, info.virtual is true</TD
+><TD
+>The non-virtual device that this device is created for.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      The info.parent property is very significant - for example, it's
+      what allows applications to associate a volume with a
+      device. Consider the following setup of devices
+
+      </P
+><P
+>&#13;        <IMG
+SRC="hal-volume-to-device.png">
+      </P
+><P
+>&#13;
+      Now, the ''CF Reader'' USB device is an ancestor to the the
+      volume that has highlight. Desktop environments can detect this
+      by traversing from the volume device through parents to find the
+      USB device and either merge more information (such as the
+      capability camera) into the USB device object or extract the
+      capability (a device information file might have merged the
+      capability camera) and act accordingly. Optionally, the DE can
+      make the USB device persistent by setting the property
+      info.persistent to true.
+
+      </P
+><P
+>&#13;
+      Indeed, this very use-case is one of the reasons that HAL tracks
+      information about volumes (FIXME: HAL should, in a later version,
+      directly support a property in info. that points to the actual
+      device).
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-linux"
+>linux namespace</A
+></H3
+><P
+>&#13;      This namespace is used to store Linux-specific information about the
+      device and is such only required on Linux.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN430"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>linux.sysfs_path (string)</TD
+><TD
+>examples: /sys/block/sda/sda1, /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0</TD
+><TD
+>Yes</TD
+><TD
+>A fully-qualified path into the sysfs filesystem for the
+              physical device</TD
+></TR
+><TR
+><TD
+>linux.sysfs_path_device (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Normally this property assumes the same value as 
+              linux.sysfs_path, however for some devices it assumes an
+              alternate location in the sysfs filesystem. It is used
+              internally in HAL</TD
+></TR
+><TR
+><TD
+>linux.driver (string)</TD
+><TD
+>examples: agpgart-intel, yenta_cardbus, usb, hub, hid</TD
+><TD
+>No</TD
+><TD
+>Name of the driver bound to this device</TD
+></TR
+><TR
+><TD
+>linux.sysfs_bus_id (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>The part of linux.sysfs_path after last /. Used 
+              internally in HAL</TD
+></TR
+><TR
+><TD
+>linux.kernel_devname (string)</TD
+><TD
+>example: usb-0000:00:07.2-1.2</TD
+><TD
+>No</TD
+><TD
+>A name specifically used by the kernel to identify the
+              device. Used internally in HAL</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-pci"
+>pci namespace</A
+></H3
+><P
+>&#13;      If a device is on a PCI bus, then these properties are available:
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN468"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>pci.device_class (int)</TD
+><TD
+>example: 3</TD
+><TD
+>Yes</TD
+><TD
+>Device class</TD
+></TR
+><TR
+><TD
+>pci.device_subclass (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Device subclass</TD
+></TR
+><TR
+><TD
+>pci.device_protocol (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Device protocol</TD
+></TR
+><TR
+><TD
+>pci.product_id (int)</TD
+><TD
+>example: 0x4c4d</TD
+><TD
+>Yes</TD
+><TD
+>Product ID</TD
+></TR
+><TR
+><TD
+>pci.vendor_id (int)</TD
+><TD
+>example: 0x1002</TD
+><TD
+>Yes</TD
+><TD
+>Vendor ID</TD
+></TR
+><TR
+><TD
+>pci.subsys_product_id (int)</TD
+><TD
+>example: 0x009e</TD
+><TD
+>Yes</TD
+><TD
+>Subsystem product id</TD
+></TR
+><TR
+><TD
+>pci.subsys_vendor_id (int)</TD
+><TD
+>example: 0x1028</TD
+><TD
+>Yes</TD
+><TD
+>Subsystem vendor id</TD
+></TR
+><TR
+><TD
+>pci.linux.sysfs_path (string)</TD
+><TD
+>example: /sys/devices/pci0000:00/0000:00:01/0000:01:00.0</TD
+><TD
+>Yes</TD
+><TD
+>Equals linux.sysfs_path</TD
+></TR
+><TR
+><TD
+>pci.product (string)</TD
+><TD
+>Rage Mobility P/M AGP 2x</TD
+><TD
+>No</TD
+><TD
+>Name of the product per the PCI database</TD
+></TR
+><TR
+><TD
+>pci.vendor (string)</TD
+><TD
+>ATI Technologies Inc</TD
+><TD
+>No</TD
+><TD
+>Name of the vendor per the PCI database</TD
+></TR
+><TR
+><TD
+>pci.subsys_product (string)</TD
+><TD
+>Inspiron 7500</TD
+><TD
+>No</TD
+><TD
+>Name of the subsystem product per the PCI database</TD
+></TR
+><TR
+><TD
+>pci.subsys_vendor (string)</TD
+><TD
+>Dell Computer Corporation</TD
+><TD
+>No</TD
+><TD
+>Name of the subsystem vendor per the PCI database</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      (FIXME: Some key PCI information (bus, slot, port, function
+      etc.) is missing here, but that is easy to add once someone
+      request it)
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-usb"
+>usb, usbif namespace</A
+></H3
+><P
+>&#13;
+      If a device is on a USB bus, then these properties
+      areavailable. Note that USB devices and the associated USB
+      interfaces are split onto different devices (and info.bus
+      values). An USB interface is always a child of the corresponding
+      USB device.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN541"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>usb.bus_number (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>The USB bus the device is attached to</TD
+></TR
+><TR
+><TD
+>usb.configuration_value (int) </TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>The current configuration the USB device is in,
+              starting from 1</TD
+></TR
+><TR
+><TD
+>usb.num_configurations (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Number of configurations this USB device 
+              can assume</TD
+></TR
+><TR
+><TD
+>usb.device_class (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Device class</TD
+></TR
+><TR
+><TD
+>usb.device_subclass (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Device sub class</TD
+></TR
+><TR
+><TD
+>usb.device_protocol (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Device protocol</TD
+></TR
+><TR
+><TD
+>usb.is_self_powered (bool)</TD
+><TD
+>example: false</TD
+><TD
+>Yes</TD
+><TD
+>The device, in this configuration, is self powered</TD
+></TR
+><TR
+><TD
+>usb.can_wake_up (bool)</TD
+><TD
+>example: true</TD
+><TD
+>Yes</TD
+><TD
+>The device, in this configuration, can wake up</TD
+></TR
+><TR
+><TD
+>usb.max_power (int)</TD
+><TD
+>example: 98</TD
+><TD
+>Yes</TD
+><TD
+>Max power drain of device, in mA</TD
+></TR
+><TR
+><TD
+>usb.num_interfaces (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Number of interfaces in current configuration</TD
+></TR
+><TR
+><TD
+>usb.num_ports (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Number of ports on a hub. Zero for non-hubs</TD
+></TR
+><TR
+><TD
+>usb.port_number (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>The port number on the parent hub, starting from 1</TD
+></TR
+><TR
+><TD
+>usb.speed_bcd (int)</TD
+><TD
+>examples: 0x00150, 0x01200, 0x48000</TD
+><TD
+>Yes</TD
+><TD
+>Speed of device in BCD</TD
+></TR
+><TR
+><TD
+>usb.version_bcd (int)</TD
+><TD
+>examples: 0x0100, 0x0110, 0x0200</TD
+><TD
+>Yes</TD
+><TD
+>USB version of device in BCD</TD
+></TR
+><TR
+><TD
+>usb.level_number (int)</TD
+><TD
+>example: 2</TD
+><TD
+>Yes</TD
+><TD
+>Depth in physical USB tree, where the virtual root hub
+              is at depth 0</TD
+></TR
+><TR
+><TD
+>usb.linux.device_number (string)</TD
+><TD
+>example: 19</TD
+><TD
+>Yes (only on Linux)</TD
+><TD
+>Device number assigned by the Linux kernel</TD
+></TR
+><TR
+><TD
+>usb.linux.parent_number (string)</TD
+><TD
+>example: 19</TD
+><TD
+>Yes (only on Linux)</TD
+><TD
+>Device number of parent device as assigned by the
+              Linux kernel</TD
+></TR
+><TR
+><TD
+>usb.linux.sysfs_path (string)</TD
+><TD
+>example: /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1.1</TD
+><TD
+>Yes (only on Linux)</TD
+><TD
+>Equal to linux.sysfs_path</TD
+></TR
+><TR
+><TD
+>usb.product_id (int)</TD
+><TD
+>example: 0x3005</TD
+><TD
+>Yes</TD
+><TD
+>USB product ID</TD
+></TR
+><TR
+><TD
+>usb.vendor_id (int)</TD
+><TD
+>example: 0x04b3</TD
+><TD
+>Yes</TD
+><TD
+>USB vendor ID</TD
+></TR
+><TR
+><TD
+>usb.device_revision_bcd (int)</TD
+><TD
+>example: 0x0100</TD
+><TD
+>Yes</TD
+><TD
+>Revision number of device, in BCD</TD
+></TR
+><TR
+><TD
+>usb.serial (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>A string uniquely identifying the instance 
+              of the device; ie. it will be different for two, otherwise
+              identical devices</TD
+></TR
+><TR
+><TD
+>usb.product (string)</TD
+><TD
+>example: IBM USB HUB KEYBOARD</TD
+><TD
+>No</TD
+><TD
+>Name of the product per the USB database</TD
+></TR
+><TR
+><TD
+>usb.vendor (string)</TD
+><TD
+>example: IBM Corp.</TD
+><TD
+>No</TD
+><TD
+>Name of the vendor per the USB database</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      And these are the properties for an USB interface
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN671"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>usbif.device_product_id (int)</TD
+><TD
+>example: 0x3005</TD
+><TD
+>Yes</TD
+><TD
+>USB product ID of the device this interface
+              belongs to</TD
+></TR
+><TR
+><TD
+>usbif.device_vendor_id (int)</TD
+><TD
+>example: 0x04b3</TD
+><TD
+>Yes</TD
+><TD
+>USB vendor ID of the device this interface
+              belongs to</TD
+></TR
+><TR
+><TD
+>usbif.interface_class (int)</TD
+><TD
+>example: 0x03</TD
+><TD
+>Yes</TD
+><TD
+>Class of this interface</TD
+></TR
+><TR
+><TD
+>usbif.interface_subclass (int)</TD
+><TD
+>example: 0x01</TD
+><TD
+>Yes</TD
+><TD
+>Subclass of this interface</TD
+></TR
+><TR
+><TD
+>usbif.interface_protocol (int)</TD
+><TD
+>example: 0x01</TD
+><TD
+>Yes</TD
+><TD
+>Protocol for this interface</TD
+></TR
+><TR
+><TD
+>usbif.number (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Number of this interface</TD
+></TR
+><TR
+><TD
+>usbif.linux.sysfs_path (string)</TD
+><TD
+>example: /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1.1/1-1.1:1.0</TD
+><TD
+>Yes</TD
+><TD
+>Equals linux.sysfs_path</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-ide"
+>ide, ide_host namespace</A
+></H3
+><P
+>&#13;
+      These namespaces are used to characterise IDE host adaptors and IDE
+      channels. In a standard PC, there are usually two IDE host
+      adaptors each with two channels (master and slave). Normally, the
+      device chain looks like
+     
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;      storage_controller.ide -&#62; ide_host -&#62; ide -&#62; block -&#62; block
+      </PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      where the first device represents the IDE controller on the motherboard
+      while the last device represents a partition on a (slave or master) 
+      IDE disk, and the device before that represent, e.g. a physical
+      harddisk. Notably, the first block device will have capability storage
+      (maybe even storage.removable) and the last block device will have
+      capability volume.
+
+      </P
+><P
+>&#13;
+      (FIXME: Is this the right terminology to use?)
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN722"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>ide_host.number (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>A unique number identifying the IDE host adaptor</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN737"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>ide.channel (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Corresponds to ide_host.number of the ide_host device
+              that is the parent of this device</TD
+></TR
+><TR
+><TD
+>ide.sub_channel (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Identifies the IDE channel of this interface</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-scsi"
+>scsi_host, scsi_device namespace</A
+></H3
+><P
+>&#13;      (FIXME: Need to populate these namespaces with some interesting
+      information such as SCSI LUN address and so on.)
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-input"
+>input namespace</A
+></H3
+><P
+>&#13;      
+      This namespace is concerned with input devices such as
+      keyboards, pointing devices and game controllers.  If a device
+      has the capability input (USB HID devices normally do), then the
+      folling properties are available
+      
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN763"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>input.absolute (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The device is capable of giving absolute device
+              coordinates when motion is detected (such as a tablet or
+              game controller)</TD
+></TR
+><TR
+><TD
+>input.absolute.x (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.y (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.z (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.rx (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.ry (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.rz (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.rz (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.throttle (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.rudder (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.wheel (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.gas (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.brake (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.hat0x (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.hat0y (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.hat1x (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.hat1y (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.hat2x (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.hat2y (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.pressure (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.distance (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.tilt_x (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.tilt_y (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.absolute.misc (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.absolute is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The device is capable of giving relate device
+              coordinates when motion is detected (such as a mouse)</TD
+></TR
+><TR
+><TD
+>input.relative.x (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative.y (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative.z (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative.hwheel (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative.dial (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative.wheel (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.relative.misc (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.relative is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The device has LED indicators that can be on or off
+              </TD
+></TR
+><TR
+><TD
+>input.led.numlock (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.capslock (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.scrolllock (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.compose (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.kana (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.sleep (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.suspend (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.mute (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.misc (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.led.max (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if input.led is true</TD
+><TD
+>WRITEME</TD
+></TR
+><TR
+><TD
+>input.force_feedback (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>input.key (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The device has keys the user can press</TD
+></TR
+><TR
+><TD
+>input.repeat (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The device sends repeat keypresses if a key is pressed
+              down</TD
+></TR
+><TR
+><TD
+>input.sound (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The device can emit sounds</TD
+></TR
+><TR
+><TD
+>input.linux.phys (string)</TD
+><TD
+>example: usb-0000:00:07.2-1.2</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>The name of the physical device as used by the kernel.
+              Used internally by HAL; see also linux.kernel_devname</TD
+></TR
+><TR
+><TD
+>input.linux.handlers (string)</TD
+><TD
+>examples: mouse1, kbd</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>The Linux input handlers for this device</TD
+></TR
+><TR
+><TD
+>input.linux.keybit (string)</TD
+><TD
+>examples: 10000 7f ffe7207a c14057ff ffbeffdf ffffffff ffffffff fffffffe, f0000 0 0 0 0 0 0 0 0</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>From device descriptor in the input subsystem (see 
+              kernel source)</TD
+></TR
+><TR
+><TD
+>input.linux.evbit (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>From device descriptor in the input subsystem (see 
+              kernel source)</TD
+></TR
+><TR
+><TD
+>input.linux.ledbit (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>From device descriptor in the input subsystem (see 
+              kernel source)</TD
+></TR
+><TR
+><TD
+>input.linux.relbit (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>From device descriptor in the input subsystem (see 
+              kernel source)</TD
+></TR
+><TR
+><TD
+>input.linux.absbit (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes (Linux only)</TD
+><TD
+>From device descriptor in the input subsystem (see 
+              kernel source)</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      (FIXME: Is this too linux specific?)
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-block"
+>block namespace</A
+></H3
+><P
+>&#13;
+      A block device is either a storage device (such as a harddisk, floppy
+      or optical driver) or a partition on a storage, ie. a volume.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1046"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>block.block_size (int)</TD
+><TD
+>example: 512</TD
+><TD
+>Yes</TD
+><TD
+>Size in octects of every block on the device</TD
+></TR
+><TR
+><TD
+>block.size (int)</TD
+><TD
+>example: 15584</TD
+><TD
+>Yes</TD
+><TD
+>Size of storage area, in blocks</TD
+></TR
+><TR
+><TD
+>block.start (int)</TD
+><TD
+>example: 32</TD
+><TD
+>Yes</TD
+><TD
+>Linear offset, in blocks, where the storage area
+              starts</TD
+></TR
+><TR
+><TD
+>block.major (int)</TD
+><TD
+>example: 8</TD
+><TD
+>Yes</TD
+><TD
+>Major number of special file to interact with the 
+              device</TD
+></TR
+><TR
+><TD
+>block.minor (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Minor number of special file to interact with the 
+              device</TD
+></TR
+><TR
+><TD
+>block.is_volume (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>True iff the block device is a volume that can be mounted 
+              into the file system</TD
+></TR
+><TR
+><TD
+>block.is_mounted (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>True iff the block device is currently mounted in the
+              file system</TD
+></TR
+><TR
+><TD
+>block.device (string)</TD
+><TD
+>example: /udev/sda1 </TD
+><TD
+>Mandatory if block.is_volume is true</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>block.fs_type (string)</TD
+><TD
+>example: vfat </TD
+><TD
+>Mandatory if block.is_mounted is true</TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+>block.mount_point (string)</TD
+><TD
+>example: /mnt/cfreader </TD
+><TD
+>Mandatory if block.is_mounted is true</TD
+><TD
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      blabla
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-net"
+>net, net.ethernet namespace</A
+></H3
+><P
+>&#13;      The net and net.ethernet namespace contains information about
+      (logicial) network devices and only applies to devices with
+      capability net and/or net.ethernet.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1109"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>net.arp_proto_hw_id (int)</TD
+><TD
+>examples: 1 (ethernet), 19 (ATM)</TD
+><TD
+>Yes</TD
+><TD
+>ARP protocol hardware identifier ID; see 
+              net/if_arp.h</TD
+></TR
+><TR
+><TD
+>net.interface (string)</TD
+><TD
+>example: eth0</TD
+><TD
+>Yes</TD
+><TD
+>Name of the network interface</TD
+></TR
+><TR
+><TD
+>net.media (string)</TD
+><TD
+>examples: Ethernet, Frame Relay DLCI</TD
+><TD
+>Yes</TD
+><TD
+>Description name of the link layer protocol</TD
+></TR
+><TR
+><TD
+>net.linux.sysfs_path (string)</TD
+><TD
+>example: /sys/class/net/eth0</TD
+><TD
+>Yes (only on Linux)</TD
+><TD
+>Sysfs path to (logical) network device object. Is
+              normally NOT equal to linux.sysfs_path</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+></P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1139"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>net.ethernet.link (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if net.arp_proto_hw_id=1</TD
+><TD
+>True iff the ethernet adaptor is connected to a
+              another transceiver</TD
+></TR
+><TR
+><TD
+>net.ethernet.rate (int)</TD
+><TD
+>example: 100000000</TD
+><TD
+>Only if net.arp_proto_hw_id=1</TD
+><TD
+>Bandwidth of connection, in bits/s</TD
+></TR
+><TR
+><TD
+>net.ethernet.mac_addr (string)</TD
+><TD
+>example: 00:10:60:5d:8e:f4</TD
+><TD
+>Only if net.arp_proto_hw_id=1</TD
+><TD
+>Textual representation of MAC address</TD
+></TR
+><TR
+><TD
+>net.ethernet.mac_addr_lower24 (int)</TD
+><TD
+>example: 0x00001060</TD
+><TD
+>Only if net.arp_proto_hw_id=1</TD
+><TD
+>Binary representation of lower 24 bits of the MAC 
+              address</TD
+></TR
+><TR
+><TD
+>net.ethernet.mac_addr_upper24 (int)</TD
+><TD
+>example: 0x005d8ef4</TD
+><TD
+>Only if net.arp_proto_hw_id=1</TD
+><TD
+>Binary representation of the upper 24 bits of the MAC
+              address</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;      </P
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="spec-device-info"
+>Specification of device info files</A
+></H2
+><P
+>&#13;    The format is almost self-explanatory; here's an example
+
+    </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+  &#60;device&#62;
+    &#60;match key="info.bus" string="usb"&#62;
+      &#60;match key="usb.vendor_id" int="0x04a9"&#62;
+        &#60;match key="usb.product_id" int="0x3052"&#62;
+          &#60;merge key="info.category" type="string"&#62;camera&#60;/merge&#62;
+          &#60;merge key="info.capabilities" type="string"&#62;camera&#60;/merge&#62;
+          &#60;merge key="info.persistent" type="bool"&#62;true&#60;/merge&#62;
+        &#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+&#60;/deviceinfo&#62;
+
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;    This .fdi file matches a Canon Digital IXUS V (for this device
+    no device or interface class is advertised), so we match the USB vendor
+    and product identifers. Then we merge category and capabilities into the
+    device object along with setting the persistent property, and this is 
+    what it looks like after being matched
+    </P
+><P
+>&#13;      <IMG
+SRC="hal-fdi-example1.png">
+    </P
+><P
+>&#13;    It's important to emphasize that any previously property stemming
+    from device detection can be overridden by a device information file.
+    </P
+></DIV
+></DIV
+></BODY
+></HTML
+>

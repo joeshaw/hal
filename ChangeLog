@@ -1,3 +1,45 @@
+2004-07-22  David Zeuthen  <david@fubar.dk>
+
+	Documentation love, part 1. Added the spec to the source tree because
+	we want closer sync between code and spec. Also generate doxygen
+	docs, but only for libhal.
+
+	* Makefile.am: No longer reference Doxyfile
+
+	* configure.in: Add a new option --enable-docbook-docs
+
+	* doc/Makefile.am: Add spec to SUBDIRS
+
+	* doc/api/Doxyfile.in: New file
+
+	* doc/api/Makefile.am: New file
+
+	* Doxyfile: Removed
+
+	* Doxyfile.in: Removed
+
+	* doc/spec/Makefile.am: New file
+
+	* doc/spec/hal-arch.dia: New file
+
+	* doc/spec/hal-arch.png: New file
+
+	* doc/spec/hal-devices-virtual1.png: New file
+
+	* doc/spec/hal-devices1.png: New file
+
+	* doc/spec/hal-fdi-example1.png: New file
+
+	* doc/spec/hal-sequence-diagram.dia: New file
+
+	* doc/spec/hal-sequence-diagram.png: New file
+
+	* doc/spec/hal-spec.html: New file
+
+	* doc/spec/hal-spec.xml.in: New file
+
+	* doc/spec/hal-volume-to-device.png: New file
+
 2004-07-21  Joe Shaw  <joeshaw@novell.com>
 
 	* hald/linux/bus_device.c (bus_device_move_from_tdl_to_gdl): If

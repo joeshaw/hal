@@ -13,7 +13,5 @@ DISTCLEANFILES = hal.pc
 
 EXTRA_DIST = hal.pc.in hal.conf.in
 
-all-local: Doxyfile
-
 clean-local :
 	rm -f *~
