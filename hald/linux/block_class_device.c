@@ -160,9 +160,16 @@ block_class_accept (ClassDeviceHandler *self,
 		    const char *path,
 		    struct sysfs_class_device *class_device)
 {
+	int instance;
 
 	/*HAL_INFO (("path = %s, classname = %s", 
 	  path, self->sysfs_class_name));*/
+
+	/* skip legacy floppies for now, until we get proper sysfs links to the
+	   platform device and switch over to merge floppies into that device.
+	   Legacy floppies handled until that in platform_bus_device.c */
+	if (sscanf (class_device->name, "fd%d", &instance) == 1)
+		return FALSE;
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {

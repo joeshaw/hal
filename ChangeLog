@@ -1,3 +1,14 @@
+2004-09-21  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/block_class_device.c: (block_class_accept):
+	skip legacy floppies here, until we get proper sysfs links to the
+	platform device and switch over to merge floppies into that device.
+	Legacy floppies handled until that in platform_bus_device.c
+
+	I'm working on fixing the kernel sysfs /device-links and with such
+	a link hald probes legacy floppies with block_class_device.c which
+	we don't want right now cause it can block the whole process.
+
 2004-09-21  David Zeuthen  <david@fubar.dk>
 
 	Patch from Martin Pitt <martin.pitt@canonical.com>
