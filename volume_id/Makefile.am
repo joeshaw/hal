@@ -12,6 +12,7 @@ libvolume_id_la_SOURCES =				\
 	linux_raid.h		linux_raid.c		\
 	linux_swap.h		linux_swap.c		\
 	lvm.h			lvm.c			\
+	luks.h			luks.c			\
 	mac.h			mac.c			\
 	msdos.h			msdos.c			\
 	ntfs.h			ntfs.c			\

@@ -76,6 +76,10 @@ int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned l
 	if (volume_id_probe_highpoint_ataraid(id, off) == 0)
 		goto exit;
 
+	/* LUKS encrypted volume */
+	if (volume_id_probe_luks(id, off) == 0)
+		goto exit;
+
 	/* signature in the first block, only small buffer needed */
 	if (volume_id_probe_vfat(id, off) == 0)
 		goto exit;

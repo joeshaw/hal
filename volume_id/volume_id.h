@@ -38,6 +38,7 @@ enum volume_id_usage {
 	VOLUME_ID_PARTITIONTABLE,
 	VOLUME_ID_RAID,
 	VOLUME_ID_DISKLABEL,
+	VOLUME_ID_CRYPTO,
 };
 
 struct volume_id_partition {

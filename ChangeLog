@@ -1,5 +1,24 @@
 2005-02-16  David Zeuthen  <davidz@redhat.com>
 
+	Patch from W. Michael Petullo <mike@flyn.org>. Attached you should
+	find a patch that begins to add LUKS support to hald. This should
+	eventually provide an easy means to mount encrypted filesystems.
+	Currently, hald only detects that a disk contains a LUKS header
+	and sets some relevant parameters.
+
+	* volume_id/volume_id.h: Add VOLUME_ID_CRYPTO to volume_id_usage enum
+
+	* volume_id/util.c (usage_to_string): Add LUKS string
+
+	* volume_id/volume_id.c (volume_id_probe_all): Also test for LUKS magic
+
+	* volume_id/Makefile.am (libvolume_id_la_SOURCES): Include luks.[ch]
+
+	* hald/linux2/probing/probe-volume.c (set_volume_id_values): Supprt
+	the VOLUME_ID_CRYPTO type
+
+2005-02-16  David Zeuthen  <davidz@redhat.com>
+
 	Patch from John (J5) Palmieri <johnp@redhat.com>.
 
 	* libhal-storage/libhal-storage.[ch]: Rename all functions, symbols

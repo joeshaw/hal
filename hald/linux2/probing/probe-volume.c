@@ -74,6 +74,9 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 	case VOLUME_ID_RAID:
 		usage = "raid";
 		break;
+	case VOLUME_ID_CRYPTO:
+		usage = "crypto";
+		break;
 	case VOLUME_ID_UNUSED:
 		libhal_device_set_property_string (ctx, udi, "info.product", "Volume (unused)", &error);
 		usage = "unused";
