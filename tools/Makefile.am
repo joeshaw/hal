@@ -28,13 +28,6 @@ if FSTAB_SYNC_ENABLED
 fstab_sync_SOURCES = fstab-sync.c
 fstab_sync_LDADD = -lpopt $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
-install-data-local :
-	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
-	- cd $(DESTDIR)$(SYSCONFDIR)/hal/device.d && $(LN_S) $(sbindir)/fstab-sync 50-fstab-sync.hal
-
-uninstall-local :
-	- rm -f $(DESTDIR)$(SYSCONFDIR)/hal/device.d/50-fstab-sync.hal
-
 MAN_IN_FILES = fstab-sync.8.in
 man_MANS = fstab-sync.8
 

@@ -1,5 +1,14 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* tools/Makefile.am: Don't install the 50-fstab-sync.hal symlink
+	as we do callouts in a different way now!
+
+	* hald/haldaemon.in: Until privilege separation is complete, run
+	with --retain-privileges. Also export LIBEXECDIR as our addons
+	and probers will be installed there
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	Fix a few things to get 'make distcheck' to succeed.
 
 2005-02-24  David Zeuthen  <davidz@redhat.com>
