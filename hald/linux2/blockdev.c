@@ -260,6 +260,8 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	void *end_token = (void *) data1;
 	gboolean is_volume;
 
+	/* helper_data may be null if probing is skipped */
+
 	HAL_INFO (("entering; timed_out=%d, return_code=%d", timed_out, return_code));
 
 	is_volume = hal_device_property_get_bool (d, "block.is_volume");
@@ -334,13 +336,22 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 		goto out;
 	}
 
+	if (!hal_device_property_get_bool (d, "storage.media_check_enabled") &&
+	    hal_device_property_get_bool (d, "storage.no_partitions_hint")) {
+		HAL_INFO (("Not probing storage device %s", hal_device_property_get_string (d, "block.device")));
+		add_blockdev_probing_helper_done (d, FALSE, 0, (gpointer) end_token, NULL, NULL);
+		goto out;
+	}
+
 	/* run prober for 
 	 *
 	 *  - drive_id
 	 *  - cdrom drive properties
 	 *  - non-partitioned filesystem on main block device
 	 */
-	
+
+	HAL_INFO (("Probing storage device %s", hal_device_property_get_string (d, "block.device")));
+
 	/* probe the device */
 	if (hal_util_helper_invoke ("hald-probe-storage", NULL, d, (gpointer) end_token, 
 				    NULL, add_blockdev_probing_helper_done, 
@@ -399,6 +410,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	unsigned int major, minor;
 	gboolean is_fakevolume;
 	char *sysfs_path_real = NULL;
+	int floppy_num;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
@@ -426,15 +438,31 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		goto out;
 	}
 
-	if (parent == NULL) {
-		HAL_INFO (("Ignoring hotplug event - no parent"));
-		goto error;
+	/* lip service for PC floppy drives */
+	HAL_INFO (("foo = '%s'", hal_util_get_last_element (sysfs_path)));
+	if (parent == NULL && sscanf (hal_util_get_last_element (sysfs_path), "fd%d", &floppy_num) == 1) {
+		;
+	} else {
+		floppy_num = -1;
+
+		if (parent == NULL) {
+			HAL_INFO (("Ignoring hotplug event - no parent"));
+			goto error;
+		}
+
+		if (!is_fakevolume && hal_device_property_get_bool (parent, "storage.no_partitions_hint")) {
+			HAL_INFO (("Ignoring blockdev since not a fakevolume and parent has "
+				   "storage.no_partitions_hint==TRUE"));
+			goto out;
+		}
 	}
+
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", parent->udi);
+	if (parent != NULL)
+		hal_device_property_set_string (d, "info.parent", parent->udi);
 	hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_BLOCK);
 
 	hal_device_property_set_string (d, "block.device", device_file);
@@ -447,6 +475,41 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	hal_device_property_set_int (d, "block.major", major);
 	hal_device_property_set_int (d, "block.minor", minor);
 	hal_device_property_set_bool (d, "block.is_volume", is_partition);
+
+	if (floppy_num >= 0) {
+		/* for now, just cheat here for floppy drives */
+
+		HAL_INFO (("doing floopy drive hack for floppy %d", floppy_num));
+
+		hal_device_property_set_string (d, "storage.bus", "platform");
+		hal_device_property_set_bool (d, "storage.no_partitions_hint", TRUE);
+		hal_device_property_set_bool (d, "storage.media_check_enabled", FALSE);
+		hal_device_property_set_bool (d, "storage.automount_enabled_hint", TRUE);
+		hal_device_property_set_string (d, "storage.model", "");
+		hal_device_property_set_string (d, "storage.vendor", "PC Floppy Drive");
+		hal_device_property_set_string (d, "info.vendor", "");
+		hal_device_property_set_string (d, "info.product", "PC Floppy Drive");
+		hal_device_property_set_string (d, "storage.drive_type", "floppy");
+		hal_device_property_set_string (d, "storage.physical_device", "/org/freedesktop/Hal/devices/computer");
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+		hal_device_property_set_bool (d, "storage.removable", TRUE);
+		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
+		hal_device_property_set_bool (d, "storage.requires_eject", FALSE);
+
+		hal_device_property_set_string (d, "info.category", "storage");
+		hal_device_add_capability (d, "storage");
+		hal_device_add_capability (d, "block");
+
+		/* add to TDL so preprobing callouts and prober can access it */
+		hal_device_store_add (hald_get_tdl (), d);
+
+		/* Process preprobe fdi files */
+		di_search_and_merge (d, DEVICE_INFO_TYPE_PREPROBE);
+
+		/* Run preprobe callouts */
+		hal_util_callout_device_preprobe (d, blockdev_callouts_preprobing_storage_done, end_token, NULL);
+		goto out2;
+	}
 
 	if (!is_partition) {
 		const char *udi_it;
@@ -576,7 +639,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			if ((media = hal_util_get_string_from_file (buf, "media")) != NULL) {
 				if (strcmp (media, "disk") == 0 ||
 				    strcmp (media, "cdrom") == 0 ||
-				    strcmp (media, "floppy")) {
+				    strcmp (media, "floppy") == 0) {
 					hal_device_property_set_string (d, "storage.drive_type", media);
 				} else {
 					goto error;
@@ -738,7 +801,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		/* Run preprobe callouts */
 		hal_util_callout_device_preprobe (d, blockdev_callouts_preprobing_volume_done, end_token, NULL);
 	}
-
+out2:
 	g_free (sysfs_path_real);
 	return;
 
