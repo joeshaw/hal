@@ -1,3 +1,34 @@
+2005-02-26  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.h: Add new LibHalDriveType entries
+	for ZIP, JAZ and FLASH_KEY - the latter represents a USB memory stick.
+
+	* libhal-storage/libhal-storage.c (my_strvdup): New function
+	(libhal_drive_from_udi): Fixup new detection of cameras and 
+	musicplayers. Also handle storage.drive_type zip, jaz and flash_key
+	and convert to LibHalDriveType as appropriate
+
+	* libhal/libhal.h: Fixup type for LibHalDeviceCondition
+
+	* libhal/libhal.c (filter_func): Fix up condition handling now that
+	it's a name and details string rather than a whole DBusMessage trailing
+	off. Fix up a bunch of free's due to new memory ownership semantics
+	in the new D-BUS
+	(libhal_device_query_capability): Handle this now that capabilities
+	is a strlist
+
+	* hald/device.c (hal_device_merge): info.capabilities is now a strlist
+	(hal_device_add_capability): -do-
+	(hal_device_has_capability): -do-
+	(hal_device_property_strlist_add): Return whether element was actually
+	added
+
+	* fdi/information/10freedesktop/10-usb-zip-drives.fdi: New file
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: New file
+
+	* fdi/information/10freedesktop/10-usb-card-readers.fdi: New file
+
 2005-02-25  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-pc-floppy.c: New file; test for floppy

@@ -253,8 +253,8 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 void
 hal_device_merge (HalDevice *target, HalDevice *source)
 {
-	const char *caps;
 	GSList *iter;
+	GSList *caps;
 
 	/* device_property_atomic_update_begin (); */
 
@@ -316,17 +316,10 @@ hal_device_merge (HalDevice *target, HalDevice *source)
 
 	/* device_property_atomic_update_end (); */
 
-	caps = hal_device_property_get_string (source, "info.capabilities");
-	if (caps != NULL) {
-		char **split_caps, **iter;
-
-		split_caps = g_strsplit (caps, " ", 0);
-		for (iter = split_caps; *iter != NULL; iter++) {
-			if (!hal_device_has_capability (target, *iter))
-				hal_device_add_capability (target, *iter);
-		}
-
-		g_strfreev (split_caps);
+	caps = hal_device_property_get_strlist (source, "info.capabilities");
+	for (iter = caps; iter != NULL; iter = iter->next) {
+		if (!hal_device_has_capability (target, iter->data))
+			hal_device_add_capability (target, iter->data);
 	}
 }
 
@@ -411,53 +404,28 @@ hal_device_set_udi (HalDevice *device, const char *udi)
 void
 hal_device_add_capability (HalDevice *device, const char *capability)
 {
-        const char *caps;
-
-        caps = hal_device_property_get_string (device, "info.capabilities");
-
-        if (caps == NULL) {
-                hal_device_property_set_string (device, "info.capabilities",
-                                                capability);
-        } else {
-                if (hal_device_has_capability (device, capability))
-                        return;
-                else {
-			char *tmp;
-
-			tmp = g_strconcat (caps, " ", capability, NULL);
-
-                        hal_device_property_set_string (device,
-                                                        "info.capabilities",
-                                                        tmp);
-
-			g_free (tmp);
-                }
-        }
-
-	g_signal_emit (device, signals[CAPABILITY_ADDED], 0, capability);
+	if (hal_device_property_strlist_add (device, "info.capabilities", capability))
+		g_signal_emit (device, signals[CAPABILITY_ADDED], 0, capability);
 }
 
 gboolean
 hal_device_has_capability (HalDevice *device, const char *capability)
 {
-	const char *caps;
-	char **split_caps, **iter;
+	GSList *caps;
+	GSList *iter;
 	gboolean matched = FALSE;
 
-	caps = hal_device_property_get_string (device, "info.capabilities");
+	caps = hal_device_property_get_strlist (device, "info.capabilities");
 
 	if (caps == NULL)
 		return FALSE;
 
-	split_caps = g_strsplit (caps, " ", 0);
-	for (iter = split_caps; *iter != NULL; iter++) {
-		if (strcmp (*iter, capability) == 0) {
+	for (iter = caps; iter != NULL; iter = iter->next) {
+		if (strcmp (iter->data, capability) == 0) {
 			matched = TRUE;
 			break;
 		}
 	}
-
-	g_strfreev (split_caps);
 
 	return matched;
 }
@@ -1201,15 +1169,19 @@ hal_device_property_strlist_add (HalDevice *device,
 				 const char *value)
 {
 	HalProperty *prop;
+	gboolean res;
+
+	res = FALSE;
 
 	/* check if property already exists */
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL) {
 		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
-			return FALSE;
+			goto out;
 
-		if (hal_property_strlist_add (prop, value)) {
+		res = hal_property_strlist_add (prop, value);
+		if (res) {
 			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 				       key, FALSE, FALSE);
 		}
@@ -1222,9 +1194,12 @@ hal_device_property_strlist_add (HalDevice *device,
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
+
+		res = TRUE;
 	}
 
-	return TRUE;
+out:
+	return res;
 }
 
 gboolean

@@ -134,7 +134,7 @@ typedef void (*LibHalDevicePropertyModified) (LibHalContext *ctx,
 typedef void (*LibHalDeviceCondition) (LibHalContext *ctx,
 				       const char *udi,
 				       const char *condition_name,
-				       DBusMessage *message);
+				       const char *condition_detail);
 
 
 LibHalContext *libhal_ctx_new                          (void);

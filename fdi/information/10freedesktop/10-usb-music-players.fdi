@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+
+    <!-- Apple iPod - TODO: use USB ids to determine exact output formats  -->
+    <match key="info.category" string="storage">
+      <match key="storage.vendor" contains="Apple">
+	<match key="storage.model" contains="iPod">
+	  <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <merge key="portable_audio_player.database_type" type="string">ipod</merge>
+          <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-mp3</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/aac</append>
+          <merge key="storage.requires_eject" type="bool">true</merge>
+	</match>
+      </match>
+    </match>	    
+
+    <!-- Jetflash MP3 Player -->
+    <match key="info.category" string="storage">
+      <match key="@storage.physical_device:info.bus" string="usb">
+	<match key="@storage.physical_device:usb.vendor_id" int="0x066f">
+          <match key="@storage.physical_device:usb.product_id" int="0x8000">
+	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <merge key="portable_audio_player.database_type" type="string">flat</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/x-wav</append>
+          </match>
+        </match>
+      </match>
+    </match>
+
+  </device>
+</deviceinfo>

@@ -648,7 +648,7 @@ filter_func (DBusConnection * connection,
 
 	object_path = dbus_message_get_path (message);
 
-	/*printf("*** in filter_func, object_path=%s\n", object_path); */
+	/*printf("*** in filter_func, object_path=%s\n", object_path);*/
 
 	if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager",
 				    "DeviceAdded")) {
@@ -659,13 +659,9 @@ filter_func (DBusConnection * connection,
 			if (ctx->device_added != NULL) {
 				ctx->device_added (ctx, udi);
 			}
-			dbus_free (udi);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	} else
-	    if (dbus_message_is_signal
-		(message, "org.freedesktop.Hal.Manager",
-		 "DeviceRemoved")) {
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager", "DeviceRemoved")) {
 		char *udi;
 		if (dbus_message_get_args (message, &error,
 					   DBUS_TYPE_STRING, &udi,
@@ -673,13 +669,9 @@ filter_func (DBusConnection * connection,
 			if (ctx->device_removed != NULL) {
 				ctx->device_removed (ctx, udi);
 			}
-			dbus_free (udi);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	} else
-	    if (dbus_message_is_signal
-		(message, "org.freedesktop.Hal.Manager",
-		 "NewCapability")) {
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager","NewCapability")) {
 		char *udi;
 		char *capability;
 		if (dbus_message_get_args (message, &error,
@@ -687,36 +679,25 @@ filter_func (DBusConnection * connection,
 					   DBUS_TYPE_STRING, &capability,
 					   DBUS_TYPE_INVALID)) {
 			if (ctx->device_new_capability != NULL) {
-				ctx->device_new_capability (ctx, 
-								       udi,
-								  capability);
+				ctx->device_new_capability (ctx, udi, capability);
 			}
-			dbus_free (udi);
-			dbus_free (capability);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	} else
-	    if (dbus_message_is_signal
-		(message, "org.freedesktop.Hal.Device", "Condition")) {
-		if (ctx->device_condition != NULL) {
-			DBusMessageIter iter;
-			char *condition_name;
-
-			dbus_message_iter_init (message, &iter);
-			dbus_message_iter_get_basic (&iter, &condition_name);
-
-			ctx->device_condition (ctx, 
-							  object_path,
-							  condition_name,
-							  message);
-
-			dbus_free (condition_name);
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "Condition")) {
+		char *udi;
+		char *condition_name;
+		char *condition_detail;
+		if (dbus_message_get_args (message, &error,
+					   DBUS_TYPE_STRING, &udi,
+					   DBUS_TYPE_STRING, &condition_name,
+					   DBUS_TYPE_STRING, &condition_detail,
+					   DBUS_TYPE_INVALID)) {
+			if (ctx->device_new_capability != NULL) {
+				ctx->device_condition (ctx, udi, condition_name, condition_detail);
+			}
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-	} else
-	    if (dbus_message_is_signal
-		(message, "org.freedesktop.Hal.Device",
-		 "PropertyModified")) {
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "PropertyModified")) {
 		if (ctx->device_property_modified != NULL) {
 			int i;
 			char *key;
@@ -742,19 +723,19 @@ filter_func (DBusConnection * connection,
 				dbus_message_iter_get_basic (&iter_struct, &removed);
 				dbus_message_iter_next (&iter_struct);
 				dbus_message_iter_get_basic (&iter_struct, &added);
-
+				
 				ctx->device_property_modified (ctx, 
 							       object_path,
 							       key, removed,
 							       added);
-
+				
 				dbus_message_iter_next (&iter_array);
 			}
-
+			
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
-
+	
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
@@ -2550,15 +2531,25 @@ libhal_device_add_capability (LibHalContext *ctx,
  *				otherwise FALSE
  */
 dbus_bool_t
-libhal_device_query_capability (LibHalContext *ctx, 
-				const char *udi, const char *capability, DBusError *error)
+libhal_device_query_capability (LibHalContext *ctx, const char *udi, const char *capability, DBusError *error)
 {
+	char **caps;
+	unsigned int i;
 	dbus_bool_t ret;
-	char *caps;
 
-	caps = libhal_device_get_property_string (ctx, udi, "info.capabilities", error);
-	ret = (caps != NULL && strstr (caps, capability) != NULL);
-	libhal_free_string (caps);
+	ret = FALSE;
+
+	caps = libhal_device_get_property_strlist (ctx, udi, "info.capabilities", error);
+	if (caps != NULL) {
+		for (i = 0; caps[i] != NULL; i++) {
+			if (strcmp (caps[i], capability) == 0) {
+				ret = TRUE;
+				break;
+			}
+		}
+		libhal_free_string_array (caps);
+	}
+
 	return ret;
 }
 

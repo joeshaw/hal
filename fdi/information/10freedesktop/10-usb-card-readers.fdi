@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+
+    <!-- Generic catch all -->
+    <match key="storage.bus" string="usb">
+      <match key="storage.model" contains="HS-CF">
+        <merge key="storage.drive_type" type="string">compact_flash</merge>
+      </match>      
+      <match key="storage.model" contains="HS-MS">
+        <merge key="storage.drive_type" type="string">memory_stick</merge>
+      </match>      
+      <match key="storage.model" contains="HS-SM">
+        <merge key="storage.drive_type" type="string">smart_media</merge>
+      </match>      
+      <match key="storage.model" contains="HS-SD/MMC">
+        <merge key="storage.drive_type" type="string">sd_mmc</merge>
+      </match>      
+    </match>
+
+    <!-- Lexar CF Reader -->
+    <match key="storage.bus" string="usb">
+      <match key="@storage.physical_device:usb.vendor_id" int="0x05dc">
+        <match key="@storage.physical_device:usb.product_id" int="0x0002">
+          <merge key="storage.drive_type" type="string">compact_flash</merge>
+        </match>
+      </match>
+    </match>    
+
+  </device>
+</deviceinfo>

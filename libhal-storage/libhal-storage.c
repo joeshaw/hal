@@ -654,6 +654,8 @@ struct LibHalDrive_s {
 
 	LibHalContext *hal_ctx;
 
+	char **capabilities;
+
 	char mount_options[MOUNT_OPTIONS_SIZE];
 };
 
@@ -729,6 +731,7 @@ libhal_drive_free (LibHalDrive *drive)
 	libhal_free_string (drive->firmware_version);
 	libhal_free_string (drive->desired_mount_point);
 	libhal_free_string (drive->mount_filesystem);
+	libhal_free_string_array (drive->capabilities);
 }
 
 
@@ -754,6 +757,28 @@ libhal_volume_free (LibHalVolume *vol)
 }
 
 
+static char **
+my_strvdup (char **strv)
+{
+	unsigned int num_elems;
+	unsigned int i;
+	char **res;
+
+	for (num_elems = 0; strv[num_elems] != NULL; num_elems++)
+		;
+
+	res = calloc (num_elems + 1, sizeof (char*));
+	if (res == NULL)
+		goto out;
+
+	for (i = 0; i < num_elems; i++)
+		res[i] = strdup (strv[i]);
+	res[i] = NULL;
+
+out:
+	return res;
+}
+
 /* ok, hey, so this is a bit ugly */
 
 #define LIBHAL_PROP_EXTRACT_BEGIN if (FALSE)
@@ -762,6 +787,7 @@ libhal_volume_free (LibHalVolume *vol)
 #define LIBHAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
 #define LIBHAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
 #define LIBHAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
+#define LIBHAL_PROP_EXTRACT_STRLIST(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_STRLIST) _where_ = my_strvdup (libhal_psi_get_strlist (&it))
 
 /** Given a UDI for a HAL device of capability 'storage', this
  *  function retrieves all the relevant properties into convenient
@@ -779,6 +805,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
 	DBusError error;
+	unsigned int i;
 
 	drive = NULL;
 	properties = NULL;
@@ -848,6 +875,8 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.no_partitions_hint",        drive->no_partitions_hint);
 
+		LIBHAL_PROP_EXTRACT_STRLIST ("info.capabilities",                drive->capabilities);
+
 		LIBHAL_PROP_EXTRACT_END;
 	}
 
@@ -872,33 +901,27 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 			drive->type = LIBHAL_DRIVE_TYPE_SMART_MEDIA;
 		} else if (strcmp (drive->type_textual, "sd_mmc") == 0) {
 			drive->type = LIBHAL_DRIVE_TYPE_SD_MMC;
-/*
 		} else if (strcmp (drive->type_textual, "zip") == 0) {
 			drive->type = LIBHAL_DRIVE_TYPE_ZIP;
 		} else if (strcmp (drive->type_textual, "jaz") == 0) {
 			drive->type = LIBHAL_DRIVE_TYPE_JAZ;
-*/
+		} else if (strcmp (drive->type_textual, "flashkey") == 0) {
+			drive->type = LIBHAL_DRIVE_TYPE_FLASHKEY;
 		} else {
 		        drive->type = LIBHAL_DRIVE_TYPE_DISK; 
 		}
 
 	}
 
-	/* check if physical device is a camera or mp3 player */
-	if (drive->physical_device != NULL) {
-		char *category;
-		DBusError err1;
-
-		dbus_error_init (&err1);
-		category = libhal_device_get_property_string (hal_ctx, drive->physical_device, "info.category", &err1);
-		if (category != NULL) {
-			if (strcmp (category, "portable_audio_player") == 0) {
+	if (drive->capabilities != NULL) {
+		for (i = 0; drive->capabilities[i] != NULL; i++) {
+			if (strcmp (drive->capabilities[i], "portable_audio_player") == 0) {
 				drive->type = LIBHAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER;
-			} else if (strcmp (category, "camera") == 0) {
+				break;
+			} else if (strcmp (drive->capabilities[i], "camera") == 0) {
 				drive->type = LIBHAL_DRIVE_TYPE_CAMERA;
+				break;
 			}
-
-			libhal_free_string (category);
 		}
 	}
 

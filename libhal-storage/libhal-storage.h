@@ -78,8 +78,9 @@ typedef enum {
 	LIBHAL_STORAGE_ICON_DRIVE_SD_MMC                   = 0x10800,
 	LIBHAL_STORAGE_ICON_DRIVE_CAMERA                   = 0x10900,
 	LIBHAL_STORAGE_ICON_DRIVE_PORTABLE_AUDIO_PLAYER    = 0x10a00,
-/*	LIBHAL_STORAGE_ICON_DRIVE_ZIP                      = 0x10b00,
-        LIBHAL_STORAGE_ICON_DRIVE_JAZ                      = 0x10c00,*/
+	LIBHAL_STORAGE_ICON_DRIVE_ZIP                      = 0x10b00,
+        LIBHAL_STORAGE_ICON_DRIVE_JAZ                      = 0x10c00,
+        LIBHAL_STORAGE_ICON_DRIVE_FLASH_KEY                = 0x10d00,
 
 	LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK          = 0x20000,
 	LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK_IDE      = 0x20001,
@@ -108,8 +109,9 @@ typedef enum {
 	LIBHAL_STORAGE_ICON_VOLUME_SD_MMC                  = 0x20800,
 	LIBHAL_STORAGE_ICON_VOLUME_CAMERA                  = 0x20900,
 	LIBHAL_STORAGE_ICON_VOLUME_PORTABLE_AUDIO_PLAYER   = 0x20a00,
-/*	LIBHAL_STORAGE_ICON_VOLUME_ZIP                     = 0x10b00,
-        LIBHAL_STORAGE_ICON_VOLUME_JAZ                     = 0x10c00,*/
+	LIBHAL_STORAGE_ICON_VOLUME_ZIP                     = 0x20b00,
+        LIBHAL_STORAGE_ICON_VOLUME_JAZ                     = 0x20c00,
+        LIBHAL_STORAGE_ICON_VOLUME_FLASH_KEY               = 0x20d00,
 
 	LIBHAL_STORAGE_ICON_DISC_CDROM                     = 0x30000,
 	LIBHAL_STORAGE_ICON_DISC_CDR                       = 0x30001,
@@ -158,9 +160,10 @@ typedef enum {
 	LIBHAL_DRIVE_TYPE_SMART_MEDIA           = 0x07,
 	LIBHAL_DRIVE_TYPE_SD_MMC                = 0x08,
 	LIBHAL_DRIVE_TYPE_CAMERA                = 0x09,
-	LIBHAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER = 0x0a/*,
+	LIBHAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER = 0x0a,
 	LIBHAL_DRIVE_TYPE_ZIP                   = 0x0b,
-	LIBHAL_DRIVE_TYPE_JAZ                   = 0x0c*/
+	LIBHAL_DRIVE_TYPE_JAZ                   = 0x0c,
+	LIBHAL_DRIVE_TYPE_FLASHKEY              = 0x0d
 } LibHalDriveType;
 
 typedef enum {
