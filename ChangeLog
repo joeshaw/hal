@@ -1,5 +1,10 @@
 2005-03-07  David Zeuthen  <davidz@redhat.com>
 
+	* doc/TODO: Forgot one important TODO about finishing the
+	volume_id library (pretty please Kay :-)
+
+2005-03-07  David Zeuthen  <davidz@redhat.com>
+
 	* doc/TODO: Updated this to reflect reality
 
 	* hald/linux2/pmu.c (battery_refresh): Pass reuse=FALSE

@@ -39,6 +39,9 @@ Medium items
 Big items
 ---------
 
+ - Finish volume_id so it's safe to use on IDE drives; e.g. make it detect
+   various IDE RAID signatures
+
  - Method invocations - have some way to specify that that a hal device
    object exports the org.freedesktop.Hal.Device.Foo.Bar interface -
    suggest to use a property info.interfaces (strlist) with what interfaces
