@@ -1,3 +1,15 @@
+2004-01-10  David Zeuthen  <david@fubar.dk>
+
+	* tools/device-manager/Const.py.in (BUS_NAMES): Add support for i2c
+	devices
+
+	* hald/linux/linux_i2c.[ch]: New files by Matthew Mastracci; slight
+	modifications by me
+
+	* hald/linux/linux_osspec.c (visit_device): Call visit_device_i2c()
+
+	* hald/Makefile.am (hald_SOURCES): Add linux_i2c.[ch]
+
 2004-01-08  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_class_scsi.c

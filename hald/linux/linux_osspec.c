@@ -43,6 +43,7 @@
 
 #include "linux_common.h"
 #include "linux_pci.h"
+#include "linux_i2c.h"
 #include "linux_usb.h"
 #include "linux_ide.h"
 #include "linux_class_block.h"
@@ -174,7 +175,11 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
     if( device==NULL )
         DIE(("Coulnd't get sysfs device object for path %s", path));
 
-    /*printf("    %s  busid=%s\n", device->bus, device->bus_id);*/
+/*
+    printf("############\n");
+    printf("############    %s  busid=%s\n", device->bus, device->bus_id);
+    printf("############\n");
+*/
 
     if( device->bus!=NULL )
     {
@@ -187,6 +192,11 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
         /** @todo This is a hack; is there such a thing as an ide_host? */
         else if( strncmp(device->bus_id, "ide", 3)==0 )
             visit_device_ide_host(path, device);
+	/* Hmm only works on some boxes?? So we have to do hack below
+        else if( strcmp(device->bus, "i2c")==0 )
+	    visit_device_i2c(path, device);*/
+        else if( strncmp(device->bus_id, "i2c", 3)==0 )
+            visit_device_i2c(path, device); 
         else 
         {
             /*printf("bus=%s path=%s\n", device->bus, path);*/

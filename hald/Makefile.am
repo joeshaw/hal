@@ -22,6 +22,7 @@ hald_SOURCES +=                                                         \
                                         linux/linux_osspec.c            \
         linux/linux_common.h            linux/linux_common.c            \
         linux/linux_pci.h               linux/linux_pci.c               \
+        linux/linux_i2c.h               linux/linux_i2c.c               \
         linux/linux_usb.h               linux/linux_usb.c               \
         linux/linux_ide.h               linux/linux_ide.c               \
         linux/linux_class_block.h       linux/linux_class_block.c       \

@@ -19,6 +19,7 @@ UDI_COLUMN    = 2
 BUS_NAMES = {"usb"         : "USB",
              "usbif"       : "USB Interface",
              "pci"         : "PCI",
+             "i2c"         : "I2C",
              "scsi_host"   : "SCSI Host",
              "scsi_device" : "SCSI",
              "block"       : "Block",
