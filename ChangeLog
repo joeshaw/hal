@@ -1,3 +1,8 @@
+2004-09-12  David Zeuthen  <david@fubar.dk>
+
+	* hal.conf.in: Fixup this file as it was broken. Reported by 
+	Kay Sievers <kay.sievers@vrfy.org>.
+
 2004-09-12  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_vfat): Patch from
