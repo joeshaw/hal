@@ -39,6 +39,9 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <libhal/libhal.h> /* For HAL_STATE_* */
 
 #include "../logger.h"
@@ -333,6 +336,25 @@ const char* get_last_element(const char* s)
     return s;
 }
 
+/* returns the path of the udevinfo program 
+ *
+ * @return                      path or NULL if udevinfo program is not found
+ */
+const char *udevinfo_path(void) {
+  char *possible_paths[] = { "/sbin/udevinfo",
+                          "/usr/sbin/udevinfo",
+                          "/usr/local/sbin/udevinfo" };
+  char *path = NULL;
+  unsigned int i;
+  struct stat s;
+  for (i = 0; i < sizeof(possible_paths)/sizeof(char *) ; i++) {
+    if (stat(possible_paths[i],&s) == 0 && S_ISREG(s.st_mode)) {
+      path = possible_paths[i];
+      break;
+    }
+  }
+  return path;
+}
 
 /** This function takes a temporary device and renames it to a proper
  *  UDI using the supplied bus-specific #naming_func. After renaming

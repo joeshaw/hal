@@ -1,3 +1,32 @@
+2004-03-01  David Zeuthen  <david@fubar.dk>
+
+	Preliminary support for waiting for sysfs information to appear - 
+	not complete but it's a start...
+
+	* tools/linux/hal_hotplug.c 
+	(get_sysfs_mnt_path): new function
+	(main): call wait_for_sysfs_info() on hotplug add
+	(wait_for_sysfs_info): new function
+
+2004-03-01  Sjoerd Simons  <sjoerd@air.luon.net>
+
+	* hald/linux/linux_common.c (udevinfo_path): new function
+
+	* hald/linux/linux_common.h: add udevinfo_path prototype
+
+	* hald/linux/linux_class_v4l.c (visit_class_device_v4l): use 
+	udevinfo_path() to get path to udevinfo
+
+	* hald/linux/linux_class_block.c 
+	(visit_class_device_block_got_parent): use udevinfo_path() to get
+	path to udevinfo. Add support for SCSI tape detection. Set correct
+	storage.media on SCSI CD-ROM and disk detection
+
+2004-02-29  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_usb.c (visit_device_usb): New way to check if 
+	device is an interface
+
 2004-02-27  Joe Shaw  <joe@ximian.com>
 
 	* hald/linux/linux_class_block.c

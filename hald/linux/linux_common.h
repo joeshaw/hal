@@ -51,6 +51,9 @@ char* read_single_line(char* filename_format,...);
 
 const char* get_last_element(const char* s);
 
+/* returns the path of the udevinfo program */
+const char *udevinfo_path(void);
+
 /** Type for function to compute the UDI (unique device id) for a given
  *  HAL device.
  *

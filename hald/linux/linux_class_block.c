@@ -254,7 +254,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         const char* path;
         int sysfs_mount_path_len;
         char sysfs_path_trunc[SYSFS_NAME_LEN];
-        char* udev_argv[7] = {"/sbin/udev", "-r", "-q", "name", "-p", 
+        char* udev_argv[7] = {udevinfo_path(), "-r", "-q", "name", "-p", 
                               sysfs_path_trunc, NULL};
         char* udev_stdout;
         char* udev_stderr;
@@ -271,8 +271,8 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         }
         HAL_INFO(("*** sysfs_path_trunc = '%s'", sysfs_path_trunc));
         
-        /* Now invoke udev */
-        if( g_spawn_sync("/",
+        /* Now invoke udevinfo */
+        if(udev_argv[0] == NULL || g_spawn_sync("/",
                          udev_argv,
                          NULL,
                          0,
@@ -283,13 +283,13 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                          &udev_exitcode,
 			 NULL)!=TRUE )
         {
-            HAL_ERROR(("Couldn't invoke /sbin/udev"));
+            HAL_ERROR(("Couldn't invoke udevinfo"));
             goto error;
         }
         
         if( udev_exitcode!=0 )
         {
-            HAL_ERROR(("/sbin/udev returned %d", udev_exitcode));
+            HAL_ERROR(("%s returned %d", udevinfo_path(), udev_exitcode));
             goto error;
         }
         
@@ -472,16 +472,27 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
 				ds_add_capability (d, "storage");
 				ds_property_set_string (d, "info.category",
 							"storage");
+				ds_property_set_string(d, "storage.media", "disk");
+				break;
+			case 1: /* Tape */
+			    ds_add_capability (d, "storage");
+			    ds_add_capability(d, "storage.removable");
+			    ds_property_set_string(d, "info.category", "storage.removable");
+			    ds_property_set_string(d, "storage.media", "tape");
+			    removable_media = TRUE;
+			    break;
 			case 5: /* CD-ROM */
-				ds_add_capability (d, "storage");
-				ds_add_capability (d, "storage.removable");
-				ds_property_set_string (d, "info.category",
-							"storage.removable");
-				removable_media = TRUE;
+			    ds_add_capability (d, "storage");
+			    ds_add_capability (d, "storage.removable");
+			    ds_property_set_string(d, "storage.media", "cdrom");
+			    ds_property_set_string (d, "info.category",
+						    "storage.removable");
+			    removable_media = TRUE;
+			    break;
 			default:
-				/** @todo add more SCSI types */
-				HAL_WARNING (("Don't know how to handle "
-					      "SCSI type %d", type));
+			    /** @todo add more SCSI types */
+			    HAL_WARNING (("Don't know how to handle "
+					  "SCSI type %d", type));
 			}
 		}				
 	}

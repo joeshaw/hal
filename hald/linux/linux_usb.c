@@ -859,18 +859,13 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
 
     /* Check if this is an USB interface */
     is_interface = FALSE;
-    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
-                        struct sysfs_attribute)
+    for(i=0; device->bus_id[i]!=0; i++)
     {
-        if( is_interface )
-            break;
-
-        if( sysfs_get_name_from_path(cur->path, 
-                                     attr_name, SYSFS_NAME_LEN) != 0 )
-            continue;
-        
-        if( strcmp(attr_name, "iInterface")==0 )
+        if( device->bus_id[i]==':' )
+        {
             is_interface = TRUE;
+            break;
+        }
     }
     
     /* USB interfaces are handled by a separate function */
