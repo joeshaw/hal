@@ -21,7 +21,7 @@
 #ifndef _VOLUME_ID_H_
 #define _VOLUME_ID_H_
 
-#define VOLUME_ID_VERSION		020
+#define VOLUME_ID_VERSION		021
 
 #define VOLUME_ID_LABEL_SIZE		64
 #define VOLUME_ID_UUID_SIZE		16
@@ -57,7 +57,9 @@ enum volume_id_type {
 	VOLUME_ID_HFS,
 	VOLUME_ID_HFSPLUS,
 	VOLUME_ID_UFS,
-	VOLUME_ID_LINUX_RAID
+	VOLUME_ID_LINUX_RAID,
+	VOLUME_ID_LVM1,
+	VOLUME_ID_LVM2
 };
 
 struct volume_id_partition {

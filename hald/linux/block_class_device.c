@@ -83,7 +83,7 @@ static gboolean deferred_check_for_non_partition_media (gpointer data);
 static void
 set_volume_id_values(HalDevice *d, struct volume_id *vid)
 {
-	const char *product;
+	char *product;
 	const char *usage;
 
 	switch (vid->usage_id) {

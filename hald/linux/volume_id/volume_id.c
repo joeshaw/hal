@@ -249,7 +249,71 @@ static void free_buffer(struct volume_id *id)
 	}
 }
 
-#define MD_RESERVED_BYTES		(64 * 1024)
+#define LVM1_SB_OFF			0x400
+#define LVM1_MAGIC			"HM"
+static int probe_lvm1(struct volume_id *id, __u64 off)
+{
+	struct lvm2_super_block {
+		__u8	id[2];
+	} __attribute__((packed)) *lvm;
+
+	const __u8 *buf;
+
+	buf = get_buffer(id, off + LVM1_SB_OFF, 0x800);
+	if (buf == NULL)
+		return -1;
+
+	lvm = (struct lvm2_super_block *) buf;
+
+	if (strncmp(lvm->id, LVM1_MAGIC, 2) != 0)
+		return -1;
+
+	id->usage_id = VOLUME_ID_RAID;
+	id->type_id = VOLUME_ID_LVM1;
+	id->type = "LVM1_member";
+
+	return 0;
+}
+
+#define LVM2_LABEL_ID			"LABELONE"
+#define LVM2LABEL_SCAN_SECTORS		4
+static int probe_lvm2(struct volume_id *id, __u64 off)
+{
+	struct lvm2_super_block {
+		__u8	id[8];
+		__u64	sector_xl;
+		__u32	crc_xl;
+		__u32	offset_xl;
+		__u8	type[8];
+	} __attribute__((packed)) *lvm;
+
+	const __u8 *buf;
+	unsigned int soff;
+
+	buf = get_buffer(id, off, LVM2LABEL_SCAN_SECTORS * 0x200);
+	if (buf == NULL)
+		return -1;
+
+
+	for (soff = 0; soff < LVM2LABEL_SCAN_SECTORS * 0x200; soff += 0x200) {
+		lvm = (struct lvm2_super_block *) &buf[soff];
+
+		if (strncmp(lvm->id, LVM2_LABEL_ID, 8) == 0)
+			goto found;
+	}
+
+	return -1;
+
+found:
+	strncpy(id->type_version, lvm->type, 8);
+	id->usage_id = VOLUME_ID_RAID;
+	id->type_id = VOLUME_ID_LVM1;
+	id->type = "LVM2_member";
+
+	return 0;
+}
+
+#define MD_RESERVED_BYTES		0x10000
 #define MD_MAGIC			0xa92b4efc
 static int probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
 {
@@ -291,6 +355,11 @@ static int probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
 	memcpy(uuid, &mdp->set_uuid0, 4);
 	memcpy(&uuid[4], &mdp->set_uuid1, 12);
 	set_uuid(id, uuid, 16);
+
+	snprintf(id->type_version, VOLUME_ID_FORMAT_SIZE-1, "%u.%u.%u",
+		 le32_to_cpu(mdp->major_version),
+		 le32_to_cpu(mdp->minor_version),
+		 le32_to_cpu(mdp->patch_version));
 
 	dbg("found raid signature");
 	id->usage_id = VOLUME_ID_RAID;
@@ -1885,6 +1954,12 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_LINUX_RAID:
 		rc = probe_linux_raid(id, off, size);
 		break;
+	case VOLUME_ID_LVM1:
+		rc = probe_lvm1(id, off);
+		break;
+	case VOLUME_ID_LVM2:
+		rc = probe_lvm2(id, off);
+		break;
 	case VOLUME_ID_ALL:
 	default:
 		rc = probe_linux_raid(id, off, size);
@@ -1935,6 +2010,13 @@ int volume_id_probe(struct volume_id *id,
 		rc = probe_ufs(id, off);
 		if (rc == 0)
 			break;
+		rc = probe_lvm1(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_lvm2(id, off);
+		if (rc == 0)
+			break;
+
 		rc = -1;
 	}
 

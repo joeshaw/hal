@@ -1,3 +1,15 @@
+2004-08-27  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c:
+	(probe_lvm1), (probe_lvm2): Add detection of LVM physical drives
+	(probe_linux_raid): add version number of raid
+
+	* hald/linux/volume_id/volume_id.h: We are at version 021 now.
+	It started as a replacement of the FAT label reading code in HAL.
+	I _never_ expected that we seek over the whole disk now to search
+	for raid signatures and support nearly every filesystem I've ever
+	had a formatting tool for :)
+
 2004-08-27  David Zeuthen  <david@fubar.dk>
 
 	* AUTHORS: Add Kay Sievers <kay.sievers@vrfy.org> cause he rocks.
