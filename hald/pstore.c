@@ -43,6 +43,10 @@
 #define PDOUBLE		"Double:"
 #define UDI_STRIP	"/org/freedesktop/Hal"
 
+#ifndef HOST_NAME_MAX
+#  define HOST_NAME_MAX 256
+#endif
+
 static char *pstore_uuid = NULL;
 
 struct _HalPStore {

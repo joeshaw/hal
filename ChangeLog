@@ -1,3 +1,10 @@
+2004-06-23  Joe Shaw  <joeshaw@novell.com>
+
+	Patch from Sjoerd Simons <sjoerd@luon.net>
+
+	* hald/pstore.c: #define HOST_NAME_MAX to 256 if it's undefined as
+	per the gethostname manpage.
+
 2004-06-20  David Zeuthen  <david@fubar.dk>
 
 	Patch from Kay Sievers <kay.sievers@vrfy.org>
