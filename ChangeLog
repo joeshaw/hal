@@ -1,5 +1,11 @@
 2004-12-16  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux/volume_id/volume_id.c (sesame_parse): Support really long
+	lines
+	(probe_crypto_sesame): Read 1024 bytes instead of only 0x100
+
+2004-12-16  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux/volume_id/volume_id.c (sesame_skip_to_next_nonempty_line):
 	New function
 	(sesame_parse): New function

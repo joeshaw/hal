@@ -2047,12 +2047,12 @@ sesame_parse (__u8 *buf, int (*got_kv_pair_cb) (const char *key, const char *val
 		unsigned int i;
 		char *lstart;
 		char *lend;
-		char line[256];
+		char line[1024];
 		size_t len;
 		char *valbegin;
 		char *ival;
 		char key[256];
-		char value[256];
+		char value[1024];
 
 		lstart = (char *) buf;
 		buf = sesame_skip_to_next_nonempty_line (buf);
@@ -2167,7 +2167,7 @@ static int probe_crypto_sesame(struct volume_id *id, __u64 off, __u64 size)
 
 	found = 0;
 
-	buf = get_buffer(id, off, 0x100);
+	buf = get_buffer(id, off, 0x400);
 	if (buf == NULL)
 		goto out;
 
