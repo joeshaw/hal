@@ -1,3 +1,8 @@
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
+	* tools/fstab-sync.c (fs_table_has_volume): Properly resolve symlinks
+	that aren't fully qualified
+
 2004-08-23  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c:

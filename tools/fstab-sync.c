@@ -1140,12 +1140,21 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 
 		  if (readlink (field->value, buf, sizeof (buf)) > 0) {
 
+		    /* check if link is fully qualified  */
+		    if (buf[0] != '/') {
+		      char buf1[256];
+		      char *p;
+
+		      strncpy (buf1, buf, sizeof (buf1));
+		      strncpy (buf, field->value, sizeof(buf));
+		      p = strrchr (buf, '/');
+		      strncpy (p+1, buf1, buf+sizeof(buf)-p-1);
+		    }
+
 		    if (strcmp (volume->block_device, buf) == 0) {
 		      /* update block.device with new value */
-		      fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), 
-					  pid, field->value, buf);
-		      hal_device_set_property_string (hal_context, volume->udi, 
-						      "block.device", field->value);
+		      fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), pid, field->value, buf);
+		      hal_device_set_property_string (hal_context, volume->udi, "block.device", field->value);
 		      return TRUE;
 		    }
 
