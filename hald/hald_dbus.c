@@ -347,7 +347,7 @@ foreach_device_by_capability (HalDeviceStore *store, HalDevice *device,
 
 	caps = hal_device_property_get_string (device, "info.capabilities");
 
-	if (strstr (caps, info->capability) != NULL) {
+	if (caps != NULL && strstr (caps, info->capability) != NULL) {
 		dbus_message_iter_append_string (info->iter,
 						 hal_device_get_udi (device));
 	}

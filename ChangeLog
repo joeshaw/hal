@@ -1,3 +1,8 @@
+2004-04-30  Joe Shaw  <joe@ximian.com>
+
+	* hald/hald_dbus.c (foreach_device_by_capability): Make sure caps
+	is not NULL before comparing strings.
+
 2004-04-30  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: update TODO note about fs detection
