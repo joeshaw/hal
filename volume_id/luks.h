@@ -1,7 +1,7 @@
 /*
  * volume_id - reads filesystem label and uuid
  *
- * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
+ * Copyright (C) 2005 W. Michael Petullo <mike@flyn.org>
  *
  *	This library is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public
@@ -18,8 +18,8 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef _VOLUME_ID_EXT_
-#define _VOLUME_ID_EXT_
+#ifndef _VOLUME_ID_LUKS_
+#define _VOLUME_ID_LUKS_
 
 extern int volume_id_probe_luks(struct volume_id *id, __u64 off);
 

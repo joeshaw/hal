@@ -15,6 +15,11 @@
 #include <config.h>
 #endif
 
+/* User of this library is supposed to export the volume_id_log symbol
+ * if sources are built with -DDEBUG
+ */
+extern void volume_id_log (const char *format, ...);
+
 #ifdef DEBUG
 #define dbg(format, arg...)							\
 	do {									\

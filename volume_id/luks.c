@@ -40,10 +40,6 @@
 #include "logging.h"
 #include "luks.h"
 
-/* FIXME: this contains a lot of copy and pasted code.  One alternative
- * would be to fork/exec cryptsetup isLuks and cryptsetup luksUUID.  Another
- * would be to write a LUKS library */
-
 /* from cryptsetup-luks internal.h */
 #define SECTOR_SHIFT            9
 #define SECTOR_SIZE             (1 << SECTOR_SHIFT)
@@ -68,8 +64,6 @@ const unsigned char LUKS_MAGIC[] = {'L','U','K','S', 0xba, 0xbe};
 
 int volume_id_probe_luks(struct volume_id *id, __u64 off)
 {
-	int i;
-
 	/* from cryptsetup-luks luks.h */
 	struct luks_phdr {
 		char            magic[LUKS_MAGIC_L];
@@ -83,7 +77,6 @@ int volume_id_probe_luks(struct volume_id *id, __u64 off)
 		char            mkDigestSalt[LUKS_SALTSIZE];
 		uint32_t        mkDigestIterations;
 		char            uuid[UUID_STRING_L];
-
 		struct {
 			uint32_t active;
 

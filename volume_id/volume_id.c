@@ -60,6 +60,7 @@
 #include "hpfs.h"
 #include "romfs.h"
 #include "sysv.h"
+#include "luks.h"
 #include "mac.h"
 #include "msdos.h"
 

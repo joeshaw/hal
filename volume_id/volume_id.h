@@ -21,7 +21,7 @@
 #ifndef _VOLUME_ID_H_
 #define _VOLUME_ID_H_
 
-#define VOLUME_ID_VERSION		34
+#define VOLUME_ID_VERSION		36
 
 #define VOLUME_ID_LABEL_SIZE		64
 #define VOLUME_ID_UUID_SIZE		16
@@ -78,10 +78,5 @@ extern struct volume_id *volume_id_open_node(const char *path);
 extern struct volume_id *volume_id_open_dev_t(dev_t devt);
 extern int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned long long size);
 extern void volume_id_close(struct volume_id *id);
-
-/* User of this library is supposed to export the volume_id_log symbol
- * if sources are built with -DDEBUG
- */
-extern void volume_id_log (const char *format, ...);
 
 #endif

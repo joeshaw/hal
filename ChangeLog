@@ -1,3 +1,17 @@
+2005-02-25  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* volume_id/logging.h: Move HAL specific logging to this file.
+
+	* volume_id/luks.c: (volume_id_probe_luks): Remove unused stuff.
+
+	* volume_id/luks.h: Fix typo and copyright.
+
+	* volume_id/reiserfs.c: (volume_id_probe_reiserfs): Support reiser4.
+
+	* volume_id/volume_id.c: Include luks.h.
+
+	* volume_id/volume_id.h: Version 36. Remove HAL specific logging.
+
 2005-02-25  David Zeuthen  <davidz@redhat.com>
 
 	* hald/hald_dbus.c (hald_dbus_filter_function): Patch from Ray Strode
