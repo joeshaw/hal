@@ -7,8 +7,8 @@
  *	of ATA or SCSI devices.
  *	
  *	Note:	Native interface access is needed. There is no way to get
- *		these kind from a device behind e.g. a USB adapter. A good
- *		bridge reads these values from the disk and provides them
+ *		these kind from a device behind a USB adapter. A good
+ *		bridge reads these values from the device and provides them
  *		as USB config strings.
  *
  *	This library is free software; you can redistribute it and/or
@@ -199,13 +199,13 @@ int drive_id_probe(struct drive_id *id, enum drive_type type)
 		return -1;
 
 	switch(type) {
-	case DID_ATA:
+	case DRIVE_ID_ATA:
 		rc = probe_ata(id);
 		break;
-	case DID_SCSI:
+	case DRIVE_ID_SCSI:
 		rc = probe_scsi(id);
 		break;
-	case DID_ALL:
+	case DRIVE_ID_ALL:
 	default:
 		rc = probe_ata(id);
 		if (rc == 0)

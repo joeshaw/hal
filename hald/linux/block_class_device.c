@@ -1071,7 +1071,7 @@ detect_fs (HalDevice *d)
 	if (vid == NULL)
 		return;
 
-	rc = volume_id_probe(vid, ALL);
+	rc = volume_id_probe(vid, VOLUME_ID_ALL);
 	if (rc != 0) {
 		volume_id_close(vid);
 		return;
@@ -1296,7 +1296,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 		device_file = hal_device_property_get_string (d, "block.device");
 		did = drive_id_open_node(device_file);
-		if (drive_id_probe(did, DID_ATA) == 0) {
+		if (drive_id_probe(did, DRIVE_ID_ATA) == 0) {
 			if (did->serial[0] != '\0')
 				hal_device_property_set_string (stordev, 
 								"storage.serial",
@@ -1399,7 +1399,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 		device_file = hal_device_property_get_string (d, "block.device");
 		did = drive_id_open_node(device_file);
-		if (drive_id_probe(did, DID_SCSI) == 0) {
+		if (drive_id_probe(did, DRIVE_ID_SCSI) == 0) {
 			if (did->serial[0] != '\0')
 				hal_device_property_set_string (stordev,
 								"storage.serial",

@@ -1,3 +1,20 @@
+2004-08-02  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+	
+	* hald/linux/block_class_device.c: (detect_fs),
+	(block_class_pre_process):
+	* hald/linux/drive_id/drive_id.c: (drive_id_probe):
+	* hald/linux/drive_id/drive_id.h:
+	* hald/linux/volume_id/volume_id.c: (probe_ext), (probe_reiser),
+	(probe_xfs), (probe_jfs), (probe_vfat), (probe_msdos), (probe_udf),
+	(probe_iso9660), (probe_ufs), (probe_hfs_hfsplus), (probe_ntfs),
+	(probe_swap), (volume_id_probe), (volume_id_open_node):
+	* hald/linux/volume_id/volume_id.h:	
+	Attached is a trivial cleanup of the enum names, cause 'ALL' is
+	not a very good name in a global namespace. I've prepended the
+	libname to all names.
+
 2004-08-01  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (block_class_compute_udi):

@@ -21,6 +21,8 @@
 #ifndef _DRIVE_ID_H_
 #define _DRIVE_ID_H_
 
+#define DRIVE_ID_VERSION		002
+
 #define DRIVE_ID_VENDOR_SIZE		8
 #define DRIVE_ID_MODEL_SIZE		40
 #define DRIVE_ID_SERIAL_SIZE		20
@@ -30,9 +32,9 @@
 
 
 enum drive_type {
-	DID_ALL,
-	DID_SCSI,
-	DID_ATA
+	DRIVE_ID_ALL,
+	DRIVE_ID_SCSI,
+	DRIVE_ID_ATA
 };
 
 struct drive_id {

@@ -283,10 +283,10 @@ static int probe_ext(struct volume_id *id)
 
 	if ((le32_to_cpu(es->feature_compat) &
 	     EXT3_FEATURE_COMPAT_HAS_JOURNAL) != 0) {
-		id->fs_type = EXT3;
+		id->fs_type = VOLUME_ID_EXT3;
 		id->fs_name = "ext3";
 	} else {
-		id->fs_type = EXT2;
+		id->fs_type = VOLUME_ID_EXT2;
 		id->fs_name = "ext2";
 	}
 
@@ -338,7 +338,7 @@ found:
 	set_label_string(id, rs->label, 16);
 	set_uuid(id, rs->uuid, 16);
 
-	id->fs_type = REISER;
+	id->fs_type = VOLUME_ID_REISER;
 	id->fs_name = "reiser";
 
 	return 0;
@@ -372,7 +372,7 @@ static int probe_xfs(struct volume_id *id)
 	set_label_string(id, xs->fname, 12);
 	set_uuid(id, xs->uuid, 16);
 
-	id->fs_type = XFS;
+	id->fs_type = VOLUME_ID_XFS;
 	id->fs_name = "xfs";
 
 	return 0;
@@ -406,7 +406,7 @@ static int probe_jfs(struct volume_id *id)
 	set_label_string(id, js->label, 16);
 	set_uuid(id, js->uuid, 16);
 
-	id->fs_type = JFS;
+	id->fs_type = VOLUME_ID_JFS;
 	id->fs_name = "jfs";
 
 	return 0;
@@ -459,7 +459,7 @@ found:
 	set_label_string(id, vs->label, 11);
 	set_uuid(id, vs->serno, 4);
 
-	id->fs_type = VFAT;
+	id->fs_type = VOLUME_ID_VFAT;
 	id->fs_name = "vfat";
 
 	return 0;
@@ -534,7 +534,7 @@ found:
 	set_label_string(id, ms->label, 11);
 	set_uuid(id, ms->serno, 4);
 
-	id->fs_type = MSDOS;
+	id->fs_type = VOLUME_ID_MSDOS;
 	id->fs_name = "msdos";
 
 	return 0;
@@ -684,7 +684,7 @@ pvd:
 		set_label_unicode16(id, vd->type.primary.ident.c, BE,31);
 
 found:
-	id->fs_type = UDF;
+	id->fs_type = VOLUME_ID_UDF;
 	id->fs_name = "udf";
 
 	return 0;
@@ -725,7 +725,7 @@ static int probe_iso9660(struct volume_id *id)
 	return -1;
 
 found:
-	id->fs_type = ISO9660;
+	id->fs_type = VOLUME_ID_ISO9660;
 	id->fs_name = "iso9660";
 
 	return 0;
@@ -907,7 +907,7 @@ static int probe_ufs(struct volume_id *id)
 	return -1;
 
 found:
-	id->fs_type = UFS;
+	id->fs_type = VOLUME_ID_UFS;
 	id->fs_name = "ufs";
 
 	return 0;
@@ -1064,7 +1064,7 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 	part = (struct mac_partition *) buf;
 	if ((strncmp(part->signature, "PM", 2) == 0) &&
 	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
-		id->fs_type = MACPARTMAP;
+		id->fs_type = VOLUME_ID_MACPARTMAP;
 		id->fs_name = "mac_partition_map";
 		return 0;
 	}
@@ -1147,7 +1147,7 @@ check:
 		set_label_string(id, hfs->label, hfs->label_len) ;
 	}
 
-	id->fs_type = HFS;
+	id->fs_type = VOLUME_ID_HFS;
 	id->fs_name = "hfs";
 
 	return 0;
@@ -1204,7 +1204,7 @@ hfsplus:
 	set_label_unicode16(id, key->unicode, BE, label_len);
 
 found:
-	id->fs_type = HFSPLUS;
+	id->fs_type = VOLUME_ID_HFSPLUS;
 	id->fs_name = "hfsplus";
 
 	return 0;
@@ -1361,7 +1361,7 @@ static int probe_ntfs(struct volume_id *id)
 	}
 
 found:
-	id->fs_type = NTFS;
+	id->fs_type = VOLUME_ID_NTFS;
 	id->fs_name = "ntfs";
 
 	return 0;
@@ -1387,7 +1387,7 @@ static int probe_swap(struct volume_id *id)
 	return -1;
 
 found:
-	id->fs_type = SWAP;
+	id->fs_type = VOLUME_ID_SWAP;
 	id->fs_name = "swap";
 
 	return 0;
@@ -1402,46 +1402,46 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 		return -EINVAL;
 
 	switch (fs_type) {
-	case EXT3:
-	case EXT2:
+	case VOLUME_ID_EXT3:
+	case VOLUME_ID_EXT2:
 		rc = probe_ext(id);
 		break;
-	case REISER:
+	case VOLUME_ID_REISER:
 		rc = probe_reiser(id);
 		break;
-	case XFS:
+	case VOLUME_ID_XFS:
 		rc = probe_xfs(id);
 		break;
-	case JFS:
+	case VOLUME_ID_JFS:
 		rc = probe_jfs(id);
 		break;
-	case MSDOS:
+	case VOLUME_ID_MSDOS:
 		rc = probe_msdos(id);
 		break;
-	case VFAT:
+	case VOLUME_ID_VFAT:
 		rc = probe_vfat(id);
 		break;
-	case UDF:
+	case VOLUME_ID_UDF:
 		rc = probe_udf(id);
 		break;
-	case ISO9660:
+	case VOLUME_ID_ISO9660:
 		rc = probe_iso9660(id);
 		break;
-	case MACPARTMAP:
-	case HFS:
-	case HFSPLUS:
+	case VOLUME_ID_MACPARTMAP:
+	case VOLUME_ID_HFS:
+	case VOLUME_ID_HFSPLUS:
 		rc = probe_hfs_hfsplus(id);
 		break;
-	case UFS:
+	case VOLUME_ID_UFS:
 		rc = probe_ufs(id);
 		break;
-	case NTFS:
+	case VOLUME_ID_NTFS:
 		rc = probe_ntfs(id);
 		break;
-	case SWAP:
+	case VOLUME_ID_SWAP:
 		rc = probe_swap(id);
 		break;
-	case ALL:
+	case VOLUME_ID_ALL:
 	default:
 		/* read only minimal buffer, cause of the slow floppies */
 		rc = probe_vfat(id);
@@ -1516,9 +1516,11 @@ struct volume_id *volume_id_open_node(const char *path)
 	struct volume_id *id;
 	int fd;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
+	fd = open(path, O_RDONLY | O_NONBLOCK);
+	if (fd < 0) {
+		dbg("unable to open '%s'", path);
 		return NULL;
+	}
 
 	id = volume_id_open_fd(fd);
 	if (id == NULL)
