@@ -1,3 +1,48 @@
+2004-04-25  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO: Add our notes about current issues with the Linux 2.6
+	kernel
+
+	* hald/linux/usbif_bus_device.c (usbif_device_accept): remove 
+	is_probing
+
+	* hald/linux/usb_bus_device.c (usb_device_accept): remove is_probing
+
+	* hald/linux/printer_class_device.c (printer_class_device_accept): 
+	remove is_probing
+
+	* hald/linux/osspec.c (visit_class_device): optionally take and use
+	a ClassDeviceHandler object
+	(visit_class): -do-
+	(visit_device): optionally take and use a BusDeviceHandler object
+	(visit_bus): new function; not currently used
+	(osspec_probe): add a comment about migration to visit_bus once the
+	kernel is ready; slight changes
+
+	* hald/linux/net_class_device.c (net_class_pre_process): set category
+	and capabilities
+
+	* hald/linux/ide_host_bus_device.c (ide_host_device_accept): remove
+	is_probing
+
+	* hald/linux/common.c (got_parent): new function
+
+	* hald/linux/class_device.h: change prototypes by removing is_probing
+	parameter
+
+	* hald/linux/class_device.c don't pass is_probing; use 
+	hald_is_initialising global instead
+
+	* hald/linux/bus_device.h: change prototypes by removing is_probing
+	parameter
+
+	* hald/linux/bus_device.c: don't pass is_probing; use the global
+	hald_is_initialising instead. Don't try to find parent if the sysfs
+	path indicates that there is no parent.
+
+	* hald/linux/block_class_device.c : don't pass is_probing; use 
+	hald_is_initialising global
+
 2004-04-22  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/usb_bus_device.c (usb_add_caps_from_class): don't set

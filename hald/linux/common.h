@@ -92,7 +92,9 @@ void drivers_collect (const char *bus_name);
  */
 #define HAL_LINUX_HOTPLUG_TIMEOUT 30000
 
-extern dbus_bool_t is_probing;
+dbus_bool_t got_parent (const char *sysfs_path);
+
+extern dbus_bool_t hald_is_initialising;
 
 extern char sysfs_mount_path[SYSFS_PATH_MAX];
 

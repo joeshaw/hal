@@ -66,14 +66,12 @@ struct BusDeviceHandler_s {
 	 *                        the device in sysfs
 	 *  @param  device        Libsysfs object representing new device
 	 *                        instance
-	 *  @param  is_probing    Set to TRUE only on initial detection
 	 *  @return               Must return TRUE if this class should
 	 *                        process this device
 	 */
 	dbus_bool_t (*accept) (BusDeviceHandler *self,
 			       const char *sysfs_path,
-			       struct sysfs_device *device,
-			       dbus_bool_t is_probing);
+			       struct sysfs_device *device);
 
 	/** Called to process the new device instance has passed accept().
 	 *
@@ -88,12 +86,10 @@ struct BusDeviceHandler_s {
 	 *                        the device in sysfs
 	 *  @param  device        Libsysfs object representing new device
 	 *                        instance
-	 *  @param  is_probing    Set to TRUE only on initial detection
 	 */
 	void (*visit) (BusDeviceHandler *self,
 		       const char *sysfs_path,
-		       struct sysfs_device *device,
-		       dbus_bool_t is_probing);
+		       struct sysfs_device *device);
 
 	/** Called when the class device instance have been removed
 	 *
@@ -160,11 +156,10 @@ struct BusDeviceHandler_s {
 };
 
 dbus_bool_t bus_device_accept (BusDeviceHandler *self, const char *path, 
-			       struct sysfs_device *device, 
-			       dbus_bool_t is_probing);
+			       struct sysfs_device *device);
 
 void bus_device_visit (BusDeviceHandler *self, const char *path, 
-		       struct sysfs_device *device, dbus_bool_t is_probing);
+		       struct sysfs_device *device);
 
 void bus_device_detection_done (BusDeviceHandler *self);
 

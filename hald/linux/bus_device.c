@@ -66,11 +66,10 @@ static void bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
  *  @param  self                Pointer to class members
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
- *  @param  is_probing          Set to TRUE only on initial detection
  */
 dbus_bool_t
 bus_device_accept (BusDeviceHandler *self, const char *path, 
-		   struct sysfs_device *device, dbus_bool_t is_probing)
+		   struct sysfs_device *device)
 {
 	/* only care about given bus name  */
 	return strcmp (device->bus, self->sysfs_bus_name) == 0;
@@ -84,11 +83,10 @@ bus_device_accept (BusDeviceHandler *self, const char *path,
  *  @param  self                Pointer to class members
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
- *  @param  is_probing          Set to TRUE only on initial detection
  */
 void
 bus_device_visit (BusDeviceHandler *self, const char *path, 
-		  struct sysfs_device *device, dbus_bool_t is_probing)
+		  struct sysfs_device *device)
 {
 	AsyncInfo *ai;
 	HalDevice *d;
@@ -111,21 +109,27 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 
 	parent_sysfs_path = get_parent_sysfs_path (path);
 
-	/* Find parent; this happens asynchronously as our parent might
-	 * be added later. If we are probing this can't happen so the
-	 * timeout is set to zero in that event
-	 */
-
 	ai = g_new0 (AsyncInfo, 1);
 	ai->device = d;
 	ai->handler = self;
-		
-	hal_device_store_match_key_value_string_async (
-		hald_get_gdl (),
-		"linux.sysfs_path_device",
-		parent_sysfs_path,
-		bus_device_got_parent, ai,
-		is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+
+	if (!got_parent(path)) {
+		/* no need to find parent; we have none; just add directly 
+		 * with parent set to NULL 
+		 */
+		bus_device_got_parent (hald_get_gdl(), NULL, ai);
+	} else {
+		/* Find parent; this happens asynchronously as our parent might
+		 * be added later. If we are probing this can't happen so the
+		 * timeout is set to zero in that event
+		 */
+		hal_device_store_match_key_value_string_async (
+			hald_get_gdl (),
+			"linux.sysfs_path_device",
+			parent_sysfs_path,
+			bus_device_got_parent, ai,
+			HAL_LINUX_HOTPLUG_TIMEOUT);
+	}
 
 	free (parent_sysfs_path);
 }

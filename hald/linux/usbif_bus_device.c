@@ -54,11 +54,10 @@
  *  @param  self                Pointer to class members
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
- *  @param  is_probing          Set to TRUE only on initial detection
  */
 static dbus_bool_t
 usbif_device_accept (BusDeviceHandler *self, const char *path, 
-		     struct sysfs_device *device, dbus_bool_t is_probing)
+		     struct sysfs_device *device)
 {
 	unsigned int i;
 

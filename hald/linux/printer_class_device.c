@@ -63,8 +63,7 @@
 static dbus_bool_t
 printer_class_device_accept (ClassDeviceHandler *self,
 			     const char *path,
-			     struct sysfs_class_device *class_device,
-			     dbus_bool_t is_probing)
+			     struct sysfs_class_device *class_device)
 {
 	int lp_number;
 

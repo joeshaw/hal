@@ -465,6 +465,10 @@ net_class_pre_process (ClassDeviceHandler *self,
 
 	media = media_type_to_string (media_type);
 	hal_device_property_set_string (d, "net.media", media);
+
+	hal_device_add_capability (d, "net");
+	hal_device_add_capability (d, "net.ethernet");
+	hal_device_property_set_string (d, "info.category", "net.ethernet");
 }
 
 static void

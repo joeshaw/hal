@@ -70,13 +70,11 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d);
  *  @param  self                Pointer to class members
  *  @param  path                Sysfs-path for device
  *  @param  class_device        libsysfs object for class device
- *  @param  is_probing          Set to TRUE only on initial detection
  */
 dbus_bool_t
 class_device_accept (ClassDeviceHandler *self,
 		     const char *path,
-		     struct sysfs_class_device *class_device,
-		     dbus_bool_t is_probing)
+		     struct sysfs_class_device *class_device)
 {
 
 	/*HAL_INFO (("path = %s, classname = %s", 
@@ -98,13 +96,11 @@ class_device_accept (ClassDeviceHandler *self,
  *  @param  self               Pointer to class members
  *  @param  path                Sysfs-path for class device
  *  @param  class_device        Libsysfs object for device
- *  @param  is_probing          Whether we are probing
  */
 void
 class_device_visit (ClassDeviceHandler *self,
 		    const char *path,
-		    struct sysfs_class_device *class_device,
-		    dbus_bool_t is_probing)
+		    struct sysfs_class_device *class_device)
 {
 	HalDevice *d;
 	char dev_file[SYSFS_PATH_MAX];
@@ -144,7 +140,7 @@ class_device_visit (ClassDeviceHandler *self,
 						dev_file_prop_name);
 
 		/* Ask udev about the device file if we are probing */
-		if (is_probing) {
+		if (hald_is_initialising) {
 			if (!class_device_get_device_file (path, dev_file, 
 							   SYSFS_PATH_MAX)) {
 				HAL_WARNING (("Couldn't get device file for "
@@ -171,7 +167,7 @@ class_device_visit (ClassDeviceHandler *self,
 			"linux.sysfs_path_device",
 			class_device->sysdevice->path,
 			class_device_got_sysdevice, ai,
-			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		char *parent_sysfs_path;
 		AsyncInfo *ai = g_new0 (AsyncInfo, 1);
@@ -188,7 +184,7 @@ class_device_visit (ClassDeviceHandler *self,
 			"linux.sysfs_path_device",
 			parent_sysfs_path,
 			class_device_got_parent_device, ai,
-			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 }
 
@@ -277,7 +273,7 @@ class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent,
 			d, target_dev, 
 			class_device_got_device_file,
 			(gpointer) self,
-			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		class_device_final (self, d);
 	}
@@ -341,7 +337,7 @@ class_device_got_sysdevice (HalDeviceStore *store,
 			d, target_dev, 
 			class_device_got_device_file,
 			(gpointer) self,
-			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		class_device_final (self, d);
 	}

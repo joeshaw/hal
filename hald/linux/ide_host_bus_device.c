@@ -51,7 +51,7 @@
 
 static dbus_bool_t
 ide_host_device_accept (BusDeviceHandler *self, const char *path, 
-			struct sysfs_device *device, dbus_bool_t is_probing)
+			struct sysfs_device *device)
 {
 	int ide_host_number;
 

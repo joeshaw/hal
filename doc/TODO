@@ -61,3 +61,17 @@ entries if you get an idea or implement one of these.
     no others will be called.  There should be a timeout which kills the
     callout after a certain period of time.  (5 seconds?  10?  15?)
 
+Issues with Linux kernel 2.6.*:
+
+ -  The ide%d, parent of IDE devices, are no under /sys/bus or /sys/class.
+    In HAL we call it ide_host
+
+ -  16-bit PCMCIA devices (e.g. not CardBus) is not in sysfs
+
+ -  It would be nice if the kernel could poll for media by itself; right
+    now we poll for media in hald/linux/block_class_device.c:detect_media
+
+ -  The ide_cs driver for PCMCIA card readers has a bug where it removes
+    and inserts the block device when we do a simple readonly open on the
+    top block device (to poll for media)
+

@@ -721,6 +721,33 @@ drivers_lookup (const char *device_path)
 	return NULL;
 }
 
+/** Check if a device got a parent by looking at the sysfs path
+ *
+ *  @param sysfs_path           Fully qualified path to into sysfs, e.g.
+ *                              /sys/devices/pci0001:01/0001:01:17
+ *  @return                     TRUE iff the device got a parent
+ */
+dbus_bool_t got_parent (const char *sysfs_path)
+{
+	char *parent_sysfs_path;
+	char *grandparent_sysfs_path;
+	char buf[256];
+	dbus_bool_t rc;
+
+	/** @todo Hmm, this implementation can be improved */
+
+	parent_sysfs_path = get_parent_sysfs_path (sysfs_path);
+
+	grandparent_sysfs_path = get_parent_sysfs_path (parent_sysfs_path);
+	snprintf (buf, sizeof(buf), "%s/devices", sysfs_mount_path);
+        rc = (strcmp (grandparent_sysfs_path, buf) != 0);
+
+	free (grandparent_sysfs_path);
+	free (parent_sysfs_path);
+
+	return rc;
+}
+
 /** Collect all drivers being used on a bus. This is only bandaid until
  *  sysutils fill in the driver_name in sysfs_device.
  *

@@ -66,14 +66,12 @@ struct ClassDeviceHandler_s {
 	 *                        the device in sysfs
 	 *  @param  class_device  Libsysfs object representing new class device
 	 *                        instance
-	 *  @param  is_probing    Set to TRUE only on initial detection
 	 *  @return               Must return TRUE if this class should
 	 *                        process this device
 	 */
 	dbus_bool_t (*accept) (ClassDeviceHandler *self,
 			       const char *sysfs_path,
-			       struct sysfs_class_device *class_device,
-			       dbus_bool_t is_probing);
+			       struct sysfs_class_device *class_device);
 
 	/** Called when a new instance of a class device is detected either
 	 *  through hotplug or through initial detection.
@@ -98,12 +96,10 @@ struct ClassDeviceHandler_s {
 	 *                        the class device in sysfs
 	 *  @param  class_device  Libsysfs object representing new class device
 	 *                        instance
-	 *  @param  is_probing    Set to TRUE only initial detection
 	 */
 	void (*visit) (ClassDeviceHandler* self,
 		       const char *sysfs_path,
-		       struct sysfs_class_device *class_device,
-		       dbus_bool_t is_probing);
+		       struct sysfs_class_device *class_device);
 
 	/** Called when the class device instance have been removed
 	 *
@@ -238,13 +234,11 @@ struct ClassDeviceHandler_s {
 
 dbus_bool_t class_device_accept (ClassDeviceHandler *self,
 				 const char *path,
-				 struct sysfs_class_device *class_device,
-				 dbus_bool_t is_probing);
+				 struct sysfs_class_device *class_device);
 
 void class_device_visit (ClassDeviceHandler *self,
 			 const char *path,
-			 struct sysfs_class_device *class_device,
-			 dbus_bool_t is_probing);
+			 struct sysfs_class_device *class_device);
 
 void class_device_removed (ClassDeviceHandler* self, 
 			   const char *sysfs_path, 

@@ -73,8 +73,7 @@ typedef struct {
 static void
 block_class_visit (ClassDeviceHandler *self,
 		   const char *path,
-		   struct sysfs_class_device *class_device,
-		   dbus_bool_t is_probing)
+		   struct sysfs_class_device *class_device)
 {
 	HalDevice *d;
 	char *parent_sysfs_path;
@@ -106,7 +105,7 @@ block_class_visit (ClassDeviceHandler *self,
 	hal_device_property_set_string (d, ".target_dev", "block.device");
 
 	/* Ask udev about the device file if we are probing */
-	if (self->require_device_file && is_probing) {
+	if (self->require_device_file && hald_is_initialising) {
 		char dev_file[SYSFS_PATH_MAX];
 
 		if (!class_device_get_device_file (path, dev_file, 
@@ -132,7 +131,7 @@ block_class_visit (ClassDeviceHandler *self,
 		"linux.sysfs_path_device",
 		parent_sysfs_path,
 		class_device_got_parent_device, ai,
-		is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+		HAL_LINUX_HOTPLUG_TIMEOUT);
 }
 
 

@@ -115,6 +115,8 @@ char sysfs_mount_path[SYSFS_PATH_MAX];
  *
  *  @param  path                Sysfs-path for class device, e.g.
  *                              /sys/class/scsi_host/host7
+ *  @param  handler             A ClassDeviceHandler object to use or NULL to
+ *                              try all handlers
  *  @param  visit_children      If children of this device should be visited
  *                              set this to #TRUE. For device-probing, this
  *                              should set be set to true so as to visit
@@ -123,11 +125,11 @@ char sysfs_mount_path[SYSFS_PATH_MAX];
  *                              generate a separate event.
  */
 static void
-visit_class_device (const char *path, dbus_bool_t visit_children)
+visit_class_device (const char *path, ClassDeviceHandler *handler,
+		    dbus_bool_t visit_children)
 {
 	int i;
 	struct sysfs_class_device *class_device;
-	struct sysfs_directory *subdir;
 
 	class_device = sysfs_open_class_device (path);
 	if (class_device == NULL) {
@@ -140,21 +142,28 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
 		   class_device->classname,
 		   class_device->path));
 
-	for (i=0; class_device_handlers[i] != NULL; i++) {
-		ClassDeviceHandler *ch = class_device_handlers[i];
-		if (ch->accept (ch, path, class_device, is_probing))
-			ch->visit (ch, path, class_device, is_probing);
+	if (handler != NULL) {
+		if (handler->accept (handler, path, class_device))
+			handler->visit (handler, path, class_device);
+	} else {
+		for (i=0; class_device_handlers[i] != NULL; i++) {
+			ClassDeviceHandler *ch = class_device_handlers[i];
+			if (ch->accept (ch, path, class_device))
+				ch->visit (ch, path, class_device);
+		}
 	}
 
 	/* Visit children */
 	if (visit_children && class_device->directory != NULL &&
 	    class_device->directory->subdirs != NULL) {
+		struct sysfs_directory *subdir;
+
 		dlist_for_each_data (class_device->directory->subdirs,
 				     subdir, struct sysfs_directory) {
 			char newpath[SYSFS_PATH_MAX];
 			snprintf (newpath, SYSFS_PATH_MAX, "%s/%s", path,
 				  subdir->name);
-			visit_class_device (newpath, TRUE);
+			visit_class_device (newpath, handler, visit_children);
 		}
 	}
 
@@ -164,6 +173,8 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
 /** Visit all devices of a given class
  *
  *  @param  class_name          Name of class, e.g. scsi_host or block
+ *  @param  handler             A ClassDeviceHandler object to use or NULL to
+ *                              try all handlers
  *  @param  visit_children      If children of this device should be visited
  *                              set this to #TRUE. For device-probing, this
  *                              should set be set to true so as to visit
@@ -172,7 +183,8 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
  *                              generate a separate event.
  */
 static void
-visit_class (const char *class_name, dbus_bool_t visit_children)
+visit_class (const char *class_name, ClassDeviceHandler *handler,
+	     dbus_bool_t visit_children)
 {
 	struct sysfs_class *cls = NULL;
 	struct sysfs_class_device *cur = NULL;
@@ -186,7 +198,8 @@ visit_class (const char *class_name, dbus_bool_t visit_children)
 	if (cls->devices != NULL) {
 		dlist_for_each_data (cls->devices, cur,
 				     struct sysfs_class_device) {
-			visit_class_device (cur->path, visit_children);
+			visit_class_device (cur->path, handler,
+					    visit_children);
 		}
 	}
 
@@ -199,6 +212,8 @@ visit_class (const char *class_name, dbus_bool_t visit_children)
  *  appropriate visit_device_<bustype> function if matched.
  *
  *  @param  path                Sysfs-path for device
+ *  @param  handler             A BusDeviceHandler object to use or NULL to try
+ *                              all handlers
  *  @param  visit_children      If children of this device should be visited
  *                              set this to #TRUE. For device-probing, this
  *                              should set be set to true so as to visit
@@ -207,11 +222,10 @@ visit_class (const char *class_name, dbus_bool_t visit_children)
  *                              generate a separate event.
  */
 static void
-visit_device (const char *path, dbus_bool_t visit_children)
+visit_device (const char *path, BusDeviceHandler *handler, 
+	      dbus_bool_t visit_children)
 {
-	int i;
 	struct sysfs_device *device;
-	struct sysfs_directory *subdir;
 
 	device = sysfs_open_device (path);
 	if (device == NULL) {
@@ -224,24 +238,61 @@ visit_device (const char *path, dbus_bool_t visit_children)
 
 	/*HAL_INFO ((" path=%s", path));*/
 
-	for (i=0; bus_device_handlers[i] != NULL; i++) {
-		BusDeviceHandler *bh = bus_device_handlers[i];
-		if (bh->accept (bh, path, device, is_probing))
-			bh->visit (bh, path, device, is_probing);
+	if (handler != NULL ) {
+		if (handler->accept (handler, path, device))
+			handler->visit (handler, path, device);
+	} else {
+		int i;
+		for (i=0; bus_device_handlers[i] != NULL; i++) {
+			BusDeviceHandler *bh = bus_device_handlers[i];
+			if (bh->accept (bh, path, device))
+				bh->visit (bh, path, device);
+		}
 	}
 
 	/* Visit children */
 	if (visit_children && device->directory->subdirs != NULL) {
+		struct sysfs_directory *subdir;
+	
 		dlist_for_each_data (device->directory->subdirs, subdir,
 				     struct sysfs_directory) {
 			char newpath[SYSFS_PATH_MAX];
 			snprintf (newpath, SYSFS_PATH_MAX, "%s/%s", path,
 				  subdir->name);
-			visit_device (newpath, TRUE);
+			visit_device (newpath, handler, visit_children);
 		}
 	}
 
 	sysfs_close_device (device);
+}
+
+
+/** Visit all devices on a given bus
+ *
+ *  @param  class_name          Name of class, e.g. scsi_host or block
+ *  @param  handler             A BusDeviceHandler object to use or NULL to try
+ *                              all handlers
+ */
+static void
+visit_bus (const char *bus_name, BusDeviceHandler *handler)
+{
+	struct sysfs_bus *bus = NULL;
+	struct sysfs_device *cur = NULL;
+
+	bus = sysfs_open_bus (bus_name);
+	if (bus == NULL) {
+		HAL_ERROR (("Error opening bus %s\n", bus_name));
+		return;
+	}
+
+	if (bus->devices != NULL) {
+		dlist_for_each_data (bus->devices, cur,
+				     struct sysfs_device) {
+			visit_device (cur->path, handler, FALSE);
+		}
+	}
+
+	sysfs_close_bus (bus);
 }
 
 
@@ -310,45 +361,57 @@ osspec_init (DBusConnection * dbus_connection)
 }
 
 /** This is set to #TRUE if we are probing and #FALSE otherwise */
-dbus_bool_t is_probing;
+dbus_bool_t hald_is_initialising;
 
 /* This function is documented in ../osspec.h */
 void
 osspec_probe ()
 {
 	int i;
-	char path[SYSFS_PATH_MAX];
-	struct sysfs_directory *current;
-	struct sysfs_directory *dir;
 
-	is_probing = TRUE;
+	hald_is_initialising = TRUE;
 
-	/* traverse /sys/devices */
-	strncpy (path, sysfs_mount_path, SYSFS_PATH_MAX);
-	strncat (path, SYSFS_DEVICES_DIR, SYSFS_PATH_MAX);
+	/** @todo When the kernel has all devices in /sys/devices
+	 *        under either /sys/bus or /sys/class then we can
+	 *        have code like this
 
-	dir = sysfs_open_directory (path);
-	if (dir == NULL) {
-		DIE (("Error opening sysfs directory at %s\n", path));
+	for (i=0; bus_device_handlers[i] != NULL; i++) {
+		BusDeviceHandler *bh = bus_device_handlers[i];
+		visit_bus (bh->sysfs_bus_name, bh);
 	}
-	if (sysfs_read_directory (dir) != 0) {
-		DIE (("Error reading sysfs directory at %s\n", path));
-	}
-	if (dir->subdirs != NULL) {
-		dlist_for_each_data (dir->subdirs, current,
-				     struct sysfs_directory) {
-			visit_device (current->path, TRUE);
+	*/
+
+	{
+		char path[SYSFS_PATH_MAX];
+		struct sysfs_directory *current;
+		struct sysfs_directory *dir;
+
+		/* traverse /sys/devices */
+		strncpy (path, sysfs_mount_path, SYSFS_PATH_MAX);
+		strncat (path, SYSFS_DEVICES_DIR, SYSFS_PATH_MAX);
+
+		dir = sysfs_open_directory (path);
+		if (dir == NULL) {
+			DIE (("Error opening sysfs directory at %s\n", path));
 		}
+		if (sysfs_read_directory (dir) != 0) {
+			DIE (("Error reading sysfs directory at %s\n", path));
+		}
+		if (dir->subdirs != NULL) {
+			dlist_for_each_data (dir->subdirs, current,
+					     struct sysfs_directory) {
+				visit_device (current->path, NULL, TRUE);
+			}
+		}
+		sysfs_close_directory (dir);
 	}
-	sysfs_close_directory (dir);
 
 	for (i=0; class_device_handlers[i] != NULL; i++) {
 		ClassDeviceHandler *ch = class_device_handlers[i];
-		visit_class (ch->sysfs_class_name, TRUE);
-		/** @todo FIXME how to select TRUE/FALSE above (see below) */
+		visit_class (ch->sysfs_class_name, ch, TRUE);
 	}
 
-	is_probing = FALSE;
+	hald_is_initialising = FALSE;
 
 	/* Notify various device and class types that detection is done, so 
 	 * they can do some (optional) batch processing
@@ -505,15 +568,18 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 	    strncmp (sysfs_devpath_wo_mp, "/class", 6)==0 ) {
 		/* handle class devices */
 		if (is_add)
-			visit_class_device (sysfs_devpath, FALSE);
+			/* dunno what handler to use; try all */
+			visit_class_device (sysfs_devpath, NULL, FALSE);
 		else
 			remove_class_device (sysfs_devpath, subsystem);
 	} else {
 		/* handle bus devices */
-		if (is_add)
-			visit_device (sysfs_devpath, FALSE);
-		else
+		if (is_add) {
+			/* dunno what handler to use; try all */
+			visit_device (sysfs_devpath, NULL, FALSE);
+		} else {
 			remove_device (sysfs_devpath, subsystem);
+		}
 	}
 		
 
