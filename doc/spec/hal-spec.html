@@ -8135,6 +8135,25 @@ CLASS="programlisting"
     &#60;/match&#62;
   &#60;/device&#62;
 
+  &#60;device&#62;
+    &#60;match key="info.udi" string="/org/freedesktop/Hal/devices/computer"&#62;
+      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync --clean&#60;/append&#62;
+    &#60;/match&#62;
+
+    &#60;match key="volume.policy.should_mount" bool="true"&#62;
+      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync&#60;/append&#62;
+      &#60;append key="info.callouts.remove" type="strlist"&#62;fstab-sync&#60;/append&#62;
+    &#60;/match&#62;
+    &#60;match key="storage.policy.should_mount" bool="true"&#62;
+      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync&#60;/append&#62;
+      &#60;append key="info.callouts.remove" type="strlist"&#62;fstab-sync&#60;/append&#62;
+    &#60;/match&#62;
+
+    &#60;match key="storage.media_check_enabled" bool="true"&#62;
+      &#60;append key="info.addons" type="strlist"&#62;hald-addon-storage&#60;/append&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
 &#60;/deviceinfo&#62;
       </PRE
 ></TD

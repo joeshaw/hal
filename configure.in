@@ -319,7 +319,7 @@ AS_AC_EXPAND(DATADIR, $datadir)
 AS_AC_EXPAND(BINDIR, $bindir)
 AS_AC_EXPAND(SBINDIR, $sbindir)
 AS_AC_EXPAND(LIBDIR, $libdir)
-
+AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
 
 
 AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is])
@@ -465,6 +465,7 @@ echo "
 
         prefix:                   ${prefix}
         libdir:                   ${LIBDIR}
+        libexecdir:               ${LIBEXECDIR}
         bindir:                   ${BINDIR}
         sbindir:                  ${SBINDIR}
         datadir:                  ${DATADIR}
