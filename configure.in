@@ -22,7 +22,7 @@ AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (a
 if ! test -z "$with_hwdata" ; then
    HWDATA_DIR="$with_hwdata"
 else
-   for dir in /usr/share/hwdata /usr/share/misc; do
+   for dir in /usr/share/hwdata /usr/share/misc /usr/share; do
       AC_CHECK_FILE($dir/pci.ids,HWDATA_DIR=$dir)
    done
 fi

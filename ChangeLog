@@ -1,5 +1,8 @@
 2004-03-01  Joe Shaw  <joe@ximian.com>
 
+	* configure.in: SUSE puts pci.ids in /usr/share, so add that to
+	the list of directories to check.
+
 	* tools/Makefile.am: Use @PACKAGE_LIBS@ and @DBUS_LIBS@ instead of
 	referencing the libs directly.  This allows us to have dbus and/or
 	glib in a prefix.
