@@ -146,13 +146,14 @@ ClassDeviceHandler printer_class_handler = {
 	class_device_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
+	class_device_accept,                /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	printer_class_post_process,         /**< add more properties */
 	NULL,                               /**< No UDI computation */
-	"usb",                              /**< sysfs class name */
+	"printer",                          /**< sysfs class name */
 	"printer",                          /**< hal class name */
 	TRUE,                               /**< require device file */
 	TRUE                                /**< merge onto sysdevice */

@@ -1,3 +1,21 @@
+2004-04-07  David Zeuthen  <david@fubar.dk>
+
+	* tools/linux/hal_dev.c: New file for sending device event
+
+	* tools/linux/Makefile.am: Build and install hal.dev
+
+	* hald/linux/class_device.h: Add accept method to ClassDeviceHandler
+
+	* hald/Makefile.am (install-data-local): Create /etc/hal/device.d and
+	/etc/hal/capability.d
+
+	* hald/linux/osspec.c (handle_device_event): new function
+	(handle_udev_node_created): removed function
+	(osspec_filter_function): Handle events from hal.dev so we don't
+	need to rely on udev having built-in dbus support
+
+	* configure.in: Bump version to 0.2.90
+
 2004-04-05  Joe Shaw  <joe@ximian.com>
 
 	* hald/linux/printer_class_device.c: Added.  New printer class.

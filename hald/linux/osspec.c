@@ -122,7 +122,8 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
 
 	for (i=0; class_device_handlers[i] != NULL; i++) {
 		ClassDeviceHandler *ch = class_device_handlers[i];
-		ch->visit (ch, path, class_device, is_probing);
+		if (ch->accept (ch, path, class_device, is_probing))
+			ch->visit (ch, path, class_device, is_probing);
 	}
 
 	/* Visit children */
@@ -546,59 +547,46 @@ udev_node_created_cb (HalDeviceStore *store, HalDevice *device,
 	handle_udev_node_created_found_device (device, (void*) filename, NULL);
 }
 
-/** Handle a org.freedesktop.Hal.HotplugEvent message. This message
- *  origins from the hal.hotplug program, tools/linux/hal_hotplug.c,
- *  and is basically just a D-BUS-ification of the hotplug event.
+
+/** Handle a org.freedesktop.Hal.DeviceEvent message. This message
+ *  origins from the hal.dev program, tools/linux/hal_dev.c,
+ *  and is basically just a D-BUS-ification of the device event from udev.
  *
  *  @param  connection          D-BUS connection
  *  @param  message             Message
  *  @return                     What to do with the message
  */
 static DBusHandlerResult
-handle_udev_node_created (DBusConnection * connection,
-			  DBusMessage * message)
+handle_device_event (DBusConnection * connection,
+		     DBusMessage * message)
 {
+	dbus_bool_t is_add;
 	char *filename;
 	char *sysfs_path;
 	char sysfs_dev_path[SYSFS_PATH_MAX];
 
 	if (dbus_message_get_args (message, NULL,
+				   DBUS_TYPE_BOOLEAN, &is_add,
 				   DBUS_TYPE_STRING, &filename,
 				   DBUS_TYPE_STRING, &sysfs_path,
 				   DBUS_TYPE_INVALID)) {
 		strncpy (sysfs_dev_path, sysfs_mount_path, SYSFS_PATH_MAX);
 		strncat (sysfs_dev_path, sysfs_path, SYSFS_PATH_MAX);
-		HAL_INFO (("udev NodeCreated: %s %s\n", filename,
-			   sysfs_dev_path));
 
-		/* Find class device; this happens asynchronously as our it 
-		 * might be added later..
-		 */
-#if 0
-		ds_device_async_find_by_key_value_string (
-			".udev.sysfs_path", sysfs_dev_path, FALSE,
-			/* note: it doesn't need to be in the GDL */
-			handle_udev_node_created_found_device,
-			(void *) filename, NULL,
-			HAL_LINUX_HOTPLUG_TIMEOUT);
-#elif 0
-		handle_udev_node_created_found_device (
-			hal_device_store_match_key_value_string (
-				hald_get_gdl (), ".udev.sysfs_path",
-				sysfs_dev_path),
-			filename, NULL);
-#else
-		hal_device_store_match_key_value_string_async (
-			hald_get_tdl (),
-			".udev.sysfs_path",
-			sysfs_dev_path,
-			udev_node_created_cb, filename,
-			HAL_LINUX_HOTPLUG_TIMEOUT);
-#endif
+		if (is_add ) {
+			hal_device_store_match_key_value_string_async (
+				hald_get_tdl (),
+				".udev.sysfs_path",
+				sysfs_dev_path,
+				udev_node_created_cb, filename,
+				HAL_LINUX_HOTPLUG_TIMEOUT);
 
-		/* NOTE NOTE NOTE: we will free filename in async 
-		 * result function 
-		 */
+			/* NOTE NOTE NOTE: we will free filename in async 
+			 * result function 
+			 */
+		} else {
+			dbus_free (filename);
+		}
 
 		dbus_free (sysfs_path);
 	}
@@ -655,28 +643,19 @@ osspec_filter_function (DBusConnection * connection,
 			DBusMessage * message, void *user_data)
 {
 
-/*
-    HAL_INFO(("obj_path=%s interface=%s method=%s", 
-              dbus_message_get_path(message), 
-              dbus_message_get_interface(message),
-              dbus_message_get_member(message)));
-*/
-
 	if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Linux.Hotplug",
 					 "HotplugEvent") &&
 	    strcmp (dbus_message_get_path (message),
 		    "/org/freedesktop/Hal/Linux/Hotplug") == 0) {
 		return handle_hotplug (connection, message);
-	} else if (dbus_message_is_signal (message,
-					   "org.kernel.udev.NodeMonitor",
-					   "NodeCreated")) {
-		return handle_udev_node_created (connection, message);
-	} else if (dbus_message_is_signal (message, 
-					   "org.kernel.udev.NodeMonitor", 
-					   "NodeDeleted")) {
-		    /* This is left intentionally blank */
-	}
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Linux.Hotplug",
+						"DeviceEvent") &&
+	    strcmp (dbus_message_get_path (message),
+		    "/org/freedesktop/Hal/Linux/Hotplug") == 0) {
+		return handle_device_event (connection, message);
+	} 
 
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }

@@ -1222,6 +1222,7 @@ ClassDeviceHandler block_class_handler = {
 	block_class_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	block_class_tick,                   /**< timer function */
+	class_device_accept,                /**< accept function */
 	block_class_visit,                  /**< visitor function */
 	block_class_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */

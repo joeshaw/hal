@@ -58,6 +58,23 @@ struct ClassDeviceHandler_s {
 	 */
 	void (*tick) (ClassDeviceHandler* self);
 
+	/** Called when processing a new device instance to determine 
+	 *  whether this class accepts this kind of device.
+	 *
+	 *  @param  self          Pointer to class members
+	 *  @param  sysfs_path    The path in sysfs (including mount point) of
+	 *                        the device in sysfs
+	 *  @param  class_device  Libsysfs object representing new class device
+	 *                        instance
+	 *  @param  is_probing    Set to TRUE only on initial detection
+	 *  @return               Must return TRUE if this class should
+	 *                        process this device
+	 */
+	dbus_bool_t (*accept) (ClassDeviceHandler *self,
+			       const char *sysfs_path,
+			       struct sysfs_class_device *class_device,
+			       dbus_bool_t is_probing);
+
 	/** Called when a new instance of a class device is detected either
 	 *  through hotplug or through initial detection.
 	 *
@@ -193,6 +210,11 @@ struct ClassDeviceHandler_s {
 	 *  parent of the sysdevice */
 	dbus_bool_t merge_or_add;
 };
+
+dbus_bool_t class_device_accept (ClassDeviceHandler *self,
+				 const char *path,
+				 struct sysfs_class_device *class_device,
+				 dbus_bool_t is_probing);
 
 void class_device_visit (ClassDeviceHandler *self,
 			 const char *path,

@@ -95,6 +95,7 @@ ClassDeviceHandler scsi_host_class_handler = {
 	class_device_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
+	class_device_accept,                /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */

@@ -61,6 +61,27 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
 			      gboolean prop_exists);
 
 
+/** Generic accept function that accepts the device if and only if
+ *  the class name from sysfs equals the class name in the class
+ *
+ *  @param  self                Pointer to class members
+ *  @param  path                Sysfs-path for device
+ *  @param  class_device        libsysfs object for class device
+ *  @param  is_probing          Set to TRUE only on initial detection
+ */
+dbus_bool_t
+class_device_accept (ClassDeviceHandler *self,
+		     const char *path,
+		     struct sysfs_class_device *class_device,
+		     dbus_bool_t is_probing)
+{
+	/* only care about given sysfs class name */
+	if (strcmp (class_device->classname, self->sysfs_class_name) == 0)
+		return TRUE;
+
+	return FALSE;
+}
+
 /** Generic visitor method for class devices.
  *
  *  This function parses the attributes present and merges more information
@@ -80,10 +101,6 @@ class_device_visit (ClassDeviceHandler *self,
 	HalDevice *d;
 	char dev_file[SYSFS_PATH_MAX];
 	char dev_file_prop_name[SYSFS_PATH_MAX];
-
-	/* only care about given sysfs class name */
-	if (strcmp (class_device->classname, self->sysfs_class_name) != 0)
-		return;
 
 	/* don't care if there is no sysdevice */
 	if (class_device->sysdevice == NULL) {

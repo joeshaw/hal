@@ -89,3 +89,8 @@ hald_marshal.c: hald_marshal.list
 clean-local:
 	rm -f *~
 	rm -f hald_marshal.c hald_marshal.h
+
+install-data-local :
+	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
+	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/capability.d
+
