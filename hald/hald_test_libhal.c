@@ -48,8 +48,49 @@
 
 #include "libhal/libhal.h"
 
+static void
+send_tests_done (DBusConnection *conn, dbus_bool_t passed)
+{
+	int i;
+	DBusMessage *message;
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	DBusError error;
 
-/* TODO: All this needs work */
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						"/org/freedesktop/Hal/Tests",
+						"org.freedesktop.Hal.Tests",
+						"TestsDone");
+	if (message == NULL) {
+		fprintf (stderr, "%s %d : Couldn't allocate D-BUS message\n", __FILE__, __LINE__);
+		goto out;
+	}
+
+	dbus_message_iter_init (message, &iter);
+	dbus_message_iter_append_boolean (&iter, passed);
+
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (conn, message, -1, &error);
+	if (dbus_error_is_set (&error)) {
+		dbus_message_unref (message);
+		fprintf (stderr, "%s %d : Error sending message: %s: %s\n", 
+			 __FILE__, __LINE__, error.name, error.message);
+		return;
+	}
+
+	if (reply == NULL) {
+		dbus_message_unref (message);
+		fprintf (stderr, "%s %d : No reply!\n", __FILE__, __LINE__);
+		return;
+	}
+
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+out:
+	;
+}
+
+
 
 gboolean
 check_libhal (const char *server_addr)
@@ -64,6 +105,7 @@ check_libhal (const char *server_addr)
 		DBusError error;
 		DBusConnection *conn;
 		LibHalContext *ctx;
+		dbus_bool_t passed;
 
 		printf ("server address='%s'\n", server_addr);
 
@@ -82,8 +124,99 @@ check_libhal (const char *server_addr)
 
 		libhal_ctx_set_dbus_connection (ctx, conn);
 		libhal_ctx_init (ctx, &error);
-		printf ("got %s\n", libhal_device_get_property_string (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.string", &error));
 		libhal_device_print (ctx, "/org/freedesktop/Hal/devices/testobj1", &error);
+
+		passed = FALSE;
+
+		{
+			char *val;
+			val = libhal_device_get_property_string (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.string", &error);
+			if (val == NULL || strcmp (val, "fooooobar22") != 0 || dbus_error_is_set (&error)) {
+				libhal_free_string (val);
+				printf ("FAILED100\n");			
+				goto fail;
+			}
+			libhal_free_string (val);
+		}
+
+		{
+			char *val;
+			val = libhal_device_get_property_string (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.string2", &error);
+			if (val == NULL || strcmp (val, "fooøةמ") != 0 || dbus_error_is_set (&error)) {
+				libhal_free_string (val);
+				printf ("FAILED100\n");			
+				goto fail;
+			}
+			libhal_free_string (val);
+		}
+
+
+		if (libhal_device_get_property_bool (
+			    ctx, "/org/freedesktop/Hal/devices/testobj1", "test.bool", &error) != TRUE ||
+		    dbus_error_is_set (&error)) {
+			printf ("FAILED102\n");			
+			goto fail;
+		}
+
+		{
+			double val;
+			double expected_val = 0.53434343;
+
+			val = libhal_device_get_property_double (ctx, "/org/freedesktop/Hal/devices/testobj1", 
+								 "test.double", &error);
+			if ( memcmp (&val, &expected_val, sizeof (double)) != 0 || dbus_error_is_set (&error)) {
+				printf ("FAILED103\n");
+				goto fail;
+			}
+		}
+
+		if (libhal_device_get_property_uint64 (
+			    ctx, "/org/freedesktop/Hal/devices/testobj1", "test.uint64", &error) != 
+		    ((((dbus_uint64_t)1)<<35) + 5) ||
+		    dbus_error_is_set (&error)) {
+			printf ("FAILED104\n");			
+			goto fail;
+		}
+
+		{
+			char **val;
+			val = libhal_device_get_property_strlist (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.strlist", &error);
+			if (val == NULL ||  dbus_error_is_set (&error)) {
+				libhal_free_string_array (val);
+				printf ("FAILED105\n");			
+				goto fail;
+			}
+
+			if (libhal_string_array_length (val) != 2) {
+				libhal_free_string_array (val);
+				printf ("FAILED106\n");			
+				goto fail;
+			}
+
+			if (strcmp (val[0], "foostrlist2") != 0 ||
+			    strcmp (val[1], "foostrlist3") != 0) {
+				libhal_free_string_array (val);
+				printf ("FAILED107\n");			
+				goto fail;
+			}
+
+			libhal_free_string_array (val);
+		}
+
+		if (libhal_device_get_property_int (
+			    ctx, "/org/freedesktop/Hal/devices/testobj1", "test.int", &error) != 42 ||
+		    dbus_error_is_set (&error)) {
+			printf ("FAILED108\n");			
+			goto fail;
+		}
+
+		printf ("Passed all libhal tests\n");
+		passed = TRUE;
+
+	fail:
+
+		send_tests_done (conn, passed);
+		exit (1);
 
 	} else {
 		printf ("child pid=%d\n", child_pid);

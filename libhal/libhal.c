@@ -2769,4 +2769,18 @@ libhal_ctx_set_device_condition (LibHalContext *ctx, LibHalDeviceCondition callb
 	return TRUE;
 }
 
+unsigned int libhal_string_array_length (char **str_array)
+{
+	unsigned int i;
+
+	if (str_array == NULL)
+		return 0;
+
+	for (i = 0; str_array[i] != NULL; i++)
+		;
+
+	return i;
+}
+
+
 /** @} */

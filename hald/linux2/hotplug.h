@@ -29,6 +29,15 @@
 #include <glib.h>
 
 #include "util.h"
+#include "../device.h"
+
+typedef enum {
+	HOTPLUG_EVENT_SYSFS       = 0,
+	HOTPLUG_EVENT_SYSFS_BUS   = 1,
+	HOTPLUG_EVENT_SYSFS_CLASS = 2,
+	HOTPLUG_EVENT_SYSFS_BLOCK = 3,
+	HOTPLUG_EVENT_ACPI        = 4
+} HotplugEventType;
 
 /** Data structure representing a hotplug event; also used for
  *  coldplugging.
@@ -36,15 +45,29 @@
 typedef struct
 {
 	gboolean is_add;                        /**< Whether the event is add or remove */
-	char subsystem[HAL_PATH_MAX];           /**< Subsystem e.g. usb, pci (only for hotplug msg) */
-	char sysfs_path[HAL_PATH_MAX];          /**< Path into sysfs e.g. /sys/block/sda */
 
-	char wait_for_sysfs_path[HAL_PATH_MAX];	/**< Wait for completion of events that a) comes before this one; AND
-						 *   b) has a sysfs path that is contained in or equals this */
+	HotplugEventType type;                  /**< Type of hotplug event */
 
-	char device_file [HAL_PATH_MAX];        /**< Path to special device (may be NULL) */
+	union {
+		struct {
+			char subsystem[HAL_PATH_MAX];           /**< Subsystem e.g. usb, pci (only for hotplug msg) */
+			char sysfs_path[HAL_PATH_MAX];          /**< Path into sysfs e.g. /sys/block/sda */
+		
+			char wait_for_sysfs_path[HAL_PATH_MAX];	/**< Wait for completion of events that a) comes 
+								 *   before this one ; AND b) has a sysfs path that
+								 *   is contained in or equals this */
+			
+			char device_file [HAL_PATH_MAX];        /**< Path to special device file (may be NULL) */
+			
+			int net_ifindex;                        /**< For network only; the value of the ifindex file */
+		} sysfs;
 
-	int net_ifindex;                        /**< For network class devices only; the value of the ifindex file */
+		struct {
+			int  acpi_type;                         /**< Type of ACPI object; see acpi.c */
+			char acpi_path[HAL_PATH_MAX];           /**< Path into procfs, e.g. /proc/acpi/battery/BAT0/ */
+		} acpi;
+	};
+
 } HotplugEvent;
 
 void hotplug_event_enqueue (HotplugEvent *event);
@@ -52,5 +75,9 @@ void hotplug_event_enqueue (HotplugEvent *event);
 void hotplug_event_process_queue (void);
 
 void hotplug_event_end (void *end_token);
+
+gboolean hotplug_rescan_device (HalDevice *d);
+
+gboolean hotplug_reprobe_tree (HalDevice *d);
 
 #endif /* HOTPLUG_H */

@@ -27,10 +27,16 @@
 #define CLASSDEV_H
 
 #include <glib.h>
+#include "hotplug.h"
 
 void hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices, void *end_token);
 
 void hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
 
+gboolean classdev_rescan_device (HalDevice *d);
+
+HotplugEvent *classdev_generate_add_hotplug_event (HalDevice *d);
+
+HotplugEvent *classdev_generate_remove_hotplug_event (HalDevice *d);
 
 #endif /* CLASSDEV_H */

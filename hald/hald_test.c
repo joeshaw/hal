@@ -364,13 +364,13 @@ check_properties (void)
 	    !hal_device_has_property (d, "test.string") ||
 	    !hal_device_has_property (d, "test.string2") ||
 	    !hal_device_has_property (d, "test.strlist")) {
-		printf ("FAILED0\n");
+		printf ("FAILED80\n");
 		goto out;
 	}
 	if (hal_device_has_property (d, "moe") ||
 	    hal_device_has_property (d, "joe") ||
 	    hal_device_has_property (d, "woo")) {
-		printf ("FAILED1\n");
+		printf ("FAILED81\n");
 		goto out;
 	}
 	printf ("PASSED\n");
@@ -401,20 +401,52 @@ server_filter_function (DBusConnection * connection,
 	    dbus_message_get_destination (message));
 }
 
+static int num_tests_done;
+static gboolean num_tests_done_last_result;
+
 static DBusHandlerResult 
 server_message_handler (DBusConnection *connection, 
 			DBusMessage *message, 
 			void *user_data)
 {
+/*
 	printf ("destination=%s obj_path=%s interface=%s method=%s\n", 
 		dbus_message_get_destination (message), 
 		dbus_message_get_path (message), 
 		dbus_message_get_interface (message),
 		dbus_message_get_member (message));
-
-	/* cheat, and handle AddMatch since libhal will try that */
-	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
+*/
+	/* handle our TestsDone Method */
+	if (dbus_message_is_method_call (message, "org.freedesktop.Hal.Tests", "TestsDone")) {
+		DBusError error;
+		dbus_bool_t passed;
 		DBusMessage *reply;
+
+		dbus_error_init (&error);
+		if (!dbus_message_get_args (message, &error,
+					    DBUS_TYPE_BOOLEAN, &passed,
+					    DBUS_TYPE_INVALID)) {
+
+			reply = dbus_message_new_error (message, "org.freedesktop.Hal.SyntaxError", "Syntax Error");
+			dbus_connection_send (connection, reply, NULL);
+			dbus_message_unref (reply);
+			passed = FALSE;			
+		} else {
+
+			reply = dbus_message_new_method_return (message);
+			dbus_connection_send (connection, reply, NULL);
+			dbus_message_unref (reply);
+		}
+
+		num_tests_done++;
+		num_tests_done_last_result = passed;
+
+		return DBUS_HANDLER_RESULT_HANDLED;
+       
+	} else if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
+		DBusMessage *reply;
+
+                /* cheat, and handle AddMatch since libhal will try that */
 		
 		reply = dbus_message_new_error (message, "org.freedesktop.Hal.Error",
 						"Not handled in HAL testing mode");
@@ -464,6 +496,23 @@ server_handle_connection (DBusServer *server,
 }
 
 
+static gboolean
+wait_for_external_test (void)
+{
+	int num_tests_done_pre;
+
+	/* sure, this is pretty ugly. Patches welcome */
+
+	num_tests_done_pre = num_tests_done;
+	while (num_tests_done_pre == num_tests_done) {
+		g_main_context_iteration (NULL, TRUE);
+		if (!g_main_context_pending (NULL))
+			usleep (100*1000);
+	}
+
+	return num_tests_done_last_result;
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -494,19 +543,20 @@ main (int argc, char *argv[])
 
 	dbus_server_set_new_connection_function (server, server_handle_connection, NULL, NULL);
 
+	/* this creates the /org/freedesktop/Hal/devices/testobj1 object  */
 	if (!check_properties ())
 		num_tests_failed++;
-/*
+
+	/* tests of libhal against /org/freedesktop/Hal/devices/testobj1 for getting  */
 	if (!check_libhal (dbus_server_get_address (server)))
 		num_tests_failed++;
-*/
+	if (!wait_for_external_test ())
+		num_tests_failed++;
+
+
 	printf ("=============================\n");
 
 	printf ("Total number of tests failed: %d\n", num_tests_failed);
-
-/*
-	g_main_loop_run (loop);
-*/
 
 out:
 	return num_tests_failed;

@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <dbus/dbus.h>
 
+#include "device.h"
 
 /** Initialize the kernel specific parts of the daemon */
 void osspec_init (void);
@@ -45,6 +46,10 @@ void osspec_shutdown (void);
 
 /* Called by kernel specific parts when probing is done */
 void osspec_shutdown_done (void);
+
+gboolean osspec_device_rescan (HalDevice *d);
+
+gboolean osspec_device_reprobe (HalDevice *d);
 
 /** Called when the org.freedesktop.Hal service receives a messaged that the generic daemon 
  *  doesn't handle. Can be used for intercepting messages from kernel or core OS components.

@@ -50,9 +50,11 @@
 #include "../hald_conf.h"
 
 #include "hotplug.h"
+
 #include "physdev.h"
 #include "classdev.h"
 #include "blockdev.h"
+#include "acpi.h"
 
 
 /** Queue of ordered hotplug events */
@@ -77,11 +79,11 @@ static void
 fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 {
 	/* fixup net devices by looking at ifindex */
-	if (strcmp (hotplug_event->subsystem, "net") == 0 && hotplug_event->net_ifindex != -1) {
+	if (strcmp (hotplug_event->sysfs.subsystem, "net") == 0 && hotplug_event->sysfs.net_ifindex != -1) {
 		int ifindex;
 		
-		if (!hal_util_get_int_from_file (hotplug_event->sysfs_path, "ifindex", &ifindex, 10) ||
-		    (ifindex != hotplug_event->net_ifindex)) {
+		if (!hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "ifindex", &ifindex, 10) ||
+		    (ifindex != hotplug_event->sysfs.net_ifindex)) {
 			GDir *dir;
 			char path[HAL_PATH_MAX];
 			char path1[HAL_PATH_MAX];
@@ -90,7 +92,7 @@ fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 			
 			/* search for new name */
 			HAL_WARNING (("Net interface @ %s with ifindex %d was probably renamed",
-				      hotplug_event->sysfs_path, hotplug_event->net_ifindex));
+				      hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.net_ifindex));
 			
 			
 			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , hal_sysfs_path);
@@ -102,9 +104,9 @@ fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 			while ((f = g_dir_read_name (dir)) != NULL) {
 				g_snprintf (path1, HAL_PATH_MAX, "%s/class/net/%s" , hal_sysfs_path, f);
 				if (hal_util_get_int_from_file (path1, "ifindex", &ifindex, 10)) {
-					if (ifindex == hotplug_event->net_ifindex) {
+					if (ifindex == hotplug_event->sysfs.net_ifindex) {
 						HAL_INFO (("Using sysfs path %s for ifindex %d", path1, ifindex));
-						strncpy (hotplug_event->sysfs_path, path1, HAL_PATH_MAX);
+						strncpy (hotplug_event->sysfs.sysfs_path, path1, HAL_PATH_MAX);
 						g_dir_close (dir);
 						goto out;
 					}
@@ -120,7 +122,7 @@ out:
 
 
 static void
-hotplug_event_begin (HotplugEvent *hotplug_event)
+hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 {
 	static char sys_devices_path[HAL_PATH_MAX];
 	static char sys_class_path[HAL_PATH_MAX];
@@ -136,20 +138,20 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 	}
 
 
-	if (strncmp (hotplug_event->sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {		
+	if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {		
 		if (hotplug_event->is_add) {
 			HalDevice *parent;
-			parent = hal_util_find_closest_ancestor (hotplug_event->sysfs_path);
-			hotplug_event_begin_add_physdev (hotplug_event->subsystem, 
-							 hotplug_event->sysfs_path, 
+			parent = hal_util_find_closest_ancestor (hotplug_event->sysfs.sysfs_path);
+			hotplug_event_begin_add_physdev (hotplug_event->sysfs.subsystem, 
+							 hotplug_event->sysfs.sysfs_path, 
 							 parent,
 							 (void *) hotplug_event);
 		} else {
-			hotplug_event_begin_remove_physdev (hotplug_event->subsystem, 
-							    hotplug_event->sysfs_path, 
+			hotplug_event_begin_remove_physdev (hotplug_event->sysfs.subsystem, 
+							    hotplug_event->sysfs.sysfs_path, 
 							    (void *) hotplug_event);
 		}
-	} else if (strncmp (hotplug_event->sysfs_path, sys_class_path, sys_class_path_len) == 0) {
+	} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_class_path, sys_class_path_len) == 0) {
 		if (hotplug_event->is_add) {
 			gchar *target;
 			HalDevice *physdev;
@@ -163,11 +165,11 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 			 */
 			fixup_net_device_for_renaming (hotplug_event);
 			
-			g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs_path);
+			g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
 			if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
 				gchar *normalized_target;
 
-				normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs_path, target);
+				normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs.sysfs_path, target);
 				g_free (target);
 
 				sysfs_path_in_devices = g_strdup (normalized_target);
@@ -191,9 +193,9 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 				physdev = NULL;
 			}
 
-			hotplug_event_begin_add_classdev (hotplug_event->subsystem,
-							  hotplug_event->sysfs_path,
-							  hotplug_event->device_file,
+			hotplug_event_begin_add_classdev (hotplug_event->sysfs.subsystem,
+							  hotplug_event->sysfs.sysfs_path,
+							  hotplug_event->sysfs.device_file,
 							  physdev,
 							  sysfs_path_in_devices,
 							  (void *) hotplug_event);
@@ -201,15 +203,15 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 			g_free (sysfs_path_in_devices);
 
 		} else {
-			hotplug_event_begin_remove_classdev (hotplug_event->subsystem,
-							     hotplug_event->sysfs_path,
+			hotplug_event_begin_remove_classdev (hotplug_event->sysfs.subsystem,
+							     hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
 		}
-	} else if (strncmp (hotplug_event->sysfs_path, sys_block_path, sys_block_path_len) == 0) {
+	} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
 		gchar *parent_path;
 		gboolean is_partition;
 		
-		parent_path = hal_util_get_parent_path (hotplug_event->sysfs_path);
+		parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
 		is_partition = (strcmp (parent_path, sys_block_path) != 0);
 		
 		if (hotplug_event->is_add) {
@@ -223,11 +225,11 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 				gchar *target;
 				char physdevpath[256];
 				
-				g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs_path);
+				g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
 				if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
 					gchar *normalized_target;
 
-					normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs_path, target);
+					normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs.sysfs_path, target);
 					g_free (target);
 					parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
 											  "linux.sysfs_path_device", 
@@ -238,19 +240,58 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 				}
 			}
 			
-			hotplug_event_begin_add_blockdev (hotplug_event->sysfs_path,
-							  hotplug_event->device_file,
+			hotplug_event_begin_add_blockdev (hotplug_event->sysfs.sysfs_path,
+							  hotplug_event->sysfs.device_file,
 							  is_partition,
 							  parent,
 							  (void *) hotplug_event);
 		} else {
-			hotplug_event_begin_remove_blockdev (hotplug_event->sysfs_path,
+			hotplug_event_begin_remove_blockdev (hotplug_event->sysfs.sysfs_path,
 							     is_partition,
 							     (void *) hotplug_event);
 		}
 	} else {
 		/* just ignore this hotplug event */
 		hotplug_event_end ((void *) hotplug_event);
+	}
+}
+
+static void
+hotplug_event_begin_acpi (HotplugEvent *hotplug_event)
+{
+	if (hotplug_event->is_add) {
+		hotplug_event_begin_add_acpi (hotplug_event->acpi.acpi_path, 
+					      hotplug_event->acpi.acpi_type,
+					      NULL,
+					      (void *) hotplug_event);
+	} else {
+		hotplug_event_begin_remove_acpi (hotplug_event->acpi.acpi_path, 
+						 hotplug_event->acpi.acpi_type,
+						 (void *) hotplug_event);
+	}
+}
+
+static void
+hotplug_event_begin (HotplugEvent *hotplug_event)
+{
+	switch (hotplug_event->type) {
+
+	/* explicit fallthrough */
+	case HOTPLUG_EVENT_SYSFS:
+	case HOTPLUG_EVENT_SYSFS_BUS:
+	case HOTPLUG_EVENT_SYSFS_CLASS:
+	case HOTPLUG_EVENT_SYSFS_BLOCK:
+		hotplug_event_begin_sysfs (hotplug_event);
+		break;
+
+	case HOTPLUG_EVENT_ACPI:
+		hotplug_event_begin_acpi (hotplug_event);
+		break;
+
+	default:
+		HAL_ERROR (("Unknown hotplug event type %d", hotplug_event->type));
+		hotplug_event_end ((void *) hotplug_event);
+		break;
 	}
 }
 
@@ -289,4 +330,136 @@ hotplug_event_process_queue (void)
 
 out:
 	;	
+}
+
+gboolean 
+hotplug_rescan_device (HalDevice *d)
+{
+	gboolean ret;
+
+	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
+	case HOTPLUG_EVENT_SYSFS_BUS:
+		ret = physdev_rescan_device (d);
+		break;
+
+	case HOTPLUG_EVENT_SYSFS_CLASS:
+		ret = classdev_rescan_device (d);
+		break;
+
+	case HOTPLUG_EVENT_SYSFS_BLOCK:
+		ret = FALSE; /* TODO */
+		break;
+
+	case HOTPLUG_EVENT_ACPI:
+		ret = acpi_rescan_device (d);
+		break;
+
+	default:
+		HAL_INFO (("Unknown hotplug type for udi=%s", d->udi));
+		ret = FALSE;
+		break;
+	}
+
+	return ret;
+}
+
+static void
+hotplug_reprobe_generate_remove_events (HalDevice *d)
+{
+	GSList *i;
+	GSList *childs;
+	HotplugEvent *e;
+
+	/* first remove childs */
+	childs = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", d->udi);
+	for (i = childs; i != NULL; i = g_slist_next (i)) {
+		HalDevice *child;
+
+		child = HAL_DEVICE (i->data);
+		hotplug_reprobe_generate_remove_events (child);
+	}
+
+	/* then remove self */
+	HAL_INFO (("Generate remove event for udi %s", d->udi));
+	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
+	case HOTPLUG_EVENT_SYSFS_BUS:
+		e = physdev_generate_remove_hotplug_event (d);
+		break;
+
+	case HOTPLUG_EVENT_SYSFS_CLASS:
+		e = classdev_generate_remove_hotplug_event (d);
+		break;
+
+	case HOTPLUG_EVENT_SYSFS_BLOCK:
+		e = NULL; /* TODO */
+		break;
+
+	case HOTPLUG_EVENT_ACPI:
+		e = acpi_generate_remove_hotplug_event (d);
+		break;
+
+	default:
+		e = NULL;
+		HAL_INFO (("Unknown hotplug type for udi=%s", d->udi));
+		break;
+	}
+
+	if (e != NULL) {
+		hotplug_event_enqueue (e);
+	}
+}
+
+static void
+hotplug_reprobe_generate_add_events (HalDevice *d)
+{
+	GSList *i;
+	GSList *childs;
+	HotplugEvent *e;
+
+	/* first add self */
+	HAL_INFO (("Generate add event for udi %s", d->udi));
+	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
+	case HOTPLUG_EVENT_SYSFS_BUS:
+		e = physdev_generate_add_hotplug_event (d);
+		break;
+
+	case HOTPLUG_EVENT_SYSFS_CLASS:
+		e = classdev_generate_add_hotplug_event (d);
+		break;
+
+	case HOTPLUG_EVENT_SYSFS_BLOCK:
+		e = NULL; /* TODO */
+		break;
+
+	case HOTPLUG_EVENT_ACPI:
+		e = acpi_generate_add_hotplug_event (d);
+		break;
+
+	default:
+		e = NULL;
+		HAL_INFO (("Unknown hotplug type for udi=%s", d->udi));
+		break;
+	}
+
+	if (e != NULL) {
+		hotplug_event_enqueue (e);
+	}
+
+	/* then add childs */
+	childs = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", d->udi);
+	for (i = childs; i != NULL; i = g_slist_next (i)) {
+		HalDevice *child;
+
+		child = HAL_DEVICE (i->data);
+		hotplug_reprobe_generate_add_events (child);
+	}
+}
+
+gboolean
+hotplug_reprobe_tree (HalDevice *d)
+{
+	hotplug_reprobe_generate_remove_events (d);
+	hotplug_reprobe_generate_add_events (d);
+	hotplug_event_process_queue ();
+	return FALSE;
 }

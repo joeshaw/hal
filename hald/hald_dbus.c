@@ -1854,6 +1854,95 @@ service_deleted (DBusMessage *message)
 	dbus_free (service_name);
 }
 
+static DBusHandlerResult
+device_rescan (DBusConnection * connection, DBusMessage * message)
+{
+	const char *udi;
+	HalDevice *device;
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	gboolean res;	
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	if (!sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "Rescan: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	HAL_DEBUG (("udi=%s", udi));
+
+	device = hal_device_store_find (hald_get_gdl (), udi);
+	if (device == NULL)
+		device = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (device == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	res = osspec_device_rescan (device);
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_append_boolean (&iter, res);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static DBusHandlerResult
+device_reprobe (DBusConnection * connection, DBusMessage * message)
+{
+	const char *udi;
+	HalDevice *device;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	gboolean res;
+	
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	if (!sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "Reprobe: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	HAL_DEBUG (("udi=%s", udi));
+
+	device = hal_device_store_find (hald_get_gdl (), udi);
+	if (device == NULL)
+		device = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (device == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	res = osspec_device_reprobe (device);
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_append_boolean (&iter, res);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
 /** Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function.
  *
@@ -1995,6 +2084,14 @@ hald_dbus_filter_function (DBusConnection * connection,
 						"org.freedesktop.Hal.Device",
 						"StringListPrepend")) {
 		return device_string_list_append_prepend (connection, message, TRUE);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"Rescan")) {
+		return device_rescan (connection, message);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"Reprobe")) {
+		return device_reprobe (connection, message);
 	} else
 		osspec_filter_function (connection, message, user_data);
 

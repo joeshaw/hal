@@ -273,10 +273,11 @@ coldplug_synthesize_events (void)
 #endif
 		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->is_add = TRUE;
-		g_strlcpy (hotplug_event->subsystem, subsystem, sizeof (hotplug_event->subsystem));
-		g_strlcpy (hotplug_event->sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs_path));
-		hal_util_get_device_file (sysfs_path, hotplug_event->device_file, sizeof (hotplug_event->device_file));
-		hotplug_event->net_ifindex = -1;
+		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
+		g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+		hal_util_get_device_file (sysfs_path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+		hotplug_event->sysfs.net_ifindex = -1;
 		
 		hotplug_event_enqueue (hotplug_event);
 	}
@@ -311,14 +312,15 @@ coldplug_synthesize_events (void)
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->is_add = TRUE;
-		g_strlcpy (hotplug_event->subsystem, "block", sizeof (hotplug_event->subsystem));
-		g_strlcpy (hotplug_event->sysfs_path, path, sizeof (hotplug_event->sysfs_path));
-		hal_util_get_device_file (path, hotplug_event->device_file, sizeof (hotplug_event->device_file));
+		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+		g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+		g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
+		hal_util_get_device_file (path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
 		if (normalized_target != NULL)
-			g_strlcpy (hotplug_event->wait_for_sysfs_path, normalized_target, sizeof (hotplug_event->wait_for_sysfs_path));
+			g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, normalized_target, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
 		else
-			hotplug_event->wait_for_sysfs_path[0] = '\0';
-		hotplug_event->net_ifindex = -1;
+			hotplug_event->sysfs.wait_for_sysfs_path[0] = '\0';
+		hotplug_event->sysfs.net_ifindex = -1;
 		hotplug_event_enqueue (hotplug_event);
 		g_free (normalized_target);
 
@@ -338,11 +340,12 @@ coldplug_synthesize_events (void)
 
 				hotplug_event = g_new0 (HotplugEvent, 1);
 				hotplug_event->is_add = TRUE;
-				g_strlcpy (hotplug_event->subsystem, "block", sizeof (hotplug_event->subsystem));
-				g_strlcpy (hotplug_event->sysfs_path, path1, sizeof (hotplug_event->sysfs_path));
-				g_strlcpy (hotplug_event->wait_for_sysfs_path, path, sizeof (hotplug_event->wait_for_sysfs_path));
-				hal_util_get_device_file (path1, hotplug_event->device_file, sizeof (hotplug_event->device_file));
-				hotplug_event->net_ifindex = -1;
+				hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+				g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+				g_strlcpy (hotplug_event->sysfs.sysfs_path, path1, sizeof (hotplug_event->sysfs.sysfs_path));
+				g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
+				hal_util_get_device_file (path1, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+				hotplug_event->sysfs.net_ifindex = -1;
 				hotplug_event_enqueue (hotplug_event);
 			}
 		}
@@ -380,15 +383,16 @@ coldplug_compute_visit_device (const gchar *path,
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->is_add = TRUE;
-		g_strlcpy (hotplug_event->subsystem, bus, sizeof (hotplug_event->subsystem));
-		g_strlcpy (hotplug_event->sysfs_path, path, sizeof (hotplug_event->sysfs_path));
-		hotplug_event->net_ifindex = -1;
+		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+		g_strlcpy (hotplug_event->sysfs.subsystem, bus, sizeof (hotplug_event->sysfs.subsystem));
+		g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
+		hotplug_event->sysfs.net_ifindex = -1;
 
 		parent_sysfs_path = hal_util_get_parent_path (path);
-		g_strlcpy (hotplug_event->wait_for_sysfs_path, parent_sysfs_path, sizeof (hotplug_event->wait_for_sysfs_path));
+		g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, parent_sysfs_path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
 		g_free (parent_sysfs_path);
 
-		hotplug_event->device_file[0] = '\0';
+		hotplug_event->sysfs.device_file[0] = '\0';
 
 		hotplug_event_enqueue (hotplug_event);
 	}
@@ -408,14 +412,15 @@ coldplug_compute_visit_device (const gchar *path,
 #endif
 		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->is_add = TRUE;
-		g_strlcpy (hotplug_event->subsystem, subsystem, sizeof (hotplug_event->subsystem));
-		g_strlcpy (hotplug_event->sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs_path));
-		hal_util_get_device_file (sysfs_path, hotplug_event->device_file, sizeof (hotplug_event->device_file));
+		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
+		g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+		hal_util_get_device_file (sysfs_path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
 		if (path != NULL)
-			g_strlcpy (hotplug_event->wait_for_sysfs_path, path, sizeof (hotplug_event->wait_for_sysfs_path));
+			g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
 		else
-			hotplug_event->wait_for_sysfs_path[0] = '\0';
-		hotplug_event->net_ifindex = -1;
+			hotplug_event->sysfs.wait_for_sysfs_path[0] = '\0';
+		hotplug_event->sysfs.net_ifindex = -1;
 		
 		hotplug_event_enqueue (hotplug_event);
 	}

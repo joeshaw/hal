@@ -511,6 +511,10 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 				goto out;
 			}
 
+			hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_CLASS);
+			hal_device_property_set_string (d, "linux.subsystem", subsystem);
+			hal_device_property_set_string (d, "linux.device_file", device_file);
+
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
 
@@ -566,4 +570,60 @@ hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_
 	hotplug_event_end (end_token);
 out:
 	;
+}
+
+gboolean
+classdev_rescan_device (HalDevice *d)
+{
+	return FALSE;
+}
+
+
+HotplugEvent *
+classdev_generate_add_hotplug_event (HalDevice *d)
+{
+	const char *subsystem;
+	const char *sysfs_path;
+	const char *device_file;
+	HotplugEvent *hotplug_event;
+
+	subsystem = hal_device_property_get_string (d, "linux.subsystem");
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+	device_file = hal_device_property_get_string (d, "linux.device_file");
+
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->is_add = TRUE;
+	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+	g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
+	g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+	if (device_file != NULL)
+		g_strlcpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+	else
+		hotplug_event->sysfs.device_file[0] = '\0';
+	hotplug_event->sysfs.net_ifindex = -1;
+
+	return hotplug_event;
+}
+
+HotplugEvent *
+classdev_generate_remove_hotplug_event (HalDevice *d)
+{
+	const char *subsystem;
+	const char *sysfs_path;
+	const char *device_file;
+	HotplugEvent *hotplug_event;
+
+	subsystem = hal_device_property_get_string (d, "linux.subsystem");
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+	device_file = hal_device_property_get_string (d, "linux.device_file");
+
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->is_add = FALSE;
+	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+	g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
+	g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+	hotplug_event->sysfs.device_file[0] = '\0';
+	hotplug_event->sysfs.net_ifindex = -1;
+
+	return hotplug_event;
 }

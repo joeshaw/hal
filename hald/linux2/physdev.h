@@ -27,9 +27,16 @@
 #define PHYSDEV_H
 
 #include <glib.h>
+#include "hotplug.h"
 
 void hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path, HalDevice *parent, void *end_token);
 
 void hotplug_event_begin_remove_physdev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
+
+gboolean physdev_rescan_device (HalDevice *d);
+
+HotplugEvent *physdev_generate_add_hotplug_event (HalDevice *d);
+
+HotplugEvent *physdev_generate_remove_hotplug_event (HalDevice *d);
 
 #endif /* PHYSDEV_H */

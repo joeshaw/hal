@@ -24,7 +24,18 @@
 #define ACPI_H
 
 #include "../hald.h"
+#include "hotplug.h"
 
-void acpi_probe (void);
+void acpi_synthesize_hotplug_events (void);
+
+void hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *parent, void *end_token);
+
+void hotplug_event_begin_remove_acpi (const gchar *acpi_path, int acpi_type, void *end_token);
+
+gboolean acpi_rescan_device (HalDevice *d);
+
+HotplugEvent *acpi_generate_add_hotplug_event (HalDevice *d);
+
+HotplugEvent *acpi_generate_remove_hotplug_event (HalDevice *d);
 
 #endif /* ACPI_H */

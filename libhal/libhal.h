@@ -309,6 +309,8 @@ double libhal_psi_get_double (LibHalPropertySetIterator *iter);
 dbus_bool_t libhal_psi_get_bool (LibHalPropertySetIterator *iter);
 char **libhal_psi_get_strlist (LibHalPropertySetIterator *iter);
 
+unsigned int libhal_string_array_length (char **str_array);
+
 void libhal_free_string_array (char **str_array);
 void libhal_free_string (char *str);
 

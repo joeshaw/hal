@@ -1,3 +1,55 @@
+2005-02-02  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux2/osspec.c: Adjust for changes in hotplug.h.
+	(osspec_device_rescan): New function
+	(osspec_device_reprobe): New function
+
+	* hald/linux2/hotplug.h: Extend HotplugEvent struct to also be used
+	for coldplugging/fake hotplugging (via Reprobe()) of ACPI devices.
+	Add prototypes for hotplug_reprobe_tree() and hotplug_rescan_device().
+
+	* hald/linux2/hotplug.c: Adjust to changes in hotplug.h
+	(hotplug_event_begin_sysfs): New function; what used to be the
+	function hotplug_event_begin().
+	(hotplug_event_begin_acpi): New function
+	(hotplug_event_begin): Now a simple dispatcher according to hotplug
+	type; e.g. sysfs or acpi
+	(hotplug_rescan_device): New function
+	(hotplug_reprobe_generate_remove_events): New function
+	(hotplug_reprobe_generate_add_events): New function
+	(hotplug_reprobe_tree): New function
+
+	* hald/linux2/coldplug.c: Adjust to changes in hotplug.h
+
+	* hald/linux2/classdev.h: Add prototypes for classdev_generate_
+	[add|remove]_hotplug_event() and classdev_rescan_device().
+
+	* hald/linux2/classdev.c (hotplug_event_begin_add_classdev): Add
+	some properties so we can reconstruct the hotplug event
+	(classdev_rescan_device): New function
+	(classdev_generate_add_hotplug_event): New function
+	(classdev_generate_remove_hotplug_event): New function
+
+	* hald/linux2/acpi.[ch]: Yikes, rewrite must of this to conform to
+	the hotplug model so we can do Rescan() and Reprobe()
+
+	* hald/osspec.h: Add prototypes for osspec_device_[rescan|reprobe]
+
+	* hald/hald_test_libhal.c (send_tests_done): New function
+	(check_libhal): Add some more tests and report back
+
+	* hald/hald_test.c (check_properties): Fixup wrong failure reports
+	(server_message_handler): Add new methods on the org.freedesktop.Hal.
+	Tests interfaces to signal that a test is done
+	(wait_for_external_test): New function; pretty ugly but it works
+	for now. As noted: Patches are Welcome(tm)
+	(main): Enable libhal tests
+
+	* hald/hald_dbus.c (device_rescan): New function
+	(device_reprobe): New function
+	(hald_dbus_filter_function): Add checks for Rescan() and Reprobe()
+	methods on the org.freedesktop.Hal.Device interface
+
 2005-02-01  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-input.c (main): Fix a bug here where

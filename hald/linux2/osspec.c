@@ -334,12 +334,13 @@ hald_helper_data (GIOChannel *source,
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->is_add = TRUE;
-		g_strlcpy (hotplug_event->subsystem, msg.subsystem, sizeof (hotplug_event->subsystem));
-		g_snprintf (hotplug_event->sysfs_path, sizeof (hotplug_event->sysfs_path), "%s%s", 
+		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+		g_strlcpy (hotplug_event->sysfs.subsystem, msg.subsystem, sizeof (hotplug_event->sysfs.subsystem));
+		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
 			    hal_sysfs_path, msg.sysfs_path);
-		g_strlcpy (hotplug_event->device_file, msg.device_name, sizeof (hotplug_event->device_file));
+		g_strlcpy (hotplug_event->sysfs.device_file, msg.device_name, sizeof (hotplug_event->sysfs.device_file));
 		/* TODO: set wait_for_sysfs_path */
-		hotplug_event->net_ifindex = msg.net_ifindex;
+		hotplug_event->sysfs.net_ifindex = msg.net_ifindex;
 
 		/* queue up and process */
 		hotplug_event_enqueue (hotplug_event);
@@ -350,12 +351,13 @@ hald_helper_data (GIOChannel *source,
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->is_add = FALSE;
-		g_strlcpy (hotplug_event->subsystem, msg.subsystem, sizeof (hotplug_event->subsystem));
-		g_snprintf (hotplug_event->sysfs_path, sizeof (hotplug_event->sysfs_path), "%s%s", 
+		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+		g_strlcpy (hotplug_event->sysfs.subsystem, msg.subsystem, sizeof (hotplug_event->sysfs.subsystem));
+		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
 			    hal_sysfs_path, msg.sysfs_path);
-		g_strlcpy (hotplug_event->device_file, msg.device_name, sizeof (hotplug_event->device_file));
+		g_strlcpy (hotplug_event->sysfs.device_file, msg.device_name, sizeof (hotplug_event->sysfs.device_file));
 		/* TODO: set wait_for_sysfs_path */
-		hotplug_event->net_ifindex = msg.net_ifindex;
+		hotplug_event->sysfs.net_ifindex = msg.net_ifindex;
 
 		/* queue up and process */
 		hotplug_event_enqueue (hotplug_event);
@@ -466,15 +468,14 @@ osspec_probe (void)
 	hal_device_store_add (hald_get_gdl (), root);
 
 	/* will enqueue hotplug events for entire system */
-	HAL_INFO (("Synthesizing events..."));
+	HAL_INFO (("Synthesizing sysfs events..."));
 	coldplug_synthesize_events ();
+	HAL_INFO (("Synthesizing acpi events..."));
+	acpi_synthesize_hotplug_events ();
 	HAL_INFO (("Done synthesizing events"));
 
 	/* start processing events */
 	hotplug_event_process_queue ();
-
-	/* ACPI */
-	acpi_probe ();
 
 	/*osspec_probe_done ();*/
 }
@@ -483,4 +484,16 @@ DBusHandlerResult
 osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+gboolean
+osspec_device_rescan (HalDevice *d)
+{
+	return hotplug_rescan_device (d);
+}
+
+gboolean
+osspec_device_reprobe (HalDevice *d)
+{
+	return hotplug_reprobe_tree (d);
 }
