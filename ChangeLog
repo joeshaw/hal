@@ -1,5 +1,9 @@
 2004-09-20  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: Bump version to 0.2.98
+
+2004-09-20  David Zeuthen  <david@fubar.dk>
+
 	* doc/spec/hal-spec.xml.in: Add docs for volume.size
 
 	* hald/linux/block_class_device.c (volume_set_size): Use the 
