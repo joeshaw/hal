@@ -425,10 +425,6 @@ usbclass_compute_udi (HalDevice *d)
 static gboolean
 classdev_remove (HalDevice *d)
 {
-	if (!hal_device_store_remove (hald_get_gdl (), d)) {
-		HAL_WARNING (("Error removing device"));
-	}
-
 	return TRUE;
 }
 
@@ -511,6 +507,34 @@ static ClassDevHandler *classdev_handlers[] = {
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static void 
+classdev_callouts_add_done (HalDevice *d, gpointer userdata)
+{
+	void *end_token = (void *) userdata;
+
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
+
+	hotplug_event_end (end_token);
+}
+
+static void 
+classdev_callouts_remove_done (HalDevice *d, gpointer userdata)
+{
+	void *end_token = (void *) userdata;
+
+	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+
+	if (!hal_device_store_remove (hald_get_gdl (), d)) {
+		HAL_WARNING (("Error removing device"));
+	}
+
+	hotplug_event_end (end_token);
+}
+
+static void 
 add_classdev_after_probing (HalDevice *d, ClassDevHandler *handler, void *end_token)
 {
 	/* Merge properties from .fdi files */
@@ -519,19 +543,17 @@ add_classdev_after_probing (HalDevice *d, ClassDevHandler *handler, void *end_to
 	/* Compute UDI */
 	if (!handler->compute_udi (d)) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		hotplug_event_end (end_token);
 		goto out;
 	}
 	
 	/* TODO: Merge persistent properties */
 
-	/* TODO: Run callouts */
-
-	/* Move from temporary to global device store */
-	hal_device_store_remove (hald_get_tdl (), d);
-	hal_device_store_add (hald_get_gdl (), d);
+	/* Run callouts */
+	hal_util_callout_device_add (d, classdev_callouts_add_done, end_token);
 
 out:
-	hotplug_event_end (end_token);
+	;
 }
 
 static void 
@@ -642,11 +664,10 @@ hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_
 			
 			handler = classdev_handlers[i];
 			if (strcmp (handler->subsystem, subsystem) == 0) {
-				if (handler->remove (d)) {
-					/* let the handler end the event */
-					hotplug_event_end (end_token);
-					goto out;
-				}
+				handler->remove (d);
+
+				hal_util_callout_device_remove (d, classdev_callouts_remove_done, end_token);
+				goto out;
 			}
 		}
 	}

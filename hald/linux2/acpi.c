@@ -337,9 +337,6 @@ acpi_callouts_remove_done (HalDevice *d, gpointer userdata)
 
 	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
 
-	/* Move from temporary to global device store */
-	hal_device_store_remove (hald_get_tdl (), d);
-
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
 	}

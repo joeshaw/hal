@@ -745,10 +745,6 @@ mmc_compute_udi (HalDevice *d)
 static gboolean
 physdev_remove (HalDevice *d)
 {
-	if (!hal_device_store_remove (hald_get_gdl (), d)) {
-		HAL_WARNING (("Error removing device"));
-	}
-
 	return TRUE;
 }
 
@@ -833,6 +829,34 @@ static PhysDevHandler *phys_handlers[] = {
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static void 
+physdev_callouts_add_done (HalDevice *d, gpointer userdata)
+{
+	void *end_token = (void *) userdata;
+
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
+
+	hotplug_event_end (end_token);
+}
+
+static void 
+physdev_callouts_remove_done (HalDevice *d, gpointer userdata)
+{
+	void *end_token = (void *) userdata;
+
+	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+
+	if (!hal_device_store_remove (hald_get_gdl (), d)) {
+		HAL_WARNING (("Error removing device"));
+	}
+
+	hotplug_event_end (end_token);
+}
+
 void
 hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path, HalDevice *parent, void *end_token)
 {
@@ -863,8 +887,6 @@ hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path
 			/* Merge properties from .fdi files */
 			di_search_and_merge (d);
 
-			/* TODO: Run callouts */
-			
 			/* Compute UDI */
 			if (!handler->compute_udi (d)) {
 				hal_device_store_remove (hald_get_tdl (), d);
@@ -872,11 +894,8 @@ hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path
 				goto out;
 			}
 
-			/* Move from temporary to global device store */
-			hal_device_store_remove (hald_get_tdl (), d);
-			hal_device_store_add (hald_get_gdl (), d);
-			
-			hotplug_event_end (end_token);
+			/* Run callouts */
+			hal_util_callout_device_add (d, physdev_callouts_add_done, end_token);
 			goto out;
 		}
 	}
@@ -902,16 +921,16 @@ hotplug_event_begin_remove_physdev (const gchar *subsystem, const gchar *sysfs_p
 		HAL_WARNING (("Couldn't remove device with sysfs path %s - not found", sysfs_path));
 		goto out;
 	}
-
+	
 	for (i = 0; phys_handlers [i] != NULL; i++) {
 		PhysDevHandler *handler;
-
+		
 		handler = phys_handlers[i];
 		if (strcmp (handler->subsystem, subsystem) == 0) {
-			if (handler->remove (d)) {
-				hotplug_event_end (end_token);
-				goto out2;
-			}
+			handler->remove (d);
+			
+			hal_util_callout_device_remove (d, physdev_callouts_remove_done, end_token);
+			goto out2;
 		}
 	}
 

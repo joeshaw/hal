@@ -1,5 +1,22 @@
 2005-02-08  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/physdev.c (physdev_remove): Don't remove device yet.
+	(physdev_callouts_add_done): New function
+	(physdev_callouts_remove_done): New function
+	(hotplug_event_begin_add_physdev): Do add callouts
+	(hotplug_event_begin_remove_physdev): Do remove callouts
+
+	* hald/linux2/classdev.c (classdev_remove): Don't remove device yet.
+	(classdev_callouts_add_done): New function
+	(classdev_callouts_remove_done): New function
+	(add_classdev_after_probing): Do add callouts
+	(hotplug_event_begin_remove_classdev): Do remove callouts
+
+	* hald/linux2/acpi.c (acpi_callouts_remove_done): Yikes, don't remove
+	from TDL since it's not there.
+
+2005-02-08  David Zeuthen  <davidz@redhat.com>
+
 	* hald/run-hald.sh: Update to include a few more paths
 
 	* hald/linux2/addons/Makefile.am: Add build rules for hald-addon-acpi
