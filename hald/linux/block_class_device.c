@@ -911,6 +911,8 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 	if (fd < 0)
 		return FALSE;
 
+	close (fd);
+
 	/* Now got_media==TRUE and fd>0.. So, Yay!, we got media
 	 *
 	 * See if we already got children (or children underway :-),
@@ -923,7 +925,6 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		get_child_device_tdl (d);
 	}
 	if (child != NULL) {
-		close (fd);
 		return FALSE;
 	}
 
@@ -1000,9 +1001,8 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 
 			HAL_INFO (("Detecting if %s contains a fs", device_file));
 
-			vid = volume_id_open_fd (fd);
+			vid = volume_id_open_node (device_file);
 			if (vid == NULL) {
-				close (fd);
 				g_object_unref (child);
 				return FALSE;
 			}
@@ -1011,15 +1011,14 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 				if (is_cdrom) {
 					/* volume_id cannot probe blank/audio discs etc,
 					 * so don't fail for them, just set vid to NULL */
-					volume_id_close (vid);
 					vid = NULL;
 				} else {
-					close (fd);
 					g_object_unref (child);
 					volume_id_close (vid);
 					return FALSE;
 				}
 			}
+
 		}
 
 		/* Unfortunally, linux doesn't scan optical discs for partition
@@ -1032,7 +1031,6 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		if (!no_partitions) {
 			if (vid != NULL)
 				volume_id_close (vid);
-			close (fd);
 			g_object_unref (child);
 			return FALSE;
 		}
@@ -1072,12 +1070,11 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
 		hal_callout_device (child, TRUE);
 
-		volume_id_close (vid);
-		close (fd);
+		if (vid != NULL)
+			volume_id_close (vid);
 		return TRUE;
 	}
 
-	close (fd);
 	return FALSE;
 }
 

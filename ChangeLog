@@ -1,3 +1,13 @@
+2004-10-15  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/block_class_device.c (detect_media): Fixup reuse
+	of file descriptors since we want O_NONBLOCK for polling and we
+	don't want to reuse that for probing the media (see below(
+	
+	* hald/linux/volume_id/volume_id.c (volume_id_open_node): Never
+	use O_NONBLOCK since new kernel semantics can and will return
+	EAGAIN aka EWOULDBLOCK (see RH bug 135886).
+
 2004-10-14  David Zeuthen  <davidz@redhat.com>
 
 	* tools/fstab-sync.c (main): clean wasn't being called on hald startup
