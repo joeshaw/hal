@@ -4,12 +4,12 @@
 
 2004-04-20  Robert Love  <rml@ximian.com>
 
-        * hald/callout.c: hal_property_get_as_string is now to_string, fix
+	* hald/callout.c: hal_property_get_as_string is now to_string, fix
 	leak.
-        * hald/device.c: add hal_device_property_to_string
-        * hald/device.h: add prototype for hal_device_property_to_string
-        * hald/property.c: rename hal_property_get_as_string to to_string
-        * hald/property.h: ditto for the prototype
+	* hald/device.c: add hal_device_property_to_string
+	* hald/device.h: add prototype for hal_device_property_to_string
+	* hald/property.c: rename hal_property_get_as_string to to_string
+	* hald/property.h: ditto for the prototype
 
 2004-04-20  Joe Shaw  <joe@ximian.com>
 
@@ -25,7 +25,6 @@
 	(process_callouts): Change the idle to a timeout.  This is a
 	copout.
 
->>>>>>> 1.107
 2004-04-20  Joe Shaw  <joe@ximian.com>
 
 	* hald/callout.c: Rework this some to make the callouts
