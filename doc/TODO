@@ -2,44 +2,75 @@
 CVSID:$Id$
 
 This document is the TODO list for the HAL project. Feel free to add/remove
-entries if you get an idea or implement of the tasks.
+entries if you get an idea or implement one of the tasks.
 
-Must be implemented/work before 0.2 release
--------------------------------------------
+Short term issues
 
- - Fix input hotplug events for input in hald (works in the agent version)
+ - veryify that we got all the necessary hardware parameters for
+   physical busses, e.g. pci, usb...
 
- - Add a device representing the system with properties on kernel name,
-   version, xserver version etc. Make all devices that currently doesn't
-   have a parent childs of this.
+ - add device persistency across invocations of the hal daemon so we
+   don't have to scan N fdi files for M devices, resulting in N*M scans
 
- - Add version number to .fdi XML-file format and check that it's not too
-   difficult to extend the format to match on properties on other devices
-   (e.g. the root device might have a os.kernel or xserver.version that an
-    .fdi file might match different properties for)
+ - fix all property string values to be UTF8 compliant
 
- - Port monitoring code from agents/linux26/sysfs/hal_monitor.c to hald
+ - add Lock()/Unlock() methods to the network API (and libhal) for obtaining
+   exclusive device access
 
- - Fix Doxygen hierarchy; It's a mess right now
+ - fix memory leaks; especially those when getting strings from D-BUS
+   [ongoing, partially resolved (libhal seems clean, still need to audit
+    hald)]
 
- - Packaging / autoconfiscating; make install/uninstall needs to work on at
-   least fedora and debian; It's a mess right now
+ - add a device representing the computer system with properties on kernel
+   name, version, xserver version etc. Make all devices that currently doesn't
+   have a parent, children of this
 
- - Fix logging system, at least change LOG_[WARNING|ERROR|..] to another
-   namespace since it conflicts with syslog.h.
+ - extend .fdi file format to be able to reference the device representing
+   the computer system and match on e.g. kernel.name and kernel.version, so
+   as to merge properties dependent on that
 
- - Fix memory leaks; especially those when getting strings from D-BUS
+ - replace mii ethernet monitoring with netlink sockets
 
- - Add local copy of pci.ids and usb.ids (the location varies on distros)
+ - figure a way to detect block.device (e.g. /udev/hda2, already we know 
+   major:minor) when detecting a block device on hald startup.
+   The hotplug case is already solved by receiving a signal from udev
 
-Other TODO's
-------------
+ - until available in sysfs, parse /proc/sys/dev/cdrom/info, to provide
+   information about capabilities of optical discs such as CD-RW, DVD etc.
 
- - Add unicode support
+ - work more on packaging, put some daemon-fork-fu into hald and make it
+   read a configuration file, make initscripts for various distros and make
+   hald run as a unprivileged dedicated user
 
- - Port over to use glib in hald where it makes sense (lists, dictionaries
-   etc.). Hmm; or use D-BUS support library by copying?
+More long term issues
 
- - Add code/scripts to test
+ - signing of fdi files
 
- - Lots of other stuff ;-)
+ - add code/scripts for regression testing
+
+ - access control logic (only daddy can use daddy's camera etc.)
+
+ - network transparency; think diskless X terminals with USB ports
+   integrated into the desktop environment running on a LTSP server
+
+ - lots of other 'crazy ideas'
+
+Fishy issues we need to work around, and don't yet do in a perfectly
+reliable way
+
+ - userspace is faster than kernel when hotplugging, so sometimes certain
+   attrs are missing; should be addressed in libsysfs 0.4. Seems also to
+   be a problem with /proc/bus/usb/devices; sometimes information derived
+   from /p/b/u/d such as USB version and USB speed is missing because of
+   this issue
+
+ - input hotplugging not giving same range of attrs as on detection time;
+   need support for input in sysfs
+
+ - various key bus-specific properties missing all over the place, 
+   especially for SCSI (I also need SCSI hardware to test with)
+
+ - sysfs is missing key information only available in /proc such as USB
+   version and speed (/proc/bus/usb/devices), model of IDE disk (e.g.
+   /proc/ide/hda/model), optical drive caps (/proc/sys/dev/cdrom/info).
+   Until this is fixed we have to read stuff from /proc.

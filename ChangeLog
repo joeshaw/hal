@@ -1,4 +1,8 @@
 2003-12-23  David Zeuthen  <david@fubar.dk>
+	
+	* doc/TODO: updated
+
+2003-12-23  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Drop DEVICEMANAGER_DIR. This allows us to do make
 	install even in maintainer mode, but changes to datafiles (glade
