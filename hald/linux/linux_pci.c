@@ -378,7 +378,7 @@ static void pci_add_caps_from_class(HalDevice* d,
                                     int dev_sub_class, 
                                     int dev_proto)
 {
-    char* cat = "unknown";
+    char* cat = NULL;
 
     switch( dev_class )
     {
@@ -642,7 +642,8 @@ static void pci_add_caps_from_class(HalDevice* d,
         break;
     }
 
-    ds_property_set_string(d, "Category", cat);
+    if( cat!=NULL )
+        ds_property_set_string(d, "Category", cat);
 }
 
 
@@ -826,6 +827,14 @@ void linux_pci_init()
 
     /* Load /usr/share/hwdata/pci.ids */
     pci_ids_load(HWDATA_DIR "/pci.ids");
+}
+
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_pci_detection_done()
+{
 }
 
 /** Shutdown function for PCI handling

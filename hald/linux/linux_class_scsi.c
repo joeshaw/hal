@@ -301,6 +301,14 @@ void linux_class_scsi_init()
 {
 }
 
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_class_scsi_detection_done()
+{
+}
+
 /** Shutdown function for SCSI handling
  *
  */

@@ -364,6 +364,7 @@ WARN_LOGFILE           =
 INPUT                  = hald \
                          hald/linux \
                          libhal \
+                         tools \
                          tools/linux
 
 # If the value of the INPUT tag contains directories, you can use the 

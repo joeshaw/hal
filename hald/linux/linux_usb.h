@@ -28,15 +28,10 @@
 
 #include "linux_common.h"
 
-/*  @ingroup  HalAgentsLinux
- *  @{
- */
-
 void visit_device_usb(const char* path, struct sysfs_device *device);
 
 void linux_usb_init();
+void linux_usb_detection_done();
 void linux_usb_shutdown();
-
-/* @} */
 
 #endif /* LINUX_USB_H */

@@ -276,6 +276,14 @@ void linux_ide_init()
 {
 }
 
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_ide_detection_done()
+{
+}
+
 /** Shutdown function for IDE handling
  *
  */

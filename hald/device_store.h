@@ -31,11 +31,11 @@
 #include <dbus/dbus.h>
 
 
-
-/**************************************************************************/
-
-/* NOTE: Right now this implementation is quite naive - should be replaced
-   with something like hashtables etc. */
+/**
+ *  @addtogroup DeviceStore
+ *
+ *  @{
+ */
 
 /** HalProperty internals; private
  */
@@ -227,5 +227,8 @@ void ds_add_capability(HalDevice* device, const char* capability);
 dbus_bool_t ds_query_capability(HalDevice* device, const char* capability);
 
 
+/**
+ *  @}
+ */
 
 #endif /* DEVICE_STORE_H */

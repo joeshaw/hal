@@ -626,10 +626,50 @@ void linux_class_input_probe()
         process_input_proc_info(i);
 }
 
+
+/** Handle input hotplug event add
+ *
+ *  @param  name                $NAME from hotplug event
+ *  @param  phys                $PHYS from hotplug event
+ *  @param  key                 $KEY from hotplug event
+ *  @param  ev                  $EV from hotplug event (or 0 if not found)
+ *  @param  rel                 $REL from hotplug event (or 0 if not found)
+ *  @param  abs                 $ABS from hotplug event (or 0 if not found)
+ *  @param  led                 $LED from hotplug event (or 0 if not found)
+ */
+void linux_class_input_handle_hotplug_add(char* name, char* phys, char* key,
+                                          int ev, int rel, int abs, int led)
+{
+    char* s;
+    input_proc_info* i;
+
+    i = get_input_proc_cur_info_obj();
+
+    /** @todo FIXME; parse product (we don't use it yet) */
+
+    strncpy(i->name, name, 128);
+    strncpy(i->phys_name, phys, 128);
+    strncpy(i->keybit, key, 128);
+    i->evbit = ev;
+    i->relbit = rel;
+    i->absbit = abs;
+    i->ledbit = led;
+
+    process_input_proc_info(i);
+}
+
 /** Init function for block device handling
  *
  */
 void linux_class_input_init()
+{
+}
+
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_class_input_detection_done()
 {
 }
 

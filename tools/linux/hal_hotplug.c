@@ -54,6 +54,7 @@
  *
  *  @param  argc                Number of arguments
  *  @param  argv                Array of arguments
+ *  @param  envp                Environment
  *  @return                     Exit code
  */
 int main(int argc, char* argv[], char* envp[])

@@ -35,6 +35,15 @@
 #include <assert.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <signal.h>
+
+#define _GNU_SOURCE 1
+#include <linux/fcntl.h>
+#include <linux/kdev_t.h>
+
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -321,11 +330,299 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
     rename_and_maybe_add(d, block_compute_udi, "block");
 }
 
+
+
+
+
+#define MOUNT_POINT_MAX 256
+#define MOUNT_POINT_STRING_SIZE 128
+
+/** Structure for holding mount point information */
+struct mount_point_s
+{
+    int major;                                 /**< Major device number */
+    int minor;                                 /**< Minor device number */
+    char device[MOUNT_POINT_STRING_SIZE];      /**< Device filename */
+    char mount_point[MOUNT_POINT_STRING_SIZE]; /**< Mount point */
+    char fs_type[MOUNT_POINT_STRING_SIZE];     /**< Filesystem type */
+};
+
+/** Array holding (valid) mount points from /etc/mtab. */
+static struct mount_point_s mount_points[MOUNT_POINT_MAX];
+
+/** Number of elements in #mount_points array */
+static int num_mount_points;
+
+static int etc_fd = -1;
+
+
+/** Process a line in /etc/mtab. The given string will be modifed by
+ *  this function.
+ *
+ *  @param  s                   Line of /etc/mtab
+ */
+static void etc_mtab_process_line(char* s)
+{
+    int i;
+    char* p;
+    char* delim = " \t\n";
+    char buf[256];
+    char* bufp = buf;
+    struct stat stat_buf;
+    int major = 0;
+    int minor = 0;
+    char* device = NULL;
+    char* mount_point = NULL;
+    char* fs_type = NULL;
+
+    i=0;
+    p = strtok_r(s, delim, &bufp);
+    while( p!=NULL )
+    {
+        /*printf("token: '%s'\n", p);*/
+        switch(i)
+        {
+        case 0:
+            if( strcmp(p, "none")==0 )
+                return;
+            if( p[0]!='/' )
+                return;
+            device = p;
+            /* Find major/minor for this device */
+
+            if( stat(p, &stat_buf)!=0 )
+            {
+                return;
+            }
+            major = MAJOR(stat_buf.st_rdev);
+            minor = MINOR(stat_buf.st_rdev);
+            break;
+
+        case 1:
+            mount_point = p;
+            break;
+
+        case 2:
+            fs_type = p;
+            break;
+
+        case 3:
+            break;
+
+        case 4:            
+            break;
+
+        case 5:
+            break;
+        }
+
+        p = strtok_r(NULL, delim, &bufp);
+        i++;
+    }
+
+    /** @todo  FIXME: Use a linked list or something that doesn't restrict
+     *         us like this
+     */
+    if( num_mount_points==MOUNT_POINT_MAX )
+        return;
+
+    mount_points[num_mount_points].major = major;
+    mount_points[num_mount_points].minor = minor;
+    strncpy(mount_points[num_mount_points].device, device, 
+            MOUNT_POINT_STRING_SIZE);
+    strncpy(mount_points[num_mount_points].mount_point, mount_point, 
+            MOUNT_POINT_STRING_SIZE);
+    strncpy(mount_points[num_mount_points].fs_type, fs_type, 
+            MOUNT_POINT_STRING_SIZE);
+
+    num_mount_points++;
+}
+
+/** Last mtime when /etc/mtab was processed */
+static time_t etc_mtab_mtime = 0;
+
+
+/** Reads /etc/mtab and fill out #mount_points and #num_mount_points 
+ *  variables accordingly
+ *
+ *  This function holds the file open for further access
+ *
+ *  @return                     FALSE if there was no changes to /etc/mtab
+ *                              since last invocation or an error occured
+ */
+static dbus_bool_t read_etc_mtab()
+{
+    int fd;
+    char buf[256];
+    FILE* f;
+    struct stat stat_buf;
+
+    num_mount_points=0;
+
+    fd = open("/etc/mtab", O_RDONLY);
+
+    if( fd==-1 )
+    {
+        HAL_ERROR(("Cannot open /etc/mtab"));
+        return FALSE;
+    }
+    
+    if( fstat(fd, &stat_buf)!=0 )
+    {
+        HAL_ERROR(("Cannot fstat /etc/mtab fd, errno=%d", errno));
+        return FALSE;
+    }
+
+    if( etc_mtab_mtime==stat_buf.st_mtime )
+    {
+        /*printf("No modification, etc_mtab_mtime=%d\n", etc_mtab_mtime);*/
+        return FALSE;
+    }
+
+    etc_mtab_mtime = stat_buf.st_mtime;
+
+    /*printf("Modification, etc_mtab_mtime=%d\n", etc_mtab_mtime);*/
+
+    f = fdopen(fd, "r");
+
+    if( f==NULL )
+    {
+        HAL_ERROR(("Cannot fdopen /etc/mtab fd"));
+        return FALSE;
+    }
+
+    while( !feof(f) )
+    {
+        if( fgets(buf, 256, f)==NULL )
+            break;
+        /*printf("got line: '%s'\n", buf);*/
+        etc_mtab_process_line(buf);
+    }
+    
+    fclose(f);
+
+    close(fd);
+
+    return TRUE;
+}
+
+static void sigio_handler(int sig);
+
+/** Global to see if we have setup the watcher on /etc */
+static dbus_bool_t have_setup_watcher = FALSE;
+
+/** Load /etc/mtab and process all HAL block devices and set properties
+ *  according to mount status. Also, optionally, sets up a watcher to do
+ *  this whenever /etc/mtab changes
+ *
+ *  @param  setup_watcher       Monitor /etc/mtab
+ */
+static void etc_mtab_process_all_block_devices()
+{
+    int i;
+    const char* bus;
+    HalDevice* d;
+    int major, minor;
+    dbus_bool_t found_mount_point;
+    struct mount_point_s* mp;
+    HalDeviceIterator diter;
+
+    /* Start or continue watching /etc */
+    if( !have_setup_watcher )
+    {
+        have_setup_watcher = TRUE;
+
+        signal(SIGIO, sigio_handler);
+        etc_fd = open("/etc", O_RDONLY);
+        fcntl(etc_fd, F_NOTIFY, DN_MODIFY|DN_MULTISHOT);
+    }
+
+    /* Just return if /etc/mtab wasn't modified */
+    if( !read_etc_mtab() )
+        return;
+
+    HAL_INFO(("/etc/mtab changed, processing all block devices"));
+
+    /* Iterate over all HAL devices */
+    for(ds_device_iter_begin(&diter);
+        ds_device_iter_has_more(&diter);
+        ds_device_iter_next(&diter))
+    {
+
+        d = ds_device_iter_get(&diter);
+
+        bus = ds_property_get_string(d, "Bus");
+        if( bus==NULL || strcmp(bus, "block")!=0 )
+            continue;
+
+        major = ds_property_get_int(d, "block.major");
+        minor = ds_property_get_int(d, "block.minor");
+
+        /* Search all mount points */
+        found_mount_point = FALSE;
+        for(i=0; i<num_mount_points; i++)
+        {
+            mp = &mount_points[i];
+
+            if( mp->major==major && mp->minor==minor )
+            {
+                HAL_INFO((
+                    "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
+                    mp->device, mp->mount_point, mp->major, mp->minor, 
+                    mp->fs_type, d->udi));
+
+                /* Yay! Found a mount point; set properties accordingly */
+                ds_property_set_string(d, "block.device", mp->device);
+                ds_property_set_string(d, "block.mountPoint", mp->mount_point);
+                ds_property_set_string(d, "block.fileSystem", mp->fs_type);
+                ds_property_set_bool(d, "block.isMounted", TRUE);
+
+                found_mount_point = TRUE;
+                break;
+            }
+        }
+
+        /* No mount point found; (possibly) remove all information */
+        if( !found_mount_point )
+        {
+            ds_property_set_bool(d, "block.isMounted", FALSE);
+            ds_property_remove(d, "block.mountPoint");
+            ds_property_remove(d, "block.fileSystem");
+        }        
+    }
+}
+
+
+/** Signal handler for watching /etc
+ *
+ *  @param  sig                 Signal number
+ */
+static void sigio_handler(int sig)
+{
+    HAL_INFO(("Directory /etc changed"));
+
+    /** @todo FIXME: It's evil to sleep in a signal handler, yes? */
+    usleep(250*1000);
+
+    etc_mtab_process_all_block_devices(TRUE);
+}
+
+
+
 /** Init function for block device handling
  *
  */
 void linux_class_block_init()
 {
+}
+
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_class_block_detection_done()
+{
+    etc_mtab_process_all_block_devices();
 }
 
 /** Shutdown function for block device handling

@@ -1,5 +1,33 @@
 2003-12-21  David Zeuthen  <david@fubar.dk>
 
+	* Doxyfile.in: add tools directory
+
+	* hald/device_store.c: fixup doxygen grouping
+
+	* hald/device_store.h: fixup doxygen grouping
+
+	* hald/logger.c: Don't print out trace priority logging statements
+
+	* hald/linux/linux_class_block.c: Add mount point detection by
+	monitoring /etc and looking at /etc/mtab. Several new functions.
+
+	* hald/linux/linux_class_input.c 
+	(linux_class_input_handle_hotplug_add): new function
+
+	* hald/linux/linux*.[ch]: Add _detection_done() method that is called
+	when device detection (on startup of the HAL daemon) is done
+
+	* hald/linux/linux_osspec.c (osspec_init): Call _detection_done
+	(ospec_hotplug): Handle input being hotplugged
+
+	* tools/hal_get_property.c: added doxygen comments
+
+	* tools/hal_set_property.c: added doxygen comments
+
+	* tools/lshal.c: added doxygen comments
+	
+2003-12-21  David Zeuthen  <david@fubar.dk>
+
 	* hald/device_store.c (ds_device_destroy): Only call gdl_changed_cb's
 	if the device being destructed is in the GDL
 

@@ -39,10 +39,15 @@
 #include "device_store.h"
 
 /**
- * @defgroup DeviceStore HAL device store
- * @ingroup HalDaemon
- * @brief The device store is where the HAL daemon device objects are stored
- * @{
+ *  @defgroup DeviceStore HAL device store
+ *  @ingroup HalDaemon
+ *
+ *  @todo FIXME: Right now this implementation is quite naive - should
+ *  be replaced with something like hashtables etc. 
+ *
+ *
+ *  @brief The device store is where the device objects are stored
+ *  @{
  */
 
 /** Maximum number of callbacks inside the HAL daemon */

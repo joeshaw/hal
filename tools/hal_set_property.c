@@ -36,6 +36,20 @@
 
 #include <libhal/libhal.h>
 
+/**
+ * @defgroup HalSetProperty  Set HAL device property
+ * @ingroup HalMisc
+ *
+ * @brief A commandline tool setting a property of a device. Uses libhal
+ *
+ * @{
+ */
+
+/** Print out program usage.
+ *
+ *  @param  argc                Number of arguments given to program
+ *  @param  argv                Arguments given to program
+ */
 static void usage(int argc, char* argv[])
 {
     fprintf(stderr, 
@@ -62,6 +76,12 @@ static void usage(int argc, char* argv[])
 "\n");
 }
 
+/** Entry point
+ *
+ *  @param  argc                Number of arguments given to program
+ *  @param  argv                Arguments given to program
+ *  @return                     Return code
+ */
 int main(int argc, char* argv[])
 {
     int rc = 0;
@@ -209,3 +229,7 @@ int main(int argc, char* argv[])
 
     return 0;
 }
+
+/**
+ * @}
+ */

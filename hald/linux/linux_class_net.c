@@ -530,6 +530,14 @@ void linux_class_net_init()
     ds_add_cb_gdl_changed(gdl_changed);    
 }
 
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_class_net_detection_done()
+{
+}
+
 /** Shutdown function for block device handling
  *
  */

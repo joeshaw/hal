@@ -578,20 +578,20 @@ static char* usb_compute_udi(HalDevice* d, int append_num)
 }
 
 
-/** Set capabilities from interface class. This is a function from hell,
- *  maybe some searchable data-structure would be better...
+/** Set capabilities from interface and/or device class.  This is a
+ *  function from hell, maybe some searchable data-structure would be
+ *  better...
  *
  *  @param  d                   The HalDevice to set the caps
  *  @param  if_class            Interface class
  *  @param  if_sub_class        Interface sub class
- *  @param  if_proto            Interface protocol
- */
+ *  @param if_proto Interface protocol */
 static void usb_add_caps_from_class(HalDevice* d,
                                     int if_class, 
                                     int if_sub_class, 
                                     int if_proto)
 {
-    char* cat = "unknown";
+    char* cat = NULL;
 
     switch( if_class )
     {
@@ -649,9 +649,17 @@ static void usb_add_caps_from_class(HalDevice* d,
         break;
     case 0x0a:
         break;
+    case 0xe0:
+        if( if_sub_class==0x01 && if_proto==0x01 ) 
+        {
+            cat = "bluetooth_adaptor";
+            ds_add_capability(d, "bluetooth_adaptor");
+        }
+        break;
     }
 
-    ds_property_set_string(d, "Category", cat);
+    if( cat!=NULL )
+        ds_property_set_string(d, "Category", cat);
 }
 
 
@@ -980,6 +988,13 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
         ds_property_set_string(d, "Product", numeric_name);
     }
 
+
+    /* Check device class */
+    usb_add_caps_from_class(d, 
+                            ds_property_get_int(d, "usb.bDeviceClass"),
+                            ds_property_get_int(d, "usb.bDeviceSubClass"),
+                            ds_property_get_int(d, "usb.bDeviceProtocol"));
+
     parent_sysfs_path = get_parent_sysfs_path(path);
 
     /* Find parent; this happens asynchronously as our parent might
@@ -1207,6 +1222,15 @@ void linux_usb_init()
     /* @todo FIXME: do this on every hotplug */
     usb_proc_parse();
 }
+
+/** This function is called when all device detection on startup is done
+ *  in order to perform optional batch processing on devices
+ *
+ */
+void linux_usb_detection_done()
+{
+}
+
 
 /** Shutdown function for USB handling
  *

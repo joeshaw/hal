@@ -28,15 +28,14 @@
 
 #include "linux_common.h"
 
-/*  @ingroup  HalAgentsLinux
- *  @{
- */
-
 void linux_class_input_probe();
 
 void linux_class_input_init();
+void linux_class_input_detection_done();
 void linux_class_input_shutdown();
 
-/* @} */
+void linux_class_input_handle_hotplug_add(char* name, char* phys, char* key,
+                                          int ev, int rel, int abs, int led);
+
 
 #endif /* LINUX_CLASS_INPUT_H */

@@ -233,10 +233,6 @@ void osspec_init(DBusConnection* dbus_connection)
     linux_class_scsi_init();
     linux_class_block_init();
     linux_class_net_init();
-
-    /* input devices are not yet in sysfs */
-    linux_class_input_probe();
-
 }
 
 /** This is set to #TRUE if we are probing and #FALSE otherwise */
@@ -285,25 +281,52 @@ void osspec_probe()
     /* visit all net devices */
     visit_class("net", TRUE);
 
-    /* Find the input devices (no yet in sysfs) */
-    //hal_input_probe();
-
-    /* Process /etc/mtab and modify block devices we indeed have mounted 
-     * (dont set up the watcher)
-     */
-    //etc_mtab_process_all_block_devices(FALSE);
+    /* input devices are not yet in sysfs */
+    linux_class_input_probe();
 
     is_probing = FALSE;
+
+    /* Notify various device and class types that detection is done, so 
+     * they can do some (optional) batch processing
+     */
+    linux_pci_detection_done();
+    linux_usb_detection_done();
+    linux_ide_detection_done();
+    linux_class_block_detection_done();
+    linux_class_input_detection_done();
+    linux_class_net_detection_done();
+    linux_class_scsi_detection_done();
 }
 
+/** Maximum length of string parameter in hotplug input events */
+#define HOTPLUG_INPUT_MAX 128
+
+/** Handle a org.freedesktop.Hal.HotplugEvent message. This message
+ *  origins from the hal.hotplug program, tools/linux/hal_hotplug.c,
+ *  and is basically just a D-BUS-ification of the hotplug event.
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
 static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
                                         DBusMessage* message)
 {
     DBusMessageIter iter;
     DBusMessageIter dict_iter;
-    char* subsystem;
-    char sysfs_devpath[SYSFS_PATH_MAX];
     dbus_bool_t is_add;
+    char* subsystem;
+    char input_name[HOTPLUG_INPUT_MAX];
+    char input_phys[HOTPLUG_INPUT_MAX];
+    char input_key[HOTPLUG_INPUT_MAX];
+    int input_ev=0;
+    int input_rel=0;
+    int input_abs=0;
+    int input_led=0;
+    char sysfs_devpath[SYSFS_PATH_MAX];
+
+    sysfs_devpath[0] = '\0';
+    input_name[0] = input_phys[0] = input_key[0] = '\0';
 
     dbus_message_iter_init(message, &iter);
 
@@ -317,8 +340,6 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
 
     dbus_message_iter_next(&iter);
     dbus_message_iter_init_dict_iterator(&iter, &dict_iter);
-
-    /*printf("subsystem = %s\n", subsystem);*/
 
     is_add = FALSE;
 
@@ -340,21 +361,38 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
                 is_add = TRUE;
             }
         }
-
-        if( strcmp(key, "DEVPATH")==0 )
+        else if( strcmp(key, "DEVPATH")==0 )
         {
             strncpy(sysfs_devpath, sysfs_mount_path, SYSFS_PATH_MAX);
             strncat(sysfs_devpath, value, SYSFS_PATH_MAX);
         }
+        else if( strcmp(key, "NAME")==0 )
+            strncpy(input_name, value, HOTPLUG_INPUT_MAX);
+        else if( strcmp(key, "PHYS")==0 )
+            strncpy(input_phys, value, HOTPLUG_INPUT_MAX);
+        else if( strcmp(key, "KEY")==0 )
+            strncpy(input_key, value, HOTPLUG_INPUT_MAX);
+        else if( strcmp(key, "EV")==0 )
+            input_ev = parse_dec(value);
+        else if( strcmp(key, "REL")==0 )
+            input_rel = parse_hex(value);
+        else if( strcmp(key, "ABS")==0 )
+            input_abs = parse_hex(value);
+        else if( strcmp(key, "LED")==0 )
+            input_led = parse_hex(value);
     }
 
-    if( sysfs_devpath!=NULL && 
+    HAL_INFO(("HotplugEvent %s, subsystem=%s", 
+              (is_add ? "add" : "remove"), subsystem));
+
+    if( sysfs_devpath[0]!='\0' && 
         (strcmp(subsystem, "usb")==0 ||
          strcmp(subsystem, "pci")==0) )
     {
+
         if( is_add )
         {
-            HAL_INFO(("Adding device @ sysfspath %s\n", sysfs_devpath));
+            HAL_INFO(("Adding device @ sysfspath %s", sysfs_devpath));
             visit_device(sysfs_devpath, FALSE);
         }
         else
@@ -370,20 +408,21 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
             }
             else
             {
+                HAL_INFO(("Removing device @ sysfspath %s, udi %s", 
+                          sysfs_devpath, d->udi));
                 ds_device_destroy(d);
             }
         }
     }
-
-    if( sysfs_devpath!=NULL && 
-        (strcmp(subsystem, "net")==0 ||
-         strcmp(subsystem, "block")==0 ||
-         strcmp(subsystem, "scsi_host")==0 ||
-         strcmp(subsystem, "scsi_device")==0) )
+    else if( sysfs_devpath[0]!='\0' && 
+             (strcmp(subsystem, "net")==0 ||
+              strcmp(subsystem, "block")==0 ||
+              strcmp(subsystem, "scsi_host")==0 ||
+              strcmp(subsystem, "scsi_device")==0) )
     {
         if( is_add )
         {
-            HAL_INFO(("Adding device @ sysfspath %s\n", sysfs_devpath));
+            HAL_INFO(("Adding classdevice @ sysfspath %s", sysfs_devpath));
             visit_class_device(sysfs_devpath, FALSE);
         }
         else
@@ -398,8 +437,30 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
             }
             else
             {
+                HAL_INFO(("Removing classdevice @ sysfspath %s, udi %s", 
+                          sysfs_devpath, d->udi));
                 ds_device_destroy(d);
             }
+        }
+    }
+    else if( strcmp(subsystem, "input")==0 )
+    {
+        if( is_add )
+        {
+            /** @todo FIXME when kernel 2.6 got input devices in sysfs
+             *        this terrible hack can be removed
+             */
+            linux_class_input_handle_hotplug_add(input_name, input_phys, 
+                                                 input_key, 
+                                                 input_ev, input_rel, 
+                                                 input_abs, input_led);
+        }
+        else
+        {
+            /* This block is left intentionally blank, since input class
+             * devices simply attach to other (physical) devices and when
+             * they disappear, the input part also goes away
+             */
         }
     }
 

@@ -28,15 +28,10 @@
 
 #include "linux_common.h"
 
-/*  @ingroup  HalAgentsLinux
- *  @{
- */
-
 void visit_device_pci(const char* path, struct sysfs_device *device);
 
 void linux_pci_init();
+void linux_pci_detection_done();
 void linux_pci_shutdown();
-
-/* @} */
 
 #endif /* LINUX_PCI_H */

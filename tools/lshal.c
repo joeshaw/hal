@@ -39,13 +39,22 @@
 
 #include <libhal/libhal.h>
 
+/**
+ * @defgroup HalLsHal  List HAL devices
+ * @ingroup HalMisc
+ *
+ * @brief A commandline tool, lshal, for displaying and, optionally,
+ *        monitor the devices managed by the HAL daemon. Uses libhal.
+ *
+ * @{
+ */
 
-static void die(const char *message)
-{
-    fprintf(stderr, "*** %s", message);
-    exit (1);
-}
+/** Macro for terminating the program on an unrecoverable error */
+#define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
+/** Dump all devices to stdout
+ *
+ */
 static void dump_devices()
 {
     int i;
@@ -55,7 +64,7 @@ static void dump_devices()
     device_names = hal_get_all_devices(&num_devices);
 
     if( device_names==NULL )
-        die("Couldn't obtain list of devices\n");
+        DIE(("Couldn't obtain list of devices\n"));
 
     printf("\n"
            "Dumping %d device(s) from the Global Device List:\n"
@@ -120,18 +129,34 @@ static void dump_devices()
     printf("\n");
 }
 
+/** Invoked when a device is added to the Global Device List. Simply prints
+ *  a message on stderr.
+ *
+ *  @param  udi                 Universal Device Id
+ */
 static void device_added(const char* udi)
 {
     fprintf(stderr, "*** lshal: device_added, udi='%s'\n", udi);
     dump_devices();
 }
 
+/** Invoked when a device is removed from the Global Device List. Simply
+ *  prints a message on stderr.
+ *
+ *  @param  udi                 Universal Device Id
+ */
 static void device_removed(const char* udi)
 {
     fprintf(stderr, "*** lshal: device_removed, udi='%s'\n", udi);
     dump_devices();
 }
 
+/** Invoked when device in the Global Device List acquires a new capability.
+ *  Prints the name of the capability to stderr.
+ *
+ *  @param  udi                 Universal Device Id
+ *  @param  capability          Name of capability
+ */
 static void device_new_capability(const char* udi, const char* capability)
 {
     fprintf(stderr, "*** lshal: new_capability, udi='%s'\n", udi);
@@ -140,6 +165,11 @@ static void device_new_capability(const char* udi, const char* capability)
 }
 
 
+/** Acquires and prints the value of of a property to stderr.
+ *
+ *  @param  udi                 Universal Device Id
+ *  @param  key                 Key of property
+ */
 static void print_property(const char* udi, const char* key)
 {
     int type;
@@ -173,6 +203,12 @@ static void print_property(const char* udi, const char* key)
     }
 }
 
+/** Invoked when a property of a device in the Global Device List is
+ *  changed, and we have we have subscribed to changes for that device.
+ *
+ *  @param  udi                 Univerisal Device Id
+ *  @param  key                 Key of property
+ */
 static void property_changed(const char* udi, const char* key)
 {
     fprintf(stderr, "*** lshal: property_changed, udi='%s', key=%s\n", 
@@ -182,6 +218,12 @@ static void property_changed(const char* udi, const char* key)
     /*dump_devices();*/
 }
 
+/** Invoked when a property of a device in the Global Device List is
+ *  added, and we have we have subscribed to changes for that device.
+ *
+ *  @param  udi                 Univerisal Device Id
+ *  @param  key                 Key of property
+ */
 static void property_added(const char* udi, const char* key)
 {
     fprintf(stderr, "*** lshal: property_added, udi='%s', key=%s\n", 
@@ -191,6 +233,12 @@ static void property_added(const char* udi, const char* key)
     /*dump_devices();*/
 }
 
+/** Invoked when a property of a device in the Global Device List is
+ *  removed, and we have we have subscribed to changes for that device.
+ *
+ *  @param  udi                 Univerisal Device Id
+ *  @param  key                 Key of property
+ */
 static void property_removed(const char* udi, const char* key)
 {
     fprintf(stderr, "*** lshal: property_removed, udi='%s', key=%s\n", 
@@ -199,12 +247,22 @@ static void property_removed(const char* udi, const char* key)
     /*dump_devices();*/
 }
 
+/** Invoked by libhal for integration with our mainloop. We take the
+ *  easy route and use link with glib for painless integrate.
+ *
+ *  @param  dbus_connection     D-BUS connection to integrate
+ */
 static void mainloop_integration(DBusConnection* dbus_connection)
 {
     dbus_connection_setup_with_g_main(dbus_connection, NULL);
 }
 
 
+/** Print out program usage.
+ *
+ *  @param  argc                Number of arguments given to program
+ *  @param  argv                Arguments given to program
+ */
 static void usage(int argc, char* argv[])
 {
     fprintf(stderr, 
@@ -216,10 +274,16 @@ static void usage(int argc, char* argv[])
 "        --help           Show this information and exit\n"
 "\n"
 "Shows all devices and their properties. If the --monitor option is given\n"
-"then the device list is also monitored for changes.\n"
+"then the device list and all devices are monitored for changes.\n"
 "\n");
 }
 
+/** Entry point
+ *
+ *  @param  argc                Number of arguments given to program
+ *  @param  argv                Arguments given to program
+ *  @return                     Return code
+ */
 int main(int argc, char* argv[])
 {
     dbus_bool_t do_monitor = FALSE;
@@ -295,3 +359,8 @@ int main(int argc, char* argv[])
     hal_shutdown();
     return 0;
 }
+
+
+/**
+ * @}
+ */

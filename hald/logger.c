@@ -94,7 +94,10 @@ void logger_emit(const char* format,...)
     case HAL_LOGPRI_ERROR:   pri="[E]"; break;
     }
 
-    fprintf(stderr, "%s %s:%d %s() : %s\n", pri, file, line, function, buf);
+    /** @todo Make programmatic interface to logging */
+    if( priority!=HAL_LOGPRI_TRACE )
+        fprintf(stderr, "%s %s:%d %s() : %s\n", 
+                pri, file, line, function, buf);
 
     va_end(args);
 }
