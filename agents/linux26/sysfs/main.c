@@ -52,6 +52,7 @@
 #include "hal_net.h"
 #include "hal_input.h"
 
+#include "hal_monitor.h"
 
 /** @defgroup HalAgentsLinux26 Linux 2.6 sysfs
  *  @ingroup  HalAgentsLinux
@@ -884,6 +885,11 @@ static void hal_sysfs_probe()
 
     /* Find the input devices (no yet in sysfs) */
     hal_input_probe();
+
+    /* Process /etc/mtab and modify block devices we indeed have mounted 
+     * (dont set up the watcher)
+     */
+    etc_mtab_process_all_block_devices(FALSE);
 }
 
 /** This function is invoked on hotplug add events */
@@ -1176,6 +1182,7 @@ static void usage()
 "usage : hal-sysfs-agent [--help] [--probe]\n"
 "\n"
 "        --probe          Probe devices present in sysfs\n"
+"        --monitor        Monitor devices (link detection, mount points)\n"
 "        --help           Show this information and exit\n"
 "\n"
 "This program is supposed to only be invoked from the linux-hotplug package\n"
@@ -1191,7 +1198,7 @@ static void usage()
  */
 int main(int argc, char* argv[])
 {
-    //GMainLoop* loop;
+    GMainLoop* loop;
     LibHalFunctions hal_functions = {mainloop_integration,
                                      NULL /*property_changed*/,
                                      NULL /*device_added*/, 
@@ -1206,13 +1213,15 @@ int main(int argc, char* argv[])
 
     fprintf(stderr, "hal-sysfs-agent " PACKAGE_VERSION "\r\n");
 
+    loop = g_main_loop_new(NULL, FALSE);
+
     if( hal_initialize(&hal_functions)  )
     {
         fprintf(stderr, "error: hal_initialize failed\r\n");
         exit(1);
     }
 
-    openlog("hal-sysfs-agent", LOG_CONS|LOG_PID, LOG_DAEMON);
+    openlog("hal-sysfs-agent", LOG_CONS|LOG_PID|LOG_PERROR, LOG_DAEMON);
 
     hal_pci_init();
     hal_usb_init();
@@ -1231,6 +1240,7 @@ int main(int argc, char* argv[])
         {
             {"help", 0, NULL, 0},
             {"probe", 0, NULL, 0},
+            {"monitor", 0, NULL, 0},
             {NULL, 0, NULL, 0}
         };
 
@@ -1252,9 +1262,15 @@ int main(int argc, char* argv[])
             else if( strcmp(opt, "probe")==0 )
             {
                 hal_sysfs_probe();
-
                 sleep(1);
                 return 0;
+            }
+            else if( strcmp(opt, "monitor")==0 )
+            {
+                /* Go into monitor mode to monitor /etc/mtab and do network
+                 * link detection
+                 */
+                hal_monitor_enter(loop);
             }
 
         default:

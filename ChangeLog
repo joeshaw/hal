@@ -1,3 +1,25 @@
+2003-12-01  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal_monitor.c: new file, the /etc/mtab 
+	monitoring code is still a bit cheesy (especially the sleep(1) :-)
+	Someone with more linux-skills will hopefully rewrite it some day!
+
+	* agents/linux26/sysfs/hal_monitor.h: new file
+
+	* agents/linux26/sysfs/hal_usb.c (visit_device_usb): Fixed potential
+	bug for whitespace-strip loop
+
+	* agents/linux26/sysfs/main.c (hal_sysfs_probe): Call 
+	etc_mtab_process_all_block_devices() to inspect /etc/mtab and set
+	correct information for the block devices that is already mounted
+	(main): Add new option --monitor to start in monitoring mode. Right
+	now only /etc/mtab is monitored but network link detection is planned.
+
+	* tools/hal-device-manager: Don't rebuild entire tree if properties
+	on a device is changing but just get the changes from hald and change
+	the internal representation. Helps performance a lot.
+
+
 2003-11-30  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26/sysfs/hal_net.c: new file

@@ -739,7 +739,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
 
         /* strip whitespace */
         len = strlen(cur->value);
-        for(i=len-1; isspace(cur->value[i]) && i>=0; --i)
+        for(i=len-1; i>=0 && isspace(cur->value[i]); --i)
             cur->value[i] = '\0';
 
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/

@@ -19,7 +19,9 @@ hal_sysfs_agent_hotplug_SOURCES =                            \
         hal_scsi.c                hal_scsi.h                 \
         hal_block.c               hal_block.h                \
         hal_net.c                 hal_net.h                  \
-        hal_input.c               hal_input.h
+        hal_input.c               hal_input.h                \
+	hal_monitor.c             hal_monitor.h
+
 
 #hal_sysfs_agent_hotplug_LDADD = @PACKAGE_LIBS@
 

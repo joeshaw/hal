@@ -145,13 +145,12 @@ class GUI:
     def udi_to_device(self, device_udi):
         return self.virtual_root.find_by_udi(device_udi)
 
-
     def build_device_tree(self):
         device_names = self.hal_manager.GetAllDevices()
         device_names.sort()
 
         virtual_root = Device("virtual_root", None, {})
-        device_list = [virtual_root]
+        self.device_list = [virtual_root]
         
         # first build list of Device objects
         for name in device_names:
@@ -164,14 +163,14 @@ class GUI:
                 # no parent, must be parent of virtual_root
                 parent_name = "/"
             device = Device(name, parent_name, properties)
-            device_list.append(device)
+            self.device_list.append(device)
 
         # set parent_device and children for each Device object
-        for device in device_list:
+        for device in self.device_list:
             parent_name = device.parent_name
             device.parent_device = virtual_root
             if parent_name!="/":
-                for p in device_list:
+                for p in self.device_list:
                     if p.device_name==parent_name:
                         device.parent_device = p
                         p.children.append(device)
@@ -365,7 +364,13 @@ class GUI:
         self.update_tab_usb(device)
         self.update_tab_pci(device)
 
-
+    def get_current_focus_udi(self):
+        (tree_model, tree_iter) = self.tree_selection.get_selected()
+        if tree_iter:
+            device_udi = tree_model.get_value(tree_iter, UDI_COLUMN)
+            return device_udi
+        return None
+        
     def on_device_tree_selection_changed(self, tree_selection):
         (tree_model, tree_iter) = tree_selection.get_selected()
         if tree_iter:
@@ -376,9 +381,27 @@ class GUI:
     def device_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
         [property_name] = dbus_message.get_args_list()
         # TODO: Update appropriate device
-        #if property_name=="Parent":
-        #    update_device_list()        
-        self.update_device_list()        
+        #self.update_device_list()        
+        if property_name=="Parent":
+            self.update_device_list()        
+        else:
+            device_udi = dbus_obj_path
+            device_udi_obj = self.hal_service.get_object(device_udi,
+                                        "org.freedesktop.Hal.Device")
+            device_obj = self.udi_to_device(device_udi)
+
+            if device_udi_obj.PropertyExists(property_name):
+                #ptype = device_udi_obj.GetPropertyType(property_name)
+                device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
+            else:
+                if device_obj != None:
+                    try:
+                        del device_obj.properties[property_name]
+                    except:
+                        pass
+            if self.get_current_focus_udi()==device_udi:
+                self.update_device_notebook(device_obj)                
+
 
     def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
         if dbus_member=="DeviceAdded":
