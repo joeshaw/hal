@@ -1,5 +1,11 @@
 2004-07-08  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/platform_bus_device.c (platform_device_pre_process): 
+	Introduce the x86 legacy floppy into THE CITY OF LOST DEVICES both
+	info.parent- and storage.device-wise
+
+2004-07-08  David Zeuthen  <david@fubar.dk>
+
 	Some more fixes caught by extensive testing
 
 	* hald/linux/block_class_device.c (mtab_handle_storage): Consolidate

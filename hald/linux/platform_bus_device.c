@@ -137,6 +137,14 @@ platform_device_pre_process (BusDeviceHandler *self,
 	hal_device_property_set_string (d, "storage.vendor", "");
 	hal_device_property_set_string (d, "storage.model", "Floppy Drive");
 
+	hal_device_property_set_string (
+		d, "storage.physical_device", 
+		"/org/freedesktop/Hal/devices/fakeroot");
+
+	hal_device_property_set_string (
+		d, "info.parent", 
+		"/org/freedesktop/Hal/devices/fakeroot");
+
 	hal_device_add_capability (d, "block");
 	hal_device_add_capability (d, "storage");
 	hal_device_add_capability (d, "storage.floppy");
