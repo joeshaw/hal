@@ -311,6 +311,9 @@ GHashTable *sysfs_to_class_in_devices_map = NULL;
  */
 GHashTable *sysfs_to_block_map = NULL;
 
+GSList *sysfs_other_blockdevs = NULL;
+
+
 /** Mapping from sysfs path in /sys/class to class type
  *
  * Example:
@@ -378,6 +381,7 @@ compute_coldplug_list (void)
 	const gchar *f1;
 	const gchar *f2;
 	GSList *coldplug_list = NULL;
+	GSList *i;
 
 	/* build bus map */
 	sysfs_to_bus_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -509,6 +513,13 @@ compute_coldplug_list (void)
 			/*printf ("%s -> %s\n",  normalized_target, path);*/
 			g_free (target);
 			g_hash_table_insert (sysfs_to_block_map, normalized_target, g_strdup(path));
+		} else {
+			/* we're also interested in block devices without device links
+			 * for e.g. device mapper stuff such as /dev/dm-0 */
+			g_snprintf (path, SYSFS_PATH_MAX, "%s/block/%s", sysfs_mount_path, f);
+
+			sysfs_other_blockdevs = g_slist_append (sysfs_other_blockdevs, g_strdup (path));
+			/*printf ("other blockdev: %s\n", path);*/
 		}
 		
 	}
@@ -588,6 +599,14 @@ compute_coldplug_list (void)
 
 	/* Then add all the class devices that doesn't sit in the /sys/devices tree */
 	g_hash_table_foreach (sysfs_to_class_map, compute_coldplug_visit_class_device, &coldplug_list);
+
+	/* Finally add all block devices without device links */
+	for (i = sysfs_other_blockdevs; i != NULL; i = i->next) {
+		const char *obpath = i->data;
+		coldplug_list = g_slist_append (coldplug_list, 
+						h_string_pair_new (g_strdup (obpath), g_strdup ("block")));
+	}
+	g_slist_free (sysfs_other_blockdevs);
 
 	g_hash_table_destroy (sysfs_to_bus_map);
 	g_hash_table_destroy (sysfs_to_class_in_devices_map);

@@ -2006,6 +2006,185 @@ found:
 	return 0;
 }
 
+#define SESAME_MAGIC "# SESAME_MAGIC"
+
+static __u8 *
+sesame_skip_to_next_nonempty_line (__u8 *buf)
+{
+	while (*buf == '\n')
+		buf++;
+
+	while (*buf != '\n') {
+		if (*buf == '\0')
+			return NULL;
+		buf++;
+	}
+
+	while (*buf == '\n')
+		buf++;
+
+	return buf;
+}
+
+static int 
+sesame_parse (__u8 *buf, int (*got_kv_pair_cb) (const char *key, const char *value, void *data), void *data)
+{
+	int rc;
+	char magic[] = SESAME_MAGIC;
+
+	rc = 0;
+
+	if (strncmp (&buf[0], magic, sizeof (magic) - 1) != 0)
+		goto out;
+
+	buf = sesame_skip_to_next_nonempty_line (buf);
+	if (buf == NULL)
+		goto out;
+
+	rc = 1;
+
+	do {
+		unsigned int i;
+		char *lstart;
+		char *lend;
+		char line[256];
+		size_t len;
+		char *valbegin;
+		char *ival;
+		char key[256];
+		char value[256];
+
+		lstart = (char *) buf;
+		buf = sesame_skip_to_next_nonempty_line (buf);
+		if (buf == NULL)
+			break;
+		lend = ((char *) buf) - 1;
+
+		len = lend - lstart;
+		if (len > sizeof (line))
+			len = sizeof (line);
+
+		strncpy (line, lstart, len);
+		line[len] = '\0';
+
+		if (line[0] == '#')
+			continue;
+
+		valbegin = strchr (line, '=') + 1;
+		if (valbegin == NULL)
+			continue;
+
+		/* copy key and strip trailing whitespace */
+		strncpy (key, line, valbegin - 1 - line);
+		key[valbegin - 1 - line] = '\0';
+		for (i = valbegin - 1 - line - 1; i >= 0; --i) {
+			if (!isspace (key[i]))
+			    break;
+			key[i]='\0';
+		}
+
+		/* get value and unescape \' to ' */
+		valbegin = strchr (valbegin, '\'');
+		if (valbegin == NULL)
+			continue;
+		valbegin++;
+		for (ival=valbegin, i=0; ival != '\0' && i < sizeof (value) - 1; ival++) {
+			if (*ival == '\'')
+				break;
+			if (*ival == '\\') {
+				if (*(ival + 1) == '\'') {
+					value [i++] = '\'';
+					ival++;;
+					continue;
+				}
+			}
+			value [i++] = *ival;
+		}
+		value [i] = '\0';
+
+		/* callback may short circuit */
+		if (got_kv_pair_cb (key, value, data) == 0) {
+			rc = 0;
+			goto out;
+		}
+
+	} while (1);
+
+
+
+out:
+	return rc;
+}
+
+static int
+sesame_got_kv_pair (const char *key, const char *value, void *data)
+{
+	int rc;
+	struct volume_id *vid = (struct volume_id *) data;
+	struct volume_id_kv_pair *pair;
+	
+	/* sanity check */
+	if (key == NULL || value == NULL || vid == NULL)
+		goto out;
+	
+	dbg ("key,value = '%s' -> '%s'", key, value);
+	
+	rc = 0;
+	
+	/* short circuit if OOM */
+	pair = calloc (1, sizeof (struct volume_id_kv_pair));
+	if (pair == NULL)
+		goto out;
+
+	pair->key = strdup (key);
+	if (pair->key == NULL)
+		goto out;
+
+	pair->value = strdup (value);
+	if (pair->value == NULL)
+		goto out;
+
+	pair->next = vid->kv_pairs;
+	vid->kv_pairs = pair;
+
+	/* map certain properties to volume_id specifics */
+	if (strcmp (key, "version") == 0) {
+		strncpy(vid->type_version, value, VOLUME_ID_FORMAT_SIZE);
+	} else if (strcmp (key, "uuid") == 0) {
+		strncpy(vid->uuid, value, VOLUME_ID_UUID_STRING_SIZE);
+	}
+
+	rc = 1;
+
+out:
+	return rc;
+}
+
+static int probe_crypto_sesame(struct volume_id *id, __u64 off, __u64 size)
+{
+	int found;
+	const __u8 *buf;
+
+	found = 0;
+
+	buf = get_buffer(id, off, 0x100);
+	if (buf == NULL)
+		goto out;
+
+	found = sesame_parse (buf, sesame_got_kv_pair, (void *) id);
+
+out:
+	if (found) {
+		id->usage_id = VOLUME_ID_CRYPTO;
+		id->type_id = VOLUME_ID_CRYPTO_SESAME;
+		id->type = "crypto_sesame";
+		return 0;
+	}
+
+	return -1;
+}
+
+
 /* probe volume for filesystem type and try to read label+uuid */
 int volume_id_probe(struct volume_id *id,
 		    enum volume_id_type type,
@@ -2073,8 +2252,15 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_HPTRAID:
 		rc = probe_highpoint_ataraid(id, off);
 		break;
+	case VOLUME_ID_CRYPTO_SESAME:
+		rc = probe_crypto_sesame(id, off, size);
+		break;
 	case VOLUME_ID_ALL:
 	default:
+		rc = probe_crypto_sesame(id, off, size);
+		if (rc == 0)
+			break;
+
 		/* probe for raid first, cause fs probes may be successful on raid members */
 		rc = probe_linux_raid(id, off, size);
 		if (rc == 0)
@@ -2204,6 +2390,9 @@ struct volume_id *volume_id_open_dev_t(dev_t devt)
 /* free allocated volume info */
 void volume_id_close(struct volume_id *id)
 {
+	struct volume_id_kv_pair *pair;
+	struct volume_id_kv_pair *pair_next;
+
 	if (id == NULL)
 		return;
 
@@ -2214,6 +2403,13 @@ void volume_id_close(struct volume_id *id)
 
 	if (id->partitions != NULL)
 		free(id->partitions);
+
+	for (pair = id->kv_pairs; pair != NULL; pair = pair_next) {
+		free (pair->key);
+		free (pair->value);
+		pair_next = pair->next;
+		free (pair);
+	}
 
 	free(id);
 }

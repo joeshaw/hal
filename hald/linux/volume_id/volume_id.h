@@ -37,6 +37,7 @@ enum volume_id_usage {
 	VOLUME_ID_FILESYSTEM,
 	VOLUME_ID_PARTITIONTABLE,
 	VOLUME_ID_RAID,
+	VOLUME_ID_CRYPTO
 };
 
 enum volume_id_type {
@@ -61,6 +62,7 @@ enum volume_id_type {
 	VOLUME_ID_LVM1,
 	VOLUME_ID_LVM2,
 	VOLUME_ID_HPTRAID,
+	VOLUME_ID_CRYPTO_SESAME
 };
 
 struct volume_id_partition {
@@ -70,6 +72,12 @@ struct volume_id_partition {
 	unsigned long long off;
 	unsigned long long len;
 	unsigned int partition_type_raw;
+};
+
+struct volume_id_kv_pair {
+	char *key;
+	char *value;
+	struct volume_id_kv_pair *next;
 };
 
 struct volume_id {
@@ -91,6 +99,8 @@ struct volume_id {
 	unsigned long long seekbuf_off;
 	unsigned int	seekbuf_len;
 	int		fd_close;
+
+	struct volume_id_kv_pair *kv_pairs;
 };
 
 /* open volume by already open file descriptor */

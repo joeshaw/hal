@@ -97,6 +97,9 @@ set_volume_id_values(HalDevice *d, struct volume_id *vid)
 	case VOLUME_ID_RAID:
 		usage = "raid";
 		break;
+	case VOLUME_ID_CRYPTO:
+		usage = "crypto";
+		break;
 	case VOLUME_ID_UNUSED:
 		hal_device_property_set_string (d, "info.product", "Volume (unused)");
 		usage = "unused";
@@ -124,6 +127,17 @@ set_volume_id_values(HalDevice *d, struct volume_id *vid)
 		product = g_strdup_printf ("Volume (%s)", vid->type);
 		hal_device_property_set_string (d, "info.product", product);
 		g_free (product);
+	}
+
+	if (vid->type != NULL && strlen (vid->type) > 0) {
+		char kv_key[256];
+		struct volume_id_kv_pair *pair;
+
+		for (pair = vid->kv_pairs; pair != NULL; pair = pair->next) {
+			
+			snprintf (kv_key, sizeof (kv_key), "volume.%s.%s", vid->type, pair->key);
+			hal_device_property_set_string (d, kv_key, pair->value);
+		}
 	}
 }
 
@@ -161,8 +175,7 @@ block_class_accept (ClassDeviceHandler *self,
 	int instance;
 	HalDevice *d;
 
-	/*HAL_INFO (("path = %s, classname = %s", 
-	  sysfs_path, self->sysfs_class_name));*/
+	/*HAL_INFO (("^^^^^ path = %s, classname = %s", sysfs_path, self->sysfs_class_name));*/
 
 	/* skip legacy floppies for now, until we get proper sysfs links to the
 	   platform device and switch over to merge floppies into that device.
@@ -256,6 +269,82 @@ block_class_visit (ClassDeviceHandler *self,
 	 * and we reorder hotplug events)
 	 */
 	if (parent == NULL) {
+		unsigned int major;
+		unsigned int minor;
+		const char *last_elem;
+
+		major = 253; /* TODO: replace by devmapper constant */
+
+		last_elem = get_last_element (path);
+		if (sscanf (last_elem, "dm-%d", &minor) == 1) {
+			GDir *dir;
+
+
+			HAL_INFO (("path=%s is a device mapper dev, major/minor=%d/%d", path, major, minor));
+
+			/* Ugly hack to see if we're a sesame crypto device; should
+			 * be replaced by some ioctl or libdevmapper stuff by where
+			 * we can ask about the name for /dev/dm-0; as e.g. given by
+			 * 'dmsetup info'
+			 *
+			 * Our assumption is that sesame-setup have invoked
+			 * dmsetup; e.g. the naming convention is 
+			 *
+			 *    sesame_crypto_<sesame_uuid>
+			 *
+			 * where <sesame_uuid> is the UUID encoded in the sesame
+			 * metadata.
+			 */
+
+			/* Ugly sleep of 0.5s here as well to allow dmsetup to do the mknod */
+			usleep (1000 * 1000 * 5 / 10);
+			
+			if ((dir = g_dir_open ("/dev/mapper", 0, NULL)) != NULL) {
+				const gchar *f;
+				char devpath[256];
+				struct stat statbuf;
+				
+				while ((f = g_dir_read_name (dir)) != NULL) {
+					char sesame_prefix[] = "sesame_crypto_";
+					const char *sesame_uuid;
+					
+					HAL_INFO (("looking at /dev/mapper/%s", f));
+					
+					g_snprintf (devpath, sizeof (devpath), "/dev/mapper/%s", f);
+					if (stat (devpath, &statbuf) == 0) {
+						if (S_ISBLK (statbuf.st_mode) && 
+						    MAJOR(statbuf.st_rdev) == major && 
+						    MINOR(statbuf.st_rdev) == minor &&
+						    strncmp (f, sesame_prefix, sizeof (sesame_prefix) - 1) == 0) {
+							HalDevice *backing_volume;
+							
+							sesame_uuid = f + sizeof (sesame_prefix) - 1;
+							HAL_INFO (("found %s; sesame_uuid='%s'!", 
+								   devpath, sesame_uuid));
+							
+							backing_volume = hal_device_store_match_key_value_string (
+								hald_get_gdl (), 
+								"volume.crypto_sesame.uuid", 
+								sesame_uuid);
+							if (backing_volume != NULL) {
+								const char *backing_volume_stordev_udi;
+								backing_volume_stordev_udi = hal_device_property_get_string (backing_volume, "block.storage_device");
+								if (backing_volume_stordev_udi != NULL) {
+									parent = hal_device_store_find (hald_get_gdl (), backing_volume_stordev_udi);
+									if (parent != NULL) {
+										hal_device_property_set_string (d, "volume.crypto_sesame.clear.backing_volume", backing_volume->udi);
+										goto got_parent;
+									}
+								}
+							}
+							
+						}
+					}
+				}
+				g_dir_close (dir);
+			}
+		}
+
 		hal_device_store_remove (hald_get_tdl (), d);
 		d = NULL;
 		goto out;
@@ -269,6 +358,8 @@ block_class_visit (ClassDeviceHandler *self,
 			goto out;			
 		}
 	}
+
+got_parent:
 
 	class_device_got_parent_device (hald_get_tdl (), parent, cad);
 

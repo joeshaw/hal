@@ -1,3 +1,25 @@
+2004-12-16  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/volume_id/volume_id.c (sesame_skip_to_next_nonempty_line):
+	New function
+	(sesame_parse): New function
+	(sesame_got_kv_pair): New function
+	(probe_crypto_sesame): New function
+	(volume_id_probe): Probe for sesame crypto metadata
+	(volume_id_close): Free key/value pairs
+
+	* hald/linux/volume_id/volume_id.h: Add the VOLUME_ID_CRYPTO usage type
+	and VOLUME_ID_CRYPTO_SESAME filesystem type. Add the volume_id_kv_pair 
+	structure
+
+	* hald/linux/osspec.c (compute_coldplug_list): Also process other block
+	devices
+
+	* hald/linux/block_class_device.c (set_volume_id_values): Allow crypto
+	and get properties from volume_id
+	(block_class_visit): Add some code to figure out if /dev/dm-0 is really
+	the cleartext device from a device backed by us.
+
 2004-12-15  David Zeuthen  <davidz@redhat.com>
 
 	* hald/dummy/Makefile.am: New file
