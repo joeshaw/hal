@@ -1,5 +1,14 @@
 2004-10-26  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/90defaultpolicy/storage-policy.fdi: Change default policy
+	such that non-hotpluggable fixed disks are not added to the
+	/etc/fstab file because a) ATARAID detection in hal is
+	incomplete (e.g. RAID members from ATARAID controllers might be
+	added to /etc/fstab); and b) default install wont corrupt
+	multiboot systems on fixed drives (RH bug 137072)
+	
+2004-10-26  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Dan Williams <dcbw@redhat.com> to add support for 
 	integration with cardmgr.
 

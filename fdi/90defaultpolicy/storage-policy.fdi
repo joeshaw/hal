@@ -171,10 +171,20 @@
 	    <match key="volume.partition.msdos_part_table_type" int="0x0e">
 	      <merge key="volume.policy.should_mount" type="bool">true</merge>
 	    </match>
-	  </match>
-
-	  
+	  </match>	  
 	</match>
+      </match>
+    </match>
+    
+  </device>
+
+  <!-- Dont want to mount non-hotpluggable fixed disks since ideraid
+       detection isnt complete as hald wrongly detects e.g. partitions
+       from some IDE RAID controllers -->
+  <device>
+    <match key="storage.hotpluggable" bool="false">
+      <match key="storage.removable" bool="false">
+	<merge key="storage.policy.should_mount" type="bool">false</merge>
       </match>
     </match>
   </device>
