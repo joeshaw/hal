@@ -105,7 +105,8 @@ gboolean      hal_device_has_property        (HalDevice    *device,
 HalProperty  *hal_device_property_find       (HalDevice    *device,
 					      const char   *key);
 int           hal_device_num_properties      (HalDevice    *device);
-
+char *        hal_device_property_to_string  (HalDevice    *device,
+					      const char   *key);
 void          hal_device_property_foreach    (HalDevice    *device,
 					      HalDevicePropertyForeachFn callback,
 					      gpointer      user_data);

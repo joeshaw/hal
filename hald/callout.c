@@ -58,7 +58,7 @@ add_property_to_env (HalDevice *device, HalProperty *property,
 		     gpointer user_data)
 {
 	Callout *callout = user_data;
-	char *prop_upper;
+	char *prop_upper, *value;
 	char *c;
 
 	prop_upper = g_ascii_strup (hal_property_get_key (property), -1);
@@ -70,11 +70,14 @@ add_property_to_env (HalDevice *device, HalProperty *property,
 			*c = '_';
 	}
 
+	value = hal_property_to_string (property);
+
 	callout->envp[callout->envp_index] =
 		g_strdup_printf ("HAL_PROP_%s=%s",
 				 prop_upper,
-				 hal_property_get_as_string (property));
+				 value);
 
+	g_free (value);
 	g_free (prop_upper);
 
 	callout->envp_index++;

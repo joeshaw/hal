@@ -155,7 +155,7 @@ hal_property_get_bool (HalProperty *prop)
 }
 
 char *
-hal_property_get_as_string (HalProperty *prop)
+hal_property_to_string (HalProperty *prop)
 {
 	g_return_val_if_fail (prop != NULL, NULL);
 

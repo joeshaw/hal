@@ -456,6 +456,18 @@ hal_device_property_find (HalDevice *device, const char *key)
 	return NULL;
 }
 
+char *
+hal_device_property_to_string (HalDevice *device, const char *key)
+{
+	HalProperty *prop;
+
+	prop = hal_device_property_find (device, key);
+	if (!prop)
+		return NULL;
+
+	return hal_property_to_string (prop);
+}
+
 void
 hal_device_property_foreach (HalDevice *device,
 			     HalDevicePropertyForeachFn callback,

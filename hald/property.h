@@ -44,7 +44,7 @@ HalProperty *hal_property_new_double     (const char   *key,
 
 const char   *hal_property_get_key       (HalProperty  *prop);
 int           hal_property_get_type      (HalProperty  *prop);
-char         *hal_property_get_as_string (HalProperty  *prop);
+char         *hal_property_to_string     (HalProperty  *prop);
 
 const char   *hal_property_get_string    (HalProperty  *prop);
 dbus_int32_t  hal_property_get_int       (HalProperty  *prop);
