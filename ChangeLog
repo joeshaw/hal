@@ -1,3 +1,11 @@
+2005-01-07  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Check for popt when building fstab-sync and error
+	out if it's not found.
+
+	* tools/Makefile.am: Build fstab-sync conditionally based on
+	whether --enable-fstab-sync is passed in.
+
 2004-12-16  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/20freedesktop/Makefile.am: Add the two new .fdi files to _DATA

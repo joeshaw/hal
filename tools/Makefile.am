@@ -10,7 +10,10 @@ INCLUDES = \
 	@PACKAGE_CFLAGS@
 
 bin_PROGRAMS = lshal hal-get-property hal-set-property
+
+if FSTAB_SYNC_ENABLED
 sbin_PROGRAMS = fstab-sync
+endif
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -21,10 +24,10 @@ hal_get_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 hal_set_property_SOURCES = hal_set_property.c
 hal_set_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
+if FSTAB_SYNC_ENABLED
 fstab_sync_SOURCES = fstab-sync.c
 fstab_sync_LDADD = -lpopt $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
-if FSTAB_SYNC_ENABLED
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
 	- cd $(DESTDIR)$(SYSCONFDIR)/hal/device.d && $(LN_S) $(sbindir)/fstab-sync 50-fstab-sync.hal
