@@ -1,5 +1,7 @@
 2004-01-04  David Zeuthen  <david@fubar.dk>
 
+	* fdi/Makefile.am: install fdi.rng
+
 	* fdi/fdi.rng: new file (thanks to Dave Malcolm)
 
 2004-01-03  David Zeuthen  <david@fubar.dk>

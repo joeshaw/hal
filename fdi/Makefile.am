@@ -1,8 +1,8 @@
 
 SUBDIRS = 10generic 20freedesktop
 
-EXTRA_DIST = fdi.dtd
+EXTRA_DIST = fdi.dtd fdi.rng
 
 fdidir = $(datadir)/hal/fdi
 
-dist_fdi_DATA = fdi.dtd
+dist_fdi_DATA = fdi.dtd fdi.rng
