@@ -6,7 +6,7 @@
 
 <article id="index">
   <articleinfo>
-    <title>HAL @VERSION@</title>
+    <title>HAL @VERSION@ Specification</title>
     <releaseinfo>Version @VERSION@</releaseinfo>
     <date>July 21, 2004</date> <!-- Update this manually -->
     <authorgroup>
@@ -78,12 +78,13 @@
     </para>
     <para>
 
-      The HAL is built upon D-BUS which is an IPC framework that, among
-      other things, provides a system-wide message-bus that allows
-      applications to talk to one another. Apart from D-BUS, HAL has
-      no other major dependencies which, in theory, allows it to work
-      on many UNIX-like systems. The major focus, initially, is
-      systems running the Linux 2.6 kernel.
+      The HAL is built upon D-BUS which is an IPC framework that,
+      among other things, provides a system-wide message-bus that
+      allows applications to talk to one another. Apart from D-BUS,
+      HAL has no other major dependencies which, given sufficient
+      infrastructure, allows it to work on many UNIX-like systems. The
+      major focus, initially, is systems running Linux 2.6 series
+      kernels.
 
     </para>
 
@@ -164,12 +165,12 @@
 
           A system-wide daemon that maintains a persistent database of
           device objects. It is also responsible for merging
-          information from the device info file repository and
+          information from the device information file repository and
           managing the life cycle of device objects. The HAL daemon
           also contains detection and monitoring code for standard
           busses (PCI, USB etc.) and devices. The HAL daemon notifies
-	  system level components through callouts and session level
-	  components using the D-BUS interface.
+          system level components through callouts and session level
+          components using the D-BUS interface.
 
         </para></listitem>
 
@@ -294,7 +295,7 @@
         from device information files.  This allows applications to
         think in terms of ''capabilities'' rather than relying on
         device class information derived from the hardware. For example,
-	for an MP3 player, the set of audio formats that the device is
+	for a MP3 player, the set of audio formats that the device is
 	capable to playback can be merged.
 
         </para></listitem> 
@@ -371,19 +372,18 @@
 	discs and other first class objects in UNIX-like operating
 	systems. While partitions are not real devices (they lend
 	space on a real device such as a hard disk or an optical
-	disc), they are on the same conceptual level as hard disks or
-	optical discs.
+	disc), they are on the same conceptual level as hard disks.
 
         </para></listitem>
       </itemizedlist>
 
       Note there is not necessarily a one-to-one relationship between
       physical devices attached to a computer system and ''device
-      objects''.  A multi-function device, which appears (and is
-      marketed) to users as a multi-function printer may show up as
-      several device objects; e.g.  printer, scanner, fax and storage.
-      On the other hand, PCI networking equipment with multiple ports
-      may show up as several networking devices and so on.
+      objects''.  A multi-function device, which appear to users as a
+      multi-function printer may show up as several device objects;
+      e.g.  printer, scanner, fax and storage; PCI networking
+      equipment with multiple ports may show up as several networking
+      devices and so on.
 
       </para><para>
 
@@ -428,8 +428,13 @@
         </para></listitem>
       </itemizedlist>
 
-      Properties of a device object carry all the important information about
-      a device object. This can be classified into three groups
+      Properties of a device object carry all the important
+      information about a device object. For organisational reasons
+      properties are also namespaced using ''.'' as a separator.
+
+      </para><para>
+
+	It can be useful to classify properties into three groups
 
       <itemizedlist>
 
@@ -452,15 +457,9 @@
       The first category is determined by HAL, the next is merged from
       either the hardware itself or device information files and the
       last is intercepted by monitoring the operating system.
-
-      </para><para>
-
       This specification is concerned with precisely defining several
       properties; see <xref linkend="device-properties"/> and onwards
       for more information.
-
-      </para><para>
-
       As a complement to device properties, HAL also provides 
       <emphasis>conditions</emphasis> on HAL device objects. Conditions
       are used to relay events that are happening on devices which are
@@ -484,6 +483,351 @@
 
       </para>
   </sect1>
+
+  <sect1 id="using-devices">
+    <title>Using devices</title>
+    <para>
+
+      While the HAL daemon provides generic operations that apply to
+      all devices (though some may be no-ops), HAL is not concerned
+      with providing non-generic device operations. Specifically, one
+      goal of HAL is to integrate with existing and future libraries
+      that target a specific class of devices such as cameras or mp3
+      players.
+
+    </para><para>
+
+      For instance, libgphoto2 could be patched such that the
+      application programmer can simply pass the UDI of the camera he
+      wishes to interact with and libghoto2 would then, via D-BUS,
+      acquire the bus-specific information required, the address so to
+      speak, from the HAL daemon, and then interact directly with the
+      hardware.
+
+    </para><para>
+
+      Another option is to use the existing API of the device library
+      to discover devices (the library would be using HAL under the
+      hood) and provide a function to retrieve the HAL UDI of the
+      device. When the library is built without HAL support this
+      function returns <literal>NULL</literal>, however, when the UDI
+      is available, then applications using the library can use the
+      UDI both as stable reference to the device and also to extract
+      more information directly from the HAL daemon.
+
+    </para>
+  </sect1>
+
+  <sect1 id="capabilties">
+     <title>Device Capabilities</title>
+     <para>
+
+       Mainstream devices aren't very good at reporting what they are,
+       they only report, at best, how to interact with them. This is a
+       problem, many devices, such as MP3 players or digital still
+       cameras, appear to the operating system as plain USB Mass
+       Storage devices when they are in fact not. The core of the
+       problem is that, without external metadata, the operating
+       system and desktop environment will present it to the user as
+       just e.g. a mass storage device.
+
+     </para><para>
+
+       As HAL is concerned with merging of external metadata, through
+       e.g. device information files, there needs to be some scheme on
+       how to record what the device actually is. This is achieved by
+       two textual properties, <literal>info.category</literal> and
+       <literal>info.capabilities</literal>. The former describes
+       <emphasis>what the device is</emphasis> (as a single
+       alphanumeric keyword) and the latter describes
+       <emphasis>what the device does</emphasis> (as a number of
+       alphanumeric keywords separated by whitespace). The keywords
+       available for use is defined in this document, we'll refer to
+       them simply as <emphasis>capabilities</emphasis>.
+
+     </para><para>
+
+       HAL itself, assigns capabilities on device detection time by
+       inspecting the device class (if available, it depends on the
+       bus type) and looking at information from the operating system
+       (most OS'es has a concept of device classes). At this time the
+       category is also determined by selecting the most prominent
+       capability. However, both capabilities and category can be
+       overridden by either device information files or callouts. This
+       gives maximum flexibility, while maintaining a base level of
+       capability detection.
+
+     </para><para>
+
+       The idea of HAL is that existing device capability specific
+       libraries (such as libghoto2), would advertise what kind of HAL
+       capabilities they are able to handle. As this happens over
+       time, this specification will grow to precisely define what a
+       device with a given capability is supposed to do and what
+       library, or service, the application programmer can use to
+       access the device.
+     
+     </para><para>
+
+       Having a capability also means that part of the property
+       namespace, prefixed with the capability name, can be populated
+       with more specific information about the capability. Indeed,
+       some properties may even be required such that applications and
+       device libraries have something to expect. For instance, the
+       capability for being a MP3 player may require properties
+       defining what audio formats the device support, whether it
+       support recording of audio, and how to interact with
+       device. For example, the latter may specify ''USB Storage
+       Device'' or ''proprietary protocol, use libfooplayer''.
+
+     </para><para>
+
+       Finally, capabilities have an inheritance scheme, e.g. if a device
+       has a capability <literal>foo.bar</literal>, it must also have
+       the capability <literal>foo</literal>.
+
+     </para><para>
+
+       The following table define the capabilities supported in HAL at
+       the time of writing.
+
+     </para>
+     <informaltable>
+       <tgroup cols="2">
+         <thead>
+           <row>
+             <entry>Capability</entry>
+             <entry>Description</entry>
+             <entry>Example Devices</entry>
+           </row>
+         </thead>
+         <tbody>
+
+           <row>
+             <entry>input</entry>
+             <entry>A human input device</entry>
+             <entry>Keyboard, Mouse</entry>
+           </row>
+           <row>
+             <entry>input.mouse</entry>
+             <entry>A pointing device, such as a mouse</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>input.keyboard</entry>
+             <entry>A keyboard</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>storage</entry>
+             <entry>A storage device</entry>
+             <entry>Harddisk, USB storage</entry>
+           </row>
+           <row>
+             <entry>storage.removable</entry>
+             <entry>A storage device with removable media</entry>
+             <entry>CD-ROM, CR-R, Floppy, DVD, Zip-drive</entry>
+           </row>
+
+           <row>
+             <entry>storage_controller</entry>
+             <entry>A device for controlling storage devices</entry>
+             <entry>USB storage, IDE, SCSI, RAID controller</entry>
+           </row>
+           <row>
+             <entry>storage_controller.ide</entry>
+             <entry>A device for controlling IDE storage devices</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>storage_controller.scsi</entry>
+             <entry>A device for controlling SCSI storage devices</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>storage_controller.floppy</entry>
+             <entry>A device for controlling floppy storage devices</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>storage_controller.raid</entry>
+             <entry>A device for controlling RAID storage devices</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>bridge</entry>
+             <entry>The device is bridging one bus to another</entry>
+             <entry>Found in many PC's today</entry>
+           </row>
+           <row>
+             <entry>bridge.cardbus</entry>
+             <entry>PCI to CardBus bridge</entry>
+             <entry>The standard interface for PCMCIA formfactor cards</entry>
+           </row>
+           <row>
+             <entry>bridge.pcmcia</entry>
+             <entry>PCI to PCMCIA bridge</entry>
+             <entry>Used in old laptops, not very common anymore</entry>
+           </row>
+           <row>
+             <entry>bridge.pci</entry>
+             <entry>PCI to PCI bridge</entry>
+             <entry>Found in many PC's today</entry>
+           </row>
+           <row>
+             <entry>bridge.host</entry>
+             <entry>PCI host bridge</entry>
+             <entry>Found in many PC's today</entry>
+           </row>
+
+           <row>
+             <entry>video</entry>
+             <entry>Video adaptor</entry>
+             <entry>Found in many PC's today</entry>
+           </row>
+           <row>
+             <entry>video.vga</entry>
+             <entry>VGA comptible video adaptor</entry>
+             <entry>Almost all graphics adaptors in the market</entry>
+           </row>
+
+           <row>
+             <entry>multimedia</entry>
+             <entry>Multimedia device</entry>
+             <entry>Sound cards etc.</entry>
+           </row>
+           <row>
+             <entry>multimedia.audio</entry>
+             <entry>Sound card</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>comm</entry>
+             <entry>Communication adaptors</entry>
+             <entry>Serial and parallel port adaptors</entry>
+           </row>
+           <row>
+             <entry>comm.serial</entry>
+             <entry>Serial port adaptor</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>comm.parallel</entry>
+             <entry>Parallel port adaptor</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>modem</entry>
+             <entry>A PSTN modem</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>modem.hayes</entry>
+             <entry>A PSTN modem compatible with the Hayes command protocol</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>serial_controller</entry>
+             <entry>Modern serial communication controllers</entry>
+             <entry>USB, IEEE1394 (Firewire, i.Link)</entry>
+           </row>
+           <row>
+             <entry>serial_controller.ieee1394</entry>
+             <entry>IEEE1394 controller</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>serial_controller.usb</entry>
+             <entry>USB controller</entry>
+             <entry></entry>
+           </row>
+
+
+           <row>
+             <entry>net</entry>
+             <entry>Networking controller</entry>
+             <entry>Ethernet, ATM etc. controllers</entry>
+           </row>
+           <row>
+             <entry>net.ethernet</entry>
+             <entry>Ethernet controller</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>net.atm</entry>
+             <entry>ATM controller</entry>
+             <entry></entry>
+           </row>
+           <row>
+             <entry>net.tokenring</entry>
+             <entry>Token Ring controller</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>printer</entry>
+             <entry>Printer</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>hub</entry>
+             <entry>A device for multiplexing a number of devices of same bus-type on a single port </entry>
+             <entry>USB hub</entry>
+           </row>
+
+           <row>
+             <entry>bluetooth_adaptor</entry>
+             <entry>Bluetooth adaptor</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>block</entry>
+             <entry>Device represents a block device</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>volume</entry>
+             <entry>Device represents a partition of a block device that can 
+             be mounted in the filesystem</entry>
+             <entry></entry>
+           </row>
+
+           <row>
+             <entry>camera</entry>
+             <entry>Device is a camera where still pictures can be extracted from</entry>
+             <entry></entry>
+           </row>
+
+         </tbody>
+       </tgroup>
+     </informaltable>
+     <para>
+
+     As evident, most of the capabilities in the above list is derived
+     directly from USB and PCI classes (the careful reader will even
+     note that not all classes from the USB and PCI standards are
+     mentioned), and as such, are not very interesting to desktop
+     applications.
+
+     </para><para>
+
+     However, if HAL becomes adopted by applications, new and
+     interesting capabilities (for example <emphasis>pda</emphasis>,
+     <emphasis>camera</emphasis> or
+     <emphasis>handheld_music_player</emphasis>), based on what the
+     device is used for, can begin to appear.
+
+     </para>
+  </sect1>
+
 
   <sect1>
     <title>D-BUS Network API</title> <para> 
@@ -860,358 +1204,11 @@ bool DeviceMatches(string udi1, string udi2, string namespace)
 
   </sect1>
 
-  <sect1 id="using-devices">
-    <title>Using devices</title>
-    <para>
-
-      While the HAL daemon provides generic operations that apply to
-      all devices (though some may be no-ops), HAL is not concerned
-      with providing non-generic device operations.
-
-    </para><para>
-
-      Specifically, one goal of HAL is to integrate with existing and
-      future libraries that target a specific class of devices such as
-      cameras or mp3 players.
-
-    </para><para>
-
-      For instance, libgphoto2 could be patched such that the
-      application programmer can simply pass the UDI of the camera he
-      wishes to interact with and libghoto2 would then, via D-BUS,
-      acquire the bus-specific information required, the address so to
-      speak, from the HAL daemon, and then interact directly with the
-      hardware.
-
-    </para><para>
-
-      Another option is to use the existing API of the device library
-      to discover devices (the library would be using HAL under the
-      hood) and provide a function to retrieve the HAL UDI of the
-      device. When the library is built without HAL support this
-      function fails, however, when the UDI is available applications
-      using the library can use the UDI both as stable reference to
-      the device and also to extract more information directly from
-      the HAL daemon.
-
-    </para>
-  </sect1>
-
-  <sect1 id="capabilties">
-     <title>Capabilities</title>
-     <para>
-
-       Mainstream devices aren't very good at reporting what they are,
-       they only report, at best, how to interact with them. This is a
-       problem, many devices, such as MP3 players or digital still
-       cameras, appear to the operating system as plain USB Mass
-       Storage devices when they are in fact not. The core of the
-       problem is that, without external metadata, the operating
-       system and desktop environment will present it to the user as
-       just e.g. a mass storage device.
-
-     </para><para>
-
-       As HAL is concerned with merging of external metadata, through
-       e.g. device information files, there needs to be some scheme on
-       how to record what the device actually is. This is achieved by
-       two textual properties, <literal>info.category</literal> and
-       <literal>info.capabilities</literal>. The former describes
-       <emphasis>what the device is</emphasis> (as a single
-       alphanumeric keyword) and the latter describes
-       <emphasis>what the device does</emphasis> (as a number of
-       alphanumeric keywords separated by whitespace). The keywords
-       available for use is defined in this document, we'll refer to
-       them simply as <emphasis>capabilities</emphasis>.
-
-     </para><para>
-
-       HAL itself, assigns capabilities on device detection time by
-       inspecting the device class (if available, it depends on the
-       bus type) and looking at information from the operating system
-       (most OS'es has a concept of device classes). At this time the
-       category is also determined by selecting the most prominent
-       capability. However, both capabilities and category can be
-       overridden by either device information files or callouts. This
-       gives maximum flexibility, while maintaining a base level of
-       capability detection.
-
-     </para><para>
-
-       The idea of HAL is that existing device capability specific
-       libraries (such as libghoto2), would advertise what kind of HAL
-       capabilities they are able to handle. As this happens over
-       time, this specification will grow to precisely define what a
-       device with a given capability is supposed to do and what
-       library, or service, the application programmer can use to
-       access the device.
-     
-     </para><para>
-
-       Having a capability also means that part of the property
-       namespace, prefixed with the capability name, can be populated
-       with more specific information about the capability. Indeed,
-       some properties may even be required such that applications and
-       device libraries have something to expect. For instance, the
-       capability for being a MP3 player may require properties
-       defining what audio formats the device support, whether it
-       support recording of audio, and how to interact with
-       device. For example, the latter may specify ''USB Storage
-       Device'' or ''proprietary protocol, use libfooplayer''.
-
-     </para><para>
-
-       Finally, capabilities have an inheritance scheme, e.g. if a device
-       has a capability <literal>foo.bar</literal>, it must also have
-       the capability <literal>foo</literal>.
-
-     </para><para>
-
-       The following table define the capabilities supported in HAL at
-       the time of writing.
-
-     </para>
-     <informaltable>
-       <tgroup cols="2">
-         <thead>
-           <row>
-             <entry>Capability</entry>
-             <entry>Description</entry>
-             <entry>Example Devices</entry>
-           </row>
-         </thead>
-         <tbody>
-
-           <row>
-             <entry>input</entry>
-             <entry>A human input device</entry>
-             <entry>Keyboard, Mouse</entry>
-           </row>
-           <row>
-             <entry>input.mouse</entry>
-             <entry>A pointing device, such as a mouse</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>input.keyboard</entry>
-             <entry>A keyboard</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>storage</entry>
-             <entry>A storage device</entry>
-             <entry>Harddisk, USB storage</entry>
-           </row>
-           <row>
-             <entry>storage.removable</entry>
-             <entry>A storage device with removable media</entry>
-             <entry>CD-ROM, CR-R, Floppy, DVD, Zip-drive</entry>
-           </row>
-
-           <row>
-             <entry>storage_controller</entry>
-             <entry>A device for controlling storage devices</entry>
-             <entry>USB storage, IDE, SCSI, RAID controller</entry>
-           </row>
-           <row>
-             <entry>storage_controller.ide</entry>
-             <entry>A device for controlling IDE storage devices</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>storage_controller.scsi</entry>
-             <entry>A device for controlling SCSI storage devices</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>storage_controller.floppy</entry>
-             <entry>A device for controlling floppy storage devices</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>storage_controller.raid</entry>
-             <entry>A device for controlling RAID storage devices</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>bridge</entry>
-             <entry>The device is bridging one bus to another</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-           <row>
-             <entry>bridge.cardbus</entry>
-             <entry>PCI to CardBus bridge</entry>
-             <entry>The standard interface for PCMCIA formfactor cards</entry>
-           </row>
-           <row>
-             <entry>bridge.pcmcia</entry>
-             <entry>PCI to PCMCIA bridge</entry>
-             <entry>Used in old laptops, not very common anymore</entry>
-           </row>
-           <row>
-             <entry>bridge.pci</entry>
-             <entry>PCI to PCI bridge</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-           <row>
-             <entry>bridge.host</entry>
-             <entry>PCI host bridge</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-
-           <row>
-             <entry>video</entry>
-             <entry>Video adaptor</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-           <row>
-             <entry>video.vga</entry>
-             <entry>VGA comptible video adaptor</entry>
-             <entry>Almost all graphics adaptors in the market</entry>
-           </row>
-
-           <row>
-             <entry>multimedia</entry>
-             <entry>Multimedia device</entry>
-             <entry>Sound cards etc.</entry>
-           </row>
-           <row>
-             <entry>multimedia.audio</entry>
-             <entry>Sound card</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>comm</entry>
-             <entry>Communication adaptors</entry>
-             <entry>Serial and parallel port adaptors</entry>
-           </row>
-           <row>
-             <entry>comm.serial</entry>
-             <entry>Serial port adaptor</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>comm.parallel</entry>
-             <entry>Parallel port adaptor</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>modem</entry>
-             <entry>A PSTN modem</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>modem.hayes</entry>
-             <entry>A PSTN modem compatible with the Hayes command protocol</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>serial_controller</entry>
-             <entry>Modern serial communication controllers</entry>
-             <entry>USB, IEEE1394 (Firewire, i.Link)</entry>
-           </row>
-           <row>
-             <entry>serial_controller.ieee1394</entry>
-             <entry>IEEE1394 controller</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>serial_controller.usb</entry>
-             <entry>USB controller</entry>
-             <entry></entry>
-           </row>
-
-
-           <row>
-             <entry>net</entry>
-             <entry>Networking controller</entry>
-             <entry>Ethernet, ATM etc. controllers</entry>
-           </row>
-           <row>
-             <entry>net.ethernet</entry>
-             <entry>Ethernet controller</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>net.atm</entry>
-             <entry>ATM controller</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>net.tokenring</entry>
-             <entry>Token Ring controller</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>printer</entry>
-             <entry>Printer</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>hub</entry>
-             <entry>A device for multiplexing a number of devices of same bus-type on a single port </entry>
-             <entry>USB hub</entry>
-           </row>
-
-           <row>
-             <entry>bluetooth_adaptor</entry>
-             <entry>Bluetooth adaptor</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>block</entry>
-             <entry>Device represents a block device</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>volume</entry>
-             <entry>Device represents a partition of a block device that can 
-             be mounted in the filesystem</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>camera</entry>
-             <entry>Device is a camera where still pictures can be extracted from</entry>
-             <entry></entry>
-           </row>
-
-         </tbody>
-       </tgroup>
-     </informaltable>
-     <para>
-
-     As evident, most of the capabilities in the above list is derived
-     directly from USB and PCI classes (the careful reader will even
-     note that not all classes from the USB and PCI standards are
-     mentioned), and as such, are not very interesting to desktop
-     applications.
-
-     </para><para>
-
-     However, if HAL becomes adopted by applications, new and
-     interesting capabilities (for example <emphasis>pda</emphasis>,
-     <emphasis>camera</emphasis> or
-     <emphasis>handheld_music_player</emphasis>), based on what the
-     device is used for, can begin to appear.
-
-     </para>
-  </sect1>
-
   <sect1 id="device-properties">
     <title>Properties of a device</title>
 
     <para>
-      Properties are arranged in a namespaces using . (dot) as a separator
+      Properties are arranged in a namespaces using ''.'' as a separator
       and are key/value pairs. The value may assume different types; currently
       int32, double, bool and UTF8 strings are supported. The key of a property
       is always an ASCII string without any whitespace.

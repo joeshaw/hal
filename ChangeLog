@@ -1,5 +1,9 @@
 2004-08-03  David Zeuthen  <david@fubar.dk>
 
+	* doc/spec/hal-spec.xml.in: Work in progress
+
+2004-08-03  David Zeuthen  <david@fubar.dk>
+
 	* doc/spec/examply-manager.py: New file
 
 	* doc/spec/hal-spec.xml.in: Work in progress
