@@ -781,6 +781,7 @@ destroy_async_match_info (AsyncMatchInfo *ai)
 	g_free (ai->key);
 	g_signal_handler_disconnect (ai->device, ai->prop_signal_id);
 	g_source_remove (ai->timeout_id);
+	g_object_unref (ai->device);
 	g_free (ai);
 }
 
@@ -837,7 +838,7 @@ hal_device_async_wait_property (HalDevice    *device,
 
 	ai = g_new0 (AsyncMatchInfo, 1);
 
-	ai->device = device;
+	ai->device = g_object_ref (device);
 	ai->key = g_strdup (key);
 	ai->callback = callback;
 	ai->user_data = user_data;

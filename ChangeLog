@@ -1,3 +1,10 @@
+2004-04-15  Joe Shaw  <joe@ximian.com>
+
+	* hald/device.c (hal_device_async_wait_property): Ref the device
+	when we create the AsyncInfo.  This should fix the glib warnings
+	about signals.
+	(destroy_async_match_info): Unref it when we're finished.
+
 2004-04-14  Joe Shaw  <joe@ximian.com>
 
 	* hald/Makefile.am: Build the new scsi_generic class handler.
