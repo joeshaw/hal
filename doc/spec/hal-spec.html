@@ -360,12 +360,52 @@ CLASS="literal"
 ></DT
 ></DL
 ></DD
+><DT
+><A
+HREF="#properties-policy"
+>Policy Properties</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#device-properties-storage-policy-default"
+><TT
+CLASS="literal"
+>storage.policy.default</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-storage-policy"
+><TT
+CLASS="literal"
+>storage.policy</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-volume-policy"
+><TT
+CLASS="literal"
+>volume.policy</TT
+> namespace</A
+></DT
+></DL
+></DD
 ></DL
 ></DD
 ><DT
 ><A
 HREF="#spec-device-info"
 >Device Information Files</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#fdi-facts"
+>Facts about devices</A
 ></DT
 ><DD
 ><DL
@@ -388,6 +428,22 @@ HREF="#fdi-example-6in1"
 ></DD
 ><DT
 ><A
+HREF="#fdi-policy"
+>Policy settings for devices</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#fdi-example-mountsetting"
+>Storage Devices</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+><A
 HREF="#callouts"
 >Callouts</A
 ></DT
@@ -400,21 +456,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1872"
+HREF="#AEN2138"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1883"
+HREF="#AEN2149"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1891"
+HREF="#AEN2157"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -428,11 +484,16 @@ HREF="#enforcing-policy"
 ><DL
 ><DT
 ><A
-HREF="#enforcing-storage"
+HREF="#enforcing-stor-vol"
 >Storage Devices</A
 ></DT
 ><DD
 ><DL
+><DT
+><A
+HREF="#stor-vol-policy"
+>Policy for Volumes and Storage devices</A
+></DT
 ><DT
 ><A
 HREF="#enforcing-storage-fstab"
@@ -812,7 +873,7 @@ CLASS="literal"
 >&#13;	    The diagram shows an example callout program, 
 	    <TT
 CLASS="literal"
->update-fstab.sh</TT
+>fstab-sync</TT
 >, that creates/destroys
 	    mount points and modifies the <TT
 CLASS="literal"
@@ -851,7 +912,7 @@ CLASS="literal"
 ><P
 >&#13;	    The <TT
 CLASS="literal"
->update-fstab.sh</TT
+>fstab-sync</TT
 > and 
 	    <TT
 CLASS="literal"
@@ -864,7 +925,8 @@ CLASS="literal"
 CLASS="literal"
 >/etc/fstab</TT
 > file and mount storage volumes
-	    in the callout or run a daemon with sufficient privileges.
+	    in the callout, run a daemon with sufficient privileges
+	    or use another setuid mount wrapper.
 	    See <A
 HREF="#enforcing-policy"
 >the chapter called <I
@@ -1058,7 +1120,7 @@ CLASS="literal"
       </P
 ><P
 >&#13;
-	It can be useful to classify properties into three groups
+	It can be useful to classify properties into four groups
 
       </P
 ><P
@@ -1075,7 +1137,7 @@ CLASS="literal"
 ></LI
 ><LI
 ><P
->Device specific information - 
+>Facts - 
                         vendor ID, product ID, disk serial numbers, 
 	                number of buttons on a mouse, formats accepted
 	                by a mp3 player and so on.</P
@@ -1086,14 +1148,21 @@ CLASS="literal"
 	                Network link status, special device file name, 
                         filesystem mount location etc.</P
 ></LI
+><LI
+><P
+>Policy - 
+                        How the device is to be used be users; usually
+	                defined by the system administrator.</P
+></LI
 ></UL
 ><P
 >&#13;
 	The first category is determined by HAL, the next is merged
-	from either the hardware itself or device information files
-	and the last is intercepted by monitoring the operating
-	system.  This specification is concerned with precisely
-	defining several properties; see <A
+	from either the hardware itself or device information files,
+	the third is intercepted by monitoring the operating system
+	and the last is merged from files that only the system
+	administrator can edit. This specification is concerned with
+	precisely defining several properties; see <A
 HREF="#device-properties"
 >the chapter called <I
 >Device Properties</I
@@ -1108,6 +1177,19 @@ CLASS="emphasis"
 	happening on devices which are not easily expressed in
 	properties. This includes events such as ''processor is
 	overheating'' or ''block device unmounted''.
+
+      </P
+><P
+>&#13;
+	There is a special hal device object referred to as the ''root
+	computer device object''. This device object represent the
+	entire system as a whole and all other devices are either
+	directly or indirectly childs of this device object. It has
+	the
+	UDI <TT
+CLASS="literal"
+>/org/freedesktop/Hal/devices/computer</TT
+>.
 
       </P
 ><P
@@ -1346,7 +1428,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN195"
+NAME="AEN199"
 ></A
 ><TABLE
 BORDER="1"
@@ -1582,7 +1664,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN286"
+NAME="AEN290"
 ></A
 ><TABLE
 BORDER="1"
@@ -1660,6 +1742,19 @@ CLASS="literal"
 >A name used internally in the Linux kernel to identify
               the device. Used internally in HAL.</TD
 ></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>linux.is_selinux_enabled</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No; can only appear on the root computer device object</TD
+><TD
+>Whether SELinux is enabled on the system</TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -1721,7 +1816,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN330"
+NAME="AEN340"
 ></A
 ><TABLE
 BORDER="1"
@@ -1944,7 +2039,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN419"
+NAME="AEN429"
 ></A
 ><TABLE
 BORDER="1"
@@ -2336,7 +2431,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN582"
+NAME="AEN592"
 ></A
 ><TABLE
 BORDER="1"
@@ -2465,7 +2560,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN629"
+NAME="AEN639"
 ></A
 ><TABLE
 BORDER="1"
@@ -2550,7 +2645,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN657"
+NAME="AEN667"
 ></A
 ><TABLE
 BORDER="1"
@@ -2646,7 +2741,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN687"
+NAME="AEN697"
 ></A
 ><TABLE
 BORDER="1"
@@ -2715,7 +2810,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN708"
+NAME="AEN718"
 ></A
 ><TABLE
 BORDER="1"
@@ -2832,7 +2927,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN749"
+NAME="AEN759"
 ></A
 ><TABLE
 BORDER="1"
@@ -2954,7 +3049,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN794"
+NAME="AEN804"
 ></A
 ><TABLE
 BORDER="1"
@@ -3075,7 +3170,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN839"
+NAME="AEN849"
 ></A
 ><TABLE
 BORDER="1"
@@ -3148,7 +3243,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN861"
+NAME="AEN871"
 ></A
 ><TABLE
 BORDER="1"
@@ -3345,7 +3440,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN921"
+NAME="AEN931"
 ></A
 ><TABLE
 BORDER="1"
@@ -3638,7 +3733,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1044"
+NAME="AEN1054"
 ></A
 ><TABLE
 BORDER="1"
@@ -3776,7 +3871,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1087"
+NAME="AEN1097"
 ></A
 ><TABLE
 BORDER="1"
@@ -3887,7 +3982,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1123"
+NAME="AEN1133"
 ></A
 ><TABLE
 BORDER="1"
@@ -4149,7 +4244,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1230"
+NAME="AEN1240"
 ></A
 ><TABLE
 BORDER="1"
@@ -4222,6 +4317,16 @@ CLASS="literal"
 >&nbsp;</TD
 ><TD
 >SCSI interface</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>sata</TD
+><TD
+>&nbsp;</TD
+><TD
+>SATA interface</TD
 ></TR
 ><TR
 ><TD
@@ -4627,7 +4732,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1419"
+NAME="AEN1434"
 ></A
 ><TABLE
 BORDER="1"
@@ -4826,7 +4931,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1499"
+NAME="AEN1514"
 ></A
 ><TABLE
 BORDER="1"
@@ -4980,7 +5085,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1557"
+NAME="AEN1572"
 ></A
 ><TABLE
 BORDER="1"
@@ -5111,7 +5216,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1599"
+NAME="AEN1614"
 ></A
 ><TABLE
 BORDER="1"
@@ -5184,7 +5289,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1621"
+NAME="AEN1636"
 ></A
 ><TABLE
 BORDER="1"
@@ -5251,7 +5356,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1641"
+NAME="AEN1656"
 ></A
 ><TABLE
 BORDER="1"
@@ -5316,7 +5421,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1661"
+NAME="AEN1676"
 ></A
 ><TABLE
 BORDER="1"
@@ -5443,7 +5548,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1705"
+NAME="AEN1720"
 ></A
 ><TABLE
 BORDER="1"
@@ -5590,7 +5695,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1753"
+NAME="AEN1768"
 ></A
 ><TABLE
 BORDER="1"
@@ -5687,6 +5792,422 @@ CLASS="literal"
 ></DIV
 ></DIV
 ></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="properties-policy"
+>Policy Properties</A
+></H2
+><P
+>&#13;
+	The properties on a hal device object can be used to express
+	certain policies about how the device is to be used. This
+	information can be used by either programs querying hal
+	directly or by hal callouts. Default policy (e.g. always
+	mount a file system with the option 'exec') can also be
+	merged on the root computer device object.
+      </P
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-storage-policy-default"
+><TT
+CLASS="literal"
+>storage.policy.default</TT
+> namespace</A
+></H3
+><P
+>&#13;	This namespace specifies the default policy for storage 
+	devices - these properties should be merged on the root computer
+	device object.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1812"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.default.use_managed_keyword</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Whether to use a <I
+CLASS="emphasis"
+>managed no
+	        operation</I
+> keyword when adding entries to
+	        the File Systems file (<TT
+CLASS="literal"
+>/etc/fstab</TT
+>) - 
+		this is used to identify entries added by a program
+		that modifies this file.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.default.managed_keyword.primary</TT
+> (string)</TD
+><TD
+>Example: 'managed'</TD
+><TD
+>No</TD
+><TD
+>No-op keyword to use when adding entries to the file systems file</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.default.managed_keyword.secondary</TT
+> (string)</TD
+><TD
+>Example: 'kudzu'</TD
+><TD
+>No</TD
+><TD
+>&#13;		Secondary no-op keyword that identifies entries added
+		to the file systems file. The secondary keyword is never
+		written; only read. This is useful when making a transition
+		from one managed keyword to another.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.default.mount_option.*</TT
+> (bool)</TD
+><TD
+>Examples: 
+		<TT
+CLASS="literal"
+>.noauto</TT
+>, 
+		<TT
+CLASS="literal"
+>.exec</TT
+>, 
+		<TT
+CLASS="literal"
+>.console</TT
+>, 
+		<TT
+CLASS="literal"
+>.fscontext=system_u:object_r:removable_t</TT
+></TD
+><TD
+>No</TD
+><TD
+>&#13;		This is actually an entire namespace that specifies
+	        what options a storage device should be mounted with,
+	        e.g. the example <TT
+CLASS="literal"
+>.exec</TT
+> should be read as
+		<TT
+CLASS="literal"
+>storage.policy.default.mount_option.exec</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.default.mount_root</TT
+> (string)</TD
+><TD
+>Example: <TT
+CLASS="literal"
+>/media</TT
+> </TD
+><TD
+>No</TD
+><TD
+>&#13;		The default mount root to use when computing what
+		mount point to use for a storage device
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-storage-policy"
+><TT
+CLASS="literal"
+>storage.policy</TT
+> namespace</A
+></H3
+><P
+>&#13;	This namespace contains properties that can be merged on
+	individual storage devices to specify how and if the storage
+	device should be mounted.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1864"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.should_mount</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Whether any volumes from this storage device
+              should be mounted</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.desired_mount_point</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		No (only applicable if the
+		property <TT
+CLASS="literal"
+>storage.no_partitions_hint</TT
+>
+		is set to TRUE)
+	      </TD
+><TD
+>&#13;		The desired mount point for this storage device. The
+		path must not be fully qualified and there is no
+		guarantee that and storage policy agents, such as
+		policy mount wrappers or programs modifying the file
+		systems file will use this mount point.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.mount_option.*</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		No (only applicable if the
+		property <TT
+CLASS="literal"
+>storage.no_partitions_hint</TT
+>
+		is set to TRUE)
+	      </TD
+><TD
+>&#13;		Mount options to use, see property <TT
+CLASS="literal"
+>storage.policy.default.mount_option.*</TT
+>
+		for details.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.policy.mount_filesystem</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;		No (only applicable if the
+		property <TT
+CLASS="literal"
+>storage.no_partitions_hint</TT
+>
+		is set to TRUE)
+	      </TD
+><TD
+>File system to use when mounting the storage device.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-volume-policy"
+><TT
+CLASS="literal"
+>volume.policy</TT
+> namespace</A
+></H3
+><P
+>&#13;	This namespace contains properties that can be merged on
+	individual volumes to specify how and if the volume
+	should be mounted.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1905"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.policy.should_mount</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Whether this volume should be mounted at all</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.policy.mount_filesystem</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>File system to use when mounting the volume.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.policy.desired_mount_point</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The desired mount point for this volume. The
+		path must not be fully qualified and there is no
+		guarantee that and storage policy agents, such as
+		policy mount wrappers or programs modifying the file
+		systems file will use this mount point.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.policy.mount_options.*</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Mount options to use, see property <TT
+CLASS="literal"
+>storage.policy.default.mount_option.*</TT
+>
+		for details.
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
 ></DIV
 ><DIV
 CLASS="chapter"
@@ -5704,7 +6225,9 @@ CLASS="literal"
       shorthand) are used to merge arbitrary properties onto device
       objects. The way device information files works is that once all
       physical properties are merged onto a device object it is tried
-      against the set of installed device information files.  
+      against the set of installed device information files.  Device
+      information files are used for both merging facts and policy
+      settings about devices.
 
     </P
 ><P
@@ -5719,12 +6242,341 @@ CLASS="literal"
       all the match directives passes then the device information can
       include <TT
 CLASS="literal"
->&#60;merge key="some_property"
+>&#60;[merge|append] key="some_property"
       type="[string|int|bool|..]"&#62;</TT
-> directives to merge
-      new properties onto the device object. It's important to
-      emphasize that any previously property stemming from device
-      detection can be overridden by a device information file.
+> directives to
+      respectively merge new properties or append to existing
+      properties on the device object. It's important to emphasize
+      that any previously property stemming from device detection can
+      be overridden by a device information file.
+
+    </P
+><P
+>&#13;
+      The <TT
+CLASS="literal"
+>&#60;match&#62;</TT
+>, 
+      <TT
+CLASS="literal"
+>&#60;merge&#62;</TT
+> and
+      <TT
+CLASS="literal"
+>&#60;append&#62;</TT
+> directives always requires
+      the <TT
+CLASS="literal"
+>key</TT
+> attribute which must be either a
+      property name on the device object in question or a path to a
+      property on another device object. The latter case is expressed
+      either through direct specification of the UDI, such as 
+      <TT
+CLASS="literal"
+>/org/freedesktop/Hal/devices/computer:foo.bar</TT
+>
+      or indirect references such as 
+      <TT
+CLASS="literal"
+>@info.parent:baz</TT
+> where the latter means that
+      the device object specified by the UDI in the string property 
+      <TT
+CLASS="literal"
+>info.parent</TT
+> should be used to query the
+      property <TT
+CLASS="literal"
+>baz</TT
+>. It is also possible to use
+      multiple indirections, e.g. for a volume on a USB memory stick
+      the indirection <TT
+CLASS="literal"
+>@block.storage_device:@storage.physical_device:usb.vendor_id</TT
+>
+      will reference the <TT
+CLASS="literal"
+>usb.vendor_id</TT
+> property
+      on the device object representing the USB interface.
+
+    </P
+><P
+>&#13;
+      When the property to match have been determined a number of
+      attributes can be used within the <TT
+CLASS="literal"
+>&#60;match&#62;</TT
+>
+      tag:
+       <P
+></P
+><UL
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>string</TT
+> - match a string property; for example
+	     <TT
+CLASS="literal"
+>&#60;match key="foo.bar" string="baz"&#62;</TT
+>
+	     will match only if 'foo.bar' is a string property assuming the value 'baz'.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>int</TT
+> - match an integer property
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>uint64</TT
+> - match property with the 64-bit unsigned type
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>bool</TT
+> - match a boolean property
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>double</TT
+> - match a property of type double
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>exists</TT
+> - used as 
+	     <TT
+CLASS="literal"
+>&#60;match key="foo.bar" exists="true"&#62;</TT
+>. Can be used with
+	     'true' and 'false' respectively to match when a property exists and it doesn't.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>empty</TT
+> - can only be used on string properties with 'true' and 'false'. The semantics
+	     for 'true' is to match only when the string is non-empty.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>is_absolute_path</TT
+> - matches only when a string property represents an absolute path
+	     (the path doesn't have to exist).
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>compare_lt</TT
+> - can be used on int, uint64, double and string properties to compare
+	     with a constant. Matches when the given property is less than the given constant
+	     using the default ordering.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>compare_le</TT
+> - like <TT
+CLASS="literal"
+>compare_lt</TT
+> but matches when less than or equal.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>compare_gt</TT
+> - like <TT
+CLASS="literal"
+>compare_lt</TT
+> but matches when greater than.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>compare_ge</TT
+> - like <TT
+CLASS="literal"
+>compare_lt</TT
+> but matches when greater than or equal.
+	 </P
+></LI
+></UL
+>
+
+       The <TT
+CLASS="literal"
+>&#60;merge&#62;</TT
+> 
+       and <TT
+CLASS="literal"
+>&#60;append&#62;</TT
+> directives all require 
+       the <TT
+CLASS="literal"
+>type</TT
+> attribute which specifies what to
+       merge. The following values are supported
+
+       <P
+></P
+><UL
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>string</TT
+> - The value is copied to the property. For example
+	     <TT
+CLASS="literal"
+>&#60;merge key="foo.bar" type="string"&#62;baz&#60;/merge&#62;</TT
+>
+	     will merge the value 'baz' into the property 'foo.bar'.	     
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>bool</TT
+> - Can merge the values 'true' or 'false'
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>int</TT
+> - Merges an integer
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>uint64</TT
+> - Merges an unsigned 64-bit integer
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>double</TT
+> - Merges a double precision floating point number
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>copy_property</TT
+> - Copies the value of a given property - supports paths with
+	     direct and indirect UDI's. For example
+	     <TT
+CLASS="literal"
+>&#60;merge key="foo.bar" type="copy_property"&#62;@info.parent:baz.bat&#60;/merge&#62;</TT
+>
+	     will merge the value of the property <TT
+CLASS="literal"
+>baz.bat</TT
+> on the device object with the UDI from
+	     the property <TT
+CLASS="literal"
+>info.parent</TT
+> into the property <TT
+CLASS="literal"
+>foo.bar</TT
+> on 
+	     the device object being processed.
+	 </P
+></LI
+></UL
+>
+
+       Device Information files are stored in the following standard hierachy with the following default
+       top level directories:
+
+       <P
+></P
+><UL
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>20freedesktop</TT
+> - device information files included with the hal tarball
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>30osvendor</TT
+> - device information files supplied by the operating system vendor
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>40oem</TT
+> - device information files from the device manufacturer and 
+	     installed from media accompanying the hardware
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>90defaultpolicy</TT
+> - Default policy determined by the operating system vendor and
+	     possibly edited by the system administrator
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>95userpolicy</TT
+> - Policy rules for specific devices.
+	 </P
+></LI
+></UL
+>
+
+       All device information files are matched for every hal device object.
       
     </P
 ><DIV
@@ -5732,9 +6584,17 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
+NAME="fdi-facts"
+>Facts about devices</A
+></H2
+><DIV
+CLASS="sect2"
+><H3
+CLASS="sect2"
+><A
 NAME="fdi-example-mp3player"
 >Example: MP3 player</A
-></H2
+></H3
 ><P
 >&#13;	
 	This device information file matches an USB Mass Storage
@@ -5782,18 +6642,17 @@ SRC="hal-fdi-example2.png">
       </P
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
 ><A
 NAME="fdi-example-camera"
 >Example: Digital Still Camera</A
-></H2
+></H3
 ><P
 >&#13;	
-	This device information file matches a Canon Digital IXUS V
-	still digital camera by matching on the USB vendor and
-	product identifers.
+	This device information file matches a Sony digital still camera
+	by matching on the USB vendor and product identifers.
 	
       </P
 ><TABLE
@@ -5808,13 +6667,12 @@ CLASS="programlisting"
 
 &#60;deviceinfo version="0.2"&#62;
   &#60;device&#62;
-    &#60;match key="info.bus" string="usb_device"&#62;
-      &#60;match key="usb_device.vendor_id" int="0x04a9"&#62;
-        &#60;match key="usb_device.product_id" int="0x3052"&#62;
+    &#60;match key="info.bus" string="usb"&#62;
+      &#60;match key="usb.vendor_id" int="0x054c"&#62;
+        &#60;match key="usb.product_id" int="0x0010"&#62;
           &#60;merge key="info.category" type="string"&#62;camera&#60;/merge&#62;
           &#60;merge key="info.capabilities" type="string"&#62;camera&#60;/merge&#62;
-          &#60;merge key="camera.access_method" type="string"&#62;user&#60;/merge&#62;
-          &#60;merge key="camera.libgphoto2.support" type="bool"&#62;true&#60;/merge&#62;
+          &#60;merge key="camera.access_method" type="string"&#62;storage&#60;/merge&#62;
         &#60;/match&#62;
       &#60;/match&#62;
     &#60;/match&#62;
@@ -5835,13 +6693,13 @@ SRC="hal-fdi-example1.png">
       </P
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
 ><A
 NAME="fdi-example-6in1"
 >Example: Card Reader</A
-></H2
+></H3
 ><P
 >&#13;	
 	This device information file matches a memory card reader with
@@ -5913,6 +6771,268 @@ SRC="hal-fdi-example3.png">
 ></DIV
 ></DIV
 ><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="fdi-policy"
+>Policy settings for devices</A
+></H2
+><P
+>&#13;	Policy settings specifies system specific settings that a
+	system administrator associates with a device instance. In the
+	context of hal, this can be expressed in terms of device
+	properties merged on the device object in question. Default
+	policy can also be merged on the root computer device object.
+      </P
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="fdi-example-mountsetting"
+>Storage Devices</A
+></H3
+><P
+>&#13;
+	Policy for storage devices is expressed in the 
+	<TT
+CLASS="literal"
+>storage.policy.default</TT
+>, 
+	<TT
+CLASS="literal"
+>storage.policy</TT
+> and
+	<TT
+CLASS="literal"
+>volume.policy</TT
+> namespaces, see
+	<A
+HREF="#properties-policy"
+>the Section called <I
+>Policy Properties</I
+> in the chapter called <I
+>Device Properties</I
+></A
+> for details.
+
+      </P
+><P
+>&#13;	The default policy for storage devices shipped with hal looks like this
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+
+  &#60;!-- Default policies merged onto computer root object  --&#62;
+  &#60;device&#62;
+    &#60;match key="info.udi" string="/org/freedesktop/Hal/devices/computer"&#62;
+      &#60;merge key="storage.policy.default.mount_root" type="string"&#62;/media&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.use_managed_keyword" type="bool"&#62;true&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.managed_keyword.primary" type="string"&#62;managed&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.managed_keyword.secondary" type="string"&#62;kudzu&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.mount_option.noauto" type="bool"&#62;true&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.mount_option.user" type="bool"&#62;true&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.mount_option.exec" type="bool"&#62;true&#60;/merge&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
+  &#60;device&#62;
+    &#60;!-- Whitelist bus types of storage devices we care about  --&#62;
+    &#60;match key="info.category" string="storage"&#62;
+      &#60;match key="storage.bus" string="usb"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;      
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="ide"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="ieee1394"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="sata"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+
+    &#60;!-- Handle drives with non-partitioned media  --&#62;
+    &#60;match key="storage.no_partitions_hint" bool="true"&#62;
+      &#60;!-- optical drives --&#62;
+      &#60;match key="storage.drive_type" string="cdrom"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;iso9660,udf&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrom&#60;/merge&#62;
+	&#60;merge key="storage.policy.mount_option.ro" type="bool"&#62;true&#60;/merge&#62;
+	&#60;match key="storage.cdrom.cdr" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.cdrw" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdplusr" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdplusrw" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdram" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdr" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdrw" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+      &#60;!-- floppy drives --&#62;
+      &#60;match key="storage.drive_type" string="floppy"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;floppy&#60;/merge&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+
+    &#60;!-- Normal volumes; use volume label, uuid or drive_type --&#62;
+    &#60;match key="block.is_volume" bool="true"&#62;
+      &#60;match key="volume.fsusage" string="filesystem"&#62;
+
+	&#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	&#60;merge key="volume.policy.mount_filesystem" type="copy_property"&#62;volume.fstype&#60;/merge&#62;
+
+	&#60;!-- Fallback is '&#60;storage.drive_type&#62;', e.g. disk, compact_flash etc. --&#62;
+	&#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;@block.storage_device:storage.drive_type&#60;/merge&#62;
+	
+	&#60;!-- Better: if available use UUID --&#62;
+        &#60;match key="volume.uuid" empty="false"&#62;
+          &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;volume.uuid&#60;/merge&#62;
+        &#60;/match&#62;
+
+        &#60;!-- Best: If available use filesystem label --&#62;
+        &#60;match key="volume.label" empty="false"&#62;
+          &#60;!-- unless it's a path (e.g. /boot, /, /home etc) --&#62;
+          &#60;match key="volume.label" is_absolute_path="false"&#62;
+            &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;volume.label&#60;/merge&#62;
+          &#60;/match&#62;
+        &#60;/match&#62;
+
+	&#60;!-- Should never mount Apple Bootstrap partitions (it would be
+	     a security hole) - should use the bootable flag from the
+	     Mac partition table instead --&#62;
+	&#60;match key="volume.fstype" string="hfs"&#62;
+	  &#60;match key="volume.label" string="bootstrap"&#62;
+	    &#60;merge key="volume.policy.should_mount" type="bool"&#62;false&#60;/merge&#62;
+	  &#60;/match&#62;
+	&#60;/match&#62;
+
+	&#60;!-- Use selinux mount options for hotpluggable and removable
+	     volumes --&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
+	    &#60;merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	  &#60;/match&#62;
+	  &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
+	    &#60;merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	  &#60;/match&#62;
+	&#60;/match&#62;
+
+	&#60;!-- Use noatime and sync options for all hotpluggable or removable
+	     volumes smaller than 2GB --&#62;
+	&#60;match key="volume.size" compare_lt="2147483648"&#62;
+	  &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
+	    &#60;merge key="volume.policy.mount_option.async" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
+	  &#60;/match&#62;
+	  &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
+	    &#60;merge key="volume.policy.mount_option.async" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
+	  &#60;/match&#62;
+	&#60;/match&#62;
+
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
+&#60;/deviceinfo&#62;
+      </PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;	and can be overridden by OS vendors to suit their purposes.
+      </P
+><P
+>&#13;	Users can also customize their own rules; some examples follow	
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+
+  &#60;!-- Example: Match volumes from an external USB harddisk enclosure by 
+                matching on vendor and model. Use mount points 
+
+  		    my_usbdisk_part_&#60;partition-number&#62;
+
+		NB: some drives (ieee1394 based IIRC) even export the
+		property storage.serial, the unique serial number of the
+		disk which is a better match --&#62;
+  &#60;device&#62;
+    &#60;match key="block.is_volume" bool="true"&#62;
+      &#60;match key="volume.fsusage" string="filesystem"&#62;
+	&#60;match key="@block.storage_device:storage.vendor" string="ST360021"&#62;
+	  &#60;match key="@block.storage_device:storage.model" string="A"&#62;
+	    &#60;merge key="volume.policy.desired_mount_point" type="string"&#62;my_usbdisk_partition_&#60;/merge&#62;
+	    &#60;append key="volume.policy.desired_mount_point" type="copy_property"&#62;volume.partition.number&#60;/append&#62;
+	  &#60;/match&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
+  &#60;!-- Example: Match a volume from an USB Storage Based mp3 player
+                by the file system UUID and assign a mount point.
+
+                NB: When reformatting the volume a new UUID will be
+                used and this rule will have to be altered --&#62;
+  &#60;device&#62;
+    &#60;match key="block.is_volume" bool="true"&#62;
+      &#60;match key="volume.fsusage" string="filesystem"&#62;
+	&#60;match key="volume.uuid" string="4150-3F34"&#62;
+	  &#60;merge key="volume.policy.desired_mount_point" type="string"&#62;my_mp3_player&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
+&#60;/deviceinfo&#62;
+      </PRE
+></TD
+></TR
+></TABLE
+></DIV
+></DIV
+></DIV
+><DIV
 CLASS="chapter"
 ><HR><H1
 ><A
@@ -5944,7 +7064,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1830"
+NAME="AEN2096"
 ></A
 ><TABLE
 BORDER="1"
@@ -6104,7 +7224,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1872"
+NAME="AEN2138"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -6220,7 +7340,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1883"
+NAME="AEN2149"
 >Example</A
 ></H3
 ><P
@@ -6338,7 +7458,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1891"
+NAME="AEN2157"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -6372,7 +7492,7 @@ CLASS="programlisting"
 #
 # @param  key                   Property to set
 # @param  value                 Value to set
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch)
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch|PermissionDenied)
 #
 void SetProperty(string key, any value)
 void SetPropertyString(string key, string value)
@@ -6403,7 +7523,7 @@ map{string, any} GetAllProperties()
 # Remove a property
 #
 # @param  key                   Property to remove
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|PermissionDenied)
 #
 void RemoveProperty(string key)
 
@@ -6428,7 +7548,7 @@ bool PropertyExists(string key)
 # interface.
 #
 # @param  capability            Capability, e.g. 'net.80211'
-# @raises                       org.freedesktop.Hal.NoSuchDevice
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|PermissionDenied)
 #
 void AddCapability(string capability)
 
@@ -6526,12 +7646,45 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="enforcing-storage"
+NAME="enforcing-stor-vol"
 >Storage Devices</A
 ></H2
 ><DIV
 CLASS="sect2"
 ><H3
+CLASS="sect2"
+><A
+NAME="stor-vol-policy"
+>Policy for Volumes and Storage devices</A
+></H3
+><P
+>&#13;	  The properties in the <TT
+CLASS="literal"
+>storage.policy</TT
+>, 
+	  <TT
+CLASS="literal"
+>volume.policy</TT
+> and 
+	  <TT
+CLASS="literal"
+>storage.policy.default</TT
+> namespaces should
+	  be the preferred way to determine how and if a filesystem
+	  can be mounted. See <A
+HREF="#properties-policy"
+>the Section called <I
+>Policy Properties</I
+> in the chapter called <I
+>Device Properties</I
+></A
+>
+	  for details.
+	</P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
 CLASS="sect2"
 ><A
 NAME="enforcing-storage-fstab"
@@ -6543,31 +7696,42 @@ NAME="enforcing-storage-fstab"
 CLASS="literal"
 >/etc/fstab</TT
 > file through the HAL callout
-	  mechanism such that every device object of capability
+	  mechanism such that device objects of capability
 	  <TT
 CLASS="literal"
 >volume</TT
-> has a corresponding entry. The
-	  reasoning behind this is, among other things, to maintain the
-	  invariant that <TT
+> and <TT
+CLASS="literal"
+>storage</TT
+> has
+	  a corresponding entry if applicable cf. 
+	  <A
+HREF="#stor-vol-policy"
+>the Section called <I
+>Policy for Volumes and Storage devices</I
+></A
+>.
+	</P
+><P
+>&#13;	  The reasoning behind this is, among other things, to
+	  maintain the invariant that <TT
 CLASS="literal"
 >/etc/fstab</TT
-> list all
-	  available filesystems. In addition
+>
+	  list all available filesystems. In addition
 	  the <TT
 CLASS="literal"
 >mount(1)</TT
 > program should enable users
-	  without superuser privileges to mount filesystems mentioned in
-	  the <TT
+	  without superuser privileges to mount filesystems mentioned
+	  in the <TT
 CLASS="literal"
 >/etc/fstab</TT
-> file as long as they have
-	  the <TT
+> file as long as they
+	  have the <TT
 CLASS="literal"
 >user</TT
 > option set.
-
 	</P
 ></DIV
 ><DIV

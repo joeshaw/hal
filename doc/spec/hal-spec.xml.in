@@ -263,7 +263,7 @@
 
         <listitem><para>
 	    The diagram shows an example callout program, 
-	    <literal>update-fstab.sh</literal>, that creates/destroys
+	    <literal>fstab-sync</literal>, that creates/destroys
 	    mount points and modifies the <literal>/etc/fstab</literal>
 	    file accordingly whenever storage devices are added or
 	    removed.
@@ -279,13 +279,14 @@
         </para></listitem>
 
         <listitem><para>
-	    The <literal>update-fstab.sh</literal> and 
+	    The <literal>fstab-sync</literal> and 
 	    <literal>*-volume-manager</literal> programs are only
 	    examples on how to enforce policy and are not part of HAL
 	    proper.  An OS vendor may choose to enforce policy in a
 	    different way e.g. he might want to ignore the 
 	    <literal>/etc/fstab</literal> file and mount storage volumes
-	    in the callout or run a daemon with sufficient privileges.
+	    in the callout, run a daemon with sufficient privileges
+	    or use another setuid mount wrapper.
 	    See <xref linkend="enforcing-policy"/> for more details.
         </para></listitem>
 
@@ -404,7 +405,7 @@
 	
       </para><para>
 
-	It can be useful to classify properties into three groups
+	It can be useful to classify properties into four groups
 
       </para>
       
@@ -417,7 +418,7 @@
 	                etc.
 	</para></listitem>
 
-        <listitem><para>Device specific information - 
+        <listitem><para>Facts - 
                         vendor ID, product ID, disk serial numbers, 
 	                number of buttons on a mouse, formats accepted
 	                by a mp3 player and so on.</para></listitem>
@@ -425,15 +426,21 @@
         <listitem><para>Usage specific information - 
 	                Network link status, special device file name, 
                         filesystem mount location etc.</para></listitem>
+
+        <listitem><para>Policy - 
+                        How the device is to be used be users; usually
+	                defined by the system administrator.</para></listitem>
+
       </itemizedlist>
 
       <para>
 
 	The first category is determined by HAL, the next is merged
-	from either the hardware itself or device information files
-	and the last is intercepted by monitoring the operating
-	system.  This specification is concerned with precisely
-	defining several properties; see <xref
+	from either the hardware itself or device information files,
+	the third is intercepted by monitoring the operating system
+	and the last is merged from files that only the system
+	administrator can edit. This specification is concerned with
+	precisely defining several properties; see <xref
 	linkend="device-properties"/> and onwards for more
 	information.  As a complement to device properties, HAL also
 	provides <emphasis>conditions</emphasis> on HAL device
@@ -441,6 +448,15 @@
 	happening on devices which are not easily expressed in
 	properties. This includes events such as ''processor is
 	overheating'' or ''block device unmounted''.
+
+      </para><para>
+
+	There is a special hal device object referred to as the ''root
+	computer device object''. This device object represent the
+	entire system as a whole and all other devices are either
+	directly or indirectly childs of this device object. It has
+	the
+	UDI <literal>/org/freedesktop/Hal/devices/computer</literal>.
 
       </para><para>
 
@@ -761,6 +777,13 @@
               <entry>No</entry>
               <entry>A name used internally in the Linux kernel to identify
               the device. Used internally in HAL.</entry>
+            </row>
+
+            <row>
+              <entry><literal>linux.is_selinux_enabled</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No; can only appear on the root computer device object</entry>
+              <entry>Whether SELinux is enabled on the system</entry>
             </row>
 
           </tbody>
@@ -2060,6 +2083,12 @@
             </row>
             <row>
               <entry></entry>
+              <entry>sata</entry>
+              <entry></entry>
+              <entry>SATA interface</entry>
+            </row>
+            <row>
+              <entry></entry>
               <entry>platform</entry>
               <entry></entry>
               <entry>Legacy device that is part of the platform</entry>
@@ -2854,8 +2883,237 @@
         </tgroup>
       </informaltable>
     </sect2>
+    </sect1>
+
+    <sect1 id="properties-policy">
+      <title>Policy Properties</title>
+      <para>
+
+	The properties on a hal device object can be used to express
+	certain policies about how the device is to be used. This
+	information can be used by either programs querying hal
+	directly or by hal callouts. Default policy (e.g. always
+	mount a file system with the option 'exec') can also be
+	merged on the root computer device object.
+      </para>
+
+    <sect2 id="device-properties-storage-policy-default">
+      <title><literal>storage.policy.default</literal> namespace</title>
+      <para>
+	This namespace specifies the default policy for storage 
+	devices - these properties should be merged on the root computer
+	device object.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>storage.policy.default.use_managed_keyword</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Whether to use a <emphasis>managed no
+	        operation</emphasis> keyword when adding entries to
+	        the File Systems file (<literal>/etc/fstab</literal>) - 
+		this is used to identify entries added by a program
+		that modifies this file.
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.policy.default.managed_keyword.primary</literal> (string)</entry>
+              <entry>Example: 'managed'</entry>
+              <entry>No</entry>
+              <entry>No-op keyword to use when adding entries to the file systems file</entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.policy.default.managed_keyword.secondary</literal> (string)</entry>
+              <entry>Example: 'kudzu'</entry>
+              <entry>No</entry>
+              <entry>
+		Secondary no-op keyword that identifies entries added
+		to the file systems file. The secondary keyword is never
+		written; only read. This is useful when making a transition
+		from one managed keyword to another.
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.policy.default.mount_option.*</literal> (bool)</entry>
+              <entry>Examples: 
+		<literal>.noauto</literal>, 
+		<literal>.exec</literal>, 
+		<literal>.console</literal>, 
+		<literal>.fscontext=system_u:object_r:removable_t</literal></entry>
+              <entry>No</entry>
+              <entry>
+		This is actually an entire namespace that specifies
+	        what options a storage device should be mounted with,
+	        e.g. the example <literal>.exec</literal> should be read as
+		<literal>storage.policy.default.mount_option.exec</literal>
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.policy.default.mount_root</literal> (string)</entry>
+              <entry>Example: <literal>/media</literal> </entry>
+              <entry>No</entry>
+              <entry>
+		The default mount root to use when computing what
+		mount point to use for a storage device
+	      </entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-storage-policy">
+      <title><literal>storage.policy</literal> namespace</title>
+      <para>
+	This namespace contains properties that can be merged on
+	individual storage devices to specify how and if the storage
+	device should be mounted.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>storage.policy.should_mount</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Whether any volumes from this storage device
+              should be mounted</entry>
+            </row>
+            <row>
+              <entry><literal>storage.policy.desired_mount_point</literal> (string)</entry>
+              <entry></entry>
+              <entry>
+		No (only applicable if the
+		property <literal>storage.no_partitions_hint</literal>
+		is set to TRUE)
+	      </entry>
+              <entry>
+		The desired mount point for this storage device. The
+		path must not be fully qualified and there is no
+		guarantee that and storage policy agents, such as
+		policy mount wrappers or programs modifying the file
+		systems file will use this mount point.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>storage.policy.mount_option.*</literal> (bool)</entry>
+              <entry></entry>
+              <entry>
+		No (only applicable if the
+		property <literal>storage.no_partitions_hint</literal>
+		is set to TRUE)
+	      </entry>
+              <entry>
+		Mount options to use, see property <literal>storage.policy.default.mount_option.*</literal>
+		for details.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>storage.policy.mount_filesystem</literal> (string)</entry>
+              <entry></entry>
+              <entry>
+		No (only applicable if the
+		property <literal>storage.no_partitions_hint</literal>
+		is set to TRUE)
+	      </entry>
+              <entry>File system to use when mounting the storage device.</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-volume-policy">
+      <title><literal>volume.policy</literal> namespace</title>
+      <para>
+	This namespace contains properties that can be merged on
+	individual volumes to specify how and if the volume
+	should be mounted.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>volume.policy.should_mount</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Whether this volume should be mounted at all</entry>
+            </row>
+            <row>
+              <entry><literal>volume.policy.mount_filesystem</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>File system to use when mounting the volume.</entry>
+            </row>
+
+            <row>
+              <entry><literal>volume.policy.desired_mount_point</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+	      <entry>
+		The desired mount point for this volume. The
+		path must not be fully qualified and there is no
+		guarantee that and storage policy agents, such as
+		policy mount wrappers or programs modifying the file
+		systems file will use this mount point.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>volume.policy.mount_options.*</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Mount options to use, see property <literal>storage.policy.default.mount_option.*</literal>
+		for details.
+	      </entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
 
     </sect1>
+
   </chapter>
 
 
@@ -2868,7 +3126,9 @@
       shorthand) are used to merge arbitrary properties onto device
       objects. The way device information files works is that once all
       physical properties are merged onto a device object it is tried
-      against the set of installed device information files.  
+      against the set of installed device information files.  Device
+      information files are used for both merging facts and policy
+      settings about devices.
 
     </para><para>
 
@@ -2877,15 +3137,149 @@
       [string|int|bool|..]="required_value" &#62;</literal> directives
       that is tested against the properties of the device object. If
       all the match directives passes then the device information can
-      include <literal>&#60;merge key="some_property"
-      type="[string|int|bool|..]"&#62;</literal> directives to merge
-      new properties onto the device object. It's important to
-      emphasize that any previously property stemming from device
-      detection can be overridden by a device information file.
+      include <literal>&#60;[merge|append] key="some_property"
+      type="[string|int|bool|..]"&#62;</literal> directives to
+      respectively merge new properties or append to existing
+      properties on the device object. It's important to emphasize
+      that any previously property stemming from device detection can
+      be overridden by a device information file.
+
+    </para><para>
+
+      The <literal>&#60;match&#62;</literal>, 
+      <literal>&#60;merge&#62;</literal> and
+      <literal>&#60;append&#62;</literal> directives always requires
+      the <literal>key</literal> attribute which must be either a
+      property name on the device object in question or a path to a
+      property on another device object. The latter case is expressed
+      either through direct specification of the UDI, such as 
+      <literal>/org/freedesktop/Hal/devices/computer:foo.bar</literal>
+      or indirect references such as 
+      <literal>@info.parent:baz</literal> where the latter means that
+      the device object specified by the UDI in the string property 
+      <literal>info.parent</literal> should be used to query the
+      property <literal>baz</literal>. It is also possible to use
+      multiple indirections, e.g. for a volume on a USB memory stick
+      the indirection <literal>@block.storage_device:@storage.physical_device:usb.vendor_id</literal>
+      will reference the <literal>usb.vendor_id</literal> property
+      on the device object representing the USB interface.
+
+    </para><para>
+
+      When the property to match have been determined a number of
+      attributes can be used within the <literal>&#60;match&#62;</literal>
+      tag:
+       <itemizedlist>
+         <listitem><para>
+	     <literal>string</literal> - match a string property; for example
+	     <literal>&#60;match key="foo.bar" string="baz"&#62;</literal>
+	     will match only if 'foo.bar' is a string property assuming the value 'baz'.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>int</literal> - match an integer property
+	 </para></listitem>
+         <listitem><para>
+	     <literal>uint64</literal> - match property with the 64-bit unsigned type
+	 </para></listitem>
+         <listitem><para>
+	     <literal>bool</literal> - match a boolean property
+	 </para></listitem>
+         <listitem><para>
+	     <literal>double</literal> - match a property of type double
+	 </para></listitem>
+         <listitem><para>
+	     <literal>exists</literal> - used as 
+	     <literal>&#60;match key="foo.bar" exists="true"&#62;</literal>. Can be used with
+	     'true' and 'false' respectively to match when a property exists and it doesn't.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>empty</literal> - can only be used on string properties with 'true' and 'false'. The semantics
+	     for 'true' is to match only when the string is non-empty.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>is_absolute_path</literal> - matches only when a string property represents an absolute path
+	     (the path doesn't have to exist).
+	 </para></listitem>
+         <listitem><para>
+	     <literal>compare_lt</literal> - can be used on int, uint64, double and string properties to compare
+	     with a constant. Matches when the given property is less than the given constant
+	     using the default ordering.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>compare_le</literal> - like <literal>compare_lt</literal> but matches when less than or equal.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>compare_gt</literal> - like <literal>compare_lt</literal> but matches when greater than.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>compare_ge</literal> - like <literal>compare_lt</literal> but matches when greater than or equal.
+	 </para></listitem>
+       </itemizedlist>
+
+       The <literal>&#60;merge&#62;</literal> 
+       and <literal>&#60;append&#62;</literal> directives all require 
+       the <literal>type</literal> attribute which specifies what to
+       merge. The following values are supported
+
+       <itemizedlist>
+         <listitem><para>
+	     <literal>string</literal> - The value is copied to the property. For example
+	     <literal>&#60;merge key="foo.bar" type="string"&#62;baz&#60;/merge&#62;</literal>
+	     will merge the value 'baz' into the property 'foo.bar'.	     
+	 </para></listitem>
+         <listitem><para>
+	     <literal>bool</literal> - Can merge the values 'true' or 'false'
+	 </para></listitem>
+         <listitem><para>
+	     <literal>int</literal> - Merges an integer
+	 </para></listitem>
+         <listitem><para>
+	     <literal>uint64</literal> - Merges an unsigned 64-bit integer
+	 </para></listitem>
+         <listitem><para>
+	     <literal>double</literal> - Merges a double precision floating point number
+	 </para></listitem>
+         <listitem><para>
+	     <literal>copy_property</literal> - Copies the value of a given property - supports paths with
+	     direct and indirect UDI's. For example
+	     <literal>&#60;merge key="foo.bar" type="copy_property"&#62;@info.parent:baz.bat&#60;/merge&#62;</literal>
+	     will merge the value of the property <literal>baz.bat</literal> on the device object with the UDI from
+	     the property <literal>info.parent</literal> into the property <literal>foo.bar</literal> on 
+	     the device object being processed.
+	 </para></listitem>
+       </itemizedlist>
+
+       Device Information files are stored in the following standard hierachy with the following default
+       top level directories:
+
+       <itemizedlist>
+         <listitem><para>
+	     <literal>20freedesktop</literal> - device information files included with the hal tarball
+	 </para></listitem>
+         <listitem><para>
+	     <literal>30osvendor</literal> - device information files supplied by the operating system vendor
+	 </para></listitem>
+         <listitem><para>
+	     <literal>40oem</literal> - device information files from the device manufacturer and 
+	     installed from media accompanying the hardware
+	 </para></listitem>
+         <listitem><para>
+	     <literal>90defaultpolicy</literal> - Default policy determined by the operating system vendor and
+	     possibly edited by the system administrator
+	 </para></listitem>
+         <listitem><para>
+	     <literal>95userpolicy</literal> - Policy rules for specific devices.
+	 </para></listitem>
+       </itemizedlist>
+
+       All device information files are matched for every hal device object.
       
     </para>
-    
-    <sect1 id="fdi-example-mp3player">
+
+    <sect1 id="fdi-facts">
+      <title>Facts about devices</title>
+      
+    <sect2 id="fdi-example-mp3player">
       <title>Example: MP3 player</title>
       
       <para>
@@ -2909,22 +3303,21 @@
 	<inlinegraphic fileref="hal-fdi-example2.png" format="PNG"/>
       </para>
       
-    </sect1>
+    </sect2>
     
     
-    <sect1 id="fdi-example-camera">
+    <sect2 id="fdi-example-camera">
       <title>Example: Digital Still Camera</title>
       
       <para>
 	
-	This device information file matches a Canon Digital IXUS V
-	still digital camera by matching on the USB vendor and
-	product identifers.
+	This device information file matches a Sony digital still camera
+	by matching on the USB vendor and product identifers.
 	
       </para>
       
       <programlisting>
-	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/canon-digital-ixus-v.fdi"/>
+	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/sony_dsc.fdi"/>
       </programlisting>
       
       <para>
@@ -2935,9 +3328,9 @@
       <para>
 	<inlinegraphic fileref="hal-fdi-example1.png" format="PNG"/>
       </para>
-    </sect1>
+    </sect2>
 
-    <sect1 id="fdi-example-6in1">
+    <sect2 id="fdi-example-6in1">
       <title>Example: Card Reader</title>
       
       <para>
@@ -2966,7 +3359,55 @@
       <para>
 	<inlinegraphic fileref="hal-fdi-example3.png" format="PNG"/>
       </para>
+    </sect2>
     </sect1>
+
+
+    <sect1 id="fdi-policy">
+      <title>Policy settings for devices</title>
+      
+      <para>
+	Policy settings specifies system specific settings that a
+	system administrator associates with a device instance. In the
+	context of hal, this can be expressed in terms of device
+	properties merged on the device object in question. Default
+	policy can also be merged on the root computer device object.
+      </para>
+
+    <sect2 id="fdi-example-mountsetting">
+      <title>Storage Devices</title>
+      <para>
+
+	Policy for storage devices is expressed in the 
+	<literal>storage.policy.default</literal>, 
+	<literal>storage.policy</literal> and
+	<literal>volume.policy</literal> namespaces, see
+	<xref linkend="properties-policy"/> for details.
+
+      </para><para>
+	The default policy for storage devices shipped with hal looks like this
+      </para>
+
+      <programlisting>
+	<inlinegraphic format="linespecific" fileref="../../fdi/90defaultpolicy/storage-policy.fdi"/>
+      </programlisting>
+
+      <para>
+	and can be overridden by OS vendors to suit their purposes.
+      </para>
+      <para>
+	Users can also customize their own rules; some examples follow	
+      </para>
+
+      <programlisting>
+	<inlinegraphic format="linespecific" fileref="../conf/storage-policy-examples.fdi"/>
+      </programlisting>
+
+
+
+    </sect2>
+    </sect1>
+
   </chapter>
 
   <chapter id="callouts">
@@ -3245,7 +3686,7 @@ Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was rem
 #
 # @param  key                   Property to set
 # @param  value                 Value to set
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch)
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch|PermissionDenied)
 #
 void SetProperty(string key, any value)
 void SetPropertyString(string key, string value)
@@ -3276,7 +3717,7 @@ map{string, any} GetAllProperties()
 # Remove a property
 #
 # @param  key                   Property to remove
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|PermissionDenied)
 #
 void RemoveProperty(string key)
 
@@ -3301,7 +3742,7 @@ bool PropertyExists(string key)
 # interface.
 #
 # @param  capability            Capability, e.g. 'net.80211'
-# @raises                       org.freedesktop.Hal.NoSuchDevice
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|PermissionDenied)
 #
 void AddCapability(string capability)
 
@@ -3381,27 +3822,40 @@ void Condition(string condition, ...)
 
     </para>
     
-    <sect1 id="enforcing-storage">
+    <sect1 id="enforcing-stor-vol">
       <title>Storage Devices</title>
+
+      <sect2 id="stor-vol-policy">
+	<title>Policy for Volumes and Storage devices</title>
+	<para>
+	  The properties in the <literal>storage.policy</literal>, 
+	  <literal>volume.policy</literal> and 
+	  <literal>storage.policy.default</literal> namespaces should
+	  be the preferred way to determine how and if a filesystem
+	  can be mounted. See <xref linkend="properties-policy"/>
+	  for details.
+	</para>
+      </sect2>
 
       <sect2 id="enforcing-storage-fstab">
 	<title>File systems file</title>
-
 	<para>
 	  An operating system vendor should maintain the 
 	  <literal>/etc/fstab</literal> file through the HAL callout
-	  mechanism such that every device object of capability
-	  <literal>volume</literal> has a corresponding entry. The
-	  reasoning behind this is, among other things, to maintain the
-	  invariant that <literal>/etc/fstab</literal> list all
-	  available filesystems. In addition
-	  the <literal>mount(1)</literal> program should enable users
-	  without superuser privileges to mount filesystems mentioned in
-	  the <literal>/etc/fstab</literal> file as long as they have
-	  the <literal>user</literal> option set.
-
+	  mechanism such that device objects of capability
+	  <literal>volume</literal> and <literal>storage</literal> has
+	  a corresponding entry if applicable cf. 
+	  <xref linkend="stor-vol-policy"/>.
 	</para>
-
+	<para>
+	  The reasoning behind this is, among other things, to
+	  maintain the invariant that <literal>/etc/fstab</literal>
+	  list all available filesystems. In addition
+	  the <literal>mount(1)</literal> program should enable users
+	  without superuser privileges to mount filesystems mentioned
+	  in the <literal>/etc/fstab</literal> file as long as they
+	  have the <literal>user</literal> option set.
+	</para>
       </sect2>
 
       <sect2 id="enforcing-storage-locking">

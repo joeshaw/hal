@@ -1,3 +1,20 @@
+2004-10-13  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/20freedesktop/sony_dsc.fdi: New file, to match krh's camera
+	that is USB Mass Storage based.
+
+	* fdi/20freedesktop/canon-digital-ixus-v.fdi: Removed
+
+	* fdi/20freedesktop/Makefile.am (dist_fdi20freedesktop_DATA): 
+	add sony, remove canon.
+
+	* doc/spec/hal-spec.xml.in: Add a bunch of documentation to match
+	the new .fdi parser and the policy stuff for storage devices
+	
+	* hald/device_info.c (handle_match): Remove debug output
+	
+	* hald/hald_dbus.c (device_remove_property): Require superuser
+
 2004-10-12  David Zeuthen  <davidz@redhat.com>
 
 	First part of big patch to use .fdi files for policy properties.

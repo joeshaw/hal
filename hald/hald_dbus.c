@@ -1081,6 +1081,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
  *  void Device.AddCapability(string capability)
  *
  *    raises org.freedesktop.Hal.NoSuchDevice, 
+ *    raises org.freedesktop.Hal.PermissionDenied, 
  *  </pre>
  *
  *  @param  connection          D-BUS connection
@@ -1160,6 +1161,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
  *
  *    raises org.freedesktop.Hal.NoSuchDevice, 
  *           org.freedesktop.Hal.NoSuchProperty
+ *           org.freedesktop.Hal.PermissionDenied
  *  </pre>
  *
  *  @param  connection          D-BUS connection
@@ -1178,6 +1180,11 @@ device_remove_property (DBusConnection * connection, DBusMessage * message)
 	HAL_TRACE (("entering"));
 
 	udi = dbus_message_get_path (message);
+
+	if (!sender_has_superuser_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "RemoveProperty: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
 	if (d == NULL)

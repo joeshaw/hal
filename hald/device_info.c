@@ -504,11 +504,8 @@ handle_match (ParsingContext * pc, const char **attr)
 	} else if (strcmp (attr[2], "compare_lt") == 0) {
 		dbus_int64_t result;
 		if (!match_compare_property (d, prop_to_check, attr[3], &result)) {
-			HAL_INFO (("foob failed"));
 			return FALSE;
 		} else {
-			HAL_INFO (("foob result = %lld", result));
-			HAL_INFO (("foob %d", result < 0));
 			return result < 0;
 		}
 	} else if (strcmp (attr[2], "compare_le") == 0) {
