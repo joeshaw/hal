@@ -1236,8 +1236,26 @@ block_class_pre_process (ClassDeviceHandler *self,
 				has_removable_media = TRUE;
 			} else if (strcmp (media, "floppy") == 0) {
 				has_removable_media = TRUE;
+
+				/* No partitions */
+				hal_device_property_set_bool (
+					d, "block.no_partitions", TRUE);
+
+				/* I've got a LS120 that identifies as a
+				 * floppy; polling doesn't work so disable
+				 * media check and automount
+				 */
+				hal_device_property_set_bool (
+					d, "storage.media_check_enabled",
+					FALSE);
+				hal_device_property_set_bool (
+					d, "storage.automount_enabled",
+					FALSE);
+
 			} else if (strcmp (media, "tape") == 0) {
 				has_removable_media = TRUE;
+
+				/* TODO: Someone test with tape drives! */
 			}
 			
 		}

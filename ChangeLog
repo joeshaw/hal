@@ -1,5 +1,12 @@
 2004-07-06  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (block_class_pre_process): Disable
+	media_check+automount and set block.no_partitions to TRUE for
+	floppy drives - Now my LS120 drive in my Dell laptop works fine
+	with HAL.
+
+2004-07-06  David Zeuthen  <david@fubar.dk>
+
 	* packaging/fedora/hal.spec (Version): Bump to 0.2.93
 
 	* configure.in: Bump to 0.2.93
