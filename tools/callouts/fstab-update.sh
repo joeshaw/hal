@@ -24,14 +24,14 @@ if test "$HAL_PROP_BLOCK_MINOR" = ""; then
     exit 0
 fi
 
-if test "$HAL_PROP_BLOCK_NO_PARTITIONS" != "true"; then
-    if test "$HAL_PROP_BLOCK_IS_VOLUME" != "true"; then
-	echo "not a volume"
-	exit 0
-    fi
-else
-    if test "$HAL_PROP_BLOCK_IS_VOLUME" = "true"; then
-	echo "volume, but on a block.no_partition device"
+echo FOOOObar dev=$HAL_PROP_BLOCK_DEVICE  $HAL_PROP_STORAGE_NO_PARTITIONS_HINT
+
+# do create fstab entries ahead of time for storage
+# devices that hint they mainly use that kind of media
+# (such as optical drives and floppies)
+#
+if test "$HAL_PROP_STORAGE_NO_PARTITIONS_HINT" = "false"; then
+    if test "$HAL_PROP_BLOCK_IS_VOLUME" = "false"; then
 	exit 0
     fi
 fi
