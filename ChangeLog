@@ -1,3 +1,10 @@
+2004-10-27  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Tim Müller <t.i.m@zen.co.uk>
+
+	* configure.in: Require libcap development packages by checking for
+	sys/capability.h
+
 2004-10-26  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/90defaultpolicy/storage-policy.fdi: Change default policy
