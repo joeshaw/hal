@@ -1,6 +1,13 @@
 2004-07-20  David Zeuthen  <david@fubar.dk>
 
-	* hald/linux/block_class_device.c: (block_class_visit):
+	* hald/linux/block_class_device.c:
+	(detect_media): use O_EXCL for optical drive media detection, much
+	safer since O_EXCL is actually in mainline. Removes possible burning
+	problems (that is, if only cdrecord open(2)'s the device using O_EXCL;
+	bug filed against fedora-devel, hopefully it will bubble upstream)
+
+2004-07-20  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/class_device.c: (class_device_accept),
 	(class_device_visit):
 	* hald/linux/common.c: (drivers_collect):

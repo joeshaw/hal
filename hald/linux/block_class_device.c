@@ -615,11 +615,24 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		unsigned char buffer[8];
 		int ret;
 
-		fd = open (device_file, O_RDONLY | O_NONBLOCK);
+		/********** media detection for optical drives **********/
+
+		/* After talking to Hadess, magicdev maintainer, the
+		 * right thing is to use O_EXCL; it's in 2.6 mainline..
+		 */
+		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
 
 		if (fd == -1) {
+
+			/* this means the disc is mounted or some other app,
+			 * like a cd burner, has opened O_EXCL */
+			if (errno == EBUSY) {
+				HAL_INFO (("*** EBUSY for %s", device_file));
+				return FALSE;
+			}
+
 			/* open failed */
-			/*HAL_WARNING (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));*/
+			HAL_INFO (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));
 			return FALSE;
 		}
 
