@@ -533,7 +533,7 @@ static char* usbif_compute_udi(HalDevice* d, int append_num)
     else
         format = "/org/freedesktop/Hal/devices/usbif_%s_%d-%d";
 
-    pd = ds_property_get_string(d, "Parent");
+    pd = ds_property_get_string(d, "info.parent");
     len = strlen(pd);
     for(i=len-1; pd[i]!='/' && i>=0; i--)
         ;
@@ -584,10 +584,10 @@ static char* usb_compute_udi(HalDevice* d, int append_num)
         serial = "noserial";
 
     snprintf(buf, 256, format, 
-             ds_property_get_int(d, "usb.idVendor"),
-             ds_property_get_int(d, "usb.idProduct"),
-             ds_property_get_int(d, "usb.bcdDevice"),
-             ds_property_get_int(d, "usb.configurationValue"),
+             ds_property_get_int(d, "usb.vendor_id"),
+             ds_property_get_int(d, "usb.product_id"),
+             ds_property_get_int(d, "usb.device_revision_bcd"),
+             ds_property_get_int(d, "usb.cfg_value"),
              serial, append_num);
     
     return buf;
@@ -675,7 +675,7 @@ static void usb_add_caps_from_class(HalDevice* d,
     }
 
     if( cat!=NULL )
-        ds_property_set_string(d, "Category", cat);
+        ds_property_set_string(d, "info.category", cat);
 }
 
 
@@ -703,15 +703,15 @@ static void visit_device_usb_interface(const char* path,
 
     /* Create HAL device representing the interface */
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "usbif");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", path);
+    ds_property_set_string(d, "info.bus", "usbif");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", path);
     /** @note We also set the path here, because otherwise we can't handle two
      *  identical devices per the algorithm used in a #rename_and_maybe_add()
-     *  The point is that we need something unique in the Bus=usbif namespace
+     *  The point is that we need something unique in info.bus=usbif namespace
      */
     ds_property_set_string(d, "usbif.linux.sysfs_path", path);
-    ds_property_set_bool(d, "isVirtual", TRUE);
+    ds_property_set_bool(d, "info.virtual", TRUE);
 
     /* set driver */
     driver = drivers_lookup(path);
@@ -738,13 +738,13 @@ static void visit_device_usb_interface(const char* path,
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
 
         if( strcmp(attr_name, "bInterfaceClass")==0 )
-            ds_property_set_int(d, "usbif.bInterfaceClass", 
+            ds_property_set_int(d, "usbif.interface_class", 
                                 parse_dec(cur->value));
         else if( strcmp(attr_name, "bInterfaceSubClass")==0 )
-            ds_property_set_int(d, "usbif.bInterfaceSubClass", 
+            ds_property_set_int(d, "usbif.interface_subclass", 
                                 parse_dec(cur->value));
         else if( strcmp(attr_name, "bInterfaceProtocol")==0 )
-            ds_property_set_int(d, "usbif.bInterfaceProtocol", 
+            ds_property_set_int(d, "usbif.interface_protocol", 
                                 parse_dec(cur->value));
         else if( strcmp(attr_name, "bInterfaceNumber")==0 )
             ds_property_set_int(d, "usbif.number", 
@@ -757,7 +757,7 @@ static void visit_device_usb_interface(const char* path,
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
      */
-    ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
+    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
                                              visit_device_usbif_got_parent,
                                              (void*) d, NULL, 
@@ -787,22 +787,22 @@ static void visit_device_usbif_got_parent(HalDevice* parent,
         return;
     }
 
-    ds_property_set_string(d, "Parent", parent->udi);
+    ds_property_set_string(d, "info.parent", parent->udi);
 
     /* We set the caps derived from this USB interface on the parent USB
      * device 
      */
     usb_add_caps_from_class(parent, 
-                            ds_property_get_int(d, "usbif.bInterfaceClass"),
-                            ds_property_get_int(d, "usbif.bInterfaceSubClass"),
-                           ds_property_get_int(d, "usbif.bInterfaceProtocol"));
+                            ds_property_get_int(d, "usbif.interface_class"),
+                            ds_property_get_int(d, "usbif.interface_subclass"),
+                           ds_property_get_int(d, "usbif.interface_protocol"));
 
-    ds_property_set_string(d, "Parent", parent->udi);
-    ds_property_set_string(d, "PhysicalDevice", parent->udi);
-    ds_property_set_int(d, "usbif.deviceIdVendor",
-        ds_property_get_int(parent, "usb.idVendor"));
-    ds_property_set_int(d, "usbif.deviceIdProduct",
-        ds_property_get_int(parent, "usb.idProduct"));
+    ds_property_set_string(d, "info.parent", parent->udi);
+    ds_property_set_string(d, "info.physical_device", parent->udi);
+    ds_property_set_int(d, "usbif.device_vendor_id",
+        ds_property_get_int(parent, "usb.vendor_id"));
+    ds_property_set_int(d, "usbif.device_product_id",
+        ds_property_get_int(parent, "usb.product_id"));
 
     rename_and_maybe_add(d, usbif_compute_udi, "usbif");
 }
@@ -869,13 +869,13 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     
     /* Must be a new USB device */
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "usb");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_bus_id", device->bus_id);
-    ds_property_set_string(d, "Linux.sysfs_path_device", path);
+    ds_property_set_string(d, "info.bus", "usb");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_bus_id", device->bus_id);
+    ds_property_set_string(d, "linux.sysfs_path_device", path);
     /** @note We also set the path here, because otherwise we can't handle two
      *  identical devices per the algorithm used in a #rename_and_maybe_add()
-     *  The point is that we need something unique in the Bus namespace
+     *  The point is that we need something unique in the info.bus namespace
      */
     ds_property_set_string(d, "usb.linux.sysfs_path", path);
     /*printf("*** created udi=%s for path=%s\n", d, path);*/
@@ -905,10 +905,10 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
         else if( strcmp(attr_name, "idVendor")==0 )
             vendor_id = parse_hex(cur->value);
         else if( strcmp(attr_name, "bcdDevice")==0 )
-            ds_property_set_int(d, "usb.bcdDevice", 
+            ds_property_set_int(d, "usb.device_revision_bcd", 
                                 parse_hex(cur->value));
         else if( strcmp(attr_name, "bMaxPower")==0 )
-            ds_property_set_int(d, "usb.bMaxPower", 
+            ds_property_set_int(d, "usb.max_power", 
                                 parse_dec(cur->value));
         else if( strcmp(attr_name, "serial")==0 && strlen(cur->value)>0 )
             ds_property_set_string(d, "usb.serial", cur->value);
@@ -917,9 +917,9 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
             int bmAttributes = parse_hex(cur->value);
 
             /* USB_CONFIG_ATT_SELFPOWER */
-            ds_property_set_bool(d, "usb.selfPowered",
+            ds_property_set_bool(d, "usb.is_self_powered",
                                  (bmAttributes&0x40)!=0 );
-            ds_property_set_bool(d, "usb.canWakeUp",
+            ds_property_set_bool(d, "usb.can_wake_up",
                                  (bmAttributes&0x20)!=0 );
         }
 /*
@@ -933,30 +933,30 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
         else if( strcmp(attr_name, "product")==0 )
             product_name_kernel = cur->value;
         else if( strcmp(attr_name, "bDeviceClass")==0 )
-            ds_property_set_int(d, "usb.bDeviceClass", 
+            ds_property_set_int(d, "usb.device_class", 
                                 parse_hex(cur->value));
         else if( strcmp(attr_name, "bDeviceSubClass")==0 )
-            ds_property_set_int(d, "usb.bDeviceSubClass", 
+            ds_property_set_int(d, "usb.device_subclass", 
                                 parse_hex(cur->value));
         else if( strcmp(attr_name, "bDeviceProtocol")==0 )
-            ds_property_set_int(d, "usb.bDeviceProtocol", 
+            ds_property_set_int(d, "usb.device_protocol", 
                                 parse_hex(cur->value));
         
         else if( strcmp(attr_name, "bNumConfigurations")==0 )
-            ds_property_set_int(d, "usb.numConfigurations", 
+            ds_property_set_int(d, "usb.num_configurations", 
                                 parse_dec(cur->value));
         else if( strcmp(attr_name, "bConfigurationValue")==0 )
-            ds_property_set_int(d, "usb.configurationValue", 
+            ds_property_set_int(d, "usb.configuration_value", 
                                 parse_dec(cur->value));
         
         else if( strcmp(attr_name, "bNumInterfaces")==0 )
-            ds_property_set_int(d, "usb.numInterfaces", 
+            ds_property_set_int(d, "usb.num_interfaces", 
                                 parse_dec(cur->value));
         
     } /* for all attributes */
 
-    ds_property_set_int(d, "usb.idProduct", product_id);
-    ds_property_set_int(d, "usb.idVendor", vendor_id);
+    ds_property_set_int(d, "usb.product_id", product_id);
+    ds_property_set_int(d, "usb.vendor_id", vendor_id);
 
     /* Lookup names in usb.ids; these may override what the kernel told
      * us, but, hey, it's only a name; it's not something we are going
@@ -969,48 +969,48 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     usb_ids_find(vendor_id, product_id, &vendor_name, &product_name);
     if( vendor_name!=NULL )
     {
-        ds_property_set_string(d, "usb.Vendor", vendor_name);
-        ds_property_set_string(d, "Vendor", vendor_name);
+        ds_property_set_string(d, "usb.vendor", vendor_name);
+        ds_property_set_string(d, "info.vendor", vendor_name);
     }
     else if( vendor_name_kernel!=NULL )
     {
         /* fallback on name supplied from kernel */
-        ds_property_set_string(d, "usb.Vendor", vendor_name_kernel);
-        ds_property_set_string(d, "Vendor", vendor_name_kernel);
+        ds_property_set_string(d, "usb.vendor", vendor_name_kernel);
+        ds_property_set_string(d, "info.vendor", vendor_name_kernel);
     }
     else
     {
         /* last resort; use numeric name */
         snprintf(numeric_name, 32, "Unknown (0x%04x)", vendor_id);
-        ds_property_set_string(d, "usb.Vendor", numeric_name);
-        ds_property_set_string(d, "Vendor", numeric_name);
+        ds_property_set_string(d, "usb.vendor", numeric_name);
+        ds_property_set_string(d, "info.vendor", numeric_name);
     }
 
     if( product_name!=NULL )
     {
-        ds_property_set_string(d, "usb.Product", product_name);
-        ds_property_set_string(d, "Product", product_name);
+        ds_property_set_string(d, "usb.product", product_name);
+        ds_property_set_string(d, "info.product", product_name);
     }
     else if( product_name_kernel!=NULL )
     {
         /* name supplied from kernel (if available) */
-        ds_property_set_string(d, "usb.Product", product_name_kernel);
-        ds_property_set_string(d, "Product", product_name_kernel);
+        ds_property_set_string(d, "usb.product", product_name_kernel);
+        ds_property_set_string(d, "info.product", product_name_kernel);
     }
     else
     {
         /* last resort; use numeric name */
         snprintf(numeric_name, 32, "Unknown (0x%04x)", product_id);
-        ds_property_set_string(d, "usb.Product", numeric_name);
-        ds_property_set_string(d, "Product", numeric_name);
+        ds_property_set_string(d, "usb.product", numeric_name);
+        ds_property_set_string(d, "info.product", numeric_name);
     }
 
 
     /* Check device class */
     usb_add_caps_from_class(d, 
-                            ds_property_get_int(d, "usb.bDeviceClass"),
-                            ds_property_get_int(d, "usb.bDeviceSubClass"),
-                            ds_property_get_int(d, "usb.bDeviceProtocol"));
+                            ds_property_get_int(d, "usb.device_class"),
+                            ds_property_get_int(d, "usb.device_subclass"),
+                            ds_property_get_int(d, "usb.device_protocol"));
 
     parent_sysfs_path = get_parent_sysfs_path(path);
 
@@ -1018,7 +1018,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
      */
-    ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
+    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path,
                                              visit_device_usb_got_parent,
                                              (void*) d, NULL, 
@@ -1045,7 +1045,7 @@ static void visit_device_usb_got_parent(HalDevice* parent,
 
     if( parent!=NULL )
     {
-        ds_property_set_string(d, "Parent", parent->udi);
+        ds_property_set_string(d, "info.parent", parent->udi);
     }
     else
     {
@@ -1056,14 +1056,14 @@ static void visit_device_usb_got_parent(HalDevice* parent,
     /* Merge information from /proc/bus/usb/devices */
     proc_info = NULL;
 
-    bus_id = ds_property_get_string(d, "Linux.sysfs_bus_id");
+    bus_id = ds_property_get_string(d, "linux.sysfs_bus_id");
 
     if( sscanf(bus_id, "usb%d", &bus_number)==1 )
     {
         /* Is of form "usb%d" which means that this is a USB virtual root
          * hub, cf. drivers/usb/hcd.c in kernel 2.6
          */
-        ds_property_set_int(d, "usb.busNumber", bus_number);
+        ds_property_set_int(d, "usb.bus_number", bus_number);
 
         if( !is_probing )
         {
@@ -1094,7 +1094,7 @@ static void visit_device_usb_got_parent(HalDevice* parent,
         /* the first part is easy */
         bus_number = atoi(bus_id);
 
-        ds_property_set_int(d, "usb.busNumber", bus_number);
+        ds_property_set_int(d, "usb.bus_number", bus_number);
 
         /* The naming convention also guarantees that
          *
@@ -1121,7 +1121,7 @@ static void visit_device_usb_got_parent(HalDevice* parent,
 
                 proc_info = usb_proc_find_virtual_hub_child(bus_number, 
                                                             port_number);
-                ds_property_set_int(d, "usb.portNumber", port_number);
+                ds_property_set_int(d, "usb.port_number", port_number);
             }
         }
         else
@@ -1139,14 +1139,14 @@ static void visit_device_usb_got_parent(HalDevice* parent,
                 port_number += digit;
             }
 
-            ds_property_set_int(d, "usb.portNumber", port_number);
+            ds_property_set_int(d, "usb.port_number", port_number);
 
             /* Ok, got the port number and bus number; this is not quite
              * enough though.. We take the usb.linux.device_number from
              * our parent and then we are set.. */
             if( parent==NULL )
             {
-                fprintf(stderr, "USB device is on a hub but no parent??\n");
+                HAL_WARNING(("USB device is on a hub but no parent??"));
                 /* have to give up then */
                 proc_info = NULL;
             }
@@ -1168,15 +1168,15 @@ static void visit_device_usb_got_parent(HalDevice* parent,
     {
         char kernel_path[32+1];
 
-        ds_property_set_int(d, "usb.levelNumber", proc_info->t_level);
+        ds_property_set_int(d, "usb.level_number", proc_info->t_level);
         ds_property_set_int(d, "usb.linux.device_number",
                                     proc_info->t_device);
         ds_property_set_int(d, "usb.linux.parent_number",
                                     proc_info->t_device);
-        ds_property_set_int(d, "usb.numPorts", 
+        ds_property_set_int(d, "usb.num_ports", 
                                     proc_info->t_max_children);
-        ds_property_set_int(d, "usb.bcdSpeed", proc_info->t_speed_bcd);
-        ds_property_set_int(d, "usb.bcdVersion", 
+        ds_property_set_int(d, "usb.speed_bcd", proc_info->t_speed_bcd);
+        ds_property_set_int(d, "usb.version_bcd", 
                                     proc_info->d_version_bcd);
 
         /* Ok, now compute the unique name that the kernel sometimes use
@@ -1199,17 +1199,17 @@ static void visit_device_usb_got_parent(HalDevice* parent,
                     snprintf(kernel_path, 32, "%s-%d", 
                              ds_property_get_string(parent, 
                                                     "linux.kernel_devname"),
-                             ds_property_get_int(d, "usb.portNumber"));
+                             ds_property_get_int(d, "usb.port_number"));
                 }
                 else
                 {
                     snprintf(kernel_path, 32, "%s.%d", 
                              ds_property_get_string(parent,
                                                     "linux.kernel_devname"),
-                             ds_property_get_int(d, "usb.portNumber"));
+                             ds_property_get_int(d, "usb.port_number"));
                 }
                 ds_property_set_string(d, "linux.kernel_devname",
-                                               kernel_path);
+                                       kernel_path);
             }
         }
 

@@ -323,10 +323,6 @@ static void async_find_check_new_addition(HalDevice* device)
     DSDeviceAsyncFindStruct* prev;
 
 check_list_again:
-    /*
-    HAL_INFO(("***** Linux.sysfs_path_device = %s",
-              ds_property_get_string(device, "Linux.sysfs_path_device")));
-    */
 
     /* Check if this is still in list */
     for(i=async_find_outstanding_head, prev=NULL; i!=NULL; i=i->next)
@@ -1168,7 +1164,7 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
         }
     }    
 
-    caps = ds_property_get_string(source, "Capabilities");
+    caps = ds_property_get_string(source, "info.capabilities");
     if( caps!=NULL )
     {
         int i;
@@ -1393,17 +1389,17 @@ void ds_add_capability(HalDevice* device, const char* capability)
     const char* caps;
     char buf[MAX_CAP_SIZE];
 
-    caps = ds_property_get_string(device, "Capabilities");
+    caps = ds_property_get_string(device, "info.capabilities");
     if( caps==NULL )
     {
-        ds_property_set_string(device, "Capabilities", capability);
+        ds_property_set_string(device, "info.capabilities", capability);
     }
     else
     {
         if( strstr(caps, capability)==NULL )
         {
             snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
-            ds_property_set_string(device, "Capabilities", buf);
+            ds_property_set_string(device, "info.capabilities", buf);
         }
     }
 
@@ -1423,7 +1419,7 @@ dbus_bool_t ds_query_capability(HalDevice* device, const char* capability)
 {
     const char* caps;
 
-    caps = ds_property_get_string(device, "Capabilities");
+    caps = ds_property_get_string(device, "info.capabilities");
     if( caps!=NULL )
     {
         if( strstr(caps, capability)!=NULL )

@@ -78,7 +78,7 @@ class DeviceManager(LibGladeApplication):
         [property_name] = dbus_message.get_args_list()
         #print "property name", property_name
         #print "dbus_obj_path", dbus_obj_path
-        if property_name=="Parent":
+        if property_name=="info.parent":
             self.update_device_list()        
         else:
             device_udi = dbus_obj_path
@@ -199,7 +199,7 @@ class DeviceManager(LibGladeApplication):
                                                      "org.freedesktop.Hal.Device")
             properties = device_dbus_obj.GetAllProperties()
             try:
-                parent_name = properties["Parent"]
+                parent_name = properties["info.parent"]
             except KeyError:
                 # no parent, must be parent of virtual_root
                 parent_name = "/"
@@ -232,71 +232,61 @@ class DeviceManager(LibGladeApplication):
         capabilities = self.xml.get_widget("ns_device_capabilities")
 
         # we always have Bus and State
-        bus.set_label(Const.BUS_NAMES[device.properties["Bus"]])
+        bus.set_label(Const.BUS_NAMES[device.properties["info.bus"]])
         #state.set_label(Const.STATE_NAMES[device.properties["State"]])
 
         # guestimate product and vendor if we have no device information file
-        if device.properties["GotDeviceInfo"]:
-            if device.properties.has_key("Product"):
-                product.set_label(device.properties["Product"])
+        if device.properties["info.bus"]=="usb":
+            if device.properties.has_key("info.product"):
+                product.set_label("%s"%device.properties["info.product"])
+            elif device.properties.has_key("usb.product"):
+                product.set_label("%s"%device.properties["usb.product"])
+            elif device.properties.has_key("usb.product_id"):
+                product.set_label("Unknown (0x%x)"%device.properties["usb.product_id"])
             else:
                 product.set_label("Unknown")
-            if device.properties.has_key("Vendor"):
-                vendor.set_label(device.properties["Vendor"])
-            else:
-                vendor.set_label("N/A")
-        else:
 
-            if device.properties["Bus"]=="usb":
-                if device.properties.has_key("Product"):
-                    product.set_label("%s"%device.properties["Product"])
-                elif device.properties.has_key("usb.Product"):
-                    product.set_label("%s"%device.properties["usb.Product"])
-                elif device.properties.has_key("usb.idProduct"):
-                    product.set_label("Unknown (0x%x)"%device.properties["usb.idProduct"])
-                else:
-                    product.set_label("Unknown")
-
-                if device.properties.has_key("Vendor"):
-                    vendor.set_label("%s"%device.properties["Vendor"])
-                elif device.properties.has_key("usb.Vendor"):
-                    vendor.set_label("%s"%device.properties["usb.Vendor"])
-                elif device.properties.has_key("usb.idVendor"):
-                    vendor.set_label("Unknown (0x%x)"%device.properties["usb.idVendor"])
-                else:
-                    vendor.set_label("Unknown")
-
-
-            elif device.properties["Bus"]=="pci":
-                if device.properties.has_key("Product"):
-                    product.set_label("%s"%device.properties["Product"])
-                elif device.properties.has_key("pci.Product"):
-                    product.set_label("%s"%device.properties["pci.Product"])
-                elif device.properties.has_key("pci.idProduct"):
-                    product.set_label("Unknown (0x%x)"%device.properties["pci.idProduct"])
-                else:
-                    product.set_label("Unknown")
-
-                if device.properties.has_key("Vendor"):
-                    vendor.set_label("%s"%device.properties["Vendor"])
-                elif device.properties.has_key("pci.Vendor"):
-                    vendor.set_label("%s"%device.properties["pci.Vendor"])
-                elif device.properties.has_key("pci.idVendor"):
-                    vendor.set_label("Unknown (0x%x)"%device.properties["pci.idVendor"])
-                else:
-                    vendor.set_label("Unknown")
-
-
+            if device.properties.has_key("info.vendor"):
+                vendor.set_label("%s"%device.properties["info.vendor"])
+            elif device.properties.has_key("usb.vendor"):
+                vendor.set_label("%s"%device.properties["usb.vendor"])
+            elif device.properties.has_key("usb.vendor_id"):
+                vendor.set_label("Unknown (0x%x)"%device.properties["usb.vendor_id"])
             else:
                 vendor.set_label("Unknown")
-            # clear category, capabilities
-            category.set_label("Unknown")
-            capabilities.set_label("Unknown")
+
+
+        elif device.properties["info.bus"]=="pci":
+            if device.properties.has_key("info.product"):
+                product.set_label("%s"%device.properties["info.product"])
+            elif device.properties.has_key("pci.product"):
+                product.set_label("%s"%device.properties["pci.product"])
+            elif device.properties.has_key("pci.product_id"):
+                product.set_label("Unknown (0x%x)"%device.properties["pci.product_id"])
+            else:
+                product.set_label("Unknown")
+
+            if device.properties.has_key("info.vendor"):
+                vendor.set_label("%s"%device.properties["info.vendor"])
+            elif device.properties.has_key("pci.vendor"):
+                vendor.set_label("%s"%device.properties["pci.vendor"])
+            elif device.properties.has_key("pci.vendor_id"):
+                vendor.set_label("Unknown (0x%x)"%device.properties["pci.vendor_id"])
+            else:
+                vendor.set_label("Unknown")
+
+
+        else:
+            vendor.set_label("Unknown")
+
+        # clear category, capabilities
+        category.set_label("Unknown")
+        capabilities.set_label("Unknown")
 
     def update_tab_usb(self, device):
         """Updates the 'USB' tab given a Device object; may hide it"""
         page = self.xml.get_widget("device_notebook").get_nth_page(1)
-        if device.properties["Bus"]!="usb":
+        if device.properties["info.bus"]!="usb":
             page.hide_all()
             return
 
@@ -309,28 +299,28 @@ class DeviceManager(LibGladeApplication):
         prod_id = self.xml.get_widget("ns_usb_prod_id")
         revision = self.xml.get_widget("ns_usb_rev")
 
-        bcdVersion = device.properties["usb.bcdDevice"]
+        bcdVersion = device.properties["usb.version_bcd"]
         version.set_label("%x.%x"%(bcdVersion>>8, bcdVersion&0xff))
 
-        bcdSpeed = device.properties["usb.bcdSpeed"]
+        bcdSpeed = device.properties["usb.speed_bcd"]
         bandwidth.set_label("%x.%x Mbit/s"%(bcdSpeed>>8, bcdSpeed&0xff))
-        maxpower.set_label("%d mA"%(device.properties["usb.bMaxPower"]))
-        if not device.properties.has_key("usb.Vendor"):
-            man_id.set_label("0x%04x"%(device.properties["usb.idVendor"]))
+        maxpower.set_label("%d mA"%(device.properties["usb.max_power"]))
+        if not device.properties.has_key("usb.vendor"):
+            man_id.set_label("0x%04x"%(device.properties["usb.vendor_id"]))
         else:
-            man_id.set_label("%s"%(device.properties["usb.Vendor"]))
-        if not device.properties.has_key("usb.Product"):
-            prod_id.set_label("0x%04x"%(device.properties["usb.idProduct"]))
+            man_id.set_label("%s"%(device.properties["usb.vendor"]))
+        if not device.properties.has_key("usb.product"):
+            prod_id.set_label("0x%04x"%(device.properties["usb.product_id"]))
         else:
-            prod_id.set_label("%s"%(device.properties["usb.Product"]))
-        bcdDevice = device.properties["usb.bcdDevice"]
+            prod_id.set_label("%s"%(device.properties["usb.product"]))
+        bcdDevice = device.properties["usb.device_revision_bcd"]
         revision.set_label("%x.%x"%((bcdDevice>>8), bcdDevice&0xff))
 
 
     def update_tab_pci(self, device):
         """Updates the 'PCI' tab given a Device object; may hide it"""
         page = self.xml.get_widget("device_notebook").get_nth_page(2)
-        if device.properties["Bus"]!="pci":
+        if device.properties["info.bus"]!="pci":
             page.hide_all()
             return
 
@@ -341,23 +331,23 @@ class DeviceManager(LibGladeApplication):
         subsys_man_id = self.xml.get_widget("ns_pci_subsys_man_id")
         subsys_prod_id = self.xml.get_widget("ns_pci_subsys_prod_id")
 
-        if not device.properties.has_key("pci.Vendor"):
-            man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendor"]))
+        if not device.properties.has_key("pci.vendor"):
+            man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.vendor_id"]))
         else:
-            man_id.set_label("%s"%(device.properties["pci.Vendor"]))
-        if not device.properties.has_key("pci.Product"):
-            prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProduct"]))
+            man_id.set_label("%s"%(device.properties["pci.vendor"]))
+        if not device.properties.has_key("pci.product"):
+            prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.product_id"]))
         else:
-            prod_id.set_label("%s"%(device.properties["pci.Product"]))
+            prod_id.set_label("%s"%(device.properties["pci.product"]))
 
-        if not device.properties.has_key("pci.VendorSubSystem"):
-            subsys_man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendorSubSystem"]))
+        if not device.properties.has_key("pci.subsys_vendor"):
+            subsys_man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.subsys_vendor_id"]))
         else:
-            subsys_man_id.set_label("%s"%(device.properties["pci.VendorSubSystem"]))
-        if not device.properties.has_key("pci.ProductSubSystem"):
-            subsys_prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProductSubSystem"]))
+            subsys_man_id.set_label("%s"%(device.properties["pci.subsys_vendor"]))
+        if not device.properties.has_key("pci.subsys_product"):
+            subsys_prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.subsys_product_id"]))
         else:
-            subsys_prod_id.set_label("%s"%(device.properties["pci.ProductSubSystem"]))
+            subsys_prod_id.set_label("%s"%(device.properties["pci.subsys_product"]))
 
     def update_tab_advanced(self, device):
         """Updates the 'Advanced' tab given a Device object"""

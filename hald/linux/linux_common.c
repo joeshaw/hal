@@ -449,12 +449,15 @@ tryagain:
         /* Device is not in list... */
         
         /* Set required parameters */
-        ds_property_set_bool(d, "GotDeviceInfo", FALSE);
+        /*ds_property_set_bool(d, "GotDeviceInfo", FALSE);*/
         /*ds_property_set_int(d, "State", HAL_STATE_NEED_DEVICE_INFO);*/
         
         /* commit the device to the Global Device List - give the
          * computed device name */
         ds_device_set_udi(d, computed_udi);
+
+        ds_property_set_string(d, "info.udi", computed_udi);
+
         ds_gdl_add(d);
 
         /* Now try to enable the device - if a .fdi is found 
@@ -497,8 +500,8 @@ char* get_parent_sysfs_path(const char* path)
 /** Set the physical device for a device.
  *
  *  This function visits all parent devices and sets the property
- *  PhysicalDevice to the first parent device that doesn't have the
- *  PhysicalDevice property set.
+ *  info.physical_device to the first parent device that doesn't have the
+ *  info.physical_device property set.
  *
  *  @param  device              HalDevice to process
  */
@@ -511,7 +514,7 @@ void find_and_set_physical_device(HalDevice* device)
     d = device;
     do
     {
-        parent_udi = ds_property_get_string(d, "Parent");
+        parent_udi = ds_property_get_string(d, "info.parent");
         if( parent_udi==NULL )
         {
             HAL_ERROR(("Error finding parent for %s\n", d->udi));
@@ -525,9 +528,9 @@ void find_and_set_physical_device(HalDevice* device)
             return;
         }
 
-        if( !ds_property_exists(parent, "PhysicalDevice") )
+        if( !ds_property_exists(parent, "info.physical_device") )
         {
-            ds_property_set_string(device, "PhysicalDevice", parent_udi);
+            ds_property_set_string(device, "info.physical_device", parent_udi);
             return;
         }
 

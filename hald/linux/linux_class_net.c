@@ -119,7 +119,7 @@ void visit_class_device_net(const char* path,
     {
         unsigned int a5, a4, a3 ,a2, a1, a0;
 
-        ds_property_set_string(d, "net.ethernet.macAddr", addr_store);
+        ds_property_set_string(d, "net.ethernet.mac_addr", addr_store);
 
         if( sscanf(addr_store, "%x:%x:%x:%x:%x:%x",
                    &a5, &a4, &a3, &a2, &a1, &a0)==6 )
@@ -129,9 +129,9 @@ void visit_class_device_net(const char* path,
             mac_upper = (a5<<16)|(a4<<8)|a3;
             mac_lower = (a2<<16)|(a1<<8)|a0;
 
-            ds_property_set_int(d, "net.ethernet.macAddrUpper24",
+            ds_property_set_int(d, "net.ethernet.mac_addr_upper24",
                                         (dbus_int32_t) mac_upper);
-            ds_property_set_int(d, "net.ethernet.macAddrLower24",
+            ds_property_set_int(d, "net.ethernet.mac_addr_lower24",
                                         (dbus_int32_t) mac_lower);
         }
     }
@@ -145,7 +145,7 @@ void visit_class_device_net(const char* path,
     }
 
 
-    ds_property_set_int(d, "net.arpProtoHwId", 
+    ds_property_set_int(d, "net.arp_proto_hw_id", 
                                 media_type);
 
     /* Always set capabilities as the last thing the addition of a 
@@ -153,7 +153,7 @@ void visit_class_device_net(const char* path,
      * daemons for instance
      */
 
-    ds_property_set_string(d, "Category", "net");
+    ds_property_set_string(d, "info.category", "net");
     ds_add_capability(d, "net");
 
     /* type is decimal according to net/core/net-sysfs.c and it
@@ -215,7 +215,7 @@ void visit_class_device_net(const char* path,
      * timeout is set to zero in that event..
      */
     ds_device_async_find_by_key_value_string(
-        "Linux.sysfs_path_device",
+        "linux.sysfs_path_device",
         class_device->sysdevice->path, 
         visit_class_device_net_got_sysdevice,
         (void*) d, NULL, 
@@ -455,6 +455,10 @@ static void link_detection_remove(HalDevice* device)
     {
         if( iface->device==device )
         {
+
+            HAL_INFO(("Stopping ethernet link monitoring on device %s", 
+                      device->udi));
+
             if( iface_prev!=NULL )
             {
                 iface_prev->next = iface->next;

@@ -413,7 +413,7 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
         {
             HalDevice* d;
 
-            d = ds_device_find_by_key_value_string("Linux.sysfs_path",
+            d = ds_device_find_by_key_value_string("linux.sysfs_path",
                                                    sysfs_devpath);
             if( d==NULL )
             {
@@ -442,7 +442,7 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
         else
         {
             HalDevice* d;
-            d = ds_device_find_by_key_value_string("Linux.sysfs_path",
+            d = ds_device_find_by_key_value_string("linux.sysfs_path",
                                                    sysfs_devpath);
             if( d==NULL )
             {
@@ -513,7 +513,7 @@ static DBusHandlerResult handle_udev_node_created(DBusConnection* connection,
          * be added later..
          */
         ds_device_async_find_by_key_value_string(
-            "Linux.sysfs_path_device",
+            "linux.sysfs_path_device",
             sysfs_dev_path, 
             handle_udev_node_created_found_device,
             (void*) filename, NULL, 

@@ -1,5 +1,78 @@
 2003-12-22  David Zeuthen  <david@fubar.dk>
 
+	* tools/device-manager/*: Some changes due to the big rename patch
+	
+	* hald/*.c: The big property rename change patch
+	s/Bus/info.bus/
+	s/Capabilities/info.capabilities/
+	s/Category/info.category/
+	s/Product/info.product/
+	s/Vendor/info.vendor/
+	s/Linux.sysfs_path/linux.sysfs_path/
+	s/Linux.sysfs_path_device/linux.sysfs_path_device/
+	s/Linux.sysfs_bus_id/linux.sysfs_bus_id/
+	s/Parent/info.parent/
+	s/PhysicalDevice/info.physical_device/
+	info.udi NEW
+	s/pci.Product/pci.product/
+	s/pci.Vendor/pci.vendor/
+	s/pci.ProductSubSystem/pci.subsys_product/
+	s/pci.VendorSubSystem/pci.subsys_vendor/
+	s/pci.deviceClass/pci.device_class/
+	s/pci.deviceSubClass/pci.device_subclass/
+	s/pci.deviceProtocol/pci.device_protocol/
+	s/pci.idProduct/pci.product_id/
+	s/pci.idVendor/pci.vendor_id/
+	s/pci.idProductSubSystem/pci.subsys_product_id/
+	s/pci.idVendorSubSystem/pci.subsys_vendor_id/
+	s/usb.Product/usb.product/
+	s/usb.Vendor/usb.vendor/
+	s/usb.bDeviceClass/usb.device_class/
+	s/usb.bDeviceSubClass/usb.device_subclass/
+	s/usb.bDeviceProtocol/usb.device_protocol/
+	s/usb.bMaxPower/usb.max_power/
+	s/usb.bcdDevice/usb.device_revision_bcd/
+	s/usb.bcdSpeed/usb.speed_bcd/
+	s/usb.bcdVersion/usb.version_bcd/
+	s/usb.busNumber/usb.bus_number/
+	s/usb.canWakeUp/usb.can_wake_up/
+	s/usb.configurationValue/usb.configuration_value/
+	s/usb.idProduct/usb.product_id/
+	s/usb.idVendor/usb.vendor_id/
+	s/usb.levelNumber/usb.level_number/
+	s/usb.numConfigurations/usb.num_configurations/
+	s/usb.numInterfaces/usb.num_interfaces/
+	s/usb.numPorts/usb.num_ports/
+	s/usb.selfPowered/usb.is_self_powered/
+	s/usb.serial/usb.serial/
+	s/usbif.bInterfaceClass/usbif.interface_class/
+	s/usbif.bInterfaceSubClass/usbif.interface_subclass/
+	s/usbif.bInterfaceProtocol/usbif.interface_protocol/
+	s/usbif.deviceIdProduct/usbif.device_product_id/
+	s/usbif.deviceIdVendor/usbif.device_vendor_id/
+	s/ide.channel/ide.channel/
+	s/ide.channel/ide.sub_channel/
+	s/ide_host.number/ide_host.number/
+	s/block.device/block.device/
+	s/block.fileSystem/block.fstype/
+	s/block.isMounted/block.is_mounted/
+	s/block.isVolume/block.is_volume/
+	s/block.major/block.major/
+	s/block.minor/block.minor/
+	s/block.mountPoint/block.mount_point/
+	s/block.size/block.size/
+	s/block.start/block.start/
+	s/block.model/block.model/
+	s/block.media/block.media/
+	s/block.removableMedia/block.has_removable_media/
+	block.block_size NEW
+	s/net.ethernet.macAddr/net.ethernet.mac_addr/
+	s/net.ethernet.macAddrLower24/net.ethernet.mac_addr_lower24/
+	s/net.ethernet.macAddrUpper24/net.ethernet.mac_addr_upper24/
+	s/net.arpProtoHwId/net.arp_proto_hw_id/
+	
+2003-12-22  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/linux_usb.c (usb_proc_parse): Allow multiple invocations,
 	specifically one on every hotplug :-)
 	(visit_device_usb_got_parent): Call usb_proc_parse, so we get up-to-

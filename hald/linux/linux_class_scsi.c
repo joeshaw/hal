@@ -70,7 +70,7 @@ static char* scsi_host_compute_udi(HalDevice* d, int append_num)
     else
         format = "/org/freedesktop/Hal/devices/scsi_host_%s-%d";
 
-    pd = ds_property_get_string(d, "Parent");
+    pd = ds_property_get_string(d, "info.parent");
     len = strlen(pd);
     for(i=len-1; pd[i]!='/' && i>=0; i--)
         ;
@@ -106,7 +106,7 @@ static char* scsi_device_compute_udi(HalDevice* d, int append_num)
     else
         format = "/org/freedesktop/Hal/devices/scsi_device_%s-%d";
 
-    pd = ds_property_get_string(d, "Parent");
+    pd = ds_property_get_string(d, "info.parent");
     len = strlen(pd);
     for(i=len-1; pd[i]!='/' && i>=0; i--)
         ;
@@ -149,13 +149,13 @@ void visit_class_device_scsi_host(const char* path,
     /** @todo: see if we already got this device */
 
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "scsi_host");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", 
+    ds_property_set_string(d, "info.bus", "scsi_host");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", 
                            class_device->sysdevice->path);
 
     /* guestimate product name */
-    ds_property_set_string(d, "Product", "SCSI Host Interface");
+    ds_property_set_string(d, "info.product", "SCSI Host Interface");
 
     parent_sysfs_path = get_parent_sysfs_path(class_device->sysdevice->path);
 
@@ -164,7 +164,7 @@ void visit_class_device_scsi_host(const char* path,
      * timeout is set to zero in that event..
      */
     ds_device_async_find_by_key_value_string(
-        "Linux.sysfs_path_device",
+        "linux.sysfs_path_device",
         parent_sysfs_path, 
         visit_class_device_scsi_host_got_parent,
         (void*) d, NULL, 
@@ -190,9 +190,9 @@ static void visit_class_device_scsi_host_got_parent(HalDevice* parent,
 
     if( parent!=NULL )
     {
-        ds_property_set_string(d, "Parent", parent->udi);
+        ds_property_set_string(d, "info.parent", parent->udi);
         find_and_set_physical_device(d);
-        ds_property_set_bool(d, "isVirtual", TRUE);
+        ds_property_set_bool(d, "info.virtual", TRUE);
     }
     else
     {
@@ -237,13 +237,13 @@ void visit_class_device_scsi_device(const char* path,
     /** @todo: see if we already got this device */
 
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "scsi_device");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", 
+    ds_property_set_string(d, "info.bus", "scsi_device");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", 
                            class_device->sysdevice->path);
 
     /* guestimate product name */
-    ds_property_set_string(d, "Product", "SCSI Interface");
+    ds_property_set_string(d, "info.product", "SCSI Interface");
 
 
     parent_sysfs_path = get_parent_sysfs_path(class_device->sysdevice->path);
@@ -253,7 +253,7 @@ void visit_class_device_scsi_device(const char* path,
      * timeout is set to zero in that event..
      */
     ds_device_async_find_by_key_value_string(
-        "Linux.sysfs_path_device",
+        "linux.sysfs_path_device",
         parent_sysfs_path,
         visit_class_device_scsi_device_got_parent,
         (void*) d, NULL, 
@@ -277,9 +277,9 @@ static void visit_class_device_scsi_device_got_parent(HalDevice* parent,
 
     if( parent!=NULL )
     {
-        ds_property_set_string(d, "Parent", parent->udi);
+        ds_property_set_string(d, "info.parent", parent->udi);
         find_and_set_physical_device(d);
-        ds_property_set_bool(d, "isVirtual", TRUE);
+        ds_property_set_bool(d, "info.virtual", TRUE);
     }
     else
     {

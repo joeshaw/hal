@@ -46,31 +46,31 @@ class Representation:
         icon = self.icons["abstract"]
             
         # First look at bus type, every device got Bus property
-        bus = device.properties["Bus"]
+        bus = device.properties["info.bus"]
         if bus=="usb":
             icon = self.icons["bus_usb"]
         elif bus=="pci":
             icon = self.icons["bus_pci"]
 
         # Then look at Category, if available
-        if not device.properties.has_key("Category"):
+        if not device.properties.has_key("info.category"):
             return icon
-        cat = device.properties["Category"]
+        cat = device.properties["info.category"]
         if cat=="input.mouse":
             icon = self.icons["mouse"]
         elif cat=="input.keyboard":
             icon = self.icons["keyboard"]
-        elif cat=="bridge.cardBus":
+        elif cat=="bridge.cardbus":
             icon = self.icons["cardbus"]
         elif cat=="video":
             icon = self.icons["video"]
-        elif cat=="removableMedia.cdrom":
+        elif cat=="removable_media.cdrom":
             icon = self.icons["cdrom"]
-        elif cat=="removableMedia.floppy":
+        elif cat=="removable_media.floppy":
             icon = self.icons["floppy"]
-        elif cat=="fixedMedia.harddisk":
+        elif cat=="fixed_media.harddisk":
             icon = self.icons["harddisk"]
-        elif cat=="fixedMedia.flash":
+        elif cat=="fixed_media.flash":
             icon = self.icons["flash"]
         elif cat=="net":
             icon = self.icons["network"]

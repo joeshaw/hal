@@ -353,12 +353,12 @@ static char* pci_compute_udi(HalDevice* d, int append_num)
 
     if( append_num==-1 )
         sprintf(buf, "/org/freedesktop/Hal/devices/pci_%x_%x",
-                ds_property_get_int(d, "pci.idVendor"),
-                ds_property_get_int(d, "pci.idProduct"));
+                ds_property_get_int(d, "pci.vendor_id"),
+                ds_property_get_int(d, "pci.product_id"));
     else
         sprintf(buf, "/org/freedesktop/Hal/devices/pci_%x_%x/%d", 
-                ds_property_get_int(d, "pci.idVendor"),
-                ds_property_get_int(d, "pci.idProduct"),
+                ds_property_get_int(d, "pci.vendor_id"),
+                ds_property_get_int(d, "pci.product_id"),
                 append_num);
     
     return buf;
@@ -383,24 +383,24 @@ static void pci_add_caps_from_class(HalDevice* d,
     switch( dev_class )
     {
     case 0x01:
-        cat = "storageController";
-        ds_add_capability(d, "storageController");
+        cat = "storage_controller";
+        ds_add_capability(d, "storage_controller");
         switch( dev_sub_class)
         {
         case 0x00:
-            ds_add_capability(d, "storageController.scsi");
+            ds_add_capability(d, "storage_controller.scsi");
             break;
         case 0x01:
-            ds_add_capability(d, "storageController.ide");
+            ds_add_capability(d, "storage_controller.ide");
             break;
         case 0x02:
-            ds_add_capability(d, "storageController.floppy");
+            ds_add_capability(d, "storage_controller.floppy");
             break;
         case 0x03:
-            ds_add_capability(d, "storageController.ipi");
+            ds_add_capability(d, "storage_controller.ipi");
             break;
         case 0x04:
-            ds_add_capability(d, "storageController.raid");
+            ds_add_capability(d, "storage_controller.raid");
             break;
         }
         break;
@@ -472,7 +472,7 @@ static void pci_add_caps_from_class(HalDevice* d,
             ds_add_capability(d, "bridge.eisa");
             break;
         case 0x03:
-            ds_add_capability(d, "bridge.microChannel");
+            ds_add_capability(d, "bridge.micro_channel");
             break;
         case 0x04:
             ds_add_capability(d, "bridge.pci");
@@ -481,20 +481,20 @@ static void pci_add_caps_from_class(HalDevice* d,
             ds_add_capability(d, "bridge.pcmcia");
             break;
         case 0x06:
-            ds_add_capability(d, "bridge.nuBus");
+            ds_add_capability(d, "bridge.nubus");
             break;
         case 0x07:
-            cat = "bridge.cardBus";
-            ds_add_capability(d, "bridge.cardBus");
+            cat = "bridge.cardbus";
+            ds_add_capability(d, "bridge.cardbus");
             break;
         case 0x08:
             ds_add_capability(d, "bridge.raceway");
             break;
         case 0x09:
-            ds_add_capability(d, "bridge.semiTransparent");
+            ds_add_capability(d, "bridge.semi_transparent");
             break;
         case 0x0a:
-            ds_add_capability(d, "bridge.infiniBand");
+            ds_add_capability(d, "bridge.infiniband");
             break;
         }
         break;
@@ -537,19 +537,19 @@ static void pci_add_caps_from_class(HalDevice* d,
             switch( dev_proto)
             {
             case 0x00:
-                ds_add_capability(d, "comm.parallel.SPP");
+                ds_add_capability(d, "comm.parallel.spp");
                 break;
             case 0x01:
-                ds_add_capability(d, "comm.parallel.BiDir");
+                ds_add_capability(d, "comm.parallel.bidir");
                 break;
             case 0x02:
-                ds_add_capability(d, "comm.parallel.ECP");
+                ds_add_capability(d, "comm.parallel.ecp");
                 break;
             case 0x03:
-                ds_add_capability(d, "comm.parallel.IEEE1284");
+                ds_add_capability(d, "comm.parallel.ieee1284");
                 break;
             case 0xfe:
-                ds_add_capability(d, "comm.parallel.IEEE1284Target");
+                ds_add_capability(d, "comm.parallel.ieee1284_target");
                 break;
             }
         }
@@ -564,42 +564,42 @@ static void pci_add_caps_from_class(HalDevice* d,
             cat = "modem";
             ds_add_capability(d, "modem");
             if( dev_proto>=0x01 && dev_proto<=0x04 )
-                ds_add_capability(d, "hayes");
+                ds_add_capability(d, "modem.hayes");
         }
         break;
     case 0x0c:
-        cat = "serialController";
-        ds_add_capability(d, "serialController");
+        cat = "serial_controller";
+        ds_add_capability(d, "serial_controller");
         switch( dev_sub_class)
         {
         case 0x00:
-            cat = "serialController.ieee1394";
-            ds_add_capability(d, "serialController.ieee1394");
+            cat = "serial_controller.ieee1394";
+            ds_add_capability(d, "serial_controller.ieee1394");
             if( dev_proto==0x10 )
-                ds_add_capability(d, "serialController.ieee1394.ohci");
+                ds_add_capability(d, "serial_controller.ieee1394.ohci");
             break;
         case 0x01:
-            ds_add_capability(d, "serialController.access");
+            ds_add_capability(d, "serial_controller.access");
             break;
         case 0x02:
-            ds_add_capability(d, "serialController.ssa");
+            ds_add_capability(d, "serial_controller.ssa");
             break;
         case 0x03:
-            cat = "serialController.usb";
-            ds_add_capability(d, "serialController.usb");
+            cat = "serial_controller.usb";
+            ds_add_capability(d, "serial_controller.usb");
             switch( dev_proto )
             {
             case 0x00:
-                ds_add_capability(d, "serialController.usb.uhci");
+                ds_add_capability(d, "serial_controller.usb.uhci");
                 break;
             case 0x01:
-                ds_add_capability(d, "serialController.usb.ohci");
+                ds_add_capability(d, "serial_controller.usb.ohci");
                 break;
             case 0x02:
-                ds_add_capability(d, "serialController.usb.ehci");
+                ds_add_capability(d, "serial_controller.usb.ehci");
                 break;
             case 0xfe:
-                ds_add_capability(d, "serialController.usb.device");
+                ds_add_capability(d, "serial_controller.usb.device");
                 break;
             }
             break;
@@ -614,36 +614,36 @@ static void pci_add_caps_from_class(HalDevice* d,
             ds_add_capability(d, "wireless.irda");
             break;
         case 0x01:
-            ds_add_capability(d, "wireless.consumerController");
+            ds_add_capability(d, "wireless.consumer_controller");
             break;
         case 0x02:
-            ds_add_capability(d, "wireless.rfController");
+            ds_add_capability(d, "wireless.rf_controller");
             break;
         }
         break;
     case 0x0f:
-        cat = "satelliteController";
-        ds_add_capability(d, "satelliteController");
+        cat = "satellite_controller";
+        ds_add_capability(d, "satellite_controller");
         switch( dev_sub_class)
         {
         case 0x00:
-            ds_add_capability(d, "satelliteController.tv");
+            ds_add_capability(d, "satellite_controller.tv");
             break;
         case 0x01:
-            ds_add_capability(d, "satelliteController.audio");
+            ds_add_capability(d, "satellite_controller.audio");
             break;
         case 0x02:
-            ds_add_capability(d, "satelliteController.video");
+            ds_add_capability(d, "satellite_controller.video");
             break;
         case 0x03:
-            ds_add_capability(d, "satelliteController.data");
+            ds_add_capability(d, "satellite_controller.data");
             break;
         }
         break;
     }
 
     if( cat!=NULL )
-        ds_property_set_string(d, "Category", cat);
+        ds_property_set_string(d, "info.category", cat);
 }
 
 
@@ -683,9 +683,9 @@ void visit_device_pci(const char* path, struct sysfs_device *device)
 
     /* Must be a new PCI device */
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "pci");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", path);
+    ds_property_set_string(d, "info.bus", "pci");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", path);
     /** @note We also set the path here, because otherwise we can't handle two
      *  identical devices per the algorithm used in a #rename_and_maybe_add()
      *  The point is that we need something unique in the Bus namespace
@@ -727,54 +727,52 @@ void visit_device_pci(const char* path, struct sysfs_device *device)
         }
     }
 
-    ds_property_set_int(d, "pci.idVendor", vendor_id);
-    ds_property_set_int(d, "pci.idProduct", product_id);
-    ds_property_set_int(d, "pci.idVendorSubSystem", subsys_vendor_id);
-    ds_property_set_int(d, "pci.idProductSubSystem",subsys_product_id);
+    ds_property_set_int(d, "pci.vendor_id", vendor_id);
+    ds_property_set_int(d, "pci.product_id", product_id);
+    ds_property_set_int(d, "pci.subsys_vendor_id", subsys_vendor_id);
+    ds_property_set_int(d, "pci.subsys_product_id",subsys_product_id);
 
     /* Lookup names in pci.ids */
     pci_ids_find(vendor_id, product_id, subsys_vendor_id, subsys_product_id,
                  &vendor_name, &product_name, 
                  &subsys_vendor_name, &subsys_product_name);
     if( vendor_name!=NULL )
-        ds_property_set_string(d, "pci.Vendor", vendor_name);
+        ds_property_set_string(d, "pci.vendor", vendor_name);
     if( product_name!=NULL )
-        ds_property_set_string(d, "pci.Product", product_name);
+        ds_property_set_string(d, "pci.product", product_name);
     if( subsys_vendor_name!=NULL )
-        ds_property_set_string(d, "pci.VendorSubSystem",
-                                       subsys_vendor_name);
+        ds_property_set_string(d, "pci.subsys_vendor", subsys_vendor_name);
     if( subsys_product_name!=NULL )
-        ds_property_set_string(d, "pci.ProductSubSystem",
-                                       subsys_product_name);
+        ds_property_set_string(d, "pci.subsys_product", subsys_product_name);
 
     /* Provide best-guess of name, goes in Product property; 
      * .fdi files can override this */
     if( product_name!=NULL )
     {
-        ds_property_set_string(d, "Product", product_name);
+        ds_property_set_string(d, "info.product", product_name);
     }
     else
     {
         snprintf(namebuf, 512, "Unknown (0x%04x)", product_id);
-        ds_property_set_string(d, "Product", namebuf);
+        ds_property_set_string(d, "info.product", namebuf);
     }
 
     /* Provide best-guess of vendor, goes in Vendor property; 
      * .fdi files can override this */
     if( vendor_name!=NULL )
     {
-        ds_property_set_string(d, "Vendor", vendor_name);
+        ds_property_set_string(d, "info.vendor", vendor_name);
     }
     else
     {
         snprintf(namebuf, 512, "Unknown (0x%04x)", vendor_id);
-        ds_property_set_string(d, "Vendor", namebuf);
+        ds_property_set_string(d, "info.vendor", namebuf);
     }
 
 
-    ds_property_set_int(d, "pci.deviceClass", (cls>>16)&0xff);
-    ds_property_set_int(d, "pci.deviceSubClass",(cls>>8)&0xff);
-    ds_property_set_int(d, "pci.deviceProtocol", cls&0xff);
+    ds_property_set_int(d, "pci.device_class", (cls>>16)&0xff);
+    ds_property_set_int(d, "pci.device_subclass",(cls>>8)&0xff);
+    ds_property_set_int(d, "pci.device_protocol", cls&0xff);
     pci_add_caps_from_class(d, (cls>>16)&0xff, (cls>>8)&0xff, cls&0xff);
 
     parent_sysfs_path = get_parent_sysfs_path(path);
@@ -783,7 +781,7 @@ void visit_device_pci(const char* path, struct sysfs_device *device)
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
      */
-    ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
+    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
                                              visit_device_pci_got_parent,
                                              (void*) d, NULL, 
@@ -807,7 +805,7 @@ static void visit_device_pci_got_parent(HalDevice* parent,
 
     if( parent!=NULL )
     {
-        ds_property_set_string(d, "Parent", parent->udi);
+        ds_property_set_string(d, "info.parent", parent->udi);
     }
 
     /* Compute a proper UDI (unique device id) and try to locate a persistent

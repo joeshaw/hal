@@ -375,10 +375,10 @@ static DBusHandlerResult manager_find_device_by_capability(
         if( !device->in_gdl )
             continue;
 
-        type = ds_property_get_type(device, "Capabilities");
+        type = ds_property_get_type(device, "info.capabilities");
         if( type==DBUS_TYPE_STRING )
         {
-            if( strstr(ds_property_get_string(device, "Capabilities"),
+            if( strstr(ds_property_get_string(device, "info.capabilities"),
                        capability)!=NULL )
                 dbus_message_iter_append_string(&iter_array, device->udi);
         }
@@ -938,17 +938,17 @@ static DBusHandlerResult device_add_capability(DBusConnection* connection,
     }
 
 
-    caps = ds_property_get_string(d, "Capabilities");
+    caps = ds_property_get_string(d, "info.capabilities");
     if( caps==NULL )
     {
-        ds_property_set_string(d, "Capabilities", capability);
+        ds_property_set_string(d, "info.capabilities", capability);
     }
     else
     {
         if( strstr(caps, capability)==NULL )
         {
             snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
-            ds_property_set_string(d, "Capabilities", buf);
+            ds_property_set_string(d, "info.capabilities", buf);
         }
     }
 
@@ -1138,7 +1138,7 @@ static DBusHandlerResult device_query_capability(DBusConnection* connection,
         DIE(("No memory"));
 
     rc = FALSE;
-    caps = ds_property_get_string(d, "Capabilities");
+    caps = ds_property_get_string(d, "info.capabilities");
     if( caps!=NULL )
     {
         if( strstr(caps, capability)!=NULL )

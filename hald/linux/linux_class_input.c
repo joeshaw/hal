@@ -558,12 +558,12 @@ static void process_input_proc_info(input_proc_info* i)
     if( i->relbit!=0 )
     {
         ds_add_capability(d, "input.mouse");
-        ds_property_set_string(d, "Category", "input.mouse");
+        ds_property_set_string(d, "info.category", "input.mouse");
     }
     else
     {
         ds_add_capability(d, "input.keyboard");
-        ds_property_set_string(d, "Category", "input.keyboard");
+        ds_property_set_string(d, "info.category", "input.keyboard");
     }
     
     /** @todo FIXME: is there any other key information we want to

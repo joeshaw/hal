@@ -1785,7 +1785,7 @@ dbus_bool_t hal_device_query_capability(const char* udi,
 {
     char* caps;
 
-    caps = hal_device_get_property_string(udi, "Capabilities");
+    caps = hal_device_get_property_string(udi, "info.capabilities");
 
     if( caps!=NULL )
         if( strstr(caps, capability)!=NULL )

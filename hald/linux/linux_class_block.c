@@ -114,9 +114,9 @@ void visit_class_device_block(const char* path,
     }
 
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "block");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", path);
+    ds_property_set_string(d, "info.bus", "block");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", path);
 
     ds_add_capability(d, "block");
 
@@ -140,19 +140,22 @@ void visit_class_device_block(const char* path,
         else if( strcmp(attr_name, "size")==0 )
         {
             ds_property_set_int(d, "block.size",
-                                        parse_dec(cur->value));
+                                parse_dec(cur->value));
         }
         else if( strcmp(attr_name, "start")==0 )
         {
             ds_property_set_int(d, "block.start",
-                                        parse_dec(cur->value));
+                                parse_dec(cur->value));
         }
         else if( strcmp(attr_name, "range")==0 )
         {
             not_partition = TRUE;
         }
     }
-    ds_property_set_bool(d, "block.isVolume", !not_partition);
+    ds_property_set_bool(d, "block.is_volume", !not_partition);
+
+    /** @todo FIXME is a block always 512 bytes?? Must check kernel source */
+    ds_property_set_int(d, "block.block_size", 512);
 
 
     if( class_device->sysdevice==NULL )
@@ -180,7 +183,7 @@ void visit_class_device_block(const char* path,
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
      */
-    ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
+    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
                                          visit_class_device_block_got_parent,
                                              (void*) d, 
@@ -215,27 +218,27 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         return;
     }
 
-    ds_property_set_string(d, "Parent", parent->udi);
+    ds_property_set_string(d, "info.parent", parent->udi);
 
-    if( ds_property_get_bool(d, "block.isVolume") )
+    if( ds_property_get_bool(d, "block.is_volume") )
     {
         /* We are a volume */
         find_and_set_physical_device(d);
-        ds_property_set_bool(d, "isVirtual", TRUE);
+        ds_property_set_bool(d, "info.virtual", TRUE);
         ds_add_capability(d, "volume");
-        ds_property_set_string(d, "Category", "volume");
+        ds_property_set_string(d, "info.category", "volume");
 
         /* block device that is a partition; e.g. a storage volume */
 
         /** @todo  Guestimate product name; use volume label */
-        ds_property_set_string(d, "Product", "Volume");
+        ds_property_set_string(d, "info.product", "Volume");
     }
     else
     {
         /* We are a disk; maybe we even offer removable media */
-        ds_property_set_string(d, "Category", "block");
+        ds_property_set_string(d, "info.category", "block");
 
-        if( strcmp(ds_property_get_string(parent, "Bus"), "ide")==0 )
+        if( strcmp(ds_property_get_string(parent, "info.bus"), "ide")==0 )
         {
             const char* ide_name;
             char* model;
@@ -243,13 +246,13 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             dbus_bool_t removable_media;
 
             ide_name = get_last_element(
-                ds_property_get_string(d, "Linux.sysfs_path"));
+                ds_property_get_string(d, "linux.sysfs_path"));
             
             model = read_single_line("/proc/ide/%s/model", ide_name);
             if( model!=NULL )
             {
                 ds_property_set_string(d, "block.model", model);
-                ds_property_set_string(d, "Product", model);
+                ds_property_set_string(d, "info.product", model);
             }
 
             removable_media = FALSE;
@@ -272,40 +275,40 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                 /* Set for removable media */
                 if( strcmp(media, "disk")==0 )
                 {
-                    ds_add_capability(d, "fixedMedia");
-                    ds_add_capability(d, "fixedMedia.harddisk");
-                    ds_property_set_string(d, "Category", 
-                                                   "fixedMedia.harddisk");
+                    ds_add_capability(d, "fixed_media");
+                    ds_add_capability(d, "fixed_media.harddisk");
+                    ds_property_set_string(d, "info.category", 
+                                           "fixed_media.harddisk");
                 }
                 else if( strcmp(media, "cdrom")==0 )
                 {
-                    ds_add_capability(d, "removableMedia");
-                    ds_add_capability(d, "removableMedia.cdrom");
-                    ds_property_set_string(d, "Category", 
-                                                   "removableMedia.cdrom");
+                    ds_add_capability(d, "removable_media");
+                    ds_add_capability(d, "removable_media.cdrom");
+                    ds_property_set_string(d, "info.category", 
+                                           "removable_media.cdrom");
                     removable_media = TRUE;
                 }
                 else if( strcmp(media, "floppy")==0 )
                 {
-                    ds_add_capability(d, "removableMedia");
-                    ds_add_capability(d, "removableMedia.floppy");
-                    ds_property_set_string(d, "Category", 
-                                                   "removableMedia.floppy");
+                    ds_add_capability(d, "removable_media");
+                    ds_add_capability(d, "removable_media.floppy");
+                    ds_property_set_string(d, "info.category", 
+                                           "removable_media.floppy");
                     removable_media = TRUE;
                 }
                 else if( strcmp(media, "tape")==0 )
                 {
-                    ds_add_capability(d, "removableMedia");
-                    ds_add_capability(d, "removableMedia.tape");
-                    ds_property_set_string(d, "Category", 
-                                                   "removableMedia.tape");
+                    ds_add_capability(d, "removable_media");
+                    ds_add_capability(d, "removable_media.tape");
+                    ds_property_set_string(d, "info.category", 
+                                           "removable_media.tape");
                     removable_media = TRUE;
                 }
 
             }
 
-            ds_property_set_bool(d, "block.removableMedia", 
-                                         removable_media);
+            ds_property_set_bool(d, "block.has_removable_media", 
+                                 removable_media);
             
         }
         else
@@ -323,13 +326,13 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
 
             ds_property_set_string(d, "block.media", "flash");
 
-            ds_add_capability(d, "fixedMedia");
-            ds_add_capability(d, "fixedMedia.flash");
-            ds_property_set_string(d, "Category", 
-                                           "fixedMedia.flash");
+            ds_add_capability(d, "fixed_media");
+            ds_add_capability(d, "fixed_media.flash");
+            ds_property_set_string(d, "info.category", 
+                                   "fixed_media.flash");
             
             /* guestimate product name */
-            ds_property_set_string(d, "Product", "Disk");
+            ds_property_set_string(d, "info.product", "Disk");
 
             /* omit block.media! */
         }
@@ -559,7 +562,7 @@ static void etc_mtab_process_all_block_devices()
 
         d = ds_device_iter_get(&diter);
 
-        bus = ds_property_get_string(d, "Bus");
+        bus = ds_property_get_string(d, "info.bus");
         if( bus==NULL || strcmp(bus, "block")!=0 )
             continue;
 
@@ -581,9 +584,9 @@ static void etc_mtab_process_all_block_devices()
 
                 /* Yay! Found a mount point; set properties accordingly */
                 ds_property_set_string(d, "block.device", mp->device);
-                ds_property_set_string(d, "block.mountPoint", mp->mount_point);
-                ds_property_set_string(d, "block.fileSystem", mp->fs_type);
-                ds_property_set_bool(d, "block.isMounted", TRUE);
+                ds_property_set_string(d, "block.mount_point",mp->mount_point);
+                ds_property_set_string(d, "block.fstype", mp->fs_type);
+                ds_property_set_bool(d, "block.is_mounted", TRUE);
 
                 found_mount_point = TRUE;
                 break;
@@ -593,9 +596,9 @@ static void etc_mtab_process_all_block_devices()
         /* No mount point found; (possibly) remove all information */
         if( !found_mount_point )
         {
-            ds_property_set_bool(d, "block.isMounted", FALSE);
-            ds_property_remove(d, "block.mountPoint");
-            ds_property_remove(d, "block.fileSystem");
+            ds_property_set_bool(d, "block.is_mounted", FALSE);
+            ds_property_remove(d, "block.mount_point");
+            ds_property_remove(d, "block.fstype");
         }        
     }
 }

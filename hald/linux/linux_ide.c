@@ -69,7 +69,7 @@ static char* ide_compute_udi(HalDevice* d, int append_num)
 
     snprintf(buf, 256, format, 
              ds_property_get_int(d, "ide.channel"),
-             ds_property_get_int(d, "ide.subChannel"),
+             ds_property_get_int(d, "ide.sub_channel"),
              append_num);
     return buf;
 }
@@ -129,18 +129,18 @@ void visit_device_ide_host(const char* path, struct sysfs_device *device)
     /*printf("ide_host_number=%d\n", ide_host_number);*/
 
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "ide_host");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", path);
+    ds_property_set_string(d, "info.bus", "ide_host");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", path);
     ds_property_set_int(d, "ide_host.number", ide_host_number);
 
     /* guestimate product name */
     if( ide_host_number==0 )
-        ds_property_set_string(d, "Product", "Primary IDE channel");
+        ds_property_set_string(d, "info.product", "Primary IDE channel");
     else if( ide_host_number==1 )
-        ds_property_set_string(d, "Product", "Secondary IDE channel");
+        ds_property_set_string(d, "info.product", "Secondary IDE channel");
     else
-        ds_property_set_string(d, "Product", "IDE channel");
+        ds_property_set_string(d, "info.product", "IDE channel");
 
 
     parent_sysfs_path = get_parent_sysfs_path(path);
@@ -149,7 +149,7 @@ void visit_device_ide_host(const char* path, struct sysfs_device *device)
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
      */
-    ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
+    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
                                              visit_device_ide_host_got_parent,
                                              (void*) d, NULL, 
@@ -173,9 +173,9 @@ static void visit_device_ide_host_got_parent(HalDevice* parent,
 
     if( parent!=NULL )
     {
-        ds_property_set_string(d, "Parent", parent->udi);
+        ds_property_set_string(d, "info.parent", parent->udi);
         find_and_set_physical_device(d);
-        ds_property_set_bool(d, "isVirtual", TRUE);
+        ds_property_set_bool(d, "info.virtual", TRUE);
     }
 
     /* Compute a proper UDI (unique device id) and try to locate a persistent
@@ -215,17 +215,17 @@ void visit_device_ide(const char* path, struct sysfs_device *device)
     /*printf("channel=%d, sub_channel=%d\n", channel, sub_channel);*/
 
     d = ds_device_new();
-    ds_property_set_string(d, "Bus", "ide");
-    ds_property_set_string(d, "Linux.sysfs_path", path);
-    ds_property_set_string(d, "Linux.sysfs_path_device", path);
+    ds_property_set_string(d, "info.bus", "ide");
+    ds_property_set_string(d, "linux.sysfs_path", path);
+    ds_property_set_string(d, "linux.sysfs_path_device", path);
     ds_property_set_int(d, "ide.channel", channel);
-    ds_property_set_int(d, "ide.subChannel", sub_channel);
+    ds_property_set_int(d, "ide.sub_channel", sub_channel);
 
     /* guestimate product name */
     if( sub_channel==0 )
-        ds_property_set_string(d, "Product", "Master IDE Interface");
+        ds_property_set_string(d, "info.product", "Master IDE Interface");
     else
-        ds_property_set_string(d, "Product", "Slave IDE Interface");
+        ds_property_set_string(d, "info.product", "Slave IDE Interface");
 
     parent_sysfs_path = get_parent_sysfs_path(path);
 
@@ -233,7 +233,7 @@ void visit_device_ide(const char* path, struct sysfs_device *device)
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
      */
-    ds_device_async_find_by_key_value_string("Linux.sysfs_path_device",
+    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
                                              visit_device_ide_got_parent,
                                              (void*) d, NULL, 
@@ -257,9 +257,9 @@ static void visit_device_ide_got_parent(HalDevice* parent,
 
     if( parent!=NULL )
     {
-        ds_property_set_string(d, "Parent", parent->udi);
+        ds_property_set_string(d, "info.parent", parent->udi);
         find_and_set_physical_device(d);
-        ds_property_set_bool(d, "isVirtual", TRUE);
+        ds_property_set_bool(d, "info.virtual", TRUE);
     }
 
     /* Compute a proper UDI (unique device id) and try to locate a persistent
