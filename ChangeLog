@@ -1,5 +1,10 @@
 2005-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/classdev.c (usbclass_add): Also set 
+	printer.physical_device
+
+2005-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/probing/probe-printer.c: New file
 
 	* hald/linux2/probing/Makefile.am: Add build rules for 

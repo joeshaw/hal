@@ -393,6 +393,8 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phys
 
 		hal_device_property_set_string (d, "info.product", "Printer");
 		hal_device_property_set_string (d, "printer.device", device_file);
+
+		hal_device_property_set_string (d, "printer.physical_device", physdev->udi);
 	}
 
 out:
