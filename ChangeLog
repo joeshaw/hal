@@ -1,3 +1,9 @@
+2004-09-15  David Zeuthen  <david@fubar.dk>
+
+	* hald/hald_dbus.c (foreach_device_match_get_udi_tdl): New function
+	(manager_find_device_string_match): Also return devices in the TDL
+	that has a non-temporary UDI
+
 2004-09-14  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (set_uuid): Swicht from

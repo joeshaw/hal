@@ -274,8 +274,34 @@ foreach_device_match_get_udi (HalDeviceStore *store, HalDevice *device,
 	return TRUE;
 }
 
+static gboolean
+foreach_device_match_get_udi_tdl (HalDeviceStore *store, HalDevice *device,
+				  gpointer user_data)
+{
+	DeviceMatchInfo *info = user_data;
+	const char *dev_value;
+
+	/* skip devices in the TDL that hasn't got a real UDI yet */
+	if (strncmp (device->udi, "/org/freedesktop/Hal/devices/temp",
+		     sizeof ("/org/freedesktop/Hal/devices/temp")) == 0)
+		return TRUE;
+
+	if (hal_device_property_get_type (device,
+					  info->key) != DBUS_TYPE_STRING)
+		return TRUE;
+
+	dev_value = hal_device_property_get_string (device, info->key);
+
+	if (dev_value != NULL && strcmp (dev_value, info->value) == 0) {
+		dbus_message_iter_append_string (info->iter,
+						 hal_device_get_udi (device));
+	}
+
+	return TRUE;
+}
+
 /** Find devices in the GDL where a single string property matches a given
- *  value.
+ *  value. Also returns devices in the TDL that has a non-tmp UDI.
  *
  *  <pre>
  *  array{object_reference} Manager.FindDeviceStringMatch(string key,
@@ -324,6 +350,11 @@ manager_find_device_string_match (DBusConnection * connection,
 
 	hal_device_store_foreach (hald_get_gdl (),
 				  foreach_device_match_get_udi,
+				  &info);
+
+	/* Also returns devices in the TDL that has a non-tmp UDI */
+	hal_device_store_foreach (hald_get_tdl (),
+				  foreach_device_match_get_udi_tdl,
 				  &info);
 
 	if (!dbus_connection_send (connection, reply, NULL))
