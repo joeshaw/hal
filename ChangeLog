@@ -1,5 +1,10 @@
 2005-04-04  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/information/10freedesktop/10-wireless-mice.fdi: Change 
+	battery.type from 'keyboard_mouse' to just 'keyboard'.
+
+2005-04-04  David Zeuthen  <davidz@redhat.com>
+
 	* libhal-storage/libhal-storage.c: Fix for when gettext is
 	not available. From Steve Grubb <sgrubb@redhat.com>.
 
