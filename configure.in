@@ -189,6 +189,7 @@ dbus_module="dbus-1 >= 0.20"
 pkg_modules="glib-2.0 >= 2.2.2, gobject-2.0 >= 2.2.2, dbus-glib-1 >= 0.20, $dbus_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
+EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
                       [
                       expat=$withval
@@ -197,7 +198,8 @@ AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
                       ]
                       )
 AC_CHECK_HEADERS(expat.h)
-AC_CHECK_LIB(expat,XML_ParserCreate)
+AC_CHECK_LIB(expat,XML_ParserCreate, EXPAT_LIB="-lexpat")
+AC_SUBST(EXPAT_LIB)
 
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
