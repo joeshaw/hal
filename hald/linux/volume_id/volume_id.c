@@ -538,6 +538,8 @@ nsr:
 	for (b = 0; b < 64; b++) {
 		vsd = (struct volume_structure_descriptor *)
 		      get_buffer(id, UDF_VSD_OFFSET + (b * bs), 0x800);
+		if (vsd == NULL)
+			return -1;
 
 		dbg("vsd: %c%c%c%c%c",
 		    vsd->id[0], vsd->id[1], vsd->id[2], vsd->id[3], vsd->id[4]);
@@ -555,21 +557,23 @@ anchor:
 	/* read anchor volume descriptor */
 	vd = (struct volume_descriptor *) get_buffer(id, 256 * bs, 0x200);
 	if (vd == NULL)
-		goto found;
+		return -1;
 
 	type = le16_to_cpu(vd->tag.id);
 	if (type != 2) /* TAG_ID_AVDP */
 		goto found;
 
 	/* get desriptor list address and block count */
-	count = le16_to_cpu(vd->type.anchor.length) / bs;
-	loc = le16_to_cpu(vd->type.anchor.location);
+	count = le32_to_cpu(vd->type.anchor.length) / bs;
+	loc = le32_to_cpu(vd->type.anchor.location);
 	dbg("0x%x descriptors starting at logical secor 0x%x", count, loc);
 
 	/* pick the primary descriptor from the list */
 	for (b = 0; b < count; b++) {
 		vd = (struct volume_descriptor *)
 		     get_buffer(id, (loc + b) * bs, 0x200);
+		if (vd == NULL)
+			return -1;
 
 		type = le16_to_cpu(vd->tag.id);
 		dbg("descriptor type %i", type);
