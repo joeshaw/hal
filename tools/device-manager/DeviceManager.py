@@ -440,6 +440,8 @@ class DeviceManager(LibGladeApplication):
                 store.set(iter, 0, p, 1, "string", 2, "%s"%val)
             elif ptype==int:
                 store.set(iter, 0, p, 1, "int", 2, "%d (0x%x)"%(val, val))
+            elif ptype==long:
+                store.set(iter, 0, p, 1, "long", 2, "%d (0x%x)"%(val, val))
             elif ptype==bool:
                 if val:
                     store.set(iter, 0, p, 1, "bool", 2, "true")

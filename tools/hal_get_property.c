@@ -176,6 +176,13 @@ main (int argc, char *argv[])
 		printf ((is_hex ? "%x\n" : "%d\n"),
 			hal_device_get_property_int (hal_ctx, udi, key));
 		break;
+	case DBUS_TYPE_UINT64:
+		if (is_verbose)
+			printf ("Type is uint64 (shown in %s)\n",
+				(is_hex ? "hexadecimal" : "decimal"));
+		printf ((is_hex ? "%llx\n" : "%lld\n"),
+			hal_device_get_property_uint64 (hal_ctx, udi, key));
+		break;
 	case DBUS_TYPE_DOUBLE:
 		if (is_verbose)
 			printf ("Type is double\n");

@@ -39,6 +39,7 @@
 
 #define PSTR		"String:"
 #define PINT32		"Int32:"
+#define PUINT64		"UInt64:"
 #define PBOOL		"Bool:"
 #define PDOUBLE		"Double:"
 #define UDI_STRIP	"/org/freedesktop/Hal"
@@ -212,6 +213,9 @@ hal_pstore_save_property (HalPStore *pstore,
 	case DBUS_TYPE_INT32:
 		id = PINT32;
 		break;
+	case DBUS_TYPE_UINT64:
+		id = PUINT64;
+		break;
 	case DBUS_TYPE_BOOLEAN:
 		id = PBOOL;
 		break;
@@ -269,6 +273,7 @@ hal_pstore_load_property (HalPStore *pstore,
 	char *buf;
 	char *str;
 	int i;
+	unsigned long long ull;
 	double d;
 
 	g_return_if_fail (pstore != NULL);
@@ -295,6 +300,13 @@ hal_pstore_load_property (HalPStore *pstore,
 		str =  &buf[sizeof (PINT32)-1];
 		i = strtol (str, NULL, 10);
 		hal_device_property_set_int (device, key, i);
+		goto exit;
+	}
+
+	if (g_ascii_strncasecmp (buf, PUINT64, sizeof (PUINT64)-1) == 0) {
+		str =  &buf[sizeof (PUINT64)-1];
+		ull = strtoull (str, NULL, 10);
+		hal_device_property_set_uint64 (device, key, ull);
 		goto exit;
 	}
 

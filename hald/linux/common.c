@@ -101,6 +101,22 @@ parse_hex (const char *str)
 	return value;
 }
 
+/** Parse an integer represented as a hexa-decimal number (base 16) in
+ *  a string.
+ *
+ *  @param  str                 String to parse
+ *  @return                     Integer; If there was an error parsing the
+ *                              result is undefined.
+ */
+dbus_uint64_t
+parse_hex_uint64 (const char *str)
+{
+	dbus_uint64_t value;
+	value = strtoull (str, NULL, 16);
+	/** @todo Check error condition */
+	return value;
+}
+
 /** Find an integer appearing right after a substring in a string.
  *
  *  The result is LONG_MAX if the number isn't properly formatted or

@@ -43,6 +43,8 @@ HalProperty *hal_property_new_string     (const char   *key,
 					  const char   *value);
 HalProperty *hal_property_new_int        (const char   *key,
 					  dbus_int32_t  value);
+HalProperty *hal_property_new_uint64     (const char   *key,
+					  dbus_uint64_t value);
 HalProperty *hal_property_new_bool       (const char   *key,
 					  dbus_bool_t   value);
 HalProperty *hal_property_new_double     (const char   *key,
@@ -54,6 +56,7 @@ char         *hal_property_to_string     (HalProperty  *prop);
 
 const char   *hal_property_get_string    (HalProperty  *prop);
 dbus_int32_t  hal_property_get_int       (HalProperty  *prop);
+dbus_uint64_t hal_property_get_uint64    (HalProperty  *prop);
 dbus_bool_t   hal_property_get_bool      (HalProperty  *prop);
 double        hal_property_get_double    (HalProperty  *prop);
 
@@ -61,6 +64,8 @@ void          hal_property_set_string    (HalProperty  *prop,
 					  const char   *value);
 void          hal_property_set_int       (HalProperty  *prop,
 					  dbus_int32_t  value);
+void          hal_property_set_uint64    (HalProperty  *prop,
+ 					  dbus_uint64_t value);
 void          hal_property_set_bool      (HalProperty  *prop,
 					  dbus_bool_t   value);
 void          hal_property_set_double    (HalProperty  *prop,

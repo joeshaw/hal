@@ -121,6 +121,8 @@ const char   *hal_device_property_get_string (HalDevice    *device,
 					      const char   *key);
 dbus_int32_t  hal_device_property_get_int    (HalDevice    *device,
 					      const char   *key);
+dbus_uint64_t hal_device_property_get_uint64 (HalDevice    *device,
+						  const char   *key);
 dbus_bool_t   hal_device_property_get_bool   (HalDevice    *device,
 					      const char   *key);
 double        hal_device_property_get_double (HalDevice    *device,
@@ -132,6 +134,9 @@ gboolean      hal_device_property_set_string (HalDevice    *device,
 gboolean      hal_device_property_set_int    (HalDevice    *device,
 					      const char   *key,
 					      dbus_int32_t  value);
+gboolean      hal_device_property_set_uint64 (HalDevice    *device,
+					      const char   *key,
+					      dbus_uint64_t value);
 gboolean      hal_device_property_set_bool   (HalDevice    *device,
 					      const char   *key,
 					      dbus_bool_t   value);

@@ -184,6 +184,25 @@ handle_match (ParsingContext * pc, const char **attr)
 		}
 
 		return TRUE;
+	} else if (strcmp (attr[2], "uint64") == 0) {
+		dbus_uint64_t value;
+
+		/* match integer property */
+		value = strtoull (attr[3], NULL, 0);
+		
+		/** @todo Check error condition */
+
+		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
+		  key, value));*/
+
+		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_UINT64)
+			return FALSE;
+
+		if (hal_device_property_get_uint64 (pc->device, key) != value) {
+			return FALSE;
+		}
+
+		return TRUE;
 	} else if (strcmp (attr[2], "bool") == 0) {
 		dbus_bool_t value;
 
@@ -249,6 +268,10 @@ handle_merge (ParsingContext * pc, const char **attr)
 	} else if (strcmp (attr[3], "int") == 0) {
 		/* match string property */
 		pc->merge_type = DBUS_TYPE_INT32;
+		return;
+	} else if (strcmp (attr[3], "uint64") == 0) {
+		/* match string property */
+		pc->merge_type = DBUS_TYPE_UINT64;
 		return;
 	} else if (strcmp (attr[3], "double") == 0) {
 		/* match string property */
@@ -409,6 +432,20 @@ end (ParsingContext * pc, const char *el)
 				/** @todo FIXME: Check error condition */
 
 				hal_device_property_set_int (pc->device,
+						     pc->merge_key, value);
+				break;
+			}
+
+		case DBUS_TYPE_UINT64:
+			{
+				dbus_uint64_t value;
+
+				/* match integer property */
+				value = strtoull (pc->cdata_buf, NULL, 0);
+
+				/** @todo FIXME: Check error condition */
+
+				hal_device_property_set_uint64 (pc->device,
 						     pc->merge_key, value);
 				break;
 			}

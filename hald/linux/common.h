@@ -40,6 +40,7 @@
 double parse_double (const char *str);
 dbus_int32_t parse_dec (const char *str);
 dbus_int32_t parse_hex (const char *str);
+dbus_uint64_t parse_hex_uint64 (const char *str);
 
 long int find_num (char *pre, char *s, int base);
 double find_double (char *pre, char *s);

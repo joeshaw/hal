@@ -222,6 +222,12 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 				hal_property_get_int (p));
 			break;
 
+		case DBUS_TYPE_UINT64:
+			hal_device_property_set_uint64 (
+				target, target_key,
+				hal_property_get_uint64 (p));
+			break;
+
 		case DBUS_TYPE_BOOLEAN:
 			hal_device_property_set_bool (
 				target, target_key,
@@ -284,6 +290,12 @@ hal_device_merge (HalDevice *target, HalDevice *source)
 			hal_device_property_set_int (
 				target, key,
 				hal_property_get_int (p));
+			break;
+
+		case DBUS_TYPE_UINT64:
+			hal_device_property_set_uint64 (
+				target, key,
+				hal_property_get_uint64 (p));
 			break;
 
 		case DBUS_TYPE_BOOLEAN:
@@ -356,6 +368,12 @@ hal_device_matches (HalDevice *device1, HalDevice *device2,
 		case DBUS_TYPE_INT32:
 			if (hal_property_get_int (p) !=
 			    hal_device_property_get_int (device2, key))
+				return FALSE;
+			break;
+
+		case DBUS_TYPE_UINT64:
+			if (hal_property_get_uint64 (p) !=
+				hal_device_property_get_uint64 (device2, key))
 				return FALSE;
 			break;
 
@@ -562,6 +580,22 @@ hal_device_property_get_int (HalDevice *device, const char *key)
 		return -1;
 }
 
+dbus_uint64_t
+hal_device_property_get_uint64 (HalDevice *device, const char *key)
+{
+	HalProperty *prop;
+
+	g_return_val_if_fail (device != NULL, -1);
+	g_return_val_if_fail (key != NULL, -1);
+
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL)
+		return hal_property_get_uint64 (prop);
+	else
+		return -1;
+}
+
 dbus_bool_t
 hal_device_property_get_bool (HalDevice *device, const char *key)
 {
@@ -666,6 +700,46 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 
 	} else {
 		prop = hal_property_new_int (key, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
+	}
+
+	return TRUE;
+}
+
+gboolean
+hal_device_property_set_uint64 (HalDevice *device, const char *key,
+			     dbus_uint64_t value)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		if (hal_property_get_type (prop) != DBUS_TYPE_UINT64)
+			return FALSE;
+
+		/* don't bother setting the same value */
+		if (hal_property_get_uint64 (prop) == value)
+			return TRUE;
+
+		hal_property_set_uint64 (prop, value);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+
+		if (hal_property_get_attribute (prop, PERSISTENCE) &&
+		    hald_get_conf ()->persistent_device_list) {
+			hal_pstore_save_property (hald_get_pstore_sys (), 
+						  device, prop); 
+		}
+
+	} else {
+		prop = hal_property_new_uint64 (key, value);
 
 		device->properties = g_slist_prepend (device->properties, prop);
 
@@ -837,6 +911,12 @@ hal_device_print (HalDevice *device)
                         fprintf (stderr, "  %s = %d  0x%x  (int)\n", key,
                                 hal_property_get_int (p),
                                 hal_property_get_int (p));
+                        break;
+ 
+                case DBUS_TYPE_UINT64:
+                        fprintf (stderr, "  %s = %lld  0x%llx  (uint64)\n", key,
+                                hal_property_get_uint64 (p),
+                                hal_property_get_uint64 (p));
                         break;
  
                 case DBUS_TYPE_DOUBLE:

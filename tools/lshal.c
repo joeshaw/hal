@@ -110,6 +110,13 @@ dump_devices ()
 					hal_psi_get_int (&it));
 				break;
 
+			case DBUS_TYPE_UINT64:
+				printf ("  %s = %lld  (0x%llx)  (uint64)\n",
+					hal_psi_get_key (&it),
+					hal_psi_get_uint64 (&it),
+					hal_psi_get_uint64 (&it));
+				break;
+
 			case DBUS_TYPE_DOUBLE:
 				printf ("  %s = %g  (double)\n",
 					hal_psi_get_key (&it),
@@ -222,6 +229,15 @@ print_property (const char *udi, const char *key)
 			    hal_device_get_property_int (hal_ctx, udi, key);
 			fprintf (stderr,
 				 "*** new value: %d (0x%x)  (int)\n",
+				 value, value);
+		}
+		break;
+	case DBUS_TYPE_UINT64:
+		{
+			dbus_uint64_t value =
+			    hal_device_get_property_uint64 (hal_ctx, udi, key);
+			fprintf (stderr,
+				 "*** new value: %lld (0x%llx)  (uint64)\n",
 				 value, value);
 		}
 		break;

@@ -89,6 +89,8 @@ struct LibHalProperty_s {
 		char *str_value;     /**< UTF-8 zero-terminated string */
 		dbus_int32_t int_value;
 				     /**< 32-bit signed integer */
+		dbus_uint64_t uint64_value;
+				     /**< 64-bit unsigned integer */
 		double double_value; /**< IEEE754 double precision float */
 		dbus_bool_t bool_value;
 				     /**< Truth value */
@@ -253,6 +255,10 @@ hal_device_get_all_properties (LibHalContext *ctx, const char *udi)
 			p->int_value =
 			    dbus_message_iter_get_int32 (&dict_iter);
 			break;
+		case DBUS_TYPE_UINT64:
+			p->uint64_value =
+			    dbus_message_iter_get_uint64 (&dict_iter);
+			break;
 		case DBUS_TYPE_DOUBLE:
 			p->double_value =
 			    dbus_message_iter_get_double (&dict_iter);
@@ -336,7 +342,7 @@ hal_psi_next (LibHalPropertySetIterator * iter)
  *
  *  @param  iter		Iterator object
  *  @return			One of DBUS_TYPE_STRING, DBUS_TYPE_INT32,
- *				DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE
+ *				DBUS_TYPE_UINT64, DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE
  */
 int
 hal_psi_get_type (LibHalPropertySetIterator * iter)
@@ -381,6 +387,17 @@ dbus_int32_t
 hal_psi_get_int (LibHalPropertySetIterator * iter)
 {
 	return iter->cur_prop->int_value;
+}
+
+/** Get the value of a property of type integer. 
+ *
+ *  @param  iter		Iterator object
+ *  @return			64-bit unsigned integer
+ */
+dbus_uint64_t
+hal_psi_get_uint64 (LibHalPropertySetIterator * iter)
+{
+	return iter->cur_prop->uint64_value;
 }
 
 /** Get the value of a property of type double. 
@@ -731,7 +748,7 @@ hal_get_all_devices (LibHalContext *ctx, int *num_devices)
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
  *  @return			One of DBUS_TYPE_STRING, DBUS_TYPE_INT32,
- *				DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE or 
+ *				DBUS_TYPE_UINT64, DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE or 
  *				DBUS_TYPE_NIL if the property didn't exist.
  */
 int
@@ -936,6 +953,78 @@ hal_device_get_property_int (LibHalContext *ctx,
 	return value;
 }
 
+/** Get the value of a property of type integer. 
+ *
+ *  @param  ctx                 The context for the connection to hald
+ *  @param  udi			Unique Device Id
+ *  @param  key			Name of the property
+ *  @return			64-bit unsigned integer
+ */
+dbus_uint64_t
+hal_device_get_property_uint64 (LibHalContext *ctx, 
+			     const char *udi, const char *key)
+{
+	DBusError error;
+	DBusMessage *message;
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	dbus_uint64_t value;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
+						"org.freedesktop.Hal.Device",
+						"GetPropertyInteger");
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return -1;
+	}
+
+	dbus_message_iter_init (message, &iter);
+	dbus_message_iter_append_string (&iter, key);
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   &error);
+	if (dbus_error_is_set (&error)) {
+		fprintf (stderr, "%s %d : Error sending msg: %s\n",
+			 __FILE__, __LINE__, error.message);
+		dbus_message_unref (message);
+		return -1;
+	}
+	if (reply == NULL) {
+		dbus_message_unref (message);
+		return -1;
+	}
+
+	dbus_message_iter_init (reply, &iter);
+
+	/* now analyze reply */
+	if (dbus_message_iter_get_arg_type (&iter) == DBUS_TYPE_NIL) {
+		/* property didn't exist */
+		fprintf (stderr,
+			 "%s %d : property '%s' for device '%s' does not "
+			 "exist\n", __FILE__, __LINE__, key, udi);
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return -1;
+	} else if (dbus_message_iter_get_arg_type (&iter) !=
+		   DBUS_TYPE_UINT64) {
+		fprintf (stderr,
+			 "%s %d : property '%s' for device '%s' is not "
+			 "of type integer\n", __FILE__, __LINE__, key,
+			 udi);
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return -1;
+	}
+	value = dbus_message_iter_get_uint64 (&iter);
+
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+	return value;
+}
+
 /** Get the value of a property of type double. 
  *
  *  @param  ctx                 The context for the connection to hald
@@ -1087,6 +1176,7 @@ hal_device_set_property_helper (LibHalContext *ctx,
 				int type,
 				const char *str_value,
 				dbus_int32_t int_value,
+				dbus_uint64_t uint64_value,
 				double double_value,
 				dbus_bool_t bool_value)
 {
@@ -1106,6 +1196,7 @@ hal_device_set_property_helper (LibHalContext *ctx,
 		method_name = "SetPropertyString";
 		break;
 	case DBUS_TYPE_INT32:
+	case DBUS_TYPE_UINT64:
 		method_name = "SetPropertyInteger";
 		break;
 	case DBUS_TYPE_DOUBLE:
@@ -1141,6 +1232,9 @@ hal_device_set_property_helper (LibHalContext *ctx,
 		break;
 	case DBUS_TYPE_INT32:
 		dbus_message_iter_append_int32 (&iter, int_value);
+		break;
+	case DBUS_TYPE_UINT64:
+		dbus_message_iter_append_uint64 (&iter, uint64_value);
 		break;
 	case DBUS_TYPE_DOUBLE:
 		dbus_message_iter_append_double (&iter, double_value);
@@ -1186,7 +1280,7 @@ hal_device_set_property_string (LibHalContext *ctx,
 {
 	return hal_device_set_property_helper (ctx, udi, key,
 					       DBUS_TYPE_STRING,
-					       value, 0, 0.0f, FALSE);
+					       value, 0, 0, 0.0f, FALSE);
 }
 
 /** Set a property of type integer.
@@ -1205,7 +1299,26 @@ hal_device_set_property_int (LibHalContext *ctx, const char *udi,
 {
 	return hal_device_set_property_helper (ctx, udi, key,
 					       DBUS_TYPE_INT32,
-					       NULL, value, 0.0f, FALSE);
+					       NULL, value, 0, 0.0f, FALSE);
+}
+
+/** Set a property of type integer.
+ *
+ *  @param  ctx                 The context for the connection to hald
+ *  @param  udi			Unique Device Id
+ *  @param  key			Name of the property
+ *  @param  value		Value of the property
+ *  @return			TRUE if the property was set, FALSE if
+ *				the device didn't exist or the property
+ *				had a different type.
+ */
+dbus_bool_t
+hal_device_set_property_uint64 (LibHalContext *ctx, const char *udi,
+			     const char *key, dbus_uint64_t value)
+{
+	return hal_device_set_property_helper (ctx, udi, key,
+					       DBUS_TYPE_UINT64,
+					       NULL, 0, value, 0.0f, FALSE);
 }
 
 /** Set a property of type double.
@@ -1224,7 +1337,7 @@ hal_device_set_property_double (LibHalContext *ctx, const char *udi,
 {
 	return hal_device_set_property_helper (ctx, udi, key,
 					       DBUS_TYPE_DOUBLE,
-					       NULL, 0, value, FALSE);
+					       NULL, 0, 0, value, FALSE);
 }
 
 /** Set a property of type bool.
@@ -1243,7 +1356,7 @@ hal_device_set_property_bool (LibHalContext *ctx, const char *udi,
 {
 	return hal_device_set_property_helper (ctx, udi, key,
 					       DBUS_TYPE_BOOLEAN,
-					       NULL, 0, 0.0f, value);
+					       NULL, 0, 0, 0.0f, value);
 }
 
 
@@ -1261,7 +1374,7 @@ hal_device_remove_property (LibHalContext *ctx,
 {
 	return hal_device_set_property_helper (ctx, udi, key, DBUS_TYPE_NIL,	
 					       /* DBUS_TYPE_NIL means remove */
-					       NULL, 0, 0.0f, FALSE);
+					       NULL, 0, 0, 0.0f, FALSE);
 }
 
 
@@ -1746,6 +1859,11 @@ hal_device_print (LibHalContext *ctx, const char *udi)
 			printf ("    %s = %d = 0x%x (int)\n", key,
 				hal_psi_get_int (&i),
 				hal_psi_get_int (&i));
+			break;
+		case DBUS_TYPE_UINT64:
+			printf ("    %s = %lld = 0x%llx (uint64)\n", key,
+				hal_psi_get_uint64 (&i),
+				hal_psi_get_uint64 (&i));
 			break;
 		case DBUS_TYPE_BOOLEAN:
 			printf ("    %s = %s (bool)\n", key,

@@ -1,5 +1,42 @@
 2004-09-01  David Zeuthen  <david@fubar.dk>
 
+	Patch from Jon Lech Johansen <jon@nanocrew.net>. Add support for
+	properties of 64-bit unsigned integers. Right now this is not used
+	as the D-BUS python bindings needs a patch.
+
+	* hald/device.c: (hal_device_merge_with_rewrite),
+	(hal_device_merge), (hal_device_matches),
+	(hal_device_property_get_uint64), (hal_device_property_set_uint64),
+	(hal_device_print):
+	* hald/device.h:
+	* hald/device_info.c: (handle_match), (handle_merge), (end):
+	* hald/hald_dbus.c: (foreach_property_append),
+	(device_get_property), (device_set_property):
+	* hald/linux/common.c: (parse_hex_uint64):
+	* hald/linux/common.h:
+	* hald/linux/ieee1394_node_class_device.c:
+	(ieee1394_node_class_pre_process):
+	* hald/linux/net_class_device.c: (net_class_pre_process):
+	* hald/property.c: (hal_property_new_uint64),
+	(hal_property_get_uint64), (hal_property_to_string),
+	(hal_property_set_uint64):
+	* hald/property.h:
+	* hald/pstore.c: (hal_pstore_save_property),
+	(hal_pstore_load_property):
+	* libhal/libhal.c: (hal_device_get_all_properties),
+	(hal_psi_get_uint64), (hal_device_get_property_uint64),
+	(hal_device_set_property_helper), (hal_device_set_property_string),
+	(hal_device_set_property_int), (hal_device_set_property_uint64),
+	(hal_device_set_property_double), (hal_device_set_property_bool),
+	(hal_device_remove_property), (hal_device_print):
+	* libhal/libhal.h:
+	* tools/device-manager/DeviceManager.py:
+	* tools/hal_get_property.c: (main):
+	* tools/hal_set_property.c: (usage), (main):
+	* tools/lshal.c: (dump_devices), (print_property):
+
+2004-09-01  David Zeuthen  <david@fubar.dk>
+
 	* tools/fstab-sync.c (fs_table_line_is_mounted): New function
 	(fs_table_remove_generated_entries): Don't remove generated entries
 	that are in use (e.g device mounted at path). Fixes problem with

@@ -576,6 +576,10 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 		dbus_message_iter_append_int32 (iter,
 						hal_property_get_int (p));
 		break;
+	case DBUS_TYPE_UINT64:
+		dbus_message_iter_append_uint64 (iter,
+						hal_property_get_uint64 (p));
+		break;
 	case DBUS_TYPE_DOUBLE:
 		dbus_message_iter_append_double (iter,
 						 hal_property_get_double (p));
@@ -721,6 +725,10 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 	case DBUS_TYPE_INT32:
 		dbus_message_iter_append_int32 (&iter,
 						hal_property_get_int (p));
+		break;
+	case DBUS_TYPE_UINT64:
+		dbus_message_iter_append_uint64 (&iter,
+						hal_property_get_uint64 (p));
 		break;
 	case DBUS_TYPE_DOUBLE:
 		dbus_message_iter_append_double (&iter,
@@ -882,6 +890,11 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 	case DBUS_TYPE_INT32:
 		rc = hal_device_property_set_int (device, key,
 					  dbus_message_iter_get_int32
+					  (&iter));
+		break;
+	case DBUS_TYPE_UINT64:
+		rc = hal_device_property_set_uint64 (device, key,
+					  dbus_message_iter_get_uint64
 					  (&iter));
 		break;
 	case DBUS_TYPE_DOUBLE:

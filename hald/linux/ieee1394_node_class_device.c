@@ -66,7 +66,8 @@ ieee1394_node_class_pre_process (ClassDeviceHandler *self,
 	struct sysfs_device *sysdevice;
 	struct sysfs_attribute *cur;
 	char attr_name[SYSFS_NAME_LEN];
-	int tmp;
+	dbus_int32_t tmp;
+ 	dbus_uint64_t tmp2;
 	const char *vendor_name = NULL;
 	int vendor_id = 0;
 
@@ -92,9 +93,11 @@ ieee1394_node_class_pre_process (ClassDeviceHandler *self,
 						     "ieee1394.capabilities",
 						     tmp);
 		} else if (strcmp (attr_name, "guid") == 0) {
-			tmp = parse_hex (cur->value);
+			tmp2 = parse_hex_uint64 (cur->value);
 
-			hal_device_property_set_int (d, "ieee1394.guid", tmp);
+			/* TODO: comment out when 64-bit python patch is in dbus */
+			/*hal_device_property_set_uint64 (d, "ieee1394.guid", tmp2);*/
+			hal_device_property_set_int (d, "ieee1394.guid", (dbus_int32_t) tmp2);
 		} else if (strcmp (attr_name, "nodeid") == 0) {
 			tmp = parse_hex (cur->value);
 

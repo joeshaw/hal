@@ -40,6 +40,7 @@ struct _HalProperty {
 	union {
 		char *str_value;
 		dbus_int32_t int_value;
+ 		dbus_uint64_t uint64_value;
 		dbus_bool_t bool_value;
 		double double_value;
 	};
@@ -96,6 +97,20 @@ hal_property_new_int (const char *key, dbus_int32_t value)
 	prop->type = DBUS_TYPE_INT32;
 	prop->key = g_strdup (key);
 	prop->int_value = value;
+
+	return prop;
+}
+
+HalProperty *
+hal_property_new_uint64 (const char *key, dbus_uint64_t value)
+{
+	HalProperty *prop;
+
+	prop = g_new0 (HalProperty, 1);
+
+	prop->type = DBUS_TYPE_UINT64;
+	prop->key = g_strdup (key);
+	prop->uint64_value = value;
 
 	return prop;
 }
@@ -162,6 +177,15 @@ hal_property_get_int (HalProperty *prop)
 	return prop->int_value;
 }
 
+dbus_uint64_t
+hal_property_get_uint64 (HalProperty *prop)
+{
+	g_return_val_if_fail (prop != NULL, -1);
+	g_return_val_if_fail (prop->type == DBUS_TYPE_UINT64, -1);
+
+	return prop->uint64_value;
+}
+
 dbus_bool_t
 hal_property_get_bool (HalProperty *prop)
 {
@@ -181,6 +205,8 @@ hal_property_to_string (HalProperty *prop)
 		return g_strdup (prop->str_value);
 	case DBUS_TYPE_INT32:
 		return g_strdup_printf ("%d", prop->int_value);
+	case DBUS_TYPE_UINT64:
+		return g_strdup_printf ("%lld", prop->uint64_value);
 	case DBUS_TYPE_BOOLEAN:
 		/* FIXME: Maybe use 1 and 0 here instead? */
 		return g_strdup (prop->bool_value ? "true" : "false");
@@ -234,6 +260,17 @@ hal_property_set_int (HalProperty *prop, dbus_int32_t value)
 
 	prop->type = DBUS_TYPE_INT32;
 	prop->int_value = value;
+}
+
+void
+hal_property_set_uint64 (HalProperty *prop, dbus_uint64_t value)
+{
+	g_return_if_fail (prop != NULL);
+	g_return_if_fail (prop->type == DBUS_TYPE_UINT64 ||
+			  prop->type == DBUS_TYPE_NIL);
+
+	prop->type = DBUS_TYPE_UINT64;
+	prop->uint64_value = value;
 }
 
 void

@@ -166,6 +166,10 @@ dbus_int32_t hal_device_get_property_int (LibHalContext *ctx,
 					  const char *udi,
 					  const char *key);
 
+dbus_uint64_t hal_device_get_property_uint64 (LibHalContext *ctx, 
+					  const char *udi,
+					  const char *key);
+
 double hal_device_get_property_double (LibHalContext *ctx, 
 				       const char *udi,
 				       const char *key);
@@ -183,6 +187,11 @@ dbus_bool_t hal_device_set_property_int (LibHalContext *ctx,
 					 const char *udi,
 					 const char *key,
 					 dbus_int32_t value);
+
+dbus_bool_t hal_device_set_property_uint64 (LibHalContext *ctx, 
+					 const char *udi,
+					 const char *key,
+					 dbus_uint64_t value);
 
 dbus_bool_t hal_device_set_property_double (LibHalContext *ctx, 
 					    const char *udi,
@@ -242,6 +251,7 @@ char *hal_psi_get_key (LibHalPropertySetIterator * iter);
 
 char *hal_psi_get_string (LibHalPropertySetIterator * iter);
 dbus_int32_t hal_psi_get_int (LibHalPropertySetIterator * iter);
+dbus_uint64_t hal_psi_get_uint64 (LibHalPropertySetIterator * iter);
 double hal_psi_get_double (LibHalPropertySetIterator * iter);
 dbus_bool_t hal_psi_get_bool (LibHalPropertySetIterator * iter);
 

@@ -65,6 +65,8 @@ usage (int argc, char *argv[])
  "        --key            Key of the property to set\n"
  "        --int            Set value to an integer. Accepts decimal and "
  "                         hexadecimal prefixed with 0x or x\n"
+ "        --uint64         Set value to an integer. Accepts decimal and "
+ "                         hexadecimal prefixed with 0x or x\n"
  "        --string         Set value to a string\n"
  "        --double         Set value to a floating point number\n"
  "        --bool           Set value to a boolean, ie. true or false\n"
@@ -93,6 +95,7 @@ main (int argc, char *argv[])
 	char *key = NULL;
 	char *str_value = NULL;
 	dbus_int32_t int_value = 0;
+	dbus_uint64_t uint64_value = 0;
 	double double_value = 0.0f;
 	dbus_bool_t bool_value = TRUE;
 	dbus_bool_t remove = FALSE;
@@ -112,6 +115,7 @@ main (int argc, char *argv[])
 			{"udi", 1, NULL, 0},
 			{"key", 1, NULL, 0},
 			{"int", 1, NULL, 0},
+			{"uint64", 1, NULL, 0},
 			{"string", 1, NULL, 0},
 			{"double", 1, NULL, 0},
 			{"bool", 1, NULL, 0},
@@ -141,6 +145,9 @@ main (int argc, char *argv[])
 			} else if (strcmp (opt, "int") == 0) {
 				int_value = strtol (optarg, NULL, 0);
 				type = DBUS_TYPE_INT32;
+			} else if (strcmp (opt, "uint64") == 0) {
+				uint64_value = strtoull (optarg, NULL, 0);
+				type = DBUS_TYPE_UINT64;
 			} else if (strcmp (opt, "double") == 0) {
 				double_value = (double) atof (optarg);
 				type = DBUS_TYPE_DOUBLE;
@@ -202,6 +209,10 @@ main (int argc, char *argv[])
 		case DBUS_TYPE_INT32:
 			rc = hal_device_set_property_int (hal_ctx, udi, key,
 							  int_value);
+			break;
+		case DBUS_TYPE_UINT64:
+			rc = hal_device_set_property_uint64 (hal_ctx, udi, key,
+							  uint64_value);
 			break;
 		case DBUS_TYPE_DOUBLE:
 			rc = hal_device_set_property_double (hal_ctx, udi, key,

@@ -515,12 +515,14 @@ net_class_pre_process (ClassDeviceHandler *self,
 			mac_upper = (a5 << 16) | (a4 << 8) | a3;
 			mac_lower = (a2 << 16) | (a1 << 8) | a0;
 
-			hal_device_property_set_int (d,
-						     "net.ethernet.mac_addr_upper24",
+			hal_device_property_set_int (d, "net.ethernet.mac_addr_upper24",
 						     (dbus_int32_t) mac_upper);
-			hal_device_property_set_int (d,
-						     "net.ethernet.mac_addr_lower24",
+			hal_device_property_set_int (d, "net.ethernet.mac_addr_lower24",
 						     (dbus_int32_t) mac_lower);
+
+			/* TODO: comment out when 64-bit python patch is in dbus */
+			/*hal_device_property_set_uint64 (d, "net.ethernet.address",
+			  (dbus_uint64_t) ((mac_upper<<24) | mac_lower));*/
 		}
 
 		/* Get the initial link state from the MII registers */
