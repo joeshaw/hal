@@ -4,7 +4,7 @@
 
   <!-- Pocket PC PDAs -->
   <device>
-    <match key="info.bus" string="serial">
+    <match key="info.capabilities" contains="serial">
       <match key="@serial.physical_device:info.linux.driver" string="ipaq">
 	<append key="info.capabilities" type="strlist">pda</append>
 	<merge key="pda.platform" type="string">pocketpc</merge>
@@ -25,7 +25,7 @@
     from the driver directly?)
   -->
   <device>
-    <match key="info.bus" string="serial">
+    <match key="info.capabilities" contains="serial">
       <match key="@serial.physical_device:info.linux.driver" string="visor">
 	<match key="@serial.physical_device:usb.vendor_id" int="0x054c">
           <match key="@serial.physical_device:usb.product_id" int="0x0038">
@@ -43,7 +43,7 @@
   
   <!-- All the other PalmOS PDAs -->
   <device>
-    <match key="info.bus" string="serial">
+    <match key="info.capabilities" contains="serial">
       <match key="@serial.physical_device:info.linux.driver" string="visor">
 	<match key="pda.platform" exists="false">
           <match key="serial.port" int="1">

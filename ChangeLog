@@ -1,5 +1,10 @@
 2005-03-30  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/information/10freedesktop/10-usb-pda.fdi: Match for info.
+	capabilities instead of info.bus
+
+2005-03-30  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/10-usb-pda.fdi: Update from
 	Andrei Yurkevich <urruru@ru.ru>; slightly tweaked by me
 
