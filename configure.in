@@ -156,19 +156,6 @@ AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
 AC_CHECK_HEADERS(expat.h)
 AC_CHECK_LIB(expat,XML_ParserCreate)
 
-# Look for iwlib
-AC_ARG_ENABLE(iwlib,             [  --enable-iwlib          require building with wireless extensions in iwlib],require_iwlib=$enableval,require_iwlib=no)
-
-AC_CHECK_HEADERS(iwlib.h,[AC_CHECK_LIB(iw,iw_sockets_open,PACKAGE_LIBS="$PACKAGE_LIBS -liw")])
-
-if test x$ac_cv_lib_iw_iw_sockets_open = xyes; then
-    AC_DEFINE(HAVE_IWLIB,1,[Have iwlib for wireless network support])
-else
-    if test x$require_iwlib != xno; then
-        AC_ERROR(cannot find iwlib)
-    fi
-fi
-
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
 AC_SUBST(PACKAGE_CFLAGS)

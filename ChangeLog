@@ -1,5 +1,13 @@
 2004-06-07  Joe Shaw  <joeshaw@novell.com>
 
+	* configure.in: Remove the iwlib dependency.
+
+	* hald/linux/net_class_device.c: Remove the wireless properties.
+	This stuff is better suited to a library like iwlib
+	(net_class_pre_process): But still check for the existence of the
+	"wireless" directory and set the net.ethernet.80211 capability if
+	it's there.
+
 	* hald/hald_conf.c: Remove deprecated use of a label at the end of
 	a function and just return instead of goto'ing there.
 
