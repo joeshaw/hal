@@ -1,4 +1,14 @@
-2005-02-04  David Zeuthen  <david@fubar.dk>
+2005-02-07  David Zeuthen  <davidz@redhat.com>
+
+	* drive_id/*: Add new drive_id library from Kay
+
+	* volume_id/*: Add new volume_id library from Kay
+
+	* Makefile.am: Add drive_id and volume_id to SUBDIRS
+
+	* configure.in: Add drive_id and volume_id to AC_OUTPUT
+
+2005-02-04  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Added docs for battery.remaining_time
 

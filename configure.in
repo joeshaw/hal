@@ -456,6 +456,8 @@ doc/spec/hal-spec.xml
 examples/Makefile
 examples/volumed/Makefile
 po/Makefile.in
+drive_id/Makefile
+volume_id/Makefile
 ])
 	
 dnl ==========================================================================
