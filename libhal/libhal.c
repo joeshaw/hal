@@ -692,6 +692,7 @@ hal_shutdown (LibHalContext *ctx)
 
 	/* unsubscribe the match rule we added in initialize; this is safe even with multiple
 	 * instances of libhal running - see the dbus docs */
+	dbus_error_init (&error);
 	dbus_bus_remove_match (ctx->connection,
 			       "type='signal',"
 			       "interface='org.freedesktop.Hal.Manager',"

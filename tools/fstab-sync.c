@@ -989,8 +989,8 @@ volume_new (const char *udi)
 {
   Volume *volume;
   char *storudi;
-  dbus_int32_t num_blocks;
-  dbus_int32_t block_size;
+  dbus_int64_t num_blocks;
+  dbus_int64_t block_size;
   char buf[64];
 
   if (!udi_is_volume_or_nonpartition_drive (udi))
@@ -1049,8 +1049,8 @@ volume_new (const char *udi)
 
   if (hal_device_property_exists (hal_context, udi, "volume.block_size") &&
       hal_device_property_exists (hal_context, udi, "volume.num_blocks")) {
-    block_size = hal_device_get_property_int (hal_context, udi, "volume.block_size");
-    num_blocks = hal_device_get_property_int (hal_context, udi, "volume.num_blocks");
+    block_size = (dbus_int64_t) hal_device_get_property_int (hal_context, udi, "volume.block_size");
+    num_blocks = (dbus_int64_t) hal_device_get_property_int (hal_context, udi, "volume.num_blocks");
     volume->size = block_size * num_blocks;
   } else {
     volume->size = -1;
@@ -1438,6 +1438,36 @@ add_udi (const char *udi)
   if (hal_device_query_capability (hal_context, udi, "volume") &&
       hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
     return FALSE;
+
+  if (hal_device_property_exists (hal_context, udi, "volume.partition.msdos_part_table_type")) {
+    unsigned int i;
+    int msdos_type;
+    int msdos_whitelist[] = {
+      0x01, /* FAT12 */
+      0x04, /* FAT16 <32M */
+      0x06, /* FAT16 */
+      0x07, /* HPFS/NTFS */
+      0x0b, /* W95 FAT32 */
+      0x0c, /* W95 FAT32 (LBA) */
+      0x0e, /* W95 FAT16 (LBA) */
+      0x83, /* Linux */
+      0x00};
+    
+    msdos_type = hal_device_get_property_int (hal_context, udi, "volume.partition.msdos_part_table_type");
+    fstab_update_debug (_("%d: msdos_part_table_type = 0x%02x\n"), pid, msdos_type);
+
+    for (i = 0; msdos_whitelist[i] != 0x00; i++) {
+      if (msdos_type == msdos_whitelist[i]) {
+	fstab_update_debug (_("%d: in whitelist\n"), pid);
+	goto in_white_list;
+      }
+    }    
+
+    fstab_update_debug (_("%d: not in whitelist; ignoring\n"), pid);
+    return FALSE;
+  }
+
+in_white_list:
 
   volume = volume_new (udi);
 

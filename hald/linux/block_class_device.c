@@ -1279,7 +1279,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 
 						hal_device_property_set_int (
-							d, "volume.partition.x86_type",
+							d, "volume.partition.msdos_part_table_type",
 							p->partition_type_raw);
 						
 						/* NOTE: We trust the type from the partition table

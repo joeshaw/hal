@@ -1,5 +1,25 @@
 2004-09-27  David Zeuthen  <david@fubar.dk>
 
+	* libhal/libhal.c (hal_shutdown): Remember to init error var
+
+	* tools/fstab-sync.c (add_udi): Add a whitelist so if a volume stems
+	from a msdos style partition table we require that type to be in the
+	whitelist; initially includes various FAT formats, NTFS and Linux.
+	(volume_new): Fix a bug in size computation
+
+	* libhal-storage/libhal-storage.h: Add prototype for
+	hal_volume_get_msdos_part_table_type
+
+	* libhal-storage/libhal-storage.c:
+	(hal_volume_get_msdos_part_table_type): New function
+
+	* hald/linux/block_class_device.c (block_class_pre_process): 
+	Rename x86_type to msdos_part_table_type
+
+	* hald/haldaemon.in: Fixup URL
+
+2004-09-27  David Zeuthen  <david@fubar.dk>
+
 	* configure.in: Added nl to ALL_LINGUAS
 
 	* po/nl.po: Dutch translations from Reinout van 

@@ -5,7 +5,7 @@
 # chkconfig: 345 98 02
 # description:  This is a daemon for collecting and maintaing information \
 #               about hardware from several sources. \
-#               See http://www.freedesktop.org/software/hal/
+#               See http://www.freedesktop.org/Software/hal
 #
 # processname: hald
 # pidfile: @HALD_PID_FILE@

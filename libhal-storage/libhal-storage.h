@@ -240,6 +240,7 @@ dbus_bool_t       hal_volume_disc_is_blank                 (HalVolume     *volum
 dbus_bool_t       hal_volume_disc_is_rewritable            (HalVolume     *volume);
 dbus_bool_t       hal_volume_disc_is_appendable            (HalVolume     *volume);
 HalVolumeDiscType hal_volume_get_disc_type                 (HalVolume     *volume);
+int               hal_volume_get_msdos_part_table_type     (HalVolume     *volume);
 
 char             *hal_volume_policy_compute_size_as_string (HalVolume     *volume);
 

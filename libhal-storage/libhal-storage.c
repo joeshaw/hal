@@ -665,6 +665,8 @@ struct HalVolume_s {
 
 	dbus_bool_t is_partition;
 	unsigned int partition_number;
+
+	int msdos_part_table_type;
 	
 
 	dbus_bool_t is_disc;
@@ -795,6 +797,7 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		HAL_PROP_EXTRACT_STRING ("storage.vendor",            drive->vendor);
 		HAL_PROP_EXTRACT_STRING ("storage.model",             drive->model);
 		HAL_PROP_EXTRACT_STRING ("storage.drive_type",        drive->type_textual);
+
 
 		HAL_PROP_EXTRACT_STRING ("storage.icon.drive",        drive->dedicated_icon_drive);
 		HAL_PROP_EXTRACT_STRING ("storage.icon.volume",       drive->dedicated_icon_volume);
@@ -944,6 +947,8 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		HAL_PROP_EXTRACT_BEGIN;
 
+		HAL_PROP_EXTRACT_INT    ("volume.partition.msdos_part_table_type", vol->msdos_part_table_type);
+
 		HAL_PROP_EXTRACT_INT    ("block.minor",               vol->device_minor);
 		HAL_PROP_EXTRACT_INT    ("block.major",               vol->device_major);
 		HAL_PROP_EXTRACT_STRING ("block.device",              vol->device_file);
@@ -998,6 +1003,21 @@ error:
 	hal_free_property_set (properties);
 	hal_volume_free (vol);
 	return NULL;
+}
+
+
+/** If the volume is on a drive with a MSDOS style partition table, return
+ *  the partition table id.
+ *
+ *  @param  volume              Volume object
+ *  @return                     The partition type or -1 if volume is not
+ *                              a partition or the media the volume stems from
+ *                              isn't partition with a MS DOS style table
+ */
+int
+hal_volume_get_msdos_part_table_type (HalVolume *volume)
+{
+	return volume->msdos_part_table_type;
 }
 
 /***********************************************************************/
