@@ -1,5 +1,10 @@
 2005-03-22  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/physdev.c: Actuall change driver property to be uniform,
+	e.g. put it in info.linux.driver
+
+2005-03-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/probing/probe-storage.c (main): Add some extra debugging
 	to help me with RH bug #151762
 
