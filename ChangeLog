@@ -1,3 +1,10 @@
+2004-09-24  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_lvm2),
+	(volume_id_probe): probe for all raid types first, cause
+	probes for real filesystems may just be successful on raid
+	members
+
 2004-09-24  David Zeuthen  <david@fubar.dk>
 
 	* po/ChangeLog: New file

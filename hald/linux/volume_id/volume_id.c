@@ -321,7 +321,7 @@ static int probe_lvm2(struct volume_id *id, __u64 off)
 found:
 	strncpy(id->type_version, lvm->type, 8);
 	id->usage_id = VOLUME_ID_RAID;
-	id->type_id = VOLUME_ID_LVM1;
+	id->type_id = VOLUME_ID_LVM2;
 	id->type = "LVM2_member";
 
 	return 0;
@@ -2040,11 +2040,18 @@ int volume_id_probe(struct volume_id *id,
 		break;
 	case VOLUME_ID_ALL:
 	default:
+		/* probe for raid first, cause fs probes may be successful on raid members */
 		rc = probe_linux_raid(id, off, size);
 		if (rc == 0)
 			break;
+		rc = probe_lvm1(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_lvm2(id, off);
+		if (rc == 0)
+			break;
 
-		/* signature in the first block */
+		/* signature in the first block, only small buffer needed */
 		rc = probe_ntfs(id, off);
 		if (rc == 0)
 			break;
@@ -2086,12 +2093,6 @@ int volume_id_probe(struct volume_id *id,
 		if (rc == 0)
 			break;
 		rc = probe_ufs(id, off);
-		if (rc == 0)
-			break;
-		rc = probe_lvm1(id, off);
-		if (rc == 0)
-			break;
-		rc = probe_lvm2(id, off);
 		if (rc == 0)
 			break;
 

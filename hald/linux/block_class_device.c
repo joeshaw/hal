@@ -609,7 +609,7 @@ volume_set_size (HalDevice *d, dbus_bool_t force)
 
 			if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
 				hal_device_property_set_uint64 (d, "volume.size", vol_size);
-				HAL_INFO (("volume.size = %lld", vol_size));
+				HAL_INFO (("volume.size = %llu", vol_size));
 			}
 
 			close (fd);
