@@ -349,3 +349,31 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 
 	return 0;
 }
+
+int
+get_dvd_media_type (int fd)
+{
+	ScsiCommand *cmd;
+	int retval = -1;
+	unsigned char header[8];
+	unsigned char *list;
+	int i, len;
+
+	cmd = scsi_command_new_from_fd (fd);
+
+	scsi_command_init (cmd, 0, 0x46);
+	scsi_command_init (cmd, 1, 1);
+	scsi_command_init (cmd, 8, 8);
+	scsi_command_init (cmd, 9, 0);
+	if (scsi_command_transport (cmd, READ, header, 8)) {
+		/* GET CONFIGURATION failed */
+		scsi_command_free (cmd);
+		return -1;
+	}
+	
+	retval = (header[6]<<8)|(header[7]);
+
+
+	scsi_command_free (cmd);
+	return retval;
+}

@@ -5,10 +5,10 @@
     <match key="info.bus" string="usb">
       <match key="usb.vendor_id" int="0x0424">
         <match key="usb.product_id" int="0x20fc">
-          <merge key="storage_lun0.media" type="string">compact_flash</merge>
-          <merge key="storage_lun1.media" type="string">memory_stick</merge>
-          <merge key="storage_lun2.media" type="string">smart_media</merge>
-          <merge key="storage_lun3.media" type="string">sd_mmc</merge>
+          <merge key="storage_lun0.drive_type" type="string">compact_flash</merge>
+          <merge key="storage_lun1.drive_type" type="string">memory_stick</merge>
+          <merge key="storage_lun2.drive_type" type="string">smart_media</merge>
+          <merge key="storage_lun3.drive_type" type="string">sd_mmc</merge>
         </match>
       </match>
     </match>

@@ -5,7 +5,7 @@
     <match key="info.bus" string="usb">
       <match key="usb.vendor_id" int="0x05dc">
         <match key="usb.product_id" int="0x0002">
-          <merge key="storage.media" type="string">compact_flash</merge>
+          <merge key="storage.drive_type" type="string">compact_flash</merge>
         </match>
       </match>
     </match>

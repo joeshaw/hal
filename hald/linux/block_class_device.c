@@ -69,6 +69,8 @@
 
 static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
+static void detect_fs (HalDevice *d);
+
 typedef struct {
 	HalDevice *device;
 	ClassDeviceHandler *handler;
@@ -171,55 +173,58 @@ cdrom_check(HalDevice *d, const char *device_file)
 		return;
 	}
 
+	hal_device_property_set_bool (d, "storage.cdrom.cdr", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.cdrw", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.dvd", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.dvdr", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.dvdram", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.dvdplusr", FALSE);
+	hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", FALSE);
+
 	if (capabilities & CDC_CD_R) {
-		hal_device_add_capability (d, "storage.cdr");
-		hal_device_property_set_bool (d, "storage.cdr", TRUE);
+		hal_device_property_set_bool (d, "storage.cdrom.cdr", TRUE);
 	}
 	
 	if (capabilities & CDC_CD_RW) {
-		hal_device_add_capability (d, "storage.cdrw");
-		hal_device_property_set_bool (d, "storage.cdrw", TRUE);
+		hal_device_property_set_bool (d, "storage.cdrom.cdrw", TRUE);
 	}
 	if (capabilities & CDC_DVD) {
 		int profile;
 		
-		hal_device_add_capability (d, "storage.dvd");
-		hal_device_property_set_bool (d, "storage.dvd", TRUE);
+		hal_device_property_set_bool (d, "storage.cdrom.dvd", TRUE);
 		
 		profile = get_dvd_r_rw_profile (fd);
 		HAL_INFO (("profile %d\n", profile));
 		if (profile == 2) {
-			hal_device_add_capability (d, "storage.dvdplusr");
-			hal_device_property_set_bool (d, "storage.dvdplusr", TRUE);
-			hal_device_add_capability (d, "storage.dvdplusrw");
-			hal_device_property_set_bool (d, "storage.dvdplusrw", TRUE);
+			hal_device_property_set_bool (d, "storage.cdrom.dvdplusr", TRUE);
+			hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", TRUE);
 		} else if (profile == 0) {
-			hal_device_add_capability(d, "storage.dvdplusr");
-			hal_device_property_set_bool(d, "storage.dvdplusr",
+			hal_device_property_set_bool(d, "storage.cdrom.dvdplusr",
 					     TRUE);
 		} else if (profile == 1) {
-			hal_device_add_capability (d, "storage.dvdplusrw");
-			hal_device_property_set_bool (d, "storage.dvdplusrw", TRUE);
+			hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", TRUE);
 		}
 	}
 	if (capabilities & CDC_DVD_R) {
-		hal_device_add_capability (d, "storage.dvdr");
-		hal_device_property_set_bool (d, "storage.dvdr", TRUE);
+		hal_device_property_set_bool (d, "storage.cdrom.dvdr", TRUE);
 	}
 	if (capabilities & CDC_DVD_RAM) {
-		hal_device_add_capability (d, "storage.dvdram");
 		hal_device_property_set_bool (d, "storage.dvdram", TRUE);
 	}
 	
 	/* while we're at it, check if we support media changed */
 	if (ioctl (fd, CDROM_MEDIA_CHANGED) >= 0) {
 		hal_device_property_set_bool (d, "storage.cdrom.support_media_changed", TRUE);
+	} else {
+		hal_device_property_set_bool (d, "storage.cdrom.support_media_changed", FALSE);
 	}
 	
 	if (get_read_write_speed(fd, &read_speed, &write_speed) >= 0) {
 		hal_device_property_set_int (d, "storage.cdrom.read_speed", read_speed);
 		if (write_speed > 0)
 			hal_device_property_set_int(d, "storage.cdrom.write_speed", write_speed);
+		else
+			hal_device_property_set_int(d, "storage.cdrom.write_speed", 0);
 	}
 
 	close (fd);
@@ -242,7 +247,7 @@ force_unmount (HalDevice * d)
 
 	device_file = hal_device_property_get_string (d, "block.device");
 	device_mount_point =
-	    hal_device_property_get_string (d, "block.mount_point");
+	    hal_device_property_get_string (d, "volume.mount_point");
 
 	umount_argv[2] = device_file;
 
@@ -289,16 +294,16 @@ force_unmount (HalDevice * d)
 						      TRUE,
 						      DBUS_TYPE_INVALID);
 
-			/* Woohoo, have to change block.mount_point *afterwards*, other
+			/* Woohoo, have to change volume.mount_point *afterwards*, other
 			 * wise device_mount_point points to garbage and D-BUS throws
 			 * us off the bus, in fact it's doing exiting with code 1
 			 * for us - not nice
 			 */
 			device_property_atomic_update_begin ();
-			hal_device_property_set_string (d, "block.mount_point",
+			hal_device_property_set_string (d, "volume.mount_point",
 						"");
-			hal_device_property_set_string (d, "block.fstype", "");
-			hal_device_property_set_bool (d, "block.is_mounted",
+			hal_device_property_set_string (d, "volume.fstype", "");
+			hal_device_property_set_bool (d, "volume.is_mounted",
 					      FALSE);
 			device_property_atomic_update_end ();
 		}
@@ -404,8 +409,8 @@ detect_media (HalDevice * d)
 		return FALSE;
 
 	/* we do special treatment for optical discs */
-	is_cdrom = hal_device_has_property (d, "storage.media") &&
-	    strcmp (hal_device_property_get_string (d, "storage.media"),
+	is_cdrom = hal_device_has_property (d, "storage.drive_type") &&
+	    strcmp (hal_device_property_get_string (d, "storage.drive_type"),
 		    "cdrom") == 0
 	    && hal_device_property_get_bool (d,
 				     "storage.cdrom.support_media_changed");
@@ -433,7 +438,7 @@ detect_media (HalDevice * d)
 
 		if (fd == -1) {
 			/* open failed */
-			HAL_WARNING (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));
+			/*HAL_WARNING (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));*/
 			return FALSE;
 		}
 
@@ -519,6 +524,15 @@ detect_media (HalDevice * d)
 			hal_device_property_set_string (child, "info.product",
 						"Disc");
 
+			/* set defaults */
+			hal_device_property_set_string (child, "volume.label", "");
+			hal_device_property_set_string (child, "volume.uuid", "");
+			hal_device_property_set_string (child, "volume.disc_type", "");
+			hal_device_property_set_string (child, "volume.fstype", "");
+			hal_device_property_set_string (child, "volume.mount_point", "");			
+			hal_device_property_set_bool (child, "volume.is_mounted", FALSE);
+
+
 			/* set UDI as appropriate */
 			strncpy (udi,
 				 hal_device_property_get_string (d, "info.udi"),
@@ -529,16 +543,15 @@ detect_media (HalDevice * d)
 
 			/* set disc media type as appropriate */
 			type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
-			close(fd);
 			switch (type) {
 			case CDS_AUDIO:		/* audio CD */
 				hal_device_property_set_string (child,
-						"storage.cdrom.media_type",
+						"volume.disc_type",
 						"audio");
 				break;
 			case CDS_MIXED:		/* mixed mode CD */
 				hal_device_property_set_string (child,
-						"storage.cdrom.media_type",
+						"volume.disc_type",
 						"mixed");
 				break;
 			case CDS_DATA_1:	/* data CD */
@@ -546,21 +559,74 @@ detect_media (HalDevice * d)
 			case CDS_XA_2_1:
 			case CDS_XA_2_2:
 				hal_device_property_set_string (child,
-						"storage.cdrom.media_type",
+						"volume.disc_type",
 						"data");
 				break;
 			case CDS_NO_INFO:	/* blank or invalid CD */
 				hal_device_property_set_string (child,
-						"storage.cdrom.media_type",
+						"volume.disc_type",
 						"blank");
 				break;
 
 			default:		/* should never see this */
 				hal_device_property_set_string (child,
-						"storage.cdrom.media_type",
+						"volume.disc_type",
 						"unknown");
 				break;
 			}
+
+			type = get_dvd_media_type (fd);
+			if ((type != -1) && ((type&0xF0) == 0x10)) {
+				switch (type) {
+				case 0x10: /* DVD-ROM */
+					HAL_INFO (("########### huu hey"));
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_rom");
+					break;
+				case 0x11: /* DVD-R Sequential */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_r");
+					break;
+				case 0x12: /* DVD-RAM */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_ram");
+					break;
+				case 0x13: /* DVD-RW Restricted Overwrite */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_rw_restricted_overwrite");
+					break;
+				case 0x14: /* DVD-RW Sequential */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_rw");
+					break;
+				case 0x1A: /* DVD+RW */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_plus_rw");
+					break;
+				case 0x1B: /* DVD+R */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc_type",
+						"dvd_plus_r");
+					break;
+				default: 
+					break;
+				}
+			}
+
+			close(fd);
 
 			detect_fs (child);
 
@@ -616,11 +682,11 @@ detect_fs (HalDevice *d)
 	if (rc != 0)
 		return;
 
-	hal_device_property_set_string (d, "block.fstype", vid->fs_name);
+	hal_device_property_set_string (d, "volume.fstype", vid->fs_name);
 	if (vid->label_string[0] != '\0')
-		hal_device_property_set_string (d, "block.volume_label", vid->label_string);
+		hal_device_property_set_string (d, "volume.label", vid->label_string);
 	if (vid->uuid_string[0] != '\0')
-		hal_device_property_set_string (d, "block.volume_uuid", vid->uuid_string);
+		hal_device_property_set_string (d, "volume.uuid", vid->uuid_string);
 
 	volume_id_close(vid);
 
@@ -672,10 +738,14 @@ block_class_pre_process (ClassDeviceHandler *self,
 		stordev_udi = d->udi;
 		stordev = d;
 
-		/* Default */
+		/* Defaults */
 		hal_device_property_set_string (
 			stordev, "storage.bus", "unknown");
 
+		hal_device_property_set_string (stordev, 
+						"storage.model", "");
+		hal_device_property_set_string (stordev, 
+						"storage.vendor", "");
 
 		/* walk up the device chain to find the physical device, 
 		 * start with our parent. On the way, optionally pick up
@@ -742,6 +812,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_bool (d, "info.virtual", TRUE);
 		hal_device_add_capability (d, "volume");
 		hal_device_property_set_string (d, "info.category", "volume");
+		hal_device_property_set_string (d, "volume.label", "");
+		hal_device_property_set_string (d, "volume.uuid", "");
+		hal_device_property_set_string (d, "volume.disc_type", "");
 
 		/* block device that is a partition; e.g. a storage volume */
 
@@ -757,12 +830,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 		return;
 	} 
 
-	/* be pessimistic */
-	hal_device_property_set_bool (stordev, "storage.cdr", FALSE);
-	hal_device_property_set_bool (stordev, "storage.cdrw", FALSE);
-	hal_device_property_set_bool (stordev, "storage.dvd", FALSE);
-	hal_device_property_set_bool (stordev, "storage.dvdr", FALSE);
-	hal_device_property_set_bool (stordev, "storage.dvdram", FALSE);
 
 	/* We are a disk or cdrom drive; maybe we even offer 
 	 * removable media 
@@ -806,7 +873,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 					  ide_name);
 		if (media != NULL) {
 			hal_device_property_set_string (stordev, 
-							"storage.media",
+							"storage.drive_type",
 							media);
 			
 			/* Set for removable media */
@@ -836,9 +903,12 @@ block_class_pre_process (ClassDeviceHandler *self,
 			  "%s/device/vendor", sysfs_path);
 		attr = sysfs_open_attribute (attr_path);
 		if (sysfs_read_attribute (attr) >= 0) {
+			strip_space (attr->value);
 			hal_device_property_set_string (d, "info.vendor",
-							strip_space (attr->
-								     value));
+							attr->value);
+			hal_device_property_set_string (stordev,
+							"storage.vendor",
+							attr->value);
 			sysfs_close_attribute (attr);
 		}
 		
@@ -865,21 +935,21 @@ block_class_pre_process (ClassDeviceHandler *self,
 			case 0:	/* Disk */
 				hal_device_property_set_string (
 					stordev, 
-					"storage.media", 
+					"storage.drive_type", 
 					"disk");
 				break;
 			case 1:	/* Tape */
 				has_removable_media = TRUE;
 				hal_device_property_set_string (
 					stordev,
-					"storage.media", 
+					"storage.drive_type", 
 					"tape");
 				has_removable_media = TRUE;
 				break;
 			case 5:	/* CD-ROM */
 				hal_device_property_set_string (
 					stordev, 
-					"storage.media", 
+					"storage.drive_type", 
 					"cdrom");
 				has_removable_media = TRUE;
 				break;
@@ -892,15 +962,8 @@ block_class_pre_process (ClassDeviceHandler *self,
 		}
 	} else {
 		/** @todo block device on non-IDE and non-SCSI device;
-		 *  how to find the name and the media-type? Right now
-		 *  we just assume that the disk is fixed and of type
-		 *  flash.
+		 *  how to find the name and the media-type? 
 		 */
-		
-		hal_device_property_set_string (
-			stordev, 
-			"storage.media",
-			"flash");
 		
 		/* guestimate product name */
 		hal_device_property_set_string (d, "info.product", "Disk");
@@ -912,16 +975,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 		stordev, 
 		"storage.removable", 
 		has_removable_media);
-	
-	if (has_removable_media) {
-		hal_device_add_capability (
-			stordev, 
-			"storage.removable");
-	}
 
-
-	if (hal_device_has_property (stordev, "storage.media") &&
-	    strcmp (hal_device_property_get_string (stordev, "storage.media"), 
+	if (hal_device_has_property (stordev, "storage.drive_type") &&
+	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
 		    "cdrom") == 0) {
 		cdrom_check (stordev, device_file);
 	}
@@ -931,11 +987,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 	hal_device_property_set_bool (stordev, "storage.hotpluggable",
 				      is_hotpluggable);
-	if (is_hotpluggable) {
-		hal_device_add_capability (stordev, "storage.hotpluggable");
-	}
-
-
 
 	/* FINALLY, merge information derived from a .fdi file, from the 
 	 * physical device that is backing this block device.
@@ -1211,16 +1262,16 @@ foreach_block_device (HalDeviceStore *store, HalDevice *d,
 
 			was_mounted =
 				hal_device_property_get_bool (d,
-							      "block.is_mounted");
+							      "volume.is_mounted");
 
 			/* Yay! Found a mount point; set properties accordingly */
 			hal_device_property_set_string (d,
-							"block.mount_point",
+							"volume.mount_point",
 							mp->mount_point);
-			hal_device_property_set_string (d, "block.fstype",
+			hal_device_property_set_string (d, "volume.fstype",
 							mp->fs_type);
 			hal_device_property_set_bool (d,
-						      "block.is_mounted",
+						      "volume.is_mounted",
 						      TRUE);
 
 			/* only overwrite block.device if it's not set */
@@ -1263,13 +1314,13 @@ foreach_block_device (HalDeviceStore *store, HalDevice *d,
 		device_property_atomic_update_begin ();
 		
 		was_mounted =
-			hal_device_property_get_bool (d, "block.is_mounted");
+			hal_device_property_get_bool (d, "volume.is_mounted");
 
-		hal_device_property_set_bool (d, "block.is_mounted",
+		hal_device_property_set_bool (d, "volume.is_mounted",
 					      FALSE);
-		hal_device_property_set_string (d, "block.mount_point",
+		hal_device_property_set_string (d, "volume.mount_point",
 						"");
-		hal_device_property_set_string (d, "block.fstype", "");
+		hal_device_property_set_string (d, "volume.fstype", "");
 
 		device_property_atomic_update_end ();
 

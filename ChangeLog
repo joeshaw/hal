@@ -1,3 +1,20 @@
+2004-05-05  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_dvd_rw_utils.c (get_dvd_media_type): new function
+
+	* hald/linux/block_class_device.c: rename some properties and ensure
+	that all properties for a namespace is always available with default
+	values - it's easiest to look at the diff to see what's changed; one
+	highlight is the introduction of the volume.* namespace.
+	(detect_media): use new utility in linux_dvd_rw_utils.c to get the
+	disc type for DVD's.
+
+	* tools/callouts/fstab-update.sh: property names changed
+
+	* fdi/20freedesktop/lexar-media-cf-reader.fdi: propertys name changed
+
+	* fdi/20freedesktop/6in1-card-reader.fdi: property names changed
+
 2004-05-05  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c (probe_udf): fix for big-endian
@@ -6,7 +23,7 @@
 
 	* hald/linux/volume_id/volume_id.c (probe_jfs): test for js == NULL
 
-	* hald/linux/block_class_device.c (detect_media):cCall detect_fs
+	* hald/linux/block_class_device.c (detect_media): call detect_fs
 	when adding a disc. Also route the child through the TDL and test
 	the TDL so we don't add more than one child now that we've got a
 	delay thanks to callouts.
