@@ -122,7 +122,7 @@ main (int argc, char *argv[], char *envp[])
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {
-		syslog (LOG_ERR, "error sending message to hald");
+		/*syslog (LOG_ERR, "error sending message to hald");*/
 	}
 out:
 	return 0;

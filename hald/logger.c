@@ -31,6 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "logger.h"
 
@@ -47,12 +49,33 @@ static const char *file;
 static int line;
 static const char *function;
 
+static int is_enabled = 1;
+
+
 /** Initialize logging system
  *
  */
 void
-logger_init ()
+logger_init (void)
 {
+}
+
+/** Disable all logging
+ *
+ */
+void 
+logger_disable (void)
+{
+	is_enabled = 0;
+}
+
+/** Enable all logging
+ *
+ */
+void 
+logger_enable (void)
+{
+	is_enabled = 1;
 }
 
 /** Setup logging entry
@@ -63,8 +86,7 @@ logger_init ()
  *  @param  function            Name of function
  */
 void
-logger_setup (int _priority, const char *_file, int _line,
-	      const char *_function)
+logger_setup (int _priority, const char *_file, int _line, const char *_function)
 {
 	priority = _priority;
 	file = _file;
@@ -83,9 +105,16 @@ logger_emit (const char *format, ...)
 	va_list args;
 	char buf[512];
 	char *pri;
+	char tbuf[256];
+	struct timeval tnow;
+	struct tm *tlocaltime;
+	struct timezone tzone;
+
+	if (!is_enabled)
+		return;
 
 	va_start (args, format);
-	vsnprintf (buf, 512, format, args);
+	vsnprintf (buf, sizeof (buf), format, args);
 
 	switch (priority) {
 	case HAL_LOGPRI_TRACE:
@@ -106,10 +135,13 @@ logger_emit (const char *format, ...)
 		break;
 	}
 
+	gettimeofday (&tnow, &tzone);
+	tlocaltime = localtime (&tnow.tv_sec);
+	strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
+
 	/** @todo Make programmatic interface to logging */
 	if (priority != HAL_LOGPRI_TRACE)
-		fprintf (stderr, "%s %s:%d %s() : %s\n",
-			 pri, file, line, function, buf);
+		fprintf (stderr, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf);
 
 	va_end (args);
 }

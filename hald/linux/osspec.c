@@ -118,213 +118,10 @@ static void hald_helper_hotplug (gboolean is_add, int seqnum, char *subsystem, c
 static void hald_helper_device_node (gboolean is_add, char *subsystem, char *sysfs_path, char *device_node);
 static gboolean hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data);
 
-/**
- * @defgroup HalDaemonLinux Linux 2.6 support
- * @ingroup HalDaemon
- * @brief Device detection and monitoring code using Linux 2.6 + udev
- * @{
- */
+static HalDevice *add_device (const char *sysfs_path, const char *subsystem);
 
 /** Mount path for sysfs */
 char sysfs_mount_path[SYSFS_PATH_MAX];
-
-/** Visitor function for any class device.
- *
- *  This function determines the class of the device and call the
- *  appropriate visit_class_device_<classtype> function if matched.
- *
- *  @param  path                Sysfs-path for class device, e.g.
- *                              /sys/class/scsi_host/host7
- *  @param  handler             A ClassDeviceHandler object to use or NULL to
- *                              try all handlers
- *  @param  visit_children      If children of this device should be visited
- *                              set this to #TRUE. For device-probing, this
- *                              should set be set to true so as to visit
- *                              all devices. For hotplug events, it should
- *                              be set to #FALSE as each sysfs object will
- *                              generate a separate event.
- *  @return                     A HalDevice pointer if the device is going
- *                              to be added to the GDL. The caller can
- *                              track the device by listening to signals
- *                              from this object. Returns NULL if the
- *                              device wasn't matched by any handler or
- *                              if it isn't going to be a separate hal
- *                              device object.
- */
-static HalDevice *
-visit_class_device (const char *path, ClassDeviceHandler *handler,
-		    dbus_bool_t visit_children)
-{
-	int i;
-	HalDevice *hal_device = NULL;
-	struct sysfs_class_device *class_device;
-
-	class_device = sysfs_open_class_device_path (path);
-	if (class_device == NULL) {
-		HAL_WARNING (("Coulnd't get sysfs class device object at "
-			      "path %s", path));
-		return NULL;
-	}
-	sysfs_get_classdev_device(class_device);
-	sysfs_get_classdev_driver(class_device);
-
-	/*HAL_INFO (("*** classname=%s path=%s",
-		   class_device->classname,
-		   class_device->path));*/
-
-	if (handler != NULL) {
-		if (handler->accept (handler, path, class_device)) {
-			hal_device = handler->visit (handler, path, class_device);
-		}
-	} else {
-		for (i=0; class_device_handlers[i] != NULL; i++) {
-			ClassDeviceHandler *ch = class_device_handlers[i];
-			if (ch->accept (ch, path, class_device)) {
-				hal_device = ch->visit (ch, path, class_device);
-				if (hal_device != NULL)
-					break;
-			}
-		}
-	}
-
-	sysfs_close_class_device (class_device);
-
-	if (visit_children) {
-		struct sysfs_directory *dir;
-		struct sysfs_directory *subdir;
-		struct dlist *subdirs;
-
-		dir = sysfs_open_directory(path);
-		if (dir == NULL)
-			return NULL;
-
-		subdirs = sysfs_get_dir_subdirs(dir);
-		if (subdirs == NULL) {
-			sysfs_close_directory(dir);
-			return NULL;
-		}
-
-		dlist_for_each_data (subdirs, subdir,
-			     struct sysfs_directory)
-			visit_class_device(subdir->path, handler, TRUE);
-
-		sysfs_close_directory(dir);
-	}
-
-	return hal_device;
-}
-
-/** Visit all devices of a given class
- *
- *  @param  class_name          Name of class, e.g. scsi_host or block
- *  @param  handler             A ClassDeviceHandler object to use or NULL to
- *                              try all handlers
- *  @param  visit_children      If children of this device should be visited
- *                              set this to #TRUE. For device-probing, this
- *                              should set be set to true so as to visit
- *                              all devices. For hotplug events, it should
- *                              be set to #FALSE as each sysfs object will
- *                              generate a separate event.
- */
-static void
-visit_class (const char *class_name, ClassDeviceHandler *handler,
-	     dbus_bool_t visit_children)
-{
-	struct sysfs_class *cls = NULL;
-	struct sysfs_class_device *cur = NULL;
-	struct dlist *class_devices;
-
-	cls = sysfs_open_class (class_name);
-	if (cls == NULL) {
-		HAL_ERROR (("Error opening class %s\n", class_name));
-		return;
-	}
-
-	class_devices = sysfs_get_class_devices(cls);
-	if (class_devices != NULL) {
-		dlist_for_each_data (class_devices, cur,
-				     struct sysfs_class_device) {
-			visit_class_device (cur->path, handler,
-					    visit_children);
-		}
-	}
-
-	sysfs_close_class (cls);
-}
-
-/** Visitor function for any device.
- *
- *  This function determines the bus-type of the device and call the
- *  appropriate visit_device_<bustype> function if matched.
- *
- *  @param  path                Sysfs-path for device
- *  @param  handler             A BusDeviceHandler object to use or NULL to try
- *                              all handlers
- *  @param  visit_children      If children of this device should be visited
- *                              set this to #TRUE. For device-probing, this
- *                              should set be set to true so as to visit
- *                              all devices. For hotplug events, it should
- *                              be set to #FALSE as each sysfs object will
- *                              generate a separate event.
- *  @return                     A HalDevice pointer if the device is going
- *                              to be added to the GDL. The caller can
- *                              track the device by listening to signals
- *                              from this object. Returns NULL if the
- *                              device wasn't matched by any handler.
- */
-static HalDevice *
-visit_device (const char *path, BusDeviceHandler *handler, 
-	      dbus_bool_t visit_children)
-{
-	struct sysfs_device *device;
-	HalDevice *hal_device = NULL;
-
-	device = sysfs_open_device_path (path);
-	if (device == NULL) {
-		HAL_WARNING (("Coulnd't get sysfs device at path %s", path));
-		return NULL;
-	}
-
-	if (handler != NULL ) {
-		if (handler->accept (handler, device->path, device))
-			hal_device = handler->visit (handler, device->path, device);
-	} else {
-		int i;
-		for (i=0; bus_device_handlers[i] != NULL; i++) {
-			BusDeviceHandler *bh = bus_device_handlers[i];
-			if (bh->accept (bh, device->path, device)) {
-				hal_device = bh->visit (bh, device->path, device);
-				if (hal_device != NULL)
-					break;
-			}
-		}
-	}
-	sysfs_close_device(device);
-
-	if (visit_children) {
-		struct sysfs_directory *dir;
-		struct sysfs_directory *subdir;
-		struct dlist *subdirs;
-
-		dir = sysfs_open_directory(path);
-		if (dir == NULL)
-			return NULL;
-
-		subdirs = sysfs_get_dir_subdirs(dir);
-		if (subdirs == NULL) {
-			sysfs_close_directory(dir);
-			return NULL;
-		}
-
-		dlist_for_each_data (subdirs, subdir,
-			     struct sysfs_directory)
-			visit_device(subdir->path, handler, TRUE);
-
-		sysfs_close_directory(dir);
-	}
-
-	return hal_device;
-}
 
 /** Timeout handler for polling
  *
@@ -348,7 +145,6 @@ osspec_timer_handler (gpointer data)
 
 	return TRUE;
 }
-
 
 /* This function is documented in ../osspec.h */
 void
@@ -377,7 +173,8 @@ osspec_init (void)
 	}
 
 	if (bind(socketfd, (struct sockaddr *) &saddr, addrlen) < 0) {
-		DIE (("bind failed, exit"));
+		fprintf (stderr, "Error binding to %s: %s\n", HALD_HELPER_SOCKET_PATH, strerror(errno));
+		exit (1);
 	}
 
 	/* enable receiving of the sender credentials */
@@ -409,162 +206,715 @@ osspec_init (void)
 	g_timeout_add (2000, osspec_timer_handler, NULL);	
 }
 
-/** This is set to #TRUE if we are probing and #FALSE otherwise */
-dbus_bool_t hald_is_initialising;
+typedef struct {
+	gchar *first;
+	gchar *second;
+} HStringPair;
+
+static HStringPair *
+h_string_pair_new (gchar *first, gchar *second)
+{
+	HStringPair *pair;
+
+	pair = g_new0 (HStringPair, 1);
+	pair->first = first;
+	pair->second = second;
+	return pair;
+}
+
+
+static void
+h_string_pair_delete (gpointer p)
+{
+	HStringPair *pair = p;
+	g_free (pair->first);
+	g_free (pair->second);
+	g_free (pair);
+}
+
+
+/** Mapping from sysfs path to subsystem for bus devices. This is consulted
+ *  when traversing /sys/devices
+ *
+ *  Example:
+ *
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0/host7/7:0:0:0  -> scsi
+ * /sys/devices/pci0000:00/0000:00:07.1/ide1/1.1                        -> ide
+ * /sys/devices/pci0000:00/0000:00:07.1/ide1/1.0                        -> ide
+ * /sys/devices/pci0000:00/0000:00:07.1/ide0/0.0                        -> ide
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0                -> usb
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1                        -> usb
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-0:1.0                    -> usb
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1                            -> usb
+ * /sys/devices/pci0000:00/0000:00:04.1/0000:06:00.0                    -> pci
+ * /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0                    -> pci
+ * /sys/devices/pci0000:00/0000:00:08.0                                 -> pci
+ * /sys/devices/platform/vesafb0                                        -> platform
+ */
+GHashTable *sysfs_to_bus_map = NULL;
+
+/** Mapping from sysfs path in /sys/devices to the pair (sysfs class path, classname)
+ *  for class devices. 
+ *
+ *  Only used for class devices that appear in the /sys/devices/ tree, e.g. when traversing
+ *  /sys/devices and a match wasn't found in sysfs_to_bus_map.
+ *
+ *  (e.g. scsi_host appear in /sys/devices tree but not in /sys/bus)
+ *
+ * Example:
+ *
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0/host7/7:0:0:0 -> (/sys/class/scsi_device/7:0:0:0, scsi_device)
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0/host7         -> (/sys/class/scsi_host/host7, scsi_host)
+ * /sys/devices/pci0000:00/0000:00:08.0                                -> (/sys/class/sound/pcmC0D0c, sound)
+ * /sys/devices/pci0000:00/0000:00:08.0                                -> (/sys/class/sound/pcmC0D0p, sound)
+ * /sys/devices/pci0000:00/0000:00:08.0                                -> (/sys/class/sound/midiC0D0, sound)
+ * /sys/devices/pci0000:00/0000:00:04.1                      -> (/sys/class/pcmcia_socket/pcmcia_socket1, pcmcia_socket)
+ * /sys/devices/pci0000:00/0000:00:04.0                      -> (/sys/class/pcmcia_socket/pcmcia_socket0, pcmcia_socket)
+ * /sys/devices/pci0000:00/0000:00:04.1/0000:06:00.0         -> (/sys/class/net/eth1, net)
+ * /sys/devices/pci0000:00/0000:00:07.2                      -> (/sys/class/usb_host/usb1, usb_host)
+ */
+GHashTable *sysfs_to_class_in_devices_map = NULL;
+
+/** Mapping from devices in /sys/devices that has a link to a top-level
+ *  block devices
+ *
+ * Example:
+ *
+ * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0/host7/7:0:0:0  -> /sys/block/sda
+ * /sys/devices/pci0000:00/0000:00:07.1/ide1/1.0                        -> /sys/block/hdc
+ * /sys/devices/pci0000:00/0000:00:07.1/ide1/1.1                        -> /sys/block/hdd
+ * /sys/devices/pci0000:00/0000:00:07.1/ide0/0.0                        -> /sys/block/hda
+ */
+GHashTable *sysfs_to_block_map = NULL;
+
+/** Mapping from sysfs path in /sys/class to class type
+ *
+ * Example:
+ *
+ * /sys/class/scsi_device/7:0:0:0             -> scsi_device
+ * /sys/class/scsi_host/host7                 -> scsi_host
+ * /sys/class/sound/pcmC0D0c                  -> sound
+ * /sys/class/sound/pcmC0D0p                  -> sound
+ * /sys/class/sound/midiC0D0                  -> sound
+ * /sys/class/pcmcia_socket/pcmcia_socket1    -> pcmcia_socket
+ * /sys/class/pcmcia_socket/pcmcia_socket0    -> pcmcia_socket
+ * /sys/class/net/eth1                        -> net
+ * /sys/class/usb_host/usb1                   -> usb_host
+ */
+GHashTable *sysfs_to_class_map = NULL;
+
+static gchar *
+get_normalized_path (const gchar *path1, const gchar *path2)
+{
+	int i;
+	int len1;
+	int len2;
+	const gchar *p1;
+	const gchar *p2;
+	gchar buf[SYSFS_PATH_MAX];
+
+	len1 = strlen (path1);
+	len2 = strlen (path1);
+
+	p1 = path1 + len1;
+
+	i = 0;
+	p2 = path2;
+	while (p2 < path2 + len2 && strncmp (p2, "../", 3) == 0) {
+		p2 += 3;
+
+		while (p1 >= path1 && *(--p1)!='/')
+			;
+
+	}
+
+	strncpy (buf, path1, (p1-path1));
+	buf[p1-path1] = '\0';
+
+	return g_strdup_printf ("%s/%s", buf, p2);
+}
+
+static void compute_coldplug_visit_device (const gchar *path, GSList **ordered_sysfs_list);
+
+static void compute_coldplug_visit_class_device (gpointer key, gpointer value, gpointer user_data);
+
+/** This function has one major purpose : build an ordered list of pairs (sysfs path, subsystem)
+ *  to process when starting up; analogue to coldplugging.
+ *
+ *  @return                     Ordered list of sysfs paths or NULL if there was an error
+ */
+static GSList *
+compute_coldplug_list (void)
+{
+	GDir *dir;
+	GError *err = NULL;
+	gchar path[SYSFS_PATH_MAX];
+	gchar path1[SYSFS_PATH_MAX];
+	const gchar *f;
+	const gchar *f1;
+	const gchar *f2;
+	GSList *coldplug_list = NULL;
+
+	/* build bus map */
+	sysfs_to_bus_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	g_snprintf (path, SYSFS_PATH_MAX, "%s/bus" , sysfs_mount_path);
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %/bus: %s", sysfs_mount_path, err->message));
+		g_error_free (err);
+		goto error;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		GDir *dir1;
+
+		g_snprintf (path, SYSFS_PATH_MAX, "%s/bus/%s" , sysfs_mount_path, f);
+		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
+			HAL_ERROR (("Unable to open %/bus/%s: %s", sysfs_mount_path, f, err->message));
+			g_error_free (err);
+			goto error;
+		}
+		while ((f1 = g_dir_read_name (dir1)) != NULL) {
+
+			if (strcmp (f1, "devices") == 0) {
+				GDir *dir2;
+
+				g_snprintf (path, SYSFS_PATH_MAX, "%s/bus/%s/%s", 
+					    sysfs_mount_path, f, f1);
+				if ((dir2 = g_dir_open (path, 0, &err)) == NULL) {
+					HAL_ERROR (("Unable to open %s/bus/%s/%s: %s", 
+						    sysfs_mount_path, f, f1, err->message));
+					g_error_free (err);
+					goto error;
+				}
+				while ((f2 = g_dir_read_name (dir2)) != NULL) {
+					gchar *target;
+					gchar *normalized_target;
+					g_snprintf (path, SYSFS_PATH_MAX, "%s/bus/%s/%s/%s", 
+						    sysfs_mount_path, f, f1, f2);
+					if ((target = g_file_read_link (path, &err)) == NULL) {
+						HAL_ERROR (("%s/bus/%s/%s/%s is not a symlink: %s!", 
+							    sysfs_mount_path, 
+							    f, f1, f2, err->message));
+						g_error_free (err);
+						goto error;
+					}
+
+					g_snprintf (path, SYSFS_PATH_MAX, "%s/bus/%s/%s", sysfs_mount_path, f, f1);
+					normalized_target = get_normalized_path (path, target);
+					g_free (target);
+
+					/*printf ("%s -> %s\n", normalized_target, f);*/
+					g_hash_table_insert (sysfs_to_bus_map, normalized_target, g_strdup(f));
+
+				}
+				g_dir_close (dir2);
+			}
+		}
+		g_dir_close (dir1);
+	}
+	g_dir_close (dir);
+
+	/* build class map and class device map */
+	sysfs_to_class_in_devices_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, h_string_pair_delete);
+	sysfs_to_class_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	g_snprintf (path, SYSFS_PATH_MAX, "%s/class" , sysfs_mount_path);
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %/class: %s", sysfs_mount_path, err->message));
+		goto error;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		GDir *dir1;
+
+		g_snprintf (path, SYSFS_PATH_MAX, "%s/class/%s" , sysfs_mount_path, f);
+		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
+			HAL_ERROR (("Unable to open %/class/%s: %s", sysfs_mount_path, f, err->message));
+			g_error_free (err);
+			goto error;
+		}
+		while ((f1 = g_dir_read_name (dir1)) != NULL) {
+			gchar *target;
+			gchar *normalized_target;
+
+			g_snprintf (path, SYSFS_PATH_MAX, "%s/class/%s/%s/device", sysfs_mount_path, f, f1);
+			if ((target = g_file_read_link (path, NULL)) != NULL) {
+				g_snprintf (path1, SYSFS_PATH_MAX, "%s/class/%s/%s", sysfs_mount_path, f, f1);
+				normalized_target = get_normalized_path (path1, target);
+				g_free (target);
+
+				/*printf ("%s -> (%s, %s)\n", normalized_target, path1, f);*/
+				g_hash_table_insert (sysfs_to_class_in_devices_map, 
+						     normalized_target, 
+						     h_string_pair_new (g_strdup (path1), g_strdup(f)));
+
+				g_hash_table_insert (sysfs_to_class_map, g_strdup (path1), g_strdup(f));
+
+			}				
+		}
+		g_dir_close (dir1);
+	}
+	g_dir_close (dir);
+
+	/* build block map */
+	sysfs_to_block_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	g_snprintf (path, SYSFS_PATH_MAX, "%s/block" , sysfs_mount_path);
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %/block: %s", sysfs_mount_path, err->message));
+		g_error_free (err);
+		goto error;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		gchar *target;
+		gchar *normalized_target;
+
+		g_snprintf (path, SYSFS_PATH_MAX, "%s/block/%s/device", sysfs_mount_path, f);
+		if ((target = g_file_read_link (path, NULL)) != NULL) {
+			g_snprintf (path, SYSFS_PATH_MAX, "%s/block/%s", sysfs_mount_path, f);
+			normalized_target = get_normalized_path (path, target);
+			/*printf ("%s -> %s\n",  normalized_target, path);*/
+			g_free (target);
+			g_hash_table_insert (sysfs_to_block_map, normalized_target, g_strdup(path));
+		}
+		
+	}
+	g_dir_close (dir);
+
+	/* The goal is to build an ordered list of (sysfs path, subsystem) to process - 
+	 * one thing to keep in mind is that we may have several BusDeviceHandlers and 
+	 * ClassDeviceHandlers for the same bustype or classtype. Hence, we just check
+	 * if the first one matches. When we process the list the accept() method
+	 * on the Handler will select only the correct one.
+	 */
+
+	/*
+	 * The final list looks like this on my system
+	 *
+	 * bus:   /sys/devices/pci0000:00/0000:00:08.0 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.3 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.2 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.2/usb1 (usb)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1 (usb)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0 (usb)
+	 * class: /sys/class/scsi_host/host7 (scsi_host)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0/host7/7:0:0:0 (scsi)
+	 * block: /sys/block/sda (block)
+	 * block: /sys/block/sda/sda1 (block)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.2/usb1/1-0:1.0 (usb)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.1 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.1/ide1 (ide_host)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.1/ide1/1.1 (ide)
+	 * block: /sys/block/hdd (block)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.1/ide1/1.0 (ide)
+	 * block: /sys/block/hdc (block)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.1/ide0 (ide_host)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.1/ide0/0.0 (ide)
+	 * block: /sys/block/hda (block)
+	 * block: /sys/block/hda/hda2 (block)
+	 * block: /sys/block/hda/hda1 (block)
+	 * bus:   /sys/devices/pci0000:00/0000:00:07.0 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:04.1 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:04.1/0000:06:00.0 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:04.0 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:01.0 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0 (pci)
+	 * bus:   /sys/devices/pci0000:00/0000:00:00.0 (pci)
+	 * bus:   /sys/devices/platform/vesafb0 (platform)
+	 * class: /sys/class/pcmcia_socket/pcmcia_socket0 (pcmcia_socket)
+	 * class: /sys/class/net/eth1 (net)
+	 * class: /sys/class/pcmcia_socket/pcmcia_socket1 (pcmcia_socket)
+	 */
+
+	/* First traverse /sys/devices and consult the maps we've built; this
+	 * includes adding a) bus devices; and b) class devices that sit in /sys/devices */
+	g_snprintf (path, SYSFS_PATH_MAX, "%s/devices" , sysfs_mount_path);
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %/devices: %s", sysfs_mount_path, err->message));
+		g_error_free (err);
+		goto error;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		GDir *dir1;
+
+		g_snprintf (path, SYSFS_PATH_MAX, "%s/devices/%s" , sysfs_mount_path, f);
+		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
+			HAL_ERROR (("Unable to open %/devices/%s: %s", sysfs_mount_path, f, err->message));
+			g_error_free (err);
+			goto error;
+		}
+		while ((f1 = g_dir_read_name (dir1)) != NULL) {
+
+			g_snprintf (path, SYSFS_PATH_MAX, "%s/devices/%s/%s" , sysfs_mount_path, f, f1);
+			compute_coldplug_visit_device (path, &coldplug_list);
+
+		}
+		g_dir_close (dir1);
+	}
+	g_dir_close (dir);
+
+	/* Then add all the class devices that doesn't sit in the /sys/devices tree */
+	g_hash_table_foreach (sysfs_to_class_map, compute_coldplug_visit_class_device, &coldplug_list);
+
+	g_hash_table_destroy (sysfs_to_bus_map);
+	g_hash_table_destroy (sysfs_to_class_in_devices_map);
+	g_hash_table_destroy (sysfs_to_block_map);
+	g_hash_table_destroy (sysfs_to_class_map);
+
+	return coldplug_list;
+error:
+	HAL_ERROR (("Error building the orderered list of sysfs paths"));
+	return NULL;
+}
+
+static void
+compute_coldplug_visit_class_device (gpointer key, gpointer value, gpointer user_data)
+{
+	int i;
+	gchar *path = key;
+	gchar *class = value;
+	GSList **coldplug_list = user_data;;
+
+	for (i = 0; class_device_handlers[i] != NULL; i++) { 
+		ClassDeviceHandler *ch = class_device_handlers[i];
+		
+		if (ch->merge_or_add && strcmp (class, ch->sysfs_class_name) == 0) {
+
+			/*printf ("class: %s (%s)\n", path, class);*/
+			*coldplug_list = g_slist_append (*coldplug_list, 
+							 h_string_pair_new (g_strdup (path), g_strdup (class)));
+			return;
+		}
+	}
+}
+
+static void
+compute_coldplug_visit_device (const gchar *path, GSList **coldplug_list) 
+{
+	int i;
+	gchar *bus;
+	HStringPair *pair;
+	gchar *block;
+	GError *err;
+	GDir *dir;
+	const gchar *f;
+		
+	bus = g_hash_table_lookup (sysfs_to_bus_map, path);
+	if (bus != NULL) {
+		for (i = 0; bus_device_handlers[i] != NULL; i++) {	
+			BusDeviceHandler *bh = bus_device_handlers[i];
+
+			if (strcmp (bus, bh->sysfs_bus_name) == 0) {
+				/*printf ("bus:   %s (%s)\n", path, bus);*/
+				*coldplug_list = g_slist_append (*coldplug_list, 
+								 h_string_pair_new (g_strdup (path), g_strdup (bus)));
+				goto found;
+			}
+		}
+	}
+
+	pair = g_hash_table_lookup (sysfs_to_class_in_devices_map, path);
+	if (pair != NULL) {
+		gchar *classpath;
+		gchar *class;
+
+		classpath = pair->first;
+		class = pair->second;
+
+		for (i = 0; class_device_handlers[i] != NULL; i++) { 
+			ClassDeviceHandler *ch = class_device_handlers[i];
+
+			if (!ch->merge_or_add && strcmp (class, ch->sysfs_class_name) == 0) {
+				/*printf ("class: %s (%s)\n", classpath, class);*/
+				*coldplug_list = g_slist_append (*coldplug_list, 
+								 h_string_pair_new (g_strdup (classpath),
+										    g_strdup (class)));
+				goto found;
+			}
+		}
+ 	}
+
+	/* know entries in sysfs that isn't in /sys/bus or /sys/class but we support
+	 * anyway so we need to fake them here
+	 *
+	 * - ide_host (the ide%d entries)
+	 * 
+	 *  bus:   /sys/devices/pci0000:00/0000:00:07.1/ide1 -> ide_host
+	 *  bus:   /sys/devices/pci0000:00/0000:00:07.1/ide0 -> ide_host
+	 */
+	if (sscanf (get_last_element (path), "ide%d", &i) == 1) {
+		bus = "ide_host";
+		/*printf ("bus:   %s (%s)\n", path, bus);*/
+		*coldplug_list = g_slist_append (*coldplug_list, 
+						 h_string_pair_new (g_strdup (path), g_strdup (bus)));
+		goto found;
+	}
+	return;
+
+found:
+
+	/* visit children */
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %: %s", path, err->message));
+		g_error_free (err);
+		goto error;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		gchar path_child[SYSFS_PATH_MAX];
+		
+		g_snprintf (path_child, SYSFS_PATH_MAX, "%s/%s", path, f);
+		
+		compute_coldplug_visit_device (path_child, coldplug_list);
+	}
+	g_dir_close (dir);
+
+error:
+	/* check for block devices */
+	block = g_hash_table_lookup (sysfs_to_block_map, path);
+	if (block != NULL) {
+		const char *dev;
+		int devlen;
+		
+		/*printf ("block: %s (block)\n", block);*/
+		*coldplug_list = g_slist_append (*coldplug_list, 
+						 h_string_pair_new (g_strdup (block), g_strdup("block")));
+
+		dev = get_last_element (block);
+		devlen = strlen (dev);
+
+		/* process block children */
+		if ((dir = g_dir_open (block, 0, &err)) == NULL) {
+			HAL_ERROR (("Unable to open %: %s", path, err->message));
+			g_error_free (err);
+			goto error1;
+		}
+		while ((f = g_dir_read_name (dir)) != NULL) {
+			gchar path_child[SYSFS_PATH_MAX];
+			
+			g_snprintf (path_child, SYSFS_PATH_MAX, "%s/%s", block, f);
+			if (strncmp (f, dev, devlen) == 0) {
+				/*printf ("block: %s (block)\n", path_child);*/
+				*coldplug_list = g_slist_append (*coldplug_list, 
+								 h_string_pair_new (g_strdup (path_child),
+										    g_strdup ("block")));
+			}
+		}
+		g_dir_close (dir);
+
+ 	}
+error1:
+	return;
+}
+
+static void process_coldplug_list (GSList *coldplug_list);
+
+static void
+process_coldplug_list_callouts_done_for_device (HalDevice *device, gpointer user_data)
+{
+	GSList *coldplug_list = user_data;
+
+	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_callouts_done_for_device, user_data);
+
+	process_coldplug_list (coldplug_list);
+}
+
+static void
+process_coldplug_list (GSList *coldplug_list)
+{
+	gchar *path;
+	gchar *subsystem;
+	HalDevice *device;
+
+	if (coldplug_list != NULL) {
+		HStringPair *pair;
+
+		pair = coldplug_list->data;
+		path = pair->first;
+		subsystem = pair->second;
+		coldplug_list = g_slist_delete_link (coldplug_list, coldplug_list);
+
+		HAL_INFO (("handling %s %s", path, subsystem));
+		device = add_device (path, subsystem);//visit_device (path, NULL, FALSE, 0);
+		g_free (path);
+		g_free (subsystem);
+		g_free (pair);
+
+		if (device != NULL && hal_device_store_find(hald_get_gdl (), device->udi) == NULL) {
+			g_signal_connect (device, "callouts_finished",
+					  G_CALLBACK (process_coldplug_list_callouts_done_for_device), coldplug_list);
+		} else {
+			process_coldplug_list (coldplug_list);
+		}
+
+
+	} else {
+		/* Inform the generic part of hald that we are done with probing */
+		osspec_probe_done ();
+
+		/* Enabling handling of hotplug events */
+		hotplug_sem_down ();
+	}
+}
+
+
+static void
+add_computer_callouts_done (HalDevice *device, gpointer user_data)
+{
+	GSList *coldplug_list = user_data;
+
+	hal_device_store_add (hald_get_gdl (), device);
+	g_signal_handlers_disconnect_by_func (device,
+					      add_computer_callouts_done,
+					      user_data);
+	g_object_unref (device);
+
+	process_coldplug_list (coldplug_list);
+}
+
 
 /* This function is documented in ../osspec.h */
 void
-osspec_probe ()
+osspec_probe (void)
 {
+	GSList *coldplug_list;
 	HalDevice *root;
-	int i;
+	
+	/* build the coldplug list */
+	coldplug_list = compute_coldplug_list ();
 
-	hald_is_initialising = TRUE;
+	/* disable handling of hotplug events */
+	hotplug_sem_up ();
 
-	/*
-	 * Create the toplevel "Computer" device, which will contain
+	/* Create the toplevel "Computer" device, which will contain
 	 * system-wide info and also provide a parent device for devices
 	 * which don't have sysdevices in sysfs.
 	 */
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.bus", "unknown");
-	hal_device_property_set_string (root,
-					"linux.sysfs_path_device",
-					"(none)");
+	hal_device_property_set_string (root, "linux.sysfs_path_device", "(none)");
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
-	hal_device_store_add (hald_get_gdl (), root);
-	g_object_unref (root);
 
-	/** @todo When the kernel has all devices in /sys/devices
-	 *        under either /sys/bus or /sys/class then we can
-	 *        have code like this
+	/* begin processing the coldplug_list when computer is added */
+	g_signal_connect (root,
+			  "callouts_finished",
+			  G_CALLBACK (add_computer_callouts_done),
+			  coldplug_list);
 
-	for (i=0; bus_device_handlers[i] != NULL; i++) {
-		BusDeviceHandler *bh = bus_device_handlers[i];
-		visit_bus (bh->sysfs_bus_name, bh);
-	}
-	*/
+	hal_callout_device (root, TRUE);
+}
 
-	{
-		char path[SYSFS_PATH_MAX];
-		struct sysfs_directory *current;
-		struct sysfs_directory *dir;
-		struct dlist *subdirs;
+static HalDevice *
+add_device (const char *sysfs_path, const char *subsystem)
+{
+	int i;
+	int len1;
+	int len2;
+	char buf1[SYSFS_PATH_MAX];
+	char buf2[SYSFS_PATH_MAX];
+	HalDevice *hal_device = NULL;
 
-		/* traverse /sys/devices */
-		strncpy (path, sysfs_mount_path, SYSFS_PATH_MAX);
-		strncat (path, "/", SYSFS_PATH_MAX);
-		strncat (path, SYSFS_DEVICES_NAME, SYSFS_PATH_MAX);
+	len1 = snprintf (buf1, SYSFS_PATH_MAX, "%s/block", sysfs_mount_path);
+	len2 = snprintf (buf2, SYSFS_PATH_MAX, "%s/class", sysfs_mount_path);
+	if (strncmp (sysfs_path, buf1, len1) == 0 || strncmp (sysfs_path, buf2, len2) == 0) {
+		for (i=0; class_device_handlers[i] != NULL; i++) {
+			ClassDeviceHandler *ch = class_device_handlers[i];
+			struct sysfs_class_device *class_device;
 
-		dir = sysfs_open_directory (path);
-		if (dir == NULL) {
-			DIE (("Error opening sysfs directory at %s\n", path));
-		}
-		subdirs = sysfs_get_dir_subdirs(dir);
-		if (subdirs != NULL) {
-			dlist_for_each_data (dir->subdirs, current,
-					     struct sysfs_directory) {
-				visit_device (current->path, NULL, TRUE);
+			class_device = sysfs_open_class_device_path (sysfs_path);
+			if (class_device == NULL) {
+				HAL_WARNING (("Coulnd't get sysfs class device object at "
+					      "path %s", sysfs_path));
+				return NULL;
 			}
+			sysfs_get_classdev_device(class_device);
+			sysfs_get_classdev_driver(class_device);
+
+			if (strcmp (ch->sysfs_class_name, subsystem) == 0) {
+				if (ch->accept (ch, sysfs_path, class_device)) {
+					hal_device = ch->visit (ch, sysfs_path, class_device);
+					if (hal_device != NULL)
+						break;
+				}
+			}
+			sysfs_close_class_device (class_device);
 		}
-		sysfs_close_directory (dir);
+	} else {
+		for (i=0; bus_device_handlers[i] != NULL; i++) {
+			BusDeviceHandler *bh = bus_device_handlers[i];
+			struct sysfs_device *device;
+
+			device = sysfs_open_device_path (sysfs_path);
+			if (device == NULL) {
+				HAL_WARNING (("Coulnd't get sysfs class device object at "
+					      "path %s", sysfs_path));
+				return NULL;
+			}
+			if (strcmp (bh->sysfs_bus_name, subsystem) == 0) {
+				if (bh->accept (bh, sysfs_path, device)) {
+					hal_device = bh->visit (bh, sysfs_path, device);
+					if (hal_device != NULL)
+						break;
+				}
+			}
+			sysfs_close_device (device);
+		}
 	}
 
-	for (i=0; class_device_handlers[i] != NULL; i++) {
-		ClassDeviceHandler *ch = class_device_handlers[i];
-		visit_class (ch->sysfs_class_name, ch, TRUE);
-	}
-
-	hald_is_initialising = FALSE;
+	return hal_device;
 }
 
 static void
-remove_callouts_finished (HalDevice *d, gpointer user_data)
+rem_device_callouts_finished (HalDevice *d, gpointer user_data)
 {
 	HAL_INFO (("in remove_callouts_finished for udi=%s", d->udi));
 	hal_device_store_remove (hald_get_gdl (), d);
 }
 
 static HalDevice *
-remove_device (const char *path, const char *subsystem)
-
+rem_device (const char *sysfs_path, const char *subsystem)
 {
-	HalDevice *d;
+	int len1;
+	int len2;
+	char buf1[SYSFS_PATH_MAX];
+	char buf2[SYSFS_PATH_MAX];
+	HalDevice *hal_device = NULL;
 
-	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
-						     "linux.sysfs_path",
-						     path);
+	/* @todo TODO FIXME: invoked removed() method on d */
 
-	if (d == NULL) {
-		HAL_WARNING (("Couldn't remove device @ %s on hotplug remove", 
-			      path));
+	hal_device = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
+
+	len1 = snprintf (buf1, SYSFS_PATH_MAX, "%s/block", sysfs_mount_path);
+	len2 = snprintf (buf2, SYSFS_PATH_MAX, "%s/class", sysfs_mount_path);
+	if (strncmp (sysfs_path, buf1, len1) == 0 || strncmp (sysfs_path, buf2, len2) == 0) {
+		if (hal_device == NULL) {
+		        /* What we need to do here is to unmerge the device from the
+			 * sysdevice it belongs to. Ughh.. It's only a big deal when
+			 * loading/unloading drivers and this should never happen
+			 * on a desktop anyway?
+			 *
+			 * @todo FIXME
+			 */
+			HAL_WARNING (("Removal of class device at sysfs path %s is not yet implemented", sysfs_path));
+			goto out;
+		} else {
+
+			g_signal_connect (hal_device, "callouts_finished",
+					  G_CALLBACK (rem_device_callouts_finished), NULL);
+			HAL_INFO (("in remove_device for udi=%s", hal_device->udi));
+			hal_callout_device (hal_device, FALSE);
+			goto out;
+		}
 	} else {
-		/*HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
-		  path, d->udi));*/
-
-		g_signal_connect (d, "callouts_finished",
-				  G_CALLBACK (remove_callouts_finished), NULL);
-
-		HAL_INFO (("in remove_device for udi=%s", d->udi));
-		hal_callout_device (d, FALSE);
-	}
-
-	return d;
-}
-
-static HalDevice *
-remove_class_device (const char *path, const char *subsystem)
-{
-	int i;
-	const char *bus_name;
-	HalDevice *d;
-
-	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
-						     "linux.sysfs_path",
-						     path);
-
-	if (d == NULL) {
-		/* Right now we only handle class devices that are put in the
-		 * tree rather than merged, ie. merge_or_add is FALSE. That
-		 * happens in the other branch below.
-		 *
-		 * What we need to do here is to unmerge the device from the
-		 * sysdevice it belongs to. Ughh.. It's only a big deal when
-		 * loading/unloading drivers and this should never happen
-		 * on a desktop anyway?
-		 *
-		 * @todo FIXME
-		 */
-
-		HAL_WARNING (("Removal of class device @ %s on "
-			      "hotplug remove is not yet implemented", path));
-
-	} else {
-		/*HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
-		  path, d->udi));*/
-
-		bus_name = hal_device_property_get_string (d, "info.bus");
-
-		for (i=0; class_device_handlers[i] != NULL; i++) {
-			ClassDeviceHandler *ch = class_device_handlers[i];
-			
-			/* See class_device_visit() where this is merged */
-			if (strcmp (ch->hal_class_name, bus_name) == 0) {
-				ch->removed (ch, path, d);
-			}
+		if (hal_device == NULL) {
+			HAL_WARNING (("Couldn't remove device at sysfs path %s. No device found.", sysfs_path));
+			goto out;
 		}
 
-		g_signal_connect (d, "callouts_finished",
-				  G_CALLBACK (remove_callouts_finished), NULL);
-
-		hal_callout_device (d, FALSE);
+		g_signal_connect (hal_device, "callouts_finished",
+				  G_CALLBACK (rem_device_callouts_finished), NULL);
+		HAL_INFO (("in remove_device for udi=%s", hal_device->udi));
+		hal_callout_device (hal_device, FALSE);
 	}
 
-	/* For now, just call the normal remove_device */
-	/*remove_device (path, subsystem);*/
-
-	return d;
+out:
+	return hal_device;
 }
 
 
@@ -590,8 +940,7 @@ udev_node_created_cb (HalDeviceStore *store, HalDevice *device,
  *  @param  data2               User data
  */
 static void
-handle_udev_node_created_found_device (HalDevice * d,
-				       void *data1, void *data2)
+handle_udev_node_created_found_device (HalDevice * d, void *data1, void *data2)
 {
 	int i;
 	const char *sysfs_class_name;
@@ -602,8 +951,7 @@ handle_udev_node_created_found_device (HalDevice * d,
 
 		/*hal_device_print (d);*/
 
-		sysfs_class_name = 
-			hal_device_property_get_string (d, ".udev.class_name");
+		sysfs_class_name = hal_device_property_get_string (d, ".udev.class_name");
 
 		HAL_INFO ((".udev.class_name = %s", sysfs_class_name));
 
@@ -621,17 +969,8 @@ handle_udev_node_created_found_device (HalDevice * d,
 	dbus_free (dev_file);
 }
 
-/** Message handler for method invocations. All invocations on any object
- *  or interface is routed through this function.
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @param  user_data           User data
- *  @return                     What to do with the message
- */
 DBusHandlerResult
-osspec_filter_function (DBusConnection * connection,
-			DBusMessage * message, void *user_data)
+osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
@@ -650,8 +989,7 @@ shutdown_callouts_finished (HalDevice *d, gpointer user_data)
 
 	if (num_shutdown_devices_remaining == 0) {
 		HAL_INFO (("All devices shutdown callouts done"));
-		/* @todo Should return to hald.c though a gobject signal */
-		exit (0);
+		osspec_shutdown_done ();
 	}
 }
 
@@ -698,44 +1036,37 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 
 	snprintf (sysfs_path_full, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, sysfs_path);
 
-	HAL_INFO (("entering %s, SEQNUM=%d subsystem=%s devpath=%s devpath_full=%s",
-		   (is_add ? "add" : "rem"), seqnum, subsystem, sysfs_path, sysfs_path_full));
+	HAL_INFO (("%s, SEQNUM=%d subsystem=%s sysfs_path=%s",
+		   (is_add ? "add" : "rem"), seqnum, subsystem, sysfs_path_full));
 
-	/* See if this is a class device or a bus device */
-	if (strncmp (sysfs_path, "/block", 6)==0 ||
-	    strncmp (sysfs_path, "/class", 6)==0 ) {
-		/* handle class devices */
-		if (is_add) {
-			/* dunno what handler to use; try all */
-			d = visit_class_device (sysfs_path_full, NULL, FALSE);
-		} else {
-			d = remove_class_device (sysfs_path_full, subsystem);
-		}
-	} else {
-		/* handle bus devices */
-		if (is_add) {
-			/* Try to add the device */
-			d = visit_device (sysfs_path_full, NULL, FALSE);
-		} else {
-			d = remove_device (sysfs_path_full, subsystem);
-		}
-	}
+	if (is_add) {
+		d = add_device (sysfs_path_full, subsystem);
 
-	if (d != NULL) {
-		/* Ok, this leads to something; this hotplug event is going
-		 * to result in adding/removing a device object to the GDL.
-		 *
-		 * Disable hotplug processing for now
-		 */
-		hotplug_sem_up ();
-		
-		/* and enable it when our device has processed all the
+		/* if device is not already added, disable hotplug processing 
+		 * and enable it again when the device has processed all the
 		 * callouts
 		 */
-		g_signal_connect (d, "callouts_finished",
-				  G_CALLBACK (reenable_hotplug_proc), NULL);
+		if (d != NULL && hal_device_store_find(hald_get_gdl (), d->udi) == NULL) {
+			
+			/* Disable hotplug processing for now */
+			hotplug_sem_up ();
+			g_signal_connect (d, "callouts_finished",
+					  G_CALLBACK (reenable_hotplug_proc), NULL);
+		}
+	} else {
+		d = rem_device (sysfs_path_full, subsystem);
+		/* if device is not already removed, disable hotplug processing 
+		 * and enable it again when the device has processed all the
+		 * callouts
+		 */
+		if (d != NULL && hal_device_store_find(hald_get_gdl (), d->udi) != NULL) {
+			
+			/* Disable hotplug processing for now */
+			hotplug_sem_up ();
+			g_signal_connect (d, "callouts_finished",
+					  G_CALLBACK (reenable_hotplug_proc), NULL);
+		}
 	}
-
 
 	g_free (subsystem);
 	g_free (sysfs_path);
@@ -752,27 +1083,21 @@ hald_helper_device_node (gboolean is_add, gchar *subsystem, gchar *sysfs_path, g
 		   (is_add ? "add" : "rem"), subsystem, sysfs_path, device_node));
 
 	if (is_add ) {
-		
+
+		/* When udev gives the SEQNUM this can be synchronous. */
 		hal_device_store_match_key_value_string_async (
 			hald_get_tdl (),
 			".udev.sysfs_path",
 			sysfs_path_full,
 			udev_node_created_cb, 
-			g_strdup (device_node),
+			g_strdup (device_node), /* will be freed in udev_node_created_cb */
 			HAL_LINUX_HOTPLUG_TIMEOUT);
-
-		/* NOTE: we will free the dupped device_node in the 
-		 * async result function */
-
-	} else {
-		/* TODO FIXME: do something here :-) */
 	}
 
 	g_free (subsystem);
 	g_free (sysfs_path);
 	g_free (device_node);
 }
-
 
 
 /** queue of hotplug events (struct hald_helper_msg pointers) */
@@ -928,9 +1253,11 @@ hald_helper_data (GIOChannel *source,
 	  msg.seqnum, last_hotplug_seqnum, msg.subsystem, msg.sysfs_path));*/
 
 	if (last_hotplug_seqnum == -1 ) {
-		/* gotta start somewhere; however sleep one second to allow  
+		/* gotta start somewhere; however sleep some time to allow  
 		 * some more hotplug events to propagate so we know where
 		 * we're at.
+		 *
+		 * @todo TODO FIXME XXX: The kernel should probably export the last sent SEQNUM in sysfs
 		 */
 
 		HAL_WARNING (("First SEQNUM=%d; sleeping 2500ms to get a few more events", msg.seqnum));
@@ -962,5 +1289,3 @@ hald_helper_data (GIOChannel *source,
 out:
 	return TRUE;
 }
-
-/** @} */

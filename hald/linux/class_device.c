@@ -41,6 +41,7 @@
 #include "../logger.h"
 #include "../device_store.h"
 #include "../hald.h"
+#include "../osspec.h"
 
 #include "common.h"
 #include "class_device.h"
@@ -225,6 +226,7 @@ class_device_visit (ClassDeviceHandler *self,
 		 * synchronous so we can test immediately whether we want to
 		 * proceed
 		 */
+		/*
 		if (hal_device_store_match_key_value_string (
 			    hald_get_gdl (),
 			    "linux.sysfs_path_device",
@@ -232,6 +234,8 @@ class_device_visit (ClassDeviceHandler *self,
 			return NULL;
 		else
 			return d;
+		*/
+		return d;
 
 	} else
 		return NULL;

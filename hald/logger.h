@@ -46,12 +46,14 @@ enum {
 	HAL_LOGPRI_ERROR = (1 << 4)    /**< error */
 };
 
-void logger_init ();
+void logger_init (void);
 
-void logger_setup (int priority, const char *file, int line,
-		   const char *function);
+void logger_setup (int priority, const char *file, int line, const char *function);
 
 void logger_emit (const char *format, ...);
+
+void logger_enable (void);
+void logger_disable (void);
 
 #ifdef ENABLE_VERBOSE_MODE
 

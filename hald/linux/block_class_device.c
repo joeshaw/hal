@@ -56,6 +56,7 @@
 #include "../device_store.h"
 #include "../callout.h"
 #include "../hald_conf.h"
+#include "../osspec.h"
 #include "class_device.h"
 #include "common.h"
 
@@ -74,7 +75,9 @@ static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
 static char *block_class_compute_udi (HalDevice * d, int append_num);
 
+#if 0
 static gboolean deferred_check_for_non_partition_media (gpointer data);
+#endif
 
 
 static void
@@ -1557,6 +1560,7 @@ block_class_in_gdl (ClassDeviceHandler *self,
 	}
 }
 
+#if 0
 static gboolean
 deferred_check_for_non_partition_media (gpointer data)
 {
@@ -1590,7 +1594,7 @@ out:
 	g_free (stordev_udi);
 	return FALSE;
 }
-
+#endif 
 
 static char *
 block_class_compute_udi (HalDevice * d, int append_num)

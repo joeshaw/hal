@@ -13,7 +13,11 @@
  *    - Update the fs table in response to HAL events
  *    
  * Additionally, this program offers another option of removing
- * any trace of its previous actions from the fs table.
+ * any trace of its previous actions from the fs table. Specifically
+ * this happens when invoked by the HAL daemon for the root computer
+ * object which can only happen when the HAL daemon is starting up.
+ * Thus, when starting the HAL daemon, the /etc/fstab file will be
+ * completely sanitized.
  *
  * Because it is possible that this program could be invoked multiple
  * times (at bootup or when a user plugs in multiple pieces of
@@ -24,8 +28,7 @@
  *
  * For these reasons, all operations are done on temporary copies of
  * /etc/fstab. After any particular instance is done it copies its temporary
- * file over to /etc/fstab.  If another process detects that fstab has
- * changed, then it simply starts over, recopying /etc/fstab and trying again.
+ * file over to /etc/fstab.  
  */
 
 #ifdef HAVE_CONFIG_H
@@ -48,11 +51,16 @@
 #include <time.h>
 #include <unistd.h>
 #include <mntent.h>
+#include <syslog.h>
 
 #include <popt.h>
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include "libhal/libhal.h"
+
+typedef int boolean;
+
+static boolean verbose = FALSE;
 
 #define _(a) (a)
 #define N_(a) a
@@ -79,7 +87,6 @@
 
 #define fstab_update_debug(...) if (verbose) fprintf (stderr, __VA_ARGS__)
 
-typedef int boolean;
 
 /** This structure represents either a volume with a mountable filesystem
  *  or a drive that uses media without partition tables.
@@ -143,7 +150,6 @@ typedef struct
 } FSTable;
 
 static LibHalContext *hal_context = NULL;
-static boolean verbose = FALSE;
 static pid_t pid;
 
 static void fs_table_line_add_field (FSTableLine *line, FSTableField *field);
@@ -158,10 +164,9 @@ static boolean fs_table_parse_data (FSTable    *table,
 
 
 static inline int get_random_int_in_range (int low, int high);
-static int open_temp_fstab_file (const char *dir, char **filename);
+static int open_temp_fstab_file (char **filename);
 
 static char *get_hal_string_property (const char *udi, const char *property);
-static boolean mount_device (const char *mount_point);
 static boolean udi_is_volume_or_nonpartition_drive (const char *udi);
 static Volume *volume_new (const char *udi);
 static void volume_determine_device_type (Volume *volume);
@@ -171,7 +176,7 @@ static boolean fs_table_add_volume (FSTable *table, Volume *volume);
 static FSTableLine *fs_table_remove_volume (FSTable *table, Volume *volume);
 static boolean fs_table_line_has_mount_option (FSTableLine *line, const char *option);
 
-static boolean add_udi (const char *udi, boolean should_mount_device);
+static boolean add_udi (const char *udi);
 static boolean remove_udi (const char *udi);
 static boolean clean (void);
 
@@ -717,10 +722,11 @@ get_random_int_in_range (int low, int high)
 }
 
 static int
-open_temp_fstab_file (const char *dir, char **filename)
+open_temp_fstab_file (char **filename)
 {
   char candidate_filename[TEMP_FSTAB_MAX_LENGTH] = { 0 };
   int fd;
+  char dir[] = "/tmp";
 
   enum Choice 
     { 
@@ -799,32 +805,6 @@ open_temp_fstab_file (const char *dir, char **filename)
     }
 
   return fd;
-}
-
-static boolean
-mount_device (const char *mount_point)
-{
-  char *argv[] = { "/bin/mount", NULL, NULL };
-  pid_t mpid;
-  int status;
-
-  argv[1] = (char *) mount_point;
-
-  if (!(mpid = fork ()))
-    {
-      execv (argv[0], argv);
-      _exit (1);
-    }
-
-  waitpid (mpid, &status, 0);
-
-  if (!WIFEXITED (status) || WEXITSTATUS (status))
-    {
-      fstab_update_debug (_("%d: /bin/mount failed\n"), pid);
-      return FALSE;
-    }
-
-  return TRUE;
 }
 
 static char *
@@ -1160,9 +1140,6 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 
 		  if (readlink (field->value, buf, sizeof (buf)) > 0) {
 
-		    printf ("*** buf=%s hal=%s, udi=%s\n", 
-			    buf, volume->block_device, volume->udi);
-
 		    if (strcmp (volume->block_device, buf) == 0) {
 		      /* update block.device with new value */
 		      fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), 
@@ -1460,11 +1437,11 @@ volume_determine_mount_point (Volume *volume, FSTable *table)
 }
 
 static boolean
-add_udi (const char *udi, boolean should_mount_device)
+add_udi (const char *udi)
 {
   Volume *volume;
   FSTable *fs_table;
-  char *dir, *last_slash, *temp_filename = NULL;
+  char *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd = -1;
 
@@ -1480,17 +1457,12 @@ add_udi (const char *udi, boolean should_mount_device)
   if (volume == NULL)
     return FALSE;
 
-  dir = strdup (_PATH_FSTAB);
-  last_slash = strrchr (dir, '/');
-  if (last_slash)
-    *last_slash = '\0';
-
   fs_table = fs_table_new (_PATH_FSTAB);
 
   if (fs_table == NULL)
     goto error;
 
-  fd = open_temp_fstab_file (dir, &temp_filename);
+  fd = open_temp_fstab_file (&temp_filename);
 
   if (fd < 0)
     goto error;
@@ -1516,7 +1488,7 @@ add_udi (const char *udi, boolean should_mount_device)
       close (fd);
       unlink (temp_filename);
       volume_free (volume);
-      return add_udi (udi, should_mount_device);
+      return add_udi (udi);
     }
 
   if (rename (temp_filename, _PATH_FSTAB) < 0)
@@ -1529,11 +1501,9 @@ add_udi (const char *udi, boolean should_mount_device)
   if (!create_mount_point_for_volume (volume))
     goto error;
 
-  if (should_mount_device && !mount_device (volume->mount_point))
-    goto error;
-
   fstab_update_debug (_("%d: added mount point '%s' for device '%s'\n"),
 		      pid, volume->mount_point, volume->block_device);
+  syslog (LOG_INFO, _("added mount point %s for %s"), volume->mount_point, volume->block_device);
 
   close (fd);
   volume_free (volume);
@@ -1555,7 +1525,7 @@ remove_udi (const char *udi)
   Volume *volume;
   FSTable *fs_table = NULL;
   FSTableLine *line = NULL;
-  char *dir, *last_slash, *temp_filename = NULL;
+  char *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd;
 
@@ -1571,14 +1541,9 @@ remove_udi (const char *udi)
   if (volume == NULL)
     return FALSE;
 
-  dir = strdup (_PATH_FSTAB);
-  last_slash = strrchr (dir, '/');
-  if (last_slash)
-    *last_slash = '\0';
-
   fs_table = fs_table_new (_PATH_FSTAB);
 
-  fd = open_temp_fstab_file (dir, &temp_filename);
+  fd = open_temp_fstab_file (&temp_filename);
 
   if (fd < 0)
     goto error;
@@ -1607,7 +1572,6 @@ remove_udi (const char *udi)
       goto error;
     }
 
-  fs_table_line_free (line);
 
   if (!fs_table_write (fs_table, fd))
     goto error;
@@ -1631,9 +1595,11 @@ remove_udi (const char *udi)
 
   fstab_update_debug (_("%d: removed mount point for device '%s'\n"),
 		      pid, volume->block_device);
+  syslog (LOG_INFO, _("removed mount point %s for %s"), line->mount_point, volume->block_device);
 
   close (fd);
   volume_free (volume);
+  fs_table_line_free (line);
 
   return TRUE;
 
@@ -1681,18 +1647,13 @@ static boolean
 clean (void)
 {
   FSTable *fs_table;
-  char *dir, *last_slash, *temp_filename = NULL;
+  char *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd;
 
-  dir = strdup (_PATH_FSTAB);
-  last_slash = strrchr (dir, '/');
-  if (last_slash)
-    *last_slash = '\0';
-
   fs_table = fs_table_new (_PATH_FSTAB);
 
-  fd = open_temp_fstab_file (dir, &temp_filename);
+  fd = open_temp_fstab_file (&temp_filename);
 
   if (fd < 0)
     goto error;
@@ -1725,6 +1686,8 @@ clean (void)
 
   close (fd);
 
+  syslog (LOG_INFO, _("removed all generated mount points"));
+
   return TRUE;
 
 error:
@@ -1740,22 +1703,24 @@ main (int argc, const char *argv[])
 {
   int i, retval = 0;
   poptContext popt_context;
-  boolean should_clean = FALSE, should_mount_device = FALSE;
+  boolean should_clean = FALSE;
   char *udi_to_add = NULL, *udi_to_remove = NULL, *hal_device_udi;
   const char **left_over_args = NULL;
   int lockfd = -1;
 
   pid = getpid ();
+
+  openlog (PROGRAM_NAME, LOG_PID, LOG_USER);
   
   struct poptOption options[] = {
       {"add", 'a', POPT_ARG_STRING, &udi_to_add, 0,
         N_("add an entry to fstab"), N_("UDI")},
-      {"mount", 'm', POPT_ARG_NONE, &should_mount_device, 0,
-        N_("Mount added entry")},
       {"remove", 'r', POPT_ARG_STRING, &udi_to_remove, 0,
         N_("remove an entry from fstab"), N_("UDI")},
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
       {"clean", 'c', POPT_ARG_NONE, &should_clean, 0,
         N_("Remove all generated entries from fstab")},
+#endif
       {"verbose", 'v', POPT_ARG_NONE, &verbose, 0,
         N_("Report detailed information about operation progress")},
 
@@ -1775,6 +1740,9 @@ main (int argc, const char *argv[])
         }
     }
 
+  if (getenv ("HALD_VERBOSE") != NULL)
+      verbose = TRUE;
+
   /* accept "add" and "remove" / HAL environment variables 
    * in addition to "--add" and "--remove" above
    */
@@ -1782,61 +1750,73 @@ main (int argc, const char *argv[])
 
   hal_device_udi = getenv ("UDI");
   if (hal_device_udi != NULL) {
-    char *caps;
+      char *caps;
+      
+      /* when invoked for the /org/freedesktop/Hal/devices/computer UDI we clean the fstab */
+      if (getenv ("HALD_STARTUP") != NULL && strcmp (hal_device_udi, "/org/freedesktop/Hal/devices/computer") == 0) {
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
+	should_clean = TRUE;
+#endif
+      } else {
+      
+	/* when we are invoked by hald, make some early tests using the
+	 * exported environment so we don't have to connect to hald */
+	
+	caps = getenv ("HAL_PROP_INFO_CAPABILITIES");
+	
+	/* if there are no info.capabilities just bail out */
+	if (caps == NULL) {
+	  retval = 0;
+	  goto out;
+	}
+	
+	/* we only handle hal device objects of capability 'volume' or 'storage' */
+	if (caps != NULL) {
+	  
+	  if (strstr (caps, "volume") == NULL &&
+	      strstr (caps, "storage") == NULL) {
+	    retval = 0;
+	    goto out;
+	  }
+	}
 
-    /* when we are invoked by hald, make some early tests using the
-     * exported environment so we don't have to connect to hald */
+	/* we don't want to remove entries just because hald is shutting down */
+	if (getenv ("HALD_SHUTDOWN") != NULL)
+	  goto out;
+      }
 
-    caps = getenv ("HAL_PROP_INFO_CAPABILITIES");
 
-    /* if there are no info.capabilities just bail out */
-    if (caps == NULL) {
-      retval = 0;
-      goto out;
-    }
-
-    /* we only handle hal device objects of capability 'volume' or 'storage' */
-    if (caps != NULL) {
-
-      if (strstr (caps, "volume") == NULL &&
-	  strstr (caps, "storage") == NULL) {
-	retval = 0;
+      fstab_update_debug (_("%d: ###################################\n"), pid);
+      fstab_update_debug (_("%d: %s entering; %s udi=%s\n"), 
+			  pid, PROGRAM_NAME, argv[1], hal_device_udi);
+      fstab_update_debug (("%d: mount_root=" FSTAB_SYNC_MOUNT_ROOT 
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
+			   " use_managed=yes"
+#else
+			   " use_managed=no"
+#endif
+			   " managed_keyword=" FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "\n"), pid);
+      
+      lockfd = open (_PATH_FSTAB, O_RDONLY);
+      if (lockfd < 0) {
+	fstab_update_debug (_("%d: couldn't open %s O_RDONLY; bailing out\n"), 
+			    pid, _PATH_FSTAB);
+	retval = 1;
 	goto out;
       }
-    }
-
-
-    fstab_update_debug (_("%d: ###################################\n"), pid);
-    fstab_update_debug (_("%d: %s entering; %s udi=%s\n"), 
-			pid, PROGRAM_NAME, argv[1], hal_device_udi);
-    fstab_update_debug (("%d: mount_root=" FSTAB_SYNC_MOUNT_ROOT 
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
-			 " use_managed=yes"
-#else
-			 " use_managed=no"
-#endif
-			 " managed_keyword=" FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "\n"), pid);
-    
-    lockfd = open (_PATH_FSTAB, O_RDONLY);
-    if (lockfd < 0) {
-      fstab_update_debug (_("%d: couldn't open %s O_RDONLY; bailing out\n"), 
-			  pid, _PATH_FSTAB);
-      retval = 1;
-      goto out;
-    }
-    fstab_update_debug (_("%d: Acquiring advisory lock on " 
-			  _PATH_FSTAB "\n"), pid);
-    if (flock (lockfd, LOCK_EX) != 0) {
-      fstab_update_debug (_("%d: Error acquiring lock '%s'; bailing out\n"),
+      fstab_update_debug (_("%d: Acquiring advisory lock on " 
+			    _PATH_FSTAB "\n"), pid);
+      if (flock (lockfd, LOCK_EX) != 0) {
+	fstab_update_debug (_("%d: Error acquiring lock '%s'; bailing out\n"),
 			    pid, strerror(errno));
-      retval = 1;
-      goto out;
+	retval = 1;
+	goto out;
+      }
+      fstab_update_debug (_("%d: Lock acquired\n"), pid);
     }
-    fstab_update_debug (_("%d: Lock acquired\n"), pid);
-  }
   
 
-  if (left_over_args)
+  if (!should_clean && left_over_args)
   for (i = 0; left_over_args[i] != NULL; i++)
     {
       if (strcmp (left_over_args[i], "add") == 0 && udi_to_add == NULL)
@@ -1853,14 +1833,14 @@ main (int argc, const char *argv[])
     }
   poptFreeContext (popt_context);
 
-  if (udi_to_add || udi_to_remove)
+  if (!should_clean && (udi_to_add || udi_to_remove))
     {
       LibHalFunctions halFunctions = { NULL };
 
       hal_context = hal_initialize (&halFunctions, 0);
 
       if (udi_to_add)
-        retval = !add_udi (udi_to_add, should_mount_device);
+        retval = !add_udi (udi_to_add);
 
       if (udi_to_remove)
         retval |= !remove_udi (udi_to_remove);

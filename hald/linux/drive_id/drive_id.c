@@ -49,7 +49,7 @@
 
 #include "drive_id.h"
 
-#define DEBUG
+/*#define DEBUG*/
 #ifdef DEBUG
 #define dbg(format, arg...)						\
 	do {								\

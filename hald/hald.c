@@ -157,22 +157,26 @@ hald_get_pstore_sys (void)
 static void
 usage ()
 {
-	fprintf (stderr, "\n" "usage : hald [--daemon=yes|no] [--help]\n");
+	fprintf (stderr, "\n" "usage : hald [--daemon=yes|no] [--verbose=yes|no] [--help]\n");
 	fprintf (stderr,
 		 "\n"
 		 "        --daemon=yes|no    Become a daemon\n"
+		 "        --verbose=yes|no   Print out debug (overrides HALD_VERBOSE)\n"
 		 "        --help             Show this information and exit\n"
 		 "\n"
 		 "The HAL daemon detects devices present in the system and provides the\n"
-		 "org.freedesktop.Hal service through D-BUS. The commandline options given\n"
-		 "overrides the configuration given in "
-		 PACKAGE_SYSCONF_DIR "/hald.conf\n" "\n"
+		 "org.freedesktop.Hal service through the system-wide message bus provided\n"
+		 "by D-BUS.\n"
+		 "\n"
 		 "For more information visit http://freedesktop.org/Software/hal\n"
 		 "\n");
 }
 
 /** If #TRUE, we will daemonize */
 static dbus_bool_t opt_become_daemon = TRUE;
+
+/** If #TRUE, we will spew out debug */
+dbus_bool_t hald_is_verbose = FALSE;
 
 static int sigterm_unix_signal_pipe_fds[2];
 static GIOChannel *sigterm_iochn;
@@ -209,13 +213,28 @@ sigterm_iochn_data (GIOChannel *source,
 		goto out;
 	}
 
-	HAL_INFO (("Recieved SIGTERM, initiating shutdown"));
+	fprintf (stderr, "SIGTERM, initiating shutdown");
+
+	hald_is_shutting_down = TRUE;
+
 	osspec_shutdown();
 
 out:
 	return TRUE;
 }
 
+void 
+osspec_shutdown_done (void)
+{
+	exit (0);
+}
+
+
+/** This is set to #TRUE if we are probing and #FALSE otherwise */
+dbus_bool_t hald_is_initialising;
+
+/** This is set to #TRUE if we are shutting down and #FALSE otherwise */
+dbus_bool_t hald_is_shutting_down;
 
 /** Entry point for HAL daemon
  *
@@ -227,7 +246,12 @@ int
 main (int argc, char *argv[])
 {
 	GMainLoop *loop;
-	guint sigterm_iochn_listener_source_id;
+
+	logger_init ();
+	if (getenv ("HALD_VERBOSE"))
+		hald_is_verbose = TRUE;
+	else
+		hald_is_verbose = FALSE;
 
 	while (1) {
 		int c;
@@ -235,6 +259,7 @@ main (int argc, char *argv[])
 		const char *opt;
 		static struct option long_options[] = {
 			{"daemon", 1, NULL, 0},
+			{"verbose", 1, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
@@ -260,6 +285,15 @@ main (int argc, char *argv[])
 					usage ();
 					return 1;
 				}
+			} else if (strcmp (opt, "verbose") == 0) {
+				if (strcmp ("yes", optarg) == 0) {
+					hald_is_verbose = TRUE;
+				} else if (strcmp ("no", optarg) == 0) {
+					hald_is_verbose = FALSE;
+				} else {
+					usage ();
+					return 1;
+				}
 			}
 			break;
 
@@ -270,27 +304,65 @@ main (int argc, char *argv[])
 		}
 	}
 
-	logger_init ();
-	HAL_INFO (("HAL daemon version " PACKAGE_VERSION " starting up"));
+	if (hald_is_verbose)
+		logger_enable ();
+	else
+		logger_disable ();
 
 	HAL_DEBUG (("opt_become_daemon = %d", opt_become_daemon));
 
 	hald_read_conf_file ();
 
+	g_type_init ();
+
+	/* set up the dbus services */
+	if (!hald_dbus_init ())
+		return 1;
+
+	loop = g_main_loop_new (NULL, FALSE);
+
+	/* initialize persitent property store, read uuid from path */
+	if (hald_get_conf ()->persistent_device_list)
+		hal_pstore_init (PACKAGE_LOCALSTATEDIR "/lib/hal/uuid");
+
+	/* initialize operating system specific parts */
+	osspec_init ();
+
+	hald_is_initialising = TRUE;
+
+	/* detect devices */
+	osspec_probe ();
+
+	/* run the main loop and serve clients */
+	g_main_loop_run (loop);
+
+	return 0;
+}
+
+void 
+osspec_probe_done (void)
+{
+	guint sigterm_iochn_listener_source_id;
+
+	HAL_INFO (("Device probing completed"));
+
+	hald_is_initialising = FALSE;
+
 	if (opt_become_daemon) {
 		int child_pid;
 		int dev_null_fd;
 
+		HAL_INFO (("Becoming a daemon"));
+
 		if (chdir ("/") < 0) {
-			HAL_ERROR (("Could not chdir to /, errno=%d",
-				    errno));
-			return 1;
+			fprintf (stderr, "Could not chdir to /: %s\n", strerror(errno));
+			exit (1);
 		}
 
 		child_pid = fork ();
 		switch (child_pid) {
 		case -1:
-			HAL_ERROR (("Cannot fork(), errno=%d", errno));
+			fprintf (stderr, "Cannot fork(): %s\n", strerror(errno));
 			break;
 
 		case 0:
@@ -306,9 +378,6 @@ main (int argc, char *argv[])
 			}
 
 			umask (022);
-
-			/** @todo FIXME change logger to direct to syslog */
-
 			break;
 
 		default:
@@ -321,26 +390,8 @@ main (int argc, char *argv[])
 		setsid ();
 	}
 
-	g_type_init ();
 
-	/* set up the dbus services */
-	if (!hald_dbus_init ())
-		exit (1);
-
-	loop = g_main_loop_new (NULL, FALSE);
-
-	/* initialize persitent property store, read uuid from path */
-	if (hald_get_conf ()->persistent_device_list)
-		hal_pstore_init (PACKAGE_LOCALSTATEDIR "/lib/hal/uuid");
-
-	/* initialize operating system specific parts */
-	osspec_init ();
-	/* and detect devices */
-	osspec_probe ();
-
-	/* So, now we are up and running...
-	 * 
-	 * We need to do stuff when we are expected to terminate, thus
+	/* we need to do stuff when we are expected to terminate, thus
 	 * this involves looking for SIGTERM; UNIX signal handlers are
 	 * evil though, so set up a pipe to transmit the signal.
 	 */
@@ -361,11 +412,7 @@ main (int argc, char *argv[])
 	
 	/* Finally, setup unix signal handler for TERM */
 	signal (SIGTERM, handle_sigterm);
-
-	/* run the main loop and serve clients */
-	g_main_loop_run (loop);
-
-	return 0;
 }
+
 
 /** @} */

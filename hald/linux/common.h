@@ -94,9 +94,8 @@ void drivers_collect (const char *bus_name);
 
 dbus_bool_t got_parent (const char *sysfs_path);
 
-extern dbus_bool_t hald_is_initialising;
-
 extern char sysfs_mount_path[SYSFS_PATH_MAX];
+
 
 
 /* @} */

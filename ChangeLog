@@ -1,3 +1,56 @@
+2004-08-22  David Zeuthen  <david@fubar.dk>
+
+	* hald/callout.c: Only invoke callouts if they have the .hal extension.
+	Export HALD_VERBOSE if the hald instance is started with verbose.
+	Add HALD_STARTUP resp. HALD_SHUTDOWN only if the callout is in response
+	to hald starting up/shutting down.
+
+	* hald/hald.c: Add an verbose option. Use the HALD_VERBOSE environment
+	variable. Postpone daemonization until we are done probing.
+
+	* hald/hald.h: Move hald_is_[verbose|initialising|is_shutting_down] here
+
+	* hald/linux/bus_device.c: 
+	(bus_device_visit): We can now always assume we got a parent
+
+	* hald/linux/class_device.c: 
+	(class_device_visit): We can now always assume we got a parent
+
+	* hald/linux/common.h:
+
+	* hald/linux/drive_id/drive_id.c:
+
+	* hald/linux/osspec.c: Complete rewrite of probing code; now we
+	construct a list of ''coldplug events'' and feed them to the
+	two new functions add_device() and rem_device(); this unifies 
+	a few codepaths and it's much faster, cleaner and just yummier. 
+	Also ensure that callouts are run sequentially.
+
+	* hald/logger.c: 
+	(logger_enable),
+	(logger_disable): New functions 
+	(logger_emit): Print time and don't print function name
+
+	* hald/logger.h: Add logger_[enable|disable].
+
+	* tools/fstab-sync.c:
+	(open_temp_fstab_file): Use /tmp for the temporary file
+	(fs_table_has_volume): Remove debug spew
+	(add_udi): Log a message to the syslog on success
+	(remove_udi): Log a message to the syslog on success
+	(clean): Log a message to the syslog on success
+	(main): Use HALD_VERBOSE. When invoked for the ''computer'' device
+	object on hald startup, automatically clean the fstab (but only if
+	using a managed keyword). Don't remove entries on hald
+	shutdown. In line with the osspec.c changes (sequential callouts)
+	we now get a fully sanitized /etc/fstab at hald startup, Yay!
+
+	* tools/linux/hal_dev.c: (main): Less syslog spamming
+
+	* tools/linux/hal_hotplug.c: 
+	(wait_for_sysfs_info): Less syslog spamming
+	(main): Less syslog spamming
+
 2004-08-20  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_reiserfs),

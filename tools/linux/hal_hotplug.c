@@ -227,11 +227,7 @@ try_again:
 
 		if (rc != 0)
 			goto try_again;
-	}
-
-	syslog (LOG_NOTICE, "got info for %s (waited %d ms)",
-		devpath, (num_tries - 1) * 100);
-	
+	}	
 	return 0;
 }
 
@@ -308,8 +304,8 @@ main (int argc, char *argv[], char *envp[])
 		rc = wait_for_sysfs_info (devpath, subsystem);
 		if (rc != 0) {
 			/* Don't know how to wait, just sleep one econd */
-			syslog (LOG_WARNING, "Dont know how to wait for %s at %s; "
-				"sleeping 1000 ms", subsystem, devpath);
+			/*syslog (LOG_WARNING, "Dont know how to wait for %s at %s; "
+			  "sleeping 1000 ms", subsystem, devpath);*/
 			usleep (1000 * 1000);
 		}
 	}
@@ -330,7 +326,7 @@ main (int argc, char *argv[], char *envp[])
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {
-		syslog (LOG_INFO, "error sending message to hald");
+		/*syslog (LOG_INFO, "error sending message to hald");*/
 		goto out;
 	}
 

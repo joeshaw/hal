@@ -33,6 +33,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "hald.h"
 #include "callout.h"
 #include "logger.h"
 
@@ -328,6 +329,8 @@ process_callouts (void)
 
 	active_callouts = g_slist_append (active_callouts, callout);
 
+	HAL_INFO (("Invoking %s", argv[0]));
+
 	if (!g_spawn_async (callout->working_dir, argv, callout->envp,
 			    G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 			    &callout->pid, &err)) {
@@ -370,9 +373,13 @@ hal_callout_device (HalDevice *device, gboolean added)
 		char *full_filename;
 		Callout *callout;
 		int num_props;
+		int i;
 
 		full_filename = g_build_filename (DEVICE_CALLOUT_DIR,
 						  filename, NULL);
+
+		if (!g_str_has_suffix (filename, ".hal"))
+			continue;
 
 		if (!g_file_test (full_filename, G_FILE_TEST_IS_EXECUTABLE)) {
 			g_free (full_filename);
@@ -391,10 +398,23 @@ hal_callout_device (HalDevice *device, gboolean added)
 		num_props = hal_device_num_properties (device);
 
 		callout->envp_index = 1;
+		if (hald_is_verbose)
+			callout->envp_index++;
+		if (hald_is_initialising)
+			callout->envp_index++;
+		if (hald_is_shutting_down)
+			callout->envp_index++;
 		callout->envp = g_new (char *, callout->envp_index);
 
-		callout->envp[0] = g_strdup_printf ("UDI=%s",
-						    hal_device_get_udi (device));
+		i = 0;
+		callout->envp[i++] = g_strdup_printf ("UDI=%s", hal_device_get_udi (device));
+		if (hald_is_verbose)
+			callout->envp[i++] = g_strdup ("HALD_VERBOSE=1");
+		if (hald_is_initialising)
+			callout->envp[i++] = g_strdup ("HALD_STARTUP=1");
+		if (hald_is_shutting_down)
+			callout->envp[i++] = g_strdup ("HALD_SHUTDOWN=1");
+
 		add_pending_callout (callout->device, callout);
 
 		any_callouts = TRUE;
@@ -440,9 +460,13 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		char *full_filename;
 		Callout *callout;
 		int num_props;
+		int i;
 
 		full_filename = g_build_filename (CAPABILITY_CALLOUT_DIR,
 						  filename, NULL);
+
+		if (!g_str_has_suffix (filename, ".hal"))
+			continue;
 
 		if (!g_file_test (full_filename, G_FILE_TEST_IS_EXECUTABLE)) {
 			g_free (full_filename);
@@ -461,12 +485,23 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		num_props = hal_device_num_properties (device);
 
 		callout->envp_index = 2;
+		if (hald_is_verbose)
+			callout->envp_index++;
+		if (hald_is_initialising)
+			callout->envp_index++;
+		if (hald_is_shutting_down)
+			callout->envp_index++;
 		callout->envp = g_new (char *, callout->envp_index);
 
-		callout->envp[0] = g_strdup_printf ("UDI=%s",
-						    hal_device_get_udi (device));
-		callout->envp[1] = g_strdup_printf ("CAPABILITY=%s",
-						    capability);
+		i = 0;
+		callout->envp[i++] = g_strdup_printf ("UDI=%s", hal_device_get_udi (device));
+		callout->envp[i++] = g_strdup_printf ("CAPABILITY=%s", capability);
+		if (hald_is_verbose)
+			callout->envp[i++] = g_strdup ("HALD_VERBOSE=1");
+		if (hald_is_initialising)
+			callout->envp[i++] = g_strdup ("HALD_STARTUP=1");
+		if (hald_is_shutting_down)
+			callout->envp[i++] = g_strdup ("HALD_SHUTDOWN=1");
 
 		add_pending_callout (callout->device, callout);
 	}
@@ -502,9 +537,13 @@ hal_callout_property (HalDevice *device, const char *key)
 		char *full_filename, *value;
 		Callout *callout;
 		int num_props;
+		int i;
 
 		full_filename = g_build_filename (PROPERTY_CALLOUT_DIR,
 						  filename, NULL);
+
+		if (!g_str_has_suffix (filename, ".hal"))
+			continue;
 
 		if (!g_file_test (full_filename, G_FILE_TEST_IS_EXECUTABLE)) {
 			g_free (full_filename);
@@ -525,12 +564,23 @@ hal_callout_property (HalDevice *device, const char *key)
 		value = hal_device_property_to_string (device, key);
 
 		callout->envp_index = 3;
+		if (hald_is_verbose)
+			callout->envp_index++;
+		if (hald_is_initialising)
+			callout->envp_index++;
+		if (hald_is_shutting_down)
+			callout->envp_index++;
 		callout->envp = g_new (char *, callout->envp_index);
-
-		callout->envp[0] = g_strdup_printf ("UDI=%s",
-						    hal_device_get_udi (device));
-		callout->envp[1] = g_strdup_printf ("PROPERTY=%s", key);
-		callout->envp[2] = g_strdup_printf ("VALUE=%s", value);
+		i = 0;
+		callout->envp[i++] = g_strdup_printf ("UDI=%s", hal_device_get_udi (device));
+		callout->envp[i++] = g_strdup_printf ("PROPERTY=%s", key);
+		callout->envp[i++] = g_strdup_printf ("VALUE=%s", value);
+		if (hald_is_verbose)
+			callout->envp[i++] = g_strdup ("HALD_VERBOSE=1");
+		if (hald_is_initialising)
+			callout->envp[i++] = g_strdup ("HALD_STARTUP=1");
+		if (hald_is_shutting_down)
+			callout->envp[i++] = g_strdup ("HALD_SHUTDOWN=1");
 
 		add_pending_callout (callout->device, callout);
 

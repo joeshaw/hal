@@ -31,24 +31,29 @@
 #include <dbus/dbus.h>
 
 
-/** Initialize the OS specific parts of the daemon
- *
- */
+/** Initialize the kernel specific parts of the daemon */
 void osspec_init (void);
 
-/** Probe all hardware present in the system and synchronize with the
- *  device list
- *
- */
+/** Probe all devices present in the system and build the device list */
 void osspec_probe (void);
 
-/** Prepare shutdown
- *
- */
+/* Called by kernel specific parts when probing is done */
+void osspec_probe_done (void);
+
+/** Prepare shutdown */
 void osspec_shutdown (void);
 
-DBusHandlerResult osspec_filter_function (DBusConnection * connection,
-					  DBusMessage * message,
-					  void *user_data);
+/* Called by kernel specific parts when probing is done */
+void osspec_shutdown_done (void);
 
-#endif				/* OSSPEC_H */
+/** Called when the org.freedesktop.Hal service receives a messaged that the generic daemon 
+ *  doesn't handle. Can be used for intercepting messages from kernel or core OS components.
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @param  user_data           User data
+ *  @return                     What to do with the message
+ */
+DBusHandlerResult osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data);
+
+#endif /* OSSPEC_H */

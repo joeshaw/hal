@@ -129,7 +129,7 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 			"linux.sysfs_path_device",
 			parent_sysfs_path,
 			bus_device_got_parent, bad,
-			HAL_LINUX_HOTPLUG_TIMEOUT);
+			0/*HAL_LINUX_HOTPLUG_TIMEOUT*/);
 	}
 
 	/* Now that a) hotplug happens in the right order; and b) the device
@@ -138,6 +138,8 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 	 * synchronous so we can test immediately whether we want to
 	 * proceed
 	 */
+
+	/*
 	if (hal_device_store_match_key_value_string (
 		    hald_get_gdl (),
 		    "linux.sysfs_path_device",
@@ -149,6 +151,10 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 		free (parent_sysfs_path);
 		return d;
 	}
+	*/
+
+	free (parent_sysfs_path);
+	return d;
 }
 
 
