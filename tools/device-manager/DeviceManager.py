@@ -287,9 +287,18 @@ class DeviceManager(LibGladeApplication):
                 vendor.set_label("Unknown (0x%x)"%device.properties["pci.vendor_id"])
             else:
                 vendor.set_label("Unknown")
+        elif device.properties["info.bus"]=="block":
+            if device.properties.has_key("info.product"):
+                product.set_label("%s"%device.properties["info.product"])
+            else:
+                product.set_label("Unknown")
 
-
+            if device.properties.has_key("info.vendor"):
+                vendor.set_label("%s"%device.properties["info.vendor"])
+            else:
+                vendor.set_label("Unknown")
         else:
+            product.set_label("Unknown")
             vendor.set_label("Unknown")
 
         # clear category, capabilities

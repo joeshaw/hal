@@ -1,3 +1,11 @@
+2004-01-04  Anders Carlsson  <andersca@gnome.org>
+
+	* tools/device-manager/DeviceManager.py:
+	Add a couple of code paths for setting vendor.
+	
+	* tools/device-manager/hal-device-manager.glade:
+	Fixup to use GtkTable instead of GtkFixed.
+	
 2004-01-04  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_class_block.c 
