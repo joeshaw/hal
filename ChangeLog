@@ -1,5 +1,9 @@
 2004-09-24  David Zeuthen  <david@fubar.dk>
 
+	* po/ChangeLog: New file
+
+2004-09-24  David Zeuthen  <david@fubar.dk>
+
 	* Makefile.am: Ensure that 'make distcheck' passes
 	(DISTCLEANFILES): Add intltool-(extract|merge|update)
 	(EXTRA_DIST): Add intltool-(extract|merge|update).in
