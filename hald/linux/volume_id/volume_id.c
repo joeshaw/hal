@@ -47,7 +47,7 @@
 	} while (0)
 #else
 #define dbg(format, arg...)	do {} while (0)
-#endif
+#endif /* DEBUG */
 
 #define bswap16(x) (__u16)((((__u16)(x) & 0x00ffu) << 8) | \
 			   (((__u32)(x) & 0xff00u) >> 8))
@@ -189,8 +189,9 @@ static __u8 *get_buffer(struct volume_id *id,
 		/* check if we need to read */
 		if ((off + len) > id->sbbuf_len) {
 			dbg("read sbbuf len:0x%lx", off + len);
-			lseek64(id->fd, 0, SEEK_SET);
+			lseek(id->fd, 0, SEEK_SET);
 			buf_len = read(id->fd, id->sbbuf, off + len);
+			dbg("got 0x%x (%i) bytes", buf_len, buf_len);
 			id->sbbuf_len = buf_len;
 			if (buf_len < off + len)
 				return NULL;
@@ -212,7 +213,7 @@ static __u8 *get_buffer(struct volume_id *id,
 		if ((off < id->seekbuf_off) ||
 		    ((off + len) > (id->seekbuf_off + id->seekbuf_len))) {
 			dbg("read seekbuf off:0x%lx len:0x%x", off, len);
-			if (lseek64(id->fd, off, SEEK_SET) == -1)
+			if (lseek(id->fd, off, SEEK_SET) == -1)
 				return NULL;
 			buf_len = read(id->fd, id->seekbuf, len);
 			dbg("got 0x%x (%i) bytes", buf_len, buf_len);
@@ -909,12 +910,17 @@ found:
 	return 0;
 }
 
-
 #define HFS_SUPERBLOCK_OFFSET		0x400
 #define HFS_NODE_LEAF			0xff
 #define HFSPLUS_POR_CNID		1
 static int probe_hfs_hfsplus(struct volume_id *id)
 {
+	struct mac_driver_desc { 
+		__u8	signature[2];
+		__u16	block_size;
+		__u32	block_count;
+	} __attribute__((__packed__)) *driver;
+
 	struct mac_partition {
 		__u8	signature[2];
 		__u16	res1;
@@ -922,7 +928,8 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 		__u32	start_block;
 		__u32	block_count;
 		__u8	name[32];
- 	} __attribute__((__packed__)) *part; 
+		__u8	type[32];
+	} __attribute__((__packed__)) *part;
 
 	struct finder_info {
 		__u32	boot_folder;
@@ -1040,7 +1047,7 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 	unsigned int	alloc_block_size;
 	unsigned int	alloc_first_block;
 	unsigned int	embed_first_block;
-	unsigned int	embed_off = 0;
+	unsigned int	partition_off = 0;
 	struct hfsplus_bnode_descriptor *descr;
 	struct hfsplus_bheader_record *bnode;
 	struct hfsplus_catalog_key *key;
@@ -1050,16 +1057,37 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 	buf = get_buffer(id, 0, 0x200);
 	if (buf == NULL)
                 return -1;
-	
+
 	part = (struct mac_partition *) buf;
 	if ((strncmp(part->signature, "PM", 2) == 0) &&
-	    (strncmp(part->name, "Apple", 5) == 0)) {
+	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
 		id->fs_type = MACPARTMAP;
 		id->fs_name = "mac_partition_map";
 		return 0;
 	}
 
-	buf = get_buffer(id, HFS_SUPERBLOCK_OFFSET, 0x200);
+	driver = (struct mac_driver_desc *) buf;
+	if (strncmp(driver->signature, "ER", 2) == 0) {
+		/* we are on a main device, like a CD
+		 * just try to probe the first partition from the map */
+		unsigned int bsize = be16_to_cpu(driver->block_size);
+		unsigned long start;
+
+		buf = get_buffer(id, 2 * bsize, 0x200);
+		if (buf == NULL)
+			return -1;
+		part = (struct mac_partition *) buf;
+
+		if (strncmp(part->signature, "PM", 2) == 0) {
+			start = be32_to_cpu(part->start_block) * bsize;
+			dbg("found '%s' partition entry pointing to 0x%lx",
+			    part->type, start);
+
+			partition_off = start;
+		}
+	}
+
+	buf = get_buffer(id, partition_off + HFS_SUPERBLOCK_OFFSET, 0x200);
 	if (buf == NULL)
                 return -1;
 
@@ -1078,11 +1106,11 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 		embed_first_block = be16_to_cpu(hfs->embed_startblock);
 		dbg("embed_first_block 0x%x", embed_first_block);
 
-		embed_off = (alloc_first_block * 512) +
-			    (embed_first_block * alloc_block_size);
-		dbg("hfs wrapped hfs+ found at offset 0x%x", embed_off);
+		partition_off += (alloc_first_block * 512) +
+				 (embed_first_block * alloc_block_size);
+		dbg("hfs wrapped hfs+ found at offset 0x%x", partition_off);
 
-		buf = get_buffer(id, embed_off + HFS_SUPERBLOCK_OFFSET, 0x200);
+		buf = get_buffer(id, partition_off + HFS_SUPERBLOCK_OFFSET, 0x200);
 		if (buf == NULL)
 	                return -1;
 		goto checkplus;
@@ -1110,7 +1138,7 @@ hfsplus:
 	blocksize = be32_to_cpu(hfsplus->blocksize);
 	cat_block = be32_to_cpu(hfsplus->cat_file.extents[0].start_block);
 	cat_block_count = be32_to_cpu(hfsplus->cat_file.extents[0].block_count);
-	cat_off = (cat_block * blocksize) + embed_off;
+	cat_off = (cat_block * blocksize) + partition_off;
 	cat_len = cat_block_count * blocksize;
 	dbg("catalog start 0x%x, len 0x%x", cat_off, cat_len);
 
@@ -1291,6 +1319,10 @@ static int probe_ntfs(struct volume_id *id)
 
 		if (attr_type == MFT_RECORD_ATTR_OBJECT_ID) {
 			dbg("found uuid");
+			/* Not sure about the on-disk format of MS's uuid's
+			 * just assuming a byte stream, it should be unique
+			 * anyway.
+			 * Any authoritative information is welcome. */
 			val = &((__u8 *) attr)[val_off];
 			set_uuid(id, val, 16);
 		}
@@ -1369,9 +1401,9 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 	case ISO9660:
 		rc = probe_iso9660(id);
 		break;
+	case MACPARTMAP:
 	case HFS:
 	case HFSPLUS:
-	case MACPARTMAP:
 		rc = probe_hfs_hfsplus(id);
 		break;
 	case UFS:

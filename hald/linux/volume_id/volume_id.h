@@ -60,7 +60,7 @@ struct volume_id {
 	unsigned char	*sbbuf;
 	unsigned int	sbbuf_len;
 	unsigned char	*seekbuf;
-	unsigned int	seekbuf_off;
+	unsigned long	seekbuf_off;
 	unsigned int	seekbuf_len;
 	int		fd_close;
 };

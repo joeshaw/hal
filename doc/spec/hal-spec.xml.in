@@ -26,47 +26,63 @@
   <sect1 id="introduction">
     <title>Introduction</title>
     <para>
+
       This is a specification of a hardware abstraction 
       layer (HAL) that allows applications to enumerate and use devices
       present in a typical desktop system, in an operating system independent
       way.
+
     </para>
     <para>
+
       A device, in the context of the HAL, is identified by a unique 
       id and a set of properties (key/value pairs). 
       This document specifies a set of known properties and gives them
       well-defined meaning. This enables applications and desktop environments
       to make a distinction between the different device objects and use 
       the devices based on certain well-known properties.
+
     </para>
     <para>
+
       For instance, the <emphasis>info.category</emphasis> property specifies 
       what the device is (such as a digital camera or an audio device), and the
       <emphasis>block.mount_point</emphasis> property
       specifies where in the filesystem a storage device is mounted. 
+
     </para>
     <para>
+
       In addition, the HAL provides generic device operations such as
       locking devices for exclusive access.
       Furthermore, hooks for non-generic operations (such as retrieve pictures
       from a camera) is also provided.
+
     </para>
     <para>
+
       Finally, this specification is concerned with so called 
       <emphasis>device information files</emphasis>.
-      A device info file matches a subset of devices
-      (from properties derived from the physical bus the device is on) and
-      populates them with other, often well-defined, properties. Device info
-      files are by no means a substitute for driver software, they are simply
-      hints to the desktop environment / applications about what the device
-      is, what it does and how it can be used.
+
+      A device information file matches a subset of devices (from
+      properties derived from the physical bus the device is on or
+      what functionality the underlying kernel provides) and populates
+      them with other, often well-defined, properties.
+
+      Device information files are by no means a substitute for driver
+      software, they are simply hints to the desktop environment /
+      applications about what the device is, what it does and how it
+      can be used.
+
     </para>
     <para>
+
       The HAL is built upon D-BUS which is a framework that, among other
       things, provides a message-bus that allows applications to talk to
       one another. Apart from D-BUS, HAL has no other major dependencies
       which, in theory, allows it to work on many UNIX-like systems. The
       major focus, initially, is systems running the Linux 2.6 kernel.
+
     </para>
 
     <sect2>
@@ -93,9 +109,9 @@
               <entry>A major rewrite.</entry>
             </row>
             <row>
-              <entry>0.3-beta</entry>
-              <entry>July 21, 2004</entry>
-              <entry>Updated to reflect the state of the code.</entry>
+              <entry>@VERSION@</entry>
+              <entry></entry>
+              <entry>Current draft from CVS</entry>
             </row>
           </tbody>
         </tgroup>
@@ -109,7 +125,7 @@
       <ulink url="http://www.ometer.com/hardware.html">&quot;Making Hardware Just Work&quot;</ulink> 
       motivated this specification. This specification would not exist without
       all the useful suggestions and comments on the Free Desktop mailing
-      list.
+      list and the HAL mailing list.
 
       </para><para>
 
@@ -124,24 +140,31 @@
 
   <sect2 id="ov_halarch"><title>Architecture of HAL</title>
     <para>
+
       The HAL consists of a number of components as outlined in the diagram
       below
+
     </para>
     <para>
       <inlinegraphic fileref="hal-arch.png" format="PNG"/>
     </para>
     <para>
+
       Detail on components
+
       <itemizedlist>
 
         <listitem><para>
+
           <emphasis>HAL daemon</emphasis></para><para> 
+
           A system-wide daemon that maintains a persistent database of device
           objects. It is also responsible for merging information from the
           device info file repository and managing the life cycle of device
           objects.
           The HAL daemon also contains detection and monitoring code for
           standard busses (PCI, USB etc.) and devices.
+
         </para></listitem>
 
         <listitem><para>
@@ -153,31 +176,39 @@
           daemon.
 
           </para><para>
+
           Any program can be a HAL agent; all it means is that the program
           communicates with the HAL daemon using a specific interface. 
           Examples of use that come to mind are prototypes for supporting
           new busses/devices, integration of existing device 
           detection/monitoring frameworks etc.
+
         </para></listitem>
 
         <listitem><para>
           <emphasis>Applications</emphasis></para><para> 
+
           This represents the end consumers of the HAL and comprises both 
           applications that need to search for a device, but also (existing)
           device specific libraries and/or services that provide operations
           on devices using HAL objects.
+
           </para><para>
+
           In addition, this group include desktop environments such as
           GNOME or KDE. Specifically, using HAL, desktop environments
           may include system- or session-daemons enforcing certain
           policies when the device database managed by the HAL daemon
           changes.
+
           </para><para>
+
           Such policies may include starting a photo management
           application when a camera is plugged in, assisting the user in
           finding driver software and device information files for a
           new device, displaying link information about network
           devices, mounting removable storage and so on.
+
         </para></listitem>
 
       </itemizedlist>
@@ -209,80 +240,89 @@
       concerned with
 
       <itemizedlist>
-
         <listitem><para>
+
         Maintaining a live list of device objects that correspond to
         the list maintained by the operating system kernel. This
         include bus specific information such as the PCI slot location
         etc.
-        </para></listitem> 
 
+        </para></listitem> 
         <listitem><para>
+
         Merging class device information (derived from the hardware)
         into a device object.  For example, for an USB mouse HAL will
         merge well-defined properties describing the input-related
         capabilities of the mouse (e.g. how many buttons etc.)
+
         </para><para>
         As device classes are mostly related to the nature of the
         device rather than operating system, HAL can still be OS
         independent. For example, both the USB and PCI standards
         discuss devices classes.
-        </para></listitem> 
 
+        </para></listitem> 
         <listitem><para>
+
         Merging information (produced by human beings) into a device
         from device information files.  This allows applications to
         think in terms of ''capabilities'' rather than relying on
         device class information derived from the hardware.
+
         </para><para>
+
         For example, this allows PIM applications to define a
         capability called 'pda', define properties that characterizes
         different PDA's they happen to support in their PIM library,
         and finally (either the PIM authors or the PDA vendors)
         provide device information files describing the particular PDA
         being plugged in.
-        </para></listitem> 
 
+        </para></listitem> 
         <listitem><para>
+
         Provide monitoring of detected devices in a non-intrusive way. 
-        </para></listitem> 
 
-        <listitem><para>
-        Provide space, such that applications can store data per device.
         </para></listitem> 
-
         <listitem><para>
+
+        Provide space, such that applications can store data per device
+	and per user.
+
+        </para></listitem> 
+        <listitem><para>
+
         Providing a simple to use query/notification API for use in
         applications.
-        </para></listitem> 
 
+        </para></listitem> 
       </itemizedlist>
 
       HAL is not concerned with
 
       <itemizedlist>
-
         <listitem><para>
+
         Device configuration; that is the task of loading an operating
         system driver, uploading firmware, mounting a disk or
         configure/initiate a network connection.  It should be noted,
         though, that HAL provides excellent infrastructure for doing
         some of these tasks in an operating system independent way.
-        </para></listitem> 
 
+        </para></listitem> 
         <listitem><para>
+
         Providing device-specific operations such as extracting
         pictures from a digital camera.  Naturally, there already
         exists libraries and frameworks for dealing with hardware. The
         motivation behind HAL is to get authors of said
         libraries/frameworks to integrate HAL into their software (see
         PIM example above).
-        </para></listitem> 
 
+        </para></listitem> 
       </itemizedlist>
 
       </para>
-
   </sect2>
   
   </sect1>
@@ -290,18 +330,24 @@
   <sect1>
     <title>Device Objects</title>
       <para>
+
       It is important to precisely define the term ''device object'' - it is
       actually intended to mean two things:
+
       <itemizedlist>
         <listitem><para>
+
         A device as recognized by the USB, PCI etc. standards and treated as
         such by the operating system kernel and base OS.
+
         </para></listitem>
         <listitem><para>
+
         Storage volumes - e.g. partitions on a storage device. While partitions
         are not real devices (they lend space on a real device such as a hard
         disk or an optical disc), they are on the same conceptual level as 
         hard disks or optical discs.
+
         </para></listitem>
       </itemizedlist>
 
@@ -320,29 +366,42 @@
       constituting what users normally understand as a single device.
 
       </para><para>
+
       A device object consist of the following information
+
       <itemizedlist>
         <listitem><para>
+
           <emphasis>Unique Device ID (referred to as the UDI in the 
           following)</emphasis></para><para> 
+
           This is an identifier that is unique for a device object - that
-          is, no other device object can have this ID at the same time.
-          This ID is computed from bus-specific information so it is unique
+          is, no other device object can have the same UDI at the same time.
+          The UDI is computed from bus-specific information so it is unique
           across device insertions and when multiple instances of the same
-          kind of device is plugged in.
+          kind of device is plugged in. It is also independent of the 
+	  physical location of the device.
+
+
         </para></listitem>
         <listitem><para>
+
           <emphasis>Properties</emphasis></para><para> 
+
           Each device got a set of properties which are key/value pairs.
           The key is an ASCII string while the value can be one of several
           types
+
           <itemizedlist>
             <listitem><para>string - UTF8 string</para></listitem>
-            <listitem><para>int - 32-bit signed integer</para></listitem>
+            <listitem><para>int32 - 32-bit signed integer</para></listitem>
+            <listitem><para>int64 - 64-bit signed integer</para></listitem>
             <listitem><para>bool - truth value</para></listitem>
             <listitem><para>double - IEEE754 double precision
                             floating point number</para></listitem>
+            <listitem><para>array - A container where each element has one of the above types</para></listitem>
           </itemizedlist>
+
         </para></listitem>
       </itemizedlist>
 

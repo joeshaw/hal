@@ -261,7 +261,7 @@ dbus_bool_t hal_agent_merge_properties (LibHalContext *ctx,
 dbus_bool_t hal_agent_device_matches (LibHalContext *ctx,
 				      const char *udi1,
 				      const char *udi2,
-				      const char *namespace);
+				      const char *property_namespace);
 
 char **hal_manager_find_device_string_match (LibHalContext *ctx,
 					     const char *key,

@@ -1646,7 +1646,7 @@ hal_agent_merge_properties (LibHalContext *ctx,
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi1		Unique Device Id for device 1
  *  @param  udi2		Unique Device Id for device 2
- *  @param  namespace		Namespace for set of devices, e.g. "usb"
+ *  @param  property_namespace	Namespace for set of devices, e.g. "usb"
  *  @return			TRUE if all properties starting
  *				with the given namespace parameter
  *				from one device is in the other and 
@@ -1655,7 +1655,7 @@ hal_agent_merge_properties (LibHalContext *ctx,
 dbus_bool_t
 hal_agent_device_matches (LibHalContext *ctx, 
 			  const char *udi1, const char *udi2,
-			  const char *namespace)
+			  const char *property_namespace)
 {
 	DBusError error;
 	DBusMessage *message;
@@ -1677,7 +1677,7 @@ hal_agent_device_matches (LibHalContext *ctx,
 	dbus_message_iter_init (message, &iter);
 	dbus_message_iter_append_string (&iter, udi1);
 	dbus_message_iter_append_string (&iter, udi2);
-	dbus_message_iter_append_string (&iter, namespace);
+	dbus_message_iter_append_string (&iter, property_namespace);
 
 	dbus_error_init (&error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,

@@ -58,7 +58,7 @@
 #include "../hald_conf.h"
 #include "class_device.h"
 #include "common.h"
- 
+
 #include "volume_id/volume_id.h"
 #include "linux_dvd_rw_utils.h"
 

@@ -15,6 +15,7 @@ AM_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AM_PATH_PYTHON
+AC_SYS_LARGEFILE
 
 AC_ARG_WITH(init-scripts,       [  --with-init-scripts=<os>   Style of init scripts to install (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<pidfile>    PID file HAL daemon])

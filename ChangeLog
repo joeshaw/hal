@@ -1,3 +1,24 @@
+2004-07-29  David Zeuthen  <david@fubar.dk>
+
+	* libhal/libhal.[ch]: s/namespace/property_namespace/ to not break
+	using libhal from C++. Pointed out by Simone Gotti 
+	<simone.gotti@email.it>
+
+2004-07-29  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* configure.in:
+	* doc/spec/hal-spec.html:
+	* doc/spec/hal-spec.xml.in:
+	* hald/linux/block_class_device.c:
+	* hald/linux/volume_id/volume_id.c: (get_buffer),
+	(probe_hfs_hfsplus), (probe_ntfs), (volume_id_probe):
+	* hald/linux/volume_id/volume_id.h:
+	Here is support for recognition of hfs and hfsplus filesystems on
+	a main block device, like a CD. Only the first partition is
+	returned with the probe.
+
 2004-07-27  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (detect_media): A mounted
