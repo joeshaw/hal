@@ -48,6 +48,7 @@
 #include "linux_ide.h"
 #include "linux_class_block.h"
 #include "linux_class_scsi.h"
+#include "linux_class_i2c_adapter.h"
 #include "linux_class_net.h"
 #include "linux_class_input.h"
 
@@ -100,6 +101,8 @@ static void visit_class_device(const char* path, dbus_bool_t visit_children)
         visit_class_device_scsi_host(path, class_device);
     else if( strcmp(class_device->classname, "scsi_device")==0 )
         visit_class_device_scsi_device(path, class_device);
+    else if( strcmp(class_device->classname, "i2c-adapter")==0 )
+        visit_class_device_i2c_adapter(path, class_device);
     else if( strcmp(class_device->classname, "block")==0 )
         visit_class_device_block(path, class_device);
     else if( strcmp(class_device->classname, "net")==0 )
@@ -170,6 +173,8 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
 {
     struct sysfs_device* device;
     struct sysfs_directory* subdir;
+    struct sysfs_class* cls;
+    struct sysfs_class_device* class_device;
 
     device = sysfs_open_device(path);
     if( device==NULL )
@@ -192,12 +197,29 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
         /** @todo This is a hack; is there such a thing as an ide_host? */
         else if( strncmp(device->bus_id, "ide", 3)==0 )
             visit_device_ide_host(path, device);
-	/* Hmm only works on some boxes?? So we have to do hack below
         else if( strcmp(device->bus, "i2c")==0 )
-	    visit_device_i2c(path, device);*/
-        else if( strncmp(device->bus_id, "i2c", 3)==0 )
-            visit_device_i2c(path, device); 
-        else 
+            visit_device_i2c(path, device);
+		else if( strncmp(device->bus_id, "i2c", 3)==0 )
+        {
+            /* @todo FIXME we need to add the i2c-adapter class
+             * devices here, otherwise the I2C devices have nowhere to
+             * go
+             */
+            cls = sysfs_open_class("i2c-adapter");
+            if (cls != NULL)
+            {
+                if( cls->devices!=NULL )
+                {
+                    dlist_for_each_data(cls->devices, class_device, struct sysfs_class_device)
+                    {
+                       printf("device->bus_id = %s, cls->name = %s\n", device->bus_id, class_device->name);
+                       if ( strcmp(device->bus_id, class_device->name) == 0 )
+                            visit_class_device_i2c_adapter(path, class_device);
+                    }
+                }
+                sysfs_close_class(cls);
+            }
+        }
         {
             /*printf("bus=%s path=%s\n", device->bus, path);*/
         }
@@ -412,7 +434,8 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
 
     if( sysfs_devpath[0]!='\0' && 
         (strcmp(subsystem, "usb")==0 ||
-         strcmp(subsystem, "pci")==0) )
+         strcmp(subsystem, "pci")==0 ||
+         strcmp(subsystem, "i2c")==0))
     {
 
         if( is_add )
@@ -461,7 +484,8 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
              (strcmp(subsystem, "net")==0 ||
               strcmp(subsystem, "block")==0 ||
               strcmp(subsystem, "scsi_host")==0 ||
-              strcmp(subsystem, "scsi_device")==0) )
+              strcmp(subsystem, "scsi_device")==0 ||
+              strcmp(subsystem, "i2c-adapter")==0) )
     {
         if( is_add )
         {

@@ -28,6 +28,7 @@ hald_SOURCES +=                                                         \
         linux/linux_class_block.h       linux/linux_class_block.c       \
         linux/linux_class_scsi.h        linux/linux_class_scsi.c        \
         linux/linux_class_net.h         linux/linux_class_net.c         \
+        linux/linux_class_i2c_adapter.h linux/linux_class_i2c_adapter.c \
         linux/linux_class_input.h       linux/linux_class_input.c
 
 hald_SOURCES +=                                                         \

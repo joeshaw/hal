@@ -1,3 +1,16 @@
+2004-01-13  Matthew Mastracci  <matt@aclaro.com>
+
+	* tools/device-manager/Const.py.in (BUS_NAMES): add i2c_adapter
+
+	* hald/linux/linux_osspec.c (visit_class_device): add support for
+	i2c-adapter
+	(visit_device): add support for i2c and i2c-adapter
+	(handle_hotplug): hotplug support for i2c and i2c-adapter
+
+	* hald/Makefile.am (hald_SOURCES): Add linux_class_i2c_adapter.[ch]
+
+	* hald/linux/linux_class_i2c_adapter.[ch]: new files
+
 2004-01-12  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_class_block.c 
