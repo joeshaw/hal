@@ -1,5 +1,14 @@
 2004-11-08  David Zeuthen  <davidz@redhat.com>
 
+	* tools/device-manager/hal-device-manager.glade: Patch from Sjoerd
+	Simons <sjoerd@luon.net>.  Attached patch improves h-d-m's glade
+	file a little. Note the difference in the ``Device type'' label
+	between the following two screenshots:
+	http://luon.net/~sjoerd/hal/hdm-before.png
+	http://luon.net/~sjoerd/hal/hdm-after.png
+
+2004-11-08  David Zeuthen  <davidz@redhat.com>
+
 	* tools/device-manager/DeviceManager.py: 
 	Patch from Bryan Clark <bclark@redhat.com>: I've noticed that the
 	category and capabilities labels on the Device tab of
