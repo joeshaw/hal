@@ -1504,7 +1504,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 					"disk");
 				break;
 			case 1:	/* Tape */
-				has_removable_media = TRUE;
 				hal_device_property_set_string (
 					stordev,
 					"storage.drive_type", 
@@ -1555,6 +1554,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			 * FALSE - for devices where this doesn't work,
 			 * we can override it with .fdi files
 			 */
+			has_removable_media = TRUE;
 		}
 
 	} else {
@@ -1576,9 +1576,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			has_removable_media = TRUE;
 
 		sysfs_close_attribute (attr);
-	}
-
-
+	} 
 	
 	hal_device_property_set_bool (stordev, "storage.removable", has_removable_media);
 

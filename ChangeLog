@@ -1,3 +1,9 @@
+2004-09-21  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (block_class_pre_process): Set
+	has_removable_media for USB floppies in case the removable file in
+	sysfs is gone
+
 2004-09-20  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Add support for usb-serial devices:
