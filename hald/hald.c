@@ -55,6 +55,10 @@
 #include "hald_dbus.h"
 #include "hald_conf.h"
 
+static void delete_pid(void) {
+    unlink(HALD_PID_FILE);
+}
+
 /**
  * @defgroup HalDaemon HAL daemon
  * @brief The HAL daemon manages persistent device objects available through
@@ -392,6 +396,8 @@ main (int argc, char *argv[])
 	if (opt_become_daemon) {
 		int child_pid;
 		int dev_null_fd;
+		int pf;
+		char pid[9];
 
 		HAL_INFO (("Becoming a daemon"));
 
@@ -417,7 +423,7 @@ main (int argc, char *argv[])
 
 			dev_null_fd = open ("/dev/null", O_RDWR);
 			/* ignore if we can't open /dev/null */
-			if (dev_null_fd > 0) {
+			if (dev_null_fd >= 0) {
 				/* attach /dev/null to stdout, stdin, stderr */
 				dup2 (dev_null_fd, 0);
 				dup2 (dev_null_fd, 1);
@@ -429,9 +435,9 @@ main (int argc, char *argv[])
 
 		default:
 		        {
-				char buf[1];
 				/* parent, block until child writes */
-				/*read (startup_daemonize_pipe[0], &buf, sizeof (buf));*/
+				/* char buf[1];
+				read (startup_daemonize_pipe[0], &buf, sizeof (buf));*/
 				exit (0);
 				break;
 			}
@@ -439,6 +445,20 @@ main (int argc, char *argv[])
 
 		/* Create session */
 		setsid ();
+
+		/* remove old pid file */
+		unlink(HALD_PID_FILE);
+
+		/* Make a new one */
+		if ((pf=open(HALD_PID_FILE, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL,
+			0644)) == -1) {
+			HAL_ERROR (("Cannot create pid file"));
+			exit(1);
+		}
+		sprintf(pid, "%lu\n", (long unsigned)getpid());
+		write(pf, pid, strlen(pid));
+		close(pf);
+		atexit(delete_pid);
 	}
 
 

@@ -1,3 +1,15 @@
+2004-09-17  David Zeuthen  <david@fubar.dk>
+
+	Patch from Steve Grubb <linux_4ever@yahoo.com>.
+
+	* configure.in: Add HALD_PID_FILE to config.h
+
+	* hald/hald.c:
+	(delete_pid): New function
+	(main): Write pidfile. Set atexit to delete_pid.
+
+	* hald/haldaemon.in: Don't write pidfile
+
 2004-09-16  David Zeuthen  <david@fubar.dk>
 
 	Revisit networking. Basically a) split ethernet and wireless into

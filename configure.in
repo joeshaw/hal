@@ -336,7 +336,7 @@ else
 fi
 
 AC_SUBST(HALD_PID_FILE)
-
+AC_DEFINE_UNQUOTED(HALD_PID_FILE, "$HALD_PID_FILE", [pid file])
 
 
 AM_CONDITIONAL(INIT_SCRIPTS_RED_HAT, test x$with_init_scripts = xredhat)

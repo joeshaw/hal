@@ -28,7 +28,7 @@ start() {
     daemon --check $servicename $processname
     RETVAL=$?
     echo
-    [ $RETVAL -eq 0 ] && touch @LOCALSTATEDIR@/lock/subsys/$servicename && echo `/sbin/pidof $processname` > @HALD_PID_FILE@
+    [ $RETVAL -eq 0 ] && touch @LOCALSTATEDIR@/lock/subsys/$servicename
 }
 
 stop() {
