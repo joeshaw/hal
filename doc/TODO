@@ -2,35 +2,49 @@
 CVSID:$Id$
 
 This document is the TODO list for the HAL project. Feel free to add/remove
-entries if you get an idea or implement one of the tasks.
+entries if you get an idea or implement one of these.
 
- 1. Rewrite Linux 2.6 specific parts [in progress, davidz]
-    1a. remove all unneccessary references to /proc
-    1b. make it easier to add support for new device classes / busses
-
- 2. Generic parts cleanup [in progress, Joe Shaw]
-    2a. add callouts - can be used for e.g. updating /etc/fstab
-    2b. multiple device stores
-    2c. UTF8 support
-
- 3. Persistent device store
+ -  Persistent device store
     Device should be persistent (e.g. saved in a file) so i) we don't need
     to check fdi files each and every time we start up; and ii) device 
     properties are persistent across time
 
- 4. Property access control and per-user properties
+    - How this should be implemented should probably be discussed on the
+      mailing list; one way is to use a binary format (performance), another
+      way is to use a human-readable file (maybe even, ugh, xml). I personally
+      opt the the binary format
+
+    - There should be a commandline tool for the administrator to easily
+      purge the database
+
+    - We still need to scan all devices at startup; most of the logic is
+      already implemented but it's a bit tricky to figure out.
+
+ -  Support for more bus-devices and class-devices
+
+ -  Testing framework; probably only feasible for non-os specific code, e.g.
+    the whole device and device store framework
+
+ -  Support for more filesystem sniffing and volume label extraction
+    (see hald/linux/block_class_device.c:detect_fs)
+
+ -  Caching in libhal; the API is ready for it. Remember you cannot use
+    glib or other dependencies; we can only depend on libc and dbus!
+
+ -  Property access control and per-user properties
     Non-root users should only have read-access to the devices except
     in properties where the key starts with 'user.'. Also properties
     starting with 'user.' should be per-user (and per-box, e.g. don't
-    save them in a dotfile or dotdirectory in the users homedir)
+    save them in a dotfile or dotdirectory in the users homedir; see TODO
+    item for persistent device store)
 
- 5. Ethernet monitoring
-    Use netlink sockets to monitor the state of network devices.
-    Currently mii ethernet registers are used for monitoring but this
-    requires root.
-
- 6. Support for signed fdi files
-    One way to implement this is using an existing PKI framewore.
+ -  Support for signed fdi files
+    One way to implement this is using an existing PKI framework.
     There should be an easy way to sign an .fdi file e.g. a hal-sign-fdi 
     tool. There should also be a directory where vendors can easily 
-    drop the public key.
+    drop the public key. 
+    Also, we should probably consider emitting a dbus-signal or setting
+    a property so desktop environments can figure display an appropriate
+    dialog with the .fdi file is unsigned. Probably needs discussion on the
+    mailling list.
+
