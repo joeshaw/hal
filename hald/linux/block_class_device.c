@@ -540,7 +540,7 @@ get_first_valid_partition(struct volume_id *id)
 				continue;
 
 			if (volume_id_probe(p, VOLUME_ID_ALL, off, 0) == 0 &&
-			    p->type_id == VOLUME_ID_FILESYSTEM)
+			    p->usage_id == VOLUME_ID_FILESYSTEM)
 				return p;
 		}
 	}
@@ -966,7 +966,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			
 			if (volume_id_probe (vid, VOLUME_ID_ALL, 0, 0) != 0) {
 				if (is_cdrom) {
-					/* volume_id cannot yet probe blank/audio discs etc,
+					/* volume_id cannot probe blank/audio discs etc,
 					 * so don't fail for them, just set vid to NULL */
 					volume_id_close (vid);
 					vid = NULL;
@@ -979,11 +979,11 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			}
 		}
 
-		/* In Linux, optical discs never have partition
-		 * tables; at least Linux doesn't use it.. This is
-		 * especially true for blank discs, audio discs
-		 * etc. */
-		no_partitions = is_cdrom || (vid != NULL && vid->type_id == VOLUME_ID_FILESYSTEM);
+		/* Unfortunally, linux doesn't scan optical discs for partition
+		 * tables. We only get the main device, the kernel doesn't
+		 * create childs for us.
+		 */
+		no_partitions = is_cdrom || (vid != NULL && vid->usage_id == VOLUME_ID_FILESYSTEM);
 		hal_device_property_set_bool (d, "block.no_partitions", no_partitions);
 
 		if (!no_partitions) {
@@ -999,11 +999,8 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		hal_device_store_add (hald_get_tdl (), child);
 		g_object_unref (child);
 
-		/* Set the stuff we obtained from volume_id
-		 *
-		 * if we detect a partition table like a apple hfs cd, we just
-		 * stop at the first partiton with a valid filesystem and add
-		 * it as a child as the linux kernel doesn't create childs for us
+		/* If _we_ detect a partition table like a apple hfs cd, we just
+		 * stop at the first partiton with a valid filesystem
 		 */
 		if (vid != NULL) {
 			if (vid->partition_count > 0) {
@@ -1018,7 +1015,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 				set_volume_id_values(child, vid);
 			}
 		}
-			
+
 		/* set UDI (will scan .fdi files and merge from unplugged) */
 		rename_and_merge (child, block_class_compute_udi, "volume");
 

@@ -1,3 +1,11 @@
+2004-08-28  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/block_class_device.c:
+	(get_first_valid_partition), (detect_media): Fix leftover from
+	volume_id name change, which broke no_partitions media.
+	Clarify comments only a few lines apart, to not claim the direct
+	opposite
+
 2004-08-27  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c:
