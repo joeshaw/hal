@@ -1,3 +1,10 @@
+2004-01-18  Bastien Nocera  <hadess@hadess.net>
+
+	* hald/linux/linux_dvd_rw_utils.c (get_read_write_speed): fixed bug
+	where the two write_speed assignments was swapped
+
+	* doc/TODO: remove note about ide-scsi and ide-cd
+
 2004-01-17  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: some shuffling around, added note about that

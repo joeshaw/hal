@@ -353,9 +353,9 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 		/* no MMC-3 "Current Write Speed" present,
 		 * try to use the MMC-2 one */
 		if (len < (hlen + 20) || p[1] < (20 -2))
-			*write_speed = p[18] << 8 | p[19];
-		else
 			*write_speed = 0;
+		else
+			*write_speed = p[18] << 8 | p[19];
 	} else {
 		*write_speed = p[28] << 8 | p[29];
 	}

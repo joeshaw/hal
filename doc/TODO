@@ -44,9 +44,6 @@ Partially resolved
 Short term issues
 =================
 
- - hald/linux/linux_dvd_rw_utils only works with ide-scsi drives; we need
-   to support ide-cd as well
-
  - veryify that we got all the necessary hardware parameters for
    physical busses, e.g. pci, usb... We won't really know before people
    start using HAL though
