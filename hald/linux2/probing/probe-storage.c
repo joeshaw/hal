@@ -172,19 +172,24 @@ main (int argc, char *argv[])
 			did = drive_id_open_fd (fd);
 			if (drive_id_probe_all (did) == 0) {
 				dbg ("serial = '%s', firmware = '%s'", did->serial, did->firmware);
-				if (did->serial[0] != '\0')
+				if (did->serial[0] != '\0') {
+					dbus_error_init (&error);
 					if (!libhal_device_set_property_string (ctx, udi, "storage.serial", 
 										did->serial, &error)) {
-						close (fd);
-						goto out;
+						dbg ("Error setting storage.serial");
 					}
+				}
 				
-				if (did->firmware[0] != '\0')
+				if (did->firmware[0] != '\0') {
+					dbus_error_init (&error);
 					if (!libhal_device_set_property_string (ctx, udi, "storage.firmware_version", 
 										did->firmware, &error)) {
-						close (fd);
-						goto out;
+						dbg ("Error setting storage.firmware_version");
 					}
+				}
+
+				dbus_error_init (&error);
+
 			}
 			drive_id_close (did);
 

@@ -1,5 +1,19 @@
 2005-04-04  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/Makefile.am (libexec_PROGRAMS): Only build
+	hald-addon-usb-csr if we have libusb
+
+	* configure.in: Check for libusb (since it appear not to build
+	on s390/s390x if we don't have it)
+
+2005-04-04  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-storage.c (main): storage.serial and
+	storage.firmware_revision may return bogus data so don't quit
+	if we fail when setting it (Red Hat bug #151762)
+
+2005-04-04  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/10-wireless-mice.fdi: Change 
 	battery.type from 'keyboard_mouse' to just 'keyboard'.
 

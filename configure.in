@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 # If porting the hal tarball to work well on a distribution search
 # for the string "(distro-tweaks required)" for what to tweak.
 #
-# Patches for that are welcome.
+# Patches for that is welcome.
 #
 
 AC_PREREQ(2.57)
@@ -203,6 +203,16 @@ AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
 AC_CHECK_HEADERS(expat.h)
 AC_CHECK_LIB(expat,XML_ParserCreate, EXPAT_LIB="-lexpat")
 AC_SUBST(EXPAT_LIB)
+
+dnl Check libusb
+AC_PATH_PROG(LIBUSB_CONFIG, libusb-configxxx)
+if test -n "${LIBUSB_CONFIG}"; then
+	AM_CONDITIONAL(HAVE_LIBUSB,true)
+else
+	AM_CONDITIONAL(HAVE_LIBUSB,false)
+fi
+
+
 
 AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux2/dummy)],
                       [
