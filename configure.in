@@ -230,6 +230,8 @@ AC_SUBST(EXPANDED_LIBDIR)
 prefix=$old_prefix
 exec_prefix=$old_exec_prefix
 
+#agents/linux/Makefile
+#agents/linux/usb/Makefile
 AC_OUTPUT([
 hal.pc
 Doxyfile
@@ -237,10 +239,9 @@ Makefile
 hald/Makefile
 libhal/Makefile
 agents/Makefile
-agents/linux/Makefile
-agents/linux/usb/Makefile
 agents/linux26/Makefile
 agents/linux26/sysfs/Makefile
+agents/linux26/sysfs/libsysfs/Makefile
 ])
 
 dnl ==========================================================================

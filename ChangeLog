@@ -1,5 +1,61 @@
 2003-11-22  David Zeuthen  <david@fubar.dk>
 
+	* COPYING: Updated to mention some source files may be LGPL also
+
+	* Doxyfile: Updated to use doxygen 1.3.4
+
+	* Doxyfile.in: Updated to use doxygen 1.3.4
+
+	* configure.in: Don't build agents/linux/usb/Makefile; we've
+	dropped 2.4 support. Build agents/linux26/sysfs/libsysfs/Makefile
+
+	* agents/Makefile.am: Don't build in agents/linux
+
+	* agents/linux26/sysfs/Makefile.am : Build in libsysfs
+
+	* agents/linux26/sysfs/hal-sysfs-agent.c: Now using sysfsutils 0.3
+	(bus_support_append_device): removed
+	(bus_support_find_bus): removed
+	(visit_device_usb_interface): Don't require device UDI to be
+	given; find it self
+	(visit_device_usb): Don't manually visit USB interfaces
+	(visit_device): Change to recursively visit children in device
+	hierachy
+	(visit_device_tree): removed
+	(visit_root_device): removed
+	(bus_support_collect): removed; not neccesary with sysfsutils 0.3
+	since we can get the bus from there
+
+	* agents/linux26/sysfs/libsysfs: New directory for holding local
+	copy of sysfsutils 0.3.
+
+	* agents/linux26/sysfs/libsysfs/Makefile.am : new file
+
+	* agents/linux26/sysfs/libsysfs/dlist.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/dlist.h : new file
+	
+	* agents/linux26/sysfs/libsysfs/libsysfs.h : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs.h : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs_bus.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs_class.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs_device.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs_dir.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs_driver.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/sysfs_utils.c : new file
+	
+	* agents/linux26/sysfs/libsysfs/ : new file
+	
+
+2003-11-22  David Zeuthen  <david@fubar.dk>
+
 	* agents/linux26/sysfs/hal-sysfs-agent.c: Implementing parsing of
 	/proc/bus/usb/devices to merge information currently not present
 	in sysfs. Quite a pain, but it seems to work... Still need some
@@ -19,9 +75,9 @@
 	(visitor_usb_device): Locate and merge properties from /proc
 	(main): Parse USB stuff from /proc/bus/usb/devices
 
-	* hal-device-manager: Add USB version
+	* tools/hal-device-manager: Add USB version
 
-	* hal-device-manager.glade: Add USB version
+	* tools/hal-device-manager.glade: Add USB version
 	
 	
 2003-11-18  David Zeuthen  <david@fubar.dk>

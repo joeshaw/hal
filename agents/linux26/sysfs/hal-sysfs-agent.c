@@ -34,6 +34,7 @@
 #include <getopt.h>
 #include <assert.h>
 #include <unistd.h>
+//#include <syslog.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -50,6 +51,10 @@
  */
 
 
+/** Macro to abort the program.
+ *
+ *  @param  expr                Format line and arguments
+ */
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
 
@@ -75,58 +80,6 @@ static void* xmalloc(unsigned int how_much)
  *  by linux-hotplug
  */
 static dbus_bool_t is_probing = FALSE;
-
-/** List of busses we know how to handle */
-static const char* bus_support[] = {"usb", "pci", "ide", "scsi"};
-
-/** Size of list of busses to handle */
-static const int bus_support_num = sizeof(bus_support)/sizeof(char*);
-
-/** Maximum number of devices */
-#define HAL_MAX_DEVICES 16384
-
-/** List of pair of (bustype, devicepath_in_sysfs) of bus type that we know
- *  how to handle 
- */
-static const char* bus_support_devices[HAL_MAX_DEVICES*2];
-
-/** Number of elements in list of devices we know how to handle */
-static int bus_support_devices_num = 0;
-
-/** Append a device to list of devices of type we know how to handle.
- *
- *  @param  bus                 Bus-type, only the pointer is copied
- *  @param  path                Path in sysfs; the contents of the string
- *                              is copied
- */
-static void bus_support_append_device(const char* bus, const char* path)
-{
-    if( bus_support_devices_num>=HAL_MAX_DEVICES )
-        return;
-
-    bus_support_devices[bus_support_devices_num*2+0] = bus;
-    bus_support_devices[bus_support_devices_num*2+1] = strdup(path);
-    bus_support_devices_num++;
-}
-
-/** Given a sysfs-path to a device, determine the bus type. Only works
- *  for bus types we know how to handle, cf. #bus_support.
- *
- *  @param  path                Sysfs-path of device, e.g. 
- *                              /sys/devices/pci0000:00/0000:00:07.2
- *  @return                     Bus-type or #NULL if unknown type
- */
-static const char* bus_support_find_bus(const char* path)
-{
-    int i;
-    for(i=0; i<bus_support_devices_num; i++)
-    {
-        if( strcmp(bus_support_devices[i*2+1], path)==0 )
-            return bus_support_devices[i*2];
-    }
-
-    return NULL;
-}
 
 /** Parse a double represented as a decimal number (base 10) in a string. 
  *
@@ -758,7 +711,17 @@ static dbus_bool_t usb_ids_free()
 
 
 
-// fails if number not found
+/** Find an integer appearing right after a substring in a string.
+ *
+ *  The result is undefined if the number isn't properly formatted or
+ *  the substring didn't exist in the given string.
+ *
+ *  @param  pre                 Substring preceding the value to parse
+ *  @param  s                   String to analyze
+ *  @param  base                Base, e.g. decimal or hexadecimal, that
+ *                              number appears in
+ *  @return                     Number
+ */
 static long int find_num(char* pre, char* s, int base)
 {
     char* where;
@@ -770,19 +733,30 @@ static long int find_num(char* pre, char* s, int base)
     where += strlen(pre);
 
     result = strtol(where, NULL, base);
+    /** @todo Handle errors gracefully */
     if( result==LONG_MIN || result==LONG_MAX )
         DIE(("Error parsing value for '%s' in '%s'", pre, s));
 
     return result;
 }
 
-// fails if double not found
+/** Find a floating point number appearing right after a substring in a string
+ *  and return it as a double precision IEEE754 floating point number.
+ *
+ *  The result is undefined if the number isn't properly formatted or
+ *  the substring didn't exist in the given string.
+ *
+ *  @param  pre                 Substring preceding the value to parse
+ *  @param  s                   String to analyze
+ *  @return                     Number
+ */
 static double find_double(char* pre, char* s)
 {
     char* where;
     double result;
 
     where = strstr(s, pre);
+    /** @todo Handle errors gracefully */
     if( where==NULL )
         DIE(("Didn't find '%s' in '%s'", pre, s));
     where += strlen(pre);
@@ -792,7 +766,16 @@ static double find_double(char* pre, char* s)
     return result;
 }
 
-// decode a number into a BCD number with two digits of precision
+/** Find a floating point number appearing right after a substring in a string
+ *  and return it as a BCD encoded number with 2 digits of precision.
+ *
+ *  The result is undefined if the number isn't properly formatted or
+ *  the substring didn't exist in the given string.
+ *
+ *  @param  pre                 Substring preceding the value to parse
+ *  @param  s                   String to analyze
+ *  @return                     Number
+ */
 static int find_bcd2(char* pre, char* s)
 {
     int i;
@@ -850,7 +833,16 @@ static int find_bcd2(char* pre, char* s)
     return result;
 }
 
-// return val only valid until next invocation. Return NULL if string not found
+/** Find a string appearing right after a substring in a string
+ *  and return it. The string return is statically allocated and is 
+ *  only valid until the next invocation of this function.
+ *
+ *  The result is undefined if the substring didn't exist in the given string.
+ *
+ *  @param  pre                 Substring preceding the value to parse
+ *  @param  s                   String to analyze
+ *  @return                     Number
+ */
 static char* find_string(char* pre, char* s)
 {
     char* where;
@@ -889,7 +881,9 @@ static char* find_string(char* pre, char* s)
     return buf;
 }
 
-/** Key information from /proc not available in sysfs */
+/** Key information about USB devices from /proc that is not available 
+ *  in sysfs
+ */
 typedef struct usb_proc_info_s
 {
     int t_bus;               /**< Bus number */
@@ -976,7 +970,12 @@ static usb_proc_info* usb_proc_find_on_hub(int bus_number, int port_number,
 }
 
 
-// T:  Bus=00 Lev=00 Prnt=00 Port=00 Cnt=00 Dev#=  1 Spd=12  MxCh= 2
+/** Parse the topology field
+ *
+ *  @param  info                Structure to put information into
+ *  @param  s                   Line from /proc/bus/usb/devices starting
+ *                              with "T:"
+ */
 static void usb_proc_handle_topology(usb_proc_info* info, char* s)
 {
     info->t_bus = find_num("Bus=", s, 10);
@@ -989,12 +988,22 @@ static void usb_proc_handle_topology(usb_proc_info* info, char* s)
     info->t_max_children = find_num("MxCh=",s, 10);
 }
 
+/** Parse the device descriptor field
+ *
+ *  @param  info                Structure to put information into
+ *  @param  s                   Line from /proc/bus/usb/devices starting
+ *                              with "D:"
+ */
 static void usb_proc_handle_device_info(usb_proc_info* info, char* s)
 {
     info->d_version_bcd = find_bcd2("Ver=",s);
 }
 
 
+/** Called when an entry from /proc/bus/usb/devices have been parsed.
+ *
+ *  @param  info                Structure representing the entry
+ */
 static void usb_proc_device_done(usb_proc_info* info)
 {
     info->next = usb_proc_head;
@@ -1072,6 +1081,7 @@ static void usb_proc_parse()
     }
     usb_proc_device_done(usb_proc_cur_info);
 
+/*
     {
         usb_proc_info* i;
         for(i=usb_proc_head; i!=NULL; i=i->next)
@@ -1091,6 +1101,7 @@ static void usb_proc_parse()
             printf("\n");
         }
     }
+*/
 }
 
 
@@ -1350,26 +1361,79 @@ static char* find_parent_udi_from_sysfs_path(const char* path)
     return NULL;
 }
 
+
+
+/** Given a sysfs-path for a device, this functions finds the HAL device
+ *  representing the given device. 
+ *
+ *  @param  path                Sysfs-path of device to find UDI for
+ *  @return                     UDI (unique device id) of device, or #NULL
+ *                              if no device was found.
+ */
+static char* find_udi_from_sysfs_path(const char* path)
+{
+    int i;
+    int len;
+    char** udis;
+    int num_udi;
+
+
+    udis = hal_manager_find_device_string_match("Linux.sysfs_path",
+                                                path,
+                                                &num_udi);
+    
+    if( num_udi==1 && udis!=NULL )
+    {
+        return udis[0];
+    }
+
+    /** @todo Log the error */
+
+    return NULL;
+}
+
+
 /** Visitor function for interfaces on a USB device.
  *
  *  @param  path                 Sysfs-path for USB interface
  *  @param  device               libsysfs object for USB interface
- *  @param  d                    UDI of HAL device to amend interface data to
  */
 static void visit_device_usb_interface(const char* path,
-                                       struct sysfs_device *device,
-                                       const char* d)
+                                       struct sysfs_device *device)
 {
     int i;
     int len;
     int in_num;
     int conf_num;
     struct sysfs_attribute* cur;
+    char* d;
     char buf[256];
     char attr_name[SYSFS_NAME_LEN];
+    char parent_path[SYSFS_PATH_MAX+1];
 
-    /*printf("usb_interface: path=%s, d=%s\n", path, d);*/
-    
+    //printf("usb_interface: path=%s\n", path);
+
+    /* First find parent device; that's easy; just remove chars from end
+     * until and including first '/'
+     */
+    strncpy(parent_path, path, SYSFS_PATH_MAX);
+    len = strlen(parent_path);
+    for(i=len-1; i>0; --i)
+    {
+        if( parent_path[i]=='/' )
+            break;
+        parent_path[i]='\0';
+    }
+    parent_path[i]='\0';
+    //printf("parent_path = '%s'\n", parent_path);
+    /* Lookup HAL device from parent_path */
+    d = find_udi_from_sysfs_path(parent_path);
+    //printf("parent udi = '%s'\n", d);
+
+
+    if( d==NULL )
+        return;
+
     if( device->directory==NULL || device->directory->attributes==NULL )
         return;
 
@@ -1380,7 +1444,8 @@ static void visit_device_usb_interface(const char* path,
 
     /* first, find interface number */
     in_num = -1;
-    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
+                        struct sysfs_attribute)
     {
         if( sysfs_get_name_from_path(cur->path, 
                                      attr_name, SYSFS_NAME_LEN) != 0 )
@@ -1396,20 +1461,21 @@ static void visit_device_usb_interface(const char* path,
 
     /*printf("conf_num=%d, in_num=%d\n", conf_num, in_num);*/
 
-    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
+                        struct sysfs_attribute)
     {
         
         if( sysfs_get_name_from_path(cur->path, 
                                      attr_name, SYSFS_NAME_LEN) != 0 )
             continue;
-        
+
         /* strip whitespace */
         len = strlen(cur->value);
-        for(i=len-1; isspace(cur->value[i]); --i)
+        for(i=len-1; i>0 && isspace(cur->value[i]); --i)
             cur->value[i] = '\0';
         
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
-        
+
         if( strcmp(attr_name, "bInterfaceClass")==0 )
         {
             snprintf(buf, 256, "usb.%d.%d.bInterfaceClass", conf_num, in_num);
@@ -1441,7 +1507,6 @@ static void visit_device_usb_interface(const char* path,
             }
         }
     }
-
 }
 
 /** Visitor function for USB device.
@@ -1472,17 +1537,19 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
     int bus_number;
     usb_proc_info* proc_info;
 
-    printf("usb: %s, bus_id=%s\n", path, device->bus_id);
+    /*printf("usb: %s, bus_id=%s\n", path, device->bus_id);*/
 
     if( device->directory==NULL || device->directory->attributes==NULL )
         return;
 
     /* Check if this is an USB interface */
     is_interface = FALSE;
-    for(cur=device->directory->attributes; 
-        cur!=NULL && !is_interface; 
-        cur=cur->next)
+    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
+                        struct sysfs_attribute)
     {
+        if( is_interface )
+            break;
+
         if( sysfs_get_name_from_path(cur->path, 
                                      attr_name, SYSFS_NAME_LEN) != 0 )
             continue;
@@ -1491,9 +1558,12 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
             is_interface = TRUE;
     }
     
-    /* We handle USB interfaces when visiting parent device; see below */
+    /* USB interfaces are handled by a separate function */
     if( is_interface )
+    {
+        visit_device_usb_interface(path, device);
         return;
+    }
     
     /* Must be a new USB device */
     d = hal_agent_new_device();
@@ -1507,7 +1577,8 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
     hal_device_set_property_string(d, "usb.linux.sysfs_path", path);
     /*printf("*** created udi=%s for path=%s\n", d, path);*/
     
-    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
+                        struct sysfs_attribute)
     {
         
         if( sysfs_get_name_from_path(cur->path, 
@@ -1531,6 +1602,18 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
         else if( strcmp(attr_name, "bMaxPower")==0 )
             hal_device_set_property_int(d, "usb.bMaxPower", 
                                         parse_dec(cur->value));
+        else if( strcmp(attr_name, "serial")==0 && strlen(cur->value)>0 )
+            hal_device_set_property_string(d, "usb.serial", cur->value);
+        else if( strcmp(attr_name, "bmAttributes")==0 )
+        {
+            int bmAttributes = parse_hex(cur->value);
+
+            /* USB_CONFIG_ATT_SELFPOWER */
+            hal_device_set_property_bool(d, "usb.selfPowered",
+                                         (bmAttributes&0x40)!=0 );
+            hal_device_set_property_bool(d, "usb.canWakeUp",
+                                         (bmAttributes&0x20)!=0 );
+        }
 /*
         else if( strcmp(attr_name, "speed")==0 )
             hal_device_set_property_double(d, "usb.speed", 
@@ -1598,19 +1681,6 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
         /* fallback on name supplied from kernel */
         hal_device_set_property_string(d, "usb.Product", product_name_kernel);
         hal_device_set_property_string(d, "Product", product_name_kernel);
-    }
-
-    
-    /* Now visit interfaces of this USB device */
-    for(in=device->children; in!=NULL; in=in->next)
-    {
-        /* Interfaces have a ":" in their name, children-devices doesn't */
-        if( strstr(in->bus_id, ":")!=NULL )
-        {
-            /*printf("Visiting interface %s\n", in->bus_id);*/
-            snprintf(in_path, SYSFS_PATH_MAX, "%s/%s", path, in->bus_id);
-            visit_device_usb_interface(in_path, in, d);
-        }
     }
 
     /* Compute parent */
@@ -1712,7 +1782,7 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
                 parent_device_number = 
                     hal_device_get_property_int(parent_udi,
                                                 "usb.linux.device_number");
-                printf("parent_device_number = %d\n", parent_device_number);
+                //printf("parent_device_number = %d\n", parent_device_number);
                 proc_info = usb_proc_find_on_hub(bus_number, port_number,
                                                  parent_device_number);
             }
@@ -1822,7 +1892,8 @@ static void visit_device_pci(const char* path, struct sysfs_device *device)
     hal_device_set_property_string(d, "pci.linux.sysfs_path", path);
     /*printf("*** created udi=%s for path=%s\n", d, path);*/
 
-    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
+                        struct sysfs_attribute)
     {
         
         if( sysfs_get_name_from_path(cur->path, 
@@ -1938,132 +2009,48 @@ static void visit_device_scsi(const char* path, struct sysfs_device *device)
 
 /** Visitor function for any device.
  *
- *  This function determines the bus-type of the device using the 
- *  #bus_support_devices list and call the appropriate visit_device_<bustype>
- *  if matched.
+ *  This function determines the bus-type of the device and call the
+ *  appropriate visit_device_<bustype> function if matched.
  *
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-static void visit_device(const char* path, struct sysfs_device *device)
+static void visit_device(const char* path)
 {
-    const char* bus;
+    struct sysfs_device* device;
+    struct sysfs_directory* subdir;
 
-    if( device!=NULL && device->directory!=NULL)
+    device = sysfs_open_device(path);
+    if( device==NULL )
+        DIE(("Coulnd't get sysfs device object for path %s", path));
+
+    //printf("bus=%s driver=%s device=%s\n", device->bus, device->driver_name, path);
+
+    if( device->bus!=NULL )
     {
-        bus = bus_support_find_bus(path);
-        if( bus!=NULL )
+        if( strcmp(device->bus, "usb")==0 )
+            visit_device_usb(path, device);
+        else if( strcmp(device->bus, "pci")==0 )
+            visit_device_pci(path, device);
+        else if( strcmp(device->bus, "ide")==0 )
+            visit_device_ide(path, device);
+        else if( strcmp(device->bus, "scsi")==0 )
+            visit_device_scsi(path, device);
+    }
+
+    /* Visit children */
+    if( device->directory->subdirs!=NULL )
+    {
+        dlist_for_each_data(device->directory->subdirs, subdir, 
+                            struct sysfs_directory)
         {
-            if( strcmp(bus, "usb")==0 )
-                visit_device_usb(path, device);
-            else if( strcmp(bus, "pci")==0 )
-                visit_device_pci(path, device);
-            else if( strcmp(bus, "ide")==0 )
-                visit_device_ide(path, device);
-            else if( strcmp(bus, "scsi")==0 )
-                visit_device_scsi(path, device);
+            char newpath[SYSFS_PATH_MAX];
+            snprintf(newpath, SYSFS_PATH_MAX, "%s/%s", path, subdir->name);
+            visit_device(newpath);
         }
     }
-}
 
-/** Recurse through a device tree and visit all the children of the device.
- *  Calls #visit_device on every node.
- *
- *  @param  path                Sysfs-path for device
- *  @param  device              libsysfs object for device
- */
-static void visit_device_tree(const char* path, struct sysfs_device* device)
-{
-    char newpath[SYSFS_PATH_MAX];
-
-    if( device!=NULL )
-    {
-        struct sysfs_device *cur = NULL;
-
-        visit_device(path, device);
-        
-        /* Visit all devices */
-        for(cur=device->children; cur!=NULL; cur=cur->next)
-        {
-            snprintf(newpath, SYSFS_PATH_MAX, "%s/%s", path, cur->bus_id);
-            visit_device_tree(newpath, cur);
-        }
-    }
-}
-
-/** Visit device tree for a root device. Root devices are stored in
- *  /sys/devices.
- *
- *  @param  path                Path of root device, e.g. 
- *                              /sys/devices/pci0000:00
- */
-static void visit_root_device(const char* path)
-{
-    struct sysfs_device* root;
-
-    root = sysfs_open_device_tree((char*)path);
-    if( root==NULL )
-        DIE(("Error opening root device %s\n", path));
-
-    visit_device_tree(path, root);
-    sysfs_close_device_tree(root);
-}
-
-/** Make a list of all devices on the busses we know. Essentially traverses
- *  /sys/bus/_busname_/devices and builds the list #bus_support_devices.
- *
- *  This is being done so we can determine the bus-type of a device
- *  when traversing the root devices on the system.
- */
-static void bus_support_collect()
-{
-    int rc;
-    int i;
-    char sysfs_path[SYSFS_PATH_MAX];
-    char path[SYSFS_PATH_MAX];
-    char linkpath[SYSFS_PATH_MAX];
-    char targetpath[SYSFS_PATH_MAX];
-    struct sysfs_directory* dir;
-    struct sysfs_dlink* current_link;
-
-    /* get mount path */
-    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
-    if( rc!=0 )
-        DIE(("Couldn't get mount path for sysfs"));
-
-    /* first get a list of all devices at the busses we support by
-     * collecting the links in /sys/bus/<busname>/devices
-     */
-    for(i=0; i<bus_support_num; i++)
-    {
-        const char* bus;
-
-        bus = bus_support[i];
-        snprintf(path, SYSFS_PATH_MAX, 
-                 "%s%s/%s%s",sysfs_path,SYSFS_BUS_DIR, bus, SYSFS_DEVICES_DIR);
-        dir = sysfs_open_directory(path);
-        if( dir==NULL )
-        {
-            DIE(("Error opening sysfs directory at %s\n", path));
-        }
-        if( sysfs_read_directory(dir)!=0 )
-        {
-            DIE(("Error reading sysfs directory at %s\n", path));
-        }
-        current_link = dir->links;
-        while( current_link!=NULL )
-        {
-            snprintf(linkpath, SYSFS_PATH_MAX, "%s/%s", 
-                     path, current_link->name);
-            rc = sysfs_get_link(linkpath, targetpath, SYSFS_PATH_MAX);
-
-            /* Append this device to list of devices */
-            bus_support_append_device(bus, targetpath);
-            
-            current_link = current_link->next;
-        }
-        sysfs_close_directory(dir);
-    }
+    sysfs_close_device(device);
 }
 
 /** This function is called when the program is invoked to probe sysfs.
@@ -2077,9 +2064,6 @@ static void hal_sysfs_probe()
     struct sysfs_directory* dir;
 
     is_probing = TRUE;
-
-    /* Collect devices from supported busses */
-    bus_support_collect();
 
     /* get mount path */
     rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
@@ -2097,11 +2081,14 @@ static void hal_sysfs_probe()
     {
         DIE(("Error reading sysfs directory at %s\n", path));
     }
-    current = dir->subdirs;
-    while( current!=NULL )
+
+
+    if( dir->subdirs!=NULL )
     {
-        visit_root_device(current->path);
-        current = current->next;
+        dlist_for_each_data(dir->subdirs, current, struct sysfs_directory)
+        {
+            visit_device(current->path);
+        }
     }
     sysfs_close_directory(dir);
 }
@@ -2115,9 +2102,6 @@ static void device_hotplug_add()
     char path[SYSFS_PATH_MAX];
     char sysfs_path[SYSFS_PATH_MAX];
     struct sysfs_device* device;
-
-    /* Collect devices from supported busses */
-    bus_support_collect();
 
     /* Discard USB interface hotplug events */
     interface = getenv("INTERFACE");
@@ -2136,11 +2120,7 @@ static void device_hotplug_add()
 
     snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
 
-    device = sysfs_open_device_tree(path);
-    if( device==NULL )
-        DIE(("Coulnd't get sysfs device object for path %s", path));
-    visit_device(path, device);
-    sysfs_close_device_tree(device);
+    visit_device(path);
 
 }
 
