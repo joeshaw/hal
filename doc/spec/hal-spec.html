@@ -512,21 +512,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2513"
+HREF="#AEN2507"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2524"
+HREF="#AEN2518"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2532"
+HREF="#AEN2526"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -6149,6 +6149,10 @@ CLASS="literal"
 >, <TT
 CLASS="literal"
 >VA</TT
+>,
+		<TT
+CLASS="literal"
+>percent</TT
 ></TD
 ><TD
 >No</TD
@@ -6163,7 +6167,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->battery.charge_level.maximum_specified</TT
+>battery.charge_level.maximum</TT
 > (int)</TD
 ><TD
 >&nbsp;</TD
@@ -6175,31 +6179,7 @@ CLASS="literal"
 CLASS="literal"
 >"battery.charge_level.unit"</TT
 >
-		units. It should  represent theoretical limit as specified
-		in the documentation.
-	      </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->battery.charge_level.maximum_real</TT
-> (int)</TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->&#13;		The maximum level of charge which the device can hold, 
-	      	taking its age into account. Measured in 
-		<TT
-CLASS="literal"
->"battery.charge_level.unit"</TT
-> units. As the 
-		battery gets older, this value can degrade - it should 
-		represent the practical limit, not the theoretical one. 
-		The user-level apps  should use this value, if present, 
-		in all the percentage calculations.
+		units.
 	      </TD
 ></TR
 ><TR
@@ -6375,7 +6355,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1988"
+NAME="AEN1982"
 ></A
 ><TABLE
 BORDER="1"
@@ -6489,7 +6469,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2032"
+NAME="AEN2026"
 ></A
 ><TABLE
 BORDER="1"
@@ -6554,7 +6534,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2052"
+NAME="AEN2046"
 ></A
 ><TABLE
 BORDER="1"
@@ -6648,7 +6628,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2084"
+NAME="AEN2078"
 ></A
 ><TABLE
 BORDER="1"
@@ -6759,7 +6739,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2126"
+NAME="AEN2120"
 ></A
 ><TABLE
 BORDER="1"
@@ -6911,7 +6891,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2184"
+NAME="AEN2178"
 ></A
 ><TABLE
 BORDER="1"
@@ -7070,7 +7050,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2236"
+NAME="AEN2230"
 ></A
 ><TABLE
 BORDER="1"
@@ -7199,7 +7179,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2277"
+NAME="AEN2271"
 ></A
 ><TABLE
 BORDER="1"
@@ -8238,7 +8218,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2471"
+NAME="AEN2465"
 ></A
 ><TABLE
 BORDER="1"
@@ -8398,7 +8378,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2513"
+NAME="AEN2507"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -8514,7 +8494,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2524"
+NAME="AEN2518"
 >Example</A
 ></H3
 ><P
@@ -8632,7 +8612,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2532"
+NAME="AEN2526"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

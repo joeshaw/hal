@@ -3042,7 +3042,8 @@
 	    </row>
             <row>
               <entry><literal>battery.charge_level.unit</literal> (string)</entry>
-              <entry>Examples: <literal>mWh</literal>, <literal>VA</literal></entry>
+              <entry>Examples: <literal>mWh</literal>, <literal>VA</literal>, 
+		<literal>percent</literal></entry>
               <entry>No</entry>
               <entry>
 		The physical unit used by the charge level properties
@@ -3052,28 +3053,13 @@
 	      </entry>
 	    </row>
             <row>
-              <entry><literal>battery.charge_level.maximum_specified</literal> (int)</entry>
+              <entry><literal>battery.charge_level.maximum</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
 		The maximum level of charge which the device can hold. 
 	        Measured in <literal>"battery.charge_level.unit"</literal>
-		units. It should  represent theoretical limit as specified
-		in the documentation.
-	      </entry>
-	    </row>
-            <row>
-              <entry><literal>battery.charge_level.maximum_real</literal> (int)</entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-		The maximum level of charge which the device can hold, 
-	      	taking its age into account. Measured in 
-		<literal>"battery.charge_level.unit"</literal> units. As the 
-		battery gets older, this value can degrade - it should 
-		represent the practical limit, not the theoretical one. 
-		The user-level apps  should use this value, if present, 
-		in all the percentage calculations.
+		units.
 	      </entry>
 	    </row>
             <row>

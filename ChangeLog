@@ -1,5 +1,27 @@
 2005-02-02  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/apm.[ch]: New files
+
+	* hald/linux2/util.c (helper_invoke): Remember to initialize the
+	error object to NULL
+
+	* hald/linux2/osspec.c (osspec_probe): Only try APM if ACPI fails
+
+	* hald/linux2/hotplug.c (hotplug_event_begin_apm): New function
+	(hotplug_event_begin): Handle APM
+	(hotplug_rescan_device): Handle APM
+	(hotplug_reprobe_generate_remove_events): Handle APM
+	(hotplug_reprobe_generate_add_events): Handle APM
+
+	* hald/linux2/acpi.c (acpi_synthesize): Remember to set error to
+	NULL and don't leak the error object
+	(acpi_generate_remove_hotplug_event): Make this function return
+	a boolean to say whether ACPI capabilities were detected
+
+	* doc/spec/hal-spec.xml.in: Update the spec a bit more on battery.*
+
+2005-02-02  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/probing/probe-input.c (main): Fix up error handling
 	here so Reprobe() on the root, /org/freedesktop/Hal/devices/computer,
 	actually works; here's some python to do that

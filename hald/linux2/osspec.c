@@ -80,6 +80,7 @@
 #include "ids.h"
 
 #include "acpi.h"
+#include "apm.h"
 
 char hal_sysfs_path [HAL_PATH_MAX];
 char hal_proc_path [HAL_PATH_MAX];
@@ -470,8 +471,11 @@ osspec_probe (void)
 	/* will enqueue hotplug events for entire system */
 	HAL_INFO (("Synthesizing sysfs events..."));
 	coldplug_synthesize_events ();
-	HAL_INFO (("Synthesizing acpi events..."));
-	acpi_synthesize_hotplug_events ();
+	HAL_INFO (("Synthesizing ACPI events..."));
+	if (!acpi_synthesize_hotplug_events ()) {
+		HAL_INFO (("No ACPI capabilities found; checking for APM"));
+		apm_synthesize_hotplug_events ();
+	}
 	HAL_INFO (("Done synthesizing events"));
 
 	/* start processing events */

@@ -365,7 +365,7 @@ coldplug_compute_visit_device (const gchar *path,
 			       GHashTable *sysfs_to_class_in_devices_map)
 {
 	gchar *bus;
-	GError *err;
+	GError *err = NULL;
 	GDir *dir;
 	const gchar *f;
 	/*HStringPair *pair;*/

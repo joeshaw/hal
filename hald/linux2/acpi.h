@@ -26,7 +26,7 @@
 #include "../hald.h"
 #include "hotplug.h"
 
-void acpi_synthesize_hotplug_events (void);
+gboolean acpi_synthesize_hotplug_events (void);
 
 void hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *parent, void *end_token);
 

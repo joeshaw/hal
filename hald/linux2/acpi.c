@@ -165,11 +165,12 @@ acpi_synthesize (const gchar *path, int acpi_type)
 {
 	const gchar *f;
 	GDir *dir;
-	GError *error;
+	GError *error = NULL;
 
 	dir = g_dir_open (path, 0, &error);
 	if (dir == NULL) {
-		HAL_ERROR (("Couldn't open %s", path));
+		HAL_ERROR (("Couldn't open %s: %s", path, error->message));
+		g_error_free (error);
 		goto out;
 	}
 
@@ -198,15 +199,23 @@ out:
 
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding ACPI objects.
+ *
+ *  @param                      TRUE if, and only if, ACPI capabilities
+ *                              were detected
  */
-void
+gboolean
 acpi_synthesize_hotplug_events (void)
 {
+	gboolean ret;
 	HalDevice *computer;
 	gchar path[HAL_PATH_MAX];
 
+	ret = FALSE;
+
 	if (!g_file_test ("/proc/acpi/info", G_FILE_TEST_EXISTS))
 		goto out;
+
+	ret = TRUE;
 
 	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
 		HAL_ERROR (("No computer object?"));
@@ -236,7 +245,7 @@ acpi_synthesize_hotplug_events (void)
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
 
 out:
-	;
+	return ret;
 }
 
 static HalDevice *

@@ -638,7 +638,7 @@ helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, 
 	gchar *argv[] = {(gchar *) path, NULL};
 	gchar **envp;
 	gchar **ienvp;
-	GError *err;
+	GError *err = NULL;
 	guint num_env_vars;
 	guint i;
 	guint num_properties;
@@ -671,7 +671,6 @@ helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, 
 		envp[i++] = g_strdup ("HALD_SHUTDOWN=1");
 	envp[i++] = NULL;
 
-	
 	err = NULL;
 	if (!g_spawn_async (NULL, 
 			    argv, 
