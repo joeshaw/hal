@@ -165,8 +165,10 @@ main (int argc, char *argv[])
 				dbg ("ac_adapter event");
 				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
-			} else if (strncmp (acpi_path, "battery/", sizeof ("battery/") - 1) == 0) {
+			} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
 				dbg ("battery event");
+				dbus_error_init (&error);
+				libhal_device_rescan (ctx, udi, &error);
 			}
 
 		} else {
