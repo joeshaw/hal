@@ -204,7 +204,7 @@ visit_device (const char *path, dbus_bool_t visit_children)
 
 	device = sysfs_open_device (path);
 	if (device == NULL) {
-		HAL_WARNING (("Coulnd't get sysfs device object at path %s"
+		HAL_WARNING (("Coulnd't get sysfs device object at path %s",
 			      path));
 		return;
 	}
