@@ -8,13 +8,11 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
-libexec_PROGRAMS = hald-probe-input hald-probe-hiddev
+libexec_PROGRAMS = hald-addon-hid-ups
 
-hald_probe_input_SOURCES = probe-input.c
-hald_probe_input_LDADD = $(top_builddir)/libhal/libhal.la
+hald_addon_hid_ups_SOURCES = addon-hid-ups.c
+hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la
 
-hald_probe_hiddev_SOURCES = probe-hiddev.c
-hald_probe_hiddev_LDADD = $(top_builddir)/libhal/libhal.la
 
 
 

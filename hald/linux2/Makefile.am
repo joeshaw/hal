@@ -1,5 +1,5 @@
 
-SUBDIRS = probing .
+SUBDIRS = probing addons .
 
 INCLUDES = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \

@@ -96,6 +96,12 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 	return d;
 }
 
+static const gchar *
+input_get_prober (HalDevice *d)
+{
+	return "hald-probe-input";
+}
+
 static gboolean
 input_post_probing (HalDevice *d)
 {
@@ -360,6 +366,63 @@ scsi_host_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	gint host_num;
+	const gchar *last_elem;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL || device_file == NULL) {
+		goto out;
+	}
+
+	last_elem = hal_util_get_last_element (sysfs_path);
+	if (sscanf (last_elem, "hiddev%d", &host_num) == 1) {
+
+		d = hal_device_new ();
+		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+		hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
+		hal_device_property_set_string (d, "info.parent", physdev->udi);
+
+		hal_device_property_set_string (d, "info.category", "hiddev");
+		hal_device_add_capability (d, "hiddev");
+
+		hal_device_property_set_string (d, "info.product", "USB HID Device");
+
+		hal_device_property_set_string (d, "hiddev.device", device_file);
+	}
+
+out:
+	return d;
+}
+
+static const gchar *
+usbclass_get_prober (HalDevice *d)
+{
+	if (hal_device_has_capability (d, "hiddev"))
+		return "hald-probe-hiddev";
+	else
+		return NULL;
+}
+
+static gboolean
+usbclass_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_hiddev",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 classdev_remove (HalDevice *d)
 {
@@ -379,7 +442,7 @@ struct ClassDevHandler_s
 {
 	const gchar *subsystem;
 	HalDevice *(*add) (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent, const gchar *sysfs_path_in_devices);
-	const gchar *prober;
+	const gchar *(*get_prober)(HalDevice *d);
 	gboolean (*post_probing) (HalDevice *d);
 	gboolean (*compute_udi) (HalDevice *d);
 	gboolean (*remove) (HalDevice *d);
@@ -391,7 +454,7 @@ static ClassDevHandler classdev_handler_input =
 { 
 	.subsystem    = "input",
 	.add          = input_add,
-	.prober       = "hald-probe-input",
+	.get_prober   = input_get_prober,
 	.post_probing = input_post_probing,
 	.compute_udi  = input_compute_udi,
 	.remove       = classdev_remove
@@ -401,7 +464,7 @@ static ClassDevHandler classdev_handler_bluetooth =
 { 
 	.subsystem    = "bluetooth",
 	.add          = bluetooth_add,
-	.prober       = NULL,
+	.get_prober   = NULL,
 	.post_probing = NULL,
 	.compute_udi  = bluetooth_compute_udi,
 	.remove       = classdev_remove
@@ -411,7 +474,7 @@ static ClassDevHandler classdev_handler_net =
 { 
 	.subsystem    = "net",
 	.add          = net_add,
-	.prober       = NULL,
+	.get_prober   = NULL,
 	.post_probing = NULL,
 	.compute_udi  = net_compute_udi,
 	.remove       = classdev_remove
@@ -421,9 +484,19 @@ static ClassDevHandler classdev_handler_scsi_host =
 { 
 	.subsystem    = "scsi_host",
 	.add          = scsi_host_add,
-	.prober       = NULL,
+	.get_prober   = NULL,
 	.post_probing = NULL,
 	.compute_udi  = scsi_host_compute_udi,
+	.remove       = classdev_remove
+};
+
+static ClassDevHandler classdev_handler_usbclass = 
+{ 
+	.subsystem    = "usb",
+	.add          = usbclass_add,
+	.get_prober   = usbclass_get_prober,
+	.post_probing = NULL,
+	.compute_udi  = usbclass_compute_udi,
 	.remove       = classdev_remove
 };
 
@@ -432,6 +505,7 @@ static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_bluetooth,
 	&classdev_handler_net,
 	&classdev_handler_scsi_host,
+	&classdev_handler_usbclass,
 	NULL
 };
 
@@ -477,9 +551,11 @@ add_classdev_probing_helper_done(HalDevice *d, gboolean timed_out, gint return_c
 	}
 
 	/* Do things post probing */
-	if (!handler->post_probing (d)) {
-		hotplug_event_end (end_token);
-		goto out;
+	if (handler->post_probing != NULL) {
+		if (!handler->post_probing (d)) {
+			hotplug_event_end (end_token);
+			goto out;
+		}
 	}
 
 	add_classdev_after_probing (d, handler, end_token);
@@ -502,6 +578,7 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 		handler = classdev_handlers[i];
 		if (strcmp (handler->subsystem, subsystem) == 0) {
 			HalDevice *d;
+			const gchar *prober;
 
 			/* attempt to add the device */
 			d = handler->add (sysfs_path, device_file, physdev, sysfs_path_in_devices);
@@ -520,9 +597,13 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
 
-			if (handler->prober != NULL) {
+			if (handler->get_prober != NULL)
+				prober = handler->get_prober (d);
+			else
+				prober = NULL;
+			if (prober != NULL) {
 				/* probe the device */
-				if (!helper_invoke (handler->prober, d, (gpointer) end_token, (gpointer) handler, add_classdev_probing_helper_done, HAL_HELPER_TIMEOUT)) {
+				if (!helper_invoke (prober, d, (gpointer) end_token, (gpointer) handler, add_classdev_probing_helper_done, HAL_HELPER_TIMEOUT)) {
 					hal_device_store_remove (hald_get_tdl (), d);
 					hotplug_event_end (end_token);
 				}

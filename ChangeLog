@@ -1,3 +1,27 @@
+2005-02-04  David Zeuthen  <david@fubar.dk>
+
+	* doc/spec/hal-spec.xml.in: Added docs for battery.remaining_time
+
+	* hald/linux2/classdev.c (input_get_prober): New function
+	(usbclass_add): New function
+	(usbclass_get_prober): New function
+	(usbclass_compute_udi): New function
+	(add_classdev_probing_helper_done): Check if post_probing is NULL
+	(hotplug_event_begin_add_classdev): Use function to get prober since
+	e.g. class usb covers multiple devices, e.g. hiddev, printers etc.
+
+	* hald/linux2/probing/probe-hiddev.c: New file; probe for application
+	pages a HIDDEV supports and add to hiddev.application_pages strlist
+
+	* hald/linux2/addons/addon-hid-ups.c: Detect UPS's on USB HID
+	interfaces and create plus maintain battery.* properties.
+
+	* hald/linux2/addons/Makefile.am: New file
+
+	* hald/linux2/Makefile.am (SUBDIRS): Add addons directory
+
+	* configure.in: Add hald2/linux2/addons/Makefile.am to AC_OUTPUT
+
 2005-02-03  David Zeuthen  <davidz@redhat.com>
 
 	* hald/device_info.c (handle_match): Handle contains and

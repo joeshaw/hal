@@ -3063,6 +3063,16 @@
 	      </entry>
 	    </row>
             <row>
+              <entry><literal>battery.remaining_time</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Remaining time, in seconds, that the battery can provide
+		power if it's discharging. This is an estimate and may be
+		imprecise.
+	      </entry>
+	    </row>
+            <row>
               <entry><literal>battery.charge_level.current</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>

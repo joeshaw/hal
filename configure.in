@@ -429,6 +429,7 @@ hald/Makefile
 hald/dummy/Makefile
 hald/linux2/Makefile
 hald/linux2/probing/Makefile
+hald/linux2/addons/Makefile
 hald/haldaemon
 libhal/Makefile
 libhal-storage/Makefile
