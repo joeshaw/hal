@@ -6,12 +6,12 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = hal-agent.usb
+bin_PROGRAMS = hal-usb-agent.hotplug
 
-hal_agent_usb_SOURCES =                                           \
+hal_usb_agent_hotplug_SOURCES =                                \
         usb_agent.c
 
-hal_agent_usb_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
+hal_usb_agent_hotplug_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
 
 clean-local :
 	rm -f *~

@@ -1,0 +1,257 @@
+#!/usr/bin/env python
+
+############################################################################
+# CVSID: $Id$
+#
+# hal-device-manager : HAL Device Viewer
+#
+# Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+#
+# Licensed under the Academic Free License version 2.0
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+############################################################################
+
+import dbus
+import gtk
+import gtk.glade
+import gobject
+
+PIXBUF_COLUMN = 0
+TITLE_COLUMN  = 1
+UDI_COLUMN    = 2
+
+class Device:
+    def __init__(self, device_name, parent_name, properties):
+        self.device_name = device_name
+        self.parent_name = parent_name
+        self.parent_device = None
+        self.properties = properties
+        self.children = []
+
+    def print_tree(self, indent):
+        if indent==0:
+            print " "*indent + self.device_name
+        else:
+            print " "*indent + "- " + self.device_name
+        for c in self.children:
+            c.print_tree(indent+4)
+
+    def populate_gtk_tree(self, tree_model):
+        if self.parent_device==None:
+            self.row = None
+        else:
+            self.row = tree_model.append(self.parent_device.row)
+        if self.row != None:
+            # TODO: Inspect Category and select name to display in tree
+            tree_model.set_value(self.row, PIXBUF_COLUMN, gtk.Window().render_icon(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_MENU, None))
+            tree_model.set_value(self.row, TITLE_COLUMN, "Unknown device")
+            tree_model.set_value(self.row, UDI_COLUMN, self.device_name)
+        for c in self.children:
+            c.populate_gtk_tree(tree_model)
+
+    def find_by_udi(self, device_udi):
+        if self.device_name==device_udi:
+            return self
+        for c in self.children:
+            rc = c.find_by_udi(device_udi)
+            if rc!=None:
+                return rc
+        return None
+
+
+def udi_to_device(device_udi):
+    return virtual_root.find_by_udi(device_udi)
+
+
+def build_device_tree():
+    device_names = hal_manager.GetAllDevices()
+
+    virtual_root = Device("virtual_root", None, [])
+    device_list = [virtual_root]
+
+    # first build list of Device objects
+    for name in device_names:
+        device_dbus_obj = hal_service.get_object(name,
+                                                 "org.freedesktop.Hal.Device")
+        properties = device_dbus_obj.GetAllProperties()
+        try:
+            parent_name = properties["Parent"]
+        except KeyError:
+            # no parent, must be parent of virtual_root
+            parent_name = "/"
+        device = Device(name, parent_name, properties)
+        device_list.append(device)
+
+    # set parent_device and children for each Device object
+    for device in device_list:
+        parent_name = device.parent_name
+        device.parent_device = virtual_root
+        if parent_name!="/":
+            for p in device_list:
+                if p.device_name==parent_name:
+                    device.parent_device = p
+                    p.children.append(device)
+        if device!=virtual_root and device.parent_device==virtual_root:
+            virtual_root.children.append(device)
+        if device==virtual_root:
+            device.parent_device=None
+    return virtual_root
+
+
+bus_names = {"usb" : "USB"}
+
+state_names = { 0 : "<span foreground='red'>No device information file was found</span>",
+                1 : "Enabling...",
+                2 : "Need information to enable",
+                3 : "Error enabling the device",
+                4 : "Enabled",
+                5 : "Disabling...",
+                6 : "Disabled",
+                7 : "Not plugged in" }
+
+def update_tab_device(device):
+    bus = xml.get_widget("ns_device_bus")
+    state = xml.get_widget("ns_device_status")
+    vendor = xml.get_widget("ns_device_vendor")
+    product = xml.get_widget("ns_device_name")
+    category = xml.get_widget("ns_device_category")
+    capabilities = xml.get_widget("ns_device_capabilities")
+
+    # we always have Bus and State
+    bus.set_label(bus_names[device.properties["Bus"]])
+    state.set_label(state_names[device.properties["State"]])
+
+    # guestimate product and vendor if we have no device information file
+    if not device.properties["GotDeviceInfo"]:
+        if device.properties["Bus"]=="usb":
+            try:
+                product.set_label(device.properties["usb.ProductString"])
+            except KeyError:
+                product.set_label("Unknown")
+            try:                
+                vendor.set_label(device.properties["usb.VendorString"])
+            except:
+                vendor.set_label("Unknown")            
+        else:
+            vendor.set_label("Unknown")
+        # clear category, capabilities
+        category.set_label("Unknown")
+        capabilities.set_label("Unknown")
+
+def update_tab_usb(device):
+    version = xml.get_widget("ns_usb_version")
+    bandwidth = xml.get_widget("ns_usb_bandwidth")
+    maxpower = xml.get_widget("ns_usb_maxpower")
+
+    version.set_label("%.1f"%(device.properties["usb.version"]))
+    bandwidth.set_label("%2.1f Mbit/s"%(device.properties["usb.speed"]))
+    for i in range(1,1+device.properties["usb.numConfigurations"]):
+        if device.properties["usb.config.%d.isActive"%i]:
+            maxpower.set_label("%d mA"%
+                               (device.properties["usb.config.%d.maxPower"%i]))
+        
+
+def update_device_notebook(device):
+    # always update the "Device" tab
+    update_tab_device(device)
+    update_tab_usb(device)
+    
+def on_device_window_delete_event(obj, event):
+    gtk.main_quit()
+    return gtk.TRUE
+
+def on_device_tree_selection_changed(tree_selection):
+    (tree_model, tree_iter) = tree_selection.get_selected()
+    device_udi = tree_model.get_value(tree_iter, UDI_COLUMN)
+    device = udi_to_device(device_udi)
+    update_device_notebook(device)
+
+def gdl_changed(dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
+    if dbus_member=="DeviceAdded" or dbus_member=="DeviceRemoved":
+        #[device_udi] = dbus_message.get_args_list()
+        update_device_list()
+    else:
+        print "*** Unknown signal %s"%dbus_member
+
+def update_device_list():
+    global virtual_root, tree_model
+    # We use a virtual root device so we have a single tree
+    virtual_root = build_device_tree()
+
+    # (Name to display, device UDI)
+    tree_model = gtk.TreeStore(gtk.gdk.Pixbuf,
+                               gobject.TYPE_STRING, gobject.TYPE_STRING)
+    virtual_root.populate_gtk_tree(tree_model)
+
+    tree_view = xml.get_widget("device_tree")
+    # remove columns, if any
+    cols = tree_view.get_columns()
+    for cr in cols:
+        tree_view.remove_column(cr)
+    # add new columns
+    column = gtk.TreeViewColumn()
+    column.set_title("Devices")
+    render_pixbuf = gtk.CellRendererPixbuf()
+    column.pack_start(render_pixbuf, expand=False)
+    column.add_attribute(render_pixbuf, "pixbuf", PIXBUF_COLUMN)
+    render_text = gtk.CellRendererText()
+    column.pack_start(render_text, expand=True)
+    column.add_attribute(render_text, "text", TITLE_COLUMN)
+    tree_view.append_column(column)
+    
+    tree_view.set_model(tree_model)
+    tree_view.expand_all()
+
+    # Set focus to first element
+    tree_view.grab_focus()
+    update_device_notebook(virtual_root.children[0])
+    
+    tree_selection = tree_view.get_selection()
+    tree_selection.connect("changed", on_device_tree_selection_changed)
+
+
+def main():
+    global bus, hal_service, hal_manager, xml
+    
+    bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)
+    hal_service = bus.get_service("org.freedesktop.Hal")
+    hal_manager = hal_service.get_object("/org/freedesktop/Hal/Manager",
+                                     "org.freedesktop.Hal.Manager")
+
+    # gdl_changed will be invoked when the Global Device List is changed
+    # per the hal spec
+    bus.add_signal_receiver(gdl_changed,
+                            "org.freedesktop.Hal.Manager",
+                            "org.freedesktop.Hal",
+                            "/org/freedesktop/Hal/Manager")
+
+    xml = gtk.glade.XML("hal-device-manager.glade")
+    win = xml.get_widget("device_window")
+    xml.signal_autoconnect({
+        "on_device_window_delete_event":  on_device_window_delete_event})
+
+    update_device_list()
+    
+    gtk.mainloop()
+
+
+if __name__ == '__main__':
+    main()
+
+
+        
+

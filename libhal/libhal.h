@@ -192,6 +192,8 @@ int hal_shutdown();
 char** hal_get_all_devices(int* num_devices);
 dbus_bool_t hal_device_exists(const char* udi);
 
+void hal_device_print(const char* udi);
+
 dbus_bool_t hal_device_property_exists(const char* udi, const char* key);
 
 char* hal_device_get_property_string(const char* udi, const char* key);

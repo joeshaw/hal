@@ -67,6 +67,9 @@
  *        a D-BUS network API
  */
 
+/** D-Bus connection object for the HAL service */
+static DBusConnection* dbus_connection;
+
 /**
  * @defgroup DaemonErrors Error conditions
  * @ingroup HalDaemon
@@ -1002,6 +1005,57 @@ static DBusHandlerResult agent_manager_new_device(DBusConnection* connection,
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+/** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
+ *  interface on the object /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void manager_send_signal_device_added(const char* udi)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "DeviceAdded");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
+
+/** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
+ *  interface on the object /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void manager_send_signal_device_removed(const char* udi)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "DeviceRemoved");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
+
+
 /** When a hidden device have been built (using the Device interface),
  *  a HAL agent can commit it to the global device list using this method.
  *
@@ -1059,6 +1113,10 @@ static DBusHandlerResult agent_manager_commit_to_gdl(
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
+    /* Ok, send out a signal on the Manager interface that we added
+     * this device to the gdl */
+    manager_send_signal_device_added(new_udi);
+
     reply = dbus_message_new_method_return(message);
     if( reply==NULL )
         DIE(("No memory"));
@@ -1114,6 +1172,10 @@ static DBusHandlerResult agent_manager_remove(DBusConnection* connection,
     }
 
     ds_device_destroy(d);
+
+    /* Ok, send out a signal on the Manager interface that we removed
+     * this device from the gdl */
+    manager_send_signal_device_removed(udi);
 
     reply = dbus_message_new_method_return(message);
     if( reply==NULL )
@@ -1478,42 +1540,6 @@ static void property_changed(HalDevice* device,
 */
 }
 
-static void test()
-{
-    HalDevice* d;
-    HalDeviceIterator gdl_iter;
-
-    d = ds_device_new();
-    ds_property_set_int(d, "foo", 55);
-    ds_property_set_string(d, "bar", "a");
-    ds_property_set_string(d, "foobar", "blablabla");
-    ds_property_set_string(d, "foobar2", "xblablabla");
-    ds_property_set_string(d, "foobar3", "yyblablabla");
-    ds_property_set_int(d, "tjoh", 42);
-    ds_property_set_bool(d, "blah", FALSE);
-    ds_property_set_bool(d, "blas", TRUE);
-    ds_property_set_double(d, "blad", 42.1);
-
-
-    d = ds_device_new();
-    ds_property_set_int(d, "foo", 54);
-    ds_property_set_string(d, "bar", "b");
-    ds_property_set_string(d, "GotDeviceInfo", "xyz");
-    ds_property_set_string(d, "stupid", "zyx");
-
-    for(ds_device_iter_begin(&gdl_iter); 
-        ds_device_iter_has_more(&gdl_iter); 
-        ds_device_iter_next(&gdl_iter))
-    {
-        ds_print(ds_device_iter_get(&gdl_iter));
-    }
-
-    ds_property_remove(d, "stupid");
-
-    ds_print(d);
-
-    LOG_INFO(("done"));
-}
 
 /** Entry point for HAL daemon
  *
@@ -1525,14 +1551,11 @@ int main(int argc, char* argv[])
 {
     GMainLoop* loop;
     DBusError dbus_error;
-    DBusConnection* dbus_connection;
 
     fprintf(stderr, "hald version " PACKAGE_VERSION "\r\n");
 
     // initialize the device store
     ds_init(property_changed);
-
-    test();
 
     loop = g_main_loop_new (NULL, FALSE);
 

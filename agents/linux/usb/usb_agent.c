@@ -38,6 +38,7 @@
 
 #include <libhal/libhal.h>
 
+
 /** @defgroup HalAgentsLinuxUsb USB
  *  @ingroup  HalAgentsLinux
  *  @brief    HAL agent for USB devices on GNU/Linux
@@ -86,14 +87,6 @@ static void usage()
 "This program is supposed to only be invoked from the linux-hotplug package\n"
 "or from the HAL daemon hald.\n"
 "\n");
-}
-
-/** This function is called when the program is invoked by the
- *  linux-hotplug subsystem.
- */
-static void usb_hotplug()
-{
-    printf("blah hotplug\n");
 }
 
 
@@ -173,6 +166,8 @@ static char* find_string(char* pre, char* s)
     return buf;
 }
 
+dbus_bool_t full_probe;
+dbus_bool_t merge_probe_matched;
 
 // T:  Bus=00 Lev=00 Prnt=00 Port=00 Cnt=00 Dev#=  1 Spd=12  MxCh= 2
 static void handle_topology(const char* d, char* s)
@@ -182,19 +177,17 @@ static void handle_topology(const char* d, char* s)
     busNumber = find_num("Bus=", s, 10);
     deviceNumber = find_num("Dev#=",s, 10);
 
-/*
     if( !full_probe )
     {
         if(    busNumber==hal_device_get_property_int(d, "usb.busNumber") &&
             deviceNumber==hal_device_get_property_int(d, "usb.deviceNumber") )
         {
-            merge_probe_matched = 1;
+            merge_probe_matched = TRUE;
         }
     }
 
     if( !merge_probe_matched && !full_probe )
         return;
-*/
 
     hal_device_set_property_int(d, "usb.busNumber", busNumber);
     hal_device_set_property_int(d, "usb.levelNumber", find_num("Lev=", s, 10));
@@ -207,9 +200,8 @@ static void handle_topology(const char* d, char* s)
 
 static void handle_device_info(const char* d, char* s)
 {
-/*    if( !merge_probe_matched && !full_probe )
+    if( !merge_probe_matched && !full_probe )
         return;
-*/
 
     hal_device_set_property_double(d, "usb.version", find_double("Ver=", s));
     hal_device_set_property_int(d, "usb.bDeviceClass", find_num("Cls=", s,16));
@@ -222,25 +214,55 @@ static void handle_device_info(const char* d, char* s)
 
 static void handle_device_info2(const char* d, char* s)
 {
-/*
+    char* str;
+
     if( !merge_probe_matched && !full_probe )
         return;
-*/
 
     hal_device_set_property_int(d, "usb.idVendor", find_num("Vendor=", s, 16));
     hal_device_set_property_int(d, "usb.idProduct",find_num("ProdID=", s, 16));
-    hal_device_set_property_double(d, "usb.revisionProduct", 
-                                  find_double("Rev=", s));
+
+    str = find_string("Rev=", s);
+    if( str!=NULL && strlen(str)>0 )
+    {
+        int i;
+        char c;
+        int digit;
+        int left, right, result;
+        int len;
+
+        left = 0;
+        len = strlen(str);
+        for(i=0; i<len && str[i]!='.'; i++)
+        {
+            if( isspace(str[i]) )
+                continue;
+            left *= 16;
+            c = str[i];
+            digit = (int) (c-'0');
+            left += digit;
+        }
+        i++;
+        right=0;
+        for( ; i<len; i++)
+        {
+            right *= 16;
+            c = str[i];
+            digit = (int) (c-'0');
+            right += digit;
+        }
+
+        result = left*256 + (right&255);
+        hal_device_set_property_int(d, "usb.bcdDevice", result);
+    }
 }
 
 static void handle_device_string(const char* d, char* s)
 {
     char* str;
 
-/*
     if( !merge_probe_matched && !full_probe )
         return;
-*/
 
     str = find_string("Manufacturer=", s);
     if( str!=NULL && strlen(str)>0 )
@@ -269,7 +291,7 @@ static void handle_device_string(const char* d, char* s)
 /** This function will compute the device uid based on other properties
  *  of the device. Specifically, the following properties are required:
  *
- *   - usb.idVendor, usb.idProduct, usb.revisionProduct. 
+ *   - usb.idVendor, usb.idProduct, usb.bcdDevice. 
  *
  *  Other properties may also be used, specifically the usb.SerialNumber 
  *  is used if available.
@@ -296,15 +318,15 @@ static char* usb_compute_udi(const char* udi, int append_num)
     /** @todo Rework this function to use e.g. serial number */
 
     if( append_num==-1 )
-        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%d_%d_%f", 
+        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%x_%x_%x", 
                 hal_device_get_property_int(udi, "usb.idVendor"),
                 hal_device_get_property_int(udi, "usb.idProduct"),
-                hal_device_get_property_double(udi, "usb.revisionProduct"));
+                hal_device_get_property_int(udi, "usb.bcdDevice"));
     else
-        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%d_%d_%f/%d", 
+        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%x_%x_%x/%d", 
                 hal_device_get_property_int(udi, "usb.idVendor"),
                 hal_device_get_property_int(udi, "usb.idProduct"),
-                hal_device_get_property_double(udi, "usb.revisionProduct"),
+                hal_device_get_property_int(udi, "usb.bcdDevice"),
                 append_num);
     
     return buf;
@@ -350,10 +372,8 @@ static void handle_config_desc(const char* d, char* s)
     int configNum;
     char buf[256];
 
-/*
     if( !merge_probe_matched && !full_probe )
         return;
-*/
 
     configNum = find_num("Cfg#=", s, 10);
 
@@ -369,6 +389,9 @@ static void handle_config_desc(const char* d, char* s)
 
     sprintf(buf, "usb.config.%d.maxPower", configNum);
     hal_device_set_property_int(d, buf, find_num("MxPwr=", s, 10));
+
+    sprintf(buf, "usb.config.%d.isActive", configNum);
+    hal_device_set_property_bool(d, buf, s[2]=='*');
 }
 
 static void handle_interface_desc(const char* d, char* s)
@@ -378,10 +401,8 @@ static void handle_interface_desc(const char* d, char* s)
     char buf[256];
     int klass, sub_class, protocol;
 
-/*
     if( !merge_probe_matched && !full_probe )
         return;
-*/
 
     iNum = find_num("If#=", s, 10);
 
@@ -419,7 +440,7 @@ static void handle_interface_desc(const char* d, char* s)
 }
 
 /** Unique device id of the device we are working on */
-static char* usb_cur_udi = NULL;
+static const char* usb_cur_udi = NULL;
 
 /** Parse a line from /proc/bus/usb/devices
  *
@@ -430,10 +451,8 @@ static void parse_line(char* s)
     switch( s[0] )
     {
     case 'T': /* topology; always present, indicates a new device */
-/*
         if( full_probe )
         {
-*/
             if( usb_cur_udi!=NULL )
             {
                 // beginning of a new device, done with usb_cur_udi
@@ -442,14 +461,12 @@ static void parse_line(char* s)
             usb_cur_udi = hal_agent_new_device();
             assert(usb_cur_udi!=NULL);
             hal_device_set_property_string(usb_cur_udi, "Bus", "usb");
-/*
         }
         else
         {
             // not matched anymore
-            merge_probe_matched = 0;
+            merge_probe_matched = FALSE;
         }
-*/
         handle_topology(usb_cur_udi, s);
         break;
 
@@ -542,6 +559,7 @@ static void usb_compute_parents()
     devices = hal_get_all_devices(&num_devices);
 
     /* minimize set to USB devices */
+
     for(i=0; i<num_devices; i++)
     {
         const char* bus;
@@ -562,9 +580,177 @@ static void usb_compute_parents()
         if( devices[i]==NULL )
             continue;
         usb_device_set_parent(devices[i], devices, num_devices);
+
+        /* Can't use hal_free_string_array() since we punched #NULL
+         * pointers into it...
+         */
+        free( devices[i] );
+    }
+}
+
+
+/** Set Parent property for a single USB device
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void usb_compute_parent(char* udi)
+{
+    int i;
+    int num_devices;
+    char** devices;
+
+    /* get all devices */
+    devices = hal_get_all_devices(&num_devices);
+
+    /* minimize set to USB devices */
+    for(i=0; i<num_devices; i++)
+    {
+        const char* bus;
+
+        bus = hal_device_get_property_string(devices[i], "Bus");
+
+        if( bus==NULL || strcmp(bus, "usb")!=0 )
+        {
+            /* not an USB device, remove from list.. */
+            free(devices[i]);
+            devices[i]=NULL;
+        }   
     }
 
-    hal_free_string_array(devices);
+    usb_device_set_parent(udi, devices, num_devices);
+
+    /* Can't use hal_free_string_array() since we punched #NULL
+     * pointers into it...
+     */
+    for(i=0; i<num_devices; i++)
+    {
+        if( devices[i]!=NULL )
+            free(devices[i]);
+    }
+    
+}
+
+/** This function takes a temporary device and renames it to a real
+ *  device. After renaming the HAL daemon will locate a .fdi file and
+ *  possibly boot the device (pending RequireEnable property).
+ *
+ *  This function handles the fact that identical devices (for instance two
+ *  completely identical USB mice) gets their own unique device id by
+ *  appending a trailing number after it.
+ *  
+ *  @param  udi                 Unique device id of temporary device
+ *  @return                     New non-temporary UDI for the device
+ *                              or #NULL if it already existed.
+ */
+static char* usb_rename_and_maybe_add(const char* udi)
+{
+    int append_num;
+    char* computed_udi;
+
+    /* udi is a temporary udi */
+
+    append_num = -1;
+tryagain:
+    /* compute the udi for the device */
+    computed_udi = usb_compute_udi(udi, append_num);
+
+    /* See if a device with the computed udi already exist. It can exist
+     * because the device-list is (can be) persistent across invocations 
+     * of hald.
+     *
+     * If it does exist, note that it's udi is computed from only the same 
+     * information as our just computed udi.. So if we match, and it's
+     * unplugged, it's the same device!
+     *
+     * (of course assuming that our udi computing algorithm actually works!
+     *  Which it might not, see discussions - but we can get close enough
+     *  for it to be practical)
+     */
+    if( hal_device_exists(computed_udi) )
+    {
+        
+        if( hal_device_get_property_int(computed_udi, "State")!=
+            HAL_STATE_UNPLUGGED )
+        {
+            /* Danger, Will Robinson! Danger!
+             *
+             * Ok, this means that either
+             *
+             * a) The user plugged in two instances of the kind of
+             *    of device; or
+             *
+             * b) The agent is invoked with --probe for the second
+             *    time during the life of the HAL daemon
+             *
+             * We want to support b) otherwise we end up adding a lot
+             * of devices which is a nuisance.. We also want to be able
+             * to do b) when developing HAL agents.
+             *
+             * So, therefore we check if the non-unplugged device has 
+             * the same bus information as our newly hotplugged one.
+             */
+            if( hal_agent_device_matches(computed_udi, udi, "usb") )
+            {
+                fprintf(stderr, "Found device already present as '%s'!\n",
+                        computed_udi);
+                /* indeed a match, must be b) ; ignore device */
+                hal_agent_remove_device(udi);
+                /* and continue processing the next device */
+                return NULL;
+            }
+            
+            /** Not a match, must be case a). Choose next computed_udi
+             *  and try again! */
+            append_num++; 
+            goto tryagain;
+        }
+        
+        /* It did exist! Merge our properties from the probed device
+         * since some of the bus-specific properties are likely to be
+         * different 
+         *
+         * (user may have changed port, #Dev is different etc.)
+         *
+         * Note that the probed device only contain bus-specific
+         * properties - the other properties will remain..
+         */
+        hal_agent_merge_properties(computed_udi, udi);
+        
+        /* Remove temporary device */
+        hal_agent_remove_device(udi);
+        
+        /* Set that the device is in the disabled state... */
+        hal_device_set_property_int(computed_udi, "State", 
+                                    HAL_STATE_DISABLED);
+        
+        /* Now try to enable the device.. */
+        if( hal_device_property_exists(computed_udi, "RequireEnable") &&
+            !hal_device_get_property_bool(computed_udi, "RequireEnable") )
+        {
+            hal_device_enable(computed_udi);
+        }
+    }
+    else
+    {
+        /* Device is not in list... */
+        
+        /* Set required parameters */
+        hal_device_set_property_bool(udi, "GotDeviceInfo", FALSE);
+        hal_device_set_property_int(udi, "State", 
+                                    HAL_STATE_NEED_DEVICE_INFO);
+        
+        /* commit the device to the Global Device List - give the
+         * computed device name */
+        hal_agent_commit_to_gdl(udi, computed_udi);
+        
+        /* Now try to enable the device - if a .fdi is found 
+         * and merged, the HAL daemon will know to respect the
+         * RequireEnable property */
+        hal_device_enable(computed_udi);
+
+    }
+
+    return computed_udi;
 }
 
 /** This function is called when the program is invoked to 
@@ -585,7 +771,7 @@ static void usb_probe()
      */
     usb_cur_udi = NULL;
     usb_probe_num_devices = 0;
-    //full_probe = 1;
+    full_probe = TRUE;
 
     while( !feof(f) )
     {
@@ -594,125 +780,184 @@ static void usb_probe()
     }
     device_done(usb_cur_udi);         /* done with usb_cur_udi */
 
-    /* Right, now go through all devices and (possibly) add each of them */
+    /* Right, now go through all devices, rename them to a proper UDI
+     * and (possibly) add each of them */
     for(i=0; i<usb_probe_num_devices; i++)
     {
-        int append_num;
-        const char* udi;
-        char* computed_udi;
+        usb_rename_and_maybe_add(usb_probe_devices[i]);
+    }
 
-        /* this is a temporary udi */
-        udi = usb_probe_devices[i];
+    /* Now compute parents for all USB devices */
+    /*usb_compute_parents();*/
+}
 
-        
-        append_num = -1;
 
-    tryagain:
-        /* compute the udi for the device */
-        computed_udi = usb_compute_udi(udi, append_num);
+/** This function analyzes the environt passed by the Linux kernel through
+ *  the linux-hotplug event multiplexor.
+ *
+ *  It returns a minimal device, for instance no USB interfaces is added,
+ *  that later can be enriched by going through /proc/bus/usb/devices and
+ *  adding information.
+ *
+ *  It is very important that the bus-specific properties set will be
+ *  exactly the same as if the device were probed from /proc/bus/usb/devices
+ *  because this is all we get on remove.
+ *
+ *  @param  is_add              Will be set to #TRUE for an add event
+ *  @return                     Newly built device UDI from bus info or #NULL
+ */
+static const char* usb_hotplug_get_minimal(dbus_bool_t* is_add)
+{
+    char* d;
+    char* action;
+    char* product;
+    char* type;
+    char* device;
+    int idVendor, idProduct, bcdDevice;
+    int bDeviceClass, bDeviceSubClass, bDeviceProtocol;
+    int bus_number, device_number;
 
-        /* See if a device with the computed udi already exist. It can exist
-         * because the device-list is (can be) persistent across invocations 
-         * of hald.
-         *
-         * If it does exist, note that it's udi is computed from only the same 
-         * information as our just computed udi.. So if we match, and it's
-         * unplugged, it's the same device!
-         *
-         * (of course assuming that our udi computing algorithm actually works!
-         *  Which it might not, see discussions - but we can get close enough
-         *  for it to be practical)
+    /* Parse everything before creating a new temporary device */
+
+    if( (action=getenv("ACTION"))==NULL )
+        return NULL;
+    if( (product=getenv("PRODUCT"))==NULL )
+        return NULL;
+    if( (type=getenv("TYPE"))==NULL )
+        return NULL;
+    if( (device=getenv("DEVICE"))==NULL )
+        return NULL;
+
+    if( strcmp(action, "add")==0 )
+        *is_add = TRUE;
+    else if( strcmp(action, "remove")==0 )
+        *is_add = FALSE;
+    else
+        return NULL;
+
+    if( sscanf(product, "%x/%x/%x", &idVendor, &idProduct, &bcdDevice)!=3 )
+        return NULL;
+
+    if( sscanf(type, "%d/%d/%d", &bDeviceClass, &bDeviceSubClass, 
+               &bDeviceProtocol)!=3 )
+        return NULL;
+
+    if( sscanf(device, "/proc/bus/usb/%03d/%03d",
+               &bus_number, &device_number)!=2 )
+        return NULL;
+
+    d = hal_agent_new_device();
+    assert( d!=NULL );
+
+    hal_device_set_property_string(d, "Bus", "usb");
+
+    hal_device_set_property_int(d,    "usb.idVendor",  idVendor);
+    hal_device_set_property_int(d,    "usb.idProduct", idProduct);
+    hal_device_set_property_int(d,    "usb.bcdDevice", bcdDevice);
+    hal_device_set_property_int(d,    "usb.bDeviceClass", bDeviceClass);
+    hal_device_set_property_int(d,    "usb.bDeviceSubClass", bDeviceSubClass);
+    hal_device_set_property_int(d,    "usb.bDeviceProtocol", bDeviceProtocol);
+    hal_device_set_property_string(d, "linux.sysfs_path", device);
+    hal_device_set_property_int(d,    "usb.busNumber", bus_number);
+    hal_device_set_property_int(d,    "usb.deviceNumber", device_number);
+
+    /* ignore $INTERFACE; we pick that up when putting more info into
+     * the device object by parsing /proc */
+    return d;
+}
+
+/** Handle hotplug events.
+ */
+static void usb_hotplug()
+{
+    FILE* f;
+    char buf[256];
+    const char* d;
+    char* added_device;
+    dbus_bool_t is_add;
+
+    /* first get a minimal device */
+    d = usb_hotplug_get_minimal(&is_add);
+    if( d==NULL )
+        return;
+
+    /* Handle remove; that's easy.. */
+    if( !is_add )
+    {
+        int i;
+        int num_devices;
+        char** devices;
+
+        /* remove: We can't merge from /proc since the device is already
+         * gone. Not a problem since the minimal device uniquely identifies
+         * the iron that was unplugged; in other words, there is only one
+         * instance in the GDL we need to remove 
          */
-        if( hal_device_exists(computed_udi) )
+
+        /* Search through all devices and do inclusion tests on usb.* */
+        devices = hal_get_all_devices(&num_devices);
+        for(i=0; i<num_devices; i++)
         {
-            printf("foobar1\n");
-
-            if( hal_device_get_property_int(computed_udi, "State")!=
-                HAL_STATE_UNPLUGGED )
+            if( hal_agent_device_matches(d, devices[i], "usb") )
             {
-                printf("foobar2\n");
-
-                /* Danger, Will Robinson! Danger!
-                 *
-                 * Ok, this means that either
-                 *
-                 * a) The user plugged in two instances of the kind of
-                 *    of device; or
-                 *
-                 * b) The agent is invoked with --probe for the second
-                 *    time during the life of the HAL daemon
-                 *
-                 * We want to support b) otherwise we end up adding a lot
-                 * of devices which is a nuisance.. We also want to be able
-                 * to do b) when developing HAL agents.
-                 *
-                 * So, therefore we check if the non-unplugged device has 
-                 * the same bus information as our newly hotplugged one.
-                 */
-                if( hal_agent_device_matches(computed_udi, udi, "usb") )
+                if( strcmp(d, devices[i])==0 )
                 {
-                    fprintf(stderr, "Found device already present as '%s'!\n",
-                            computed_udi);
-                    /* indeed a match, must be b) ; ignore device */
-                    hal_agent_remove_device(udi);
-                    /* and continue processing the next device */
+                    printf("Need to fix sending temporary devices out!\n");
                     continue;
                 }
 
-                /** Not a match, must be case a). Choose next computed_udi
-                 *  and try again! */
-                append_num++; 
-                goto tryagain;
-            }
-
-            /* It did exist! Merge our properties from the probed device
-             * since some of the bus-specific properties are likely to be
-             * different 
-             *
-             * (user may have changed port, #Dev is different etc.)
-             *
-             * Note that the probed device only contain bus-specific
-             * properties - the other properties will remain..
-             */
-            hal_agent_merge_properties(computed_udi, udi);
-
-            /* Remove temporary device */
-            hal_agent_remove_device(udi);
-
-            /* Set that the device is in the disabled state... */
-            hal_device_set_property_int(computed_udi, "State", 
-                                        HAL_STATE_DISABLED);
-
-            /* Now try to enable the device.. */
-            if( hal_device_property_exists(computed_udi, "RequireEnable") &&
-                !hal_device_get_property_bool(computed_udi, "RequireEnable") )
-            {
-                hal_device_enable(computed_udi);
+                /* Okay, remove devices[i] - The HAL daemon takes care
+                 * of keeping the device (and removing the bus-specific
+                 * properties) if it is persistent */
+                hal_agent_remove_device(devices[i]);
+                break;
             }
         }
-        else
-        {
-            /* Device is not in list... */
 
-            /* Set required parameters */
-            hal_device_set_property_bool(udi, "GotDeviceInfo", FALSE);
-            hal_device_set_property_int(udi, "State", 
-                                        HAL_STATE_NEED_DEVICE_INFO);
+        /* Remove tempoary device */
+        hal_agent_remove_device(d);
 
-            /* commit the device to the Global Device List - give the
-             * computed device name */
-            hal_agent_commit_to_gdl(udi, computed_udi);
+        hal_free_string_array(devices);
+        return;
+    }
 
-            /* Now try to enable the device - if a .fdi is found 
-             * and merged, the HAL daemon will know to respect the
-             * RequireEnable property */
-            hal_device_enable(computed_udi);
-        }
-        
-    } /* for all probed devices */
+    /* Now handle add.. */
 
-    /* Now compute parents for all USB devices */
-    usb_compute_parents();
+/*
+    printf("\n\n\n**** Minimal ");
+    hal_device_print(d);
+*/
+
+    /* Look through at /proc and merge more info */
+    f = fopen("/proc/bus/usb/devices", "r");
+    if( f==NULL )
+        return;
+    usb_cur_udi = d;
+    full_probe = FALSE;
+    merge_probe_matched = FALSE;
+    while( !feof(f) )
+    {
+        fgets(buf, 256, f);
+        parse_line(buf);
+    }
+
+/*
+    printf("\n\n\n**** Merged ");
+    hal_device_print(d);
+*/
+
+    /* Right, now rename and (possibly) add the device */
+    added_device = usb_rename_and_maybe_add(d);
+
+/*
+    // Find a parent for the added device
+    if( added_device!=NULL )
+        usb_compute_parent(added_device);
+*/
+    /* Find parents for all USB devices since plugging in a hub may mean
+     * many devices added and this all happens at the same time
+     */
+    /*usb_compute_parents();*/
 }
 
 /** Entry point for USB agent for HAL on GNU/Linux
@@ -745,7 +990,13 @@ int main(int argc, char* argv[])
     }
 
     if( argc==2 && strcmp(argv[1], "usb")==0 )
+    {
         usb_hotplug();
+        /* No use in reporting error back to linux-hotplug */
+
+        sleep(1);
+        return 0;
+    }
 
     while(1)
     {
@@ -777,7 +1028,9 @@ int main(int argc, char* argv[])
             else if( strcmp(opt, "probe")==0 )
             {
                 usb_probe();
-                exit(0);
+
+                sleep(1);
+                return 0;
             }
 
         default:

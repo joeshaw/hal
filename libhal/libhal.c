@@ -1624,6 +1624,48 @@ dbus_bool_t hal_agent_device_matches(const char* udi1, const char* udi2,
     return value;
 }
 
+/** Print a device to stdout; useful for debugging.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+void hal_device_print(const char* udi)
+{
+    int type;
+    char* key;
+    LibHalPropertySet* pset;
+    LibHalPropertySetIterator i;
+
+    printf("device_id = %s\n", udi);
+
+    pset = hal_device_get_all_properties(udi);
+
+    for(hal_psi_init(&i, pset); hal_psi_has_more(&i); hal_psi_next(&i))
+    {
+        type = hal_psi_get_type(&i);
+        key = hal_psi_get_key(&i);
+        switch(type)
+        {
+        case DBUS_TYPE_STRING:
+            printf("    %s = %s (string)\n", key, hal_psi_get_string(&i));
+            break;
+        case DBUS_TYPE_INT32:
+            printf("    %s = %d = 0x%x (int)\n", key, hal_psi_get_int(&i),
+                   hal_psi_get_int(&i));
+            break;
+        case DBUS_TYPE_BOOLEAN:
+            printf("    %s = %s (bool)\n", key, 
+                   (hal_psi_get_bool(&i) ? "true" : "false"));
+            break;
+        case DBUS_TYPE_DOUBLE:
+            printf("    %s = %g (double)\n", key, hal_psi_get_double(&i));
+            break;
+        default:
+            printf("    *** unknown type for key %s\n", key);
+            break;
+        }
+    }
+    hal_free_property_set(pset);
+}
 
 /** @} */
 

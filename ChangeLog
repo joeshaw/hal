@@ -1,3 +1,34 @@
+2003-11-11  David Zeuthen  <david@fubar.dk>
+
+	* tools/hal-device-manager: new file, GUI device manager using PyGTK
+
+	* tools/hal-device-manager.glade: new file
+
+	* agents/linux/usb/Makefile.am: rename program to hal-usb-agent.hotplug
+	so it works with the linux-hotplug event multiplexor
+
+	* agents/linux/usb/usb_agent.c (usb_hotplug): implement
+	(handle_device_info2): drop usb.revisionProduct; use usb.bcdDevice
+	instead
+	(handle_config_desc): set usb.config.%d.isActive property
+	(usb_compute_parent): new function
+	(usb_rename_and_maybe_add): new function
+	(usb_hotplug_get_minimal): new function
+
+	* hald/main.c (manager_send_signal_device_added): new function
+	(manager_send_signal_device_removed): new function
+	(agent_manager_commit_to_gdl): send out signal using above function
+	(agent_manager_remove): send out signal using above function
+	(test): removed
+
+	* libhal/libhal.c (hal_device_print): new function
+
+	* libhal/libhal.h: add prototype for hal_device_print()
+
+	* tools/lshal.py: print device types, reprint device list when
+	receiving D-BUS signals from the HAL daemon
+	
+
 2003-11-09  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux/usb/usb_agent.c (usage): Fixed typo from --remove to
