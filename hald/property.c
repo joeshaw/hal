@@ -30,6 +30,7 @@
 
 #include <glib.h>
 
+#include "logger.h"
 #include "property.h"
 
 struct _HalProperty {
@@ -62,12 +63,25 @@ HalProperty *
 hal_property_new_string (const char *key, const char *value)
 {
 	HalProperty *prop;
+	char *endchar;
+	gboolean validated = TRUE;
 
 	prop = g_new0 (HalProperty, 1);
 
 	prop->type = DBUS_TYPE_STRING;
 	prop->key = g_strdup (key);
 	prop->str_value = g_strdup (value);
+
+	while (!g_utf8_validate (prop->str_value, -1,
+				 (const char **) &endchar)) {
+		validated = FALSE;
+		*endchar = '?';
+	}
+
+	if (!validated) {
+		HAL_WARNING (("Key '%s' has invalid UTF-8 string '%s'",
+			      key, value));
+	}
 
 	return prop;
 }
@@ -189,12 +203,26 @@ hal_property_get_double (HalProperty *prop)
 void
 hal_property_set_string (HalProperty *prop, const char *value)
 {
+	char *endchar;
+	gboolean validated = TRUE;
+
 	g_return_if_fail (prop != NULL);
 	g_return_if_fail (prop->type == DBUS_TYPE_STRING ||
 			  prop->type == DBUS_TYPE_NIL);
 
 	prop->type = DBUS_TYPE_STRING;
 	prop->str_value = g_strdup (value);
+
+	while (!g_utf8_validate (prop->str_value, -1,
+				 (const char **) &endchar)) {
+		validated = FALSE;
+		*endchar = '?';
+	}
+
+	if (!validated) {
+		HAL_WARNING (("Key '%s' has invalid UTF-8 string '%s'",
+			      prop->key, value));
+	}
 }
 
 void

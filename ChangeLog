@@ -1,3 +1,9 @@
+2004-07-30  Joe Shaw  <joeshaw@novell.com>
+
+	* hald/property.c (hal_property_new_string,
+	hal_property_set_string): Validate incoming strings as UTF-8 and
+	replace invalid sequences with '?'
+
 2004-07-29  David Zeuthen  <david@fubar.dk>
 
 	Patch from Kay Sievers <kay.sievers@vrfy.org>
