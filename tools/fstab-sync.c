@@ -8,12 +8,10 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* This program serves two major purposes:
- *    1) Update the fs table in response to HAL events
- *    2) Possibly mount the devices that were added in response to 1)
- *       (not useful if a volume manager is installed)
- *
- * Additionally, this program offers a third option of removing
+/* This program serves one major purpose:
+ *    - Update the fs table in response to HAL events
+ *    
+ * Additionally, this program offers another option of removing
  * any trace of its previous actions from the fs table.
  *
  * Because it is possible that this program could be invoked multiple
@@ -1579,7 +1577,8 @@ main (int argc, const char *argv[])
   int i, retval = 0;
   poptContext popt_context;
   boolean should_clean = FALSE, should_mount_device = FALSE;
-  char *udi_to_add = NULL, *udi_to_remove = NULL;
+  char *udi_to_add = NULL, *udi_to_remove = NULL, *hal_device_udi;
+  const char **left_over_args = NULL;
 
   struct poptOption options[] = {
       {"add", 'a', POPT_ARG_STRING, &udi_to_add, 0,
@@ -1606,6 +1605,32 @@ main (int argc, const char *argv[])
         {
           poptPrintHelp (popt_context, stderr, 0);
           return 1;
+        }
+    }
+
+  /* accept "add" and "remove" / HAL environment variables 
+   * in addition to "--add" and "--remove" above
+   */
+  left_over_args = poptGetArgs (popt_context);
+
+  hal_device_udi = getenv ("HAL_DEVICE_UDI");
+  
+  if (hal_device_udi == NULL)
+    hal_device_udi = getenv ("UDI");
+
+  if (left_over_args)
+  for (i = 0; left_over_args[i] != NULL; i++)
+    {
+      if (strcmp (left_over_args[i], "add") == 0 && udi_to_add == NULL)
+        {
+          udi_to_add = strdup (hal_device_udi);
+          break;
+        }
+      
+      if (strcmp (left_over_args[i], "remove") == 0)
+        {
+          udi_to_remove = strdup (hal_device_udi);
+          break;
         }
     }
   poptFreeContext (popt_context);

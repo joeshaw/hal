@@ -1,6 +1,7 @@
-2004-08-09  David Zeuthen  <david@fubar.dk>
+2004-08-11  Ray Strode  <rstrode@redhat.com>
 
-	* doc/spec/hal-volume-to-device.png: Removed
+	* tools/fstab-sync.c: don't require callout wrapper shell
+	script.
 
 2004-08-09  David Zeuthen  <david@fubar.dk>	
 
