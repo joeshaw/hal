@@ -1,3 +1,10 @@
+2004-09-17  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_vfat):
+	Fix endless loop for FAT32 volumes where the root directory
+	cluster chain is not terminated. Follow a maximum of 100 clusters
+	now and stop searching if we find a directory-end entry.
+
 2004-09-17  David Zeuthen  <david@fubar.dk>
 
 	Patch from Steve Grubb <linux_4ever@yahoo.com>.

@@ -735,52 +735,6 @@ static int probe_jfs(struct volume_id *id, __u64 off)
 #define FAT12_MAX			0xff5
 #define FAT16_MAX			0xfff5
 #define FAT_ATTR_VOLUME			0x08
-struct vfat_dir_entry {
-	__u8	name[11];
-	__u8	attr;
-	__u16	time_creat;
-	__u16	date_creat;
-	__u16	time_acc;
-	__u16	date_acc;
-	__u16	cluster_high;
-	__u16	time_write;
-	__u16	date_write;
-	__u16	cluster_low;
-	__u32	size;
-} __attribute__((__packed__));
-
-static  char *vfat_search_label_in_dir(const __u8 *buf, __u16 size)
-{
-	struct vfat_dir_entry *dir;
-	int i;
-	__u16 count;
-
-	dir = (struct vfat_dir_entry*) buf;
-	count = size / sizeof(struct vfat_dir_entry);
-	dbg("expected entries 0x%x", count);
-
-	for (i = 0; i <= count; i++) {
-		/* end marker */
-		if (dir[i].attr == 0x00) {
-			dbg("end of dir");
-			return NULL;
-		}
-
-		/* empty entry */
-		if (dir[i].attr == 0xe5)
-			continue;
-
-		if (dir[i].attr == FAT_ATTR_VOLUME) {
-			dbg("found ATTR_VOLUME id in root dir");
-			return dir[i].name;
-		}
-
-		dbg("skip dir entry");
-	}
-
-	return NULL;
-}
-
 static int probe_vfat(struct volume_id *id, __u64 off)
 {
 	struct vfat_super_block {
@@ -825,6 +779,20 @@ static int probe_vfat(struct volume_id *id, __u64 off)
 		} __attribute__((__packed__)) type;
 	} __attribute__((__packed__)) *vs;
 
+	struct vfat_dir_entry {
+		__u8	name[11];
+		__u8	attr;
+		__u16	time_creat;
+		__u16	date_creat;
+		__u16	time_acc;
+		__u16	date_acc;
+		__u16	cluster_high;
+		__u16	time_write;
+		__u16	date_write;
+		__u16	cluster_low;
+		__u32	size;
+	} __attribute__((__packed__)) *dir;
+
 	__u16 sector_size;
 	__u16 dir_entries;
 	__u32 sect_count;
@@ -841,6 +809,8 @@ static int probe_vfat(struct volume_id *id, __u64 off)
 	__u32 buf_size;
 	__u8 *label = NULL;
 	__u32 next;
+	int maxloop;
+	int i;
 
 	vs = (struct vfat_super_block *) get_buffer(id, off, 0x200);
 	if (vs == NULL)
@@ -935,15 +905,35 @@ valid:
 
 	/* the label may be an attribute in the root directory */
 	root_start = (reserved + fat_size) * sector_size;
-	root_dir_entries = le16_to_cpu(vs->dir_entries);
 	dbg("root dir start 0x%x", root_start);
+	root_dir_entries = le16_to_cpu(vs->dir_entries);
+	dbg("expected entries 0x%x", root_dir_entries);
 
 	buf_size = root_dir_entries * sizeof(struct vfat_dir_entry);
 	buf = get_buffer(id, off + root_start, buf_size);
 	if (buf == NULL)
 		goto found;
 
-	label = vfat_search_label_in_dir(buf, buf_size);
+	dir = (struct vfat_dir_entry*) buf;
+
+	for (i = 0; i <= root_dir_entries; i++) {
+		/* end marker */
+		if (dir[i].attr == 0x00) {
+			dbg("end of dir");
+			break;
+		}
+
+		/* empty entry */
+		if (dir[i].attr == 0xe5)
+			continue;
+
+		if (dir[i].attr == FAT_ATTR_VOLUME) {
+			dbg("found ATTR_VOLUME id in root dir");
+			label = dir[i].name;
+		}
+
+		dbg("skip dir entry");
+	}
 
 	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
 		set_label_raw(id, label, 11);
@@ -963,10 +953,12 @@ fat32:
 	start_data_sect = reserved + fat_size;
 
 	next = root_cluster;
-	while (1) {
+	maxloop = 100;
+	while (maxloop--) {
 		__u32 next_sect_off;
 		__u64 next_off;
 		__u64 fat_entry_off;
+		int count;
 
 		dbg("next cluster %u", next);
 		next_sect_off = (next - 2) * vs->sectors_per_cluster;
@@ -978,9 +970,29 @@ fat32:
 		if (buf == NULL)
 			goto found;
 
-		label = vfat_search_label_in_dir(buf, buf_size);
-		if (label != NULL)
-			break;
+		dir = (struct vfat_dir_entry*) buf;
+		count = buf_size / sizeof(struct vfat_dir_entry);
+		dbg("expected entries 0x%x", count);
+
+		for (i = 0; i <= count; i++) {
+			/* end marker */
+			if (dir[i].attr == 0x00) {
+				dbg("end of dir");
+				goto fat32_label;
+			}
+
+			/* empty entry */
+			if (dir[i].attr == 0xe5)
+				continue;
+
+			if (dir[i].attr == FAT_ATTR_VOLUME) {
+				dbg("found ATTR_VOLUME id in root dir");
+				label = dir[i].name;
+				goto fat32_label;
+			}
+
+			dbg("skip dir entry");
+		}
 
 		/* get FAT entry */
 		fat_entry_off = (reserved * sector_size) + (next * sizeof(__u32));
@@ -993,7 +1005,10 @@ fat32:
 		if (next == 0)
 			break;
 	}
+	if (maxloop == 0)
+		dbg("reached maximum follow count of root cluster chain, give up");
 
+fat32_label:
 	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
 		set_label_raw(id, label, 11);
 		set_label_string(id, label, 11);
