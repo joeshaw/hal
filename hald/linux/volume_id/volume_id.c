@@ -69,7 +69,7 @@
 			   (((__u64)(x) & 0x000000000000ff00u) << 40) | \
 			   (((__u64)(x) & 0x00000000000000ffu) << 56))
 
-#if (__BYTE_ORDER == __LITTLE_ENDIAN) 
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
 #define le16_to_cpu(x) (x)
 #define le32_to_cpu(x) (x)
 #define le64_to_cpu(x) (x)
@@ -152,7 +152,7 @@ static void set_uuid(struct volume_id *id,
 	memcpy(id->uuid_raw, buf, count);
 
 	/* create string if uuid is set */
-	for (i = 0; i < count; i++) 
+	for (i = 0; i < count; i++)
 		if (buf[i] != 0)
 			goto set;
 	return;
@@ -404,18 +404,25 @@ static int probe_reiserfs(struct volume_id *id, __u64 off)
 	if (rs == NULL)
 		return -1;
 
-	if (strncmp(rs->magic, "ReIsEr2Fs", 9) == 0)
+	if (strncmp(rs->magic, "ReIsEr2Fs", 9) == 0) {
+		strcpy(id->format_version, "3.6");
 		goto found;
-	if (strncmp(rs->magic, "ReIsEr3Fs", 9) == 0)
+	}
+
+	if (strncmp(rs->magic, "ReIsEr3Fs", 9) == 0) {
+		strcpy(id->format_version, "JR");
 		goto found;
+	}
 
 	rs = (struct reiserfs_super_block *)
 	     get_buffer(id, off + REISERFS1_SUPERBLOCK_OFFSET, 0x200);
 	if (rs == NULL)
 		return -1;
 
-	if (strncmp(rs->magic, "ReIsErFs", 8) == 0)
+	if (strncmp(rs->magic, "ReIsErFs", 8) == 0) {
+		strcpy(id->format_version, "3.5");
 		goto found;
+	}
 
 	return -1;
 
@@ -901,7 +908,7 @@ pvd:
 
 	clen = vd->type.primary.ident.clen;
 	dbg("label string charsize=%i bit", clen);
-	if (clen == 8) 
+	if (clen == 8)
 		set_label_string(id, vd->type.primary.ident.c, 31);
 	else if (clen == 16)
 		set_label_unicode16(id, vd->type.primary.ident.c, BE,31);
@@ -1014,7 +1021,7 @@ static int probe_ufs(struct volume_id *id, __u64 off)
 		__u32	fs_fpg;
 		struct ufs_csum {
 			__u32	cs_ndir;
-			__u32	cs_nbfree; 
+			__u32	cs_nbfree;
 			__u32	cs_nifree;
 			__u32	cs_nffree;
 		} __attribute__((__packed__)) fs_cstotal;
@@ -1100,7 +1107,7 @@ static int probe_ufs(struct volume_id *id, __u64 off)
 		__u32	fs_magic;
 		__u8	fs_space[1];
 	} __attribute__((__packed__)) *ufs;
-	
+
 	__u32	magic;
 	int 	i;
 	int	offsets[] = {0, 8, 64, 256, -1};
@@ -1141,7 +1148,7 @@ found:
 
 static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 {
-	struct mac_driver_desc { 
+	struct mac_driver_desc {
 		__u8	signature[2];
 		__u16	block_size;
 		__u32	block_count;
@@ -1438,7 +1445,7 @@ hfsplus:
 	dbg("descriptor type 0x%x", descr->type);
 	if (descr->type != HFS_NODE_LEAF)
 		goto found;
-	
+
 	key = (struct hfsplus_catalog_key *)
 		&buf[sizeof(struct hfsplus_bnode_descriptor)];
 
@@ -1636,10 +1643,14 @@ static int probe_swap(struct volume_id *id, __u64 off)
 			if (sig == NULL)
 				return -1;
 
-			if (strncmp(sig, "SWAP-SPACE", 10) == 0)
+			if (strncmp(sig, "SWAP-SPACE", 10) == 0) {
+				strcpy(id->format_version, "1");
 				goto found;
-			if (strncmp(sig, "SWAPSPACE2", 10) == 0)
+			}
+			if (strncmp(sig, "SWAPSPACE2", 10) == 0) {
+				strcpy(id->format_version, "2");
 				goto found;
+			}
 	}
 	return -1;
 
