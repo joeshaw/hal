@@ -404,6 +404,7 @@ libhal-storage/Makefile
 tools/Makefile
 tools/fstab-sync.8
 tools/linux/Makefile
+tools/device-manager/hal-device-manager
 tools/device-manager/Makefile
 tools/device-manager/Const.py
 fdi/Makefile

@@ -1,4 +1,8 @@
 
+devicemanagerbindir = $(bindir)
+
+dist_devicemanagerbin_SCRIPTS = hal-device-manager
+
 devicemanagerdir = $(datadir)/hal/device-manager
 
 dist_devicemanager_SCRIPTS = hal-device-manager
@@ -26,9 +30,9 @@ dist_devicemanager_DATA =                                          \
                        hal-device-manager.glade
 
 # symlink into $(bindir) for convenience
-install-data-local :
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	- cd $(DESTDIR)$(bindir) && $(LN_S) $(pkgdatadir)/device-manager/hal-device-manager hal-device-manager
-
-uninstall-local :
-	- rm -f $(DESTDIR)$(bindir)/hal-device-manager
+#install-data-local :
+#	$(mkinstalldirs) $(DESTDIR)$(bindir)
+#	- cd $(DESTDIR)$(bindir) && $(CP) $(pkgdatadir)/device-manager/hal-device-manager hal-device-manager
+#
+#uninstall-local :
+#	- rm -f $(DESTDIR)$(bindir)/hal-device-manager

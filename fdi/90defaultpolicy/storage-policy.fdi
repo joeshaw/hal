@@ -34,6 +34,12 @@
 	<merge key="storage.policy.should_mount" type="bool">true</merge>
       </match>
     </match>
+    <!-- Also add SCSI optical drives -->
+    <match key="storage.bus" string="scsi">
+      <match key="storage.drive_type" string="cdrom">
+        <merge key="storage.policy.should_mount" type="bool">true</merge>
+      </match>
+    </match>
 
     <!-- Handle drives with non-partitioned media  -->
     <match key="storage.no_partitions_hint" bool="true">
@@ -126,11 +132,11 @@
 	       volumes smaller than 2GB -->
 	  <match key="volume.size" compare_lt="2147483648">
 	    <match key="@block.storage_device:storage.hotpluggable" bool="true">
-	      <merge key="volume.policy.mount_option.async" type="bool">true</merge>
+	      <merge key="volume.policy.mount_option.sync" type="bool">true</merge>
 	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
 	    </match>
 	    <match key="@block.storage_device:storage.removable" bool="true">
-	      <merge key="volume.policy.mount_option.async" type="bool">true</merge>
+	      <merge key="volume.policy.mount_option.sync" type="bool">true</merge>
 	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
 	    </match>
 	  </match>

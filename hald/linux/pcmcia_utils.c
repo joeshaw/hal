@@ -71,7 +71,7 @@ static int pcmcia_lookup_dev(void)
 int pcmcia_socket_open (int socket)
 {
 	static char *paths[] = {
-		"/var/lib/pcmcia", "/var/run", "/dev", "/tmp", NULL
+		"/dev", "/var/run", "/tmp", NULL
 	};
 	int fd;
 	char **p, fn[64];
