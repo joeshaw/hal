@@ -265,6 +265,12 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 
 	HAL_INFO (("entering; timed_out=%d, return_code=%d", timed_out, return_code));
 
+	if (d == NULL) {
+		HAL_INFO (("Device object already removed"));
+		hotplug_event_end (end_token);
+		goto out;
+	}
+
 	is_volume = hal_device_property_get_bool (d, "block.is_volume");
 
 	/* Discard device if probing reports failure 
@@ -465,7 +471,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	}
 
 	/* lip service for PC floppy drives */
-	HAL_INFO (("foo = '%s'", hal_util_get_last_element (sysfs_path)));
 	if (parent == NULL && sscanf (hal_util_get_last_element (sysfs_path), "fd%d", &floppy_num) == 1) {
 		;
 	} else {
@@ -1049,7 +1054,12 @@ block_rescan_storage_done (HalDevice *d, gboolean timed_out, gint return_code,
 	HalDevice *fakevolume;
 	char fake_sysfs_path[HAL_PATH_MAX];
 
-	HAL_ERROR (("hald-probe-storage --only-check-for-media returned %d", return_code));
+	HAL_INFO (("hald-probe-storage --only-check-for-media returned %d (timed_out=%d)", return_code, timed_out));
+
+	if (d == NULL) {
+		HAL_INFO (("Device object already removed"));
+		goto out;
+	}
 
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
@@ -1074,6 +1084,9 @@ block_rescan_storage_done (HalDevice *d, gboolean timed_out, gint return_code,
 			}
 		}
 	}
+
+out:
+	;
 }
 
 gboolean

@@ -416,12 +416,15 @@ main (int argc, char *argv[])
 	else
 		hald_is_verbose = FALSE;
 
-	/* our helpers are installed into libexec, so adjust out $PATH to include this */
+	/* our helpers are installed into libexec, so adjust out $PATH
+	 * to include this at the end (since we want to overide in
+	 * run-hald.sh and friends)
+	 */
 	path = getenv ("PATH");
-	g_strlcpy (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
+	g_strlcpy (newpath, path, sizeof (newpath));
 	if (path != NULL) {
 		g_strlcat (newpath, ":", sizeof (newpath));
-		g_strlcat (newpath, path, sizeof (newpath));
+		g_strlcat (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
 	}
 	setenv ("PATH", newpath, TRUE);
 

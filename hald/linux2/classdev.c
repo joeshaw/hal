@@ -587,6 +587,12 @@ add_classdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 
 	HAL_INFO (("entering; timed_out=%d, return_code=%d", timed_out, return_code));
 
+	if (d == NULL) {
+		HAL_INFO (("Device object already removed"));
+		hotplug_event_end (end_token);
+		goto out;
+	}
+
 	/* Discard device if probing reports failure */
 	if (return_code != 0) {
 		hal_device_store_remove (hald_get_tdl (), d);

@@ -147,20 +147,10 @@ main (int argc, char *argv[])
 	if (!libhal_ctx_init (ctx, &error))
 		goto out;
 
-	printf ("**************************************************\n");
-	printf ("**************************************************\n");
-	printf ("Doing probe-storage for %s (bus %s) (drive_type %s) (--only-check-for-fs==%d)\n", 
-		device_file, bus, drive_type, only_check_for_fs);
-	printf ("**************************************************\n");
-	printf ("**************************************************\n");
+	dbg ("Doing probe-storage for %s (bus %s) (drive_type %s) (--only-check-for-fs==%d)", 
+	     device_file, bus, drive_type, only_check_for_fs);
 
 	if (!only_check_for_fs) {
-		fd = open (device_file, O_RDONLY | O_NONBLOCK);
-		if (fd < 0) {
-			printf ("Cannot open %s: %s\n", device_file, strerror (errno));
-			goto out;
-		}
-
 		/* Only do drive_id on IDE and real SCSI disks - specifically
 		 * not on USB which uses emulated SCSI since an INQUIRY on
 		 * most USB devices may crash the storage device if the
@@ -171,19 +161,33 @@ main (int argc, char *argv[])
 		    strcmp (bus, "scsi") == 0) {
 			struct drive_id *did;
 			
+			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
+			fd = open (device_file, O_RDONLY | O_NONBLOCK);
+			if (fd < 0) {
+				dbg ("Cannot open %s: %s", device_file, strerror (errno));
+				goto out;
+			}
+			dbg ("Returned from open(2)");
+
 			did = drive_id_open_fd (fd);
 			if (drive_id_probe_all (did) == 0) {
 				if (did->serial[0] != '\0')
 					if (!libhal_device_set_property_string (ctx, udi, "storage.serial", 
-										did->serial, &error))
+										did->serial, &error)) {
+						close (fd);
 						goto out;
+					}
 				
 				if (did->firmware[0] != '\0')
 					if (!libhal_device_set_property_string (ctx, udi, "storage.firmware_version", 
-										did->firmware, &error))
+										did->firmware, &error)) {
+						close (fd);
 						goto out;
+					}
 			}
-			drive_id_close (did);		
+			drive_id_close (did);
+
+			close (fd);
 		}
 
 #if 0
@@ -206,14 +210,25 @@ main (int argc, char *argv[])
 			int capabilities;
 			int read_speed, write_speed;
 			
-			if( ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0 ) {
+			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
+			fd = open (device_file, O_RDONLY | O_NONBLOCK);
+			if (fd < 0) {
+				dbg ("Cannot open %s: %s", device_file, strerror (errno));
+				goto out;
+			}
+			dbg ("Returned from open(2)");
+
+			if (ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0) {
 				dbg ("Error: CDROM_SET_OPTIONS failed: %s\n", strerror(errno));
+				close (fd);
 				goto out;
 			}
 			
 			capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
-			if (capabilities < 0)
+			if (capabilities < 0) {
+				close (fd);
 				goto out;
+			}
 			
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdr", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdrw", FALSE, &error);
@@ -271,45 +286,22 @@ main (int argc, char *argv[])
 				else
 					libhal_device_set_property_int (ctx, udi, "storage.cdrom.write_speed", 0, &error);
 			}
+
+			close (fd);
 		}
 		
-		close (fd);
 	} /* !only_check_for_fs */
 
 	ret = 0;
 
-	/* See if we got a file system on the main block device - which 
-	 * means doing a data (non O_NONBLOCK) open - this might fail, 
-	 * especially if we don't have any media...
-	 */
-	fd = open (device_file, O_RDONLY | O_NONBLOCK);
-	if (fd < 0) {
-		printf ("Cannot open %s: %s\n", device_file, strerror (errno));
-		goto out;
-	}
-
-	/* probe for file system */
-	vid = volume_id_open_fd (fd);
-	if (vid != NULL) {
-		if (volume_id_probe_all (vid, 0, 0 /* size */) == 0) {
-			/* signal to hald that we've found a file system and a fakevolume
-			 * should be added - see hald/linux2/blockdev.c:add_blockdev_probing_helper_done()
-			 * and hald/linux2/blockdev.c:block_rescan_storage_done().
-			 */
-			if (vid->usage_id == VOLUME_ID_FILESYSTEM)
-				ret = 2;
-		} else {
-			;
-		}
-		volume_id_close(vid);
-	}
-
 	/* Also return 2 if we're a cdrom and we got a disc */
-	if (ret != 2 && strcmp (drive_type, "cdrom") == 0) {
+	if (strcmp (drive_type, "cdrom") == 0) {
 		char *support_media_changed_str;
 		int support_media_changed;
 		int got_media;
 		int drive;
+
+		dbg ("Checking for optical disc on %s", device_file);
 
 		support_media_changed_str = getenv ("HAL_PROP_STORAGE_CDROM_SUPPORT_MEDIA_CHANGED");
 		if (support_media_changed_str != NULL && strcmp (support_media_changed_str, "true") == 0)
@@ -317,7 +309,7 @@ main (int argc, char *argv[])
 		else
 			support_media_changed = FALSE;
 
-		close (fd);
+		dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK | O_EXCL)", device_file);
 		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
 
 		if (fd < 0 && errno == EBUSY) {
@@ -332,6 +324,7 @@ main (int argc, char *argv[])
 			if (!is_mounted (device_file))
 				goto out;
 
+			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
 		}
 
@@ -378,11 +371,43 @@ main (int argc, char *argv[])
 
 		if (got_media)
 			ret = 2;
-	}
 
-out:
-	if (fd >= 0)
 		close (fd);
+	} else {
+
+		dbg ("Checking for file system on %s", device_file);
+
+		/* See if we got a file system on the main block device - which 
+		 * means doing a data (non O_NONBLOCK) open - this might fail, 
+		 * especially if we don't have any media...
+		 */
+		dbg ("Doing open (\"%s\", O_RDONLY)", device_file);
+		fd = open (device_file, O_RDONLY);
+		if (fd < 0) {
+			dbg ("Cannot open %s: %s", device_file, strerror (errno));
+			goto out;
+		}
+		dbg ("Returned from open(2)");
+		
+		/* probe for file system */
+		vid = volume_id_open_fd (fd);
+		if (vid != NULL) {
+			if (volume_id_probe_all (vid, 0, 0 /* size */) == 0) {
+				/* signal to hald that we've found a file system and a fakevolume
+				 * should be added - see hald/linux2/blockdev.c:add_blockdev_probing_helper_done()
+				 * and hald/linux2/blockdev.c:block_rescan_storage_done().
+				 */
+				if (vid->usage_id == VOLUME_ID_FILESYSTEM)
+					ret = 2;
+			} else {
+				;
+			}
+			volume_id_close(vid);
+		}
+		close (fd);
+	}
+	
+out:
 
 	if (ctx != NULL) {
 		dbus_error_init (&error);

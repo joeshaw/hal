@@ -137,6 +137,7 @@ main (int argc, char *argv[])
 	unsigned int partition_number;
 	unsigned int block_size;
 	dbus_uint64_t vol_size;
+	dbus_bool_t should_probe_for_fs;
 
 	fd = -1;
 
@@ -177,87 +178,14 @@ main (int argc, char *argv[])
 	if (!libhal_ctx_init (ctx, &error))
 		goto out;
 
-	printf ("**************************************************\n");
-	printf ("**************************************************\n");
-	printf ("Doing probe-volume for %s\n", device_file);
-	printf ("**************************************************\n");
-	printf ("**************************************************\n");
+	dbg ("Doing probe-volume for %s\n", device_file);
 
 	fd = open (device_file, O_RDONLY);
 	if (fd < 0)
 		goto out;
 
-	/* probe for file system */
-	vid = volume_id_open_fd (fd);
-	if (vid != NULL) {
-		if (volume_id_probe_all (vid, 0, 0 /* size */) == 0) {
-			set_volume_id_values(ctx, udi, vid);
-		} else {
-			libhal_device_set_property_string (ctx, udi, "info.product", "Volume", &error);
-		}
-		volume_id_close(vid);
-	}
+	should_probe_for_fs = TRUE;
 
-	/* get partition type (if we are from partitioned media)
-	 *
-	 * (presently we only support PC style partition tables)
-	 */
-	if (partition_number_str != NULL) {
-		if ((stordev_dev_file = libhal_device_get_property_string (
-			     ctx, parent_udi, "block.device", &error)) == NULL) {
-			goto out;
-		}
-		vid = volume_id_open_node (stordev_dev_file);
-		if (vid != NULL) {
-			if (volume_id_probe_msdos_part_table (vid, 0) == 0) {
-				dbg ("Number of partitions = %d", vid->partition_count);
-				
-				if (partition_number > 0 && partition_number <= vid->partition_count) {
-					struct volume_id_partition *p;
-					p = &vid->partitions[partition_number-1];
-					
-					libhal_device_set_property_int (ctx, udi,
-									"volume.partition.msdos_part_table_type",
-									p->partition_type_raw, &error);
-					
-					/* NOTE: We trust the type from the partition table
-					 * if it explicitly got correct entries for RAID and
-					 * LVM partitions.
-					 *
-					 * Btw, in general it's not a good idea to trust the
-					 * partition table type as many geek^Wexpert users use 
-					 * FAT filesystems on type 0x83 which is Linux.
-					 *
-					 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
-					 */
-					if (p->partition_type_raw == 0xfd ||
-					    p->partition_type_raw == 0x8e ) {
-						libhal_device_set_property_string (
-							ctx, udi, "volume.fsusage", "raid", &error);
-					}
-				
-				} else {
-					dbg ("warning: partition_number=%d not in [0;%d[", 
-					     partition_number, vid->partition_count);
-				}
-			}
-			volume_id_close(vid);
-		}		
-		libhal_free_string (stordev_dev_file);
-	}
-
-	/* block size and total size */
-	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
-		dbg ("volume.block_size = %d", block_size);
-		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
-	}
-	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
-		dbg ("volume.size = %llu", vol_size);
-		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
-	}
-
-	/* good so far */
-	ret = 0;
 
 	if (is_disc) {
 		int type;
@@ -282,6 +210,7 @@ main (int argc, char *argv[])
 		case CDS_AUDIO:		/* audio CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
 			dbg ("Disc in %s has audio", device_file);
+			should_probe_for_fs = FALSE;
 			break;
 		case CDS_MIXED:		/* mixed mode CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
@@ -298,11 +227,13 @@ main (int argc, char *argv[])
 		case CDS_NO_INFO:	/* blank or invalid CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", TRUE, &error);
 			dbg ("Disc in %s is blank", device_file);
+			should_probe_for_fs = FALSE;
 			break;
 			
 		default:		/* should never see this */
 			libhal_device_set_property_string (ctx, udi, "volume.disc_type", "unknown", &error);
 			dbg ("Disc in %s returned unknown CDROM_DISC_STATUS", device_file);
+			should_probe_for_fs = FALSE;
 			break;
 		}
 		
@@ -363,8 +294,81 @@ main (int argc, char *argv[])
 		if (disc_is_appendable (fd)) {
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", TRUE, &error);
 		}
-		
 	}
+
+	if (should_probe_for_fs) {
+		/* probe for file system */
+		vid = volume_id_open_fd (fd);
+		if (vid != NULL) {
+			if (volume_id_probe_all (vid, 0, 0 /* size */) == 0) {
+				set_volume_id_values(ctx, udi, vid);
+			} else {
+				libhal_device_set_property_string (ctx, udi, "info.product", "Volume", &error);
+			}
+			volume_id_close(vid);
+		}
+
+		/* get partition type (if we are from partitioned media)
+		 *
+		 * (presently we only support PC style partition tables)
+		 */
+		if (partition_number_str != NULL) {
+			if ((stordev_dev_file = libhal_device_get_property_string (
+				     ctx, parent_udi, "block.device", &error)) == NULL) {
+				goto out;
+			}
+			vid = volume_id_open_node (stordev_dev_file);
+			if (vid != NULL) {
+				if (volume_id_probe_msdos_part_table (vid, 0) == 0) {
+					dbg ("Number of partitions = %d", vid->partition_count);
+					
+					if (partition_number > 0 && partition_number <= vid->partition_count) {
+						struct volume_id_partition *p;
+						p = &vid->partitions[partition_number-1];
+						
+						libhal_device_set_property_int (
+							ctx, udi, "volume.partition.msdos_part_table_type",
+							p->partition_type_raw, &error);
+						
+						/* NOTE: We trust the type from the partition table
+						 * if it explicitly got correct entries for RAID and
+						 * LVM partitions.
+						 *
+						 * Btw, in general it's not a good idea to trust the
+						 * partition table type as many geek^Wexpert users use 
+						 * FAT filesystems on type 0x83 which is Linux.
+						 *
+						 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
+						 */
+						if (p->partition_type_raw == 0xfd ||
+						    p->partition_type_raw == 0x8e ) {
+							libhal_device_set_property_string (
+								ctx, udi, "volume.fsusage", "raid", &error);
+						}
+						
+					} else {
+						dbg ("warning: partition_number=%d not in [0;%d[", 
+						     partition_number, vid->partition_count);
+					}
+				}
+				volume_id_close(vid);
+			}		
+			libhal_free_string (stordev_dev_file);
+		}
+	}
+
+	/* block size and total size */
+	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
+		dbg ("volume.block_size = %d", block_size);
+		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
+	}
+	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
+		dbg ("volume.size = %llu", vol_size);
+		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
+	}
+
+	/* good so far */
+	ret = 0;
 
 
 out:

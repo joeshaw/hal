@@ -117,10 +117,10 @@ main (int argc, char *argv[], char *envp[])
 	if (argc != 2)
 		return 1;
 
-	openlog ("hal.hotplug2", LOG_PID, LOG_USER);
+	openlog ("hal.hotplug", LOG_PID, LOG_USER);
 
-	syslog (LOG_INFO, "ACTION=%s SUBSYS=%s SEQNUM=%s DEVPATH=%s PHYSDEVPATH=%s", 
-		getenv ("ACTION"), argv[1], getenv ("SEQNUM"), getenv ("DEVPATH"), getenv ("PHYSDEVPATH"));
+	/*syslog (LOG_INFO, "ACTION=%s SUBSYS=%s SEQNUM=%s DEVPATH=%s PHYSDEVPATH=%s", 
+	  getenv ("ACTION"), argv[1], getenv ("SEQNUM"), getenv ("DEVPATH"), getenv ("PHYSDEVPATH"));*/
 
 	if (get_sysfs_mnt_path() != 0) {
 		syslog (LOG_ERR, "could not get mountpoint for sysfs");

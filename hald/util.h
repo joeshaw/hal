@@ -93,6 +93,7 @@ struct HalHelperData_s
 	HalDevice *d;
 
 	gboolean already_issued_callback;
+	gboolean already_issued_kill;
 };
 
 unsigned int hal_util_kill_all_helpers (void);

@@ -1,3 +1,38 @@
+2005-02-28  David Zeuthen  <davidz@redhat.com>
+
+	* tools/linux/hal_hotplug.c (main): Use "hal.hotplug" instead of 
+	"hal.hotplug2" for syslog. Don't write a message for every entry.
+
+	* hald/linux2/probing/probe-volume.c (main): Only probe for fs on
+	optical disc if there is indeed data on the disc
+
+	* hald/linux2/probing/probe-storage.c (main): Fix up debug outputs;
+	don't read fs on cdrom's, only check if there is a disc. Don't use
+	O_NONBLOCK on non-cdrom's.
+
+	* hald/linux2/classdev.c (add_classdev_probing_helper_done): Handle
+	that HalDevice object is already unreffed
+
+	* hald/linux2/blockdev.c (add_blockdev_probing_helper_done): Handle
+	that HalDevice object is already unreffed
+	(block_rescan_storage_done): -do-
+
+	* hald/util.h (struct HalHelperData_s): Add already_issued_kill field
+
+	* hald/util.c (hal_util_terminate_helper): Don't kill helpers twice
+	and don't callback more than once
+	(helper_child_timeout): Don't callback more than once
+	(helper_device_object_finalized): Finalized; being called when
+	a HalDevice object is finalized; use this as hint to terminate
+	the helper
+	(helper_child_exited): Remove the weak reference to the HalDevice
+	object
+	(hal_util_helper_invoke): Create a weak reference to the HalDevice
+	object so we get a callback when it's finalized
+
+	* hald/hald.c (main): Bah, put LIBEXECDIR at the end so we get
+	the local helpers when running via run-hald.sh
+
 2005-02-27  David Zeuthen  <davidz@redhat.com>
 
 	More fun with valgrind :-)

@@ -425,23 +425,31 @@ out:
 void
 hal_util_terminate_helper (HalHelperData *ed)
 {
-	HAL_INFO (("killing %d for udi %s", ed->pid, ed->d->udi));
+	if (ed->already_issued_kill) {
+		HAL_INFO (("Already issued SIGTERM for pid %d, udi %s",
+			   ed->pid, ed->d != NULL ? ed->d->udi : "(finalized object)"));
+		goto out;
+	}
+
+	HAL_INFO (("killing %d for udi %s", ed->pid, ed->d != NULL ? ed->d->udi : "(finalized object)"));
 
 	/* kill kenny! kill it!! */
+	ed->already_issued_kill = TRUE;
 	kill (ed->pid, SIGTERM);
-	/* TODO: yikes; what about removing the zombie? */
 
 	if (ed->timeout_watch_id != (guint) -1) {
 		g_source_remove (ed->timeout_watch_id);
 		ed->timeout_watch_id = -1;
 	}
 
-	ed->already_issued_callback = TRUE;
-
-	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
+	if (!ed->already_issued_callback) {
+		ed->already_issued_callback = TRUE;
+		ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
+	}
 
 	/* ed will be cleaned up when helper_child_exited reaps the child */
-	return;
+out:
+	;
 }
 
 static gboolean
@@ -452,18 +460,32 @@ helper_child_timeout (gpointer data)
 	HAL_INFO (("child timeout for pid %d", ed->pid));
 
 	/* kill kenny! kill it!! */
+	ed->already_issued_kill = TRUE;
 	kill (ed->pid, SIGTERM);
 
 	ed->timeout_watch_id = -1;
-	ed->already_issued_callback = TRUE;
 
-	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
+	if (!ed->already_issued_callback) {
+		ed->already_issued_callback = TRUE;
+		ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
+	}
 
 	/* ed will be cleaned up when helper_child_exited reaps the child */
 	return FALSE;
 }
 
 static GSList *running_helpers = NULL;
+
+static void 
+helper_device_object_finalized (gpointer data, GObject *where_the_object_was)
+{
+	HalHelperData *ed = (HalHelperData *) data;
+
+	HAL_INFO (("device object finalized for helper with pid %d", ed->pid));
+
+	ed->d = NULL;
+	hal_util_terminate_helper (ed);
+}
 
 static void 
 helper_child_exited (GPid pid, gint status, gpointer data)
@@ -476,10 +498,14 @@ helper_child_exited (GPid pid, gint status, gpointer data)
 		g_source_remove (ed->timeout_watch_id);
 	g_spawn_close_pid (ed->pid);
 
+	if (ed->d != NULL)
+		g_object_weak_unref (G_OBJECT (ed->d), helper_device_object_finalized, ed);
+
 	if (!ed->already_issued_callback)
 		ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2, ed);
 
-	running_helpers = g_slist_remove (running_helpers, ed);		
+	running_helpers = g_slist_remove (running_helpers, ed);
+
 	g_free (ed);
 }
 
@@ -513,7 +539,6 @@ helper_add_property_to_env (HalDevice *device, HalProperty *property, gpointer u
 	return TRUE;
 }
 
-
 HalHelperData *
 hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
 			gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout)
@@ -534,6 +559,8 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 	ed->data2 = data2;
 	ed->d = d;
 	ed->cb = cb;
+	ed->already_issued_callback = FALSE;
+	ed->already_issued_kill = FALSE;
 
 	num_properties = hal_device_num_properties (d);
 	if (extra_env == NULL)
@@ -588,6 +615,11 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 				ed->timeout_watch_id = (guint) -1;
 
 			running_helpers = g_slist_prepend (running_helpers, ed);
+			/* device object may disappear from underneath us - this is
+			 * used to terminate the helper and pass d=NULL in the
+			 * HalHelperTerminatedCB callback
+			 */
+			g_object_weak_ref (G_OBJECT (d), helper_device_object_finalized, ed);
 		}
 	}
 
