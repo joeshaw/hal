@@ -31,10 +31,10 @@
 #  include <config.h>
 #endif
 
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -954,7 +954,7 @@ fat32:
 
 	next = root_cluster;
 	maxloop = 100;
-	while (maxloop--) {
+	while (--maxloop) {
 		__u32 next_sect_off;
 		__u64 next_off;
 		__u64 fat_entry_off;

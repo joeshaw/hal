@@ -1,3 +1,9 @@
+2004-09-20  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_vfat): Trivial fix
+	for debug output, the last iteration of the loop should end
+	with 0 not -1
+
 2004-09-19  David Zeuthen  <david@fubar.dk>
 
 	* doc/spec/hal-spec.xml.in: Add section about policy agents and
