@@ -4,10 +4,12 @@ if DOCBOOK_DOCS_ENABLED
 EXTRA_DIST =                          \
 	hal-spec.xml
 
-FIGURE_FILES =                        \
-	hal-arch.png                  \
-	hal-devices1.png              \
-	hal-fdi-example1.png
+FIGURE_FILES =                        	\
+	hal-arch.png                  	\
+	hal-devices1.png              	\
+	hal-fdi-example1.png      	\
+	hal-linux26.png
+
 
 EXTRA_DIST += hal-spec.html $(FIGURE_FILES)
 

@@ -97,6 +97,11 @@ HREF="#device-properties"
 HREF="#spec-device-info"
 >Specification of device info files</A
 ></DT
+><DT
+><A
+HREF="#impl"
+>HAL implementation details</A
+></DT
 ></DL
 ></DIV
 ><DIV
@@ -3677,6 +3682,48 @@ SRC="hal-fdi-example1.png">
 >&#13;    It's important to emphasize that any previously property stemming
     from device detection can be overridden by a device information file.
     </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="impl"
+>HAL implementation details</A
+></H2
+><P
+>&#13;
+      Though HAL exposes an abstract view on hardware, integrating HAL
+      into an operating system is highly dependent on the kernel and
+      userspace utilities. The section contain implementation notes for
+      various kernels supported by HAL.
+
+    </P
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN1184"
+>Linux 2.6 and udev</A
+></H3
+><P
+>&#13;
+	HAL is available for for Linux 2.6 systems using udev to manage
+	the device nodes. A typical installation may look like this
+
+      </P
+><P
+>&#13;	<IMG
+SRC="hal-linux26.png">
+      </P
+><P
+>&#13;
+	Note that only the callout for managing storage device is shown
+	in this diagram.
+	
+      </P
+></DIV
 ></DIV
 ></DIV
 ></BODY

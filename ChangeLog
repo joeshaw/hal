@@ -1,5 +1,14 @@
 2004-08-02  David Zeuthen  <david@fubar.dk>
 
+	* doc/spec/Makefile.am (FIGURE_FILES): Add hal-linux26.png
+
+	* doc/spec/hal-spec.xml.in: Work-in-progress commit
+
+	* doc/spec/hal-linux26.dia:
+	* doc/spec/hal-linux26.png: New files
+
+2004-08-02  David Zeuthen  <david@fubar.dk>
+
 	* doc/spec/Makefile.am (FIGURE_FILES): Remove hal-devices-virtual1.png
 
 	* doc/spec/hal-spec.xml.in: Work-in-progress commit
