@@ -1,8 +1,13 @@
 2004-07-04  David Zeuthen  <david@fubar.dk>
 
+	* tools/linux/hal_hotplug.c: 'product' file is also not guaranteed
+	to exist for USB devices
+
+2004-07-04  David Zeuthen  <david@fubar.dk>
+
 	* tools/linux/hal_hotplug.c: Don't wait for 'manufacturer' file for
 	USB devices since it's not guaranteed to exist. 
-	Observed by Eric Butler <eric@extremeboredom.net>
+	Observed by Eric Butler <eric@extremeboredom.net>	
 
 2004-07-04  David Zeuthen  <david@fubar.dk>
 

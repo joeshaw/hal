@@ -101,7 +101,7 @@ static const char *file_list_usb[] = {
 	 /*"serial", */
 	 "bmAttributes",
 	 /*"manufacturer",*/
-	 "product",
+	 /*"product",*/
 	 "bDeviceClass",
 	 "bDeviceSubClass",
 	 "bDeviceProtocol",
