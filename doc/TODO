@@ -1,0 +1,45 @@
+
+CVSID:$Id$
+
+This document is the TODO list for the HAL project. Feel free to add/remove
+entries if you get an idea or implement of the tasks.
+
+Must be implemented/work before 0.2 release
+-------------------------------------------
+
+ - Fix input hotplug events for input in hald (works in the agent version)
+
+ - Add a device representing the system with properties on kernel name,
+   version, xserver version etc. Make all devices that currently doesn't
+   have a parent childs of this.
+
+ - Add version number to .fdi XML-file format and check that it's not too
+   difficult to extend the format to match on properties on other devices
+   (e.g. the root device might have a os.kernel or xserver.version that an
+    .fdi file might match different properties for)
+
+ - Port monitoring code from agents/linux26/sysfs/hal_monitor.c to hald
+
+ - Fix Doxygen hierarchy; It's a mess right now
+
+ - Packaging / autoconfiscating; make install/uninstall needs to work on at
+   least fedora and debian; It's a mess right now
+
+ - Fix logging system, at least change LOG_[WARNING|ERROR|..] to another
+   namespace since it conflicts with syslog.h.
+
+ - Fix memory leaks; especially those when getting strings from D-BUS
+
+ - Add local copy of pci.ids and usb.ids (the location varies on distros)
+
+Other TODO's
+------------
+
+ - Add unicode support
+
+ - Port over to use glib in hald where it makes sense (lists, dictionaries
+   etc.). Hmm; or use D-BUS support library by copying?
+
+ - Add code/scripts to test
+
+ - Lots of other stuff ;-)

@@ -1,3 +1,55 @@
+2003-12-14  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO: New file! Contains a high-level TODO list as a complement
+	to the @todo's embedded in the source code.
+
+	* hald/device_store.c (xstrdup): new function
+	(ds_init): Require a callback to when the GDL changes
+	(async_find_timeout_fn): new function
+	(async_find_check_new_addition): new function
+	(ds_device_async_find_by_key_value_string): new function
+	(ds_device_find_by_key_value_string): new function
+	(ds_device_new): use xstrdup
+	(ds_gdl_add): check for pending async finds; notify about GDL change
+	(ds_device_set_udi): use xstrdup
+	(ds_property_set_string): use xstrdup
+	(ds_property_set_int): use xstrdup
+	(ds_property_set_bool): use xstrdup
+	(ds_property_set_double): use xstrdup
+	(ds_add_capability): new function
+
+	* hald/device_store.h: Add prototypes and required datatypes for
+	public functions added in device_store.c
+
+	* hald/main.c (gdl_changed): new function
+	(main): Call OS specific elements; see hald/linux
+
+	* hald/linux: New directory holding files for device probing and
+	hotplug handling on Linux 2.6.  All the logic from
+	agents/linux26/sysfs is ported over to use the local HAL interface
+	in hald. 
+	It's a major change, but I'm sure it's worth it. It's
+	simply more efficient having a single daemon and, more
+	importantly, it's easier to manage. The monitoring code still
+	needs to be ported over.
+	This is the last major change before 0.2 is released.
+	
+	* hald/Makefile.am: Add sources from linux and linux/libsysfs
+
+	* hald/osspec.h: new file
+
+	* tools/linux/hal_hotplug.c: New simple program for translating a
+	hotplug event into a D-BUS messages
+	
+	* hal.conf: Add interface for listening to D-BUS messages originating
+	from Linux Hotplug
+
+	* Makefile.am: Apply patch from Martin Waitz for smarter installation
+	of D-BUS policy file. Remove reference to agents; add tools to SUBDIRS
+	
+	* configure.in: Remove all agents; add Makefile generation for tools
+	and tools/linux
+	
 2003-12-14  Anders Carlsson  <andersca@gnome.org>
 
 	* configure.in: Fix config message

@@ -238,10 +238,8 @@ Doxyfile
 Makefile
 hald/Makefile
 libhal/Makefile
-agents/Makefile
-agents/linux26/Makefile
-agents/linux26/sysfs/Makefile
-agents/linux26/sysfs/libsysfs/Makefile
+tools/Makefile
+tools/linux/Makefile
 ])
 
 dnl ==========================================================================

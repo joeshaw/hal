@@ -38,6 +38,7 @@
 #include "logger.h"
 #include "device_store.h"
 #include "device_info.h"
+#include "osspec.h"
 
 /* We need somewhere to define these groups somewhere */
 
@@ -1486,7 +1487,7 @@ static DBusHandlerResult agent_manager_commit_to_gdl(
 
     /* Ok, send out a signal on the Manager interface that we added
      * this device to the gdl */
-    manager_send_signal_device_added(new_udi);
+    /*manager_send_signal_device_added(new_udi);*/
 
     reply = dbus_message_new_method_return(message);
     if( reply==NULL )
@@ -1546,7 +1547,9 @@ static DBusHandlerResult agent_manager_remove(DBusConnection* connection,
 
     /* Ok, send out a signal on the Manager interface that we removed
      * this device from the gdl */
+    /*
     manager_send_signal_device_removed(udi);
+    */
 
     reply = dbus_message_new_method_return(message);
     if( reply==NULL )
@@ -1810,7 +1813,6 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
     }
 
 
-
     else if( dbus_message_is_method_call(message,
                                          "org.freedesktop.Hal.Device",
                                          "Enable") )
@@ -1919,6 +1921,8 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
     {
         return device_query_capability(connection, message);
     }
+    else 
+        osspec_filter_function(connection, message, user_data);
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
@@ -1943,11 +1947,13 @@ static void property_changed(HalDevice* device,
     DBusMessageIter iter;
     const char* signal_name;
 
+/*
     LOG_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
               device->udi, key, 
               in_gdl ? "true" : "false",
               removed ? "true" : "false",
               added ? "true" : "false"));
+*/
 
     if( !in_gdl )
         return;
@@ -1972,6 +1978,34 @@ static void property_changed(HalDevice* device,
     dbus_message_unref(message);
 }
 
+/** Callback for the global device list has changed
+ *
+ *  @param  device              Pointer a #HalDevice object
+ *  @param  is_added            True iff device was added
+ */
+static void gdl_changed(HalDevice* device, dbus_bool_t is_added)
+{
+    if( !is_added )
+        manager_send_signal_device_added(device->udi);
+    else
+        manager_send_signal_device_removed(device->udi);
+}
+
+/** Callback for when a new capability is added to a device.
+ *
+ *  @param  device              Pointer a #HalDevice object
+ *  @param  capability          Capability added
+ *  @param  in_gdl              True iff the device object in visible in the
+ *                              global device list
+ */
+static void new_capability(HalDevice* device, const char* capability,
+                           dbus_bool_t in_gdl)
+{
+    if( !in_gdl )
+        return;
+
+    manager_send_signal_new_capability(device->udi, capability);
+}
 
 /** Entry point for HAL daemon
  *
@@ -1987,7 +2021,7 @@ int main(int argc, char* argv[])
     fprintf(stderr, "hald version " PACKAGE_VERSION "\r\n");
 
     // initialize the device store
-    ds_init(property_changed);
+    ds_init(property_changed, gdl_changed, new_capability);
 
     loop = g_main_loop_new (NULL, FALSE);
 
@@ -2012,6 +2046,10 @@ int main(int argc, char* argv[])
     }
 
     dbus_connection_add_filter(dbus_connection, filter_function, NULL, NULL);
+
+    osspec_init(dbus_connection);
+
+    osspec_probe();
 
     // run the main loop
     g_main_loop_run (loop);

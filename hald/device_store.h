@@ -65,7 +65,8 @@ typedef struct HalDevice_s
 {
     char* udi;                       /**< Unique device id */
     dbus_bool_t in_gdl;              /**< True iff device is in the global
-                                      *   device list */
+                                      *   device list. To modify use
+                                      *   ds_gdl_add() */
     int num_properties;              /**< Number of properties */
     HalProperty* prop_head;          /**< Properties head */
     struct HalDevice_s* prev;        /**< Linked list; prev element or #NULL */
@@ -104,13 +105,61 @@ typedef void (*HalDevicePropertyChangedCallback)(HalDevice* device,
                                                  dbus_bool_t removed,
                                                  dbus_bool_t added);
 
-void ds_init(HalDevicePropertyChangedCallback property_changed_cb);
+/** Signature for callback function when a device is added or removed
+ *  to the gdl
+ *
+ *  @param  device              A pointer to a #HalDevice object
+ *  @param  is_added            True iff device was added
+ */
+typedef void (*HalDeviceGDLChangedCallback)(HalDevice* device,
+                                            dbus_bool_t is_added);
+
+
+/** Signature for callback function when a device is assigned
+ *  a new capability
+ *
+ *  @param  device              A pointer to a #HalDevice object
+ *  @param  capability          Capability acquired
+ */
+typedef void (*HalDeviceNewCapabilityCallback)(HalDevice* device,
+                                               const char* capability,
+                                               dbus_bool_t in_gdl);
+
+void ds_init(HalDevicePropertyChangedCallback property_changed_cb,
+             HalDeviceGDLChangedCallback gdl_changed_cb,
+             HalDeviceNewCapabilityCallback new_capability_cb);
 void ds_shutdown();
 void ds_print(HalDevice* device);
 
 /**************************************************************************/
 
+/** Type for callback function when a device has been found.
+ *
+ *  @param  result              The result of the search or #NULL if the
+ *                              specified timeout occured
+ *
+ *  @param  data1               The 1st parameter passed to the search function
+ *                              that triggered this callback. This is used to
+ *                              uniqely identify the origin/context for the
+ *                              caller
+ *
+ *  @param  data2               The 2nd parameter passed to the search function
+ */
+typedef void (*DSAsyncFindDeviceCB)(HalDevice* result, 
+                                    void* data1, void* data2);
+
+
 HalDevice* ds_device_find(const char* udi);
+
+HalDevice* ds_device_find_by_key_value_string(const char* key, 
+                                              const char* value);
+
+void ds_device_async_find_by_key_value_string(const char* key, 
+                                              const char* value,
+                                              DSAsyncFindDeviceCB callback, 
+                                              void* data1, 
+                                              void* data2, 
+                                              int timeout);
 HalDevice* ds_device_new();
 void ds_device_destroy(HalDevice* device);
 
@@ -169,6 +218,7 @@ dbus_int32_t ds_property_get_int(HalDevice* device, const char* key);
 dbus_bool_t ds_property_get_bool(HalDevice* device, const char* key);
 double ds_property_get_double(HalDevice* device, const char* key);
 
+void ds_add_capability(HalDevice* device, const char* capability);
 
 
 

@@ -28,10 +28,12 @@
 #  include <config.h>
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dbus/dbus.h>
+#include <dbus/dbus-glib.h>
 
 #include "logger.h"
 #include "device_store.h"
@@ -46,6 +48,12 @@
 
 /** property changed callback */
 static HalDevicePropertyChangedCallback property_changed_cb = NULL;
+
+/** new capability callback */
+static HalDeviceGDLChangedCallback gdl_changed_cb = NULL;
+
+/** new capability callback */
+static HalDeviceNewCapabilityCallback new_capability_cb = NULL;
 
 /** Number of devices */
 static unsigned int device_list_num = 0;
@@ -69,17 +77,34 @@ static void* xmalloc(unsigned int how_much)
     return p;
 }
 
+/** String duplication; aborts if no memory.
+ *
+ *  @param  how_much            Number of bytes to allocated
+ *  @return                     Pointer to allocated storage
+ */
+static char* xstrdup(const char* str)
+{
+    char* p = strdup(str);
+    if( !p )
+        DIE(("Unable to duplicate string '%s'", str));
+    return p;
+}
+
 /** Initialize the device store.
  *
  *  @param  _property_changed_cb  Function to invoke whenever a property
  *                                is changed
  */
-void ds_init(HalDevicePropertyChangedCallback _property_changed_cb)
+void ds_init(HalDevicePropertyChangedCallback _property_changed_cb,
+             HalDeviceGDLChangedCallback _gdl_changed_cb,
+             HalDeviceNewCapabilityCallback _new_capability_cb)
 {
     device_list_num = 0;
     device_list_head = NULL;
     temp_device_counter = 0;
     property_changed_cb = _property_changed_cb;
+    gdl_changed_cb = _gdl_changed_cb;
+    new_capability_cb = _new_capability_cb;
 }
 
 /** Shut down the device store.
@@ -163,6 +188,238 @@ HalDevice* ds_device_find(const char* udi)
     return NULL;
 }
 
+/** search structure for async find operations */
+typedef struct DSDeviceAsyncFindStruct_s
+{
+    char* key;                    /**< key to search for, allocated by us */
+    char* value;                  /**< value that key must assume, allocated
+                                   *   by us */
+    DSAsyncFindDeviceCB callback; /**< callback to caller */
+    void* data1;                  /**< caller data, opaque pointer */
+    void* data2;                  /**< caller data, opaque pointer */
+    guint timeout_id;             /**< Timeout ID */
+
+    struct DSDeviceAsyncFindStruct_s* next; /**< next element in list*/
+} DSDeviceAsyncFindStruct;
+
+/** head of list of outstanding async find requests */
+static DSDeviceAsyncFindStruct* async_find_outstanding_head = NULL;
+
+/** Callback for when an async timeout happens 
+ *
+ *  @param  data                User provided data
+ *  @return                     #TRUE to preserve the timer, #FALSE otherwise
+ */
+static gboolean async_find_timeout_fn(gpointer data)
+{
+    void* data1;
+    void* data2;
+    DSAsyncFindDeviceCB callback;
+    DSDeviceAsyncFindStruct* i;
+    DSDeviceAsyncFindStruct* prev;
+    DSDeviceAsyncFindStruct* afs = (DSDeviceAsyncFindStruct*) data;
+
+    /* Check if this is still in list */
+    for(i=async_find_outstanding_head, prev=NULL; i!=NULL; i=i->next)
+    {
+        if( i==afs )
+        {
+            data1 = i->data1;
+            data2 = i->data2;
+            callback = i->callback;
+            
+            /* Remove element in list */
+            if( prev!=NULL )
+            {
+                prev->next = i->next;
+            }
+            else
+            {
+                async_find_outstanding_head = i->next;
+            }
+
+            /* Clean up element */
+            free(i->key);
+            free(i->value);
+            free(i);
+
+            /* We need to be careful to remove the element prior to this
+             * invocation as our use of it triggers a device addition and
+             * thus an indirect invocation of code looking at this list
+             */
+            (*callback)(NULL, data1, data2);
+            return FALSE; /* cancel timeout */
+        }
+
+        prev = i;
+    }
+    return FALSE; /* cancel timeout */
+}
+
+/** This function is called by #ds_gdl_add() when a new device is added
+ *  to the global device list.
+ *
+ *  We use it to check if there is someone having an asynchronous wait out
+ *  for the this device.
+ *
+ *  @param  device              Device just added
+ */
+static void async_find_check_new_addition(HalDevice* device)
+{
+    int type;
+    void* data1;
+    void* data2;
+    DSAsyncFindDeviceCB callback;
+    DSDeviceAsyncFindStruct* i;
+    DSDeviceAsyncFindStruct* prev;
+
+    /* Check if this is still in list */
+    for(i=async_find_outstanding_head, prev=NULL; i!=NULL; i=i->next)
+    {
+        type = ds_property_get_type(device, i->key);
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strcmp(ds_property_get_string(device, i->key), i->value)==0 )
+            {
+                /* Yay, a match! */
+                /*printf("new_add_match 0x%08x\n", i);*/
+
+                data1 = i->data1;
+                data2 = i->data2;
+                callback = i->callback;
+            
+                /* Remove element in list */
+                if( prev!=NULL )
+                {
+                    prev->next = i->next;
+                }
+                else
+                {
+                    async_find_outstanding_head = i->next;
+                }
+
+                /* Clean up element */
+                free(i->key);
+                free(i->value);
+                free(i);
+
+                /* We need to be careful to remove the element prior to this
+                 * invocation as our use of it triggers a device addition and
+                 * thus an indirect invocation of code looking at this list
+                 */
+                (*callback)(device, data1, data2);
+                return;
+            }
+        }
+        prev = i;
+    }
+}
+
+/** Find a device by requiring a specific key to assume string value. If 
+ *  multiple devices meet this criteria then the result is undefined. Only
+ *  devices in the GDL is searched.
+ *
+ *  This is an asynchronous version of #ds_device_find_by_key_value_string.
+ *  The result is delivered to the specified callback function. If the
+ *  device is there the callback is invoked immedieately and thus
+ *  before this functions returns.
+ *
+ *  The caller can specify a timeout in milliseconds on how long he is
+ *  willing to wait. A value of zero means don't wait at all.
+ *
+ *  @param  key                 key of the property
+ *  @param  value               value of the property
+ *  @param  data1               The 1st parameter passed to the callback
+ *                              function for this callback. This is used to
+ *                              uniqely identify the origin/context for the
+ *                              caller
+ *  @param  data2               The 2nd parameter passed to the callback
+ *                              function
+ *  @param  timeout             Timeout in milliseconds
+ *  @return                     #HalDevice object or #NULL if no such device
+ *                              exist
+ */
+void ds_device_async_find_by_key_value_string(const char* key, 
+                                              const char* value,
+                                              DSAsyncFindDeviceCB callback, 
+                                              void* data1, 
+                                              void* data2, 
+                                              int timeout)
+{
+    HalDevice* device;
+    DSDeviceAsyncFindStruct* afs;
+
+    assert( callback!=NULL );
+
+    /* first, try to see if we can find it right away */
+    device = ds_device_find_by_key_value_string(key, value);
+    if( device!=NULL )
+    {
+        /* yay! */
+        (*callback)(device, data1, data2 );
+        return;
+    }
+
+    if( timeout==0 )
+    {
+        (*callback)(NULL, data1, data2 );
+        return;
+    }
+
+    /* Nope; First, create a request with the neccessary data */
+    afs = xmalloc(sizeof(DSDeviceAsyncFindStruct));
+    afs->key   = xstrdup(key);
+    afs->value = xstrdup(value);
+    afs->callback = callback;
+    afs->data1 = data1;
+    afs->data2 = data2;
+
+    /* Second, setup a function to fire at timeout */
+    afs->timeout_id = g_timeout_add(timeout, 
+                                    async_find_timeout_fn, (gpointer)afs);
+
+    afs->next = async_find_outstanding_head;
+    async_find_outstanding_head = afs;
+
+}
+
+/** Find a device by requiring a specific key to assume string value. If 
+ *  multiple devices meet this criteria then the result is undefined. Only
+ *  devices in the GDL is searched.
+ *
+ *  @param  key                 key of the property
+ *  @param  value               value of the property
+ *  @return                     #HalDevice object or #NULL if no such device
+ *                              exist
+ */
+HalDevice* ds_device_find_by_key_value_string(const char* key, 
+                                              const char* value)
+{
+    int type;
+    HalDevice* device;
+    HalDeviceIterator iter_device;
+
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        device = ds_device_iter_get(&iter_device);
+
+        if( !device->in_gdl )
+            continue;
+
+        type = ds_property_get_type(device, key);
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strcmp(ds_property_get_string(device, key),
+                       value)==0 )
+                return device;
+        }
+    }
+
+    return NULL;
+}
+
 /** Create a new device; it will be added to the global device list
  *  and will have a randomly generated unique device id. It will not
  *  be in the global device list.
@@ -179,7 +436,7 @@ HalDevice* ds_device_new()
 
     obj = (HalDevice*) xmalloc(sizeof(HalDevice));
 
-    obj->udi            = strdup(buf);
+    obj->udi            = xstrdup(buf);
     obj->in_gdl         = FALSE;
     obj->num_properties = 0;
     obj->prop_head      = NULL;
@@ -204,6 +461,9 @@ void ds_device_destroy(HalDevice* device)
 {
     HalProperty* prop;
     HalProperty* prop_next;
+
+    if( gdl_changed_cb!=NULL )
+        (*gdl_changed_cb)(device, FALSE);
 
     // remove device from list
     if( device->next!=NULL )
@@ -236,6 +496,14 @@ void ds_device_destroy(HalDevice* device)
 void ds_gdl_add(HalDevice* device)
 {
     device->in_gdl = TRUE;
+
+    if( gdl_changed_cb!=NULL )
+        (*gdl_changed_cb)(device, TRUE);
+
+    /* Ah, now check for the asynchronous outstanding finds whether this
+     * device was the one someone is searching for
+     */
+    async_find_check_new_addition(device);
 }
 
 /** Get number of devices
@@ -313,7 +581,7 @@ dbus_bool_t ds_device_set_udi(HalDevice* device, const char* udi)
     if( ds_device_find(udi)!=NULL )
         return FALSE;
     free(device->udi);
-    device->udi = strdup(udi);
+    device->udi = xstrdup(udi);
     return TRUE;
 }
 
@@ -432,9 +700,7 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
             }
 
             free(prop->str_value);
-            prop->str_value = (char*) strdup(value);
-            if( prop->str_value == NULL )
-                return FALSE;
+            prop->str_value = (char*) xstrdup(value);
 
             // callback that the property changed
             if( property_changed_cb!=NULL )
@@ -450,12 +716,8 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
     prop = (HalProperty*) malloc(sizeof(HalProperty));
     if( prop==NULL )
         return FALSE;
-    prop->key = (char*) strdup(key);
-    if( prop->key==NULL )
-        return FALSE;
-    prop->str_value = (char*) strdup(value);
-    if( prop->str_value==NULL )
-        return FALSE;
+    prop->key = (char*) xstrdup(key);
+    prop->str_value = (char*) xstrdup(value);
 
     prop->type = DBUS_TYPE_STRING;
 
@@ -516,9 +778,7 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
     prop = (HalProperty*) malloc(sizeof(HalProperty));
     if( prop==NULL )
         return FALSE;
-    prop->key = (char*) strdup(key);
-    if( prop->key==NULL )
-        return FALSE;
+    prop->key = (char*) xstrdup(key);
     prop->int_value = value;
 
     prop->type = DBUS_TYPE_INT32;
@@ -580,9 +840,7 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
     prop = (HalProperty*) malloc(sizeof(HalProperty));
     if( prop==NULL )
         return FALSE;
-    prop->key = (char*) strdup(key);
-    if( prop->key==NULL )
-        return FALSE;
+    prop->key = (char*) xstrdup(key);
     prop->bool_value = value;
 
     prop->type = DBUS_TYPE_BOOLEAN;
@@ -644,9 +902,7 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
     prop = (HalProperty*) malloc(sizeof(HalProperty));
     if( prop==NULL )
         return FALSE;
-    prop->key = (char*) strdup(key);
-    if( prop->key==NULL )
-        return FALSE;
+    prop->key = (char*) xstrdup(key);
     prop->double_value = value;
 
     prop->type = DBUS_TYPE_DOUBLE;
@@ -1028,6 +1284,39 @@ dbus_bool_t ds_device_matches(HalDevice* device1, HalDevice* device2,
     }
 
     return TRUE;
+}
+
+
+/** Maximum string length for capabilities; quite a hack :-/ */
+#define MAX_CAP_SIZE 2048
+
+/** Add a capability to a device
+ *
+ *  @param  device              HalDevice to add capability to
+ *  @param  capability          Capability to add
+ */
+void ds_add_capability(HalDevice* device, const char* capability)
+{
+    const char* caps;
+    char buf[MAX_CAP_SIZE];
+
+    caps = ds_property_get_string(device, "Capabilities");
+    if( caps==NULL )
+    {
+        ds_property_set_string(device, "Capabilities", capability);
+    }
+    else
+    {
+        if( strstr(caps, capability)==NULL )
+        {
+            snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
+            ds_property_set_string(device, "Capabilities", buf);
+        }
+    }
+
+
+    if( new_capability_cb!=NULL )
+        (*new_capability_cb)(device, capability, device->in_gdl);
 }
 
 /** @} */
