@@ -1,3 +1,10 @@
+2004-07-27  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (detect_media): A mounted
+	disc wasn't detected; this is now 'fixed'. Spotted by Sjoerd Simons.
+	(is_mounted): New function to determine if a filesystem on a 
+	device file is mounted
+
 2004-07-23  Joe Shaw  <joeshaw@novell.com>
 
 	* Makefile.am: Also dist HACKING.

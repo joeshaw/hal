@@ -48,6 +48,7 @@
 #include <linux/cdrom.h>
 #include <linux/fs.h>
 #include <glib.h>
+#include <mntent.h>
  
 #include "../hald.h"
 #include "../hald_dbus.h"
@@ -404,6 +405,39 @@ volume_remove_from_gdl (HalDevice *device, gpointer user_data)
 }
 
 
+/** Check if a filesystem on a special device file is mounted
+ *
+ *  @param  device_file         Special device file, e.g. /dev/cdrom
+ *  @return                     TRUE iff there is a filesystem system mounted
+ *                              on the special device file
+ */
+static dbus_bool_t
+is_mounted (const char *device_file)
+{
+	FILE *f;
+	dbus_bool_t rc;
+	struct mntent mnt;
+	struct mntent *mnte;
+	char buf[512];
+
+	rc = FALSE;
+
+	if ((f = setmntent ("/etc/mtab", "r")) == NULL)
+		goto out;
+
+	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
+		if (strcmp (device_file, mnt.mnt_fsname) == 0) {
+			rc = TRUE;
+			goto out1;
+		}
+	}
+
+out1:
+	endmntent (f);
+out:
+	return rc;
+}
+
 /** Check for media on a block device that is not a volume
  *
  *  @param  d                   Device to inspect; can be any device, but
@@ -625,13 +659,25 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			/* this means the disc is mounted or some other app,
 			 * like a cd burner, has opened O_EXCL */
 			if (errno == EBUSY) {
-				/*HAL_INFO (("*** EBUSY for %s", device_file));*/
+				/*HAL_INFO(("*** EBUSY for %s", device_file));*/
+
+				/* HOWEVER, when starting hald a disc may be
+				 * mounted; so check /etc/mtab to see if it
+				 * actually is mounted. If it is we open
+				 * without O_EXCL
+				 */
+				if (is_mounted (device_file)) {
+					fd = open (device_file, O_RDONLY | O_NONBLOCK);
+					if (fd == -1)
+						return FALSE;
+				} else {
+					return FALSE;
+				}
+			} else {
+				/* open failed */
+				HAL_INFO (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));
 				return FALSE;
 			}
-
-			/* open failed */
-			HAL_INFO (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));
-			return FALSE;
 		}
 
 		/* respect policy */
