@@ -3,22 +3,33 @@
  "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
 <busconfig>
 
+
   <!-- This configuration file specifies the required security policies
        for the HAL to work. -->
 
-  <!-- Only root can own the HAL service and only root can use the
-       AgentManager and Linux.Hotplug interfaces -->
-  <policy user="root">
+  <!-- Only user @HAL_USER@ can own the HAL service and be an agent -->
+  <policy user="@HAL_USER@">
     <allow own="org.freedesktop.Hal"/>
 
     <allow send_interface="org.freedesktop.Hal.AgentManager"
            send_destination="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.AgentManager"
            receive_sender="org.freedesktop.Hal"/>
+  </policy>
 
+  <!-- Only root can use the Linux.Hotplug interface -->
+  <policy user="root">
     <allow send_interface="org.freedesktop.Hal.Linux.Hotplug"
            send_destination="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.Linux.Hotplug"
+           receive_sender="org.freedesktop.Hal"/>
+  </policy>
+
+  <!-- Any user in the @HAL_GROUP@ group can use the AgentManager interface -->
+  <policy group="@HAL_GROUP@">
+    <allow send_interface="org.freedesktop.Hal.AgentManager"
+           send_destination="org.freedesktop.Hal"/>
+    <allow receive_interface="org.freedesktop.Hal.AgentManager"
            receive_sender="org.freedesktop.Hal"/>
   </policy>
 
@@ -32,5 +43,6 @@
     <allow receive_interface="org.freedesktop.Hal.Device"
            receive_sender="org.freedesktop.Hal"/>
   </policy>
+
 </busconfig>
 

@@ -474,6 +474,8 @@ static void usb_proc_parse()
         usb_proc_head = NULL;
     }
 
+    usb_proc_cur_info = NULL;
+
     f = fopen("/proc/bus/usb/devices", "r");
     if( f==NULL )
     {
@@ -487,7 +489,6 @@ static void usb_proc_parse()
     }
     usb_proc_device_done(usb_proc_cur_info);
 
-/*
     {
         usb_proc_info* i;
         for(i=usb_proc_head; i!=NULL; i=i->next)
@@ -507,7 +508,6 @@ static void usb_proc_parse()
             printf("\n");
         }
     }
-*/
 }
 
 
@@ -1058,18 +1058,18 @@ static void visit_device_usb_got_parent(HalDevice* parent,
 
     bus_id = ds_property_get_string(d, "linux.sysfs_bus_id");
 
+    if( !is_probing )
+    {
+        /* reload proc info if we are not probing on startup */
+        usb_proc_parse();
+    }
+
     if( sscanf(bus_id, "usb%d", &bus_number)==1 )
     {
         /* Is of form "usb%d" which means that this is a USB virtual root
          * hub, cf. drivers/usb/hcd.c in kernel 2.6
          */
         ds_property_set_int(d, "usb.bus_number", bus_number);
-
-        if( !is_probing )
-        {
-            /* reload proc info if we are not probing on startup */
-            usb_proc_parse();
-        }
 
         proc_info = usb_proc_find_virtual_hub(bus_number);
     }

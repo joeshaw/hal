@@ -30,6 +30,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <getopt.h>
+#include <pwd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
@@ -1779,6 +1787,34 @@ static void new_capability(HalDevice* device, const char* capability,
     manager_send_signal_new_capability(device->udi, capability);
 }
 
+/** Print out program usage.
+ *
+ */
+static void usage()
+{
+    fprintf(stderr, 
+"\n"
+"usage : hald [--daemon=yes|no] [--help]\n");
+    fprintf(stderr, 
+"\n"
+"        --daemon=yes|no    Become a daemon\n"
+"        --help             Show this information and exit\n"
+"\n"
+"The HAL daemon detects devices present in the system and provides the\n"
+"org.freedesktop.Hal service through D-BUS. The commandline options given\n"
+"overrides the configuration given in " PACKAGE_SYSCONF_DIR "/hald.conf\n"
+"\n"
+"For more information visit http://freedesktop.org/Software/hal\n"
+"\n");
+}
+
+
+/** If #TRUE, we will daemonize */
+static dbus_bool_t opt_become_daemon = TRUE;
+
+/** Run as specified username if not #NULL */
+static char* opt_run_as = NULL;
+
 /** Entry point for HAL daemon
  *
  *  @param  argc                Number of arguments
@@ -1790,13 +1826,147 @@ int main(int argc, char* argv[])
     GMainLoop* loop;
     DBusError dbus_error;
 
-    logger_init();
+    opt_run_as = "hal";
 
+    while(1)
+    {
+        int c;
+        int option_index = 0;
+        const char* opt;
+        static struct option long_options[] = 
+        {
+            {"daemon", 1, NULL, 0},
+            {"help", 0, NULL, 0},
+            {NULL, 0, NULL, 0}
+        };
+
+        c = getopt_long(argc, argv, "",
+                        long_options, &option_index);
+        if (c == -1)
+            break;
+        
+        switch(c)
+        {
+        case 0:
+            opt = long_options[option_index].name;
+
+            if( strcmp(opt, "help")==0 )
+            {
+                usage();
+                return 0;
+            }
+            else if( strcmp(opt, "daemon")==0 )
+            {
+                if( strcmp("yes", optarg)==0 )
+                {
+                    opt_become_daemon = TRUE;
+                }
+                else if( strcmp("no", optarg)==0 )
+                {
+                    opt_become_daemon = FALSE;
+                }
+                else
+                {
+                    usage();
+                    return 1;
+                }                
+            }
+            break;        
+
+        default:
+            usage();
+            return 1;
+            break;
+        }         
+    }
+
+    logger_init();
     HAL_INFO(("HAL daemon version " PACKAGE_VERSION " starting up"));
 
-    // initialize the device store
+    HAL_DEBUG(("opt_become_daemon = %d", opt_become_daemon));
+
+    if( opt_become_daemon )
+    {
+        int child_pid;
+        int dev_null_fd;
+
+        if( chdir("/")<0 )
+        {
+            HAL_ERROR(("Could not chdir to /, errno=%d", errno));
+            return 1;
+        }
+
+        child_pid = fork();
+        switch( child_pid )
+        {
+        case -1:
+            HAL_ERROR(("Cannot fork(), errno=%d", errno));
+            break;
+
+        case 0:
+            /* child */
+
+            dev_null_fd = open("/dev/null", O_RDWR);
+            /* ignore if we can't open /dev/null */
+            if( dev_null_fd>0 )
+            {
+                /* attach /dev/null to stdout, stdin and stderr */
+                dup2(dev_null_fd, 0);
+                dup2(dev_null_fd, 1);
+                dup2(dev_null_fd, 2);
+            }
+
+            umask(022);
+
+            /** @todo FIXME change logger to direct to syslog */
+
+            break;
+
+        default:
+            /* parent */
+            exit(0);
+            break;
+        }
+        
+        /* Create session */
+        setsid();
+    }
+
+    if( opt_run_as!=NULL )
+    {
+        uid_t uid;
+        gid_t gid;
+        struct passwd* pw;
+
+        
+        if( (pw = getpwnam(opt_run_as)) == NULL )
+        {
+            HAL_ERROR(("Could not lookup user %s, errno=%d", 
+                       opt_run_as, errno));
+            exit(1);
+        }
+
+        uid = pw->pw_uid;
+        gid = pw->pw_gid;
+
+        if( setgid(gid)<0 )
+        {
+            HAL_ERROR(("Failed to set GID to %d, errno=%d", gid, errno));
+            exit(1);
+        }
+
+        if( setuid(uid)<0 )
+        {
+            HAL_ERROR(("Failed to set UID to %d, errno=%d", uid, errno));
+            exit(1);
+        }
+
+    }
+
+    /* initialize the device store */
     ds_init();
 
+    /* add callbacks from device store */
     ds_add_cb_newcap(new_capability);
     ds_add_cb_gdl_changed(gdl_changed);
     ds_add_cb_property_changed(property_changed);
@@ -1825,11 +1995,12 @@ int main(int argc, char* argv[])
 
     dbus_connection_add_filter(dbus_connection, filter_function, NULL, NULL);
 
+    /* initialize operating system specific parts */
     osspec_init(dbus_connection);
-
+    /* and detect devices */
     osspec_probe();
 
-    // run the main loop
+    /* run the main loop and serve clients */
     g_main_loop_run (loop);
 
     return 0;

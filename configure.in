@@ -31,6 +31,25 @@ AC_SUBST(HWDATA_DIR)
 AC_DEFINE_UNQUOTED(HWDATA_DIR,"$HWDATA_DIR", [Where PCI and USB IDs are found])
 
 
+AC_ARG_WITH(hal_user,[  --with-hal-user=<user>  User for running the HAL daemon (hal)])
+if test -z "$with_hal_user" ; then
+    HAL_USER=hal
+else
+    HAL_USER=$with_hal_user
+fi
+AC_SUBST(HAL_USER)
+AC_DEFINE_UNQUOTED(HAL_USER,"$HAL_USER", [User for running the HAL daemon])
+
+AC_ARG_WITH(hal_group,[  --with-hal-group=<grp>  Group for HAL (hal)])
+if test -z "$with_hal_group" ; then
+    HAL_GROUP=hal
+else
+    HAL_GROUP=$with_hal_group
+fi
+AC_SUBST(HAL_GROUP)
+AC_DEFINE_UNQUOTED(HAL_GROUP,"$HAL_GROUP", [Group for HAL])
+
+
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi         enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
 AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
@@ -208,6 +227,7 @@ AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d dir
 
 AC_OUTPUT([
 hal.pc
+hal.conf
 Doxyfile
 Makefile
 hald/Makefile
@@ -241,7 +261,10 @@ echo "
         compiler:                 ${CC}
         cflags:                   ${CFLAGS}
         cppflags:                 ${CPPFLAGS}
-        Doxygen:                  ${DOXYGEN}"
+        Doxygen:                  ${DOXYGEN}
+        User for HAL:             ${HAL_USER}
+        Group for HAL:            ${HAL_GROUP}
+"
 
 echo "
         Maintainer mode:          ${USE_MAINTAINER_MODE}
@@ -253,6 +276,9 @@ if test x$enable_verbose_mode = xyes; then
    echo "NOTE: building with verbose mode increases library size, may slightly increase security risk, and decreases performance."
    echo
 fi
+
+echo "NOTE: Remember to create user ${HAL_USER} and group ${HAL_GROUP} before make install"
+echo
 
 dnl if test x${USE_MAINTAINER_MODE} = xyes; then
 dnl    echo "NOTE: device info files will be read from the device_info_files directory in the source distribution rather than from ${LOCALSTATEDIR}/hal/fdi"
