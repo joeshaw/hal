@@ -1,5 +1,11 @@
 2004-06-20  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (foreach_block_device): Don't
+	clear volume.mount_point when learning that the device is
+	unmounted.  Seen by Kay Sievers <kay.sievers@vrfy.org>
+
+2004-06-20  David Zeuthen  <david@fubar.dk>
+
 	Patch from Kay Sievers <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.[ch] : Extract volume label from

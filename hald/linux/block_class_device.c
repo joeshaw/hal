@@ -1530,7 +1530,6 @@ foreach_block_device (HalDeviceStore *store, HalDevice *d,
 					      FALSE);
 		hal_device_property_set_string (d, "volume.mount_point",
 						"");
-		hal_device_property_set_string (d, "volume.fstype", "");
 
 		device_property_atomic_update_end ();
 
