@@ -158,8 +158,8 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
 
         value = attr[3];
 
-        HAL_INFO(("Checking that key='%s' is a string that equals '%s'",
-                  key, value));
+        /*HAL_INFO(("Checking that key='%s' is a string that equals '%s'",
+          key, value));*/
 
         if( ds_property_get_type(pc->device, key)!=DBUS_TYPE_STRING )
             return FALSE;
@@ -250,6 +250,24 @@ static void handle_merge(ParsingContext* pc, const char** attr)
         pc->merge_type = DBUS_TYPE_STRING;
         return;
     }
+    else if( strcmp(attr[3], "bool")==0 )
+    {
+        /* match string property */
+        pc->merge_type = DBUS_TYPE_BOOLEAN;
+        return;
+    }
+    else if( strcmp(attr[3], "int")==0 )
+    {
+        /* match string property */
+        pc->merge_type = DBUS_TYPE_INT32;
+        return;
+    }
+    else if( strcmp(attr[3], "double")==0 )
+    {
+        /* match string property */
+        pc->merge_type = DBUS_TYPE_DOUBLE;
+        return;
+    }
     
     return;
 }
@@ -280,6 +298,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
     
     pc->cdata_buf_len = 0;
     
+/*
     for (i = 0; i < pc->depth; i++)
         printf("  ");
     
@@ -290,6 +309,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
     }
 
     printf("   curelem=%d\n", pc->curelem);
+*/
     
     if( strcmp(el, "match")==0 )
     {
@@ -334,7 +354,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
         }
         else
         {
-            HAL_INFO(("No merge!"));
+            /*HAL_INFO(("No merge!"));*/
         }
     }
     else if( strcmp(el, "device")==0 )
@@ -394,7 +414,7 @@ static void end(ParsingContext* pc, const char* el)
 
     pc->cdata_buf[pc->cdata_buf_len]='\0';
 
-    printf("   curelem=%d\n", pc->curelem);
+/*    printf("   curelem=%d\n", pc->curelem);*/
 
     if( pc->curelem==CURELEM_MERGE && pc->match_ok )
     {
@@ -405,6 +425,31 @@ static void end(ParsingContext* pc, const char* el)
         {
         case DBUS_TYPE_STRING:
             ds_property_set_string(pc->device, pc->merge_key, pc->cdata_buf);
+            break;
+
+            
+        case DBUS_TYPE_INT32:
+        {
+            dbus_int32_t value;
+            
+            /* match integer property */
+            value = strtol(pc->cdata_buf, NULL, 0);
+            
+            /** @todo FIXME: Check error condition */
+
+            ds_property_set_int(pc->device, pc->merge_key, value);
+            break;
+        }
+
+        case DBUS_TYPE_BOOLEAN:
+            ds_property_set_bool(
+                pc->device, pc->merge_key, 
+                (strcmp(pc->cdata_buf, "true")==0) ? TRUE : FALSE);
+            break;
+
+        case DBUS_TYPE_DOUBLE:
+            ds_property_set_double(pc->device, pc->merge_key, 
+                                   atof(pc->cdata_buf));
             break;
 
         default:
@@ -443,9 +488,7 @@ static void cdata(ParsingContext *pc, const char* s, int len)
     bytes_left = CDATA_BUF_SIZE - pc->cdata_buf_len;
     if( len>bytes_left )
     {
-        fprintf(stderr,
-                "libhaldeviceinfo: CDATA in element larger than %d\r\n",
-                CDATA_BUF_SIZE);
+        HAL_ERROR(("CDATA in element larger than %d", CDATA_BUF_SIZE));
     }
 
     bytes_to_copy = len;
@@ -481,7 +524,7 @@ static dbus_bool_t process_fdi_file(const char* dir, const char* filename,
 
     snprintf(buf, 511, "%s/%s", dir, filename);
 
-    printf("analysing file %s\r\n", buf);
+    /*HAL_INFO(("analysing file %s", buf));*/
 
     // open file and read it into a buffer; it's a small file...
     file = fopen(buf, "r");
@@ -533,17 +576,16 @@ static dbus_bool_t process_fdi_file(const char* dir, const char* filename,
     XML_SetUserData(parser, parsing_context);
 
     rc = XML_Parse(parser, filebuf, filesize, 1);
-    printf("XML_Parse rc=%d\r\n", rc);
+    /*printf("XML_Parse rc=%d\r\n", rc);*/
 
     if( rc==0 )
     {
         // error parsing document
-        fprintf(stderr, "libhaldeviceinfo : Error parsing XML document %s\r\n",
-                buf);
-        fprintf(stderr, "at line %d, column %d : %s\r\n", 
-                XML_GetCurrentLineNumber(parser),
-                XML_GetCurrentColumnNumber(parser),
-                XML_ErrorString(XML_GetErrorCode(parser)));
+        HAL_ERROR(("Error parsing XML document %s at line %d, column %d : %s",
+                   buf,
+                   XML_GetCurrentLineNumber(parser),
+                   XML_GetCurrentColumnNumber(parser),
+                   XML_ErrorString(XML_GetErrorCode(parser)) ));
         device_matched = FALSE;
     }
     else
@@ -576,7 +618,7 @@ static int scan_fdi_files(const char* dir, HalDevice* d)
 
     found_fdi_file = 0;
 
-    HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));
+    /*HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));*/
 
     num_entries = scandir(dir, &name_list, 0, alphasort);
     if( num_entries==-1 )
@@ -625,7 +667,7 @@ static int scan_fdi_files(const char* dir, HalDevice* d)
             dirname = (char*) malloc(num_bytes);
             if( dirname==NULL )
             {
-                HAL_ERROR(("couldn't allocated %d bytes\r\n", num_bytes));
+                HAL_ERROR(("couldn't allocated %d bytes", num_bytes));
                 break;
             }
 
@@ -658,7 +700,7 @@ static int scan_fdi_files(const char* dir, HalDevice* d)
  */
 dbus_bool_t di_search_and_merge(HalDevice* d)
 {
-    return scan_fdi_files("/home/david/xdg-hacking/hal/fdi", d);
+    return scan_fdi_files(PACKAGE_DATA_DIR "/hal/fdi", d);
 }
 
 /** @} */

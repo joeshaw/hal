@@ -64,14 +64,19 @@ class Representation:
             icon = self.icons["cardbus"]
         elif cat=="video":
             icon = self.icons["video"]
-        elif cat=="removable_media.cdrom":
-            icon = self.icons["cdrom"]
-        elif cat=="removable_media.floppy":
-            icon = self.icons["floppy"]
-        elif cat=="fixed_media.harddisk":
-            icon = self.icons["harddisk"]
-        elif cat=="fixed_media.flash":
-            icon = self.icons["flash"]
+        elif cat=="camera":
+            icon = self.icons["camera"]
+        elif cat=="storage" or cat=="storage.removable":
+            if device.properties.has_key("storage.media"):
+                media = device.properties["storage.media"]
+                if media=="cdrom":
+                    icon = self.icons["cdrom"]
+                elif media=="floppy":
+                    icon = self.icons["floppy"]
+                elif media=="disk":
+                    icon = self.icons["harddisk"]
+                elif media=="flash":
+                    icon = self.icons["flash"]
         elif cat=="net":
             icon = self.icons["network"]
         elif cat=="multimedia.audio":

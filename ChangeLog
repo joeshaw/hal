@@ -1,3 +1,54 @@
+2003-12-23  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Drop DEVICEMANAGER_DIR. This allows us to do make
+	install even in maintainer mode, but changes to datafiles (glade
+	and png's) needs to be installed every time unless Const.py is
+	directly edited. Add autogeneration of fdi/Makefile and 
+	fdi/10generic/Makefile and fdi/20freedesktop/Makefile.
+
+	* hald/device_info.c (handle_match): Fix check for merge of the
+	other non-string types (bool, int, double)
+	(end): Merge non-string types
+
+	* hald/linux/linux_class_block.c 
+	(visit_class_device_block_got_parent): rename various properties
+	to match the spec.
+
+	* hald/linux/linux_class_input.c (process_input_proc_info): rename 
+	various properties to match the spec.
+
+	* hald/linux/linux_common.c (rename_and_maybe_add): Implement
+	merging with persistent unplugged devices; search for .fdi files
+
+	* hald/linux/linux_osspec.c (handle_hotplug): Don't destroy
+	persistent devices on remove; rather mark the unplugged, 
+	info.not_available set to true, and remove some key properties in
+	info and linux namespace.
+
+	* hald/linux/linux_usb.c (usb_add_caps_from_class): Renamed capability
+	from storage to storage_controller to match spec.. Hmm.. not sure..
+
+	* tools/device-manager/Const.py.in: Use @DATADIR@ and path instead
+	of @DEVICEMANAGER_DIR@
+
+	* tools/device-manager/Representation.py: Add support for capability
+	camera and fixup how the storage icon is selected to reflect the new
+	spec
+
+	* fdi/Makefile.am: new file
+
+	* fdi/10generic/Makefile.am: new file
+	
+	* fdi/10generic/usb-classes.fdi: removed
+
+	* fdi/20freedesktop/Makefile.am: new file
+	
+	* fdi/20freedesktop/ibm-usb-hub-keyboard.fdi: removed
+
+	* fdi/20freedesktop/lexar-cf-card-reader.fdi: removed
+
+	* fdi/20freedesktop/canon-digital-ixus-v.fdi: new file
+	
 2003-12-22  David Zeuthen  <david@fubar.dk>
 
 	* libhal/libhal.c (hal_free_string): rename from hal_free_utf8 as

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = libhal hald tools
+SUBDIRS = libhal hald tools fdi
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = hal.pc

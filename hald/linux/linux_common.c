@@ -41,6 +41,7 @@
 
 #include "../logger.h"
 #include "../device_store.h"
+#include "../device_info.h"
 #include "linux_common.h"
 
 /**
@@ -381,8 +382,8 @@ tryagain:
     if( computed_d!=NULL )
     {
         
-        if( ds_property_get_int(computed_d, "State")!=
-            42 /** @todo: FIXME HAL_STATE_UNPLUGGED*/ )
+        if( (!ds_property_exists(computed_d, "info.not_available"))
+            && (!ds_property_get_bool(computed_d, "info.not_available")) )
         {
             /* Danger, Will Robinson! Danger!
              *
@@ -403,8 +404,8 @@ tryagain:
              */
             if( ds_device_matches(computed_d, d, namespace) )
             {
-                fprintf(stderr, "Found device already present as '%s'!\n",
-                        computed_udi);
+                HAL_ERROR(("Found device already present as '%s'!\n",
+                           computed_d->udi));
                 ds_print(d);
                 ds_print(computed_d);
                 /* indeed a match, must be b) ; ignore device */
@@ -432,40 +433,31 @@ tryagain:
         
         /* Remove temporary device */
         ds_device_destroy(d);
-        
-        /* Set that the device is in the disabled state... */
-        /*ds_property_set_int(computed_d, "State", HAL_STATE_DISABLED);*/
-        
-        /* Now try to enable the device.. */
-        if( ds_property_exists(computed_d, "RequireEnable") &&
-            !ds_property_get_bool(computed_d, "RequireEnable") )
-        {
-            /*HAL_INFO(("TODO: enable %s!", computed_udi));*/
-            /*hal_device_enable(computed_udi);*/
-        }
+
+        /* Set that we are back in business! */
+        ds_property_set_bool(computed_d, "info.not_available", FALSE);
+
+        HAL_INFO(("Device %s is plugged in again", computed_d->udi));
+
     }
     else
     {
         /* Device is not in list... */
         
-        /* Set required parameters */
-        /*ds_property_set_bool(d, "GotDeviceInfo", FALSE);*/
-        /*ds_property_set_int(d, "State", HAL_STATE_NEED_DEVICE_INFO);*/
-        
-        /* commit the device to the Global Device List - give the
-         * computed device name */
+        /* assign the computed device name */
         ds_device_set_udi(d, computed_udi);
-
         ds_property_set_string(d, "info.udi", computed_udi);
 
+        /* Search for device information file and attempt merge */
+        if( di_search_and_merge(d) )
+        {
+            HAL_INFO(("Found a .fdi file for %s", d->udi));
+        }
+
+        /* add to GDL */ 
         ds_gdl_add(d);
 
-        /* Now try to enable the device - if a .fdi is found 
-         * and merged, the HAL daemon will know to respect the
-         * RequireEnable property */
-        /*HAL_INFO(("TODO: enable %s!", computed_udi));*/
-        /*hal_device_enable(computed_udi);*/
-
+        HAL_INFO(("New device %s added", d->udi));
     }
 
     return computed_udi;

@@ -251,7 +251,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             model = read_single_line("/proc/ide/%s/model", ide_name);
             if( model!=NULL )
             {
-                ds_property_set_string(d, "block.model", model);
+                ds_property_set_string(d, "storage.model", model);
                 ds_property_set_string(d, "info.product", model);
             }
 
@@ -270,50 +270,49 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             media = read_single_line("/proc/ide/%s/media", ide_name);
             if( media!=NULL )
             {
-                ds_property_set_string(d, "block.media", media);
+                ds_property_set_string(d, "storage.media", media);
 
                 /* Set for removable media */
                 if( strcmp(media, "disk")==0 )
                 {
-                    ds_add_capability(d, "fixed_media");
-                    ds_add_capability(d, "fixed_media.harddisk");
+                    ds_add_capability(d, "storage");
                     ds_property_set_string(d, "info.category", 
-                                           "fixed_media.harddisk");
+                                           "storage");
                 }
                 else if( strcmp(media, "cdrom")==0 )
                 {
-                    ds_add_capability(d, "removable_media");
-                    ds_add_capability(d, "removable_media.cdrom");
+                    ds_add_capability(d, "storage");
+                    ds_add_capability(d, "storage.removable");
                     ds_property_set_string(d, "info.category", 
-                                           "removable_media.cdrom");
+                                           "storage.removable");
                     removable_media = TRUE;
                 }
                 else if( strcmp(media, "floppy")==0 )
                 {
-                    ds_add_capability(d, "removable_media");
-                    ds_add_capability(d, "removable_media.floppy");
+                    ds_add_capability(d, "storage");
+                    ds_add_capability(d, "storage.removable");
                     ds_property_set_string(d, "info.category", 
-                                           "removable_media.floppy");
+                                           "storage.removable");
                     removable_media = TRUE;
                 }
                 else if( strcmp(media, "tape")==0 )
                 {
-                    ds_add_capability(d, "removable_media");
-                    ds_add_capability(d, "removable_media.tape");
+                    ds_add_capability(d, "storage");
+                    ds_add_capability(d, "storage.removable");
                     ds_property_set_string(d, "info.category", 
-                                           "removable_media.tape");
+                                           "storage.removable");
                     removable_media = TRUE;
                 }
 
             }
 
-            ds_property_set_bool(d, "block.has_removable_media", 
+            ds_property_set_bool(d, "storage.has_removable_media", 
                                  removable_media);
             
         }
         else
         {
-            /** @todo: block device on non-IDE device; how to find the
+            /** @todo block device on non-IDE device; how to find the
              *         name and the media-type? Right now we just assume
              *         that the disk is fixed and of type flash.. This hack
              *         does 'the right thing' on IDE-systems where the
@@ -324,12 +323,11 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
              *       
              */
 
-            ds_property_set_string(d, "block.media", "flash");
+            ds_property_set_string(d, "storage.media", "flash");
 
-            ds_add_capability(d, "fixed_media");
-            ds_add_capability(d, "fixed_media.flash");
+            ds_add_capability(d, "storage");
             ds_property_set_string(d, "info.category", 
-                                   "fixed_media.flash");
+                                   "storage");
             
             /* guestimate product name */
             ds_property_set_string(d, "info.product", "Disk");

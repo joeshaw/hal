@@ -656,8 +656,8 @@ static void usb_add_caps_from_class(HalDevice* d,
         ds_add_capability(d, "printer");
         break;
     case 0x08:
-        cat = "storage";
-        ds_add_capability(d, "storage");
+        cat = "storage_controller";
+        ds_add_capability(d, "storage_controller");
         break;
     case 0x09:
         cat = "hub";

@@ -446,7 +446,7 @@ static void process_input_proc_info(input_proc_info* i)
                                  i->evbit&(1<<EV_SND));
     ds_property_set_bool(d, "input.repeat", 
                                  i->evbit&(1<<EV_REP));
-    ds_property_set_bool(d, "input.forceFeedback", 
+    ds_property_set_bool(d, "input.force_feedback", 
                                  i->evbit&(1<<EV_FF));
     ds_property_set_bool(d, "input.misc", 
                                  i->evbit&(1<<EV_MSC));

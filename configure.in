@@ -206,14 +206,6 @@ fi
 AC_SUBST(LINUX_HOTPLUG_DIR)
 AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d directory is])
 
-if test x$USE_MAINTAINER_MODE = xyes; then
-    DEVICEMANAGER_DIR=$(cd $top_srcdir; pwd)/tools/device-manager
-else
-    DEVICEMANAGER_DIR=$DATADIR/$PACKAGE/device-manager
-fi
-AC_SUBST(DEVICEMANAGER_DIR)
-
-
 AC_OUTPUT([
 hal.pc
 Doxyfile
@@ -224,6 +216,9 @@ tools/Makefile
 tools/linux/Makefile
 tools/device-manager/Makefile
 tools/device-manager/Const.py
+fdi/Makefile
+fdi/10generic/Makefile
+fdi/20freedesktop/Makefile
 ])
 
 dnl ==========================================================================
@@ -232,7 +227,6 @@ echo "
                   ===========
 
         prefix:                   ${prefix}
-        exec_prefix:              ${REAL_EXEC_PREFIX}
         libdir:                   ${LIBDIR}
         bindir:                   ${BINDIR}
         datadir:                  ${DATADIR}

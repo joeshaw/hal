@@ -424,7 +424,25 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
             {
                 HAL_INFO(("Removing device @ sysfspath %s, udi %s", 
                           sysfs_devpath, d->udi));
-                ds_device_destroy(d);
+
+                if( ds_property_exists(d, "info.persistent") &&
+                    ds_property_get_bool(d, "info.persistent") )
+                {
+                    ds_property_set_bool(d, "info.not_available", TRUE);
+                    /* Remove enough specific details so we are not found
+                     * by child devices when being plugged in again.. 
+                     */
+                    ds_property_remove(d, "info.parent");
+                    ds_property_remove(d, "info.physical_device");
+                    ds_property_remove(d, "linux.sysfs_path");
+                    ds_property_remove(d, "linux.sysfs_path_device");
+                    HAL_INFO(("Device %s is persistent, so not removed",
+                              d->udi));
+                }
+                else
+                {
+                    ds_device_destroy(d);
+                }
             }
         }
     }

@@ -10,7 +10,7 @@ AUTHORS = [
     "Shannon -jj Behrens <jjinux@yahoo.com> (for simplepy)"
 ]
 
-DATADIR = "@DEVICEMANAGER_DIR@"
+DATADIR = "@DATADIR@/@PACKAGE@/device-manager"
 
 PIXBUF_COLUMN = 0
 TITLE_COLUMN  = 1

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb">
+      <match key="usb.vendor_id" int="0x04a9">
+        <match key="usb.product_id" int="0x3052">
+          <merge key="info.category" type="string">camera</merge>
+          <merge key="info.capabilities" type="string">camera</merge>
+          <merge key="info.persistent" type="bool">true</merge>
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>
