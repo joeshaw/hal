@@ -219,6 +219,9 @@ tools/device-manager/Const.py
 fdi/Makefile
 fdi/10generic/Makefile
 fdi/20freedesktop/Makefile
+doc/Makefile
+examples/Makefile
+examples/volumed/Makefile
 ])
 
 dnl ==========================================================================

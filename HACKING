@@ -2,7 +2,8 @@
 Coding Style
 ===
 
- - Please follow the coding style already used
+ - Please follow the coding style already used - it's not a must, but it's
+   nice to have consistency.
 
  - Write docs for all functions and structs and so on. try
    "doxygen Doxyfile" prior to commit and be sure there are no

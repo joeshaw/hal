@@ -1,0 +1,104 @@
+
+====================================
+HAL 0.2 "Open the Pod Bay Door, Hal"
+====================================
+
+So, I've promised a release of HAL before Christmas, so here goes
+version 0.2. It's not at version 9000 yet, so it won't do any device
+configuration (like closing your Pod Bay door device), and it probably
+never will. That's right, HAL is a lot simpler than earlier envisioned.
+
+To get an idea of what I'm talking about, you might want to read the
+updated spec available at http://freedesktop.org/Software/hal and give
+the tarball a testdrive.
+
+Special thanks to Martin Waitz for patches to package HAL.
+
+
+What is it?
+===========
+
+HAL is a hardware abstraction layer and aims to provide a live list of
+devices present in the system at any point in time. HAL tries to understand
+both physical devices (such as PCI, USB) and the device classes (such as 
+input, net and block) physical devices have, and it allows merging of
+information from so called device info files specific to a device.
+
+HAL provides a network API through D-BUS for querying devices and notifying
+when things change. Finally, HAL provides some monitoring (in an unintrusive
+way) of devices, presently ethernet link detection and volume mounts are
+monitored.
+
+This, and more, is all described in the HAL specification
+
+
+Where can I get it?
+===================
+
+ http://freedesktop.org/~david/hal-0.2/spec/hal-spec.html
+ 
+ http://freedesktop.org/~david/hal-0.2/hal-0.2.tar.gz
+
+
+How do I build and run HAL?
+===========================
+
+You'll need recent glib, expat and d-bus from CVS to build HAL. Also
+pygnome and pygtk is required to run the GUI device manager. A Linux
+2.6 kernel is also required. HAL integrates with udev (if udev is
+compiled with D-BUS support; version 009 and onwards happen to
+be). You'll also need a recent version of linux-hotplug.
+
+The client library, libhal, for use in desktop application, only
+requires dbus (which doesn't have any dependencies) so both KDE and
+GNOME people should be happy.
+
+To build, do the usual ./configure; make; make install dance. Make
+sure to install into same prefix as D-BUS, otherwise you'll need to
+copy some files yourself.  Now restart D-BUS to reload the policy
+configuration files and (as root) start hald - the HAL daemon.
+
+You can now start hal-device-manager from a separate terminal. Try
+plugging or unplugging USB storage or Cardbus (PCMCIA) devices and
+check out the device list change. Also, try unplugging your network
+cable while looking at the properties for that device.
+
+If you're the advanterous type, you can try to run 
+
+ examples/volumed/volumed.py
+
+from the tarball while plugging in USB storage. This example shows how
+a volume manager built on top of HAL could work. It doesn't really
+mount anything, but it does print out a line when it would have
+mounted or unmounted a volume. Obviously, you'll need udev for this.
+
+It's also great fun (!) to fiddle around with writing .fdi files for
+your devices. I've included a single .fdi file in the distribution to
+match my digital camera. You can also play around with the
+hal-get-property and hal-set-property tools; the latter can be used to
+set the info.persistent property to keep unplugged devices in the
+device list to retain the properties of the device while it is
+unplugged.
+
+
+Is this stable software?
+========================
+
+No way, not yet, at best consider this release a development
+snapshot. It has been tested on Fedora Core 1 (i386) and Debian (ppc),
+both with 2.6.0-test11 kernels.
+
+There's still lots of small issues I'd wish was resolved before this
+release, that's detailed in doc/TODO in the tarball. Most of the short
+term issues will probably be addressed in the next release, 4-8 weeks
+from this release. Also, important busses, such as IEEE1394, is not
+supported yet.
+
+However, even though the API may change somewhat, I think we have
+now got the basic infrastructure necessary to start building
+application and integrating HAL into desktop environments. That
+was the grand plan anyway :-)
+
+Please send bug reports, suggestions and patches to the xdg-list. Do
+consult the TODO list to see whether the issue is already known.
+

@@ -7,7 +7,8 @@ entries if you get an idea or implement one of the tasks.
 Short term issues
 
  - veryify that we got all the necessary hardware parameters for
-   physical busses, e.g. pci, usb...
+   physical busses, e.g. pci, usb... We won't really know before people
+   start using HAL though
 
  - add device persistency across invocations of the hal daemon so we
    don't have to scan N fdi files for M devices, resulting in N*M scans
@@ -53,10 +54,12 @@ More long term issues
  - network transparency; think diskless X terminals with USB ports
    integrated into the desktop environment running on a LTSP server
 
+ - get HAL to work on other OS'es than those based on Linux 2.6
+
  - lots of other 'crazy ideas'
 
 Fishy issues we need to work around, and don't yet do in a perfectly
-reliable way
+reliable way (Linux 2.6 specific)
 
  - userspace is faster than kernel when hotplugging, so sometimes certain
    attrs are missing; should be addressed in libsysfs 0.4. Seems also to

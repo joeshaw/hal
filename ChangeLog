@@ -1,4 +1,23 @@
 2003-12-23  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: add autogeneration doc/Makefile, examples/Makefile and
+	examples/volumed/Makefile
+
+	* Makefile.am: add doc and examples to SUBDIRS
+
+	* examples/Makefile.am: new file
+
+	* examples/volumed/Makefile.am: new file
+
+	* doc/Makefile.am: new file
+
+	* doc/TODO: updated
+
+	* HACKING: updated
+
+	* NEWS: updated, since 0.2 is ready for distribution
+
+2003-12-23  David Zeuthen  <david@fubar.dk>
 	
 	* doc/TODO: updated
 
