@@ -1,3 +1,41 @@
+2004-08-01  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (block_class_compute_udi):
+	If model and serial numbers are not available (for USB or IEEE1394
+	devices), use the UDI for storage.physical_device and append the
+	SCSI LUN and prepend block_ to attain uniqueness.
+	
+	* hald/linux/scsi_device_class_device.c:
+	(scsi_device_class_pre_process): Add capability 'scsi_device'
+	
+	* hald/linux/scsi_host_class_device.c:
+	(scsi_host_class_pre_process): Add capability 'scsi_host'
+
+2004-08-01  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* hald/Makefile.am:
+	* hald/linux/block_class_device.c: (block_class_pre_process),
+	(block_class_compute_udi):
+	* hald/linux/drive_id/drive_id.c: (dump), (set_str), (scsi_inq),
+	(probe_scsi), (probe_ata), (drive_id_probe), (drive_id_open_fd),
+	(drive_id_open_node), (drive_id_open_dev_t), (drive_id_close):
+	* hald/linux/drive_id/drive_id.h:
+	Here is the code, that reads the serial number of a drive,
+	directly connected to an ATA or SCSI bus. HAL probes for the
+	values and adds: storage.serial, storage.firmware_version,
+        storage.revision if available.
+	Note: This will only work on native interfaces. For devices behind
+	USB, it's not possible to get any of these values. There are some
+	bridges out there, which are capable to set the USB-values itself,
+	to the values from a ATA Inquiry, but unfortunally, most of the
+	bridges out there, don't do it.  "USB storage compliance" mandates
+	a unique serial number, but most of the vendors seems not to care
+	about it.
+	I changed the compute_udi for block devices. If we get a serial
+	number or a uuid we use it to compute the udi.
+
 2004-07-30  Joe Shaw  <joeshaw@novell.com>
 
 	Patch from Dan Williams <dcbw@redhat.com>

@@ -1592,6 +1592,44 @@ block_class_compute_udi (HalDevice * d, int append_num)
 
 		if (model != NULL && serial != NULL && serial[0] != '\0') {
 			snprintf (id, 255, "%s-%s", model, serial);
+		} else {
+			const char *phys_device;
+			int lun = -1;
+			const char *i;
+
+			/* use UDI from storage.physical_device and append
+			 * the LUN */
+
+			phys_device = hal_device_property_get_string (
+				d, "storage.physical_device");
+			if (phys_device != NULL) {
+
+				/* go up the chain and to find the LUN */
+				
+				i = hal_device_property_get_string (d, "info.parent");
+				while (i != NULL) {
+					HalDevice *idev;
+
+					idev = hal_device_store_find (hald_get_gdl (), i);
+					if (idev == NULL)
+						break;
+
+					if (hal_device_has_capability (idev, "scsi_device")) {
+						lun = hal_device_property_get_int (idev, "scsi_device.lun");
+						break;
+					}
+
+
+					i = hal_device_property_get_string (idev, "info.parent");
+				}
+
+				if (lun != -1 ) {
+					snprintf (id, 255, 
+						  "%s-lun%d", 
+						  get_last_element (phys_device),
+						  lun);
+				}
+			}
 		}
 	}
 	id[255] = '\0';
