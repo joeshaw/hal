@@ -568,7 +568,7 @@ device_get_all_properties (DBusConnection * connection,
 
 	udi = dbus_message_get_path (message);
 
-	HAL_TRACE (("entering, udi=%s", udi));
+	/*HAL_TRACE (("entering, udi=%s", udi));*/
 
 	d = ds_device_find (udi);
 	if (d == NULL) {

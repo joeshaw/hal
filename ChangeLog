@@ -1,3 +1,13 @@
+2004-03-30  David Zeuthen  <david@fubar.dk>
+
+	* hald/main.c (device_get_all_properties): Comment out noise trace
+	call
+
+	* hald/device_store.c 
+	(ds_device_merge, ds_add_capability): Signal capability added even
+	though target device already had the capability. Fixes problem with
+	monitoring ethernet devices.
+
 2004-03-28  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_class_block.c (visit_class_device_block): Remove

@@ -1351,9 +1351,9 @@ ds_device_merge (HalDevice * target, HalDevice * source)
 
 		tok = strtok_r ((char *) caps, " ", &bufp);
 		while (tok != NULL) {
-			if (!ds_query_capability (target, tok)) {
-				ds_add_capability (target, tok);
-			}
+			HAL_INFO (("adding tok=%s (from %s to %s)", tok, 
+				   source->udi, target->udi));
+			ds_add_capability (target, tok);
 			tok = strtok_r (NULL, " ", &bufp);
 		}
 	}
@@ -1569,7 +1569,7 @@ ds_add_capability (HalDevice * device, const char *capability)
 					capability);
 	} else {
 		if (ds_query_capability (device, capability)) {
-			return;
+			/*return;*/
 		} else {
 			snprintf (buf, MAX_CAP_SIZE, "%s %s", caps,
 				  capability);

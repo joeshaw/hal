@@ -482,7 +482,8 @@ static void
 new_capability (HalDevice * device, const char *capability,
 		dbus_bool_t in_gdl)
 {
-	if (in_gdl) {
+	HAL_INFO (("device->udi=%s capability=%s", device->udi, capability));
+	if (device->in_gdl) {
 		if (strcmp (capability, "net.ethernet") == 0) {
 			link_detection_add (device);
 		}
@@ -503,7 +504,7 @@ gdl_changed (HalDevice * device, dbus_bool_t is_added)
 		}
 	} else {
 		/* We may not have added this device yet, but the 
-		 * callee checks for for this
+		 * callee checks for this
 		 */
 		link_detection_remove (device);
 	}
