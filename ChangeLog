@@ -1,3 +1,16 @@
+2004-04-30  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO: update TODO note about fs detection
+
+2004-04-30  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/Makefile.am (hald_SOURCES): add volume_id/volume_id.[ch]
+
+	* hald/linux/block_class_device.c (detect_fs): use utility in new 
+	subdirectory volume_id
+
+	* hald/linux/volume_id/volume_id.[ch]: new files
+
 2004-04-27  Joe Shaw  <joe@ximian.com>
 
 	* doc/TODO: Remove a now completed TODO item.

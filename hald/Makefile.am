@@ -61,6 +61,9 @@ hald_SOURCES +=                                                         \
                                         linux/libsysfs/sysfs_driver.c   \
                                         linux/libsysfs/sysfs_utils.c
 
+hald_SOURCES +=                                                         \
+	linux/volume_id/volume_id.h	linux/volume_id/volume_id.c
+
 hald_LDADD = @PACKAGE_LIBS@
 
 #### Init scripts fun

@@ -57,6 +57,7 @@
 #include "class_device.h"
 #include "common.h"
  
+#include "volume_id/volume_id.h"
 #include "linux_dvd_rw_utils.h"
 
 /**
@@ -587,70 +588,31 @@ block_class_got_udi (ClassDeviceHandler *self,
 	}
 }
 
-static dbus_bool_t
-detect_fs_fat (HalDevice *d)
-{
-	int i, len;
-	int fd;
-	const char *device_file;
-	unsigned char data[512];
-	char label[12];
-	dbus_bool_t matched = FALSE;
-
-	/* See http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html for
-	 * more information
-	 */
-
-	device_file = hal_device_property_get_string (d, "block.device");
-
-	fd = open (device_file, O_RDONLY);
-	if (fd < 0)
-		return FALSE;
-
-	if (512 != read (fd, data, 512))
-		goto out;
-
-	/* signature must be 0x55aa on the last two bytes of the first 512
-	 * byte sector */
-	if (data[510] != 0x55 && 
-	    data[511] != 0xaa)
-		goto out;
-
-	memset (label, 0, 12);
-
-	if (data[82] == 'F' &&
-	    data[83] == 'A' &&
-	    data[84] == 'T' &&
-	    data[85] == '3' &&
-	    data[86] == '2' ) {
-		/* FAT32 */
-		memcpy (label, data+71, 11);
-		hal_device_property_set_string (d, "block.fstype", "vfat");
-		matched = TRUE;
-	} else if (data[54] == 'F' &&
-		   data[55] == 'A' &&
-		   data[56] == 'T' ) {
-		/* FAT12/FAT16/FAT */
-		memcpy (label, data+43, 11);
-		hal_device_property_set_string (d, "block.fstype", "vfat");
-		matched = TRUE;
-	}
-
-	len = strlen (label);
-	for (i=len-1; i>=0 && isspace (label[i]); --i)
-		label[i] = '\0';
-	hal_device_property_set_string (d, "block.volume_label", label);
-	
-out:
-	close (fd);
-	return matched;
-}
-
 static void
 detect_fs (HalDevice *d)
 {
-	if (detect_fs_fat(d))
+	struct volume_id *vid;
+	const char *device_file;
+	int rc;
+
+	device_file = hal_device_property_get_string (d, "block.device");
+	vid = volume_id_open_node(device_file);
+	if (vid == NULL)
 		return;
+
+	rc = volume_id_probe(vid, ALL);
+	if (rc != 0)
+		return;
+
+	hal_device_property_set_string (d, "block.fstype", vid->fs_name);
+	if (vid->label_string[0] != '\0')
+		hal_device_property_set_string (d, "block.volume_label", vid->label_string);
+	if (vid->uuid_string[0] != '\0')
+		hal_device_property_set_string (d, "block.volume_uuid", vid->uuid_string);
+
+	volume_id_close(vid);
+
+	return;
 }
 
 static void 
