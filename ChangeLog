@@ -1,3 +1,76 @@
+2005-02-27  David Zeuthen  <davidz@redhat.com>
+
+	Played around with Valgrind on this slow Sunday :-). Before this
+	patch options 'valgrind --show-reachable=yes --leak-check=yes
+	--tool=memcheck ./hald --daemon=no --retain-privileges' - remember
+	to set up environment variables as in run-hald.sh. Some of the
+	output:
+
+	497664 bytes in 486 blocks are still reachable in loss record 33 of 35
+	     at 0x1B908984: malloc (vg_replace_malloc.c:131)
+             by 0x4DE983: (within /usr/lib/libexpat.so.0.5.0)
+             by 0x4E1729: XML_ParserCreate_MM (in /usr/lib/libexpat.so.0.5.0)
+             by 0x4E17C1: XML_ParserCreate (in /usr/lib/libexpat.so.0.5.0)
+
+	1003104 bytes in 972 blocks are still reachable in loss record 34 of 35
+             at 0x1B908984: malloc (vg_replace_malloc.c:131)
+             by 0x4DD4A2: (within /usr/lib/libexpat.so.0.5.0)
+             by 0x4DD5F1: (within /usr/lib/libexpat.so.0.5.0)
+             by 0x4E0596: (within /usr/lib/libexpat.so.0.5.0)
+
+	2115584 bytes in 486 blocks are still reachable in loss record 35 of 35
+             at 0x1B908984: malloc (vg_replace_malloc.c:131)
+             by 0x4DC64E: XML_GetBuffer (in /usr/lib/libexpat.so.0.5.0)
+             by 0x4DC91E: XML_Parse (in /usr/lib/libexpat.so.0.5.0)
+             by 0x805093E: scan_fdi_files (device_info.c:1282)
+
+	LEAK SUMMARY:
+	   definitely lost: 20034 bytes in 769 blocks.
+	   possibly lost:   1057 bytes in 21 blocks.
+	   still reachable: 5289701 bytes in 19813 blocks.
+	   suppressed: 0 bytes in 0 blocks.
+
+	plus some illegal memory access errors. After this patch
+
+	130613 bytes in 1 blocks are still reachable in loss record 23 of 24
+	   at 0x1B908984: malloc (vg_replace_malloc.c:131)
+	   by 0x80610E2: ids_init (ids.c:514)
+	   by 0x8056A15: osspec_init (osspec.c:337)
+	   by 0x8051DF8: main (hald.c:591)
+
+	322003 bytes in 1 blocks are still reachable in loss record 24 of 24
+	   at 0x1B908984: malloc (vg_replace_malloc.c:131)
+	   by 0x806101D: ids_init (ids.c:292)
+	   by 0x8056A15: osspec_init (osspec.c:337)
+	   by 0x8051DF8: main (hald.c:591)
+
+	LEAK SUMMARY:
+	   definitely lost: 20884 bytes in 774 blocks.
+	   possibly lost:   800 bytes in 20 blocks.
+	   still reachable: 643659 bytes in 4499 blocks.
+
+	which gives us a net saving of approx 4.5MB. Sweet. (yes, this
+	ChangeLog is somewhat a weblog for me these days)
+
+	* hald/device_info.c (process_fdi_file): Fix up error handling;
+	remember to free the XML_Parser context which fixes a 4.5MB memory
+	leak on my system.
+
+	* hald/linux2/coldplug.c (coldplug_synthesize_events): Free strings
+	to seal a leak
+
+	* hald/util.h: Export hal_util_hexdump prototype
+
+	* hald/util.c (hal_util_grep_string_elem_from_file): Yikes, make
+	this a static buffer since we're returning a pointer to this
+	variable.
+	(hal_util_hexdump): New convenience function
+
+	* hald/hald_dbus.c (device_add_capability): Fixup this function to
+	actually work now that info.capabilities is a strlist
+
+	* hald/hald.c (parent_wait_for_child): Fix unneeded char buf[1].
+
 2005-02-26  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/policy/10osvendor/10-storage-policy.fdi: Fix syntax error

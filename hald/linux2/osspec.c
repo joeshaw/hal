@@ -394,8 +394,6 @@ osspec_probe (void)
 	di_search_and_merge (root, DEVICE_INFO_TYPE_POLICY);
 
 	hal_util_callout_device_add (root, computer_callouts_add_done, NULL, NULL);
-
-	/*osspec_probe_done ();*/
 }
 
 DBusHandlerResult

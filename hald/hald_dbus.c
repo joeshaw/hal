@@ -1271,10 +1271,6 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-
-/** Maximum string length for capabilities; quite a hack :-/ */
-#define MAX_CAP_SIZE 2048
-
 /** This function is used to modify the Capabilities property. The reason
  *  for having a dedicated function is that the HAL daemon will broadcast
  *  a signal on the Manager interface to tell applications that the device
@@ -1307,11 +1303,9 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 {
 	const char *udi;
 	const char *capability;
-	const char *caps;
 	HalDevice *d;
 	DBusMessage *reply;
 	DBusError error;
-	char buf[MAX_CAP_SIZE];
 
 	HAL_TRACE (("entering"));
 
@@ -1340,20 +1334,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 	}
 
 
-	caps = hal_device_property_get_string (d, "info.capabilities");
-	if (caps == NULL) {
-		hal_device_property_set_string (d, "info.capabilities",
-					capability);
-	} else {
-		if (strstr (caps, capability) == NULL) {
-			snprintf (buf, MAX_CAP_SIZE, "%s %s", caps,
-				  capability);
-			hal_device_property_set_string (d, "info.capabilities",
-						buf);
-		}
-	}
-
-	manager_send_signal_new_capability (d, capability);
+	hal_device_add_capability (d, capability);
 
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)

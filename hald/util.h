@@ -110,6 +110,8 @@ void hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpoint
 void hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
 void hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
 
+void hal_util_hexdump (const void *buf, unsigned int size);
+
 #define HAL_HELPER_TIMEOUT 10000
 
 #define HAL_PATH_MAX 256

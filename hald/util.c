@@ -681,7 +681,7 @@ hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file,
 {
 	gchar *line;
 	gchar *res;
-	gchar buf[256];
+	static gchar buf[256];
 	gchar **tokens;
 	guint i, j;
 
@@ -1056,3 +1056,46 @@ hal_util_kill_all_helpers (void)
 
 	return n;
 }
+
+void
+hal_util_hexdump (const void *mem, unsigned int size)
+{
+	unsigned int i;
+	unsigned int j;
+	unsigned int n;
+	const char *buf = (const char *) mem;
+
+	n = 0;
+	printf ("Dumping %d=0x%x bytes\n", size, size);
+	while (n < size) {
+
+		printf ("0x%04x: ", n);
+
+		j = n;
+		for (i = 0; i < 16; i++) {
+			if (j >= size)
+				break;
+			printf ("%02x ", buf[j]);
+			j++;
+		}
+		
+		for ( ; i < 16; i++) {
+			printf ("   ");
+		}
+		
+		printf ("   ");
+		
+		j = n;
+		for (i = 0; i < 16; i++) {
+			if (j >= size)
+				break;
+			printf ("%c", isprint(buf[j]) ? buf[j] : '.');
+			j++;
+		}
+
+		printf ("\n");
+		
+		n += 16;
+	}
+}
+

@@ -335,7 +335,6 @@ handle_sigchld (int value)
 static int 
 parent_wait_for_child (int child_fd, pid_t child_pid)
 {
-	char buf[1];
 	fd_set rfds;
 	fd_set efds;
 	struct timeval tv;
@@ -406,6 +405,7 @@ main (int argc, char *argv[])
 
 	retain_privs = FALSE;
   
+
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
 	g_type_init ();
@@ -619,6 +619,7 @@ osspec_probe_done (void)
 	close (startup_daemonize_pipe[1]);
 
 	hald_is_initialising = FALSE;
+
 }
 
 

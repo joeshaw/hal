@@ -280,6 +280,9 @@ coldplug_synthesize_events (void)
 		hotplug_event->sysfs.net_ifindex = -1;
 		
 		hotplug_event_enqueue (hotplug_event);
+
+		g_free (li->data);
+		g_free (li->next->data);
 	}
 	g_slist_free (sysfs_other_class_dev);
 
@@ -352,7 +355,7 @@ coldplug_synthesize_events (void)
 		g_dir_close (dir1);		
 	}
 	g_dir_close (dir);
-
+       
 	return TRUE;
 error:
 	HAL_ERROR (("Error building the orderered list of sysfs paths"));
@@ -393,7 +396,6 @@ coldplug_compute_visit_device (const gchar *path,
 		g_free (parent_sysfs_path);
 
 		hotplug_event->sysfs.device_file[0] = '\0';
-
 		hotplug_event_enqueue (hotplug_event);
 	}
 
@@ -421,7 +423,6 @@ coldplug_compute_visit_device (const gchar *path,
 		else
 			hotplug_event->sysfs.wait_for_sysfs_path[0] = '\0';
 		hotplug_event->sysfs.net_ifindex = -1;
-		
 		hotplug_event_enqueue (hotplug_event);
 	}
 
