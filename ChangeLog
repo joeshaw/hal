@@ -1,48 +1,47 @@
-2004-03-31  David Zeuthen  <david@fubar.dk>
+2004-04-03  David Zeuthen  <david@fubar.dk>
 
-	* hald/linux/osspec.c (handle_hotplug): Actually remove the class
-	devices that was added instead of merged
+	Merge hal-gobject-branch back to HEAD
 
-2004-03-30  David Zeuthen  <david@fubar.dk>
+2004-04-03  David Zeuthen  <david@fubar.dk>
 
-	* hald/main.c (manager_get_all_devices): Uncomment trace
+	* hald/linux/bus_device.c: Various cleanups
 
-2004-03-30  David Zeuthen  <david@fubar.dk>
+	* hald/linux/class_device.c: Various cleanups
 
-	* hald/linux/block_class_device.c: Fixup includes
-	(linux_class_block_init): Remove unused function
-	(cdrom_check): Use const char* for device file
-	(block_class_visit): remove unused variables
+	* hald/linux/block_class_device.c: Various cleanups
 
-	* hald/linux/scsi_device_class_device.c 
-	(scsi_device_class_post_process): fix cast warning
+	* hald/device.c (hal_device_async_wait_property): New method
 
-	* hald/linux/scsi_host_class_device.c 
-	(scsi_host_class_post_process): fix cast warning
+2004-04-02  David Zeuthen  <david@fubar.dk>
 
-	* hald/linux/input_class_device.c 
-	(input_class_get_device_file_target): fix cast warning
+	* hald/linux/osspec.c (handle_hotplug): Actually remove class devices
+	that populate the tree
+	(handle_udev_node_created): Search in Temporary Device List instead of
+	the Global Device List - quite important difference :-)
 
-	* hald/linux/usb_bus_device.c (usb_device_detection_done): remove
-	unused function
+	* hald/linux/common.c (rename_and_merge): remove from tdl
 
-	* hald/linux/class_device.c (class_device_udev_event): fix cast warning
-	(class_device_got_parent_device): fix cast warning
-	(class_device_got_sysdevice): fix cast warning
-	(class_device_got_device_file): fix cast warning
+	* hald/linux/class_device.c (class_device_visit): add to tdl
+	(class_device_got_parent_device): remove from tdl
+	(class_device_got_sysdevice): remove from tdl
+	(class_device_got_device_file): remove from tdl
 
-	* hald/linux/bus_device.c (bus_device_got_parent): fix cast warning
+	* hald/linux/bus_device.c (bus_device_visit): Asynchronously find
+	the parent device instead of synchronously
+	(bus_device_got_parent): New format
 
-	* hald/linux/osspec.c (handle_udev_node_created_found_device): fix
-	cast warning
+	* hald/linux/block_class_device.c (block_class_visit): add to tdl
+	(detect_media): Add the patch from rml for storage.cdrom.media_type
+	(block_class_removed): new function
 
-	* hald/linux/common.c: Don't include libhal.h; include glib.h
-	(class_device_get_device_file): Fix unsigned/signed comparison
-	warning, fix cast warning
+	* hald/hald.c (hald_get_tdl): New function to get temporary device
+	list
 
-	* hald/device_info.c (start): Remove unused variable
+2004-04-01  David Zeuthen  <david@fubar.dk>
 
-	* hald/device_store.c (ds_device_merge): Remove unused variable
+	* hald/linux/common.c (rename_and_merge): Fixed a subtle error where
+	multiple instances of the same device couldn't appear in the device
+	list
 
 2004-03-29  Robert Love  <rml@ximian.com>
 

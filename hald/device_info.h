@@ -32,6 +32,6 @@
 
 #include "device_store.h"
 
-dbus_bool_t di_search_and_merge (HalDevice * d);
+dbus_bool_t di_search_and_merge (HalDevice *d);
 
 #endif				/* DEVICE_INFO_H */

@@ -41,6 +41,7 @@
 
 #include "../osspec.h"
 #include "../logger.h"
+#include "../hald.h"
 
 #include "common.h"
 #include "bus_device.h"
@@ -72,7 +73,7 @@ static BusDeviceHandler* bus_device_handlers[] = {
 	&usb_bus_handler,
 	&usbif_bus_handler,
 	&ide_host_bus_handler,
-	&ide_bus_handler,
+        &ide_bus_handler,
 	NULL
 };
 
@@ -193,11 +194,7 @@ visit_device (const char *path, dbus_bool_t visit_children)
 	if (device == NULL)
 		DIE (("Coulnd't get sysfs device object for path %s", path));
 
-/*
-    printf("############\n");
-    printf("############    %s  busid=%s\n", device->bus, device->bus_id);
-    printf("############\n");
-*/
+	/*HAL_INFO ((" path=%s", path));*/
 
 	for (i=0; bus_device_handlers[i] != NULL; i++) {
 		BusDeviceHandler *bh = bus_device_handlers[i];
@@ -422,14 +419,14 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 					/* was actually added, so it makes sense to remove */
 
 					HalDevice *d;
-					d = ds_device_find_by_key_value_string ("linux.sysfs_path", sysfs_devpath, TRUE);
+					d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_devpath);
 					if (d == NULL) {
 						HAL_WARNING (("Couldn't remove classdevice @ %s on hotplug remove", sysfs_devpath));
 					} else {
 						HAL_INFO (("Removing classdevice @ sysfspath %s, udi %s", sysfs_devpath, d->udi));
 						ch->removed (ch, sysfs_devpath, d);
 
-						ds_device_destroy (d);
+						hal_device_store_remove (hald_get_gdl (), d);
 						goto out;
 					}
 
@@ -457,8 +454,10 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 
 		HalDevice *d;
 
-		d = ds_device_find_by_key_value_string
-			("linux.sysfs_path", sysfs_devpath, TRUE);
+		d = hal_device_store_match_key_value_string (
+			hald_get_gdl (), "linux.sysfs_path",
+			sysfs_devpath);
+
 		if (d == NULL) {
 			HAL_WARNING (("Couldn't remove device @ %s "
 				      "on hotplug remove", 
@@ -466,8 +465,8 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 		} else {
 			HAL_INFO (("Removing device @ sysfspath %s, "
 				   "udi %s", sysfs_devpath, d->udi));
-			
-			ds_device_destroy (d);
+
+			hal_device_store_remove (hald_get_gdl (), d);
 			goto out;
 		}
 	}
@@ -486,8 +485,10 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 		} else {
 			HalDevice *d;
 
-			d = ds_device_find_by_key_value_string
-			    ("linux.sysfs_path", sysfs_devpath, TRUE);
+			d = hal_device_store_match_key_value_string (
+				hald_get_gdl (), "linux.sysfs_path",
+				sysfs_devpath);
+
 			if (d == NULL) {
 				HAL_WARNING (("Couldn't remove device @ %s "
 					      "on hotplug remove", 
@@ -498,7 +499,7 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 
 				if (ds_property_exists
 				    (d, "info.persistent")
-				    && ds_property_get_bool (
+				    && hal_device_property_get_bool (
 					    d, "info.persistent"))
 				{
 					ds_property_set_bool (
@@ -517,7 +518,8 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 					HAL_INFO (("Device %s is persistent, "
 						   "so not removed", d->udi));
 				} else {
-					ds_device_destroy (d);
+					hal_device_store_remove (
+						hald_get_gdl (), d);
 				}
 			}
 		}
@@ -532,6 +534,15 @@ out:
 static void handle_udev_node_created_found_device (HalDevice * d,
 						   void *data1,
 						   void *data2);
+
+static void
+udev_node_created_cb (HalDeviceStore *store, HalDevice *device,
+		      gpointer user_data)
+{
+	const char *filename = user_data;
+
+	handle_udev_node_created_found_device (device, (void*) filename, NULL);
+}
 
 /** Handle a org.freedesktop.Hal.HotplugEvent message. This message
  *  origins from the hal.hotplug program, tools/linux/hal_hotplug.c,
@@ -561,12 +572,27 @@ handle_udev_node_created (DBusConnection * connection,
 		/* Find class device; this happens asynchronously as our it 
 		 * might be added later..
 		 */
+#if 0
 		ds_device_async_find_by_key_value_string (
 			".udev.sysfs_path", sysfs_dev_path, FALSE,
 			/* note: it doesn't need to be in the GDL */
 			handle_udev_node_created_found_device,
 			(void *) filename, NULL,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
+#elif 0
+		handle_udev_node_created_found_device (
+			hal_device_store_match_key_value_string (
+				hald_get_gdl (), ".udev.sysfs_path",
+				sysfs_dev_path),
+			filename, NULL);
+#else
+		hal_device_store_match_key_value_string_async (
+			hald_get_tdl (),
+			".udev.sysfs_path",
+			sysfs_dev_path,
+			udev_node_created_cb, filename,
+			HAL_LINUX_HOTPLUG_TIMEOUT);
+#endif
 
 		/* NOTE NOTE NOTE: we will free filename in async 
 		 * result function 
@@ -596,7 +622,7 @@ handle_udev_node_created_found_device (HalDevice * d,
 		HAL_INFO (("Got dev_file=%s for udi=%s", dev_file, d->udi));
 
 		sysfs_class_name = 
-			ds_property_get_string (d, ".udev.class_name");
+			hal_device_property_get_string (d, ".udev.class_name");
 
 		HAL_INFO ((".udev.class_name = %s", sysfs_class_name));
 

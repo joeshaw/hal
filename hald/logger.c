@@ -107,10 +107,9 @@ logger_emit (const char *format, ...)
 	}
 
 	/** @todo Make programmatic interface to logging */
-	/*if (priority != HAL_LOGPRI_TRACE)*/ {
+	if (priority != HAL_LOGPRI_TRACE)
 		fprintf (stderr, "%s %s:%d %s() : %s\n",
 			 pri, file, line, function, buf);
-	}
 
 	va_end (args);
 }

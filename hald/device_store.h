@@ -1,9 +1,10 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * device_store.h : device store interface
+ * device.c : HalDevice methods
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2004 Novell, Inc.
  *
  * Licensed under the Academic Free License version 2.0
  *
@@ -26,224 +27,88 @@
 #ifndef DEVICE_STORE_H
 #define DEVICE_STORE_H
 
-#include <stdarg.h>
-#include <stdint.h>
-#include <dbus/dbus.h>
+#include <glib-object.h>
 
+#include "device.h"
 
-/**
- *  @addtogroup DeviceStore
- *
- *  @{
- */
+typedef struct _HalDeviceStore      HalDeviceStore;
+typedef struct _HalDeviceStoreClass HalDeviceStoreClass;
 
-/** HalProperty internals; private
- */
-typedef struct HalProperty_s {
-	int type;		  /**< One of #DBUS_TYPE_STRING, 
-                                   * #DBUS_TYPE_INT32, #DBUS_TYPE_BOOL, 
-                                   * #DBUS_TYPE_DOUBLE */
-	char *key;		  /**< ASCII string */
+struct _HalDeviceStore {
+	GObject parent;
 
-	/** Union of possible values */
-	union {
-		char *str_value;  /**< UTF-8 string */
-		dbus_int32_t int_value;
-				  /**< Signed 32-bit integer */
-		dbus_bool_t bool_value;
-				  /**< Boolean value */
-		double double_value;
-				  /**< IEEE754 double precision floating 
-                                   *   point number */
-	};
-	struct HalProperty_s *prev;
-				  /**< Linked list; prev element or #NULL */
-	struct HalProperty_s *next;
-				  /**< Linked list; next element or #NULL */
-} HalProperty;
+	GSList *devices;
+};
 
-/** HalDevice internals; private
- */
-typedef struct HalDevice_s {
-	char *udi;		     /**< Unique device id */
-	dbus_bool_t in_gdl;	     /**< True iff device is in the global
-                                      *   device list. To modify use
-                                      *   ds_gdl_add() */
-	int num_properties;	     /**< Number of properties */
-	HalProperty *prop_head;	     /**< Properties head */
-	struct HalDevice_s *prev;    /**< Linked list; prev element or #NULL */
-	struct HalDevice_s *next;    /**< Linked list; next element or #NULL */
-} HalDevice;
+struct _HalDeviceStoreClass {
+	GObjectClass parent_class;
 
+	/* signals */
+	void (*store_changed) (HalDeviceStore *store,
+			       HalDevice *device,
+			       gboolean added);
 
-/** Iterator for properties; private
- */
-typedef struct HalPropertyIterator_s {
-	HalDevice *device;	  /**< The device we are iterating over */
-	HalProperty *cursor;	  /**< Cursor position */
-} HalPropertyIterator;
+	void (*device_property_changed) (HalDeviceStore *store,
+					 HalDevice *device,
+					 const char *key,
+					 gboolean removed,
+					 gboolean added);
 
-/** Iterator for global device list; private
- */
-typedef struct HalDeviceIterator_s {
-	HalDevice *cursor;	  /**< Cursor position */
-	unsigned int position;	  /**< Which number are we iterating over */
-} HalDeviceIterator;
+	void (*device_capability_added) (HalDeviceStore *store,
+					 HalDevice *device,
+					 const char *capability);
 
-/** Signature for callback function when a property is changed, added
- *  or removed.
- *
- *  @param  device              A pointer to a #HalDevice object
- *  @param  key                 The key of the property
- *  @param  in_gdl              Device is in global device list
- *  @param  removed             True iff property was removed
- *  @param  added               True iff property was added
- */
-typedef void (*HalDevicePropertyChangedCallback) (HalDevice * device,
-						  const char *key,
-						  dbus_bool_t in_gdl,
-						  dbus_bool_t removed,
-						  dbus_bool_t added);
+};
 
-/** Signature for callback function when a device is added or removed
- *  to the gdl
- *
- *  @param  device              A pointer to a #HalDevice object
- *  @param  is_added            True iff device was added
- */
-typedef void (*HalDeviceGDLChangedCallback) (HalDevice * device,
-					     dbus_bool_t is_added);
+#define HAL_TYPE_DEVICE_STORE              (hal_device_store_get_type ())
+#define HAL_DEVICE_STORE(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj),\
+                                            HAL_TYPE_DEVICE_STORE, \
+                                            HalDeviceStore))
+#define HAL_DEVICE_STORE_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), \
+                                            HAL_TYPE_DEVICE_STORE, \
+					    HalDeviceStoreClass))
+#define HAL_IS_DEVICE_STORE(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj),\
+                                            HAL_TYPE_DEVICE_STORE))
+#define HAL_IS_DEVICE_STORE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), \
+                                            HAL_TYPE_DEVICE_STORE))
 
+typedef void     (*HalDeviceStoreAsyncCallback) (HalDeviceStore *store,
+						 HalDevice      *device,
+						 gpointer        user_data);
 
-/** Signature for callback function when a device is assigned
- *  a new capability
- *
- *  @param  device              A pointer to a #HalDevice object
- *  @param  capability          Capability acquired
- */
-typedef void (*HalDeviceNewCapabilityCallback) (HalDevice * device,
-						const char *capability,
-						dbus_bool_t in_gdl);
+/* Return value of FALSE means that the foreach should be short-circuited */
+typedef gboolean (*HalDeviceStoreForeachFn) (HalDeviceStore *store,
+					     HalDevice      *device,
+					     gpointer        user_data);
+					     
+GType           hal_device_store_get_type   (void);
 
-void ds_init ();
-void ds_shutdown ();
-void ds_print (HalDevice * device);
+HalDeviceStore *hal_device_store_new        (void);
 
-void ds_add_cb_newcap (HalDeviceNewCapabilityCallback cb);
+void            hal_device_store_add        (HalDeviceStore *store,
+					     HalDevice      *device);
+gboolean        hal_device_store_remove     (HalDeviceStore *store,
+					     HalDevice      *device);
 
-void ds_add_cb_property_changed (HalDevicePropertyChangedCallback cb);
+HalDevice      *hal_device_store_find       (HalDeviceStore *store,
+					     const char     *udi);
 
-void ds_add_cb_gdl_changed (HalDeviceGDLChangedCallback cb);
+void            hal_device_store_foreach    (HalDeviceStore *store,
+					     HalDeviceStoreForeachFn callback,
+					     gpointer user_data);
 
-/**************************************************************************/
+HalDevice      *hal_device_store_match_key_value_string (HalDeviceStore *store,
+							 const char *key,
+							 const char *value);
+GSList         *hal_device_store_match_multiple_key_value_string (HalDeviceStore *store,
+								  const char *key,
+								  const char *value);
 
-/** Type for callback function when a device has been found.
- *
- *  @param  result              The result of the search or #NULL if the
- *                              specified timeout occured
- *
- *  @param  data1               The 1st parameter passed to the search function
- *                              that triggered this callback. This is used to
- *                              uniqely identify the origin/context for the
- *                              caller
- *
- *  @param  data2               The 2nd parameter passed to the search function
- */
-typedef void (*DSAsyncFindDeviceCB) (HalDevice * result,
-				     void *data1, void *data2);
+void           hal_device_store_match_key_value_string_async (HalDeviceStore *store,
+							      const char *key,
+							      const char *value,
+							      HalDeviceStoreAsyncCallback callback,
+							      gpointer user_data,
+							      int timeout);
 
-
-HalDevice *ds_device_find (const char *udi);
-
-HalDevice **ds_device_find_multiple_by_key_value_string (const char *key,
-							 const char *value,
-							 dbus_bool_t only_gdl,
-							 int *num_results);
-
-HalDevice *ds_device_find_by_key_value_string (const char *key,
-					       const char *value,
-					       dbus_bool_t only_gdl);
-
-void ds_device_async_find_by_key_value_string (const char *key,
-					       const char *value,
-					       dbus_bool_t only_gdl,
-					       DSAsyncFindDeviceCB callback, 
-					       void *data1, void *data2, 
-					       int timeout);
-
-void ds_device_async_wait_for_property (HalDevice *device,
-					const char *key,
-					DSAsyncFindDeviceCB callback,
-					void *data1, void *data2, 
-					int timeout);
-
-HalDevice *ds_device_new ();
-void ds_device_destroy (HalDevice * device);
-
-void ds_device_merge (HalDevice * target, HalDevice * source);
-
-dbus_bool_t ds_device_matches (HalDevice * device1, HalDevice * device,
-			       const char *namespace);
-
-/**************************************************************************/
-
-void ds_gdl_add (HalDevice * device);
-
-unsigned int ds_device_size ();
-void ds_device_iter_begin (HalDeviceIterator * iterator);
-dbus_bool_t ds_device_iter_has_more (HalDeviceIterator * iterator);
-void ds_device_iter_next (HalDeviceIterator * iterator);
-HalDevice *ds_device_iter_get (HalDeviceIterator * iterator);
-
-const char *ds_device_get_udi (HalDevice * device);
-dbus_bool_t ds_device_set_udi (HalDevice * device, const char *udi);
-
-
-/**************************************************************************/
-
-unsigned int ds_properties_size (HalDevice * device);
-dbus_bool_t ds_property_exists (HalDevice * device, const char *key);
-HalProperty *ds_property_find (HalDevice * device, const char *key);
-void ds_property_iter_begin (HalDevice * device,
-			     HalPropertyIterator * iterator);
-dbus_bool_t ds_property_iter_has_more (HalPropertyIterator * iterator);
-void ds_property_iter_next (HalPropertyIterator * iterator);
-HalProperty *ds_property_iter_get (HalPropertyIterator * iterator);
-
-dbus_bool_t ds_property_set_string (HalDevice * device, const char *key,
-				    const char *value);
-dbus_bool_t ds_property_set_int (HalDevice * device, const char *key,
-				 dbus_int32_t value);
-dbus_bool_t ds_property_set_bool (HalDevice * device, const char *key,
-				  dbus_bool_t value);
-dbus_bool_t ds_property_set_double (HalDevice * device, const char *key,
-				    double value);
-dbus_bool_t ds_property_remove (HalDevice * device, const char *key);
-
-/**************************************************************************/
-
-const char *ds_property_iter_get_key (HalProperty * property);
-int ds_property_iter_get_type (HalProperty * property);
-const char *ds_property_iter_get_string (HalProperty * property);
-dbus_int32_t ds_property_iter_get_int (HalProperty * property);
-dbus_bool_t ds_property_iter_get_bool (HalProperty * property);
-double ds_property_iter_get_double (HalProperty * property);
-
-
-int ds_property_get_type (HalDevice * device, const char *key);
-const char *ds_property_get_string (HalDevice * device, const char *key);
-dbus_int32_t ds_property_get_int (HalDevice * device, const char *key);
-dbus_bool_t ds_property_get_bool (HalDevice * device, const char *key);
-double ds_property_get_double (HalDevice * device, const char *key);
-
-void ds_add_capability (HalDevice * device, const char *capability);
-
-dbus_bool_t ds_query_capability (HalDevice * device,
-				 const char *capability);
-
-
-/**
- *  @}
- */
-
-#endif				/* DEVICE_STORE_H */
+#endif /* DEVICE_STORE_H */

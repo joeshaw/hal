@@ -36,8 +36,6 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include <libhal/libhal.h>	/* for common defines etc. */
-
 #include "logger.h"
 #include "device_info.h"
 
@@ -158,11 +156,11 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO(("Checking that key='%s' is a string that "
 		  "equals '%s'", key, value)); */
 
-		if (ds_property_get_type (pc->device, key) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_STRING)
 			return FALSE;
 
-		if (strcmp
-		    (ds_property_get_string (pc->device, key), value) != 0)
+		if (strcmp (hal_device_property_get_string (pc->device, key),
+			    value) != 0)
 			return FALSE;
 
 		HAL_INFO (("*** string match for key %s", key));
@@ -178,10 +176,10 @@ handle_match (ParsingContext * pc, const char **attr)
 		HAL_INFO (("Checking that key='%s' is a int that equals %d", 
 			   key, value));
 
-		if (ds_property_get_type (pc->device, key) != DBUS_TYPE_INT32)
+		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_INT32)
 			return FALSE;
 
-		if (ds_property_get_int (pc->device, key) != value) {
+		if (hal_device_property_get_int (pc->device, key) != value) {
 			return FALSE;
 		}
 
@@ -201,11 +199,11 @@ handle_match (ParsingContext * pc, const char **attr)
 		HAL_INFO (("Checking that key='%s' is a bool that equals %s", 
 			   key, value ? "TRUE" : "FALSE"));
 
-		if (ds_property_get_type (pc->device, key) != 
+		if (hal_device_property_get_type (pc->device, key) != 
 		    DBUS_TYPE_BOOLEAN)
 			return FALSE;
 
-		if (ds_property_get_bool (pc->device, key) != value)
+		if (hal_device_property_get_bool (pc->device, key) != value)
 			return FALSE;
 
 		HAL_INFO (("*** bool match for key %s", key));
@@ -396,7 +394,7 @@ end (ParsingContext * pc, const char *el)
 
 		switch (pc->merge_type) {
 		case DBUS_TYPE_STRING:
-			ds_property_set_string (pc->device, pc->merge_key,
+			hal_device_property_set_string (pc->device, pc->merge_key,
 						pc->cdata_buf);
 			break;
 
@@ -410,20 +408,20 @@ end (ParsingContext * pc, const char *el)
 
 				/** @todo FIXME: Check error condition */
 
-				ds_property_set_int (pc->device,
+				hal_device_property_set_int (pc->device,
 						     pc->merge_key, value);
 				break;
 			}
 
 		case DBUS_TYPE_BOOLEAN:
-			ds_property_set_bool (pc->device, pc->merge_key,
+			hal_device_property_set_bool (pc->device, pc->merge_key,
 					      (strcmp (pc->cdata_buf,
 						       "true") == 0) 
 					      ? TRUE : FALSE);
 			break;
 
 		case DBUS_TYPE_DOUBLE:
-			ds_property_set_double (pc->device, pc->merge_key,
+			hal_device_property_set_double (pc->device, pc->merge_key,
 						atof (pc->cdata_buf));
 			break;
 
@@ -674,11 +672,9 @@ scan_fdi_files (const char *dir, HalDevice * d)
  *  @return                     #TRUE if information was merged
  */
 dbus_bool_t
-di_search_and_merge (HalDevice * d)
+di_search_and_merge (HalDevice *d)
 {
-	dbus_bool_t rc;
-	rc = scan_fdi_files (PACKAGE_DATA_DIR "/hal/fdi", d);
-	return rc;
+	return scan_fdi_files (PACKAGE_DATA_DIR "/hal/fdi", d);
 }
 
 /** @} */

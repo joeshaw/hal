@@ -226,11 +226,13 @@ void class_device_get_device_file_target (ClassDeviceHandler *self,
 					  char* dev_file_prop,
 					  int dev_file_prop_len);
 
-void class_device_got_device_file (HalDevice *dm, void *data1, void *data2);
+void class_device_got_sysdevice (HalDeviceStore *store, 
+				 HalDevice *sysdevice, 
+				 gpointer user_data);
 
-void class_device_got_sysdevice (HalDevice *sysdevice, void *data1, void *data2);
-
-void class_device_got_parent_device (HalDevice *parent, void *data1, void *data2);
+void class_device_got_parent_device (HalDeviceStore *store, 
+				     HalDevice *parent, 
+				     gpointer user_data);
 
 
 #endif /* CLASS_DEVICE_H */

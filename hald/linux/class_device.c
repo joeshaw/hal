@@ -37,10 +37,9 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#include <linux/input.h>	/* for EV_* etc. */
-
 #include "../logger.h"
 #include "../device_store.h"
+#include "../hald.h"
 
 #include "common.h"
 #include "class_device.h"
@@ -52,14 +51,25 @@
  * @{
  */
 
+typedef struct {
+	HalDevice *device;
+	ClassDeviceHandler *handler;
+} AsyncInfo;
+
+static void
+class_device_got_device_file (HalDevice *d, gpointer user_data, 
+			      gboolean prop_exists);
+
 
 /** Generic visitor method for class devices.
  *
  *  This function parses the attributes present and merges more information
  *  into the HAL device this class device points to
  *
+ *  @param  self               Pointer to class members
  *  @param  path                Sysfs-path for class device
  *  @param  class_device        Libsysfs object for device
+ *  @param  is_probing          Whether we are probing
  */
 void
 class_device_visit (ClassDeviceHandler *self,
@@ -68,72 +78,91 @@ class_device_visit (ClassDeviceHandler *self,
 		    dbus_bool_t is_probing)
 {
 	HalDevice *d;
+	char dev_file[SYSFS_PATH_MAX];
 	char dev_file_prop_name[SYSFS_PATH_MAX];
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, self->sysfs_class_name) != 0)
 		return;
 
+	/* don't care if there is no sysdevice */
 	if (class_device->sysdevice == NULL) {
-		HAL_WARNING (("class device %s doesn't have sysdevice", path));
 		return;
 	}
 
-	d = ds_device_new ();
+	/* Construct a new device and add to temporary device list */
+	d = hal_device_new ();
+	hal_device_store_add (hald_get_tdl (), d);
+
+	/* Need some properties if we are to appear in the tree on our own */
 	if (!self->merge_or_add) {
-		ds_property_set_string (d, "info.bus", self->hal_class_name);
-		ds_property_set_string (d, "linux.sysfs_path", path);
-		ds_property_set_string (d, "linux.sysfs_path_device", 
+		hal_device_property_set_string (d, "info.bus", 
+						self->hal_class_name);
+		hal_device_property_set_string (d, "linux.sysfs_path", path);
+		hal_device_property_set_string (d, "linux.sysfs_path_device", 
 					class_device->sysdevice->path);
 	} 
 
+	/* We may require a device file */
 	if (self->require_device_file) {
-		/* temporary property used for _udev_event() */
-		ds_property_set_string (d, ".udev.sysfs_path", path);
-		ds_property_set_string (d, ".udev.class_name", self->sysfs_class_name);
+		/* Temporary property used for _udev_event() */
+		hal_device_property_set_string (d, ".udev.sysfs_path", path);
+		hal_device_property_set_string (d, ".udev.class_name", 
+						self->sysfs_class_name);
 
 		/* Find the property name we should store the device file in */
 		self->get_device_file_target (self, d, path, class_device,
-					      dev_file_prop_name, SYSFS_PATH_MAX);
-		ds_property_set_string (d, ".target_dev", dev_file_prop_name);
-	}
+					      dev_file_prop_name, 
+					      SYSFS_PATH_MAX);
+		hal_device_property_set_string (d, ".target_dev", 
+						dev_file_prop_name);
 
-	/* Ask udev about the device file if we are probing */
-	if (self->require_device_file && is_probing) {
-		char dev_file[SYSFS_PATH_MAX];
+		/* Ask udev about the device file if we are probing */
+		if (is_probing) {
+			if (!class_device_get_device_file (path, dev_file, 
+							   SYSFS_PATH_MAX)) {
+				HAL_WARNING (("Couldn't get device file for "
+					      "sysfs path %s", path));
+				return;
+			}
 
-		if (!class_device_get_device_file (path, dev_file, 
-						   SYSFS_PATH_MAX)) {
-			HAL_WARNING (("Couldn't get device file for sysfs "
-				      "path %s", path));
-			return;
+			/* If we are not probing this function will be called 
+			 * upon receiving a dbus event */
+			self->udev_event (self, d, dev_file);
 		}
-
-		/* If we are not probing this function will be called upon
-		 * receiving a dbus event */
-		self->udev_event (self, d, dev_file);
 	}
 
 	/* Now find the physical device; this happens asynchronously as it
 	 * might be added later. */
 	if (self->merge_or_add) {
-		ds_device_async_find_by_key_value_string
-			("linux.sysfs_path_device", 
-			 class_device->sysdevice->path,
-			 TRUE, class_device_got_sysdevice, 
-			 (void *) d, (void *) self,
-			 is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+		AsyncInfo *ai = g_new0 (AsyncInfo, 1);
+		ai->device = d;
+		ai->handler = self;
+
+		/* find the sysdevice */
+		hal_device_store_match_key_value_string_async (
+			hald_get_gdl (),
+			"linux.sysfs_path_device",
+			class_device->sysdevice->path,
+			class_device_got_sysdevice, ai,
+			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		char *parent_sysfs_path;
+		AsyncInfo *ai = g_new0 (AsyncInfo, 1);
 
-		parent_sysfs_path = get_parent_sysfs_path (class_device->sysdevice->path);
+		parent_sysfs_path = 
+			get_parent_sysfs_path (class_device->sysdevice->path);
 
-		ds_device_async_find_by_key_value_string
-			("linux.sysfs_path_device", 
-			 parent_sysfs_path,
-			 TRUE, class_device_got_parent_device, 
-			 (void *) d, (void *) self,
-			 is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+		ai->device = d;
+		ai->handler = self;
+
+		/* find the parent */
+		hal_device_store_match_key_value_string_async (
+			hald_get_gdl (),
+			"linux.sysfs_path_device",
+			parent_sysfs_path,
+			class_device_got_parent_device, ai,
+			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 }
 
@@ -146,11 +175,10 @@ class_device_visit (ClassDeviceHandler *self,
  *                             this device class
  */
 void
-class_device_removed (ClassDeviceHandler* self, 
-		      const char *sysfs_path, 
+class_device_removed (ClassDeviceHandler* self, const char *sysfs_path, 
 		      HalDevice *d)
 {
-	HAL_INFO (("entering : sysfs_path = '%s'", sysfs_path));
+	HAL_INFO (("sysfs_path = '%s'", sysfs_path));
 }
 
 /** Called when a device file (e.g. a file in /dev) have been created by udev 
@@ -161,14 +189,14 @@ class_device_removed (ClassDeviceHandler* self,
  *  @param  dev_file            device file, e.g. /dev/input/event4
  */
 void
-class_device_udev_event (ClassDeviceHandler *self,
-			 HalDevice *d, char *dev_file)
+class_device_udev_event (ClassDeviceHandler *self, HalDevice *d, 
+			 char *dev_file)
 {
 	const char *target_dev;
 	char *target_dev_copy;
 
 	/* merge the device file name into the name determined above */
-	target_dev = ds_property_get_string (d, ".target_dev");
+	target_dev = hal_device_property_get_string (d, ".target_dev");
 	assert (target_dev != NULL);
 
 	/* hmm, have to make a copy because somewhere asynchronously we
@@ -177,10 +205,11 @@ class_device_udev_event (ClassDeviceHandler *self,
 	assert (target_dev_copy != NULL);
 
 	/* this will invoke _got_device_file per the _async_wait_for_  below */
-	ds_property_set_string (d, target_dev_copy, dev_file);
+	hal_device_property_set_string (d, target_dev_copy, dev_file);
 
 	free (target_dev_copy);
 }
+
 
 /** Callback when the parent device is found or if timeout for search occurs.
  *  (only applicable if self->merge_or_add==FALSE)
@@ -191,30 +220,35 @@ class_device_udev_event (ClassDeviceHandler *self,
  *  @param  data2               User data
  */
 void
-class_device_got_parent_device (HalDevice *parent, void *data1, void *data2)
+class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent, 
+				gpointer user_data)
 {
+	AsyncInfo *ai = user_data;
 	const char *target_dev = NULL;
 	const char *sysfs_path = NULL;
 	char *new_udi = NULL;
 	HalDevice *new_d = NULL;
-	HalDevice *d = (HalDevice *) data1;
-	ClassDeviceHandler *self = (ClassDeviceHandler *) data2;
+	HalDevice *d = (HalDevice *) ai->device;
+	ClassDeviceHandler *self = ai->handler;
 	struct sysfs_class_device *class_device;
+
+	g_free (ai);
 
 	if (parent == NULL) {
 		HAL_WARNING (("No parent for class device at sysfs path %s",
 			      d->udi));
 		/* get rid of temporary device */
-		ds_device_destroy (d);
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		return;
 	}
 
 	/* set parent */
-	ds_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_string (d, "info.parent", parent->udi);
 
 	/* get more information about the device from the specialised 
 	 * function */
-	sysfs_path = ds_property_get_string (d, "linux.sysfs_path");
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 	assert (sysfs_path != NULL);
 	class_device = sysfs_open_class_device (sysfs_path);
 	if (class_device == NULL)
@@ -225,12 +259,13 @@ class_device_got_parent_device (HalDevice *parent, void *data1, void *data2)
 
 	/** @todo handle merge_or_add==FALSE && require_device_file==TRUE */
 	if (self->require_device_file) {
-		target_dev = ds_property_get_string (d, ".target_dev");
+		target_dev = hal_device_property_get_string (d, ".target_dev");
 		assert (target_dev != NULL);
-		ds_device_async_wait_for_property (
+
+		hal_device_async_wait_property (
 			d, target_dev, 
 			class_device_got_device_file,
-			(void *) d, (void *) self,
+			(gpointer) self,
 			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		/* Compute a proper UDI (unique device id) and try to locate a 
@@ -238,11 +273,13 @@ class_device_got_parent_device (HalDevice *parent, void *data1, void *data2)
 		 */
 		new_udi = rename_and_merge (d, self->compute_udi, self->hal_class_name);
 		if (new_udi != NULL) {
-			new_d = ds_device_find (new_udi);
-			if (new_d != NULL) {
-				ds_gdl_add (new_d);
-			}
+			new_d = hal_device_store_find (hald_get_gdl (),
+						       new_udi);
+			hal_device_store_add (hald_get_gdl (),
+					      new_d != NULL ? new_d : d);
 		}
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 	}
 }
 
@@ -256,46 +293,52 @@ class_device_got_parent_device (HalDevice *parent, void *data1, void *data2)
  *  @param  data2               User data
  */
 void
-class_device_got_sysdevice (HalDevice *sysdevice, void *data1, void *data2)
+class_device_got_sysdevice (HalDeviceStore *store, 
+			    HalDevice *sysdevice, 
+			    gpointer user_data)
 {
+	AsyncInfo *ai = user_data;
 	const char *target_dev;
 	const char *parent_udi;
 	HalDevice *parent_device;
-	HalDevice *d = (HalDevice *) data1;
-	ClassDeviceHandler *self = (ClassDeviceHandler *) data2;
+	HalDevice *d = (HalDevice *) ai->device;
+	ClassDeviceHandler *self = ai->handler;
 
 	HAL_INFO (("Entering d=0x%0x, sysdevice=0x%0x!", d, sysdevice));
 
 	if (sysdevice == NULL) {
 		HAL_WARNING (("Sysdevice for a class device never appeared!"));
 		/* get rid of temporary device */
-		ds_device_destroy (d);
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		return;
 	}
 
 	/* if the sysdevice is virtual, ascent into the closest non-
 	 * virtual device */
-	while (ds_property_exists (sysdevice, "info.virtual") &&
-	       ds_property_get_bool (sysdevice, "info.virtual") &&
+	while (hal_device_has_property (sysdevice, "info.virtual") &&
+	       hal_device_property_get_bool (sysdevice, "info.virtual") &&
 	       (parent_udi = 
-		ds_property_get_string (sysdevice, "info.parent")) != NULL ) {
-		parent_device = ds_device_find (parent_udi);
+		hal_device_property_get_string (sysdevice, "info.parent")) != NULL ) {
+		parent_device = hal_device_store_find (hald_get_gdl (),
+						       parent_udi);
 		if (parent_device != NULL) {
 			sysdevice = parent_device;
 		}
 	}
 	
 	/* store the name of the sysdevice in a temporary property */
-	ds_property_set_string (d, ".sysdevice", sysdevice->udi);
+	hal_device_property_set_string (d, ".sysdevice", sysdevice->udi);
 
 	/* wait for the appropriate property for the device file */
 	if (self->require_device_file ) {
-		target_dev = ds_property_get_string (d, ".target_dev");
+		target_dev = hal_device_property_get_string (d, ".target_dev");
 		assert (target_dev != NULL);
-		ds_device_async_wait_for_property (
+
+		hal_device_async_wait_property (
 			d, target_dev, 
 			class_device_got_device_file,
-			(void *) d, (void *) self,
+			(gpointer) self,
 			is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		/** @todo FIXME */
@@ -303,54 +346,50 @@ class_device_got_sysdevice (HalDevice *sysdevice, void *data1, void *data2)
 	}
 }
 
-/** Callback when we got a device file found or on timeout on search occurs.
- *
- *  @param  sysdevice           Async Return value from the find call or NULL
- *                              if timeout
- *  @param  data1               User data (our own device in this case)
- *  @param  data2               User data
- */
-void
-class_device_got_device_file (HalDevice *dm, void *data1, void *data2)
+static void
+class_device_got_device_file (HalDevice *d, gpointer user_data, 
+			      gboolean prop_exists)
 {
-	HalDevice *d = (HalDevice *) data1;
 	HalDevice *sysdevice;
-	ClassDeviceHandler *self = (ClassDeviceHandler *) data2;
+	ClassDeviceHandler *self = (ClassDeviceHandler *) user_data;
 
-	if (dm == NULL) {
+	if (!prop_exists) {
 		HAL_WARNING (("Never got device file for class device at %s", 
-			      ds_property_get_string (d, ".udev.sysfs_path")));
-		ds_device_destroy (d);
+			      hal_device_property_get_string (d, ".udev.sysfs_path")));
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		return;
 	}
 
 	/* remove the property for the device file name target */
-	ds_property_remove (d, ".target_dev");
+	hal_device_property_remove (d, ".target_dev");
 
 	/* remove properties for udev reception */
-	ds_property_remove (d, ".udev.sysfs_path");
-	ds_property_remove (d, ".udev.class_name");
+	hal_device_property_remove (d, ".udev.sysfs_path");
+	hal_device_property_remove (d, ".udev.class_name");
 
 	if (self->merge_or_add) {
-		const char* sysdevice_udi;
+		const char *sysdevice_udi;
 		/* get the sysdevice from the temporary cookie */
-		sysdevice_udi = ds_property_get_string (d, ".sysdevice");
+		sysdevice_udi = hal_device_property_get_string (d, ".sysdevice");
 		assert (sysdevice_udi != NULL);
-		sysdevice = ds_device_find (sysdevice_udi);
+		sysdevice = hal_device_store_find (hald_get_gdl (),
+						   sysdevice_udi);
 		assert (sysdevice != NULL);
-		ds_property_remove (d, ".sysdevice");
+		hal_device_property_remove (d, ".sysdevice");
 		
 		/* now, do some post-processing */
 		self->post_process (self, d, 
-				    ds_property_get_string (d, ".udev.sysfs_path"),
+				    hal_device_property_get_string (d, ".udev.sysfs_path"),
 				    NULL /** @todo FIXME */ );
 
 		/* merge information from temporary device onto the physical
 		 * device */
-		ds_device_merge (sysdevice, d);
+		hal_device_merge (sysdevice, d);
 
 		/* get rid of temporary device */
-		ds_device_destroy (d);
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 
 	} else {
 		char *new_udi;
@@ -360,11 +399,13 @@ class_device_got_device_file (HalDevice *dm, void *data1, void *data2)
 		 */
 		new_udi = rename_and_merge (d, self->compute_udi, self->hal_class_name);
 		if (new_udi != NULL) {
-			new_d = ds_device_find (new_udi);
-			if (new_d != NULL) {
-				ds_gdl_add (new_d);
-			}
+			new_d = hal_device_store_find (hald_get_gdl (),
+						       new_udi);
+			hal_device_store_add (hald_get_gdl (),
+					      new_d != NULL ? new_d : d);
 		}
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 	}
 }
 

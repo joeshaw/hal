@@ -10,45 +10,38 @@ INCLUDES = \
 
 sbin_PROGRAMS = hald
 
+BUILT_SOURCES =		\
+	hald_marshal.h	\
+	hald_marshal.c
+
 hald_SOURCES =                                                          \
-        hald.h                                                          \
-                                        main.c                          \
-        osspec.h                                                        \
-        logger.h                        logger.c                        \
-        device_store.h                  device_store.c                  \
-        device_info.h                   device_info.c         
+	hald_marshal.h			hald_marshal.c			\
+	callout.h			callout.c			\
+	device.h			device.c			\
+	device_info.h			device_info.c			\
+	device_store.h			device_store.c			\
+        hald.h				hald.c				\
+	hald_dbus.h			hald_dbus.c			\
+	logger.h			logger.c			\
+	osspec.h							\
+	property.h			property.c
 
-#hald_SOURCES +=	\
-#	linux/common.h			linux/common.c			\
-#					linux/osspec.c			\
-#	linux/bus_device.h		linux/bus_device.c		\
-#	linux/class_device.h		linux/class_device.c		\
-#					linux/pci_bus_device.c		\
-#					linux/usb_bus_device.c		\
-#					linux/usbif_bus_device.c	\
-#					linux/input_class_device.c	\
-#					linux/scsi_host_class_device.c	\
-#					linux/scsi_device_class_device.c \
-#					linux/block_class_device.c	\
-#					linux/ide_host_bus_device.c	\
-#					linux/ide_bus_device.c		\
-#	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c
+hald_SOURCES +=	\
+	linux/common.h			linux/common.c			\
+					linux/osspec.c			\
+	linux/bus_device.h		linux/bus_device.c		\
+	linux/class_device.h		linux/class_device.c		\
+					linux/pci_bus_device.c		\
+					linux/usb_bus_device.c		\
+					linux/usbif_bus_device.c	\
+					linux/input_class_device.c	\
+					linux/scsi_host_class_device.c	\
+					linux/scsi_device_class_device.c \
+					linux/block_class_device.c	\
+					linux/ide_host_bus_device.c	\
+					linux/ide_bus_device.c		\
+	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c
 
-hald_SOURCES +=                                                         \
-                                        linux/linux_osspec.c            \
-        linux/linux_common.h            linux/linux_common.c            \
-        linux/linux_pci.h               linux/linux_pci.c               \
-        linux/linux_i2c.h               linux/linux_i2c.c               \
-        linux/linux_usb.h               linux/linux_usb.c               \
-	linux/linux_ieee1394.h          linux/linux_ieee1394.c          \
-        linux/linux_ide.h               linux/linux_ide.c               \
-	linux/linux_dvd_rw_utils.h      linux/linux_dvd_rw_utils.c	    \
-        linux/linux_class_block.h       linux/linux_class_block.c       \
-        linux/linux_class_scsi.h        linux/linux_class_scsi.c        \
-	linux/linux_class_net.h         linux/linux_class_net.c         \
-        linux/linux_class_i2c_adapter.h linux/linux_class_i2c_adapter.c \
-        linux/linux_class_v4l.h         linux/linux_class_v4l.c         \
-        linux/linux_class_input.h       linux/linux_class_input.c
 
 hald_SOURCES +=                                                         \
         linux/libsysfs/libsysfs.h                                       \
@@ -77,6 +70,21 @@ initd_SCRIPTS= 	\
 endif
  ## Red Hat end
 
+EXTRA_DIST =			\
+	hald_marshal.list
 
-clean-local :
+hald_marshal.h: hald_marshal.list
+	cd $(srcdir) \
+	&& glib-genmarshal --prefix=hald_marshal hald_marshal.list --header >> xgen-gmh \
+	&& (cmp -s xgen-gmh hald_marshal.h || cp xgen-gmh hald_marshal.h) \
+	&& rm -f xgen-gmh xgen-gmh~
+
+hald_marshal.c: hald_marshal.list
+	cd $(srcdir) \
+	&& glib-genmarshal --prefix=hald_marshal hald_marshal.list --body >> xgen-gmc \
+	&& (cmp -s xgen-gmc hald_marshal.c || cp xgen-gmc hald_marshal.c) \
+	&& rm -f xgen-gmc xgen-gmc~
+
+clean-local:
 	rm -f *~
+	rm -f hald_marshal.c hald_marshal.h

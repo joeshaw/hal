@@ -56,12 +56,12 @@ ide_device_compute_udi (HalDevice *d, int append_num)
 
 	if (append_num == -1)
 		sprintf (buf, "/org/freedesktop/Hal/devices/ide_%d_%d",
-			 ds_property_get_int (d, "ide.host"),
-			 ds_property_get_int (d, "ide.channel"));
+			 hal_device_property_get_int (d, "ide.host"),
+			 hal_device_property_get_int (d, "ide.channel"));
 	else
-		sprintf (buf, "/org/freedesktop/Hal/devices/ide_%d_%d/d",
-			 ds_property_get_int (d, "ide.host"),
-			 ds_property_get_int (d, "ide.channel"),
+		sprintf (buf, "/org/freedesktop/Hal/devices/ide_%d_%d/%d",
+			 hal_device_property_get_int (d, "ide.host"),
+			 hal_device_property_get_int (d, "ide.channel"),
 			 append_num);
 
 	return buf;
@@ -76,14 +76,18 @@ ide_device_post_process (BusDeviceHandler *self,
 	int host, channel;
 
 	sscanf (device->bus_id, "%d.%d", &host, &channel);
-	ds_property_set_int (d, "ide.host", host);
-	ds_property_set_int (d, "ide.channel", channel);
+	hal_device_property_set_int (d, "ide.host", host);
+	hal_device_property_set_int (d, "ide.channel", channel);
 
-	if (channel == 0)
-		ds_property_set_string (d, "info.product", "IDE channel (master)");
-	else
-		ds_property_set_string (d, "info.product", "IDE channel (slave)");
-	ds_property_set_bool (d, "info.virtual", TRUE);
+	if (channel == 0) {
+		hal_device_property_set_string (d, "info.product",
+						"IDE channel (master)");
+	} else {
+		hal_device_property_set_string (d, "info.product",
+						"IDE channel (slave)");
+	}
+
+	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 

@@ -42,11 +42,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <glib.h>
-
 #include "../logger.h"
 #include "../device_store.h"
 #include "../device_info.h"
+#include "../hald.h"
 #include "common.h"
 
 /**
@@ -400,7 +399,7 @@ rename_and_merge (HalDevice * d,
 	/* udi is a temporary udi */
 
 	append_num = -1;
-      tryagain:
+tryagain:
 	/* compute the udi for the device */
 	computed_udi = (*naming_func) (d, append_num);
 
@@ -416,13 +415,13 @@ rename_and_merge (HalDevice * d,
 	 *  Which it might not, see discussions - but we can get close enough
 	 *  for it to be practical)
 	 */
-	computed_d = ds_device_find (computed_udi);
+	computed_d = hal_device_store_find (hald_get_gdl (), computed_udi);
 	if (computed_d != NULL) {
 
-		if ((!ds_property_exists
+		if ((!hal_device_has_property
 		     (computed_d, "info.not_available"))
 		    &&
-		    (!ds_property_get_bool
+		    (!hal_device_property_get_bool
 		     (computed_d, "info.not_available"))) {
 			/* Danger, Will Robinson! Danger!
 			 *
@@ -442,19 +441,24 @@ rename_and_merge (HalDevice * d,
 			 * has the same bus information as our newly hotplugged
 			 * one.
 			 */
-			if (ds_device_matches (computed_d, d, namespace)) {
+			if (hal_device_matches (computed_d, d, namespace)) {
 				HAL_ERROR (("Found device already present "
 					    "as '%s'!\n", computed_d->udi));
-				ds_print (d);
-				ds_print (computed_d);
+				hal_device_print (d);
+				hal_device_print (computed_d);
 				/* indeed a match, must be b) ;ignore device */
-				ds_device_destroy (d);
+				hal_device_store_remove (hald_get_tdl (), d);
+				g_object_unref (d);
 				/* and return */
 				return NULL;
 			}
 			
 			/** Not a match, must be case a). Choose next 
 			 *  computed_udi and try again! */
+			append_num++;
+			goto tryagain;
+		} else {
+			/* must be another instance of this type of device */
 			append_num++;
 			goto tryagain;
 		}
@@ -468,14 +472,11 @@ rename_and_merge (HalDevice * d,
 		 * Note that the probed device only contain bus-specific
 		 * properties - the other properties will remain..
 		 */
-		ds_device_merge (computed_d, d);
-
-		/* Remove temporary device */
-		ds_device_destroy (d);
+		hal_device_merge (computed_d, d);
 
 		/* Set that we are back in business! */
-		ds_property_set_bool (computed_d, "info.not_available",
-				      FALSE);
+		hal_device_property_set_bool (computed_d, "info.not_available",
+					      FALSE);
 
 		HAL_INFO (("Device %s is plugged in again",
 			   computed_d->udi));
@@ -484,8 +485,9 @@ rename_and_merge (HalDevice * d,
 		/* Device is not in list... */
 
 		/* assign the computed device name */
-		ds_device_set_udi (d, computed_udi);
-		ds_property_set_string (d, "info.udi", computed_udi);
+		HAL_INFO ((" ##### computed_udi=%s", computed_udi));
+		hal_device_set_udi (d, computed_udi);
+		hal_device_property_set_string (d, "info.udi", computed_udi);
 
 		/* Search for device information file and attempt merge */
 		if (di_search_and_merge (d)) {
@@ -540,24 +542,26 @@ find_and_set_physical_device (HalDevice * device)
 
 	d = device;
 	do {
-		parent_udi = ds_property_get_string (d, "info.parent");
+		parent_udi = hal_device_property_get_string (d,
+							      "info.parent");
 		if (parent_udi == NULL) {
 			HAL_ERROR (("Error finding parent for %s\n",
 				    d->udi));
 			return;
 		}
 
-		parent = ds_device_find (parent_udi);
+		parent = hal_device_store_find (hald_get_gdl (), parent_udi);
 		if (parent == NULL) {
 			HAL_ERROR (("Error resolving UDI %s\n",
 				    parent_udi));
 			return;
 		}
 
-		if (!ds_property_exists (parent, "info.physical_device")) {
-			ds_property_set_string (device,
-						"info.physical_device",
-						parent_udi);
+		if (!hal_device_has_property (parent,
+					       "info.physical_device")) {
+			hal_device_property_set_string (device,
+							 "info.physical_device",
+							 parent_udi);
 			return;
 		}
 

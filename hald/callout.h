@@ -1,9 +1,9 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * device_store.h : device store interface
+ * callout.h : Call out to helper programs when devices are added/removed.
  *
- * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2004 Novell, Inc.
  *
  * Licensed under the Academic Free License version 2.0
  *
@@ -23,29 +23,16 @@
  *
  **************************************************************************/
 
-#ifndef HALD_H
-#define HALD_H
+#ifndef CALLOUT_H
+#define CALLOUT_H
 
-#include <stdarg.h>
-#include <stdint.h>
-#include <dbus/dbus.h>
+#include <glib.h>
+#include "device.h"
 
-#include "device_store.h"
+void hal_callout_device     (HalDevice  *device,
+			     gboolean    added);
+void hal_callout_capability (HalDevice  *device,
+			     const char *capability,
+			     gboolean    added);
 
-/**
- *  @addtogroup HalDaemon
- *
- *  @{
- */
-
-HalDeviceStore *hald_get_gdl (void);
-HalDeviceStore *hald_get_tdl (void);
-
-void property_atomic_update_begin ();
-void property_atomic_update_end ();
-
-/**
- *  @}
- */
-
-#endif				/* HALD_H */
+#endif /* CALLOUT_H */

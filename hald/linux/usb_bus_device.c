@@ -38,6 +38,8 @@
 
 #include "../logger.h"
 #include "../device_store.h"
+#include "../hald.h"
+
 #include "bus_device.h"
 #include "common.h"
 
@@ -527,28 +529,28 @@ usb_add_caps_from_class (HalDevice * d,
 	switch (if_class) {
 	case 0x01:
 		cat = "multimedia.audio";
-		ds_add_capability (d, "multimedia.audio");
+		hal_device_add_capability (d, "multimedia.audio");
 		break;
 	case 0x02:
 		if (if_sub_class == 0x06) {
 			cat = "net";
-			ds_add_capability (d, "net");
-			ds_add_capability (d, "net.ethernet");
+			hal_device_add_capability (d, "net");
+			hal_device_add_capability (d, "net.ethernet");
 		} else if (if_sub_class == 0x02 && if_proto == 0x01) {
 			cat = "modem";
-			ds_add_capability (d, "modem");
+			hal_device_add_capability (d, "modem");
 		}
 		break;
 	case 0x03:
 		cat = "input";
-		ds_add_capability (d, "input");
+		hal_device_add_capability (d, "input");
 		if (if_sub_class == 0x00 || if_sub_class == 0x01) {
 			if (if_proto == 0x01) {
 				cat = "input.keyboard";
-				ds_add_capability (d, "input.keyboard");
+				hal_device_add_capability (d, "input.keyboard");
 			} else if (if_proto == 0x02) {
 				cat = "input.mouse";
-				ds_add_capability (d, "input.mouse");
+				hal_device_add_capability (d, "input.mouse");
 			}
 		}
 		break;
@@ -560,28 +562,28 @@ usb_add_caps_from_class (HalDevice * d,
 		break;
 	case 0x07:
 		cat = "printer";
-		ds_add_capability (d, "printer");
+		hal_device_add_capability (d, "printer");
 		break;
 	case 0x08:
 		cat = "storage_controller";
-		ds_add_capability (d, "storage_controller");
+		hal_device_add_capability (d, "storage_controller");
 		break;
 	case 0x09:
 		cat = "hub";
-		ds_add_capability (d, "hub");
+		hal_device_add_capability (d, "hub");
 		break;
 	case 0x0a:
 		break;
 	case 0xe0:
 		if (if_sub_class == 0x01 && if_proto == 0x01) {
 			cat = "bluetooth_adaptor";
-			ds_add_capability (d, "bluetooth_adaptor");
+			hal_device_add_capability (d, "bluetooth_adaptor");
 		}
 		break;
 	}
 
 	if (cat != NULL)
-		ds_property_set_string (d, "info.category", cat);
+		hal_device_property_set_string (d, "info.category", cat);
 }
 
 
@@ -603,6 +605,7 @@ usb_device_init ()
 
 	usb_proc_parse ();
 }
+
 
 /** Shutdown function for USB handling
  *
@@ -653,16 +656,16 @@ usb_device_compute_udi (HalDevice *d, int append_num)
 		format =
 		    "/org/freedesktop/Hal/devices/usb_%x_%x_%x_%d_%s-%d";
 
-	if (ds_property_exists (d, "usb.serial"))
-		serial = ds_property_get_string (d, "usb.serial");
+	if (hal_device_has_property (d, "usb.serial"))
+		serial = hal_device_property_get_string (d, "usb.serial");
 	else
 		serial = "noserial";
 
 	snprintf (buf, 256, format,
-		  ds_property_get_int (d, "usb.vendor_id"),
-		  ds_property_get_int (d, "usb.product_id"),
-		  ds_property_get_int (d, "usb.device_revision_bcd"),
-		  ds_property_get_int (d, "usb.cfg_value"),
+		  hal_device_property_get_int (d, "usb.vendor_id"),
+		  hal_device_property_get_int (d, "usb.product_id"),
+		  hal_device_property_get_int (d, "usb.device_revision_bcd"),
+		  hal_device_property_get_int (d, "usb.cfg_value"),
 		  serial, append_num);
 
 	return buf;
@@ -678,20 +681,20 @@ usb_merge_info_from_proc (HalDevice* d)
 	const char *parent_udi;
 	HalDevice* parent;
 
-	parent_udi = ds_property_get_string (d, "info.parent");
-	parent = ds_device_find (parent_udi);
+	parent_udi = hal_device_property_get_string (d, "info.parent");
+	parent = hal_device_store_find (hald_get_gdl (), parent_udi);
 
 	/* Merge information from /proc/bus/usb/devices */
 	proc_info = NULL;
 	usb_proc_parse ();
 
-	bus_id = get_last_element (ds_property_get_string (d, "linux.sysfs_path"));
+	bus_id = get_last_element (hal_device_property_get_string (d, "linux.sysfs_path"));
 
 	if (sscanf (bus_id, "usb%d", &bus_number) == 1) {
 		/* Is of form "usb%d" which means that this is a USB virtual 
 		 * root hub, cf. drivers/usb/hcd.c in kernel 2.6
 		 */
-		ds_property_set_int (d, "usb.bus_number", bus_number);
+		hal_device_property_set_int (d, "usb.bus_number", bus_number);
 
 		proc_info = usb_proc_find_virtual_hub (bus_number);
 	} else {
@@ -714,7 +717,7 @@ usb_merge_info_from_proc (HalDevice* d)
 		/* the first part is easy */
 		bus_number = atoi (bus_id);
 
-		ds_property_set_int (d, "usb.bus_number", bus_number);
+		hal_device_property_set_int (d, "usb.bus_number", bus_number);
 
 		/* The naming convention also guarantees that
 		 *
@@ -740,7 +743,7 @@ usb_merge_info_from_proc (HalDevice* d)
 				proc_info =
 				    usb_proc_find_virtual_hub_child
 				    (bus_number, port_number);
-				ds_property_set_int (d, "usb.port_number",
+				hal_device_property_set_int (d, "usb.port_number",
 						     port_number);
 			}
 		} else {
@@ -757,7 +760,7 @@ usb_merge_info_from_proc (HalDevice* d)
 				port_number += digit;
 			}
 
-			ds_property_set_int (d, "usb.port_number",
+			hal_device_property_set_int (d, "usb.port_number",
 					     port_number);
 
 			/* Ok, got the port number and bus number; this is 
@@ -771,7 +774,7 @@ usb_merge_info_from_proc (HalDevice* d)
 				proc_info = NULL;
 			} else {
 				parent_device_number =
-				    ds_property_get_int (
+				    hal_device_property_get_int (
 					    parent, "usb.linux.device_number");
 				//printf("parent_device_number = %d\n", parent_device_number);
 				proc_info =
@@ -787,17 +790,17 @@ usb_merge_info_from_proc (HalDevice* d)
 	if (proc_info != NULL) {
 		char kernel_path[32 + 1];
 
-		ds_property_set_int (d, "usb.level_number",
+		hal_device_property_set_int (d, "usb.level_number",
 				     proc_info->t_level);
-		ds_property_set_int (d, "usb.linux.device_number",
+		hal_device_property_set_int (d, "usb.linux.device_number",
 				     proc_info->t_device);
-		ds_property_set_int (d, "usb.linux.parent_number",
+		hal_device_property_set_int (d, "usb.linux.parent_number",
 				     proc_info->t_device);
-		ds_property_set_int (d, "usb.num_ports",
+		hal_device_property_set_int (d, "usb.num_ports",
 				     proc_info->t_max_children);
-		ds_property_set_int (d, "usb.speed_bcd",
+		hal_device_property_set_int (d, "usb.speed_bcd",
 				     proc_info->t_speed_bcd);
-		ds_property_set_int (d, "usb.version_bcd",
+		hal_device_property_set_int (d, "usb.version_bcd",
 				     proc_info->d_version_bcd);
 
 		/* Ok, now compute the unique name that the kernel sometimes 
@@ -806,30 +809,30 @@ usb_merge_info_from_proc (HalDevice* d)
 		 */
 		if (proc_info->t_level == 0) {
 			snprintf (kernel_path, 32, "usb-%s",
-				  ds_property_get_string (d,
+				  hal_device_property_get_string (d,
 							  "usb.serial"));
-			ds_property_set_string (d, "linux.kernel_devname",
+			hal_device_property_set_string (d, "linux.kernel_devname",
 						kernel_path);
 		} else {
 			if (parent != NULL) {
 				if (proc_info->t_level == 1) {
 					snprintf (kernel_path, 32, "%s-%d",
-						  ds_property_get_string
+						  hal_device_property_get_string
 						  (parent,
 						   "linux.kernel_devname"),
-						  ds_property_get_int (
+						  hal_device_property_get_int (
 							  d,
 							  "usb.port_number"));
 				} else {
 					snprintf (kernel_path, 32, "%s.%d",
-						  ds_property_get_string
+						  hal_device_property_get_string
 						  (parent,
 						   "linux.kernel_devname"),
-						  ds_property_get_int (
+						  hal_device_property_get_int (
 							  d,
 							  "usb.port_number"));
 				}
-				ds_property_set_string (d,
+				hal_device_property_set_string (d,
 							"linux.kernel_devname",
 							kernel_path);
 			}
@@ -878,22 +881,22 @@ usb_device_post_process (BusDeviceHandler *self,
 		else if (strcmp (attr_name, "idVendor") == 0)
 			vendor_id = parse_hex (cur->value);
 		else if (strcmp (attr_name, "bcdDevice") == 0)
-			ds_property_set_int (d, "usb.device_revision_bcd",
+			hal_device_property_set_int (d, "usb.device_revision_bcd",
 					     parse_hex (cur->value));
 		else if (strcmp (attr_name, "bMaxPower") == 0)
-			ds_property_set_int (d, "usb.max_power",
+			hal_device_property_set_int (d, "usb.max_power",
 					     parse_dec (cur->value));
 		else if (strcmp (attr_name, "serial") == 0
 			 && strlen (cur->value) > 0)
-			ds_property_set_string (d, "usb.serial",
+			hal_device_property_set_string (d, "usb.serial",
 						cur->value);
 		else if (strcmp (attr_name, "bmAttributes") == 0) {
 			int bmAttributes = parse_hex (cur->value);
 
 			/* USB_CONFIG_ATT_SELFPOWER */
-			ds_property_set_bool (d, "usb.is_self_powered",
+			hal_device_property_set_bool (d, "usb.is_self_powered",
 					      (bmAttributes & 0x40) != 0);
-			ds_property_set_bool (d, "usb.can_wake_up",
+			hal_device_property_set_bool (d, "usb.can_wake_up",
 					      (bmAttributes & 0x20) != 0);
 		}
 /*
@@ -907,30 +910,30 @@ usb_device_post_process (BusDeviceHandler *self,
 		else if (strcmp (attr_name, "product") == 0)
 			product_name_kernel = cur->value;
 		else if (strcmp (attr_name, "bDeviceClass") == 0)
-			ds_property_set_int (d, "usb.device_class",
+			hal_device_property_set_int (d, "usb.device_class",
 					     parse_hex (cur->value));
 		else if (strcmp (attr_name, "bDeviceSubClass") == 0)
-			ds_property_set_int (d, "usb.device_subclass",
+			hal_device_property_set_int (d, "usb.device_subclass",
 					     parse_hex (cur->value));
 		else if (strcmp (attr_name, "bDeviceProtocol") == 0)
-			ds_property_set_int (d, "usb.device_protocol",
+			hal_device_property_set_int (d, "usb.device_protocol",
 					     parse_hex (cur->value));
 
 		else if (strcmp (attr_name, "bNumConfigurations") == 0)
-			ds_property_set_int (d, "usb.num_configurations",
+			hal_device_property_set_int (d, "usb.num_configurations",
 					     parse_dec (cur->value));
 		else if (strcmp (attr_name, "bConfigurationValue") == 0)
-			ds_property_set_int (d, "usb.configuration_value",
+			hal_device_property_set_int (d, "usb.configuration_value",
 					     parse_dec (cur->value));
 
 		else if (strcmp (attr_name, "bNumInterfaces") == 0)
-			ds_property_set_int (d, "usb.num_interfaces",
+			hal_device_property_set_int (d, "usb.num_interfaces",
 					     parse_dec (cur->value));
 
 	}			/* for all attributes */
 
-	ds_property_set_int (d, "usb.product_id", product_id);
-	ds_property_set_int (d, "usb.vendor_id", vendor_id);
+	hal_device_property_set_int (d, "usb.product_id", product_id);
+	hal_device_property_set_int (d, "usb.vendor_id", vendor_id);
 
 	/* Lookup names in usb.ids; these may override what the kernel told
 	 * us, but, hey, it's only a name; it's not something we are going
@@ -942,43 +945,43 @@ usb_device_post_process (BusDeviceHandler *self,
 	 */
 	usb_ids_find (vendor_id, product_id, &vendor_name, &product_name);
 	if (vendor_name != NULL) {
-		ds_property_set_string (d, "usb.vendor", vendor_name);
-		ds_property_set_string (d, "info.vendor", vendor_name);
+		hal_device_property_set_string (d, "usb.vendor", vendor_name);
+		hal_device_property_set_string (d, "info.vendor", vendor_name);
 	} else if (vendor_name_kernel != NULL) {
 		/* fallback on name supplied from kernel */
-		ds_property_set_string (d, "usb.vendor",
+		hal_device_property_set_string (d, "usb.vendor",
 					vendor_name_kernel);
-		ds_property_set_string (d, "info.vendor",
+		hal_device_property_set_string (d, "info.vendor",
 					vendor_name_kernel);
 	} else {
 		/* last resort; use numeric name */
 		snprintf (numeric_name, sizeof(numeric_name), "Unknown (0x%04x)", vendor_id);
-		ds_property_set_string (d, "usb.vendor", numeric_name);
-		ds_property_set_string (d, "info.vendor", numeric_name);
+		hal_device_property_set_string (d, "usb.vendor", numeric_name);
+		hal_device_property_set_string (d, "info.vendor", numeric_name);
 	}
 
 	if (product_name != NULL) {
-		ds_property_set_string (d, "usb.product", product_name);
-		ds_property_set_string (d, "info.product", product_name);
+		hal_device_property_set_string (d, "usb.product", product_name);
+		hal_device_property_set_string (d, "info.product", product_name);
 	} else if (product_name_kernel != NULL) {
 		/* name supplied from kernel (if available) */
-		ds_property_set_string (d, "usb.product",
+		hal_device_property_set_string (d, "usb.product",
 					product_name_kernel);
-		ds_property_set_string (d, "info.product",
+		hal_device_property_set_string (d, "info.product",
 					product_name_kernel);
 	} else {
 		/* last resort; use numeric name */
 		snprintf (numeric_name, sizeof(numeric_name), "Unknown (0x%04x)",
 			  product_id);
-		ds_property_set_string (d, "usb.product", numeric_name);
-		ds_property_set_string (d, "info.product", numeric_name);
+		hal_device_property_set_string (d, "usb.product", numeric_name);
+		hal_device_property_set_string (d, "info.product", numeric_name);
 	}
 
 
 	/* Check device class */
-	usb_add_caps_from_class (d, ds_property_get_int (d, "usb.device_class"),
-				 ds_property_get_int (d, "usb.device_subclass"),
-				 ds_property_get_int (d, "usb.device_protocol"));
+	usb_add_caps_from_class (d, hal_device_property_get_int (d, "usb.device_class"),
+				 hal_device_property_get_int (d, "usb.device_subclass"),
+				 hal_device_property_get_int (d, "usb.device_protocol"));
 
 	usb_merge_info_from_proc (d);
 }

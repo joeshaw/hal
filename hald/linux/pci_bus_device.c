@@ -349,12 +349,12 @@ pci_device_compute_udi (HalDevice *d, int append_num)
 
 	if (append_num == -1)
 		sprintf (buf, "/org/freedesktop/Hal/devices/pci_%x_%x",
-			 ds_property_get_int (d, "pci.vendor_id"),
-			 ds_property_get_int (d, "pci.product_id"));
+			 hal_device_property_get_int (d, "pci.vendor_id"),
+			 hal_device_property_get_int (d, "pci.product_id"));
 	else
 		sprintf (buf, "/org/freedesktop/Hal/devices/pci_%x_%x/%d",
-			 ds_property_get_int (d, "pci.vendor_id"),
-			 ds_property_get_int (d, "pci.product_id"),
+			 hal_device_property_get_int (d, "pci.vendor_id"),
+			 hal_device_property_get_int (d, "pci.product_id"),
 			 append_num);
 
 	return buf;
@@ -378,215 +378,215 @@ pci_add_caps_from_class (HalDevice * d,
 	switch (dev_class) {
 	case 0x01:
 		cat = "storage_controller";
-		ds_add_capability (d, "storage_controller");
+		hal_device_add_capability (d, "storage_controller");
 		switch (dev_sub_class) {
 		case 0x00:
-			ds_add_capability (d, "storage_controller.scsi");
+			hal_device_add_capability (d, "storage_controller.scsi");
 			break;
 		case 0x01:
-			ds_add_capability (d, "storage_controller.ide");
+			hal_device_add_capability (d, "storage_controller.ide");
 			break;
 		case 0x02:
-			ds_add_capability (d, "storage_controller.floppy");
+			hal_device_add_capability (d, "storage_controller.floppy");
 			break;
 		case 0x03:
-			ds_add_capability (d, "storage_controller.ipi");
+			hal_device_add_capability (d, "storage_controller.ipi");
 			break;
 		case 0x04:
-			ds_add_capability (d, "storage_controller.raid");
+			hal_device_add_capability (d, "storage_controller.raid");
 			break;
 		}
 		break;
 	case 0x02:
 		cat = "net";
-		ds_add_capability (d, "net");
+		hal_device_add_capability (d, "net");
 		switch (dev_sub_class) {
 		case 0x00:
-			ds_add_capability (d, "net.ethernet");
+			hal_device_add_capability (d, "net.ethernet");
 			break;
 		case 0x01:
-			ds_add_capability (d, "net.tokenring");
+			hal_device_add_capability (d, "net.tokenring");
 			break;
 		case 0x02:
-			ds_add_capability (d, "net.fddi");
+			hal_device_add_capability (d, "net.fddi");
 			break;
 		case 0x03:
-			ds_add_capability (d, "net.atm");
+			hal_device_add_capability (d, "net.atm");
 			break;
 		case 0x04:
-			ds_add_capability (d, "net.isdn");
+			hal_device_add_capability (d, "net.isdn");
 			break;
 		}
 		break;
 	case 0x03:
 		cat = "video";
-		ds_add_capability (d, "video");
+		hal_device_add_capability (d, "video");
 		if (dev_sub_class == 0x00 && dev_proto == 0x00)
-			ds_add_capability (d, "video.vga");
+			hal_device_add_capability (d, "video.vga");
 		if (dev_sub_class == 0x00 && dev_proto == 0x01)
-			ds_add_capability (d, "video.8514");
+			hal_device_add_capability (d, "video.8514");
 		else if (dev_sub_class == 0x01)
-			ds_add_capability (d, "video.xga");
+			hal_device_add_capability (d, "video.xga");
 		else if (dev_sub_class == 0x02)
-			ds_add_capability (d, "video.3d");
+			hal_device_add_capability (d, "video.3d");
 		break;
 	case 0x04:
 		cat = "multimedia";
-		ds_add_capability (d, "multimedia");
+		hal_device_add_capability (d, "multimedia");
 		switch (dev_sub_class) {
 		case 0x00:
-			ds_add_capability (d, "multimedia.video");
+			hal_device_add_capability (d, "multimedia.video");
 			cat = "multimedia.video";
 			break;
 		case 0x01:
-			ds_add_capability (d, "multimedia.audio");
+			hal_device_add_capability (d, "multimedia.audio");
 			cat = "multimedia.audio";
 			break;
 		case 0x02:
-			ds_add_capability (d, "multimedia.telephony");
+			hal_device_add_capability (d, "multimedia.telephony");
 			cat = "multimedia.telephony";
 			break;
 		}
 		break;
 	case 0x06:
 		cat = "bridge";
-		ds_add_capability (d, "bridge");
+		hal_device_add_capability (d, "bridge");
 		switch (dev_sub_class) {
 		case 0x00:
-			ds_add_capability (d, "bridge.host");
+			hal_device_add_capability (d, "bridge.host");
 			break;
 		case 0x01:
-			ds_add_capability (d, "bridge.isa");
+			hal_device_add_capability (d, "bridge.isa");
 			break;
 		case 0x02:
-			ds_add_capability (d, "bridge.eisa");
+			hal_device_add_capability (d, "bridge.eisa");
 			break;
 		case 0x03:
-			ds_add_capability (d, "bridge.micro_channel");
+			hal_device_add_capability (d, "bridge.micro_channel");
 			break;
 		case 0x04:
-			ds_add_capability (d, "bridge.pci");
+			hal_device_add_capability (d, "bridge.pci");
 			break;
 		case 0x05:
-			ds_add_capability (d, "bridge.pcmcia");
+			hal_device_add_capability (d, "bridge.pcmcia");
 			break;
 		case 0x06:
-			ds_add_capability (d, "bridge.nubus");
+			hal_device_add_capability (d, "bridge.nubus");
 			break;
 		case 0x07:
 			cat = "bridge.cardbus";
-			ds_add_capability (d, "bridge.cardbus");
+			hal_device_add_capability (d, "bridge.cardbus");
 			break;
 		case 0x08:
-			ds_add_capability (d, "bridge.raceway");
+			hal_device_add_capability (d, "bridge.raceway");
 			break;
 		case 0x09:
-			ds_add_capability (d, "bridge.semi_transparent");
+			hal_device_add_capability (d, "bridge.semi_transparent");
 			break;
 		case 0x0a:
-			ds_add_capability (d, "bridge.infiniband");
+			hal_device_add_capability (d, "bridge.infiniband");
 			break;
 		}
 		break;
 	case 0x07:
 		cat = "comm";
-		ds_add_capability (d, "comm");
+		hal_device_add_capability (d, "comm");
 		if (dev_sub_class == 0x00) {
 			cat = "comm.serial";
-			ds_add_capability (d, "comm.serial");
+			hal_device_add_capability (d, "comm.serial");
 			switch (dev_proto) {
 			case 0x00:
-				ds_add_capability (d, "comm.serial.8250");
+				hal_device_add_capability (d, "comm.serial.8250");
 				break;
 			case 0x01:
-				ds_add_capability (d, "comm.serial.16450");
+				hal_device_add_capability (d, "comm.serial.16450");
 				break;
 			case 0x02:
-				ds_add_capability (d, "comm.serial.16550");
+				hal_device_add_capability (d, "comm.serial.16550");
 				break;
 			case 0x03:
-				ds_add_capability (d, "comm.serial.16650");
+				hal_device_add_capability (d, "comm.serial.16650");
 				break;
 			case 0x04:
-				ds_add_capability (d, "comm.serial.16750");
+				hal_device_add_capability (d, "comm.serial.16750");
 				break;
 			case 0x05:
-				ds_add_capability (d, "comm.serial.16850");
+				hal_device_add_capability (d, "comm.serial.16850");
 				break;
 			case 0x06:
-				ds_add_capability (d, "comm.serial.16950");
+				hal_device_add_capability (d, "comm.serial.16950");
 				break;
 			}
 		} else if (dev_sub_class == 0x01) {
 			cat = "comm.parallel";
-			ds_add_capability (d, "comm.parallel");
+			hal_device_add_capability (d, "comm.parallel");
 			switch (dev_proto) {
 			case 0x00:
-				ds_add_capability (d, "comm.parallel.spp");
+				hal_device_add_capability (d, "comm.parallel.spp");
 				break;
 			case 0x01:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "comm.parallel.bidir");
 				break;
 			case 0x02:
-				ds_add_capability (d, "comm.parallel.ecp");
+				hal_device_add_capability (d, "comm.parallel.ecp");
 				break;
 			case 0x03:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "comm.parallel.ieee1284");
 				break;
 			case 0xfe:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "comm.parallel.ieee1284_target");
 				break;
 			}
 		} else if (dev_sub_class == 0x02) {
 			cat = "comm.serial";
-			ds_add_capability (d, "comm.serial");
-			ds_add_capability (d, "comm.serial.multiport");
+			hal_device_add_capability (d, "comm.serial");
+			hal_device_add_capability (d, "comm.serial.multiport");
 		} else if (dev_sub_class == 0x03) {
 			cat = "modem";
-			ds_add_capability (d, "modem");
+			hal_device_add_capability (d, "modem");
 			if (dev_proto >= 0x01 && dev_proto <= 0x04)
-				ds_add_capability (d, "modem.hayes");
+				hal_device_add_capability (d, "modem.hayes");
 		}
 		break;
 	case 0x0c:
 		cat = "serial_controller";
-		ds_add_capability (d, "serial_controller");
+		hal_device_add_capability (d, "serial_controller");
 		switch (dev_sub_class) {
 		case 0x00:
 			cat = "serial_controller.ieee1394";
-			ds_add_capability (d,
+			hal_device_add_capability (d,
 					   "serial_controller.ieee1394");
 			if (dev_proto == 0x10)
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "serial_controller.ieee1394.ohci");
 			break;
 		case 0x01:
-			ds_add_capability (d, "serial_controller.access");
+			hal_device_add_capability (d, "serial_controller.access");
 			break;
 		case 0x02:
-			ds_add_capability (d, "serial_controller.ssa");
+			hal_device_add_capability (d, "serial_controller.ssa");
 			break;
 		case 0x03:
 			cat = "serial_controller.usb";
-			ds_add_capability (d, "serial_controller.usb");
+			hal_device_add_capability (d, "serial_controller.usb");
 			switch (dev_proto) {
 			case 0x00:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "serial_controller.usb.uhci");
 				break;
 			case 0x01:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "serial_controller.usb.ohci");
 				break;
 			case 0x02:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "serial_controller.usb.ehci");
 				break;
 			case 0xfe:
-				ds_add_capability (d,
+				hal_device_add_capability (d,
 						   "serial_controller.usb.device");
 				break;
 			}
@@ -595,44 +595,44 @@ pci_add_caps_from_class (HalDevice * d,
 		break;
 	case 0x0d:
 		cat = "wireless";
-		ds_add_capability (d, "wireless");
+		hal_device_add_capability (d, "wireless");
 		switch (dev_sub_class) {
 		case 0x00:
-			ds_add_capability (d, "wireless.irda");
+			hal_device_add_capability (d, "wireless.irda");
 			break;
 		case 0x01:
-			ds_add_capability (d,
+			hal_device_add_capability (d,
 					   "wireless.consumer_controller");
 			break;
 		case 0x02:
-			ds_add_capability (d, "wireless.rf_controller");
+			hal_device_add_capability (d, "wireless.rf_controller");
 			break;
 		}
 		break;
 	case 0x0f:
 		cat = "satellite_controller";
-		ds_add_capability (d, "satellite_controller");
+		hal_device_add_capability (d, "satellite_controller");
 		switch (dev_sub_class) {
 		case 0x00:
-			ds_add_capability (d, "satellite_controller.tv");
+			hal_device_add_capability (d, "satellite_controller.tv");
 			break;
 		case 0x01:
-			ds_add_capability (d,
+			hal_device_add_capability (d,
 					   "satellite_controller.audio");
 			break;
 		case 0x02:
-			ds_add_capability (d,
+			hal_device_add_capability (d,
 					   "satellite_controller.video");
 			break;
 		case 0x03:
-			ds_add_capability (d, "satellite_controller.data");
+			hal_device_add_capability (d, "satellite_controller.data");
 			break;
 		}
 		break;
 	}
 
 	if (cat != NULL)
-		ds_property_set_string (d, "info.category", cat);
+		hal_device_property_set_string (d, "info.category", cat);
 }
 
 
@@ -710,10 +710,10 @@ pci_device_post_process (BusDeviceHandler *self,
 		}
 	}
 
-	ds_property_set_int (d, "pci.vendor_id", vendor_id);
-	ds_property_set_int (d, "pci.product_id", product_id);
-	ds_property_set_int (d, "pci.subsys_vendor_id", subsys_vendor_id);
-	ds_property_set_int (d, "pci.subsys_product_id",
+	hal_device_property_set_int (d, "pci.vendor_id", vendor_id);
+	hal_device_property_set_int (d, "pci.product_id", product_id);
+	hal_device_property_set_int (d, "pci.subsys_vendor_id", subsys_vendor_id);
+	hal_device_property_set_int (d, "pci.subsys_product_id",
 			     subsys_product_id);
 
 	/* Lookup names in pci.ids */
@@ -721,38 +721,38 @@ pci_device_post_process (BusDeviceHandler *self,
 		      subsys_product_id, &vendor_name, &product_name,
 		      &subsys_vendor_name, &subsys_product_name);
 	if (vendor_name != NULL)
-		ds_property_set_string (d, "pci.vendor", vendor_name);
+		hal_device_property_set_string (d, "pci.vendor", vendor_name);
 	if (product_name != NULL)
-		ds_property_set_string (d, "pci.product", product_name);
+		hal_device_property_set_string (d, "pci.product", product_name);
 	if (subsys_vendor_name != NULL)
-		ds_property_set_string (d, "pci.subsys_vendor",
+		hal_device_property_set_string (d, "pci.subsys_vendor",
 					subsys_vendor_name);
 	if (subsys_product_name != NULL)
-		ds_property_set_string (d, "pci.subsys_product",
+		hal_device_property_set_string (d, "pci.subsys_product",
 					subsys_product_name);
 
 	/* Provide best-guess of name, goes in Product property; 
 	 * .fdi files can override this */
 	if (product_name != NULL) {
-		ds_property_set_string (d, "info.product", product_name);
+		hal_device_property_set_string (d, "info.product", product_name);
 	} else {
 		snprintf (namebuf, sizeof(namebuf), "Unknown (0x%04x)", product_id);
-		ds_property_set_string (d, "info.product", namebuf);
+		hal_device_property_set_string (d, "info.product", namebuf);
 	}
 
 	/* Provide best-guess of vendor, goes in Vendor property; 
 	 * .fdi files can override this */
 	if (vendor_name != NULL) {
-		ds_property_set_string (d, "info.vendor", vendor_name);
+		hal_device_property_set_string (d, "info.vendor", vendor_name);
 	} else {
 		snprintf (namebuf, sizeof(namebuf), "Unknown (0x%04x)", vendor_id);
-		ds_property_set_string (d, "info.vendor", namebuf);
+		hal_device_property_set_string (d, "info.vendor", namebuf);
 	}
 
 
-	ds_property_set_int (d, "pci.device_class", (cls >> 16) & 0xff);
-	ds_property_set_int (d, "pci.device_subclass", (cls >> 8) & 0xff);
-	ds_property_set_int (d, "pci.device_protocol", cls & 0xff);
+	hal_device_property_set_int (d, "pci.device_class", (cls >> 16) & 0xff);
+	hal_device_property_set_int (d, "pci.device_subclass", (cls >> 8) & 0xff);
+	hal_device_property_set_int (d, "pci.device_protocol", cls & 0xff);
 	pci_add_caps_from_class (d, (cls >> 16) & 0xff, (cls >> 8) & 0xff,
 				 cls & 0xff);
 }

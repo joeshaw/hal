@@ -89,14 +89,16 @@ usbif_device_compute_udi (HalDevice *d, int append_num)
 	else
 		format = "/org/freedesktop/Hal/devices/usbif_%s_%d-%d";
 
-	pd = ds_property_get_string (d, "info.parent");
+	hal_device_print (d);
+
+	pd = hal_device_property_get_string (d, "info.parent");
 	len = strlen (pd);
 	for (i = len - 1; pd[i] != '/' && i >= 0; i--);
 	name = pd + i + 1;
 
 	snprintf (buf, 256, format,
 		  name,
-		  ds_property_get_int (d, "usbif.number"), append_num);
+		  hal_device_property_get_int (d, "usbif.number"), append_num);
 
 	return buf;
 }
@@ -129,20 +131,20 @@ usbif_device_post_process (BusDeviceHandler *self,
 		/*printf("attr_name=%s -> '%s'\n", attr_name, cur->value); */
 
 		if (strcmp (attr_name, "bInterfaceClass") == 0)
-			ds_property_set_int (d, "usbif.interface_class",
+			hal_device_property_set_int (d, "usbif.interface_class",
 					     parse_dec (cur->value));
 		else if (strcmp (attr_name, "bInterfaceSubClass") == 0)
-			ds_property_set_int (d, "usbif.interface_subclass",
+			hal_device_property_set_int (d, "usbif.interface_subclass",
 					     parse_dec (cur->value));
 		else if (strcmp (attr_name, "bInterfaceProtocol") == 0)
-			ds_property_set_int (d, "usbif.interface_protocol",
+			hal_device_property_set_int (d, "usbif.interface_protocol",
 					     parse_dec (cur->value));
 		else if (strcmp (attr_name, "bInterfaceNumber") == 0)
-			ds_property_set_int (d, "usbif.number",
+			hal_device_property_set_int (d, "usbif.number",
 					     parse_dec (cur->value));
 	}
 
-	ds_property_set_bool (d, "info.virtual", TRUE);
+	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 /** Method specialisations for bustype usbif */

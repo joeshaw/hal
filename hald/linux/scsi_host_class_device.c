@@ -62,13 +62,14 @@ scsi_host_class_post_process (ClassDeviceHandler *self,
 	/* Sets last_elem to host14 in path=/sys/class/scsi_host/host14 */
 	last_elem = get_last_element (sysfs_path);
 	sscanf (last_elem, "host%d", &host_num);
-	ds_property_set_int (d, "scsi_host.host", host_num);
+	hal_device_property_set_int (d, "scsi_host.host", host_num);
 
 	/* guestimate product name */
-	ds_property_set_string (d, "info.product", "SCSI Host Interface");
+	hal_device_property_set_string (d, "info.product",
+					"SCSI Host Interface");
 
 	/* this is a virtual device */
-	ds_property_set_bool (d, "info.virtual", TRUE);
+	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 static char *
@@ -83,7 +84,7 @@ scsi_host_class_compute_udi (HalDevice * d, int append_num)
 		format = "/org/freedesktop/Hal/devices/scsi_host_%d-%d";
 
 	snprintf (buf, 256, format,
-		  ds_property_get_int (d, "scsi_host.host"), append_num);
+		  hal_device_property_get_int (d, "scsi_host.host"), append_num);
 
 	return buf;
 }

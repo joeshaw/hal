@@ -65,16 +65,16 @@ scsi_device_class_post_process (ClassDeviceHandler *self,
 	last_elem = get_last_element (sysfs_path);
 	sscanf (last_elem, "%d:%d:%d:%d",
 		&host_num, &bus_num, &target_num, &lun_num);
-	ds_property_set_int (d, "scsi_device.host", host_num);
-	ds_property_set_int (d, "scsi_device.bus", bus_num);
-	ds_property_set_int (d, "scsi_device.target", target_num);
-	ds_property_set_int (d, "scsi_device.lun", lun_num);
+	hal_device_property_set_int (d, "scsi_device.host", host_num);
+	hal_device_property_set_int (d, "scsi_device.bus", bus_num);
+	hal_device_property_set_int (d, "scsi_device.target", target_num);
+	hal_device_property_set_int (d, "scsi_device.lun", lun_num);
 
 	/* guestimate product name */
-	ds_property_set_string (d, "info.product", "SCSI Device");
+	hal_device_property_set_string (d, "info.product", "SCSI Device");
 
 	/* this is a virtual device */
-	ds_property_set_bool (d, "info.virtual", TRUE);
+	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 static char *
@@ -91,10 +91,11 @@ scsi_device_class_compute_udi (HalDevice * d, int append_num)
 		    "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d-%d";
 
 	snprintf (buf, 256, format,
-		  ds_property_get_int (d, "scsi_device.host"),
-		  ds_property_get_int (d, "scsi_device.bus"),
-		  ds_property_get_int (d, "scsi_device.target"),
-		  ds_property_get_int (d, "scsi_device.lun"), append_num);
+		  hal_device_property_get_int (d, "scsi_device.host"),
+		  hal_device_property_get_int (d, "scsi_device.bus"),
+		  hal_device_property_get_int (d, "scsi_device.target"),
+		  hal_device_property_get_int (d, "scsi_device.lun"),
+		  append_num);
 
 	return buf;
 }

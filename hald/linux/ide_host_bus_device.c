@@ -69,10 +69,10 @@ ide_host_device_compute_udi (HalDevice *d, int append_num)
 
 	if (append_num == -1)
 		sprintf (buf, "/org/freedesktop/Hal/devices/ide_host_%d",
-			 ds_property_get_int (d, "ide_host.host_number"));
+			 hal_device_property_get_int (d, "ide_host.host_number"));
 	else
 		sprintf (buf, "/org/freedesktop/Hal/devices/ide_host_%d/%d",
-			 ds_property_get_int (d, "ide_host.host_number"),
+			 hal_device_property_get_int (d, "ide_host.host_number"),
 			 append_num);
 
 	return buf;
@@ -87,13 +87,13 @@ ide_host_device_post_process (BusDeviceHandler *self,
 	int ide_host_number;
 
 	sscanf (device->bus_id, "ide%d", &ide_host_number);
-	ds_property_set_int (d, "ide_host.host_number", ide_host_number);
+	hal_device_property_set_int (d, "ide_host.host_number", ide_host_number);
 
 	/* guestimate product name */
-	ds_property_set_string (d, "info.product", "IDE host controller");
+	hal_device_property_set_string (d, "info.product", "IDE host controller");
 
 	/* virtual device */
-	ds_property_set_bool (d, "info.virtual", TRUE);
+	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 
