@@ -70,6 +70,11 @@ static void* xmalloc(unsigned int how_much)
 */
 
 
+/** Global variable that is #TRUE if, and only if, we are invoked to probe
+ *  all the devices. Hence it is #FALSE if, and only if, we are invoked
+ *  by linux-hotplug
+ */
+static dbus_bool_t is_probing = FALSE;
 
 /** List of busses we know how to handle */
 static const char* bus_support[] = {"usb", "pci", "ide", "scsi"};
@@ -487,6 +492,272 @@ static dbus_bool_t pci_ids_free()
 
 
 
+
+/** Pointer to where the usb.ids file is loaded */
+static char* usb_ids = NULL;
+
+/** Length of data store at at usb_ids */
+static unsigned int usb_ids_len;
+
+/** Iterator position into usb_ids */
+static unsigned int usb_ids_iter_pos;
+
+/** Initialize the usb.ids line iterator to the beginning of the file */
+static void usb_ids_line_iter_init()
+{
+    usb_ids_iter_pos = 0;
+}
+
+/** Maximum length of lines in usb.ids */
+#define USB_IDS_MAX_LINE_LEN 512
+
+/** Get the next line from usb.ids
+ *
+ *  @param  line_len            Pointer to where number of bytes in line will
+ *                              be stored
+ *  @return                     Pointer to the line; only valid until the
+ *                              next invocation of this function
+ */
+static char* usb_ids_line_iter_get_line(unsigned int* line_len)
+{
+    unsigned int i;
+    static char line[USB_IDS_MAX_LINE_LEN];
+
+    for(i=0; 
+        usb_ids_iter_pos<usb_ids_len && 
+            i<USB_IDS_MAX_LINE_LEN-1 && 
+            usb_ids[usb_ids_iter_pos]!='\n';
+        i++, usb_ids_iter_pos++)
+    {
+        line[i] = usb_ids[usb_ids_iter_pos];
+    }
+
+    line[i] = '\0';
+    if( line_len!=NULL )
+        *line_len = i;
+
+    usb_ids_iter_pos++;
+            
+    return line;
+}
+
+/** See if there are more lines to process in usb.ids
+ *
+ *  @return                     #TRUE iff there are more lines to process
+ */
+static dbus_bool_t usb_ids_line_iter_has_more()
+{
+    return usb_ids_iter_pos<usb_ids_len;
+}
+
+/** Find the name corresponding to a USB vendor id.
+ *
+ *  @param  vendor_id           USB vendor id
+ *  @return                     The name as a string or #NULL if the name
+ *                              couldn't be found
+ */
+static char* usb_ids_find_vendor(int vendor_id)
+{
+    char* line;
+    unsigned int i;
+    unsigned int line_len;
+    char rep[8];
+
+    snprintf(rep, 8, "%04x", vendor_id);
+    printf(" vendor_id=%x => '%s'\n", vendor_id, rep);
+
+    for(usb_ids_line_iter_init(); usb_ids_line_iter_has_more(); )
+    {
+        line = usb_ids_line_iter_get_line(&line_len);
+
+        if( line_len>=4 )
+        {
+            /* fast way to compare four bytes */
+            if( (*((dbus_uint32_t*)line))==(*((dbus_uint32_t*)rep)) )
+            {
+                /* found it */
+                for(i=4; i<line_len; i++)
+                {
+                    if( !isspace(line[i]) )
+                        break;
+                }
+                return line+i;
+            }
+
+        }
+    }
+
+    return NULL;
+}
+
+
+/** Find the names for a USB device.
+ *
+ *  The pointers returned are only valid until the next invocation of this
+ *  function.
+ *
+ *  @param  vendor_id           USB vendor id or 0 if unknown
+ *  @param  product_id          USB product id or 0 if unknown
+ *  @param  vendor_name         Set to pointer of result or #NULL
+ *  @param  product_name        Set to pointer of result or #NULL
+ */
+static void usb_ids_find(int vendor_id, int product_id,
+                         char** vendor_name, char** product_name)
+{
+    char* line;
+    unsigned int i;
+    unsigned int line_len;
+    unsigned int num_tabs;
+    char rep_vi[8];
+    char rep_pi[8];
+    static char store_vn[USB_IDS_MAX_LINE_LEN];
+    static char store_pn[USB_IDS_MAX_LINE_LEN];
+    dbus_bool_t vendor_matched=FALSE;
+
+    snprintf(rep_vi, 8, "%04x", vendor_id);
+    snprintf(rep_pi, 8, "%04x", product_id);
+
+    *vendor_name = NULL;
+    *product_name = NULL;
+
+    for(usb_ids_line_iter_init(); usb_ids_line_iter_has_more(); )
+    {
+        line = usb_ids_line_iter_get_line(&line_len);
+
+        /* skip lines with no content */
+        if( line_len<4 )
+            continue;
+
+        /* skip comments */
+        if( line[0]=='#' )
+            continue;
+
+        /* count number of tabs */
+        num_tabs = 0;
+        for(i=0; i<line_len; i++)
+        {
+            if( line[i]!='\t' )
+                break;
+            num_tabs++;
+        }
+
+        switch( num_tabs )
+        {
+        case 0:
+            /* vendor names */
+            vendor_matched = FALSE;
+
+            /* check vendor_id */
+            if( vendor_id!=0 )
+            {
+                if( memcmp(line, rep_vi, 4)==0 )
+                {
+                    /* found it */
+                    vendor_matched = TRUE;
+
+                    for(i=4; i<line_len; i++)
+                    {
+                        if( !isspace(line[i]) )
+                            break;
+                    }
+                    strncpy(store_vn, line+i, USB_IDS_MAX_LINE_LEN);
+                    *vendor_name = store_vn;
+                }
+            }            
+            break;
+
+        case 1:
+            /* product names */
+            if( !vendor_matched )
+                continue;
+
+            /* check product_id */
+            if( product_id!=0 )
+            {
+                if( memcmp(line+1, rep_pi, 4)==0 )
+                {
+                    /* found it */
+                    for(i=5; i<line_len; i++)
+                    {
+                        if( !isspace(line[i]) )
+                            break;
+                    }
+                    strncpy(store_pn, line+i, USB_IDS_MAX_LINE_LEN);
+                    *product_name = store_pn;
+
+                    /* no need to continue the search */
+                    return;
+                }
+            }
+            break;
+
+        default:
+            break;
+        }
+        
+    }
+}
+
+/** Load the USB database used for mapping vendor, product, subsys_vendor
+ *  and subsys_product numbers into names.
+ *
+ *  @param  path                Path of the usb.ids file, e.g. 
+ *                              /usr/share/hwdata/usb.ids
+ *  @return                     #TRUE if the file was succesfully loaded
+ */
+static dbus_bool_t usb_ids_load(const char* path)
+{
+    FILE* fp;
+    unsigned int num_read;
+
+    fp = fopen(path, "r");
+    if( fp==NULL )
+    {
+        printf("couldn't open USB database at %s,", path);
+        return FALSE;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    usb_ids_len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    usb_ids = malloc(usb_ids_len);
+    if( usb_ids==NULL )
+    {
+        printf("Couldn't allocate %d bytes for USB database file\n",
+               usb_ids_len);
+        return FALSE;
+    }
+    
+    num_read = fread(usb_ids, sizeof(char), usb_ids_len, fp);
+    if( usb_ids_len!=num_read )
+    {
+        printf("Error loading USB database file\n");
+        free(usb_ids);
+        usb_ids=NULL;
+        return FALSE;
+    }    
+
+    return TRUE;
+}
+
+/** Free resources used by to store the USB database
+ *
+ *  @param                      #FALSE if the USB database wasn't loaded
+ */
+static dbus_bool_t usb_ids_free()
+{
+    if( usb_ids!=NULL )
+    {
+        free(usb_ids);
+        usb_ids=NULL;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+
 /** This function will compute the device uid based on other properties
  *  of the device. Specifically, the following properties are required:
  *
@@ -685,6 +956,7 @@ static char* find_parent_udi_from_sysfs_path(const char* path)
     char** parent_udis;
     int num_parent_udi;
     char parent_path[SYSFS_PATH_MAX];
+    int time_to_sleep = 100*1000;
 
     /* Find parent device by truncating our own path */
     strncpy(parent_path, path, SYSFS_PATH_MAX);
@@ -696,21 +968,49 @@ static char* find_parent_udi_from_sysfs_path(const char* path)
     parent_path[i]='\0';
     
     /*printf("*** found parent=%s\n", parent_path);*/
-    
-    /* Now find corresponding HAL device */
-    parent_udis = hal_manager_find_device_string_match("Linux.sysfs_path",
+
+    while( time_to_sleep<2*1000*1000 ) // means we'll only sleep max 4 seconds
+    {    
+        /* Now find corresponding HAL device */
+        parent_udis = hal_manager_find_device_string_match("Linux.sysfs_path",
                                                        parent_path,
                                                        &num_parent_udi);
     
-    /** @todo fix memory leak */
+        /** @todo fix memory leak */
 
-    if( num_parent_udi!=1 || parent_udis==NULL )
-    {
-        /* no parent, or multiple parents; the latter don't float */
-        return NULL;
+        if( num_parent_udi!=1 || parent_udis==NULL )
+        {
+            /* no parent, or multiple parents; the latter doesn't make sense 
+             *
+             * Hmm.. one good example is plugging in the IBM USB Preferred
+             * Keyboard which appear as two USB devices; one hub and one
+             * HID device which is a child of the hub..
+             *
+             * Well, the Linux kernel invokes /sbin/hotplug for these two
+             * devices at the same time so two instances of this program
+             * is running which means that the invocation for the HID
+             * device might get to *this* point before the invocation for
+             * the hub have called #hal_manager_commit_to_gdl().. 
+             *
+             * Fix: sleep for a while then try again. Don't blame me, blame
+             * the Linux kernel :-)
+             */
+
+            /* Don't do this if we are probing devices; it'd be a waste of 
+             * time*/
+            if( is_probing )
+                return NULL;
+
+            usleep(time_to_sleep); 
+            time_to_sleep*=2;
+        }
+        else
+        {
+            return parent_udis[0];
+        }
     }
 
-    return parent_udis[0];
+    return NULL;
 }
 
 /** Visitor function for interfaces on a USB device.
@@ -826,6 +1126,12 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
     const char* parent_udi;
     char attr_name[SYSFS_NAME_LEN];
     char in_path[SYSFS_PATH_MAX];
+    int vendor_id=0;
+    int product_id=0;
+    char* vendor_name;
+    char* product_name;
+    char* vendor_name_kernel;
+    char* product_name_kernel;
 
     /*printf("usb: %s, bus_id=%s\n", path, device->bus_id);*/
 
@@ -868,20 +1174,20 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
         if( sysfs_get_name_from_path(cur->path, 
                                      attr_name, SYSFS_NAME_LEN) != 0 )
             continue;
+
+        fprintf(stderr, "cur->path='%s', cur->value='%s'\n", cur->path, cur->value);
         
         /* strip whitespace */
         len = strlen(cur->value);
-        for(i=len-1; isspace(cur->value[i]); --i)
-            cur->value[i] = '\0';
+        for(i=len-1; isspace(cur->value[i]) && i>0; --i)
+                cur->value[i] = '\0';
         
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
         
         if( strcmp(attr_name, "idProduct")==0 )
-            hal_device_set_property_int(d, "usb.idProduct", 
-                                        parse_hex(cur->value));
+            product_id = parse_hex(cur->value);
         else if( strcmp(attr_name, "idVendor")==0 )
-            hal_device_set_property_int(d, "usb.idVendor", 
-                                        parse_hex(cur->value));
+            vendor_id = parse_hex(cur->value);
         else if( strcmp(attr_name, "bcdDevice")==0 )
             hal_device_set_property_int(d, "usb.bcdDevice", 
                                         parse_hex(cur->value));
@@ -893,12 +1199,9 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
                                            parse_double(cur->value));
         
         else if( strcmp(attr_name, "manufacturer")==0 )
-            hal_device_set_property_string(d, "usb.Manufacturer",
-                                           cur->value);
+            vendor_name_kernel = cur->value;
         else if( strcmp(attr_name, "product")==0 )
-            hal_device_set_property_string(d, "usb.Product",
-                                           cur->value);
-        
+            product_name_kernel = cur->value;
         else if( strcmp(attr_name, "bDeviceClass")==0 )
             hal_device_set_property_int(d, "usb.bDeviceClass", 
                                         parse_hex(cur->value));
@@ -921,6 +1224,43 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
                                         parse_dec(cur->value));
         
     } /* for all attributes */
+
+    hal_device_set_property_int(d, "usb.idProduct", product_id);
+    hal_device_set_property_int(d, "usb.idVendor", vendor_id);
+
+    /* Lookup names in usb.ids; these may override what the kernel told
+     * us, but, hey, it's only a name; it's not something we are going
+     * to match a device on... We prefer names from usb.ids as the kernel
+     * name sometimes is just a hexnumber :-/
+     *
+     * Also provide best guess on name, Product and Vendor properties;
+     * these can both be overridden in .fdi files.
+     */
+    usb_ids_find(vendor_id, product_id, &vendor_name, &product_name);
+    if( vendor_name!=NULL )
+    {
+        hal_device_set_property_string(d, "usb.Vendor", vendor_name);
+        hal_device_set_property_string(d, "Vendor", vendor_name);
+    }
+    else
+    {
+        /* fallback on name supplied from kernel */
+        hal_device_set_property_string(d, "usb.Vendor", vendor_name_kernel);
+        hal_device_set_property_string(d, "Vendor", vendor_name_kernel);
+    }
+
+    if( product_name!=NULL )
+    {
+        hal_device_set_property_string(d, "usb.Product", product_name);
+        hal_device_set_property_string(d, "Product", product_name);
+    }
+    else
+    {
+        /* fallback on name supplied from kernel */
+        hal_device_set_property_string(d, "usb.Product", product_name_kernel);
+        hal_device_set_property_string(d, "Product", product_name_kernel);
+    }
+
     
     /* Now visit interfaces of this USB device */
     for(in=device->children; in!=NULL; in=in->next)
@@ -1010,6 +1350,7 @@ static void visit_device_pci(const char* path, struct sysfs_device *device)
     char* product_name;
     char* subsys_vendor_name;
     char* subsys_product_name;
+    char namebuf[512];
 
     /*printf("pci: %s\n", path);*/
 
@@ -1062,6 +1403,7 @@ static void visit_device_pci(const char* path, struct sysfs_device *device)
     hal_device_set_property_int(d, "pci.idVendorSubSystem", subsys_vendor_id);
     hal_device_set_property_int(d, "pci.idProductSubSystem",subsys_product_id);
 
+    /* Lookup names in pci.ids */
     pci_ids_find(vendor_id, product_id, subsys_vendor_id, subsys_product_id,
                  &vendor_name, &product_name, 
                  &subsys_vendor_name, &subsys_product_name);
@@ -1075,6 +1417,30 @@ static void visit_device_pci(const char* path, struct sysfs_device *device)
     if( subsys_product_name!=NULL )
         hal_device_set_property_string(d, "pci.ProductSubSystem",
                                        subsys_product_name);
+
+    /* Provide best-guess of name, goes in Product property; 
+     * .fdi files can override this */
+    if( product_name!=NULL )
+    {
+        hal_device_set_property_string(d, "Product", product_name);
+    }
+    else
+    {
+        snprintf(namebuf, 512, "Unknown (0x%04x)", product_id);
+        hal_device_set_property_string(d, "Product", namebuf);
+    }
+
+    /* Provide best-guess of vendor, goes in Vendor property; 
+     * .fdi files can override this */
+    if( vendor_name!=NULL )
+    {
+        hal_device_set_property_string(d, "Vendor", vendor_name);
+    }
+    else
+    {
+        snprintf(namebuf, 512, "Unknown (0x%04x)", vendor_id);
+        hal_device_set_property_string(d, "Vendor", namebuf);
+    }
 
     /* Compute parent */
     parent_udi = find_parent_udi_from_sysfs_path(path);
@@ -1253,6 +1619,8 @@ static void hal_sysfs_probe()
     char sysfs_path[SYSFS_PATH_MAX];
     struct sysfs_directory* current;
     struct sysfs_directory* dir;
+
+    is_probing = TRUE;
 
     /* Collect devices from supported busses */
     bus_support_collect();
@@ -1434,6 +1802,7 @@ int main(int argc, char* argv[])
     //openlog("hal-sysfs-agent", LOG_CONS|LOG_PID, LOG_DAEMON);
 
     pci_ids_load("/usr/share/hwdata/pci.ids");
+    usb_ids_load("/usr/share/hwdata/usb.ids");
 
     if( argc==2 && 
         (strcmp(argv[1], "usb")==0 ||

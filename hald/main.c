@@ -927,9 +927,12 @@ static DBusHandlerResult manager_get_all_devices(DBusConnection* connection,
         ds_device_iter_next(&iter_device))
     {
         d = ds_device_iter_get(&iter_device);
-        udi = ds_device_get_udi(d);
-        
-        dbus_message_iter_append_string(&iter_array, udi);
+        /* only return devices in the GDL */
+        if( d->in_gdl )
+        {
+            udi = ds_device_get_udi(d);
+            dbus_message_iter_append_string(&iter_array, udi);
+        }
     }
 
     if( !dbus_connection_send(connection, reply, NULL) )
@@ -941,7 +944,8 @@ static DBusHandlerResult manager_get_all_devices(DBusConnection* connection,
 }
 
 
-/** Find devices where a single string property matches a given value.
+/** Find devices in the GDL where a single string property matches a given
+ *  value.
  *
  *  <pre>
  *  array{object_reference} Manager.FindDeviceStringMatch(string key,
@@ -991,6 +995,9 @@ static DBusHandlerResult manager_find_device_string_match(
     {
         device = ds_device_iter_get(&iter_device);
 
+        if( !device->in_gdl )
+            continue;
+
         type = ds_property_get_type(device, key);
         if( type==DBUS_TYPE_STRING )
         {
@@ -1012,7 +1019,7 @@ static DBusHandlerResult manager_find_device_string_match(
 /** Determine if a device exists.
  *
  *  <pre>
- *  bool Manager.DeviceExists()
+ *  bool Manager.DeviceExists(string udi)
  *  </pre>
  *
  *  @param  connection          D-BUS connection
@@ -1053,6 +1060,56 @@ static DBusHandlerResult manager_device_exists(DBusConnection* connection,
   
     dbus_message_unref(reply);
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+/** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
+ *  interface on the object /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void manager_send_signal_device_added(const char* udi)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "DeviceAdded");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
+
+/** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
+ *  interface on the object /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void manager_send_signal_device_removed(const char* udi)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "DeviceRemoved");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
 }
 
 /** @} */
@@ -1107,57 +1164,6 @@ static DBusHandlerResult agent_manager_new_device(DBusConnection* connection,
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
-
-/** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
- *  interface on the object /org/freedesktop/Hal/Manager.
- *
- *  @param  udi                 Unique Device Id
- */
-static void manager_send_signal_device_added(const char* udi)
-{
-    DBusMessage* message;
-    DBusMessageIter iter;
-
-    LOG_TRACE(("entering, udi=%s", udi));
-
-    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
-                                      "org.freedesktop.Hal.Manager",
-                                      "DeviceAdded");
-
-    dbus_message_iter_init(message, &iter);
-    dbus_message_iter_append_string(&iter, udi);
-
-    if( !dbus_connection_send(dbus_connection,message, NULL) )
-        DIE(("error broadcasting message"));
-
-    dbus_message_unref(message);
-}
-
-/** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
- *  interface on the object /org/freedesktop/Hal/Manager.
- *
- *  @param  udi                 Unique Device Id
- */
-static void manager_send_signal_device_removed(const char* udi)
-{
-    DBusMessage* message;
-    DBusMessageIter iter;
-
-    LOG_TRACE(("entering, udi=%s", udi));
-
-    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
-                                      "org.freedesktop.Hal.Manager",
-                                      "DeviceRemoved");
-
-    dbus_message_iter_init(message, &iter);
-    dbus_message_iter_append_string(&iter, udi);
-
-    if( !dbus_connection_send(dbus_connection,message, NULL) )
-        DIE(("error broadcasting message"));
-
-    dbus_message_unref(message);
-}
-
 
 /** When a hidden device have been built (using the Device interface),
  *  a HAL agent can commit it to the global device list using this method.
@@ -1436,6 +1442,7 @@ static DBusHandlerResult agent_device_matches(DBusConnection* connection,
     dbus_message_unref(reply);
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
+
 
 /** @} */
 

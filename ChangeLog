@@ -1,15 +1,44 @@
+2003-11-18  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal-sysfs-agent.c: Use usb.ids if
+	available.
+	(find_parent_udi_from_sysfs_path): Sleep if parent device not
+	found on hotplug; Fixes the issue of hotplugging a hub with many
+	devices attached to it
+	(visit_device_usb): Fix segfault when stripping whitespace off empty
+	string. Provide guess for Vendor, Product properties
+	(visit_device_pci): Provide guess for Vendor, Product properties
+
+	* hald/main.c (manager_get_all_devices): Only return devices in the GDL
+	(manager_find_device_string_match): Only match on devices in the GDL
+
+	* libhal/libhal.c: Various documentation clarifications
+
+	* tools/hal-device-manager: Use icons and Vendor, Product properties.
+	Added "Advanced" tab page for showing all properties in a list.
+
+	* tools/hal-device-manager.glade: Added "Advanced" tab page for
+	showing all properties in a list.
+
+	* tools/bus-usb.png: new (binary) file 
+
+	* tools/bus-pci.png: new (binary) file
+
+	* tools/lshal.py: Sort properties
+
+	
 2003-11-16  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26 : new directory; for Linux 2.6 agents
 
-	* agents/linux26/Makefile.am : new file
+	* agents/linux26/Makefile.am: new file
 
-	* agents/linux26/sysfs/hal-sysfs-agent.c : new file; inspects sysfs
+	* agents/linux26/sysfs/hal-sysfs-agent.c: new file; inspects sysfs
 	on Linux 2.6 and adds USB, PCI devices found there. Currently works
 	with both --probe and in hotplug situations. Block devices are planned
 	real soon now.
 
-	* agents/linux26/sysfs/Makefile.am : new file
+	* agents/linux26/sysfs/Makefile.am: new file
 	
 	* tools/hal-device-manager: Added support for PCI devices
 

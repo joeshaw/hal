@@ -602,13 +602,13 @@ int hal_shutdown()
     if( !is_initialized )
         return 1;
 
-    // TODO: cleanup
+    /** @todo cleanup */
 
     is_initialized = 0;
     return 0;
 }
 
-/** Get all devices on the system
+/** Get all devices in the Global Device List (GDL).
  *
  *  @param  num_devices         The number of devices will be stored here
  *  @return                     An array of device identifiers terminated
@@ -1667,7 +1667,8 @@ void hal_device_print(const char* udi)
     hal_free_property_set(pset);
 }
 
-/** Find a device where a single string property matches a given value.
+/** Find a device in the GDL where a single string property matches a
+ *  given value.
  *
  *  @param  key                 Name of the property
  *  @param  value               Value to match

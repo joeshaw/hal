@@ -13,7 +13,9 @@ def print_devices():
         device = hal_service.get_object(name, "org.freedesktop.Hal.Device")
         print "device_unique_id = %s"%name
         properties = device.GetAllProperties()
-        for p in properties:
+        keys = properties.keys()
+        keys.sort()
+        for p in keys:
             val = properties[p]
             ptype = type(val)
             if ptype==str:
@@ -23,6 +25,7 @@ def print_devices():
             elif ptype==bool:
                 if val:
                     print "  %s = true   (bool)"%p
+                else:
                     print "  %s = false   (bool)"%p
             elif ptype==float:
                 print "  %s = %g   (double)"%(p, val)
