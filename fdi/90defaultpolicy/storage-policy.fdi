@@ -10,7 +10,7 @@
       <merge key="storage.policy.default.managed_keyword.primary" type="string">managed</merge>
       <merge key="storage.policy.default.managed_keyword.secondary" type="string">kudzu</merge>
       <merge key="storage.policy.default.mount_option.noauto" type="bool">true</merge>
-      <merge key="storage.policy.default.mount_option.user" type="bool">true</merge>
+      <merge key="storage.policy.default.mount_option.pamconsole" type="bool">true</merge>
       <merge key="storage.policy.default.mount_option.exec" type="bool">true</merge>
     </match>
   </device>
