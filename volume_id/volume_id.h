@@ -79,4 +79,9 @@ extern struct volume_id *volume_id_open_dev_t(dev_t devt);
 extern int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned long long size);
 extern void volume_id_close(struct volume_id *id);
 
+/* User of this library is supposed to export the volume_id_log symbol
+ * if sources are built with -DDEBUG
+ */
+extern void volume_id_log (const char *format, ...);
+
 #endif

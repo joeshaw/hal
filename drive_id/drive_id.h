@@ -56,4 +56,9 @@ extern int drive_id_probe_all(struct drive_id *id);
 /* free allocated device info */
 extern void drive_id_close(struct drive_id *id);
 
+/* User of this library is supposed to export the drive_id_log symbol
+ * if sources are built with -DDEBUG
+ */
+extern void drive_id_log (const char *format, ...);
+
 #endif /* _DRIVE_ID_H_ */

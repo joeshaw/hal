@@ -16,9 +16,9 @@
 #endif
 
 #ifdef DEBUG
-#define dbg(format, arg...)						\
-	do {								\
-		printf("%s: " format "\n", __FUNCTION__ , ## arg);	\
+#define dbg(format, arg...)							\
+	do {									\
+		drive_id_log("%s: " format "\n", __FUNCTION__ , ## arg);	\
 	} while (0)
 #else
 #define dbg(format, arg...)	do {} while (0)

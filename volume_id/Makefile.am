@@ -1,6 +1,8 @@
 
 noinst_LTLIBRARIES = libvolume_id.la
 
+INCLUDES = -DDEBUG
+
 libvolume_id_la_SOURCES =				\
 	dasd.h			dasd.c			\
 	ext.h			ext.c			\

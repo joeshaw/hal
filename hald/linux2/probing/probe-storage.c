@@ -46,11 +46,25 @@
 
 #include "drive_id/drive_id.h"
 #include "volume_id/volume_id.h"
-
 #include "linux_dvd_rw_utils.h"
 
 #include "shared.h"
 
+void 
+volume_id_log (const char *format, ...)
+{
+	va_list args;
+	va_start (args, format);
+	_do_dbg (format, args);
+}
+
+void 
+drive_id_log (const char *format, ...)
+{
+	va_list args;
+	va_start (args, format);
+	_do_dbg (format, args);
+}
 
 /** Check if a filesystem on a special device file is mounted
  *
@@ -113,6 +127,9 @@ main (int argc, char *argv[])
 		goto out;
 	if ((drive_type = getenv ("HAL_PROP_STORAGE_DRIVE_TYPE")) == NULL)
 		goto out;
+
+	if ((getenv ("HALD_VERBOSE")) != NULL)
+		is_verbose = TRUE;
 
 	if (argc == 2 && strcmp (argv[1], "--only-check-for-media") == 0)
 		only_check_for_fs = TRUE;
@@ -190,7 +207,7 @@ main (int argc, char *argv[])
 			int read_speed, write_speed;
 			
 			if( ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0 ) {
-				HAL_ERROR (("CDROM_SET_OPTIONS failed: %s\n", strerror(errno)));
+				dbg ("Error: CDROM_SET_OPTIONS failed: %s\n", strerror(errno));
 				goto out;
 			}
 			
@@ -319,7 +336,7 @@ main (int argc, char *argv[])
 		}
 
 		if (fd < 0) {
-			HAL_INFO (("open failed for %s: %s", device_file, strerror (errno))); 
+			dbg ("open failed for %s: %s", device_file, strerror (errno));
 			goto out;
 		}
 
@@ -352,7 +369,7 @@ main (int argc, char *argv[])
 			break;
 			
 		case -1:
-			HAL_ERROR(("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
+			dbg ("Error: CDROM_DRIVE_STATUS failed: %s\n", strerror(errno));
 			break;
 			
 		default:

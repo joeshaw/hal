@@ -91,7 +91,7 @@ unmount_childs(LibHalContext *ctx, const char *udi)
 					vol_device_file = libhal_device_get_property_string (ctx, vol_udi, 
 											     "block.device", &error);
 					if (vol_device_file != NULL) {
-						HAL_INFO (("Forcing unmount for %s", vol_device_file));
+						dbg ("Forcing unmount for %s", vol_device_file);
 
 						/* TODO: emit DeviceCondition */
 						force_unmount (vol_device_file);
@@ -233,7 +233,7 @@ main (int argc, char *argv[])
 			}
 
 			if (fd < 0) {
-				HAL_INFO (("open failed for %s: %s", device_file, strerror (errno))); 
+				dbg ("open failed for %s: %s", device_file, strerror (errno)); 
 				goto skip_check;
 			}
 
@@ -265,7 +265,7 @@ main (int argc, char *argv[])
 				break;
 			
 			case -1:
-				HAL_ERROR(("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
+				dbg ("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno));
 				break;
 				
 			default:
@@ -282,7 +282,7 @@ main (int argc, char *argv[])
 				got_media = TRUE;
 				close (fd);
 			} else {
-				HAL_INFO (("open failed for %s: %s", device_file, strerror (errno))); 
+				dbg ("open failed for %s: %s", device_file, strerror (errno)); 
 				close (fd);
 				goto skip_check;
 			}
@@ -294,7 +294,7 @@ main (int argc, char *argv[])
 			if (!got_media) {
 				DBusError error;
 				
-				HAL_INFO (("Media removal detected on %s", device_file));
+				dbg ("Media removal detected on %s", device_file);
 				
 				/* have to unmount all childs, but only if we're doing policy on the device */
 				if (storage_policy_should_mount)
@@ -316,7 +316,7 @@ main (int argc, char *argv[])
 			if (got_media) {
 				DBusError error;
 				
-				HAL_INFO (("Media insertion detected on %s", device_file));
+				dbg ("Media insertion detected on %s", device_file);
 				/* our probe will trigger the appropriate hotplug events */
 				
 				/* could have a fs on the main block device; do a rescan to add it */
@@ -338,7 +338,7 @@ main (int argc, char *argv[])
 			media_status = MEDIA_STATUS_NO_MEDIA;
 		
 		
-		HAL_INFO (("polling %s; got media=%d", device_file, got_media));
+		dbg ("polling %s; got media=%d", device_file, got_media);
 		
 	skip_check:
 

@@ -1,5 +1,23 @@
 2005-02-16  David Zeuthen  <davidz@redhat.com>
 
+	* volume_id/luks.[ch]: New files (forgot to commit before) 
+
+	* hald/linux2/probing/shared.h: Redefine logging a bit
+
+	* hald/linux2/probing/probe-volume.c: Use new shared.h logging;
+	implement volume_id_log and drive_id_log functions
+
+	* hald/linux2/probing/probe-storage.c: Use new shared.h logging;
+	implement volume_id_log and drive_id_log functions
+
+	* hald/linux2/addons/addon-storage.c: Use new shared.h logging
+
+	* drive_id/logging.h: Use drive_id_log function
+
+	* drive_id/drive_id.h (drive_id_log): Add drive_id_log prototype
+
+2005-02-16  David Zeuthen  <davidz@redhat.com>
+
 	Fix up more sloppy errors incuded from patches that I should
 	have reviewed more carefully :-/
 

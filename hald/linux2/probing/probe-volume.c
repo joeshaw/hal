@@ -41,6 +41,8 @@
 #include <linux/kdev_t.h>
 #include <linux/cdrom.h>
 #include <linux/fs.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "libhal/libhal.h"
 
@@ -51,6 +53,14 @@
 #include "linux_dvd_rw_utils.h"
 
 #include "shared.h"
+
+void 
+volume_id_log (const char *format, ...)
+{
+	va_list args;
+	va_start (args, format);
+	_do_dbg (format, args);
+}
 
 static void
 set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid)
@@ -86,18 +96,18 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 	}
 
 	libhal_device_set_property_string (ctx, udi, "volume.fsusage", usage, &error);
-	HAL_INFO (("volume.fsusage = '%s'", usage));
+	dbg ("volume.fsusage = '%s'", usage);
 
 	libhal_device_set_property_string (ctx, udi, "volume.fstype", vid->type, &error);
-	HAL_INFO (("volume.fstype = '%s'", vid->type));
+	dbg ("volume.fstype = '%s'", vid->type);
 	if (vid->type_version[0] != '\0') {
 		libhal_device_set_property_string (ctx, udi, "volume.fsversion", vid->type_version, &error);
-		HAL_INFO (("volume.fsversion = '%s'", vid->type_version));
+		dbg ("volume.fsversion = '%s'", vid->type_version);
 	}
 	libhal_device_set_property_string (ctx, udi, "volume.uuid", vid->uuid, &error);
-	HAL_INFO (("volume.uuid = '%s'", vid->uuid));
+	dbg ("volume.uuid = '%s'", vid->uuid);
 	libhal_device_set_property_string (ctx, udi, "volume.label", vid->label, &error);
-	HAL_INFO (("volume.label = '%s'", vid->label));
+	dbg ("volume.label = '%s'", vid->label);
 
 	if (vid->label[0] != '\0') {
 		libhal_device_set_property_string (ctx, udi, "info.product", vid->label, &error);
@@ -153,6 +163,9 @@ main (int argc, char *argv[])
 	else
 		is_disc = FALSE;
 
+	if ((getenv ("HALD_VERBOSE")) != NULL)
+		is_verbose = TRUE;
+
 	dbus_error_init (&error);
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 		goto out;
@@ -197,7 +210,7 @@ main (int argc, char *argv[])
 		vid = volume_id_open_node (stordev_dev_file);
 		if (vid != NULL) {
 			if (volume_id_probe_msdos_part_table (vid, 0) == 0) {
-				HAL_INFO (("Number of partitions = %d", vid->partition_count));
+				dbg ("Number of partitions = %d", vid->partition_count);
 				
 				if (partition_number > 0 && partition_number <= vid->partition_count) {
 					struct volume_id_partition *p;
@@ -224,8 +237,8 @@ main (int argc, char *argv[])
 					}
 				
 				} else {
-					HAL_WARNING (("partition_number=%d not in [0;%d[", 
-						      partition_number, vid->partition_count));
+					dbg ("warning: partition_number=%d not in [0;%d[", 
+					     partition_number, vid->partition_count);
 				}
 			}
 			volume_id_close(vid);
@@ -235,11 +248,11 @@ main (int argc, char *argv[])
 
 	/* block size and total size */
 	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
-		HAL_INFO (("volume.block_size = %d", block_size));
+		dbg ("volume.block_size = %d", block_size);
 		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
 	}
 	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
-		HAL_INFO (("volume.size = %llu", vol_size));
+		dbg ("volume.size = %llu", vol_size);
 		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
 	}
 
@@ -268,28 +281,28 @@ main (int argc, char *argv[])
 		switch (type) {
 		case CDS_AUDIO:		/* audio CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
-			HAL_INFO (("Disc in %s has audio", device_file));
+			dbg ("Disc in %s has audio", device_file);
 			break;
 		case CDS_MIXED:		/* mixed mode CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
-			HAL_INFO (("Disc in %s has audio+data", device_file));
+			dbg ("Disc in %s has audio+data", device_file);
 			break;
 		case CDS_DATA_1:	/* data CD */
 		case CDS_DATA_2:
 		case CDS_XA_2_1:
 		case CDS_XA_2_2:
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
-			HAL_INFO (("Disc in %s has data", device_file));
+			dbg ("Disc in %s has data", device_file);
 			break;
 		case CDS_NO_INFO:	/* blank or invalid CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", TRUE, &error);
-			HAL_INFO (("Disc in %s is blank", device_file));
+			dbg ("Disc in %s is blank", device_file);
 			break;
 			
 		default:		/* should never see this */
 			libhal_device_set_property_string (ctx, udi, "volume.disc_type", "unknown", &error);
-			HAL_INFO (("Disc in %s returned unknown CDROM_DISC_STATUS", device_file));
+			dbg ("Disc in %s returned unknown CDROM_DISC_STATUS", device_file);
 			break;
 		}
 		
@@ -297,7 +310,7 @@ main (int argc, char *argv[])
 		 * http://www.t10.org/drafts.htm#mmc3
 		 */
 		type = get_disc_type (fd);
-		HAL_INFO (("get_disc_type returned 0x%02x", type));
+		dbg ("get_disc_type returned 0x%02x", type);
 		if (type != -1) {
 			switch (type) {
 			case 0x08: /* CD-ROM */
