@@ -167,7 +167,7 @@ main (int argc, char *argv[])
 	}
 
 	type = libhal_device_get_property_type (hal_ctx, udi, key, &error);
-	if (type == DBUS_TYPE_NIL) {
+	if (type == DBUS_TYPE_INVALID) {
 		fprintf (stderr, "error: libhal_device_get_property_type: %s: %s\n", error.name, error.message);
 		return 1;
 	}

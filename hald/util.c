@@ -403,12 +403,18 @@ hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gc
 	g_vsnprintf (buf, sizeof (buf), format, args);
 	va_end (args);
 
+	g_strcanon (buf, 
+		    "/_"
+		    "abcdefghijklmnopqrstuvwxyz"
+		    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		    "1234567890", '_');
+
 	g_strlcpy (dst, buf, dstsize);
 	if (hal_device_store_find (store, dst) == NULL)
 		goto out;
 
 	for (i = 0; ; i++) {
-		g_snprintf (dst, dstsize, "%s-%d", buf, i);
+		g_snprintf (dst, dstsize, "%s_%d", buf, i);
 		if (hal_device_store_find (store, dst) == NULL)
 			goto out;
 	}

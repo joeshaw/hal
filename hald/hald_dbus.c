@@ -260,8 +260,11 @@ foreach_device_get_udi (HalDeviceStore *store, HalDevice *device,
 			gpointer user_data)
 {
 	DBusMessageIter *iter = user_data;
+	const char *udi;
 
-	dbus_message_iter_append_string (iter, hal_device_get_udi (device));
+	udi = hal_device_get_udi (device);
+
+	dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &udi);
 
 	return TRUE;
 }
@@ -290,13 +293,17 @@ manager_get_all_devices (DBusConnection * connection,
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_array (&iter, &iter_array,
-					DBUS_TYPE_STRING);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_open_container (&iter, 
+					  DBUS_TYPE_ARRAY,
+					  DBUS_TYPE_STRING_AS_STRING,
+					  &iter_array);
 
 	hal_device_store_foreach (hald_get_gdl (),
 				  foreach_device_get_udi,
 				  &iter_array);
+
+	dbus_message_iter_close_container (&iter, &iter_array);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -326,8 +333,11 @@ foreach_device_match_get_udi (HalDeviceStore *store, HalDevice *device,
 	dev_value = hal_device_property_get_string (device, info->key);
 
 	if (dev_value != NULL && strcmp (dev_value, info->value) == 0) {
-		dbus_message_iter_append_string (info->iter,
-						 hal_device_get_udi (device));
+		const char *udi;
+		udi =  hal_device_get_udi (device);
+		dbus_message_iter_append_basic  (info->iter,
+						 DBUS_TYPE_STRING,
+						 &udi);
 	}
 
 	return TRUE;
@@ -352,8 +362,12 @@ foreach_device_match_get_udi_tdl (HalDeviceStore *store, HalDevice *device,
 	dev_value = hal_device_property_get_string (device, info->key);
 
 	if (dev_value != NULL && strcmp (dev_value, info->value) == 0) {
-		dbus_message_iter_append_string (info->iter,
-						 hal_device_get_udi (device));
+		const char *udi;
+		udi = hal_device_get_udi (device);
+
+		dbus_message_iter_append_basic (info->iter,
+						DBUS_TYPE_STRING,
+						&udi);
 	}
 
 	return TRUE;
@@ -399,9 +413,11 @@ manager_find_device_string_match (DBusConnection * connection,
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_array (&iter, &iter_array,
-					DBUS_TYPE_STRING);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_open_container (&iter, 
+					  DBUS_TYPE_ARRAY,
+					  DBUS_TYPE_STRING_AS_STRING,
+					  &iter_array);
 
 	info.key = key;
 	info.value = value;
@@ -415,6 +431,8 @@ manager_find_device_string_match (DBusConnection * connection,
 	hal_device_store_foreach (hald_get_tdl (),
 				  foreach_device_match_get_udi_tdl,
 				  &info);
+
+	dbus_message_iter_close_container (&iter, &iter_array);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -439,8 +457,12 @@ foreach_device_by_capability (HalDeviceStore *store, HalDevice *device,
 	caps = hal_device_property_get_string (device, "info.capabilities");
 
 	if (caps != NULL && strstr (caps, info->capability) != NULL) {
-		dbus_message_iter_append_string (info->iter,
-						 hal_device_get_udi (device));
+		const char *udi;
+		udi = hal_device_get_udi (device);
+		
+		dbus_message_iter_append_basic (info->iter,
+						DBUS_TYPE_STRING,
+						&udi);
 	}
 
 	return TRUE;
@@ -482,9 +504,11 @@ manager_find_device_by_capability (DBusConnection * connection,
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_array (&iter, &iter_array,
-					DBUS_TYPE_STRING);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_open_container (&iter, 
+					  DBUS_TYPE_ARRAY,
+					  DBUS_TYPE_ARRAY_AS_STRING,
+					  &iter_array);
 
 	info.capability = capability;
 	info.iter = &iter_array;
@@ -492,6 +516,8 @@ manager_find_device_by_capability (DBusConnection * connection,
 	hal_device_store_foreach (hald_get_gdl (),
 				  foreach_device_by_capability,
 				  &info);
+
+	dbus_message_iter_close_container (&iter, &iter_array);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -520,6 +546,7 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 	DBusError error;
 	HalDevice *d;
 	const char *udi;
+	dbus_bool_t b;
 
 	dbus_error_init (&error);
 	if (!dbus_message_get_args (message, &error,
@@ -537,8 +564,9 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 		d = hal_device_store_find (hald_get_tdl (), udi);
 
 	reply = dbus_message_new_method_return (message);
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_boolean (&iter, d != NULL);
+	dbus_message_iter_init_append (reply, &iter);
+	b = d != NULL;
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &b);
 
 	if (reply == NULL)
 		DIE (("No memory"));
@@ -568,8 +596,8 @@ manager_send_signal_device_added (HalDevice *device)
 					   "org.freedesktop.Hal.Manager",
 					   "DeviceAdded");
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, udi);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 
 	if (!dbus_connection_send (dbus_connection, message, NULL))
 		DIE (("error broadcasting message"));
@@ -595,8 +623,8 @@ manager_send_signal_device_removed (HalDevice *device)
 					   "org.freedesktop.Hal.Manager",
 					   "DeviceRemoved");
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, udi);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 
 	if (!dbus_connection_send (dbus_connection, message, NULL))
 		DIE (("error broadcasting message"));
@@ -625,9 +653,9 @@ manager_send_signal_new_capability (HalDevice *device,
 					   "org.freedesktop.Hal.Manager",
 					   "NewCapability");
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, udi);
-	dbus_message_iter_append_string (&iter, capability);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &capability);
 
 	if (!dbus_connection_send (dbus_connection, message, NULL))
 		DIE (("error broadcasting message"));
@@ -648,60 +676,167 @@ static gboolean
 foreach_property_append (HalDevice *device, HalProperty *p,
 			 gpointer user_data)
 {
-	DBusMessageIter *iter = user_data;
+	DBusMessageIter *iter;
+	DBusMessageIter iter_dict_entry;
 	const char *key;
 	int type;
+
+	iter = (DBusMessageIter *)user_data;
+
+	dbus_message_iter_open_container (iter,
+					  DBUS_TYPE_DICT_ENTRY,
+					  NULL,
+					  &iter_dict_entry);
 
 	key = hal_property_get_key (p);
 	type = hal_property_get_type (p);
 
+	dbus_message_iter_append_basic (&iter_dict_entry, DBUS_TYPE_STRING, &key);
+
 	switch (type) {
 	case HAL_PROPERTY_TYPE_STRING:
-		dbus_message_iter_append_dict_key (iter, key);
-		dbus_message_iter_append_string (iter, hal_property_get_string (p));
+	{
+		DBusMessageIter iter_var;
+		const char *v;
+
+		v = hal_property_get_string (p);
+
+		dbus_message_iter_open_container (&iter_dict_entry,
+						  DBUS_TYPE_VARIANT,
+						  DBUS_TYPE_STRING_AS_STRING,
+						  &iter_var);
+
+		dbus_message_iter_append_basic (&iter_var, 
+						DBUS_TYPE_STRING,
+						&v);
+
+		dbus_message_iter_close_container (&iter_dict_entry,
+						   &iter_var);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_INT32:
-		dbus_message_iter_append_dict_key (iter, key);
-		dbus_message_iter_append_int32 (iter, hal_property_get_int (p));
+	{
+		DBusMessageIter iter_var;
+		dbus_int32_t v;
+
+		v = hal_property_get_int (p);
+
+		dbus_message_iter_open_container (&iter_dict_entry,
+						  DBUS_TYPE_VARIANT,
+						  DBUS_TYPE_INT32_AS_STRING,
+						  &iter_var);
+
+		dbus_message_iter_append_basic (&iter_var, 
+						DBUS_TYPE_INT32,
+						&v);
+
+		dbus_message_iter_close_container (&iter_dict_entry,
+						   &iter_var);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_UINT64:
-		dbus_message_iter_append_dict_key (iter, key);
-		dbus_message_iter_append_uint64 (iter, hal_property_get_uint64 (p));
+	{
+		DBusMessageIter iter_var;
+		dbus_uint64_t v;
+
+		v = hal_property_get_uint64 (p);
+
+		dbus_message_iter_open_container (&iter_dict_entry,
+						  DBUS_TYPE_VARIANT,
+						  DBUS_TYPE_UINT64_AS_STRING,
+						  &iter_var);
+
+		dbus_message_iter_append_basic (&iter_var, 
+						DBUS_TYPE_UINT64,
+						&v);
+
+		dbus_message_iter_close_container (&iter_dict_entry,
+						   &iter_var);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_DOUBLE:
-		dbus_message_iter_append_dict_key (iter, key);
-		dbus_message_iter_append_double (iter, hal_property_get_double (p));
+	{
+		DBusMessageIter iter_var;
+		double v;
+
+		v = hal_property_get_double (p);
+
+		dbus_message_iter_open_container (&iter_dict_entry,
+						  DBUS_TYPE_VARIANT,
+						  DBUS_TYPE_DOUBLE_AS_STRING,
+						  &iter_var);
+
+		dbus_message_iter_append_basic (&iter_var, 
+						DBUS_TYPE_DOUBLE,
+						&v);
+
+		dbus_message_iter_close_container (&iter_dict_entry,
+						   &iter_var);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_BOOLEAN:
-		dbus_message_iter_append_dict_key (iter, key);
-		dbus_message_iter_append_boolean (iter, hal_property_get_bool (p));
+	{
+		DBusMessageIter iter_var;
+		dbus_bool_t v;
+
+		v = hal_property_get_bool (p);
+
+		dbus_message_iter_open_container (&iter_dict_entry,
+						  DBUS_TYPE_VARIANT,
+						  DBUS_TYPE_BOOLEAN_AS_STRING,
+						  &iter_var);
+
+		dbus_message_iter_append_basic (&iter_var, 
+						DBUS_TYPE_BOOLEAN,
+						&v);
+
+		dbus_message_iter_close_container (&iter_dict_entry,
+						   &iter_var);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_STRLIST:
 	{
-		char buf[256];
+		DBusMessageIter iter_var, iter_array;
+		GSList *iter;
 
-		/* yikes, this is *really* ugly - we kind of have to do it, as D-BUS as of 0.23 doesn't
-		 * support anything but primitive types as dict values. D-BUS CVS as of Jan 27, 2005
-		 * should work (since it got recursive data types); TODO FIXME HACK XXX
-		 *
-		 * So, instead, send it over the wire as '\tval1\tval2\tval3\t' and put some brains
-		 * in the other end (libhal) to clean it up... 
-		 *
-		 * Of course, this will sort of break stuff not using libhal.
-		 *
-		 * I did say *really* ugly... sue me..
-		 */
+		dbus_message_iter_open_container (&iter_dict_entry,
+						  DBUS_TYPE_VARIANT,
+						  DBUS_TYPE_ARRAY_AS_STRING
+						  DBUS_TYPE_STRING_AS_STRING,
+						  &iter_var);
+
+		dbus_message_iter_open_container (&iter_var,
+						  DBUS_TYPE_ARRAY,
+						  DBUS_TYPE_STRING_AS_STRING,
+						  &iter_array);
+
+		for (iter = hal_property_get_strlist (p); 
+				     iter != NULL; 
+				     iter = iter->next) {
+				     
+			const char *v;
+			v = (const char *) iter->data;
+			
+			dbus_message_iter_append_basic (&iter_array, 
+							DBUS_TYPE_STRING,
+							&v);
+		}
 		
-		dbus_message_iter_append_dict_key (iter, key);
-		dbus_message_iter_append_string (iter, 
-						 hal_device_property_get_as_string (device, key, buf, sizeof (buf)));
-	}
+		dbus_message_iter_close_container (&iter_var,
+						   &iter_array);
+
+		dbus_message_iter_close_container (&iter_dict_entry,
+						   &iter_var);
 		break;
+	}
 		
 	default:
 		HAL_WARNING (("Unknown property type 0x%04x", type));
 		break;
 	}
+
+	dbus_message_iter_close_container (iter, &iter_dict_entry);
+
 
 	return TRUE;
 }
@@ -747,12 +882,21 @@ device_get_all_properties (DBusConnection * connection,
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_dict (&iter, &iter_dict);
+	dbus_message_iter_init_append (reply, &iter);
+
+	dbus_message_iter_open_container (&iter, 
+					  DBUS_TYPE_ARRAY,
+					  DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
+					  DBUS_TYPE_STRING_AS_STRING
+					  DBUS_TYPE_VARIANT_AS_STRING
+					  DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
+					  &iter_dict);
 
 	hal_device_property_foreach (d,
 				     foreach_property_append,
 				     &iter_dict);
+
+	dbus_message_iter_close_container (&iter, &iter_dict);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -823,33 +967,60 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init_append (reply, &iter);
 
 	type = hal_property_get_type (p);
 	switch (type) {
 	case HAL_PROPERTY_TYPE_STRING:
-		dbus_message_iter_append_string (&iter, hal_property_get_string (p));
+	{
+		const char *s;
+		s = hal_property_get_string (p);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &s);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_INT32:
-		dbus_message_iter_append_int32 (&iter, hal_property_get_int (p));
+	{
+		dbus_int32_t i;
+		i = hal_property_get_int (p);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &i);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_UINT64:
-		dbus_message_iter_append_uint64 (&iter, hal_property_get_uint64 (p));
+	{
+		dbus_uint64_t ul;
+		ul = hal_property_get_uint64 (p);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT64, &ul);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_DOUBLE:
-		dbus_message_iter_append_double (&iter, hal_property_get_double (p));
+	{
+		double d;
+		d = hal_property_get_double (p);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_DOUBLE, &d);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_BOOLEAN:
-		dbus_message_iter_append_boolean (&iter, hal_property_get_bool (p));
+	{
+		dbus_bool_t b;
+		b = hal_property_get_bool (p);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &b);
 		break;
+	}
 	case HAL_PROPERTY_TYPE_STRLIST:
 	{
 		GSList *l;
 		DBusMessageIter iter_array;
-		dbus_message_iter_append_array (&iter, &iter_array, DBUS_TYPE_STRING);
+
+		dbus_message_iter_open_container (&iter, 
+						  DBUS_TYPE_ARRAY, 
+						  DBUS_TYPE_STRING_AS_STRING,
+						  &iter_array);
+
 		for (l = hal_property_get_strlist (p); l != NULL; l = g_slist_next (l)) {
-			dbus_message_iter_append_string (&iter_array, l->data);
+			dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, &(l->data));
 		}
+
+		dbus_message_iter_close_container (&iter, &iter_array);
 	}
 		break;
 
@@ -891,6 +1062,7 @@ device_get_property_type (DBusConnection * connection,
 	const char *udi;
 	char *key;
 	HalProperty *p;
+	dbus_int32_t i;
 
 	udi = dbus_message_get_path (message);
 
@@ -923,9 +1095,9 @@ device_get_property_type (DBusConnection * connection,
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_int32 (&iter,
-					hal_property_get_type (p));
+	i = hal_property_get_type (p);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &i);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -1007,7 +1179,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 		raise_syntax (connection, message, "SetProperty");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
-	key = dbus_message_iter_get_string (&iter);
+	dbus_message_iter_get_basic (&iter, &key);
 
 	if (!sender_has_privileges (connection, message)) {
 		raise_permission_denied (connection, message, "SetProperty: not privileged");
@@ -1033,31 +1205,55 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 
 	switch (type) {
 	case DBUS_TYPE_STRING:
-		rc = hal_device_property_set_string (device, key,
-					     dbus_message_iter_get_string
-					     (&iter));
-		break;
-	case DBUS_TYPE_INT32:
-		rc = hal_device_property_set_int (device, key,
-					  dbus_message_iter_get_int32
-					  (&iter));
-		break;
-	case DBUS_TYPE_UINT64:
-		rc = hal_device_property_set_uint64 (device, key,
-					  dbus_message_iter_get_uint64
-					  (&iter));
-		break;
-	case DBUS_TYPE_DOUBLE:
-		rc = hal_device_property_set_double (device, key,
-					     dbus_message_iter_get_double
-					     (&iter));
-		break;
-	case DBUS_TYPE_BOOLEAN:
-		rc = hal_device_property_set_bool (device, key,
-					   dbus_message_iter_get_boolean
-					   (&iter));
-		break;
+	{
+		const char *v;
 
+		dbus_message_iter_get_basic (&iter, &v);
+		
+		rc = hal_device_property_set_string (device, key, v);
+		
+		break;
+	}
+	case DBUS_TYPE_INT32:
+	{
+		dbus_int32_t v;
+
+		dbus_message_iter_get_basic (&iter, &v);
+		
+		rc = hal_device_property_set_int (device, key, v);
+		
+		break;
+	}
+	case DBUS_TYPE_UINT64:
+	{
+		dbus_uint64_t v;
+
+		dbus_message_iter_get_basic (&iter, &v);
+
+		rc = hal_device_property_set_uint64 (device, key, v);
+
+		break;
+	}
+	case DBUS_TYPE_DOUBLE:
+	{
+		double v;
+
+		dbus_message_iter_get_basic (&iter, &v);
+
+		rc = hal_device_property_set_double (device, key, v);
+
+		break;
+	}
+	case DBUS_TYPE_BOOLEAN:
+	{
+		dbus_bool_t v;
+
+		dbus_message_iter_get_basic (&iter, &v);
+
+		rc = hal_device_property_set_bool (device, key, v);
+
+		break;
+	}
 	default:
 		HAL_WARNING (("Unsupported property type %d", type));
 		break;
@@ -1319,6 +1515,7 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 	DBusMessage *reply;
 	DBusError error;
 	DBusMessageIter iter;
+	dbus_bool_t b;
 
 	HAL_TRACE (("entering"));
 
@@ -1345,9 +1542,9 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_boolean (&iter,
-					  hal_device_has_property (d, key));
+	b =  hal_device_has_property (d, key);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &b);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -1425,8 +1622,8 @@ device_query_capability (DBusConnection * connection,
 
 	dbus_free (capability);
 
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_boolean (&iter, rc);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &rc);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -1686,18 +1883,24 @@ device_property_atomic_update_end (void)
 				pu_iter->udi,
 				"org.freedesktop.Hal.Device",
 				"PropertyModified");
-			dbus_message_iter_init (message, &iter);
-			dbus_message_iter_append_int32 (&iter,
-							num_updates_this);
+			dbus_message_iter_init_append (message, &iter);
+			dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32,
+							&num_updates_this);
 			for (pu_iter2 = pu_iter; pu_iter2 != NULL;
 			     pu_iter2 = pu_iter2->next) {
 				if (strcmp (pu_iter2->udi, pu_iter->udi) == 0) {
-					dbus_message_iter_append_string
-					    (&iter, pu_iter2->key);
-					dbus_message_iter_append_boolean
-					    (&iter, pu_iter2->removed);
-					dbus_message_iter_append_boolean
-					    (&iter, pu_iter2->added);
+					dbus_message_iter_append_basic
+					    (&iter, 
+					     DBUS_TYPE_STRING,
+					     &(pu_iter2->key));
+					dbus_message_iter_append_basic
+					    (&iter,
+					     DBUS_TYPE_BOOLEAN,
+					     &(pu_iter2->removed));
+					dbus_message_iter_append_basic
+					    (&iter, 
+					     DBUS_TYPE_BOOLEAN,
+					     &(pu_iter2->added));
 
 					/* signal this is already processed */
 					if (pu_iter2 != pu_iter) {
@@ -1755,15 +1958,20 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 		pending_updates_head = pu;
 		num_pending_updates++;
 	} else {
+		dbus_int32_t i;
+		
 		message = dbus_message_new_signal (udi,
 						  "org.freedesktop.Hal.Device",
 						   "PropertyModified");
 
-		dbus_message_iter_init (message, &iter);
-		dbus_message_iter_append_int32 (&iter, 1);
-		dbus_message_iter_append_string (&iter, key);
-		dbus_message_iter_append_boolean (&iter, removed);
-		dbus_message_iter_append_boolean (&iter, added);
+		dbus_message_iter_init_append (message, &iter);
+		i = 1;
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &i);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, 
+		                                &removed);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, 
+		                                &added);
 
 		if (!dbus_connection_send (dbus_connection, message, NULL))
 			DIE (("error broadcasting message"));
@@ -1803,8 +2011,10 @@ device_send_signal_condition (HalDevice *device, const char *condition_name,
 	message = dbus_message_new_signal (udi,
 					   "org.freedesktop.Hal.Device",
 					   "Condition");
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, condition_name);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, 
+	                                DBUS_TYPE_STRING, 
+	                                &condition_name);
 
 	va_start (var_args, first_arg_type);
 	dbus_message_append_args_valist (message, first_arg_type,
@@ -1837,7 +2047,7 @@ service_deleted (DBusMessage *message)
 	if (!dbus_message_get_args (message, NULL,
 				    DBUS_TYPE_STRING, &service_name,
 				    DBUS_TYPE_INVALID)) {
-		HAL_ERROR (("Invalid ServiceDeleted signal from bus!"));
+		HAL_ERROR (("Invalid NameLost signal from bus!"));
 		return;
 	}
 
@@ -1888,8 +2098,8 @@ device_rescan (DBusConnection * connection, DBusMessage * message)
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
 		DIE (("No memory"));
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_boolean (&iter, res);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &res);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -1932,8 +2142,8 @@ device_reprobe (DBusConnection * connection, DBusMessage * message)
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
 		DIE (("No memory"));
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_append_boolean (&iter, res);
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &res);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -1967,7 +2177,7 @@ hald_dbus_filter_function (DBusConnection * connection,
 
 	} else if (dbus_message_is_signal (message,
 					   DBUS_INTERFACE_ORG_FREEDESKTOP_DBUS,
-					   "ServiceDeleted")) {
+					   "NameLost")) {
 
 		if (services_with_locks != NULL)
 			service_deleted (message);
@@ -2115,10 +2325,10 @@ hald_dbus_init (void)
 	dbus_connection_setup_with_g_main (dbus_connection, NULL);
 	dbus_connection_set_exit_on_disconnect (dbus_connection, FALSE);
 
-	dbus_bus_acquire_service (dbus_connection, "org.freedesktop.Hal",
+	dbus_bus_request_name (dbus_connection, "org.freedesktop.Hal",
 				  0, &dbus_error);
 	if (dbus_error_is_set (&dbus_error)) {
-		HAL_ERROR (("dbus_bus_acquire_service(): %s",
+		HAL_ERROR (("dbus_bus_request_name(): %s",
 			    dbus_error.message));
 		return FALSE;
 	}
@@ -2130,7 +2340,7 @@ hald_dbus_init (void)
 			    "type='signal',"
 			    "interface='"DBUS_INTERFACE_ORG_FREEDESKTOP_DBUS"',"
 			    "sender='"DBUS_SERVICE_ORG_FREEDESKTOP_DBUS"',"
-			    "member='ServiceDeleted'",
+			    "member='NameLost'",
 			    NULL);
 
 	return TRUE;

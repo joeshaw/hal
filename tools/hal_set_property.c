@@ -100,7 +100,7 @@ main (int argc, char *argv[])
 	dbus_bool_t bool_value = TRUE;
 	dbus_bool_t remove = FALSE;
 	dbus_bool_t is_version = FALSE;
-	int type = DBUS_TYPE_NIL;
+	int type = DBUS_TYPE_INVALID;
 	DBusError error;
 
 	if (argc <= 1) {
@@ -184,7 +184,7 @@ main (int argc, char *argv[])
 	}
 
 	/* must have at least one, but not neither or both */
-	if ((remove && type != DBUS_TYPE_NIL) || ((!remove) && type == DBUS_TYPE_NIL)) {
+	if ((remove && type != DBUS_TYPE_INVALID) || ((!remove) && type == DBUS_TYPE_INVALID)) {
 		usage (argc, argv);
 		return 1;
 	}

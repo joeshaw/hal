@@ -561,3 +561,13 @@ main (int argc, char *argv[])
 out:
 	return num_tests_failed;
 }
+
+gboolean osspec_device_rescan (HalDevice *d)
+{
+  return FALSE;
+}
+
+gboolean osspec_device_reprobe (HalDevice *d)
+{
+  return FALSE;
+}

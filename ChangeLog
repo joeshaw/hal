@@ -1,3 +1,40 @@
+2005-02-14  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Require dbus >= 0.30
+
+2005-02-11  John (J5) Palmieri  <johnp@redhat.com>
+
+	* hald/device.c, hald/device_info.c, hald/property.c, hald/property.h,
+        tools/hal_set_property.c, tools/hal_get_property.c: 
+        s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
+
+	* hald/hald_dbus.c: ported to new dbus-0.30 API
+	(foreach_property_append): implemented real string lists 
+        and got rid of the \tval\tval\tval\t hack
+
+	* libhal/libhal.c: ported to new dbus-0.30 API
+        s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
+	(libhal_get_string_array_from_iter): new helper function to create
+        string arrays from dbus arrays
+	(libhal_property_fill_value_from_variant): new helper function
+        that fills in properties from variants.  Used when getting
+        a hash of properties from hald
+        
+	* libhal/libhal.h: s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
+        HAL_PROPERTY_TYPE_INVALID = DBUS_TYPE_INVALID
+
+	* hald/hald_test_libhal.c: ported to new dbus-0.30 API
+        Added success messages and more detailed failed messages
+
+	* hald/util.c (hal_util_compute_udi): Change all illegal characters
+	to underscores '_'
+
+	* tools/device-manager/DeviceManager.py
+	(DeviceManager::__init__, add_device_signal_recv): 
+	change add_signal_receiver calls to add expand_args=False parameter.
+	(DeviceManager::device_changed, gdl_changed): changed handlers
+	to conform with the new way we call signal handlers
+
 2005-02-11  David Zeuthen  <davidz@redhat.com>
 
 	* Makefile.am (SUBDIRS): Rearrange order so volume_id and drive_id

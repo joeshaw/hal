@@ -233,6 +233,62 @@ out:
 	return TRUE;
 }
 
+
+#define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
+                           s >= sizeof (struct nlmsghdr) && \
+                           s >= h->nlmsg_len))
+
+static gboolean
+netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
+			   gpointer user_data)
+{
+	int fd;
+	int bytes_read;
+	guint total_read = 0;
+	struct sockaddr_nl nladdr;
+	socklen_t nladdrlen = sizeof(nladdr);
+	char buf[1024];
+
+	HAL_INFO (("data!", buf));
+
+	if (cond & ~(G_IO_IN | G_IO_PRI)) {
+		HAL_ERROR (("Error occurred on netlink socket"));
+		return TRUE;
+	}
+
+	fd = g_io_channel_unix_get_fd (channel);
+
+	do {
+		errno = 0;
+		bytes_read = recvfrom (fd,
+				   buf + total_read,
+				   sizeof (buf) - total_read,
+				   MSG_DONTWAIT,
+				   (struct sockaddr*)&nladdr, &nladdrlen);
+		if (nladdrlen != sizeof(nladdr)) {
+			HAL_ERROR(("Bad address size reading netlink socket"));
+			return TRUE;
+		}
+		if (nladdr.nl_pid) {
+			HAL_ERROR(("Spoofed packet received on netlink socket"));
+			return TRUE;
+		}
+		if (bytes_read > 0)
+			total_read += bytes_read;
+	} while (bytes_read > 0 || errno == EINTR);
+
+	if (bytes_read < 0 && errno != EAGAIN) {
+		HAL_ERROR (("Error reading data off netlink socket"));
+		return TRUE;
+	}
+
+	if (total_read > 0) {
+		HAL_INFO (("total_read=%d buf='%s'", total_read, buf));
+	}
+
+	return TRUE;
+}
+
 void
 osspec_init (void)
 {
@@ -243,6 +299,9 @@ osspec_init (void)
 	GIOChannel *channel;	
 	const int on = 1;
 	guint sigio_iochn_listener_source_id;
+	static int netlink_fd = -1;
+	struct sockaddr_nl netlink_addr;
+	GIOChannel *netlink_channel;
 
 	/* setup socket for listening from datagrams from the hal.hotplug helper */
 	memset(&saddr, 0x00, sizeof(saddr));
@@ -294,6 +353,26 @@ osspec_init (void)
 	sigio_iochn_listener_source_id = g_io_add_watch (sigio_iochn, G_IO_IN, sigio_iochn_data, NULL);
 	signal (SIGIO, sigio_handler);
 
+	/* hook up to netlink socket to receive events from the *Kernel Events Layer* */
+	netlink_fd = socket (PF_NETLINK, SOCK_DGRAM, 15/*NETLINK_KOBJECT_UEVENT*/);
+
+	if (netlink_fd < 0) {
+		DIE (("Unable to create netlink socket"));
+	}
+
+	memset (&netlink_addr, 0, sizeof (netlink_addr));
+	netlink_addr.nl_family = AF_NETLINK;
+	netlink_addr.nl_pid = getpid ();
+	netlink_addr.nl_groups = 0xffffffff;15;//RTMGRP_LINK;//1 << 15 /*NETLINK_KOBJECT_UEVENT*/;
+
+	if (bind (netlink_fd, (struct sockaddr *) &netlink_addr, sizeof (netlink_addr)) < 0) {
+		DIE (("Unable to bind to netlink socket"));
+	}
+
+	netlink_channel = g_io_channel_unix_new (netlink_fd);
+
+	g_io_add_watch (netlink_channel, G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_NVAL,
+			netlink_detection_data_ready, NULL);
 
 	/* Load various hardware id databases */
 	ids_init ();

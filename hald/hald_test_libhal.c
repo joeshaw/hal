@@ -66,8 +66,8 @@ send_tests_done (DBusConnection *conn, dbus_bool_t passed)
 		goto out;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_boolean (&iter, passed);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &passed);
 
 	dbus_error_init (&error);
 	reply = dbus_connection_send_with_reply_and_block (conn, message, -1, &error);
@@ -122,20 +122,39 @@ check_libhal (const char *server_addr)
 			/* TODO: handle */
 		}
 
+		
 		libhal_ctx_set_dbus_connection (ctx, conn);
+
 		libhal_ctx_init (ctx, &error);
+
+		if (dbus_error_is_set (&error)) {
+			printf ("FAILED98: %s\n", error.message);			
+			goto fail;
+		}
+		printf ("SUCCESS98\n");
+
 		libhal_device_print (ctx, "/org/freedesktop/Hal/devices/testobj1", &error);
+
+
+		if (dbus_error_is_set (&error)) {
+			printf ("FAILED99: %s\n", error.message);			
+			goto fail;
+		}
+		printf ("SUCCESS99\n");
 
 		passed = FALSE;
 
 		{
 			char *val;
+			
 			val = libhal_device_get_property_string (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.string", &error);
+
 			if (val == NULL || strcmp (val, "fooooobar22") != 0 || dbus_error_is_set (&error)) {
 				libhal_free_string (val);
 				printf ("FAILED100\n");			
 				goto fail;
 			}
+			printf ("SUCCESS100\n");
 			libhal_free_string (val);
 		}
 
@@ -144,18 +163,24 @@ check_libhal (const char *server_addr)
 			val = libhal_device_get_property_string (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.string2", &error);
 			if (val == NULL || strcmp (val, "fooøةמ") != 0 || dbus_error_is_set (&error)) {
 				libhal_free_string (val);
-				printf ("FAILED100\n");			
+				printf ("FAILED101: %s\n", error.message);			
 				goto fail;
 			}
 			libhal_free_string (val);
+			printf ("SUCCESS101\n");
 		}
 
-
-		if (libhal_device_get_property_bool (
-			    ctx, "/org/freedesktop/Hal/devices/testobj1", "test.bool", &error) != TRUE ||
-		    dbus_error_is_set (&error)) {
-			printf ("FAILED102\n");			
-			goto fail;
+		{
+			dbus_bool_t b;
+			b = libhal_device_get_property_bool (
+			    ctx, "/org/freedesktop/Hal/devices/testobj1", 
+			    "test.bool", &error);
+			    
+			if (!b || dbus_error_is_set (&error)) {
+				printf ("FAILED102: %s, %i\n", error.message, b);			
+				goto fail;
+			}
+			printf ("SUCCESS102\n");
 		}
 
 		{
@@ -168,30 +193,34 @@ check_libhal (const char *server_addr)
 				printf ("FAILED103\n");
 				goto fail;
 			}
+			printf ("SUCCESS103\n");
 		}
 
 		if (libhal_device_get_property_uint64 (
 			    ctx, "/org/freedesktop/Hal/devices/testobj1", "test.uint64", &error) != 
 		    ((((dbus_uint64_t)1)<<35) + 5) ||
 		    dbus_error_is_set (&error)) {
-			printf ("FAILED104\n");			
+			printf ("FAILED104: %s\n", error.message);			
 			goto fail;
 		}
-
+		printf ("SUCCESS104\n");
+		
 		{
 			char **val;
 			val = libhal_device_get_property_strlist (ctx, "/org/freedesktop/Hal/devices/testobj1", "test.strlist", &error);
 			if (val == NULL ||  dbus_error_is_set (&error)) {
 				libhal_free_string_array (val);
-				printf ("FAILED105\n");			
+				printf ("FAILED105: %s\n", error.message);			
 				goto fail;
 			}
-
+			printf ("SUCCESS105\n");
+			
 			if (libhal_string_array_length (val) != 2) {
 				libhal_free_string_array (val);
 				printf ("FAILED106\n");			
 				goto fail;
 			}
+			printf ("SUCCESS106\n");
 
 			if (strcmp (val[0], "foostrlist2") != 0 ||
 			    strcmp (val[1], "foostrlist3") != 0) {
@@ -199,6 +228,7 @@ check_libhal (const char *server_addr)
 				printf ("FAILED107\n");			
 				goto fail;
 			}
+			printf ("SUCCESS107\n");
 
 			libhal_free_string_array (val);
 		}
@@ -209,6 +239,8 @@ check_libhal (const char *server_addr)
 			printf ("FAILED108\n");			
 			goto fail;
 		}
+		printf ("SUCCESS108\n");
+
 
 		printf ("Passed all libhal tests\n");
 		passed = TRUE;

@@ -981,7 +981,7 @@ end (ParsingContext * pc, const char *el)
 		case MERGE_TYPE_STRLIST:
 		{
 			int type = hal_device_property_get_type (pc->device, pc->merge_key);
-			if (type == HAL_PROPERTY_TYPE_STRLIST || type == HAL_PROPERTY_TYPE_NIL) {
+			if (type == HAL_PROPERTY_TYPE_STRLIST || type == HAL_PROPERTY_TYPE_INVALID) {
 				hal_device_property_remove (pc->device, pc->merge_key);
 				hal_device_property_strlist_append (pc->device, pc->merge_key, pc->cdata_buf);
 			}
@@ -1065,7 +1065,7 @@ end (ParsingContext * pc, const char *el)
 	} else if (pc->curelem == CURELEM_APPEND && pc->match_ok && 
 		   (hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING ||
 		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRLIST ||
-		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_NIL)) {
+		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_INVALID)) {
 		char buf[256];
 		char buf2[256];
 
@@ -1103,7 +1103,7 @@ end (ParsingContext * pc, const char *el)
 	} else if (pc->curelem == CURELEM_PREPEND && pc->match_ok && 
 		   (hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING ||
 		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRLIST ||
-		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_NIL)) {
+		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_INVALID)) {
 		char buf[256];
 		char buf2[256];
 

@@ -204,7 +204,7 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 
 		/* only remove target if it exists with a different type */
 		target_type = hal_device_property_get_type (target, key);
-		if (target_type != HAL_PROPERTY_TYPE_NIL && target_type != type)
+		if (target_type != HAL_PROPERTY_TYPE_INVALID && target_type != type)
 			hal_device_property_remove (target, key);
 
 		switch (type) {
@@ -274,7 +274,7 @@ hal_device_merge (HalDevice *target, HalDevice *source)
 
 		/* only remove target if it exists with a different type */
 		target_type = hal_device_property_get_type (target, key);
-		if (target_type != HAL_PROPERTY_TYPE_NIL && target_type != type)
+		if (target_type != HAL_PROPERTY_TYPE_INVALID && target_type != type)
 			hal_device_property_remove (target, key);
 
 		switch (type) {
@@ -536,15 +536,15 @@ hal_device_property_get_type (HalDevice *device, const char *key)
 {
 	HalProperty *prop;
 
-	g_return_val_if_fail (device != NULL, HAL_PROPERTY_TYPE_NIL);
-	g_return_val_if_fail (key != NULL, HAL_PROPERTY_TYPE_NIL);
+	g_return_val_if_fail (device != NULL, HAL_PROPERTY_TYPE_INVALID);
+	g_return_val_if_fail (key != NULL, HAL_PROPERTY_TYPE_INVALID);
 
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL)
 		return hal_property_get_type (prop);
 	else
-		return HAL_PROPERTY_TYPE_NIL;
+		return HAL_PROPERTY_TYPE_INVALID;
 }
 
 const char *

@@ -164,7 +164,7 @@ hal_property_get_key (HalProperty *prop)
 int
 hal_property_get_type (HalProperty *prop)
 {
-	g_return_val_if_fail (prop != NULL, HAL_PROPERTY_TYPE_NIL);
+	g_return_val_if_fail (prop != NULL, HAL_PROPERTY_TYPE_INVALID);
 
 	return prop->type;
 }
@@ -270,7 +270,7 @@ hal_property_set_string (HalProperty *prop, const char *value)
 
 	g_return_if_fail (prop != NULL);
 	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_STRING ||
-			  prop->type == HAL_PROPERTY_TYPE_NIL);
+			  prop->type == HAL_PROPERTY_TYPE_INVALID);
 
 	prop->type = HAL_PROPERTY_TYPE_STRING;
 	prop->str_value = g_strdup (value);
@@ -292,7 +292,7 @@ hal_property_set_int (HalProperty *prop, dbus_int32_t value)
 {
 	g_return_if_fail (prop != NULL);
 	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_INT32 ||
-			  prop->type == HAL_PROPERTY_TYPE_NIL);
+			  prop->type == HAL_PROPERTY_TYPE_INVALID);
 
 	prop->type = HAL_PROPERTY_TYPE_INT32;
 	prop->int_value = value;
@@ -303,7 +303,7 @@ hal_property_set_uint64 (HalProperty *prop, dbus_uint64_t value)
 {
 	g_return_if_fail (prop != NULL);
 	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_UINT64 ||
-			  prop->type == HAL_PROPERTY_TYPE_NIL);
+			  prop->type == HAL_PROPERTY_TYPE_INVALID);
 
 	prop->type = HAL_PROPERTY_TYPE_UINT64;
 	prop->uint64_value = value;
@@ -314,7 +314,7 @@ hal_property_set_bool (HalProperty *prop, dbus_bool_t value)
 {
 	g_return_if_fail (prop != NULL);
 	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_BOOLEAN ||
-			  prop->type == HAL_PROPERTY_TYPE_NIL);
+			  prop->type == HAL_PROPERTY_TYPE_INVALID);
 
 	prop->type = HAL_PROPERTY_TYPE_BOOLEAN;
 	prop->bool_value = value;
@@ -325,7 +325,7 @@ hal_property_set_double (HalProperty *prop, double value)
 {
 	g_return_if_fail (prop != NULL);
 	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_DOUBLE ||
-			  prop->type == HAL_PROPERTY_TYPE_NIL);
+			  prop->type == HAL_PROPERTY_TYPE_INVALID);
 
 	prop->type = HAL_PROPERTY_TYPE_DOUBLE;
 	prop->double_value = value;

@@ -53,6 +53,13 @@
 # define N_(String) (String)
 #endif
 
+char **libhal_get_string_array_from_iter (DBusMessageIter *iter);
+
+dbus_bool_t libhal_property_fill_value_from_variant (LibHalProperty *p, 
+						     DBusMessageIter *var_iter);
+
+
+
 /**
  * @defgroup LibHal HAL convenience library
  * @brief A convenience library used to communicate with the HAL daemon
@@ -76,6 +83,61 @@ libhal_free_string_array (char **str_array)
 		}
 		free (str_array);
 	}
+}
+
+
+/** Creates a NULL terminated array of strings from a dbus message iterator.
+ *
+ *  @param  iter		The message iterator to extract the strings from
+ *  @return			Pointer to the string array
+ */
+char **
+libhal_get_string_array_from_iter (DBusMessageIter *iter)
+{
+	int count;
+	char **buffer;
+
+	count = 0;
+	buffer = (char **)malloc (sizeof (char *) * 8);
+
+	if (buffer == NULL)
+		goto oom;
+
+	buffer[0] = NULL;
+	while (dbus_message_iter_get_arg_type (iter) == DBUS_TYPE_STRING) {
+		const char *value;
+		char *str;
+		
+		if ((count % 8) == 0 && count != 0) {
+			buffer = realloc (buffer, sizeof (char *) * (count + 8));
+			if (buffer == NULL)
+				goto oom;
+		}
+		
+		dbus_message_iter_get_basic (iter, &value);
+		str = strdup (value);
+		if (str == NULL)
+			goto oom;
+
+		buffer[count] = str;
+
+		dbus_message_iter_next(iter);
+		count++;
+	}
+
+	if ((count % 8) == 0) {
+		buffer = realloc (buffer, sizeof (char *) * (count + 1));
+		if (buffer == NULL)
+			goto oom;
+	}
+
+	buffer[count] = NULL;
+	return buffer;
+
+oom:
+	fprintf (stderr, "%s %d : error allocating memory\n", __FILE__, __LINE__);
+	return NULL;
+
 }
 
 /** Frees a nul-terminated string
@@ -176,6 +238,74 @@ libhal_ctx_get_user_data(LibHalContext *ctx)
 }
 
 
+/** Fills in the value for the LibHalProperty given a variant iterator. 
+ *
+ *  @param  p                 The property to fill in
+ *  @param  var_iter	      Varient iterator to extract the value from
+ */
+dbus_bool_t
+libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var_iter)
+{
+	switch (p->type) {
+	case DBUS_TYPE_ARRAY:
+		if (dbus_message_iter_get_element_type (var_iter) != DBUS_TYPE_STRING)
+			return FALSE;
+
+		p->strlist_value = libhal_get_string_array_from_iter (var_iter);
+
+		p->type = LIBHAL_PROPERTY_TYPE_STRLIST; 
+
+		break;
+	case DBUS_TYPE_STRING:
+	{
+		const char *v;
+
+		dbus_message_iter_get_basic (var_iter, &v);
+
+		p->str_value = strdup (v);
+		if (p->str_value == NULL) 
+			return FALSE;
+
+		break;
+	}
+	case DBUS_TYPE_INT32:
+	{
+		dbus_int32_t v;
+		
+		dbus_message_iter_get_basic (var_iter, &v);
+		
+		p->int_value = v;
+
+		break;
+	}
+	case DBUS_TYPE_UINT64:
+	{
+		dbus_uint64_t v;
+		
+		dbus_message_iter_get_basic (var_iter, &v);
+
+		p->uint64_value = v;
+		
+		break;
+	}
+	case DBUS_TYPE_DOUBLE:
+	{
+		double v;
+
+		dbus_message_iter_get_basic (var_iter, &v);
+
+		p->double_value = v;
+
+		break;
+	}
+	default:
+		/** @todo  report error */
+		break;
+	}
+
+	return TRUE;
+}
+
 /** Retrieve all the properties on a device. 
  *
  *  @param  ctx                 The context for the connection to hald
@@ -188,14 +318,15 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
 	DBusMessageIter dict_iter;
 	LibHalPropertySet *result;
-	LibHalProperty **pn;
+	LibHalProperty *p_last;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetAllProperties");
+
 	if (message == NULL) {
 		fprintf (stderr,
 			 "%s %d : Couldn't allocate D-BUS message\n",
@@ -207,6 +338,10 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 							   message, -1,
 							   error);
 	if (dbus_error_is_set (error)) {
+		fprintf (stderr,
+			 "%s %d : %s\n",
+			 __FILE__, __LINE__, error->message);
+
 		dbus_message_unref (message);
 		return NULL;
 	}
@@ -216,17 +351,11 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 		return NULL;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	result = malloc (sizeof (LibHalPropertySet));
-	if (result == NULL) {
-		fprintf (stderr, "%s %d : error allocating memory\n",
-			 __FILE__, __LINE__);
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return NULL;
-	}
-
+	if (result == NULL) 
+		goto oom;
 /*
     result->properties = malloc(sizeof(LibHalProperty)*result->num_properties);
     if( result->properties==NULL )
@@ -236,123 +365,78 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
     }
 */
 
-	pn = &result->properties_head;
+	result->properties_head = NULL;
 	result->num_properties = 0;
 
-	dbus_message_iter_init_dict_iterator (&iter, &dict_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY  &&
+	    dbus_message_iter_get_element_type (&reply_iter) != DBUS_TYPE_DICT_ENTRY) {
+		fprintf (stderr, "%s %d : error, expecting an array of dict entries\n",
+			 __FILE__, __LINE__);
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return NULL;
+	}
 
-	do {
-		char *dbus_str;
+	dbus_message_iter_recurse (&reply_iter, &dict_iter);
+
+	p_last = NULL;
+
+	while (dbus_message_iter_get_arg_type (&dict_iter) 
+	                      == DBUS_TYPE_DICT_ENTRY)
+	{
+		DBusMessageIter dict_entry_iter, var_iter;
+		const char *key;
 		LibHalProperty *p;
 
-		p = malloc (sizeof (LibHalProperty));
-		if (p == NULL) {
-			fprintf (stderr,
-				 "%s %d : error allocating memory\n",
-				 __FILE__, __LINE__);
-			/** @todo FIXME cleanup */
-			return NULL;
-		}
+		dbus_message_iter_recurse (&dict_iter, &dict_entry_iter);
 
-		*pn = p;
-		pn = &p->next;
+		dbus_message_iter_get_basic (&dict_entry_iter, &key);
+
+		p = malloc (sizeof (LibHalProperty));
+		if (p == NULL)
+			goto oom;
+
 		p->next = NULL;
+
+		if (result->num_properties == 0)
+			result->properties_head = p;
+
+		if (p_last != NULL)
+			p_last->next = p;
+
+		p_last = p;
+
+		p->key = strdup (key);
+		if (p->key == NULL)
+			goto oom;
+
+		dbus_message_iter_next (&dict_entry_iter);
+
+		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
+
+		p->type = dbus_message_iter_get_arg_type (&var_iter);
+	
 		result->num_properties++;
 
-		dbus_str = dbus_message_iter_get_dict_key (&dict_iter);
-		p->key =
-		    (char *) ((dbus_str != NULL) ? strdup (dbus_str) :
-			      NULL);
-		if (p->key == NULL) {
-			fprintf (stderr,
-				 "%s %d : error allocating memory\n",
-				 __FILE__, __LINE__);
-			/** @todo FIXME cleanup */
-			return NULL;
-		}
-		dbus_free (dbus_str);
+		if(!libhal_property_fill_value_from_variant (p, &var_iter))
+			goto oom;
 
-		p->type = dbus_message_iter_get_arg_type (&dict_iter);
+		
 
-		switch (p->type) {
-		case DBUS_TYPE_STRING:
-			dbus_str = dbus_message_iter_get_string (&dict_iter);
-			if (dbus_str != NULL && dbus_str[0]=='\t') {
-				unsigned int i;
-				unsigned int num_elems;
-				char *r;
-				char **str_array;
-
-				/* TODO FIXME HACK XXX: hack for string lists */
-
-				for (r = dbus_str + 1, num_elems = 0; r != NULL; r = strchr (r + 1, '\t'))
-					num_elems++;
-
-				p->type = LIBHAL_PROPERTY_TYPE_STRLIST;
-
-				--num_elems;
-				str_array = calloc (num_elems + 1, sizeof (char *));
-
-				r = dbus_str;
-				for (i = 0; i < num_elems; i++) {
-					char *q;
-					char *res;
-
-					q = strchr (r + 1, '\t');
-					if (q == NULL)
-						break;
-					res = calloc (q - r - 1 + 1, sizeof (char));
-					strncpy (res, r + 1, (size_t) (q - r));
-					res[q - r - 1] = '\0';
-					str_array [i] = res;
-
-					r = q;
-				}
-				str_array[i] = NULL;
-				p->strlist_value = str_array;
-				
-			} else {		
-				p->str_value = (char *) ((dbus_str != NULL) ? strdup (dbus_str) : NULL);
-				if (p->str_value == NULL) {
-					fprintf (stderr,
-						 "%s %d : error allocating memory\n",
-						 __FILE__, __LINE__);
-					/** @todo FIXME cleanup */
-					return NULL;
-				}
-			}
-			dbus_free (dbus_str);
-			break;
-		case DBUS_TYPE_INT32:
-			p->int_value =
-			    dbus_message_iter_get_int32 (&dict_iter);
-			break;
-		case DBUS_TYPE_UINT64:
-			p->uint64_value =
-			    dbus_message_iter_get_uint64 (&dict_iter);
-			break;
-		case DBUS_TYPE_DOUBLE:
-			p->double_value =
-			    dbus_message_iter_get_double (&dict_iter);
-			break;
-		case DBUS_TYPE_BOOLEAN:
-			p->bool_value =
-			    dbus_message_iter_get_boolean (&dict_iter);
-			break;
-
-		default:
-			/** @todo  report error */
-			break;
-		}
-
+		dbus_message_iter_next (&dict_iter);
 	}
-	while (dbus_message_iter_has_next (&dict_iter) &&
-	       dbus_message_iter_next (&dict_iter));
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
 
 	return result;
+
+oom:
+	fprintf (stderr,
+		"%s %d : error allocating memory\n",
+		 __FILE__, __LINE__);
+		/** @todo FIXME cleanup */
+	return NULL;
 }
 
 /** Free a property set earlier obtained with libhal_device_get_all_properties().
@@ -392,6 +476,7 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 	iter->index = 0;
 	iter->cur_prop = set->properties_head;
 }
+
 
 /** Determine whether there are more properties to iterate over
  *
@@ -581,8 +666,7 @@ filter_func (DBusConnection * connection,
 			char *condition_name;
 
 			dbus_message_iter_init (message, &iter);
-			condition_name =
-			    dbus_message_iter_get_string (&iter);
+			dbus_message_iter_get_basic (&iter, &condition_name);
 
 			ctx->device_condition (ctx, 
 							  object_path,
@@ -599,25 +683,23 @@ filter_func (DBusConnection * connection,
 		if (ctx->device_property_modified != NULL) {
 			int i;
 			char *key;
-			dbus_bool_t removed, added;
+			dbus_bool_t removed;
+			dbus_bool_t added;
 			int num_modifications;
 			DBusMessageIter iter;
 
 			dbus_message_iter_init (message, &iter);
-			num_modifications =
-			    dbus_message_iter_get_int32 (&iter);
+			dbus_message_iter_get_basic (&iter, &num_modifications);
 			dbus_message_iter_next (&iter);
 
 
 			for (i = 0; i < num_modifications; i++) {
 
-				key = dbus_message_iter_get_string (&iter);
+				dbus_message_iter_get_basic (&iter, &key);
 				dbus_message_iter_next (&iter);
-				removed =
-				    dbus_message_iter_get_boolean (&iter);
+				dbus_message_iter_get_basic (&iter, &removed);
 				dbus_message_iter_next (&iter);
-				added =
-				    dbus_message_iter_get_boolean (&iter);
+				dbus_message_iter_get_basic (&iter, &added);
 				dbus_message_iter_next (&iter);
 
 				ctx->
@@ -794,11 +876,9 @@ libhal_shutdown (LibHalContext *ctx)
 char **
 libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 {
-	int i;
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
-	char **device_names;
+	DBusMessageIter iter_array, reply_iter;
 	char **hal_device_names;
 
 	*num_devices = 0;
@@ -823,37 +903,19 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	}
 
 	/* now analyze reply */
-	dbus_message_iter_init (reply, &iter);
-	if (!dbus_message_iter_get_string_array (&iter,
-						 &device_names,
-						 num_devices)) {
-		fprintf (stderr, "%s %d : wrong reply from hald\n", __FILE__, __LINE__);
+	dbus_message_iter_init (reply, &reply_iter);
+
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
+		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
 		return NULL;
 	}
+	
+	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
+	hal_device_names = libhal_get_string_array_from_iter (&iter_array);
+		      
 	dbus_message_unref (reply);
 	dbus_message_unref (message);
-
-	/* Have to convert from dbus string array to hal string array 
-	 * since we can't poke at the dbus string array for the reason
-	 * that d-bus use their own memory allocation scheme
-	 */
-	hal_device_names = malloc (sizeof (char *) * ((*num_devices) + 1));
-	if (hal_device_names == NULL)
-		return NULL;
-	/** @todo Handle OOM better */
-
-	for (i = 0; i < (*num_devices); i++) {
-		hal_device_names[i] = strdup (device_names[i]);
-		if (hal_device_names[i] == NULL) {
-			fprintf (stderr, "%s %d : error allocating memory\n", __FILE__, __LINE__);
-			/** @todo FIXME cleanup */
-			return NULL;
-		}
-	}
-	hal_device_names[i] = NULL;
-
-	dbus_free_string_array (device_names);
 
 	return hal_device_names;
 }
@@ -865,14 +927,14 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
  *  @param  key			Name of the property
  *  @return			One of DBUS_TYPE_STRING, DBUS_TYPE_INT32,
  *				DBUS_TYPE_UINT64, DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE or 
- *				DBUS_TYPE_NIL if the property didn't exist.
+ *				DBUS_TYPE_INVALID if the property didn't exist.
  */
 LibHalPropertyType
 libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char *key, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	int type;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
@@ -880,25 +942,25 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 						"GetPropertyType");
 	if (message == NULL) {
 		fprintf (stderr, "%s %d : Couldn't allocate D-BUS message\n", __FILE__, __LINE__);
-		return LIBHAL_PROPERTY_TYPE_NIL;
+		return LIBHAL_PROPERTY_TYPE_INVALID;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
 	if (dbus_error_is_set (error)) {
 		dbus_message_unref (message);
-		return LIBHAL_PROPERTY_TYPE_NIL;
+		return LIBHAL_PROPERTY_TYPE_INVALID;
 	}
 	if (reply == NULL) {
 		dbus_message_unref (message);
-		return LIBHAL_PROPERTY_TYPE_NIL;
+		return LIBHAL_PROPERTY_TYPE_INVALID;
 	}
 
-	dbus_message_iter_init (reply, &iter);
-	type = dbus_message_iter_get_int32 (&iter);
+	dbus_message_iter_init (reply, &reply_iter);
+	dbus_message_iter_get_basic (&reply_iter, &type);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -922,12 +984,9 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 char **
 libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const char *key, DBusError *error)
 {
-	int i;
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
-	char **string_values;
-	int num_strings;
+	DBusMessageIter iter, iter_array, reply_iter;
 	char **our_strings;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
@@ -940,8 +999,8 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 		return NULL;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
@@ -954,36 +1013,19 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 		return NULL;
 	}
 	/* now analyse reply */
-	dbus_message_iter_init (reply, &iter);
-	if (!dbus_message_iter_get_string_array (&iter,
-						 &string_values,
-						 &num_strings)) {
-		fprintf (stderr, "%s %d : wrong reply from hald\n",
-			 __FILE__, __LINE__);
+	dbus_message_iter_init (reply, &reply_iter);
+
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
+		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
 		return NULL;
 	}
+	
+	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	dbus_message_unref (message);
+	our_strings = libhal_get_string_array_from_iter (&iter_array);
+		      
 	dbus_message_unref (reply);
-
-	/* Have to convert from dbus string array to hal string array 
-	 * since we can't poke at the dbus string array for the reason
-	 * that d-bus use their own memory allocation scheme
-	 */
-	our_strings = malloc (sizeof (char *) * ((num_strings) + 1));
-	if (our_strings == NULL)
-		return NULL;
-	/** @todo Handle OOM better */
-
-	for (i = 0; i < num_strings; i++) {
-		our_strings[i] = strdup (string_values[i]);
-		if (our_strings[i] == NULL)
-			return NULL;
-		/** @todo Handle OOM better */
-	}
-	our_strings[i] = NULL;
-
-	dbus_free_string_array (string_values);
+	dbus_message_unref (message);
 
 	return our_strings;
 }
@@ -1005,13 +1047,14 @@ libhal_device_get_property_string (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	char *value;
 	char *dbus_str;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyString");
+
 	if (message == NULL) {
 		fprintf (stderr,
 			 "%s %d : Couldn't allocate D-BUS message\n",
@@ -1019,9 +1062,9 @@ libhal_device_get_property_string (LibHalContext *ctx,
 		return NULL;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
-	
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
@@ -1034,21 +1077,17 @@ libhal_device_get_property_string (LibHalContext *ctx,
 		return NULL;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) == DBUS_TYPE_NIL) {
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return NULL;
-	} else if (dbus_message_iter_get_arg_type (&iter) !=
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_STRING) {
 		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return NULL;
 	}
 
-	dbus_str = dbus_message_iter_get_string (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &dbus_str);
 	value = (char *) ((dbus_str != NULL) ? strdup (dbus_str) : NULL);
 	if (value == NULL) {
 		fprintf (stderr, "%s %d : error allocating memory\n",
@@ -1056,7 +1095,6 @@ libhal_device_get_property_string (LibHalContext *ctx,
 		/** @todo FIXME cleanup */
 		return NULL;
 	}
-	dbus_free (dbus_str);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -1076,7 +1114,7 @@ libhal_device_get_property_int (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	dbus_int32_t value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
@@ -1089,8 +1127,8 @@ libhal_device_get_property_int (LibHalContext *ctx,
 		return -1;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1104,18 +1142,10 @@ libhal_device_get_property_int (LibHalContext *ctx,
 		return -1;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) == DBUS_TYPE_NIL) {
-		/* property didn't exist */
-		fprintf (stderr,
-			 "%s %d : property '%s' for device '%s' does not "
-			 "exist\n", __FILE__, __LINE__, key, udi);
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return -1;
-	} else if (dbus_message_iter_get_arg_type (&iter) !=
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_INT32) {
 		fprintf (stderr,
 			 "%s %d : property '%s' for device '%s' is not "
@@ -1125,7 +1155,7 @@ libhal_device_get_property_int (LibHalContext *ctx,
 		dbus_message_unref (reply);
 		return -1;
 	}
-	value = dbus_message_iter_get_int32 (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -1145,7 +1175,7 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	dbus_uint64_t value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
@@ -1158,8 +1188,8 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 		return -1;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1173,18 +1203,9 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 		return -1;
 	}
 
-	dbus_message_iter_init (reply, &iter);
-
+	dbus_message_iter_init (reply, &reply_iter);
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) == DBUS_TYPE_NIL) {
-		/* property didn't exist */
-		fprintf (stderr,
-			 "%s %d : property '%s' for device '%s' does not "
-			 "exist\n", __FILE__, __LINE__, key, udi);
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return -1;
-	} else if (dbus_message_iter_get_arg_type (&iter) !=
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_UINT64) {
 		fprintf (stderr,
 			 "%s %d : property '%s' for device '%s' is not "
@@ -1194,7 +1215,7 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 		dbus_message_unref (reply);
 		return -1;
 	}
-	value = dbus_message_iter_get_uint64 (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -1214,7 +1235,7 @@ libhal_device_get_property_double (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	double value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
@@ -1227,8 +1248,8 @@ libhal_device_get_property_double (LibHalContext *ctx,
 		return -1.0f;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1242,18 +1263,10 @@ libhal_device_get_property_double (LibHalContext *ctx,
 		return -1.0f;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) == DBUS_TYPE_NIL) {
-		/* property didn't exist */
-		fprintf (stderr,
-			 "%s %d : property '%s' for device '%s' does not "
-			 "exist\n", __FILE__, __LINE__, key, udi);
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return -1.0f;
-	} else if (dbus_message_iter_get_arg_type (&iter) !=
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_DOUBLE) {
 		fprintf (stderr,
 			 "%s %d : property '%s' for device '%s' is not "
@@ -1262,7 +1275,7 @@ libhal_device_get_property_double (LibHalContext *ctx,
 		dbus_message_unref (reply);
 		return -1.0f;
 	}
-	value = dbus_message_iter_get_double (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -1282,8 +1295,8 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
-	double value;
+	DBusMessageIter iter, reply_iter;
+	dbus_bool_t value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1295,8 +1308,8 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1310,18 +1323,10 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) == DBUS_TYPE_NIL) {
-		/* property didn't exist */
-		fprintf (stderr,
-			 "%s %d : property '%s' for device '%s' does not "
-			 "exist\n", __FILE__, __LINE__, key, udi);
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return FALSE;
-	} else if (dbus_message_iter_get_arg_type (&iter) !=
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_BOOLEAN) {
 		fprintf (stderr,
 			 "%s %d : property '%s' for device '%s' is not "
@@ -1330,7 +1335,7 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 		dbus_message_unref (reply);
 		return FALSE;
 	}
-	value = dbus_message_iter_get_boolean (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -1357,9 +1362,8 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 	char *method_name = NULL;
 
 	/** @todo  sanity check incoming params */
-
 	switch (type) {
-	case DBUS_TYPE_NIL:
+	case DBUS_TYPE_INVALID:
 		method_name = "RemoveProperty";
 		break;
 	case DBUS_TYPE_STRING:
@@ -1391,26 +1395,23 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	switch (type) {
-	case DBUS_TYPE_NIL:
-		dbus_message_iter_append_nil (&iter);
-		break;
 	case DBUS_TYPE_STRING:
-		dbus_message_iter_append_string (&iter, str_value);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &str_value);
 		break;
 	case DBUS_TYPE_INT32:
-		dbus_message_iter_append_int32 (&iter, int_value);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &int_value);
 		break;
 	case DBUS_TYPE_UINT64:
-		dbus_message_iter_append_uint64 (&iter, uint64_value);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT64, &uint64_value);
 		break;
 	case DBUS_TYPE_DOUBLE:
-		dbus_message_iter_append_double (&iter, double_value);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_DOUBLE, &double_value);
 		break;
 	case DBUS_TYPE_BOOLEAN:
-		dbus_message_iter_append_boolean (&iter, bool_value);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &bool_value);
 		break;
 	}
 
@@ -1542,8 +1543,8 @@ dbus_bool_t
 libhal_device_remove_property (LibHalContext *ctx, 
 			       const char *udi, const char *key, DBusError *error)
 {
-	return libhal_device_set_property_helper (ctx, udi, key, DBUS_TYPE_NIL,	
-						  /* DBUS_TYPE_NIL means remove */
+	return libhal_device_set_property_helper (ctx, udi, key, DBUS_TYPE_INVALID,	
+						  /* DBUS_TYPE_INVALID means remove */
 						  NULL, 0, 0, 0.0f, FALSE, error);
 }
 
@@ -1567,9 +1568,9 @@ libhal_device_property_strlist_append (LibHalContext *ctx,
 			 __FILE__, __LINE__);
 		return FALSE;
 	}
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
-	dbus_message_iter_append_string (&iter, value);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &value);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1605,9 +1606,9 @@ libhal_device_property_strlist_prepend (LibHalContext *ctx,
 			 __FILE__, __LINE__);
 		return FALSE;
 	}
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
-	dbus_message_iter_append_string (&iter, value);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &value);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1643,9 +1644,9 @@ libhal_device_property_strlist_remove_index (LibHalContext *ctx,
 			 __FILE__, __LINE__);
 		return FALSE;
 	}
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
-	dbus_message_iter_append_uint32 (&iter, index);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &index);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1680,9 +1681,9 @@ libhal_device_property_strlist_remove (LibHalContext *ctx,
 			 __FILE__, __LINE__);
 		return FALSE;
 	}
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
-	dbus_message_iter_append_string (&iter, value);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &value);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1737,8 +1738,8 @@ libhal_device_lock (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, reason_to_lock);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &reason_to_lock);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -1833,7 +1834,7 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
 	char *value;
 	char *dbus_str;
 
@@ -1861,10 +1862,10 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
 		return NULL;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_STRING) {
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_STRING) {
 		fprintf (stderr,
 			 "%s %d : expected a string in reply to NewDevice\n",
 			 __FILE__, __LINE__);
@@ -1873,7 +1874,7 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
 		return NULL;
 	}
 
-	dbus_str = dbus_message_iter_get_string (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &dbus_str);
 	value = (char *) ((dbus_str != NULL) ? strdup (dbus_str) : NULL);
 	if (value == NULL) {
 		fprintf (stderr, "%s %d : error allocating memory\n",
@@ -1881,7 +1882,6 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
 		/** @todo FIXME cleanup */
 		return NULL;
 	}
-	dbus_free (dbus_str);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -1926,9 +1926,9 @@ libhal_agent_commit_to_gdl (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, temp_udi);
-	dbus_message_iter_append_string (&iter, udi);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &temp_udi);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -1977,8 +1977,8 @@ libhal_agent_remove_device (LibHalContext *ctx, const char *udi, DBusError *erro
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, udi);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2009,7 +2009,7 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
@@ -2023,8 +2023,8 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, udi);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2039,10 +2039,10 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 		return FALSE;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyze reply */
-	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_BOOLEAN) {
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
 		fprintf (stderr,
 			 "%s %d : expected a bool in reply to DeviceExists\n",
 			 __FILE__, __LINE__);
@@ -2051,7 +2051,7 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 		return FALSE;
 	}
 
-	value = dbus_message_iter_get_boolean (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -2071,7 +2071,7 @@ libhal_device_property_exists (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
@@ -2084,8 +2084,8 @@ libhal_device_property_exists (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2100,10 +2100,10 @@ libhal_device_property_exists (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_init (reply, &reply_iter);
 
 	/* now analyse reply */
-	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_BOOLEAN) {
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
 		fprintf (stderr, "%s %d : expected a bool in reply to "
 			 "PropertyExists\n", __FILE__, __LINE__);
 		dbus_message_unref (message);
@@ -2111,7 +2111,7 @@ libhal_device_property_exists (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	value = dbus_message_iter_get_boolean (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -2144,9 +2144,9 @@ libhal_agent_merge_properties (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, target_udi);
-	dbus_message_iter_append_string (&iter, source_udi);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &target_udi);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &source_udi);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2192,7 +2192,7 @@ libhal_agent_device_matches (LibHalContext *ctx,
 {
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
+	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
@@ -2206,10 +2206,10 @@ libhal_agent_device_matches (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, udi1);
-	dbus_message_iter_append_string (&iter, udi2);
-	dbus_message_iter_append_string (&iter, property_namespace);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, udi1);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, udi2);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, property_namespace);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2224,8 +2224,9 @@ libhal_agent_device_matches (LibHalContext *ctx,
 		return FALSE;
 	}
 	/* now analyse reply */
-	dbus_message_iter_init (reply, &iter);
-	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_BOOLEAN) {
+	dbus_message_iter_init (reply, &reply_iter);
+
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
 		fprintf (stderr,
 			 "%s %d : expected a bool in reply to DeviceMatches\n",
 			 __FILE__, __LINE__);
@@ -2234,7 +2235,7 @@ libhal_agent_device_matches (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	value = dbus_message_iter_get_boolean (&iter);
+	dbus_message_iter_get_basic (&reply_iter, &value);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
@@ -2263,6 +2264,7 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 	     libhal_psi_next (&i)) {
 		type = libhal_psi_get_type (&i);
 		key = libhal_psi_get_key (&i);
+
 		switch (type) {
 		case LIBHAL_PROPERTY_TYPE_STRING:
 			printf ("    %s = '%s' (string)\n", key,
@@ -2300,6 +2302,7 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 					printf (", ");
 			}
 			printf ("] (string list)\n");
+
 			break;
 		}
 		default:
@@ -2307,6 +2310,7 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 			break;
 		}
 	}
+
 	libhal_free_property_set (pset);
 
 	return TRUE;
@@ -2327,11 +2331,9 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 					 const char *key,
 					 const char *value, int *num_devices, DBusError *error)
 {
-	int i;
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
-	char **device_names;
+	DBusMessageIter iter, iter_array, reply_iter;
 	char **hal_device_names;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
@@ -2345,9 +2347,9 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 		return NULL;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, key);
-	dbus_message_iter_append_string (&iter, value);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &value);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2362,36 +2364,19 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 		return NULL;
 	}
 	/* now analyse reply */
-	dbus_message_iter_init (reply, &iter);
-	if (!dbus_message_iter_get_string_array (&iter,
-						 &device_names,
-						 num_devices)) {
-		fprintf (stderr, "%s %d : wrong reply from hald\n",
-			 __FILE__, __LINE__);
+	dbus_message_iter_init (reply, &reply_iter);
+
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
+		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
 		return NULL;
 	}
+	
+	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	dbus_message_unref (message);
+	hal_device_names = libhal_get_string_array_from_iter (&iter_array);
+		      
 	dbus_message_unref (reply);
-
-	/* Have to convert from dbus string array to hal string array 
-	 * since we can't poke at the dbus string array for the reason
-	 * that d-bus use their own memory allocation scheme
-	 */
-	hal_device_names = malloc (sizeof (char *) * ((*num_devices) + 1));
-	if (hal_device_names == NULL)
-		return NULL;
-		     /** @todo Handle OOM better */
-
-	for (i = 0; i < (*num_devices); i++) {
-		hal_device_names[i] = strdup (device_names[i]);
-		if (hal_device_names[i] == NULL)
-			return NULL;
-			 /** @todo Handle OOM better */
-	}
-	hal_device_names[i] = NULL;
-
-	dbus_free_string_array (device_names);
+	dbus_message_unref (message);
 
 	return hal_device_names;
 }
@@ -2423,8 +2408,8 @@ libhal_device_add_capability (LibHalContext *ctx,
 		return FALSE;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, capability);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &capability);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2479,11 +2464,9 @@ char **
 libhal_find_device_by_capability (LibHalContext *ctx, 
 				  const char *capability, int *num_devices, DBusError *error)
 {
-	int i;
 	DBusMessage *message;
 	DBusMessage *reply;
-	DBusMessageIter iter;
-	char **device_names;
+	DBusMessageIter iter, iter_array, reply_iter;
 	char **hal_device_names;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
@@ -2497,8 +2480,8 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 		return NULL;
 	}
 
-	dbus_message_iter_init (message, &iter);
-	dbus_message_iter_append_string (&iter, capability);
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &capability);
 
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
@@ -2513,36 +2496,19 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 		return NULL;
 	}
 	/* now analyse reply */
-	dbus_message_iter_init (reply, &iter);
-	if (!dbus_message_iter_get_string_array (&iter,
-						 &device_names,
-						 num_devices)) {
-		fprintf (stderr, "%s %d : wrong reply from hald\n",
-			 __FILE__, __LINE__);
+	dbus_message_iter_init (reply, &reply_iter);
+
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
+		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
 		return NULL;
 	}
+	
+	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	dbus_message_unref (message);
+	hal_device_names = libhal_get_string_array_from_iter (&iter_array);
+		      
 	dbus_message_unref (reply);
-
-	/* Have to convert from dbus string array to hal string array 
-	 * since we can't poke at the dbus string array for the reason
-	 * that d-bus use their own memory allocation scheme
-	 */
-	hal_device_names = malloc (sizeof (char *) * ((*num_devices) + 1));
-	if (hal_device_names == NULL)
-		return NULL;
-	/** @todo Handle OOM better */
-
-	for (i = 0; i < (*num_devices); i++) {
-		hal_device_names[i] = strdup (device_names[i]);
-		if (hal_device_names[i] == NULL)
-			return NULL;
-		/** @todo Handle OOM better */
-	}
-	hal_device_names[i] = NULL;
-
-	dbus_free_string_array (device_names);
+	dbus_message_unref (message);
 
 	return hal_device_names;
 }
@@ -2787,12 +2753,11 @@ dbus_bool_t
 libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 {
 	DBusMessage *message;
-	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
 
-	message = dbus_message_new_method_call ("org.freedesktop.Hal",
-						udi,
+	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"Rescan");
 
@@ -2817,8 +2782,14 @@ libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 	if (reply == NULL)
 		return FALSE;
 
-	dbus_message_iter_init (reply, &iter);
-	result = dbus_message_iter_get_boolean (&iter);
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
+		   DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return FALSE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &result);
 
 	dbus_message_unref (reply);
 
@@ -2829,7 +2800,7 @@ dbus_bool_t
 libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 {
 	DBusMessage *message;
-	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
 
@@ -2859,8 +2830,14 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 	if (reply == NULL)
 		return FALSE;
 
-	dbus_message_iter_init (reply, &iter);
-	result = dbus_message_iter_get_boolean (&iter);
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
+		   DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return FALSE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &result);
 
 	dbus_message_unref (reply);
 

@@ -7,6 +7,7 @@ import dbus
 
 try:
     import gnome.ui
+
 except ImportError:
     gnome_imported = 0
 else:
@@ -51,17 +52,20 @@ class DeviceManager(LibGladeApplication):
 				     "DeviceAdded",
                                      "org.freedesktop.Hal.Manager",
                                      "org.freedesktop.Hal",
-                                     "/org/freedesktop/Hal/Manager")
+                                     "/org/freedesktop/Hal/Manager",
+				     expand_args=False)
         self.bus.add_signal_receiver(self.gdl_changed,
 				     "DeviceRemoved",
                                      "org.freedesktop.Hal.Manager",
                                      "org.freedesktop.Hal",
-                                     "/org/freedesktop/Hal/Manager")
+                                     "/org/freedesktop/Hal/Manager",
+				     expand_args=False)
         self.bus.add_signal_receiver(self.gdl_changed,
 				     "NewCapability",
                                      "org.freedesktop.Hal.Manager",
                                      "org.freedesktop.Hal",
-                                     "/org/freedesktop/Hal/Manager")
+                                     "/org/freedesktop/Hal/Manager",
+				     expand_args=False)
 
         # Add listeners for all devices
         try:
@@ -86,13 +90,13 @@ class DeviceManager(LibGladeApplication):
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
-				     udi)
+				     udi, expand_args=False)
 	return
 	self.bus.add_signal_receiver(self.device_changed,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
-				     udi)
+				     udi, expand_args=False)
 
     def remove_device_signal_recv (self, udi):
 	self.bus.remove_signal_receiver(self.device_changed,
@@ -125,19 +129,18 @@ class DeviceManager(LibGladeApplication):
             self.update_device_notebook(device)
 
 
-    def device_changed(self, dbus_if, dbus_member, dbus_svc,
-                       dbus_obj_path, dbus_message):
+    def device_changed(self, sender, device):
         """This method is called when signals on the Device interface is
         received"""
-        if dbus_member=="Condition":
-            args = dbus_message.get_args_list()
-            print "\nCondition %s, device=%s"%(args[0], dbus_obj_path)
+
+	print "device_changed: " + sender.signal_name
+        if sender.signal_name=="Condition":
+            print "\nCondition %s, device=%s"%(device, sender.path)
             print "  message = ", args 
-        elif dbus_member=="PropertyModified":
-            args = dbus_message.get_args_list()
-            num_modifications = args[0]
-            print "\nPropertyModified, device=%s"%dbus_obj_path
-            #print "dbus_obj_path", dbus_obj_path
+        elif sender.signal_name=="PropertyModified":
+            num_modifications = device 
+            print "\nPropertyModified, device=%s"%sender.path
+            #print "dbus_obj_path", sender.path
             for i in range(0, num_modifications):
                 property_name = args[1+3*i]
                 removed = args[2+3*i]
@@ -169,24 +172,24 @@ class DeviceManager(LibGladeApplication):
                             self.update_device_notebook(device)
 
 
-    def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
+    def gdl_changed(self, sender):
         """This method is called when a HAL device is added or removed."""
 
-        if dbus_member=="DeviceAdded":
-            [device_udi] = dbus_message.get_args_list()
+        if sender.signal_name=="DeviceAdded":
+            [device_udi] = sender.message.get_args_list()
             print "\nDeviceAdded, udi=%s"%(device_udi)
 	    self.add_device_signal_recv (device_udi)
             self.update_device_list()
-        elif dbus_member=="DeviceRemoved":
-            [device_udi] = dbus_message.get_args_list()
+        elif sender.signal_name=="DeviceRemoved":
+            [device_udi] = sender.message.get_args_list()
             print "\nDeviceRemoved, udi=%s"%(device_udi)
 	    self.remove_device_signal_recv (device_udi)
             self.update_device_list()
-        elif dbus_member=="NewCapability":
-            [device_udi, cap] = dbus_message.get_args_list()
+        elif sender.signal_name=="NewCapability":
+            [device_udi, cap] = sender.message.get_args_list()
             print "\nNewCapability, cap=%s, udi=%s"%(cap, device_udi)
         else:
-            print "*** Unknown signal %s"%dbus_member
+            print "*** Unknown signal %s"% sender.signal_name
 
 
     def update_device_list(self):

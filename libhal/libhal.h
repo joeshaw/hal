@@ -44,7 +44,7 @@ extern "C" {
 /** Possible types for properties on hal device objects */
 typedef enum {
         /** Used to report error condition */
-	LIBHAL_PROPERTY_TYPE_NIL     =    DBUS_TYPE_NIL,
+	LIBHAL_PROPERTY_TYPE_INVALID     =    DBUS_TYPE_INVALID,
 
 	/** Type for 32-bit signed integer property */
 	LIBHAL_PROPERTY_TYPE_INT32   =    DBUS_TYPE_INT32,
@@ -156,8 +156,6 @@ dbus_bool_t    libhal_ctx_free                         (LibHalContext *ctx);
 char        **libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error);
 dbus_bool_t   libhal_device_exists   (LibHalContext *ctx, const char *udi,  DBusError *error);
 dbus_bool_t   libhal_device_print    (LibHalContext *ctx, const char *udi,  DBusError *error);
-
-
 
 dbus_bool_t libhal_device_property_exists (LibHalContext *ctx, 
 					   const char *udi,
