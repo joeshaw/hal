@@ -1,3 +1,9 @@
+2003-12-22  David Zeuthen  <david@fubar.dk>
+
+	* hald/device_store.c (async_find_check_new_addition): fixed a 
+	quite subtle bug where multiple finds for the same device were
+	out there. I just love bloody callbacks :-/
+
 2003-12-21  David Zeuthen  <david@fubar.dk>
 
 	* examples/volumed/volumed.py: be less verbose

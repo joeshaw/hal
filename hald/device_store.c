@@ -296,6 +296,7 @@ static gboolean async_find_timeout_fn(gpointer data)
              * thus an indirect invocation of code looking at this list
              */
             (*callback)(NULL, data1, data2);
+
             return FALSE; /* cancel timeout */
         }
 
@@ -321,9 +322,17 @@ static void async_find_check_new_addition(HalDevice* device)
     DSDeviceAsyncFindStruct* i;
     DSDeviceAsyncFindStruct* prev;
 
+check_list_again:
+    /*
+    HAL_INFO(("***** Linux.sysfs_path_device = %s",
+              ds_property_get_string(device, "Linux.sysfs_path_device")));
+    */
+
     /* Check if this is still in list */
     for(i=async_find_outstanding_head, prev=NULL; i!=NULL; i=i->next)
     {
+        /*HAL_INFO(("   *** key='%s', value='%s'", i->key, i->value));*/
+
         type = ds_property_get_type(device, i->key);
         if( type==DBUS_TYPE_STRING )
         {
@@ -356,7 +365,22 @@ static void async_find_check_new_addition(HalDevice* device)
                  * thus an indirect invocation of code looking at this list
                  */
                 (*callback)(device, data1, data2);
-                return;
+
+                /* Argh.. Ok, this call we just made may trigger modifications
+                 * to the list (inserted at the head), or it may have trigger
+                 * a device add (more sensible), hence an invocation of this
+                 * function... again.. 
+                 *
+                 * *AND*, there may be more than one outstanding request
+                 * for this newly added device.. 
+                 *
+                 * *THEREFORE*, we have to start comparing the list from the
+                 * darn beginning all over again. 
+                 *
+                 * Sigh.. callbacks suck
+                 */
+                goto check_list_again;
+                /*return;*/
             }
         }
         prev = i;
