@@ -1,12 +1,12 @@
 2004-08-31  David Zeuthen  <david@fubar.dk>
 
-	* hald/Makefile.am (hald_SOURCES): Also add volume_id_logging.h so
-	distribution tarballs work
+	* tools/fstab-sync.c (clean): Call restore_selinux_context if we
+	have selinux
 
 2004-08-31  David Zeuthen  <david@fubar.dk>
 
-	* tools/fstab-sync.c (clean): Call restore_selinux_context if we
-	have selinux
+	* hald/Makefile.am (hald_SOURCES): Also add volume_id_logging.h so
+	distribution tarballs work
 
 2004-08-30  Kay Sievers  <kay.sievers@vrfy.org>
 
