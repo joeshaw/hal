@@ -703,34 +703,37 @@ error1:
 	return;
 }
 
-static void process_coldplug_list (GSList *coldplug_list);
+/* global list of devices to be coldplugged */
+static GSList *coldplug_list;
+
+static void process_coldplug_list ();
 
 static void process_coldplug_list_device_cancelled (HalDevice *device, gpointer user_data);
 
 static void
-process_coldplug_list_callouts_done_for_device (HalDevice *device, gpointer user_data)
+process_coldplug_list_on_gdl_store_add (HalDeviceStore *store, HalDevice *device, gboolean is_added, gpointer user_data)
 {
-	GSList *coldplug_list = user_data;
+	HalDevice *waiting_device = (HalDevice *) user_data;
 
-	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_callouts_done_for_device, user_data);
-	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_device_cancelled, user_data);
+	if (waiting_device == device && is_added) {
+		g_signal_handlers_disconnect_by_func (store, process_coldplug_list_on_gdl_store_add, user_data);
+		g_signal_handlers_disconnect_by_func (device, process_coldplug_list_device_cancelled, user_data);
 
-	process_coldplug_list (coldplug_list);
+		process_coldplug_list ();
+	}
 }
 
 static void
 process_coldplug_list_device_cancelled (HalDevice *device, gpointer user_data)
 {
-	GSList *coldplug_list = user_data;
-
-	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_callouts_done_for_device, user_data);
+	g_signal_handlers_disconnect_by_func (hald_get_gdl (), process_coldplug_list_on_gdl_store_add, user_data);
 	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_device_cancelled, user_data);
 
-	process_coldplug_list (coldplug_list);
+	process_coldplug_list ();
 }
 
 static void
-process_coldplug_list (GSList *coldplug_list)
+process_coldplug_list ()
 {
 	gchar *path;
 	gchar *subsystem;
@@ -751,12 +754,16 @@ process_coldplug_list (GSList *coldplug_list)
 		g_free (pair);
 
 		if (device != NULL && hal_device_store_find(hald_get_gdl (), device->udi) == NULL) {
-			g_signal_connect (device, "callouts_finished",
-					  G_CALLBACK (process_coldplug_list_callouts_done_for_device), coldplug_list);
+
+			/* wait until we are in GDL */
+			g_signal_connect (hald_get_gdl (), "store_changed", 
+					  G_CALLBACK (process_coldplug_list_on_gdl_store_add), device);
+
+			/* or until we are cancelled */
 			g_signal_connect (device, "cancelled",
-					  G_CALLBACK (process_coldplug_list_device_cancelled), coldplug_list);
+					  G_CALLBACK (process_coldplug_list_device_cancelled), device);
 		} else {
-			process_coldplug_list (coldplug_list);
+			process_coldplug_list ();
 		}
 
 
@@ -773,8 +780,6 @@ process_coldplug_list (GSList *coldplug_list)
 static void
 add_computer_callouts_done (HalDevice *device, gpointer user_data)
 {
-	GSList *coldplug_list = user_data;
-
 	g_object_ref (device);
 	hal_device_store_remove (hald_get_tdl (), device);
 	hal_device_store_add (hald_get_gdl (), device);
@@ -783,7 +788,7 @@ add_computer_callouts_done (HalDevice *device, gpointer user_data)
 					      user_data);
 	g_object_unref (device);
 
-	process_coldplug_list (coldplug_list);
+	process_coldplug_list ();
 }
 
 
@@ -791,7 +796,6 @@ add_computer_callouts_done (HalDevice *device, gpointer user_data)
 void
 osspec_probe (void)
 {
-	GSList *coldplug_list;
 	HalDevice *root;
 	struct utsname un;
 	
@@ -1095,23 +1099,48 @@ osspec_shutdown ()
 	process_shutdown_list (shutdown_list);
 }
 
-static void reenable_hotplug_proc (HalDevice *d, gpointer user_data);
+static void reenable_hotplug_proc_on_device_cancel (HalDevice *d, gpointer user_data);
+
+static void
+reenable_hotplug_on_gdl_store_add (HalDeviceStore *store, HalDevice *device, gboolean is_added, gpointer user_data)
+{
+	HalDevice *waiting_device = (HalDevice *) user_data;
+
+	if (waiting_device == device && is_added) {
+		/* unregister signal handlers */
+		g_signal_handlers_disconnect_by_func (store, reenable_hotplug_on_gdl_store_add, user_data);
+		g_signal_handlers_disconnect_by_func (device, reenable_hotplug_proc_on_device_cancel, user_data);
+
+		/* continue processing */
+		hotplug_sem_down ();
+	}
+}
 
 static void
 reenable_hotplug_proc_on_device_cancel (HalDevice *d, gpointer user_data)
 {
-	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc_on_device_cancel, user_data);
-	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc, user_data);
-	hotplug_sem_down ();
+	/* unregister signal handlers */
+	g_signal_handlers_disconnect_by_func (hald_get_gdl (), reenable_hotplug_on_gdl_store_add, user_data);
+        g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc_on_device_cancel, user_data);
+
+	/* continue processing */
+        hotplug_sem_down ();
 }
 
 static void
-reenable_hotplug_proc (HalDevice *d, gpointer user_data)
+reenable_hotplug_on_gdl_store_remove (HalDeviceStore *store, HalDevice *device, gboolean is_added, gpointer user_data)
 {
-	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc_on_device_cancel, user_data);
-	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc, user_data);
-	hotplug_sem_down ();
+	HalDevice *waiting_device = (HalDevice *) user_data;
+
+	if (waiting_device == device && !is_added) {
+		/* unregister signal handlers */
+		g_signal_handlers_disconnect_by_func (store, reenable_hotplug_on_gdl_store_remove, user_data);
+
+		/* continue processing */
+		hotplug_sem_down ();
+	}
 }
+
 
 static void
 hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs_path)
@@ -1135,11 +1164,20 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 			
 			/* Disable hotplug processing for now */
 			hotplug_sem_up ();
-			g_signal_connect (d, "callouts_finished",
-					  G_CALLBACK (reenable_hotplug_proc), NULL);
-			/* device may also be cancelled if e.g. no device file is found */
-			g_signal_connect (d, "cancelled",
-					  G_CALLBACK (reenable_hotplug_proc_on_device_cancel), NULL);
+
+			/* wait until we are in GDL */
+			g_signal_connect (hald_get_gdl (), "store_changed", 
+					  G_CALLBACK (reenable_hotplug_on_gdl_store_add), d);
+
+			/* or until we are cancelled */
+			g_signal_connect (d, "cancelled", G_CALLBACK (reenable_hotplug_proc_on_device_cancel), d);
+
+		} else {
+			if (d != NULL) {
+				HAL_ERROR (("d = 0x%08x", d->udi));
+			} else {
+				HAL_ERROR (("d is NULL!"));
+			}
 		}
 	} else {
 		d = rem_device (sysfs_path_full, subsystem);
@@ -1151,8 +1189,10 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 			
 			/* Disable hotplug processing for now */
 			hotplug_sem_up ();
-			g_signal_connect (d, "callouts_finished",
-					  G_CALLBACK (reenable_hotplug_proc), NULL);
+
+			/* wait until we are out of the GDL */
+			g_signal_connect (hald_get_gdl (), "store_changed", 
+					  G_CALLBACK (reenable_hotplug_on_gdl_store_remove), d);
 		}
 	}
 

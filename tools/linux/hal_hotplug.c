@@ -130,7 +130,7 @@ static const char *file_list_scsi_host[] = { "device",
 static const char *file_list_block[] = {
 	"dev",
 	"size",
-	"removable",
+	/*"removable",*/
 	NULL
 };
 

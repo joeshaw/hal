@@ -1,3 +1,32 @@
+2004-09-01  David Zeuthen  <david@fubar.dk>
+
+	This was a fun debugging session that led to this fix :-)
+	Basically when building optimized binaries (like for the Fedora
+	RPMS) an interesting sideeffect showed up: gobject signal handlers
+	are run in arbritrary order. This means that we were processing
+	hotplug events for sda%d before sda was added; which resulted in
+	the unavailability of the kids because they couldn't find their
+	parent.  Now we look at the device store to infer when to process
+	the next event. Which is more correct and actually makes hal
+	work. This *never* once showed up when not building without
+	--build=i686-redhat-linux-gnu --host=i686-redhat-linux-gnu
+	--target=i386-redhat-linux-gnu. Oh well.
+
+	* hald/linux/osspec.c (process_coldplug_list_on_gdl_store_add): 
+	Renamed from _callouts_done_for_device
+	(process_coldplug_list): Wait for device to be added to GDL instead
+	of relying on callouts to complete (device obj may not have been added
+	to GDL just because the callouts complete)
+	(reenable_hotplug_on_gdl_store_add): Renamed from reeanble_hotplug_proc
+	(reenable_hotplug_on_gdl_store_remove): New function
+	(hald_helper_hotplug): Rather look at the GDL for additions and
+	removals than looking at whether callouts complete
+
+2004-08-31  David Zeuthen  <david@fubar.dk>
+
+	* tools/linux/hal_hotplug.c: Don't wait for 'removable' file - it just
+	isn't available for non-top-level block devices (duh)
+
 2004-08-31  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c: 
