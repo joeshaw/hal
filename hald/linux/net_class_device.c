@@ -48,7 +48,13 @@
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
+
+#ifdef HAVE_IWLIB
+#  include <linux/wireless.h>
+#  include <iwlib.h>
+#else
+#  include <net/if.h>
+#endif
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -317,7 +323,7 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 	HalDevice *d = HAL_DEVICE (user_data);
 	int fd;
 	int bytes_read;
-	int total_read = 0;
+	guint total_read = 0;
 	char buf[1024];
 
 	if (cond & ~(G_IO_IN | G_IO_PRI)) {
@@ -345,7 +351,7 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 
 	if (total_read > 0) {
 		struct nlmsghdr *hdr = (struct nlmsghdr *) buf;
-		int offset = 0;
+		guint offset = 0;
 
 		while (offset < total_read &&
 		       VALID_NLMSG (hdr, total_read - offset)) {
@@ -399,6 +405,397 @@ link_detection_init (HalDevice *d)
 	g_io_add_watch (channel, G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_NVAL,
 			link_detection_data_ready, d);
 }
+
+#ifdef HAVE_IWLIB
+static void
+open_wireless_sysfs_subdir (HalDevice *d, const char *sysfs_path)
+{
+	char wireless_path[SYSFS_PATH_MAX];
+	struct sysfs_directory *dir;
+	struct sysfs_attribute *cur;
+
+	snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
+	dir = sysfs_open_directory (wireless_path);
+
+	/* will fail if the directory doesn't exist */
+	if (sysfs_read_directory (dir) < 0)
+		return;
+
+	/* dir exists but is empty */
+	if (dir->attributes == NULL)
+		return;
+
+	dlist_for_each_data (dir->attributes, cur, struct sysfs_attribute) {
+		char attr_name[SYSFS_NAME_LEN];
+		int len, i;
+		int tmp;
+
+		if (sysfs_get_name_from_path (cur->path, attr_name,
+					      SYSFS_NAME_LEN) != 0)
+			continue;
+
+		/* strip whitespace */
+		len = strlen (cur->value);
+		for (i = len - 1; i >= 0 && isspace (cur->value[i]); --i)
+			cur->value[i] = '\0';
+
+		if (strcmp (attr_name, "level") == 0) {
+			tmp = parse_dec (cur->value);
+
+			hal_device_property_set_int (d,
+						     "net.ethernet.80211.level",
+						     tmp);
+		} else if (strcmp (attr_name, "link") == 0) {
+			tmp = parse_dec (cur->value);
+
+			hal_device_property_set_int (d, "net.ethernet.80211.link",
+						     tmp);
+		} else if (strcmp (attr_name, "noise") == 0) {
+			tmp = parse_dec (cur->value);
+
+			hal_device_property_set_int (d, "net.ethernet.80211.noise",
+						     tmp);
+		} else if (strcmp (attr_name, "status") == 0) {
+			tmp = parse_hex (cur->value);
+
+			hal_device_property_set_int (d, "net.ethernet.80211.status",
+						     tmp);
+		}
+	}
+
+	sysfs_close_directory (dir);
+
+	hal_device_add_capability (d, "net.ethernet.80211");
+}
+
+typedef struct {
+	char address[128];
+	float freq;
+	char essid[IW_ESSID_MAX_SIZE + 1];
+	int link, level, noise;
+} APInfo;
+
+static int
+ap_compare (gconstpointer a, gconstpointer b)
+{
+	APInfo *ap_a = (APInfo *) a;
+	APInfo *ap_b = (APInfo *) b;
+
+	return strcmp (ap_a->essid, ap_b->essid);
+}
+
+static void
+hash_to_list (gpointer key, gpointer value, gpointer user_data)
+{
+	GSList **list = (GSList **) user_data;
+
+	*list = g_slist_prepend (*list, value);
+}
+
+static void
+aps_to_properties (HalDevice *d, GSList *aps)
+{
+	GSList *iter;
+	GHashTable *networks;
+	int ap_num = 0;
+	GSList *network_list = NULL;
+	int i;
+
+	networks = g_hash_table_new_full (g_str_hash, g_str_equal,
+					  NULL, g_free);
+
+	for (iter = aps; iter != NULL; iter = iter->next) {
+		APInfo *ap = (APInfo *) iter->data;
+		APInfo *best_ap;
+
+		best_ap = g_hash_table_lookup (networks, ap->essid);
+
+		if (best_ap != NULL) {
+			if (ap->link > best_ap->link)
+				g_hash_table_replace (networks, ap->essid, ap);
+			else
+				g_free (ap);
+		} else
+			g_hash_table_insert (networks, ap->essid, ap);
+	}
+	
+	hal_device_property_set_int (d, "net.ethernet.80211.available_networks",
+				     g_hash_table_size (networks));
+
+	g_hash_table_foreach (networks, hash_to_list, &network_list);
+	network_list = g_slist_sort (network_list, ap_compare);
+
+	for (iter = network_list; iter != NULL; iter = iter->next) {
+		APInfo *ap = (APInfo *) iter->data;
+		char prop_name[256];
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.address",
+			  ap_num);
+
+		hal_device_property_set_string (d, prop_name, ap->address);
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.frequency",
+			  ap_num);
+
+		hal_device_property_set_double (d, prop_name, ap->freq);
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.essid",
+			  ap_num);
+
+		hal_device_property_set_string (d, prop_name, ap->essid);
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.link",
+			  ap_num);
+
+		hal_device_property_set_int (d, prop_name, ap->link);
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.level",
+			  ap_num);
+
+		hal_device_property_set_int (d, prop_name, ap->level);
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.noise",
+			  ap_num);
+
+		hal_device_property_set_int (d, prop_name, ap->noise);
+
+		ap_num++;
+	}
+
+	g_slist_free (aps);
+	g_hash_table_destroy (networks);
+
+	/* 
+	 * Clean out old properties.  There'll probably never be more than 64
+	 * networks, right?
+	 */
+	for (i = ap_num; i < 64; i++) {
+		char prop_name[256];
+
+		snprintf (prop_name, 256, "net.ethernet.80211.network%d.essid", i);
+
+		if (hal_device_has_property (d, prop_name)) {
+			char *prop_names[] = {
+				"address", "essid", "frequency",
+				"link", "level", "noise", NULL };
+			char **c;
+
+			for (c = prop_names; *c != NULL; c++) {
+				snprintf (prop_name, 256,
+					  "net.ethernet.80211.network%d.%s",
+					  i, *c);
+
+				hal_device_property_remove (d, prop_name);
+			}
+		} else
+			break;
+	}
+}
+
+static APInfo *
+parse_scanning_token (struct iw_event *iwe, APInfo *old_ap)
+{
+	APInfo *ap;
+
+	if (iwe->cmd == SIOCGIWAP)
+		ap = g_new0 (APInfo, 1);
+	else {
+		g_assert (old_ap != NULL);
+		ap = old_ap;
+	}
+
+	switch (iwe->cmd) {
+	case SIOCGIWAP:
+		memset (ap->address, 0, 128);
+		iw_pr_ether (ap->address, iwe->u.ap_addr.sa_data);
+		break;
+
+	case SIOCGIWFREQ:
+		ap->freq = iw_freq2float(&(iwe->u.freq));
+		break;
+
+	case SIOCGIWESSID:
+		memcpy (ap->essid, iwe->u.essid.pointer,
+			IW_ESSID_MAX_SIZE + 1);
+		ap->essid[iwe->u.essid.length] = 0;
+		break;
+
+	case IWEVQUAL:
+		ap->link = iwe->u.qual.qual;
+		ap->level = iwe->u.qual.level;
+		ap->noise = iwe->u.qual.noise;
+		break;
+	}
+
+	return ap;
+}	
+
+typedef struct {
+	HalDevice *d;
+	int skfd;
+} ScanningInfo;
+
+static gboolean
+read_scanning_results (gpointer user_data)
+{
+	ScanningInfo *si = user_data;
+	struct iwreq wrq;
+	char buffer[IW_SCAN_MAX_DATA];
+
+	wrq.u.data.pointer = buffer;
+	wrq.u.data.length = IW_SCAN_MAX_DATA;
+	wrq.u.data.flags = 0;
+
+	strncpy (wrq.ifr_name,
+		 hal_device_property_get_string (si->d, "net.interface"),
+		 IFNAMSIZ);
+
+	if (ioctl (si->skfd, SIOCGIWSCAN, &wrq) < 0) {
+		if (errno == EAGAIN) {
+			/* Results aren't ready yet.  Requeue. */
+			return TRUE;
+		} else {
+			goto cleanup;
+		}
+	}
+
+	if (wrq.u.data.length > 0) {
+		struct iw_event iwe;
+		struct stream_descr stream;
+		int ret;
+		GSList *aps = NULL;
+		APInfo *old_ap = NULL, *ap;
+
+		iw_init_event_stream (&stream, buffer, wrq.u.data.length);
+		do {
+			ret = iw_extract_event_stream (&stream, &iwe);
+
+			if (ret > 0) {
+				ap = parse_scanning_token (&iwe, old_ap);
+
+				if (ap != old_ap)
+					aps = g_slist_prepend (aps, ap);
+
+				old_ap = ap;
+			}
+		} while (ret > 0);
+
+		aps_to_properties (si->d, aps);
+	}
+
+cleanup:
+	g_object_unref (si->d);
+	close (si->skfd);
+	g_free (si);
+
+	return FALSE;
+}
+
+static void
+get_wireless_properties (HalDevice *d, const char *sysfs_path)
+{
+	int skfd;
+	const char *iface;
+	struct iwreq wrq;
+	char essid[IW_ESSID_MAX_SIZE + 1];
+	char key[IW_ENCODING_TOKEN_MAX];
+	gboolean close_skfd = TRUE;
+
+	open_wireless_sysfs_subdir (d, sysfs_path);
+
+	skfd = iw_sockets_open ();
+	if (skfd < 0)
+		return;
+
+	iface = hal_device_property_get_string (d, "net.interface");
+
+	/* Wireless protocol */
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCGIWNAME, &wrq) < 0) {
+		/* no wireless extensions */
+		close (skfd);
+		return;
+	}
+
+	hal_device_property_set_bool (d, "net.ethernet.is_80211", TRUE);
+
+	wrq.u.name[IFNAMSIZ] = 0;
+	hal_device_property_set_string (d, "net.ethernet.80211.protocol",
+					wrq.u.name);
+
+	/* Frequency */
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCGIWFREQ, &wrq) >= 0) {
+		hal_device_property_set_double (d, "net.ethernet.80211.frequency",
+						iw_freq2float(&(wrq.u.freq)));
+	}
+
+	/* Crypto info */
+	memset (key, 0, IW_ENCODING_TOKEN_MAX);
+	wrq.u.data.pointer = (caddr_t) key;
+	wrq.u.data.length = IW_ENCODING_TOKEN_MAX;
+	wrq.u.data.flags = 0;
+
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCGIWENCODE, &wrq) >= 0) {
+		hal_device_property_set_string (d, "net.ethernet.80211.key", key);
+	}
+
+	/* ESSID */
+	memset (essid, 0, IW_ESSID_MAX_SIZE + 1);
+	wrq.u.essid.pointer = (caddr_t) essid;
+	wrq.u.essid.length = IW_ESSID_MAX_SIZE + 1;
+	wrq.u.essid.flags = 0;
+
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCGIWESSID, &wrq) >= 0) {
+		hal_device_property_set_string (d, "net.ethernet.80211.essid",
+						essid);
+	}
+
+	/* Mode (ad-hoc, managed, etc) */
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCGIWMODE, &wrq) >= 0) {
+		/* stolen from iwlib */
+		const char *modes[] = { "auto", "ad-hoc", "managed",
+					"master", "repeater", "secondary",
+					"monitor" };
+
+		hal_device_property_set_int (d, "net.ethernet.80211.mode",
+					     wrq.u.mode);
+		hal_device_property_set_string (d, "net.ethernet.80211.mode_str",
+						modes[wrq.u.mode]);
+	}
+
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCGIWAP, &wrq) >= 0) {
+		char ap_addr[128];
+
+		memset (ap_addr, 0, 128);
+		iw_pr_ether (ap_addr, wrq.u.ap_addr.sa_data);
+
+		hal_device_property_set_string (d, "net.ethernet.80211.ap_address",
+						ap_addr);
+	}
+	
+	/* Scan for other access points */
+	strncpy (wrq.ifr_name, iface, IFNAMSIZ);
+	if (ioctl (skfd, SIOCSIWSCAN, &wrq) >= 0) {
+		ScanningInfo *si = g_new0 (ScanningInfo, 1);
+		
+		si->d = g_object_ref (d);
+		si->skfd = skfd;
+		close_skfd = FALSE;
+			
+		g_timeout_add (100, read_scanning_results, si);
+	}
+	
+	if (close_skfd)
+		close (skfd);
+
+	hal_device_add_capability (d, "net.ethernet.80211");
+}
+#endif
 
 /** This method is called just before the device is either merged
  *  onto the sysdevice or added to the GDL (cf. merge_or_add). 
@@ -474,6 +871,11 @@ net_class_pre_process (ClassDeviceHandler *self,
 	media = media_type_to_string (media_type);
 	hal_device_property_set_string (d, "net.media", media);
 
+#ifdef HAVE_IWLIB
+	/* read any wireless properties */
+	get_wireless_properties (d, sysfs_path);
+#endif
+
 	hal_device_add_capability (d, "net");
 	hal_device_add_capability (d, "net.ethernet");
 	hal_device_property_set_string (d, "info.category", "net.ethernet");
@@ -536,11 +938,51 @@ net_class_compute_udi (HalDevice *d, int append_num)
 	return buf;
 }
 
+#ifdef HAVE_IWLIB
+static gboolean
+rehash_wireless (HalDeviceStore *gdl, HalDevice *d, gpointer user_data)
+{
+	const char *sysfs_path;
+
+	if (!hal_device_has_property (d, "net.ethernet.80211"))
+		return TRUE;
+
+	if (hal_device_property_get_bool (d, "net.ethernet.80211") == FALSE)
+		return TRUE;
+
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+
+	get_wireless_properties (d, sysfs_path);
+
+	return TRUE;
+}
+#endif
+
+static void
+net_class_tick (ClassDeviceHandler *self)
+{
+#ifdef HAVE_IWLIB
+	/*
+	 * We only want this to happen once every 10 seconds, not the
+	 * normal 2.
+	 */
+	static int tick_count = 0;
+
+	tick_count++;
+
+	if (tick_count >= 5) {
+		hal_device_store_foreach (hald_get_gdl (), rehash_wireless,
+					  NULL);
+		tick_count = 0;
+	}
+#endif
+}
+
 /** Method specialisations for input device class */
 ClassDeviceHandler net_class_handler = {
 	class_device_init,                  /**< init function */
 	class_device_shutdown,              /**< shutdown function */
-	class_device_tick,                  /**< timer function */
+	net_class_tick,                     /**< timer function */
 	net_class_accept,                   /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */

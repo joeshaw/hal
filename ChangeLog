@@ -1,4 +1,26 @@
-2004-05-25  Joe Shaw <joeshaw@novell.com>
+2004-05-26  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Add --enable-iwlib, and check for it so we can
+	build the wireless functionality.
+
+	* hald/linux/net_class_device.c: Add wireless network support.
+	Adds a bunch of properties for the current state of things, as
+	well as scanning for networks.
+	(open_wireless_sysfs_subdir): Open the sysfs "wireless" path and
+	read in a bunch of properties.
+	(get_wireless_properties): Use the iwlib API to extract a bunch of
+	additional properties, like the protocol, frequency, crypto key,
+	ESSID, mode (ad-hoc, managed, etc), access point mac address.
+	Also start scanning for other available access points.
+	(read_scanning_results, parse_scanning_token, aps_to_properties):
+	helper functions to read in the scanning data and expose as
+	properties the list of networks (not access points!) available.
+	(net_class_pre_process): Call get_wireless_properties().
+	(net_class_tick): Added.  Gets wireless properties every 5 ticks.
+	(net_class_handler): Call net_class_tick() instead of
+	class_device_tick().
+
+2004-05-25  Joe Shaw  <joeshaw@novell.com>
 
 	* hald/Makefile.am: Add the ieee1394 class devices.
 
