@@ -222,7 +222,7 @@ blockdev_mount_status_changed (const gchar *sysfs_path, gboolean is_mounted)
 	return;
 
 error:
-	HAL_INFO (("Couldn't find hal volume for %s", d->udi));
+	HAL_INFO (("Couldn't find hal volume for %s", sysfs_path));
 	;
 }
 
@@ -753,11 +753,7 @@ force_unmount (HalDevice *d)
 			HAL_INFO (("Goint to emit VolumeUnmountForced('%s', '%s', TRUE)", device_file, device_mount_point));
 			device_send_signal_condition (d,
 						      "VolumeUnmountForced",
-						      DBUS_TYPE_STRING,
-						      device_file,
-						      DBUS_TYPE_STRING,
-						      device_mount_point,
-						      DBUS_TYPE_INVALID);
+						      device_file);
 		}
 	} else {
 		HAL_INFO (("Didn't want to unmount %s", device_file));

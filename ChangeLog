@@ -1,5 +1,17 @@
 2005-02-23  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/blockdev.c (force_unmount): Change to use new prototype
+	for device_send_signal_condition
+
+	* hald/hald_dbus.h: Adjust prototype for device_send_signal_condition
+
+	* hald/hald_dbus.c (device_send_signal_condition): Change a Condition
+	to not take an arbitrary message byt just a (name, details) tupple
+
+	* hald/debug-hald.sh: Add some helpful instructions
+
+2005-02-23  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/libhal.c (libhal_ctx_init): Add a small fix here wrt.
 	error handling
 

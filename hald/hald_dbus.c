@@ -2034,13 +2034,11 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
  *                              DBUS_TYPE_INVALID
  */
 void
-device_send_signal_condition (HalDevice *device, const char *condition_name,
-			      int first_arg_type, ...)
+device_send_signal_condition (HalDevice *device, const char *condition_name, const char *condition_details)
 {
 	const char *udi = hal_device_get_udi (device);
 	DBusMessage *message;
 	DBusMessageIter iter;
-	va_list var_args;
 
 	message = dbus_message_new_signal (udi,
 					   "org.freedesktop.Hal.Device",
@@ -2049,11 +2047,9 @@ device_send_signal_condition (HalDevice *device, const char *condition_name,
 	dbus_message_iter_append_basic (&iter, 
 	                                DBUS_TYPE_STRING, 
 	                                &condition_name);
-
-	va_start (var_args, first_arg_type);
-	dbus_message_append_args_valist (message, first_arg_type,
-					 var_args);
-	va_end (var_args);
+	dbus_message_iter_append_basic (&iter, 
+	                                DBUS_TYPE_STRING, 
+	                                &condition_details);
 
 	if (!dbus_connection_send (dbus_connection, message, NULL))
 		DIE (("error broadcasting message"));

@@ -82,7 +82,7 @@ void device_send_signal_property_modified (HalDevice *device,
 					   dbus_bool_t added);
 void device_send_signal_condition (HalDevice *device,
 				   const char *condition_name,
-				   int first_arg_type, ...);
+				   const char *condition_details);
 
 void device_property_atomic_update_begin (void);
 void device_property_atomic_update_end   (void);
