@@ -8,7 +8,11 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
-libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume
+libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume hald-probe-printer
+
+hald_probe_printer_SOURCES = probe-printer.c
+hald_probe_printer_LDADD = $(top_builddir)/libhal/libhal.la @PACKAGE_LIBS@
+#TODO : get rid of glib in hald_probe_printer
 
 hald_probe_input_SOURCES = probe-input.c
 hald_probe_input_LDADD = $(top_builddir)/libhal/libhal.la

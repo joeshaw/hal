@@ -381,6 +381,18 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phys
 		hal_device_property_set_string (d, "info.product", "USB HID Device");
 
 		hal_device_property_set_string (d, "hiddev.device", device_file);
+	} else if (sscanf (last_elem, "lp%d", &host_num) == 1) {
+
+		d = hal_device_new ();
+		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+		hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
+		hal_device_property_set_string (d, "info.parent", physdev->udi);
+
+		hal_device_property_set_string (d, "info.category", "printer");
+		hal_device_add_capability (d, "printer");
+
+		hal_device_property_set_string (d, "info.product", "Printer");
+		hal_device_property_set_string (d, "printer.device", device_file);
 	}
 
 out:
@@ -392,6 +404,8 @@ usbclass_get_prober (HalDevice *d)
 {
 	if (hal_device_has_capability (d, "hiddev"))
 		return "hald-probe-hiddev";
+	else if (hal_device_has_capability (d, "printer"))
+		return "hald-probe-printer";
 	else
 		return NULL;
 }
@@ -401,11 +415,24 @@ usbclass_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_hiddev",
-			      hal_device_property_get_string (d, "info.parent"));
-	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
+	if (hal_device_has_capability (d, "hiddev")) {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_hiddev",
+				      hal_device_property_get_string (d, "info.parent"));
+		hal_device_set_udi (d, udi);
+		hal_device_property_set_string (d, "info.udi", udi);
+	} else if (hal_device_has_capability (d, "printer")) {
+		char *serial;
+
+		serial = hal_device_property_get_string (d, "printer.serial");
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_printer_%s",
+				      hal_device_property_get_string (d, "info.parent"),
+				      serial != NULL ? serial : "noserial");
+		hal_device_set_udi (d, udi);
+		hal_device_property_set_string (d, "info.udi", udi);
+	}
+
 	return TRUE;
 }
 
