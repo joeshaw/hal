@@ -429,8 +429,8 @@ filter_func (DBusConnection * connection,
 					   DBUS_TYPE_INVALID)) {
 			if (ctx->functions->device_added != NULL) {
 				ctx->functions->device_added (ctx, udi);
-				dbus_free (udi);
 			}
+			dbus_free (udi);
 		}
 		return DBUS_HANDLER_RESULT_HANDLED;
 	} else
@@ -443,8 +443,8 @@ filter_func (DBusConnection * connection,
 					   DBUS_TYPE_INVALID)) {
 			if (ctx->functions->device_removed != NULL) {
 				ctx->functions->device_removed (ctx, udi);
-				dbus_free (udi);
 			}
+			dbus_free (udi);
 		}
 		return DBUS_HANDLER_RESULT_HANDLED;
 	} else
@@ -461,9 +461,9 @@ filter_func (DBusConnection * connection,
 				ctx->functions->device_new_capability (ctx, 
 								       udi,
 								  capability);
-				dbus_free (udi);
-				dbus_free (capability);
 			}
+			dbus_free (udi);
+			dbus_free (capability);
 		}
 		return DBUS_HANDLER_RESULT_HANDLED;
 	} else

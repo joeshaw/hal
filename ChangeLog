@@ -2,6 +2,17 @@
 
 	* doc/spec/hal-spec.xml.in: Work in progress
 
+2004-08-04  David Zeuthen  <david@fubar.dk>
+
+	Patch from Dan Williams <dcbw@redhat.com>
+	
+	* libhal/libhal.c (filter_func): fix small memory leaks when
+	LibHalFunctions are missing
+
+2004-08-04  David Zeuthen  <david@fubar.dk>
+
+	* doc/spec/hal-spec.xml.in: Work in progress
+
 2004-08-03  David Zeuthen  <david@fubar.dk>
 
 	* doc/spec/hal-spec.xml.in: Work in progress

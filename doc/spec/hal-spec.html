@@ -105,18 +105,18 @@ HREF="#ov_hal_linux26"
 ></DD
 ><DT
 ><A
-HREF="#AEN112"
+HREF="#AEN113"
 >Device Objects</A
+></DT
+><DT
+><A
+HREF="#device-capabilities"
+>Device Capabilities</A
 ></DT
 ><DT
 ><A
 HREF="#using-devices"
 >Using devices</A
-></DT
-><DT
-><A
-HREF="#capabilties"
->Device Capabilities</A
 ></DT
 ><DT
 ><A
@@ -186,26 +186,26 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1173"
+HREF="#AEN1180"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1184"
+HREF="#AEN1191"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1192"
+HREF="#AEN1199"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ><DT
 ><A
-HREF="#AEN1201"
+HREF="#AEN1208"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></DT
 ></DL
@@ -255,11 +255,12 @@ CLASS="emphasis"
 CLASS="emphasis"
 >device information files</I
 > and
-	some related to how the device is configured. This document
-	specifies the set of properties and gives them well-defined
-	meaning. This enable system and desktop level components to
-	make a distinction between the different device objects and
-	use and configure the devices based on these properties.
+	some are related to how the device is configured. This
+	document specifies the set of properties and gives them
+	well-defined meaning. This enable system and desktop level
+	components to make a distinction between the different device
+	objects and use and configure the devices based on these
+	properties.
 
       </P
 ><P
@@ -276,12 +277,12 @@ CLASS="emphasis"
 ><P
 >&#13;
 	The most important goal of HAL is to provide plug-and-play
-	facilities for UNIX-based desktops with focus on providing a
+	facilities for UNIX-like desktops with focus on providing a
 	rich and extensible description of what the devices are.  HAL
 	has no other major dependencies apart from D-BUS which, given
 	sufficient infrastructure, allows it to be implemented on many
 	UNIX-like systems. The major focus, initially, is systems
-	running Linux 2.6 series kernels.
+	running the Linux 2.6 series kernels.
 
       </P
 ></DIV
@@ -431,7 +432,7 @@ CLASS="emphasis"
 > 
 
           A system-wide daemon that maintains a persistent database of
-          device objects. It is also responsible for merging
+          device objects. The daemon is also responsible for merging
           information from the device information file repository and
           managing the life cycle of device objects. The HAL daemon
           also contains detection and monitoring code for
@@ -484,8 +485,8 @@ CLASS="emphasis"
             both applications that need to search for a device, but
             also (existing) device specific libraries and/or services
             that provide operations on devices. Specifically, the
-            application or device library can obtain the ''address'',
-            (the special device file or other details) of the device
+            application or device library can obtain the ''address''
+            (the special device file or other details), of the device
             through HAL to interact with the device through the
             kernel as normal.
 
@@ -502,6 +503,13 @@ CLASS="emphasis"
             information files for a new device, displaying link
             information about network devices, mounting removable
             storage and so on.
+
+          </P
+><P
+>&#13;
+	    Note that several desktop sessions may be active on the
+	    same system; it is the responsibility of session-level
+	    software to arbitrate between devices.
 
         </P
 ></LI
@@ -545,8 +553,8 @@ HREF="#dbus-api"
       </P
 ><P
 >&#13;
-      Note that HAL doesn't enforce any policy, this is left for
-      desktop environments and operating systems vendors to define and
+      Note that HAL doesn't enforce any policy at all, this is left
+      for desktop environments and operating systems vendors to
       implement.  However, to ensure interoperability between
       operating systems and desktop environments, recommendations and
       best practises on how to enforce policy is discussed in <A
@@ -671,60 +679,88 @@ HREF="#enforcing-policy"
 CLASS="chapter"
 ><HR><H1
 ><A
-NAME="AEN112"
+NAME="AEN113"
 ></A
 >Device Objects</H1
 ><P
 >&#13;
-      It is important to precisely define the term ''HAL device
-      object'' - it is actually intended to mean two things:
-
-      <P
-></P
-><UL
-><LI
-><P
->&#13;
-        A device as recognized by the USB, PCI etc. standards and treated as
-        such by the operating system kernel and base OS.
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Storage volumes (e.g. partitions on a storage device), optical
-	discs and other first class objects in UNIX-like operating
-	systems. While partitions are not real devices (they lend
-	space on a real device such as a hard disk or an optical
-	disc), they are on the same conceptual level as hard disks.
-
-        </P
-></LI
-></UL
->
-
-      Note there is not necessarily a one-to-one relationship between
-      physical devices attached to a computer system and ''device
-      objects''.  A multi-function device, which appear to users as a
-      multi-function printer may show up as several device objects;
-      e.g.  printer, scanner, fax and storage; PCI networking
-      equipment with multiple ports may show up as several networking
-      devices and so on.
+	It is important to precisely define the term HAL device
+	object. It's actually a bit blurry to define in general, it
+	includes what most UNIX-like systems consider first class
+	objects when it comes to hardware. In particular, a device
+	object should represent the smallest unit of addressable
+	hardware. This means there can be a one-to-many relationship
+	between a physical device and the device objects exported by
+	HAL. Specifically, a multi-function printer, which appear to
+	users as a single device may show up as several device
+	objects; e.g. one HAL device object for each of the printing,
+	scanning, fax and storage interfaces. Conversely, some devices
+	may be implemented such that the HAL device object represent
+	several functional interfaces. HAL is not concerned with this
+	duality of either one-to-many or many-to-one relationships
+	between device objects and the actual iron constituting what
+	users normally understand as a single piece of hardware;
+	a device object represents the smallest addressable unit.
 
       </P
 ><P
 >&#13;
-      HAL is not concerned with this duality of either one-to-one or
-      many-to-one relationships between ''device objects'' and the actual iron
-      constituting what users normally understand as a single device.
+	Device objects in HAL are organised on a by-connection basis,
+	e.g. for a given device object X it is possible to find the
+	device object Y where X is attached to Y. This gives structure
+	to the device database of HAL; it is possible to map the
+	devices out in a tree. Further, software emulation devices
+	exported by a kernel, such as SCSI emulation for USB Storage
+	Devices, are also considered device objects in HAL. This
+	implies that kernel specific bits leak into the device object
+	database, however users of HAL won't notice, such device
+	objects are not referenced anywhere in the device objects that
+	users are interested in; they are merely used as glue.
 
       </P
 ><P
 >&#13;
-      A device object consist of the following information
+	In addition to provide information about what kind of hardware
+	a device object represent (such as a PCI or USB device) and
+	how to address it, HAL merges information about the functional
+	interfaces the OS kernel provides in order to use the device;
+	in most cases this is represented on the device object as a
+	string property with the name of the special device file in
+	<TT
+CLASS="literal"
+>/dev</TT
+>. In addition to the special device
+	file, a number of other useful properties are merged. This
+	means that both hardware and functional properties are on the
+	same device object which is very useful for an application
+	programmer. For example, an application might query HAL for
+	the device object that exports the special device file
+	<TT
+CLASS="literal"
+>/dev/input/mouse2</TT
+> and learn that this is
+	provide by an USB mouse from a certain manufacturer by
+	checking the properties that export the USB vendor and product
+	identifiers.  See <A
+HREF="#device-capabilities"
+>the chapter called <I
+>Device Capabilities</I
+></A
+> and
+	<A
+HREF="#device-properties"
+>the chapter called <I
+>Device Properties</I
+></A
+> for details.
 
-      <P
+      </P
+><P
+>&#13;
+	On a formal level, a device object is comprised by
+
+      </P
+><P
 ></P
 ><UL
 ><LI
@@ -732,18 +768,17 @@ NAME="AEN112"
 >&#13;
           <I
 CLASS="emphasis"
->Unique Device ID (referred to as the UDI in the 
-          following)</I
+>UDI</I
 ></P
 ><P
 > 
 
-          This is an identifier that is unique for a device object - that
-          is, no other device object can have the same UDI at the same time.
-          The UDI is computed from bus-specific information so it is unique
-          across device insertions and when multiple instances of the same
-          kind of device is plugged in. It is also independent of the 
-	  physical slot the device is plugged into.
+          This is an identifier, the Unique Device Identifer, that is
+          unique for a device object - that is, no other device object
+          can have the same UDI at the same time.  The UDI is computed
+          using bus-specific information and it is unique across
+          device insertions. It is also independent of the physical
+          port or slot the device may be plugged into.
 
         </P
 ></LI
@@ -757,29 +792,44 @@ CLASS="emphasis"
 ><P
 > 
 
-          Each device got a set of properties which are key/value pairs.
-          The key is an ASCII string while the value can be one of several
-          types
+          Each device object got a set of properties which are
+          key/value pairs.  The key is an ASCII string while the value
+          can be one of several types
 
           <P
 ></P
 ><UL
 ><LI
 ><P
->string - UTF8 string</P
+><TT
+CLASS="literal"
+>string</TT
+> - 
+		UTF8 string</P
 ></LI
 ><LI
 ><P
->int32 - 32-bit signed integer</P
+><TT
+CLASS="literal"
+>int32</TT
+> - 
+		32-bit signed integer</P
 ></LI
 ><LI
 ><P
->bool - truth value</P
+><TT
+CLASS="literal"
+>bool</TT
+> - 
+		truth value</P
 ></LI
 ><LI
 ><P
->double - IEEE754 double precision
-                            floating point number</P
+><TT
+CLASS="literal"
+>double</TT
+> - 
+		IEEE754 double precision floating point number</P
 ></LI
 ></UL
 >
@@ -787,26 +837,26 @@ CLASS="emphasis"
         </P
 ></LI
 ></UL
->
-
-      Properties of a device object carry all the important
-      information about a device object. For organisational reasons
-      properties are also namespaced using ''.'' as a separator.
-
+><P
+>&#13;	Properties of a device object carry all the important
+	information about a device object. For organisational reasons
+	properties are also namespaced using ''.'' as a separator.
+	
       </P
 ><P
 >&#13;
 	It can be useful to classify properties into three groups
 
-      <P
+      </P
+><P
 ></P
 ><UL
 ><LI
 ><P
 >Metadata - 
 	                Information about how the devices are connected with
-                        respect to each other (parent/child relationships) 
-	                and what the device is and what it does
+                        respect to each other (parent/child relationships),
+	                what the device is, what it does etc.
 	</P
 ></LI
 ><LI
@@ -814,7 +864,7 @@ CLASS="emphasis"
 >Device specific information - 
                         vendor ID, product ID, disk serial numbers, 
 	                number of buttons on a mouse, formats accepted
-	                by a mp3 player, connection structure etc.</P
+	                by a mp3 player and so on.</P
 ></LI
 ><LI
 ><P
@@ -823,41 +873,42 @@ CLASS="emphasis"
                         mount location etc.</P
 ></LI
 ></UL
->
-
-      The first category is determined by HAL, the next is merged from
-      either the hardware itself or device information files and the
-      last is intercepted by monitoring the operating system.
-      This specification is concerned with precisely defining several
-      properties; see <A
+><P
+>&#13;
+	The first category is determined by HAL, the next is merged
+	from either the hardware itself or device information files
+	and the last is intercepted by monitoring the operating
+	system.  This specification is concerned with precisely
+	defining several properties; see <A
 HREF="#device-properties"
 >the chapter called <I
 >Device Properties</I
 ></A
-> and onwards
-      for more information.
-      As a complement to device properties, HAL also provides 
-      <I
+> and onwards for more
+	information.  As a complement to device properties, HAL also
+	provides <I
 CLASS="emphasis"
 >conditions</I
-> on HAL device objects. Conditions
-      are used to relay events that are happening on devices which are
-      not easily expressed in properties. This includes events such as
-      ''processor is overheating'' or ''block device unmounted''.
+> on HAL device
+	objects. Conditions are used to relay events that are
+	happening on devices which are not easily expressed in
+	properties. This includes events such as ''processor is
+	overheating'' or ''block device unmounted''.
 
       </P
 ><P
 >&#13;
-      The fundamental idea about HAL is that all ''interesting'' information
-      about hardware a desktop application needs can be obtained by HAL.
-
-      </P
-><P
->&#13;
-      Below is a screenshot of a device manager application communicating
-      with the HAL daemon and displaying the devices. The shown properties
-      are for a device representing a harddisk
-
+	The fundamental idea about HAL is that all ''interesting''
+	information about hardware that a desktop application needs,
+	can be obtained by querying HAL. Below is a screenshot of a
+	simple device manager application shipped with HAL
+	called <TT
+CLASS="literal"
+>hal-device-manager</TT
+>.  This
+	application is communicating with the HAL daemon and displays
+	the tree of device objects. The shown properties are for a
+	device object representing a harddisk.
       </P
 ><P
 >&#13;        <IMG
@@ -871,62 +922,19 @@ SRC="hal-devices1.png">
 CLASS="chapter"
 ><HR><H1
 ><A
-NAME="using-devices"
-></A
->Using devices</H1
-><P
->&#13;
-      While the HAL daemon provides generic operations that apply to
-      all devices (though some may be no-ops), HAL is not concerned
-      with providing non-generic device operations. Specifically, one
-      goal of HAL is to integrate with existing and future libraries
-      that target a specific class of devices such as cameras or mp3
-      players.
-
-    </P
-><P
->&#13;
-      For instance, libgphoto2 could be patched such that the
-      application programmer can simply pass the UDI of the camera he
-      wishes to interact with and libghoto2 would then, via D-BUS,
-      acquire the bus-specific information required, the address so to
-      speak, from the HAL daemon, and then interact directly with the
-      hardware.
-
-    </P
-><P
->&#13;
-      Another option is to use the existing API of the device library
-      to discover devices (the library would be using HAL under the
-      hood) and provide a function to retrieve the HAL UDI of the
-      device. When the library is built without HAL support this
-      function returns <TT
-CLASS="literal"
->NULL</TT
->, however, when the UDI
-      is available, then applications using the library can use the
-      UDI both as stable reference to the device and also to extract
-      more information directly from the HAL daemon.
-
-    </P
-></DIV
-><DIV
-CLASS="chapter"
-><HR><H1
-><A
-NAME="capabilties"
+NAME="device-capabilities"
 ></A
 >Device Capabilities</H1
 ><P
 >&#13;
-       Mainstream devices aren't very good at reporting what they are,
+       Mainstream hardware isn't very good at reporting what they are,
        they only report, at best, how to interact with them. This is a
-       problem, many devices, such as MP3 players or digital still
+       problem; many devices, such as MP3 players or digital still
        cameras, appear to the operating system as plain USB Mass
-       Storage devices when they are in fact not. The core of the
-       problem is that, without external metadata, the operating
-       system and desktop environment will present it to the user as
-       just e.g. a mass storage device.
+       Storage devices when they in fact is a lot more than just
+       that. The core of the problem is that without external
+       metadata, the operating system and desktop environment will
+       present it to the user as just e.g. a mass storage device.
 
      </P
 ><P
@@ -952,8 +960,8 @@ CLASS="emphasis"
 >what the device does</I
 > (as a number of
        alphanumeric keywords separated by whitespace). The keywords
-       available for use is defined in this document, we'll refer to
-       them simply as <I
+       available for use is defined in this document; we'll refer to
+       them in following simply as <I
 CLASS="emphasis"
 >capabilities</I
 >.
@@ -986,7 +994,7 @@ CLASS="emphasis"
 ><P
 >&#13;
        Having a capability also means that part of the property
-       namespace, prefixed with the capability name, can be populated
+       namespace, prefixed with the capability name, will be populated
        with more specific information about the capability. Indeed,
        some properties may even be required such that applications and
        device libraries have something to expect. For instance, the
@@ -1012,8 +1020,8 @@ CLASS="literal"
      </P
 ><P
 >&#13;
-       The following table define the capabilities supported in HAL at
-       the time of writing.
+       The following table define the capabilities exported by HAL
+       at the current release:
 
      </P
 ><DIV
@@ -1021,7 +1029,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN177"
+NAME="AEN178"
 ></A
 ><TABLE
 BORDER="1"
@@ -1374,6 +1382,49 @@ CLASS="emphasis"
 CLASS="chapter"
 ><HR><H1
 ><A
+NAME="using-devices"
+></A
+>Using devices</H1
+><P
+>&#13;
+      While the HAL daemon provides generic operations that apply to
+      all devices (though some may be no-ops), HAL is not concerned
+      with providing non-generic device operations. Specifically, one
+      goal of HAL is to integrate with existing and future libraries
+      that target a specific class of devices such as cameras or mp3
+      players.
+
+    </P
+><P
+>&#13;
+      For instance, libgphoto2 could be patched such that the
+      application programmer can simply pass the UDI of the camera he
+      wishes to interact with and libghoto2 would then, via D-BUS,
+      acquire the bus-specific information required, the address so to
+      speak, from the HAL daemon, and then interact directly with the
+      hardware.
+
+    </P
+><P
+>&#13;
+      Another option is to use the existing API of the device library
+      to discover devices (the library would be using HAL under the
+      hood) and provide a function to retrieve the HAL UDI of the
+      device. When the library is built without HAL support this
+      function returns <TT
+CLASS="literal"
+>NULL</TT
+>, however, when the UDI
+      is available, then applications using the library can use the
+      UDI both as stable reference to the device and also to extract
+      more information directly from the HAL daemon.
+
+    </P
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
 NAME="device-properties"
 ></A
 >Device Properties</H1
@@ -1400,7 +1451,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN344"
+NAME="AEN351"
 ></A
 ><TABLE
 BORDER="1"
@@ -1591,7 +1642,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN416"
+NAME="AEN423"
 ></A
 ><TABLE
 BORDER="1"
@@ -1692,7 +1743,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN454"
+NAME="AEN461"
 ></A
 ><TABLE
 BORDER="1"
@@ -1868,7 +1919,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN527"
+NAME="AEN534"
 ></A
 ><TABLE
 BORDER="1"
@@ -2150,7 +2201,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN657"
+NAME="AEN664"
 ></A
 ><TABLE
 BORDER="1"
@@ -2300,7 +2351,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN708"
+NAME="AEN715"
 ></A
 ><TABLE
 BORDER="1"
@@ -2344,7 +2395,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN723"
+NAME="AEN730"
 ></A
 ><TABLE
 BORDER="1"
@@ -2429,7 +2480,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN749"
+NAME="AEN756"
 ></A
 ><TABLE
 BORDER="1"
@@ -3031,7 +3082,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1032"
+NAME="AEN1039"
 ></A
 ><TABLE
 BORDER="1"
@@ -3186,7 +3237,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1095"
+NAME="AEN1102"
 ></A
 ><TABLE
 BORDER="1"
@@ -3261,7 +3312,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1125"
+NAME="AEN1132"
 ></A
 ><TABLE
 BORDER="1"
@@ -3441,7 +3492,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1173"
+NAME="AEN1180"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -3557,7 +3608,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1184"
+NAME="AEN1191"
 >Example</A
 ></H3
 ><P
@@ -3680,7 +3731,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1192"
+NAME="AEN1199"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -3833,7 +3884,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1201"
+NAME="AEN1208"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></H2
 ><P
