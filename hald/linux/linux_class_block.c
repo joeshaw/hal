@@ -43,7 +43,7 @@
 #define _GNU_SOURCE 1
 #include <linux/fcntl.h>
 #include <linux/kdev_t.h>
-
+#include <linux/cdrom.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -333,6 +333,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             char* model;
             char* media;
             dbus_bool_t removable_media;
+	    int fd, capabilities;
 
             ide_name = get_last_element(
                 ds_property_get_string(d, "linux.sysfs_path"));
@@ -351,8 +352,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
              * can only assume "disk", "cdrom", "tape", "floppy", "UNKNOWN"
              */
 
-            /** @todo Given media 'cdrom', how do we determine whether
-             *        it's a DVD or a CD-RW or both? Given floppy how
+            /** @todo Given floppy how
              *        do we determine it's LS120?
              */
 
@@ -374,6 +374,31 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                     ds_add_capability(d, "storage.removable");
                     ds_property_set_string(d, "info.category", 
                                            "storage.removable");
+
+		    /* Check handling */
+		    fd = open (ds_property_get_string (d, "block.device"), O_RDONLY);
+		    
+		    if (fd >= 0)
+		    {
+			capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
+			
+			if (capabilities >= 0)
+			{
+			    if (capabilities & CDC_CD_R)
+				ds_add_capability(d, "cdrom.cdr");
+			    if (capabilities & CDC_CD_RW)
+				ds_add_capability(d, "cdrom.cdrw");
+			    if (capabilities & CDC_DVD)
+				ds_add_capability(d, "cdrom.dvd");
+			    if (capabilities & CDC_DVD_R)
+				ds_add_capability(d, "cdrom.dvdr");
+			    if (capabilities & CDC_DVD_RAM)
+				ds_add_capability(d, "cdrom.dvdram");
+			}
+
+			close (fd);
+		    }
+		    
                     removable_media = TRUE;
                 }
                 else if( strcmp(media, "floppy")==0 )
