@@ -387,6 +387,8 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 	int fd;
 	int bytes_read;
 	guint total_read = 0;
+	struct sockaddr_nl nladdr;
+	socklen_t nladdrlen = sizeof(nladdr);
 	char buf[1024];
 
 	if (cond & ~(G_IO_IN | G_IO_PRI)) {
@@ -398,11 +400,19 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 
 	do {
 		errno = 0;
-		bytes_read = recv (fd,
+		bytes_read = recvfrom (fd,
 				   buf + total_read,
 				   sizeof (buf) - total_read,
-				   MSG_DONTWAIT);
-
+				   MSG_DONTWAIT,
+				   (struct sockaddr*)&nladdr, &nladdrlen);
+		if (nladdrlen != sizeof(nladdr)) {
+			HAL_ERROR(("Bad address size reading netlink socket"));
+			return FALSE;
+		}
+		if (nladdr.nl_pid) {
+			HAL_ERROR(("Spoofed packet received on netlink socket"));
+			return FALSE;
+		}
 		if (bytes_read > 0)
 			total_read += bytes_read;
 	} while (bytes_read > 0 || errno == EINTR);

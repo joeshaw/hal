@@ -1,5 +1,17 @@
 2004-10-14  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Steve Grubb (linux_4ever@yahoo.com).
+
+	* hald/linux/net_class_device.c (link_detection_data_ready): The
+	hal daemon does not check the sender's PID for netlink packets.
+	Netlink packets can be sent by any user with local access to the
+	system. Kernel originating packets have a PID of 0, while user
+	space originating packets are > 0. Without checking this, users
+	may send messages to hald that cause daemons using dbus to take
+	inappropriate actions.
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Add fstab-sync.8 to AC_OUTPUT
 	
 	* doc/conf/storage-non-fixed.fdi: New file, example
