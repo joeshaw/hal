@@ -659,7 +659,7 @@ block_class_post_process (ClassDeviceHandler *self,
 	const char *stordev_udi;
 	const char *device_file;
 	dbus_bool_t has_removable_media = FALSE;
-	dbus_bool_t is_hotplugable = FALSE;
+	dbus_bool_t is_hotpluggable = FALSE;
 
 	parent = hal_device_store_find (hald_get_gdl (),
 					hal_device_property_get_string (
@@ -718,7 +718,7 @@ block_class_post_process (ClassDeviceHandler *self,
 			if (strcmp (bus, "usb") == 0) {
 				physdev = d_it;
 				physdev_udi = udi_it;
-				is_hotplugable = TRUE;
+				is_hotpluggable = TRUE;
 				hal_device_property_set_string (
 					stordev, "storage.bus", "usb");
 								
@@ -726,7 +726,7 @@ block_class_post_process (ClassDeviceHandler *self,
 			} else if (strcmp (bus, "ieee1394") == 0) {
 				physdev = d_it;
 				physdev_udi = udi_it;
-				is_hotplugable = TRUE;
+				is_hotpluggable = TRUE;
 				hal_device_property_set_string (
 					stordev, "storage.bus", "ieee1394");
 				break;
@@ -947,10 +947,10 @@ block_class_post_process (ClassDeviceHandler *self,
 	hal_device_property_set_string (stordev, "info.category", "storage");
 	hal_device_add_capability (stordev, "storage");
 
-	hal_device_property_set_bool (stordev, "storage.hotplugable",
-				      is_hotplugable);
-	if (is_hotplugable) {
-		hal_device_add_capability (stordev, "storage.hotplugable");
+	hal_device_property_set_bool (stordev, "storage.hotpluggable",
+				      is_hotpluggable);
+	if (is_hotpluggable) {
+		hal_device_add_capability (stordev, "storage.hotpluggable");
 	}
 
 
