@@ -1,5 +1,13 @@
 2004-07-30  Joe Shaw  <joeshaw@novell.com>
 
+	Patch from Dan Williams <dcbw@redhat.com>
+
+	* hald/linux/net_class_device.c (link_detection_handle_message):
+	Fix a point arithmetic bug which caused link status changes to be
+	missed.  Also fixes a compiler warning.
+
+2004-07-30  Joe Shaw  <joeshaw@novell.com>
+
 	* tools/device-manager/Representation.py (get_icon): Use get()
 	rather than indexing for "info.property" so that we can fall
 	back and not throw an exception if a device doesn't have it
