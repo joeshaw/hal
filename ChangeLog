@@ -1,5 +1,55 @@
 2005-03-11  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Add all the ATA raid signatures which are supported in the dmraid
+	library. volume_id will just recognize the raid signatures and set
+	the usage to raid, to prevent raid members to show up as mountable
+	volumes. Any detailed informatiuon about the raid set must be
+	queried with the original lib.
+
+	* volume_id/Makefile.am:
+
+	* volume_id/highpoint.c: (volume_id_probe_highpoint_37x_raid),
+	(volume_id_probe_highpoint_45x_raid):
+
+	* volume_id/highpoint.h:
+
+	* volume_id/isw_raid.c: (volume_id_probe_intel_software_raid):
+
+	* volume_id/isw_raid.h:
+
+	* volume_id/linux_raid.c: (volume_id_probe_linux_raid):
+
+	* volume_id/logging.h:
+
+	* volume_id/lsi_raid.c: (volume_id_probe_lsi_mega_raid):
+
+	* volume_id/lsi_raid.h:
+
+	* volume_id/ntfs.c: (volume_id_probe_ntfs):
+
+	* volume_id/nvidia_raid.c: (volume_id_probe_nvidia_raid):
+
+	* volume_id/nvidia_raid.h:
+
+	* volume_id/promise_raid.c:
+	(volume_id_probe_promise_fasttrack_raid):
+
+	* volume_id/promise_raid.h:
+
+	* volume_id/silicon_raid.c: (volume_id_probe_silicon_medley_raid):
+
+	* volume_id/silicon_raid.h:
+
+	* volume_id/via_raid.c: (volume_id_probe_via_raid):
+
+	* volume_id/via_raid.h:
+
+	* volume_id/volume_id.c: (volume_id_probe_all):
+
+	* volume_id/volume_id.h: Version 42.
+
+2005-03-11  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* volume_id/Makefile.am: add minix probing code
 
 	* volume_id/luks.c: 

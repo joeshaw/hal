@@ -9,6 +9,12 @@ libvolume_id_la_SOURCES =				\
 	fat.h			fat.c			\
 	hfs.h			hfs.c			\
 	highpoint.h		highpoint.c		\
+	isw_raid.h		isw_raid.c		\
+	lsi_raid.h		lsi_raid.c		\
+	via_raid.h		via_raid.c		\
+	silicon_raid.h		silicon_raid.c		\
+	nvidia_raid.h		nvidia_raid.c		\
+	promise_raid.h		promise_raid.c		\
 	iso9660.h		iso9660.c		\
 	jfs.h			jfs.c			\
 	linux_raid.h		linux_raid.c		\

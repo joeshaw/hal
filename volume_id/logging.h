@@ -21,12 +21,14 @@
 extern void volume_id_log (const char *format, ...);
 
 #ifdef DEBUG
+#ifndef dbg
 #define dbg(format, arg...)							\
 	do {									\
 		volume_id_log("%s: " format "\n", __FUNCTION__ , ## arg);	\
 	} while (0)
 #else
 #define dbg(format, arg...)	do {} while (0)
-#endif
+#endif /* dbg */
+#endif /* DEBUG */
 
 #endif /* _VOLUME_ID_LOGGING_H_ */
