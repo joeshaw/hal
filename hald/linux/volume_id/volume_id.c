@@ -625,8 +625,8 @@ found:
 	set_uuid(id, ms->serno, 4);
 
 	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_VFAT;
-	id->format = "vfat";
+	id->format_id = VOLUME_ID_MSDOS;
+	id->format = "msdos";
 
 	return 0;
 }
