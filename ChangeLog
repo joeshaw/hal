@@ -1,5 +1,12 @@
 2004-07-21  David Zeuthen  <david@fubar.dk>
 
+	* doc/TODO: Added the TODO 'Rescan() method on HalDevice'.
+	Added the TODO 'Privilege Management'.
+	Put some more info on 'Locking of devices' and 'Power Management',
+	name that HAL export generic methods on HalDevice.
+
+2004-07-21  David Zeuthen  <david@fubar.dk>
+
 	* doc/TODO: Removed 'CD burning' TODO, since this is now fixed.
 	Added entry on .fdi files. Add entry on handling SIGTERM in a
 	nice way.

@@ -7,6 +7,47 @@ you want to work on one of these you might want to send a patch that
 updates this file to reflect it.
 
 ============================================================================
+* Rescan() method on HalDevice
+============================================================================
+
+The idea is that HAL exports a generic operation to 'rescan' a device
+where the semantics of this operation is highly dependent on the actual
+HalDevice. 
+
+For example, this is needed when we don't poll for media, so e.g. the
+semantics of the operation on devices of capability block where
+block.is_volume is FALSE is to poll for media (and note on Linux this
+is highly dependent on whether it's a legacy floppy drive, USB floppy
+drive, an optical drive or a cardreader; partitions or not, etc.
+
+If we support legacy serial ports it might mean 'search for a modem'.
+
+============================================================================
+* Privilege management
+============================================================================
+
+We need to ensure that non-root can only read the properties. This is
+very important to do before anyone starts shipping HAL in a stable
+distro.
+
+This poses an interesting question on how gnome-volume-manager
+works. g-v-m adds the capability content.photos to a volume if a DCIM/
+tree is found in the root. Perhaps HAL should take care of this? Another
+option is to use the GetUnixProcessID(), see below.
+
+Anyway, for this we'll need D-BUS 0.22 since the GetUnixProcessID() and
+GetUnixUser() only hit CVS some weeks ago. Ideally D-BUS should support
+policy for this, see
+
+ http://freedesktop.org/pipermail/dbus/2004-July/001309.html
+
+but this is not going to happen as it requires root. 
+
+Sigh. We can still do this, we've only have to maintain the policy
+ourselves in /etc/hal/hald.conf, e.g. say
+/usr/bin/gnome-volume-manager is allowed to do stuff. 
+
+============================================================================
 * Multi-function USB devices (davidz is working on this)
 ============================================================================
 
@@ -151,6 +192,8 @@ discussion see this thread
 
      http://freedesktop.org/pipermail/hal/2004-July/000579.html
 
+This should be exported as a generic Lock() method on the HalDevice.
+
 ============================================================================
 * Removal of class devices
 ============================================================================
@@ -198,7 +241,8 @@ There is already some discussion here
 
  http://freedesktop.org/pipermail/hal/2004-July/000544.html
 
-about abstracting both ACPI and pmud.
+about abstracting both ACPI and pmud. Ideally we would also have Suspend()
+and Resume() methods on HalDevices.
 
 ============================================================================
 * Support for more bus-devices and class-devices
