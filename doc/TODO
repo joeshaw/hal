@@ -6,6 +6,24 @@ entries if you get an idea or implement one of the tasks.
 
 Short term issues
 
+ - Add void PropertyModified(string key, bool is_added, bool is_removed)
+   and deprecate Property[Added,Removed,Changed]
+
+ - Make all optional properties from the spec available but with empty values
+
+ - Add infrastructure so updates to several properties happen as a single
+   transaction
+
+ - Make sure device is not added to GDL before all the key properties as
+   specified in the spec is there
+
+ - Add dbus_bool_t* not_found to all get functions in libhal
+
+ - Possible bug: PropertyAdded being called several times
+
+ - Possible bug: DeviceAdded/DeviceRemoved being called several time on a
+   device?
+
  - veryify that we got all the necessary hardware parameters for
    physical busses, e.g. pci, usb... We won't really know before people
    start using HAL though
@@ -16,7 +34,7 @@ Short term issues
  - fix all property string values to be UTF8 compliant
 
  - add Lock()/Unlock() methods to the network API (and libhal) for obtaining
-   exclusive device access
+   exclusive device access (useful for burning CD's)
 
  - fix memory leaks; especially those when getting strings from D-BUS
    [ongoing, partially resolved (libhal seems clean, still need to audit
@@ -34,14 +52,20 @@ Short term issues
 
  - figure a way to detect block.device (e.g. /udev/hda2, already we know 
    major:minor) when detecting a block device on hald startup.
-   The hotplug case is already solved by receiving a signal from udev
+   The hotplug case is already solved by receiving a signal from udev. Might
+   need to modify udev to be able to do something like
+   'udev --get-device --major <num> --minor <num>'
 
  - until available in sysfs, parse /proc/sys/dev/cdrom/info, to provide
    information about capabilities of optical discs such as CD-RW, DVD etc.
 
+
+Partially resolved
+
  - work more on packaging, put some daemon-fork-fu into hald and make it
    read a configuration file, make initscripts for various distros and make
    hald run as a unprivileged dedicated user
+
 
 More long term issues
 
@@ -49,7 +73,8 @@ More long term issues
 
  - add code/scripts for regression testing
 
- - access control logic (only daddy can use daddy's camera etc.)
+ - access control logic (only daddy can use daddy's camera etc.). To come
+   from distros?
 
  - network transparency; think diskless X terminals with USB ports
    integrated into the desktop environment running on a LTSP server
