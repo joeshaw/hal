@@ -65,6 +65,8 @@
 #include "../device_info.h"
 #include "../hald_conf.h"
 
+#include "osspec_linux.h"
+
 #include "util.h"
 #include "coldplug.h"
 #include "hotplug_helper.h"

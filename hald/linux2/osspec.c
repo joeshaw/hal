@@ -96,7 +96,7 @@ get_hal_sysfs_path (void)
 const gchar *
 get_hal_proc_path (void)
 {
-	return hal_sysfs_path;
+	return hal_proc_path;
 }
 
 static gboolean
