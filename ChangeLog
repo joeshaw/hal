@@ -1,5 +1,13 @@
 2005-03-10  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/acpi.c (battery_refresh_poll): Also set property
+	battery.charge_level.rate
+	(acpi_poll): Make the update atomic
+	
+	* doc/spec/hal-spec.xml.in: Update for battery.charge_level.rate
+
+2005-03-10  David Zeuthen  <davidz@redhat.com>
+
 	Bah, so it turns out that crappy BIOS'es and what-have-you gets really
 	upset of hald, every five seconds, accessing the state file three
 	times and the info file one time (in /proc/acpi/battery/BAT%d)

@@ -71,6 +71,8 @@ battery_refresh_poll (HalDevice *d)
 					  "state", "charging state", 0, "discharging", TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, 
 					 "state", "remaining capacity", 0, 10, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.charge_level.rate", path, 
+					 "state", "present rate", 0, 10, TRUE);
 }
 
 static gboolean
@@ -283,7 +285,9 @@ acpi_poll (gpointer data)
 		d = HAL_DEVICE (i->data);
 		if (hal_device_has_property (d, "linux.acpi_type")) {
 			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
 			battery_refresh_poll (d);
+			device_property_atomic_update_end ();		
 		}
 	}
 
