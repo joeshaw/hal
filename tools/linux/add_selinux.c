@@ -109,7 +109,11 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
+	if (!is_selinux_enabled ())
+		goto out;
+
 	if (get_selinux_removable_context (&scontext) == 0) {
+
 		if (is_volume)
 			snprintf (buf, sizeof (buf), "volume.policy.mount_option.fscontext=%s", scontext);
 		else
