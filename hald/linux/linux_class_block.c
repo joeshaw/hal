@@ -380,9 +380,20 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
     device_file = ds_property_get_string(d, "block.device");
     HAL_INFO(("Entering, udi=%s, device_file=%s", d->udi, device_file));
 
-    if( device_file!=NULL && strcmp(device_file, "")!=0 )
+    if( !is_probing )
     {
-        ds_gdl_add(d);
+        /** We really need to invoke udev soon */
+        if( device_file!=NULL && strcmp(device_file, "fixme-invoke-udev")!=0 )
+        {
+            ds_gdl_add(d);
+        }
+    }
+    else
+    {
+        if( device_file!=NULL && strcmp(device_file, "")!=0 )
+        {
+            ds_gdl_add(d);
+        }
     }
 }
 
