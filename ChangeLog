@@ -1,5 +1,10 @@
 2004-09-07  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/osspec.c (hald_helper_hotplug_process_queue): Check
+	for duplicate events and ignore them
+
+2004-09-07  David Zeuthen  <david@fubar.dk>
+
 	Patch from Sjoerd Simons <sjoerd@luon.net>
 
 	* configure.in: 

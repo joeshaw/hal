@@ -1250,6 +1250,17 @@ trynext:
 	for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
 		msg = (struct hald_helper_msg *) i->data;
 
+		/* check for dupes (user may have several hal.hotplug helpers (!) */
+		if (msg->seqnum == last_hotplug_seqnum) {
+			HAL_WARNING (("******************************************"));
+			HAL_WARNING (("Ignoring duplicate event with SEQNUM=%d", msg->seqnum));
+			HAL_WARNING (("******************************************"));
+			g_free (msg);
+			hotplug_queue = g_list_delete_link (hotplug_queue, i);
+			goto trynext;
+		}
+
+
 		if (msg->seqnum == last_hotplug_seqnum + 1) {
 			/* yup, found it */
 			last_hotplug_seqnum = msg->seqnum;
