@@ -27,7 +27,7 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#define _GNU_SOURCE 1
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -48,16 +48,7 @@
 #include <asm/types.h>
 
 #include "drive_id.h"
-
-/*#define DEBUG*/
-#ifdef DEBUG
-#define dbg(format, arg...)						\
-	do {								\
-		printf("%s: " format "\n", __FUNCTION__ , ## arg);	\
-	} while (0)
-#else
-#define dbg(format, arg...)	do {} while (0)
-#endif /* DEBUG */
+#include "drive_id_logging.h"
 
 static inline void dump(unsigned char *buf, int len)
 {

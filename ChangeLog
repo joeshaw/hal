@@ -1,3 +1,18 @@
+2004-09-20  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/Makefile.am: add new logging glue file for
+	drive_id/
+
+	* hald/linux/drive_id/drive_id.c: remove own dbg()
+	implementation and map to the HAL logger
+
+	* hald/linux/drive_id/drive_id.h: next version number
+
+	* hald/linux/drive_id/drive_id_logging.h: map to
+	the HAL logging function
+
+	* hald/linux/volume_id/volume_id.h: next version number
+
 2004-09-20  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Bump version to 0.2.98
