@@ -319,6 +319,7 @@ manager_find_device_string_match (DBusConnection * connection,
 					DBUS_TYPE_STRING);
 
 	info.key = key;
+	info.value = value;
 	info.iter = &iter_array;
 
 	hal_device_store_foreach (hald_get_gdl (),

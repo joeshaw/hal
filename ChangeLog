@@ -1,3 +1,8 @@
+2004-05-01  Owen Fraser-Green  <owen@discobabe.net>
+
+	* hald/hald_dbus.c (manager_find_device_string_match): Set
+	info.value
+
 2004-05-01  David Zeuthen  <david@fubar.dk>
 
 	* libhal/libhal.h: fix that the extern "C" linkage stuff was
