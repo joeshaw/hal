@@ -514,9 +514,7 @@ usb_proc_parse ()
 */
 }
 
-/** Set capabilities from interface and/or device class.  This is a
- *  function from hell, maybe some searchable data-structure would be
- *  better...
+/** Set capabilities from interface and/or device class.  
  *
  *  @param  d                   The HalDevice to set the caps
  *  @param  if_class            Interface class
@@ -529,58 +527,9 @@ usb_add_caps_from_class (HalDevice * d,
 	char *cat = NULL;
 
 	switch (if_class) {
-	case 0x01:
-		cat = "multimedia.audio";
-		hal_device_add_capability (d, "multimedia.audio");
-		break;
-	case 0x02:
-		if (if_sub_class == 0x06) {
-			cat = "net";
-			hal_device_add_capability (d, "net");
-			hal_device_add_capability (d, "net.ethernet");
-		} else if (if_sub_class == 0x02 && if_proto == 0x01) {
-			cat = "modem";
-			hal_device_add_capability (d, "modem");
-		}
-		break;
-	case 0x03:
-		cat = "input";
-		hal_device_add_capability (d, "input");
-		if (if_sub_class == 0x00 || if_sub_class == 0x01) {
-			if (if_proto == 0x01) {
-				cat = "input.keyboard";
-				hal_device_add_capability (d, "input.keyboard");
-			} else if (if_proto == 0x02) {
-				cat = "input.mouse";
-				hal_device_add_capability (d, "input.mouse");
-			}
-		}
-		break;
-	case 0x04:
-		break;
-	case 0x05:
-		break;
-	case 0x06:
-		break;
-	case 0x07:
-		cat = "printer";
-		hal_device_add_capability (d, "printer");
-		break;
-	case 0x08:
-		cat = "storage_controller";
-		hal_device_add_capability (d, "storage_controller");
-		break;
 	case 0x09:
-		cat = "hub";
-		hal_device_add_capability (d, "hub");
-		break;
-	case 0x0a:
-		break;
-	case 0xe0:
-		if (if_sub_class == 0x01 && if_proto == 0x01) {
-			cat = "bluetooth_adaptor";
-			hal_device_add_capability (d, "bluetooth_adaptor");
-		}
+		cat = "usbhub";
+		hal_device_add_capability (d, "usbhub");
 		break;
 	}
 

@@ -60,7 +60,7 @@ class Representation:
             icon = self.icons["mouse"]
         elif cat=="input.keyboard":
             icon = self.icons["keyboard"]
-        elif cat=="bridge.cardbus":
+        elif cat=="pcmcia_socket":
             icon = self.icons["cardbus"]
         elif cat=="video":
             icon = self.icons["video"]

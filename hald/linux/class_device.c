@@ -404,6 +404,10 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d)
 		 * device */
 		hal_device_merge (sysdevice, d);
 
+		HAL_INFO (("Merged udi=%s onto %s", 
+			   hal_device_get_udi (d),
+			   hal_device_get_udi (sysdevice)));
+
 		/* get rid of temporary device */
 		hal_device_store_remove (hald_get_tdl (), d);
 		g_object_unref (d);

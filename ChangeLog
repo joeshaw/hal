@@ -1,5 +1,32 @@
 2004-04-22  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/usb_bus_device.c (usb_add_caps_from_class): don't set
+	capabilities from device class since this is very misleading.
+	In fact, capabilities should only stem from kernel- or userspace-
+	drivers. We retain the right to set the usbhub capability as no
+	kernel driver is bound to this class of devices. Yet.. who knows?
+	In either case, a GUI device browsers can always inspect the info.bus
+	and consult the appropriate stuff, e.g. the usb.device_class, 
+	_sub_class and _protocol deal for usb devices, to select an appropriate
+	icon.
+
+	* hald/linux/pci_bus_device.c (pci_add_caps_from_class): removed for
+	same reasons as above
+	(pci_device_pre_process): don't call pci_add_caps_from_class
+
+	* tools/device-manager/Representation.py:
+	s/bridge.cardbus/pcmcia_socket/
+
+	* hald/linux/osspec.c: add pcmcia_socket_class_handler
+
+	* hald/linux/pcmcia_socket_class_device.c: new file; very simple just
+	tag a busdevice with the capability pcmcia_socket
+
+	* hald/linux/class_device.c (class_device_final): log an informative
+	message when we merge onto a device
+
+2004-04-22  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/class_device.c (class_device_got_sysdevice): Instead
 	of refusing to merge onto a socalled virtual device (which is really
 	a HAL term, and thus quite crackful), just special-case the fact
@@ -12,7 +39,7 @@
 	* hald/linux/osspec.c (remove_class_device): Make a more concise
 	statement in the log message about the fact that removal of class
 	devices is not yet implemented; add @todo tag so this is not
-	forgotton
+	forgotten
 
 	* doc/TODO: Add note about removal of class devices
 

@@ -56,6 +56,7 @@ extern ClassDeviceHandler scsi_host_class_handler;
 extern ClassDeviceHandler scsi_device_class_handler;
 extern ClassDeviceHandler scsi_generic_class_handler;
 extern ClassDeviceHandler block_class_handler;
+extern ClassDeviceHandler pcmcia_socket_class_handler;
 
 /*
 extern ClassDeviceHandler ieee1394_host_class_handler;
@@ -82,6 +83,7 @@ static ClassDeviceHandler* class_device_handlers[] = {
 	&scsi_device_class_handler,
 	&scsi_generic_class_handler,
 	&block_class_handler,
+	&pcmcia_socket_class_handler,
 	/*&ieee1394_host_class_handler,
 	  &ieee1394_node_class_handler,*/
 	NULL
