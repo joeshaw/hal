@@ -585,7 +585,7 @@ detect_fs_fat (HalDevice *d)
 	int i, len;
 	int fd;
 	const char *device_file;
-	char data[512];
+	unsigned char data[512];
 	char label[12];
 	dbus_bool_t matched = FALSE;
 
@@ -682,11 +682,21 @@ block_class_post_process (ClassDeviceHandler *self,
 		stordev = hal_device_store_find (hald_get_gdl (), stordev_udi);
 	} else {
 		const char *udi_it;
+		HalDevice *physdev = NULL;
 
-		stordev_udi = NULL;
+		/* Set ourselves to be the storage.* keeper */
+		stordev_udi = d->udi;
+		stordev = d;
 
-		/* walk up the device chain, start with our parent */
+		/* Default */
+		hal_device_property_set_string (
+			stordev, "storage.bus", "unknown");
+
+
+		/* walk up the device chain to find the physical device, 
+		 * start with our parent */
 		udi_it = parent->udi;
+		physdev = NULL; /* be pessimistic */
 
 		while (udi_it != NULL) {
 			HalDevice *d_it;
@@ -699,44 +709,34 @@ block_class_post_process (ClassDeviceHandler *self,
 			/* Check info.bus */
 			bus = hal_device_property_get_string (d_it,"info.bus");
 			if (strcmp (bus, "usb") == 0) {
-				stordev_udi = udi_it;
-				stordev = d_it;
+				physdev = d_it;
+				is_hotplugable = TRUE;
+				hal_device_property_set_string (
+					stordev, "storage.bus", "usb");
+								
+				break;
+			} else if (strcmp (bus, "ieee1394") == 0) {
+				physdev = d_it;
+				is_hotplugable = TRUE;
+				hal_device_property_set_string (
+					stordev, "storage.bus", "ieee1394");
 				break;
 			} else if (strcmp (bus, "ide") == 0) {
-				stordev_udi = udi_it;
-				stordev = d_it;
+				physdev = d_it;
+				hal_device_property_set_string (
+					stordev, "storage.bus", "ide");
 				break;
 			}
 
 			/* Go to parent */
-			udi_it = hal_device_property_get_string (d_it, 
-							       "info.parent");
+			udi_it = hal_device_property_get_string (
+				d_it, "info.parent");
 		}
 
-		if (hal_device_has_property (stordev, "info.bus") &&
-		    ( strcmp (hal_device_property_get_string (stordev, 
-							      "info.bus"), 
-			      "usb") == 0 ||
-		      strcmp (hal_device_property_get_string (stordev, 
-							      "info.bus"), 
-			      "ieee1394") == 0) ) {
-			is_hotplugable = TRUE;
-		} 
+		/* physdev is either NULL or the physical device (ide,
+		 * usb, iee1394 etc.) of which we are the offspring */
 
-		/* XXX HACK FIXME TODO : Always choose ourselves as the
-		 * device holding the storage.* properties otherwise optical
-		 * disc handling breaks */
-		stordev_udi = NULL;
-
-		if (stordev_udi == NULL) {
-			/* We couldn't find a storage device, use our own udi
-			 *
-			 * Ayeii, note - this is a temporary UDI but we will 
-			 * remedy such a situation in _got_udi() above
-			 */
-			stordev_udi = d->udi;
-			stordev = d;
-		}
+		/* TODO: Merge storage.* from physdev onto stordev */
 
 	}
 
