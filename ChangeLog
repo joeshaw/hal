@@ -1,5 +1,11 @@
 2004-10-08  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/platform_bus_device.c (platform_device_accept): Check that
+	the floppy drive actually exists. Code snippet from Bill Nottingham
+	<notting@redhat.com>, see Red Hat bug 133777.
+
+2004-10-08  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/pci_bus_device.c (pci_ids_load): The {pci, usb} id
 	database read functions never close the file descriptors.  bad.
 	Fixed in attached patch. Patch from Sjoerd Simons <sjoerd@luon.net>.

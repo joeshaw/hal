@@ -33,8 +33,14 @@
 #include <string.h>
 #include <getopt.h>
 #include <assert.h>
-#include <unistd.h>
 #include <stdarg.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <linux/fd.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -46,12 +52,61 @@ static dbus_bool_t
 platform_device_accept (BusDeviceHandler *self, const char *path, 
 			struct sysfs_device *device)
 {
+	int fd;
+	int number;
+	char device_file[256];
+	char fd_sysfs_path[256];
+	char name[256];
+	struct floppy_drive_struct ds;
+
 	if (strcmp (device->bus, "platform") != 0)
 		return FALSE;
 
 	/* Only support floppies */
 	if (strncmp (device->bus_id, "floppy", 6) != 0)
 		return FALSE;
+
+	sscanf (device->bus_id, "floppy%d", &number);
+
+	/* get device file */
+	snprintf (fd_sysfs_path, sizeof (fd_sysfs_path), "%s/block/fd%d", 
+		  sysfs_mount_path, number);
+
+	if (!class_device_get_device_file (fd_sysfs_path, 
+					   device_file, 
+					   sizeof (device_file))) {
+		HAL_ERROR (("Could not get device file floppy %d", number));
+		return FALSE;
+	}
+
+	/* Check that there actually is a drive at the other end */
+	fd = open (device_file, O_RDONLY | O_NONBLOCK);
+	if (fd < 0) {
+		HAL_ERROR (("Could not open %s", device_file));
+		return FALSE;
+	}
+	
+	/* @todo Could use the name here */
+	ioctl (fd, FDRESET, NULL);
+	if (ioctl (fd, FDGETDRVTYP, name) != 0) {
+		HAL_ERROR (("FDGETDRVTYP failed for %s", device_file));
+		close (fd);
+		return FALSE;
+	}
+	HAL_INFO (("name is '%s'", name));
+
+	if (ioctl (fd, FDPOLLDRVSTAT, &ds)) {
+		HAL_ERROR (("FDPOLLDRVSTAT failed for %s", device_file));
+		close (fd);
+		return FALSE;
+	}
+	close (fd);
+	
+	if (ds.track < 0) {
+		HAL_ERROR (("floppy drive %s seems not to exist", device_file));
+		return FALSE;
+	}
+	
 
 	return TRUE;
 }
