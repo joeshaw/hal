@@ -272,6 +272,24 @@ fi
 AM_CONDITIONAL(DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
 AC_MSG_RESULT(yes)
 
+# Check for BLKGETSIZE64
+AC_MSG_CHECKING(for BLKGETSIZE64)
+AC_TRY_COMPILE(
+[#include <sys/types.h>
+#include <linux/ioctl.h>
+#include <linux/fs.h>],
+[int main(int argc, char *argv[])
+{
+	int fd = 0;
+	unsigned long long int n;
+	ioctl (fd, BLKGETSIZE64, &n);
+	return 0;
+}
+], have_size64=yes, have_size64=no)
+AC_MSG_RESULT($have_size64)
+if test x$have_size64 = xno; then
+  AC_MSG_ERROR([BLKGETSIZE64 is not defined])
+fi
 
 # DocBook Documentation
 

@@ -26,7 +26,7 @@
  **************************************************************************/
 
 #ifndef LIBHAL_STORAGE_H
-#define LIBHAL_STORAGE__H
+#define LIBHAL_STORAGE_H
 
 #include <libhal.h>
 
