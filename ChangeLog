@@ -1,5 +1,21 @@
 2004-04-10  David Zeuthen  <david@fubar.dk>
 
+	* libhal/libhal.[ch]: Added LibHalContext object so a stack of libraries
+	and applications can simultaneously use libhal
+
+	* libhal/libhal.h : Added LibHalLostCapability
+
+	* libhal/libhal.c (hal_device_get_all_properties): Fixed a bug where
+	the last property was missing
+
+	* tools/hal_get_property.c: update to new libhal API
+
+	* tools/hal_set_property.c: Update to new libhal API
+
+	* tools/lshal.c: Update to new libhal API
+	                     
+2004-04-10  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (block_class_post_process): 
 	Revert to setting the storage backing device to the top-level
 	block device

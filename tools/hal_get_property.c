@@ -44,6 +44,7 @@
  * @{
  */
 
+static LibHalContext *hal_ctx;
 
 /** Print out program usage.
  *
@@ -146,19 +147,19 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-	if (hal_initialize (NULL, FALSE)) {
+	if ((hal_ctx = hal_initialize (NULL, FALSE)) == NULL) {
 		fprintf (stderr, "error: hal_initialize failed\n");
 		return 1;
 	}
 
-	type = hal_device_get_property_type (udi, key);
+	type = hal_device_get_property_type (hal_ctx, udi, key);
 	if (type == DBUS_TYPE_NIL) {
 		return 1;
 	}
 	// emit the value to stdout
 	switch (type) {
 	case DBUS_TYPE_STRING:
-		str = hal_device_get_property_string (udi, key);
+		str = hal_device_get_property_string (hal_ctx, udi, key);
 		if (!is_quiet)
 			fprintf (stderr, "Type is string\n");
 		fprintf (stdout, "%s", str);
@@ -169,19 +170,19 @@ main (int argc, char *argv[])
 			fprintf (stderr, "Type is integer (shown in %s)\n",
 				 (is_hex ? "hexadecimal" : "decimal"));
 		fprintf (stdout, (is_hex ? "%x" : "%d"),
-			 hal_device_get_property_int (udi, key));
+			 hal_device_get_property_int (hal_ctx, udi, key));
 		break;
 	case DBUS_TYPE_DOUBLE:
 		if (!is_quiet)
 			fprintf (stderr, "Type is double\n");
 		fprintf (stdout, "%f",
-			 hal_device_get_property_double (udi, key));
+			 hal_device_get_property_double (hal_ctx, udi, key));
 		break;
 	case DBUS_TYPE_BOOLEAN:
 		if (!is_quiet)
 			fprintf (stderr, "Type is boolean\n");
 		fprintf (stdout, "%s",
-			 hal_device_get_property_bool (udi,
+			 hal_device_get_property_bool (hal_ctx, udi,
 						       key) ? "true" :
 			 "false");
 		break;

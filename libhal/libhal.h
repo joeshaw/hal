@@ -28,9 +28,11 @@
 
 #include <dbus/dbus.h>
 
+/*
 #if defined(__cplusplus)
 extern "C" {
 #endif
+*/
 
 /**
  * @addtogroup LibHal
@@ -38,33 +40,47 @@ extern "C" {
  * @{
  */
 
+typedef struct LibHalContext_s
+LibHalContext;
+
 /** Type for function in application code that integrates a #DBusConnection 
  *  object into it's own mainloop. 
  *
  *  @param  udi                 Unique Device Id
  */
-typedef void (*LibHalIntegrateDBusIntoMainLoop) (DBusConnection *
+typedef void (*LibHalIntegrateDBusIntoMainLoop) (LibHalContext *ctx,
+						 DBusConnection *
 						 dbus_connection);
 
 /** Type for callback when a device is added.
  *
  *  @param  udi                 Unique Device Id
  */
-typedef void (*LibHalDeviceAdded) (const char *udi);
+typedef void (*LibHalDeviceAdded) (LibHalContext *ctx, const char *udi);
 
 /** Type for callback when a device is removed. 
  *
  *  @param  udi                 Unique Device Id
  */
-typedef void (*LibHalDeviceRemoved) (const char *udi);
+typedef void (*LibHalDeviceRemoved) (LibHalContext *ctx, const char *udi);
 
 /** Type for callback when a device got a new capability
  *
  *  @param  udi                 Unique Device Id
  *  @param  capability          Capability of the device
  */
-typedef void (*LibHalNewCapability) (const char *udi,
+typedef void (*LibHalNewCapability) (LibHalContext *ctx, 
+				     const char *udi,
 				     const char *capability);
+
+/** Type for callback when a device lost a capability
+ *
+ *  @param  udi                 Unique Device Id
+ *  @param  capability          Capability of the device
+ */
+typedef void (*LibHalLostCapability) (LibHalContext *ctx, 
+				      const char *udi,
+				      const char *capability);
 
 /** Type for callback when a property of a device changes. 
  *
@@ -73,7 +89,8 @@ typedef void (*LibHalNewCapability) (const char *udi,
  *  @param  is_removed          Property removed
  *  @param  is_added            Property added
  */
-typedef void (*LibHalDevicePropertyModified) (const char *udi,
+typedef void (*LibHalDevicePropertyModified) (LibHalContext *ctx,
+					      const char *udi,
 					      const char *key,
 					      dbus_bool_t is_removed,
 					      dbus_bool_t is_added);
@@ -87,7 +104,8 @@ typedef void (*LibHalDevicePropertyModified) (const char *udi,
  *  @param  message             D-BUS message with variable parameters
  *                              depending on condition
  */
-typedef void (*LibHalDeviceCondition) (const char *udi,
+typedef void (*LibHalDeviceCondition) (LibHalContext *ctx,
+				       const char *udi,
 				       const char *condition_name,
 				       DBusMessage *message);
 
@@ -112,6 +130,9 @@ typedef struct LibHalFunctions_s {
 	/** Device got a new capability */
 	LibHalNewCapability device_new_capability;
 
+	/** Device got a new capability */
+	LibHalLostCapability device_lost_capability;
+
 	/** A property of a device changed  */
 	LibHalDevicePropertyModified device_property_modified;
 
@@ -120,51 +141,62 @@ typedef struct LibHalFunctions_s {
 
 } LibHalFunctions;
 
-int hal_initialize (const LibHalFunctions * functions,
-		    dbus_bool_t use_cache);
 
-int hal_shutdown (void);
+LibHalContext *hal_initialize (const LibHalFunctions * functions,
+			       dbus_bool_t use_cache);
 
-char **hal_get_all_devices (int *num_devices);
-dbus_bool_t hal_device_exists (const char *udi);
+int hal_shutdown (LibHalContext *ctx);
 
-void hal_device_print (const char *udi);
+char **hal_get_all_devices (LibHalContext *ctx, int *num_devices);
+dbus_bool_t hal_device_exists (LibHalContext *ctx, const char *udi);
 
-dbus_bool_t hal_device_property_exists (const char *udi,
+void hal_device_print (LibHalContext *ctx, const char *udi);
+
+dbus_bool_t hal_device_property_exists (LibHalContext *ctx, 
+					const char *udi,
 					const char *key);
 
-char *hal_device_get_property_string (const char *udi,
+char *hal_device_get_property_string (LibHalContext *ctx, const char *udi,
 				      const char *key);
 
-dbus_int32_t hal_device_get_property_int (const char *udi,
+dbus_int32_t hal_device_get_property_int (LibHalContext *ctx, 
+					  const char *udi,
 					  const char *key);
 
-double hal_device_get_property_double (const char *udi,
+double hal_device_get_property_double (LibHalContext *ctx, 
+				       const char *udi,
 				       const char *key);
 
-dbus_bool_t hal_device_get_property_bool (const char *udi,
+dbus_bool_t hal_device_get_property_bool (LibHalContext *ctx, 
+					  const char *udi,
 					  const char *key);
 
-dbus_bool_t hal_device_set_property_string (const char *udi,
+dbus_bool_t hal_device_set_property_string (LibHalContext *ctx, 
+					    const char *udi,
 					    const char *key,
 					    const char *value);
 
-dbus_bool_t hal_device_set_property_int (const char *udi,
+dbus_bool_t hal_device_set_property_int (LibHalContext *ctx, 
+					 const char *udi,
 					 const char *key,
 					 dbus_int32_t value);
 
-dbus_bool_t hal_device_set_property_double (const char *udi,
+dbus_bool_t hal_device_set_property_double (LibHalContext *ctx, 
+					    const char *udi,
 					    const char *key,
 					    double value);
 
-dbus_bool_t hal_device_set_property_bool (const char *udi,
+dbus_bool_t hal_device_set_property_bool (LibHalContext *ctx, 
+					  const char *udi,
 					  const char *key,
 					  dbus_bool_t value);
 
-dbus_bool_t hal_device_remove_property (const char *udi,
+dbus_bool_t hal_device_remove_property (LibHalContext *ctx, 
+					const char *udi,
 					const char *key);
 
-int hal_device_get_property_type (const char *udi,
+int hal_device_get_property_type (LibHalContext *ctx, 
+				  const char *udi,
 				  const char *key);
 
 
@@ -174,7 +206,8 @@ typedef struct LibHalProperty_s LibHalProperty;
 struct LibHalPropertySet_s;
 typedef struct LibHalPropertySet_s LibHalPropertySet;
 
-LibHalPropertySet *hal_device_get_all_properties (const char *udi);
+LibHalPropertySet *hal_device_get_all_properties (LibHalContext *ctx, 
+						  const char *udi);
 
 void hal_free_property_set (LibHalPropertySet * set);
 
@@ -208,34 +241,44 @@ dbus_bool_t hal_psi_get_bool (LibHalPropertySetIterator * iter);
 void hal_free_string_array (char **str_array);
 void hal_free_string (char *str);
 
-char *hal_agent_new_device (void);
-dbus_bool_t hal_agent_commit_to_gdl (const char *temp_udi,
+char *hal_agent_new_device (LibHalContext *ctx);
+dbus_bool_t hal_agent_commit_to_gdl (LibHalContext *ctx,
+				     const char *temp_udi,
 				     const char *udi);
-dbus_bool_t hal_agent_remove_device (const char *udi);
-dbus_bool_t hal_agent_merge_properties (const char *udi,
+dbus_bool_t hal_agent_remove_device (LibHalContext *ctx, 
+				     const char *udi);
+dbus_bool_t hal_agent_merge_properties (LibHalContext *ctx,
+					const char *udi,
 					const char *from_udi);
 
-dbus_bool_t hal_agent_device_matches (const char *udi1,
+dbus_bool_t hal_agent_device_matches (LibHalContext *ctx,
+				      const char *udi1,
 				      const char *udi2,
 				      const char *namespace);
 
-char **hal_manager_find_device_string_match (const char *key,
+char **hal_manager_find_device_string_match (LibHalContext *ctx,
+					     const char *key,
 					     const char *value,
 					     int *num_devices);
 
 
-dbus_bool_t hal_device_add_capability (const char *device,
+dbus_bool_t hal_device_add_capability (LibHalContext *ctx,
+				       const char *device,
 				       const char *capability);
 
-dbus_bool_t hal_device_query_capability (const char *udi,
+dbus_bool_t hal_device_query_capability (LibHalContext *ctx,
+					 const char *udi,
 					 const char *capability);
 
-char **hal_find_device_by_capability (const char *capability,
+char **hal_find_device_by_capability (LibHalContext *ctx,
+				      const char *capability,
 				      int *num_devices);
 
-int hal_device_property_watch_all (void);
-int hal_device_add_property_watch (const char *udi);
-int hal_device_remove_property_watch (const char *udi);
+int hal_device_property_watch_all (LibHalContext *ctx);
+int hal_device_add_property_watch (LibHalContext *ctx, 
+				   const char *udi);
+int hal_device_remove_property_watch (LibHalContext *ctx, 
+				      const char *udi);
 
 /** @} */
 

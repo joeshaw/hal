@@ -52,6 +52,8 @@
 /** Macro for terminating the program on an unrecoverable error */
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
+static LibHalContext *hal_ctx;
+
 /** Dump all devices to stdout
  *
  */
@@ -62,7 +64,7 @@ dump_devices ()
 	int num_devices;
 	char **device_names;
 
-	device_names = hal_get_all_devices (&num_devices);
+	device_names = hal_get_all_devices (hal_ctx, &num_devices);
 
 	if (device_names == NULL)
 		DIE (("Couldn't obtain list of devices\n"));
@@ -77,7 +79,8 @@ dump_devices ()
 		LibHalPropertySetIterator it;
 		int type;
 
-		props = hal_device_get_all_properties (device_names[i]);
+		props = hal_device_get_all_properties (hal_ctx, 
+						       device_names[i]);
 
 		/* NOTE NOTE NOTE: This may be NULL if the device was removed
 		 *                 in the daemon; this is because 
@@ -141,7 +144,8 @@ dump_devices ()
  *  @param  udi                 Universal Device Id
  */
 static void
-device_added (const char *udi)
+device_added (LibHalContext *ctx,
+	      const char *udi)
 {
 	fprintf (stderr, "*** lshal: device_added, udi='%s'\n", udi);
 	dump_devices ();
@@ -153,7 +157,8 @@ device_added (const char *udi)
  *  @param  udi                 Universal Device Id
  */
 static void
-device_removed (const char *udi)
+device_removed (LibHalContext *ctx,
+		const char *udi)
 {
 	fprintf (stderr, "*** lshal: device_removed, udi='%s'\n", udi);
 	dump_devices ();
@@ -166,9 +171,27 @@ device_removed (const char *udi)
  *  @param  capability          Name of capability
  */
 static void
-device_new_capability (const char *udi, const char *capability)
+device_new_capability (LibHalContext *ctx,
+		       const char *udi, 
+		       const char *capability)
 {
 	fprintf (stderr, "*** lshal: new_capability, udi='%s'\n", udi);
+	fprintf (stderr, "*** capability: %s\n", capability);
+	/*dump_devices(); */
+}
+
+/** Invoked when device in the Global Device List loses a capability.
+ *  Prints the name of the capability to stderr.
+ *
+ *  @param  udi                 Universal Device Id
+ *  @param  capability          Name of capability
+ */
+static void
+device_lost_capability (LibHalContext *ctx,
+			const char *udi, 
+			const char *capability)
+{
+	fprintf (stderr, "*** lshal: lost_capability, udi='%s'\n", udi);
 	fprintf (stderr, "*** capability: %s\n", capability);
 	/*dump_devices(); */
 }
@@ -185,18 +208,18 @@ print_property (const char *udi, const char *key)
 	int type;
 	char *str;
 
-	type = hal_device_get_property_type (udi, key);
+	type = hal_device_get_property_type (hal_ctx, udi, key);
 
 	switch (type) {
 	case DBUS_TYPE_STRING:
-		str = hal_device_get_property_string (udi, key);
+		str = hal_device_get_property_string (hal_ctx, udi, key);
 		fprintf (stderr, "*** new value: '%s'  (string)\n", str);
 		hal_free_string (str);
 		break;
 	case DBUS_TYPE_INT32:
 		{
 			dbus_int32_t value =
-			    hal_device_get_property_int (udi, key);
+			    hal_device_get_property_int (hal_ctx, udi, key);
 			fprintf (stderr,
 				 "*** new value: %d (0x%x)  (int)\n",
 				 value, value);
@@ -204,11 +227,11 @@ print_property (const char *udi, const char *key)
 		break;
 	case DBUS_TYPE_DOUBLE:
 		fprintf (stderr, "*** new value: %g  (double)\n",
-			 hal_device_get_property_double (udi, key));
+			 hal_device_get_property_double (hal_ctx, udi, key));
 		break;
 	case DBUS_TYPE_BOOLEAN:
 		fprintf (stderr, "*** new value: %s  (bool)\n",
-			 hal_device_get_property_bool (udi,
+			 hal_device_get_property_bool (hal_ctx, udi,
 						       key) ? "true" :
 			 "false");
 		break;
@@ -226,8 +249,11 @@ print_property (const char *udi, const char *key)
  *  @param  key                 Key of property
  */
 static void
-property_modified (const char *udi, const char *key,
-		   dbus_bool_t is_removed, dbus_bool_t is_added)
+property_modified (LibHalContext *ctx,
+		   const char *udi, 
+		   const char *key,
+		   dbus_bool_t is_removed, 
+		   dbus_bool_t is_added)
 {
 	fprintf (stderr, "*** lshal: property_modified, udi=%s, key=%s\n",
 		 udi, key);
@@ -249,7 +275,9 @@ property_modified (const char *udi, const char *key,
  *  @param  message             D-BUS message with parameters
  */
 static void
-device_condition (const char *udi, const char *condition_name,
+device_condition (LibHalContext *ctx,
+		  const char *udi, 
+		  const char *condition_name,
 		  DBusMessage * message)
 {
 	fprintf (stderr, "*** lshal: device_condition, udi=%s\n", udi);
@@ -266,7 +294,7 @@ device_condition (const char *udi, const char *condition_name,
  *  @param  dbus_connection     D-BUS connection to integrate
  */
 static void
-mainloop_integration (DBusConnection * dbus_connection)
+mainloop_integration (LibHalContext *ctx, DBusConnection * dbus_connection)
 {
 	dbus_connection_setup_with_g_main (dbus_connection, NULL);
 }
@@ -306,6 +334,7 @@ main (int argc, char *argv[])
 		device_added,
 		device_removed,
 		device_new_capability,
+		device_lost_capability,
 		property_modified,
 		device_condition
 	};
@@ -349,7 +378,7 @@ main (int argc, char *argv[])
 	}
 
 
-	if (hal_initialize (&hal_functions, FALSE)) {
+	if ((hal_ctx = hal_initialize (&hal_functions, FALSE)) == NULL) {
 		fprintf (stderr, "error: hal_initialize failed\n");
 		exit (1);
 	}
@@ -358,11 +387,11 @@ main (int argc, char *argv[])
 
 	/* run the main loop only if we should monitor */
 	if (do_monitor) {
-		hal_device_property_watch_all ();
+		hal_device_property_watch_all (hal_ctx);
 		g_main_loop_run (loop);
 	}
 
-	hal_shutdown ();
+	hal_shutdown (hal_ctx);
 	return 0;
 }
 

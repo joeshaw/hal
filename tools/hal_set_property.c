@@ -36,6 +36,8 @@
 
 #include <libhal/libhal.h>
 
+static LibHalContext *hal_ctx;
+
 /**
  * @defgroup HalSetProperty  Set HAL device property
  * @ingroup HalMisc
@@ -174,31 +176,31 @@ main (int argc, char *argv[])
 
 	fprintf (stderr, "\n");
 
-	if (hal_initialize (NULL, FALSE)) {
+	if ((hal_ctx = hal_initialize (NULL, FALSE)) == NULL) {
 		fprintf (stderr, "error: hal_initialize failed\n");
 		return 1;
 	}
 
 	if (remove) {
-		rc = hal_device_remove_property (udi, key);
+		rc = hal_device_remove_property (hal_ctx, udi, key);
 		if (rc != 0)
 			return 1;
 	} else {
 		switch (type) {
 		case DBUS_TYPE_STRING:
-			rc = hal_device_set_property_string (udi, key,
+			rc = hal_device_set_property_string (hal_ctx, udi, key,
 							     str_value);
 			break;
 		case DBUS_TYPE_INT32:
-			rc = hal_device_set_property_int (udi, key,
+			rc = hal_device_set_property_int (hal_ctx, udi, key,
 							  int_value);
 			break;
 		case DBUS_TYPE_DOUBLE:
-			rc = hal_device_set_property_double (udi, key,
+			rc = hal_device_set_property_double (hal_ctx, udi, key,
 							     double_value);
 			break;
 		case DBUS_TYPE_BOOLEAN:
-			rc = hal_device_set_property_bool (udi, key,
+			rc = hal_device_set_property_bool (hal_ctx, udi, key,
 							   bool_value);
 			break;
 		}
