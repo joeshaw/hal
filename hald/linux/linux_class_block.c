@@ -327,10 +327,28 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         /** @todo  Guestimate product name; use volume label */
         ds_property_set_string(d, "info.product", "Volume");
 
+        /* update storage.removable.media_inserted if applicable */
+/*
+        if( ds_property_get_bool(parent, "storage.removable") )
+        {
+            ds_property_set_bool(parent, "storage.removable.media_inserted", 
+                                 TRUE)
+        }
+*/
+
     }
     else
     {
-        /* We are a disk; maybe we even offer removable media */
+        dbus_bool_t removable_media = FALSE;
+
+        /* be pessimistic */
+        ds_property_set_bool(d, "storage.cdr", FALSE);
+        ds_property_set_bool(d, "storage.cdrw", FALSE);
+        ds_property_set_bool(d, "storage.dvd", FALSE);
+        ds_property_set_bool(d, "storage.dvdr", FALSE);
+        ds_property_set_bool(d, "storage.dvdram", FALSE);
+
+        /* We are a disk or cdrom drive; maybe we even offer removable media */
         ds_property_set_string(d, "info.category", "block");
 
         if( strcmp(ds_property_get_string(parent, "info.bus"), "ide")==0 )
@@ -338,7 +356,6 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             const char* ide_name;
             char* model;
             char* media;
-            dbus_bool_t removable_media;
 
             ide_name = get_last_element(
                 ds_property_get_string(d, "linux.sysfs_path"));
@@ -350,7 +367,6 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                 ds_property_set_string(d, "info.product", model);
             }
 
-            removable_media = FALSE;
             
             /* According to the function proc_ide_read_media() in 
              * drivers/ide/ide-proc.c in the Linux sources, media
@@ -400,9 +416,6 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                 }
 
             }
-
-            ds_property_set_bool(d, "storage.has_removable_media", 
-                                 removable_media);
             
         }
         else
@@ -427,8 +440,16 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             /* guestimate product name */
             ds_property_set_string(d, "info.product", "Disk");
 
-            /* omit block.media! */
         }
+
+        ds_property_set_bool(d, "storage.removable", removable_media);
+/*
+        if( removable_media )
+        {
+            ds_property_set_bool(d, "storage.removable.media_inserted", 
+                                 FALSE);
+        }
+*/
     }
 
     /* check /etc/mtab, forces reload of the file */
@@ -467,14 +488,6 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
 
     device_file = ds_property_get_string(d, "block.device");
     HAL_INFO(("Entering, udi=%s, device_file=%s", d->udi, device_file));
-
-    /* be pessimistic */
-    ds_property_set_bool(d, "storage.cdr", FALSE);
-    ds_property_set_bool(d, "storage.cdrw", FALSE);
-    ds_property_set_bool(d, "storage.dvd", FALSE);
-    ds_property_set_bool(d, "storage.dvdr", FALSE);
-    ds_property_set_bool(d, "storage.dvdram", FALSE);
-    ds_property_set_bool(d, "storage.cdrom.support_media_changed", FALSE);
 
     if( device_file!=NULL && strcmp(device_file, "")!=0 )
     {
@@ -527,7 +540,7 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
                 }
 
                 /* while we're at it, check if we support media changed */
-                if( ioctl(fd, CDROM_MEDIA_CHANGED)==0 )
+                if( ioctl(fd, CDROM_MEDIA_CHANGED)>=0 )
                 {
                     ds_property_set_bool(d, 
                          "storage.cdrom.support_media_changed", TRUE);
@@ -977,99 +990,114 @@ static dbus_bool_t detect_media(HalDevice* d)
      */
     fd = open(device_file, O_RDONLY|O_NONBLOCK);
 
-    if( fd!=-1 )
-    {
-        /* special treatment for optical discs */
-        if( ds_property_exists(d, "storage.media") &&
-            strcmp(ds_property_get_string(d, "storage.media"), "cdrom")==0 &&
-            ds_property_get_bool(d, "storage.cdrom.support_media_changed")
-            )
-        {
-            int media_changed;
-            HalDevice* child;
-            
-            ioctl(fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS);
-            media_changed = ioctl(fd, CDROM_MEDIA_CHANGED);
-            close(fd);
-            
-            if( media_changed!=0 )
-            {
-                /* we get to here if there is no disc in the drive */
-                
-                child = ds_device_find_by_key_value_string("info.parent", 
-                                                           d->udi, 
-                                                           TRUE);
-                if( child!=NULL )
-                {
-                    HAL_INFO(("Removing volume for optical device %s", 
-                              device_file));
-                    ds_device_destroy(child);
-
-                    /* GDL was modified */
-                    return TRUE;
-                }
-            }
-            else
-            {
-                /* disc in drive; check if the HAL device representing
-                 * the optical drive already got a child (it can have
-                 * only one child)
-                 */
-
-                child = ds_device_find_by_key_value_string("info.parent", 
-                                                           d->udi, 
-                                                           TRUE);
-                if( child==NULL )
-                {
-                    char udi[256];
-                    
-                    /* nope, add child */
-                    HAL_INFO(("Adding volume for optical device %s", 
-                                  device_file));
-
-                    child = ds_device_new();
-                    
-                    /* copy from parent */
-                    ds_device_merge(child, d);
-                    
-                    /* modify some properties */
-                    ds_property_set_string(child, "info.parent", d->udi);
-                    ds_property_set_bool(child, "block.is_volume", TRUE);
-                    ds_property_set_string(child, "info.capabilities", 
-                                           "block volume");
-                    ds_property_set_string(child, "info.category", 
-                                           "volume");
-                    ds_property_set_string(child, "info.product", 
-                                           "Disc");
-                    
-                    /* set UDI as appropriate */
-                    strncpy(udi, ds_property_get_string(d, "info.udi"),
-                            256);
-                    strncat(udi, "-disc", 256);
-                    ds_property_set_string(child, "info.udi", udi);
-                    ds_device_set_udi(child, udi);
-                    
-                    /* add new device */
-                    ds_gdl_add(child);
-
-                    /* GDL was modified */
-                    return TRUE;
-                }
-            }
-        }
-        else
-        {
-            close(fd);
-        }
-        
-    }
-    else
+    if( fd==-1 )
     {
         /* open failed */
         HAL_WARNING(("open(\"%s\", O_RDONLY|O_NONBLOCK) failed, "
                      "errno=%d", device_file, errno));
+        return FALSE;
     }
 
+    /* special treatment for optical discs */
+    if( ds_property_exists(d, "storage.media") &&
+        strcmp(ds_property_get_string(d, "storage.media"), "cdrom")==0 &&
+        ds_property_get_bool(d, "storage.cdrom.support_media_changed")
+        )
+    {
+        int drive;
+        HalDevice* child;
+        dbus_bool_t got_disc = FALSE;
+            
+        drive = ioctl(fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
+        switch( drive )
+        {
+        /* explicit fallthrough */
+        case CDS_NO_INFO:
+        case CDS_NO_DISC:
+        case CDS_TRAY_OPEN:
+        case CDS_DRIVE_NOT_READY:
+            break;
+
+        case CDS_DISC_OK:
+            got_disc = TRUE;
+            break;
+            
+        default:
+            break;
+        }
+
+        if( !got_disc )
+        {
+            /* we get to here if there is no disc in the drive */
+            child = ds_device_find_by_key_value_string("info.parent", 
+                                                       d->udi, 
+                                                       TRUE);
+
+            if( child!=NULL )
+            {
+                HAL_INFO(("Removing volume for optical device %s", 
+                          device_file));
+                ds_device_destroy(child);
+
+                close(fd);
+
+                /* GDL was modified */
+                return TRUE;
+            }
+
+            close(fd);
+            return FALSE;
+        }
+
+        /* got a disc in drive, */
+        
+        /* disc in drive; check if the HAL device representing
+         * the optical drive already got a child (it can have
+         * only one child)
+         */
+            
+        child = ds_device_find_by_key_value_string("info.parent", 
+                                                   d->udi, 
+                                                   TRUE);
+        if( child==NULL )
+        {
+            char udi[256];
+            
+            /* nope, add child */
+            HAL_INFO(("Adding volume for optical device %s", 
+                      device_file));
+            
+            child = ds_device_new();
+            
+            /* copy from parent */
+            ds_device_merge(child, d);
+            
+            /* modify some properties */
+            ds_property_set_string(child, "info.parent", d->udi);
+            ds_property_set_bool(child, "block.is_volume", TRUE);
+            ds_property_set_string(child, "info.capabilities", 
+                                   "block volume");
+            ds_property_set_string(child, "info.category", 
+                                   "volume");
+            ds_property_set_string(child, "info.product", 
+                                   "Disc");
+            
+            /* set UDI as appropriate */
+            strncpy(udi, ds_property_get_string(d, "info.udi"),
+                    256);
+            strncat(udi, "-disc", 256);
+            ds_property_set_string(child, "info.udi", udi);
+            ds_device_set_udi(child, udi);
+            
+            /* add new device */
+            ds_gdl_add(child);
+            
+            /* GDL was modified */
+            return TRUE;
+        }
+
+    } /* if( is optical drive ) */
+    
     return FALSE;
 }
 

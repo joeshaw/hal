@@ -1,5 +1,17 @@
 2004-01-13  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/linux_class_block.c 
+	(linux_class_block_check_if_ready_to_add): ioctl rc>=0 is also success
+	(detect_media): rewrite most of this function
+	(visit_class_device_block_got_parent): Rename 
+	storage.has_removable_media to storage.support_removable_media. Set
+	it for all devices - only properly detected for IDE CD-ROM drives
+	currently.
+	(linux_class_block_check_if_ready_to_add): Move storage.* properties
+	to visit_class_device_block_got_parent()
+
+2004-01-13  David Zeuthen  <david@fubar.dk>
+	
 	* configure.in: Bump version number to 0.2.3
 
 	* tools/device-manager/DeviceManager.py 
