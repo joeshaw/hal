@@ -1,5 +1,10 @@
 2004-05-01  David Zeuthen  <david@fubar.dk>
 
+	* libhal/libhal.h: fix that the extern "C" linkage stuff was
+	accidently commented out
+
+2004-05-01  David Zeuthen  <david@fubar.dk>
+
 	* hald/callout.c (iochn_data): remember to remove element from 
 	active_callouts list
 

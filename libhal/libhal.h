@@ -28,11 +28,9 @@
 
 #include <dbus/dbus.h>
 
-/*
 #if defined(__cplusplus)
 extern "C" {
 #endif
-*/
 
 /**
  * @addtogroup LibHal
