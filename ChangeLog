@@ -1,3 +1,7 @@
+2003-11-06  David Zeuthen  <david@fubar.dk>
+
+	* hal.conf: Changed to work with D-BUS head
+	
 2003-11-05  David Zeuthen  <david@fubar.dk>
 
 	* Initial module creation; moved HAL 0.1 out of the way
