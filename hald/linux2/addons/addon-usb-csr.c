@@ -112,7 +112,12 @@ static void update_properties (void)
 					   the_device_udi, 
 					   "battery.command_interface", "csr",
 					   &err);
+}
 
+static void add_capability (void)
+{
+	DBusError err;
+	dbus_error_init (&err);
 	libhal_device_add_capability (hal_context, 
 				      the_device_udi, 
 				      "battery",
@@ -430,10 +435,15 @@ main (int argc, char *argv[])
 	
 	dbg ("** Addon started\n");
 
+	/* do coldplug */
+	check_all_batteries (NULL);
+
+	/* only add capability when initial charge_level key has been set */
+	add_capability ();
+
 	main_loop = g_main_loop_new (NULL, FALSE);
 
 	g_timeout_add (1000L * check_interval, check_all_batteries, NULL);
-	check_all_batteries (NULL);
 
 	g_main_loop_run (main_loop);
 

@@ -6,6 +6,13 @@
 
 	* configure.in: Added zh_TW to ALL_LINGUAS
 
+2005-04-02  Richard hughes  <richard@hughsie.com>
+	
+	* hald/linux2/addons/addon-usb-csr: Fix a problem where
+	the capability was being added before the charge_level key
+	way set, causing programs watching for the "new capability"
+	to not be able to query the key until it was restarted.
+ 
 2005-03-30  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/information/10freedesktop/10-usb-pda.fdi: Match for info.
