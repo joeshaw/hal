@@ -118,7 +118,7 @@ static void set_label_unicode16(struct volume_id *id,
 	__u16 c;
 
 	j = 0;
-	for (i = 0; i <= count-2; i += 2) {
+	for (i = 0; i + 2 <= count; i += 2) {
 		if (endianess == LE)
 			c = (buf[i+1] << 8) | buf[i];
 		else

@@ -1,3 +1,8 @@
+2004-06-28  Joe Shaw  <joeshaw@novell.com>
+
+	* linux/volume_id/volume_id.c (set_label_unicode16): Change
+	condition to not wrap around on very short (or empty) labels.
+
 2004-06-26  David Zeuthen  <david@fubar.dk>
 
 	* fdi/20freedesktop/Makefile.am (dist_fdi20freedesktop_DATA): 
