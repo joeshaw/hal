@@ -236,6 +236,8 @@ dbus_bool_t hald_is_initialising;
 /** This is set to #TRUE if we are shutting down and #FALSE otherwise */
 dbus_bool_t hald_is_shutting_down;
 
+static int startup_daemonize_pipe[2];
+
 /** Entry point for HAL daemon
  *
  *  @param  argc                Number of arguments
@@ -247,6 +249,8 @@ main (int argc, char *argv[])
 {
 	GMainLoop *loop;
 	guint sigterm_iochn_listener_source_id;
+
+	g_type_init ();
 
 	logger_init ();
 	if (getenv ("HALD_VERBOSE"))
@@ -318,6 +322,12 @@ main (int argc, char *argv[])
 
 		HAL_INFO (("Becoming a daemon"));
 
+		if (pipe (startup_daemonize_pipe) != 0) {
+			fprintf (stderr, "Could not setup pipe: %s\n", strerror(errno));
+			exit (1);
+		}
+
+
 		if (chdir ("/") < 0) {
 			fprintf (stderr, "Could not chdir to /: %s\n", strerror(errno));
 			exit (1);
@@ -345,9 +355,13 @@ main (int argc, char *argv[])
 			break;
 
 		default:
-			/* parent */
-			exit (0);
-			break;
+		        {
+				char buf[1];
+				/* parent, block until child writes */
+				read (startup_daemonize_pipe[0], &buf, sizeof (buf));
+				exit (0);
+				break;
+			}
 		}
 
 		/* Create session */
@@ -380,8 +394,6 @@ main (int argc, char *argv[])
 
 	hald_read_conf_file ();
 
-	g_type_init ();
-
 	/* set up the dbus services */
 	if (!hald_dbus_init ())
 		return 1;
@@ -409,8 +421,14 @@ main (int argc, char *argv[])
 void 
 osspec_probe_done (void)
 {
+	char buf[1] = {0};
 
 	HAL_INFO (("Device probing completed"));
+
+	/* tell parent to exit */
+	write (startup_daemonize_pipe[1], buf, sizeof (buf));
+	close (startup_daemonize_pipe[0]);
+	close (startup_daemonize_pipe[1]);
 
 	hald_is_initialising = FALSE;
 }

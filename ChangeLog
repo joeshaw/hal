@@ -1,5 +1,11 @@
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
+	* hald/hald.c (main): Setup a pipe and make parent wait until client
+	writes to it.
+	(osspec_probe_done): Write to the parent to make it exit
+
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
 	* hald/hald.c (main): Move daemonazation back to beginning (fixes
 	fdo bug #1165) for now
 
