@@ -1,5 +1,15 @@
 2003-11-23  David Zeuthen  <david@fubar.dk>
 
+	* agents/linux26/sysfs/hal-sysfs-agent.c: USB interfaces now have
+	their own device which has the USB device as the parent
+	(usbif_compute_udi): new function
+	(visit_device_usb_interface): create a new independent device for
+	the interface
+
+	* tools/hal-device-manager: Add support for bus usbif
+	
+2003-11-23  David Zeuthen  <david@fubar.dk>
+
 	* agents/linux26/sysfs/hal-sysfs-agent.c:
 	(usb_compute_udi): Make the device configuration entry part of the
 	device udi; use serial number, if available.

@@ -1150,6 +1150,55 @@ static char* usb_compute_udi(const char* udi, int append_num)
     return buf;
 }
 
+/** This function will compute the device uid based on other properties
+ *  of the device. Specifically, the following properties are required:
+ *
+ *   - usb.idVendor, usb.idProduct, usb.bcdDevice. 
+ *
+ *  Other properties may also be used, specifically the usb.SerialNumber 
+ *  is used if available.
+ *
+ *  Requirements for uid:
+ *   - do not rely on bus, port etc.; we want this id to be as unique for
+ *     the device as we can
+ *   - make sure it doesn't rely on properties that cannot be obtained
+ *     from the minimal information we can obtain on an unplug event
+ *
+ *  @param  udi                 Unique device id of tempoary device object
+ *  @param  append_num          Number to append to name if not -1
+ *  @return                     New unique device id; only good until the
+ *                              next invocation of this function
+ */
+static char* usbif_compute_udi(const char* udi, int append_num)
+{
+    char* serial;
+    char* format;
+    char* pd;
+    char* name;
+    int i, len;
+    static char buf[256];
+
+    if( append_num==-1 )
+        format = "/org/freedesktop/Hal/devices/usbif_%s_%d";
+    else
+        format = "/org/freedesktop/Hal/devices/usbif_%s_%d-%d";
+
+    pd = hal_device_get_property_string(udi, "Parent");
+    len = strlen(pd);
+    for(i=len-1; pd[i]!='/' && i>=0; i--)
+        ;
+    name = pd+i+1;
+
+    snprintf(buf, 256, format, 
+             name,
+             hal_device_get_property_int(udi, "usbif.number"),
+             append_num);
+
+    free(pd);
+    
+    return buf;
+}
+
 /** Type for function to compute the UDI (unique device id) for a given
  *  HAL device.
  *
@@ -1401,6 +1450,8 @@ static char* find_udi_from_sysfs_path(const char* path)
  *  for a while because we may race against the /sbin/hotplug invoked
  *  event for the USB device.
  *
+ *  This race actually happens once in a while.
+ *
  *  @param  path                Sysfs-path of USB interface
  *  @return                     UDI (unique device id) of USB device
  */
@@ -1465,42 +1516,38 @@ static void visit_device_usb_interface(const char* path,
     int i;
     int len;
     int in_num;
-    int conf_num;
     struct sysfs_attribute* cur;
     char* d;
+    char* pd;
     char buf[256];
     char attr_name[SYSFS_NAME_LEN];
 
     //printf("usb_interface: path=%s\n", path);
 
-    d = find_usb_device_from_interface_sysfs_path(path);
+    /* Find parent USB device - this may block..  */
+    pd = find_usb_device_from_interface_sysfs_path(path);
+
+
+    /* Create HAL device representing the interface */
+    d = hal_agent_new_device();
+    assert( d!=NULL );
+    hal_device_set_property_string(d, "Bus", "usbif");
+    hal_device_set_property_string(d, "Linux.sysfs_path", path);
+    /** @note We also set the path here, because otherwise we can't handle two
+     *  identical devices per the algorithm used in a #rename_and_maybe_add()
+     *  The point is that we need something unique in the Bus namespace
+     */
+    hal_device_set_property_string(d, "usbif.linux.sysfs_path", path);
+    hal_device_set_property_string(d, "PhysicalDevice", pd);
+    hal_device_set_property_string(d, "Parent", pd);
+
+    hal_device_set_property_int(d, "usbif.deviceIdVendor",
+        hal_device_get_property_int(pd, "usb.idVendor"));
+    hal_device_set_property_int(d, "usbif.deviceIdProduct",
+        hal_device_get_property_int(pd, "usb.idProduct"));
 
     if( device->directory==NULL || device->directory->attributes==NULL )
         return;
-
-    /** @todo What about multiple configurations? Must acquire an USB
-     *        device that does this :-) Right now assume configuration 1
-     */
-    conf_num = 1;
-
-    /* first, find interface number */
-    in_num = -1;
-    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
-                        struct sysfs_attribute)
-    {
-        if( sysfs_get_name_from_path(cur->path, 
-                                     attr_name, SYSFS_NAME_LEN) != 0 )
-            continue;
-
-        if( strcmp(attr_name, "bInterfaceNumber")==0 )
-        {
-            in_num = parse_dec(cur->value);
-        }
-    }
-    if( in_num==-1 )
-        return;
-
-    /*printf("conf_num=%d, in_num=%d\n", conf_num, in_num);*/
 
     dlist_for_each_data(sysfs_get_device_attributes(device), cur,
                         struct sysfs_attribute)
@@ -1518,36 +1565,20 @@ static void visit_device_usb_interface(const char* path,
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
 
         if( strcmp(attr_name, "bInterfaceClass")==0 )
-        {
-            snprintf(buf, 256, "usb.%d.%d.bInterfaceClass", conf_num, in_num);
-            hal_device_set_property_int(d, buf, parse_dec(cur->value));
-            if( conf_num==1 && in_num==0 )
-            {
-                hal_device_set_property_int(d, "usb.bInterfaceClass", 
-                                            parse_dec(cur->value));
-            }
-        }
+            hal_device_set_property_int(d, "usbif.bInterfaceClass", 
+                                        parse_dec(cur->value));
         else if( strcmp(attr_name, "bInterfaceSubClass")==0 )
-        {
-            snprintf(buf, 256, "usb.%d.%d.bInterfaceSubClass",conf_num,in_num);
-            hal_device_set_property_int(d, buf, parse_dec(cur->value));
-            if( conf_num==1 && in_num==0 )
-            {
-                hal_device_set_property_int(d, "usb.bInterfaceSubClass",
-                                            parse_dec(cur->value));
-            }
-        }
+            hal_device_set_property_int(d, "usbif.bInterfaceSubClass",
+                                        parse_dec(cur->value));
         else if( strcmp(attr_name, "bInterfaceProtocol")==0 )
-        {
-            snprintf(buf, 256, "usb.%d.%d.bInterfaceProtocol",conf_num,in_num);
-            hal_device_set_property_int(d, buf, parse_dec(cur->value));
-            if( conf_num==1 && in_num==0 )
-            {
-                hal_device_set_property_int(d, "usb.bInterfaceProtocol", 
-                                            parse_dec(cur->value));
-            }
-        }
+            hal_device_set_property_int(d, "usbif.bInterfaceProtocol", 
+                                        parse_dec(cur->value));
+        else if( strcmp(attr_name, "bInterfaceNumber")==0 )
+            hal_device_set_property_int(d, "usbif.number", 
+                                        parse_dec(cur->value));
     }
+
+    d = rename_and_maybe_add(d, usbif_compute_udi, "usbif");
 }
 
 /** Visitor function for USB device.

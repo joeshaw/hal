@@ -60,6 +60,8 @@ class Device:
 
             if self.properties["Bus"]=="usb":
                 icon = bus_icons["usb"]
+            elif self.properties["Bus"]=="usbif":
+                icon = bus_icons["usb"]
             elif self.properties["Bus"]=="pci":
                 icon = bus_icons["pci"]
             tree_model.set_value(self.row, PIXBUF_COLUMN, icon)
@@ -121,7 +123,9 @@ def build_device_tree():
     return virtual_root
 
 
-bus_names = {"usb" : "USB", "pci" : "PCI"}
+bus_names = {"usb"   : "USB",
+             "usbif" : "USB Interface",
+             "pci"   : "PCI"}
 
 state_names = { 0 : "<span foreground='red'>No device information file was found</span>",
                 1 : "Enabling...",
