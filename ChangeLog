@@ -1,3 +1,20 @@
+2004-10-18  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald.c (main): Do openlog() so we can log to the syslog
+	
+	* hald/linux/hald_helper.h: Add a timestamp field
+	
+	* hald/linux/osspec.c:
+	(osspec_timer_handler): Call hotplug_timeout_handler
+	(hotplug_timeout_handler): New function
+	(hald_helper_hotplug_process_queue): Set last timestamp and add
+	 uncommented test code for dropping every 16th hotplug event
+	(hald_helper_first_hotplug_event): Update last timestamp
+	
+	* tools/linux/hal_dev.c (main): Set timestamp
+	
+	* tools/linux/hal_hotplug.c (main): Set timestamp
+
 2004-10-15  David Zeuthen  <davidz@redhat.com>
 
 	* tools/fstab-sync.c (add_udi): Use the name of the special device

@@ -44,6 +44,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <time.h>
 
 #include "../../hald/linux/hald_helper.h"
 
@@ -131,6 +132,7 @@ main (int argc, char *argv[], char *envp[])
 	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN-1);
 	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN-1);
 	strncpy (msg.device_name, devname, HALD_HELPER_STRLEN-1);
+	msg.time_stamp = time (NULL);
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {

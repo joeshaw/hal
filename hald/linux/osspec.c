@@ -37,10 +37,12 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <syslog.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/utsname.h>
+#include <time.h>
 
 #include <glib.h>
 #include <dbus/dbus.h>
@@ -60,7 +62,11 @@
 
 #include "libsysfs/libsysfs.h"
 
+/** How many ms to sleep on first hotplug event (to queue up other hotplug events) */
 #define FIRST_HOTPLUG_SLEEP 3500
+
+/** How many seconds before we discard a missing hotplug event and move on to the next one */
+#define HOTPLUG_TIMEOUT 15
 
 extern ClassDeviceHandler input_class_handler;
 extern ClassDeviceHandler net_class_handler;
@@ -133,6 +139,8 @@ static gboolean hald_helper_data (GIOChannel *source, GIOCondition condition, gp
 
 static HalDevice *add_device (const char *sysfs_path, const char *subsystem, struct hald_helper_msg *msg);
 
+static void hotplug_timeout_handler (void);
+
 /** Mount path for sysfs */
 char sysfs_mount_path[SYSFS_PATH_MAX];
 
@@ -155,6 +163,8 @@ osspec_timer_handler (gpointer data)
 		ClassDeviceHandler *ch = class_device_handlers[i];
 		ch->tick (ch);
 	}
+
+	hotplug_timeout_handler ();
 
 	return TRUE;
 }
@@ -1394,6 +1404,9 @@ static GList *hotplug_queue_first = NULL;
 /** Last hotplug sequence number */
 static guint64 last_hotplug_seqnum = 0;
 
+/** Timestamp of last hotplug */
+static time_t last_hotplug_time_stamp = 0;
+
 /** Hotplug semaphore */
 static gint hotplug_counter = 0;
 
@@ -1435,11 +1448,38 @@ trynext:
 		if (msg->seqnum == last_hotplug_seqnum + 1) {
 			/* yup, found it */
 			last_hotplug_seqnum = msg->seqnum;
+			last_hotplug_time_stamp = msg->time_stamp;
 			hald_helper_hotplug (msg->action, msg->seqnum, g_strdup (msg->subsystem), 
 					     g_strdup (msg->sysfs_path), msg);
 			g_free (msg);
 			hotplug_queue = g_list_delete_link (hotplug_queue, i);
 			goto trynext;
+		}
+	}
+}
+
+/** Check the queue and do timeout handling on missing hotplug events */
+static void 
+hotplug_timeout_handler (void)
+{
+	time_t now;
+
+	now = time (NULL);
+
+	/* See if there was a last hotplug event */
+	if (last_hotplug_time_stamp > 0) {
+		/* See if it's too long ago we processed */
+		if (now - last_hotplug_time_stamp > HOTPLUG_TIMEOUT) {
+			/* And if anything is actually waiting to be processed */
+			if (hotplug_queue != NULL) {
+				/* also log this to syslog */
+				syslog (LOG_ERR, "Timed out waiting for hotplug event %lld", last_hotplug_seqnum + 1);
+				HAL_ERROR (("Timed out waiting for hotplug event %lld", last_hotplug_seqnum + 1));
+				
+				/* Go to next seqnum and try again */
+				last_hotplug_seqnum++;
+				hald_helper_hotplug_process_queue ();
+			}
 		}
 	}
 }
@@ -1505,6 +1545,7 @@ hald_helper_first_hotplug_event (gpointer data)
 		msg = (struct hald_helper_msg *) i->data;
 		HAL_INFO (("*** msg->seqnum = %lld", msg->seqnum));
 		last_hotplug_seqnum = msg->seqnum;
+		last_hotplug_time_stamp = msg->time_stamp;
 	}
 
 	/* Done sleeping on the first hotplug event */
@@ -1576,6 +1617,20 @@ hald_helper_data (GIOChannel *source,
 		goto out;
 	}
 
+	HAL_INFO (("SEQNUM=%lld, TIMESTAMP=%d", msg.seqnum, msg.time_stamp));
+
+	/* For DEBUG: Drop every 16th hotplug event */
+#if 0
+	if ((msg.seqnum&0x0f) == 0x00) {
+		HAL_INFO (("=========================================="));
+		HAL_INFO (("=========================================="));
+		HAL_INFO (("NOTE NOTE: For debugging, deliberately ignoring hotplug event with SEQNUM=%d", msg.seqnum));
+		HAL_INFO (("=========================================="));
+		HAL_INFO (("=========================================="));
+		goto out;
+	}
+#endif
+
 	switch (msg.type) {
 	case HALD_DEVD:
 		hald_helper_device_name (msg.action, msg.seqnum, g_strdup (msg.subsystem),
@@ -1608,6 +1663,7 @@ hald_helper_data (GIOChannel *source,
 
 			/* so we only setup one timer */
 			last_hotplug_seqnum = msg.seqnum;
+			last_hotplug_time_stamp = msg.time_stamp;
 
 			goto out;
 		}

@@ -6923,13 +6923,10 @@ CLASS="programlisting"
 	  &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
 	  &#60;merge key="volume.policy.mount_filesystem" type="copy_property"&#62;volume.fstype&#60;/merge&#62;
 	  
-	  &#60;!-- Fallback is '&#60;storage.drive_type&#62;', e.g. disk, compact_flash etc. --&#62;
-	  &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;@block.storage_device:storage.drive_type&#60;/merge&#62;
-	  
-	  &#60;!-- Better: if available use UUID --&#62;
-          &#60;match key="volume.uuid" empty="false"&#62;
-            &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;volume.uuid&#60;/merge&#62;
-          &#60;/match&#62;
+	  &#60;!-- Fallback is '&#60;storage.bus&#62;', appended with 'disk', e.g. usbdisk,
+	       idedisk, scsidisk etc. --&#62;
+	  &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;@block.storage_device:storage.bus&#60;/merge&#62;
+	  &#60;append key="volume.policy.desired_mount_point" type="string"&#62;disk&#60;/append&#62;
 	  
           &#60;!-- Best: If available use filesystem label --&#62;
           &#60;match key="volume.label" empty="false"&#62;

@@ -41,6 +41,7 @@
 #include <sys/prctl.h>
 #include <sys/capability.h>
 #include <grp.h>
+#include <syslog.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -321,6 +322,8 @@ main (int argc, char *argv[])
 {
 	GMainLoop *loop;
 	guint sigterm_iochn_listener_source_id;
+
+	openlog ("hald", LOG_PID, LOG_DAEMON);
 
 	g_type_init ();
 
