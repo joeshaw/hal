@@ -1,3 +1,9 @@
+2004-10-25  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/osspec.c (hotplug_timeout_handler): Fixup timeout handling
+	to rebasing to lowest seqnum in queue instead of just taking the
+	next one
+
 2004-10-25  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_highpoint_ataraid),

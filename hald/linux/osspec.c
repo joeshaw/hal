@@ -1468,6 +1468,8 @@ static void
 hotplug_timeout_handler (void)
 {
 	time_t now;
+	GList *i;
+	struct hald_helper_msg *msg;
 
 	now = time (NULL);
 
@@ -1477,12 +1479,27 @@ hotplug_timeout_handler (void)
 		if (now - last_hotplug_time_stamp > HOTPLUG_TIMEOUT) {
 			/* And if anything is actually waiting to be processed */
 			if (hotplug_queue != NULL) {
-				/* also log this to syslog */
-				syslog (LOG_ERR, "Timed out waiting for hotplug event %lld", last_hotplug_seqnum + 1);
-				HAL_ERROR (("Timed out waiting for hotplug event %lld", last_hotplug_seqnum + 1));
-				
-				/* Go to next seqnum and try again */
-				last_hotplug_seqnum++;
+				unsigned long long new_min_seqnum;
+
+				/* Select the lowest seqnum in the queue and reset last_hotplug_time_stamp to 0 */
+				new_min_seqnum = G_MAXUINT64;
+				for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
+					/* this will run since hotplug_queue != NULL */
+					msg = i->data;
+					HAL_INFO (("Looking at %lld", msg->seqnum));
+					if (msg->seqnum < new_min_seqnum)
+						new_min_seqnum = msg->seqnum;
+				}
+				syslog (LOG_ERR, "Timed out waiting for hotplug event %lld. Rebasing to %lld", 
+					last_hotplug_seqnum + 1, new_min_seqnum);
+				HAL_ERROR (("Timed out waiting for hotplug event %lld. Rebasing to %lld", 
+					    last_hotplug_seqnum + 1, new_min_seqnum));
+				last_hotplug_seqnum = new_min_seqnum - 1;
+				last_hotplug_time_stamp = 0;
+
+
+
+				/* process that event now */
 				hald_helper_hotplug_process_queue ();
 			}
 		}
