@@ -1,5 +1,26 @@
 2004-09-13  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/linux/multimedia_class_device.c:
+	(multimedia_class_device_accept), (multimedia_class_pre_process):
+	New file for initial support of video4linux devices. It's just
+	a starting point and we need more input from users of v4l
+	devices. For a simple webcam it currently looks like this:
+	   multimedia.device = '/udev/video0'  (string)
+	   info.category = 'multimedia'  (string)
+	   multimedia.video.can_capture = true  (bool)
+	   multimedia.audio.has_audio = false  (bool)
+	   multimedia.tuner.has_tuner = false  (bool)
+	   multimedia.linux.version = 'v4l'  (string)
+	   info.udi = '/org/freedesktop/Hal/devices/usb_device_5a9_a511_100_-1_noserial'  (string)
+
+	* hald/linux/osspec.c:  Add the new multimedia_class_handler to
+	probe for video device properties on device discovery
+
+	* tools/device-manager/Representation.py: Change "video" to
+	"multimedia" to have a nice icon for the screenshots :)
+
+2004-09-13  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/linux/volume_id/volume_id.c: (probe_hfs_hfsplus): Add
 	  support for hfsplus with the physical location of the root node
 	  specified by a higher extent as the first one. This fixes

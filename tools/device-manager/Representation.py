@@ -67,7 +67,7 @@ class Representation:
             icon = self.icons["keyboard"]
         elif cat=="pcmcia_socket":
             icon = self.icons["cardbus"]
-        elif cat=="video":
+        elif cat=="multimedia":
             icon = self.icons["video"]
         elif cat=="camera":
             icon = self.icons["camera"]

@@ -69,6 +69,7 @@ extern ClassDeviceHandler pcmcia_socket_class_handler;
 extern ClassDeviceHandler ieee1394_class_handler;
 extern ClassDeviceHandler ieee1394_node_class_handler;
 extern ClassDeviceHandler ieee1394_host_class_handler;
+extern ClassDeviceHandler multimedia_class_handler;
 
 extern BusDeviceHandler pci_bus_handler;
 extern BusDeviceHandler usb_bus_handler;
@@ -97,6 +98,7 @@ static ClassDeviceHandler* class_device_handlers[] = {
 	&ieee1394_host_class_handler,
 	&ieee1394_node_class_handler,
 	&ieee1394_class_handler,
+	&multimedia_class_handler,
 	NULL
 };
 
