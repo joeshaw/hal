@@ -21,12 +21,13 @@
 #ifndef _VOLUME_ID_H_
 #define _VOLUME_ID_H_
 
-#define VOLUME_ID_VERSION		010
+#define VOLUME_ID_VERSION		013
 
 #define VOLUME_ID_LABEL_SIZE		64
 #define VOLUME_ID_UUID_SIZE		16
 #define VOLUME_ID_UUID_STRING_SIZE	37
-#define VOLUME_ID_PATH_MAX		255
+#define VOLUME_ID_FORMAT_SIZE		32
+#define VOLUME_ID_PATH_MAX		256
 
 enum volume_id_type {
 	VOLUME_ID_UNKNOWN,
@@ -45,7 +46,6 @@ enum volume_id_format {
 	VOLUME_ID_REISERFS,
 	VOLUME_ID_XFS,
 	VOLUME_ID_JFS,
-	VOLUME_ID_MSDOS,
 	VOLUME_ID_VFAT,
 	VOLUME_ID_UDF,
 	VOLUME_ID_ISO9660,
@@ -71,6 +71,7 @@ struct volume_id {
 	enum		volume_id_type type_id;
 	enum		volume_id_format format_id;
 	char		*format;
+	char		format_version[VOLUME_ID_FORMAT_SIZE];
 	struct volume_id_partition *partitions;
 	unsigned int	partition_count;
 	int		fd;

@@ -83,6 +83,9 @@ set_volume_id_values(HalDevice *d, struct volume_id *vid)
 	char *product;
 
 	hal_device_property_set_string (d, "volume.fstype", vid->format);
+	if (vid->format_version[0] != '\0')
+		hal_device_property_set_string (d, "volume.fsversion",
+						vid->format_version);
 	hal_device_property_set_string (d, "volume.uuid", vid->uuid);
 	hal_device_property_set_string (d, "volume.label", vid->label);
 

@@ -1,3 +1,21 @@
+2004-08-19 Kay Sievers <kay.sievers@vrfy.org>
+
+	* hald/linux/block_class_device.c: Add volume.fsversion to the
+	volume if avalable. Currently FAT12, FAT16, FAT32, and the
+	NTFS version unmber is supported.
+
+	* hald/linux/volume_id/volume_id.[ch]: bump to version 013
+	o remove msdos probe type (handled by vfat now)
+	o introduce format_version to return the filesystem version
+	  if available. We can provide vfat(FAT32) or NTFS(3.1) now.
+	o no longer trust the version string in the fat superblock,
+	  it's not correct to do this. The type of FAT is _only_ de-
+ 	  termined by the count of clusters.
+	o vfat's "NO NAME" is a empty label now
+	o support for FAT labels stored in the directory instead of the
+	  superblock (XP does this). volume_id ignores the label in the
+	  superblock if you have a label in the directory.
+
 2004-08-17  David Zeuthen  <david@fubar.dk>
 
 	* tools/fstab-sync.c (volume_new): Use vfat instead of msdos

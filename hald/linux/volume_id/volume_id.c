@@ -501,132 +501,263 @@ static int probe_jfs(struct volume_id *id, __u64 off)
 	return 0;
 }
 
+#define FAT12_MAX			0xff5
+#define FAT16_MAX			0xfff5
+#define FAT_ATTR_VOLUME			0x08
+struct vfat_dir_entry {
+	__u8	name[11];
+	__u8	attr;
+	__u16	time_creat;
+	__u16	date_creat;
+	__u16	time_acc;
+	__u16	date_acc;
+	__u16	cluster_high;
+	__u16	time_write;
+	__u16	date_write;
+	__u16	cluster_low;
+	__u32	size;
+} __attribute__((__packed__));
+
+static  char *_search_label_in_dir_block(const __u8 *buf, __u16 size)
+{
+	struct vfat_dir_entry *dir;
+	int i;
+	__u16 count;
+
+	dir = (struct vfat_dir_entry*) buf;
+	count = size / sizeof(struct vfat_dir_entry);
+	dbg("expected entries 0x%x", count);
+
+	for (i = 0; i <= count; i++) {
+		/* end marker */
+		if (dir[i].attr == 0x00) {
+			dbg("end of dir");
+			return NULL;
+		}
+
+		/* empty entry */
+		if (dir[i].attr == 0xe5)
+			continue;
+
+		if (dir[i].attr == FAT_ATTR_VOLUME) {
+			dbg("found ATTR_VOLUME id root dir");
+			return dir[i].name;
+		}
+
+		dbg("skip dir entry");
+	}
+
+	return NULL;
+}
+
 static int probe_vfat(struct volume_id *id, __u64 off)
 {
 	struct vfat_super_block {
-		__u8	ignored[3];
+		__u8	boot_jump[3];
 		__u8	sysid[8];
-		__u8	sector_size[2];
-		__u8	cluster_size;
+		__u16	sector_size;
+		__u8	sectors_per_cluster;
 		__u16	reserved;
 		__u8	fats;
-		__u8	dir_entries[2];
-		__u8	sectors[2];
+		__u16	dir_entries;
+		__u16	sectors;
 		__u8	media;
 		__u16	fat_length;
 		__u16	secs_track;
 		__u16	heads;
 		__u32	hidden;
 		__u32	total_sect;
-		__u32	fat32_length;
-		__u16	flags;
-		__u8	version[2];
-		__u32	root_cluster;
-		__u16	insfo_sector;
-		__u16	backup_boot;
-		__u16	reserved2[6];
-		__u8	unknown[3];
-		__u8	serno[4];
-		__u8	label[11];
-		__u8	magic[8];
-		__u8	dummy2[164];
-		__u8	pmagic[2];
+		union {
+			struct fat_super_block {
+				__u8	unknown[3];
+				__u8	serno[4];
+				__u8	label[11];
+				__u8	magic[8];
+				__u8	dummy2[192];
+				__u8	pmagic[2];
+			} __attribute__((__packed__)) fat;
+			struct fat32_super_block {
+				__u32	fat32_length;
+				__u16	flags;
+				__u8	version[2];
+				__u32	root_cluster;
+				__u16	insfo_sector;
+				__u16	backup_boot;
+				__u16	reserved2[6];
+				__u8	unknown[3];
+				__u8	serno[4];
+				__u8	label[11];
+				__u8	magic[8];
+				__u8	dummy2[164];
+				__u8	pmagic[2];
+			} __attribute__((__packed__)) fat32;
+		} __attribute__((__packed__)) type;
 	} __attribute__((__packed__)) *vs;
+
+	__u16 sector_size;
+	__u16 dir_entries;
+	__u32 sect_count;
+	__u16 reserved;
+	__u16 fat_size;
+	__u32 root_cluster;
+	__u32 dir_size;
+	__u32 cluster_count;
+	__u32 fat_length;
+	__u64 root_start;
+	__u32 start_data_sect;
+	__u32 root_cluster_sect_off;
+	__u16 root_dir_entries;
+	__u8 *buf;
+	__u32 buf_size;
+	__u8 *label = NULL;
 
 	vs = (struct vfat_super_block *) get_buffer(id, off, 0x200);
 	if (vs == NULL)
 		return -1;
 
-	if (strncmp(vs->magic, "MSWIN", 5) == 0)
-		goto found;
-	if (strncmp(vs->magic, "FAT32   ", 8) == 0)
-		goto found;
-	return -1;
+	/* believe only that's fat, don't trust the version
+	 * the cluster_count will tell us
+	 */
+	if (strncmp(vs->type.fat32.magic, "MSWIN", 5) == 0)
+		goto valid;
 
-found:
-	set_label_raw(id, vs->label, 11);
-	set_label_string(id, vs->label, 11);
-	set_uuid(id, vs->serno, 4);
+	if (strncmp(vs->type.fat32.magic, "FAT32   ", 8) == 0)
+		goto valid;
 
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_VFAT;
-	id->format = "vfat";
+	if (strncmp(vs->type.fat.magic, "FAT16   ", 8) == 0)
+		goto valid;
 
-	return 0;
-}
+	if (strncmp(vs->type.fat.magic, "MSDOS", 5) == 0)
+		goto valid;
 
-static int probe_msdos(struct volume_id *id, __u64 off)
-{
-	struct msdos_super_block {
-		__u8	boot_jump[3];
-		__u8	sysid[8];
-		__u16	sector_size;
-		__u8	cluster_size;
-		__u16	reserved;
-		__u8	fats;
-		__u8	dir_entries[2];
-		__u8	sectors[2];
-		__u8	media;
-		__u16	fat_length;
-		__u16	secs_track;
-		__u16	heads;
-		__u32	hidden;
-		__u32	total_sect;
-		__u8	unknown[3];
-		__u8	serno[4];
-		__u8	label[11];
-		__u8	magic[8];
-		__u8	dummy2[192];
-		__u8	pmagic[2];
-	} __attribute__((__packed__)) *ms;
+	if (strncmp(vs->type.fat.magic, "FAT12   ", 8) == 0)
+		goto valid;
 
-	unsigned int	sector_size;
-
-	ms = (struct msdos_super_block *) get_buffer(id, off, 0x200);
-	if (ms == NULL)
-		return -1;
-
-	if (strncmp(ms->magic, "MSDOS", 5) == 0)
-		goto found;
-	if (strncmp(ms->magic, "FAT16   ", 8) == 0)
-		goto found;
-	if (strncmp(ms->magic, "FAT12   ", 8) == 0)
-		goto found;
 	/*
-	 * Bad, not finished. There are old floppies out there without a magic,
- 	 * so we check for well known values and guess if it's a msdos volume
+	 * There are old floppies out there without a magic, so we check
+	 * for well known values and guess if it's a fat volume
 	 */
 
 	/* boot jump address check */
-	if ((ms->boot_jump[0] != 0xeb || ms->boot_jump[2] != 0x90) &&
-	     ms->boot_jump[0] != 0xe9)
+	if ((vs->boot_jump[0] != 0xeb || vs->boot_jump[2] != 0x90) &&
+	     vs->boot_jump[0] != 0xe9)
 		return -1;
+
 	/* heads check */
-	if (ms->heads == 0)
+	if (vs->heads == 0)
 		return -1;
+
+	/* cluster size check*/	
+	if (vs->sectors_per_cluster == 0 ||
+	    (vs->sectors_per_cluster & (vs->sectors_per_cluster-1)))
+		return -1;
+
+	/* media check */
+	if (vs->media < 0xf8 && vs->media != 0xf0)
+		return -1;
+
+	/* fat count*/
+	if (vs->fats != 2)
+		return -1;
+
+valid:
 	/* sector size check */
-	sector_size = le16_to_cpu(ms->sector_size);
+	sector_size = le16_to_cpu(vs->sector_size);
 	if (sector_size != 0x200 && sector_size != 0x400 &&
 	    sector_size != 0x800 && sector_size != 0x1000)
 		return -1;
-	/* cluster size check*/	
-	if (ms->cluster_size == 0 || (ms->cluster_size & (ms->cluster_size-1)))
-		return -1;
-	/* media check */
-	if (ms->media < 0xf8 && ms->media != 0xf0)
-		return -1;
-	/* fat count*/
-	if (ms->fats != 2)
-		return -1;
+
+	dbg("sector_size 0x%x", sector_size);
+	dbg("sectors_per_cluster 0x%x", vs->sectors_per_cluster);
+
+	dir_entries = le16_to_cpu(vs->dir_entries);
+	reserved = le16_to_cpu(vs->reserved);
+	dbg("reserved 0x%x", reserved);
+
+	sect_count = le16_to_cpu(vs->sectors);
+	if (sect_count == 0)
+		sect_count = vs->total_sect;
+	dbg("sect_count 0x%x", sect_count);
+
+	fat_length = le16_to_cpu(vs->fat_length);
+	if (fat_length == 0)
+		fat_length = le32_to_cpu(vs->type.fat32.fat32_length);
+	dbg("fat_length 0x%x", fat_length);
+
+	fat_size = fat_length * vs->fats;
+	dir_size = ((dir_entries * sizeof(struct vfat_dir_entry)) +
+			(sector_size-1)) / sector_size;
+	dbg("dir_size 0x%x", dir_size);
+
+	cluster_count = sect_count - (reserved + fat_size + dir_size);
+	cluster_count /= vs->sectors_per_cluster;
+	dbg("cluster_count 0x%x", cluster_count);
+
+	if (cluster_count < FAT12_MAX) {
+		strcpy(id->format_version, "FAT12");
+	} else if (cluster_count < FAT16_MAX) {
+		strcpy(id->format_version, "FAT16");
+	} else {
+		strcpy(id->format_version, "FAT32");
+		goto fat32;
+	}
+
+	/* the label may be a attribute in the root directory */
+	root_start = (reserved + fat_size)* sector_size;
+	root_dir_entries = le16_to_cpu(vs->dir_entries);
+	dbg("root dir start 0x%x", root_start);
+
+	buf_size = root_dir_entries * sizeof(struct vfat_dir_entry);
+	buf = get_buffer(id, root_start, buf_size);
+	if (buf == NULL)
+		goto found;
+
+	label = _search_label_in_dir_block(buf, buf_size);
+
+	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
+		set_label_raw(id, label, 11);
+		set_label_string(id, label, 11);
+	} else if (strncmp(vs->type.fat.label, "NO NAME    ", 11) != 0) {
+		set_label_raw(id, vs->type.fat.label, 11);
+		set_label_string(id, vs->type.fat.label, 11);
+	}
+	set_uuid(id, vs->type.fat.serno, 4);
+	goto found;
+
+fat32:
+	/* the label may be a attribute in the root directory */
+	root_cluster = le32_to_cpu(vs->type.fat32.root_cluster);
+	root_cluster_sect_off = (root_cluster - 2) * vs->sectors_per_cluster;
+	start_data_sect = reserved + fat_size + dir_size;
+	dbg("data area 0x%llx", (__u64) start_data_sect * sector_size);
+	root_start = (start_data_sect + root_cluster_sect_off) * sector_size;
+	dbg("root dir start 0x%x", root_start);
+
+	/* FIXME: on FAT32 the root dir is a cluster chain like any other
+	 * directory or a file, so we need to follow the chain, as the
+	 * label may be anywhere in the root directory. For now it's only
+	 * the first cluster.
+	 */
+	buf_size = vs->sectors_per_cluster * sector_size;
+	buf = get_buffer(id, root_start, buf_size);
+	if (buf == NULL)
+		goto found;
+
+	label = _search_label_in_dir_block(buf, buf_size);
+
+	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
+		set_label_raw(id, label, 11);
+		set_label_string(id, label, 11);
+	} else if (strncmp(vs->type.fat32.label, "NO NAME    ", 11) == 0) {
+		set_label_raw(id, vs->type.fat32.label, 11);
+		set_label_string(id, vs->type.fat32.label, 11);
+	}
+	set_uuid(id, vs->type.fat32.serno, 4);
 
 found:
-	set_label_raw(id, ms->label, 11);
-	set_label_string(id, ms->label, 11);
-	set_uuid(id, ms->serno, 4);
-
 	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_MSDOS;
-	id->format = "msdos";
+	id->format_id = VOLUME_ID_VFAT;
+	id->format = "vfat";
 
 	return 0;
 }
@@ -1329,8 +1460,9 @@ found:
 }
 
 #define MFT_RECORD_VOLUME			3
-#define MFT_RECORD_ATTR_VOLUME_NAME		0x60u
-#define MFT_RECORD_ATTR_OBJECT_ID		0x40u
+#define MFT_RECORD_ATTR_VOLUME_NAME		0x60
+#define MFT_RECORD_ATTR_VOLUME_INFO		0x70
+#define MFT_RECORD_ATTR_OBJECT_ID		0x40
 #define MFT_RECORD_ATTR_END			0xffffffffu
 static int probe_ntfs(struct volume_id *id, __u64 off)
 {
@@ -1385,6 +1517,12 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 		__u32	value_len;
 		__u16	value_offset;
 	} __attribute__((__packed__)) *attr;
+
+	struct volume_info {
+		__u64 reserved;
+		__u8 major_ver;
+		__u8 minor_ver;
+	} __attribute__((__packed__)) *info;
 
 	unsigned int sector_size;
 	unsigned int cluster_size;
@@ -1460,16 +1598,22 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 		dbg("found attribute type 0x%x, len %i, at offset %i",
 		    attr_type, attr_len, attr_off);
 
+		if (attr_type == MFT_RECORD_ATTR_VOLUME_INFO) {
+			dbg("found info, len %i", val_len);
+			info = (struct volume_info*) (((__u8 *) attr) + val_off);
+			snprintf(id->format_version, VOLUME_ID_FORMAT_SIZE-1,
+				 "%u.%u", info->major_ver, info->minor_ver);
+		}
+
 		if (attr_type == MFT_RECORD_ATTR_VOLUME_NAME) {
 			dbg("found label, len %i", val_len);
 			if (val_len > VOLUME_ID_LABEL_SIZE)
 				val_len = VOLUME_ID_LABEL_SIZE;
 
-			val = &((__u8 *) attr)[val_off];
+			val = ((__u8 *) attr) + val_off;
 			set_label_raw(id, val, val_len);
 			set_label_unicode16(id, val, LE, val_len);
 		}
-
 	}
 
 found:
@@ -1536,9 +1680,6 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_VFAT:
 		rc = probe_vfat(id, off);
 		break;
-	case VOLUME_ID_MSDOS:
-		rc = probe_msdos(id, off);
-		break;
 	case VOLUME_ID_UDF:
 		rc = probe_udf(id, off);
 		break;
@@ -1565,9 +1706,6 @@ int volume_id_probe(struct volume_id *id,
 	default:
 		/* read only minimal buffer, cause of the slow floppies */
 		rc = probe_vfat(id, off);
-		if (rc == 0)
-			break;
-		rc = probe_msdos(id, off);
 		if (rc == 0)
 			break;
 		rc = probe_msdos_part_table(id, off);
