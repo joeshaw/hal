@@ -1,5 +1,11 @@
 2004-09-24  David Zeuthen  <david@fubar.dk>
 
+	* libhal-storage/libhal-storage.c :
+	(hal_volume_policy_should_be_visible): s/moint/mount/ so the code
+	actually compiles :-/
+	
+2004-09-24  David Zeuthen  <david@fubar.dk>
+	
 	* libhal-storage/libhal-storage.h: Add and hal_drive_find_all_volumes
 	and change hal_volume_policy_should_be_visible
 

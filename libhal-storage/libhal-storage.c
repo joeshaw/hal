@@ -550,7 +550,7 @@ out:
  */
 dbus_bool_t
 hal_volume_policy_should_be_visible (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy, 
-				     const char *target_moint_point)
+				     const char *target_mount_point)
 {
 	unsigned int i;
 	dbus_bool_t is_visible;
