@@ -1,3 +1,9 @@
+2005-03-09  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/addons/addon-acpi.c (main): Handle /proc/acpi/event
+	as a file, not a socket. Now we can run without acpid :-). Reported
+	by Bill Nottingham.
+
 2005-03-07  David Zeuthen  <davidz@redhat.com>
 
 	Release 0.5.0

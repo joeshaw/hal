@@ -99,10 +99,12 @@ main (int argc, char *argv[])
 	char acpi_name[256];
 	unsigned int acpi_num1;
 	unsigned int acpi_num2;
-	
+
+	fd = -1;
+
 	if ((getenv ("HALD_VERBOSE")) != NULL)
 		is_verbose = TRUE;
-	
+
 	dbus_error_init (&error);
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 		goto out;
@@ -113,19 +115,20 @@ main (int argc, char *argv[])
 		goto out;
 	if (!libhal_ctx_init (ctx, &error))
 		goto out;
-	
-	fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (fd < 0) {
-		return fd;
-	}
-	
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
+
 	/* TODO: get mountpoint of proc from... /proc/mounts.. :-) */
-	snprintf(addr.sun_path, sizeof (addr.sun_path), "%s", "/proc/acpi/event");
-	if (connect (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
-		dbg ("Cannot open /proc/acpi/event: %s - trying trying /var/run/acpid.socket", strerror (errno));
+	fd = open ("/proc/acpi/event", O_RDONLY);
+	if (fd < 0) {
+		dbg ("Cannot open /proc/acpi/event: %s - trying /var/run/acpid.socket", strerror (errno));
+		
 		/* TODO: make /var/run/acpid.socket a configure option */
+
+		fd = socket(AF_UNIX, SOCK_STREAM, 0);
+		if (fd < 0) {
+			return fd;
+		}
+		memset(&addr, 0, sizeof(addr));
+		addr.sun_family = AF_UNIX;
 		snprintf (addr.sun_path, sizeof (addr.sun_path), "%s", "/var/run/acpid.socket");
 		if (connect (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
 			dbg ("Cannot open /var/run/acpid.socket - bailing out");
@@ -178,7 +181,7 @@ main (int argc, char *argv[])
 	}
 	
 	
-	out:
+out:
 	if (fd >= 0)
 		close (fd);
 
