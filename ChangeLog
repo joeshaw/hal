@@ -1,5 +1,10 @@
 2004-08-25  David Zeuthen  <david@fubar.dk>
 
+	* tools/linux/hal_hotplug_map.c (main): Match usb_device rather
+	than usb since we don't want to merge onto interfaces.
+
+2004-08-25  David Zeuthen  <david@fubar.dk>
+
 	* configure.in: Add option for new callout hal-hotplug-map
 	
 	* hald/device.[ch]: Add the "cancelled" signal and hal_device_cancel

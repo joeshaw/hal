@@ -110,15 +110,15 @@ main (int argc, char *argv[])
 		verbose = TRUE;
 
 	bus = getenv ("HAL_PROP_INFO_BUS");
-	if (bus == NULL || strcmp (bus, "usb") != 0)
+	if (bus == NULL || strcmp (bus, "usb_device") != 0)
 		return 0;
 
-	vendor_id_str = getenv ("HAL_PROP_USB_VENDOR_ID");
+	vendor_id_str = getenv ("HAL_PROP_USB_DEVICE_VENDOR_ID");
 	if (vendor_id_str == NULL)
 		return 1;
 	vendor_id = atoi (vendor_id_str);
 
-	product_id_str = getenv ("HAL_PROP_USB_PRODUCT_ID");
+	product_id_str = getenv ("HAL_PROP_USB_DEVICE_PRODUCT_ID");
 	if (product_id_str == NULL)
 		return 1;
 	product_id = atoi (product_id_str);
