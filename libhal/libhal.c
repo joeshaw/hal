@@ -2783,4 +2783,88 @@ unsigned int libhal_string_array_length (char **str_array)
 }
 
 
+dbus_bool_t 
+libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	dbus_bool_t result;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"Rescan");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_iter_init (reply, &iter);
+	result = dbus_message_iter_get_boolean (&iter);
+
+	dbus_message_unref (reply);
+
+	return result;
+}
+
+dbus_bool_t
+libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	dbus_bool_t result;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"Reprobe");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_iter_init (reply, &iter);
+	result = dbus_message_iter_get_boolean (&iter);
+
+	dbus_message_unref (reply);
+
+	return result;
+}
+
 /** @} */

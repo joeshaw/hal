@@ -2,9 +2,9 @@
 
 <deviceinfo version="0.2">
   <device>
-    <match key="info.bus" string="usb">
-      <match key="usb.vendor_id" int="0x05dc">
-        <match key="usb.product_id" int="0x0002">
+    <match key="storage.bus" string="usb">
+      <match key="@storage.physical_device:usb.vendor_id" int="0x05dc">
+        <match key="@storage.physical_device:usb.product_id" int="0x0002">
           <merge key="storage.drive_type" type="string">compact_flash</merge>
         </match>
       </match>

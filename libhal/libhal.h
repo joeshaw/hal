@@ -378,6 +378,14 @@ dbus_bool_t libhal_device_unlock (LibHalContext *ctx,
 				  const char *udi,
 				  DBusError *error);
 
+dbus_bool_t libhal_device_rescan (LibHalContext *ctx,
+				  const char *udi,
+				  DBusError *error);
+
+dbus_bool_t libhal_device_reprobe (LibHalContext *ctx,
+				   const char *udi,
+				   DBusError *error);
+
 /** @} */
 
 #if defined(__cplusplus)

@@ -1,3 +1,71 @@
+2005-02-11  David Zeuthen  <davidz@redhat.com>
+
+	With this path, all storage devices should be working just as
+	well as on the 0.4.x branch. 
+
+	In fact, since we're doing things in separate processes hald now
+	nicely handles my very troublesome USB 6in1 card reader. There's
+	other improvements too; we handle media with non-partitioned file
+	systems _a lot nicer_, especially those on PCMCIA card
+	readers (driven by ide-cs) since we now have logic to discard
+	hotplug rem/add for those partitions.
+
+	Rock on.
+
+	* libhal/libhal.h: Add prototypes for libhal_device_rescan()
+	and libhal_device_reprobe()
+
+	* libhal/libhal.c (libhal_device_rescan): New function
+	(libhal_device_reprobe): New function
+
+	* hald/linux2/probing/probe-volume.c (main): Be able to probe for
+	volumes on main block devices. Retrieve optical disc properties
+	if applicable.
+
+	* hald/linux2/probing/probe-storage.c (is_mounted): New function
+	(main): Add a new option --only-check-for-media which is used on
+	Rescan() of a storage device. Check for fs on main block device or
+	a disc in the optical drive. Return code 2 if that is the case.
+
+	* hald/linux2/addons/addon-storage.c (force_unmount): New function
+	(unmount_childs): New function
+	(is_mounted): New function
+	(main): Do lazy unmount, if necessary, when media goes away. Handle
+	polling on optical drives.
+
+	* hald/linux2/hotplug.h: Add prototype for hotplug_event_reposted()
+	and hotplug_event_enqueue_at_front().
+
+	* hald/linux2/hotplug.c (hotplug_event_reposted): New function;
+	like event_end but without deleting the hotplug event (useful
+	for reordering events)
+	(hotplug_event_enqueue_at_front): New function; to insert events
+	at the front of the queue
+
+	* hald/linux2/blockdev.c:
+	(generate_fakevolume_hotplug_event_add_for_storage_device): New
+	function (and what a nice long name :-/)
+	(add_blockdev_probing_helper_done): Check result from hald-probe-
+	storage and add a new fakevolume add event if one was detected.
+	(hotplug_event_begin_add_blockdev): Handle fakevolume add events.
+	Add some more debug spewage when things fail.
+	(force_unmount): New function
+	(hotplug_event_begin_remove_blockdev): Handle fakevolume remove
+	events; reorder queue to process non-handled volume before
+	the storage device. Nice.
+	(block_rescan_storage_done): New function
+	(blockdev_rescan_device): Actually do something here; a Rescan()
+	method call on a storage device will induce searching a filesystem
+	on the main block device
+
+	* hald/hald.c (main): Add new master_slave code but comment it out
+	for now
+
+	* fdi/20freedesktop/lexar-media-cf-reader.fdi: Fix up
+
+	* fdi/20freedesktop/6in1-card-reader.fdi: Fix up to use new way
+	of figuring vendor_id/product_id etc.
+
 2005-02-10  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: From Richard Hughes <richard@hughsie.com> I've

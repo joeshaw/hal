@@ -74,6 +74,15 @@ hotplug_event_end (void *end_token)
 	hotplug_event_process_queue ();
 }
 
+void 
+hotplug_event_reposted (void *end_token)
+{
+	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
+
+	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
+	hotplug_event_process_queue ();
+}
+
 
 
 static void
@@ -341,6 +350,15 @@ hotplug_event_enqueue (HotplugEvent *hotplug_event)
 		hotplug_event_queue = g_queue_new ();
 
 	g_queue_push_tail (hotplug_event_queue, hotplug_event);
+}
+
+void 
+hotplug_event_enqueue_at_front (HotplugEvent *hotplug_event)
+{
+	if (hotplug_event_queue == NULL)
+		hotplug_event_queue = g_queue_new ();
+
+	g_queue_push_head (hotplug_event_queue, hotplug_event);
 }
 
 void 

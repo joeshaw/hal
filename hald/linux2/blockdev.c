@@ -208,17 +208,50 @@ blockdev_mtab_changed (void)
 	}
 }
 
+static void
+generate_fakevolume_hotplug_event_add_for_storage_device (HalDevice *d)
+{
+	const char *sysfs_path;
+	const char *device_file;
+	HotplugEvent *hotplug_event;
+	char fake_sysfs_path[HAL_PATH_MAX];
+
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+	device_file = hal_device_property_get_string (d, "block.device");
+
+	snprintf (fake_sysfs_path, sizeof(fake_sysfs_path), "%s/fakevolume", sysfs_path);
+
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->is_add = TRUE;
+	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+	g_strlcpy (hotplug_event->sysfs.sysfs_path, fake_sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+	if (device_file != NULL)
+		g_strlcpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+	else
+		hotplug_event->sysfs.device_file[0] = '\0';
+	hotplug_event->sysfs.net_ifindex = -1;
+
+	hotplug_event_enqueue (hotplug_event);
+	hotplug_event_process_queue ();
+}
 
 static void 
 add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_code, 
 				  gpointer data1, gpointer data2, HalHelperData *helper_data)
 {
 	void *end_token = (void *) data1;
+	gboolean is_volume;
 
 	HAL_INFO (("entering; timed_out=%d, return_code=%d", timed_out, return_code));
 
-	/* Discard device if probing reports failure */
-	if (timed_out || return_code != 0) {
+	is_volume = hal_device_property_get_bool (d, "block.is_volume");
+
+	/* Discard device if probing reports failure 
+	 * 
+	 * (return code 2 means fs found on main block device (for non-volumes)) 
+	 */
+	if (timed_out || !(return_code == 0 || (!is_volume && return_code == 2))) {
 		hal_device_store_remove (hald_get_tdl (), d);
 		hotplug_event_end (end_token);
 		goto out;
@@ -231,7 +264,7 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	}
 
 	/* set block.storage_device for storage devices since only now we know the UDI */
-	if (!hal_device_property_get_bool (d, "block.is_volume")) {
+	if (!is_volume) {
 		hal_device_copy_property (d, "info.udi", d, "block.storage_device");
 	} else {
 		/* check for mount point */
@@ -246,6 +279,15 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	/* Run callouts */
 	hal_util_callout_device_add (d, blockdev_callouts_add_done, end_token);
 
+	/* Yay, got a file system on the main block device...
+	 *
+	 * Generate a fake hotplug event to get this added
+	 */
+	if (!is_volume && return_code == 2) {
+		generate_fakevolume_hotplug_event_add_for_storage_device (d);
+	}
+
+
 out:
 	;
 }
@@ -259,31 +301,47 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	gchar *major_minor;
 	HalDevice *d;
 	unsigned int major, minor;
+	gboolean is_fakevolume;
+	char *sysfs_path_real;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
+
+	if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0) {
+		is_fakevolume = TRUE;
+		sysfs_path_real = hal_util_get_parent_path (sysfs_path);
+		HAL_INFO (("Handling %s as fakevolume - sysfs_path_real=%s", device_file, sysfs_path_real));
+	} else {
+		is_fakevolume = FALSE;
+		sysfs_path_real = g_strdup (sysfs_path);
+	}
 	
 	/* See if we already have device (which we may have as we're ignoring rem/add
 	 * for certain classes of devices - see hotplug_event_begin_remove_blockdev)
 	 */
 	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
 	if (d != NULL) {
-		HAL_INFO (("Ignoring hotplug event"));
+		HAL_INFO (("Ignoring hotplug event - device is already added"));
 		goto out;
 	}
 
-	if (parent == NULL)
+	if (parent == NULL) {
+		HAL_INFO (("Ignoring hotplug event - no parent"));
 		goto error;
+	}
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_BLOCK);
 
 	hal_device_property_set_string (d, "block.device", device_file);
-	if ((major_minor = hal_util_get_string_from_file (sysfs_path, "dev")) == NULL || 
-	    sscanf (major_minor, "%d:%d", &major, &minor) != 2)
+	if ((major_minor = hal_util_get_string_from_file (sysfs_path_real, "dev")) == NULL || 
+	    sscanf (major_minor, "%d:%d", &major, &minor) != 2) {
+		HAL_INFO (("Ignoring hotplug event - cannot read major:minor"));
 		goto error;
+	}
 
 	hal_device_property_set_int (d, "block.major", major);
 	hal_device_property_set_int (d, "block.minor", minor);
@@ -330,6 +388,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		while (udi_it != NULL) {
 			HalDevice *d_it;
 
+			/*************************
+			 *
+			 * STORAGE
+			 *
+			 ************************/
+
 			/* Find device */
 			d_it = hal_device_store_find (hald_get_gdl (), udi_it);
 			g_assert (d_it != NULL);
@@ -341,7 +405,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev = d_it;
 					physdev_udi = udi_it;
 					hal_device_property_set_string (d, "storage.bus", "scsi");
-					hal_device_property_set_string (d, "storage.scsi_device", udi_it);
+					hal_device_copy_property (scsidev, "scsi.lun", d, "storage.lun");
 					/* want to continue here, because it may be USB or IEEE1394 */
 				}
 
@@ -515,7 +579,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	} else {
 		guint sysfs_path_len;
 
-		/* volumes */
+		/*************************
+		 *
+		 * VOLUMES
+		 *
+		 ************************/
+
 		hal_device_property_set_string (d, "block.storage_device", parent->udi);
 
 		/* set defaults */
@@ -535,21 +604,23 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_add_capability (d, "volume");
 		hal_device_add_capability (d, "block");
 
-		/* determine partition number */
+		/* determine partition number - unless, of course, we're a fakevolume */
 		sysfs_path_len = strlen (sysfs_path);
-		if (sysfs_path_len > 0 && isdigit (sysfs_path[sysfs_path_len - 1])) {
-			guint i;
-			for (i = sysfs_path_len - 1; isdigit (sysfs_path[i]); --i)
-				;
-			if (isdigit (sysfs_path[i+1])) {
-				guint partition_number;
-				partition_number = atoi (&sysfs_path[i+1]);
-				hal_device_property_set_int (d, "volume.partition.number", partition_number);
+		if (!is_fakevolume) {
+			if (sysfs_path_len > 0 && isdigit (sysfs_path[sysfs_path_len - 1])) {
+				guint i;
+				for (i = sysfs_path_len - 1; isdigit (sysfs_path[i]); --i)
+					;
+				if (isdigit (sysfs_path[i+1])) {
+					guint partition_number;
+					partition_number = atoi (&sysfs_path[i+1]);
+					hal_device_property_set_int (d, "volume.partition.number", partition_number);
+				} else {
+					goto error;
+				}
 			} else {
 				goto error;
 			}
-		} else {
-			goto error;
 		}
 
 		/* first estimate - prober may override this...
@@ -557,8 +628,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 * (block size requires opening the device file)
 		 */
 		hal_device_property_set_int (d, "volume.block_size", 512);
-		if (!hal_util_set_int_from_file (d, "volume.num_blocks", sysfs_path, "size", 0))
+		if (!hal_util_set_int_from_file (d, "volume.num_blocks", sysfs_path_real, "size", 0)) {
+			HAL_INFO (("Ignoring hotplug event - cannot read 'size'"));
 			goto error;
+		}
 		hal_device_property_set_uint64 (
 			d, "volume.size", 
 			((dbus_uint64_t)(512)) * 
@@ -576,6 +649,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 	}
 
+	g_free (sysfs_path_real);
 	return;
 
 error:
@@ -583,11 +657,12 @@ error:
 		g_object_unref (d);
 out:
 	hotplug_event_end (end_token);
+
+	g_free (sysfs_path_real);
 }
 
-#if 0
 static void
-force_unmount (HalDevice * d)
+force_unmount (HalDevice *d)
 {
 	const char *storudi;
 	HalDevice *stordev;
@@ -601,16 +676,25 @@ force_unmount (HalDevice * d)
 	device_file = hal_device_property_get_string (d, "block.device");
 	device_mount_point = hal_device_property_get_string (d, "volume.mount_point");
 
+	HAL_INFO (("Entering... udi=%s device_file=%s mount_point=%s", d->udi, device_file, device_mount_point));
+
 	/* Only attempt to 'umount -l' if some hal policy piece are performing policy on the device */
 	storudi = hal_device_property_get_string (d, "block.storage_device");
-	if (storudi == NULL)
-		return;
+	if (storudi == NULL) {
+		HAL_WARNING (("Could not get block.storage_device"));
+		goto out;
+	}
 	stordev = hal_device_store_find (hald_get_gdl (), storudi);
-	if (stordev == NULL)
-		return;
-	if ((!hal_device_has_property (stordev, "storage.policy.should_mount")) ||
-	    (!hal_device_property_get_bool (stordev, "storage.policy.should_mount")))
-		return;
+	if (stordev == NULL) {
+		HAL_WARNING (("Could not get device object for storage device"));
+		goto out;
+	} else {
+		if ((!hal_device_has_property (stordev, "storage.policy.should_mount")) ||
+		    (!hal_device_property_get_bool (stordev, "storage.policy.should_mount"))) {
+			HAL_WARNING (("storage device doesn't have storage.policy.should_mount"));
+			goto out;
+		}
+	}
 
 	umount_argv[2] = device_file;
 
@@ -620,6 +704,8 @@ force_unmount (HalDevice * d)
 	    device_mount_point != NULL &&
 	    strlen (device_mount_point) > 0) {
 		HAL_INFO (("attempting /bin/umount -l %s", device_file));
+
+		/* TODO: this is a bit dangerous; rather spawn async and do some timout on it */
 
 		/* invoke umount */
 		if (g_spawn_sync ("/",
@@ -635,8 +721,7 @@ force_unmount (HalDevice * d)
 		}
 
 		if (umount_exitcode != 0) {
-			HAL_ERROR (("/bin/umount returned %d",
-				    umount_exitcode));
+			HAL_ERROR (("/bin/umount returned %d", umount_exitcode));
 		} else {
 			/* Tell clients we are going to unmount so they close
 			 * can files - otherwise this unmount is going to stall
@@ -657,10 +742,11 @@ force_unmount (HalDevice * d)
 						      DBUS_TYPE_INVALID);
 		}
 	} else {
-		HAL_INFO (("didn't want to unmount"));
+		HAL_INFO (("Didn't want to unmount %s", device_file));
 	}
+out:
+	;
 }
-#endif
 
 void
 hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partition, void *end_token)
@@ -676,9 +762,16 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 	} else {
 		const char *stor_udi;
 		HalDevice *stor_dev;
+		gboolean is_fakevolume;
+
+		if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0)
+			is_fakevolume = TRUE;
+		else
+			is_fakevolume = FALSE;		
 
 		/* ignore hotplug events on IDE partitions since ide-cs and others causes hotplug 
-		 * rem/add when the last closer (including mount) closes the device.
+		 * rem/add when the last closer (including mount) closes the device. (Unless it's
+		 * a fakevolume)
 		 *
 		 * This causes an infinite loop since we open the device to probe. How nice.
 		 *
@@ -687,50 +780,86 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 		 */
 		stor_udi = hal_device_property_get_string (d, "block.storage_device");
 		if (is_partition && 
+		    !is_fakevolume &&
 		    stor_udi != NULL && 
 		    ((stor_dev = hal_device_store_find (hald_get_gdl (), stor_udi)) != NULL)) {
 			const char *stor_bus;
 			stor_bus = hal_device_property_get_string (stor_dev, "storage.bus");
 			if (strcmp (stor_bus, "ide") == 0) {
-				HAL_INFO (("Ignoring hotplug event"));
-				hotplug_event_end (end_token);
-				goto out;
+				/* unless we are already delayed, cf. the code below */
+				if (hal_device_property_get_bool (d, ".already_delayed") != TRUE) {
+					HAL_INFO (("Ignoring hotplug event"));
+					hotplug_event_end (end_token);
+					goto out;
+				}
 			}
 		} else if (!is_partition) {
 			GSList *i;
 			GSList *partitions;
+			unsigned int num_childs;
 			/* see if there any partitions lying around that we refused to remove above */
 
 			partitions = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
 										       "block.storage_device",
 										       stor_udi);
+
+			/* have to count number of childs first */
+			num_childs = 0;
 			for (i = partitions; i != NULL; i = g_slist_next (i)) {
 				HalDevice *child;
-				HotplugEvent *hotplug_event;
-
 				child = HAL_DEVICE (i->data);
-
 				/* ignore ourself */
 				if (child == d)
 					continue;
-
-				/* yah - generate hotplug event */
-				hotplug_event = blockdev_generate_remove_hotplug_event (child);
-				hotplug_event_enqueue (hotplug_event);
-
-				HAL_INFO (("Generating hotplug rem for ignored IDE partition with udi %s",
-					   child->udi));
+				num_childs++;
 			}
 
-			g_slist_free (partitions);
+			if (num_childs > 0) {
+
+				/* OK, so we did have childs to remove before removing ourself
+				 *
+				 * Enqueue at front of queue; the childs will get in front of us
+				 * because they will also queue up in front of use (damn kids!)
+				 */
+				HAL_INFO (("Delaying hotplug event until childs are done and gone"));
+				hotplug_event_enqueue_at_front ((HotplugEvent *) end_token);
+				
+				for (i = partitions; i != NULL; i = g_slist_next (i)) {
+					HalDevice *child;
+					HotplugEvent *hotplug_event;
+					child = HAL_DEVICE (i->data);
+					/* ignore ourself */
+					if (child == d)
+						continue;
+
+					/* set a flag such that we *will* get removed above */
+					hal_device_property_set_bool (child, ".already_delayed", TRUE);
+
+					HAL_INFO (("Generating hotplug rem for ignored fakevolume/ide_part with udi %s",
+						   child->udi));
+					/* yay! - gen hotplug event and fast track us to the front of the queue :-) */
+					hotplug_event = blockdev_generate_remove_hotplug_event (child);
+					hotplug_event_enqueue_at_front (hotplug_event);
+				}
+
+				g_slist_free (partitions);
+
+				/* since we pushed ourselves into the queue again above, say that we're done
+				 * but the event shouldn't get deleted
+				 */
+				hotplug_event_reposted (end_token);
+				goto out;
+
+			} else {
+				/* No childs to remove before ourself; just remove ourself, e.g. carry on below */
+				g_slist_free (partitions);
+			}
 		}
 
 		/* if we're mounted, then do a lazy unmount so the system can gracefully recover */
-#if 0
 		if (hal_device_property_get_bool (d, "volume.is_mounted")) {
 			force_unmount (d);
 		}
-#endif
 
 		hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token);
 	}
@@ -738,10 +867,68 @@ out:
 	;
 }
 
+static void 
+block_rescan_storage_done (HalDevice *d, gboolean timed_out, gint return_code, 
+			   gpointer data1, gpointer data2, HalHelperData *helper_data)
+{
+	const char *sysfs_path;
+	HalDevice *fakevolume;
+	char fake_sysfs_path[HAL_PATH_MAX];
+
+	HAL_ERROR (("hald-probe-storage --only-check-for-media returned %d", return_code));
+
+	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+
+	/* see if we already got a fake volume */
+	snprintf (fake_sysfs_path, sizeof(fake_sysfs_path), "%s/fakevolume", sysfs_path);
+	fakevolume = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", fake_sysfs_path);
+
+	if (return_code == 2) {
+		/* we've got a fs on the main block device - add fakevolume if we haven't got one already */
+		if (fakevolume == NULL) {
+			generate_fakevolume_hotplug_event_add_for_storage_device (d);
+		}
+	} else {
+		/* no fs on the main block device - remove fakevolume if we have one */
+		if (fakevolume != NULL) {
+			/* generate hotplug event to remove the fakevolume */
+			HotplugEvent *hotplug_event;
+			hotplug_event = blockdev_generate_remove_hotplug_event (fakevolume);
+			if (hotplug_event != NULL) {
+				hotplug_event_enqueue (hotplug_event);
+				hotplug_event_process_queue ();
+			}
+		}
+	}
+}
+
 gboolean
 blockdev_rescan_device (HalDevice *d)
 {
-	return FALSE;
+	gboolean ret;
+
+	ret = FALSE;
+
+	HAL_INFO (("Entering, udi=%s", d->udi));
+
+	/* This only makes sense on storage devices */
+	if (hal_device_property_get_bool (d, "block.is_volume")) {
+		HAL_INFO (("No action on volumes", d->udi));
+		goto out;
+	}
+
+	/* now see if we got a file system on the main block device */
+	if (hal_util_helper_invoke ("hald-probe-storage --only-check-for-media", NULL, d, NULL, 
+				    NULL, block_rescan_storage_done, 
+				    HAL_HELPER_TIMEOUT) == NULL) {
+		HAL_INFO (("Could not invoke 'hald-probe-storage --only-check-for-media'"));
+		goto out;
+	}
+	
+	ret = TRUE;
+
+out:
+	return ret;
 }
 
 

@@ -84,9 +84,13 @@ typedef struct
 
 void hotplug_event_enqueue (HotplugEvent *event);
 
+void hotplug_event_enqueue_at_front (HotplugEvent *hotplug_event);
+
 void hotplug_event_process_queue (void);
 
 void hotplug_event_end (void *end_token);
+
+void hotplug_event_reposted (void *end_token);
 
 gboolean hotplug_rescan_device (HalDevice *d);
 

@@ -119,6 +119,8 @@ main (int argc, char *argv[])
 	struct volume_id *vid;
 	char *stordev_dev_file;
 	char *partition_number_str;
+	char *is_disc_str;
+	dbus_bool_t is_disc;
 	unsigned int partition_number;
 	unsigned int block_size;
 	dbus_uint64_t vol_size;
@@ -136,9 +138,17 @@ main (int argc, char *argv[])
 		goto out;
 	if ((sysfs_path = getenv ("HAL_PROP_LINUX_SYSFS_PATH")) == NULL)
 		goto out;
-	if ((partition_number_str = getenv ("HAL_PROP_VOLUME_PARTITION_NUMBER")) == NULL)
-		goto out;
-	partition_number = (unsigned int) atoi (partition_number_str);
+	partition_number_str = getenv ("HAL_PROP_VOLUME_PARTITION_NUMBER");
+	if (partition_number_str != NULL)
+		partition_number = (unsigned int) atoi (partition_number_str);
+	else
+		partition_number = (unsigned int) -1;
+
+	is_disc_str = getenv ("HAL_PROP_VOLUME_IS_DISC");
+	if (is_disc_str != NULL && strcmp (is_disc_str, "true") == 0)
+		is_disc = TRUE;
+	else
+		is_disc = FALSE;
 
 	dbus_error_init (&error);
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
@@ -172,46 +182,53 @@ main (int argc, char *argv[])
 		volume_id_close(vid);
 	}
 
-	/* get partition type - presently we only support PC style partition tables */
-	if ((stordev_dev_file = libhal_device_get_property_string (ctx, parent_udi, "block.device", &error)) == NULL) {
-		goto out;
-	}
-	vid = volume_id_open_node (stordev_dev_file);
-	if (vid != NULL) {
- 		if (volume_id_probe_msdos_part_table (vid, 0) == 0) {
-			HAL_INFO (("Number of partitions = %d", vid->partition_count));
-			
-			if (partition_number > 0 && partition_number <= vid->partition_count) {
-				struct volume_id_partition *p;
-				p = &vid->partitions[partition_number-1];
-
-				libhal_device_set_property_int (ctx, udi,
-								"volume.partition.msdos_part_table_type",
-								p->partition_type_raw, &error);
-				
-				/* NOTE: We trust the type from the partition table
-				 * if it explicitly got correct entries for RAID and
-				 * LVM partitions.
-				 *
-				 * Btw, in general it's not a good idea to trust the
-				 * partition table type as many geek^Wexpert users use 
-				 * FAT filesystems on type 0x83 which is Linux.
-				 *
-				 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
-				 */
-				if (p->partition_type_raw == 0xfd ||
-				    p->partition_type_raw == 0x8e ) {
-					libhal_device_set_property_string (ctx, udi, "volume.fsusage", "raid", &error);
-				}
-				
-			} else {
-				HAL_WARNING (("partition_number=%d not in [0;%d[", 
-					      partition_number, vid->partition_count));
-			}
+	/* get partition type (if we are from partitioned media)
+	 *
+	 * (presently we only support PC style partition tables)
+	 */
+	if (partition_number_str != NULL) {
+		if ((stordev_dev_file = libhal_device_get_property_string (
+			     ctx, parent_udi, "block.device", &error)) == NULL) {
+			goto out;
 		}
-		volume_id_close(vid);
-	}		
-	libhal_free_string (stordev_dev_file);
+		vid = volume_id_open_node (stordev_dev_file);
+		if (vid != NULL) {
+			if (volume_id_probe_msdos_part_table (vid, 0) == 0) {
+				HAL_INFO (("Number of partitions = %d", vid->partition_count));
+				
+				if (partition_number > 0 && partition_number <= vid->partition_count) {
+					struct volume_id_partition *p;
+					p = &vid->partitions[partition_number-1];
+					
+					libhal_device_set_property_int (ctx, udi,
+									"volume.partition.msdos_part_table_type",
+									p->partition_type_raw, &error);
+					
+					/* NOTE: We trust the type from the partition table
+					 * if it explicitly got correct entries for RAID and
+					 * LVM partitions.
+					 *
+					 * Btw, in general it's not a good idea to trust the
+					 * partition table type as many geek^Wexpert users use 
+					 * FAT filesystems on type 0x83 which is Linux.
+					 *
+					 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
+					 */
+					if (p->partition_type_raw == 0xfd ||
+					    p->partition_type_raw == 0x8e ) {
+						libhal_device_set_property_string (
+							ctx, udi, "volume.fsusage", "raid", &error);
+					}
+				
+				} else {
+					HAL_WARNING (("partition_number=%d not in [0;%d[", 
+						      partition_number, vid->partition_count));
+				}
+			}
+			volume_id_close(vid);
+		}		
+		libhal_free_string (stordev_dev_file);
+	}
 
 	/* block size and total size */
 	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
@@ -223,7 +240,116 @@ main (int argc, char *argv[])
 		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
 	}
 
+	/* good so far */
 	ret = 0;
+
+	if (is_disc) {
+		int type;
+
+		/* defaults */
+		libhal_device_set_property_string (ctx, udi, "volume.disc.type", "unknown", &error);
+		libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", FALSE, &error);
+		libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", FALSE, &error);
+		libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", FALSE, &error);
+		libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", FALSE, &error);
+		libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", FALSE, &error);
+
+		/* Suggested by Alex Larsson to get rid of log spewage
+		 * on Alan's cd changer (RH bug 130649) */
+		if (ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT) != CDS_DISC_OK) {
+			goto out;
+		}
+
+		/* check for audio/data/blank */
+		type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
+		switch (type) {
+		case CDS_AUDIO:		/* audio CD */
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
+			HAL_INFO (("Disc in %s has audio", device_file));
+			break;
+		case CDS_MIXED:		/* mixed mode CD */
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
+			HAL_INFO (("Disc in %s has audio+data", device_file));
+			break;
+		case CDS_DATA_1:	/* data CD */
+		case CDS_DATA_2:
+		case CDS_XA_2_1:
+		case CDS_XA_2_2:
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
+			HAL_INFO (("Disc in %s has data", device_file));
+			break;
+		case CDS_NO_INFO:	/* blank or invalid CD */
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", TRUE, &error);
+			HAL_INFO (("Disc in %s is blank", device_file));
+			break;
+			
+		default:		/* should never see this */
+			libhal_device_set_property_string (ctx, udi, "volume.disc_type", "unknown", &error);
+			HAL_INFO (("Disc in %s returned unknown CDROM_DISC_STATUS", device_file));
+			break;
+		}
+		
+		/* see table 373 in MMC-3 for details on disc type
+		 * http://www.t10.org/drafts.htm#mmc3
+		 */
+		type = get_disc_type (fd);
+		HAL_INFO (("get_disc_type returned 0x%02x", type));
+		if (type != -1) {
+			switch (type) {
+			case 0x08: /* CD-ROM */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "cd_rom", &error);
+				break;
+			case 0x09: /* CD-R */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "cd_r", &error);
+				break;
+			case 0x0a: /* CD-RW */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "cd_rw", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			case 0x10: /* DVD-ROM */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_rom", &error);
+				break;
+			case 0x11: /* DVD-R Sequential */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_r", &error);
+				break;
+			case 0x12: /* DVD-RAM */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_ram", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			case 0x13: /* DVD-RW Restricted Overwrite */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_rw", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			case 0x14: /* DVD-RW Sequential */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_rw", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			case 0x1A: /* DVD+RW */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_rw", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			case 0x1B: /* DVD+R */
+				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_r", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			default: 
+				break;
+			}
+		}
+
+		/* On some hardware the get_disc_type call fails,
+		   so we use this as a backup */
+		if (disc_is_rewritable (fd)) {
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+		}
+		
+		if (disc_is_appendable (fd)) {
+			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", TRUE, &error);
+		}
+		
+	}
+
 
 out:
 	if (fd >= 0)

@@ -227,6 +227,7 @@
       <append key="info.callouts.add" type="strlist">fstab-sync</append>
       <append key="info.callouts.remove" type="strlist">fstab-sync</append>
     </match>
+
     <match key="storage.policy.should_mount" bool="true">
       <append key="info.callouts.add" type="strlist">fstab-sync</append>
       <append key="info.callouts.remove" type="strlist">fstab-sync</append>
@@ -235,6 +236,7 @@
     <match key="storage.media_check_enabled" bool="true">
       <append key="info.addons" type="strlist">hald-addon-storage</append>
     </match>
+
   </device>
 
 </deviceinfo>

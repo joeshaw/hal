@@ -44,6 +44,9 @@
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
+
+/*#include "master_slave.h"*/
 
 #include "logger.h"
 #include "hald.h"
@@ -407,13 +410,18 @@ main (int argc, char *argv[])
 		}
 	}
 
-	if (!retain_privs)
-		drop_privileges();
-
 	if (hald_is_verbose)
 		logger_enable ();
 	else
 		logger_disable ();
+
+	/* will fork into two; only the child will return here if we are successful */
+	/*master_slave_setup ();*/
+
+	if (!retain_privs)
+		drop_privileges();
+
+	loop = g_main_loop_new (NULL, FALSE);
 
 	HAL_INFO ((PACKAGE_STRING));
 	if (opt_become_daemon)
@@ -426,7 +434,7 @@ main (int argc, char *argv[])
 		int dev_null_fd;
 		int pf;
 		char pid[9];
-
+		
 		HAL_INFO (("Becoming a daemon"));
 
 		if (pipe (startup_daemonize_pipe) != 0) {
@@ -518,8 +526,6 @@ main (int argc, char *argv[])
 	/* set up the dbus services */
 	if (!hald_dbus_init ())
 		return 1;
-
-	loop = g_main_loop_new (NULL, FALSE);
 
 	/* initialize operating system specific parts */
 	osspec_init ();
