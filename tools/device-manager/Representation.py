@@ -46,7 +46,7 @@ class Representation:
         # Default to abstract icon
         icon = self.icons["abstract"]
 
-        product = device.properties["info.product"]
+        product = device.properties.get("info.product", "")
         if product=="Computer":
             return self.icons["computer"]
 

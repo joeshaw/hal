@@ -1,5 +1,12 @@
 2004-07-30  Joe Shaw  <joeshaw@novell.com>
 
+	* tools/device-manager/Representation.py (get_icon): Use get()
+	rather than indexing for "info.property" so that we can fall
+	back and not throw an exception if a device doesn't have it
+	set (as virtual devices often don't).
+
+2004-07-30  Joe Shaw  <joeshaw@novell.com>
+
 	* hald/hald.c (main): Update for the change to hald_dbus_init():
 	don't get a DBusConnection from there, exit() if it fails.  Also
 	update for the change to osspec_init(): don't pass in any
