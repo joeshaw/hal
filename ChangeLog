@@ -1,3 +1,30 @@
+2005-01-25  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/osspec.c (osspec_probe): Add HAL_INFO's around
+	coldplug event synthesization so we can see how long it takes.
+
+	* hald/linux2/coldplug.c: Undefine HAL_COLDPLUG_VERBOSE by default
+	to reduce log spamming.
+
+2005-01-25  David Zeuthen  <davidz@redhat.com>
+
+	Merge the changes applied to the hal-0_4-stable-branch yesterday
+
+	2005-01-24  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c (mopts_collect): Remove debugging
+	fprintf's
+
+	2005-01-24  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c (mopts_collect): Also remove
+	mount options if something is set to FALSE (based on patch from
+	Sebastian Dransfeld <sebastid@stud.ntnu.no>; also fix a pretty bad
+	bug where the computation of is_imply_opt were totally wrong.
+	(hal_volume_policy_get_mount_options),
+	(hal_drive_policy_get_mount_options): Collect imply options in the
+	correct order now that mopts_collect is fixed : -do-
+
 2005-01-23  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/util.h: Add prototypes for hal_util_set_driver () and

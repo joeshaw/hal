@@ -56,7 +56,8 @@ coldplug_compute_visit_device (const gchar *path,
 			       GHashTable *sysfs_to_bus_map, 
 			       GHashTable *sysfs_to_class_in_devices_map);
 
-#define HAL_COLDPLUG_VERBOSE
+/* For debugging */
+/*#define HAL_COLDPLUG_VERBOSE*/
 
 /** This function serves one major purpose : build an ordered list of
  *  pairs (sysfs path, subsystem) to process when starting up:

@@ -1472,7 +1472,7 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 		
 		type = hal_psi_get_type (&it);
 		key = hal_psi_get_key (&it);
-		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
+		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN &&
 		    strncmp (key, namespace, namespace_len - 1) == 0) {
 			const char *option = key + namespace_len - 1;
 			char *location;
@@ -1482,9 +1482,10 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 			if (strcmp (option, "user") == 0 ||
 			    strcmp (option, "users") == 0 ||
 			    strcmp (option, "defaults") == 0 ||
-			    strcmp (option, "pamconsole"))
+			    strcmp (option, "pamconsole") == 0)
 				is_imply_opt = TRUE;
 
+			
 			if (only_collect_imply_opts) {
 				if (!is_imply_opt)
 					continue;
@@ -1493,12 +1494,28 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 					continue;
 			}
 
-			/* see if option is already there */
-			location = strstr (options_string, option);
-			if (location == NULL) {
-				if (strlen (options_string) > 0)
-					strcat_len (options_string, ",", options_max_len);
-				strcat_len (options_string, option, options_max_len);
+			if (hal_psi_get_bool (&it)) {
+				/* see if option is already there */
+				location = strstr (options_string, option);
+				if (location == NULL) {
+					if (strlen (options_string) > 0)
+						strcat_len (options_string, ",", options_max_len);
+					strcat_len (options_string, option, options_max_len);
+				}
+			} else {
+				/* remove option if already there */
+				location = strstr (options_string, option);
+				if (location != NULL) {
+					char *end;
+
+					end = strchr (location, ',');
+					if (end == NULL) {
+						location[0] = '\0';
+					} else {
+						strcpy (location, end + 1); /* skip the extra comma */
+					}
+				}
+
 			}
 		}
 	}
@@ -1518,15 +1535,15 @@ hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
 	drive->mount_options[0] = '\0';
 
 	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
-	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
-		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
-	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
-	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
-	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
-		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
 		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
+		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
+	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
+		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
+		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 
 	result = drive->mount_options;
 
@@ -1560,16 +1577,16 @@ const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *vol
 	result = NULL;
 	volume->mount_options[0] = '\0';
 
-	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
-	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
-		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
-	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
-	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
-		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
 		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
+		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
+	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
+		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
+		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 
 	result = volume->mount_options;
 

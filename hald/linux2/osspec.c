@@ -230,7 +230,9 @@ osspec_probe (void)
 	hal_device_store_add (hald_get_gdl (), root);
 
 	/* will enqueue hotplug events for entire system */
+	HAL_INFO (("Synthesizing events..."));
 	coldplug_synthesize_events ();
+	HAL_INFO (("Done synthesizing events"));
 
 	/* start processing events */
 	hotplug_event_process_queue ();
