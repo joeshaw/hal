@@ -9,7 +9,9 @@ dist_fdi20freedesktop_DATA = 		\
 	lucent-pcmcia-wireless.fdi	\
 	jetflash-mp3-player.fdi         \
         ide-drives.fdi                  \
-        usb-zip-drives.fdi
+        usb-zip-drives.fdi              \
+        usb-pda-devices.fdi             \
+        usb-pda-serial.fdi
 
 
 

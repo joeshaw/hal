@@ -1,5 +1,9 @@
 2004-12-16  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/20freedesktop/Makefile.am: Add the two new .fdi files to _DATA
+
+2004-12-16  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/20freedesktop/usb-pda-serial.fdi: New file
 
 	* fdi/20freedesktop/usb-pda-devices.fdi: New file
