@@ -416,7 +416,6 @@ hal.conf
 Makefile
 hald/Makefile
 hald/dummy/Makefile
-hald/linux/Makefile
 hald/linux2/Makefile
 hald/linux2/probing/Makefile
 hald/haldaemon
