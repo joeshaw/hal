@@ -121,7 +121,7 @@ typedef struct LibHalFunctions_s
 
 int hal_initialize(const LibHalFunctions* functions, dbus_bool_t use_cache);
 
-int hal_shutdown();
+int hal_shutdown(void);
 
 char** hal_get_all_devices(int* num_devices);
 dbus_bool_t hal_device_exists(const char* udi);
@@ -191,7 +191,7 @@ dbus_bool_t hal_psi_get_bool(LibHalPropertySetIterator* iter);
 void hal_free_string_array(char** str_array);
 void hal_free_string(char* str);
 
-char* hal_agent_new_device();
+char* hal_agent_new_device(void);
 dbus_bool_t hal_agent_commit_to_gdl(const char* temp_udi, const char* udi);
 dbus_bool_t hal_agent_remove_device(const char* udi);
 dbus_bool_t hal_agent_merge_properties(const char* udi, const char* from_udi);
@@ -212,7 +212,7 @@ dbus_bool_t hal_device_query_capability(const char* udi,
 
 char** hal_find_device_by_capability(const char* capability, int* num_devices);
 
-int hal_device_property_watch_all();
+int hal_device_property_watch_all(void);
 int hal_device_add_property_watch(const char* udi);
 int hal_device_remove_property_watch(const char* udi);
 

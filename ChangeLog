@@ -1,3 +1,54 @@
+2004-01-17  David Zeuthen  <david@fubar.dk>
+
+	* hald/device_store.c (ds_query_capability): use strtok_r instead
+	of strstr as it didn't really work (example: will return true if
+	called with 'cdrom' and caps were 'cdrom.cdr block'.
+	(ds_add_capability): only announce new capability if we actually
+	added it
+
+2004-01-17  Joe Shaw  <joe@ximian.com>
+
+	* hald/Makefile.am (hald_SOURCES): add linux_ieee1394.[ch]
+
+	* hald/linux/linux_ieee1394.[ch]: new files
+
+	* hald/linux/linux_osspec.c (visit_device): visit IEEE1394 devices
+	(osspec_probe): handle IEEE1394 devices
+	(handle_hotplug): handle IEEE1394 devices
+
+2004-01-17  Matthew Mastracci  <matt@acclaro.com>
+	
+	* tools/device-manager/Const.py.in (BUS_NAMES): add video4linux,
+	fix I2C capitalization         
+
+	* hald/linux/linux_osspec.c (visit_class_device): add support
+	for video4linux, minor I2C fixes
+	(visit_class_device): add support for video4linux
+	(visit_class_device): use class device path for I2C
+	(handle_hotplug): hotplug support for video4linux
+
+	* hald/Makefile.am (hald_SOURCES): Add linux_class_video4linux.[ch]
+
+	* hald/linux/linux_class_video4linux.[ch]: new files
+	
+2004-01-17  Bastien Nocera  <hadess@hadess.net>
+
+	* hald/Makefile.am (hald_SOURCES): Add linux_dvd_rw_utils.[ch]
+
+	* hald/linux/linux_class_block.c 
+	(linux_class_block_check_if_ready_to_add): Check for DVD writer
+	capabilities	
+
+	* hal.pc.in: Fixup up so applications only need to include libhal and
+	not dbus
+
+	* hald/linux/linux_dvd_rw_utils.[ch]: new files
+
+2004-01-17  Robert Love  <rml@ximian.com>
+
+	* libhal/libhal.h: Change protototype of foo() to foo(void) to avoid
+	warnings when compiling -Wstrict-prototypes
+
 2004-01-16  David Zeuthen  <david@fubar.dk>
 
 	* packaging/fedora/hal.spec (Version): bump version to 0.2.5

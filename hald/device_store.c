@@ -1474,13 +1474,16 @@ void ds_add_capability(HalDevice* device, const char* capability)
     }
     else
     {
-        if( !ds_query_capability(device, capability) )
+        if( ds_query_capability(device, capability) )
+        {
+            return;
+        }
+        else
         {
             snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
             ds_property_set_string(device, "info.capabilities", buf);
         }
     }
-
 
     for(i=0; i<num_new_capability_cb; i++)
         (*(new_capability_cb[i]))(device, capability, device->in_gdl);
@@ -1495,16 +1498,31 @@ void ds_add_capability(HalDevice* device, const char* capability)
  */
 dbus_bool_t ds_query_capability(HalDevice* device, const char* capability)
 {
-    const char* caps;
+    const char* caps_orig;
+    char* caps;
+    char buf[256];
+    char* bufp = buf;
+    char* c;
 
-    caps = ds_property_get_string(device, "info.capabilities");
-    if( caps!=NULL )
+    caps = NULL;
+    caps_orig = ds_property_get_string(device, "info.capabilities");
+    if( caps_orig!=NULL )
     {
-        /** @todo FIXME this is clearly borken - consider properties foo
-         *  and foobar - you cannot add foo if foobar already exist 
-         */
-        if( strstr(caps, capability)!=NULL )
-            return TRUE;
+        /* strtok_r destroys the string, so mae a copy */
+        caps = xstrdup(caps_orig);
+
+        for(c = strtok_r(caps, " ", &bufp); 
+            c!=NULL; 
+            c = strtok_r(NULL, " ", &bufp))
+        {
+            if( strcmp(c, capability)==0 )
+            {
+                free(caps);
+                return TRUE;
+            }
+        }
+        
+        free(caps);
     }
     return FALSE;
 }

@@ -49,6 +49,7 @@
 #include "linux_class_block.h"
 #include "linux_class_scsi.h"
 #include "linux_class_i2c_adapter.h"
+#include "linux_class_v4l.h"
 #include "linux_class_net.h"
 #include "linux_class_input.h"
 
@@ -103,6 +104,8 @@ static void visit_class_device(const char* path, dbus_bool_t visit_children)
         visit_class_device_scsi_device(path, class_device);
     else if( strcmp(class_device->classname, "i2c-adapter")==0 )
         visit_class_device_i2c_adapter(path, class_device);
+    else if( strcmp(class_device->classname, "video4linux")==0 )
+        visit_class_device_v4l(path, class_device);
     else if( strcmp(class_device->classname, "block")==0 )
         visit_class_device_block(path, class_device);
     else if( strcmp(class_device->classname, "net")==0 )
@@ -192,6 +195,8 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
             visit_device_pci(path, device);
         else if( strcmp(device->bus, "usb")==0 )
             visit_device_usb(path, device);
+        else if( strcmp(device->bus, "ieee1394")==0 )
+            visit_device_ieee1394(path, device);
         else if( strcmp(device->bus, "ide")==0 )
             visit_device_ide(path, device);
         /** @todo This is a hack; is there such a thing as an ide_host? */
@@ -214,7 +219,7 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
                     {
                        printf("device->bus_id = %s, cls->name = %s\n", device->bus_id, class_device->name);
                        if ( strcmp(device->bus_id, class_device->name) == 0 )
-                            visit_class_device_i2c_adapter(path, class_device);
+                            visit_class_device_i2c_adapter(class_device->path, class_device);
                     }
                 }
                 sysfs_close_class(cls);
@@ -262,7 +267,9 @@ void osspec_init(DBusConnection* dbus_connection)
 
     linux_pci_init();
     linux_usb_init();
+    linux_ieee1394_init();
     linux_ide_init();
+    linux_class_v4l_init();
     linux_class_scsi_init();
     linux_class_block_init();
     linux_class_net_init();
@@ -315,6 +322,9 @@ void osspec_probe()
     }
     sysfs_close_directory(dir);
 
+    /* visit class devices in /sys/class/video4linux */
+    visit_class("video4linux", TRUE);
+
     /* visit class devices in /sys/class/scsi_host */
     visit_class("scsi_host", FALSE);
 
@@ -337,6 +347,7 @@ void osspec_probe()
      */
     linux_pci_detection_done();
     linux_usb_detection_done();
+    linux_ieee1394_detection_done();
     linux_ide_detection_done();
     linux_class_block_detection_done();
     linux_class_input_detection_done();
@@ -435,6 +446,7 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
     if( sysfs_devpath[0]!='\0' && 
         (strcmp(subsystem, "usb")==0 ||
          strcmp(subsystem, "pci")==0 ||
+         strcmp(subsystem, "ieee1394")==0 ||
          strcmp(subsystem, "i2c")==0))
     {
 
@@ -485,7 +497,8 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
               strcmp(subsystem, "block")==0 ||
               strcmp(subsystem, "scsi_host")==0 ||
               strcmp(subsystem, "scsi_device")==0 ||
-              strcmp(subsystem, "i2c-adapter")==0) )
+              strcmp(subsystem, "i2c-adapter")==0 ||
+              strcmp(subsystem, "video4linux")==0 ))
     {
         if( is_add )
         {

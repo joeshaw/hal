@@ -24,11 +24,14 @@ hald_SOURCES +=                                                         \
         linux/linux_pci.h               linux/linux_pci.c               \
         linux/linux_i2c.h               linux/linux_i2c.c               \
         linux/linux_usb.h               linux/linux_usb.c               \
+        linux/linux_ieee1394.h          linux/linux_ieee1394.c          \
         linux/linux_ide.h               linux/linux_ide.c               \
+		linux/linux_dvd_rw_utils.h      linux/linux_dvd_rw_utils.c	    \
         linux/linux_class_block.h       linux/linux_class_block.c       \
         linux/linux_class_scsi.h        linux/linux_class_scsi.c        \
         linux/linux_class_net.h         linux/linux_class_net.c         \
         linux/linux_class_i2c_adapter.h linux/linux_class_i2c_adapter.c \
+        linux/linux_class_v4l.h         linux/linux_class_v4l.c         \
         linux/linux_class_input.h       linux/linux_class_input.c
 
 hald_SOURCES +=                                                         \

@@ -6,5 +6,6 @@ includedir=@includedir@
 Name: hal
 Description: Free desktop hardware abstraction layer
 Version: @VERSION@
+Requires: dbus-1
 Libs: -L${libdir} -lhal
-Cflags: -I${includedir}/hal
+Cflags: -DDBUS_API_SUBJECT_TO_CHANGE -I${includedir}/hal

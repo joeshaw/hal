@@ -52,6 +52,7 @@
 #include "../device_store.h"
 #include "../hald.h"
 #include "linux_class_block.h"
+#include "linux_dvd_rw_utils.h"
 
 /* fwd decl */
 static void etc_mtab_process_all_block_devices(dbus_bool_t force);
@@ -525,8 +526,26 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
                     }
                     if (capabilities & CDC_DVD)
                     {
+                        int profile;
+
                         ds_add_capability(d, "storage.dvd");
                         ds_property_set_bool(d, "storage.dvd", TRUE);
+                        
+                        profile = get_dvd_r_rw_profile (fd);
+                        HAL_WARNING (("profile %d\n", profile));
+                        if (profile == 2)
+                        {
+                            ds_add_capability(d, "storage.dvdplusr");
+                            ds_property_set_bool(d, "storage.dvdplusr", TRUE);
+                            ds_add_capability(d, "storage.dvdplusrw");
+                            ds_property_set_bool(d, "storage.dvdplusrw", TRUE);
+                        } else if (profile == 0) {
+                            ds_add_capability(d, "storage.dvdplusr");
+                            ds_property_set_bool(d, "storage.dvdplusr", TRUE);
+                        } else if (profile == 1) {
+                            ds_add_capability(d, "storage.dvdplusrw");
+                            ds_property_set_bool(d, "storage.dvdplusrw", TRUE);
+                        }
                     }
                     if (capabilities & CDC_DVD_R)
                     {
@@ -539,7 +558,7 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
                         ds_property_set_bool(d, "storage.dvdram", TRUE);
                     }
                 }
-
+                
                 /* while we're at it, check if we support media changed */
                 if( ioctl(fd, CDROM_MEDIA_CHANGED)>=0 )
                 {
