@@ -1,3 +1,14 @@
+2004-02-27  Joe Shaw  <joe@ximian.com>
+
+	* hald/linux/linux_class_block.c
+	(visit_class_device_block_got_parent): Handle block devices which
+	have a "scsi_device" as its parent class.  Use sysfs to get
+	vendor, product, and SCSI device type, which get mapped to HAL
+	capabilities.
+
+	* hald/linux/linux_usb.c (usb_proc_parse): Fallback to
+	/proc/bus/usb/devices_please-use-sysfs-instead.  Yeah, yeah.
+
 2004-01-20  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_osspec.c (visit_device): disable ieee1394

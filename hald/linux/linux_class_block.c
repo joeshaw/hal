@@ -207,6 +207,18 @@ void visit_class_device_block(const char* path,
     */
 }
 
+static char *
+strip_space (char *str)
+{
+    int i, len;
+
+    len = strlen (str);
+    for (i = len - 1; i > 0 && isspace (str[i]); --i)
+	    str[i] = '\0';
+
+    return str;
+}
+
 /** Callback when the parent is found or if there is no parent.. This is
  *  where we get added to the GDL..
  *
@@ -346,6 +358,9 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         /* We are a disk or cdrom drive; maybe we even offer removable media */
         ds_property_set_string(d, "info.category", "block");
 
+	HAL_INFO (("Bus type is %s!", ds_property_get_string (parent,
+							      "info.bus")));
+
         if( strcmp(ds_property_get_string(parent, "info.bus"), "ide")==0 )
         {
             const char* ide_name;
@@ -413,16 +428,69 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             }
             
         }
-        else
+        else if( strcmp(ds_property_get_string(parent, "info.bus"),
+			"scsi_device")==0 )
         {
-            /** @todo block device on non-IDE device; how to find the
-             *         name and the media-type? Right now we just assume
-             *         that the disk is fixed and of type flash.. This hack
-             *         does 'the right thing' on IDE-systems where the
-             *         user attach a USB storage device.
-             *
-             *         We should special case for at least SCSI once this
-             *         information is easily accessible in kernel 2.6.
+		const char *sysfs_path;
+		char attr_path[SYSFS_PATH_MAX];
+		struct sysfs_attribute *attr;
+
+		sysfs_path = ds_property_get_string (d, "linux.sysfs_path");
+
+		snprintf (attr_path, SYSFS_PATH_MAX, "%s/device/vendor",
+			  sysfs_path);
+
+		attr = sysfs_open_attribute (attr_path);
+
+		if (sysfs_read_attribute (attr) >= 0) {
+			ds_property_set_string (d, "info.vendor",
+						strip_space (attr->value));
+			sysfs_close_attribute (attr);
+		}
+
+		snprintf (attr_path, SYSFS_PATH_MAX, "%s/device/model",
+			  sysfs_path);
+
+		attr = sysfs_open_attribute (attr_path);
+
+		if (sysfs_read_attribute (attr) >= 0) {
+			ds_property_set_string (d, "info.product",
+						strip_space (attr->value));
+			sysfs_close_attribute (attr);
+		}
+
+		snprintf (attr_path, SYSFS_PATH_MAX, "%s/device/type",
+			  sysfs_path);
+
+		attr = sysfs_open_attribute (attr_path);
+
+		if (sysfs_read_attribute (attr) >= 0) {
+			int type = parse_dec (attr->value);
+
+			switch (type) {
+			case 0: /* Disk */
+				ds_add_capability (d, "storage");
+				ds_property_set_string (d, "info.category",
+							"storage");
+			case 5: /* CD-ROM */
+				ds_add_capability (d, "storage");
+				ds_add_capability (d, "storage.removable");
+				ds_property_set_string (d, "info.category",
+							"storage.removable");
+				removable_media = TRUE;
+			default:
+				/** @todo add more SCSI types */
+				HAL_WARNING (("Don't know how to handle "
+					      "SCSI type %d", type));
+			}
+		}				
+	}
+	else
+	{
+            /** @todo block device on non-IDE and non-SCSI device;
+	     *         how to find the name and the media-type? Right now
+	     *         we just assume that the disk is fixed and of type
+	     *         flash.
              *       
              */
 
@@ -486,7 +554,7 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
 
     if( device_file!=NULL && strcmp(device_file, "")!=0 )
     {
-        char* media;
+        const char* media;
 
         /* now we have block.device (and storage.media since got_parent
          * was called) 
@@ -957,7 +1025,7 @@ static void force_unmount(HalDevice* d)
                                                 
         /* invoke umount */
         if( g_spawn_sync("/",
-                         umount_argv,
+                         (char **) umount_argv,
                          NULL,
                          0,
                          NULL,

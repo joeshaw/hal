@@ -478,6 +478,8 @@ static void usb_proc_parse()
 
     f = fopen("/proc/bus/usb/devices", "r");
     if( f==NULL )
+	    f = fopen("/proc/bus/usb/devices_please-use-sysfs-instead", "r");
+    if( f==NULL )
     {
         DIE(("Couldn't open /proc/bus/usb/devices"));
     }
