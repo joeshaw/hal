@@ -1,3 +1,8 @@
+2004-08-20  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_reiserfs),
+	(probe_swap): Export format_version for reiser and swap
+
 2004-08-19  David Zeuthen  <david@fubar.dk>
 
 	* tools/fstab-sync.c: Lot's of changes: remove old locking code;
