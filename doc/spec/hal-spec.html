@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->HAL 0.5.0 Specification</TITLE
+>HAL 0.5.0.cvs20050310 Specification</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.79"></HEAD
@@ -24,7 +24,7 @@ CLASS="TITLEPAGE"
 CLASS="title"
 ><A
 NAME="AEN2"
->HAL 0.5.0 Specification</A
+>HAL 0.5.0.cvs20050310 Specification</A
 ></H1
 ><H3
 CLASS="author"
@@ -51,7 +51,7 @@ HREF="mailto:david@fubar.dk"
 ></DIV
 ><SPAN
 CLASS="releaseinfo"
->Version 0.5.0<BR></SPAN
+>Version 0.5.0.cvs20050310<BR></SPAN
 ><HR></DIV
 ><DIV
 CLASS="TOC"
@@ -512,21 +512,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2593"
+HREF="#AEN2600"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2604"
+HREF="#AEN2611"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2612"
+HREF="#AEN2619"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -690,7 +690,7 @@ CLASS="CALSTABLE"
 ></TR
 ><TR
 ><TD
->0.5.0</TD
+>0.5.0.cvs20050310</TD
 ><TD
 >&nbsp;</TD
 ><TD
@@ -6387,22 +6387,6 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->battery.remaining_time</TT
-> (int)</TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->&#13;		Remaining time, in seconds, that the battery can provide
-		power if it's discharging. This is an estimate and may be
-		imprecise.
-	      </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
 >battery.charge_level.current</TT
 > (int)</TD
 ><TD
@@ -6416,6 +6400,41 @@ CLASS="literal"
 >"battery.charge_level.unit"</TT
 > 
 		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.charge_level.rate</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The discharge/charge rate measured
+		in <TT
+CLASS="literal"
+>"battery.charge_level.unit"</TT
+>
+		units per second.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.remaining_time</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Remaining time, in seconds, that the battery can provide
+		power if it's discharging. This is an estimate and may be
+		imprecise.
 	      </TD
 ></TR
 ><TR
@@ -6572,7 +6591,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2067"
+NAME="AEN2074"
 ></A
 ><TABLE
 BORDER="1"
@@ -6686,7 +6705,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2111"
+NAME="AEN2118"
 ></A
 ><TABLE
 BORDER="1"
@@ -6754,7 +6773,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2132"
+NAME="AEN2139"
 ></A
 ><TABLE
 BORDER="1"
@@ -6848,7 +6867,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2164"
+NAME="AEN2171"
 ></A
 ><TABLE
 BORDER="1"
@@ -6959,7 +6978,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2206"
+NAME="AEN2213"
 ></A
 ><TABLE
 BORDER="1"
@@ -7111,7 +7130,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2264"
+NAME="AEN2271"
 ></A
 ><TABLE
 BORDER="1"
@@ -7270,7 +7289,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2316"
+NAME="AEN2323"
 ></A
 ><TABLE
 BORDER="1"
@@ -7399,7 +7418,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2357"
+NAME="AEN2364"
 ></A
 ><TABLE
 BORDER="1"
@@ -8467,7 +8486,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2551"
+NAME="AEN2558"
 ></A
 ><TABLE
 BORDER="1"
@@ -8627,7 +8646,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2593"
+NAME="AEN2600"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -8743,7 +8762,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2604"
+NAME="AEN2611"
 >Example</A
 ></H3
 ><P
@@ -8861,7 +8880,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2612"
+NAME="AEN2619"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

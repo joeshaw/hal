@@ -48,6 +48,7 @@
 
 #include "drive_id/drive_id.h"
 #include "volume_id/volume_id.h"
+#include "volume_id/logging.h"
 #include "volume_id/msdos.h"
 
 #include "linux_dvd_rw_utils.h"
@@ -296,11 +297,30 @@ main (int argc, char *argv[])
 		}
 	}
 
+	/* block size and total size */
+	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
+		dbg ("volume.block_size = %d", block_size);
+		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
+	}
+	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
+		dbg ("volume.size = %llu", vol_size);
+		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
+	} else
+		vol_size = 0;
+
 	if (should_probe_for_fs) {
+
+		/* Optical discs have problems reporting the exact
+		 * size so we should never look for data there since
+		 * it causes problems with the broken ide-cd driver
+		 */
+		if (is_disc)
+			vol_size = 0;
+
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
-			if (volume_id_probe_all (vid, 0, 0 /* size */) == 0) {
+			if (volume_id_probe_all (vid, 0, vol_size /* size */) == 0) {
 				set_volume_id_values(ctx, udi, vid);
 			} else {
 				libhal_device_set_property_string (ctx, udi, "info.product", "Volume", &error);
@@ -355,16 +375,6 @@ main (int argc, char *argv[])
 			}		
 			libhal_free_string (stordev_dev_file);
 		}
-	}
-
-	/* block size and total size */
-	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
-		dbg ("volume.block_size = %d", block_size);
-		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
-	}
-	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
-		dbg ("volume.size = %llu", vol_size);
-		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
 	}
 
 	/* good so far */

@@ -149,6 +149,8 @@ main (int argc, char *argv[])
 			break;
 		}
 
+		dbg ("event is '%s'", event);
+
 		if (sscanf (event, "%s %s %x %x", acpi_path, acpi_name, &acpi_num1, &acpi_num2) == 4) {
 			char udi[256];
 

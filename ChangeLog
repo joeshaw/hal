@@ -1,3 +1,10 @@
+2005-03-11  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-volume.c (main): Patch from Kay
+	Sievers <kay.sievers@vrfy.org> I need the following to make linux
+	raid volumes working again. I have a test disk here, that does not
+	work with the new HAL.
+
 2005-03-11  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Add all the ATA raid signatures which are supported in the dmraid
