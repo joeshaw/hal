@@ -1,5 +1,11 @@
 2004-09-29  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/volume_id/volume_id.c (volume_id_probe): Probe for msdos
+	partition table before any other fs'es with the signature in the first
+	block. Patch from Martin Pitt <martin@piware.de>.
+
+2004-09-29  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (detect_disc): Do a CDROM_DRIVE_STATUS
 	before CDROM_DISC_STATUS
 

@@ -2052,13 +2052,13 @@ int volume_id_probe(struct volume_id *id,
 			break;
 
 		/* signature in the first block, only small buffer needed */
+		rc = probe_msdos_part_table(id, off);
+		if (rc == 0)
+			break;
 		rc = probe_ntfs(id, off);
 		if (rc == 0)
 			break;
 		rc = probe_vfat(id, off);
-		if (rc == 0)
-			break;
-		rc = probe_msdos_part_table(id, off);
 		if (rc == 0)
 			break;
 		rc = probe_mac_partition_map(id, off);
