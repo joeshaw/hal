@@ -2,6 +2,13 @@
 
 	Patch from Kay Sievers <kay.sievers@vrfy.org>
 
+	* hald/linux/volume_id/volume_id.[ch] : Extract volume label from
+	NTFS disks
+
+2004-06-20  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
 	* hald/linux/osspec.c (osspec_init): Remove support for listening
 	to udev as this is now handled by the HAL dev.d callout.
 
