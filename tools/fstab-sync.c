@@ -1158,7 +1158,6 @@ static char* add_hal_device (FSTable *table, const char *udi)
 	fstab_update_debug (_("%d: entering add_hal_device, udi='%s'\n"), pid, udi);
 	
 	drive  = libhal_drive_from_udi (hal_context, udi);
-	/*fstab_update_debug (_("%d: drive=%x, volume=%x\n"), pid, drive, volume);*/
 	if (drive == NULL) {
 		char *udi_storage_device;
 		DBusError error;
@@ -1174,6 +1173,8 @@ static char* add_hal_device (FSTable *table, const char *udi)
 	}
 
 	volume = libhal_volume_from_udi (hal_context, udi);
+
+	/*fstab_update_debug (_("%d: drive=%x, volume=%x\n"), pid, drive, volume);*/
 		
 	/* see if we are a drive */
 	if (volume == NULL) {
@@ -1190,6 +1191,8 @@ static char* add_hal_device (FSTable *table, const char *udi)
 		device_file = libhal_drive_get_device_file (drive);
 		if (device_file == NULL)
 			goto out;
+
+		fstab_update_debug (_("%d: device_file=%s\n"), pid, device_file);
 
 		if (fs_table_has_device (table, device_file, NULL, udi)) /* no label */ {
 			fstab_update_debug (_("%d: Could not add entry to fstab file: "

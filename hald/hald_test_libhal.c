@@ -308,7 +308,7 @@ check_libhal (const char *server_addr)
 
 				case LIBHAL_PROPERTY_TYPE_BOOLEAN:
 					if (strcmp (key, "test.bool") == 0) {
-						if (libhal_psi_get_bool (&it))
+						if (libhal_psi_get_bool (&it) == TRUE)
 							psi_num_passed++;
 						else
 							printf ("fail on %s\n", key);

@@ -1,5 +1,26 @@
 2005-02-16  David Zeuthen  <davidz@redhat.com>
 
+	Fix up more sloppy errors incuded from patches that I should
+	have reviewed more carefully :-/
+
+	* libhal-storage/libhal-storage.c: Match against
+	LIBHAL_PROPERTY_TYPE_*, not DBUS_TYPE_*
+	(libhal_drive_policy_default_use_managed_keyword):
+	(libhal_drive_policy_default_get_mount_root):
+	(libhal_drive_policy_default_use_managed_keyword):
+	(libhal_drive_policy_default_get_managed_keyword_primary):
+	(libhal_drive_policy_default_get_managed_keyword_secondary):
+	(libhal_drive_policy_get_mount_options):
+	(libhal_volume_policy_get_mount_options): Yikes, Yikes, rename
+	"/org/freedesktop/LibHal" back to "/org/freedesktop/Hal"
+
+	* libhal/libhal.c (libhal_property_fill_value_from_variant): p->type
+	wasn't being assigned :-/. Also, DBUS_TYPE_BOOLEAN wasn't handled.
+
+	* hald/hald_test_libhal.c (check_libhal): Fix this test
+
+2005-02-16  David Zeuthen  <davidz@redhat.com>
+
 	Patch from W. Michael Petullo <mike@flyn.org>. Attached you should
 	find a patch that begins to add LUKS support to hald. This should
 	eventually provide an easy means to mount encrypted filesystems.

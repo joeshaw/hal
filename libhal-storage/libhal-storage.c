@@ -758,17 +758,17 @@ libhal_volume_free (LibHalVolume *vol)
 
 #define LIBHAL_PROP_EXTRACT_BEGIN if (FALSE)
 #define LIBHAL_PROP_EXTRACT_END ;
-#define LIBHAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_INT32) _where_ = libhal_psi_get_int (&it)
-#define LIBHAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
-#define LIBHAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
-#define LIBHAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
+#define LIBHAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_INT32) _where_ = libhal_psi_get_int (&it)
+#define LIBHAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
+#define LIBHAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
+#define LIBHAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
 
-/** Given a UDI for a LIBHAL device of capability 'storage', this
+/** Given a UDI for a HAL device of capability 'storage', this
  *  function retrieves all the relevant properties into convenient
  *  in-process data structures.
  *
  *  @param  hal_ctx             libhal context
- *  @param  udi                 LIBHAL UDI
+ *  @param  udi                 HAL UDI
  *  @return                     LibHalDrive object or NULL if UDI is invalid
  */
 LibHalDrive *
@@ -948,7 +948,7 @@ libhal_drive_requires_eject (LibHalDrive *drive)
  *  in-process data structures.
  *
  *  @param  hal_ctx             libhal context
- *  @param  udi                 LIBHAL UDI
+ *  @param  udi                 HAL UDI
  *  @return                     LibHalVolume object or NULL if UDI is invalid
  */
 LibHalVolume *
@@ -1428,7 +1428,7 @@ libhal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						  "storage.policy.default.mount_root", &error);
 }
 
@@ -1437,7 +1437,7 @@ libhal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
+	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						"storage.policy.default.use_managed_keyword", &error);
 }
 
@@ -1446,7 +1446,7 @@ libhal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						  "storage.policy.default.managed_keyword.primary", &error);
 }
 
@@ -1455,7 +1455,7 @@ libhal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ct
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						  "storage.policy.default.managed_keyword.secondary", &error);
 }
 
@@ -1464,6 +1464,8 @@ libhal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ct
 dbus_bool_t
 libhal_drive_policy_is_mountable (LibHalDrive *drive, LibHalStoragePolicy *policy)
 {
+	printf ("should_mount=%d, no_partitions_hint=%d\n", drive->should_mount, drive->no_partitions_hint);
+
 	return drive->should_mount && drive->no_partitions_hint;
 }
 
@@ -1500,7 +1502,7 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 		
 		type = libhal_psi_get_type (&it);
 		key = libhal_psi_get_key (&it);
-		if (libhal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN &&
+		if (libhal_psi_get_type (&it) == LIBHAL_PROPERTY_TYPE_BOOLEAN &&
 		    strncmp (key, namespace, namespace_len - 1) == 0) {
 			const char *option = key + namespace_len - 1;
 			char *location;
@@ -1564,12 +1566,12 @@ libhal_drive_policy_get_mount_options (LibHalDrive *drive, LibHalStoragePolicy *
 
 	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/LibHal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
 		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/LibHal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
 		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 
@@ -1607,12 +1609,12 @@ const char *libhal_volume_policy_get_mount_options (LibHalDrive *drive, LibHalVo
 
 	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/LibHal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
 		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/LibHal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
 		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 

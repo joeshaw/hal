@@ -269,6 +269,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 		p->str_value = strdup (v);
 		if (p->str_value == NULL) 
 			return FALSE;
+		p->type = LIBHAL_PROPERTY_TYPE_STRING; 
 
 		break;
 	}
@@ -279,6 +280,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 		dbus_message_iter_get_basic (var_iter, &v);
 		
 		p->int_value = v;
+		p->type = LIBHAL_PROPERTY_TYPE_INT32; 
 
 		break;
 	}
@@ -289,6 +291,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 		dbus_message_iter_get_basic (var_iter, &v);
 
 		p->uint64_value = v;
+		p->type = LIBHAL_PROPERTY_TYPE_UINT64; 
 		
 		break;
 	}
@@ -299,6 +302,18 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 		dbus_message_iter_get_basic (var_iter, &v);
 
 		p->double_value = v;
+		p->type = LIBHAL_PROPERTY_TYPE_DOUBLE; 
+
+		break;
+	}
+	case DBUS_TYPE_BOOLEAN:
+	{
+		double v;
+
+		dbus_message_iter_get_basic (var_iter, &v);
+
+		p->double_value = v;
+		p->type = LIBHAL_PROPERTY_TYPE_BOOLEAN; 
 
 		break;
 	}
@@ -385,8 +400,7 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 
 	p_last = NULL;
 
-	while (dbus_message_iter_get_arg_type (&dict_iter) 
-	                      == DBUS_TYPE_DICT_ENTRY)
+	while (dbus_message_iter_get_arg_type (&dict_iter) == DBUS_TYPE_DICT_ENTRY)
 	{
 		DBusMessageIter dict_entry_iter, var_iter;
 		const char *key;
@@ -425,8 +439,6 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 
 		if(!libhal_property_fill_value_from_variant (p, &var_iter))
 			goto oom;
-
-		
 
 		dbus_message_iter_next (&dict_iter);
 	}
