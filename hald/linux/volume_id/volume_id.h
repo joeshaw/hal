@@ -31,6 +31,7 @@
 
 enum filesystem_type {
 	ALL,
+	SWAP,
 	EXT2,
 	EXT3,
 	REISER,
@@ -43,7 +44,8 @@ enum filesystem_type {
 	NTFS,
 	HFS,
 	HFSPLUS,
-	SWAP
+	MACPARTMAP,
+	UFS
 };
 
 struct volume_id {

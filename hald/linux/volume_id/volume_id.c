@@ -726,9 +726,213 @@ found:
 	return 0;
 }
 
-#define HFS_SUPERBLOCK_OFFSET		0x400
-static int probe_hfs(struct volume_id *id)
+#define UFS_MAGIC			0x00011954                                      
+#define UFS2_MAGIC			0x19540119 
+#define UFS_MAGIC_FEA			0x00195612
+#define UFS_MAGIC_LFN			0x00095014
+
+
+static int probe_ufs(struct volume_id *id)
 {
+	struct ufs_super_block {
+		__u32	fs_link;
+		__u32	fs_rlink;
+		__u32	fs_sblkno;
+		__u32	fs_cblkno;
+		__u32	fs_iblkno;
+		__u32	fs_dblkno;
+		__u32	fs_cgoffset;
+		__u32	fs_cgmask;
+		__u32	fs_time;
+		__u32	fs_size;
+		__u32	fs_dsize;
+		__u32	fs_ncg;	
+		__u32	fs_bsize;
+		__u32	fs_fsize;
+		__u32	fs_frag;
+		__u32	fs_minfree;
+		__u32	fs_rotdelay;
+		__u32	fs_rps;	
+		__u32	fs_bmask;
+		__u32	fs_fmask;
+		__u32	fs_bshift;
+		__u32	fs_fshift;
+		__u32	fs_maxcontig;
+		__u32	fs_maxbpg;
+		__u32	fs_fragshift;
+		__u32	fs_fsbtodb;
+		__u32	fs_sbsize;
+		__u32	fs_csmask;
+		__u32	fs_csshift;
+		__u32	fs_nindir;
+		__u32	fs_inopb;
+		__u32	fs_nspf;
+		__u32	fs_optim;
+		__u32	fs_npsect_state;
+		__u32	fs_interleave;
+		__u32	fs_trackskew;
+		__u32	fs_id[2];
+		__u32	fs_csaddr;
+		__u32	fs_cssize;
+		__u32	fs_cgsize;
+		__u32	fs_ntrak;
+		__u32	fs_nsect;
+		__u32	fs_spc;	
+		__u32	fs_ncyl;
+		__u32	fs_cpg;
+		__u32	fs_ipg;
+		__u32	fs_fpg;
+		struct ufs_csum {
+			__u32	cs_ndir;
+			__u32	cs_nbfree; 
+			__u32	cs_nifree;
+			__u32	cs_nffree;
+		} __attribute__((__packed__)) fs_cstotal;
+		__s8	fs_fmod;
+		__s8	fs_clean;
+		__s8	fs_ronly;
+		__s8	fs_flags;
+		union {
+			struct {
+				__s8	fs_fsmnt[512];
+				__u32	fs_cgrotor;
+				__u32	fs_csp[31];
+				__u32	fs_maxcluster;
+				__u32	fs_cpc;
+				__u16	fs_opostbl[16][8];
+			} __attribute__((__packed__)) fs_u1;
+			struct {
+				__s8  fs_fsmnt[468];
+				__u8   fs_volname[32];
+				__u64  fs_swuid;
+				__s32  fs_pad;
+				__u32   fs_cgrotor;
+				__u32   fs_ocsp[28];
+				__u32   fs_contigdirs;
+				__u32   fs_csp;	
+				__u32   fs_maxcluster;
+				__u32   fs_active;
+				__s32   fs_old_cpc;
+				__s32   fs_maxbsize;
+				__s64   fs_sparecon64[17];
+				__s64   fs_sblockloc;
+				struct  ufs2_csum_total {
+					__u64	cs_ndir;
+					__u64	cs_nbfree;
+					__u64	cs_nifree;
+					__u64	cs_nffree;
+					__u64	cs_numclusters;
+					__u64	cs_spare[3];
+				} __attribute__((__packed__)) fs_cstotal;
+				struct  ufs_timeval {
+					__s32	tv_sec;
+					__s32	tv_usec;
+				} __attribute__((__packed__)) fs_time;
+				__s64    fs_size;
+				__s64    fs_dsize;
+				__u64    fs_csaddr;
+				__s64    fs_pendingblocks;
+				__s32    fs_pendinginodes;
+			} __attribute__((__packed__)) fs_u2;
+		}  fs_u11;
+		union {
+			struct {
+				__s32	fs_sparecon[53];
+				__s32	fs_reclaim;
+				__s32	fs_sparecon2[1];
+				__s32	fs_state;
+				__u32	fs_qbmask[2];
+				__u32	fs_qfmask[2];
+			} __attribute__((__packed__)) fs_sun;
+			struct {
+				__s32	fs_sparecon[53];
+				__s32	fs_reclaim;
+				__s32	fs_sparecon2[1];
+				__u32	fs_npsect;
+				__u32	fs_qbmask[2];
+				__u32	fs_qfmask[2];
+			} __attribute__((__packed__)) fs_sunx86;
+			struct {
+				__s32	fs_sparecon[50];
+				__s32	fs_contigsumsize;
+				__s32	fs_maxsymlinklen;
+				__s32	fs_inodefmt;
+				__u32	fs_maxfilesize[2];
+				__u32	fs_qbmask[2];
+				__u32	fs_qfmask[2];
+				__s32	fs_state;
+			} __attribute__((__packed__)) fs_44;
+		} fs_u2;
+		__s32	fs_postblformat;
+		__s32	fs_nrpos;
+		__s32	fs_postbloff;
+		__s32	fs_rotbloff;
+		__u32	fs_magic;
+		__u8	fs_space[1];
+	} __attribute__((__packed__)) *ufs;
+	
+	__u32	magic;
+	int 	i;
+	int	offsets[] = {0, 8, 64, 256, -1};
+
+	for (i = 0; offsets[i] >= 0; i++) {	
+		ufs = (struct ufs_super_block *)
+			get_buffer(id, offsets[i] * 0x400, 0x800);
+		if (ufs == NULL)
+			return -1;
+
+		dbg("offset 0x%x", offsets[i] * 0x400);
+		magic = be32_to_cpu(ufs->fs_magic);
+		if ((magic == UFS_MAGIC) ||
+		    (magic == UFS2_MAGIC) ||
+		    (magic == UFS_MAGIC_FEA) ||
+		    (magic == UFS_MAGIC_LFN)) {
+			dbg("magic 0x%08x(be)", magic);
+			goto found;
+		}
+		magic = le32_to_cpu(ufs->fs_magic);
+		if ((magic == UFS_MAGIC) ||
+		    (magic == UFS2_MAGIC) ||
+		    (magic == UFS_MAGIC_FEA) ||
+		    (magic == UFS_MAGIC_LFN)) {
+			dbg("magic 0x%08x(le)", magic);
+			goto found;
+		}
+	}
+	return -1;
+
+found:
+	id->fs_type = UFS;
+	id->fs_name = "ufs";
+
+	return 0;
+}
+
+
+#define HFS_SUPERBLOCK_OFFSET		0x400
+#define HFS_NODE_LEAF			0xff
+#define HFSPLUS_POR_CNID		1
+static int probe_hfs_hfsplus(struct volume_id *id)
+{
+	struct mac_partition {
+		__u8	signature[2];
+		__u16	res1;
+		__u32	map_count;
+		__u32	start_block;
+		__u32	block_count;
+		__u8	name[32];
+ 	} __attribute__((__packed__)) *part; 
+
+	struct finder_info {
+		__u32	boot_folder;
+		__u32	start_app;
+		__u32	open_folder;
+		__u32	os9_folder;
+		__u32	reserved;
+		__u32	osx_folder;
+		__u8	id[8];
+	} __attribute__((__packed__));
+
 	struct hfs_mdb {
 		__u8	signature[2];
 		__u32	cr_date;
@@ -753,42 +957,12 @@ static int probe_hfs(struct volume_id *id)
 		__u16	num_root_dirs;
 		__u32	file_count;
 		__u32	dir_count;
-		struct finder_info {
-			__u32	boot_folder;
-			__u32	start_app;
-			__u32	open_folder;
-			__u32	os9_folder;
-			__u32	reserved;
-			__u32	osx_folder;
-			__u8	id[8];
-		} __attribute__((__packed__)) finfo;
-
+		struct finder_info finfo;
+		__u8	embed_sig[2];
+		__u16	embed_startblock;
+		__u16	embed_blockcount;
 	} __attribute__((__packed__)) *hfs;
 
-	hfs = (struct hfs_mdb *) get_buffer(id, HFS_SUPERBLOCK_OFFSET, 0x200);
-	if (hfs == NULL)
-                return -1;
-
-	if (strncmp(hfs->signature, "BD", 2) != 0)
-		return -1;
-	
-	if (hfs->label_len > 0 && hfs->label_len < 28) {	
-		set_label_raw(id, hfs->label, hfs->label_len);
-		set_label_string(id, hfs->label, hfs->label_len) ;
-	}
-
-	set_uuid(id, hfs->finfo.id, 8);
-
-	id->fs_type = HFS;
-	id->fs_name = "hfs";
-
-	return 0;
-}
-
-#define HFS_NODE_LEAF		0xff
-#define HFSPLUS_POR_CNID	1
-static int probe_hfsplus(struct volume_id *id)
-{
 	struct hfsplus_bnode_descriptor {
 		__u32	next;
 		__u32	prev;
@@ -847,15 +1021,7 @@ static int probe_hfsplus(struct volume_id *id)
 		__u32	next_cnid;
 		__u32	write_count;
 		__u64	encodings_bmp;
-		struct finder_info {
-			__u32	boot_folder;
-			__u32	start_app;
-			__u32	open_folder;
-			__u32	os9_folder;
-			__u32	reserved;
-			__u32	osx_folder;
-			__u8	id[8];
-		} __attribute__((__packed__)) finfo;
+		struct finder_info finfo;
 		struct hfsplus_fork alloc_file;
 		struct hfsplus_fork ext_file;
 		struct hfsplus_fork cat_file;
@@ -870,28 +1036,80 @@ static int probe_hfsplus(struct volume_id *id)
 	unsigned int	cat_len;
 	unsigned int	leaf_node_head;
 	unsigned int	leaf_node_size;
+	unsigned int	alloc_block_size;
+	unsigned int	alloc_first_block;
+	unsigned int	embed_first_block;
+	unsigned int	embed_off = 0;
 	struct hfsplus_bnode_descriptor *descr;
 	struct hfsplus_bheader_record *bnode;
 	struct hfsplus_catalog_key *key;
 	unsigned int	label_len;
 	const __u8 *buf;
 
-	hfsplus = (struct hfsplus_vol_header *)
-		get_buffer(id, HFS_SUPERBLOCK_OFFSET, 0x200);
-	if (hfsplus == NULL)
+	buf = get_buffer(id, 0, 0x200);
+	if (buf == NULL)
+                return -1;
+	
+	part = (struct mac_partition *) buf;
+	if ((strncmp(part->signature, "PM", 2) == 0) &&
+	    (strncmp(part->name, "Apple", 5) == 0)) {
+		id->fs_type = MACPARTMAP;
+		id->fs_name = "mac_partition_map";
+		return 0;
+	}
+
+	buf = get_buffer(id, HFS_SUPERBLOCK_OFFSET, 0x200);
+	if (buf == NULL)
                 return -1;
 
+	hfs = (struct hfs_mdb *) buf;
+	if (strncmp(hfs->signature, "BD", 2) != 0)
+		goto checkplus;
+
+	/* it may be just a hfs wrapper for hfs+ */
+	if (strncmp(hfs->embed_sig, "H+", 2) == 0) {
+		alloc_block_size = be32_to_cpu(hfs->al_blk_size);
+		dbg("alloc_block_size 0x%x", alloc_block_size);
+
+		alloc_first_block = be16_to_cpu(hfs->al_bl_st);
+		dbg("alloc_first_block 0x%x", alloc_first_block);
+
+		embed_first_block = be16_to_cpu(hfs->embed_startblock);
+		dbg("embed_first_block 0x%x", embed_first_block);
+
+		embed_off = (alloc_first_block * 512) +
+			    (embed_first_block * alloc_block_size);
+		dbg("hfs wrapped hfs+ found at offset 0x%x", embed_off);
+
+		buf = get_buffer(id, embed_off + HFS_SUPERBLOCK_OFFSET, 0x200);
+		if (buf == NULL)
+	                return -1;
+		goto checkplus;
+	}
+
+	if (hfs->label_len > 0 && hfs->label_len < 28) {	
+		set_label_raw(id, hfs->label, hfs->label_len);
+		set_label_string(id, hfs->label, hfs->label_len) ;
+	}
+
+	id->fs_type = HFS;
+	id->fs_name = "hfs";
+
+	return 0;
+
+checkplus:
+	hfsplus = (struct hfsplus_vol_header *) buf;
 	if (strncmp(hfsplus->signature, "H+", 2) == 0)
-		goto label;
+		goto hfsplus;
 	if (strncmp(hfsplus->signature, "HX", 2) == 0)
-		goto label;
+		goto hfsplus;
 	return -1;
 
-label:
+hfsplus:
 	blocksize = be32_to_cpu(hfsplus->blocksize);
 	cat_block = be32_to_cpu(hfsplus->cat_file.extents[0].start_block);
 	cat_block_count = be32_to_cpu(hfsplus->cat_file.extents[0].block_count);
-	cat_off = cat_block * blocksize;
+	cat_off = (cat_block * blocksize) + embed_off;
 	cat_len = cat_block_count * blocksize;
 	dbg("catalog start 0x%x, len 0x%x", cat_off, cat_len);
 
@@ -1151,10 +1369,12 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 		rc = probe_iso9660(id);
 		break;
 	case HFS:
-		rc = probe_hfs(id);
-		break;
 	case HFSPLUS:
-		rc = probe_hfsplus(id);
+	case MACPARTMAP:
+		rc = probe_hfs_hfsplus(id);
+		break;
+	case UFS:
+		rc = probe_ufs(id);
 		break;
 	case NTFS:
 		rc = probe_ntfs(id);
@@ -1199,10 +1419,10 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 		rc = probe_ntfs(id);
 		if (rc == 0)
 			break;
-		rc = probe_hfsplus(id);
+		rc = probe_hfs_hfsplus(id);
 		if (rc == 0)
 			break;
-		rc = probe_hfs(id);
+		rc = probe_ufs(id);
 		if (rc == 0)
 			break;
 		rc = -1;
