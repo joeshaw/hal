@@ -49,6 +49,7 @@
 #include "device_info.h"
 #include "osspec.h"
 #include "hald_dbus.h"
+#include "hald_conf.h"
 
 /**
  * @defgroup HalDaemon HAL daemon
@@ -173,9 +174,6 @@ main (int argc, char *argv[])
 	DBusConnection *dbus_connection;
 	GMainLoop *loop;
 
-	/* We require root to sniff mii registers */
-	/*opt_run_as = HAL_USER; */
-
 	while (1) {
 		int c;
 		int option_index = 0;
@@ -221,6 +219,8 @@ main (int argc, char *argv[])
 	HAL_INFO (("HAL daemon version " PACKAGE_VERSION " starting up"));
 
 	HAL_DEBUG (("opt_become_daemon = %d", opt_become_daemon));
+
+	hald_read_conf_file ();
 
 	if (opt_become_daemon) {
 		int child_pid;

@@ -103,6 +103,10 @@ clean-local:
 	rm -f *~
 	rm -f hald_marshal.c hald_marshal.h
 
+confdir = $(sysconfdir)/hal
+
+dist_conf_DATA = hald.conf
+
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/capability.d

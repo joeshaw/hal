@@ -1158,6 +1158,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
 		    "cdrom") == 0) {
 		cdrom_check (stordev, device_file);
+		hal_device_add_capability (stordev, "storage.cdrom");
 	}
 
 	hal_device_property_set_string (stordev, "info.category", "storage");

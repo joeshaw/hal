@@ -1,5 +1,26 @@
 2004-06-01  David Zeuthen  <david@fubar.dk>
 
+	* hald/hald.conf: New file, policy for hal daemon
+
+	* hald/Makefile.am: Install hald.conf into $sysconfdir/hal
+
+	* hald/hald_conf.c (hald_read_conf_file): New function
+	(cdata): New function
+	(end): New function
+	(start): New function
+	(parsing_abort): New function
+
+	* hald/hald.c (main): Call hald_read_conf_file to read the 
+	configuration file
+
+	* hald/hald_conf.h (hald_read_conf_file): Added hald_read_conf_file
+	prototype
+
+	* hald/linux/block_class_device.c (block_class_pre_process): add
+	storage.cdrom capability if device is a cdrom
+
+2004-06-01  David Zeuthen  <david@fubar.dk>
+
 	* hald/hald_conf.[ch]: New files, vendor and user specific
 	configuration of the HAL daemon
 

@@ -68,7 +68,7 @@ struct _HaldConf {
 	dbus_bool_t storage_automount_enabled;
 
 	/** Default value for storage.cdrom.eject_check_enabled for
-	 *  devices of capability storage - this can be overridden by
+	 *  devices of capability storage.cdrom - this can be overridden by
 	 *  .fdi files.
 	 *
 	 *  Setting this to FALSE results a whitelist policy,
@@ -85,6 +85,8 @@ struct _HaldConf {
 	dbus_bool_t storage_cdrom_eject_check_enabled;
 };
 
-HaldConf* hald_get_conf (void);
+HaldConf *hald_get_conf (void);
+
+void hald_read_conf_file (void);
 
 #endif  /* HALD_CONF_H */
