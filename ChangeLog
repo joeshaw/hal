@@ -1,3 +1,22 @@
+2005-03-04  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* volume_id/luks.c: (volume_id_probe_luks): Remove unneeded stuff.
+
+	* volume_id/volume_id.h: Version v37.
+
+
+2005-03-02  W. Michael Petullo  <mike@flyn.org>
+
+	* volume_id/luks.c: (volume_id_probe_luks) Use new 
+	UUID_DCE_UNPARSED format for volume_id_set_uuid call.
+
+	* volume_id/util.c: (volume_id_set_uuid) Add UUID_DCE_UNPARSED
+	format.
+
+	* volume_id/util.h: Add UUID_DCE_UNPARSED format.
+
+	* volume_id/volume_id.c: Only #include "luks.h" once.
+
 2005-03-03  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux2/classdev.c (serial_add): New function (note the TODO :-)
