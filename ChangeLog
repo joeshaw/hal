@@ -1,5 +1,17 @@
 2004-08-02  David Zeuthen  <david@fubar.dk>
 
+	* doc/spec/Makefile.am (FIGURE_FILES): Remove hal-devices-virtual1.png
+
+	* doc/spec/hal-spec.xml.in: Work-in-progress commit
+
+	* doc/spec/hal-arch.dia:
+	* doc/spec/hal-arch.png:
+	* doc/spec/hal-devices1.png: Updated
+
+	* doc/spec/hal-devices-virtual1.png: Removed
+
+2004-08-02  David Zeuthen  <david@fubar.dk>
+
 	Patch from Kay Sievers <kay.sievers@vrfy.org>
 	
 	* hald/linux/block_class_device.c: (detect_fs),

@@ -7,7 +7,6 @@ EXTRA_DIST =                          \
 FIGURE_FILES =                        \
 	hal-arch.png                  \
 	hal-devices1.png              \
-	hal-devices-virtual1.png      \
 	hal-fdi-example1.png
 
 EXTRA_DIST += hal-spec.html $(FIGURE_FILES)
