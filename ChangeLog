@@ -1,6 +1,8 @@
 2004-08-09  David Zeuthen  <david@fubar.dk>
 
-	* doc/spec/Makefile.am (FIGURE_FILES): Added hal-fdi-example3.png
+	* doc/spec/hal-volume-to-device.png: Removed
+
+2004-08-09  David Zeuthen  <david@fubar.dk>	
 
 	* doc/spec/hal-spec.xml.in: Added some text about how storage_lun%d.*
 	and storage.* properties are merged from the physical device object
