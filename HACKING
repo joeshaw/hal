@@ -2,7 +2,7 @@
 Coding Style
 ===
 
- - Please follow the coding already used
+ - Please follow the coding style already used
 
  - Write docs for all functions and structs and so on. try
    "doxygen Doxyfile" prior to commit and be sure there are no

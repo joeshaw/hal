@@ -1,3 +1,7 @@
+2003-11-08  David Zeuthen  <david@fubar.dk>
+
+	* HACKING: Fixed typo
+	
 2003-11-06  David Zeuthen  <david@fubar.dk>
 
 	* hal.conf: Changed to work with D-BUS head
