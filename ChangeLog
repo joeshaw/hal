@@ -1,5 +1,15 @@
 2004-10-18  David Zeuthen  <davidz@redhat.com>
 
+	* libhal-storage/libhal-storage.c:
+	(mopts_collect): New convenience function
+	(hal_drive_policy_get_mount_options): Ensure that 'pamconsole', 'user',
+	'users' and 'console' before any other option as an intricate detail 
+	of the mount program require that e.g. exec is after each of these
+	as they imply e.g. noexec.
+	(hal_volume_policy_get_mount_options): -do-
+
+2004-10-18  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald.c (main): Do openlog() so we can log to the syslog
 	
 	* hald/linux/hald_helper.h: Add a timestamp field

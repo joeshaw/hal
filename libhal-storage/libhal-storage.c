@@ -1446,20 +1446,15 @@ hal_drive_policy_get_desired_mount_point (HalDrive *drive, HalStoragePolicy *pol
 } while(0)
 
 
-const char *
-hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
+static void
+mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len, 
+	       const char *udi, char *options_string, size_t options_max_len, dbus_bool_t only_collect_imply_opts)
 {
-	const char *result;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
-	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
-	char stor_mount_option_begin[] = "storage.policy.mount_option.";
-
-	result = NULL;
-	drive->mount_options[0] = '\0';
 
 	/* first collect from root computer device */
-	properties = hal_device_get_all_properties (drive->hal_ctx, "/org/freedesktop/Hal/devices/computer");
+	properties = hal_device_get_all_properties (hal_ctx, udi);
 	if (properties == NULL)
 		goto error;
 	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
@@ -1469,35 +1464,63 @@ hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
 		type = hal_psi_get_type (&it);
 		key = hal_psi_get_key (&it);
 		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
-		    strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
-			if (strlen (drive->mount_options) > 0)
-				strcat_len (drive->mount_options, ",", MOUNT_OPTIONS_SIZE);
-			strcat_len (drive->mount_options, key + sizeof(stor_mount_option_default_begin)-1, MOUNT_OPTIONS_SIZE);
-		}
-	}
-	hal_free_property_set (properties);
+		    strncmp (key, namespace, namespace_len - 1) == 0) {
+			const char *option = key + namespace_len - 1;
+			char *location;
+			dbus_bool_t is_imply_opt;
 
-	/* append options from the specific drive */
-	properties = hal_device_get_all_properties (drive->hal_ctx, drive->udi);
-	if (properties == NULL)
-		goto error;
-	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
-		int type;
-		char *key;		
-		type = hal_psi_get_type (&it);
-		key = hal_psi_get_key (&it);
-		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
-		    strncmp (key, stor_mount_option_begin, sizeof (stor_mount_option_begin) - 1) == 0) {
-			if (strlen (drive->mount_options) > 0)
-				strcat_len (drive->mount_options, ",", MOUNT_OPTIONS_SIZE);
-			strcat_len (drive->mount_options, key + sizeof (stor_mount_option_begin)-1, MOUNT_OPTIONS_SIZE);
+			is_imply_opt = FALSE;
+			if (strcmp (option, "user") == 0 ||
+			    strcmp (option, "users") == 0 ||
+			    strcmp (option, "defaults") == 0 ||
+			    strcmp (option, "pamconsole"))
+				is_imply_opt = TRUE;
+
+			if (only_collect_imply_opts) {
+				if (!is_imply_opt)
+					continue;
+			} else {
+				if (is_imply_opt)
+					continue;
+			}
+
+			/* see if option is already there */
+			location = strstr (options_string, option);
+			if (location == NULL) {
+				if (strlen (options_string) > 0)
+					strcat_len (options_string, ",", options_max_len);
+				strcat_len (options_string, option, options_max_len);
+			}
 		}
 	}
+error:
+	hal_free_property_set (properties);
+}
+
+
+const char *
+hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
+{
+	const char *result;
+	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
+	char stor_mount_option_begin[] = "storage.policy.mount_option.";
+
+	result = NULL;
+	drive->mount_options[0] = '\0';
+
+	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
+	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
+		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
+		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
+	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
+		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
+		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 
 	result = drive->mount_options;
 
-error:
-	hal_free_property_set (properties);
 	return result;
 }
 
@@ -1522,54 +1545,24 @@ const char *hal_volume_policy_get_desired_mount_point (HalDrive *drive, HalVolum
 const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
 {
 	const char *result;
-	LibHalPropertySet *properties;
-	LibHalPropertySetIterator it;
 	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
 	char vol_mount_option_begin[] = "volume.policy.mount_option.";
 
 	result = NULL;
 	volume->mount_options[0] = '\0';
 
-	/* first collect from root computer device */
-	properties = hal_device_get_all_properties (drive->hal_ctx, "/org/freedesktop/Hal/devices/computer");
-	if (properties == NULL)
-		goto error;
-	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
-		int type;
-		char *key;
-		
-		type = hal_psi_get_type (&it);
-		key = hal_psi_get_key (&it);
-		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
-		    strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
-			if (strlen (volume->mount_options) > 0)
-				strcat_len (volume->mount_options, ",", MOUNT_OPTIONS_SIZE);
-			strcat_len (volume->mount_options, key + sizeof(stor_mount_option_default_begin)-1, MOUNT_OPTIONS_SIZE);
-		}
-	}
-	hal_free_property_set (properties);
-
-	/* append options from the specific volume */
-	properties = hal_device_get_all_properties (drive->hal_ctx, volume->udi);
-	if (properties == NULL)
-		goto error;
-	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
-		int type;
-		char *key;		
-		type = hal_psi_get_type (&it);
-		key = hal_psi_get_key (&it);
-		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN && hal_psi_get_bool (&it) &&
-		    strncmp (key, vol_mount_option_begin, sizeof (vol_mount_option_begin) - 1) == 0) {
-			if (strlen (volume->mount_options) > 0)
-				strcat_len (volume->mount_options, ",", MOUNT_OPTIONS_SIZE);
-			strcat_len (volume->mount_options, key + sizeof (vol_mount_option_begin)-1, MOUNT_OPTIONS_SIZE);
-		}
-	}
+	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
+	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
+		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
+		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
+	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
+		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
+		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 
 	result = volume->mount_options;
-
-error:
-	hal_free_property_set (properties);
 
 	return result;
 }
