@@ -71,6 +71,24 @@ static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
 static void detect_fs (HalDevice *d);
 
+static dbus_bool_t
+block_class_accept (ClassDeviceHandler *self,
+		    const char *path,
+		    struct sysfs_class_device *class_device)
+{
+
+	/*HAL_INFO (("path = %s, classname = %s", 
+	  path, self->sysfs_class_name));*/
+
+	/* only care about given sysfs class name */
+	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+
 static void
 block_class_visit (ClassDeviceHandler *self,
 		   const char *path,
@@ -133,6 +151,8 @@ block_class_visit (ClassDeviceHandler *self,
 		parent_sysfs_path,
 		class_device_got_parent_device, cad,
 		HAL_LINUX_HOTPLUG_TIMEOUT);
+
+	hal_device_print (d);
 }
 
 
@@ -1520,7 +1540,7 @@ ClassDeviceHandler block_class_handler = {
 	class_device_init,                  /**< init function */
 	class_device_shutdown,              /**< shutdown function */
 	block_class_tick,                   /**< timer function */
-	class_device_accept,                /**< accept function */
+	block_class_accept,                 /**< accept function */
 	block_class_visit,                  /**< visitor function */
 	block_class_removed,                /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */

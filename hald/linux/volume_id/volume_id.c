@@ -823,8 +823,10 @@ struct volume_id *volume_id_open_node(const char *path)
 		return NULL;
 
 	id = volume_id_open_fd(fd);
-	if (id == NULL)
+	if (id == NULL) {
+		close (fd);
 		return NULL;
+	}
 
 	/* close fd on device close */
 	id->fd_close = 1;

@@ -1,3 +1,14 @@
+2004-05-27  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/volume_id/volume_id.c (volume_id_open_node): While
+	debugging the file descriptor leak that stops cdroms being
+	ejected, I noticed a theoretical file descriptor when the box runs
+	out of memory. Patch from Crispin Flowerday <gnome@flowerday.cx>
+
+	* hald/linux/block_class_device.c (block_class_accept): Added this
+	since 2nd level block devices, e.g. sda1, doesn't have sysdevices
+	and the generic class_device_accept was changed to required this.
+
 2004-05-26  Joe Shaw  <joeshaw@novell.com>
 
 	* hald/linux/net_class_device.c (parse_scanning_token): We're
