@@ -50,24 +50,25 @@
  *  @param  argc                Number of arguments given to program
  *  @param  argv                Arguments given to program
  */
-static void usage(int argc, char* argv[])
+static void
+usage (int argc, char *argv[])
 {
-    fprintf(stderr, 
-"\n"
-"usage : %s --udi <udi> --key <key> [--hex] [--quiet] [--help]\n", 
-            argv[0]);
-    fprintf(stderr, 
-"\n"
-"        --udi            Unique Device Id\n"
-"        --key            Key of the property to get\n"
-"        --hex            Show integer values in hex (without leading 0x)\n"
-"        --quiet          Be quiet\n"
-"        --help           Show this information and exit\n"
-"\n"
-"This program retrieves a property from a device. If the property exist\n"
-"then it is printed on stdout and this program exits with exit code 0.\n"
-"On error, the program exits with an exit code different from 0\n"
-"\n");
+	fprintf (stderr,
+ "\n"
+ "usage : %s --udi <udi> --key <key> [--hex] [--quiet] [--help]\n",
+		 argv[0]);
+	fprintf (stderr,
+ "\n"
+ "        --udi            Unique Device Id\n"
+ "        --key            Key of the property to get\n"
+ "        --hex            Show integer values in hex (without leading 0x)\n"
+ "        --quiet          Be quiet\n"
+ "        --help           Show this information and exit\n"
+ "\n"
+ "This program retrieves a property from a device. If the property exist\n"
+ "then it is printed on stdout and this program exits with exit code 0.\n"
+ "On error, the program exits with an exit code different from 0\n"
+ "\n");
 }
 
 /** Entry point
@@ -76,136 +77,122 @@ static void usage(int argc, char* argv[])
  *  @param  argv                Arguments given to program
  *  @return                     Return code
  */
-int main(int argc, char* argv[])
+int
+main (int argc, char *argv[])
 {
-    char* udi = NULL;
-    char* key = NULL;
-    int type;
-    dbus_bool_t is_hex = FALSE;
-    dbus_bool_t is_quiet = FALSE;
-    char* str;
+	char *udi = NULL;
+	char *key = NULL;
+	int type;
+	dbus_bool_t is_hex = FALSE;
+	dbus_bool_t is_quiet = FALSE;
+	char *str;
 
-    if( argc<=1 )
-    {
-        usage(argc, argv);
-        return 1;
-    }
+	if (argc <= 1) {
+		usage (argc, argv);
+		return 1;
+	}
 
-    while(1)
-    {
-        int c;
-        int option_index = 0;
-        const char* opt;
-        static struct option long_options[] = 
-        {
-            {"udi", 1, NULL, 0},
-            {"key", 1, NULL, 0},
-            {"hex", 0, NULL, 0},
-            {"quiet", 0, NULL, 0},
-            {"help", 0, NULL, 0},
-            {NULL, 0, NULL, 0}
-        };
+	while (1) {
+		int c;
+		int option_index = 0;
+		const char *opt;
+		static struct option long_options[] = {
+			{"udi", 1, NULL, 0},
+			{"key", 1, NULL, 0},
+			{"hex", 0, NULL, 0},
+			{"quiet", 0, NULL, 0},
+			{"help", 0, NULL, 0},
+			{NULL, 0, NULL, 0}
+		};
 
-        c = getopt_long(argc, argv, "",
-                        long_options, &option_index);
-        if (c == -1)
-            break;
-        
-        switch(c)
-        {
-        case 0:
-            opt = long_options[option_index].name;
+		c = getopt_long (argc, argv, "",
+				 long_options, &option_index);
+		if (c == -1)
+			break;
 
-            if( strcmp(opt, "help")==0 )
-            {
-                usage(argc, argv);
-                return 0;
-            }
-            else if( strcmp(opt, "hex")==0 )
-            {
-                is_hex = TRUE;
-            }
-            else if( strcmp(opt, "quiet")==0 )
-            {
-                is_quiet = TRUE;
-            }
-            else if( strcmp(opt, "key")==0 )
-            {
-                key = strdup(optarg);
-            }
-            else if( strcmp(opt, "udi")==0 )
-            {
-                udi = strdup(optarg);
-            }
-            break;        
+		switch (c) {
+		case 0:
+			opt = long_options[option_index].name;
 
-        default:
-            usage(argc, argv);
-            return 1;
-            break;
-        }         
-    }
+			if (strcmp (opt, "help") == 0) {
+				usage (argc, argv);
+				return 0;
+			} else if (strcmp (opt, "hex") == 0) {
+				is_hex = TRUE;
+			} else if (strcmp (opt, "quiet") == 0) {
+				is_quiet = TRUE;
+			} else if (strcmp (opt, "key") == 0) {
+				key = strdup (optarg);
+			} else if (strcmp (opt, "udi") == 0) {
+				udi = strdup (optarg);
+			}
+			break;
 
-    if( !is_quiet )
-        fprintf(stderr, "%s " PACKAGE_VERSION "\n", argv[0]);
+		default:
+			usage (argc, argv);
+			return 1;
+			break;
+		}
+	}
 
-    if( !is_quiet )
-        fprintf(stderr, "\n");
+	if (!is_quiet)
+		fprintf (stderr, "%s " PACKAGE_VERSION "\n", argv[0]);
 
-    if( udi==NULL || key==NULL )
-    {
-        usage(argc, argv);
-        return 1;
-    }
+	if (!is_quiet)
+		fprintf (stderr, "\n");
 
-    if( hal_initialize(NULL, FALSE)  )
-    {
-        fprintf(stderr, "error: hal_initialize failed\n");
-        return 1;
-    }
+	if (udi == NULL || key == NULL) {
+		usage (argc, argv);
+		return 1;
+	}
 
-    type = hal_device_get_property_type(udi, key);
-    if( type==DBUS_TYPE_NIL )
-    {
-        return 1;
-    }
-    
-    // emit the value to stdout
-    switch( type )
-    {
-    case DBUS_TYPE_STRING:
-        str = hal_device_get_property_string(udi, key);
-        if( !is_quiet )
-            fprintf(stderr, "Type is string\n");
-        fprintf(stdout, "%s", str);
-        hal_free_string(str);
-        break;
-    case DBUS_TYPE_INT32:
-        if( !is_quiet )
-            fprintf(stderr, "Type is integer (shown in %s)\n",
-                    (is_hex ? "hexadecimal" : "decimal"));
-        fprintf(stdout, (is_hex ? "%x" : "%d"), 
-                hal_device_get_property_int(udi, key));
-        break;
-    case DBUS_TYPE_DOUBLE:
-        if( !is_quiet )
-            fprintf(stderr, "Type is double\n");
-        fprintf(stdout, "%f", hal_device_get_property_double(udi, key));
-        break;
-    case DBUS_TYPE_BOOLEAN:
-        if( !is_quiet )
-            fprintf(stderr, "Type is boolean\n");
-        fprintf(stdout, "%s", 
-                hal_device_get_property_bool(udi, key) ? "true" : "false");
-        break;
+	if (hal_initialize (NULL, FALSE)) {
+		fprintf (stderr, "error: hal_initialize failed\n");
+		return 1;
+	}
 
-    default:
-        fprintf(stderr, "Unknown type %d='%c'\n", type, type);
-        return 1;
-        break;
-    }
+	type = hal_device_get_property_type (udi, key);
+	if (type == DBUS_TYPE_NIL) {
+		return 1;
+	}
+	// emit the value to stdout
+	switch (type) {
+	case DBUS_TYPE_STRING:
+		str = hal_device_get_property_string (udi, key);
+		if (!is_quiet)
+			fprintf (stderr, "Type is string\n");
+		fprintf (stdout, "%s", str);
+		hal_free_string (str);
+		break;
+	case DBUS_TYPE_INT32:
+		if (!is_quiet)
+			fprintf (stderr, "Type is integer (shown in %s)\n",
+				 (is_hex ? "hexadecimal" : "decimal"));
+		fprintf (stdout, (is_hex ? "%x" : "%d"),
+			 hal_device_get_property_int (udi, key));
+		break;
+	case DBUS_TYPE_DOUBLE:
+		if (!is_quiet)
+			fprintf (stderr, "Type is double\n");
+		fprintf (stdout, "%f",
+			 hal_device_get_property_double (udi, key));
+		break;
+	case DBUS_TYPE_BOOLEAN:
+		if (!is_quiet)
+			fprintf (stderr, "Type is boolean\n");
+		fprintf (stdout, "%s",
+			 hal_device_get_property_bool (udi,
+						       key) ? "true" :
+			 "false");
+		break;
 
-    return 0;
+	default:
+		fprintf (stderr, "Unknown type %d='%c'\n", type, type);
+		return 1;
+		break;
+	}
+
+	return 0;
 }
 
 /**

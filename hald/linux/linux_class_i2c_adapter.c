@@ -56,27 +56,29 @@
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-static char* i2c_adapter_compute_udi(HalDevice* d, int append_num)
+static char *
+i2c_adapter_compute_udi (HalDevice * d, int append_num)
 {
-    const char* format;
-    static char buf[256];
+	const char *format;
+	static char buf[256];
 
-    if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/i2c_adapter_%d";
-    else
-        format = "/org/freedesktop/Hal/devices/i2c_adapter_%d-%d";
+	if (append_num == -1)
+		format = "/org/freedesktop/Hal/devices/i2c_adapter_%d";
+	else
+		format = "/org/freedesktop/Hal/devices/i2c_adapter_%d-%d";
 
-    snprintf(buf, 256, format, 
-             ds_property_get_int(d, "i2c_adapter.adapter"),
-             append_num);
-    
-    return buf;
+	snprintf (buf, 256, format,
+		  ds_property_get_int (d, "i2c_adapter.adapter"),
+		  append_num);
+
+	return buf;
 }
 
 
 /* fwd decl */
-static void visit_class_device_i2c_adapter_got_parent(HalDevice* parent, 
-                                                      void* data1, void* data2);
+static void visit_class_device_i2c_adapter_got_parent (HalDevice * parent,
+						       void *data1,
+						       void *data2);
 
 /** Visitor function for I2C adapter.
  *
@@ -86,82 +88,85 @@ static void visit_class_device_i2c_adapter_got_parent(HalDevice* parent,
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-void visit_class_device_i2c_adapter(const char* path, 
-                                    struct sysfs_class_device* class_device)
+void
+visit_class_device_i2c_adapter (const char *path,
+				struct sysfs_class_device *class_device)
 {
-    HalDevice* d;
-    struct sysfs_attribute* cur;
-    char* parent_sysfs_path;
-	char* product_name;
-    char attr_name[SYSFS_NAME_LEN];
-    const char* last_elem;
-    int adapter_num;
-    int len;
-    int i;
+	HalDevice *d;
+	struct sysfs_attribute *cur;
+	char *parent_sysfs_path;
+	char *product_name;
+	char attr_name[SYSFS_NAME_LEN];
+	const char *last_elem;
+	int adapter_num;
+	int len;
+	int i;
 
-    if( class_device->sysdevice==NULL )
-    {
-        HAL_INFO(("Skipping virtual class device at path %s\n", path));
-        return;
-    }
+	if (class_device->sysdevice == NULL) {
+		HAL_INFO (("Skipping virtual class device at path %s\n",
+			   path));
+		return;
+	}
 
-    HAL_INFO(("i2c_adapter: sysdevice_path=%s, path=%s\n", class_device->sysdevice->path, path));
+	HAL_INFO (("i2c_adapter: sysdevice_path=%s, path=%s\n",
+		   class_device->sysdevice->path, path));
 
-    /** @todo: see if we already got this device */
+	/** @todo: see if we already got this device */
 
-    d = ds_device_new();
-    ds_property_set_string(d, "info.bus", "i2c_adapter");
-    ds_property_set_string(d, "linux.sysfs_path", path);
-    ds_property_set_string(d, "linux.sysfs_path_device", 
-                           class_device->sysdevice->path);
+	d = ds_device_new ();
+	ds_property_set_string (d, "info.bus", "i2c_adapter");
+	ds_property_set_string (d, "linux.sysfs_path", path);
+	ds_property_set_string (d, "linux.sysfs_path_device",
+				class_device->sysdevice->path);
 
-    /* Sets last_elem to i2c-2 in path=/sys/class/i2c-adapter/i2c-2 */
-    last_elem = get_last_element(path);
-    sscanf(last_elem, "i2c-%d", &adapter_num);
-    ds_property_set_int(d, "i2c_adapter.adapter", adapter_num);
+	/* Sets last_elem to i2c-2 in path=/sys/class/i2c-adapter/i2c-2 */
+	last_elem = get_last_element (path);
+	sscanf (last_elem, "i2c-%d", &adapter_num);
+	ds_property_set_int (d, "i2c_adapter.adapter", adapter_num);
 
-    /* guestimate product name */
-    dlist_for_each_data(sysfs_get_device_attributes(class_device->sysdevice), cur,
-                        struct sysfs_attribute)
-    {
-        
-        if( sysfs_get_name_from_path(cur->path, 
-                                     attr_name, SYSFS_NAME_LEN) != 0 )
-            continue;
-        
-        /* strip whitespace */
-        len = strlen(cur->value);
-        for(i=len-1; isspace(cur->value[i]); --i)
-            cur->value[i] = '\0';
-        
-        /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
-        
-        if( strcmp(attr_name, "name")==0 )
-           product_name = cur->value;
-    }
+	/* guestimate product name */
+	dlist_for_each_data (sysfs_get_device_attributes
+			     (class_device->sysdevice), cur,
+			     struct sysfs_attribute) {
+		
+		if (sysfs_get_name_from_path (cur->path,
+					      attr_name,
+					      SYSFS_NAME_LEN) != 0)
+			continue;
 
-    ds_property_set_string(d, "info.product", "I2C Adapter Interface");
-    if ( product_name==NULL )
-        ds_property_set_string(d, "i2c_adapter.name", "I2C Adapter Interface");
-    else
-        ds_property_set_string(d, "i2c_adapter.name", product_name);
+		/* strip whitespace */
+		len = strlen (cur->value);
+		for (i = len - 1; isspace (cur->value[i]); --i)
+			cur->value[i] = '\0';
 
-    parent_sysfs_path = get_parent_sysfs_path(class_device->sysdevice->path);
+		/*printf("attr_name=%s -> '%s'\n", attr_name, cur->value); */
 
-    /* Find parent; this happens asynchronously as our parent might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    ds_device_async_find_by_key_value_string(
-        "linux.sysfs_path_device",
-        parent_sysfs_path, 
-        TRUE,
-        visit_class_device_i2c_adapter_got_parent,
-        (void*) d, NULL, 
-        is_probing ? 0 :
-        HAL_LINUX_HOTPLUG_TIMEOUT);
+		if (strcmp (attr_name, "name") == 0)
+			product_name = cur->value;
+	}
 
-    free(parent_sysfs_path);
+	ds_property_set_string (d, "info.product",
+				"I2C Adapter Interface");
+	if (product_name == NULL)
+		ds_property_set_string (d, "i2c_adapter.name",
+					"I2C Adapter Interface");
+	else
+		ds_property_set_string (d, "i2c_adapter.name",
+					product_name);
+
+	parent_sysfs_path =
+	    get_parent_sysfs_path (class_device->sysdevice->path);
+
+	/* Find parent; this happens asynchronously as our parent might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	ds_device_async_find_by_key_value_string
+	    ("linux.sysfs_path_device", parent_sysfs_path, TRUE,
+	     visit_class_device_i2c_adapter_got_parent, (void *) d, NULL,
+	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+
+	free (parent_sysfs_path);
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -171,50 +176,48 @@ void visit_class_device_i2c_adapter(const char* path,
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void visit_class_device_i2c_adapter_got_parent(HalDevice* parent, 
-                                                      void* data1, void* data2)
+static void
+visit_class_device_i2c_adapter_got_parent (HalDevice * parent,
+					   void *data1, void *data2)
 {
-    char* new_udi = NULL;
-    HalDevice* new_d = NULL;
-    HalDevice* d = (HalDevice*) data1;
+	char *new_udi = NULL;
+	HalDevice *new_d = NULL;
+	HalDevice *d = (HalDevice *) data1;
 
-    /*printf("parent=0x%08x\n", parent);*/
+	/*printf("parent=0x%08x\n", parent); */
 
-    if( parent!=NULL )
-    {
-        ds_property_set_string(d, "info.parent", parent->udi);
-        find_and_set_physical_device(d);
-        ds_property_set_bool(d, "info.virtual", TRUE);
-    }
-    else
-    {
-        HAL_ERROR(("No parent for I2C adapter device!"));
-        ds_device_destroy(d);
-        return;
-    }
+	if (parent != NULL) {
+		ds_property_set_string (d, "info.parent", parent->udi);
+		find_and_set_physical_device (d);
+		ds_property_set_bool (d, "info.virtual", TRUE);
+	} else {
+		HAL_ERROR (("No parent for I2C adapter device!"));
+		ds_device_destroy (d);
+		return;
+	}
 
-    /* Add the i2c_adapter capability to our parent device */
-	ds_add_capability(parent, "i2c_adapter");
+	/* Add the i2c_adapter capability to our parent device */
+	ds_add_capability (parent, "i2c_adapter");
 
-    /* Compute a proper UDI (unique device id) and try to locate a persistent
-     * unplugged device or simple add this new device...
-     */
-    new_udi = rename_and_merge(d, i2c_adapter_compute_udi, "i2c_adapter");
-    if( new_udi!=NULL )
-    {
-        new_d = ds_device_find(new_udi);
-        if( new_d!=NULL )
-        {
-            ds_gdl_add(new_d);
-        }
-    }
+	/* Compute a proper UDI (unique device id) and try to locate a persistent
+	 * unplugged device or simple add this new device...
+	 */
+	new_udi =
+	    rename_and_merge (d, i2c_adapter_compute_udi, "i2c_adapter");
+	if (new_udi != NULL) {
+		new_d = ds_device_find (new_udi);
+		if (new_d != NULL) {
+			ds_gdl_add (new_d);
+		}
+	}
 }
 
 
 /** Init function for I2C adapter class handling
  *
  */
-void linux_class_i2c_adapter_init()
+void
+linux_class_i2c_adapter_init ()
 {
 }
 
@@ -222,14 +225,16 @@ void linux_class_i2c_adapter_init()
  *  in order to perform optional batch processing on devices
  *
  */
-void linux_class_i2c_adapter_detection_done()
+void
+linux_class_i2c_adapter_detection_done ()
 {
 }
 
 /** Shutdown function for I2C adapter class handling
  *
  */
-void linux_class_i2c_adapter_shutdown()
+void
+linux_class_i2c_adapter_shutdown ()
 {
 }
 

@@ -28,10 +28,10 @@
 
 #include "linux_common.h"
 
-void visit_device_usb(const char* path, struct sysfs_device *device);
+void visit_device_usb (const char *path, struct sysfs_device *device);
 
-void linux_usb_init();
-void linux_usb_detection_done();
-void linux_usb_shutdown();
+void linux_usb_init ();
+void linux_usb_detection_done ();
+void linux_usb_shutdown ();
 
-#endif /* LINUX_USB_H */
+#endif				/* LINUX_USB_H */

@@ -29,10 +29,10 @@
 
 #include "linux_common.h"
 
-void visit_device_i2c(const char* path, struct sysfs_device *device);
+void visit_device_i2c (const char *path, struct sysfs_device *device);
 
-void linux_i2c_init();
-void linux_i2c_detection_done();
-void linux_i2c_shutdown();
+void linux_i2c_init ();
+void linux_i2c_detection_done ();
+void linux_i2c_shutdown ();
 
-#endif /* LINUX_I2C_H */
+#endif				/* LINUX_I2C_H */

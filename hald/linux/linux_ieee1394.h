@@ -28,10 +28,10 @@
 
 #include "linux_common.h"
 
-void visit_device_ieee1394(const char* path, struct sysfs_device *device);
+void visit_device_ieee1394 (const char *path, struct sysfs_device *device);
 
-void linux_ieee1394_init();
-void linux_ieee1394_detection_done();
-void linux_ieee1394_shutdown();
+void linux_ieee1394_init ();
+void linux_ieee1394_detection_done ();
+void linux_ieee1394_shutdown ();
 
-#endif /* LINUX_IEEE1394_H */
+#endif				/* LINUX_IEEE1394_H */

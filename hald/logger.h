@@ -35,21 +35,20 @@
 
 /** Logging levels for HAL daemon
  */
-enum
-{
-    HAL_LOGPRI_TRACE   =  (1<<0),  /**< function call sequences */
-    HAL_LOGPRI_DEBUG   =  (1<<1),  /**< debug statements in code */
-    HAL_LOGPRI_INFO    =  (1<<2),  /**< informational level */
-    HAL_LOGPRI_WARNING =  (1<<3),  /**< warnings */
-    HAL_LOGPRI_ERROR   =  (1<<4)   /**< error */
+enum {
+	HAL_LOGPRI_TRACE = (1 << 0),   /**< function call sequences */
+	HAL_LOGPRI_DEBUG = (1 << 1),   /**< debug statements in code */
+	HAL_LOGPRI_INFO = (1 << 2),    /**< informational level */
+	HAL_LOGPRI_WARNING = (1 << 3), /**< warnings */
+	HAL_LOGPRI_ERROR = (1 << 4)    /**< error */
 };
 
-void logger_init();
+void logger_init ();
 
-void logger_setup(int priority, const char* file, int line, 
-                  const char* function);
+void logger_setup (int priority, const char *file, int line,
+		   const char *function);
 
-void logger_emit(const char* format,...);
+void logger_emit (const char *format, ...);
 
 #ifdef ENABLE_VERBOSE_MODE
 
@@ -88,8 +87,8 @@ void logger_emit(const char* format,...);
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
 
-#endif /* ENABLE_VERBOSE_MODE */
+#endif				/* ENABLE_VERBOSE_MODE */
 
 /** @} */
 
-#endif /* LOGGER_H */
+#endif				/* LOGGER_H */

@@ -56,21 +56,21 @@
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-static char* scsi_host_compute_udi(HalDevice* d, int append_num)
+static char *
+scsi_host_compute_udi (HalDevice * d, int append_num)
 {
-    const char* format;
-    static char buf[256];
+	const char *format;
+	static char buf[256];
 
-    if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/scsi_host_%d";
-    else
-        format = "/org/freedesktop/Hal/devices/scsi_host_%d-%d";
+	if (append_num == -1)
+		format = "/org/freedesktop/Hal/devices/scsi_host_%d";
+	else
+		format = "/org/freedesktop/Hal/devices/scsi_host_%d-%d";
 
-    snprintf(buf, 256, format, 
-             ds_property_get_int(d, "scsi_host.host"),
-             append_num);
-    
-    return buf;
+	snprintf (buf, 256, format,
+		  ds_property_get_int (d, "scsi_host.host"), append_num);
+
+	return buf;
 }
 
 
@@ -83,30 +83,33 @@ static char* scsi_host_compute_udi(HalDevice* d, int append_num)
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-static char* scsi_device_compute_udi(HalDevice* d, int append_num)
+static char *
+scsi_device_compute_udi (HalDevice * d, int append_num)
 {
-    const char* format;
-    static char buf[256];
+	const char *format;
+	static char buf[256];
 
-    if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d";
-    else
-        format = "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d-%d";
+	if (append_num == -1)
+		format =
+		    "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d";
+	else
+		format =
+		    "/org/freedesktop/Hal/devices/scsi_device_%d_%d_%d_%d-%d";
 
-    snprintf(buf, 256, format, 
-             ds_property_get_int(d, "scsi_device.host"),
-             ds_property_get_int(d, "scsi_device.bus"),
-             ds_property_get_int(d, "scsi_device.target"),
-             ds_property_get_int(d, "scsi_device.lun"),
-             append_num);
-    
-    return buf;
+	snprintf (buf, 256, format,
+		  ds_property_get_int (d, "scsi_device.host"),
+		  ds_property_get_int (d, "scsi_device.bus"),
+		  ds_property_get_int (d, "scsi_device.target"),
+		  ds_property_get_int (d, "scsi_device.lun"), append_num);
+
+	return buf;
 }
 
 
 /* fwd decl */
-static void visit_class_device_scsi_host_got_parent(HalDevice* parent, 
-                                                    void* data1, void* data2);
+static void visit_class_device_scsi_host_got_parent (HalDevice * parent,
+						     void *data1,
+						     void *data2);
 
 /** Visitor function for SCSI host.
  *
@@ -116,55 +119,54 @@ static void visit_class_device_scsi_host_got_parent(HalDevice* parent,
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-void visit_class_device_scsi_host(const char* path, 
-                                  struct sysfs_class_device* class_device)
+void
+visit_class_device_scsi_host (const char *path,
+			      struct sysfs_class_device *class_device)
 {
-    HalDevice* d;
-    char* parent_sysfs_path;
-    const char* last_elem;
-    int host_num;
+	HalDevice *d;
+	char *parent_sysfs_path;
+	const char *last_elem;
+	int host_num;
 
-    if( class_device->sysdevice==NULL )
-    {
-        HAL_INFO(("Skipping virtual class device at path %s\n", path));
-        return;
-    }
+	if (class_device->sysdevice == NULL) {
+		HAL_INFO (("Skipping virtual class device at path %s\n",
+			   path));
+		return;
+	}
 
-    HAL_INFO(("scsi_host: sysdevice_path=%s, path=%s\n", class_device->sysdevice->path, path));
+	HAL_INFO (("scsi_host: sysdevice_path=%s, path=%s\n",
+		   class_device->sysdevice->path, path));
 
-    /** @todo: see if we already got this device */
+	/** @todo: see if we already got this device */
 
-    d = ds_device_new();
-    ds_property_set_string(d, "info.bus", "scsi_host");
-    ds_property_set_string(d, "linux.sysfs_path", path);
-    ds_property_set_string(d, "linux.sysfs_path_device", 
-                           class_device->sysdevice->path);
+	d = ds_device_new ();
+	ds_property_set_string (d, "info.bus", "scsi_host");
+	ds_property_set_string (d, "linux.sysfs_path", path);
+	ds_property_set_string (d, "linux.sysfs_path_device",
+				class_device->sysdevice->path);
 
-    /* Sets last_elem to host14 in path=/sys/class/scsi_host/host14 */
-    last_elem = get_last_element(path);
-    sscanf(last_elem, "host%d", &host_num);
-    ds_property_set_int(d, "scsi_host.host", host_num);
+	/* Sets last_elem to host14 in path=/sys/class/scsi_host/host14 */
+	last_elem = get_last_element (path);
+	sscanf (last_elem, "host%d", &host_num);
+	ds_property_set_int (d, "scsi_host.host", host_num);
 
 
-    /* guestimate product name */
-    ds_property_set_string(d, "info.product", "SCSI Host Interface");
+	/* guestimate product name */
+	ds_property_set_string (d, "info.product", "SCSI Host Interface");
 
-    parent_sysfs_path = get_parent_sysfs_path(class_device->sysdevice->path);
+	parent_sysfs_path =
+	    get_parent_sysfs_path (class_device->sysdevice->path);
 
-    /* Find parent; this happens asynchronously as our parent might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    ds_device_async_find_by_key_value_string(
-        "linux.sysfs_path_device",
-        parent_sysfs_path, 
-        TRUE,
-        visit_class_device_scsi_host_got_parent,
-        (void*) d, NULL, 
-        is_probing ? 0 :
-        HAL_LINUX_HOTPLUG_TIMEOUT);
+	/* Find parent; this happens asynchronously as our parent might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	ds_device_async_find_by_key_value_string
+	    ("linux.sysfs_path_device", parent_sysfs_path, TRUE,
+	     visit_class_device_scsi_host_got_parent, (void *) d, NULL,
+	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 
-    free(parent_sysfs_path);
+	free (parent_sysfs_path);
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -174,46 +176,43 @@ void visit_class_device_scsi_host(const char* path,
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void visit_class_device_scsi_host_got_parent(HalDevice* parent, 
-                                                    void* data1, void* data2)
+static void
+visit_class_device_scsi_host_got_parent (HalDevice * parent,
+					 void *data1, void *data2)
 {
-    char* new_udi = NULL;
-    HalDevice* new_d = NULL;
-    HalDevice* d = (HalDevice*) data1;
+	char *new_udi = NULL;
+	HalDevice *new_d = NULL;
+	HalDevice *d = (HalDevice *) data1;
 
-    /*printf("parent=0x%08x\n", parent);*/
+	/*printf("parent=0x%08x\n", parent); */
 
-    if( parent!=NULL )
-    {
-        ds_property_set_string(d, "info.parent", parent->udi);
-        find_and_set_physical_device(d);
-        ds_property_set_bool(d, "info.virtual", TRUE);
-    }
-    else
-    {
-        HAL_ERROR(("No parent for SCSI device!"));
-        ds_device_destroy(d);
-        return;
-    }
+	if (parent != NULL) {
+		ds_property_set_string (d, "info.parent", parent->udi);
+		find_and_set_physical_device (d);
+		ds_property_set_bool (d, "info.virtual", TRUE);
+	} else {
+		HAL_ERROR (("No parent for SCSI device!"));
+		ds_device_destroy (d);
+		return;
+	}
 
-    /* Compute a proper UDI (unique device id) and try to locate a persistent
-     * unplugged device or simple add this new device...
-     */
-    new_udi = rename_and_merge(d, scsi_host_compute_udi, "scsi_host");
-    if( new_udi!=NULL )
-    {
-        new_d = ds_device_find(new_udi);
-        if( new_d!=NULL )
-        {
-            ds_gdl_add(new_d);
-        }
-    }
+	/* Compute a proper UDI (unique device id) and try to locate a
+	 * persistent unplugged device or simple add this new device...
+	 */
+	new_udi = rename_and_merge (d, scsi_host_compute_udi, "scsi_host");
+	if (new_udi != NULL) {
+		new_d = ds_device_find (new_udi);
+		if (new_d != NULL) {
+			ds_gdl_add (new_d);
+		}
+	}
 }
 
 
 /* fwd decl */
-static void visit_class_device_scsi_device_got_parent(HalDevice* parent, 
-                                                     void* data1, void* data2);
+static void visit_class_device_scsi_device_got_parent (HalDevice * parent,
+						       void *data1,
+						       void *data2);
 
 /** Visitor function for SCSI device.
  *
@@ -223,60 +222,60 @@ static void visit_class_device_scsi_device_got_parent(HalDevice* parent,
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-void visit_class_device_scsi_device(const char* path, 
-                                    struct sysfs_class_device* class_device)
+void
+visit_class_device_scsi_device (const char *path,
+				struct sysfs_class_device *class_device)
 {
-    HalDevice* d;
-    char* parent_sysfs_path;
-    const char* last_elem;
-    int host_num, bus_num, target_num, lun_num;
+	HalDevice *d;
+	char *parent_sysfs_path;
+	const char *last_elem;
+	int host_num, bus_num, target_num, lun_num;
 
-    if( class_device->sysdevice==NULL )
-    {
-        HAL_INFO(("Skipping virtual class device at path %s\n", path));
-        return;
-    }
+	if (class_device->sysdevice == NULL) {
+		HAL_INFO (("Skipping virtual class device at path %s\n",
+			   path));
+		return;
+	}
 
-    /*printf("scsi_device: sysdevice_path=%s, path=%s\n", class_device->sysdevice->path, path);*/
+	/*printf("scsi_device: sysdevice_path=%s, path=%s\n", class_device->sysdevice->path, path); */
 
     /** @todo: see if we already got this device */
 
-    d = ds_device_new();
-    ds_property_set_string(d, "info.bus", "scsi_device");
-    ds_property_set_string(d, "linux.sysfs_path", path);
-    ds_property_set_string(d, "linux.sysfs_path_device", 
-                           class_device->sysdevice->path);
+	d = ds_device_new ();
+	ds_property_set_string (d, "info.bus", "scsi_device");
+	ds_property_set_string (d, "linux.sysfs_path", path);
+	ds_property_set_string (d, "linux.sysfs_path_device",
+				class_device->sysdevice->path);
 
-    /* Sets last_elem to 1:2:3:4 in path=/sys/class/scsi_host/host23/1:2:3:4 */
-    last_elem = get_last_element(path);
-    sscanf(last_elem, "%d:%d:%d:%d", 
-           &host_num, &bus_num, &target_num, &lun_num);
-    ds_property_set_int(d, "scsi_device.host", host_num);
-    ds_property_set_int(d, "scsi_device.bus", bus_num);
-    ds_property_set_int(d, "scsi_device.target", target_num);
-    ds_property_set_int(d, "scsi_device.lun", lun_num);
-
-
-    /* guestimate product name */
-    ds_property_set_string(d, "info.product", "SCSI Interface");
+	/* Sets last_elem to 1:2:3:4 in 
+	 * path=/sys/class/scsi_host/host23/1:2:3:4 
+	 */
+	last_elem = get_last_element (path);
+	sscanf (last_elem, "%d:%d:%d:%d",
+		&host_num, &bus_num, &target_num, &lun_num);
+	ds_property_set_int (d, "scsi_device.host", host_num);
+	ds_property_set_int (d, "scsi_device.bus", bus_num);
+	ds_property_set_int (d, "scsi_device.target", target_num);
+	ds_property_set_int (d, "scsi_device.lun", lun_num);
 
 
-    parent_sysfs_path = get_parent_sysfs_path(class_device->sysdevice->path);
+	/* guestimate product name */
+	ds_property_set_string (d, "info.product", "SCSI Interface");
 
-    /* Find parent; this happens asynchronously as our parent might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    ds_device_async_find_by_key_value_string(
-        "linux.sysfs_path_device",
-        parent_sysfs_path,
-        TRUE,
-        visit_class_device_scsi_device_got_parent,
-        (void*) d, NULL, 
-        is_probing ? 0 :
-        HAL_LINUX_HOTPLUG_TIMEOUT);
 
-    free(parent_sysfs_path);
+	parent_sysfs_path =
+	    get_parent_sysfs_path (class_device->sysdevice->path);
+
+	/* Find parent; this happens asynchronously as our parent might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	ds_device_async_find_by_key_value_string
+	    ("linux.sysfs_path_device", parent_sysfs_path, TRUE,
+	     visit_class_device_scsi_device_got_parent, (void *) d, NULL,
+	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+
+	free (parent_sysfs_path);
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -286,44 +285,42 @@ void visit_class_device_scsi_device(const char* path,
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void visit_class_device_scsi_device_got_parent(HalDevice* parent, 
-                                                      void* data1, void* data2)
+static void
+visit_class_device_scsi_device_got_parent (HalDevice * parent,
+					   void *data1, void *data2)
 {
-    char* new_udi = NULL;
-    HalDevice* new_d = NULL;
-    HalDevice* d = (HalDevice*) data1;
+	char *new_udi = NULL;
+	HalDevice *new_d = NULL;
+	HalDevice *d = (HalDevice *) data1;
 
-    if( parent!=NULL )
-    {
-        ds_property_set_string(d, "info.parent", parent->udi);
-        find_and_set_physical_device(d);
-        ds_property_set_bool(d, "info.virtual", TRUE);
-    }
-    else
-    {
-        HAL_ERROR(("No parent for SCSI device!"));
-        ds_device_destroy(d);
-        return;
-    }
+	if (parent != NULL) {
+		ds_property_set_string (d, "info.parent", parent->udi);
+		find_and_set_physical_device (d);
+		ds_property_set_bool (d, "info.virtual", TRUE);
+	} else {
+		HAL_ERROR (("No parent for SCSI device!"));
+		ds_device_destroy (d);
+		return;
+	}
 
-    /* Compute a proper UDI (unique device id) and try to locate a persistent
-     * unplugged device or simple add this new device...
-     */
-    new_udi = rename_and_merge(d, scsi_device_compute_udi, "scsi_device");
-    if( new_udi!=NULL )
-    {
-        new_d = ds_device_find(new_udi);
-        if( new_d!=NULL )
-        {
-            ds_gdl_add(new_d);
-        }
-    }
+	/* Compute a proper UDI (unique device id) and try to locate a 
+	 * persistent unplugged device or simple add this new device...
+	 */
+	new_udi =
+	    rename_and_merge (d, scsi_device_compute_udi, "scsi_device");
+	if (new_udi != NULL) {
+		new_d = ds_device_find (new_udi);
+		if (new_d != NULL) {
+			ds_gdl_add (new_d);
+		}
+	}
 }
 
 /** Init function for SCSI handling
  *
  */
-void linux_class_scsi_init()
+void
+linux_class_scsi_init ()
 {
 }
 
@@ -331,14 +328,16 @@ void linux_class_scsi_init()
  *  in order to perform optional batch processing on devices
  *
  */
-void linux_class_scsi_detection_done()
+void
+linux_class_scsi_detection_done ()
 {
 }
 
 /** Shutdown function for SCSI handling
  *
  */
-void linux_class_scsi_shutdown()
+void
+linux_class_scsi_shutdown ()
 {
 }
 

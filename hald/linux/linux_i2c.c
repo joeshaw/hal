@@ -66,25 +66,26 @@
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-static char* i2c_compute_udi(HalDevice* d, int append_num)
+static char *
+i2c_compute_udi (HalDevice * d, int append_num)
 {
-    static char buf[256];
+	static char buf[256];
 
-    if( append_num==-1 )
-        sprintf(buf, "/org/freedesktop/Hal/devices/i2c_%s",
-                ds_property_get_string(d, "i2c.product"));
-    else
-        sprintf(buf, "/org/freedesktop/Hal/devices/i2c_%s/%d", 
-                ds_property_get_string(d, "i2c.product"),
-                append_num);
-    
-    return buf;
+	if (append_num == -1)
+		sprintf (buf, "/org/freedesktop/Hal/devices/i2c_%s",
+			 ds_property_get_string (d, "i2c.product"));
+	else
+		sprintf (buf, "/org/freedesktop/Hal/devices/i2c_%s/%d",
+			 ds_property_get_string (d, "i2c.product"),
+			 append_num);
+
+	return buf;
 }
 
 
 /* fwd decl */
-static void visit_device_i2c_got_parent(HalDevice* parent, 
-                                        void* data1, void* data2);
+static void visit_device_i2c_got_parent (HalDevice * parent,
+					 void *data1, void *data2);
 
 /** Visitor function for I2C device.
  *
@@ -94,80 +95,80 @@ static void visit_device_i2c_got_parent(HalDevice* parent,
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-void visit_device_i2c(const char* path, struct sysfs_device *device)
+void
+visit_device_i2c (const char *path, struct sysfs_device *device)
 {
-    int i;
-    int len;
-    HalDevice* d;
-    char attr_name[SYSFS_NAME_LEN];
-    struct sysfs_attribute* cur;
-    char* product_name = NULL;
-    const char* driver;
-    char* parent_sysfs_path;
+	int i;
+	int len;
+	HalDevice *d;
+	char attr_name[SYSFS_NAME_LEN];
+	struct sysfs_attribute *cur;
+	char *product_name = NULL;
+	const char *driver;
+	char *parent_sysfs_path;
 
-    /* Must be a new I2C device */
-    d = ds_device_new();
-    ds_property_set_string(d, "info.bus", "i2c");
-    ds_property_set_string(d, "info.category", "i2c");
-    ds_property_set_string(d, "info.capabilities", "i2c");
-    ds_property_set_string(d, "linux.sysfs_path", path);
-    ds_property_set_string(d, "linux.sysfs_path_device", path);
-    /** @note We also set the path here, because otherwise we can't handle two
-     *  identical devices per the algorithm used in a #rename_and_merge()
-     *  The point is that we need something unique in the Bus namespace
-     */
-    ds_property_set_string(d, "i2c.linux.sysfs_path", path);
-    /*printf("*** created udi=%s for path=%s\n", d, path);*/
+	/* Must be a new I2C device */
+	d = ds_device_new ();
+	ds_property_set_string (d, "info.bus", "i2c");
+	ds_property_set_string (d, "info.category", "i2c");
+	ds_property_set_string (d, "info.capabilities", "i2c");
+	ds_property_set_string (d, "linux.sysfs_path", path);
+	ds_property_set_string (d, "linux.sysfs_path_device", path);
+	/** @note We also set the path here, because otherwise we can't handle
+	 *  two identical devices per algorithm used in a #rename_and_merge()
+	 *  The point is that we need something unique in the Bus namespace
+	 */
+	ds_property_set_string (d, "i2c.linux.sysfs_path", path);
+	/*printf("*** created udi=%s for path=%s\n", d, path); */
 
-    /* set driver */
-    driver = drivers_lookup(path);
-    if( driver!=NULL )
-        ds_property_set_string(d, "linux.driver", driver);
+	/* set driver */
+	driver = drivers_lookup (path);
+	if (driver != NULL)
+		ds_property_set_string (d, "linux.driver", driver);
 
-    dlist_for_each_data(sysfs_get_device_attributes(device), cur,
-                        struct sysfs_attribute)
-    {
-        
-        if( sysfs_get_name_from_path(cur->path, 
-                                     attr_name, SYSFS_NAME_LEN) != 0 )
-            continue;
-        
-        /* strip whitespace */
-        len = strlen(cur->value);
-        for(i=len-1; isspace(cur->value[i]); --i)
-            cur->value[i] = '\0';
-        
-        /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
-        
-        if( strcmp(attr_name, "name")==0 )
-           product_name = cur->value;
-    }
+	dlist_for_each_data (sysfs_get_device_attributes (device), cur,
+			     struct sysfs_attribute) {
 
-    if( product_name==NULL )
-        product_name = "Unknown";
+		if (sysfs_get_name_from_path (cur->path,
+					      attr_name,
+					      SYSFS_NAME_LEN) != 0)
+			continue;
 
-    ds_property_set_string(d, "i2c.product", product_name);
+		/* strip whitespace */
+		len = strlen (cur->value);
+		for (i = len - 1; isspace (cur->value[i]); --i)
+			cur->value[i] = '\0';
 
-    /* Provide best-guess of name, goes in Product property; 
-     * .fdi files can override this */
-    ds_property_set_string(d, "info.product", product_name);
+		/*printf("attr_name=%s -> '%s'\n", attr_name, cur->value); */
 
-    parent_sysfs_path = get_parent_sysfs_path(path);
+		if (strcmp (attr_name, "name") == 0)
+			product_name = cur->value;
+	}
 
-    /* Find parent; this happens asynchronously as our parent might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    HAL_INFO(("For device = %s, parent = %s", ds_property_get_string(d, "linux.sysfs_path"), parent_sysfs_path));
-    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
-                                             parent_sysfs_path, 
-                                             TRUE,
-                                             visit_device_i2c_got_parent,
-                                             (void*) d, NULL, 
-                                             is_probing ? 0 :
-                                             HAL_LINUX_HOTPLUG_TIMEOUT);
+	if (product_name == NULL)
+		product_name = "Unknown";
 
-    free(parent_sysfs_path);
+	ds_property_set_string (d, "i2c.product", product_name);
+
+	/* Provide best-guess of name, goes in Product property; 
+	 * .fdi files can override this */
+	ds_property_set_string (d, "info.product", product_name);
+
+	parent_sysfs_path = get_parent_sysfs_path (path);
+
+	/* Find parent; this happens asynchronously as our parent might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	HAL_INFO (("For device = %s, parent = %s",
+		   ds_property_get_string (d, "linux.sysfs_path"),
+		   parent_sysfs_path));
+	ds_device_async_find_by_key_value_string
+	    ("linux.sysfs_path_device", parent_sysfs_path, TRUE,
+	     visit_device_i2c_got_parent, (void *) d, NULL,
+	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
+
+	free (parent_sysfs_path);
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -177,58 +178,56 @@ void visit_device_i2c(const char* path, struct sysfs_device *device)
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void visit_device_i2c_got_parent(HalDevice* parent, 
-                                        void* data1, void* data2)
+static void
+visit_device_i2c_got_parent (HalDevice * parent, void *data1, void *data2)
 {
-    char* new_udi = NULL;
-    HalDevice* new_d = NULL;
-    HalDevice* d = (HalDevice*) data1;
+	char *new_udi = NULL;
+	HalDevice *new_d = NULL;
+	HalDevice *d = (HalDevice *) data1;
 
-    if( parent!=NULL )
-    {
-        ds_property_set_string(d, "info.parent", parent->udi);
-    }
-    else
-    {
-        /* An I2C device should always have a parent! */
-        HAL_WARNING(("No parent for I2C device!"));
-    }
+	if (parent != NULL) {
+		ds_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		/* An I2C device should always have a parent! */
+		HAL_WARNING (("No parent for I2C device!"));
+	}
 
-    /* Compute a proper UDI (unique device id) and try to locate a persistent
-     * unplugged device or simple add this new device...
-     */
-    new_udi = rename_and_merge(d, i2c_compute_udi, "i2c");
-    if( new_udi!=NULL )
-    {
-        new_d = ds_device_find(new_udi);
-        if( new_d!=NULL )
-        {
-            ds_gdl_add(new_d);
-        }
-    }
+	/* Compute a proper UDI (unique device id) and try to locate a 
+	 * persistent unplugged device or simple add this new device...
+	 */
+	new_udi = rename_and_merge (d, i2c_compute_udi, "i2c");
+	if (new_udi != NULL) {
+		new_d = ds_device_find (new_udi);
+		if (new_d != NULL) {
+			ds_gdl_add (new_d);
+		}
+	}
 }
 
 /** Init function for I2C handling
  *
  */
-void linux_i2c_init()
+void
+linux_i2c_init ()
 {
-    /* get all drivers under /sys/bus/i2c/drivers */
-    drivers_collect("i2c");
+	/* get all drivers under /sys/bus/i2c/drivers */
+	drivers_collect ("i2c");
 }
 
 /** This function is called when all device detection on startup is done
  *  in order to perform optional batch processing on devices
  *
  */
-void linux_i2c_detection_done()
+void
+linux_i2c_detection_done ()
 {
 }
 
 /** Shutdown function for I2C handling
  *
  */
-void linux_i2c_shutdown()
+void
+linux_i2c_shutdown ()
 {
 }
 

@@ -43,14 +43,15 @@
 
 
 static int priority;
-static const char* file;
+static const char *file;
 static int line;
-static const char* function;
+static const char *function;
 
 /** Initialize logging system
  *
  */
-void logger_init()
+void
+logger_init ()
 {
 }
 
@@ -61,13 +62,14 @@ void logger_init()
  *  @param  line                Line number of file
  *  @param  function            Name of function
  */
-void logger_setup(int _priority, const char* _file, int _line, 
-                  const char* _function)
+void
+logger_setup (int _priority, const char *_file, int _line,
+	      const char *_function)
 {
-    priority = _priority;
-    file = _file;
-    line = _line;
-    function = _function;
+	priority = _priority;
+	file = _file;
+	line = _line;
+	function = _function;
 }
 
 /** Emit logging entry
@@ -75,31 +77,41 @@ void logger_setup(int _priority, const char* _file, int _line,
  *  @param  format              Message format string, printf style
  *  @param  ...                 Parameters for message, printf style
  */
-void logger_emit(const char* format,...)
+void
+logger_emit (const char *format, ...)
 {
-    va_list args;
-    char buf[512];
-    char* pri;
+	va_list args;
+	char buf[512];
+	char *pri;
 
-    va_start(args, format);
-    vsnprintf(buf, 512, format, args);
+	va_start (args, format);
+	vsnprintf (buf, 512, format, args);
 
-    switch( priority )
-    {
-    case HAL_LOGPRI_TRACE:   pri="[T]"; break;
-    case HAL_LOGPRI_DEBUG:   pri="[D]"; break;
-    case HAL_LOGPRI_INFO:    pri="[I]"; break;
-    case HAL_LOGPRI_WARNING: pri="[W]"; break;
-    default: /* explicit fallthrough */
-    case HAL_LOGPRI_ERROR:   pri="[E]"; break;
-    }
+	switch (priority) {
+	case HAL_LOGPRI_TRACE:
+		pri = "[T]";
+		break;
+	case HAL_LOGPRI_DEBUG:
+		pri = "[D]";
+		break;
+	case HAL_LOGPRI_INFO:
+		pri = "[I]";
+		break;
+	case HAL_LOGPRI_WARNING:
+		pri = "[W]";
+		break;
+	default:		/* explicit fallthrough */
+	case HAL_LOGPRI_ERROR:
+		pri = "[E]";
+		break;
+	}
 
-    /** @todo Make programmatic interface to logging */
-    if( priority!=HAL_LOGPRI_TRACE )
-        fprintf(stderr, "%s %s:%d %s() : %s\n", 
-                pri, file, line, function, buf);
+	/** @todo Make programmatic interface to logging */
+	if (priority != HAL_LOGPRI_TRACE)
+		fprintf (stderr, "%s %s:%d %s() : %s\n",
+			 pri, file, line, function, buf);
 
-    va_end(args);
+	va_end (args);
 }
 
 

@@ -28,11 +28,11 @@
 
 #include "linux_common.h"
 
-void visit_class_device_net(const char* path, 
-                            struct sysfs_class_device *class_device);
+void visit_class_device_net (const char *path,
+			     struct sysfs_class_device *class_device);
 
-void linux_class_net_init();
-void linux_class_net_detection_done();
-void linux_class_net_shutdown();
+void linux_class_net_init ();
+void linux_class_net_detection_done ();
+void linux_class_net_shutdown ();
 
-#endif /* LINUX_CLASS_NET_H */
+#endif				/* LINUX_CLASS_NET_H */

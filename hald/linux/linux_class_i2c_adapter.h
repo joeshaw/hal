@@ -28,12 +28,13 @@
 
 #include "linux_common.h"
 
-void visit_class_device_i2c_adapter(const char* path, 
-                                    struct sysfs_class_device *class_device);
+void visit_class_device_i2c_adapter (const char *path,
+				     struct sysfs_class_device
+				     *class_device);
 
 
-void linux_class_i2c_adapter_init();
-void linux_class_i2c_adapter_detection_done();
-void linux_class_i2c_adapter_shutdown();
+void linux_class_i2c_adapter_init ();
+void linux_class_i2c_adapter_detection_done ();
+void linux_class_i2c_adapter_shutdown ();
 
-#endif /* LINUX_CLASS_I2C_ADAPTER_H */
+#endif				/* LINUX_CLASS_I2C_ADAPTER_H */

@@ -37,7 +37,7 @@
 #include <stdarg.h>
 #include <limits.h>
 
-#include <linux/input.h> /* for EV_* etc. */
+#include <linux/input.h>	/* for EV_* etc. */
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -54,60 +54,61 @@
 /** Key information about input devices from /proc that is not available 
  *  in sysfs
  */
-typedef struct input_proc_info_s
-{
-    int bus;
-    int vendor;
-    int product;
-    int version;
+typedef struct input_proc_info_s {
+	int bus;
+	int vendor;
+	int product;
+	int version;
 
-    dbus_uint32_t evbit;
-    dbus_uint32_t ledbit;
-    dbus_uint32_t relbit;
-    dbus_uint32_t absbit;
+	dbus_uint32_t evbit;
+	dbus_uint32_t ledbit;
+	dbus_uint32_t relbit;
+	dbus_uint32_t absbit;
 
-    char name[128];
-    char phys_name[128];
-    char handlers[128];
-    char keybit[128];
+	char name[128];
+	char phys_name[128];
+	char handlers[128];
+	char keybit[128];
 
-    struct input_proc_info_s* next; /**< next element or #NULL if last */
+	struct input_proc_info_s *next;
+				    /**< next element or #NULL if last */
 } input_proc_info;
 
 /** Allocate and initialize an input_proc_info object
  *
  *  @return                     Pointer input_proc_info object
  */
-static input_proc_info* get_input_proc_cur_info_obj()
+static input_proc_info *
+get_input_proc_cur_info_obj ()
 {
-    input_proc_info* i;
+	input_proc_info *i;
 
-    i = malloc(sizeof(input_proc_info));
-    if( i==NULL )
-        DIE(("Cannot allocated memory"));
+	i = malloc (sizeof (input_proc_info));
+	if (i == NULL)
+		DIE (("Cannot allocated memory"));
 
-    (i->name)[0] = '\0';
-    (i->phys_name)[0] = '\0';
-    (i->handlers)[0] = '\0';
-    (i->keybit)[0] = '\0';
-    i->evbit = 0;
-    i->ledbit = 0;
-    i->relbit = 0;
-    i->absbit = 0;
-    i->bus = 0;
-    i->vendor = 0;
-    i->product = 0;
-    i->version = 0;
+	(i->name)[0] = '\0';
+	(i->phys_name)[0] = '\0';
+	(i->handlers)[0] = '\0';
+	(i->keybit)[0] = '\0';
+	i->evbit = 0;
+	i->ledbit = 0;
+	i->relbit = 0;
+	i->absbit = 0;
+	i->bus = 0;
+	i->vendor = 0;
+	i->product = 0;
+	i->version = 0;
 
-    return i;
+	return i;
 }
 
 
 /** First element in input proc linked list */
-static input_proc_info* input_proc_head = NULL;
+static input_proc_info *input_proc_head = NULL;
 
 /** Unique device id of the device we are working on */
-static input_proc_info* input_proc_cur_info = NULL;
+static input_proc_info *input_proc_cur_info = NULL;
 
 
 /** Parse the interface field
@@ -116,12 +117,13 @@ static input_proc_info* input_proc_cur_info = NULL;
  *  @param  s                   Line from /proc/bus/input/devices starting
  *                              with "I:"
  */
-static void input_proc_handle_interface(input_proc_info* info, char* s)
+static void
+input_proc_handle_interface (input_proc_info * info, char *s)
 {
-    info->bus = find_num("Bus=", s, 16);
-    info->vendor = find_num("Vendor=", s, 16);
-    info->product = find_num("Product=", s, 16);
-    info->version = find_num("Version=", s, 16);
+	info->bus = find_num ("Bus=", s, 16);
+	info->vendor = find_num ("Vendor=", s, 16);
+	info->product = find_num ("Product=", s, 16);
+	info->version = find_num ("Version=", s, 16);
 }
 
 /** Parse the name field
@@ -130,22 +132,21 @@ static void input_proc_handle_interface(input_proc_info* info, char* s)
  *  @param  s                   Line from /proc/bus/input/devices starting
  *                              with "N:"
  */
-static void input_proc_handle_name(input_proc_info* info, char* s)
+static void
+input_proc_handle_name (input_proc_info * info, char *s)
 {
-    char* str;
-    /* grr, the kernel puts quotes in the name */
-    str = find_string("Name=\"", s);
+	char *str;
+	/* grr, the kernel puts quotes in the name */
+	str = find_string ("Name=\"", s);
 
-    if( str!=NULL )
-    {
-        strncpy(info->name, str, 128);
-        /* remove the trailing quote */
-        (info->name)[strlen(info->name)-1] = '\0';
-    }
-    else
-        (info->name)[0]='\0';
+	if (str != NULL) {
+		strncpy (info->name, str, 128);
+		/* remove the trailing quote */
+		(info->name)[strlen (info->name) - 1] = '\0';
+	} else
+		(info->name)[0] = '\0';
 
-    
+
 }
 
 /** Parse the physical information field
@@ -154,14 +155,15 @@ static void input_proc_handle_name(input_proc_info* info, char* s)
  *  @param  s                   Line from /proc/bus/input/devices starting
  *                              with "P:"
  */
-static void input_proc_handle_phys(input_proc_info* info, char* s)
+static void
+input_proc_handle_phys (input_proc_info * info, char *s)
 {
-    char* str;
-    str = find_string("Phys=", s);
-    if( str!=NULL )
-        strncpy(info->phys_name, str, 128);
-    else
-        (info->phys_name)[0]='\0';
+	char *str;
+	str = find_string ("Phys=", s);
+	if (str != NULL)
+		strncpy (info->phys_name, str, 128);
+	else
+		(info->phys_name)[0] = '\0';
 }
 
 /** Parse the handlers field
@@ -170,14 +172,15 @@ static void input_proc_handle_phys(input_proc_info* info, char* s)
  *  @param  s                   Line from /proc/bus/input/devices starting
  *                              with "H:"
  */
-static void input_proc_handle_handlers(input_proc_info* info, char* s)
+static void
+input_proc_handle_handlers (input_proc_info * info, char *s)
 {
-    char* str;
-    str = find_string("Handlers=", s);
-    if( str!=NULL )
-        strncpy(info->handlers, str, 128);
-    else
-        (info->handlers)[0]='\0';
+	char *str;
+	str = find_string ("Handlers=", s);
+	if (str != NULL)
+		strncpy (info->handlers, str, 128);
+	else
+		(info->handlers)[0] = '\0';
 }
 
 /** Parse a bits field
@@ -186,40 +189,36 @@ static void input_proc_handle_handlers(input_proc_info* info, char* s)
  *  @param  s                   Line from /proc/bus/input/devices starting
  *                              with "N:"
  */
-static void input_proc_handle_bits(input_proc_info* info, char* s)
+static void
+input_proc_handle_bits (input_proc_info * info, char *s)
 {
-    int num;
+	int num;
 
-    if( (num=find_num("EV=", s, 16))!=LONG_MAX )
-    {
-        info->evbit = num;
-        return;
-    }
+	if ((num = find_num ("EV=", s, 16)) != LONG_MAX) {
+		info->evbit = num;
+		return;
+	}
 
-    if( (num=find_num("LED=", s, 16))!=LONG_MAX )
-    {
-        info->ledbit = num;
-        return;
-    }
+	if ((num = find_num ("LED=", s, 16)) != LONG_MAX) {
+		info->ledbit = num;
+		return;
+	}
 
-    if( (num=find_num("REL=", s, 16))!=LONG_MAX )
-    {
-        info->relbit = num;
-        return;
-    }
+	if ((num = find_num ("REL=", s, 16)) != LONG_MAX) {
+		info->relbit = num;
+		return;
+	}
 
-    if( (num=find_num("ABS=", s, 16))!=LONG_MAX )
-    {
-        info->absbit = num;
-        return;
-    }
+	if ((num = find_num ("ABS=", s, 16)) != LONG_MAX) {
+		info->absbit = num;
+		return;
+	}
 
-    if( strncmp("B: KEY=", s, 7)==0 )
-    {
-        strncpy(info->keybit, s+7, 128);
-        /* remove trailing newline */
-        info->keybit[strlen(info->keybit)-1] = '\0';
-    }
+	if (strncmp ("B: KEY=", s, 7) == 0) {
+		strncpy (info->keybit, s + 7, 128);
+		/* remove trailing newline */
+		info->keybit[strlen (info->keybit) - 1] = '\0';
+	}
 }
 
 
@@ -228,10 +227,11 @@ static void input_proc_handle_bits(input_proc_info* info, char* s)
  *
  *  @param  info                Structure representing the entry
  */
-static void input_proc_device_done(input_proc_info* info)
+static void
+input_proc_device_done (input_proc_info * info)
 {
-    info->next = input_proc_head;
-    input_proc_head = info;
+	info->next = input_proc_head;
+	input_proc_head = info;
 }
 
 
@@ -239,72 +239,69 @@ static void input_proc_device_done(input_proc_info* info)
  *
  *  @param  s                   Line from /proc/bus/input/devices
  */
-static void input_proc_parse_line(char* s)
+static void
+input_proc_parse_line (char *s)
 {
-    /* See drivers/input/input.c, function input_devices_read() in 
-     * the Linux kernel for details.
-     */
+	/* See drivers/input/input.c, function input_devices_read() in 
+	 * the Linux kernel for details.
+	 */
 
-    switch( s[0] )
-    {
-    case 'I': /* interface; always present, indicates a new device */
-        if( input_proc_cur_info!=NULL )
-        {
-            // beginning of a new device, done with current
-            input_proc_device_done(input_proc_cur_info);
-        }
+	switch (s[0]) {
+	case 'I':		/* interface; always present, indicates a new device */
+		if (input_proc_cur_info != NULL) {
+			/* beginning of a new device, done with current */
+			input_proc_device_done (input_proc_cur_info);
+		}
 
-        input_proc_cur_info = get_input_proc_cur_info_obj();
+		input_proc_cur_info = get_input_proc_cur_info_obj ();
 
-        input_proc_handle_interface(input_proc_cur_info, s);
-        break;
+		input_proc_handle_interface (input_proc_cur_info, s);
+		break;
 
-    case 'N': /* Name */
-        input_proc_handle_name(input_proc_cur_info, s);
-        break;
+	case 'N':		/* Name */
+		input_proc_handle_name (input_proc_cur_info, s);
+		break;
 
-    case 'P': /* Phyiscal information */
-        input_proc_handle_phys(input_proc_cur_info, s);
-        break;
+	case 'P':		/* Phyiscal information */
+		input_proc_handle_phys (input_proc_cur_info, s);
+		break;
 
-    case 'H': /* Handlers */
-        input_proc_handle_handlers(input_proc_cur_info, s);
-        break;
+	case 'H':		/* Handlers */
+		input_proc_handle_handlers (input_proc_cur_info, s);
+		break;
 
-    case 'B': /* Bits */
-        input_proc_handle_bits(input_proc_cur_info, s);
-        break;
+	case 'B':		/* Bits */
+		input_proc_handle_bits (input_proc_cur_info, s);
+		break;
 
 
-    default:
-        break;
-    }
+	default:
+		break;
+	}
 }
 
 /** Parse /proc/bus/input/devices
  */
-static void input_proc_parse()
+static void
+input_proc_parse ()
 {
-    FILE* f;
-    char buf[256];
+	FILE *f;
+	char buf[256];
 
-    f = fopen("/proc/bus/input/devices", "r");
-    if( f==NULL )
-    {
-        DIE(("Couldn't open /proc/bus/input/devices"));
-    }
+	f = fopen ("/proc/bus/input/devices", "r");
+	if (f == NULL) {
+		DIE (("Couldn't open /proc/bus/input/devices"));
+	}
 
-    while( !feof(f) )
-    {
-        fgets(buf, 256, f);
-        input_proc_parse_line(buf);
-    }
-    input_proc_device_done(input_proc_cur_info);
+	while (!feof (f)) {
+		fgets (buf, 256, f);
+		input_proc_parse_line (buf);
+	}
+	input_proc_device_done (input_proc_cur_info);
 
-    {
-        input_proc_info* i;
-        for(i=input_proc_head; i!=NULL; i=i->next)
-        {
+	{
+		input_proc_info *i;
+		for (i = input_proc_head; i != NULL; i = i->next) {
 /*
             printf("/p/b/i/d entry\n");
             printf("  bus               %d\n", i->bus);
@@ -317,94 +314,94 @@ static void input_proc_parse()
             printf("  handlers          '%s'\n", i->handlers);
             printf("\n");
 */
-        }
-    }
+		}
+	}
 }
 
 
     /*
 
-This is an example input event
+       This is an example input event
 
-----------------------------------------
-Sat Nov 29 14:32:55 CET 2003
-----------------------------------------
-input
-----------------------------------------
-EV=7
-NAME=Logitech USB-PS/2 Optical Mouse
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-ACTION=add
-PWD=/
-KEY=f0000 0 0 0 0 0 0 0 0
-REL=103
-HOME=/
-SHLVL=2
-PHYS=usb-0000:00:07.2-1.1.2/input0
-PRODUCT=3/46d/c012/1320
-_=/bin/env
-----------------------------------------
-----------------------------------------
+       ----------------------------------------
+       Sat Nov 29 14:32:55 CET 2003
+       ----------------------------------------
+       input
+       ----------------------------------------
+       EV=7
+       NAME=Logitech USB-PS/2 Optical Mouse
+       PATH=/sbin:/bin:/usr/sbin:/usr/bin
+       ACTION=add
+       PWD=/
+       KEY=f0000 0 0 0 0 0 0 0 0
+       REL=103
+       HOME=/
+       SHLVL=2
+       PHYS=usb-0000:00:07.2-1.1.2/input0
+       PRODUCT=3/46d/c012/1320
+       _=/bin/env
+       ----------------------------------------
+       ----------------------------------------
 
-This is /proc/bus/input/devices                                                                                
-I: Bus=0011 Vendor=0002 Product=0001 Version=0000
-N: Name="PS/2 Generic Mouse"
-P: Phys=isa0060/serio1/input0
-H: Handlers=mouse0
-B: EV=7
-B: KEY=70000 0 0 0 0 0 0 0 0
-B: REL=3
- 
-I: Bus=0011 Vendor=0001 Product=0002 Version=ab02
-N: Name="AT Translated Set 2 keyboard"
-P: Phys=isa0060/serio0/input0
-H: Handlers=kbd
-B: EV=120003
-B: KEY=4 2200000 c061f9 fbc9d621 efdfffdf ffefffff ffffffff fffffffe
-B: LED=7
- 
-I: Bus=0003 Vendor=04b3 Product=3005 Version=0100
-N: Name="Silitek IBM USB HUB KEYBOARD"
-P: Phys=usb-0000:00:07.2-1.2.1/input0
-H: Handlers=kbd
-B: EV=120003
-B: KEY=10000 7f ffe7207a c14057ff ffbeffdf ffffffff ffffffff fffffffe
-B: LED=1f
- 
-I: Bus=0003 Vendor=046d Product=c012 Version=1320
-N: Name="Logitech USB-PS/2 Optical Mouse"
-P: Phys=usb-0000:00:07.2-1.2.2/input0
-H: Handlers=mouse1
-B: EV=7
-B: KEY=f0000 0 0 0 0 0 0 0 0
-B: REL=103
+       This is /proc/bus/input/devices                                                                                
+       I: Bus=0011 Vendor=0002 Product=0001 Version=0000
+       N: Name="PS/2 Generic Mouse"
+       P: Phys=isa0060/serio1/input0
+       H: Handlers=mouse0
+       B: EV=7
+       B: KEY=70000 0 0 0 0 0 0 0 0
+       B: REL=3
+
+       I: Bus=0011 Vendor=0001 Product=0002 Version=ab02
+       N: Name="AT Translated Set 2 keyboard"
+       P: Phys=isa0060/serio0/input0
+       H: Handlers=kbd
+       B: EV=120003
+       B: KEY=4 2200000 c061f9 fbc9d621 efdfffdf ffefffff ffffffff fffffffe
+       B: LED=7
+
+       I: Bus=0003 Vendor=04b3 Product=3005 Version=0100
+       N: Name="Silitek IBM USB HUB KEYBOARD"
+       P: Phys=usb-0000:00:07.2-1.2.1/input0
+       H: Handlers=kbd
+       B: EV=120003
+       B: KEY=10000 7f ffe7207a c14057ff ffbeffdf ffffffff ffffffff fffffffe
+       B: LED=1f
+
+       I: Bus=0003 Vendor=046d Product=c012 Version=1320
+       N: Name="Logitech USB-PS/2 Optical Mouse"
+       P: Phys=usb-0000:00:07.2-1.2.2/input0
+       H: Handlers=mouse1
+       B: EV=7
+       B: KEY=f0000 0 0 0 0 0 0 0 0
+       B: REL=103
 
      */
 
 
 /* fwd decl */
-static void input_got_sysdevice(HalDevice* device, 
-                                void* data1, void* data2);
+static void input_got_sysdevice (HalDevice * device,
+				 void *data1, void *data2);
 
 /** Process an input device field.
  *
  *  @param  i                   input device field
  */
-static void process_input_proc_info(input_proc_info* i)
+static void
+process_input_proc_info (input_proc_info * i)
 {
-    int n;
-    HalDevice* d;
-    char phys[128];
+	int n;
+	HalDevice *d;
+	char phys[128];
 
-    /* First extract physical name */
-    for(n=0; n<128; n++)
-    {
-        if( i->phys_name[n]=='/' )
-            break;
-        phys[n] = i->phys_name[n];
-    }
-    phys[n] = '\0';
-    
+	/* First extract physical name */
+	for (n = 0; n < 128; n++) {
+		if (i->phys_name[n] == '/')
+			break;
+		phys[n] = i->phys_name[n];
+	}
+	phys[n] = '\0';
+
 /*
   if( sscanf(i->phys_name+n+1, "input%d", &in_num)!=1 )
   {
@@ -413,175 +410,154 @@ static void process_input_proc_info(input_proc_info* i)
   }
 */
 
-    d = ds_device_new();
-    
-    ds_property_set_string(d, "input.linux.phys", 
-                                   i->phys_name);
-    ds_property_set_string(d, "input.linux.handlers", 
-                                   i->handlers);
-    ds_property_set_int(d, "input.linux.evbit", 
-                                i->evbit);
-    ds_property_set_int(d, "input.linux.ledbit", 
-                                i->ledbit);
-    ds_property_set_int(d, "input.linux.relbit", 
-                                i->relbit);
-    ds_property_set_int(d, "input.linux.absbit", 
-                                i->absbit);
-    ds_property_set_string(d, "input.linux.keybit", 
-                                   i->keybit);
-        
-    /* The "USB HID for Linux USB" document provides good information
-     * http://www.frogmouth.net/hid-doco/linux-hid.html
-     *
-     */
-    ds_property_set_bool(d, "input.key", 
-                                 i->evbit&(1<<EV_KEY));
-    ds_property_set_bool(d, "input.relative", 
-                                 i->evbit&(1<<EV_REL));
-    ds_property_set_bool(d, "input.absolute", 
-                                 i->evbit&(1<<EV_ABS));
-    ds_property_set_bool(d, "input.led", 
-                                 i->evbit&(1<<EV_LED));
-    ds_property_set_bool(d, "input.sound", 
-                                 i->evbit&(1<<EV_SND));
-    ds_property_set_bool(d, "input.repeat", 
-                                 i->evbit&(1<<EV_REP));
-    ds_property_set_bool(d, "input.force_feedback", 
-                                 i->evbit&(1<<EV_FF));
-    ds_property_set_bool(d, "input.misc", 
-                                 i->evbit&(1<<EV_MSC));
-#ifdef EV_RST
-    ds_property_set_bool(d, "input.rst", 
-                                 i->evbit&(1<<EV_RST));
-#elif EV_SYN
-    ds_property_set_bool(d, "input.rst", 
-                                 i->evbit&(1<<EV_SYN));
-#endif
-    
-    if( i->evbit&(1<<EV_LED) )
-    {
-        ds_property_set_bool(d, "input.led.numlock", 
-                                     i->ledbit&(1<<LED_NUML));
-        ds_property_set_bool(d, "input.led.capslock", 
-                                     i->ledbit&(1<<LED_CAPSL));
-        ds_property_set_bool(d, "input.led.scrolllock", 
-                                     i->ledbit&(1<<LED_SCROLLL));
-        ds_property_set_bool(d, "input.led.compose", 
-                                     i->ledbit&(1<<LED_COMPOSE));
-        ds_property_set_bool(d, "input.led.kana", 
-                                     i->ledbit&(1<<LED_KANA));
-        ds_property_set_bool(d, "input.led.sleep", 
-                                     i->ledbit&(1<<LED_SLEEP));
-        ds_property_set_bool(d, "input.led.suspend", 
-                                     i->ledbit&(1<<LED_SUSPEND));
-        ds_property_set_bool(d, "input.led.mute", 
-                                     i->ledbit&(1<<LED_MUTE));
-        ds_property_set_bool(d, "input.led.misc", 
-                                     i->ledbit&(1<<LED_MISC));
-        ds_property_set_bool(d, "input.led.max", 
-                                     i->ledbit&(1<<LED_MAX));
-    }
-    
-    if( i->evbit&(1<<EV_REL) )
-    {
-        ds_property_set_bool(d, "input.relative.x", 
-                                     i->relbit&(1<<REL_X));
-        ds_property_set_bool(d, "input.relative.y", 
-                                     i->relbit&(1<<REL_Y));
-        ds_property_set_bool(d, "input.relative.z", 
-                                     i->relbit&(1<<REL_Z));
-        ds_property_set_bool(d, "input.relative.hwheel", 
-                                     i->relbit&(1<<REL_HWHEEL));
-        ds_property_set_bool(d, "input.relative.dial", 
-                                     i->relbit&(1<<REL_DIAL));
-        ds_property_set_bool(d, "input.relative.wheel", 
-                                     i->relbit&(1<<REL_WHEEL));
-        ds_property_set_bool(d, "input.relative.misc", 
-                                     i->relbit&(1<<REL_MISC));
-    }
-    
-    if( i->evbit&(1<<EV_ABS) )
-    {
-        ds_property_set_bool(d, "input.absolute.x", 
-                                     i->absbit&(1<<ABS_X));
-        ds_property_set_bool(d, "input.absolute.y", 
-                                     i->absbit&(1<<ABS_Y));
-        ds_property_set_bool(d, "input.absolute.z", 
-                                     i->absbit&(1<<ABS_Z));
-        ds_property_set_bool(d, "input.absolute.rx", 
-                                     i->absbit&(1<<ABS_RX));
-        ds_property_set_bool(d, "input.absolute.ry", 
-                                     i->absbit&(1<<ABS_RY));
-        ds_property_set_bool(d, "input.absolute.rz", 
-                                     i->absbit&(1<<ABS_RZ));
-        ds_property_set_bool(d, "input.absolute.throttle", 
-                                     i->absbit&(1<<ABS_THROTTLE));
-        ds_property_set_bool(d, "input.absolute.rudder", 
-                                     i->absbit&(1<<ABS_RUDDER));
-        ds_property_set_bool(d, "input.absolute.wheel", 
-                                     i->absbit&(1<<ABS_WHEEL));
-        ds_property_set_bool(d, "input.absolute.gas", 
-                                     i->absbit&(1<<ABS_GAS));
-        ds_property_set_bool(d, "input.absolute.brake", 
-                                     i->absbit&(1<<ABS_BRAKE));
-        ds_property_set_bool(d, "input.absolute.hat0x", 
-                                     i->absbit&(1<<ABS_HAT0X));
-        ds_property_set_bool(d, "input.absolute.hat0y", 
-                                     i->absbit&(1<<ABS_HAT0Y));
-        ds_property_set_bool(d, "input.absolute.hat1x", 
-                                     i->absbit&(1<<ABS_HAT1X));
-        ds_property_set_bool(d, "input.absolute.hat1y", 
-                                     i->absbit&(1<<ABS_HAT1Y));
-        ds_property_set_bool(d, "input.absolute.hat2x", 
-                                     i->absbit&(1<<ABS_HAT2X));
-        ds_property_set_bool(d, "input.absolute.hat2y", 
-                                     i->absbit&(1<<ABS_HAT2Y));
-        ds_property_set_bool(d, "input.absolute.pressure", 
-                                     i->absbit&(1<<ABS_PRESSURE));
-        ds_property_set_bool(d, "input.absolute.distance", 
-                                     i->absbit&(1<<ABS_DISTANCE));
-        ds_property_set_bool(d, "input.absolute.tilt_x", 
-                                     i->absbit&(1<<ABS_TILT_X));
-        ds_property_set_bool(d, "input.absolute.tilt_Y", 
-                                     i->absbit&(1<<ABS_TILT_Y));
-        ds_property_set_bool(d, "input.absolute.misc", 
-                                     i->absbit&(1<<ABS_MISC));
-    }
+	d = ds_device_new ();
 
-    /* Either way, we're an input device */
-    ds_add_capability(d, "input");
+	ds_property_set_string (d, "input.linux.phys", i->phys_name);
+	ds_property_set_string (d, "input.linux.handlers", i->handlers);
+	ds_property_set_int (d, "input.linux.evbit", i->evbit);
+	ds_property_set_int (d, "input.linux.ledbit", i->ledbit);
+	ds_property_set_int (d, "input.linux.relbit", i->relbit);
+	ds_property_set_int (d, "input.linux.absbit", i->absbit);
+	ds_property_set_string (d, "input.linux.keybit", i->keybit);
+
+	/* The "USB HID for Linux USB" document provides good information
+	 * http://www.frogmouth.net/hid-doco/linux-hid.html
+	 *
+	 */
+	ds_property_set_bool (d, "input.key", i->evbit & (1 << EV_KEY));
+	ds_property_set_bool (d, "input.relative",
+			      i->evbit & (1 << EV_REL));
+	ds_property_set_bool (d, "input.absolute",
+			      i->evbit & (1 << EV_ABS));
+	ds_property_set_bool (d, "input.led", i->evbit & (1 << EV_LED));
+	ds_property_set_bool (d, "input.sound", i->evbit & (1 << EV_SND));
+	ds_property_set_bool (d, "input.repeat", i->evbit & (1 << EV_REP));
+	ds_property_set_bool (d, "input.force_feedback",
+			      i->evbit & (1 << EV_FF));
+	ds_property_set_bool (d, "input.misc", i->evbit & (1 << EV_MSC));
+#ifdef EV_RST
+	ds_property_set_bool (d, "input.rst", i->evbit & (1 << EV_RST));
+#elif EV_SYN
+	ds_property_set_bool (d, "input.rst", i->evbit & (1 << EV_SYN));
+#endif
+
+	if (i->evbit & (1 << EV_LED)) {
+		ds_property_set_bool (d, "input.led.numlock",
+				      i->ledbit & (1 << LED_NUML));
+		ds_property_set_bool (d, "input.led.capslock",
+				      i->ledbit & (1 << LED_CAPSL));
+		ds_property_set_bool (d, "input.led.scrolllock",
+				      i->ledbit & (1 << LED_SCROLLL));
+		ds_property_set_bool (d, "input.led.compose",
+				      i->ledbit & (1 << LED_COMPOSE));
+		ds_property_set_bool (d, "input.led.kana",
+				      i->ledbit & (1 << LED_KANA));
+		ds_property_set_bool (d, "input.led.sleep",
+				      i->ledbit & (1 << LED_SLEEP));
+		ds_property_set_bool (d, "input.led.suspend",
+				      i->ledbit & (1 << LED_SUSPEND));
+		ds_property_set_bool (d, "input.led.mute",
+				      i->ledbit & (1 << LED_MUTE));
+		ds_property_set_bool (d, "input.led.misc",
+				      i->ledbit & (1 << LED_MISC));
+		ds_property_set_bool (d, "input.led.max",
+				      i->ledbit & (1 << LED_MAX));
+	}
+
+	if (i->evbit & (1 << EV_REL)) {
+		ds_property_set_bool (d, "input.relative.x",
+				      i->relbit & (1 << REL_X));
+		ds_property_set_bool (d, "input.relative.y",
+				      i->relbit & (1 << REL_Y));
+		ds_property_set_bool (d, "input.relative.z",
+				      i->relbit & (1 << REL_Z));
+		ds_property_set_bool (d, "input.relative.hwheel",
+				      i->relbit & (1 << REL_HWHEEL));
+		ds_property_set_bool (d, "input.relative.dial",
+				      i->relbit & (1 << REL_DIAL));
+		ds_property_set_bool (d, "input.relative.wheel",
+				      i->relbit & (1 << REL_WHEEL));
+		ds_property_set_bool (d, "input.relative.misc",
+				      i->relbit & (1 << REL_MISC));
+	}
+
+	if (i->evbit & (1 << EV_ABS)) {
+		ds_property_set_bool (d, "input.absolute.x",
+				      i->absbit & (1 << ABS_X));
+		ds_property_set_bool (d, "input.absolute.y",
+				      i->absbit & (1 << ABS_Y));
+		ds_property_set_bool (d, "input.absolute.z",
+				      i->absbit & (1 << ABS_Z));
+		ds_property_set_bool (d, "input.absolute.rx",
+				      i->absbit & (1 << ABS_RX));
+		ds_property_set_bool (d, "input.absolute.ry",
+				      i->absbit & (1 << ABS_RY));
+		ds_property_set_bool (d, "input.absolute.rz",
+				      i->absbit & (1 << ABS_RZ));
+		ds_property_set_bool (d, "input.absolute.throttle",
+				      i->absbit & (1 << ABS_THROTTLE));
+		ds_property_set_bool (d, "input.absolute.rudder",
+				      i->absbit & (1 << ABS_RUDDER));
+		ds_property_set_bool (d, "input.absolute.wheel",
+				      i->absbit & (1 << ABS_WHEEL));
+		ds_property_set_bool (d, "input.absolute.gas",
+				      i->absbit & (1 << ABS_GAS));
+		ds_property_set_bool (d, "input.absolute.brake",
+				      i->absbit & (1 << ABS_BRAKE));
+		ds_property_set_bool (d, "input.absolute.hat0x",
+				      i->absbit & (1 << ABS_HAT0X));
+		ds_property_set_bool (d, "input.absolute.hat0y",
+				      i->absbit & (1 << ABS_HAT0Y));
+		ds_property_set_bool (d, "input.absolute.hat1x",
+				      i->absbit & (1 << ABS_HAT1X));
+		ds_property_set_bool (d, "input.absolute.hat1y",
+				      i->absbit & (1 << ABS_HAT1Y));
+		ds_property_set_bool (d, "input.absolute.hat2x",
+				      i->absbit & (1 << ABS_HAT2X));
+		ds_property_set_bool (d, "input.absolute.hat2y",
+				      i->absbit & (1 << ABS_HAT2Y));
+		ds_property_set_bool (d, "input.absolute.pressure",
+				      i->absbit & (1 << ABS_PRESSURE));
+		ds_property_set_bool (d, "input.absolute.distance",
+				      i->absbit & (1 << ABS_DISTANCE));
+		ds_property_set_bool (d, "input.absolute.tilt_x",
+				      i->absbit & (1 << ABS_TILT_X));
+		ds_property_set_bool (d, "input.absolute.tilt_Y",
+				      i->absbit & (1 << ABS_TILT_Y));
+		ds_property_set_bool (d, "input.absolute.misc",
+				      i->absbit & (1 << ABS_MISC));
+	}
+
+	/* Either way, we're an input device */
+	ds_add_capability (d, "input");
 
     /** @todo Figure out if this input device is a mouse, a keyboard or.. 
      *        bzzzttt.. an UPS.. We can wawe our hands a bit because this
      *        can always be overridden by a .fdi file..
      */
-    if( i->relbit!=0 )
-    {
-        ds_add_capability(d, "input.mouse");
-        ds_property_set_string(d, "info.category", "input.mouse");
-    }
-    else
-    {
-        ds_add_capability(d, "input.keyboard");
-        ds_property_set_string(d, "info.category", "input.keyboard");
-    }
-    
+	if (i->relbit != 0) {
+		ds_add_capability (d, "input.mouse");
+		ds_property_set_string (d, "info.category", "input.mouse");
+	} else {
+		ds_add_capability (d, "input.keyboard");
+		ds_property_set_string (d, "info.category",
+					"input.keyboard");
+	}
+
     /** @todo FIXME: is there any other key information we want to
      *        give here? Like major:minor number of device?
      */
 
 
-    /* Find phys device; this happens asynchronously as it might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    ds_device_async_find_by_key_value_string("linux.kernel_devname",
-                                             phys, 
-                                             FALSE, /* note: doesn't need to be in GDL */
-                                             input_got_sysdevice,
-                                             (void*) d, NULL, 
-                                             is_probing ? 0 :
-                                             HAL_LINUX_HOTPLUG_TIMEOUT);
+	/* Find phys device; this happens asynchronously as it might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	ds_device_async_find_by_key_value_string ("linux.kernel_devname", phys, FALSE,	/* note: doesn't need to be in GDL */
+						  input_got_sysdevice,
+						  (void *) d, NULL,
+						  is_probing ? 0 :
+						  HAL_LINUX_HOTPLUG_TIMEOUT);
 }
 
 /** Callback when the sysdevice is found or if there is no parent.. This is
@@ -591,25 +567,22 @@ static void process_input_proc_info(input_proc_info* i)
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void input_got_sysdevice(HalDevice* sysdevice, 
-                                void* data1, void* data2)
+static void
+input_got_sysdevice (HalDevice * sysdevice, void *data1, void *data2)
 {
-    HalDevice* d = (HalDevice*) data1;
+	HalDevice *d = (HalDevice *) data1;
 
-    if( sysdevice==NULL )
-    {
-        HAL_WARNING(("Sysdevice for a class input device never appeared!"));
-    }
-    else
-    {
-        /* merge information from temporary device into the physical
-         * device 
-         */
-        ds_device_merge(sysdevice, d);
-    }
+	if (sysdevice == NULL) {
+		HAL_WARNING (("Sysdevice for a class input device never appeared!"));
+	} else {
+		/* merge information from temporary device into the physical
+		 * device 
+		 */
+		ds_device_merge (sysdevice, d);
+	}
 
-    /* get rid of tempoary device; it was only a placeholder after all */
-    ds_device_destroy(d);
+	/* get rid of tempoary device; it was only a placeholder after all */
+	ds_device_destroy (d);
 }
 
 
@@ -617,14 +590,15 @@ static void input_got_sysdevice(HalDevice* sysdevice,
  *  not call this before all physical devices are probed as no new HAL
  *  devices will be created..
  */
-void linux_class_input_probe()
+void
+linux_class_input_probe ()
 {
-    input_proc_info* i;
-    
-    input_proc_parse();    
+	input_proc_info *i;
 
-    for(i=input_proc_head; i!=NULL; i=i->next)
-        process_input_proc_info(i);
+	input_proc_parse ();
+
+	for (i = input_proc_head; i != NULL; i = i->next)
+		process_input_proc_info (i);
 }
 
 
@@ -638,31 +612,33 @@ void linux_class_input_probe()
  *  @param  abs                 $ABS from hotplug event (or 0 if not found)
  *  @param  led                 $LED from hotplug event (or 0 if not found)
  */
-void linux_class_input_handle_hotplug_add(char* name, char* phys, char* key,
-                                          int ev, int rel, int abs, int led)
+void
+linux_class_input_handle_hotplug_add (char *name, char *phys, char *key,
+				      int ev, int rel, int abs, int led)
 {
-    char* s;
-    input_proc_info* i;
+	char *s;
+	input_proc_info *i;
 
-    i = get_input_proc_cur_info_obj();
+	i = get_input_proc_cur_info_obj ();
 
     /** @todo FIXME; parse product (we don't use it yet) */
 
-    strncpy(i->name, name, 128);
-    strncpy(i->phys_name, phys, 128);
-    strncpy(i->keybit, key, 128);
-    i->evbit = ev;
-    i->relbit = rel;
-    i->absbit = abs;
-    i->ledbit = led;
+	strncpy (i->name, name, 128);
+	strncpy (i->phys_name, phys, 128);
+	strncpy (i->keybit, key, 128);
+	i->evbit = ev;
+	i->relbit = rel;
+	i->absbit = abs;
+	i->ledbit = led;
 
-    process_input_proc_info(i);
+	process_input_proc_info (i);
 }
 
 /** Init function for block device handling
  *
  */
-void linux_class_input_init()
+void
+linux_class_input_init ()
 {
 }
 
@@ -670,14 +646,16 @@ void linux_class_input_init()
  *  in order to perform optional batch processing on devices
  *
  */
-void linux_class_input_detection_done()
+void
+linux_class_input_detection_done ()
 {
 }
 
 /** Shutdown function for block device handling
  *
  */
-void linux_class_input_shutdown()
+void
+linux_class_input_shutdown ()
 {
 }
 

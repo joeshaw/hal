@@ -38,21 +38,21 @@
  */
 
 
-double parse_double(const char* str);
-dbus_int32_t parse_dec(const char* str);
-dbus_int32_t parse_hex(const char* str);
+double parse_double (const char *str);
+dbus_int32_t parse_dec (const char *str);
+dbus_int32_t parse_hex (const char *str);
 
-long int find_num(char* pre, char* s, int base);
-double find_double(char* pre, char* s);
-int find_bcd2(char* pre, char* s);
-char* find_string(char* pre, char* s);
+long int find_num (char *pre, char *s, int base);
+double find_double (char *pre, char *s);
+int find_bcd2 (char *pre, char *s);
+char *find_string (char *pre, char *s);
 
-char* read_single_line(char* filename_format,...);
+char *read_single_line (char *filename_format, ...);
 
-const char* get_last_element(const char* s);
+const char *get_last_element (const char *s);
 
 /* returns the path of the udevinfo program */
-const char *udevinfo_path(void);
+const char *udevinfo_path (void);
 
 /** Type for function to compute the UDI (unique device id) for a given
  *  HAL device.
@@ -62,19 +62,19 @@ const char *udevinfo_path(void);
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-typedef char* (*ComputeFDI)(HalDevice* d, int append_num);
+typedef char *(*ComputeFDI) (HalDevice * d, int append_num);
 
-char* rename_and_merge(HalDevice* d, ComputeFDI naming_func, 
-                       const char* namespace);
+char *rename_and_merge (HalDevice * d, ComputeFDI naming_func,
+			const char *namespace);
 
-char* get_parent_sysfs_path(const char* path);
+char *get_parent_sysfs_path (const char *path);
 
-void find_and_set_physical_device(HalDevice* device);
+void find_and_set_physical_device (HalDevice * device);
 
 
-const char* drivers_lookup(const char* device_path);
+const char *drivers_lookup (const char *device_path);
 
-void drivers_collect(const char* bus_name);
+void drivers_collect (const char *bus_name);
 
 /** Timeout in milliseconds for waiting for a sysfs device to appear as
  *  a HAL device. Usually used when hotplugging usb-storage since
@@ -96,4 +96,4 @@ extern char sysfs_mount_path[SYSFS_PATH_MAX];
 
 /* @} */
 
-#endif /* LINUX_COMMON_H */
+#endif				/* LINUX_COMMON_H */

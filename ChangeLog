@@ -1,3 +1,9 @@
+2004-03-03  David Zeuthen  <david@fubar.dk>
+
+	Major reformatting patch - seems that everyone is following
+	another coding style than me so I chose the GNOME coding guidelines,
+	indent -kr -i8 -pcs -lps -psl, and did some manual reformatting
+
 2004-03-01  Joe Shaw  <joe@ximian.com>
 
 	* configure.in: SUSE puts pci.ids in /usr/share, so add that to

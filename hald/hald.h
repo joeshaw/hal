@@ -38,17 +38,17 @@
  *  @{
  */
 
-char* xstrdup(const char* str);
-void* xmalloc(unsigned int how_much);
+char *xstrdup (const char *str);
+void *xmalloc (unsigned int how_much);
 
-void property_atomic_update_begin();
-void property_atomic_update_end();
+void property_atomic_update_begin ();
+void property_atomic_update_end ();
 
-void emit_condition(HalDevice* device, const char* condition_name,
-                    int first_arg_type, ... );
+void emit_condition (HalDevice * device, const char *condition_name,
+		     int first_arg_type, ...);
 
 /**
  *  @}
  */
 
-#endif /* HALD_H */
+#endif				/* HALD_H */

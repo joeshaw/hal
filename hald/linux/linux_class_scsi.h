@@ -28,14 +28,16 @@
 
 #include "linux_common.h"
 
-void visit_class_device_scsi_host(const char* path, 
-                                  struct sysfs_class_device *class_device);
+void visit_class_device_scsi_host (const char *path,
+				   struct sysfs_class_device
+				   *class_device);
 
-void visit_class_device_scsi_device(const char* path, 
-                                    struct sysfs_class_device *class_device);
+void visit_class_device_scsi_device (const char *path,
+				     struct sysfs_class_device
+				     *class_device);
 
-void linux_class_scsi_init();
-void linux_class_scsi_detection_done();
-void linux_class_scsi_shutdown();
+void linux_class_scsi_init ();
+void linux_class_scsi_detection_done ();
+void linux_class_scsi_shutdown ();
 
-#endif /* LINUX_CLASS_SCSI_H */
+#endif				/* LINUX_CLASS_SCSI_H */

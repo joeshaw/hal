@@ -57,21 +57,21 @@
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-static char* ide_compute_udi(HalDevice* d, int append_num)
+static char *
+ide_compute_udi (HalDevice * d, int append_num)
 {
-    char* format;
-    static char buf[256];
+	char *format;
+	static char buf[256];
 
-    if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/ide_%d_%d";
-    else
-        format = "/org/freedesktop/Hal/devices/ide_%d_%d-%d";
+	if (append_num == -1)
+		format = "/org/freedesktop/Hal/devices/ide_%d_%d";
+	else
+		format = "/org/freedesktop/Hal/devices/ide_%d_%d-%d";
 
-    snprintf(buf, 256, format, 
-             ds_property_get_int(d, "ide.channel"),
-             ds_property_get_int(d, "ide.sub_channel"),
-             append_num);
-    return buf;
+	snprintf (buf, 256, format,
+		  ds_property_get_int (d, "ide.channel"),
+		  ds_property_get_int (d, "ide.sub_channel"), append_num);
+	return buf;
 }
 
 
@@ -84,25 +84,25 @@ static char* ide_compute_udi(HalDevice* d, int append_num)
  *  @return                     New unique device id; only good until the
  *                              next invocation of this function
  */
-static char* ide_host_compute_udi(HalDevice* d, int append_num)
+static char *
+ide_host_compute_udi (HalDevice * d, int append_num)
 {
-    char* format;
-    static char buf[256];
+	char *format;
+	static char buf[256];
 
-    if( append_num==-1 )
-        format = "/org/freedesktop/Hal/devices/ide_host_%d";
-    else
-        format = "/org/freedesktop/Hal/devices/ide_host_%d-%d";
+	if (append_num == -1)
+		format = "/org/freedesktop/Hal/devices/ide_host_%d";
+	else
+		format = "/org/freedesktop/Hal/devices/ide_host_%d-%d";
 
-    snprintf(buf, 256, format, 
-             ds_property_get_int(d, "ide_host.number"),
-             append_num);
-    return buf;
+	snprintf (buf, 256, format,
+		  ds_property_get_int (d, "ide_host.number"), append_num);
+	return buf;
 }
 
 /* fwd decl */
-static void visit_device_ide_host_got_parent(HalDevice* parent, 
-                                             void* data1, void* data2);
+static void visit_device_ide_host_got_parent (HalDevice * parent,
+					      void *data1, void *data2);
 
 /** Visitor function for IDE host.
  *
@@ -112,52 +112,51 @@ static void visit_device_ide_host_got_parent(HalDevice* parent,
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-void visit_device_ide_host(const char* path, struct sysfs_device *device)
+void
+visit_device_ide_host (const char *path, struct sysfs_device *device)
 {
-    HalDevice* d;
-    int ide_host_number;
-    char* parent_sysfs_path;
+	HalDevice *d;
+	int ide_host_number;
+	char *parent_sysfs_path;
 
-    /*printf("ide_host: %s\n", path);*/
-    if( sscanf(device->bus_id, "ide%d", &ide_host_number)!=1 )
-    {
-        HAL_ERROR(("Couldn't find ide_host_number in %s\n",
-                   device->bus_id));
-        return;
-    }
+	/*printf("ide_host: %s\n", path); */
+	if (sscanf (device->bus_id, "ide%d", &ide_host_number) != 1) {
+		HAL_ERROR (("Couldn't find ide_host_number in %s\n",
+			    device->bus_id));
+		return;
+	}
 
-    /*printf("ide_host_number=%d\n", ide_host_number);*/
+	/*printf("ide_host_number=%d\n", ide_host_number); */
 
-    d = ds_device_new();
-    ds_property_set_string(d, "info.bus", "ide_host");
-    ds_property_set_string(d, "linux.sysfs_path", path);
-    ds_property_set_string(d, "linux.sysfs_path_device", path);
-    ds_property_set_int(d, "ide_host.number", ide_host_number);
+	d = ds_device_new ();
+	ds_property_set_string (d, "info.bus", "ide_host");
+	ds_property_set_string (d, "linux.sysfs_path", path);
+	ds_property_set_string (d, "linux.sysfs_path_device", path);
+	ds_property_set_int (d, "ide_host.number", ide_host_number);
 
-    /* guestimate product name */
-    if( ide_host_number==0 )
-        ds_property_set_string(d, "info.product", "Primary IDE channel");
-    else if( ide_host_number==1 )
-        ds_property_set_string(d, "info.product", "Secondary IDE channel");
-    else
-        ds_property_set_string(d, "info.product", "IDE channel");
+	/* guestimate product name */
+	if (ide_host_number == 0)
+		ds_property_set_string (d, "info.product",
+					"Primary IDE channel");
+	else if (ide_host_number == 1)
+		ds_property_set_string (d, "info.product",
+					"Secondary IDE channel");
+	else
+		ds_property_set_string (d, "info.product", "IDE channel");
 
 
-    parent_sysfs_path = get_parent_sysfs_path(path);
+	parent_sysfs_path = get_parent_sysfs_path (path);
 
-    /* Find parent; this happens asynchronously as our parent might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
-                                             parent_sysfs_path, 
-                                             TRUE,
-                                             visit_device_ide_host_got_parent,
-                                             (void*) d, NULL, 
-                                             is_probing ? 0 :
-                                             HAL_LINUX_HOTPLUG_TIMEOUT);
+	/* Find parent; this happens asynchronously as our parent might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	ds_device_async_find_by_key_value_string
+	    ("linux.sysfs_path_device", parent_sysfs_path, TRUE,
+	     visit_device_ide_host_got_parent, (void *) d, NULL,
+	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 
-    free(parent_sysfs_path);
+	free (parent_sysfs_path);
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -167,38 +166,36 @@ void visit_device_ide_host(const char* path, struct sysfs_device *device)
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void visit_device_ide_host_got_parent(HalDevice* parent, 
-                                             void* data1, void* data2)
+static void
+visit_device_ide_host_got_parent (HalDevice * parent,
+				  void *data1, void *data2)
 {
-    char* new_udi = NULL;
-    HalDevice* new_d = NULL;
-    HalDevice* d = (HalDevice*) data1;
+	char *new_udi = NULL;
+	HalDevice *new_d = NULL;
+	HalDevice *d = (HalDevice *) data1;
 
-    if( parent!=NULL )
-    {
-        ds_property_set_string(d, "info.parent", parent->udi);
-        find_and_set_physical_device(d);
-        ds_property_set_bool(d, "info.virtual", TRUE);
-    }
+	if (parent != NULL) {
+		ds_property_set_string (d, "info.parent", parent->udi);
+		find_and_set_physical_device (d);
+		ds_property_set_bool (d, "info.virtual", TRUE);
+	}
 
-    /* Compute a proper UDI (unique device id) and try to locate a persistent
-     * unplugged device or simple add this new device...
-     */
-    new_udi = rename_and_merge(d, ide_host_compute_udi, "ide_host");
-    if( new_udi!=NULL )
-    {
-        new_d = ds_device_find(new_udi);
-        if( new_d!=NULL )
-        {
-            ds_gdl_add(new_d);
-        }
-    }
+	/* Compute a proper UDI (unique device id) and try to locate a
+	 * persistent unplugged device or simple add this new device...
+	 */
+	new_udi = rename_and_merge (d, ide_host_compute_udi, "ide_host");
+	if (new_udi != NULL) {
+		new_d = ds_device_find (new_udi);
+		if (new_d != NULL) {
+			ds_gdl_add (new_d);
+		}
+	}
 }
 
 
 /* fwd decl */
-static void visit_device_ide_got_parent(HalDevice* parent, 
-                                        void* data1, void* data2);
+static void visit_device_ide_got_parent (HalDevice * parent,
+					 void *data1, void *data2);
 
 /** Visitor function for IDE.
  *
@@ -208,51 +205,50 @@ static void visit_device_ide_got_parent(HalDevice* parent,
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
  */
-void visit_device_ide(const char* path, struct sysfs_device *device)
+void
+visit_device_ide (const char *path, struct sysfs_device *device)
 {
-    HalDevice* d;
-    int channel;
-    int sub_channel;
-    char* parent_sysfs_path;
+	HalDevice *d;
+	int channel;
+	int sub_channel;
+	char *parent_sysfs_path;
 
-    /*printf("ide: %s\n", path);*/
-    if( sscanf(device->bus_id, "%d.%d", &channel, &sub_channel)!=2 )
-    {
-        HAL_ERROR(("Couldn't find channel and sub_channel in %s\n",
-                   device->bus_id));
-        return;
-    }
+	/*printf("ide: %s\n", path); */
+	if (sscanf (device->bus_id, "%d.%d", &channel, &sub_channel) != 2) {
+		HAL_ERROR (("Couldn't find channel and sub_channel in %s\n", 
+			    device->bus_id));
+		return;
+	}
 
-    /*printf("channel=%d, sub_channel=%d\n", channel, sub_channel);*/
+	/*printf("channel=%d, sub_channel=%d\n", channel, sub_channel); */
 
-    d = ds_device_new();
-    ds_property_set_string(d, "info.bus", "ide");
-    ds_property_set_string(d, "linux.sysfs_path", path);
-    ds_property_set_string(d, "linux.sysfs_path_device", path);
-    ds_property_set_int(d, "ide.channel", channel);
-    ds_property_set_int(d, "ide.sub_channel", sub_channel);
+	d = ds_device_new ();
+	ds_property_set_string (d, "info.bus", "ide");
+	ds_property_set_string (d, "linux.sysfs_path", path);
+	ds_property_set_string (d, "linux.sysfs_path_device", path);
+	ds_property_set_int (d, "ide.channel", channel);
+	ds_property_set_int (d, "ide.sub_channel", sub_channel);
 
-    /* guestimate product name */
-    if( sub_channel==0 )
-        ds_property_set_string(d, "info.product", "Master IDE Interface");
-    else
-        ds_property_set_string(d, "info.product", "Slave IDE Interface");
+	/* guestimate product name */
+	if (sub_channel == 0)
+		ds_property_set_string (d, "info.product",
+					"Master IDE Interface");
+	else
+		ds_property_set_string (d, "info.product",
+					"Slave IDE Interface");
 
-    parent_sysfs_path = get_parent_sysfs_path(path);
+	parent_sysfs_path = get_parent_sysfs_path (path);
 
-    /* Find parent; this happens asynchronously as our parent might
-     * be added later. If we are probing this can't happen so the
-     * timeout is set to zero in that event..
-     */
-    ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
-                                             parent_sysfs_path, 
-                                             TRUE,
-                                             visit_device_ide_got_parent,
-                                             (void*) d, NULL, 
-                                             is_probing ? 0 :
-                                             HAL_LINUX_HOTPLUG_TIMEOUT);
+	/* Find parent; this happens asynchronously as our parent might
+	 * be added later. If we are probing this can't happen so the
+	 * timeout is set to zero in that event..
+	 */
+	ds_device_async_find_by_key_value_string
+	    ("linux.sysfs_path_device", parent_sysfs_path, TRUE,
+	     visit_device_ide_got_parent, (void *) d, NULL,
+	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
 
-    free(parent_sysfs_path);
+	free (parent_sysfs_path);
 }
 
 /** Callback when the parent is found or if there is no parent.. This is
@@ -262,39 +258,37 @@ void visit_device_ide(const char* path, struct sysfs_device *device)
  *  @param  data1               User data
  *  @param  data2               User data
  */
-static void visit_device_ide_got_parent(HalDevice* parent, 
-                                        void* data1, void* data2)
+static void
+visit_device_ide_got_parent (HalDevice * parent, void *data1, void *data2)
 {
-    char* new_udi = NULL;
-    HalDevice* new_d = NULL;
-    HalDevice* d = (HalDevice*) data1;
+	char *new_udi = NULL;
+	HalDevice *new_d = NULL;
+	HalDevice *d = (HalDevice *) data1;
 
-    if( parent!=NULL )
-    {
-        ds_property_set_string(d, "info.parent", parent->udi);
-        find_and_set_physical_device(d);
-        ds_property_set_bool(d, "info.virtual", TRUE);
-    }
+	if (parent != NULL) {
+		ds_property_set_string (d, "info.parent", parent->udi);
+		find_and_set_physical_device (d);
+		ds_property_set_bool (d, "info.virtual", TRUE);
+	}
 
-    /* Compute a proper UDI (unique device id) and try to locate a persistent
-     * unplugged device or simple add this new device...
-     */
-    new_udi = rename_and_merge(d, ide_compute_udi, "ide");
-    if( new_udi!=NULL )
-    {
-        new_d = ds_device_find(new_udi);
-        if( new_d!=NULL )
-        {
-            ds_gdl_add(new_d);
-        }
-    }
+	/* Compute a proper UDI (unique device id) and try to locate a 
+	 * persistent unplugged device or simple add this new device...
+	 */
+	new_udi = rename_and_merge (d, ide_compute_udi, "ide");
+	if (new_udi != NULL) {
+		new_d = ds_device_find (new_udi);
+		if (new_d != NULL) {
+			ds_gdl_add (new_d);
+		}
+	}
 }
 
 
 /** Init function for IDE handling
  *
  */
-void linux_ide_init()
+void
+linux_ide_init ()
 {
 }
 
@@ -302,14 +296,16 @@ void linux_ide_init()
  *  in order to perform optional batch processing on devices
  *
  */
-void linux_ide_detection_done()
+void
+linux_ide_detection_done ()
 {
 }
 
 /** Shutdown function for IDE handling
  *
  */
-void linux_ide_shutdown()
+void
+linux_ide_shutdown ()
 {
 }
 

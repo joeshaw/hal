@@ -56,11 +56,11 @@
 #include "linux/linux_dvd_rw_utils.h"
 
 typedef enum {
-	NONE=CGC_DATA_NONE,     // 3
-	READ=CGC_DATA_READ,     // 2
-	WRITE=CGC_DATA_WRITE    // 1
+	NONE = CGC_DATA_NONE,	// 3
+	READ = CGC_DATA_READ,	// 2
+	WRITE = CGC_DATA_WRITE	// 1
 } Direction;
-                                                                                
+
 typedef struct ScsiCommand ScsiCommand;
 
 struct ScsiCommand {
@@ -69,10 +69,10 @@ struct ScsiCommand {
 	char *filename;
 	struct cdrom_generic_command cgc;
 	union {
-		struct request_sense    s;
-		unsigned char           u[18];
+		struct request_sense s;
+		unsigned char u[18];
 	} _sense;
-	struct sg_io_hdr            sg_io;
+	struct sg_io_hdr sg_io;
 };
 
 #define DIRECTION(i) (Dir_xlate[i]);
@@ -81,7 +81,7 @@ struct ScsiCommand {
  * 2,CGC_DATA_READ
  * 3,CGC_DATA_NONE
  */
-const int Dir_xlate [4] = {
+const int Dir_xlate[4] = {
 	0,			// implementation-dependent...
 	SG_DXFER_TO_DEV,	// 1,CGC_DATA_WRITE
 	SG_DXFER_FROM_DEV,	// 2,CGC_DATA_READ
@@ -93,7 +93,7 @@ scsi_command_new (void)
 {
 	ScsiCommand *cmd;
 
-	cmd = (ScsiCommand *)malloc (sizeof (ScsiCommand));
+	cmd = (ScsiCommand *) malloc (sizeof (ScsiCommand));
 	memset (cmd, 0, sizeof (ScsiCommand));
 	cmd->fd = -1;
 	cmd->filename = NULL;
@@ -105,25 +105,23 @@ scsi_command_new (void)
 static ScsiCommand *
 scsi_command_new_from_fd (int f)
 {
-    ScsiCommand *cmd;
+	ScsiCommand *cmd;
 
-    cmd = scsi_command_new ();
-    cmd->fd = f;
-    cmd->autoclose = 0;
+	cmd = scsi_command_new ();
+	cmd->fd = f;
+	cmd->autoclose = 0;
 
-    return cmd;
+	return cmd;
 }
 
 static void
-scsi_command_free (ScsiCommand *cmd)
+scsi_command_free (ScsiCommand * cmd)
 {
-	if (cmd->fd >= 0 && cmd->autoclose)
-	{
+	if (cmd->fd >= 0 && cmd->autoclose) {
 		close (cmd->fd);
 		cmd->fd = -1;
 	}
-	if (cmd->filename)
-	{
+	if (cmd->filename) {
 		free (cmd->filename);
 		cmd->filename = NULL;
 	}
@@ -132,27 +130,26 @@ scsi_command_free (ScsiCommand *cmd)
 }
 
 static int
-scsi_command_transport (ScsiCommand *cmd, Direction dir, void *buf, size_t sz)
+scsi_command_transport (ScsiCommand * cmd, Direction dir, void *buf,
+			size_t sz)
 {
 	int ret = 0;
 
-	cmd->sg_io.dxferp                = buf;
-	cmd->sg_io.dxfer_len             = sz;
-	cmd->sg_io.dxfer_direction       = DIRECTION(dir);
+	cmd->sg_io.dxferp = buf;
+	cmd->sg_io.dxfer_len = sz;
+	cmd->sg_io.dxfer_direction = DIRECTION (dir);
 
 	if (ioctl (cmd->fd, SG_IO, &cmd->sg_io))
 		return -1;
 
-	if ((cmd->sg_io.info&SG_INFO_OK_MASK) != SG_INFO_OK)
-	{
-		errno=EIO;
-		ret=-1;
-		if (cmd->sg_io.masked_status & CHECK_CONDITION)
-		{
-			CREAM_ON_ERRNO(cmd->sg_io.sbp);
-			ret=ERRCODE(cmd->sg_io.sbp);
-			if (ret==0)
-				ret=-1;
+	if ((cmd->sg_io.info & SG_INFO_OK_MASK) != SG_INFO_OK) {
+		errno = EIO;
+		ret = -1;
+		if (cmd->sg_io.masked_status & CHECK_CONDITION) {
+			CREAM_ON_ERRNO (cmd->sg_io.sbp);
+			ret = ERRCODE (cmd->sg_io.sbp);
+			if (ret == 0)
+				ret = -1;
 		}
 	}
 
@@ -160,22 +157,21 @@ scsi_command_transport (ScsiCommand *cmd, Direction dir, void *buf, size_t sz)
 }
 
 static void
-scsi_command_init (ScsiCommand *cmd, size_t i, int arg)
+scsi_command_init (ScsiCommand * cmd, size_t i, int arg)
 {
-	if (i == 0)
-	{
-		memset(&cmd->cgc,0,sizeof(cmd->cgc));
-		memset(&cmd->_sense,0,sizeof(cmd->_sense));
+	if (i == 0) {
+		memset (&cmd->cgc, 0, sizeof (cmd->cgc));
+		memset (&cmd->_sense, 0, sizeof (cmd->_sense));
 		cmd->cgc.quiet = 1;
 		cmd->cgc.sense = &cmd->_sense.s;
-		memset(&cmd->sg_io,0,sizeof(cmd->sg_io));
-		cmd->sg_io.interface_id= 'S';
-		cmd->sg_io.mx_sb_len = sizeof(cmd->_sense);
-		cmd->sg_io.cmdp      = cmd->cgc.cmd;
-		cmd->sg_io.sbp       = cmd->_sense.u;
-		cmd->sg_io.flags     = SG_FLAG_LUN_INHIBIT|SG_FLAG_DIRECT_IO;
+		memset (&cmd->sg_io, 0, sizeof (cmd->sg_io));
+		cmd->sg_io.interface_id = 'S';
+		cmd->sg_io.mx_sb_len = sizeof (cmd->_sense);
+		cmd->sg_io.cmdp = cmd->cgc.cmd;
+		cmd->sg_io.sbp = cmd->_sense.u;
+		cmd->sg_io.flags = SG_FLAG_LUN_INHIBIT | SG_FLAG_DIRECT_IO;
 	}
-	cmd->sg_io.cmd_len = i+1;
+	cmd->sg_io.cmd_len = i + 1;
 	cmd->cgc.cmd[i] = arg;
 }
 
@@ -194,8 +190,7 @@ get_dvd_r_rw_profile (int fd)
 	scsi_command_init (cmd, 1, 2);
 	scsi_command_init (cmd, 8, 8);
 	scsi_command_init (cmd, 9, 0);
-	if (scsi_command_transport (cmd, READ, page, 8))
-	{
+	if (scsi_command_transport (cmd, READ, page, 8)) {
 		/* GET CONFIGURATION failed */
 		scsi_command_free (cmd);
 		return -1;
@@ -203,8 +198,7 @@ get_dvd_r_rw_profile (int fd)
 
 	/* See if it's 2 gen drive by checking if DVD+R profile is an option */
 	len = 4 + (page[0] << 24 | page[1] << 16 | page[2] << 8 | page[3]);
-	if (len > 264)
-	{
+	if (len > 264) {
 		scsi_command_free (cmd);
 		/* insane profile list length */
 		return -1;
@@ -217,21 +211,18 @@ get_dvd_r_rw_profile (int fd)
 	scsi_command_init (cmd, 7, len >> 8);
 	scsi_command_init (cmd, 8, len);
 	scsi_command_init (cmd, 9, 0);
-	if (scsi_command_transport (cmd, READ, list, len))
-	{
+	if (scsi_command_transport (cmd, READ, list, len)) {
 		/* GET CONFIGURATION failed */
 		scsi_command_free (cmd);
 		free (list);
 		return -1;
 	}
 
-	for (i = 12 ; i < list[11] ; i += 4)
-	{
-		int profile = (list[i] <<8 | list[i+1]);
+	for (i = 12; i < list[11]; i += 4) {
+		int profile = (list[i] << 8 | list[i + 1]);
 		/* 0x1B: DVD+R
 		 * 0x1A: DVD+RW */
-		if (profile == 0x1B)
-		{
+		if (profile == 0x1B) {
 			if (retval == 1)
 				retval = 2;
 			else
@@ -259,14 +250,13 @@ pull_page2a_from_fd (int fd)
 
 	cmd = scsi_command_new_from_fd (fd);
 
-	scsi_command_init (cmd, 0, 0x5A); /* MODE SENSE */
-	scsi_command_init (cmd, 1, 0x08); /* Disable Block Descriptors */
-	scsi_command_init (cmd, 2, 0x2A); /* Capabilities and Mechanical Status */
-	scsi_command_init (cmd, 8, sizeof (header)); /* header only to start with */
+	scsi_command_init (cmd, 0, 0x5A);	/* MODE SENSE */
+	scsi_command_init (cmd, 1, 0x08);	/* Disable Block Descriptors */
+	scsi_command_init (cmd, 2, 0x2A);	/* Capabilities and Mechanical Status */
+	scsi_command_init (cmd, 8, sizeof (header));	/* header only to start with */
 	scsi_command_init (cmd, 9, 0);
 
-	if (scsi_command_transport (cmd, READ, header, sizeof (header)))
-	{
+	if (scsi_command_transport (cmd, READ, header, sizeof (header))) {
 		/* MODE SENSE failed */
 		scsi_command_free (cmd);
 		return NULL;
@@ -276,35 +266,31 @@ pull_page2a_from_fd (int fd)
 	bdlen = header[6] << 8 | header[7];
 
 	/* should never happen as we set "DBD" above */
-	if (bdlen)
-	{
-		if (len < (8 + bdlen + 30))
-		{
+	if (bdlen) {
+		if (len < (8 + bdlen + 30)) {
 			/* LUN impossible to bear with */
 			scsi_command_free (cmd);
 			return NULL;
 		}
 	} else if (len < (8 + 2 + (unsigned int) header[9])) {
 		/* SANYO does this. */
-		len = 8+2+header[9];
+		len = 8 + 2 + header[9];
 	}
 
-	page2A = (unsigned char *)malloc(len);
-	if (page2A == NULL)
-	{
+	page2A = (unsigned char *) malloc (len);
+	if (page2A == NULL) {
 		/* ENOMEM */
 		scsi_command_free (cmd);
 		return NULL;
 	}
 
-	scsi_command_init (cmd, 0, 0x5A); /* MODE SENSE */
-	scsi_command_init (cmd, 1, 0x08); /* Disable Block Descriptors */
-	scsi_command_init (cmd, 2, 0x2A); /* Capabilities and Mechanical Status */
+	scsi_command_init (cmd, 0, 0x5A);	/* MODE SENSE */
+	scsi_command_init (cmd, 1, 0x08);	/* Disable Block Descriptors */
+	scsi_command_init (cmd, 2, 0x2A);	/* Capabilities and Mechanical Status */
 	scsi_command_init (cmd, 7, len >> 8);
-	scsi_command_init (cmd, 8, len); /* Real length */
+	scsi_command_init (cmd, 8, len);	/* Real length */
 	scsi_command_init (cmd, 9, 0);
-	if (scsi_command_transport (cmd, READ, page2A, len))
-	{
+	if (scsi_command_transport (cmd, READ, page2A, len)) {
 		/* MODE SENSE failed */
 		scsi_command_free (cmd);
 		free (page2A);
@@ -315,8 +301,7 @@ pull_page2a_from_fd (int fd)
 
 	len -= 2;
 	/* paranoia */
-	if (len < ((unsigned int) page2A[0] << 8 | page2A[1]))
-	{
+	if (len < ((unsigned int) page2A[0] << 8 | page2A[1])) {
 		page2A[0] = len >> 8;
 		page2A[1] = len;
 	}
@@ -332,27 +317,25 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 	unsigned char *p;
 
 	*read_speed = 0;
-	*write_speed =0;
+	*write_speed = 0;
 
 	page2A = pull_page2a_from_fd (fd);
-	if (page2A == NULL)
-	{
+	if (page2A == NULL) {
 		printf ("Failed to get Page 2A\n");
 		/* Failed to get Page 2A */
 		return -1;
 	}
 
-	len  = (page2A[0] << 8 | page2A[1]) + 2;
+	len = (page2A[0] << 8 | page2A[1]) + 2;
 	hlen = 8 + (page2A[6] << 8 | page2A[7]);
 	p = page2A + hlen;
 
 	/* Values guessed from the cd_mode_page_2A struct
 	 * in cdrecord's libscg/scg/scsireg.h */
-	if (len < (hlen + 30) || p[1] < (30 - 2))
-	{
+	if (len < (hlen + 30) || p[1] < (30 - 2)) {
 		/* no MMC-3 "Current Write Speed" present,
 		 * try to use the MMC-2 one */
-		if (len < (hlen + 20) || p[1] < (20 -2))
+		if (len < (hlen + 20) || p[1] < (20 - 2))
 			*write_speed = 0;
 		else
 			*write_speed = p[18] << 8 | p[19];
@@ -366,4 +349,3 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 
 	return 0;
 }
-

@@ -27,7 +27,7 @@
 #  include <config.h>
 #endif
 
-#define _GNU_SOURCE 1 /* for strndup() */
+#define _GNU_SOURCE 1		/* for strndup() */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <libhal/libhal.h> /* For HAL_STATE_* */
+#include <libhal/libhal.h>	/* For HAL_STATE_* */
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -62,10 +62,11 @@
  *  @return                     Double; If there was an error parsing the
  *                              result is undefined.
  */
-double parse_double(const char* str)
+double
+parse_double (const char *str)
 {
-    /** @todo Check error condition */
-    return atof(str);
+	/** @todo Check error condition */
+	return atof (str);
 }
 
 /** Parse an integer represented as a decimal number (base 10) in a string. 
@@ -74,12 +75,13 @@ double parse_double(const char* str)
  *  @return                     Integer; If there was an error parsing the
  *                              result is undefined.
  */
-dbus_int32_t parse_dec(const char* str)
+dbus_int32_t
+parse_dec (const char *str)
 {
-    dbus_int32_t value;
-    value = strtol(str, NULL, 10);
-    /** @todo Check error condition */
-    return value;
+	dbus_int32_t value;
+	value = strtol (str, NULL, 10);
+	/** @todo Check error condition */
+	return value;
 }
 
 /** Parse an integer represented as a hexa-decimal number (base 16) in
@@ -89,12 +91,13 @@ dbus_int32_t parse_dec(const char* str)
  *  @return                     Integer; If there was an error parsing the
  *                              result is undefined.
  */
-dbus_int32_t parse_hex(const char* str)
+dbus_int32_t
+parse_hex (const char *str)
 {
-    dbus_int32_t value;
-    value = strtol(str, NULL, 16);
-    /** @todo Check error condition */
-    return value;
+	dbus_int32_t value;
+	value = strtol (str, NULL, 16);
+	/** @todo Check error condition */
+	return value;
 }
 
 /** Find an integer appearing right after a substring in a string.
@@ -108,27 +111,27 @@ dbus_int32_t parse_hex(const char* str)
  *                              number appears in
  *  @return                     Number
  */
-long int find_num(char* pre, char* s, int base)
+long int
+find_num (char *pre, char *s, int base)
 {
-    char* where;
-    int result;
+	char *where;
+	int result;
 
-    where = strstr(s, pre);
-    if( where==NULL )
-    {
-        /*DIE(("Didn't find '%s' in '%s'", pre, s));*/
-        return LONG_MAX;
-    }
-    where += strlen(pre);
+	where = strstr (s, pre);
+	if (where == NULL) {
+		/*DIE(("Didn't find '%s' in '%s'", pre, s)); */
+		return LONG_MAX;
+	}
+	where += strlen (pre);
 
-    result = strtol(where, NULL, base);
-    /** @todo Handle errors gracefully */
+	result = strtol (where, NULL, base);
+	/** @todo Handle errors gracefully */
 /*
     if( result==LONG_MIN || result==LONG_MAX )
         DIE(("Error parsing value for '%s' in '%s'", pre, s));
 */
 
-    return result;
+	return result;
 }
 
 /** Find a floating point number appearing right after a substring in a string
@@ -141,20 +144,21 @@ long int find_num(char* pre, char* s, int base)
  *  @param  s                   String to analyze
  *  @return                     Number
  */
-double find_double(char* pre, char* s)
+double
+find_double (char *pre, char *s)
 {
-    char* where;
-    double result;
+	char *where;
+	double result;
 
-    where = strstr(s, pre);
-    /** @todo Handle errors gracefully */
-    if( where==NULL )
-        DIE(("Didn't find '%s' in '%s'", pre, s));
-    where += strlen(pre);
+	where = strstr (s, pre);
+	/** @todo Handle errors gracefully */
+	if (where == NULL)
+		DIE (("Didn't find '%s' in '%s'", pre, s));
+	where += strlen (pre);
 
-    result = atof(where);
+	result = atof (where);
 
-    return result;
+	return result;
 }
 
 /** Find a floating point number appearing right after a substring in a string
@@ -167,61 +171,60 @@ double find_double(char* pre, char* s)
  *  @param  s                   String to analyze
  *  @return                     Number
  */
-int find_bcd2(char* pre, char* s)
+int
+find_bcd2 (char *pre, char *s)
 {
-    int i;
-    char c;
-    int digit;
-    int left, right, result;
-    int len;
-    char* str;
-    dbus_bool_t passed_white_space;
-    int num_prec;
+	int i;
+	char c;
+	int digit;
+	int left, right, result;
+	int len;
+	char *str;
+	dbus_bool_t passed_white_space;
+	int num_prec;
 
-    str = find_string(pre, s);
-    if( str==NULL || strlen(str)==0 )
-        return 0xffff;
+	str = find_string (pre, s);
+	if (str == NULL || strlen (str) == 0)
+		return 0xffff;
 
 
-    left = 0;
-    len = strlen(str);
-    passed_white_space = FALSE;
-    for(i=0; i<len && str[i]!='.'; i++)
-    {
-        if( isspace(str[i]) )
-        {
-            if( passed_white_space )
-                break;
-            else
-                continue;
-        }
-        passed_white_space = TRUE;
-        left *= 16;
-        c = str[i];
-        digit = (int) (c-'0');
-        left += digit;
-    }
-    i++;
-    right=0;
-    num_prec=0;
-    for( ; i<len; i++)
-    {
-        if( isspace(str[i]) )
-            break;
-        if( num_prec==2 )       /* Only care about 2 digits of precision */
-            break;
-        right *= 16;
-        c = str[i];
-        digit = (int) (c-'0');
-        right += digit;
-        num_prec++;
-    }
+	left = 0;
+	len = strlen (str);
+	passed_white_space = FALSE;
+	for (i = 0; i < len && str[i] != '.'; i++) {
+		if (isspace (str[i])) {
+			if (passed_white_space)
+				break;
+			else
+				continue;
+		}
+		passed_white_space = TRUE;
+		left *= 16;
+		c = str[i];
+		digit = (int) (c - '0');
+		left += digit;
+	}
+	i++;
+	right = 0;
+	num_prec = 0;
+	for (; i < len; i++) {
+		if (isspace (str[i]))
+			break;
+		if (num_prec == 2)	/* Only care about two digits 
+					 * of precision */
+			break;
+		right *= 16;
+		c = str[i];
+		digit = (int) (c - '0');
+		right += digit;
+		num_prec++;
+	}
 
-    for( ; num_prec<2; num_prec++)
-        right*=16;
-    
-    result = left*256 + (right&255);
-    return result;
+	for (; num_prec < 2; num_prec++)
+		right *= 16;
+
+	result = left * 256 + (right & 255);
+	return result;
 }
 
 /** Find a string appearing right after a substring in a string
@@ -234,42 +237,42 @@ int find_bcd2(char* pre, char* s)
  *  @param  s                   String to analyze
  *  @return                     Number
  */
-char* find_string(char* pre, char* s)
+char *
+find_string (char *pre, char *s)
 {
-    char* where;
-    static char buf[256];
-    char* p;
+	char *where;
+	static char buf[256];
+	char *p;
 
-    where = strstr(s, pre);
-    if( where==NULL )
-        return NULL;
-    where += strlen(pre);
+	where = strstr (s, pre);
+	if (where == NULL)
+		return NULL;
+	where += strlen (pre);
 
-    p=buf;
-    while( *where!='\n' && *where!='\r')
-    {
-        char c = *where;
+	p = buf;
+	while (*where != '\n' && *where != '\r') {
+		char c = *where;
 
-        // ignoring char 63 fixes a problem with info from the Lexar CF Reader
-        if( (isalnum(c) || isspace(c) || ispunct(c)) && c!=63 )
-        {
-            *p = c;
-            ++p;
-        }
+		/* ignoring char 63 fixes a problem with info from the 
+		 * Lexar CF Reader
+		 */
+		if ((isalnum (c) || isspace (c) || ispunct (c)) && c != 63) {
+			*p = c;
+			++p;
+		}
 
-        ++where;
-    }
-    *p = '\0';
+		++where;
+	}
+	*p = '\0';
 
-    // remove trailing white space
-    --p;
-    while( isspace(*p) )
-    {
-        *p='\0';
-        --p;
-    }
+	/* remove trailing white space */
+	--p;
+	while (isspace (*p)) {
+		*p = '\0';
+		--p;
+	}
 
-    return buf;
+	return buf;
 }
 
 /** Read the first line of a file and return it.
@@ -279,40 +282,39 @@ char* find_string(char* pre, char* s)
  *                              not be opened. The result is only valid until
  *                              the next invocation of this function.
  */
-char* read_single_line(char* filename_format,...)
+char *
+read_single_line (char *filename_format, ...)
 {
-    FILE* f;
-    int i;
-    int len;
-    char filename[512];
-    static char buf[512];
-    va_list args;
+	FILE *f;
+	int i;
+	int len;
+	char filename[512];
+	static char buf[512];
+	va_list args;
 
-    va_start(args, filename_format);
-    vsnprintf(filename, 512, filename_format, args);
-    va_end(args);
+	va_start (args, filename_format);
+	vsnprintf (filename, 512, filename_format, args);
+	va_end (args);
 
-    f = fopen(filename, "rb");
-    if( f==NULL )
-        return NULL;
+	f = fopen (filename, "rb");
+	if (f == NULL)
+		return NULL;
 
-    if( fgets(buf, 512, f)==NULL )
-    {
-        fclose(f);
-        return NULL;
-    }
+	if (fgets (buf, 512, f) == NULL) {
+		fclose (f);
+		return NULL;
+	}
 
-    len = strlen(buf);
-    for(i=len-1; i>0; --i )
-    {
-        if( buf[i]=='\n' || buf[i]=='\r' )
-            buf[i]='\0';
-        else
-            break;
-    }
+	len = strlen (buf);
+	for (i = len - 1; i > 0; --i) {
+		if (buf[i] == '\n' || buf[i] == '\r')
+			buf[i] = '\0';
+		else
+			break;
+	}
 
-    fclose(f);
-    return buf;
+	fclose (f);
+	return buf;
 }
 
 /** Given a path, /foo/bar/bat/foobar, return the last element, e.g.
@@ -321,39 +323,43 @@ char* read_single_line(char* filename_format,...)
  *  @param  path                Path
  *  @return                     Pointer into given string
  */
-const char* get_last_element(const char* s)
+const char *
+get_last_element (const char *s)
 {
-    int len;
-    const char* p;
-    
-    len = strlen(s);
-    for(p=s+len-1; p>s; --p)
-    {
-        if( (*p)=='/' )
-            return p+1;
-    }
+	int len;
+	const char *p;
 
-    return s;
+	len = strlen (s);
+	for (p = s + len - 1; p > s; --p) {
+		if ((*p) == '/')
+			return p + 1;
+	}
+
+	return s;
 }
 
 /* returns the path of the udevinfo program 
  *
  * @return                      path or NULL if udevinfo program is not found
  */
-const char *udevinfo_path(void) {
-  char *possible_paths[] = { "/sbin/udevinfo",
-                          "/usr/sbin/udevinfo",
-                          "/usr/local/sbin/udevinfo" };
-  char *path = NULL;
-  unsigned int i;
-  struct stat s;
-  for (i = 0; i < sizeof(possible_paths)/sizeof(char *) ; i++) {
-    if (stat(possible_paths[i],&s) == 0 && S_ISREG(s.st_mode)) {
-      path = possible_paths[i];
-      break;
-    }
-  }
-  return path;
+const char *
+udevinfo_path (void)
+{
+	char *possible_paths[] = { "/sbin/udevinfo",
+		"/usr/sbin/udevinfo",
+		"/usr/local/sbin/udevinfo"
+	};
+	char *path = NULL;
+	unsigned int i;
+	struct stat s;
+	for (i = 0; i < sizeof (possible_paths) / sizeof (char *); i++) {
+		if (stat (possible_paths[i], &s) == 0
+		    && S_ISREG (s.st_mode)) {
+			path = possible_paths[i];
+			break;
+		}
+	}
+	return path;
 }
 
 /** This function takes a temporary device and renames it to a proper
@@ -382,112 +388,112 @@ const char *udevinfo_path(void) {
  *                              In the event that the device already existed
  *                              the given HalDevice object is destroyed.
  */
-char* rename_and_merge(HalDevice* d, 
-                       ComputeFDI naming_func,
-                       const char* namespace)
+char *
+rename_and_merge (HalDevice * d,
+		  ComputeFDI naming_func, const char *namespace)
 {
-    int append_num;
-    char* computed_udi;
-    HalDevice* computed_d;
+	int append_num;
+	char *computed_udi;
+	HalDevice *computed_d;
 
-    /* udi is a temporary udi */
+	/* udi is a temporary udi */
 
-    append_num = -1;
-tryagain:
-    /* compute the udi for the device */
-    computed_udi = (*naming_func)(d, append_num);
+	append_num = -1;
+      tryagain:
+	/* compute the udi for the device */
+	computed_udi = (*naming_func) (d, append_num);
 
-    /* See if a device with the computed udi already exist. It can exist
-     * because the device-list is (can be) persistent across invocations 
-     * of hald.
-     *
-     * If it does exist, note that it's udi is computed from only the same 
-     * information as our just computed udi.. So if we match, and it's
-     * unplugged, it's the same device!
-     *
-     * (of course assuming that our udi computing algorithm actually works!
-     *  Which it might not, see discussions - but we can get close enough
-     *  for it to be practical)
-     */
-    computed_d = ds_device_find(computed_udi);
-    if( computed_d!=NULL )
-    {
-        
-        if( (!ds_property_exists(computed_d, "info.not_available"))
-            && (!ds_property_get_bool(computed_d, "info.not_available")) )
-        {
-            /* Danger, Will Robinson! Danger!
-             *
-             * Ok, this means that either
-             *
-             * a) The user plugged in two instances of the kind of
-             *    of device; or
-             *
-             * b) The agent is invoked with --probe for the second
-             *    time during the life of the HAL daemon
-             *
-             * We want to support b) otherwise we end up adding a lot
-             * of devices which is a nuisance.. We also want to be able
-             * to do b) when developing HAL agents.
-             *
-             * So, therefore we check if the non-unplugged device has 
-             * the same bus information as our newly hotplugged one.
-             */
-            if( ds_device_matches(computed_d, d, namespace) )
-            {
-                HAL_ERROR(("Found device already present as '%s'!\n",
-                           computed_d->udi));
-                ds_print(d);
-                ds_print(computed_d);
-                /* indeed a match, must be b) ; ignore device */
-                ds_device_destroy(d);
-                /* and return */
-                return NULL;
-            }
-            
-            /** Not a match, must be case a). Choose next computed_udi
-             *  and try again! */
-            append_num++; 
-            goto tryagain;
-        }
-        
-        /* It did exist! Merge our properties from the probed device
-         * since some of the bus-specific properties are likely to be
-         * different 
-         *
-         * (user may have changed port, #Dev is different etc.)
-         *
-         * Note that the probed device only contain bus-specific
-         * properties - the other properties will remain..
-         */
-        ds_device_merge(computed_d, d);
-        
-        /* Remove temporary device */
-        ds_device_destroy(d);
+	/* See if a device with the computed udi already exist. It can exist
+	 * because the device-list is (can be) persistent across invocations 
+	 * of hald.
+	 *
+	 * If it does exist, note that it's udi is computed from only the same 
+	 * information as our just computed udi.. So if we match, and it's
+	 * unplugged, it's the same device!
+	 *
+	 * (of course assuming that our udi computing algorithm actually works!
+	 *  Which it might not, see discussions - but we can get close enough
+	 *  for it to be practical)
+	 */
+	computed_d = ds_device_find (computed_udi);
+	if (computed_d != NULL) {
 
-        /* Set that we are back in business! */
-        ds_property_set_bool(computed_d, "info.not_available", FALSE);
+		if ((!ds_property_exists
+		     (computed_d, "info.not_available"))
+		    &&
+		    (!ds_property_get_bool
+		     (computed_d, "info.not_available"))) {
+			/* Danger, Will Robinson! Danger!
+			 *
+			 * Ok, this means that either
+			 *
+			 * a) The user plugged in two instances of the kind of
+			 *    of device; or
+			 *
+			 * b) The agent is invoked with --probe for the second
+			 *    time during the life of the HAL daemon
+			 *
+			 * We want to support b) otherwise we end up adding a
+			 * lot of devices which is a nuisance.. We also want to
+			 * be able to do b) when developing HAL agents.
+			 *
+			 * So, therefore we check if the non-unplugged device 
+			 * has the same bus information as our newly hotplugged
+			 * one.
+			 */
+			if (ds_device_matches (computed_d, d, namespace)) {
+				HAL_ERROR (("Found device already present "
+					    "as '%s'!\n", computed_d->udi));
+				ds_print (d);
+				ds_print (computed_d);
+				/* indeed a match, must be b) ;ignore device */
+				ds_device_destroy (d);
+				/* and return */
+				return NULL;
+			}
+			
+			/** Not a match, must be case a). Choose next 
+			 *  computed_udi and try again! */
+			append_num++;
+			goto tryagain;
+		}
 
-        HAL_INFO(("Device %s is plugged in again", computed_d->udi));
+		/* It did exist! Merge our properties from the probed device
+		 * since some of the bus-specific properties are likely to be
+		 * different 
+		 *
+		 * (user may have changed port, #Dev is different etc.)
+		 *
+		 * Note that the probed device only contain bus-specific
+		 * properties - the other properties will remain..
+		 */
+		ds_device_merge (computed_d, d);
 
-    }
-    else
-    {
-        /* Device is not in list... */
-        
-        /* assign the computed device name */
-        ds_device_set_udi(d, computed_udi);
-        ds_property_set_string(d, "info.udi", computed_udi);
+		/* Remove temporary device */
+		ds_device_destroy (d);
 
-        /* Search for device information file and attempt merge */
-        if( di_search_and_merge(d) )
-        {
-            HAL_INFO(("Found a .fdi file for %s", d->udi));
-        }
+		/* Set that we are back in business! */
+		ds_property_set_bool (computed_d, "info.not_available",
+				      FALSE);
 
-    }
+		HAL_INFO (("Device %s is plugged in again",
+			   computed_d->udi));
 
-    return computed_udi;
+	} else {
+		/* Device is not in list... */
+
+		/* assign the computed device name */
+		ds_device_set_udi (d, computed_udi);
+		ds_property_set_string (d, "info.udi", computed_udi);
+
+		/* Search for device information file and attempt merge */
+		if (di_search_and_merge (d)) {
+			HAL_INFO (("Found a .fdi file for %s", d->udi));
+		}
+
+	}
+
+	return computed_udi;
 }
 
 /** Given a sysfs-path for a device, this functions finds the sysfs
@@ -496,24 +502,24 @@ tryagain:
  *  @param  path                Sysfs-path of device to find parent for
  *  @return                     Path for parent; must be freed by caller
  */
-char* get_parent_sysfs_path(const char* path)
+char *
+get_parent_sysfs_path (const char *path)
 {
-    int i;
-    int len;
-    char* parent_path;
+	int i;
+	int len;
+	char *parent_path;
 
-    /* Find parent device by truncating our own path */
-    parent_path = strndup(path, SYSFS_PATH_MAX);
-    if( parent_path==NULL )
-        DIE(("No memory"));
-    len = strlen(parent_path);
-    for(i=len-1; parent_path[i]!='/'; --i)
-    {
-        parent_path[i]='\0';
-    }
-    parent_path[i]='\0';
+	/* Find parent device by truncating our own path */
+	parent_path = strndup (path, SYSFS_PATH_MAX);
+	if (parent_path == NULL)
+		DIE (("No memory"));
+	len = strlen (parent_path);
+	for (i = len - 1; parent_path[i] != '/'; --i) {
+		parent_path[i] = '\0';
+	}
+	parent_path[i] = '\0';
 
-    return parent_path;
+	return parent_path;
 }
 
 /** Set the physical device for a device.
@@ -524,69 +530,72 @@ char* get_parent_sysfs_path(const char* path)
  *
  *  @param  device              HalDevice to process
  */
-void find_and_set_physical_device(HalDevice* device)
+void
+find_and_set_physical_device (HalDevice * device)
 {
-    HalDevice* d;
-    HalDevice* parent;
-    const char* parent_udi;
+	HalDevice *d;
+	HalDevice *parent;
+	const char *parent_udi;
 
-    d = device;
-    do
-    {
-        parent_udi = ds_property_get_string(d, "info.parent");
-        if( parent_udi==NULL )
-        {
-            HAL_ERROR(("Error finding parent for %s\n", d->udi));
-            return;
-        }
+	d = device;
+	do {
+		parent_udi = ds_property_get_string (d, "info.parent");
+		if (parent_udi == NULL) {
+			HAL_ERROR (("Error finding parent for %s\n",
+				    d->udi));
+			return;
+		}
 
-        parent = ds_device_find(parent_udi);
-        if( parent==NULL )
-        {
-            HAL_ERROR(("Error resolving UDI %s\n", parent_udi));
-            return;
-        }
+		parent = ds_device_find (parent_udi);
+		if (parent == NULL) {
+			HAL_ERROR (("Error resolving UDI %s\n",
+				    parent_udi));
+			return;
+		}
 
-        if( !ds_property_exists(parent, "info.physical_device") )
-        {
-            ds_property_set_string(device, "info.physical_device", parent_udi);
-            return;
-        }
+		if (!ds_property_exists (parent, "info.physical_device")) {
+			ds_property_set_string (device,
+						"info.physical_device",
+						parent_udi);
+			return;
+		}
 
-        d = parent;
-    } 
-    while(TRUE);
+		d = parent;
+	}
+	while (TRUE);
 }
 
 
 /* Entry in bandaid driver database */
-struct driver_entry_s
-{
-    char driver_name[SYSFS_NAME_LEN];  /**< Name of driver, e.g. 8139too */
-    char device_path[SYSFS_PATH_MAX];  /**< Sysfs path */
-    struct driver_entry_s* next;       /**< Pointer to next element or #NULL
+struct driver_entry_s {
+	char driver_name[SYSFS_NAME_LEN];
+				       /**< Name of driver, e.g. 8139too */
+	char device_path[SYSFS_PATH_MAX];
+				       /**< Sysfs path */
+	struct driver_entry_s *next;   /**< Pointer to next element or #NULL
                                         *   if the last element */
 };
 
 /** Head of linked list of #driver_entry_s structs */
-static struct driver_entry_s* drivers_table_head = NULL;
+static struct driver_entry_s *drivers_table_head = NULL;
 
 /** Add an entry to the bandaid driver database.
  *
  *  @param  driver_name         Name of the driver
  *  @param  device_path         Path to device, must start with /sys/devices
  */
-static void drivers_add_entry(const char* driver_name, const char* device_path)
+static void
+drivers_add_entry (const char *driver_name, const char *device_path)
 {
-    struct driver_entry_s* entry;
+	struct driver_entry_s *entry;
 
-    entry = malloc(sizeof(struct driver_entry_s));
-    if( entry==NULL )
-        DIE(("Out of memory"));
-    strncpy(entry->driver_name, driver_name, SYSFS_NAME_LEN);
-    strncpy(entry->device_path, device_path, SYSFS_PATH_MAX);
-    entry->next = drivers_table_head;
-    drivers_table_head = entry;
+	entry = malloc (sizeof (struct driver_entry_s));
+	if (entry == NULL)
+		DIE (("Out of memory"));
+	strncpy (entry->driver_name, driver_name, SYSFS_NAME_LEN);
+	strncpy (entry->device_path, device_path, SYSFS_PATH_MAX);
+	entry->next = drivers_table_head;
+	drivers_table_head = entry;
 }
 
 /** Given a device path under /sys/devices, lookup the driver. You need
@@ -596,16 +605,16 @@ static void drivers_add_entry(const char* driver_name, const char* device_path)
  *  @return                     Driver name or #NULL if no driver is bound
  *                              to that sysfs device
  */
-const char* drivers_lookup(const char* device_path)
+const char *
+drivers_lookup (const char *device_path)
 {
-    struct driver_entry_s* i;
+	struct driver_entry_s *i;
 
-    for(i=drivers_table_head; i!=NULL; i=i->next)
-    {
-        if( strcmp(device_path, i->device_path)==0 )
-            return i->driver_name;
-    }
-    return NULL;
+	for (i = drivers_table_head; i != NULL; i = i->next) {
+		if (strcmp (device_path, i->device_path) == 0)
+			return i->driver_name;
+	}
+	return NULL;
 }
 
 /** Collect all drivers being used on a bus. This is only bandaid until
@@ -613,54 +622,58 @@ const char* drivers_lookup(const char* device_path)
  *
  *  @param  bus_name            Name of bus, e.g. pci, usb
  */
-void drivers_collect(const char* bus_name)
+void
+drivers_collect (const char *bus_name)
 {
-    char path[SYSFS_PATH_MAX];
-    struct sysfs_directory* current;
-    struct sysfs_link* current2;
-    struct sysfs_directory* dir;
-    struct sysfs_directory* dir2;
+	char path[SYSFS_PATH_MAX];
+	struct sysfs_directory *current;
+	struct sysfs_link *current2;
+	struct sysfs_directory *dir;
+	struct sysfs_directory *dir2;
 
-    /* traverse /sys/bus/<bus>/drivers */
-    snprintf(path, SYSFS_PATH_MAX, "%s/bus/%s/drivers", sysfs_mount_path, bus_name);
-    dir = sysfs_open_directory(path);
-    if( dir==NULL )
-    {
-        HAL_WARNING(("Error opening sysfs directory at %s\n", path));
-        goto out;
-    }
-    if( sysfs_read_directory(dir)!=0 )
-    {
-        HAL_WARNING(("Error reading sysfs directory at %s\n", path));
-        goto out;
-    }
-    if( dir->subdirs!=NULL )
-    {
-        dlist_for_each_data(dir->subdirs, current, struct sysfs_directory)
-        {
-            /*printf("name=%s\n", current->name);*/
+	/* traverse /sys/bus/<bus>/drivers */
+	snprintf (path, SYSFS_PATH_MAX, "%s/bus/%s/drivers",
+		  sysfs_mount_path, bus_name);
+	dir = sysfs_open_directory (path);
+	if (dir == NULL) {
+		HAL_WARNING (("Error opening sysfs directory at %s\n",
+			      path));
+		goto out;
+	}
+	if (sysfs_read_directory (dir) != 0) {
+		HAL_WARNING (("Error reading sysfs directory at %s\n",
+			      path));
+		goto out;
+	}
+	if (dir->subdirs != NULL) {
+		dlist_for_each_data (dir->subdirs, current,
+				     struct sysfs_directory) {
+			/*printf("name=%s\n", current->name); */
 
-            dir2 = sysfs_open_directory(current->path);
-            if( dir2==NULL )
-                DIE(("Error opening sysfs directory at %s\n", current->path));
-            if( sysfs_read_directory(dir2)!=0 )
-                DIE(("Error reading sysfs directory at %s\n", current->path));
+			dir2 = sysfs_open_directory (current->path);
+			if (dir2 == NULL)
+				DIE (("Error opening sysfs directory "
+				      "at %s\n", current->path));
+			if (sysfs_read_directory (dir2) != 0)
+				DIE (("Error reading sysfs directory "
+				      "at %s\n", current->path));
 
-            if( dir2->links!=NULL )
-            {
-                dlist_for_each_data(dir2->links, current2, 
-                                    struct sysfs_link)
-                {
-                    /*printf("  link=%s\n", current2->target);*/
-                    drivers_add_entry(current->name, current2->target);
-                }
-                sysfs_close_directory(dir2);
-            }
-        }
-    }
+			if (dir2->links != NULL) {
+				dlist_for_each_data (dir2->links, current2,
+						     struct sysfs_link) {
+					/*printf("link=%s\n",current2->target);
+					 */
+					drivers_add_entry (current->name,
+							   current2->
+							   target);
+				}
+				sysfs_close_directory (dir2);
+			}
+		}
+	}
 out:
-    if( dir!=NULL )
-        sysfs_close_directory(dir);
+	if (dir != NULL)
+		sysfs_close_directory (dir);
 }
 
 /** @} */

@@ -52,11 +52,11 @@
  */
 
 /* fwd decl */
-static void async_find_property_changed(HalDevice* device,
-                                        const char* key, 
-                                        dbus_bool_t in_gdl, 
-                                        dbus_bool_t removed,
-                                        dbus_bool_t added);
+static void async_find_property_changed (HalDevice * device,
+					 const char *key,
+					 dbus_bool_t in_gdl,
+					 dbus_bool_t removed,
+					 dbus_bool_t added);
 
 /** Maximum number of callbacks inside the HAL daemon */
 #define MAX_CB_FUNCS 32
@@ -87,58 +87,63 @@ static unsigned int device_list_num = 0;
 unsigned int temp_device_counter = 0;
 
 /** Head of device list */
-static HalDevice* device_list_head = NULL;
+static HalDevice *device_list_head = NULL;
 
 /** Initialize the device store.
  *
  */
-void ds_init()
+void
+ds_init ()
 {
-    device_list_num = 0;
-    device_list_head = NULL;
-    temp_device_counter = 0;
+	device_list_num = 0;
+	device_list_head = NULL;
+	temp_device_counter = 0;
 
-    num_gdl_changed_cb = 0;
-    num_new_capability_cb = 0;
-    num_property_changed_cb = 1;
-    property_changed_cb[0] = async_find_property_changed;
+	num_gdl_changed_cb = 0;
+	num_new_capability_cb = 0;
+	num_property_changed_cb = 1;
+	property_changed_cb[0] = async_find_property_changed;
 }
 
 /** Add a callback when a device has got a new capability
  *
  *  @param  cb                  Callback function
  */
-void ds_add_cb_newcap(HalDeviceNewCapabilityCallback cb)
+void
+ds_add_cb_newcap (HalDeviceNewCapabilityCallback cb)
 {
-    if( num_property_changed_cb < MAX_CB_FUNCS )
-        new_capability_cb[num_new_capability_cb++] = cb;
+	if (num_property_changed_cb < MAX_CB_FUNCS)
+		new_capability_cb[num_new_capability_cb++] = cb;
 }
 
 /** Add a callback when a property of a device has changed
  *
  *  @param  cb                  Callback function
  */
-void ds_add_cb_property_changed(HalDevicePropertyChangedCallback cb)
+void
+ds_add_cb_property_changed (HalDevicePropertyChangedCallback cb)
 {
-    if( num_property_changed_cb < MAX_CB_FUNCS )
-        property_changed_cb[num_property_changed_cb++] = cb;
+	if (num_property_changed_cb < MAX_CB_FUNCS)
+		property_changed_cb[num_property_changed_cb++] = cb;
 }
 
 /** Add a callback when the global device list changeds
  *
  *  @param  cb                  Callback function
  */
-void ds_add_cb_gdl_changed(HalDeviceGDLChangedCallback cb)
+void
+ds_add_cb_gdl_changed (HalDeviceGDLChangedCallback cb)
 {
-    if( num_gdl_changed_cb < MAX_CB_FUNCS )
-        gdl_changed_cb[num_gdl_changed_cb++] = cb;
+	if (num_gdl_changed_cb < MAX_CB_FUNCS)
+		gdl_changed_cb[num_gdl_changed_cb++] = cb;
 }
 
 
 
 /** Shut down the device store.
  */
-void ds_shutdown()
+void
+ds_shutdown ()
 {
 }
 
@@ -146,55 +151,55 @@ void ds_shutdown()
  *
  *  @param  device              A pointer to a #HalDevice object
  */
-void ds_print(HalDevice* device)
+void
+ds_print (HalDevice * device)
 {
-    HalPropertyIterator iter;
+	HalPropertyIterator iter;
 
-    printf("device udi = %s    (%s)\n", ds_device_get_udi(device),
-           device->in_gdl ? "in GDL" : "NOT in GDL");
+	printf ("device udi = %s    (%s)\n", ds_device_get_udi (device),
+		device->in_gdl ? "in GDL" : "NOT in GDL");
 
-    for(ds_property_iter_begin(device, &iter);
-        ds_property_iter_has_more(&iter);
-        ds_property_iter_next(&iter))
-    {
-        int type;
-        HalProperty* p;
-        const char* key;
+	for (ds_property_iter_begin (device, &iter);
+	     ds_property_iter_has_more (&iter);
+	     ds_property_iter_next (&iter)) {
+		int type;
+		HalProperty *p;
+		const char *key;
 
-        p = ds_property_iter_get(&iter);
+		p = ds_property_iter_get (&iter);
 
-        key = ds_property_iter_get_key(p);
-        type = ds_property_iter_get_type(p);
+		key = ds_property_iter_get_key (p);
+		type = ds_property_iter_get_type (p);
 
-        switch( type )
-        {
-        case DBUS_TYPE_STRING:
-            printf("  %s = '%s'  (string)\n", key, 
-                   ds_property_iter_get_string(p));
-            break;
+		switch (type) {
+		case DBUS_TYPE_STRING:
+			printf ("  %s = '%s'  (string)\n", key,
+				ds_property_iter_get_string (p));
+			break;
 
-        case DBUS_TYPE_INT32:
-            printf("  %s = %d  0x%x  (int)\n", key, 
-                   ds_property_iter_get_int(p),
-                   ds_property_iter_get_int(p));
-            break;
+		case DBUS_TYPE_INT32:
+			printf ("  %s = %d  0x%x  (int)\n", key,
+				ds_property_iter_get_int (p),
+				ds_property_iter_get_int (p));
+			break;
 
-        case DBUS_TYPE_DOUBLE:
-            printf("  %s = %g  (double)\n", key, 
-                   ds_property_iter_get_double(p));
-            break;
+		case DBUS_TYPE_DOUBLE:
+			printf ("  %s = %g  (double)\n", key,
+				ds_property_iter_get_double (p));
+			break;
 
-        case DBUS_TYPE_BOOLEAN:
-            printf("  %s = %s  (bool)\n", key, 
-                   (ds_property_iter_get_bool(p) ? "true" : "false"));
-            break;
+		case DBUS_TYPE_BOOLEAN:
+			printf ("  %s = %s  (bool)\n", key,
+				(ds_property_iter_get_bool (p) ? "true" :
+				 "false"));
+			break;
 
-        default:
-            HAL_WARNING(("Unknown property type %d", type));
-            break;
-        }
-    }
-    printf("\n");
+		default:
+			HAL_WARNING (("Unknown property type %d", type));
+			break;
+		}
+	}
+	printf ("\n");
 }
 
 /**************************************************************************/
@@ -205,86 +210,86 @@ void ds_print(HalDevice* device)
  *  @return                     #HalDevice object or #NULL if the device
  *                              doesn't exist
  */
-HalDevice* ds_device_find(const char* udi)
+HalDevice *
+ds_device_find (const char *udi)
 {
-    HalDevice* it;
+	HalDevice *it;
 
-    for(it=device_list_head; it!=NULL; it=it->next)
-    {
-        if( strcmp(it->udi, udi)==0 )
-            return it;
-    }
-    return NULL;
+	for (it = device_list_head; it != NULL; it = it->next) {
+		if (strcmp (it->udi, udi) == 0)
+			return it;
+	}
+	return NULL;
 }
 
 /** search structure for async find operations */
-typedef struct DSDeviceAsyncFindStruct_s
-{
-    char* key;                    /**< key to search for, allocated by us */
-    char* value;                  /**< value that key must assume, allocated
+typedef struct DSDeviceAsyncFindStruct_s {
+	char *key;		  /**< key to search for, allocated by us */
+	char *value;		  /**< value that key must assume, allocated
                                    *   by us */
-    dbus_bool_t only_gdl;         /**< only search if in GDL */
-    DSAsyncFindDeviceCB callback; /**< callback to caller */
-    void* data1;                  /**< caller data, opaque pointer */
-    void* data2;                  /**< caller data, opaque pointer */
-    guint timeout_id;             /**< Timeout ID */
+	dbus_bool_t only_gdl;	  /**< only search if in GDL */
+	DSAsyncFindDeviceCB callback;
+				  /**< callback to caller */
+	void *data1;		  /**< caller data, opaque pointer */
+	void *data2;		  /**< caller data, opaque pointer */
+	guint timeout_id;	  /**< Timeout ID */
 
-    struct DSDeviceAsyncFindStruct_s* next; /**< next element in list*/
+	struct DSDeviceAsyncFindStruct_s *next;
+					    /**< next element in list*/
 } DSDeviceAsyncFindStruct;
 
 /** head of list of outstanding async find requests */
-static DSDeviceAsyncFindStruct* async_find_outstanding_head = NULL;
+static DSDeviceAsyncFindStruct *async_find_outstanding_head = NULL;
 
 /** Callback for when an async timeout happens 
  *
  *  @param  data                User provided data
  *  @return                     #TRUE to preserve the timer, #FALSE otherwise
  */
-static gboolean async_find_timeout_fn(gpointer data)
+static gboolean
+async_find_timeout_fn (gpointer data)
 {
-    void* data1;
-    void* data2;
-    DSAsyncFindDeviceCB callback;
-    DSDeviceAsyncFindStruct* i;
-    DSDeviceAsyncFindStruct* prev;
-    DSDeviceAsyncFindStruct* afs = (DSDeviceAsyncFindStruct*) data;
+	void *data1;
+	void *data2;
+	DSAsyncFindDeviceCB callback;
+	DSDeviceAsyncFindStruct *i;
+	DSDeviceAsyncFindStruct *prev;
+	DSDeviceAsyncFindStruct *afs = (DSDeviceAsyncFindStruct *) data;
 
-    /* Check if this is still in list */
-    for(i=async_find_outstanding_head, prev=NULL; i!=NULL; i=i->next)
-    {
-        if( i==afs )
-        {
-            data1 = i->data1;
-            data2 = i->data2;
-            callback = i->callback;
-            
-            /* Remove element in list */
-            if( prev!=NULL )
-            {
-                prev->next = i->next;
-            }
-            else
-            {
-                async_find_outstanding_head = i->next;
-            }
+	/* Check if this is still in list */
+	for (i = async_find_outstanding_head, prev = NULL; i != NULL;
+	     i = i->next) {
+		if (i == afs) {
+			data1 = i->data1;
+			data2 = i->data2;
+			callback = i->callback;
 
-            /* Clean up element */
-            free(i->key);
-            free(i->value);
-            free(i);
+			/* Remove element in list */
+			if (prev != NULL) {
+				prev->next = i->next;
+			} else {
+				async_find_outstanding_head = i->next;
+			}
 
-            /* We need to be careful to remove the element prior to this
-             * invocation as our use of it triggers a device addition and
-             * thus an indirect invocation of code looking at this list
-             */
-            (*callback)(NULL, data1, data2);
+			/* Clean up element */
+			free (i->key);
+			free (i->value);
+			free (i);
 
-            return FALSE; /* cancel timeout */
-        }
+			/* We need to be careful to remove the element prior
+			 * to this invocation as our use of it triggers a 
+			 * device addition and thus an indirect invocation 
+			 * of code looking at this list
+			 */
 
-        prev = i;
-    }
-    return FALSE; /* cancel timeout */
+			(*callback) (NULL, data1, data2);
+
+			return FALSE;	/* cancel timeout */
+		}
+
+		prev = i;
+	}
+	return FALSE;		/* cancel timeout */
 }
 
 
@@ -296,76 +301,81 @@ static gboolean async_find_timeout_fn(gpointer data)
  *
  *  @param  device              Device just added
  */
-static void async_find_check_new_addition(HalDevice* device)
+static void
+async_find_check_new_addition (HalDevice * device)
 {
-    int type;
-    void* data1;
-    void* data2;
-    DSAsyncFindDeviceCB callback;
-    DSDeviceAsyncFindStruct* i;
-    DSDeviceAsyncFindStruct* prev;
+	int type;
+	void *data1;
+	void *data2;
+	DSAsyncFindDeviceCB callback;
+	DSDeviceAsyncFindStruct *i;
+	DSDeviceAsyncFindStruct *prev;
 
 check_list_again:
 
-    /* Check if this is still in list */
-    for(i=async_find_outstanding_head, prev=NULL; i!=NULL; i=i->next)
-    {
-        /*HAL_INFO(("   *** key='%s', value='%s'", i->key, i->value));*/
+	/* Check if this is still in list */
+	for (i = async_find_outstanding_head, prev = NULL; i != NULL;
+	     i = i->next) {
+		/*HAL_INFO(("*** key='%s', value='%s'", i->key, i->value)); */
 
-        type = ds_property_get_type(device, i->key);
-        if( type==DBUS_TYPE_STRING )
-        {
-            if( strcmp(ds_property_get_string(device, i->key), i->value)==0 &&
-                ( (!(i->only_gdl)) || (i->only_gdl && device->in_gdl)) )
-            {
+		type = ds_property_get_type (device, i->key);
+		if (type == DBUS_TYPE_STRING) {
+			if (strcmp
+			    (ds_property_get_string (device, i->key),
+			     i->value) == 0 && ((!(i->only_gdl))
+						|| (i->only_gdl
+						    && device->in_gdl))) {
 
-                /* Yay, a match! */
-                /*printf("new_add_match 0x%08x\n", i);*/
+				/* Yay, a match! */
+				/*printf("new_add_match 0x%08x\n", i); */
 
-                data1 = i->data1;
-                data2 = i->data2;
-                callback = i->callback;
-            
-                /* Remove element in list */
-                if( prev!=NULL )
-                {
-                    prev->next = i->next;
-                }
-                else
-                {
-                    async_find_outstanding_head = i->next;
-                }
+				data1 = i->data1;
+				data2 = i->data2;
+				callback = i->callback;
 
-                /* Clean up element */
-                free(i->key);
-                free(i->value);
-                free(i);
+				/* Remove element in list */
+				if (prev != NULL) {
+					prev->next = i->next;
+				} else {
+					async_find_outstanding_head =
+					    i->next;
+				}
 
-                /* We need to be careful to remove the element prior to this
-                 * invocation as our use of it triggers a device addition and
-                 * thus an indirect invocation of code looking at this list
-                 */
-                (*callback)(device, data1, data2);
+				/* Clean up element */
+				free (i->key);
+				free (i->value);
+				free (i);
 
-                /* Argh.. Ok, this call we just made may trigger modifications
-                 * to the list (inserted at the head), or it may have trigger
-                 * a device add (more sensible), hence an invocation of this
-                 * function... again.. 
-                 *
-                 * *AND*, there may be more than one outstanding request
-                 * for this newly added device.. 
-                 *
-                 * *THEREFORE*, we have to start comparing the list from the
-                 * darn beginning all over again. 
-                 *
-                 * Sigh.. callbacks suck
-                 */
-                goto check_list_again;
-                /*return;*/
-            }
-        }
-        prev = i;
-    }
+				/* We need to be careful to remove the element
+				 * prior to this invocation as our use of it
+				 * triggers a device addition and thus an 
+				 * indirect invocation of code looking at 
+				 * this list
+				 */
+				(*callback) (device, data1, data2);
+
+				/* Argh.. Ok, this call we just made may 
+				 * trigger modifications to the list (inserted
+				 * at the head), or it may have trigger a 
+				 * device add (more sensible), hence an 
+				 * invocation of this function... again.. 
+				 *
+				 * *AND*, there may be more than one 
+				 * outstanding request for this newly added 
+				 * device.. 
+				 *
+				 * *THEREFORE*, we have to start comparing 
+				 * the list from the darn beginning all over 
+				 * again. 
+				 *
+				 * Sigh.. callbacks suck
+				 */
+				goto check_list_again;
+				/*return; */
+			}
+		}
+		prev = i;
+	}
 }
 
 /** Called whenever a property on a device is changed. 
@@ -377,14 +387,14 @@ check_list_again:
  *  @param  removed             True iff the property was removed
  *  @param  added               True iff the property was added
  */
-static void async_find_property_changed(HalDevice* device,
-                                        const char* key, 
-                                        dbus_bool_t in_gdl, 
-                                        dbus_bool_t removed,
-                                        dbus_bool_t added)
+static void
+async_find_property_changed (HalDevice * device,
+			     const char *key,
+			     dbus_bool_t in_gdl,
+			     dbus_bool_t removed, dbus_bool_t added)
 {
-    if( !removed )
-        async_find_check_new_addition(device);
+	if (!removed)
+		async_find_check_new_addition (device);
 }
 
 
@@ -413,49 +423,48 @@ static void async_find_property_changed(HalDevice* device,
  *  @return                     #HalDevice object or #NULL if no such device
  *                              exist
  */
-void ds_device_async_find_by_key_value_string(const char* key, 
-                                              const char* value,
-                                              dbus_bool_t only_gdl,
-                                              DSAsyncFindDeviceCB callback, 
-                                              void* data1, 
-                                              void* data2, 
-                                              int timeout)
+void
+ds_device_async_find_by_key_value_string (const char *key,
+					  const char *value,
+					  dbus_bool_t only_gdl,
+					  DSAsyncFindDeviceCB callback,
+					  void *data1,
+					  void *data2, int timeout)
 {
-    HalDevice* device;
-    DSDeviceAsyncFindStruct* afs;
+	HalDevice *device;
+	DSDeviceAsyncFindStruct *afs;
 
-    assert( callback!=NULL );
+	assert (callback != NULL);
 
-    /* first, try to see if we can find it right away */
-    device = ds_device_find_by_key_value_string(key, value, only_gdl);
-    if( device!=NULL )
-    {
-        /* yay! */
-        (*callback)(device, data1, data2 );
-        return;
-    }
+	/* first, try to see if we can find it right away */
+	device = ds_device_find_by_key_value_string (key, value, only_gdl);
+	if (device != NULL) {
+		/* yay! */
+		(*callback) (device, data1, data2);
+		return;
+	}
 
-    if( timeout==0 )
-    {
-        (*callback)(NULL, data1, data2 );
-        return;
-    }
+	if (timeout == 0) {
+		(*callback) (NULL, data1, data2);
+		return;
+	}
 
-    /* Nope; First, create a request with the neccessary data */
-    afs = xmalloc(sizeof(DSDeviceAsyncFindStruct));
-    afs->key   = xstrdup(key);
-    afs->value = xstrdup(value);
-    afs->only_gdl = only_gdl;
-    afs->callback = callback;
-    afs->data1 = data1;
-    afs->data2 = data2;
+	/* Nope; First, create a request with the neccessary data */
+	afs = xmalloc (sizeof (DSDeviceAsyncFindStruct));
+	afs->key = xstrdup (key);
+	afs->value = xstrdup (value);
+	afs->only_gdl = only_gdl;
+	afs->callback = callback;
+	afs->data1 = data1;
+	afs->data2 = data2;
 
-    /* Second, setup a function to fire at timeout */
-    afs->timeout_id = g_timeout_add(timeout, 
-                                    async_find_timeout_fn, (gpointer)afs);
+	/* Second, setup a function to fire at timeout */
+	afs->timeout_id = g_timeout_add (timeout,
+					 async_find_timeout_fn,
+					 (gpointer) afs);
 
-    afs->next = async_find_outstanding_head;
-    async_find_outstanding_head = afs;
+	afs->next = async_find_outstanding_head;
+	async_find_outstanding_head = afs;
 
 }
 
@@ -471,51 +480,48 @@ void ds_device_async_find_by_key_value_string(const char* key,
  *                              devices exist. 
  *                              Caller is supposed to free this with free()
  */
-HalDevice** ds_device_find_multiple_by_key_value_string(const char* key, 
-                                                        const char* value,
-                                                        dbus_bool_t only_gdl,
-                                                        int* num_results)
+HalDevice **
+ds_device_find_multiple_by_key_value_string (const char *key,
+					     const char *value,
+					     dbus_bool_t only_gdl,
+					     int *num_results)
 {
-    int type;
-    int num_devices;
-    HalDevice* device;
-    HalDevice** devices;
-    HalDeviceIterator iter_device;
+	int type;
+	int num_devices;
+	HalDevice *device;
+	HalDevice **devices;
+	HalDeviceIterator iter_device;
 
-    /** @todo FIXME HACK XXX HERE_BE_DRAGONS this is an ugly hack, and a waste
-     *  to have max 1024 devices */
-    devices = xmalloc(sizeof(HalDevice*)*1024);
-    num_devices = 0;
+	/** @todo FIXME HACK XXX HERE_BE_DRAGONS this is an ugly hack, and 
+	 *  a waste to have max 1024 devices 
+	 */
+	devices = xmalloc (sizeof (HalDevice *) * 1024);
+	num_devices = 0;
 
-    for(ds_device_iter_begin(&iter_device);
-        ds_device_iter_has_more(&iter_device);
-        ds_device_iter_next(&iter_device))
-    {
-        device = ds_device_iter_get(&iter_device);
+	for (ds_device_iter_begin (&iter_device);
+	     ds_device_iter_has_more (&iter_device);
+	     ds_device_iter_next (&iter_device)) {
+		device = ds_device_iter_get (&iter_device);
 
-        if( only_gdl && !device->in_gdl )
-            continue;
+		if (only_gdl && !device->in_gdl)
+			continue;
 
-        type = ds_property_get_type(device, key);
-        if( type==DBUS_TYPE_STRING )
-        {
-            if( strcmp(ds_property_get_string(device, key),
-                       value)==0 )
-                devices[num_devices++] = device;
-        }
-    }
+		type = ds_property_get_type (device, key);
+		if (type == DBUS_TYPE_STRING) {
+			if (strcmp (ds_property_get_string (device, key),
+				    value) == 0)
+				devices[num_devices++] = device;
+		}
+	}
 
-    if( num_devices==0 )
-    {
-        free(devices);
-        return NULL;
-    }
-    else
-    {
-        if( num_results!=NULL )
-            *num_results = num_devices;
-        return devices;
-    }
+	if (num_devices == 0) {
+		free (devices);
+		return NULL;
+	} else {
+		if (num_results != NULL)
+			*num_results = num_devices;
+		return devices;
+	}
 }
 
 /** Find a device by requiring a specific key to assume string value. If 
@@ -528,33 +534,32 @@ HalDevice** ds_device_find_multiple_by_key_value_string(const char* key,
  *  @return                     #HalDevice object or #NULL if no such device
  *                              exist
  */
-HalDevice* ds_device_find_by_key_value_string(const char* key, 
-                                              const char* value,
-                                              dbus_bool_t only_gdl)
+HalDevice *
+ds_device_find_by_key_value_string (const char *key,
+				    const char *value,
+				    dbus_bool_t only_gdl)
 {
-    int type;
-    HalDevice* device;
-    HalDeviceIterator iter_device;
+	int type;
+	HalDevice *device;
+	HalDeviceIterator iter_device;
 
-    for(ds_device_iter_begin(&iter_device);
-        ds_device_iter_has_more(&iter_device);
-        ds_device_iter_next(&iter_device))
-    {
-        device = ds_device_iter_get(&iter_device);
+	for (ds_device_iter_begin (&iter_device);
+	     ds_device_iter_has_more (&iter_device);
+	     ds_device_iter_next (&iter_device)) {
+		device = ds_device_iter_get (&iter_device);
 
-        if( only_gdl && !device->in_gdl )
-            continue;
+		if (only_gdl && !device->in_gdl)
+			continue;
 
-        type = ds_property_get_type(device, key);
-        if( type==DBUS_TYPE_STRING )
-        {
-            if( strcmp(ds_property_get_string(device, key),
-                       value)==0 )
-                return device;
-        }
-    }
+		type = ds_property_get_type (device, key);
+		if (type == DBUS_TYPE_STRING) {
+			if (strcmp (ds_property_get_string (device, key),
+				    value) == 0)
+				return device;
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /** Create a new device; it will be added to the global device list
@@ -563,30 +568,31 @@ HalDevice* ds_device_find_by_key_value_string(const char* key,
  *
  *  @return                     A #HalDevice object
  */
-HalDevice* ds_device_new()
+HalDevice *
+ds_device_new ()
 {
-    char buf[128];
-    HalDevice* obj;
+	char buf[128];
+	HalDevice *obj;
 
-    snprintf(buf, 128, "/org/freedesktop/Hal/devices/temp/%d", 
-             temp_device_counter++);
+	snprintf (buf, 128, "/org/freedesktop/Hal/devices/temp/%d",
+		  temp_device_counter++);
 
-    obj = (HalDevice*) xmalloc(sizeof(HalDevice));
+	obj = (HalDevice *) xmalloc (sizeof (HalDevice));
 
-    obj->udi            = xstrdup(buf);
-    obj->in_gdl         = FALSE;
-    obj->num_properties = 0;
-    obj->prop_head      = NULL;
+	obj->udi = xstrdup (buf);
+	obj->in_gdl = FALSE;
+	obj->num_properties = 0;
+	obj->prop_head = NULL;
 
-    obj->prev = NULL;
-    obj->next = device_list_head;
-    if( obj->next!=NULL )
-        obj->next->prev = obj;
+	obj->prev = NULL;
+	obj->next = device_list_head;
+	if (obj->next != NULL)
+		obj->next->prev = obj;
 
-    device_list_head = obj;
-    device_list_num++;
+	device_list_head = obj;
+	device_list_num++;
 
-    return obj;
+	return obj;
 }
 
 /** Destroy a device; works both if the device is in the global device list
@@ -594,38 +600,36 @@ HalDevice* ds_device_new()
  *
  *  @param  device              A pointer to a #HalDevice object
  */
-void ds_device_destroy(HalDevice* device)
+void
+ds_device_destroy (HalDevice * device)
 {
-    int i;
-    HalProperty* prop;
-    HalProperty* prop_next;
+	int i;
+	HalProperty *prop;
+	HalProperty *prop_next;
 
-    if( device->in_gdl )
-    {
-        for(i=0; i<num_gdl_changed_cb; i++)
-            (*(gdl_changed_cb[i]))(device, FALSE);
-    }
+	if (device->in_gdl) {
+		for (i = 0; i < num_gdl_changed_cb; i++)
+			(*(gdl_changed_cb[i])) (device, FALSE);
+	}
+	/* remove device from list */
+	if (device->next != NULL)
+		device->next->prev = device->prev;
+	if (device->prev != NULL)
+		device->prev->next = device->next;
+	if (device_list_head == device)
+		device_list_head = device->next;
+	--device_list_num;
 
-    // remove device from list
-    if( device->next!=NULL )
-        device->next->prev = device->prev;
-    if( device->prev!=NULL )
-        device->prev->next = device->next;
-    if( device_list_head==device )
-        device_list_head = device->next;
-    --device_list_num;
-
-    // free device
-    for(prop=device->prop_head; prop!=NULL; prop=prop_next)
-    {
-        prop_next = prop->next;
-        free(prop->key);
-        if( prop->type==DBUS_TYPE_STRING )
-            free(prop->str_value);
-        free(prop);
-    }
-    free(device->udi);
-    free(device);
+	/* free device */
+	for (prop = device->prop_head; prop != NULL; prop = prop_next) {
+		prop_next = prop->next;
+		free (prop->key);
+		if (prop->type == DBUS_TYPE_STRING)
+			free (prop->str_value);
+		free (prop);
+	}
+	free (device->udi);
+	free (device);
 }
 
 /**************************************************************************/
@@ -634,37 +638,40 @@ void ds_device_destroy(HalDevice* device)
  *
  *  @param  device              A #HalDevice object
  */
-void ds_gdl_add(HalDevice* device)
+void
+ds_gdl_add (HalDevice * device)
 {
-    int i;
-    device->in_gdl = TRUE;
+	int i;
+	device->in_gdl = TRUE;
 
-    for(i=0; i<num_gdl_changed_cb; i++)
-        (*(gdl_changed_cb[i]))(device, TRUE);
+	for (i = 0; i < num_gdl_changed_cb; i++)
+		(*(gdl_changed_cb[i])) (device, TRUE);
 
-    /* Ah, now check for the asynchronous outstanding finds whether this
-     * device was the one someone is searching for
-     */
-    async_find_check_new_addition(device);
+	/* Ah, now check for the asynchronous outstanding finds whether this
+	 * device was the one someone is searching for
+	 */
+	async_find_check_new_addition (device);
 }
 
 /** Get number of devices
  *
  *  @return                     Number of devices
  */
-unsigned int ds_device_size()
+unsigned int
+ds_device_size ()
 {
-    return device_list_num;
+	return device_list_num;
 }
 
 /** Get an iterator pointing to the beginning of the device list
  *
  *  @param  iterator            Iterator object
  */
-void ds_device_iter_begin(HalDeviceIterator* iterator)
+void
+ds_device_iter_begin (HalDeviceIterator * iterator)
 {
-    iterator->position = 0;
-    iterator->cursor = device_list_head;
+	iterator->position = 0;
+	iterator->cursor = device_list_head;
 }
 
 /** Determine if there are more devices to iterate over.
@@ -672,9 +679,10 @@ void ds_device_iter_begin(HalDeviceIterator* iterator)
  *  @param  iterator            Iterator object
  *  @return                     #FALSE if there isn't any properties left
  */
-dbus_bool_t ds_device_iter_has_more(HalDeviceIterator* iterator)
+dbus_bool_t
+ds_device_iter_has_more (HalDeviceIterator * iterator)
 {
-    return iterator->position<device_list_num;
+	return iterator->position < device_list_num;
 }
 
 /** Advance the iterator to the next position.
@@ -683,10 +691,11 @@ dbus_bool_t ds_device_iter_has_more(HalDeviceIterator* iterator)
  *  @return                     #FALSE if there isn't any devices left
  *                              left
  */
-void ds_device_iter_next(HalDeviceIterator* iterator)
+void
+ds_device_iter_next (HalDeviceIterator * iterator)
 {
-    iterator->position++;
-    iterator->cursor = iterator->cursor->next;
+	iterator->position++;
+	iterator->cursor = iterator->cursor->next;
 }
 
 /** Get the device that this iterator represents
@@ -694,9 +703,10 @@ void ds_device_iter_next(HalDeviceIterator* iterator)
  *  @param  iterator            Iterator object
  *  @return                     The #HalDevice object the iterator represents
  */
-HalDevice* ds_device_iter_get(HalDeviceIterator* iterator)
+HalDevice *
+ds_device_iter_get (HalDeviceIterator * iterator)
 {
-    return iterator->cursor;
+	return iterator->cursor;
 }
 
 /**************************************************************************/
@@ -706,9 +716,10 @@ HalDevice* ds_device_iter_get(HalDeviceIterator* iterator)
  *  @param  device              A pointer to a #HalDevice object
  *  @retur                      The device unique id
  */
-const char* ds_device_get_udi(HalDevice* device)
+const char *
+ds_device_get_udi (HalDevice * device)
 {
-    return device->udi;
+	return device->udi;
 }
 
 /** Set unique device id.
@@ -718,13 +729,14 @@ const char* ds_device_get_udi(HalDevice* device)
  *  @return                     #FALSE if the unique device id was in use
  *                              by another application
  */
-dbus_bool_t ds_device_set_udi(HalDevice* device, const char* udi)
+dbus_bool_t
+ds_device_set_udi (HalDevice * device, const char *udi)
 {
-    if( ds_device_find(udi)!=NULL )
-        return FALSE;
-    free(device->udi);
-    device->udi = xstrdup(udi);
-    return TRUE;
+	if (ds_device_find (udi) != NULL)
+		return FALSE;
+	free (device->udi);
+	device->udi = xstrdup (udi);
+	return TRUE;
 }
 
 
@@ -735,9 +747,10 @@ dbus_bool_t ds_device_set_udi(HalDevice* device, const char* udi)
  *  @param  device              A pointer to a #HalDevice object
  *  @return                     Number of properties
  */
-unsigned int ds_properties_size(HalDevice* device)
+unsigned int
+ds_properties_size (HalDevice * device)
 {
-    return device->num_properties;
+	return device->num_properties;
 }
 
 /** Determine if a property exists.
@@ -746,9 +759,10 @@ unsigned int ds_properties_size(HalDevice* device)
  *  @param  key                 The key of the property
  *  @return                     #TRUE if the property exists, otherwise #FALSE
  */
-dbus_bool_t ds_property_exists(HalDevice* device, const char* key)
+dbus_bool_t
+ds_property_exists (HalDevice * device, const char *key)
 {
-    return ds_property_find(device, key)!=NULL;
+	return ds_property_find (device, key) != NULL;
 }
 
 /** Find a device property.
@@ -758,20 +772,19 @@ dbus_bool_t ds_property_exists(HalDevice* device, const char* key)
  *  @return                     #HalProperty object or #NULL if the property
  *                              doesn't exist
  */
-HalProperty* ds_property_find(HalDevice* device, const char* key)
+HalProperty *
+ds_property_find (HalDevice * device, const char *key)
 {
-    HalProperty* prop;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            return prop;
-        }
-    }
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			return prop;
+		}
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /** Get an iterator pointing to the beginning of the properties of a device.
@@ -779,10 +792,11 @@ HalProperty* ds_property_find(HalDevice* device, const char* key)
  *  @param  device              Device to get properties from
  *  @param  iterator            Iterator object
  */
-void ds_property_iter_begin(HalDevice* device, HalPropertyIterator* iterator)
+void
+ds_property_iter_begin (HalDevice * device, HalPropertyIterator * iterator)
 {
-    iterator->device = device;
-    iterator->cursor = device->prop_head;
+	iterator->device = device;
+	iterator->cursor = device->prop_head;
 }
 
 /** Determine if there are more properties to iterate over.
@@ -790,18 +804,20 @@ void ds_property_iter_begin(HalDevice* device, HalPropertyIterator* iterator)
  *  @param  iterator            Iterator object
  *  @return                     #FALSE if there isn't any properties left
  */
-dbus_bool_t ds_property_iter_has_more(HalPropertyIterator* iterator)
+dbus_bool_t
+ds_property_iter_has_more (HalPropertyIterator * iterator)
 {
-    return iterator->cursor!=NULL;
+	return iterator->cursor != NULL;
 }
 
 /** Advance the property iterator to the next position.
  *
  *  @param  iterator            Iterator object
  */
-void ds_property_iter_next(HalPropertyIterator* iterator)
+void
+ds_property_iter_next (HalPropertyIterator * iterator)
 {
-    iterator->cursor = iterator->cursor->next;
+	iterator->cursor = iterator->cursor->next;
 }
 
 /** Get the property that this iterator represents
@@ -809,9 +825,10 @@ void ds_property_iter_next(HalPropertyIterator* iterator)
  *  @param  iterator            Iterator object
  *  @return                     The #HalProperty object the iterator represents
  */
-HalProperty* ds_property_iter_get(HalPropertyIterator* iterator)
+HalProperty *
+ds_property_iter_get (HalPropertyIterator * iterator)
 {
-    return iterator->cursor;
+	return iterator->cursor;
 }
 
 /** Set the value of a property
@@ -822,60 +839,60 @@ HalProperty* ds_property_iter_get(HalPropertyIterator* iterator)
  *  @return                     #FALSE if the property already exists and
  *                              isn't of type string
  */
-dbus_bool_t ds_property_set_string(HalDevice* device, const char* key, 
-                                   const char* value)
+dbus_bool_t
+ds_property_set_string (HalDevice * device, const char *key,
+			const char *value)
 {
-    int i;
-    HalProperty* prop;
+	int i;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_STRING )
-                return FALSE;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_STRING)
+				return FALSE;
 
-            // don't bother setting the same value
-            if( value!=NULL && strcmp(prop->str_value, value)==0 )
-            {
-                return TRUE;
-            }
+			/* don't bother setting the same value */
+			if (value != NULL
+			    && strcmp (prop->str_value, value) == 0) {
+				return TRUE;
+			}
 
-            free(prop->str_value);
-            prop->str_value = (char*) xstrdup(value);
+			free (prop->str_value);
+			prop->str_value = (char *) xstrdup (value);
 
-            // callback that the property changed
-            for(i=0; i<num_property_changed_cb; i++)
-                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                            FALSE, FALSE);
-            return TRUE;
-        }
-    }
+			/* callback that the property changed */
+			for (i = 0; i < num_property_changed_cb; i++)
+				(*(property_changed_cb[i])) (device, key,
+							     device->
+							     in_gdl, FALSE,
+							     FALSE);
+			return TRUE;
+		}
+	}
 
-    // nope, have to create it
-    //
-    prop = (HalProperty*) malloc(sizeof(HalProperty));
-    if( prop==NULL )
-        return FALSE;
-    prop->key = (char*) xstrdup(key);
-    prop->str_value = (char*) xstrdup(value);
+	/* nope, have to create it */
+	prop = (HalProperty *) malloc (sizeof (HalProperty));
+	if (prop == NULL)
+		return FALSE;
+	prop->key = (char *) xstrdup (key);
+	prop->str_value = (char *) xstrdup (value);
 
-    prop->type = DBUS_TYPE_STRING;
+	prop->type = DBUS_TYPE_STRING;
 
-    prop->next        = device->prop_head;
-    prop->prev        = NULL;
-    device->prop_head = prop;
-    device->num_properties++;
-    if( prop->next!=NULL )
-        prop->next->prev = prop;
+	prop->next = device->prop_head;
+	prop->prev = NULL;
+	device->prop_head = prop;
+	device->num_properties++;
+	if (prop->next != NULL)
+		prop->next->prev = prop;
 
-    // callback that the property have been added
-    for(i=0; i<num_property_changed_cb; i++)
-        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                    FALSE, TRUE);
+	/* callback that the property have been added */
+	for (i = 0; i < num_property_changed_cb; i++)
+		(*(property_changed_cb[i])) (device, key, device->in_gdl,
+					     FALSE, TRUE);
 
-    return TRUE;
+	return TRUE;
 }
 
 /** Set the value of a property
@@ -886,57 +903,57 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
  *  @return                     #FALSE if the property already exists and
  *                              isn't of type int
  */
-dbus_bool_t ds_property_set_int(HalDevice* device, const char* key, 
-                                dbus_int32_t value)
+dbus_bool_t
+ds_property_set_int (HalDevice * device, const char *key,
+		     dbus_int32_t value)
 {
-    int i;
-    HalProperty* prop;
+	int i;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_INT32 )
-                return FALSE;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_INT32)
+				return FALSE;
 
-            // don't bother setting the same value
-            if( prop->int_value==value )
-                return TRUE;
+			/* don't bother setting the same value */
+			if (prop->int_value == value)
+				return TRUE;
 
-            prop->int_value = value;
+			prop->int_value = value;
 
-            // callback that the property changed
-            for(i=0; i<num_property_changed_cb; i++)
-                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                            FALSE, FALSE);
-            return TRUE;
-        }
-    }
+			/* callback that the property changed */
+			for (i = 0; i < num_property_changed_cb; i++)
+				(*(property_changed_cb[i])) (device, key,
+							     device->
+							     in_gdl, FALSE,
+							     FALSE);
+			return TRUE;
+		}
+	}
 
-    // nope, have to create it
-    //
-    prop = (HalProperty*) malloc(sizeof(HalProperty));
-    if( prop==NULL )
-        return FALSE;
-    prop->key = (char*) xstrdup(key);
-    prop->int_value = value;
+	/* nope, have to create it */
+	prop = (HalProperty *) malloc (sizeof (HalProperty));
+	if (prop == NULL)
+		return FALSE;
+	prop->key = (char *) xstrdup (key);
+	prop->int_value = value;
 
-    prop->type = DBUS_TYPE_INT32;
+	prop->type = DBUS_TYPE_INT32;
 
-    prop->next        = device->prop_head;
-    prop->prev        = NULL;
-    device->prop_head = prop;
-    device->num_properties++;
-    if( prop->next!=NULL )
-        prop->next->prev = prop;
+	prop->next = device->prop_head;
+	prop->prev = NULL;
+	device->prop_head = prop;
+	device->num_properties++;
+	if (prop->next != NULL)
+		prop->next->prev = prop;
 
-    // callback that the property have been added
-    for(i=0; i<num_property_changed_cb; i++)
-        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                    FALSE, TRUE);
+	/* callback that the property have been added */
+	for (i = 0; i < num_property_changed_cb; i++)
+		(*(property_changed_cb[i])) (device, key, device->in_gdl,
+					     FALSE, TRUE);
 
-    return TRUE;
+	return TRUE;
 }
 
 /** Set the value of a property
@@ -947,57 +964,57 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
  *  @return                     #FALSE if the property already exists and
  *                              isn't of type boolean
  */
-dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key, 
-                                 dbus_bool_t value)
+dbus_bool_t
+ds_property_set_bool (HalDevice * device, const char *key,
+		      dbus_bool_t value)
 {
-    int i;
-    HalProperty* prop;
+	int i;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_BOOLEAN )
-                return FALSE;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_BOOLEAN)
+				return FALSE;
 
-            // don't bother setting the same value
-            if( prop->bool_value==value )
-                return TRUE;
+			/* don't bother setting the same value */
+			if (prop->bool_value == value)
+				return TRUE;
 
-            prop->bool_value = value;
+			prop->bool_value = value;
 
-            // callback that the property changed
-            for(i=0; i<num_property_changed_cb; i++)
-                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                            FALSE, FALSE);
-            return TRUE;
-        }
-    }
+			/* callback that the property changed */
+			for (i = 0; i < num_property_changed_cb; i++)
+				(*(property_changed_cb[i])) (device, key,
+							     device->
+							     in_gdl, FALSE,
+							     FALSE);
+			return TRUE;
+		}
+	}
 
-    // nope, have to create it
-    //
-    prop = (HalProperty*) malloc(sizeof(HalProperty));
-    if( prop==NULL )
-        return FALSE;
-    prop->key = (char*) xstrdup(key);
-    prop->bool_value = value;
+	/* nope, have to create it */
+	prop = (HalProperty *) malloc (sizeof (HalProperty));
+	if (prop == NULL)
+		return FALSE;
+	prop->key = (char *) xstrdup (key);
+	prop->bool_value = value;
 
-    prop->type = DBUS_TYPE_BOOLEAN;
+	prop->type = DBUS_TYPE_BOOLEAN;
 
-    prop->next        = device->prop_head;
-    prop->prev        = NULL;
-    device->prop_head = prop;
-    device->num_properties++;
-    if( prop->next!=NULL )
-        prop->next->prev = prop;
+	prop->next = device->prop_head;
+	prop->prev = NULL;
+	device->prop_head = prop;
+	device->num_properties++;
+	if (prop->next != NULL)
+		prop->next->prev = prop;
 
-    // callback that the property have been added
-    for(i=0; i<num_property_changed_cb; i++)
-        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                    FALSE, TRUE);
+	/* callback that the property have been added */
+	for (i = 0; i < num_property_changed_cb; i++)
+		(*(property_changed_cb[i])) (device, key, device->in_gdl,
+					     FALSE, TRUE);
 
-    return TRUE;
+	return TRUE;
 }
 
 /** Set the value of a property
@@ -1008,57 +1025,56 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
  *  @return                     #FALSE if the property already exists and
  *                              isn't of type double
  */
-dbus_bool_t ds_property_set_double(HalDevice* device, const char* key, 
-                                   double value)
+dbus_bool_t
+ds_property_set_double (HalDevice * device, const char *key, double value)
 {
-    int i;
-    HalProperty* prop;
+	int i;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_DOUBLE )
-                return FALSE;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_DOUBLE)
+				return FALSE;
 
-            // don't bother setting the same value
-            if( prop->double_value==value )
-                return TRUE;
+			/* don't bother setting the same value */
+			if (prop->double_value == value)
+				return TRUE;
 
-            prop->double_value = value;
+			prop->double_value = value;
 
-            // callback that the property changed
-            for(i=0; i<num_property_changed_cb; i++)
-                (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                            FALSE, FALSE);
-            return TRUE;
-        }
-    }
+			/* callback that the property changed */
+			for (i = 0; i < num_property_changed_cb; i++)
+				(*(property_changed_cb[i])) (device, key,
+							     device->
+							     in_gdl, FALSE,
+							     FALSE);
+			return TRUE;
+		}
+	}
 
-    // nope, have to create it
-    //
-    prop = (HalProperty*) malloc(sizeof(HalProperty));
-    if( prop==NULL )
-        return FALSE;
-    prop->key = (char*) xstrdup(key);
-    prop->double_value = value;
+	/* nope, have to create it */
+	prop = (HalProperty *) malloc (sizeof (HalProperty));
+	if (prop == NULL)
+		return FALSE;
+	prop->key = (char *) xstrdup (key);
+	prop->double_value = value;
 
-    prop->type = DBUS_TYPE_DOUBLE;
+	prop->type = DBUS_TYPE_DOUBLE;
 
-    prop->next        = device->prop_head;
-    prop->prev        = NULL;
-    device->prop_head = prop;
-    device->num_properties++;
-    if( prop->next!=NULL )
-        prop->next->prev = prop;
+	prop->next = device->prop_head;
+	prop->prev = NULL;
+	device->prop_head = prop;
+	device->num_properties++;
+	if (prop->next != NULL)
+		prop->next->prev = prop;
 
-    // callback that the property have been added
-    for(i=0; i<num_property_changed_cb; i++)
-        (*(property_changed_cb[i]))(device, key, device->in_gdl, 
-                                    FALSE, TRUE);
+	/* callback that the property have been added */
+	for (i = 0; i < num_property_changed_cb; i++)
+		(*(property_changed_cb[i])) (device, key, device->in_gdl,
+					     FALSE, TRUE);
 
-    return TRUE;
+	return TRUE;
 }
 
 /** Remove a property.
@@ -1067,57 +1083,55 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
  *  @param  key                 The key of the property
  *  @return                     #FALSE if property didn't exist
  */
-dbus_bool_t ds_property_remove(HalDevice* device, const char* key)
+dbus_bool_t
+ds_property_remove (HalDevice * device, const char *key)
 {
-    int i;
-    int j;
-    HalProperty* prop;
+	int i;
+	int j;
+	HalProperty *prop;
 
-    i=0;
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next, i++)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            switch( prop->type )
-            {
-            case DBUS_TYPE_STRING:
-                free( prop->str_value );
-                break;
-            case DBUS_TYPE_INT32:
-                break;
-            case DBUS_TYPE_DOUBLE:
-                break;
-            case DBUS_TYPE_BOOLEAN:
-                break;
-            }
+	i = 0;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL;
+	     prop = prop->next, i++) {
+		if (strcmp (prop->key, key) == 0) {
+			switch (prop->type) {
+			case DBUS_TYPE_STRING:
+				free (prop->str_value);
+				break;
+			case DBUS_TYPE_INT32:
+				break;
+			case DBUS_TYPE_DOUBLE:
+				break;
+			case DBUS_TYPE_BOOLEAN:
+				break;
+			}
 
-            free(prop->key);
-                
-            if( prop->prev==NULL )
-            {
-                device->prop_head = prop->next;
-                if( prop->next!=NULL )
-                    prop->next->prev = NULL;
-            }
-            else
-            {
-                prop->prev->next = prop->next;
-                if( prop->next!=NULL )
-                    prop->next->prev = prop->prev;
-            }
-            free(prop);
-            device->num_properties--;
+			free (prop->key);
 
-            for(j=0; j<num_property_changed_cb; j++)
-                (*(property_changed_cb[j]))(device, key, device->in_gdl, 
-                                            TRUE, FALSE);
-            
-            return TRUE;
-        }
-    }
+			if (prop->prev == NULL) {
+				device->prop_head = prop->next;
+				if (prop->next != NULL)
+					prop->next->prev = NULL;
+			} else {
+				prop->prev->next = prop->next;
+				if (prop->next != NULL)
+					prop->next->prev = prop->prev;
+			}
+			free (prop);
+			device->num_properties--;
 
-    return FALSE;
+			for (j = 0; j < num_property_changed_cb; j++)
+				(*(property_changed_cb[j])) (device, key,
+							     device->
+							     in_gdl, TRUE,
+							     FALSE);
+
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 /**************************************************************************/
@@ -1127,9 +1141,10 @@ dbus_bool_t ds_property_remove(HalDevice* device, const char* key)
  *  @param  property            A pointer to a #HalProperty object
  *  @return                     Key of the property
  */
-const char* ds_property_iter_get_key(HalProperty* property)
+const char *
+ds_property_iter_get_key (HalProperty * property)
 {
-    return property->key;
+	return property->key;
 }
 
 /** Get the type of the value of a property.
@@ -1138,9 +1153,10 @@ const char* ds_property_iter_get_key(HalProperty* property)
  *  @return                     One of #DBUS_TYPE_STRING, #DBUS_TYPE_INT32,
  *                              #DBUS_TYPE_BOOL, #DBUS_TYPE_DOUBLE
  */
-int ds_property_iter_get_type(HalProperty* property)
+int
+ds_property_iter_get_type (HalProperty * property)
 {
-    return property->type;
+	return property->type;
 }
 
 
@@ -1150,11 +1166,12 @@ int ds_property_iter_get_type(HalProperty* property)
  *  @return                     A zero-terminated UTF-8 string or #NULL
  *                              if property didn't exist or wasn't a string
  */
-const char* ds_property_iter_get_string(HalProperty* property)
+const char *
+ds_property_iter_get_string (HalProperty * property)
 {
-    if( property->type!=DBUS_TYPE_STRING )
-        return NULL;
-    return property->str_value;
+	if (property->type != DBUS_TYPE_STRING)
+		return NULL;
+	return property->str_value;
 }
 
 /** Get the value of a property
@@ -1162,9 +1179,10 @@ const char* ds_property_iter_get_string(HalProperty* property)
  *  @param  property            A pointer to a #HalProperty object
  *  @return                     A 32-bit signed integer
  */
-dbus_int32_t ds_property_iter_get_int(HalProperty* property)
+dbus_int32_t
+ds_property_iter_get_int (HalProperty * property)
 {
-    return property->int_value;
+	return property->int_value;
 }
 
 /** Get the value of a property
@@ -1172,9 +1190,10 @@ dbus_int32_t ds_property_iter_get_int(HalProperty* property)
  *  @param  property            A pointer to a #HalProperty object
  *  @return                     #TRUE or #FALSE
  */
-dbus_bool_t ds_property_iter_get_bool(HalProperty* property)
+dbus_bool_t
+ds_property_iter_get_bool (HalProperty * property)
 {
-    return property->bool_value;
+	return property->bool_value;
 }
 
 /** Get the value of a property
@@ -1182,9 +1201,10 @@ dbus_bool_t ds_property_iter_get_bool(HalProperty* property)
  *  @param  property            A pointer to a #HalProperty object
  *  @return                     IEEE754 double precision floating point number
  */
-double ds_property_iter_get_double(HalProperty* property)
+double
+ds_property_iter_get_double (HalProperty * property)
 {
-    return property->double_value;
+	return property->double_value;
 }
 
 /** Merge properties from one device to another. 
@@ -1197,75 +1217,78 @@ double ds_property_iter_get_double(HalProperty* property)
  *  @param  target              Target device receiving properties
  *  @param  source              Source device contributing properties
  */
-void ds_device_merge(HalDevice* target, HalDevice* source)
+void
+ds_device_merge (HalDevice * target, HalDevice * source)
 {
-    const char* caps;
-    HalPropertyIterator iter;
+	const char *caps;
+	HalPropertyIterator iter;
 
-    property_atomic_update_begin();
+	property_atomic_update_begin ();
 
-    for(ds_property_iter_begin(source, &iter);
-        ds_property_iter_has_more(&iter);
-        ds_property_iter_next(&iter))
-    {
-        int type;
-        int target_type;
-        const char* key;
-        HalProperty* p;
+	for (ds_property_iter_begin (source, &iter);
+	     ds_property_iter_has_more (&iter);
+	     ds_property_iter_next (&iter)) {
+		int type;
+		int target_type;
+		const char *key;
+		HalProperty *p;
 
-        p = ds_property_iter_get(&iter);
-        key = ds_property_iter_get_key(p);
-        type = ds_property_iter_get_type(p);
+		p = ds_property_iter_get (&iter);
+		key = ds_property_iter_get_key (p);
+		type = ds_property_iter_get_type (p);
 
-        /* handle info.capabilities in a special way */
-        if( strcmp(key, "info.capabilities")==0 )
-            continue;
+		/* handle info.capabilities in a special way */
+		if (strcmp (key, "info.capabilities") == 0)
+			continue;
 
-        /* only remove target if it exists with different type */
-        target_type = ds_property_get_type(target, key);
-        if( target_type!=DBUS_TYPE_NIL && target_type!=type )
-            ds_property_remove(target, key);
+		/* only remove target if it exists with different type */
+		target_type = ds_property_get_type (target, key);
+		if (target_type != DBUS_TYPE_NIL && target_type != type)
+			ds_property_remove (target, key);
 
-        switch( type )
-        {
-        case DBUS_TYPE_STRING:
-            ds_property_set_string(target, key,ds_property_iter_get_string(p));
-            break;
-        case DBUS_TYPE_INT32:
-            ds_property_set_int(target, key, ds_property_iter_get_int(p));
-            break;
-        case DBUS_TYPE_DOUBLE:
-            ds_property_set_double(target, key,ds_property_iter_get_double(p));
-            break;
-        case DBUS_TYPE_BOOLEAN:
-            ds_property_set_bool(target, key, ds_property_iter_get_bool(p));
-            break;
-        default:
-            HAL_WARNING(("Unknown property type %d", type));
-            break;
-        }
-    }    
+		switch (type) {
+		case DBUS_TYPE_STRING:
+			ds_property_set_string (target, key,
+						ds_property_iter_get_string
+						(p));
+			break;
+		case DBUS_TYPE_INT32:
+			ds_property_set_int (target, key,
+					     ds_property_iter_get_int (p));
+			break;
+		case DBUS_TYPE_DOUBLE:
+			ds_property_set_double (target, key,
+						ds_property_iter_get_double
+						(p));
+			break;
+		case DBUS_TYPE_BOOLEAN:
+			ds_property_set_bool (target, key,
+					      ds_property_iter_get_bool
+					      (p));
+			break;
+		default:
+			HAL_WARNING (("Unknown property type %d", type));
+			break;
+		}
+	}
 
-    property_atomic_update_end();
+	property_atomic_update_end ();
 
-    caps = ds_property_get_string(source, "info.capabilities");
-    if( caps!=NULL )
-    {
-        int i;
-        char* tok;
-        char buf[256];
-        char* bufp = buf;
-    
-        tok = strtok_r((char*)caps, " ", &bufp);
-        while( tok!=NULL )
-        {
-            if( !ds_query_capability(target, tok) )
-            {
-                ds_add_capability(target, tok);
-            }
-            tok = strtok_r(NULL, " ", &bufp);
-        }
-    }
+	caps = ds_property_get_string (source, "info.capabilities");
+	if (caps != NULL) {
+		int i;
+		char *tok;
+		char buf[256];
+		char *bufp = buf;
+
+		tok = strtok_r ((char *) caps, " ", &bufp);
+		while (tok != NULL) {
+			if (!ds_query_capability (target, tok)) {
+				ds_add_capability (target, tok);
+			}
+			tok = strtok_r (NULL, " ", &bufp);
+		}
+	}
 
 }
 
@@ -1277,19 +1300,18 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
  *                              #DBUS_TYPE_BOOL, #DBUS_TYPE_DOUBLE or 
  *                              #DBUS_TYPE_NIL if the property didn't exist
  */
-int ds_property_get_type(HalDevice* device, const char* key)
+int
+ds_property_get_type (HalDevice * device, const char *key)
 {
-    HalProperty* prop;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            return prop->type;
-        }
-    }
-    return DBUS_TYPE_NIL;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			return prop->type;
+		}
+	}
+	return DBUS_TYPE_NIL;
 }
 
 /** Get the value of a property
@@ -1299,21 +1321,20 @@ int ds_property_get_type(HalDevice* device, const char* key)
  *  @return                     A zero-terminated UTF-8 string or #NULL
  *                              if property didn't exist or wasn't a string
  */
-const char* ds_property_get_string(HalDevice* device, const char* key)
+const char *
+ds_property_get_string (HalDevice * device, const char *key)
 {
-    HalProperty* prop;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_STRING )
-                return NULL;
-            return prop->str_value;
-        }
-    }
-    return NULL;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_STRING)
+				return NULL;
+			return prop->str_value;
+		}
+	}
+	return NULL;
 }
 
 /** Get the value of a property
@@ -1322,21 +1343,20 @@ const char* ds_property_get_string(HalDevice* device, const char* key)
  *  @param  key                 The key of the property
  *  @return                     A 32-bit signed integer
  */
-dbus_int32_t ds_property_get_int(HalDevice* device, const char* key)
+dbus_int32_t
+ds_property_get_int (HalDevice * device, const char *key)
 {
-    HalProperty* prop;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_INT32 )
-                return -1;
-            return prop->int_value;
-        }
-    }
-    return -1;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_INT32)
+				return -1;
+			return prop->int_value;
+		}
+	}
+	return -1;
 }
 
 /** Get the value of a property
@@ -1345,21 +1365,20 @@ dbus_int32_t ds_property_get_int(HalDevice* device, const char* key)
  *  @param  key                 The key of the property
  *  @return                     #TRUE or #FALSE
  */
-dbus_bool_t ds_property_get_bool(HalDevice* device, const char* key)
+dbus_bool_t
+ds_property_get_bool (HalDevice * device, const char *key)
 {
-    HalProperty* prop;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_BOOLEAN )
-                return -1;
-            return prop->bool_value;
-        }
-    }
-    return -1;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_BOOLEAN)
+				return -1;
+			return prop->bool_value;
+		}
+	}
+	return -1;
 }
 
 /** Get the value of a property
@@ -1368,21 +1387,20 @@ dbus_bool_t ds_property_get_bool(HalDevice* device, const char* key)
  *  @param  key                 The key of the property
  *  @return                     IEEE754 double precision floating point number
  */
-double ds_property_get_double(HalDevice* device, const char* key)
+double
+ds_property_get_double (HalDevice * device, const char *key)
 {
-    HalProperty* prop;
+	HalProperty *prop;
 
-    // check if property already exist
-    for(prop=device->prop_head; prop!=NULL; prop=prop->next)
-    {
-        if( strcmp(prop->key, key)==0 )
-        {
-            if( prop->type!=DBUS_TYPE_DOUBLE )
-                return -1.0;
-            return prop->double_value;
-        }
-    }
-    return -1.0;
+	/* check if property already exist */
+	for (prop = device->prop_head; prop != NULL; prop = prop->next) {
+		if (strcmp (prop->key, key) == 0) {
+			if (prop->type != DBUS_TYPE_DOUBLE)
+				return -1.0;
+			return prop->double_value;
+		}
+	}
+	return -1.0;
 }
 
 
@@ -1404,61 +1422,61 @@ double ds_property_get_double(HalDevice* device, const char* key)
  *                              from one device is in the other and 
  *                              have the same value.
  */
-dbus_bool_t ds_device_matches(HalDevice* device1, HalDevice* device2, 
-                              const char* namespace)
+dbus_bool_t
+ds_device_matches (HalDevice * device1, HalDevice * device2,
+		   const char *namespace)
 {
-    int len;
-    HalPropertyIterator iter;
+	int len;
+	HalPropertyIterator iter;
 
-    len = strlen(namespace);
+	len = strlen (namespace);
 
-    for(ds_property_iter_begin(device1, &iter);
-        ds_property_iter_has_more(&iter);
-        ds_property_iter_next(&iter))
-    {
-        int type;
-        const char* key;
-        HalProperty* p;
+	for (ds_property_iter_begin (device1, &iter);
+	     ds_property_iter_has_more (&iter);
+	     ds_property_iter_next (&iter)) {
+		int type;
+		const char *key;
+		HalProperty *p;
 
-        p = ds_property_iter_get(&iter);
-        key = ds_property_iter_get_key(p);
-        type = ds_property_iter_get_type(p);
+		p = ds_property_iter_get (&iter);
+		key = ds_property_iter_get_key (p);
+		type = ds_property_iter_get_type (p);
 
-        if( strncmp(key, namespace, len)!=0 )
-            continue;
+		if (strncmp (key, namespace, len) != 0)
+			continue;
 
-        if( !ds_property_exists(device2, key) )
-            return FALSE;
+		if (!ds_property_exists (device2, key))
+			return FALSE;
 
-        switch( type )
-        {
-        case DBUS_TYPE_STRING:
-            if( strcmp(ds_property_iter_get_string(p),
-                       ds_property_get_string(device2, key))!=0 )
-                return FALSE;
-            break;
-        case DBUS_TYPE_INT32:
-            if( ds_property_iter_get_int(p) !=
-                ds_property_get_int(device2, key) )
-                return FALSE;
-            break;
-        case DBUS_TYPE_DOUBLE:
-            if( ds_property_iter_get_double(p) !=
-                ds_property_get_double(device2, key) )
-                return FALSE;
-            break;
-        case DBUS_TYPE_BOOLEAN:
-            if( ds_property_iter_get_bool(p) !=
-                ds_property_get_bool(device2, key) )
-                return FALSE;
-            break;
-        default:
-            HAL_WARNING(("Unknown property type %d", type));
-            break;
-        }
-    }
+		switch (type) {
+		case DBUS_TYPE_STRING:
+			if (strcmp (ds_property_iter_get_string (p),
+				    ds_property_get_string (device2,
+							    key)) != 0)
+				return FALSE;
+			break;
+		case DBUS_TYPE_INT32:
+			if (ds_property_iter_get_int (p) !=
+			    ds_property_get_int (device2, key))
+				return FALSE;
+			break;
+		case DBUS_TYPE_DOUBLE:
+			if (ds_property_iter_get_double (p) !=
+			    ds_property_get_double (device2, key))
+				return FALSE;
+			break;
+		case DBUS_TYPE_BOOLEAN:
+			if (ds_property_iter_get_bool (p) !=
+			    ds_property_get_bool (device2, key))
+				return FALSE;
+			break;
+		default:
+			HAL_WARNING (("Unknown property type %d", type));
+			break;
+		}
+	}
 
-    return TRUE;
+	return TRUE;
 }
 
 
@@ -1470,32 +1488,31 @@ dbus_bool_t ds_device_matches(HalDevice* device1, HalDevice* device2,
  *  @param  device              HalDevice to add capability to
  *  @param  capability          Capability to add
  */
-void ds_add_capability(HalDevice* device, const char* capability)
+void
+ds_add_capability (HalDevice * device, const char *capability)
 {
-    int i;
-    const char* caps;
-    char buf[MAX_CAP_SIZE];
+	int i;
+	const char *caps;
+	char buf[MAX_CAP_SIZE];
 
-    caps = ds_property_get_string(device, "info.capabilities");
-    if( caps==NULL )
-    {
-        ds_property_set_string(device, "info.capabilities", capability);
-    }
-    else
-    {
-        if( ds_query_capability(device, capability) )
-        {
-            return;
-        }
-        else
-        {
-            snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
-            ds_property_set_string(device, "info.capabilities", buf);
-        }
-    }
+	caps = ds_property_get_string (device, "info.capabilities");
+	if (caps == NULL) {
+		ds_property_set_string (device, "info.capabilities",
+					capability);
+	} else {
+		if (ds_query_capability (device, capability)) {
+			return;
+		} else {
+			snprintf (buf, MAX_CAP_SIZE, "%s %s", caps,
+				  capability);
+			ds_property_set_string (device,
+						"info.capabilities", buf);
+		}
+	}
 
-    for(i=0; i<num_new_capability_cb; i++)
-        (*(new_capability_cb[i]))(device, capability, device->in_gdl);
+	for (i = 0; i < num_new_capability_cb; i++)
+		(*(new_capability_cb[i])) (device, capability,
+					   device->in_gdl);
 }
 
 /** Query a device for a capability
@@ -1505,35 +1522,32 @@ void ds_add_capability(HalDevice* device, const char* capability)
  *  @return                     #TRUE if and only if the device got the 
  *                              capablity
  */
-dbus_bool_t ds_query_capability(HalDevice* device, const char* capability)
+dbus_bool_t
+ds_query_capability (HalDevice * device, const char *capability)
 {
-    const char* caps_orig;
-    char* caps;
-    char buf[256];
-    char* bufp = buf;
-    char* c;
+	const char *caps_orig;
+	char *caps;
+	char buf[256];
+	char *bufp = buf;
+	char *c;
 
-    caps = NULL;
-    caps_orig = ds_property_get_string(device, "info.capabilities");
-    if( caps_orig!=NULL )
-    {
-        /* strtok_r destroys the string, so mae a copy */
-        caps = xstrdup(caps_orig);
+	caps = NULL;
+	caps_orig = ds_property_get_string (device, "info.capabilities");
+	if (caps_orig != NULL) {
+		/* strtok_r destroys the string, so mae a copy */
+		caps = xstrdup (caps_orig);
 
-        for(c = strtok_r(caps, " ", &bufp); 
-            c!=NULL; 
-            c = strtok_r(NULL, " ", &bufp))
-        {
-            if( strcmp(c, capability)==0 )
-            {
-                free(caps);
-                return TRUE;
-            }
-        }
-        
-        free(caps);
-    }
-    return FALSE;
+		for (c = strtok_r (caps, " ", &bufp);
+		     c != NULL; c = strtok_r (NULL, " ", &bufp)) {
+			if (strcmp (c, capability) == 0) {
+				free (caps);
+				return TRUE;
+			}
+		}
+
+		free (caps);
+	}
+	return FALSE;
 }
 
 

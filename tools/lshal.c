@@ -55,78 +55,84 @@
 /** Dump all devices to stdout
  *
  */
-static void dump_devices()
+static void
+dump_devices ()
 {
-    int i;
-    int num_devices;
-    char** device_names;
+	int i;
+	int num_devices;
+	char **device_names;
 
-    device_names = hal_get_all_devices(&num_devices);
+	device_names = hal_get_all_devices (&num_devices);
 
-    if( device_names==NULL )
-        DIE(("Couldn't obtain list of devices\n"));
+	if (device_names == NULL)
+		DIE (("Couldn't obtain list of devices\n"));
 
-    printf("\n"
-           "Dumping %d device(s) from the Global Device List:\n"
-           "-------------------------------------------------\n", num_devices);
+	printf ("\n"
+		"Dumping %d device(s) from the Global Device List:\n"
+		"-------------------------------------------------\n",
+		num_devices);
 
-    for(i=0; i<num_devices; i++)
-    {
-        LibHalPropertySet* props;
-        LibHalPropertySetIterator it;
-        int type;
+	for (i = 0; i < num_devices; i++) {
+		LibHalPropertySet *props;
+		LibHalPropertySetIterator it;
+		int type;
 
-        props = hal_device_get_all_properties(device_names[i]);
+		props = hal_device_get_all_properties (device_names[i]);
 
-        /* NOTE NOTE NOTE: This may be NULL if the device was removed
-         *                 in the daemon; this is because hal_device_get_all_
-         *                 properties() is a in essence an IPC call and
-         *                 other stuff may be happening..
-         */
-        if( props==NULL )
-            continue;
+		/* NOTE NOTE NOTE: This may be NULL if the device was removed
+		 *                 in the daemon; this is because 
+		 *                 hal_device_get_all_properties() is a in
+		 *                 essence an IPC call and other stuff may 
+		 *                 be happening..
+		 */
+		if (props == NULL)
+			continue;
 
-        printf("udi = '%s'\n", device_names[i]);
-        
-        for(hal_psi_init(&it, props); hal_psi_has_more(&it); hal_psi_next(&it))
-        {
-            type = hal_psi_get_type(&it);
-            switch( type )
-            {
-            case DBUS_TYPE_STRING:
-                printf("  %s = '%s'  (string)\n", 
-                       hal_psi_get_key(&it), hal_psi_get_string(&it));
-                break;
+		printf ("udi = '%s'\n", device_names[i]);
 
-            case DBUS_TYPE_INT32:
-                printf("  %s = %d  (0x%x)  (int)\n", 
-                       hal_psi_get_key(&it), 
-                       hal_psi_get_int(&it), hal_psi_get_int(&it));
-                break;
+		for (hal_psi_init (&it, props); hal_psi_has_more (&it);
+		     hal_psi_next (&it)) {
+			type = hal_psi_get_type (&it);
+			switch (type) {
+			case DBUS_TYPE_STRING:
+				printf ("  %s = '%s'  (string)\n",
+					hal_psi_get_key (&it),
+					hal_psi_get_string (&it));
+				break;
 
-            case DBUS_TYPE_DOUBLE:
-                printf("  %s = %g  (double)\n", 
-                       hal_psi_get_key(&it), hal_psi_get_double(&it));
-                break;
+			case DBUS_TYPE_INT32:
+				printf ("  %s = %d  (0x%x)  (int)\n",
+					hal_psi_get_key (&it),
+					hal_psi_get_int (&it),
+					hal_psi_get_int (&it));
+				break;
 
-            case DBUS_TYPE_BOOLEAN:
-                printf("  %s = %s  (bool)\n", 
-                       hal_psi_get_key(&it), 
-                       hal_psi_get_bool(&it) ? "true" : "false");
-                break;
-            }
-        }
-        hal_free_property_set(props);
-        printf("\n");
-    }
+			case DBUS_TYPE_DOUBLE:
+				printf ("  %s = %g  (double)\n",
+					hal_psi_get_key (&it),
+					hal_psi_get_double (&it));
+				break;
 
-    hal_free_string_array(device_names);
+			case DBUS_TYPE_BOOLEAN:
+				printf ("  %s = %s  (bool)\n",
+					hal_psi_get_key (&it),
+					hal_psi_get_bool (&it) ? "true" :
+					"false");
+				break;
+			}
+		}
+		hal_free_property_set (props);
+		printf ("\n");
+	}
 
-    printf("\n"
-           "Dumped %d device(s) from the Global Device List:\n"
-           "------------------------------------------------\n", num_devices);
+	hal_free_string_array (device_names);
 
-    printf("\n");
+	printf ("\n"
+		"Dumped %d device(s) from the Global Device List:\n"
+		"------------------------------------------------\n",
+		num_devices);
+
+	printf ("\n");
 }
 
 /** Invoked when a device is added to the Global Device List. Simply prints
@@ -134,10 +140,11 @@ static void dump_devices()
  *
  *  @param  udi                 Universal Device Id
  */
-static void device_added(const char* udi)
+static void
+device_added (const char *udi)
 {
-    fprintf(stderr, "*** lshal: device_added, udi='%s'\n", udi);
-    dump_devices();
+	fprintf (stderr, "*** lshal: device_added, udi='%s'\n", udi);
+	dump_devices ();
 }
 
 /** Invoked when a device is removed from the Global Device List. Simply
@@ -145,10 +152,11 @@ static void device_added(const char* udi)
  *
  *  @param  udi                 Universal Device Id
  */
-static void device_removed(const char* udi)
+static void
+device_removed (const char *udi)
 {
-    fprintf(stderr, "*** lshal: device_removed, udi='%s'\n", udi);
-    dump_devices();
+	fprintf (stderr, "*** lshal: device_removed, udi='%s'\n", udi);
+	dump_devices ();
 }
 
 /** Invoked when device in the Global Device List acquires a new capability.
@@ -157,11 +165,12 @@ static void device_removed(const char* udi)
  *  @param  udi                 Universal Device Id
  *  @param  capability          Name of capability
  */
-static void device_new_capability(const char* udi, const char* capability)
+static void
+device_new_capability (const char *udi, const char *capability)
 {
-    fprintf(stderr, "*** lshal: new_capability, udi='%s'\n", udi);
-    fprintf(stderr, "*** capability: %s\n", capability);
-    /*dump_devices();*/
+	fprintf (stderr, "*** lshal: new_capability, udi='%s'\n", udi);
+	fprintf (stderr, "*** capability: %s\n", capability);
+	/*dump_devices(); */
 }
 
 
@@ -170,39 +179,44 @@ static void device_new_capability(const char* udi, const char* capability)
  *  @param  udi                 Universal Device Id
  *  @param  key                 Key of property
  */
-static void print_property(const char* udi, const char* key)
+static void
+print_property (const char *udi, const char *key)
 {
-    int type;
-    char* str;
+	int type;
+	char *str;
 
-    type = hal_device_get_property_type(udi, key);
+	type = hal_device_get_property_type (udi, key);
 
-    switch( type )
-    {
-    case DBUS_TYPE_STRING:
-        str = hal_device_get_property_string(udi, key);
-        fprintf(stderr, "*** new value: '%s'  (string)\n", str);
-        hal_free_string(str);
-        break;
-    case DBUS_TYPE_INT32:
-    {
-        dbus_int32_t value = hal_device_get_property_int(udi, key);
-        fprintf(stderr, "*** new value: %d (0x%x)  (int)\n", value, value);
-    }
-    break;
-    case DBUS_TYPE_DOUBLE:
-        fprintf(stderr, "*** new value: %g  (double)\n", 
-                hal_device_get_property_double(udi, key));
-        break;
-    case DBUS_TYPE_BOOLEAN:
-        fprintf(stderr, "*** new value: %s  (bool)\n", 
-                hal_device_get_property_bool(udi, key) ? "true" : "false");
-        break;
-        
-    default:
-        fprintf(stderr, "Unknown type %d='%c'\n", type, type);
-        break;
-    }
+	switch (type) {
+	case DBUS_TYPE_STRING:
+		str = hal_device_get_property_string (udi, key);
+		fprintf (stderr, "*** new value: '%s'  (string)\n", str);
+		hal_free_string (str);
+		break;
+	case DBUS_TYPE_INT32:
+		{
+			dbus_int32_t value =
+			    hal_device_get_property_int (udi, key);
+			fprintf (stderr,
+				 "*** new value: %d (0x%x)  (int)\n",
+				 value, value);
+		}
+		break;
+	case DBUS_TYPE_DOUBLE:
+		fprintf (stderr, "*** new value: %g  (double)\n",
+			 hal_device_get_property_double (udi, key));
+		break;
+	case DBUS_TYPE_BOOLEAN:
+		fprintf (stderr, "*** new value: %s  (bool)\n",
+			 hal_device_get_property_bool (udi,
+						       key) ? "true" :
+			 "false");
+		break;
+
+	default:
+		fprintf (stderr, "Unknown type %d='%c'\n", type, type);
+		break;
+	}
 }
 
 /** Invoked when a property of a device in the Global Device List is
@@ -211,18 +225,19 @@ static void print_property(const char* udi, const char* key)
  *  @param  udi                 Univerisal Device Id
  *  @param  key                 Key of property
  */
-static void property_modified(const char* udi, const char* key,
-                              dbus_bool_t is_removed, dbus_bool_t is_added)
+static void
+property_modified (const char *udi, const char *key,
+		   dbus_bool_t is_removed, dbus_bool_t is_added)
 {
-    fprintf(stderr, "*** lshal: property_modified, udi=%s, key=%s\n", 
-            udi, key);
-    fprintf(stderr, "           is_removed=%s, is_added=%s\n", 
-            is_removed ? "true" : "false", 
-            is_added ? "true" : "false" );
-    if( !is_removed )
-        print_property(udi, key);
-    fprintf(stderr, "\n");
-    /*dump_devices();*/
+	fprintf (stderr, "*** lshal: property_modified, udi=%s, key=%s\n",
+		 udi, key);
+	fprintf (stderr, "           is_removed=%s, is_added=%s\n",
+		 is_removed ? "true" : "false",
+		 is_added ? "true" : "false");
+	if (!is_removed)
+		print_property (udi, key);
+	fprintf (stderr, "\n");
+	/*dump_devices(); */
 }
 
 
@@ -233,14 +248,15 @@ static void property_modified(const char* udi, const char* key,
  *  @param  condition_name      Name of condition
  *  @param  message             D-BUS message with parameters
  */
-static void device_condition(const char* udi, const char* condition_name,
-                             DBusMessage* message)
+static void
+device_condition (const char *udi, const char *condition_name,
+		  DBusMessage * message)
 {
-    fprintf(stderr, "*** lshal: device_condition, udi=%s\n", udi);
-    fprintf(stderr, "           condition_name=%s\n", condition_name);
-    /** @todo FIXME print out message */
-    fprintf(stderr, "\n");
-    /*dump_devices();*/
+	fprintf (stderr, "*** lshal: device_condition, udi=%s\n", udi);
+	fprintf (stderr, "           condition_name=%s\n", condition_name);
+	/** @todo FIXME print out message */
+	fprintf (stderr, "\n");
+	/*dump_devices(); */
 }
 
 
@@ -249,9 +265,10 @@ static void device_condition(const char* udi, const char* condition_name,
  *
  *  @param  dbus_connection     D-BUS connection to integrate
  */
-static void mainloop_integration(DBusConnection* dbus_connection)
+static void
+mainloop_integration (DBusConnection * dbus_connection)
 {
-    dbus_connection_setup_with_g_main(dbus_connection, NULL);
+	dbus_connection_setup_with_g_main (dbus_connection, NULL);
 }
 
 
@@ -260,19 +277,18 @@ static void mainloop_integration(DBusConnection* dbus_connection)
  *  @param  argc                Number of arguments given to program
  *  @param  argv                Arguments given to program
  */
-static void usage(int argc, char* argv[])
+static void
+usage (int argc, char *argv[])
 {
-    fprintf(stderr, 
-"\n"
-"usage : %s --monitor [--help]\n", argv[0]);
-    fprintf(stderr, 
-"\n"
-"        --monitor        Monitor device list\n"
-"        --help           Show this information and exit\n"
-"\n"
-"Shows all devices and their properties. If the --monitor option is given\n"
-"then the device list and all devices are monitored for changes.\n"
-"\n");
+	fprintf (stderr, "\n" "usage : %s --monitor [--help]\n", argv[0]);
+	fprintf (stderr,
+		 "\n"
+		 "        --monitor        Monitor device list\n"
+		 "        --help           Show this information and exit\n"
+		 "\n"
+		 "Shows all devices and their properties. If the --monitor option is given\n"
+		 "then the device list and all devices are monitored for changes.\n"
+		 "\n");
 }
 
 /** Entry point
@@ -281,79 +297,73 @@ static void usage(int argc, char* argv[])
  *  @param  argv                Arguments given to program
  *  @return                     Return code
  */
-int main(int argc, char* argv[])
+int
+main (int argc, char *argv[])
 {
-    dbus_bool_t do_monitor = FALSE;
-    GMainLoop* loop;
-    LibHalFunctions hal_functions = { mainloop_integration,
-                                      device_added, 
-                                      device_removed, 
-                                      device_new_capability,
-                                      property_modified,
-                                      device_condition };
+	dbus_bool_t do_monitor = FALSE;
+	GMainLoop *loop;
+	LibHalFunctions hal_functions = { mainloop_integration,
+		device_added,
+		device_removed,
+		device_new_capability,
+		property_modified,
+		device_condition
+	};
 
-    fprintf(stderr, "lshal version " PACKAGE_VERSION "\n");
+	fprintf (stderr, "lshal version " PACKAGE_VERSION "\n");
 
-    loop = g_main_loop_new (NULL, FALSE);
+	loop = g_main_loop_new (NULL, FALSE);
 
-    while(1)
-    {
-        int c;
-        int option_index = 0;
-        const char* opt;
-        static struct option long_options[] = 
-        {
-            {"monitor", 0, NULL, 0},
-            {"help", 0, NULL, 0},
-            {NULL, 0, NULL, 0}
-        };
+	while (1) {
+		int c;
+		int option_index = 0;
+		const char *opt;
+		static struct option long_options[] = {
+			{"monitor", 0, NULL, 0},
+			{"help", 0, NULL, 0},
+			{NULL, 0, NULL, 0}
+		};
 
-        c = getopt_long(argc, argv, "",
-                        long_options, &option_index);
-        if (c == -1)
-            break;
-        
-        switch(c)
-        {
-        case 0:
-            opt = long_options[option_index].name;
+		c = getopt_long (argc, argv, "",
+				 long_options, &option_index);
+		if (c == -1)
+			break;
 
-            if( strcmp(opt, "help")==0 )
-            {
-                usage(argc, argv);
-                return 0;
-            }
-            else if( strcmp(opt, "monitor")==0 )
-            {
-                do_monitor = TRUE;
-            }
-            break;        
+		switch (c) {
+		case 0:
+			opt = long_options[option_index].name;
 
-        default:
-            usage(argc, argv);
-            return 1;
-            break;
-        }         
-    }
+			if (strcmp (opt, "help") == 0) {
+				usage (argc, argv);
+				return 0;
+			} else if (strcmp (opt, "monitor") == 0) {
+				do_monitor = TRUE;
+			}
+			break;
+
+		default:
+			usage (argc, argv);
+			return 1;
+			break;
+		}
+	}
 
 
-    if( hal_initialize(&hal_functions, FALSE)  )
-    {
-        fprintf(stderr, "error: hal_initialize failed\n");
-        exit(1);
-    }
+	if (hal_initialize (&hal_functions, FALSE)) {
+		fprintf (stderr, "error: hal_initialize failed\n");
+		exit (1);
+	}
 
-    dump_devices();    
+	dump_devices ();
 
-    /* run the main loop only if we should monitor */
-    if( do_monitor )
-    {
-        hal_device_property_watch_all();
-        g_main_loop_run(loop);
-    }
+	/* run the main loop only if we should monitor */
+	if (do_monitor) {
+		hal_device_property_watch_all ();
+		g_main_loop_run (loop);
+	}
 
-    hal_shutdown();
-    return 0;
+	hal_shutdown ();
+	return 0;
 }
 
 

@@ -35,16 +35,16 @@
  *
  *  @param  dbus_connection     The D-BUS connection the HAL daemon got,
  */
-void osspec_init(DBusConnection* dbus_connection);
+void osspec_init (DBusConnection * dbus_connection);
 
 /** Probe all hardware present in the system and synchronize with the
  *  device list
  *
  */
-void osspec_probe();
+void osspec_probe ();
 
-DBusHandlerResult osspec_filter_function(DBusConnection* connection,
-                                         DBusMessage* message,
-                                         void* user_data);
+DBusHandlerResult osspec_filter_function (DBusConnection * connection,
+					  DBusMessage * message,
+					  void *user_data);
 
-#endif /* OSSPEC_H */
+#endif				/* OSSPEC_H */

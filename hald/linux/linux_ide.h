@@ -28,12 +28,12 @@
 
 #include "linux_common.h"
 
-void visit_device_ide_host(const char* path, struct sysfs_device *device);
+void visit_device_ide_host (const char *path, struct sysfs_device *device);
 
-void visit_device_ide(const char* path, struct sysfs_device *device);
+void visit_device_ide (const char *path, struct sysfs_device *device);
 
-void linux_ide_init();
-void linux_ide_detection_done();
-void linux_ide_shutdown();
+void linux_ide_init ();
+void linux_ide_detection_done ();
+void linux_ide_shutdown ();
 
-#endif /* LINUX_IDE_H */
+#endif				/* LINUX_IDE_H */
