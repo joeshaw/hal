@@ -65,21 +65,21 @@
  */
 
 typedef struct IconMappingEntry_s {
-	HalStoragePolicyIcon icon;
+	LibHalStoragePolicyIcon icon;
 	char *path;
 	struct IconMappingEntry_s *next;
 } IconMappingEntry;
 
-struct HalStoragePolicy_s {
+struct LibHalStoragePolicy_s {
 	IconMappingEntry *icon_mappings;
 };
 
-HalStoragePolicy *
-hal_storage_policy_new ()
+LibHalStoragePolicy *
+libhal_storage_policy_new ()
 {
-	HalStoragePolicy *p;
+	LibHalStoragePolicy *p;
 
-	p = malloc (sizeof (HalStoragePolicy));
+	p = malloc (sizeof (LibHalStoragePolicy));
 	if (p == NULL)
 		goto out;
 
@@ -89,7 +89,7 @@ out:
 }
 
 void
-hal_storage_policy_free (HalStoragePolicy *policy)
+libhal_storage_policy_free (LibHalStoragePolicy *policy)
 {
 	IconMappingEntry *i;
 	IconMappingEntry *j;
@@ -105,7 +105,7 @@ hal_storage_policy_free (HalStoragePolicy *policy)
 }
 
 void
-hal_storage_policy_set_icon_path (HalStoragePolicy *policy, HalStoragePolicyIcon icon, const char *path)
+libhal_storage_policy_set_icon_path (LibHalStoragePolicy *policy, LibHalStoragePolicyIcon icon, const char *path)
 {
 	IconMappingEntry *i;
 
@@ -131,17 +131,17 @@ out:
 }
 
 void
-hal_storage_policy_set_icon_mapping (HalStoragePolicy *policy, HalStoragePolicyIconPair *pairs)
+libhal_storage_policy_set_icon_mapping (LibHalStoragePolicy *policy, LibHalStoragePolicyIconPair *pairs)
 {
-	HalStoragePolicyIconPair *i;
+	LibHalStoragePolicyIconPair *i;
 
 	for (i = pairs; i->icon != 0x00; i++) {
-		hal_storage_policy_set_icon_path (policy, i->icon, i->icon_path);
+		libhal_storage_policy_set_icon_path (policy, i->icon, i->icon_path);
 	}
 }
 
 const char *
-hal_storage_policy_lookup_icon (HalStoragePolicy *policy, HalStoragePolicyIcon icon)
+libhal_storage_policy_lookup_icon (LibHalStoragePolicy *policy, LibHalStoragePolicyIcon icon)
 {
 	IconMappingEntry *i;
 	const char *path;
@@ -161,7 +161,7 @@ out:
 #define MAX_STRING_SZ 256
 
 char *
-hal_volume_policy_compute_size_as_string (HalVolume *volume)
+libhal_volume_policy_compute_size_as_string (LibHalVolume *volume)
 {
 	dbus_uint64_t size;
 	char *result;
@@ -174,7 +174,7 @@ hal_volume_policy_compute_size_as_string (HalVolume *volume)
 
 	result = NULL;
 
-	size = hal_volume_get_size (volume);
+	size = libhal_volume_get_size (volume);
 
 	do {
 		if (sizes_str[cur_str+1] == NULL || size < cur*step) {
@@ -209,28 +209,28 @@ fixup_string (char *s)
 
 /* volume may be NULL (e.g. if drive supports removable media) */
 char *
-hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	char *name;
 	char *size_str;
 	char *vendormodel_str;
 	const char *model;
 	const char *vendor;
-	HalDriveType drive_type;
+	LibHalDriveType drive_type;
 	dbus_bool_t drive_is_hotpluggable;
 	dbus_bool_t drive_is_removable;
-	HalDriveCdromCaps drive_cdrom_caps;
+	LibHalDriveCdromCaps drive_cdrom_caps;
 	char buf[MAX_STRING_SZ];
 
-	model = hal_drive_get_model (drive);
-	vendor = hal_drive_get_vendor (drive);
-	drive_type = hal_drive_get_type (drive);
-	drive_is_hotpluggable = hal_drive_is_hotpluggable (drive);
-	drive_is_removable = hal_drive_uses_removable_media (drive);
-	drive_cdrom_caps = hal_drive_get_cdrom_caps (drive);
+	model = libhal_drive_get_model (drive);
+	vendor = libhal_drive_get_vendor (drive);
+	drive_type = libhal_drive_get_type (drive);
+	drive_is_hotpluggable = libhal_drive_is_hotpluggable (drive);
+	drive_is_removable = libhal_drive_uses_removable_media (drive);
+	drive_cdrom_caps = libhal_drive_get_cdrom_caps (drive);
 
 	if (volume != NULL)
-		size_str = hal_volume_policy_compute_size_as_string (volume);
+		size_str = libhal_volume_policy_compute_size_as_string (volume);
 	else
 		size_str = NULL;
 
@@ -250,7 +250,7 @@ hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalSt
 
 	fixup_string (vendormodel_str);
 
-	if (drive_type==HAL_DRIVE_TYPE_CDROM) {
+	if (drive_type==LIBHAL_DRIVE_TYPE_CDROM) {
 
 		/* Optical drive handling */
 		char *first;
@@ -258,29 +258,29 @@ hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalSt
 
 
 		first = "CD-ROM";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_CDR)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_CDR)
 			first = "CD-R";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_CDRW)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_CDRW)
 			first = "CD-RW";
 
 		second = "";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDROM)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDROM)
 			second = "/DVD-ROM";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDPLUSR)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR)
 			second = "/DVD+R";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDPLUSRW)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW)
 			second = "/DVD+RW";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDR)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDR)
 			second = "/DVD-R";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDRW)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDRW)
 			second = "/DVD-RW";
-		if (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDRAM)
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDRAM)
 			second = "/DVD-RAM";
-		if ((drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDR) &&
-		    (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDPLUSR))
+		if ((drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDR) &&
+		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR))
 			second = "/DVD±R";
-		if ((drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDRW) &&
-		    (drive_cdrom_caps & HAL_DRIVE_CDROM_CAPS_DVDPLUSRW))
+		if ((drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDRW) &&
+		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW))
 			second = "/DVD±RW";
 
 
@@ -292,7 +292,7 @@ hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalSt
 			name = strdup (buf);
 		}
 			
-	} else if (drive_type==HAL_DRIVE_TYPE_FLOPPY) {
+	} else if (drive_type==LIBHAL_DRIVE_TYPE_FLOPPY) {
 
 		/* Floppy Drive handling */
 
@@ -300,7 +300,7 @@ hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalSt
 			name = strdup (_("External Floppy Drive"));
 		else
 			name = strdup (_("Floppy Drive"));
-	} else if (drive_type==HAL_DRIVE_TYPE_DISK && !drive_is_removable) {
+	} else if (drive_type==LIBHAL_DRIVE_TYPE_DISK && !drive_is_removable) {
 
 		/* Harddisks */
 
@@ -335,28 +335,28 @@ hal_drive_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalSt
 }
 
 char *
-hal_volume_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	char *name;
 	char *size_str;
 	const char *volume_label;
 	const char *model;
 	const char *vendor;
-	HalDriveType drive_type;
+	LibHalDriveType drive_type;
 	dbus_bool_t drive_is_hotpluggable;
 	dbus_bool_t drive_is_removable;
-	HalDriveCdromCaps drive_cdrom_caps;
+	LibHalDriveCdromCaps drive_cdrom_caps;
 	char buf[MAX_STRING_SZ];
 
-	volume_label = hal_volume_get_label (volume);
-	model = hal_drive_get_model (drive);
-	vendor = hal_drive_get_vendor (drive);
-	drive_type = hal_drive_get_type (drive);
-	drive_is_hotpluggable = hal_drive_is_hotpluggable (drive);
-	drive_is_removable = hal_drive_uses_removable_media (drive);
-	drive_cdrom_caps = hal_drive_get_cdrom_caps (drive);
+	volume_label = libhal_volume_get_label (volume);
+	model = libhal_drive_get_model (drive);
+	vendor = libhal_drive_get_vendor (drive);
+	drive_type = libhal_drive_get_type (drive);
+	drive_is_hotpluggable = libhal_drive_is_hotpluggable (drive);
+	drive_is_removable = libhal_drive_uses_removable_media (drive);
+	drive_cdrom_caps = libhal_drive_get_cdrom_caps (drive);
 
-	size_str = hal_volume_policy_compute_size_as_string (volume);
+	size_str = libhal_volume_policy_compute_size_as_string (volume);
 
 	/* If the volume label is available use that 
 	 *
@@ -368,64 +368,64 @@ hal_volume_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalS
 	}
 
 	/* Handle media in optical drives */
-	if (drive_type==HAL_DRIVE_TYPE_CDROM) {
-		switch (hal_volume_get_disc_type (volume)) {
+	if (drive_type==LIBHAL_DRIVE_TYPE_CDROM) {
+		switch (libhal_volume_get_disc_type (volume)) {
 
 		default:
 			/* explict fallthrough */
-		case HAL_VOLUME_DISC_TYPE_CDROM:
+		case LIBHAL_VOLUME_DISC_TYPE_CDROM:
 			name = strdup (_("CD-ROM Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_CDR:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_CDR:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank CD-R Disc"));
 			else
 				name = strdup (_("CD-R Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_CDRW:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_CDRW:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank CD-RW Disc"));
 			else
 				name = strdup (_("CD-RW Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_DVDROM:
+		case LIBHAL_VOLUME_DISC_TYPE_DVDROM:
 			name = strdup (_("DVD-ROM Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_DVDRAM:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_DVDRAM:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank DVD-RAM Disc"));
 			else
 				name = strdup (_("DVD-RAM Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_DVDR:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_DVDR:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank DVD-R Disc"));
 			else
 				name = strdup (_("DVD-R Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_DVDRW:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_DVDRW:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank DVD-RW Disc"));
 			else
 				name = strdup (_("DVD-RW Disc"));
 
 			break;
 
-		case HAL_VOLUME_DISC_TYPE_DVDPLUSR:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank DVD+R Disc"));
 			else
 				name = strdup (_("DVD+R Disc"));
 			break;
 			
-		case HAL_VOLUME_DISC_TYPE_DVDPLUSRW:
-			if (hal_volume_disc_is_blank (volume))
+		case LIBHAL_VOLUME_DISC_TYPE_DVDPLUSRW:
+			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank DVD+RW Disc"));
 			else
 				name = strdup (_("DVD+RW Disc"));
@@ -433,7 +433,7 @@ hal_volume_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalS
 		}
 		
 		/* Special case for pure audio disc */
-		if (hal_volume_disc_has_audio (volume) && !hal_volume_disc_has_data (volume)) {
+		if (libhal_volume_disc_has_audio (volume) && !libhal_volume_disc_has_data (volume)) {
 			free (name);
 			name = strdup (_("Audio Disc"));
 		}
@@ -451,7 +451,7 @@ hal_volume_policy_compute_display_name (HalDrive *drive, HalVolume *volume, HalS
 	}
 
 	/* Fallback: Use drive name */
-	/*name = hal_drive_policy_compute_display_name (drive, volume);*/
+	/*name = libhal_drive_policy_compute_display_name (drive, volume);*/
 
 out:
 	free (size_str);
@@ -459,27 +459,27 @@ out:
 }
 
 char *
-hal_drive_policy_compute_icon_name (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+libhal_drive_policy_compute_icon_name (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	const char *name;
-	HalDriveBus bus;
-	HalDriveType drive_type;
+	LibHalDriveBus bus;
+	LibHalDriveType drive_type;
 
-	bus        = hal_drive_get_bus (drive);
-	drive_type = hal_drive_get_type (drive);
+	bus        = libhal_drive_get_bus (drive);
+	drive_type = libhal_drive_get_type (drive);
 
 	/* by design, the enums are laid out so we can do easy computations */
 
 	switch (drive_type) {
-	case HAL_DRIVE_TYPE_REMOVABLE_DISK:
-	case HAL_DRIVE_TYPE_DISK:
-	case HAL_DRIVE_TYPE_CDROM:
-	case HAL_DRIVE_TYPE_FLOPPY:
-		name = hal_storage_policy_lookup_icon (policy, 0x10000 + drive_type*0x100 + bus);
+	case LIBHAL_DRIVE_TYPE_REMOVABLE_DISK:
+	case LIBHAL_DRIVE_TYPE_DISK:
+	case LIBHAL_DRIVE_TYPE_CDROM:
+	case LIBHAL_DRIVE_TYPE_FLOPPY:
+		name = libhal_storage_policy_lookup_icon (policy, 0x10000 + drive_type*0x100 + bus);
 		break;
 
 	default:
-		name = hal_storage_policy_lookup_icon (policy, 0x10000 + drive_type*0x100);
+		name = libhal_storage_policy_lookup_icon (policy, 0x10000 + drive_type*0x100);
 	}
 
 	if (name != NULL)
@@ -489,39 +489,39 @@ hal_drive_policy_compute_icon_name (HalDrive *drive, HalVolume *volume, HalStora
 }
 
 char *
-hal_volume_policy_compute_icon_name (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+libhal_volume_policy_compute_icon_name (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	const char *name;
-	HalDriveBus bus;
-	HalDriveType drive_type;
-	HalVolumeDiscType disc_type;
+	LibHalDriveBus bus;
+	LibHalDriveType drive_type;
+	LibHalVolumeDiscType disc_type;
 
 	/* by design, the enums are laid out so we can do easy computations */
 
-	if (hal_volume_is_disc (volume)) {
-		disc_type = hal_volume_get_disc_type (volume);
-		name = hal_storage_policy_lookup_icon (policy, 0x30000 + disc_type);
+	if (libhal_volume_is_disc (volume)) {
+		disc_type = libhal_volume_get_disc_type (volume);
+		name = libhal_storage_policy_lookup_icon (policy, 0x30000 + disc_type);
 		goto out;
 	}
 
 	if (drive == NULL) {
-		name = hal_storage_policy_lookup_icon (policy, HAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK);
+		name = libhal_storage_policy_lookup_icon (policy, LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK);
 		goto out;
 	}
 
-	bus        = hal_drive_get_bus (drive);
-	drive_type = hal_drive_get_type (drive);
+	bus        = libhal_drive_get_bus (drive);
+	drive_type = libhal_drive_get_type (drive);
 
 	switch (drive_type) {
-	case HAL_DRIVE_TYPE_REMOVABLE_DISK:
-	case HAL_DRIVE_TYPE_DISK:
-	case HAL_DRIVE_TYPE_CDROM:
-	case HAL_DRIVE_TYPE_FLOPPY:
-		name = hal_storage_policy_lookup_icon (policy, 0x20000 + drive_type*0x100 + bus);
+	case LIBHAL_DRIVE_TYPE_REMOVABLE_DISK:
+	case LIBHAL_DRIVE_TYPE_DISK:
+	case LIBHAL_DRIVE_TYPE_CDROM:
+	case LIBHAL_DRIVE_TYPE_FLOPPY:
+		name = libhal_storage_policy_lookup_icon (policy, 0x20000 + drive_type*0x100 + bus);
 		break;
 
 	default:
-		name = hal_storage_policy_lookup_icon (policy, 0x20000 + drive_type*0x100);
+		name = libhal_storage_policy_lookup_icon (policy, 0x20000 + drive_type*0x100);
 	}
 out:
 	if (name != NULL)
@@ -547,7 +547,7 @@ out:
  *                              environment.
  */
 dbus_bool_t
-hal_volume_policy_should_be_visible (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy, 
+libhal_volume_policy_should_be_visible (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy, 
 				     const char *target_mount_point)
 {
 	unsigned int i;
@@ -581,12 +581,12 @@ hal_volume_policy_should_be_visible (HalDrive *drive, HalVolume *volume, HalStor
 	is_visible = FALSE;
 
 	/* skip if hal says it's not used as a filesystem */
-	if (hal_volume_get_fsusage (volume) != HAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM)
+	if (libhal_volume_get_fsusage (volume) != LIBHAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM)
 		goto out;
 
-	label = hal_volume_get_label (volume);
-	mount_point = hal_volume_get_mount_point (volume);
-	fstype = hal_volume_get_fstype (volume);
+	label = libhal_volume_get_label (volume);
+	mount_point = libhal_volume_get_mount_point (volume);
+	fstype = libhal_volume_get_fstype (volume);
 
 	/* use target mount point if we're not mounted yet */
 	if (mount_point == NULL)
@@ -619,21 +619,21 @@ out:
 
 #define MOUNT_OPTIONS_SIZE 256
 
-struct HalDrive_s {
+struct LibHalDrive_s {
 	char *udi;
 
 	int device_major;
 	int device_minor;
 	char *device_file;
 
-	HalDriveBus bus;
+	LibHalDriveBus bus;
 	char *vendor;             /* may be "", is never NULL */
 	char *model;              /* may be "", is never NULL */
 	dbus_bool_t is_hotpluggable;
 	dbus_bool_t is_removable;
 	dbus_bool_t requires_eject;
 
-	HalDriveType type;
+	LibHalDriveType type;
 	char *type_textual;
 
 	char *physical_device;  /* UDI of physical device, e.g. the 
@@ -644,7 +644,7 @@ struct HalDrive_s {
 
 	char *serial;
 	char *firmware_version;
-	HalDriveCdromCaps cdrom_caps;
+	LibHalDriveCdromCaps cdrom_caps;
 
 	char *desired_mount_point;
 	char *mount_filesystem;
@@ -657,7 +657,7 @@ struct HalDrive_s {
 	char mount_options[MOUNT_OPTIONS_SIZE];
 };
 
-struct HalVolume_s {
+struct LibHalVolume_s {
 	char *udi;
 
 	int device_major;
@@ -671,7 +671,7 @@ struct HalVolume_s {
 	char *uuid;
 	char *storage_device;
 
-	HalVolumeUsage fsusage;
+	LibHalVolumeUsage fsusage;
 
 	dbus_bool_t is_partition;
 	unsigned int partition_number;
@@ -680,7 +680,7 @@ struct HalVolume_s {
 	
 
 	dbus_bool_t is_disc;
-	HalVolumeDiscType disc_type;
+	LibHalVolumeDiscType disc_type;
 	dbus_bool_t disc_has_audio;
 	dbus_bool_t disc_has_data;
 	dbus_bool_t disc_is_appendable;
@@ -698,23 +698,23 @@ struct HalVolume_s {
 };
 
 const char *
-hal_drive_get_dedicated_icon_drive (HalDrive *drive)
+libhal_drive_get_dedicated_icon_drive (LibHalDrive *drive)
 {
 	return drive->dedicated_icon_drive;
 }
 
 const char *
-hal_drive_get_dedicated_icon_volume (HalDrive *drive)
+libhal_drive_get_dedicated_icon_volume (LibHalDrive *drive)
 {
 	return drive->dedicated_icon_volume;
 }
 
-/** Free all resources used by a HalDrive object.
+/** Free all resources used by a LibHalDrive object.
  *
  *  @param  drive               Object to free
  */
 void
-hal_drive_free (HalDrive *drive)
+libhal_drive_free (LibHalDrive *drive)
 {
 	if (drive == NULL )
 		return;
@@ -732,12 +732,12 @@ hal_drive_free (HalDrive *drive)
 }
 
 
-/** Free all resources used by a HalVolume object.
+/** Free all resources used by a LibHalVolume object.
  *
  *  @param  volume              Object to free
  */
 void
-hal_volume_free (HalVolume *vol)
+libhal_volume_free (LibHalVolume *vol)
 {
 	if (vol == NULL )
 		return;
@@ -756,26 +756,26 @@ hal_volume_free (HalVolume *vol)
 
 /* ok, hey, so this is a bit ugly */
 
-#define HAL_PROP_EXTRACT_BEGIN if (FALSE)
-#define HAL_PROP_EXTRACT_END ;
-#define HAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_INT32) _where_ = libhal_psi_get_int (&it)
-#define HAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
-#define HAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
-#define HAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
+#define LIBHAL_PROP_EXTRACT_BEGIN if (FALSE)
+#define LIBHAL_PROP_EXTRACT_END ;
+#define LIBHAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_INT32) _where_ = libhal_psi_get_int (&it)
+#define LIBHAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
+#define LIBHAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
+#define LIBHAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
 
-/** Given a UDI for a HAL device of capability 'storage', this
+/** Given a UDI for a LIBHAL device of capability 'storage', this
  *  function retrieves all the relevant properties into convenient
  *  in-process data structures.
  *
  *  @param  hal_ctx             libhal context
- *  @param  udi                 HAL UDI
- *  @return                     HalDrive object or NULL if UDI is invalid
+ *  @param  udi                 LIBHAL UDI
+ *  @return                     LibHalDrive object or NULL if UDI is invalid
  */
-HalDrive *
-hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
+LibHalDrive *
+libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 {
 	char *bus_textual;
-	HalDrive *drive;
+	LibHalDrive *drive;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
 	DBusError error;
@@ -788,10 +788,10 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	if (!libhal_device_query_capability (hal_ctx, udi, "storage", &error))
 		goto error;
 
-	drive = malloc (sizeof (HalDrive));
+	drive = malloc (sizeof (LibHalDrive));
 	if (drive == NULL)
 		goto error;
-	memset (drive, 0x00, sizeof (HalDrive));
+	memset (drive, 0x00, sizeof (LibHalDrive));
 
 	drive->hal_ctx = hal_ctx;
 
@@ -811,75 +811,75 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		type = libhal_psi_get_type (&it);
 		key = libhal_psi_get_key (&it);
 
-		HAL_PROP_EXTRACT_BEGIN;
+		LIBHAL_PROP_EXTRACT_BEGIN;
 
-		HAL_PROP_EXTRACT_INT    ("block.minor",               drive->device_minor);
-		HAL_PROP_EXTRACT_INT    ("block.major",               drive->device_major);
-		HAL_PROP_EXTRACT_STRING ("block.device",              drive->device_file);
-		HAL_PROP_EXTRACT_STRING ("storage.bus",               bus_textual);
-		HAL_PROP_EXTRACT_STRING ("storage.vendor",            drive->vendor);
-		HAL_PROP_EXTRACT_STRING ("storage.model",             drive->model);
-		HAL_PROP_EXTRACT_STRING ("storage.drive_type",        drive->type_textual);
+		LIBHAL_PROP_EXTRACT_INT    ("block.minor",               drive->device_minor);
+		LIBHAL_PROP_EXTRACT_INT    ("block.major",               drive->device_major);
+		LIBHAL_PROP_EXTRACT_STRING ("block.device",              drive->device_file);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.bus",               bus_textual);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.vendor",            drive->vendor);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.model",             drive->model);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.drive_type",        drive->type_textual);
 
 
-		HAL_PROP_EXTRACT_STRING ("storage.icon.drive",        drive->dedicated_icon_drive);
-		HAL_PROP_EXTRACT_STRING ("storage.icon.volume",       drive->dedicated_icon_volume);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.icon.drive",        drive->dedicated_icon_drive);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.icon.volume",       drive->dedicated_icon_volume);
 
-		HAL_PROP_EXTRACT_BOOL   ("storage.hotpluggable",      drive->is_hotpluggable);
-		HAL_PROP_EXTRACT_BOOL   ("storage.removable",         drive->is_removable);
-		HAL_PROP_EXTRACT_BOOL   ("storage.requires_eject",    drive->requires_eject);
+		LIBHAL_PROP_EXTRACT_BOOL   ("storage.hotpluggable",      drive->is_hotpluggable);
+		LIBHAL_PROP_EXTRACT_BOOL   ("storage.removable",         drive->is_removable);
+		LIBHAL_PROP_EXTRACT_BOOL   ("storage.requires_eject",    drive->requires_eject);
 
-		HAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
-		HAL_PROP_EXTRACT_STRING ("storage.firmware_version",  drive->firmware_version);
-		HAL_PROP_EXTRACT_STRING ("storage.serial",            drive->serial);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.firmware_version",  drive->firmware_version);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.serial",            drive->serial);
 
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.cdr", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_CDR);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.cdrw", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_CDRW);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvd", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDROM);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusr", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDPLUSR);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrw", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDPLUSRW);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdr", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDR);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdrw", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDRW);
-		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdram", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDRAM);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.cdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_CDR);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.cdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_CDRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvd", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDROM);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDR);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdram", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRAM);
 
-		HAL_PROP_EXTRACT_BOOL   ("storage.policy.should_mount",        drive->should_mount);
-		HAL_PROP_EXTRACT_STRING ("storage.policy.desired_mount_point", drive->desired_mount_point);
-		HAL_PROP_EXTRACT_STRING ("storage.policy.mount_filesystem",    drive->mount_filesystem);
+		LIBHAL_PROP_EXTRACT_BOOL   ("storage.policy.should_mount",        drive->should_mount);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.policy.desired_mount_point", drive->desired_mount_point);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.policy.mount_filesystem",    drive->mount_filesystem);
 
-		HAL_PROP_EXTRACT_BOOL   ("storage.no_partitions_hint",        drive->no_partitions_hint);
+		LIBHAL_PROP_EXTRACT_BOOL   ("storage.no_partitions_hint",        drive->no_partitions_hint);
 
-		HAL_PROP_EXTRACT_END;
+		LIBHAL_PROP_EXTRACT_END;
 	}
 
 	if (drive->type_textual != NULL) {
 		if (strcmp (drive->type_textual, "cdrom") == 0) {
-			drive->cdrom_caps |= HAL_DRIVE_CDROM_CAPS_CDROM;
-			drive->type = HAL_DRIVE_TYPE_CDROM;
+			drive->cdrom_caps |= LIBHAL_DRIVE_CDROM_CAPS_CDROM;
+			drive->type = LIBHAL_DRIVE_TYPE_CDROM;
 		} else if (strcmp (drive->type_textual, "floppy") == 0) {
-			drive->type = HAL_DRIVE_TYPE_FLOPPY;
+			drive->type = LIBHAL_DRIVE_TYPE_FLOPPY;
 		} else if (strcmp (drive->type_textual, "disk") == 0) {
 			if (drive->is_removable)
-				drive->type = HAL_DRIVE_TYPE_REMOVABLE_DISK;
+				drive->type = LIBHAL_DRIVE_TYPE_REMOVABLE_DISK;
 			else
-				drive->type = HAL_DRIVE_TYPE_DISK;				
+				drive->type = LIBHAL_DRIVE_TYPE_DISK;				
 		} else if (strcmp (drive->type_textual, "tape") == 0) {
-			drive->type = HAL_DRIVE_TYPE_TAPE;
+			drive->type = LIBHAL_DRIVE_TYPE_TAPE;
 		} else if (strcmp (drive->type_textual, "compact_flash") == 0) {
-			drive->type = HAL_DRIVE_TYPE_COMPACT_FLASH;
+			drive->type = LIBHAL_DRIVE_TYPE_COMPACT_FLASH;
 		} else if (strcmp (drive->type_textual, "memory_stick") == 0) {
-			drive->type = HAL_DRIVE_TYPE_MEMORY_STICK;
+			drive->type = LIBHAL_DRIVE_TYPE_MEMORY_STICK;
 		} else if (strcmp (drive->type_textual, "smart_media") == 0) {
-			drive->type = HAL_DRIVE_TYPE_SMART_MEDIA;
+			drive->type = LIBHAL_DRIVE_TYPE_SMART_MEDIA;
 		} else if (strcmp (drive->type_textual, "sd_mmc") == 0) {
-			drive->type = HAL_DRIVE_TYPE_SD_MMC;
+			drive->type = LIBHAL_DRIVE_TYPE_SD_MMC;
 /*
 		} else if (strcmp (drive->type_textual, "zip") == 0) {
-			drive->type = HAL_DRIVE_TYPE_ZIP;
+			drive->type = LIBHAL_DRIVE_TYPE_ZIP;
 		} else if (strcmp (drive->type_textual, "jaz") == 0) {
-			drive->type = HAL_DRIVE_TYPE_JAZ;
+			drive->type = LIBHAL_DRIVE_TYPE_JAZ;
 */
 		} else {
-		        drive->type = HAL_DRIVE_TYPE_DISK; 
+		        drive->type = LIBHAL_DRIVE_TYPE_DISK; 
 		}
 
 	}
@@ -893,9 +893,9 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		category = libhal_device_get_property_string (hal_ctx, drive->physical_device, "info.category", &err1);
 		if (category != NULL) {
 			if (strcmp (category, "portable_audio_player") == 0) {
-				drive->type = HAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER;
+				drive->type = LIBHAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER;
 			} else if (strcmp (category, "camera") == 0) {
-				drive->type = HAL_DRIVE_TYPE_CAMERA;
+				drive->type = LIBHAL_DRIVE_TYPE_CAMERA;
 			}
 
 			libhal_free_string (category);
@@ -904,13 +904,13 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 	if (bus_textual != NULL) {
 		if (strcmp (bus_textual, "usb") == 0) {
-			drive->bus = HAL_DRIVE_BUS_USB;
+			drive->bus = LIBHAL_DRIVE_BUS_USB;
 		} else if (strcmp (bus_textual, "ieee1394") == 0) {
-			drive->bus = HAL_DRIVE_BUS_IEEE1394;
+			drive->bus = LIBHAL_DRIVE_BUS_IEEE1394;
 		} else if (strcmp (bus_textual, "ide") == 0) {
-			drive->bus = HAL_DRIVE_BUS_IDE;
+			drive->bus = LIBHAL_DRIVE_BUS_IDE;
 		} else if (strcmp (bus_textual, "scsi") == 0) {
-			drive->bus = HAL_DRIVE_BUS_SCSI;
+			drive->bus = LIBHAL_DRIVE_BUS_SCSI;
 		}
 	}
 
@@ -922,40 +922,40 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 error:
 	libhal_free_string (bus_textual);
 	libhal_free_property_set (properties);
-	hal_drive_free (drive);
+	libhal_drive_free (drive);
 	return NULL;
 }
 
 const char *
-hal_volume_get_storage_device_udi (HalVolume *volume)
+libhal_volume_get_storage_device_udi (LibHalVolume *volume)
 {
 	return volume->storage_device;
 }
 
-const char *hal_drive_get_physical_device_udi (HalDrive *drive)
+const char *libhal_drive_get_physical_device_udi (LibHalDrive *drive)
 {
 	return drive->physical_device;
 }
 
 dbus_bool_t
-hal_drive_requires_eject (HalDrive *drive)
+libhal_drive_requires_eject (LibHalDrive *drive)
 {
 	return drive->requires_eject;
 }
 
-/** Given a UDI for a HAL device of capability 'volume', this
+/** Given a UDI for a LIBHAL device of capability 'volume', this
  *  function retrieves all the relevant properties into convenient
  *  in-process data structures.
  *
  *  @param  hal_ctx             libhal context
- *  @param  udi                 HAL UDI
- *  @return                     HalVolume object or NULL if UDI is invalid
+ *  @param  udi                 LIBHAL UDI
+ *  @return                     LibHalVolume object or NULL if UDI is invalid
  */
-HalVolume *
-hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
+LibHalVolume *
+libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 {
 	char *disc_type_textual;
-	HalVolume *vol;
+	LibHalVolume *vol;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
 	DBusError error;
@@ -968,10 +968,10 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 	if (!libhal_device_query_capability (hal_ctx, udi, "volume", &error))
 		goto error;
 
-	vol = malloc (sizeof (HalVolume));
+	vol = malloc (sizeof (LibHalVolume));
 	if (vol == NULL)
 		goto error;
-	memset (vol, 0x00, sizeof (HalVolume));
+	memset (vol, 0x00, sizeof (LibHalVolume));
 
 	vol->udi = strdup (udi);
 
@@ -987,57 +987,57 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		type = libhal_psi_get_type (&it);
 		key = libhal_psi_get_key (&it);
 
-		HAL_PROP_EXTRACT_BEGIN;
+		LIBHAL_PROP_EXTRACT_BEGIN;
 
-		HAL_PROP_EXTRACT_INT    ("volume.partition.msdos_part_table_type", vol->msdos_part_table_type);
+		LIBHAL_PROP_EXTRACT_INT    ("volume.partition.msdos_part_table_type", vol->msdos_part_table_type);
 
-		HAL_PROP_EXTRACT_INT    ("block.minor",               vol->device_minor);
-		HAL_PROP_EXTRACT_INT    ("block.major",               vol->device_major);
-		HAL_PROP_EXTRACT_STRING ("block.device",              vol->device_file);
+		LIBHAL_PROP_EXTRACT_INT    ("block.minor",               vol->device_minor);
+		LIBHAL_PROP_EXTRACT_INT    ("block.major",               vol->device_major);
+		LIBHAL_PROP_EXTRACT_STRING ("block.device",              vol->device_file);
 
-		HAL_PROP_EXTRACT_STRING ("block.storage_device",      vol->storage_device);
+		LIBHAL_PROP_EXTRACT_STRING ("block.storage_device",      vol->storage_device);
 
-		HAL_PROP_EXTRACT_INT    ("volume.block_size",         vol->block_size);
-		HAL_PROP_EXTRACT_INT    ("volume.num_blocks",         vol->num_blocks);
-		HAL_PROP_EXTRACT_STRING ("volume.label",              vol->volume_label);
-		HAL_PROP_EXTRACT_STRING ("volume.mount_point",        vol->mount_point);
-		HAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
-		HAL_PROP_EXTRACT_BOOL   ("volume.is_mounted",         vol->is_mounted);
+		LIBHAL_PROP_EXTRACT_INT    ("volume.block_size",         vol->block_size);
+		LIBHAL_PROP_EXTRACT_INT    ("volume.num_blocks",         vol->num_blocks);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.label",              vol->volume_label);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.mount_point",        vol->mount_point);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_mounted",         vol->is_mounted);
 
-		HAL_PROP_EXTRACT_BOOL   ("volume.is_disc",            vol->is_disc);
-		HAL_PROP_EXTRACT_STRING ("volume.disc.type",          disc_type_textual);
-		HAL_PROP_EXTRACT_BOOL   ("volume.disc.has_audio",     vol->disc_has_audio);
-		HAL_PROP_EXTRACT_BOOL   ("volume.disc.has_data",      vol->disc_has_data);
-		HAL_PROP_EXTRACT_BOOL   ("volume.disc.is_appendable", vol->disc_is_appendable);
-		HAL_PROP_EXTRACT_BOOL   ("volume.disc.is_blank",      vol->disc_is_blank);
-		HAL_PROP_EXTRACT_BOOL   ("volume.disc.is_rewritable", vol->disc_is_rewritable);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_disc",            vol->is_disc);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.disc.type",          disc_type_textual);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.has_audio",     vol->disc_has_audio);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.has_data",      vol->disc_has_data);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.is_appendable", vol->disc_is_appendable);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.is_blank",      vol->disc_is_blank);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.is_rewritable", vol->disc_is_rewritable);
 
-		HAL_PROP_EXTRACT_BOOL   ("volume.policy.should_mount",        vol->should_mount);
-		HAL_PROP_EXTRACT_STRING ("volume.policy.desired_mount_point", vol->desired_mount_point);
-		HAL_PROP_EXTRACT_STRING ("volume.policy.mount_filesystem",    vol->mount_filesystem);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.policy.should_mount",        vol->should_mount);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.policy.desired_mount_point", vol->desired_mount_point);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.policy.mount_filesystem",    vol->mount_filesystem);
 
-		HAL_PROP_EXTRACT_END;
+		LIBHAL_PROP_EXTRACT_END;
 	}
 
 	if (disc_type_textual != NULL) {
 		if (strcmp (disc_type_textual, "cd_rom") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_CDROM;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_CDROM;
 		} else if (strcmp (disc_type_textual, "cd_r") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_CDR;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_CDR;
 		} else if (strcmp (disc_type_textual, "cd_rw") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_CDRW;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_CDRW;
 		} else if (strcmp (disc_type_textual, "dvd_rom") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_DVDROM;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDROM;
 		} else if (strcmp (disc_type_textual, "dvd_ram") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_DVDRAM;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDRAM;
 		} else if (strcmp (disc_type_textual, "dvd_r") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_DVDR;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDR;
 		} else if (strcmp (disc_type_textual, "dvd_rw") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_DVDRW;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDRW;
 		} else if (strcmp (disc_type_textual, "dvd_plusr") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_DVDPLUSR;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR;
 		} else if (strcmp (disc_type_textual, "dvd_plusrw") == 0) {
-			vol->disc_type = HAL_VOLUME_DISC_TYPE_DVDPLUSRW;
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSRW;
 		}
 	}
 
@@ -1047,7 +1047,7 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 error:
 	libhal_free_string (disc_type_textual);
 	libhal_free_property_set (properties);
-	hal_volume_free (vol);
+	libhal_volume_free (vol);
 	return NULL;
 }
 
@@ -1061,7 +1061,7 @@ error:
  *                              isn't partition with a MS DOS style table
  */
 int
-hal_volume_get_msdos_part_table_type (HalVolume *volume)
+libhal_volume_get_msdos_part_table_type (LibHalVolume *volume)
 {
 	return volume->msdos_part_table_type;
 }
@@ -1073,15 +1073,15 @@ hal_volume_get_msdos_part_table_type (HalVolume *volume)
  *
  *  @param  hal_ctx             libhal context to use
  *  @param  device_file         Name of special device file, e.g. '/dev/hdc'
- *  @return                     HalDrive object or NULL if it doesn't exist
+ *  @return                     LibHalDrive object or NULL if it doesn't exist
  */
-HalDrive *
-hal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
+LibHalDrive *
+libhal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 {
 	int i;
 	char **hal_udis;
 	int num_hal_udis;
-	HalDrive *result;
+	LibHalDrive *result;
 	char *found_udi;
 	DBusError error;
 
@@ -1118,7 +1118,7 @@ hal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 	libhal_free_string_array (hal_udis);
 
 	if (found_udi != NULL)
-		result = hal_drive_from_udi (hal_ctx, found_udi);
+		result = libhal_drive_from_udi (hal_ctx, found_udi);
 
 	free (found_udi);
 out:
@@ -1130,15 +1130,15 @@ out:
  *
  *  @param  hal_ctx             libhal context to use
  *  @param  device_file         Name of special device file, e.g. '/dev/hda5'
- *  @return                     HalVolume object or NULL if it doesn't exist
+ *  @return                     LibHalVolume object or NULL if it doesn't exist
  */
-HalVolume *
-hal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
+LibHalVolume *
+libhal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 {
 	int i;
 	char **hal_udis;
 	int num_hal_udis;
-	HalVolume *result;
+	LibHalVolume *result;
 	char *found_udi;
 	DBusError error;
 
@@ -1162,7 +1162,7 @@ hal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 	libhal_free_string_array (hal_udis);
 
 	if (found_udi != NULL)
-		result = hal_volume_from_udi (hal_ctx, found_udi);
+		result = libhal_volume_from_udi (hal_ctx, found_udi);
 
 	free (found_udi);
 out:
@@ -1170,92 +1170,92 @@ out:
 }
 
 dbus_uint64_t
-hal_volume_get_size (HalVolume *volume)
+libhal_volume_get_size (LibHalVolume *volume)
 {
 	return ((dbus_uint64_t)volume->block_size) * ((dbus_uint64_t)volume->num_blocks);
 }
 
 
 dbus_bool_t
-hal_drive_is_hotpluggable (HalDrive *drive)
+libhal_drive_is_hotpluggable (LibHalDrive *drive)
 {
 	return drive->is_hotpluggable;
 }
 
 dbus_bool_t
-hal_drive_uses_removable_media (HalDrive *drive)
+libhal_drive_uses_removable_media (LibHalDrive *drive)
 {
 	return drive->is_removable;
 }
 
-HalDriveType
-hal_drive_get_type (HalDrive *drive)
+LibHalDriveType
+libhal_drive_get_type (LibHalDrive *drive)
 {
 	return drive->type;
 }
 
-HalDriveBus
-hal_drive_get_bus (HalDrive *drive)
+LibHalDriveBus
+libhal_drive_get_bus (LibHalDrive *drive)
 {
 	return drive->bus;
 }
 
-HalDriveCdromCaps
-hal_drive_get_cdrom_caps (HalDrive *drive)
+LibHalDriveCdromCaps
+libhal_drive_get_cdrom_caps (LibHalDrive *drive)
 {
 	return drive->cdrom_caps;
 }
 
 unsigned int
-hal_drive_get_device_major (HalDrive *drive)
+libhal_drive_get_device_major (LibHalDrive *drive)
 {
 	return drive->device_major;
 }
 
 unsigned int
-hal_drive_get_device_minor (HalDrive *drive)
+libhal_drive_get_device_minor (LibHalDrive *drive)
 {
 	return drive->device_minor;
 }
 
 const char *
-hal_drive_get_type_textual (HalDrive *drive)
+libhal_drive_get_type_textual (LibHalDrive *drive)
 {
 	return drive->type_textual;
 }
 
 const char *
-hal_drive_get_device_file (HalDrive *drive)
+libhal_drive_get_device_file (LibHalDrive *drive)
 {
 	return drive->device_file;
 }
 
 const char *
-hal_drive_get_udi (HalDrive *drive)
+libhal_drive_get_udi (LibHalDrive *drive)
 {
 	return drive->udi;
 }
 
 const char *
-hal_drive_get_serial (HalDrive *drive)
+libhal_drive_get_serial (LibHalDrive *drive)
 {
 	return drive->serial;
 }
 
 const char *
-hal_drive_get_firmware_version (HalDrive *drive)
+libhal_drive_get_firmware_version (LibHalDrive *drive)
 {
 	return drive->firmware_version;
 }
 
 const char *
-hal_drive_get_model (HalDrive *drive)
+libhal_drive_get_model (LibHalDrive *drive)
 {
 	return drive->model;
 }
 
 const char *
-hal_drive_get_vendor (HalDrive *drive)
+libhal_drive_get_vendor (LibHalDrive *drive)
 {
 	return drive->vendor;
 }
@@ -1263,125 +1263,125 @@ hal_drive_get_vendor (HalDrive *drive)
 /*****************************************************************************/
 
 const char *
-hal_volume_get_udi (HalVolume *volume)
+libhal_volume_get_udi (LibHalVolume *volume)
 {
 	return volume->udi;
 }
 
 const char *
-hal_volume_get_device_file (HalVolume *volume)
+libhal_volume_get_device_file (LibHalVolume *volume)
 {
 	return volume->device_file;
 }
 
-unsigned int hal_volume_get_device_major (HalVolume *volume)
+unsigned int libhal_volume_get_device_major (LibHalVolume *volume)
 {
 	return volume->device_major;
 }
 
-unsigned int hal_volume_get_device_minor (HalVolume *volume)
+unsigned int libhal_volume_get_device_minor (LibHalVolume *volume)
 {
 	return volume->device_minor;
 }
 
 const char *
-hal_volume_get_fstype (HalVolume *volume)
+libhal_volume_get_fstype (LibHalVolume *volume)
 {
 	return volume->fstype;
 }
 
 const char *
-hal_volume_get_fsversion (HalVolume *volume)
+libhal_volume_get_fsversion (LibHalVolume *volume)
 {
 	return volume->fsversion;
 }
 
-HalVolumeUsage 
-hal_volume_get_fsusage (HalVolume *volume)
+LibHalVolumeUsage 
+libhal_volume_get_fsusage (LibHalVolume *volume)
 {
 	return volume->fsusage;
 }
 
 dbus_bool_t 
-hal_volume_is_mounted (HalVolume *volume)
+libhal_volume_is_mounted (LibHalVolume *volume)
 {
 	return volume->is_mounted;
 }
 
 dbus_bool_t 
-hal_volume_is_partition (HalVolume *volume)
+libhal_volume_is_partition (LibHalVolume *volume)
 {
 	return volume->is_partition;
 }
 
 dbus_bool_t
-hal_volume_is_disc (HalVolume *volume)
+libhal_volume_is_disc (LibHalVolume *volume)
 {
 	return volume->is_disc;
 }
 
 unsigned int
-hal_volume_get_partition_number (HalVolume *volume)
+libhal_volume_get_partition_number (LibHalVolume *volume)
 {
 	return volume->partition_number;
 }
 
 const char *
-hal_volume_get_label (HalVolume *volume)
+libhal_volume_get_label (LibHalVolume *volume)
 {
 	return volume->volume_label;
 }
 
 const char *
-hal_volume_get_mount_point (HalVolume *volume)
+libhal_volume_get_mount_point (LibHalVolume *volume)
 {
 	return volume->mount_point;
 }
 
 const char *
-hal_volume_get_uuid (HalVolume *volume)
+libhal_volume_get_uuid (LibHalVolume *volume)
 {
 	return volume->uuid;
 }
 
 dbus_bool_t
-hal_volume_disc_has_audio (HalVolume *volume)
+libhal_volume_disc_has_audio (LibHalVolume *volume)
 {
 	return volume->disc_has_audio;
 }
 
 dbus_bool_t
-hal_volume_disc_has_data (HalVolume *volume)
+libhal_volume_disc_has_data (LibHalVolume *volume)
 {
 	return volume->disc_has_data;
 }
 
 dbus_bool_t
-hal_volume_disc_is_blank (HalVolume *volume)
+libhal_volume_disc_is_blank (LibHalVolume *volume)
 {
 	return volume->disc_is_blank;
 }
 
 dbus_bool_t
-hal_volume_disc_is_rewritable (HalVolume *volume)
+libhal_volume_disc_is_rewritable (LibHalVolume *volume)
 {
 	return volume->disc_is_rewritable;
 }
 
 dbus_bool_t
-hal_volume_disc_is_appendable (HalVolume *volume)
+libhal_volume_disc_is_appendable (LibHalVolume *volume)
 {
 	return volume->disc_is_appendable;
 }
 
-HalVolumeDiscType
-hal_volume_get_disc_type (HalVolume *volume)
+LibHalVolumeDiscType
+libhal_volume_get_disc_type (LibHalVolume *volume)
 {
 	return volume->disc_type;
 }
 
 char ** 
-hal_drive_find_all_volumes (LibHalContext *hal_ctx, HalDrive *drive, int *num_volumes)
+libhal_drive_find_all_volumes (LibHalContext *hal_ctx, LibHalDrive *drive, int *num_volumes)
 {
 	int i;
 	char **udis;
@@ -1394,7 +1394,7 @@ hal_drive_find_all_volumes (LibHalContext *hal_ctx, HalDrive *drive, int *num_vo
 	result = NULL;
 	*num_volumes = 0;
 
-	drive_udi = hal_drive_get_udi (drive);
+	drive_udi = libhal_drive_get_udi (drive);
 	if (drive_udi == NULL)
 		goto out;
 
@@ -1424,51 +1424,51 @@ out:
 /*************************************************************************/
 
 char *
-hal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
+libhal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
 						  "storage.policy.default.mount_root", &error);
 }
 
 dbus_bool_t
-hal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
+libhal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
 						"storage.policy.default.use_managed_keyword", &error);
 }
 
 char *
-hal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
+libhal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
 						  "storage.policy.default.managed_keyword.primary", &error);
 }
 
 char *
-hal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx)
+libhal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx)
 {
 	DBusError error;
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/LibHal/devices/computer",
 						  "storage.policy.default.managed_keyword.secondary", &error);
 }
 
 /*************************************************************************/
 
 dbus_bool_t
-hal_drive_policy_is_mountable (HalDrive *drive, HalStoragePolicy *policy)
+libhal_drive_policy_is_mountable (LibHalDrive *drive, LibHalStoragePolicy *policy)
 {
 	return drive->should_mount && drive->no_partitions_hint;
 }
 
 const char *
-hal_drive_policy_get_desired_mount_point (HalDrive *drive, HalStoragePolicy *policy)
+libhal_drive_policy_get_desired_mount_point (LibHalDrive *drive, LibHalStoragePolicy *policy)
 {
 	return drive->desired_mount_point;
 }
@@ -1553,7 +1553,7 @@ error:
 
 
 const char *
-hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
+libhal_drive_policy_get_mount_options (LibHalDrive *drive, LibHalStoragePolicy *policy)
 {
 	const char *result;
 	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
@@ -1564,12 +1564,12 @@ hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
 
 	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+		       "/org/freedesktop/LibHal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
 		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/Hal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+		       "/org/freedesktop/LibHal/devices/computer", drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 	mopts_collect (drive->hal_ctx, stor_mount_option_begin, sizeof (stor_mount_option_begin),
 		       drive->udi, drive->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 
@@ -1579,24 +1579,24 @@ hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
 }
 
 const char *
-hal_drive_policy_get_mount_fs (HalDrive *drive, HalStoragePolicy *policy)
+libhal_drive_policy_get_mount_fs (LibHalDrive *drive, LibHalStoragePolicy *policy)
 {
 	return drive->mount_filesystem;
 }
 
 
 dbus_bool_t
-hal_volume_policy_is_mountable (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+libhal_volume_policy_is_mountable (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	return drive->should_mount && volume->should_mount;
 }
 
-const char *hal_volume_policy_get_desired_mount_point (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+const char *libhal_volume_policy_get_desired_mount_point (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	return volume->desired_mount_point;
 }
 
-const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+const char *libhal_volume_policy_get_mount_options (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	const char *result;
 	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
@@ -1607,12 +1607,12 @@ const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *vol
 
 	/* ensure ('pamconsole', 'user', 'users', 'defaults' options that imply other options), are first */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
+		       "/org/freedesktop/LibHal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
 		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, TRUE);
 	/* collect options != ('pamconsole', 'user', 'users', 'defaults' options that imply other options)  */
 	mopts_collect (drive->hal_ctx, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin),
-		       "/org/freedesktop/Hal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
+		       "/org/freedesktop/LibHal/devices/computer", volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 	mopts_collect (drive->hal_ctx, vol_mount_option_begin, sizeof (vol_mount_option_begin),
 		       volume->udi, volume->mount_options, MOUNT_OPTIONS_SIZE, FALSE);
 
@@ -1621,13 +1621,13 @@ const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *vol
 	return result;
 }
 
-const char *hal_volume_policy_get_mount_fs (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+const char *libhal_volume_policy_get_mount_fs (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
 {
 	return volume->mount_filesystem;
 }
 
 dbus_bool_t       
-hal_drive_no_partitions_hint (HalDrive *drive)
+libhal_drive_no_partitions_hint (LibHalDrive *drive)
 {
 	return drive->no_partitions_hint;
 }

@@ -1,5 +1,14 @@
 2005-02-16  David Zeuthen  <davidz@redhat.com>
 
+	Patch from John (J5) Palmieri <johnp@redhat.com>.
+
+	* libhal-storage/libhal-storage.[ch]: Rename all functions, symbols
+	and defines from hal_storage to libhal_storage.
+
+	* tools/fstab-sync.c: Update for changes in libhal-storage
+
+2005-02-16  David Zeuthen  <davidz@redhat.com>
+
 	* tools/device-manager/DeviceManager.py:
 	(DeviceManager.update_tab_advanced): Make this work for string lists
 

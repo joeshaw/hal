@@ -1146,8 +1146,8 @@ tryagain:
 static char* add_hal_device (FSTable *table, const char *udi)
 {
 	char *rc;
-	HalDrive *drive;
-	HalVolume *volume;
+	LibHalDrive *drive;
+	LibHalVolume *volume;
 	FSTableLine *line;
 	char final_options[256];
 	
@@ -1157,7 +1157,7 @@ static char* add_hal_device (FSTable *table, const char *udi)
 	
 	fstab_update_debug (_("%d: entering add_hal_device, udi='%s'\n"), pid, udi);
 	
-	drive  = hal_drive_from_udi (hal_context, udi);
+	drive  = libhal_drive_from_udi (hal_context, udi);
 	/*fstab_update_debug (_("%d: drive=%x, volume=%x\n"), pid, drive, volume);*/
 	if (drive == NULL) {
 		char *udi_storage_device;
@@ -1167,13 +1167,13 @@ static char* add_hal_device (FSTable *table, const char *udi)
 		udi_storage_device = libhal_device_get_property_string (hal_context, udi, "block.storage_device", &error);
 		if (udi_storage_device == NULL)
 			goto out;
-		drive = hal_drive_from_udi (hal_context, udi_storage_device);
+		drive = libhal_drive_from_udi (hal_context, udi_storage_device);
 		libhal_free_string (udi_storage_device);
 		if (drive == NULL)
 			goto out;
 	}
 
-	volume = hal_volume_from_udi (hal_context, udi);
+	volume = libhal_volume_from_udi (hal_context, udi);
 		
 	/* see if we are a drive */
 	if (volume == NULL) {
@@ -1184,10 +1184,10 @@ static char* add_hal_device (FSTable *table, const char *udi)
 		const char *fstype;
 		const char *options;
 		
-		if (!hal_drive_policy_is_mountable (drive, NULL))
+		if (!libhal_drive_policy_is_mountable (drive, NULL))
 			goto out;
 		
-		device_file = hal_drive_get_device_file (drive);
+		device_file = libhal_drive_get_device_file (drive);
 		if (device_file == NULL)
 			goto out;
 
@@ -1197,7 +1197,7 @@ static char* add_hal_device (FSTable *table, const char *udi)
 			goto out;
 		}
 		
-		desired_mount_point = hal_drive_policy_get_desired_mount_point (drive, NULL);
+		desired_mount_point = libhal_drive_policy_get_desired_mount_point (drive, NULL);
 		if (desired_mount_point == NULL)
 			goto out;
 
@@ -1205,10 +1205,10 @@ static char* add_hal_device (FSTable *table, const char *udi)
 		if (normalized_desired_mount_point == NULL)
 			goto out;
 		
-		fstype = hal_drive_policy_get_mount_fs (drive, NULL);
+		fstype = libhal_drive_policy_get_mount_fs (drive, NULL);
 		if (fstype == NULL)
 			goto out;
-		options = hal_drive_policy_get_mount_options (drive, NULL);
+		options = libhal_drive_policy_get_mount_options (drive, NULL);
 		if (options == NULL)
 			goto out;
 		
@@ -1247,14 +1247,14 @@ static char* add_hal_device (FSTable *table, const char *udi)
 		const char *options;
 		
 		/* means we are a volume */
-		if (!hal_volume_policy_is_mountable (drive, volume, NULL))
+		if (!libhal_volume_policy_is_mountable (drive, volume, NULL))
 			goto out;
 		
-		device_file = hal_volume_get_device_file (volume);
+		device_file = libhal_volume_get_device_file (volume);
 		if (device_file == NULL)
 			goto out;
 		
-		label = hal_volume_get_label (volume);
+		label = libhal_volume_get_label (volume);
 		if (device_file == NULL)
 			goto out;
 		
@@ -1264,7 +1264,7 @@ static char* add_hal_device (FSTable *table, const char *udi)
 			goto out;
 		}
 		
-		desired_mount_point = hal_volume_policy_get_desired_mount_point (drive, volume, NULL);
+		desired_mount_point = libhal_volume_policy_get_desired_mount_point (drive, volume, NULL);
 		if (desired_mount_point == NULL)
 			goto out;
 
@@ -1272,10 +1272,10 @@ static char* add_hal_device (FSTable *table, const char *udi)
 		if (normalized_desired_mount_point == NULL)
 			goto out;
 		
-		fstype = hal_volume_policy_get_mount_fs (drive, volume, NULL);
+		fstype = libhal_volume_policy_get_mount_fs (drive, volume, NULL);
 		if (fstype == NULL)
 			goto out;
-		options = hal_volume_policy_get_mount_options (drive, volume, NULL);
+		options = libhal_volume_policy_get_mount_options (drive, volume, NULL);
 		if (options == NULL)
 			goto out;
 		
@@ -1310,8 +1310,8 @@ static char* add_hal_device (FSTable *table, const char *udi)
 	
 	
 out:
-	hal_volume_free (volume);
-	hal_drive_free (drive);
+	libhal_volume_free (volume);
+	libhal_drive_free (drive);
 	return rc;
 }
 
@@ -1803,16 +1803,16 @@ main (int argc, const char *argv[])
 	  goto out;
   }
 
-  fsy_mount_root = hal_drive_policy_default_get_mount_root (hal_context);
+  fsy_mount_root = libhal_drive_policy_default_get_mount_root (hal_context);
   if (fsy_mount_root == NULL)
 	  goto out;
   fstab_update_debug (_("%d: mount_root='%s'\n"), pid, fsy_mount_root);
-  fsy_use_managed = hal_drive_policy_default_use_managed_keyword (hal_context);
+  fsy_use_managed = libhal_drive_policy_default_use_managed_keyword (hal_context);
   fstab_update_debug (_("%d: use_managed=%d\n"), pid, fsy_use_managed);
   if (fsy_use_managed) {
-	  if ((fsy_managed_primary   = hal_drive_policy_default_get_managed_keyword_primary (hal_context)) == NULL)
+	  if ((fsy_managed_primary   = libhal_drive_policy_default_get_managed_keyword_primary (hal_context)) == NULL)
 		  goto out;
-	  if ((fsy_managed_secondary = hal_drive_policy_default_get_managed_keyword_secondary (hal_context)) == NULL)
+	  if ((fsy_managed_secondary = libhal_drive_policy_default_get_managed_keyword_secondary (hal_context)) == NULL)
 		  goto out;
 	  fstab_update_debug (_("%d: managed primary='%s'\n"), pid, fsy_managed_primary);
 	  fstab_update_debug (_("%d: managed secondary='%s'\n"), pid, fsy_managed_secondary);
