@@ -167,46 +167,59 @@ main (int argc, char *argv[])
 	}
 
 	type = libhal_device_get_property_type (hal_ctx, udi, key, &error);
-	if (type == DBUS_TYPE_INVALID) {
+	if (type == LIBHAL_PROPERTY_TYPE_INVALID) {
 		fprintf (stderr, "error: libhal_device_get_property_type: %s: %s\n", error.name, error.message);
 		return 1;
 	}
 	/* emit the value to stdout */
 	switch (type) {
-	case DBUS_TYPE_STRING:
+	case LIBHAL_PROPERTY_TYPE_STRING:
 		str = libhal_device_get_property_string (hal_ctx, udi, key, &error);
 		if (is_verbose)
 			printf ("Type is string\n");
 		printf ("%s\n", str);
 		libhal_free_string (str);
 		break;
-	case DBUS_TYPE_INT32:
+	case LIBHAL_PROPERTY_TYPE_INT32:
 		if (is_verbose)
 			printf ("Type is integer (shown in %s)\n",
 				(is_hex ? "hexadecimal" : "decimal"));
 		printf ((is_hex ? "%x\n" : "%d\n"),
 			libhal_device_get_property_int (hal_ctx, udi, key, &error));
 		break;
-	case DBUS_TYPE_UINT64:
+	case LIBHAL_PROPERTY_TYPE_UINT64:
 		if (is_verbose)
 			printf ("Type is uint64 (shown in %s)\n",
 				(is_hex ? "hexadecimal" : "decimal"));
 		printf ((is_hex ? "%llx\n" : "%lld\n"),
 			libhal_device_get_property_uint64 (hal_ctx, udi, key, &error));
 		break;
-	case DBUS_TYPE_DOUBLE:
+	case LIBHAL_PROPERTY_TYPE_DOUBLE:
 		if (is_verbose)
 			printf ("Type is double\n");
 		printf ("%f\n",
 			libhal_device_get_property_double (hal_ctx, udi, key, &error));
 		break;
-	case DBUS_TYPE_BOOLEAN:
+	case LIBHAL_PROPERTY_TYPE_BOOLEAN:
 		if (is_verbose)
 			printf ("Type is boolean\n");
 		printf ("%s\n",
 			libhal_device_get_property_bool (hal_ctx, udi, key, &error) ? "true" : "false");
 		break;
 
+	case LIBHAL_PROPERTY_TYPE_STRLIST:
+	{
+		unsigned int i;
+		char **strlist;
+		
+		strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
+		for (i = 0; strlist[i] != 0; i++) {
+			printf ("%s", strlist[i]);
+			if (strlist[i+1] != NULL)
+				printf (" ");
+		}
+		break;
+	}
 	default:
 		printf ("Unknown type %d='%c'\n", type, type);
 		return 1;

@@ -1,5 +1,9 @@
 2005-03-12  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal_get_property.c (main): Make this work for strlists
+
+2005-03-12  David Zeuthen  <davidz@redhat.com>
+
 	Bah, I still need to update the spec for all the new stuff; until
 	then, here's some other new stuff - one very relevant use for this
 	is that we can key off whether a system can ACPI S3 by e.g. looking
