@@ -1,3 +1,11 @@
+2004-06-07  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Bump to 0.2.92
+
+	* packaging/fedora/hal.spec: Install the symlink in
+	/etc/dev.d/default/hal.dev. Patch from Kristian Høgsberg
+	<krh@bitplanet.net>. Bump version to 0.2.92
+
 2004-06-06  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (block_class_visit): Add the

@@ -4,7 +4,7 @@
 
 Summary: Hardware Abstraction Layer
 Name: hal
-Version: 0.2.91
+Version: 0.2.92
 Release: 2
 URL: http://www.freedesktop.org/software/hal/
 Source0: %{name}-%{version}.tar.gz
@@ -95,6 +95,7 @@ fi
 %dir %{_sysconfdir}/dbus-1/system.d
 %config %{_sysconfdir}/dbus-1/system.d/hal.conf
 %config %{_sysconfdir}/rc.d/init.d/*
+%{_sysconfdir}/dev.d/default/hal.dev
 
 %{_sbindir}/hald
 
