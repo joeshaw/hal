@@ -1,9 +1,19 @@
+2005-03-04  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/blockdev.c (blockdev_get_luks_uuid): Only sleep
+	the 0.5s if we are not initialising
+	(hotplug_event_begin_add_blockdev): Don't leak the HalDevice object
+
+2005-03-02  W. Michael Petullo  <mike@flyn.org>
+
+	* hald/linux2/blockdev.c: Add ability to identify volumes in
+	/dev/mapper as the counterpart to a LUKS+encrypted device.
+
 2005-03-04  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* volume_id/luks.c: (volume_id_probe_luks): Remove unneeded stuff.
 
 	* volume_id/volume_id.h: Version v37.
-
 
 2005-03-02  W. Michael Petullo  <mike@flyn.org>
 

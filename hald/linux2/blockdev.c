@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <linux/kdev_t.h>
 
 #include <limits.h>
 #include <errno.h>
@@ -432,6 +433,89 @@ out:
 	;
 }
 
+static const gchar *
+blockdev_get_luks_uuid(const gchar *device_file)
+{
+	const gchar *luks_uuid = NULL;
+	unsigned int major;
+	unsigned int minor;
+	const char *last_elem;
+
+	HAL_INFO (("get_luks_uuid: device_file=%s", device_file));
+
+	major = 253; /* FIXME: replace by devmapper constant */
+	last_elem = hal_util_get_last_element (device_file);
+	if (sscanf (last_elem, "dm-%d", &minor) == 1) {
+		GDir *dir;
+		HAL_INFO (("path=%s is a device mapper dev, major/minor=%d/%d", device_file, major, minor));
+		/* Ugly hack to see if we're a LUKS crypto device; should
+		* be replaced by some ioctl or libdevmapper stuff by where
+		* we can ask about the name for /dev/dm-0; as e.g. given by
+		* 'dmsetup info'
+		*
+		* Our assumption is that sesame-setup have invoked
+		* dmsetup; e.g. the naming convention is 
+		*
+		*    sesame_crypto_<luks_uuid>
+		*
+		* where <luks_uuid> is the UUID encoded in the luks
+		* metadata.
+		*/
+		/* Ugly sleep of 0.5s here as well to allow dmsetup to do the mknod */
+		if (!hald_is_initialising)
+			usleep (1000 * 1000 * 5 / 10);
+		if ((dir = g_dir_open ("/dev/mapper", 0, NULL)) != NULL) {
+			const gchar *f;
+			char devpath[256];
+			struct stat statbuf;
+			while ((f = g_dir_read_name (dir)) != NULL) {
+				char sesame_prefix[] = "sesame_crypto_";
+				HAL_INFO (("looking at /dev/mapper/%s", f));
+				g_snprintf (devpath, sizeof (devpath), "/dev/mapper/%s", f);
+				if (stat (devpath, &statbuf) == 0) {
+					if (S_ISBLK (statbuf.st_mode) && 
+					    MAJOR(statbuf.st_rdev) == major && 
+					    MINOR(statbuf.st_rdev) == minor &&
+					    strncmp (f, sesame_prefix, sizeof (sesame_prefix) - 1) == 0) {
+						luks_uuid = f + sizeof (sesame_prefix) - 1;
+						HAL_INFO (("found %s; luks_uuid='%s'!", devpath, luks_uuid));
+						break;
+					}
+				}
+			}
+			g_dir_close (dir);
+		}
+	}
+	return luks_uuid;
+}
+
+static HalDevice *
+blockdev_get_luks_parent (const gchar *luks_uuid, HalDevice *device)
+{
+	HalDevice *parent = NULL;
+	HalDevice *backing_volume;
+
+	HAL_INFO (("get_luks_parent: luks_uuid=%s device=0x%08x", 
+		   luks_uuid, device));
+
+	backing_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
+								  "volume.uuid", 
+								  luks_uuid);
+	if (backing_volume != NULL) {
+		const char *backing_volume_stordev_udi;
+		HAL_INFO (("backing_volume udi='%s'!", backing_volume->udi));
+		backing_volume_stordev_udi = hal_device_property_get_string (backing_volume, "block.storage_device");
+		if (backing_volume_stordev_udi != NULL) {
+			HAL_INFO (("backing_volume_stordev_udi='%s'!", backing_volume_stordev_udi));
+			parent = hal_device_store_find (hald_get_gdl (), backing_volume_stordev_udi);
+			if (parent != NULL) {
+				HAL_INFO (("parent='%s'!", parent->udi));
+				hal_device_property_set_string (device, "volume.crypto_sesame.clear.backing_volume", backing_volume->udi);
+			}
+		}
+	}
+	return parent;
+}
 
 void
 hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_file, gboolean is_partition,
@@ -470,11 +554,21 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		goto out;
 	}
 
+	d = hal_device_new ();
+
 	/* lip service for PC floppy drives */
 	if (parent == NULL && sscanf (hal_util_get_last_element (sysfs_path), "fd%d", &floppy_num) == 1) {
 		;
 	} else {
 		floppy_num = -1;
+
+		if (parent == NULL) {
+			const gchar *luks_uuid = blockdev_get_luks_uuid (device_file);
+			if (luks_uuid != NULL) {
+				is_partition = TRUE;
+				parent = blockdev_get_luks_parent (luks_uuid, d);
+			}
+		}
 
 		if (parent == NULL) {
 			HAL_INFO (("Ignoring hotplug event - no parent"));
@@ -488,8 +582,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 	}
 
-
-	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	if (parent != NULL)
