@@ -603,9 +603,15 @@ void drivers_collect(const char* bus_name)
     snprintf(path, SYSFS_PATH_MAX, "%s/bus/%s/drivers", sysfs_mount_path, bus_name);
     dir = sysfs_open_directory(path);
     if( dir==NULL )
-        DIE(("Error opening sysfs directory at %s\n", path));
+    {
+        HAL_WARNING(("Error opening sysfs directory at %s\n", path));
+        goto out;
+    }
     if( sysfs_read_directory(dir)!=0 )
-        DIE(("Error reading sysfs directory at %s\n", path));
+    {
+        HAL_WARNING(("Error reading sysfs directory at %s\n", path));
+        goto out;
+    }
     if( dir->subdirs!=NULL )
     {
         dlist_for_each_data(dir->subdirs, current, struct sysfs_directory)
@@ -630,7 +636,9 @@ void drivers_collect(const char* bus_name)
             }
         }
     }
-    sysfs_close_directory(dir);
+out:
+    if( dir!=NULL )
+        sysfs_close_directory(dir);
 }
 
 /** @} */

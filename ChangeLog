@@ -1,3 +1,9 @@
+2004-01-19  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_common.c (drivers_collect): Don't call DIE() if 
+	we cannot open the /sys/bus/<busname>/drivers directory - just
+	ignore this error with HAL_WARNING()
+
 2004-01-18  David Zeuthen  <david@fubar.dk>
 
 	* hald/device_store.c (ds_device_merge): treat info.properties in
