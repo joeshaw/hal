@@ -1742,6 +1742,15 @@ agent_device_matches (DBusConnection * connection, DBusMessage * message)
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static gboolean
+reinit_dbus (gpointer user_data)
+{
+	if (hald_dbus_init ())
+		return FALSE;
+	else
+		return TRUE;
+}
+
 /** Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function.
  *
@@ -1761,11 +1770,18 @@ filter_function (DBusConnection * connection,
     dbus_message_get_member(message)));
 */
 
-	if (dbus_message_is_method_call (message,
+	if (dbus_message_is_signal (message,
+				    DBUS_INTERFACE_ORG_FREEDESKTOP_LOCAL,
+				    "Disconnected") &&
+	    strcmp (dbus_message_get_path (message),
+		    DBUS_PATH_ORG_FREEDESKTOP_LOCAL) == 0) {
+		dbus_connection_unref (dbus_connection);
+		g_timeout_add (3000, reinit_dbus, NULL);
+	} else if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Manager",
 					 "GetAllDevices") &&
-	    strcmp (dbus_message_get_path (message),
-		    "/org/freedesktop/Hal/Manager") == 0) {
+		   strcmp (dbus_message_get_path (message),
+			   "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_get_all_devices (connection, message);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Manager",
@@ -1893,7 +1909,7 @@ filter_function (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-DBusConnection *
+gboolean
 hald_dbus_init (void)
 {
 	DBusError dbus_error;
@@ -1904,23 +1920,24 @@ hald_dbus_init (void)
 	dbus_connection = dbus_bus_get (DBUS_BUS_SYSTEM, &dbus_error);
 	if (dbus_connection == NULL) {
 		HAL_ERROR (("dbus_bus_get(): %s", dbus_error.message));
-		exit (1);
+		return FALSE;
 	}
 
 	dbus_connection_setup_with_g_main (dbus_connection, NULL);
+	dbus_connection_set_exit_on_disconnect (dbus_connection, FALSE);
 
 	dbus_bus_acquire_service (dbus_connection, "org.freedesktop.Hal",
 				  0, &dbus_error);
 	if (dbus_error_is_set (&dbus_error)) {
 		HAL_ERROR (("dbus_bus_acquire_service(): %s",
 			    dbus_error.message));
-		exit (1);
+		return FALSE;
 	}
 
 	dbus_connection_add_filter (dbus_connection, filter_function, NULL,
 				    NULL);
 
-	return dbus_connection;
+	return TRUE;
 }
 
 /** @} */

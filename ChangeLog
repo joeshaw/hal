@@ -1,5 +1,26 @@
 2004-07-30  Joe Shaw  <joeshaw@novell.com>
 
+	* hald/hald.c (main): Update for the change to hald_dbus_init():
+	don't get a DBusConnection from there, exit() if it fails.  Also
+	update for the change to osspec_init(): don't pass in any
+	arguments.
+
+	* hald/hald_dbus.c (hald_dbus_init): Don't exit() anywhere here;
+	instead return FALSE.  Tell dbus not to exit if we're disconnected
+	from the bus.  Return TRUE on success, not a DBusConnection.
+	(filter_function): Listen for the "Disconnected" signal on the
+	"Local" dbus interface and if so, unref the connection and try to
+	reconnect to the system bus every 3 seconds.
+	(reinit_dbus): Try to reconnect to the system bus.
+
+	* hald/osspec.h: Change osspec_init() to not take any parameters;
+	the only backend (the Linux 2.6 one) wasn't using it.
+
+	* hald/linux/osspec.c (osspec_init): Take void instead of a
+	DBusConnection.
+
+2004-07-30  Joe Shaw  <joeshaw@novell.com>
+
 	* hald/property.c (hal_property_new_string,
 	hal_property_set_string): Validate incoming strings as UTF-8 and
 	replace invalid sequences with '?'

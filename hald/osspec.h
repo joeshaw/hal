@@ -33,20 +33,19 @@
 
 /** Initialize the OS specific parts of the daemon
  *
- *  @param  dbus_connection     The D-BUS connection the HAL daemon got,
  */
-void osspec_init (DBusConnection * dbus_connection);
+void osspec_init (void);
 
 /** Probe all hardware present in the system and synchronize with the
  *  device list
  *
  */
-void osspec_probe ();
+void osspec_probe (void);
 
 /** Prepare shutdown
  *
  */
-void osspec_shutdown ();
+void osspec_shutdown (void);
 
 DBusHandlerResult osspec_filter_function (DBusConnection * connection,
 					  DBusMessage * message,

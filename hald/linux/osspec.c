@@ -310,7 +310,7 @@ osspec_timer_handler (gpointer data)
 
 /* This function is documented in ../osspec.h */
 void
-osspec_init (DBusConnection * dbus_connection)
+osspec_init (void)
 {
 	int i;
 	int rc;

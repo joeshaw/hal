@@ -226,7 +226,6 @@ out:
 int
 main (int argc, char *argv[])
 {
-	DBusConnection *dbus_connection;
 	GMainLoop *loop;
 	guint sigterm_iochn_listener_source_id;
 
@@ -325,7 +324,8 @@ main (int argc, char *argv[])
 	g_type_init ();
 
 	/* set up the dbus services */
-	dbus_connection = hald_dbus_init ();
+	if (!hald_dbus_init ())
+		exit (1);
 
 	loop = g_main_loop_new (NULL, FALSE);
 
@@ -334,7 +334,7 @@ main (int argc, char *argv[])
 		hal_pstore_init (PACKAGE_LOCALSTATEDIR "/lib/hal/uuid");
 
 	/* initialize operating system specific parts */
-	osspec_init (dbus_connection);
+	osspec_init ();
 	/* and detect devices */
 	osspec_probe ();
 

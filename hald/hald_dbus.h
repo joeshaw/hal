@@ -83,6 +83,6 @@ void device_send_signal_condition (HalDevice *device,
 void device_property_atomic_update_begin (void);
 void device_property_atomic_update_end   (void);
 
-DBusConnection *hald_dbus_init (void);
+gboolean hald_dbus_init (void);
 
 #endif /* HAL_DBUS_H */
