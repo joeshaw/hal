@@ -1,3 +1,11 @@
+2004-04-05  Joe Shaw  <joe@ximian.com>
+
+	* hald/linux/printer_class_device.c: Added.  New printer class.
+
+	* hald/linux/Makefile.am: Build linux/printer_class_device.c
+
+	* hald/linux/osspec.c: Add the printer class handler.
+
 2004-04-03  David Zeuthen  <david@fubar.dk>
 
 	* hald/main.c : Removed file

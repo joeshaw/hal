@@ -50,6 +50,7 @@
 #include "libsysfs/libsysfs.h"
 
 extern ClassDeviceHandler input_class_handler;
+extern ClassDeviceHandler printer_class_handler;
 extern ClassDeviceHandler scsi_host_class_handler;
 extern ClassDeviceHandler scsi_device_class_handler;
 extern ClassDeviceHandler block_class_handler;
@@ -62,6 +63,7 @@ extern BusDeviceHandler ide_bus_handler;
 
 static ClassDeviceHandler* class_device_handlers[] = {
 	&input_class_handler,
+	&printer_class_handler,
 	&scsi_host_class_handler,
 	&scsi_device_class_handler,
 	&block_class_handler,
