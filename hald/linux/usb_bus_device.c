@@ -487,6 +487,7 @@ usb_proc_parse ()
 		fgets (buf, 256, f);
 		usb_proc_parse_line (buf);
 	}
+	fclose(f);
 	usb_proc_device_done (usb_proc_cur_info);
 
 /*

@@ -1,5 +1,13 @@
 2004-09-19  David Zeuthen  <david@fubar.dk>
 
+	Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+	* hald/linux/usb_bus_device.c (usb_proc_parse): usb_proc_parse()
+	parses /proc/bus/usb/devices but never closes the FILE struct,
+	which obviously leads to a fd leak. Fixed in attached patch.
+
+2004-09-19  David Zeuthen  <david@fubar.dk>
+
 	Patch from Alexander Larsson <alexl@redhat.com>. It seems that
 	some models of cd-rw drives doesn't seem to support the GET
 	CONFIGURATION command. At least mine returns sense 5h. However, to
