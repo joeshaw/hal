@@ -233,8 +233,6 @@ visit_class_device_v4l (const char *path,
 	    ("linux.sysfs_path_device", sysdevice_sysfs_path, TRUE,
 	     visit_class_device_v4l_got_sysdevice, (void *) d, NULL,
 	     is_probing ? 0 : HAL_LINUX_HOTPLUG_TIMEOUT);
-
-	free (sysdevice_sysfs_path);
 }
 
 /** Callback when the sysdevice is found or if there is no sysdevice.. This is

@@ -346,6 +346,7 @@ const char *
 udevinfo_path (void)
 {
 	char *possible_paths[] = { "/sbin/udevinfo",
+		"/usr/bin/udevinfo",
 		"/usr/sbin/udevinfo",
 		"/usr/local/sbin/udevinfo"
 	};

@@ -1,3 +1,11 @@
+2004-03-05  Sjoerd Simons  <sjoerd@air.luon.net>
+
+	* hald/linux/linux_class_v4l.c (visit_class_device_v4l): Remove
+	invalid free of a static string
+
+	* hald/linux/linux_common.c (udevinfo_path): Add /usr/bin/udevinfo
+	as candidate for location of udevinfo
+
 2004-03-03  David Zeuthen  <david@fubar.dk>
 
 	Major reformatting patch - seems that everyone is following
