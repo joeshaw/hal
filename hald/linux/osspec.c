@@ -117,8 +117,8 @@ static BusDeviceHandler* bus_device_handlers[] = {
 
 static void hotplug_sem_up (void);
 static void hotplug_sem_down (void);
-static void hald_helper_hotplug (gboolean is_add, int seqnum, char *subsystem, char *sysfs_path);
-static void hald_helper_device_node (gboolean is_add, int seqnum, char *subsystem, char *sysfs_path, char *device_node);
+static void hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path);
+static void hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path, gchar *device_name);
 static gboolean hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data);
 
 static HalDevice *add_device (const char *sysfs_path, const char *subsystem);
@@ -1145,17 +1145,17 @@ reenable_hotplug_on_gdl_store_remove (HalDeviceStore *store, HalDevice *device, 
 
 
 static void
-hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs_path)
+hald_helper_hotplug (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path)
 {
 	HalDevice *d = NULL;
 	char sysfs_path_full[SYSFS_PATH_MAX];
 
 	snprintf (sysfs_path_full, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, sysfs_path);
 
-	HAL_INFO (("%s, SEQNUM=%d subsystem=%s sysfs_path=%s",
-		   (is_add ? "add" : "rem"), seqnum, subsystem, sysfs_path_full));
+	HAL_INFO (("action=%s seqnum=%llu subsystem=%s sysfs_path=%s",
+		   action, seqnum, subsystem, sysfs_path_full));
 
-	if (is_add) {
+	if (strcmp(action, "add") == 0)  {
 		d = add_device (sysfs_path_full, subsystem);
 
 		/* if device is not already added, disable hotplug processing 
@@ -1181,7 +1181,7 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 				HAL_ERROR (("d is NULL!"));
 			}
 		}
-	} else {
+	} else if (strcmp(action, "remove") == 0){
 		d = rem_device (sysfs_path_full, subsystem);
 		/* if device is not already removed, disable hotplug processing 
 		 * and enable it again when the device has processed all the
@@ -1203,16 +1203,16 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 }
 
 static void
-hald_helper_device_node (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs_path, gchar *device_node)
+hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem, gchar *sysfs_path, gchar *device_name)
 {
 	char sysfs_path_full[SYSFS_PATH_MAX];
 
 	snprintf (sysfs_path_full, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, sysfs_path);
 
-	HAL_INFO (("entering %s, Seqnum=%d  subsystem=%s devpath=%s devnode=%s",
-		   (is_add ? "add" : "rem"), seqnum, subsystem, sysfs_path, device_node));
+	HAL_INFO (("action=%s, seqnum=%llu  subsystem=%s devpath=%s devname=%s",
+		   action, seqnum, subsystem, sysfs_path, device_name));
 
-	if (is_add ) {
+	if (strcmp(action, "add") == 0) {
 
 		/* When udev gives the SEQNUM this can be synchronous. */
 		hal_device_store_match_key_value_string_async (
@@ -1220,13 +1220,13 @@ hald_helper_device_node (gboolean is_add, int seqnum, gchar *subsystem, gchar *s
 			".udev.sysfs_path",
 			sysfs_path_full,
 			udev_node_created_cb, 
-			g_strdup (device_node), /* will be freed in udev_node_created_cb */
+			g_strdup (device_name), /* will be freed in udev_node_created_cb */
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 
 	g_free (subsystem);
 	g_free (sysfs_path);
-	g_free (device_node);
+	g_free (device_name);
 }
 
 
@@ -1234,7 +1234,7 @@ hald_helper_device_node (gboolean is_add, int seqnum, gchar *subsystem, gchar *s
 static GList *hotplug_queue = NULL;
 
 /** Last hotplug sequence number */
-static gint last_hotplug_seqnum = -1;
+static guint64 last_hotplug_seqnum = 0;
 
 /** Hotplug semaphore */
 static gint hotplug_counter = 0;
@@ -1266,7 +1266,7 @@ trynext:
 		if (msg->seqnum == last_hotplug_seqnum + 1) {
 			/* yup, found it */
 			last_hotplug_seqnum = msg->seqnum;
-			hald_helper_hotplug (msg->is_add, msg->seqnum, g_strdup (msg->subsystem), 
+			hald_helper_hotplug (msg->action, msg->seqnum, g_strdup (msg->subsystem), 
 					     g_strdup (msg->sysfs_path));
 			g_free (msg);
 			hotplug_queue = g_list_delete_link (hotplug_queue, i);
@@ -1322,8 +1322,7 @@ hald_helper_first_hotplug_event (gpointer data)
 	GList *i;
 	struct hald_helper_msg *msg;
 
-	last_hotplug_seqnum = G_MAXINT;
-	/* find the seqnum we should start with */
+	/* find the lowest seqnum we should start with */
 	for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
 		msg = (struct hald_helper_msg *) i->data;
 		if (msg->seqnum < last_hotplug_seqnum)
@@ -1331,7 +1330,7 @@ hald_helper_first_hotplug_event (gpointer data)
 	}
 	--last_hotplug_seqnum;
 
-	HAL_INFO (("Starting with SEQNUM=%d", last_hotplug_seqnum+1));
+	HAL_INFO (("Starting with SEQNUM=%llu", last_hotplug_seqnum+1));
 
 	hotplug_sem_down ();
 
@@ -1388,53 +1387,53 @@ hald_helper_data (GIOChannel *source,
 		goto out;
 	}
 
-	if (!msg.is_hotplug_or_dev) {
-		/* device events doesn't have seqnum on them, however udev also respect sequence numbers */
-		hald_helper_device_node (msg.is_add, msg.seqnum, g_strdup (msg.subsystem), g_strdup (msg.sysfs_path), 
-					 g_strdup (msg.device_node));
-		goto out;
-	}
+	switch (msg.type) {
+	case HALD_DEVD:
+		hald_helper_device_name (msg.action, msg.seqnum, g_strdup (msg.subsystem),
+					 g_strdup (msg.sysfs_path), g_strdup (msg.device_name));
+		break;
+	case HALD_HOTPLUG:
+		/* need to process hotplug events in proper sequence */
 
-	/* need to process hotplug events in proper sequence */
+		/*HAL_INFO (("Before reordering, SEQNUM=%d, last_hotplug_seqnum=%llu, subsystem=%s, sysfs=%s",
+		  msg.seqnum, last_hotplug_seqnum, msg.subsystem, msg.sysfs_path));*/
 
-	/*HAL_INFO (("Before reordering, SEQNUM=%d, last_hotplug_seqnum=%d, subsystem=%s, sysfs=%s", 
-	  msg.seqnum, last_hotplug_seqnum, msg.subsystem, msg.sysfs_path));*/
+		if (last_hotplug_seqnum == 0 ) {
+			/* gotta start somewhere; however sleep some time to allow
+			 * some more hotplug events to propagate so we know where
+			 * we're at.
+			 *
+			 * @todo TODO: read SEQNUM from sysfs
+			 */
 
-	if (last_hotplug_seqnum == -1 ) {
-		/* gotta start somewhere; however sleep some time to allow  
-		 * some more hotplug events to propagate so we know where
-		 * we're at.
-		 *
-		 * @todo TODO FIXME XXX: The kernel should probably export the last sent SEQNUM in sysfs
-		 */
+			HAL_WARNING (("First SEQNUM=%llu; sleeping 2500ms to get a few more events", msg.seqnum));
 
-		HAL_WARNING (("First SEQNUM=%d; sleeping 2500ms to get a few more events", msg.seqnum));
+			hotplug_sem_up ();
+			g_timeout_add (2500, hald_helper_first_hotplug_event, NULL);
 
-		hotplug_sem_up ();
-		g_timeout_add (2500, hald_helper_first_hotplug_event, NULL);
+			/* so we only setup one timer */
+			last_hotplug_seqnum = msg.seqnum;
+		}
 
-		/* so we only setup one timer */
-		last_hotplug_seqnum = -2;
-	}
+		if (msg.seqnum < last_hotplug_seqnum) {
+			/* yikes, this means were started during a hotplug */
+			HAL_WARNING (("Got SEQNUM=%d, but last_hotplug_seqnum=%llu", msg.seqnum, last_hotplug_seqnum));
 
-	if (msg.seqnum < last_hotplug_seqnum) {
-		/* yikes, this means were started during a hotplug */
-		HAL_WARNING (("Got SEQNUM=%d, but last_hotplug_seqnum=%d", msg.seqnum, last_hotplug_seqnum));
+			/* have to process immediately other we may deadlock due to
+			 * the hotplug semaphore */
+			hald_helper_hotplug (msg.action, msg.seqnum, g_strdup (msg.subsystem), 
+					     g_strdup (msg.sysfs_path));
+			/* still need to process the queue though */
+			hald_helper_hotplug_process_queue ();
+			goto out;
+		}
 
-		/* have to process immediately other we may deadlock due to
-		 * the hotplug semaphore */
-		hald_helper_hotplug (msg.is_add, msg.seqnum, g_strdup (msg.subsystem), 
-				     g_strdup (msg.sysfs_path));
-		/* still need to process the queue though */
+		/* Queue up this hotplug event and process the queue */
+		HAL_INFO (("Queing up seqnum=%llu, sysfspath=%s, subsys=%s", msg.seqnum, msg.sysfs_path, msg.subsystem));
+		hotplug_queue = g_list_append (hotplug_queue, g_memdup (&msg, sizeof (struct hald_helper_msg)));
 		hald_helper_hotplug_process_queue ();
-		goto out;
+		break;
 	}
-
-	/* Queue up this hotplug event and process the queue */
-	HAL_INFO (("Queing up seqnum=%d, sysfspath=%s, subsys=%s", msg.seqnum, msg.sysfs_path, msg.subsystem));
-	hotplug_queue = g_list_append (hotplug_queue, g_memdup (&msg, sizeof (struct hald_helper_msg)));
-	hald_helper_hotplug_process_queue ();
-
 out:
 	return TRUE;
 }

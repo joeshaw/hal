@@ -241,7 +241,7 @@ try_again:
 
 		if (rc != 0)
 			goto try_again;
-	}	
+	}
 	return 0;
 }
 
@@ -263,8 +263,7 @@ main (int argc, char *argv[], char *envp[])
 	char *devpath;
 	char *action;
 	char *seqnum_str;
-	int is_add;
-	int seqnum;
+	unsigned long long seqnum;
 
 	if (argc != 2)
 		return 1;
@@ -299,22 +298,17 @@ main (int argc, char *argv[], char *envp[])
 		syslog (LOG_ERR, "ACTION is not set");
 		goto out;
 	}
-	if (strcmp (action, "add") == 0)
-		is_add = 1;
-	else
-		is_add = 0;
 
 	seqnum_str = getenv ("SEQNUM");
 	if (seqnum_str == NULL) {
 		syslog (LOG_ERR, "SEQNUM is not set");
 		goto out;
 	}
-	seqnum = atoi (seqnum_str);
+	seqnum = strtoull (seqnum_str, NULL, 10);
 
-	if (is_add) {
-		/* wait for information to be published in sysfs */
+	/* wait for information to be published in sysfs */
+	if (strcmp (action, "add") == 0)
 		wait_for_sysfs_info (devpath, subsystem);
-	}
 
 	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
 	saddr.sun_family = AF_LOCAL;
@@ -324,11 +318,11 @@ main (int argc, char *argv[], char *envp[])
 
 	memset (&msg, 0x00, sizeof (msg));
 	msg.magic = HALD_HELPER_MAGIC; 
-	msg.is_hotplug_or_dev = 1;
-	msg.is_add = is_add;
+	msg.type = HALD_HOTPLUG;
 	msg.seqnum = seqnum;
-	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN);
-	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN);
+	strncpy (msg.action, action, HALD_HELPER_STRLEN-1);
+	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN-1);
+	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN-1);
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {
@@ -339,4 +333,3 @@ main (int argc, char *argv[], char *envp[])
 out:
 	return 0;
 }
-

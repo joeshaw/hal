@@ -1,3 +1,21 @@
+2004-09-14  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Change Hotplug handling to better match the kernel. The next kernel
+	version will have a u64 hotplug sequence number starting at 1.
+	We can't be sure, that an ACTION != "add" is everytime a "remove" event,
+	change that to pass the action string around instead of the flag.
+
+	* hald/linux/hald_helper.h:
+	* hald/linux/osspec.c:
+	* tools/linux/hal_dev.c:
+	* tools/linux/hal_hotplug.c:
+	Change the hal_message structure to carry the u64 sequence number
+	and the ACTION as a string. Change message type to an enum. Rename
+	devnode to devname to match the udev name.
+	Use the u64 sequence number and change the logic not to rely on
+	negative numbers. The first sequence number will never be 0 in the
+	kernel, so we use it if we don't get one from udev.
+
 2004-09-14  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (cdrom_get_properties): Also set

@@ -65,10 +65,9 @@ main (int argc, char *argv[], char *envp[])
 	socklen_t addrlen;
 	char *subsystem;
 	char *devpath;
-	char *devnode;
+	char *devname;
 	char *action;
 	char *seqnum_str;
-	int is_add;
 	int seqnum;
 
 	openlog ("hal.dev", LOG_PID, LOG_USER);
@@ -92,8 +91,8 @@ main (int argc, char *argv[], char *envp[])
 		goto out;
 	}
 
-	devnode = getenv ("DEVNAME");
-	if (devnode == NULL) {
+	devname = getenv ("DEVNAME");
+	if (devname == NULL) {
 		syslog (LOG_ERR, "DEVNAME is not set");
 		goto out;
 	}
@@ -103,16 +102,12 @@ main (int argc, char *argv[], char *envp[])
 		syslog (LOG_ERR, "ACTION is not set");
 		goto out;
 	}
-	if (strcmp (action, "add") == 0)
-		is_add = 1;
-	else
-		is_add = 0;
 
 	seqnum_str = getenv ("SEQNUM");
 	if (seqnum_str == NULL) {
-		seqnum = -1;
+		seqnum = 0;
 	} else {
-		seqnum = atoi (seqnum_str);
+		seqnum = strtoull (seqnum_str, NULL, 10);
 	}
 
 
@@ -130,12 +125,12 @@ main (int argc, char *argv[], char *envp[])
 
 	memset (&msg, 0x00, sizeof (msg));
 	msg.magic = HALD_HELPER_MAGIC; 
-	msg.is_hotplug_or_dev = 0;
-	msg.is_add = is_add;
+	msg.type = HALD_DEVD;
 	msg.seqnum = seqnum;
-	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN);
-	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN);
-	strncpy (msg.device_node, devnode, HALD_HELPER_STRLEN);
+	strncpy (msg.action, action, HALD_HELPER_STRLEN-1);
+	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN-1);
+	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN-1);
+	strncpy (msg.device_name, devname, HALD_HELPER_STRLEN-1);
 
 	if (sendto (fd, &msg, sizeof(struct hald_helper_msg), 0,
 		    (struct sockaddr *)&saddr, addrlen) == -1) {

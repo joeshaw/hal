@@ -30,15 +30,20 @@
 #define HALD_HELPER_SOCKET_PATH "/var/run/hal/hotplug_socket"
 #define HALD_HELPER_STRLEN 256
 
+enum hald_msg_type {
+	HALD_HOTPLUG,
+	HALD_DEVD,
+};
+
 struct hald_helper_msg
 {
-	unsigned int magic;                    /**< magic */
-	int is_hotplug_or_dev;                 /**< 1 if hotplug msg, 0 if device msg */
-	int is_add;                            /**< 1 if add, 0 if remove */
-	int seqnum;                            /**< Sequence number (may be -1 if for dev if udev has no support) */
-	char subsystem[HALD_HELPER_STRLEN];    /**< subsystem e.g. usb, pci (only for hotplug msg) */
-	char sysfs_path[HALD_HELPER_STRLEN];   /**< path into sysfs without sysfs mountpoint, e.g. /block/sda */
-	char device_node[HALD_HELPER_STRLEN];  /**< fully qualified path of device node (only for device msg) */
+	unsigned int magic;			/**< magic */
+	enum hald_msg_type type;		/**< hotplug or device node name message */
+	unsigned long long seqnum;		/**< Sequence number (may be 0 if for dev if udev has no support) */
+	char action[HALD_HELPER_STRLEN];	/**< hotplug action */
+	char subsystem[HALD_HELPER_STRLEN];	/**< subsystem e.g. usb, pci (only for hotplug msg) */
+	char sysfs_path[HALD_HELPER_STRLEN];	/**< path into sysfs without sysfs mountpoint, e.g. /block/sda */
+	char device_name[HALD_HELPER_STRLEN];	/**< absolute path of device node (only for device msg) */
 };
 
 #endif /* HALD_HELPER_H */
