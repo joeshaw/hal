@@ -1,0 +1,94 @@
+/***************************************************************************
+ * CVSID: $Id$
+ *
+ * main.h : common functions for sysfs-agent on Linux 2.6
+ *
+ * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ *
+ * Licensed under the Academic Free License version 2.0
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ **************************************************************************/
+
+#ifndef MAIN_H
+#define MAIN_H
+
+#include <dbus/dbus.h>
+#include <dbus/dbus-glib.h>
+#include <libsysfs.h>
+#include <libhal/libhal.h>
+
+/*  @ingroup  HalAgentsLinux
+ *  @{
+ */
+
+/** Timeout in seconds for waiting for a sysfs device to appear as
+ *  a HAL device. Usually used when hotplugging usb-storage since
+ *  many HAL devices (usb, usbif, scsi_host, scsi_device, block*2)
+ *  appear and the linux kernel gives us these add events out of
+ *  order.
+ */
+#define HAL_LINUX_HOTPLUG_TIMEOUT 15
+
+/** Macro to abort the program.
+ *
+ *  @param  expr                Format line and arguments
+ */
+#define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
+
+
+extern dbus_bool_t is_probing;
+
+double parse_double(const char* str);
+dbus_int32_t parse_dec(const char* str);
+dbus_int32_t parse_hex(const char* str);
+
+long int find_num(char* pre, char* s, int base);
+double find_double(char* pre, char* s);
+int find_bcd2(char* pre, char* s);
+char* find_string(char* pre, char* s);
+
+
+/** Type for function to compute the UDI (unique device id) for a given
+ *  HAL device.
+ *
+ *  @param  udi                 Unique device id of tempoary device object
+ *  @param  append_num          Number to append to name if not -1
+ *  @return                     New unique device id; only good until the
+ *                              next invocation of this function
+ */
+typedef char* (*ComputeFDI)(const char* udi, int append_num);
+
+char* rename_and_maybe_add(const char* udi, 
+                           ComputeFDI naming_func,
+                           const char* namespace);
+
+char* find_udi_from_sysfs_path(const char* path, 
+                               int max_time_to_try);
+
+char* find_parent_udi_from_sysfs_path(const char* path, 
+                                      int max_time_to_try);
+
+const char* get_last_element(const char* s);
+
+char* read_single_line(char* filename_format,...);
+
+void find_and_set_physical_device(char* udi);
+
+
+/* @} */
+
+#endif /* MAIN_H */

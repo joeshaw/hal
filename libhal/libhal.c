@@ -533,6 +533,18 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+static LibHalFunctions hal_null_functions = {
+    NULL /*mainloop_integration*/,
+    NULL /*property_changed*/,
+    NULL /*device_added*/, 
+    NULL /*device_remove*/, 
+    NULL /*device_booting*/,
+    NULL /*device_shutting_down*/,
+    NULL /*device_disabled*/,
+    NULL /*device_need_device_info*/,
+    NULL /*device_boot_error*/,
+    NULL /*device_enabled*/,
+    NULL /*device_req_user*/ };
 
 /** Initialize the HAL library. 
  *
@@ -557,6 +569,9 @@ int hal_initialize(const LibHalFunctions* cb_functions)
     }
 
     functions = cb_functions;
+    /* allow caller to pass NULL */
+    if( functions==NULL )
+        functions = hal_null_functions;
 
     // connect to hald service on the system bus
     dbus_error_init(&error);

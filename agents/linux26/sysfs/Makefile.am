@@ -12,7 +12,12 @@ INCLUDES = \
 bin_PROGRAMS = hal-sysfs-agent.hotplug
 
 hal_sysfs_agent_hotplug_SOURCES =                            \
-        hal-sysfs-agent.c 
+        main.c                    main.h                     \
+        hal_usb.c                 hal_usb.h                  \
+        hal_pci.c                 hal_pci.h                  \
+        hal_ide.c                 hal_ide.h                  \
+        hal_scsi.c                hal_scsi.h                 \
+        hal_block.c               hal_block.h 
 
 #hal_sysfs_agent_hotplug_LDADD = @PACKAGE_LIBS@
 

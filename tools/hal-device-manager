@@ -51,19 +51,54 @@ class Device:
             c.print_tree(indent+4)
 
     def populate_gtk_tree(self, tree_model):
+        dont_show_virtual = 1
+        # see if we should show virtual devices
+        if dont_show_virtual:
+            if self.properties.has_key("isVirtual"):
+                if self.properties["isVirtual"]:
+                    # but do show all block devices and ide channels
+                    if not self.properties["Bus"] in ["block", "ide_host"]:
+                        self.row = self.parent_device.row
+                        # and recurse the childs
+                        for c in self.children:
+                            c.populate_gtk_tree(tree_model)
+                        return
+
         if self.parent_device==None:
             self.row = None
         else:
             self.row = tree_model.append(self.parent_device.row)
+
         if self.row != None:
             # TODO: Inspect Category and select name to display in tree
 
             if self.properties["Bus"]=="usb":
-                icon = bus_icons["usb"]
-            elif self.properties["Bus"]=="usbif":
-                icon = bus_icons["usb"]
+                icon = hal_icons["bus_usb"]
             elif self.properties["Bus"]=="pci":
-                icon = bus_icons["pci"]
+                icon = hal_icons["bus_pci"]
+            elif self.properties["Bus"]=="usbif":
+                icon = hal_icons["abstract"]
+            elif self.properties["Bus"]=="ide_host":
+                icon = hal_icons["abstract"]
+            elif self.properties["Bus"]=="block":
+                if self.properties["block.isVolume"]:
+                    icon = hal_icons["abstract"]
+                else:
+                    if self.properties.has_key("block.media"):
+                        media = self.properties["block.media"]
+                        if media=="disk":
+                            icon = hal_icons["harddisk"]
+                        elif media=="cdrom":
+                            icon = hal_icons["cdrom"]
+                        elif media=="floppy":
+                            icon = hal_icons["floppy"]
+                        else:
+                            icon = hal_icons["abstract"]
+                    else:
+                        icon = hal_icons["abstract"]
+            else:
+                icon = hal_icons["unknown"]
+
             tree_model.set_value(self.row, PIXBUF_COLUMN, icon)
             try:
                 title_name = self.properties["Product"]
@@ -71,9 +106,10 @@ class Device:
                 title_name = "Unknown Device"
             tree_model.set_value(self.row, TITLE_COLUMN, title_name)
             tree_model.set_value(self.row, UDI_COLUMN, self.device_name)
+
         for c in self.children:
             c.populate_gtk_tree(tree_model)
-
+            
     def find_by_udi(self, device_udi):
         if self.device_name==device_udi:
             return self
@@ -91,7 +127,7 @@ def udi_to_device(device_udi):
 def build_device_tree():
     device_names = hal_manager.GetAllDevices()
 
-    virtual_root = Device("virtual_root", None, [])
+    virtual_root = Device("virtual_root", None, {})
     device_list = [virtual_root]
 
     # first build list of Device objects
@@ -123,9 +159,14 @@ def build_device_tree():
     return virtual_root
 
 
-bus_names = {"usb"   : "USB",
-             "usbif" : "USB Interface",
-             "pci"   : "PCI"}
+bus_names = {"usb"         : "USB",
+             "usbif"       : "USB Interface",
+             "pci"         : "PCI",
+             "scsi_host"   : "SCSI Host",
+             "scsi_device" : "SCSI",
+             "block"       : "Block",
+             "ide"         : "IDE",
+             "ide_host"    : "IDE Host"}
 
 state_names = { 0 : "<span foreground='red'>No device information file was found</span>",
                 1 : "Enabling...",
@@ -150,8 +191,14 @@ def update_tab_device(device):
 
     # guestimate product and vendor if we have no device information file
     if device.properties["GotDeviceInfo"]:
-        product.set_label(device.properties["Product"])
-        vendor.set_label(device.properties["Vendor"])
+        if device.properties.has_key("Product"):
+            product.set_label(device.properties["Product"])
+        else:
+            product.set_label("Unknown")
+        if device.properties.has_key("Vendor"):
+            vendor.set_label(device.properties["Vendor"])
+        else:
+            vendor.set_label("N/A")
     else:
         
         if device.properties["Bus"]=="usb":
@@ -395,12 +442,17 @@ def load_and_scale_icon(path):
     return icon
 
 def main():
-    global bus, hal_service, hal_manager, xml, bus_icons
+    global bus, hal_service, hal_manager, xml, hal_icons
 
-    bus_icons = {}
-    
-    bus_icons["pci"] = load_and_scale_icon("bus-pci.png")
-    bus_icons["usb"] = load_and_scale_icon("bus-usb.png")
+    hal_icons = {}
+
+    hal_icons["bus_pci"] = load_and_scale_icon("bus-pci.png")
+    hal_icons["bus_usb"] = load_and_scale_icon("bus-usb.png")
+    hal_icons["abstract"] = load_and_scale_icon("hal-abstract.png");
+    hal_icons["harddisk"] = load_and_scale_icon("hal-harddisk.png");
+    hal_icons["cdrom"] = load_and_scale_icon("hal-cdrom.png");
+    hal_icons["floppy"] = load_and_scale_icon("hal-floppy.png");
+    hal_icons["unknown"] = load_and_scale_icon("hal-unknown.png")
 
     
     bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)

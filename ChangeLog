@@ -1,3 +1,47 @@
+2003-11-27  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal-sysfs-agent.c: Removed; splitted into
+	multiple files; added scsi, ide and block probing + hotplugging;
+	many many changes..
+
+	* agents/linux26/sysfs/main.c: new file
+
+	* agents/linux26/sysfs/main.h: new file
+
+	* agents/linux26/sysfs/hal_usb.c: new file
+
+	* agents/linux26/sysfs/hal_usb.h: new file
+
+	* agents/linux26/sysfs/hal_pci.c: new file
+
+	* agents/linux26/sysfs/hal_pci.h: new file
+
+	* agents/linux26/sysfs/hal_ide.c: new file
+
+	* agents/linux26/sysfs/hal_ide.h: new file
+
+	* agents/linux26/sysfs/hal_scsi.c: new file
+
+	* agents/linux26/sysfs/hal_scsi.h: new file
+
+	* agents/linux26/sysfs/hal_block.c: new file
+
+	* agents/linux26/sysfs/hal_block.h: new file
+
+	* agents/linux26/sysfs/Makefile.am: Changed to reference new files
+
+	* fdi/10generic/generic-hid-mouse.fdi: remove
+
+	* fdi/10generic/generic-usb-hub.fdi: remove
+
+	* fdi/10generic/usb-classes.fdi: new file
+
+	* hald/device_info.c: Add support for bool in fdi-files
+
+	* libhal/libhal.c: Allow caller to pass NULL in libhal_init()
+	
+	* tools/hal-device-manager: Don't show (most) virtual devices
+	
 2003-11-23  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26/sysfs/hal-sysfs-agent.c: USB interfaces now have

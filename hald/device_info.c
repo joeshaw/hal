@@ -192,6 +192,31 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
 
         return TRUE;
     }
+    else if( strcmp(attr[2], "bool")==0 )
+    {
+        dbus_bool_t value;
+
+        /* match string property */
+
+        if( strcmp(attr[3], "false")==0 )
+            value=FALSE;
+        else if( strcmp(attr[3], "true")==0 )
+            value=TRUE;
+        else
+            return FALSE;
+
+        LOG_INFO(("Checking that key='%s' is a bool that equals %s",
+                  key, value ? "TRUE" : "FALSE"));
+
+        if( ds_property_get_type(pc->device, key)!=DBUS_TYPE_BOOLEAN )
+            return FALSE;
+
+        if( ds_property_get_bool(pc->device, key)!=value )
+            return FALSE;
+
+        LOG_INFO(("*** bool match for key %s", key));
+        return TRUE;
+    }
 
     return FALSE;
 }

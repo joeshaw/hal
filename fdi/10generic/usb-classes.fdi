@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo>
+
+  <device>
+    <match key="Bus" string="usbif">
+      <match key="usbif.bInterfaceClass" int="0x03">
+          <match key="usbif.bInterfaceProtocol" int="0x02">
+            <merge key="DeviceInfoFileVendor" type="string">Free Desktop Project</merge>
+            <merge key="DeviceInfoFileId" type="string">org.freedesktop.org.Hal.FDIRepo.USBClass.3.star.2</merge>
+            <merge key="Product" type="string">HID Mouse Interface</merge>
+            <merge key="Category" type="string">Mouse</merge>
+            <merge key="Capabilities" type="string">Mouse</merge>
+          </match>
+      </match>
+    </match>
+  </device>
+
+  <device>
+    <match key="Bus" string="usbif">
+      <match key="usbif.bInterfaceClass" int="0x03">
+          <match key="usbif.bInterfaceProtocol" int="0x01">
+            <merge key="DeviceInfoFileVendor" type="string">Free Desktop Project</merge>
+            <merge key="DeviceInfoFileId" type="string">org.freedesktop.org.Hal.FDIRepo.USBClass.3.star.1</merge>
+            <merge key="Product" type="string">HID Keyboard Interface</merge>
+            <merge key="Category" type="string">Keyboard</merge>
+            <merge key="Capabilities" type="string">Keyboard</merge>
+          </match>
+      </match>
+    </match>
+  </device>
+
+  <device>
+    <match key="Bus" string="usbif">
+      <match key="usbif.bInterfaceClass" int="0x08">
+            <merge key="DeviceInfoFileVendor" type="string">Free Desktop Project</merge>
+            <merge key="DeviceInfoFileId" type="string">org.freedesktop.org.Hal.FDIRepo.USBClass.8.star.star</merge>
+            <merge key="Product" type="string">USB Mass Storage Interface</merge>
+      </match>
+    </match>
+  </device>
+
+  <device>
+    <match key="Bus" string="usbif">
+      <match key="usbif.bInterfaceClass" int="0x09">
+            <merge key="DeviceInfoFileVendor" type="string">Free Desktop Project</merge>
+            <merge key="DeviceInfoFileId" type="string">org.freedesktop.org.Hal.FDIRepo.USBClass.9.star.star</merge>
+            <merge key="Product" type="string">USB Hub Interface</merge>
+      </match>
+    </match>
+  </device>
+
+</deviceinfo>
