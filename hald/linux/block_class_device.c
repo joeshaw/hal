@@ -363,11 +363,13 @@ force_unmount_of_all_childs (HalDevice * d)
 }
 
 static void
-add_to_gdl (HalDevice *device, gpointer user_data)
+disc_add_to_gdl (HalDevice *device, gpointer user_data)
 {
+	hal_device_store_remove (hald_get_tdl (), device);
 	hal_device_store_add (hald_get_gdl (), device);
 
-	g_signal_handlers_disconnect_by_func (device, add_to_gdl, user_data);
+	g_signal_handlers_disconnect_by_func (device, disc_add_to_gdl, 
+					      user_data);
 }
 
 /** Check for media on a block device that is not a volume
@@ -486,6 +488,12 @@ detect_media (HalDevice * d)
 			hal_device_get_udi (d));
 
 		if (child == NULL) {
+			child = hal_device_store_match_key_value_string (
+				hald_get_tdl (), "info.parent",
+				hal_device_get_udi (d));
+		}
+
+		if (child == NULL) {
 			int type;
 			char udi[256];
 
@@ -494,6 +502,7 @@ detect_media (HalDevice * d)
 				   device_file));
 
 			child = hal_device_new ();
+			hal_device_store_add (hald_get_tdl (), child);
 
 			/* copy from parent */
 			hal_device_merge (child, d);
@@ -553,10 +562,11 @@ detect_media (HalDevice * d)
 				break;
 			}
 
+			detect_fs (child);
 
 			/* add new device */
 			g_signal_connect (child, "callouts_finished",
-					  G_CALLBACK (add_to_gdl), NULL);
+					  G_CALLBACK (disc_add_to_gdl), NULL);
 			hal_callout_device (child, TRUE);
 
 			/* GDL was modified */

@@ -1,5 +1,21 @@
 2004-05-04  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/volume_id/volume_id.c (probe_jfs): test for js == NULL
+
+	* hald/linux/block_class_device.c (detect_media):cCall detect_fs
+	when adding a disc. Also route the child through the TDL and test
+	the TDL so we don't add more than one child now that we've got a
+	delay thanks to callouts.
+	(add_to_gdl): rename to disc_add_to_gdl, since we use it only for
+	optical discs
+
+2004-05-04  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.[ch] : support reading of iso9660
+	and udf labels
+
+2004-05-04  David Zeuthen  <david@fubar.dk>
+
 	* libhal/libhal.c (hal_ctx_set_user_data): new function
 	(hal_ctx_get_user_data): new function
 
