@@ -31,6 +31,12 @@
 
 typedef struct _HalProperty HalProperty;
 
+enum PropertyAttribute {
+	READONLY,
+	PERSISTENCE,
+	CALLOUT
+};
+
 void          hal_property_free          (HalProperty  *prop);
 
 HalProperty *hal_property_new_string     (const char   *key,
@@ -59,5 +65,10 @@ void          hal_property_set_bool      (HalProperty  *prop,
 					  dbus_bool_t   value);
 void          hal_property_set_double    (HalProperty  *prop,
 					  double        value);
+void          hal_property_set_attribute (HalProperty *prop,
+					  enum PropertyAttribute attr,
+					  gboolean val);
+gboolean      hal_property_get_attribute (HalProperty *prop,
+					  enum PropertyAttribute attr);
 
 #endif /* PROPERTY_H */

@@ -83,6 +83,11 @@ struct _HaldConf {
 	 *  Default value is TRUE, this may be overridden in hald.conf.
 	 */
 	dbus_bool_t storage_cdrom_eject_check_enabled;
+
+	/** If true, then the device list is saved to disk such that
+         *  properties are kept between invocations of hald.
+	 */
+	dbus_bool_t persistent_device_list;
 };
 
 HaldConf *hald_get_conf (void);

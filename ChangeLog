@@ -1,3 +1,65 @@
+2004-06-20  David Zeuthen  <david@fubar.dk>
+
+	* hald/Makefile.am (install-data-local): Create
+	$(LOCALSTATEDIR)/lib/hal
+
+	* hald/linux/common.c (rename_and_merge): Check
+	persistent_device_list configuration value
+
+	* hald/device.c (hal_device_property_set_attribute) 
+	(hal_device_property_set_string, hal_device_property_set_bool) 
+	(hal_device_property_set_double, hal_device_property_remove): 
+	Check persistent_device_list configuration value
+
+	* hald/hald.c (main): Check persistent_device_list configuration
+	value
+
+	* hald/hald.conf: Add persistent_device_list tag, set to false
+	as default
+
+	* hald/hald_conf.h: Add persistent_device_list member
+
+	* hald/hald_conf.c (hald_conf): Add persistent_device_list member
+	(end): Check for persistent_device_list tag
+
+	* hald/property.h: Rename property_attribute to PropertyAttribute
+
+2004-06-20  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* hald/pstore.[ch]: New files
+
+	* hald/linux/common.c (rename_and_merge): Load a device from disk
+
+	* hald/property.h: Add property_attribute enum and 
+	hal_property_get_attribute(), hal_property_set_attribute()
+
+	* hald/property.c: Add readonly, persistence, callout bools to
+	HalProperty
+	(hal_property_set_attribute): New function
+	(hal_property_get_attribute): New function
+
+	* hald/hald_dbus.c (device_set_property): Set property to persistent
+
+	* hald/hald.h: Add hald_get_pstore_sys
+
+	* hald/hald.c (hald_get_pstore_sys): New function
+	(main): Load persistent store
+
+	* hald/device.h: Add hal_device_property_set_attribute()
+
+	* hald/device.c (hal_device_property_set_string):
+	(hal_device_property_set_int, hal_device_property_set_bool)
+	(hal_device_property_set_double): Save property to disk if the
+	PERSISTENCE attribute is set
+	(hal_device_property_remove): Delete property from disk if the
+	PERSISTENCE attribyte is set
+	(hal_device_property_set_attribute): New function
+
+	* hald/Makefile.am (INCLUDES): Add PACKAGE_LOCALSTATEDIR
+	(hald_SOURCES): add pstore.[ch]
+
 2004-06-11  Joe Shaw  <joeshaw@novell.com>
 
 	Patch from Dan Williams (dcbw@redhat.com).

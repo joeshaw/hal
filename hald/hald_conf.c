@@ -39,10 +39,12 @@
 
 #define HALD_CONF_FILE PACKAGE_SYSCONF_DIR "/hal/hald.conf"
 
+/* default values */
 static HaldConf hald_conf = {
-	TRUE, /* storage.media_check_enabled */
-	TRUE, /* storage.automount_enabled */
-	TRUE  /* storage.cdrom.eject_check_enabled */
+	TRUE,  /* storage.media_check_enabled */
+	TRUE,  /* storage.automount_enabled */
+	TRUE,  /* storage.cdrom.eject_check_enabled */
+	FALSE  /* persistent_device_list */
 };
 
 HaldConf *
@@ -114,7 +116,11 @@ end (ParsingContext * pc, const char *el)
 	} else if ((strcmp (key, "storage_cdrom_eject_check_enabled") == 0) &&
 		   (strcmp (value, "false") == 0)) {
 		hald_conf.storage_cdrom_eject_check_enabled = FALSE;
+	} else if ((strcmp (key, "persistent_device_list") == 0) &&
+		   (strcmp (value, "true") == 0)) {
+		hald_conf.persistent_device_list = TRUE;
 	}
+
 
 	pc->elem[0] = '\0';
 	pc->cdata_buf[0] = '\0';

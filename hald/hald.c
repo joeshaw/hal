@@ -46,6 +46,7 @@
 #include "logger.h"
 #include "hald.h"
 #include "device_store.h"
+#include "pstore.h"
 #include "device_info.h"
 #include "osspec.h"
 #include "hald_dbus.h"
@@ -60,6 +61,8 @@
 static HalDeviceStore *global_device_list = NULL;
 
 static HalDeviceStore *temporary_device_list = NULL;
+
+static HalPStore *pstore_sys = NULL;
 
 static void
 gdl_store_changed (HalDeviceStore *store, HalDevice *device,
@@ -129,6 +132,16 @@ hald_get_tdl (void)
 	}
 
 	return temporary_device_list;
+}
+
+HalPStore *
+hald_get_pstore_sys (void)
+{
+	if (pstore_sys == NULL)
+		pstore_sys = hal_pstore_open (PACKAGE_LOCALSTATEDIR
+					      "/lib/hal");
+
+	return pstore_sys;
 }
 
 /**
@@ -272,6 +285,10 @@ main (int argc, char *argv[])
 	dbus_connection = hald_dbus_init ();
 
 	loop = g_main_loop_new (NULL, FALSE);
+
+	/* initialize persitent property store, read uuid from path */
+	if (hald_get_conf ()->persistent_device_list)
+		hal_pstore_init (PACKAGE_LOCALSTATEDIR "/lib/hal/uuid");
 
 	/* initialize operating system specific parts */
 	osspec_init (dbus_connection);

@@ -872,6 +872,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 
 	type = dbus_message_iter_get_arg_type (&iter);
 	rc = FALSE;
+
 	switch (type) {
 	case DBUS_TYPE_STRING:
 		rc = hal_device_property_set_string (device, key,
@@ -898,6 +899,11 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 		HAL_WARNING (("Unsupported property type %d", type));
 		break;
 	}
+
+	/* FIXME: temporary pstore test only */
+	hal_device_property_set_attribute (device, key, PERSISTENCE, TRUE);
+	HAL_WARNING (("FIXME: persistence set for all D-BUS props; "
+		      "udi=%s, key=%s", udi, key));
 
 	if (!rc) {
 		raise_property_type_error (connection, message, udi, key);

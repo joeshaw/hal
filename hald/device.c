@@ -31,9 +31,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "hald.h"
 #include "device.h"
+#include "pstore.h"
 #include "hald_marshal.h"
 #include "logger.h"
+#include "hald_conf.h"
 
 static GObjectClass *parent_class;
 
@@ -603,15 +606,21 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
 
-		return TRUE;
+		if (hal_property_get_attribute (prop, PERSISTENCE) &&
+		    hald_get_conf ()->persistent_device_list) {
+			hal_pstore_save_property (hald_get_pstore_sys (), 
+						  device, prop); 
+		}
+
+	} else {
+
+		prop = hal_property_new_string (key, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
 	}
-
-	prop = hal_property_new_string (key, value);
-
-	device->properties = g_slist_prepend (device->properties, prop);
-
-	g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-		       key, FALSE, TRUE);
 
 	return TRUE;
 }
@@ -638,15 +647,20 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
 
-		return TRUE;
+		if (hal_property_get_attribute (prop, PERSISTENCE) &&
+		    hald_get_conf ()->persistent_device_list) {
+			hal_pstore_save_property (hald_get_pstore_sys (), 
+						  device, prop); 
+		}
+
+	} else {
+		prop = hal_property_new_int (key, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
 	}
-
-	prop = hal_property_new_int (key, value);
-
-	device->properties = g_slist_prepend (device->properties, prop);
-
-	g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-		       key, FALSE, TRUE);
 
 	return TRUE;
 }
@@ -673,15 +687,20 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
 
-		return TRUE;
+		if (hal_property_get_attribute (prop, PERSISTENCE) &&
+		    hald_get_conf ()->persistent_device_list) {
+			hal_pstore_save_property (hald_get_pstore_sys (), 
+						  device, prop);
+		} 
+
+	} else {
+		prop = hal_property_new_bool (key, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
 	}
-
-	prop = hal_property_new_bool (key, value);
-
-	device->properties = g_slist_prepend (device->properties, prop);
-
-	g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-		       key, FALSE, TRUE);
 
 	return TRUE;
 }
@@ -708,15 +727,20 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
 
-		return TRUE;
+		if (hal_property_get_attribute (prop, PERSISTENCE) &&
+		    hald_get_conf ()->persistent_device_list) {
+			hal_pstore_save_property (hald_get_pstore_sys (), 
+						  device, prop); 
+		}
+
+	} else {
+		prop = hal_property_new_double (key, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
 	}
-
-	prop = hal_property_new_double (key, value);
-
-	device->properties = g_slist_prepend (device->properties, prop);
-
-	g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-		       key, FALSE, TRUE);
 
 	return TRUE;
 }
@@ -731,12 +755,48 @@ hal_device_property_remove (HalDevice *device, const char *key)
 	if (prop == NULL)
 		return FALSE;
 
+	if (hal_property_get_attribute (prop, PERSISTENCE) &&
+	    hald_get_conf ()->persistent_device_list) {
+		hal_pstore_delete_property (hald_get_pstore_sys (), 
+					    device, prop); 
+	}
+
 	device->properties = g_slist_remove (device->properties, prop);
 
 	hal_property_free (prop);
 
 	g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 		       key, TRUE, FALSE);
+
+	return TRUE;
+}
+
+gboolean
+hal_device_property_set_attribute (HalDevice *device,
+				   const char *key,
+				   enum PropertyAttribute attr,
+				   gboolean val)
+{
+	HalProperty *prop;
+
+	prop = hal_device_property_find (device, key);
+
+	if (prop == NULL)
+		return FALSE;
+
+	hal_property_set_attribute (prop, PERSISTENCE, val);
+
+	if (attr == PERSISTENCE &&
+	    hald_get_conf ()->persistent_device_list) {
+		/* Save property to disk, or delete it */
+		if (val) {
+			hal_pstore_save_property (hald_get_pstore_sys (), 
+						  device, prop);
+		} else {
+			hal_pstore_delete_property (hald_get_pstore_sys (), 
+						    device, prop);
+		}
+	}
 
 	return TRUE;
 }

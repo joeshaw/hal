@@ -150,4 +150,9 @@ void          hal_device_async_wait_property (HalDevice    *device,
 
 void          hal_device_callouts_finished    (HalDevice    *device);
 
+gboolean      hal_device_property_set_attribute (HalDevice *device,
+						 const char *key,
+						 enum PropertyAttribute attr,
+						 gboolean persistence);
+
 #endif /* DEVICE_H */

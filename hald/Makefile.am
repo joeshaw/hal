@@ -5,6 +5,7 @@ INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
+	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
@@ -25,6 +26,7 @@ hald_SOURCES =                                                          \
 	logger.h			logger.c			\
 	osspec.h							\
 	property.h			property.c                      \
+	pstore.h                        pstore.c                        \
 	hald_conf.h                     hald_conf.c
 
 hald_SOURCES +=	\
@@ -111,4 +113,5 @@ install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/capability.d
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/property.d
+	$(mkinstalldirs) $(DESTDIR)$(LOCALSTATEDIR)/lib/hal
 

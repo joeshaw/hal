@@ -44,8 +44,10 @@
 
 #include "../logger.h"
 #include "../device_store.h"
+#include "../pstore.h"
 #include "../device_info.h"
 #include "../hald.h"
+#include "../hald_conf.h"
 #include "common.h"
 
 /**
@@ -512,6 +514,9 @@ tryagain:
 			HAL_INFO (("Found a .fdi file for %s", d->udi));
 		}
 
+		/* add possible saved properties for this udi from disk*/
+		if (hald_get_conf ()->persistent_device_list)
+			hal_pstore_load_device (hald_get_pstore_sys (), d);
 	}
 
 	return computed_udi;
