@@ -38,6 +38,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/prctl.h>
+#include <sys/capability.h>
+#include <grp.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -162,6 +165,9 @@ usage ()
 		 "\n"
 		 "        --daemon=yes|no    Become a daemon\n"
 		 "        --verbose=yes|no   Print out debug (overrides HALD_VERBOSE)\n"
+ 		 "        --drop-privileges  Run as normal user instead of root (calling of\n"
+ 		 "                           external scripts to modify fstab etc. will not work\n" 
+		 "                           run as root)\n"
 		 "        --help             Show this information and exit\n"
 		 "\n"
 		 "The HAL daemon detects devices present in the system and provides the\n"
@@ -238,6 +244,67 @@ dbus_bool_t hald_is_shutting_down;
 
 static int startup_daemonize_pipe[2];
 
+/** Drop all but necessary privileges from hald when it runs as root.  Set the
+ *  running user id to HAL_USER and group to HAL_GROUP and grant the following 
+ *  capabilities: CAP_NET_ADMIN
+ */
+static void
+drop_privileges ()
+{
+    cap_t cap;
+    struct passwd *pw = NULL;
+    struct group *gr = NULL;
+
+    /* determine user id */
+    pw = getpwnam (HAL_USER);
+    if (!pw)  {
+	HAL_ERROR (("drop_privileges: user " HAL_USER " does not exist"));
+	exit (-1);
+    }
+
+    /* determine primary group id */
+    gr = getgrnam (HAL_GROUP);
+    if(!gr) {
+	HAL_ERROR (("drop_privileges: group " HAL_GROUP " does not exist"));
+	exit (-1);
+    }
+
+    /* keep capabilities and change uid/gid */
+    if( prctl (PR_SET_KEEPCAPS, 1, 0, 0, 0)) {
+	HAL_ERROR (("drop_privileges: could not keep capabilities"));
+	exit (-1);
+    }
+
+    if( initgroups (HAL_USER, gr->gr_gid)) {
+	HAL_ERROR (("drop_privileges: could not initialize groups"));
+	exit (-1);
+    }
+
+    if( setgid (gr->gr_gid) ) {
+	HAL_ERROR (("drop_privileges: could not set group id"));
+	exit (-1);
+    }
+
+    if( setuid (pw->pw_uid)) {
+	HAL_ERROR (("drop_privileges: could not set user id"));
+	exit (-1);
+    }
+
+    /* only keep necessary capabilities */
+    cap = cap_from_text ("cap_net_admin=ep");
+
+    if(cap_set_proc(cap)) {
+	HAL_ERROR (("drop_privileges: could not install capabilities"));
+	exit (-1);
+    }
+
+    if(cap_free (cap)) {
+	HAL_ERROR (("drop_privileges: cap_free"));
+	exit (-1);
+    }
+}
+
+
 /** Entry point for HAL daemon
  *
  *  @param  argc                Number of arguments
@@ -266,6 +333,7 @@ main (int argc, char *argv[])
 			{"daemon", 1, NULL, 0},
 			{"verbose", 1, NULL, 0},
 			{"help", 0, NULL, 0},
+			{"drop-privileges", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
 
@@ -299,7 +367,8 @@ main (int argc, char *argv[])
 					usage ();
 					return 1;
 				}
-			}
+			} else if (strcmp (opt, "drop-privileges") == 0)
+				drop_privileges ();
 			break;
 
 		default:

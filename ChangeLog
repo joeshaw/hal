@@ -2,6 +2,22 @@
 
 	Patch from Martin Pitt <martin@piware.de>.
 
+	* hal.conf.in: Drop AgentManager interface. Allow both HAL_USER
+	and root to own the org.freedesktop.Hal service.
+	
+	* hald/Makefile.am: Link with libcap
+	
+	* hald/hald.c: (usage), (drop_privileges), (main):
+	add option --drop-privileges which causes hald not to run as root,
+	but as @HAL_USER@ in @HAL_GROUP@ and all additional groups set in
+	/etc/group, and keeping the necessary capabilities to do its
+	job. This does _not_ change the default behaviour, if the option
+	is not specified, hald runs as root, as before.
+
+2004-09-03  David Zeuthen  <david@fubar.dk>
+
+	Patch from Martin Pitt <martin@piware.de>.
+
 	* hald/linux/block_class_device.c: (cdrom_get_properties),
 	(detect_media):
 	* hald/linux/input_class_device.c: (input_class_pre_process):
