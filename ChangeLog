@@ -1,3 +1,8 @@
+2004-05-04  David Zeuthen  <david@fubar.dk>
+
+	* libhal/libhal.c (hal_ctx_set_user_data): new function
+	(hal_ctx_get_user_data): new function
+
 2004-05-01  Owen Fraser-Green  <owen@discobabe.net>
 
 	* hald/hald_dbus.c (manager_find_device_string_match): Set

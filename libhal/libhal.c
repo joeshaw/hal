@@ -104,7 +104,20 @@ struct LibHalContext_s {
 	dbus_bool_t is_initialized;           /**< Are we initialised */
 	dbus_bool_t cache_enabled;            /**< Is the cache enabled */
 	const LibHalFunctions *functions;     /**< Callback functions */
+	void *user_data;                      /**< User data */
 };
+
+void 
+hal_ctx_set_user_data(LibHalContext *ctx, void *user_data)
+{
+	ctx->user_data = user_data;
+}
+
+void*
+hal_ctx_get_user_data(LibHalContext *ctx)
+{
+	return ctx->user_data;
+}
 
 
 /** Retrieve all the properties on a device. 

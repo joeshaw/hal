@@ -145,6 +145,10 @@ LibHalContext *hal_initialize (const LibHalFunctions * functions,
 
 int hal_shutdown (LibHalContext *ctx);
 
+void hal_ctx_set_user_data(LibHalContext *ctx, void *user_data);
+
+void* hal_ctx_get_user_data(LibHalContext *ctx);
+
 char **hal_get_all_devices (LibHalContext *ctx, int *num_devices);
 dbus_bool_t hal_device_exists (LibHalContext *ctx, const char *udi);
 
