@@ -21,25 +21,28 @@
 #ifndef _VOLUME_ID_H_
 #define _VOLUME_ID_H_
 
-#define VOLUME_ID_VERSION		015
+#define VOLUME_ID_VERSION		019
 
 #define VOLUME_ID_LABEL_SIZE		64
 #define VOLUME_ID_UUID_SIZE		16
 #define VOLUME_ID_UUID_STRING_SIZE	37
 #define VOLUME_ID_FORMAT_SIZE		32
 #define VOLUME_ID_PATH_MAX		256
+#define VOLUME_ID_PARTITIONS_MAX	16
 
 enum volume_id_type {
-	VOLUME_ID_UNKNOWN,
+	VOLUME_ID_UNUSED,
 	VOLUME_ID_UNPROBED,
 	VOLUME_ID_OTHER,
 	VOLUME_ID_FILESYSTEM,
-	VOLUME_ID_PARTITIONTABLE
+	VOLUME_ID_PARTITIONTABLE,
+	VOLUME_ID_RAID
 };
 
 enum volume_id_format {
 	VOLUME_ID_ALL,
 	VOLUME_ID_MSDOSPARTTABLE,
+	VOLUME_ID_MSDOSEXTENDED,
 	VOLUME_ID_SWAP,
 	VOLUME_ID_EXT2,
 	VOLUME_ID_EXT3,
@@ -53,13 +56,16 @@ enum volume_id_format {
 	VOLUME_ID_MACPARTMAP,
 	VOLUME_ID_HFS,
 	VOLUME_ID_HFSPLUS,
-	VOLUME_ID_UFS
+	VOLUME_ID_UFS,
+	VOLUME_ID_LINUX_RAID
 };
 
 struct volume_id_partition {
-	enum volume_id_type type;
-	unsigned long long	off;
-	unsigned long long	len;
+	enum		volume_id_type type_id;
+	enum		volume_id_format format_id;
+	char		*format;
+	unsigned long long off;
+	unsigned long long len;
 };
 
 struct volume_id {
@@ -94,7 +100,7 @@ extern struct volume_id *volume_id_open_dev_t(dev_t devt);
 
 /* probe volume for filesystem type and try to read label/uuid */
 extern int volume_id_probe(struct volume_id *id, enum volume_id_type type,
-			   unsigned long long off);
+			   unsigned long long off, unsigned long long size);
 
 /* free allocated device info */
 extern void volume_id_close(struct volume_id *id);

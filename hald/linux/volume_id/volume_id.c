@@ -249,13 +249,70 @@ static void free_buffer(struct volume_id *id)
 	}
 }
 
+#define MD_RESERVED_BYTES		(64 * 1024)
+#define MD_MAGIC			0xa92b4efc
+static int probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
+{
+	struct mdp_super_block {
+		__u32	md_magic;
+		__u32	major_version;
+		__u32	minor_version;
+		__u32	patch_version;
+		__u32	gvalid_words;
+		__u32	set_uuid0;
+		__u32	ctime;
+		__u32	level;
+		__u32	size;
+		__u32	nr_disks;
+		__u32	raid_disks;
+		__u32	md_minor;
+		__u32	not_persistent;
+		__u32	set_uuid1;
+		__u32	set_uuid2;
+		__u32	set_uuid3;
+	} __attribute__((packed)) *mdp;
+
+	const __u8 *buf;
+	__u64 sboff = (size & ~(MD_RESERVED_BYTES - 1)) - MD_RESERVED_BYTES;
+	__u8 uuid[16];
+
+	if (size == 0)
+		return -1;
+
+	buf = get_buffer(id, off + sboff, 0x800);
+	if (buf == NULL)
+		return -1;
+
+	mdp = (struct mdp_super_block *) buf;
+
+	if (le32_to_cpu(mdp->md_magic) != MD_MAGIC)
+		return -1;
+
+	memcpy(uuid, &mdp->set_uuid0, 4);
+	memcpy(&uuid[4], &mdp->set_uuid1, 12);
+	set_uuid(id, uuid, 16);
+
+	dbg("found raid signature");
+	id->type_id = VOLUME_ID_RAID;
+	id->format = "linux_raid";
+
+	return 0;
+}
+
 #define MSDOS_MAGIC			"\x55\xaa"
 #define MSDOS_PARTTABLE_OFFSET		0x1be
-#define MSDOS_EOS_SIG			0x1FE
+#define MSDOS_SIG_OFF			0x1fe
 #define BSIZE				0x200
 #define DOS_EXTENDED_PARTITION		0x05
 #define LINUX_EXTENDED_PARTITION	0x85
 #define WIN98_EXTENDED_PARTITION	0x0f
+#define LINUX_RAID_PARTITION		0xfd
+#define is_extended(type) \
+	(type == DOS_EXTENDED_PARTITION ||	\
+	 type == WIN98_EXTENDED_PARTITION ||	\
+	 type == LINUX_EXTENDED_PARTITION)
+#define is_raid(type) \
+	(type == LINUX_RAID_PARTITION)
 static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 {
 	struct msdos_partition_entry {
@@ -273,13 +330,20 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 	const __u8 *buf;
 	int i;
+	__u64 poff;
+	__u64 plen;
+	__u64 extended = 0;
+	__u64 current;
+	__u64 next;
+	int limit;
 	int empty = 1;
+	struct volume_id_partition *p;
 
 	buf = get_buffer(id, off, 0x200);
 	if (buf == NULL)
 		return -1;
 
-	if (strncmp(&buf[MSDOS_EOS_SIG], MSDOS_MAGIC, 2) != 0)
+	if (strncmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
 		return -1;
 
 	/* check flags on all entries for a valid partition table */
@@ -297,34 +361,104 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 	if (id->partitions != NULL)
 		free(id->partitions);
-	id->partitions = malloc(4 * sizeof(struct volume_id_partition));
+	id->partitions = malloc(VOLUME_ID_PARTITIONS_MAX *
+				sizeof(struct volume_id_partition));
 	if (id->partitions == NULL)
 		return -1;
-	memset(id->partitions, 0x00, 4 * sizeof(struct volume_id_partition));
+	memset(id->partitions, 0x00,
+	       VOLUME_ID_PARTITIONS_MAX * sizeof(struct volume_id_partition));
 
 	for (i = 0; i < 4; i++) {
-		__u64 poff;
-		__u64 plen;
-
 		poff = (__u64) le32_to_cpu(part[i].start_sect) * BSIZE;
 		plen = (__u64) le32_to_cpu(part[i].nr_sects) * BSIZE;
 
 		if (plen == 0)
 			continue;
 
-		if (part[i].sys_ind == DOS_EXTENDED_PARTITION ||
-		    part[i].sys_ind == WIN98_EXTENDED_PARTITION ||
-		    part[i].sys_ind == LINUX_EXTENDED_PARTITION) {
+		p = &id->partitions[i];
+
+		if (is_extended(part[i].sys_ind)) {
 			dbg("found extended partition at 0x%llx", poff);
-			id->partitions[i].type = VOLUME_ID_PARTITIONTABLE;
+			p->type_id = VOLUME_ID_PARTITIONTABLE;
+			p->format_id = VOLUME_ID_MSDOSEXTENDED;
+			p->format = "msdos_extended_partition";
+			if (extended == 0)
+				extended = off + poff;
 		} else {
 			dbg("found 0x%x data partition at 0x%llx, len 0x%llx",
 			    part[i].sys_ind, poff, plen);
-			id->partitions[i].type = VOLUME_ID_UNPROBED;
+
+			if (is_raid(part[i].sys_ind))
+				p->type_id = VOLUME_ID_RAID;
+			else
+				p->type_id = VOLUME_ID_UNPROBED;
 		}
-		id->partitions[i].off = off + poff;
-		id->partitions[i].len = off + plen;
+
+		p->off = off + poff;
+		p->len = plen;
 		id->partition_count = i+1;
+	}
+
+	next = extended;
+	current = extended;
+	limit = 50;
+
+	/* follow extended partition chain and add data partitions */
+	while (next != 0) {
+		if (limit-- == 0) {
+			dbg("extended chain limit reached");
+			break;
+		}
+
+		buf = get_buffer(id, current, 0x200);
+		if (buf == NULL)
+			break;
+
+		part = (struct msdos_partition_entry*) &buf[MSDOS_PARTTABLE_OFFSET];
+
+		if (strncmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
+			break;
+
+		next = 0;
+
+		for (i = 0; i < 4; i++) {
+			poff = (__u64) le32_to_cpu(part[i].start_sect) * BSIZE;
+			plen = (__u64) le32_to_cpu(part[i].nr_sects) * BSIZE;
+
+			if (plen == 0)
+				continue;
+
+			if (is_extended(part[i].sys_ind)) {
+				dbg("found extended partition at 0x%llx", poff);
+				if (next == 0)
+					next = extended + poff;
+			} else {
+				dbg("found 0x%x data partition at 0x%llx, len 0x%llx",
+					part[i].sys_ind, poff, plen);
+
+				/* we always start at the 5th entry */
+				while (id->partition_count < 4)
+					id->partitions[id->partition_count++].type_id =
+						VOLUME_ID_UNUSED;
+
+				p = &id->partitions[id->partition_count];
+
+				if (is_raid(part[i].sys_ind))
+					p->type_id = VOLUME_ID_RAID;
+				else
+					p->type_id = VOLUME_ID_UNPROBED;
+
+				p->off = current + poff;
+				p->len = plen;
+				id->partition_count++;
+				if (id->partition_count >= VOLUME_ID_PARTITIONS_MAX) {
+					dbg("to many partitions");
+					next = 0;
+				}
+			}
+		}
+
+		current = next;
 	}
 
 	id->type_id = VOLUME_ID_PARTITIONTABLE;
@@ -531,7 +665,7 @@ struct vfat_dir_entry {
 	__u32	size;
 } __attribute__((__packed__));
 
-static  char *_search_label_in_dir_block(const __u8 *buf, __u16 size)
+static  char *vfat_search_label_in_dir(const __u8 *buf, __u16 size)
 {
 	struct vfat_dir_entry *dir;
 	int i;
@@ -553,7 +687,7 @@ static  char *_search_label_in_dir_block(const __u8 *buf, __u16 size)
 			continue;
 
 		if (dir[i].attr == FAT_ATTR_VOLUME) {
-			dbg("found ATTR_VOLUME id root dir");
+			dbg("found ATTR_VOLUME id in root dir");
 			return dir[i].name;
 		}
 
@@ -618,11 +752,11 @@ static int probe_vfat(struct volume_id *id, __u64 off)
 	__u32 fat_length;
 	__u64 root_start;
 	__u32 start_data_sect;
-	__u32 root_cluster_sect_off;
 	__u16 root_dir_entries;
 	__u8 *buf;
 	__u32 buf_size;
 	__u8 *label = NULL;
+	__u32 next;
 
 	vs = (struct vfat_super_block *) get_buffer(id, off, 0x200);
 	if (vs == NULL)
@@ -715,17 +849,17 @@ valid:
 		goto fat32;
 	}
 
-	/* the label may be a attribute in the root directory */
-	root_start = (reserved + fat_size)* sector_size;
+	/* the label may be an attribute in the root directory */
+	root_start = (reserved + fat_size) * sector_size;
 	root_dir_entries = le16_to_cpu(vs->dir_entries);
 	dbg("root dir start 0x%x", root_start);
 
 	buf_size = root_dir_entries * sizeof(struct vfat_dir_entry);
-	buf = get_buffer(id, root_start, buf_size);
+	buf = get_buffer(id, off + root_start, buf_size);
 	if (buf == NULL)
 		goto found;
 
-	label = _search_label_in_dir_block(buf, buf_size);
+	label = vfat_search_label_in_dir(buf, buf_size);
 
 	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
 		set_label_raw(id, label, 11);
@@ -738,25 +872,43 @@ valid:
 	goto found;
 
 fat32:
-	/* the label may be a attribute in the root directory */
-	root_cluster = le32_to_cpu(vs->type.fat32.root_cluster);
-	root_cluster_sect_off = (root_cluster - 2) * vs->sectors_per_cluster;
-	start_data_sect = reserved + fat_size + dir_size;
-	dbg("data area 0x%llx", (__u64) start_data_sect * sector_size);
-	root_start = (start_data_sect + root_cluster_sect_off) * sector_size;
-	dbg("root dir start 0x%x", root_start);
-
-	/* FIXME: on FAT32 the root dir is a cluster chain like any other
-	 * directory or a file, so we need to follow the chain, as the
-	 * label may be anywhere in the root directory. For now it's only
-	 * the first cluster.
-	 */
+	/* FAT32 root dir is a cluster chain like any other directory */
 	buf_size = vs->sectors_per_cluster * sector_size;
-	buf = get_buffer(id, root_start, buf_size);
-	if (buf == NULL)
-		goto found;
+	root_cluster = le32_to_cpu(vs->type.fat32.root_cluster);
+	dbg("root dir cluster %u", root_cluster);
+	start_data_sect = reserved + fat_size;
 
-	label = _search_label_in_dir_block(buf, buf_size);
+	next = root_cluster;
+	while (1) {
+		__u32 next_sect_off;
+		__u64 next_off;
+		__u64 fat_entry_off;
+
+		dbg("next cluster %u", next);
+		next_sect_off = (next - 2) * vs->sectors_per_cluster;
+		next_off = (start_data_sect + next_sect_off) * sector_size;
+		dbg("cluster offset 0x%x", next_off);
+
+		/* get cluster */
+		buf = get_buffer(id, off + next_off, buf_size);
+		if (buf == NULL)
+			goto found;
+
+		label = vfat_search_label_in_dir(buf, buf_size);
+		if (label != NULL)
+			break;
+
+		/* get FAT entry */
+		fat_entry_off = (reserved * sector_size) + (next * sizeof(__u32));
+		buf = get_buffer(id, off + fat_entry_off, buf_size);
+		if (buf == NULL)
+			goto found;
+
+		/* set next cluster */
+		next = le32_to_cpu(*((__u32 *) buf) & 0x0fffffff);
+		if (next == 0)
+			break;
+	}
 
 	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
 		set_label_raw(id, label, 11);
@@ -1179,7 +1331,7 @@ static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 	part = (struct mac_partition *) buf;
 	if ((strncmp(part->signature, "PM", 2) == 0) &&
 	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
-		/* linux creates a own subdevice for the map
+		/* linux creates an own subdevice for the map
 		 * just return the type if the drive header is missing */
 		id->type_id = VOLUME_ID_PARTITIONTABLE;
 		id->format_id = VOLUME_ID_MACPARTMAP;
@@ -1236,6 +1388,15 @@ static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 
 			id->partitions[i].off = poff;
 			id->partitions[i].len = plen;
+
+			if (strncmp(part->type, "Apple_Free", 10) == 0) {
+				id->partitions[i].type_id = VOLUME_ID_UNUSED;
+			} else if (strncmp(part->type, "Apple_partition_map", 19) == 0) {
+				id->partitions[i].type_id = VOLUME_ID_PARTITIONTABLE;
+				id->partitions[i].format_id = VOLUME_ID_MACPARTMAP;
+			} else {
+				id->partitions[i].type_id = VOLUME_ID_UNPROBED;
+			}
 		}
 		id->type_id = VOLUME_ID_PARTITIONTABLE;
 		id->format_id = VOLUME_ID_MACPARTMAP;
@@ -1670,7 +1831,9 @@ found:
 
 /* probe volume for filesystem type and try to read label+uuid */
 int volume_id_probe(struct volume_id *id,
-		    enum volume_id_type type, unsigned long long off)
+		    enum volume_id_type type,
+		    unsigned long long off,
+		    unsigned long long size)
 {
 	int rc;
 
@@ -1719,10 +1882,29 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_SWAP:
 		rc = probe_swap(id, off);
 		break;
+	case VOLUME_ID_LINUX_RAID:
+		rc = probe_linux_raid(id, off, size);
+		break;
 	case VOLUME_ID_ALL:
 	default:
-		/* read only minimal buffer, cause of the slow floppies */
+		rc = probe_linux_raid(id, off, size);
+		if (rc == 0)
+			break;
+
+		/* signature in the first block */
+		rc = probe_ntfs(id, off);
+		if (rc == 0)
+			break;
 		rc = probe_vfat(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_msdos_part_table(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_mac_partition_map(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_xfs(id, off);
 		if (rc == 0)
 			break;
 
@@ -1738,9 +1920,6 @@ int volume_id_probe(struct volume_id *id,
 		rc = probe_reiserfs(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_xfs(id, off);
-		if (rc == 0)
-			break;
 		rc = probe_jfs(id, off);
 		if (rc == 0)
 			break;
@@ -1750,19 +1929,10 @@ int volume_id_probe(struct volume_id *id,
 		rc = probe_iso9660(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_ntfs(id, off);
-		if (rc == 0)
-			break;
-		rc = probe_mac_partition_map(id, off);
-		if (rc == 0)
-			break;
 		rc = probe_hfs_hfsplus(id, off);
 		if (rc == 0)
 			break;
 		rc = probe_ufs(id, off);
-		if (rc == 0)
-			break;
-		rc = probe_msdos_part_table(id, off);
 		if (rc == 0)
 			break;
 		rc = -1;

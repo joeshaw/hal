@@ -85,6 +85,20 @@ set_volume_id_values(HalDevice *d, struct volume_id *vid)
 {
 	char *product;
 
+	switch (vid->type_id) {
+	case VOLUME_ID_FILESYSTEM:
+		hal_device_property_set_bool (d, "volume.is_filesystem", TRUE);
+		break;
+	case VOLUME_ID_RAID:
+		hal_device_property_set_bool (d, "volume.is_part_of_raid", TRUE);
+		break;
+	case VOLUME_ID_UNUSED:
+		hal_device_property_set_string (d, "info.product", "Volume (unused)");
+		return;
+	default:
+		;
+	}
+
 	hal_device_property_set_string (d, "volume.fstype", vid->format);
 	if (vid->format_version[0] != '\0')
 		hal_device_property_set_string (d, "volume.fsversion",
@@ -517,7 +531,7 @@ get_first_valid_partition(struct volume_id *id)
 			if (len == 0)
 				continue;
 
-			if (volume_id_probe(p, VOLUME_ID_ALL, off) == 0 &&
+			if (volume_id_probe(p, VOLUME_ID_ALL, off, 0) == 0 &&
 			    p->type_id == VOLUME_ID_FILESYSTEM)
 				return p;
 		}
@@ -547,7 +561,7 @@ volume_set_size (HalDevice *d, dbus_bool_t force)
 	if (force || hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
 
 		sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
-		/* no-partition volumes doesn't have sysfs path */
+		/* no-partition volumes don't have a sysfs path */
 		if (sysfs_path == NULL)
 			sysfs_path = hal_device_property_get_string (stordev, "linux.sysfs_path");
 
@@ -942,7 +956,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 				return FALSE;
 			}
 			
-			if (volume_id_probe (vid, VOLUME_ID_ALL, 0) != 0) {
+			if (volume_id_probe (vid, VOLUME_ID_ALL, 0, 0) != 0) {
 				if (is_cdrom) {
 					/* volume_id cannot yet probe blank/audio discs etc,
 					 * so don't fail for them, just set vid to NULL */
@@ -1185,10 +1199,21 @@ block_class_pre_process (ClassDeviceHandler *self,
 		 * or any of it partitions are not mounted causes the loop.
 		 */
 		if (hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
+			unsigned long long size = 0;
+			int bcount;
+			int bsize;
+
+			volume_set_size (d, FALSE);
+
+			bcount = hal_device_property_get_int (d, "volume.num_blocks");
+			bsize = hal_device_property_get_int (d, "volume.block_size");
+
+			if ((bsize > 0)  && (bcount > 0))
+				size = bcount * bsize;
 
 			vid = volume_id_open_node(device_file);
 			if (vid != NULL) {
-				if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0) {
+				if (volume_id_probe(vid, VOLUME_ID_ALL, 0, size) == 0) {
 					set_volume_id_values(d, vid);
 				}
 				volume_id_close(vid);
@@ -1203,9 +1228,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 			hal_device_property_set_string (d, "volume.fstype", "vfat,auto");
 			hal_device_property_set_bool (d, "volume.is_filesystem", TRUE);
 		}
-
-		volume_set_size (d, FALSE);
-
 		return;
 	}
 

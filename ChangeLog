@@ -1,3 +1,23 @@
+2004-08-25  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/block_class_device.c:
+	(set_volume_id_values), (get_first_valid_partition),
+	(volume_set_size), (detect_media), (block_class_pre_process): Add
+	"volume.is_part_of_raid" and pass the size of the volume down to
+	volume_id to be able to look for a raid superblock at the end of
+	the device.
+	* hald/linux/volume_id/volume_id.c:
+	(probe_linux_raid) : Add linux_raid detection with reading of the
+	raid set uuid
+	(probe_msdos_part_table): follow extended partiton while probing
+	(vfat_search_label_in_dir), (probe_vfat): Support reding of labels
+	stored in the directory of FAT32 and read the whole root directory
+	instead of only the first cluster
+	(probe_mac_partition_map): return UNUSED and PARTITIONTABLE types
+	for know Apple partitions
+	(volume_id_probe): Add raid detection, if volume_id is called with
+	the size of the volume.
+
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (detect_media):
