@@ -1,5 +1,11 @@
 2004-07-15  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: Bump version to 0.2.94
+
+	* packaging/fedora/hal.spec (Version): Bump to 0.2.94
+
+2004-07-15  David Zeuthen  <david@fubar.dk>
+
 	Patch from Sjoerd Simons <sjoerd@luon.net>
 
 	* hald/linux/block_class_device.c (block_class_pre_process): It
