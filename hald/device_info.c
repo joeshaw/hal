@@ -78,6 +78,12 @@ enum {
 
 	/** Processing an append element */
 	CURELEM_APPEND = 4,
+
+	/** Processing an prepend element */
+	CURELEM_PREPEND = 5,
+
+	/** Processing an prepend element */
+	CURELEM_REMOVE = 6
 };
 
 /** What and how to merge */
@@ -88,7 +94,9 @@ enum {
 	MERGE_TYPE_INT32,
 	MERGE_TYPE_UINT64,
 	MERGE_TYPE_DOUBLE,
-	MERGE_TYPE_COPY_PROPERTY
+	MERGE_TYPE_COPY_PROPERTY,
+	MERGE_TYPE_STRLIST,
+	MERGE_TYPE_REMOVE
 };
 
 /** Parsing Context
@@ -538,18 +546,33 @@ handle_match (ParsingContext * pc, const char **attr)
 
 		needle = attr[3];
 
-		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
-			return FALSE;
-
-		if (hal_device_has_property (d, prop_to_check)) {
-			const char *haystack;
-
-			haystack = hal_device_property_get_string (d, prop_to_check);
-			if (needle != NULL && haystack != NULL && strstr (haystack, needle)) {
-				contains = TRUE;
+		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+			if (hal_device_has_property (d, prop_to_check)) {
+				const char *haystack;
+				
+				haystack = hal_device_property_get_string (d, prop_to_check);
+				if (needle != NULL && haystack != NULL && strstr (haystack, needle)) {
+					contains = TRUE;
+				}
+				
 			}
+		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
+			   needle != NULL) {
+			GSList *i;
+			GSList *value;
 
+			value = hal_device_property_get_strlist (d, prop_to_check);
+			for (i = value; i != NULL; i = g_slist_next (i)) {
+				const char *str = i->data;
+				if (strcmp (str, needle) == 0) {
+					contains = TRUE;
+					break;
+				}
+			}
+		} else {
+			return FALSE;
 		}
+
 		return contains;
 	} else if (strcmp (attr[2], "contains_ncase") == 0) {
 		const char *needle;
@@ -557,22 +580,37 @@ handle_match (ParsingContext * pc, const char **attr)
 
 		needle = attr[3];
 
-		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
-			return FALSE;
-
-		if (hal_device_has_property (d, prop_to_check)) {
-			char *needle_lowercase;
-			char *haystack_lowercase;
-
-			needle_lowercase   = g_utf8_strdown (needle, -1);
-			haystack_lowercase = g_utf8_strdown (hal_device_property_get_string (d, prop_to_check), -1);
-			if (needle_lowercase != NULL && haystack_lowercase != NULL && strstr (haystack_lowercase, needle_lowercase)) {
-				contains_ncase = TRUE;
+		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+			if (hal_device_has_property (d, prop_to_check)) {
+				char *needle_lowercase;
+				char *haystack_lowercase;
+				
+				needle_lowercase   = g_utf8_strdown (needle, -1);
+				haystack_lowercase = g_utf8_strdown (hal_device_property_get_string (d, prop_to_check), -1);
+				if (needle_lowercase != NULL && haystack_lowercase != NULL && strstr (haystack_lowercase, needle_lowercase)) {
+					contains_ncase = TRUE;
+				}
+				
+				g_free (needle_lowercase);
+				g_free (haystack_lowercase);
 			}
+		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
+			   needle != NULL) {
+			GSList *i;
+			GSList *value;
 
-			g_free (needle_lowercase);
-			g_free (haystack_lowercase);
+			value = hal_device_property_get_strlist (d, prop_to_check);
+			for (i = value; i != NULL; i = g_slist_next (i)) {
+				const char *str = i->data;
+				if (g_ascii_strcasecmp (str, needle) == 0) {
+					contains_ncase = TRUE;
+					break;
+				}
+			}
+		} else {
+			return FALSE;
 		}
+
 		return contains_ncase;
 	} else if (strcmp (attr[2], "compare_lt") == 0) {
 		dbus_int64_t result;
@@ -652,6 +690,10 @@ handle_merge (ParsingContext * pc, const char **attr)
 		/* match string property */
 		pc->merge_type = MERGE_TYPE_DOUBLE;
 		return;
+	} else if (strcmp (attr[3], "strlist") == 0) {
+		/* match string property */
+		pc->merge_type = MERGE_TYPE_STRLIST;
+		return;
 	} else if (strcmp (attr[3], "copy_property") == 0) {
 		/* copy another property */
 		pc->merge_type = MERGE_TYPE_COPY_PROPERTY;
@@ -661,13 +703,13 @@ handle_merge (ParsingContext * pc, const char **attr)
 	return;
 }
 
-/** Called when the append element begins.
+/** Called when the append or prepend element begins.
  *
  *  @param  pc                  Parsing context
  *  @param  attr                Attribute key/value pairs
  */
 static void
-handle_append (ParsingContext * pc, const char **attr)
+handle_append_prepend (ParsingContext * pc, const char **attr)
 {
 	int num_attrib;
 
@@ -688,13 +730,59 @@ handle_append (ParsingContext * pc, const char **attr)
 		return;
 
 	if (strcmp (attr[3], "string") == 0) {
-		/* match string property */
+		/* append to a string */
 		pc->merge_type = MERGE_TYPE_STRING;
+		return;
+	} else if (strcmp (attr[3], "strlist") == 0) {
+		/* append to a string list*/
+		pc->merge_type = MERGE_TYPE_STRLIST;
 		return;
 	} else if (strcmp (attr[3], "copy_property") == 0) {
 		/* copy another property */
 		pc->merge_type = MERGE_TYPE_COPY_PROPERTY;
 		return;
+	}
+
+	return;
+}
+
+/** Called when the append or prepend element begins.
+ *
+ *  @param  pc                  Parsing context
+ *  @param  attr                Attribute key/value pairs
+ */
+static void
+handle_remove (ParsingContext * pc, const char **attr)
+{
+	int num_attrib;
+
+	pc->merge_type = MERGE_TYPE_UNKNOWN;
+
+	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
+		;
+	}
+
+	if (num_attrib != 2 && num_attrib != 4)
+		return;
+
+	if (strcmp (attr[0], "key") != 0)
+		return;
+	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
+
+	if (num_attrib == 4) {
+		if (strcmp (attr[2], "type") != 0)
+			return;
+
+		if (strcmp (attr[3], "strlist") == 0) {
+			/* remove from strlist */
+			pc->merge_type = MERGE_TYPE_STRLIST;
+			return;
+		} else {
+			pc->merge_type = MERGE_TYPE_UNKNOWN;
+			return;
+		}
+	} else {
+		pc->merge_type = MERGE_TYPE_REMOVE;
 	}
 
 	return;
@@ -790,7 +878,41 @@ start (ParsingContext * pc, const char *el, const char **attr)
 
 		pc->curelem = CURELEM_APPEND;
 		if (pc->match_ok) {
-			handle_append (pc, attr);
+			handle_append_prepend (pc, attr);
+		} else {
+			/*HAL_INFO(("No merge!")); */
+		}
+	} else if (strcmp (el, "prepend") == 0) {
+		if (pc->curelem != CURELEM_DEVICE
+		    && pc->curelem != CURELEM_MATCH) {
+			HAL_ERROR (("%s:%d:%d: Element <prepend> can only be "
+				    "inside <device> and <match>", 
+				    pc->file, 
+				    XML_GetCurrentLineNumber (pc->parser), 
+				    XML_GetCurrentColumnNumber (pc->parser)));
+			parsing_abort (pc);
+		}
+
+		pc->curelem = CURELEM_PREPEND;
+		if (pc->match_ok) {
+			handle_append_prepend (pc, attr);
+		} else {
+			/*HAL_INFO(("No merge!")); */
+		}
+	} else if (strcmp (el, "remove") == 0) {
+		if (pc->curelem != CURELEM_DEVICE
+		    && pc->curelem != CURELEM_MATCH) {
+			HAL_ERROR (("%s:%d:%d: Element <remove> can only be "
+				    "inside <device> and <match>", 
+				    pc->file, 
+				    XML_GetCurrentLineNumber (pc->parser), 
+				    XML_GetCurrentColumnNumber (pc->parser)));
+			parsing_abort (pc);
+		}
+
+		pc->curelem = CURELEM_REMOVE;
+		if (pc->match_ok) {
+			handle_remove (pc, attr);
 		} else {
 			/*HAL_INFO(("No merge!")); */
 		}
@@ -853,10 +975,18 @@ end (ParsingContext * pc, const char *el)
 
 		switch (pc->merge_type) {
 		case MERGE_TYPE_STRING:
-			hal_device_property_set_string (pc->device, pc->merge_key,
-						pc->cdata_buf);
+			hal_device_property_set_string (pc->device, pc->merge_key, pc->cdata_buf);
 			break;
 
+		case MERGE_TYPE_STRLIST:
+		{
+			int type = hal_device_property_get_type (pc->device, pc->merge_key);
+			if (type == HAL_PROPERTY_TYPE_STRLIST || type == HAL_PROPERTY_TYPE_NIL) {
+				hal_device_property_remove (pc->device, pc->merge_key);
+				hal_device_property_strlist_append (pc->device, pc->merge_key, pc->cdata_buf);
+			}
+			break;
+		}
 
 		case MERGE_TYPE_INT32:
 			{
@@ -933,32 +1063,94 @@ end (ParsingContext * pc, const char *el)
 			break;
 		}
 	} else if (pc->curelem == CURELEM_APPEND && pc->match_ok && 
-		   hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING) {
+		   (hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING ||
+		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRLIST ||
+		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_NIL)) {
 		char buf[256];
 		char buf2[256];
 
 		/* As soon as we are appending, we have matched the device... */
 		pc->device_matched = TRUE;
 
-		switch (pc->merge_type) {
-		case MERGE_TYPE_STRING:
-			strncpy (buf, pc->cdata_buf, sizeof (buf));
-			break;
-
-		case MERGE_TYPE_COPY_PROPERTY:
-			hal_device_property_get_as_string (pc->device, pc->cdata_buf, buf, sizeof (buf));
-			break;
-
-		default:
-			HAL_ERROR (("Unknown merge_type=%d='%c'",
-				    pc->merge_type, pc->merge_type));
-			break;
+		if (pc->merge_type == MERGE_TYPE_STRLIST) {
+			hal_device_property_strlist_append (pc->device, pc->merge_key, pc->cdata_buf);
+		} else {
+			const char *existing_string;
+			
+			switch (pc->merge_type) {
+			case MERGE_TYPE_STRING:
+				strncpy (buf, pc->cdata_buf, sizeof (buf));
+				break;
+				
+			case MERGE_TYPE_COPY_PROPERTY:
+				hal_device_property_get_as_string (pc->device, pc->cdata_buf, buf, sizeof (buf));
+				break;
+				
+			default:
+				HAL_ERROR (("Unknown merge_type=%d='%c'", pc->merge_type, pc->merge_type));
+				break;
+			}
+			
+			existing_string = hal_device_property_get_string (pc->device, pc->merge_key);
+			if (existing_string != NULL) {
+				strncpy (buf2, existing_string, sizeof (buf2));
+				strncat (buf2, buf, sizeof (buf2) - strlen(buf2));
+			} else {
+				strncpy (buf2, buf, sizeof (buf2));
+			}
+			hal_device_property_set_string (pc->device, pc->merge_key, buf2);
 		}
+	} else if (pc->curelem == CURELEM_PREPEND && pc->match_ok && 
+		   (hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING ||
+		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRLIST ||
+		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_NIL)) {
+		char buf[256];
+		char buf2[256];
 
-		strncpy (buf2, hal_device_property_get_string (pc->device, pc->merge_key), sizeof (buf2));
-		strncat (buf2, buf, sizeof (buf2) - strlen(buf2));
-		hal_device_property_set_string (pc->device, pc->merge_key, buf2);
+		/* As soon as we are prepending, we have matched the device... */
+		pc->device_matched = TRUE;
+
+		if (pc->merge_type == MERGE_TYPE_STRLIST) {
+			hal_device_property_strlist_prepend (pc->device, pc->merge_key, pc->cdata_buf);
+		} else {
+			const char *existing_string;
+			
+			switch (pc->merge_type) {
+			case MERGE_TYPE_STRING:
+				strncpy (buf, pc->cdata_buf, sizeof (buf));
+				break;
+				
+			case MERGE_TYPE_COPY_PROPERTY:
+				hal_device_property_get_as_string (pc->device, pc->cdata_buf, buf, sizeof (buf));
+				break;
+				
+			default:
+				HAL_ERROR (("Unknown merge_type=%d='%c'", pc->merge_type, pc->merge_type));
+				break;
+			}
+			
+			existing_string = hal_device_property_get_string (pc->device, pc->merge_key);
+			if (existing_string != NULL) {
+				strncpy (buf2, buf, sizeof (buf2));
+				strncat (buf2, existing_string, sizeof (buf2) - strlen(buf2));
+			} else {
+				strncpy (buf2, buf, sizeof (buf2));
+			}
+			hal_device_property_set_string (pc->device, pc->merge_key, buf2);
+		}
+	} else if (pc->curelem == CURELEM_REMOVE && pc->match_ok) {
+
+		if (pc->merge_type == MERGE_TYPE_STRLIST) {
+			/* covers <remove key="foobar" type="strlist">blah</remove> */
+			hal_device_property_strlist_remove (pc->device, pc->merge_key, pc->cdata_buf);
+		} else {
+			/* only allow <remove key="foobar"/>, not <remove key="foobar">blah</remove> */
+			if (strlen (pc->cdata_buf) == 0) {
+				hal_device_property_remove (pc->device, pc->merge_key);
+			}
+		}
 	}
+
 
 
 	pc->cdata_buf_len = 0;

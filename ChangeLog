@@ -1,3 +1,41 @@
+2005-02-03  David Zeuthen  <davidz@redhat.com>
+
+	* hald/device_info.c (handle_match): Handle contains and
+	contains_ncase for strlist properties. Also allow <merge key="foo"
+	type="strlist> blah</merge> to create a new strlist; possibly
+	destroy an existing strlist with the single elem 'blah'.
+	(handle_append_prepend): Renamed from handle_append since it also
+	covers prepend now and supports strlist's.
+	(handle_remove): New function to cover <remove key="foobar"
+	type="strlist">blah</remove> (removes element 'blah' from strlist
+	'foobar') and <remove key="foobar"/> to completely remove a
+	property.
+	(start): Support <prepend> on both strings and strlists. Support
+	<remove>
+	(end): Support the new directives.
+
+	Here is an example of the new directives; I'm pasting it here
+	so it's handy when the spec needs to be updated. Oh, and for
+	when I get around to adding test cases for this :-)
+
+	<append key="bat0" type="string">foo0</append>
+	<merge key="baz0" type="strlist">foz0</merge>
+	<append key="bar0" type="strlist">foo0</append>
+	<append key="bar0" type="strlist">foo1</append>
+	<append key="bar0" type="strlist">foo2</append>
+	<append key="bar0" type="strlist">foo3</append>
+
+	<prepend key="dat0" type="string">foo0</prepend>
+	<merge key="daz0" type="strlist">foz0</merge>
+	<prepend key="dar0" type="strlist">foo0</prepend>
+	<prepend key="dar0" type="strlist">foo1</prepend>
+	<prepend key="dar0" type="strlist">foo2</prepend>
+	<prepend key="dar0" type="strlist">foo3</prepend>
+
+	<remove key="t1" type="strlist">val1</remove>
+	<remove key="t2"/>
+	<remove key="t3"/>
+
 2005-02-02  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/pmu.[ch]: New files
