@@ -1745,9 +1745,9 @@ property_atomic_update_end ()
 			}
 
 
-			if (!dbus_connection_send
-			    (dbus_connection, message, NULL))
+			if (!dbus_connection_send(dbus_connection, message, NULL))
 				DIE (("error broadcasting message"));
+
 
 			dbus_message_unref (message);
 
@@ -1827,16 +1827,13 @@ property_changed (HalDevice * device,
 	DBusMessage *message;
 	DBusMessageIter iter;
 
-/*
-    HAL_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
-              device->udi, key, 
-              in_gdl ? "true" : "false",
-              removed ? "true" : "false",
-              added ? "true" : "false"));
-*/
-
 	if (!in_gdl)
 		return;
+
+	HAL_TRACE (("Entering, udi='%s', key='%s' %d, removed=%s added=%s",
+		    device->udi, key, strlen(key),
+		    removed ? "true" : "false",
+		    added ? "true" : "false"));
 
 	if (atomic_count > 0) {
 		PendingUpdate *pu;

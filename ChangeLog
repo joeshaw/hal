@@ -1,3 +1,34 @@
+2004-03-14  David Zeuthen  <david@fubar.dk>
+
+	Added first stab of rewrite of linux specific parts - the new
+	code is a lot more object oriented and thus more compact; it's
+	currently disabled until it's more tested; you have to manually
+	enable by editing hald/Makefile.am
+
+	* hald/Makefile.am (hald_SOURCES): Add new linux specific parts;
+	currently disabled
+	
+	* hald/device_store.h: add ds_device_async_wait_for_property()
+
+	* hald/device_store.c (DSDeviceAsyncFindStruct): Add device member
+	used in for wait_for_property
+	(async_find_check_new_addition): add wait_for_property check
+	(ds_device_async_wait_for_property): new function
+
+	* osspec.c : new file
+	* common.[ch] : new files
+	* bus_device.[ch] : new files
+	* usb_bus_device.c : new file
+	* usbif_bus_device.c : new file
+	* pci_bus_device.c : new file
+	* ide_bus_device.c : new file
+	* ide_host_bus_device.c : new file
+	* class_device.[ch] : new files
+	* input_class_device.c : new file
+	* block_class_device.c : new file
+	* scsi_host_class_device.c : new file
+	* scsi_device_class_device.c : new file
+
 2004-03-05  Sjoerd Simons  <sjoerd@air.luon.net>
 
 	* hald/linux/linux_class_v4l.c (visit_class_device_v4l): Remove

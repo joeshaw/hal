@@ -678,7 +678,9 @@ scan_fdi_files (const char *dir, HalDevice * d)
 dbus_bool_t
 di_search_and_merge (HalDevice * d)
 {
-	return scan_fdi_files (PACKAGE_DATA_DIR "/hal/fdi", d);
+	dbus_bool_t rc;
+	rc = scan_fdi_files (PACKAGE_DATA_DIR "/hal/fdi", d);
+	return rc;
 }
 
 /** @} */

@@ -157,8 +157,7 @@ HalDevice *ds_device_find (const char *udi);
 
 HalDevice **ds_device_find_multiple_by_key_value_string (const char *key,
 							 const char *value,
-							 dbus_bool_t
-							 only_gdl,
+							 dbus_bool_t only_gdl,
 							 int *num_results);
 
 HalDevice *ds_device_find_by_key_value_string (const char *key,
@@ -168,9 +167,16 @@ HalDevice *ds_device_find_by_key_value_string (const char *key,
 void ds_device_async_find_by_key_value_string (const char *key,
 					       const char *value,
 					       dbus_bool_t only_gdl,
-					       DSAsyncFindDeviceCB
-					       callback, void *data1,
-					       void *data2, int timeout);
+					       DSAsyncFindDeviceCB callback, 
+					       void *data1, void *data2, 
+					       int timeout);
+
+void ds_device_async_wait_for_property (HalDevice *device,
+					const char *key,
+					DSAsyncFindDeviceCB callback,
+					void *data1, void *data2, 
+					int timeout);
+
 HalDevice *ds_device_new ();
 void ds_device_destroy (HalDevice * device);
 
