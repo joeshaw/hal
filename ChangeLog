@@ -1,5 +1,12 @@
 2003-12-22  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/linux_usb.c (usb_proc_parse): Allow multiple invocations,
+	specifically one on every hotplug :-)
+	(visit_device_usb_got_parent): Call usb_proc_parse, so we get up-to-
+	date information from proc
+	
+2003-12-22  David Zeuthen  <david@fubar.dk>
+
 	* hald/device_store.c (async_find_check_new_addition): fixed a 
 	quite subtle bug where multiple finds for the same device were
 	out there. I just love bloody callbacks :-/

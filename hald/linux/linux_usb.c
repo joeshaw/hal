@@ -458,6 +458,22 @@ static void usb_proc_parse()
     FILE* f;
     char buf[256];
 
+    /* We may be called multiple times; in fact we are called on every
+     * hotplug.. so clean up old info
+     */
+    if( usb_proc_head!=NULL )
+    {
+        usb_proc_info* i;
+        usb_proc_info* next;
+
+        for(i=usb_proc_head; i!=NULL; i=next)
+        {
+            next = i->next;
+            free(i);
+        }
+        usb_proc_head = NULL;
+    }
+
     f = fopen("/proc/bus/usb/devices", "r");
     if( f==NULL )
     {
@@ -1048,6 +1064,13 @@ static void visit_device_usb_got_parent(HalDevice* parent,
          * hub, cf. drivers/usb/hcd.c in kernel 2.6
          */
         ds_property_set_int(d, "usb.busNumber", bus_number);
+
+        if( !is_probing )
+        {
+            /* reload proc info if we are not probing on startup */
+            usb_proc_parse();
+        }
+
         proc_info = usb_proc_find_virtual_hub(bus_number);
     }
     else
@@ -1220,7 +1243,6 @@ void linux_usb_init()
 
     /* Parse /proc/bus/usb/devices */
 
-    /* @todo FIXME: do this on every hotplug */
     usb_proc_parse();
 }
 
