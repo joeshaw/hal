@@ -1,3 +1,10 @@
+2004-10-02  David Zeuthen  <david@fubar.dk>
+
+	* libhal/libhal.c (hal_initialize): Don't set is_shutdown when we're
+	just initialized.
+	(hal_get_all_devices): Set num_devices to 0 even if we fail. Patch
+	from Colin Walters <walters@redhat.com>
+
 2004-09-29  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/volume_id/volume_id.c (volume_id_probe): Probe for msdos

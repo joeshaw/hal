@@ -671,8 +671,6 @@ hal_initialize (const LibHalFunctions * cb_functions,
 	}
 
 	ctx->is_initialized = TRUE;
-	ctx->is_shutdown = TRUE;
-
 	return ctx;
 }
 
@@ -743,6 +741,8 @@ hal_get_all_devices (LibHalContext *ctx, int *num_devices)
 	DBusMessageIter iter;
 	char **device_names;
 	char **hal_device_names;
+
+	*num_devices = 0;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
