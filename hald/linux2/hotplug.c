@@ -259,6 +259,8 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							     is_partition,
 							     (void *) hotplug_event);
 		}
+
+		g_free (parent_path);
 	} else {
 		/* just ignore this hotplug event */
 		hotplug_event_end ((void *) hotplug_event);

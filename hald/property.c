@@ -273,6 +273,8 @@ hal_property_set_string (HalProperty *prop, const char *value)
 			  prop->type == HAL_PROPERTY_TYPE_INVALID);
 
 	prop->type = HAL_PROPERTY_TYPE_STRING;
+	if (prop->str_value != NULL)
+		g_free (prop->str_value);
 	prop->str_value = g_strdup (value);
 
 	while (!g_utf8_validate (prop->str_value, -1,

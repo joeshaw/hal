@@ -1110,29 +1110,34 @@ sender_has_privileges (DBusConnection *connection, DBusMessage *message)
 	DBusError error;
 	unsigned long user_uid;
 	const char *user_base_svc;
+	dbus_bool_t ret;
+
+	ret = FALSE;
 
 	user_base_svc = dbus_message_get_sender (message);
 	if (user_base_svc == NULL) {
 		HAL_WARNING (("Cannot determine base service of caller"));
-		return FALSE;
+		goto out;
 	}
 
 	HAL_DEBUG (("base_svc = %s", user_base_svc));
 
 	dbus_error_init (&error);
-	if ((user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error)) 
-       == (unsigned long) -1) {
+	if ((user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error)) == (unsigned long) -1) {
 		HAL_WARNING (("Could not get uid for connection"));
-		return FALSE;
+		goto out;
 	}
 
 	HAL_INFO (("uid for caller is %ld", user_uid));
 
 	if (user_uid != 0 && user_uid != geteuid()) {
 		HAL_WARNING (("uid %d is doesn't have the right priviledges", user_uid));
-		return FALSE;
+		goto out;
 	}
 
+	ret = TRUE;
+
+out:
 	return TRUE;
 }
 
@@ -1829,8 +1834,7 @@ device_property_atomic_update_end (void)
 	--atomic_count;
 
 	if (atomic_count < 0) {
-		HAL_WARNING (("*** atomic_count = %d < 0 !!",
-			      atomic_count));
+		HAL_WARNING (("*** atomic_count = %d < 0 !!", atomic_count));
 		atomic_count = 0;
 	}
 
@@ -1845,22 +1849,21 @@ device_property_atomic_update_end (void)
 
 			pu_iter_next = pu_iter->next;
 
+			/* see if we've already processed this */
 			if (pu_iter->udi == NULL)
-				goto have_processed;
+				goto already_processed;
 
 			/* count number of updates for this device */
 			num_updates_this = 0;
-			for (pu_iter2 = pu_iter;
-			     pu_iter2 != NULL; pu_iter2 = pu_iter2->next) {
+			for (pu_iter2 = pu_iter; pu_iter2 != NULL; pu_iter2 = pu_iter2->next) {
 				if (strcmp (pu_iter2->udi, pu_iter->udi) == 0)
 					num_updates_this++;
 			}
 
 			/* prepare message */
-			message = dbus_message_new_signal (
-				pu_iter->udi,
-				"org.freedesktop.Hal.Device",
-				"PropertyModified");
+			message = dbus_message_new_signal (pu_iter->udi,
+							   "org.freedesktop.Hal.Device",
+							   "PropertyModified");
 			dbus_message_iter_init_append (message, &iter);
 			dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32,
 							&num_updates_this);
@@ -1898,6 +1901,7 @@ device_property_atomic_update_end (void)
 					dbus_message_iter_close_container (&iter_array, &iter_struct);
 
 					/* signal this is already processed */
+					g_free (pu_iter2->key);
 					if (pu_iter2 != pu_iter) {
 						g_free (pu_iter2->udi);
 						pu_iter2->udi = NULL;
@@ -1905,19 +1909,18 @@ device_property_atomic_update_end (void)
 				}
 			}
 
+			g_free (pu_iter->udi);
 			dbus_message_iter_close_container (&iter, &iter_array);
-
 
 			if (!dbus_connection_send
 			    (dbus_connection, message, NULL))
 				DIE (("error broadcasting message"));
-
 			dbus_message_unref (message);
 
-		      have_processed:
-			g_free (pu_iter->key);
+		already_processed:
 			g_free (pu_iter);
-		}		/* for all updates */
+
+		} /* for all updates */
 
 		num_pending_updates = 0;
 		pending_updates_head = NULL;

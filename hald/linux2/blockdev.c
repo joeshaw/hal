@@ -148,6 +148,7 @@ blockdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userda
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
 	}
+	g_object_unref (d);
 
 	hotplug_event_end (end_token);
 }
@@ -272,12 +273,14 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	 */
 	if (timed_out || !(return_code == 0 || (!is_volume && return_code == 2))) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 		goto out;
 	}
 
 	if (!blockdev_compute_udi (d)) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 		goto out;
 	}
@@ -350,6 +353,7 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 						    NULL, add_blockdev_probing_helper_done, 
 						    HAL_HELPER_TIMEOUT) == NULL) {
 				hal_device_store_remove (hald_get_tdl (), d);
+				g_object_unref (d);
 				hotplug_event_end (end_token);
 			}
 			goto out;
@@ -377,6 +381,7 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 				    NULL, add_blockdev_probing_helper_done, 
 				    HAL_HELPER_TIMEOUT) == NULL) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 	}
 
@@ -413,6 +418,7 @@ blockdev_callouts_preprobing_volume_done (HalDevice *d, gpointer userdata1, gpoi
 				    NULL, add_blockdev_probing_helper_done, 
 				    HAL_HELPER_TIMEOUT) == NULL) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 	}
 
@@ -473,7 +479,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		if (!is_fakevolume && hal_device_property_get_bool (parent, "storage.no_partitions_hint")) {
 			HAL_INFO (("Ignoring blockdev since not a fakevolume and parent has "
 				   "storage.no_partitions_hint==TRUE"));
-			goto out;
+			goto error;
 		}
 	}
 

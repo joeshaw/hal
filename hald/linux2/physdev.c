@@ -852,6 +852,7 @@ physdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdat
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
 	}
+	g_object_unref (d);
 
 	hotplug_event_end (end_token);
 }
@@ -890,6 +891,7 @@ physdev_callouts_preprobing_done (HalDevice *d, gpointer userdata1, gpointer use
 	/* Compute UDI */
 	if (!handler->compute_udi (d)) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 		goto out;
 	}

@@ -285,6 +285,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 error:
 	if (d != NULL) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		d = NULL;
 	}
 
@@ -548,6 +549,8 @@ classdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userda
 		HAL_WARNING (("Error removing device"));
 	}
 
+	g_object_unref (d);
+
 	hotplug_event_end (end_token);
 }
 
@@ -561,6 +564,7 @@ add_classdev_after_probing (HalDevice *d, ClassDevHandler *handler, void *end_to
 	/* Compute UDI */
 	if (!handler->compute_udi (d)) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 		goto out;
 	}
@@ -586,6 +590,7 @@ add_classdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	/* Discard device if probing reports failure */
 	if (return_code != 0) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 		hotplug_event_end (end_token);
 		goto out;
 	}
@@ -640,6 +645,7 @@ classdev_callouts_preprobing_done (HalDevice *d, gpointer userdata1, gpointer us
 					    (gpointer) handler, add_classdev_probing_helper_done, 
 					    HAL_HELPER_TIMEOUT) == NULL) {
 			hal_device_store_remove (hald_get_tdl (), d);
+			g_object_unref (d);
 			hotplug_event_end (end_token);
 		}
 		goto out;

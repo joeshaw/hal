@@ -1,5 +1,47 @@
 2005-02-27  David Zeuthen  <davidz@redhat.com>
 
+	More fun with valgrind :-)
+
+	* hald/linux2/classdev.c: Fix a bunch of leaks by calling
+	g_object_unref for HalDevice objects that goes away
+
+	* hald/linux2/physdev.c: Fix a bunch of leaks by calling
+	g_object_unref for HalDevice objects that goes away
+
+	* hald/linux2/hotplug.c (hotplug_event_begin_sysfs): Don't
+	leak parent_path
+
+	* hald/linux2/coldplug.c (free_hash_sys_to_class_in_dev): New
+	function; to free values of the sysfs_to_class_in_devices_map
+	hashtable
+	(coldplug_synthesize_events): Fix memory leaks
+
+	* hald/linux2/blockdev.c: Fix a bunch of leaks by calling
+	g_object_unref for HalDevice objects that goes away
+
+	* hald/property.c (hal_property_set_string): Don't leak old value
+
+	* hald/hald_dbus.c (sender_has_privileges): Fixup error handling
+	(device_property_atomic_update_end): Fix memory leak
+
+	* hald/hald.h: Add HALD_MEMLEAK_DBG but uncomment it by default
+
+	* hald/hald.c (my_shutdown): New function, defined only if
+	HALD_MEMLEAK_DBG is set; should prolly be invoked by handler
+	registered with atexit(3); some day in the future
+	(osspec_probe_done): Add appropriate timeout if HALD_MEMLEAK_DBG
+	is et
+
+	* hald/device.c (hal_device_finalize, hal_device_new): Recognize
+	the HALD_MEMLEAK_DBG define and maintain dbg_hal_device_object_delta
+	accordingly.
+	(hal_device_set_udi): Don't leak old udi
+
+	* hald/valgrind-hald.sh: New file - useful for finding memory
+	leaks
+
+2005-02-27  David Zeuthen  <davidz@redhat.com>
+
 	Played around with Valgrind on this slow Sunday :-). Before this
 	patch options 'valgrind --show-reachable=yes --leak-check=yes
 	--tool=memcheck ./hald --daemon=no --retain-privileges' - remember

@@ -48,6 +48,15 @@ extern dbus_bool_t hald_is_verbose;
 extern dbus_bool_t hald_is_initialising;
 extern dbus_bool_t hald_is_shutting_down;
 
+/* If this is defined, the amount of time, in seconds, before hald
+ * does an exit where resources are freed - useful for valgrinding
+ * and finding memory leaks; e.g. plug in a device, do something
+ * with the hal daemon and then look at the report
+ *
+ * Use hald/valgrind-hald.sh for this
+ */
+/*#define HALD_MEMLEAK_DBG 60*/
+
 /**
  *  @}
  */

@@ -48,10 +48,19 @@ enum {
 
 static guint signals[LAST_SIGNAL] = { 0 };
 
+#ifdef HALD_MEMLEAK_DBG
+int dbg_hal_device_object_delta = 0;
+#endif
+
 static void
 hal_device_finalize (GObject *obj)
 {
 	HalDevice *device = HAL_DEVICE (obj);
+
+#ifdef HALD_MEMLEAK_DBG
+	dbg_hal_device_object_delta--;
+	printf ("************* in finalize for udi=%s\n", device->udi);
+#endif
 
 	g_slist_foreach (device->properties, (GFunc) hal_property_free, NULL);
 
@@ -59,6 +68,7 @@ hal_device_finalize (GObject *obj)
 
 	if (parent_class->finalize)
 		parent_class->finalize (obj);
+
 }
 
 static void
@@ -149,6 +159,7 @@ hal_device_get_type (void)
 	return type;
 }
 
+
 HalDevice *
 hal_device_new (void)
 {
@@ -156,6 +167,9 @@ hal_device_new (void)
 
 	device = g_object_new (HAL_TYPE_DEVICE, NULL);
 
+#ifdef HALD_MEMLEAK_DBG
+	dbg_hal_device_object_delta++;
+#endif
 	return device;
 }
 
@@ -398,6 +412,8 @@ hal_device_get_udi (HalDevice *device)
 void
 hal_device_set_udi (HalDevice *device, const char *udi)
 {
+	if (device->udi != NULL)
+		g_free (device->udi);
 	device->udi = g_strdup (udi);
 }
 

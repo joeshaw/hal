@@ -601,10 +601,31 @@ main (int argc, char *argv[])
 	return 0;
 }
 
-gboolean
-resolve_udiprop_path (const char *path, const char *source_udi,
-		      char *udi_result, size_t udi_result_size, 
-		      char *prop_result, size_t prop_result_size);
+#ifdef HALD_MEMLEAK_DBG
+extern int dbg_hal_device_object_delta;
+
+/* useful for valgrinding; see below */
+static gboolean
+my_shutdown (gpointer data)
+{
+	HalDeviceStore *gdl;
+	
+	printf ("Num devices in TDL: %d\n", g_slist_length ((hald_get_tdl ())->devices));
+	printf ("Num devices in GDL: %d\n", g_slist_length ((hald_get_gdl ())->devices));
+	
+	gdl = hald_get_gdl ();
+next:
+	if (g_slist_length (gdl->devices) > 0) {
+		HalDevice *d = HAL_DEVICE(gdl->devices->data);
+		hal_device_store_remove (gdl, d);
+		g_object_unref (d);
+		goto next;
+	}
+	
+	printf ("hal_device_object_delta = %d (should be zero)\n", dbg_hal_device_object_delta);
+	exit (1);
+}
+#endif
 
 void 
 osspec_probe_done (void)
@@ -620,6 +641,11 @@ osspec_probe_done (void)
 
 	hald_is_initialising = FALSE;
 
+#ifdef HALD_MEMLEAK_DBG
+	g_timeout_add ((HALD_MEMLEAK_DBG) * 1000,
+		       my_shutdown,
+		       NULL);
+#endif
 }
 
 

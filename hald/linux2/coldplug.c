@@ -59,6 +59,17 @@ coldplug_compute_visit_device (const gchar *path,
 /* For debugging */
 /*#define HAL_COLDPLUG_VERBOSE*/
 
+static void
+free_hash_sys_to_class_in_dev (gpointer key, gpointer value, gpointer user_data)
+{
+	GSList *i;
+	GSList *list = (GSList *) value;
+
+	for (i = list; i != NULL; i = g_slist_next (i))
+		g_free (i->data);
+	g_slist_free (list);
+}
+
 /** This function serves one major purpose : build an ordered list of
  *  pairs (sysfs path, subsystem) to process when starting up:
  *  coldplugging. The ordering is arranged such that all bus-devices
@@ -180,8 +191,8 @@ coldplug_synthesize_events (void)
 	}
 	g_dir_close (dir);
 
-	/* build class map and class device map */
-	sysfs_to_class_in_devices_map = g_hash_table_new (g_str_hash, g_str_equal);
+	/* build class map and class device map (values are free in separate foreach()) */
+	sysfs_to_class_in_devices_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	g_snprintf (path, HAL_PATH_MAX, "%s/class" , get_hal_sysfs_path ());
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
 		HAL_ERROR (("Unable to open %/class: %s", get_hal_sysfs_path (), err->message));
@@ -211,10 +222,8 @@ coldplug_synthesize_events (void)
 				GSList *classdev_strings;
 
 				g_snprintf (path2, HAL_PATH_MAX, "%s/class/%s/%s", get_hal_sysfs_path (), f, f1);
-				if (target) {
-					normalized_target = hal_util_get_normalized_path (path2, target);
-					g_free (target);
-				}
+				normalized_target = hal_util_get_normalized_path (path2, target);
+				g_free (target);
 
 				classdev_strings = g_hash_table_lookup (sysfs_to_class_in_devices_map,
 									normalized_target);
@@ -257,6 +266,8 @@ coldplug_synthesize_events (void)
 	g_dir_close (dir);
 
 	g_hash_table_destroy (sysfs_to_bus_map);
+	/* free keys and values in this complex hash */
+	g_hash_table_foreach (sysfs_to_class_in_devices_map, free_hash_sys_to_class_in_dev, NULL);
 	g_hash_table_destroy (sysfs_to_class_in_devices_map);
 
 	/* we are guaranteed, per construction, that the len of this list is even */
