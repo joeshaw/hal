@@ -635,7 +635,14 @@ detect_disc (HalDevice *d, const char *device_file)
 	fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (fd < 0)
 		return;
-	
+
+	/* Suggested by Alex Larsson to get rid of log spewage
+	 * on Alan's cd changer (RH bug 130649) */
+	if (ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT) != CDS_DISC_OK) {
+		close (fd);
+		return;
+	}
+
 	/* check for audio/data/blank */
 	type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
 	switch (type) {

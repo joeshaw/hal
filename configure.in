@@ -94,14 +94,43 @@ AC_SUBST(FSTAB_SYNC_MOUNT_ROOT)
 AC_DEFINE_UNQUOTED(FSTAB_SYNC_MOUNT_ROOT,"$FSTAB_SYNC_MOUNT_ROOT", [Mount root used by fstab-sync])
 
 
-AC_ARG_WITH(with_mnt_noop,      [  --with-mnt-noop=<word>  Noop keyword used by fstab-sync (kudzu)])
+AC_ARG_WITH(with_mnt_noop,      [  --with-mnt-noop=<word>  Noop keyword used by fstab-sync (managed)])
 if test -z "$with_mnt_noop" ; then
-    FSTAB_SYNC_MOUNT_MANAGED_KEYWORD=kudzu
+    FSTAB_SYNC_MOUNT_MANAGED_KEYWORD=managed
 else
     FSTAB_SYNC_MOUNT_MANAGED_KEYWORD=$with_mnt_noop
 fi
 AC_SUBST(FSTAB_SYNC_MOUNT_MANAGED_KEYWORD)
 AC_DEFINE_UNQUOTED(FSTAB_SYNC_MOUNT_MANAGED_KEYWORD,"$FSTAB_SYNC_MOUNT_MANAGED_KEYWORD", [Noop keyword used by fstab-sync])
+
+AC_ARG_ENABLE(mnt-noop-sec,         [  --enable-mnt-noop-sec   Use secondary noop option in fstab-sync],enable_mnt_noop_sec=yes,enable_mnt_noop_sec=no)
+if test "x$enable_mnt_noop_sec" = "xyes" ; then
+   AC_DEFINE(FSTAB_SYNC_USE_NOOP_MOUNT_OPTION_SEC,1,[Use a secondary unique keyword in the fstab when deleting entries])
+fi
+
+AC_ARG_WITH(with_mnt_noop_sec,      [  --with-mnt-noop-sec=<word> Secondary Noop keyword for fstab-sync (kudzu)])
+if test -z "$with_mnt_noop_sec" ; then
+    FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC=kudzu
+else
+    FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC=$with_mnt_noop_sec
+fi
+AC_SUBST(FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC)
+AC_DEFINE_UNQUOTED(FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC,"$FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC", [Secondary Noop keyword used by fstab-sync])
+
+
+AC_ARG_ENABLE(mnt-access,         [  --enable-mnt-access     Use a mount option to give unpriv users access],enable_mnt_access=yes,enable_mnt_access=no)
+if test "x$enable_mnt_access" = "xyes" ; then
+   AC_DEFINE(FSTAB_SYNC_USE_ACCESS,1,[Add mount option to enable access to unpriv users])
+fi
+
+AC_ARG_WITH(with_mnt_access,      [  --with-mnt-access=<word> Mount keyword to give unpriv users additional access (user)])
+if test -z "$with_mnt_noop_sec" ; then
+    FSTAB_SYNC_MOUNT_ACCESS_SEC=user
+else
+    FSTAB_SYNC_MOUNT_ACCESS=$with_mnt_access
+fi
+AC_SUBST(FSTAB_SYNC_MOUNT_ACCESS)
+AC_DEFINE_UNQUOTED(FSTAB_SYNC_MOUNT_ACCESS,"$FSTAB_SYNC_MOUNT_ACCESS", [Mount keyword to give unprivileged users additional access])
 
 
 #### gcc warning flags
@@ -433,10 +462,14 @@ echo "
         hald pidfile:             ${HALD_PID_FILE}
         Building SELinux support: ${have_selinux}
 
-        install fstab-sync:       ${enable_fstab_sync}
-        fstab-sync using noop:    ${enable_mnt_noop}
-        fstab-sync noop keyword:  ${FSTAB_SYNC_MOUNT_MANAGED_KEYWORD}
-        fstab-sync mount root:    ${FSTAB_SYNC_MOUNT_ROOT}
+        install fstab-sync:                     ${enable_fstab_sync}
+        fstab-sync using noop:                  ${enable_mnt_noop}
+        fstab-sync noop keyword:                ${FSTAB_SYNC_MOUNT_MANAGED_KEYWORD}
+        fstab-sync using secondary noop:        ${enable_mnt_noop_sec}
+        fstab-sync secondary noop keyword:      ${FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC}
+        fstab-sync using mount access keyword:  ${enable_mnt_access}
+        fstab-sync mount access keyword:        ${FSTAB_SYNC_MOUNT_ACCESS}
+        fstab-sync mount root:                  ${FSTAB_SYNC_MOUNT_ROOT}
 
         install hal-hotplug-map:  ${enable_hotplug_map}"
 

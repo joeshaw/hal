@@ -79,7 +79,15 @@ static boolean verbose = FALSE;
 #endif
 
 #ifndef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD
-#  define FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "kudzu"
+#  define FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "managed"
+#endif
+
+#ifndef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC
+#  define FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC "kudzu"
+#endif
+
+#ifndef FSTAB_SYNC_MOUNT_ACCESS
+#  define FSTAB_SYNC_MOUNT_ACCESS "console"
 #endif
 
 #ifndef TRUE
@@ -150,6 +158,7 @@ typedef struct
   char *label;                    /**< Label of media or blank */
   char *drive_type;               /**< The storage.drive_type value */
   boolean is_hotpluggable;        /**< TRUE if the volume stems from a hotpluggable drive */
+  boolean is_removable;           /**< TRUE if the volume is from a drive with removable media */
   dbus_int64_t size;              /**< Size in bytes of the volume or -1 if not available */
   char *bus;                      /**< Type of bus the device is connected to */
 } Volume;
@@ -360,11 +369,22 @@ fs_table_line_add_field (FSTableLine *line, FSTableField *field)
 
 static boolean fs_table_line_is_generated (FSTableLine *line)
 {
+  boolean has_managed_keyword;
+
+  has_managed_keyword = FALSE;
 
 #ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
-  if (!fs_table_line_has_mount_option (line, FSTAB_SYNC_MOUNT_MANAGED_KEYWORD))
-    return FALSE;
+  if (fs_table_line_has_mount_option (line, FSTAB_SYNC_MOUNT_MANAGED_KEYWORD))
+    has_managed_keyword = TRUE;
 #endif
+
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION_SEC
+  if (fs_table_line_has_mount_option (line, FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC))
+    has_managed_keyword = TRUE;
+#endif
+
+  if (!has_managed_keyword)
+    return FALSE;
 
   if (strncmp (line->mount_point, FSTAB_SYNC_MOUNT_ROOT "/", sizeof (FSTAB_SYNC_MOUNT_ROOT "/") -1) != 0)
     return FALSE;
@@ -1012,6 +1032,7 @@ volume_new (const char *udi)
 
   storudi = hal_device_get_property_string (hal_context, udi, "block.storage_device");
   volume->is_hotpluggable = hal_device_get_property_bool (hal_context, storudi, "storage.hotpluggable");
+  volume->is_removable = hal_device_get_property_bool (hal_context, storudi, "storage.removable");
   volume->drive_type = hal_device_get_property_string (hal_context, storudi, "storage.drive_type");
   volume->bus = hal_device_get_property_string (hal_context, storudi, "storage.bus");
 
@@ -1264,14 +1285,21 @@ fs_table_add_volume (FSTable *table, Volume *volume)
 
   options[0] = '\0';
 
-  strcat_len (options, "noauto,user,exec");
+  strcat_len (options, "noauto");
+
+#ifdef FSTAB_SYNC_USE_ACCESS
+  strcat_len (options, "," FSTAB_SYNC_MOUNT_ACCESS);
+#endif
+
+  strcat_len (options, ",exec");
 
 #ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
   strcat_len (options, "," FSTAB_SYNC_MOUNT_MANAGED_KEYWORD);
 #endif
 
+
 #ifdef HAVE_SELINUX
-  if (is_selinux_enabled() > 0 ){
+  if (is_selinux_enabled() > 0 && (volume->is_hotpluggable || volume->is_removable) ) {
     security_context_t scontext;
 
     fstab_update_debug (_("%d: SELinux is enabled\n"), pid);

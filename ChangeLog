@@ -1,5 +1,35 @@
 2004-09-29  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (detect_disc): Do a CDROM_DRIVE_STATUS
+	before CDROM_DISC_STATUS
+
+	* tools/fstab-sync.c (fs_table_line_is_generated): Use secondary
+	managed keyword if applicable
+	(fs_table_add_volume): Use access keyword only if applicable
+	(volume_new): Also set is_removable
+	(fs_table_add_volume): Only add removable selinux context for
+	hotpluggable drives and drives with removable media
+
+	* configure.in: Add fstab-sync secondary keyword which is useful for
+	migration from e.g. kudzu to managed - fstab-sync will only delete
+	fstab lines with the secondary keyword but never write them. Needs
+	to be enabled with --enable-mnt-noop-sec.
+	Also add fstab-sync access keyword which defaults to 'user' but
+	can be replaced by 'console' - this is useful for specifying the
+	extra mount option for how to give access. Now the access keyword
+	needs to be enabled with --enable-mnt-access.
+
+	For (my own) reference, this is the parameters used to bootstrap
+	when building for Red Hat distros
+
+	./autogen.sh --enable-mnt-noop --enable-fstab-sync --enable-hotplug-map --with-mnt-noop=managed --enable-mnt-noop-sec --with-mnt-noop-sec=kudzu --enable-mnt-access --with-mnt-access=console --with-init-scripts=redhat --with-pid-file=/var/run/haldaemon.pid --enable-selinux
+
+	note: the util-linux package must be patched with the patch in RH bug
+	133941 in order for --with-mnt-access=console to work; should hit 
+	Rawhide soon.
+
+2004-09-29  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (block_class_pre_process): Check for
 	USB floppy drive by looking at interface class instead
 
