@@ -52,7 +52,7 @@ class Representation:
 
         # First look at bus type, every device got Bus property
         bus = device.properties["info.bus"]
-        if bus=="usb":
+        if bus=="usb_device":
             icon = self.icons["bus_usb"]
         elif bus=="pci":
             icon = self.icons["bus_pci"]

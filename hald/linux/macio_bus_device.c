@@ -72,7 +72,6 @@ macio_device_pre_process (BusDeviceHandler *self,
 			  struct sysfs_device *device)
 {
 	hal_device_property_set_string (d, "macio.bus_id", device->bus_id);
-	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 

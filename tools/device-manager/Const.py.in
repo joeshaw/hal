@@ -17,9 +17,9 @@ TITLE_COLUMN  = 1
 UDI_COLUMN    = 2
 
 BUS_NAMES = {"unknown"       : "Unknown",
-             "usb"           : "USB",
+             "usb_device"    : "USB",
              "platform"      : "Legacy Device",
-             "usbif"         : "USB Interface",
+             "usb"           : "USB Interface",
              "pci"           : "PCI",
              "i2c"           : "I2C",
              "i2c_adapter"   : "I2C Adapter",

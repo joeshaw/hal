@@ -1220,7 +1220,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 		/* We are a volume */
 		find_and_set_physical_device (d);
-		hal_device_property_set_bool (d, "info.virtual", TRUE);
 		hal_device_add_capability (d, "volume");
 		hal_device_property_set_string (d, "info.category", "volume");
 		hal_device_property_set_string (d, "volume.label", "");

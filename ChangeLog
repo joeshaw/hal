@@ -1,3 +1,68 @@
+2004-08-09  David Zeuthen  <david@fubar.dk>
+
+	* doc/spec/Makefile.am (FIGURE_FILES): Added hal-fdi-example3.png
+
+	* doc/spec/hal-spec.xml.in: Added some text about how storage_lun%d.*
+	and storage.* properties are merged from the physical device object
+	backing the block devices. Included .fdi example with 6in1 reader
+	to further clarify this.
+
+	* doc/spec/hal/hal-devices1.png: 
+	* doc/spec/hal/hal-fdi-example1.png:
+	Updated to show full device tree now that info.virtual is gone.
+
+	* doc/spec/hal/hal-fdi-example2.png: New file
+
+	* doc/spec/hal/hal-fdi-example3.png: New file
+
+2004-08-08  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO: Remove the TODO entry about support for multiple USB
+	interfaces since this is now done
+
+	* hald/linux/usbif_bus_device.c (compute_name_from_if): New function
+
+	* hald/linux/usb_bus_device.c: Rename all usb.* properties to
+	usb_device.*
+
+	* hald/linux/usbif_bus_device.c: Rename all usbif.* properties to
+	usb.*. Merge usb_device.* properties from parent device. Essentially
+	an USB interface is now like an USB device was except that it
+	exports properties usb.interface.* to describe the USB interface
+
+	* tools/device-manager/Const.py.in: 
+	* tools/device-manager/Representation.py: 
+	Handle the s/usb/usb_device/ and s/usbif/usb/ renamings
+
+	* doc/spec/hal-spec.xml.in: Apply a patch from Kay with spelling/
+	language/grammar improvements. Also update to reflect the USB
+	renaming.
+
+	* hald/linux/usbif_bus_device.c (usbif_device_pre_process): 
+	* hald/linux/scsi_host_class_device.c (scsi_host_class_pre_process): 
+	* hald/linux/scsi_device_class_device.c 
+	(scsi_device_class_pre_process): 
+	* hald/linux/macio_bus_device.c (macio_device_pre_process): 
+	* hald/linux/ieee1394_node_class_device.c 
+	(ieee1394_node_class_pre_process): 
+	* hald/linux/ieee1394_host_class_device.c 
+	(ieee1394_host_class_pre_process): 
+	* hald/linux/ide_host_bus_device.c (ide_host_device_pre_process): 
+	* hald/linux/ide_bus_device.c (ide_device_pre_process): 
+	* hald/linux/block_class_device.c (block_class_pre_process): 
+	Don't set the info.virtual property
+
+2004-08-06  David Zeuthen  <david@fubar.dk>
+
+	* fdi/20freedesktop/canon-digital-ixus-v.fdi: Updated to match spec
+
+	* fdi/20freedesktop/jetflash-mp3-player.fdi: Updated to match spec
+
+	* doc/spec/hal-spec.xml.in: Work in progress
+
+	* hald/linux/pcmcia_socket_class_device.c 
+	(pcmcia_socket_class_pre_process): Add property pcmcia_socket.number
+
 2004-08-04  David Zeuthen  <david@fubar.dk>
 
 	* doc/spec/hal-spec.xml.in: Work in progress

@@ -113,7 +113,6 @@ ieee1394_host_class_pre_process (ClassDeviceHandler *self,
 		}
 	}
 
-	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 		  
 /** Method specialisations for ieee1394_host device class */

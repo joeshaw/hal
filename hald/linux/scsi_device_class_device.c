@@ -73,9 +73,6 @@ scsi_device_class_pre_process (ClassDeviceHandler *self,
 	/* guestimate product name */
 	hal_device_property_set_string (d, "info.product", "SCSI Device");
 
-	/* this is a virtual device */
-	hal_device_property_set_bool (d, "info.virtual", TRUE);
-
 	hal_device_add_capability (d, "scsi_device");
 }
 

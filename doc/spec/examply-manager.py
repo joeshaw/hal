@@ -21,19 +21,14 @@ devices = hal_manager.GetAllDevices ()
 for d in devices:
     print 'Found device %s'%d
 
-bus.add_signal_receiver(device_added,
+bus.add_signal_receiver (device_added,
 			 'DeviceAdded',
 			 'org.freedesktop.Hal.Manager',
 			 'org.freedesktop.Hal',
 			 '/org/freedesktop/Hal/Manager')
-bus.add_signal_receiver(device_removed,
+bus.add_signal_receiver (device_removed,
 			 'DeviceRemoved',
 			 'org.freedesktop.Hal.Manager',
 			 'org.freedesktop.Hal',
 			 '/org/freedesktop/Hal/Manager')
 gtk.main()
-
-
-
-
-

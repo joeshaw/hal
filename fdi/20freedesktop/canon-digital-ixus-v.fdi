@@ -7,7 +7,8 @@
         <match key="usb.product_id" int="0x3052">
           <merge key="info.category" type="string">camera</merge>
           <merge key="info.capabilities" type="string">camera</merge>
-          <merge key="info.persistent" type="bool">true</merge>
+          <merge key="camera.access_method" type="string">user</merge>
+          <merge key="camera.libgphoto2.support" type="bool">true</merge>
         </match>
       </match>
     </match>

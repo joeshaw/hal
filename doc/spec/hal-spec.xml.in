@@ -8,7 +8,7 @@
   <bookinfo>
     <title>HAL @VERSION@ Specification</title>
     <releaseinfo>Version @VERSION@</releaseinfo>
-    <date>July 21, 2004</date> <!-- Update this manually -->
+    <date>August 6th, 2004</date> <!-- Update this manually -->
     <authorgroup>
       <author>
 	<firstname>David</firstname>
@@ -40,17 +40,18 @@
       </para>
       <para>
 
-	A piece of hardware, called a device object in HAL, is
-	identified by a unique identifier and a set of key/value pairs
-	referered to as <emphasis>device properties</emphasis>. Some
-	properties are derived from the actual hardware, some are
-	merged from <emphasis>device information files</emphasis> and
-	some are related to how the device is configured. This
-	document specifies the set of properties and gives them
-	well-defined meaning. This enable system and desktop level
-	components to make a distinction between the different device
-	objects and use and configure the devices based on these
-	properties.
+	HAL represents a piece of hardware as a 
+	<emphasis>device object</emphasis>. A device object is
+	identified by a unique identifer and carries a set of
+	key/value paris referred to as <emphasis>device
+	properties</emphasis>. Some properties are derived from the
+	actual hardware, some are merged from <emphasis>device
+	information files</emphasis> and some are related to the
+	actual device configuration. This document specifies the set
+	of device properties and gives them well-defined meaning. This
+	enable system and desktop level components to distinguish
+	between the different device objects and discover and
+	configure devices based on these properties.
 
       </para>
       <para>
@@ -61,18 +62,18 @@
 	another. Specifically, D-BUS provides asynchronous
 	notification such that HAL can notify other peers on the
 	message-bus when devices are added and removed as well as when
-	properties on a device changes.  
+	properties on a device are changing.  
 
       </para>
       <para>
 
 	The most important goal of HAL is to provide plug-and-play
 	facilities for UNIX-like desktops with focus on providing a
-	rich and extensible description of what the devices are.  HAL
-	has no other major dependencies apart from D-BUS which, given
-	sufficient infrastructure, allows it to be implemented on many
-	UNIX-like systems. The major focus, initially, is systems
-	running the Linux 2.6 series kernels.
+	rich and extensible description of device characteristics and
+	features. HAL has no other major dependencies apart from D-BUS
+	which, given sufficient infrastructure, allows it to be
+	implemented on many UNIX-like systems. The major focus,
+	initially, is systems running the Linux 2.6 series kernels.
 
       </para>
 
@@ -176,7 +177,7 @@
           <emphasis>HAL agents</emphasis></para><para> 
 
           The term <emphasis>HAL agent</emphasis> is used to
-          characterize programs that is involved in the detection and
+          characterize a program that is involved in the detection and
           monitoring of devices not supported directly by the HAL
           daemon.
 
@@ -199,11 +200,11 @@
             This represents the end consumers of the HAL and comprises
             both applications that need to search for a device, but
             also (existing) device specific libraries and/or services
-            that provide operations on devices. Specifically, the
+            that provide access to devices. Specifically, the
             application or device library can obtain the ''address''
             (the special device file or other details), of the device
-            through HAL to interact with the device through the
-            kernel as normal.
+            through HAL, to interact with the device through the
+            kernel as usual.
 
           </para><para>
 
@@ -214,7 +215,7 @@
             HAL daemon changes. Such policies may include starting a
             photo management application when a camera is plugged in,
             assisting the user in finding driver software and device
-            information files for a new device, displaying link
+            information files for a new device, displaying link status
             information about network devices, mounting removable
             storage and so on.
 
@@ -222,7 +223,7 @@
 
 	    Note that several desktop sessions may be active on the
 	    same system; it is the responsibility of session-level
-	    software to arbitrate between devices.
+	    software to arbitrate the device access between sessions.
 
         </para></listitem>
 
@@ -231,14 +232,13 @@
         <listitem><para>
           <emphasis>Callouts</emphasis></para><para> 
 
-	    Callouts are programs invoked just after the HAL daemon
-	    have detected a device, but just before desktop session
-	    level applications are notified through the D-BUS
-	    interface. As such, callouts can be used to maintain
-	    system-wide policy (that may be specific to the particular
-	    OS) such as changing permissions on device nodes, updating
-	    the systemwide /etc/fstab file or configuring the
-	    networking subsystem.
+	    Callouts are programs invoked when the device object list
+	    is modified or when a device property changes. As such, callouts
+	    can be used to maintain system-wide policy (that may be
+	    specific to the particular OS) such as changing
+	    permissions on device nodes, updating the
+	    systemwide <literal>/etc/fstab</literal> file or
+	    configuring the networking subsystem.
 
         </para></listitem>
 
@@ -250,16 +250,13 @@
       applications and the aforementioned HAL agents. As D-BUS is
       designed to be language independent, potentially many languages
       / runtime systems will be able to easily access the services
-      offered by HAL. The D-BUS API is detailed in
-      <xref linkend="dbus-api"/>.
-
-      </para><para>
-
-      Note that HAL doesn't enforce any policy at all, this is left
-      for desktop environments and operating systems vendors to
-      implement.  However, to ensure interoperability between
-      operating systems and desktop environments, recommendations and
-      best practises on how to enforce policy is discussed in <xref
+      offered by HAL. The D-BUS API is detailed in <xref
+      linkend="dbus-api"/>. Note that HAL doesn't enforce any policy
+      at all, this is left for desktop environments and operating
+      systems vendors to implement.  However, to ensure
+      interoperability between operating systems and desktop
+      environments, recommendations and best practises on how to
+      enforce policy is discussed in <xref
       linkend="enforcing-policy"/>.
 
     </para>
@@ -354,14 +351,15 @@
 	exported by a kernel, such as SCSI emulation for USB Storage
 	Devices, are also considered device objects in HAL. This
 	implies that kernel specific bits leak into the device object
-	database, however users of HAL won't notice, such device
+	database. However users of HAL won't notice, such device
 	objects are not referenced anywhere in the device objects that
-	users are interested in; they are merely used as glue.
+	users are interested in; they are merely used as glue to build
+	the device tree.
 
       </para><para>
 
 	In addition to provide information about what kind of hardware
-	a device object represent (such as a PCI or USB device) and
+	a device object represents (such as a PCI or USB device) and
 	how to address it, HAL merges information about the functional
 	interfaces the OS kernel provides in order to use the device;
 	in most cases this is represented on the device object as a
@@ -369,7 +367,7 @@
 	<literal>/dev</literal>. In addition to the special device
 	file, a number of other useful properties are merged. This
 	means that both hardware and functional properties are on the
-	same device object which is very useful for an application
+	same device object, which is very useful for an application
 	programmer. For example, an application might query HAL for
 	the device object that exports the special device file
 	<literal>/dev/input/mouse2</literal> and learn that this is
@@ -392,8 +390,8 @@
           This is an identifier, the Unique Device Identifer, that is
           unique for a device object - that is, no other device object
           can have the same UDI at the same time.  The UDI is computed
-          using bus-specific information and it is unique across
-          device insertions. It is also independent of the physical
+          using bus-specific information and is meant to be unique
+          across device insertions and independent of the physical
           port or slot the device may be plugged into.
 
         </para></listitem>
@@ -432,10 +430,11 @@
       
       <itemizedlist>
 
-	<listitem><para>Metadata - 
-	                Information about how the devices are connected with
-                        respect to each other (parent/child relationships),
-	                what the device is, what it does etc.
+	<listitem><para>Metadata - Information about how the devices
+	                are connected with respect to each other
+	                (parent/child relationships), what kind of
+	                device it is, what functionality it provides
+	                etc.
 	</para></listitem>
 
         <listitem><para>Device specific information - 
@@ -444,8 +443,8 @@
 	                by a mp3 player and so on.</para></listitem>
 
         <listitem><para>Usage specific information - 
-	                Network link status, special device file, 
-                        mount location etc.</para></listitem>
+	                Network link status, special device file name, 
+                        filesystem mount location etc.</para></listitem>
       </itemizedlist>
 
       <para>
@@ -488,7 +487,7 @@
        they only report, at best, how to interact with them. This is a
        problem; many devices, such as MP3 players or digital still
        cameras, appear to the operating system as plain USB Mass
-       Storage devices when they in fact is a lot more than just
+       Storage devices when they in fact are a lot more than just
        that. The core of the problem is that without external
        metadata, the operating system and desktop environment will
        present it to the user as just e.g. a mass storage device.
@@ -512,7 +511,7 @@
        HAL itself, assigns capabilities on device detection time by
        inspecting the device class (if available, it depends on the
        bus type) and looking at information from the operating system
-       (most OS'es has a concept of device classes). At this time the
+       (most OS'es have a concept of device classes). At this time the
        category is also determined by selecting the most prominent
        capability. However, both capabilities and category can be
        overridden by either device information files or callouts. This
@@ -538,254 +537,22 @@
        device libraries have something to expect. For instance, the
        capability for being a MP3 player may require properties
        defining what audio formats the device support, whether it
-       support recording of audio, and how to interact with
+       support recording of audio, and how to interact with the
        device. For example, the latter may specify ''USB Storage
        Device'' or ''proprietary protocol, use libfooplayer''.
+
+     </para><para>
+
+       Just as device objects can appear and disappear at any time
+       (e.g. when a device is plugged in respectively removed),
+       capabilities can also appear and disappear - one example of
+       this happening is when device drivers are loaded and unloaded.
 
      </para><para>
 
        Finally, capabilities have an inheritance scheme, e.g. if a device
        has a capability <literal>foo.bar</literal>, it must also have
        the capability <literal>foo</literal>.
-
-     </para><para>
-
-       The following table define the capabilities exported by HAL
-       at the current release:
-
-     </para>
-     <informaltable>
-       <tgroup cols="2">
-         <thead>
-           <row>
-             <entry>Capability</entry>
-             <entry>Description</entry>
-             <entry>Example Devices</entry>
-           </row>
-         </thead>
-         <tbody>
-
-           <row>
-             <entry>input</entry>
-             <entry>A human input device</entry>
-             <entry>Keyboard, Mouse</entry>
-           </row>
-           <row>
-             <entry>input.mouse</entry>
-             <entry>A pointing device, such as a mouse</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>input.keyboard</entry>
-             <entry>A keyboard</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>storage</entry>
-             <entry>A storage device</entry>
-             <entry>Harddisk, USB storage</entry>
-           </row>
-           <row>
-             <entry>storage.removable</entry>
-             <entry>A storage device with removable media</entry>
-             <entry>CD-ROM, CR-R, Floppy, DVD, Zip-drive</entry>
-           </row>
-
-           <row>
-             <entry>storage_controller</entry>
-             <entry>A device for controlling storage devices</entry>
-             <entry>USB storage, IDE, SCSI, RAID controller</entry>
-           </row>
-           <row>
-             <entry>storage_controller.ide</entry>
-             <entry>A device for controlling IDE storage devices</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>storage_controller.scsi</entry>
-             <entry>A device for controlling SCSI storage devices</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>storage_controller.floppy</entry>
-             <entry>A device for controlling floppy storage devices</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>storage_controller.raid</entry>
-             <entry>A device for controlling RAID storage devices</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>bridge</entry>
-             <entry>The device is bridging one bus to another</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-           <row>
-             <entry>bridge.cardbus</entry>
-             <entry>PCI to CardBus bridge</entry>
-             <entry>The standard interface for PCMCIA formfactor cards</entry>
-           </row>
-           <row>
-             <entry>bridge.pcmcia</entry>
-             <entry>PCI to PCMCIA bridge</entry>
-             <entry>Used in old laptops, not very common anymore</entry>
-           </row>
-           <row>
-             <entry>bridge.pci</entry>
-             <entry>PCI to PCI bridge</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-           <row>
-             <entry>bridge.host</entry>
-             <entry>PCI host bridge</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-
-           <row>
-             <entry>video</entry>
-             <entry>Video adaptor</entry>
-             <entry>Found in many PC's today</entry>
-           </row>
-           <row>
-             <entry>video.vga</entry>
-             <entry>VGA comptible video adaptor</entry>
-             <entry>Almost all graphics adaptors in the market</entry>
-           </row>
-
-           <row>
-             <entry>multimedia</entry>
-             <entry>Multimedia device</entry>
-             <entry>Sound cards etc.</entry>
-           </row>
-           <row>
-             <entry>multimedia.audio</entry>
-             <entry>Sound card</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>comm</entry>
-             <entry>Communication adaptors</entry>
-             <entry>Serial and parallel port adaptors</entry>
-           </row>
-           <row>
-             <entry>comm.serial</entry>
-             <entry>Serial port adaptor</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>comm.parallel</entry>
-             <entry>Parallel port adaptor</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>modem</entry>
-             <entry>A PSTN modem</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>modem.hayes</entry>
-             <entry>A PSTN modem compatible with the Hayes command protocol</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>serial_controller</entry>
-             <entry>Modern serial communication controllers</entry>
-             <entry>USB, IEEE1394 (Firewire, i.Link)</entry>
-           </row>
-           <row>
-             <entry>serial_controller.ieee1394</entry>
-             <entry>IEEE1394 controller</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>serial_controller.usb</entry>
-             <entry>USB controller</entry>
-             <entry></entry>
-           </row>
-
-
-           <row>
-             <entry>net</entry>
-             <entry>Networking controller</entry>
-             <entry>Ethernet, ATM etc. controllers</entry>
-           </row>
-           <row>
-             <entry>net.ethernet</entry>
-             <entry>Ethernet controller</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>net.atm</entry>
-             <entry>ATM controller</entry>
-             <entry></entry>
-           </row>
-           <row>
-             <entry>net.tokenring</entry>
-             <entry>Token Ring controller</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>printer</entry>
-             <entry>Printer</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>hub</entry>
-             <entry>A device for multiplexing a number of devices of same bus-type on a single port </entry>
-             <entry>USB hub</entry>
-           </row>
-
-           <row>
-             <entry>bluetooth_adaptor</entry>
-             <entry>Bluetooth adaptor</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>block</entry>
-             <entry>Device represents a block device</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>volume</entry>
-             <entry>Device represents a partition of a block device that can 
-             be mounted in the filesystem</entry>
-             <entry></entry>
-           </row>
-
-           <row>
-             <entry>camera</entry>
-             <entry>Device is a camera where still pictures can be extracted from</entry>
-             <entry></entry>
-           </row>
-
-         </tbody>
-       </tgroup>
-     </informaltable>
-     <para>
-
-     As evident, most of the capabilities in the above list is derived
-     directly from USB and PCI classes (the careful reader will even
-     note that not all classes from the USB and PCI standards are
-     mentioned), and as such, are not very interesting to desktop
-     applications.
-
-     </para><para>
-
-     However, if HAL becomes adopted by applications, new and
-     interesting capabilities (for example <emphasis>pda</emphasis>,
-     <emphasis>camera</emphasis> or
-     <emphasis>handheld_music_player</emphasis>), based on what the
-     device is used for, can begin to appear.
 
      </para>
   </chapter>
@@ -803,11 +570,12 @@
 
     </para><para>
 
-      For instance, libgphoto2 could be patched such that the
-      application programmer can simply pass the UDI of the camera he
-      wishes to interact with and libghoto2 would then, via D-BUS,
-      acquire the bus-specific information required, the address so to
-      speak, from the HAL daemon, and then interact directly with the
+      For instance, <literal>libgphoto2</literal> could be extended
+      such that the application programmer can simply pass the UDI of
+      the camera he wishes to interact with
+      and <literal>libghoto2</literal> would then, via D-BUS, acquire
+      the bus-specific information required, the address so to speak,
+      from the HAL daemon, and then interact directly with the
       hardware.
 
     </para><para>
@@ -831,14 +599,29 @@
       Properties are arranged in a namespaces using ''.'' as a separator
       and are key/value pairs. The value may assume different types; currently
       int32, double, bool and UTF8 strings are supported. The key of a property
-      is always an ASCII string without any whitespace.
+      is always an ASCII string without any whitespace. The properties are
+      updated in real-time.
     </para>
 
-    <sect1 id="device-properties-info">
-      <title>info namespace</title>
+    <sect1 id="properties-metadata">
+      <title>Metadata Properties</title>
+
       <para>
-      The info namespace of the properties can be considered meta-data about
-      a device. The following properties are defined:
+
+	The section represents properties that aren't tied to either
+	physical or functional characteristics of what the device
+	object represents.
+
+      </para>
+
+    <sect2 id="device-properties-info">
+      <title><literal>info</literal> namespace</title>
+      <para>
+
+      The <literal>info</literal> namespace contain properties that
+      can be considered metadata about device objects. These
+      properties are always available.
+
       </para>
 
       <informaltable>
@@ -854,119 +637,73 @@
           <tbody>
 
             <row>
-              <entry>info.bus (string)</entry>
+              <entry><literal>info.bus</literal> (string)</entry>
               <entry>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi_device</entry>
               <entry>Yes</entry>
-              <entry>Describes what ''physical'' bus the device is on</entry>
+              <entry>Describes what ''physical'' bus the device is connected to</entry>
             </row>
             <row>
-              <entry>info.udi (string)</entry>
-              <entry>example: /org/freedesktop/Hal/devices/block_22_0</entry>
+              <entry><literal>info.udi</literal> (string)</entry>
+              <entry>example: /org/freedesktop/Hal/devices/pci_10ec_8139</entry>
               <entry>Yes</entry>
               <entry>The HAL unique device id</entry>
             </row>
             <row>
-              <entry>info.persistent (bool)</entry>
+              <entry><literal>info.persistent</literal> (bool)</entry>
               <entry></entry>
-              <entry>No, but required if info.not_available is set to true</entry>
+              <entry>No, but required if <literal>info.not_available</literal> is set to TRUE</entry>
               <entry>If this property is set, the device will remain in the
                      the GDL even if the device is unplugged</entry>
             </row>
             <row>
-              <entry>info.not_available (bool)</entry>
+              <entry><literal>info.not_available</literal> (bool)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>The device is currently not available (it may be unplugged
                      or powered down)</entry>
             </row>
             <row>
-              <entry>info.capabilities (string)</entry>
-              <entry>example: block storage storage.removable</entry>
+              <entry><literal>info.capabilities</literal> (string)</entry>
+              <entry>example: block storage storage.cdrom</entry>
               <entry>No</entry>
               <entry>A white-space separated list of capabilities describing what the devices does</entry>
             </row>
             <row>
-              <entry>info.category (string)</entry>
-              <entry>example: storage.removable</entry>
+              <entry><literal>info.category</literal> (string)</entry>
+              <entry>example: storage.cdrom</entry>
               <entry>No</entry>
               <entry>The prominent capability describing what the device is</entry>
             </row>
             <row>
-              <entry>info.product (string)</entry>
-              <entry>examples: SleekKeyboard, MouseMan 2003, Volume, LS-120 SLIM3 00 UHD Floppy</entry>
+              <entry><literal>info.product</literal> (string)</entry>
+              <entry>examples: ''SleekKeyboard'', ''MouseMan 2003'', ''Volume'', ''LS-120 SLIM3 00 UHD Floppy''</entry>
               <entry>No</entry>
-              <entry>The name of the product or class, the device is an instance of</entry>
+              <entry>The name of the device</entry>
             </row>
             <row>
-              <entry>info.vendor (string)</entry>
-              <entry>example: Logitch</entry>
+              <entry><literal>info.vendor</literal> (string)</entry>
+              <entry>examples: Logitch, Mustek</entry>
               <entry>No</entry>
               <entry>The name of the vendor of the device</entry>
             </row>
             <row>
-              <entry>info.parent (string)</entry>
+              <entry><literal>info.parent</literal> (string)</entry>
               <entry>example: /org/freedesktop/Hal/devices/ide_1_0</entry>
-              <entry>Yes, for all non-root devices</entry>
-              <entry>The UDI of the parent of the device, connection-wise; 
-                     see screenshots of device manager</entry>
-            </row>
-            <row>
-              <entry>info.virtual (bool)</entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>If available and set to true, it means that the HAL 
-                     device object doesn't represent a device per se, and
-                     as such should be ignored </entry>
-            </row>
-            <row>
-              <entry>info.physical_device (string)</entry>
-              <entry></entry>
-              <entry>Must only be set if, and only if, info.virtual is true</entry>
-              <entry>The non-virtual device that this device is created for.</entry>
+              <entry>Yes, for all non-root device objects</entry>
+              <entry>The UDI of the device object that this device object
+	      is connected to.</entry>
             </row>
 
           </tbody>
         </tgroup>
       </informaltable>
+    </sect2>
 
+    <sect2 id="device-properties-linux">
+      <title><literal>linux</literal> namespace</title>
       <para>
-
-      The info.parent property is very significant - for example, it's
-      what allows applications to associate a volume with a
-      device. Consider the following setup of devices
-
-      </para>
-      <para>
-        <inlinegraphic fileref="hal-volume-to-device.png" format="PNG"/>
-      </para>
-      <para>
-
-      Now, the ''CF Reader'' USB device is an ancestor to the the
-      volume that has highlight. Desktop environments can detect this
-      by traversing from the volume device through parents to find the
-      USB device and either merge more information (such as the
-      capability camera) into the USB device object or extract the
-      capability (a device information file might have merged the
-      capability camera) and act accordingly. Optionally, the DE can
-      make the USB device persistent by setting the property
-      info.persistent to true.
-
-      </para><para>
-
-      Indeed, this very use-case is one of the reasons that HAL tracks
-      information about volumes (FIXME: HAL should, in a later version,
-      directly support a property in info. that points to the actual
-      device).
-
-      </para>
-    </sect1>
-
-
-    <sect1 id="device-properties-linux">
-      <title>linux namespace</title>
-      <para>
-      This namespace is used to store Linux-specific information about the
-      device and is such only required on Linux.
+	This namespace is used to store Linux-specific metadata about the
+	device object and is only available on Linux systems.
       </para>
 
       <informaltable>
@@ -982,14 +719,14 @@
           <tbody>
 
             <row>
-              <entry>linux.sysfs_path (string)</entry>
+              <entry><literal>linux.sysfs_path</literal> (string)</entry>
               <entry>examples: /sys/block/sda/sda1, /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0</entry>
               <entry>Yes</entry>
               <entry>A fully-qualified path into the sysfs filesystem for the
               physical device</entry>
             </row>
             <row>
-              <entry>linux.sysfs_path_device (string)</entry>
+              <entry><literal>linux.sysfs_path_device</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>Normally this property assumes the same value as 
@@ -998,24 +735,17 @@
               internally in HAL</entry>
             </row>
             <row>
-              <entry>linux.driver (string)</entry>
-              <entry>examples: agpgart-intel, yenta_cardbus, usb, hub, hid</entry>
+              <entry><literal>linux.driver</literal> (string)</entry>
+              <entry>examples: agpgart-intel, yenta_cardbus, usb, hub, usbhid</entry>
               <entry>No</entry>
               <entry>Name of the driver bound to this device</entry>
             </row>
             <row>
-              <entry>linux.sysfs_bus_id (string)</entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>The part of linux.sysfs_path after last /. Used 
-              internally in HAL</entry>
-            </row>
-            <row>
-              <entry>linux.kernel_devname (string)</entry>
+              <entry><literal>linux.kernel_devname</literal> (string)</entry>
               <entry>example: usb-0000:00:07.2-1.2</entry>
               <entry>No</entry>
-              <entry>A name specifically used by the kernel to identify the
-              device. Used internally in HAL</entry>
+              <entry>A name used internally in the Linux kernel to identify
+              the device. Used internally in HAL.</entry>
             </row>
 
           </tbody>
@@ -1023,13 +753,34 @@
       </informaltable>
       <para>
       </para>
+    </sect2>
+
     </sect1>
+    <sect1 id="properties-bus">
+      <title>Physical Properties</title>
 
-
-    <sect1 id="device-properties-pci">
-      <title>pci namespace</title>
       <para>
-      If a device is on a PCI bus, then these properties are available:
+
+	In this section properties for device objects that represent
+	physically addressable hardware is described. Availability of
+	these depends on the value of the <literal>info.bus</literal>
+	property.  These properties are not of particular interest to
+	application developers, instead they are useful for libraries
+	and userspace drivers that needs to interact with the device
+	given a UDI. Knowledge of various bus interconnect
+	technologies is assumed for this section to be useful.
+
+      </para>
+
+    <sect2 id="device-properties-pci">
+      <title><literal>pci</literal> namespace</title>
+
+      <para>
+
+	This namespace contains properties for device objects representing
+	functions on devices on a PCI bus. These properties are available
+	exactly when <literal>info.bus</literal> equals <literal>pci</literal>.
+
       </para>
 
       <informaltable>
@@ -1045,73 +796,73 @@
           <tbody>
 
             <row>
-              <entry>pci.device_class (int)</entry>
+              <entry><literal>pci.device_class</literal> (int)</entry>
               <entry>example: 3</entry>
               <entry>Yes</entry>
-              <entry>Device class</entry>
+              <entry>Device Class</entry>
             </row>
             <row>
-              <entry>pci.device_subclass (int)</entry>
+              <entry><literal>pci.device_subclass</literal> (int)</entry>
               <entry>example: 0</entry>
               <entry>Yes</entry>
-              <entry>Device subclass</entry>
+              <entry>PCI Device Sub Class</entry>
             </row>
             <row>
-              <entry>pci.device_protocol (int)</entry>
+              <entry><literal>pci.device_protocol</literal> (int)</entry>
               <entry>example: 0</entry>
               <entry>Yes</entry>
-              <entry>Device protocol</entry>
+              <entry>Device Protocol</entry>
             </row>
             <row>
-              <entry>pci.product_id (int)</entry>
+              <entry><literal>pci.product_id</literal> (int)</entry>
               <entry>example: 0x4c4d</entry>
               <entry>Yes</entry>
               <entry>Product ID</entry>
             </row>
             <row>
-              <entry>pci.vendor_id (int)</entry>
+              <entry><literal>pci.vendor_id</literal> (int)</entry>
               <entry>example: 0x1002</entry>
               <entry>Yes</entry>
               <entry>Vendor ID</entry>
             </row>
             <row>
-              <entry>pci.subsys_product_id (int)</entry>
+              <entry><literal>pci.subsys_product_id</literal> (int)</entry>
               <entry>example: 0x009e</entry>
               <entry>Yes</entry>
               <entry>Subsystem product id</entry>
             </row>
             <row>
-              <entry>pci.subsys_vendor_id (int)</entry>
+              <entry><literal>pci.subsys_vendor_id</literal> (int)</entry>
               <entry>example: 0x1028</entry>
               <entry>Yes</entry>
               <entry>Subsystem vendor id</entry>
             </row>
             <row>
-              <entry>pci.linux.sysfs_path (string)</entry>
+              <entry><literal>pci.linux.sysfs_path</literal> (string)</entry>
               <entry>example: /sys/devices/pci0000:00/0000:00:01/0000:01:00.0</entry>
-              <entry>Yes</entry>
-              <entry>Equals linux.sysfs_path</entry>
+              <entry>Yes (only on Linux)</entry>
+              <entry>Equals <literal>linux.sysfs_path</literal></entry>
             </row>
             <row>
-              <entry>pci.product (string)</entry>
+              <entry><literal>pci.product</literal> (string)</entry>
               <entry>Rage Mobility P/M AGP 2x</entry>
               <entry>No</entry>
               <entry>Name of the product per the PCI database</entry>
             </row>
             <row>
-              <entry>pci.vendor (string)</entry>
+              <entry><literal>pci.vendor</literal> (string)</entry>
               <entry>ATI Technologies Inc</entry>
               <entry>No</entry>
               <entry>Name of the vendor per the PCI database</entry>
             </row>
             <row>
-              <entry>pci.subsys_product (string)</entry>
+              <entry><literal>pci.subsys_product</literal> (string)</entry>
               <entry>Inspiron 7500</entry>
               <entry>No</entry>
               <entry>Name of the subsystem product per the PCI database</entry>
             </row>
             <row>
-              <entry>pci.subsys_vendor (string)</entry>
+              <entry><literal>pci.subsys_vendor</literal> (string)</entry>
               <entry>Dell Computer Corporation</entry>
               <entry>No</entry>
               <entry>Name of the subsystem vendor per the PCI database</entry>
@@ -1123,22 +874,21 @@
       <para>
 
       (FIXME: Some key PCI information (bus, slot, port, function
-      etc.) is missing here, but that is easy to add once someone
-      request it)
+      etc.) is missing here)
 
       </para>
-    </sect1>
+    </sect2>
 
 
-    <sect1 id="device-properties-usb">
-      <title>usb, usbif namespace</title>
+    <sect2 id="device-properties-usb">
+      <title><literal>usb_device</literal> namespace</title>
       <para>
 
-      If a device is on a USB bus, then these properties
-      areavailable. Note that USB devices and the associated USB
-      interfaces are split onto different devices (and info.bus
-      values). An USB interface is always a child of the corresponding
-      USB device.
+	For device objects representing USB devices the property
+	<literal>info.bus</literal> will be <literal>usb_device</literal>, 
+	and the following properties will be available. Note that the 
+	corresponding USB interfaces are represented by separate
+	device objects as children.
 
       </para>
 
@@ -1155,164 +905,178 @@
           <tbody>
 
             <row>
-              <entry>usb.bus_number (int)</entry>
+              <entry><literal>usb_device.bus_number</literal> (int)</entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
               <entry>The USB bus the device is attached to</entry>
             </row>
             <row>
-              <entry>usb.configuration_value (int) </entry>
+              <entry><literal>usb_device.configuration_value</literal> (int) </entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
-              <entry>The current configuration the USB device is in,
+              <entry>The current configuration the USB device is in;
               starting from 1</entry>
             </row>
             <row>
-              <entry>usb.num_configurations (int)</entry>
+              <entry><literal>usb_device.num_configurations</literal> (int)</entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
               <entry>Number of configurations this USB device 
               can assume</entry>
             </row>
             <row>
-              <entry>usb.device_class (int)</entry>
+              <entry><literal>usb_device.device_class</literal> (int)</entry>
               <entry>example: 0</entry>
               <entry>Yes</entry>
-              <entry>Device class</entry>
+              <entry>USB Device Class</entry>
             </row>
             <row>
-              <entry>usb.device_subclass (int)</entry>
+              <entry><literal>usb_device.device_subclass</literal> (int)</entry>
               <entry>example: 0</entry>
               <entry>Yes</entry>
-              <entry>Device sub class</entry>
+              <entry>USB Device Sub Class</entry>
             </row>
             <row>
-              <entry>usb.device_protocol (int)</entry>
+              <entry><literal>usb_device.device_protocol</literal> (int)</entry>
               <entry>example: 0</entry>
               <entry>Yes</entry>
-              <entry>Device protocol</entry>
+              <entry>USB Device Protocol</entry>
             </row>
 
             <row>
-              <entry>usb.is_self_powered (bool)</entry>
+              <entry><literal>usb_device.is_self_powered</literal> (bool)</entry>
               <entry>example: false</entry>
               <entry>Yes</entry>
-              <entry>The device, in this configuration, is self powered</entry>
+              <entry>The device, in the current configuration, is self 
+		powered</entry>
             </row>
             <row>
-              <entry>usb.can_wake_up (bool)</entry>
+              <entry><literal>usb_device.can_wake_up</literal> (bool)</entry>
               <entry>example: true</entry>
               <entry>Yes</entry>
-              <entry>The device, in this configuration, can wake up</entry>
+              <entry>The device, in the current configuration, can wake up</entry>
             </row>
 
             <row>
-              <entry>usb.max_power (int)</entry>
+              <entry><literal>usb_device.max_power</literal> (int)</entry>
               <entry>example: 98</entry>
               <entry>Yes</entry>
               <entry>Max power drain of device, in mA</entry>
             </row>
             <row>
-              <entry>usb.num_interfaces (int)</entry>
+              <entry><literal>usb_device.num_interfaces</literal> (int)</entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
-              <entry>Number of interfaces in current configuration</entry>
+              <entry>Number of USB Interfaces in the current configuration</entry>
             </row>
             <row>
-              <entry>usb.num_ports (int)</entry>
+              <entry><literal>usb_device.num_ports</literal> (int)</entry>
               <entry>example: 0</entry>
               <entry>Yes</entry>
               <entry>Number of ports on a hub. Zero for non-hubs</entry>
             </row>
             <row>
-              <entry>usb.port_number (int)</entry>
+              <entry><literal>usb_device.port_number</literal> (int)</entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
-              <entry>The port number on the parent hub, starting from 1</entry>
+              <entry>The port number on the parent hub that the device is attached to, starting from 1</entry>
             </row>
             <row>
-              <entry>usb.speed_bcd (int)</entry>
+              <entry><literal>usb_device.speed_bcd</literal> (int)</entry>
               <entry>examples: 0x00150, 0x01200, 0x48000</entry>
               <entry>Yes</entry>
-              <entry>Speed of device in BCD</entry>
+              <entry>Speed of device, in Mbit/s, in BCD with two decimals</entry>
             </row>
             <row>
-              <entry>usb.version_bcd (int)</entry>
+              <entry><literal>usb_device.version_bcd</literal> (int)</entry>
               <entry>examples: 0x0100, 0x0110, 0x0200</entry>
               <entry>Yes</entry>
-              <entry>USB version of device in BCD</entry>
+              <entry>USB version of device in BCD with two decimals</entry>
             </row>
             <row>
-              <entry>usb.level_number (int)</entry>
+              <entry><literal>usb_device.level_number</literal> (int)</entry>
               <entry>example: 2</entry>
               <entry>Yes</entry>
               <entry>Depth in physical USB tree, where the virtual root hub
               is at depth 0</entry>
             </row>
             <row>
-              <entry>usb.linux.device_number (string)</entry>
+              <entry><literal>usb_device.linux.device_number</literal> (string)</entry>
               <entry>example: 19</entry>
               <entry>Yes (only on Linux)</entry>
-              <entry>Device number assigned by the Linux kernel</entry>
+              <entry>USB Device Number as assigned by the Linux kernel</entry>
             </row>
             <row>
-              <entry>usb.linux.parent_number (string)</entry>
+              <entry><literal>usb_device.linux.parent_number</literal> (string)</entry>
               <entry>example: 19</entry>
               <entry>Yes (only on Linux)</entry>
               <entry>Device number of parent device as assigned by the
               Linux kernel</entry>
             </row>
             <row>
-              <entry>usb.linux.sysfs_path (string)</entry>
+              <entry><literal>usb_device.linux.sysfs_path</literal> (string)</entry>
               <entry>example: /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1.1</entry>
               <entry>Yes (only on Linux)</entry>
-              <entry>Equal to linux.sysfs_path</entry>
+              <entry>Equals <literal>linux.sysfs_path</literal></entry>
             </row>
             <row>
-              <entry>usb.product_id (int)</entry>
+              <entry><literal>usb_device.product_id</literal> (int)</entry>
               <entry>example: 0x3005</entry>
               <entry>Yes</entry>
-              <entry>USB product ID</entry>
+              <entry>USB Product ID</entry>
             </row>
             <row>
-              <entry>usb.vendor_id (int)</entry>
+              <entry><literal>usb_device.vendor_id</literal> (int)</entry>
               <entry>example: 0x04b3</entry>
               <entry>Yes</entry>
-              <entry>USB vendor ID</entry>
+              <entry>USB Vendor ID</entry>
             </row>
             <row>
-              <entry>usb.device_revision_bcd (int)</entry>
+              <entry><literal>usb_device.device_revision_bcd</literal> (int)</entry>
               <entry>example: 0x0100</entry>
               <entry>Yes</entry>
-              <entry>Revision number of device, in BCD</entry>
+              <entry>Device Revision Number encoded in BCD with two decimals</entry>
             </row>
             <row>
-              <entry>usb.serial (string)</entry>
+              <entry><literal>usb_device.serial</literal> (string)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>A string uniquely identifying the instance 
-              of the device; ie. it will be different for two, otherwise
-              identical devices</entry>
+              of the device; ie. it will be different for two devices
+              of the same type. Note that the serial number is broken
+	      on some USB devices.</entry>
             </row>
             <row>
-              <entry>usb.product (string)</entry>
+              <entry><literal>usb_device.product</literal> (string)</entry>
               <entry>example: IBM USB HUB KEYBOARD</entry>
               <entry>No</entry>
-              <entry>Name of the product per the USB database</entry>
+              <entry>Name of the product per the USB ID Database</entry>
             </row>
             <row>
-              <entry>usb.vendor (string)</entry>
+              <entry><literal>usb_device.vendor</literal> (string)</entry>
               <entry>example: IBM Corp.</entry>
               <entry>No</entry>
-              <entry>Name of the vendor per the USB database</entry>
+              <entry>Name of the vendor per the USB ID Database</entry>
             </row>
 
           </tbody>
         </tgroup>
       </informaltable>
+	
+    </sect2>
+
+
+    <sect2 id="device-properties-usbif">
+      <title><literal>usb</literal> namespace</title>
       <para>
 
-      And these are the properties for an USB interface
+	Device objects that represent USB interfaces, ie. when
+	<literal>info.bus</literal> assumes <literal>usb</literal>,
+	are represented by the properties below. In addition all
+	the <literal>usb_device.*</literal> properties from the parent
+	USB device is available in this namespace but only with
+	the <literal>usb</literal> prefix instead of
+	<literal>usb_device</literal>.
 
       </para>
       <informaltable>
@@ -1328,85 +1092,56 @@
           <tbody>
 
             <row>
-              <entry>usbif.device_product_id (int)</entry>
-              <entry>example: 0x3005</entry>
-              <entry>Yes</entry>
-              <entry>USB product ID of the device this interface
-              belongs to</entry>
-            </row>
-            <row>
-              <entry>usbif.device_vendor_id (int)</entry>
-              <entry>example: 0x04b3</entry>
-              <entry>Yes</entry>
-              <entry>USB vendor ID of the device this interface
-              belongs to</entry>
-            </row>
-            <row>
-              <entry>usbif.interface_class (int)</entry>
+              <entry><literal>usb.interface.class</literal> (int)</entry>
               <entry>example: 0x03</entry>
               <entry>Yes</entry>
-              <entry>Class of this interface</entry>
+              <entry>USB Class for the interface</entry>
             </row>
             <row>
-              <entry>usbif.interface_subclass (int)</entry>
+              <entry><literal>usb.interface.subclass</literal> (int)</entry>
               <entry>example: 0x01</entry>
               <entry>Yes</entry>
-              <entry>Subclass of this interface</entry>
+              <entry>USB Sub Class for this interface</entry>
             </row>
             <row>
-              <entry>usbif.interface_protocol (int)</entry>
+              <entry><literal>usb.interface.protocol</literal> (int)</entry>
               <entry>example: 0x01</entry>
               <entry>Yes</entry>
-              <entry>Protocol for this interface</entry>
+              <entry>USB Protocol for the interface</entry>
             </row>
             <row>
-              <entry>usbif.number (int)</entry>
+              <entry><literal>usb.interface.number</literal> (int)</entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
-              <entry>Number of this interface</entry>
+              <entry>Number of this interface, starting from zero</entry>
             </row>
             <row>
-              <entry>usbif.linux.sysfs_path (string)</entry>
+              <entry><literal>usb.linux.sysfs_path</literal> (string)</entry>
               <entry>example: /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1.1/1-1.1:1.0</entry>
-              <entry>Yes</entry>
-              <entry>Equals linux.sysfs_path</entry>
+              <entry>Yes (only on Linux)</entry>
+              <entry>Equals <literal>linux.sysfs_path</literal></entry>
             </row>
 
           </tbody>
         </tgroup>
       </informaltable>
-      <para>
-      </para>
-    </sect1>
+	
+    </sect2>
 
 
-    <sect1 id="device-properties-ide">
-      <title>ide, ide_host namespace</title>
-      <para>
+    <sect2 id="device-properties-ide-host">
+      <title><literal>ide_host</literal> namespace</title>
 
-      These namespaces are used to characterise IDE host adaptors and IDE
-      channels. In a standard PC, there are usually two IDE host
-      adaptors each with two channels (master and slave). Normally, the
-      device chain looks like
-     
-      </para> 
-      <programlisting>
-      storage_controller.ide -&gt; ide_host -&gt; ide -&gt; block -&gt; block
-      </programlisting>
       <para>
 
-      where the first device represents the IDE controller on the motherboard
-      while the last device represents a partition on a (slave or master) 
-      IDE disk, and the device before that represent, e.g. a physical
-      harddisk. Notably, the first block device will have capability storage
-      (maybe even storage.removable) and the last block device will have
-      capability volume.
-
-      </para><para>
-
-      (FIXME: Is this the right terminology to use?)
+	The <literal>ide_host</literal> namespace is present for
+	device objects where <literal>info.bus</literal> is set
+	to <literal>ide_host</literal>.  Such device objects represent
+	IDE and ATA host adaptors for harddisks and optical drives as
+	found in the majority of computer systems.
 
       </para>
+
       <informaltable>
         <tgroup cols="2">
           <thead>
@@ -1419,15 +1154,31 @@
           </thead>
           <tbody>
             <row>
-              <entry>ide_host.number (int)</entry>
+              <entry><literal>ide_host.number</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>A unique number identifying the IDE host adaptor</entry>
             </row>
+            <row>
+              <entry><literal>ide_host.linux.sysfs_path</literal> (string)</entry>
+              <entry>example: /sys/devices/pci0000:00/0000:00:07.1/ide0</entry>
+              <entry>Yes (only on Linux)</entry>
+              <entry>Equals <literal>linux.sysfs_path</literal></entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
+
+    </sect2>
+
+
+    <sect2 id="device-properties-ide">
+      <title><literal>ide</literal> namespace</title>
       <para>
+
+	ATA and IDE drives are represented by device objects where
+	<literal>info.bus</literal> equals <literal>ide</literal>. The
+	following properties are available for such device objects.
 
       </para>
       <informaltable>
@@ -1442,45 +1193,36 @@
           </thead>
           <tbody>
             <row>
-              <entry>ide.channel (int)</entry>
+              <entry><literal>ide.host</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>Corresponds to ide_host.number of the ide_host device
-              that is the parent of this device</entry>
+              <entry>Corresponds
+		to <literal>ide_host.host_number</literal> of
+		the <literal>ide_host</literal> device that is the
+		parent of this device object</entry>
             </row>
             <row>
-              <entry>ide.sub_channel (int)</entry>
+              <entry><literal>ide.channel</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>Identifies the IDE channel of this interface</entry>
+              <entry>Identifies the IDE channel of the host interface</entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-scsi_host">
+      <title><literal>scsi_host</literal> namespace</title>
       <para>
 
-      </para>
-    </sect1>
+	The <literal>scsi_host</literal> namespace is present for
+	device objects where <literal>info.bus</literal> is set
+	to <literal>scsi_host</literal>.  Such device objects represent
+	SCSI host adaptors for SCSI devices as found in some computer
+	systems.
 
-    <sect1 id="device-properties-scsi">
-      <title>scsi_host, scsi_device namespace</title>
-      <para>
-      (FIXME: Need to populate these namespaces with some interesting
-      information such as SCSI LUN address and so on.)
       </para>
-    </sect1>
-
-    <sect1 id="device-properties-input">
-      <title>input namespace</title>
-      <para>
-      
-      This namespace is concerned with input devices such as
-      keyboards, pointing devices and game controllers.  If a device
-      has the capability input (USB HID devices normally do), then the
-      folling properties are available
-      
-      </para>
-
       <informaltable>
         <tgroup cols="2">
           <thead>
@@ -1492,367 +1234,231 @@
             </row>
           </thead>
           <tbody>
-
             <row>
-              <entry>input.absolute (bool)</entry>
+              <entry><literal>scsi_host.host</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>The device is capable of giving absolute device
-              coordinates when motion is detected (such as a tablet or
-              game controller)</entry>
+              <entry>A unique number identifying the SCSI host adaptor</entry>
             </row>
-            <row>
-              <entry>input.absolute.x (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.y (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.z (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.rx (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.ry (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.rz (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.rz (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.throttle (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.rudder (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.wheel (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.gas (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.brake (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.hat0x (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.hat0y (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.hat1x (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.hat1y (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.hat2x (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.hat2y (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.pressure (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.distance (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.tilt_x (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.tilt_y (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.absolute.misc (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.absolute is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-
-            <row>
-              <entry>input.relative (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The device is capable of giving relate device
-              coordinates when motion is detected (such as a mouse)</entry>
-            </row>
-            <row>
-              <entry>input.relative.x (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.relative.y (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.relative.z (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.relative.hwheel (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.relative.dial (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.relative.wheel (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.relative.misc (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.relative is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-
-            <row>
-              <entry>input.led (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The device has LED indicators that can be on or off
-              </entry>
-            </row>
-            <row>
-              <entry>input.led.numlock (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.capslock (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.scrolllock (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.compose (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.kana (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.sleep (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.suspend (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.mute (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.misc (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-            <row>
-              <entry>input.led.max (bool)</entry>
-              <entry></entry>
-              <entry>Only if input.led is true</entry>
-              <entry>WRITEME</entry>
-            </row>
-
-            <row>
-              <entry>input.force_feedback (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry></entry>
-            </row>
-
-            <row>
-              <entry>input.key (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The device has keys the user can press</entry>
-            </row>
-            <row>
-              <entry>input.repeat (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The device sends repeat keypresses if a key is pressed
-              down</entry>
-            </row>
-            <row>
-              <entry>input.sound (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The device can emit sounds</entry>
-            </row>
-
-            <row>
-              <entry>input.linux.phys (string)</entry>
-              <entry>example: usb-0000:00:07.2-1.2</entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>The name of the physical device as used by the kernel.
-              Used internally by HAL; see also linux.kernel_devname</entry>
-            </row>
-
-            <row>
-              <entry>input.linux.handlers (string)</entry>
-              <entry>examples: mouse1, kbd</entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>The Linux input handlers for this device</entry>
-            </row>
-            <row>
-              <entry>input.linux.keybit (string)</entry>
-              <entry>examples: 10000 7f ffe7207a c14057ff ffbeffdf ffffffff ffffffff fffffffe, f0000 0 0 0 0 0 0 0 0</entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>From device descriptor in the input subsystem (see 
-              kernel source)</entry>
-            </row>
-
-            <row>
-              <entry>input.linux.evbit (int)</entry>
-              <entry></entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>From device descriptor in the input subsystem (see 
-              kernel source)</entry>
-            </row>
-            <row>
-              <entry>input.linux.ledbit (int)</entry>
-              <entry></entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>From device descriptor in the input subsystem (see 
-              kernel source)</entry>
-            </row>
-            <row>
-              <entry>input.linux.relbit (int)</entry>
-              <entry></entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>From device descriptor in the input subsystem (see 
-              kernel source)</entry>
-            </row>
-            <row>
-              <entry>input.linux.absbit (int)</entry>
-              <entry></entry>
-              <entry>Yes (Linux only)</entry>
-              <entry>From device descriptor in the input subsystem (see 
-              kernel source)</entry>
-            </row>
-
           </tbody>
         </tgroup>
       </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-scsi">
+      <title><literal>scsi_device</literal> namespace</title>
       <para>
 
-      (FIXME: Is this too linux specific?)
+	SCSI devices are represented by device objects where
+	<literal>info.bus</literal> equals <literal>scsi_device</literal>.
+	The following properties are available for such device objects.
 
       </para>
-    </sect1>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>scsi.host</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Corresponds to <literal>scsi_host.host</literal>
+		of the <literal>scsi_host</literal> device that is the
+		parent of this device object</entry>
+            </row>
+            <row>
+              <entry><literal>scsi.bus</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>SCSI channel number</entry>
+            </row>
+            <row>
+              <entry><literal>scsi.target</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>SCSI identifier number</entry>
+            </row>
+            <row>
+              <entry><literal>scsi.lun</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>SCSI Logical Unit Number</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
 
 
-    <sect1 id="device-properties-block">
-      <title>block namespace</title>
+
+    <sect2 id="device-properties-ieee1394_host">
+      <title><literal>ieee1394_host</literal> namespace</title>
       <para>
 
-      A block device is either a storage device (such as a harddisk, floppy
-      or optical driver) or a partition on a storage, ie. a volume.
+	Device objects with <literal>info.bus</literal> set to
+	<literal>ieee1394_host</literal> represent IEEE 1394 host
+	adaptors. The following properties are available for such
+	device objects.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ieee1394_host.is_busmgr</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+
+            <row>
+              <entry><literal>ieee1394_host.is_irn</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+
+            <row>
+              <entry><literal>ieee1394_host.is_root</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+
+            <row>
+              <entry><literal>ieee1394_host.node_count</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+
+            <row>
+              <entry><literal>ieee1394_host.nodes_active</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+
+    <sect2 id="device-properties-ieee1394_node">
+      <title><literal>ieee1394_node</literal> namespace</title>
+      <para>
+
+	Device objects with <literal>info.bus</literal> set to 
+	<literal>ieee1394_node</literal> represent IEEE 1394 nodes on
+	a IEEE 1394 bus. The following properties are available for
+	such device objects.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ieee1394_node.capabilities</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>ieee1394_node.guid</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>ieee1394_node.nodeid</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>ieee1394_node.vendor</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>ieee1394_node.vendor_id</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-ieee1394">
+      <title><literal>ieee1394</literal> namespace</title>
+      <para>
+
+	Device objects with <literal>info.bus</literal> set to 
+	<literal>ieee1394</literal> represent IEEE 1394 devices. The 
+	following properties are available for such device objects.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ieee1394.specifier_id</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+
+    <sect2 id="device-properties-block">
+      <title><literal>block</literal> namespace</title>
+      <para>
+
+	Device objects representing addressable block devices, such as
+	drives and partitions, will have <literal>info.bus</literal>
+	set to <literal>block</literal> and will export a number of
+	properties in the <literal>block</literal> namespace.
 
       </para>
 
@@ -1869,90 +1475,96 @@
           <tbody>
 
             <row>
-              <entry>block.block_size (int)</entry>
-              <entry>example: 512</entry>
+              <entry><literal>block.device</literal> (string)</entry>
+              <entry>example: /dev/sda </entry>
               <entry>Yes</entry>
-              <entry>Size in octects of every block on the device</entry>
+              <entry>Special device file to interact with the block device</entry>
             </row>
             <row>
-              <entry>block.size (int)</entry>
-              <entry>example: 15584</entry>
-              <entry>Yes</entry>
-              <entry>Size of storage area, in blocks</entry>
-            </row>
-            <row>
-              <entry>block.start (int)</entry>
-              <entry>example: 32</entry>
-              <entry>Yes</entry>
-              <entry>Linear offset, in blocks, where the storage area
-              starts</entry>
-            </row>
-            <row>
-              <entry>block.major (int)</entry>
+              <entry><literal>block.major</literal> (int)</entry>
               <entry>example: 8</entry>
               <entry>Yes</entry>
               <entry>Major number of special file to interact with the 
               device</entry>
             </row>
             <row>
-              <entry>block.minor (int)</entry>
+              <entry><literal>block.minor</literal> (int)</entry>
               <entry>example: 1</entry>
               <entry>Yes</entry>
               <entry>Minor number of special file to interact with the 
               device</entry>
             </row>
             <row>
-              <entry>block.is_volume (bool)</entry>
+              <entry><literal>block.is_volume</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>True iff the block device is a volume that can be mounted 
-              into the file system</entry>
+              <entry>True only when the block device is a volume that can
+		be mounted into the file system. In this case the
+		<literal>volume</literal> capability will be set and
+		thus, properties, in the <literal>volume</literal>
+		namespace are available.</entry>
             </row>
             <row>
-              <entry>block.is_mounted (bool)</entry>
+              <entry><literal>block.no_partitions</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>True iff the block device is currently mounted in the
-              file system</entry>
-            </row>
-
-            <row>
-              <entry>block.device (string)</entry>
-              <entry>example: /udev/sda1 </entry>
-              <entry>Mandatory if block.is_volume is true</entry>
-              <entry></entry>
-            </row>
-
-            <row>
-              <entry>block.fs_type (string)</entry>
-              <entry>example: vfat </entry>
-              <entry>Mandatory if block.is_mounted is true</entry>
-              <entry></entry>
+              <entry>True only when the device object represents an
+		entire storage device and no known partition table
+		have been identified. In this case, if the storage
+		device contain a file system it will be accessible
+		using the same special device file as the one for this
+		device object and the device object representing the
+		filesystem will appear as a separate device object as
+		a child.
+	      </entry>
             </row>
             <row>
-              <entry>block.mount_point (string)</entry>
-              <entry>example: /mnt/cfreader </entry>
-              <entry>Mandatory if block.is_mounted is true</entry>
+              <entry><literal>block.storage_device</literal> (string)</entry>
               <entry></entry>
+              <entry>Yes</entry>
+              <entry>The UDI of the device object with a 
+	      <literal>storage</literal> capability that in detail
+	      describes the characteristics of the physical storage
+	      device that this device object is part of</entry>
             </row>
 
           </tbody>
         </tgroup>
       </informaltable>
-      <para>
+    </sect2>
 
-      blabla
 
-      </para>
+
     </sect1>
+    <sect1 id="properties-functional">
+      <title>Functional Properties</title>
 
-
-    <sect1 id="device-properties-net">
-      <title>net, net.ethernet namespace</title>
       <para>
-      The net and net.ethernet namespace contains information about
-      (logicial) network devices and only applies to devices with
-      capability net and/or net.ethernet.
+
+	The section describe functional properties of device objects,
+	that is, properties that are merged onto device objects
+	representing physically addressable hardware. In most
+	circumstances such properties stem from a kernel level
+	driver attached to the device represented by the device object,
+	however, as HAL can merge properties from anywhere, they
+	may have been merged from device information files or callouts.
+
+      </para>
+
+
+
+    <sect2 id="device-properties-volume">
+      <title><literal>volume</literal> namespace</title>
+      <para>
+
+	This namespace is for device objects that represent storage
+	devices with a filesystem that can be mounted. Such device
+	objects will have the capability <literal>volume</literal> and
+	they will export the properties below. Note that device
+	objects can only have the <literal>volume</literal> capability
+	if they already have the capability <literal>block</literal>
+	and the property <literal>block.is_volume</literal> set to TRUE.
+
       </para>
 
       <informaltable>
@@ -1968,37 +1580,60 @@
           <tbody>
 
             <row>
-              <entry>net.arp_proto_hw_id (int)</entry>
-              <entry>examples: 1 (ethernet), 19 (ATM)</entry>
+              <entry><literal>volume.is_mounted</literal> (bool)</entry>
+              <entry></entry>
               <entry>Yes</entry>
-              <entry>ARP protocol hardware identifier ID; see 
-              net/if_arp.h</entry>
+              <entry>This property is TRUE if and only if the volume is mounted</entry>
             </row>
             <row>
-              <entry>net.interface (string)</entry>
-              <entry>example: eth0</entry>
-              <entry>Yes</entry>
-              <entry>Name of the network interface</entry>
+              <entry><literal>volume.mount_point</literal> (string)</entry>
+              <entry>example: /media/compact_flash1  </entry>
+              <entry>Yes (is blank only when volume.is_mounted is FALSE)</entry>
+              <entry>A fully qualified path to the mount point of the volume</entry>
             </row>
             <row>
-              <entry>net.media (string)</entry>
-              <entry>examples: Ethernet, Frame Relay DLCI</entry>
+              <entry><literal>volume.fstype</literal> (string)</entry>
+              <entry>example: ext3</entry>
+              <entry>Yes (is blank if the filesystem type is unknown)</entry>
+              <entry></entry>
+            </row>
+            <row>
+              <entry><literal>volume.label</literal> (string)</entry>
+              <entry>example: 'Fedora Core 1.90' </entry>
+              <entry>Yes (is blank if the filesystem doesn't support labels)</entry>
+              <entry>The label of the media</entry>
+            </row>
+            <row>
+              <entry><literal>volume.uuid</literal> (string)</entry>
+              <entry>example: 4060-6C11</entry>
+              <entry>Yes (is blank if there is no UUID)</entry>
+              <entry>The Universal Unique Identifer for the volume</entry>
+            </row>
+            <row>
+              <entry><literal>volume.is_disc</literal> (bool)</entry>
+              <entry></entry>
               <entry>Yes</entry>
-              <entry>Description name of the link layer protocol</entry>
+              <entry>If the volume stems from an optical disc, this
+              property is true and the device object will also have
+              the capability <literal>volume.disc</literal></entry>
             </row>
 
-            <row>
-              <entry>net.linux.sysfs_path (string)</entry>
-              <entry>example: /sys/class/net/eth0</entry>
-              <entry>Yes (only on Linux)</entry>
-              <entry>Sysfs path to (logical) network device object. Is
-              normally NOT equal to linux.sysfs_path</entry>
-            </row>
           </tbody>
         </tgroup>
       </informaltable>
+    </sect2>
 
-      <para></para>
+
+    <sect2 id="device-properties-volume-disc">
+      <title><literal>volume.disc</literal> namespace</title>
+      <para>
+
+	This namespace is for device objects that represent optical
+	discs, e.g. device objects with the capability 
+	<literal>volume.disc</literal>. Such device objects will
+	also have the capability <literal>volume</literal>.
+
+      </para>
 
       <informaltable>
         <tgroup cols="2">
@@ -2013,33 +1648,513 @@
           <tbody>
 
             <row>
-              <entry>net.ethernet.link (bool)</entry>
+              <entry><literal>volume.disc.has_audio</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc contains audio</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.has_data</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc contains data</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.is_appendable</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if it's possible to write additional data</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.is_blank</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc is blank</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.is_rewritable</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc is rewritable</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This property specifies the physical type of the disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>cd_rom</entry>
+              <entry></entry>
+              <entry>CD-ROM disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>cd_r</entry>
+              <entry></entry>
+              <entry>CD-R disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>cd_rw</entry>
+              <entry></entry>
+              <entry>CD-RW disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>dvd_rom</entry>
+              <entry></entry>
+              <entry>DVD-ROM disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>dvd_ram</entry>
+              <entry></entry>
+              <entry>DVD-RAM disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>dvd_r</entry>
+              <entry></entry>
+              <entry>DVD-R disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>dvd_rw</entry>
+              <entry></entry>
+              <entry>DVD-RW disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>dvd_plus_r</entry>
+              <entry></entry>
+              <entry>DVD+R disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>dvd_plus_rw</entry>
+              <entry></entry>
+              <entry>DVD+RW disc</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+
+    <sect2 id="device-properties-storage">
+      <title><literal>storage</literal> namespace</title>
+      <para>
+
+	This namespace is used to describe physical storage devices
+	and their capabilities. Such device objects will have the 
+	capability <literal>storage</literal> and
+	they will export the properties below. Note that device
+	objects can only have the <literal>storage</literal> capability
+	if they already got capability <literal>block</literal> and the
+	property <literal>block.is_volume</literal> set to FALSE.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>storage.bus</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Physical interface the storage device is attached to</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>ide</entry>
+              <entry></entry>
+              <entry>IDE or ATA interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>usb</entry>
+              <entry></entry>
+              <entry>USB interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>ieee1394</entry>
+              <entry></entry>
+              <entry>IEEE 1394 interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>scsi</entry>
+              <entry></entry>
+              <entry>SCSI interface</entry>
+            </row>
+
+            <row>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.drive_type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		The type of the drive. Note that it may not be
+		possible to probe for some of these properties so in
+		some cases memory card readers may appear as
+		harddisks. Device information files can be used to
+		override this value.
+	      </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>disk</entry>
+              <entry></entry>
+              <entry>The device is a harddisk</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>cdrom</entry>
+              <entry></entry>
+              <entry>The device is an optical drive. The device object will also have the capability <literal>storage.cdrom</literal> in this case.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>floppy</entry>
+              <entry></entry>
+              <entry>The device is a floppy disk drive</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>tape</entry>
+              <entry></entry>
+              <entry>The device is a tape drive</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>compact_flash</entry>
+              <entry></entry>
+              <entry>The device is a card reader for Compact Flash memory cards</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>memory_stick</entry>
+              <entry></entry>
+              <entry>The device is a card reader for MemoryStick memory cards</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>smart_media</entry>
+              <entry></entry>
+              <entry>The device is a card reader for SmartMedia memory cards</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>sd_mmc</entry>
+              <entry></entry>
+              <entry>The device is a card reader for SecureDigital/MultiMediaCard memory cards</entry>
+            </row>
+
+            <row>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+            </row>
+
+
+            <row>
+              <entry><literal>storage.removable</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Media can be removed from the storage device</entry>
+            </row>
+            <row>
+              <entry><literal>storage.hotpluggable</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The storage device can be removed while the system is running</entry>
+            </row>
+            <row>
+              <entry><literal>storage.media_check_enabled</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>If this property is set to FALSE then HAL will not continuosly poll for media changes. </entry>
+            </row>
+            <row>
+              <entry><literal>storage.automount_enabled</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This property is a hint to desktop file managers that they shouldn't automount volumes of the storage device when they appear.</entry>
+            </row>
+            <row>
+              <entry><literal>storage.physical_device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		This contains the UDI of the device object
+		representing the physical device. Additionally, a
+		number of properties are merged from that device
+		object. Specifically, all properties prefixed
+		with <literal>storage</literal> and, if the physical
+		device has several storage ports,
+		<literal>storage_lunX</literal> (where X is number of
+		the port starting from zero) are merged and will have 
+		the prefix <literal>storage</literal>.  See <xref
+		linkend="fdi-example-6in1"/> for an example.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>storage.model</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The name of the drive</entry>
+            </row>
+            <row>
+              <entry><literal>storage.vendor</literal> (string)</entry>
+              <entry></entry>
+              <entry>The vendor of the drive</entry>
+              <entry></entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+
+    <sect2 id="device-properties-storage-cdrom">
+      <title><literal>storage.cdrom</literal> namespace</title>
+      <para>
+
+	This namespace is used to describe optical storage drives
+	and their capabilities.Such device objects will have the 
+	capability <literal>storage.cdrom</literal> and
+	they will export the properties below. Note that device
+	objects can only have the <literal>storage.cdrom</literal> capability
+	if they already got the capability <literal>storage</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>storage.cdrom.cdr</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write CD-R discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.cdrw</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can blank and write to CD-RW discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.dvd</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can read DVD-ROM discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.dvdr</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to DVD-R discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.dvdrw</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can blank and write to DVD-RW discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.dvdram</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to DVD-RAM discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.dvdplusr</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to DVD+R discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.dvdplusrw</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can blank and write to DVD+RW discs</entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.cdrom.support_media_changed</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE if the drive can generate media changed events</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.read_speed</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The maximum reading speed, in kb/s</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.write_speed</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The maximum writing speed, in kb/s</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+
+    <sect2 id="device-properties-net">
+      <title><literal>net</literal> namespace</title>
+      <para>
+
+	This namespace is used to describe networking devices and
+	their capabilities.Such device objects will have the
+	capability <literal>net</literal> and they will export the
+	properties below. This namespace only describe the generic
+	aspect of networking devices; specific networking technologies
+	such as IEEE 802.3 and IEEE 802.11 have separate namespaces.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>net.address</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Hardware address as a string</entry>
+            </row>
+            <row>
+              <entry><literal>net.arp_proto_hw_id</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>ARP protocol hardware identifier</entry>
+            </row>
+            <row>
+              <entry><literal>net.interface</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Name of the interface</entry>
+            </row>
+            <row>
+              <entry><literal>net.linux.sysfs_path</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes (only on Linux)</entry>
+              <entry>Path of device in sysfs</entry>
+            </row>
+            <row>
+              <entry><literal>net.media</literal> (string)</entry>
+              <entry>example: Ethernet</entry>
+              <entry>Yes</entry>
+              <entry>Textual description of the networking media</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+
+    <sect2 id="device-properties-net-ethernet">
+      <title><literal>net.ethernet</literal> namespace</title>
+      <para>
+
+	Ethernet networking devices is described in this namespace
+	for device objects with the capability 
+	<literal>net.ethernet</literal>.
+	Note that device
+	objects can only have the <literal>net.ethernet</literal> capability
+	if they already have the capability <literal>net</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>net.ethernet.link</literal> (bool)</entry>
               <entry></entry>
               <entry>Only if net.arp_proto_hw_id=1</entry>
               <entry>True iff the ethernet adaptor is connected to a
               another transceiver</entry>
             </row>
             <row>
-              <entry>net.ethernet.rate (int)</entry>
+              <entry><literal>net.ethernet.rate</literal> (int)</entry>
               <entry>example: 100000000</entry>
               <entry>Only if net.arp_proto_hw_id=1</entry>
               <entry>Bandwidth of connection, in bits/s</entry>
             </row>
             <row>
-              <entry>net.ethernet.mac_addr (string)</entry>
+              <entry><literal>net.ethernet.mac_addr</literal> (string)</entry>
               <entry>example: 00:10:60:5d:8e:f4</entry>
               <entry>Only if net.arp_proto_hw_id=1</entry>
               <entry>Textual representation of MAC address</entry>
             </row>
             <row>
-              <entry>net.ethernet.mac_addr_lower24 (int)</entry>
+              <entry><literal>net.ethernet.mac_addr_lower24</literal> (int)</entry>
               <entry>example: 0x00001060</entry>
               <entry>Only if net.arp_proto_hw_id=1</entry>
               <entry>Binary representation of lower 24 bits of the MAC 
               address</entry>
             </row>
             <row>
-              <entry>net.ethernet.mac_addr_upper24 (int)</entry>
+              <entry><literal>net.ethernet.mac_addr_upper24</literal> (int)</entry>
               <entry>example: 0x005d8ef4</entry>
               <entry>Only if net.arp_proto_hw_id=1</entry>
               <entry>Binary representation of the upper 24 bits of the MAC
@@ -2051,50 +2166,513 @@
       </informaltable>
       <para>
       </para>
+    </sect2>
+
+    <sect2 id="device-properties-input">
+      <title><literal>input</literal> namespace</title>
+      <para>
+      
+	This namespace is concerned with human input devices such as
+	keyboards, mice, pointing devices and game controllers. If a
+	device object has the capability <literal>input</literal> then
+	the following properties are available
+      
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>input.device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Special device file for recieving input events</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-pcmcia_socket">
+      <title><literal>pcmcia_socket namespace</literal></title>
+      <para>
+      
+	Device objects with the capability <literal>pcmcia_socket</literal>
+	represent bridge devices (the actual bus of the device may differ)
+	that PCMCIA cards can be attached to. The following properties are
+	available.
+      
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>pcmcia_socket.number</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>PCMCIA socket number, starting from zero</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-printer">
+      <title><literal>printer</literal> namespace</title>
+      <para>
+      
+	Device objects with the capability <literal>printer</literal>
+	represent printers. The following properties are available.
+      
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>printer.device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>printer.vendor</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>printer.product</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>printer.serial</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+            <row>
+              <entry><literal>printer.description</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TODO</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-portable_audio_player">
+      <title><literal>portable_audio_player</literal> namespace</title>
+      <para>
+      
+	Device objects with the capability 
+	<literal>portable_audio_player</literal> represent portable
+	audio players that can be attached to a computer to exchange
+	files. They can also playback audio. Sometimes they can also
+	record audio. This capability can't, in general, be reliably
+	probed from the hardware so the information needs to be merged
+	from either device information files or callouts. Therefore
+	this capability should be merged on the appropriate device
+	object that represents the addressable piece of hardware that
+	is the portable music player; for USB devices this would be
+	the device object representing the appropriate USB
+	interface. The following properties are available:
+      
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>portable_audio_player.access_method</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This property defines how the device is accessed </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>storage</entry>
+              <entry></entry>
+              <entry>
+		The device is accessed as a Mass Storage device
+		through a kernel driver.  Application Developers
+		should descent down the device object tree to find the
+		device object of capability
+		<literal>storage</literal> in order to access the
+		device.
+	      </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>user</entry>
+              <entry></entry>
+              <entry>
+		The device is accessed from userspace through
+		a userspace driver.
+	      </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+            </row>
+
+            <row>
+              <entry><literal>portable_audio_player.output_formats</literal> (string)</entry>
+              <entry>example: 'audio/mpeg audio/x-ms-wma</entry>
+              <entry>Yes</entry>
+              <entry>
+		A whitespace-separated list of MIME-types representing 
+		the kind of audio formats that the device can play back
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>portable_audio_player.input_formats</literal> (string)</entry>
+              <entry>example: 'audio/x-wav</entry>
+              <entry>Yes</entry>
+              <entry>
+		A whitespace-separated list of MIME-types representing 
+		the kind of audio formats that the device can record. If
+		empty, it means that the device is not capable of recording.
+	      </entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-camera">
+      <title><literal>camera</literal> namespace</title>
+      <para>
+      
+	Device objects with the capability <literal>camera</literal>
+	represent digital still cameras that can be attached to a
+	computer to exchange files. This does not include card readers
+	for memory cards used for cameras. This capability can't, in
+	general, be reliably probed from the hardware so the
+	information needs to be merged from either device information
+	files or callouts. Therefore this capability should be merged
+	on the appropriate device object that represents the
+	addressable piece of hardware that is the digital still
+	camera; for USB devices this would be the device object
+	representing the appropriate USB interface. The following
+	properties are available:
+      
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>camera.access_method</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This property defines how the device is accessed </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>storage</entry>
+              <entry></entry>
+              <entry>
+		The device is accessed as a Mass Storage device
+		through a kernel driver.  Application Developers
+		should descent down the device object tree to find the
+		device object of capability
+		<literal>storage</literal> in order to access the
+		device.
+	      </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>user</entry>
+              <entry></entry>
+              <entry>
+		The device is accessed from userspace through
+		a userspace driver.
+	      </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+            </row>
+
+            <row>
+              <entry><literal>camera.libgphoto2.support</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		If true, the device is supported by a userspace driver
+		from the libgphoto2 project.
+	      </entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     </sect1>
   </chapter>
+
+
 
   <chapter id="spec-device-info">
     <title>Device Information Files</title>
     <para>
-    The format is almost self-explanatory; here's an example
 
-    </para>
-<programlisting>
+      Device information files (<literal>.fdi</literal> files is a
+      shorthand) are used to merge arbitrary properties onto device
+      objects. The way device information files works is that once all
+      physical properties are merged onto a device object it is tried
+      against the set of installed device information files.  
 
-&lt;?xml version="1.0" encoding="ISO-8859-1"?&gt; &lt;!-- -*- SGML -*- --&gt; 
+    </para><para>
 
-&lt;deviceinfo version="0.2"&gt;
-  &lt;device&gt;
-    &lt;match key="info.bus" string="usb"&gt;
-      &lt;match key="usb.vendor_id" int="0x04a9"&gt;
-        &lt;match key="usb.product_id" int="0x3052"&gt;
-          &lt;merge key="info.category" type="string"&gt;camera&lt;/merge&gt;
-          &lt;merge key="info.capabilities" type="string"&gt;camera&lt;/merge&gt;
-          &lt;merge key="info.persistent" type="bool"&gt;true&lt;/merge&gt;
-        &lt;/match&gt;
-      &lt;/match&gt;
-    &lt;/match&gt;
-  &lt;/device&gt;
-&lt;/deviceinfo&gt;
+      Each device information file got a number of
+      <literal>&#60;match key="some_property"
+      [string|int|bool|..]="required_value" &#62;</literal> directives
+      that is tested against the properties of the device object. If
+      all the match directives passes then the device information can
+      include <literal>&#60;merge key="some_property"
+      type="[string|int|bool|..]"&#62;</literal> directives to merge
+      new properties onto the device object. It's important to
+      emphasize that any previously property stemming from device
+      detection can be overridden by a device information file.
+      
+    </para>
+    
+    <sect1 id="fdi-example-mp3player">
+      <title>Example: MP3 player</title>
+      
+      <para>
+	
+	This device information file matches an USB Mass Storage
+	based MP3 player by the matching on the USB vendor and
+	product identifiers.
+	
+      </para>
+      
+      <programlisting>
+	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/jetflash-mp3-player.fdi"/>
+      </programlisting>
+      
+      <para>
+	
+	The final set of properties look like this:
+	
+      </para>
+      <para>
+	<inlinegraphic fileref="hal-fdi-example2.png" format="PNG"/>
+      </para>
+      
+    </sect1>
+    
+    
+    <sect1 id="fdi-example-camera">
+      <title>Example: Digital Still Camera</title>
+      
+      <para>
+	
+	This device information file matches a Canon Digital IXUS V
+	still digital camera by matching on the USB vendor and
+	product identifers.
+	
+      </para>
+      
+      <programlisting>
+	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/canon-digital-ixus-v.fdi"/>
+      </programlisting>
+      
+      <para>
+	
+	The final set of properties look like this:
+	
+      </para>
+      <para>
+	<inlinegraphic fileref="hal-fdi-example1.png" format="PNG"/>
+      </para>
+    </sect1>
 
-</programlisting>
-    <para>
-    This .fdi file matches a Canon Digital IXUS V (for this device
-    no device or interface class is advertised), so we match the USB vendor
-    and product identifers. Then we merge category and capabilities into the
-    device object along with setting the persistent property, and this is 
-    what it looks like after being matched
-    </para>
-    <para>
-      <inlinegraphic fileref="hal-fdi-example1.png" format="PNG"/>
-    </para>
-    <para>
-    It's important to emphasize that any previously property stemming
-    from device detection can be overridden by a device information file.
-    </para>
+    <sect1 id="fdi-example-6in1">
+      <title>Example: Card Reader</title>
+      
+      <para>
+	
+	This device information file matches a memory card reader with
+	multiple storage ports that can be active at the same time.
+	
+      </para>
+      
+      <programlisting>
+	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/6in1-card-reader.fdi"/>
+      </programlisting>
+      
+      <para>
+	
+	As described in the documentation for the
+	<literal>storage.physical_device</literal> property in <xref
+	linkend="device-properties-storage"/> this device information
+	file export information about each storage port through the
+	property <literal>storage.drive_type</literal>. Thus, one
+	of the four <literal>storage</literal> devices has the
+	following properties that are merged from the device object
+	that the device information file targets:
+	
+      </para>
+      <para>
+	<inlinegraphic fileref="hal-fdi-example3.png" format="PNG"/>
+      </para>
+    </sect1>
   </chapter>
 
+  <chapter id="callouts">
+    <title>Callouts</title>
+    <para>
+
+      Callouts are programs invoked when the device object list is
+      modified or when a device changes. As such, callouts can be used
+      to maintain system-wide policy (that may be specific to the
+      particular OS) such as changing permissions on device nodes,
+      updating the systemwide <literal>/etc/fstab</literal> file or
+      configuring the networking subsystem.
+      
+    </para><para>
+      
+      There are three different classes of callouts. A callout
+      involves sequentially invoking all executable programs in a
+      given directory in alphabetic order.
+
+    </para>
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Type</entry>
+            <entry>Description</entry>
+            <entry>Callout Directory</entry>
+            <entry>Positional Parameters</entry>
+          </row>
+        </thead>
+        <tbody>
+	  
+          <row>
+            <entry>Device Add/Remove</entry>
+            <entry>
+	      When a new device object have been added, this callout
+	      is invoked just after a device have entered the GDL
+	      (global device list) but just before it is announced
+	      through the D-BUS network API (the device isn't
+	      announced until the last callout has finished).
+	      When a device object is to be removed this callout is
+	      invoked and the device isn't removed before the last
+	      callout has finished.
+	    </entry>
+            <entry><literal>/etc/hal/device.d</literal></entry>
+            <entry><literal>add</literal> or <literal>remove</literal></entry>
+          </row>
+
+          <row>
+            <entry>Capability Add/Remove</entry>
+            <entry>
+	      Invoked when a capability have been added or removed.
+	    </entry>
+            <entry><literal>/etc/hal/capability.d</literal></entry>
+            <entry><literal>add</literal> or <literal>remove</literal></entry>
+          </row>
+
+          <row>
+            <entry>Property Change</entry>
+            <entry>
+	      Invoked when a device property have been added, removed
+	      or is modified.
+	    </entry>
+            <entry><literal>/etc/hal/property.d</literal></entry>
+            <entry>
+	      <literal>add</literal>, <literal>remove</literal> or 
+	      <literal>modify</literal>
+	    </entry>
+          </row>
+	  
+        </tbody>
+      </tgroup>
+    </informaltable>
+    <para>
+      
+      All callouts execute in the same environment as which the HAL
+      daemon was started. In addition, the UDI of the device object is
+      exported in the environment variable <literal>UDI</literal>. All
+      properties of the device object are exported in the environment
+      prefixed with <literal>HAL_</literal>. The HAL daemon isn't
+      suspended while callouts are executing. Thus, callouts can
+      communicate with the HAL daemon using the D-BUS network
+      API. Hence, one application of callouts is to merge or modify
+      properties on a device object.
+
+    </para>
+
+  </chapter>
+
+      
   <chapter id="dbus-api">
     <title>D-BUS Network API</title> <para> 
 
@@ -2103,7 +2681,7 @@
       system and intercepts hotplug events as devices are plugged in
       and removed.  The daemon is also responsible for providing
       services to applications that wants to locate devices and
-      perform generic operations them such as obtaining exclusive
+      perform generic operations on them such as obtaining exclusive
       access.  Non-generic operations, such as obtaining pictures from
       a camera device, is outside the scope of the HAL daemon; see
       <xref linkend="using-devices"/> for more information.
@@ -2474,8 +3052,34 @@ bool DeviceMatches(string udi1, string udi2, string namespace)
   <chapter id="enforcing-policy">
     <title>Enforcing Policy</title>
     <para> 
-      blabla
+
+      Notwithstanding the fact that HAL avoids to enforce any policy,
+      it is useful to have a minimal set of guidelines such that
+      applications using HAL written for one operating system can
+      easily run on another. This chapter contains recommendations
+      about how to enforce policy to achieve that goal.
+
     </para>
+    
+    <sect1 id="enforcing-storage">
+      <title>Storage Devices</title>
+      <para>
+
+	An operating system vendor should maintain the 
+	<literal>/etc/fstab</literal> file through the HAL callout
+	mechanism such that every device object of capability
+	<literal>volume</literal> has a corresponding entry. The
+	reasoning behind this is, among other things, to maintain the
+	invariant that <literal>/etc/fstab</literal> list all
+	available filesystems. In addition
+	the <literal>mount(1)</literal> program should enable users
+	without superuser privileges to mount filesystems mentioned in
+	the <literal>/etc/fstab</literal> file as long as they have
+	the <literal>user</literal> option set.
+
+      </para>
+    </sect1>
+
   </chapter>
 
 </book>

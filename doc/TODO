@@ -48,23 +48,6 @@ ourselves in /etc/hal/hald.conf, e.g. say
 /usr/bin/gnome-volume-manager is allowed to do stuff. 
 
 ============================================================================
-* Multi-function USB devices (davidz is working on this)
-============================================================================
-
-Here's one
-
-     http://www.pc-netto.dk/templates/product.asp?productguid=133%2D09
-
-this one got one USB interface for the PS/2 keyboard and one USB
-interface for the PS/2 mouse. Here's another one
-
-     http://www.superwarehouse.com/HP_PSC_2175/Q3068A/p/286911
-
-that got a many USB interfaces for printing, scanning, media reader
-etc. We need a better way of representing such devices; if possible
-in a way that doesn't change already written .fdi files
-
-============================================================================
 * Input devices
 ============================================================================
 

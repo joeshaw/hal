@@ -86,8 +86,6 @@ ide_device_pre_process (BusDeviceHandler *self,
 		hal_device_property_set_string (d, "info.product",
 						"IDE device (slave)");
 	}
-
-	hal_device_property_set_bool (d, "info.virtual", TRUE);
 }
 
 

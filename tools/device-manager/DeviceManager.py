@@ -83,34 +83,24 @@ class DeviceManager(LibGladeApplication):
 
     def add_device_signal_recv (self, udi):
 	self.bus.add_signal_receiver(self.device_changed,
-				     "PropertyAdded",
+				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 	self.bus.add_signal_receiver(self.device_changed,
-				     "PropertyRemoved",
-				     "org.freedesktop.Hal.Device",
-				     "org.freedesktop.Hal",
-				     udi)
-	self.bus.add_signal_receiver(self.device_changed,
-				     "PropertyChanged",
+				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 
     def remove_device_signal_recv (self, udi):
 	self.bus.remove_signal_receiver(self.device_changed,
-				     "PropertyAdded",
+				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 	self.bus.remove_signal_receiver(self.device_changed,
-				     "PropertyRemoved",
-				     "org.freedesktop.Hal.Device",
-				     "org.freedesktop.Hal",
-				     udi)
-	self.bus.remove_signal_receiver(self.device_changed,
-				     "PropertyChanged",
+				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)

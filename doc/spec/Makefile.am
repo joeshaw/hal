@@ -2,13 +2,18 @@
 if DOCBOOK_DOCS_ENABLED
 
 EXTRA_DIST =                            \
-	hal-spec.xml
+	hal-spec.xml			\
+	example-manager.py		\
+	hal-arch.dia			\
+	hal-linux26.dia
 
 FIGURE_FILES =                        	\
 	hal-arch.png                  	\
 	hal-devices1.png              	\
 	hal-fdi-example1.png      	\
-	hal-linux26.png
+	hal-fdi-example2.png      	\
+	hal-fdi-example3.png      	\
+	hal-linux26.png	
 
 
 EXTRA_DIST += hal-spec.html $(FIGURE_FILES)

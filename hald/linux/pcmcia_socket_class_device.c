@@ -72,8 +72,14 @@ pcmcia_socket_class_pre_process (ClassDeviceHandler *self,
 				const char *sysfs_path,
 				struct sysfs_class_device *class_device)
 {
+	int num;
+
+	sscanf (class_device->name, "pcmcia_socket%d", &num);
+	hal_device_property_set_int (d, "pcmcia_socket.number", num);
+
 	hal_device_add_capability (d, "pcmcia_socket");
 	hal_device_property_set_string (d, "info.category", "pcmcia_socket");
+
 }
 
 /** Method specialisations for input device class */
