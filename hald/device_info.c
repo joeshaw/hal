@@ -592,7 +592,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 
 	found_fdi_file = 0;
 
-	/*HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir)); */
+	HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));
 
 	num_entries = scandir (dir, &name_list, 0, alphasort);
 	if (num_entries == -1) {
@@ -603,11 +603,18 @@ scan_fdi_files (const char *dir, HalDevice * d)
 	for (i = num_entries - 1; i >= 0; i--) {
 		int len;
 		char *filename;
+		gchar *full_path;					     
 
 		filename = name_list[i]->d_name;
 		len = strlen (filename);
 
-		if (name_list[i]->d_type == DT_REG) {
+		full_path = g_strdup_printf ("%s/%s", dir, filename);
+		HAL_INFO (("Full path = %s", full_path));
+
+		/* Mmm, d_type can be DT_UNKNOWN, use glib to determine
+		 * the type
+		 */
+		if (g_file_test (full_path, (G_FILE_TEST_IS_REGULAR))) {
 			/* regular file */
 
 			if (len >= 5 &&
@@ -626,8 +633,8 @@ scan_fdi_files (const char *dir, HalDevice * d)
 				}
 			}
 
-		} else if (name_list[i]->d_type == DT_DIR &&
-			   strcmp (filename, ".") != 0
+		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) 
+			   && strcmp (filename, ".") != 0
 			   && strcmp (filename, "..") != 0) {
 			int num_bytes;
 			char *dirname;
@@ -651,6 +658,8 @@ scan_fdi_files (const char *dir, HalDevice * d)
 			if (found_fdi_file)
 				break;
 		}
+
+		g_free (full_path);
 
 		free (name_list[i]);
 	}

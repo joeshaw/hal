@@ -1,5 +1,10 @@
 2004-07-04  David Zeuthen  <david@fubar.dk>
 
+	* hald/device_info.c (scan_fdi_files): Use glib to determine
+	the file type since d_type in struct dirent can be DT_UNKNOWN
+
+2004-07-04  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/net_class_device.c (set_device_link_status):
 	(net_class_pre_process): Don't check for link on wireless devices
 
