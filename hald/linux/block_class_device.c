@@ -60,6 +60,7 @@
 #include "common.h"
 
 #include "volume_id/volume_id.h"
+#include "drive_id/drive_id.h"
 #include "linux_dvd_rw_utils.h"
 
 /**
@@ -1272,10 +1273,12 @@ block_class_pre_process (ClassDeviceHandler *self,
 	HAL_INFO (("Bus type is %s!",
 		   hal_device_property_get_string (parent, "info.bus")));
 
-	if (strcmp (hal_device_property_get_string (parent, "info.bus"), 
+	if (strcmp (hal_device_property_get_string (parent, "info.bus"),
 			    "ide") == 0) {
 		const char *ide_name;
 		char *model;
+		const char *device_file;
+		struct drive_id *did;
 		char *media;
 
 		ide_name = get_last_element (hal_device_property_get_string
@@ -1283,14 +1286,27 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 		model = read_single_line ("/proc/ide/%s/model", ide_name);
 		if (model != NULL) {
-			hal_device_property_set_string (stordev, 
-							"storage.model", 
+			hal_device_property_set_string (stordev,
+							"storage.model",
 							model);
 			hal_device_property_set_string (d, 
 							"info.product",
 							model);
 		}
 
+		device_file = hal_device_property_get_string (d, "block.device");
+		did = drive_id_open_node(device_file);
+		if (drive_id_probe(did, DID_ATA) == 0) {
+			if (did->serial[0] != '\0')
+				hal_device_property_set_string (stordev, 
+								"storage.serial",
+								did->serial);
+			if (did->firmware[0] != '\0')
+				hal_device_property_set_string (stordev, 
+								"storage.firmware_version",
+								did->firmware);
+		}
+		drive_id_close(did);
 
 		/* According to the function proc_ide_read_media() in 
 		 * drivers/ide/ide-proc.c in the Linux sources, media
@@ -1340,9 +1356,11 @@ block_class_pre_process (ClassDeviceHandler *self,
 			
 		}
 		
-	} else if (strcmp (hal_device_property_get_string (parent, 
+	} else if (strcmp (hal_device_property_get_string (parent,
 							 "info.bus"),
 			   "scsi_device") == 0) {
+		const char *device_file;
+		struct drive_id *did;
 		const char *sysfs_path;
 		char attr_path[SYSFS_PATH_MAX];
 		struct sysfs_attribute *attr;
@@ -1370,7 +1388,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		attr = sysfs_open_attribute (attr_path);
 		if (sysfs_read_attribute (attr) >= 0) {
 			strip_space (attr->value);
-			hal_device_property_set_string (d, 
+			hal_device_property_set_string (d,
 							"info.product",
 							attr->value);
 			hal_device_property_set_string (stordev,
@@ -1378,7 +1396,21 @@ block_class_pre_process (ClassDeviceHandler *self,
 							attr->value);
 			sysfs_close_attribute (attr);
 		}
-		
+
+		device_file = hal_device_property_get_string (d, "block.device");
+		did = drive_id_open_node(device_file);
+		if (drive_id_probe(did, DID_SCSI) == 0) {
+			if (did->serial[0] != '\0')
+				hal_device_property_set_string (stordev,
+								"storage.serial",
+								did->serial);
+			if (did->revision[0] != '\0')
+				hal_device_property_set_string (stordev, 
+								"storage.revision",
+								did->revision);
+		}
+		drive_id_close(did);
+
 		snprintf (attr_path, SYSFS_PATH_MAX,
 			  "%s/device/type", sysfs_path);
 		attr = sysfs_open_attribute (attr_path);
@@ -1534,19 +1566,52 @@ block_class_in_gdl (ClassDeviceHandler *self,
 static char *
 block_class_compute_udi (HalDevice * d, int append_num)
 {
-        char *format;
-        static char buf[256];
- 
-        if (append_num == -1)
-                format = "/org/freedesktop/Hal/devices/block_%d_%d";
-        else
-                format = "/org/freedesktop/Hal/devices/block_%d_%d-%d";
- 
-        snprintf (buf, 256, format,
-                  hal_device_property_get_int (d, "block.major"),
-                  hal_device_property_get_int (d, "block.minor"), append_num);
- 
-        return buf;
+	char *format;
+	static char buf[256];
+	char id[256] = "";
+
+	if (hal_device_property_get_bool (d, "block.is_volume")) {
+		const char *label =
+			hal_device_property_get_string (d, "volume.label");
+		const char *uuid =
+			hal_device_property_get_string (d, "volume.uuid");
+
+		if (uuid != NULL && uuid[0] != '\0') {
+			strcpy(id, uuid);
+		} else if (label != NULL && label[0] != '\0') {
+			if (strcmp(label, "/") == 0)
+				strcpy(id, "root");
+			else
+				strcpy(id, label);
+		}
+	} else {
+		const char *model =
+			hal_device_property_get_string (d, "storage.model");
+		const char *serial =
+			hal_device_property_get_string (d, "storage.serial");
+
+		if (model != NULL && serial != NULL && serial[0] != '\0') {
+			snprintf (id, 255, "%s-%s", model, serial);
+		}
+	}
+	id[255] = '\0';
+
+	/* FIXME: do something better then fallback to major/minor */
+	if (id[0] == '\0') {
+		int major = hal_device_property_get_int (d, "block.major");
+		int minor = hal_device_property_get_int (d, "block.minor");
+		sprintf (id, "%d_%d", major, minor);
+	}
+
+	if (append_num == -1)
+		format = "/org/freedesktop/Hal/devices/block_%s";
+	else
+		format = "/org/freedesktop/Hal/devices/block_%s-%d";
+
+	snprintf (buf, 255, format, id, append_num);
+	buf[255] = '\0';
+
+	return buf;
 }
 
 
