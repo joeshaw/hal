@@ -40,5 +40,8 @@ void
 ids_find_usb (int vendor_id, int product_id,
 	      char **vendor_name, char **product_name);
 
+void
+ids_find_pnp (const char *pnp_id, char **pnp_description);
+
 
 #endif /* IDS_H */

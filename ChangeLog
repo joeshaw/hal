@@ -1,3 +1,27 @@
+2005-01-22  David Zeuthen  <davidz@redhat.com>
+
+	* tools/device-manager/Const.py.in: Add pnp and serio to BUS_NAMES
+
+	* hald/linux2/physdev.c: Refactor this file a bit and add support
+	for the following bus devices: ide, pnp, serio, pcmcia
+
+	* hald/linux2/ids.h (ids_find_pnp): Add prototype
+
+	* hald/linux2/ids.c (ids_find_pnp): New function; just use
+	a hardcoded array and do a slow O(n) search (might want to
+	optimize this later)
+
+	* hald/linux2/classdev.c (add_classdev_after_probing): Compute
+	UDI may fail; remember to clean up
+
+	* hald/linux2/Makefile.am: Add pcmcia_utils.[ch] as we'll need
+	them until sysfs got the right properties
+
+	* hald/linux2/pcmcia_utils.[ch]: New files; imported from old
+	backend
+
+	* hald/linux2/pcmcia_cs.h: Ditto
+
 2005-01-19  David Zeuthen  <davidz@redhat.com>
 
 	Some more refactoring... You want to redo 'make install' to

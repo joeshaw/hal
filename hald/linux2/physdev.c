@@ -58,12 +58,15 @@
 
 #include "ids.h"
 
-static gboolean
-pci_add (const gchar *sysfs_path, HalDevice *parent, void *end_token)
+#include "pcmcia_utils.h"
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+pci_add (const gchar *sysfs_path, HalDevice *parent)
 {
 	HalDevice *d;
 	gint device_class;
-	gchar udi[256];
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
@@ -137,15 +140,14 @@ pci_add (const gchar *sysfs_path, HalDevice *parent, void *end_token)
 		}
 	}
 
-	/* Add to temporary device store */
-	hal_device_store_add (hald_get_tdl (), d);
+	return d;
+}
 
-	/* Merge properties from .fdi files */
-	di_search_and_merge (d);
+static gboolean
+pci_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
 
-	/* TODO: Run callouts */
-
-	/* Compute UDI */
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 			      "/org/freedesktop/Hal/devices/pci_%x_%x",
 			      hal_device_property_get_int (d, "pci.vendor_id"),
@@ -153,13 +155,10 @@ pci_add (const gchar *sysfs_path, HalDevice *parent, void *end_token)
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
-	/* Move from temporary to global device store */
-	hal_device_store_remove (hald_get_tdl (), d);
-	hal_device_store_add (hald_get_gdl (), d);
-	
-	hotplug_event_end (end_token);
 	return TRUE;
 }
+
+/*--------------------------------------------------------------------------------------------------------------*/
 
 static void 
 usbif_set_name (HalDevice *d, int ifclass, int ifsubclass, int ifprotocol)
@@ -225,12 +224,11 @@ usbif_set_name (HalDevice *d, int ifclass, int ifsubclass, int ifprotocol)
 	hal_device_property_set_string (d, "info.product", name);
 }
 
-static gboolean
-usb_add (const gchar *sysfs_path, HalDevice *parent, void *end_token)
+static HalDevice *
+usb_add (const gchar *sysfs_path, HalDevice *parent)
 {
 	HalDevice *d;
 	const gchar *bus_id;
-	gchar udi[256];
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
@@ -317,29 +315,6 @@ usb_add (const gchar *sysfs_path, HalDevice *parent, void *end_token)
 
 		/* TODO:  .level_number .parent_number  */
 
-		/* Add to temporary device store */
-		hal_device_store_add (hald_get_tdl (), d);
-
-		/* Merge properties from .fdi files */
-		di_search_and_merge (d);
-		
-		/* TODO: Run callouts */
-		
-		/* Compute UDI */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/usb_device_%x_%x_%s",
-				      hal_device_property_get_int (d, "usb_device.vendor_id"),
-				      hal_device_property_get_int (d, "usb_device.product_id"),
-				      hal_device_has_property (d, "usb_device.serial") ?
-				        hal_device_property_get_string (d, "usb_device.serial") :
-				        "noserial");
-		hal_device_set_udi (d, udi);
-		hal_device_property_set_string (d, "info.udi", udi);
-		
-		/* Move from temporary to global device store */
-		hal_device_store_remove (hald_get_tdl (), d);
-		hal_device_store_add (hald_get_gdl (), d);
-
 	} else {
 		hal_device_property_set_string (d, "info.bus", "usb");
 
@@ -358,69 +333,355 @@ usb_add (const gchar *sysfs_path, HalDevice *parent, void *end_token)
 				hal_device_property_get_int (d, "usb.interface.class"),
 				hal_device_property_get_int (d, "usb.interface.subclass"),
 				hal_device_property_get_int (d, "usb.interface.protocol"));
+	}
 
-		/* Add to temporary device store */
-		hal_device_store_add (hald_get_tdl (), d);
-		
-		/* Merge properties from .fdi files */
-		di_search_and_merge (d);
-		
-		/* TODO: Run callouts */
-		
-		/* Compute UDI */
+	return d;
+}
+
+static gboolean
+usb_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	if (hal_device_has_property (d, "usb.interface.number")) {
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 				      "%s_if%d",
 				      hal_device_property_get_string (d, "info.parent"),
 				      hal_device_property_get_int (d, "usb.interface.number"));
 		hal_device_set_udi (d, udi);
 		hal_device_property_set_string (d, "info.udi", udi);
-		
-		/* Move from temporary to global device store */
-		hal_device_store_remove (hald_get_tdl (), d);
-		hal_device_store_add (hald_get_gdl (), d);
+	} else {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "/org/freedesktop/Hal/devices/usb_device_%x_%x_%s",
+				      hal_device_property_get_int (d, "usb_device.vendor_id"),
+				      hal_device_property_get_int (d, "usb_device.product_id"),
+				      hal_device_has_property (d, "usb_device.serial") ?
+				        hal_device_property_get_string (d, "usb_device.serial") :
+				        "noserial");
+		hal_device_set_udi (d, udi);
+		hal_device_property_set_string (d, "info.udi", udi);
 	}
 
-	hotplug_event_end (end_token);
 	return TRUE;
 }
 
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+ide_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	guint host, channel;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "ide");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+
+	sscanf (bus_id, "%d.%d", &host, &channel);
+	hal_device_property_set_int (d, "ide.host", host);
+	hal_device_property_set_int (d, "ide.channel", channel);
+
+	if (channel == 0) {
+		hal_device_property_set_string (d, "info.product", "IDE device (master)");
+	} else {
+		hal_device_property_set_string (d, "info.product", "IDE device (slave)");
+	}
+	
+	return d;
+}
+
 static gboolean
-physdev_remove (HalDevice *d, void *end_token)
+ide_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_ide_%d_%d",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_int (d, "ide.host"),
+			      hal_device_property_get_int (d, "ide.channel"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+pnp_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "pnp");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_string_from_file (d, "pnp.id", sysfs_path, "id");
+	if (hal_device_has_property (d, "pnp.id")) {
+		gchar *pnp_description;
+		ids_find_pnp (hal_device_property_get_string (d, "pnp.id"), &pnp_description);
+		if (pnp_description != NULL) {
+			hal_device_property_set_string (d, "pnp.description", pnp_description);
+			hal_device_property_set_string (d, "info.product", pnp_description);
+		}
+	}
+
+	if (!hal_device_has_property (d, "info.product")) {
+		gchar buf[64];
+		g_snprintf (buf, sizeof (buf), "PnP Device (%s)", hal_device_property_get_string (d, "pnp.id"));
+		hal_device_property_set_string (d, "info.product", buf);
+	}
+
+	
+	return d;
+}
+
+static gboolean
+pnp_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/pnp_%s",
+			      hal_device_property_get_string (d, "pnp.id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+serio_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "serio");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	hal_device_property_set_string (d, "serio.id", bus_id);
+	if (!hal_util_set_string_from_file (d, "serio.description", sysfs_path, "description")) {
+		hal_device_property_set_string (d, "serio.description", hal_device_property_get_string (d, "serio.id"));
+	}
+	hal_device_property_set_string (d, "info.product", hal_device_property_get_string (d, "serio.description"));
+	
+	return d;
+}
+
+static gboolean
+serio_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_%s",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_string (d, "serio.description"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+pcmcia_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	guint socket, function;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "pcmcia");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+
+	/* not sure if %d.%d means socket function - need to revisit */
+	sscanf (bus_id, "%d.%d", &socket, &function);
+	hal_device_property_set_int (d, "pcmcia.socket_number", socket);
+
+	/* TODO: need to read this from sysfs instead of relying on stab */
+	{
+		pcmcia_card_info *info;
+
+		info = pcmcia_card_info_get (socket);
+		if (info != NULL) {
+			const char *type;
+
+			if (info->productid_1 != NULL && strlen (info->productid_1) > 0)
+				hal_device_property_set_string (d, "pcmcia.productid_1", info->productid_1);
+			else
+				hal_device_property_set_string (d, "pcmcia.productid_1", "");
+			if (info->productid_2 != NULL && strlen (info->productid_2) > 0)
+				hal_device_property_set_string (d, "pcmcia.productid_2", info->productid_2);
+			else
+				hal_device_property_set_string (d, "pcmcia.productid_2", "");
+			if (info->productid_3 != NULL && strlen (info->productid_3) > 0)
+				hal_device_property_set_string (d, "pcmcia.productid_3", info->productid_3);
+			else
+				hal_device_property_set_string (d, "pcmcia.productid_3", "");
+			if (info->productid_4 != NULL && strlen (info->productid_4) > 0)
+				hal_device_property_set_string (d, "pcmcia.productid_4", info->productid_4);
+			else
+				hal_device_property_set_string (d, "pcmcia.productid_4", "");
+
+			if ((type = pcmcia_card_type_string_from_type (info->type)))
+				hal_device_property_set_string (d, "pcmcia.function", type);
+			else
+				hal_device_property_set_string (d, "pcmcia.function", "");
+
+			hal_device_property_set_int (d, "pcmcia.manfid1", info->manfid_1);
+			hal_device_property_set_int (d, "pcmcia.manfid2", info->manfid_2);
+
+			/* Provide best-guess of vendor, goes in Vendor property */
+			if (info->productid_1 != NULL) {
+				hal_device_property_set_string (d, "info.vendor", info->productid_1);
+			} else {
+				gchar buf[50];
+				g_snprintf (buf, sizeof(buf), "Unknown (0x%04x)", info->manfid_1);
+				hal_device_property_set_string (d, "info.vendor", buf);
+			}
+
+			/* Provide best-guess of name, goes in Product property */
+			if (info->productid_2 != NULL) {
+				hal_device_property_set_string (d, "info.product", info->productid_2);
+			} else {
+				gchar buf[50];
+				g_snprintf (buf, sizeof(buf), "Unknown (0x%04x)", info->manfid_2);
+				hal_device_property_set_string (d, "info.product", buf);
+			}
+
+			pcmcia_card_info_free (info);
+		}
+	}
+
+
+	return d;
+}
+
+static gboolean
+pcmcia_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/pcmcia_%d_%d",
+			      hal_device_property_get_int (d, "pcmcia.manfid1"),
+			      hal_device_property_get_int (d, "pcmcia.manfid2"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static gboolean
+physdev_remove (HalDevice *d)
 {
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
 	}
 
-	hotplug_event_end (end_token);
 	return TRUE;
 }
+
+/*--------------------------------------------------------------------------------------------------------------*/
 
 typedef struct
 {
 	const gchar *subsystem;
-	gboolean (*add) (const gchar *sysfs_path, HalDevice *parent, void *end_token);
-	gboolean (*remove) (HalDevice *d, void *end_token);
+	HalDevice *(*add) (const gchar *sysfs_path, HalDevice *parent);
+	gboolean (*compute_udi) (HalDevice *d);
+	gboolean (*remove) (HalDevice *d);
 } PhysDevHandler;
 
 static PhysDevHandler physdev_handler_pci = { 
-	"pci",
-	pci_add,
-	physdev_remove
+	.subsystem   = "pci",
+	.add         = pci_add,
+	.compute_udi = pci_compute_udi,
+	.remove      = physdev_remove
 };
 
 static PhysDevHandler physdev_handler_usb = { 
-	"usb",
-	usb_add,
-	physdev_remove
+	.subsystem   = "usb",
+	.add         = usb_add,
+	.compute_udi = usb_compute_udi,
+	.remove      = physdev_remove
+};
+
+static PhysDevHandler physdev_handler_ide = { 
+	.subsystem   = "ide",
+	.add         = ide_add,
+	.compute_udi = ide_compute_udi,
+	.remove      = physdev_remove
+};
+
+static PhysDevHandler physdev_handler_pnp = { 
+	.subsystem   = "pnp",
+	.add         = pnp_add,
+	.compute_udi = pnp_compute_udi,
+	.remove      = physdev_remove
+};
+
+static PhysDevHandler physdev_handler_serio = { 
+	.subsystem   = "serio",
+	.add         = serio_add,
+	.compute_udi = serio_compute_udi,
+	.remove      = physdev_remove
+};
+
+static PhysDevHandler physdev_handler_pcmcia = { 
+	.subsystem   = "pcmcia",
+	.add         = pcmcia_add,
+	.compute_udi = pcmcia_compute_udi,
+	.remove      = physdev_remove
 };
 	
 
 static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_pci,
 	&physdev_handler_usb,
+	&physdev_handler_ide,
+	&physdev_handler_pnp,
+	&physdev_handler_serio,
+	&physdev_handler_pcmcia,
 	NULL
 };
 
+/*--------------------------------------------------------------------------------------------------------------*/
 
 void
 hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path, HalDevice *parent, void *end_token)
@@ -434,13 +695,39 @@ hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path
 
 		handler = phys_handlers[i];
 		if (strcmp (handler->subsystem, subsystem) == 0) {
-			if (handler->add (sysfs_path, parent, end_token)) {
-				/* let the handler end the event */
+			HalDevice *d;
+
+			d = handler->add (sysfs_path, parent);
+			if (d == NULL) {
+				/* didn't find anything - thus, ignore this hotplug event */
+				hotplug_event_end (end_token);
 				goto out;
 			}
+
+			/* Add to temporary device store */
+			hal_device_store_add (hald_get_tdl (), d);
+
+			/* Merge properties from .fdi files */
+			di_search_and_merge (d);
+
+			/* TODO: Run callouts */
+			
+			/* Compute UDI */
+			if (!handler->compute_udi (d)) {
+				hal_device_store_remove (hald_get_tdl (), d);
+				hotplug_event_end (end_token);
+				goto out;
+			}
+
+			/* Move from temporary to global device store */
+			hal_device_store_remove (hald_get_tdl (), d);
+			hal_device_store_add (hald_get_gdl (), d);
+			
+			hotplug_event_end (end_token);
+			goto out;
 		}
 	}
-
+	
 	/* didn't find anything - thus, ignore this hotplug event */
 	hotplug_event_end (end_token);
 out:
@@ -468,8 +755,8 @@ hotplug_event_begin_remove_physdev (const gchar *subsystem, const gchar *sysfs_p
 
 		handler = phys_handlers[i];
 		if (strcmp (handler->subsystem, subsystem) == 0) {
-			if (handler->remove (d, end_token)) {
-				/* let the handler end the event */
+			if (handler->remove (d)) {
+				hotplug_event_end (end_token);
 				goto out2;
 			}
 		}

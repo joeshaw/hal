@@ -203,8 +203,10 @@ add_classdev_after_probing (HalDevice *d, ClassDevHandler *handler, void *end_to
 	di_search_and_merge (d);
 
 	/* Compute UDI */
-	if (!handler->compute_udi (d))
+	if (!handler->compute_udi (d)) {
+		hal_device_store_remove (hald_get_tdl (), d);
 		goto out;
+	}
 	
 	/* TODO: Merge persistent properties */
 
