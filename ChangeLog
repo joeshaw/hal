@@ -1,5 +1,20 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Add back selinux detection; default to auto
+
+	* tools/linux/add_selinux.c: New file, add selinux attributes the
+	Right Way(tm) instead of hardcoding the context (RH bug 135765)
+
+	* tools/linux/Makefile.am: If HAVE_SELINUX is set, add build rules
+	for hald-add-selinux-mount-option
+
+	* fdi/policy/10osvendor/20-storage-add-selinux.fdi: New file, invoke
+	hald-add-selinux-mount-option (only used if HAVE_SELINUX is 1)
+
+	* tools/linux/hal_hotplug_map.c: Removed (forgot to remove it earlier)
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald.c (parent_wait_for_child): Fixup accidental message being
 	printed
 
