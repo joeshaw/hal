@@ -1,5 +1,19 @@
 2005-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/osspec.c: Use kernel events layer instead of D_NOTIFY
+	on /etc/mtab. Yay!
+
+	* hald/linux2/blockdev.c (update_mount_point): Use /proc/mounts as
+	we're now using the kernel events layer to get mount/umount signals
+	rather than waiting for /etc/mtab to be changed. Otherwise we've
+	would have a race with mount(1). Add some usable debug information.
+	(blockdev_mount_status_changed): Renamed from blockdev_mtab_changed.
+
+	* hald/hald_dbus.c (device_send_signal_property_modified): Yikes,
+	append to the right iterator; fixes segfault
+
+2005-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/libhal.c: Patch from John (J5) Palmieri
 	<johnp@redhat.com>. Most libhal methods now require an additional
 	DBusError pointer to be passed into the method.  Sometimes errors

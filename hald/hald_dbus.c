@@ -2000,13 +2000,12 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 						  NULL,
 						  &iter_struct);
 		
-		dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
-		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &removed);
-		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &added);
+		dbus_message_iter_append_basic (&iter_struct, DBUS_TYPE_STRING, &key);
+		dbus_message_iter_append_basic (&iter_struct, DBUS_TYPE_BOOLEAN, &removed);
+		dbus_message_iter_append_basic (&iter_struct, DBUS_TYPE_BOOLEAN, &added);
 
 		dbus_message_iter_close_container (&iter_array, &iter_struct);
 		dbus_message_iter_close_container (&iter, &iter_array);
-
 
 		if (!dbus_connection_send (dbus_connection, message, NULL))
 			DIE (("error broadcasting message"));

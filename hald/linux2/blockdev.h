@@ -38,6 +38,6 @@ HotplugEvent *blockdev_generate_add_hotplug_event (HalDevice *d);
 
 HotplugEvent *blockdev_generate_remove_hotplug_event (HalDevice *d);
 
-void blockdev_mtab_changed (void);
+void blockdev_mount_status_changed (const gchar *sysfs_path, gboolean is_mounted);
 
 #endif /* BLOCKDEV_H */

@@ -194,46 +194,6 @@ out:
 	return TRUE;
 }
 
-static int sigio_unix_signal_pipe_fds[2];
-static GIOChannel *sigio_iochn;
-
-static void
-sigio_handler (int sig)
-{
-	static char marker[1] = {'S'};
-
-	/* write a 'S' character to the other end to tell about
-	 * the signal. Note that 'the other end' is a GIOChannel thingy
-	 * that is only called from the mainloop - thus this is how we
-	 * defer this since UNIX signal handlers are evil
-	 *
-	 * Oh, and write(2) is indeed reentrant */
-	write (sigio_unix_signal_pipe_fds[1], marker, 1);
-}
-
-static gboolean
-sigio_iochn_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
-{
-	GError *err = NULL;
-	gchar data[1];
-	gsize bytes_read;
-
-	/* Empty the pipe */
-	if (G_IO_STATUS_NORMAL != g_io_channel_read_chars (source, data, 1, &bytes_read, &err)) {
-		HAL_ERROR (("Error emptying callout notify pipe: %s", err->message));
-		g_error_free (err);
-		goto out;
-	}
-
-	/* TODO: check mtime on /etc/mtab file */
-	HAL_INFO (("/etc/mtab changed"));
-	blockdev_mtab_changed ();
-	
-out:
-	return TRUE;
-}
-
-
 #define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
                            s >= sizeof (struct nlmsghdr) && \
                            s >= h->nlmsg_len))
@@ -248,8 +208,6 @@ netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 	struct sockaddr_nl nladdr;
 	socklen_t nladdrlen = sizeof(nladdr);
 	char buf[1024];
-
-	HAL_INFO (("data!", buf));
 
 	if (cond & ~(G_IO_IN | G_IO_PRI)) {
 		HAL_ERROR (("Error occurred on netlink socket"));
@@ -286,19 +244,33 @@ netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 		HAL_INFO (("total_read=%d buf='%s'", total_read, buf));
 	}
 
+	/* Handle event: "mount@/block/hde" */
+	if (g_str_has_prefix (buf, "mount")) {
+		gchar sysfs_path[HAL_PATH_MAX];
+		g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
+		g_strlcat (sysfs_path, ((char *) buf) + sizeof ("mount"), sizeof (sysfs_path));
+		blockdev_mount_status_changed (sysfs_path, TRUE);
+	}
+
+	/* Handle event: "umount@/block/hde" */
+	if (g_str_has_prefix (buf, "umount")) {
+		gchar sysfs_path[HAL_PATH_MAX];
+		g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
+		g_strlcat (sysfs_path, ((char *) buf) + sizeof ("umount"), sizeof (sysfs_path));
+		blockdev_mount_status_changed (sysfs_path, FALSE);
+	}
+
 	return TRUE;
 }
 
 void
 osspec_init (void)
 {
-	int etcfd;
 	int socketfd;
 	struct sockaddr_un saddr;
 	socklen_t addrlen;
 	GIOChannel *channel;	
 	const int on = 1;
-	guint sigio_iochn_listener_source_id;
 	static int netlink_fd = -1;
 	struct sockaddr_nl netlink_addr;
 	GIOChannel *netlink_channel;
@@ -326,7 +298,6 @@ osspec_init (void)
 	g_io_add_watch (channel, G_IO_IN, hald_helper_data, NULL);
 	g_io_channel_unref (channel);
 
-
 	/* Get mount points for /proc and /sys */
 	if (!hal_util_get_fs_mnt_path ("sysfs", hal_sysfs_path, sizeof (hal_sysfs_path))) {
 		HAL_ERROR (("Could not get sysfs mount point"));
@@ -339,22 +310,9 @@ osspec_init (void)
 	}
 	HAL_INFO (("proc mount point is '%s'", hal_proc_path));
 
-	/* start watching /etc so we know when mtab is updated */
-	etcfd = open ("/etc", O_RDONLY);
-	if (etcfd < 0)
-		DIE (("Could not open /etc"));
-	fcntl (etcfd, F_NOTIFY, DN_MODIFY | DN_MULTISHOT);
-
-	if (pipe (sigio_unix_signal_pipe_fds) != 0) {
-		DIE (("Could not setup pipe: %s", strerror (errno)));
-	}	
-	if ((sigio_iochn = g_io_channel_unix_new (sigio_unix_signal_pipe_fds[0])) == NULL)
-		DIE (("Could not create GIOChannel"));
-	sigio_iochn_listener_source_id = g_io_add_watch (sigio_iochn, G_IO_IN, sigio_iochn_data, NULL);
-	signal (SIGIO, sigio_handler);
-
 	/* hook up to netlink socket to receive events from the Kernel Events
-	 * Layer (available since 2.6.10) - TODO: Don't use the constant 15
+	 * Layer (available since 2.6.10) - TODO: Don't use the constant 15 but
+	 * rather the NETLINK_KOBJECT_UEVENT symbol
 	 */
 	netlink_fd = socket (PF_NETLINK, SOCK_DGRAM, 15/*NETLINK_KOBJECT_UEVENT*/);
 

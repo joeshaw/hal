@@ -161,21 +161,26 @@ update_mount_point (HalDevice *d)
 	struct mntent *mnte;
 	const char *device_file;
 	char buf[512];
-
+	
 	if ((device_file = hal_device_property_get_string (d, "block.device")) == NULL)
 		goto out;
-	
-	if ((f = setmntent ("/etc/mtab", "r")) == NULL) {
-		HAL_ERROR (("Could not open /etc/mtab"));
+
+	HAL_INFO (("Update mount point for %s (device_file %s)", d->udi, device_file));
+
+	snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
+	if ((f = setmntent (buf, "r")) == NULL) {
+		HAL_ERROR (("Could not open /proc/mounts"));
 		goto out;
 	}
-		
+
+	/* TODO: should use major:minor numbers to catch /dev/root */
 	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
 		if (strcmp (mnt.mnt_fsname, device_file) == 0) {
 			device_property_atomic_update_begin ();
 			hal_device_property_set_bool (d, "volume.is_mounted", TRUE);
 			hal_device_property_set_string (d, "volume.mount_point", mnt.mnt_dir);
 			device_property_atomic_update_end ();
+			HAL_INFO (("Setting mount point %s for %s", mnt.mnt_dir, device_file));
 			goto found;
 		}
 	}
@@ -185,6 +190,8 @@ update_mount_point (HalDevice *d)
 	hal_device_property_set_string (d, "volume.mount_point", "");
 	device_property_atomic_update_end ();
 
+	HAL_INFO (("Clearing mount point for %s", device_file));
+
 found:		
 	endmntent (f);
 out:
@@ -192,20 +199,31 @@ out:
 }
 
 void 
-blockdev_mtab_changed (void)
+blockdev_mount_status_changed (const gchar *sysfs_path, gboolean is_mounted)
 {
-	GSList *i;
-	GSList *volumes;
+	HalDevice *d;
+	HAL_INFO (("mount_status_changed for '%s', is_mounted=%d", sysfs_path, is_mounted));
 
-	volumes = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
-								    "volume.fsusage",
-								    "filesystem");
-	for (i = volumes; i != NULL; i = g_slist_next (i)) {
-		HalDevice *d;
+	if ((d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path)) == NULL)
+		goto error;
 
-		d = HAL_DEVICE (i->data);
-		update_mount_point (d);
+	if (!hal_device_has_capability (d, "volume")) {
+		/* may have a fakevolume */
+		d = hal_device_store_match_key_value_string (hald_get_gdl (),
+							     "info.parent",
+							     d->udi);
+		if (d == NULL || !hal_device_has_capability (d, "volume"))
+			goto error;
 	}
+
+	HAL_INFO (("Applies to %s", d->udi));
+
+	update_mount_point (d);
+	return;
+
+error:
+	HAL_INFO (("Couldn't find hal volume for %s", d->udi));
+	;
 }
 
 static void
