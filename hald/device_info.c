@@ -592,7 +592,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 
 	found_fdi_file = 0;
 
-	HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));
+	/*HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));*/
 
 	num_entries = scandir (dir, &name_list, 0, alphasort);
 	if (num_entries == -1) {
@@ -609,7 +609,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 		len = strlen (filename);
 
 		full_path = g_strdup_printf ("%s/%s", dir, filename);
-		HAL_INFO (("Full path = %s", full_path));
+		/*HAL_INFO (("Full path = %s", full_path));*/
 
 		/* Mmm, d_type can be DT_UNKNOWN, use glib to determine
 		 * the type
@@ -622,8 +622,8 @@ scan_fdi_files (const char *dir, HalDevice * d)
 			    filename[len - 3] == 'f' &&
 			    filename[len - 2] == 'd' &&
 			    filename[len - 1] == 'i') {
-				HAL_INFO (("scan_fdi_files: Processing "
-					   "file '%s'", filename));
+				/*HAL_INFO (("scan_fdi_files: Processing "
+				  "file '%s'", filename));*/
 				found_fdi_file =
 				    process_fdi_file (dir, filename, d);
 				if (found_fdi_file) {

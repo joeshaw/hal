@@ -1,5 +1,29 @@
 2004-07-21  David Zeuthen  <david@fubar.dk>
 
+	Commit of first stab at callouts for shutdown; needs some more work.
+	Now to update the spec
+
+	* hald/device_info.c: (scan_fdi_files): Remove some noisy debug
+
+	* hald/hald.c: 
+	(handle_sigterm): New function
+	(sigterm_iochn_data):  New function
+	(main): Handle SIGTERM, setup GIOChannel for safe handling of POSIX
+	signal
+
+	* hald/linux/block_class_device.c: 
+	(detect_media): Comment out noisy EBUSY debug
+
+	* hald/linux/osspec.c: 
+	(visit_class_device): Removed unused dir variable
+	(shutdown_callouts_finished): New function
+	(do_shutdown_callouts): New function
+	(osspec_shutdown): New function
+
+	* hald/osspec.h: Add prototype for osspec_shutdown()
+
+2004-07-21  David Zeuthen  <david@fubar.dk>
+
 	* doc/TODO: changed key="udi:<X>/<Y>" to 'udi="<X>" key="Y"' after
 	suggestion by David Malcolm
 
@@ -8,7 +32,7 @@
 	* doc/TODO: Added the TODO 'Rescan() method on HalDevice'.
 	Added the TODO 'Privilege Management'.
 	Put some more info on 'Locking of devices' and 'Power Management',
-	name that HAL export generic methods on HalDevice.
+	namely that HAL export generic methods on HalDevice.
 
 2004-07-21  David Zeuthen  <david@fubar.dk>
 

@@ -171,9 +171,51 @@ usage ()
 		 "\n");
 }
 
-
 /** If #TRUE, we will daemonize */
 static dbus_bool_t opt_become_daemon = TRUE;
+
+static int sigterm_unix_signal_pipe_fds[2];
+static GIOChannel *sigterm_iochn;
+
+static void 
+handle_sigterm (int value)
+{
+	static char marker[1] = {'S'};
+
+	/* write a 'S' character to the other end to tell about
+	 * the signal. Note that 'the other end' is a GIOChannel thingy
+	 * that is only called from the mainloop - thus this is how we
+	 * defer this since UNIX signal handlers are evil
+	 *
+	 * Oh, and write(2) is indeed reentrant */
+	write (sigterm_unix_signal_pipe_fds[1], marker, 1);
+}
+
+static gboolean
+sigterm_iochn_data (GIOChannel *source, 
+		    GIOCondition condition, 
+		    gpointer user_data)
+{
+	GError *err = NULL;
+	gchar data[1];
+	gsize bytes_read;
+
+	/* Empty the pipe */
+	if (G_IO_STATUS_NORMAL != 
+	    g_io_channel_read_chars (source, data, 1, &bytes_read, &err)) {
+		HAL_ERROR (("Error emptying callout notify pipe: %s",
+				   err->message));
+		g_error_free (err);
+		goto out;
+	}
+
+	HAL_INFO (("Recieved SIGTERM, initiating shutdown"));
+	osspec_shutdown();
+
+out:
+	return TRUE;
+}
+
 
 /** Entry point for HAL daemon
  *
@@ -186,6 +228,7 @@ main (int argc, char *argv[])
 {
 	DBusConnection *dbus_connection;
 	GMainLoop *loop;
+	guint sigterm_iochn_listener_source_id;
 
 	while (1) {
 		int c;
@@ -294,6 +337,30 @@ main (int argc, char *argv[])
 	osspec_init (dbus_connection);
 	/* and detect devices */
 	osspec_probe ();
+
+	/* So, now we are up and running...
+	 * 
+	 * We need to do stuff when we are expected to terminate, thus
+	 * this involves looking for SIGTERM; UNIX signal handlers are
+	 * evil though, so set up a pipe to transmit the signal.
+	 */
+
+	/* create pipe */
+	if (pipe (sigterm_unix_signal_pipe_fds) != 0) {
+		DIE (("Could not setup pipe, errno=%d", errno));
+	}
+	
+	/* setup glib handler - 0 is for reading, 1 is for writing */
+	sigterm_iochn = g_io_channel_unix_new (sigterm_unix_signal_pipe_fds[0]);
+	if (sigterm_iochn == NULL)
+		DIE (("Could not create GIOChannel"));
+	
+	/* get callback when there is data to read */
+	sigterm_iochn_listener_source_id = g_io_add_watch (
+		sigterm_iochn, G_IO_IN, sigterm_iochn_data, NULL);
+	
+	/* Finally, setup unix signal handler for TERM */
+	signal (SIGTERM, handle_sigterm);
 
 	/* run the main loop and serve clients */
 	g_main_loop_run (loop);

@@ -627,7 +627,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			/* this means the disc is mounted or some other app,
 			 * like a cd burner, has opened O_EXCL */
 			if (errno == EBUSY) {
-				HAL_INFO (("*** EBUSY for %s", device_file));
+				/*HAL_INFO (("*** EBUSY for %s", device_file));*/
 				return FALSE;
 			}
 

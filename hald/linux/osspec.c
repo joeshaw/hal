@@ -134,7 +134,6 @@ visit_class_device (const char *path, ClassDeviceHandler *handler,
 {
 	int i;
 	struct sysfs_class_device *class_device;
-	struct sysfs_directory *dir;
 
 	class_device = sysfs_open_class_device_path (path);
 	if (class_device == NULL) {
@@ -709,6 +708,52 @@ osspec_filter_function (DBusConnection * connection,
 	} 
 
 	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+
+/* number of devices for whom the shutdown callouts are pending */
+static int num_shutdown_devices_remaining;
+
+static void
+shutdown_callouts_finished (HalDevice *d, gpointer user_data)
+{
+	HAL_INFO (("entering for udi=%s", d->udi));
+
+	num_shutdown_devices_remaining--;
+
+	if (num_shutdown_devices_remaining == 0) {
+		HAL_INFO (("All devices shutdown callouts done"));
+		/* @todo Should return to hald.c though a gobject signal */
+		exit (0);
+	}
+}
+
+
+static gboolean
+do_shutdown_callouts (HalDeviceStore *store, HalDevice *device,
+		      gpointer user_data)
+{
+	HAL_INFO (("doing shutdown callouts for udi %s", device->udi));
+
+	num_shutdown_devices_remaining++;
+
+	g_signal_connect (device, "callouts_finished",
+			  G_CALLBACK (shutdown_callouts_finished), NULL);
+	hal_callout_device (device, FALSE);
+	return TRUE;
+}
+
+/* This function is documented in ../osspec.h */
+void
+osspec_shutdown ()
+{
+	HAL_INFO (("entering"));
+
+	num_shutdown_devices_remaining = 0;
+	hal_device_store_foreach (hald_get_gdl (),
+				  do_shutdown_callouts,
+				  NULL);
 }
 
 /** @} */

@@ -43,6 +43,11 @@ void osspec_init (DBusConnection * dbus_connection);
  */
 void osspec_probe ();
 
+/** Prepare shutdown
+ *
+ */
+void osspec_shutdown ();
+
 DBusHandlerResult osspec_filter_function (DBusConnection * connection,
 					  DBusMessage * message,
 					  void *user_data);
