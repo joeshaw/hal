@@ -1,3 +1,16 @@
+2003-12-30  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Change default user to from hal to haldaemon since
+	people may already use login called hal or hald (I know of both).
+	Bump version number to 0.2.1
+	
+	* packaging/fedora/hal.spec: new file
+
+	* hald/main.c (main): Use HAL_USER macro instead of the hardcoded hal
+
+	* hal.conf.in: group policy segfaults dbus-daemon-1 on 0.20, but works
+	in CVS; Now changed so only root can use the AgentManager interface
+
 2003-12-29  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: add --with-init-scripts and --with-pid-file. Now

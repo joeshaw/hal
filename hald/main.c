@@ -1826,7 +1826,7 @@ int main(int argc, char* argv[])
     GMainLoop* loop;
     DBusError dbus_error;
 
-    opt_run_as = "hal";
+    opt_run_as = HAL_USER;
 
     while(1)
     {
