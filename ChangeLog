@@ -1,4 +1,8 @@
 2004-07-05  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>. Add hfs support
+
+2004-07-05  David Zeuthen  <david@fubar.dk>
 	
 	* hald/linux/input_class_device.c (input_class_accept): Make this
 	static (remove warning)

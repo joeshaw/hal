@@ -3,13 +3,10 @@
  *
  * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
  *
- *	The superblock structs are taken from the libblkid living inside
- *	the e2fsprogs. This is a simple straightforward implementation for
- *	reading the label strings of only the most common filesystems.
- *	If you need a full featured library with attribute caching, support for
- *	much more partition/media types or non-root disk access, you may have
- *	a look at:
- *		http://e2fsprogs.sourceforge.net.
+ *	The superblock structs are taken from the linux kernel sources
+ *	and the libblkid living inside the e2fsprogs. This is a simple
+ *	straightforward implementation for reading the label strings of the
+ *	most common filesystems.
  *
  *	This library is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public
@@ -72,16 +69,20 @@
 #define le16_to_cpu(x) (x)
 #define le32_to_cpu(x) (x)
 #define le64_to_cpu(x) (x)
+#define be16_to_cpu(x) bswap16(x)
+#define be32_to_cpu(x) bswap32(x)
 #elif (__BYTE_ORDER == __BIG_ENDIAN)
 #define le16_to_cpu(x) bswap16(x)
 #define le32_to_cpu(x) bswap32(x)
 #define le64_to_cpu(x) bswap64(x)
+#define be16_to_cpu(x) (x)
+#define be32_to_cpu(x) (x)
 #endif
 
 /* size of superblock buffer, reiser block is at 64k */
 #define SB_BUFFER_SIZE				0x11000
-/* size of seek buffer 2k */
-#define SEEK_BUFFER_SIZE			0x800
+/* size of seek buffer 4k */
+#define SEEK_BUFFER_SIZE			0x1000
 
 
 static void set_label_raw(struct volume_id *id,
@@ -697,6 +698,213 @@ found:
 	return 0;
 }
 
+#define HFS_SUPERBLOCK_OFFSET		0x400
+static int probe_hfs(struct volume_id *id)
+{
+	struct hfs_mdb {
+		__u8	signature[2];
+		__u32	cr_date;
+		__u32	ls_Mod;
+		__u16	atrb;
+		__u16	nm_fls;
+		__u16	vbm_st;
+		__u16	alloc_ptr;
+		__u16	nm_al_blks;
+		__u32	al_blk_size;
+		__u32	clp_size;
+		__u16	al_bl_st;
+		__u32	nxt_cnid;
+		__u16	free_bks;
+		__u8	label_len;
+		__u8	label[27];
+		__u32	vol_bkup;
+		__u16	vol_seq_num;
+		__u32	wr_cnt;
+		__u32	xt_clump_size;
+		__u32	ct_clump_size;
+		__u16	num_root_dirs;
+		__u32	file_count;
+		__u32	dir_count;
+		struct finder_info {
+			__u32	boot_folder;
+			__u32	start_app;
+			__u32	open_folder;
+			__u32	os9_folder;
+			__u32	reserved;
+			__u32	osx_folder;
+			__u8	id[8];
+		} __attribute__((__packed__)) finfo;
+
+	} __attribute__((__packed__)) *hfs;
+
+	hfs = (struct hfs_mdb *) get_buffer(id, HFS_SUPERBLOCK_OFFSET, 0x200);
+	if (hfs == NULL)
+                return -1;
+
+	if (strncmp(hfs->signature, "BD", 2) != 0)
+		return -1;
+	
+	if (hfs->label_len > 0 && hfs->label_len < 28) {	
+		set_label_raw(id, hfs->label, hfs->label_len);
+		set_label_string(id, hfs->label, hfs->label_len) ;
+	}
+
+	set_uuid(id, hfs->finfo.id, 8);
+
+	id->fs_type = HFS;
+	id->fs_name = "hfs";
+
+	return 0;
+}
+
+#define HFS_NODE_LEAF		0xff
+#define HFSPLUS_POR_CNID	1
+static int probe_hfsplus(struct volume_id *id)
+{
+	struct hfsplus_bnode_descriptor {
+		__u32	next;
+		__u32	prev;
+		__u8	type;
+		__u8	height;
+		__u16	num_recs;
+		__u16	reserved;
+	} __attribute__((__packed__));
+
+	struct hfsplus_bheader_record {
+		__u16	depth;
+		__u32	root;
+		__u32	leaf_count;
+		__u32	leaf_head;
+		__u32	leaf_tail;
+		__u16	node_size;
+	} __attribute__((__packed__));
+
+	struct hfsplus_catalog_key {
+		__u16	key_len;
+		__u32	parent_id;
+		__u16	unicode_len;
+		__u8	unicode[255 * 2];
+	} __attribute__((__packed__));
+	
+	struct hfsplus_extent {
+		__u32 start_block;
+		__u32 block_count;
+	} __attribute__((__packed__));
+
+	struct hfsplus_fork {
+		__u64 total_size;
+        	__u32 clump_size;
+		__u32 total_blocks;
+		struct hfsplus_extent extents[8];
+	} __attribute__((__packed__));
+
+	struct hfsplus_vol_header {
+		__u8	signature[2];
+		__u16	version;
+		__u32	attributes;
+		__u32	last_mount_vers;
+		__u32	reserved;
+		__u32	create_date;
+		__u32	modify_date;
+		__u32	backup_date;
+		__u32	checked_date;
+		__u32	file_count;
+		__u32	folder_count;
+		__u32	blocksize;
+		__u32	total_blocks;
+		__u32	free_blocks;
+		__u32	next_alloc;
+		__u32	rsrc_clump_sz;
+		__u32	data_clump_sz;
+		__u32	next_cnid;
+		__u32	write_count;
+		__u64	encodings_bmp;
+		struct finder_info {
+			__u32	boot_folder;
+			__u32	start_app;
+			__u32	open_folder;
+			__u32	os9_folder;
+			__u32	reserved;
+			__u32	osx_folder;
+			__u8	id[8];
+		} __attribute__((__packed__)) finfo;
+		struct hfsplus_fork alloc_file;
+		struct hfsplus_fork ext_file;
+		struct hfsplus_fork cat_file;
+		struct hfsplus_fork attr_file;
+		struct hfsplus_fork start_file;
+	} __attribute__((__packed__)) *hfsplus;
+
+	unsigned int	blocksize;
+	unsigned int	cat_block;
+	unsigned int	cat_block_count;
+	unsigned int	cat_off;
+	unsigned int	cat_len;
+	unsigned int	leaf_node_head;
+	unsigned int	leaf_node_size;
+	struct hfsplus_bnode_descriptor *descr;
+	struct hfsplus_bheader_record *bnode;
+	struct hfsplus_catalog_key *key;
+	unsigned int	label_len;
+	const __u8 *buf;
+
+	hfsplus = (struct hfsplus_vol_header *)
+		get_buffer(id, HFS_SUPERBLOCK_OFFSET, 0x200);
+	if (hfsplus == NULL)
+                return -1;
+
+	if (strncmp(hfsplus->signature, "H+", 2) == 0)
+		goto label;
+	if (strncmp(hfsplus->signature, "HX", 2) == 0)
+		goto label;
+	return -1;
+
+label:
+	blocksize = be32_to_cpu(hfsplus->blocksize);
+	cat_block = be32_to_cpu(hfsplus->cat_file.extents[0].start_block);
+	cat_block_count = be32_to_cpu(hfsplus->cat_file.extents[0].block_count);
+	cat_off = cat_block * blocksize;
+	cat_len = cat_block_count * blocksize;
+	dbg("catalog start 0x%x, len 0x%x", cat_off, cat_len);
+
+	buf = get_buffer(id, cat_off, 0x2000);
+	if (buf == NULL)
+		goto found;
+
+	bnode = (struct hfsplus_bheader_record *)
+		&buf[sizeof(struct hfsplus_bnode_descriptor)];
+
+	leaf_node_head = be32_to_cpu(bnode->leaf_head);
+	leaf_node_size = be16_to_cpu(bnode->node_size);
+
+	dbg("catalog leaf node 0x%x, size 0x%x", leaf_node_head, leaf_node_size);
+
+	buf = get_buffer(id, cat_off + leaf_node_size, leaf_node_size);
+	if (buf == NULL)
+		goto found;
+
+	descr = (struct hfsplus_bnode_descriptor *) buf;
+	if (descr->type != HFS_NODE_LEAF)
+		goto found;
+	
+	key = (struct hfsplus_catalog_key *)
+		&buf[sizeof(struct hfsplus_bnode_descriptor)];
+
+	if (be32_to_cpu(key->parent_id) != HFSPLUS_POR_CNID)
+		goto found;
+
+	label_len = be16_to_cpu(key->unicode_len) * 2;
+	dbg("label unicode16 len %i", label_len);
+	set_label_raw(id, key->unicode, label_len);
+	set_label_unicode16(id, key->unicode, BE, label_len);
+
+found:
+	id->fs_type = HFSPLUS;
+	id->fs_name = "hfsplus";
+
+	return 0;
+}
+
 #define MFT_RECORD_VOLUME			3
 #define MFT_RECORD_ATTR_VOLUME_NAME		0x60u
 #define MFT_RECORD_ATTR_OBJECT_ID		0x40u
@@ -910,6 +1118,12 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 	case ISO9660:
 		rc = probe_iso9660(id);
 		break;
+	case HFS:
+		rc = probe_hfs(id);
+		break;
+	case HFSPLUS:
+		rc = probe_hfsplus(id);
+		break;
 	case NTFS:
 		rc = probe_ntfs(id);
 		break;
@@ -920,6 +1134,9 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 	default:
 		/* fill buffer with maximum */
 		get_buffer(id, 0, SB_BUFFER_SIZE);
+		rc = probe_swap(id);
+		if (rc == 0)
+			break;
 		rc = probe_ext(id);
 		if (rc == 0)
 			break;
@@ -947,7 +1164,10 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 		rc = probe_ntfs(id);
 		if (rc == 0)
 			break;
-		rc = probe_swap(id);
+		rc = probe_hfsplus(id);
+		if (rc == 0)
+			break;
+		rc = probe_hfs(id);
 		if (rc == 0)
 			break;
 		rc = -1;
