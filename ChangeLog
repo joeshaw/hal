@@ -1,3 +1,12 @@
+2005-02-22  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux2/osspec.c (osspec_init): Small fix for the kobject_uevent
+	stuff
+
+	* hald/hald_dbus.c (manager_find_device_by_capability): Patch from
+	John (J5) Palmieri <johnp@redhat.com> Attached is a simple patch
+	to fix the signature of the array container we are opening.
+
 2005-02-16  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Update volume_id to version 34. Add support for hpfs, cramfs and romfs.

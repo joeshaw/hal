@@ -363,7 +363,7 @@ osspec_init (void)
 	memset (&netlink_addr, 0, sizeof (netlink_addr));
 	netlink_addr.nl_family = AF_NETLINK;
 	netlink_addr.nl_pid = getpid ();
-	netlink_addr.nl_groups = 0xffffffff;15;//RTMGRP_LINK;//1 << 15 /*NETLINK_KOBJECT_UEVENT*/;
+	netlink_addr.nl_groups = 0xffffffff;//RTMGRP_LINK;//1 << 15 /*NETLINK_KOBJECT_UEVENT*/;
 
 	if (bind (netlink_fd, (struct sockaddr *) &netlink_addr, sizeof (netlink_addr)) < 0) {
 		DIE (("Unable to bind to netlink socket"));

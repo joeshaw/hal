@@ -505,7 +505,7 @@ manager_find_device_by_capability (DBusConnection * connection,
 	dbus_message_iter_init_append (reply, &iter);
 	dbus_message_iter_open_container (&iter, 
 					  DBUS_TYPE_ARRAY,
-					  DBUS_TYPE_ARRAY_AS_STRING,
+					  DBUS_TYPE_STRING_AS_STRING,
 					  &iter_array);
 
 	info.capability = capability;
