@@ -1,3 +1,8 @@
+2004-07-21  Joe Shaw  <joeshaw@novell.com>
+
+	* tools/fstab-sync.c: #include "libhal/libhal.h" to fix the build
+	for me.
+
 2004-07-21  David Zeuthen  <david@fubar.dk>
 
 	Commit of first stab at callouts for shutdown; needs some more work.

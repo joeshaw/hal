@@ -47,7 +47,7 @@
 #include <popt.h>
 
 #define DBUS_API_SUBJECT_TO_CHANGE
-#include "hal/libhal.h"
+#include "libhal/libhal.h"
 
 #define _(a) (a)
 #define N_(a) a
