@@ -1,6 +1,12 @@
 2005-01-17  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Patch from Richard Hughes
+	<ee21rh@surrey.ac.uk>. Move properties into right section;
+	add some linux.* properties.
+
+2005-01-17  David Zeuthen  <davidz@redhat.com>
+
+	* doc/spec/hal-spec.xml.in: Patch from Richard Hughes
 	<ee21rh@surrey.ac.uk>. This is a patch for HAL CVS HEAD that
 	provides all the system.* namespaces. I have not included the
 	PMU/ACPI specific parts yet as we are still debating about how to

@@ -366,6 +366,54 @@ CLASS="literal"
 >battery</TT
 > namespace</A
 ></DT
+><DT
+><A
+HREF="#device-properties-system"
+><TT
+CLASS="literal"
+>system</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-ac_adaptor"
+><TT
+CLASS="literal"
+>system.ac_adaptor</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-button"
+><TT
+CLASS="literal"
+>system.button</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-processor"
+><TT
+CLASS="literal"
+>system.processor</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-display_device"
+><TT
+CLASS="literal"
+>system.display_device</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-sensor"
+><TT
+CLASS="literal"
+>system.sensor</TT
+> namespace</A
+></DT
 ></DL
 ></DD
 ><DT
@@ -464,21 +512,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2281"
+HREF="#AEN2536"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2292"
+HREF="#AEN2547"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2300"
+HREF="#AEN2555"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -511,63 +559,6 @@ HREF="#enforcing-storage-fstab"
 ><A
 HREF="#enforcing-storage-locking"
 >Disabling policy agents</A
-></DT
-></DL
-></DD
-><DT
-><A
-HREF="#properties-system"
->System Devices</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="#device-properties-system"
-><TT
-CLASS="literal"
->system</TT
-> namespace</A
-></DT
-><DT
-><A
-HREF="#device-properties-system-ac_adaptor"
-><TT
-CLASS="literal"
->system.ac_adaptor</TT
-> namespace</A
-></DT
-><DT
-><A
-HREF="#device-properties-system-button"
-><TT
-CLASS="literal"
->system.button</TT
-> namespace</A
-></DT
-><DT
-><A
-HREF="#device-properties-system-processor"
-><TT
-CLASS="literal"
->system.processor</TT
-> namespace</A
-></DT
-><DT
-><A
-HREF="#device-properties-system-display_device"
-><TT
-CLASS="literal"
->system.display_device</TT
-> namespace</A
-></DT
-><DT
-><A
-HREF="#device-properties-system-sensor"
-><TT
-CLASS="literal"
->system.sensor</TT
-> namespace</A
 ></DT
 ></DL
 ></DD
@@ -1784,6 +1775,88 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>linux.procfs_path</TT
+> (string)</TD
+><TD
+>example: /proc/acpi/button/power/PWRF, /proc/pmu/battery_0</TD
+><TD
+>No</TD
+><TD
+>&#13;                A fully-qualified path into the procfs filesystem for the 
+                physical device
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>linux.procfs_path.keyname</TT
+> (string)</TD
+><TD
+>example: "remaining capacity"</TD
+><TD
+>Yes, if linux.procfs_path is set</TD
+><TD
+>&#13;                The keyname that HAL can use to extract the data from the procfs file
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>linux.acpi_version</TT
+> (string)</TD
+><TD
+>example: 20041210</TD
+><TD
+>No</TD
+><TD
+>&#13;                The in-kernel driver version providing ACPI services
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>linux.pmu_device</TT
+> (string)</TD
+><TD
+>example: /dev/pmu</TD
+><TD
+>No</TD
+><TD
+>The udev assigned device file for PMU.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>linux.pmu_driver_version</TT
+> (string)</TD
+><TD
+>example: 2</TD
+><TD
+>No</TD
+><TD
+>PMU driver version</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>linux.pmu_firmware_version</TT
+> (string)</TD
+><TD
+>example: 0c</TD
+><TD
+>No</TD
+><TD
+>PMU firmware version</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >linux.driver</TT
 > (string)</TD
 ><TD
@@ -1881,7 +1954,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN340"
+NAME="AEN376"
 ></A
 ><TABLE
 BORDER="1"
@@ -2104,7 +2177,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN429"
+NAME="AEN465"
 ></A
 ><TABLE
 BORDER="1"
@@ -2496,7 +2569,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN592"
+NAME="AEN628"
 ></A
 ><TABLE
 BORDER="1"
@@ -2625,7 +2698,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN639"
+NAME="AEN675"
 ></A
 ><TABLE
 BORDER="1"
@@ -2710,7 +2783,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN667"
+NAME="AEN703"
 ></A
 ><TABLE
 BORDER="1"
@@ -2806,7 +2879,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN697"
+NAME="AEN733"
 ></A
 ><TABLE
 BORDER="1"
@@ -2875,7 +2948,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN718"
+NAME="AEN754"
 ></A
 ><TABLE
 BORDER="1"
@@ -2992,7 +3065,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN759"
+NAME="AEN795"
 ></A
 ><TABLE
 BORDER="1"
@@ -3114,7 +3187,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN804"
+NAME="AEN840"
 ></A
 ><TABLE
 BORDER="1"
@@ -3235,7 +3308,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN849"
+NAME="AEN885"
 ></A
 ><TABLE
 BORDER="1"
@@ -3308,7 +3381,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN871"
+NAME="AEN907"
 ></A
 ><TABLE
 BORDER="1"
@@ -3505,7 +3578,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN931"
+NAME="AEN967"
 ></A
 ><TABLE
 BORDER="1"
@@ -3798,7 +3871,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1054"
+NAME="AEN1090"
 ></A
 ><TABLE
 BORDER="1"
@@ -3936,7 +4009,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1097"
+NAME="AEN1133"
 ></A
 ><TABLE
 BORDER="1"
@@ -4047,7 +4120,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1133"
+NAME="AEN1169"
 ></A
 ><TABLE
 BORDER="1"
@@ -4309,7 +4382,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1240"
+NAME="AEN1276"
 ></A
 ><TABLE
 BORDER="1"
@@ -4797,7 +4870,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1434"
+NAME="AEN1470"
 ></A
 ><TABLE
 BORDER="1"
@@ -4996,7 +5069,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1514"
+NAME="AEN1550"
 ></A
 ><TABLE
 BORDER="1"
@@ -5150,7 +5223,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1572"
+NAME="AEN1608"
 ></A
 ><TABLE
 BORDER="1"
@@ -5281,7 +5354,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1614"
+NAME="AEN1650"
 ></A
 ><TABLE
 BORDER="1"
@@ -5354,7 +5427,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1636"
+NAME="AEN1672"
 ></A
 ><TABLE
 BORDER="1"
@@ -5421,7 +5494,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1656"
+NAME="AEN1692"
 ></A
 ><TABLE
 BORDER="1"
@@ -5486,7 +5559,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1676"
+NAME="AEN1712"
 ></A
 ><TABLE
 BORDER="1"
@@ -5613,7 +5686,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1720"
+NAME="AEN1756"
 ></A
 ><TABLE
 BORDER="1"
@@ -5760,7 +5833,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1768"
+NAME="AEN1804"
 ></A
 ><TABLE
 BORDER="1"
@@ -5882,7 +5955,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1810"
+NAME="AEN1846"
 ></A
 ><TABLE
 BORDER="1"
@@ -6238,6 +6311,617 @@ CLASS="literal"
 ></P
 ></DIV
 ></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system"
+><TT
+CLASS="literal"
+>system</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system</TT
+>
+        represent system devices currently accessed through
+        the ACPI and PMU bus.
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-ac_adaptor"
+><TT
+CLASS="literal"
+>system.ac_adaptor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.ac_adaptor</TT
+>
+        represent all the devices capable of powering the system from AC power
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1991"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.ac_adaptor.enabled</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The state of the adaptor, i.e. whether it is providing power to
+                the unit
+              </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-button"
+><TT
+CLASS="literal"
+>system.button</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.button</TT
+>
+        represent the devices capable of providing a state to the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2011"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.button.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The type of button</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>lid_switch</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The switch on a laptop that senses whether the lid is
+                open or closed
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>power</TD
+><TD
+>&nbsp;</TD
+><TD
+>The main power button on the computer.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>sleep</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The sleep button on a computer capable of putting the computer
+                into a suspend state
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.button.has_state</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>True if the button maintains state, e.g. can toggled on/off</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.button.state.value</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                Only when <TT
+CLASS="literal"
+>system.button.has_state</TT
+> is
+                TRUE
+              </TD
+><TD
+>State of the button, TRUE if it is enabled</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+        Device objects with this capability may emit the following events.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2055"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Condition Name</TH
+><TH
+>Parameters</TH
+><TH
+>Example</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>SystemButtonPressed</TT
+></TD
+><TD
+><TT
+CLASS="literal"
+>system.button.type (string)</TT
+></TD
+><TD
+>sleep</TD
+><TD
+>Emitted when a button is pressed</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-processor"
+><TT
+CLASS="literal"
+>system.processor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability system.processor represent
+        CPU's in the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2075"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.processor.number</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The internal processor number in the system, starting from zero
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.processor.can_throttle</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;                Whether the processor supports throttling to decrease it's
+                own clock speed
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.processor.maximum_speed</TT
+> (long)</TD
+><TD
+>example: 2200</TD
+><TD
+>No</TD
+><TD
+>The maximum speed of the processor in units of MHz</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-display_device"
+><TT
+CLASS="literal"
+>system.display_device</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>display_device</TT
+>
+        represent display devices attached to the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2107"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.display_device.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The type of display device</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>lcd</TD
+><TD
+>&nbsp;</TD
+><TD
+>LCD panel</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>crt</TD
+><TD
+>&nbsp;</TD
+><TD
+>CRT tube</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>tv_out</TD
+><TD
+>&nbsp;</TD
+><TD
+>TV Out</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.display_device.lcd.brightness</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if <TT
+CLASS="literal"
+>system.display_device.type</TT
+> is lcd</TD
+><TD
+>Brightness level in percent</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-sensor"
+><TT
+CLASS="literal"
+>system.sensor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.sensor</TT
+>
+        represent light or temperature sensors in the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2149"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.sensor.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The type of sensor device</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>light</TD
+><TD
+>&nbsp;</TD
+><TD
+>Light sensor</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>temperature</TD
+><TD
+>&nbsp;</TD
+><TD
+>Temperature sensor</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.sensor.location</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The location of the sensor device</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>gpu</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measures GPU source</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>cpu</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measures CPU source</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>external</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measures external source</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>unknown</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measuring other source</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
 ></DIV
 ><DIV
 CLASS="sect1"
@@ -6277,7 +6961,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1952"
+NAME="AEN2207"
 ></A
 ><TABLE
 BORDER="1"
@@ -6436,7 +7120,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2004"
+NAME="AEN2259"
 ></A
 ><TABLE
 BORDER="1"
@@ -6565,7 +7249,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2045"
+NAME="AEN2300"
 ></A
 ><TABLE
 BORDER="1"
@@ -7604,7 +8288,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2239"
+NAME="AEN2494"
 ></A
 ><TABLE
 BORDER="1"
@@ -7764,7 +8448,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2281"
+NAME="AEN2536"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -7880,7 +8564,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2292"
+NAME="AEN2547"
 >Example</A
 ></H3
 ><P
@@ -7998,7 +8682,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2300"
+NAME="AEN2555"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -8290,626 +8974,6 @@ NAME="enforcing-storage-locking"
 	  users preferred CD burning application when respectively
 	  non-blank rewritable or blank media is inserted.
 	</P
-></DIV
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="properties-system"
->System Devices</A
-></H2
-><DIV
-CLASS="sect2"
-><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system"
-><TT
-CLASS="literal"
->system</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->system</TT
->
-        represent system devices currently accessed through
-        the ACPI and PMU bus.
-
-      </P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system-ac_adaptor"
-><TT
-CLASS="literal"
->system.ac_adaptor</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->system.ac_adaptor</TT
->
-        represent all the devices capable of powering the system from AC power
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN2348"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->system.ac_adaptor.enabled</TT
-> (bool)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->&#13;                The state of the adaptor, i.e. whether it is providing power to
-                the unit
-              </TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system-button"
-><TT
-CLASS="literal"
->system.button</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->system.button</TT
->
-        represent the devices capable of providing a state to the system.
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN2368"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->system.button.type</TT
-> (string)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->The type of button</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->lid_switch</TD
-><TD
->&nbsp;</TD
-><TD
->&#13;                The switch on a laptop that senses whether the lid is
-                open or closed
-              </TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->power</TD
-><TD
->&nbsp;</TD
-><TD
->The main power button on the computer.</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->sleep</TD
-><TD
->&nbsp;</TD
-><TD
->&#13;                The sleep button on a computer capable of putting the computer
-                into a suspend state
-              </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->system.button.has_state</TT
-> (bool)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->True if the button maintains state, e.g. can toggled on/off</TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->system.button.state.value</TT
-> (bool)</TD
-><TD
->&nbsp;</TD
-><TD
->&#13;                Only when <TT
-CLASS="literal"
->system.button.has_state</TT
-> is
-                TRUE
-              </TD
-><TD
->State of the button, TRUE if it is enabled</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-><P
->&#13;
-        Device objects with this capability may emit the following events.
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN2412"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Condition Name</TH
-><TH
->Parameters</TH
-><TH
->Example</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->SystemButtonPressed</TT
-></TD
-><TD
-><TT
-CLASS="literal"
->system.button.type (string)</TT
-></TD
-><TD
->sleep</TD
-><TD
->Emitted when a button is pressed</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system-processor"
-><TT
-CLASS="literal"
->system.processor</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability system.processor represent
-        CPU's in the system.
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN2432"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->system.processor.number</TT
-> (int)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->&#13;                The internal processor number in the system, starting from zero
-              </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->system.processor.can_throttle</TT
-> (bool)</TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->&#13;                Whether the processor supports throttling to decrease it's
-                own clock speed
-              </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->system.processor.maximum_speed</TT
-> (long)</TD
-><TD
->example: 2200</TD
-><TD
->No</TD
-><TD
->The maximum speed of the processor in units of MHz</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system-display_device"
-><TT
-CLASS="literal"
->system.display_device</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->display_device</TT
->
-        represent display devices attached to the system.
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN2464"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->system.display_device.type</TT
-> (string)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->The type of display device</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->lcd</TD
-><TD
->&nbsp;</TD
-><TD
->LCD panel</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->crt</TD
-><TD
->&nbsp;</TD
-><TD
->CRT tube</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->tv_out</TD
-><TD
->&nbsp;</TD
-><TD
->TV Out</TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->system.display_device.lcd.brightness</TT
-> (int)</TD
-><TD
->&nbsp;</TD
-><TD
->Only if <TT
-CLASS="literal"
->system.display_device.type</TT
-> is lcd</TD
-><TD
->Brightness level in percent</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system-sensor"
-><TT
-CLASS="literal"
->system.sensor</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->system.sensor</TT
->
-        represent light or temperature sensors in the system.
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN2506"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->system.sensor.type</TT
-> (string)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->The type of sensor device</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->light</TD
-><TD
->&nbsp;</TD
-><TD
->Light sensor</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->temperature</TD
-><TD
->&nbsp;</TD
-><TD
->Temperature sensor</TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->system.sensor.location</TT
-> (string)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->The location of the sensor device</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->gpu</TD
-><TD
->&nbsp;</TD
-><TD
->Measures GPU source</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->cpu</TD
-><TD
->&nbsp;</TD
-><TD
->Measures CPU source</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->external</TD
-><TD
->&nbsp;</TD
-><TD
->Measures external source</TD
-></TR
-><TR
-><TD
->&nbsp;</TD
-><TD
->unknown</TD
-><TD
->&nbsp;</TD
-><TD
->Measuring other source</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
 ></DIV
 ></DIV
 ></DIV
