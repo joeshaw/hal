@@ -271,6 +271,7 @@ visit_device (const char *path, BusDeviceHandler *handler,
 }
 
 
+#if 0
 /** Visit all devices on a given bus
  *
  *  @param  class_name          Name of class, e.g. scsi_host or block
@@ -298,6 +299,7 @@ visit_bus (const char *bus_name, BusDeviceHandler *handler)
 
 	sysfs_close_bus (bus);
 }
+#endif
 
 
 /** Timeout handler for polling
@@ -329,7 +331,6 @@ osspec_init (DBusConnection * dbus_connection)
 {
 	int i;
 	int rc;
-	DBusError error;
 
 	/* get mount path for sysfs */
 	rc = sysfs_get_mnt_path (sysfs_mount_path, SYSFS_PATH_MAX);

@@ -318,7 +318,7 @@ link_detection_handle_message (struct nlmsghdr *hdr)
 
 	memset (&ifname, 0, sizeof (ifname));
 
-	attr = (void *) ifinfo + NLMSG_ALIGN (sizeof (struct ifinfomsg));
+	attr = (void *) (ifinfo + NLMSG_ALIGN (sizeof (struct ifinfomsg)));
 	attr_len = NLMSG_PAYLOAD (hdr, sizeof (struct ifinfomsg));
 
 	while (RTA_OK (attr, attr_len)) {

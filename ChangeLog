@@ -1,4 +1,18 @@
 2004-07-05  David Zeuthen  <david@fubar.dk>
+	
+	* hald/linux/input_class_device.c (input_class_accept): Make this
+	static (remove warning)
+
+	* hald/linux/osspec.c (osspec_init): Remove error variable (remove
+	warning)
+	(visit_bus): Comment out this function because it is not currently
+	used (remove warning)
+
+	* hald/linux/block_class_device.c (block_class_in_gdl): New function
+	(block_class_pre_process): Move check for media and mtab to the new
+	block_class_in_gdl method
+
+2004-07-05  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/ieee1394_host_class_device.c: Add class_device_in_gdl
 	method

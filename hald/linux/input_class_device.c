@@ -62,7 +62,7 @@
  *  @param  path                Sysfs-path for device
  *  @param  class_device        libsysfs object for class device
  */
-dbus_bool_t
+static dbus_bool_t
 input_class_accept (ClassDeviceHandler *self,
                     const char *path,
                     struct sysfs_class_device *class_device)
