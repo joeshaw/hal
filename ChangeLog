@@ -1,5 +1,17 @@
 2003-12-03  David Zeuthen  <david@fubar.dk>
 
+	* agents/linux26/sysfs/hal_net (visit_class_device_net): Change
+	mac address to be split into two 24-bit sizes. s/ethernet/net.ethernet/
+
+	* libhal/libhal.c (hal_find_all_devices): Put trailing NULL in result
+	(hal_manager_find_device_string_match): Put trailing NULL in result
+	(hal_find_device_by_capability): Put trailing NULL in result
+
+	* tools/device-manager/hal-device-manager/Representation.y: 
+	Simplify icon selection code
+	
+2003-12-03  David Zeuthen  <david@fubar.dk>
+
 	* tools/device-manager: new directory with tools/hal-device-manager
 	split into many files
 

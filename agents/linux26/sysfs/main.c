@@ -1279,6 +1279,23 @@ int main(int argc, char* argv[])
             {
                 hal_sysfs_probe();
                 sleep(1);
+
+/*
+    {
+        int i;
+        int num_devices;
+        char** devices;
+
+        devices = hal_get_all_devices(&num_devices);
+        printf("rc: devices=%x, num_devices=%d\n", devices, num_devices);
+        for(i=0; devices[i]!=NULL; i++)
+        {
+            hal_device_print(devices[i]);
+        }
+        return 0;
+    }
+*/
+
                 return 0;
             }
             else if( strcmp(opt, "monitor")==0 )

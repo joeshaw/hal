@@ -686,7 +686,7 @@ char** hal_get_all_devices(int* num_devices)
      * since we can't poke at the dbus string array for the reason
      * that d-bus use their own memory allocation scheme
      */
-    hal_device_names = malloc(sizeof(char*)*(*num_devices));
+    hal_device_names = malloc(sizeof(char*)*((*num_devices)+1));
     if( hal_device_names==NULL )
         return NULL; /** @todo: Handle OOM better */
 
@@ -696,6 +696,7 @@ char** hal_get_all_devices(int* num_devices)
         if( hal_device_names[i]==NULL )
             return NULL; /** @todo: Handle OOM better */
     }
+    hal_device_names[i] = NULL;
 
     dbus_free_string_array(device_names);
 
@@ -1771,7 +1772,7 @@ char** hal_manager_find_device_string_match(const char* key,
      * since we can't poke at the dbus string array for the reason
      * that d-bus use their own memory allocation scheme
      */
-    hal_device_names = malloc(sizeof(char*)*(*num_devices));
+    hal_device_names = malloc(sizeof(char*)*((*num_devices)+1));
     if( hal_device_names==NULL )
         return NULL; /** @todo: Handle OOM better */
 
@@ -1781,6 +1782,7 @@ char** hal_manager_find_device_string_match(const char* key,
         if( hal_device_names[i]==NULL )
             return NULL; /** @todo: Handle OOM better */
     }
+    hal_device_names[i] = NULL;
 
     dbus_free_string_array(device_names);
 
@@ -1911,7 +1913,7 @@ char** hal_find_device_by_capability(const char* capability, int* num_devices)
      * since we can't poke at the dbus string array for the reason
      * that d-bus use their own memory allocation scheme
      */
-    hal_device_names = malloc(sizeof(char*)*(*num_devices));
+    hal_device_names = malloc(sizeof(char*)*((*num_devices)+1));
     if( hal_device_names==NULL )
         return NULL; /** @todo: Handle OOM better */
 
@@ -1921,6 +1923,7 @@ char** hal_find_device_by_capability(const char* capability, int* num_devices)
         if( hal_device_names[i]==NULL )
             return NULL; /** @todo: Handle OOM better */
     }
+    hal_device_names[i] = NULL;
 
     dbus_free_string_array(device_names);
 

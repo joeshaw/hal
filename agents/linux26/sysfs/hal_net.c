@@ -167,19 +167,19 @@ void visit_class_device_net(const char* path,
     {
         unsigned int a5, a4, a3 ,a2, a1, a0;
 
-        hal_device_set_property_string(d, "ethernet.macAddr", addr_store);
+        hal_device_set_property_string(d, "net.ethernet.macAddr", addr_store);
 
         if( sscanf(addr_store, "%x:%x:%x:%x:%x:%x",
                    &a5, &a4, &a3, &a2, &a1, &a0)==6 )
         {
             dbus_uint32_t mac_upper, mac_lower;
 
-            mac_upper = (a5<<8)|a4;
-            mac_lower = (a3<<24)|(a2<<16)|(a1<<8)|a0;
+            mac_upper = (a5<<16)|(a4<<8)|a3;
+            mac_lower = (a2<<16)|(a1<<8)|a0;
 
-            hal_device_set_property_int(d, "ethernet.macAddrUpper",
+            hal_device_set_property_int(d, "net.ethernet.macAddrUpper24",
                                         (dbus_int32_t) mac_upper);
-            hal_device_set_property_int(d, "ethernet.macAddrLower",
+            hal_device_set_property_int(d, "net.ethernet.macAddrLower24",
                                         (dbus_int32_t) mac_lower);
         }
     }

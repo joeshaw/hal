@@ -42,24 +42,19 @@ class Representation:
     def get_icon(self, device):
         """Given a Device object return an icon to display"""
 
+        # Default to abstract icon
+        icon = self.icons["abstract"]
+            
         # First look at bus type, every device got Bus property
         bus = device.properties["Bus"]
-
         if bus=="usb":
             icon = self.icons["bus_usb"]
         elif bus=="pci":
             icon = self.icons["bus_pci"]
-        elif bus=="usbif":
-            icon = self.icons["abstract"]
-        elif bus=="ide_host":
-            icon = self.icons["abstract"]
-        elif bus=="block":
-            icon = self.icons["abstract"]
 
-        # Then look at Category
+        # Then look at Category, if available
         if not device.properties.has_key("Category"):
             return icon
-
         cat = device.properties["Category"]
         if cat=="input.mouse":
             icon = self.icons["mouse"]
