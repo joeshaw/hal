@@ -329,7 +329,7 @@ process_callouts (void)
 
 	active_callouts = g_slist_append (active_callouts, callout);
 
-	HAL_INFO (("Invoking %s", argv[0]));
+	HAL_INFO (("Invoking %s/%s", callout->working_dir, argv[0]));
 
 	if (!g_spawn_async (callout->working_dir, argv, callout->envp,
 			    G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,

@@ -1,5 +1,15 @@
 2004-09-01  David Zeuthen  <david@fubar.dk>
 
+	* tools/fstab-sync.c (fs_table_line_is_mounted): New function
+	(fs_table_remove_generated_entries): Don't remove generated entries
+	that are in use (e.g device mounted at path). Fixes problem with
+	restarting the hal daemon with devices mounted (e.g. on package
+	upgrade etc.)
+
+	* hald/callout.c (process_callouts): Print full path of callout
+
+2004-09-01  David Zeuthen  <david@fubar.dk>
+
 	This was a fun debugging session that led to this fix :-)
 	Basically when building optimized binaries (like for the Fedora
 	RPMS) an interesting sideeffect showed up: gobject signal handlers

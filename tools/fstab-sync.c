@@ -1668,6 +1668,32 @@ error:
   return FALSE;
 }
 
+static boolean fs_table_line_is_mounted (FSTableLine *line)
+{
+  FILE *f;
+  boolean is_mounted = FALSE;
+  struct mntent *m;
+
+  f = fopen (_PATH_MOUNTED, "r");
+  if (f == NULL)
+    goto out;
+
+  while ((m = getmntent (f)) != NULL) {
+
+    if (strcmp (m->mnt_fsname, line->block_device) == 0 && 
+	strcmp (m->mnt_dir, line->mount_point) == 0) {
+      is_mounted = TRUE;
+      goto out;
+    }
+  }
+
+out:
+  if (f != NULL)
+    fclose (f);
+
+  return is_mounted;
+}
+
 static void
 fs_table_remove_generated_entries (FSTable *table)
 {
@@ -1677,8 +1703,10 @@ fs_table_remove_generated_entries (FSTable *table)
   line = table->lines;
   while (line != NULL)
     {
-      if (fs_table_line_is_generated (line))
+      /* don't remove generated line if device is mounted there */
+      if (fs_table_line_is_generated (line) && !fs_table_line_is_mounted (line))
         {
+
 	  if (rmdir (line->mount_point) < 0)
 	    {
 	      fstab_update_debug (_("%d: Failed to remove mount point '%s': %s\n"),
