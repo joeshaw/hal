@@ -59,12 +59,9 @@
 
 #include <popt.h>
 
+
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include "libhal/libhal.h"
-
-#ifdef HAVE_SELINUX
-#include <selinux/selinux.h>
-#endif
 
 typedef int boolean;
 
@@ -95,6 +92,48 @@ static boolean verbose = FALSE;
 
 #define fstab_update_debug(...) do {if (verbose) fprintf (stderr, __VA_ARGS__);} while (0)
 
+static pid_t pid;
+
+
+#ifdef HAVE_SELINUX
+#include <selinux/selinux.h>
+
+static int get_removable_context(security_context_t *newcon)
+{
+  FILE *fp;
+  char buf[255], *ptr;
+  size_t plen;
+
+  fstab_update_debug (_("%d: selinux_removable_context_path %s\n"), pid, selinux_removable_context_path());
+  fp = fopen(selinux_removable_context_path(), "r");
+  if (!fp)
+    return -1;
+  
+  ptr = fgets_unlocked(buf, sizeof buf, fp);
+  fclose(fp);
+  
+  if (!ptr)
+    return -1;
+  plen = strlen(ptr);
+  if (buf[plen-1] == '\n') 
+    buf[plen-1] = 0;
+  
+  *newcon=strdup(buf);
+  /* If possible, check the context to catch
+     errors early rather than waiting until the
+     caller tries to use setexeccon on the context.
+     But this may not always be possible, e.g. if
+     selinuxfs isn't mounted. */
+  if (security_check_context(*newcon) && errno != ENOENT) {
+    free(*newcon);
+    *newcon = 0;
+    return -1;
+  }
+
+  fstab_update_debug (_("%d: removable context is %s\n"), pid, *newcon);  
+  return 0;
+}
+#endif
 
 /** This structure represents either a volume with a mountable filesystem
  *  or a drive that uses media without partition tables.
@@ -158,7 +197,6 @@ typedef struct
 } FSTable;
 
 static LibHalContext *hal_context = NULL;
-static pid_t pid;
 
 static void fs_table_line_add_field (FSTableLine *line, FSTableField *field);
 static boolean fs_table_line_is_generated (FSTableLine *line);
@@ -187,100 +225,6 @@ static boolean add_udi (const char *udi);
 static boolean remove_udi (const char *udi);
 static boolean clean (void);
 
-
-#ifdef HAVE_SELINUX
-/* largely based on restorecon.c in policycoreutils, GPLv2 license, Author: Dan Walsh */
-static int restore_selinux_context(char *filename)
-{
-  int retcontext=0;
-  int retval=0;
-  int errors=0;
-  security_context_t scontext;
-  security_context_t prev_context;
-  int len=strlen(filename);
-  struct stat st;
-  char path[256+1]; /* PATH_MAX */
-
-  /* 
-     Eliminate trailing /
-  */
-  if (len > 0 && filename[len-1]=='/' && (strcmp(filename,"/") != 0)) {
-    filename[len-1]=0;
-  }
-  if (lstat(filename, &st)!=0) {
-    fstab_update_debug ("%d: lstat(%s) failed: %s\n", pid, filename,strerror(errno));
-    return 1;
-  }
-  if (S_ISLNK(st.st_mode)) {
-    fstab_update_debug ("%d: Warning! %s refers to a symbolic link, not following last component.\n", pid, filename);
-    char *p = NULL, *file_sep;
-    char *tmp_path = strdup(filename);
-    if (!tmp_path) {
-      fstab_update_debug ("%d: strdup on %s failed:  %s\n", pid, filename,strerror(errno));
-      return 1;
-    }
-    file_sep = strrchr(tmp_path, '/');
-    if(file_sep)
-    {
-      *file_sep = 0;
-      file_sep++;
-      p = realpath(tmp_path, path);
-    }
-    if (!p || strlen(path) + strlen(file_sep) + 1 > 256) {
-      fstab_update_debug ("%d: realpath(%s) failed %s\n", pid, filename, strerror(errno));
-      free(tmp_path);
-      return 1;
-    }
-    sprintf(p + strlen(p), "/%s", file_sep);
-    filename = p;
-    free(tmp_path);
-  } else {
-    char *p;
-    p = realpath(filename, path);
-    if (!p) {
-      fstab_update_debug ("%d: realpath(%s) failed %s\n", pid, filename, strerror(errno));
-      return 1;
-    }
-    filename = p;
-  }
-
-  retval = matchpathcon(filename, st.st_mode, &scontext);
-  if (retval < 0) {
-    fstab_update_debug ("%d: matchpathcon(%s) failed %s\n", pid, filename,strerror(errno));
-    return 1;
-  } 
-  if (strcmp(scontext,"<<none>>")==0) {
-    freecon(scontext);
-    return 0;
-  }
-  retcontext=lgetfilecon(filename,&prev_context);
-  
-  if (retcontext >= 0 || errno == ENODATA) {
-    if (retcontext < 0 || strcmp(prev_context,scontext) != 0) {
-      retval=lsetfilecon(filename,scontext);
-      if (retval<0) {
-	  fstab_update_debug ("%d: %s set context %s->%s failed:'%s'\n",
-			      pid, PROGRAM_NAME, filename, scontext, strerror(errno));
-	  if (retcontext >= 0)
-	    freecon(prev_context);
-	  freecon(scontext);
-	  return 1;
-      } else 	
-	fstab_update_debug ("%d: %s reset context %s->%s\n",
-			    pid, PROGRAM_NAME, filename, scontext);
-    } 
-    if (retcontext >= 0)
-      freecon(prev_context);
-  } 
-  else {
-    errors++;
-    fstab_update_debug ("%d: %s get context on %s failed: '%s'\n",
-			pid, PROGRAM_NAME, filename, strerror(errno));
-  }
-  freecon(scontext);
-  return errors;
-}
-#endif /* HAVE_SELINUX */
 
 static FSTableField *
 fs_table_field_new (FSTableFieldType type, const char *value)
@@ -1326,6 +1270,24 @@ fs_table_add_volume (FSTable *table, Volume *volume)
   strcat_len (options, "," FSTAB_SYNC_MOUNT_MANAGED_KEYWORD);
 #endif
 
+#ifdef HAVE_SELINUX
+  if (is_selinux_enabled() > 0 ){
+    security_context_t scontext;
+
+    fstab_update_debug (_("%d: SELinux is enabled\n"), pid);
+
+    if (get_removable_context(&scontext)==0) {
+      strcat_len (options, ",fscontext=");
+      strcat_len(options, scontext);
+      freecon(scontext);
+    } else {
+      fstab_update_debug (_("%d: Could not get fscontext\n"), pid);
+    }
+  } else {
+    fstab_update_debug (_("%d: SELinux is NOT enabled\n"), pid);
+  }
+#endif
+
   if (strcmp (volume->drive_type, "cdrom") == 0)
     strcat_len (options, ",ro");
 
@@ -1538,10 +1500,6 @@ add_udi (const char *udi)
   close (fd);
   volume_free (volume);
 
-#ifdef HAVE_SELINUX
-  restore_selinux_context(_PATH_FSTAB);
-#endif
-
   return TRUE;
 
 error:
@@ -1644,10 +1602,6 @@ remove_udi (const char *udi)
   close (fd);
   free (block_device);
   fs_table_line_free (line);
-
-#ifdef HAVE_SELINUX
-  restore_selinux_context(_PATH_FSTAB);
-#endif
 
   return TRUE;
 
@@ -1785,10 +1739,6 @@ clean (void)
     }
 
   close (fd);
-
-#ifdef HAVE_SELINUX
-  restore_selinux_context(_PATH_FSTAB);
-#endif
 
   syslog (LOG_INFO, _("removed all generated mount points"));
 

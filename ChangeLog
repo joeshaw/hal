@@ -1,3 +1,21 @@
+2004-09-19  David Zeuthen  <david@fubar.dk>
+
+	* hald/hald_dbus.c: Include dbus-glib-lowlevel.h instead of dbus-glib.h
+	(filter_function): Remove some debug output
+
+	* configure.in: Check for selinux_removable_context_path in 
+	libselinux
+
+	* tools/fstab-sync.c:
+	(get_removable_context):
+	(fs_table_add_volume):
+	(add_udi):
+	(remove_udi):
+	(clean): 
+	Patch from Dan Walsh <dwalsh@redhat.com> to add fscontext to
+	/etc/fstab for SELinux. Also removes patch that restored context
+	for /etc/fstab since this is not needed.
+
 2004-09-17  Joe Shaw  <joeshaw@novell.com>
 
 	* doc/TODO: Remove the device locking section, it's done now. Woo!

@@ -32,7 +32,7 @@
 #include <string.h>
 
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 #include "hald.h"
 #include "hald_dbus.h"
@@ -2105,12 +2105,12 @@ static DBusHandlerResult
 filter_function (DBusConnection * connection,
 		 DBusMessage * message, void *user_data)
 {
-
+/*
     HAL_INFO (("obj_path=%s interface=%s method=%s", 
-    dbus_message_get_path(message), 
-    dbus_message_get_interface(message),
-    dbus_message_get_member(message)));
-
+	       dbus_message_get_path(message), 
+	       dbus_message_get_interface(message),
+	       dbus_message_get_member(message)));
+*/
 
 	if (dbus_message_is_signal (message,
 				    DBUS_INTERFACE_ORG_FREEDESKTOP_LOCAL,
