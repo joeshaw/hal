@@ -274,6 +274,10 @@ set_device_link_status (HalDeviceStore *store, HalDevice *device,
 	struct FindDevInfo *info = user_data;
 	const char * dev_value;
 
+	/* no link check on 802.11x devices */
+	if (hal_device_has_capability (device, "net.ethernet.80211"))
+		return TRUE;
+
 	if (hal_device_property_get_type (device,
 					  "net.interface") != DBUS_TYPE_STRING)
 		return TRUE;
@@ -464,10 +468,26 @@ net_class_pre_process (ClassDeviceHandler *self,
 	const char *media;
 	char wireless_path[SYSFS_PATH_MAX];
 	struct sysfs_directory *wireless_dir;
+	dbus_bool_t is_80211 = FALSE;
 
 	hal_device_property_set_string (d, "net.linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "net.interface",
 					class_device->name);
+
+	/* Check to see if this interface supports wireless extensions */
+	is_80211 = FALSE;
+	snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
+	wireless_dir = sysfs_open_directory (wireless_path);
+
+	if (sysfs_read_directory (wireless_dir) >= 0) {
+		if (wireless_dir->attributes != NULL) {
+			hal_device_add_capability (d, "net.ethernet.80211");
+			is_80211 = TRUE;
+		}
+
+		sysfs_close_directory (wireless_dir);
+	}
+
 
 	attr = sysfs_get_classdev_attr (class_device, "address");
 
@@ -504,7 +524,8 @@ net_class_pre_process (ClassDeviceHandler *self,
 		}
 
 		/* Get the initial link state from the MII registers */
-		mii_get_link (d);
+		if (!is_80211)
+			mii_get_link (d);
 	}
 
 	g_free (address);
@@ -517,17 +538,6 @@ net_class_pre_process (ClassDeviceHandler *self,
 	hal_device_add_capability (d, "net");
 	hal_device_add_capability (d, "net.ethernet");
 	hal_device_property_set_string (d, "info.category", "net.ethernet");
-
-	/* Check to see if this interface supports wireless extensions */
-	snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
-	wireless_dir = sysfs_open_directory (wireless_path);
-
-	if (sysfs_read_directory (wireless_dir) >= 0) {
-		if (wireless_dir->attributes != NULL)
-			hal_device_add_capability (d, "net.ethernet.80211");
-
-		sysfs_close_directory (wireless_dir);
-	}
 }
 
 static dbus_bool_t
