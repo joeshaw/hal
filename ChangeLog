@@ -1,5 +1,13 @@
 2004-07-29  David Zeuthen  <david@fubar.dk>
 
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c (probe_hfs_hfsplus):
+	here we search for the first 'Apple_HFS' type partition. Please
+	have a look with your multi-multi-multi-partition DVD :)
+
+2004-07-29  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/volume_id/volume_id.c: Include <config.h> to take
 	advantage of AC_SYS_LARGEFILE
 

@@ -43,7 +43,6 @@
 
 #include "volume_id.h"
 
-#define DEBUG
 #ifdef DEBUG
 #define dbg(format, arg...)						\
 	do {								\
@@ -1076,21 +1075,44 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 		 * just try to probe the first partition from the map */
 		unsigned int bsize = be16_to_cpu(driver->block_size);
 		unsigned long start;
+		int part_count;
+		int i;
 
-		buf = get_buffer(id, 2 * bsize, 0x200);
+		/* get first entry of partition table */
+		buf = get_buffer(id,  bsize, 0x200);
 		if (buf == NULL)
 			return -1;
-		part = (struct mac_partition *) buf;
 
-		if (strncmp(part->signature, "PM", 2) == 0) {
+		part = (struct mac_partition *) buf;
+		if (strncmp(part->signature, "PM", 2) != 0)
+			return -1;
+
+		part_count = be32_to_cpu(part->map_count);
+		dbg("expecting %d partition entries", part_count);
+
+		for (i = 1; i <= part_count; i++) {
+			buf = get_buffer(id, i *  bsize, 0x200);
+			if (buf == NULL)
+				return -1;
+
+			part = (struct mac_partition *) buf;
+			if (strncmp(part->signature, "PM", 2) != 0)
+				return -1;
+
 			start = be32_to_cpu(part->start_block) * bsize;
 			dbg("found '%s' partition entry pointing to 0x%lx",
 			    part->type, start);
 
-			partition_off = start;
+			if (strncmp(part->type, "Apple_HFS", 9) == 0) {
+				partition_off = start;
+				goto check;
+			}
 		}
+		return -1;
 	}
 
+
+check:
 	buf = get_buffer(id, partition_off + HFS_SUPERBLOCK_OFFSET, 0x200);
 	if (buf == NULL)
                 return -1;
