@@ -67,7 +67,6 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../hald_dbus.h"
-#include "../callout.h"
 #include "../device_info.h"
 #include "../hald_conf.h"
 
@@ -450,6 +449,19 @@ osspec_shutdown (void)
 {
 }
 
+static void 
+computer_callouts_add_done (HalDevice *d, gpointer userdata)
+{
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
+
+	/* start processing events */
+	hotplug_event_process_queue ();
+}
+
 void 
 osspec_probe (void)
 {
@@ -462,12 +474,8 @@ osspec_probe (void)
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 
+	/* Let computer be in TDL while synthesizing all other events because some may write to the object */
 	hal_device_store_add (hald_get_tdl (), root);
-
-	di_search_and_merge (root);
-
-	hal_device_store_remove (hald_get_tdl (), root);
-	hal_device_store_add (hald_get_gdl (), root);
 
 	/* will enqueue hotplug events for entire system */
 	HAL_INFO (("Synthesizing sysfs events..."));
@@ -484,8 +492,9 @@ osspec_probe (void)
 	}
 	HAL_INFO (("Done synthesizing events"));
 
-	/* start processing events */
-	hotplug_event_process_queue ();
+	di_search_and_merge (root);
+
+	hal_util_callout_device_add (root, computer_callouts_add_done, NULL);	
 
 	/*osspec_probe_done ();*/
 }

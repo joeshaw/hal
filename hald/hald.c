@@ -46,7 +46,6 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "callout.h"
 #include "logger.h"
 #include "hald.h"
 #include "device_store.h"
@@ -54,6 +53,7 @@
 #include "osspec.h"
 #include "hald_dbus.h"
 #include "hald_conf.h"
+#include "util.h"
 
 static void delete_pid(void) {
     unlink(HALD_PID_FILE);
@@ -69,16 +69,69 @@ static HalDeviceStore *global_device_list = NULL;
 
 static HalDeviceStore *temporary_device_list = NULL;
 
+static GSList *running_addons = NULL;
+
+static void 
+addon_terminated (HalDevice *d, gboolean timed_out, gint return_code, 
+		  gpointer data1, gpointer data2, HalHelperData *helper_data)
+{
+	running_addons = g_slist_remove (running_addons, helper_data);
+}
+
 static void
 gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 		   gboolean is_added, gpointer user_data)
 {
-	if (is_added)
-		HAL_INFO (("Added device to GDL; udi=%s",
-			   hal_device_get_udi(device)));
-	else
-		HAL_INFO (("Removed device from GDL; udi=%s",
-			   hal_device_get_udi(device)));
+	if (is_added) {
+		GSList *addons;
+
+		HAL_INFO (("Added device to GDL; udi=%s", hal_device_get_udi(device)));
+
+		if ((addons = hal_device_property_get_strlist (device, "info.addons")) != NULL) {
+			GSList *i;
+			
+			for (i = addons; i != NULL; i = g_slist_next (i)) {
+				const gchar *command_line;
+				HalHelperData *helper_data;
+				gchar *extra_env[2] = {"HALD_ACTION=addon", NULL};
+
+				command_line = (const gchar *) i->data;
+				helper_data = hal_util_helper_invoke (command_line, extra_env, device,
+								      NULL, NULL,
+								      addon_terminated, 0 /* no timeout */);
+
+				if (helper_data != NULL) {
+					HAL_INFO (("Invoked addon %s with pid %d for udi %s", 
+						   command_line, helper_data->pid, helper_data->d->udi));
+					running_addons = g_slist_prepend (running_addons, helper_data);
+				}
+			}
+		}
+	} else {
+		GSList *i;
+
+		HAL_INFO (("Removed device from GDL; udi=%s", hal_device_get_udi(device)));
+
+	start_from_beginning:
+
+		/* may have several addons running */
+		for (i = running_addons; i != NULL; i = g_slist_next (i)) {
+			HalHelperData *helper_data;
+
+			helper_data = (HalHelperData *) (i->data);
+			if (helper_data->d == device) {
+				HAL_INFO (("Terminating addon with pid %d for udi %s", 
+					   helper_data->pid, helper_data->d->udi));
+				/* will force a callback - the callback removes us from the list */
+				hal_util_terminate_helper (helper_data);
+				/* TODO: is it safe to remove an elem from a GSList and keep iterating? 
+				 *       Better play it safe for now.
+				 */
+				goto start_from_beginning;
+			}
+		}
+		
+	}
 
 	/*hal_device_print (device);*/
 
@@ -97,7 +150,7 @@ gdl_property_changed (HalDeviceStore *store, HalDevice *device,
 
 	/* only execute the callouts if the property _changed_ */
 	if (added == FALSE && removed == FALSE)
-		hal_callout_property (device, key);
+		/*hal_callout_property (device, key)*/;
 }
 
 static void
@@ -105,7 +158,7 @@ gdl_capability_added (HalDeviceStore *store, HalDevice *device,
 		      const char *capability, gpointer user_data)
 {
 	manager_send_signal_new_capability (device, capability);
-	hal_callout_capability (device, capability, TRUE);
+	/*hal_callout_capability (device, capability, TRUE)*/;
 }
 
 HalDeviceStore *

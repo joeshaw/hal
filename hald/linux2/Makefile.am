@@ -19,7 +19,6 @@ libhald_linux2_la_SOURCES =					\
 	physdev.h		physdev.c			\
 	classdev.h		classdev.c			\
 	blockdev.h		blockdev.c			\
-	util.h			util.c				\
 	acpi.h			acpi.c				\
 	apm.h			apm.c				\
 	pmu.h			pmu.c				\

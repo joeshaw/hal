@@ -222,6 +222,32 @@ hal_property_to_string (HalProperty *prop)
 		return g_strdup (prop->bool_value ? "true" : "false");
 	case HAL_PROPERTY_TYPE_DOUBLE:
 		return g_strdup_printf ("%f", prop->double_value);
+	case HAL_PROPERTY_TYPE_STRLIST:
+	{
+		GSList *iter;
+		guint i;
+		char buf[256];
+		
+		i = 0;
+		for (iter = hal_property_get_strlist (prop); 
+		     iter != NULL && i < sizeof(buf); 
+		     iter = g_slist_next (iter)) {
+			guint len;
+			const char *str;
+			
+			str = (const char *) iter->data;
+			len = strlen (str);
+			strncpy (buf + i, str, sizeof(buf) - i);
+			i += len;
+			
+			if (g_slist_next (iter) != NULL && i < sizeof(buf)) {
+				buf[i] = '\t';
+				i++;
+			}
+		}
+		return g_strdup (buf);
+	}
+
 	default:
 		return NULL;
 	}

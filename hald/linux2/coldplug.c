@@ -42,7 +42,6 @@
 #include "../osspec.h"
 #include "../logger.h"
 #include "../hald.h"
-#include "../callout.h"
 #include "../device_info.h"
 #include "../hald_conf.h"
 

@@ -26,8 +26,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include "../device.h"
-#include "../device_store.h"
+#include "device.h"
+#include "device_store.h"
 
 gboolean hal_util_remove_trailing_slash (gchar *path);
 
@@ -82,9 +82,34 @@ gboolean hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key,
 					   const gchar *directory, const gchar *file, 
 					   const gchar *linestart, guint elem, const gchar *expected);
 
-typedef void (*HelperTerminatedCB)(HalDevice *d, gboolean timed_out, gint return_code, gpointer data1, gpointer data2);
+struct HalHelperData_s;
+typedef struct HalHelperData_s HalHelperData;
 
-gboolean helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, HelperTerminatedCB cb, guint timeout);
+typedef void (*HalHelperTerminatedCB) (HalDevice *d, gboolean timed_out, gint return_code, 
+				       gpointer data1, gpointer data2, HalHelperData *helper_data);
+
+struct HalHelperData_s
+{
+	GPid pid;
+	guint timeout_watch_id;
+	guint child_watch_id;
+	HalHelperTerminatedCB cb;
+	gpointer data1;
+	gpointer data2;
+	HalDevice *d;
+};
+
+HalHelperData  *hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
+					gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout);
+
+void hal_util_terminate_helper (HalHelperData *helper_data);
+
+gchar **hal_util_dup_strv_from_g_slist (GSList *strlist);
+
+typedef void (*HalCalloutsDone) (HalDevice *d, gpointer userdata);
+
+void hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata);
+void hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata);
 
 #define HAL_HELPER_TIMEOUT 10000
 

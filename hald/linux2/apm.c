@@ -26,7 +26,6 @@
 
 #include <string.h>
 
-#include "../callout.h"
 #include "../device_info.h"
 #include "../logger.h"
 #include "../hald_dbus.h"
@@ -202,7 +201,8 @@ apm_synthesize_hotplug_events (void)
 
 	ret = TRUE;
 
-	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
+	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL &&
+	    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
 		HAL_ERROR (("No computer object?"));
 		goto out;
 	}

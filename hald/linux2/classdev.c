@@ -62,7 +62,6 @@
 #include "../osspec.h"
 #include "../logger.h"
 #include "../hald.h"
-#include "../callout.h"
 #include "../device_info.h"
 #include "../hald_conf.h"
 
@@ -536,7 +535,8 @@ out:
 }
 
 static void 
-add_classdev_probing_helper_done(HalDevice *d, gboolean timed_out, gint return_code, gpointer data1, gpointer data2)
+add_classdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_code, 
+				  gpointer data1, gpointer data2, HalHelperData *helper_data)
 {
 	void *end_token = (void *) data1;
 	ClassDevHandler *handler = (ClassDevHandler *) data2;
@@ -603,7 +603,9 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 				prober = NULL;
 			if (prober != NULL) {
 				/* probe the device */
-				if (!helper_invoke (prober, d, (gpointer) end_token, (gpointer) handler, add_classdev_probing_helper_done, HAL_HELPER_TIMEOUT)) {
+				if (hal_util_helper_invoke (prober, NULL, d, (gpointer) end_token, 
+							    (gpointer) handler, add_classdev_probing_helper_done, 
+							    HAL_HELPER_TIMEOUT) == NULL) {
 					hal_device_store_remove (hald_get_tdl (), d);
 					hotplug_event_end (end_token);
 				}

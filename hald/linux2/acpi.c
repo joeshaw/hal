@@ -26,7 +26,6 @@
 
 #include <string.h>
 
-#include "../callout.h"
 #include "../device_info.h"
 #include "../logger.h"
 #include "../hald_dbus.h"
@@ -217,7 +216,8 @@ acpi_synthesize_hotplug_events (void)
 
 	ret = TRUE;
 
-	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
+	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL &&
+	    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
 		HAL_ERROR (("No computer object?"));
 		goto out;
 	}
@@ -281,10 +281,6 @@ acpi_generic_compute_udi (HalDevice *d, ACPIDevHandler *handler)
 static gboolean
 acpi_generic_remove (HalDevice *d, ACPIDevHandler *handler)
 {
-	if (!hal_device_store_remove (hald_get_gdl (), d)) {
-		HAL_WARNING (("Error removing device"));
-	}
-
 	return TRUE;
 }
 
@@ -320,6 +316,37 @@ static ACPIDevHandler *acpi_handlers[] = {
 	NULL
 };
 
+static void 
+acpi_callouts_add_done (HalDevice *d, gpointer userdata)
+{
+	void *end_token = (void *) userdata;
+
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
+
+	hotplug_event_end (end_token);
+}
+
+static void 
+acpi_callouts_remove_done (HalDevice *d, gpointer userdata)
+{
+	void *end_token = (void *) userdata;
+
+	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+
+	if (!hal_device_store_remove (hald_get_gdl (), d)) {
+		HAL_WARNING (("Error removing device"));
+	}
+
+	hotplug_event_end (end_token);
+}
+
 void
 hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *parent, void *end_token)
 {
@@ -349,7 +376,6 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 			/* Merge properties from .fdi files */
 			di_search_and_merge (d);
 
-			/* TODO: Run callouts */
 			
 			/* Compute UDI */
 			if (!handler->compute_udi (d, handler)) {
@@ -358,11 +384,8 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 				goto out;
 			}
 
-			/* Move from temporary to global device store */
-			hal_device_store_remove (hald_get_tdl (), d);
-			hal_device_store_add (hald_get_gdl (), d);
-			
-			hotplug_event_end (end_token);
+			/* Run callouts */
+			hal_util_callout_device_add (d, acpi_callouts_add_done, end_token);
 			goto out;
 		}
 	}
@@ -393,7 +416,7 @@ hotplug_event_begin_remove_acpi (const gchar *acpi_path, int acpi_type, void *en
 		handler = acpi_handlers[i];
 		if (handler->acpi_type == acpi_type) {
 			if (handler->remove (d, handler)) {
-				hotplug_event_end (end_token);
+				hal_util_callout_device_remove (d, acpi_callouts_remove_done, end_token);
 				goto out2;
 			}
 		}

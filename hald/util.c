@@ -43,12 +43,11 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
-#include "../callout.h"
-#include "../device_info.h"
-#include "../hald_conf.h"
+#include "osspec.h"
+#include "logger.h"
+#include "hald.h"
+#include "device_info.h"
+#include "hald_conf.h"
 
 #include "util.h"
 
@@ -550,24 +549,30 @@ out:
 	;
 }
 
-
-typedef struct
+void
+hal_util_terminate_helper (HalHelperData *ed)
 {
-	GPid pid;
-	guint timeout_watch_id;
-	guint child_watch_id;
+	HAL_INFO (("killing %d for udi %s", ed->pid, ed->d->udi));
 
-	HelperTerminatedCB cb;
-	gpointer data1;
-	gpointer data2;
+	/* kill kenny! kill it!! */
+	kill (ed->pid, SIGTERM);
+	/* TODO: yikes; what about removing the zombie? */
 
-	HalDevice *d;
-} HelperData;
+	if (ed->timeout_watch_id != (guint) -1)
+		g_source_remove (ed->timeout_watch_id);
+	g_source_remove (ed->child_watch_id);
+	g_spawn_close_pid (ed->pid);
+
+	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
+
+	g_free (ed);
+	return;
+}
 
 static gboolean
 helper_child_timeout (gpointer data)
 {
-	HelperData *ed = (HelperData *) data;
+	HalHelperData *ed = (HalHelperData *) data;
 
 	HAL_INFO (("child timeout for pid %d", ed->pid));
 
@@ -578,7 +583,7 @@ helper_child_timeout (gpointer data)
 	g_source_remove (ed->child_watch_id);
 	g_spawn_close_pid (ed->pid);
 
-	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2);
+	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
 
 	g_free (ed);
 	return FALSE;
@@ -587,14 +592,15 @@ helper_child_timeout (gpointer data)
 static void 
 helper_child_exited (GPid pid, gint status, gpointer data)
 {
-	HelperData *ed = (HelperData *) data;
+	HalHelperData *ed = (HalHelperData *) data;
 
 	HAL_INFO (("child exited for pid %d", ed->pid));
 
-	g_source_remove (ed->timeout_watch_id);
+	if (ed->timeout_watch_id != (guint) -1)
+		g_source_remove (ed->timeout_watch_id);
 	g_spawn_close_pid (ed->pid);
 
-	ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2);
+	ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2, ed);
 
 	g_free (ed);
 }
@@ -630,27 +636,33 @@ helper_add_property_to_env (HalDevice *device, HalProperty *property, gpointer u
 }
 
 
-gboolean
-helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, HelperTerminatedCB cb, guint timeout)
+HalHelperData *
+hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
+			gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout)
 {
-	gboolean ret;
-	HelperData *ed;
-	gchar *argv[] = {(gchar *) path, NULL};
+	HalHelperData *ed;
+	gint argc;
+	gchar **argv;
 	gchar **envp;
 	gchar **ienvp;
 	GError *err = NULL;
 	guint num_env_vars;
-	guint i;
+	guint i, j;
 	guint num_properties;
+	guint num_extras;
 
-	ed = g_new0 (HelperData, 1);
+	ed = g_new0 (HalHelperData, 1);
 	ed->data1 = data1;
 	ed->data2 = data2;
 	ed->d = d;
 	ed->cb = cb;
 
 	num_properties = hal_device_num_properties (d);
-	num_env_vars = num_properties + 2;
+	if (extra_env == NULL)
+		num_extras = 0;
+	else
+		num_extras = g_strv_length ((gchar **) extra_env);
+	num_env_vars = num_properties + 2 + num_extras;
 	if (hald_is_verbose)
 		num_env_vars++;
 	if (hald_is_initialising)
@@ -669,30 +681,44 @@ helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, 
 		envp[i++] = g_strdup ("HALD_STARTUP=1");
 	if (hald_is_shutting_down)
 		envp[i++] = g_strdup ("HALD_SHUTDOWN=1");
+	for (j = 0; j < num_extras; j++) {
+		envp[i++] = g_strdup (extra_env[j]);
+	}
 	envp[i++] = NULL;
 
 	err = NULL;
-	if (!g_spawn_async (NULL, 
-			    argv, 
-			    envp, 
-			    G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH,
-			    NULL,
-			    NULL,
-			    &ed->pid,
-			    &err)) {
-		HAL_ERROR (("Couldn't spawn '%s' err=%s!", path, err->message));
+	if (!g_shell_parse_argv (command_line, &argc, &argv, &err)) {
+		HAL_ERROR (("Error parsing commandline '%s': %s", command_line, err->message));
 		g_error_free (err);
-		ret = FALSE;
 		g_free (ed);
+		ed = NULL;
 	} else {
-		ed->child_watch_id = g_child_watch_add (ed->pid, helper_child_exited, (gpointer) ed);
-		ed->timeout_watch_id = g_timeout_add (timeout, helper_child_timeout, (gpointer) ed);
-		ret = TRUE;
+		err = NULL;
+		if (!g_spawn_async (NULL, 
+				    argv, 
+				    envp, 
+				    G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH,
+				    NULL,
+				    NULL,
+				    &ed->pid,
+				    &err)) {
+			HAL_ERROR (("Couldn't spawn '%s' err=%s!", command_line, err->message));
+			g_error_free (err);
+			g_free (ed);
+			ed = NULL;
+		} else {
+			ed->child_watch_id = g_child_watch_add (ed->pid, helper_child_exited, (gpointer) ed);
+			if (timeout > 0)
+				ed->timeout_watch_id = g_timeout_add (timeout, helper_child_timeout, (gpointer) ed);
+			else
+				ed->timeout_watch_id = (guint) -1;
+		}
 	}
 
 	g_strfreev (envp);
+	g_free (argv);
 
-	return ret;
+	return ed;
 }
 
 gboolean
@@ -1006,4 +1032,127 @@ out:
 		g_strfreev (tokens);
 
 	return res;
+}
+
+gchar **
+hal_util_dup_strv_from_g_slist (GSList *strlist)
+{
+	guint j;
+	guint len;
+	gchar **strv;
+	GSList *i;
+
+	len = g_slist_length (strlist);
+	strv = g_new (char *, len + 1);
+
+	for (i = strlist, j = 0; i != NULL; i = g_slist_next (i), j++) {
+		strv[j] = g_strdup ((const gchar *) i->data);
+	}
+	strv[j] = NULL;
+
+	return strv;	
+}
+
+/* -------------------------------------------------------------------------------------------------------------- */
+
+typedef struct {
+	HalDevice *d;
+	gchar **programs;
+	gchar **extra_env;
+	guint next_program;
+
+	HalCalloutsDone callback;
+	gpointer userdata;
+
+} Callout;
+
+static void callout_do_next (Callout *c);
+
+static void 
+callout_terminated (HalDevice *d, gboolean timed_out, gint return_code, 
+		    gpointer data1, gpointer data2, HalHelperData *helper_data)
+{
+	Callout *c;
+
+	c = (Callout *) data1;
+	callout_do_next (c);
+}
+
+static void
+callout_do_next (Callout *c)
+{
+
+	/* Check if we're done */
+	if (c->programs[c->next_program] == NULL) {
+		HalDevice *d;
+		gpointer userdata;
+		HalCalloutsDone callback;
+
+		d = c->d;
+		userdata = c->userdata;
+		callback = c->callback;
+
+		g_strfreev (c->programs);
+		g_strfreev (c->extra_env);
+		g_free (c);
+
+		callback (d, userdata);
+
+	} else {
+		hal_util_helper_invoke (c->programs[c->next_program], c->extra_env, c->d, 
+					(gpointer) c, NULL, callout_terminated, HAL_HELPER_TIMEOUT);
+		c->next_program++;
+	}
+}
+
+static void
+hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata, GSList *programs, gchar **extra_env)
+{
+	Callout *c;
+
+	c = g_new0 (Callout, 1);
+	c->d = d;
+	c->callback = callback;
+	c->userdata = userdata;
+	c->programs = hal_util_dup_strv_from_g_slist (programs);
+	c->extra_env = g_strdupv (extra_env);
+	c->next_program = 0;
+
+	callout_do_next (c);
+}
+
+void
+hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata)
+{
+	GSList *programs;
+	gchar *extra_env[2] = {"HALD_ACTION=add", NULL};
+
+	if ((programs = hal_device_property_get_strlist (d, "info.callouts.add")) == NULL) {
+		callback (d, userdata);
+		goto out;
+	}	
+
+	HAL_INFO (("Add callouts for udi=%s", d->udi));
+
+	hal_callout_device (d, callback, userdata, programs, extra_env);
+out:
+	;
+}
+
+void
+hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata)
+{
+	GSList *programs;
+	gchar *extra_env[2] = {"HALD_ACTION=remove", NULL};
+
+	if ((programs = hal_device_property_get_strlist (d, "info.callouts.remove")) == NULL) {
+		callback (d, userdata);
+		goto out;
+	}	
+
+	HAL_INFO (("Remove callouts for udi=%s", d->udi));
+
+	hal_callout_device (d, callback, userdata, programs, extra_env);
+out:
+	;
 }

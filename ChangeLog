@@ -1,3 +1,66 @@
+2005-02-08  David Zeuthen  <davidz@redhat.com>
+
+	* hald/run-hald.sh: Update to include a few more paths
+
+	* hald/linux2/addons/Makefile.am: Add build rules for hald-addon-acpi
+
+	* hald/linux2/addons/addon-acpi.c: New file
+
+	* hald/linux2/pmu.c (pmu_synthesize_hotplug_events): Also look for
+	computer in the TDL
+
+	* hald/linux2/osspec.c (computer_callouts_add_done): New function
+	(osspec_probe): Run callouts for computer
+
+	* hald/linux2/classdev.c (add_classdev_probing_helper_done): Fix up
+	for the new helper
+
+	* hald/linux2/apm.c (apm_synthesize_hotplug_events): Also look for
+	computer in the TDL
+
+	* hald/linux2/acpi.c (acpi_synthesize_hotplug_events): Also look for
+	computer in the TDL
+	(acpi_generic_remove): Don't remove the device
+	(acpi_callouts_add_done): New function
+	(acpi_callouts_remove_done): New function
+	(hotplug_event_begin_add_acpi): Run add callouts
+	(hotplug_event_begin_remove_acpi): Run remove callouts
+
+	* hald/property.c (hal_property_to_string): Add code for string lists
+
+	* hald/hald.c (addon_terminated): New function
+	(gdl_store_changed): Run addons
+	(gdl_property_changed): Don't run property.d callouts
+	(gdl_capability_added): Don't run capability.d callouts
+
+	* hald/util.h: Move from hald/linux2 since this is generic.
+	Export the HalHelperData structure when doing
+	hal_util_helper invoke. Add prototypes for hal_util_terminate_
+	helper, hal_util_dup_strv_from_g_slist,
+	hal_util_callout_device_add, hal_util_callout_device_remove.
+
+	* hald/util.c: Move from hald/linux2 since this is generic.
+	(hal_util_terminate_helper): New function
+	(hal_util_helper_invoke): Renamed from helper_invoke. Accept
+	command line parameters (through g_shell_parse_argv). Accept a
+	strv of extra environement to set. Introduce that timeout==0 means
+	no timeout.  Return the HalHelperData structure
+	(hal_util_dup_strv_from_g_slist): New convenience function; create
+	a new NULL-terminated string vector from a GSList of strings.
+	(callout_terminated): New function
+	(callout_do_next): New function
+	(hal_callout_device): New function
+	(hal_util_callout_device_add): New function
+	(hal_util_callout_device_remove): New function
+
+	* hald/linux2/util.[ch]: Remove
+
+	* hald/callout.[ch]: Remove since this functionality is now in util.[ch]
+
+	* hald/Makefile.am: Add util.[ch]
+
+	* hald/linux2/Makefile.am: Remove util.[ch]
+
 2005-02-07  David Zeuthen  <davidz@redhat.com>
 
 	* drive_id/*: Add new drive_id library from Kay
