@@ -263,6 +263,36 @@ static void free_buffer(struct volume_id *id)
 	}
 }
 
+#define HPT37X_CONFIG_OFF		0x1200
+#define HPT37X_MAGIC_OK			0x5a7816f0
+#define HPT37X_MAGIC_BAD		0x5a7816fd
+static int probe_highpoint_ataraid(struct volume_id *id, __u64 off)
+{
+	struct hpt37x {
+		__u8	filler1[32];
+		__u32	magic;
+		__u32	magic_0;
+		__u32	magic_1;
+	} __attribute__((packed)) *hpt;
+
+	const __u8 *buf;
+
+	buf = get_buffer(id, off + HPT37X_CONFIG_OFF, 0x200);
+	if (buf == NULL)
+		return -1;
+
+	hpt = (struct hpt37x *) buf;
+
+	if (hpt->magic != HPT37X_MAGIC_OK && hpt->magic != HPT37X_MAGIC_BAD)
+		return -1;
+
+	id->usage_id = VOLUME_ID_RAID;
+	id->type_id = VOLUME_ID_HPTRAID;
+	id->type = "hpt_ataraid_member";
+
+	return 0;
+}
+
 #define LVM1_SB_OFF			0x400
 #define LVM1_MAGIC			"HM"
 static int probe_lvm1(struct volume_id *id, __u64 off)
@@ -2038,6 +2068,9 @@ int volume_id_probe(struct volume_id *id,
 	case VOLUME_ID_LVM2:
 		rc = probe_lvm2(id, off);
 		break;
+	case VOLUME_ID_HPTRAID:
+		rc = probe_highpoint_ataraid(id, off);
+		break;
 	case VOLUME_ID_ALL:
 	default:
 		/* probe for raid first, cause fs probes may be successful on raid members */
@@ -2048,6 +2081,9 @@ int volume_id_probe(struct volume_id *id,
 		if (rc == 0)
 			break;
 		rc = probe_lvm2(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_highpoint_ataraid(id, off);
 		if (rc == 0)
 			break;
 
@@ -2128,7 +2164,7 @@ struct volume_id *volume_id_open_node(const char *path)
 	struct volume_id *id;
 	int fd;
 
-	fd = open(path, O_RDONLY /*| O_NONBLOCK */);
+	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		dbg("unable to open '%s'", path);
 		return NULL;

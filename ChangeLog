@@ -1,3 +1,9 @@
+2004-10-25  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_highpoint_ataraid),
+	(volume_id_probe), (volume_id_open_node): Add recognition for
+	highpoint ataraid volumes.
+
 2004-10-21  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux/net_class_device.c (net_class_pre_process): Just see if
