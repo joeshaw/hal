@@ -319,7 +319,8 @@ usb_add (const gchar *sysfs_path, HalDevice *parent)
 		hal_device_property_set_string (d, "info.bus", "usb");
 
 		/* take all usb_device.* properties from parent and make them usb.* on this object */
-		hal_device_merge_with_rewrite (d, parent, "usb.", "usb_device.");
+		if (parent)
+			hal_device_merge_with_rewrite (d, parent, "usb.", "usb_device.");
 
 		hal_device_property_set_string (d, "usb.linux.sysfs_path", sysfs_path);
 

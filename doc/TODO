@@ -8,9 +8,9 @@ updates this file to reflect it.
 
 Ongoing items that always need work
 -----------------------------------
- - valgrind once in a while to fix memory leaks / memory corruption
+ - Valgrind once in a while to fix memory leaks / memory corruption
 
- - keeping the spec in sync with the code
+ - Keeping the spec in sync with the code
 
  - Extend test suite coverage
 
@@ -28,6 +28,9 @@ Small items
 
  - Fix storage policy properties now that we have string lists
 
+ - Make the helpers (probers, addons) use a direct connection to hald
+   instead of routing it through the system message bus
+
 Medium items
 ------------
 
@@ -44,6 +47,11 @@ Big items
  - Finish volume_id so it's safe to use on IDE drives; e.g. make it detect
    various IDE RAID signatures
 
+ - Port server code to new glib/gobject D-BUS bindings when they're cooked
+   and ready
+   - We get introspection for free
+   - GNOME projects etc. would use D-BUS glib bindings instead of libhal
+
  - Method invocations - have some way to specify that that a hal device
    object exports the org.freedesktop.Hal.Device.Foo.Bar interface -
    suggest to use a property info.interfaces (strlist) with what interfaces
@@ -54,6 +62,8 @@ Big items
  - Persistent properties, e.g. the ability for someone using libhal to
    say libhal_device_property_set_persistent (udi, "some.property.name") -
    should be a privileged operation
+
+ - Persistent device objects
 
  - Move all privilege checking to D-BUS configuration files - the one shipped
    with hal wouldn't allow much but distributors are free to change this as

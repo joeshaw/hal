@@ -146,6 +146,13 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
 	}
 
+	if (hotplug_event->is_add && hal_device_store_match_key_value_string (hald_get_gdl (),
+									      "linux.sysfs_path",
+									      hotplug_event->sysfs.sysfs_path)) {
+		HAL_ERROR (("devpath %s already present in the store, ignore event", hotplug_event->sysfs.sysfs_path));
+		hotplug_event_end ((void *) hotplug_event);
+		return;
+	}
 
 	if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {		
 		if (hotplug_event->is_add) {

@@ -1,3 +1,22 @@
+2005-03-15  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO (CVSID): Add a few items
+
+2005-03-15  David Zeuthen  <davidz@redhat.com>
+
+	Two patches from Kay Sievers Kay Sievers <kay.sievers@vrfy.org>
+
+	* hald/linux2/physdev.c (usb_add): Such events should not happen, 
+	but better recover from it. :) SEQNUM=0 ACTION=add DEVPATH=
+	"/devices/pci0000:00/0000:00:1d.7" /usr/libexec/hal.hotplug usb
+
+	* hald/linux2/hotplug.c (hotplug_event_begin_sysfs): While playing
+	around with hotplug event replay from initramfs, it happens, that
+	events are generated for devices HAL already knows from its
+	coldplug run. This leads to a lot of funny double entries in the
+	device store. :) We should prevent the device addition by hotplug
+	events if we already have one with the same sysfs-devpath.
+
 2005-03-12  W. Michael Petullo  <mike@flyn.org>
 
 	* hald/linux2/blockdev.c: s/sesame/luks.
