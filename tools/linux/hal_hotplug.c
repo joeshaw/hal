@@ -94,21 +94,22 @@ get_sysfs_mnt_path ()
 }
 
 static const char *file_list_usb[] = {
-	"idProduct",
-	"idVendor",
-	"bcdDevice",
-	"bMaxPower",
-	/*"serial", */
-	"bmAttributes",
-	"manufacturer",
-	"product",
-	"bDeviceClass",
-	"bDeviceSubClass",
-	"bDeviceProtocol",
-	"bNumConfigurations",
-	"bConfigurationValue",
-	"bNumInterfaces",
+	 "idProduct",
+	 "idVendor",
+	 "bcdDevice",
+	 "bMaxPower",
+	 /*"serial", */
+	 "bmAttributes",
+	 /*"manufacturer",*/
+	 "product",
+	 "bDeviceClass",
+	 "bDeviceSubClass",
+	 "bDeviceProtocol",
+	 "bNumConfigurations",
+	 "bConfigurationValue",
+	 "bNumInterfaces",
 	NULL
+
 };
 
 static const char *file_list_usbif[] = {

@@ -1,8 +1,15 @@
 2004-07-04  David Zeuthen  <david@fubar.dk>
 
+	* tools/linux/hal_hotplug.c: Don't wait for 'manufacturer' file for
+	USB devices since it's not guaranteed to exist. 
+	Observed by Eric Butler <eric@extremeboredom.net>
+
+2004-07-04  David Zeuthen  <david@fubar.dk>
+
 	* hald/device_info.c (scan_fdi_files): Use glib to determine
 	the file type since d_type in struct dirent can be DT_UNKNOWN
-
+	Observed by Eric Butler <eric@extremeboredom.net>
+	
 2004-07-04  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/net_class_device.c (set_device_link_status):
