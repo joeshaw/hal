@@ -111,145 +111,6 @@ media_type_to_string (int media_type)
 	}
 }
 
-static void
-link_detection_handle_message (struct nlmsghdr *hdr, HalDevice *d)
-{
-	struct ifinfomsg *ifinfo;
-	char ifname[1024];
-	struct rtattr *attr;
-	int attr_len;
-
-	ifinfo = NLMSG_DATA (hdr);
-
-	if (hdr->nlmsg_len < NLMSG_LENGTH (sizeof (struct ifinfomsg))) {
-		HAL_ERROR (("Packet too small or truncated for ifinfomsg"));
-		return;
-	}
-
-	memset (&ifname, 0, sizeof (ifname));
-
-	attr = (void *) ifinfo + NLMSG_ALIGN (sizeof (struct ifinfomsg));
-	attr_len = NLMSG_PAYLOAD (hdr, sizeof (struct ifinfomsg));
-
-	while (RTA_OK (attr, attr_len)) {
-		if (attr->rta_type == IFLA_IFNAME) {
-			int l = RTA_PAYLOAD (attr);
-
-			if (l > 1023)
-				l = 1023;
-
-			strncpy (ifname, RTA_DATA (attr), l);
-		}
-
-		attr = RTA_NEXT (attr, attr_len);
-	}
-
-	hal_device_property_set_bool (d, "net.ethernet.link",
-				      ifinfo->ifi_flags & IFF_RUNNING ?
-				      TRUE : FALSE);
-
-	/*
-	 * Check the MII registers to set our link rate if we haven't set
-	 * it previously.
-	 */
-	if (!hal_device_has_property (d, "net.ethernet.rate"))
-		mii_get_rate (d);
-}
-
-#define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
-                           s >= sizeof (struct nlmsghdr) && \
-                           s >= h->nlmsg_len))
-
-static gboolean
-link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
-			   gpointer user_data)
-{
-	HalDevice *d = HAL_DEVICE (user_data);
-	int fd;
-	int bytes_read;
-	int total_read = 0;
-	char buf[1024];
-
-	if (cond & ~(G_IO_IN | G_IO_PRI)) {
-		HAL_ERROR (("Error occurred on netlink socket"));
-		return FALSE;
-	}
-
-	fd = g_io_channel_unix_get_fd (channel);
-
-	do {
-		errno = 0;
-		bytes_read = recv (fd,
-				   buf + total_read,
-				   sizeof (buf) - total_read,
-				   MSG_DONTWAIT);
-
-		if (bytes_read > 0)
-			total_read += bytes_read;
-	} while (bytes_read > 0 || errno == EINTR);
-
-	if (bytes_read < 0 && errno != EAGAIN) {
-		HAL_ERROR (("Error reading data off netlink socket"));
-		return FALSE;
-	}
-
-	if (total_read > 0) {
-		struct nlmsghdr *hdr = (struct nlmsghdr *) buf;
-		int offset = 0;
-
-		while (offset < total_read &&
-		       VALID_NLMSG (hdr, total_read - offset)) {
-			if (hdr->nlmsg_type == NLMSG_DONE)
-				break;
-
-			if (hdr->nlmsg_type == RTM_NEWLINK ||
-			    hdr->nlmsg_type == RTM_DELLINK)
-				link_detection_handle_message (hdr, d);
-
-			offset += hdr->nlmsg_len;
-			hdr = (struct nlmsghdr *) (buf + offset);
-		}
-
-		if (offset < total_read &&
-		    !VALID_NLMSG (hdr, total_read - offset)) {
-			HAL_ERROR (("Packet too small or truncated"));
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-static void
-link_detection_init (HalDevice *d)
-{
-	int fd;
-	struct sockaddr_nl addr;
-	GIOChannel *channel;
-
-	fd = socket (PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
-
-	if (fd < 0) {
-		HAL_ERROR (("Unable to create netlink socket"));
-		return;
-	}
-
-	memset (&addr, 0, sizeof (addr));
-	addr.nl_family = AF_NETLINK;
-	addr.nl_pid = getpid ();
-	addr.nl_groups = RTMGRP_LINK;
-
-	if (bind (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
-		HAL_ERROR (("Unable to bind to netlink socket"));
-		return;
-	}
-
-	channel = g_io_channel_unix_new (fd);
-
-	g_io_add_watch (channel, G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_NVAL,
-			link_detection_data_ready, d);
-}
-
 /** Read a word from the MII transceiver management registers 
  *
  *  @param  iface               Which interface
@@ -392,6 +253,145 @@ mii_get_link (HalDevice *d)
 	mii_get_rate (d);
 
 	close (sockfd);
+}
+
+static void
+link_detection_handle_message (struct nlmsghdr *hdr, HalDevice *d)
+{
+	struct ifinfomsg *ifinfo;
+	char ifname[1024];
+	struct rtattr *attr;
+	int attr_len;
+
+	ifinfo = NLMSG_DATA (hdr);
+
+	if (hdr->nlmsg_len < NLMSG_LENGTH (sizeof (struct ifinfomsg))) {
+		HAL_ERROR (("Packet too small or truncated for ifinfomsg"));
+		return;
+	}
+
+	memset (&ifname, 0, sizeof (ifname));
+
+	attr = (void *) ifinfo + NLMSG_ALIGN (sizeof (struct ifinfomsg));
+	attr_len = NLMSG_PAYLOAD (hdr, sizeof (struct ifinfomsg));
+
+	while (RTA_OK (attr, attr_len)) {
+		if (attr->rta_type == IFLA_IFNAME) {
+			int l = RTA_PAYLOAD (attr);
+
+			if (l > 1023)
+				l = 1023;
+
+			strncpy (ifname, RTA_DATA (attr), l);
+		}
+
+		attr = RTA_NEXT (attr, attr_len);
+	}
+
+	hal_device_property_set_bool (d, "net.ethernet.link",
+				      ifinfo->ifi_flags & IFF_RUNNING ?
+				      TRUE : FALSE);
+
+	/*
+	 * Check the MII registers to set our link rate if we haven't set
+	 * it previously.
+	 */
+	if (!hal_device_has_property (d, "net.ethernet.rate"))
+		mii_get_rate (d);
+}
+
+#define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
+                           s >= sizeof (struct nlmsghdr) && \
+                           s >= h->nlmsg_len))
+
+static gboolean
+link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
+			   gpointer user_data)
+{
+	HalDevice *d = HAL_DEVICE (user_data);
+	int fd;
+	int bytes_read;
+	int total_read = 0;
+	char buf[1024];
+
+	if (cond & ~(G_IO_IN | G_IO_PRI)) {
+		HAL_ERROR (("Error occurred on netlink socket"));
+		return FALSE;
+	}
+
+	fd = g_io_channel_unix_get_fd (channel);
+
+	do {
+		errno = 0;
+		bytes_read = recv (fd,
+				   buf + total_read,
+				   sizeof (buf) - total_read,
+				   MSG_DONTWAIT);
+
+		if (bytes_read > 0)
+			total_read += bytes_read;
+	} while (bytes_read > 0 || errno == EINTR);
+
+	if (bytes_read < 0 && errno != EAGAIN) {
+		HAL_ERROR (("Error reading data off netlink socket"));
+		return FALSE;
+	}
+
+	if (total_read > 0) {
+		struct nlmsghdr *hdr = (struct nlmsghdr *) buf;
+		int offset = 0;
+
+		while (offset < total_read &&
+		       VALID_NLMSG (hdr, total_read - offset)) {
+			if (hdr->nlmsg_type == NLMSG_DONE)
+				break;
+
+			if (hdr->nlmsg_type == RTM_NEWLINK ||
+			    hdr->nlmsg_type == RTM_DELLINK)
+				link_detection_handle_message (hdr, d);
+
+			offset += hdr->nlmsg_len;
+			hdr = (struct nlmsghdr *) (buf + offset);
+		}
+
+		if (offset < total_read &&
+		    !VALID_NLMSG (hdr, total_read - offset)) {
+			HAL_ERROR (("Packet too small or truncated"));
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+static void
+link_detection_init (HalDevice *d)
+{
+	int fd;
+	struct sockaddr_nl addr;
+	GIOChannel *channel;
+
+	fd = socket (PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+
+	if (fd < 0) {
+		HAL_ERROR (("Unable to create netlink socket"));
+		return;
+	}
+
+	memset (&addr, 0, sizeof (addr));
+	addr.nl_family = AF_NETLINK;
+	addr.nl_pid = getpid ();
+	addr.nl_groups = RTMGRP_LINK;
+
+	if (bind (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
+		HAL_ERROR (("Unable to bind to netlink socket"));
+		return;
+	}
+
+	channel = g_io_channel_unix_new (fd);
+
+	g_io_add_watch (channel, G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_NVAL,
+			link_detection_data_ready, d);
 }
 
 /** This method is called just before the device is either merged
