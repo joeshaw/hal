@@ -38,6 +38,8 @@
 
 enum {
 	ACPI_TYPE_BATTERY,
+	ACPI_TYPE_PROCESSOR,
+	ACPI_TYPE_FAN,
 	ACPI_TYPE_AC_ADAPTER,
 	ACPI_TYPE_BUTTON
 };
@@ -104,6 +106,44 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		device_property_atomic_update_end ();
 	}
 
+	return TRUE;
+}
+
+static gboolean
+processor_refresh (HalDevice *d, ACPIDevHandler *handler)
+{
+	const char *path;
+
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return FALSE;
+
+	hal_device_property_set_string (d, "info.product", "Processor");
+	hal_device_property_set_string (d, "info.category", "processor");
+	hal_device_add_capability (d, "processor");
+	hal_util_set_int_elem_from_file (d, "processor.number", path, 
+					 "info", "processor id", 0, 10);
+	hal_util_set_bool_elem_from_file (d, "processor.can_throttle", path, 
+					  "info", "throttling control", 0, "yes");
+	return TRUE;
+}
+
+static gboolean
+fan_refresh (HalDevice *d, ACPIDevHandler *handler)
+{
+	const char *path;
+
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return FALSE;
+
+	hal_device_property_set_string (d, "info.product", "Fan");
+	hal_device_property_set_string (d, "info.category", "fan");
+	hal_device_add_capability (d, "fan");
+	hal_util_set_int_elem_from_file (d, "processor.number", path, 
+					 "info", "processor id", 0, 10);
+	hal_util_set_bool_elem_from_file (d, "fan.enabled", path, 
+					  "state", "status", 0, "on");
 	return TRUE;
 }
 
@@ -234,6 +274,14 @@ acpi_synthesize_hotplug_events (void)
 	snprintf (path, sizeof (path), "%s/acpi/battery", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BATTERY);
 
+	/* collect processors */
+	snprintf (path, sizeof (path), "%s/acpi/processor", get_hal_proc_path ());
+	acpi_synthesize (path, ACPI_TYPE_PROCESSOR);
+
+	/* collect fans */
+	snprintf (path, sizeof (path), "%s/acpi/fan", get_hal_proc_path ());
+	acpi_synthesize (path, ACPI_TYPE_FAN);
+
 	/* collect AC adapters */
 	snprintf (path, sizeof (path), "%s/acpi/ac_adapter", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_AC_ADAPTER);
@@ -295,6 +343,22 @@ static ACPIDevHandler acpidev_handler_battery = {
 	.remove      = acpi_generic_remove
 };
 
+static ACPIDevHandler acpidev_handler_processor = { 
+	.acpi_type   = ACPI_TYPE_PROCESSOR,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = processor_refresh,
+	.remove      = acpi_generic_remove
+};
+
+static ACPIDevHandler acpidev_handler_fan = { 
+	.acpi_type   = ACPI_TYPE_FAN,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = fan_refresh,
+	.remove      = acpi_generic_remove
+};
+
 static ACPIDevHandler acpidev_handler_button = { 
 	.acpi_type   = ACPI_TYPE_BUTTON,
 	.add         = acpi_generic_add,
@@ -313,6 +377,8 @@ static ACPIDevHandler acpidev_handler_ac_adapter = {
 
 static ACPIDevHandler *acpi_handlers[] = {
 	&acpidev_handler_battery,
+	&acpidev_handler_processor,
+	&acpidev_handler_fan,
 	&acpidev_handler_button,
 	&acpidev_handler_ac_adapter,
 	NULL

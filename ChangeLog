@@ -1,3 +1,15 @@
+2005-03-02  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/acpi.c (processor_refresh): s/system.processor/processor/
+
+2005-03-02  Richard Hughes  <richard@hughsie.com>
+
+	* hald/linux2/acpi.c (processor_refresh, fan_refresh): New
+	functions to handle additional ACPI devices.
+
+	* hald/linux2/acpi.c (acpi_synthesize_hotplug_events): Added
+	processor and fan handlers.
+ 
 2005-03-02  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux2/classdev.c (sound_add): Rename alsa.id to alsa.card_id;
