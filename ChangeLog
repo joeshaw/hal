@@ -1,3 +1,24 @@
+2004-10-06  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/osspec.c (hald_helper_data): New handling of hotplug
+	events with SEQNUM < LAST_SEQNUM. Idea from Sjoerd Simons 
+	<sjoerd@luon.net>.
+
+2004-10-06  David Zeuthen  <david@fubar.dk>
+
+	Patch from Martin Pitt <martin.pitt@canonical.com>.
+
+	* hald/linux/osspec.c (add_device): Check whether given_sysfs_path
+	is NULL and immediately return in this case; previously, this
+	parameter was copied and compared without checking, which caused a
+	segfault.
+
+	* hald/hald.c (drop_privileges): Do not exit hald if capabilities
+	cannot be installed (which happens on kernels which do not support
+	capabilities), since only few features actually depend on
+	additional capabilities (currently only the "link" detection of
+	MII ethernet cards)
+
 2004-10-02  David Zeuthen  <david@fubar.dk>
 
 	* libhal/libhal.c (hal_initialize): Don't set is_shutdown when we're

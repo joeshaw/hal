@@ -298,8 +298,9 @@ drop_privileges ()
     cap = cap_from_text ("cap_net_admin=ep");
 
     if(cap_set_proc(cap)) {
-	HAL_ERROR (("drop_privileges: could not install capabilities"));
-	exit (-1);
+	HAL_WARNING (("Your kernel does not support capabilities; some features will not be available."));
+	/* we do not fail on kernels which do not support capabilities, since
+	 * only very few features actually depend on them */
     }
 
     if(cap_free (cap)) {

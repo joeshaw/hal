@@ -898,6 +898,11 @@ add_device (const char *given_sysfs_path, const char *subsystem, struct hald_hel
 	char sysfs_path[SYSFS_PATH_MAX];
 	HalDevice *hal_device = NULL;
 
+	if (given_sysfs_path == NULL) {
+		HAL_WARNING (("given_sysfs_path is NULL, cannot add this device" ));
+		return NULL;
+	}
+
 	strncpy (sysfs_path, given_sysfs_path, SYSFS_PATH_MAX);
 
 	len1 = snprintf (buf1, SYSFS_PATH_MAX, "%s/block", sysfs_mount_path);
@@ -1494,16 +1499,9 @@ hald_helper_data (GIOChannel *source,
 		}
 
 		if (msg.seqnum < last_hotplug_seqnum) {
-			/* yikes, this means were started during a hotplug */
-			HAL_WARNING (("Got SEQNUM=%llu, but last_hotplug_seqnum=%llu", msg.seqnum, last_hotplug_seqnum));
 
-			/* have to process immediately other we may deadlock due to
-			 * the hotplug semaphore */
-			hald_helper_hotplug (msg.action, msg.seqnum, g_strdup (msg.subsystem), 
-					     g_strdup (msg.sysfs_path), &msg);
-			/* still need to process the queue though */
-			hald_helper_hotplug_process_queue ();
-			goto out;
+			/* Just reduce the last_hotplug_seqnum counter */
+			last_hotplug_seqnum = msg.seqnum;
 		}
 
 		/* Queue up this hotplug event and process the queue */
