@@ -1759,6 +1759,62 @@
     </sect2>
 
 
+    <sect2 id="device-properties-kernel">
+      <title><literal>kernel</literal> namespace</title>
+      <para>
+
+	This namespace is found on the toplevel "Computer" device,
+	and represents information about the currently running kernel.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>kernel.name</literal> (string)</entry>
+              <entry>example: Linux</entry>
+              <entry>No</entry>
+              <entry>
+                The name of the kernel, usually the equivalent of
+                <literal>uname -s</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>kernel.version</literal> (string)</entry>
+              <entry>example: 2.6.5-7.104-default</entry>
+              <entry>No</entry>
+              <entry>
+                The version of the currently running kernel.  Usually
+                the equivalent of <literal>uname -r</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>kernel.machine</literal> (string)</entry>
+              <entry>example: i686</entry>
+              <entry>No</entry>
+              <entry>
+                The "machine hardware name" of the currently running kernel.
+                Usually the equivalent of <literal>uname -m</literal>.
+	      </entry>
+            </row>
+				      
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+    </sect2>
+
+
     <sect2 id="device-properties-volume-disc">
       <title><literal>volume.disc</literal> namespace</title>
       <para>

@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/utsname.h>
 
 #include <glib.h>
 #include <dbus/dbus.h>
@@ -786,6 +787,7 @@ osspec_probe (void)
 {
 	GSList *coldplug_list;
 	HalDevice *root;
+	struct utsname un;
 	
 	/* build the coldplug list */
 	coldplug_list = compute_coldplug_list ();
@@ -803,6 +805,15 @@ osspec_probe (void)
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
+	
+	if (uname (&un) >= 0) {
+		hal_device_property_set_string (root, "kernel.name",
+						un.sysname);
+		hal_device_property_set_string (root, "kernel.version",
+						un.release);
+		hal_device_property_set_string (root, "kernel.machine",
+						un.machine);
+	}
 
 	/* begin processing the coldplug_list when computer is added */
 	g_signal_connect (root,

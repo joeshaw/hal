@@ -1,3 +1,13 @@
+2004-08-26  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Don't check for a C++ compiler... we don't have
+	any C++ code.
+
+	* doc/spec/hal-spec.xml.in: Add a section about kernel properties.
+
+	* hald/linux/osspec.c (osspec_probe): Get kernel info from uname()
+	and add the properties to the Computer device.
+
 2004-08-26  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* doc/spec/hal-spec.xml.in: Add description of "volume.fsusage"
