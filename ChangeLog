@@ -1,5 +1,10 @@
 2005-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/README: New file describing the various uses of device
+	information files.
+
+2005-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/osspec.c: Use kernel events layer instead of D_NOTIFY
 	on /etc/mtab. Yay!
 
