@@ -1074,11 +1074,10 @@ detect_media (HalDevice * d)
 		 * only one child)
 		 */
 
-		close (fd);
-
 		child = ds_device_find_by_key_value_string ("info.parent",
 							    d->udi, TRUE);
 		if (child == NULL) {
+			int type;
 			char udi[256];
 
 			/* nope, add child */
@@ -1109,6 +1108,40 @@ detect_media (HalDevice * d)
 			strncat (udi, "-disc", 256);
 			ds_property_set_string (child, "info.udi", udi);
 			ds_device_set_udi (child, udi);
+
+			/* set disc media type as appropriate */
+			type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
+			close(fd);
+			switch (type) {
+			case CDS_AUDIO:		/* audio CD */
+				ds_property_set_string (child,
+						"storage.cdrom.media_type",
+						"audio");
+				break;
+			case CDS_MIXED:		/* mixed mode CD */
+				ds_property_set_string (child,
+						"storage.cdrom.media_type",
+						"mixed");
+				break;
+			case CDS_DATA_1:	/* data CD */
+			case CDS_DATA_2:
+			case CDS_XA_2_1:
+			case CDS_XA_2_2:
+				ds_property_set_string (child,
+						"storage.cdrom.media_type",
+						"data");
+				break;
+			case CDS_NO_INFO:	/* blank or invalid CD */
+				ds_property_set_string (child,
+						"storage.cdrom.media_type",
+						"blank");
+				break;
+			default:		/* should never see this */
+				ds_property_set_string (child,
+						"storage.cdrom.media_type",
+						"unknown");
+				break;
+			}
 
 			/* add new device */
 			ds_gdl_add (child);
@@ -1162,7 +1195,7 @@ block_class_tick (ClassDeviceHandler *self)
 		etc_mtab_process_all_block_devices (FALSE);
 	}
 
-	HAL_INFO (("exiting"));
+	/*HAL_INFO (("exiting"));*/
 
 	return TRUE;
 }

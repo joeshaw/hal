@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <mntent.h>
 #include <syslog.h>
+#include <linux/limits.h>
 
 #include <dbus/dbus.h>
 
@@ -54,7 +55,7 @@
  */
 
 
-static char *sysfs_mnt_path[255];
+static char sysfs_mnt_path[PATH_MAX];
 
 /** Get the mount path for sysfs. A side-effect is that sysfs_mnt_path
  *  is set on success.
@@ -77,7 +78,7 @@ get_sysfs_mnt_path ()
 	       && (mntent = getmntent (mnt)) != NULL) {
 		if (strcmp (mntent->mnt_type, "sysfs") == 0) {
 			dirlen = strlen (mntent->mnt_dir);
-			if (dirlen <= (255 - 1)) {
+			if (dirlen <= (PATH_MAX - 1)) {
 				strcpy (sysfs_mnt_path, mntent->mnt_dir);
 			} else {
 				ret = -1;
@@ -92,7 +93,8 @@ get_sysfs_mnt_path ()
 	return ret;
 }
 
-static char *file_list_usb[] = { "idProduct",
+static const char *file_list_usb[] = {
+	"idProduct",
 	"idVendor",
 	"bcdDevice",
 	"bMaxPower",
@@ -109,23 +111,26 @@ static char *file_list_usb[] = { "idProduct",
 	NULL
 };
 
-static char *file_list_usbif[] = { "bInterfaceClass",
+static const char *file_list_usbif[] = {
+	"bInterfaceClass",
 	"bInterfaceSubClass",
 	"bInterfaceProtocol",
 	"bInterfaceNumber",
 	NULL
 };
 
-static char *file_list_scsi_device[] = { NULL };
+static const char *file_list_scsi_device[] = { NULL };
 
-static char *file_list_scsi_host[] = { NULL };
+static const char *file_list_scsi_host[] = { NULL };
 
-static char *file_list_block[] = { "dev",
+static const char *file_list_block[] = {
+	"dev",
 	"size",
 	NULL
 };
 
-static char *file_list_pci[] = { "device",
+static const char *file_list_pci[] = {
+	"device",
 	"vendor",
 	"subsystem_device",
 	"subsystem_vendor",
@@ -137,13 +142,12 @@ static int
 wait_for_sysfs_info (char *devpath, char *hotplug_type)
 {
 	size_t devpath_len;
-	char **file_list;
+	const char **file_list;
 	int num_tries;
 	int rc;
 	struct stat stat_buf;
-	char *file;
 	int i;
-	char path[255];
+	char path[PATH_MAX];
 
 	syslog (LOG_NOTICE, "waiting for %s info at %s",
 		hotplug_type, devpath);
@@ -201,8 +205,8 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 	num_tries++;
 
 	/* first, check directory */
-	strncpy (path, sysfs_mnt_path, 255);
-	strncat (path, devpath, 255);
+	strncpy (path, sysfs_mnt_path, PATH_MAX);
+	strncat (path, devpath, PATH_MAX);
 
 	/*printf("path0 = %s\n", path); */
 
@@ -213,12 +217,13 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 
 	/* second, check each requested file */
 	for (i = 0; file_list[i] != NULL; i++) {
-		file = file_list[i];
+		const char *file;
 
-		strncpy (path, sysfs_mnt_path, 255);
-		strncat (path, devpath, 255);
-		strncat (path, "/", 255);
-		strncat (path, file, 255);
+		file = file_list[i];
+		strncpy (path, sysfs_mnt_path, PATH_MAX);
+		strncat (path, devpath, PATH_MAX);
+		strncat (path, "/", PATH_MAX);
+		strncat (path, file, PATH_MAX);
 
 		/*printf("path1 = %s\n", path); */
 

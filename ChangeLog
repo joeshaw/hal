@@ -1,3 +1,15 @@
+2004-03-29  Robert Love  <rml@ximian.com>
+
+	* tools/linux/hal_hotplug.c: sysfs_mnt_path should be a "char []"
+	  not a "char * []", also use PATH_MAX instead of 255, and finally
+	  use "const char" as appropriate
+
+2004-03-30  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (detect_media): media detection 
+	on CD-ROM's from the patch from Robert (storage.cdrom.media_type)
+	(block_class_tick): Comment out noisy debug statement when polling
+
 2004-03-30  David Zeuthen  <david@fubar.dk>
 
 	* hald/main.c (device_get_all_properties): Comment out noise trace
