@@ -1,5 +1,23 @@
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (force_unmount): Don't clear the 
+	volume.* properties
+
+	* hald/linux/osspec.c (rem_device): Call the removed method on the
+	ClassDeviceHandler
+
+	* tools/fstab-sync.c:
+	(fs_table_add_volume): Only use fstype auto for optical and floppy
+	drives; ignore the rest if fstype cannot be probled (fixes *some*
+	issues with RAID partitions getting added to fstab)
+	(volume_determine_mount_point): Complete rewrite; this was broken
+	for ieee1394 drives. Also check if the directory is available
+	in /media or whatever the root is
+	(fs_table_remove_generated_entries): Also remove directory in
+	/media. Fixed a bug where only every other line was removed.
+
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
 	* tools/fstab-sync.c (fs_table_has_volume): Properly resolve symlinks
 	that aren't fully qualified
 

@@ -870,6 +870,7 @@ rem_device_callouts_finished (HalDevice *d, gpointer user_data)
 static HalDevice *
 rem_device (const char *sysfs_path, const char *subsystem)
 {
+	int i;
 	int len1;
 	int len2;
 	char buf1[SYSFS_PATH_MAX];
@@ -894,6 +895,15 @@ rem_device (const char *sysfs_path, const char *subsystem)
 			HAL_WARNING (("Removal of class device at sysfs path %s is not yet implemented", sysfs_path));
 			goto out;
 		} else {
+
+			for (i=0; class_device_handlers[i] != NULL; i++) {
+				ClassDeviceHandler *ch = class_device_handlers[i];
+				/** @todo TODO FIXME: just use ->accept() once we get rid of libsysfs */
+				if (strcmp (ch->hal_class_name, subsystem) == 0) {
+					ch->removed (ch, sysfs_path, hal_device);
+				}
+
+			}
 
 			g_signal_connect (hal_device, "callouts_finished",
 					  G_CALLBACK (rem_device_callouts_finished), NULL);

@@ -101,8 +101,8 @@ typedef struct
   char *fs_type;                  /**< Filesystem type or blank */
   char *mount_point;              /**< Final unique mount point, e.g "/media/cdrw2" */
   char *label;                    /**< Label of media or blank */
+  char *drive_type;               /**< The storage.drive_type value */
   boolean is_hotpluggable;        /**< TRUE if the volume stems from a hotpluggable drive */
-  boolean is_optical_drive;       /**< TRUE if the volume is on an optical drive*/
   dbus_int64_t size;              /**< Size in bytes of the volume or -1 if not available */
   char *bus;                      /**< Type of bus the device is connected to */
 } Volume;
@@ -169,7 +169,6 @@ static int open_temp_fstab_file (char **filename);
 static char *get_hal_string_property (const char *udi, const char *property);
 static boolean udi_is_volume_or_nonpartition_drive (const char *udi);
 static Volume *volume_new (const char *udi);
-static void volume_determine_device_type (Volume *volume);
 static void volume_free (Volume *volume);
 static boolean create_mount_point_for_volume (Volume *volume);
 static boolean fs_table_add_volume (FSTable *table, Volume *volume);
@@ -936,50 +935,6 @@ compute_cdrom_name (const char *drive_udi)
   return result;
 }
 
-
-static void
-volume_determine_device_type (Volume *volume)
-{
-  char *storage_device_udi;
-  char *bus;
-  char *drive_type;
-  char buf[64];
-
-  volume->type = NULL;
-
-  storage_device_udi = get_hal_string_property (volume->udi,
-                                                "block.storage_device");
-
-  if (storage_device_udi == NULL || !hal_device_exists (hal_context, storage_device_udi)) {
-    volume->type = strdup ("disk");
-    return;
-  }
-
-  bus = hal_device_get_property_string (hal_context, storage_device_udi,
-					"storage.bus");
-  drive_type = hal_device_get_property_string (hal_context, storage_device_udi,
-					       "storage.drive_type");
-
-  if (strcmp (drive_type, "cdrom") == 0) {
-    
-    volume->type = compute_cdrom_name (storage_device_udi);
-
-  } else if (strcmp (drive_type, "disk") == 0) {
-
-    snprintf (buf, 63, "%sdisk", bus);
-    volume->type = strdup (buf);
-
-  } else {
-
-    volume->type = strdup (drive_type);
-
-  }
-  
-  free (drive_type);
-  free (bus);
-  free (storage_device_udi);
-}
-
 static Volume *
 volume_new (const char *udi)
 {
@@ -987,6 +942,7 @@ volume_new (const char *udi)
   char *storudi;
   dbus_int32_t num_blocks;
   dbus_int32_t block_size;
+  char buf[64];
 
   if (!udi_is_volume_or_nonpartition_drive (udi))
     return NULL;
@@ -1005,15 +961,33 @@ volume_new (const char *udi)
 
   volume->type = NULL;
 
-  volume_determine_device_type (volume);
+  storudi = hal_device_get_property_string (hal_context, udi, "block.storage_device");
+  volume->is_hotpluggable = hal_device_get_property_bool (hal_context, storudi, "storage.hotpluggable");
+  volume->drive_type = hal_device_get_property_string (hal_context, storudi, "storage.drive_type");
+  volume->bus = hal_device_get_property_string (hal_context, storudi, "storage.bus");
+
+  if (strcmp (volume->drive_type, "cdrom") == 0) {    
+    volume->type = compute_cdrom_name (storudi);
+  } else if (strcmp (volume->drive_type, "disk") == 0) {
+    snprintf (buf, 63, "%sdisk", volume->bus);
+    volume->type = strdup (buf);
+  } else {
+    volume->type = strdup (volume->drive_type);
+  }
+
+  free (storudi);
 
   volume->fs_type = get_hal_string_property (udi, "volume.fstype");
   if (volume->fs_type == NULL || strlen (volume->fs_type) == 0)
     {
-      free (volume->fs_type);
-      volume->fs_type = strdup ("auto");
+      if (strcmp (volume->drive_type, "cdrom") == 0 || strcmp (volume->drive_type, "floppy") == 0) {
+	free (volume->fs_type);
+	volume->fs_type = strdup ("auto");
+      } else {
+	volume_free (volume);
+	return NULL;
+      }
     }
-
   if (strcmp (volume->fs_type, "msdos") == 0)
     {
       free (volume->fs_type);
@@ -1023,19 +997,6 @@ volume_new (const char *udi)
   volume->label = get_hal_string_property (udi, "volume.label");
   if (volume->label == NULL)
     volume->label = strdup ("");
-
-
-  storudi = hal_device_get_property_string (hal_context, udi, "block.storage_device");
-  volume->is_hotpluggable = hal_device_get_property_bool (hal_context, storudi, "storage.hotpluggable");
-
-  if (strcmp (hal_device_get_property_string (hal_context, storudi, "storage.drive_type"),
-		"cdrom") == 0) {
-    volume->is_optical_drive = TRUE;
-  } else {
-    volume->is_optical_drive = FALSE;
-  }
-  volume->bus = hal_device_get_property_string (hal_context, storudi, "storage.bus");
-  free (storudi);
 
   if (hal_device_property_exists (hal_context, udi, "volume.block_size") &&
       hal_device_property_exists (hal_context, udi, "volume.num_blocks")) {
@@ -1260,7 +1221,7 @@ fs_table_add_volume (FSTable *table, Volume *volume)
   strcat_len (options, "," FSTAB_SYNC_MOUNT_MANAGED_KEYWORD);
 #endif
 
-  if (volume->is_optical_drive)
+  if (strcmp (volume->drive_type, "cdrom") == 0)
     strcat_len (options, ",ro");
 
   /* cheeasy heuristic for memory sticks */
@@ -1357,91 +1318,39 @@ static boolean
 volume_determine_mount_point (Volume *volume, FSTable *table)
 {
   FSTableLine *line;
-  char *device_type;
-  unsigned long device_number, next_available_device_number = 0;
-  long length;
-  struct stat buf;
+  char desired_name[256];
+  int dev_number;
+  struct stat statbuf;  
 
-  for (line = table->lines; line != NULL; line = line->next)
-    {
-      char *p = NULL, *q = NULL, *end = NULL, *mount_root = NULL;
+  dev_number = 0;
 
-      if (line->mount_point == NULL)
-        continue;
+tryagain:
+  if (dev_number >= 16384) {
+    /* to prevent looping; should never happen (unless you got more than 16k disks) */
+    volume->mount_point = NULL;
+    return FALSE;
+  }
 
-      p = strrchr (line->mount_point, '/');
+  if (dev_number == 0)
+    snprintf (desired_name, sizeof (desired_name), FSTAB_SYNC_MOUNT_ROOT "/%s", volume->type);
+  else
+    snprintf (desired_name, sizeof (desired_name), FSTAB_SYNC_MOUNT_ROOT "/%s%d", volume->type, dev_number);
 
-      if (p != NULL)
-        {
-          mount_root = strndup (line->mount_point, p - line->mount_point + 1);
-          p++;
-        }
-      else
-        continue;
-
-      if (strcmp (mount_root, FSTAB_SYNC_MOUNT_ROOT "/") != 0)
-        {
-          free (mount_root);
-          continue;
-        }
-      free (mount_root);
-
-      for (q = p; *q != '\0' && !isspace (*q) && !isdigit (*q); q++);
-
-      device_type = strndup (p, q - p);
-
-      /* If the mount point doesn't end in a number, assume an implied 0 
-       */
-      if (*q == '\0' || !isdigit (*q))
-        device_number = 0;
-      else
-        device_number = strtoul (q, &end, 10);
-
-      assert (q != end);
-
-      /* Generated mount points don't have numbers in the middle of them--
-       * just at the end
-       */
-      if (end != NULL && *end != '\0')
-        {
-          free (device_type);
-          continue;
-        }
-
-      if (strcmp (volume->type, device_type) == 0
-          && next_available_device_number == device_number)
-        next_available_device_number++;
+  /* see if it's in fstab */
+  for (line = table->lines; line != NULL; line = line->next) {
+    if (line->mount_point != NULL && strcmp (line->mount_point, desired_name) == 0) {
+      dev_number++;
+      goto tryagain;
     }
+  }
 
-  length = strlen (volume->type) + sizeof (FSTAB_SYNC_MOUNT_ROOT "/") + 6 /* digits */;
-  volume->mount_point = malloc (length);
+  /* see if the mount point physically exists */
+  if (stat (desired_name, &statbuf) == 0 || errno != ENOENT) {
+    dev_number++;
+    goto tryagain;
+  }
 
-  if (next_available_device_number == 0)
-    {
-      strcpy (volume->mount_point, FSTAB_SYNC_MOUNT_ROOT "/");
-      strcat (volume->mount_point, volume->type);
-    }
-  else if (snprintf (volume->mount_point, length, FSTAB_SYNC_MOUNT_ROOT"/%s%lu",
-                     volume->type, next_available_device_number) > length)
-    {
-      fstab_update_debug (_("%d: Could not use mount point '%s': %s\n"),
-                          pid, volume->mount_point, "too long");
-
-      free (volume->mount_point);
-      volume->mount_point = NULL;
-      return FALSE;
-    }
-
-  if (stat (volume->mount_point, &buf) < 0 && errno != ENOENT)
-    {
-      fstab_update_debug (_("%d: Could not use mount point '%s': %s\n"),
-                          pid, volume->mount_point, strerror (errno));
-
-      free (volume->mount_point);
-      volume->mount_point = NULL;
-      return FALSE;
-    }
-
+  volume->mount_point = strdup (desired_name);
   return TRUE;
 }
 
@@ -1637,19 +1546,33 @@ fs_table_remove_generated_entries (FSTable *table)
     {
       if (fs_table_line_is_generated (line))
         {
+	  if (rmdir (line->mount_point) < 0)
+	    {
+	      fstab_update_debug (_("%d: Failed to remove mount point '%s': %s\n"),
+				  pid, line->mount_point, strerror (errno));
+	    }
+
+
           if (previous_line == NULL)
+	    {
               table->lines = line->next;
+	    }
           else 
             {
               if (line->next == NULL)
                 table->tail = previous_line;
+
               previous_line->next = line->next;
             }
         }
+      else
+	{
+	  previous_line = line;
+	}
 
-      previous_line = line;
       line = line->next;
     }
+
 }
 
 static boolean

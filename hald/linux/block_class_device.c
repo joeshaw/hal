@@ -392,6 +392,7 @@ force_unmount (HalDevice * d)
 			 * us off the bus, in fact it's doing exiting with code 1
 			 * for us - not nice
 			 */
+/*
 			device_property_atomic_update_begin ();
 			hal_device_property_set_string (d, "volume.mount_point",
 						"");
@@ -399,6 +400,7 @@ force_unmount (HalDevice * d)
 			hal_device_property_set_bool (d, "volume.is_mounted",
 					      FALSE);
 			device_property_atomic_update_end ();
+*/
 		}
 	}
 }
