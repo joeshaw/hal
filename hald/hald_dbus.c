@@ -2197,16 +2197,16 @@ hald_dbus_filter_function (DBusConnection * connection,
 {
 
 	if (dbus_message_is_signal (message,
-				    DBUS_INTERFACE_ORG_FREEDESKTOP_LOCAL,
+				    DBUS_INTERFACE_DBUS,
 				    "Disconnected") &&
 	    strcmp (dbus_message_get_path (message),
-		    DBUS_PATH_ORG_FREEDESKTOP_LOCAL) == 0) {
+		    DBUS_PATH_LOCAL) == 0) {
 
 		dbus_connection_unref (dbus_connection);
 		g_timeout_add (3000, reinit_dbus, NULL);
 
 	} else if (dbus_message_is_signal (message,
-					   DBUS_INTERFACE_ORG_FREEDESKTOP_DBUS,
+					   DBUS_INTERFACE_DBUS,
 					   "NameLost")) {
 
 		if (services_with_locks != NULL)
@@ -2368,8 +2368,8 @@ hald_dbus_init (void)
 
 	dbus_bus_add_match (dbus_connection,
 			    "type='signal',"
-			    "interface='"DBUS_INTERFACE_ORG_FREEDESKTOP_DBUS"',"
-			    "sender='"DBUS_SERVICE_ORG_FREEDESKTOP_DBUS"',"
+			    "interface='"DBUS_INTERFACE_DBUS"',"
+			    "sender='"DBUS_SERVICE_DBUS"',"
 			    "member='NameLost'",
 			    NULL);
 

@@ -1,3 +1,8 @@
+2005-02-25  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald_dbus.c (hald_dbus_filter_function): Patch from Ray Strode
+	<rstrode@redhat.com> to catch up with D-BUS changes
+
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Add back selinux detection; default to auto
