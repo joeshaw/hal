@@ -44,6 +44,29 @@ enum {
 	ACPI_TYPE_BUTTON
 };
 
+#define ACPI_POLL_INTERVAL 10000
+
+static gboolean
+acpi_poll (gpointer data)
+{
+	GSList *i;
+	GSList *devices;
+
+	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "battery.type",
+								    "primary");
+	for (i = devices; i != NULL; i = g_slist_next (i)) {
+		HalDevice *d;
+		
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.acpi_type"))
+			acpi_rescan_device (d);
+	}
+
+	return TRUE;
+}
+
+
 typedef struct ACPIDevHandler_s
 {
 	int acpi_type;
@@ -293,6 +316,11 @@ acpi_synthesize_hotplug_events (void)
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
 	snprintf (path, sizeof (path), "%s/acpi/button/sleep", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
+
+	/* setup timer for things that we need to poll */
+	g_timeout_add (ACPI_POLL_INTERVAL,
+		       acpi_poll,
+		       NULL);
 
 out:
 	return ret;

@@ -1,5 +1,12 @@
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/acpi.c (acpi_poll): New function
+	(acpi_synthesize_hotplug_events): Setup timeout every ten seconds to
+	poll batteries (since some ACPI implementations don't report back when
+	the battery charge level changes)
+
+2005-03-02  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-acpi.c (main): Do call Rescan() when we
 	get a battery event
 
