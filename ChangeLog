@@ -1,3 +1,25 @@
+2004-06-01  David Zeuthen  <david@fubar.dk>
+
+	* hald/hald_conf.[ch]: New files, vendor and user specific
+	configuration of the HAL daemon
+
+	* hald/Makefile.am (hald_SOURCES): Add hald_conf.[ch]
+
+	* hald/linux/block_class_device.c (block_class_pre_process): Set
+	storage.media_check_enabled and storage.automount_enabled to
+	default value from HaldConf. Forgot to set volume.is_mounted to
+	FALSE when building the device. NOTE: when media_check_enabled is
+	set to FALSE use touch /dev/sda (or whatever) to force a poll for
+	media. So, now to write a /etc/hal/hald.conf configuration file
+	parser :-)
+	(cdrom_check): Set storage.cdrom.eject_check_enabled to default
+	value from HaldConf
+	(detect_media): Disable continous printing of error when no medium
+	is in storage device. Respect the storage.media_check_enabled and
+	storage.cdrom.eject_check_enabled properties
+
+	* hald/hald.c (main): Remove opt_run_as
+
 2004-05-31  David Zeuthen  <david@fubar.dk>
 
 	* AUTHORS: Added Joe Shaw

@@ -24,7 +24,8 @@ hald_SOURCES =                                                          \
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\
-	property.h			property.c
+	property.h			property.c                      \
+	hald_conf.h                     hald_conf.c
 
 hald_SOURCES +=	\
 	linux/common.h			linux/common.c			\

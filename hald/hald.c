@@ -161,9 +161,6 @@ usage ()
 /** If #TRUE, we will daemonize */
 static dbus_bool_t opt_become_daemon = TRUE;
 
-/** Run as specified username if not #NULL */
-static char *opt_run_as = NULL;
-
 /** Entry point for HAL daemon
  *
  *  @param  argc                Number of arguments
@@ -267,35 +264,6 @@ main (int argc, char *argv[])
 
 		/* Create session */
 		setsid ();
-	}
-
-	if (opt_run_as != NULL) {
-		uid_t uid;
-		gid_t gid;
-		struct passwd *pw;
-
-
-		if ((pw = getpwnam (opt_run_as)) == NULL) {
-			HAL_ERROR (("Could not lookup user %s, errno=%d",
-				    opt_run_as, errno));
-			exit (1);
-		}
-
-		uid = pw->pw_uid;
-		gid = pw->pw_gid;
-
-		if (setgid (gid) < 0) {
-			HAL_ERROR (("Failed to set GID to %d, errno=%d",
-				    gid, errno));
-			exit (1);
-		}
-
-		if (setuid (uid) < 0) {
-			HAL_ERROR (("Failed to set UID to %d, errno=%d",
-				    uid, errno));
-			exit (1);
-		}
-
 	}
 
 	g_type_init ();

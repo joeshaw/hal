@@ -54,6 +54,7 @@
 #include "../logger.h"
 #include "../device_store.h"
 #include "../callout.h"
+#include "../hald_conf.h"
 #include "class_device.h"
 #include "common.h"
  
@@ -195,6 +196,11 @@ cdrom_check(HalDevice *d, const char *device_file)
 	hal_device_property_set_bool (d, "storage.cdrom.dvdram", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdplusr", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", FALSE);
+
+	hal_device_property_set_bool (
+		d, 
+		"storage.cdrom.eject_check_enabled", 
+		(hald_get_conf ())->storage_cdrom_eject_check_enabled);
 
 	if (capabilities & CDC_CD_R) {
 		hal_device_property_set_bool (d, "storage.cdrom.cdr", TRUE);
@@ -408,7 +414,7 @@ disc_remove_from_gdl (HalDevice *device, gpointer user_data)
  *                              it will only have effect if the device is
  *                              in the GDL and is of capability block and
  *                              is not a volume
- *  @param                      TRUE iff the GDL was modified
+ *  @return                     TRUE iff the GDL was modified
  */
 static dbus_bool_t
 detect_media (HalDevice * d)
@@ -417,6 +423,10 @@ detect_media (HalDevice * d)
 	dbus_bool_t is_cdrom;
 	const char *device_file;
 	HalDevice *child;
+
+	/* respect policy */
+	if (!hal_device_property_get_bool (d, "storage.media_check_enabled"))
+		return FALSE;
 
 	/* need to be in GDL */
 	if (!hal_device_store_find (hald_get_gdl (),
@@ -445,8 +455,8 @@ detect_media (HalDevice * d)
 
 		if (fd == -1) {
 			/* open failed */
-			HAL_WARNING (("open(\"%s\", O_RDONLY) failed, "
-				      "errno=%d", device_file, errno));
+			/*HAL_WARNING (("open(\"%s\", O_RDONLY) failed, "
+			  "errno=%d", device_file, errno));*/
 
 			if (errno == ENOMEDIUM) {
 				force_unmount_of_all_childs (d);
@@ -472,35 +482,40 @@ detect_media (HalDevice * d)
 			return FALSE;
 		}
 
-		/* Check whether the 'eject' button is pressed - supposedly
-		 * only works on MMC-2 drivers and higher...
-		 *
-		 * From http://www.ussg.iu.edu/hypermail/linux/kernel/0202.0/att-0603/01-cd_poll.c
-		 */
+		/* respect policy */
+		if (hal_device_property_get_bool (
+			    d, "storage.cdrom.eject_check_enabled")) {
+
+			/* Check whether the 'eject' button is pressed..
+			 * Supposedly only works on MMC-2 drivers or higher.
+			 *
+			 * From http://www.ussg.iu.edu/hypermail/linux/kernel/0202.0/att-0603/01-cd_poll.c
+			 */
 		
-		memset (&cgc, 0, sizeof(struct cdrom_generic_command));
-		memset (buffer, 0, sizeof(buffer));		
-		cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
-		cgc.cmd[1] = 1;
-		cgc.cmd[4] = 16;
-		cgc.cmd[8] = sizeof (buffer);
-		memset (&sense, 0, sizeof (sense));
-		cgc.timeout = 600;
-		cgc.buffer = buffer;
-		cgc.buflen = sizeof (buffer);
-		cgc.data_direction = CGC_DATA_READ;
-		cgc.sense = &sense;
-		cgc.quiet = 1;
-		ret = ioctl (fd, CDROM_SEND_PACKET, &cgc);
-		if (ret < 0) {
-			HAL_ERROR (("GPCMD_GET_EVENT_STATUS_NOTIFICATION failed, errno=%d", errno));
-		} else {
-			if ((buffer[4]&0x0f) == 0x01) {
-				HAL_INFO (("Eject pressed on udi=%s!", 
-					   hal_device_get_udi (d)));
-				/* handle later */
-				eject_pressed = TRUE;
-				
+			memset (&cgc, 0, sizeof(struct cdrom_generic_command));
+			memset (buffer, 0, sizeof(buffer));		
+			cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
+			cgc.cmd[1] = 1;
+			cgc.cmd[4] = 16;
+			cgc.cmd[8] = sizeof (buffer);
+			memset (&sense, 0, sizeof (sense));
+			cgc.timeout = 600;
+			cgc.buffer = buffer;
+			cgc.buflen = sizeof (buffer);
+			cgc.data_direction = CGC_DATA_READ;
+			cgc.sense = &sense;
+			cgc.quiet = 1;
+			ret = ioctl (fd, CDROM_SEND_PACKET, &cgc);
+			if (ret < 0) {
+				HAL_ERROR (("GPCMD_GET_EVENT_STATUS_NOTIFICATION failed, errno=%d", errno));
+			} else {
+				if ((buffer[4]&0x0f) == 0x01) {
+					HAL_INFO (("Eject pressed on udi=%s!", 
+						   hal_device_get_udi (d)));
+					/* handle later */
+					eject_pressed = TRUE;
+					
+				}
 			}
 		}
 
@@ -894,6 +909,16 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (
 			stordev, "storage.bus", "unknown");
 
+		hal_device_property_set_bool (
+			stordev, 
+			"storage.media_check_enabled", 
+			(hald_get_conf ())->storage_media_check_enabled);
+
+		hal_device_property_set_bool (
+			stordev, 
+			"storage.automount_enabled", 
+			(hald_get_conf ())->storage_automount_enabled);
+
 		hal_device_property_set_string (stordev, 
 						"storage.model", "");
 		hal_device_property_set_string (stordev, 
@@ -967,6 +992,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.uuid", "");
 		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
+		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 
 		/* block device that is a partition; e.g. a storage volume */
 
