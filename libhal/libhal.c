@@ -686,14 +686,11 @@ filter_func (DBusConnection * connection,
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "Condition")) {
 		char *condition_name;
 		char *condition_detail;
-		printf ("foo0\n");
 		if (dbus_message_get_args (message, &error,
 					   DBUS_TYPE_STRING, &condition_name,
 					   DBUS_TYPE_STRING, &condition_detail,
 					   DBUS_TYPE_INVALID)) {
-			printf ("foo1\n");
 			if (ctx->device_new_capability != NULL) {
-				printf ("foo2\n");
 				ctx->device_condition (ctx, object_path, condition_name, condition_detail);
 			}
 		}
