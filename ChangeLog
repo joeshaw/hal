@@ -1,5 +1,27 @@
 2004-08-12  David Zeuthen  <david@fubar.dk>
 
+	* doc/spec/hal-spec.xml.in: Rewrite block.no_partitions spec.
+	Add storage.[serial|firmware_version] which was forgotton.
+	
+	* hald/linux/block_class_device.c (detect_media): Set to
+	value of storage.no_partitions_hint to honor the new spec when
+	creating a volume for media with no partition tables.
+	
+	* tools/fstab-sync.c: Remove DeviceType datatype; document entries
+	in Volume datatype.
+	(udi_is_volume_or_nonpartition_drive): Renamed from udi_is_volume
+	(compute_cdrom_name): New function
+	(volume_determine_device_type): Rewrite
+	(volume_new): Call udi_is_volume_or_nonpartition_drive. Always use
+	"auto" as target filesystem if not known
+	(fs_table_has_volume): Remove debug printfs
+	(fs_table_add_volume): Use hal properties to determine mount flags
+	(add_udi): Don't process volumes spawned from media w/o partitions
+	(remove_udi): Don't process volumes spawned from media w/o partitions
+	(main): Also handle capability 'storage'
+
+2004-08-12  David Zeuthen  <david@fubar.dk>
+
 	* tools/fstab-sync.c (udi_is_volume): Simplify this a bit given
 	that cap volume always implies cap block
 	(main): Check the HAL_INFO_PROP_INFO_CAPABILITIES which is set

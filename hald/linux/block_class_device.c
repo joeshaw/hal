@@ -822,6 +822,9 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 
 		/* copy block.* properties from parent */
 		hal_device_merge_with_rewrite (child, d, "block", "block");
+		/* in particular, set this to the value of storage.no_partitions_hint */
+		hal_device_property_set_bool (child, "block.no_partitions", 
+					      hal_device_property_get_bool (d, "block.no_partitions"));
 
 		/* modify some properties */
 		hal_device_property_set_bool (child, "block.is_volume", TRUE);

@@ -72,23 +72,19 @@
 
 typedef int boolean;
 
-typedef enum
-{
-  DEVICE_TYPE_UNKNOWN = 0,
-  DEVICE_TYPE_DISK,
-  DEVICE_TYPE_CDROM,
-} DeviceType;
-
+/** This structure represents either a volume with a mountable filesystem
+ *  or a drive that uses media without partition tables.
+ *
+ *  All fields needs to be non-NULL.
+ */
 typedef struct
 {
-  char *udi;
-  char *block_device;
-  char *type;
-  char *fs_type;
-  char *mount_point;
-  char *label;
-
-  DeviceType device_type;
+  char *udi;             /**< UDI from HAL */
+  char *block_device;    /**< Special device file */
+  char *type;            /**< Name used in mount point construction, e.g. "cdrw" */
+  char *fs_type;         /**< Filesystem type or blank */
+  char *mount_point;     /**< Final unique mount point, e.g "/media/cdrw2" */
+  char *label;           /**< Label of media or blank */
 } Volume;
 
 typedef enum 
@@ -153,7 +149,7 @@ static int open_temp_fstab_file (const char *dir, char **filename);
 
 static char *get_hal_string_property (const char *udi, const char *property);
 static boolean mount_device (const char *mount_point);
-static boolean udi_is_volume (const char *udi);
+static boolean udi_is_volume_or_nonpartition_drive (const char *udi);
 static Volume *volume_new (const char *udi);
 static void volume_determine_device_type (Volume *volume);
 static void volume_free (Volume *volume);
@@ -830,16 +826,35 @@ get_hal_string_property (const char *udi, const char *property)
 }
 
 static boolean
-udi_is_volume (const char *udi)
+udi_is_volume_or_nonpartition_drive (const char *udi)
 {
-  if (!hal_device_query_capability (hal_context, udi, "volume"))
-    return FALSE;
 
-  if (hal_device_property_exists (hal_context, udi, "volume.disc.has_data") &&
-      !hal_device_get_property_bool (hal_context, udi, "volume.disc.has_data"))
-    return FALSE;
+  if (hal_device_query_capability (hal_context, udi, "volume")) {
 
-  return TRUE;
+    /* we accept volumes with data and known filesystems */
+
+    if (hal_device_property_exists (hal_context, udi, "volume.is_disc.has_data") &&
+	!hal_device_get_property_bool (hal_context, udi, "volume.disc.has_data"))
+      return FALSE;
+
+    if (hal_device_property_exists (hal_context, udi, "volume.is_filesystem") &&
+	!hal_device_get_property_bool (hal_context, udi, "volume.is_filesystem"))
+      return FALSE;
+
+    return TRUE;
+
+  } else if (hal_device_query_capability (hal_context, udi, "storage")) {
+
+    /* we accept storage drives with hints that they usually use media
+     * without partition tables (such as optical and floppy drives)
+     */
+
+    if (hal_device_property_exists (hal_context, udi, "storage.no_partitions_hint") &&
+	hal_device_get_property_bool (hal_context, udi, "storage.no_partitions_hint"))
+      return TRUE;
+  }
+
+  return FALSE;
 }
 
 static char *
@@ -869,65 +884,106 @@ device_type_normalize (const char *device_type)
   return new_device_type;
 }
 
+
+static char *
+compute_cdrom_name (const char *drive_udi)
+{
+  boolean cdr;
+  boolean cdrw;
+  boolean dvd;
+  boolean dvdplusr;
+  boolean dvdplusrw;
+  boolean dvdr;
+  boolean dvdram;
+  char *first;
+  char *second;
+  char *result;
+  
+  /* use the capabilities of the optical device */
+  
+  cdr = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.cdr");
+  cdrw = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.cdrw");
+  dvd = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvd");
+  dvdplusr = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdplusr");
+  dvdplusrw = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdplusrw");
+  dvdr = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdr");
+  dvdram = hal_device_get_property_bool (hal_context, drive_udi, "storage.cdrom.dvdram");
+
+  first = NULL;
+  if (cdr)
+    first = "cdr";
+  if (cdrw)
+    first = "cdrw";
+  
+  second = NULL;
+  if (dvd)
+    second = "dvdrom";
+  if (dvdram)
+    second = "dvdram";
+  if (dvdplusr || dvdr)
+    second = "dvdr";
+  if (dvdplusrw)
+    second = "dvdrw";
+
+  if (first == NULL && second == NULL)
+    result = strdup ("cdrom");
+  else if (first == NULL)
+    result = strdup (second);
+  else if (second == NULL)
+    result = strdup (first);
+  else {
+    char buf[64];
+
+    snprintf (buf, 64, "%s_%s", first, second);
+    result = strdup (buf);
+  }
+
+  return result;
+}
+
+
 static void
 volume_determine_device_type (Volume *volume)
 {
   char *storage_device_udi;
+  char *bus;
+  char *drive_type;
+  char buf[64];
 
   volume->type = NULL;
 
   storage_device_udi = get_hal_string_property (volume->udi,
                                                 "block.storage_device");
 
-  if (storage_device_udi)
-    volume->type = get_hal_string_property (storage_device_udi, 
-                                            "storage.drive_type");
+  if (storage_device_udi == NULL) {
+    volume->type = strdup ("disk");
+    return;
+  }
 
-  if (volume->type == NULL)
-    volume->type = strdup ("device");
 
-  /* HAL's storage.drive_type key isn't very specific.  Let's do some
-   * heuristics to come up with something more specific if possible
-   */
-  if (strcmp (volume->type, "disk") == 0
-      && hal_device_property_exists (hal_context, storage_device_udi, 
-                                     "storage.removable")
-      && hal_device_get_property_bool (hal_context, storage_device_udi,
-                                       "storage.removable"))
-    {
-      char *physical_device_udi;
+  bus = hal_device_get_property_string (hal_context, storage_device_udi,
+					"storage.bus");
+  drive_type = hal_device_get_property_string (hal_context, storage_device_udi,
+					       "storage.drive_type");
 
-      physical_device_udi = get_hal_string_property (storage_device_udi, 
-                                                     "storage.physical_device");
+  if (strcmp (drive_type, "cdrom") == 0) {
+    
+    volume->type = compute_cdrom_name (storage_device_udi);
 
-      if (physical_device_udi)
-        {
-          char *product;
-          product = get_hal_string_property (physical_device_udi, 
-                                             "info.product");
-          free (volume->type);
-          volume->type = device_type_normalize (product);
-          free (product);
-        }
+  } else if (strcmp (drive_type, "disk") == 0) {
 
-      volume->device_type = DEVICE_TYPE_DISK;
-    }
-  else if (strcmp (volume->type, "cdrom") == 0)
-    {
-      char *disc_type;
+    snprintf (buf, 63, "%sdisk", bus);
+    volume->type = strdup (buf);
 
-      disc_type = get_hal_string_property (volume->udi, "volume.disc.type");
+  } else {
 
-      if (disc_type)
-        {
-          free (volume->type);
-          volume->type = disc_type;
-        }
-      volume->device_type = DEVICE_TYPE_CDROM;
-    }
+    volume->type = strdup (drive_type);
 
-  if (storage_device_udi)
-    free (storage_device_udi);
+  }
+  
+  free (drive_type);
+  free (bus);
+  free (storage_device_udi);
 }
 
 static Volume *
@@ -935,7 +991,7 @@ volume_new (const char *udi)
 {
   Volume *volume;
 
-  if (!udi_is_volume (udi))
+  if (!udi_is_volume_or_nonpartition_drive (udi))
     return NULL;
 
   volume = calloc (sizeof (Volume), 1);
@@ -954,26 +1010,15 @@ volume_new (const char *udi)
 
   volume_determine_device_type (volume);
 
-  volume->fs_type = get_hal_string_property (udi, "block.fs_type");
-
-  volume->label = get_hal_string_property (udi, "volume.label");
-
+  volume->fs_type = get_hal_string_property (udi, "volume.fs_type");
   if (volume->fs_type == NULL)
     {
-      switch (volume->device_type)
-        {
-        case DEVICE_TYPE_UNKNOWN:
-        case DEVICE_TYPE_DISK:
-            volume->fs_type = strdup ("auto");
-          break;
-        case DEVICE_TYPE_CDROM:
-            volume->fs_type = strdup ("udf,iso9660");
-          break;
-        default:
-          assert (FALSE);
-          break;
-        }
+      volume->fs_type = strdup ("auto");
     }
+
+  volume->label = get_hal_string_property (udi, "volume.label");
+  if (volume->label == NULL)
+    volume->label = strdup ("");
 
   return volume;
 }
@@ -1087,15 +1132,11 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 		  char buf[512];
 		  char *device_file_from_mount_point;
 
-		  printf ("..and label=%s has mountpoint=%s\n", 
-			  volume->label, mount_point);
-
 		  /* good, now lookup in /etc/mtab */
 		  device_file_from_mount_point = NULL;
 		  if ((f = setmntent ("/etc/mtab", "r")) != NULL) {
 
 		    while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
-		      printf ("fsname=%s, dir=%s\n", mnt.mnt_fsname, mnt.mnt_dir);
 		      if (strcmp (mnt.mnt_dir, mount_point) == 0) {
 			device_file_from_mount_point = mnt.mnt_fsname;
 			break;
@@ -1138,26 +1179,20 @@ fs_table_add_volume (FSTable *table, Volume *volume)
       return FALSE;
     }
 
-  switch (volume->device_type)
-    {
-    case DEVICE_TYPE_UNKNOWN:
-    case DEVICE_TYPE_DISK:
-#ifdef USE_NOOP_MOUNT_OPTION
-      mount_options = "noauto,user,exec,dev,suid,kudzu";
-#else
-      mount_options = "noauto,user,exec,dev,suid";
-#endif
-      break;
-    case DEVICE_TYPE_CDROM:
+    if (hal_device_property_exists (hal_context, volume->udi, "storage.drive_type") &&
+	strcmp (hal_device_get_property_string (hal_context, volume->udi, "storage.drive_type"),
+		"cdrom") == 0) {
 #ifdef USE_NOOP_MOUNT_OPTION
       mount_options = "noauto,user,exec,dev,suid,kudzu,ro";
 #else
       mount_options = "noauto,user,exec,dev,suid,ro";
 #endif
-      break;
-    default:
-      assert (FALSE);
-      break;
+    } else {
+#ifdef USE_NOOP_MOUNT_OPTION
+      mount_options = "noauto,user,exec,dev,suid,kudzu";
+#else
+      mount_options = "noauto,user,exec,dev,suid";
+#endif
     }
 
   line = fs_table_line_new_from_field_values (volume->block_device,
@@ -1398,6 +1433,13 @@ add_udi (const char *udi, boolean should_mount_device)
   time_t fstab_modification_time;
   int fd = -1;
 
+  /* don't add an fstab entry if we were spawned of a device with
+   * storage.no_partitions_hint set to TRUE. Per the spec this is
+   * exactly when block.no_partitions is TRUE on the volume */
+  if (hal_device_query_capability (hal_context, udi, "volume") &&
+      hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
+    return FALSE;
+
   volume = volume_new (udi);
 
   if (volume == NULL)
@@ -1478,6 +1520,13 @@ remove_udi (const char *udi)
   char *dir, *last_slash, *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd;
+
+  /* don't remove the fstab entry if we were spawned of a device with
+   * storage.no_partitions_hint set to TRUE. Per the spec this is
+   * exactly when block.no_partitions is TRUE on the volume */
+  if (hal_device_query_capability (hal_context, udi, "volume") &&
+      hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
+    return FALSE;
 
   volume = volume_new (udi);
 
@@ -1697,8 +1746,9 @@ main (int argc, const char *argv[])
     caps = getenv ("HAL_PROP_INFO_CAPABILITIES");
     if (caps != NULL) {
 
-      /* we only handle hal device objects of capability 'volume' */
-      if (strstr (caps, "volume") == NULL) {
+      /* we only handle hal device objects of capability 'volume' or 'storage' */
+      if (strstr (caps, "volume") == NULL &&
+	  strstr (caps, "storage") == NULL) {
 	retval = 0;
 	goto out;
       }

@@ -1508,14 +1508,19 @@
               <entry><literal>block.no_partitions</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>True only when the device object represents an
-		entire storage device and no known partition table
-		have been identified. In this case, if the storage
-		device contain a file system it will be accessible
-		using the same special device file as the one for this
-		device object and the device object representing the
-		filesystem will appear as a separate device object as
-		a child.
+              <entry>For toplevel block devices, this is TRUE only
+		when no known partition tables have been found on the
+		media (In this case, if the storage device contain a
+		file system it will be accessible using the same
+		special device file as the one for this device object
+		and the device object representing the filesystem will
+		appear as a separate device object as a child). For
+		the child, that is
+		when <literal>block.is_volume</literal> is true, this
+		property is TRUE exactly when it was created for a
+		storage device with
+		the <literal>storage.no_partitions_hint</literal> set
+		to TRUE.
 	      </entry>
             </row>
             <row>
@@ -2055,8 +2060,21 @@
             <row>
               <entry><literal>storage.vendor</literal> (string)</entry>
               <entry></entry>
+              <entry>Yes</entry>
               <entry>The vendor of the drive</entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.serial</literal> (string)</entry>
               <entry></entry>
+              <entry>No</entry>
+              <entry>The serial number of the drive</entry>
+            </row>
+            <row>
+              <entry><literal>storage.firmware_revision</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>The revision of the firmware of the drive</entry>
             </row>
 
           </tbody>
