@@ -70,6 +70,7 @@ hald_SOURCES +=                                                         \
                                         linux/libsysfs/sysfs_utils.c
 
 hald_SOURCES +=                                                         \
+	linux/volume_id/volume_id_logging.h				\
 	linux/volume_id/volume_id.h	linux/volume_id/volume_id.c	\
 	linux/drive_id/drive_id.h	linux/drive_id/drive_id.c
 
