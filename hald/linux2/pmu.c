@@ -88,7 +88,7 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		/* we're discharging if, and only if, we are not plugged into the wall */
 		{
 			char buf[HAL_PATH_MAX];
-			snprintf (buf, sizeof (buf), "%s/pmu/info", hal_proc_path);
+			snprintf (buf, sizeof (buf), "%s/pmu/info", get_hal_proc_path ());
 			hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", buf, "", 
 							  "AC Power", 0, "0");
 		}
@@ -163,7 +163,7 @@ pmu_synthesize_hotplug_events (void)
 	hal_device_property_set_string (computer, "power_management.type", "pmu");
 
 	/* AC Adapter */
-	snprintf (path, sizeof (path), "%s/pmu/info", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->is_add = TRUE;
 	hotplug_event->type = HOTPLUG_EVENT_PMU;
@@ -172,7 +172,7 @@ pmu_synthesize_hotplug_events (void)
 	hotplug_event_enqueue (hotplug_event);
 
 	error = NULL;
-	snprintf (path, sizeof (path), "%s/pmu", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/pmu", get_hal_proc_path ());
 	dir = g_dir_open (path, 0, &error);
 	if (dir != NULL) {
 		const gchar *f;
@@ -182,7 +182,7 @@ pmu_synthesize_hotplug_events (void)
 			gchar buf[HAL_PATH_MAX];
 			int battery_num;
 
-			snprintf (buf, sizeof (buf), "%s/pmu/%s", hal_proc_path, f);
+			snprintf (buf, sizeof (buf), "%s/pmu/%s", get_hal_proc_path (), f);
 			if (sscanf (f, "battery_%d", &battery_num) == 1) {
 				HAL_INFO (("Processing %s", buf));
 				

@@ -45,6 +45,8 @@
 #include "../device_info.h"
 #include "../hald_conf.h"
 
+#include "osspec_linux.h"
+
 #include "util.h"
 #include "coldplug.h"
 #include "hotplug.h"
@@ -124,18 +126,18 @@ coldplug_synthesize_events (void)
 
 	/* build bus map */
 	sysfs_to_bus_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-	g_snprintf (path, HAL_PATH_MAX, "%s/bus", hal_sysfs_path);
+	g_snprintf (path, HAL_PATH_MAX, "%s/bus", get_hal_sysfs_path ());
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-		HAL_ERROR (("Unable to open %/bus: %s", hal_sysfs_path, err->message));
+		HAL_ERROR (("Unable to open %/bus: %s", get_hal_sysfs_path (), err->message));
 		g_error_free (err);
 		goto error;
 	}
 	while ((f = g_dir_read_name (dir)) != NULL) {
 		GDir *dir1;
 
-		g_snprintf (path, HAL_PATH_MAX, "%s/bus/%s", hal_sysfs_path, f);
+		g_snprintf (path, HAL_PATH_MAX, "%s/bus/%s", get_hal_sysfs_path (), f);
 		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_ERROR (("Unable to open %/bus/%s: %s", hal_sysfs_path, f, err->message));
+			HAL_ERROR (("Unable to open %/bus/%s: %s", get_hal_sysfs_path (), f, err->message));
 			g_error_free (err);
 			goto error;
 		}
@@ -145,10 +147,10 @@ coldplug_synthesize_events (void)
 				GDir *dir2;
 
 				g_snprintf (path, HAL_PATH_MAX, "%s/bus/%s/%s", 
-					    hal_sysfs_path, f, f1);
+					    get_hal_sysfs_path (), f, f1);
 				if ((dir2 = g_dir_open (path, 0, &err)) == NULL) {
 					HAL_ERROR (("Unable to open %s/bus/%s/%s: %s", 
-						    hal_sysfs_path, f, f1, err->message));
+						    get_hal_sysfs_path (), f, f1, err->message));
 					g_error_free (err);
 					goto error;
 				}
@@ -156,16 +158,16 @@ coldplug_synthesize_events (void)
 					gchar *target;
 					gchar *normalized_target;
 					g_snprintf (path, HAL_PATH_MAX, "%s/bus/%s/%s/%s", 
-						    hal_sysfs_path, f, f1, f2);
+						    get_hal_sysfs_path (), f, f1, f2);
 					if ((target = g_file_read_link (path, &err)) == NULL) {
 						HAL_ERROR (("%s/bus/%s/%s/%s is not a symlink: %s!", 
-							    hal_sysfs_path, 
+							    get_hal_sysfs_path (), 
 							    f, f1, f2, err->message));
 						g_error_free (err);
 						goto error;
 					}
 
-					g_snprintf (path, HAL_PATH_MAX, "%s/bus/%s/%s", hal_sysfs_path, f, f1);
+					g_snprintf (path, HAL_PATH_MAX, "%s/bus/%s/%s", get_hal_sysfs_path (), f, f1);
 					normalized_target = hal_util_get_normalized_path (path, target);
 					g_free (target);
 
@@ -181,17 +183,17 @@ coldplug_synthesize_events (void)
 
 	/* build class map and class device map */
 	sysfs_to_class_in_devices_map = g_hash_table_new (g_str_hash, g_str_equal);
-	g_snprintf (path, HAL_PATH_MAX, "%s/class" , hal_sysfs_path);
+	g_snprintf (path, HAL_PATH_MAX, "%s/class" , get_hal_sysfs_path ());
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-		HAL_ERROR (("Unable to open %/class: %s", hal_sysfs_path, err->message));
+		HAL_ERROR (("Unable to open %/class: %s", get_hal_sysfs_path (), err->message));
 		goto error;
 	}
 	while ((f = g_dir_read_name (dir)) != NULL) {
 		GDir *dir1;
 
-		g_snprintf (path, HAL_PATH_MAX, "%s/class/%s" , hal_sysfs_path, f);
+		g_snprintf (path, HAL_PATH_MAX, "%s/class/%s" , get_hal_sysfs_path (), f);
 		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_ERROR (("Unable to open %/class/%s: %s", hal_sysfs_path, f, err->message));
+			HAL_ERROR (("Unable to open %/class/%s: %s", get_hal_sysfs_path (), f, err->message));
 			g_error_free (err);
 			goto error;
 		}
@@ -199,17 +201,17 @@ coldplug_synthesize_events (void)
 			gchar *target;
 			gchar *normalized_target;
 
-			g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s/device", hal_sysfs_path, f, f1);
+			g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s/device", get_hal_sysfs_path (), f, f1);
 			/* Accept net devices without device links too, they may be coldplugged PCMCIA devices */
 			if (((target = g_file_read_link (path1, NULL)) == NULL)) {
 				/* no device link */
-				g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s", hal_sysfs_path, f, f1);
+				g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s", get_hal_sysfs_path (), f, f1);
 				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (path1));
 				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (f));
 			} else {
 				GSList *classdev_strings;
 
-				g_snprintf (path2, HAL_PATH_MAX, "%s/class/%s/%s", hal_sysfs_path, f, f1);
+				g_snprintf (path2, HAL_PATH_MAX, "%s/class/%s/%s", get_hal_sysfs_path (), f, f1);
 				if (target) {
 					normalized_target = hal_util_get_normalized_path (path2, target);
 					g_free (target);
@@ -231,24 +233,24 @@ coldplug_synthesize_events (void)
 	/* Now traverse /sys/devices and consult the map we've just
 	 * built; this includes adding a) bus devices; and b) class
 	 * devices that sit in /sys/devices */
-	g_snprintf (path, HAL_PATH_MAX, "%s/devices", hal_sysfs_path);
+	g_snprintf (path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-		HAL_ERROR (("Unable to open %/devices: %s", hal_sysfs_path, err->message));
+		HAL_ERROR (("Unable to open %/devices: %s", get_hal_sysfs_path (), err->message));
 		g_error_free (err);
 		goto error;
 	}
 	while ((f = g_dir_read_name (dir)) != NULL) {
 		GDir *dir1;
 
-		g_snprintf (path, HAL_PATH_MAX, "%s/devices/%s", hal_sysfs_path, f);
+		g_snprintf (path, HAL_PATH_MAX, "%s/devices/%s", get_hal_sysfs_path (), f);
 		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_ERROR (("Unable to open %/devices/%s: %s", hal_sysfs_path, f, err->message));
+			HAL_ERROR (("Unable to open %/devices/%s: %s", get_hal_sysfs_path (), f, err->message));
 			g_error_free (err);
 			goto error;
 		}
 		while ((f1 = g_dir_read_name (dir1)) != NULL) {
 
-			g_snprintf (path, HAL_PATH_MAX, "%s/devices/%s/%s", hal_sysfs_path, f, f1);
+			g_snprintf (path, HAL_PATH_MAX, "%s/devices/%s/%s", get_hal_sysfs_path (), f, f1);
 			coldplug_compute_visit_device (path, sysfs_to_bus_map, sysfs_to_class_in_devices_map);
 		}
 		g_dir_close (dir1);
@@ -283,7 +285,7 @@ coldplug_synthesize_events (void)
 	g_slist_free (sysfs_other_class_dev);
 
 	/* add block devices */
-	g_snprintf (path, HAL_PATH_MAX, "%s/block", hal_sysfs_path);
+	g_snprintf (path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
 		HAL_ERROR (("Unable to open %s: %s", path, err->message));
 		g_error_free (err);
@@ -296,12 +298,12 @@ coldplug_synthesize_events (void)
 		gchar *target;
 		gchar *normalized_target;
 
-		g_snprintf (path, HAL_PATH_MAX, "%s/block/%s", hal_sysfs_path, f);
+		g_snprintf (path, HAL_PATH_MAX, "%s/block/%s", get_hal_sysfs_path (), f);
 #ifdef HAL_COLDPLUG_VERBOSE
 		printf ("block: %s (block)\n",  path);
 #endif
 
-		g_snprintf (path1, HAL_PATH_MAX, "%s/block/%s/device", hal_sysfs_path, f);
+		g_snprintf (path1, HAL_PATH_MAX, "%s/block/%s/device", get_hal_sysfs_path (), f);
 		if (((target = g_file_read_link (path1, NULL)) != NULL)) {
 			normalized_target = hal_util_get_normalized_path (path1, target);
 			g_free (target);

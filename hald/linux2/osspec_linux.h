@@ -1,9 +1,9 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * callout.h : Call out to helper programs when devices are added/removed.
+ * osspec_linux.h : OS Specific interface
  *
- * Copyright (C) 2004 Novell, Inc.
+ * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
  * Licensed under the Academic Free License version 2.0
  *
@@ -23,18 +23,21 @@
  *
  **************************************************************************/
 
-#ifndef CALLOUT_H
-#define CALLOUT_H
+#ifndef OSSPEC_LINUX_H
+#define OSSPEC_LINUX_H
 
 #include <glib.h>
-#include "device.h"
+#include "../device.h"
 
-void hal_callout_device     (HalDevice  *device,
-			     gboolean    added);
-void hal_callout_capability (HalDevice  *device,
-			     const char *capability,
-			     gboolean    added);
-void hal_callout_property   (HalDevice	*device,
-			     const char	*key);
+const gchar *get_hal_sysfs_path (void);
 
-#endif /* CALLOUT_H */
+const gchar *get_hal_proc_path (void);
+
+gboolean hal_util_get_device_file (const gchar *sysfs_path, gchar *dev_file, gsize dev_file_length);
+
+gboolean hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path);
+
+HalDevice *hal_util_find_closest_ancestor (const gchar *sysfs_path);
+
+
+#endif /* OSSPEC_LINUX_H */

@@ -14,6 +14,7 @@ noinst_LTLIBRARIES = libhald_linux2.la
 
 libhald_linux2_la_SOURCES =					\
 				osspec.c			\
+	osspec_linux.h						\
 	hotplug.h		hotplug.c			\
 	coldplug.h		coldplug.c			\
 	physdev.h		physdev.c			\

@@ -211,7 +211,7 @@ apm_synthesize_hotplug_events (void)
 	hal_device_property_set_bool (computer, "power_management.is_enabled", TRUE);
 	hal_device_property_set_string (computer, "power_management.type", "apm");
 
-	snprintf (path, sizeof (path), "%s/apm", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/apm", get_hal_proc_path ());
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->is_add = TRUE;

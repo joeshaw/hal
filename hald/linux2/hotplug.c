@@ -48,8 +48,9 @@
 #include "../device_info.h"
 #include "../hald_conf.h"
 
-#include "hotplug.h"
+#include "osspec_linux.h"
 
+#include "hotplug.h"
 #include "physdev.h"
 #include "classdev.h"
 #include "blockdev.h"
@@ -95,14 +96,14 @@ fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 				      hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.net_ifindex));
 			
 			
-			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , hal_sysfs_path);
+			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , get_hal_sysfs_path());
 			if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-				HAL_ERROR (("Unable to open %/class/net: %s", hal_sysfs_path, err->message));
+				HAL_ERROR (("Unable to open %/class/net: %s", get_hal_sysfs_path(), err->message));
 				g_error_free (err);
 				goto out;
 			}
 			while ((f = g_dir_read_name (dir)) != NULL) {
-				g_snprintf (path1, HAL_PATH_MAX, "%s/class/net/%s" , hal_sysfs_path, f);
+				g_snprintf (path1, HAL_PATH_MAX, "%s/class/net/%s" , get_hal_sysfs_path (), f);
 				if (hal_util_get_int_from_file (path1, "ifindex", &ifindex, 10)) {
 					if (ifindex == hotplug_event->sysfs.net_ifindex) {
 						HAL_INFO (("Using sysfs path %s for ifindex %d", path1, ifindex));
@@ -132,9 +133,9 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	static gsize sys_block_path_len = 0;
 
 	if (sys_block_path_len == 0) {
-		sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", hal_sysfs_path);
-		sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", hal_sysfs_path);
-		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", hal_sysfs_path);
+		sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
+		sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
+		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
 	}
 
 

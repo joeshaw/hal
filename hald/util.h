@@ -37,10 +37,6 @@ const gchar *hal_util_get_last_element (const gchar *s);
 
 gchar *hal_util_get_parent_path (const gchar *path);
 
-gboolean hal_util_get_device_file (const gchar *sysfs_path, gchar *dev_file, gsize dev_file_length);
-
-HalDevice *hal_util_find_closest_ancestor (const gchar *sysfs_path);
-
 gchar *hal_util_get_normalized_path (const gchar *path1, const gchar *path2);
 
 gboolean hal_util_get_int_from_file (const gchar *directory, const gchar *file, gint *result, gint base);
@@ -56,8 +52,6 @@ gboolean hal_util_get_bcd2_from_file (const gchar *directory, const gchar *file,
 gboolean hal_util_set_bcd2_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file);
 
 void hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...);
-
-gboolean hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path);
 
 gboolean hal_util_path_ascend (gchar *path);
 
@@ -114,8 +108,5 @@ void hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpo
 #define HAL_HELPER_TIMEOUT 10000
 
 #define HAL_PATH_MAX 256
-
-extern char hal_sysfs_path [HAL_PATH_MAX];
-extern char hal_proc_path [HAL_PATH_MAX];
 
 #endif /* UTIL_H */

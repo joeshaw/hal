@@ -31,6 +31,8 @@
 #include "../hald_dbus.h"
 #include "util.h"
 
+#include "osspec_linux.h"
+
 #include "acpi.h"
 #include "hotplug.h"
 
@@ -229,19 +231,19 @@ acpi_synthesize_hotplug_events (void)
 					    "/proc/acpi", "info", "version", 0);
 
 	/* collect batteries */
-	snprintf (path, sizeof (path), "%s/acpi/battery", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/acpi/battery", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BATTERY);
 
 	/* collect AC adapters */
-	snprintf (path, sizeof (path), "%s/acpi/ac_adapter", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/acpi/ac_adapter", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_AC_ADAPTER);
 
 	/* collect buttons */
-	snprintf (path, sizeof (path), "%s/acpi/button/lid", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/acpi/button/lid", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
-	snprintf (path, sizeof (path), "%s/acpi/button/power", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/acpi/button/power", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
-	snprintf (path, sizeof (path), "%s/acpi/button/sleep", hal_proc_path);
+	snprintf (path, sizeof (path), "%s/acpi/button/sleep", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
 
 out:
