@@ -13,4 +13,4 @@ from DeviceManager import DeviceManager
 
 gnome.program_init(Const.NAME, Const.VERSION)
 DeviceManager()
-gtk.mainloop()
+gtk.main()

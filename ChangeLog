@@ -1,3 +1,16 @@
+2004-07-14  David Zeuthen  <david@fubar.dk>
+
+	Patch from Sjoerd Simons <sjoerd@luon.net>
+
+	* tools/device-manager/DeviceManager.py:
+	* tools/device-manager/LibGladeApplication.py:
+	* tools/device-manager/hal-device-manager:
+	Attached patch makes hal-device-manager shows the error about hald
+	not running in a gtk messagedialog instead of on the
+	console. Which ensures that when running it from the menu you see
+	more then just a flash if hald isn't running :) Also it changes
+	some deprecated functions to use their non-deprecated counterparts
+
 2004-07-11  David Zeuthen  <david@fubar.dk>
 
 	* tools/hal_get_property.c, tools/hal_set_property.c: Make the

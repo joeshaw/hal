@@ -62,4 +62,4 @@ class LibGladeApplication:
 
     def on_quit_activate(self, *args):
         """Ignore args and call gtk.mainquit()."""
-        gtk.mainquit()
+        gtk.main_quit()

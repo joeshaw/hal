@@ -56,7 +56,12 @@ class DeviceManager(LibGladeApplication):
         try:
             device_names = self.hal_manager.GetAllDevices()
         except:
-            sys.exit("Could not get device list. Make sure hald is running")
+            dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, 
+                                       gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE,
+                                       "Could not get device list. "
+                                       "Make sure hald is running!")
+            dialog.run()
+            sys.exit(1)
 
         for name in device_names:
             self.bus.add_signal_receiver(self.device_changed,
