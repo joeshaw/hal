@@ -13,8 +13,10 @@
 	and remove storage.cdrom_eject_check_enabled.
 
 	* hald/linux/common.[ch]:
+	Remove find_and_set_virtual_device()
 
 	* hald/linux/platform_bus_device.c: (platform_device_pre_process):
+	Set the correct properties for floppy drives
 
 	* hald/property.c (hal_property_get_bool): Return FALSE instead of
 	-1 if property not found.
