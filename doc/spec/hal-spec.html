@@ -384,26 +384,26 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1704"
+HREF="#AEN1715"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1715"
+HREF="#AEN1726"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1723"
+HREF="#AEN1734"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ><DT
 ><A
-HREF="#AEN1732"
+HREF="#AEN1743"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></DT
 ></DL
@@ -3210,25 +3210,6 @@ CLASS="literal"
 		level block device have already been scanned for filesystems.
 	      </TD
 ></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->block.storage_device</TT
-> (string)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->The UDI of the device object with a 
-	      <TT
-CLASS="literal"
->storage</TT
-> capability that in detail
-	      describes the characteristics of the physical storage
-	      device that this device object is part of</TD
-></TR
 ></TBODY
 ></TABLE
 ><P
@@ -3294,7 +3275,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN908"
+NAME="AEN901"
 ></A
 ><TABLE
 BORDER="1"
@@ -3374,14 +3355,27 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>volume.fsversion</TT
+> (string)</TD
+><TD
+>example: FAT32</TD
+><TD
+>&nbsp;</TD
+><TD
+>Version number or subtype of the filesystem</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >volume.label</TT
 > (string)</TD
 ><TD
 >example: 'Fedora Core 1.90' </TD
 ><TD
->Yes (is blank if the filesystem doesn't support labels)</TD
+>Yes (is blank if no label is found)</TD
 ><TD
->The label of the media</TD
+>The label of the volume</TD
 ></TR
 ><TR
 ><TD
@@ -3392,7 +3386,7 @@ CLASS="literal"
 ><TD
 >example: 4060-6C11</TD
 ><TD
->Yes (is blank if there is no UUID)</TD
+>Yes (is blank if no UUID is found)</TD
 ><TD
 >The Universal Unique Identifer for the volume</TD
 ></TR
@@ -3414,6 +3408,34 @@ CLASS="literal"
 >volume.disc</TT
 ></TD
 ></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.block_size</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The block size of the volume
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.num_blocks</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Number of blocks on the volume
+	      </TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -3428,7 +3450,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN961"
+NAME="AEN972"
 ></A
 ><TABLE
 BORDER="1"
@@ -3574,7 +3596,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1006"
+NAME="AEN1017"
 ></A
 ><TABLE
 BORDER="1"
@@ -3836,7 +3858,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1113"
+NAME="AEN1124"
 ></A
 ><TABLE
 BORDER="1"
@@ -4255,7 +4277,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1282"
+NAME="AEN1293"
 ></A
 ><TABLE
 BORDER="1"
@@ -4454,7 +4476,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1362"
+NAME="AEN1373"
 ></A
 ><TABLE
 BORDER="1"
@@ -4581,7 +4603,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1408"
+NAME="AEN1419"
 ></A
 ><TABLE
 BORDER="1"
@@ -4705,7 +4727,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1453"
+NAME="AEN1464"
 ></A
 ><TABLE
 BORDER="1"
@@ -4772,7 +4794,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1473"
+NAME="AEN1484"
 ></A
 ><TABLE
 BORDER="1"
@@ -4837,7 +4859,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1493"
+NAME="AEN1504"
 ></A
 ><TABLE
 BORDER="1"
@@ -4964,7 +4986,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1537"
+NAME="AEN1548"
 ></A
 ><TABLE
 BORDER="1"
@@ -5111,7 +5133,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1585"
+NAME="AEN1596"
 ></A
 ><TABLE
 BORDER="1"
@@ -5465,7 +5487,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1662"
+NAME="AEN1673"
 ></A
 ><TABLE
 BORDER="1"
@@ -5625,7 +5647,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1704"
+NAME="AEN1715"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -5741,7 +5763,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1715"
+NAME="AEN1726"
 >Example</A
 ></H3
 ><P
@@ -5859,7 +5881,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1723"
+NAME="AEN1734"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -6012,7 +6034,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1732"
+NAME="AEN1743"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></H2
 ><P

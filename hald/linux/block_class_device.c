@@ -524,6 +524,53 @@ get_first_valid_partition(struct volume_id *id)
 
 
 static void
+volume_set_size (HalDevice *d, dbus_bool_t force)
+{
+	int fd;
+	int num_blocks;
+	int block_size;
+	const char *sysfs_path;
+	const char *storudi;
+	const char *device_file;
+	HalDevice *stordev;
+	char attr_path[SYSFS_PATH_MAX];
+	struct sysfs_attribute *attr;
+
+	storudi = hal_device_property_get_string (d, "block.storage_device");
+	stordev = hal_device_store_find (hald_get_gdl (), storudi);
+
+	if (force || hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
+
+		sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+		/* no-partition volumes doesn't have sysfs path */
+		if (sysfs_path == NULL)
+			sysfs_path = hal_device_property_get_string (stordev, "linux.sysfs_path");
+
+		if (sysfs_path == NULL)
+			return;
+
+		device_file = hal_device_property_get_string (d, "block.device");
+
+		snprintf (attr_path, SYSFS_PATH_MAX, "%s/size", sysfs_path);
+		attr = sysfs_open_attribute (attr_path);
+		if (sysfs_read_attribute (attr) >= 0) {
+			num_blocks = atoi (attr->value);
+
+			hal_device_property_set_int (d, "volume.num_blocks", num_blocks);
+			sysfs_close_attribute (attr);
+		}
+
+		fd = open (device_file, O_RDONLY);
+		if (fd >= 0) {
+			if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
+				hal_device_property_set_int (d, "volume.block_size", block_size);
+			}
+			close (fd);
+		}
+	}
+}
+
+static void
 detect_disc (HalDevice *d, const char *device_file)
 {
 	int fd;
@@ -869,6 +916,9 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		hal_device_property_set_bool (child, "volume.is_mounted", FALSE);
 		hal_device_property_set_bool (child, "volume.is_disc", is_cdrom);
 
+		/* set the size */
+		volume_set_size (child, force_poll);
+
 		if (is_cdrom )
 			detect_disc (child, device_file);
 
@@ -983,6 +1033,7 @@ block_class_got_udi (ClassDeviceHandler *self,
 						udi);
 	}
 }
+
 
 static void
 block_class_pre_process (ClassDeviceHandler *self,
@@ -1127,6 +1178,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		 * or any of it partitions are not mounted causes the loop.
 		 */
 		if (hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
+
 			vid = volume_id_open_node(device_file);
 			if (vid != NULL) {
 				if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0) {
@@ -1134,14 +1186,17 @@ block_class_pre_process (ClassDeviceHandler *self,
 				}
 				volume_id_close(vid);
 			}
+
 		} else {
 			/* gee, so at least set volume.fstype vfat,msdos,auto so 
 			 * mount(1) doesn't screw up and causes hotplug events
 			 *
 			 * GRRRR!!!
 			 */
-			hal_device_property_set_string (d, "volume.fstype", "vfat,msdos,auto");
+			hal_device_property_set_string (d, "volume.fstype", "vfat,auto");
 		}
+
+		volume_set_size (d, FALSE);
 
 		return;
 	}

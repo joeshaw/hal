@@ -60,10 +60,14 @@
 #define PROGRAM_NAME "fstab-sync"
 #define TEMP_FSTAB_PREFIX ".fstab.hal."
 #define TEMP_FSTAB_MAX_LENGTH 64
-#define MOUNT_ROOT "/media/"
 
-#define LOCK_TIMEOUT 60          /* seconds */
-#define LOCK_TIMEOUT_WAIT 500000 /* microseconds */
+#ifndef FSTAB_SYNC_MOUNT_ROOT
+#  define FSTAB_SYNC_MOUNT_ROOT "/media"
+#endif
+
+#ifndef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD
+#  define FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "kudzu"
+#endif
 
 #ifndef TRUE
 #define TRUE 1
@@ -84,12 +88,16 @@ typedef int boolean;
  */
 typedef struct
 {
-  char *udi;             /**< UDI from HAL */
-  char *block_device;    /**< Special device file */
-  char *type;            /**< Name used in mount point construction, e.g. "cdrw" */
-  char *fs_type;         /**< Filesystem type or blank */
-  char *mount_point;     /**< Final unique mount point, e.g "/media/cdrw2" */
-  char *label;           /**< Label of media or blank */
+  char *udi;                      /**< UDI from HAL */
+  char *block_device;             /**< Special device file */
+  char *type;                     /**< Name used in mount point construction, e.g. "cdrw" */
+  char *fs_type;                  /**< Filesystem type or blank */
+  char *mount_point;              /**< Final unique mount point, e.g "/media/cdrw2" */
+  char *label;                    /**< Label of media or blank */
+  boolean is_hotpluggable;        /**< TRUE if the volume stems from a hotpluggable drive */
+  boolean is_optical_drive;       /**< TRUE if the volume is on an optical drive*/
+  dbus_int64_t size;              /**< Size in bytes of the volume or -1 if not available */
+  char *bus;                      /**< Type of bus the device is connected to */
 } Volume;
 
 typedef enum 
@@ -150,7 +158,6 @@ static boolean fs_table_parse_data (FSTable    *table,
 
 
 static inline int get_random_int_in_range (int low, int high);
-static int open_and_lock_file (const char *filename);
 static int open_temp_fstab_file (const char *dir, char **filename);
 
 static char *get_hal_string_property (const char *udi, const char *property);
@@ -162,6 +169,7 @@ static void volume_free (Volume *volume);
 static boolean create_mount_point_for_volume (Volume *volume);
 static boolean fs_table_add_volume (FSTable *table, Volume *volume);
 static FSTableLine *fs_table_remove_volume (FSTable *table, Volume *volume);
+static boolean fs_table_line_has_mount_option (FSTableLine *line, const char *option);
 
 static boolean add_udi (const char *udi, boolean should_mount_device);
 static boolean remove_udi (const char *udi);
@@ -302,12 +310,12 @@ fs_table_line_add_field (FSTableLine *line, FSTableField *field)
 static boolean fs_table_line_is_generated (FSTableLine *line)
 {
 
-#ifdef USE_NOOP_MOUNT_OPTION
-  if (!fs_table_line_has_mount_option (line, "kudzu"))
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
+  if (!fs_table_line_has_mount_option (line, FSTAB_SYNC_MOUNT_MANAGED_KEYWORD))
     return FALSE;
 #endif
 
-  if (strncmp (line->mount_point, MOUNT_ROOT, sizeof (MOUNT_ROOT) -1) != 0)
+  if (strncmp (line->mount_point, FSTAB_SYNC_MOUNT_ROOT "/", sizeof (FSTAB_SYNC_MOUNT_ROOT "/") -1) != 0)
     return FALSE;
 
   return TRUE;
@@ -424,7 +432,7 @@ fs_table_new (const char *filename)
   table->parse_buffer[0] = '\0';
   table->parse_buffer_length = 0;
 
-  input_fd = open_and_lock_file (filename);
+  input_fd = open (filename, O_RDONLY);
 
   if (input_fd < 0)
     goto error;
@@ -996,6 +1004,9 @@ static Volume *
 volume_new (const char *udi)
 {
   Volume *volume;
+  char *storudi;
+  dbus_int32_t num_blocks;
+  dbus_int32_t block_size;
 
   if (!udi_is_volume_or_nonpartition_drive (udi))
     return NULL;
@@ -1032,6 +1043,28 @@ volume_new (const char *udi)
   volume->label = get_hal_string_property (udi, "volume.label");
   if (volume->label == NULL)
     volume->label = strdup ("");
+
+
+  storudi = hal_device_get_property_string (hal_context, udi, "block.storage_device");
+  volume->is_hotpluggable = hal_device_get_property_bool (hal_context, storudi, "storage.hotpluggable");
+
+  if (strcmp (hal_device_get_property_string (hal_context, storudi, "storage.drive_type"),
+		"cdrom") == 0) {
+    volume->is_optical_drive = TRUE;
+  } else {
+    volume->is_optical_drive = FALSE;
+  }
+  volume->bus = hal_device_get_property_string (hal_context, storudi, "storage.bus");
+  free (storudi);
+
+  if (hal_device_property_exists (hal_context, udi, "volume.block_size") &&
+      hal_device_property_exists (hal_context, udi, "volume.num_blocks")) {
+    block_size = hal_device_get_property_int (hal_context, udi, "volume.block_size");
+    num_blocks = hal_device_get_property_int (hal_context, udi, "volume.num_blocks");
+    volume->size = block_size * num_blocks;
+  } else {
+    volume->size = -1;
+  }
 
   return volume;
 }
@@ -1072,6 +1105,12 @@ volume_free (Volume *volume)
       free (volume->type);
       volume->type = NULL;
     }
+
+  if (volume->bus != NULL)
+    {
+      free (volume->bus);
+      volume->bus = NULL;
+    }
 }
 
 /* FIXME: This function should be more fleshed out then it is
@@ -1083,7 +1122,7 @@ create_mount_point_for_volume (Volume *volume)
   /* FIXME: Should only mkdir if we need to and should do so
    * recursively for each component of the mount root.
    */
-  mkdir (MOUNT_ROOT, 0775);
+  mkdir (FSTAB_SYNC_MOUNT_ROOT "/", 0775);
 
   return (mkdir (volume->mount_point, 0775) != -1) || errno == EEXIST;
 }
@@ -1093,6 +1132,7 @@ static boolean
 fs_table_has_volume (FSTable *table, Volume *volume)
 {
   FSTableLine *line;
+  struct stat statbuf;
 
   line = table->lines;
   while (line != NULL)
@@ -1109,6 +1149,32 @@ fs_table_has_volume (FSTable *table, Volume *volume)
 	      /* Easy, the device file is a match */
               if (strcmp (field->value, volume->block_device) == 0)
                 return TRUE;
+
+	      /* Check if it's a symlink */
+	      if (lstat (field->value, &statbuf) == 0) {
+
+		if (S_ISLNK(statbuf.st_mode)) {
+		  char buf[256];
+
+		  memset (buf, '\0', sizeof (buf));
+
+		  if (readlink (field->value, buf, sizeof (buf)) > 0) {
+
+		    printf ("*** buf=%s hal=%s, udi=%s\n", 
+			    buf, volume->block_device, volume->udi);
+
+		    if (strcmp (volume->block_device, buf) == 0) {
+		      /* update block.device with new value */
+		      fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), 
+					  pid, field->value, buf);
+		      hal_device_set_property_string (hal_context, volume->udi, 
+						      "block.device", field->value);
+		      return TRUE;
+		    }
+
+		  }
+		} 
+	      }
 
 	      /* Mount by label, more tricky, see below... */
 	      if (strncmp (field->value, "LABEL=", 6) == 0 &&
@@ -1179,11 +1245,19 @@ fs_table_has_volume (FSTable *table, Volume *volume)
   return FALSE;
 }
 
+#define OPTIONS_SIZE 256
+
+/* safely strcat() at most the remaining space in 'dst' */
+#define strcat_len(dst, src) do { \
+	dst[sizeof (dst) - 1] = '\0'; \
+	strncat (dst, src, sizeof (dst) - strlen (dst) - 1); \
+} while(0)
+
 static boolean
 fs_table_add_volume (FSTable *table, Volume *volume)
 {
-  char *mount_options;
   FSTableLine *line;
+  char options[OPTIONS_SIZE];
 
   if (fs_table_has_volume (table, volume))
     {
@@ -1192,26 +1266,28 @@ fs_table_add_volume (FSTable *table, Volume *volume)
       return FALSE;
     }
 
-    if (hal_device_property_exists (hal_context, volume->udi, "storage.drive_type") &&
-	strcmp (hal_device_get_property_string (hal_context, volume->udi, "storage.drive_type"),
-		"cdrom") == 0) {
-#ifdef USE_NOOP_MOUNT_OPTION
-      mount_options = "noauto,user,exec,dev,suid,kudzu,ro";
-#else
-      mount_options = "noauto,user,exec,dev,suid,ro";
+  options[0] = '\0';
+
+  strcat_len (options, "noauto,user,exec");
+
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
+  strcat_len (options, "," FSTAB_SYNC_MOUNT_MANAGED_KEYWORD);
 #endif
-    } else {
-#ifdef USE_NOOP_MOUNT_OPTION
-      mount_options = "noauto,user,exec,dev,suid,kudzu";
-#else
-      mount_options = "noauto,user,exec,dev,suid";
-#endif
-    }
+
+  if (volume->is_optical_drive)
+    strcat_len (options, ",ro");
+
+  /* cheeasy heuristic for memory sticks */
+  if (volume->size > 0 && 
+      volume->size < 1024*1024*1024 && /* 1GB */
+      volume->is_hotpluggable) {
+    strcat_len (options, ",noatime,sync");
+  }
 
   line = fs_table_line_new_from_field_values (volume->block_device,
                                               volume->mount_point,
                                               volume->fs_type,
-                                              mount_options, 0, 0); 
+                                              strdup (options), 0, 0); 
   fs_table_add_line (table, line);
 
   return TRUE;
@@ -1291,60 +1367,6 @@ get_file_modification_time (const char *filename)
   return buf.st_mtime;
 }
 
-static int
-open_and_lock_file (const char *filename)
-{
-  struct flock lock;
-  int fd, saved_errno, lock_status;
-  time_t timeout;
-
-  fd = open (filename, O_RDONLY);
-
-  if (fd < 0)
-    {
-      fstab_update_debug (_("%d: failed to open '%s': %s\n"),
-                          pid, filename, strerror (errno));
-      return FALSE;
-    }
-
-  lock.l_type = F_RDLCK;
-  lock.l_whence = SEEK_SET;
-  lock.l_start = 0;
-  lock.l_len = 0;
-
-  timeout = time (NULL) + LOCK_TIMEOUT;
-
-  while ((lock_status = fcntl (fd, F_SETLK, &lock)) < 0)
-    {
-      saved_errno = errno;
-
-      if (saved_errno != EACCES 
-          && saved_errno != EAGAIN 
-          && saved_errno != EINTR)
-        break;
-
-      usleep (LOCK_TIMEOUT_WAIT);
-
-      if (time (NULL) > timeout)
-        {
-          fstab_update_debug (_("%d: timed out waiting for read lock on '%s'\n"),
-                              pid, filename);
-          close (fd);
-          return FALSE;
-        }
-    }
-
-  if (lock_status < 0)
-    {
-      fstab_update_debug (_("%d: Could not get read lock on '%s': %s\n"),
-                          pid, filename, strerror (saved_errno));
-      close (fd);
-      return FALSE;
-    }
-
-  return fd;
-}
-
 static boolean
 volume_determine_mount_point (Volume *volume, FSTable *table)
 {
@@ -1371,7 +1393,7 @@ volume_determine_mount_point (Volume *volume, FSTable *table)
       else
         continue;
 
-      if (strcmp (mount_root, MOUNT_ROOT) != 0)
+      if (strcmp (mount_root, FSTAB_SYNC_MOUNT_ROOT "/") != 0)
         {
           free (mount_root);
           continue;
@@ -1405,15 +1427,15 @@ volume_determine_mount_point (Volume *volume, FSTable *table)
         next_available_device_number++;
     }
 
-  length = strlen (volume->type) + sizeof (MOUNT_ROOT) + 6 /* digits */;
+  length = strlen (volume->type) + sizeof (FSTAB_SYNC_MOUNT_ROOT "/") + 6 /* digits */;
   volume->mount_point = malloc (length);
 
   if (next_available_device_number == 0)
     {
-      strcpy (volume->mount_point, MOUNT_ROOT);
+      strcpy (volume->mount_point, FSTAB_SYNC_MOUNT_ROOT "/");
       strcat (volume->mount_point, volume->type);
     }
-  else if (snprintf (volume->mount_point, length, MOUNT_ROOT"%s%lu",
+  else if (snprintf (volume->mount_point, length, FSTAB_SYNC_MOUNT_ROOT"/%s%lu",
                      volume->type, next_available_device_number) > length)
     {
       fstab_update_debug (_("%d: Could not use mount point '%s': %s\n"),
@@ -1787,6 +1809,13 @@ main (int argc, const char *argv[])
     fstab_update_debug (_("%d: ###################################\n"), pid);
     fstab_update_debug (_("%d: %s entering; %s udi=%s\n"), 
 			pid, PROGRAM_NAME, argv[1], hal_device_udi);
+    fstab_update_debug (("%d: mount_root=" FSTAB_SYNC_MOUNT_ROOT 
+#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
+			 " use_managed=yes"
+#else
+			 " use_managed=no"
+#endif
+			 " managed_keyword=" FSTAB_SYNC_MOUNT_MANAGED_KEYWORD "\n"), pid);
     
     lockfd = open (_PATH_FSTAB, O_RDONLY);
     if (lockfd < 0) {

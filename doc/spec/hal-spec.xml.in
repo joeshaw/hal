@@ -1532,16 +1532,6 @@
 		level block device have already been scanned for filesystems.
 	      </entry>
             </row>
-            <row>
-              <entry><literal>block.storage_device</literal> (string)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The UDI of the device object with a 
-	      <literal>storage</literal> capability that in detail
-	      describes the characteristics of the physical storage
-	      device that this device object is part of</entry>
-            </row>
-
           </tbody>
         </tgroup>
       </informaltable>
@@ -1650,6 +1640,25 @@
               property is true and the device object will also have
               the capability <literal>volume.disc</literal></entry>
             </row>
+
+            <row>
+              <entry><literal>volume.block_size</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		The block size of the volume
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>volume.num_blocks</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Number of blocks on the volume
+	      </entry>
+            </row>
+
 
 				      
           </tbody>

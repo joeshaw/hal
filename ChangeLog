@@ -1,3 +1,24 @@
+2004-08-19  David Zeuthen  <david@fubar.dk>
+
+	* tools/fstab-sync.c: Lot's of changes: remove old locking code;
+	fix security issue (remove dev,suid) with the given mount options 
+	(RH bug #130290); Use a, pretty lame perhaps, heuristic to add 
+	noatime,sync for hotpluggable volumes smaller than 1GB. Check device 
+	mentioned in /etc/fstab for symlink and if found, update the 
+	block.device property in HAL if applicable; Use macros for mount
+	root and noop keyword (see configure.in changes).	
+
+	* hald/linux/block_class_device.c (volume_set_size): New function
+	(detect_media): Call volume_set_size
+	(block_class_pre_process): Call volume_set_size
+
+	* doc/spec/hal-spec.xml.in: Add documentation for volume.block_size
+	and volume.num_blocks.
+
+	* configure.in: Add gobject>=2.2.2 to PKG_CHECK_MODULES. Patch from 
+	Steve Grubb <linux_4ever@yahoo.com>. Added some configuration options
+	for fstab-sync.
+	
 2004-08-19 Kay Sievers <kay.sievers@vrfy.org>
 
 	* hald/linux/block_class_device.c: Add volume.fsversion to the

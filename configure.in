@@ -17,8 +17,8 @@ AC_PROG_LN_S
 AM_PATH_PYTHON
 AC_SYS_LARGEFILE
 
-AC_ARG_WITH(init-scripts,       [  --with-init-scripts=<os>   Style of init scripts to install (redhat)])
-AC_ARG_WITH(pid-file,    [  --with-pid-file=<pidfile>    PID file HAL daemon])
+AC_ARG_WITH(init-scripts,       [  --with-init-scripts=<os> Style of init scripts to install (redhat)])
+AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
 AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
 if ! test -z "$with_hwdata" ; then
    HWDATA_DIR="$with_hwdata"
@@ -63,10 +63,30 @@ if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
 fi
 
-AC_ARG_ENABLE(fstab-noop,       [  --enable-fstab-noop     Use noop option in fstab-sync],enable_fstab_noop=yes,enable_fstab_noop=no)
-if test "x$enable_fstab_noop" = "xyes" ; then
-   AC_DEFINE(USE_NOOP_MOUNT_OPTION,1,[Use an unique keyword in the fstab])
+AC_ARG_ENABLE(mnt-noop,         [  --enable-mnt-noop       Use noop option in fstab-sync],enable_mnt_noop=yes,enable_mnt_noop=no)
+if test "x$enable_mnt_noop" = "xyes" ; then
+   AC_DEFINE(FSTAB_SYNC_USE_NOOP_MOUNT_OPTION,1,[Use an unique keyword in the fstab])
 fi
+
+AC_ARG_WITH(with_mnt_root,      [  --with-mnt-root=<path>  Mount root used by fstab-sync (/media)])
+if test -z "$with_mnt_root" ; then
+    FSTAB_SYNC_MOUNT_ROOT=/media
+else
+    FSTAB_SYNC_MOUNT_ROOT=$with_mnt_root
+fi
+AC_SUBST(FSTAB_SYNC_MOUNT_ROOT)
+AC_DEFINE_UNQUOTED(FSTAB_SYNC_MOUNT_ROOT,"$FSTAB_SYNC_MOUNT_ROOT", [Mount root used by fstab-sync])
+
+
+AC_ARG_WITH(with_mnt_noop,      [  --with-mnt-noop=<word>  Noop keyword used by fstab-sync (kudzu)])
+if test -z "$with_mnt_noop" ; then
+    FSTAB_SYNC_MOUNT_MANAGED_KEYWORD=kudzu
+else
+    FSTAB_SYNC_MOUNT_MANAGED_KEYWORD=$with_mnt_noop
+fi
+AC_SUBST(FSTAB_SYNC_MOUNT_MANAGED_KEYWORD)
+AC_DEFINE_UNQUOTED(FSTAB_SYNC_MOUNT_MANAGED_KEYWORD,"$FSTAB_SYNC_MOUNT_MANAGED_KEYWORD", [Noop keyword used by fstab-sync])
+
 
 #### gcc warning flags
 
@@ -150,7 +170,7 @@ fi
 
 
 dbus_module="dbus-1 >= 0.20"
-pkg_modules="glib-2.0 >= 2.2.2, dbus-glib-1 >= 0.20, $dbus_module"
+pkg_modules="glib-2.0 >= 2.2.2, gobject-2.0 >= 2.2.2, dbus-glib-1 >= 0.20, $dbus_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
@@ -351,7 +371,10 @@ echo "
         User for HAL:             ${HAL_USER}
         Group for HAL:            ${HAL_GROUP}
         hald pidfile:             ${HALD_PID_FILE}
-	fstab-sync using noop:    ${enable_fstab_noop}"
+
+	fstab-sync using noop:    ${enable_mnt_noop}
+        fstab-sync noop keyword:  ${FSTAB_SYNC_MOUNT_MANAGED_KEYWORD}
+        fstab-sync mount root:    ${FSTAB_SYNC_MOUNT_ROOT}"
 
 echo "
         Maintainer mode:          ${USE_MAINTAINER_MODE}
