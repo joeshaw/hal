@@ -48,6 +48,8 @@ char *find_string (char *pre, char *s);
 
 char *read_single_line (char *filename_format, ...);
 
+char *read_single_line_grep (char *begin, char *filename_format, ...);
+
 const char *get_last_element (const char *s);
 
 /* returns the path of the udevinfo program */

@@ -68,6 +68,7 @@ extern BusDeviceHandler usbif_bus_handler;
 extern BusDeviceHandler ide_host_bus_handler;
 extern BusDeviceHandler ide_bus_handler;
 extern BusDeviceHandler macio_bus_handler;
+extern BusDeviceHandler platform_bus_handler;
 
 /*
  * NOTE!  Order can be significant here, especially at startup time
@@ -97,6 +98,7 @@ static BusDeviceHandler* bus_device_handlers[] = {
 	&ide_host_bus_handler,
         &ide_bus_handler,
 	&macio_bus_handler,
+	&platform_bus_handler,
 	NULL
 };
 
@@ -424,6 +426,7 @@ osspec_probe ()
 static void
 remove_callouts_finished (HalDevice *d, gpointer user_data)
 {
+	HAL_INFO (("in remove_callouts_finished for udi=%s", d->udi));
 	hal_device_store_remove (hald_get_gdl (), d);
 }
 
@@ -446,6 +449,7 @@ remove_device (const char *path, const char *subsystem)
 		g_signal_connect (d, "callouts_finished",
 				  G_CALLBACK (remove_callouts_finished), NULL);
 
+		HAL_INFO (("in remove_device for udi=%s", d->udi));
 		hal_callout_device (d, FALSE);
 	}
 }

@@ -1,3 +1,41 @@
+2004-06-24  David Zeuthen  <david@fubar.dk>
+
+	Add floppy support to HAL - tested with x86 legacy floppies and
+	an USB floppy drive.
+
+	* tools/device-manager/Const.py.in (BUS_NAMES): Add platform bus
+
+	* hald/linux/common.h: Add read_single_line_grep prototype
+
+	* hald/linux/common.c (read_single_line_grep): New function
+
+	* hald/linux/block_class_device.c (detect_media): Add the
+	force_poll parameter to poll on devices with media detection
+	explicitly disabled.  Introduce support for non-optical drives
+	with block.no_partitions set to TRUE. Remember to clear linux.*
+	properties for discs and volumes from block.no_partitions as hot
+	unplugging such drives will cause the top-level block device to
+	stay as the child is found instead when searching on
+	linux.sysfs_path
+	(block_class_pre_process): Introduce a nasty hack to read
+	/proc/scsi/usb-storage/<scsi-hostnumber> to determine if we're
+	a floppy drive and thus should set block.no_partitions to TRUE
+	(foreach_block_device): Rename to mtab_foreach_device, split into
+	mtab_handle_volume and mtab_handle_storage
+	(mtab_handle_volume): New function, handle normal partition based
+	volumes in /etc/mtab
+	(mtab_handle_storage): New function, handle block.no_partitions
+	volumes in /etc/mtab
+	(block_class_removed): Make sure to remove the HAL-made child
+	if block.no_partitions is TRUE
+
+	* hald/linux/block_class_device.c (disc_remove_from_gdl): Rename
+	to volume_remove_from_gdl
+
+	* hald/linux/platform_bus_device.c: New file
+
+	* hald/Makefile.am (hald_SOURCES): Add platform_bus_device.c
+
 2004-06-23  David Zeuthen  <david@fubar.dk>
 
 	Patch from Kay Sievers <kay.sievers@vrfy.org>

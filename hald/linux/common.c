@@ -278,6 +278,61 @@ find_string (char *pre, char *s)
 
 /** Read the first line of a file and return it.
  *
+ *  @param  begin               Return to line that begins with this string
+ *  @param  filename_format     Name of file, printf-style formatted
+ *  @return                     Pointer to string right after the begin string
+ *                              or #NULL if the file could not be opened or
+ *                              there is no matching lines. The result is only
+ *                              valid until the next invocation of this 
+ *                              function.
+ */
+char *
+read_single_line_grep (char *begin, char *filename_format, ...)
+{
+	FILE *f;
+	int i;
+	int len;
+	char filename[512];
+	static char buf[512];
+	va_list args;
+	size_t begin_len;
+
+	begin_len = strlen (begin);
+
+	va_start (args, filename_format);
+	vsnprintf (filename, 512, filename_format, args);
+	va_end (args);
+
+	f = fopen (filename, "rb");
+	if (f == NULL)
+		return NULL;
+
+	do {
+		if (fgets (buf, 512, f) == NULL) {
+			fclose (f);
+			return NULL;
+		}
+
+		if (strncmp (buf, begin, begin_len) == 0) {
+			len = strlen (buf);
+			for (i = len - 1; i > 0; --i) {
+				if (buf[i] == '\n' || buf[i] == '\r')
+					buf[i] = '\0';
+				else
+					break;
+			}
+
+			break;
+		}
+	} while (TRUE);
+
+	fclose (f);
+
+	return buf + begin_len;
+}
+
+/** Read the first line of a file and return it.
+ *
  *  @param  filename_format     Name of file, printf-style formatted
  *  @return                     Pointer to string or #NULL if the file could
  *                              not be opened. The result is only valid until
