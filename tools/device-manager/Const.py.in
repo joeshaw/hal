@@ -32,7 +32,8 @@ BUS_NAMES = {"unknown"       : "Unknown",
              "macio"         : "MacIO",
              "ieee1394_host" : "IEEE1394 Host",
              "ieee1394_node" : "IEEE1394 Node",
-             "ieee1394"      : "IEEE1394 Device",
+             "serial"        : "Serial",
+             "usb-serial"    : "USB Serial",
              "pcmcia"        : "PCMCIA"}
 
 STATE_NAMES = { 0 : "No device information file was found",

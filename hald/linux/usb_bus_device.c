@@ -704,8 +704,7 @@ usb_merge_info_from_proc (HalDevice* d)
 
 			/* This is quite a hack */
 			port_number = 0;
-			for (i = len - 1; i > 0 && isdigit (bus_id[i]);
-			     --i) {
+			for (i = len - 1; i > 0 && isdigit (bus_id[i]); --i) {
 				digit = (int) (bus_id[i] - '0');
 				port_number *= 10;
 				port_number += digit;
@@ -944,7 +943,7 @@ BusDeviceHandler usb_bus_handler = {
 	usb_device_shutdown,       /**< shutdown function */
 	bus_device_tick,           /**< timer function */
 	usb_device_accept,         /**< accept function */
- 	bus_device_visit,          /**< visitor function */
+	bus_device_visit,          /**< visitor function */
 	bus_device_removed,        /**< device is removed */
 	usb_device_compute_udi,    /**< UDI computing function */
 	usb_device_pre_process,    /**< add more properties */

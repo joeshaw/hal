@@ -1,5 +1,32 @@
 2004-09-20  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Add support for usb-serial devices:
+
+	* hald/Makefile.am: add serial_class_device.c,
+	usb_serial_bus_device.c
+
+	* hald/linux/osspec.c: (hald_helper_data): plug serial_class_handler,
+	usb_serial_bus_handler into the device processing
+
+	* hald/linux/serial_class_device.c: (serial_class_device_accept),
+	(serial_class_pre_process): new file to support serial ports
+
+	* hald/linux/usb_serial_bus_device.c:
+	(usb_serial_device_compute_udi), (usb_serial_device_pre_process):
+	support for bus devices from the usb-serial subsystem
+
+	* tools/device-manager/Const.py.in: add the new busses
+
+	* tools/device-manager/Makefile.am: add the new icon
+
+	* tools/device-manager/Representation.py: support the new serial
+	port icon
+
+	* tools/device-manager/hal-serial-port.png: picture of serial port
+
+
+2004-09-20  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/Makefile.am: add new logging glue file for
 	drive_id/
 

@@ -38,6 +38,7 @@ class Representation:
         self.icons["network"] = self.load_and_scale_icon(Const.DATADIR + "/hal-network.png")
         self.icons["audio"] = self.load_and_scale_icon(Const.DATADIR + "/hal-audio.png")
         self.icons["camera"] = self.load_and_scale_icon(Const.DATADIR + "/hal-camera.png")
+        self.icons["serial"] = self.load_and_scale_icon(Const.DATADIR + "/hal-serial-port.png")
 
 
     def get_icon(self, device):
@@ -86,5 +87,7 @@ class Representation:
             icon = self.icons["network"]
         elif cat=="multimedia.audio":
             icon = self.icons["audio"]
+        elif cat=="serial":
+            icon = self.icons["serial"]
 
         return icon

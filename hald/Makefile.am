@@ -51,6 +51,8 @@ hald_SOURCES +=	\
 					linux/ieee1394_class_device.c	\
 					linux/ieee1394_node_class_device.c \
 					linux/ieee1394_host_class_device.c \
+					linux/serial_class_device.c \
+					linux/usb_serial_bus_device.c \
 					linux/multimedia_class_device.c \
 					linux/platform_bus_device.c	\
 	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c \

@@ -69,6 +69,7 @@ extern ClassDeviceHandler pcmcia_socket_class_handler;
 extern ClassDeviceHandler ieee1394_class_handler;
 extern ClassDeviceHandler ieee1394_node_class_handler;
 extern ClassDeviceHandler ieee1394_host_class_handler;
+extern ClassDeviceHandler serial_class_handler;
 extern ClassDeviceHandler multimedia_class_handler;
 
 extern BusDeviceHandler pci_bus_handler;
@@ -79,6 +80,7 @@ extern BusDeviceHandler ide_bus_handler;
 extern BusDeviceHandler scsi_bus_handler;
 extern BusDeviceHandler macio_bus_handler;
 extern BusDeviceHandler platform_bus_handler;
+extern BusDeviceHandler usb_serial_bus_handler;
 
 /*
  * NOTE!  Order can be significant here, especially at startup time
@@ -98,6 +100,7 @@ static ClassDeviceHandler* class_device_handlers[] = {
 	&ieee1394_host_class_handler,
 	&ieee1394_node_class_handler,
 	&ieee1394_class_handler,
+	&serial_class_handler,
 	&multimedia_class_handler,
 	NULL
 };
@@ -107,10 +110,11 @@ static BusDeviceHandler* bus_device_handlers[] = {
 	&usb_bus_handler,
 	&usbif_bus_handler,
 	&ide_host_bus_handler,
-        &ide_bus_handler,
+	&ide_bus_handler,
 	&macio_bus_handler,
 	&platform_bus_handler,
 	&scsi_bus_handler,
+	&usb_serial_bus_handler,
 	NULL
 };
 
@@ -1491,7 +1495,7 @@ hald_helper_data (GIOChannel *source,
 
 		if (msg.seqnum < last_hotplug_seqnum) {
 			/* yikes, this means were started during a hotplug */
-			HAL_WARNING (("Got SEQNUM=%d, but last_hotplug_seqnum=%llu", msg.seqnum, last_hotplug_seqnum));
+			HAL_WARNING (("Got SEQNUM=%llu, but last_hotplug_seqnum=%llu", msg.seqnum, last_hotplug_seqnum));
 
 			/* have to process immediately other we may deadlock due to
 			 * the hotplug semaphore */

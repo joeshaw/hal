@@ -22,7 +22,7 @@ dist_devicemanager_DATA =                                          \
                        hal-camera.png        hal-network.png       \
                        hal-cat-cardbus.png   hal-unknown.png       \
                        hal-cat-keyboard.png  hal-video.png         \
-                       hal-computer.png                            \
+                       hal-computer.png      hal-serial-port.png   \
                        hal-device-manager.glade
 
 # symlink into $(bindir) for convenience
