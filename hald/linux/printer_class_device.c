@@ -67,6 +67,9 @@ printer_class_device_accept (ClassDeviceHandler *self,
 {
 	int lp_number;
 
+	if (class_device->sysdevice == NULL)
+		return FALSE;
+
 	if (sscanf (class_device->name, "lp%d", &lp_number) == 1)
 		return TRUE;
 

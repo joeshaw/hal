@@ -1,3 +1,8 @@
+2004-06-03  Joe Shaw  <joeshaw@novell.com>
+
+	* hald/linux/printer_class_device.c (printer_class_device_accept):
+	Reject class devices that have no sysdevice.
+
 2004-06-01  David Zeuthen  <david@fubar.dk>
 
 	* hald/hald.conf: New file, policy for hal daemon
