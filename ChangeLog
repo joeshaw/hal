@@ -1,5 +1,11 @@
 2004-04-12  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (block_class_post_process): 
+	Introduce storage.physical_device to point to the physical device
+	backing this storage device
+
+2004-04-12  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (block_class_post_process): Merge
 	storage.* and storage_lun%d.* properties from physical device (eg.
 	usb, ieee1394, ide) onto storage device

@@ -684,6 +684,7 @@ block_class_post_process (ClassDeviceHandler *self,
 		stordev = hal_device_store_find (hald_get_gdl (), stordev_udi);
 	} else {
 		const char *udi_it;
+		const char *physdev_udi = NULL;
 
 		/* Set ourselves to be the storage.* keeper */
 		stordev_udi = d->udi;
@@ -716,6 +717,7 @@ block_class_post_process (ClassDeviceHandler *self,
 
 			if (strcmp (bus, "usb") == 0) {
 				physdev = d_it;
+				physdev_udi = udi_it;
 				is_hotplugable = TRUE;
 				hal_device_property_set_string (
 					stordev, "storage.bus", "usb");
@@ -723,12 +725,14 @@ block_class_post_process (ClassDeviceHandler *self,
 				break;
 			} else if (strcmp (bus, "ieee1394") == 0) {
 				physdev = d_it;
+				physdev_udi = udi_it;
 				is_hotplugable = TRUE;
 				hal_device_property_set_string (
 					stordev, "storage.bus", "ieee1394");
 				break;
 			} else if (strcmp (bus, "ide") == 0) {
 				physdev = d_it;
+				physdev_udi = udi_it;
 				hal_device_property_set_string (
 					stordev, "storage.bus", "ide");
 				break;
@@ -739,6 +743,12 @@ block_class_post_process (ClassDeviceHandler *self,
 				d_it, "info.parent");
 		}
 
+		if (physdev_udi != NULL) {
+			hal_device_property_set_string (
+				stordev, 
+				"storage.physical_device",
+				physdev_udi);
+		}
 	}
 
 	hal_device_property_set_string (d, "block.storage_device",
@@ -813,7 +823,8 @@ block_class_post_process (ClassDeviceHandler *self,
 		media = read_single_line ("/proc/ide/%s/media",
 					  ide_name);
 		if (media != NULL) {
-			hal_device_property_set_string (stordev, "storage.media",
+			hal_device_property_set_string (stordev, 
+							"storage.media",
 							media);
 			
 			/* Set for removable media */
