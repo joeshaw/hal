@@ -129,9 +129,9 @@ msgstr "CD audio"
 #: libhal-storage/libhal-storage.c:446
 #, c-format
 msgid "%s Removable Media"
-msgstr "Péripéhrique amovible %s"
+msgstr "Périphérique amovible %s"
 
 #: libhal-storage/libhal-storage.c:449
 #, c-format
 msgid "%s Media"
-msgstr "Péripéhrique %s"
+msgstr "Périphérique %s"
