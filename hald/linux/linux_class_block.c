@@ -333,7 +333,6 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             char* model;
             char* media;
             dbus_bool_t removable_media;
-	    int fd, capabilities;
 
             ide_name = get_last_element(
                 ds_property_get_string(d, "linux.sysfs_path"));
@@ -374,30 +373,6 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                     ds_add_capability(d, "storage.removable");
                     ds_property_set_string(d, "info.category", 
                                            "storage.removable");
-
-		    /* Check handling */
-		    fd = open (ds_property_get_string (d, "block.device"), O_RDONLY);
-		    
-		    if (fd >= 0)
-		    {
-			capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
-			
-			if (capabilities >= 0)
-			{
-			    if (capabilities & CDC_CD_R)
-				ds_add_capability(d, "cdrom.cdr");
-			    if (capabilities & CDC_CD_RW)
-				ds_add_capability(d, "cdrom.cdrw");
-			    if (capabilities & CDC_DVD)
-				ds_add_capability(d, "cdrom.dvd");
-			    if (capabilities & CDC_DVD_R)
-				ds_add_capability(d, "cdrom.dvdr");
-			    if (capabilities & CDC_DVD_RAM)
-				ds_add_capability(d, "cdrom.dvdram");
-			}
-
-			close (fd);
-		    }
 		    
                     removable_media = TRUE;
                 }
@@ -489,6 +464,42 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
 
     if( device_file!=NULL && strcmp(device_file, "")!=0 )
     {
+        char* media;
+
+        /* now we have block.device (and storage.media since got_parent
+         * was called) 
+         */
+        media = ds_property_get_string(d, "storage.media");
+        if( media!=NULL && strcmp(media, "cdrom")==0 )
+        {
+            int fd, capabilities;
+
+		    /* Check handling */
+		    fd = open (ds_property_get_string (d, "block.device"), O_RDONLY);
+		    
+		    if (fd >= 0)
+		    {
+                capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
+			
+                if (capabilities >= 0)
+                {
+                    if (capabilities & CDC_CD_R)
+                        ds_add_capability(d, "storage.cdr");
+                    if (capabilities & CDC_CD_RW)
+                        ds_add_capability(d, "storage.cdrw");
+                    if (capabilities & CDC_DVD)
+                        ds_add_capability(d, "storage.dvd");
+                    if (capabilities & CDC_DVD_R)
+                        ds_add_capability(d, "storage.dvdr");
+                    if (capabilities & CDC_DVD_RAM)
+                        ds_add_capability(d, "storage.dvdram");
+                }
+
+                close (fd);
+		    }
+        }
+
+
         ds_gdl_add(d);
     }
 }

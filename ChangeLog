@@ -1,3 +1,11 @@
+2004-01-04  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_class_block.c 
+	(linux_class_block_check_if_ready_to_add): moved cdrom cap check to
+	here. Renamed capabilities from cdrom.* to storage.*
+	(visit_class_device_block_got_parent): moved cdrom cap away from here
+	since on hotplugging we are not sure to have block.device.
+
 2004-01-04  Anders Carlsson  <andersca@gnome.org>
 
 	* hald/linux/linux_class_block.c:
