@@ -58,6 +58,10 @@
 #include "class_device.h"
 #include "common.h"
 
+#if PCMCIA_SUPPORT_ENABLE
+#include "pcmcia_utils.h"
+#endif
+
 /**
  * @defgroup HalDaemonLinuxNet Network class
  * @ingroup HalDaemonLinux
@@ -509,10 +513,14 @@ net_class_pre_process (ClassDeviceHandler *self,
 	int media_type = 0;
 	const char *media;
 	char wireless_path[SYSFS_PATH_MAX];
+	char driver_path[SYSFS_PATH_MAX];
 	dbus_bool_t is_80211 = FALSE;
 	int ifindex;
 	int flags;
 	struct stat statbuf;
+#if PCMCIA_SUPPORT_ENABLE
+ 	pcmcia_stab_entry *entry;
+#endif
 
 	hal_device_property_set_string (d, "net.linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "net.interface",
@@ -524,6 +532,16 @@ net_class_pre_process (ClassDeviceHandler *self,
 	if (stat (wireless_path, &statbuf) == 0) {
 		hal_device_add_capability (d, "net.80211");
 		is_80211 = TRUE;
+	}
+
+	/* Check driver link (may be unavailable for PCMCIA devices) */
+	snprintf (driver_path, SYSFS_PATH_MAX, "%s/driver", sysfs_path);
+	if (stat (driver_path, &statbuf) == 0) {
+		char buf[256];
+		memset (buf, '\0', sizeof (buf));
+		if (readlink (driver_path, buf, sizeof (buf) - 1) > 0) {
+			hal_device_property_set_string (d, "net.linux.driver", get_last_element (buf));
+		}
 	}
 
 	attr = sysfs_get_classdev_attr (class_device, "address");
@@ -596,6 +614,69 @@ net_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "info.category", "net.80203");
 		hal_device_add_capability (d, "net.80203");
 	}
+
+#if PCMCIA_SUPPORT_ENABLE
+	/* Add PCMCIA specific entries for PCMCIA cards */
+	if ((entry = pcmcia_get_stab_entry_for_device (class_device->name))) {
+		pcmcia_card_info *info = pcmcia_card_info_get (entry->socket);
+		if (info && (info->socket >= 0)) {
+			const char *type;
+			HalDevice *parent;
+
+			hal_device_property_set_string (d, "info.bus", "pcmcia");
+			if (entry->driver)
+				hal_device_property_set_string (d, "net.linux.driver", entry->driver);
+
+			if (info->productid_1 && strlen (info->productid_1))
+				hal_device_property_set_string (d, "pcmcia.productid_1", info->productid_1);
+			if (info->productid_2 && strlen (info->productid_2))
+				hal_device_property_set_string (d, "pcmcia.productid_2", info->productid_2);
+			if (info->productid_3 && strlen (info->productid_3))
+				hal_device_property_set_string (d, "pcmcia.productid_3", info->productid_3);
+			if (info->productid_4 && strlen (info->productid_4))
+				hal_device_property_set_string (d, "pcmcia.productid_4", info->productid_4);
+
+			if ((type = pcmcia_card_type_string_from_type (info->type)))
+				hal_device_property_set_string (d, "pcmcia.function", type);
+
+			hal_device_property_set_int (d, "pcmcia.manfid_1", info->manfid_1);
+			hal_device_property_set_int (d, "pcmcia.manfid_2", info->manfid_2);
+			hal_device_property_set_int (d, "pcmcia.socket_number", info->socket);
+
+			/* Provide best-guess of vendor, goes in Vendor property; 
+			 * .fdi files can override this */
+			if (info->productid_1 != NULL) {
+				hal_device_property_set_string (d, "info.vendor", info->productid_1);
+			} else {
+				char namebuf[50];
+				snprintf (namebuf, sizeof(namebuf), "Unknown (0x%04x)", info->manfid_1);
+				hal_device_property_set_string (d, "info.vendor", namebuf);
+			}
+
+			/* Provide best-guess of name, goes in Product property; 
+			 * .fdi files can override this */
+			if (info->productid_2 != NULL) {
+				hal_device_property_set_string (d, "info.product", info->productid_2);
+			} else {
+				char namebuf[50];
+				snprintf (namebuf, sizeof(namebuf), "Unknown (0x%04x)", info->manfid_2);
+				hal_device_property_set_string (d, "info.product", namebuf);
+			}
+
+			/* Reparent PCMCIA devices to be under their socket */
+			parent = hal_device_store_match_key_value_int (hald_get_gdl (), 
+									      "pcmcia_socket.number", 
+									      info->socket);
+			if (parent)
+				hal_device_property_set_string (d, "info.parent",
+						hal_device_property_get_string (parent, "info.udi"));
+
+		}
+
+		pcmcia_card_info_free (info);
+		pcmcia_stab_entry_free (entry);
+	}
+#endif
 }
 
 static dbus_bool_t
@@ -604,6 +685,9 @@ net_class_accept (ClassDeviceHandler *self, const char *path,
 {
 	gboolean accept;
 	struct sysfs_attribute *attr = NULL;
+#if PCMCIA_SUPPORT_ENABLE
+	pcmcia_stab_entry *entry = NULL;
+#endif
 
 	accept = TRUE;
 
@@ -630,12 +714,32 @@ net_class_accept (ClassDeviceHandler *self, const char *path,
 	}
 
 	/* 1 is the type for ethernet (incl. wireless) devices */
-	if (attr->value[0] == '1') {
-		accept = TRUE;
+	if (attr->value[0] != '1') {
+		accept = FALSE;
+		goto out;
+	}
+
+#if PCMCIA_SUPPORT_ENABLE
+	/* Allow 'net' devices without a sysdevice only if they
+	 * are backed by real hardware (like PCMCIA cards).
+	 */
+	if ((entry = pcmcia_get_stab_entry_for_device (class_device->name))) {
+		pcmcia_card_info *info = pcmcia_card_info_get (entry->socket);
+		if (info && (info->socket >= 0)) {
+			/* Ok, we're a PCMCIA card */
+			accept = TRUE;
+		} else {
+			accept = FALSE;
+		}
+		
+		pcmcia_card_info_free (info);
+		pcmcia_stab_entry_free (entry);
 		goto out;
 	} else {
 		accept = FALSE;
+		goto out;
 	}
+#endif
 
 out:
 	return accept;
@@ -658,7 +762,7 @@ net_class_compute_udi (HalDevice *d, int append_num)
 	if (append_num == -1)
 		format = "/org/freedesktop/Hal/devices/net-%s";
 	else
-		format = "/org/freedesktop/Hal/devices_net-%s-%d";
+		format = "/org/freedesktop/Hal/devices/net-%s-%d";
 
 	snprintf (buf, 256, format,
 		  hal_device_property_get_string (d, "net.address"),

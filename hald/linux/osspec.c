@@ -458,10 +458,23 @@ compute_coldplug_list (void)
 			gchar *normalized_target;
 
 			g_snprintf (path, SYSFS_PATH_MAX, "%s/class/%s/%s/device", sysfs_mount_path, f, f1);
-			if ((target = g_file_read_link (path, NULL)) != NULL) {
+			/* Accept net devices without device links too, they may be coldplugged PCMCIA devices */
+			if (((target = g_file_read_link (path, NULL)) != NULL)
+#if PCMCIA_SUPPORT_ENABLE
+			    || !strcmp (f, "net")
+#endif
+				)
+			{
 				g_snprintf (path1, SYSFS_PATH_MAX, "%s/class/%s/%s", sysfs_mount_path, f, f1);
-				normalized_target = get_normalized_path (path1, target);
-				g_free (target);
+				if (target) {
+					normalized_target = get_normalized_path (path1, target);
+					g_free (target);
+				}
+#if PCMCIA_SUPPORT_ENABLE
+				else {
+					normalized_target = g_strdup (path1);
+				}
+#endif
 
 				/*printf ("%s -> (%s, %s)\n", normalized_target, path1, f);*/
 				g_hash_table_insert (sysfs_to_class_in_devices_map, 

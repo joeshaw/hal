@@ -1,3 +1,30 @@
+2004-10-26  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Dan Williams <dcbw@redhat.com> to add support for 
+	integration with cardmgr.
+
+	* configure.in: Add --enable-pcmcia-support and --with-stab-file
+	options
+	
+	* hald/Makefile.am: Conditionally include linux/pcmcia_utils.c
+	linux/pcmcia_utils.h linux/pcmcia_cs.h
+
+	* hald/linux/net_class_device.c
+	(net_class_pre_process): Check driver link and set net.linux.driver
+	properties (me); add appropriate PCMCIA properties if applicable
+	(net_class_accept): Only accept network devices with device links as
+	well as PCMCIA devices
+	(net_class_compute_udi): Fix a typo (me)
+	
+	* hald/linux/osspec.c
+	(compute_coldplug_list): Accept network devices without device link
+	
+	* hald/linux/pcmcia_cs.h: New file
+
+	* hald/linux/pcmcia_utils.c: New file
+	
+	* hald/linux/pcmcia_utils.h: New file
+
 2004-10-25  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/90defaultpolicy/storage-policy.fdi: Allow fstype 'auto' for 

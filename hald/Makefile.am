@@ -60,6 +60,9 @@ hald_SOURCES +=	\
 
 #					linux/ieee1394_host_class_device.c
 
+if PCMCIA_SUPPORT_ENABLE
+hald_SOURCES += linux/pcmcia_utils.c linux/pcmcia_utils.h linux/pcmcia_cs.h
+endif
 
 hald_SOURCES +=                                                         \
         linux/libsysfs/libsysfs.h                                       \

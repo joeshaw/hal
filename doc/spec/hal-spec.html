@@ -6879,7 +6879,7 @@ CLASS="programlisting"
     &#60;match key="storage.no_partitions_hint" bool="true"&#62;
       &#60;!-- optical drives --&#62;
       &#60;match key="storage.drive_type" string="cdrom"&#62;
-	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;iso9660,udf&#60;/merge&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
 	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrom&#60;/merge&#62;
 	&#60;merge key="storage.policy.mount_option.ro" type="bool"&#62;true&#60;/merge&#62;
 	&#60;match key="storage.cdrom.cdr" bool="true"&#62;

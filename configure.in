@@ -71,6 +71,22 @@ AC_SUBST(FSTAB_SYNC_ENABLED)
 AM_CONDITIONAL(FSTAB_SYNC_ENABLED, test x$enable_fstab_sync = xyes)
 
 
+AC_ARG_ENABLE(pcmcia-support,         [  --enable-pcmcia-support     Extended PCMCIA card support],enable_pcmcia_support=yes,enable_pcmcia_support=no)
+if test "x$enable_pcmcia_support" = "xyes" ; then
+   AC_DEFINE(PCMCIA_SUPPORT_ENABLE,1,[Whether PCMCIA card workarounds should be used (for kernels that don't have a sysfsized PCMCIA layer)])
+fi
+AC_SUBST(PCMCIA_SUPPORT_ENABLE)
+AM_CONDITIONAL(PCMCIA_SUPPORT_ENABLE, test x$enable_pcmcia_support = xyes)
+
+AC_ARG_WITH(stab_file,[  --with-stab-file=<file>  PCMCIA socket table file (/var/lib/pcmcia/stab)])
+if test -z "$with_stab_file" ; then
+    PCMCIA_STAB_FILE=/var/lib/pcmcia/stab
+else
+    PCMCIA_STAB_FILE=$with_stab_file
+fi
+AC_SUBST(PCMCIA_STAB_FILE)
+AC_DEFINE_UNQUOTED(PCMCIA_STAB_FILE,"$PCMCIA_STAB_FILE", [PCMCIA socket table file])
+
 AC_ARG_ENABLE(hotplug_map,         [  --enable-hotplug-map    Install hotplug-map callout],enable_hotplug_map=yes,enable_hotplug_map=no)
 if test "x$enable_hotplug_map" = "xyes" ; then
    AC_DEFINE(HOTPLUG_MAP_ENABLED,1,[Whether hotplug-map callout should be installed])
@@ -433,7 +449,10 @@ echo "
         hald pidfile:             ${HALD_PID_FILE}
         Building SELinux support: ${have_selinux}
 
-        install fstab-sync:                     ${enable_fstab_sync}
+        install fstab-sync:       ${enable_fstab_sync}
+
+        Extended PCMCIA support:  ${enable_pcmcia_support}
+        PCMCIA stab file:         ${PCMCIA_STAB_FILE}
 
         install hal-hotplug-map:  ${enable_hotplug_map}"
 
