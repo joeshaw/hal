@@ -1,3 +1,8 @@
+2004-09-02  Joe Shaw  <joeshaw@novell.com>
+
+	* doc/TODO: Update the "Computer" HalDevice item, remove a 
+	duplicate item.
+
 2004-09-01  David Zeuthen  <david@fubar.dk>
 
 	Patch from Jon Lech Johansen <jon@nanocrew.net>. Add support for

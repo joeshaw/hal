@@ -152,12 +152,13 @@ vendor kernels etc., e.g. 2.6.47-1.492smp would also match.
    no D-BUS signals should be emitted.
 
 ============================================================================
-* Root HalDevice representing system
+* Additional properties on the "Computer" Root HalDevice
 ============================================================================
 
-The CITY OF LOST DEVICES HalDevice should be renamed to Computer and
-contain information about the system such as the kernel version, X.org
-version etc.
+The Computer HalDevice needs to contain additional info about the system.
+Right now it just exports some basic kernel info (name, version).  It
+should also include things like the X.org version, power management info
+(see below), etc.
 
 ============================================================================
 * UTF8 support
@@ -214,7 +215,7 @@ the mailing list.
 * Persistent device store
 ============================================================================
 
-Kay Sievers have implemented parts of it, see
+Kay Sievers has implemented parts of it, see
 
      http://freedesktop.org/pipermail/hal/2004-June/000388.html
 
@@ -271,12 +272,6 @@ persistent device store)
 Callouts are currently called in order, so if a callout hangs then no
 others will be called.  There should be a timeout which kills the
 callout after a certain period of time.  (5 seconds?  10?  15?)
-
-============================================================================
-* Device Removal
-============================================================================
-
-We shouldn't remove a device before all the children are removed
 
 ============================================================================
 * Dependencies, Robustness
