@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+SUBDIRS = $(HALD_BACKEND) .
+
 INCLUDES = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -29,59 +31,7 @@ hald_SOURCES =                                                          \
 	pstore.h                        pstore.c                        \
 	hald_conf.h                     hald_conf.c
 
-hald_SOURCES +=	\
-	linux/common.h			linux/common.c			\
-					linux/osspec.c			\
-	linux/bus_device.h		linux/bus_device.c		\
-	linux/class_device.h		linux/class_device.c		\
-					linux/pci_bus_device.c		\
-					linux/usb_bus_device.c		\
-					linux/usbif_bus_device.c	\
-					linux/input_class_device.c	\
-					linux/net_class_device.c	\
-					linux/printer_class_device.c	\
-					linux/scsi_bus_device.c           \
-					linux/scsi_generic_class_device.c \
-					linux/scsi_host_class_device.c	\
-					linux/block_class_device.c	\
-					linux/ide_host_bus_device.c	\
-					linux/ide_bus_device.c		\
-					linux/pcmcia_socket_class_device.c \
-					linux/macio_bus_device.c	\
-					linux/ieee1394_class_device.c	\
-					linux/ieee1394_node_class_device.c \
-					linux/ieee1394_host_class_device.c \
-					linux/serial_class_device.c \
-					linux/usb_serial_bus_device.c \
-					linux/multimedia_class_device.c \
-					linux/platform_bus_device.c	\
-	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c \
-	linux/hald_helper.h
-
-#					linux/ieee1394_host_class_device.c
-
-if PCMCIA_SUPPORT_ENABLE
-hald_SOURCES += linux/pcmcia_utils.c linux/pcmcia_utils.h linux/pcmcia_cs.h
-endif
-
-hald_SOURCES +=                                                         \
-        linux/libsysfs/libsysfs.h                                       \
-        linux/libsysfs/dlist.h          linux/libsysfs/dlist.c          \
-        linux/libsysfs/sysfs.h                                          \
-                                        linux/libsysfs/sysfs_bus.c      \
-                                        linux/libsysfs/sysfs_class.c    \
-                                        linux/libsysfs/sysfs_device.c   \
-                                        linux/libsysfs/sysfs_dir.c      \
-                                        linux/libsysfs/sysfs_driver.c   \
-                                        linux/libsysfs/sysfs_utils.c
-
-hald_SOURCES +=                                                         \
-	linux/volume_id/volume_id_logging.h				\
-	linux/volume_id/volume_id.h	linux/volume_id/volume_id.c	\
-	linux/drive_id/drive_id_logging.h				\
-	linux/drive_id/drive_id.h	linux/drive_id/drive_id.c
-
-hald_LDADD = @PACKAGE_LIBS@ -lm -lcap @EXPAT_LIB@
+hald_LDADD = @PACKAGE_LIBS@ -lm -lcap @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 if HAVE_SELINUX
 hald_LDADD += -lselinux

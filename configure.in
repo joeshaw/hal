@@ -193,6 +193,19 @@ AC_CHECK_HEADERS(expat.h)
 AC_CHECK_LIB(expat,XML_ParserCreate, EXPAT_LIB="-lexpat")
 AC_SUBST(EXPAT_LIB)
 
+AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux/dummy)],
+                      [
+                      backend=$withval
+                      ]
+                      )
+if ! test -z "$with_backend" ; then
+    HALD_BACKEND="$with_backend"
+else
+    HALD_BACKEND="linux"
+fi
+AC_SUBST(HALD_BACKEND)
+
+
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
 AC_SUBST(PACKAGE_CFLAGS)
@@ -398,6 +411,8 @@ hal-storage.pc
 hal.conf
 Makefile
 hald/Makefile
+hald/dummy/Makefile
+hald/linux/Makefile
 hald/haldaemon
 libhal/Makefile
 libhal-storage/Makefile
@@ -449,6 +464,9 @@ echo "
         User for HAL:             ${HAL_USER}
         Group for HAL:            ${HAL_GROUP}
         hald pidfile:             ${HALD_PID_FILE}
+
+        hald backend:             ${HALD_BACKEND}
+
         Building SELinux support: ${have_selinux}
 
         install fstab-sync:       ${enable_fstab_sync}

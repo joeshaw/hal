@@ -1,3 +1,15 @@
+2004-12-15  David Zeuthen  <davidz@redhat.com>
+
+	* hald/dummy/Makefile.am: New file
+
+	* hald/dummy/osspec.c: New file
+
+	* hald/linux/Makefile.am: New file
+
+	* hald/Makefile.am: Use new $(HALD_BACKEND) variable
+
+	* configure.in: Add --with-backend; default to linux
+
 2004-12-13  David Zeuthen  <davidz@redhat.com>
 
 	Merged all changes from the stable branch so HEAD is on par.
