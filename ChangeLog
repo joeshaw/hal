@@ -1,5 +1,13 @@
 2004-09-27  David Zeuthen  <david@fubar.dk>
 
+	Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+	* tools/linux/hal_hotplug_map.c: 
+	Since a few days debians libgphoto2 also ships the an usb
+	usermap. Attaches patch makes hal work with this :)
+
+2004-09-27  David Zeuthen  <david@fubar.dk>
+
 	* libhal/libhal.c:
 	(struct LibHalContext_s): add is_shutdown field
 	(filter_func): if ctx->is_shutdown is TRUE don't process the message.

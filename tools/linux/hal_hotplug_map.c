@@ -19,7 +19,7 @@ static int verbose = FALSE;
 #define dbg(...) do {if (verbose) fprintf (stderr, __VA_ARGS__);} while (0)
 
 /* @todo FIXME HACK: it's a hack to hardcode this */
-static const char *usbmapfiles[] = {"/etc/hotplug/usb.usermap", "/etc/hotplug/usb/libsane.usermap", NULL};
+static const char *usbmapfiles[] = {"/etc/hotplug/usb.usermap", "/etc/hotplug/usb/libsane.usermap", "/etc/hotplug/usb/libgphoto2.usermap",  NULL};
 
 static int
 handle_usb_found (const char *module)
@@ -35,7 +35,7 @@ handle_usb_found (const char *module)
 	if (hal_context == NULL)
 		return FALSE;
 
-	if (strcmp (module, "usbcam") == 0) {
+	if (strcmp (module, "usbcam") == 0 || strcmp(module, "libgphoto2") == 0) {
 		hal_device_add_capability (hal_context, udi, "camera");
 		hal_device_set_property_string (hal_context, udi, "info.category", "camera");
 		hal_device_set_property_string (hal_context, udi, "camera.access_method", "user");
