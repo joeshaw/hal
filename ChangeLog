@@ -1,3 +1,14 @@
+2004-08-12  David Zeuthen  <david@fubar.dk>
+
+	* tools/fstab-sync.c: Set emacs mode to GNU, include mntent.h
+	(volume_new): Add label field
+	(volume_free): Destroy label field
+	(fs_table_has_volume): Renamed from fs_table_has_block_device,
+	handle LABEL= entries in fstab by looking at the volume and
+	looking up /etc/mtab
+	(fs_table_add_volume): Invoke fs_table_has_volume instead
+	of fs_table_has_block_device
+
 2004-08-11  David Zeuthen  <david@fubar.dk>
 
 	* doc/spec/hal-spec.xml.in: Add docs for block.have_scanned,

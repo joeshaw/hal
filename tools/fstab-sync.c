@@ -1,3 +1,4 @@
+/* -*- mode: C; c-file-style: "gnu" -*- */
 /* Copyright 2004 Red Hat, Inc.
  *
  * This software may be freely redistributed under the terms of the GNU
@@ -41,6 +42,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include <mntent.h>
 
 #include <popt.h>
 
@@ -84,6 +86,7 @@ typedef struct
   char *type;
   char *fs_type;
   char *mount_point;
+  char *label;
 
   DeviceType device_type;
 } Volume;
@@ -957,6 +960,8 @@ volume_new (const char *udi)
 
   volume->fs_type = get_hal_string_property (udi, "block.fs_type");
 
+  volume->label = get_hal_string_property (udi, "volume.label");
+
   if (volume->fs_type == NULL)
     {
       switch (volume->device_type)
@@ -1002,6 +1007,12 @@ volume_free (Volume *volume)
       volume->fs_type = NULL;
     }
 
+  if (volume->label != NULL)
+    {
+      free (volume->label);
+      volume->fs_type = NULL;
+    }
+
   if (volume->type != NULL)
     {
       free (volume->type);
@@ -1023,8 +1034,9 @@ create_mount_point_for_volume (Volume *volume)
   return (mkdir (volume->mount_point, 0775) != -1) || errno == EEXIST;
 }
 
+
 static boolean
-fs_table_has_block_device (FSTable *table, const char *block_device)
+fs_table_has_volume (FSTable *table, Volume *volume)
 {
   FSTableLine *line;
 
@@ -1036,13 +1048,79 @@ fs_table_has_block_device (FSTable *table, const char *block_device)
       field = line->fields;
       while (field != NULL)
         {
+
           if (field->type == FS_TABLE_FIELD_TYPE_BLOCK_DEVICE)
             {
-              if (strcmp (field->value, block_device) == 0)
+
+	      /* Easy, the device file is a match */
+              if (strcmp (field->value, volume->block_device) == 0)
                 return TRUE;
 
-              break;
+	      /* Mount by label, more tricky, see below... */
+	      if (strncmp (field->value, "LABEL=", 6) == 0 &&
+		  strlen (field->value) > 6 &&
+		  strcmp (field->value + 6, volume->label) == 0) {
+		FSTableField *i;
+		char *mount_point;
+      
+		/* OK, so this new volume has a label that is matched
+		 * in the fstab.. Check, via /etc/mtab, whether the
+		 * device file for the entry in mtab matches the mount
+		 * point 
+		 *
+		 * (If it's mounted at all, which we assume it
+		 * is since no hotpluggable drives should be listed
+		 * in /etc/fstab by LABEL. And note that if it's 
+		 * not mounted then now we have TWO volumes with
+		 * the same label and then everything is FUBAR anyway) 
+		 */
+
+		/* first, find the mountpoint from fstab */
+		mount_point = NULL;
+		for (i = line->fields; i != NULL; i = i->next) {
+		  if (i->type == FS_TABLE_FIELD_TYPE_MOUNT_POINT) {
+		    mount_point = i->value;
+		    break;
+		  }
+		}
+
+		if (mount_point != NULL) {
+		  FILE *f;
+		  struct mntent mnt;
+		  struct mntent *mnte;
+		  char buf[512];
+		  char *device_file_from_mount_point;
+
+		  printf ("..and label=%s has mountpoint=%s\n", 
+			  volume->label, mount_point);
+
+		  /* good, now lookup in /etc/mtab */
+		  device_file_from_mount_point = NULL;
+		  if ((f = setmntent ("/etc/mtab", "r")) != NULL) {
+
+		    while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
+		      printf ("fsname=%s, dir=%s\n", mnt.mnt_fsname, mnt.mnt_dir);
+		      if (strcmp (mnt.mnt_dir, mount_point) == 0) {
+			device_file_from_mount_point = mnt.mnt_fsname;
+			break;
+		      }
+		    }
+
+		    endmntent (f);
+		  }
+
+		  /* now see if it's the same device_file as our volume */
+		  if (device_file_from_mount_point != NULL &&
+		      strcmp (device_file_from_mount_point, 
+			      volume->block_device) == 0) {
+		    /* Yah it is.. So we're already listed in the fstab */
+		    return TRUE;
+		  }
+		}
+	      } /* entry is LABEL= */
+
             }
+
           field = field->next;
         }
       line = line->next;
@@ -1057,7 +1135,7 @@ fs_table_add_volume (FSTable *table, Volume *volume)
   char *mount_options;
   FSTableLine *line;
 
-  if (fs_table_has_block_device (table, volume->block_device))
+  if (fs_table_has_volume (table, volume))
     {
       fstab_update_debug (_("Could not add entry to fstab file: "
                             "block device already listed\n"));
