@@ -128,6 +128,7 @@ process_callouts (void)
 	Callout *callout;
 	char *argv[3];
 	GError *err = NULL;
+	int num_props;
 
 	if (pending_callouts == NULL) {
 		processing_callouts = FALSE;
@@ -155,8 +156,23 @@ process_callouts (void)
 
 	argv[2] = NULL;
 
+	num_props = hal_device_num_properties (callout->device);
+
+	/*
+	 * All the properties, plus any special env vars set up for this
+	 * type of callout, plus one for a trailing NULL.
+	 */
+	callout->envp = g_renew (char *, callout->envp,
+				 num_props + callout->envp_index + 1);
+
 	hal_device_property_foreach (callout->device, add_property_to_env,
 				     callout);
+
+	/*
+	 * envp_index is incremented in the foreach, so afterward we're
+	 * pointing at the end of the array.
+	 */
+	callout->envp[callout->envp_index] = NULL;
 
 	if (!g_spawn_async (callout->working_dir, argv, callout->envp,
 			    G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
@@ -175,9 +191,6 @@ hal_callout_device (HalDevice *device, gboolean added)
 	GDir *dir;
 	GError *err = NULL;
 	const char *filename;
-
-	/* XXX */
-	return;
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
@@ -217,13 +230,11 @@ hal_callout_device (HalDevice *device, gboolean added)
 
 		num_props = hal_device_num_properties (device);
 
-		/* Extra one for the UDI, extra one for NULL */
-		callout->envp = g_new0 (char *, num_props + 2);
+		callout->envp_index = 1;
+		callout->envp = g_new (char *, callout->envp_index);
 
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
 						    hal_device_get_udi (device));
-		callout->envp_index = 1;
-
 		pending_callouts = g_slist_append (pending_callouts, callout);
 	}
 
@@ -239,10 +250,6 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 	GDir *dir;
 	GError *err = NULL;
 	const char *filename;
-
-	/* XXX */
-	return;
-
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
@@ -282,14 +289,13 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 
 		num_props = hal_device_num_properties (device);
 
-		/* Extra one for UDI, one for capability, and one for NULL */
-		callout->envp = g_new0 (char *, num_props + 3);
+		callout->envp_index = 2;
+		callout->envp = g_new (char *, callout->envp_index);
 
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
 						    hal_device_get_udi (device));
 		callout->envp[1] = g_strdup_printf ("CAPABILITY=%s",
 						    capability);
-		callout->envp_index = 2;
 
 		pending_callouts = g_slist_append (pending_callouts, callout);
 	}
@@ -306,10 +312,6 @@ hal_callout_property (HalDevice *device, const char *key)
 	GDir *dir;
 	GError *err = NULL;
 	const char *filename;
-
-	/* XXX */
-	return;
-
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
@@ -351,14 +353,13 @@ hal_callout_property (HalDevice *device, const char *key)
 
 		value = hal_device_property_to_string (device, key);
 
-		/* Extra one for UDI, two key/value, and one for NULL */
-		callout->envp = g_new0 (char *, num_props + 4);
+		callout->envp_index = 3;
+		callout->envp = g_new (char *, callout->envp_index);
 
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
-					   hal_device_get_udi (device));
+						    hal_device_get_udi (device));
 		callout->envp[1] = g_strdup_printf ("PROPERTY=%s", key);
 		callout->envp[2] = g_strdup_printf ("VALUE=%s", value);
-		callout->envp_index = 3;
 
 		pending_callouts = g_slist_append (pending_callouts, callout);
 

@@ -1,3 +1,14 @@
+2004-04-21  Joe Shaw  <joe@ximian.com>
+
+	* hald/callout.c (process_callouts): Reallocate the envp here with
+	enough space for all of the properties, since properties were
+	probably added since we initially measured the space.
+	(hal_callout_device, hal_callout_capability,
+	hal_callout_property): Reenable these.  Don't bother counting the
+	number of properties here, it doesn't matter.  Instead allocate
+	just enough space for our special env vars and let
+	process_callouts() deal with the rest.
+
 2004-04-21  David Zeuthen  <david@fubar.dk>
 
 	* hald/callout.c
