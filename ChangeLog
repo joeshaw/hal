@@ -1,4 +1,13 @@
-2005-03-01  David Zeuthen  <david@fubar.dk>
+2005-02-28  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/hal-spec.xml.in: Added ALSA namespace
+
+	* hald/linux2/classdev.c (sound_add, sound_compute_udi): New
+	functions to handle ALSA devices.
+ 
+	* ChangeLog: Updated my email address in this file.
+
+2005-03-01  David Zeuthen  <davidz@redhat.com>
 
 	* hald/hald_dbus.c (foreach_device_by_capability): Fixup this
 	function to work with the new D-BUS API
@@ -17,7 +26,7 @@
 2005-02-28  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/ids.c: Added TOS6200, TOS6202, TOS6207 entries from
-	Richard Hughes <ee21rh@surrey.ac.uk> - he got them from
+	Richard Hughes <richard@hughsie.com> - he got them from
 	http://homel.vsb.cz/~pop036/files/acpi_toshiba.c
 
 2005-02-28  David Zeuthen  <davidz@redhat.com>
@@ -1298,7 +1307,7 @@
 
 	 http://lists.freedesktop.org/archives/hal/2005-January/002002.html
 
-	from Richard Hughes <ee21rh@surrey.ac.uk> but much mangled by
+	from Richard Hughes <richard@hughsie.com> but much mangled by
 	myself
 
 	* hald/linux2/util.c (hal_util_get_parent_path): Renamed from
@@ -1644,13 +1653,13 @@
 2005-01-17  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Patch from Richard Hughes
-	<ee21rh@surrey.ac.uk>. Move properties into right section;
+	<richard@hughsie.com>. Move properties into right section;
 	add some linux.* properties.
 
 2005-01-17  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Patch from Richard Hughes
-	<ee21rh@surrey.ac.uk>. This is a patch for HAL CVS HEAD that
+	<richard@hughsie.com>. This is a patch for HAL CVS HEAD that
 	provides all the system.* namespaces. I have not included the
 	PMU/ACPI specific parts yet as we are still debating about how to
 	include pmu.* and acpi.* in the most efficient way.

@@ -4,6 +4,7 @@
  * classdev.c : Handling of functional kernel devices
  *
  * Copyright (C) 2004 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Richard Hughes, <richard@hughsie.com>
  *
  * Licensed under the Academic Free License version 2.0
  *
@@ -438,6 +439,75 @@ usbclass_compute_udi (HalDevice *d)
 	return TRUE;
 }
 
+static HalDevice *
+sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	const gchar *device;
+	int cardnum, devicenum;
+	char type;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL || device_file == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.category", "alsa");
+	hal_device_add_capability (d, "alsa");
+	hal_device_property_set_string (d, "alsa.physical_device", physdev->udi);
+
+	device = hal_util_get_last_element(sysfs_path);
+	if (sscanf (device, "controlC%d", &cardnum) == 1) {
+		hal_device_property_set_string (d, "alsa.type", "control");
+		hal_device_property_set_string (d, "info.product", "ALSA Control Device");
+		hal_device_property_set_int (d, "alsa.card", cardnum);
+	} else if (sscanf (device, "pcmC%dD%d%c", &cardnum, &devicenum, &type) == 3) {
+		hal_device_property_set_int (d, "alsa.card", cardnum);
+		hal_device_property_set_int (d, "alsa.device", devicenum);
+		if (type == 'p') {
+			hal_device_property_set_string (d, "alsa.type", "playback");
+			hal_device_property_set_string (d, "info.product", "ALSA Playback Device");
+		} else if (type == 'c') {
+			hal_device_property_set_string (d, "alsa.type", "capture");
+			hal_device_property_set_string (d, "info.product", "ALSA Capture Device");
+		} else {
+			hal_device_property_set_string (d, "alsa.type", "unknown");
+			hal_device_property_set_string (d, "info.product", "ALSA Device");
+		}
+	} else {
+		g_object_unref (d);
+		d = NULL;
+	}
+
+out:
+	return d;
+}
+
+static gboolean
+sound_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	int cardnum, devicenum;
+
+	cardnum = hal_device_property_get_int (d, "alsa.card");
+	devicenum = hal_device_property_get_int (d, "alsa.device");
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_alsa_%s_%i_%i",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_string (d, "alsa.type"),
+			      hal_device_property_get_int (d, "alsa.card"),
+			      hal_device_property_get_int (d, "alsa.device"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static gboolean
@@ -513,12 +583,23 @@ static ClassDevHandler classdev_handler_usbclass =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_sound = 
+{ 
+	.subsystem    = "sound",
+	.add          = sound_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = sound_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_input,
 	&classdev_handler_bluetooth,
 	&classdev_handler_net,
 	&classdev_handler_scsi_host,
 	&classdev_handler_usbclass,
+	&classdev_handler_sound,
 	NULL
 };
 
