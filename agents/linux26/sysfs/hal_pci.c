@@ -383,6 +383,7 @@ void visit_device_pci(const char* path, struct sysfs_device *device)
     char* product_name;
     char* subsys_vendor_name;
     char* subsys_product_name;
+    const char* driver;
     char namebuf[512];
 
     /*printf("pci: %s\n", path);*/
@@ -399,6 +400,11 @@ void visit_device_pci(const char* path, struct sysfs_device *device)
      */
     hal_device_set_property_string(d, "pci.linux.sysfs_path", path);
     /*printf("*** created udi=%s for path=%s\n", d, path);*/
+
+    /* set driver */
+    driver = drivers_lookup(path);
+    if( driver!=NULL )
+        hal_device_set_property_string(d, "linux.driver", driver);
 
     dlist_for_each_data(sysfs_get_device_attributes(device), cur,
                         struct sysfs_attribute)
@@ -495,9 +501,11 @@ void visit_device_pci(const char* path, struct sysfs_device *device)
  */
 void hal_pci_init()
 {
-    /** @todo Hardcoding path to pci.ids is a hack */
+    /* get all drivers under /sys/bus/pci/drivers */
+    drivers_collect("pci");
 
     /* Load /usr/share/hwdata/pci.ids */
+    /** @todo Hardcoding path to pci.ids is a hack */
     pci_ids_load("/usr/share/hwdata/pci.ids");
 }
 

@@ -1,4 +1,48 @@
-2003-11-17  David Zeuthen  <david@fubar.dk>
+2003-11-30  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal_net.c: new file
+
+	* agents/linux26/sysfs/hal_net.h: new file
+
+	* agents/linux26/sysfs/hal_input.c: new file
+
+	* agents/linux26/sysfs/hal_input.h: new file
+
+	* agents/linux26/sysfs/Makefile.am: Add net and input to filelist
+
+	* agents/linux26/sysfs/hal_pci.c (visit_device_pci): Set driver
+	property.
+	(hal_pci_init): Collect drivers
+
+	* agents/linux26/sysfs/hal_usb.c (visit_device_usb): Set driver
+	property. Compute and set linux.kernel_devname; the name that
+	the kernel uses to uniquely identify the device
+	(visit_device_usb_interface): Set driver property
+	(hal_usb_init): Collect drivers
+
+	* agents/linux26/sysfs/main.c (find_num): Gracefully handle errors
+	(find_udi_from_sysfs_path): allow max_time_to_try to be zero
+	(find_udi_by_key_value): new function
+	(visit_class_device): support for net class devices
+	(hal_sysfs_probe): support for net class devices
+	(device_hotplug_add): support for input and net class 
+	(device_hotplug_remove): support for input and net class devices
+	(drivers_add_entry): new function
+	(drivers_lookup): new function
+	(drivers_collect): new function
+	(main): support for input and net class devices
+
+	* agents/linux26/sysfs/main.h: Add new prototypes
+
+	* tools/hal-device-manager: Fix a bug that slowed down the app
+	when the devices are changing. Many other changes
+
+	* tools/hal-device-manager.glade: Add menu and gnome-app
+
+	* tools/fdo-logo.png: new (binary) file
+
+
+2003-11-27  David Zeuthen  <david@fubar.dk>
 
 	* libhal/libhal.c (hal_initialized): Fixed stupied error that prevented
 	libhal from compiling

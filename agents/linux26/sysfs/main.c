@@ -49,6 +49,8 @@
 #include "hal_ide.h"
 #include "hal_scsi.h"
 #include "hal_block.h"
+#include "hal_net.h"
+#include "hal_input.h"
 
 
 /** @defgroup HalAgentsLinux26 Linux 2.6 sysfs
@@ -122,7 +124,7 @@ dbus_int32_t parse_hex(const char* str)
 
 /** Find an integer appearing right after a substring in a string.
  *
- *  The result is undefined if the number isn't properly formatted or
+ *  The result is LONG_MAX if the number isn't properly formatted or
  *  the substring didn't exist in the given string.
  *
  *  @param  pre                 Substring preceding the value to parse
@@ -138,13 +140,18 @@ long int find_num(char* pre, char* s, int base)
 
     where = strstr(s, pre);
     if( where==NULL )
-        DIE(("Didn't find '%s' in '%s'", pre, s));
+    {
+        /*DIE(("Didn't find '%s' in '%s'", pre, s));*/
+        return LONG_MAX;
+    }
     where += strlen(pre);
 
     result = strtol(where, NULL, base);
     /** @todo Handle errors gracefully */
+/*
     if( result==LONG_MIN || result==LONG_MAX )
         DIE(("Error parsing value for '%s' in '%s'", pre, s));
+*/
 
     return result;
 }
@@ -448,7 +455,7 @@ char* find_udi_from_sysfs_path(const char* path,
     
     /*printf("*** found parent=%s\n", parent_path);*/
 
-    while( time_slept<max_time_to_try*1000*1000 )
+    while( time_slept<=max_time_to_try*1000*1000 )
     {    
         /* Now find corresponding HAL device */
         udis = hal_manager_find_device_string_match(
@@ -469,7 +476,8 @@ char* find_udi_from_sysfs_path(const char* path,
             syslog(LOG_INFO, "Finding UDI for %s; sleeping %d us",
                    path, time_to_sleep);
 
-            usleep(time_to_sleep);
+            if( max_time_to_try>0 )
+                usleep(time_to_sleep);
             time_slept += time_to_sleep;
         }
         else
@@ -517,12 +525,73 @@ char* find_parent_udi_from_sysfs_path(const char* path,
     return find_udi_from_sysfs_path(parent_path, max_time_to_try);
 }
 
+/** This function finds a device where a given key mathces a given value.
+ *
+ *  If several devices match it is undefined which of the devices are
+ *  returned.
+ *
+ *  Optionally, the caller may specify for many how seconds to try. This is
+ *  useful for hotplug situations where the many hotplug events for a
+ *  input device are not in order. Remember, in this situation a
+ *  number of copies of this program is running.
+ *
+ *  @param  path                Sysfs-path of device to find parent for
+ *  @param
+ *  @param  max_time_to_try     Number of seconds to try before giving up.
+ *  @return                     UDI (unique device id) of parent, or #NULL
+ *                              if no parent device was found.
+ */
+char* find_udi_by_key_value(const char* key,
+                            const char* value,
+                            int max_time_to_try)
+{
+    char** udis;
+    int num_udi;
+    int time_slept = 0;
+    int time_to_sleep = 500*1000; // every 250 ms 
+    
+    while( time_slept<=max_time_to_try*1000*1000 )
+    {    
+        /* Now find corresponding HAL device */
+        udis = hal_manager_find_device_string_match(
+            key,
+            value,
+            &num_udi);
+    
+        /** @todo fix memory leak */
+
+        if( num_udi!=1 || udis==NULL )
+        {
+            /* Don't do this if we are probing devices; it'd be a waste of 
+             * time*/
+
+            if( is_probing )
+                return NULL;
+
+            syslog(LOG_INFO, "Finding UDI for key,val=%s,%s; sleeping %d us",
+                   key, value, time_to_sleep);
+
+            if( max_time_to_try>0 )
+                usleep(time_to_sleep);
+            time_slept += time_to_sleep;
+        }
+        else
+        {
+            return udis[0];
+        }
+    }
+
+    syslog(LOG_INFO, "Giving up finding UDI for key,val=%s,%s", 
+           key, value);
+
+    return NULL;
+}
 
 /** Set the physical device for a device.
  *
  *  This function visits all parent devices and sets the property
- *  PhysicalDevice on the first device that doesn't have the PhysicalDevice
- *  property set.
+ *  PhysicalDevice to the first parent device that doesn't have the
+ *  PhysicalDevice property set.
  *
  *  @param  udi                 Unique Device Id
  */
@@ -711,6 +780,8 @@ static void visit_class_device(const char* path, dbus_bool_t visit_children)
         visit_class_device_scsi_device(path, class_device);
     else if( strcmp(class_device->classname, "block")==0 )
         visit_class_device_block(path, class_device);
+    else if( strcmp(class_device->classname, "net")==0 )
+        visit_class_device_net(path, class_device);
 
     /* Visit children */
     if( visit_children && class_device->directory!=NULL &&
@@ -807,6 +878,12 @@ static void hal_sysfs_probe()
 
     /* visit all block devices */
     visit_class("block", TRUE);
+
+    /* visit all net devices */
+    visit_class("net", TRUE);
+
+    /* Find the input devices (no yet in sysfs) */
+    hal_input_probe();
 }
 
 /** This function is invoked on hotplug add events */
@@ -816,6 +893,13 @@ static void device_hotplug_add(char* bus)
     const char* devpath;
     char path[SYSFS_PATH_MAX];
     char sysfs_path[SYSFS_PATH_MAX];
+
+    if( strcmp(bus, "input")==0 )
+    {
+        syslog(LOG_INFO, "adding input device %s", getenv("PHYS"));
+        hal_input_handle_hotplug_add();
+        return;
+    }
 
     /* Must have $DEVPATH */
     devpath = getenv("DEVPATH");
@@ -857,6 +941,11 @@ static void device_hotplug_add(char* bus)
         syslog(LOG_INFO, "adding block class device at %s", path);
         visit_class_device(path, FALSE);
     }
+    else if( strcmp(bus, "net")==0 )
+    {
+        syslog(LOG_INFO, "adding net class device at %s", path);
+        visit_class_device(path, FALSE);
+    }
     else
     {
         syslog(LOG_INFO, "ignoring device add of bus=%s at %s", bus, path);
@@ -874,6 +963,14 @@ static void device_hotplug_remove(char* bus)
     char sysfs_path[SYSFS_PATH_MAX];
     char** device_udis;
     int num_device_udis;
+
+    if( strcmp(bus, "input")==0 )
+    {
+        syslog(LOG_INFO, "removing input device %s", getenv("PHYS"));
+        hal_input_handle_hotplug_remove();
+        return;
+    }
+
 
     /* Must have $DEVPATH */
     devpath = getenv("DEVPATH");
@@ -911,6 +1008,10 @@ static void device_hotplug_remove(char* bus)
     else if( strcmp(bus, "block")==0 )
     {
         syslog(LOG_INFO, "removing block class device at %s", path);
+    }
+    else if( strcmp(bus, "net")==0 )
+    {
+        syslog(LOG_INFO, "removing net class device at %s", path);
     }
     else
     {
@@ -950,6 +1051,111 @@ static void device_hotplug(char* bus)
     else if( strcmp(action, "remove")==0 )
         device_hotplug_remove(bus);
 
+}
+
+/* Entry in bandaid driver database */
+struct driver_entry_s
+{
+    char driver_name[SYSFS_NAME_LEN];  /**< Name of driver, e.g. 8139too */
+    char device_path[SYSFS_PATH_MAX];  /**< Sysfs path */
+    struct driver_entry_s* next;       /**< Pointer to next element or #NULL
+                                        *   if the last element */
+};
+
+/** Head of linked list of #driver_entry_s structs */
+static struct driver_entry_s* drivers_table_head = NULL;
+
+/** Add an entry to the bandaid driver database.
+ *
+ *  @param  driver_name         Name of the driver
+ *  @param  device_path         Path to device, must start with /sys/devices
+ */
+static void drivers_add_entry(const char* driver_name, const char* device_path)
+{
+    struct driver_entry_s* entry;
+
+    entry = malloc(sizeof(struct driver_entry_s));
+    if( entry==NULL )
+        DIE(("Out of memory"));
+    strncpy(entry->driver_name, driver_name, SYSFS_NAME_LEN);
+    strncpy(entry->device_path, device_path, SYSFS_PATH_MAX);
+    entry->next = drivers_table_head;
+    drivers_table_head = entry;
+}
+
+/** Given a device path under /sys/devices, lookup the driver. You need
+ *  to have called #drivers_collect() on the bus-type before hand.
+ *
+ *  @param  device_path         sysfs path to device
+ *  @return                     Driver name or #NULL if no driver is bound
+ *                              to that sysfs device
+ */
+const char* drivers_lookup(const char* device_path)
+{
+    struct driver_entry_s* i;
+
+    for(i=drivers_table_head; i!=NULL; i=i->next)
+    {
+        if( strcmp(device_path, i->device_path)==0 )
+            return i->driver_name;
+    }
+    return NULL;
+}
+
+/** Collect all drivers being used on a bus. This is only bandaid until
+ *  sysutils fill in the driver_name in sysfs_device.
+ *
+ *  @param  bus_name            Name of bus, e.g. pci, usb
+ */
+void drivers_collect(const char* bus_name)
+{
+    int rc;
+    char path[SYSFS_PATH_MAX];
+    char sysfs_path[SYSFS_PATH_MAX];
+    struct sysfs_directory* current;
+    struct sysfs_link* current2;
+    struct sysfs_directory* dir;
+    struct sysfs_directory* dir2;
+
+    /* get mount path for sysfs */
+    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
+    if( rc!=0 )
+    {
+        DIE(("Couldn't get mount path for sysfs"));
+    }
+
+    /* traverse /sys/bus/<bus>/drivers */
+    snprintf(path, SYSFS_PATH_MAX, "%s/bus/%s/drivers", sysfs_path, bus_name);
+    dir = sysfs_open_directory(path);
+    if( dir==NULL )
+        DIE(("Error opening sysfs directory at %s\n", path));
+    if( sysfs_read_directory(dir)!=0 )
+        DIE(("Error reading sysfs directory at %s\n", path));
+    if( dir->subdirs!=NULL )
+    {
+        dlist_for_each_data(dir->subdirs, current, struct sysfs_directory)
+        {
+            /*printf("name=%s\n", current->name);*/
+
+            dir2 = sysfs_open_directory(current->path);
+            if( dir2==NULL )
+                DIE(("Error opening sysfs directory at %s\n", current->path));
+            if( sysfs_read_directory(dir2)!=0 )
+                DIE(("Error reading sysfs directory at %s\n", current->path));
+
+            if( dir2->links!=NULL )
+            {
+                dlist_for_each_data(dir2->links, current2, 
+                                    struct sysfs_link)
+                {
+                    /*printf("  link=%s\n", current2->target);*/
+                    drivers_add_entry(current->name, current2->target);
+                }
+                sysfs_close_directory(dir2);
+            }
+        }
+    }
+    sysfs_close_directory(dir);
 }
 
 
@@ -1013,6 +1219,8 @@ int main(int argc, char* argv[])
     hal_ide_init();
     hal_scsi_init();
     hal_block_init();
+    hal_net_init();
+    hal_input_init();
 
     while(TRUE)
     {

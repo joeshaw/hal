@@ -26,6 +26,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <limits.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <libsysfs.h>
@@ -40,8 +41,14 @@
  *  many HAL devices (usb, usbif, scsi_host, scsi_device, block*2)
  *  appear and the linux kernel gives us these add events out of
  *  order.
+ *
+ *  My old PIII 650Mhz, 128MB laptop with GNOME 2.4 is slow when
+ *  attaching a whole subtree of USB devices, so a value of 30 seconds 
+ *  is actually reasonable. It's important to note that it's not
+ *  HAL that is taking the lions share of the resources; rather it's
+ *  the shell-scripts in linux-hotplug.
  */
-#define HAL_LINUX_HOTPLUG_TIMEOUT 15
+#define HAL_LINUX_HOTPLUG_TIMEOUT 30
 
 /** Macro to abort the program.
  *
@@ -88,6 +95,12 @@ char* read_single_line(char* filename_format,...);
 
 void find_and_set_physical_device(char* udi);
 
+char* find_udi_by_key_value(const char* key,
+                            const char* value,
+                            int max_time_to_try);
+
+const char* drivers_lookup(const char* device_path);
+void drivers_collect(const char* bus_name);
 
 /* @} */
 

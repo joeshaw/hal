@@ -392,6 +392,8 @@ static void usb_proc_device_done(usb_proc_info* info)
     usb_proc_head = info;
 }
 
+
+
 /** Parse a line from /proc/bus/usb/devices
  *
  *  @param  s                   Line from /proc/bus/usb/devices
@@ -584,9 +586,10 @@ static void visit_device_usb_interface(const char* path,
     struct sysfs_attribute* cur;
     char* d;
     char* pd;
+    const char* driver;
     char attr_name[SYSFS_NAME_LEN];
 
-    //printf("usb_interface: path=%s\n", path);
+    /*printf("usb_interface: path=%s\n", path);*/
 
     /* Find parent USB device - this may block..  */
     pd = find_parent_udi_from_sysfs_path(path, HAL_LINUX_HOTPLUG_TIMEOUT);
@@ -606,6 +609,12 @@ static void visit_device_usb_interface(const char* path,
     hal_device_set_property_string(d, "PhysicalDevice", pd);
     hal_device_set_property_bool(d, "isVirtual", TRUE);
     hal_device_set_property_string(d, "Parent", pd);
+
+    /* set driver */
+    driver = drivers_lookup(path);
+    if( driver!=NULL )
+        hal_device_set_property_string(d, "linux.driver", driver);
+
 
     hal_device_set_property_int(d, "usbif.deviceIdVendor",
         hal_device_get_property_int(pd, "usb.idVendor"));
@@ -670,6 +679,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     char* product_name;
     char* vendor_name_kernel = NULL;
     char* product_name_kernel = NULL;
+    const char* driver;
     int bus_number;
     usb_proc_info* proc_info;
 
@@ -713,6 +723,11 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
      */
     hal_device_set_property_string(d, "usb.linux.sysfs_path", path);
     /*printf("*** created udi=%s for path=%s\n", d, path);*/
+
+    /* set driver */
+    driver = drivers_lookup(path);
+    if( driver!=NULL )
+        hal_device_set_property_string(d, "linux.driver", driver);
     
     dlist_for_each_data(sysfs_get_device_attributes(device), cur,
                         struct sysfs_attribute)
@@ -825,7 +840,6 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     if( parent_udi!=NULL )
         hal_device_set_property_string(d, "Parent", parent_udi);
 
-
     /* Merge information from /proc/bus/usb/devices */
     proc_info = NULL;
 
@@ -930,6 +944,8 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
 
     if( proc_info!=NULL )
     {
+        char kernel_path[32+1];
+
         hal_device_set_property_int(d, "usb.levelNumber", proc_info->t_level);
         hal_device_set_property_int(d, "usb.linux.device_number",
                                     proc_info->t_device);
@@ -940,6 +956,41 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
         hal_device_set_property_int(d, "usb.bcdSpeed", proc_info->t_speed_bcd);
         hal_device_set_property_int(d, "usb.bcdVersion", 
                                     proc_info->d_version_bcd);
+
+        /* Ok, now compute the unique name that the kernel sometimes use
+         * to refer to the device; it's #usb_make_path() as defined in
+         * include/linux/usb.h
+         */
+        if( proc_info->t_level==0 )
+        {
+            snprintf(kernel_path, 32, "usb-%s", 
+                     hal_device_get_property_string(d, "usb.serial"));
+            hal_device_set_property_string(d, "linux.kernel_devname",
+                                           kernel_path);
+        }
+        else
+        {
+            if( parent_udi!=NULL )
+            {
+                if( proc_info->t_level==1 )
+                {
+                    snprintf(kernel_path, 32, "%s-%d", 
+                             hal_device_get_property_string(parent_udi, 
+                                                     "linux.kernel_devname"),
+                             hal_device_get_property_int(d, "usb.portNumber"));
+                }
+                else
+                {
+                    snprintf(kernel_path, 32, "%s.%d", 
+                             hal_device_get_property_string(parent_udi, 
+                                                     "linux.kernel_devname"),
+                             hal_device_get_property_int(d, "usb.portNumber"));
+                }
+                hal_device_set_property_string(d, "linux.kernel_devname",
+                                               kernel_path);
+            }
+        }
+
     }
 
     /* Uncomment this line to test that sleeping works when handling USB
@@ -962,9 +1013,12 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
  */
 void hal_usb_init()
 {
-    /** @todo Hardcoding path to usb.ids is a hack */
+
+    /* get all drivers under /sys/bus/usb/drivers */
+    drivers_collect("usb");
 
     /* Load /usr/share/hwdata/usb.ids */
+    /** @todo Hardcoding path to usb.ids is a hack */
     usb_ids_load("/usr/share/hwdata/usb.ids");
 
     /* Parse /proc/bus/usb/devices */

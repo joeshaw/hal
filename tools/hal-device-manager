@@ -3,7 +3,7 @@
 ############################################################################
 # CVSID: $Id$
 #
-# hal-device-manager : HAL Device Viewer
+# hal-device-manager : HAL Device Manager
 #
 # Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
 #
@@ -29,10 +29,33 @@ import dbus
 import gtk
 import gtk.glade
 import gobject
+import gnome
+import gnome.ui
+
+
+gnome.app_version = "0.2"
 
 PIXBUF_COLUMN = 0
 TITLE_COLUMN  = 1
 UDI_COLUMN    = 2
+
+bus_names = {"usb"         : "USB",
+             "usbif"       : "USB Interface",
+             "pci"         : "PCI",
+             "scsi_host"   : "SCSI Host",
+             "scsi_device" : "SCSI",
+             "block"       : "Block",
+             "ide"         : "IDE",
+             "ide_host"    : "IDE Host"}
+
+state_names = { 0 : "<span foreground='red'>No device information file was found</span>",
+                1 : "Enabling...",
+                2 : "Need information to enable",
+                3 : "Error enabling the device",
+                4 : "Enabled",
+                5 : "Disabling...",
+                6 : "Disabled",
+                7 : "Not plugged in" }
 
 class Device:
     def __init__(self, device_name, parent_name, properties):
@@ -50,18 +73,17 @@ class Device:
         for c in self.children:
             c.print_tree(indent+4)
 
-    def populate_gtk_tree(self, tree_model):
-        dont_show_virtual = 1
+    def populate_gtk_tree(self, tree_model, dont_show_virtual):
         # see if we should show virtual devices
         if dont_show_virtual:
             if self.properties.has_key("isVirtual"):
                 if self.properties["isVirtual"]:
-                    # but do show all block devices and ide channels
+                    # do show all block devices, ide channels
                     if not self.properties["Bus"] in ["block", "ide_host"]:
                         self.row = self.parent_device.row
                         # and recurse the childs
                         for c in self.children:
-                            c.populate_gtk_tree(tree_model)
+                            c.populate_gtk_tree(tree_model, dont_show_virtual)
                         return
 
         if self.parent_device==None:
@@ -108,7 +130,7 @@ class Device:
             tree_model.set_value(self.row, UDI_COLUMN, self.device_name)
 
         for c in self.children:
-            c.populate_gtk_tree(tree_model)
+            c.populate_gtk_tree(tree_model, dont_show_virtual)
             
     def find_by_udi(self, device_udi):
         if self.device_name==device_udi:
@@ -119,375 +141,382 @@ class Device:
                 return rc
         return None
 
-
-def udi_to_device(device_udi):
-    return virtual_root.find_by_udi(device_udi)
-
-
-def build_device_tree():
-    device_names = hal_manager.GetAllDevices()
-
-    virtual_root = Device("virtual_root", None, {})
-    device_list = [virtual_root]
-
-    # first build list of Device objects
-    for name in device_names:
-        device_dbus_obj = hal_service.get_object(name,
-                                                 "org.freedesktop.Hal.Device")
-        properties = device_dbus_obj.GetAllProperties()
-        try:
-            parent_name = properties["Parent"]
-        except KeyError:
-            # no parent, must be parent of virtual_root
-            parent_name = "/"
-        device = Device(name, parent_name, properties)
-        device_list.append(device)
-
-    # set parent_device and children for each Device object
-    for device in device_list:
-        parent_name = device.parent_name
-        device.parent_device = virtual_root
-        if parent_name!="/":
-            for p in device_list:
-                if p.device_name==parent_name:
-                    device.parent_device = p
-                    p.children.append(device)
-        if device!=virtual_root and device.parent_device==virtual_root:
-            virtual_root.children.append(device)
-        if device==virtual_root:
-            device.parent_device=None
-    return virtual_root
+class GUI:
+    def udi_to_device(self, device_udi):
+        return self.virtual_root.find_by_udi(device_udi)
 
 
-bus_names = {"usb"         : "USB",
-             "usbif"       : "USB Interface",
-             "pci"         : "PCI",
-             "scsi_host"   : "SCSI Host",
-             "scsi_device" : "SCSI",
-             "block"       : "Block",
-             "ide"         : "IDE",
-             "ide_host"    : "IDE Host"}
+    def build_device_tree(self):
+        device_names = self.hal_manager.GetAllDevices()
+        device_names.sort()
 
-state_names = { 0 : "<span foreground='red'>No device information file was found</span>",
-                1 : "Enabling...",
-                2 : "Need information to enable",
-                3 : "Error enabling the device",
-                4 : "Enabled",
-                5 : "Disabling...",
-                6 : "Disabled",
-                7 : "Not plugged in" }
-
-def update_tab_device(device):
-    bus = xml.get_widget("ns_device_bus")
-    state = xml.get_widget("ns_device_status")
-    vendor = xml.get_widget("ns_device_vendor")
-    product = xml.get_widget("ns_device_name")
-    category = xml.get_widget("ns_device_category")
-    capabilities = xml.get_widget("ns_device_capabilities")
-
-    # we always have Bus and State
-    bus.set_label(bus_names[device.properties["Bus"]])
-    state.set_label(state_names[device.properties["State"]])
-
-    # guestimate product and vendor if we have no device information file
-    if device.properties["GotDeviceInfo"]:
-        if device.properties.has_key("Product"):
-            product.set_label(device.properties["Product"])
-        else:
-            product.set_label("Unknown")
-        if device.properties.has_key("Vendor"):
-            vendor.set_label(device.properties["Vendor"])
-        else:
-            vendor.set_label("N/A")
-    else:
+        virtual_root = Device("virtual_root", None, {})
+        device_list = [virtual_root]
         
-        if device.properties["Bus"]=="usb":
+        # first build list of Device objects
+        for name in device_names:
+            device_dbus_obj = self.hal_service.get_object(name,
+                                                     "org.freedesktop.Hal.Device")
+            properties = device_dbus_obj.GetAllProperties()
+            try:
+                parent_name = properties["Parent"]
+            except KeyError:
+                # no parent, must be parent of virtual_root
+                parent_name = "/"
+            device = Device(name, parent_name, properties)
+            device_list.append(device)
+
+        # set parent_device and children for each Device object
+        for device in device_list:
+            parent_name = device.parent_name
+            device.parent_device = virtual_root
+            if parent_name!="/":
+                for p in device_list:
+                    if p.device_name==parent_name:
+                        device.parent_device = p
+                        p.children.append(device)
+            if device!=virtual_root and device.parent_device==virtual_root:
+                virtual_root.children.append(device)
+            if device==virtual_root:
+                device.parent_device=None
+        return virtual_root
+
+
+
+    def update_tab_device(self, device):
+        bus = self.xml.get_widget("ns_device_bus")
+        state = self.xml.get_widget("ns_device_status")
+        vendor = self.xml.get_widget("ns_device_vendor")
+        product = self.xml.get_widget("ns_device_name")
+        category = self.xml.get_widget("ns_device_category")
+        capabilities = self.xml.get_widget("ns_device_capabilities")
+
+        # we always have Bus and State
+        bus.set_label(bus_names[device.properties["Bus"]])
+        state.set_label(state_names[device.properties["State"]])
+
+        # guestimate product and vendor if we have no device information file
+        if device.properties["GotDeviceInfo"]:
             if device.properties.has_key("Product"):
-                product.set_label("%s"%device.properties["Product"])
-            elif device.properties.has_key("usb.Product"):
-                product.set_label("%s"%device.properties["usb.Product"])
-            elif device.properties.has_key("usb.idProduct"):
-                product.set_label("Unknown (0x%x)"%device.properties["usb.idProduct"])
+                product.set_label(device.properties["Product"])
             else:
                 product.set_label("Unknown")
-
             if device.properties.has_key("Vendor"):
-                vendor.set_label("%s"%device.properties["Vendor"])
-            elif device.properties.has_key("usb.Vendor"):
-                vendor.set_label("%s"%device.properties["usb.Vendor"])
-            elif device.properties.has_key("usb.idVendor"):
-                vendor.set_label("Unknown (0x%x)"%device.properties["usb.idVendor"])
+                vendor.set_label(device.properties["Vendor"])
             else:
-                vendor.set_label("Unknown")
-
-                
-        elif device.properties["Bus"]=="pci":
-            if device.properties.has_key("Product"):
-                product.set_label("%s"%device.properties["Product"])
-            elif device.properties.has_key("pci.Product"):
-                product.set_label("%s"%device.properties["pci.Product"])
-            elif device.properties.has_key("pci.idProduct"):
-                product.set_label("Unknown (0x%x)"%device.properties["pci.idProduct"])
-            else:
-                product.set_label("Unknown")
-
-            if device.properties.has_key("Vendor"):
-                vendor.set_label("%s"%device.properties["Vendor"])
-            elif device.properties.has_key("pci.Vendor"):
-                vendor.set_label("%s"%device.properties["pci.Vendor"])
-            elif device.properties.has_key("pci.idVendor"):
-                vendor.set_label("Unknown (0x%x)"%device.properties["pci.idVendor"])
-            else:
-                vendor.set_label("Unknown")
-
-                
+                vendor.set_label("N/A")
         else:
-            vendor.set_label("Unknown")
-        # clear category, capabilities
-        category.set_label("Unknown")
-        capabilities.set_label("Unknown")
 
-def update_tab_usb(device):
-    page = xml.get_widget("device_notebook").get_nth_page(1)
-    if device.properties["Bus"]!="usb":
-        page.hide_all()
-        return
+            if device.properties["Bus"]=="usb":
+                if device.properties.has_key("Product"):
+                    product.set_label("%s"%device.properties["Product"])
+                elif device.properties.has_key("usb.Product"):
+                    product.set_label("%s"%device.properties["usb.Product"])
+                elif device.properties.has_key("usb.idProduct"):
+                    product.set_label("Unknown (0x%x)"%device.properties["usb.idProduct"])
+                else:
+                    product.set_label("Unknown")
 
-    page.show_all()
-
-    version = xml.get_widget("ns_usb_version")
-    bandwidth = xml.get_widget("ns_usb_bandwidth")
-    maxpower = xml.get_widget("ns_usb_maxpower")
-    man_id = xml.get_widget("ns_usb_man_id")
-    prod_id = xml.get_widget("ns_usb_prod_id")
-    revision = xml.get_widget("ns_usb_rev")
-
-    bcdVersion = device.properties["usb.bcdVersion"]
-    version.set_label("%x.%x"%(bcdVersion>>8, bcdVersion&0xff))
-    
-    bcdSpeed = device.properties["usb.bcdSpeed"]
-    bandwidth.set_label("%x.%x Mbit/s"%(bcdSpeed>>8, bcdSpeed&0xff))
-    maxpower.set_label("%d mA"%(device.properties["usb.bMaxPower"]))
-    if not device.properties.has_key("usb.Vendor"):
-        man_id.set_label("0x%04x"%(device.properties["usb.idVendor"]))
-    else:
-        man_id.set_label("%s"%(device.properties["usb.Vendor"]))
-    if not device.properties.has_key("usb.Product"):
-        prod_id.set_label("0x%04x"%(device.properties["usb.idProduct"]))
-    else:
-        prod_id.set_label("%s"%(device.properties["usb.Product"]))
-    bcdDevice = device.properties["usb.bcdDevice"]
-    revision.set_label("%x.%x"%((bcdDevice>>8), bcdDevice&0xff))
+                if device.properties.has_key("Vendor"):
+                    vendor.set_label("%s"%device.properties["Vendor"])
+                elif device.properties.has_key("usb.Vendor"):
+                    vendor.set_label("%s"%device.properties["usb.Vendor"])
+                elif device.properties.has_key("usb.idVendor"):
+                    vendor.set_label("Unknown (0x%x)"%device.properties["usb.idVendor"])
+                else:
+                    vendor.set_label("Unknown")
 
 
-def update_tab_pci(device):
-    page = xml.get_widget("device_notebook").get_nth_page(2)
-    if device.properties["Bus"]!="pci":
-        page.hide_all()
-        return
+            elif device.properties["Bus"]=="pci":
+                if device.properties.has_key("Product"):
+                    product.set_label("%s"%device.properties["Product"])
+                elif device.properties.has_key("pci.Product"):
+                    product.set_label("%s"%device.properties["pci.Product"])
+                elif device.properties.has_key("pci.idProduct"):
+                    product.set_label("Unknown (0x%x)"%device.properties["pci.idProduct"])
+                else:
+                    product.set_label("Unknown")
 
-    page.show_all()
+                if device.properties.has_key("Vendor"):
+                    vendor.set_label("%s"%device.properties["Vendor"])
+                elif device.properties.has_key("pci.Vendor"):
+                    vendor.set_label("%s"%device.properties["pci.Vendor"])
+                elif device.properties.has_key("pci.idVendor"):
+                    vendor.set_label("Unknown (0x%x)"%device.properties["pci.idVendor"])
+                else:
+                    vendor.set_label("Unknown")
 
-    man_id = xml.get_widget("ns_pci_man_id")
-    prod_id = xml.get_widget("ns_pci_prod_id")
-    subsys_man_id = xml.get_widget("ns_pci_subsys_man_id")
-    subsys_prod_id = xml.get_widget("ns_pci_subsys_prod_id")
 
-    if not device.properties.has_key("pci.Vendor"):
-        man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendor"]))
-    else:
-        man_id.set_label("%s"%(device.properties["pci.Vendor"]))
-    if not device.properties.has_key("pci.Product"):
-        prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProduct"]))
-    else:
-        prod_id.set_label("%s"%(device.properties["pci.Product"]))
-
-    if not device.properties.has_key("pci.VendorSubSystem"):
-        subsys_man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendorSubSystem"]))
-    else:
-        subsys_man_id.set_label("%s"%(device.properties["pci.VendorSubSystem"]))
-    if not device.properties.has_key("pci.ProductSubSystem"):
-        subsys_prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProductSubSystem"]))
-    else:
-        subsys_prod_id.set_label("%s"%(device.properties["pci.ProductSubSystem"]))
-
-def update_tab_advanced(device):
-
-    store = gtk.ListStore(gobject.TYPE_STRING,
-                          gobject.TYPE_STRING,
-                          gobject.TYPE_STRING)
-    keys = device.properties.keys()
-    keys.sort()
-    for p in keys:
-        iter = store.append()
-        val = device.properties[p]
-        ptype = type(val)
-        if ptype==str:
-            store.set(iter, 0, p, 1, "string", 2, "%s"%val)
-        elif ptype==int:
-            store.set(iter, 0, p, 1, "int", 2, "%d (0x%x)"%(val, val))
-        elif ptype==bool:
-            if val:
-                store.set(iter, 0, p, 1, "bool", 2, "true")
             else:
-                store.set(iter, 0, p, 1, "bool", 2, "false")
-        elif ptype==float:
-            store.set(iter, 0, p, 1, "float", 2, "%f"%val)
-            
+                vendor.set_label("Unknown")
+            # clear category, capabilities
+            category.set_label("Unknown")
+            capabilities.set_label("Unknown")
 
-    prop_tree_view = xml.get_widget("ns_adv_properties")
+    def update_tab_usb(self, device):
+        page = self.xml.get_widget("device_notebook").get_nth_page(1)
+        if device.properties["Bus"]!="usb":
+            page.hide_all()
+            return
 
-    # remove old columns, if any
-    cols = prop_tree_view.get_columns()
-    for cr in cols:
-        prop_tree_view.remove_column(cr)
+        page.show_all()
 
-    column0 = gtk.TreeViewColumn("Key", gtk.CellRendererText(), text=0)
-    column1 = gtk.TreeViewColumn("Type", gtk.CellRendererText(), text=1)
-    column2 = gtk.TreeViewColumn("Value", gtk.CellRendererText(), text=2)
-    prop_tree_view.append_column(column0)
-    prop_tree_view.append_column(column1)
-    prop_tree_view.append_column(column2)
+        version = self.xml.get_widget("ns_usb_version")
+        bandwidth = self.xml.get_widget("ns_usb_bandwidth")
+        maxpower = self.xml.get_widget("ns_usb_maxpower")
+        man_id = self.xml.get_widget("ns_usb_man_id")
+        prod_id = self.xml.get_widget("ns_usb_prod_id")
+        revision = self.xml.get_widget("ns_usb_rev")
 
-    prop_tree_view.set_model(store)
+        bcdVersion = device.properties["usb.bcdVersion"]
+        version.set_label("%x.%x"%(bcdVersion>>8, bcdVersion&0xff))
+
+        bcdSpeed = device.properties["usb.bcdSpeed"]
+        bandwidth.set_label("%x.%x Mbit/s"%(bcdSpeed>>8, bcdSpeed&0xff))
+        maxpower.set_label("%d mA"%(device.properties["usb.bMaxPower"]))
+        if not device.properties.has_key("usb.Vendor"):
+            man_id.set_label("0x%04x"%(device.properties["usb.idVendor"]))
+        else:
+            man_id.set_label("%s"%(device.properties["usb.Vendor"]))
+        if not device.properties.has_key("usb.Product"):
+            prod_id.set_label("0x%04x"%(device.properties["usb.idProduct"]))
+        else:
+            prod_id.set_label("%s"%(device.properties["usb.Product"]))
+        bcdDevice = device.properties["usb.bcdDevice"]
+        revision.set_label("%x.%x"%((bcdDevice>>8), bcdDevice&0xff))
+
+
+    def update_tab_pci(self, device):
+        page = self.xml.get_widget("device_notebook").get_nth_page(2)
+        if device.properties["Bus"]!="pci":
+            page.hide_all()
+            return
+
+        page.show_all()
+
+        man_id = self.xml.get_widget("ns_pci_man_id")
+        prod_id = self.xml.get_widget("ns_pci_prod_id")
+        subsys_man_id = self.xml.get_widget("ns_pci_subsys_man_id")
+        subsys_prod_id = self.xml.get_widget("ns_pci_subsys_prod_id")
+
+        if not device.properties.has_key("pci.Vendor"):
+            man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendor"]))
+        else:
+            man_id.set_label("%s"%(device.properties["pci.Vendor"]))
+        if not device.properties.has_key("pci.Product"):
+            prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProduct"]))
+        else:
+            prod_id.set_label("%s"%(device.properties["pci.Product"]))
+
+        if not device.properties.has_key("pci.VendorSubSystem"):
+            subsys_man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendorSubSystem"]))
+        else:
+            subsys_man_id.set_label("%s"%(device.properties["pci.VendorSubSystem"]))
+        if not device.properties.has_key("pci.ProductSubSystem"):
+            subsys_prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProductSubSystem"]))
+        else:
+            subsys_prod_id.set_label("%s"%(device.properties["pci.ProductSubSystem"]))
+
+    def update_tab_advanced(self, device):
+
+        store = gtk.ListStore(gobject.TYPE_STRING,
+                              gobject.TYPE_STRING,
+                              gobject.TYPE_STRING)
+        keys = device.properties.keys()
+        keys.sort()
+        for p in keys:
+            iter = store.append()
+            val = device.properties[p]
+            ptype = type(val)
+            if ptype==str:
+                store.set(iter, 0, p, 1, "string", 2, "%s"%val)
+            elif ptype==int:
+                store.set(iter, 0, p, 1, "int", 2, "%d (0x%x)"%(val, val))
+            elif ptype==bool:
+                if val:
+                    store.set(iter, 0, p, 1, "bool", 2, "true")
+                else:
+                    store.set(iter, 0, p, 1, "bool", 2, "false")
+            elif ptype==float:
+                store.set(iter, 0, p, 1, "float", 2, "%f"%val)
+
+
+        prop_tree_view = self.xml.get_widget("ns_adv_properties")
+
+        # remove old columns, if any
+        cols = prop_tree_view.get_columns()
+        for cr in cols:
+            prop_tree_view.remove_column(cr)
+
+        column0 = gtk.TreeViewColumn("Key", gtk.CellRendererText(), text=0)
+        column1 = gtk.TreeViewColumn("Type", gtk.CellRendererText(), text=1)
+        column2 = gtk.TreeViewColumn("Value", gtk.CellRendererText(), text=2)
+        prop_tree_view.append_column(column0)
+        prop_tree_view.append_column(column1)
+        prop_tree_view.append_column(column2)
+
+        prop_tree_view.set_model(store)
 
 
 
-def update_device_notebook(device):
-    update_tab_device(device)
-    update_tab_advanced(device)
-    update_tab_usb(device)
-    update_tab_pci(device)
+    def update_device_notebook(self, device):
+        self.update_tab_device(device)
+        self.update_tab_advanced(device)
+        self.update_tab_usb(device)
+        self.update_tab_pci(device)
 
 
-def on_device_window_delete_event(obj, event):
-    gtk.main_quit()
-    return gtk.TRUE
+    def on_device_tree_selection_changed(self, tree_selection):
+        (tree_model, tree_iter) = tree_selection.get_selected()
+        if tree_iter:
+            device_udi = tree_model.get_value(tree_iter, UDI_COLUMN)
+            device = self.udi_to_device(device_udi)
+            self.update_device_notebook(device)
 
-def on_device_tree_selection_changed(tree_selection):
-    (tree_model, tree_iter) = tree_selection.get_selected()
-    device_udi = tree_model.get_value(tree_iter, UDI_COLUMN)
-    device = udi_to_device(device_udi)
-    update_device_notebook(device)
+    def device_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
+        [property_name] = dbus_message.get_args_list()
+        # TODO: Update appropriate device
+        #if property_name=="Parent":
+        #    update_device_list()        
+        self.update_device_list()        
 
-def device_changed(dbus_if,dbus_member, dbus_svc, dbus_obj_path, dbus_message):
-    [property_name] = dbus_message.get_args_list()
-    # TODO: Update appropriate device
-    #if property_name=="Parent":
-    #    update_device_list()        
-    update_device_list()        
+    def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
+        if dbus_member=="DeviceAdded":
+            [device_udi] = dbus_message.get_args_list()
+            self.bus.add_signal_receiver(self.device_changed,
+                                         "org.freedesktop.Hal.Device",
+                                         "org.freedesktop.Hal",
+                                         device_udi)
+            self.update_device_list()
+        elif dbus_member=="DeviceRemoved":
+            [device_udi] = dbus_message.get_args_list()
+            self.bus.remove_signal_receiver(self.device_changed,
+                                            "org.freedesktop.Hal.Device",
+                                            "org.freedesktop.Hal",
+                                            device_udi)
+            self.update_device_list()
+        else:
+            print "*** Unknown signal %s"%dbus_member
 
-def gdl_changed(dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
-    if dbus_member=="DeviceAdded":
-        [device_udi] = dbus_message.get_args_list()
-        bus.add_signal_receiver(device_changed,
-                                "org.freedesktop.Hal.Device",
-                                "org.freedesktop.Hal",
-                                device_udi)
-        update_device_list()
-    elif dbus_member=="DeviceRemoved":
-        [device_udi] = dbus_message.get_args_list()
-        bus.remove_signal_receiver(device_changed,
-                                   "org.freedesktop.Hal.Device",
-                                   "org.freedesktop.Hal",
-                                   device_udi)
-        update_device_list()
-    else:
-        print "*** Unknown signal %s"%dbus_member
 
-def update_device_list():
-    global virtual_root, tree_model
-    # We use a virtual root device so we have a single tree
-    virtual_root = build_device_tree()
+    def update_device_list(self):
+        # We use a virtual root device so we have a single tree
+        self.virtual_root = self.build_device_tree()
 
-    # (Name to display, device UDI)
-    tree_model = gtk.TreeStore(gtk.gdk.Pixbuf,
-                               gobject.TYPE_STRING, gobject.TYPE_STRING)
-    virtual_root.populate_gtk_tree(tree_model)
+        # (Name to display, device UDI)
+        try:
+            if self.tree_model:
+                pass
+        except:
+            self.tree_model = gtk.TreeStore(gtk.gdk.Pixbuf,
+                                            gobject.TYPE_STRING, gobject.TYPE_STRING)
+        while 1:
+            it = self.tree_model.get_iter_first()
+            if not it:
+                break
+            self.tree_model.remove(it)
 
-    tree_view = xml.get_widget("device_tree")
-    # remove columns, if any
-    cols = tree_view.get_columns()
-    for cr in cols:
-        tree_view.remove_column(cr)
-    # add new columns
-    column = gtk.TreeViewColumn()
-    column.set_title("Devices")
-    render_pixbuf = gtk.CellRendererPixbuf()
-    column.pack_start(render_pixbuf, expand=False)
-    column.add_attribute(render_pixbuf, "pixbuf", PIXBUF_COLUMN)
-    render_text = gtk.CellRendererText()
-    column.pack_start(render_text, expand=True)
-    column.add_attribute(render_text, "text", TITLE_COLUMN)
-    tree_view.append_column(column)
-    
-    tree_view.set_model(tree_model)
-    tree_view.expand_all()
 
-    # Set focus to first element
-    tree_view.grab_focus()
-    update_device_notebook(virtual_root.children[0])
-    
-    tree_selection = tree_view.get_selection()
-    tree_selection.connect("changed", on_device_tree_selection_changed)
 
-def load_and_scale_icon(path):
-    orig = gtk.gdk.pixbuf_new_from_file(path)
-    icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, gtk.TRUE, 8, 16, 16)
-    orig.scale(icon, 0, 0, 16, 16,
-               0, 0,
-               16.0/orig.get_width(),
-               16.0/orig.get_height(),
-               gtk.gdk.INTERP_HYPER)
-    return icon
+        self.virtual_root.populate_gtk_tree(self.tree_model, self.dont_show_virtual)
 
-def main():
-    global bus, hal_service, hal_manager, xml, hal_icons
+        tree_view = self.xml.get_widget("device_tree")
+        try:
+            if self.tree_selection:
+                pass
+        except:
+            self.tree_selection = tree_view.get_selection()
+            self.tree_selection.connect("changed", self.on_device_tree_selection_changed)
 
-    hal_icons = {}
+        # add new columns only first time
+        try:
+            if self.column_dt:
+                pass
+        except:
+            self.column_dt = gtk.TreeViewColumn()
+            self.column_dt.set_title("Devices")
+            render_pixbuf = gtk.CellRendererPixbuf()
+            self.column_dt.pack_start(render_pixbuf, expand=False)
+            self.column_dt.add_attribute(render_pixbuf, "pixbuf", PIXBUF_COLUMN)
+            render_text = gtk.CellRendererText()
+            self.column_dt.pack_start(render_text, expand=True)
+            self.column_dt.add_attribute(render_text, "text", TITLE_COLUMN)
+            tree_view.append_column(self.column_dt)
 
-    hal_icons["bus_pci"] = load_and_scale_icon("bus-pci.png")
-    hal_icons["bus_usb"] = load_and_scale_icon("bus-usb.png")
-    hal_icons["abstract"] = load_and_scale_icon("hal-abstract.png");
-    hal_icons["harddisk"] = load_and_scale_icon("hal-harddisk.png");
-    hal_icons["cdrom"] = load_and_scale_icon("hal-cdrom.png");
-    hal_icons["floppy"] = load_and_scale_icon("hal-floppy.png");
-    hal_icons["unknown"] = load_and_scale_icon("hal-unknown.png")
+        tree_view.set_model(self.tree_model)
+        tree_view.expand_all()
 
-    
-    bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)
-    hal_service = bus.get_service("org.freedesktop.Hal")
-    hal_manager = hal_service.get_object("/org/freedesktop/Hal/Manager",
-                                     "org.freedesktop.Hal.Manager")
+        # Set focus to first element
+        tree_view.grab_focus()
+        self.update_device_notebook(self.virtual_root.children[0])
 
-    # gdl_changed will be invoked when the Global Device List is changed
-    # per the hal spec
-    bus.add_signal_receiver(gdl_changed,
-                            "org.freedesktop.Hal.Manager",
-                            "org.freedesktop.Hal",
-                            "/org/freedesktop/Hal/Manager")
+    def on_virtual_devices1_activate(self, obj):
+        self.dont_show_virtual = 1 - self.dont_show_virtual
+        self.update_device_list()
 
-    # Add listeners for all devices
-    device_names = hal_manager.GetAllDevices()
-    for name in device_names:
-        bus.add_signal_receiver(device_changed,
-                                "org.freedesktop.Hal.Device",
-                                "org.freedesktop.Hal",
-                                name)    
+    def load_and_scale_icon(self, path):
+        orig = gtk.gdk.pixbuf_new_from_file(path)
+        icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, gtk.TRUE, 8, 16, 16)
+        orig.scale(icon, 0, 0, 16, 16,
+                   0, 0,
+                   16.0/orig.get_width(),
+                   16.0/orig.get_height(),
+                   gtk.gdk.INTERP_HYPER)
+        return icon
 
-    xml = gtk.glade.XML("hal-device-manager.glade")
-    win = xml.get_widget("device_window")
-    xml.signal_autoconnect({
-        "on_device_window_delete_event":  on_device_window_delete_event})
+    def on_device_window_delete_event(self, obj, event):
+        gtk.main_quit()
+        return gtk.TRUE
 
-    update_device_list()
-    
-    gtk.mainloop()
+    def main(self):
+        global hal_icons
+        hal_icons = {}
+        hal_icons["bus_pci"] = self.load_and_scale_icon("bus-pci.png")
+        hal_icons["bus_usb"] = self.load_and_scale_icon("bus-usb.png")
+        hal_icons["abstract"] = self.load_and_scale_icon("hal-abstract.png");
+        hal_icons["harddisk"] = self.load_and_scale_icon("hal-harddisk.png");
+        hal_icons["cdrom"] = self.load_and_scale_icon("hal-cdrom.png");
+        hal_icons["floppy"] = self.load_and_scale_icon("hal-floppy.png");
+        hal_icons["unknown"] = self.load_and_scale_icon("hal-unknown.png")
+
+
+        self.bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)
+        self.hal_service = self.bus.get_service("org.freedesktop.Hal")
+        self.hal_manager = self.hal_service.get_object("/org/freedesktop/Hal/Manager",
+                                         "org.freedesktop.Hal.Manager")
+
+        # gdl_changed will be invoked when the Global Device List is changed
+        # per the hal spec
+        self.bus.add_signal_receiver(self.gdl_changed,
+                                     "org.freedesktop.Hal.Manager",
+                                     "org.freedesktop.Hal",
+                                     "/org/freedesktop/Hal/Manager")
+
+        # Add listeners for all devices
+        device_names = self.hal_manager.GetAllDevices()
+        for name in device_names:
+            self.bus.add_signal_receiver(self.device_changed,
+                                         "org.freedesktop.Hal.Device",
+                                         "org.freedesktop.Hal",
+                                         name)    
+
+        self.xml = gtk.glade.XML("hal-device-manager.glade")
+        app = self.xml.get_widget("app1")
+        app.connect("destroy", gtk.mainquit)
+
+        self.xml.signal_autoconnect({"on_virtual_devices1_activate" :
+                                     self.on_virtual_devices1_activate})
+
+        self.dont_show_virtual = 1
+
+        self.update_device_list()
+
+        gtk.mainloop()
 
 
 if __name__ == '__main__':
-    main()
+    gui = GUI()
+    gui.main()
 
 
         
-
