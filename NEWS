@@ -1,4 +1,29 @@
+==========
+HAL 0.5.0 "The family had a lot of buffers."
+==========
 
+Released Mar 7, 2005
+
+ - Completely rewritten backend code including splitting work that
+   requires privileges into separate processes
+ - HAL daemon should be more restitant to broken kernel drivers thanks
+   to the split into multiple processes
+ - Test suite
+ - New features
+   - String list property type
+   - New device information file features
+   - ACPI/PMU/APM/hiddev UPS abstractions
+ - Not backwards compatible since D-BUS broke ABI (porting effort is
+   minimal though)
+ - Updated list of TODO items providing a roadmap
+
+Requires
+ - Linux 2.6.10 or later built with hotplug and uevents
+ - udev 050 or later with /sbin/udevsend as the hotplug helper/multiplexor
+ - D-BUS 0.31 or later including glib and (optionally) Python bindings
+ - glib2 2.4 or later
+
+========================================================================
 
 Branched sometime after 0.4.2 - all 0.4.x release are now on the
 branch called hal-0_4-stable-branch in CVS.
