@@ -351,13 +351,11 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 }
 
 int
-get_dvd_media_type (int fd)
+get_disc_type (int fd)
 {
 	ScsiCommand *cmd;
 	int retval = -1;
 	unsigned char header[8];
-	unsigned char *list;
-	int i, len;
 
 	cmd = scsi_command_new_from_fd (fd);
 
@@ -373,6 +371,32 @@ get_dvd_media_type (int fd)
 	
 	retval = (header[6]<<8)|(header[7]);
 
+
+	scsi_command_free (cmd);
+	return retval;
+}
+
+
+int
+disc_is_appendable (int fd)
+{
+	ScsiCommand *cmd;
+	int retval = -1;
+	unsigned char header[32];
+
+	cmd = scsi_command_new_from_fd (fd);
+
+	/* see section 5.19 of MMC-3 from http://www.t10.org/drafts.htm#mmc3 */
+	scsi_command_init (cmd, 0, 0x51); /* READ_DISC_INFORMATION */
+	scsi_command_init (cmd, 8, 32);
+	scsi_command_init (cmd, 9, 0);
+	if (scsi_command_transport (cmd, READ, header, 32)) {
+		/* READ_DISC_INFORMATION failed */
+		scsi_command_free (cmd);
+		return 0;
+	}
+	
+	retval = ((header[2]&0x03) == 0x01);
 
 	scsi_command_free (cmd);
 	return retval;

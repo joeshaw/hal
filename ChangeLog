@@ -1,3 +1,33 @@
+2004-05-13  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c 
+	(detect_media): Move disc properties into volume.disc.* namespace and
+	only set them for optical discs. Use disc_is_appendable() to set 
+	volume.disc.is_appendable. Specifically, the following properties
+	are now available for discs (e.g. iff volume.is_disc is TRUE)
+
+	volume.disc.has_audio      - TRUE iff the disc got audio tracks
+	volume.disc.has_data       - TRUE iff the disc got data tracks
+	volume.disc.is_appendable  - TRUE iff further data can be written
+	volume.disc.is_blank       - TRUE iff the data is blank 
+	volume.disc.is_rewriteable - TRUE iff the disc can be reformatted
+	volume.disc.type           - type of disc, can assume "cd_rom", "cd_r",
+	                             "cd_rw", "dvd_rom", dvd_r", "dvd_rw",
+	                             "dvd_ram", "dvd_plus_r", "dvd_plus_rw"
+
+	(block_class_pre_process): Don't set volume.disc_type, but set the
+	boolean property volume.is_disc.
+
+	* hald/linux/linux_dvd_rw_utils.c (disc_is_appendable): new function
+
+2004-05-09  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_dvd_rw_utils.h: 
+	s/get_dvd_media_type/get_disc_type/
+
+	* hald/linux/linux_dvd_rw_utils.c (get_dvd_media_type):
+	s/get_dvd_media_type/get_disc_type/
+
 2004-05-13  Joe Shaw  <joe@ximian.com>
 
 	* hald/linux/block_class_device.c (detect_media): Connect to the

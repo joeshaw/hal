@@ -535,12 +535,30 @@ detect_media (HalDevice * d)
 						"Disc");
 
 			/* set defaults */
-			hal_device_property_set_string (child, "volume.label", "");
-			hal_device_property_set_string (child, "volume.uuid", "");
-			hal_device_property_set_string (child, "volume.disc_type", "");
-			hal_device_property_set_string (child, "volume.fstype", "");
-			hal_device_property_set_string (child, "volume.mount_point", "");			
-			hal_device_property_set_bool (child, "volume.is_mounted", FALSE);
+			hal_device_property_set_string (
+				child, "volume.label", "");
+			hal_device_property_set_string (
+				child, "volume.uuid", "");
+			hal_device_property_set_string (
+				child, "volume.fstype", "");
+			hal_device_property_set_string (
+				child, "volume.mount_point", "");
+			hal_device_property_set_bool (
+				child, "volume.is_mounted", FALSE);
+			hal_device_property_set_bool (
+				child, "volume.is_disc", TRUE);
+			hal_device_property_set_string (
+				child, "volume.disc.type", "unknown");
+			hal_device_property_set_bool (
+				child, "volume.disc.has_audio", FALSE);
+			hal_device_property_set_bool (
+				child, "volume.disc.has_data", FALSE);
+			hal_device_property_set_bool (
+				child, "volume.disc.is_blank", FALSE);
+			hal_device_property_set_bool (
+				child, "volume.disc.is_appendable", FALSE);
+			hal_device_property_set_bool (
+				child, "volume.disc.is_rewritable", FALSE);
 
 
 			/* set UDI as appropriate */
@@ -551,31 +569,29 @@ detect_media (HalDevice * d)
 			hal_device_property_set_string (child, "info.udi", udi);
 			hal_device_set_udi (child, udi);
 
-			/* set disc media type as appropriate */
+			/* check for audio/data/blank */
 			type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
 			switch (type) {
 			case CDS_AUDIO:		/* audio CD */
-				hal_device_property_set_string (child,
-						"volume.disc_type",
-						"audio");
+				hal_device_property_set_bool (
+					child, "volume.disc.has_audio", TRUE);
 				break;
 			case CDS_MIXED:		/* mixed mode CD */
-				hal_device_property_set_string (child,
-						"volume.disc_type",
-						"mixed");
+				hal_device_property_set_bool (
+					child, "volume.disc.has_audio", TRUE);
+				hal_device_property_set_bool (
+					child, "volume.disc.has_data", TRUE);
 				break;
 			case CDS_DATA_1:	/* data CD */
 			case CDS_DATA_2:
 			case CDS_XA_2_1:
 			case CDS_XA_2_2:
-				hal_device_property_set_string (child,
-						"volume.disc_type",
-						"data");
+				hal_device_property_set_bool (
+					child, "volume.disc.has_data", TRUE);
 				break;
 			case CDS_NO_INFO:	/* blank or invalid CD */
-				hal_device_property_set_string (child,
-						"volume.disc_type",
-						"blank");
+				hal_device_property_set_bool (
+					child, "volume.disc.is_blank", TRUE);
 				break;
 
 			default:		/* should never see this */
@@ -585,56 +601,112 @@ detect_media (HalDevice * d)
 				break;
 			}
 
-			type = get_dvd_media_type (fd);
-			if ((type != -1) && ((type&0xF0) == 0x10)) {
+			/* see table 373 in MMC-3 for details on disc type
+			 * http://www.t10.org/drafts.htm#mmc3
+			 */
+			type = get_disc_type (fd);
+			HAL_INFO (("get_disc_type returned 0x%02x", type));
+			if (type != -1) {
 				switch (type) {
-				case 0x10: /* DVD-ROM */
-					HAL_INFO (("########### huu hey"));
+				case 0x08: /* CD-ROM */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
+						"volume.disc.type",
+						"cd_rom");
+					break;
+				case 0x09: /* CD-R */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc.type",
+						"cd_r");
+					break;
+				case 0x0a: /* CD-RW */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc.type",
+						"cd_rw");
+					hal_device_property_set_bool (
+						child, 
+						"volume.disc.is_rewritable", 
+						TRUE);
+					break;
+				case 0x10: /* DVD-ROM */
+					hal_device_property_set_string (
+						child, 
+						"volume.disc.type",
 						"dvd_rom");
 					break;
 				case 0x11: /* DVD-R Sequential */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
+						"volume.disc.type",
 						"dvd_r");
 					break;
 				case 0x12: /* DVD-RAM */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
+						"volume.disc.type",
 						"dvd_ram");
+					hal_device_property_set_bool (
+						child, 
+						"volume.disc.is_rewritable", 
+						TRUE);
 					break;
 				case 0x13: /* DVD-RW Restricted Overwrite */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
-						"dvd_rw_restricted_overwrite");
+						"volume.disc.type",
+						"dvd_rw");
+					hal_device_property_set_bool (
+						child, 
+						"volume.disc.is_rewritable", 
+						TRUE);
 					break;
 				case 0x14: /* DVD-RW Sequential */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
+						"volume.disc.type",
 						"dvd_rw");
+					hal_device_property_set_bool (
+						child, 
+						"volume.disc.is_rewritable", 
+						TRUE);
 					break;
 				case 0x1A: /* DVD+RW */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
+						"volume.disc.type",
 						"dvd_plus_rw");
+					hal_device_property_set_bool (
+						child, 
+						"volume.disc.is_rewritable", 
+						TRUE);
 					break;
 				case 0x1B: /* DVD+R */
 					hal_device_property_set_string (
 						child, 
-						"volume.disc_type",
+						"volume.disc.type",
 						"dvd_plus_r");
+					hal_device_property_set_bool (
+						child, 
+						"volume.disc.is_rewritable", 
+						TRUE);
 					break;
 				default: 
 					break;
 				}
 			}
+
+			HAL_INFO (("BAR"));
+
+			if (disc_is_appendable (fd)) {
+				hal_device_property_set_bool (
+					child, 
+					"volume.disc.is_appendable", 
+					TRUE);
+			}
+
+			HAL_INFO (("FOO"));
 
 			close(fd);
 
@@ -824,7 +896,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "info.category", "volume");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.uuid", "");
-		hal_device_property_set_string (d, "volume.disc_type", "");
+		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
 
 		/* block device that is a partition; e.g. a storage volume */
 
