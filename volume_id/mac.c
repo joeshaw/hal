@@ -39,33 +39,37 @@
 #include "util.h"
 #include "mac.h"
 
+struct mac_driver_desc {
+	__u8	signature[2];
+	__u16	block_size;
+	__u32	block_count;
+} __attribute__((__packed__));
+
+struct mac_partition {
+	__u8	signature[2];
+	__u16	res1;
+	__u32	map_count;
+	__u32	start_block;
+	__u32	block_count;
+	__u8	name[32];
+	__u8	type[32];
+} __attribute__((__packed__));
+
 int volume_id_probe_mac_partition_map(struct volume_id *id, __u64 off)
 {
-	struct mac_driver_desc {
-		__u8	signature[2];
-		__u16	block_size;
-		__u32	block_count;
-	} __attribute__((__packed__)) *driver;
-
-	struct mac_partition {
-		__u8	signature[2];
-		__u16	res1;
-		__u32	map_count;
-		__u32	start_block;
-		__u32	block_count;
-		__u8	name[32];
-		__u8	type[32];
-	} __attribute__((__packed__)) *part;
-
 	const __u8 *buf;
+	struct mac_driver_desc *driver;
+	struct mac_partition *part;
+
+	dbg("probing at offset %llu", off);
 
 	buf = volume_id_get_buffer(id, off, 0x200);
 	if (buf == NULL)
 		return -1;
 
 	part = (struct mac_partition *) buf;
-	if ((strncmp(part->signature, "PM", 2) == 0) &&
-	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
+	if ((memcmp(part->signature, "PM", 2) == 0) &&
+	    (memcmp(part->type, "Apple_partition_map", 19) == 0)) {
 		/* linux creates an own subdevice for the map
 		 * just return the type if the drive header is missing */
 		volume_id_set_usage(id, VOLUME_ID_PARTITIONTABLE);
@@ -74,7 +78,7 @@ int volume_id_probe_mac_partition_map(struct volume_id *id, __u64 off)
 	}
 
 	driver = (struct mac_driver_desc *) buf;
-	if (strncmp(driver->signature, "ER", 2) == 0) {
+	if (memcmp(driver->signature, "ER", 2) == 0) {
 		/* we are on a main device, like a CD
 		 * just try to probe the first partition from the map */
 		unsigned int bsize = be16_to_cpu(driver->block_size);
@@ -87,7 +91,7 @@ int volume_id_probe_mac_partition_map(struct volume_id *id, __u64 off)
 			return -1;
 
 		part = (struct mac_partition *) buf;
-		if (strncmp(part->signature, "PM", 2) != 0)
+		if (memcmp(part->signature, "PM", 2) != 0)
 			return -1;
 
 		part_count = be32_to_cpu(part->map_count);
@@ -112,7 +116,7 @@ int volume_id_probe_mac_partition_map(struct volume_id *id, __u64 off)
 				return -1;
 
 			part = (struct mac_partition *) buf;
-			if (strncmp(part->signature, "PM", 2) != 0)
+			if (memcmp(part->signature, "PM", 2) != 0)
 				return -1;
 
 			poff = be32_to_cpu(part->start_block) * bsize;
@@ -123,9 +127,9 @@ int volume_id_probe_mac_partition_map(struct volume_id *id, __u64 off)
 			id->partitions[i].off = poff;
 			id->partitions[i].len = plen;
 
-			if (strncmp(part->type, "Apple_Free", 10) == 0) {
+			if (memcmp(part->type, "Apple_Free", 10) == 0) {
 				volume_id_set_usage_part(&id->partitions[i], VOLUME_ID_UNUSED);
-			} else if (strncmp(part->type, "Apple_partition_map", 19) == 0) {
+			} else if (memcmp(part->type, "Apple_partition_map", 19) == 0) {
 				volume_id_set_usage_part(&id->partitions[i], VOLUME_ID_PARTITIONTABLE);
 			} else {
 				volume_id_set_usage_part(&id->partitions[i], VOLUME_ID_UNPROBED);

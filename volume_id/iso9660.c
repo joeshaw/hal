@@ -47,30 +47,34 @@
 #define ISO_VD_END			0xff
 #define ISO_VD_MAX			16
 
+union iso_super_block {
+	struct iso_header {
+		__u8	type;
+		__u8	id[5];
+		__u8	version;
+		__u8	unused1;
+		__u8		system_id[32];
+		__u8		volume_id[32];
+	} __attribute__((__packed__)) iso;
+	struct hs_header {
+		__u8	foo[8];
+		__u8	type;
+		__u8	id[4];
+		__u8	version;
+	} __attribute__((__packed__)) hs;
+} __attribute__((__packed__));
+
 int volume_id_probe_iso9660(struct volume_id *id, __u64 off)
 {
-	union iso_super_block {
-		struct iso_header {
-			__u8	type;
-			__u8	id[5];
-			__u8	version;
-			__u8	unused1;
-			__u8		system_id[32];
-			__u8		volume_id[32];
-		} __attribute__((__packed__)) iso;
-		struct hs_header {
-			__u8	foo[8];
-			__u8	type;
-			__u8	id[4];
-			__u8	version;
-		} __attribute__((__packed__)) hs;
-	} __attribute__((__packed__)) *is;
+	union iso_super_block *is;
+
+	dbg("probing at offset %llu", off);
 
 	is = (union iso_super_block *) volume_id_get_buffer(id, off + ISO_SUPERBLOCK_OFFSET, 0x200);
 	if (is == NULL)
 		return -1;
 
-	if (strncmp(is->iso.id, "CD001", 5) == 0) {
+	if (memcmp(is->iso.id, "CD001", 5) == 0) {
 		char root_label[VOLUME_ID_LABEL_SIZE+1];
 		int vd_offset;
 		int i;
@@ -96,14 +100,14 @@ int volume_id_probe_iso9660(struct volume_id *id, __u64 off)
 		}
 
 		if (!found_svd ||
-		    (found_svd && !strncmp(root_label, id->label, 16)))
+		    (found_svd && !memcmp(root_label, id->label, 16)))
 		{
 			volume_id_set_label_raw(id, root_label, 32);
 			volume_id_set_label_string(id, root_label, 32);
 		}
 		goto found;
 	}
-	if (strncmp(is->hs.id, "CDROM", 5) == 0)
+	if (memcmp(is->hs.id, "CDROM", 5) == 0)
 		goto found;
 	return -1;
 

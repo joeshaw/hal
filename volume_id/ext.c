@@ -39,30 +39,34 @@
 #include "logging.h"
 #include "ext.h"
 
+struct ext2_super_block {
+	__u32	inodes_count;
+	__u32	blocks_count;
+	__u32	r_blocks_count;
+	__u32	free_blocks_count;
+	__u32	free_inodes_count;
+	__u32	first_data_block;
+	__u32	log_block_size;
+	__u32	dummy3[7];
+	__u8	magic[2];
+	__u16	state;
+	__u32	dummy5[8];
+	__u32	feature_compat;
+	__u32	feature_incompat;
+	__u32	feature_ro_compat;
+	__u8	uuid[16];
+	__u8	volume_name[16];
+} __attribute__((__packed__));
+
 #define EXT3_FEATURE_COMPAT_HAS_JOURNAL		0x00000004
 #define EXT3_FEATURE_INCOMPAT_JOURNAL_DEV	0x00000008
 #define EXT_SUPERBLOCK_OFFSET			0x400
 
 int volume_id_probe_ext(struct volume_id *id, __u64 off)
 {
-	struct ext2_super_block {
-		__u32	inodes_count;
-		__u32	blocks_count;
-		__u32	r_blocks_count;
-		__u32	free_blocks_count;
-		__u32	free_inodes_count;
-		__u32	first_data_block;
-		__u32	log_block_size;
-		__u32	dummy3[7];
-		__u8	magic[2];
-		__u16	state;
-		__u32	dummy5[8];
-		__u32	feature_compat;
-		__u32	feature_incompat;
-		__u32	feature_ro_compat;
-		__u8	uuid[16];
-		__u8	volume_name[16];
-	} __attribute__((__packed__)) *es;
+	struct ext2_super_block *es;
+
+	dbg("probing at offset %llu", off);
 
 	es = (struct ext2_super_block *) volume_id_get_buffer(id, off + EXT_SUPERBLOCK_OFFSET, 0x200);
 	if (es == NULL)

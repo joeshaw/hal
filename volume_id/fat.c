@@ -159,6 +159,8 @@ int volume_id_probe_vfat(struct volume_id *id, __u64 off)
 	__u32 next;
 	int maxloop;
 
+	dbg("probing at offset %llu", off);
+
 	vs = (struct vfat_super_block *) volume_id_get_buffer(id, off, 0x200);
 	if (vs == NULL)
 		return -1;
@@ -166,22 +168,22 @@ int volume_id_probe_vfat(struct volume_id *id, __u64 off)
 	/* believe only that's fat, don't trust the version
 	 * the cluster_count will tell us
 	 */
-	if (strncmp(vs->sysid, "NTFS", 4) == 0)
+	if (memcmp(vs->sysid, "NTFS", 4) == 0)
 		return -1;
 
-	if (strncmp(vs->type.fat32.magic, "MSWIN", 5) == 0)
+	if (memcmp(vs->type.fat32.magic, "MSWIN", 5) == 0)
 		goto valid;
 
-	if (strncmp(vs->type.fat32.magic, "FAT32   ", 8) == 0)
+	if (memcmp(vs->type.fat32.magic, "FAT32   ", 8) == 0)
 		goto valid;
 
-	if (strncmp(vs->type.fat.magic, "FAT16   ", 8) == 0)
+	if (memcmp(vs->type.fat.magic, "FAT16   ", 8) == 0)
 		goto valid;
 
-	if (strncmp(vs->type.fat.magic, "MSDOS", 5) == 0)
+	if (memcmp(vs->type.fat.magic, "MSDOS", 5) == 0)
 		goto valid;
 
-	if (strncmp(vs->type.fat.magic, "FAT12   ", 8) == 0)
+	if (memcmp(vs->type.fat.magic, "FAT12   ", 8) == 0)
 		goto valid;
 
 	/*
@@ -272,10 +274,10 @@ valid:
 	if (vs == NULL)
 		return -1;
 
-	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
+	if (label != NULL && memcmp(label, "NO NAME    ", 11) != 0) {
 		volume_id_set_label_raw(id, label, 11);
 		volume_id_set_label_string(id, label, 11);
-	} else if (strncmp(vs->type.fat.label, "NO NAME    ", 11) != 0) {
+	} else if (memcmp(vs->type.fat.label, "NO NAME    ", 11) != 0) {
 		volume_id_set_label_raw(id, vs->type.fat.label, 11);
 		volume_id_set_label_string(id, vs->type.fat.label, 11);
 	}
@@ -333,10 +335,10 @@ fat32:
 	if (vs == NULL)
 		return -1;
 
-	if (label != NULL && strncmp(label, "NO NAME    ", 11) != 0) {
+	if (label != NULL && memcmp(label, "NO NAME    ", 11) != 0) {
 		volume_id_set_label_raw(id, label, 11);
 		volume_id_set_label_string(id, label, 11);
-	} else if (strncmp(vs->type.fat32.label, "NO NAME    ", 11) != 0) {
+	} else if (memcmp(vs->type.fat32.label, "NO NAME    ", 11) != 0) {
 		volume_id_set_label_raw(id, vs->type.fat32.label, 11);
 		volume_id_set_label_string(id, vs->type.fat32.label, 11);
 	}

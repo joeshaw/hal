@@ -51,10 +51,15 @@
 #include "ntfs.h"
 #include "iso9660.h"
 #include "udf.h"
+#include "luks.h"
 #include "highpoint.h"
 #include "linux_swap.h"
 #include "linux_raid.h"
 #include "lvm.h"
+#include "cramfs.h"
+#include "hpfs.h"
+#include "romfs.h"
+#include "sysv.h"
 #include "mac.h"
 #include "msdos.h"
 
@@ -76,7 +81,6 @@ int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned l
 	if (volume_id_probe_highpoint_ataraid(id, off) == 0)
 		goto exit;
 
-	/* LUKS encrypted volume */
 	if (volume_id_probe_luks(id, off) == 0)
 		goto exit;
 
@@ -118,6 +122,18 @@ int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned l
 		goto exit;
 
 	if (volume_id_probe_ntfs(id, off)  == 0)
+		goto exit;
+
+	if (volume_id_probe_cramfs(id, off) == 0)
+		goto exit;
+
+	if (volume_id_probe_romfs(id, off) == 0)
+		goto exit;
+
+	if (volume_id_probe_hpfs(id, off) == 0)
+		goto exit;
+
+	if (volume_id_probe_sysv(id, off) == 0)
 		goto exit;
 
 	return -1;

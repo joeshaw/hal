@@ -1,7 +1,7 @@
 /*
  * volume_id - reads filesystem label and uuid
  *
- * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
+ * Copyright (C) 2005 Kay Sievers <kay.sievers@vrfy.org>
  *
  *	This library is free software; you can redistribute it and/or
  *	modify it under the terms of the GNU Lesser General Public
@@ -37,42 +37,33 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "xfs.h"
+#include "hpfs.h"
 
-struct xfs_super_block {
+struct hpfs_super
+{
 	__u8	magic[4];
-	__u32	blocksize;
-	__u64	dblocks;
-	__u64	rblocks;
-	__u32	dummy1[2];
-	__u8	uuid[16];
-	__u32	dummy2[15];
-	__u8	fname[12];
-	__u32	dummy3[2];
-	__u64	icount;
-	__u64	ifree;
-	__u64	fdblocks;
+	__u8	version;
 } __attribute__((__packed__));
 
-int volume_id_probe_xfs(struct volume_id *id, __u64 off)
+#define HPFS_SUPERBLOCK_OFFSET			0x2000
+
+int volume_id_probe_hpfs(struct volume_id *id, __u64 off)
 {
-	struct xfs_super_block *xs;
+	struct hpfs_super *hs;
 
 	dbg("probing at offset %llu", off);
 
-	xs = (struct xfs_super_block *) volume_id_get_buffer(id, off, 0x200);
-	if (xs == NULL)
+	hs = (struct hpfs_super *) volume_id_get_buffer(id, off + HPFS_SUPERBLOCK_OFFSET, 0x200);
+	if (hs == NULL)
 		return -1;
 
-	if (memcmp(xs->magic, "XFSB", 4) != 0)
-		return -1;
+	if (memcmp(hs->magic, "\x49\xe8\x95\xf9", 4) == 0) {
+		snprintf(id->type_version, VOLUME_ID_FORMAT_SIZE-1, "%u", hs->version);
 
-	volume_id_set_label_raw(id, xs->fname, 12);
-	volume_id_set_label_string(id, xs->fname, 12);
-	volume_id_set_uuid(id, xs->uuid, UUID_DCE);
+		volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
+		id->type = "hpfs";
+		return 0;
+	}
 
-	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-	id->type = "xfs";
-
-	return 0;
+	return -1;
 }

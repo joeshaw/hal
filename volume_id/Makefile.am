@@ -22,6 +22,10 @@ libvolume_id_la_SOURCES =				\
 	udf.h			udf.c			\
 	ufs.h			ufs.c			\
 	xfs.h			xfs.c			\
+	hpfs.h			hpfs.c			\
+	romfs.h			romfs.c			\
+	sysv.h			sysv.c			\
+	cramfs.h		cramfs.c		\
 	logging.h					\
 	util.h			util.c			\
 	volume_id.h		volume_id.c

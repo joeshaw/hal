@@ -37,63 +37,41 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "linux_raid.h"
+#include "cramfs.h"
 
-struct mdp_super_block {
-	__u32	md_magic;
-	__u32	major_version;
-	__u32	minor_version;
-	__u32	patch_version;
-	__u32	gvalid_words;
-	__u32	set_uuid0;
-	__u32	ctime;
-	__u32	level;
+struct cramfs_super {
+	__u8	magic[4];
 	__u32	size;
-	__u32	nr_disks;
-	__u32	raid_disks;
-	__u32	md_minor;
-	__u32	not_persistent;
-	__u32	set_uuid1;
-	__u32	set_uuid2;
-	__u32	set_uuid3;
-} __attribute__((packed)) *mdp;
+	__u32	flags;
+	__u32	future;
+	__u8	signature[16];
+	struct cramfs_info {
+		__u32	crc;
+		__u32	edition;
+		__u32	blocks;
+		__u32	files;
+	} __attribute__((__packed__)) info;
+	__u8 name[16];
+} __attribute__((__packed__));
 
-#define MD_RESERVED_BYTES		0x10000
-#define MD_MAGIC			0xa92b4efc
-
-int volume_id_probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
+int volume_id_probe_cramfs(struct volume_id *id, __u64 off)
 {
-	const __u8 *buf;
-	__u64 sboff;
-	__u8 uuid[16];
+	struct cramfs_super *cs;
 
 	dbg("probing at offset %llu", off);
 
-	if (size < 0x10000)
+	cs = (struct cramfs_super *) volume_id_get_buffer(id, off, 0x200);
+	if (cs == NULL)
 		return -1;
 
-	sboff = (size & ~(MD_RESERVED_BYTES - 1)) - MD_RESERVED_BYTES;
-	buf = volume_id_get_buffer(id, off + sboff, 0x800);
-	if (buf == NULL)
-		return -1;
+	if (memcmp(cs->magic, "\x45\x3d\xcd\x28", 4) == 0) {
+		volume_id_set_label_raw(id, cs->name, 16);
+		volume_id_set_label_string(id, cs->name, 16);
 
-	mdp = (struct mdp_super_block *) buf;
+		volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
+		id->type = "cramfs";
+		return 0;
+	}
 
-	if (le32_to_cpu(mdp->md_magic) != MD_MAGIC)
-		return -1;
-
-	memcpy(uuid, &mdp->set_uuid0, 4);
-	memcpy(&uuid[4], &mdp->set_uuid1, 12);
-	volume_id_set_uuid(id, uuid, UUID_DCE);
-
-	snprintf(id->type_version, VOLUME_ID_FORMAT_SIZE-1, "%u.%u.%u",
-		 le32_to_cpu(mdp->major_version),
-		 le32_to_cpu(mdp->minor_version),
-		 le32_to_cpu(mdp->patch_version));
-
-	dbg("found raid signature");
-	volume_id_set_usage(id, VOLUME_ID_RAID);
-	id->type = "linux_raid_member";
-
-	return 0;
+	return -1;
 }

@@ -35,6 +35,7 @@
 #include <asm/types.h>
 
 #include "volume_id.h"
+#include "logging.h"
 #include "util.h"
 #include "dasd.h"
 
@@ -160,13 +161,15 @@ typedef struct dasd_information_t {
 #define BIODASDINFO _IOR(DASD_IOCTL_LETTER,1,dasd_information_t)
 #define BLKSSZGET _IO(0x12,104)
 
-int probe_ibm_partition(struct volume_id *id)
+int volume_id_probe_dasd(struct volume_id *id)
 {
 	int blocksize;
 	dasd_information_t info;
 	__u8 *data;
 	__u8 *label_raw;
 	unsigned char name[7];
+
+	dbg("probing");
 
 	if (ioctl(id->fd, BIODASDINFO, &info) != 0)
 		return -1;
