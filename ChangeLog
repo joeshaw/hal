@@ -1,3 +1,13 @@
+2005-03-24  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.c (filter_func): Stupid bug; checked for ctx->
+	device_new_capability, but should check for ctx->device_condition
+
+	* hald/linux2/physdev.c (pci_add): Even more stupid bug; somehow
+	the hal_util_set_driver were enclosed in an if statement, thus
+	rendering the next statement conditional (the one that sets
+	pci.product_id)
+
 2005-03-23  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Sergey Udaltsov <sergey.udaltsov@gmail.com>, slightly

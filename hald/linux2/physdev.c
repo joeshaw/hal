@@ -80,7 +80,7 @@ pci_add (const gchar *sysfs_path, HalDevice *parent)
 
 	hal_device_property_set_string (d, "pci.linux.sysfs_path", sysfs_path);
 
-	if (hal_util_set_driver (d, "info.linux.driver", sysfs_path))
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
 	hal_util_set_int_from_file (d, "pci.product_id", sysfs_path, "device", 16);
 	hal_util_set_int_from_file (d, "pci.vendor_id", sysfs_path, "vendor", 16);

@@ -690,7 +690,7 @@ filter_func (DBusConnection * connection,
 					   DBUS_TYPE_STRING, &condition_name,
 					   DBUS_TYPE_STRING, &condition_detail,
 					   DBUS_TYPE_INVALID)) {
-			if (ctx->device_new_capability != NULL) {
+			if (ctx->device_condition != NULL) {
 				ctx->device_condition (ctx, object_path, condition_name, condition_detail);
 			}
 		}
