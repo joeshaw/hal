@@ -44,6 +44,7 @@ static void
 check_abs (int fd, LibHalContext *ctx, const char *udi)
 {
 	char bitmask[(ABS_MAX + 7) / 8];
+	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_ABS, sizeof (bitmask)), bitmask) < 0) {
 		fprintf(stderr, "ioctl EVIOCGBIT failed\n");
@@ -55,7 +56,8 @@ check_abs (int fd, LibHalContext *ctx, const char *udi)
 		goto out;
 	}
 
-	libhal_device_add_capability (ctx, udi, "input.tablet", NULL);
+	dbus_error_init (&error);
+	libhal_device_add_capability (ctx, udi, "input.tablet", &error);
 
 out:
 	;
@@ -67,6 +69,7 @@ check_key (int fd, LibHalContext *ctx, const char *udi)
 	unsigned int i;
 	char bitmask[(KEY_MAX + 7) / 8];
 	int is_keyboard;
+	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask)), bitmask) < 0) {
 		fprintf(stderr, "ioctl EVIOCGBIT failed\n");
@@ -84,7 +87,8 @@ check_key (int fd, LibHalContext *ctx, const char *udi)
 	}
 
 	if (is_keyboard) {
-		libhal_device_add_capability (ctx, udi, "input.keyboard", NULL);
+		dbus_error_init (&error);
+		libhal_device_add_capability (ctx, udi, "input.keyboard", &error);
 	}
 
 out:
@@ -95,6 +99,7 @@ static void
 check_rel (int fd, LibHalContext *ctx, const char *udi)
 {
 	char bitmask[(REL_MAX + 7) / 8];
+	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_REL, sizeof (bitmask)), bitmask) < 0) {
 		fprintf(stderr, "ioctl EVIOCGBIT failed: %m\n");
@@ -106,7 +111,8 @@ check_rel (int fd, LibHalContext *ctx, const char *udi)
 		goto out;
 	}
 
-	libhal_device_add_capability (ctx, udi, "input.mouse", NULL);
+	dbus_error_init (&error);
+	libhal_device_add_capability (ctx, udi, "input.mouse", &error);
 
 out:
 	;
@@ -121,6 +127,8 @@ main (int argc, char *argv[])
 	char *device_file;
 	char *physical_device;
 	LibHalContext *ctx = NULL;
+	DBusError error;
+	DBusConnection *conn;
 	char name[128];
 	struct input_id id;
 
@@ -133,11 +141,15 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		goto out;
 
+	dbus_error_init (&error);
+	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
+		goto out;
+
 	if ((ctx = libhal_ctx_new ()) == NULL)
 		goto out;
-	if (!libhal_ctx_set_dbus_connection (ctx, dbus_bus_get (DBUS_BUS_SYSTEM, NULL)))
+	if (!libhal_ctx_set_dbus_connection (ctx, conn))
 		goto out;
-	if (!libhal_ctx_init (ctx, NULL))
+	if (!libhal_ctx_init (ctx, &error))
 		goto out;
 
 	device_file = getenv ("HAL_PROP_INPUT_DEVICE");
@@ -175,8 +187,10 @@ main (int argc, char *argv[])
 		fprintf(stderr, "ioctl EVIOCGNAME failed\n");
 		goto out;
 	}
-	libhal_device_set_property_string (ctx, udi, "info.product", name, NULL);
-	libhal_device_set_property_string (ctx, udi, "input.product", name, NULL);
+	if (!libhal_device_set_property_string (ctx, udi, "info.product", name, &error))
+		goto out;
+	if (!libhal_device_set_property_string (ctx, udi, "input.product", name, &error))
+		goto out;
 
 	check_abs (fd, ctx, udi);
 	check_rel (fd, ctx, udi);
@@ -190,7 +204,8 @@ out:
 		close (fd);
 
 	if (ctx != NULL) {
-		libhal_ctx_shutdown (ctx, NULL);
+		dbus_error_init (&error);
+		libhal_ctx_shutdown (ctx, &error);
 		libhal_ctx_free (ctx);
 	}
 

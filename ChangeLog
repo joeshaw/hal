@@ -1,4 +1,20 @@
-2005-02-02  David Zeuthen  <david@fubar.dk>
+2005-02-02  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-input.c (main): Fix up error handling
+	here so Reprobe() on the root, /org/freedesktop/Hal/devices/computer,
+	actually works; here's some python to do that
+
+	#!/usr/bin/python
+
+	import dbus
+
+	bus = dbus.Bus (dbus.Bus.TYPE_SYSTEM)
+	hal_service = bus.get_service ('org.freedesktop.Hal')
+	d = hal_service.get_object ('/org/freedesktop/Hal/devices/computer', 
+	                            'org.freedesktop.Hal.Device')
+	d.Reprobe()
+
+2005-02-02  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/osspec.c: Adjust for changes in hotplug.h.
 	(osspec_device_rescan): New function
