@@ -1,5 +1,19 @@
 2005-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* libhal/libhal.c: Patch from John (J5) Palmieri
+	<johnp@redhat.com>. Most libhal methods now require an additional
+	DBusError pointer to be passed into the method.  Sometimes errors
+	are expected in a world where device can be added or removed at
+	any moment.  These errors can be handled based on the return value
+	of the method and do not need the extra verbosity that the dbus
+	errors provide.  Attached is a patch which allows a NULL value to
+	be passed to all methods which read HAL keys indicating that a
+	dbus error is not needed thereby freeing the programmer from
+	having to initialize and free dbus error objects when they are not
+	needed.
+
+2005-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/classdev.c (usbclass_add): Also set 
 	printer.physical_device
 

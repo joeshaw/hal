@@ -329,6 +329,8 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
  *
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique id of device
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			An object represent all properties. Must be
  *				freed with libhal_free_property_set
  */
@@ -341,6 +343,7 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 	DBusMessageIter dict_iter;
 	LibHalPropertySet *result;
 	LibHalProperty *p_last;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -353,10 +356,13 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 		return NULL;
 	}
 
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		fprintf (stderr,
 			 "%s %d : %s\n",
 			 __FILE__, __LINE__, error->message);
@@ -902,6 +908,8 @@ libhal_shutdown (LibHalContext *ctx)
  *
  *  @param  ctx                 The context for the connection to hald
  *  @param  num_devices		The number of devices will be stored here
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			An array of device identifiers terminated
  *				with NULL. It is the responsibility of the
  *				caller to free with libhal_free_string_array().
@@ -914,6 +922,7 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	DBusMessage *reply;
 	DBusMessageIter iter_array, reply_iter;
 	char **hal_device_names;
+	DBusError _error;
 
 	*num_devices = 0;
 
@@ -926,8 +935,11 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 		return NULL;
 	}
 
-	reply = dbus_connection_send_with_reply_and_block (ctx->connection, message, -1, error);
-	if (dbus_error_is_set (error)) {
+	dbus_error_init (&_error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection, message, -1, &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return NULL;
 	}
@@ -959,6 +971,8 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			One of DBUS_TYPE_STRING, DBUS_TYPE_INT32,
  *				DBUS_TYPE_UINT64, DBUS_TYPE_BOOL, DBUS_TYPE_DOUBLE or 
  *				DBUS_TYPE_INVALID if the property didn't exist.
@@ -970,6 +984,7 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	int type;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -981,10 +996,14 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return LIBHAL_PROPERTY_TYPE_INVALID;
 	}
@@ -1007,6 +1026,8 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			Array of pointers to UTF8 nul-terminated
  *                              strings terminated by NULL. The caller is
  *				responsible for freeing this string
@@ -1022,6 +1043,7 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 	DBusMessage *reply;
 	DBusMessageIter iter, iter_array, reply_iter;
 	char **our_strings;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1035,10 +1057,14 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
+
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return NULL;
 	}
@@ -1069,6 +1095,8 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			UTF8 nul-terminated string. The caller is
  *				responsible for freeing this string with the
  *				function libhal_free_string(). 
@@ -1084,6 +1112,7 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	DBusMessageIter iter, reply_iter;
 	char *value;
 	char *dbus_str;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1099,10 +1128,13 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return NULL;
 	}
@@ -1140,6 +1172,8 @@ libhal_device_get_property_string (LibHalContext *ctx,
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			32-bit signed integer
  */
 dbus_int32_t
@@ -1150,6 +1184,7 @@ libhal_device_get_property_int (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	dbus_int32_t value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1163,11 +1198,14 @@ libhal_device_get_property_int (LibHalContext *ctx,
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
-	
+
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return -1;
 	}
@@ -1201,6 +1239,8 @@ libhal_device_get_property_int (LibHalContext *ctx,
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			64-bit unsigned integer
  */
 dbus_uint64_t
@@ -1211,6 +1251,7 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	dbus_uint64_t value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1224,11 +1265,14 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
-	
+
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+	
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return -1;
 	}
@@ -1261,6 +1305,8 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			IEEE754 double precision float
  */
 double
@@ -1271,6 +1317,7 @@ libhal_device_get_property_double (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	double value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1284,11 +1331,14 @@ libhal_device_get_property_double (LibHalContext *ctx,
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
-	
+
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return -1.0f;
 	}
@@ -1321,6 +1371,8 @@ libhal_device_get_property_double (LibHalContext *ctx,
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique Device Id
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			Truth value
  */
 dbus_bool_t
@@ -1331,6 +1383,7 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1345,10 +1398,13 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return FALSE;
 	}
@@ -2036,6 +2092,8 @@ libhal_agent_remove_device (LibHalContext *ctx, const char *udi, DBusError *erro
  *
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique device id.
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			TRUE if the device exists
  */
 dbus_bool_t
@@ -2045,6 +2103,7 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2060,11 +2119,13 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 
-	
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return FALSE;
 	}
@@ -2097,6 +2158,8 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
  *  @param  ctx                 The context for the connection to hald
  *  @param  udi			Unique device id.
  *  @param  key			Name of the property
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			TRUE if the device exists
  */
 dbus_bool_t
@@ -2107,6 +2170,7 @@ libhal_device_property_exists (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -2121,11 +2185,13 @@ libhal_device_property_exists (LibHalContext *ctx,
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 
-	
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return FALSE;
 	}
@@ -2214,6 +2280,8 @@ libhal_agent_merge_properties (LibHalContext *ctx,
  *  @param  udi1		Unique Device Id for device 1
  *  @param  udi2		Unique Device Id for device 2
  *  @param  property_namespace	Namespace for set of devices, e.g. "usb"
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			TRUE if all properties starting
  *				with the given namespace parameter
  *				from one device is in the other and 
@@ -2228,6 +2296,7 @@ libhal_agent_device_matches (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2245,11 +2314,13 @@ libhal_agent_device_matches (LibHalContext *ctx,
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, udi2);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, property_namespace);
 
-	
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return FALSE;
 	}
@@ -2357,6 +2428,8 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
  *  @param  key			Name of the property
  *  @param  value		Value to match
  *  @param  num_devices		Pointer to store number of devices
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			UDI of devices; free with 
  *				libhal_free_string_array()
  */
@@ -2369,6 +2442,7 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, iter_array, reply_iter;
 	char **hal_device_names;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2385,11 +2459,13 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &value);
 
-	
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return NULL;
 	}
@@ -2491,6 +2567,8 @@ libhal_device_query_capability (LibHalContext *ctx,
  *  @param  ctx                 The context for the connection to hald
  *  @param  capability		Capability name
  *  @param  num_devices		Pointer to store number of devices
+ *  @param  error		Pointer to an initialized dbus error object for 
+ * 				returning errors or #NULL
  *  @return			UDI of devices; free with 
  *				libhal_free_string_array()
  */
@@ -2502,6 +2580,7 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter, iter_array, reply_iter;
 	char **hal_device_names;
+	DBusError _error;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2517,11 +2596,13 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &capability);
 
-	
+	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
-							   error);
-	if (dbus_error_is_set (error)) {
+							   &_error);
+	
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
 		dbus_message_unref (message);
 		return NULL;
 	}
