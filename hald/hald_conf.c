@@ -166,7 +166,7 @@ hald_read_conf_file (void)
 	file = fopen (HALD_CONF_FILE, "r");
 	if (file == NULL) {
 		HAL_INFO (("Couldn't open " HALD_CONF_FILE));
-		goto out;;
+		return;
 	}
 
 	fseek (file, 0L, SEEK_END);
@@ -214,5 +214,4 @@ out2:
 	free (filebuf);
 out1:
 	fclose (file);
-out:
 }

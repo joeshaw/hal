@@ -1,3 +1,8 @@
+2004-06-07  Joe Shaw  <joeshaw@novell.com>
+
+	* hald/hald_conf.c: Remove deprecated use of a label at the end of
+	a function and just return instead of goto'ing there.
+
 2004-06-07  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Bump to 0.2.92
