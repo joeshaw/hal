@@ -261,13 +261,49 @@ mii_get_link (HalDevice *d)
 	close (sockfd);
 }
 
+
+struct FindDevInfo {
+	gboolean link_up;
+	char *ifname;
+};
+
+static gboolean
+set_device_link_status (HalDeviceStore *store, HalDevice *device,
+			      gpointer user_data)
+{
+	struct FindDevInfo *info = user_data;
+	const char * dev_value;
+
+	if (hal_device_property_get_type (device,
+					  "net.interface") != DBUS_TYPE_STRING)
+		return TRUE;
+
+	dev_value = hal_device_property_get_string (device, "net.interface");
+
+	if (dev_value != NULL && strcmp (dev_value, info->ifname) == 0) {
+		hal_device_property_set_bool (device, "net.ethernet.link",
+				      info->link_up);
+
+		/*
+		 * Check the MII registers to set our link rate if we haven't
+		 * set it previously.
+		 */
+		if (!hal_device_has_property (device, "net.ethernet.rate"))
+			mii_get_rate (device);
+	}
+
+	return TRUE;
+}
+
+
 static void
-link_detection_handle_message (struct nlmsghdr *hdr, HalDevice *d)
+link_detection_handle_message (struct nlmsghdr *hdr)
 {
 	struct ifinfomsg *ifinfo;
 	char ifname[1024];
 	struct rtattr *attr;
 	int attr_len;
+	struct FindDevInfo dev_info;
 
 	ifinfo = NLMSG_DATA (hdr);
 
@@ -294,16 +330,15 @@ link_detection_handle_message (struct nlmsghdr *hdr, HalDevice *d)
 		attr = RTA_NEXT (attr, attr_len);
 	}
 
-	hal_device_property_set_bool (d, "net.ethernet.link",
-				      ifinfo->ifi_flags & IFF_RUNNING ?
-				      TRUE : FALSE);
+	if (strlen (ifname) > 0) {
+		dev_info.link_up = 
+			ifinfo->ifi_flags & IFF_RUNNING ? TRUE : FALSE;
+		dev_info.ifname = &ifname[0];
 
-	/*
-	 * Check the MII registers to set our link rate if we haven't set
-	 * it previously.
-	 */
-	if (!hal_device_has_property (d, "net.ethernet.rate"))
-		mii_get_rate (d);
+		hal_device_store_foreach (hald_get_gdl (),
+					  set_device_link_status,
+					  &dev_info);
+	}
 }
 
 #define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
@@ -314,7 +349,6 @@ static gboolean
 link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 			   gpointer user_data)
 {
-	HalDevice *d = HAL_DEVICE (user_data);
 	int fd;
 	int bytes_read;
 	guint total_read = 0;
@@ -354,7 +388,7 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 
 			if (hdr->nlmsg_type == RTM_NEWLINK ||
 			    hdr->nlmsg_type == RTM_DELLINK)
-				link_detection_handle_message (hdr, d);
+				link_detection_handle_message (hdr);
 
 			offset += hdr->nlmsg_len;
 			hdr = (struct nlmsghdr *) (buf + offset);
@@ -373,13 +407,17 @@ link_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 static void
 link_detection_init (HalDevice *d)
 {
-	int fd;
+	static int netlink_fd = -1;
 	struct sockaddr_nl addr;
 	GIOChannel *channel;
 
-	fd = socket (PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+	/* Already opened the socket, no need to do it twice */
+	if (netlink_fd >= 0)
+		return;
 
-	if (fd < 0) {
+	netlink_fd = socket (PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+
+	if (netlink_fd < 0) {
 		HAL_ERROR (("Unable to create netlink socket"));
 		return;
 	}
@@ -389,15 +427,15 @@ link_detection_init (HalDevice *d)
 	addr.nl_pid = getpid ();
 	addr.nl_groups = RTMGRP_LINK;
 
-	if (bind (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
+	if (bind (netlink_fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
 		HAL_ERROR (("Unable to bind to netlink socket"));
 		return;
 	}
 
-	channel = g_io_channel_unix_new (fd);
+	channel = g_io_channel_unix_new (netlink_fd);
 
 	g_io_add_watch (channel, G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_NVAL,
-			link_detection_data_ready, d);
+			link_detection_data_ready, NULL);
 }
 
 /** This method is called just before the device is either merged
