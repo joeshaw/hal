@@ -1,5 +1,10 @@
 2004-09-27  David Zeuthen  <david@fubar.dk>
 
+	* libhal/libhal.c (hal_shutdown): Make libhal compile since an
+	error variable was errornously deleted before committing it
+
+2004-09-27  David Zeuthen  <david@fubar.dk>
+
 	Patch from Sjoerd Simons <sjoerd@luon.net>.
 
 	* tools/linux/hal_hotplug_map.c: 

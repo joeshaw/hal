@@ -685,6 +685,8 @@ hal_initialize (const LibHalFunctions * cb_functions,
 int
 hal_shutdown (LibHalContext *ctx)
 {
+	DBusError error;
+
 	if (!ctx->is_initialized)
 		return 1;
 
