@@ -1,5 +1,11 @@
 2005-02-28  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/ids.c: Added TOS6200, TOS6202, TOS6207 entries from
+	Richard Hughes <ee21rh@surrey.ac.uk> - he got them from
+	http://homel.vsb.cz/~pop036/files/acpi_toshiba.c
+
+2005-02-28  David Zeuthen  <davidz@redhat.com>
+
 	* tools/linux/hal_hotplug.c (main): Use "hal.hotplug" instead of 
 	"hal.hotplug2" for syslog. Don't write a message for every entry.
 

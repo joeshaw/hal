@@ -559,7 +559,11 @@ ids_init (void)
 }
 
 
-/* This, somewhat incomplete, list is from http://www.plasma-online.de/english/identify/serial/pnp_id_pnp.html */
+/* This, somewhat incomplete, list is from
+ * http://www.plasma-online.de/english/identify/serial/pnp_id_pnp.html 
+ * 
+ * Keep this sorted!
+ */
 static char *pnp_ids_list[] = {
 	"PNP0000", "AT Interrupt Controller",
 	"PNP0001", "EISA Interrupt Controller",
@@ -871,6 +875,9 @@ static char *pnp_ids_list[] = {
 	"PNPB02F", "Joystick/Game port",
 	"PNPC000", "Compaq 14400 Modem (TBD)",
 	"PNPC001", "Compaq 2400/9600 Modem (TBD)",
+	"TOS6200", "Toshiba Notebook Extra HCI driver",
+	"TOS6202", "Toshiba Notebook Extra HCI driver",
+	"TOS6207", "Toshiba Notebook Extra HCI driver",
 	NULL
 };
 
