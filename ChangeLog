@@ -1,3 +1,15 @@
+2004-07-18  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* hald/linux/libsysfs/*.[ch]: 
+	(visit_device), (osspec_probe): Update to libsysfs 1.1
+
+	* hald/linux/bus_device.c: (bus_device_got_parent):
+	* hald/linux/class_device.c: (class_device_final):
+	* hald/linux/osspec.c: (visit_class_device), (visit_class),
+	Adjust to use libsysfs 1.1
+
 2004-07-15  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Bump version to 0.2.94

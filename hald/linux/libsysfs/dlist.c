@@ -73,14 +73,14 @@ inline void *_dlist_mark_move(Dlist *list,int direction)
 {
   if(direction)
     {
-      if( list->marker->next!=NULL)
+      if( list->marker && list->marker->next!=NULL)
 	list->marker=list->marker->next;
       else
 	return(NULL);
     }
   else
     {
-      if( list->marker->prev!=NULL)
+      if( list->marker && list->marker->prev!=NULL)
 	list->marker=list->marker->prev;
       else
 	return(NULL);
@@ -259,6 +259,16 @@ void dlist_unshift(Dlist *list,void *data)
   dlist_insert(list,data,0);
 }
 
+void dlist_unshift_sorted(Dlist *list, void *data, 
+			int (*sorter)(void *new_elem, void *old_elem))
+{
+	if (list->count == 0)
+		dlist_unshift(list, data);
+	else {
+		list->marker=list->head->next;
+		dlist_insert_sorted(list, data, sorter);
+	}
+}
 
 /* 
  * Remove end node from list.

@@ -186,7 +186,7 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	 * function */
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 	assert (sysfs_path != NULL);
-	device = sysfs_open_device (sysfs_path);
+	device = sysfs_open_device_path (sysfs_path);
 	if (device == NULL)
 		DIE (("Coulnd't get sysfs device object for path %s", 
 		      sysfs_path));

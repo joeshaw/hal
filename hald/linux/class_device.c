@@ -429,7 +429,7 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d,
 	 * function */
 	sysfs_path = hal_device_property_get_string (d, ".udev.sysfs_path");
 	assert (sysfs_path != NULL);
-	class_device = sysfs_open_class_device (sysfs_path);
+	class_device = sysfs_open_class_device_path (sysfs_path);
 	if (class_device == NULL)
 		DIE (("Coulnd't get sysfs class device object for path %s", 
 		      sysfs_path));

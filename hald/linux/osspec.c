@@ -135,12 +135,14 @@ visit_class_device (const char *path, ClassDeviceHandler *handler,
 	int i;
 	struct sysfs_class_device *class_device;
 
-	class_device = sysfs_open_class_device (path);
+	class_device = sysfs_open_class_device_path (path);
 	if (class_device == NULL) {
 		HAL_WARNING (("Coulnd't get sysfs class device object at "
 			      "path %s", path));
 		return;
 	}
+	sysfs_get_classdev_device(class_device);
+	sysfs_get_classdev_driver(class_device);
 
 	HAL_INFO (("*** classname=%s path=%s",
 		   class_device->classname,
@@ -157,21 +159,29 @@ visit_class_device (const char *path, ClassDeviceHandler *handler,
 		}
 	}
 
-	/* Visit children */
-	if (visit_children && class_device->directory != NULL &&
-	    class_device->directory->subdirs != NULL) {
-		struct sysfs_directory *subdir;
-
-		dlist_for_each_data (class_device->directory->subdirs,
-				     subdir, struct sysfs_directory) {
-			char newpath[SYSFS_PATH_MAX];
-			snprintf (newpath, SYSFS_PATH_MAX, "%s/%s", path,
-				  subdir->name);
-			visit_class_device (newpath, handler, visit_children);
-		}
-	}
-
 	sysfs_close_class_device (class_device);
+
+	if (visit_children) {
+		struct sysfs_directory *dir;
+		struct sysfs_directory *subdir;
+		struct dlist *subdirs;
+
+		dir = sysfs_open_directory(path);
+		if (dir == NULL)
+			return;
+
+		subdirs = sysfs_get_dir_subdirs(dir);
+		if (subdirs == NULL) {
+			sysfs_close_directory(dir);
+			return;
+		}
+
+		dlist_for_each_data (subdirs, subdir,
+			     struct sysfs_directory)
+			visit_class_device(subdir->path, handler, TRUE);
+
+		sysfs_close_directory(dir);
+	}
 }
 
 /** Visit all devices of a given class
@@ -192,6 +202,7 @@ visit_class (const char *class_name, ClassDeviceHandler *handler,
 {
 	struct sysfs_class *cls = NULL;
 	struct sysfs_class_device *cur = NULL;
+	struct dlist *class_devices;
 
 	cls = sysfs_open_class (class_name);
 	if (cls == NULL) {
@@ -199,8 +210,9 @@ visit_class (const char *class_name, ClassDeviceHandler *handler,
 		return;
 	}
 
-	if (cls->devices != NULL) {
-		dlist_for_each_data (cls->devices, cur,
+	class_devices = sysfs_get_class_devices(cls);
+	if (class_devices != NULL) {
+		dlist_for_each_data (class_devices, cur,
 				     struct sysfs_class_device) {
 			visit_class_device (cur->path, handler,
 					    visit_children);
@@ -231,76 +243,47 @@ visit_device (const char *path, BusDeviceHandler *handler,
 {
 	struct sysfs_device *device;
 
-	device = sysfs_open_device (path);
+	device = sysfs_open_device_path (path);
 	if (device == NULL) {
-		HAL_WARNING (("Coulnd't get sysfs device object at path %s",
-			      path));
+		HAL_WARNING (("Coulnd't get sysfs device at path %s", path));
 		return;
 	}
 
-	HAL_INFO (("$$$ busname=%s path=%s", device->bus, device->path));
-
-	/*HAL_INFO ((" path=%s", path));*/
-
 	if (handler != NULL ) {
-		if (handler->accept (handler, path, device))
-			handler->visit (handler, path, device);
+		if (handler->accept (handler, device->path, device))
+			handler->visit (handler, device->path, device);
 	} else {
 		int i;
 		for (i=0; bus_device_handlers[i] != NULL; i++) {
 			BusDeviceHandler *bh = bus_device_handlers[i];
-			if (bh->accept (bh, path, device))
-				bh->visit (bh, path, device);
+			if (bh->accept (bh, device->path, device))
+				bh->visit (bh, device->path, device);
 		}
 	}
+	sysfs_close_device(device);
 
-	/* Visit children */
-	if (visit_children && device->directory->subdirs != NULL) {
+	if (visit_children) {
+		struct sysfs_directory *dir;
 		struct sysfs_directory *subdir;
-	
-		dlist_for_each_data (device->directory->subdirs, subdir,
-				     struct sysfs_directory) {
-			char newpath[SYSFS_PATH_MAX];
-			snprintf (newpath, SYSFS_PATH_MAX, "%s/%s", path,
-				  subdir->name);
-			visit_device (newpath, handler, visit_children);
+		struct dlist *subdirs;
+
+		dir = sysfs_open_directory(path);
+		if (dir == NULL)
+			return;
+
+		subdirs = sysfs_get_dir_subdirs(dir);
+		if (subdirs == NULL) {
+			sysfs_close_directory(dir);
+			return;
 		}
-	}
 
-	sysfs_close_device (device);
+		dlist_for_each_data (subdirs, subdir,
+			     struct sysfs_directory)
+			visit_device(subdir->path, handler, TRUE);
+
+		sysfs_close_directory(dir);
+	}
 }
-
-
-#if 0
-/** Visit all devices on a given bus
- *
- *  @param  class_name          Name of class, e.g. scsi_host or block
- *  @param  handler             A BusDeviceHandler object to use or NULL to try
- *                              all handlers
- */
-static void
-visit_bus (const char *bus_name, BusDeviceHandler *handler)
-{
-	struct sysfs_bus *bus = NULL;
-	struct sysfs_device *cur = NULL;
-
-	bus = sysfs_open_bus (bus_name);
-	if (bus == NULL) {
-		HAL_ERROR (("Error opening bus %s\n", bus_name));
-		return;
-	}
-
-	if (bus->devices != NULL) {
-		dlist_for_each_data (bus->devices, cur,
-				     struct sysfs_device) {
-			visit_device (cur->path, handler, FALSE);
-		}
-	}
-
-	sysfs_close_bus (bus);
-}
-#endif
-
 
 /** Timeout handler for polling
  *
@@ -395,19 +378,19 @@ osspec_probe ()
 		char path[SYSFS_PATH_MAX];
 		struct sysfs_directory *current;
 		struct sysfs_directory *dir;
+		struct dlist *subdirs;
 
 		/* traverse /sys/devices */
 		strncpy (path, sysfs_mount_path, SYSFS_PATH_MAX);
-		strncat (path, SYSFS_DEVICES_DIR, SYSFS_PATH_MAX);
+		strncat (path, "/", SYSFS_PATH_MAX);
+		strncat (path, SYSFS_DEVICES_NAME, SYSFS_PATH_MAX);
 
 		dir = sysfs_open_directory (path);
 		if (dir == NULL) {
 			DIE (("Error opening sysfs directory at %s\n", path));
 		}
-		if (sysfs_read_directory (dir) != 0) {
-			DIE (("Error reading sysfs directory at %s\n", path));
-		}
-		if (dir->subdirs != NULL) {
+		subdirs = sysfs_get_dir_subdirs(dir);
+		if (subdirs != NULL) {
 			dlist_for_each_data (dir->subdirs, current,
 					     struct sysfs_directory) {
 				visit_device (current->path, NULL, TRUE);
