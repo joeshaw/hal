@@ -50,6 +50,8 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../callout.h"
+#include "../device_info.h"
+#include "../hald_conf.h"
 
 #include "common.h"
 #include "hald_helper.h"
@@ -801,6 +803,9 @@ add_computer_callouts_done (HalDevice *device, gpointer user_data)
 	process_coldplug_list ();
 }
 
+#ifdef HAVE_SELINUX
+#include <selinux/selinux.h>
+#endif /* HAVE_SELINUX */
 
 /* This function is documented in ../osspec.h */
 void
@@ -827,14 +832,25 @@ osspec_probe (void)
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 	
 	if (uname (&un) >= 0) {
-		hal_device_property_set_string (root, "kernel.name",
-						un.sysname);
-		hal_device_property_set_string (root, "kernel.version",
-						un.release);
-		hal_device_property_set_string (root, "kernel.machine",
-						un.machine);
+		hal_device_property_set_string (root, "kernel.name", un.sysname);
+		hal_device_property_set_string (root, "kernel.version", un.release);
+		hal_device_property_set_string (root, "kernel.machine", un.machine);
 	}
+
+#ifdef HAVE_SELINUX
+	hal_device_property_set_bool (root, "linux.is_selinux_enabled", is_selinux_enabled());
+#endif /* HAVE_SELINUX */
+
 	hal_device_store_add (hald_get_tdl (), root);
+
+	/* Search for device information file and attempt merge */
+	if (di_search_and_merge (root)) {
+		HAL_INFO (("Found a .fdi file for %s", root->udi));
+	}
+	
+	/* add possible saved properties for this udi from disk*/
+	if (hald_get_conf ()->persistent_device_list)
+		hal_pstore_load_device (hald_get_pstore_sys (), root);
 
 	/* begin processing the coldplug_list when computer is added */
 	g_signal_connect (root,

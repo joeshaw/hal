@@ -445,9 +445,15 @@ tools/device-manager/Const.py
 fdi/Makefile
 fdi/10generic/Makefile
 fdi/20freedesktop/Makefile
+fdi/30osvendor/Makefile
+fdi/40oem/Makefile
+fdi/50user/Makefile
+fdi/90defaultpolicy/Makefile
+fdi/95userpolicy/Makefile
 doc/Makefile
 doc/api/Makefile
 doc/api/Doxyfile
+doc/conf/Makefile
 doc/spec/Makefile
 doc/spec/hal-spec.xml
 examples/Makefile

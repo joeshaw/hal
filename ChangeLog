@@ -1,3 +1,54 @@
+2004-10-12  David Zeuthen  <davidz@redhat.com>
+
+	First part of big patch to use .fdi files for policy properties.
+
+	* configure.in: Add a bunch of new configure.in variables
+
+	* doc/Makefile.am: Add conf directory
+
+	* doc/conf/Makefile.am: New file
+
+	* doc/conf/storage-policy-examples.fdi: New file
+
+	* fdi/30osvendor/Makefile.am: New file
+
+	* fdi/40oem/Makefile.am: New file
+
+	* fdi/50user/Makefile.am: New file
+
+	* fdi/90defaultpolicy/Makefile.am: New File
+
+	* fdi/90defaultpolicy/storage-policy.fdi: New file
+
+	* fdi/95userpolicy/Makefile.am: New file
+
+	* fdi/Makefile.am: Added new subdirs
+
+	* hald/Makefile.am: Link with libselinux if selinux is enabled
+
+	* hald/device.c: 
+	(hal_device_property_get_as_string): New function
+	(hal_device_copy_property): New function
+
+	* hald/device.h: Add prototypes for two new functions
+
+	* hald/device_info.c:
+	(resolve_udiprop_path): New function 
+	(match_compare_property): New function
+	(handle_match): Allow property names to contain UDI dirct and indirect
+	references. Add support for 'exists', 'empty', 'is_absolute_path', 
+	'compare_lt', 'compare_le', 'compare_gt', 'compare_ge'
+	(handle_merge): Add support for 'copy_property'
+	(handle_append): New function
+	(start): Support new 'append' operation (like merge)
+	(end): Also support MERGE_TYPE_COPY_PROPERTY. Fixup compare bug in 
+	match_depth_first_fail that made several matches on the same level
+	impossible.
+	(process_fdi_file): Init match_depth_first_fail to -1
+
+	* hald/linux/osspec.c (osspec_probe): Add selinux support to
+	root computer device object.
+
 2004-10-08  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/platform_bus_device.c (platform_device_accept): Check that

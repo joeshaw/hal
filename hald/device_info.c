@@ -35,9 +35,12 @@
 #include <assert.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
+#include <math.h>
 
+#include "hald.h"
 #include "logger.h"
 #include "device_info.h"
+#include "device_store.h"
 
 /**
  * @defgroup DeviceInfo Device Info File Parsing
@@ -72,6 +75,20 @@ enum {
 
 	/** Processing a merge element */
 	CURELEM_MERGE = 3,
+
+	/** Processing an append element */
+	CURELEM_APPEND = 4,
+};
+
+/** What and how to merge */
+enum {
+	MERGE_TYPE_UNKNOWN,
+	MERGE_TYPE_STRING,
+	MERGE_TYPE_BOOLEAN,
+	MERGE_TYPE_INT32,
+	MERGE_TYPE_UINT64,
+	MERGE_TYPE_DOUBLE,
+	MERGE_TYPE_COPY_PROPERTY
 };
 
 /** Parsing Context
@@ -124,6 +141,166 @@ typedef struct {
 
 } ParsingContext;
 
+/** Resolve a udi-property path as used in .fdi files. 
+ *
+ *  Examples of udi-property paths:
+ *
+ *   info.udi
+ *   /org/freedesktop/Hal/devices/computer:kernel.name
+ *   @block.storage_device:storage.bus
+ *   @block.storage_device:@storage.physical_device:ide.channel
+ *
+ *  @param  source_udi          UDI of source device
+ *  @param  path                The given path
+ *  @param  udi_result          Where to store the resulting UDI
+ *  @param  udi_result_size     Size of UDI string
+ *  @param  prop_result         Where to store the resulting property name
+ *  @param  prop_result_size    Size of property string
+ *  @return                     TRUE if and only if the path resolved.
+ */
+gboolean
+resolve_udiprop_path (const char *path, const char *source_udi,
+		      char *udi_result, size_t udi_result_size, 
+		      char *prop_result, size_t prop_result_size)
+{
+	int i;
+	gchar **tokens = NULL;
+	gboolean rc;
+
+	rc = FALSE;
+
+	/*HAL_INFO (("Looking at '%s' for udi='%s'", path, source_udi));*/
+
+	/* Split up path into ':' tokens */
+	tokens = g_strsplit (path, ":", 64);
+
+	/* Detect trivial property access, e.g. path='foo.bar'   */
+	if (tokens == NULL || tokens[0] == NULL || tokens[1] == NULL) {
+		strncpy (udi_result, source_udi, udi_result_size);
+		strncpy (prop_result, path, prop_result_size);
+		rc = TRUE;
+		goto out;
+	}
+
+	
+	/* Start with the source udi */
+	strncpy (udi_result, source_udi, udi_result_size);
+
+	for (i = 0; tokens[i] != NULL; i++) {
+		HalDevice *d;
+		gchar *curtoken;
+
+		/*HAL_INFO (("tokens[%d] = '%s'", i, tokens[i]));*/
+
+		d = hal_device_store_find (hald_get_gdl (), udi_result);
+		if (d == NULL)
+			d = hal_device_store_find (hald_get_tdl (), udi_result);
+		if (d == NULL)
+			goto out;
+
+		curtoken = tokens[i];
+
+		/* process all but the last tokens as UDI paths */
+		if (tokens[i+1] == NULL) {
+			strncpy (prop_result, curtoken, prop_result_size);
+			rc = TRUE;
+			goto out;
+		}
+
+
+		/* Check for indirection */
+		if (curtoken[0] == '@') {
+			const char *udiprop;
+			const char *newudi;
+
+			udiprop = curtoken + 1;
+
+			newudi = hal_device_property_get_string (d, udiprop);
+			if (newudi == NULL)
+				goto out;
+
+			/*HAL_INFO (("new_udi = '%s' (from indirection)", newudi));*/
+
+			strncpy (udi_result, newudi, udi_result_size);
+		} else {
+			/*HAL_INFO (("new_udi = '%s'", curtoken));*/
+			strncpy (udi_result, curtoken, udi_result_size);			
+		}
+
+	}
+
+out:
+
+/*
+	HAL_INFO (("success     = '%s'", rc ? "yes" : "no"));
+	HAL_INFO (("udi_result  = '%s'", udi_result));
+	HAL_INFO (("prop_result = '%s'", prop_result));
+*/
+
+	g_strfreev (tokens);
+
+	return rc;
+}
+
+/* Compare the value of a property on a hal device object against a string value
+ * and return the result. Note that this works for several types, e.g. both strings
+ * and integers - in the latter case the given right side string will be interpreted
+ * as a number.
+ *
+ * The comparison might not make sense if you are comparing a property which is an integer
+ * against a string in which case this function returns FALSE. Also, if the property doesn't
+ * exist this function will also return FALSE.
+ *
+ * @param  d                    hal device object
+ * @param  key                  Key of the property to compare
+ * @param  right_side           Value to compare against
+ * @param  result               Pointer to where to store result
+ * @return                      TRUE if, and only if, the comparison could take place
+ */
+static gboolean
+match_compare_property (HalDevice *d, const char *key, const char *right_side, dbus_int64_t *result)
+{
+	gboolean rc;
+	int proptype;
+
+	rc = FALSE;
+
+	if (!hal_device_has_property (d, key))
+		goto out;
+
+	proptype = hal_device_property_get_type (d, key);
+	switch (proptype) {
+	case DBUS_TYPE_STRING:
+		*result = (dbus_int64_t) strcmp (hal_device_property_get_string (d, key), right_side);
+		rc = TRUE;
+		break;
+
+	case DBUS_TYPE_INT32:
+		*result = ((dbus_int64_t) hal_device_property_get_int (d, key)) - strtoll (right_side, NULL, 0);
+		rc = TRUE;
+		break;
+
+	case DBUS_TYPE_UINT64:
+		*result = ((dbus_int64_t) hal_device_property_get_uint64 (d, key)) - ((dbus_int64_t) strtoll (right_side, NULL, 0));
+		rc = TRUE;
+		break;
+
+	case DBUS_TYPE_DOUBLE:
+		*result = (dbus_int64_t) ceil (hal_device_property_get_double (d, key) - atof (right_side));
+		rc = TRUE;
+		break;
+
+	default:
+		/* explicit fallthrough */
+	case DBUS_TYPE_BOOLEAN:
+		/* explicit blank since this doesn't make sense */
+		break;
+	}
+
+out:
+	return rc;
+}
+
 /** Called when the match element begins.
  *
  *  @param  pc                  Parsing context
@@ -134,8 +311,11 @@ typedef struct {
 static dbus_bool_t
 handle_match (ParsingContext * pc, const char **attr)
 {
+	char udi_to_check[256];
+	char prop_to_check[256];
 	const char *key;
 	int num_attrib;
+	HalDevice *d;
 
 	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++);
 
@@ -145,6 +325,25 @@ handle_match (ParsingContext * pc, const char **attr)
 	if (strcmp (attr[0], "key") != 0)
 		return FALSE;
 	key = attr[1];
+
+	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
+	if (!resolve_udiprop_path (key,
+				   pc->device->udi,
+				   udi_to_check, sizeof (udi_to_check),
+				   prop_to_check, sizeof (prop_to_check))) {
+		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, pc->device->udi));
+		return FALSE;
+	}
+
+	d = hal_device_store_find (hald_get_gdl (), udi_to_check);
+	if (d == NULL) {
+		d = hal_device_store_find (hald_get_tdl (), udi_to_check);
+	}
+	if (d == NULL) {
+		HAL_ERROR (("Could not find device with udi '%s'", udi_to_check));
+		return FALSE;
+	}
+	
 
 	if (strcmp (attr[2], "string") == 0) {
 		const char *value;
@@ -156,10 +355,10 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO(("Checking that key='%s' is a string that "
 		  "equals '%s'", key, value)); */
 
-		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
 			return FALSE;
 
-		if (strcmp (hal_device_property_get_string (pc->device, key),
+		if (strcmp (hal_device_property_get_string (d, prop_to_check),
 			    value) != 0)
 			return FALSE;
 
@@ -176,10 +375,10 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
 		  key, value));*/
 
-		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_INT32)
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_INT32)
 			return FALSE;
 
-		if (hal_device_property_get_int (pc->device, key) != value) {
+		if (hal_device_property_get_int (d, prop_to_check) != value) {
 			return FALSE;
 		}
 
@@ -195,10 +394,10 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
 		  key, value));*/
 
-		if (hal_device_property_get_type (pc->device, key) != DBUS_TYPE_UINT64)
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_UINT64)
 			return FALSE;
 
-		if (hal_device_property_get_uint64 (pc->device, key) != value) {
+		if (hal_device_property_get_uint64 (d, prop_to_check) != value) {
 			return FALSE;
 		}
 
@@ -218,17 +417,120 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO (("Checking that key='%s' is a bool that equals %s", 
 		  key, value ? "TRUE" : "FALSE"));*/
 
-		if (hal_device_property_get_type (pc->device, key) != 
+		if (hal_device_property_get_type (d, prop_to_check) != 
 		    DBUS_TYPE_BOOLEAN)
 			return FALSE;
 
-		if (hal_device_property_get_bool (pc->device, key) != value)
+		if (hal_device_property_get_bool (d, prop_to_check) != value)
 			return FALSE;
 
 		/*HAL_INFO (("*** bool match for key %s", key));*/
 		return TRUE;
-	}
+	} else if (strcmp (attr[2], "exists") == 0) {
+		dbus_bool_t should_exist = TRUE;
 
+		if (strcmp (attr[3], "false") == 0)
+			should_exist = FALSE;
+
+		if (should_exist) {
+			if (hal_device_has_property (d, prop_to_check))
+				return TRUE;
+			else
+				return FALSE;
+		} else {
+			if (hal_device_has_property (d, prop_to_check))
+				return FALSE;
+			else
+				return TRUE;
+		}
+	} else if (strcmp (attr[2], "empty") == 0) {
+		dbus_bool_t is_empty = TRUE;
+		dbus_bool_t should_be_empty = TRUE;
+
+		if (strcmp (attr[3], "false") == 0)
+			should_be_empty = FALSE;
+
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+			return FALSE;
+
+		if (hal_device_has_property (d, prop_to_check))
+			if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
+				is_empty = FALSE;
+
+		if (should_be_empty) {
+			if (is_empty)
+				return TRUE;
+			else
+				return FALSE;
+		} else {
+			if (is_empty)
+				return FALSE;
+			else
+				return TRUE;
+		}
+	} else if (strcmp (attr[2], "is_absolute_path") == 0) {
+		const char *path = NULL;
+		dbus_bool_t is_absolute_path = FALSE;
+		dbus_bool_t should_be_absolute_path = TRUE;
+
+		if (strcmp (attr[3], "false") == 0)
+			should_be_absolute_path = FALSE;
+
+		/*HAL_INFO (("d->udi='%s', prop_to_check='%s'", d->udi, prop_to_check));*/
+
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+			return FALSE;
+
+		if (hal_device_has_property (d, prop_to_check)) {
+			path = hal_device_property_get_string (d, prop_to_check);
+			if (g_path_is_absolute (path))
+				is_absolute_path = TRUE;
+		}
+
+		/*HAL_INFO (("is_absolute=%d, should_be=%d, path='%s'", is_absolute_path, should_be_absolute_path, path));*/
+
+
+		if (should_be_absolute_path) {
+			if (is_absolute_path)
+				return TRUE;
+			else
+				return FALSE;
+		} else {
+			if (is_absolute_path)
+				return FALSE;
+			else
+				return TRUE;
+		}
+	} else if (strcmp (attr[2], "compare_lt") == 0) {
+		dbus_int64_t result;
+		if (!match_compare_property (d, prop_to_check, attr[3], &result)) {
+			HAL_INFO (("foob failed"));
+			return FALSE;
+		} else {
+			HAL_INFO (("foob result = %lld", result));
+			HAL_INFO (("foob %d", result < 0));
+			return result < 0;
+		}
+	} else if (strcmp (attr[2], "compare_le") == 0) {
+		dbus_int64_t result;
+		if (!match_compare_property (d, prop_to_check, attr[3], &result))
+			return FALSE;
+		else
+			return result <= 0;
+	} else if (strcmp (attr[2], "compare_gt") == 0) {
+		dbus_int64_t result;
+		if (!match_compare_property (d, prop_to_check, attr[3], &result))
+			return FALSE;
+		else
+			return result > 0;
+	} else if (strcmp (attr[2], "compare_ge") == 0) {
+		dbus_int64_t result;
+		if (!match_compare_property (d, prop_to_check, attr[3], &result))
+			return FALSE;
+		else
+			return result >= 0;
+	}
+	
 	return FALSE;
 }
 
@@ -242,6 +544,9 @@ static void
 handle_merge (ParsingContext * pc, const char **attr)
 {
 	int num_attrib;
+
+	pc->merge_type = MERGE_TYPE_UNKNOWN;
+
 
 	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
 		;
@@ -259,23 +564,66 @@ handle_merge (ParsingContext * pc, const char **attr)
 
 	if (strcmp (attr[3], "string") == 0) {
 		/* match string property */
-		pc->merge_type = DBUS_TYPE_STRING;
+		pc->merge_type = MERGE_TYPE_STRING;
 		return;
 	} else if (strcmp (attr[3], "bool") == 0) {
 		/* match string property */
-		pc->merge_type = DBUS_TYPE_BOOLEAN;
+		pc->merge_type = MERGE_TYPE_BOOLEAN;
 		return;
 	} else if (strcmp (attr[3], "int") == 0) {
 		/* match string property */
-		pc->merge_type = DBUS_TYPE_INT32;
+		pc->merge_type = MERGE_TYPE_INT32;
 		return;
 	} else if (strcmp (attr[3], "uint64") == 0) {
 		/* match string property */
-		pc->merge_type = DBUS_TYPE_UINT64;
+		pc->merge_type = MERGE_TYPE_UINT64;
 		return;
 	} else if (strcmp (attr[3], "double") == 0) {
 		/* match string property */
-		pc->merge_type = DBUS_TYPE_DOUBLE;
+		pc->merge_type = MERGE_TYPE_DOUBLE;
+		return;
+	} else if (strcmp (attr[3], "copy_property") == 0) {
+		/* copy another property */
+		pc->merge_type = MERGE_TYPE_COPY_PROPERTY;
+		return;
+	}
+
+	return;
+}
+
+/** Called when the append element begins.
+ *
+ *  @param  pc                  Parsing context
+ *  @param  attr                Attribute key/value pairs
+ */
+static void
+handle_append (ParsingContext * pc, const char **attr)
+{
+	int num_attrib;
+
+	pc->merge_type = MERGE_TYPE_UNKNOWN;
+
+	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
+		;
+	}
+
+	if (num_attrib != 4)
+		return;
+
+	if (strcmp (attr[0], "key") != 0)
+		return;
+	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
+
+	if (strcmp (attr[2], "type") != 0)
+		return;
+
+	if (strcmp (attr[3], "string") == 0) {
+		/* match string property */
+		pc->merge_type = MERGE_TYPE_STRING;
+		return;
+	} else if (strcmp (attr[3], "copy_property") == 0) {
+		/* copy another property */
+		pc->merge_type = MERGE_TYPE_COPY_PROPERTY;
 		return;
 	}
 
@@ -333,6 +681,7 @@ start (ParsingContext * pc, const char *el, const char **attr)
 		}
 
 		pc->curelem = CURELEM_MATCH;
+
 		/* don't bother checking if matching at lower depths failed */
 		if (pc->match_ok) {
 			if (!handle_match (pc, attr)) {
@@ -355,6 +704,23 @@ start (ParsingContext * pc, const char *el, const char **attr)
 		pc->curelem = CURELEM_MERGE;
 		if (pc->match_ok) {
 			handle_merge (pc, attr);
+		} else {
+			/*HAL_INFO(("No merge!")); */
+		}
+	} else if (strcmp (el, "append") == 0) {
+		if (pc->curelem != CURELEM_DEVICE
+		    && pc->curelem != CURELEM_MATCH) {
+			HAL_ERROR (("%s:%d:%d: Element <append> can only be "
+				    "inside <device> and <match>", 
+				    pc->file, 
+				    XML_GetCurrentLineNumber (pc->parser), 
+				    XML_GetCurrentColumnNumber (pc->parser)));
+			parsing_abort (pc);
+		}
+
+		pc->curelem = CURELEM_APPEND;
+		if (pc->match_ok) {
+			handle_append (pc, attr);
 		} else {
 			/*HAL_INFO(("No merge!")); */
 		}
@@ -416,13 +782,13 @@ end (ParsingContext * pc, const char *el)
 		pc->device_matched = TRUE;
 
 		switch (pc->merge_type) {
-		case DBUS_TYPE_STRING:
+		case MERGE_TYPE_STRING:
 			hal_device_property_set_string (pc->device, pc->merge_key,
 						pc->cdata_buf);
 			break;
 
 
-		case DBUS_TYPE_INT32:
+		case MERGE_TYPE_INT32:
 			{
 				dbus_int32_t value;
 
@@ -436,7 +802,7 @@ end (ParsingContext * pc, const char *el)
 				break;
 			}
 
-		case DBUS_TYPE_UINT64:
+		case MERGE_TYPE_UINT64:
 			{
 				dbus_uint64_t value;
 
@@ -450,16 +816,67 @@ end (ParsingContext * pc, const char *el)
 				break;
 			}
 
-		case DBUS_TYPE_BOOLEAN:
+		case MERGE_TYPE_BOOLEAN:
 			hal_device_property_set_bool (pc->device, pc->merge_key,
 					      (strcmp (pc->cdata_buf,
 						       "true") == 0) 
 					      ? TRUE : FALSE);
 			break;
 
-		case DBUS_TYPE_DOUBLE:
+		case MERGE_TYPE_DOUBLE:
 			hal_device_property_set_double (pc->device, pc->merge_key,
 						atof (pc->cdata_buf));
+			break;
+
+		case MERGE_TYPE_COPY_PROPERTY:
+		{
+			char udi_to_merge_from[256];
+			char prop_to_merge[256];
+
+			/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' 
+			 * '@prop.here.is.an.udi:with.prop.name'
+			 */
+			if (!resolve_udiprop_path (pc->cdata_buf,
+						   pc->device->udi,
+						   udi_to_merge_from, sizeof (udi_to_merge_from),
+						   prop_to_merge, sizeof (prop_to_merge))) {
+				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", pc->cdata_buf, pc->device->udi));
+			} else {
+				HalDevice *d;
+
+				d = hal_device_store_find (hald_get_gdl (), udi_to_merge_from);
+				if (d == NULL) {
+					d = hal_device_store_find (hald_get_tdl (), udi_to_merge_from);
+				}
+				if (d == NULL) {
+					HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge_from));
+				} else {
+					hal_device_copy_property (d, prop_to_merge, pc->device, pc->merge_key);
+				}
+			}
+			break;
+		}
+
+		default:
+			HAL_ERROR (("Unknown merge_type=%d='%c'",
+				    pc->merge_type, pc->merge_type));
+			break;
+		}
+	} else if (pc->curelem == CURELEM_APPEND && pc->match_ok && 
+		   hal_device_property_get_type (pc->device, pc->merge_key) == DBUS_TYPE_STRING) {
+		char buf[256];
+		char buf2[256];
+
+		/* As soon as we are appending, we have matched the device... */
+		pc->device_matched = TRUE;
+
+		switch (pc->merge_type) {
+		case MERGE_TYPE_STRING:
+			strncpy (buf, pc->cdata_buf, sizeof (buf));
+			break;
+
+		case MERGE_TYPE_COPY_PROPERTY:
+			hal_device_property_get_as_string (pc->device, pc->cdata_buf, buf, sizeof (buf));
 			break;
 
 		default:
@@ -467,6 +884,10 @@ end (ParsingContext * pc, const char *el)
 				    pc->merge_type, pc->merge_type));
 			break;
 		}
+
+		strncpy (buf2, hal_device_property_get_string (pc->device, pc->merge_key), sizeof (buf2));
+		strncat (buf2, buf, sizeof (buf2) - strlen(buf2));
+		hal_device_property_set_string (pc->device, pc->merge_key, buf2);
 	}
 
 
@@ -477,7 +898,7 @@ end (ParsingContext * pc, const char *el)
 	pc->curelem = pc->curelem_stack[pc->depth];
 
 	/* maintain pc->match_ok */
-	if (pc->depth < pc->match_depth_first_fail)
+	if (pc->depth <= pc->match_depth_first_fail)
 		pc->match_ok = TRUE;
 }
 
@@ -578,7 +999,7 @@ process_fdi_file (const char *dir, const char *filename,
 	parsing_context->file = buf;
 	parsing_context->parser = parser;
 	parsing_context->device = device;
-
+	parsing_context->match_depth_first_fail = -1;
 
 	XML_SetElementHandler (parser,
 			       (XML_StartElementHandler) start,
@@ -720,6 +1141,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 dbus_bool_t
 di_search_and_merge (HalDevice *d)
 {
+
 	return scan_fdi_files (PACKAGE_DATA_DIR "/hal/fdi", d);
 }
 

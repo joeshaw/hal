@@ -80,6 +80,10 @@ hald_SOURCES +=                                                         \
 
 hald_LDADD = @PACKAGE_LIBS@ -lcap @EXPAT_LIB@
 
+if HAVE_SELINUX
+hald_LDADD += -lselinux
+endif
+
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in
 

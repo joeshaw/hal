@@ -512,12 +512,39 @@ main (int argc, char *argv[])
 	return 0;
 }
 
+gboolean
+resolve_udiprop_path (const char *path, const char *source_udi,
+		      char *udi_result, size_t udi_result_size, 
+		      char *prop_result, size_t prop_result_size);
+
 void 
 osspec_probe_done (void)
 {
 	char buf[1] = {0};
 
 	HAL_INFO (("Device probing completed"));
+
+/*
+	{
+		char udi[256];
+		char prop[256];
+
+		resolve_udiprop_path ("info.udi", 
+				      "/org/freedesktop/Hal/devices/computer", 
+				      udi, sizeof (udi), 
+				      prop, sizeof (prop));
+		HAL_INFO (("----------------------------------------"));
+		resolve_udiprop_path ("/org/freedesktop/Hal/devices/computer:kernel.name", 
+				      "/org/freedesktop/Hal/devices/pci_8086_3341", 
+				      udi, sizeof (udi), 
+				      prop, sizeof (prop));
+		HAL_INFO (("----------------------------------------"));
+		resolve_udiprop_path ("@block.storage_device:@storage.physical_device:ide.channel", 
+				      "/org/freedesktop/Hal/devices/block_3_3", 
+				      udi, sizeof (udi), 
+				      prop, sizeof (prop));
+	}
+*/
 
 	/* tell parent to exit */
 	write (startup_daemonize_pipe[1], buf, sizeof (buf));

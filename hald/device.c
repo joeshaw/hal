@@ -564,6 +564,42 @@ hal_device_property_get_string (HalDevice *device, const char *key)
 		return NULL;
 }
 
+const char *
+hal_device_property_get_as_string (HalDevice *device, const char *key, char *buf, size_t bufsize)
+{
+	HalProperty *prop;
+
+	g_return_val_if_fail (device != NULL, NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+	g_return_val_if_fail (buf != NULL, NULL);
+
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		switch (hal_property_get_type (prop)) {
+		case DBUS_TYPE_STRING:
+			strncpy (buf, hal_property_get_string (prop), bufsize);
+			break;
+		case DBUS_TYPE_INT32:
+			snprintf (buf, bufsize, "%d", hal_property_get_int (prop));
+			break;
+		case DBUS_TYPE_UINT64:
+			snprintf (buf, bufsize, "%lld", hal_property_get_uint64 (prop));
+			break;
+		case DBUS_TYPE_DOUBLE:
+			snprintf (buf, bufsize, "%f", hal_property_get_double (prop));
+			break;
+		case DBUS_TYPE_BOOLEAN:
+			strncpy (buf, hal_property_get_bool (prop) ? "true" : "false", bufsize);
+			break;
+		}
+		return buf;
+	} else {
+		buf[0] = '\0';
+		return NULL;
+	}
+}
+
 dbus_int32_t
 hal_device_property_get_int (HalDevice *device, const char *key)
 {
@@ -828,6 +864,41 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 	}
 
 	return TRUE;
+}
+
+gboolean
+hal_device_copy_property (HalDevice *from_device, const char *from, HalDevice *to_device, const char *to)
+{
+	gboolean rc;
+
+	rc = FALSE;
+
+	if (hal_device_has_property (from_device, from)) {
+		switch (hal_device_property_get_type (from_device, from)) {
+		case DBUS_TYPE_STRING:
+			rc = hal_device_property_set_string (
+				to_device, to, hal_device_property_get_string (from_device, from));
+			break;
+		case DBUS_TYPE_INT32:
+			rc = hal_device_property_set_int (
+				to_device, to, hal_device_property_get_int (from_device, from));
+			break;
+		case DBUS_TYPE_UINT64:
+			rc = hal_device_property_set_uint64 (
+				to_device, to, hal_device_property_get_uint64 (from_device, from));
+			break;
+		case DBUS_TYPE_BOOLEAN:
+			rc = hal_device_property_set_bool (
+				to_device, to, hal_device_property_get_bool (from_device, from));
+			break;
+		case DBUS_TYPE_DOUBLE:
+			rc = hal_device_property_set_double (
+				to_device, to, hal_device_property_get_double (from_device, from));
+			break;
+		}
+	}
+
+	return rc;
 }
 
 gboolean

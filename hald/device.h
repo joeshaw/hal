@@ -117,6 +117,10 @@ void          hal_device_property_foreach    (HalDevice    *device,
 
 int           hal_device_property_get_type   (HalDevice    *device,
 					      const char   *key);
+const char   *hal_device_property_get_as_string (HalDevice    *device,
+						 const char   *key,
+						 char *buf,
+						 size_t bufsize);
 const char   *hal_device_property_get_string (HalDevice    *device,
 					      const char   *key);
 dbus_int32_t  hal_device_property_get_int    (HalDevice    *device,
@@ -146,6 +150,12 @@ gboolean      hal_device_property_set_double (HalDevice    *device,
 
 gboolean      hal_device_property_remove     (HalDevice    *device,
 					      const char   *key);
+
+gboolean      hal_device_copy_property       (HalDevice *from_device, 
+					      const char *from,
+					      HalDevice *to_device,
+					      const char *to);
+
 
 void          hal_device_print               (HalDevice    *device);
 
