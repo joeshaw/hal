@@ -90,13 +90,13 @@ class DeviceManager(LibGladeApplication):
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
-				     udi, expand_args=False)
+				     udi)
 	return
 	self.bus.add_signal_receiver(self.device_changed,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
-				     udi, expand_args=False)
+				     udi)
 
     def remove_device_signal_recv (self, udi):
 	self.bus.remove_signal_receiver(self.device_changed,
@@ -129,28 +129,26 @@ class DeviceManager(LibGladeApplication):
             self.update_device_notebook(device)
 
 
-    def device_changed(self, sender, device):
+    def device_changed(self, sender, num_changes, change_list):
         """This method is called when signals on the Device interface is
         received"""
 
-	print "device_changed: " + sender.signal_name
+	device_udi = sender.path
         if sender.signal_name=="Condition":
             print "\nCondition %s, device=%s"%(device, sender.path)
             print "  message = ", args 
         elif sender.signal_name=="PropertyModified":
-            num_modifications = device 
             print "\nPropertyModified, device=%s"%sender.path
             #print "dbus_obj_path", sender.path
-            for i in range(0, num_modifications):
-                property_name = args[1+3*i]
-                removed = args[2+3*i]
-                added = args[3+3*i]
+            for i in change_list:
+                property_name = i[0]
+                removed = i[1]
+                added = i[2]
 
                 print "  key=%s, rem=%d, add=%d"%(property_name, removed, added)
                 if property_name=="info.parent":
                     self.update_device_list()        
                 else:
-                    device_udi = dbus_obj_path
                     device_udi_obj = self.hal_service.get_object(device_udi,
                                                    "org.freedesktop.Hal.Device")
                     device_obj = self.udi_to_device(device_udi)

@@ -1,5 +1,11 @@
 2005-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* tools/device-manager/DeviceManager.py:
+	(DeviceManager.device_changed): Make this work again after the D-BUS
+	updates
+
+2005-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald_dbus.c (device_property_atomic_update_end): Send changes
 	as an array to ensure that PropertyModified signal always has two 
 	parameters
