@@ -118,9 +118,11 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
 	struct sysfs_directory *subdir;
 
 	class_device = sysfs_open_class_device (path);
-	if (class_device == NULL)
-		DIE (("Coulnd't get sysfs class device object for path %s",
-		      path));
+	if (class_device == NULL) {
+		HAL_WARNING (("Coulnd't get sysfs class device object at "
+			      "path %s", path));
+		return;
+	}
 
 	HAL_INFO (("*** classname=%s name=%s path=%s\n",
 		   class_device->classname,
@@ -201,8 +203,11 @@ visit_device (const char *path, dbus_bool_t visit_children)
 	struct sysfs_directory *subdir;
 
 	device = sysfs_open_device (path);
-	if (device == NULL)
-		DIE (("Coulnd't get sysfs device object for path %s", path));
+	if (device == NULL) {
+		HAL_WARNING (("Coulnd't get sysfs device object at path %s"
+			      path));
+		return;
+	}
 
 	/*HAL_INFO ((" path=%s", path));*/
 
