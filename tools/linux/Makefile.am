@@ -23,9 +23,9 @@ clean-local :
 
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
-	- cd $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default && $(LN_S) $(libexecdir)/hal.hotplug hal.hotplug
+	- cd $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default && $(LN_S) $(libexecdir)/hal.hotplug 20-hal.hotplug
 	$(mkinstalldirs) $(DESTDIR)/etc/dev.d/default
-	- cd $(DESTDIR)/etc/dev.d/default && $(LN_S) $(libexecdir)/hal.dev hal.dev
+	- cd $(DESTDIR)/etc/dev.d/default && $(LN_S) $(libexecdir)/hal.dev 10-hal.dev
 if HOTPLUG_MAP_ENABLED
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
 	- cd $(DESTDIR)$(SYSCONFDIR)/hal/device.d && $(LN_S) $(libexecdir)/hal-hotplug-map 40-hal-hotplug-map.hal

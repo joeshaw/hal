@@ -1,3 +1,23 @@
+2004-08-30  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Add SELinux checks
+	
+	* tools/Makefile.am: Build fstab-sync with selinux support if applicable
+	
+	* tools/fstab-sync.c: 
+	(restore_selinux_context): New functions
+	(add_udi): Use restore_selinux_context
+	(remove_udi): Use restore_selinux_context
+	
+	* tools/linux/Makefile.am: Install hal.hotplug and hal.dev symlinks
+	prefixed with 20- respectively 10-.
+
+2004-08-29  David Zeuthen  <david@fubar.dk>
+
+	* tools/linux/Makefile.am (install-data-local): Use 20-hal.hotplug for
+	hotplug helper and 10-hal.dev for dev.d helper. Suggested by Kay
+	Sievers <kay.sievers@vrfy.org>.
+
 2004-08-29  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (detect_media): Set volume.fsusage
