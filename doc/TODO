@@ -18,6 +18,10 @@ Ongoing items that always need work
 Small items
 -----------
 
+ - Fix GtkDeprecationWarning: gtk.TRUE is deprecated, use True instead
+   icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, gtk.TRUE, 8, 16, 16)
+   - even better; get rid of h-d-m when something  better is available
+
  - Fix doxygen documentation for exported libraries, e.g. libhal and 
    libhal-storage
 
