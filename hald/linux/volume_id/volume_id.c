@@ -1621,6 +1621,7 @@ static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
 	struct hfsplus_bheader_record *bnode;
 	struct hfsplus_catalog_key *key;
 	unsigned int	label_len;
+	struct hfsplus_extent extents[HFSPLUS_EXTENT_COUNT];
 	const __u8 *buf;
 
 	buf = get_buffer(id, off + HFS_SUPERBLOCK_OFFSET, 0x200);
@@ -1679,7 +1680,8 @@ hfsplus:
 	blocksize = be32_to_cpu(hfsplus->blocksize);
 	dbg("blocksize %u", blocksize);
 
-	cat_block = be32_to_cpu(hfsplus->cat_file.extents[0].start_block);
+	memcpy(extents, hfsplus->cat_file.extents, sizeof(extents));
+	cat_block = be32_to_cpu(extents[0].start_block);
 	dbg("catalog start block 0x%x", cat_block);
 
 	buf = get_buffer(id, off + (cat_block * blocksize), 0x2000);
@@ -1704,8 +1706,8 @@ hfsplus:
 
 	/* get physical location */
 	for (ext = 0; ext < HFSPLUS_EXTENT_COUNT; ext++) {
-		ext_block_start = be32_to_cpu(hfsplus->cat_file.extents[ext].start_block);
-		ext_block_count = be32_to_cpu(hfsplus->cat_file.extents[ext].block_count);
+		ext_block_start = be32_to_cpu(extents[ext].start_block);
+		ext_block_count = be32_to_cpu(extents[ext].block_count);
 		dbg("extent start block 0x%x, count 0x%x", ext_block_start, ext_block_count);
 
 		if (ext_block_count == 0)

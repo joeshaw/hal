@@ -1,3 +1,10 @@
+2004-09-15  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_hfs_hfsplus):
+	Copy over extents array for later examination. Fixes the
+	label reading of a 40 GB hfsplus volume that I found on
+	my neighbours desk.
+
 2004-09-15  David Zeuthen  <david@fubar.dk>
 
 	* hald/hald_dbus.c (foreach_device_match_get_udi_tdl): New function
