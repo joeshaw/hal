@@ -60,6 +60,9 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force);
  * @{
  */
 
+/** udev root directory, e.g. "/udev/" */
+static char udev_root[256];
+
 /** This function will compute the device uid based on other properties
  *  of the device. For block device it's simply block appended with the
  *  major and minor number
@@ -182,6 +185,7 @@ void visit_class_device_block(const char* path,
         parent_sysfs_path = class_device->sysdevice->path;
     }
 
+
     /* Find parent; this happens asynchronously as our parent might
      * be added later. If we are probing this can't happen so the
      * timeout is set to zero in that event..
@@ -215,7 +219,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
     HalDevice* new_d = NULL;
     HalDevice* d = (HalDevice*) data1;
 
-    HAL_INFO(("data2=0x%08x, d=0x%08x, d->udi=%s, parent->udi=%s, parent->in_gdl=%d", data2, d, d->udi, parent!=NULL ? parent->udi : "no parent", parent!=NULL ? parent->in_gdl : 42 ));
+    /*HAL_INFO(("data2=0x%08x, d=0x%08x, d->udi=%s, parent->udi=%s, parent->in_gdl=%d", data2, d, d->udi, parent!=NULL ? parent->udi : "no parent", parent!=NULL ? parent->in_gdl : 42 ));*/
 
     if( parent==NULL )
     {
@@ -223,8 +227,86 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         ds_device_destroy(d);
         return;
     }
-
     ds_property_set_string(d, "info.parent", parent->udi);
+
+
+    /* Ask udev about the device file if we are probing.. otherwise we'll just
+     * receive a dbus message from udev later */
+    if( is_probing )
+    {
+        int i;
+        char* path;
+        int sysfs_mount_path_len;
+        char sysfs_path_trunc[SYSFS_NAME_LEN];
+        char* udev_argv[4] = {"/sbin/udev", "-q", 
+                              sysfs_path_trunc, NULL};
+        char* udev_stdout;
+        char* udev_stderr;
+        int udev_exitcode;
+        char dev_file[256];
+
+        path = ds_property_get_string(d, "linux.sysfs_path");
+
+        /* compute truncated sysfs path */
+        sysfs_mount_path_len = strlen(sysfs_mount_path);
+        if( strlen(path)>sysfs_mount_path_len )
+        {
+            strncpy(sysfs_path_trunc, path + sysfs_mount_path_len, 
+                    SYSFS_NAME_LEN);
+        }
+        HAL_INFO(("*** sysfs_path_trunc = '%s'", sysfs_path_trunc));
+        
+        /* Now invoke udev */
+        if( g_spawn_sync("/",
+                         udev_argv,
+                         NULL,
+                         0,
+                         NULL,
+                         NULL,
+                         &udev_stdout,
+                         &udev_stderr,
+                         &udev_exitcode)!=TRUE )
+        {
+            HAL_ERROR(("Couldn't invoke /sbin/udev"));
+            goto error;
+        }
+        
+        if( udev_exitcode!=0 )
+        {
+            HAL_ERROR(("/sbin/udev returned %d", udev_exitcode));
+            goto error;
+        }
+        
+        /* sanitize string returned by udev */
+        for(i=0; udev_stdout[i]!=0; i++)
+        {
+            if( udev_stdout[i]=='\r' || udev_stdout[i]=='\n' )
+            {
+                udev_stdout[i]=0;
+                break;
+            }
+        }
+
+        strncpy(dev_file, udev_root, 256);
+        strncat(dev_file, udev_stdout, 256);
+        
+        HAL_INFO(("device file = '%s'", dev_file));
+        
+        ds_property_set_string(d, "block.device", dev_file);
+        
+        /** @todo FIXME free udev_stdout, udev_stderr? */        
+    }
+    else
+    {
+    error:
+        /* woow, be careful not to overwrite */
+        if( !ds_property_exists(d, "block.device") )
+        {
+            ds_property_set_string(d, "block.device", "");
+        }
+    }
+
+
 
     if( ds_property_get_bool(d, "block.is_volume") )
     {
@@ -380,20 +462,9 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
     device_file = ds_property_get_string(d, "block.device");
     HAL_INFO(("Entering, udi=%s, device_file=%s", d->udi, device_file));
 
-    if( !is_probing )
+    if( device_file!=NULL && strcmp(device_file, "")!=0 )
     {
-        /** We really need to invoke udev soon */
-        if( device_file!=NULL && strcmp(device_file, "fixme-invoke-udev")!=0 )
-        {
-            ds_gdl_add(d);
-        }
-    }
-    else
-    {
-        if( device_file!=NULL && strcmp(device_file, "")!=0 )
-        {
-            ds_gdl_add(d);
-        }
+        ds_gdl_add(d);
     }
 }
 
@@ -632,6 +703,8 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 
             if( mp->major==major && mp->minor==minor )
             {
+                char* existing_block_device;
+
                 HAL_INFO((
                     "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
                     mp->device, mp->mount_point, mp->major, mp->minor, 
@@ -639,11 +712,21 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
                 
                 property_atomic_update_begin();
 
+                existing_block_device = ds_property_get_string(d,
+                                                               "block.device");
+
                 /* Yay! Found a mount point; set properties accordingly */
-                ds_property_set_string(d, "block.device", mp->device);
                 ds_property_set_string(d, "block.mount_point",mp->mount_point);
                 ds_property_set_string(d, "block.fstype", mp->fs_type);
                 ds_property_set_bool(d, "block.is_mounted", TRUE);
+
+                /* only overwrite block.device if it's not set */
+                if( existing_block_device==NULL ||
+                    (existing_block_device!=NULL &&  
+                     strcmp(existing_block_device, "")==0) )
+                {
+                    ds_property_set_string(d, "block.device", mp->device);
+                }
 
                 property_atomic_update_end();
 
@@ -660,12 +743,6 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
             ds_property_set_bool(d, "block.is_mounted", FALSE);
             ds_property_set_string(d, "block.mount_point", "");
             ds_property_set_string(d, "block.fstype", "");
-            if( !ds_property_exists(d, "block.device") )
-            {
-                /** @todo Invoke udev! */
-
-                ds_property_set_string(d, "block.device", "fixme-invoke-udev");
-            }
 
             property_atomic_update_end();
         }        
@@ -688,6 +765,57 @@ static void sigio_handler(int sig)
     etc_mtab_process_all_block_devices(FALSE);
 }
 
+/** Find udev root directory (e.g. '/udev/') by invoking '/sbin/udev -r'.
+ *  If this fails, we default to /udev/.
+ *
+ */
+static void get_udev_root()
+{
+    int i;
+    char* udev_argv[3] = {"/sbin/udev", "-r", NULL};
+    char* udev_stdout;
+    char* udev_stderr;
+    int udev_exitcode;
+
+    strncpy(udev_root, "/udev/", 256);
+
+    /* Invoke udev */
+    if( g_spawn_sync("/",
+                     udev_argv,
+                     NULL,
+                     0,
+                     NULL,
+                     NULL,
+                     &udev_stdout,
+                     &udev_stderr,
+                     &udev_exitcode)!=TRUE )
+    {
+        HAL_ERROR(("Couldn't invoke /sbin/udev -r"));
+        return;
+    }
+    
+    if( udev_exitcode!=0 )
+    {
+        HAL_ERROR(("/sbin/udev -r returned %d", udev_exitcode));
+        return;
+    }
+    
+    /* sanitize string returned by udev */
+    for(i=0; udev_stdout[i]!=0; i++)
+    {
+        if( udev_stdout[i]=='\r' || udev_stdout[i]=='\n' )
+        {
+            udev_stdout[i]=0;
+            break;
+        }
+    }
+    
+    strncpy(udev_root, udev_stdout, 256);
+        
+    HAL_INFO(("udev root = '%s'", udev_root));
+        
+    /** @todo FIXME free udev_stdout, udev_stderr? */        
+}
 
 
 /** Init function for block device handling
@@ -695,6 +823,7 @@ static void sigio_handler(int sig)
  */
 void linux_class_block_init()
 {
+    get_udev_root();
 }
 
 /** This function is called when all device detection on startup is done

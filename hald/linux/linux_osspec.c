@@ -556,9 +556,10 @@ static void handle_udev_node_created_found_device(HalDevice* d,
                                                   void* data1, void* data2)
 {
     char* filename = (char*) data1;
-    
+
     if( d!=NULL )
     {
+        HAL_INFO(("Setting block.device=%s for udi=%s", filename, d->udi));
         ds_property_set_string(d, "block.device", filename);
         linux_class_block_check_if_ready_to_add(d);
     }

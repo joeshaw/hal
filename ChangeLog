@@ -1,3 +1,13 @@
+2004-01-03  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_class_block.c 
+	(visit_class_device_block_got_parent): Invoke udev on hald boot time
+	to get device file names
+	(etc_mtab_process_all_block_devices): Be careful not to overwrite
+	existing block.device when looking at /etc/mtab
+	(get_udev_root): new function
+	(linux_class_block_init): find udev root using '/sbin/udev -r'
+
 2004-01-02  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: bump version to 0.2.2
