@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# haldaemon:   HAL daemon
+#
+# chkconfig: 345 98 02
+# description:  This is a daemon for collecting and maintaing information \
+#               about hardware from several sources. \
+#               See http://www.freedesktop.org/software/hal/
+#
+# processname: hald
+# pidfile: @HALD_PID_FILE@
+#
+
+# Sanity checks.
+[ -x @SBINDIR@/hald ] || exit 0
+
+# Source function library.
+. @SYSCONFDIR@/rc.d/init.d/functions
+
+# so we can rearrange this easily
+processname=hald
+servicename=haldaemon
+
+RETVAL=0
+
+start() {
+    echo -n $"Starting HAL daemon: "
+    daemon --check $servicename $processname
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch @LOCALSTATEDIR@/lock/subsys/$servicename && echo `/sbin/pidof $processname` > @HALD_PID_FILE@
+}
+
+stop() {
+    echo -n $"Stopping HAL daemon: "
+
+    killproc $servicename -TERM
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ]; then
+        rm -f @LOCALSTATEDIR@/lock/subsys/$servicename
+        rm -f @HALD_PID_FILE@
+    fi
+}
+
+# See how we were called.
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $processname
+        RETVAL=$?
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    condrestart)
+        if [ -f @LOCALSTATEDIR@/lock/subsys/$servicename ]; then
+            stop
+            start
+        fi
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+        ;;
+esac
+exit $RETVAL
