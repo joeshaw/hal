@@ -23,7 +23,7 @@ install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
 	- cd $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default && $(LN_S) $(libexecdir)/hal.hotplug hal.hotplug
 	$(mkinstalldirs) $(DESTDIR)/etc/dev.d/default
-	- cd $(DESTDIR)/dev.d/default && $(LN_S) $(libexecdir)/hal.dev hal.dev
+	- cd $(DESTDIR)/etc/dev.d/default && $(LN_S) $(libexecdir)/hal.dev hal.dev
 
 uninstall-local :
 	- rm -f $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default/hal.hotplug
