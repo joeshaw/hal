@@ -1,5 +1,10 @@
 2005-02-01  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/probing/probe-input.c (main): Fix a bug here where
+	we checked for the wrong return value of libhal_ctx_init.
+
+2005-02-01  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Pierre Ossman <drzeus-list@drzeus.cx>. Basic MMC bus
 	support. Reads out all the information currently available. I also
 	need to add a mapping between vendor id:s an names, but I don't

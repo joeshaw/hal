@@ -137,7 +137,7 @@ main (int argc, char *argv[])
 		goto out;
 	if (!libhal_ctx_set_dbus_connection (ctx, dbus_bus_get (DBUS_BUS_SYSTEM, NULL)))
 		goto out;
-	if (libhal_ctx_init (ctx, NULL))
+	if (!libhal_ctx_init (ctx, NULL))
 		goto out;
 
 	device_file = getenv ("HAL_PROP_INPUT_DEVICE");
