@@ -1,3 +1,9 @@
+2004-09-12  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_vfat): Patch from
+	  Sjoerd Simons <sjoerd@luon.net> to fix vfat label reading
+	  on big endian systems
+
 2004-09-07  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/osspec.c (hald_helper_hotplug_process_queue): Check
