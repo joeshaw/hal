@@ -1,3 +1,8 @@
+2004-04-19  Robert Love  <rml@ximian.com>
+
+	* hald/callout.c (hal_callout_capability): add properties to 
+	environment and set working directory correctly
+
 2004-04-15  Joe Shaw  <joe@ximian.com>
 
 	* hald/device.c (hal_device_async_wait_property): Ref the device

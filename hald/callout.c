@@ -184,7 +184,10 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		info.envp = envp;
 		info.index = 2;
 
-		if (!g_spawn_sync (DEVICE_CALLOUT_DIR, argv, envp, 0,
+		hal_device_property_foreach (device, add_property_to_env,
+					     &info);
+
+		if (!g_spawn_sync (CAPABILITY_CALLOUT_DIR, argv, envp, 0,
 				   NULL, NULL, NULL, NULL, NULL, &err)) {
 			HAL_WARNING (("Couldn't invoke %s: %s", argv[0],
 				      err->message));
