@@ -343,7 +343,10 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 		*write_speed = p[28] << 8 | p[29];
 	}
 
-	*read_speed = p[8] << 8 | p[9];
+	if (len >= hlen+9)
+	    *read_speed = p[8] << 8 | p[9];
+	else
+	    *read_speed = 0;
 
 	free (page2A);
 

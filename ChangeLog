@@ -1,5 +1,17 @@
 2004-09-21  David Zeuthen  <david@fubar.dk>
 
+	Patch from Martin Pitt <martin.pitt@canonical.com>
+	
+	* hald/linux/linux_dvd_rw_utils.c (get_read_write_speed): Several
+	Ubuntu users reported that hal does not start up properly. I
+	debugged this and found out that hald/linux/linux_dvd_rw_utils.c
+	contains an unchecked buffer access which causes a segfault.  The
+	attached patch fixes that; it might not be the most correct
+	solution, but it works. The error is still present in 0.2.98; I
+	made the fix in 0.2.92, but the patch should still apply.
+
+2004-09-21  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (block_class_pre_process): Set
 	has_removable_media for USB floppies in case the removable file in
 	sysfs is gone
