@@ -473,17 +473,17 @@ hal_util_set_bcd2_from_file (HalDevice *d, const gchar *key, const gchar *direct
 	return ret;
 }
 
-gboolean
-hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file)
+gchar *
+hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 {
 	FILE *f;
-	gchar buf[256];
+	static gchar buf[256];
 	gchar path[HAL_PATH_MAX];
-	gboolean ret;
+	gchar *result;
 	gsize len;
-
+	
 	f = NULL;
-	ret = FALSE;
+	result = NULL;
 
 	g_snprintf (path, sizeof (path), "%s/%s", directory, file);
 
@@ -502,11 +502,25 @@ hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *dire
 	if (len>0)
 		buf[len-1] = '\0';
 
-	ret = hal_device_property_set_string (d, key, buf);
+	result = buf;
 
 out:
 	if (f != NULL)
 		fclose (f);
+
+	return result;
+}
+
+gboolean
+hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file)
+{
+	gchar *buf;
+	gboolean ret;
+
+	ret = FALSE;
+
+	if ((buf = hal_util_get_string_from_file (directory, file)) != NULL)
+		ret = hal_device_property_set_string (d, key, buf);
 
 	return ret;
 }

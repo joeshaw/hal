@@ -1,5 +1,12 @@
 2005-02-01  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Pierre Ossman <drzeus-list@drzeus.cx>.
+
+	* hald/linux2/util.c (hal_util_get_string_from_file): New function
+	(hal_util_set_string_from_file): Use the new function mentioned above
+
+2005-02-01  David Zeuthen  <davidz@redhat.com>
+
 	This is largely based on this patch
 
 	 http://lists.freedesktop.org/archives/hal/2005-January/002002.html
