@@ -1510,6 +1510,9 @@ static boolean fs_table_line_is_mounted (FSTableLine *line)
   boolean is_mounted = FALSE;
   struct mntent *m;
 
+  if (line->block_device == NULL || line->mount_point == NULL)
+	  goto out;
+
   f = fopen (_PATH_MOUNTED, "r");
   if (f == NULL)
     goto out;
@@ -1539,6 +1542,9 @@ fs_table_remove_generated_entries (FSTable *table)
   line = table->lines;
   while (line != NULL)
     {
+	    fstab_update_debug (_("%d: Seeing if line for dev='%s',mnt='%s' should be removed\n"), pid, line->block_device, line->mount_point);
+	    fstab_update_debug (_("%d: is_generated=%d, is_mounted=%d\n"), pid, 
+				fs_table_line_is_generated (line), fs_table_line_is_mounted (line));
       /* don't remove generated line if device is mounted there */
       if (fs_table_line_is_generated (line) && !fs_table_line_is_mounted (line))
         {

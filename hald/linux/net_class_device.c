@@ -509,10 +509,10 @@ net_class_pre_process (ClassDeviceHandler *self,
 	int media_type = 0;
 	const char *media;
 	char wireless_path[SYSFS_PATH_MAX];
-	struct sysfs_directory *wireless_dir;
 	dbus_bool_t is_80211 = FALSE;
 	int ifindex;
 	int flags;
+	struct stat statbuf;
 
 	hal_device_property_set_string (d, "net.linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "net.interface",
@@ -521,17 +521,10 @@ net_class_pre_process (ClassDeviceHandler *self,
 	/* Check to see if this interface supports wireless extensions */
 	is_80211 = FALSE;
 	snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
-	wireless_dir = sysfs_open_directory (wireless_path);
-
-	if (sysfs_read_directory (wireless_dir) >= 0) {
-		if (wireless_dir->attributes != NULL) {
-			hal_device_add_capability (d, "net.80211");
-			is_80211 = TRUE;
-		}
-
-		sysfs_close_directory (wireless_dir);
+	if (stat (wireless_path, &statbuf) == 0) {
+		hal_device_add_capability (d, "net.80211");
+		is_80211 = TRUE;
 	}
-
 
 	attr = sysfs_get_classdev_attr (class_device, "address");
 	if (attr != NULL) {

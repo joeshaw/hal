@@ -1,3 +1,10 @@
+2004-10-21  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/net_class_device.c (net_class_pre_process): Just see if
+	there is a 'wireless' directory in sysfs; don't let the libsysfs copy
+	try to open files cause that might fail on orinoco+hermes (RH bug
+	136591). Reported by Dan Williams <dcbw@redhat.com>
+
 2004-10-19  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Added pt to ALL_LINGUAS
