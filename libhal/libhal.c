@@ -432,6 +432,7 @@ filter_func (DBusConnection * connection,
 				dbus_free (udi);
 			}
 		}
+		return DBUS_HANDLER_RESULT_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Manager",
@@ -445,6 +446,7 @@ filter_func (DBusConnection * connection,
 				dbus_free (udi);
 			}
 		}
+		return DBUS_HANDLER_RESULT_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Manager",
@@ -463,6 +465,7 @@ filter_func (DBusConnection * connection,
 				dbus_free (capability);
 			}
 		}
+		return DBUS_HANDLER_RESULT_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Device", "Condition")) {
@@ -481,6 +484,7 @@ filter_func (DBusConnection * connection,
 
 			dbus_free (condition_name);
 		}
+		return DBUS_HANDLER_RESULT_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Device",
@@ -519,9 +523,10 @@ filter_func (DBusConnection * connection,
 			}
 
 		}
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	return DBUS_HANDLER_RESULT_HANDLED;
+	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
 static LibHalFunctions hal_null_functions = {
