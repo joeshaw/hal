@@ -1,5 +1,9 @@
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/acpi.c (battery_refresh): Remove .last_full, not .maximum
+
+2005-03-02  David Zeuthen  <davidz@redhat.com>
+
 	* doc/spec/hal-spec.xml.in: Change this to remove the property
 	battery.charge_level.maximum and introduce battery.charge_level.design
 	and battery.charge_level.last_full instead
