@@ -58,6 +58,11 @@ The CITY OF LOST DEVICES HalDevice should be renamed to Computer and
 contain information about the system such as the kernel version, X.org
 version etc.
 
+============================================================================
+* UTF8 support
+============================================================================
+
+All string handling functions need to use UTF8.
 
 
 ============================================================================
@@ -65,7 +70,6 @@ version etc.
  NEW MAJOR RELEASE, UPDATE SPEC
 ============================================================================
 ============================================================================
-
 
 ============================================================================
 * Locking of devices
@@ -170,3 +174,9 @@ callout after a certain period of time.  (5 seconds?  10?  15?)
 
 We shouldn't remove a device before all the children are removed
 
+============================================================================
+* Dependencies, Robustness
+============================================================================
+
+It would be good to rewrite hald in the paranoid D-BUS handle-OOM etc. style
+and get rid of glib, gobject dependencies.
