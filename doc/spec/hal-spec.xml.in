@@ -766,47 +766,13 @@
               internally in HAL</entry>
             </row>
             <row>
-              <entry><literal>linux.procfs_path</literal> (string)</entry>
+              <entry><literal>linux.acpi_path</literal> (string)</entry>
               <entry>example: /proc/acpi/button/power/PWRF, /proc/pmu/battery_0</entry>
               <entry>No</entry>
               <entry>
-                A fully-qualified path into the procfs filesystem for the 
-                physical device
+                A fully-qualified path into the procfs filesystem for a
+                device object representing an ACPI abstraction.
               </entry>
-            </row>
-            <row>
-              <entry><literal>linux.procfs_path.keyname</literal> (string)</entry>
-              <entry>example: "remaining capacity"</entry>
-              <entry>Yes, if linux.procfs_path is set</entry>
-              <entry>
-                The keyname that HAL can use to extract the data from the procfs file
-              </entry>
-            </row>
-            <row>
-              <entry><literal>linux.acpi_version</literal> (string)</entry>
-              <entry>example: 20041210</entry>
-              <entry>No</entry>
-              <entry>
-                The in-kernel driver version providing ACPI services
-              </entry>
-            </row>
-            <row>
-              <entry><literal>linux.pmu_device</literal> (string)</entry>
-              <entry>example: /dev/pmu</entry>
-              <entry>No</entry>
-              <entry>The udev assigned device file for PMU.</entry>
-            </row>
-            <row>
-              <entry><literal>linux.pmu_driver_version</literal> (string)</entry>
-              <entry>example: 2</entry>
-              <entry>No</entry>
-              <entry>PMU driver version</entry>
-            </row>
-            <row>
-              <entry><literal>linux.pmu_firmware_version</literal> (string)</entry>
-              <entry>example: 0c</entry>
-              <entry>No</entry>
-              <entry>PMU firmware version</entry>
             </row>
             <row>
               <entry><literal>linux.driver</literal> (string)</entry>
@@ -2927,16 +2893,25 @@
       </informaltable>
     </sect2>
 
-    <sect2 id="device-properties-battery">
-      <title><literal>battery</literal> namespace</title>
+    <sect2 id="device-properties-system">
+      <title><literal>system</literal> namespace</title>
       <para>
-      
-	Device objects with the capability <literal>battery</literal>
-	represent all the devices having some battery (in many cases - 
-	rechargeable) inside. 
-	The following properties are available:
-      </para>
 
+        Device objects with the capability <literal>system</literal>
+        represent system devices currently accessed through
+        the ACPI and PMU bus.
+
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-system-ac_adaptor">
+      <title><literal>system.ac_adaptor</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>system.ac_adaptor</literal>
+        represent all the devices capable of powering the system from AC power
+
+      </para>
       <informaltable>
         <tgroup cols="2">
           <thead>
@@ -2948,7 +2923,49 @@
             </row>
           </thead>
           <tbody>
+            <row>
+              <entry><literal>system.ac_adaptor.present</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The state of the adaptor, i.e. whether it is providing power to
+                the unit from mains power.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
 
+    <sect2 id="device-properties-battery">
+      <title><literal>battery</literal> namespace</title>
+      <para>
+      
+	Device objects with the capability <literal>battery</literal>
+	represent all the devices having some battery (in many cases - 
+	rechargeable) inside. 
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>battery.present</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		This is present as some smart batteries can have acpi/pmu 
+                entries, and be physically missing.
+	      </entry>
+            </row>
             <row>
               <entry><literal>battery.type</literal> (string)</entry>
               <entry></entry>
@@ -3025,17 +3042,17 @@
 	    </row>
             <row>
               <entry><literal>battery.charge_level.unit</literal> (string)</entry>
-              <entry>Examples: <literal>mWatt</literal>, <literal>VA</literal></entry>
+              <entry>Examples: <literal>mWh</literal>, <literal>VA</literal></entry>
               <entry>No</entry>
               <entry>
-		The physical unit used by the charge level properties 
-		(maximum and current). In many cases, this property is empty
-		- which indicates that the charge properties are measured in
-		some unknown units.
+		The physical unit used by the charge level properties
+		(maximum and current). In many cases, this property is
+		omitted - which indicates that the charge properties
+		are measured in some unknown units.
 	      </entry>
 	    </row>
             <row>
-              <entry><literal>battery.charge_level.maximum.specified</literal> (int)</entry>
+              <entry><literal>battery.charge_level.maximum_specified</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
@@ -3046,7 +3063,7 @@
 	      </entry>
 	    </row>
             <row>
-              <entry><literal>battery.charge_level.maximum.real</literal> (int)</entry>
+              <entry><literal>battery.charge_level.maximum_real</literal> (int)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>
@@ -3078,31 +3095,24 @@
 	        one-time (disposable after one usage).
 	      </entry>
 	    </row>
+
             <row>
               <entry><literal>battery.rechargeable.is_charging</literal> (bool)</entry>
               <entry></entry>
               <entry>Only if <literal>battery.is_rechargeable</literal> is TRUE</entry>
               <entry>
-		True if the device is charging, false otherwise.</entry>
+		TRUE if, and only if, the battery is charging.
+              </entry>
 	    </row>
             <row>
-              <entry><literal>battery.rechargeable.time_to_charge</literal> (int)</entry>
+              <entry><literal>battery.rechargeable.is_discharging</literal> (bool)</entry>
               <entry></entry>
-              <entry>No</entry>
+              <entry>Only if <literal>battery.is_rechargeable</literal> is TRUE</entry>
               <entry>
-		The time (measured in seconds) necessary for the 
-                rechargeable device to charge fully.
-	      </entry>
+		TRUE if, and only if, the battery is discharging.
+              </entry>
 	    </row>
-            <row>
-              <entry><literal>battery.time_to_discharge</literal> (int)</entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-		The expected worktime of the device (measured in 
-                seconds), without recharging, from the current moment.
-	      </entry>
-	    </row>
+
             <row>
               <entry><literal>battery.command_interface</literal> (string)</entry>
               <entry></entry>
@@ -3114,7 +3124,6 @@
 		coding simplicity.
 	      </entry>
 	    </row>
-
             <row>
               <entry><literal>battery.vendor</literal> (string)</entry>
               <entry></entry>
@@ -3132,6 +3141,14 @@
 	      </entry>
 	    </row>
             <row>
+              <entry><literal>battery.technology</literal> (string)</entry>
+              <entry>example: LION</entry>
+              <entry>No</entry>
+              <entry>
+		The technology of the battery.
+	      </entry>
+	    </row>
+            <row>
               <entry><literal>battery.serial</literal> (string)</entry>
               <entry></entry>
               <entry>No</entry>
@@ -3141,50 +3158,6 @@
 	      </entry>
 	    </row>
 
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
-
-    <sect2 id="device-properties-system">
-      <title><literal>system</literal> namespace</title>
-      <para>
-
-        Device objects with the capability <literal>system</literal>
-        represent system devices currently accessed through
-        the ACPI and PMU bus.
-
-      </para>
-    </sect2>
-
-    <sect2 id="device-properties-system-ac_adaptor">
-      <title><literal>system.ac_adaptor</literal> namespace</title>
-      <para>
-
-        Device objects with the capability <literal>system.ac_adaptor</literal>
-        represent all the devices capable of powering the system from AC power
-
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry><literal>system.ac_adaptor.enabled</literal> (bool)</entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>
-                The state of the adaptor, i.e. whether it is providing power to
-                the unit
-              </entry>
-            </row>
           </tbody>
         </tgroup>
       </informaltable>
@@ -3217,7 +3190,7 @@
             </row>
             <row>
               <entry></entry>
-              <entry>lid_switch</entry>
+              <entry>lid</entry>
               <entry></entry>
               <entry>
                 The switch on a laptop that senses whether the lid is

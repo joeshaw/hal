@@ -79,6 +79,8 @@
 
 #include "ids.h"
 
+#include "acpi.h"
+
 char hal_sysfs_path [HAL_PATH_MAX];
 char hal_proc_path [HAL_PATH_MAX];
 
@@ -470,6 +472,9 @@ osspec_probe (void)
 
 	/* start processing events */
 	hotplug_event_process_queue ();
+
+	/* ACPI */
+	acpi_probe ();
 
 	/*osspec_probe_done ();*/
 }

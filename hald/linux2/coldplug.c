@@ -384,7 +384,7 @@ coldplug_compute_visit_device (const gchar *path,
 		g_strlcpy (hotplug_event->sysfs_path, path, sizeof (hotplug_event->sysfs_path));
 		hotplug_event->net_ifindex = -1;
 
-		parent_sysfs_path = hal_util_get_parent_sysfs_path (path);
+		parent_sysfs_path = hal_util_get_parent_path (path);
 		g_strlcpy (hotplug_event->wait_for_sysfs_path, parent_sysfs_path, sizeof (hotplug_event->wait_for_sysfs_path));
 		g_free (parent_sysfs_path);
 

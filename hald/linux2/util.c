@@ -139,15 +139,14 @@ hal_util_get_last_element (const gchar *s)
 	return s;
 }
 
-/** Given a sysfs-path for a device, this functions finds the sysfs
- *  path representing the parent of the given device by truncation.
+/** Given a path, this functions finds the path representing the
+ *  parent directory by truncation.
  *
- *  @param  path                Sysfs-path of device to find parent for
- *  @return                     Path for parent or NULL if there is no parent; 
- *                              must be freed by caller
+ *  @param  path                Path
+ *  @return                     Path for parent or NULL. Must be freed by caller
  */
 gchar *
-hal_util_get_parent_sysfs_path (const gchar *path)
+hal_util_get_parent_path (const gchar *path)
 {
 	guint i;
 	guint len;
@@ -719,4 +718,250 @@ hal_util_path_ascend (gchar *path)
 
 	*p = '\0';
 	return TRUE;
+}
+
+/** Given a directory and filename, open the file and search for the
+ *  first line that starts with the given linestart string. Returns
+ *  the rest of the line as a string if found.
+ *
+ *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @param  file                File, e.g. "info"
+ *  @param  linestart           Start of line, e.g. "serial number"
+ *  @return                     NULL if not found, otherwise the remainder
+ *                              of the line, e.g. ":           21805" if
+ *                              the file /proc/acpi/battery/BAT0 contains
+ *                              this line "serial number:           21805"
+ *                              The string is only valid until the next
+ *                              invocation of this function.
+ */
+gchar *
+hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart)
+{
+	FILE *f;
+	static gchar buf[512];
+	static gchar filename[HAL_PATH_MAX];
+	gchar *result;
+	gsize linestart_len;
+
+	result = NULL;
+
+	snprintf (filename, sizeof (filename), "%s/%s", directory, file);
+	f = fopen (filename, "r");
+	if (f == NULL)
+		goto out;
+
+	linestart_len = strlen (linestart);
+
+	do {
+		if (fgets (buf, sizeof (buf), f) == NULL)
+			goto out;
+
+		if (strncmp (buf, linestart, linestart_len) == 0) {
+			guint i;
+			gsize len;
+
+			len = strlen (buf);
+			for (i = len - 1; i > 0; --i) {
+				if (buf[i] == '\n' || buf[i] == '\r')
+					buf[i] = '\0';
+				else
+					break;
+			}
+			break;
+		}
+	} while (TRUE);
+
+	result = buf + linestart_len;
+
+out:
+	if (f != NULL)
+		fclose (f);
+	return result;
+}
+
+/** Get a string value from a formatted text file and assign it to
+ *  a property on a device object.
+ *
+ *  Example: Given that the file /proc/acpi/battery/BAT0/info contains
+ *  the line
+ *
+ *    "design voltage:          10800 mV"
+ *
+ *  then hal_util_set_string_elem_from_file (d, "system.battery.foo",
+ *  "/proc/acpi/battery/BAT0", "info", "design voltage", 1) will assign
+ *  the string "mV" to the property "system.battery.foo" on d.
+ *
+ *  @param  d                   Device object
+ *  @param  key                 Property name
+ *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @param  file                File, e.g. "info"
+ *  @param  linestart           Start of line, e.g. "design voltage"
+ *  @param  elem                Element number after linestart to extract
+ *                              excluding whitespace and ':' characters.
+ *  @return                     TRUE, if, and only if, the value could be
+ *                              extracted and the property was set
+ */
+gboolean
+hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key, 
+				    const gchar *directory, const gchar *file, 
+				    const gchar *linestart, guint elem)
+{
+	gchar *line;
+	gboolean res;
+	gchar **tokens;
+	guint i, j;
+
+	res = FALSE;
+	tokens = NULL;
+
+	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+		goto out;
+
+	tokens = g_strsplit_set (line, " \t:", 0);
+	for (i = 0, j = 0; tokens[i] != NULL; i++) {
+		if (strlen (tokens[i]) == 0)
+			continue;
+		if (j == elem) {
+			hal_device_property_set_string (d, key, tokens[i]);
+			res = TRUE;
+			goto out;
+		}
+		j++;
+	}
+	
+out:
+	if (tokens != NULL)
+		g_strfreev (tokens);
+
+	return res;
+}
+
+/** Get an integer value from a formatted text file and assign it to
+ *  a property on a device object.
+ *
+ *  Example: Given that the file /proc/acpi/battery/BAT0/info contains
+ *  the line
+ *
+ *    "design voltage:          10800 mV"
+ *
+ *  then hal_util_set_int_elem_from_file (d, "system.battery.bar",
+ *  "/proc/acpi/battery/BAT0", "info", "design voltage", 0) will assign
+ *  the integer 10800 to the property "system.battery.foo" on d.
+ *
+ *  @param  d                   Device object
+ *  @param  key                 Property name
+ *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @param  file                File, e.g. "info"
+ *  @param  linestart           Start of line, e.g. "design voltage"
+ *  @param  elem                Element number after linestart to extract
+ *                              excluding whitespace and ':' characters.
+ *  @return                     TRUE, if, and only if, the value could be
+ *                              extracted and the property was set
+ */
+gboolean
+hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
+				 const gchar *directory, const gchar *file, 
+				 const gchar *linestart, guint elem)
+{
+	gchar *line;
+	gboolean res;
+	gchar **tokens;
+	int value;
+	char *endptr;
+	guint i, j;
+
+	res = FALSE;
+	tokens = NULL;
+
+	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+		goto out;
+
+	tokens = g_strsplit_set (line, " \t:", 0);
+
+	for (i = 0, j = 0; tokens[i] != NULL; i++) {
+		if (strlen (tokens[i]) == 0)
+			continue;
+		if (j == elem) {
+			value = strtol (tokens[i], &endptr, 0);
+			if (endptr == tokens[i])
+				goto out;
+			hal_device_property_set_int (d, key, value);
+			res = TRUE;
+			goto out;
+		}
+		j++;
+	}	
+
+out:
+	if (tokens != NULL)
+		g_strfreev (tokens);
+
+	return res;
+}
+
+/** Get a value from a formatted text file, test it against a given
+ *  value, and set a boolean property on a device object with the
+ *  test result.
+ *
+ *  Example: Given that the file /proc/acpi/battery/BAT0/info contains
+ *  the line
+ *
+ *    "present:                 yes"
+ *
+ *  then hal_util_set_bool_elem_from_file (d, "system.battery.baz",
+ *  "/proc/acpi/battery/BAT0", "info", "present", 0, "yes") will assign
+ *  the boolean TRUE to the property "system.battery.baz" on d.
+ *
+ *  If, instead, the line was
+ *
+ *    "present:                 no"
+ *
+ *  the value assigned will be FALSE.
+ *
+ *  @param  d                   Device object
+ *  @param  key                 Property name
+ *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @param  file                File, e.g. "info"
+ *  @param  linestart           Start of line, e.g. "design voltage"
+ *  @param  elem                Element number after linestart to extract
+ *                              excluding whitespace and ':' characters.
+ *  @param  expected            Value to test against
+ *  @return                     TRUE, if, and only if, the value could be
+ *                              extracted and the property was set
+ */
+gboolean
+hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key, 
+				  const gchar *directory, const gchar *file, 
+				  const gchar *linestart, guint elem, const gchar *expected)
+{
+	gchar *line;
+	gboolean res;
+	gchar **tokens;
+	guint i, j;
+
+	res = FALSE;
+	tokens = NULL;
+
+	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+		goto out;
+
+	tokens = g_strsplit_set (line, " \t:", 0);
+
+	for (i = 0, j = 0; tokens[i] != NULL; i++) {
+		if (strlen (tokens[i]) == 0)
+			continue;
+		if (j == elem) {
+			hal_device_property_set_bool (d, key, strcmp (tokens[i], expected) == 0);
+			res = TRUE;
+			goto out;
+		}
+		j++;
+	}
+
+
+out:
+	if (tokens != NULL)
+		g_strfreev (tokens);
+
+	return res;
 }

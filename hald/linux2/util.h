@@ -27,6 +27,7 @@
 #define UTIL_H
 
 #include "../device.h"
+#include "../device_store.h"
 
 gboolean hal_util_remove_trailing_slash (gchar *path);
 
@@ -34,7 +35,7 @@ gboolean hal_util_get_fs_mnt_path (const gchar *fs_type, gchar *mnt_path, gsize 
 
 const gchar *hal_util_get_last_element (const gchar *s);
 
-gchar *hal_util_get_parent_sysfs_path (const gchar *path);
+gchar *hal_util_get_parent_path (const gchar *path);
 
 gboolean hal_util_get_device_file (const gchar *sysfs_path, gchar *dev_file, gsize dev_file_length);
 
@@ -58,6 +59,20 @@ gboolean hal_util_set_driver (HalDevice *d, const char *property_name, const cha
 
 gboolean hal_util_path_ascend (gchar *path);
 
+
+gchar *hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart);
+
+gboolean hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key, 
+					     const gchar *directory, const gchar *file, 
+					     const gchar *linestart, guint elem);
+
+gboolean hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
+					  const gchar *directory, const gchar *file, 
+					  const gchar *linestart, guint elem);
+
+gboolean hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key, 
+					   const gchar *directory, const gchar *file, 
+					   const gchar *linestart, guint elem, const gchar *expected);
 
 typedef void (*HelperTerminatedCB)(HalDevice *d, gboolean timed_out, gint return_code, gpointer data1, gpointer data2);
 

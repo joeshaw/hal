@@ -20,6 +20,7 @@ libhald_linux2_la_SOURCES =					\
 	classdev.h		classdev.c			\
 	blockdev.h		blockdev.c			\
 	util.h			util.c				\
+	acpi.h			acpi.c				\
 	ids.h			ids.c				\
 	pcmcia_utils.h		pcmcia_utils.c
 

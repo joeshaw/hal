@@ -209,7 +209,7 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 		gchar *parent_path;
 		gboolean is_partition;
 		
-		parent_path = hal_util_get_parent_sysfs_path (hotplug_event->sysfs_path);
+		parent_path = hal_util_get_parent_path (hotplug_event->sysfs_path);
 		is_partition = (strcmp (parent_path, sys_block_path) != 0);
 		
 		if (hotplug_event->is_add) {

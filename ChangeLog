@@ -1,3 +1,27 @@
+2005-02-01  David Zeuthen  <davidz@redhat.com>
+
+	This is largely based on this patch
+
+	 http://lists.freedesktop.org/archives/hal/2005-January/002002.html
+
+	from Richard Hughes <ee21rh@surrey.ac.uk> but much mangled by
+	myself
+
+	* hald/linux2/util.c (hal_util_get_parent_path): Renamed from
+	hal_util_get_parent_sysfs_path.
+	(hal_util_grep_file): New function
+	(hal_util_set_string_elem_from_file): New function
+	(hal_util_set_int_elem_from_file): New function
+	(hal_util_set_bool_elem_from_file): New function
+
+	* hald/linux2/util.h: Add new prototypes
+
+	* hald/linux2/osspec.c (osspec_probe): Call acpi_probe.
+
+	* hald/linux2/acpi.[ch]: New files
+
+	* hald/linux2/Makefile.am (libhald_linux2_la_SOURCES): Add acpi.[ch]
+
 2005-01-31  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Prebump to 0.5.0 - but we're not doing a release yet!

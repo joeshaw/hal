@@ -360,14 +360,6 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
-HREF="#device-properties-battery"
-><TT
-CLASS="literal"
->battery</TT
-> namespace</A
-></DT
-><DT
-><A
 HREF="#device-properties-system"
 ><TT
 CLASS="literal"
@@ -380,6 +372,14 @@ HREF="#device-properties-system-ac_adaptor"
 ><TT
 CLASS="literal"
 >system.ac_adaptor</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-battery"
+><TT
+CLASS="literal"
+>battery</TT
 > namespace</A
 ></DT
 ><DT
@@ -512,21 +512,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2536"
+HREF="#AEN2513"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2547"
+HREF="#AEN2524"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2555"
+HREF="#AEN2532"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -1775,83 +1775,16 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->linux.procfs_path</TT
+>linux.acpi_path</TT
 > (string)</TD
 ><TD
 >example: /proc/acpi/button/power/PWRF, /proc/pmu/battery_0</TD
 ><TD
 >No</TD
 ><TD
->&#13;                A fully-qualified path into the procfs filesystem for the 
-                physical device
+>&#13;                A fully-qualified path into the procfs filesystem for a
+                device object representing an ACPI abstraction.
               </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->linux.procfs_path.keyname</TT
-> (string)</TD
-><TD
->example: "remaining capacity"</TD
-><TD
->Yes, if linux.procfs_path is set</TD
-><TD
->&#13;                The keyname that HAL can use to extract the data from the procfs file
-              </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->linux.acpi_version</TT
-> (string)</TD
-><TD
->example: 20041210</TD
-><TD
->No</TD
-><TD
->&#13;                The in-kernel driver version providing ACPI services
-              </TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->linux.pmu_device</TT
-> (string)</TD
-><TD
->example: /dev/pmu</TD
-><TD
->No</TD
-><TD
->The udev assigned device file for PMU.</TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->linux.pmu_driver_version</TT
-> (string)</TD
-><TD
->example: 2</TD
-><TD
->No</TD
-><TD
->PMU driver version</TD
-></TR
-><TR
-><TD
-><TT
-CLASS="literal"
->linux.pmu_firmware_version</TT
-> (string)</TD
-><TD
->example: 0c</TD
-><TD
->No</TD
-><TD
->PMU firmware version</TD
 ></TR
 ><TR
 ><TD
@@ -1954,7 +1887,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN376"
+NAME="AEN346"
 ></A
 ><TABLE
 BORDER="1"
@@ -2177,7 +2110,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN465"
+NAME="AEN435"
 ></A
 ><TABLE
 BORDER="1"
@@ -2569,7 +2502,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN628"
+NAME="AEN598"
 ></A
 ><TABLE
 BORDER="1"
@@ -2698,7 +2631,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN675"
+NAME="AEN645"
 ></A
 ><TABLE
 BORDER="1"
@@ -2783,7 +2716,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN703"
+NAME="AEN673"
 ></A
 ><TABLE
 BORDER="1"
@@ -2879,7 +2812,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN733"
+NAME="AEN703"
 ></A
 ><TABLE
 BORDER="1"
@@ -2948,7 +2881,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN754"
+NAME="AEN724"
 ></A
 ><TABLE
 BORDER="1"
@@ -3065,7 +2998,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN795"
+NAME="AEN765"
 ></A
 ><TABLE
 BORDER="1"
@@ -3187,7 +3120,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN840"
+NAME="AEN810"
 ></A
 ><TABLE
 BORDER="1"
@@ -3308,7 +3241,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN885"
+NAME="AEN855"
 ></A
 ><TABLE
 BORDER="1"
@@ -3381,7 +3314,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN907"
+NAME="AEN877"
 ></A
 ><TABLE
 BORDER="1"
@@ -3578,7 +3511,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN967"
+NAME="AEN937"
 ></A
 ><TABLE
 BORDER="1"
@@ -3871,7 +3804,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1090"
+NAME="AEN1060"
 ></A
 ><TABLE
 BORDER="1"
@@ -4009,7 +3942,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1133"
+NAME="AEN1103"
 ></A
 ><TABLE
 BORDER="1"
@@ -4120,7 +4053,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1169"
+NAME="AEN1139"
 ></A
 ><TABLE
 BORDER="1"
@@ -4382,7 +4315,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1276"
+NAME="AEN1246"
 ></A
 ><TABLE
 BORDER="1"
@@ -4870,7 +4803,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1470"
+NAME="AEN1440"
 ></A
 ><TABLE
 BORDER="1"
@@ -5069,7 +5002,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1550"
+NAME="AEN1520"
 ></A
 ><TABLE
 BORDER="1"
@@ -5223,7 +5156,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1608"
+NAME="AEN1578"
 ></A
 ><TABLE
 BORDER="1"
@@ -5354,7 +5287,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1650"
+NAME="AEN1620"
 ></A
 ><TABLE
 BORDER="1"
@@ -5427,7 +5360,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1672"
+NAME="AEN1642"
 ></A
 ><TABLE
 BORDER="1"
@@ -5494,7 +5427,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1692"
+NAME="AEN1662"
 ></A
 ><TABLE
 BORDER="1"
@@ -5559,7 +5492,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1712"
+NAME="AEN1682"
 ></A
 ><TABLE
 BORDER="1"
@@ -5686,7 +5619,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1756"
+NAME="AEN1726"
 ></A
 ><TABLE
 BORDER="1"
@@ -5833,7 +5766,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1804"
+NAME="AEN1774"
 ></A
 ><TABLE
 BORDER="1"
@@ -5934,28 +5867,49 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="device-properties-battery"
+NAME="device-properties-system"
 ><TT
 CLASS="literal"
->battery</TT
+>system</TT
 > namespace</A
 ></H3
 ><P
->&#13;      
-	Device objects with the capability <TT
+>&#13;
+        Device objects with the capability <TT
 CLASS="literal"
->battery</TT
+>system</TT
 >
-	represent all the devices having some battery (in many cases - 
-	rechargeable) inside. 
-	The following properties are available:
+        represent system devices currently accessed through
+        the ACPI and PMU bus.
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-ac_adaptor"
+><TT
+CLASS="literal"
+>system.ac_adaptor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.ac_adaptor</TT
+>
+        represent all the devices capable of powering the system from AC power
+
       </P
 ><DIV
 CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1846"
+NAME="AEN1821"
 ></A
 ><TABLE
 BORDER="1"
@@ -5976,6 +5930,89 @@ CLASS="CALSTABLE"
 ></TR
 ></THEAD
 ><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.ac_adaptor.present</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The state of the adaptor, i.e. whether it is providing power to
+                the unit from mains power.
+              </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-battery"
+><TT
+CLASS="literal"
+>battery</TT
+> namespace</A
+></H3
+><P
+>&#13;      
+	Device objects with the capability <TT
+CLASS="literal"
+>battery</TT
+>
+	represent all the devices having some battery (in many cases - 
+	rechargeable) inside. 
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1841"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.present</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		This is present as some smart batteries can have acpi/pmu 
+                entries, and be physically missing.
+	      </TD
+></TR
 ><TR
 ><TD
 ><TT
@@ -6108,7 +6145,7 @@ CLASS="literal"
 ><TD
 >Examples: <TT
 CLASS="literal"
->mWatt</TT
+>mWh</TT
 >, <TT
 CLASS="literal"
 >VA</TT
@@ -6116,17 +6153,17 @@ CLASS="literal"
 ><TD
 >No</TD
 ><TD
->&#13;		The physical unit used by the charge level properties 
-		(maximum and current). In many cases, this property is empty
-		- which indicates that the charge properties are measured in
-		some unknown units.
+>&#13;		The physical unit used by the charge level properties
+		(maximum and current). In many cases, this property is
+		omitted - which indicates that the charge properties
+		are measured in some unknown units.
 	      </TD
 ></TR
 ><TR
 ><TD
 ><TT
 CLASS="literal"
->battery.charge_level.maximum.specified</TT
+>battery.charge_level.maximum_specified</TT
 > (int)</TD
 ><TD
 >&nbsp;</TD
@@ -6146,7 +6183,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->battery.charge_level.maximum.real</TT
+>battery.charge_level.maximum_real</TT
 > (int)</TD
 ><TD
 >&nbsp;</TD
@@ -6213,37 +6250,25 @@ CLASS="literal"
 >battery.is_rechargeable</TT
 > is TRUE</TD
 ><TD
->&#13;		True if the device is charging, false otherwise.</TD
+>&#13;		TRUE if, and only if, the battery is charging.
+              </TD
 ></TR
 ><TR
 ><TD
 ><TT
 CLASS="literal"
->battery.rechargeable.time_to_charge</TT
-> (int)</TD
+>battery.rechargeable.is_discharging</TT
+> (bool)</TD
 ><TD
 >&nbsp;</TD
 ><TD
->No</TD
-><TD
->&#13;		The time (measured in seconds) necessary for the 
-                rechargeable device to charge fully.
-	      </TD
-></TR
-><TR
-><TD
-><TT
+>Only if <TT
 CLASS="literal"
->battery.time_to_discharge</TT
-> (int)</TD
+>battery.is_rechargeable</TT
+> is TRUE</TD
 ><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->&#13;		The expected worktime of the device (measured in 
-                seconds), without recharging, from the current moment.
-	      </TD
+>&#13;		TRUE if, and only if, the battery is discharging.
+              </TD
 ></TR
 ><TR
 ><TD
@@ -6294,6 +6319,20 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>battery.technology</TT
+> (string)</TD
+><TD
+>example: LION</TD
+><TD
+>No</TD
+><TD
+>&#13;		The technology of the battery.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >battery.serial</TT
 > (string)</TD
 ><TD
@@ -6304,95 +6343,6 @@ CLASS="literal"
 >&#13;		A string uniquely identifying the instance of the battery; 
 		it will be different for two (otherwise) identical batteries.
 	      </TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system"
-><TT
-CLASS="literal"
->system</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->system</TT
->
-        represent system devices currently accessed through
-        the ACPI and PMU bus.
-
-      </P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="device-properties-system-ac_adaptor"
-><TT
-CLASS="literal"
->system.ac_adaptor</TT
-> namespace</A
-></H3
-><P
->&#13;
-        Device objects with the capability <TT
-CLASS="literal"
->system.ac_adaptor</TT
->
-        represent all the devices capable of powering the system from AC power
-
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN1991"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
-><TT
-CLASS="literal"
->system.ac_adaptor.enabled</TT
-> (bool)</TD
-><TD
->&nbsp;</TD
-><TD
->Yes</TD
-><TD
->&#13;                The state of the adaptor, i.e. whether it is providing power to
-                the unit
-              </TD
 ></TR
 ></TBODY
 ></TABLE
@@ -6425,7 +6375,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2011"
+NAME="AEN1988"
 ></A
 ><TABLE
 BORDER="1"
@@ -6463,7 +6413,7 @@ CLASS="literal"
 ><TD
 >&nbsp;</TD
 ><TD
->lid_switch</TD
+>lid</TD
 ><TD
 >&nbsp;</TD
 ><TD
@@ -6539,7 +6489,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2055"
+NAME="AEN2032"
 ></A
 ><TABLE
 BORDER="1"
@@ -6604,7 +6554,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2075"
+NAME="AEN2052"
 ></A
 ><TABLE
 BORDER="1"
@@ -6698,7 +6648,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2107"
+NAME="AEN2084"
 ></A
 ><TABLE
 BORDER="1"
@@ -6809,7 +6759,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2149"
+NAME="AEN2126"
 ></A
 ><TABLE
 BORDER="1"
@@ -6961,7 +6911,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2207"
+NAME="AEN2184"
 ></A
 ><TABLE
 BORDER="1"
@@ -7120,7 +7070,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2259"
+NAME="AEN2236"
 ></A
 ><TABLE
 BORDER="1"
@@ -7249,7 +7199,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2300"
+NAME="AEN2277"
 ></A
 ><TABLE
 BORDER="1"
@@ -8288,7 +8238,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2494"
+NAME="AEN2471"
 ></A
 ><TABLE
 BORDER="1"
@@ -8448,7 +8398,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2536"
+NAME="AEN2513"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -8564,7 +8514,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2547"
+NAME="AEN2524"
 >Example</A
 ></H3
 ><P
@@ -8682,7 +8632,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2555"
+NAME="AEN2532"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
