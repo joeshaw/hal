@@ -1,3 +1,13 @@
+2004-08-23  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c:
+	(probe_msdos_part_table),
+	(volume_id_probe): Patch from Sjoerd Simons <sjoerd@luon.net>
+	to move msdos partition table probing to the end of the list.
+	He found a ext3 with msdos signature on the first block.
+	Also add a check if all partitions are empty, so  we do not
+	recognize it as a msdos partition table.
+
 2004-08-22  David Zeuthen  <david@fubar.dk>
 
 	* hald/callout.c: Only invoke callouts if they have the .hal extension.

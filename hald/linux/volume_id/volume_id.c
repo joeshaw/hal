@@ -273,6 +273,7 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 	const __u8 *buf;
 	int i;
+	int empty = 1;
 
 	buf = get_buffer(id, off, 0x200);
 	if (buf == NULL)
@@ -287,7 +288,12 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 		if (part[i].boot_ind != 0 &&
 		    part[i].boot_ind != 0x80)
 			return -1;
+
+		if (le32_to_cpu(part[i].nr_sects) != 0)
+			empty = 0;
 	}
+	if (empty == 1)
+		return -1;
 
 	if (id->partitions != NULL)
 		free(id->partitions);
@@ -1719,9 +1725,6 @@ int volume_id_probe(struct volume_id *id,
 		rc = probe_vfat(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_msdos_part_table(id, off);
-		if (rc == 0)
-			break;
 
 		/* fill buffer with maximum */
 		get_buffer(id, 0, SB_BUFFER_SIZE);
@@ -1757,6 +1760,9 @@ int volume_id_probe(struct volume_id *id,
 		if (rc == 0)
 			break;
 		rc = probe_ufs(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_msdos_part_table(id, off);
 		if (rc == 0)
 			break;
 		rc = -1;
