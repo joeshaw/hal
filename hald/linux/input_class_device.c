@@ -36,6 +36,8 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <fcntl.h>
+#include <linux/input.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -51,6 +53,32 @@
  * @{
  */
 
+
+/** Accept function for input devices.  It's like
+ *  class_device_accept(), except we accept the device even if there
+ *  is no sysfs device
+ *
+ *  @param  self                Pointer to class members
+ *  @param  path                Sysfs-path for device
+ *  @param  class_device        libsysfs object for class device
+ */
+dbus_bool_t
+input_class_accept (ClassDeviceHandler *self,
+                    const char *path,
+                    struct sysfs_class_device *class_device)
+{
+        /* If there is no sysfs device we only accept event%d devices. */
+        if (class_device->sysdevice == NULL &&
+            strncmp (class_device->name, "event", 5) != 0)
+                return FALSE;
+
+	/* only care about given sysfs class name */
+	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {
+		return TRUE;
+	}
+
+	return FALSE;
+}
 
 /** This method is called just before the device is either merged
  *  onto the sysdevice or added to the GDL (cf. merge_or_add). 
@@ -72,6 +100,11 @@ input_class_pre_process (ClassDeviceHandler *self,
 			 const char *sysfs_path,
 			 struct sysfs_class_device *class_device)
 {
+        char name[64];
+        const char *device_file;
+        int major, minor;
+        int fd;
+
 	/* add capabilities for device */
 	hal_device_property_set_string (d, "info.category", "input");
 	hal_device_add_capability (d, "input");
@@ -80,6 +113,34 @@ input_class_pre_process (ClassDeviceHandler *self,
 	 *        .target_dev) and set additional properties */
 
 	/** @todo read some data from sysfs and set additional properties */
+
+	class_device_get_major_minor (sysfs_path, &major, &minor);
+	hal_device_property_set_int (d, "input.major", major);
+	hal_device_property_set_int (d, "input.minor", minor);
+
+	/* Find out what kind of input device this is */
+	if (!hal_device_has_property (d, "input.device"))
+                /* We're being called for for a mouse%d alias device
+                 * that doesn't have the input.device property. */
+                return;
+
+        device_file = hal_device_property_get_string (d, "input.device");
+	fd = open (device_file, O_RDONLY | O_NONBLOCK);
+	if (fd < 0)
+		return;
+		
+        /* If there is no corresponding sysfs device we ask the event
+         * layer for a name for this device.*/
+        if (class_device->sysdevice == NULL) {
+                if (ioctl(fd, EVIOCGNAME(sizeof name), name) >= 0) {
+                        hal_device_property_set_string (d, "info.product",
+                                                        name);
+                }
+        }
+
+        /* @todo add more ioctl()'s here */
+
+        close(fd);
 }
 
 /** Get the name of that the property that the device file should be put in.
@@ -122,12 +183,40 @@ input_class_get_device_file_target (ClassDeviceHandler *self,
 	}
 }
 
+
+/** Compute the device udi for input devices that do not have a sysfs
+ *  device file.
+ *
+ *  @param  d                   HalDevice object
+ *  @param  append_num          Number to append to name if not -1
+ *  @return                     New unique device id; only good until
+ *                              the next invocation of this function
+ */
+static char *
+input_class_compute_udi (HalDevice *d, int append_num)
+{
+        char *format;
+        static char buf[256];
+
+        if (append_num == -1)
+                format = "/org/freedesktop/Hal/devices/input_%d_%d";
+        else
+                format = "/org/freedesktop/Hal/devices/input_%d_%d-%d";
+ 
+        snprintf (buf, 256, format,
+                  hal_device_property_get_int (d, "input.major"),
+                  hal_device_property_get_int (d, "input.minor"), append_num);
+ 
+        return buf;
+  
+}
+
 /** Method specialisations for input device class */
 ClassDeviceHandler input_class_handler = {
 	class_device_init,                  /**< init function */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
-	class_device_accept,                /**< accept function */
+	input_class_accept,                 /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
@@ -135,7 +224,7 @@ ClassDeviceHandler input_class_handler = {
 	input_class_pre_process,            /**< add more properties */
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
-	NULL,                               /**< No UDI computation */
+	input_class_compute_udi,            /**< UDI computation */
 	"input",                            /**< sysfs class name */
 	"input",                            /**< hal class name */
 	TRUE,                               /**< require device file */

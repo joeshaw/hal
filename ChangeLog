@@ -1,3 +1,19 @@
+2004-06-04  Joe Shaw  <joeshaw@novell.com>
+
+	Patch from Kristian Høgsberg <krh@bitplanet.net>
+
+	* hald/linux/input_class_device.c (input_class_accept): New
+	function.  Accepts devices with no sysdevice but which begin with
+	"event".  For built-in, non-sysfs input devices like PS/2 mice.
+	(input_class_pre_process): Set the major and minor numbers as
+	properties.  If there is no sysdevice, do an ioctl() on the device
+	to try to get identifying info about it and set it in
+	info.product.
+	(input_class_compute_udi): Added.  Computes the UDI for devices
+	that don't get merged onto parents.
+	(input_class_handler): Use input-specific functions for the accept
+	and compute_udi functions.
+
 2004-06-03  Joe Shaw  <joeshaw@novell.com>
 
 	* hald/linux/printer_class_device.c (printer_class_device_accept):
