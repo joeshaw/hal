@@ -2750,7 +2750,7 @@ libhal_ctx_set_dbus_connection (LibHalContext *ctx, DBusConnection *conn)
 dbus_bool_t 
 libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 {
-	DBusError myerror;
+	DBusError _error;
 
 	if (ctx == NULL)
 		return FALSE;
@@ -2760,22 +2760,18 @@ libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 
 	
 	if (!dbus_connection_add_filter (ctx->connection, filter_func, ctx, NULL)) {
-		fprintf (stderr, "%s %d : Error creating connection handler\r\n", __FILE__, __LINE__);
-		/** @todo  clean up */
 		return FALSE;
 	}
 
-	dbus_error_init (&myerror);
+	dbus_error_init (&_error);
 	dbus_bus_add_match (ctx->connection, 
 			    "type='signal',"
 			    "interface='org.freedesktop.Hal.Manager',"
 			    "sender='org.freedesktop.Hal',"
-			    "path='/org/freedesktop/Hal/Manager'", &myerror);
-	if (dbus_error_is_set (&myerror)) {
-		fprintf (stderr, "%s %d : Error subscribing to signals, error=%s\n", 
-			 __FILE__, __LINE__, error->message);
-		/** @todo  clean up */
-		/*return FALSE;*/
+			    "path='/org/freedesktop/Hal/Manager'", &_error);
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
 	}
 	ctx->is_initialized = TRUE;
 

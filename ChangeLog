@@ -1,3 +1,8 @@
+2005-02-23  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.c (libhal_ctx_init): Add a small fix here wrt.
+	error handling
+
 2005-02-22  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/README: New file describing the various uses of device
