@@ -237,6 +237,7 @@ usb_ids_load (const char *path)
 		printf
 		    ("Couldn't allocate %d bytes for USB database file\n",
 		     usb_ids_len);
+		fclose(fp);
 		return FALSE;
 	}
 
@@ -245,9 +246,11 @@ usb_ids_load (const char *path)
 		printf ("Error loading USB database file\n");
 		free (usb_ids);
 		usb_ids = NULL;
+		fclose(fp);
 		return FALSE;
 	}
 
+	fclose(fp);
 	return TRUE;
 }
 

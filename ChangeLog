@@ -1,5 +1,13 @@
 2004-10-14  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+	* hald/linux/usb_bus_device.c (usb_ids_load): The usb id database
+	read functions never close the file descriptors. bad.  Fixed in
+	attached patch. 
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Steve Grubb (linux_4ever@yahoo.com).
 
 	* hald/linux/net_class_device.c (link_detection_data_ready): The
