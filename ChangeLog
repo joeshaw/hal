@@ -1,3 +1,8 @@
+2004-07-06  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>. Better msdos
+	detection for floppy disks
+
 2004-07-05  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/volume_id/volume_id.c (volume_id_probe): Comment

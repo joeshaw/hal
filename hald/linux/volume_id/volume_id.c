@@ -211,7 +211,8 @@ static __u8 *get_buffer(struct volume_id *id,
 		if ((off < id->seekbuf_off) ||
 		    ((off + len) > (id->seekbuf_off + id->seekbuf_len))) {
 			dbg("read seekbuf off:0x%lx len:0x%x", off, len);
-			lseek64(id->fd, off, SEEK_SET);
+			if (lseek64(id->fd, off, SEEK_SET) == -1)
+				return NULL;
 			buf_len = read(id->fd, id->seekbuf, len);
 			dbg("got 0x%x (%i) bytes", buf_len, buf_len);
 			id->seekbuf_off = off;
@@ -462,9 +463,9 @@ found:
 static int probe_msdos(struct volume_id *id)
 {
 	struct msdos_super_block {
-		__u8	ignored[3];
+		__u8	boot_jump[3];
 		__u8	sysid[8];
-		__u8	sector_size[2];
+		__u16	sector_size;
 		__u8	cluster_size;
 		__u16	reserved;
 		__u8	fats;
@@ -484,6 +485,8 @@ static int probe_msdos(struct volume_id *id)
 		__u8	pmagic[2];
 	} __attribute__((__packed__)) *ms;
 
+	unsigned int	sector_size;
+
 	ms = (struct msdos_super_block *) get_buffer(id, 0, 0x200);
 	if (ms == NULL)
 		return -1;
@@ -494,7 +497,32 @@ static int probe_msdos(struct volume_id *id)
 		goto found;
 	if (strncmp(ms->magic, "FAT12   ", 8) == 0)
 		goto found;
-	return -1;
+	/*
+	 * Bad, not finished. There are old floppies out there without a magic,
+ 	 * so we check for well known values and guess if it's a msdos volume
+	 */
+
+	/* boot jump address check */
+	if ((ms->boot_jump[0] != 0xeb || ms->boot_jump[2] != 0x90) &&
+	     ms->boot_jump[0] != 0xe9)
+		return -1;
+	/* heads check */
+	if (ms->heads == 0)
+		return -1;
+	/* sector size check */
+	sector_size = le16_to_cpu(ms->sector_size);
+	if (sector_size != 0x200 && sector_size != 0x400 &&
+	    sector_size != 0x800 && sector_size != 0x1000)
+		return -1;
+	/* cluster size check*/	
+	if (ms->cluster_size == 0 || (ms->cluster_size & (ms->cluster_size-1)))
+		return -1;
+	/* media check */
+	if (ms->media < 0xf8 && ms->media != 0xf0)
+		return -1;
+	/* fat count*/
+	if (ms->fats != 2)
+		return -1;
 
 found:
 	set_label_raw(id, ms->label, 11);
@@ -877,9 +905,11 @@ label:
 	leaf_node_head = be32_to_cpu(bnode->leaf_head);
 	leaf_node_size = be16_to_cpu(bnode->node_size);
 
-	dbg("catalog leaf node 0x%x, size 0x%x", leaf_node_head, leaf_node_size);
+	dbg("catalog leaf node 0x%x, size 0x%x",
+	    leaf_node_head, leaf_node_size);
 
-	buf = get_buffer(id, cat_off + leaf_node_size, leaf_node_size);
+	buf = get_buffer(id, cat_off + (leaf_node_head * leaf_node_size),
+			 leaf_node_size);
 	if (buf == NULL)
 		goto found;
 
@@ -1132,14 +1162,17 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 		break;
 	case ALL:
 	default:
-		/* fill buffer with maximum */
-		/*get_buffer(id, 0, SB_BUFFER_SIZE);*/
+		/* read only minimal buffer, cause of the slow floppies */
 		rc = probe_vfat(id);
 		if (rc == 0)
 			break;
 		rc = probe_msdos(id);
 		if (rc == 0)
 			break;
+
+		/* fill buffer with maximum */
+		get_buffer(id, 0, SB_BUFFER_SIZE);
+
 		rc = probe_swap(id);
 		if (rc == 0)
 			break;
