@@ -1133,7 +1133,13 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 	case ALL:
 	default:
 		/* fill buffer with maximum */
-		get_buffer(id, 0, SB_BUFFER_SIZE);
+		/*get_buffer(id, 0, SB_BUFFER_SIZE);*/
+		rc = probe_vfat(id);
+		if (rc == 0)
+			break;
+		rc = probe_msdos(id);
+		if (rc == 0)
+			break;
 		rc = probe_swap(id);
 		if (rc == 0)
 			break;
@@ -1147,12 +1153,6 @@ int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
 		if (rc == 0)
 			break;
 		rc = probe_jfs(id);
-		if (rc == 0)
-			break;
-		rc = probe_msdos(id);
-		if (rc == 0)
-			break;
-		rc = probe_vfat(id);
 		if (rc == 0)
 			break;
 		rc = probe_udf(id);

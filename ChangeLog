@@ -1,5 +1,11 @@
 2004-07-05  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/volume_id/volume_id.c (volume_id_probe): Comment
+	out get_buffer, it's quite time consuming on floppies and Kay
+	says OK. Move probe_vfat() and probe_msdos() to the top.
+
+2004-07-05  David Zeuthen  <david@fubar.dk>
+
 	Patch from Kay Sievers <kay.sievers@vrfy.org>. Add hfs support
 
 2004-07-05  David Zeuthen  <david@fubar.dk>
