@@ -69,6 +69,7 @@ pci_add (const gchar *sysfs_path, HalDevice *parent)
 	gint device_class;
 
 	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pci");
 	if (parent != NULL) {
@@ -231,6 +232,7 @@ usb_add (const gchar *sysfs_path, HalDevice *parent)
 	const gchar *bus_id;
 
 	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	if (parent != NULL) {
 		hal_device_property_set_string (d, "info.parent", parent->udi);
@@ -375,6 +377,7 @@ ide_add (const gchar *sysfs_path, HalDevice *parent)
 	guint host, channel;
 
 	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ide");
 	if (parent != NULL) {
@@ -423,6 +426,7 @@ pnp_add (const gchar *sysfs_path, HalDevice *parent)
 	HalDevice *d;
 
 	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pnp");
 	if (parent != NULL) {
@@ -475,6 +479,7 @@ serio_add (const gchar *sysfs_path, HalDevice *parent)
 	const gchar *bus_id;
 
 	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "serio");
 	if (parent != NULL) {
@@ -518,6 +523,7 @@ pcmcia_add (const gchar *sysfs_path, HalDevice *parent)
 	guint socket, function;
 
 	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pcmcia");
 	if (parent != NULL) {
@@ -608,6 +614,55 @@ pcmcia_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+scsi_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	gint host_num, bus_num, target_num, lun_num;
+
+	if (parent == NULL) {
+		d = NULL;
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "scsi");
+	hal_device_property_set_string (d, "info.parent", parent->udi);
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	sscanf (bus_id, "%d:%d:%d:%d", &host_num, &bus_num, &target_num, &lun_num);
+	hal_device_property_set_int (d, "scsi.host", host_num);
+	hal_device_property_set_int (d, "scsi.bus", bus_num);
+	hal_device_property_set_int (d, "scsi.target", target_num);
+	hal_device_property_set_int (d, "scsi.lun", lun_num);
+
+	/* guestimate product name */
+	hal_device_property_set_string (d, "info.product", "SCSI Device");
+
+out:
+	return d;
+}
+
+static gboolean
+scsi_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_scsi_device_lun%d",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_int (d, "scsi.lun"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 physdev_remove (HalDevice *d)
 {
@@ -669,6 +724,13 @@ static PhysDevHandler physdev_handler_pcmcia = {
 	.compute_udi = pcmcia_compute_udi,
 	.remove      = physdev_remove
 };
+
+static PhysDevHandler physdev_handler_scsi = { 
+	.subsystem   = "scsi",
+	.add         = scsi_add,
+	.compute_udi = scsi_compute_udi,
+	.remove      = physdev_remove
+};
 	
 
 static PhysDevHandler *phys_handlers[] = {
@@ -678,6 +740,7 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_pnp,
 	&physdev_handler_serio,
 	&physdev_handler_pcmcia,
+	&physdev_handler_scsi,
 	NULL
 };
 
@@ -743,7 +806,7 @@ hotplug_event_begin_remove_physdev (const gchar *subsystem, const gchar *sysfs_p
 	HAL_INFO (("phys_rem: subsys=%s sysfs_path=%s", subsystem, sysfs_path));
 
 	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
-						     "linux.sysfs_path_device", 
+						     "linux.sysfs_path", 
 						     sysfs_path);
 	if (d == NULL) {
 		HAL_WARNING (("Couldn't remove device with sysfs path %s - not found", sysfs_path));

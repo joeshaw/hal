@@ -71,6 +71,7 @@ hotplug_event_end (void *end_token)
 	hotplug_event_process_queue ();
 }
 
+
 static void
 hotplug_event_begin (HotplugEvent *hotplug_event)
 {
@@ -106,6 +107,9 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 			gchar *target;
 			HalDevice *physdev;
 			char physdevpath[256];
+			gchar *sysfs_path_in_devices;
+
+			sysfs_path_in_devices = NULL;
 
 			/* TODO: fixup net devices by looking at ifindex */
 			
@@ -116,9 +120,22 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 				normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs_path, target);
 				g_free (target);
 
-				physdev = hal_device_store_match_key_value_string (hald_get_gdl (), 
-										   "linux.sysfs_path_device", 
-										   normalized_target);
+				sysfs_path_in_devices = g_strdup (normalized_target);
+
+				/* there may be ''holes'' in /sys/devices so try hard to find the closest match */
+				do {
+					physdev = hal_device_store_match_key_value_string (hald_get_gdl (), 
+											   "linux.sysfs_path_device", 
+											   normalized_target);
+					if (physdev != NULL)
+						break;
+
+					/* go up one directory */
+					if (!hal_util_path_ascend (normalized_target))
+						break;
+
+				} while (physdev == NULL);
+
 				g_free (normalized_target);
 			} else {
 				physdev = NULL;
@@ -128,7 +145,11 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 							  hotplug_event->sysfs_path,
 							  hotplug_event->device_file,
 							  physdev,
+							  sysfs_path_in_devices,
 							  (void *) hotplug_event);
+
+			g_free (sysfs_path_in_devices);
+
 		} else {
 			hotplug_event_begin_remove_classdev (hotplug_event->subsystem,
 							     hotplug_event->sysfs_path,

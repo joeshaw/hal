@@ -54,6 +54,11 @@ gboolean hal_util_set_bcd2_from_file (HalDevice *d, const gchar *key, const gcha
 
 void hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...);
 
+gboolean hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path);
+
+gboolean hal_util_path_ascend (gchar *path);
+
+
 typedef void (*HelperTerminatedCB)(HalDevice *d, gboolean timed_out, gint return_code, gpointer data1, gpointer data2);
 
 gboolean helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, HelperTerminatedCB cb, guint timeout);

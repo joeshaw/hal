@@ -28,6 +28,8 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <mntent.h>
 #include <errno.h>
@@ -37,6 +39,21 @@
 #include <sys/un.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+#include <ctype.h>
+#include <unistd.h>
+
+#include <limits.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <net/if_arp.h> /* for ARPHRD_... */
+#include <sys/socket.h>
+#include <linux/types.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <net/if.h>
 
 #include <glib.h>
 #include <dbus/dbus.h>
@@ -59,12 +76,12 @@
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
-input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev)
+input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
 {
 	HalDevice *d;
 
 	d = hal_device_new ();
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	if (physdev != NULL) {
 		hal_device_property_set_string (d, "input.physical_device", physdev->udi);
 		hal_device_property_set_string (d, "info.parent", physdev->udi);
@@ -102,7 +119,8 @@ input_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
-bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev)
+bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
+	       const gchar *sysfs_path_in_devices)
 {
 	HalDevice *d;
 
@@ -113,7 +131,7 @@ bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 	}
 
 	d = hal_device_new ();
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", physdev->udi);
 
 	hal_device_property_set_string (d, "info.category", "bluetooth_hci");
@@ -121,6 +139,8 @@ bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 
 	hal_device_property_set_string (d, "bluetooth_hci.physical_device", physdev->udi);
 	hal_util_set_string_from_file (d, "bluetooth_hci.interface_name", sysfs_path, "name");
+
+	hal_device_property_set_string (d, "info.product", "Bluetooth Host Controller Interface");
 
 out:
 	return d;
@@ -133,6 +153,196 @@ bluetooth_compute_udi (HalDevice *d)
 
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 			      "%s_bluetooth_hci",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	const gchar *ifname;
+	guint media_type;
+	gint flags;
+
+	d = NULL;
+
+	if (physdev == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+
+	if (!hal_util_set_driver (d, "net.linux.driver", sysfs_path)) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		d = NULL;
+		goto out;
+	}
+
+	hal_device_property_set_string (d, "info.category", "net");
+	hal_device_add_capability (d, "net");
+
+	hal_device_property_set_string (d, "net.physical_device", physdev->udi);
+
+	ifname = hal_util_get_last_element (sysfs_path);
+	hal_device_property_set_string (d, "net.interface", ifname);
+
+	hal_util_set_string_from_file (d, "net.address", sysfs_path, "address");
+	hal_util_set_int_from_file (d, "net.linux.ifindex", sysfs_path, "ifindex", 10);
+
+	hal_util_set_int_from_file (d, "net.arp_proto_hw_id", sysfs_path, "type", 10);
+	media_type = hal_device_property_get_int (d, "net.arp_proto_hw_id");
+
+	if (media_type == ARPHRD_ETHER) {
+		FILE *f;
+		gboolean is_wireless;
+		const char *addr;
+
+		is_wireless = FALSE;
+
+		f = fopen ("/proc/net/wireless", "ro");
+		if (f != NULL) {
+			unsigned int i;
+			unsigned int ifname_len;
+			char buf[128];
+
+			ifname_len = strlen (ifname);
+
+			do {
+				if (fgets (buf, sizeof (buf), f) == NULL)
+					break;
+
+				for (i=0; i < sizeof (buf); i++) {
+					if (isspace (buf[i]))
+						continue;
+					else
+						break;
+				}
+
+				if (strncmp (ifname, buf + i, ifname_len) == 0) {
+					is_wireless = TRUE;
+					break;
+				}
+
+			} while (TRUE);
+			fclose (f);
+		}
+
+		if (is_wireless) {
+		/* Check to see if this interface supports wireless extensions */
+		/*
+		snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
+		if (stat (wireless_path, &statbuf) == 0) {
+		*/
+			hal_device_property_set_string (d, "info.category", "net.80211");
+			hal_device_add_capability (d, "net.80211");
+		} else {
+			gint have_link;
+
+			hal_device_property_set_string (d, "info.category", "net.80203");
+			hal_device_add_capability (d, "net.80203");
+
+			hal_util_get_int_from_file (sysfs_path, "carrier", &have_link, 10);
+			hal_device_property_set_bool (d, "net.80203.link", have_link != 0);
+			if (have_link != 0) {
+				HAL_INFO (("FIXME: no speed file in sysfs; assuming link speed is 100Mbps"));
+				hal_device_property_set_uint64 (d, "net.80203.rate", 100 * 1000 * 1000);
+			}
+		}
+
+		addr = hal_device_property_get_string (d, "net.address");
+		if (addr != NULL) {
+			unsigned int a5, a4, a3, a2, a1, a0;
+			
+			if (sscanf (addr, "%x:%x:%x:%x:%x:%x",
+				    &a5, &a4, &a3, &a2, &a1, &a0) == 6) {
+				dbus_uint64_t mac_address;
+				
+				mac_address = 
+					((dbus_uint64_t)a5<<40) |
+					((dbus_uint64_t)a4<<32) | 
+					((dbus_uint64_t)a3<<24) | 
+					((dbus_uint64_t)a2<<16) | 
+					((dbus_uint64_t)a1<< 8) | 
+					((dbus_uint64_t)a0<< 0);
+				
+				hal_device_property_set_uint64 (d, is_wireless ? "net.80211.mac_address" : 
+								"net.80203.mac_address",
+								mac_address);
+			}
+		}
+	}
+
+	hal_util_get_int_from_file (sysfs_path, "flags", &flags, 16);
+	hal_device_property_set_bool (d, "net.interface_up", flags & IFF_UP);
+
+	hal_device_property_set_string (d, "info.product", "Networking Interface");
+
+
+out:
+	return d;
+}
+
+static gboolean
+net_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/net_%s",
+			      hal_device_property_get_string (d, "net.address"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	gint host_num;
+	const gchar *last_elem;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
+	
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+
+	hal_device_property_set_string (d, "info.category", "scsi_host");
+	hal_device_add_capability (d, "scsi_host");
+
+	hal_device_property_set_string (d, "info.product", "SCSI Host Adapter");
+
+	last_elem = hal_util_get_last_element (sysfs_path);
+	sscanf (last_elem, "host%d", &host_num);
+	hal_device_property_set_int (d, "scsi_host.host", host_num);
+
+out:
+	return d;
+}
+
+static gboolean
+scsi_host_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_scsi_host",
 			      hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
@@ -159,7 +369,7 @@ typedef struct ClassDevHandler_s ClassDevHandler;
 struct ClassDevHandler_s
 {
 	const gchar *subsystem;
-	HalDevice *(*add) (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent);
+	HalDevice *(*add) (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent, const gchar *sysfs_path_in_devices);
 	const gchar *prober;
 	gboolean (*post_probing) (HalDevice *d);
 	gboolean (*compute_udi) (HalDevice *d);
@@ -188,9 +398,31 @@ static ClassDevHandler classdev_handler_bluetooth =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_net = 
+{ 
+	.subsystem    = "net",
+	.add          = net_add,
+	.prober       = NULL,
+	.post_probing = NULL,
+	.compute_udi  = net_compute_udi,
+	.remove       = classdev_remove
+};
+
+static ClassDevHandler classdev_handler_scsi_host = 
+{ 
+	.subsystem    = "scsi_host",
+	.add          = scsi_host_add,
+	.prober       = NULL,
+	.post_probing = NULL,
+	.compute_udi  = scsi_host_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_input,
 	&classdev_handler_bluetooth,
+	&classdev_handler_net,
+	&classdev_handler_scsi_host,
 	NULL
 };
 
@@ -249,7 +481,7 @@ out:
 
 void
 hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file, 
-				  HalDevice *physdev, void *end_token)
+				  HalDevice *physdev, const gchar *sysfs_path_in_devices, void *end_token)
 {
 	guint i;
 
@@ -263,7 +495,7 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 			HalDevice *d;
 
 			/* attempt to add the device */
-			d = handler->add (sysfs_path, device_file, physdev);
+			d = handler->add (sysfs_path, device_file, physdev, sysfs_path_in_devices);
 			if (d == NULL) {
 				/* didn't find anything - thus, ignore this hotplug event */
 				hotplug_event_end (end_token);
@@ -302,7 +534,7 @@ hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_
 
 	HAL_INFO (("class_rem: subsys=%s sysfs_path=%s", subsystem, sysfs_path));
 
-	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path_device", sysfs_path);
+	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
 	if (d == NULL) {
 		HAL_WARNING (("Error removing device"));
 	} else {

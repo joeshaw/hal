@@ -51,10 +51,12 @@
 #include "hotplug.h"
 
 
-static void 
-coldplug_compute_visit_device (const gchar *path, GHashTable *sysfs_to_bus_map);
+static void
+coldplug_compute_visit_device (const gchar *path, 
+			       GHashTable *sysfs_to_bus_map, 
+			       GHashTable *sysfs_to_class_in_devices_map);
 
-/*#define HAL_COLDPLUG_VERBOSE*/
+#define HAL_COLDPLUG_VERBOSE
 
 /** This function serves one major purpose : build an ordered list of
  *  pairs (sysfs path, subsystem) to process when starting up:
@@ -63,7 +65,7 @@ coldplug_compute_visit_device (const gchar *path, GHashTable *sysfs_to_bus_map);
  *  the tree; e.g. bus-device A is not processed before bus-device B
  *  if B is a parent of A connection-wise.
  *
- *  After all bus-devices are added to the list, then all block are
+ *  After all bus-devices are added to the list, then all block devices are
  *  processed in the order they appear.
  *
  *  Finally, all class devices are added to the list.
@@ -78,9 +80,11 @@ coldplug_synthesize_events (void)
 	GError *err = NULL;
 	gchar path[HAL_PATH_MAX];
 	gchar path1[HAL_PATH_MAX];
+	gchar path2[HAL_PATH_MAX];
 	const gchar *f;
 	const gchar *f1;
 	const gchar *f2;
+	GSList *li;
 
 	/** Mapping from sysfs path to subsystem for bus devices. This is consulted
 	 *  when traversing /sys/devices
@@ -101,6 +105,22 @@ coldplug_synthesize_events (void)
 	 * /sys/devices/platform/vesafb0                                        -> platform
 	 */
 	GHashTable *sysfs_to_bus_map = NULL;
+
+        /** Mapping from sysfs path in /sys/devices to the pairs (sysfs class path, classname)
+	 *  for class devices; note that more than one class device might map to a physical device
+	 *
+	 * Example:
+	 *
+	 * /sys/devices/pci0000:00/0000:00:07.2/usb1/1-1/1-1:1.0/host7  -> (/sys/class/scsi_host/host7, scsi_host)
+	 * /sys/devices/platform/i8042/serio0/serio2 -> (/sys/class/input/event2, input, /sys/class/input/mouse1, input)
+	 */
+	GHashTable *sysfs_to_class_in_devices_map = NULL;
+
+	/* Class devices without device links; string list; example
+	 *
+	 * (/sys/class/input/mice, mouse, /sys/class/mem/null, mem, ...)
+	 */
+	GSList *sysfs_other_class_dev = NULL;
 
 	/* build bus map */
 	sysfs_to_bus_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -159,6 +179,55 @@ coldplug_synthesize_events (void)
 	}
 	g_dir_close (dir);
 
+	/* build class map and class device map */
+	sysfs_to_class_in_devices_map = g_hash_table_new (g_str_hash, g_str_equal);
+	g_snprintf (path, HAL_PATH_MAX, "%s/class" , hal_sysfs_path);
+	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %/class: %s", hal_sysfs_path, err->message));
+		goto error;
+	}
+	while ((f = g_dir_read_name (dir)) != NULL) {
+		GDir *dir1;
+
+		g_snprintf (path, HAL_PATH_MAX, "%s/class/%s" , hal_sysfs_path, f);
+		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
+			HAL_ERROR (("Unable to open %/class/%s: %s", hal_sysfs_path, f, err->message));
+			g_error_free (err);
+			goto error;
+		}
+		while ((f1 = g_dir_read_name (dir1)) != NULL) {
+			gchar *target;
+			gchar *normalized_target;
+
+			g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s/device", hal_sysfs_path, f, f1);
+			/* Accept net devices without device links too, they may be coldplugged PCMCIA devices */
+			if (((target = g_file_read_link (path1, NULL)) == NULL)) {
+				/* no device link */
+				g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s", hal_sysfs_path, f, f1);
+				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (path1));
+				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (f));
+			} else {
+				GSList *classdev_strings;
+
+				g_snprintf (path2, HAL_PATH_MAX, "%s/class/%s/%s", hal_sysfs_path, f, f1);
+				if (target) {
+					normalized_target = hal_util_get_normalized_path (path2, target);
+					g_free (target);
+				}
+
+				classdev_strings = g_hash_table_lookup (sysfs_to_class_in_devices_map,
+									normalized_target);
+
+				classdev_strings = g_slist_append (classdev_strings, g_strdup (path2));
+				classdev_strings = g_slist_append (classdev_strings, g_strdup (f));
+				g_hash_table_replace (sysfs_to_class_in_devices_map,
+						      normalized_target, classdev_strings);
+			}				
+		}
+		g_dir_close (dir1);
+	}
+	g_dir_close (dir);
+
 	/* Now traverse /sys/devices and consult the map we've just
 	 * built; this includes adding a) bus devices; and b) class
 	 * devices that sit in /sys/devices */
@@ -180,69 +249,37 @@ coldplug_synthesize_events (void)
 		while ((f1 = g_dir_read_name (dir1)) != NULL) {
 
 			g_snprintf (path, HAL_PATH_MAX, "%s/devices/%s/%s", hal_sysfs_path, f, f1);
-			coldplug_compute_visit_device (path, sysfs_to_bus_map);
-
+			coldplug_compute_visit_device (path, sysfs_to_bus_map, sysfs_to_class_in_devices_map);
 		}
 		g_dir_close (dir1);
 	}
 	g_dir_close (dir);
 
 	g_hash_table_destroy (sysfs_to_bus_map);
+	g_hash_table_destroy (sysfs_to_class_in_devices_map);
 
+	/* we are guaranteed, per construction, that the len of this list is even */
+	for (li = sysfs_other_class_dev; li != NULL; li = g_slist_next (g_slist_next (li))) {
+		gchar *sysfs_path;
+		gchar *subsystem;
+		HotplugEvent *hotplug_event;
 
-	/* add class devices */
-	g_snprintf (path, HAL_PATH_MAX, "%s/class", hal_sysfs_path);
-	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-		HAL_ERROR (("Unable to open %/class: %s", hal_sysfs_path, err->message));
-		goto error;
-	}
-	while ((f = g_dir_read_name (dir)) != NULL) {
-		GDir *dir1;
+		sysfs_path = (gchar *) li->data;
+		subsystem = (gchar *) li->next->data;
 
-		g_snprintf (path, HAL_PATH_MAX, "%s/class/%s", hal_sysfs_path, f);
-		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_ERROR (("Unable to open %/class/%s: %s", hal_sysfs_path, f, err->message));
-			g_error_free (err);
-			goto error;
-		}
-		while ((f1 = g_dir_read_name (dir1)) != NULL) {
-			HotplugEvent *hotplug_event;
-			gchar *target;
-			gchar *normalized_target;
-
-			g_snprintf (path, HAL_PATH_MAX, "%s/class/%s/%s", hal_sysfs_path, f, f1);
 #ifdef HAL_COLDPLUG_VERBOSE
-			printf ("class: %s (%s)\n", path, f);
+		printf ("class: %s (%s) (no device link)\n", sysfs_path, subsystem);
 #endif
-
-			g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s/device", hal_sysfs_path, f, f1);
-			if (((target = g_file_read_link (path1, NULL)) != NULL)) {
-				normalized_target = hal_util_get_normalized_path (path1, target);
-				g_free (target);
-			} else {
-				normalized_target = NULL;
-			}
-
-
-			hotplug_event = g_new0 (HotplugEvent, 1);
-			hotplug_event->is_add = TRUE;
-			g_strlcpy (hotplug_event->subsystem, f, sizeof (hotplug_event->subsystem));
-			g_strlcpy (hotplug_event->sysfs_path, path, sizeof (hotplug_event->sysfs_path));
-			hal_util_get_device_file (path, hotplug_event->device_file, sizeof (hotplug_event->device_file));
-			if (normalized_target != NULL)
-				g_strlcpy (hotplug_event->wait_for_sysfs_path, normalized_target, sizeof (hotplug_event->wait_for_sysfs_path));
-			else
-				hotplug_event->wait_for_sysfs_path[0] = '\0';
-			hotplug_event->net_ifindex = -1;
-
-			hotplug_event_enqueue (hotplug_event);
-
-			g_free (normalized_target);
-
-		}
-		g_dir_close (dir1);
+		hotplug_event = g_new0 (HotplugEvent, 1);
+		hotplug_event->is_add = TRUE;
+		g_strlcpy (hotplug_event->subsystem, subsystem, sizeof (hotplug_event->subsystem));
+		g_strlcpy (hotplug_event->sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs_path));
+		hal_util_get_device_file (sysfs_path, hotplug_event->device_file, sizeof (hotplug_event->device_file));
+		hotplug_event->net_ifindex = -1;
+		
+		hotplug_event_enqueue (hotplug_event);
 	}
-	g_dir_close (dir);
+	g_slist_free (sysfs_other_class_dev);
 
 	/* add block devices */
 	g_snprintf (path, HAL_PATH_MAX, "%s/block", hal_sysfs_path);
@@ -319,12 +356,17 @@ error:
 }
 
 static void
-coldplug_compute_visit_device (const gchar *path, GHashTable *sysfs_to_bus_map)
+coldplug_compute_visit_device (const gchar *path, 
+			       GHashTable *sysfs_to_bus_map, 
+			       GHashTable *sysfs_to_class_in_devices_map)
 {
 	gchar *bus;
 	GError *err;
 	GDir *dir;
 	const gchar *f;
+	/*HStringPair *pair;*/
+	GSList *class_devs;
+	GSList *i;
 
 	bus = g_hash_table_lookup (sysfs_to_bus_map, path);
 	if (bus != NULL) {
@@ -350,6 +392,33 @@ coldplug_compute_visit_device (const gchar *path, GHashTable *sysfs_to_bus_map)
 		hotplug_event_enqueue (hotplug_event);
 	}
 
+	/* we are guaranteed, per construction, that the len of this list is even */
+	class_devs = g_hash_table_lookup (sysfs_to_class_in_devices_map, path);
+	for (i = class_devs; i != NULL; i = g_slist_next (g_slist_next (i))) {
+		gchar *sysfs_path;
+		gchar *subsystem;
+		HotplugEvent *hotplug_event;
+
+		sysfs_path = (gchar *) i->data;
+		subsystem = (gchar *) i->next->data;
+
+#ifdef HAL_COLDPLUG_VERBOSE
+		printf ("class: %s (%s) (%s)\n", path, subsystem, sysfs_path);
+#endif
+		hotplug_event = g_new0 (HotplugEvent, 1);
+		hotplug_event->is_add = TRUE;
+		g_strlcpy (hotplug_event->subsystem, subsystem, sizeof (hotplug_event->subsystem));
+		g_strlcpy (hotplug_event->sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs_path));
+		hal_util_get_device_file (sysfs_path, hotplug_event->device_file, sizeof (hotplug_event->device_file));
+		if (path != NULL)
+			g_strlcpy (hotplug_event->wait_for_sysfs_path, path, sizeof (hotplug_event->wait_for_sysfs_path));
+		else
+			hotplug_event->wait_for_sysfs_path[0] = '\0';
+		hotplug_event->net_ifindex = -1;
+		
+		hotplug_event_enqueue (hotplug_event);
+	}
+
 	/* visit children; dont follow symlinks though.. */
 	err = NULL;
 	if ((dir = g_dir_open (path, 0, &err)) == NULL) {
@@ -367,7 +436,9 @@ coldplug_compute_visit_device (const gchar *path, GHashTable *sysfs_to_bus_map)
 
 			if (!S_ISLNK (statbuf.st_mode)) {
 				/* recursion fun */
-				coldplug_compute_visit_device (path_child, sysfs_to_bus_map);
+				coldplug_compute_visit_device (path_child, 
+							       sysfs_to_bus_map, 
+							       sysfs_to_class_in_devices_map);
 			}
 		}
 	}

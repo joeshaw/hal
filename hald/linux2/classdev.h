@@ -28,7 +28,7 @@
 
 #include <glib.h>
 
-void hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, void *end_token);
+void hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices, void *end_token);
 
 void hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
 

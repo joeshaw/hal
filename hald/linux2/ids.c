@@ -882,7 +882,7 @@ ids_find_pnp (const char *pnp_id, char **pnp_description)
 
 	/* OK, so someone should optimize this lookup - send me patches */
 	for (i = 0; pnp_ids_list[2*i] != NULL; i++) {
-		if (strcmp (pnp_id, pnp_ids_list[2*i]) == 0) {
+		if (strcasecmp (pnp_id, pnp_ids_list[2*i]) == 0) {
 			*pnp_description = pnp_ids_list[2*i + 1];
 			return;
 		}

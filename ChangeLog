@@ -1,3 +1,40 @@
+2005-01-23  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/util.h: Add prototypes for hal_util_set_driver () and
+	hal_util_path_ascend ().
+
+	* hald/linux2/util.c (hal_util_set_driver): New function
+	(hal_util_path_ascend): New function
+
+	* hald/linux2/physdev.c: Set both linux.sysfs_path and 
+	linux.sysfs_path_device. The former is the real sysfs path for both
+	class and bus devices while the latter always is a location in 
+	/sys/devices; incidently the latter may not always exists. The former
+	is used for remove events while the latter is used for determing
+	child/parent relationships.
+	(scsi_add): New function
+	(scsi_compute_udi): New function
+
+	* hald/linux2/ids.c (ids_find_pnp): Use strcasecmp instead of strcmp
+
+	* hald/linux2/hotplug.c (hotplug_event_begin): Cope with the fact
+	that there may be holes in /sys/devices; e.g. look at the
+	target0:0:0:0 stuff. So, for a class device ascend all the way up
+	until we find a hal device object that can be our parent.
+
+	* hald/linux2/coldplug.c: Euwh, too much simplification here; we
+	need to insert class devs between bus devs in the coldplug queue
+	as e.g. scsi_host is a class dev but sits between bus devs.
+
+	* hald/linux2/classdev.h: Make hotplug_event_begin_add_classdev take
+	the sysfs path of the corresponding device in /sys/devices (which
+	may not be a physical device, e.g. class scsi_host)
+
+	* hald/linux2/classdev.c (net_add): New function
+	(net_compute_udi): New function
+	(scsi_host_add): New function
+	(scsi_host_compute_udi): New function
+
 2005-01-22  David Zeuthen  <davidz@redhat.com>
 
 	* tools/device-manager/Const.py.in: Add pnp and serio to BUS_NAMES

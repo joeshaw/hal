@@ -222,7 +222,7 @@ hal_util_get_device_file (const gchar *sysfs_path, gchar *dev_file, gsize dev_fi
 	sysfs_path_len = strlen (sysfs_path);
 	strncpy (sysfs_path_dev_trunc, sysfs_path, HAL_PATH_MAX);
 	strncat (sysfs_path_dev_trunc + sysfs_path_len, "/dev", 4);
-	if (g_stat (sysfs_path_dev_trunc, &statbuf) != 0)
+	if (stat (sysfs_path_dev_trunc, &statbuf) != 0)
 		return FALSE;
 
 	/* get path to udevinfo */
@@ -683,3 +683,40 @@ helper_invoke (const gchar *path, HalDevice *d, gpointer data1, gpointer data2, 
 	return ret;
 }
 
+gboolean
+hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path)
+{
+	gboolean ret;
+	gchar driver_path[HAL_PATH_MAX];
+	struct stat statbuf;
+
+	ret = FALSE;
+
+	g_snprintf (driver_path, sizeof (driver_path), "%s/driver", sysfs_path);
+	if (stat (driver_path, &statbuf) == 0) {
+		gchar buf[256];
+		memset (buf, '\0', sizeof (buf));
+		if (readlink (driver_path, buf, sizeof (buf) - 1) > 0) {
+			hal_device_property_set_string (d, property_name, hal_util_get_last_element (buf));
+			ret = TRUE;
+		}
+	}
+
+	return ret;
+}
+
+gboolean
+hal_util_path_ascend (gchar *path)
+{
+	gchar *p;
+
+	if (path == NULL)
+		return FALSE;
+
+	p = strrchr (path, '/');
+	if (p == NULL)
+		return FALSE;
+
+	*p = '\0';
+	return TRUE;
+}
