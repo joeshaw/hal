@@ -1,5 +1,11 @@
 2004-05-26  Joe Shaw  <joeshaw@novell.com>
 
+	* hald/linux/net_class_device.c (parse_scanning_token): We're
+	likely to get multiple SIOCGIWFREQ tokens.  If it's lower than
+	1000, then it's the channel and not the frequency.  Ugh.
+
+2004-05-26  Joe Shaw  <joeshaw@novell.com>
+
 	* configure.in: Add --enable-iwlib, and check for it so we can
 	build the wireless functionality.
 

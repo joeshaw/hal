@@ -596,6 +596,7 @@ static APInfo *
 parse_scanning_token (struct iw_event *iwe, APInfo *old_ap)
 {
 	APInfo *ap;
+	float val;
 
 	if (iwe->cmd == SIOCGIWAP)
 		ap = g_new0 (APInfo, 1);
@@ -611,7 +612,15 @@ parse_scanning_token (struct iw_event *iwe, APInfo *old_ap)
 		break;
 
 	case SIOCGIWFREQ:
-		ap->freq = iw_freq2float(&(iwe->u.freq));
+		/*
+		 * If the value is less than 1000, then it's the channel.
+		 * Otherwise, it's the frequency.  I swear to god the
+		 * iwlib code is like this.
+		 */
+		val = iw_freq2float(&(iwe->u.freq));
+		
+		if (val > 1000)
+			ap->freq = val;
 		break;
 
 	case SIOCGIWESSID:
