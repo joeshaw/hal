@@ -96,4 +96,6 @@ gboolean hotplug_rescan_device (HalDevice *d);
 
 gboolean hotplug_reprobe_tree (HalDevice *d);
 
+void hotplug_queue_now_empty (void);
+
 #endif /* HOTPLUG_H */

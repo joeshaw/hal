@@ -322,6 +322,75 @@ drop_privileges ()
 }
 
 
+/*--------------------------------------------------------------------------------------------------*/
+
+static gboolean child_died = FALSE;
+
+static void 
+handle_sigchld (int value)
+{
+	child_died = TRUE;
+}
+
+static int 
+parent_wait_for_child (int child_fd, pid_t child_pid)
+{
+	char buf[1];
+	fd_set rfds;
+	fd_set efds;
+	struct timeval tv;
+	int retval;
+	int ret;
+
+	signal(SIGCHLD, handle_sigchld);
+
+	/* wait for either
+	 *
+	 * o Child writes something to the child_fd; means that device
+	 *   probing is completed and the parent should exit with success
+	 *
+	 * o Child is killed (segfault etc.); means that parent should exit
+	 *   with failure
+	 *
+	 * o Timeout; means that we should kill the child and exit with
+	 *   failure
+	 *
+	 */
+
+	FD_ZERO(&rfds);
+	FD_SET(child_fd, &rfds);
+	FD_ZERO(&efds);
+	FD_SET(child_fd, &efds);
+	/* Wait up to 25 seconds for device probing */
+	tv.tv_sec = 25;
+	tv.tv_usec = 0;
+
+	fprintf (stderr, "start waiting\n");
+
+	retval = select (child_fd + 1, &rfds, NULL, &efds, &tv);
+
+	if (child_died) {
+		/* written from handle_sigchld */
+		ret = 1;
+		goto out;
+	}
+
+	if (retval > 0) {
+		/* means child wrote to socket or closed it */
+		ret = 0;
+		goto out;
+	}
+
+	/* assume timeout; kill child */
+	kill (child_pid, SIGTERM);
+	ret = 2;
+
+out:
+	return ret;
+}
+
+/*--------------------------------------------------------------------------------------------------*/
+
 /** Entry point for HAL daemon
  *
  *  @param  argc                Number of arguments
@@ -473,13 +542,9 @@ main (int argc, char *argv[])
 			break;
 
 		default:
-		        {
-				/* parent, block until child writes */
-				/* char buf[1];
-				read (startup_daemonize_pipe[0], &buf, sizeof (buf));*/
-				exit (0);
-				break;
-			}
+			/* parent, block until child writes */
+			exit (parent_wait_for_child (startup_daemonize_pipe[0], child_pid));
+			break;
 		}
 
 		/* Create session */
@@ -549,28 +614,6 @@ osspec_probe_done (void)
 	char buf[1] = {0};
 
 	HAL_INFO (("Device probing completed"));
-
-/*
-	{
-		char udi[256];
-		char prop[256];
-
-		resolve_udiprop_path ("info.udi", 
-				      "/org/freedesktop/Hal/devices/computer", 
-				      udi, sizeof (udi), 
-				      prop, sizeof (prop));
-		HAL_INFO (("----------------------------------------"));
-		resolve_udiprop_path ("/org/freedesktop/Hal/devices/computer:kernel.name", 
-				      "/org/freedesktop/Hal/devices/pci_8086_3341", 
-				      udi, sizeof (udi), 
-				      prop, sizeof (prop));
-		HAL_INFO (("----------------------------------------"));
-		resolve_udiprop_path ("@block.storage_device:@storage.physical_device:ide.channel", 
-				      "/org/freedesktop/Hal/devices/block_3_3", 
-				      udi, sizeof (udi), 
-				      prop, sizeof (prop));
-	}
-*/
 
 	/* tell parent to exit */
 	write (startup_daemonize_pipe[1], buf, sizeof (buf));

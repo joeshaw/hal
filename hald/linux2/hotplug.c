@@ -365,9 +365,11 @@ hotplug_event_process_queue (void)
 {
 	HotplugEvent *hotplug_event;
 
-
-	if (hotplug_event_queue == NULL)
+	if (hotplug_events_in_progress == NULL && 
+	    (hotplug_event_queue == NULL || g_queue_is_empty (hotplug_event_queue))) {
+		hotplug_queue_now_empty ();
 		goto out;
+	}
 
 	/* do not process events if some other event is in progress 
 	 *

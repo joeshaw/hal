@@ -1,5 +1,26 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	Finally got around to implementing the bit that made the parent wait
+	for device probing when daemonizing. Hope that it's right this time
+	cause the last time it resulted in breaking peoples pkg updates :-):
+	
+	https://www.redhat.com/archives/fedora-test-list/2004-August/msg00785.html	
+
+	* hald/linux2/osspec.c (hotplug_queue_now_empty): New function; call
+	osspec_probe_done if we're initialising and don't do anything else
+
+	* hald/linux2/hotplug.h: Export prototype for hotplug_queue_now_empty
+
+	* hald/linux2/hotplug.c (hotplug_event_process_queue): Call the
+	function hotplug_queue_now_empty when we are out of hotplug (or
+	coldplug :-) events to process.
+
+	* hald/hald.c (handle_sigchld): New function
+	(parent_wait_for_child): New function
+	(main): Wait for child to finish device probing when daemonizing
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/osspec.c (osspec_shutdown): Remove this function
 
 	* hald/dummy/osspec.c (computer_callouts_add_done): New function

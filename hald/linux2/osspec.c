@@ -353,6 +353,13 @@ computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2
 	hotplug_event_process_queue ();
 }
 
+void
+hotplug_queue_now_empty (void)
+{
+	if (hald_is_initialising)
+		osspec_probe_done ();
+}
+
 void 
 osspec_probe (void)
 {
