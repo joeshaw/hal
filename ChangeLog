@@ -1,5 +1,11 @@
 2005-01-18  David Zeuthen  <davidz@redhat.com>
 
+	* hald/run-hald.sh: New file; used to run hald from the development
+	directory. Sets up the appropriate path for external probing
+	programs.
+
+2005-01-18  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in (AC_OUTPUT): Don't generate hald/linux/Makefile as
 	Makefile.am is now gone
 
