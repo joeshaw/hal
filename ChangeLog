@@ -1,5 +1,16 @@
 2004-08-12  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: Bump to 0.2.96
+
+	* doc/spec/hal-spec.xml.in: Include example-manager.py instead of
+	examply-manager.py. Sigh.
+
+	* doc/spec/example-manager.py: New file
+
+	* doc/spec/examply-manager.py: Removed
+
+2004-08-12  David Zeuthen  <david@fubar.dk>
+
 	* doc/spec/hal-spec.xml.in: Rewrite block.no_partitions spec.
 	Add storage.[serial|firmware_version] which was forgotton.
 	

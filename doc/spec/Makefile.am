@@ -1,12 +1,6 @@
 
 if DOCBOOK_DOCS_ENABLED
 
-EXTRA_DIST =                            \
-	hal-spec.xml			\
-	example-manager.py		\
-	hal-arch.dia			\
-	hal-linux26.dia
-
 FIGURE_FILES =                        	\
 	hal-arch.png                  	\
 	hal-devices1.png              	\
@@ -16,13 +10,18 @@ FIGURE_FILES =                        	\
 	hal-linux26.png	
 
 
-EXTRA_DIST += hal-spec.html $(FIGURE_FILES)
-
 htmldocdir = $(datadir)/doc/hal-$(VERSION)/spec
 htmldoc_DATA = hal-spec.html $(FIGURE_FILES)
 
 hal-spec.html : hal-spec.xml $(FIGURE_FILES)
 	$(DOCBOOK) --nochunks hal-spec.xml -o .
+
+EXTRA_DIST = hal-spec.html       \
+	     hal-spec.xml.in     \
+	     example-manager.py	 \
+	     hal-arch.dia	 \
+	     hal-linux26.dia     \
+	     $(FIGURE_FILES)
 
 clean-local:
 	rm -f *~

@@ -2930,7 +2930,7 @@ void NewCapability(string udi, string capability)
       </para>
 
 <programlisting>
-  <inlinegraphic format="linespecific" fileref="examply-manager.py"/>
+  <inlinegraphic format="linespecific" fileref="example-manager.py"/>
 </programlisting>
 
       <para>
