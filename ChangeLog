@@ -1,3 +1,16 @@
+2004-08-31  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c: 
+	(detect_media): Don't poll on drives with storage.removable set to FALSE
+	(block_class_pre_process): Use the /sys/block/<drive>/removable file
+	
+	* tools/device-manager/DeviceManager.py: Don't print out Conditions;
+	should give us more headroom until D-BUS is fixed wrt. rules maximum
+	and subscription of signals in the python bindings
+	
+	* tools/linux/hal_hotplug.c: Wait for 'removable' file for 'block'
+	system events
+
 2004-08-31  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* tools/linux/hal_hotplug.c: (wait_for_sysfs_info): Fix timout

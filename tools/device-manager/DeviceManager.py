@@ -87,6 +87,7 @@ class DeviceManager(LibGladeApplication):
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
+	return
 	self.bus.add_signal_receiver(self.device_changed,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
@@ -99,6 +100,7 @@ class DeviceManager(LibGladeApplication):
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
+	return
 	self.bus.remove_signal_receiver(self.device_changed,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",

@@ -723,6 +723,10 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 	    !hal_device_property_get_bool (d, "storage.media_check_enabled"))
 		return FALSE;
 
+	/* Refuse to poll on storage devices without removable media */
+	if (!force_poll && !hal_device_property_get_bool (d, "storage.removable"))
+		return FALSE;
+
 	/* need to be in GDL */
 	if (!hal_device_store_find (hald_get_gdl (), hal_device_get_udi (d)))
 		return FALSE;
@@ -1070,6 +1074,8 @@ block_class_pre_process (ClassDeviceHandler *self,
 	const char *device_file;
 	dbus_bool_t has_removable_media = FALSE;
 	dbus_bool_t is_hotpluggable = FALSE;
+	char attr_path[SYSFS_PATH_MAX];
+	struct sysfs_attribute *attr;
 
 	parent = hal_device_store_find (hald_get_gdl (),
 					hal_device_property_get_string (
@@ -1361,8 +1367,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 		const char *device_file;
 		struct drive_id *did;
 		const char *sysfs_path;
-		char attr_path[SYSFS_PATH_MAX];
-		struct sysfs_attribute *attr;
 		int scsi_host;
 		char *scsi_protocol;
 		
@@ -1485,15 +1489,21 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "info.product", "Disk");
 		
 	}
+
+	snprintf (attr_path, SYSFS_PATH_MAX, "%s/removable", sysfs_path);
+	attr = sysfs_open_attribute (attr_path);
+	if (sysfs_read_attribute (attr) >= 0) {
+		if (attr->value [0] == '0')
+			has_removable_media = FALSE;
+		else
+			has_removable_media = TRUE;
+
+		sysfs_close_attribute (attr);
+	}
+
+
 	
-	
-	/* XYZME: Read the removable file in sysfs, 
-	 *        e.g. /sys/block/sdb/removable
-	 */
-	hal_device_property_set_bool (
-		stordev, 
-		"storage.removable", 
-		has_removable_media);
+	hal_device_property_set_bool (stordev, "storage.removable", has_removable_media);
 
 	if (hal_device_has_property (stordev, "storage.drive_type") &&
 	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
