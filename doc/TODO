@@ -9,9 +9,22 @@ Resolved
 
  - Add void PropertyModified(string key, bool is_added, bool is_removed)
    and deprecate Property[Added,Removed,Changed]
+   RESOLVED
 
  - Add infrastructure so updates to several properties happen as a single
    transaction
+   RESOLVED
+
+ - figure a way to detect block.device (e.g. /udev/hda2, already we know 
+   major:minor) when detecting a block device on hald startup.
+   The hotplug case is already solved by receiving a signal from udev. Might
+   need to modify udev to be able to do something like
+   'udev --get-device --major <num> --minor <num>'
+   RESOLVED: udev-012 and onwards support querying
+
+ - until available in sysfs, parse /proc/sys/dev/cdrom/info, to provide
+   information about capabilities of optical discs such as CD-RW, DVD etc.
+   RESOLVED: patches from hadess
 
 Partially resolved
 ==================
@@ -19,24 +32,20 @@ Partially resolved
  - work more on packaging, put some daemon-fork-fu into hald and make it
    read a configuration file, make initscripts for various distros and make
    hald run as a unprivileged dedicated user
+   ISSUE: still needs to run as root to do ethernet link detection, mii style
 
  - Make all optional properties from the spec available but with empty values
+   ISSUE: need to audit all the code
 
  - Make sure device is not added to GDL before all the key properties as
    specified in the spec is there
-   [resolved for block devices, need to audit other bus + classes]
+   ISSUE: resolved for block devices, need to audit other bus + classes
 
 Short term issues
 =================
 
- - Add org.freedesktop.Hal.Device.[BlockClass, NetClass] interfaces and
-   make them emit useful signals upon big events like mount point and link
-   changes.
-
- - Possible bug: PropertyAdded being called several times
-
- - Possible bug: DeviceAdded/DeviceRemoved being called several time on a
-   device?
+ - hald/linux/linux_dvd_rw_utils only works with ide-scsi drives; we need
+   to support ide-cd as well
 
  - veryify that we got all the necessary hardware parameters for
    physical busses, e.g. pci, usb... We won't really know before people
@@ -63,15 +72,6 @@ Short term issues
    as to merge properties dependent on that
 
  - replace mii ethernet monitoring with netlink sockets
-
- - figure a way to detect block.device (e.g. /udev/hda2, already we know 
-   major:minor) when detecting a block device on hald startup.
-   The hotplug case is already solved by receiving a signal from udev. Might
-   need to modify udev to be able to do something like
-   'udev --get-device --major <num> --minor <num>'
-
- - until available in sysfs, parse /proc/sys/dev/cdrom/info, to provide
-   information about capabilities of optical discs such as CD-RW, DVD etc.
 
 
 More long term issues

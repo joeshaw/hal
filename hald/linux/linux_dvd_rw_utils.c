@@ -250,3 +250,120 @@ get_dvd_r_rw_profile (int fd)
 	return retval;
 }
 
+static unsigned char *
+pull_page2a_from_fd (int fd)
+{
+	ScsiCommand *cmd;
+	unsigned char header[12], *page2A;
+	unsigned int len, bdlen;
+
+	cmd = scsi_command_new_from_fd (fd);
+
+	scsi_command_init (cmd, 0, 0x5A); /* MODE SENSE */
+	scsi_command_init (cmd, 1, 0x08); /* Disable Block Descriptors */
+	scsi_command_init (cmd, 2, 0x2A); /* Capabilities and Mechanical Status */
+	scsi_command_init (cmd, 8, sizeof (header)); /* header only to start with */
+	scsi_command_init (cmd, 9, 0);
+
+	if (scsi_command_transport (cmd, READ, header, sizeof (header)))
+	{
+		/* MODE SENSE failed */
+		scsi_command_free (cmd);
+		return NULL;
+	}
+
+	len = (header[0] << 8 | header[1]) + 2;
+	bdlen = header[6] << 8 | header[7];
+
+	/* should never happen as we set "DBD" above */
+	if (bdlen)
+	{
+		if (len < (8 + bdlen + 30))
+		{
+			/* LUN impossible to bear with */
+			scsi_command_free (cmd);
+			return NULL;
+		}
+	} else if (len < (8 + 2 + (unsigned int) header[9])) {
+		/* SANYO does this. */
+		len = 8+2+header[9];
+	}
+
+	page2A = (unsigned char *)malloc(len);
+	if (page2A == NULL)
+	{
+		/* ENOMEM */
+		scsi_command_free (cmd);
+		return NULL;
+	}
+
+	scsi_command_init (cmd, 0, 0x5A); /* MODE SENSE */
+	scsi_command_init (cmd, 1, 0x08); /* Disable Block Descriptors */
+	scsi_command_init (cmd, 2, 0x2A); /* Capabilities and Mechanical Status */
+	scsi_command_init (cmd, 7, len >> 8);
+	scsi_command_init (cmd, 8, len); /* Real length */
+	scsi_command_init (cmd, 9, 0);
+	if (scsi_command_transport (cmd, READ, page2A, len))
+	{
+		/* MODE SENSE failed */
+		scsi_command_free (cmd);
+		free (page2A);
+		return NULL;
+	}
+
+	scsi_command_free (cmd);
+
+	len -= 2;
+	/* paranoia */
+	if (len < ((unsigned int) page2A[0] << 8 | page2A[1]))
+	{
+		page2A[0] = len >> 8;
+		page2A[1] = len;
+	}
+
+	return page2A;
+}
+
+int
+get_read_write_speed (int fd, int *read_speed, int *write_speed)
+{
+	unsigned char *page2A;
+	int len, hlen;
+	unsigned char *p;
+
+	*read_speed = 0;
+	*write_speed =0;
+
+	page2A = pull_page2a_from_fd (fd);
+	if (page2A == NULL)
+	{
+		printf ("Failed to get Page 2A\n");
+		/* Failed to get Page 2A */
+		return -1;
+	}
+
+	len  = (page2A[0] << 8 | page2A[1]) + 2;
+	hlen = 8 + (page2A[6] << 8 | page2A[7]);
+	p = page2A + hlen;
+
+	/* Values guessed from the cd_mode_page_2A struct
+	 * in cdrecord's libscg/scg/scsireg.h */
+	if (len < (hlen + 30) || p[1] < (30 - 2))
+	{
+		/* no MMC-3 "Current Write Speed" present,
+		 * try to use the MMC-2 one */
+		if (len < (hlen + 20) || p[1] < (20 -2))
+			*write_speed = p[18] << 8 | p[19];
+		else
+			*write_speed = 0;
+	} else {
+		*write_speed = p[28] << 8 | p[29];
+	}
+
+	*read_speed = p[8] << 8 | p[9];
+
+	free (page2A);
+
+	return 0;
+}
+

@@ -514,6 +514,8 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
 
                 if (capabilities >= 0)
                 {
+                    int read_speed, write_speed;
+
                     if (capabilities & CDC_CD_R)
                     {
                         ds_add_capability(d, "storage.cdr");
@@ -557,15 +559,23 @@ void linux_class_block_check_if_ready_to_add(HalDevice* d)
                         ds_add_capability(d, "storage.dvdram");
                         ds_property_set_bool(d, "storage.dvdram", TRUE);
                     }
-                }
-                
-                /* while we're at it, check if we support media changed */
-                if( ioctl(fd, CDROM_MEDIA_CHANGED)>=0 )
-                {
-                    ds_property_set_bool(d, 
-                         "storage.cdrom.support_media_changed", TRUE);
-                }
+                    
+                    /* while we're at it, check if we support media changed */
+                    if( ioctl(fd, CDROM_MEDIA_CHANGED)>=0 )
+                    {
+                        ds_property_set_bool(d,
+                            "storage.cdrom.support_media_changed", TRUE);
+                    }
 
+                    if( get_read_write_speed(fd, &read_speed, &write_speed)>=0)
+                    {
+                        ds_property_set_int(d, "storage.cdrom.read_speed", 
+                                            read_speed);
+                        if( write_speed>0 )
+                            ds_property_set_int(d, "storage.cdrom.write_speed",
+                                                write_speed);
+                    }
+                } 
                 close (fd);
 		    }
         }
@@ -1196,12 +1206,12 @@ static dbus_bool_t detect_media(HalDevice* d)
         int drive;
         dbus_bool_t got_disc = FALSE;
 
-        fd = open(device_file, O_RDONLY|O_NONBLOCK);
+        fd = open(device_file, O_RDONLY|O_NONBLOCK|O_EXCL);
 
         if( fd==-1 )
         {
             /* open failed */
-            HAL_WARNING(("open(\"%s\", O_RDONLY|O_NONBLOCK) failed, "
+            HAL_WARNING(("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, "
                          "errno=%d", device_file, errno));
             return FALSE;
         }

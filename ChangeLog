@@ -1,5 +1,21 @@
 2004-01-17  David Zeuthen  <david@fubar.dk>
 
+	* doc/TODO: some shuffling around, added note about that
+	hald/linux/linux_dvd_rw_utils.c is ide-scsi centric
+
+2004-01-17  Bastien Nocera  <hadess@hadess.net>
+
+	* hald/linux/linux_dvd_rw_utils.c (pull_page2a_from_fd): new function
+	(get_read_write_speed): new function
+
+	* hald/linux/linux_dvd_rw_utils.h: add get_read_write_speed() prototype
+
+	* hald/linux/linux_class_block.c 
+	(linux_class_block_check_if_ready_to_add): call get_read_write_speed
+	for optical drives
+
+2004-01-17  David Zeuthen  <david@fubar.dk>
+
 	* hald/device_store.c (ds_query_capability): use strtok_r instead
 	of strstr as it didn't really work (example: will return true if
 	called with 'cdrom' and caps were 'cdrom.cdr block'.
