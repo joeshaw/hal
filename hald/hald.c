@@ -246,6 +246,7 @@ int
 main (int argc, char *argv[])
 {
 	GMainLoop *loop;
+	guint sigterm_iochn_listener_source_id;
 
 	logger_init ();
 	if (getenv ("HALD_VERBOSE"))
@@ -311,43 +312,6 @@ main (int argc, char *argv[])
 
 	HAL_DEBUG (("opt_become_daemon = %d", opt_become_daemon));
 
-	hald_read_conf_file ();
-
-	g_type_init ();
-
-	/* set up the dbus services */
-	if (!hald_dbus_init ())
-		return 1;
-
-	loop = g_main_loop_new (NULL, FALSE);
-
-	/* initialize persitent property store, read uuid from path */
-	if (hald_get_conf ()->persistent_device_list)
-		hal_pstore_init (PACKAGE_LOCALSTATEDIR "/lib/hal/uuid");
-
-	/* initialize operating system specific parts */
-	osspec_init ();
-
-	hald_is_initialising = TRUE;
-
-	/* detect devices */
-	osspec_probe ();
-
-	/* run the main loop and serve clients */
-	g_main_loop_run (loop);
-
-	return 0;
-}
-
-void 
-osspec_probe_done (void)
-{
-	guint sigterm_iochn_listener_source_id;
-
-	HAL_INFO (("Device probing completed"));
-
-	hald_is_initialising = FALSE;
-
 	if (opt_become_daemon) {
 		int child_pid;
 		int dev_null_fd;
@@ -412,6 +376,43 @@ osspec_probe_done (void)
 	
 	/* Finally, setup unix signal handler for TERM */
 	signal (SIGTERM, handle_sigterm);
+
+
+	hald_read_conf_file ();
+
+	g_type_init ();
+
+	/* set up the dbus services */
+	if (!hald_dbus_init ())
+		return 1;
+
+	loop = g_main_loop_new (NULL, FALSE);
+
+	/* initialize persitent property store, read uuid from path */
+	if (hald_get_conf ()->persistent_device_list)
+		hal_pstore_init (PACKAGE_LOCALSTATEDIR "/lib/hal/uuid");
+
+	/* initialize operating system specific parts */
+	osspec_init ();
+
+	hald_is_initialising = TRUE;
+
+	/* detect devices */
+	osspec_probe ();
+
+	/* run the main loop and serve clients */
+	g_main_loop_run (loop);
+
+	return 0;
+}
+
+void 
+osspec_probe_done (void)
+{
+
+	HAL_INFO (("Device probing completed"));
+
+	hald_is_initialising = FALSE;
 }
 
 

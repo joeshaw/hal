@@ -1,5 +1,10 @@
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
+	* hald/hald.c (main): Move daemonazation back to beginning (fixes
+	fdo bug #1165) for now
+
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (force_unmount): Don't clear the 
 	volume.* properties
 
