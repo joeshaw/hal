@@ -953,10 +953,10 @@ rehash_wireless (HalDeviceStore *gdl, HalDevice *d, gpointer user_data)
 {
 	const char *sysfs_path;
 
-	if (!hal_device_has_property (d, "net.ethernet.80211"))
+	if (!hal_device_has_property (d, "net.ethernet.is_80211"))
 		return TRUE;
 
-	if (hal_device_property_get_bool (d, "net.ethernet.80211") == FALSE)
+	if (hal_device_property_get_bool (d, "net.ethernet.is_80211") == FALSE)
 		return TRUE;
 
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
