@@ -45,9 +45,9 @@ How do I build and run HAL?
 
 You'll need recent glib, expat and d-bus from CVS to build HAL. Also
 pygnome and pygtk is required to run the GUI device manager. A Linux
-2.6 kernel is also required. HAL integrates with udev (if udev is
-compiled with D-BUS support; version 009 and onwards happen to
-be). You'll also need a recent version of linux-hotplug.
+2.6 kernel is also required. HAL integrates with udev (udev sends D-BUS
+messages by calling udev_dbus in /etc/dev.d/). You'll also need a recent
+version of linux-hotplug.
 
 The client library, libhal, for use in desktop application, only
 requires dbus (which doesn't have any dependencies) so both KDE and
