@@ -56,14 +56,15 @@ usage (int argc, char *argv[])
 {
 	fprintf (stderr,
  "\n"
- "usage : %s --udi <udi> --key <key> [--hex] [--quiet] [--help]\n",
-		 argv[0]);
+ "usage : hal-get-property --udi <udi> --key <key> \n"
+ "                        [--hex] [--quiet] [--help] [--verbose] [--version]\n");
 	fprintf (stderr,
  "\n"
  "        --udi            Unique Device Id\n"
  "        --key            Key of the property to get\n"
  "        --hex            Show integer values in hex (without leading 0x)\n"
- "        --quiet          Be quiet\n"
+ "        --verbose        Be verbose\n"
+ "        --version        Show version and exit\n"
  "        --help           Show this information and exit\n"
  "\n"
  "This program retrieves a property from a device. If the property exist\n"
@@ -85,7 +86,8 @@ main (int argc, char *argv[])
 	char *key = NULL;
 	int type;
 	dbus_bool_t is_hex = FALSE;
-	dbus_bool_t is_quiet = FALSE;
+	dbus_bool_t is_verbose = FALSE;
+	dbus_bool_t is_version = FALSE;
 	char *str;
 
 	if (argc <= 1) {
@@ -101,7 +103,8 @@ main (int argc, char *argv[])
 			{"udi", 1, NULL, 0},
 			{"key", 1, NULL, 0},
 			{"hex", 0, NULL, 0},
-			{"quiet", 0, NULL, 0},
+			{"verbose", 0, NULL, 0},
+			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
@@ -120,8 +123,10 @@ main (int argc, char *argv[])
 				return 0;
 			} else if (strcmp (opt, "hex") == 0) {
 				is_hex = TRUE;
-			} else if (strcmp (opt, "quiet") == 0) {
-				is_quiet = TRUE;
+			} else if (strcmp (opt, "verbose") == 0) {
+				is_verbose = TRUE;
+			} else if (strcmp (opt, "version") == 0) {
+				is_version = TRUE;
 			} else if (strcmp (opt, "key") == 0) {
 				key = strdup (optarg);
 			} else if (strcmp (opt, "udi") == 0) {
@@ -136,11 +141,10 @@ main (int argc, char *argv[])
 		}
 	}
 
-	if (!is_quiet)
-		fprintf (stderr, "%s " PACKAGE_VERSION "\n", argv[0]);
-
-	if (!is_quiet)
-		fprintf (stderr, "\n");
+	if (is_version) {
+		printf ("hal-get-property " PACKAGE_VERSION "\n");
+		return 0;
+	}
 
 	if (udi == NULL || key == NULL) {
 		usage (argc, argv);
@@ -160,35 +164,35 @@ main (int argc, char *argv[])
 	switch (type) {
 	case DBUS_TYPE_STRING:
 		str = hal_device_get_property_string (hal_ctx, udi, key);
-		if (!is_quiet)
-			fprintf (stderr, "Type is string\n");
-		fprintf (stdout, "%s", str);
+		if (is_verbose)
+			printf ("Type is string\n");
+		printf ("%s\n", str);
 		hal_free_string (str);
 		break;
 	case DBUS_TYPE_INT32:
-		if (!is_quiet)
-			fprintf (stderr, "Type is integer (shown in %s)\n",
-				 (is_hex ? "hexadecimal" : "decimal"));
-		fprintf (stdout, (is_hex ? "%x" : "%d"),
-			 hal_device_get_property_int (hal_ctx, udi, key));
+		if (is_verbose)
+			printf ("Type is integer (shown in %s)\n",
+				(is_hex ? "hexadecimal" : "decimal"));
+		printf ((is_hex ? "%x\n" : "%d\n"),
+			hal_device_get_property_int (hal_ctx, udi, key));
 		break;
 	case DBUS_TYPE_DOUBLE:
-		if (!is_quiet)
-			fprintf (stderr, "Type is double\n");
-		fprintf (stdout, "%f",
-			 hal_device_get_property_double (hal_ctx, udi, key));
+		if (is_verbose)
+			printf ("Type is double\n");
+		printf ("%f\n",
+			hal_device_get_property_double (hal_ctx, udi, key));
 		break;
 	case DBUS_TYPE_BOOLEAN:
-		if (!is_quiet)
-			fprintf (stderr, "Type is boolean\n");
-		fprintf (stdout, "%s",
-			 hal_device_get_property_bool (hal_ctx, udi,
-						       key) ? "true" :
-			 "false");
+		if (is_verbose)
+			printf ("Type is boolean\n");
+		printf ("%s\n",
+			hal_device_get_property_bool (hal_ctx, udi,
+						      key) ? "true" :
+			"false");
 		break;
 
 	default:
-		fprintf (stderr, "Unknown type %d='%c'\n", type, type);
+		printf ("Unknown type %d='%c'\n", type, type);
 		return 1;
 		break;
 	}

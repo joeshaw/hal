@@ -57,10 +57,9 @@ usage (int argc, char *argv[])
 {
 	fprintf (stderr,
  "\n"
- "usage : %s --udi <udi> --key <key>\n"
- "           (--int <value> | --string <value> | --bool <value> |"
- "            --double <value> | --remove) [--help]\n",
-		 argv[0]);
+ "usage : hal-set-property --udi <udi> --key <key>\n"
+ "           (--int <value> | --string <value> | --bool <value> |\n"
+ "            --double <value> | --remove) [--help] [--version]\n");
 	fprintf (stderr,
  "\n" "        --udi            Unique Device Id\n"
  "        --key            Key of the property to set\n"
@@ -70,6 +69,8 @@ usage (int argc, char *argv[])
  "        --double         Set value to a floating point number\n"
  "        --bool           Set value to a boolean, ie. true or false\n"
  "        --remove         Indicates that the property should be removed\n"
+ "        --verbose        Be verbose\n"
+ "        --version        Show version and exit\n"
  "        --help           Show this information and exit\n"
  "\n"
  "This program attempts to set property for a device. Note that, due to\n"
@@ -95,9 +96,8 @@ main (int argc, char *argv[])
 	double double_value = 0.0f;
 	dbus_bool_t bool_value = TRUE;
 	dbus_bool_t remove = FALSE;
+	dbus_bool_t is_version = FALSE;
 	int type = DBUS_TYPE_NIL;
-
-	fprintf (stderr, "%s " PACKAGE_VERSION "\n", argv[0]);
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -116,6 +116,7 @@ main (int argc, char *argv[])
 			{"double", 1, NULL, 0},
 			{"bool", 1, NULL, 0},
 			{"remove", 0, NULL, 0},
+			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
@@ -157,6 +158,8 @@ main (int argc, char *argv[])
 				remove = TRUE;
 			} else if (strcmp (opt, "udi") == 0) {
 				udi = strdup (optarg);
+			} else if (strcmp (opt, "version") == 0) {
+				is_version = TRUE;
 			}
 			break;
 
@@ -165,6 +168,11 @@ main (int argc, char *argv[])
 			return 1;
 			break;
 		}
+	}
+
+	if (is_version) {
+		printf ("hal-set-property " PACKAGE_VERSION "\n");
+		return 0;
 	}
 
 	/* must have at least one, but not neither or both */

@@ -1,3 +1,9 @@
+2004-07-11  David Zeuthen  <david@fubar.dk>
+
+	* tools/hal_get_property.c, tools/hal_set_property.c: Make the
+	command line interface a bit nicer.  Patch from Martin Waitz
+	<tali@admingilde.org>
+
 2004-07-10  David Zeuthen  <david@fubar.dk>
 
 	Patch from Kay Sievers <kay.sievers@vrfy.org>.
