@@ -26,6 +26,10 @@
  *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -119,9 +123,6 @@ static void set_label_unicode16(struct volume_id *id,
 			c = (buf[i+1] << 8) | buf[i];
 		else
 			c = (buf[i] << 8) | buf[i+1];
-
-		dbg("0x%x", c);
-
 		if (c == 0) {
 			id->label_string[j] = '\0';
 			break;
@@ -179,15 +180,14 @@ static __u8 *get_buffer(struct volume_id *id,
 	if (off + len <= SB_BUFFER_SIZE) {
 		if (id->sbbuf == NULL) {
 			id->sbbuf = malloc(SB_BUFFER_SIZE);
-			dbg("--- %p", id->sbbuf);
 			if (id->sbbuf == NULL)
 				return NULL;
 		}
 
 		/* check if we need to read */
 		if ((off + len) > id->sbbuf_len) {
-			dbg("read sbbuf len:0x%x", off + len);
-			lseek(id->fd, 0, SEEK_SET);
+			dbg("read sbbuf len:0x%lx", off + len);
+			lseek64(id->fd, 0, SEEK_SET);
 			buf_len = read(id->fd, id->sbbuf, off + len);
 			id->sbbuf_len = buf_len;
 			if (buf_len < off + len)
@@ -202,7 +202,6 @@ static __u8 *get_buffer(struct volume_id *id,
 		/* get seek buffer */
 		if (id->seekbuf == NULL) {
 			id->seekbuf = malloc(SEEK_BUFFER_SIZE);
-			dbg("--- %p", id->seekbuf);
 			if (id->seekbuf == NULL)
 				return NULL;
 		}
@@ -210,9 +209,10 @@ static __u8 *get_buffer(struct volume_id *id,
 		/* check if we need to read */
 		if ((off < id->seekbuf_off) ||
 		    ((off + len) > (id->seekbuf_off + id->seekbuf_len))) {
-			dbg("read seekbuf off:0x%x len:0x%x", off, len);
-			lseek(id->fd, off, SEEK_SET);
+			dbg("read seekbuf off:0x%lx len:0x%x", off, len);
+			lseek64(id->fd, off, SEEK_SET);
 			buf_len = read(id->fd, id->seekbuf, len);
+			dbg("got 0x%x (%i) bytes", buf_len, buf_len);
 			id->seekbuf_off = off;
 			id->seekbuf_len = buf_len;
 			if (buf_len < len)
@@ -786,7 +786,8 @@ static int probe_ntfs(struct volume_id *id)
 	dbg("sectorsize  0x%x", sector_size);
 	dbg("clustersize 0x%x", cluster_size);
 	dbg("mftcluster  %li", mft_cluster);
-	dbg("cluster per record  %li", ns->cluster_per_mft_record);
+	dbg("mftoffset  0x%lx", mft_off);
+	dbg("cluster per mft_record  %i", ns->cluster_per_mft_record);
 	dbg("mft record size  %i", mft_record_size);
 
 	buf = get_buffer(id, mft_off + (MFT_RECORD_VOLUME * mft_record_size),
@@ -795,6 +796,11 @@ static int probe_ntfs(struct volume_id *id)
 		goto found;
 
 	mftr = (struct master_file_table_record*) buf;
+
+	dbg("mftr->magic[0] = '%c' %03d, 0x%02x", mftr->magic[0], mftr->magic[0], mftr->magic[0]);
+	dbg("mftr->magic[1] = '%c' %03d, 0x%02x", mftr->magic[1], mftr->magic[1], mftr->magic[1]);
+	dbg("mftr->magic[2] = '%c' %03d, 0x%02x", mftr->magic[2], mftr->magic[2], mftr->magic[2]);
+	dbg("mftr->magic[3] = '%c' %03d, 0x%02x", mftr->magic[3], mftr->magic[3], mftr->magic[3]);
 	if (strncmp(mftr->magic, "FILE", 4) != 0)
 		goto found;
 
