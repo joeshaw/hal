@@ -1,3 +1,7 @@
+2004-10-14  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Bump to version 0.4.0 - Hurray
+
 2004-10-14  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/90defaultpolicy/storage-policy.fdi: Use pamconsole option 
