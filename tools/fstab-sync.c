@@ -1653,27 +1653,23 @@ main (int argc, const char *argv[])
   openlog (PROGRAM_NAME, LOG_PID, LOG_USER);
   
   struct poptOption options[] = {
-      {"add", 'a', POPT_ARG_STRING, &udi_to_add, 0,
-        N_("add an entry to fstab"), N_("UDI")},
-      {"remove", 'r', POPT_ARG_STRING, &udi_to_remove, 0,
-        N_("remove an entry from fstab"), N_("UDI")},
-      {"clean", 'c', POPT_ARG_NONE, &should_clean, 0,
-        N_("Remove all generated entries from fstab")},
-      {"verbose", 'v', POPT_ARG_NONE, &verbose, 0,
-        N_("Report detailed information about operation progress")},
+      {"add",     'a', POPT_ARG_STRING, &udi_to_add,    0, N_("add an entry to fstab"), N_("UDI")},
+      {"remove",  'r', POPT_ARG_STRING, &udi_to_remove, 0, N_("remove an entry from fstab"), N_("UDI")},
+      {"clean",   'c', POPT_ARG_NONE,   &should_clean,  0, N_("Remove all generated entries from fstab"), NULL},
+      {"verbose", 'v', POPT_ARG_NONE,   &verbose,       0, N_("Report detailed information about operation progress"), NULL},
 
       POPT_AUTOHELP
 
-      {NULL, '\0', 0, NULL},
+      {NULL, '\0', 0, NULL, 0, NULL, NULL}
   };
 
   popt_context = poptGetContext (PROGRAM_NAME, argc, argv, options, 0);
-
+	  
   while ((i = poptGetNextOpt (popt_context)) != -1)
     {
       if (i < -1)
         {
-          poptPrintHelp (popt_context, stderr, 0);
+	  poptPrintHelp (popt_context, stderr, 0);
           return 1;
         }
     }
@@ -1760,7 +1756,6 @@ main (int argc, const char *argv[])
 			  break;
 		  }
 	  }
-  poptFreeContext (popt_context);
 
   hal_context = hal_initialize (NULL, FALSE);
   fsy_mount_root = hal_drive_policy_default_get_mount_root (hal_context);
@@ -1792,8 +1787,8 @@ main (int argc, const char *argv[])
     retval = clean ();
   else
     {
-      poptPrintHelp (popt_context, stderr, 0);
-      return 1;
+	poptPrintHelp (popt_context, stderr, 0);
+	return 1;
     }
 
   if (hal_device_udi != NULL) {
@@ -1815,6 +1810,8 @@ main (int argc, const char *argv[])
     fstab_update_debug (_("%d: ###################################\n"), pid);
     fstab_update_debug (_("\n"));
   }
+
+  poptFreeContext (popt_context);
 
 out:
   return retval;

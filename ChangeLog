@@ -1,5 +1,9 @@
 2004-10-18  David Zeuthen  <davidz@redhat.com>
 
+	* tools/fstab-sync.c (main): Fix crasher when no options are given
+
+2004-10-18  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/90defaultpolicy/storage-policy.fdi: Allows allow legacy floppy
 	drives to be mounted by matching storage.bus=platform
 
