@@ -2990,22 +2990,11 @@
       </informaltable>
     </sect2>
 
-    <sect2 id="device-properties-system">
-      <title><literal>system</literal> namespace</title>
+    <sect2 id="device-properties-ac_adaptor">
+      <title><literal>ac_adaptor</literal> namespace</title>
       <para>
 
-        Device objects with the capability <literal>system</literal>
-        represent system devices currently accessed through
-        the ACPI and PMU bus.
-
-      </para>
-    </sect2>
-
-    <sect2 id="device-properties-system-ac_adaptor">
-      <title><literal>system.ac_adaptor</literal> namespace</title>
-      <para>
-
-        Device objects with the capability <literal>system.ac_adaptor</literal>
+        Device objects with the capability <literal>ac_adaptor</literal>
         represent all the devices capable of powering the system from AC power
 
       </para>
@@ -3021,7 +3010,7 @@
           </thead>
           <tbody>
             <row>
-              <entry><literal>system.ac_adaptor.present</literal> (bool)</entry>
+              <entry><literal>ac_adaptor.present</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
@@ -3256,11 +3245,11 @@
       </informaltable>
     </sect2>
 
-    <sect2 id="device-properties-system-button">
-      <title><literal>system.button</literal> namespace</title>
+    <sect2 id="device-properties-button">
+      <title><literal>button</literal> namespace</title>
       <para>
 
-        Device objects with the capability <literal>system.button</literal>
+        Device objects with the capability <literal>button</literal>
         represent the devices capable of providing a state to the system.
 
       </para>
@@ -3276,7 +3265,7 @@
           </thead>
           <tbody>
             <row>
-              <entry><literal>system.button.type</literal> (string)</entry>
+              <entry><literal>button.type</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>The type of button</entry>
@@ -3306,16 +3295,16 @@
               </entry>
             </row>
             <row>
-              <entry><literal>system.button.has_state</literal> (bool)</entry>
+              <entry><literal>button.has_state</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>True if the button maintains state, e.g. can toggled on/off</entry>
             </row>
             <row>
-              <entry><literal>system.button.state.value</literal> (bool)</entry>
+              <entry><literal>button.state.value</literal> (bool)</entry>
               <entry></entry>
               <entry>
-                Only when <literal>system.button.has_state</literal> is
+                Only when <literal>button.has_state</literal> is
                 TRUE
               </entry>
               <entry>State of the button, TRUE if it is enabled</entry>
@@ -3341,8 +3330,8 @@
           </thead>
           <tbody>
             <row>
-              <entry><literal>SystemButtonPressed</literal></entry>
-              <entry><literal>system.button.type (string)</literal></entry>
+              <entry><literal>ButtonPressed</literal></entry>
+              <entry><literal>button.type (string)</literal></entry>
               <entry>sleep</entry>
               <entry>Emitted when a button is pressed</entry>
             </row>
@@ -3351,12 +3340,12 @@
       </informaltable>  
     </sect2>
 
-    <sect2 id="device-properties-system-processor">
-      <title><literal>system.processor</literal> namespace</title>
+    <sect2 id="device-properties-processor">
+      <title><literal>processor</literal> namespace</title>
       <para>
 
-        Device objects with the capability system.processor represent
-        CPU's in the system.
+        Device objects with the capability <literal>processor</literal>
+        represent CPU's in the system.
 
       </para>
       <informaltable>
@@ -3371,7 +3360,7 @@
           </thead>
           <tbody>
             <row>
-              <entry><literal>system.processor.number</literal> (int)</entry>
+              <entry><literal>processor.number</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
@@ -3379,7 +3368,7 @@
               </entry>
             </row>
             <row>
-              <entry><literal>system.processor.can_throttle</literal> (bool)</entry>
+              <entry><literal>processor.can_throttle</literal> (bool)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>
@@ -3388,7 +3377,7 @@
               </entry>
             </row>
             <row>
-              <entry><literal>system.processor.maximum_speed</literal> (long)</entry>
+              <entry><literal>processor.maximum_speed</literal> (long)</entry>
               <entry>example: 2200</entry>
               <entry>No</entry>
               <entry>The maximum speed of the processor in units of MHz</entry>
@@ -3398,8 +3387,8 @@
       </informaltable>
     </sect2>
 
-    <sect2 id="device-properties-system-display_device">
-      <title><literal>system.display_device</literal> namespace</title>
+    <sect2 id="device-properties-display_device">
+      <title><literal>display_device</literal> namespace</title>
       <para>
 
         Device objects with the capability <literal>display_device</literal>
@@ -3418,7 +3407,7 @@
           </thead>
           <tbody>
             <row>
-              <entry><literal>system.display_device.type</literal> (string)</entry>
+              <entry><literal>display_device.type</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>The type of display device</entry>
@@ -3442,9 +3431,9 @@
               <entry>TV Out</entry>
             </row>
             <row>
-              <entry><literal>system.display_device.lcd.brightness</literal> (int)</entry>
+              <entry><literal>display_device.lcd.brightness</literal> (int)</entry>
               <entry></entry>
-              <entry>Only if <literal>system.display_device.type</literal> is lcd</entry>
+              <entry>Only if <literal>display_device.type</literal> is lcd</entry>
               <entry>Brightness level in percent</entry>
             </row>
           </tbody>
@@ -3452,11 +3441,11 @@
       </informaltable>
     </sect2>
 
-    <sect2 id="device-properties-system-sensor">
-      <title><literal>system.sensor</literal> namespace</title>
+    <sect2 id="device-properties-sensor">
+      <title><literal>sensor</literal> namespace</title>
       <para>
 
-        Device objects with the capability <literal>system.sensor</literal>
+        Device objects with the capability <literal>sensor</literal>
         represent light or temperature sensors in the system.
 
       </para>
@@ -3472,7 +3461,7 @@
           </thead>
           <tbody>
             <row>
-              <entry><literal>system.sensor.type</literal> (string)</entry>
+              <entry><literal>sensor.type</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>The type of sensor device</entry>
@@ -3490,7 +3479,7 @@
               <entry>Temperature sensor</entry>
             </row>
             <row>
-              <entry><literal>system.sensor.location</literal> (string)</entry>
+              <entry><literal>sensor.location</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>The location of the sensor device</entry>

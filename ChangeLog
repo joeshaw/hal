@@ -1,3 +1,17 @@
+2005-03-02  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/hal-spec.xml.in: Removed all the 'system.' 
+	prefixes to the ACPI and PMU objects, they serve no purpose
+	other to confuse people.
+
+	* hald/linux2/acpi.c (ac_adapter_refresh, button_refresh):
+	Removed 'system.' prefix.
+ 
+	* hald/linux2/pmu.c (ac_adapter_refresh): Removed 
+	'system.' prefix.
+ 
+	* hald/util.c: Updated comment regarding 'system.'
+ 
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
 	* tools/device-manager/DeviceManager.py: Move some things around

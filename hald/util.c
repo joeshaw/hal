@@ -773,9 +773,9 @@ out:
  *
  *    "design voltage:          10800 mV"
  *
- *  then hal_util_set_string_elem_from_file (d, "system.battery.foo",
+ *  then hal_util_set_string_elem_from_file (d, "battery.foo",
  *  "/proc/acpi/battery/BAT0", "info", "design voltage", 1) will assign
- *  the string "mV" to the property "system.battery.foo" on d.
+ *  the string "mV" to the property "battery.foo" on d.
  *
  *  @param  d                   Device object
  *  @param  key                 Property name
@@ -813,9 +813,9 @@ out:
  *
  *    "design voltage:          10800 mV"
  *
- *  then hal_util_set_int_elem_from_file (d, "system.battery.bar",
+ *  then hal_util_set_int_elem_from_file (d, "battery.bar",
  *  "/proc/acpi/battery/BAT0", "info", "design voltage", 0) will assign
- *  the integer 10800 to the property "system.battery.foo" on d.
+ *  the integer 10800 to the property "battery.foo" on d.
  *
  *  @param  d                   Device object
  *  @param  key                 Property name
@@ -862,9 +862,9 @@ out:
  *
  *    "present:                 yes"
  *
- *  then hal_util_set_bool_elem_from_file (d, "system.battery.baz",
+ *  then hal_util_set_bool_elem_from_file (d, "battery.baz",
  *  "/proc/acpi/battery/BAT0", "info", "present", 0, "yes") will assign
- *  the boolean TRUE to the property "system.battery.baz" on d.
+ *  the boolean TRUE to the property "battery.baz" on d.
  *
  *  If, instead, the line was
  *

@@ -117,9 +117,9 @@ ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
 		return FALSE;
 
 	hal_device_property_set_string (d, "info.product", "AC Adapter");
-	hal_device_property_set_string (d, "info.category", "system.ac_adapter");
-	hal_device_add_capability (d, "system.ac_adapter");
-	hal_util_set_bool_elem_from_file (d, "system.ac_adapter.present", path, "state", "state", 0, "on-line");
+	hal_device_property_set_string (d, "info.category", "ac_adapter");
+	hal_device_add_capability (d, "ac_adapter");
+	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line");
 
 	return TRUE;
 }
@@ -138,7 +138,7 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 	parent_path = hal_util_get_parent_path (path);
 	button_type = hal_util_get_last_element (parent_path);
 
-	hal_device_property_set_string (d, "system.button.type", button_type);
+	hal_device_property_set_string (d, "button.type", button_type);
 
 	if (strcmp (button_type, "power") == 0)   
 		hal_device_property_set_string (d, "info.product", "Power Button");
@@ -147,12 +147,12 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 	else if (strcmp (button_type, "sleep") == 0)   
 		hal_device_property_set_string (d, "info.product", "Sleep Button");
 
-	hal_device_property_set_string (d, "info.category", "system.button");
-	hal_device_add_capability (d, "system.button");
-	if (!hal_util_set_bool_elem_from_file (d, "system.button.state.value", path, "state", "state", 0, "closed")) {
-		hal_device_property_set_bool (d, "system.button.has_state", FALSE);
+	hal_device_property_set_string (d, "info.category", "button");
+	hal_device_add_capability (d, "button");
+	if (!hal_util_set_bool_elem_from_file (d, "button.state.value", path, "state", "state", 0, "closed")) {
+		hal_device_property_set_bool (d, "button.has_state", FALSE);
 	} else {
-		hal_device_property_set_bool (d, "system.button.has_state", TRUE);
+		hal_device_property_set_bool (d, "button.has_state", TRUE);
 	}
 
 	g_free (parent_path);

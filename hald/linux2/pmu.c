@@ -123,10 +123,10 @@ ac_adapter_refresh (HalDevice *d, PMUDevHandler *handler)
 		return FALSE;
 
 	hal_device_property_set_string (d, "info.product", "AC Adapter");
-	hal_device_property_set_string (d, "info.category", "system.ac_adapter");
-	hal_device_add_capability (d, "system.ac_adapter");
+	hal_device_property_set_string (d, "info.category", "ac_adapter");
+	hal_device_add_capability (d, "ac_adapter");
 
-	hal_util_set_bool_elem_from_file (d, "system.ac_adapter.present", path, "", "AC Power", 0, "1");	
+	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "", "AC Power", 0, "1");	
 
 	return TRUE;
 }
