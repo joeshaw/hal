@@ -1,5 +1,13 @@
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
+	* tools/Makefile.am (install-data-local): Install the fstab-sync
+	if applicable.
+
+	* configure.in: Add the --enable-fstab-sync option to automatically
+	install a 50-fstab-sync.hal symlink to fstab-sync.
+
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
 	* hald/hald.c (main): Setup a pipe and make parent wait until client
 	writes to it.
 	(osspec_probe_done): Write to the parent to make it exit

@@ -25,5 +25,12 @@ hal_set_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 fstab_sync_SOURCES = fstab-sync.c
 fstab_sync_LDADD = -lpopt $(top_builddir)/libhal/libhal.la
 
+if FSTAB_SYNC_ENABLED
+install-data-local :
+	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
+	- cd $(DESTDIR)$(SYSCONFDIR)/hal/device.d && $(LN_S) $(sbindir)/fstab-sync 50-fstab-sync.hal
+endif
+## FSTAB_SYNC_INSTALL end
+
 clean-local :
 	rm -f *~

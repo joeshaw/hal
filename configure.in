@@ -63,6 +63,13 @@ if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
 fi
 
+AC_ARG_ENABLE(fstab-sync,         [  --enable-fstab-sync     Build and install fstab-sync],enable_fstab_sync=yes,enable_fstab_sync=no)
+if test "x$enable_fstab_sync" = "xyes" ; then
+   AC_DEFINE(FSTAB_SYNC_ENABLED,1,[Whether fstab-sync should be built and installed])
+fi
+AC_SUBST(FSTAB_SYNC_ENABLED)
+AM_CONDITIONAL(FSTAB_SYNC_ENABLED, test x$enable_fstab_sync = xyes)
+
 AC_ARG_ENABLE(mnt-noop,         [  --enable-mnt-noop       Use noop option in fstab-sync],enable_mnt_noop=yes,enable_mnt_noop=no)
 if test "x$enable_mnt_noop" = "xyes" ; then
    AC_DEFINE(FSTAB_SYNC_USE_NOOP_MOUNT_OPTION,1,[Use an unique keyword in the fstab])
@@ -372,7 +379,9 @@ echo "
         Group for HAL:            ${HAL_GROUP}
         hald pidfile:             ${HALD_PID_FILE}
 
-	fstab-sync using noop:    ${enable_mnt_noop}
+
+        install fstab-sync:       ${enable_fstab_sync}
+        fstab-sync using noop:    ${enable_mnt_noop}
         fstab-sync noop keyword:  ${FSTAB_SYNC_MOUNT_MANAGED_KEYWORD}
         fstab-sync mount root:    ${FSTAB_SYNC_MOUNT_ROOT}"
 
