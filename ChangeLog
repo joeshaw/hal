@@ -1,5 +1,15 @@
 2004-07-15  David Zeuthen  <david@fubar.dk>
 
+	Patch from Sjoerd Simons <sjoerd@luon.net>
+
+	* hald/linux/block_class_device.c (block_class_pre_process): It
+	seems there was some code missing for the detection of the
+	physical device for scsi devices. Attached patch fixes
+	this. Causing the new gnome-vfs patch to work properly on my
+	workstation :)
+
+2004-07-15  David Zeuthen  <david@fubar.dk>
+
 	Patch from Ray Strode <rstrode@redhat.com>
 
 	* tools/Makefile.am: Add rules for building fstab-sync

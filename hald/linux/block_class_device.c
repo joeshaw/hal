@@ -1109,6 +1109,10 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 			if (strcmp (bus, "scsi_device") == 0) {
 				scsidev = d_it;
+				physdev = d_it;
+				physdev_udi = udi_it;
+				hal_device_property_set_string (
+					stordev, "storage.bus", "scsi");
 			}
 
 			if (strcmp (bus, "usb") == 0) {
