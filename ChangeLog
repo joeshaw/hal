@@ -1,3 +1,10 @@
+2004-05-18  Joe shaw  <joeshaw@novell.com>
+
+	* tools/callouts/fstab-update.sh: Use /media as long as it's there
+	and /mnt doesn't exist.  Otherwise fallback to /mnt.  Should
+	happily work on all distros.  Patch from Sjoerd Simons
+	<sjoerd@luon.net>.
+
 2004-05-17  Joe Shaw  <joeshaw@novell.com>
 
 	* tools/callouts/fstab-update.sh: Guard against the script being
