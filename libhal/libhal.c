@@ -633,11 +633,13 @@ int hal_shutdown()
  */
 char** hal_get_all_devices(int* num_devices)
 { 
+    int i;
     DBusError error;
     DBusMessage* message;
     DBusMessage* reply;
     DBusMessageIter iter;
     char** device_names;
+    char** hal_device_names;
 
     message = dbus_message_new_method_call("org.freedesktop.Hal", 
                                            "/org/freedesktop/Hal/Manager",
@@ -679,7 +681,25 @@ char** hal_get_all_devices(int* num_devices)
 
     dbus_message_unref(reply);
     dbus_message_unref(message);
-    return device_names;
+
+    /* Have to convert from dbus string array to hal string array 
+     * since we can't poke at the dbus string array for the reason
+     * that d-bus use their own memory allocation scheme
+     */
+    hal_device_names = malloc(sizeof(char*)*(*num_devices));
+    if( hal_device_names==NULL )
+        return NULL; /** @todo: Handle OOM better */
+
+    for(i=0; i<(*num_devices); i++)
+    {
+        hal_device_names[i] = strdup(device_names[i]);
+        if( hal_device_names[i]==NULL )
+            return NULL; /** @todo: Handle OOM better */
+    }
+
+    dbus_free_string_array(device_names);
+
+    return hal_device_names;
 }
 
 /** Query a property type of a device.
@@ -1695,11 +1715,13 @@ char** hal_manager_find_device_string_match(const char* key,
                                             const char* value,
                                             int* num_devices)
 {
+    int i;
     DBusError error;
     DBusMessage* message;
     DBusMessage* reply;
     DBusMessageIter iter;
     char** device_names;
+    char** hal_device_names;
 
     message = dbus_message_new_method_call("org.freedesktop.Hal",
                                            "/org/freedesktop/Hal/Manager",
@@ -1744,8 +1766,168 @@ char** hal_manager_find_device_string_match(const char* key,
 
     dbus_message_unref(message);
     dbus_message_unref(reply);
-    return device_names;
+
+    /* Have to convert from dbus string array to hal string array 
+     * since we can't poke at the dbus string array for the reason
+     * that d-bus use their own memory allocation scheme
+     */
+    hal_device_names = malloc(sizeof(char*)*(*num_devices));
+    if( hal_device_names==NULL )
+        return NULL; /** @todo: Handle OOM better */
+
+    for(i=0; i<(*num_devices); i++)
+    {
+        hal_device_names[i] = strdup(device_names[i]);
+        if( hal_device_names[i]==NULL )
+            return NULL; /** @todo: Handle OOM better */
+    }
+
+    dbus_free_string_array(device_names);
+
+    return hal_device_names;
 }
+
+/** Maximum string length for capabilities; quite a hack :-/ */
+#define MAX_CAP_SIZE 2048
+
+/** Assign a capability to a device.
+ *
+ *  @param  udi                 Unique Device Id
+ *  @param  capability          Capability name
+ *  @return                     #TRUE if the capability was added, #FALSE if
+ *                              the device didn't exist
+ */
+dbus_bool_t hal_device_add_capability(const char* udi, 
+                                      const char* capability)
+{
+    char* caps;
+    char buf[MAX_CAP_SIZE];
+
+    if( !hal_device_exists(udi) )
+        return FALSE;
+
+    caps = hal_device_get_property_string(udi, "Capabilities");
+
+    if( caps!=NULL )
+    {
+        if( strstr(caps, capability)!=NULL )
+            return TRUE;
+
+        snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
+        hal_device_set_property_string(udi, "Capabilities", buf);
+    }
+    else
+    {
+        hal_device_set_property_string(udi, "Capabilities", capability);
+    }
+
+
+    return TRUE;
+}
+
+/** Check if a device got a capability. The result is undefined if the
+ *  device doesn't exist.
+ *
+ *  @param  udi                 Unique Device Id
+ *  @param  capability          Capability name
+ *  @return                     #TRUE if the device got the capability, 
+ *                              otherwise #FALSE
+ */
+dbus_bool_t hal_device_query_capability(const char* udi, 
+                                        const char* capability)
+{
+    char* caps;
+
+    caps = hal_device_get_property_string(udi, "Capabilities");
+
+    if( caps!=NULL )
+        if( strstr(caps, capability)!=NULL )
+            return TRUE;
+
+    return FALSE;
+}
+
+/** Find devices with a given capability. 
+ *
+ *  @param  capability          Capability name
+ *  @param  num_devices         Pointer to store number of devices
+ *  @return                     UDI of devices; free with 
+ *                              #hal_free_string_array()
+ */
+char** hal_find_device_by_capability(const char* capability, int* num_devices)
+{
+    int i;
+    DBusError error;
+    DBusMessage* message;
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    char** device_names;
+    char** hal_device_names;
+
+    message = dbus_message_new_method_call("org.freedesktop.Hal",
+                                           "/org/freedesktop/Hal/Manager",
+                                           "org.freedesktop.Hal.Manager",
+                                           "FindDeviceByCapability");
+    if( message==NULL )
+    {
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
+        return NULL;
+    }
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, capability);
+
+    dbus_error_init(&error);
+    reply = dbus_connection_send_with_reply_and_block(connection,
+                                                      message, -1,
+                                                      &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
+        dbus_message_unref(message);
+        return NULL;
+    }
+    if( reply==NULL )
+    {
+        dbus_message_unref(message);
+        return NULL;
+    }
+
+    // now analyze reply
+    dbus_message_iter_init(reply, &iter);
+    if( !dbus_message_iter_get_string_array(&iter, 
+                                            &device_names, num_devices) )
+    {
+        fprintf(stderr, "%s %d : wrong reply from hald\n", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    dbus_message_unref(message);
+    dbus_message_unref(reply);
+
+    /* Have to convert from dbus string array to hal string array 
+     * since we can't poke at the dbus string array for the reason
+     * that d-bus use their own memory allocation scheme
+     */
+    hal_device_names = malloc(sizeof(char*)*(*num_devices));
+    if( hal_device_names==NULL )
+        return NULL; /** @todo: Handle OOM better */
+
+    for(i=0; i<(*num_devices); i++)
+    {
+        hal_device_names[i] = strdup(device_names[i]);
+        if( hal_device_names[i]==NULL )
+            return NULL; /** @todo: Handle OOM better */
+    }
+
+    dbus_free_string_array(device_names);
+
+    return hal_device_names;    
+}
+
+
 
 /** @} */
 

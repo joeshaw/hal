@@ -53,9 +53,13 @@
 void visit_class_device_net(const char* path, 
                             struct sysfs_class_device* class_device)
 {
+    int i;
+    int len;
     char* d;
     struct sysfs_attribute* cur;
     char attr_name[SYSFS_NAME_LEN];
+    char* addr_store = NULL;
+    int media_type = 0;
 
     if( class_device->sysdevice==NULL )
     {
@@ -75,6 +79,10 @@ void visit_class_device_net(const char* path,
     hal_device_set_property_string(d, "net.interface", class_device->name);
     hal_device_set_property_string(d, "net.linux.sysfs_path", path);
 
+    hal_device_add_capability(d, "net");
+
+    hal_device_set_property_string(d, "Category", "net");
+
     dlist_for_each_data(sysfs_get_classdev_attributes(class_device), cur,
                         struct sysfs_attribute)
     {
@@ -82,38 +90,100 @@ void visit_class_device_net(const char* path,
                                      attr_name, SYSFS_NAME_LEN) != 0 )
             continue;
 
-        if( strcmp(attr_name, "type")==0 )
+        /* strip whitespace */
+        len = strlen(cur->value);
+        for(i=len-1; i>=0 && isspace(cur->value[i]); --i)
+            cur->value[i] = '\0';
+
+        if( strcmp(attr_name, "address")==0 )
         {
-            int type = parse_dec(cur->value);
+            addr_store = cur->value;
+        }
+        else if( strcmp(attr_name, "type")==0 )
+        {
+            media_type = parse_dec(cur->value);
             char* media;
 
             /* type is decimal according to net/core/net-sysfs.c and it
              * assumes values from /usr/include/net/if_arp.h. Either
              * way we store both the 
              */
-            switch(type)
+            switch(media_type)
             {
-            case ARPHRD_NETROM: media="NET/ROM pseudo"; break;
-            case ARPHRD_ETHER: media="Ethernet"; break;
-            case ARPHRD_EETHER: media="Experimenal Ethernet"; break;
-            case ARPHRD_AX25: media="AX.25 Level 2"; break;
-            case ARPHRD_PRONET: media="PROnet tokenring"; break;
-            case ARPHRD_CHAOS: media="Chaosnet"; break;
-            case ARPHRD_IEEE802: media="ATM"; break;
-            case ARPHRD_ARCNET: media="ARCnet"; break;
-            case ARPHRD_APPLETLK: media="APPLEtalk"; break;
-            case ARPHRD_DLCI: media="Frame Relay DLCI"; break;
-            case ARPHRD_ATM: media="ATM"; break;
-            case ARPHRD_METRICOM: media="Metricom STRIP (new IANA id)"; break;
-            case ARPHRD_IEEE1394: media="IEEE1394 IPv4 - RFC 2734"; break;
-            default: media="Unknown"; break;
+            case ARPHRD_NETROM: 
+                media="NET/ROM pseudo"; 
+                break;
+            case ARPHRD_ETHER: 
+                media="Ethernet"; 
+                hal_device_add_capability(d, "net.ethernet");
+                break;
+            case ARPHRD_EETHER: 
+                media="Experimenal Ethernet"; 
+                break;
+            case ARPHRD_AX25: 
+                media="AX.25 Level 2"; 
+                break;
+            case ARPHRD_PRONET: 
+                media="PROnet tokenring"; 
+                hal_device_add_capability(d, "net.tokenring");
+                break;
+            case ARPHRD_CHAOS: 
+                media="Chaosnet"; 
+                break;
+            case ARPHRD_IEEE802: 
+                media="IEEE802"; 
+                break;
+            case ARPHRD_ARCNET: 
+                media="ARCnet"; 
+                break;
+            case ARPHRD_APPLETLK: 
+                media="APPLEtalk"; 
+                break;
+            case ARPHRD_DLCI: 
+                media="Frame Relay DLCI"; 
+                break;
+            case ARPHRD_ATM: 
+                media="ATM"; 
+                hal_device_add_capability(d, "net.atm");
+                break;
+            case ARPHRD_METRICOM: 
+                media="Metricom STRIP (new IANA id)"; 
+                break;
+            case ARPHRD_IEEE1394: 
+                media="IEEE1394 IPv4 - RFC 2734"; 
+                break;
+            default: 
+                media="Unknown"; 
+                break;
             }
 
             hal_device_set_property_string(d, "net.media", media);
-            hal_device_set_property_int(d, "net.arp_proto_hw_id", 
-                                        type);
+            hal_device_set_property_int(d, "net.arpProtoHwId", 
+                                        media_type);
         }
     }
+
+    if( addr_store!=NULL && media_type==ARPHRD_ETHER )
+    {
+        unsigned int a5, a4, a3 ,a2, a1, a0;
+
+        hal_device_set_property_string(d, "ethernet.macAddr", addr_store);
+
+        if( sscanf(addr_store, "%x:%x:%x:%x:%x:%x",
+                   &a5, &a4, &a3, &a2, &a1, &a0)==6 )
+        {
+            dbus_uint32_t mac_upper, mac_lower;
+
+            mac_upper = (a5<<8)|a4;
+            mac_lower = (a3<<24)|(a2<<16)|(a1<<8)|a0;
+
+            hal_device_set_property_int(d, "ethernet.macAddrUpper",
+                                        (dbus_int32_t) mac_upper);
+            hal_device_set_property_int(d, "ethernet.macAddrLower",
+                                        (dbus_int32_t) mac_lower);
+        }
+    }
+
 
     /* check for driver */
     if( class_device->driver!=NULL )

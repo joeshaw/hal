@@ -1016,6 +1016,75 @@ static DBusHandlerResult manager_find_device_string_match(
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+
+/** Find devices in the GDL with a given capability.
+ *
+ *  <pre>
+ *  array{object_reference} Manager.FindDeviceByCapability(string capability)
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult manager_find_device_by_capability(
+    DBusConnection* connection,
+    DBusMessage* message)
+{
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusMessageIter iter_array;
+    DBusError error;
+    const char* capability;
+    HalDeviceIterator iter_device;
+    int type;
+    HalDevice* device;
+
+    LOG_TRACE(("entering"));
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &capability,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "Manager.FindDeviceByCapability");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
+
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        device = ds_device_iter_get(&iter_device);
+
+        if( !device->in_gdl )
+            continue;
+
+        type = ds_property_get_type(device, "Capabilities");
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strstr(ds_property_get_string(device, "Capabilities"),
+                       capability)!=NULL )
+                dbus_message_iter_append_string(&iter_array, device->udi);
+        }
+    }
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref (reply);
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
 /** Determine if a device exists.
  *
  *  <pre>
@@ -1498,6 +1567,15 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
     {
         return manager_find_device_string_match(connection, message);
     }
+    else if( dbus_message_is_method_call(message,
+                                         "org.freedesktop.Hal.Manager",
+                                         "FindDeviceByCapability") &&
+        strcmp(dbus_message_get_path(message), 
+               "/org/freedesktop/Hal/Manager")==0 )
+    {
+        return manager_find_device_by_capability(connection, message);
+    }
+
     else if( dbus_message_is_method_call(message,
                                          "org.freedesktop.Hal.AgentManager",
                                          "NewDevice") &&

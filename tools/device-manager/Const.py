@@ -1,0 +1,34 @@
+"""This file contains global constants."""
+
+NAME = "hal-device-manager"
+NAME_LONG = "HAL Device Manager"
+VERSION = "0.2" 
+COPYRIGHT = "Copyright (C) 2003 David Zeuthen."
+INFO = "This application shows information about\nhardware on your system"""
+AUTHORS = [
+    "David Zeuthen <david@fubar.dk>",
+    "Shannon -jj Behrens <jjinux@yahoo.com> (for simplepy)"
+]
+
+PIXBUF_COLUMN = 0
+TITLE_COLUMN  = 1
+UDI_COLUMN    = 2
+
+BUS_NAMES = {"usb"         : "USB",
+             "usbif"       : "USB Interface",
+             "pci"         : "PCI",
+             "scsi_host"   : "SCSI Host",
+             "scsi_device" : "SCSI",
+             "block"       : "Block",
+             "ide"         : "IDE",
+             "ide_host"    : "IDE Host"}
+
+STATE_NAMES = { 0 : "No device information file was found",
+                1 : "Enabling...",
+                2 : "Need information to enable",
+                3 : "Error enabling the device",
+                4 : "Enabled",
+                5 : "Disabling...",
+                6 : "Disabled",
+                7 : "Not plugged in" }
+

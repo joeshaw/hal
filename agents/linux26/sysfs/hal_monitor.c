@@ -293,13 +293,13 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
                        mp->fs_type);
 
                 /* Yay! Found a mount point; set properties accordingly */
-                hal_device_set_property_string(udi, "block.device", 
+                hal_device_set_property_string(udi, "volume.device", 
                                                mp->device);
-                hal_device_set_property_string(udi, "block.mountPoint", 
+                hal_device_set_property_string(udi, "volume.mountPoint", 
                                                mp->mount_point);
-                hal_device_set_property_string(udi, "block.fileSystem", 
+                hal_device_set_property_string(udi, "volume.fileSystem", 
                                                mp->fs_type);
-                hal_device_set_property_bool(udi, "block.isMounted", TRUE);
+                hal_device_set_property_bool(udi, "volume.isMounted", TRUE);
 
                 found_mount_point = TRUE;
             }
@@ -308,10 +308,10 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
         /* No mount point found; (possibly) remove all information */
         if( !found_mount_point )
         {
-            hal_device_set_property_bool(udi, "block.isMounted", FALSE);
-            hal_device_remove_property(udi, "block.mountPoint");
-            hal_device_remove_property(udi, "block.fileSystem");
-            hal_device_remove_property(udi, "block.device");
+            hal_device_set_property_bool(udi, "volume.isMounted", FALSE);
+            hal_device_remove_property(udi, "volume.mountPoint");
+            hal_device_remove_property(udi, "volume.fileSystem");
+            hal_device_remove_property(udi, "volume.device");
         }
     }
 

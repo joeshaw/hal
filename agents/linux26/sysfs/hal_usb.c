@@ -572,6 +572,81 @@ static char* usb_compute_udi(const char* udi, int append_num)
     return buf;
 }
 
+/** Set capabilities from interface class. This is a function from hell,
+ *  maybe some searchable data-structure would be better...
+ *
+ *  @param  udi                 UDI of HAL device to set caps on
+ *  @param  if_class            Interface class
+ *  @param  if_sub_class        Interface sub class
+ *  @param  if_proto            Interface protocol
+ */
+static void usb_add_caps_from_class(const char* udi,
+                                    int if_class, 
+                                    int if_sub_class, 
+                                    int if_proto)
+{
+    char* cat = "unknown";
+
+    switch( if_class )
+    {
+    case 0x01:
+        cat = "multimedia.audio";
+        hal_device_add_capability(udi, "multimedia.audio");
+        break;
+    case 0x02:
+        if( if_sub_class==0x06 )
+        {
+            cat = "net";
+            hal_device_add_capability(udi, "net");
+            hal_device_add_capability(udi, "net.ethernet");
+        }
+        else if( if_sub_class==0x02 && if_proto==0x01 )
+        {
+            cat = "modem";
+            hal_device_add_capability(udi, "modem");
+        }
+        break;
+    case 0x03:
+        cat = "input";
+        hal_device_add_capability(udi, "input");
+        if( if_sub_class==0x00 || if_sub_class==0x01 )
+        {
+            if( if_proto==0x01 )
+            {
+                cat = "input.keyboard";
+                hal_device_add_capability(udi, "input.keyboard");
+            }
+            else if( if_proto==0x02 )
+            {
+                cat = "input.mouse";
+                hal_device_add_capability(udi, "input.mouse");
+            }
+        }
+        break;
+    case 0x04:
+        break;
+    case 0x05:
+        break;
+    case 0x06:
+        break;
+    case 0x07:
+        cat = "printer";
+        hal_device_add_capability(udi, "printer");
+        break;
+    case 0x08:
+        cat = "storage";
+        hal_device_add_capability(udi, "storage");
+        break;
+    case 0x09:
+        cat = "hub";
+        hal_device_add_capability(udi, "hub");
+        break;
+    case 0x0a:
+        break;
+    }
+
+    hal_device_set_property_string(udi, "Category", cat);
+}
 
 /** Visitor function for interfaces on a USB device.
  *
@@ -588,6 +663,9 @@ static void visit_device_usb_interface(const char* path,
     char* pd;
     const char* driver;
     char attr_name[SYSFS_NAME_LEN];
+    int if_class = -1;
+    int if_sub_class = -1;
+    int if_proto = -1;
 
     /*printf("usb_interface: path=%s\n", path);*/
 
@@ -640,18 +718,23 @@ static void visit_device_usb_interface(const char* path,
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
 
         if( strcmp(attr_name, "bInterfaceClass")==0 )
-            hal_device_set_property_int(d, "usbif.bInterfaceClass", 
-                                        parse_dec(cur->value));
+            if_class = parse_dec(cur->value);
         else if( strcmp(attr_name, "bInterfaceSubClass")==0 )
-            hal_device_set_property_int(d, "usbif.bInterfaceSubClass",
-                                        parse_dec(cur->value));
+            if_sub_class = parse_dec(cur->value);
         else if( strcmp(attr_name, "bInterfaceProtocol")==0 )
-            hal_device_set_property_int(d, "usbif.bInterfaceProtocol", 
-                                        parse_dec(cur->value));
+            if_proto = parse_dec(cur->value);
         else if( strcmp(attr_name, "bInterfaceNumber")==0 )
             hal_device_set_property_int(d, "usbif.number", 
                                         parse_dec(cur->value));
     }
+
+    hal_device_set_property_int(d, "usbif.bInterfaceClass", if_class);
+    hal_device_set_property_int(d, "usbif.bInterfaceSubClass", if_sub_class);
+    hal_device_set_property_int(d, "usbif.bInterfaceProtocol", if_proto);
+
+    /* We set the caps on the parent device */
+    usb_add_caps_from_class(pd, if_class, if_sub_class, if_proto);
+    
 
     d = rename_and_maybe_add(d, usbif_compute_udi, "usbif");
 }

@@ -127,6 +127,8 @@ void visit_class_device_block(const char* path,
     hal_device_set_property_string(d, "Linux.sysfs_path", path);
     hal_device_set_property_string(d, "Linux.sysfs_path_device", path);
 
+    hal_device_add_capability(d, "block");
+
     dlist_for_each_data(sysfs_get_classdev_attributes(class_device), cur,
                         struct sysfs_attribute)
     {
@@ -160,14 +162,36 @@ void visit_class_device_block(const char* path,
         }
     }
 
-    if( not_partition )
+    hal_device_set_property_bool(d, "block.isVolume", !not_partition);
+
+    hal_device_set_property_string(d, "Parent", parent_udi);
+
+    if( !not_partition )
     {
+        /* We are a volume */
+        find_and_set_physical_device(d);
+        hal_device_set_property_bool(d, "isVirtual", TRUE);
+        hal_device_add_capability(d, "volume");
+        hal_device_set_property_string(d, "Category", "volume");
+
+        /* block device that is a partition; e.g. a storage volume */
+
+        /** @todo  Guestimate product name; use volume label */
+        hal_device_set_property_string(d, "Product", "Volume");
+    }
+    else
+    {
+        /* We are a disk; maybe we even offer removable media */
+        hal_device_set_property_string(d, "Category", "block");
+
         if( strcmp(hal_device_get_property_string(parent_udi, "Bus"), 
                    "ide")==0 )
         {
             const char* ide_name;
             char* model;
             char* media;
+            dbus_bool_t removable_media;
+
 
             ide_name = get_last_element(path);
             
@@ -177,56 +201,88 @@ void visit_class_device_block(const char* path,
                 hal_device_set_property_string(d, "block.model", model);
                 hal_device_set_property_string(d, "Product", model);
             }
+
+            removable_media = FALSE;
             
             /* According to the function proc_ide_read_media() in 
              * drivers/ide/ide-proc.c in the Linux sources, media
              * can only assume "disk", "cdrom", "tape", "floppy", "UNKNOWN"
-             *
-             * This is good enough for us.
              */
+
+            /** @todo Given media 'cdrom', how do we determine whether
+             *        it's a DVD or a CD-RW or both? Given floppy how
+             *        do we determine it's LS120?
+             */
+
             media = read_single_line("/proc/ide/%s/media", ide_name);
             if( media!=NULL )
             {
                 hal_device_set_property_string(d, "block.media", media);
+
+                /* Set for removable media */
+                if( strcmp(media, "disk")==0 )
+                {
+                    hal_device_add_capability(d, "fixedMedia");
+                    hal_device_add_capability(d, "fixedMedia.harddisk");
+                    hal_device_set_property_string(d, "Category", 
+                                                   "fixedMedia.harddisk");
+                }
+                else if( strcmp(media, "cdrom")==0 )
+                {
+                    hal_device_add_capability(d, "removableMedia");
+                    hal_device_add_capability(d, "removableMedia.cdrom");
+                    hal_device_set_property_string(d, "Category", 
+                                                   "removableMedia.cdrom");
+                    removable_media = TRUE;
+                }
+                else if( strcmp(media, "floppy")==0 )
+                {
+                    hal_device_add_capability(d, "removableMedia");
+                    hal_device_add_capability(d, "removableMedia.floppy");
+                    hal_device_set_property_string(d, "Category", 
+                                                   "removableMedia.floppy");
+                    removable_media = TRUE;
+                }
+                else if( strcmp(media, "tape")==0 )
+                {
+                    hal_device_add_capability(d, "removableMedia");
+                    hal_device_add_capability(d, "removableMedia.tape");
+                    hal_device_set_property_string(d, "Category", 
+                                                   "removableMedia.tape");
+                    removable_media = TRUE;
+                }
+
             }
+
+            hal_device_set_property_bool(d, "block.removableMedia", 
+                                         removable_media);
             
-            /** @todo Given media 'cdrom', how do we determine whether
-             *        it's a DVD or a CD-RW or both? 
-             */
         }
         else
         {
             /** @todo: block device on non-IDE device; how to find the
-             *         name and the media-type? */
+             *         name and the media-type? Right now we just assume
+             *         that the disk is fixed and of type flash.. This hack
+             *         does 'the right thing' on IDE-systems where the
+             *         user attach a USB storage device.
+             *
+             *         We should special case for at least SCSI once this
+             *         information is easily accessible in kernel 2.6.
+             *       
+             */
+
+            hal_device_set_property_string(d, "block.media", "flash");
+
+            hal_device_add_capability(d, "fixedMedia");
+            hal_device_add_capability(d, "fixedMedia.flash");
+            hal_device_set_property_string(d, "Category", 
+                                           "fixedMedia.flash");
             
             /* guestimate product name */
             hal_device_set_property_string(d, "Product", "Disk");
 
-            /* omit block.media */
+            /* omit block.media! */
         }
-    }
-    else
-    {
-        /* block device that is a partition; e.g. a storage volume */
-
-        /* guestimate product name */
-        hal_device_set_property_string(d, "Product", "Volume");
-    }
-
-    hal_device_set_property_bool(d, "block.isVolume", !not_partition);
-
-    hal_device_set_property_string(d, "Parent", parent_udi);
-
-    /* Being a block device and not a partition (volume) we're certainly 
-     * some kind of physical device of our own */
-    if( !not_partition )
-    {
-        find_and_set_physical_device(d);
-        hal_device_set_property_bool(d, "isVirtual", TRUE);
-    }
-    else
-    {
-        ;
     }
 
     d = rename_and_maybe_add(d, block_compute_udi, "block");

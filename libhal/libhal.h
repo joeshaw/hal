@@ -273,6 +273,17 @@ char** hal_manager_find_device_string_match(const char* key,
                                             const char* value,
                                             int* num_devices);
 
+
+dbus_bool_t hal_device_add_capability(const char* device, 
+                                      const char* capability);
+
+dbus_bool_t hal_device_query_capability(const char* udi, 
+                                        const char* capability);
+
+char** hal_find_device_by_capability(const char* capability, int* num_devices);
+
+
+
 /** @} */
 
 #if defined(__cplusplus)

@@ -66,6 +66,35 @@ typedef struct input_proc_info_s
     struct input_proc_info_s* next; /**< next element or #NULL if last */
 } input_proc_info;
 
+/** Allocate and initialize an input_proc_info object
+ *
+ *  @return                     Pointer input_proc_info object
+ */
+static input_proc_info* get_input_proc_cur_info_obj()
+{
+    input_proc_info* i;
+
+    i = malloc(sizeof(input_proc_info));
+    if( i==NULL )
+        DIE(("Cannot allocated memory"));
+
+    (i->name)[0] = '\0';
+    (i->phys_name)[0] = '\0';
+    (i->handlers)[0] = '\0';
+    (i->keybit)[0] = '\0';
+    i->evbit = 0;
+    i->ledbit = 0;
+    i->relbit = 0;
+    i->absbit = 0;
+    i->bus = 0;
+    i->vendor = 0;
+    i->product = 0;
+    i->version = 0;
+
+    return i;
+}
+
+
 /** First element in input proc linked list */
 static input_proc_info* input_proc_head = NULL;
 
@@ -198,7 +227,6 @@ static void input_proc_device_done(input_proc_info* info)
 }
 
 
-
 /** Parse a line from /proc/bus/input/devices
  *
  *  @param  s                   Line from /proc/bus/input/devices
@@ -218,15 +246,7 @@ static void input_proc_parse_line(char* s)
             input_proc_device_done(input_proc_cur_info);
         }
 
-        input_proc_cur_info = malloc(sizeof(input_proc_info));
-
-        if( input_proc_cur_info==NULL )
-            DIE(("Cannot allocated memory"));
-
-        (input_proc_cur_info->name)[0] = '\0';
-        (input_proc_cur_info->phys_name)[0] = '\0';
-        (input_proc_cur_info->handlers)[0] = '\0';
-        (input_proc_cur_info->keybit)[0] = '\0';
+        input_proc_cur_info = get_input_proc_cur_info_obj();
 
         input_proc_handle_interface(input_proc_cur_info, s);
         break;
@@ -517,6 +537,24 @@ static void process_input_proc_info(input_proc_info* i)
         hal_device_set_property_bool(udi, "input.absolute.misc", 
                                      i->absbit&(1<<ABS_MISC));
     }
+
+    /* Either way, we're an input device */
+    hal_device_add_capability(udi, "input");
+
+    /** @todo Figure out if this input device is a mouse, a keyboard or.. 
+     *        bzzzttt.. an UPS.. We can wawe our hands a bit because this
+     *        can always be overridden by a .fdi file..
+     */
+    if( i->relbit!=0 )
+    {
+        hal_device_add_capability(udi, "input.mouse");
+        hal_device_set_property_string(udi, "Category", "input.mouse");
+    }
+    else
+    {
+        hal_device_add_capability(udi, "input.keyboard");
+        hal_device_set_property_string(udi, "Category", "input.keyboard");
+    }
     
     /** @todo FIXME, is there any other key information we want to
      *        give here? Like major:minor number of device?
@@ -545,9 +583,7 @@ void hal_input_handle_hotplug_add()
     char* s;
     input_proc_info* i;
 
-    i = malloc(sizeof(input_proc_info));
-    if( i==NULL )
-        DIE(("Cannot allocated memory"));
+    i = get_input_proc_cur_info_obj();
 
     /** @todo FIXME; parse product (we don't use it yet) */
 

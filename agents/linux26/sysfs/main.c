@@ -1231,6 +1231,22 @@ int main(int argc, char* argv[])
     hal_net_init();
     hal_input_init();
 
+/*
+    {
+        int i;
+        int num_devices;
+        char** devices;
+
+        devices = hal_find_device_by_capability("input", &num_devices);
+        printf("rc: devices=%x, num_devices=%d\n", devices, num_devices);
+        for(i=0; i<num_devices; i++)
+        {
+            printf("devices[%d] = %s\n", i, devices[i]);
+        }
+        return 0;
+    }
+*/
+
     while(TRUE)
     {
         int c;

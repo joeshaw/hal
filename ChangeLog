@@ -1,3 +1,45 @@
+2003-12-03  David Zeuthen  <david@fubar.dk>
+
+	* tools/device-manager: new directory with tools/hal-device-manager
+	split into many files
+
+	* agents/linux26/sysfs/hal_block.c (visit_device_block): Set
+	Capability and Category properties
+
+	* agents/linux26/sysfs/hal_input.c (get_input_proc_cur_info_obj): new
+	function
+	(process_input_proc_info): Set Capability and Category properties
+
+	* agents/linux26/sysfs/hal_monitor.c
+	(etc_mtab_process_all_block_devices): Set some properties under
+	the volume namespace
+
+	* agents/linux26/sysfs/hal_net.c (visit_class_device_net): Set
+	Capability and Category properties; set MAC address under
+	namespace ethernet for Ethernet net devices
+
+	* agents/linux26/sysfs/hal_pci.c (visit_device_pci): Set
+	Capability and Category properties
+	(pci_add_caps_from_class): new function
+
+	* agents/linux26/sysfs/hal_usb.c (visit_device_usb_interface): Set
+	Capability and Category properties
+	(usb_add_caps_from_class): new function
+
+	* hald/main.c (manager_find_device_by_capability): new function
+	(filter_function): Add call
+
+	* libhal/libhal.c (hal_get_all_devices): Convert from d-bus string
+	array.
+	(hal_manager_find_device_string_match): Convert from d-bus string
+	array.
+	(hal_device_add_capability): new function
+	(hal_device_query_capability): new function
+	(hal_find_device_by_capability): new function
+
+	* libhal/libhal.h: Add prototypes
+
+
 2003-12-01  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26/sysfs/hal_monitor.c: new file, the /etc/mtab 
