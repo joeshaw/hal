@@ -485,7 +485,7 @@ tryagain:
 		/* Device is not in list... */
 
 		/* assign the computed device name */
-		HAL_INFO ((" ##### computed_udi=%s", computed_udi));
+		/*HAL_INFO ((" ##### computed_udi=%s", computed_udi));*/
 		hal_device_set_udi (d, computed_udi);
 		hal_device_property_set_string (d, "info.udi", computed_udi);
 
@@ -632,7 +632,7 @@ class_device_get_device_file (const char *sysfs_path,
 			 SYSFS_NAME_LEN);
 	}
 
-	HAL_INFO (("*** sysfs_path_trunc = '%s'", sysfs_path_trunc));
+	/*HAL_INFO (("*** sysfs_path_trunc = '%s'", sysfs_path_trunc));*/
 
 	/* Now invoke udevinfo */
 	if (udev_argv[0] == NULL || g_spawn_sync ("/",
@@ -663,7 +663,7 @@ class_device_get_device_file (const char *sysfs_path,
 		}
 	}
 
-	HAL_INFO (("got device file %s for %s", udev_stdout, sysfs_path));
+	/*HAL_INFO (("got device file %s for %s", udev_stdout, sysfs_path));*/
 
 	strncpy (dev_file, udev_stdout, dev_file_length);
 	return TRUE;

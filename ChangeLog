@@ -1,3 +1,38 @@
+2004-04-21  David Zeuthen  <david@fubar.dk>
+
+	* hald/callout.c
+	(hal_callout_property): callouts seem to be a bit broken right 
+	now (segfaults my box etc.), so disable them. Hopefully this is
+	fixed soon!
+	(hal_callout_capability): -do-
+	(hal_callout_device): -do
+
+	* hald/linux/usbif_bus_device.c (usbif_device_compute_udi): Don't
+	print details about the device
+
+	* hald/linux/usb_bus_device.c (usb_proc_parse): Comment out noisy
+	print statements
+
+	* hald/linux/osspec.c 
+	(handle_udev_node_created_found_device): 
+	(visit_class_device): clean up logging statements
+	(visit_device): -do-
+	(remove_device): comment out noisy logging statements
+	(remove_class_device): -do-
+	(handle_hotplug): -do-
+
+
+	* hald/linux/class_device.c 
+	(class_device_got_device_file): comment out noisy logging statement
+	(class_device_accept): -do-
+
+	* hald/linux/common.c 
+	(rename_and_merge): comment out noisy logging statements
+	(class_device_get_device_file): -do-
+
+	* hald/hald.c (gdl_store_changed): don't print device, just print
+	the UDI
+
 2004-04-21  Robert Love  <rml@ximian.com>
 
 	* hald/callout.c: add property modified callout;

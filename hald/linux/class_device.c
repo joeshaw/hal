@@ -79,7 +79,8 @@ class_device_accept (ClassDeviceHandler *self,
 		     dbus_bool_t is_probing)
 {
 
-	HAL_INFO (("path = %s, classname = %s", path, self->sysfs_class_name));	
+	/*HAL_INFO (("path = %s, classname = %s", 
+	  path, self->sysfs_class_name));*/
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {
@@ -350,7 +351,7 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
 {
 	ClassDeviceHandler *self = (ClassDeviceHandler *) user_data;
 
-	HAL_INFO (("entering"));
+	/*HAL_INFO (("entering"));*/
 
 	if (!prop_exists) {
 		HAL_WARNING (("Never got device file for class device at %s", 

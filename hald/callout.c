@@ -176,6 +176,9 @@ hal_callout_device (HalDevice *device, gboolean added)
 	GError *err = NULL;
 	const char *filename;
 
+	/* XXX */
+	return;
+
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
 	if (!g_file_test (DEVICE_CALLOUT_DIR, G_FILE_TEST_EXISTS))
@@ -236,6 +239,10 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 	GDir *dir;
 	GError *err = NULL;
 	const char *filename;
+
+	/* XXX */
+	return;
+
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
@@ -299,6 +306,10 @@ hal_callout_property (HalDevice *device, const char *key)
 	GDir *dir;
 	GError *err = NULL;
 	const char *filename;
+
+	/* XXX */
+	return;
+
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */

@@ -65,11 +65,13 @@ gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 		   gboolean is_added, gpointer user_data)
 {
 	if (is_added)
-		HAL_INFO(("Added device to GDL!"));
+		HAL_INFO (("Added device to GDL; udi=%s",
+			   hal_device_get_udi(device)));
 	else
-		HAL_INFO(("Removed device from GDL!"));
+		HAL_INFO (("Removed device from GDL; udi=%s",
+			   hal_device_get_udi(device)));
 
-	hal_device_print (device);
+	/*hal_device_print (device);*/
 
 	if (is_added) {
 		manager_send_signal_device_added (device);

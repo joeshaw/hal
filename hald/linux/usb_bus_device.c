@@ -489,6 +489,7 @@ usb_proc_parse ()
 	}
 	usb_proc_device_done (usb_proc_cur_info);
 
+/*
 	{
 		usb_proc_info *i;
 		for (i = usb_proc_head; i != NULL; i = i->next) {
@@ -510,6 +511,7 @@ usb_proc_parse ()
 			printf ("\n");
 		}
 	}
+*/
 }
 
 /** Set capabilities from interface and/or device class.  This is a

@@ -134,9 +134,8 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
 		return;
 	}
 
-	HAL_INFO (("*** classname=%s name=%s path=%s\n",
+	HAL_INFO (("*** classname=%s path=%s",
 		   class_device->classname,
-		   class_device->name,
 		   class_device->path));
 
 	for (i=0; class_device_handlers[i] != NULL; i++) {
@@ -218,6 +217,8 @@ visit_device (const char *path, dbus_bool_t visit_children)
 			      path));
 		return;
 	}
+
+	HAL_INFO (("$$$ busname=%s path=%s", device->bus, device->path));
 
 	/*HAL_INFO ((" path=%s", path));*/
 
@@ -374,8 +375,8 @@ remove_device (const char *path, const char *subsystem)
 		HAL_WARNING (("Couldn't remove device @ %s on hotplug remove", 
 			      path));
 	} else {
-		HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
-			   path, d->udi));
+		/*HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
+		  path, d->udi));*/
 		
 		hal_device_store_remove (hald_get_gdl (), d);
 	}
@@ -407,8 +408,8 @@ remove_class_device (const char *path, const char *subsystem)
 			      "hotplug remove", path));
 
 	} else {
-		HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
-			   path, d->udi));
+		/*HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
+		  path, d->udi));*/
 
 		bus_name = hal_device_property_get_string (d, "info.bus");
 
@@ -471,7 +472,7 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 		key = dbus_message_iter_get_dict_key (&dict_iter);
 		value = dbus_message_iter_get_string (&dict_iter);
 
-		HAL_INFO (("key/value : %s=%s", key, value));
+		/*HAL_INFO (("key/value : %s=%s", key, value));*/
 
 		if (strcmp (key, "ACTION") == 0) {
 			if (strcmp (value, "add") == 0) {
@@ -557,6 +558,10 @@ handle_device_event (DBusConnection * connection,
 		strncat (sysfs_dev_path, sysfs_path, SYSFS_PATH_MAX);
 
 		if (is_add ) {
+
+			HAL_INFO (("DeviceEvent add devpath=%s devfile=%s",
+				   sysfs_dev_path, filename));
+
 			hal_device_store_match_key_value_string_async (
 				hald_get_tdl (),
 				".udev.sysfs_path",
@@ -592,12 +597,12 @@ handle_udev_node_created_found_device (HalDevice * d,
 	char *dev_file = (char *) data1;
 
 	if (d != NULL) {
-		HAL_INFO (("Got dev_file=%s for udi=%s", dev_file, d->udi));
+		HAL_INFO (("dev_file=%s is for udi=%s", dev_file, d->udi));
 
 		sysfs_class_name = 
 			hal_device_property_get_string (d, ".udev.class_name");
 
-		HAL_INFO ((".udev.class_name = %s", sysfs_class_name));
+		/*HAL_INFO ((".udev.class_name = %s", sysfs_class_name));*/
 
 		for (i=0; class_device_handlers[i] != NULL; i++) {
 			ClassDeviceHandler *ch = class_device_handlers[i];
@@ -606,7 +611,7 @@ handle_udev_node_created_found_device (HalDevice * d,
 			}
 		}
 	} else {
-		HAL_WARNING (("No HAL device corresponding to device %s",
+		HAL_WARNING (("No HAL device corresponding to device file %s",
 			      dev_file));
 	}
 

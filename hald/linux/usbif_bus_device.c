@@ -89,7 +89,7 @@ usbif_device_compute_udi (HalDevice *d, int append_num)
 	else
 		format = "/org/freedesktop/Hal/devices/usbif_%s_%d-%d";
 
-	hal_device_print (d);
+	/*hal_device_print (d);*/
 
 	pd = hal_device_property_get_string (d, "info.parent");
 	len = strlen (pd);
