@@ -1667,5 +1667,69 @@ void hal_device_print(const char* udi)
     hal_free_property_set(pset);
 }
 
+/** Find a device where a single string property matches a given value.
+ *
+ *  @param  key                 Name of the property
+ *  @param  value               Value to match
+ *  @param  num_devices         Pointer to store number of devices
+ *  @return                     UDI of devices; free with 
+ *                              #hal_free_string_array()
+ */
+char** hal_manager_find_device_string_match(const char* key, 
+                                            const char* value,
+                                            int* num_devices)
+{
+    DBusError error;
+    DBusMessage* message;
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    char** device_names;
+
+    message = dbus_message_new_method_call("org.freedesktop.Hal",
+                                           "/org/freedesktop/Hal/Manager",
+                                           "org.freedesktop.Hal.Manager",
+                                           "FindDeviceStringMatch");
+    if( message==NULL )
+    {
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
+        return NULL;
+    }
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, key);
+    dbus_message_iter_append_string(&iter, value);
+
+    dbus_error_init(&error);
+    reply = dbus_connection_send_with_reply_and_block(connection,
+                                                      message, -1,
+                                                      &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error sending msg: %s\n", 
+                __FILE__, __LINE__, error.message);
+        dbus_message_unref(message);
+        return NULL;
+    }
+    if( reply==NULL )
+    {
+        dbus_message_unref(message);
+        return NULL;
+    }
+
+    // now analyze reply
+    dbus_message_iter_init(reply, &iter);
+    if( !dbus_message_iter_get_string_array(&iter, 
+                                            &device_names, num_devices) )
+    {
+        fprintf(stderr, "%s %d : wrong reply from hald\n", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    dbus_message_unref(message);
+    dbus_message_unref(reply);
+    return device_names;
+}
+
 /** @} */
 

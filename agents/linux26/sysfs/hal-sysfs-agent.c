@@ -1,0 +1,1495 @@
+/***************************************************************************
+ * CVSID: $Id$
+ *
+ * hal-sysfs-agent.c : Agent scanning sysfs for HAL on Linux 2.6
+ *
+ * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ *
+ * Licensed under the Academic Free License version 2.0
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ **************************************************************************/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
+#include <assert.h>
+#include <unistd.h>
+
+#include <dbus/dbus.h>
+#include <dbus/dbus-glib.h>
+#include <libsysfs.h>
+
+#include <libhal/libhal.h>
+
+
+/** @defgroup HalAgentsLinux26 Linux 2.6 sysfs
+ *  @ingroup  HalAgentsLinux
+ *  @brief    HAL agent using sysfs on Linux 2.6 kernels
+ *
+ *  @{
+ */
+
+
+#define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
+
+
+
+/** Memory allocation; aborts if no memory.
+ *
+ *  @param  how_much            Number of bytes to allocated
+ *  @return                     Pointer to allocated storage
+ */
+/*
+static void* xmalloc(unsigned int how_much)
+{
+    void* p = malloc(how_much);
+    if( !p )
+        DIE(("Unable to allocate %d bytes of memory", how_much));
+    return p;
+}
+*/
+
+
+
+/** List of busses we know how to handle */
+static const char* bus_support[] = {"usb", "pci", "ide", "scsi"};
+
+/** Size of list of busses to handle */
+static const int bus_support_num = sizeof(bus_support)/sizeof(char*);
+
+/** Maximum number of devices */
+#define HAL_MAX_DEVICES 16384
+
+/** List of pair of (bustype, devicepath_in_sysfs) of bus type that we know
+ *  how to handle 
+ */
+static const char* bus_support_devices[HAL_MAX_DEVICES*2];
+
+/** Number of elements in list of devices we know how to handle */
+static int bus_support_devices_num = 0;
+
+/** Append a device to list of devices of type we know how to handle.
+ *
+ *  @param  bus                 Bus-type, only the pointer is copied
+ *  @param  path                Path in sysfs; the contents of the string
+ *                              is copied
+ */
+static void bus_support_append_device(const char* bus, const char* path)
+{
+    if( bus_support_devices_num>=HAL_MAX_DEVICES )
+        return;
+
+    bus_support_devices[bus_support_devices_num*2+0] = bus;
+    bus_support_devices[bus_support_devices_num*2+1] = strdup(path);
+    bus_support_devices_num++;
+}
+
+/** Given a sysfs-path to a device, determine the bus type. Only works
+ *  for bus types we know how to handle, cf. #bus_support.
+ *
+ *  @param  path                Sysfs-path of device, e.g. 
+ *                              /sys/devices/pci0000:00/0000:00:07.2
+ *  @return                     Bus-type or #NULL if unknown type
+ */
+static const char* bus_support_find_bus(const char* path)
+{
+    int i;
+    for(i=0; i<bus_support_devices_num; i++)
+    {
+        if( strcmp(bus_support_devices[i*2+1], path)==0 )
+            return bus_support_devices[i*2];
+    }
+
+    return NULL;
+}
+
+/** Parse a double represented as a decimal number (base 10) in a string. 
+ *
+ *  @param  str                 String to parse
+ *  @return                     Double; If there was an error parsing the
+ *                              result is undefined.
+ */
+static double parse_double(const char* str)
+{
+    /** @todo Check error condition */
+    return atof(str);
+}
+
+/** Parse an integer represented as a decimal number (base 10) in a string. 
+ *
+ *  @param  str                 String to parse
+ *  @return                     Integer; If there was an error parsing the
+ *                              result is undefined.
+ */
+static dbus_int32_t parse_dec(const char* str)
+{
+    dbus_int32_t value;
+    value = strtol(str, NULL, 10);
+    /** @todo Check error condition */
+    return value;
+}
+
+/** Parse an integer represented as a hexa-decimal number (base 16) in
+ *  a string.
+ *
+ *  @param  str                 String to parse
+ *  @return                     Integer; If there was an error parsing the
+ *                              result is undefined.
+ */
+static dbus_int32_t parse_hex(const char* str)
+{
+    dbus_int32_t value;
+    value = strtol(str, NULL, 16);
+    /** @todo Check error condition */
+    return value;
+}
+
+/** Pointer to where the pci.ids file is loaded */
+static char* pci_ids = NULL;
+
+/** Length of data store at at pci_ids */
+static unsigned int pci_ids_len;
+
+/** Iterator position into pci_ids */
+static unsigned int pci_ids_iter_pos;
+
+/** Initialize the pci.ids line iterator to the beginning of the file */
+static void pci_ids_line_iter_init()
+{
+    pci_ids_iter_pos = 0;
+}
+
+/** Maximum length of lines in pci.ids */
+#define PCI_IDS_MAX_LINE_LEN 512
+
+/** Get the next line from pci.ids
+ *
+ *  @param  line_len            Pointer to where number of bytes in line will
+ *                              be stored
+ *  @return                     Pointer to the line; only valid until the
+ *                              next invocation of this function
+ */
+static char* pci_ids_line_iter_get_line(unsigned int* line_len)
+{
+    unsigned int i;
+    static char line[PCI_IDS_MAX_LINE_LEN];
+
+    for(i=0; 
+        pci_ids_iter_pos<pci_ids_len && 
+            i<PCI_IDS_MAX_LINE_LEN-1 && 
+            pci_ids[pci_ids_iter_pos]!='\n';
+        i++, pci_ids_iter_pos++)
+    {
+        line[i] = pci_ids[pci_ids_iter_pos];
+    }
+
+    line[i] = '\0';
+    if( line_len!=NULL )
+        *line_len = i;
+
+    pci_ids_iter_pos++;
+            
+    return line;
+}
+
+/** See if there are more lines to process in pci.ids
+ *
+ *  @return                     #TRUE iff there are more lines to process
+ */
+static dbus_bool_t pci_ids_line_iter_has_more()
+{
+    return pci_ids_iter_pos<pci_ids_len;
+}
+
+/** Find the name corresponding to a PCI vendor id.
+ *
+ *  @param  vendor_id           PCI vendor id
+ *  @return                     The name as a string or #NULL if the name
+ *                              couldn't be found
+ */
+static char* pci_ids_find_vendor(int vendor_id)
+{
+    char* line;
+    unsigned int i;
+    unsigned int line_len;
+    char rep[8];
+
+    snprintf(rep, 8, "%04x", vendor_id);
+    printf(" vendor_id=%x => '%s'\n", vendor_id, rep);
+
+    for(pci_ids_line_iter_init(); pci_ids_line_iter_has_more(); )
+    {
+        line = pci_ids_line_iter_get_line(&line_len);
+
+        if( line_len>=4 )
+        {
+            /* fast way to compare four bytes */
+            if( (*((dbus_uint32_t*)line))==(*((dbus_uint32_t*)rep)) )
+            {
+                /* found it */
+                for(i=4; i<line_len; i++)
+                {
+                    if( !isspace(line[i]) )
+                        break;
+                }
+                return line+i;
+            }
+
+        }
+    }
+
+    return NULL;
+}
+
+
+/** Find the names for a PCI device.
+ *
+ *  The pointers returned are only valid until the next invocation of this
+ *  function.
+ *
+ *  @param  vendor_id           PCI vendor id or 0 if unknown
+ *  @param  product_id          PCI product id or 0 if unknown
+ *  @param  subsys_vendor_id    PCI subsystem vendor id or 0 if unknown
+ *  @param  subsys_product_id   PCI subsystem product id or 0 if unknown
+ *  @param  vendor_name         Set to pointer of result or #NULL
+ *  @param  product_name        Set to pointer of result or #NULL
+ *  @param  subsys_vendor_name  Set to pointer of result or #NULL
+ *  @param  subsys_product_name Set to pointer of result or #NULL
+ */
+static void pci_ids_find(int vendor_id, int product_id,
+                         int subsys_vendor_id, int subsys_product_id,
+                         char** vendor_name, char** product_name,
+                         char** subsys_vendor_name,char** subsys_product_name)
+{
+    char* line;
+    unsigned int i;
+    unsigned int line_len;
+    unsigned int num_tabs;
+    char rep_vi[8];
+    char rep_pi[8];
+    char rep_svi[8];
+    char rep_spi[8];
+    static char store_vn[PCI_IDS_MAX_LINE_LEN];
+    static char store_pn[PCI_IDS_MAX_LINE_LEN];
+    static char store_svn[PCI_IDS_MAX_LINE_LEN];
+    static char store_spn[PCI_IDS_MAX_LINE_LEN];
+    dbus_bool_t vendor_matched=FALSE;
+    dbus_bool_t product_matched=FALSE;
+
+    snprintf(rep_vi, 8, "%04x", vendor_id);
+    snprintf(rep_pi, 8, "%04x", product_id);
+    snprintf(rep_svi, 8, "%04x", subsys_vendor_id);
+    snprintf(rep_spi, 8, "%04x", subsys_product_id);
+
+    *vendor_name = NULL;
+    *product_name = NULL;
+    *subsys_vendor_name = NULL;
+    *subsys_product_name = NULL;
+
+    for(pci_ids_line_iter_init(); pci_ids_line_iter_has_more(); )
+    {
+        line = pci_ids_line_iter_get_line(&line_len);
+
+        /* skip lines with no content */
+        if( line_len<4 )
+            continue;
+
+        /* skip comments */
+        if( line[0]=='#' )
+            continue;
+
+        /* count number of tabs */
+        num_tabs = 0;
+        for(i=0; i<line_len; i++)
+        {
+            if( line[i]!='\t' )
+                break;
+            num_tabs++;
+        }
+
+        switch( num_tabs )
+        {
+        case 0:
+            /* vendor names */
+            vendor_matched = FALSE;
+
+            /* first check subsys_vendor_id, if haven't done already */
+            if( *subsys_vendor_name==NULL && subsys_vendor_id!=0 )
+            {
+                if( (*((dbus_uint32_t*)line))==(*((dbus_uint32_t*)rep_svi)) )
+                {
+                    /* found it */
+                    for(i=4; i<line_len; i++)
+                    {
+                        if( !isspace(line[i]) )
+                            break;
+                    }
+                    strncpy(store_svn, line+i, PCI_IDS_MAX_LINE_LEN);
+                    *subsys_vendor_name = store_svn;
+                }
+            }
+            
+            /* check vendor_id */
+            if( vendor_id!=0 )
+            {
+                if( memcmp(line, rep_vi, 4)==0 )
+                {
+                    /* found it */
+                    vendor_matched = TRUE;
+
+                    for(i=4; i<line_len; i++)
+                    {
+                        if( !isspace(line[i]) )
+                            break;
+                    }
+                    strncpy(store_vn, line+i, PCI_IDS_MAX_LINE_LEN);
+                    *vendor_name = store_vn;
+                }
+            }
+            
+            break;
+
+        case 1:
+            product_matched = FALSE;
+
+            /* product names */
+            if( !vendor_matched )
+                continue;
+
+            /* check product_id */
+            if( product_id!=0 )
+            {
+                if( memcmp(line+1, rep_pi, 4)==0 )
+                {
+                    /* found it */
+
+                    product_matched = TRUE;
+
+                    for(i=5; i<line_len; i++)
+                    {
+                        if( !isspace(line[i]) )
+                            break;
+                    }
+                    strncpy(store_pn, line+i, PCI_IDS_MAX_LINE_LEN);
+                    *product_name = store_pn;
+                }
+            }
+            break;
+
+        case 2:
+            /* subsystem_vendor subsystem_product */
+            if( !vendor_matched || !product_matched )
+                continue;
+
+            /* check product_id */
+            if( subsys_vendor_id!=0 && subsys_product_id!=0 )
+            {
+                if( memcmp(line+2, rep_svi, 4)==0 &&
+                    memcmp(line+7, rep_spi, 4)==0 )
+                {
+                    /* found it */
+                    for(i=11; i<line_len; i++)
+                    {
+                        if( !isspace(line[i]) )
+                            break;
+                    }
+                    strncpy(store_spn, line+i, PCI_IDS_MAX_LINE_LEN);
+                    *subsys_product_name = store_spn;
+                }
+            }
+
+            break;
+
+        default:
+            break;
+        }
+        
+    }
+}
+
+/** Load the PCI database used for mapping vendor, product, subsys_vendor
+ *  and subsys_product numbers into names.
+ *
+ *  @param  path                Path of the pci.ids file, e.g. 
+ *                              /usr/share/hwdata/pci.ids
+ *  @return                     #TRUE if the file was succesfully loaded
+ */
+static dbus_bool_t pci_ids_load(const char* path)
+{
+    FILE* fp;
+    unsigned int num_read;
+
+    fp = fopen(path, "r");
+    if( fp==NULL )
+    {
+        printf("couldn't open PCI database at %s,", path);
+        return FALSE;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    pci_ids_len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    pci_ids = malloc(pci_ids_len);
+    if( pci_ids==NULL )
+    {
+        printf("Couldn't allocate %d bytes for PCI database file\n",
+               pci_ids_len);
+        return FALSE;
+    }
+    
+    num_read = fread(pci_ids, sizeof(char), pci_ids_len, fp);
+    if( pci_ids_len!=num_read )
+    {
+        printf("Error loading PCI database file\n");
+        free(pci_ids);
+        pci_ids=NULL;
+        return FALSE;
+    }    
+
+    return TRUE;
+}
+
+/** Free resources used by to store the PCI database
+ *
+ *  @param                      #FALSE if the PCI database wasn't loaded
+ */
+static dbus_bool_t pci_ids_free()
+{
+    if( pci_ids!=NULL )
+    {
+        free(pci_ids);
+        pci_ids=NULL;
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+
+/** This function will compute the device uid based on other properties
+ *  of the device. Specifically, the following properties are required:
+ *
+ *   - usb.idVendor, usb.idProduct, usb.bcdDevice. 
+ *
+ *  Other properties may also be used, specifically the usb.SerialNumber 
+ *  is used if available.
+ *
+ *  Requirements for uid:
+ *   - do not rely on bus, port etc.; we want this id to be as unique for
+ *     the device as we can
+ *   - make sure it doesn't rely on properties that cannot be obtained
+ *     from the minimal information we can obtain on an unplug event
+ *
+ *  @param  udi                 Unique device id of tempoary device object
+ *  @param  append_num          Number to append to name if not -1
+ *  @return                     New unique device id; only good until the
+ *                              next invocation of this function
+ */
+static char* usb_compute_udi(const char* udi, int append_num)
+{
+    static char buf[256];
+
+    /** @todo Rework this function to use e.g. serial number */
+
+    if( append_num==-1 )
+        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%x_%x_%x", 
+                hal_device_get_property_int(udi, "usb.idVendor"),
+                hal_device_get_property_int(udi, "usb.idProduct"),
+                hal_device_get_property_int(udi, "usb.bcdDevice"));
+    else
+        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%x_%x_%x/%d", 
+                hal_device_get_property_int(udi, "usb.idVendor"),
+                hal_device_get_property_int(udi, "usb.idProduct"),
+                hal_device_get_property_int(udi, "usb.bcdDevice"),
+                append_num);
+    
+    return buf;
+}
+
+/** Type for function to compute the UDI (unique device id) for a given
+ *  HAL device.
+ *
+ *  @param  udi                 Unique device id of tempoary device object
+ *  @param  append_num          Number to append to name if not -1
+ *  @return                     New unique device id; only good until the
+ *                              next invocation of this function
+ */
+typedef char* (*ComputeFDI)(const char* udi, int append_num);
+
+
+/** This function takes a temporary device and renames it to a proper
+ *  UDI using the supplied bus-specific #naming_func. After renaming
+ *  the HAL daemon will locate a .fdi file and possibly boot the
+ *  device (pending RequireEnable property).
+ *
+ *  This function handles the fact that identical devices (for
+ *  instance two completely identical USB mice) gets their own unique
+ *  device id by appending a trailing number after it.
+ *
+ *  @param  udi                 UDI (unique device id) of temporary device
+ *  @param  naming_func         Function to compute bus-specific UDI
+ *  @param  namespace           Namespace of properties that must match,
+ *                              e.g. "usb", "pci", in order to have matched
+ *                              a device
+ *  @return                     New non-temporary UDI for the device
+ *                              or #NULL if the device already existed.
+ */
+static char* rename_and_maybe_add(const char* udi, 
+                                  ComputeFDI naming_func,
+                                  const char* namespace)
+{
+    int append_num;
+    char* computed_udi;
+
+    /* udi is a temporary udi */
+
+    append_num = -1;
+tryagain:
+    /* compute the udi for the device */
+    computed_udi = (*naming_func)(udi, append_num);
+
+    /* See if a device with the computed udi already exist. It can exist
+     * because the device-list is (can be) persistent across invocations 
+     * of hald.
+     *
+     * If it does exist, note that it's udi is computed from only the same 
+     * information as our just computed udi.. So if we match, and it's
+     * unplugged, it's the same device!
+     *
+     * (of course assuming that our udi computing algorithm actually works!
+     *  Which it might not, see discussions - but we can get close enough
+     *  for it to be practical)
+     */
+    if( hal_device_exists(computed_udi) )
+    {
+        
+        if( hal_device_get_property_int(computed_udi, "State")!=
+            HAL_STATE_UNPLUGGED )
+        {
+            /* Danger, Will Robinson! Danger!
+             *
+             * Ok, this means that either
+             *
+             * a) The user plugged in two instances of the kind of
+             *    of device; or
+             *
+             * b) The agent is invoked with --probe for the second
+             *    time during the life of the HAL daemon
+             *
+             * We want to support b) otherwise we end up adding a lot
+             * of devices which is a nuisance.. We also want to be able
+             * to do b) when developing HAL agents.
+             *
+             * So, therefore we check if the non-unplugged device has 
+             * the same bus information as our newly hotplugged one.
+             */
+            if( hal_agent_device_matches(computed_udi, udi, namespace) )
+            {
+                fprintf(stderr, "Found device already present as '%s'!\n",
+                        computed_udi);
+                hal_device_print(udi);
+                hal_device_print(computed_udi);
+                /* indeed a match, must be b) ; ignore device */
+                hal_agent_remove_device(udi);
+                /* and continue processing the next device */
+                return NULL;
+            }
+            
+            /** Not a match, must be case a). Choose next computed_udi
+             *  and try again! */
+            append_num++; 
+            goto tryagain;
+        }
+        
+        /* It did exist! Merge our properties from the probed device
+         * since some of the bus-specific properties are likely to be
+         * different 
+         *
+         * (user may have changed port, #Dev is different etc.)
+         *
+         * Note that the probed device only contain bus-specific
+         * properties - the other properties will remain..
+         */
+        hal_agent_merge_properties(computed_udi, udi);
+        
+        /* Remove temporary device */
+        hal_agent_remove_device(udi);
+        
+        /* Set that the device is in the disabled state... */
+        hal_device_set_property_int(computed_udi, "State", 
+                                    HAL_STATE_DISABLED);
+        
+        /* Now try to enable the device.. */
+        if( hal_device_property_exists(computed_udi, "RequireEnable") &&
+            !hal_device_get_property_bool(computed_udi, "RequireEnable") )
+        {
+            hal_device_enable(computed_udi);
+        }
+    }
+    else
+    {
+        /* Device is not in list... */
+        
+        /* Set required parameters */
+        hal_device_set_property_bool(udi, "GotDeviceInfo", FALSE);
+        hal_device_set_property_int(udi, "State", 
+                                    HAL_STATE_NEED_DEVICE_INFO);
+        
+        /* commit the device to the Global Device List - give the
+         * computed device name */
+        hal_agent_commit_to_gdl(udi, computed_udi);
+        
+        /* Now try to enable the device - if a .fdi is found 
+         * and merged, the HAL daemon will know to respect the
+         * RequireEnable property */
+        hal_device_enable(computed_udi);
+
+    }
+
+    return computed_udi;
+}
+
+/** Given a sysfs-path for a device, this functions finds the HAL device
+ *  representing the parent of the given device. There may not be a parent
+ *  device, in which case this function returns #NULL.
+ *
+ *  @param  path                Sysfs-path of device to find parent for
+ *  @return                     UDI (unique device id) of parent, or #NULL
+ *                              if no parent device was found.
+ */
+static char* find_parent_udi_from_sysfs_path(const char* path)
+{
+    int i;
+    int len;
+    char** parent_udis;
+    int num_parent_udi;
+    char parent_path[SYSFS_PATH_MAX];
+
+    /* Find parent device by truncating our own path */
+    strncpy(parent_path, path, SYSFS_PATH_MAX);
+    len = strlen(parent_path);
+    for(i=len-1; parent_path[i]!='/'; --i)
+    {
+        parent_path[i]='\0';
+    }
+    parent_path[i]='\0';
+    
+    /*printf("*** found parent=%s\n", parent_path);*/
+    
+    /* Now find corresponding HAL device */
+    parent_udis = hal_manager_find_device_string_match("Linux.sysfs_path",
+                                                       parent_path,
+                                                       &num_parent_udi);
+    
+    /** @todo fix memory leak */
+
+    if( num_parent_udi!=1 || parent_udis==NULL )
+    {
+        /* no parent, or multiple parents; the latter don't float */
+        return NULL;
+    }
+
+    return parent_udis[0];
+}
+
+/** Visitor function for interfaces on a USB device.
+ *
+ *  @param  path                Sysfs-path for USB interface
+ *  @param  device              libsysfs object for USB interface
+ *  @param  d                   UDI of HAL device to amend interface data to
+ */
+static void visit_device_usb_interface(const char* path,
+                                       struct sysfs_device *device,
+                                       const char* d)
+{
+    int i;
+    int len;
+    int in_num;
+    int conf_num;
+    struct sysfs_attribute* cur;
+    char buf[256];
+    char attr_name[SYSFS_NAME_LEN];
+
+    /*printf("usb_interface: path=%s, d=%s\n", path, d);*/
+    
+    if( device->directory==NULL || device->directory->attributes==NULL )
+        return;
+
+    /** @todo What about multiple configurations? Must acquire an USB
+     *        device that does this :-) Right now assume configuration 1
+     */
+    conf_num = 1;
+
+    /* first, find interface number */
+    in_num = -1;
+    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    {
+        if( sysfs_get_name_from_path(cur->path, 
+                                     attr_name, SYSFS_NAME_LEN) != 0 )
+            continue;
+
+        if( strcmp(attr_name, "bInterfaceNumber")==0 )
+        {
+            in_num = parse_dec(cur->value);
+        }
+    }
+    if( in_num==-1 )
+        return;
+
+    /*printf("conf_num=%d, in_num=%d\n", conf_num, in_num);*/
+
+    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    {
+        
+        if( sysfs_get_name_from_path(cur->path, 
+                                     attr_name, SYSFS_NAME_LEN) != 0 )
+            continue;
+        
+        /* strip whitespace */
+        len = strlen(cur->value);
+        for(i=len-1; isspace(cur->value[i]); --i)
+            cur->value[i] = '\0';
+        
+        /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
+        
+        if( strcmp(attr_name, "bInterfaceClass")==0 )
+        {
+            snprintf(buf, 256, "usb.%d.%d.bInterfaceClass", conf_num, in_num);
+            hal_device_set_property_int(d, buf, parse_dec(cur->value));
+            if( conf_num==1 && in_num==0 )
+            {
+                hal_device_set_property_int(d, "usb.bInterfaceClass", 
+                                            parse_dec(cur->value));
+            }
+        }
+        else if( strcmp(attr_name, "bInterfaceSubClass")==0 )
+        {
+            snprintf(buf, 256, "usb.%d.%d.bInterfaceSubClass",conf_num,in_num);
+            hal_device_set_property_int(d, buf, parse_dec(cur->value));
+            if( conf_num==1 && in_num==0 )
+            {
+                hal_device_set_property_int(d, "usb.bInterfaceSubClass",
+                                            parse_dec(cur->value));
+            }
+        }
+        else if( strcmp(attr_name, "bInterfaceProtocol")==0 )
+        {
+            snprintf(buf, 256, "usb.%d.%d.bInterfaceProtocol",conf_num,in_num);
+            hal_device_set_property_int(d, buf, parse_dec(cur->value));
+            if( conf_num==1 && in_num==0 )
+            {
+                hal_device_set_property_int(d, "usb.bInterfaceProtocol", 
+                                            parse_dec(cur->value));
+            }
+        }
+    }
+
+}
+
+/** Visitor function for USB device.
+ *
+ *  This function parses the attributes present and creates a new HAL
+ *  device based on this information.
+ *
+ *  @param  path                Sysfs-path for device
+ *  @param  device              libsysfs object for device
+ */
+static void visit_device_usb(const char* path, struct sysfs_device *device)
+{
+    int i;
+    int len;
+    dbus_bool_t is_interface;
+    struct sysfs_attribute* cur;
+    struct sysfs_device* in;
+    const char* d;
+    const char* parent_udi;
+    char attr_name[SYSFS_NAME_LEN];
+    char in_path[SYSFS_PATH_MAX];
+
+    /*printf("usb: %s, bus_id=%s\n", path, device->bus_id);*/
+
+    if( device->directory==NULL || device->directory->attributes==NULL )
+        return;
+
+    /* Check if this is an USB interface */
+    is_interface = FALSE;
+    for(cur=device->directory->attributes; 
+        cur!=NULL && !is_interface; 
+        cur=cur->next)
+    {
+        if( sysfs_get_name_from_path(cur->path, 
+                                     attr_name, SYSFS_NAME_LEN) != 0 )
+            continue;
+        
+        if( strcmp(attr_name, "iInterface")==0 )
+            is_interface = TRUE;
+    }
+    
+    /* We handle USB interfaces when visiting parent device; see below */
+    if( is_interface )
+        return;
+    
+    /* Must be a new USB device */
+    d = hal_agent_new_device();
+    assert( d!=NULL );
+    hal_device_set_property_string(d, "Bus", "usb");
+    hal_device_set_property_string(d, "Linux.sysfs_path", path);
+    /** @note We also set the path here, because otherwise we can't handle two
+     *  identical devices per the algorithm used in a #rename_and_maybe_add()
+     *  The point is that we need something unique in the Bus namespace
+     */
+    hal_device_set_property_string(d, "usb.linux.sysfs_path", path);
+    /*printf("*** created udi=%s for path=%s\n", d, path);*/
+    
+    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    {
+        
+        if( sysfs_get_name_from_path(cur->path, 
+                                     attr_name, SYSFS_NAME_LEN) != 0 )
+            continue;
+        
+        /* strip whitespace */
+        len = strlen(cur->value);
+        for(i=len-1; isspace(cur->value[i]); --i)
+            cur->value[i] = '\0';
+        
+        /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
+        
+        if( strcmp(attr_name, "idProduct")==0 )
+            hal_device_set_property_int(d, "usb.idProduct", 
+                                        parse_hex(cur->value));
+        else if( strcmp(attr_name, "idVendor")==0 )
+            hal_device_set_property_int(d, "usb.idVendor", 
+                                        parse_hex(cur->value));
+        else if( strcmp(attr_name, "bcdDevice")==0 )
+            hal_device_set_property_int(d, "usb.bcdDevice", 
+                                        parse_hex(cur->value));
+        else if( strcmp(attr_name, "bMaxPower")==0 )
+            hal_device_set_property_int(d, "usb.bMaxPower", 
+                                        parse_dec(cur->value));
+        else if( strcmp(attr_name, "speed")==0 )
+            hal_device_set_property_double(d, "usb.speed", 
+                                           parse_double(cur->value));
+        
+        else if( strcmp(attr_name, "manufacturer")==0 )
+            hal_device_set_property_string(d, "usb.Manufacturer",
+                                           cur->value);
+        else if( strcmp(attr_name, "product")==0 )
+            hal_device_set_property_string(d, "usb.Product",
+                                           cur->value);
+        
+        else if( strcmp(attr_name, "bDeviceClass")==0 )
+            hal_device_set_property_int(d, "usb.bDeviceClass", 
+                                        parse_hex(cur->value));
+        else if( strcmp(attr_name, "bDeviceSubClass")==0 )
+            hal_device_set_property_int(d, "usb.bDeviceSubClass", 
+                                        parse_hex(cur->value));
+        else if( strcmp(attr_name, "bDeviceProtocol")==0 )
+            hal_device_set_property_int(d, "usb.bDeviceProtocol", 
+                                        parse_hex(cur->value));
+        
+        else if( strcmp(attr_name, "bNumConfigurations")==0 )
+            hal_device_set_property_int(d, "usb.numConfigurations", 
+                                        parse_dec(cur->value));
+        else if( strcmp(attr_name, "bConfigurationValue")==0 )
+            hal_device_set_property_int(d, "usb.configurationValue", 
+                                        parse_dec(cur->value));
+        
+        else if( strcmp(attr_name, "bNumInterfaces")==0 )
+            hal_device_set_property_int(d, "usb.numInterfaces", 
+                                        parse_dec(cur->value));
+        
+    } /* for all attributes */
+    
+    /* Now visit interfaces of this USB device */
+    for(in=device->children; in!=NULL; in=in->next)
+    {
+        /* Interfaces have a ":" in their name, children-devices doesn't */
+        if( strstr(in->bus_id, ":")!=NULL )
+        {
+            /*printf("Visiting interface %s\n", in->bus_id);*/
+            snprintf(in_path, SYSFS_PATH_MAX, "%s/%s", path, in->bus_id);
+            visit_device_usb_interface(in_path, in, d);
+        }
+    }
+
+    /* Compute parent */
+    parent_udi = find_parent_udi_from_sysfs_path(path);
+    if( parent_udi!=NULL )
+        hal_device_set_property_string(d, "Parent", parent_udi);
+
+    
+    /* Compute a proper UDI (unique device id), try to locate a persistent
+     * unplugged device or add it
+     */
+    rename_and_maybe_add(d, usb_compute_udi, "usb");    
+}
+
+
+
+/** This function will compute the device uid based on other properties
+ *  of the device. Specifically, the following properties are required:
+ *
+ *   - pci.idVendor, pci.idProduct
+ *
+ *  Other properties may also be used.
+ *
+ *  Requirements for uid:
+ *   - do not rely on bus, port etc.; we want this id to be as unique for
+ *     the device as we can
+ *   - make sure it doesn't rely on properties that cannot be obtained
+ *     from the minimal information we can obtain on an unplug event
+ *
+ *  @param  udi                 Unique device id of tempoary device object
+ *  @param  append_num          Number to append to name if not -1
+ *  @return                     New unique device id; only good until the
+ *                              next invocation of this function
+ */
+static char* pci_compute_udi(const char* udi, int append_num)
+{
+    static char buf[256];
+
+    /** @todo Rework this function to use e.g. serial number */
+
+    if( append_num==-1 )
+        sprintf(buf, "/org/freedesktop/Hal/devices/pci_%x_%x",
+                hal_device_get_property_int(udi, "pci.idVendor"),
+                hal_device_get_property_int(udi, "pci.idProduct"));
+    else
+        sprintf(buf, "/org/freedesktop/Hal/devices/pci_%x_%x/%d", 
+                hal_device_get_property_int(udi, "pci.idVendor"),
+                hal_device_get_property_int(udi, "pci.idProduct"),
+                append_num);
+    
+    return buf;
+}
+
+
+/** Visitor function for PCI device.
+ *
+ *  This function parses the attributes present and creates a new HAL
+ *  device based on this information.
+ *
+ *  @param  path                Sysfs-path for device
+ *  @param  device              libsysfs object for device
+ */
+static void visit_device_pci(const char* path, struct sysfs_device *device)
+{
+    int i;
+    int len;
+    char* parent_udi;
+    const char* d;
+    char attr_name[SYSFS_NAME_LEN];
+    struct sysfs_attribute* cur;
+    int vendor_id=0;
+    int product_id=0;
+    int subsys_vendor_id=0;
+    int subsys_product_id=0;
+    char* vendor_name;
+    char* product_name;
+    char* subsys_vendor_name;
+    char* subsys_product_name;
+
+    /*printf("pci: %s\n", path);*/
+
+    /* Must be a new PCI device */
+    d = hal_agent_new_device();
+    assert( d!=NULL );
+    hal_device_set_property_string(d, "Bus", "pci");
+    hal_device_set_property_string(d, "Linux.sysfs_path", path);
+    /** @note We also set the path here, because otherwise we can't handle two
+     *  identical devices per the algorithm used in a #rename_and_maybe_add()
+     *  The point is that we need something unique in the Bus namespace
+     */
+    hal_device_set_property_string(d, "pci.linux.sysfs_path", path);
+    /*printf("*** created udi=%s for path=%s\n", d, path);*/
+
+    for(cur=device->directory->attributes; cur!=NULL; cur=cur->next)
+    {
+        
+        if( sysfs_get_name_from_path(cur->path, 
+                                     attr_name, SYSFS_NAME_LEN) != 0 )
+            continue;
+        
+        /* strip whitespace */
+        len = strlen(cur->value);
+        for(i=len-1; isspace(cur->value[i]); --i)
+            cur->value[i] = '\0';
+        
+        /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
+        
+        if( strcmp(attr_name, "device")==0 )
+            product_id = parse_hex(cur->value);
+        else if( strcmp(attr_name, "vendor")==0 )
+            vendor_id = parse_hex(cur->value);
+        else if( strcmp(attr_name, "subsystem_device")==0 )
+            subsys_product_id = parse_hex(cur->value);
+        else if( strcmp(attr_name, "subsystem_vendor")==0 )
+            subsys_vendor_id = parse_hex(cur->value);
+        else if( strcmp(attr_name, "class")==0 )
+        {
+            dbus_int32_t cls;
+            cls = parse_hex(cur->value);
+            hal_device_set_property_int(d, "pci.deviceClass", (cls>>16)&0xff);
+            hal_device_set_property_int(d, "pci.deviceSubClass",(cls>>8)&0xff);
+            hal_device_set_property_int(d, "pci.deviceProtocol", cls&0xff);
+        }
+    }
+
+    hal_device_set_property_int(d, "pci.idVendor", vendor_id);
+    hal_device_set_property_int(d, "pci.idProduct", product_id);
+    hal_device_set_property_int(d, "pci.idVendorSubSystem", subsys_vendor_id);
+    hal_device_set_property_int(d, "pci.idProductSubSystem",subsys_product_id);
+
+    pci_ids_find(vendor_id, product_id, subsys_vendor_id, subsys_product_id,
+                 &vendor_name, &product_name, 
+                 &subsys_vendor_name, &subsys_product_name);
+    if( vendor_name!=NULL )
+        hal_device_set_property_string(d, "pci.Vendor", vendor_name);
+    if( product_name!=NULL )
+        hal_device_set_property_string(d, "pci.Product", product_name);
+    if( subsys_vendor_name!=NULL )
+        hal_device_set_property_string(d, "pci.VendorSubSystem",
+                                       subsys_vendor_name);
+    if( subsys_product_name!=NULL )
+        hal_device_set_property_string(d, "pci.ProductSubSystem",
+                                       subsys_product_name);
+
+    /* Compute parent */
+    parent_udi = find_parent_udi_from_sysfs_path(path);
+    if( parent_udi!=NULL )
+        hal_device_set_property_string(d, "Parent", parent_udi);
+
+    /* Compute a proper UDI (unique device id), try to locate a persistent
+     * unplugged device or add it
+     */
+    rename_and_maybe_add(d, pci_compute_udi, "pci");    
+
+}
+
+/** Visitor function for IDE device.
+ *
+ *  This function parses the attributes present and creates a new HAL
+ *  device based on this information.
+ *
+ *  @param  path                Sysfs-path for device
+ *  @param  device              libsysfs object for device
+ */
+static void visit_device_ide(const char* path, struct sysfs_device *device)
+{
+    printf("ide: %s\n", path);
+}
+
+/** Visitor function for SCSI device.
+ *
+ *  This function parses the attributes present and creates a new HAL
+ *  device based on this information.
+ *
+ *  @param  path                Sysfs-path for device
+ *  @param  device              libsysfs object for device
+ */
+static void visit_device_scsi(const char* path, struct sysfs_device *device)
+{
+    printf("scsi: %s\n", path);
+}
+
+/** Visitor function for any device.
+ *
+ *  This function determines the bus-type of the device using the 
+ *  #bus_support_devices list and call the appropriate visit_device_<bustype>
+ *  if matched.
+ *
+ *  @param  path                Sysfs-path for device
+ *  @param  device              libsysfs object for device
+ */
+static void visit_device(const char* path, struct sysfs_device *device)
+{
+    const char* bus;
+
+    if( device!=NULL && device->directory!=NULL)
+    {
+        bus = bus_support_find_bus(path);
+        if( bus!=NULL )
+        {
+            if( strcmp(bus, "usb")==0 )
+                visit_device_usb(path, device);
+            else if( strcmp(bus, "pci")==0 )
+                visit_device_pci(path, device);
+            else if( strcmp(bus, "ide")==0 )
+                visit_device_ide(path, device);
+            else if( strcmp(bus, "scsi")==0 )
+                visit_device_scsi(path, device);
+        }
+    }
+}
+
+/** Recurse through a device tree and visit all the children of the device.
+ *  Calls #visit_device on every node.
+ *
+ *  @param  path                Sysfs-path for device
+ *  @param  device              libsysfs object for device
+ */
+static void visit_device_tree(const char* path, struct sysfs_device* device)
+{
+    char newpath[SYSFS_PATH_MAX];
+
+    if( device!=NULL )
+    {
+        struct sysfs_device *cur = NULL;
+
+        visit_device(path, device);
+        
+        /* Visit all devices */
+        for(cur=device->children; cur!=NULL; cur=cur->next)
+        {
+            snprintf(newpath, SYSFS_PATH_MAX, "%s/%s", path, cur->bus_id);
+            visit_device_tree(newpath, cur);
+        }
+    }
+}
+
+/** Visit device tree for a root device. Root devices are stored in
+ *  /sys/devices.
+ *
+ *  @param  path                Path of root device, e.g. 
+ *                              /sys/devices/pci0000:00
+ */
+static void visit_root_device(const char* path)
+{
+    struct sysfs_device* root;
+
+    root = sysfs_open_device_tree((char*)path);
+    if( root==NULL )
+        DIE(("Error opening root device %s\n", path));
+
+    visit_device_tree(path, root);
+    sysfs_close_device_tree(root);
+}
+
+/** Make a list of all devices on the busses we know. Essentially traverses
+ *  /sys/bus/_busname_/devices and builds the list #bus_support_devices.
+ *
+ *  This is being done so we can determine the bus-type of a device
+ *  when traversing the root devices on the system.
+ */
+static void bus_support_collect()
+{
+    int rc;
+    int i;
+    char sysfs_path[SYSFS_PATH_MAX];
+    char path[SYSFS_PATH_MAX];
+    char linkpath[SYSFS_PATH_MAX];
+    char targetpath[SYSFS_PATH_MAX];
+    struct sysfs_directory* dir;
+    struct sysfs_dlink* current_link;
+
+    /* get mount path */
+    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
+    if( rc!=0 )
+        DIE(("Couldn't get mount path for sysfs"));
+
+    /* first get a list of all devices at the busses we support by
+     * collecting the links in /sys/bus/<busname>/devices
+     */
+    for(i=0; i<bus_support_num; i++)
+    {
+        const char* bus;
+
+        bus = bus_support[i];
+        snprintf(path, SYSFS_PATH_MAX, 
+                 "%s%s/%s%s",sysfs_path,SYSFS_BUS_DIR, bus, SYSFS_DEVICES_DIR);
+        dir = sysfs_open_directory(path);
+        if( dir==NULL )
+        {
+            DIE(("Error opening sysfs directory at %s\n", path));
+        }
+        if( sysfs_read_directory(dir)!=0 )
+        {
+            DIE(("Error reading sysfs directory at %s\n", path));
+        }
+        current_link = dir->links;
+        while( current_link!=NULL )
+        {
+            snprintf(linkpath, SYSFS_PATH_MAX, "%s/%s", 
+                     path, current_link->name);
+            rc = sysfs_get_link(linkpath, targetpath, SYSFS_PATH_MAX);
+
+            /* Append this device to list of devices */
+            bus_support_append_device(bus, targetpath);
+            
+            current_link = current_link->next;
+        }
+        sysfs_close_directory(dir);
+    }
+}
+
+/** This function is called when the program is invoked to probe sysfs.
+ */
+static void hal_sysfs_probe()
+{
+    int rc;
+    char path[SYSFS_PATH_MAX];
+    char sysfs_path[SYSFS_PATH_MAX];
+    struct sysfs_directory* current;
+    struct sysfs_directory* dir;
+
+    /* Collect devices from supported busses */
+    bus_support_collect();
+
+    /* get mount path */
+    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
+    if( rc!=0 )
+        DIE(("Couldn't get mount path for sysfs"));
+
+    /* traverse each root device */
+    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, SYSFS_DEVICES_DIR);
+    dir = sysfs_open_directory(path);
+    if( dir==NULL )
+    {
+        DIE(("Error opening sysfs directory at %s\n", path));
+    }
+    if( sysfs_read_directory(dir)!=0 )
+    {
+        DIE(("Error reading sysfs directory at %s\n", path));
+    }
+    current = dir->subdirs;
+    while( current!=NULL )
+    {
+        visit_root_device(current->path);
+        current = current->next;
+    }
+    sysfs_close_directory(dir);
+}
+
+/** This function is invoked on hotplug add events */
+static void device_hotplug_add()
+{
+    int rc;
+    const char* devpath;
+    const char* interface;
+    char path[SYSFS_PATH_MAX];
+    char sysfs_path[SYSFS_PATH_MAX];
+    struct sysfs_device* device;
+
+    /* Collect devices from supported busses */
+    bus_support_collect();
+
+    /* Discard USB interface hotplug events */
+    interface = getenv("INTERFACE");
+    if( interface!=NULL )
+        return;
+
+    /* Must have $DEVPATH */
+    devpath = getenv("DEVPATH");
+    if( devpath==NULL )
+        return;
+
+    /* get mount path for sysfs */
+    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
+    if( rc!=0 )
+        DIE(("Couldn't get mount path for sysfs"));
+
+    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
+
+    device = sysfs_open_device_tree(path);
+    if( device==NULL )
+        DIE(("Coulnd't get sysfs device object for path %s", path));
+    visit_device(path, device);
+    sysfs_close_device_tree(device);
+
+}
+
+/** This function is invoked on hotplug remove events */
+static void device_hotplug_remove()
+{
+    int rc;
+    const char* devpath;
+    const char* device_udi;
+    char path[SYSFS_PATH_MAX];
+    char sysfs_path[SYSFS_PATH_MAX];
+    char** device_udis;
+    int num_device_udis;
+
+    /* Must have $DEVPATH */
+    devpath = getenv("DEVPATH");
+    if( devpath==NULL )
+        return;
+
+    /* get mount path for sysfs */
+    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
+    if( rc!=0 )
+    {
+        DIE(("Couldn't get mount path for sysfs"));
+    }
+
+    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
+
+    /* Now find corresponding HAL device */
+    device_udis = hal_manager_find_device_string_match("Linux.sysfs_path",
+                                                       path,
+                                                       &num_device_udis);
+    if( device_udis==NULL || num_device_udis!=1 )
+    {
+        //syslog(LOG_ERR, "device_hotplug_remove(), Could not find UDI!");
+    }
+    else
+    {
+        device_udi = device_udis[0];
+        //syslog(LOG_INFO, "device_hotplug_remove(), device_udi=%s", device_udi);
+        hal_agent_remove_device(device_udi);
+    }
+}
+
+/** This function is invoked on hotplug events */
+static void device_hotplug()
+{
+    const char* action;
+
+    action = getenv("ACTION");
+    if( action==NULL )
+        return;
+
+    if( strcmp(action, "add")==0 )
+        device_hotplug_add();
+    else if( strcmp(action, "remove")==0 )
+        device_hotplug_remove();
+
+}
+
+
+/** D-BUS mainloop integration for libhal.
+ *
+ *  @param  dbus_connection     D-BUS connection to integrate
+ */
+static void mainloop_integration(DBusConnection* dbus_connection)
+{
+    dbus_connection_setup_with_g_main(dbus_connection, NULL);
+}
+
+/** Usage */
+static void usage()
+{
+    fprintf(stderr, 
+"\n"
+"usage : hal-sysfs-agent [--help] [--probe]\n"
+"\n"
+"        --probe          Probe devices present in sysfs\n"
+"        --help           Show this information and exit\n"
+"\n"
+"This program is supposed to only be invoked from the linux-hotplug package\n"
+"or from the HAL daemon hald.\n"
+"\n");
+}
+
+/** Entry point for USB agent for HAL on GNU/Linux
+ *
+ *  @param  argc                Number of arguments
+ *  @param  argv                Array of arguments
+ *  @return                     Exit code
+ */
+int main(int argc, char* argv[])
+{
+    //GMainLoop* loop;
+    LibHalFunctions hal_functions = {mainloop_integration,
+                                     NULL /*property_changed*/,
+                                     NULL /*device_added*/, 
+                                     NULL /*device_remove*/, 
+                                     NULL /*device_booting*/,
+                                     NULL /*device_shutting_down*/,
+                                     NULL /*device_disabled*/,
+                                     NULL /*device_need_device_info*/,
+                                     NULL /*device_boot_error*/,
+                                     NULL /*device_enabled*/,
+                                     NULL /*device_req_user*/ };
+
+    fprintf(stderr, "hal-sysfs-agent " PACKAGE_VERSION "\r\n");
+
+    if( hal_initialize(&hal_functions)  )
+    {
+        fprintf(stderr, "error: hal_initialize failed\r\n");
+        exit(1);
+    }
+
+    //openlog("hal-sysfs-agent", LOG_CONS|LOG_PID, LOG_DAEMON);
+
+    pci_ids_load("/usr/share/hwdata/pci.ids");
+
+    if( argc==2 && 
+        (strcmp(argv[1], "usb")==0 ||
+         strcmp(argv[1], "pci")==0) )
+    {
+        device_hotplug();
+
+        sleep(1);
+        return 0;
+    }
+
+    while(TRUE)
+    {
+        int c;
+        int option_index = 0;
+        const char* opt;
+        static struct option long_options[] = 
+        {
+            {"help", 0, NULL, 0},
+            {"probe", 0, NULL, 0},
+            {NULL, 0, NULL, 0}
+        };
+
+        c = getopt_long(argc, argv, "",
+                        long_options, &option_index);
+        if (c == -1)
+            break;
+        
+        switch(c)
+        {
+        case 0:
+            opt = long_options[option_index].name;
+
+            if( strcmp(opt, "help")==0 )
+            {
+                usage();
+                exit(0);
+            }
+            else if( strcmp(opt, "probe")==0 )
+            {
+                hal_sysfs_probe();
+
+                sleep(1);
+                return 0;
+            }
+
+        default:
+            usage();
+            exit(1);
+            break;
+        }         
+    }
+
+    usage();
+
+    return 0;
+}
+
+/** @} */

@@ -940,6 +940,75 @@ static DBusHandlerResult manager_get_all_devices(DBusConnection* connection,
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+
+/** Find devices where a single string property matches a given value.
+ *
+ *  <pre>
+ *  array{object_reference} Manager.FindDeviceStringMatch(string key,
+ *                                                        string value)
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult manager_find_device_string_match(
+    DBusConnection* connection,
+    DBusMessage* message)
+{
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusMessageIter iter_array;
+    DBusError error;
+    const char* key;
+    const char* value;
+    HalDeviceIterator iter_device;
+    int type;
+    HalDevice* device;
+
+    LOG_TRACE(("entering"));
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &key,
+                               DBUS_TYPE_STRING, &value,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "Manager.FindDeviceStringMatch");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
+
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        device = ds_device_iter_get(&iter_device);
+
+        type = ds_property_get_type(device, key);
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strcmp(ds_property_get_string(device, key),
+                       value)==0 )
+                dbus_message_iter_append_string(&iter_array, device->udi);
+        }
+    }
+
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref (reply);
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
 /** Determine if a device exists.
  *
  *  <pre>
@@ -1199,7 +1268,7 @@ static DBusHandlerResult agent_manager_remove(DBusConnection* connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    LOG_INFO(("entering, udi=%s", udi));
 
     d = ds_device_find(udi);
     if( d==NULL )
@@ -1413,6 +1482,14 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
                "/org/freedesktop/Hal/Manager")==0 )
     {
         return manager_device_exists(connection, message);
+    }
+    else if( dbus_message_is_method_call(message,
+                                         "org.freedesktop.Hal.Manager",
+                                         "FindDeviceStringMatch") &&
+        strcmp(dbus_message_get_path(message), 
+               "/org/freedesktop/Hal/Manager")==0 )
+    {
+        return manager_find_device_string_match(connection, message);
     }
     else if( dbus_message_is_method_call(message,
                                          "org.freedesktop.Hal.AgentManager",

@@ -269,6 +269,10 @@ dbus_bool_t hal_agent_merge_properties(const char* udi, const char* from_udi);
 dbus_bool_t hal_agent_device_matches(const char* udi1, const char* udi2, 
                                      const char* namespace);
 
+char** hal_manager_find_device_string_match(const char* key,
+                                            const char* value,
+                                            int* num_devices);
+
 /** @} */
 
 #if defined(__cplusplus)

@@ -1,7 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = linux linux26
+SUBDIRS = sysfs
 
 clean-local :
 	rm -f *~
-

@@ -239,6 +239,8 @@ libhal/Makefile
 agents/Makefile
 agents/linux/Makefile
 agents/linux/usb/Makefile
+agents/linux26/Makefile
+agents/linux26/sysfs/Makefile
 ])
 
 dnl ==========================================================================

@@ -1,3 +1,33 @@
+2003-11-16  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26 : new directory; for Linux 2.6 agents
+
+	* agents/linux26/Makefile.am : new file
+
+	* agents/linux26/sysfs/hal-sysfs-agent.c : new file; inspects sysfs
+	on Linux 2.6 and adds USB, PCI devices found there. Currently works
+	with both --probe and in hotplug situations. Block devices are planned
+	real soon now.
+
+	* agents/linux26/sysfs/Makefile.am : new file
+	
+	* tools/hal-device-manager: Added support for PCI devices
+
+	* tools/hal-device-manager.glade: Added PCI page in device_notebook
+	
+	* libhal/libhal.h: Added hal_manager_find_device_string_match()
+	
+	* libhal/libhal.c (hal_manager_find_device_string_match): new function
+	
+	* hald/main.c (manager_find_device_string_match): new function
+	
+	* configure.in: add agents/linux26/Makefile, agents/linux26/Makefile
+	
+	* Doxyfile.in: add agents/linux26/sysfs
+
+	* Doxyfile: add agents/linux26/sysfs
+
+
 2003-11-15  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux/usb/usb_agent.c (usb_compute_parents): Remove calls

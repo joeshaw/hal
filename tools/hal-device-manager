@@ -116,7 +116,7 @@ def build_device_tree():
     return virtual_root
 
 
-bus_names = {"usb" : "USB"}
+bus_names = {"usb" : "USB", "pci" : "PCI"}
 
 state_names = { 0 : "<span foreground='red'>No device information file was found</span>",
                 1 : "Enabling...",
@@ -144,6 +144,7 @@ def update_tab_device(device):
         product.set_label(device.properties["Product"])
         vendor.set_label(device.properties["Vendor"])
     else:
+        
         if device.properties["Bus"]=="usb":
             try:
                 product.set_label(device.properties["usb.ProductString"])
@@ -152,7 +153,24 @@ def update_tab_device(device):
             try:                
                 vendor.set_label(device.properties["usb.VendorString"])
             except:
-                vendor.set_label("Unknown")            
+                vendor.set_label("Unknown")
+                
+        elif device.properties["Bus"]=="pci":
+            if device.properties.has_key("pci.Product"):
+                product.set_label("%s"%device.properties["pci.Product"])
+            elif device.properties.has_key("pci.idProduct"):
+                product.set_label("Unknown (0x%x)"%device.properties["pci.idProduct"])
+            else:
+                product.set_label("Unknown")
+
+            if device.properties.has_key("pci.Vendor"):
+                vendor.set_label("%s"%device.properties["pci.Vendor"])
+            elif device.properties.has_key("pci.idVendor"):
+                vendor.set_label("Unknown (0x%x)"%device.properties["pci.idVendor"])
+            else:
+                vendor.set_label("Unknown")
+
+                
         else:
             vendor.set_label("Unknown")
         # clear category, capabilities
@@ -160,22 +178,73 @@ def update_tab_device(device):
         capabilities.set_label("Unknown")
 
 def update_tab_usb(device):
-    version = xml.get_widget("ns_usb_version")
+    page = xml.get_widget("device_notebook").get_nth_page(1)
+    if device.properties["Bus"]!="usb":
+        page.hide_all()
+        return
+
+    page.show_all()
+
     bandwidth = xml.get_widget("ns_usb_bandwidth")
     maxpower = xml.get_widget("ns_usb_maxpower")
+    man_id = xml.get_widget("ns_usb_man_id")
+    prod_id = xml.get_widget("ns_usb_prod_id")
+    revision = xml.get_widget("ns_usb_rev")
 
-    version.set_label("%.1f"%(device.properties["usb.version"]))
     bandwidth.set_label("%2.1f Mbit/s"%(device.properties["usb.speed"]))
-    for i in range(1,1+device.properties["usb.numConfigurations"]):
-        if device.properties["usb.config.%d.isActive"%i]:
-            maxpower.set_label("%d mA"%
-                               (device.properties["usb.config.%d.maxPower"%i]))
-        
+    maxpower.set_label("%d mA"%(device.properties["usb.bMaxPower"]))
+    if not device.properties.has_key("usb.Manufacturer"):
+        man_id.set_label("0x%04x"%(device.properties["usb.idVendor"]))
+    else:
+        man_id.set_label("%s (0x%04x)"%(device.properties["usb.Manufacturer"],
+                                        device.properties["usb.idVendor"]))
+    if not device.properties.has_key("usb.Product"):
+        prod_id.set_label("0x%04x"%(device.properties["usb.idProduct"]))
+    else:
+        prod_id.set_label("%s (0x%04x)"%(device.properties["usb.Product"],
+                                        device.properties["usb.idProduct"]))
+    bcdDevice = device.properties["usb.bcdDevice"]
+    revision.set_label("%x.%x"%((bcdDevice>>8), bcdDevice&0xff))
+
+
+def update_tab_pci(device):
+    page = xml.get_widget("device_notebook").get_nth_page(2)
+    if device.properties["Bus"]!="pci":
+        page.hide_all()
+        return
+
+    page.show_all()
+
+    man_id = xml.get_widget("ns_pci_man_id")
+    prod_id = xml.get_widget("ns_pci_prod_id")
+    subsys_man_id = xml.get_widget("ns_pci_subsys_man_id")
+    subsys_prod_id = xml.get_widget("ns_pci_subsys_prod_id")
+
+    if not device.properties.has_key("pci.Vendor"):
+        man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendor"]))
+    else:
+        man_id.set_label("%s"%(device.properties["pci.Vendor"]))
+    if not device.properties.has_key("pci.Product"):
+        prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProduct"]))
+    else:
+        prod_id.set_label("%s"%(device.properties["pci.Product"]))
+
+    if not device.properties.has_key("pci.VendorSubSystem"):
+        subsys_man_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idVendorSubSystem"]))
+    else:
+        subsys_man_id.set_label("%s"%(device.properties["pci.VendorSubSystem"]))
+    if not device.properties.has_key("pci.ProductSubSystem"):
+        subsys_prod_id.set_label("Unknown (0x%04x)"%(device.properties["pci.idProductSubSystem"]))
+    else:
+        subsys_prod_id.set_label("%s"%(device.properties["pci.ProductSubSystem"]))
+
+
 
 def update_device_notebook(device):
     # always update the "Device" tab
     update_tab_device(device)
     update_tab_usb(device)
+    update_tab_pci(device)
     
 def on_device_window_delete_event(obj, event):
     gtk.main_quit()
