@@ -54,6 +54,7 @@ extern ClassDeviceHandler net_class_handler;
 extern ClassDeviceHandler printer_class_handler;
 extern ClassDeviceHandler scsi_host_class_handler;
 extern ClassDeviceHandler scsi_device_class_handler;
+extern ClassDeviceHandler scsi_generic_class_handler;
 extern ClassDeviceHandler block_class_handler;
 
 /*
@@ -67,12 +68,19 @@ extern BusDeviceHandler usbif_bus_handler;
 extern BusDeviceHandler ide_host_bus_handler;
 extern BusDeviceHandler ide_bus_handler;
 
+/*
+ * NOTE!  Order can be significant here, especially at startup time
+ * when we're probing.  If we're expecting to find a parent device
+ * and it's not there, things will complain.  (scsi_generic needs to
+ * be after scsi_host, for example.)
+ */
 static ClassDeviceHandler* class_device_handlers[] = {
 	&input_class_handler,
 	&net_class_handler,
 	&printer_class_handler,
 	&scsi_host_class_handler,
 	&scsi_device_class_handler,
+	&scsi_generic_class_handler,
 	&block_class_handler,
 	/*&ieee1394_host_class_handler,
 	  &ieee1394_node_class_handler,*/

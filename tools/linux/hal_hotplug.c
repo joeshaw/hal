@@ -121,6 +121,8 @@ static const char *file_list_usbif[] = {
 
 static const char *file_list_scsi_device[] = { NULL };
 
+static const char *file_list_scsi_generic[] = { NULL };
+
 static const char *file_list_scsi_host[] = { NULL };
 
 static const char *file_list_block[] = {
@@ -182,6 +184,8 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 			file_list = file_list_usb;
 	} else if (strcmp (hotplug_type, "scsi_device") == 0) {
 		file_list = file_list_scsi_device;
+	} else if (strcmp (hotplug_type, "scsi_generic") == 0) {
+		file_list = file_list_scsi_generic;
 	} else if (strcmp (hotplug_type, "scsi_host") == 0) {
 		file_list = file_list_scsi_host;
 	} else if (strcmp (hotplug_type, "block") == 0) {

@@ -37,6 +37,7 @@ hald_SOURCES +=	\
 					linux/input_class_device.c	\
 					linux/net_class_device.c	\
 					linux/printer_class_device.c	\
+					linux/scsi_generic_class_device.c \
 					linux/scsi_host_class_device.c	\
 					linux/scsi_device_class_device.c \
 					linux/block_class_device.c	\

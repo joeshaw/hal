@@ -1,3 +1,17 @@
+2004-04-14  Joe Shaw  <joe@ximian.com>
+
+	* hald/Makefile.am: Build the new scsi_generic class handler.
+
+	* hald/linux/osspec.c: Add scsi_generic_class_handler.  Also add a
+	comment about how the order of the class_device_handlers array is
+	important, particularly when probing at startup.
+
+	* hald/linux/scsi_generic_class_device.c: Added.  The actual
+	handler.  The dumbest and most straightforward backend yet.
+
+	* tools/linux/hal_hotplug.c: Add file_list_scsi_generic.
+	(wait_for_sysfs_info): And add it here...
+
 2004-04-12  Joe Shaw  <joe@ximian.com>
 
 	* tools/device-manager/DeviceManager.py: Wrap the gnome.ui import
