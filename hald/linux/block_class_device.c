@@ -1181,30 +1181,26 @@ block_class_pre_process (ClassDeviceHandler *self,
 				scsidev = d_it;
 				physdev = d_it;
 				physdev_udi = udi_it;
-				hal_device_property_set_string (
-					stordev, "storage.bus", "scsi");
+				hal_device_property_set_string (stordev, "storage.bus", "scsi");
 			}
 
 			if (strcmp (bus, "usb") == 0) {
 				physdev = d_it;
 				physdev_udi = udi_it;
 				is_hotpluggable = TRUE;
-				hal_device_property_set_string (
-					stordev, "storage.bus", "usb");
+				hal_device_property_set_string (stordev, "storage.bus", "usb");
 								
 				break;
 			} else if (strcmp (bus, "ieee1394") == 0) {
 				physdev = d_it;
 				physdev_udi = udi_it;
 				is_hotpluggable = TRUE;
-				hal_device_property_set_string (
-					stordev, "storage.bus", "ieee1394");
+				hal_device_property_set_string (stordev, "storage.bus", "ieee1394");
 				break;
 			} else if (strcmp (bus, "ide") == 0) {
 				physdev = d_it;
 				physdev_udi = udi_it;
-				hal_device_property_set_string (
-					stordev, "storage.bus", "ide");
+				hal_device_property_set_string (stordev, "storage.bus", "ide");
 				break;
 			}
 
@@ -1498,6 +1494,22 @@ block_class_pre_process (ClassDeviceHandler *self,
 								did->revision);
 		}
 		drive_id_close(did);
+
+		/* see if this is really a SATA disk */
+#if 0
+		/* commented out until the value of ATA_IOC_GET_IO32 is available */
+		{
+			int fd;
+			unsigned char unused;
+
+			if ((fd = open (device_file, O_RDONLY|O_NDELAY)) != -1) {
+				if (ioctl (fd, ATA_IOC_GET_IO32, &unused) >= 0) {
+					hal_device_property_set_string (stordev, "storage.bus", "sata");
+				}
+				close (fd);
+			}
+		}
+#endif
 
 		snprintf (attr_path, SYSFS_PATH_MAX,
 			  "%s/device/type", sysfs_path);

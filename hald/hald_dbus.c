@@ -910,6 +910,36 @@ device_get_property_type (DBusConnection * connection,
 }
 
 
+static dbus_bool_t 
+sender_has_superuser_privileges (DBusConnection *connection, DBusMessage *message)
+{
+	DBusError error;
+	unsigned long user_uid;
+	const char *user_base_svc;
+
+	user_base_svc = dbus_message_get_sender (message);
+	if (user_base_svc == NULL) {
+		HAL_WARNING (("Cannot determine base service of caller"));
+		return FALSE;
+	}
+
+	HAL_DEBUG (("base_svc = %s", user_base_svc));
+
+	dbus_error_init (&error);
+	if ((user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error)) == -1) {
+		HAL_WARNING (("Could not get uid for connection"));
+		return FALSE;
+	}
+
+	HAL_INFO (("uid for caller is %ld", user_uid));
+
+	if (user_uid != 0) {
+		HAL_WARNING (("uid %d is not superuser", user_uid));
+		return FALSE;
+	}
+
+	return TRUE;
+}
 
 /** Set a property on a device.
  *
@@ -951,6 +981,11 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 	key = dbus_message_iter_get_string (&iter);
+
+	if (!sender_has_superuser_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "SetProperty: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
 
 	HAL_DEBUG (("udi=%s, key=%s", udi, key));
 
@@ -1064,6 +1099,11 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 	char buf[MAX_CAP_SIZE];
 
 	HAL_TRACE (("entering"));
+
+	if (!sender_has_superuser_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "AddCapability: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
 
 	udi = dbus_message_get_path (message);
 

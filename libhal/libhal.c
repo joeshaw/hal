@@ -123,6 +123,7 @@ struct LibHalProperty_s {
 struct LibHalContext_s {
 	DBusConnection *connection;           /**< D-BUS connection */
 	dbus_bool_t is_initialized;           /**< Are we initialised */
+	dbus_bool_t is_shutdown;              /**< Have we been shutdown */
 	dbus_bool_t cache_enabled;            /**< Is the cache enabled */
 	const LibHalFunctions *functions;     /**< Callback functions */
 	void *user_data;                      /**< User data */
@@ -451,6 +452,9 @@ filter_func (DBusConnection * connection,
 	DBusError error;
 	LibHalContext *ctx = (LibHalContext *) user_data;
 
+	if (ctx->is_shutdown)
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
 	dbus_error_init (&error);
 
 	object_path = dbus_message_get_path (message);
@@ -468,7 +472,7 @@ filter_func (DBusConnection * connection,
 			}
 			dbus_free (udi);
 		}
-		return DBUS_HANDLER_RESULT_HANDLED;
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Manager",
@@ -482,7 +486,7 @@ filter_func (DBusConnection * connection,
 			}
 			dbus_free (udi);
 		}
-		return DBUS_HANDLER_RESULT_HANDLED;
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Manager",
@@ -501,7 +505,7 @@ filter_func (DBusConnection * connection,
 			dbus_free (udi);
 			dbus_free (capability);
 		}
-		return DBUS_HANDLER_RESULT_HANDLED;
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Device", "Condition")) {
@@ -520,7 +524,7 @@ filter_func (DBusConnection * connection,
 
 			dbus_free (condition_name);
 		}
-		return DBUS_HANDLER_RESULT_HANDLED;
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else
 	    if (dbus_message_is_signal
 		(message, "org.freedesktop.Hal.Device",
@@ -559,7 +563,7 @@ filter_func (DBusConnection * connection,
 			}
 
 		}
-		return DBUS_HANDLER_RESULT_HANDLED;
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
 
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -618,6 +622,9 @@ hal_initialize (const LibHalFunctions * cb_functions,
 		return NULL;
 	}
 
+	ctx->is_initialized = FALSE;
+	ctx->is_shutdown = FALSE;
+
 	ctx->cache_enabled = use_cache;
 
 	ctx->functions = cb_functions;
@@ -664,6 +671,7 @@ hal_initialize (const LibHalFunctions * cb_functions,
 	}
 
 	ctx->is_initialized = TRUE;
+	ctx->is_shutdown = TRUE;
 
 	return ctx;
 }
@@ -680,8 +688,36 @@ hal_shutdown (LibHalContext *ctx)
 	if (!ctx->is_initialized)
 		return 1;
 
-	/** @todo cleanup */
-	free (ctx);
+	/* unsubscribe the match rule we added in initialize; this is safe even with multiple
+	 * instances of libhal running - see the dbus docs */
+	dbus_bus_remove_match (ctx->connection,
+			       "type='signal',"
+			       "interface='org.freedesktop.Hal.Manager',"
+			       "sender='org.freedesktop.Hal',"
+			       "path='/org/freedesktop/Hal/Manager'", &error);
+	if (dbus_error_is_set (&error)) {
+		fprintf (stderr, "%s %d : Error removing match rule, error=%s\r\n",
+			 __FILE__, __LINE__, error.message);
+	}
+
+	/* TODO: remove all other match rules */
+
+	/* set a flag so we don't propagte callbacks from this context anymore */
+	ctx->is_shutdown = TRUE;
+
+	/* yikes, it's dangerous to unref the connection since it will terminate the process
+	 * because this connection may be shared so we cannot set the exit_on_disconnect flag
+	 *
+	 * so we don't do that right now 
+	 *
+	 */
+	/*dbus_connection_unref (ctx->connection);*/
+
+	/* we also refuse to free the resources as filter_function may reference these 
+	 * 
+	 * should free async when our connection goes away.
+	 */
+	/* free (ctx); */
 	return 0;
 }
 

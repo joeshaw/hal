@@ -1,3 +1,25 @@
+2004-09-27  David Zeuthen  <david@fubar.dk>
+
+	* libhal/libhal.c:
+	(struct LibHalContext_s): add is_shutdown field
+	(filter_func): if ctx->is_shutdown is TRUE don't process the message.
+	Return NOT_YET_HANDLED instead of HANDLED on all messages as several
+	libhal contexts may want to process them.
+	(hal_initialize): Set ctx->is_shutdown to FALSE
+	(hal_shutdown): Remove the matching rule on the Manager object and
+	set is_shutdown to TRUE. Don't fix the leak on the DBusConnection
+	because leaking it means that the application will terminate. Hence
+	introduce a leak of the LibHalContext since shutdown is async. Add
+	a few TODO comments about that this needs fixing (probably needs
+	dbus_bus_get_dedicated).
+
+	* hald/hald_dbus.c (sender_has_superuser_privileges): New function
+	(device_set_property): Require superuser
+	(device_add_capability): Require superuser
+
+	* hald/linux/block_class_device.c (block_class_pre_process): Add checks
+	for SATA disks - code snippet from Alan Cox <alan@redhat.com>
+
 2004-09-27  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_vfat): Fix

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-09-22 23:26+0200\n"
+"POT-Creation-Date: 2004-09-25 01:00+0200\n"
 "PO-Revision-Date: 2004-09-22 23:26+0200\n"
 "Last-Translator: David Zeuthen <davidz@redhat.com>\n"
 "Language-Team: Danish <dansk@klid.dk>\n"
@@ -16,120 +16,120 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: libhal-storage/libhal-storage.c:241
+#: libhal-storage/libhal-storage.c:288
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Eksternt %s%s drev"
 
-#: libhal-storage/libhal-storage.c:244
+#: libhal-storage/libhal-storage.c:291
 #, c-format
 msgid "%s%s Drive"
 msgstr "%s%s drev"
 
-#: libhal-storage/libhal-storage.c:253
+#: libhal-storage/libhal-storage.c:300
 msgid "External Floppy Drive"
 msgstr "Eksternt Diskette Drev"
 
-#: libhal-storage/libhal-storage.c:255
+#: libhal-storage/libhal-storage.c:302
 msgid "Floppy Drive"
 msgstr "Diskette Drev"
 
-#: libhal-storage/libhal-storage.c:262
+#: libhal-storage/libhal-storage.c:309
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "%s Ekstern Hard Disk Drev"
 
-#: libhal-storage/libhal-storage.c:265
+#: libhal-storage/libhal-storage.c:312
 #, c-format
 msgid "%s Hard Drive"
 msgstr "%s Hard Disk Drev"
 
-#: libhal-storage/libhal-storage.c:270
+#: libhal-storage/libhal-storage.c:317
 msgid "External Hard Drive"
 msgstr "Ekstern Hard Disk"
 
-#: libhal-storage/libhal-storage.c:272
+#: libhal-storage/libhal-storage.c:319
 msgid "Hard Drive"
 msgstr "Hard Disk"
 
-#: libhal-storage/libhal-storage.c:281
+#: libhal-storage/libhal-storage.c:328
 msgid "Drive"
 msgstr "Drev"
 
-#: libhal-storage/libhal-storage.c:330
+#: libhal-storage/libhal-storage.c:377
 msgid "CD-ROM Disc"
 msgstr "CD-ROM medie"
 
-#: libhal-storage/libhal-storage.c:335
+#: libhal-storage/libhal-storage.c:382
 msgid "Blank CD-R Disc"
 msgstr "Blankt CD-R medie"
 
-#: libhal-storage/libhal-storage.c:337
+#: libhal-storage/libhal-storage.c:384
 msgid "CD-R Disc"
 msgstr "CD-R medie"
 
-#: libhal-storage/libhal-storage.c:342
+#: libhal-storage/libhal-storage.c:389
 msgid "Blank CD-RW Disc"
 msgstr "Blankt CD-RW medie"
 
-#: libhal-storage/libhal-storage.c:344
+#: libhal-storage/libhal-storage.c:391
 msgid "CD-RW Disc"
 msgstr "CD-RW medie"
 
-#: libhal-storage/libhal-storage.c:348
+#: libhal-storage/libhal-storage.c:395
 msgid "DVD-ROM Disc"
 msgstr "DVD-ROM medie"
 
-#: libhal-storage/libhal-storage.c:353
+#: libhal-storage/libhal-storage.c:400
 msgid "Blank DVD-RAM Disc"
 msgstr "Blankt DVD-RAM medie"
 
-#: libhal-storage/libhal-storage.c:355
+#: libhal-storage/libhal-storage.c:402
 msgid "DVD-RAM Disc"
 msgstr "DVD-RAM medie"
 
-#: libhal-storage/libhal-storage.c:360
+#: libhal-storage/libhal-storage.c:407
 msgid "Blank DVD-R Disc"
 msgstr "Blankt DVD-R medie"
 
-#: libhal-storage/libhal-storage.c:362
+#: libhal-storage/libhal-storage.c:409
 msgid "DVD-R Disc"
 msgstr "DVD-R medie"
 
-#: libhal-storage/libhal-storage.c:367
+#: libhal-storage/libhal-storage.c:414
 msgid "Blank DVD-RW Disc"
 msgstr "Blankt DVD-RW medie"
 
-#: libhal-storage/libhal-storage.c:369
+#: libhal-storage/libhal-storage.c:416
 msgid "DVD-RW Disc"
 msgstr "DVD-RW medie"
 
-#: libhal-storage/libhal-storage.c:375
+#: libhal-storage/libhal-storage.c:422
 msgid "Blank DVD+R Disc"
 msgstr "Blankt DVD+R medie"
 
-#: libhal-storage/libhal-storage.c:377
+#: libhal-storage/libhal-storage.c:424
 msgid "DVD+R Disc"
 msgstr "DVD+R medie"
 
-#: libhal-storage/libhal-storage.c:382
+#: libhal-storage/libhal-storage.c:429
 msgid "Blank DVD+RW Disc"
 msgstr "Blankt DVD+RW medie"
 
-#: libhal-storage/libhal-storage.c:384
+#: libhal-storage/libhal-storage.c:431
 msgid "DVD+RW Disc"
 msgstr "DVD+RW medie"
 
-#: libhal-storage/libhal-storage.c:391
+#: libhal-storage/libhal-storage.c:438
 msgid "Audio Disc"
 msgstr "Lyd CD"
 
-#: libhal-storage/libhal-storage.c:399
+#: libhal-storage/libhal-storage.c:446
 #, c-format
 msgid "%s Removable Media"
 msgstr "%s flytbart medie"
 
-#: libhal-storage/libhal-storage.c:402
+#: libhal-storage/libhal-storage.c:449
 #, c-format
 msgid "%s Media"
 msgstr "%s medie"
