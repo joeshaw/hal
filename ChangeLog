@@ -1,3 +1,8 @@
+2005-03-29  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/information/10freedesktop/10-usb-pda.fdi: New file to
+	match all PDA's - right now it only got a single entry
+
 2005-03-24  David Zeuthen  <davidz@redhat.com>
 
 	* libhal/libhal.c (filter_func): Stupid bug; checked for ctx->

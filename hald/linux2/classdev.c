@@ -570,7 +570,6 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 		hal_device_property_set_string (d, "serial.type", "platform");
 		hal_device_property_set_string (d, "info.product",
 						hal_device_property_get_string (physdev, "info.product"));
-
 	} else if (sscanf (last_elem, "ttyUSB%d", &portnum) == 1) {
 		HalDevice *usbdev;
 
@@ -602,8 +601,6 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 		hal_device_property_set_string (d, "serial.type", "unknown");
 		hal_device_property_set_string (d, "info.product", "Serial Port");
 	}
-
-
 
 	/* TODO: run prober to see if there actually is a physical
 	 *       serial port if possible (on my T41, the kernel

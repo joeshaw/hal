@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+
+    <!-- PDA's use the visor driver are all PalmOS devices -->
+    <match key="@serial.physical_device:info.linux.driver" string="visor">
+      <match key="serial.port" int="1">
+	<append key="info.capabilities" type="strlist">pda</append>
+	<merge key="pda.platform" type="string">palmos</merge>
+	<merge key="pda.serial_device" type="copy_property">serial.device</merge>
+      </match>
+    </match>
+
+  </device>
+</deviceinfo>
+
