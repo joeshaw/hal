@@ -1,3 +1,37 @@
+2004-01-04  David Zeuthen  <david@fubar.dk>
+
+	* tools/linux/hal_hotplug.c: Don't include dbus-glib
+
+2004-01-04  Joe Shaw  <joe@ximian.com>
+
+	* hald/main.c (PendingUpdate_s): Remove the "const" from the
+	"key" field, since it's supposed to be freed.
+ 
+	* hald/linux/linux_class_block.c: #include <glib.h>.
+	(visit_class_device_block_got_parent): The path should be declared
+	const.  g_spawn_sync() was missing a NULL GError argument.
+	(etc_mtab_process_all_block_devices): existing_block_device should
+	be declared const.
+	(get_udev_root): g_spawn_sync() needs a GError argument.
+ 
+	* hald/linux/linux_class_net.c: Add #include "../hald.h".
+	(visit_class_device_net): Wrap the check for ARPHRD_IEEE1394 in an
+	#ifdef, since my machine doesn't seem to define it.
+ 
+	* hald/linux/linux_common.c: #define _GNU_SOURCE since we're using
+	strndup().
+ 
+2004-01-04  Joe Shaw  <joe@ximian.com>
+ 
+	* configure.in: Do a separate check for dbus alone, so that we can
+	link libhal to it and not the glib libs.  This fixes things for
+	a dbus installed into a separate prefix.
+ 
+	* libhal/Makefile.am: Use the DBUS_CFLAGS for the INCLUDES and
+	DBUS_LIBS for the libhal_la_LIBADD.
+
+	* tools/linux/Makefile.am: Ditto for hal_hotplug
+ 
 2004-01-04  Anders Carlsson  <andersca@gnome.org>
 
 	* tools/device-manager/DeviceManager.py:

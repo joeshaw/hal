@@ -1728,7 +1728,7 @@ static int num_pending_updates = 0;
 typedef struct PendingUpdate_s
 {
     HalDevice* device;    /**< pointer to device */
-    const char* key;      /**< key of property; free this memory when done */
+    char* key;            /**< key of property; free this memory when done */
     dbus_bool_t removed;  /**< true iff property was removed */
     dbus_bool_t added;    /**< true iff property was added */
     struct PendingUpdate_s* next; /**< next update or #NULL */

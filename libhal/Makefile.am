@@ -3,7 +3,7 @@
 INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
-	@PACKAGE_CFLAGS@
+	@DBUS_CFLAGS@
 
 lib_LTLIBRARIES=libhal.la
 
@@ -16,7 +16,7 @@ libhal_la_SOURCES =                                       \
 	libhal.c                  libhal.h
 
 
-libhal_la_LIBADD = -ldbus-1
+libhal_la_LIBADD = @DBUS_LIBS@ 
 
 clean-local :
 	rm -f *~

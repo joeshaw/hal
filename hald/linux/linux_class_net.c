@@ -46,6 +46,7 @@
 
 #include <net/if_arp.h> /* for ARPHRD_ETHER etc. */
 
+#include "../hald.h"
 #include "../logger.h"
 #include "../device_store.h"
 #include "linux_class_net.h"
@@ -201,9 +202,11 @@ void visit_class_device_net(const char* path,
     case ARPHRD_METRICOM: 
         media="Metricom STRIP (new IANA id)"; 
         break;
+#ifdef ARPHRD_IEEE1394
     case ARPHRD_IEEE1394: 
         media="IEEE1394 IPv4 - RFC 2734"; 
         break;
+#endif
     default: 
         media="Unknown"; 
         break;

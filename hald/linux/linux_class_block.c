@@ -40,6 +40,8 @@
 #include <sys/stat.h>
 #include <signal.h>
 
+#include <glib.h>
+
 #define _GNU_SOURCE 1
 #include <linux/fcntl.h>
 #include <linux/kdev_t.h>
@@ -235,7 +237,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
     if( is_probing )
     {
         int i;
-        char* path;
+        const char* path;
         int sysfs_mount_path_len;
         char sysfs_path_trunc[SYSFS_NAME_LEN];
         char* udev_argv[4] = {"/sbin/udev", "-q", 
@@ -265,7 +267,8 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
                          NULL,
                          &udev_stdout,
                          &udev_stderr,
-                         &udev_exitcode)!=TRUE )
+                         &udev_exitcode,
+			 NULL)!=TRUE )
         {
             HAL_ERROR(("Couldn't invoke /sbin/udev"));
             goto error;
@@ -739,7 +742,7 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 
             if( mp->major==major && mp->minor==minor )
             {
-                char* existing_block_device;
+		const char* existing_block_device;
 
                 HAL_INFO((
                     "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
@@ -824,7 +827,8 @@ static void get_udev_root()
                      NULL,
                      &udev_stdout,
                      &udev_stderr,
-                     &udev_exitcode)!=TRUE )
+                     &udev_exitcode,
+		     NULL)!=TRUE )
     {
         HAL_ERROR(("Couldn't invoke /sbin/udev -r"));
         return;

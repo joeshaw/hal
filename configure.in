@@ -142,8 +142,8 @@ else
 fi
 
 
-
-pkg_modules="glib-2.0 >= 2.2.2, dbus-1 >= 0.20, dbus-glib-1 >= 0.20"
+dbus_module="dbus-1 >= 0.20"
+pkg_modules="glib-2.0 >= 2.2.2, dbus-glib-1 >= 0.20, $dbus_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
@@ -161,7 +161,11 @@ AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
 AC_SUBST(PACKAGE_CFLAGS)
 AC_SUBST(PACKAGE_LIBS)
 
+# Now just the D-BUS libs
+PKG_CHECK_MODULES(DBUS, [$dbus_module])
 
+AC_SUBST(DBUS_CFLAGS)
+AC_SUBST(DBUS_LIBS)
 
 ### All this also from dbus
 

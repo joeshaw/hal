@@ -34,7 +34,6 @@
 #include <unistd.h>
 
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
 
 /**
  * @defgroup HalMisc  Misc tools for HAL
