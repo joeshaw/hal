@@ -1322,6 +1322,7 @@ add_udi (const char *udi)
 	char *dir = NULL;
 	char *last_slash;
 	char *mount_point;
+	char *device_file;
 	
 	dir = strdup (_PATH_FSTAB); 	 
 	last_slash = strrchr (dir, '/'); 	 
@@ -1368,11 +1369,15 @@ add_udi (const char *udi)
 	
 	if (!create_mount_point_for_volume (mount_point))
 		goto error;
+
+	device_file = hal_device_get_property_string (hal_context, udi, "block.device");
 	
 	fstab_update_debug (_("%d: added mount point '%s' for device '%s'\n"),
-			    pid, mount_point, "foo");
+			    pid, mount_point, device_file);
 	syslog (LOG_INFO, _("added mount point %s for %s"), 
-		mount_point, "foo");
+		mount_point, device_file);
+	
+	hal_free_string (device_file);
 	
 	close (fd);
 	

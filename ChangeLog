@@ -1,5 +1,10 @@
 2004-10-15  David Zeuthen  <davidz@redhat.com>
 
+	* tools/fstab-sync.c (add_udi): Use the name of the special device
+	file instead of 'foo' when writing to the syslog
+
+2004-10-15  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/90defaultpolicy/storage-policy.fdi: Never use filesystem UUDI
 	for mount points in the default policy (/me badly flamed) - change
 	fallback to <bustype>disk.
