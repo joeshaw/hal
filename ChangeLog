@@ -1,5 +1,10 @@
 2004-10-18  David Zeuthen  <davidz@redhat.com>
 
+	* tools/fstab-sync.8.in: Fixup some typos and clarify how .fdi files
+	are processed
+
+2004-10-18  David Zeuthen  <davidz@redhat.com>
+
 	* tools/fstab-sync.c (main): Fix crasher when no options are given
 
 2004-10-18  David Zeuthen  <davidz@redhat.com>

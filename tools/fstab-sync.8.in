@@ -84,13 +84,27 @@ for more information.
 
 .PP
 By default, the 
-.B @DATADIR@/fdi/90defaultpolicy/storage-policy.fdi
+.B @DATADIR@/hal/fdi/90defaultpolicy/storage-policy.fdi
 file specifies the policy - this file should never be edited by the
 system administrator as it might get updated by the OS vendor for security
 updates. Instead, system- or site-specific rules can be put in
 the
-.B @DATADIR@/fdi/95userpolicy
+.B @DATADIR@/hal/fdi/95userpolicy
 directory.
+
+Device information files are processed for every hal device object in the
+.B @DATADIR@/hal/fdi/ 
+directory in alphabetical order including directories. Hence, files in the
+.B 90defaultpolicy
+directory are processed before files
+.B 95userpolicy
+directory, 
+.B 95userpolicy/a.fdi 
+is processed before
+.B 95userpolicy/b.fdi 
+and so on. In addition, directives in specific files are processed in a
+top-down fashion.
+
 
 .PP
 A number of sample policy files for various uses should
