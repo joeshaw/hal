@@ -98,12 +98,12 @@ class DeviceManager(LibGladeApplication):
         self.main_window.show()
 
     def add_device_signal_recv (self, udi):
-	return
 	self.bus.add_signal_receiver(self.property_modified,
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
+	return
 	self.bus.add_signal_receiver(self.device_condition,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
@@ -111,12 +111,12 @@ class DeviceManager(LibGladeApplication):
 				     udi)
 
     def remove_device_signal_recv (self, udi):
-	return
 	self.bus.remove_signal_receiver(self.property_modified,
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
+	return
 	self.bus.remove_signal_receiver(self.device_condition,
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
