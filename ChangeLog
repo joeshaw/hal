@@ -1,5 +1,13 @@
 2004-09-20  David Zeuthen  <david@fubar.dk>
 
+	* doc/spec/hal-spec.xml.in: Add docs for volume.size
+
+	* hald/linux/block_class_device.c (volume_set_size): Use the 
+	BLKSIZEGET64 ioctl to get the size in bytes and populate volume.size
+	(block_class_pre_process): Use volume.size when doing volume_id
+
+2004-09-20  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (block_class_pre_process): 
 	Catch up with changes made in volume_id described below
 

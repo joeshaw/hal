@@ -1700,6 +1700,14 @@
 		Number of blocks on the volume
 	      </entry>
             </row>
+            <row>
+              <entry><literal>volume.size</literal> (uint64)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Size of the volume in bytes
+	      </entry>
+            </row>
 
             <row>
               <entry><literal>volume.is_partition</literal> (bool)</entry>

@@ -560,6 +560,7 @@ volume_set_size (HalDevice *d, dbus_bool_t force)
 	int fd;
 	int num_blocks;
 	int block_size;
+	dbus_uint64_t vol_size;
 	const char *sysfs_path;
 	const char *storudi;
 	const char *device_file;
@@ -588,6 +589,7 @@ volume_set_size (HalDevice *d, dbus_bool_t force)
 			num_blocks = atoi (attr->value);
 
 			hal_device_property_set_int (d, "volume.num_blocks", num_blocks);
+			HAL_INFO (("volume.num_blocks = %d", num_blocks));
 			sysfs_close_attribute (attr);
 		}
 
@@ -595,7 +597,14 @@ volume_set_size (HalDevice *d, dbus_bool_t force)
 		if (fd >= 0) {
 			if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
 				hal_device_property_set_int (d, "volume.block_size", block_size);
+				HAL_INFO (("volume.block_size = %d", block_size));
 			}
+
+			if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
+				hal_device_property_set_uint64 (d, "volume.size", vol_size);
+				HAL_INFO (("volume.size = %lld", vol_size));
+			}
+
 			close (fd);
 		}
 	}
@@ -1239,18 +1248,11 @@ block_class_pre_process (ClassDeviceHandler *self,
 		 * or any of it partitions are not mounted causes the loop.
 		 */
 		if (hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
-			unsigned long long size = 0;
-			int bcount;
-			int bsize;
+			dbus_uint64_t size = 0;
 			const char *stordev_device_file;
 
 			volume_set_size (d, FALSE);
-
-			bcount = hal_device_property_get_int (d, "volume.num_blocks");
-			bsize = hal_device_property_get_int (d, "volume.block_size");
-
-			if ((bsize > 0)  && (bcount > 0))
-				size = bcount * bsize;
+			size = hal_device_property_get_uint64 (d, "volume.size");
 
 			vid = volume_id_open_node(device_file);
 			if (vid != NULL) {
