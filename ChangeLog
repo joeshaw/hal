@@ -1,5 +1,13 @@
 2004-10-14  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Martin Pitt <martin@piware.de>.
+	
+	* hald/linux/pci_bus_device.c (pci_device_pre_process): Fixup crash
+	on intel pro 2200 wireless because of unchecked pointer. Reported by
+	Mitch <Mitch@0Bits.COM>.
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Sjoerd Simons <sjoerd@luon.net>.
 
 	* hald/Makefile.am: Add -lm to hald_LDADD so it actually compiles

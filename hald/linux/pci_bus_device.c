@@ -410,6 +410,9 @@ pci_device_pre_process (BusDeviceHandler *self,
 	dlist_for_each_data (sysfs_get_device_attributes (device), cur,
 			     struct sysfs_attribute) {
 
+		if (cur == NULL || cur->path == NULL || cur->value == NULL)
+			continue;
+
 		if (sysfs_get_name_from_path (cur->path,
 					      attr_name,
 					      SYSFS_NAME_LEN) != 0)
