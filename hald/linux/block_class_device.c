@@ -1264,43 +1264,37 @@ block_class_pre_process (ClassDeviceHandler *self,
 			stordev_device_file = hal_device_property_get_string (stordev, "block.device");
 			vid = volume_id_open_node (stordev_device_file);
 			if (vid != NULL) {
-				unsigned int i;
-
 				if (volume_id_probe(vid, VOLUME_ID_MSDOSPARTTABLE, 0, size) == 0) {
 					HAL_INFO (("Number of partitions = %d", vid->partition_count));
 
-					for (i = 0; i < vid->partition_count; i++) {
+					if (partition_number >= 0 && partition_number < vid->partition_count) {
 						struct volume_id_partition *p;
-
-						p = &vid->partitions[i];
-
-						HAL_INFO (("%d: partition %d, type 0x%02x", i, 
-							   p->partition_number, 
-							   p->partition_msdosparttable_type));
-
-						if (p->partition_number == partition_number) {
-							hal_device_property_set_int (
-								d, "volume.partition.x86_type",
-								p->partition_msdosparttable_type);
-
-							/* NOTE: We trust the type from the partition table
-							 * if it explicitly got correct entries for RAID and
-							 * LVM partitions.
-							 *
-							 * Btw, in general it's not a good idea to trust the
-							 * partition table type as many geek^Wexpert users use 
-							 * FAT filesystems on type 0x83 which is Linux.
-							 *
-							 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
-							 */
-							if (p->partition_msdosparttable_type == 0xfd ||
-							    p->partition_msdosparttable_type == 0x8e ) {
-								hal_device_property_set_string (
-									d, "volume.fsusage", "raid");
-							}
+						p = &vid->partitions[partition_number];
 
 
-						}						
+						hal_device_property_set_int (
+							d, "volume.partition.x86_type",
+							p->partition_type_raw);
+						
+						/* NOTE: We trust the type from the partition table
+						 * if it explicitly got correct entries for RAID and
+						 * LVM partitions.
+						 *
+						 * Btw, in general it's not a good idea to trust the
+						 * partition table type as many geek^Wexpert users use 
+						 * FAT filesystems on type 0x83 which is Linux.
+						 *
+						 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
+						 */
+						if (p->partition_type_raw == 0xfd ||
+						    p->partition_type_raw == 0x8e ) {
+							hal_device_property_set_string (
+								d, "volume.fsusage", "raid");
+						}
+							
+					} else {
+						HAL_WARNING (("partition_number=%d not in [0;%d[", 
+							      partition_number, vid->partition_count));
 					}
 				}
 				

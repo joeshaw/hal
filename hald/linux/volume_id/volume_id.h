@@ -68,9 +68,7 @@ struct volume_id_partition {
 	char		*type;
 	unsigned long long off;
 	unsigned long long len;
-
-	unsigned int partition_number;
-	unsigned int partition_msdosparttable_type;
+	unsigned int partition_type_raw;
 };
 
 struct volume_id {

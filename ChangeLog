@@ -1,5 +1,17 @@
 2004-09-20  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (block_class_pre_process): 
+	Catch up with changes made in volume_id described below
+
+	* hald/linux/volume_id/volume_id.h: Remove partition_number
+	as it's redundant. Rename partition_msdosparttable_type to
+	partition_type_raw
+
+	* hald/linux/volume_id/volume_id.c (probe_msdos_part_table): 
+	Don't set partition_number as it's gone
+
+2004-09-20  David Zeuthen  <david@fubar.dk>
+
 	* doc/spec/hal-spec.xml.in: Add docs for volume.is_partition,
 	volume.partition.number and volume.partition.x86_type
 	

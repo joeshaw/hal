@@ -461,8 +461,7 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 		p = &id->partitions[i];
 
-		p->partition_number = i + 1;
-		p->partition_msdosparttable_type = part[i].sys_ind;
+		p->partition_type_raw = part[i].sys_ind;
 
 		if (is_extended(part[i].sys_ind)) {
 			dbg("found extended partition at 0x%llx", poff);
@@ -539,9 +538,7 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 				p->len = plen;
 				id->partition_count++;
 
-				p->partition_number = id->partition_count;
-				p->partition_msdosparttable_type = part[i].sys_ind;
-
+				p->partition_type_raw = part[i].sys_ind;
 
 				if (id->partition_count >= VOLUME_ID_PARTITIONS_MAX) {
 					dbg("to many partitions");
