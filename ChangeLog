@@ -1,3 +1,9 @@
+2004-07-21  David Zeuthen  <david@fubar.dk>
+
+	* doc/TODO: Removed 'CD burning' TODO, since this is now fixed.
+	Added entry on .fdi files. Add entry on handling SIGTERM in a
+	nice way.
+
 2004-07-20  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c:

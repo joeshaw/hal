@@ -7,14 +7,6 @@ you want to work on one of these you might want to send a patch that
 updates this file to reflect it.
 
 ============================================================================
-* CD Burning problems (davidz is working on this)
-============================================================================
-
-hald should use O_EXCL when polling the CD drive. Bastien Nocera
-(magicdev maintainer) confirms that magicdev uses this and this fixes
-the burning problems.
-
-============================================================================
 * Multi-function USB devices (davidz is working on this)
 ============================================================================
 
@@ -49,6 +41,85 @@ some ideas
    a list of strings
 
  - ranges, e.g. [3.4;43.2[, [2.0;3.0]
+
+ - .fdi files should be able to match on new types
+
+============================================================================
+* .fdi files
+============================================================================
+
+This really needs to be thought through. Ideally we should be able to
+do stuff like this
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb">
+      <match key="usb.vendor_id" int="0x066f">
+        <match key="usb.product_id" int="0x8000">
+
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <merge key="info.capabilities" type="string">portable_audio_player</merge>
+          <merge key="portable_audio_player.output" type="string">mp3 wma</merge>
+          <merge key="portable_audio_player.input" type="string">wav</merge>
+          <merge key="portable_audio_player.localdb" type="bool">false</merge>
+
+          <match key="udi:root/kernel.name" string="Linux">
+            <merge key="blah" string="pre-foo">
+            <match key="udi:root/kernel.version" version_ge="2.6.42">
+              <merge key="blah" string="new-foo">
+            </match>
+          </match>
+
+          <match key="udi:root/kernel.name" string="FreeBSD">
+            <merge key="blah" string="bsd-foo">
+          </match>
+
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>
+
+where udi:<X>/<Y> means reference the property <Y> on the device with
+UDI <X>. 
+
+The 'version_ge' attribute means to read the string property (good
+idea or should version tupples be a primitive type?) kernel.version
+and see if it's greater than 2.6.42. Clearly, this must work for
+vendor kernels etc., e.g. 2.6.47-1.492smp would also match.
+
+============================================================================
+* Run callouts for shutdown, startup, normal operation
+============================================================================
+
+ - For startup, hald should run the callouts (it does already) but the
+   environment should export
+
+    HALD_HOTPLUG  = false
+    HALD_STARTUP  = true
+    HALD_SHUTDOWN = false
+
+   and no D-BUS signals should be emitted. This applies only for devices
+   that are not newly detected.
+   (without persistency all devices are newly detected)
+
+ - When detecting device add/remove while running, hald should export this
+   in the environment
+
+    HALD_HOTPLUG  = true
+    HALD_STARTUP  = false
+    HALD_SHUTDOWN = false
+
+   and D-BUS signals should be emitted.
+
+ - When hald recieves a SIGTERM the callouts should be run with 'remove'
+   and the environment should export
+
+    HALD_HOTPLUG  = false
+    HALD_STARTUP  = false
+    HALD_SHUTDOWN = true
+
+   no D-BUS signals should be emitted.
 
 ============================================================================
 * Root HalDevice representing system
