@@ -72,6 +72,53 @@ hotplug_event_end (void *end_token)
 }
 
 
+
+static void
+fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
+{
+	/* fixup net devices by looking at ifindex */
+	if (strcmp (hotplug_event->subsystem, "net") == 0 && hotplug_event->net_ifindex != -1) {
+		int ifindex;
+		
+		if (!hal_util_get_int_from_file (hotplug_event->sysfs_path, "ifindex", &ifindex, 10) ||
+		    (ifindex != hotplug_event->net_ifindex)) {
+			GDir *dir;
+			char path[HAL_PATH_MAX];
+			char path1[HAL_PATH_MAX];
+			GError *err = NULL;
+			const gchar *f;
+			
+			/* search for new name */
+			HAL_WARNING (("Net interface @ %s with ifindex %d was probably renamed",
+				      hotplug_event->sysfs_path, hotplug_event->net_ifindex));
+			
+			
+			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , hal_sysfs_path);
+			if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+				HAL_ERROR (("Unable to open %/class/net: %s", hal_sysfs_path, err->message));
+				g_error_free (err);
+				goto out;
+			}
+			while ((f = g_dir_read_name (dir)) != NULL) {
+				g_snprintf (path1, HAL_PATH_MAX, "%s/class/net/%s" , hal_sysfs_path, f);
+				if (hal_util_get_int_from_file (path1, "ifindex", &ifindex, 10)) {
+					if (ifindex == hotplug_event->net_ifindex) {
+						HAL_INFO (("Using sysfs path %s for ifindex %d", path1, ifindex));
+						strncpy (hotplug_event->sysfs_path, path1, HAL_PATH_MAX);
+						g_dir_close (dir);
+						goto out;
+					}
+				}
+				
+			}
+			g_dir_close (dir);	
+		}
+	}
+out:
+	;
+}
+
+
 static void
 hotplug_event_begin (HotplugEvent *hotplug_event)
 {
@@ -111,7 +158,10 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 
 			sysfs_path_in_devices = NULL;
 
-			/* TODO: fixup net devices by looking at ifindex */
+			/* /sbin/ifrename may be called from a hotplug handler before we process this,
+			 * so if index doesn't match, go ahead and find a new sysfs path
+			 */
+			fixup_net_device_for_renaming (hotplug_event);
 			
 			g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs_path);
 			if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {

@@ -1,3 +1,19 @@
+2005-01-26  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/osspec.c (link_detection_handle_message): New function.
+	(netlink_socket_data): New function
+	(osspec_init): Listen to netlink socket
+
+	* hald/linux2/hotplug.c (fixup_net_device_for_renaming): New function.
+	For coping with net interfaces being renamed before hald can handle
+	them (For testing, put in the line g_spawn_command_line_sync 
+	("/path/to/ifrename", NULL, NULL, NULL, NULL); in the top of hotplug_
+	event_begin().
+	(hotplug_event_begin): Call fixup_net_device_for_renaming()
+
+	* hald/linux2/classdev.c (net_add): Be a bit more defensive
+	about errors; export the net.80203.can_detect_link property
+
 2005-01-25  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/osspec.c (osspec_probe): Add HAL_INFO's around

@@ -171,19 +171,15 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 
 	d = NULL;
 
-	if (physdev == NULL) {
-		goto out;
-	}
+	if (physdev == NULL)
+		goto error;
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", physdev->udi);
 
-	if (!hal_util_set_driver (d, "net.linux.driver", sysfs_path)) {
-		hal_device_store_remove (hald_get_tdl (), d);
-		d = NULL;
-		goto out;
-	}
+	if (!hal_util_set_driver (d, "net.linux.driver", sysfs_path))
+		goto error;
 
 	hal_device_property_set_string (d, "info.category", "net");
 	hal_device_add_capability (d, "net");
@@ -193,12 +189,21 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
 
-	hal_util_set_string_from_file (d, "net.address", sysfs_path, "address");
-	hal_util_set_int_from_file (d, "net.linux.ifindex", sysfs_path, "ifindex", 10);
+	if (!hal_util_set_string_from_file (d, "net.address", sysfs_path, "address"))
+		goto error;
+	if (!hal_util_set_int_from_file (d, "net.linux.ifindex", sysfs_path, "ifindex", 10))
+		goto error;
 
-	hal_util_set_int_from_file (d, "net.arp_proto_hw_id", sysfs_path, "type", 10);
+	if (!hal_util_set_int_from_file (d, "net.arp_proto_hw_id", sysfs_path, "type", 10))
+		goto error;
+
+	if (!hal_util_get_int_from_file (sysfs_path, "flags", &flags, 16))
+		goto error;
+	hal_device_property_set_bool (d, "net.interface_up", flags & IFF_UP);
+
+	hal_device_property_set_string (d, "info.product", "Networking Interface");
+
 	media_type = hal_device_property_get_int (d, "net.arp_proto_hw_id");
-
 	if (media_type == ARPHRD_ETHER) {
 		FILE *f;
 		gboolean is_wireless;
@@ -248,11 +253,15 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 			hal_device_property_set_string (d, "info.category", "net.80203");
 			hal_device_add_capability (d, "net.80203");
 
-			hal_util_get_int_from_file (sysfs_path, "carrier", &have_link, 10);
-			hal_device_property_set_bool (d, "net.80203.link", have_link != 0);
-			if (have_link != 0) {
-				HAL_INFO (("FIXME: no speed file in sysfs; assuming link speed is 100Mbps"));
-				hal_device_property_set_uint64 (d, "net.80203.rate", 100 * 1000 * 1000);
+			if (hal_util_get_int_from_file (sysfs_path, "carrier", &have_link, 10)) {
+				hal_device_property_set_bool (d, "net.80203.can_detect_link", TRUE);
+				hal_device_property_set_bool (d, "net.80203.link", have_link != 0);
+				if (have_link != 0) {
+					HAL_INFO (("FIXME: no speed file in sysfs; assuming link speed is 100Mbps"));
+					hal_device_property_set_uint64 (d, "net.80203.rate", 100 * 1000 * 1000);
+				}
+			} else {
+				hal_device_property_set_bool (d, "net.80203.can_detect_link", FALSE);
 			}
 		}
 
@@ -279,13 +288,13 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 		}
 	}
 
-	hal_util_get_int_from_file (sysfs_path, "flags", &flags, 16);
-	hal_device_property_set_bool (d, "net.interface_up", flags & IFF_UP);
+	return d;
+error:
+	if (d != NULL) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		d = NULL;
+	}
 
-	hal_device_property_set_string (d, "info.product", "Networking Interface");
-
-
-out:
 	return d;
 }
 
