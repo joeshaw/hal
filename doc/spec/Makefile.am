@@ -1,7 +1,7 @@
 
 if DOCBOOK_DOCS_ENABLED
 
-EXTRA_DIST =                          \
+EXTRA_DIST =                            \
 	hal-spec.xml
 
 FIGURE_FILES =                        	\
@@ -21,7 +21,7 @@ hal-spec.html : hal-spec.xml $(FIGURE_FILES)
 
 clean-local:
 	rm -f *~
-	rm -f hal-spec.html
+	rm -f hal-spec.html hal-spec.xml
 
 
 endif # DOCBOOK_DOCS_ENABLED

@@ -845,14 +845,14 @@ bool DeviceExists(string udi)
 #
 # @param  key                   Key, for example 'block.fstype'
 # @param  value                 Value, for example 'ext3'
-# @return                       List of UDI's
+# @return                       Array of UDI's, may be empty
 #
 array{string} FindDeviceStringMatch(string key, string value)
 
 # Find the set of devices in the GDL that has a given capability
 #
 # @param  capability            Capability, for example 'volume'
-# @return                       List of UDI's
+# @return                       Array of UDI's, may be empty
 #
 array{string} FindDeviceByCapability(string capability)
   
@@ -863,10 +863,18 @@ array{string} FindDeviceByCapability(string capability)
 ><P
 >&#13;
       This object also emits the following signals on the
-      org.freedesktop.Hal.Manager interface that applications can
-      subscribe to using D-BUS:
+      <TT
+CLASS="literal"
+>/org/freedesktop/Hal/Manager</TT
+> object on the
+      <TT
+CLASS="literal"
+>org.freedesktop.Hal.Manager</TT
+> interface that
+      applications can subscribe to using D-BUS:
 
-<TABLE
+      </P
+><TABLE
 BORDER="0"
 BGCOLOR="#E0E0E0"
 WIDTH="100%"
@@ -899,25 +907,153 @@ void NewCapability(string udi, string capability)
 ></TD
 ></TR
 ></TABLE
->
+><DIV
+CLASS="sect3"
+><HR><H4
+CLASS="sect3"
+><A
+NAME="AEN162"
+>Example</A
+></H4
+><P
+>&#13;
+      The following brief Python program demonstrates some of the API
 
       </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;  #!/usr/bin/python
+ 
+import gtk
+import dbus
+
+def device_added(interface, signal_name, service, path, message):
+    [udi] = message.get_args_list ()
+    print 'Device %s was added'%udi
+
+def device_removed(interface, signal_name, service, path, message):
+    [udi] = message.get_args_list ()
+    print 'Device %s was removed'%udi
+
+ 
+bus = dbus.Bus (dbus.Bus.TYPE_SYSTEM)
+hal_service = bus.get_service ('org.freedesktop.Hal')
+hal_manager = hal_service.get_object ('/org/freedesktop/Hal/Manager',
+				      'org.freedesktop.Hal.Manager')
+
+devices = hal_manager.GetAllDevices ()
+for d in devices:
+    print 'Found device %s'%d
+
+bus.add_signal_receiver(device_added,
+			 'DeviceAdded',
+			 'org.freedesktop.Hal.Manager',
+			 'org.freedesktop.Hal',
+			 '/org/freedesktop/Hal/Manager')
+bus.add_signal_receiver(device_removed,
+			 'DeviceRemoved',
+			 'org.freedesktop.Hal.Manager',
+			 'org.freedesktop.Hal',
+			 '/org/freedesktop/Hal/Manager')
+gtk.main()
+
+
+
+
+
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      which gives the following output
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001-disc
+Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001
+Found device /org/freedesktop/Hal/devices/block_37332a77-105e-4e76-8e99-27d3746e0531
+Found device /org/freedesktop/Hal/devices/block_3_2
+Found device /org/freedesktop/Hal/devices/block_LS-120 SLIM3 00 UHD Floppy-0208MBA00211
+Found device /org/freedesktop/Hal/devices/block_IC25N020ATCS05-0-CLP225F2G3UR4A
+Found device /org/freedesktop/Hal/devices/ide_1_1
+Found device /org/freedesktop/Hal/devices/ide_0_0
+Found device /org/freedesktop/Hal/devices/ide_1_0
+Found device /org/freedesktop/Hal/devices/usbif_usb_0_0_206_-1_0000:00:07.2_0
+Found device /org/freedesktop/Hal/devices/ide_host_0
+Found device /org/freedesktop/Hal/devices/ide_host_1
+Found device /org/freedesktop/Hal/devices/pci_104c_8400
+Found device /org/freedesktop/Hal/devices/usb_0_0_206_-1_0000:00:07.2
+Found device /org/freedesktop/Hal/devices/pci_1002_4c4d
+Found device /org/freedesktop/Hal/devices/pci_125d_1978
+Found device /org/freedesktop/Hal/devices/pci_8086_7111
+Found device /org/freedesktop/Hal/devices/pci_104c_ac1c/0
+Found device /org/freedesktop/Hal/devices/pci_8086_7112
+Found device /org/freedesktop/Hal/devices/pci_8086_7110
+Found device /org/freedesktop/Hal/devices/input_13_65
+Found device /org/freedesktop/Hal/devices/pci_104c_ac1c
+Found device /org/freedesktop/Hal/devices/pci_8086_7190
+Found device /org/freedesktop/Hal/devices/input_13_64
+Found device /org/freedesktop/Hal/devices/pci_8086_7113
+Found device /org/freedesktop/Hal/devices/pci_8086_7191
+Found device /org/freedesktop/Hal/devices/computer
+
+(insert USB mouse)
+
+Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was added
+Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was added
+
+(remove USB mouse)
+
+Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was removed
+Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was removed
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      </P
+></DIV
 ></DIV
 ><DIV
 CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN160"
+NAME="AEN170"
 >Interface org.freedesktop.Hal.Device</A
 ></H3
 ><P
 >&#13;
-      Applications use the Manager interface to locate the device
-      objects they are interested in. When a device object (which is
-      really a D-BUS object, note that the UDI is the objects object_path)
-      is obtained, the HAL daemon provides the
-      org.freedesktop.Hal.Device interface with the following methods
+      Applications use
+      the <TT
+CLASS="literal"
+>org.freedesktop.Hal.Manager</TT
+> interface to
+      locate the device objects they are interested in. When a device
+      object (which is really a D-BUS object, note that the UDI is the
+      objects object_path) is obtained, the HAL daemon provides the
+      <TT
+CLASS="literal"
+>org.freedesktop.Hal.Device</TT
+> interface on the
+      object denoted by the UDI. This interface has the following
+      methods
 
       </P
 ><TABLE
@@ -988,14 +1124,14 @@ bool PropertyExists(string key)
 # signal to all client applications subscribing to signals from the Manager
 # interface.
 #
-# @param  capability            Capability, e.g. 'net.ethernet'
+# @param  capability            Capability, e.g. 'net.80211'
 # @raises                       org.freedesktop.Hal.NoSuchDevice
 #
 void AddCapability(string capability)
 
 # Determine if a device got a given capability
 #
-# @param  capability            Capability, e.g. 'video.vga'
+# @param  capability            Capability, e.g. 'storage.cdrom'
 # @return                       TRUE iff the device got the given capability
 # @raises                       org.freedesktop.Hal.NoSuchDevice
 #
@@ -1019,23 +1155,23 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;# Notification that property have been added
+>&#13;# Notification that property have been modified
 #
 # @param  key                   Property
+# @param  added                 True iff the property have been added
+# @param  removed               True iff the property have been removed
 #
-void PropertyAdded(string key)
+void PropertyModified(string key, bool added, bool removed)
 
-# Notification that property have been removed
+# Notification that an event happened on the device has occured.
 #
-# @param  key                   Property
+# Normally this is used to signal events that aren't or can't be expressed
+# in properties, e.g. 'ProcessorOverheating' etc. 
 #
-void PropertyRemoved(string key)
+# @param  condition             Name of condition
+# @param  ...                   Dependent on the condition name
+void Condition(string condition, ...)
 
-# Notification that property have changed value
-#
-# @param  key                   Property
-#
-void PropertyChanged(string key)
 </PRE
 ></TD
 ></TR
@@ -1052,7 +1188,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN167"
+NAME="AEN179"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></H3
 ><P
@@ -1153,82 +1289,40 @@ NAME="using-devices"
 >Using devices</A
 ></H2
 ><P
->&#13;    One of the goals of the HAL is to provide easy access to devices on
-    a system. This includes obtaining device specific information, such
-    as CPU frequency, and invoking device specific methods such as
-    getting the pictures on a camera or changing the volume on a sound
-    device.
+>&#13;
+      While the HAL daemon provides generic operations that apply to
+      all devices (though some may be no-ops), HAL is not concerned
+      with providing non-generic device operations.
 
     </P
 ><P
 >&#13;
-    While the HAL daemon provides generic operations that apply to all
-    devices (though some may be no-ops) and provide some level of monitoring
-    for well-know class devices (such as networking devices), it is not
-    concerned with providing non-generic device operations. 
+      Specifically, one goal of HAL is to integrate with existing and
+      future libraries that target a specific class of devices such as
+      cameras or mp3 players.
 
     </P
 ><P
 >&#13;
-    The architecture of the HAL allows a number of ways of dealing with
-    specific device information and operations
+      For instance, libgphoto2 could be patched such that the
+      application programmer can simply pass the UDI of the camera he
+      wishes to interact with and libghoto2 would then, via D-BUS,
+      acquire the bus-specific information required, the address so to
+      speak, from the HAL daemon, and then interact directly with the
+      hardware.
 
-    <P
-></P
-><UL
-><LI
-><P
->&#13;        <I
-CLASS="emphasis"
->Out-of-process D-BUS Service</I
-></P
-><P
-> 
-        For example, one could write a volume manager that manages the
-        different storage devices present on the system and mount the
-        partitions/volumes available on those into the filesystem 
-        according to certain rules. 
-        The volume manager would run as a daemon monitoring the device list
-        of the HAL daemon and act appropriately when devices having 
-        Storage and StorageVolume in the Capabilitites property appear and
-        disappear. 
-
-        </P
+    </P
 ><P
 >&#13;
-        The volume manager could also offer an operation for writing
-        ISO images to e.g. CD-R devices through a D-BUS interface
-        on HAL device object. In this scenario, a desktop file manager
-        would use the HAL daemon to query for the HAL device object
-        that is a CD recorder and pass the object reference to the
-        D-BUS service offered by the volume manager.
-      </P
-></LI
-><LI
-><P
->&#13;        <I
-CLASS="emphasis"
->In-process library</I
-></P
-><P
-> 
+      Another option is to use the existing API of the device library
+      to discover devices (the library would be using HAL under the
+      hood) and provide a function to retrieve the HAL UDI of the
+      device. When the library is built without HAL support this
+      function fails, however, when the UDI is available applications
+      using the library can use the UDI both as stable reference to
+      the device and also to extract more information directly from
+      the HAL daemon.
 
-        Another example is device objects having capability
-        camera. One could use an existing library, such as libgphoto2,
-        and make wrapper functions such that the application
-        programmer simple passes the HAL UDI to the library. The
-        library would then, via D-BUS, acquire the bus-specific
-        information required from the HAL daemon, and then interact
-        with the device.
-
-      </P
-></LI
-></UL
->
-
-    Note that there are other ways of dealing with device-specific
-    operations - this list is not exhaustive.
-    
     </P
 ></DIV
 ><DIV
@@ -1241,77 +1335,101 @@ NAME="capabilties"
 ></H2
 ><P
 >&#13;
-     As previously mentioned the capabilities of a device specify what
-     the device does. For instance, a CompactFlash card reader can be
-     thought of as a camera, a handheld music device and removable
-     storage.
+       Mainstream devices aren't very good at reporting what they are,
+       they only report, at best, how to interact with them. This is a
+       problem, many devices, such as MP3 players or digital still
+       cameras, appear to the operating system as plain USB Mass
+       Storage devices when they are in fact not. The core of the
+       problem is that, without external metadata, the operating
+       system and desktop environment will present it to the user as
+       just e.g. a mass storage device.
 
      </P
 ><P
 >&#13;
-     HAL itself, assigns capabilities on device detection time by
-     inspecting the device class (if available, it depends on the bus
-     type) and looking at information from the operating system (most
-     OS'es has a concept of device classes). At this time the category
-     is also determined by selecting the most prominent
-     capability. However, both capabilities and category can be
-     overridden by either device information files or a desktop
-     environment policy daemon. This gives maximum flexibility, while
-     maintaining a base level of capability detection. 
+       As HAL is concerned with merging of external metadata, through
+       e.g. device information files, there needs to be some scheme on
+       how to record what the device actually is. This is achieved by
+       two textual properties, <TT
+CLASS="literal"
+>info.category</TT
+> and
+       <TT
+CLASS="literal"
+>info.capabilities</TT
+>. The former describes
+       <I
+CLASS="emphasis"
+>what the device is</I
+> (as a single
+       alphanumeric keyword) and the latter describes
+       <I
+CLASS="emphasis"
+>what the device does</I
+> (as a number of
+       alphanumeric keywords separated by whitespace). The keywords
+       available for use is defined in this document, we'll refer to
+       them simply as <I
+CLASS="emphasis"
+>capabilities</I
+>.
 
      </P
 ><P
 >&#13;
-     Note that, for instance, a number of USB devices doesn't advertise
-     anything in their device class, so a repository of device
-     information files coupled with an interactive dialog (provided by a
-     desktop environment daemon) asking the user what he just plugged
-     in, will probably yield the best experience for users. Incidently,
-     this is how certain non-free operating systems appear to handle
-     hardware.
+       HAL itself, assigns capabilities on device detection time by
+       inspecting the device class (if available, it depends on the
+       bus type) and looking at information from the operating system
+       (most OS'es has a concept of device classes). At this time the
+       category is also determined by selecting the most prominent
+       capability. However, both capabilities and category can be
+       overridden by either device information files or callouts. This
+       gives maximum flexibility, while maintaining a base level of
+       capability detection.
 
      </P
 ><P
 >&#13;
-     Returning to the example of the card reader, this might just
-     happen to be a digital camera with the only interface being a
-     card reader - HAL, or the base OS, wouldn't be able to tell the
-     difference - it's just looks like a storage device. So, to handle
-     hardware well to meet the expectation of the users, device
-     information files and desktop environment policy daemons need to
-     be available on top of HAL (notably, the desktop environment
-     daemon might look at the files on the device to infer whether
-     it's music, pictures or something else) and adjust the capabilities
-     and category of certain devices.
-
-     </P
-><P
->&#13;
-     Finally, what a given capability means, needs to be precisely
-     defined. The idea of HAL is that existing device capability
-     specific libraries (such as libghoto2), would advertise what kind
-     of HAL capabilities they are able to handle. As this happens over
-     time, this specification will grow to precisely define what a
-     device with a given capability is supposed to do and what
-     library, or service, the application programmer can use to access
-     the device. At some point in time, we may define an uniform
-     in-process extension framework akin to e.g. OpenGL extensions for
-     accessing said libraries and services.
+       The idea of HAL is that existing device capability specific
+       libraries (such as libghoto2), would advertise what kind of HAL
+       capabilities they are able to handle. As this happens over
+       time, this specification will grow to precisely define what a
+       device with a given capability is supposed to do and what
+       library, or service, the application programmer can use to
+       access the device.
      
      </P
 ><P
 >&#13;
-     Having a capability also means that part of the property
-     namespace, prefixed with the capability name, can (but it's not a
-     requirement) be populated with more specific information about
-     the capability. Virtual devices will not have any capabilities
-     assigned to them.
+       Having a capability also means that part of the property
+       namespace, prefixed with the capability name, can be populated
+       with more specific information about the capability. Indeed,
+       some properties may even be required such that applications and
+       device libraries have something to expect. For instance, the
+       capability for being a MP3 player may require properties
+       defining what audio formats the device support, whether it
+       support recording of audio, and how to interact with
+       device. For example, the latter may specify ''USB Storage
+       Device'' or ''proprietary protocol, use libfooplayer''.
 
      </P
 ><P
 >&#13;
-     The following table define the capabilities supported in HAL at
-     the time of writing.
+       Finally, capabilities have an inheritance scheme, e.g. if a device
+       has a capability <TT
+CLASS="literal"
+>foo.bar</TT
+>, it must also have
+       the capability <TT
+CLASS="literal"
+>foo</TT
+>.
+
+     </P
+><P
+>&#13;
+       The following table define the capabilities supported in HAL at
+       the time of writing.
 
      </P
 ><DIV
@@ -1319,7 +1437,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN196"
+NAME="AEN206"
 ></A
 ><TABLE
 BORDER="1"
@@ -1699,7 +1817,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN363"
+NAME="AEN373"
 ></A
 ><TABLE
 BORDER="1"
@@ -1890,7 +2008,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN435"
+NAME="AEN445"
 ></A
 ><TABLE
 BORDER="1"
@@ -1991,7 +2109,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN473"
+NAME="AEN483"
 ></A
 ><TABLE
 BORDER="1"
@@ -2167,7 +2285,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN546"
+NAME="AEN556"
 ></A
 ><TABLE
 BORDER="1"
@@ -2449,7 +2567,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN676"
+NAME="AEN686"
 ></A
 ><TABLE
 BORDER="1"
@@ -2599,7 +2717,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN727"
+NAME="AEN737"
 ></A
 ><TABLE
 BORDER="1"
@@ -2643,7 +2761,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN742"
+NAME="AEN752"
 ></A
 ><TABLE
 BORDER="1"
@@ -2728,7 +2846,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN768"
+NAME="AEN778"
 ></A
 ><TABLE
 BORDER="1"
@@ -3330,7 +3448,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1051"
+NAME="AEN1061"
 ></A
 ><TABLE
 BORDER="1"
@@ -3485,7 +3603,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1114"
+NAME="AEN1124"
 ></A
 ><TABLE
 BORDER="1"
@@ -3560,7 +3678,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1144"
+NAME="AEN1154"
 ></A
 ><TABLE
 BORDER="1"
@@ -3721,7 +3839,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1190"
+NAME="AEN1200"
 >Linux 2.6 and udev</A
 ></H3
 ><P
