@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <libhal/libhal.h>	/* For HAL_STATE_* */
+#include <glib.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -611,9 +611,10 @@ class_device_get_device_file (const char *sysfs_path,
 			      char *dev_file, int dev_file_length)
 {
 	int i;
-	int sysfs_mount_path_len;
+	unsigned int sysfs_mount_path_len;
 	char sysfs_path_trunc[SYSFS_NAME_LEN];
-	char *udev_argv[7] = { udevinfo_path (), "-r", "-q", "name", "-p",
+	char *udev_argv[7] = { (char *) udevinfo_path (), 
+			       "-r", "-q", "name", "-p",
 			       sysfs_path_trunc, NULL };
 	char *udev_stdout;
 	char *udev_stderr;

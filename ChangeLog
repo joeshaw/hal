@@ -1,3 +1,40 @@
+2004-03-30  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c: Fixup includes
+	(linux_class_block_init): Remove unused function
+	(cdrom_check): Use const char* for device file
+	(block_class_visit): remove unused variables
+
+	* hald/linux/scsi_device_class_device.c 
+	(scsi_device_class_post_process): fix cast warning
+
+	* hald/linux/scsi_host_class_device.c 
+	(scsi_host_class_post_process): fix cast warning
+
+	* hald/linux/input_class_device.c 
+	(input_class_get_device_file_target): fix cast warning
+
+	* hald/linux/usb_bus_device.c (usb_device_detection_done): remove
+	unused function
+
+	* hald/linux/class_device.c (class_device_udev_event): fix cast warning
+	(class_device_got_parent_device): fix cast warning
+	(class_device_got_sysdevice): fix cast warning
+	(class_device_got_device_file): fix cast warning
+
+	* hald/linux/bus_device.c (bus_device_got_parent): fix cast warning
+
+	* hald/linux/osspec.c (handle_udev_node_created_found_device): fix
+	cast warning
+
+	* hald/linux/common.c: Don't include libhal.h; include glib.h
+	(class_device_get_device_file): Fix unsigned/signed comparison
+	warning, fix cast warning
+
+	* hald/device_info.c (start): Remove unused variable
+
+	* hald/device_store.c (ds_device_merge): Remove unused variable
+
 2004-03-29  Robert Love  <rml@ximian.com>
 
 	* tools/linux/hal_hotplug.c: add a "strcat_len()" macro and use it

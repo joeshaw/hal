@@ -57,7 +57,7 @@ scsi_host_class_post_process (ClassDeviceHandler *self,
 			      struct sysfs_class_device *class_device)
 {
 	int host_num;
-	char *last_elem;
+	const char *last_elem;
 
 	/* Sets last_elem to host14 in path=/sys/class/scsi_host/host14 */
 	last_elem = get_last_element (sysfs_path);

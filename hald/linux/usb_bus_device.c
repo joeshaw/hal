@@ -604,16 +604,6 @@ usb_device_init ()
 	usb_proc_parse ();
 }
 
-/** This function is called when all device detection on startup is done
- *  in order to perform optional batch processing on devices
- *
- */
-static void
-usb_device_detection_done ()
-{
-}
-
-
 /** Shutdown function for USB handling
  *
  */
@@ -685,7 +675,7 @@ usb_merge_info_from_proc (HalDevice* d)
 	int bus_number;
 	const char *bus_id;
 	usb_proc_info *proc_info;
-	char *parent_udi;
+	const char *parent_udi;
 	HalDevice* parent;
 
 	parent_udi = ds_property_get_string (d, "info.parent");

@@ -164,7 +164,7 @@ void
 class_device_udev_event (ClassDeviceHandler *self,
 			 HalDevice *d, char *dev_file)
 {
-	char *target_dev;
+	const char *target_dev;
 	char *target_dev_copy;
 
 	/* merge the device file name into the name determined above */
@@ -193,8 +193,8 @@ class_device_udev_event (ClassDeviceHandler *self,
 void
 class_device_got_parent_device (HalDevice *parent, void *data1, void *data2)
 {
-	char *target_dev = NULL;
-	char *sysfs_path = NULL;
+	const char *target_dev = NULL;
+	const char *sysfs_path = NULL;
 	char *new_udi = NULL;
 	HalDevice *new_d = NULL;
 	HalDevice *d = (HalDevice *) data1;
@@ -258,8 +258,8 @@ class_device_got_parent_device (HalDevice *parent, void *data1, void *data2)
 void
 class_device_got_sysdevice (HalDevice *sysdevice, void *data1, void *data2)
 {
-	char *target_dev;
-	char *parent_udi;
+	const char *target_dev;
+	const char *parent_udi;
 	HalDevice *parent_device;
 	HalDevice *d = (HalDevice *) data1;
 	ClassDeviceHandler *self = (ClassDeviceHandler *) data2;
@@ -332,7 +332,7 @@ class_device_got_device_file (HalDevice *dm, void *data1, void *data2)
 	ds_property_remove (d, ".udev.class_name");
 
 	if (self->merge_or_add) {
-		char* sysdevice_udi;
+		const char* sysdevice_udi;
 		/* get the sysdevice from the temporary cookie */
 		sysdevice_udi = ds_property_get_string (d, ".sysdevice");
 		assert (sysdevice_udi != NULL);

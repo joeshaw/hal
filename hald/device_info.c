@@ -282,8 +282,6 @@ parsing_abort (ParsingContext * pc)
 static void
 start (ParsingContext * pc, const char *el, const char **attr)
 {
-	int i;
-
 	if (pc->aborted)
 		return;
 

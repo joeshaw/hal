@@ -103,7 +103,7 @@ input_class_get_device_file_target (ClassDeviceHandler *self,
 				    char* dev_file_prop,
 				    int dev_file_prop_len)
 {
-	char *sysfs_name;
+	const char *sysfs_name;
 
 	/* since we have multiple device files for class mouse we need 
 	 * to merge them into different, welldefined, properties */

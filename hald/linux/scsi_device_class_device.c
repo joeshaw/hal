@@ -56,7 +56,7 @@ scsi_device_class_post_process (ClassDeviceHandler *self,
 				const char *sysfs_path,
 				struct sysfs_class_device *class_device)
 {
-	char *last_elem;
+	const char *last_elem;
 	int host_num, bus_num, target_num, lun_num;
 
 	/* Sets last_elem to 1:2:3:4 in 

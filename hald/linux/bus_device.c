@@ -133,7 +133,7 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 static void
 bus_device_got_parent (HalDevice * parent, void *data1, void *data2)
 {
-	char *sysfs_path = NULL;
+	const char *sysfs_path = NULL;
 	char *new_udi = NULL;
 	HalDevice *new_d = NULL;
 	HalDevice *d = (HalDevice *) data1;

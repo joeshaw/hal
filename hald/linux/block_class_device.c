@@ -27,6 +27,8 @@
 #  include <config.h>
 #endif
 
+#define _GNU_SOURCE 1
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,22 +39,24 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <errno.h>
+#include <signal.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <signal.h>
+#include <sys/ioctl.h>
+#include <linux/kdev_t.h>
+#include <linux/cdrom.h>
+#include <linux/fs.h>
+#include <glib.h>
 
+
+#include "../hald.h"
 #include "../logger.h"
 #include "../device_store.h"
 #include "class_device.h"
 #include "common.h"
 
 #include "linux_dvd_rw_utils.h"
-
-#define _GNU_SOURCE 1
-#include <linux/fcntl.h>
-#include <linux/kdev_t.h>
-#include <linux/cdrom.h>
-#include <linux/fs.h>
 
 /**
  * @defgroup HalDaemonLinuxBlock Block device class
@@ -61,6 +65,9 @@
  * @{
  */
 
+/* fwd decl */
+static dbus_bool_t detect_media (HalDevice * d);
+
 static void
 block_class_visit (ClassDeviceHandler *self,
 		   const char *path,
@@ -68,8 +75,6 @@ block_class_visit (ClassDeviceHandler *self,
 		   dbus_bool_t is_probing)
 {
 	HalDevice *d;
-	int major, minor;
-	char dev_file_prop_name[SYSFS_PATH_MAX];
 	char *parent_sysfs_path;
 
 	/* only care about given sysfs class name */
@@ -137,7 +142,7 @@ strip_space (char *str)
 
 
 static void
-cdrom_check(HalDevice *d, char *device_file)
+cdrom_check(HalDevice *d, const char *device_file)
 {
 	int fd, capabilities;
 	int read_speed, write_speed;
@@ -220,7 +225,7 @@ block_class_post_process (ClassDeviceHandler *self,
 	HalDevice *parent;
 	HalDevice *stordev;
 	char *stordev_udi;
-	char *device_file;
+	const char *device_file;
 
 	ds_print (d);
 	parent = ds_device_find (ds_property_get_string (d, "info.parent"));
@@ -805,14 +810,6 @@ sigio_handler (int sig)
 	sigio_etc_changed = TRUE;
 }
 
-/** Init function for block device handling
- *
- */
-void
-linux_class_block_init ()
-{
-}
-
 /** Force unmount of a patition. Must have block.volume=1 and valid
  *  block.device
  *
@@ -950,13 +947,20 @@ force_unmount_of_all_childs (HalDevice * d)
 
 
 
-/** Called when this device is about to be removed
+/** Called when the block class device instance have been removed
  *
- *  @param  d                   Device
+ *  @param  self               Pointer to class members
+ *  @param  sysfs_path         The path in sysfs (including mount point) of
+ *                             the class device in sysfs
+ *  @param  d                  The HalDevice object of the instance of
+ *                             this device class
  */
-void
-linux_class_block_removed (HalDevice * d)
+static void
+block_class_removed (ClassDeviceHandler* self, 
+		      const char *sysfs_path, 
+		      HalDevice *d)
 {
+	HAL_INFO (("entering : sysfs_path = '%s'", sysfs_path));
 	if (ds_property_exists (d, "block.is_volume")) {
 		if (ds_property_get_bool (d, "block.is_volume")) {
 			force_unmount (d);
@@ -1158,15 +1162,9 @@ detect_media (HalDevice * d)
 }
 
 
-
-
-
-
-void
+static void
 block_class_tick (ClassDeviceHandler *self)
 {
-	int fd;
-	const char *device_file;
 	HalDevice *d;
 	HalDeviceIterator iter;
 
@@ -1196,8 +1194,6 @@ block_class_tick (ClassDeviceHandler *self)
 	}
 
 	/*HAL_INFO (("exiting"));*/
-
-	return TRUE;
 }
 
 static void
@@ -1209,11 +1205,11 @@ block_class_detection_done (ClassDeviceHandler *self)
 /** Method specialisations for block device class */
 ClassDeviceHandler block_class_handler = {
 	class_device_init,                  /**< init function */
-	block_class_detection_done,        /**< detection is done */
+	block_class_detection_done,         /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	block_class_tick,                   /**< timer function */
 	block_class_visit,                  /**< visitor function */
-	class_device_removed,               /**< class device is removed */
+	block_class_removed,                /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	block_class_post_process,           /**< add more properties */

@@ -573,7 +573,7 @@ handle_udev_node_created_found_device (HalDevice * d,
 				       void *data1, void *data2)
 {
 	int i;
-	char *sysfs_class_name;
+	const char *sysfs_class_name;
 	char *dev_file = (char *) data1;
 
 	if (d != NULL) {

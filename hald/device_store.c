@@ -1344,7 +1344,6 @@ ds_device_merge (HalDevice * target, HalDevice * source)
 
 	caps = ds_property_get_string (source, "info.capabilities");
 	if (caps != NULL) {
-		int i;
 		char *tok;
 		char buf[256];
 		char *bufp = buf;
