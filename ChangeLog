@@ -1,5 +1,56 @@
 2004-04-26  David Zeuthen  <david@fubar.dk>
 
+	* hald/device.c (hal_device_print): Print out to stderr instead of
+	stdout.
+
+	* hald/device_store.c (hal_device_store_print): Print out the
+	contents of a HalDeviceStore.
+
+	* hald/linux/common.c (rename_and_merge): Check to see if the UDI
+	exists in the TDL and try again if it is.
+
+2004-04-26  Joe Shaw  <joe@ximian.com>
+
+	* hald/callout.c: Make pending callouts a hash table of lists, so
+	we can execute all the callouts for the devices in order.
+	(add_pending_callout, pop_pending_callout): New convenience
+	functions.
+	(wait_for_callout): If this is the last callout for a device, fire
+	off the callouts_finished signal on the device.
+	(hal_callout_device, hal_callout_capability,
+	hal_callout_property): Use the new convenience functions, call
+	process_callouts() in an idle function.
+
+	* hald/device.c: Add a "callouts_finished" signal.
+
+	* hald/hald.c (gdl_store_changed): Don't call hal_callout_device()
+	here anymore... we call it in the backend before we get added to
+	the GDL.
+
+	* hald/hald_dbus.c (manager_device_exists,
+	device_get_all_properties, device_get_property,
+	device_get_property_type, device_set_property,
+	device_add_capability, device_remove_property,
+	device_property_exists, device_query_capability,
+	agent_merge_properties, agent_device_matches): Search the TDL for
+	the provided UDI if it's not found in the GDL.
+
+	* hald/linux/block_class_device.c (detect_media): Instead of
+	adding the device to the GDL immediately, connect to the
+	callouts_finished signal and add the device then.  Call
+	hal_callout_device() here, though.
+
+	* hald/linux/bus_device.c (bus_device_got_parent): Ditto.
+
+	* hald/linux/class_device.c (class_device_final): Ditto.
+
+	* hald/linux/common.c (device_move_from_tdl_to_gdl): Remove the
+	device from the TDL and add it to the GDL.  Remove the signal
+	handler and unref the device.  Used as a callback from
+	bus_device.c and class_device.c.
+
+2004-04-26  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/macio_bus_device.c: new file because with the recent
 	change in how probing is handled, my CD-ROM wasn't added until 30
 	seconds late into the process as the macio glue wasn't handled

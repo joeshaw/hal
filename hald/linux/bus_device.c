@@ -39,6 +39,7 @@
 #include <glib.h>
 
 #include "../logger.h"
+#include "../callout.h"
 #include "../device_store.h"
 #include "../hald.h"
 #include "common.h"
@@ -176,15 +177,24 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	 */
 	new_udi = rename_and_merge (d, self->compute_udi, self->hal_bus_name);
 	if (new_udi != NULL) {
+		HalDevice *device_to_add;
+
 		new_d = hal_device_store_find (hald_get_gdl (), new_udi);
 
-		self->got_udi (self, new_d != NULL ? new_d : d, new_udi);
+		device_to_add = new_d != NULL ? new_d : d;
 
-		hal_device_store_add (hald_get_gdl (),
-				      new_d != NULL ? new_d : d);
+		self->got_udi (self, device_to_add, new_udi);
+
+		g_signal_connect (g_object_ref (device_to_add),
+				  "callouts_finished",
+				  G_CALLBACK (device_move_from_tdl_to_gdl),
+				  NULL);
+
+		hal_callout_device (device_to_add, TRUE);
+	} else {
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
 	}
-	hal_device_store_remove (hald_get_tdl (), d);
-	g_object_unref (d);
 }
 
 /** This function is called when all device detection on startup is done

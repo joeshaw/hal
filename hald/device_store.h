@@ -111,4 +111,7 @@ void           hal_device_store_match_key_value_string_async (HalDeviceStore *st
 							      gpointer user_data,
 							      int timeout);
 
+void hal_device_store_print (HalDeviceStore *store);
+
+
 #endif /* DEVICE_STORE_H */

@@ -241,6 +241,30 @@ hal_device_store_foreach (HalDeviceStore *store,
 	}
 }
 
+static gboolean
+hal_device_store_print_foreach_fn (HalDeviceStore *store,
+				   HalDevice *device,
+				   gpointer user_data)
+{
+	fprintf (stderr, "----\n");
+	hal_device_print (device);
+	fprintf (stderr, "----\n");
+	return TRUE;
+}
+
+void 
+hal_device_store_print (HalDeviceStore *store)
+{
+	fprintf (stderr, "===============================================\n");
+        fprintf (stderr, "Dumping %d devices\n", 
+		 g_slist_length (store->devices));
+	fprintf (stderr, "===============================================\n");
+	hal_device_store_foreach (store, 
+				  hal_device_store_print_foreach_fn, 
+				  NULL);
+	fprintf (stderr, "===============================================\n");
+}
+
 HalDevice *
 hal_device_store_match_key_value_string (HalDeviceStore *store,
 					 const char *key,
@@ -424,6 +448,7 @@ hal_device_store_match_key_value_string_async (HalDeviceStore *store,
 						  G_CALLBACK (store_changed),
 						  info);
 
-	info->timeout_id = g_timeout_add (timeout, match_device_async_timeout,
+	info->timeout_id = g_timeout_add (timeout,
+					  match_device_async_timeout,
 					  info);
 }

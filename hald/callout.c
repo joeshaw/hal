@@ -53,12 +53,72 @@ typedef struct {
 	char **envp;
 	int envp_index;
 	int pid;
+	gboolean last_of_device;
 } Callout;
 
 static void process_callouts (void);
 
-static GSList *pending_callouts = NULL;
+/* Key: HalDevice  Value: pointer to GSList of Callouts */
+static GHashTable *pending_callouts = NULL;
 static gboolean processing_callouts = FALSE;
+
+static void
+add_pending_callout (HalDevice *device, Callout *callout)
+{
+	GSList **clist = NULL;
+
+	if (pending_callouts == NULL)
+		pending_callouts = g_hash_table_new (NULL, NULL);
+	else
+		clist = g_hash_table_lookup (pending_callouts, device);
+
+	if (clist == NULL) {
+		clist = g_new0 (GSList *, 1);
+		g_hash_table_insert (pending_callouts, device, clist);
+	}
+
+	*clist = g_slist_append (*clist, callout);
+}
+
+static void
+get_device (gpointer key, gpointer value, gpointer user_data)
+{
+	HalDevice **device = user_data;
+
+	if (*device == NULL)
+		*device = (HalDevice *) key;
+}
+
+static Callout *
+pop_pending_callout (gboolean *last_of_device)
+{
+	GSList **clist;
+	HalDevice *device = NULL;
+	Callout *callout;
+
+	if (pending_callouts == NULL)
+		return NULL;
+
+	/* Hmm, not sure of a better way to do this... */
+	g_hash_table_foreach (pending_callouts, get_device, &device);
+
+	clist = g_hash_table_lookup (pending_callouts, device);
+
+	if (clist == NULL)
+		return NULL;
+
+	callout = (Callout *) (*clist)->data;
+	*clist = g_slist_remove (*clist, callout);
+
+	if (*clist == NULL) {
+		g_hash_table_remove (pending_callouts, device);
+		g_free (clist);
+		*last_of_device = TRUE;
+	} else
+		*last_of_device = FALSE;
+
+	return callout;
+}
 
 static gboolean
 add_property_to_env (HalDevice *device, HalProperty *property, 
@@ -111,6 +171,9 @@ wait_for_callout (gpointer user_data)
 				      strerror (errno)));
 		}
 	} else {
+		if (callout->last_of_device)
+			hal_device_callouts_finished (callout->device);
+
 		g_free (callout->filename);
 		g_strfreev (callout->envp);
 		g_object_unref (callout->device);
@@ -126,19 +189,21 @@ static void
 process_callouts (void)
 {
 	Callout *callout;
+	gboolean last_of_device;
 	char *argv[3];
 	GError *err = NULL;
 	int num_props;
 
-	if (pending_callouts == NULL) {
+	if (pending_callouts == NULL ||
+	    g_hash_table_size (pending_callouts) == 0) {
 		processing_callouts = FALSE;
 		return;
 	}
 
 	processing_callouts = TRUE;
 
-	callout = (Callout *) pending_callouts->data;
-	pending_callouts = g_slist_remove (pending_callouts, callout);
+	callout = pop_pending_callout (&last_of_device);
+	callout->last_of_device = last_of_device;
 
 	argv[0] = callout->filename;
 
@@ -183,6 +248,13 @@ process_callouts (void)
 	}
 
 	g_timeout_add (250, wait_for_callout, callout);
+}
+
+static gboolean
+process_callouts_idle (gpointer user_data)
+{
+	process_callouts ();
+	return FALSE;
 }
 
 void
@@ -235,13 +307,13 @@ hal_callout_device (HalDevice *device, gboolean added)
 
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
 						    hal_device_get_udi (device));
-		pending_callouts = g_slist_append (pending_callouts, callout);
+		add_pending_callout (callout->device, callout);
 	}
 
 	g_dir_close (dir);
 
-	if (pending_callouts != NULL && !processing_callouts)
-		process_callouts ();
+	if (!processing_callouts)
+		g_idle_add (process_callouts_idle, NULL);
 }
 
 void
@@ -297,13 +369,13 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		callout->envp[1] = g_strdup_printf ("CAPABILITY=%s",
 						    capability);
 
-		pending_callouts = g_slist_append (pending_callouts, callout);
+		add_pending_callout (callout->device, callout);
 	}
 
 	g_dir_close (dir);
 
-	if (pending_callouts != NULL && !processing_callouts)
-		process_callouts ();
+	if (!processing_callouts)
+		g_idle_add (process_callouts_idle, NULL);
 }
 
 void
@@ -361,13 +433,13 @@ hal_callout_property (HalDevice *device, const char *key)
 		callout->envp[1] = g_strdup_printf ("PROPERTY=%s", key);
 		callout->envp[2] = g_strdup_printf ("VALUE=%s", value);
 
-		pending_callouts = g_slist_append (pending_callouts, callout);
+		add_pending_callout (callout->device, callout);
 
 		g_free (value);
 	}
 
 	g_dir_close (dir);
 
-	if (pending_callouts != NULL && !processing_callouts)
-		process_callouts ();
+	if (!processing_callouts)
+		g_idle_add (process_callouts_idle, NULL);
 }

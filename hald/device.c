@@ -40,6 +40,7 @@ static GObjectClass *parent_class;
 enum {
 	PROPERTY_CHANGED,
 	CAPABILITY_ADDED,
+	CALLOUTS_FINISHED,
 	LAST_SIGNAL
 };
 
@@ -90,6 +91,16 @@ hal_device_class_init (HalDeviceClass *klass)
 			      hald_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1,
 			      G_TYPE_STRING);
+
+	signals[CALLOUTS_FINISHED] =
+		g_signal_new ("callouts_finished",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceClass,
+					       callouts_finished),
+			      NULL, NULL,
+			      hald_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -735,7 +746,7 @@ hal_device_print (HalDevice *device)
 {
 	GSList *iter;
 
-        printf ("device udi = %s\n", hal_device_get_udi (device));
+        fprintf (stderr, "device udi = %s\n", hal_device_get_udi (device));
 
 	for (iter = device->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
@@ -747,23 +758,23 @@ hal_device_print (HalDevice *device)
 
                 switch (type) {
                 case DBUS_TYPE_STRING:
-                        printf ("  %s = '%s'  (string)\n", key,
+                        fprintf (stderr, "  %s = '%s'  (string)\n", key,
                                 hal_property_get_string (p));
                         break;
  
                 case DBUS_TYPE_INT32:
-                        printf ("  %s = %d  0x%x  (int)\n", key,
+                        fprintf (stderr, "  %s = %d  0x%x  (int)\n", key,
                                 hal_property_get_int (p),
                                 hal_property_get_int (p));
                         break;
  
                 case DBUS_TYPE_DOUBLE:
-                        printf ("  %s = %g  (double)\n", key,
+                        fprintf (stderr, "  %s = %g  (double)\n", key,
                                 hal_property_get_double (p));
                         break;
  
                 case DBUS_TYPE_BOOLEAN:
-                        printf ("  %s = %s  (bool)\n", key,
+                        fprintf (stderr, "  %s = %s  (bool)\n", key,
                                 (hal_property_get_bool (p) ? "true" :
                                  "false"));
                         break;
@@ -773,7 +784,7 @@ hal_device_print (HalDevice *device)
                         break;
                 }
         }
-        printf ("\n");
+        fprintf (stderr, "\n");
 }
 
 
@@ -861,3 +872,10 @@ hal_device_async_wait_property (HalDevice    *device,
 
 	ai->timeout_id = g_timeout_add (timeout, async_wait_timeout, ai);
 }
+
+void
+hal_device_callouts_finished (HalDevice *device)
+{
+	g_signal_emit (device, signals[CALLOUTS_FINISHED], 0);
+}
+

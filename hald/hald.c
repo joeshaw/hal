@@ -75,7 +75,6 @@ gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 
 	if (is_added) {
 		manager_send_signal_device_added (device);
-		hal_callout_device (device, TRUE);
 	} else {
 		manager_send_signal_device_removed (device);
 		hal_callout_device (device, FALSE);

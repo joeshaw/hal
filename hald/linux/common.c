@@ -407,6 +407,13 @@ tryagain:
 	 * because the device-list is (can be) persistent across invocations 
 	 * of hald.
 	 *
+	 * The name can also be taken already as the UDI computation methods
+	 * may not yield perfectly unique names; an interesting example is
+	 * multiple USB adapters - they show up as multiple PCI devices with
+	 * exactly the same characteristics expect slot location. And the
+	 * UDI computation method cannot depend on things like slot location
+	 * etc. 
+	 *
 	 * If it does exist, note that it's udi is computed from only the same 
 	 * information as our just computed udi.. So if we match, and it's
 	 * unplugged, it's the same device!
@@ -416,6 +423,17 @@ tryagain:
 	 *  for it to be practical)
 	 */
 	computed_d = hal_device_store_find (hald_get_gdl (), computed_udi);
+
+	/* Ok, see if it's in the TDL as we may process several identical
+	 * devices at the same time (see above example with multiple USB
+	 * adapters)
+	 */
+	if (computed_d == NULL) {
+
+		computed_d = hal_device_store_find (hald_get_tdl (), 
+						    computed_udi);
+	}
+
 	if (computed_d != NULL) {
 
 		if ((!hal_device_has_property
@@ -485,7 +503,7 @@ tryagain:
 		/* Device is not in list... */
 
 		/* assign the computed device name */
-		/*HAL_INFO ((" ##### computed_udi=%s", computed_udi));*/
+		HAL_INFO ((" ##### computed_udi=%s", computed_udi));
 		hal_device_set_udi (d, computed_udi);
 		hal_device_property_set_string (d, "info.udi", computed_udi);
 
@@ -806,5 +824,26 @@ out:
 	if (dir != NULL)
 		sysfs_close_directory (dir);
 }
+
+/** Removes the device from the TDL and adds it to the GDL when all
+ *  all of the device's callouts have finished.  This is a gobject
+ *  signal callback.  NOTE!  The device must be reffed, since this
+ *  callback unrefs it, to ensure lifetime safety.
+ *
+ *  @param  device              The device being moved
+ *  @param  user_data           User data provided when connecting the signal
+ *
+ */
+void
+device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
+{
+	hal_device_store_remove (hald_get_tdl (), device);
+	hal_device_store_add (hald_get_gdl (), device);
+	g_signal_handlers_disconnect_by_func (device,
+					      device_move_from_tdl_to_gdl,
+					      user_data);
+	g_object_unref (device);
+}
+
 
 /** @} */

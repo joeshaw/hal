@@ -98,6 +98,9 @@ extern dbus_bool_t hald_is_initialising;
 
 extern char sysfs_mount_path[SYSFS_PATH_MAX];
 
+void device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data);
+
+
 /* @} */
 
 #endif				/* COMMON_H */

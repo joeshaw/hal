@@ -442,6 +442,9 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
 
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	reply = dbus_message_new_method_return (message);
 	dbus_message_iter_init (reply, &iter);
 	dbus_message_iter_append_boolean (&iter, d != NULL);
@@ -618,6 +621,9 @@ device_get_all_properties (DBusConnection * connection,
 	HAL_TRACE (("entering, udi=%s", udi));
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -677,6 +683,9 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 	HAL_TRACE (("entering, udi=%s", udi));
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -765,6 +774,9 @@ device_get_property_type (DBusConnection * connection,
 	HAL_TRACE (("entering, udi=%s", udi));
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -846,6 +858,9 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 	HAL_DEBUG (("udi=%s, key=%s", udi, key));
 
 	device = hal_device_store_find (hald_get_gdl (), udi);
+	if (device == NULL)
+		device = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (device == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -945,6 +960,9 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 	udi = dbus_message_get_path (message);
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -1014,6 +1032,9 @@ device_remove_property (DBusConnection * connection, DBusMessage * message)
 	udi = dbus_message_get_path (message);
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -1072,6 +1093,9 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 	udi = dbus_message_get_path (message);
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -1131,6 +1155,9 @@ device_query_capability (DBusConnection * connection,
 	udi = dbus_message_get_path (message);
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -1595,12 +1622,18 @@ agent_merge_properties (DBusConnection * connection, DBusMessage * message)
 		    target_udi, source_udi));
 
 	target_d = hal_device_store_find (hald_get_gdl (), target_udi);
+	if (target_d == NULL)
+		target_d = hal_device_store_find (hald_get_tdl (), target_udi);
+
 	if (target_d == NULL) {
 		raise_no_such_device (connection, message, target_udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
 
 	source_d = hal_device_store_find (hald_get_gdl (), source_udi);
+	if (source_d == NULL)
+		source_d = hal_device_store_find (hald_get_tdl (), source_udi);
+
 	if (source_d == NULL) {
 		raise_no_such_device (connection, message, source_udi);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
@@ -1669,12 +1702,18 @@ agent_device_matches (DBusConnection * connection, DBusMessage * message)
 		    udi1, udi2, namespace));
 
 	d1 = hal_device_store_find (hald_get_gdl (), udi1);
+	if (d1 == NULL)
+		d1 = hal_device_store_find (hald_get_tdl (), udi1);
+
 	if (d1 == NULL) {
 		raise_no_such_device (connection, message, udi1);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
 
 	d2 = hal_device_store_find (hald_get_gdl (), udi2);
+	if (d2 == NULL)
+		d2 = hal_device_store_find (hald_get_tdl (), udi2);
+
 	if (d2 == NULL) {
 		raise_no_such_device (connection, message, udi2);
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

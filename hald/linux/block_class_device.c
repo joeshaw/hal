@@ -53,6 +53,7 @@
 #include "../hald_dbus.h"
 #include "../logger.h"
 #include "../device_store.h"
+#include "../callout.h"
 #include "class_device.h"
 #include "common.h"
  
@@ -358,6 +359,13 @@ force_unmount_of_all_childs (HalDevice * d)
 	}			/* childs!=NULL */
 }
 
+static void
+add_to_gdl (HalDevice *device, gpointer user_data)
+{
+	hal_device_store_add (hald_get_gdl (), device);
+
+	g_signal_handlers_disconnect_by_func (device, add_to_gdl, user_data);
+}
 
 /** Check for media on a block device that is not a volume
  *
@@ -544,8 +552,9 @@ detect_media (HalDevice * d)
 
 
 			/* add new device */
-			hal_device_store_add (hald_get_gdl (), child);
-			g_object_unref (child);
+			g_signal_connect (child, "callouts_finished",
+					  G_CALLBACK (add_to_gdl), NULL);
+			hal_callout_device (child, TRUE);
 
 			/* GDL was modified */
 			return TRUE;
