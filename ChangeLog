@@ -1,5 +1,9 @@
 2004-03-29  Robert Love  <rml@ximian.com>
 
+	* tools/linux/hal_hotplug.c: add a "strcat_len()" macro and use it
+	
+2004-03-29  Robert Love  <rml@ximian.com>
+
 	* tools/linux/hal_hotplug.c: sysfs_mnt_path should be a "char []"
 	  not a "char * []", also use PATH_MAX instead of 255, and finally
 	  use "const char" as appropriate

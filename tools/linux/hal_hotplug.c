@@ -138,6 +138,12 @@ static const char *file_list_pci[] = {
 	NULL
 };
 
+/* safely strcat() at most the remaining space in 'dst' */
+#define strcat_len(dst, src) do { \
+	dst[sizeof (dst) - 1] = '\0'; \
+	strncat (dst, src, sizeof (dst) - strlen (dst) - 1); \
+} while(0)
+
 static int
 wait_for_sysfs_info (char *devpath, char *hotplug_type)
 {
@@ -206,7 +212,7 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 
 	/* first, check directory */
 	strncpy (path, sysfs_mnt_path, PATH_MAX);
-	strncat (path, devpath, PATH_MAX);
+	strcat_len (path, devpath);
 
 	/*printf("path0 = %s\n", path); */
 
@@ -221,10 +227,9 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 
 		file = file_list[i];
 		strncpy (path, sysfs_mnt_path, PATH_MAX);
-		strncat (path, devpath, PATH_MAX);
-		strncat (path, "/", PATH_MAX);
-		strncat (path, file, PATH_MAX);
-
+		strcat_len (path, devpath);
+		strcat_len (path, "/");
+		strcat_len (path, file);
 		/*printf("path1 = %s\n", path); */
 
 		rc = stat (path, &stat_buf);
