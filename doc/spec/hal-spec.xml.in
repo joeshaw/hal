@@ -3307,21 +3307,39 @@ void Condition(string condition, ...)
     
     <sect1 id="enforcing-storage">
       <title>Storage Devices</title>
-      <para>
 
-	An operating system vendor should maintain the 
-	<literal>/etc/fstab</literal> file through the HAL callout
-	mechanism such that every device object of capability
-	<literal>volume</literal> has a corresponding entry. The
-	reasoning behind this is, among other things, to maintain the
-	invariant that <literal>/etc/fstab</literal> list all
-	available filesystems. In addition
-	the <literal>mount(1)</literal> program should enable users
-	without superuser privileges to mount filesystems mentioned in
-	the <literal>/etc/fstab</literal> file as long as they have
-	the <literal>user</literal> option set.
+      <sect2 id="enforcing-storage-fstab">
+	<title>File systems file</title>
 
-      </para>
+	<para>
+	  An operating system vendor should maintain the 
+	  <literal>/etc/fstab</literal> file through the HAL callout
+	  mechanism such that every device object of capability
+	  <literal>volume</literal> has a corresponding entry. The
+	  reasoning behind this is, among other things, to maintain the
+	  invariant that <literal>/etc/fstab</literal> list all
+	  available filesystems. In addition
+	  the <literal>mount(1)</literal> program should enable users
+	  without superuser privileges to mount filesystems mentioned in
+	  the <literal>/etc/fstab</literal> file as long as they have
+	  the <literal>user</literal> option set.
+
+	</para>
+
+      </sect2>
+
+      <sect2 id="enforcing-storage-locking">
+	<title>Disabling policy agents</title>
+	<para>
+	  Policy agents like volume mounters should ignore when media
+	  is inserted into a drive that is locked by another
+	  application. Thus, CD burning applications should lock the
+	  device to disable auto mounting or automatic start of the
+	  users preferred CD burning application when respectively
+	  non-blank rewritable or blank media is inserted.
+	</para>
+      </sect2>
+
     </sect1>
 
   </chapter>

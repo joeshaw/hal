@@ -1,5 +1,11 @@
 2004-09-19  David Zeuthen  <david@fubar.dk>
 
+	* doc/spec/hal-spec.xml.in: Add section about policy agents and
+	media insertion into drives that another application is holding
+	a lock on.
+
+2004-09-19  David Zeuthen  <david@fubar.dk>
+
 	* hald/hald_dbus.c (agent_device_matches): Removed
 	(agent_merge_properties): Removed
 	(agent_manager_remove): Removed
