@@ -1,5 +1,10 @@
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (detect_media):
+	(block_class_pre_process): Set volume.is_filesystem to FALSE by default
+
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/osspec.c (osspec_probe): Add info.udi to computer
 	(process_shutdown_list_callouts_done_for_device): New function
 	(process_shutdown_list): New function

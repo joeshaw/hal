@@ -914,6 +914,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		hal_device_property_set_string (child, "info.product", "Volume");
 
 		/* set defaults */
+		hal_device_property_set_bool (d, "volume.is_filesystem", FALSE);
 		hal_device_property_set_string (child, "volume.fstype", "");
 		hal_device_property_set_string (child, "volume.uuid", "");
 		hal_device_property_set_string (child, "volume.label", "");
@@ -1174,6 +1175,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "volume.fstype", "");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.uuid", "");
+		hal_device_property_set_bool (d, "volume.is_filesystem", FALSE);
 		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 
@@ -1199,6 +1201,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			 * GRRRR!!!
 			 */
 			hal_device_property_set_string (d, "volume.fstype", "vfat,auto");
+			hal_device_property_set_bool (d, "volume.is_filesystem", TRUE);
 		}
 
 		volume_set_size (d, FALSE);
