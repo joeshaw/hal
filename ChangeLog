@@ -1,3 +1,10 @@
+2004-01-20  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/linux_osspec.c (visit_device): disable ieee1394
+	(osspec_init): disable ieee1394
+	(osspec_probe): disable ieee1394
+	(handle_hotplug): disable ieee1394
+
 2004-01-19  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: bump version to 0.2.6

@@ -195,8 +195,10 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
             visit_device_pci(path, device);
         else if( strcmp(device->bus, "usb")==0 )
             visit_device_usb(path, device);
+/*
         else if( strcmp(device->bus, "ieee1394")==0 )
             visit_device_ieee1394(path, device);
+*/
         else if( strcmp(device->bus, "ide")==0 )
             visit_device_ide(path, device);
         /** @todo This is a hack; is there such a thing as an ide_host? */
@@ -267,7 +269,7 @@ void osspec_init(DBusConnection* dbus_connection)
 
     linux_pci_init();
     linux_usb_init();
-    linux_ieee1394_init();
+    /*linux_ieee1394_init();*/
     linux_ide_init();
     linux_class_v4l_init();
     linux_class_scsi_init();
@@ -347,7 +349,7 @@ void osspec_probe()
      */
     linux_pci_detection_done();
     linux_usb_detection_done();
-    linux_ieee1394_detection_done();
+    /*linux_ieee1394_detection_done();*/
     linux_ide_detection_done();
     linux_class_block_detection_done();
     linux_class_input_detection_done();
@@ -446,7 +448,7 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
     if( sysfs_devpath[0]!='\0' && 
         (strcmp(subsystem, "usb")==0 ||
          strcmp(subsystem, "pci")==0 ||
-         strcmp(subsystem, "ieee1394")==0 ||
+         /*strcmp(subsystem, "ieee1394")==0 ||*/
          strcmp(subsystem, "i2c")==0))
     {
 
