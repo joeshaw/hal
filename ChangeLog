@@ -1,3 +1,8 @@
+2005-03-30  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/information/10freedesktop/10-usb-pda.fdi: Update from
+	Andrei Yurkevich <urruru@ru.ru>; slightly tweaked by me
+
 2005-03-29  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/information/10freedesktop/10-usb-pda.fdi: New file to
