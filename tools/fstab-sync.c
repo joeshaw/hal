@@ -1758,6 +1758,10 @@ clean (void)
 
   close (fd);
 
+#ifdef HAVE_SELINUX
+  restore_selinux_context(_PATH_FSTAB);
+#endif
+
   syslog (LOG_INFO, _("removed all generated mount points"));
 
   return TRUE;
