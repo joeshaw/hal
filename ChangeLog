@@ -1,3 +1,46 @@
+2004-08-16  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Add the --enable-fstab-op to specify whether we
+	want to use a keyword (currently kudzu) when adding entries
+	to the fstab. Default is off
+
+	* hald/linux/block_class_device.c:
+	(block_class_visit): Only return the HalDevice if the parent exists
+	(detect_media): Print out debug statement when we forcibly probe
+	for media
+	(block_class_pre_process): Detect the ide-cs driver by looking at
+	the sysfs path (!) and set the media_check_enable to FALSE.  Only
+	do volume_id and drive_id probing if storage.media_check_enabled
+	is TRUE. Sets the volume.fstype to 'vfat,msdos,auto' in this case.
+	Fixes issues with the ide-cs driver
+	(block_class_in_gdl): Add a comment about how we could defer
+	the check for non-partitioned media via a timeout
+	(deferred_check_for_non_partition_media): The function to check
+	for media; not currently used
+	(mtab_handle_storage): Use detect_media() to add the new child
+	when a non-partition volume we didn't know about was mounted
+	(mtab_handle_volume): Remove non partitioned media on drives
+	that can't be polled when it's unmounted.
+	
+	* hald/linux/bus_device.c:
+	(bus_device_visit): Only return the HalDevice if the parent exists
+
+	* hald/linux/class_device.c:
+	(class_device_visit): Only return the HalDevice if the parent exists
+	(class_device_got_parent_device): Print out the sysfs path instead
+	of the HAL UDI
+	
+	* hald/linux/ide_bus_device.c:
+	(ide_device_accept): New function; currently the same as the super
+	class but useful for testing
+	
+	* hald/linux/ide_host_bus_device.c:
+	(ide_host_device_accept): Don't pickup toplevel ide_host objects
+	cause they're not hotplugged anyway (thus no way to remove them)
+	
+	* tools/fstab-sync.c: 
+	(volume_new): Also check if the volume.fstype is empty
+
 2004-08-15  David Zeuthen  <david@fubar.dk>
 
 	Sends messages from hotplug and device naming helpers via a local

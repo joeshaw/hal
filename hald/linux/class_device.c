@@ -103,11 +103,13 @@ class_device_visit (ClassDeviceHandler *self,
 		    const char *path,
 		    struct sysfs_class_device *class_device)
 {
+	ClassAsyncData *cad;
 	HalDevice *d;
 	char dev_file[SYSFS_PATH_MAX];
 	char dev_file_prop_name[SYSFS_PATH_MAX];
 	gboolean merge_or_add;
 	struct sysfs_device *sysdevice;
+	char *what_to_find;
 
 	sysdevice = sysfs_get_classdev_device (class_device);
 
@@ -181,48 +183,57 @@ class_device_visit (ClassDeviceHandler *self,
 		} 
 	}
 
+	cad = g_new0 (ClassAsyncData, 1);
+	cad->device = d;
+	cad->handler = self;
+	cad->merge_or_add = merge_or_add;
+
 	/* Now find the physical device; this happens asynchronously as it
 	 * might be added later. */
 	if (merge_or_add) {
-		ClassAsyncData *cad = g_new0 (ClassAsyncData, 1);
-		cad->device = d;
-		cad->handler = self;
-		cad->merge_or_add = merge_or_add;
+		what_to_find = sysdevice->path;
 
 		/* find the sysdevice */
 		hal_device_store_match_key_value_string_async (
 			hald_get_gdl (),
 			"linux.sysfs_path_device",
-			sysdevice->path,
+			what_to_find,
 			class_device_got_sysdevice, cad,
-			HAL_LINUX_HOTPLUG_TIMEOUT);
-	} else {
-		char *parent_sysfs_path;
-		ClassAsyncData *cad = g_new0 (ClassAsyncData, 1);
+		HAL_LINUX_HOTPLUG_TIMEOUT);
 
+	} else {
 		if (sysdevice != NULL) {
-			parent_sysfs_path = 
-				get_parent_sysfs_path (sysdevice->path);
+			what_to_find = get_parent_sysfs_path (sysdevice->path);
 		} else {
-			parent_sysfs_path = "(none)";
+			what_to_find = "(none)";
 		}
 
-		cad->device = d;
-		cad->handler = self;
-		cad->merge_or_add = merge_or_add;
-
-		/* find the parent */
+		/* find the sysdevice */
 		hal_device_store_match_key_value_string_async (
 			hald_get_gdl (),
 			"linux.sysfs_path_device",
-			parent_sysfs_path,
+			what_to_find,
 			class_device_got_parent_device, cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 
-	if (!merge_or_add)
-		return d;
-	else
+
+	if (!merge_or_add) {
+		/* Now that a) hotplug happens in the right order; and b) the device
+		 * from a hotplug event is completely added to the GDL before the
+		 * next event is processed; the aysnc call above is actually
+		 * synchronous so we can test immediately whether we want to
+		 * proceed
+		 */
+		if (hal_device_store_match_key_value_string (
+			    hald_get_gdl (),
+			    "linux.sysfs_path_device",
+			    what_to_find) == NULL)
+			return NULL;
+		else
+			return d;
+
+	} else
 		return NULL;
 }
 
@@ -290,7 +301,7 @@ class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent,
 
 	if (parent == NULL) {
 		HAL_WARNING (("No parent for class device at sysfs path %s",
-			      d->udi));
+			      hal_device_property_get_string (d, "linux.sysfs_path")));
 		/* get rid of temporary device */
 		hal_device_store_remove (hald_get_tdl (), d);
 		return;

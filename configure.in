@@ -54,13 +54,18 @@ AC_DEFINE_UNQUOTED(HAL_GROUP,"$HAL_GROUP", [Group for HAL])
 
 
 # Taken from dbus
-AC_ARG_ENABLE(ansi,             [  --enable-ansi         enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
-AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
-AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs     build DOXYGEN documentation (requires Doxygen)],enable_doxygen_docs=$enableval,enable_doxygen_docs=auto)
-AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs     build DocBook documentation (requires docbook2html)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
+AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
+AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
+AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs   build DOXYGEN documentation (requires Doxygen)],enable_doxygen_docs=$enableval,enable_doxygen_docs=auto)
+AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build DocBook documentation (requires docbook2html)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
 
 if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
+fi
+
+AC_ARG_ENABLE(fstab-noop,       [  --enable-fstab-noop     Use noop option in fstab-sync],enable_fstab_noop=yes,enable_fstab_noop=no)
+if test "x$enable_fstab_noop" = "xyes" ; then
+   AC_DEFINE(USE_NOOP_MOUNT_OPTION,1,[Use an unique keyword in the fstab])
 fi
 
 #### gcc warning flags
@@ -326,7 +331,7 @@ examples/volumed/Makefile
 dnl ==========================================================================
 echo "
                     HAL $VERSION
-                  ===========
+                  ==============
 
         prefix:                   ${prefix}
         libdir:                   ${LIBDIR}
@@ -346,7 +351,7 @@ echo "
         User for HAL:             ${HAL_USER}
         Group for HAL:            ${HAL_GROUP}
         hald pidfile:             ${HALD_PID_FILE}
-"
+	fstab-sync using noop:    ${enable_fstab_noop}"
 
 echo "
         Maintainer mode:          ${USE_MAINTAINER_MODE}

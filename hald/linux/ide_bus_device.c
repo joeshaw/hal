@@ -48,6 +48,24 @@
  * @{
  */
 
+static dbus_bool_t
+ide_device_accept (BusDeviceHandler *self, const char *path, 
+		   struct sysfs_device *device)
+{
+
+/* Uncomment this to test that we can ignore a device
+ * (specifically, in this case, a PCMCIA card reader on a
+ * normal system
+ */
+/*
+	if (strcmp (device->path, "/sys/devices/ide2/2.0") == 0)
+		return FALSE;
+*/
+
+	/* only care about given bus name  */
+	return strcmp (device->bus, self->sysfs_bus_name) == 0;
+}
+
 
 static char *
 ide_device_compute_udi (HalDevice *d, int append_num)
@@ -94,13 +112,13 @@ BusDeviceHandler ide_bus_handler = {
 	bus_device_init,           /**< init function */
 	bus_device_shutdown,       /**< shutdown function */
 	bus_device_tick,           /**< timer function */
-	bus_device_accept,         /**< accept function */
+	ide_device_accept,         /**< accept function */
  	bus_device_visit,          /**< visitor function */
 	bus_device_removed,        /**< device is removed */
 	ide_device_compute_udi,    /**< UDI computing function */
 	ide_device_pre_process,    /**< add more properties */
 	bus_device_got_udi,        /**< got UDI */
-	bus_device_in_gdl,            /**< in GDL */
+	bus_device_in_gdl,         /**< in GDL */
 	"ide",                     /**< sysfs bus name */
 	"ide"                      /**< namespace */
 };

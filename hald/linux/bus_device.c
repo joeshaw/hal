@@ -79,7 +79,9 @@ bus_device_accept (BusDeviceHandler *self, const char *path,
  *  @param  self                Pointer to class members
  *  @param  path                Sysfs-path for device
  *  @param  device              libsysfs object for device
- *  @return               A pointer to the HalDevice* object created
+ *  @return                     A pointer to the HalDevice* object
+ *                              or NULL if the devices isn't going
+ *                              to be added anyway
  */
 HalDevice *
 bus_device_visit (BusDeviceHandler *self, const char *path, 
@@ -130,9 +132,23 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 
-	free (parent_sysfs_path);
-
-	return d;
+	/* Now that a) hotplug happens in the right order; and b) the device
+	 * from a hotplug event is completely added to the GDL before the
+	 * next event is processed; the aysnc call above is actually
+	 * synchronous so we can test immediately whether we want to
+	 * proceed
+	 */
+	if (hal_device_store_match_key_value_string (
+		    hald_get_gdl (),
+		    "linux.sysfs_path_device",
+		    parent_sysfs_path) == NULL) {
+		
+		free (parent_sysfs_path);
+		return NULL;
+	} else {
+		free (parent_sysfs_path);
+		return d;
+	}
 }
 
 
@@ -142,7 +158,6 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
  *
  *  @param  device              The device being moved
  *  @param  user_data           User data provided when connecting the signal
- *
  */
 static void
 bus_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)

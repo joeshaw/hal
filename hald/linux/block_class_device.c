@@ -74,6 +74,8 @@ static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
 static char *block_class_compute_udi (HalDevice * d, int append_num);
 
+static gboolean deferred_check_for_non_partition_media (gpointer data);
+
 
 static void
 set_volume_id_values(HalDevice *d, struct volume_id *vid)
@@ -211,7 +213,19 @@ block_class_visit (ClassDeviceHandler *self,
 
 	/*hal_device_print (d);*/
 
-	return d;
+	/* Now that a) hotplug happens in the right order; and b) the device
+	 * from a hotplug event is completely added to the GDL before the
+	 * next event is processed; the aysnc call above is actually
+	 * synchronous so we can test immediately whether we want to
+	 * proceed
+	 */
+	if (hal_device_store_match_key_value_string (
+		    hald_get_gdl (),
+		    "linux.sysfs_path_device",
+		    parent_sysfs_path) == NULL)
+		return NULL;
+	else
+		return d;
 }
 
 
@@ -659,8 +673,13 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 	got_media = FALSE;
 
 	device_file = hal_device_property_get_string (d, "block.device");
+
 	if (device_file == NULL)
 		return FALSE;
+
+	if (force_poll) {
+		HAL_INFO (("Forcing check for media check on device %s", device_file));
+	}
 
 	if (is_cdrom)
 		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
@@ -1099,12 +1118,26 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 
-		vid = volume_id_open_node(device_file);
-		if (vid != NULL) {
-			if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0) {
-				set_volume_id_values(d, vid);
+		/* only check for volume_id if we are allowed to poll, otherwise we may
+		 * cause inifite loops of hotplug events, cf. broken ide-cs driver and
+		 * broken zip drives. Merely accessing the top-level block device if it
+		 * or any of it partitions are not mounted causes the loop.
+		 */
+		if (hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
+			vid = volume_id_open_node(device_file);
+			if (vid != NULL) {
+				if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0) {
+					set_volume_id_values(d, vid);
+				}
+				volume_id_close(vid);
 			}
-			volume_id_close(vid);
+		} else {
+			/* gee, so at least set volume.fstype vfat,msdos,auto so 
+			 * mount(1) doesn't screw up and causes hotplug events
+			 *
+			 * GRRRR!!!
+			 */
+			hal_device_property_set_string (d, "volume.fstype", "vfat,msdos,auto");
 		}
 
 		return;
@@ -1129,9 +1162,27 @@ block_class_pre_process (ClassDeviceHandler *self,
 			    "ide") == 0) {
 		const char *ide_name;
 		char *model;
-		const char *device_file;
-		struct drive_id *did;
 		char *media;
+
+
+		/* blacklist the broken ide-cs driver */
+		if (physdev != NULL) {
+			size_t len;
+			char buf[256];
+			const char *physdev_sysfs_path;
+			
+			snprintf (buf, 256, "%s/devices/ide", sysfs_mount_path);
+			len = strlen (buf);
+			
+			physdev_sysfs_path = hal_device_property_get_string (physdev, "linux.sysfs_path");
+			
+			if (strncmp (physdev_sysfs_path, buf, len) == 0) {
+				hal_device_property_set_bool (stordev, "storage.media_check_enabled", FALSE);
+			}
+			
+			HAL_INFO (("Working around broken ide-cs driver for %s", physdev->udi));
+		}
+
 
 		ide_name = get_last_element (hal_device_property_get_string
 					     (d, "linux.sysfs_path"));
@@ -1145,20 +1196,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 							"info.product",
 							model);
 		}
-
-		device_file = hal_device_property_get_string (d, "block.device");
-		did = drive_id_open_node(device_file);
-		if (drive_id_probe(did, DRIVE_ID_ATA) == 0) {
-			if (did->serial[0] != '\0')
-				hal_device_property_set_string (stordev, 
-								"storage.serial",
-								did->serial);
-			if (did->firmware[0] != '\0')
-				hal_device_property_set_string (stordev, 
-								"storage.firmware_version",
-								did->firmware);
-		}
-		drive_id_close(did);
 
 		/* According to the function proc_ide_read_media() in 
 		 * drivers/ide/ide-proc.c in the Linux sources, media
@@ -1198,9 +1235,33 @@ block_class_pre_process (ClassDeviceHandler *self,
 				has_removable_media = TRUE;
 
 				/* TODO: Someone test with tape drives! */
-			}
-			
+			}			
 		}
+
+		/* only check for drive_id if we are allowed to poll, otherwise we may
+		 * cause inifite loops of hotplug events, cf. broken ide-cs driver and
+		 * broken zip drives. Merely accessing the top-level block device if it
+		 * or any of it partitions are not mounted causes the loop.
+		 */
+		if (hal_device_property_get_bool (stordev, "storage.media_check_enabled")) {
+			const char *device_file;
+			struct drive_id *did;
+
+			device_file = hal_device_property_get_string (d, "block.device");
+			did = drive_id_open_node(device_file);
+			if (drive_id_probe(did, DRIVE_ID_ATA) == 0) {
+				if (did->serial[0] != '\0')
+					hal_device_property_set_string (stordev, 
+									"storage.serial",
+									did->serial);
+				if (did->firmware[0] != '\0')
+					hal_device_property_set_string (stordev, 
+									"storage.firmware_version",
+									did->firmware);
+			}
+			drive_id_close(did);
+		}
+
 		
 	} else if (strcmp (hal_device_property_get_string (parent,
 							 "info.bus"),
@@ -1367,6 +1428,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 				      hal_device_property_get_bool (
 					      stordev, "storage.no_partitions_hint"));
 
+
 	/* FINALLY, merge information derived from a .fdi file, from the 
 	 * physical device that is backing this block device.
 	 *
@@ -1384,21 +1446,21 @@ block_class_pre_process (ClassDeviceHandler *self,
 		/* Merge storage.* from physdev to stordev */
 		hal_device_merge_with_rewrite (stordev, physdev, 
 					       "storage.", "storage.");
-
+		
 		/* If there's a scsi device inbetween merge all 
-		 * storage.lun%d.* properties */
+		 * storage_lun%d.* properties */
 		if (scsidev != NULL) {
 			int lun;
 			char propname[64];
-		
+			
 			lun = hal_device_property_get_int (
 				scsidev, "scsi.lun");
 		
 			/* See 6in1-card-reader.fdi for an example */
-		       		
+			
 			snprintf (propname, sizeof (propname), 
 				  "storage_lun%d.", lun);
-
+			
 			hal_device_merge_with_rewrite (stordev, physdev, 
 						       "storage.", propname);
 		}
@@ -1415,7 +1477,62 @@ block_class_in_gdl (ClassDeviceHandler *self,
 
 	/* Check the mtab to see if the device is mounted */
 	etc_mtab_process_all_block_devices (TRUE);
+
+	if (!hal_device_property_get_bool (d, "block.is_volume") &&
+	    !hal_device_property_get_bool (d, "storage.media_check_enabled")) {
+		/* Right, if we don't have media_check_enabled we don't really know
+		 * if the storage device contains media without partition
+		 * tables. This is because of the hotplug infinite loops if trying
+		 * to access the top-level block device.
+		 *
+		 * (man, if only the kernel could tell us that it didn't find
+		 *  any partition tables!)
+		 *
+		 * We could try to setup a timer that fires in a few seconds to
+		 * see whether we got any childs added and, if not, then resort
+		 * to actually doing a detect_media on the top-level block device.
+		 *
+		 * This works on the ide-cs driver, but there are many other drivers
+		 * it might not work on, so I've commented it out. Oh well.
+		 */
+		/*g_timeout_add (3000, deferred_check_for_non_partition_media, g_strdup(udi));*/
+	}
 }
+
+static gboolean
+deferred_check_for_non_partition_media (gpointer data)
+{
+	gchar *stordev_udi = (gchar *) data;
+	HalDevice *d;
+	HalDevice *child;
+
+	HAL_INFO (("Entering, udi %s", stordev_udi));
+
+	/* See if device is still there */
+	d = hal_device_store_find (hald_get_gdl (), stordev_udi);
+	if (d == NULL)
+		goto out;
+
+	/* See if we already got children (check both TDL and GDL) */
+	child = hal_device_store_match_key_value_string (hald_get_gdl (), "info.parent",
+							 stordev_udi);
+	if (child == NULL)
+		child = hal_device_store_match_key_value_string (hald_get_tdl (), "info.parent",
+								 stordev_udi);
+
+	if (child != NULL)
+		goto out;
+
+	HAL_INFO (("Forcing check for media check on udi %s", stordev_udi));
+
+	/* no children so force this check */
+	detect_media (d, TRUE);	
+
+out:
+	g_free (stordev_udi);
+	return FALSE;
+}
+
 
 static char *
 block_class_compute_udi (HalDevice * d, int append_num)
@@ -1708,10 +1825,6 @@ mtab_handle_storage (HalDevice *d)
 	/* Search all mount points */
 	found_mount_point = FALSE;
 	for (i = 0; i < num_mount_points; i++) {
-		char udi[256];
-		const char *device_file;
-		struct volume_id *vid;
-		ClassAsyncData *cad;
 
 		mp = &mount_points[i];
 
@@ -1724,100 +1837,13 @@ mtab_handle_storage (HalDevice *d)
 		}
 
 		/* is now mounted, and we didn't have a child.. */
-		HAL_INFO (("%s now mounted at %s, "
-			   "major:minor=%d:%d, " "fstype=%s, udi=%s",
-			   mp->device, mp->mount_point,
-			   mp->major, mp->minor, mp->fs_type, d->udi));
+		HAL_INFO (("%s now mounted at %s, fstype=%s, udi=%s",
+			   mp->device, mp->mount_point, mp->fs_type, d->udi));
 
-		child = hal_device_new ();
-		hal_device_store_add (hald_get_tdl (), child);
-		g_object_unref (child);
-
-		/* copy from parent */
-		hal_device_merge (child, d);
-
-		/* modify some properties */
-		hal_device_property_set_string (child, "info.parent", d->udi);
-		hal_device_property_set_bool (child, "block.is_volume", TRUE);
-		hal_device_property_set_string (child,
-						"info.capabilities",
-						"block volume");
-		hal_device_property_set_string (child,
-						"info.category",
-						"volume");
-		hal_device_property_set_string (child,
-						"info.product",
-						"Volume");
-		/* clear these otherwise we'll
-		 * imposter the parent on hotplug
-		 * remove
-		 */
-		hal_device_property_set_string (child, "linux.sysfs_path", "");
-		hal_device_property_set_string (child,
-						"linux.sysfs_path_device", "");
-
-		/* set defaults */
-		hal_device_property_set_string (
-			child, "volume.label", "");
-		hal_device_property_set_string (
-			child, "volume.uuid", "");
-		hal_device_property_set_string (
-			child, "volume.fstype", mp->fs_type);
-		hal_device_property_set_string (
-			child, "volume.mount_point", mp->mount_point);
-		hal_device_property_set_bool (
-			child, "volume.is_mounted", TRUE);
-		hal_device_property_set_bool (
-			child, "volume.is_disc", FALSE);
-
-		/* set UDI as appropriate */
-		strncpy (udi, hal_device_property_get_string (
-				d, "info.udi"), 256);
-		strncat (udi, "-volume", 256);
-		hal_device_property_set_string (child, "info.udi", udi);
-		hal_device_set_udi (child, udi);
-
-		device_file = hal_device_property_get_string (d,
-							      "block.device");
-		vid = volume_id_open_node(device_file);
-		if (vid != NULL) {
-			if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0)
-				set_volume_id_values(d, vid);
-			volume_id_close(vid);
-		}
-
-		cad = g_new0 (ClassAsyncData, 1);
-		cad->device = child;
-		cad->handler = &block_class_handler;
-		cad->merge_or_add = block_class_handler.merge_or_add;
-
-		/* add new device */
-		g_signal_connect (
-			child, "callouts_finished",
-			G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
-		hal_callout_device (child, TRUE);
+		/* detect the media and do indeed force this check */
+		detect_media (d, TRUE);
 
 		return TRUE;
-	}
-
-	/* No mount point found */
-	if (!found_mount_point) {
-		if (child != NULL ) {
-			/* We had a child, but is no longer mounted, go
-			 * remove the child */
-			HAL_INFO (("%s not mounted anymore at %s, "
-				   "major:minor=%d:%d, "
-				   "fstype=%s, udi=%s", 
-				   mp->device, mp->mount_point, 
-				   mp->major, mp->minor, 
-				   mp->fs_type, d->udi));
-			
-			g_signal_connect (child, "callouts_finished",
-					  G_CALLBACK (volume_remove_from_gdl), NULL);
-			hal_callout_device (child, FALSE);
-
-			return TRUE;
-		}
 	}
 
 	return TRUE;
@@ -1935,6 +1961,32 @@ mtab_handle_volume (HalDevice *d)
 				DBUS_TYPE_STRING,
 				device_mount_point,
 				DBUS_TYPE_INVALID);
+
+			/* Alrighty, we were unmounted and we are some media without
+			 * partition tables and we don't like to be polled. So now
+			 * the user could actually remove the media and insert some
+			 * other media and we wouldn't notice. Ever.
+			 *
+			 * So, remove the hal device object to be on the safe side.
+			 */
+			if ( strcmp (hal_device_property_get_string (d, "block.device"),
+				     hal_device_property_get_string (stor, "block.device")) == 0 &&
+			     !hal_device_property_get_bool (stor, "storage.media_check_enabled")) {
+
+				HAL_INFO (("Removing hal device object %s since it was unmounted", d->udi));
+
+				/* remove device */
+				g_signal_connect (d, "callouts_finished",
+						  G_CALLBACK (volume_remove_from_gdl), NULL);
+				hal_callout_device (d, FALSE);
+
+				/* allow to scan again */
+				hal_device_property_set_bool (stor, "block.have_scanned", FALSE);
+
+				g_free (device_mount_point);
+				return FALSE;
+			}
+
 		}
 
 		g_free (device_mount_point);

@@ -54,10 +54,20 @@ ide_host_device_accept (BusDeviceHandler *self, const char *path,
 			struct sysfs_device *device)
 {
 	int ide_host_number;
+	char buf[256];
+	size_t len;
 
 	if (sscanf (device->bus_id, "ide%d", &ide_host_number) != 1) {
 		return FALSE;
 	}
+
+	/* Don't pickup toplevel ide_host objects */
+	snprintf (buf, 256, "%s/devices/ide", sysfs_mount_path);
+	len = strlen (buf);
+	if (strncmp (buf, device->path, len) == 0)
+		return FALSE;
+
+
 
 	return TRUE;
 }

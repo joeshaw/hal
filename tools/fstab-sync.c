@@ -28,6 +28,10 @@
  * changed, then it simply starts over, recopying /etc/fstab and trying again.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #define _GNU_SOURCE
 #include <assert.h>
 #include <ctype.h>
@@ -1013,7 +1017,7 @@ volume_new (const char *udi)
   volume_determine_device_type (volume);
 
   volume->fs_type = get_hal_string_property (udi, "volume.fstype");
-  if (volume->fs_type == NULL)
+  if (volume->fs_type == NULL || strlen (volume->fs_type) == 0)
     {
       volume->fs_type = strdup ("auto");
     }
