@@ -240,11 +240,129 @@ check_libhal (const char *server_addr)
 			goto fail;
 		}
 		printf ("SUCCESS108\n");
+	
+		/* tests for libhal_psi */
+		{
+			int type;
+			char *key;
+			LibHalPropertySet *pset;
+			LibHalPropertySetIterator it;
+			unsigned int psi_num_passed;
+			unsigned int psi_num_elems;
+
+			if ((pset = libhal_device_get_all_properties (ctx, "/org/freedesktop/Hal/devices/testobj1", 
+								      &error)) == NULL)
+				return FALSE;
+			printf ("SUCCESS110\n");
+
+			psi_num_passed = 0;
+			psi_num_elems = libhal_property_set_get_num_elems (pset);
+
+			for (libhal_psi_init (&it, pset); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
+				type = libhal_psi_get_type (&it);
+				key = libhal_psi_get_key (&it);
+
+				switch (type) {
+				case LIBHAL_PROPERTY_TYPE_STRING:
+					if (strcmp (key, "info.udi") == 0) {
+						if (strcmp (libhal_psi_get_string (&it), 
+							    "/org/freedesktop/Hal/devices/testobj1") == 0) {
+							psi_num_passed++;
+						} else {
+							printf ("fail on %s\n", key);
+						}
+					} else if (strcmp (key, "test.string") == 0) {
+						if (strcmp (libhal_psi_get_string (&it), 
+							    "fooooobar22") == 0) {
+							psi_num_passed++;
+						} else {
+							printf ("fail on %s\n", key);
+						}
+					} else if (strcmp (key, "test.string2") == 0) {
+						if (strcmp (libhal_psi_get_string (&it), 
+							    "fooøةמ") == 0) {
+							psi_num_passed++;
+						} else {
+							printf ("fail on %s\n", key);
+						}
+					}
+					break;
+
+				case LIBHAL_PROPERTY_TYPE_INT32:
+					if (strcmp (key, "test.int") == 0) {
+						if (libhal_psi_get_int (&it) == 42)
+							psi_num_passed++;
+						else
+							printf ("fail on %s\n", key);
+					}
+					break;
+
+				case LIBHAL_PROPERTY_TYPE_UINT64:
+					if (strcmp (key, "test.uint64") == 0) {
+						if (libhal_psi_get_uint64 (&it) == ((((dbus_uint64_t)1)<<35) + 5))
+							psi_num_passed++;
+						else
+							printf ("fail on %s\n", key);
+					}
+					break;
+
+				case LIBHAL_PROPERTY_TYPE_BOOLEAN:
+					if (strcmp (key, "test.bool") == 0) {
+						if (libhal_psi_get_bool (&it))
+							psi_num_passed++;
+						else
+							printf ("fail on %s\n", key);
+					}
+					break;
+
+				case LIBHAL_PROPERTY_TYPE_DOUBLE:
+					if (strcmp (key, "test.double") == 0) {
+						double val = 0.53434343;
+						double val2;
+
+						val2 = libhal_psi_get_double (&it);
+						if (memcmp (&val, &val2, sizeof (double)) == 0)
+							psi_num_passed++;
+						else
+							printf ("fail on %s\n", key);
+					}
+					break;
+
+				case LIBHAL_PROPERTY_TYPE_STRLIST:
+					if (strcmp (key, "test.strlist") == 0) {
+						char **val;
+					
+						val = libhal_psi_get_strlist (&it);
+						if (libhal_string_array_length (val) == 2 &&
+						    strcmp (val[0], "foostrlist2") == 0 &&
+						    strcmp (val[1], "foostrlist3") == 0 &&
+						    val[2] == NULL)
+							psi_num_passed++;
+						else
+							printf ("fail on %s\n", key);
+					}
+					break;
+
+				default:
+					printf ("    *** unknown type for key %s\n", key);
+					break;
+				}
+			}
+			libhal_free_property_set (pset);
+
+			if (psi_num_passed != psi_num_elems) {
+				printf ("FAILED111\n");			
+				goto fail;
+			}
+			printf ("SUCCESS111\n");			
 
 
+		} /* end libhal_test_psi */
+
+	
 		printf ("Passed all libhal tests\n");
 		passed = TRUE;
-
+		
 	fail:
 
 		send_tests_done (conn, passed);

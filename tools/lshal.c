@@ -59,7 +59,7 @@ static LibHalContext *hal_ctx;
  *
  */
 static void
-dump_devices ()
+dump_devices (void)
 {
 	int i;
 	int num_devices;
@@ -377,8 +377,6 @@ main (int argc, char *argv[])
 
 	fprintf (stderr, "lshal version " PACKAGE_VERSION "\n");
 
-	loop = g_main_loop_new (NULL, FALSE);
-
 	while (1) {
 		int c;
 		int option_index = 0;
@@ -413,13 +411,20 @@ main (int argc, char *argv[])
 		}
 	}
 
+	if (do_monitor)
+		loop = g_main_loop_new (NULL, FALSE);
+	else
+		loop = NULL;
+
 	dbus_error_init (&error);	
 	conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (conn == NULL) {
 		fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
 		return 1;
-	}		
-	dbus_connection_setup_with_g_main (conn, NULL);
+	}
+
+	if (do_monitor)
+		dbus_connection_setup_with_g_main (conn, NULL);
 
 	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
 		fprintf (stderr, "error: libhal_ctx_new\n");
@@ -444,13 +449,16 @@ main (int argc, char *argv[])
 	dump_devices ();
 
 	/* run the main loop only if we should monitor */
-	if (do_monitor) {
+	if (do_monitor && loop != NULL) {
 		libhal_device_property_watch_all (hal_ctx, &error);
 		g_main_loop_run (loop);
 	}
 
 	libhal_ctx_shutdown (hal_ctx, &error);
 	libhal_ctx_free (hal_ctx);
+
+	dbus_connection_disconnect (conn);
+	dbus_connection_unref (conn);
 	return 0;
 }
 

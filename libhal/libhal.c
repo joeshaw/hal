@@ -53,10 +53,9 @@
 # define N_(String) (String)
 #endif
 
-char **libhal_get_string_array_from_iter (DBusMessageIter *iter);
+static char **libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements);
 
-dbus_bool_t libhal_property_fill_value_from_variant (LibHalProperty *p, 
-						     DBusMessageIter *var_iter);
+static dbus_bool_t libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var_iter);
 
 
 
@@ -89,10 +88,11 @@ libhal_free_string_array (char **str_array)
 /** Creates a NULL terminated array of strings from a dbus message iterator.
  *
  *  @param  iter		The message iterator to extract the strings from
+ *  @param  num_elements        Pointer to an integer where to store number of elements (can be NULL)
  *  @return			Pointer to the string array
  */
-char **
-libhal_get_string_array_from_iter (DBusMessageIter *iter)
+static char **
+libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements)
 {
 	int count;
 	char **buffer;
@@ -132,6 +132,8 @@ libhal_get_string_array_from_iter (DBusMessageIter *iter)
 	}
 
 	buffer[count] = NULL;
+	if (num_elements != NULL)
+		*num_elements = count;
 	return buffer;
 
 oom:
@@ -243,15 +245,17 @@ libhal_ctx_get_user_data(LibHalContext *ctx)
  *  @param  p                 The property to fill in
  *  @param  var_iter	      Varient iterator to extract the value from
  */
-dbus_bool_t
+static dbus_bool_t
 libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var_iter)
 {
+	DBusMessageIter iter_array;
 	switch (p->type) {
 	case DBUS_TYPE_ARRAY:
 		if (dbus_message_iter_get_element_type (var_iter) != DBUS_TYPE_STRING)
 			return FALSE;
 
-		p->strlist_value = libhal_get_string_array_from_iter (var_iter);
+		dbus_message_iter_recurse (var_iter, &iter_array);
+		p->strlist_value = libhal_get_string_array_from_iter (&iter_array, NULL);
 
 		p->type = LIBHAL_PROPERTY_TYPE_STRLIST; 
 
@@ -414,6 +418,7 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 
 		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
 
+
 		p->type = dbus_message_iter_get_arg_type (&var_iter);
 	
 		result->num_properties++;
@@ -463,6 +468,20 @@ libhal_free_property_set (LibHalPropertySet * set)
 	}
 	free (set);
 }
+
+unsigned int 
+libhal_property_set_get_num_elems (LibHalPropertySet *set)
+{
+	unsigned int num_elems;
+	LibHalProperty *p;
+
+	num_elems = 0;
+	for (p = set->properties_head; p != NULL; p = p->next)
+		num_elems++;
+
+	return num_elems;
+}
+
 
 /** Initialize a property set iterator.
  *
@@ -912,7 +931,7 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	
 	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	hal_device_names = libhal_get_string_array_from_iter (&iter_array);
+	hal_device_names = libhal_get_string_array_from_iter (&iter_array, num_devices);
 		      
 	dbus_message_unref (reply);
 	dbus_message_unref (message);
@@ -1022,7 +1041,7 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 	
 	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	our_strings = libhal_get_string_array_from_iter (&iter_array);
+	our_strings = libhal_get_string_array_from_iter (&iter_array, NULL);
 		      
 	dbus_message_unref (reply);
 	dbus_message_unref (message);
@@ -2373,7 +2392,7 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 	
 	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	hal_device_names = libhal_get_string_array_from_iter (&iter_array);
+	hal_device_names = libhal_get_string_array_from_iter (&iter_array, num_devices);
 		      
 	dbus_message_unref (reply);
 	dbus_message_unref (message);
@@ -2505,7 +2524,7 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	
 	dbus_message_iter_recurse (&reply_iter, &iter_array);
 
-	hal_device_names = libhal_get_string_array_from_iter (&iter_array);
+	hal_device_names = libhal_get_string_array_from_iter (&iter_array, num_devices);
 		      
 	dbus_message_unref (reply);
 	dbus_message_unref (message);
@@ -2670,14 +2689,33 @@ libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 dbus_bool_t    
 libhal_ctx_shutdown (LibHalContext *ctx, DBusError *error)
 {
-	/* TODO */
+	DBusError myerror;
+
+	dbus_error_init (&myerror);
+	dbus_bus_add_match (ctx->connection, 
+			    "type='signal',"
+			    "interface='org.freedesktop.Hal.Manager',"
+			    "sender='org.freedesktop.Hal',"
+			    "path='/org/freedesktop/Hal/Manager'", &myerror);
+	if (dbus_error_is_set (&myerror)) {
+		fprintf (stderr, "%s %d : Error unsubscribing to signals, error=%s\n", 
+			 __FILE__, __LINE__, error->message);
+		/** @todo  clean up */
+	}
+
+	/* TODO: remove other matches */
+
+	dbus_connection_remove_filter (ctx->connection, filter_func, ctx);
+
+	ctx->is_initialized = FALSE;
+
 	return TRUE;
 }
 
 dbus_bool_t    
 libhal_ctx_free (LibHalContext *ctx)
 {
-	/* TODO */
+	free (ctx);
 	return TRUE;
 }
 

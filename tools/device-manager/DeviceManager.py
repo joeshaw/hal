@@ -463,6 +463,9 @@ class DeviceManager(LibGladeApplication):
                     store.set(iter, 0, p, 1, "bool", 2, "false")
             elif ptype==float:
                 store.set(iter, 0, p, 1, "float", 2, "%f"%val)
+	    else:
+		# assume strlist
+		store.set(iter, 0, p, 1, "strlist", 2, val)
 
 
         prop_tree_view = self.xml.get_widget("ns_adv_properties")

@@ -278,6 +278,8 @@ LibHalPropertySet *libhal_device_get_all_properties (LibHalContext *ctx,
 
 void libhal_free_property_set (LibHalPropertySet *set);
 
+unsigned int libhal_property_set_get_num_elems (LibHalPropertySet *set);
+
 /** Iterator for inspecting all properties */
 struct LibHalPropertySetIterator_s {
 	LibHalPropertySet *set;    /**< Property set we are iterating over */

@@ -1,3 +1,29 @@
+2005-02-16  David Zeuthen  <davidz@redhat.com>
+
+	* tools/device-manager/DeviceManager.py:
+	(DeviceManager.update_tab_advanced): Make this work for string lists
+
+	* tools/lshal.c (main): Various cleanups
+
+	* libhal/libhal.c (libhal_property_fill_value_from_variant): Make
+	this one static. Make sure to recurse into string array otherwise
+	it won't work at all
+	(libhal_get_string_array_from_iter): Make this static. Take
+	num_elems pointer
+	(libhal_property_set_get_num_elems): New function
+	(libhal_get_all_devices): Pass num_devices to
+	libhal_get_string_array_from_iter
+	(libhal_ctx_shutdown): Remove match and filter function
+	(libhal_ctx_free): Implement this one; free our context
+
+	* libhal/libhal.h: Add prototype for libhal_property_set_get_num_elems
+
+	* hald/hald_test_libhal.c (check_libhal): Add tests for the property
+	set functions as they were failing (see changes above)
+
+	* hald/Makefile.am (hald_test_SOURCES): Remove callout.[ch] as they
+	are now gone
+
 2005-02-14  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Require dbus >= 0.30

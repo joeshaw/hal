@@ -287,8 +287,6 @@ manager_get_all_devices (DBusConnection * connection,
 	DBusMessageIter iter;
 	DBusMessageIter iter_array;
 
-	HAL_TRACE (("entering"));
-
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
 		DIE (("No memory"));
@@ -810,13 +808,11 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 						  DBUS_TYPE_STRING_AS_STRING,
 						  &iter_array);
 
-		for (iter = hal_property_get_strlist (p); 
-				     iter != NULL; 
-				     iter = iter->next) {
+		for (iter = hal_property_get_strlist (p); iter != NULL; iter = iter->next) {
 				     
 			const char *v;
 			v = (const char *) iter->data;
-			
+
 			dbus_message_iter_append_basic (&iter_array, 
 							DBUS_TYPE_STRING,
 							&v);
