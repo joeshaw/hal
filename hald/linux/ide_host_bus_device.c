@@ -108,6 +108,7 @@ BusDeviceHandler ide_host_bus_handler = {
 	ide_host_device_compute_udi, /**< UDI computing function */
 	ide_host_device_pre_process, /**< add more properties */
 	bus_device_got_udi,          /**< got UDI */
+	bus_device_in_gdl,            /**< in GDL */
 	"ide_host",                  /**< sysfs bus name */
 	"ide_host"                   /**< namespace */
 };

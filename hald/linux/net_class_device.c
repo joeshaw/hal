@@ -611,6 +611,7 @@ ClassDeviceHandler net_class_handler = {
 	net_class_post_merge,               /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	net_class_compute_udi,              /**< compute UDI */
+	class_device_in_gdl,                /**< in GDL */
 	"net",                              /**< sysfs class name */
 	"net",                              /**< hal class name */
 	FALSE,                              /**< require device file */

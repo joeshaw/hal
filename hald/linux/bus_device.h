@@ -141,6 +141,17 @@ struct BusDeviceHandler_s {
 			 HalDevice *d, 
 			 const char *udi);
 
+	/** Called when the device is in the GDL and all callouts have
+	 *  run
+	 *
+	 *  @param  self          Pointer to class members
+	 *  @param  d             The HalDevice object
+	 *  @param  udi           UDI of device
+	 */
+	void (*in_gdl) (BusDeviceHandler *self, 
+			HalDevice *d, 
+			const char *udi);
+
 
 	/** name of bus the instance handles (name mentioned in /sys/bus) */
 	const char *sysfs_bus_name;
@@ -173,6 +184,10 @@ void bus_device_pre_process (BusDeviceHandler *self,
 void bus_device_got_udi (BusDeviceHandler *self,
 			 HalDevice *d,
 			 const char *udi);
+
+void bus_device_in_gdl (BusDeviceHandler *self,
+			HalDevice *d,
+			const char *udi);
 
 /* Convenience structure for passing around multiple pieces of data to
    the got_parent_device() functions */

@@ -154,6 +154,7 @@ BusDeviceHandler platform_bus_handler = {
 	platform_device_compute_udi,  /**< UDI computing function */
 	platform_device_pre_process,  /**< add more properties */
 	platform_device_got_udi,      /**< got UDI */
+	bus_device_in_gdl,            /**< in GDL */
 	"platform",                   /**< sysfs bus name */
 	"platform"                    /**< namespace */
 };

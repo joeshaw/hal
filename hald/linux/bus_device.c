@@ -132,6 +132,32 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 	free (parent_sysfs_path);
 }
 
+
+/** Removes the device from the TDL and adds it to the GDL when all
+ *  all of the device's callouts have finished.  This is a gobject
+ *  signal callback. 
+ *
+ *  @param  device              The device being moved
+ *  @param  user_data           User data provided when connecting the signal
+ *
+ */
+static void
+bus_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
+{
+	BusAsyncData *bad = (BusAsyncData*) user_data;
+
+	g_object_ref (device);
+	hal_device_store_remove (hald_get_tdl (), device);
+	hal_device_store_add (hald_get_gdl (), device);
+	g_signal_handlers_disconnect_by_func (device,
+					      device_move_from_tdl_to_gdl,
+					      user_data);
+	g_object_unref (device);
+
+	((bad->handler)->in_gdl) (bad->handler, device, device->udi);
+}
+
+
 /** Callback when the parent is found or if there is no parent.. This is
  *  where we get added to the GDL..
  *
@@ -150,8 +176,6 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	HalDevice *d = (HalDevice *) bad->device;
 	BusDeviceHandler *self = (BusDeviceHandler *) bad->handler;
 	struct sysfs_device *device;
-
-	g_free (bad);
 
 	/* set parent, if any */
 	if (parent != NULL) {
@@ -182,14 +206,17 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 
 		self->got_udi (self, device_to_add, new_udi);
 
+		/* bad is freeded in callback */
 		g_signal_connect (device_to_add,
 				  "callouts_finished",
-				  G_CALLBACK (device_move_from_tdl_to_gdl),
-				  NULL);
+				  G_CALLBACK (bus_device_move_from_tdl_to_gdl),
+				  bad);
 
 		hal_callout_device (device_to_add, TRUE);
 	} else {
 		hal_device_store_remove (hald_get_tdl (), d);
+		/* free bad now */
+		g_free (bad);
 	}
 }
 
@@ -260,6 +287,13 @@ void
 bus_device_got_udi (BusDeviceHandler *self,
 		    HalDevice *d,
 		    const char *udi)
+{
+}
+
+void 
+bus_device_in_gdl (BusDeviceHandler *self,
+		   HalDevice *d,
+		   const char *udi)
 {
 }
 

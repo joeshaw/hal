@@ -114,6 +114,7 @@ ClassDeviceHandler scsi_device_class_handler = {
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	scsi_device_class_compute_udi,      /**< No UDI computation */
+	class_device_in_gdl,                /**< in GDL */
 	"scsi_device",                      /**< sysfs class name */
 	"scsi_device",                      /**< hal class name */
 	FALSE,                              /**< don't require device file */

@@ -103,6 +103,7 @@ ClassDeviceHandler scsi_host_class_handler = {
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	scsi_host_class_compute_udi,        /**< No UDI computation */
+	class_device_in_gdl,                /**< in GDL */
 	"scsi_host",                        /**< sysfs class name */
 	"scsi_host",                        /**< hal class name */
 	FALSE,                              /**< don't require device file */

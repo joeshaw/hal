@@ -157,6 +157,7 @@ BusDeviceHandler usbif_bus_handler = {
 	usbif_device_compute_udi,  /**< UDI computing function */
 	usbif_device_pre_process,  /**< add more properties */
 	bus_device_got_udi,        /**< got UDI */
+	bus_device_in_gdl,            /**< in GDL */
 	"usb",                     /**< sysfs bus name */
 	"usbif"                    /**< namespace */
 };

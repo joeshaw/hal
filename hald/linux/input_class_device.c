@@ -225,6 +225,7 @@ ClassDeviceHandler input_class_handler = {
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	input_class_compute_udi,            /**< UDI computation */
+	class_device_in_gdl,                /**< in GDL */
 	"input",                            /**< sysfs class name */
 	"input",                            /**< hal class name */
 	TRUE,                               /**< require device file */

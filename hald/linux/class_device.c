@@ -391,6 +391,33 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
 	class_device_final (self, d, merge_or_add);
 }
 
+
+
+/** Removes the device from the TDL and adds it to the GDL when all
+ *  all of the device's callouts have finished.  This is a gobject
+ *  signal callback. 
+ *
+ *  @param  device              The device being moved
+ *  @param  user_data           User data provided when connecting the signal
+ *
+ */
+static void
+class_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
+{
+	ClassAsyncData *cad = (ClassAsyncData*) user_data;
+
+	g_object_ref (device);
+	hal_device_store_remove (hald_get_tdl (), device);
+	hal_device_store_add (hald_get_gdl (), device);
+	g_signal_handlers_disconnect_by_func (device,
+					      device_move_from_tdl_to_gdl,
+					      user_data);
+	g_object_unref (device);
+
+	((cad->handler)->in_gdl) (cad->handler, device, device->udi);
+}
+
+
 static void
 class_device_final (ClassDeviceHandler* self, HalDevice *d,
 		    gboolean merge_or_add)
@@ -454,6 +481,7 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d,
 		new_udi = rename_and_merge (d, self->compute_udi, self->hal_class_name);
 		if (new_udi != NULL) {
 			HalDevice *device_to_add;
+			ClassAsyncData *cad = g_new0 (ClassAsyncData, 1);
 
 			new_d = hal_device_store_find (hald_get_gdl (),
 						       new_udi);
@@ -462,10 +490,15 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d,
 
 			self->got_udi (self, device_to_add, new_udi);
 
+			cad->device = d;
+			cad->handler = self;
+			cad->merge_or_add = merge_or_add;
+
+
 			g_signal_connect (device_to_add,
 					  "callouts_finished",
-					  G_CALLBACK (device_move_from_tdl_to_gdl),
-					  NULL);
+					  G_CALLBACK (class_device_move_from_tdl_to_gdl),
+					  cad);
 
 			hal_callout_device (device_to_add, TRUE);
 		} else {
@@ -570,6 +603,13 @@ void
 class_device_got_udi (ClassDeviceHandler *self,
 		      HalDevice *d,
 		      const char *udi)
+{
+}
+
+void
+class_device_in_gdl (ClassDeviceHandler *self,
+		     HalDevice *d,
+		     const char *udi)
 {
 }
 

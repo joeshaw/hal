@@ -490,6 +490,7 @@ BusDeviceHandler pci_bus_handler = {
 	pci_device_compute_udi,    /**< UDI computing function */
 	pci_device_pre_process,    /**< add more properties */
 	bus_device_got_udi,        /**< got UDI */
+	bus_device_in_gdl,            /**< in GDL */
 	"pci",                     /**< sysfs bus name */
 	"pci"                      /**< namespace */
 };

@@ -1,5 +1,66 @@
 2004-07-05  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/ieee1394_host_class_device.c: Add class_device_in_gdl
+	method
+
+	* hald/linux/ieee1394_node_class_device.c: Add class_device_in_gdl
+	method
+
+	* hald/linux/ieee1394_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/pcmcia_socket_class_device.c: Add class_device_in_gdl
+	method
+
+	* hald/linux/block_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/scsi_device_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/scsi_host_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/scsi_generic_class_device.c: Add class_device_in_gdl
+	method
+
+	* hald/linux/printer_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/net_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/input_class_device.c: Add class_device_in_gdl method
+
+	* hald/linux/class_device.c (class_device_in_gdl): New function
+	(class_device_move_from_tdl_to_gdl): New function, specialised version
+	of device_move_from_tdl_to_gdl that calls in_gdl method
+	(class_device_final): Call class_device_move_from_tdl_to_gdl instead
+	and create a ClassAsyncData variable to carry data around
+
+	* hald/linux/class_device.h: Add in_gdl method to ClassDeviceHandler
+	and prototype for default method class_device_in_gdl ().
+
+	* hald/linux/pci_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/usb_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/usbif_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/ide_host_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/ide_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/macio_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/platform_bus_device.c: Add bus_device_in_gdl method
+
+	* hald/linux/bus_device.c (bus_device_in_gdl): New function
+	(bus_device_move_from_tdl_to_gdl): New function, specialised version
+	of device_move_from_tdl_to_gdl that calls in_gdl method
+	(bus_device_got_parent): Call bus_device_move_from_tdl_to_gdl instead
+	and carry on the BusAsyncData bad variable; conditionally free it
+	on failure though.
+
+	* hald/linux/bus_device.h: Add in_gdl method to BusDeviceHandler
+	and prototype for default method bus_device_in_gdl ().
+
+2004-07-05  David Zeuthen  <david@fubar.dk>
+
 	* tools/linux/hal_dev.c (main): Disable logging. Also fork(2) a
 	new process and make parent exit to temporarily fix that udevstart
 	takes a few minutes to run

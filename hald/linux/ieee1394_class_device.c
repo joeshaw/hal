@@ -121,6 +121,7 @@ ClassDeviceHandler ieee1394_class_handler = {
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	ieee1394_class_compute_udi,         /**< No UDI computation */
+	class_device_in_gdl,                /**< in GDL */
 	"ieee1394",                         /**< sysfs class name */
 	"ieee1394",                         /**< hal class name */
 	FALSE,                              /**< don't require device file */

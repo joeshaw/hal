@@ -201,6 +201,18 @@ struct ClassDeviceHandler_s {
 	 */
 	char* (*compute_udi) (HalDevice *d, int append_num);
 
+	/** Called when the information from the device is in the GDL
+	 *  and all callouts have run. Only applicable if merge_or_add is
+	 *  FALSE
+	 *
+	 *  @param  self          Pointer to class members
+	 *  @param  d             The HalDevice object that the information
+	 *                        ended up at
+	 *  @param  udi           UDI of device
+	 */
+	void (*in_gdl) (ClassDeviceHandler *self, 
+			HalDevice *d, 
+			const char *udi);
 
 	/** name of device class the instance handles (name mentioned 
 	 *  in /sys/class */
@@ -274,6 +286,10 @@ void class_device_got_sysdevice (HalDeviceStore *store,
 void class_device_got_parent_device (HalDeviceStore *store, 
 				     HalDevice *parent, 
 				     gpointer user_data);
+
+void class_device_in_gdl (ClassDeviceHandler *self,
+			  HalDevice *d,
+			  const char *udi);
 
 
 /* Convenience structure for passing around multiple pieces of data

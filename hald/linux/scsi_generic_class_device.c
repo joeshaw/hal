@@ -90,6 +90,7 @@ ClassDeviceHandler scsi_generic_class_handler = {
 	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	NULL,                               /**< No UDI computation */
+	class_device_in_gdl,                /**< in GDL */
 	"scsi_generic",                     /**< sysfs class name */
 	"scsi_generic",                     /**< hal class name */
 	TRUE,                               /**< require device file */
