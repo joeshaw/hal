@@ -1,3 +1,13 @@
+2004-09-03  David Zeuthen  <david@fubar.dk>
+
+	Patch from Martin Pitt <martin@piware.de>.
+
+	* hald/linux/block_class_device.c: (cdrom_get_properties),
+	(detect_media):
+	* hald/linux/input_class_device.c: (input_class_pre_process):
+	* hald/linux/printer_class_device.c: (printer_class_pre_process):
+	Intercept unchecked ioctl calls and log failures.
+
 2004-09-02  Joe Shaw  <joeshaw@novell.com>
 
 	* hald/device.c (hal_device_property_get_bool): Aiee!  If the

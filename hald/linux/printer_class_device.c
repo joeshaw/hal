@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -115,7 +116,9 @@ printer_class_pre_process (ClassDeviceHandler *self,
 		   device_id) < 0) {
 		close (fd);
 		return;
-	}
+	} else
+	    HAL_ERROR(("LPIOC_GET_DEVICE_ID failed: %s\n", strerror(errno)));
+
 
 	close (fd);
 

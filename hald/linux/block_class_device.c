@@ -273,7 +273,8 @@ cdrom_get_properties (HalDevice *d, const char *device_file)
 	if (fd < 0)
 		return;
 		
-	ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS);
+	if( ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0 )
+	    HAL_ERROR(("CDROM_SET_OPTIONS failed: %s\n", strerror(errno)));
 		
 	capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
 	if (capabilities < 0) {
@@ -799,6 +800,10 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 			got_media = TRUE;
 			break;
 			
+		case -1:
+		    HAL_ERROR(("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
+		    break;
+
 		default:
 			break;
 		}

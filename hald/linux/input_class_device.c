@@ -38,6 +38,7 @@
 #include <limits.h>
 #include <fcntl.h>
 #include <linux/input.h>
+#include <errno.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -135,7 +136,8 @@ input_class_pre_process (ClassDeviceHandler *self,
                 if (ioctl(fd, EVIOCGNAME(sizeof name), name) >= 0) {
                         hal_device_property_set_string (d, "info.product",
                                                         name);
-                }
+                } else
+		    HAL_ERROR(("EVIOCGNAME failed: %s\n", strerror(errno)));
         }
 
         /* @todo add more ioctl()'s here */
