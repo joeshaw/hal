@@ -1,3 +1,15 @@
+2004-09-24  David Zeuthen  <david@fubar.dk>
+
+	* libhal-storage/libhal-storage.h: Add and hal_drive_find_all_volumes
+	and change hal_volume_policy_should_be_visible
+
+	* libhal-storage/libhal-storage.c: Delete some uncommented code
+	(hal_volume_policy_should_be_visible): Accept a new parameter called
+	target_mount_point since we need to evaluate policy on unmounted 
+	volumes and want to blacklist them in advance. Add documentation.
+	(hal_drive_find_all_volumes): New function to find all volumes
+	belonging to a drive
+
 2004-09-24  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_lvm2),

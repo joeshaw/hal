@@ -188,6 +188,8 @@ const char       *hal_drive_get_physical_device_udi     (HalDrive      *drive);
 char             *hal_drive_policy_compute_display_name (HalDrive      *drive, HalVolume *volume, HalStoragePolicy *policy);
 char             *hal_drive_policy_compute_icon_name    (HalDrive      *drive, HalVolume *volume, HalStoragePolicy *policy);
 
+char            **hal_drive_find_all_volumes            (LibHalContext *hal_ctx, HalDrive *drive, int *num_volumes);
+
 typedef enum {
 	HAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM,
 	HAL_VOLUME_USAGE_PARTITION_TABLE,
@@ -239,7 +241,7 @@ char             *hal_volume_policy_compute_size_as_string (HalVolume     *volum
 char             *hal_volume_policy_compute_display_name   (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy);
 char             *hal_volume_policy_compute_icon_name      (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy);
 
-dbus_bool_t       hal_volume_policy_should_be_visible      (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy);
+dbus_bool_t       hal_volume_policy_should_be_visible      (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy, const char *target_moint_point);
 
 
 /** @} */

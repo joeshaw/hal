@@ -532,8 +532,25 @@ out:
 		return NULL;
 }
 
+/** Policy function to determine if a volume should be visible in a desktop 
+ *  environment. This is useful to hide certain system volumes as bootstrap
+ *  partitions, the /usr partition, swap partitions and other volumes that
+ *  a unprivileged desktop user shouldn't know even exists.
+ *
+ *  @param  drive               Drive that the volume is stemming from
+ *  @param  volume              Volume
+ *  @param  policy              Policy object
+ *  @param  target_mount_point  The mount point that the volume is expected to
+ *                              be mounted at if not already mounted. This may
+ *                              e.g. stem from /etc/fstab. If this is NULL the
+ *                              then mount point isn't taking into account when
+ *                              evaluating whether the volume should be visible
+ *  @return                     Whether the volume should be shown in a desktop
+ *                              environment.
+ */
 dbus_bool_t
-hal_volume_policy_should_be_visible (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+hal_volume_policy_should_be_visible (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy, 
+				     const char *target_moint_point)
 {
 	unsigned int i;
 	dbus_bool_t is_visible;
@@ -573,21 +590,29 @@ hal_volume_policy_should_be_visible (HalDrive *drive, HalVolume *volume, HalStor
 	mount_point = hal_volume_get_mount_point (volume);
 	fstype = hal_volume_get_fstype (volume);
 
-	/* bail out if not mounted */
-	if (mount_point == NULL || fstype == NULL)
+	/* use target mount point if we're not mounted yet */
+	if (mount_point == NULL)
+		mount_point = target_mount_point;
+
+	/* bail out if we don't know the filesystem */
+	if (fstype == NULL)
 		goto out;
 
 	/* blacklist fhs2.3 top level mount points */
-	for (i = 0; fhs23_toplevel_mount_points[i] != NULL; i++) {
-		if (strcmp (mount_point, fhs23_toplevel_mount_points[i]) == 0)
-			goto out;
+	if (mount_point != NULL) {
+		for (i = 0; fhs23_toplevel_mount_points[i] != NULL; i++) {
+			if (strcmp (mount_point, fhs23_toplevel_mount_points[i]) == 0)
+				goto out;
+		}
 	}
 
 	/* blacklist partitions with name 'bootstrap' of type HFS (Apple uses that) */
-	if (strcmp (label, "bootstrap") == 0 && strcmp (fstype, "hfs") == 0)
+	if (label != NULL && strcmp (label, "bootstrap") == 0 && strcmp (fstype, "hfs") == 0)
 		goto out;
 
+	/* only the real lucky mount points will make it this far :-) */
 	is_visible = TRUE;
+
 out:
 	return is_visible;
 }
@@ -1256,123 +1281,44 @@ hal_volume_get_disc_type (HalVolume *volume)
 	return volume->disc_type;
 }
 
-
-#if 0
-static char *
-_hal_get_drive_icon (HalVolume *vol, HalDrive *drive)
+char ** 
+hal_drive_find_all_volumes (LibHalContext *hal_ctx, HalDrive *drive, int *num_volumes)
 {
-	char *name;
+	int i;
+	char **udis;
+	int num_udis;
+	const char *drive_udi;
+	char **result;
 
-	if (strcmp (drive->bus, "usb") == 0) {
-		name = strdup (HAL_STORAGE_ICON_DRIVE_REMOVABLE_USB);
-	} else if (strcmp (drive->bus, "ieee1394") == 0) {
-		name = strdup (HAL_STORAGE_ICON_DRIVE_REMOVABLE_IEEE1394);
-	} else {
-		name = strdup (HAL_STORAGE_ICON_DRIVE_REMOVABLE);
+	udis = NULL;
+	result = NULL;
+	*num_volumes = 0;
+
+	drive_udi = hal_drive_get_udi (drive);
+	if (drive_udi == NULL)
+		goto out;
+
+	/* get initial list... */
+	if ((udis = hal_manager_find_device_string_match (hal_ctx, "block.storage_device", 
+							  drive_udi, &num_udis)) == NULL)
+		goto out;
+
+	result = malloc (sizeof (char *) * num_udis);
+	if (result == NULL)
+		goto out;
+
+	/* ...and filter out the single UDI that is the drive itself */
+	for (i = 0; i < num_udis; i++) {
+		if (strcmp (udis[i], drive_udi) == 0)
+			continue;
+		result[*num_volumes] = strdup (udis[i]);
+		*num_volumes = (*num_volumes) + 1;
 	}
 
-	return name;
+out:
+	hal_free_string_array (udis);
+	return result;
 }
-
-/* vol may be NULL */
-static int
-_hal_get_drive_type (HalVolume *vol, HalDrive *drive)
-{
-	int type;
-
-	type = GNOME_VFS_DEVICE_TYPE_HARDDRIVE;
-
-	if (strcmp (drive->type, "cdrom") == 0)
-		type = GNOME_VFS_DEVICE_TYPE_CDROM;
-	if (strcmp (drive->type, "floppy") == 0)
-		type = GNOME_VFS_DEVICE_TYPE_FLOPPY;
-	else if (strcmp (drive->type, "compact_flash") == 0 ||
-		 strcmp (drive->type, "memory_stick") == 0 ||
-		 strcmp (drive->type, "smart_media") == 0 ||
-		 strcmp (drive->type, "sd_mmc") == 0)
-		type = GNOME_VFS_DEVICE_TYPE_MEMORY_STICK;
-
-	return type;
-}
-
-
-static char *
-_hal_get_vol_icon (HalVolume *vol, HalDrive *drive)
-{
-	char *icon;
-	char *category;
-
-
-	category = hal_device_get_property_string (hal_ctx, 
-						   drive->physical_device,
-						   "info.category");
-	if (category != NULL) {
-		if (strcmp (category, "portable_audio_player") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_PORTABLE_AUDIO_PLAYER);
-			return icon;
-		} else if (strcmp (category, "camera") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_CAMERA);
-			return icon;
-		}
-	}
-
-	if (strcmp (drive->type, "cdrom") == 0) {
-
-		/* If it's a optical disc, use the disc type */
-		if (strcmp (vol->disc_type, "cd_rom") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_CDROM);
-		} else if (strcmp (vol->disc_type, "cd_r") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_CDR);
-		} else if (strcmp (vol->disc_type, "cd_rw") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_CDRW);
-		} else if (strcmp (vol->disc_type, "dvd_rom") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_DVDROM);
-		} else if (strcmp (vol->disc_type, "dvd_r") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_DVDR);
-		} else if (strcmp (vol->disc_type, "dvd_ram") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_DVDRAM);
-		} else if ((strcmp (vol->disc_type, "dvd_rw_restricted_overwrite") == 0) || (strcmp (vol->disc_type, "dvd_rw") == 0)) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_DVDRW);
-		} else if (strcmp (vol->disc_type, "dvd_plus_rw") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_DVDRW_PLUS);
-		} else if (strcmp (vol->disc_type, "dvdplusr") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_DISC_DVDR_PLUS);
-		} else {
-			icon = strdup (HAL_STORAGE_ICON_DISC_CDROM);
-		}
-
-	} else if (strcmp (drive->type, "floppy") == 0) {
-		icon = strdup (HAL_STORAGE_ICON_MEDIA_FLOPPY);
-	} else if (strcmp (drive->type, "compact_flash") == 0) {
-		icon = strdup (HAL_STORAGE_ICON_MEDIA_COMPACT_FLASH);
-	} else if (strcmp (drive->type, "memory_stick") == 0) {
-		icon = strdup (HAL_STORAGE_ICON_MEDIA_MEMORY_STICK);
-	} else if (strcmp (drive->type, "smart_media") == 0) {
-		icon = strdup (HAL_STORAGE_ICON_MEDIA_SMART_MEDIA);
-	} else if (strcmp (drive->type, "sd_mmc") == 0) {
-		icon = strdup (HAL_STORAGE_ICON_MEDIA_SD_MMC);
-	} else {
-
-		if (strcmp (drive->bus, "usb") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_MEDIA_HARDDISK_USB);
-		} else if (strcmp (drive->bus, "ieee1394") == 0) {
-			icon = strdup (HAL_STORAGE_ICON_MEDIA_HARDDISK_IEEE1394);
-		} else {
-			icon = strdup y(HAL_STORAGE_ICON_MEDIA_HARDDISK);
-		}
-	}
-	
-	return icon;
-}
-
-static int
-_hal_get_vol_type (HalVolume *vol, HalDrive *drive, LibHalContext *hal_ctx)
-{
-	return _hal_get_drive_type (NULL, drive, hal_ctx);
-}
-#endif 
-
-
 
 
 /** @} */
