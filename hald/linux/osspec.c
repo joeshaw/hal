@@ -388,6 +388,7 @@ osspec_probe ()
 	hal_device_property_set_bool (fakeroot, "info.virtual", TRUE);
 	hal_device_set_udi (fakeroot, "/org/freedesktop/Hal/devices/fakeroot");
 	hal_device_store_add (hald_get_gdl (), fakeroot);
+	g_object_unref (fakeroot);
 
 	/** @todo When the kernel has all devices in /sys/devices
 	 *        under either /sys/bus or /sys/class then we can

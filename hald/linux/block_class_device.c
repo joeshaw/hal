@@ -105,6 +105,8 @@ block_class_visit (ClassDeviceHandler *self,
 
 	d = hal_device_new ();
 	hal_device_store_add (hald_get_tdl (), d);
+	g_object_unref (d);
+
 	hal_device_property_set_string (d, "info.bus", self->hal_class_name);
 	hal_device_property_set_string (d, "linux.sysfs_path", path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", path);
@@ -391,22 +393,11 @@ force_unmount_of_all_childs (HalDevice * d)
 }
 
 static void
-disc_add_to_gdl (HalDevice *device, gpointer user_data)
-{
-	hal_device_store_remove (hald_get_tdl (), device);
-	hal_device_store_add (hald_get_gdl (), device);
-
-	g_signal_handlers_disconnect_by_func (device, disc_add_to_gdl, 
-					      user_data);
-}
-
-static void
 disc_remove_from_gdl (HalDevice *device, gpointer user_data)
 {
-	hal_device_store_remove (hald_get_gdl (), device);
 	g_signal_handlers_disconnect_by_func (device, disc_remove_from_gdl, 
 					      user_data);
-	g_object_unref (device);
+	hal_device_store_remove (hald_get_gdl (), device);
 }
 
 
@@ -607,6 +598,7 @@ detect_media (HalDevice * d)
 
 			child = hal_device_new ();
 			hal_device_store_add (hald_get_tdl (), child);
+			g_object_unref (child);
 
 			/* copy from parent */
 			hal_device_merge (child, d);
@@ -799,7 +791,7 @@ detect_media (HalDevice * d)
 
 			/* add new device */
 			g_signal_connect (child, "callouts_finished",
-					  G_CALLBACK (disc_add_to_gdl), NULL);
+					  G_CALLBACK (device_move_from_tdl_to_gdl), NULL);
 			hal_callout_device (child, TRUE);
 
 			/* GDL was modified */

@@ -117,6 +117,7 @@ class_device_visit (ClassDeviceHandler *self,
 	/* Construct a new device and add to temporary device list */
 	d = hal_device_new ();
 	hal_device_store_add (hald_get_tdl (), d);
+	g_object_unref (d);
 
 	/* Need some properties if we are to appear in the tree on our own */
 	if (!merge_or_add) {
@@ -278,7 +279,6 @@ class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent,
 			      d->udi));
 		/* get rid of temporary device */
 		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
 		return;
 	}
 
@@ -328,7 +328,6 @@ class_device_got_sysdevice (HalDeviceStore *store,
 		HAL_WARNING (("Sysdevice for a class device never appeared!"));
 		/* get rid of temporary device */
 		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
 		return;
 	}
 
@@ -386,7 +385,6 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
 		HAL_WARNING (("Never got device file for class device at %s", 
 			      hal_device_property_get_string (d, ".udev.sysfs_path")));
 		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
 		return;
 	}
 
@@ -438,7 +436,6 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d,
 
 		/* get rid of temporary device */
 		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
 
 		self->post_merge (self, sysdevice);
 	} else {
@@ -473,7 +470,6 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d,
 			hal_callout_device (device_to_add, TRUE);
 		} else {
 			hal_device_store_remove (hald_get_tdl (), d);
-			g_object_unref (d);
 		}
 	}
 }

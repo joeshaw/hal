@@ -92,6 +92,8 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 	/* Construct a new device and add to temporary device list */
 	d = hal_device_new ();
 	hal_device_store_add (hald_get_tdl (), d);
+	g_object_unref (d);
+
 	hal_device_property_set_string (d, "info.bus", self->hal_bus_name);
 	hal_device_property_set_string (d, "linux.sysfs_path", path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", path);
@@ -188,7 +190,6 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 		hal_callout_device (device_to_add, TRUE);
 	} else {
 		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
 	}
 }
 

@@ -1,3 +1,29 @@
+2004-06-09  Joe Shaw  <joeshaw@novell.com>
+
+	Fix some refcounting issues
+
+	* hald/linux/block_class_device.c: Unref the device after we add
+	it to the TDL.
+	(disc_add_to_gdl): Removed; it's functionally equivalent to
+	device_move_from_tdl_to_gdl() in common.c.
+	(disc_remove_from_gdl): Disconnect the signal handlers before
+	removing from the TDL (and thus finalizing).
+	(detect_media): Unref the child after adding it to the TDL.
+	Replace signal handler for "callouts_finished".
+
+	* hald/linux/bus_device.c (bus_device_visit): Unref device after
+	adding it to the TDL.
+	(bus_device_got_parent): Don't unref after removing from the TDL.
+
+	* hald/linux/class_device.c (class_device_visit): Unref device
+	after adding it to TDL.
+	(class_device_got_parent_device, class_device_got_sysdevice,
+	class_device_got_device_file, class_device_final): Don't unref
+	after removing from the TDL.
+
+	* hald/linux/osspec.c (osspec_probe): Unref the fakeroot device
+	after adding it to GDL.
+
 2004-06-07  Joe Shaw  <joeshaw@novell.com>
 
 	* doc/TODO: Add an item about capability matching in FDI files.
