@@ -1,5 +1,15 @@
 2005-03-15  David Zeuthen  <davidz@redhat.com>
 
+	* hald/util.c (hal_util_get_string_from_file): Yikes, variable i
+	needs to be a gint rather than an guint otherwise our for-loop
+	with i >= 0 will continue with i < 0 (only seen on x86_64 with
+	gcc4)
+
+	* hald/linux2/classdev.c (serial_add): Also make an unsigned int
+	an int cf. above comment
+
+2005-03-15  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/10-usb-card-readers.fdi: Add
 	device-information for the builtin USB2 card reader in my HP Media
 	Center x86_64 box

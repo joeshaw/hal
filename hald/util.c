@@ -339,7 +339,7 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 	gchar path[HAL_PATH_MAX];
 	gchar *result;
 	gsize len;
-	guint i;
+	gint i;
 	
 	f = NULL;
 	result = NULL;
@@ -352,6 +352,7 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 		goto out;
 	}
 
+	buf[0] = '\0';
 	if (fgets (buf, sizeof (buf), f) == NULL) {
 		HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
@@ -362,7 +363,7 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 		buf[len-1] = '\0';
 
 	/* Clear remaining whitespace */
-	for (i = len-2; i >= 0; --i) {
+	for (i = len - 2; i >= 0; --i) {
 		if (!g_ascii_isspace (buf[i]))
 			break;
 		buf[i] = '\0';

@@ -590,7 +590,7 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 		}
 	} else {
 		size_t len;
-		unsigned int i;
+		int i;
 
 		len = strlen (last_elem);
 
