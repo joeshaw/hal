@@ -1,3 +1,12 @@
+2004-09-13  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_hfs_hfsplus): Add
+	  support for hfsplus with the physical location of the root node
+	  specified by a higher extent as the first one. This fixes
+	  the label reading on David's big hfsplus volume - I always
+	  expected that the volume was broken :)
+	  Also add initial support for hfs anf hfsplus uuid's.
+
 2004-09-12  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (block_class_in_gdl): Force the
