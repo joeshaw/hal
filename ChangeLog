@@ -1,3 +1,7 @@
+2004-07-23  Joe Shaw  <joeshaw@novell.com>
+
+	* Makefile.am: Also dist HACKING.
+	
 2004-07-22  David Zeuthen  <david@fubar.dk>
 
 	* packaging/fedora/hal.spec (Version): Bump to 0.2.95

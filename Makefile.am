@@ -11,7 +11,7 @@ dist_dbus_DATA = hal.conf
 
 DISTCLEANFILES = hal.pc
 
-EXTRA_DIST = hal.pc.in hal.conf.in
+EXTRA_DIST = HACKING hal.pc.in hal.conf.in
 
 clean-local :
 	rm -f *~
