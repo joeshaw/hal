@@ -54,76 +54,36 @@ typedef struct {
 	HalDevice *device;
 	char **envp;
 	int envp_index;
-	int pid;
+	pid_t pid;
 	gboolean last_of_device;
+	guint timeout_id;
 } Callout;
 
-static void process_callouts (void);
+static void process_next_callout (void);
 
 /* Callouts that still needing to be processed
  *
  * Key: HalDevice  Value: pointer to GSList of Callouts */
-static GHashTable *pending_callouts = NULL;
+static GSList *pending_callouts = NULL;
 
-/* List of Callouts currently being processed */
-static GSList *active_callouts = NULL;
-
-static gboolean processing_callouts = FALSE;
+static Callout *active_callout = NULL;
 
 static void
 add_pending_callout (HalDevice *device, Callout *callout)
 {
-	GSList **clist = NULL;
-
-	if (pending_callouts == NULL)
-		pending_callouts = g_hash_table_new (NULL, NULL);
-	else
-		clist = g_hash_table_lookup (pending_callouts, device);
-
-	if (clist == NULL) {
-		clist = g_new0 (GSList *, 1);
-		g_hash_table_insert (pending_callouts, device, clist);
-	}
-
-	*clist = g_slist_append (*clist, callout);
-}
-
-static void
-get_device (gpointer key, gpointer value, gpointer user_data)
-{
-	HalDevice **device = user_data;
-
-	if (*device == NULL)
-		*device = (HalDevice *) key;
+	pending_callouts = g_slist_append (pending_callouts, callout);
 }
 
 static Callout *
-pop_pending_callout (gboolean *last_of_device)
+pop_pending_callout (void)
 {
-	GSList **clist;
-	HalDevice *device = NULL;
 	Callout *callout;
 
 	if (pending_callouts == NULL)
 		return NULL;
 
-	/* Hmm, not sure of a better way to do this... */
-	g_hash_table_foreach (pending_callouts, get_device, &device);
-
-	clist = g_hash_table_lookup (pending_callouts, device);
-
-	if (clist == NULL)
-		return NULL;
-
-	callout = (Callout *) (*clist)->data;
-	*clist = g_slist_remove (*clist, callout);
-
-	if (*clist == NULL) {
-		g_hash_table_remove (pending_callouts, device);
-		g_free (clist);
-		*last_of_device = TRUE;
-	} else
-		*last_of_device = FALSE;
+	callout = (Callout *) pending_callouts->data;
+	pending_callouts = g_slist_remove (pending_callouts, callout);
 
 	return callout;
 }
@@ -185,9 +145,7 @@ iochn_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 	gchar data[1];
 	GError *err = NULL;
 	pid_t child_pid;
-	Callout *callout;
-	GSList *it;
-
+	Callout *previous_callout;
 
 	/* Empty the pipe; one character per dead child */
 	if (G_IO_STATUS_NORMAL != 
@@ -211,51 +169,79 @@ iochn_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 			/* this can happen indeed since we loop */
 			goto out;
 		}
-	
-		/* Now find the corresponding Callout object */
-		callout = NULL;
-		for (it=g_slist_nth(active_callouts, 0); 
-		     it != NULL; 
-		     it = g_slist_next(it)) {
-			Callout *callout_it = (Callout *) it->data;
-			if (callout_it->pid == child_pid) {
-				callout = callout_it;
-				break;
-			}
-		}
 
-		if (callout == NULL) {
-			/* this should never happen */
-			HAL_ERROR (("Cannot find callout for terminated "
-				    "child with pid %d", child_pid));
+		HAL_INFO (("Child pid %d terminated", child_pid));
+
+		if (active_callout == NULL) {
+			HAL_ERROR (("No active callout for child with pid %d - did it timeout?", child_pid));
 			goto out;
 		}
 
+		if (active_callout->pid != child_pid) {
+			/* this should never happen */
+			HAL_ERROR (("Cannot find callout for terminated child with pid %d", child_pid));
+			goto out;
+		}
 
-		/* remove element from active_callouts list */
-		active_callouts = g_slist_delete_link (active_callouts,
-							       it);
+		previous_callout = active_callout;
+		active_callout = NULL;
 
-		if (callout->last_of_device)
-			hal_device_callouts_finished (callout->device);
+		g_source_remove (previous_callout->timeout_id);
+
+		if (previous_callout->last_of_device) {
+			hal_device_callouts_finished (previous_callout->device);
+			HAL_INFO (("Callouts done for %s", previous_callout->device->udi));
+		}
 		
-		g_free (callout->filename);
-		g_strfreev (callout->envp);
-		g_object_unref (callout->device);
-		g_free (callout);
+
+		g_free (previous_callout->filename);
+		g_strfreev (previous_callout->envp);
+		g_object_unref (previous_callout->device);
+		g_free (previous_callout);
 		
-		process_callouts ();
+		process_next_callout ();
 	}
 	
 out:
 	return TRUE;
 }
 
-static void
-process_callouts (void)
+#define CALLOUT_TIMEOUT 10000
+
+static gboolean
+callout_timeout_handler (gpointer data)
 {
 	Callout *callout;
-	gboolean last_of_device;
+
+	callout = (Callout *) data;
+	
+	HAL_WARNING (("Timeout (%d ms) for callout %s", CALLOUT_TIMEOUT, callout->filename));
+
+	/* kill the child.. kill it the hard way */
+	kill (callout->pid, SIGKILL);
+
+	active_callout = NULL;
+
+	if (callout->last_of_device) {
+		hal_device_callouts_finished (callout->device);
+		HAL_INFO (("Callouts done for %s", callout->device->udi));
+	}
+	
+	
+	g_free (callout->filename);
+	g_strfreev (callout->envp);
+	g_object_unref (callout->device);
+	g_free (callout);
+
+	process_next_callout ();
+
+	return FALSE;
+}
+
+static void
+process_next_callout (void)
+{
+	Callout *callout;
 	char *argv[3];
 	GError *err = NULL;
 	int num_props;
@@ -282,16 +268,15 @@ process_callouts (void)
 		have_installed_sigchild_handler = TRUE;
 	}
 
-	if (pending_callouts == NULL ||
-	    g_hash_table_size (pending_callouts) == 0) {
-		processing_callouts = FALSE;
+next_callout:
+	if (active_callout != NULL)
 		return;
-	}
 
-	processing_callouts = TRUE;
+	callout = pop_pending_callout ();
+	if (callout == NULL)
+		return;
 
-	callout = pop_pending_callout (&last_of_device);
-	callout->last_of_device = last_of_device;
+	active_callout = callout;
 
 	argv[0] = callout->filename;
 
@@ -327,7 +312,8 @@ process_callouts (void)
 	 */
 	callout->envp[callout->envp_index] = NULL;
 
-	active_callouts = g_slist_append (active_callouts, callout);
+	/* Setup timer for timeouts - ten seconds */
+	callout->timeout_id = g_timeout_add (CALLOUT_TIMEOUT, callout_timeout_handler, (gpointer) callout);
 
 	HAL_INFO (("Invoking %s/%s", callout->working_dir, argv[0]));
 
@@ -337,14 +323,13 @@ process_callouts (void)
 		HAL_WARNING (("Couldn't invoke %s: %s", argv[0],
 			      err->message));
 		g_error_free (err);
+		g_source_remove (callout->timeout_id);
+		active_callout = NULL;
+		goto next_callout;
+	} else {
+		HAL_INFO (("Child pid %d for %s", callout->pid, argv[0]));
 	}
-}
 
-static gboolean
-process_callouts_idle (gpointer user_data)
-{
-	process_callouts ();
-	return FALSE;
 }
 
 void
@@ -354,6 +339,7 @@ hal_callout_device (HalDevice *device, gboolean added)
 	GError *err = NULL;
 	const char *filename;
 	gboolean any_callouts = FALSE;
+	Callout *callout;
 
 	/* Directory doesn't exist.  This isn't an error, just exit
 	 * quietly. */
@@ -369,9 +355,9 @@ hal_callout_device (HalDevice *device, gboolean added)
 		goto finish;
 	}
 
+	callout = NULL;
 	while ((filename = g_dir_read_name (dir)) != NULL) {
 		char *full_filename;
-		Callout *callout;
 		int num_props;
 		int i;
 
@@ -420,10 +406,13 @@ hal_callout_device (HalDevice *device, gboolean added)
 		any_callouts = TRUE;
 	}
 
+	if (callout != NULL)
+		callout->last_of_device = TRUE;
+
 	g_dir_close (dir);
 
-	if (!processing_callouts)
-		g_idle_add (process_callouts_idle, NULL);
+	if (any_callouts)
+		process_next_callout ();
 
 finish:
 	/*
@@ -440,6 +429,7 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 {
 	GDir *dir;
 	GError *err = NULL;
+	Callout *callout;
 	const char *filename;
 
 	/* Directory doesn't exist.  This isn't an error, just exit
@@ -456,9 +446,9 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		return;
 	}
 
+	callout = NULL;
 	while ((filename = g_dir_read_name (dir)) != NULL) {
 		char *full_filename;
-		Callout *callout;
 		int num_props;
 		int i;
 
@@ -506,10 +496,12 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		add_pending_callout (callout->device, callout);
 	}
 
+	if (callout != NULL)
+		callout->last_of_device = TRUE;
+
 	g_dir_close (dir);
 
-	if (!processing_callouts)
-		g_idle_add (process_callouts_idle, NULL);
+	process_next_callout ();
 }
 
 void
@@ -517,6 +509,7 @@ hal_callout_property (HalDevice *device, const char *key)
 {
 	GDir *dir;
 	GError *err = NULL;
+	Callout *callout;
 	const char *filename;
 
 	/* Directory doesn't exist.  This isn't an error, just exit
@@ -533,9 +526,9 @@ hal_callout_property (HalDevice *device, const char *key)
 		return;
 	}
 
+	callout = NULL;
 	while ((filename = g_dir_read_name (dir)) != NULL) {
 		char *full_filename, *value;
-		Callout *callout;
 		int num_props;
 		int i;
 
@@ -558,6 +551,8 @@ hal_callout_property (HalDevice *device, const char *key)
 		callout->filename = g_strdup (filename);
 		callout->action = CALLOUT_MODIFY;
 		callout->device = g_object_ref (device);
+
+		callout->last_of_device = FALSE;
 
 		num_props = hal_device_num_properties (device);
 
@@ -587,8 +582,11 @@ hal_callout_property (HalDevice *device, const char *key)
 		g_free (value);
 	}
 
+	if (callout != NULL)
+		callout->last_of_device = TRUE;
+
+
 	g_dir_close (dir);
 
-	if (!processing_callouts)
-		g_idle_add (process_callouts_idle, NULL);
+	process_next_callout ();
 }

@@ -45,7 +45,7 @@
 #include <sys/un.h>
 #include <time.h>
 
-#include "../../hald/linux/hald_helper.h"
+#include "../../hald/linux2/hotplug_helper.h"
 
 static char sysfs_mnt_path[PATH_MAX];
 
@@ -85,191 +85,12 @@ get_sysfs_mnt_path (void)
 	return ret;
 }
 
-static const char *file_list_net[] = {
-	"ifindex",
-	NULL
-};
-
-static const char *file_list_class_device[] = {
-	"dev",
-	NULL
-};
-
-static const char *file_list_usb[] = {
-	"idProduct",
-	"idVendor",
-	"bcdDevice",
-	"bMaxPower",
-	/*"serial", */
-	"bmAttributes",
-	/*"manufacturer",*/
-	/*"product",*/
-	"bDeviceClass",
-	"bDeviceSubClass",
-	"bDeviceProtocol",
-	"bNumConfigurations",
-	"bConfigurationValue",
-	"bNumInterfaces",
-	NULL
-
-};
-
-static const char *file_list_usbif[] = {
-	"bInterfaceClass",
-	"bInterfaceSubClass",
-	"bInterfaceProtocol",
-	"bInterfaceNumber",
-	NULL
-};
-
-static const char *file_list_scsi[] = { "vendor",
-					"model",
-					"type",
-					NULL };
-
-static const char *file_list_scsi_generic[] = { "device", 
-						NULL };
-
-static const char *file_list_scsi_host[] = { "device",
-					     NULL };
-
-static const char *file_list_block[] = {
-	"dev",
-	"size",
-	/*"removable",*/
-	NULL
-};
-
-static const char *file_list_pci[] = {
-	"device",
-	"vendor",
-	"subsystem_device",
-	"subsystem_vendor",
-	"class",
-	NULL
-};
-
 /* safely strcat() at most the remaining space in 'dst' */
 #define strcat_len(dst, src) do { \
 	dst[sizeof (dst) - 1] = '\0'; \
 	strncat (dst, src, sizeof (dst) - strlen (dst) - 1); \
 } while(0)
 
-static int
-wait_for_sysfs_info (char *devpath, char *hotplug_type, int *net_ifindex)
-{
-	size_t devpath_len;
-	const char **file_list;
-	int timeout;
-	int rc;
-	struct stat stat_buf;
-	int i;
-	char path[PATH_MAX];
-
-	devpath_len = strlen (devpath);
-
-	file_list = NULL;
-
-	if (strcmp (hotplug_type, "pci") == 0) {
-		file_list = file_list_pci;
-	} else if (strcmp (hotplug_type, "usb") == 0) {
-		int is_interface = 0;
-
-		if (strstr (devpath, "class") != NULL) {
-			file_list = file_list_class_device;
-		} else {
-			for (i = devpath_len - 1; devpath[i] != '/' && i > 0; --i) {
-				if (devpath[i] == ':') {
-					is_interface = 1;
-					break;
-				}
-			}
-
-			if (is_interface) {
-				file_list = file_list_usbif;
-			} else
-				file_list = file_list_usb;
-		}
-	} else if (strcmp (hotplug_type, "scsi") == 0) {
-		file_list = file_list_scsi;
-	} else if (strcmp (hotplug_type, "scsi_generic") == 0) {
-		file_list = file_list_scsi_generic;
-	} else if (strcmp (hotplug_type, "scsi_host") == 0) {
-		file_list = file_list_scsi_host;
-	} else if (strcmp (hotplug_type, "block") == 0) {
-		file_list = file_list_block;
-	} else if (strcmp (hotplug_type, "net") == 0) {
-		file_list = file_list_net;
-	}
-
-	if (file_list == NULL) {
-		return -1;
-	}
-
-	timeout = 0;
-
-try_again:
-	if (timeout > 0) {
-		usleep (100 * 1000); /* 100 ms */
-	}
-	timeout += 100 * 1000;
-
-	if (timeout >= 10 * 1000*1000) { /* 10 secs */
-		syslog (LOG_NOTICE, "timout(%d ms) waiting for %s ",
-			timeout / 1000, devpath);
-		return -1;
-	}
-
-
-	/* first, check directory */
-	strncpy (path, sysfs_mnt_path, PATH_MAX);
-	strcat_len (path, devpath);
-
-	/*printf("path0 = %s\n", path); */
-
-	rc = stat (path, &stat_buf);
-	/*printf("rc0 = %d\n", rc); */
-	if (rc != 0)
-		goto try_again;
-
-	/* second, check each requested file */
-	for (i = 0; file_list[i] != NULL; i++) {
-		const char *file;
-
-		file = file_list[i];
-		strncpy (path, sysfs_mnt_path, PATH_MAX);
-		strcat_len (path, devpath);
-		strcat_len (path, "/");
-		strcat_len (path, file);
-		/*printf("path1 = %s\n", path); */
-
-		rc = stat (path, &stat_buf);
-
-		/*printf("rc1 = %d\n", rc); */
-
-		if (rc != 0)
-			goto try_again;
-	}
-	
-	/* lip service for 'net' */
-	if (strcmp (hotplug_type, "net") == 0) {
-		FILE *f;
-		char buf[80];
-
-		strncpy (path, sysfs_mnt_path, PATH_MAX);
-		strcat_len (path, devpath);
-		strcat_len (path, "/ifindex");
-		if ((f = fopen (path, "r")) != NULL) {
-			memset (buf, 0, sizeof (buf));
-			fread (buf, sizeof (buf) - 1, 1, f);
-			fclose (f);
-
-			*net_ifindex = atoi(buf);
-		}		
-	}
-
-	return 0;
-}
 
 /** Entry point
  *
@@ -289,13 +110,17 @@ main (int argc, char *argv[], char *envp[])
 	char *devpath;
 	char *action;
 	char *seqnum_str;
+	char *devname;
 	int net_ifindex = -1;
 	unsigned long long seqnum;
 
 	if (argc != 2)
 		return 1;
 
-	openlog ("hal.hotplug", LOG_PID, LOG_USER);
+	openlog ("hal.hotplug2", LOG_PID, LOG_USER);
+
+	syslog (LOG_INFO, "ACTION=%s SUBSYS=%s SEQNUM=%s DEVPATH=%s PHYSDEVPATH=%s", 
+		getenv ("ACTION"), argv[1], getenv ("SEQNUM"), getenv ("DEVPATH"), getenv ("PHYSDEVPATH"));
 
 	if (get_sysfs_mnt_path() != 0) {
 		syslog (LOG_ERR, "could not get mountpoint for sysfs");
@@ -316,7 +141,7 @@ main (int argc, char *argv[], char *envp[])
 
 	devpath = getenv ("DEVPATH");
 	if (devpath == NULL) {
-		syslog (LOG_ERR, "DEVPATH is not set");
+		syslog (LOG_ERR, "DEVPATH is not set (subsystem %s)", subsystem);
 		goto out;
 	}
 
@@ -333,9 +158,27 @@ main (int argc, char *argv[], char *envp[])
 	}
 	seqnum = strtoull (seqnum_str, NULL, 10);
 
-	/* wait for information to be published in sysfs */
-	if (strcmp (action, "add") == 0)
-		wait_for_sysfs_info (devpath, subsystem, &net_ifindex);
+	devname = getenv ("DEVNAME");
+
+
+	/* pickup ifindex for net as nameif'ing the interface a
+	 * hotplug event handler will screw us otherwise */
+	if (strcmp (subsystem, "net") == 0) {
+		FILE *f;
+		char buf[80];
+		char path[PATH_MAX];
+
+		strncpy (path, sysfs_mnt_path, PATH_MAX);
+		strcat_len (path, devpath);
+		strcat_len (path, "/ifindex");
+		if ((f = fopen (path, "r")) != NULL) {
+			memset (buf, 0, sizeof (buf));
+			fread (buf, sizeof (buf) - 1, 1, f);
+			fclose (f);
+
+			net_ifindex = atoi(buf);
+		}
+	}
 
 	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
 	saddr.sun_family = AF_LOCAL;
@@ -345,11 +188,14 @@ main (int argc, char *argv[], char *envp[])
 
 	memset (&msg, 0x00, sizeof (msg));
 	msg.magic = HALD_HELPER_MAGIC; 
-	msg.type = HALD_HOTPLUG;
 	msg.seqnum = seqnum;
 	strncpy (msg.action, action, HALD_HELPER_STRLEN-1);
 	strncpy (msg.subsystem, subsystem, HALD_HELPER_STRLEN-1);
 	strncpy (msg.sysfs_path, devpath, HALD_HELPER_STRLEN-1);
+	if (devname != NULL)
+		strncpy (msg.device_name, devname, HALD_HELPER_STRLEN-1);
+	else
+		msg.device_name[0] = '\0';
 	msg.net_ifindex = net_ifindex;
 	msg.time_stamp = time (NULL);
 

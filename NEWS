@@ -1,4 +1,264 @@
 
+
+Branched sometime after 0.4.2 - all 0.4.x release are now on the
+branch called hal-0_4-stable-branch in CVS.
+
+==========
+HAL 0.4.2 "Something like that. Tastes the same anyway."
+==========
+
+Released Dec 1, 2004
+
+ - Add blacklist for not polling certain IDE slave drives as that
+   decreases performance
+ - Support for Linux kernels 2.6.10-rc2 and onwards
+ - Only lazy unmount devices if {storage.volume}.policy.should_mount is
+   TRUE - e.g. don't lazy unmount devices we don't care about
+ - Support for IDE Zip and Jaz drives (treated as floppy drives)
+ - Various fdi-parsing enhancements
+ - Don't add 'ro' to optical drives as it prevents DVD-RAM usage
+ - Support 256 partitions instead of only 16
+ - small h-d-m UI bugfix (Sjoerd Simons)
+ - small h-d-m UI bugfix (Bryan Clark)
+
+==========
+HAL 0.4.1 "What's that? Chicken?"
+==========
+
+Released Nov 2, 2004
+
+ - Make $(binpath)/hal-device-manager a real executable instead of a
+   symlink to better work with strict SELinux (Colin Walters)
+ - Change default storage policy such that SCSI optical drives are being 
+   added to e.g. /etc/fstab
+ - Refine PCMCIA socket location to better work with strict SELinux
+   (from Dan Walsh)
+ - Make configure.in require libcap development headers (Tim Müller)
+ - Change default storage policy to not add fixed non-hotpluggable disks
+   to e.g. /etc/fstab (as ATARAID detection is not yet complete)
+ - Support PCMCIA 16-bit network devices (Dan Williams)
+ - Change default storage policy to use 'auto' for filesystem instead of
+   'udf,iso9660'
+ - Probe ext3 filesystems before NTFS filesystems
+ - Highpoint ATARAID detection (Kay Sievers)
+ - Fixup detection of Orinico 802.11 devices (Dan Williams)
+ - Portuguese translations (Pedro Morais)
+ - Hungarian translations (Laszlo Dvornik)
+ - Russian translations (Leonid Kanter)
+ - Clarify fstab-sync man page
+ - Fix crash in fstab-sync when no options are given
+ - Change default storage policy to allow legacy floppy disks
+ - Fixup order of mount options in libhal-storage as mount depend on that
+ - Handle missing hotplug events
+ - Change default storage policy to not never use UUID
+ - Don't use O_NONBLOCK in volume_id when reading data block devices
+ - fix fstab-sync clean
+
+==========
+HAL 0.4.0 "It's origin and purpose, still a total mystery"
+==========
+
+Released Oct 17, 2004
+
+ - Use pamconsole mount option instead of user (David Zeuthen)
+ - Remove fstab-sync configure options (David Zeuthen)
+ - Unchecked buffer access fix in pci device detection (Martin Pitt)
+ - Allow hal euid to AddProperty and other operations (Sjoerd Simons)
+ - Fix netlink packets interceptor such that only packages from the
+   kernel is processed - security fix (Steve Grubb)
+ - Device information file parser fixes (David Zeuthen)
+ - fstab-sync manual page (David Zeuthen)
+ - Make fstab-sync use storage policy properties (David Zeuthen)
+ - libhal-storage C glue to access new storage policy (David Zeuthen) 
+ - RemoveProperty requires privileged user (David Zeuthen)
+ - Add prop to computer obj saying if selinux is enabled (David Zeuthen)
+ - Lots of new .fdi-file parser feature (David Zeuthen)
+ - Define new storage policy properties (David Zeuthen)
+ - Check that legacy floppy drive actually exists (From Bill Nottingham)
+ - Fixup {pci, usb} fd leaks (Sjoerd Simons)
+ - Look for BLKGETSIZE64 in configure.in (Jonathan Blandford)
+ - Handle initial hotplug events more graceful (David Zeuthen)
+ - Checks for sysfs path and unprivileged execution fixes (Martin Pitt)
+ - libhal fix for hal_get_all_devices (Colin Walters)
+ - vfat fs detection as the first thing (Martin Pitt) 
+ - Fixup cdrom polling to be more safe (From Alexander Larsson)
+ - Detect USB floppy drive by looking at USB if class (David Zeuthen)
+ - Make fstab-sync use msdos partition id whitelist (David Zeuthen)
+ - Dutch libhal-storage translations (Reinout van Schouwen)
+ - Debian support for hal_hotplug_map (Sjoerd Simons)
+ - Require superuser for SetProperty and AddCapability (David Zeuthen)
+ - libhal shutdown 'fix' (David Zeuthen)
+ - SATA disk checking (From Alan Cox)
+ - Fix end-of-marker and FAT UUID conversion (Kay Sievers) 
+ - storage.icon.drive, storage.icon.volume properties (David Zeuthen)
+ - storage.require_eject property (David Zeuthen)
+ - French libhal-storage translations (Jérôme Lodewyck)
+ - LVM2/RAID detection fixes (Kay Sievers)
+ - New libhal-storage library and i18n support (David Zeuthen)
+ - Partition id fixes (Kay Sievers)
+ - Unchecked buffer access fix in cdrom speed detection (Martin Pitt)
+ - USB serial device support (Kay Sievers)
+ - volume_id logging glue (Kay Sievers)
+
+==========
+HAL 0.2.98
+==========
+
+Released Sep 20, 2004
+
+ - UUID for NTFS partitions (Kay Sievers)
+ - Fixup --with-pid-file (Tim Gerla)
+ - Volume ID fix for FAT32 label (Kay Sievers)
+ - volume.num_blocks, volume.block_szie
+ - Fix dev,suid security issue with fstab-sync
+ - Use async,noatime for removable or hotpluggable drives smaller than
+   2 GB in fstab-sync
+ - Symlink device node checks in fstab-sync
+ - Build fixes (Steve Grubb)
+ - Reiser and swap versions
+ - Require .hal extension for callouts
+ - Introduce HALD_VERBOSE that works even if hal is not built with
+   verbose mode. Make logging output nicer with timestamps
+ - Rewrite of device detection code - huge performance wins
+ - Make fstab-sync write to syslog when modifying fstab file
+ - Invoke fstab-sync --clean on hald startup
+ - Export HALD_VERBOSE to callouts
+ - Volume id fixes (Sjoerd Simons)
+ - Fixup symlink resolving in fstab-sync
+ - fstab-sync name computation fixes
+ - Add --enable-fstab-sync configure option
+ - Add info.udi to computer hal device object
+ - RAID probing in volume id (Kay Sievers)
+ - Introduce new callout hal-hotplug-map to look at gphoto2 and
+   libsane usermaps on Linux and tag devices accordingly
+ - Fixup debug
+ - fstab-sync doesn't require storage device on remove
+ - Introduce volume.fsusage and use it in fstab-sync (Kay Sievers)
+ - Don't check for a C++ compiler (Joe Shaw)
+ - Add kernel.* properties to computer (Joe Shaw)
+ - Fix libsysfs memory leak (Steve Grubb)
+ - LVM probing and RAID version numbers in volume id (Kay Sievers)
+ - Callout / Race condition fixes
+ - Set priorities on hal.dev and hal.hotplug helpers so we run before
+   linux-hotplug etc.
+ - SELinux support for fstab-sync
+ - Timeout fixes in hal.hotplug (Kay Sievers)
+ - Respect the /sys/block/<dev>/removable file
+ - Don't remove mount point entries for devices that are mounted with
+   fstab-sync --clean
+ - 64-bit unsigned integer properties (Jon Lech Johansen)
+ - boolean property fixes (Joe Shaw)
+ - Intercept unchecked ioctl's (Martin Pitt)
+ - Introduce --drop-privileges (Martin Pitt)
+ - Only add -lexpat for hald (Sjoerd Simons)
+ - Ignore duplicate hotplug events
+ - Volume ID vfat fixes on BE boxes (Sjoerd Simons)
+ - Fixup hald.conf.in as I broke it earlier
+ - Force initial poll even if drive is not removable
+ - Fixup HFS+ volume id (Kay Sievers)
+ - Multimedia device support (Kay Sievers)
+ - Use 64-bit sequence numbers and use textual action (Kay Sievers)
+ - HFS+ UUID fixes (Kay Sievers)
+ - Support network device renaming
+ - Rename networking properties to net.80203 and net.80211
+ - Make hald write the pid file, not the init script (Steve Grubb)
+ - Fix endless loop for broken FAT32 volumes in volume id (Kay Sievers)
+ - Add advisory locking on devices (Joe Shaw)
+ - SELinux fixes for fstab-sync (Dan Walsh)
+ - Fixup volume.is_rewritable for some broken drives (Alexander Larsson)
+ - Fix FD leak (Sjoerd Simons)
+ - Update spec to catch up with code
+ - Add volume.partition.* properties
+
+==========
+HAL 0.2.97
+==========
+
+Released Aug 16, 2004
+
+ - fstab-sync: lock around the entire process (seems to work very well
+   now)
+ - use local sockets for communication between hotplug.d/dev.d helpers
+   and hald (fixes d-bus limit issues)
+ - reorder hotplug messages (fixes issues with hotplugging 20 usb
+   devices at the same time (using a hub))
+ - don't process next hotplug message before device from current message
+   is fully processed and in GDL (fixes issues with usb devices needing
+   firmware uploads and thus will hotplug rem to hotplug add as a new
+   device)
+ - turn off media detection for drives being driven by the ide-cs driver
+ - don't use drive_id or volume_id on drives with media detection turned
+   off (fixes infinite hotplug loop with e.g. ide-cs drives)
+
+==========
+HAL 0.2.96
+==========
+
+Released Aug 12, 2004
+
+ - dist HACKING (Joe Shaw)
+ - fix missing detection of optical disc when starting
+ - enhanced hfs/hfsplus detection (Kay Sievers)
+ - make libhal work with c++
+ - validate incoming strings as UTF-8 (Joe Shaw)
+ - try to reconnect to system bus if disconnected (Joe Shaw)
+ - ethernet link status fixes (Dan Williams)
+ - read vital product data from drives (Kay Sievers)
+ - block device UDI computation enhancements
+ - only return RESULT_HANDLED in libhal if we really handle the message
+ - fix small memory leaks in libhal (Dan Williams)
+ - spec now matches code
+ - remove info.virtual concept
+ - make USB interfaces a first class device object
+ - fstab-sync no longer needs a wrapper (Ray Strode)
+ - handle removable media without partition tables
+ - fstab-sync: add entries for floppy/optical drives
+ - fstab-sync: don't add entries if device is listed with LABEL=
+
+==========
+HAL 0.2.95
+==========
+
+Released July 22, 2004
+
+ - Faster hotplugging; fork hack
+ - Moved spec to hal module
+ - Actually build Doxygen docs for libhal
+ - Computer found in city of lost devices (Joe Shaw)
+ - Experimental shutdown on SIGTERM
+ - Use O_EXCL for optical disc detection
+ - TODO update
+ - libsysfs upgrade to 1.1  (Kay Sievers, Joe Shaw)
+
+==========
+HAL 0.2.94
+==========
+
+Released July 15, 2004
+
+ - SCSI device detection fixes (Sjoerd Simons)
+ - fstab-sync callout in C (Ray Strode)
+ - hal-device-manager GTK+ error dialog (Sjoerd Simons)
+ - Volume Label fixes (Kay Sievers)
+ - Storage device detection and fixes (David Zeuthen, Sjoerd Simons)
+ - No media detection for devices using floppy drivers, e.g. LS120 (davidz)
+ - HAL commandline tool interface cleanups (Martin Waitz)
+
+
+==========
+HAL 0.2.93
+==========
+
+Released July 5, 2004
+
+ - Volume probing and label additions fixes (Kay Sievers)
+ - hal.dev doesn't slow down udevstart or udev anymore (David Zeuthen)
+   http://www.redhat.com/archives/fedora-devel-list/2004-July/msg00261.html
+ - Volume mount detection fixes (David Zeuthen, pointed out by Sjoerd Simons)
+ - Persistent device store (still disabled) (Kay Sievers)
+ - Fix of 802.3 link detection (Dan Williams)
+ - Removal of wireless scanning (Joe Shaw, Robert Love)
+
 ====================================
 HAL 0.2 "Open the Pod Bay Door, Hal"
 ====================================

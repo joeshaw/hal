@@ -1,0 +1,132 @@
+# Italian translation of hal
+# This file is distributed under the same license as the PACKAGE package.
+# Pier Luigi Fiorini <pierluigi.fiorini@mockup.org>, 2004.
+msgid ""
+msgstr ""
+"Project-Id-Version: hal 0.4.2\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-01-03 16:09-0500\n"
+"PO-Revision-Date: 2004-12-25 09:47+0100\n"
+"Last-Translator: Pier Luigi Fiorini <pierluigi.fiorini@mockup.org>\n"
+"Language-Team: Italian <it@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: libhal-storage/libhal-storage.c:288
+#, c-format
+msgid "External %s%s Drive"
+msgstr "Unità %s%s esterna"
+
+#: libhal-storage/libhal-storage.c:291
+#, c-format
+msgid "%s%s Drive"
+msgstr "Unità %s%s"
+
+#: libhal-storage/libhal-storage.c:300
+msgid "External Floppy Drive"
+msgstr "Unità floppy esterna"
+
+#: libhal-storage/libhal-storage.c:302
+msgid "Floppy Drive"
+msgstr "Unità floppy"
+
+#: libhal-storage/libhal-storage.c:309
+#, c-format
+msgid "%s External Hard Drive"
+msgstr "Disco rigido esterno %s"
+
+#: libhal-storage/libhal-storage.c:312
+#, c-format
+msgid "%s Hard Drive"
+msgstr "Disco rigido %s"
+
+#: libhal-storage/libhal-storage.c:317
+msgid "External Hard Drive"
+msgstr "Disco rigido esterno"
+
+#: libhal-storage/libhal-storage.c:319
+msgid "Hard Drive"
+msgstr "Disco rigido"
+
+#: libhal-storage/libhal-storage.c:328
+msgid "Drive"
+msgstr "Unità"
+
+#: libhal-storage/libhal-storage.c:377
+msgid "CD-ROM Disc"
+msgstr "Disco CD-ROM"
+
+#: libhal-storage/libhal-storage.c:382
+msgid "Blank CD-R Disc"
+msgstr "Disco CD-R vergine"
+
+#: libhal-storage/libhal-storage.c:384
+msgid "CD-R Disc"
+msgstr "Disco CD-R"
+
+#: libhal-storage/libhal-storage.c:389
+msgid "Blank CD-RW Disc"
+msgstr "Disco CD-RW vergine"
+
+#: libhal-storage/libhal-storage.c:391
+msgid "CD-RW Disc"
+msgstr "Disco CD-RW"
+
+#: libhal-storage/libhal-storage.c:395
+msgid "DVD-ROM Disc"
+msgstr "Disco DVD-ROM"
+
+#: libhal-storage/libhal-storage.c:400
+msgid "Blank DVD-RAM Disc"
+msgstr "Disco DVD-RAM vergine"
+
+#: libhal-storage/libhal-storage.c:402
+msgid "DVD-RAM Disc"
+msgstr "Disco DVD-RAM"
+
+#: libhal-storage/libhal-storage.c:407
+msgid "Blank DVD-R Disc"
+msgstr "Disco DVD-R vergine"
+
+#: libhal-storage/libhal-storage.c:409
+msgid "DVD-R Disc"
+msgstr "Disco DVD-R"
+
+#: libhal-storage/libhal-storage.c:414
+msgid "Blank DVD-RW Disc"
+msgstr "Disco DVD-RW vergine"
+
+#: libhal-storage/libhal-storage.c:416
+msgid "DVD-RW Disc"
+msgstr "Disco DVD-RW"
+
+#: libhal-storage/libhal-storage.c:422
+msgid "Blank DVD+R Disc"
+msgstr "Disco DVD+R vergine"
+
+#: libhal-storage/libhal-storage.c:424
+msgid "DVD+R Disc"
+msgstr "Disco DVD+R"
+
+#: libhal-storage/libhal-storage.c:429
+msgid "Blank DVD+RW Disc"
+msgstr "Disco DVD+RW vergine"
+
+#: libhal-storage/libhal-storage.c:431
+msgid "DVD+RW Disc"
+msgstr "Disco DVD+RW"
+
+#: libhal-storage/libhal-storage.c:438
+msgid "Audio Disc"
+msgstr "Disco audio"
+
+#: libhal-storage/libhal-storage.c:446
+#, c-format
+msgid "%s Removable Media"
+msgstr "Dispositivo rimovibile %s"
+
+#: libhal-storage/libhal-storage.c:449
+#, c-format
+msgid "%s Media"
+msgstr "Dispositivo %s"

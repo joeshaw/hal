@@ -205,7 +205,7 @@ AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux/dummy)],
 if ! test -z "$with_backend" ; then
     HALD_BACKEND="$with_backend"
 else
-    HALD_BACKEND="linux"
+    HALD_BACKEND="linux2"
 fi
 AC_SUBST(HALD_BACKEND)
 
@@ -399,7 +399,7 @@ else
 fi
 
 
-ALL_LINGUAS="da fr de nl ru hu pt"
+ALL_LINGUAS="da fr de nl ru hu pt it"
 AC_SUBST(ALL_LINGUAS)
 
 GETTEXT_PACKAGE=AC_PACKAGE_NAME
@@ -417,6 +417,8 @@ Makefile
 hald/Makefile
 hald/dummy/Makefile
 hald/linux/Makefile
+hald/linux2/Makefile
+hald/linux2/probing/Makefile
 hald/haldaemon
 libhal/Makefile
 libhal-storage/Makefile

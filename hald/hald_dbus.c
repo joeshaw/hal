@@ -94,7 +94,7 @@ raise_no_such_property (DBusConnection * connection,
 
 	snprintf (buf, 511, "No property %s on device with id %s", key,
 		  device_id);
-	HAL_WARNING ((buf));
+	/*HAL_WARNING ((buf));*/
 	reply = dbus_message_new_error (in_reply_to,
 					"org.freedesktop.Hal.NoSuchProperty",
 					buf);

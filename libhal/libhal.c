@@ -2230,15 +2230,13 @@ dbus_bool_t
 hal_device_query_capability (LibHalContext *ctx, 
 			     const char *udi, const char *capability)
 {
+	dbus_bool_t ret;
 	char *caps;
 
 	caps = hal_device_get_property_string (ctx, udi, "info.capabilities");
-
-	if (caps != NULL)
-		if (strstr (caps, capability) != NULL)
-			return TRUE;
-
-	return FALSE;
+	ret = (caps != NULL && strstr (caps, capability) != NULL);
+	hal_free_string (caps);
+	return ret;
 }
 
 /** Find devices with a given capability. 

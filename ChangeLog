@@ -1,3 +1,90 @@
+2005-01-18  David Zeuthen  <david@fubar.dk>
+
+	* tools/linux/Makefile.am: Remove hal.dev build rules
+
+	* tools/linux/hal_dev.c: Remove
+
+	* configure.in: Set linux2 as the default backend
+
+	* hald/linux: Remove all files here as they will get reimplemented
+	in hald/linux2
+
+	* hald/linux2: Add a bunch of new files
+
+	* hald/linux2/probing: Add some new files
+
+2005-01-18  David Zeuthen  <davidz@redhat.com>
+
+	Merge some more changes from the stable branch (except those
+	in hald/linux and doc/spec)
+
+	2005-01-12  David Zeuthen  <davidz@redhat.com>
+
+	* hald/callout.c (callout_timeout_handler): Be tough and kill
+	the misbehaving child the hard way - suggestion from Joe Shaw.
+
+	2005-01-12  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/osspec.c (HOTPLUG_TIMEOUT): Increase to 25 seconds
+	to better cope with callouts timeout of 10 seconds
+
+	* hald/callout.c (iochn_data): Cope with callouts terminating
+	and free timeout handler
+	(callout_timeout_handler): New function; kill callouts if they
+	time out
+	(process_next_callout): Setup timeout for callouts - set to
+	ten seconds
+
+	2005-01-11  David Zeuthen  <davidz@redhat.com>
+
+	* hald/callout.c: Simplify a lot more by demanding that callouts
+	are run sequentially - which they are anyway since everything is
+	serialized. Make a mental note to review and stress test this in
+	the morning.
+
+	2005-01-11  David Zeuthen  <davidz@redhat.com>
+
+	* hald/callout.c: Fix some craziness adding an idle handler for
+	detecting when callouts complete - fixes bug on my new AMD64
+	system with device add/remove prior to completion of callouts -
+	one visible effect was that fstab-sync was crashing since it
+	couldn't retrieve the block.device device as the device was
+	removed prior to the completion of the callout
+
+	2005-01-07  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/20freedesktop/ide-drives.fdi: Also check IDE floppies for whether
+	they are Zip drives
+
+	2005-01-07  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Check for popt when building fstab-sync and error
+	out if it's not found.
+
+	* tools/Makefile.am: Build fstab-sync conditionally based on
+	whether --enable-fstab-sync is passed in.
+
+	2005-01-06  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.c (hal_device_query_capability): Patch from Tim
+	Müller <t.i.m@zen.co.uk>. The attached patch fixes a small memory
+	leak in libhal's hal_device_query_capability().
+
+	2005-01-03  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Added it to ALL_LINGUAS
+
+	* po/it.po: Italien translation from Pier Luigi Fiorini
+	<pierluigi.fiorini@mockup.org>
+
+	2004-12-15  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/20freedesktop/usb-zip-drives.fdi: Only match on actual
+	harddisks to avoid wrong detection of e.g. "Iomega ZipCD 650 USB CDRW"
+	drives (Red Hat bug #143834)
+
+	* fdi/20freedesktop/ide-drives.fdi: ditto
+
 2005-01-17  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Patch from Richard Hughes
@@ -78,11 +165,6 @@
 
 	* hald/linux/net_class_device.c (mii_get_link): Close the fd for link
 	detection before getting the rate	
-
-2004-12-08  David Zeuthen  <davidz@redhat.com>
-
-	* doc/spec/hal-spec.xml.in: Add battery.* properties - Patch from
-	Sergey Udaltsov <sergey.udaltsov@gmail.com>; slightly mangled.
 
 2004-12-08  David Zeuthen  <davidz@redhat.com>
 

@@ -1157,7 +1157,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 			    filename[len - 3] == 'f' &&
 			    filename[len - 2] == 'd' &&
 			    filename[len - 1] == 'i') {
-				HAL_INFO (("scan_fdi_files: Processing file '%s'", filename));
+				/*HAL_INFO (("scan_fdi_files: Processing file '%s'", filename));*/
 				found_fdi_file = process_fdi_file (dir, filename, d);
 				if (found_fdi_file) {
 					HAL_INFO (("*** Matched file %s/%s", dir, filename));
