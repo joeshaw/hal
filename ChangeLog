@@ -1,5 +1,12 @@
 2004-08-30  David Zeuthen  <david@fubar.dk>
 
+	* tools/fstab-sync.c: (open_temp_fstab_file), (add_udi),
+	(remove_udi), (clean): Go back to creating the temporary
+	file in /etc. Add note about using /tmp (giving up atomicity)
+	if /etc is in general readonly
+
+2004-08-30  David Zeuthen  <david@fubar.dk>
+
 	* configure.in: Add SELinux checks
 	
 	* tools/Makefile.am: Build fstab-sync with selinux support if applicable

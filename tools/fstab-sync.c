@@ -27,8 +27,12 @@
  * error conditions like out-of-disk-space and power outages.  
  *
  * For these reasons, all operations are done on temporary copies of
- * /etc/fstab. After any particular instance is done it copies its temporary
- * file over to /etc/fstab.  
+ * /etc/fstab in /etc itself. After any particular instance is done it
+ * copies its temporary file over to /etc/fstab; this is guaranteed to
+ * be atomic. 
+ *
+ * TODO: add support for using /tmp if /etc is mounted readonly (with 
+ * /etc/fstab being on a tmpfs or ramfs)
  */
 
 #ifdef HAVE_CONFIG_H
@@ -168,7 +172,7 @@ static boolean fs_table_parse_data (FSTable    *table,
 
 
 static inline int get_random_int_in_range (int low, int high);
-static int open_temp_fstab_file (char **filename);
+static int open_temp_fstab_file (const char *dir, char **filename);
 
 static char *get_hal_string_property (const char *udi, const char *property);
 static boolean udi_is_volume_or_nonpartition_drive (const char *udi);
@@ -820,11 +824,10 @@ get_random_int_in_range (int low, int high)
 }
 
 static int
-open_temp_fstab_file (char **filename)
+open_temp_fstab_file (const char *dir, char **filename)
 {
   char candidate_filename[TEMP_FSTAB_MAX_LENGTH] = { 0 };
   int fd;
-  char dir[] = "/tmp";
 
   enum Choice 
     { 
@@ -880,6 +883,8 @@ open_temp_fstab_file (char **filename)
       if (full_path[strlen (full_path) - 1] != '/')
         strcat (full_path, "/");
       strcat (full_path, candidate_filename);
+
+      fstab_update_debug (_("%d: using temporary file '%s'\n"), pid, full_path);
 
       fd = open (full_path, O_CREAT | O_RDWR | O_EXCL, 0644); 
 
@@ -1462,6 +1467,8 @@ add_udi (const char *udi)
   char *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd = -1;
+  char *dir = NULL;
+  char *last_slash;
 
   /* don't add an fstab entry if we were spawned of a device with
    * storage.no_partitions_hint set to TRUE. Per the spec this is
@@ -1475,12 +1482,17 @@ add_udi (const char *udi)
   if (volume == NULL)
     return FALSE;
 
+  dir = strdup (_PATH_FSTAB); 	 
+  last_slash = strrchr (dir, '/'); 	 
+  if (last_slash) 
+    *last_slash = '\0';
+
   fs_table = fs_table_new (_PATH_FSTAB);
 
   if (fs_table == NULL)
     goto error;
 
-  fd = open_temp_fstab_file (&temp_filename);
+  fd = open_temp_fstab_file (dir, &temp_filename);
 
   if (fd < 0)
     goto error;
@@ -1536,6 +1548,8 @@ error:
   if (fd >= 0)
     close (fd);
   volume_free (volume);
+  if (dir != NULL)
+    free (dir);
   if (temp_filename != NULL)
     unlink (temp_filename);
   return FALSE;
@@ -1551,6 +1565,8 @@ remove_udi (const char *udi)
   time_t fstab_modification_time;
   int fd;
   boolean is_volume;
+  char *dir = NULL;
+  char *last_slash;
 
   is_volume = hal_device_query_capability (hal_context, udi, "volume");
 
@@ -1564,9 +1580,14 @@ remove_udi (const char *udi)
 
   block_device = hal_device_get_property_string (hal_context, udi, "block.device");
 
+  dir = strdup (_PATH_FSTAB); 	 
+  last_slash = strrchr (dir, '/'); 	 
+  if (last_slash) 
+    *last_slash = '\0';
+
   fs_table = fs_table_new (_PATH_FSTAB);
 
-  fd = open_temp_fstab_file (&temp_filename);
+  fd = open_temp_fstab_file (dir, &temp_filename);
 
   if (fd < 0)
     goto error;
@@ -1639,6 +1660,9 @@ error:
   if (temp_filename != NULL)
     unlink (temp_filename);
 
+  if (dir != NULL)
+    free (dir);
+
   fs_table_line_free (line);
 
   return FALSE;
@@ -1691,10 +1715,17 @@ clean (void)
   char *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd;
+  char *dir = NULL;
+  char *last_slash;
+
+  dir = strdup (_PATH_FSTAB); 	 
+  last_slash = strrchr (dir, '/'); 	 
+  if (last_slash) 
+    *last_slash = '\0';
 
   fs_table = fs_table_new (_PATH_FSTAB);
 
-  fd = open_temp_fstab_file (&temp_filename);
+  fd = open_temp_fstab_file (dir, &temp_filename);
 
   if (fd < 0)
     goto error;
@@ -1734,6 +1765,8 @@ clean (void)
 error:
   if (fd >= 0)
     close (fd);
+  if (dir != NULL)
+    free (dir);
   if (temp_filename != NULL)
     unlink (temp_filename);
   return FALSE;
