@@ -16,6 +16,7 @@ libhald_linux2_la_SOURCES =					\
 				osspec.c			\
 	osspec_linux.h						\
 	hotplug.h		hotplug.c			\
+	hotplug_helper.h					\
 	coldplug.h		coldplug.c			\
 	physdev.h		physdev.c			\
 	classdev.h		classdev.c			\
@@ -24,7 +25,9 @@ libhald_linux2_la_SOURCES =					\
 	apm.h			apm.c				\
 	pmu.h			pmu.c				\
 	ids.h			ids.c				\
-	pcmcia_utils.h		pcmcia_utils.c
+	pcmcia_utils.h		pcmcia_utils.c			\
+	pcmcia_cs.h
+
 
 
 

@@ -71,8 +71,8 @@
 #include "../hald.h"
 #include "../hald_dbus.h"
 #include "../device_info.h"
+#include "../util.h"
 
-#include "util.h"
 #include "hotplug.h"
 #include "coldplug.h"
 

@@ -1,5 +1,9 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	Fix a few things to get 'make distcheck' to succeed.
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* tools/linux/hal_hotplug_map.c: Removed
 
 	* tools/linux/Makefile.am: Remove build rules for hal-hotplug-map

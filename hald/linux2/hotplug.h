@@ -28,8 +28,8 @@
 
 #include <glib.h>
 
-#include "util.h"
 #include "../device.h"
+#include "../util.h"
 
 typedef enum {
 	HOTPLUG_EVENT_SYSFS       = 0,

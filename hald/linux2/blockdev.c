@@ -58,10 +58,10 @@
 #include "../hald.h"
 #include "../device_info.h"
 #include "../hald_dbus.h"
+#include "../util.h"
 
 #include "osspec_linux.h"
 
-#include "util.h"
 #include "coldplug.h"
 #include "hotplug_helper.h"
 

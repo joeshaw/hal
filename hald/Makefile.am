@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = $(HALD_BACKEND) .
+SUBDIRS = dummy linux2 .
 
 INCLUDES = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \

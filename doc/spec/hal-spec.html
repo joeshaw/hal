@@ -7696,7 +7696,23 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;	
+>&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+  &#60;device&#62;
+    &#60;match key="info.bus" string="usb"&#62;
+      &#60;match key="usb.vendor_id" int="0x066f"&#62;
+        &#60;match key="usb.product_id" int="0x8000"&#62;
+          &#60;merge key="info.category" type="string"&#62;portable_audio_player&#60;/merge&#62;
+          &#60;merge key="info.capabilities" type="string"&#62;portable_audio_player&#60;/merge&#62;
+          &#60;merge key="portable_audio_player.access_method" type="string"&#62;storage&#60;/merge&#62;
+          &#60;merge key="portable_audio_player.output_formats" type="string"&#62;audio/mpeg audio/x-ms-wma&#60;/merge&#62;
+          &#60;merge key="portable_audio_player.input_formats" type="string"&#62;audio/x-wav&#60;/merge&#62;
+        &#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+&#60;/deviceinfo&#62;
       </PRE
 ></TD
 ></TR
@@ -7733,7 +7749,21 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;	
+>&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+  &#60;device&#62;
+    &#60;match key="info.bus" string="usb"&#62;
+      &#60;match key="usb.vendor_id" int="0x054c"&#62;
+        &#60;match key="usb.product_id" int="0x0010"&#62;
+          &#60;merge key="info.category" type="string"&#62;camera&#60;/merge&#62;
+          &#60;merge key="info.capabilities" type="string"&#62;camera&#60;/merge&#62;
+          &#60;merge key="camera.access_method" type="string"&#62;storage&#60;/merge&#62;
+        &#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+&#60;/deviceinfo&#62;
       </PRE
 ></TD
 ></TR
@@ -7770,7 +7800,30 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;	
+>&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+  &#60;device&#62;
+    &#60;match key="storage.bus" string="usb"&#62;
+      &#60;match key="@storage.physical_device:usb.vendor_id" int="0x0424"&#62;
+        &#60;match key="@storage.physical_device:usb.product_id" int="0x20fc"&#62;
+          &#60;match key="storage.lun" int="0"&#62;
+            &#60;merge key="storage.drive_type" type="string"&#62;compact_flash&#60;/merge&#62;
+	  &#60;/match&#62;
+          &#60;match key="storage.lun" int="1"&#62;
+            &#60;merge key="storage.drive_type" type="string"&#62;memory_stick&#60;/merge&#62;
+	  &#60;/match&#62;
+          &#60;match key="storage.lun" int="2"&#62;
+            &#60;merge key="storage.drive_type" type="string"&#62;smart_media&#60;/merge&#62;
+	  &#60;/match&#62;
+          &#60;match key="storage.lun" int="3"&#62;
+            &#60;merge key="storage.drive_type" type="string"&#62;sd_mmc&#60;/merge&#62;
+	  &#60;/match&#62;
+        &#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+&#60;/deviceinfo&#62;
       </PRE
 ></TD
 ></TR
@@ -7870,7 +7923,248 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;	
+>&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;deviceinfo version="0.2"&#62;
+
+  &#60;!-- Default policies merged onto computer root object  --&#62;
+  &#60;device&#62;
+    &#60;match key="info.udi" string="/org/freedesktop/Hal/devices/computer"&#62;
+      &#60;merge key="storage.policy.default.mount_root" type="string"&#62;/media&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.use_managed_keyword" type="bool"&#62;true&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.managed_keyword.primary" type="string"&#62;managed&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.managed_keyword.secondary" type="string"&#62;kudzu&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.mount_option.noauto" type="bool"&#62;true&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.mount_option.pamconsole" type="bool"&#62;true&#60;/merge&#62;
+      &#60;merge key="storage.policy.default.mount_option.exec" type="bool"&#62;true&#60;/merge&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
+  &#60;device&#62;
+    &#60;!-- Whitelist bus types of storage devices we care about  --&#62;
+    &#60;match key="info.category" string="storage"&#62;
+      &#60;match key="storage.bus" string="usb"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;      
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="ide"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="ieee1394"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="sata"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+      &#60;match key="storage.bus" string="platform"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+    &#60;!-- Also add SCSI optical drives --&#62;
+    &#60;match key="storage.bus" string="scsi"&#62;
+      &#60;match key="storage.drive_type" string="cdrom"&#62;
+        &#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+
+    &#60;!-- Handle drives with non-partitioned media  --&#62;
+    &#60;match key="storage.no_partitions_hint" bool="true"&#62;
+      &#60;!-- optical drives --&#62;
+      &#60;match key="storage.drive_type" string="cdrom"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrom&#60;/merge&#62;
+	&#60;match key="storage.cdrom.cdr" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.cdrw" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdplusr" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdplusrw" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdram" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdr" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="storage.cdrom.dvdrw" bool="true"&#62;
+	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
+	&#60;/match&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+
+      &#60;!-- floppy drives --&#62;
+      &#60;match key="storage.drive_type" string="floppy"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;floppy&#60;/merge&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+
+      &#60;!-- zip drives --&#62;
+      &#60;match key="storage.drive_type" string="zip"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+
+      &#60;!-- jaz drives --&#62;
+      &#60;match key="storage.drive_type" string="jaz"&#62;
+	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
+	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;jaz&#60;/merge&#62;
+	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	&#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+
+    &#60;!-- Normal volumes; use volume label, uuid or drive_type --&#62;
+    &#60;match key="block.is_volume" bool="true"&#62;
+      &#60;match key="volume.fsusage" string="filesystem"&#62;
+	&#60;!-- skip for drives with the no partitions hint (they are handled above) --&#62;
+	&#60;match key="@block.storage_device:storage.no_partitions_hint" bool="false"&#62;
+
+	  &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	  &#60;merge key="volume.policy.mount_filesystem" type="copy_property"&#62;volume.fstype&#60;/merge&#62;
+	  
+	  &#60;!-- Fallback is '&#60;storage.bus&#62;', appended with 'disk', e.g. usbdisk,
+	       idedisk, scsidisk etc. --&#62;
+	  &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;@block.storage_device:storage.bus&#60;/merge&#62;
+	  &#60;append key="volume.policy.desired_mount_point" type="string"&#62;disk&#60;/append&#62;
+
+         &#60;!-- zip drives --&#62;
+         &#60;match key="storage.drive_type" string="zip"&#62;
+ 	   &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
+         &#60;/match&#62;
+	  
+          &#60;!-- Best: If available use filesystem label --&#62;
+          &#60;match key="volume.label" empty="false"&#62;
+            &#60;!-- unless it's a path (e.g. /boot, /, /home etc) --&#62;
+            &#60;match key="volume.label" is_absolute_path="false"&#62;
+	      &#60;!-- and only if the label is ascii --&#62;
+              &#60;match key="volume.label" is_ascii="true"&#62;
+		&#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;volume.label&#60;/merge&#62;
+              &#60;/match&#62;
+            &#60;/match&#62;
+          &#60;/match&#62;
+	  
+	  &#60;!-- Should never mount Apple Bootstrap partitions (it would be
+	       a security hole) - should use the bootable flag from the
+	       Mac partition table instead --&#62;
+	  &#60;match key="volume.fstype" string="hfs"&#62;
+	    &#60;match key="volume.label" string="bootstrap"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;false&#60;/merge&#62;
+	    &#60;/match&#62;
+	  &#60;/match&#62;
+	  
+	  &#60;!-- Use selinux mount options for hotpluggable and removable
+	       volumes --&#62;
+	  &#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
+	    &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
+	      &#60;merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
+	      &#60;merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	  &#60;/match&#62;
+
+	  &#60;!-- Use noatime and sync options for all hotpluggable or removable
+	       volumes smaller than 2GB --&#62;
+	  &#60;match key="volume.size" compare_lt="2147483648"&#62;
+	    &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
+	      &#60;merge key="volume.policy.mount_option.sync" type="bool"&#62;true&#60;/merge&#62;
+	      &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
+	      &#60;merge key="volume.policy.mount_option.sync" type="bool"&#62;true&#60;/merge&#62;
+	      &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	  &#60;/match&#62;
+	  
+	  &#60;!-- whitelist of partition table id's, if from a msdos partition table --&#62;
+	  &#60;match key="volume.partition.msdos_part_table_type" exists="true"&#62;
+	    &#60;!-- Default to no mount and punch holes --&#62;
+	    &#60;merge key="volume.policy.should_mount" type="bool"&#62;false&#60;/merge&#62;
+	    &#60;!-- Linux --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x83"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- FAT12 --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x01"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- FAT16 &#60;32M --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x04"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- FAT16 --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x06"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- HPFS/NTFS --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x07"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- W95 FAT32 --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x0b"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- W95 FAT32 (LBA) --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x0c"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	    &#60;!-- W95 FAT16 (LBA) --&#62;
+	    &#60;match key="volume.partition.msdos_part_table_type" int="0x0e"&#62;
+	      &#60;merge key="volume.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+	    &#60;/match&#62;
+	  &#60;/match&#62;	  
+	&#60;/match&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+    
+  &#60;/device&#62;
+
+  &#60;!-- Dont want to mount non-hotpluggable fixed disks since ideraid
+       detection isnt complete as hald wrongly detects e.g. partitions
+       from some IDE RAID controllers --&#62;
+  &#60;device&#62;
+    &#60;match key="storage.hotpluggable" bool="false"&#62;
+      &#60;match key="storage.removable" bool="false"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;false&#60;/merge&#62;
+      &#60;/match&#62;
+    &#60;/match&#62;
+  &#60;/device&#62;
+
+  &#60;device&#62;
+    &#60;match key="info.udi" string="/org/freedesktop/Hal/devices/computer"&#62;
+      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync --clean&#60;/append&#62;
+    &#60;/match&#62;
+
+    &#60;match key="volume.policy.should_mount" bool="true"&#62;
+      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync&#60;/append&#62;
+      &#60;append key="info.callouts.remove" type="strlist"&#62;fstab-sync&#60;/append&#62;
+    &#60;/match&#62;
+
+    &#60;match key="storage.policy.should_mount" bool="true"&#62;
+      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync&#60;/append&#62;
+      &#60;append key="info.callouts.remove" type="strlist"&#62;fstab-sync&#60;/append&#62;
+    &#60;/match&#62;
+
+    &#60;match key="storage.media_check_enabled" bool="true"&#62;
+      &#60;append key="info.addons" type="strlist"&#62;hald-addon-storage&#60;/append&#62;
+    &#60;/match&#62;
+
+  &#60;/device&#62;
+
+&#60;/deviceinfo&#62;
       </PRE
 ></TD
 ></TR

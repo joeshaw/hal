@@ -483,7 +483,7 @@ echo
 echo "NOTE: Remember to create user ${HAL_USER} and group ${HAL_GROUP} before make install"
 echo
 
-echo "NOTE: For development, use hald/run-hald.sh and hald/debug-hald.sh scripts to "
+echo "NOTE: For development, use run-hald.sh and debug-hald.sh scripts in hald/ to "
 echo "      use programs (callouts, probers, addons) and device information files "
 echo "      from build directories."
 echo "      (You still need 'make install' to set up hotplug.d agent)"

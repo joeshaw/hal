@@ -43,10 +43,10 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../device_info.h"
+#include "../util.h"
 
 #include "osspec_linux.h"
 
-#include "util.h"
 #include "coldplug.h"
 #include "hotplug.h"
 
