@@ -1,3 +1,29 @@
+2003-11-22  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal-sysfs-agent.c: Implementing parsing of
+	/proc/bus/usb/devices to merge information currently not present
+	in sysfs. Quite a pain, but it seems to work... Still need some
+	cleanup though	
+	(find_num): new function
+	(find_double): new function
+	(find_bcd2): new function
+	(find_string): new function
+	(usb_proc_find_virtual_hub): new function
+	(usb_proc_find_virtual_hub_child): new function
+	(usb_proc_find_on_hub): new function
+	(usb_proc_handle_topology): new function
+	(usb_proc_handle_device_info): new function
+	(usb_proc_device_done): new function
+	(usb_proc_parse_line): new function
+	(usb_proc_parse): new function
+	(visitor_usb_device): Locate and merge properties from /proc
+	(main): Parse USB stuff from /proc/bus/usb/devices
+
+	* hal-device-manager: Add USB version
+
+	* hal-device-manager.glade: Add USB version
+	
+	
 2003-11-18  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26/sysfs/hal-sysfs-agent.c: Use usb.ids if

@@ -758,6 +758,343 @@ static dbus_bool_t usb_ids_free()
 
 
 
+// fails if number not found
+static long int find_num(char* pre, char* s, int base)
+{
+    char* where;
+    int result;
+
+    where = strstr(s, pre);
+    if( where==NULL )
+        DIE(("Didn't find '%s' in '%s'", pre, s));
+    where += strlen(pre);
+
+    result = strtol(where, NULL, base);
+    if( result==LONG_MIN || result==LONG_MAX )
+        DIE(("Error parsing value for '%s' in '%s'", pre, s));
+
+    return result;
+}
+
+// fails if double not found
+static double find_double(char* pre, char* s)
+{
+    char* where;
+    double result;
+
+    where = strstr(s, pre);
+    if( where==NULL )
+        DIE(("Didn't find '%s' in '%s'", pre, s));
+    where += strlen(pre);
+
+    result = atof(where);
+
+    return result;
+}
+
+// decode a number into a BCD number with two digits of precision
+static int find_bcd2(char* pre, char* s)
+{
+    int i;
+    char c;
+    int digit;
+    int left, right, result;
+    int len;
+    char* str;
+    dbus_bool_t passed_white_space;
+    int num_prec;
+
+    str = find_string(pre, s);
+    if( str==NULL || strlen(str)==0 )
+        return 0xffff;
+
+
+    left = 0;
+    len = strlen(str);
+    passed_white_space = FALSE;
+    for(i=0; i<len && str[i]!='.'; i++)
+    {
+        if( isspace(str[i]) )
+        {
+            if( passed_white_space )
+                break;
+            else
+                continue;
+        }
+        passed_white_space = TRUE;
+        left *= 16;
+        c = str[i];
+        digit = (int) (c-'0');
+        left += digit;
+    }
+    i++;
+    right=0;
+    num_prec=0;
+    for( ; i<len; i++)
+    {
+        if( isspace(str[i]) )
+            break;
+        if( num_prec==2 )       /* Only care about 2 digits of precision */
+            break;
+        right *= 16;
+        c = str[i];
+        digit = (int) (c-'0');
+        right += digit;
+        num_prec++;
+    }
+
+    for( ; num_prec<2; num_prec++)
+        right*=16;
+    
+    result = left*256 + (right&255);
+    return result;
+}
+
+// return val only valid until next invocation. Return NULL if string not found
+static char* find_string(char* pre, char* s)
+{
+    char* where;
+    static char buf[256];
+    char* p;
+
+    where = strstr(s, pre);
+    if( where==NULL )
+        return NULL;
+    where += strlen(pre);
+
+    p=buf;
+    while( *where!='\n' && *where!='\r')
+    {
+        char c = *where;
+
+        // ignoring char 63 fixes a problem with info from the Lexar CF Reader
+        if( (isalnum(c) || isspace(c) || ispunct(c)) && c!=63 )
+        {
+            *p = c;
+            ++p;
+        }
+
+        ++where;
+    }
+    *p = '\0';
+
+    // remove trailing white space
+    --p;
+    while( isspace(*p) )
+    {
+        *p='\0';
+        --p;
+    }
+
+    return buf;
+}
+
+/** Key information from /proc not available in sysfs */
+typedef struct usb_proc_info_s
+{
+    int t_bus;               /**< Bus number */
+    int t_level;             /**< Level in topology (depth) */
+    int t_parent;            /**< Parent DeviceNumber */
+    int t_port;              /**< Port on Parent for this device */
+    int t_count;             /**< Count of devices at this level */
+    int t_device;            /**< DeviceNumber */
+    int t_speed_bcd;         /**< Device Speed in Mbps, encoded as BCD */
+    int t_max_children;      /**< Maximum number of children */
+    int d_version_bcd;       /**< USB version, encoded in BCD */
+
+    struct usb_proc_info_s* next; /**< next element or #NULL if last */
+} usb_proc_info;
+
+/** First element in usb proc linked list */
+static usb_proc_info* usb_proc_head = NULL;
+
+/** Unique device id of the device we are working on */
+static usb_proc_info* usb_proc_cur_info = NULL;
+
+/** Find the USB virtual root hub device for a USB bus.
+ *
+ *  @param  bus_number          USB bus number
+ *  @return                     The #usb_proc_info structure with information
+ *                              retrieved from /proc or #NULL if not found
+ */
+static usb_proc_info* usb_proc_find_virtual_hub(int bus_number)
+{
+    usb_proc_info* i;
+    for(i=usb_proc_head; i!=NULL; i=i->next)
+    {
+        if( i->t_bus==bus_number && i->t_level==0 )
+            return i;
+    }
+
+    return NULL;
+}
+
+
+/** Find a child of a USB virtual root hub device for a USB bus.
+ *
+ *  @param  bus_number          USB bus number
+ *  @param  port_number         The port number, starting from 1
+ *  @return                     The #usb_proc_info structure with information
+ *                              retrieved from /proc or #NULL if not found
+ */
+static usb_proc_info* usb_proc_find_virtual_hub_child(int bus_number,
+                                                      int port_number)
+{
+    usb_proc_info* i;
+    for(i=usb_proc_head; i!=NULL; i=i->next)
+    {
+        /* Note that /proc counts port starting from zero */
+        if( i->t_bus==bus_number && i->t_level==1 && 
+            i->t_port==port_number-1 )
+            return i;
+    }
+
+    return NULL;
+}
+
+/** Find a child of a given hub device given a bus and port number
+ *
+ *  @param  bus_number           USB bus number
+ *  @param  port_number          The port number, starting from 1
+ *  @param  parent_device_number The Linux device number
+ *  @return                      The #usb_proc_info structure with information
+ *                               retrieved from /proc or #NULL if not found
+ */
+static usb_proc_info* usb_proc_find_on_hub(int bus_number, int port_number, 
+                                           int parent_device_number)
+{
+    usb_proc_info* i;
+    for(i=usb_proc_head; i!=NULL; i=i->next)
+    {
+        /* Note that /proc counts port starting from zero */
+        if( i->t_bus==bus_number  && i->t_port==port_number-1 && 
+            i->t_parent==parent_device_number )
+            return i;
+    }
+
+    return NULL;
+}
+
+
+// T:  Bus=00 Lev=00 Prnt=00 Port=00 Cnt=00 Dev#=  1 Spd=12  MxCh= 2
+static void usb_proc_handle_topology(usb_proc_info* info, char* s)
+{
+    info->t_bus = find_num("Bus=", s, 10);
+    info->t_level = find_num("Lev=", s, 10);
+    info->t_parent = find_num("Prnt=", s, 10);
+    info->t_port = find_num("Port=", s, 10);
+    info->t_count = find_num("Cnt=", s, 10);
+    info->t_device = find_num("Dev#=",s, 10);
+    info->t_speed_bcd = find_bcd2("Spd=",s);
+    info->t_max_children = find_num("MxCh=",s, 10);
+}
+
+static void usb_proc_handle_device_info(usb_proc_info* info, char* s)
+{
+    info->d_version_bcd = find_bcd2("Ver=",s);
+}
+
+
+static void usb_proc_device_done(usb_proc_info* info)
+{
+    info->next = usb_proc_head;
+    usb_proc_head = info;
+}
+
+/** Parse a line from /proc/bus/usb/devices
+ *
+ *  @param  s                   Line from /proc/bus/usb/devices
+ */
+static void usb_proc_parse_line(char* s)
+{
+    switch( s[0] )
+    {
+    case 'T': /* topology; always present, indicates a new device */
+        if( usb_proc_cur_info!=NULL )
+        {
+            // beginning of a new device, done with current
+            usb_proc_device_done(usb_proc_cur_info);
+        }
+
+        usb_proc_cur_info = malloc(sizeof(usb_proc_info));
+
+        if( usb_proc_cur_info==NULL )
+            DIE(("Cannot allocated memory"));
+
+        usb_proc_handle_topology(usb_proc_cur_info, s);
+        break;
+
+    case 'B': /* bandwidth */
+        break;
+
+    case 'D': /* device information */
+        usb_proc_handle_device_info(usb_proc_cur_info, s);
+        break;
+
+    case 'P': /* more device information */
+        break;
+
+    case 'S': /* device string information */
+        break;
+
+    case 'C': /* config descriptor info */
+        break;
+
+    case 'I': /* interface descriptor info */
+        break;
+
+    case 'E': /* endpoint descriptor info */
+        break;
+
+    default:
+        break;
+    }
+}
+
+/** Parse /proc/bus/usb/devices
+ */
+static void usb_proc_parse()
+{
+    unsigned int i;
+    FILE* f;
+    char buf[256];
+
+    f = fopen("/proc/bus/usb/devices", "r");
+    if( f==NULL )
+    {
+        DIE(("Couldn't open /proc/bus/usb/devices"));
+    }
+
+    while( !feof(f) )
+    {
+        fgets(buf, 256, f);
+        usb_proc_parse_line(buf);
+    }
+    usb_proc_device_done(usb_proc_cur_info);
+
+    {
+        usb_proc_info* i;
+        for(i=usb_proc_head; i!=NULL; i=i->next)
+        {
+            printf("/p/b/u/d entry\n");
+            printf("  bus               %d\n", i->t_bus);
+            printf("  level             %d\n", i->t_level);
+            printf("  parent            %d\n", i->t_parent);
+            printf("  port              %d\n", i->t_port);
+            printf("  count             %d\n", i->t_count);
+            printf("  device            %d\n", i->t_device);
+            printf("  speed_bcd         %x.%x (0x%06x)\n", i->t_speed_bcd>>8, 
+                   i->t_speed_bcd&0xff, i->t_speed_bcd);
+            printf("  max_children      %d\n", i->t_max_children);
+            printf("  version_bcd       %x.%x (0x%06x)\n", i->d_version_bcd>>8,
+                   i->d_version_bcd&0xff, i->d_version_bcd);
+            printf("\n");
+        }
+    }
+}
+
+
+
 /** This function will compute the device uid based on other properties
  *  of the device. Specifically, the following properties are required:
  *
@@ -1015,9 +1352,9 @@ static char* find_parent_udi_from_sysfs_path(const char* path)
 
 /** Visitor function for interfaces on a USB device.
  *
- *  @param  path                Sysfs-path for USB interface
- *  @param  device              libsysfs object for USB interface
- *  @param  d                   UDI of HAL device to amend interface data to
+ *  @param  path                 Sysfs-path for USB interface
+ *  @param  device               libsysfs object for USB interface
+ *  @param  d                    UDI of HAL device to amend interface data to
  */
 static void visit_device_usb_interface(const char* path,
                                        struct sysfs_device *device,
@@ -1132,8 +1469,10 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
     char* product_name;
     char* vendor_name_kernel;
     char* product_name_kernel;
+    int bus_number;
+    usb_proc_info* proc_info;
 
-    /*printf("usb: %s, bus_id=%s\n", path, device->bus_id);*/
+    printf("usb: %s, bus_id=%s\n", path, device->bus_id);
 
     if( device->directory==NULL || device->directory->attributes==NULL )
         return;
@@ -1175,8 +1514,6 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
                                      attr_name, SYSFS_NAME_LEN) != 0 )
             continue;
 
-        fprintf(stderr, "cur->path='%s', cur->value='%s'\n", cur->path, cur->value);
-        
         /* strip whitespace */
         len = strlen(cur->value);
         for(i=len-1; isspace(cur->value[i]) && i>0; --i)
@@ -1194,9 +1531,11 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
         else if( strcmp(attr_name, "bMaxPower")==0 )
             hal_device_set_property_int(d, "usb.bMaxPower", 
                                         parse_dec(cur->value));
+/*
         else if( strcmp(attr_name, "speed")==0 )
             hal_device_set_property_double(d, "usb.speed", 
                                            parse_double(cur->value));
+*/
         
         else if( strcmp(attr_name, "manufacturer")==0 )
             vendor_name_kernel = cur->value;
@@ -1279,11 +1618,128 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
     if( parent_udi!=NULL )
         hal_device_set_property_string(d, "Parent", parent_udi);
 
-    
-    /* Compute a proper UDI (unique device id), try to locate a persistent
-     * unplugged device or add it
+
+    /* Merge information from /proc/bus/usb/devices */
+    proc_info = NULL;
+
+    if( sscanf(device->bus_id, "usb%d", &bus_number)==1 )
+    {
+        /* Is of form "usb%d" which means that this is a USB virtual root
+         * hub, cf. drivers/usb/hcd.c in kernel 2.6
+         */
+        hal_device_set_property_int(d, "usb.busNumber", bus_number);
+        proc_info = usb_proc_find_virtual_hub(bus_number);
+    }
+    else
+    {
+        int i;
+        int len;
+        int digit;
+        int port_number;
+        /* Not a root hub; According to the Linux kernel sources,
+         * the name is of the form
+         *
+         *  "%d-%s[.%d]"
+         *
+         * where the first number is the bus-number, the middle string is
+         * the parent device and the last, optional, number is the port
+         * number in the event that the USB device is a hub.
+         */
+
+        len = strlen(device->bus_id);
+
+        /* the first part is easy */
+        bus_number = atoi(device->bus_id);
+
+        hal_device_set_property_int(d, "usb.busNumber", bus_number);
+
+        /* The naming convention also guarantees that
+         *
+         *   device is on a (non-virtual) hub    
+         *
+         *            IF AND ONLY IF  
+         *
+         *   the bus_id contains a "."
+         */
+        for(i=0; i<len; i++)
+        {
+            if( device->bus_id[i]=='.' )
+                break;
+        }
+
+        if( i==len )
+        {
+            /* Not on a hub; this means we must be a child of the root
+             * hub... Thus the name must is of the form "%d-%d"
+             */
+            if( sscanf(device->bus_id, "%d-%d", 
+                       &bus_number, &port_number) == 2 )
+            {
+
+                proc_info = usb_proc_find_virtual_hub_child(bus_number, 
+                                                            port_number);
+                hal_device_set_property_int(d, "usb.portNumber", port_number);
+            }
+        }
+        else
+        {
+            int parent_device_number;
+
+            /* On a hub */
+
+            /* This is quite a hack */
+            port_number = 0;
+            for(i=len-1; i>0 && isdigit(device->bus_id[i]); --i)
+            {
+                digit = (int)(device->bus_id[i] - '0');
+                port_number *= 10;
+                port_number += digit;
+            }
+
+            hal_device_set_property_int(d, "usb.portNumber", port_number);
+
+            /* Ok, got the port number and bus number; this is not quite
+             * enough though.. We take the usb.linux.device_number from
+             * our parent and then we are set.. */
+            if( parent_udi==NULL )
+            {
+                fprintf(stderr, "Device %s is on a hub but no parent??\n", d);
+                /* have to give up then */
+                proc_info = NULL;
+            }
+            else
+            {
+                parent_device_number = 
+                    hal_device_get_property_int(parent_udi,
+                                                "usb.linux.device_number");
+                printf("parent_device_number = %d\n", parent_device_number);
+                proc_info = usb_proc_find_on_hub(bus_number, port_number,
+                                                 parent_device_number);
+            }
+
+        }
+    }
+
+
+    if( proc_info!=NULL )
+    {
+        hal_device_set_property_int(d, "usb.levelNumber", proc_info->t_level);
+        hal_device_set_property_int(d, "usb.linux.device_number",
+                                    proc_info->t_device);
+        hal_device_set_property_int(d, "usb.linux.parent_number",
+                                    proc_info->t_device);
+        hal_device_set_property_int(d, "usb.numPorts", 
+                                    proc_info->t_max_children);
+        hal_device_set_property_int(d, "usb.bcdSpeed", proc_info->t_speed_bcd);
+        hal_device_set_property_int(d, "usb.bcdVersion", 
+                                    proc_info->d_version_bcd);
+    }
+
+    /* Finally, Compute a proper UDI (unique device id), try to locate
+     * a persistent unplugged device or add it
      */
-    rename_and_maybe_add(d, usb_compute_udi, "usb");    
+    d = rename_and_maybe_add(d, usb_compute_udi, "usb");    
+
 }
 
 
@@ -1803,6 +2259,9 @@ int main(int argc, char* argv[])
 
     pci_ids_load("/usr/share/hwdata/pci.ids");
     usb_ids_load("/usr/share/hwdata/usb.ids");
+
+    /* Parse /proc/bus/usb/devices */
+    usb_proc_parse();
 
     if( argc==2 && 
         (strcmp(argv[1], "usb")==0 ||

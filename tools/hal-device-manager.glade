@@ -355,94 +355,6 @@
 	      <property name="visible">True</property>
 
 	      <child>
-		<widget class="GtkLabel" id="label23">
-		  <property name="width_request">84</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">&lt;b&gt;Bandwidth:&lt;/b&gt;</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">24</property>
-		  <property name="y">24</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="label24">
-		  <property name="width_request">84</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">&lt;b&gt;Power usage:&lt;/b&gt;</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">24</property>
-		  <property name="y">48</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="label25">
-		  <property name="width_request">108</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">&lt;b&gt;Vendor:&lt;/b&gt;</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">0</property>
-		  <property name="y">88</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="label26">
-		  <property name="width_request">84</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">&lt;b&gt;Product:&lt;/b&gt;</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">24</property>
-		  <property name="y">112</property>
-		</packing>
-	      </child>
-
-	      <child>
 		<widget class="GtkLabel" id="label27">
 		  <property name="width_request">84</property>
 		  <property name="height_request">16</property>
@@ -460,95 +372,7 @@
 		</widget>
 		<packing>
 		  <property name="x">24</property>
-		  <property name="y">136</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="ns_usb_bandwidth">
-		  <property name="width_request">250</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">usb bandwidth</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_LEFT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">120</property>
-		  <property name="y">24</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="ns_usb_maxpower">
-		  <property name="width_request">250</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">max 	power drain</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_LEFT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">120</property>
-		  <property name="y">48</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="ns_usb_man_id">
-		  <property name="width_request">250</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">man id</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_LEFT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">120</property>
-		  <property name="y">88</property>
-		</packing>
-	      </child>
-
-	      <child>
-		<widget class="GtkLabel" id="ns_usb_prod_id">
-		  <property name="width_request">250</property>
-		  <property name="height_request">16</property>
-		  <property name="visible">True</property>
-		  <property name="label" translatable="yes">prod id</property>
-		  <property name="use_underline">False</property>
-		  <property name="use_markup">True</property>
-		  <property name="justify">GTK_JUSTIFY_LEFT</property>
-		  <property name="wrap">True</property>
-		  <property name="selectable">False</property>
-		  <property name="xalign">0.5</property>
-		  <property name="yalign">0.5</property>
-		  <property name="xpad">0</property>
-		  <property name="ypad">0</property>
-		</widget>
-		<packing>
-		  <property name="x">120</property>
-		  <property name="y">112</property>
+		  <property name="y">160</property>
 		</packing>
 	      </child>
 
@@ -570,7 +394,227 @@
 		</widget>
 		<packing>
 		  <property name="x">120</property>
+		  <property name="y">160</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="label26">
+		  <property name="width_request">84</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Product:&lt;/b&gt;</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">24</property>
 		  <property name="y">136</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="label25">
+		  <property name="width_request">108</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Vendor:&lt;/b&gt;</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">0</property>
+		  <property name="y">112</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="ns_usb_man_id">
+		  <property name="width_request">250</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">man id</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_LEFT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">120</property>
+		  <property name="y">112</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="label24">
+		  <property name="width_request">84</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Power usage:&lt;/b&gt;</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">24</property>
+		  <property name="y">72</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="label23">
+		  <property name="width_request">84</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">&lt;b&gt;Bandwidth:&lt;/b&gt;</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">24</property>
+		  <property name="y">48</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="label40">
+		  <property name="width_request">84</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">&lt;b&gt;USB version:&lt;/b&gt;</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_RIGHT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">24</property>
+		  <property name="y">24</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="ns_usb_prod_id">
+		  <property name="width_request">250</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">prod id</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_LEFT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">120</property>
+		  <property name="y">136</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="ns_usb_maxpower">
+		  <property name="width_request">250</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">max 	power drain</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_LEFT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">120</property>
+		  <property name="y">72</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="ns_usb_bandwidth">
+		  <property name="width_request">250</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">usb bandwidth</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_LEFT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">120</property>
+		  <property name="y">48</property>
+		</packing>
+	      </child>
+
+	      <child>
+		<widget class="GtkLabel" id="ns_usb_version">
+		  <property name="width_request">250</property>
+		  <property name="height_request">16</property>
+		  <property name="visible">True</property>
+		  <property name="label" translatable="yes">usb version</property>
+		  <property name="use_underline">False</property>
+		  <property name="use_markup">True</property>
+		  <property name="justify">GTK_JUSTIFY_LEFT</property>
+		  <property name="wrap">True</property>
+		  <property name="selectable">False</property>
+		  <property name="xalign">0.5</property>
+		  <property name="yalign">0.5</property>
+		  <property name="xpad">0</property>
+		  <property name="ypad">0</property>
+		</widget>
+		<packing>
+		  <property name="x">120</property>
+		  <property name="y">24</property>
 		</packing>
 	      </child>
 	    </widget>

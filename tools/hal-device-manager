@@ -204,13 +204,18 @@ def update_tab_usb(device):
 
     page.show_all()
 
+    version = xml.get_widget("ns_usb_version")
     bandwidth = xml.get_widget("ns_usb_bandwidth")
     maxpower = xml.get_widget("ns_usb_maxpower")
     man_id = xml.get_widget("ns_usb_man_id")
     prod_id = xml.get_widget("ns_usb_prod_id")
     revision = xml.get_widget("ns_usb_rev")
 
-    bandwidth.set_label("%2.1f Mbit/s"%(device.properties["usb.speed"]))
+    bcdVersion = device.properties["usb.bcdVersion"]
+    version.set_label("%x.%x"%(bcdVersion>>8, bcdVersion&0xff))
+    
+    bcdSpeed = device.properties["usb.bcdSpeed"]
+    bandwidth.set_label("%x.%x Mbit/s"%(bcdSpeed>>8, bcdSpeed&0xff))
     maxpower.set_label("%d mA"%(device.properties["usb.bMaxPower"]))
     if not device.properties.has_key("usb.Vendor"):
         man_id.set_label("0x%04x"%(device.properties["usb.idVendor"]))
