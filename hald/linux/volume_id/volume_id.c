@@ -24,7 +24,7 @@
  */
 
 #ifndef _GNU_SOURCE
-#define _GNU_SOURCE
+#define _GNU_SOURCE 1
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -42,15 +42,7 @@
 #include <asm/types.h>
 
 #include "volume_id.h"
-
-#ifdef DEBUG
-#define dbg(format, arg...)						\
-	do {								\
-		printf("%s: " format "\n", __FUNCTION__ , ## arg);	\
-	} while (0)
-#else
-#define dbg(format, arg...)	do {} while (0)
-#endif /* DEBUG */
+#include "volume_id_logging.h"
 
 #define bswap16(x) (__u16)((((__u16)(x) & 0x00ffu) << 8) | \
 			   (((__u32)(x) & 0xff00u) >> 8))
@@ -337,12 +329,13 @@ static int probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
 	} __attribute__((packed)) *mdp;
 
 	const __u8 *buf;
-	__u64 sboff = (size & ~(MD_RESERVED_BYTES - 1)) - MD_RESERVED_BYTES;
+	__u64 sboff;
 	__u8 uuid[16];
 
-	if (size == 0)
+	if (size < 0x10000)
 		return -1;
 
+	sboff = (size & ~(MD_RESERVED_BYTES - 1)) - MD_RESERVED_BYTES;
 	buf = get_buffer(id, off + sboff, 0x800);
 	if (buf == NULL)
 		return -1;

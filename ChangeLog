@@ -1,3 +1,12 @@
+2004-08-30  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_linux_raid): Skip very
+	very small volumes, caus our end of volume calculation is wrong in
+	that case.
+
+	* hald/linux/volume_id/volume_id_logging.h: Add a new file
+	to wrap the HAL logging facility into volume_id
+
 2004-08-30  David Zeuthen  <david@fubar.dk>
 
 	* tools/linux/Makefile.am (uninstall-local): Get the uninstall rules
