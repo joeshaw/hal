@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb_device">
+      <match key="usb_device.vendor_id" int="0x046d"> <!-- Logitech, Inc. -->
+
+        <match key="usb_device.product_id" int="0xc50e"> <!-- Receiver for MX1000 Laser -->
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+	  <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+	<!-- Receiver for Coordless Keyboard + Mouse combo -->
+        <match key="usb_device.product_id" int="0xc512"> 
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">keyboard_mouse</merge>
+	  <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>

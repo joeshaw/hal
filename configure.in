@@ -92,7 +92,7 @@ AC_SUBST(FSTAB_SYNC_ENABLED)
 AM_CONDITIONAL(FSTAB_SYNC_ENABLED, test x$enable_fstab_sync = xyes)
 
 
-AC_ARG_ENABLE(pcmcia-support,         [  --enable-pcmcia-support     Extended PCMCIA card support],enable_pcmcia_support=yes,enable_pcmcia_support=no)
+AC_ARG_ENABLE(pcmcia-support,         [  --enable-pcmcia-support Extended PCMCIA card support],enable_pcmcia_support=yes,enable_pcmcia_support=no)
 if test "x$enable_pcmcia_support" = "xyes" ; then
    AC_DEFINE(PCMCIA_SUPPORT_ENABLE,1,[Whether PCMCIA card workarounds should be used (for kernels that don't have a sysfsized PCMCIA layer)])
 fi

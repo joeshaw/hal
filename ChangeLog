@@ -1,3 +1,15 @@
+2005-03-23  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Sergey Udaltsov <sergey.udaltsov@gmail.com>, slightly
+	tweaked to be in line with the spec
+
+	* hald/linux2/addons/addon-usb-csr.c: New file
+
+	* fdi/information/10freedesktop/10-wireless-mice.fdi: New file
+
+	* doc/spec/hal-spec.xml.in: Add keyboard_mouse as allowed value for
+	battery.type
+
 2005-03-22  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/physdev.c: Actuall change driver property to be uniform,

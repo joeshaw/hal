@@ -8,7 +8,7 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
-libexec_PROGRAMS = hald-addon-hid-ups hald-addon-acpi hald-addon-storage
+libexec_PROGRAMS = hald-addon-hid-ups hald-addon-acpi hald-addon-storage hald-addon-usb-csr
 
 hald_addon_hid_ups_SOURCES = addon-hid-ups.c
 hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la
@@ -19,9 +19,5 @@ hald_addon_acpi_LDADD = $(top_builddir)/libhal/libhal.la
 hald_addon_storage_SOURCES = addon-storage.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la
 
-
-
-
-
-
-
+hald_addon_usb_csr_SOURCES = addon-usb-csr.c
+hald_addon_usb_csr_LDADD = $(top_builddir)/libhal/libhal.la -lusb @PACKAGE_LIBS@
