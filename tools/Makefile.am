@@ -12,14 +12,14 @@ INCLUDES = \
 bin_PROGRAMS = lshal hal-get-property hal-set-property
 
 lshal_SOURCES = lshal.c
-lshal_LDADD = -ldbus-1 -ldbus-glib-1 -lglib-2.0 \
+lshal_LDADD = @PACKAGE_LIBS@ \
               $(top_builddir)/libhal/libhal.la
 
 hal_get_property_SOURCES = hal_get_property.c
-hal_get_property_LDADD = -ldbus-1 $(top_builddir)/libhal/libhal.la
+hal_get_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_set_property_SOURCES = hal_set_property.c
-hal_set_property_LDADD = -ldbus-1 $(top_builddir)/libhal/libhal.la
+hal_set_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 clean-local :
 	rm -f *~

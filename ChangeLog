@@ -1,3 +1,9 @@
+2004-03-01  Joe Shaw  <joe@ximian.com>
+
+	* tools/Makefile.am: Use @PACKAGE_LIBS@ and @DBUS_LIBS@ instead of
+	referencing the libs directly.  This allows us to have dbus and/or
+	glib in a prefix.
+
 2004-03-01  David Zeuthen  <david@fubar.dk>
 
 	Preliminary support for waiting for sysfs information to appear - 
