@@ -21,7 +21,7 @@
 #ifndef _VOLUME_ID_H_
 #define _VOLUME_ID_H_
 
-#define VOLUME_ID_VERSION		019
+#define VOLUME_ID_VERSION		020
 
 #define VOLUME_ID_LABEL_SIZE		64
 #define VOLUME_ID_UUID_SIZE		16
@@ -30,7 +30,7 @@
 #define VOLUME_ID_PATH_MAX		256
 #define VOLUME_ID_PARTITIONS_MAX	16
 
-enum volume_id_type {
+enum volume_id_usage {
 	VOLUME_ID_UNUSED,
 	VOLUME_ID_UNPROBED,
 	VOLUME_ID_OTHER,
@@ -39,7 +39,7 @@ enum volume_id_type {
 	VOLUME_ID_RAID
 };
 
-enum volume_id_format {
+enum volume_id_type {
 	VOLUME_ID_ALL,
 	VOLUME_ID_MSDOSPARTTABLE,
 	VOLUME_ID_MSDOSEXTENDED,
@@ -61,9 +61,9 @@ enum volume_id_format {
 };
 
 struct volume_id_partition {
+	enum		volume_id_usage usage_id;
 	enum		volume_id_type type_id;
-	enum		volume_id_format format_id;
-	char		*format;
+	char		*type;
 	unsigned long long off;
 	unsigned long long len;
 };
@@ -74,10 +74,10 @@ struct volume_id {
 	char		label[VOLUME_ID_LABEL_SIZE+1];
 	unsigned char	uuid_raw[VOLUME_ID_UUID_SIZE];
 	char		uuid[VOLUME_ID_UUID_STRING_SIZE];
+	enum		volume_id_usage usage_id;
 	enum		volume_id_type type_id;
-	enum		volume_id_format format_id;
-	char		*format;
-	char		format_version[VOLUME_ID_FORMAT_SIZE];
+	char		*type;
+	char		type_version[VOLUME_ID_FORMAT_SIZE];
 	struct volume_id_partition *partitions;
 	unsigned int	partition_count;
 	int		fd;

@@ -1,3 +1,25 @@
+2004-08-26  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* doc/spec/hal-spec.xml.in: Add description of "volume.fsusage"
+
+	* hald/linux/block_class_device.c:
+	(set_volume_id_values): Use "volume.fsusage" instead of "is_filesystem"
+	and "is_part_of_raid"
+	(detect_media), (block_class_pre_process): Set missing defaults and
+	remove "is_filesystem"
+
+	* hald/linux/volume_id/volume_id.c: (probe_linux_raid),
+	(probe_msdos_part_table), (probe_ext), (probe_reiserfs),
+	(probe_xfs), (probe_jfs), (probe_vfat), (probe_udf),
+	(probe_iso9660), (probe_ufs), (probe_mac_partition_map),
+	(probe_hfs_hfsplus), (probe_ntfs), (probe_swap): Switch naming
+	form "format" and "type" to "type" and "usage" to match the
+	names we use in HAL now. 
+
+	* tools/fstab-sync.c: (udi_is_volume_or_nonpartition_drive):
+	Switch from "is_filesystem" to "volume.fsusage" to determine
+	if the volume is mountable
+
 2004-08-25  David Zeuthen  <david@fubar.dk>
 
 	* tools/linux/hal_hotplug_map.c (main): Match usb_device rather

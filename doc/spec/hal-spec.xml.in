@@ -1599,14 +1599,42 @@
               <entry>A fully qualified path to the mount point of the volume</entry>
             </row>
             <row>
-              <entry><literal>volume.is_filesystem</literal> (bool)</entry>
-              <entry></entry>
+              <entry><literal>volume.fsusage</literal> (string)</entry>
+              <entry>example: filesystem</entry>
               <entry>Yes</entry>
               <entry>
-		This property is TRUE if the volume indeed contains a mountable
-		filesystem. If it's FALSE the volume contain other data such
-		as swap or partition maps.
-	      </entry>
+                This property specifies the expected usage of the volume
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>filesystem</entry>
+              <entry></entry>
+              <entry>The volume is a mountable filesystem</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>partitiontable</entry>
+              <entry></entry>
+              <entry>The volume conatains a partitiontable</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>raid</entry>
+              <entry></entry>
+              <entry>The volume is a member of a raid set and not mountable</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>other</entry>
+              <entry></entry>
+              <entry>The volume is not mountable like a swap partition</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>unused</entry>
+              <entry></entry>
+              <entry>The volume is marked a unused or free</entry>
             </row>
             <row>
               <entry><literal>volume.fstype</literal> (string)</entry>

@@ -83,36 +83,42 @@ static gboolean deferred_check_for_non_partition_media (gpointer data);
 static void
 set_volume_id_values(HalDevice *d, struct volume_id *vid)
 {
-	char *product;
+	const char *product;
+	const char *usage;
 
-	switch (vid->type_id) {
+	switch (vid->usage_id) {
 	case VOLUME_ID_FILESYSTEM:
-		hal_device_property_set_bool (d, "volume.is_filesystem", TRUE);
+		usage = "filesystem";
+		break;
+	case VOLUME_ID_PARTITIONTABLE:
+		usage = "partitiontable";
+		break;
+	case VOLUME_ID_OTHER:
+		usage = "other";
 		break;
 	case VOLUME_ID_RAID:
-		hal_device_property_set_bool (d, "volume.is_part_of_raid", TRUE);
+		usage = "raid";
 		break;
 	case VOLUME_ID_UNUSED:
 		hal_device_property_set_string (d, "info.product", "Volume (unused)");
+		usage = "unused";
 		return;
 	default:
-		;
+		usage = "";
 	}
+	hal_device_property_set_string (d, "volume.fsusage", usage);
 
-	hal_device_property_set_string (d, "volume.fstype", vid->format);
-	if (vid->format_version[0] != '\0')
+	hal_device_property_set_string (d, "volume.fstype", vid->type);
+	if (vid->type_version[0] != '\0')
 		hal_device_property_set_string (d, "volume.fsversion",
-						vid->format_version);
+						vid->type_version);
 	hal_device_property_set_string (d, "volume.uuid", vid->uuid);
 	hal_device_property_set_string (d, "volume.label", vid->label);
-
-	hal_device_property_set_bool (d, "volume.is_filesystem", 
-				      (vid->type_id == VOLUME_ID_FILESYSTEM));
 
 	if (vid->label[0] != '\0') {
 		hal_device_property_set_string (d, "info.product", vid->label);
 	} else {
-		product = g_strdup_printf ("Volume (%s)", vid->format);
+		product = g_strdup_printf ("Volume (%s)", vid->type);
 		hal_device_property_set_string (d, "info.product", product);
 		g_free (product);
 	}
@@ -928,8 +934,8 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		hal_device_property_set_string (child, "info.product", "Volume");
 
 		/* set defaults */
-		hal_device_property_set_bool (d, "volume.is_filesystem", FALSE);
 		hal_device_property_set_string (child, "volume.fstype", "");
+		hal_device_property_set_string (child, "volume.fsversion", "");
 		hal_device_property_set_string (child, "volume.uuid", "");
 		hal_device_property_set_string (child, "volume.label", "");
 		hal_device_property_set_string (child, "volume.mount_point", "");
@@ -1187,9 +1193,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "info.category", "volume");
 		hal_device_property_set_string (d, "info.product", "Volume");
 		hal_device_property_set_string (d, "volume.fstype", "");
+		hal_device_property_set_string (d, "volume.fsversion", "");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.uuid", "");
-		hal_device_property_set_bool (d, "volume.is_filesystem", FALSE);
 		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 
@@ -1226,7 +1232,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			 * GRRRR!!!
 			 */
 			hal_device_property_set_string (d, "volume.fstype", "vfat,auto");
-			hal_device_property_set_bool (d, "volume.is_filesystem", TRUE);
+			hal_device_property_set_string (d, "volume.usage", "filesystem");
 		}
 		return;
 	}

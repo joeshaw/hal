@@ -293,8 +293,8 @@ static int probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
 	set_uuid(id, uuid, 16);
 
 	dbg("found raid signature");
-	id->type_id = VOLUME_ID_RAID;
-	id->format = "linux_raid";
+	id->usage_id = VOLUME_ID_RAID;
+	id->type = "linux_raid_member";
 
 	return 0;
 }
@@ -379,9 +379,9 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 		if (is_extended(part[i].sys_ind)) {
 			dbg("found extended partition at 0x%llx", poff);
-			p->type_id = VOLUME_ID_PARTITIONTABLE;
-			p->format_id = VOLUME_ID_MSDOSEXTENDED;
-			p->format = "msdos_extended_partition";
+			p->usage_id = VOLUME_ID_PARTITIONTABLE;
+			p->type_id = VOLUME_ID_MSDOSEXTENDED;
+			p->type = "msdos_extended_partition";
 			if (extended == 0)
 				extended = off + poff;
 		} else {
@@ -389,9 +389,9 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 			    part[i].sys_ind, poff, plen);
 
 			if (is_raid(part[i].sys_ind))
-				p->type_id = VOLUME_ID_RAID;
+				p->usage_id = VOLUME_ID_RAID;
 			else
-				p->type_id = VOLUME_ID_UNPROBED;
+				p->usage_id = VOLUME_ID_UNPROBED;
 		}
 
 		p->off = off + poff;
@@ -438,15 +438,15 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 
 				/* we always start at the 5th entry */
 				while (id->partition_count < 4)
-					id->partitions[id->partition_count++].type_id =
+					id->partitions[id->partition_count++].usage_id =
 						VOLUME_ID_UNUSED;
 
 				p = &id->partitions[id->partition_count];
 
 				if (is_raid(part[i].sys_ind))
-					p->type_id = VOLUME_ID_RAID;
+					p->usage_id = VOLUME_ID_RAID;
 				else
-					p->type_id = VOLUME_ID_UNPROBED;
+					p->usage_id = VOLUME_ID_UNPROBED;
 
 				p->off = current + poff;
 				p->len = plen;
@@ -461,9 +461,9 @@ static int probe_msdos_part_table(struct volume_id *id, __u64 off)
 		current = next;
 	}
 
-	id->type_id = VOLUME_ID_PARTITIONTABLE;
-	id->format_id = VOLUME_ID_MSDOSPARTTABLE;
-	id->format = "msdos_partition_table";
+	id->usage_id = VOLUME_ID_PARTITIONTABLE;
+	id->type_id = VOLUME_ID_MSDOSPARTTABLE;
+	id->type = "msdos_partition_table";
 
 	return 0;
 }
@@ -507,13 +507,13 @@ static int probe_ext(struct volume_id *id, __u64 off)
 
 	if ((le32_to_cpu(es->feature_compat) &
 	     EXT3_FEATURE_COMPAT_HAS_JOURNAL) != 0) {
-		id->type_id = VOLUME_ID_FILESYSTEM;
-		id->format_id = VOLUME_ID_EXT3;
-		id->format = "ext3";
+		id->usage_id = VOLUME_ID_FILESYSTEM;
+		id->type_id = VOLUME_ID_EXT3;
+		id->type = "ext3";
 	} else {
-		id->type_id = VOLUME_ID_FILESYSTEM;
-		id->format_id = VOLUME_ID_EXT2;
-		id->format = "ext2";
+		id->usage_id = VOLUME_ID_FILESYSTEM;
+		id->type_id = VOLUME_ID_EXT2;
+		id->type = "ext2";
 	}
 
 	return 0;
@@ -545,12 +545,12 @@ static int probe_reiserfs(struct volume_id *id, __u64 off)
 		return -1;
 
 	if (strncmp(rs->magic, "ReIsEr2Fs", 9) == 0) {
-		strcpy(id->format_version, "3.6");
+		strcpy(id->type_version, "3.6");
 		goto found;
 	}
 
 	if (strncmp(rs->magic, "ReIsEr3Fs", 9) == 0) {
-		strcpy(id->format_version, "JR");
+		strcpy(id->type_version, "JR");
 		goto found;
 	}
 
@@ -560,7 +560,7 @@ static int probe_reiserfs(struct volume_id *id, __u64 off)
 		return -1;
 
 	if (strncmp(rs->magic, "ReIsErFs", 8) == 0) {
-		strcpy(id->format_version, "3.5");
+		strcpy(id->type_version, "3.5");
 		goto found;
 	}
 
@@ -571,9 +571,9 @@ found:
 	set_label_string(id, rs->label, 16);
 	set_uuid(id, rs->uuid, 16);
 
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_REISERFS;
-	id->format = "reiserfs";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_REISERFS;
+	id->type = "reiserfs";
 
 	return 0;
 }
@@ -606,9 +606,9 @@ static int probe_xfs(struct volume_id *id, __u64 off)
 	set_label_string(id, xs->fname, 12);
 	set_uuid(id, xs->uuid, 16);
 
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_XFS;
-	id->format = "xfs";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_XFS;
+	id->type = "xfs";
 
 	return 0;
 }
@@ -641,9 +641,9 @@ static int probe_jfs(struct volume_id *id, __u64 off)
 	set_label_string(id, js->label, 16);
 	set_uuid(id, js->uuid, 16);
 
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_JFS;
-	id->format = "jfs";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_JFS;
+	id->type = "jfs";
 
 	return 0;
 }
@@ -841,11 +841,11 @@ valid:
 	dbg("cluster_count 0x%x", cluster_count);
 
 	if (cluster_count < FAT12_MAX) {
-		strcpy(id->format_version, "FAT12");
+		strcpy(id->type_version, "FAT12");
 	} else if (cluster_count < FAT16_MAX) {
-		strcpy(id->format_version, "FAT16");
+		strcpy(id->type_version, "FAT16");
 	} else {
-		strcpy(id->format_version, "FAT32");
+		strcpy(id->type_version, "FAT32");
 		goto fat32;
 	}
 
@@ -920,9 +920,9 @@ fat32:
 	set_uuid(id, vs->type.fat32.serno, 4);
 
 found:
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_VFAT;
-	id->format = "vfat";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_VFAT;
+	id->type = "vfat";
 
 	return 0;
 }
@@ -1072,9 +1072,9 @@ pvd:
 		set_label_unicode16(id, vd->type.primary.ident.c, BE,31);
 
 found:
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_UDF;
-	id->format = "udf";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_UDF;
+	id->type = "udf";
 
 	return 0;
 }
@@ -1114,9 +1114,9 @@ static int probe_iso9660(struct volume_id *id, __u64 off)
 	return -1;
 
 found:
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_ISO9660;
-	id->format = "iso9660";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_ISO9660;
+	id->type = "iso9660";
 
 	return 0;
 }
@@ -1297,9 +1297,9 @@ static int probe_ufs(struct volume_id *id, __u64 off)
 	return -1;
 
 found:
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_UFS;
-	id->format = "ufs";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_UFS;
+	id->type = "ufs";
 
 	return 0;
 }
@@ -1333,9 +1333,9 @@ static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
 		/* linux creates an own subdevice for the map
 		 * just return the type if the drive header is missing */
-		id->type_id = VOLUME_ID_PARTITIONTABLE;
-		id->format_id = VOLUME_ID_MACPARTMAP;
-		id->format = "mac_partition_map";
+		id->usage_id = VOLUME_ID_PARTITIONTABLE;
+		id->type_id = VOLUME_ID_MACPARTMAP;
+		id->type = "mac_partition_map";
 		return 0;
 	}
 
@@ -1390,17 +1390,17 @@ static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 			id->partitions[i].len = plen;
 
 			if (strncmp(part->type, "Apple_Free", 10) == 0) {
-				id->partitions[i].type_id = VOLUME_ID_UNUSED;
+				id->partitions[i].usage_id = VOLUME_ID_UNUSED;
 			} else if (strncmp(part->type, "Apple_partition_map", 19) == 0) {
-				id->partitions[i].type_id = VOLUME_ID_PARTITIONTABLE;
-				id->partitions[i].format_id = VOLUME_ID_MACPARTMAP;
+				id->partitions[i].usage_id = VOLUME_ID_PARTITIONTABLE;
+				id->partitions[i].type_id = VOLUME_ID_MACPARTMAP;
 			} else {
-				id->partitions[i].type_id = VOLUME_ID_UNPROBED;
+				id->partitions[i].usage_id = VOLUME_ID_UNPROBED;
 			}
 		}
-		id->type_id = VOLUME_ID_PARTITIONTABLE;
-		id->format_id = VOLUME_ID_MACPARTMAP;
-		id->format = "mac_partition_map";
+		id->usage_id = VOLUME_ID_PARTITIONTABLE;
+		id->type_id = VOLUME_ID_MACPARTMAP;
+		id->type = "mac_partition_map";
 		return 0;
 	}
 
@@ -1568,9 +1568,9 @@ static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
 		set_label_string(id, hfs->label, hfs->label_len) ;
 	}
 
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_HFS;
-	id->format = "hfs";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_HFS;
+	id->type = "hfs";
 
 	return 0;
 
@@ -1626,9 +1626,9 @@ hfsplus:
 	set_label_unicode16(id, key->unicode, BE, label_len);
 
 found:
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_HFSPLUS;
-	id->format = "hfsplus";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_HFSPLUS;
+	id->type = "hfsplus";
 
 	return 0;
 }
@@ -1775,7 +1775,7 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 		if (attr_type == MFT_RECORD_ATTR_VOLUME_INFO) {
 			dbg("found info, len %i", val_len);
 			info = (struct volume_info*) (((__u8 *) attr) + val_off);
-			snprintf(id->format_version, VOLUME_ID_FORMAT_SIZE-1,
+			snprintf(id->type_version, VOLUME_ID_FORMAT_SIZE-1,
 				 "%u.%u", info->major_ver, info->minor_ver);
 		}
 
@@ -1791,9 +1791,9 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 	}
 
 found:
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_NTFS;
-	id->format = "ntfs";
+	id->usage_id = VOLUME_ID_FILESYSTEM;
+	id->type_id = VOLUME_ID_NTFS;
+	id->type = "ntfs";
 
 	return 0;
 }
@@ -1811,20 +1811,20 @@ static int probe_swap(struct volume_id *id, __u64 off)
 				return -1;
 
 			if (strncmp(sig, "SWAP-SPACE", 10) == 0) {
-				strcpy(id->format_version, "1");
+				strcpy(id->type_version, "1");
 				goto found;
 			}
 			if (strncmp(sig, "SWAPSPACE2", 10) == 0) {
-				strcpy(id->format_version, "2");
+				strcpy(id->type_version, "2");
 				goto found;
 			}
 	}
 	return -1;
 
 found:
-	id->type_id = VOLUME_ID_OTHER;
-	id->format_id = VOLUME_ID_SWAP;
-	id->format = "swap";
+	id->usage_id = VOLUME_ID_OTHER;
+	id->type_id = VOLUME_ID_SWAP;
+	id->type = "swap";
 
 	return 0;
 }

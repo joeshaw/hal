@@ -822,6 +822,7 @@ get_hal_string_property (const char *udi, const char *property)
 static boolean
 udi_is_volume_or_nonpartition_drive (const char *udi)
 {
+  const char *fsusage;
 
   if (hal_device_query_capability (hal_context, udi, "volume")) {
 
@@ -831,8 +832,8 @@ udi_is_volume_or_nonpartition_drive (const char *udi)
 	!hal_device_get_property_bool (hal_context, udi, "volume.disc.has_data"))
       return FALSE;
 
-    if (hal_device_property_exists (hal_context, udi, "volume.is_filesystem") &&
-	!hal_device_get_property_bool (hal_context, udi, "volume.is_filesystem"))
+    fsusage = hal_device_get_property_string (hal_context, udi, "volume.fsusage");
+    if (fsusage == NULL || strcmp (fsusage, "filesystem") != 0)
       return FALSE;
 
     return TRUE;
