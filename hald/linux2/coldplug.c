@@ -50,6 +50,10 @@
 #include "coldplug.h"
 #include "hotplug.h"
 
+#define DMPREFIX "dm-"
+
+static gboolean
+coldplug_synthesize_block_event(const gchar *f);
 
 static void
 coldplug_compute_visit_device (const gchar *path, 
@@ -133,6 +137,14 @@ coldplug_synthesize_events (void)
 	 * (/sys/class/input/mice, mouse, /sys/class/mem/null, mem, ...)
 	 */
 	GSList *sysfs_other_class_dev = NULL;
+
+	/* Device mapper devices that should be added after all other block devices
+	 *
+	 * Example:
+	 *
+	 * (/sys/block/dm-0)
+	 */
+	GSList *sysfs_dm_dev = NULL;
 
 	/* build bus map */
 	sysfs_to_bus_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -305,66 +317,21 @@ coldplug_synthesize_events (void)
 		goto error;
 	}
 	while ((f = g_dir_read_name (dir)) != NULL) {
-		GDir *dir1;
-		gsize flen;
-		HotplugEvent *hotplug_event;
-		gchar *target;
-		gchar *normalized_target;
-
-		g_snprintf (path, HAL_PATH_MAX, "%s/block/%s", get_hal_sysfs_path (), f);
-#ifdef HAL_COLDPLUG_VERBOSE
-		printf ("block: %s (block)\n",  path);
-#endif
-
-		g_snprintf (path1, HAL_PATH_MAX, "%s/block/%s/device", get_hal_sysfs_path (), f);
-		if (((target = g_file_read_link (path1, NULL)) != NULL)) {
-			normalized_target = hal_util_get_normalized_path (path1, target);
-			g_free (target);
-		} else {
-			normalized_target = NULL;
+		if (g_str_has_prefix (f, DMPREFIX)) {
+			/* defer dm devices */
+			sysfs_dm_dev = g_slist_append(sysfs_dm_dev, g_strdup(f));
+			continue;
 		}
-
-		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->is_add = TRUE;
-		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
-		g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
-		g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
-		hal_util_get_device_file (path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
-		if (normalized_target != NULL)
-			g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, normalized_target, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
-		else
-			hotplug_event->sysfs.wait_for_sysfs_path[0] = '\0';
-		hotplug_event->sysfs.net_ifindex = -1;
-		hotplug_event_enqueue (hotplug_event);
-		g_free (normalized_target);
-
-		flen = strlen (f);
-
-		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_ERROR (("Unable to open %s: %s", path, err->message));
-			g_error_free (err);
+		if (coldplug_synthesize_block_event(f) == FALSE)
 			goto error;
-		}
-		while ((f1 = g_dir_read_name (dir1)) != NULL) {
-			if (strncmp (f, f1, flen) == 0) {
-				g_snprintf (path1, HAL_PATH_MAX, "%s/%s", path, f1);
-#ifdef HAL_COLDPLUG_VERBOSE
-				printf ("block: %s (block)\n", path1);
-#endif
-
-				hotplug_event = g_new0 (HotplugEvent, 1);
-				hotplug_event->is_add = TRUE;
-				hotplug_event->type = HOTPLUG_EVENT_SYSFS;
-				g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
-				g_strlcpy (hotplug_event->sysfs.sysfs_path, path1, sizeof (hotplug_event->sysfs.sysfs_path));
-				g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
-				hal_util_get_device_file (path1, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
-				hotplug_event->sysfs.net_ifindex = -1;
-				hotplug_event_enqueue (hotplug_event);
-			}
-		}
-		g_dir_close (dir1);		
 	}
+	/* process all dm devices last so that their backing devices exist */
+	for (li = sysfs_dm_dev; li != NULL; li = g_slist_next (g_slist_next (li))) {
+		if (coldplug_synthesize_block_event(li->data) == FALSE)
+			goto error;
+		g_free (li->data);
+	}
+	g_slist_free (sysfs_dm_dev);
 	g_dir_close (dir);
        
 	return TRUE;
@@ -372,6 +339,79 @@ error:
 	HAL_ERROR (("Error building the orderered list of sysfs paths"));
 	return FALSE;
 }
+
+static gboolean
+coldplug_synthesize_block_event(const gchar *f)
+{
+	GDir *dir1;
+	gsize flen;
+	HotplugEvent *hotplug_event;
+	gchar *target;
+	gchar *normalized_target;
+	GError *err = NULL;
+	gchar path[HAL_PATH_MAX];
+	gchar path1[HAL_PATH_MAX];
+	const gchar *f1;
+
+	g_snprintf (path, HAL_PATH_MAX, "%s/block/%s", get_hal_sysfs_path (), f);
+#ifdef HAL_COLDPLUG_VERBOSE
+	printf ("block: %s (block)\n",  path);
+#endif
+
+	g_snprintf (path1, HAL_PATH_MAX, "%s/block/%s/device", get_hal_sysfs_path (), f);
+	if (((target = g_file_read_link (path1, NULL)) != NULL)) {
+		normalized_target = hal_util_get_normalized_path (path1, target);
+		g_free (target);
+	} else {
+		normalized_target = NULL;
+	}
+
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->is_add = TRUE;
+	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+	g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
+	hal_util_get_device_file (path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+	if (normalized_target != NULL)
+		g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, normalized_target, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
+	else
+		hotplug_event->sysfs.wait_for_sysfs_path[0] = '\0';
+	hotplug_event->sysfs.net_ifindex = -1;
+	hotplug_event_enqueue (hotplug_event);
+	g_free (normalized_target);
+
+	flen = strlen (f);
+
+	if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
+		HAL_ERROR (("Unable to open %s: %s", path, err->message));
+		g_error_free (err);
+		goto error;
+	}
+	while ((f1 = g_dir_read_name (dir1)) != NULL) {
+		if (strncmp (f, f1, flen) == 0) {
+			g_snprintf (path1, HAL_PATH_MAX, "%s/%s", path, f1);
+#ifdef HAL_COLDPLUG_VERBOSE
+			printf ("block: %s (block)\n", path1);
+#endif
+
+			hotplug_event = g_new0 (HotplugEvent, 1);
+			hotplug_event->is_add = TRUE;
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+			g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+			g_strlcpy (hotplug_event->sysfs.sysfs_path, path1, sizeof (hotplug_event->sysfs.sysfs_path));
+			g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
+			hal_util_get_device_file (path1, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+			hotplug_event->sysfs.net_ifindex = -1;
+			hotplug_event_enqueue (hotplug_event);
+		}
+	}
+	g_dir_close (dir1);		
+       
+	return TRUE;
+error:
+	return FALSE;
+}
+
 
 static void
 coldplug_compute_visit_device (const gchar *path, 

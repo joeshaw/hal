@@ -453,10 +453,10 @@ blockdev_get_luks_uuid(const gchar *device_file)
 		* we can ask about the name for /dev/dm-0; as e.g. given by
 		* 'dmsetup info'
 		*
-		* Our assumption is that sesame-setup have invoked
+		* Our assumption is that luks-setup have invoked
 		* dmsetup; e.g. the naming convention is 
 		*
-		*    sesame_crypto_<luks_uuid>
+		*    luks_crypto_<luks_uuid>
 		*
 		* where <luks_uuid> is the UUID encoded in the luks
 		* metadata.
@@ -469,15 +469,15 @@ blockdev_get_luks_uuid(const gchar *device_file)
 			char devpath[256];
 			struct stat statbuf;
 			while ((f = g_dir_read_name (dir)) != NULL) {
-				char sesame_prefix[] = "sesame_crypto_";
+				char luks_prefix[] = "luks_crypto_";
 				HAL_INFO (("looking at /dev/mapper/%s", f));
 				g_snprintf (devpath, sizeof (devpath), "/dev/mapper/%s", f);
 				if (stat (devpath, &statbuf) == 0) {
 					if (S_ISBLK (statbuf.st_mode) && 
 					    MAJOR(statbuf.st_rdev) == major && 
 					    MINOR(statbuf.st_rdev) == minor &&
-					    strncmp (f, sesame_prefix, sizeof (sesame_prefix) - 1) == 0) {
-						luks_uuid = f + sizeof (sesame_prefix) - 1;
+					    strncmp (f, luks_prefix, sizeof (luks_prefix) - 1) == 0) {
+						luks_uuid = f + sizeof (luks_prefix) - 1;
 						HAL_INFO (("found %s; luks_uuid='%s'!", devpath, luks_uuid));
 						break;
 					}
@@ -510,7 +510,7 @@ blockdev_get_luks_parent (const gchar *luks_uuid, HalDevice *device)
 			parent = hal_device_store_find (hald_get_gdl (), backing_volume_stordev_udi);
 			if (parent != NULL) {
 				HAL_INFO (("parent='%s'!", parent->udi));
-				hal_device_property_set_string (device, "volume.crypto_sesame.clear.backing_volume", backing_volume->udi);
+				hal_device_property_set_string (device, "volume.crypto_luks.clear.backing_volume", backing_volume->udi);
 			}
 		}
 	}
