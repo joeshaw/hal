@@ -1,5 +1,9 @@
 2003-12-06  David Zeuthen  <david@fubar.dk>
 
+	* tools/device-manager/hal-device-manager.glade: Forgot to add file
+	
+2003-12-06  David Zeuthen  <david@fubar.dk>
+
 	* agents/linux26/sysfs/hal_monitor.c (ethmon_mdio_read): new function
 	(ethmon_process): new function
 	(ethmon_timeout): new function
