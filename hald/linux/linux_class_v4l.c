@@ -49,9 +49,6 @@
  * @{
  */
 
-/** udev root directory, e.g. "/udev/" */
-static char udev_root[256];
-
 /* fwd decl */
 static void visit_class_device_v4l_got_sysdevice(HalDevice* parent, 
                                                  void* data1, void* data2);
@@ -121,7 +118,7 @@ void visit_class_device_v4l(const char* path,
         int i;
         int sysfs_mount_path_len;
         char sysfs_path_trunc[SYSFS_NAME_LEN];
-        char* udev_argv[4] = {"/sbin/udev", "-q", 
+        char* udev_argv[7] = {"/sbin/udev", "-r", "-q", "name", "-p",
                               sysfs_path_trunc, NULL};
         char* udev_stdout;
         char* udev_stderr;
@@ -168,7 +165,6 @@ void visit_class_device_v4l(const char* path,
             }
         }
 
-        strncpy(dev_file, udev_root, 256);
         strncat(dev_file, udev_stdout, 256);
                 
         /** @todo FIXME free udev_stdout, udev_stderr? */        
@@ -269,65 +265,11 @@ static void visit_class_device_v4l_got_sysdevice(HalDevice* sysdevice,
     ds_device_destroy(d);
 }
 
-/** Find udev root directory (e.g. '/udev/') by invoking '/sbin/udev -r'.
- *  If this fails, we default to /udev/.
- *
- */
-static void get_udev_root()
-{
-    int i;
-    char* udev_argv[3] = {"/sbin/udev", "-r", NULL};
-    char* udev_stdout;
-    char* udev_stderr;
-    int udev_exitcode;
-
-    strncpy(udev_root, "/udev/", 256);
-
-    /* Invoke udev */
-    if( g_spawn_sync("/",
-                     udev_argv,
-                     NULL,
-                     0,
-                     NULL,
-                     NULL,
-                     &udev_stdout,
-                     &udev_stderr,
-                     &udev_exitcode,
-		     NULL)!=TRUE )
-    {
-        HAL_ERROR(("Couldn't invoke /sbin/udev -r"));
-        return;
-    }
-    
-    if( udev_exitcode!=0 )
-    {
-        HAL_ERROR(("/sbin/udev -r returned %d", udev_exitcode));
-        return;
-    }
-    
-    /* sanitize string returned by udev */
-    for(i=0; udev_stdout[i]!=0; i++)
-    {
-        if( udev_stdout[i]=='\r' || udev_stdout[i]=='\n' )
-        {
-            udev_stdout[i]=0;
-            break;
-        }
-    }
-    
-    strncpy(udev_root, udev_stdout, 256);
-        
-    HAL_INFO(("udev root = '%s'", udev_root));
-        
-    /** @todo FIXME free udev_stdout, udev_stderr? */        
-}
-
 /** Init function for V4L adapter class handling
  *
  */
 void linux_class_v4l_init()
 {
-    get_udev_root();
 }
 
 /** This function is called when all device detection on startup is done

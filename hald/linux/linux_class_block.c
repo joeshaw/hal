@@ -65,9 +65,6 @@ static dbus_bool_t detect_media(HalDevice* d);
  * @{
  */
 
-/** udev root directory, e.g. "/udev/" */
-static char udev_root[256];
-
 /** This function will compute the device uid based on other properties
  *  of the device. For block device it's simply block appended with the
  *  major and minor number
@@ -245,12 +242,11 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         const char* path;
         int sysfs_mount_path_len;
         char sysfs_path_trunc[SYSFS_NAME_LEN];
-        char* udev_argv[4] = {"/sbin/udev", "-q", 
+        char* udev_argv[7] = {"/sbin/udev", "-r", "-q", "name", "-p", 
                               sysfs_path_trunc, NULL};
         char* udev_stdout;
         char* udev_stderr;
         int udev_exitcode;
-        char dev_file[256];
 
         path = ds_property_get_string(d, "linux.sysfs_path");
 
@@ -295,12 +291,9 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
             }
         }
 
-        strncpy(dev_file, udev_root, 256);
-        strncat(dev_file, udev_stdout, 256);
+        HAL_INFO(("device file = '%s'", udev_stdout));
         
-        HAL_INFO(("device file = '%s'", dev_file));
-        
-        ds_property_set_string(d, "block.device", dev_file);
+        ds_property_set_string(d, "block.device", udev_stdout);
         
         /** @todo FIXME free udev_stdout, udev_stderr? */        
     }
@@ -929,66 +922,11 @@ static void sigio_handler(int sig)
     sigio_etc_changed = TRUE;
 }
 
-/** Find udev root directory (e.g. '/udev/') by invoking '/sbin/udev -r'.
- *  If this fails, we default to /udev/.
- *
- */
-static void get_udev_root()
-{
-    int i;
-    char* udev_argv[3] = {"/sbin/udev", "-r", NULL};
-    char* udev_stdout;
-    char* udev_stderr;
-    int udev_exitcode;
-
-    strncpy(udev_root, "/udev/", 256);
-
-    /* Invoke udev */
-    if( g_spawn_sync("/",
-                     udev_argv,
-                     NULL,
-                     0,
-                     NULL,
-                     NULL,
-                     &udev_stdout,
-                     &udev_stderr,
-                     &udev_exitcode,
-		     NULL)!=TRUE )
-    {
-        HAL_ERROR(("Couldn't invoke /sbin/udev -r"));
-        return;
-    }
-    
-    if( udev_exitcode!=0 )
-    {
-        HAL_ERROR(("/sbin/udev -r returned %d", udev_exitcode));
-        return;
-    }
-    
-    /* sanitize string returned by udev */
-    for(i=0; udev_stdout[i]!=0; i++)
-    {
-        if( udev_stdout[i]=='\r' || udev_stdout[i]=='\n' )
-        {
-            udev_stdout[i]=0;
-            break;
-        }
-    }
-    
-    strncpy(udev_root, udev_stdout, 256);
-        
-    HAL_INFO(("udev root = '%s'", udev_root));
-        
-    /** @todo FIXME free udev_stdout, udev_stderr? */        
-}
-
-
 /** Init function for block device handling
  *
  */
 void linux_class_block_init()
 {
-    get_udev_root();
 }
 
 /** Force unmount of a patition. Must have block.volume=1 and valid

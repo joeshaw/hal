@@ -1,5 +1,19 @@
 2004-01-19  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: bump version to 0.2.6
+
+	* packaging/fedora/hal.spec (Version): bump to 0.2.6
+
+	* hald/linux/linux_class_v4l.c (get_udev_root): removed
+	(linux_class_v4l_init): don't call get_udev_root()
+	(visit_class_device_v4l): use new options in udev-013
+
+	* hald/linux/linux_class_block.c (get_udev_root): removed
+	(linux_class_block_init): don't call get_udev_root()
+	(visit_class_device_block_got_parent): use new options in udev-013
+
+2004-01-19  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/linux_common.c (drivers_collect): Don't call DIE() if 
 	we cannot open the /sys/bus/<busname>/drivers directory - just
 	ignore this error with HAL_WARNING()
