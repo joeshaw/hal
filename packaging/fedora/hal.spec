@@ -4,8 +4,8 @@
 
 Summary: Hardware Abstraction Layer
 Name: hal
-Version: 0.2.92
-Release: 2
+Version: 0.2.93
+Release: 1
 URL: http://www.freedesktop.org/software/hal/
 Source0: %{name}-%{version}.tar.gz
 License: AFL/GPL

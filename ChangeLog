@@ -1,5 +1,11 @@
 2004-07-06  David Zeuthen  <david@fubar.dk>
 
+	* packaging/fedora/hal.spec (Version): Bump to 0.2.93
+
+	* configure.in: Bump to 0.2.93
+
+2004-07-06  David Zeuthen  <david@fubar.dk>
+
 	Patch from Kay Sievers <kay.sievers@vrfy.org>. Better msdos
 	detection for floppy disks
 
