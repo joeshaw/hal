@@ -1667,17 +1667,10 @@ mtab_handle_storage (HalDevice *d)
 	struct mount_point_s *mp = NULL;
 	int i;
 	
-	if (!hal_device_property_get_bool (d, "block.no_partitions"))
+	if (!hal_device_property_get_bool (d, "block.no_partitions") ||
+	    !hal_device_has_property (d, "storage.media_check_enabled") ||
+	    hal_device_property_get_bool (d, "storage.media_check_enabled"))
 		return TRUE;
-
-	if (!hal_device_has_property (d, "storage.media_check_enabled"))
-		return TRUE;
-
-	if (hal_device_property_get_bool (d, "storage.media_check_enabled"))
-		return TRUE;
-
-	HAL_INFO (("FOOO Checking for %s", 
-		   hal_device_property_get_string (d, "block.device")));
 
 	/* Only handle storage devices where block.no_parition==TRUE and
 	 * where we can't check for media. Typically this is only legacy
@@ -1693,6 +1686,13 @@ mtab_handle_storage (HalDevice *d)
 	child = hal_device_store_match_key_value_string (
 		hald_get_gdl (), "info.parent",
 		hal_device_get_udi (d));
+
+	if (child == NULL) {
+		child = hal_device_store_match_key_value_string (
+			hald_get_tdl (), "info.parent",
+			hal_device_get_udi (d));
+
+	}
 
 	/* Search all mount points */
 	found_mount_point = FALSE;
@@ -1802,6 +1802,12 @@ mtab_handle_storage (HalDevice *d)
 				/* GDL was modified */
 				return TRUE;
 
+			} else {
+				/* Is mounted and we did have a child,
+				 * just bail
+				 */
+				found_mount_point = TRUE;
+				return FALSE;
 			}
 		}
 	}
@@ -1838,10 +1844,20 @@ mtab_handle_volume (HalDevice *d)
 	int major, minor;
 	dbus_bool_t found_mount_point;
 	struct mount_point_s *mp;
+	const char *storudi;
+	HalDevice *stor;
 	int i;
 
 	major = hal_device_property_get_int (d, "block.major");
 	minor = hal_device_property_get_int (d, "block.minor");
+
+	/* these are handled in mtab_handle_storage */
+	storudi = hal_device_property_get_string (d, "block.storage_device");
+	stor = hal_device_store_find (hald_get_gdl (), storudi);
+	if (hal_device_property_get_bool (stor, "block.no_partitions") &&
+	    hal_device_has_property (d, "storage.media_check_enabled") &&
+	    !hal_device_property_get_bool (d, "storage.media_check_enabled"))
+		return TRUE;
 
 	/* Search all mount points */
 	found_mount_point = FALSE;

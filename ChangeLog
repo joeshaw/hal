@@ -1,3 +1,13 @@
+2004-07-08  David Zeuthen  <david@fubar.dk>
+
+	Some more fixes caught by extensive testing
+
+	* hald/linux/block_class_device.c (mtab_handle_storage): Consolidate
+	three if statements into one. Also search TDL for child. Don't remove
+	child if called second time.
+	(mtab_handle_volume): Don't check volumes added by mtab_handle_storage
+	e.g. volumes we detect on mount only
+
 2004-07-07  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (detect_media, mtab_handle_storage): 
