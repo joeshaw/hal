@@ -1,3 +1,23 @@
+2005-03-12  David Zeuthen  <davidz@redhat.com>
+
+	Bah, I still need to update the spec for all the new stuff; until
+	then, here's some other new stuff - one very relevant use for this
+	is that we can key off whether a system can ACPI S3 by e.g. looking
+	at the new smbios.* properties on computer (so distros can maintain
+	a whitelist) - another interesting one is system.formfactor that
+	e.g. Nautilus can use to select the right icon for Computer
+
+	* hald/linux2/probing/probe-smbios.c: New file; invoke dmidecode
+	and extract useful properties
+
+	* hald/linux2/probing/Makefile.am: Add build rules for new prober
+	hald-probe-smbios
+
+	* hald/linux2/osspec.c (computer_probing_helper_done): New function
+	(computer_probing_pcbios_helper_done): New function
+	(osspec_probe): Do the hald-probe-smbios if system supports ACPI or
+	APM; add note to do something similar for PowerMac's etc.
+
 2005-03-11  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-volume.c (main): Patch from Kay

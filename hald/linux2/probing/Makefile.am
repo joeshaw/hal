@@ -9,7 +9,10 @@ INCLUDES = \
 	@PACKAGE_CFLAGS@
 
 libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume hald-probe-printer \
-	           hald-probe-pc-floppy
+	           hald-probe-pc-floppy hald-probe-smbios
+
+hald_probe_smbios_SOURCES = probe-smbios.c shared.h
+hald_probe_smbios_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_probe_printer_SOURCES = probe-printer.c shared.h
 hald_probe_printer_LDADD = $(top_builddir)/libhal/libhal.la @PACKAGE_LIBS@

@@ -360,10 +360,96 @@ hotplug_queue_now_empty (void)
 		osspec_probe_done ();
 }
 
+
+static void
+computer_probing_helper_done (HalDevice *d)
+{
+	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
+
+	hal_util_callout_device_add (d, computer_callouts_add_done, NULL, NULL);
+}
+
+static void 
+computer_probing_pcbios_helper_done (HalDevice *d, gboolean timed_out, gint return_code, 
+				     gpointer data1, gpointer data2, HalHelperData *helper_data)
+{
+	const char *chassis_type;
+	const char *system_manufacturer;
+	const char *system_product;
+	const char *system_version;
+
+	if ((system_manufacturer = hal_device_property_get_string (d, "smbios.system.manufacturer")) != NULL &&
+	    (system_product = hal_device_property_get_string (d, "smbios.system.product")) != NULL &&
+	    (system_version = hal_device_property_get_string (d, "smbios.system.version")) != NULL) {
+		char buf[128];
+
+		g_snprintf (buf, sizeof (buf), "%s %s", system_product, system_version);
+		hal_device_property_set_string (d, "system.vendor", system_manufacturer);
+		hal_device_property_set_string (d, "system.product", buf);
+	}
+
+
+	/* now map the smbios.* properties to our generic system.formfactor property */
+	if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
+		unsigned int i;
+
+		/* Map the chassis type from dmidecode.c to a sensible type used in hal 
+		 *
+		 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
+		 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
+		 *
+		 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
+		 */
+		static const char *chassis_map[] = {
+			"Other",                 "unknown",
+			"Unknown",               "unknown",
+			"Desktop",               "desktop",
+			"Low Profile Desktop",   "desktop",
+			"Pizza Box",             "server",
+			"Mini Tower",            "desktop",
+			"Tower",                 "desktop",
+			"Portable",              "laptop",
+			"Laptop",                "laptop",
+			"Notebook",              "laptop",
+			"Hand Held",             "handheld",
+			"Docking Station",       "laptop",
+			"All In One",            "unknown",
+			"Sub Notebook",          "laptop",
+			"Space-saving",          "unknown",
+			"Lunch Box",             "unknown",
+			"Main Server Chassis",   "server",
+			"Expansion Chassis",     "unknown",
+			"Sub Chassis",           "unknown",
+			"Bus Expansion Chassis", "unknown",
+			"Peripheral Chassis",    "unknown",
+			"RAID Chassis",          "unknown",
+			"Rack Mount Chassis",    "unknown",
+			"Sealed-case PC",        "unknown",
+			"Multi-system",          "unknown",
+			NULL
+		};
+
+		for (i = 0; chassis_map[i] != NULL; i += 2) {
+			if (strcmp (chassis_map[i], chassis_type) == 0) {
+				hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
+				break;
+			}
+		}
+	       
+	}
+
+	computer_probing_helper_done (d);
+}
+
 void 
 osspec_probe (void)
 {
 	HalDevice *root;
+	struct utsname un;
+	gboolean should_decode_dmi;
+
+	should_decode_dmi = FALSE;
 
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.bus", "unknown");
@@ -372,28 +458,50 @@ osspec_probe (void)
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 
+	if (uname (&un) >= 0) {
+		hal_device_property_set_string (root, "system.kernel.name", un.sysname);
+		hal_device_property_set_string (root, "system.kernel.version", un.release);
+		hal_device_property_set_string (root, "system.kernel.machine", un.machine);
+	}
+
+	/* can be overridden by dmidecode, others */
+	hal_device_property_set_string (root, "system.formfactor", "unknown");
+
+
 	/* Let computer be in TDL while synthesizing all other events because some may write to the object */
 	hal_device_store_add (hald_get_tdl (), root);
 
 	/* will enqueue hotplug events for entire system */
 	HAL_INFO (("Synthesizing sysfs events..."));
 	coldplug_synthesize_events ();
+
 	HAL_INFO (("Synthesizing powermgmt events..."));
 	if (acpi_synthesize_hotplug_events ()) {
 		HAL_INFO (("ACPI capabilities found"));
+		should_decode_dmi = TRUE;
 	} else if (pmu_synthesize_hotplug_events ()) {
 		HAL_INFO (("PMU capabilities found"));		
 	} else if (apm_synthesize_hotplug_events ()) {
 		HAL_INFO (("APM capabilities found"));		
+		should_decode_dmi = TRUE;
 	} else {
 		HAL_INFO (("No powermgmt capabilities"));		
 	}
 	HAL_INFO (("Done synthesizing events"));
 
-	di_search_and_merge (root, DEVICE_INFO_TYPE_INFORMATION);
-	di_search_and_merge (root, DEVICE_INFO_TYPE_POLICY);
+	/* TODO: add prober for PowerMac's */
 
-	hal_util_callout_device_add (root, computer_callouts_add_done, NULL, NULL);
+	if (should_decode_dmi) {
+		if (hal_util_helper_invoke ("hald-probe-smbios", NULL, root, NULL, NULL,
+					    computer_probing_pcbios_helper_done, 
+					    HAL_HELPER_TIMEOUT) != NULL)
+			goto out;
+	}
+
+	/* no probing or probing failed */
+	computer_probing_helper_done (root);
+out:
+	;
 }
 
 DBusHandlerResult
