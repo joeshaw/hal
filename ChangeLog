@@ -1,3 +1,8 @@
+2004-12-08  David Zeuthen  <davidz@redhat.com>
+
+	* doc/spec/hal-spec.xml.in: Add battery.* properties - Patch from
+	Sergey Udaltsov <sergey.udaltsov@gmail.com>; slightly mangled.
+
 2004-11-08  David Zeuthen  <davidz@redhat.com>
 
 	* tools/device-manager/hal-device-manager.glade: Patch from Sjoerd
