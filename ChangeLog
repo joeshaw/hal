@@ -1,3 +1,7 @@
+2004-01-04  David Zeuthen  <david@fubar.dk>
+
+	* fdi/fdi.rng: new file (thanks to Dave Malcolm)
+
 2004-01-03  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_class_block.c 
@@ -17,7 +21,7 @@
 
 	* fdi/Makefile.am: install fdi.dtd to $(datadir)/hal/fdi
 
-	* fdi/fdi.dtd: new file
+	* fdi/fdi.dtd: new file (thanks to Dave Malcolm)
 
 	* hald/device_store.c (ds_device_find_by_key_value_string): set
 	that we can choose whether to search the GDL or not

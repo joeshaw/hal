@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<grammar 
+	xmlns="http://relaxng.org/ns/structure/1.0"
+	datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"
+>
+	<start>
+		<element name="deviceinfo">
+			<attribute name="version">
+				<choice>
+					<value>0.1</value>
+					<value>0.2</value>
+				</choice>	
+			</attribute>	
+			<zeroOrMore>	
+				<ref name="device"/>
+			</zeroOrMore>
+		</element>	
+	</start>
+	<define name="device">
+		<element name="device">
+			<zeroOrMore>
+				<choice>
+					<ref name="match"/>
+					<ref name="merge"/>
+				</choice>
+			</zeroOrMore>
+		</element>
+	</define>
+	<define name="match">
+		<element name="match">
+			<attribute name="key"/>
+			<choice>
+				<attribute name="bool">
+					<data type="boolean"/>
+				</attribute>
+				<attribute name="int">
+					<data type="string"/>
+				</attribute>	
+				<attribute name="string">
+					<text/>
+				</attribute>
+			</choice>
+			<zeroOrMore>
+				<choice>
+					<ref name="match"/>
+					<ref name="merge"/>
+				</choice>
+			</zeroOrMore>
+		</element>
+	</define>
+	<define name="merge">
+		<element name="merge">
+			<attribute name="key"/>
+			<choice>
+				<group>
+					<attribute name="type">
+						<value>string</value>
+					</attribute>
+					<text/>
+				</group>
+				<group>
+					<attribute name="type">
+						<value>int</value>
+					</attribute>
+					<data type="int"/>
+				</group>
+				<group>
+					<attribute name="type">
+						<value>bool</value>
+					</attribute>
+					<data type="boolean"/>
+				</group>
+				<group>
+					<attribute name="type">
+						<value>double</value>
+					</attribute>
+					<data type="double"/>
+				</group>
+			</choice>
+		</element>
+	</define>
+</grammar>
