@@ -84,13 +84,11 @@ void drivers_collect (const char *bus_name);
  *  appear and the linux kernel gives us these add events out of
  *  order.
  *
- *  My old PIII 650Mhz, 128MB laptop with GNOME 2.4 is slow when
- *  attaching a whole subtree of USB devices, so a value of 30 seconds 
- *  is actually reasonable. It's important to note that it's not
- *  HAL that is taking the lions share of the resources; rather it's
- *  the shell-scripts in linux-hotplug...
+ *  This can be changed to WAIT_FOR_UDEV_TIMEOUT once udev support SEQNUM; 60 
+ *  secs isn't unreasonable with this setup; if you hotplug a hub full of 
+ *  devices and whatnot while hald is under load with h-d-m on a slow machine.
  */
-#define HAL_LINUX_HOTPLUG_TIMEOUT 30000
+#define HAL_LINUX_HOTPLUG_TIMEOUT 60000
 
 dbus_bool_t got_parent (const char *sysfs_path);
 

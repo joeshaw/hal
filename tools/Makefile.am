@@ -13,8 +13,7 @@ bin_PROGRAMS = lshal hal-get-property hal-set-property
 sbin_PROGRAMS = fstab-sync
 
 lshal_SOURCES = lshal.c
-lshal_LDADD = @PACKAGE_LIBS@ \
-              $(top_builddir)/libhal/libhal.la
+lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_get_property_SOURCES = hal_get_property.c
 hal_get_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -29,8 +28,11 @@ if FSTAB_SYNC_ENABLED
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
 	- cd $(DESTDIR)$(SYSCONFDIR)/hal/device.d && $(LN_S) $(sbindir)/fstab-sync 50-fstab-sync.hal
+
+uninstall-local :
+	- rm -f $(DESTDIR)$(SYSCONFDIR)/hal/device.d/50-fstab-sync.hal
 endif
-## FSTAB_SYNC_INSTALL end
+## FSTAB_SYNC_ENABLED end
 
 clean-local :
 	rm -f *~

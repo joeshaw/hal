@@ -56,6 +56,8 @@ struct _HalDeviceClass {
 				  const char *capability);
 
 	void (*callouts_finished) (HalDevice *device);
+
+	void (*cancelled) (HalDevice *device);
 };
 
 #define HAL_TYPE_DEVICE             (hal_device_get_type ())
@@ -149,6 +151,8 @@ void          hal_device_async_wait_property (HalDevice    *device,
 					      int           timeout);
 
 void          hal_device_callouts_finished    (HalDevice    *device);
+
+void          hal_device_cancel               (HalDevice    *device);
 
 gboolean      hal_device_property_set_attribute (HalDevice *device,
 						 const char *key,

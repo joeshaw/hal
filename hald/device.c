@@ -44,6 +44,7 @@ enum {
 	PROPERTY_CHANGED,
 	CAPABILITY_ADDED,
 	CALLOUTS_FINISHED,
+	CANCELLED,
 	LAST_SIGNAL
 };
 
@@ -101,6 +102,16 @@ hal_device_class_init (HalDeviceClass *klass)
 			      G_SIGNAL_RUN_LAST,
 			      G_STRUCT_OFFSET (HalDeviceClass,
 					       callouts_finished),
+			      NULL, NULL,
+			      hald_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+
+	signals[CANCELLED] =
+		g_signal_new ("cancelled",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceClass,
+					       cancelled),
 			      NULL, NULL,
 			      hald_marshal_VOID__VOID,
 			      G_TYPE_NONE, 0);
@@ -937,5 +948,14 @@ void
 hal_device_callouts_finished (HalDevice *device)
 {
 	g_signal_emit (device, signals[CALLOUTS_FINISHED], 0);
+}
+
+/** Used when giving up on a device, e.g. if no device file appeared
+ */
+void
+hal_device_cancel (HalDevice *device)
+{
+	HAL_INFO (("udi=%s", device->udi));
+	g_signal_emit (device, signals[CANCELLED], 0);
 }
 

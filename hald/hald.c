@@ -358,7 +358,7 @@ main (int argc, char *argv[])
 		        {
 				char buf[1];
 				/* parent, block until child writes */
-				read (startup_daemonize_pipe[0], &buf, sizeof (buf));
+				/*read (startup_daemonize_pipe[0], &buf, sizeof (buf));*/
 				exit (0);
 				break;
 			}

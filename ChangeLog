@@ -1,3 +1,45 @@
+2004-08-25  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Add option for new callout hal-hotplug-map
+	
+	* hald/device.[ch]: Add the "cancelled" signal and hal_device_cancel
+	method
+
+	* hald/hald.c (main): Avoid daemonization for now; will make hald
+	hang if anything fails up-until device probing (RH bug 130849)
+
+	* hald/linux/class_device.c (class_device_got_device_file):
+	Cancel the device if don't get the device file
+
+	* hald/linux/common.h: Increase timeout to 60 secs. Make note
+	about we really need the SEQNUM support in udev
+
+	* hald/linux/osspec.c: 
+	(process_coldplug_list_device_cancelled): New function
+	(process_coldplug_list): Add support for cancelling
+	(reenable_hotplug_proc_on_device_cancel): New function
+	(hald_helper_hotplug): Add support for cancelling
+	(hotplug_sem_up): Add some helpful debug
+	(hotplug_sem_down): Add some helpful debug
+	(hald_helper_data): Add some helpful debug
+
+	* tools/Makefile.am: Also remove callout on uninstall
+
+	* tools/fstab-sync.c:
+	(fs_table_remove_volume): Only require device_file not complete Volume
+	object
+	(remove_udi): Don't require storage device to be present (fixes some
+	problems when unplugging unpartitioned media as we don't get hotplug
+	event and things are thus not serialised)
+
+	* tools/linux/Makefile.am: Build and, optionally, install 
+	hal-hotplug-map callout
+
+	* tools/linux/hal_hotplug_map.c: New program; a tad Red Hat specific
+	wrt. file locations; patches are welcome. The single purpose of
+	this callout is to detect gphoto2 supported cameras and libsane
+	supported scanners using usermap files in /etc/hotplug.
+
 2004-08-25  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/block_class_device.c:

@@ -85,7 +85,7 @@ static boolean verbose = FALSE;
 #define FALSE !TRUE
 #endif
 
-#define fstab_update_debug(...) if (verbose) fprintf (stderr, __VA_ARGS__)
+#define fstab_update_debug(...) do {if (verbose) fprintf (stderr, __VA_ARGS__);} while (0)
 
 
 /** This structure represents either a volume with a mountable filesystem
@@ -172,7 +172,7 @@ static Volume *volume_new (const char *udi);
 static void volume_free (Volume *volume);
 static boolean create_mount_point_for_volume (Volume *volume);
 static boolean fs_table_add_volume (FSTable *table, Volume *volume);
-static FSTableLine *fs_table_remove_volume (FSTable *table, Volume *volume);
+static FSTableLine *fs_table_remove_volume (FSTable *table, const char *volume);
 static boolean fs_table_line_has_mount_option (FSTableLine *line, const char *option);
 
 static boolean add_udi (const char *udi);
@@ -1269,7 +1269,7 @@ fs_table_line_has_mount_option (FSTableLine *line, const char *option)
  * removed for convenience (a bit strange, I know)
  */
 static FSTableLine *
-fs_table_remove_volume (FSTable *table, Volume *volume)
+fs_table_remove_volume (FSTable *table, const char *block_device)
 {
   FSTableLine *line, *previous_line; 
 
@@ -1278,7 +1278,7 @@ fs_table_remove_volume (FSTable *table, Volume *volume)
   while (line != NULL)
     {
       if (line->block_device != NULL
-          && strcmp (line->block_device, volume->block_device) == 0
+          && strcmp (line->block_device, block_device) == 0
           && fs_table_line_is_generated (line))
         {
           if (previous_line == NULL)
@@ -1440,24 +1440,25 @@ error:
 static boolean
 remove_udi (const char *udi)
 {
-  Volume *volume;
+  char *block_device;
   FSTable *fs_table = NULL;
   FSTableLine *line = NULL;
   char *temp_filename = NULL;
   time_t fstab_modification_time;
   int fd;
+  boolean is_volume;
+
+  is_volume = hal_device_query_capability (hal_context, udi, "volume");
 
   /* don't remove the fstab entry if we were spawned of a device with
    * storage.no_partitions_hint set to TRUE. Per the spec this is
-   * exactly when block.no_partitions is TRUE on the volume */
-  if (hal_device_query_capability (hal_context, udi, "volume") &&
-      hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
+   * exactly when block.no_partitions is TRUE on the volume. E.g.
+   * floppies and optical discs
+   */
+  if (is_volume && hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
     return FALSE;
 
-  volume = volume_new (udi);
-
-  if (volume == NULL)
-    return FALSE;
+  block_device = hal_device_get_property_string (hal_context, udi, "block.device");
 
   fs_table = fs_table_new (_PATH_FSTAB);
 
@@ -1471,13 +1472,13 @@ remove_udi (const char *udi)
   if (fstab_modification_time == 0)
     goto error;
 
-  line = fs_table_remove_volume (fs_table, volume);
+  line = fs_table_remove_volume (fs_table, block_device);
 
   if (line == NULL)
     {
       fstab_update_debug (_("%d: Could not remove device '%s' with UDI '%s' from "
                             "fs table: not found\n"),
-                          pid, volume->block_device, udi);
+                          pid, block_device, udi);
       goto error;
     }
 
@@ -1500,7 +1501,7 @@ remove_udi (const char *udi)
     {
       close (fd);
       unlink (temp_filename);
-      volume_free (volume);
+      free (block_device);
       return remove_udi (udi);
     }
 
@@ -1512,11 +1513,11 @@ remove_udi (const char *udi)
     }
 
   fstab_update_debug (_("%d: removed mount point for device '%s'\n"),
-		      pid, volume->block_device);
-  syslog (LOG_INFO, _("removed mount point %s for %s"), line->mount_point, volume->block_device);
+		      pid, block_device);
+  syslog (LOG_INFO, _("removed mount point %s for %s"), line->mount_point, block_device);
 
   close (fd);
-  volume_free (volume);
+  free (block_device);
   fs_table_line_free (line);
 
   return TRUE;
@@ -1525,7 +1526,7 @@ error:
   if (fd >= 0)
     close (fd);
 
-  volume_free (volume);
+  free (block_device);
 
   if (temp_filename != NULL)
     unlink (temp_filename);

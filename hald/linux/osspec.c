@@ -715,6 +715,16 @@ process_coldplug_list_callouts_done_for_device (HalDevice *device, gpointer user
 }
 
 static void
+process_coldplug_list_device_cancelled (HalDevice *device, gpointer user_data)
+{
+	GSList *coldplug_list = user_data;
+
+	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_device_cancelled, user_data);
+
+	process_coldplug_list (coldplug_list);
+}
+
+static void
 process_coldplug_list (GSList *coldplug_list)
 {
 	gchar *path;
@@ -738,6 +748,8 @@ process_coldplug_list (GSList *coldplug_list)
 		if (device != NULL && hal_device_store_find(hald_get_gdl (), device->udi) == NULL) {
 			g_signal_connect (device, "callouts_finished",
 					  G_CALLBACK (process_coldplug_list_callouts_done_for_device), coldplug_list);
+			g_signal_connect (device, "cancelled",
+					  G_CALLBACK (process_coldplug_list_device_cancelled), NULL);
 		} else {
 			process_coldplug_list (coldplug_list);
 		}
@@ -1065,6 +1077,13 @@ osspec_shutdown ()
 }
 
 static void
+reenable_hotplug_proc_on_device_cancel (HalDevice *d, gpointer user_data)
+{
+	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc_on_device_cancel, user_data);
+	hotplug_sem_down ();
+}
+
+static void
 reenable_hotplug_proc (HalDevice *d, gpointer user_data)
 {
 	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc, user_data);
@@ -1095,6 +1114,9 @@ hald_helper_hotplug (gboolean is_add, int seqnum, gchar *subsystem, gchar *sysfs
 			hotplug_sem_up ();
 			g_signal_connect (d, "callouts_finished",
 					  G_CALLBACK (reenable_hotplug_proc), NULL);
+			/* device may also be cancelled if e.g. no device file is found */
+			g_signal_connect (d, "cancelled",
+					  G_CALLBACK (reenable_hotplug_proc_on_device_cancel), NULL);
 		}
 	} else {
 		d = rem_device (sysfs_path_full, subsystem);
@@ -1187,6 +1209,9 @@ static void
 hotplug_sem_up (void)
 {
 	++hotplug_counter;
+	HAL_INFO (("******************************************"));
+	HAL_INFO (("**** hotplug_counter is now %d", hotplug_counter));
+	HAL_INFO (("******************************************"));
 }
 
 /** Decrement the hotplug semaphore. 
@@ -1196,6 +1221,10 @@ static void
 hotplug_sem_down (void)
 {
 	--hotplug_counter;
+
+	HAL_INFO (("=========================================="));
+	HAL_INFO (("==== hotplug_counter is now %d", hotplug_counter));
+	HAL_INFO (("=========================================="));
 
 	if (hotplug_counter < 0) {
 		HAL_ERROR (("****************************************"));
@@ -1326,6 +1355,7 @@ hald_helper_data (GIOChannel *source,
 	}
 
 	/* Queue up this hotplug event and process the queue */
+	HAL_INFO (("Queing up seqnum=%d, sysfspath=%s, subsys=%s", msg.seqnum, msg.sysfs_path, msg.subsystem));
 	hotplug_queue = g_list_append (hotplug_queue, g_memdup (&msg, sizeof (struct hald_helper_msg)));
 	hald_helper_hotplug_process_queue ();
 

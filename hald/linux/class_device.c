@@ -413,6 +413,7 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
 	if (!prop_exists) {
 		HAL_WARNING (("Never got device file for class device at %s", 
 			      hal_device_property_get_string (d, ".udev.sysfs_path")));
+		hal_device_cancel (d);
 		hal_device_store_remove (hald_get_tdl (), d);
 		return;
 	}
