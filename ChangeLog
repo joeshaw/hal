@@ -1,3 +1,15 @@
+2005-03-22  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-storage.c (main): Add some extra debugging
+	to help me with RH bug #151762
+
+	* hald/linux2/physdev.c: Set <bustype>.linux.driver for all bus devices
+
+	* hald/linux2/classdev.c (net_add): Don't set net.linux.driver, first
+	of all because it doesn't make sense (drivers don't bind to class
+	devices, they bind to physical devices), second because the Linux
+	kernel moved around where the driver symlink is.
+
 2005-03-21  David Zeuthen  <davidz@redhat.com>
 
 	* doc/TODO: Add a small item here

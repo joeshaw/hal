@@ -185,9 +185,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", physdev->udi);
 
-	if (!hal_util_set_driver (d, "net.linux.driver", sysfs_path))
-		goto error;
-
 	hal_device_property_set_string (d, "info.category", "net");
 	hal_device_add_capability (d, "net");
 
@@ -589,7 +586,7 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 			hal_device_property_set_string (d, "info.product", "USB Serial Port");
 		}
 	} else {
-		size_t len;
+		int len;
 		int i;
 
 		len = strlen (last_elem);

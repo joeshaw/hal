@@ -147,8 +147,8 @@ main (int argc, char *argv[])
 	if (!libhal_ctx_init (ctx, &error))
 		goto out;
 
-	dbg ("Doing probe-storage for %s (bus %s) (drive_type %s) (--only-check-for-fs==%d)", 
-	     device_file, bus, drive_type, only_check_for_fs);
+	dbg ("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 
+	     device_file, bus, drive_type, udi, only_check_for_fs);
 
 	if (!only_check_for_fs) {
 		/* Only do drive_id on IDE and real SCSI disks - specifically
@@ -171,6 +171,7 @@ main (int argc, char *argv[])
 
 			did = drive_id_open_fd (fd);
 			if (drive_id_probe_all (did) == 0) {
+				dbg ("serial = '%s', firmware = '%s'", did->serial, did->firmware);
 				if (did->serial[0] != '\0')
 					if (!libhal_device_set_property_string (ctx, udi, "storage.serial", 
 										did->serial, &error)) {

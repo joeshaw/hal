@@ -58,6 +58,8 @@
 
 #include "pcmcia_utils.h"
 
+#include "osspec_linux.h"
+
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
@@ -77,6 +79,8 @@ pci_add (const gchar *sysfs_path, HalDevice *parent)
 	}
 
 	hal_device_property_set_string (d, "pci.linux.sysfs_path", sysfs_path);
+
+	hal_util_set_driver (d, "pci.linux.driver", sysfs_path);
 
 	hal_util_set_int_from_file (d, "pci.product_id", sysfs_path, "device", 16);
 	hal_util_set_int_from_file (d, "pci.vendor_id", sysfs_path, "vendor", 16);
@@ -243,6 +247,8 @@ usb_add (const gchar *sysfs_path, HalDevice *parent)
 
 		hal_device_property_set_string (d, "info.bus", "usb_device");
 
+		hal_util_set_driver (d, "usb_device.linux.driver", sysfs_path);
+
 		hal_device_property_set_string (d, "usb_device.linux.sysfs_path", sysfs_path);
 
 		hal_util_set_int_from_file (d, "usb_device.configuration_value", sysfs_path, "bConfigurationValue", 10);
@@ -319,8 +325,10 @@ usb_add (const gchar *sysfs_path, HalDevice *parent)
 		hal_device_property_set_string (d, "info.bus", "usb");
 
 		/* take all usb_device.* properties from parent and make them usb.* on this object */
-		if (parent)
+		if (parent != NULL)
 			hal_device_merge_with_rewrite (d, parent, "usb.", "usb_device.");
+
+		hal_util_set_driver (d, "usb.linux.driver", sysfs_path);
 
 		hal_device_property_set_string (d, "usb.linux.sysfs_path", sysfs_path);
 
@@ -385,6 +393,8 @@ ide_add (const gchar *sysfs_path, HalDevice *parent)
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
 
+	hal_util_set_driver (d, "ide.linux.driver", sysfs_path);
+
 	bus_id = hal_util_get_last_element (sysfs_path);
 
 	sscanf (bus_id, "%d.%d", &host, &channel);
@@ -433,6 +443,8 @@ pnp_add (const gchar *sysfs_path, HalDevice *parent)
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
+
+	hal_util_set_driver (d, "pnp.linux.driver", sysfs_path);
 
 	hal_util_set_string_from_file (d, "pnp.id", sysfs_path, "id");
 	if (hal_device_has_property (d, "pnp.id")) {
@@ -487,6 +499,8 @@ serio_add (const gchar *sysfs_path, HalDevice *parent)
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
 
+	hal_util_set_driver (d, "serio.linux.driver", sysfs_path);
+
 	bus_id = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "serio.id", bus_id);
 	if (!hal_util_set_string_from_file (d, "serio.description", sysfs_path, "description")) {
@@ -532,6 +546,8 @@ pcmcia_add (const gchar *sysfs_path, HalDevice *parent)
 	}
 
 	bus_id = hal_util_get_last_element (sysfs_path);
+
+	hal_util_set_driver (d, "pcmcia.linux.driver", sysfs_path);
 
 	/* not sure if %d.%d means socket function - need to revisit */
 	sscanf (bus_id, "%d.%d", &socket, &function);
@@ -638,6 +654,8 @@ scsi_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_int (d, "scsi.target", target_num);
 	hal_device_property_set_int (d, "scsi.lun", lun_num);
 
+	hal_util_set_driver (d, "scsi.linux.driver", sysfs_path);
+
 	/* guestimate product name */
 	hal_device_property_set_string (d, "info.product", "SCSI Device");
 
@@ -680,6 +698,8 @@ mmc_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "mmc");
 	hal_device_property_set_string (d, "info.parent", parent->udi);
+
+	hal_util_set_driver (d, "mmc.linux.driver", sysfs_path);
 
 	bus_id = hal_util_get_last_element (sysfs_path);
 	sscanf (bus_id, "mmc%d:%x", &host_num, &rca);
@@ -769,6 +789,8 @@ ieee1394_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ieee1394");
 	hal_device_property_set_string (d, "info.parent", parent->udi);
+
+	hal_util_set_driver (d, "ieee1394.linux.driver", sysfs_path);
 
 	hal_device_property_set_uint64 (d, "ieee1394.guid", guid);
 	hal_util_set_int_from_file    (d, "ieee1394.vendor_id", sysfs_path, "../vendor_id", 16);
