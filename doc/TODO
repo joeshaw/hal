@@ -6,6 +6,10 @@ entries if you get an idea or implement one of the tasks.
 
 Short term issues
 
+ - Add org.freedesktop.Hal.Device.[BlockClass, NetClass] interfaces and
+   make them emit useful signals upon big events like mount point and link
+   changes.
+
  - Add void PropertyModified(string key, bool is_added, bool is_removed)
    and deprecate Property[Added,Removed,Changed]
 
@@ -16,8 +20,6 @@ Short term issues
 
  - Make sure device is not added to GDL before all the key properties as
    specified in the spec is there
-
- - Add dbus_bool_t* not_found to all get functions in libhal
 
  - Possible bug: PropertyAdded being called several times
 
