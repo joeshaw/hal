@@ -1,6 +1,14 @@
+2004-06-05  David Zeuthen  <david@fubar.dk>
+
+	* packaging/fedora/hal.spec: Add hald.conf to %files. Patch from
+	Kristian Høgsberg <krh@bitplanet.net>
+
+	* ChangeLog: Fixup the danish character ø in Kristians last name
+	since we want to use ISO-8859-1 in ChangeLog :-)
+
 2004-06-04  Joe Shaw  <joeshaw@novell.com>
 
-	Patch from Kristian HÃ¸gsberg <krh@bitplanet.net>
+	Patch from Kristian Høgsberg <krh@bitplanet.net>
 
 	* hald/linux/input_class_device.c (input_class_accept): New
 	function.  Accepts devices with no sysdevice but which begin with

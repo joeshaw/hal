@@ -106,6 +106,7 @@ fi
 
 %{_libexecdir}/hal.hotplug
 %{_libexecdir}/hal.dev
+%{_sysconfdir}/hal/hald.conf
 /etc/hotplug.d/default/hal.hotplug
 
 %dir %{_datadir}/hal
