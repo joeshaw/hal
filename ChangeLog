@@ -1,5 +1,12 @@
 2004-09-27  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: Added nl to ALL_LINGUAS
+
+	* po/nl.po: Dutch translations from Reinout van 
+	Schouwen <reinout@cs.vu.nl>
+
+2004-09-27  David Zeuthen  <david@fubar.dk>
+
 	* libhal/libhal.c (hal_shutdown): Make libhal compile since an
 	error variable was errornously deleted before committing it
 
