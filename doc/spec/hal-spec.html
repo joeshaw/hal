@@ -1,11 +1,11 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML
 ><HEAD
 ><TITLE
 >HAL 0.4.2 Specification</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"></HEAD
 ><BODY
 CLASS="book"
 BGCOLOR="#FFFFFF"
@@ -514,6 +514,63 @@ HREF="#enforcing-storage-locking"
 ></DT
 ></DL
 ></DD
+><DT
+><A
+HREF="#properties-system"
+>System Devices</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#device-properties-system"
+><TT
+CLASS="literal"
+>system</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-ac_adaptor"
+><TT
+CLASS="literal"
+>system.ac_adaptor</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-button"
+><TT
+CLASS="literal"
+>system.button</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-processor"
+><TT
+CLASS="literal"
+>system.processor</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-display_device"
+><TT
+CLASS="literal"
+>system.display_device</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-system-sensor"
+><TT
+CLASS="literal"
+>system.sensor</TT
+> namespace</A
+></DT
+></DL
+></DD
 ></DL
 ></DD
 ></DL
@@ -822,7 +879,7 @@ CLASS="literal"
       easily access the services offered by HAL. The D-BUS API is
       detailed in <A
 HREF="#dbus-api"
->the chapter called <I
+>the Chapter called <I
 >D-BUS Network API</I
 ></A
 >. Note that HAL doesn't
@@ -832,7 +889,7 @@ HREF="#dbus-api"
       environments, recommendations and best practises on how to
       enforce policy is discussed in <A
 HREF="#enforcing-policy"
->the chapter called <I
+>the Chapter called <I
 >Enforcing Policy</I
 ></A
 >.
@@ -937,7 +994,7 @@ CLASS="literal"
 	    or use another setuid mount wrapper.
 	    See <A
 HREF="#enforcing-policy"
->the chapter called <I
+>the Chapter called <I
 >Enforcing Policy</I
 ></A
 > for more details.
@@ -1018,13 +1075,13 @@ CLASS="literal"
 	checking the properties that export the USB vendor and product
 	identifiers.  See <A
 HREF="#device-capabilities"
->the chapter called <I
+>the Chapter called <I
 >Device Capabilities</I
 ></A
 > and
 	<A
 HREF="#device-properties"
->the chapter called <I
+>the Chapter called <I
 >Device Properties</I
 ></A
 > for details.
@@ -1172,7 +1229,7 @@ CLASS="literal"
 	administrator can edit. This specification is concerned with
 	precisely defining several properties; see <A
 HREF="#device-properties"
->the chapter called <I
+>the Chapter called <I
 >Device Properties</I
 ></A
 > and onwards for more
@@ -4595,7 +4652,7 @@ CLASS="literal"
 HREF="#fdi-example-6in1"
 >the Section called <I
 >Example: Card Reader</I
-> in the chapter called <I
+> in the Chapter called <I
 >Device Information Files</I
 ></A
 > for an example.
@@ -7146,7 +7203,7 @@ HREF="#device-properties-storage"
 CLASS="literal"
 >storage</TT
 > namespace</I
-> in the chapter called <I
+> in the Chapter called <I
 >Device Properties</I
 ></A
 > this device information
@@ -7211,7 +7268,7 @@ CLASS="literal"
 HREF="#properties-policy"
 >the Section called <I
 >Policy Properties</I
-> in the chapter called <I
+> in the Chapter called <I
 >Device Properties</I
 ></A
 > for details.
@@ -7686,7 +7743,7 @@ NAME="dbus-api"
       a camera device, is outside the scope of the HAL daemon; see
       <A
 HREF="#using-devices"
->the chapter called <I
+>the Chapter called <I
 >Using devices</I
 ></A
 > for more information.
@@ -8158,7 +8215,7 @@ CLASS="literal"
 HREF="#properties-policy"
 >the Section called <I
 >Policy Properties</I
-> in the chapter called <I
+> in the Chapter called <I
 >Device Properties</I
 ></A
 >
@@ -8233,6 +8290,626 @@ NAME="enforcing-storage-locking"
 	  users preferred CD burning application when respectively
 	  non-blank rewritable or blank media is inserted.
 	</P
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="properties-system"
+>System Devices</A
+></H2
+><DIV
+CLASS="sect2"
+><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system"
+><TT
+CLASS="literal"
+>system</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system</TT
+>
+        represent system devices currently accessed through
+        the ACPI and PMU bus.
+
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-ac_adaptor"
+><TT
+CLASS="literal"
+>system.ac_adaptor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.ac_adaptor</TT
+>
+        represent all the devices capable of powering the system from AC power
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2348"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.ac_adaptor.enabled</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The state of the adaptor, i.e. whether it is providing power to
+                the unit
+              </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-button"
+><TT
+CLASS="literal"
+>system.button</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.button</TT
+>
+        represent the devices capable of providing a state to the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2368"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.button.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The type of button</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>lid_switch</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The switch on a laptop that senses whether the lid is
+                open or closed
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>power</TD
+><TD
+>&nbsp;</TD
+><TD
+>The main power button on the computer.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>sleep</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The sleep button on a computer capable of putting the computer
+                into a suspend state
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.button.has_state</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>True if the button maintains state, e.g. can toggled on/off</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.button.state.value</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                Only when <TT
+CLASS="literal"
+>system.button.has_state</TT
+> is
+                TRUE
+              </TD
+><TD
+>State of the button, TRUE if it is enabled</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+        Device objects with this capability may emit the following events.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2412"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Condition Name</TH
+><TH
+>Parameters</TH
+><TH
+>Example</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>SystemButtonPressed</TT
+></TD
+><TD
+><TT
+CLASS="literal"
+>system.button.type (string)</TT
+></TD
+><TD
+>sleep</TD
+><TD
+>Emitted when a button is pressed</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-processor"
+><TT
+CLASS="literal"
+>system.processor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability system.processor represent
+        CPU's in the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2432"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.processor.number</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The internal processor number in the system, starting from zero
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.processor.can_throttle</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;                Whether the processor supports throttling to decrease it's
+                own clock speed
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.processor.maximum_speed</TT
+> (long)</TD
+><TD
+>example: 2200</TD
+><TD
+>No</TD
+><TD
+>The maximum speed of the processor in units of MHz</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-display_device"
+><TT
+CLASS="literal"
+>system.display_device</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>display_device</TT
+>
+        represent display devices attached to the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2464"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.display_device.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The type of display device</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>lcd</TD
+><TD
+>&nbsp;</TD
+><TD
+>LCD panel</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>crt</TD
+><TD
+>&nbsp;</TD
+><TD
+>CRT tube</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>tv_out</TD
+><TD
+>&nbsp;</TD
+><TD
+>TV Out</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.display_device.lcd.brightness</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Only if <TT
+CLASS="literal"
+>system.display_device.type</TT
+> is lcd</TD
+><TD
+>Brightness level in percent</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-system-sensor"
+><TT
+CLASS="literal"
+>system.sensor</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>system.sensor</TT
+>
+        represent light or temperature sensors in the system.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2506"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.sensor.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The type of sensor device</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>light</TD
+><TD
+>&nbsp;</TD
+><TD
+>Light sensor</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>temperature</TD
+><TD
+>&nbsp;</TD
+><TD
+>Temperature sensor</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.sensor.location</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The location of the sensor device</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>gpu</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measures GPU source</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>cpu</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measures CPU source</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>external</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measures external source</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>unknown</TD
+><TD
+>&nbsp;</TD
+><TD
+>Measuring other source</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
 ></DIV
 ></DIV
 ></DIV

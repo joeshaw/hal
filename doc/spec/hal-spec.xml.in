@@ -4095,6 +4095,323 @@ void Condition(string condition, ...)
 
     </sect1>
 
+    <sect1 id="properties-system">
+      <title>System Devices</title>
+
+    <sect2 id="device-properties-system">
+      <title><literal>system</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>system</literal>
+        represent system devices currently accessed through
+        the ACPI and PMU bus.
+
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-system-ac_adaptor">
+      <title><literal>system.ac_adaptor</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>system.ac_adaptor</literal>
+        represent all the devices capable of powering the system from AC power
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>system.ac_adaptor.enabled</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The state of the adaptor, i.e. whether it is providing power to
+                the unit
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-system-button">
+      <title><literal>system.button</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>system.button</literal>
+        represent the devices capable of providing a state to the system.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>system.button.type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The type of button</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>lid_switch</entry>
+              <entry></entry>
+              <entry>
+                The switch on a laptop that senses whether the lid is
+                open or closed
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>power</entry>
+              <entry></entry>
+              <entry>The main power button on the computer.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>sleep</entry>
+              <entry></entry>
+              <entry>
+                The sleep button on a computer capable of putting the computer
+                into a suspend state
+              </entry>
+            </row>
+            <row>
+              <entry><literal>system.button.has_state</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>True if the button maintains state, e.g. can toggled on/off</entry>
+            </row>
+            <row>
+              <entry><literal>system.button.state.value</literal> (bool)</entry>
+              <entry></entry>
+              <entry>
+                Only when <literal>system.button.has_state</literal> is
+                TRUE
+              </entry>
+              <entry>State of the button, TRUE if it is enabled</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+      <para>
+
+        Device objects with this capability may emit the following events.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Condition Name</entry>
+              <entry>Parameters</entry>
+              <entry>Example</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>SystemButtonPressed</literal></entry>
+              <entry><literal>system.button.type (string)</literal></entry>
+              <entry>sleep</entry>
+              <entry>Emitted when a button is pressed</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>  
+    </sect2>
+
+    <sect2 id="device-properties-system-processor">
+      <title><literal>system.processor</literal> namespace</title>
+      <para>
+
+        Device objects with the capability system.processor represent
+        CPU's in the system.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>system.processor.number</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The internal processor number in the system, starting from zero
+              </entry>
+            </row>
+            <row>
+              <entry><literal>system.processor.can_throttle</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                Whether the processor supports throttling to decrease it's
+                own clock speed
+              </entry>
+            </row>
+            <row>
+              <entry><literal>system.processor.maximum_speed</literal> (long)</entry>
+              <entry>example: 2200</entry>
+              <entry>No</entry>
+              <entry>The maximum speed of the processor in units of MHz</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-system-display_device">
+      <title><literal>system.display_device</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>display_device</literal>
+        represent display devices attached to the system.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>system.display_device.type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The type of display device</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>lcd</entry>
+              <entry></entry>
+              <entry>LCD panel</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>crt</entry>
+              <entry></entry>
+              <entry>CRT tube</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>tv_out</entry>
+              <entry></entry>
+              <entry>TV Out</entry>
+            </row>
+            <row>
+              <entry><literal>system.display_device.lcd.brightness</literal> (int)</entry>
+              <entry></entry>
+              <entry>Only if <literal>system.display_device.type</literal> is lcd</entry>
+              <entry>Brightness level in percent</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-system-sensor">
+      <title><literal>system.sensor</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>system.sensor</literal>
+        represent light or temperature sensors in the system.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>system.sensor.type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The type of sensor device</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>light</entry>
+              <entry></entry>
+              <entry>Light sensor</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>temperature</entry>
+              <entry></entry>
+              <entry>Temperature sensor</entry>
+            </row>
+            <row>
+              <entry><literal>system.sensor.location</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The location of the sensor device</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>gpu</entry>
+              <entry></entry>
+              <entry>Measures GPU source</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>cpu</entry>
+              <entry></entry>
+              <entry>Measures CPU source</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>external</entry>
+              <entry></entry>
+              <entry>Measures external source</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>unknown</entry>
+              <entry></entry>
+              <entry>Measuring other source</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    </sect1>
+
   </chapter>
 
 </book>
