@@ -77,7 +77,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_device_property_remove (d, "battery.vendor");
 		hal_device_property_remove (d, "battery.charge_level.unit");
 		hal_device_property_remove (d, "battery.charge_level.current");
-		hal_device_property_remove (d, "battery.charge_level.maximum_specified");
+		hal_device_property_remove (d, "battery.charge_level.maximum");
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();
@@ -94,12 +94,12 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_util_set_string_elem_from_file (d, "battery.technology", path, "info", "battery type", 0);
 		hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0);
 		hal_util_set_string_elem_from_file (d, "battery.charge_level.unit", path, "info", "design capacity", 1);
-
+		
 		hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, 
-						 "state", "remaining capacity", 0);
+						 "state", "remaining capacity", 0, 10);
 
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.maximum_specified", path, 
-						 "info", "design capacity", 0);
+		hal_util_set_int_elem_from_file (d, "battery.charge_level.maximum", path, 
+						 "info", "design capacity", 0, 10);
 		device_property_atomic_update_end ();
 	}
 

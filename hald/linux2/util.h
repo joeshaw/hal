@@ -64,13 +64,19 @@ gboolean hal_util_path_ascend (gchar *path);
 
 gchar *hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart);
 
+gint hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file, 
+				       const gchar *linestart, guint elem, guint base);
+
+gchar *hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file, 
+					    const gchar *linestart, guint elem);
+
 gboolean hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key, 
 					     const gchar *directory, const gchar *file, 
 					     const gchar *linestart, guint elem);
 
 gboolean hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
 					  const gchar *directory, const gchar *file, 
-					  const gchar *linestart, guint elem);
+					  const gchar *linestart, guint elem, guint base);
 
 gboolean hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key, 
 					   const gchar *directory, const gchar *file, 

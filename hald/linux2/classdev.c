@@ -513,7 +513,9 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 
 			hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_CLASS);
 			hal_device_property_set_string (d, "linux.subsystem", subsystem);
-			hal_device_property_set_string (d, "linux.device_file", device_file);
+			
+			if (device_file != NULL && strlen (device_file) > 0)
+				hal_device_property_set_string (d, "linux.device_file", device_file);
 
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
@@ -610,12 +612,10 @@ classdev_generate_remove_hotplug_event (HalDevice *d)
 {
 	const char *subsystem;
 	const char *sysfs_path;
-	const char *device_file;
 	HotplugEvent *hotplug_event;
 
 	subsystem = hal_device_property_get_string (d, "linux.subsystem");
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
-	device_file = hal_device_property_get_string (d, "linux.device_file");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->is_add = FALSE;

@@ -56,6 +56,7 @@
 #include "blockdev.h"
 #include "acpi.h"
 #include "apm.h"
+#include "pmu.h"
 
 /** Queue of ordered hotplug events */
 GQueue *hotplug_event_queue;
@@ -287,6 +288,21 @@ hotplug_event_begin_apm (HotplugEvent *hotplug_event)
 }
 
 static void
+hotplug_event_begin_pmu (HotplugEvent *hotplug_event)
+{
+	if (hotplug_event->is_add) {
+		hotplug_event_begin_add_pmu (hotplug_event->pmu.pmu_path, 
+					     hotplug_event->pmu.pmu_type,
+					     NULL,
+					     (void *) hotplug_event);
+	} else {
+		hotplug_event_begin_remove_pmu (hotplug_event->pmu.pmu_path, 
+						hotplug_event->pmu.pmu_type,
+						(void *) hotplug_event);
+	}
+}
+
+static void
 hotplug_event_begin (HotplugEvent *hotplug_event)
 {
 	switch (hotplug_event->type) {
@@ -305,6 +321,10 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 
 	case HOTPLUG_EVENT_APM:
 		hotplug_event_begin_apm (hotplug_event);
+		break;
+
+	case HOTPLUG_EVENT_PMU:
+		hotplug_event_begin_pmu (hotplug_event);
 		break;
 
 	default:
@@ -374,7 +394,11 @@ hotplug_rescan_device (HalDevice *d)
 		break;
 
 	case HOTPLUG_EVENT_APM:
-		ret = acpi_rescan_device (d);
+		ret = apm_rescan_device (d);
+		break;
+
+	case HOTPLUG_EVENT_PMU:
+		ret = pmu_rescan_device (d);
 		break;
 
 	default:
@@ -422,7 +446,11 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 		break;
 
 	case HOTPLUG_EVENT_APM:
-		e = acpi_generate_remove_hotplug_event (d);
+		e = apm_generate_remove_hotplug_event (d);
+		break;
+
+	case HOTPLUG_EVENT_PMU:
+		e = pmu_generate_remove_hotplug_event (d);
 		break;
 
 	default:
@@ -463,7 +491,11 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 		break;
 
 	case HOTPLUG_EVENT_APM:
-		e = acpi_generate_add_hotplug_event (d);
+		e = apm_generate_add_hotplug_event (d);
+		break;
+
+	case HOTPLUG_EVENT_PMU:
+		e = pmu_generate_add_hotplug_event (d);
 		break;
 
 	default:

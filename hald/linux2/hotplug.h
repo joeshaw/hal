@@ -37,7 +37,8 @@ typedef enum {
 	HOTPLUG_EVENT_SYSFS_CLASS = 2,
 	HOTPLUG_EVENT_SYSFS_BLOCK = 3,
 	HOTPLUG_EVENT_ACPI        = 4,
-	HOTPLUG_EVENT_APM         = 5
+	HOTPLUG_EVENT_APM         = 5,
+	HOTPLUG_EVENT_PMU         = 6
 } HotplugEventType;
 
 /** Data structure representing a hotplug event; also used for
@@ -69,9 +70,14 @@ typedef struct
 		} acpi;
 
 		struct {
-			int  apm_type;                          /**< Type of ACPI object; see apm.c */
+			int  apm_type;                          /**< Type of APM object; see apm.c */
 			char apm_path[HAL_PATH_MAX];            /**< Path into procfs, e.g. /proc/apm */
 		} apm;
+
+		struct {
+			int  pmu_type;                          /**< Type of PMU object; see pmu.c */
+			char pmu_path[HAL_PATH_MAX];            /**< Path into procfs, e.g. /proc/pmu/battery_0 */
+		} pmu;
 	};
 
 } HotplugEvent;

@@ -1,5 +1,42 @@
 2005-02-02  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/pmu.[ch]: New files
+
+	* hald/linux2/util.h: Add prototypes for
+	hal_util_grep_string_elem_from_file and
+	hal_util_grep_int_elem_from_file.
+
+	* hald/linux2/util.c (hal_util_grep_file): Allow file to be NULL
+	or empty and handle it correctly
+	(hal_util_grep_string_elem_from_file): New function
+	(hal_util_grep_int_elem_from_file): New function
+	(hal_util_set_string_elem_from_file): Simplify by using
+	hal_util_grep_string_elem_from_file
+	(hal_util_set_int_elem_from_file): Simplify by using
+	hal_util_grep_string_elem_from_file
+
+	* hald/linux2/osspec.c (osspec_probe): Refine algorithm for selecting
+	power management system since PMU based systems may simultaneously
+	support APM as well.
+
+	* hald/linux2/hotplug.h: Add PMU hotplug event
+
+	* hald/linux2/hotplug.c (hotplug_event_begin_pmu): New function
+	(hotplug_event_begin): Handle PMU
+	(hotplug_rescan_device): Handle PMU
+	(hotplug_reprobe_generate_remove_events): Handle PMU
+	(hotplug_reprobe_generate_add_events): Handle PMU
+
+	* hald/linux2/classdev.c (hotplug_event_begin_add_classdev): Only
+	set linux.device_file if there really is a device file
+
+	* hald/linux2/acpi.c (battery_refresh): Use maximum instead of
+	maximum_specified
+
+	* hald/linux2/Makefile.am: Add pmu.[ch]
+
+2005-02-02  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/apm.[ch]: New files
 
 	* hald/linux2/util.c (helper_invoke): Remember to initialize the

@@ -758,7 +758,10 @@ hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *line
 
 	result = NULL;
 
-	snprintf (filename, sizeof (filename), "%s/%s", directory, file);
+	if (file != NULL && strlen (file) > 0)
+		snprintf (filename, sizeof (filename), "%s/%s", directory, file);
+	else
+		strncpy (filename, directory, sizeof (filename));
 	f = fopen (filename, "r");
 	if (f == NULL)
 		goto out;
@@ -792,6 +795,64 @@ out:
 	return result;
 }
 
+gchar *
+hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file, 
+				     const gchar *linestart, guint elem)
+{
+	gchar *line;
+	gchar *res;
+	gchar buf[256];
+	gchar **tokens;
+	guint i, j;
+
+	res = NULL;
+	tokens = NULL;
+
+	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+		goto out;
+
+	tokens = g_strsplit_set (line, " \t:", 0);
+	for (i = 0, j = 0; tokens[i] != NULL; i++) {
+		if (strlen (tokens[i]) == 0)
+			continue;
+		if (j == elem) {
+			strncpy (buf, tokens[i], sizeof (buf));
+			res = buf;
+			goto out;
+		}
+		j++;
+	}
+	
+out:
+	if (tokens != NULL)
+		g_strfreev (tokens);
+
+	return res;
+}
+
+gint
+hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file, 
+				  const gchar *linestart, guint elem, guint base)
+{
+	gchar *endptr;
+	gchar *strvalue;
+	int value;
+
+	value = G_MAXINT;
+
+	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem)) == NULL)
+		goto out;
+
+	value = strtol (strvalue, &endptr, base);
+	if (endptr == strvalue) {
+		value = G_MAXINT;
+		goto out;
+	}
+
+out:
+	return value;
+}
+
 /** Get a string value from a formatted text file and assign it to
  *  a property on a device object.
  *
@@ -819,33 +880,16 @@ hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key,
 				    const gchar *directory, const gchar *file, 
 				    const gchar *linestart, guint elem)
 {
-	gchar *line;
 	gboolean res;
-	gchar **tokens;
-	guint i, j;
+	gchar *value;
 
 	res = FALSE;
-	tokens = NULL;
 
-	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+	if ((value = hal_util_grep_string_elem_from_file (directory, file, linestart, elem)) == NULL)
 		goto out;
 
-	tokens = g_strsplit_set (line, " \t:", 0);
-	for (i = 0, j = 0; tokens[i] != NULL; i++) {
-		if (strlen (tokens[i]) == 0)
-			continue;
-		if (j == elem) {
-			hal_device_property_set_string (d, key, tokens[i]);
-			res = TRUE;
-			goto out;
-		}
-		j++;
-	}
-	
+	res = hal_device_property_set_string (d, key, value);
 out:
-	if (tokens != NULL)
-		g_strfreev (tokens);
-
 	return res;
 }
 
@@ -874,42 +918,27 @@ out:
 gboolean
 hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
 				 const gchar *directory, const gchar *file, 
-				 const gchar *linestart, guint elem)
+				 const gchar *linestart, guint elem, guint base)
 {
-	gchar *line;
+	gchar *endptr;
 	gboolean res;
-	gchar **tokens;
+	gchar *strvalue;
 	int value;
-	char *endptr;
-	guint i, j;
 
 	res = FALSE;
-	tokens = NULL;
 
-	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem)) == NULL)
 		goto out;
 
-	tokens = g_strsplit_set (line, " \t:", 0);
-
-	for (i = 0, j = 0; tokens[i] != NULL; i++) {
-		if (strlen (tokens[i]) == 0)
-			continue;
-		if (j == elem) {
-			value = strtol (tokens[i], &endptr, 0);
-			if (endptr == tokens[i])
-				goto out;
-			hal_device_property_set_int (d, key, value);
-			res = TRUE;
-			goto out;
-		}
-		j++;
-	}	
-
+	value = strtol (strvalue, &endptr, base);
+	if (endptr == strvalue)
+		goto out;
+	
+	res = hal_device_property_set_int (d, key, value);
+	
 out:
-	if (tokens != NULL)
-		g_strfreev (tokens);
-
 	return res;
+
 }
 
 /** Get a value from a formatted text file, test it against a given
