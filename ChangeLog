@@ -1,4 +1,9 @@
 2005-04-04  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c: Fix for when gettext is
+	not available. From Steve Grubb <sgrubb@redhat.com>.
+
+2005-04-04  David Zeuthen  <davidz@redhat.com>
 	
 	* po/zh_TW.po: New file from chaoweilun@pcmail.com.tw
 
