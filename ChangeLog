@@ -1,3 +1,9 @@
+2004-07-05  David Zeuthen  <david@fubar.dk>
+
+	* tools/linux/hal_dev.c (main): Disable logging. Also fork(2) a
+	new process and make parent exit to temporarily fix that udevstart
+	takes a few minutes to run
+
 2004-07-04  David Zeuthen  <david@fubar.dk>
 
 	* tools/linux/hal_hotplug.c: 'product' file is also not guaranteed

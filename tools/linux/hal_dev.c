@@ -35,7 +35,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <mntent.h>
-#include <syslog.h>
+/*#include <syslog.h>*/
 #include <linux/limits.h>
 
 #include <dbus/dbus.h>
@@ -112,14 +112,29 @@ main (int argc, char *argv[], char *envp[])
 	DBusMessage *message;
 	DBusMessageIter iter;
 	DBusMessageIter iter_dict;
+	pid_t rc;
 
 	if (argc != 2)
 		return 1;
 
+	/* fork a new process so we exit instantly and child is handling
+	 * the processing; fixes bug where udevstart takes a long time
+	 * to start since udev executes stuff in dev.d sequentially.
+	 *
+	 * TODO, FIXME, HACK, XXX : This is not the right way; we merely
+	 * work around the problem that D-BUS requires us to take a nap
+	 * before exiting because otherwise messages are lost
+	 */
+	rc = fork ();
+	if (rc == -1)
+		return 1;
+	if (rc != 0)
+		return 0;
+
 	if (get_sysfs_mnt_path () != 0)
 		return 1;
 
-	openlog ("hal.dev", LOG_PID, LOG_USER);
+	/*openlog ("hal.dev", LOG_PID, LOG_USER);*/
 
 	/* Connect to a well-known bus instance, the system bus */
 	dbus_error_init (&error);
@@ -162,7 +177,7 @@ main (int argc, char *argv[], char *envp[])
 	}
 
 	if (devname == NULL || devpath == NULL) {
-		syslog (LOG_ERR, "Missing devname or devpath");
+		/*syslog (LOG_ERR, "Missing devname or devpath");*/
 		goto out;
 	}
 
