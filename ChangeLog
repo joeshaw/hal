@@ -1,5 +1,11 @@
 2004-05-25  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: Bump to 0.2.91
+
+	* packaging/fedora/hal.spec: Bump to 0.2.91
+
+2004-05-25  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (read_etc_mtab): hal doesn't
 	close the filedescriptor when it /etc/mtab wasn't changed of the
 	fstat failed. Also when closing a file stream opened with fdopen,
