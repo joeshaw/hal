@@ -3149,11 +3149,22 @@
 	      </entry>
 	    </row>
             <row>
-              <entry><literal>battery.charge_level.maximum</literal> (int)</entry>
+              <entry><literal>battery.charge_level.design</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-		The maximum level of charge which the device can hold. 
+		The maximum level of charge the device was designed for.
+	        Measured in <literal>"battery.charge_level.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.charge_level.last_full</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		The maximum level of charge the device could hold the last
+		time it was full.
 	        Measured in <literal>"battery.charge_level.unit"</literal>
 		units.
 	      </entry>

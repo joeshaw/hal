@@ -512,21 +512,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2586"
+HREF="#AEN2593"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2597"
+HREF="#AEN2604"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2605"
+HREF="#AEN2612"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -6348,14 +6348,34 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->battery.charge_level.maximum</TT
+>battery.charge_level.design</TT
 > (int)</TD
 ><TD
 >&nbsp;</TD
 ><TD
 >Yes</TD
 ><TD
->&#13;		The maximum level of charge which the device can hold. 
+>&#13;		The maximum level of charge the device was designed for.
+	        Measured in <TT
+CLASS="literal"
+>"battery.charge_level.unit"</TT
+>
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.charge_level.last_full</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The maximum level of charge the device could hold the last
+		time it was full.
 	        Measured in <TT
 CLASS="literal"
 >"battery.charge_level.unit"</TT
@@ -6552,7 +6572,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2060"
+NAME="AEN2067"
 ></A
 ><TABLE
 BORDER="1"
@@ -6666,7 +6686,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2104"
+NAME="AEN2111"
 ></A
 ><TABLE
 BORDER="1"
@@ -6734,7 +6754,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2125"
+NAME="AEN2132"
 ></A
 ><TABLE
 BORDER="1"
@@ -6828,7 +6848,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2157"
+NAME="AEN2164"
 ></A
 ><TABLE
 BORDER="1"
@@ -6939,7 +6959,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2199"
+NAME="AEN2206"
 ></A
 ><TABLE
 BORDER="1"
@@ -7091,7 +7111,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2257"
+NAME="AEN2264"
 ></A
 ><TABLE
 BORDER="1"
@@ -7250,7 +7270,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2309"
+NAME="AEN2316"
 ></A
 ><TABLE
 BORDER="1"
@@ -7379,7 +7399,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2350"
+NAME="AEN2357"
 ></A
 ><TABLE
 BORDER="1"
@@ -8447,7 +8467,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2544"
+NAME="AEN2551"
 ></A
 ><TABLE
 BORDER="1"
@@ -8607,7 +8627,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2586"
+NAME="AEN2593"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -8723,7 +8743,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2597"
+NAME="AEN2604"
 >Example</A
 ></H3
 ><P
@@ -8841,7 +8861,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2605"
+NAME="AEN2612"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

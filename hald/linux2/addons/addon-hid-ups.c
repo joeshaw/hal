@@ -212,7 +212,9 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 
 					case 0x850083: /* DesignCapacity */
 						libhal_device_set_property_int (
-							ctx, udi, "battery.charge_level.maximum", uref.value, &error);
+							ctx, udi, "battery.charge_level.design", uref.value, &error);
+						libhal_device_set_property_int (
+							ctx, udi, "battery.charge_level.last_full", uref.value, &error);
 						break;
 
 					default:

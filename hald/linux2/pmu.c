@@ -96,7 +96,8 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		}
 
 		hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, "", "charge", 0, 10);
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.maximum", path, "", "max_charge", 0, 10);
+		hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, "", "max_charge", 0, 10);
+		hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, "", "max_charge", 0, 10);
 
 		device_property_atomic_update_end ();
 	} else {
@@ -106,7 +107,8 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		hal_device_property_remove (d, "battery.rechargeable.is_discharging");
 		/*hal_device_property_remove (d, "battery.charge_level.unit");*/
 		hal_device_property_remove (d, "battery.charge_level.current");
-		hal_device_property_remove (d, "battery.charge_level.maximum");
+		hal_device_property_remove (d, "battery.charge_level.last_full");
+		hal_device_property_remove (d, "battery.charge_level.design");
 		device_property_atomic_update_end ();		
 	}
 

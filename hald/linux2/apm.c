@@ -127,7 +127,8 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		hal_device_property_remove (d, "battery.rechargeable.is_discharging");
 		hal_device_property_remove (d, "battery.charge_level.unit");
 		hal_device_property_remove (d, "battery.charge_level.current");
-		hal_device_property_remove (d, "battery.charge_level.maximum");
+		hal_device_property_remove (d, "battery.charge_level.last_full");
+		hal_device_property_remove (d, "battery.charge_level.design");
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();
@@ -136,7 +137,8 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		hal_device_property_set_int (d, "battery.charge_level", i.battery_percentage);
 		hal_device_property_set_string (d, "battery.charge_level.unit", "percent");
 
-		hal_device_property_set_int (d, "battery.charge_level.maximum", 100);
+		hal_device_property_set_int (d, "battery.charge_level.design", 100);
+		hal_device_property_set_int (d, "battery.charge_level.last_full", 100);
 
 		/* TODO: clean the logic below up; it appears my T41
 		 * with 2.6.10-1.1110_FC4 and acpi=off always report

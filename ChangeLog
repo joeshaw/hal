@@ -1,5 +1,23 @@
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
+	* doc/spec/hal-spec.xml.in: Change this to remove the property
+	battery.charge_level.maximum and introduce battery.charge_level.design
+	and battery.charge_level.last_full instead
+
+	* hald/linux2/addons/addon-hid-ups.c (ups_get_static): Update code
+	to use new the new properties
+
+	* hald/linux2/pmu.c (battery_refresh): Update code to use new the
+	new properties
+
+	* hald/linux2/apm.c (battery_refresh): Update code to use new the
+	new properties
+
+	* hald/linux2/acpi.c (battery_refresh): Update code to use new the
+	new properties
+
+2005-03-02  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/acpi.c (acpi_poll): New function
 	(acpi_synthesize_hotplug_events): Setup timeout every ten seconds to
 	poll batteries (since some ACPI implementations don't report back when
