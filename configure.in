@@ -365,7 +365,7 @@ else
 fi
 
 
-ALL_LINGUAS="da fr de nl ru hu"
+ALL_LINGUAS="da fr de nl ru hu pt"
 AC_SUBST(ALL_LINGUAS)
 
 GETTEXT_PACKAGE=AC_PACKAGE_NAME

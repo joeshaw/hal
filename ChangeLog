@@ -1,5 +1,11 @@
 2004-10-19  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Added pt to ALL_LINGUAS
+
+	* po/pt.po: Portuguese translations from Pedro Morais <morais@kde.org>
+
+2004-10-19  David Zeuthen  <davidz@redhat.com>
+
 	Make PCMCIA card readers work by ignoring hotplug add and remove
 	on IDE partitions. Need to remove this code once the kernel is sane
 	again. For background (and some kernel hacker attitude :-) please see
