@@ -1,5 +1,12 @@
 2004-09-12  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (block_class_in_gdl): Force the
+	initial poll if we support media_check_enabled; should fix some
+	issues with the IBM USB Memory Stick that shockingly report
+	/sys/block/<drive>/removable set to 0.
+
+2004-09-12  David Zeuthen  <david@fubar.dk>
+
 	* hal.conf.in: Fixup this file as it was broken. Reported by 
 	Kay Sievers <kay.sievers@vrfy.org>.
 

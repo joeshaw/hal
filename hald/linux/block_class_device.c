@@ -1579,8 +1579,16 @@ block_class_in_gdl (ClassDeviceHandler *self,
 		    HalDevice *d,
 		    const char *udi)
 {
-	/* check for media on the device */
-	detect_media (d, FALSE);
+	dbus_bool_t force_initial_poll;
+
+	/* check for media on the device 
+	 *
+	 * Force the initial poll if we support media_check_enabled; should fix some issues with
+	 * the IBM USB Memory Stick that shockingly report /sys/block/<drive>/removable set to
+	 * 0.
+	 */
+	force_initial_poll = hal_device_property_get_bool (d, "storage.media_check_enabled");
+	detect_media (d, force_initial_poll);
 
 	/* Check the mtab to see if the device is mounted */
 	etc_mtab_process_all_block_devices (TRUE);
