@@ -84,6 +84,10 @@ get_sysfs_mnt_path (void)
 	return ret;
 }
 
+static const char *file_list_class_device[] ={
+	"dev",
+	NULL
+};
 
 static const char *file_list_usb[] = {
 	"idProduct",
@@ -149,7 +153,7 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 {
 	size_t devpath_len;
 	const char **file_list;
-	int num_tries;
+	int timeout;
 	int rc;
 	struct stat stat_buf;
 	int i;
@@ -164,17 +168,21 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 	} else if (strcmp (hotplug_type, "usb") == 0) {
 		int is_interface = 0;
 
-		for (i = devpath_len - 1; devpath[i] != '/' && i > 0; --i) {
-			if (devpath[i] == ':') {
-				is_interface = 1;
-				break;
+		if (strstr (devpath, "class") != NULL) {
+			file_list = file_list_class_device;
+		} else {
+			for (i = devpath_len - 1; devpath[i] != '/' && i > 0; --i) {
+				if (devpath[i] == ':') {
+					is_interface = 1;
+					break;
+				}
 			}
-		}
 
-		if (is_interface) {
-			file_list = file_list_usbif;
-		} else
-			file_list = file_list_usb;
+			if (is_interface) {
+				file_list = file_list_usbif;
+			} else
+				file_list = file_list_usb;
+		}
 	} else if (strcmp (hotplug_type, "scsi") == 0) {
 		file_list = file_list_scsi;
 	} else if (strcmp (hotplug_type, "scsi_generic") == 0) {
@@ -189,17 +197,17 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 		return -1;
 	}
 
-	num_tries = 0;
+	timeout = 0;
 
 try_again:
-	if (num_tries > 0) {
+	if (timeout > 0) {
 		usleep (100 * 1000); /* 100 ms */
 	}
-	num_tries += 100;
+	timeout += 100 * 1000;
 
-	if (num_tries >= 10 * 1000*1000) { /* 10 secs */
-		syslog (LOG_NOTICE, "timout waiting for %s (waited %d ms)",
-			devpath, num_tries * 100);
+	if (timeout >= 10 * 1000*1000) { /* 10 secs */
+		syslog (LOG_NOTICE, "timout(%d ms) waiting for %s ",
+			timeout / 1000, devpath);
 		return -1;
 	}
 
