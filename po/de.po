@@ -19,12 +19,12 @@ msgstr ""
 #: libhal-storage/libhal-storage.c:288
 #, c-format
 msgid "External %s%s Drive"
-msgstr "Externer %s%s Datenträger"
+msgstr "Externes %s%s Laufwerk"
 
 #: libhal-storage/libhal-storage.c:291
 #, c-format
 msgid "%s%s Drive"
-msgstr "%s%s Datenträger"
+msgstr "%s%s Laufwerk"
 
 #: libhal-storage/libhal-storage.c:300
 msgid "External Floppy Drive"
@@ -54,7 +54,7 @@ msgstr "Festplatte"
 
 #: libhal-storage/libhal-storage.c:328
 msgid "Drive"
-msgstr "Datenträger"
+msgstr "Laufwerk"
 
 #: libhal-storage/libhal-storage.c:377
 msgid "CD-ROM Disc"
