@@ -36,6 +36,7 @@
 #include <dbus/dbus-glib.h>
 
 #include "logger.h"
+#include "hald.h"
 #include "device_store.h"
 
 /**
@@ -49,6 +50,13 @@
  *  @brief The device store is where the device objects are stored
  *  @{
  */
+
+/* fwd decl */
+static void async_find_property_changed(HalDevice* device,
+                                        const char* key, 
+                                        dbus_bool_t in_gdl, 
+                                        dbus_bool_t removed,
+                                        dbus_bool_t added);
 
 /** Maximum number of callbacks inside the HAL daemon */
 #define MAX_CB_FUNCS 32
@@ -81,36 +89,8 @@ unsigned int temp_device_counter = 0;
 /** Head of device list */
 static HalDevice* device_list_head = NULL;
 
-/** Memory allocation; aborts if no memory.
- *
- *  @param  how_much            Number of bytes to allocated
- *  @return                     Pointer to allocated storage
- */
-static void* xmalloc(unsigned int how_much)
-{
-    void* p = malloc(how_much);
-    if( !p )
-        DIE(("Unable to allocate %d bytes of memory", how_much));
-    return p;
-}
-
-/** String duplication; aborts if no memory.
- *
- *  @param  how_much            Number of bytes to allocated
- *  @return                     Pointer to allocated storage
- */
-static char* xstrdup(const char* str)
-{
-    char* p = strdup(str);
-    if( !p )
-        DIE(("Unable to duplicate string '%s'", str));
-    return p;
-}
-
 /** Initialize the device store.
  *
- *  @param  _property_changed_cb  Function to invoke whenever a property
- *                                is changed
  */
 void ds_init()
 {
@@ -118,9 +98,10 @@ void ds_init()
     device_list_head = NULL;
     temp_device_counter = 0;
 
-    num_property_changed_cb = 0;
     num_gdl_changed_cb = 0;
     num_new_capability_cb = 0;
+    num_property_changed_cb = 1;
+    property_changed_cb[0] = async_find_property_changed;
 }
 
 /** Add a callback when a device has got a new capability
@@ -242,6 +223,7 @@ typedef struct DSDeviceAsyncFindStruct_s
     char* key;                    /**< key to search for, allocated by us */
     char* value;                  /**< value that key must assume, allocated
                                    *   by us */
+    dbus_bool_t only_gdl;         /**< only search if in GDL */
     DSAsyncFindDeviceCB callback; /**< callback to caller */
     void* data1;                  /**< caller data, opaque pointer */
     void* data2;                  /**< caller data, opaque pointer */
@@ -305,6 +287,7 @@ static gboolean async_find_timeout_fn(gpointer data)
     return FALSE; /* cancel timeout */
 }
 
+
 /** This function is called by #ds_gdl_add() when a new device is added
  *  to the global device list.
  *
@@ -332,8 +315,10 @@ check_list_again:
         type = ds_property_get_type(device, i->key);
         if( type==DBUS_TYPE_STRING )
         {
-            if( strcmp(ds_property_get_string(device, i->key), i->value)==0 )
+            if( strcmp(ds_property_get_string(device, i->key), i->value)==0 &&
+                ( (!(i->only_gdl)) || (i->only_gdl && device->in_gdl)) )
             {
+
                 /* Yay, a match! */
                 /*printf("new_add_match 0x%08x\n", i);*/
 
@@ -383,6 +368,26 @@ check_list_again:
     }
 }
 
+/** Called whenever a property on a device is changed. 
+ *
+ *  @param  device              #HalDevice object
+ *  @param  key                 Property that has changed
+ *  @param  in_gdl              True iff the device object in visible in the
+ *                              global device list
+ *  @param  removed             True iff the property was removed
+ *  @param  added               True iff the property was added
+ */
+static void async_find_property_changed(HalDevice* device,
+                                        const char* key, 
+                                        dbus_bool_t in_gdl, 
+                                        dbus_bool_t removed,
+                                        dbus_bool_t added)
+{
+    if( !removed )
+        async_find_check_new_addition(device);
+}
+
+
 /** Find a device by requiring a specific key to assume string value. If 
  *  multiple devices meet this criteria then the result is undefined. Only
  *  devices in the GDL is searched.
@@ -397,6 +402,7 @@ check_list_again:
  *
  *  @param  key                 key of the property
  *  @param  value               value of the property
+ *  @param  only_gdl            only search in the gdl
  *  @param  data1               The 1st parameter passed to the callback
  *                              function for this callback. This is used to
  *                              uniqely identify the origin/context for the
@@ -409,6 +415,7 @@ check_list_again:
  */
 void ds_device_async_find_by_key_value_string(const char* key, 
                                               const char* value,
+                                              dbus_bool_t only_gdl,
                                               DSAsyncFindDeviceCB callback, 
                                               void* data1, 
                                               void* data2, 
@@ -420,7 +427,7 @@ void ds_device_async_find_by_key_value_string(const char* key,
     assert( callback!=NULL );
 
     /* first, try to see if we can find it right away */
-    device = ds_device_find_by_key_value_string(key, value);
+    device = ds_device_find_by_key_value_string(key, value, only_gdl);
     if( device!=NULL )
     {
         /* yay! */
@@ -438,6 +445,7 @@ void ds_device_async_find_by_key_value_string(const char* key,
     afs = xmalloc(sizeof(DSDeviceAsyncFindStruct));
     afs->key   = xstrdup(key);
     afs->value = xstrdup(value);
+    afs->only_gdl = only_gdl;
     afs->callback = callback;
     afs->data1 = data1;
     afs->data2 = data2;
@@ -452,16 +460,17 @@ void ds_device_async_find_by_key_value_string(const char* key,
 }
 
 /** Find a device by requiring a specific key to assume string value. If 
- *  multiple devices meet this criteria then the result is undefined. Only
- *  devices in the GDL is searched.
+ *  multiple devices meet this criteria then the result is undefined.
  *
  *  @param  key                 key of the property
  *  @param  value               value of the property
+ *  @param  only_gdl            only search in the gdl
  *  @return                     #HalDevice object or #NULL if no such device
  *                              exist
  */
 HalDevice* ds_device_find_by_key_value_string(const char* key, 
-                                              const char* value)
+                                              const char* value,
+                                              dbus_bool_t only_gdl)
 {
     int type;
     HalDevice* device;
@@ -473,7 +482,7 @@ HalDevice* ds_device_find_by_key_value_string(const char* key,
     {
         device = ds_device_iter_get(&iter_device);
 
-        if( !device->in_gdl )
+        if( only_gdl && !device->in_gdl )
             continue;
 
         type = ds_property_get_type(device, key);
@@ -1130,11 +1139,14 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
     const char* caps;
     HalPropertyIterator iter;
 
+    property_atomic_update_begin();
+
     for(ds_property_iter_begin(source, &iter);
         ds_property_iter_has_more(&iter);
         ds_property_iter_next(&iter))
     {
         int type;
+        int target_type;
         const char* key;
         HalProperty* p;
 
@@ -1142,7 +1154,10 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
         key = ds_property_iter_get_key(p);
         type = ds_property_iter_get_type(p);
 
-        ds_property_remove(target, key);
+        /* only remove target if it exists with different type */
+        target_type = ds_property_get_type(target, key);
+        if( target_type!=DBUS_TYPE_NIL && target_type!=type )
+            ds_property_remove(target, key);
 
         switch( type )
         {
@@ -1164,6 +1179,8 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
         }
     }    
 
+    property_atomic_update_end();
+
     caps = ds_property_get_string(source, "info.capabilities");
     if( caps!=NULL )
     {
@@ -1180,6 +1197,7 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
             tok = strtok_r(NULL, " ", &bufp);
         }
     }
+
 }
 
 /** Get the type of the value of a property.

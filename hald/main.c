@@ -44,6 +44,7 @@
 #include <libhal/libhal.h>   /* for common defines etc. */
 
 #include "logger.h"
+#include "hald.h"
 #include "device_store.h"
 #include "device_info.h"
 #include "osspec.h"
@@ -1707,6 +1708,114 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+/** Counter for atomic updating */
+static int atomic_count = 0;
+
+/** Begin an atomic update - this is useful for updating several properties
+ *  in one go.
+ *
+ *  Note that an atomic update is recursive - use with caution!
+ */
+void property_atomic_update_begin()
+{
+    atomic_count++;
+}
+
+/** Number of updates pending */
+static int num_pending_updates = 0;
+
+/** Structure for queing updates */
+typedef struct PendingUpdate_s
+{
+    HalDevice* device;    /**< pointer to device */
+    const char* key;      /**< key of property; free this memory when done */
+    dbus_bool_t removed;  /**< true iff property was removed */
+    dbus_bool_t added;    /**< true iff property was added */
+    struct PendingUpdate_s* next; /**< next update or #NULL */
+} PendingUpdate;
+
+static PendingUpdate* pending_updates_head = NULL;
+
+/** End an atomic update.
+ *
+ *  Note that an atomic update is recursive - use with caution!
+ */
+void property_atomic_update_end()
+{
+    PendingUpdate* pu_iter = NULL;
+    PendingUpdate* pu_iter2 = NULL;
+
+    --atomic_count;
+
+    if( atomic_count<0 )
+    {
+        HAL_WARNING(("*** atomic_count = %d < 0 !!", atomic_count));
+        atomic_count=0;
+    }
+
+    if( atomic_count==0 && num_pending_updates>0 )
+    {
+        DBusMessage* message;
+        DBusMessageIter iter;
+
+        for(pu_iter=pending_updates_head; 
+            pu_iter!=NULL; 
+            pu_iter=pu_iter->next)
+        {
+            int num_updates_this;
+
+            if( pu_iter->device==NULL )
+                goto have_processed;
+
+            /* count number of updates for this device */
+            num_updates_this = 0;
+            for(pu_iter2=pu_iter; 
+                pu_iter2!=NULL; 
+                pu_iter2=pu_iter2->next)
+            {
+                if( pu_iter2->device==pu_iter->device )
+                    num_updates_this++;
+            }
+
+            /* prepare message */
+            message = dbus_message_new_signal(pu_iter->device->udi, 
+                                              "org.freedesktop.Hal.Device",
+                                              "PropertyModified");
+            dbus_message_iter_init(message, &iter);
+            dbus_message_iter_append_int32(&iter, num_updates_this);
+            for(pu_iter2=pu_iter; 
+                pu_iter2!=NULL; 
+                pu_iter2=pu_iter2->next)
+            {
+                if( pu_iter2->device==pu_iter->device )
+                {
+                    dbus_message_iter_append_string(&iter, pu_iter2->key);
+                    dbus_message_iter_append_boolean(&iter, pu_iter2->removed);
+                    dbus_message_iter_append_boolean(&iter, pu_iter2->added);
+
+                    /* signal this is already processed */
+                    if( pu_iter2!=pu_iter )
+                        pu_iter2->device = NULL;
+                }
+            }
+
+        
+            if( !dbus_connection_send(dbus_connection,message, NULL) )
+                DIE(("error broadcasting message"));
+        
+            dbus_message_unref(message);
+
+        have_processed:
+            free(pu_iter->key);
+            free(pu_iter);
+        } /* for all updates */
+        
+        num_pending_updates = 0;
+        pending_updates_head = NULL;
+    }
+}
+
+
 /** Function in the HAL daemon that is called whenever a property on a device
  *  is changed. Will broadcast the changes using D-BUS signals.
  *
@@ -1725,7 +1834,6 @@ static void property_changed(HalDevice* device,
 {
     DBusMessage* message;
     DBusMessageIter iter;
-    const char* signal_name;
 
 /*
     HAL_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
@@ -1738,24 +1846,37 @@ static void property_changed(HalDevice* device,
     if( !in_gdl )
         return;
 
-    if( removed )
-        signal_name = "PropertyRemoved";
-    else if( added )
-        signal_name = "PropertyAdded";
+    if( atomic_count>0 )
+    {
+        PendingUpdate* pu;
+
+        pu = xmalloc(sizeof(PendingUpdate));
+        pu->device = device;
+        pu->key = xstrdup(key);
+        pu->removed = removed;
+        pu->added = added;
+        pu->next = pending_updates_head;
+
+        pending_updates_head = pu;
+        num_pending_updates++;
+    }
     else
-        signal_name = "PropertyChanged";
+    {
+        message = dbus_message_new_signal(device->udi, 
+                                          "org.freedesktop.Hal.Device",
+                                          "PropertyModified");
 
-    message = dbus_message_new_signal(device->udi, 
-                                      "org.freedesktop.Hal.Device",
-                                      signal_name);
+        dbus_message_iter_init(message, &iter);
+        dbus_message_iter_append_int32(&iter, 1);
+        dbus_message_iter_append_string(&iter, key);
+        dbus_message_iter_append_boolean(&iter, removed);
+        dbus_message_iter_append_boolean(&iter, added);
 
-    dbus_message_iter_init(message, &iter);
-    dbus_message_iter_append_string(&iter, key);
+        if( !dbus_connection_send(dbus_connection,message, NULL) )
+            DIE(("error broadcasting message"));
 
-    if( !dbus_connection_send(dbus_connection,message, NULL) )
-        DIE(("error broadcasting message"));
-
-    dbus_message_unref(message);
+        dbus_message_unref(message);
+    }
 }
 
 /** Callback for the global device list has changed
@@ -1826,7 +1947,8 @@ int main(int argc, char* argv[])
     GMainLoop* loop;
     DBusError dbus_error;
 
-    opt_run_as = HAL_USER;
+    /* We require root to sniff mii registers */
+    /*opt_run_as = HAL_USER;*/
 
     while(1)
     {
@@ -2004,6 +2126,32 @@ int main(int argc, char* argv[])
     g_main_loop_run (loop);
 
     return 0;
+}
+
+/** Memory allocation; aborts if no memory.
+ *
+ *  @param  how_much            Number of bytes to allocated
+ *  @return                     Pointer to allocated storage
+ */
+void* xmalloc(unsigned int how_much)
+{
+    void* p = malloc(how_much);
+    if( !p )
+        DIE(("Unable to allocate %d bytes of memory", how_much));
+    return p;
+}
+
+/** String duplication; aborts if no memory.
+ *
+ *  @param  how_much            Number of bytes to allocated
+ *  @return                     Pointer to allocated storage
+ */
+char* xstrdup(const char* str)
+{
+    char* p = strdup(str);
+    if( !p )
+        DIE(("Unable to duplicate string '%s'", str));
+    return p;
 }
 
 /** @} */

@@ -1,0 +1,24 @@
+<!-- Document Type for FreeDesktop.org Device Information Files -->
+<!-- CVSID: $Id$ -->
+
+<!-- <deviceinfo> is the top-level element of an fdi file. -->
+<!ELEMENT deviceinfo (device*) >
+<!ATTLIST deviceinfo 
+    version (0.1|0.2) #REQUIRED
+>
+
+<!ELEMENT device (match|merge)*  >
+
+<!ELEMENT match (match|merge)* >
+<!ATTLIST match 
+    key    CDATA #REQUIRED
+    string CDATA #IMPLIED
+    int    CDATA #IMPLIED
+    bool   CDATA #IMPLIED
+>
+
+<!ELEMENT merge (#PCDATA) >
+<!ATTLIST merge 
+    key    CDATA #REQUIRED
+    type   (string|int|bool|double) #REQUIRED
+>

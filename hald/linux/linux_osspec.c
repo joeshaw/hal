@@ -414,7 +414,7 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
             HalDevice* d;
 
             d = ds_device_find_by_key_value_string("linux.sysfs_path",
-                                                   sysfs_devpath);
+                                                   sysfs_devpath, TRUE);
             if( d==NULL )
             {
                 HAL_WARNING(("Couldn't remove device @ %s on hotplug remove",
@@ -461,7 +461,7 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
         {
             HalDevice* d;
             d = ds_device_find_by_key_value_string("linux.sysfs_path",
-                                                   sysfs_devpath);
+                                                   sysfs_devpath, TRUE);
             if( d==NULL )
             {
                 HAL_WARNING(("Couldn't remove device @ %s on hotplug remove",
@@ -533,6 +533,7 @@ static DBusHandlerResult handle_udev_node_created(DBusConnection* connection,
         ds_device_async_find_by_key_value_string(
             "linux.sysfs_path_device",
             sysfs_dev_path, 
+            FALSE, /* note: it doesn't need to be in the GDL */
             handle_udev_node_created_found_device,
             (void*) filename, NULL, 
             HAL_LINUX_HOTPLUG_TIMEOUT);
@@ -559,6 +560,7 @@ static void handle_udev_node_created_found_device(HalDevice* d,
     if( d!=NULL )
     {
         ds_property_set_string(d, "block.device", filename);
+        linux_class_block_check_if_ready_to_add(d);
     }
     else
     {

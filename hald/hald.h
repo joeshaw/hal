@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * linux_class_block.h : Block device handling on Linux 2.6
+ * device_store.h : device store interface
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
@@ -23,18 +23,28 @@
  *
  **************************************************************************/
 
-#ifndef LINUX_CLASS_BLOCK_H
-#define LINUX_CLASS_BLOCK_H
+#ifndef HALD_H
+#define HALD_H
 
-#include "linux_common.h"
+#include <stdarg.h>
+#include <stdint.h>
+#include <dbus/dbus.h>
 
-void visit_class_device_block(const char* path, 
-                              struct sysfs_class_device *class_device);
 
-void linux_class_block_check_if_ready_to_add();
+/**
+ *  @addtogroup HalDaemon
+ *
+ *  @{
+ */
 
-void linux_class_block_init();
-void linux_class_block_detection_done();
-void linux_class_block_shutdown();
+char* xstrdup(const char* str);
+void* xmalloc(unsigned int how_much);
 
-#endif /* LINUX_CLASS_BLOCK_H */
+void property_atomic_update_begin();
+void property_atomic_update_end();
+
+/**
+ *  @}
+ */
+
+#endif /* HALD_H */

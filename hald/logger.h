@@ -51,7 +51,6 @@ void logger_setup(int priority, const char* file, int line,
 
 void logger_emit(const char* format,...);
 
-
 #ifdef ENABLE_VERBOSE_MODE
 
 /* Verbose mode */

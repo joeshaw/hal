@@ -75,37 +75,46 @@ class DeviceManager(LibGladeApplication):
     def device_changed(self, dbus_if, dbus_member, dbus_svc,
                        dbus_obj_path, dbus_message):
         """This method is called when properties for a HAL device changes"""
-        [property_name] = dbus_message.get_args_list()
-        #print "property name", property_name
+        args = dbus_message.get_args_list()
+        num_modifications = args[0]
+        print "\nPropertyModified, device=%s"%dbus_obj_path
         #print "dbus_obj_path", dbus_obj_path
-        if property_name=="info.parent":
-            self.update_device_list()        
-        else:
-            device_udi = dbus_obj_path
-            device_udi_obj = self.hal_service.get_object(device_udi,
-                                        "org.freedesktop.Hal.Device")
-            device_obj = self.udi_to_device(device_udi)
-        
-            if device_udi_obj.PropertyExists(property_name):
-                device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
-            else:
-                if device_obj != None:
-                    try:
-                        del device_obj.properties[property_name]
-                    except:
-                        pass
+        for i in range(0, num_modifications):
+            property_name = args[1+3*i]
+            removed = args[2+3*i]
+            added = args[3+3*i]
 
-            device_focus_udi = self.get_current_focus_udi()
-            if device_focus_udi != None:
-                device = self.udi_to_device(device_udi)
-                if device_focus_udi==device_udi:
-                    self.update_device_notebook(device)
+            print "  key=%s, rem=%d, add=%d"%(property_name, removed, added)
+            if property_name=="info.parent":
+                self.update_device_list()        
+            else:
+                device_udi = dbus_obj_path
+                device_udi_obj = self.hal_service.get_object(device_udi,
+                                               "org.freedesktop.Hal.Device")
+                device_obj = self.udi_to_device(device_udi)
+        
+                if device_udi_obj.PropertyExists(property_name):
+                    device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
+                    print "  value=%s"%(device_obj.properties[property_name])
+                else:
+                    if device_obj != None:
+                        try:
+                            del device_obj.properties[property_name]
+                        except:
+                            pass
+
+                device_focus_udi = self.get_current_focus_udi()
+                if device_focus_udi != None:
+                    device = self.udi_to_device(device_udi)
+                    if device_focus_udi==device_udi:
+                        self.update_device_notebook(device)
 
 
     def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
         """This method is called when a HAL device is added or removed."""
         if dbus_member=="DeviceAdded":
             [device_udi] = dbus_message.get_args_list()
+            print "\nDeviceAdded, udi=%s"%(device_udi)
             self.bus.add_signal_receiver(self.device_changed,
                                          "org.freedesktop.Hal.Device",
                                          "org.freedesktop.Hal",
@@ -113,11 +122,15 @@ class DeviceManager(LibGladeApplication):
             self.update_device_list()
         elif dbus_member=="DeviceRemoved":
             [device_udi] = dbus_message.get_args_list()
+            print "\nDeviceRemoved, udi=%s"%(device_udi)
             self.bus.remove_signal_receiver(self.device_changed,
                                             "org.freedesktop.Hal.Device",
                                             "org.freedesktop.Hal",
                                             device_udi)
             self.update_device_list()
+        elif dbus_member=="NewCapability":
+            [device_udi, cap] = dbus_message.get_args_list()
+            print "\nNewCapability, cap=%s, udi=%s"%(cap, device_udi)
         else:
             print "*** Unknown signal %s"%dbus_member
 

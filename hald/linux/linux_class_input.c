@@ -577,6 +577,7 @@ static void process_input_proc_info(input_proc_info* i)
      */
     ds_device_async_find_by_key_value_string("linux.kernel_devname",
                                              phys, 
+                                             FALSE, /* note: doesn't need to be in GDL */
                                              input_got_sysdevice,
                                              (void*) d, NULL, 
                                              is_probing ? 0 :

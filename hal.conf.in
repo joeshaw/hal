@@ -8,7 +8,8 @@
        for the HAL to work. -->
 
   <!-- Only user @HAL_USER@ can own the HAL service and be an agent -->
-  <policy user="@HAL_USER@">
+  <!-- policy user="@HAL_USER@" We require root to sniff mii registers -->
+  <policy user="root">
     <allow own="org.freedesktop.Hal"/>
 
     <allow send_interface="org.freedesktop.Hal.AgentManager"

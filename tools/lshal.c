@@ -211,43 +211,20 @@ static void print_property(const char* udi, const char* key)
  *  @param  udi                 Univerisal Device Id
  *  @param  key                 Key of property
  */
-static void property_changed(const char* udi, const char* key)
+static void property_modified(const char* udi, const char* key,
+                              dbus_bool_t is_removed, dbus_bool_t is_added)
 {
-    fprintf(stderr, "*** lshal: property_changed, udi='%s', key=%s\n", 
+    fprintf(stderr, "*** lshal: property_modified, udi=%s, key=%s\n", 
             udi, key);
-    print_property(udi, key);
+    fprintf(stderr, "           is_removed=%s, is_added=%s\n", 
+            is_removed ? "true" : "false", 
+            is_added ? "true" : "false" );
+    if( !is_removed )
+        print_property(udi, key);
     fprintf(stderr, "\n");
     /*dump_devices();*/
 }
 
-/** Invoked when a property of a device in the Global Device List is
- *  added, and we have we have subscribed to changes for that device.
- *
- *  @param  udi                 Univerisal Device Id
- *  @param  key                 Key of property
- */
-static void property_added(const char* udi, const char* key)
-{
-    fprintf(stderr, "*** lshal: property_added, udi='%s', key=%s\n", 
-            udi, key);
-    print_property(udi, key);
-    fprintf(stderr, "\n");
-    /*dump_devices();*/
-}
-
-/** Invoked when a property of a device in the Global Device List is
- *  removed, and we have we have subscribed to changes for that device.
- *
- *  @param  udi                 Univerisal Device Id
- *  @param  key                 Key of property
- */
-static void property_removed(const char* udi, const char* key)
-{
-    fprintf(stderr, "*** lshal: property_removed, udi='%s', key=%s\n", 
-            udi, key);
-    fprintf(stderr, "\n");
-    /*dump_devices();*/
-}
 
 /** Invoked by libhal for integration with our mainloop. We take the
  *  easy route and use link with glib for painless integrate.
@@ -294,9 +271,7 @@ int main(int argc, char* argv[])
                                       device_added, 
                                       device_removed, 
                                       device_new_capability,
-                                      property_changed,
-                                      property_added,
-                                      property_removed };
+                                      property_modified };
 
     fprintf(stderr, "lshal version " PACKAGE_VERSION "\n");
 

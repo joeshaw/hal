@@ -67,29 +67,15 @@ typedef void (*LibHalNewCapability)(const char* udi, const char* capability);
 /** Type for callback when a property of a device changes. 
  *
  *  @param  udi                 Unique Device Id
- *
  *  @param  key                 Name of the property that has changed
+ *  @param  is_removed          Property removed
+ *  @param  is_added            Property added
  */
-typedef void (*LibHalDevicePropertyChanged)(const char* udi, 
-                                            const char* key);
+typedef void (*LibHalDevicePropertyModified)(const char* udi, 
+                                             const char* key,
+                                             dbus_bool_t is_removed,
+                                             dbus_bool_t is_added);
 
-/** Type for callback when a property of a device is added. 
- *
- *  @param  udi                 Unique Device Id
- *
- *  @param  key                 Name of the property that was added
- */
-typedef void (*LibHalDevicePropertyAdded)(const char* udi, 
-                                          const char* key);
-
-/** Type for callback when a property of a device is removed. 
- *
- *  @param  udi                 Unique Device Id
- *
- *  @param  key                 Name of the property that was removed
- */
-typedef void (*LibHalDevicePropertyRemoved)(const char* udi, 
-                                            const char* key);
 
 /** Big convenience chunk for all callback function pointers. 
  *
@@ -113,13 +99,7 @@ typedef struct LibHalFunctions_s
     LibHalNewCapability                device_new_capability;
 
     /** A property of a device changed  */
-    LibHalDevicePropertyChanged        device_property_changed;
-
-    /** A property of a device was added  */
-    LibHalDevicePropertyAdded          device_property_added;
-
-    /** A property of a device was removed  */
-    LibHalDevicePropertyRemoved        device_property_removed;
+    LibHalDevicePropertyModified       device_property_modified;
 
 } LibHalFunctions;
 

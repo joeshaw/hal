@@ -4,22 +4,34 @@ CVSID:$Id$
 This document is the TODO list for the HAL project. Feel free to add/remove
 entries if you get an idea or implement one of the tasks.
 
-Short term issues
-
- - Add org.freedesktop.Hal.Device.[BlockClass, NetClass] interfaces and
-   make them emit useful signals upon big events like mount point and link
-   changes.
+Resolved
+========
 
  - Add void PropertyModified(string key, bool is_added, bool is_removed)
    and deprecate Property[Added,Removed,Changed]
 
- - Make all optional properties from the spec available but with empty values
-
  - Add infrastructure so updates to several properties happen as a single
    transaction
 
+Partially resolved
+==================
+
+ - work more on packaging, put some daemon-fork-fu into hald and make it
+   read a configuration file, make initscripts for various distros and make
+   hald run as a unprivileged dedicated user
+
+ - Make all optional properties from the spec available but with empty values
+
  - Make sure device is not added to GDL before all the key properties as
    specified in the spec is there
+   [resolved for block devices, need to audit other bus + classes]
+
+Short term issues
+=================
+
+ - Add org.freedesktop.Hal.Device.[BlockClass, NetClass] interfaces and
+   make them emit useful signals upon big events like mount point and link
+   changes.
 
  - Possible bug: PropertyAdded being called several times
 
@@ -62,14 +74,8 @@ Short term issues
    information about capabilities of optical discs such as CD-RW, DVD etc.
 
 
-Partially resolved
-
- - work more on packaging, put some daemon-fork-fu into hald and make it
-   read a configuration file, make initscripts for various distros and make
-   hald run as a unprivileged dedicated user
-
-
 More long term issues
+=====================
 
  - signing of fdi files
 

@@ -151,6 +151,7 @@ void visit_device_ide_host(const char* path, struct sysfs_device *device)
      */
     ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
+                                             TRUE,
                                              visit_device_ide_host_got_parent,
                                              (void*) d, NULL, 
                                              is_probing ? 0 :
@@ -169,6 +170,8 @@ void visit_device_ide_host(const char* path, struct sysfs_device *device)
 static void visit_device_ide_host_got_parent(HalDevice* parent, 
                                              void* data1, void* data2)
 {
+    char* new_udi = NULL;
+    HalDevice* new_d = NULL;
     HalDevice* d = (HalDevice*) data1;
 
     if( parent!=NULL )
@@ -181,7 +184,15 @@ static void visit_device_ide_host_got_parent(HalDevice* parent,
     /* Compute a proper UDI (unique device id) and try to locate a persistent
      * unplugged device or simple add this new device...
      */
-    rename_and_maybe_add(d, ide_host_compute_udi, "ide_host");
+    new_udi = rename_and_merge(d, ide_host_compute_udi, "ide_host");
+    if( new_udi!=NULL )
+    {
+        new_d = ds_device_find(new_udi);
+        if( new_d!=NULL )
+        {
+            ds_gdl_add(new_d);
+        }
+    }
 }
 
 
@@ -235,6 +246,7 @@ void visit_device_ide(const char* path, struct sysfs_device *device)
      */
     ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
+                                             TRUE,
                                              visit_device_ide_got_parent,
                                              (void*) d, NULL, 
                                              is_probing ? 0 :
@@ -253,6 +265,8 @@ void visit_device_ide(const char* path, struct sysfs_device *device)
 static void visit_device_ide_got_parent(HalDevice* parent, 
                                         void* data1, void* data2)
 {
+    char* new_udi = NULL;
+    HalDevice* new_d = NULL;
     HalDevice* d = (HalDevice*) data1;
 
     if( parent!=NULL )
@@ -265,7 +279,15 @@ static void visit_device_ide_got_parent(HalDevice* parent,
     /* Compute a proper UDI (unique device id) and try to locate a persistent
      * unplugged device or simple add this new device...
      */
-    rename_and_maybe_add(d, ide_compute_udi, "ide");
+    new_udi = rename_and_merge(d, ide_compute_udi, "ide");
+    if( new_udi!=NULL )
+    {
+        new_d = ds_device_find(new_udi);
+        if( new_d!=NULL )
+        {
+            ds_gdl_add(new_d);
+        }
+    }
 }
 
 

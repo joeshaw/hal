@@ -1,3 +1,66 @@
+2004-01-02  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: bump version to 0.2.2
+
+	* hald/linux/linux_class_net.c (link_detection_process): Group
+	net.ethernet.link and net.ethernet.rate as an atomic update
+
+	* fdi/Makefile.am: install fdi.dtd to $(datadir)/hal/fdi
+
+	* fdi/fdi.dtd: new file
+
+	* hald/device_store.c (ds_device_find_by_key_value_string): set
+	that we can choose whether to search the GDL or not
+	(ds_device_async_find_by_key_value_string): set that we can choose
+	whether to search the GDL or not
+	(ds_device_merge): Do all the merge as an atomic operation
+
+	* hald/linux/linux_osspec.c
+	(handle_udev_node_created_found_device): Call
+	linux_class_block_check_if_ready_to_add()
+	(handle_udev_node_created): search for device not in GDL
+
+	* hald/linux/linux_common.c (rename_and_merge): renamed from
+	rename_and_maybe_add. News is that you need to call ds_gdl_add()
+	explicitly
+
+	* hald/linux/linux_*.c: call rename_and_merge() instead. Explicitly
+	call ds_gdl_add()
+
+	* hald/linux/linux_class_block.c 
+	(etc_mtab_process_all_block_devices): make sure we always set required
+	properties; set all properties in a single transaction	
+	(read_etc_mtab): add force parameter
+	(etc_mtab_process_all_block_devices): add force parameter
+	(visit_class_device_block_got_parent): reload /etc/mtab on every
+	hotplug. Call linux_class_block_check_if_ready_to_add() instead of
+	ds_gdl_add()
+	(linux_class_block_check_if_ready_to_add): new function
+	
+	* libhal/libhal.c (filter_func): Added PropertyModified, removed
+	Property[Changed, Added, Removed]
+
+	* libhal/libhal.h (LibHalFunctions_s): Added PropertyModified, removed
+	Property[Changed, Added, Removed]
+	
+	* tools/device-manager/DeviceManager.py 
+	(DeviceManager.device_changed): Listen for PropertyModified instead.
+	Print out payload on stdout for debugging purposes
+
+	* tools/lshal.c (property_modified): new function
+	(property_added): removed
+	(property_removed): removed
+	(property_changed): removed
+	
+	* hald/main.c (hald_atomic_update_begin): new function
+	(hald_atomic_update_end): new function
+	(property_changed): add support for atomic updates
+	(main): Run as root, we require this to sniff mii registres
+
+	* hal.conf.in: Run as root, we require this to sniff mii registres
+
+	* hald/hald.h: new file
+
 2003-12-30  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Change default user to from hal to haldaemon since

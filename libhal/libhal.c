@@ -426,63 +426,37 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
         }
     }
     else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "PropertyChanged") )
+                                    "PropertyModified") )
     {
-        if( functions->device_property_changed!=NULL )
+        if( functions->device_property_modified!=NULL )
         {
+            int i;
             char* key;
-            if( dbus_message_get_args(message, &error, 
-                                      DBUS_TYPE_STRING, &key,
-                                      DBUS_TYPE_INVALID) )
+            dbus_bool_t removed, added;
+            int num_modifications;
+            DBusMessageIter iter;
+
+            dbus_message_iter_init(message, &iter);
+            num_modifications = dbus_message_iter_get_int32(&iter);
+            dbus_message_iter_next(&iter);
+
+
+            for(i=0; i<num_modifications; i++)
             {
-                functions->device_property_changed(object_path, key);
+                
+                key = dbus_message_iter_get_string(&iter);
+                dbus_message_iter_next(&iter);
+                removed = dbus_message_iter_get_boolean(&iter);
+                dbus_message_iter_next(&iter);
+                added = dbus_message_iter_get_boolean(&iter);
+                dbus_message_iter_next(&iter);
+                
+                functions->device_property_modified(object_path, key,
+                                                    removed, added);
+                
                 dbus_free(key);
             }
-            else
-            {
-                fprintf(stderr, "%s %d : error parsing PropertyChanged "
-                        "signal\n", __FILE__, __LINE__);
-            }
-        }
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "PropertyAdded") )
-    {
-        if( functions->device_property_added!=NULL )
-        {
-            char* key;
-            if( dbus_message_get_args(message, &error, 
-                                      DBUS_TYPE_STRING, &key,
-                                      DBUS_TYPE_INVALID) )
-            {
-                functions->device_property_added(object_path, key);
-                dbus_free(key);
-            }
-            else
-            {
-                fprintf(stderr, "%s %d : error parsing PropertyAdded "
-                        "signal\n", __FILE__, __LINE__);
-            }
-        }
-    }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
-                                    "PropertyRemoved") )
-    {
-        if( functions->device_property_removed!=NULL )
-        {
-            char* key;
-            if( dbus_message_get_args(message, &error, 
-                                      DBUS_TYPE_STRING, &key,
-                                      DBUS_TYPE_INVALID) )
-            {
-                functions->device_property_removed(object_path, key);
-                dbus_free(key);
-            }
-            else
-            {
-                fprintf(stderr, "%s %d : error parsing PropertyRemoved "
-                        "signal\n", __FILE__, __LINE__);
-            }
+
         }
     }
 
@@ -494,9 +468,7 @@ static LibHalFunctions hal_null_functions = {
     NULL /*device_added*/, 
     NULL /*device_removed*/, 
     NULL /*device_new_capability*/,
-    NULL /*property_changed*/,
-    NULL /*property_added*/,
-    NULL /*property_removed*/,
+    NULL /*property_modified*/,
 };
 
 /** Initialize the HAL library. 

@@ -334,26 +334,33 @@ const char* get_last_element(const char* s)
 
 /** This function takes a temporary device and renames it to a proper
  *  UDI using the supplied bus-specific #naming_func. After renaming
- *  the HAL daemon will locate a .fdi file and possibly boot the
- *  device (pending RequireEnable property).
+ *  the HAL daemon will locate a .fdi file and possibly merge information
+ *  into the object.
  *
  *  This function handles the fact that identical devices (for
  *  instance two completely identical USB mice) gets their own unique
  *  device id by appending a trailing number after it.
+ *
+ *  You cannot rely on the HalDevice object you gave this function, since
+ *  information may have been merged into an existing HalDevice object. Use
+ *  ds_device_find() to get the corresponding HalDevice object.
+ *
+ *  The device _is not_ added to the GDL. You need to call ds_gdl_add()
+ *  explicitly to do this.
  *
  *  @param  d                   HalDevice object
  *  @param  naming_func         Function to compute bus-specific UDI
  *  @param  namespace           Namespace of properties that must match,
  *                              e.g. "usb", "pci", in order to have matched
  *                              a device
- *  @return                     New non-temporary UDI for the device
+ *  @return                     New UDI for the device
  *                              or #NULL if the device already existed.
  *                              In the event that the device already existed
- *                              the given HalDevice object is destroyed
+ *                              the given HalDevice object is destroyed.
  */
-char* rename_and_maybe_add(HalDevice* d, 
-                           ComputeFDI naming_func,
-                           const char* namespace)
+char* rename_and_merge(HalDevice* d, 
+                       ComputeFDI naming_func,
+                       const char* namespace)
 {
     int append_num;
     char* computed_udi;
@@ -454,10 +461,6 @@ tryagain:
             HAL_INFO(("Found a .fdi file for %s", d->udi));
         }
 
-        /* add to GDL */ 
-        ds_gdl_add(d);
-
-        HAL_INFO(("New device %s added", d->udi));
     }
 
     return computed_udi;

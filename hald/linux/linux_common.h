@@ -61,9 +61,8 @@ const char* get_last_element(const char* s);
  */
 typedef char* (*ComputeFDI)(HalDevice* d, int append_num);
 
-char* rename_and_maybe_add(HalDevice* d, 
-                           ComputeFDI naming_func,
-                           const char* namespace);
+char* rename_and_merge(HalDevice* d, ComputeFDI naming_func, 
+                       const char* namespace);
 
 char* get_parent_sysfs_path(const char* path);
 

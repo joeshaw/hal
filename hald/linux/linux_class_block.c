@@ -47,7 +47,11 @@
 
 #include "../logger.h"
 #include "../device_store.h"
+#include "../hald.h"
 #include "linux_class_block.h"
+
+/* fwd decl */
+static void etc_mtab_process_all_block_devices(dbus_bool_t force);
 
 /**
  * @defgroup HalDaemonLinuxBlock Block class
@@ -157,7 +161,6 @@ void visit_class_device_block(const char* path,
     /** @todo FIXME is a block always 512 bytes?? Must check kernel source */
     ds_property_set_int(d, "block.block_size", 512);
 
-
     if( class_device->sysdevice==NULL )
     {
         /* there is no sys device corresponding to us.. this means we
@@ -185,6 +188,7 @@ void visit_class_device_block(const char* path,
      */
     ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
+                                             TRUE,
                                          visit_class_device_block_got_parent,
                                              (void*) d, 
                                             /*(void*) parent_sysfs_path*/NULL, 
@@ -207,9 +211,11 @@ void visit_class_device_block(const char* path,
 static void visit_class_device_block_got_parent(HalDevice* parent, 
                                                 void* data1, void* data2)
 {
+    char* new_udi = NULL;
+    HalDevice* new_d = NULL;
     HalDevice* d = (HalDevice*) data1;
 
-    /*HAL_INFO(("data2=0x%08x, d=0x%08x", data2, d));*/
+    HAL_INFO(("data2=0x%08x, d=0x%08x, d->udi=%s, parent->udi=%s, parent->in_gdl=%d", data2, d, d->udi, parent!=NULL ? parent->udi : "no parent", parent!=NULL ? parent->in_gdl : 42 ));
 
     if( parent==NULL )
     {
@@ -232,6 +238,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
 
         /** @todo  Guestimate product name; use volume label */
         ds_property_set_string(d, "info.product", "Volume");
+
     }
     else
     {
@@ -336,10 +343,48 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
         }
     }
 
-    rename_and_maybe_add(d, block_compute_udi, "block");
+    /* check /etc/mtab, forces reload of the file */
+    etc_mtab_process_all_block_devices(TRUE);
+
+    new_udi = rename_and_merge(d, block_compute_udi, "block");
+    if( new_udi!=NULL )
+    {
+        new_d = ds_device_find(new_udi);
+        if( new_d!=NULL )
+        {
+            linux_class_block_check_if_ready_to_add(new_d);
+        }
+    }
 }
 
+/** Check if all the required properties are in place so we can announce
+ *  this device to the world.
+ *
+ *  @param  d                   Device
+ */
+void linux_class_block_check_if_ready_to_add(HalDevice* d)
+{
+    const char* parent;
+    const char* device_file;
 
+    /* we know, a'priori, that the only thing we possibly get later
+     * is block.device, so just check for the presence of this
+     */
+
+    /* but do check that we already got our parent sorted out to avoid
+     * a race between udev add and find parent */
+    parent = ds_property_get_string(d, "info.parent");
+    if( parent==NULL )
+        return;
+
+    device_file = ds_property_get_string(d, "block.device");
+    HAL_INFO(("Entering, udi=%s, device_file=%s", d->udi, device_file));
+
+    if( device_file!=NULL && strcmp(device_file, "")!=0 )
+    {
+        ds_gdl_add(d);
+    }
+}
 
 
 
@@ -456,10 +501,11 @@ static time_t etc_mtab_mtime = 0;
  *
  *  This function holds the file open for further access
  *
+ *  @param  force               Force reading of mtab
  *  @return                     FALSE if there was no changes to /etc/mtab
  *                              since last invocation or an error occured
  */
-static dbus_bool_t read_etc_mtab()
+static dbus_bool_t read_etc_mtab(dbus_bool_t force)
 {
     int fd;
     char buf[256];
@@ -482,7 +528,7 @@ static dbus_bool_t read_etc_mtab()
         return FALSE;
     }
 
-    if( etc_mtab_mtime==stat_buf.st_mtime )
+    if( !force && etc_mtab_mtime==stat_buf.st_mtime )
     {
         /*printf("No modification, etc_mtab_mtime=%d\n", etc_mtab_mtime);*/
         return FALSE;
@@ -524,9 +570,9 @@ static dbus_bool_t have_setup_watcher = FALSE;
  *  according to mount status. Also, optionally, sets up a watcher to do
  *  this whenever /etc/mtab changes
  *
- *  @param  setup_watcher       Monitor /etc/mtab
+ *  @param  force               Force reading of mtab
  */
-static void etc_mtab_process_all_block_devices()
+static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 {
     int i;
     const char* bus;
@@ -547,7 +593,7 @@ static void etc_mtab_process_all_block_devices()
     }
 
     /* Just return if /etc/mtab wasn't modified */
-    if( !read_etc_mtab() )
+    if( !read_etc_mtab(force) )
         return;
 
     HAL_INFO(("/etc/mtab changed, processing all block devices"));
@@ -579,12 +625,16 @@ static void etc_mtab_process_all_block_devices()
                     "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
                     mp->device, mp->mount_point, mp->major, mp->minor, 
                     mp->fs_type, d->udi));
+                
+                property_atomic_update_begin();
 
                 /* Yay! Found a mount point; set properties accordingly */
                 ds_property_set_string(d, "block.device", mp->device);
                 ds_property_set_string(d, "block.mount_point",mp->mount_point);
                 ds_property_set_string(d, "block.fstype", mp->fs_type);
                 ds_property_set_bool(d, "block.is_mounted", TRUE);
+
+                property_atomic_update_end();
 
                 found_mount_point = TRUE;
                 break;
@@ -594,9 +644,19 @@ static void etc_mtab_process_all_block_devices()
         /* No mount point found; (possibly) remove all information */
         if( !found_mount_point )
         {
+            property_atomic_update_begin();
+
             ds_property_set_bool(d, "block.is_mounted", FALSE);
-            ds_property_remove(d, "block.mount_point");
-            ds_property_remove(d, "block.fstype");
+            ds_property_set_string(d, "block.mount_point", "");
+            ds_property_set_string(d, "block.fstype", "");
+            if( !ds_property_exists(d, "block.device") )
+            {
+                /** @todo Invoke udev! */
+
+                ds_property_set_string(d, "block.device", "fixme-invoke-udev");
+            }
+
+            property_atomic_update_end();
         }        
     }
 }
@@ -613,7 +673,8 @@ static void sigio_handler(int sig)
     /** @todo FIXME: It's evil to sleep in a signal handler, yes? */
     usleep(250*1000);
 
-    etc_mtab_process_all_block_devices(TRUE);
+    /* don't force reloading of /etc/mtab */
+    etc_mtab_process_all_block_devices(FALSE);
 }
 
 
@@ -631,7 +692,7 @@ void linux_class_block_init()
  */
 void linux_class_block_detection_done()
 {
-    etc_mtab_process_all_block_devices();
+    etc_mtab_process_all_block_devices(TRUE);
 }
 
 /** Shutdown function for block device handling

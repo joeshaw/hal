@@ -707,7 +707,7 @@ static void visit_device_usb_interface(const char* path,
     ds_property_set_string(d, "linux.sysfs_path", path);
     ds_property_set_string(d, "linux.sysfs_path_device", path);
     /** @note We also set the path here, because otherwise we can't handle two
-     *  identical devices per the algorithm used in a #rename_and_maybe_add()
+     *  identical devices per the algorithm used in a #rename_and_merge()
      *  The point is that we need something unique in info.bus=usbif namespace
      */
     ds_property_set_string(d, "usbif.linux.sysfs_path", path);
@@ -759,6 +759,7 @@ static void visit_device_usb_interface(const char* path,
      */
     ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path, 
+                                             TRUE,
                                              visit_device_usbif_got_parent,
                                              (void*) d, NULL, 
                                              is_probing ? 0 :
@@ -777,6 +778,8 @@ static void visit_device_usb_interface(const char* path,
 static void visit_device_usbif_got_parent(HalDevice* parent, 
                                           void* data1, void* data2)
 {
+    char* new_udi = NULL;
+    HalDevice* new_d = NULL;
     HalDevice* d = (HalDevice*) data1;
 
     if( parent==NULL )
@@ -804,7 +807,16 @@ static void visit_device_usbif_got_parent(HalDevice* parent,
     ds_property_set_int(d, "usbif.device_product_id",
         ds_property_get_int(parent, "usb.product_id"));
 
-    rename_and_maybe_add(d, usbif_compute_udi, "usbif");
+    new_udi = rename_and_merge(d, usbif_compute_udi, "usbif");
+    if( new_udi!=NULL )
+    {
+        new_d = ds_device_find(new_udi);
+        if( new_d!=NULL )
+        {
+            ds_gdl_add(new_d);
+        }
+    }
+
 }
 
 
@@ -874,7 +886,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
     ds_property_set_string(d, "linux.sysfs_bus_id", device->bus_id);
     ds_property_set_string(d, "linux.sysfs_path_device", path);
     /** @note We also set the path here, because otherwise we can't handle two
-     *  identical devices per the algorithm used in a #rename_and_maybe_add()
+     *  identical devices per the algorithm used in a #rename_and_merge()
      *  The point is that we need something unique in the info.bus namespace
      */
     ds_property_set_string(d, "usb.linux.sysfs_path", path);
@@ -1020,6 +1032,7 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
      */
     ds_device_async_find_by_key_value_string("linux.sysfs_path_device",
                                              parent_sysfs_path,
+                                             TRUE,
                                              visit_device_usb_got_parent,
                                              (void*) d, NULL, 
                                              is_probing ? 0 :
@@ -1038,6 +1051,8 @@ void visit_device_usb(const char* path, struct sysfs_device *device)
 static void visit_device_usb_got_parent(HalDevice* parent, 
                                         void* data1, void* data2)
 {
+    char* new_udi = NULL;
+    HalDevice* new_d = NULL;
     int bus_number;
     const char* bus_id;
     usb_proc_info* proc_info;
@@ -1225,7 +1240,15 @@ static void visit_device_usb_got_parent(HalDevice* parent,
     /* Finally, Compute a proper UDI (unique device id), try to locate
      * a persistent unplugged device or add it
      */
-    rename_and_maybe_add(d, usb_compute_udi, "usb");
+    new_udi = rename_and_merge(d, usb_compute_udi, "usb");
+    if( new_udi!=NULL )
+    {
+        new_d = ds_device_find(new_udi);
+        if( new_d!=NULL )
+        {
+            ds_gdl_add(new_d);
+        }
+    }
 }
 
 

@@ -217,6 +217,7 @@ void visit_class_device_net(const char* path,
     ds_device_async_find_by_key_value_string(
         "linux.sysfs_path_device",
         class_device->sysdevice->path, 
+        FALSE,
         visit_class_device_net_got_sysdevice,
         (void*) d, NULL, 
         is_probing ? 0 :
@@ -328,6 +329,8 @@ static void link_detection_process(link_detection_if* iface)
          *
          */
 
+        property_atomic_update_begin();
+
         if( (status_word&0x0016)==0x0004 )
         {
             ds_property_set_bool(iface->device, 
@@ -354,6 +357,7 @@ static void link_detection_process(link_detection_if* iface)
          */
         link_word = mdio_read(iface, 1);
 
+        
         if( link_word&0x0300 )
         {
             ds_property_set_int(iface->device, "net.ethernet.rate", 
@@ -365,6 +369,7 @@ static void link_detection_process(link_detection_if* iface)
                                 10*1000*1000);
         }
 
+        property_atomic_update_end();
     }
 }
 
