@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo>
+  <device>
+    <match key="Bus" string="usb">
+      <match key="usb.bDeviceClass" int="9">
+          <merge key="DeviceInfoFileVendor" type="string">Free Desktop Project</merge>
+          <merge key="DeviceInfoFileId" type="string">org.freedesktop.org.Hal.FDIRepo.GenericUSBHub</merge>
+          <merge key="Vendor" type="string">Generic USB Hub</merge>
+          <merge key="Product" type="string">Generic USB Hub</merge>
+          <merge key="Category" type="string">Hub</merge>
+          <merge key="Capabilities" type="string">Hub</merge>
+      </match>
+    </match>
+  </device>
+</deviceinfo>
+

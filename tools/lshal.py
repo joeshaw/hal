@@ -32,9 +32,24 @@ def print_devices():
     print "==========================================="
     print ""
 
+def device_changed(dbus_if,dbus_member, dbus_svc, dbus_obj_path, dbus_message):
+    [property_name] = dbus_message.get_args_list()
+    print "%s %s property %s"%(dbus_member, dbus_obj_path, property_name)
+
 def gdl_changed(dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
-    if dbus_member=="DeviceAdded" or dbus_member=="DeviceRemoved":
+    if dbus_member=="DeviceAdded":
         [device_udi] = dbus_message.get_args_list()
+        bus.add_signal_receiver(device_changed,
+                                "org.freedesktop.Hal.Device",
+                                "org.freedesktop.Hal",
+                                device_udi)
+        print_devices()
+    elif dbus_member=="DeviceRemoved":
+        [device_udi] = dbus_message.get_args_list()
+        bus.remove_signal_receiver(device_changed,
+                                   "org.freedesktop.Hal.Device",
+                                   "org.freedesktop.Hal",
+                                   device_udi)
         print_devices()
     else:
         print "*** Unknown signal %s"%dbus_member
@@ -54,6 +69,15 @@ def main():
                             "org.freedesktop.Hal.Manager",
                             "org.freedesktop.Hal",
                             "/org/freedesktop/Hal/Manager")
+
+    # Add listeners for all devices
+    device_names = hal_manager.GetAllDevices()
+    for name in device_names:
+        bus.add_signal_receiver(device_changed,
+                                "org.freedesktop.Hal.Device",
+                                "org.freedesktop.Hal",
+                                name)
+
 
     print_devices();
     gtk.main()

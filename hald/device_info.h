@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * logger.h : Logging facility
+ * device_store.c : Search for .fdi files and merge on match
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
@@ -23,22 +23,15 @@
  *
  **************************************************************************/
 
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef DEVICE_INFO_H
+#define DEVICE_INFO_H
 
-/*#define LOG_TRACE(expr)   do {printf("[T] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)*/
-#define LOG_TRACE(expr) do {;} while(0)
+#include <stdarg.h>
+#include <stdint.h>
+#include <dbus/dbus.h>
 
+#include "device_store.h"
 
-#define LOG_DEBUG(expr)   do {printf("[D] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
+dbus_bool_t di_search_and_merge(HalDevice* d);
 
-#define LOG_INFO(expr)    do {printf("[I] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
-
-#define LOG_WARNING(expr) do {printf("[W] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
-
-#define LOG_ERROR(expr)   do {printf("[E] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
-
-#define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
-
-
-#endif /* LOGGER_H */
+#endif /* DEVICE_INFO_H */

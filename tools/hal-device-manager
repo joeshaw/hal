@@ -58,7 +58,11 @@ class Device:
         if self.row != None:
             # TODO: Inspect Category and select name to display in tree
             tree_model.set_value(self.row, PIXBUF_COLUMN, gtk.Window().render_icon(gtk.STOCK_DIALOG_WARNING, gtk.ICON_SIZE_MENU, None))
-            tree_model.set_value(self.row, TITLE_COLUMN, "Unknown device")
+            try:
+                title_name = self.properties["Category"]
+            except KeyError:
+                title_name = "Unknown Device"
+            tree_model.set_value(self.row, TITLE_COLUMN, title_name)
             tree_model.set_value(self.row, UDI_COLUMN, self.device_name)
         for c in self.children:
             c.populate_gtk_tree(tree_model)
@@ -136,7 +140,10 @@ def update_tab_device(device):
     state.set_label(state_names[device.properties["State"]])
 
     # guestimate product and vendor if we have no device information file
-    if not device.properties["GotDeviceInfo"]:
+    if device.properties["GotDeviceInfo"]:
+        product.set_label(device.properties["Product"])
+        vendor.set_label(device.properties["Vendor"])
+    else:
         if device.properties["Bus"]=="usb":
             try:
                 product.set_label(device.properties["usb.ProductString"])
@@ -180,9 +187,26 @@ def on_device_tree_selection_changed(tree_selection):
     device = udi_to_device(device_udi)
     update_device_notebook(device)
 
+def device_changed(dbus_if,dbus_member, dbus_svc, dbus_obj_path, dbus_message):
+    [property_name] = dbus_message.get_args_list()
+    # TODO: Update appropriate device
+    if property_name=="Parent":
+        update_device_list()        
+
 def gdl_changed(dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
-    if dbus_member=="DeviceAdded" or dbus_member=="DeviceRemoved":
-        #[device_udi] = dbus_message.get_args_list()
+    if dbus_member=="DeviceAdded":
+        [device_udi] = dbus_message.get_args_list()
+        bus.add_signal_receiver(device_changed,
+                                "org.freedesktop.Hal.Device",
+                                "org.freedesktop.Hal",
+                                device_udi)
+        update_device_list()
+    elif dbus_member=="DeviceRemoved":
+        [device_udi] = dbus_message.get_args_list()
+        bus.remove_signal_receiver(device_changed,
+                                   "org.freedesktop.Hal.Device",
+                                   "org.freedesktop.Hal",
+                                   device_udi)
         update_device_list()
     else:
         print "*** Unknown signal %s"%dbus_member
@@ -238,6 +262,14 @@ def main():
                             "org.freedesktop.Hal.Manager",
                             "org.freedesktop.Hal",
                             "/org/freedesktop/Hal/Manager")
+
+    # Add listeners for all devices
+    device_names = hal_manager.GetAllDevices()
+    for name in device_names:
+        bus.add_signal_receiver(device_changed,
+                                "org.freedesktop.Hal.Device",
+                                "org.freedesktop.Hal",
+                                name)    
 
     xml = gtk.glade.XML("hal-device-manager.glade")
     win = xml.get_widget("device_window")

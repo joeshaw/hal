@@ -37,6 +37,7 @@
 
 #include "logger.h"
 #include "device_store.h"
+#include "device_info.h"
 
 /* We need somewhere to define these groups somewhere */
 
@@ -768,8 +769,41 @@ static DBusHandlerResult device_enable(DBusConnection* connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    /** @todo: enable device */
+    /* Now enable device */
     LOG_INFO(("Enabling device %s", udi));
+    
+    /* First, make sure we got an .fdi file */
+    if( (!ds_property_exists(d, "GotDeviceInfo")) || 
+        (!ds_property_get_bool(d, "GotDeviceInfo")) )
+    {
+        /* need to search for an .fdi file */
+        if( di_search_and_merge(d) )
+        {
+            /* Found .fdi file */
+
+            /** @todo Check for required properties */
+
+            ds_property_set_bool(d, "GotDeviceInfo", TRUE);
+        }
+        else
+            ds_property_set_bool(d, "GotDeviceInfo", FALSE);
+    }
+
+
+
+    if( ds_property_get_bool(d, "GotDeviceInfo") )
+    {
+        /** @todo boot device */
+        LOG_INFO(("Now booting device"));
+
+        ds_property_set_int(d, "State", HAL_STATE_ENABLED);        
+    }
+    else
+    {
+        /* giving up */
+        ds_property_set_int(d, "State", HAL_STATE_NEED_DEVICE_INFO);
+    }
+
 
     dbus_message_iter_init(reply, &iter);
     dbus_message_iter_append_boolean(&iter, ok_to_enable);
@@ -1113,6 +1147,9 @@ static DBusHandlerResult agent_manager_commit_to_gdl(
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
+    /* add to the GDL */
+    ds_gdl_add(d);
+
     /* Ok, send out a signal on the Manager interface that we added
      * this device to the gdl */
     manager_send_signal_device_added(new_udi);
@@ -1354,10 +1391,12 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
                                          DBusMessage* message,
                                          void* user_data)
 {
+/*
     LOG_INFO(("obj_path=%s interface=%s method=%s", 
               dbus_message_get_path(message), 
               dbus_message_get_interface(message),
               dbus_message_get_member(message)));
+*/
 
     if( dbus_message_is_method_call(message,
                                     "org.freedesktop.Hal.Manager",
@@ -1526,18 +1565,45 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
  *  @param  in_gdl              True iff the device object in visible in the
  *                              global device list
  *  @param  removed             True iff the property was removed
+ *  @param  added               True iff the property was added
  */
 static void property_changed(HalDevice* device,
                              const char* key, 
                              dbus_bool_t in_gdl, 
-                             dbus_bool_t removed)
+                             dbus_bool_t removed,
+                             dbus_bool_t added)
 {
-/*
-    LOG_INFO(("Invoked, udi=%s, key=%s, in_gdl=%s, removed=%s",
-              ds_get_udi(device), key, 
+    DBusMessage* message;
+    DBusMessageIter iter;
+    const char* signal_name;
+
+    LOG_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
+              device->udi, key, 
               in_gdl ? "true" : "false",
-              removed ? "true" : "false"));
-*/
+              removed ? "true" : "false",
+              added ? "true" : "false"));
+
+    if( !in_gdl )
+        return;
+
+    if( removed )
+        signal_name = "PropertyRemoved";
+    else if( added )
+        signal_name = "PropertyAdded";
+    else
+        signal_name = "PropertyChanged";
+
+    message = dbus_message_new_signal(device->udi, 
+                                      "org.freedesktop.Hal.Device",
+                                      signal_name);
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, key);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
 }
 
 

@@ -89,17 +89,20 @@ typedef struct HalDeviceIterator_s
     unsigned int position;        /**< Which number are we iterating over */
 } HalDeviceIterator;
 
-/** Signature for callback function when a property is changed or removed.
+/** Signature for callback function when a property is changed, added
+ *  or removed.
  *
  *  @param  device              A pointer to a #HalDevice object
  *  @param  key                 The key of the property
  *  @param  in_gdl              Device is in global device list
- *  @param  removed             Property is removed
+ *  @param  removed             True iff property was removed
+ *  @param  added               True iff property was added
  */
 typedef void (*HalDevicePropertyChangedCallback)(HalDevice* device,
                                                  const char* key, 
                                                  dbus_bool_t in_gdl, 
-                                                 dbus_bool_t removed);
+                                                 dbus_bool_t removed,
+                                                 dbus_bool_t added);
 
 void ds_init(HalDevicePropertyChangedCallback property_changed_cb);
 void ds_shutdown();

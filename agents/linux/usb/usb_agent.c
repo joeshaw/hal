@@ -533,6 +533,8 @@ static void usb_device_set_parent(char* d, char** devices,
         if( c==NULL )
             continue;
 
+        printf("c='%s'\n", c);
+
         // only test against USB devices
         if( strcmp(hal_device_get_property_string(c, "Bus"), "usb")!=0 )
             continue;
@@ -569,7 +571,7 @@ static void usb_compute_parents()
         if( bus==NULL || strcmp(bus, "usb")!=0 )
         {
             /* not an USB device, remove from list.. */
-            free(devices[i]);
+            //free(devices[i]);
             devices[i]=NULL;
         }   
     }
@@ -584,7 +586,7 @@ static void usb_compute_parents()
         /* Can't use hal_free_string_array() since we punched #NULL
          * pointers into it...
          */
-        free( devices[i] );
+        //free( devices[i] );
     }
 }
 
@@ -612,7 +614,7 @@ static void usb_compute_parent(char* udi)
         if( bus==NULL || strcmp(bus, "usb")!=0 )
         {
             /* not an USB device, remove from list.. */
-            free(devices[i]);
+            //free(devices[i]);
             devices[i]=NULL;
         }   
     }
@@ -625,7 +627,7 @@ static void usb_compute_parent(char* udi)
     for(i=0; i<num_devices; i++)
     {
         if( devices[i]!=NULL )
-            free(devices[i]);
+            ;//free(devices[i]);
     }
     
 }
@@ -788,7 +790,7 @@ static void usb_probe()
     }
 
     /* Now compute parents for all USB devices */
-    /*usb_compute_parents();*/
+    usb_compute_parents();
 }
 
 
@@ -917,7 +919,7 @@ static void usb_hotplug()
         /* Remove tempoary device */
         hal_agent_remove_device(d);
 
-        hal_free_string_array(devices);
+        //hal_free_string_array(devices);
         return;
     }
 
@@ -955,9 +957,10 @@ static void usb_hotplug()
         usb_compute_parent(added_device);
 */
     /* Find parents for all USB devices since plugging in a hub may mean
-     * many devices added and this all happens at the same time
+     * many devices added and this all happens at the same time, which means
+     * that childs may be added before parents
      */
-    /*usb_compute_parents();*/
+    usb_compute_parents();
 }
 
 /** Entry point for USB agent for HAL on GNU/Linux
@@ -991,6 +994,10 @@ int main(int argc, char* argv[])
 
     if( argc==2 && strcmp(argv[1], "usb")==0 )
     {
+        /** @todo  Hmm, it appears that /proc/bus/usb/devices is not updated
+         *         before the hotplug event is received; this "fixes" it.. */
+        sleep(1);
+
         usb_hotplug();
         /* No use in reporting error back to linux-hotplug */
 

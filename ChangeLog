@@ -1,3 +1,57 @@
+2003-11-15  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux/usb/usb_agent.c (usb_compute_parents): Remove calls
+	to free(); we are causing segfaults because of we are interferring
+	with D-BUS memory management
+	(usb_compute_parent): Remove calls to free(); same reason
+	(usb_probe): Call usb_compute_parents()
+	(usb_hotplug): Remove calls to free(); same as above; compute parents
+	for all USB devices every time a single device is added/removed
+	(main): Sleep for one second before handling hotplug event to allow
+	the kernel to update /proc/bus/usb/devices
+
+	* hald/device_info.h: new file
+
+	* hald/device_info.c: new file
+
+	* hald/Makefile.am: add device_info.[ch]
+
+	* hald/device_store.h: Change signature of
+	HalDevicePropertyChangeCallback with an added parameter to allow
+	the callback handler to see if a device have been added
+
+	* hald/device_store.c: Change to new signature of property_change_cb
+
+	* hald/logger.h: Don't print LOG_TRACE()
+
+	* hald/main.c (device_enable): Call di_search_and_merge() to handle
+	  .fdi files 
+	(agent_manager_commit_to_gdl): Call ds_gdl_add()
+	(filter_func): Don't log entry on every method invocation
+	(property_changed): Implement
+
+	* tools/hal-device-manager: Use Product, Vendor, Category properties to
+	display information, if available. Handle property changed; reloads
+	device tree when a Parent property changes. Subscribe to signals
+	org.freedesktop.Hal.Device interface to catch property changes
+
+	* tools/lshal.py: Listen to property changes on device objects
+
+	* fdi: new directory
+
+	* fdi/10generic: new directory
+
+	* fdi/20freedesktop: new directory
+
+	* fdi/10generic/generic-usb-hub.fdi: new file
+	
+	* fdi/10generic/generic-hid-mouse.fdi: new file
+
+	* fdi/20freedesktop/ibm-usb-hub-keyboard.fdi: new file
+
+	* fdi/20freedesktop/lexar-cf-card-reader.fdi: new file
+
+	
 2003-11-11  David Zeuthen  <david@fubar.dk>
 
 	* Doxyfile: new file, added so we can generate doxygen documentation

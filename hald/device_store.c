@@ -440,7 +440,7 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
             if( property_changed_cb!=NULL )
                 property_changed_cb(device,
                                     key,
-                                    device->in_gdl, FALSE);
+                                    device->in_gdl, FALSE, FALSE);
             return TRUE;
         }
     }
@@ -470,7 +470,7 @@ dbus_bool_t ds_property_set_string(HalDevice* device, const char* key,
     if( property_changed_cb!=NULL )
         property_changed_cb(device,
                             prop->key,
-                            device->in_gdl, FALSE);
+                            device->in_gdl, FALSE, TRUE);
 
     return TRUE;
 }
@@ -506,7 +506,7 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
             if( property_changed_cb!=NULL )
                 property_changed_cb(device,
                                     key,
-                                    device->in_gdl, FALSE);
+                                    device->in_gdl, FALSE, FALSE);
             return TRUE;
         }
     }
@@ -534,7 +534,7 @@ dbus_bool_t ds_property_set_int(HalDevice* device, const char* key,
     if( property_changed_cb!=NULL )
         property_changed_cb(device,
                             prop->key,
-                            device->in_gdl, FALSE);
+                            device->in_gdl, FALSE, TRUE);
 
     return TRUE;
 }
@@ -570,7 +570,7 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
             if( property_changed_cb!=NULL )
                 property_changed_cb(device,
                                     key,
-                                    device->in_gdl, FALSE);
+                                    device->in_gdl, FALSE, FALSE);
             return TRUE;
         }
     }
@@ -598,7 +598,7 @@ dbus_bool_t ds_property_set_bool(HalDevice* device, const char* key,
     if( property_changed_cb!=NULL )
         property_changed_cb(device,
                             prop->key,
-                            device->in_gdl, FALSE);
+                            device->in_gdl, FALSE, TRUE);
 
     return TRUE;
 }
@@ -634,7 +634,7 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
             if( property_changed_cb!=NULL )
                 property_changed_cb(device,
                                     key,
-                                    device->in_gdl, FALSE);
+                                    device->in_gdl, FALSE, FALSE);
             return TRUE;
         }
     }
@@ -662,7 +662,7 @@ dbus_bool_t ds_property_set_double(HalDevice* device, const char* key,
     if( property_changed_cb!=NULL )
         property_changed_cb(device,
                             prop->key,
-                            device->in_gdl, FALSE);
+                            device->in_gdl, FALSE, TRUE);
 
     return TRUE;
 }
@@ -718,7 +718,7 @@ dbus_bool_t ds_property_remove(HalDevice* device, const char* key)
             if( property_changed_cb!=NULL )
                 property_changed_cb(device,
                                     key,
-                                    device->in_gdl, TRUE);
+                                    device->in_gdl, TRUE, FALSE);
             
             return TRUE;
         }
