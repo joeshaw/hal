@@ -459,8 +459,68 @@ void ds_device_async_find_by_key_value_string(const char* key,
 
 }
 
+/** Find one or more devices by requiring a specific key to assume string
+ *  value. 
+ *
+ *  @param  key                 key of the property
+ *  @param  value               value of the property
+ *  @param  only_gdl            only search in the gdl
+ *  @param  num_results         pointer to where number of results are stored
+ *  @return                     Array of pointers to #HalDevice object, 
+ *                              terminated by #NULL, or #NULL if no such 
+ *                              devices exist. 
+ *                              Caller is supposed to free this with free()
+ */
+HalDevice** ds_device_find_multiple_by_key_value_string(const char* key, 
+                                                        const char* value,
+                                                        dbus_bool_t only_gdl,
+                                                        int* num_results)
+{
+    int type;
+    int num_devices;
+    HalDevice* device;
+    HalDevice** devices;
+    HalDeviceIterator iter_device;
+
+    /** @todo FIXME HACK XXX HERE_BE_DRAGONS this is an ugly hack, and a waste
+     *  to have max 1024 devices */
+    devices = xmalloc(sizeof(HalDevice*)*1024);
+    num_devices = 0;
+
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        device = ds_device_iter_get(&iter_device);
+
+        if( only_gdl && !device->in_gdl )
+            continue;
+
+        type = ds_property_get_type(device, key);
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strcmp(ds_property_get_string(device, key),
+                       value)==0 )
+                devices[num_devices++] = device;
+        }
+    }
+
+    if( num_devices==0 )
+    {
+        free(devices);
+        return NULL;
+    }
+    else
+    {
+        if( num_results!=NULL )
+            *num_results = num_devices;
+        return devices;
+    }
+}
+
 /** Find a device by requiring a specific key to assume string value. If 
- *  multiple devices meet this criteria then the result is undefined.
+ *  multiple devices meet this criteria then the result is undefined. Use
+ *  ds_device_find_multiple_by_key_value_string() instead.
  *
  *  @param  key                 key of the property
  *  @param  value               value of the property
@@ -1414,7 +1474,7 @@ void ds_add_capability(HalDevice* device, const char* capability)
     }
     else
     {
-        if( strstr(caps, capability)==NULL )
+        if( !ds_query_capability(device, capability) )
         {
             snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
             ds_property_set_string(device, "info.capabilities", buf);
@@ -1440,6 +1500,9 @@ dbus_bool_t ds_query_capability(HalDevice* device, const char* capability)
     caps = ds_property_get_string(device, "info.capabilities");
     if( caps!=NULL )
     {
+        /** @todo FIXME this is clearly borken - consider properties foo
+         *  and foobar - you cannot add foo if foobar already exist 
+         */
         if( strstr(caps, capability)!=NULL )
             return TRUE;
     }

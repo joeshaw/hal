@@ -103,7 +103,7 @@ int main(int argc, char* argv[], char* envp[])
     /* Do some sleep here so the kernel have time to publish it's
      * stuff in sysfs
      */
-    usleep(500*1000);
+    usleep(1000*1000);
 
     if ( !dbus_connection_send(sysbus_connection, message, NULL) )
         return 1;

@@ -31,7 +31,9 @@
 void visit_class_device_block(const char* path, 
                               struct sysfs_class_device *class_device);
 
-void linux_class_block_check_if_ready_to_add();
+void linux_class_block_removed(HalDevice* d);
+
+void linux_class_block_check_if_ready_to_add(HalDevice* d);
 
 void linux_class_block_init();
 void linux_class_block_detection_done();

@@ -46,6 +46,7 @@
 #include <linux/fcntl.h>
 #include <linux/kdev_t.h>
 #include <linux/cdrom.h>
+#include <linux/fs.h>
 
 #include "../logger.h"
 #include "../device_store.h"
@@ -816,7 +817,7 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
                     "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
                     mp->device, mp->mount_point, mp->major, mp->minor, 
                     mp->fs_type, d->udi));
-                
+
                 property_atomic_update_begin();
 
                 existing_block_device = ds_property_get_string(d,
@@ -882,19 +883,21 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 }
 
 
+/** Will be set to true by the SIGIO handler */
+static dbus_bool_t sigio_etc_changed = FALSE;
+
 /** Signal handler for watching /etc
  *
  *  @param  sig                 Signal number
  */
 static void sigio_handler(int sig)
 {
-    HAL_INFO(("Directory /etc changed"));
+    /* Set a variable instead of handling it now - this is *much* safer
+     * since this handler must be very careful - man signal for more 
+     * information 
+     */
 
-    /** @todo FIXME: It's evil to sleep in a signal handler, yes? */
-    usleep(250*1000);
-
-    /* don't force reloading of /etc/mtab */
-    etc_mtab_process_all_block_devices(FALSE);
+    sigio_etc_changed = TRUE;
 }
 
 /** Find udev root directory (e.g. '/udev/') by invoking '/sbin/udev -r'.
@@ -959,6 +962,165 @@ void linux_class_block_init()
     get_udev_root();
 }
 
+/** Force unmount of a patition. Must have block.volume=1 and valid
+ *  block.device
+ *
+ *  @param  d                   Device
+ */
+static void force_unmount(HalDevice* d)
+{
+    const char* device_file;
+    const char* device_mount_point;
+    const char* umount_argv[4] = {"/bin/umount", "-l", NULL, NULL};
+    char* umount_stdout;
+    char* umount_stderr;
+    int umount_exitcode;
+
+    device_file = ds_property_get_string(d, "block.device");
+    device_mount_point = ds_property_get_string(d, "block.mount_point");
+            
+    umount_argv[2] = device_file;
+            
+    if( ds_property_exists(d, "block.is_volume") &&
+        ds_property_get_bool(d, "block.is_volume") &&
+        device_mount_point!=NULL && 
+        strlen(device_mount_point)>0 )
+    {
+        HAL_INFO(("attempting /bin/umount -l %s", device_file));
+                                                
+        /* invoke umount */
+        if( g_spawn_sync("/",
+                         umount_argv,
+                         NULL,
+                         0,
+                         NULL,
+                         NULL,
+                         &umount_stdout,
+                         &umount_stderr,
+                         &umount_exitcode,
+                         NULL)!=TRUE )
+        {
+            HAL_ERROR(("Couldn't invoke /bin/umount"));
+        }
+        
+        if( umount_exitcode!=0 )
+        {
+            HAL_INFO(("/bin/umount returned %d", umount_exitcode));
+        }
+        else
+        {
+            /* Tell clients we are going to unmount so they close
+             * can files - otherwise this unmount is going to stall
+             *
+             * One candidate for catching this would be FAM - the
+             * File Alteration Monitor
+             *
+             * Lazy unmount been in Linux since 2.4.11, so we're
+             * homefree (but other OS'es might not support this)
+             */
+            HAL_INFO(("Goint to emit BlockForcedUnmountPartition('%s', '%s', TRUE)",
+                      device_file, device_mount_point));
+            emit_condition(
+                d, "BlockForcedUnmountPartition",
+                DBUS_TYPE_STRING, device_file,
+                DBUS_TYPE_STRING, device_mount_point,
+                DBUS_TYPE_BOOLEAN, TRUE,
+                DBUS_TYPE_INVALID);
+
+            /* Woohoo, have to change block.mount_point *afterwards*, other
+             * wise device_mount_point points to garbage and D-BUS throws
+             * us off the bus, in fact it's doing exiting with code 1
+             * for us - not nice
+             */
+            property_atomic_update_begin();
+            ds_property_set_string(d, "block.mount_point", "");
+            ds_property_set_string(d, "block.fstype", "");
+            ds_property_set_bool(d, "block.is_mounted", FALSE);
+            property_atomic_update_end();
+        }
+    }
+}
+
+/** Unmount all partitions that stems from this block device. Must have
+ *  block.is_volume==0
+ *
+ *  @param  d                   Device
+ */
+static void force_unmount_of_all_childs(HalDevice* d)
+{
+    int fd;
+    int num_childs;
+    const char* device_file;
+    HalDevice* child;
+    HalDevice** childs;
+
+    device_file = ds_property_get_string(d, "block.device");
+
+    childs = ds_device_find_multiple_by_key_value_string("info.parent",
+                                                         d->udi, 
+                                                         TRUE,
+                                                         &num_childs);
+    if( childs!=NULL )
+    {
+        int n;
+
+        for(n=0; n<num_childs; n++)
+        {
+            child = childs[n];
+
+            force_unmount(child);
+                        
+        } /* for all childs */
+        
+        free(childs);
+        
+        HAL_INFO(("Rereading partition table for %s", device_file));
+        fd = open(device_file, O_RDONLY|O_NONBLOCK);
+        if( fd!=-1 )
+        {
+            ioctl(fd, BLKRRPART);
+        }
+        close(fd);
+        
+        /* All this work should generate hotplug events to actually
+         * remove the child devices 
+         */
+
+        /* Finally, send a single signal on the device - this
+         * is useful for desktop policy clients such as g-v-m
+         * such that only a single annoying "dude, you need to
+         * *stop* the device before pulling it out" popup is
+         * displayed */
+        HAL_INFO(("Goint to emit BlockForcedUnmount('%s')",
+                  device_file));
+        emit_condition(d, "BlockForcedUnmount",
+                       DBUS_TYPE_STRING, device_file,
+                       DBUS_TYPE_INVALID);
+        
+    } /* childs!=NULL */
+}
+
+
+
+/** Called when this device is about to be removed
+ *
+ *  @param  d                   Device
+ */
+void linux_class_block_removed(HalDevice* d)
+{
+    if( ds_property_exists(d, "block.is_volume") )
+    {
+        if( ds_property_get_bool(d, "block.is_volume") )
+        {
+            force_unmount(d);
+        }
+        else
+        {
+            force_unmount_of_all_childs(d);
+        }
+    }
+}
+
 /** Check for media on a block device that is not a volume
  *
  *  @param  d                   Device to inspect; can be any device, but
@@ -970,7 +1132,9 @@ void linux_class_block_init()
 static dbus_bool_t detect_media(HalDevice* d)
 {
     int fd;
+    dbus_bool_t is_cdrom;
     const char* device_file;
+    HalDevice* child;
 
     /* need to be in GDL, need to have block.deve and 
      * have block.is_volume==FALSE 
@@ -985,29 +1149,44 @@ static dbus_bool_t detect_media(HalDevice* d)
     if( device_file==NULL )
         return FALSE;
     
-    /* This is sufficient to invoke hotplug remove and hotplug add
-     * for partitions on the device; neat!
-     */
-    fd = open(device_file, O_RDONLY|O_NONBLOCK);
-
-    if( fd==-1 )
-    {
-        /* open failed */
-        HAL_WARNING(("open(\"%s\", O_RDONLY|O_NONBLOCK) failed, "
-                     "errno=%d", device_file, errno));
-        return FALSE;
-    }
-
-    /* special treatment for optical discs */
-    if( ds_property_exists(d, "storage.media") &&
+    /* we do special treatment for optical discs */
+    is_cdrom = ds_property_exists(d, "storage.media") &&
         strcmp(ds_property_get_string(d, "storage.media"), "cdrom")==0 &&
-        ds_property_get_bool(d, "storage.cdrom.support_media_changed")
-        )
+        ds_property_get_bool(d, "storage.cdrom.support_media_changed");
+
+    if( !is_cdrom )
+    {
+        fd = open(device_file, O_RDONLY);
+        
+        if( fd==-1 )
+        {
+            /* open failed */
+            HAL_WARNING(("open(\"%s\", O_RDONLY) failed, "
+                         "errno=%d", device_file, errno));
+
+            if( errno==ENOMEDIUM )
+            {
+                force_unmount_of_all_childs(d);
+            }
+
+        }
+
+    } /* device is not an optical drive */
+    else
     {
         int drive;
-        HalDevice* child;
         dbus_bool_t got_disc = FALSE;
-            
+
+        fd = open(device_file, O_RDONLY|O_NONBLOCK);
+
+        if( fd==-1 )
+        {
+            /* open failed */
+            HAL_WARNING(("open(\"%s\", O_RDONLY|O_NONBLOCK) failed, "
+                         "errno=%d", device_file, errno));
+            return FALSE;
+        }
+        
         drive = ioctl(fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
         switch( drive )
         {
@@ -1133,6 +1312,19 @@ static gboolean media_detect_timer_handler(gpointer data)
         if( detect_media(d) )
             break;
     }
+
+    /* check if the SIGIO signal handler delivered something to us */
+    if( sigio_etc_changed )
+    {
+        /* acknowledge we got it */
+        sigio_etc_changed = FALSE;
+
+        HAL_INFO(("Directory /etc changed"));
+        /* don't force reloading of /etc/mtab */
+        etc_mtab_process_all_block_devices(FALSE);
+    }
+
+    HAL_INFO(("exiting"));
 
     return TRUE;
 }

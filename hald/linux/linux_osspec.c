@@ -504,6 +504,9 @@ static DBusHandlerResult handle_hotplug(DBusConnection* connection,
             }
             else
             {
+                if( strcmp(subsystem, "block")==0 )
+                    linux_class_block_removed(d);
+
                 HAL_INFO(("Removing classdevice @ sysfspath %s, udi %s", 
                           sysfs_devpath, d->udi));
                 ds_device_destroy(d);

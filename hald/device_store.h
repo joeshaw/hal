@@ -155,6 +155,11 @@ typedef void (*DSAsyncFindDeviceCB)(HalDevice* result,
 
 HalDevice* ds_device_find(const char* udi);
 
+HalDevice** ds_device_find_multiple_by_key_value_string(const char* key, 
+                                                        const char* value,
+                                                        dbus_bool_t only_gdl,
+                                                        int* num_results);
+
 HalDevice* ds_device_find_by_key_value_string(const char* key, 
                                               const char* value,
                                               dbus_bool_t only_gdl);

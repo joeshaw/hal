@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -1743,6 +1744,7 @@ static PendingUpdate* pending_updates_head = NULL;
 void property_atomic_update_end()
 {
     PendingUpdate* pu_iter = NULL;
+    PendingUpdate* pu_iter_next = NULL;
     PendingUpdate* pu_iter2 = NULL;
 
     --atomic_count;
@@ -1760,9 +1762,11 @@ void property_atomic_update_end()
 
         for(pu_iter=pending_updates_head; 
             pu_iter!=NULL; 
-            pu_iter=pu_iter->next)
+            pu_iter=pu_iter_next)
         {
             int num_updates_this;
+
+            pu_iter_next = pu_iter->next;
 
             if( pu_iter->device==NULL )
                 goto have_processed;

@@ -1,3 +1,40 @@
+2004-01-16  David Zeuthen  <david@fubar.dk>
+
+	* packaging/fedora/hal.spec (Version): bump version to 0.2.5
+
+	* configure.in: bump version to 0.2.5
+
+	* tools/linux/hal_hotplug.c (main): sleep 1000ms instead of 500ms
+	before sending signal - we really need to update to latest libsysfs
+	in hald to avoid the race - this is soo ugly
+
+	* hald/main.c (property_atomic_update_end): fix possible memory
+	violation
+
+	* hald/linux/linux_osspec.c (handle_hotplug): call 
+	linux_class_block_removed() just before destroying the HalDevice obj
+
+	* hald/linux/linux_class_block.c (linux_class_block_removed): new
+	function
+
+	* hald/linux/linux_class_block.h: add prototype for 
+	linux_class_block_removed()
+
+	* hald/device_store.c 
+	(ds_device_find_multiple_by_key_value_string): new funtion
+
+	* hald/device_store.h: add prototype for
+	ds_device_find_multiple_by_key_value_string()
+
+	* hald/linux/linux_class_block.c (sigio_handler): Make this signal
+	handler *a lot* safer by only setting a flag a timer can pick up
+	(detect_media): properly handle situation when user removes media
+	where partitions are mounted on
+	(media_detect_timer_handler): check sigio_etc_changed
+	(force_unmount_of_all_childs): newfunction
+	(force_unmount): new function
+	(linux_class_block_removed): new function
+
 2004-01-14  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_class_block.c (detect_media): Doh, leaked a
