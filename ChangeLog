@@ -1,5 +1,18 @@
 2005-02-26  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/10-storage-policy.fdi: Use mount point
+	'ipod' for iPod's (works better with gtkpod :-). Apply patch from
+	Daniel Serpell <daniel.serpell@aplik.cl> that I got via Sjoerd
+	Simons <sjoerd@luon.net> : The FDI rule that detects USB ZIP drive
+	and names the mountpoint is incorrectly write, so partitioned
+	ZIP's are named generically. The attached patch fixes the
+	test (lookup in the parent of the partition).
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: Rename
+	portable_audio_player.database_type to p_a_p.type
+
+2005-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/Makefile.am (dist_fdi_DATA): Remember
 	to dist new files
 

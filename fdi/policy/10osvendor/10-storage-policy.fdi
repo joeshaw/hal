@@ -102,11 +102,11 @@
 	       idedisk, scsidisk etc. -->
 	  <merge key="volume.policy.desired_mount_point" type="copy_property">@block.storage_device:storage.bus</merge>
 	  <append key="volume.policy.desired_mount_point" type="string">disk</append>
-
-         <!-- zip drives -->
-         <match key="storage.drive_type" string="zip">
- 	   <merge key="storage.policy.desired_mount_point" type="string">zip</merge>
-         </match>
+	  
+          <!-- zip drives -->
+          <match key="@block.storage_device:storage.drive_type" string="zip">
+ 	    <merge key="volume.policy.desired_mount_point" type="string">zip</merge>
+          </match>
 	  
           <!-- Best: If available use filesystem label -->
           <match key="volume.label" empty="false">
@@ -140,6 +140,14 @@
 	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
 	    </match>
 	  </match>
+	  
+	  <!-- Attempt mount point 'ipod' for iPod's -->
+	  <match key="@block.storage_device:portable_audio_player.type" string="ipod">
+	    <merge key="volume.policy.desired_mount_point" type="string">ipod</merge>
+	  </match>
+	  
+	</match>
+	
 	  
 	  <!-- whitelist of partition table id's, if from a msdos partition table -->
 	  <match key="volume.partition.msdos_part_table_type" exists="true">
