@@ -1,5 +1,20 @@
 2004-07-22  David Zeuthen  <david@fubar.dk>
 
+	* tools/linux/hal_hotplug.c (main): Apply the same hack we did to
+	hal_dev.c some time ago; improves hotplugging speed; suggestion by
+	Sjoerd Simons.
+
+	* hald/linux/block_class_device.c (block_class_visit): Fixed a nasty
+	bug where .udev.sysfs_path were set before other key properties. This
+	resulted in lack of information in handle_udev_node_created_found_device
+	that was invoked as soon as .udev.sysfs_path were set. Obviously
+	this situation was only applicable when we got the DeviceEvent before
+	the HotplugEvent. udev is indeed fast.
+
+	* hald/linux/class_device.c (class_device_visit): -do-
+
+2004-07-22  David Zeuthen  <david@fubar.dk>
+
 	Patch from Kay Sievers <kay.sievers@vrfy.org>
 
 	* tools/device-manager/hal-computer.png: New file

@@ -146,11 +146,6 @@ class_device_visit (ClassDeviceHandler *self,
 		}
 	} 
 
-	/* Temporary property used for _udev_event() */
-	hal_device_property_set_string (d, ".udev.sysfs_path", path);
-	hal_device_property_set_string (d, ".udev.class_name", 
-					self->sysfs_class_name);
-
 	/* We may require a device file */
 	if (self->require_device_file) {
 
@@ -158,11 +153,21 @@ class_device_visit (ClassDeviceHandler *self,
 		self->get_device_file_target (self, d, path, class_device,
 					      dev_file_prop_name, 
 					      SYSFS_PATH_MAX);
+
+		/* Temporary property used for _udev_event() */
 		hal_device_property_set_string (d, ".target_dev", 
 						dev_file_prop_name);
+	}
 
+	hal_device_property_set_string (
+		d, ".udev.class_name", self->sysfs_class_name);
+	hal_device_property_set_string (
+		d, ".udev.sysfs_path", path);
+
+	if (self->require_device_file) {
 		/* Ask udev about the device file if we are probing */
 		if (hald_is_initialising) {
+
 			if (!class_device_get_device_file (path, dev_file, 
 							   SYSFS_PATH_MAX)) {
 				HAL_WARNING (("Couldn't get device file for "
@@ -173,7 +178,7 @@ class_device_visit (ClassDeviceHandler *self,
 			/* If we are not probing this function will be called 
 			 * upon receiving a dbus event */
 			self->udev_event (self, d, dev_file);
-		}
+		} 
 	}
 
 	/* Now find the physical device; this happens asynchronously as it

@@ -272,12 +272,27 @@ main (int argc, char *argv[], char *envp[])
 	DBusMessage *message;
 	DBusMessageIter iter;
 	DBusMessageIter iter_dict;
+	int rc;
 
 	if (argc != 2)
 		return 1;
 
 	if (get_sysfs_mnt_path () != 0)
 		return 1;
+
+	/* fork a new process so we exit instantly and child is handling
+	 * the processing; 
+	 *
+	 * TODO, FIXME, HACK, XXX : This is not the right way; we merely
+	 * work around the problem that D-BUS requires us to take a nap
+	 * before exiting because otherwise messages are lost
+	 */
+	rc = fork ();
+	if (rc == -1)
+		return 1;
+	if (rc != 0)
+		return 0;
+
 
 	openlog ("hal.hotplug", LOG_PID, LOG_USER);
 

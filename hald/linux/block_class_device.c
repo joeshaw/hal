@@ -127,11 +127,9 @@ block_class_visit (ClassDeviceHandler *self,
 	}
 
 	/* temporary property used for _udev_event() */
-	hal_device_property_set_string (d, ".udev.sysfs_path", path);
-	hal_device_property_set_string (d, ".udev.class_name", "block");
-
-	/* Property name we should store the device file in */
 	hal_device_property_set_string (d, ".target_dev", "block.device");
+	hal_device_property_set_string (d, ".udev.class_name", "block");
+	hal_device_property_set_string (d, ".udev.sysfs_path", path);
 
 	/* Ask udev about the device file if we are probing */
 	if (self->require_device_file && hald_is_initialising) {

@@ -660,10 +660,12 @@ handle_udev_node_created_found_device (HalDevice * d,
 	if (d != NULL) {
 		HAL_INFO (("dev_file=%s is for udi=%s", dev_file, d->udi));
 
+		hal_device_print (d);
+
 		sysfs_class_name = 
 			hal_device_property_get_string (d, ".udev.class_name");
 
-		/*HAL_INFO ((".udev.class_name = %s", sysfs_class_name));*/
+		HAL_INFO ((".udev.class_name = %s", sysfs_class_name));
 
 		for (i=0; class_device_handlers[i] != NULL; i++) {
 			ClassDeviceHandler *ch = class_device_handlers[i];
