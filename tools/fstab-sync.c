@@ -74,11 +74,6 @@ static boolean verbose = FALSE;
 #define TEMP_FSTAB_PREFIX ".fstab.hal."
 #define TEMP_FSTAB_MAX_LENGTH 64
 
-#undef FSTAB_SYNC_MOUNT_ROOT
-#undef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD
-#undef FSTAB_SYNC_MOUNT_MANAGED_KEYWORD_SEC
-#undef FSTAB_SYNC_MOUNT_ACCESS
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -1657,10 +1652,8 @@ main (int argc, const char *argv[])
         N_("add an entry to fstab"), N_("UDI")},
       {"remove", 'r', POPT_ARG_STRING, &udi_to_remove, 0,
         N_("remove an entry from fstab"), N_("UDI")},
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
       {"clean", 'c', POPT_ARG_NONE, &should_clean, 0,
         N_("Remove all generated entries from fstab")},
-#endif
       {"verbose", 'v', POPT_ARG_NONE, &verbose, 0,
         N_("Report detailed information about operation progress")},
 
@@ -1694,9 +1687,7 @@ main (int argc, const char *argv[])
       
       /* when invoked for the /org/freedesktop/Hal/devices/computer UDI we clean the fstab */
       if (getenv ("HALD_STARTUP") != NULL && strcmp (hal_device_udi, "/org/freedesktop/Hal/devices/computer") == 0) {
-#ifdef FSTAB_SYNC_USE_NOOP_MOUNT_OPTION
 	should_clean = TRUE;
-#endif
       } else {
       
 	/* when we are invoked by hald, make some early tests using the

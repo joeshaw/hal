@@ -1,4 +1,9 @@
-2004-10-14  David Zeuthen  <david@fubar.dk>
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
+	* tools/fstab-sync.c (main): clean wasn't being called on hald startup
+	because of missing defines due to the removal of fstab-sync options.
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Bump to version 0.4.0 - Hurray
 
