@@ -1,0 +1,7 @@
+.deps
+.libs
+Makefile
+Makefile.in
+hal-get-property
+hal-set-property
+lshal
