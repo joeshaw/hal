@@ -139,7 +139,7 @@ main (int argc, char *argv[])
 	unsigned int block_size;
 	dbus_uint64_t vol_size;
 	dbus_bool_t should_probe_for_fs;
-
+	dbus_uint64_t vol_probe_offset = 0;
 	fd = -1;
 
 	/* assume failure */
@@ -185,11 +185,22 @@ main (int argc, char *argv[])
 	if (fd < 0)
 		goto out;
 
-	should_probe_for_fs = TRUE;
+	/* block size and total size */
+	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
+		dbg ("volume.block_size = %d", block_size);
+		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
+	}
+	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
+		dbg ("volume.size = %llu", vol_size);
+		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
+	} else
+		vol_size = 0;
 
+	should_probe_for_fs = TRUE;
 
 	if (is_disc) {
 		int type;
+		struct cdrom_tochdr toc_hdr;
 
 		/* defaults */
 		libhal_device_set_property_string (ctx, udi, "volume.disc.type", "unknown", &error);
@@ -286,8 +297,7 @@ main (int argc, char *argv[])
 			}
 		}
 
-		/* On some hardware the get_disc_type call fails,
-		   so we use this as a backup */
+		/* On some hardware the get_disc_type call fails, so we use this as a backup */
 		if (disc_is_rewritable (fd)) {
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
 		}
@@ -295,18 +305,37 @@ main (int argc, char *argv[])
 		if (disc_is_appendable (fd)) {
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", TRUE, &error);
 		}
-	}
 
-	/* block size and total size */
-	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
-		dbg ("volume.block_size = %d", block_size);
-		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
+		/* check for multisession disks */
+		if (ioctl (fd, CDROMREADTOCHDR, &toc_hdr) == 0) {
+			struct cdrom_tocentry toc_entr;
+			unsigned int vol_session_count = 0;
+
+			vol_session_count = toc_hdr.cdth_trk1;
+			dbg ("volume_session_count = %u", vol_session_count);
+
+			/* read session header */
+			memset (&toc_entr, 0x00, sizeof (toc_entr));
+			toc_entr.cdte_track = vol_session_count;
+			toc_entr.cdte_format = CDROM_LBA;
+			if (ioctl (fd, CDROMREADTOCENTRY, &toc_entr) == 0)
+				if ((toc_entr.cdte_ctrl & CDROM_DATA_TRACK) == 4) {
+					dbg ("last session starts at block = %u", toc_entr.cdte_addr.lba);
+					vol_probe_offset = toc_entr.cdte_addr.lba * block_size;
+				}
+		}
+
+		/* try again, to get last session that way */
+		if (vol_probe_offset == 0) {
+			struct cdrom_multisession ms_info;
+
+			memset(&ms_info, 0x00, sizeof(ms_info));
+			ms_info.addr_format = CDROM_LBA;
+			if (ioctl(fd, CDROMMULTISESSION, &ms_info) == 0)
+				if (!ms_info.xa_flag)
+					vol_probe_offset = ms_info.addr.lba * block_size;
+		}
 	}
-	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
-		dbg ("volume.size = %llu", vol_size);
-		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
-	} else
-		vol_size = 0;
 
 	if (should_probe_for_fs) {
 
@@ -320,7 +349,7 @@ main (int argc, char *argv[])
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
-			if (volume_id_probe_all (vid, 0, vol_size /* size */) == 0) {
+			if (volume_id_probe_all (vid, vol_probe_offset , vol_size) == 0) {
 				set_volume_id_values(ctx, udi, vid);
 			} else {
 				libhal_device_set_property_string (ctx, udi, "info.product", "Volume", &error);

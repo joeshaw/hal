@@ -1,3 +1,8 @@
+2005-04-06  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/probing/probe-volume.c: (main): read volume label
+	from last session of optical multisession disk.
+
 2005-04-04  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/Makefile.am (libexec_PROGRAMS): Only build
