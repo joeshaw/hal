@@ -1,5 +1,10 @@
 2005-02-26  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/information/10freedesktop/Makefile.am (dist_fdi_DATA): Remember
+	to dist new files
+
+2005-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* libhal-storage/libhal-storage.h: Add new LibHalDriveType entries
 	for ZIP, JAZ and FLASH_KEY - the latter represents a USB memory stick.
 
