@@ -1,5 +1,11 @@
 2004-08-28  David Zeuthen  <david@fubar.dk>
 
+	* tools/linux/hal_hotplug.c: Add some more files to wait for
+	(wait_for_sysfs_info): Only wait 10 secs (should be enough; we're
+	waiting for the kernel)
+
+2004-08-28  David Zeuthen  <david@fubar.dk>
+	
 	* hald/linux/block_class_device.c: 
 	(block_class_visit): Fail if parent isn't already there (this and
 	other things should close RH Bug #131154)

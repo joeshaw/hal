@@ -112,11 +112,16 @@ static const char *file_list_usbif[] = {
 	NULL
 };
 
-static const char *file_list_scsi_device[] = { NULL };
+static const char *file_list_scsi[] = { "vendor",
+					"model",
+					"type",
+					NULL };
 
-static const char *file_list_scsi_generic[] = { NULL };
+static const char *file_list_scsi_generic[] = { "device", 
+						NULL };
 
-static const char *file_list_scsi_host[] = { NULL };
+static const char *file_list_scsi_host[] = { "device",
+					     NULL };
 
 static const char *file_list_block[] = {
 	"dev",
@@ -170,8 +175,8 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 			file_list = file_list_usbif;
 		} else
 			file_list = file_list_usb;
-	} else if (strcmp (hotplug_type, "scsi_device") == 0) {
-		file_list = file_list_scsi_device;
+	} else if (strcmp (hotplug_type, "scsi") == 0) {
+		file_list = file_list_scsi;
 	} else if (strcmp (hotplug_type, "scsi_generic") == 0) {
 		file_list = file_list_scsi_generic;
 	} else if (strcmp (hotplug_type, "scsi_host") == 0) {
@@ -188,16 +193,16 @@ wait_for_sysfs_info (char *devpath, char *hotplug_type)
 
 try_again:
 	if (num_tries > 0) {
-		usleep (100 * 1000);
+		usleep (100 * 1000); /* 100 ms */
 	}
+	num_tries += 100;
 
-	if (num_tries == 20 * 10) {
-		syslog (LOG_NOTICE, "timed out for %s (waited %d ms)",
+	if (num_tries >= 10 * 1000*1000) { /* 10 secs */
+		syslog (LOG_NOTICE, "timout waiting for %s (waited %d ms)",
 			devpath, num_tries * 100);
 		return -1;
 	}
 
-	num_tries++;
 
 	/* first, check directory */
 	strncpy (path, sysfs_mnt_path, PATH_MAX);
@@ -298,16 +303,8 @@ main (int argc, char *argv[], char *envp[])
 	seqnum = atoi (seqnum_str);
 
 	if (is_add) {
-		int rc;
-
 		/* wait for information to be published in sysfs */
-		rc = wait_for_sysfs_info (devpath, subsystem);
-		if (rc != 0) {
-			/* Don't know how to wait, just sleep one econd */
-			/*syslog (LOG_WARNING, "Dont know how to wait for %s at %s; "
-			  "sleeping 1000 ms", subsystem, devpath);*/
-			usleep (1000 * 1000);
-		}
+		wait_for_sysfs_info (devpath, subsystem);
 	}
 
 	memset (&saddr, 0x00, sizeof(struct sockaddr_un));
