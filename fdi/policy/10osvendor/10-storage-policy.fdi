@@ -146,9 +146,6 @@
 	    <merge key="volume.policy.desired_mount_point" type="string">ipod</merge>
 	  </match>
 	  
-	</match>
-	
-	  
 	  <!-- whitelist of partition table id's, if from a msdos partition table -->
 	  <match key="volume.partition.msdos_part_table_type" exists="true">
 	    <!-- Default to no mount and punch holes -->
@@ -191,7 +188,7 @@
     </match>
     
   </device>
-
+  
   <!-- Dont want to mount non-hotpluggable fixed disks since ideraid
        detection isnt complete as hald wrongly detects e.g. partitions
        from some IDE RAID controllers -->
@@ -202,11 +199,11 @@
       </match>
     </match>
   </device>
-
+  
   <device>
     <match key="storage.media_check_enabled" bool="true">
       <append key="info.addons" type="strlist">hald-addon-storage</append>
     </match>
   </device>
-
+  
 </deviceinfo>

@@ -1,5 +1,9 @@
 2005-02-26  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/10-storage-policy.fdi: Fix syntax error
+
+2005-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/policy/10osvendor/10-storage-policy.fdi: Use mount point
 	'ipod' for iPod's (works better with gtkpod :-). Apply patch from
 	Daniel Serpell <daniel.serpell@aplik.cl> that I got via Sjoerd
