@@ -418,7 +418,23 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 		for (i=0; class_device_handlers[i] != NULL; i++) {
 			ClassDeviceHandler *ch = class_device_handlers[i];
 			if (strcmp (subsystem, ch->sysfs_class_name) == 0) {
-				/* @todo implement me */
+				if (!ch->merge_or_add) {
+					/* was actually added, so it makes sense to remove */
+
+					HalDevice *d;
+					d = ds_device_find_by_key_value_string ("linux.sysfs_path", sysfs_devpath, TRUE);
+					if (d == NULL) {
+						HAL_WARNING (("Couldn't remove classdevice @ %s on hotplug remove", sysfs_devpath));
+					} else {
+						HAL_INFO (("Removing classdevice @ sysfspath %s, udi %s", sysfs_devpath, d->udi));
+						ch->removed (ch, sysfs_devpath, d);
+
+						ds_device_destroy (d);
+						goto out;
+					}
+
+				}
+				HAL_INFO (("sysfs_devpath=%s by %s", sysfs_devpath, subsystem));
 			}
 		}
 	}

@@ -234,7 +234,7 @@ manager_get_all_devices (DBusConnection * connection,
 	const char *udi;
 	HalDeviceIterator iter_device;
 
-	HAL_TRACE (("entering"));
+	/*HAL_TRACE (("entering"));*/
 
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
