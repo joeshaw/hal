@@ -401,6 +401,7 @@ disc_remove_from_gdl (HalDevice *device, gpointer user_data)
 	g_object_unref (device);
 }
 
+
 /** Check for media on a block device that is not a volume
  *
  *  @param  d                   Device to inspect; can be any device, but
@@ -457,8 +458,13 @@ detect_media (HalDevice * d)
 	else {
 		int drive;
 		dbus_bool_t got_disc = FALSE;
+		dbus_bool_t eject_pressed = FALSE;
+		struct request_sense sense;
+		struct cdrom_generic_command cgc;
+		unsigned char buffer[8];
+		int ret;
 
-		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
+		fd = open (device_file, O_RDONLY | O_NONBLOCK);
 
 		if (fd == -1) {
 			/* open failed */
@@ -466,6 +472,42 @@ detect_media (HalDevice * d)
 			return FALSE;
 		}
 
+		/* Check whether the 'eject' button is pressed - supposedly
+		 * only works on MMC-2 drivers and higher...
+		 *
+		 * From http://www.ussg.iu.edu/hypermail/linux/kernel/0202.0/att-0603/01-cd_poll.c
+		 */
+		
+		memset (&cgc, 0, sizeof(struct cdrom_generic_command));
+		memset (buffer, 0, sizeof(buffer));		
+		cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
+		cgc.cmd[1] = 1;
+		cgc.cmd[4] = 16;
+		cgc.cmd[8] = sizeof (buffer);
+		memset (&sense, 0, sizeof (sense));
+		cgc.timeout = 600;
+		cgc.buffer = buffer;
+		cgc.buflen = sizeof (buffer);
+		cgc.data_direction = CGC_DATA_READ;
+		cgc.sense = &sense;
+		cgc.quiet = 1;
+		ret = ioctl (fd, CDROM_SEND_PACKET, &cgc);
+		if (ret < 0) {
+			HAL_ERROR (("GPCMD_GET_EVENT_STATUS_NOTIFICATION failed, errno=%d", errno));
+		} else {
+			if ((buffer[4]&0x0f) == 0x01) {
+				HAL_INFO (("Eject pressed on udi=%s!", 
+					   hal_device_get_udi (d)));
+				/* handle later */
+				eject_pressed = TRUE;
+				
+			}
+		}
+
+		/* Check if a disc is in the drive
+		 *
+		 * @todo Use API above if MMC-2 or higher drive
+		 */
 		drive = ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
 		switch (drive) {
 			/* explicit fallthrough */
@@ -521,6 +563,21 @@ detect_media (HalDevice * d)
 			child = hal_device_store_match_key_value_string (
 				hald_get_tdl (), "info.parent",
 				hal_device_get_udi (d));
+		}
+
+		
+		/* handle eject if we already got a disc */
+		if (child != NULL && eject_pressed ) {
+			device_send_signal_condition (
+				child,
+				"EjectPressed",
+				DBUS_TYPE_STRING,
+				hal_device_property_get_string (
+					child,
+					"block.device"),
+				DBUS_TYPE_INVALID);
+			
+
 		}
 
 		if (child == NULL) {
@@ -712,16 +769,12 @@ detect_media (HalDevice * d)
 				}
 			}
 
-			HAL_INFO (("BAR"));
-
 			if (disc_is_appendable (fd)) {
 				hal_device_property_set_bool (
 					child, 
 					"volume.disc.is_appendable", 
 					TRUE);
 			}
-
-			HAL_INFO (("FOO"));
 
 			close(fd);
 

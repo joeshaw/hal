@@ -1,3 +1,14 @@
+2004-05-31  David Zeuthen  <david@fubar.dk>
+
+	* AUTHORS: Added Joe Shaw
+
+	* hald/linux/block_class_device.c (detect_media): Add code for 
+	checking whether the eject button is pressed on an optical drive.
+	If detected the condition 'EjectPressed' is emitted on the disc
+	HalDevice with a single string representing the device file.
+	Also remove BAR and FOO debug statements from earlier development
+	sessions. Yay.
+
 2004-05-28  Joe Shaw  <joeshaw@novell.com>
 
 	* hald/linux/net_class_device.c (rehash_wireless): Forgot to change
