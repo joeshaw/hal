@@ -617,7 +617,7 @@ out:
 
 /*************************************************************************/
 
-
+#define MOUNT_OPTIONS_SIZE 256
 
 struct HalDrive_s {
 	char *udi;
@@ -645,6 +645,16 @@ struct HalDrive_s {
 	char *serial;
 	char *firmware_version;
 	HalDriveCdromCaps cdrom_caps;
+
+	char *desired_mount_point;
+	char *mount_filesystem;
+	dbus_bool_t should_mount;
+
+	dbus_bool_t no_partitions_hint;
+
+	LibHalContext *hal_ctx;
+
+	char mount_options[MOUNT_OPTIONS_SIZE];
 };
 
 struct HalVolume_s {
@@ -679,6 +689,12 @@ struct HalVolume_s {
 
 	unsigned int block_size;
 	unsigned int num_blocks;
+
+	char *desired_mount_point;
+	char *mount_filesystem;
+	dbus_bool_t should_mount;
+
+	char mount_options[MOUNT_OPTIONS_SIZE];
 };
 
 const char *
@@ -711,6 +727,8 @@ hal_drive_free (HalDrive *drive)
 	hal_free_string (drive->physical_device);
 	hal_free_string (drive->serial);
 	hal_free_string (drive->firmware_version);
+	hal_free_string (drive->desired_mount_point);
+	hal_free_string (drive->mount_filesystem);
 }
 
 
@@ -731,6 +749,8 @@ hal_volume_free (HalVolume *vol)
 	hal_free_string (vol->mount_point);
 	hal_free_string (vol->fsversion);
 	hal_free_string (vol->uuid);
+	hal_free_string (vol->desired_mount_point);
+	hal_free_string (vol->mount_filesystem);
 }
 
 
@@ -742,7 +762,6 @@ hal_volume_free (HalVolume *vol)
 #define HAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_STRING) _where_ = (hal_psi_get_string (&it) != NULL && strlen (hal_psi_get_string (&it)) > 0) ? strdup (hal_psi_get_string (&it)) : NULL
 #define HAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ = hal_psi_get_bool (&it)
 #define HAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ |= hal_psi_get_bool (&it) ? _field_ : 0
-
 
 /** Given a UDI for a HAL device of capability 'storage', this
  *  function retrieves all the relevant properties into convenient
@@ -771,6 +790,8 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	if (drive == NULL)
 		goto error;
 	memset (drive, 0x00, sizeof (HalDrive));
+
+	drive->hal_ctx = hal_ctx;
 
 	drive->udi = strdup (udi);
 	if (drive->udi == NULL)
@@ -818,6 +839,12 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdr", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDR);
 		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdrw", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDRW);
 		HAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdram", drive->cdrom_caps, HAL_DRIVE_CDROM_CAPS_DVDRAM);
+
+		HAL_PROP_EXTRACT_BOOL   ("storage.policy.should_mount",        drive->should_mount);
+		HAL_PROP_EXTRACT_STRING ("storage.policy.desired_mount_point", drive->desired_mount_point);
+		HAL_PROP_EXTRACT_STRING ("storage.policy.mount_filesystem",    drive->mount_filesystem);
+
+		HAL_PROP_EXTRACT_BOOL   ("storage.no_partitions_hint",        drive->no_partitions_hint);
 
 		HAL_PROP_EXTRACT_END;
 	}
@@ -969,6 +996,10 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		HAL_PROP_EXTRACT_BOOL   ("volume.disc.is_appendable", vol->disc_is_appendable);
 		HAL_PROP_EXTRACT_BOOL   ("volume.disc.is_blank",      vol->disc_is_blank);
 		HAL_PROP_EXTRACT_BOOL   ("volume.disc.is_rewritable", vol->disc_is_rewritable);
+
+		HAL_PROP_EXTRACT_BOOL   ("volume.policy.should_mount",        vol->should_mount);
+		HAL_PROP_EXTRACT_STRING ("volume.policy.desired_mount_point", vol->desired_mount_point);
+		HAL_PROP_EXTRACT_STRING ("volume.policy.mount_filesystem",    vol->mount_filesystem);
 
 		HAL_PROP_EXTRACT_END;
 	}
@@ -1364,5 +1395,190 @@ out:
 	return result;
 }
 
+/*************************************************************************/
+
+char *
+hal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
+{
+	return hal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+					       "storage.policy.default.mount_root");
+}
+
+dbus_bool_t
+hal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
+{
+	return hal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+					     "storage.policy.default.use_managed_keyword");
+}
+
+char *
+hal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
+{
+	return hal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+					       "storage.policy.default.managed_keyword.primary");
+}
+
+char *
+hal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx)
+{
+	return hal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+					       "storage.policy.default.managed_keyword.secondary");
+}
+
+/*************************************************************************/
+
+dbus_bool_t
+hal_drive_policy_is_mountable (HalDrive *drive, HalStoragePolicy *policy)
+{
+	return drive->should_mount && drive->no_partitions_hint;
+}
+
+const char *
+hal_drive_policy_get_desired_mount_point (HalDrive *drive, HalStoragePolicy *policy)
+{
+	return drive->desired_mount_point;
+}
+
+/* safely strcat() at most the remaining space in 'dst' */
+#define strcat_len(dst, src, dstmaxlen) do {    \
+	dst[dstmaxlen - 1] = '\0'; \
+	strncat (dst, src, dstmaxlen - strlen (dst) - 1); \
+} while(0)
+
+
+const char *
+hal_drive_policy_get_mount_options (HalDrive *drive, HalStoragePolicy *policy)
+{
+	const char *result;
+	LibHalPropertySet *properties;
+	LibHalPropertySetIterator it;
+	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
+	char stor_mount_option_begin[] = "storage.policy.mount_option.";
+
+	result = NULL;
+	drive->mount_options[0] = '\0';
+
+	/* first collect from root computer device */
+	properties = hal_device_get_all_properties (drive->hal_ctx, "/org/freedesktop/Hal/devices/computer");
+	if (properties == NULL)
+		goto error;
+	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+		int type;
+		char *key;
+		
+		type = hal_psi_get_type (&it);
+		key = hal_psi_get_key (&it);
+		if (strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
+			if (strlen (drive->mount_options) > 0)
+				strcat_len (drive->mount_options, ",", MOUNT_OPTIONS_SIZE);
+			strcat_len (drive->mount_options, key + sizeof(stor_mount_option_default_begin)-1, MOUNT_OPTIONS_SIZE);
+		}
+	}
+	hal_free_property_set (properties);
+
+	/* append options from the specific drive */
+	properties = hal_device_get_all_properties (drive->hal_ctx, drive->udi);
+	if (properties == NULL)
+		goto error;
+	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+		int type;
+		char *key;		
+		type = hal_psi_get_type (&it);
+		key = hal_psi_get_key (&it);
+		if (strncmp (key, stor_mount_option_begin, sizeof (stor_mount_option_begin) - 1) == 0) {
+			if (strlen (drive->mount_options) > 0)
+				strcat_len (drive->mount_options, ",", MOUNT_OPTIONS_SIZE);
+			strcat_len (drive->mount_options, key + sizeof (stor_mount_option_begin)-1, MOUNT_OPTIONS_SIZE);
+		}
+	}
+
+	result = drive->mount_options;
+
+error:
+	hal_free_property_set (properties);
+	return result;
+}
+
+const char *
+hal_drive_policy_get_mount_fs (HalDrive *drive, HalStoragePolicy *policy)
+{
+	return drive->mount_filesystem;
+}
+
+
+dbus_bool_t
+hal_volume_policy_is_mountable (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+{
+	return drive->should_mount && volume->should_mount;
+}
+
+const char *hal_volume_policy_get_desired_mount_point (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+{
+	return volume->desired_mount_point;
+}
+
+const char *hal_volume_policy_get_mount_options (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+{
+	const char *result;
+	LibHalPropertySet *properties;
+	LibHalPropertySetIterator it;
+	char stor_mount_option_default_begin[] = "storage.policy.default.mount_option.";
+	char vol_mount_option_begin[] = "volume.policy.mount_option.";
+
+	result = NULL;
+	volume->mount_options[0] = '\0';
+
+	/* first collect from root computer device */
+	properties = hal_device_get_all_properties (drive->hal_ctx, "/org/freedesktop/Hal/devices/computer");
+	if (properties == NULL)
+		goto error;
+	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+		int type;
+		char *key;
+		
+		type = hal_psi_get_type (&it);
+		key = hal_psi_get_key (&it);
+		if (strncmp (key, stor_mount_option_default_begin, sizeof (stor_mount_option_default_begin) - 1) == 0) {
+			if (strlen (volume->mount_options) > 0)
+				strcat_len (volume->mount_options, ",", MOUNT_OPTIONS_SIZE);
+			strcat_len (volume->mount_options, key + sizeof(stor_mount_option_default_begin)-1, MOUNT_OPTIONS_SIZE);
+		}
+	}
+	hal_free_property_set (properties);
+
+	/* append options from the specific volume */
+	properties = hal_device_get_all_properties (drive->hal_ctx, volume->udi);
+	if (properties == NULL)
+		goto error;
+	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+		int type;
+		char *key;		
+		type = hal_psi_get_type (&it);
+		key = hal_psi_get_key (&it);
+		if (strncmp (key, vol_mount_option_begin, sizeof (vol_mount_option_begin) - 1) == 0) {
+			if (strlen (volume->mount_options) > 0)
+				strcat_len (volume->mount_options, ",", MOUNT_OPTIONS_SIZE);
+			strcat_len (volume->mount_options, key + sizeof (vol_mount_option_begin)-1, MOUNT_OPTIONS_SIZE);
+		}
+	}
+
+	result = volume->mount_options;
+
+error:
+	hal_free_property_set (properties);
+
+	return result;
+}
+
+const char *hal_volume_policy_get_mount_fs (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy)
+{
+	return volume->mount_filesystem;
+}
+
+dbus_bool_t       
+hal_drive_no_partitions_hint (HalDrive *drive)
+{
+	return drive->no_partitions_hint;
+}
 
 /** @} */

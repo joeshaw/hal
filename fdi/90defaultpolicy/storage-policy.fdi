@@ -77,59 +77,104 @@
     <!-- Normal volumes; use volume label, uuid or drive_type -->
     <match key="block.is_volume" bool="true">
       <match key="volume.fsusage" string="filesystem">
+	<!-- skip for drives with the no partitions hint (they are handled above) -->
+	<match key="@block.storage_device:storage.no_partitions_hint" bool="false">
 
-	<merge key="volume.policy.should_mount" type="bool">true</merge>
-	<merge key="volume.policy.mount_filesystem" type="copy_property">volume.fstype</merge>
-
-	<!-- Fallback is '<storage.drive_type>', e.g. disk, compact_flash etc. -->
-	<merge key="volume.policy.desired_mount_point" type="copy_property">@block.storage_device:storage.drive_type</merge>
-	
-	<!-- Better: if available use UUID -->
-        <match key="volume.uuid" empty="false">
-          <merge key="volume.policy.desired_mount_point" type="copy_property">volume.uuid</merge>
-        </match>
-
-        <!-- Best: If available use filesystem label -->
-        <match key="volume.label" empty="false">
-          <!-- unless it's a path (e.g. /boot, /, /home etc) -->
-          <match key="volume.label" is_absolute_path="false">
-            <merge key="volume.policy.desired_mount_point" type="copy_property">volume.label</merge>
+	  <merge key="volume.policy.should_mount" type="bool">true</merge>
+	  <merge key="volume.policy.mount_filesystem" type="copy_property">volume.fstype</merge>
+	  
+	  <!-- Fallback is '<storage.drive_type>', e.g. disk, compact_flash etc. -->
+	  <merge key="volume.policy.desired_mount_point" type="copy_property">@block.storage_device:storage.drive_type</merge>
+	  
+	  <!-- Better: if available use UUID -->
+          <match key="volume.uuid" empty="false">
+            <merge key="volume.policy.desired_mount_point" type="copy_property">volume.uuid</merge>
           </match>
-        </match>
+	  
+          <!-- Best: If available use filesystem label -->
+          <match key="volume.label" empty="false">
+            <!-- unless it's a path (e.g. /boot, /, /home etc) -->
+            <match key="volume.label" is_absolute_path="false">
+	      <!-- and only if the label is ascii -->
+              <match key="volume.label" is_ascii="true">
+		<merge key="volume.policy.desired_mount_point" type="copy_property">volume.label</merge>
+              </match>
+            </match>
+          </match>
+	  
+	  <!-- Should never mount Apple Bootstrap partitions (it would be
+	       a security hole) - should use the bootable flag from the
+	       Mac partition table instead -->
+	  <match key="volume.fstype" string="hfs">
+	    <match key="volume.label" string="bootstrap">
+	      <merge key="volume.policy.should_mount" type="bool">false</merge>
+	    </match>
+	  </match>
+	  
+	  <!-- Use selinux mount options for hotpluggable and removable
+	       volumes -->
+	  <match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true">
+	    <match key="@block.storage_device:storage.hotpluggable" bool="true">
+	      <merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
+	    </match>
+	    <match key="@block.storage_device:storage.removable" bool="true">
+	      <merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
+	    </match>
+	  </match>
 
-	<!-- Should never mount Apple Bootstrap partitions (it would be
-	     a security hole) - should use the bootable flag from the
-	     Mac partition table instead -->
-	<match key="volume.fstype" string="hfs">
-	  <match key="volume.label" string="bootstrap">
+	  <!-- Use noatime and sync options for all hotpluggable or removable
+	       volumes smaller than 2GB -->
+	  <match key="volume.size" compare_lt="2147483648">
+	    <match key="@block.storage_device:storage.hotpluggable" bool="true">
+	      <merge key="volume.policy.mount_option.async" type="bool">true</merge>
+	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
+	    </match>
+	    <match key="@block.storage_device:storage.removable" bool="true">
+	      <merge key="volume.policy.mount_option.async" type="bool">true</merge>
+	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
+	    </match>
+	  </match>
+	  
+	  <!-- whitelist of partition table id, if from a msdos partition table -->
+	  <match key="volume.partition.msdos_part_table_type" exists="true">
+	    <!-- Default to no mount and punch holes -->
 	    <merge key="volume.policy.should_mount" type="bool">false</merge>
+	    <!-- Linux -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x83">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- FAT12 -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x01">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- FAT16 <32M -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x04">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- FAT16 -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x06">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- HPFS/NTFS -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x07">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- W95 FAT32 -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x0b">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- W95 FAT32 (LBA) -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x0c">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
+	    <!-- W95 FAT16 (LBA) -->
+	    <match key="volume.partition.msdos_part_table_type" int="0x0e">
+	      <merge key="volume.policy.should_mount" type="bool">true</merge>
+	    </match>
 	  </match>
-	</match>
 
-	<!-- Use selinux mount options for hotpluggable and removable
-	     volumes -->
-	<match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true">
-	  <match key="@block.storage_device:storage.hotpluggable" bool="true">
-	    <merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
-	  </match>
-	  <match key="@block.storage_device:storage.removable" bool="true">
-	    <merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool">true</merge>
-	  </match>
+	  
 	</match>
-
-	<!-- Use noatime and sync options for all hotpluggable or removable
-	     volumes smaller than 2GB -->
-	<match key="volume.size" compare_lt="2147483648">
-	  <match key="@block.storage_device:storage.hotpluggable" bool="true">
-	    <merge key="volume.policy.mount_option.async" type="bool">true</merge>
-	    <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
-	  </match>
-	  <match key="@block.storage_device:storage.removable" bool="true">
-	    <merge key="volume.policy.mount_option.async" type="bool">true</merge>
-	    <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
-	  </match>
-	</match>
-
       </match>
     </match>
   </device>

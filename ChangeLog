@@ -1,5 +1,41 @@
 2004-10-13  David Zeuthen  <davidz@redhat.com>
 
+	* doc/spec/hal-spec.xml.in: Add docs for is_ascii attribute on the
+	match directive.
+	
+	* fdi/90defaultpolicy/storage-policy.fdi: Don't add volume policy
+	if the drive has the no_partitions_hint set to TRUE. Require label
+	to be ASCII if using the label as a mount point. Use whitelist of
+	msdos partition types if volume stems from a drive with a msdos
+	partition table.
+	
+	* hald/device_info.c (handle_match): Add the is_ascii match check.
+	
+	* libhal-storage/libhal-storage.c:
+	(hal_drive_free): Free newly added fields
+	(hal_volume_free): Free newly added fields
+	(hal_drive_from_udi): Add should_mount, mount_filesystem, 	
+	desired_mount_point properties
+	(hal_volume_from_udi): Add should_mount, mount_filesystem, 	
+	desired_mount_point properties
+	(hal_drive_policy_default_get_mount_root): New function
+	(hal_drive_policy_default_use_managed_keyword): New function
+	(hal_drive_policy_default_get_managed_keyword_primary): New function
+	(hal_drive_policy_default_get_managed_keyword_secondary): New function
+	(hal_drive_policy_is_mountable): New function
+	(hal_drive_policy_get_desired_mount_point): New function
+	(hal_drive_policy_get_mount_options): New function
+	(hal_drive_policy_get_mount_fs): New function
+	(hal_volume_policy_is_mountable): New function
+	(hal_volume_policy_get_desired_mount_point): New function
+	(hal_volume_policy_get_mount_options): New function
+	(hal_volume_policy_get_mount_fs): New function
+	(hal_drive_no_partitions_hint): New function
+
+	* libhal-storage/libhal-storage.h: Add prototypes for new functions
+
+2004-10-13  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/20freedesktop/sony_dsc.fdi: New file, to match krh's camera
 	that is USB Mass Storage based.
 

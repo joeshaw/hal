@@ -468,6 +468,37 @@ handle_match (ParsingContext * pc, const char **attr)
 			else
 				return TRUE;
 		}
+	} else if (strcmp (attr[2], "is_ascii") == 0) {
+		dbus_bool_t is_ascii = TRUE;
+		dbus_bool_t should_be_ascii = TRUE;
+		unsigned int i;
+		const char *str;
+
+		if (strcmp (attr[3], "false") == 0)
+			should_be_ascii = FALSE;
+
+		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+			return FALSE;
+
+		is_ascii = TRUE;
+
+		str = hal_device_property_get_string (d, prop_to_check);
+		for (i = 0; str[i] != '\0'; i++) {
+			if (((unsigned char) str[i]) > 0x7f)
+				is_ascii = FALSE;
+		}
+
+		if (should_be_ascii) {
+			if (is_ascii)
+				return TRUE;
+			else
+				return FALSE;
+		} else {
+			if (is_ascii)
+				return FALSE;
+			else
+				return TRUE;
+		}
 	} else if (strcmp (attr[2], "is_absolute_path") == 0) {
 		const char *path = NULL;
 		dbus_bool_t is_absolute_path = FALSE;

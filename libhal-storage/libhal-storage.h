@@ -171,6 +171,7 @@ void              hal_drive_free                        (HalDrive      *drive);
 
 dbus_bool_t       hal_drive_is_hotpluggable             (HalDrive      *drive);
 dbus_bool_t       hal_drive_uses_removable_media        (HalDrive      *drive);
+dbus_bool_t       hal_drive_no_partitions_hint          (HalDrive      *drive);
 dbus_bool_t       hal_drive_requires_eject              (HalDrive      *drive);
 HalDriveType      hal_drive_get_type                    (HalDrive      *drive);
 HalDriveBus       hal_drive_get_bus                     (HalDrive      *drive);
@@ -192,7 +193,18 @@ const char       *hal_drive_get_dedicated_icon_volume   (HalDrive      *drive);
 char             *hal_drive_policy_compute_display_name (HalDrive      *drive, HalVolume *volume, HalStoragePolicy *policy);
 char             *hal_drive_policy_compute_icon_name    (HalDrive      *drive, HalVolume *volume, HalStoragePolicy *policy);
 
+dbus_bool_t       hal_drive_policy_is_mountable        (HalDrive      *drive, HalStoragePolicy *policy);
+const char       *hal_drive_policy_get_desired_mount_point (HalDrive      *drive, HalStoragePolicy *policy);
+const char       *hal_drive_policy_get_mount_options   (HalDrive      *drive, HalStoragePolicy *policy);
+const char       *hal_drive_policy_get_mount_fs        (HalDrive      *drive, HalStoragePolicy *policy);
+
 char            **hal_drive_find_all_volumes            (LibHalContext *hal_ctx, HalDrive *drive, int *num_volumes);
+
+
+char        *hal_drive_policy_default_get_mount_root                (LibHalContext *hal_ctx);
+dbus_bool_t  hal_drive_policy_default_use_managed_keyword           (LibHalContext *hal_ctx);
+char        *hal_drive_policy_default_get_managed_keyword_primary   (LibHalContext *hal_ctx);
+char        *hal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx);
 
 
 typedef enum {
@@ -247,8 +259,12 @@ char             *hal_volume_policy_compute_size_as_string (HalVolume     *volum
 char             *hal_volume_policy_compute_display_name   (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy);
 char             *hal_volume_policy_compute_icon_name      (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy);
 
-dbus_bool_t       hal_volume_policy_should_be_visible      (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy, const char *target_moint_point);
+dbus_bool_t       hal_volume_policy_should_be_visible      (HalDrive      *drive, HalVolume    *volume, HalStoragePolicy *policy, const char *target_mount_point);
 
+dbus_bool_t       hal_volume_policy_is_mountable        (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy);
+const char       *hal_volume_policy_get_desired_mount_point (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy);
+const char       *hal_volume_policy_get_mount_options   (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy);
+const char       *hal_volume_policy_get_mount_fs        (HalDrive *drive, HalVolume *volume, HalStoragePolicy *policy);
 
 /** @} */
 

@@ -3198,7 +3198,11 @@
 	 </para></listitem>
          <listitem><para>
 	     <literal>is_absolute_path</literal> - matches only when a string property represents an absolute path
-	     (the path doesn't have to exist).
+	     (the path doesn't have to exist). Can be used with 'true' or 'false'.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>is_ascii</literal> - matches only when a string property contain only ASCII characters. 
+	     Can be used with 'true' or 'false'.
 	 </para></listitem>
          <listitem><para>
 	     <literal>compare_lt</literal> - can be used on int, uint64, double and string properties to compare
