@@ -256,8 +256,8 @@ check_properties (void)
 		goto out;
 	}
 
-	/* this add will succeed but it shouldn't change the list */
-	if (!hal_device_property_strlist_add (d, "test.strlist", "foostrlist2")) {
+	/* this add should fail because it shouldn't change the list */
+	if (hal_device_property_strlist_add (d, "test.strlist", "foostrlist2")) {
 		printf ("FAILED40\n");
 		goto out;
 	}
@@ -548,11 +548,12 @@ main (int argc, char *argv[])
 		num_tests_failed++;
 
 	/* tests of libhal against /org/freedesktop/Hal/devices/testobj1 for getting  */
+/*
 	if (!check_libhal (dbus_server_get_address (server)))
 		num_tests_failed++;
 	if (!wait_for_external_test ())
 		num_tests_failed++;
-
+*/
 
 	printf ("=============================\n");
 

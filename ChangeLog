@@ -1,5 +1,13 @@
 2005-03-07  David Zeuthen  <davidz@redhat.com>
 
+	* hald/hald_test.c (main): Back out libhal testing code for now.
+	(check_properties): We've changed the semantics of hal_device_
+	property_strlist_add so change test suite accordingly
+	
+	* doc/TODO: Add note about extending test suite coverage
+
+2005-03-07  David Zeuthen  <davidz@redhat.com>
+
 	* doc/TODO: Forgot one important TODO about finishing the
 	volume_id library (pretty please Kay :-)
 
