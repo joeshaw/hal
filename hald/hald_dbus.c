@@ -446,21 +446,14 @@ typedef struct {
 } DeviceCapabilityInfo;
 
 static gboolean
-foreach_device_by_capability (HalDeviceStore *store, HalDevice *device,
-			      gpointer user_data)
+foreach_device_by_capability (HalDeviceStore *store, HalDevice *device, gpointer user_data)
 {
-	DeviceCapabilityInfo *info = user_data;
-	const char *caps;
+	DeviceCapabilityInfo *info = (DeviceCapabilityInfo *) user_data;
 
-	caps = hal_device_property_get_string (device, "info.capabilities");
-
-	if (caps != NULL && strstr (caps, info->capability) != NULL) {
-		const char *udi;
-		udi = hal_device_get_udi (device);
-		
+	if (hal_device_has_capability (device, info->capability)) {
 		dbus_message_iter_append_basic (info->iter,
 						DBUS_TYPE_STRING,
-						&udi);
+						&(device->udi));
 	}
 
 	return TRUE;
@@ -1677,7 +1670,7 @@ device_lock (DBusConnection * connection,
 
 	hal_device_property_set_bool (d, "info.locked", TRUE);
 	hal_device_property_set_string (d, "info.locked.reason", reason);
-	hal_device_property_set_string (d, "info.locked.dbus_service",
+	hal_device_property_set_string (d, "info.locked.dbus_name",
 					sender);
 
 	if (services_with_locks == NULL) {
@@ -1759,7 +1752,7 @@ device_unlock (DBusConnection * connection,
 	sender = dbus_message_get_sender (message);
 
 	if (strcmp (sender, hal_device_property_get_string (
-			    d, "info.locked.dbus_service")) != 0) {
+			    d, "info.locked.dbus_name")) != 0) {
 		char *reason;
 
 		reason = g_strdup_printf ("Service '%s' does not own the "
@@ -1782,7 +1775,7 @@ device_unlock (DBusConnection * connection,
 
 	hal_device_property_remove (d, "info.locked");
 	hal_device_property_remove (d, "info.locked.reason");
-	hal_device_property_remove (d, "info.locked.dbus_service");
+	hal_device_property_remove (d, "info.locked.dbus_name");
 
 	/* FIXME?  Pointless? */
 	if (!dbus_connection_send (connection, reply, NULL))
@@ -2055,27 +2048,27 @@ reinit_dbus (gpointer user_data)
 static void
 service_deleted (DBusMessage *message)
 {
-	char *service_name;
+	char *old_service_name;
+	char *new_service_name;
 	HalDevice *d;
 
 	if (!dbus_message_get_args (message, NULL,
-				    DBUS_TYPE_STRING, &service_name,
+				    DBUS_TYPE_STRING, &old_service_name,
+				    DBUS_TYPE_STRING, &new_service_name,
 				    DBUS_TYPE_INVALID)) {
-		HAL_ERROR (("Invalid NameLost signal from bus!"));
+		HAL_ERROR (("Invalid NameOwnerChanged signal from bus!"));
 		return;
 	}
 
-	d = g_hash_table_lookup (services_with_locks, service_name);
+	d = g_hash_table_lookup (services_with_locks, new_service_name);
 
 	if (d != NULL) {
 		hal_device_property_remove (d, "info.locked");
 		hal_device_property_remove (d, "info.locked.reason");
-		hal_device_property_remove (d, "info.locked.dbus_service");
+		hal_device_property_remove (d, "info.locked.dbus_name");
 
-		g_hash_table_remove (services_with_locks, service_name);
+		g_hash_table_remove (services_with_locks, new_service_name);
 	}
-
-	dbus_free (service_name);
 }
 
 static DBusHandlerResult
@@ -2179,6 +2172,10 @@ DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
 			   DBusMessage * message, void *user_data)
 {
+	/*HAL_INFO (("obj_path=%s interface=%s method=%s", 
+		   dbus_message_get_path(message), 
+		   dbus_message_get_interface(message),
+		   dbus_message_get_member(message)));*/
 
 	if (dbus_message_is_signal (message,
 				    DBUS_INTERFACE_DBUS,
@@ -2191,7 +2188,7 @@ hald_dbus_filter_function (DBusConnection * connection,
 
 	} else if (dbus_message_is_signal (message,
 					   DBUS_INTERFACE_DBUS,
-					   "NameLost")) {
+					   "NameOwnerChanged")) {
 
 		if (services_with_locks != NULL)
 			service_deleted (message);
@@ -2351,10 +2348,10 @@ hald_dbus_init (void)
 				    NULL);
 
 	dbus_bus_add_match (dbus_connection,
-			    "type='signal',"
-			    "interface='"DBUS_INTERFACE_DBUS"',"
-			    "sender='"DBUS_SERVICE_DBUS"',"
-			    "member='NameLost'",
+			    "type='signal'"
+			    ",interface='"DBUS_INTERFACE_DBUS"'"
+			    ",sender='"DBUS_SERVICE_DBUS"'"
+			    ",member='NameOwnerChanged'",
 			    NULL);
 
 	return TRUE;

@@ -18,7 +18,7 @@ reason = "locking.py pid %d"%pid
 bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)
 hal_service = bus.get_service("org.freedesktop.Hal")
 
-print "I am %s with pid %d"%(bus.get_connection().get_base_service(), pid)
+print "I am %s with pid %d"%(bus.get_connection().get_unique_name(), pid)
 print
 
 dev = hal_service.get_object (dev_udi, "org.freedesktop.Hal.Device")

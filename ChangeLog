@@ -1,3 +1,19 @@
+2005-03-01  David Zeuthen  <david@fubar.dk>
+
+	* hald/hald_dbus.c (foreach_device_by_capability): Fixup this
+	function to work with the new D-BUS API
+	(device_lock): Be consistent with new D-BUS naming, e.g. use
+	info.locked.dbus_name instead of info.lock.dbus_service
+	(device_unlock): -do-
+	(service_deleted): Use NameOwnerChanged instead of NameLost as
+	the latter only goes to the service who's lost the name
+	(hald_dbus_filter_function): -do-
+	(hald_dbus_init): Subscribe to NameOwnerChanged rather than
+	NameLost
+
+	* examples/locking.py: Fixup to use get_unique_name() instead of
+	get_base_service()
+
 2005-02-28  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/ids.c: Added TOS6200, TOS6202, TOS6207 entries from
