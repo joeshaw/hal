@@ -1,5 +1,9 @@
 2004-07-06  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/volume_id/volume_id.c: Remove #define DEBUG
+
+2004-07-06  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/bus_device.c (bus_device_move_from_tdl_to_gdl): Removed
 	the wrong handler so on remove this was called and the device was
 	added to the GDL again. Resulting in the device was never removed.

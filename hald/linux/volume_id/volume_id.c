@@ -39,7 +39,6 @@
 
 #include "volume_id.h"
 
-#define DEBUG
 #ifdef DEBUG
 #define dbg(format, arg...)						\
 	do {								\
