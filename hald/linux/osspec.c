@@ -346,18 +346,6 @@ osspec_init (DBusConnection * dbus_connection)
 		ch->init (ch);
 	}
 
-	/* Add match for signals from udev */
-	dbus_error_init (&error);
-	dbus_bus_add_match (dbus_connection,
-			    "type='signal',"
-			    "interface='org.kernel.udev.NodeMonitor',"
-			    /*"sender='org.kernel.udev'," until dbus is fixed*/
-			    "path='/org/kernel/udev/NodeMonitor'", &error);
-	if (dbus_error_is_set (&error)) {
-		HAL_WARNING (("Cannot subscribe to udev signals, error=%s",
-			      error.message));
-	}
-
 	/* Setup timer */
 	g_timeout_add (2000, osspec_timer_handler, NULL);	
 }
