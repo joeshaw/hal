@@ -1,5 +1,11 @@
 2004-10-14  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Remove a bunch of fstab-sync options (all but the
+	--enable-fstab-sync) that is now taken from the root computer device
+	object, e.g. defined in fdi/90defaultpolicy/storage-policy.fdi file.
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Martin Pitt <martin@piware.de>.
 	
 	* hald/linux/pci_bus_device.c (pci_device_pre_process): Fixup crash

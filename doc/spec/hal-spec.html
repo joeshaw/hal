@@ -6975,7 +6975,7 @@ CLASS="programlisting"
 	    &#60;/match&#62;
 	  &#60;/match&#62;
 	  
-	  &#60;!-- whitelist of partition table id, if from a msdos partition table --&#62;
+	  &#60;!-- whitelist of partition table id's, if from a msdos partition table --&#62;
 	  &#60;match key="volume.partition.msdos_part_table_type" exists="true"&#62;
 	    &#60;!-- Default to no mount and punch holes --&#62;
 	    &#60;merge key="volume.policy.should_mount" type="bool"&#62;false&#60;/merge&#62;
