@@ -104,14 +104,14 @@ do stuff like this
           <merge key="portable_audio_player.input" type="string">wav</merge>
           <merge key="portable_audio_player.localdb" type="bool">false</merge>
 
-          <match key="udi:root/kernel.name" string="Linux">
+          <match udi="root" key="kernel.name" string="Linux">
             <merge key="blah" string="pre-foo">
-            <match key="udi:root/kernel.version" version_ge="2.6.42">
+            <match udi="root" key="kernel.version" version_ge="2.6.42">
               <merge key="blah" string="new-foo">
             </match>
           </match>
 
-          <match key="udi:root/kernel.name" string="FreeBSD">
+          <match udi="root" key="kernel.name" string="FreeBSD">
             <merge key="blah" string="bsd-foo">
           </match>
 
@@ -121,7 +121,7 @@ do stuff like this
   </device>
 </deviceinfo>
 
-where udi:<X>/<Y> means reference the property <Y> on the device with
+where using udi="<X>" means reference the property on the device with
 UDI <X>. 
 
 The 'version_ge' attribute means to read the string property (good

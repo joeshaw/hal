@@ -1,5 +1,10 @@
 2004-07-21  David Zeuthen  <david@fubar.dk>
 
+	* doc/TODO: changed key="udi:<X>/<Y>" to 'udi="<X>" key="Y"' after
+	suggestion by David Malcolm
+
+2004-07-21  David Zeuthen  <david@fubar.dk>
+
 	* doc/TODO: Added the TODO 'Rescan() method on HalDevice'.
 	Added the TODO 'Privilege Management'.
 	Put some more info on 'Locking of devices' and 'Power Management',
