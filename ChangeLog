@@ -1,4 +1,15 @@
-2004-10-25  David Zeuthen  <david@fubar.dk>
+2004-10-25  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/90defaultpolicy/storage-policy.fdi: Allow fstype 'auto' for 
+	optical drives instead of 'iso9660,udf'
+
+2004-10-25  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux/volume_id/volume_id.c (volume_id_probe): Move probe_ntfs
+	to the bottom as some ext3 partition was wrongly identified as a NTFS
+	partition
+
+2004-10-25  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux/osspec.c (hotplug_timeout_handler): Fixup timeout handling
 	to rebasing to lowest seqnum in queue instead of just taking the

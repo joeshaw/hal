@@ -39,7 +39,7 @@
     <match key="storage.no_partitions_hint" bool="true">
       <!-- optical drives -->
       <match key="storage.drive_type" string="cdrom">
-	<merge key="storage.policy.mount_filesystem" type="string">iso9660,udf</merge>
+	<merge key="storage.policy.mount_filesystem" type="string">auto</merge>
 	<merge key="storage.policy.desired_mount_point" type="string">cdrom</merge>
 	<merge key="storage.policy.mount_option.ro" type="bool">true</merge>
 	<match key="storage.cdrom.cdr" bool="true">

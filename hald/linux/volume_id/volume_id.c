@@ -2091,9 +2091,6 @@ int volume_id_probe(struct volume_id *id,
 		rc = probe_msdos_part_table(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_ntfs(id, off);
-		if (rc == 0)
-			break;
 		rc = probe_vfat(id, off);
 		if (rc == 0)
 			break;
@@ -2129,6 +2126,9 @@ int volume_id_probe(struct volume_id *id,
 		if (rc == 0)
 			break;
 		rc = probe_ufs(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_ntfs(id, off);
 		if (rc == 0)
 			break;
 
