@@ -7,14 +7,17 @@
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.7"></HEAD
 ><BODY
-CLASS="article"
+CLASS="book"
 BGCOLOR="#FFFFFF"
 TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
 ><DIV
-CLASS="ARTICLE"
+CLASS="BOOK"
+><A
+NAME="index"
+></A
 ><DIV
 CLASS="TITLEPAGE"
 ><H1
@@ -23,33 +26,33 @@ CLASS="title"
 NAME="AEN2"
 >HAL 0.2.95 Specification</A
 ></H1
-><DIV
-CLASS="authorgroup"
-><A
-NAME="AEN6"
-></A
-><H4
+><H3
 CLASS="author"
 ><A
 NAME="AEN7"
->David Zeuthen</A
-></H4
+></A
+>David Zeuthen</H3
 ><DIV
 CLASS="affiliation"
 ><DIV
 CLASS="address"
->&#13;	    <DIV
+><P
+CLASS="address"
+><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<CODE
 CLASS="email"
->david@fubar.dk</DIV
->
-	  </DIV
+>&#60;<A
+HREF="mailto:david@fubar.dk"
+>david@fubar.dk</A
+>&#62;</CODE
+><br>
+	&nbsp;&nbsp;</P
 ></DIV
 ></DIV
-><HR
-WIDTH="75%"
-ALIGN="CENTER"
-COLOR="#000000"
-SIZE="1"></DIV
+><SPAN
+CLASS="releaseinfo"
+>Version 0.2.95<BR></SPAN
+><HR></DIV
 ><DIV
 CLASS="TOC"
 ><DL
@@ -62,14 +65,47 @@ CLASS="TOC"
 HREF="#introduction"
 >Introduction</A
 ></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN15"
+>About</A
+></DT
+><DT
+><A
+HREF="#AEN23"
+>Document History</A
+></DT
+><DT
+><A
+HREF="#AEN45"
+>Acknowledgements</A
+></DT
+></DL
+></DD
 ><DT
 ><A
 HREF="#overview"
 >Overview</A
 ></DT
+><DD
+><DL
 ><DT
 ><A
-HREF="#AEN102"
+HREF="#ov_halarch"
+>Architecture of HAL</A
+></DT
+><DT
+><A
+HREF="#ov_hal_linux26"
+>HAL on Linux 2.6</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="#AEN112"
 >Device Objects</A
 ></DT
 ><DT
@@ -84,114 +120,179 @@ HREF="#capabilties"
 ></DT
 ><DT
 ><A
-HREF="#AEN328"
->D-BUS Network API</A
+HREF="#device-properties"
+>Device Properties</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#device-properties-info"
+>info namespace</A
 ></DT
 ><DT
 ><A
-HREF="#device-properties"
->Properties of a device</A
+HREF="#device-properties-linux"
+>linux namespace</A
 ></DT
+><DT
+><A
+HREF="#device-properties-pci"
+>pci namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-usb"
+>usb, usbif namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-ide"
+>ide, ide_host namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-scsi"
+>scsi_host, scsi_device namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-input"
+>input namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-block"
+>block namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-net"
+>net, net.ethernet namespace</A
+></DT
+></DL
+></DD
 ><DT
 ><A
 HREF="#spec-device-info"
->Specification of device info files</A
+>Device Information Files</A
 ></DT
 ><DT
 ><A
-HREF="#impl"
->HAL implementation details</A
+HREF="#dbus-api"
+>D-BUS Network API</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN1173"
+>Interface org.freedesktop.Hal.Manager</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN1184"
+>Example</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="#AEN1192"
+>Interface org.freedesktop.Hal.Device</A
+></DT
+><DT
+><A
+HREF="#AEN1201"
+>Interface org.freedesktop.Hal.AgentManager</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="#enforcing-policy"
+>Enforcing Policy</A
 ></DT
 ></DL
 ></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="introduction"
+></A
+>Introduction</H1
 ><DIV
 CLASS="sect1"
 ><H2
 CLASS="sect1"
 ><A
-NAME="introduction"
->Introduction</A
+NAME="AEN15"
+>About</A
 ></H2
 ><P
->&#13;
-      This document concerns the specification of HAL which is a piece of
-      software that provides a view of the various hardware attached to
-      a system. Though the name HAL is derived from Hardware Abstraction
-      Layer, HAL in itself is not an abstraction layer in the traditional
-      sense. The purpose of HAL is to give an up to date view of hardware,
-      merge arbitrary metadata with metadata obtained from the hardware
-      and provide hooks such that system-level and desktop session-level
-      software can react to changes in the hardware configuration in order
-      to maintain system policy.
+>&#13;	This document concerns the specification of HAL which is a
+	piece of software that provides a view of the various hardware
+	attached to a system. In addition to this, HAL keeps detailed
+	metadata for each piece of hardware and provide hooks such
+	that system- and desktop-level software can react to changes
+	in the hardware configuration in order to maintain system
+	policy.
 
-    </P
+      </P
 ><P
 >&#13;
-      A device, in the context of the HAL, is identified by a unique
-      id and a set of properties (key/value pairs).  This document
-      specifies a set of known properties and gives them well-defined
-      meaning. This enables applications and desktop environments to
-      make a distinction between the different device objects and use
-      the devices based on certain well-known properties.
-
-    </P
-><P
->&#13;
-      For instance, the <I
+	A piece of hardware, called a device object in HAL, is
+	identified by a unique identifier and a set of key/value pairs
+	referered to as <I
 CLASS="emphasis"
->info.category</I
-> property
-      specifies what the device is (such as a digital camera or an
-      audio device), and the
-      <I
-CLASS="emphasis"
->block.mount_point</I
-> property
-      specifies where in the filesystem a storage device is mounted. 
-      In addition, the HAL provides generic device operations such as
-      locking devices for exclusive access, or suspend/resume.
-
-    </P
-><P
->&#13;
-      In order to merge arbitrary metadata, HAL is concerned with so called 
-      <I
+>device properties</I
+>. Some
+	properties are derived from the actual hardware, some are
+	merged from <I
 CLASS="emphasis"
 >device information files</I
->.
+> and
+	some related to how the device is configured. This document
+	specifies the set of properties and gives them well-defined
+	meaning. This enable system and desktop level components to
+	make a distinction between the different device objects and
+	use and configure the devices based on these properties.
 
-      A device information file matches a subset of devices (from
-      properties derived from the physical bus the device is on or
-      what functionality the underlying kernel provides) and populates
-      them with other, often well-defined, properties.
+      </P
+><P
+>&#13;	
+	HAL provides an easy-to-use API through D-BUS which is an IPC
+	framework that, among other things, provides a system-wide
+	message-bus that allows applications to talk to one
+	another. Specifically, D-BUS provides asynchronous
+	notification such that HAL can notify other peers on the
+	message-bus when devices are added and removed as well as when
+	properties on a device changes.  
 
-      Device information files are by no means a substitute for driver
-      software, they are simply hints to the desktop environment /
-      applications about what the device is, what it does and how it
-      can be used. For example, a device information file can be used
-      to specify that what the kernel sees only as a USB Mass Storage
-      Device is in fact a digital camera or a MP3 player.
-
-    </P
+      </P
 ><P
 >&#13;
-      The HAL is built upon D-BUS which is an IPC framework that,
-      among other things, provides a system-wide message-bus that
-      allows applications to talk to one another. Apart from D-BUS,
-      HAL has no other major dependencies which, given sufficient
-      infrastructure, allows it to work on many UNIX-like systems. The
-      major focus, initially, is systems running Linux 2.6 series
-      kernels.
+	The most important goal of HAL is to provide plug-and-play
+	facilities for UNIX-based desktops with focus on providing a
+	rich and extensible description of what the devices are.  HAL
+	has no other major dependencies apart from D-BUS which, given
+	sufficient infrastructure, allows it to be implemented on many
+	UNIX-like systems. The major focus, initially, is systems
+	running Linux 2.6 series kernels.
 
-    </P
+      </P
+></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="AEN23"
->Version control</A
-></H3
+>Document History</A
+></H2
 ><DIV
 CLASS="informaltable"
 ><P
@@ -248,24 +349,36 @@ CLASS="CALSTABLE"
 ></DIV
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="AEN45"
->Acknowledgement</A
-></H3
+>Acknowledgements</A
+></H2
 ><P
 >&#13;
       Havoc Pennington's article
       <A
 HREF="http://www.ometer.com/hardware.html"
 TARGET="_top"
->"Making Hardware Just Work"</A
-> 
-      motivated this specification. This specification would not exist
-      without all the useful suggestions, comments and patches from the
-      Free Desktop and HAL mailing lists.
+>''Making
+      Hardware Just Work''</A
+> motivated this
+      work. The specification and software would not exist
+      without all the useful ideas, suggestions, comments and patches
+      from the 
+      <A
+HREF="http://freedesktop.org/mailman/listinfo/xdg"
+TARGET="_top"
+>Free Desktop</A
+> and
+      <A
+HREF="http://freedesktop.org/mailman/listinfo/hal"
+TARGET="_top"
+>HAL</A
+>
+      mailing lists.
 
       </P
 ><P
@@ -276,25 +389,25 @@ TARGET="_top"
 ></DIV
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="chapter"
+><HR><H1
 ><A
 NAME="overview"
->Overview</A
-></H2
+></A
+>Overview</H1
 ><DIV
-CLASS="sect2"
-><H3
-CLASS="sect2"
+CLASS="sect1"
+><H2
+CLASS="sect1"
 ><A
 NAME="ov_halarch"
 >Architecture of HAL</A
-></H3
+></H2
 ><P
 >&#13;
-      The HAL consists of a number of components as outlined in the diagram
-      below
+      The HAL consists of a number of components as outlined in the
+      diagram below. Note that this diagram is high-level and doesn't
+      capture implementation details.
 
     </P
 ><P
@@ -303,7 +416,7 @@ SRC="hal-arch.png">
     </P
 ><P
 >&#13;
-      Highlights
+      Details on each component
 
       <P
 ></P
@@ -321,9 +434,10 @@ CLASS="emphasis"
           device objects. It is also responsible for merging
           information from the device information file repository and
           managing the life cycle of device objects. The HAL daemon
-          also contains detection and monitoring code for standard
-          busses (PCI, USB etc.) and devices. The HAL daemon notifies
-          system level components through callouts and session level
+          also contains detection and monitoring code for
+          buses (such as PCI and USB buses) and devices (such as
+          networking and storage devices). The HAL daemon notifies system
+          level components through callouts and session level
           components using the D-BUS interface.
 
         </P
@@ -351,7 +465,7 @@ CLASS="emphasis"
           Any program can be a HAL agent; all it means is that the
           program communicates with the HAL daemon using a specific
           interface.  Examples of use that come to mind are prototypes
-          for supporting vendor or OEM specific busses/devices,
+          for supporting vendor or OEM specific buses/devices,
           integration of existing device detection/monitoring
           frameworks etc.
 
@@ -366,30 +480,28 @@ CLASS="emphasis"
 ><P
 > 
 
-          This represents the end consumers of the HAL and comprises
-          both applications that need to search for a device, but also
-          (existing) device specific libraries and/or services that
-          provide operations on devices. Specifically, the application
-          or device library obtain the ''address'', (the special
-          device file or other details) of the device through HAL but
-          interact with the device through the kernel as normal.
+            This represents the end consumers of the HAL and comprises
+            both applications that need to search for a device, but
+            also (existing) device specific libraries and/or services
+            that provide operations on devices. Specifically, the
+            application or device library can obtain the ''address'',
+            (the special device file or other details) of the device
+            through HAL to interact with the device through the
+            kernel as normal.
 
           </P
 ><P
 >&#13;
-          In addition, this group include desktop environments such as
-          GNOME or KDE. Specifically, using HAL, desktop environments
-          may include session-daemons enforcing certain policies when
-          the device database managed by the HAL daemon changes.
-
-          </P
-><P
->&#13;
-          Such policies may include starting a photo management
-          application when a camera is plugged in, assisting the user in
-          finding driver software and device information files for a
-          new device, displaying link information about network
-          devices, mounting removable storage and so on.
+            In addition, this group include desktop environments such
+            as GNOME or KDE. Specifically, using HAL, desktop
+            environments may include session-level daemons enforcing
+            certain policies when the device database managed by the
+            HAL daemon changes. Such policies may include starting a
+            photo management application when a camera is plugged in,
+            assisting the user in finding driver software and device
+            information files for a new device, displaying link
+            information about network devices, mounting removable
+            storage and so on.
 
         </P
 ></LI
@@ -402,13 +514,14 @@ CLASS="emphasis"
 ><P
 > 
 
-	  Callouts are invoked just after the HAL daemon have detected
-	  a device, but just before desktop session level applications
-	  are notified through the D-BUS interface. As such, callouts
-	  can be used to maintain system-wide policy (that may be
-	  specific to the particular OS) such as changing permissions
-	  on device nodes, updating the systemwide /etc/fstab file or
-	  configuring the networking subsystem.
+	    Callouts are programs invoked just after the HAL daemon
+	    have detected a device, but just before desktop session
+	    level applications are notified through the D-BUS
+	    interface. As such, callouts can be used to maintain
+	    system-wide policy (that may be specific to the particular
+	    OS) such as changing permissions on device nodes, updating
+	    the systemwide /etc/fstab file or configuring the
+	    networking subsystem.
 
         </P
 ></LI
@@ -421,144 +534,146 @@ CLASS="emphasis"
       applications and the aforementioned HAL agents. As D-BUS is
       designed to be language independent, potentially many languages
       / runtime systems will be able to easily access the services
-      offered by HAL.
+      offered by HAL. The D-BUS API is detailed in
+      <A
+HREF="#dbus-api"
+>the chapter called <I
+>D-BUS Network API</I
+></A
+>.
 
       </P
 ><P
 >&#13;
-      It is important to emphasize that both the HAL daemon and
-      programs acting as HAL agents are responsible for both
-      adding/creating device objects and monitoring devices. Examples
-      of monitoring includes network device link detection, optical
-      disc change detection, storage volume mount point detection etc.
-      This is detailed in the following sections.
+      Note that HAL doesn't enforce any policy, this is left for
+      desktop environments and operating systems vendors to define and
+      implement.  However, to ensure interoperability between
+      operating systems and desktop environments, recommendations and
+      best practises on how to enforce policy is discussed in <A
+HREF="#enforcing-policy"
+>the chapter called <I
+>Enforcing Policy</I
+></A
+>.
 
     </P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="ov_scopearch"
->Scope of HAL</A
-></H3
-><P
->&#13;      
-      This section attempts to draw some line in the sand in terms of
-      what HAL is supposed to do and not to do. First of all, HAL is
-      concerned with
-
-      <P
-></P
-><UL
-><LI
-><P
->&#13;
-        Maintaining a live list of device objects that correspond to
-        the list maintained by the operating system kernel. This
-        include bus specific information such as the PCI slot location
-	or USB Vendor ID.
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Merging class device information (derived from the hardware)
-        into a device object.  For example, for a USB mouse HAL will
-        merge well-defined properties describing the input-related
-        capabilities of the mouse (e.g. how many buttons), and for
-	optical discs HAL will merge information about the disc (e.g.
-	is it a CD-R, DVD-RW etc.).
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Merging information (produced by human beings) into a device
-        from device information files.  This allows applications to
-        think in terms of ''capabilities'' rather than relying on
-        device class information derived from the hardware. For example,
-	for a MP3 player, the set of audio formats that the device is
-	capable to playback can be merged.
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Provide monitoring of detected devices in a way that doesn't
-	disrupt normal device usage.
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Provide ways for OS vendors to configure the operating system
-	when new devices are detected by taking advantage of the metadata
-	exported by HAL.
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Providing a simple to use query/notification API for use in
-        desktop applications.
-
-        </P
-></LI
-></UL
->
-
-      HAL is not concerned with
-
-      <P
-></P
-><UL
-><LI
-><P
->&#13;
-        Device configuration; that is the task of loading an operating
-        system driver, uploading firmware, mounting a disk or
-        configure/initiate a network connection.  It should be noted,
-        though, that HAL provides excellent infrastructure, callouts
-        and D-BUS notifications, for doing some of these tasks.
-
-        </P
-></LI
-><LI
-><P
->&#13;
-        Providing device-specific operations such as extracting
-        pictures from a digital camera.  There already exists
-        libraries and frameworks for dealing with hardware. The
-        idea is to integrate HAL into already existing libraries/
-	frameworks/applications.
-
-        </P
-></LI
-></UL
->
-
-      Specifically, HAL doesn't enforce any policy whatsoever, this
-      is left for desktop environments and operating systems vendors to
-      implement. See section TODO for further discussion.
-
-      </P
-></DIV
 ></DIV
 ><DIV
 CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN102"
->Device Objects</A
+NAME="ov_hal_linux26"
+>HAL on Linux 2.6</A
 ></H2
+><P
+>&#13;
+      On a Linux 2.6 system HAL is implemented as shown in the diagram
+      below:
+
+      </P
+><P
+>&#13;	<IMG
+SRC="hal-linux26.png">
+      </P
+><P
+>&#13;
+      Highlights
+
+      <P
+></P
+><UL
+><LI
+><P
+>&#13;	    HAL depends on the <TT
+CLASS="literal"
+>udev</TT
+> and 
+	    <TT
+CLASS="literal"
+>linux-hotplug</TT
+> packages
+        </P
+></LI
+><LI
+><P
+>&#13;	    The diagram shows an example callout program, 
+	    <TT
+CLASS="literal"
+>update-fstab.sh</TT
+>, that creates/destroys
+	    mount points and modifies the <TT
+CLASS="literal"
+>/etc/fstab</TT
+>
+	    file accordingly whenever storage devices are added or
+	    removed.
+        </P
+></LI
+><LI
+><P
+>&#13;	    A session-level daemon, <TT
+CLASS="literal"
+>*-volume-manager</TT
+>,
+	    for mounting storage devices is shown. This piece of software
+	    depends on a properly updated <TT
+CLASS="literal"
+>/etc/fstab</TT
+>
+	    file and a setuid <TT
+CLASS="literal"
+>mount(1)</TT
+> binary that 
+	    allows an unprivileged user to mount devices marked with option
+	    <TT
+CLASS="literal"
+>user</TT
+> in the <TT
+CLASS="literal"
+>/etc/fstab</TT
+> file.
+        </P
+></LI
+><LI
+><P
+>&#13;	    The <TT
+CLASS="literal"
+>update-fstab.sh</TT
+> and 
+	    <TT
+CLASS="literal"
+>*-volume-manager</TT
+> programs are only
+	    examples on how to enforce policy and are not part of HAL
+	    proper.  An OS vendor may choose to enforce policy in a
+	    different way e.g. he might want to ignore the 
+	    <TT
+CLASS="literal"
+>/etc/fstab</TT
+> file and mount storage volumes
+	    in the callout or run a daemon with sufficient privileges.
+	    See <A
+HREF="#enforcing-policy"
+>the chapter called <I
+>Enforcing Policy</I
+></A
+> for more details.
+        </P
+></LI
+></UL
+>
+
+    </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="AEN112"
+></A
+>Device Objects</H1
 ><P
 >&#13;
       It is important to precisely define the term ''HAL device
@@ -716,8 +831,8 @@ CLASS="emphasis"
       This specification is concerned with precisely defining several
       properties; see <A
 HREF="#device-properties"
->the Section called <I
->Properties of a device</I
+>the chapter called <I
+>Device Properties</I
 ></A
 > and onwards
       for more information.
@@ -753,13 +868,12 @@ SRC="hal-devices1.png">
       </P
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="chapter"
+><HR><H1
 ><A
 NAME="using-devices"
->Using devices</A
-></H2
+></A
+>Using devices</H1
 ><P
 >&#13;
       While the HAL daemon provides generic operations that apply to
@@ -797,13 +911,12 @@ CLASS="literal"
     </P
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="chapter"
+><HR><H1
 ><A
 NAME="capabilties"
->Device Capabilities</A
-></H2
+></A
+>Device Capabilities</H1
 ><P
 >&#13;
        Mainstream devices aren't very good at reporting what they are,
@@ -908,7 +1021,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN167"
+NAME="AEN177"
 ></A
 ><TABLE
 BORDER="1"
@@ -1258,539 +1371,12 @@ CLASS="emphasis"
      </P
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN328"
->D-BUS Network API</A
-></H2
-><P
-> 
-
-      The HAL daemon is a system-wide process that keeps track of a
-      number of device objects. It communicates with the operating
-      system and intercepts hotplug events as devices are plugged in
-      and removed.  The daemon is also responsible for providing
-      services to applications that wants to locate devices and
-      perform generic operations them such as obtaining exclusive
-      access.  Non-generic operations, such as obtaining pictures from
-      a camera device, is outside the scope of the HAL daemon; see
-      <A
-HREF="#using-devices"
->the Section called <I
->Using devices</I
-></A
-> for more information.
-
-      </P
-><P
->&#13;
-      HAL has the concept of device stores. When a device is detected
-      it is placed in the TDL (temporary device list) and then properties
-      are merged from several sources including device information files
-      and possibly callouts. Eventually, the device transitions to the
-      GDL (global device list) and first then it becomes ''visible'' for 
-      desktop applications.
-
-      </P
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN333"
->Interface org.freedesktop.Hal.Manager</A
-></H3
-><P
-> 
-
-      Using D-BUS terminology, the HAL daemon provides the D-BUS
-      service <TT
-CLASS="literal"
->org.freedesktop.Hal</TT
->. This service
-      offers a D-BUS object at a well-known
-      location <TT
-CLASS="literal"
->/org/freedesktop/Hal/Manager</TT
->. This
-      object offers a D-BUS
-      interface, <TT
-CLASS="literal"
->org.freedesktop.Hal.Manager</TT
->, for
-      querying device objects with the following methods:
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;# Return a list of all devices in the GDL
-#
-# @return                       List of UDI's
-#
-array{string} GetAllDevices()
-
-# Determine if a device with a given Unique Device Id exists in the GDL
-#
-# @param  udi                   Device UDI, for example '/org/freedesktop/Hal/devices/pci_8086_7111'
-# @return                       TRUE iff the device with the given UDI exists
-#
-bool DeviceExists(string udi)
-
-# Find the set of devices in the GDL that has a given property matching
-# a given value
-#
-# @param  key                   Key, for example 'block.fstype'
-# @param  value                 Value, for example 'ext3'
-# @return                       Array of UDI's, may be empty
-#
-array{string} FindDeviceStringMatch(string key, string value)
-
-# Find the set of devices in the GDL that has a given capability
-#
-# @param  capability            Capability, for example 'volume'
-# @return                       Array of UDI's, may be empty
-#
-array{string} FindDeviceByCapability(string capability)
-  
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;
-      This object also emits the following signals on the
-      <TT
-CLASS="literal"
->/org/freedesktop/Hal/Manager</TT
-> object on the
-      <TT
-CLASS="literal"
->org.freedesktop.Hal.Manager</TT
-> interface that
-      applications can subscribe to using D-BUS:
-
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;
-# Notification that a new device have been added to the GDL
-#
-# @param  udi                   Unique Device Id
-#
-void DeviceAdded(string udi)
-
-# Notification that a new device have been removed from the GDL. The
-# application cannot use this UDI anymore.
-#
-# @param  udi                   Unique Device Id
-#
-void DeviceRemoved(string udi)
-
-# Notification that a device in the GDL have got a new capability. Note that
-# this is emitted even though the device already had the old capability
-#
-# @param  udi                   Unique Device Id
-#
-void NewCapability(string udi, string capability)
-
-</PRE
-></TD
-></TR
-></TABLE
-><DIV
-CLASS="sect3"
-><HR><H4
-CLASS="sect3"
-><A
-NAME="AEN344"
->Example</A
-></H4
-><P
->&#13;
-      The following brief Python program demonstrates some of the API
-
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;  #!/usr/bin/python
- 
-import gtk
-import dbus
-
-def device_added(interface, signal_name, service, path, message):
-    [udi] = message.get_args_list ()
-    print 'Device %s was added'%udi
-
-def device_removed(interface, signal_name, service, path, message):
-    [udi] = message.get_args_list ()
-    print 'Device %s was removed'%udi
-
- 
-bus = dbus.Bus (dbus.Bus.TYPE_SYSTEM)
-hal_service = bus.get_service ('org.freedesktop.Hal')
-hal_manager = hal_service.get_object ('/org/freedesktop/Hal/Manager',
-				      'org.freedesktop.Hal.Manager')
-
-devices = hal_manager.GetAllDevices ()
-for d in devices:
-    print 'Found device %s'%d
-
-bus.add_signal_receiver(device_added,
-			 'DeviceAdded',
-			 'org.freedesktop.Hal.Manager',
-			 'org.freedesktop.Hal',
-			 '/org/freedesktop/Hal/Manager')
-bus.add_signal_receiver(device_removed,
-			 'DeviceRemoved',
-			 'org.freedesktop.Hal.Manager',
-			 'org.freedesktop.Hal',
-			 '/org/freedesktop/Hal/Manager')
-gtk.main()
-
-
-
-
-
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;
-      which gives the following output
-
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001-disc
-Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001
-Found device /org/freedesktop/Hal/devices/block_37332a77-105e-4e76-8e99-27d3746e0531
-Found device /org/freedesktop/Hal/devices/block_3_2
-Found device /org/freedesktop/Hal/devices/block_LS-120 SLIM3 00 UHD Floppy-0208MBA00211
-Found device /org/freedesktop/Hal/devices/block_IC25N020ATCS05-0-CLP225F2G3UR4A
-Found device /org/freedesktop/Hal/devices/ide_1_1
-Found device /org/freedesktop/Hal/devices/ide_0_0
-Found device /org/freedesktop/Hal/devices/ide_1_0
-Found device /org/freedesktop/Hal/devices/usbif_usb_0_0_206_-1_0000:00:07.2_0
-Found device /org/freedesktop/Hal/devices/ide_host_0
-Found device /org/freedesktop/Hal/devices/ide_host_1
-Found device /org/freedesktop/Hal/devices/pci_104c_8400
-Found device /org/freedesktop/Hal/devices/usb_0_0_206_-1_0000:00:07.2
-Found device /org/freedesktop/Hal/devices/pci_1002_4c4d
-Found device /org/freedesktop/Hal/devices/pci_125d_1978
-Found device /org/freedesktop/Hal/devices/pci_8086_7111
-Found device /org/freedesktop/Hal/devices/pci_104c_ac1c/0
-Found device /org/freedesktop/Hal/devices/pci_8086_7112
-Found device /org/freedesktop/Hal/devices/pci_8086_7110
-Found device /org/freedesktop/Hal/devices/input_13_65
-Found device /org/freedesktop/Hal/devices/pci_104c_ac1c
-Found device /org/freedesktop/Hal/devices/pci_8086_7190
-Found device /org/freedesktop/Hal/devices/input_13_64
-Found device /org/freedesktop/Hal/devices/pci_8086_7113
-Found device /org/freedesktop/Hal/devices/pci_8086_7191
-Found device /org/freedesktop/Hal/devices/computer
-
-(insert USB mouse)
-
-Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was added
-Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was added
-
-(remove USB mouse)
-
-Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was removed
-Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was removed
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;
-      </P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN352"
->Interface org.freedesktop.Hal.Device</A
-></H3
-><P
->&#13;
-      Applications use
-      the <TT
-CLASS="literal"
->org.freedesktop.Hal.Manager</TT
-> interface to
-      locate the device objects they are interested in. When a device
-      object (which is really a D-BUS object, note that the UDI is the
-      objects object_path) is obtained, the HAL daemon provides the
-      <TT
-CLASS="literal"
->org.freedesktop.Hal.Device</TT
-> interface on the
-      object denoted by the UDI. This interface has the following
-      methods
-
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;
-# Set property
-#
-# @param  key                   Property to set
-# @param  value                 Value to set
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch)
-#
-void SetProperty(string key, any value)
-void SetPropertyString(string key, string value)
-void SetPropertyInteger(string key, int32 value)
-void SetPropertyBoolean(string key, bool value)
-void SetPropertyDouble(string key, double value)
-
-# Get property
-#
-# @param  key                   Property to get
-# @return                       The value of the property
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|TypeMismatch)
-#
-any GetProperty(string key)
-string GetPropertyString(string key)
-int32 GetPropertyInteger(string key)
-bool GetPropertyBoolean(string key)
-double GetPropertyDouble(string key)
-
-# Get all properties
-#
-# @return                       Dictionary from key to value
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-map{string, any} GetAllProperties()
-
-  
-# Remove a property
-#
-# @param  key                   Property to remove
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
-#
-void RemoveProperty(string key)
-
-# Get the type of a property
-#
-# @param  key                   Property
-# @return                       D-BUS type of property
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
-#
-int32 GetPropertyType(string key)
-
-# Determine if a property exists
-#
-# @param  key                   Property
-# @return                       TRUE iff the property exists
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-bool PropertyExists(string key)
-
-# Add a capability to a device. Note that this will trigger a NewCapability
-# signal to all client applications subscribing to signals from the Manager
-# interface.
-#
-# @param  capability            Capability, e.g. 'net.80211'
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void AddCapability(string capability)
-
-# Determine if a device got a given capability
-#
-# @param  capability            Capability, e.g. 'storage.cdrom'
-# @return                       TRUE iff the device got the given capability
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-bool QueryCapability(string capability)
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;
-      The device objects also emits the following signals on the
-      org.freedesktop.Hal interface that applications can subscribe to 
-      using D-BUS
-
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;# Notification that property have been modified
-#
-# @param  key                   Property
-# @param  added                 True iff the property have been added
-# @param  removed               True iff the property have been removed
-#
-void PropertyModified(string key, bool added, bool removed)
-
-# Notification that an event happened on the device has occured.
-#
-# Normally this is used to signal events that aren't or can't be expressed
-# in properties, e.g. 'ProcessorOverheating' etc. 
-#
-# @param  condition             Name of condition
-# @param  ...                   Dependent on the condition name
-void Condition(string condition, ...)
-
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;
-      Note that D-BUS supports that applications can opt to receive
-      signals for only a subset of the devices available.
-
-      </P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN361"
->Interface org.freedesktop.Hal.AgentManager</A
-></H3
-><P
->&#13;
-      The API described above is available to all applications. There is 
-      an additional D-BUS interface on the /org/freedesktop/Hal/Manager
-      object called org.freedesktop.Hal.AgentManager which is only available
-      for processes running with administrative privileges. 
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;
-# Create a new device object not in the GDL (ie. hidden from 
-# applications). This object can be obtained using the given UDI as
-# as the D-BUS object reference. 
-#
-# The object implements the org.freedesktop.Hal.Device interface
-#
-# @return                       Temporary UDI for new device object
-#
-string NewDevice()
-
-# When a device have been built, an application can add it to the GDL.
-#
-# A side-effect of this call, is that the Manager object will emit the
-# signal DeviceAdded.
-# 
-# @param  tempUdi               Temporary UDI as obtained from the NewDevice call
-# @param  newUdi                New UDI to use.
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|UdiInUse)
-#
-void CommitToGDL(string tempUdi, string newUdi)
-
-# Remove a device object. 
-#
-# Depending on the info.persistent property, the device may not be removed but
-# rather acquire the property info.not_available with value true.
-#
-# @param  udi                   UDI of device
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void Remove(string udi)
-
-# Merge all properties from one device to another device.
-#
-# If the source device got any capabilities, then the target device
-# will acquire these capabilities and a NewCapability signal will be
-# emitted for the target device for every capability in the source
-# device.
-#
-# @param  targetUdi             UDI of device to receive properties
-# @param  sourceUdi             UDI of device to copy properties from
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void MergeProperties(string targetUdi, string sourceUdi)
-
-# Checks that all properties where keys, starting with a given value
-# (namespace), of the first device is present in the second device and that
-# they got the same value and type. 
-#
-# Note that the other inclusion isn't tested, so there could be
-# properties (from the given namespace) in the second device not present
-# in the first device.
-#
-# @param  udi1                  UDI of device 1
-# @param  udi2                  UDI of device 2
-# @param  namespace             Namespace used for matching, e.g. 'usb'
-# @return                       TRUE if, and only if, all properties starting
-#                               with the namespace parameter from udi1 is
-#                               in udi2 and assume the same value
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-bool DeviceMatches(string udi1, string udi2, string namespace)
-
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;      HAL Agents uses the org.freedesktop.Hal.AgentManager API when 
-      discovering devices either through detection, handling hotplug
-      events or through some other way.
-      </P
-></DIV
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="chapter"
+><HR><H1
 ><A
 NAME="device-properties"
->Properties of a device</A
-></H2
+></A
+>Device Properties</H1
 ><P
 >&#13;      Properties are arranged in a namespaces using ''.'' as a separator
       and are key/value pairs. The value may assume different types; currently
@@ -1798,13 +1384,13 @@ NAME="device-properties"
       is always an ASCII string without any whitespace.
     </P
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-info"
 >info namespace</A
-></H3
+></H2
 ><P
 >&#13;      The info namespace of the properties can be considered meta-data about
       a device. The following properties are defined:
@@ -1814,7 +1400,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN372"
+NAME="AEN344"
 ></A
 ><TABLE
 BORDER="1"
@@ -1989,13 +1575,13 @@ SRC="hal-volume-to-device.png">
       </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-linux"
 >linux namespace</A
-></H3
+></H2
 ><P
 >&#13;      This namespace is used to store Linux-specific information about the
       device and is such only required on Linux.
@@ -2005,7 +1591,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN444"
+NAME="AEN416"
 ></A
 ><TABLE
 BORDER="1"
@@ -2091,13 +1677,13 @@ CLASS="CALSTABLE"
 >&#13;      </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-pci"
 >pci namespace</A
-></H3
+></H2
 ><P
 >&#13;      If a device is on a PCI bus, then these properties are available:
       </P
@@ -2106,7 +1692,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN482"
+NAME="AEN454"
 ></A
 ><TABLE
 BORDER="1"
@@ -2261,13 +1847,13 @@ CLASS="CALSTABLE"
       </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-usb"
 >usb, usbif namespace</A
-></H3
+></H2
 ><P
 >&#13;
       If a device is on a USB bus, then these properties
@@ -2282,7 +1868,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN555"
+NAME="AEN527"
 ></A
 ><TABLE
 BORDER="1"
@@ -2564,7 +2150,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN685"
+NAME="AEN657"
 ></A
 ><TABLE
 BORDER="1"
@@ -2666,13 +2252,13 @@ CLASS="CALSTABLE"
 >&#13;      </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-ide"
 >ide, ide_host namespace</A
-></H3
+></H2
 ><P
 >&#13;
       These namespaces are used to characterise IDE host adaptors and IDE
@@ -2714,7 +2300,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN736"
+NAME="AEN708"
 ></A
 ><TABLE
 BORDER="1"
@@ -2758,7 +2344,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN751"
+NAME="AEN723"
 ></A
 ><TABLE
 BORDER="1"
@@ -2810,26 +2396,26 @@ CLASS="CALSTABLE"
       </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-scsi"
 >scsi_host, scsi_device namespace</A
-></H3
+></H2
 ><P
 >&#13;      (FIXME: Need to populate these namespaces with some interesting
       information such as SCSI LUN address and so on.)
       </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-input"
 >input namespace</A
-></H3
+></H2
 ><P
 >&#13;      
       This namespace is concerned with input devices such as
@@ -2843,7 +2429,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN777"
+NAME="AEN749"
 ></A
 ><TABLE
 BORDER="1"
@@ -3427,13 +3013,13 @@ CLASS="CALSTABLE"
       </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-block"
 >block namespace</A
-></H3
+></H2
 ><P
 >&#13;
       A block device is either a storage device (such as a harddisk, floppy
@@ -3445,7 +3031,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1060"
+NAME="AEN1032"
 ></A
 ><TABLE
 BORDER="1"
@@ -3583,13 +3169,13 @@ CLASS="CALSTABLE"
       </P
 ></DIV
 ><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
 ><A
 NAME="device-properties-net"
 >net, net.ethernet namespace</A
-></H3
+></H2
 ><P
 >&#13;      The net and net.ethernet namespace contains information about
       (logicial) network devices and only applies to devices with
@@ -3600,7 +3186,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1123"
+NAME="AEN1095"
 ></A
 ><TABLE
 BORDER="1"
@@ -3675,7 +3261,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1153"
+NAME="AEN1125"
 ></A
 ><TABLE
 BORDER="1"
@@ -3759,13 +3345,12 @@ CLASS="CALSTABLE"
 ></DIV
 ></DIV
 ><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
+CLASS="chapter"
+><HR><H1
 ><A
 NAME="spec-device-info"
->Specification of device info files</A
-></H2
+></A
+>Device Information Files</H1
 ><P
 >&#13;    The format is almost self-explanatory; here's an example
 
@@ -3816,46 +3401,541 @@ SRC="hal-fdi-example1.png">
     </P
 ></DIV
 ><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="dbus-api"
+></A
+>D-BUS Network API</H1
+><P
+> 
+
+      The HAL daemon is a system-wide process that keeps track of a
+      number of device objects. It communicates with the operating
+      system and intercepts hotplug events as devices are plugged in
+      and removed.  The daemon is also responsible for providing
+      services to applications that wants to locate devices and
+      perform generic operations them such as obtaining exclusive
+      access.  Non-generic operations, such as obtaining pictures from
+      a camera device, is outside the scope of the HAL daemon; see
+      <A
+HREF="#using-devices"
+>the chapter called <I
+>Using devices</I
+></A
+> for more information.
+
+      </P
+><P
+>&#13;
+      HAL has the concept of device stores. When a device is detected
+      it is placed in the TDL (temporary device list) and then properties
+      are merged from several sources including device information files
+      and possibly callouts. Eventually, the device transitions to the
+      GDL (global device list) and first then it becomes ''visible'' for 
+      desktop applications.
+
+      </P
+><DIV
 CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="impl"
->HAL implementation details</A
+NAME="AEN1173"
+>Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
->&#13;
-      Though HAL exposes an abstract view on hardware, integrating HAL
-      into an operating system is highly dependent on the kernel and
-      userspace utilities. The section contain implementation notes for
-      various kernels supported by HAL.
+> 
 
-    </P
+      Using D-BUS terminology, the HAL daemon provides the D-BUS
+      service <TT
+CLASS="literal"
+>org.freedesktop.Hal</TT
+>. This service
+      offers a D-BUS object at a well-known
+      location <TT
+CLASS="literal"
+>/org/freedesktop/Hal/Manager</TT
+>. This
+      object offers a D-BUS
+      interface, <TT
+CLASS="literal"
+>org.freedesktop.Hal.Manager</TT
+>, for
+      querying device objects with the following methods:
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;# Return a list of all devices in the GDL
+#
+# @return                       List of UDI's
+#
+array{string} GetAllDevices()
+
+# Determine if a device with a given Unique Device Id exists in the GDL
+#
+# @param  udi                   Device UDI, for example '/org/freedesktop/Hal/devices/pci_8086_7111'
+# @return                       TRUE iff the device with the given UDI exists
+#
+bool DeviceExists(string udi)
+
+# Find the set of devices in the GDL that has a given property matching
+# a given value
+#
+# @param  key                   Key, for example 'block.fstype'
+# @param  value                 Value, for example 'ext3'
+# @return                       Array of UDI's, may be empty
+#
+array{string} FindDeviceStringMatch(string key, string value)
+
+# Find the set of devices in the GDL that has a given capability
+#
+# @param  capability            Capability, for example 'volume'
+# @return                       Array of UDI's, may be empty
+#
+array{string} FindDeviceByCapability(string capability)
+  
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      This object also emits the following signals on the
+      <TT
+CLASS="literal"
+>/org/freedesktop/Hal/Manager</TT
+> object on the
+      <TT
+CLASS="literal"
+>org.freedesktop.Hal.Manager</TT
+> interface that
+      applications can subscribe to using D-BUS:
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+# Notification that a new device have been added to the GDL
+#
+# @param  udi                   Unique Device Id
+#
+void DeviceAdded(string udi)
+
+# Notification that a new device have been removed from the GDL. The
+# application cannot use this UDI anymore.
+#
+# @param  udi                   Unique Device Id
+#
+void DeviceRemoved(string udi)
+
+# Notification that a device in the GDL have got a new capability. Note that
+# this is emitted even though the device already had the old capability
+#
+# @param  udi                   Unique Device Id
+#
+void NewCapability(string udi, string capability)
+
+</PRE
+></TD
+></TR
+></TABLE
 ><DIV
 CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1199"
->Linux 2.6 and udev</A
+NAME="AEN1184"
+>Example</A
 ></H3
 ><P
 >&#13;
-	HAL is available for for Linux 2.6 systems using udev to manage
-	the device nodes. A typical installation may look like this
+      The following brief Python program demonstrates some of the API
 
       </P
-><P
->&#13;	<IMG
-SRC="hal-linux26.png">
-      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;  #!/usr/bin/python
+ 
+import gtk
+import dbus
+
+def device_added(interface, signal_name, service, path, message):
+    [udi] = message.get_args_list ()
+    print 'Device %s was added'%udi
+
+def device_removed(interface, signal_name, service, path, message):
+    [udi] = message.get_args_list ()
+    print 'Device %s was removed'%udi
+
+ 
+bus = dbus.Bus (dbus.Bus.TYPE_SYSTEM)
+hal_service = bus.get_service ('org.freedesktop.Hal')
+hal_manager = hal_service.get_object ('/org/freedesktop/Hal/Manager',
+				      'org.freedesktop.Hal.Manager')
+
+devices = hal_manager.GetAllDevices ()
+for d in devices:
+    print 'Found device %s'%d
+
+bus.add_signal_receiver(device_added,
+			 'DeviceAdded',
+			 'org.freedesktop.Hal.Manager',
+			 'org.freedesktop.Hal',
+			 '/org/freedesktop/Hal/Manager')
+bus.add_signal_receiver(device_removed,
+			 'DeviceRemoved',
+			 'org.freedesktop.Hal.Manager',
+			 'org.freedesktop.Hal',
+			 '/org/freedesktop/Hal/Manager')
+gtk.main()
+
+
+
+
+
+</PRE
+></TD
+></TR
+></TABLE
 ><P
 >&#13;
-	Note that only the callout for managing storage device is shown
-	in this diagram.
-	
+      which gives the following output
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001-disc
+Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001
+Found device /org/freedesktop/Hal/devices/block_37332a77-105e-4e76-8e99-27d3746e0531
+Found device /org/freedesktop/Hal/devices/block_3_2
+Found device /org/freedesktop/Hal/devices/block_LS-120 SLIM3 00 UHD Floppy-0208MBA00211
+Found device /org/freedesktop/Hal/devices/block_IC25N020ATCS05-0-CLP225F2G3UR4A
+Found device /org/freedesktop/Hal/devices/ide_1_1
+Found device /org/freedesktop/Hal/devices/ide_0_0
+Found device /org/freedesktop/Hal/devices/ide_1_0
+Found device /org/freedesktop/Hal/devices/usbif_usb_0_0_206_-1_0000:00:07.2_0
+Found device /org/freedesktop/Hal/devices/ide_host_0
+Found device /org/freedesktop/Hal/devices/ide_host_1
+Found device /org/freedesktop/Hal/devices/pci_104c_8400
+Found device /org/freedesktop/Hal/devices/usb_0_0_206_-1_0000:00:07.2
+Found device /org/freedesktop/Hal/devices/pci_1002_4c4d
+Found device /org/freedesktop/Hal/devices/pci_125d_1978
+Found device /org/freedesktop/Hal/devices/pci_8086_7111
+Found device /org/freedesktop/Hal/devices/pci_104c_ac1c/0
+Found device /org/freedesktop/Hal/devices/pci_8086_7112
+Found device /org/freedesktop/Hal/devices/pci_8086_7110
+Found device /org/freedesktop/Hal/devices/input_13_65
+Found device /org/freedesktop/Hal/devices/pci_104c_ac1c
+Found device /org/freedesktop/Hal/devices/pci_8086_7190
+Found device /org/freedesktop/Hal/devices/input_13_64
+Found device /org/freedesktop/Hal/devices/pci_8086_7113
+Found device /org/freedesktop/Hal/devices/pci_8086_7191
+Found device /org/freedesktop/Hal/devices/computer
+
+(insert USB mouse)
+
+Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was added
+Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was added
+
+(remove USB mouse)
+
+Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was removed
+Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was removed
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
       </P
 ></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN1192"
+>Interface org.freedesktop.Hal.Device</A
+></H2
+><P
+>&#13;
+      Applications use
+      the <TT
+CLASS="literal"
+>org.freedesktop.Hal.Manager</TT
+> interface to
+      locate the device objects they are interested in. When a device
+      object (which is really a D-BUS object, note that the UDI is the
+      objects object_path) is obtained, the HAL daemon provides the
+      <TT
+CLASS="literal"
+>org.freedesktop.Hal.Device</TT
+> interface on the
+      object denoted by the UDI. This interface has the following
+      methods
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+# Set property
+#
+# @param  key                   Property to set
+# @param  value                 Value to set
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch)
+#
+void SetProperty(string key, any value)
+void SetPropertyString(string key, string value)
+void SetPropertyInteger(string key, int32 value)
+void SetPropertyBoolean(string key, bool value)
+void SetPropertyDouble(string key, double value)
+
+# Get property
+#
+# @param  key                   Property to get
+# @return                       The value of the property
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|TypeMismatch)
+#
+any GetProperty(string key)
+string GetPropertyString(string key)
+int32 GetPropertyInteger(string key)
+bool GetPropertyBoolean(string key)
+double GetPropertyDouble(string key)
+
+# Get all properties
+#
+# @return                       Dictionary from key to value
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+map{string, any} GetAllProperties()
+
+  
+# Remove a property
+#
+# @param  key                   Property to remove
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+#
+void RemoveProperty(string key)
+
+# Get the type of a property
+#
+# @param  key                   Property
+# @return                       D-BUS type of property
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+#
+int32 GetPropertyType(string key)
+
+# Determine if a property exists
+#
+# @param  key                   Property
+# @return                       TRUE iff the property exists
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool PropertyExists(string key)
+
+# Add a capability to a device. Note that this will trigger a NewCapability
+# signal to all client applications subscribing to signals from the Manager
+# interface.
+#
+# @param  capability            Capability, e.g. 'net.80211'
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+void AddCapability(string capability)
+
+# Determine if a device got a given capability
+#
+# @param  capability            Capability, e.g. 'storage.cdrom'
+# @return                       TRUE iff the device got the given capability
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool QueryCapability(string capability)
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      The device objects also emits the following signals on the
+      org.freedesktop.Hal interface that applications can subscribe to 
+      using D-BUS
+
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;# Notification that property have been modified
+#
+# @param  key                   Property
+# @param  added                 True iff the property have been added
+# @param  removed               True iff the property have been removed
+#
+void PropertyModified(string key, bool added, bool removed)
+
+# Notification that an event happened on the device has occured.
+#
+# Normally this is used to signal events that aren't or can't be expressed
+# in properties, e.g. 'ProcessorOverheating' etc. 
+#
+# @param  condition             Name of condition
+# @param  ...                   Dependent on the condition name
+void Condition(string condition, ...)
+
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;
+      Note that D-BUS supports that applications can opt to receive
+      signals for only a subset of the devices available.
+
+      </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN1201"
+>Interface org.freedesktop.Hal.AgentManager</A
+></H2
+><P
+>&#13;
+      The API described above is available to all applications. There is 
+      an additional D-BUS interface on the /org/freedesktop/Hal/Manager
+      object called org.freedesktop.Hal.AgentManager which is only available
+      for processes running with administrative privileges. 
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;
+# Create a new device object not in the GDL (ie. hidden from 
+# applications). This object can be obtained using the given UDI as
+# as the D-BUS object reference. 
+#
+# The object implements the org.freedesktop.Hal.Device interface
+#
+# @return                       Temporary UDI for new device object
+#
+string NewDevice()
+
+# When a device have been built, an application can add it to the GDL.
+#
+# A side-effect of this call, is that the Manager object will emit the
+# signal DeviceAdded.
+# 
+# @param  tempUdi               Temporary UDI as obtained from the NewDevice call
+# @param  newUdi                New UDI to use.
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|UdiInUse)
+#
+void CommitToGDL(string tempUdi, string newUdi)
+
+# Remove a device object. 
+#
+# Depending on the info.persistent property, the device may not be removed but
+# rather acquire the property info.not_available with value true.
+#
+# @param  udi                   UDI of device
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+void Remove(string udi)
+
+# Merge all properties from one device to another device.
+#
+# If the source device got any capabilities, then the target device
+# will acquire these capabilities and a NewCapability signal will be
+# emitted for the target device for every capability in the source
+# device.
+#
+# @param  targetUdi             UDI of device to receive properties
+# @param  sourceUdi             UDI of device to copy properties from
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+void MergeProperties(string targetUdi, string sourceUdi)
+
+# Checks that all properties where keys, starting with a given value
+# (namespace), of the first device is present in the second device and that
+# they got the same value and type. 
+#
+# Note that the other inclusion isn't tested, so there could be
+# properties (from the given namespace) in the second device not present
+# in the first device.
+#
+# @param  udi1                  UDI of device 1
+# @param  udi2                  UDI of device 2
+# @param  namespace             Namespace used for matching, e.g. 'usb'
+# @return                       TRUE if, and only if, all properties starting
+#                               with the namespace parameter from udi1 is
+#                               in udi2 and assume the same value
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool DeviceMatches(string udi1, string udi2, string namespace)
+
+</PRE
+></TD
+></TR
+></TABLE
+><P
+>&#13;      HAL Agents uses the org.freedesktop.Hal.AgentManager API when 
+      discovering devices either through detection, handling hotplug
+      events or through some other way.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="enforcing-policy"
+></A
+>Enforcing Policy</H1
+><P
+> 
+      blabla
+    </P
 ></DIV
 ></DIV
 ></BODY
