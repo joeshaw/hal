@@ -292,6 +292,9 @@ void class_device_in_gdl (ClassDeviceHandler *self,
 			  const char *udi);
 
 
+void class_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data);
+
+
 /* Convenience structure for passing around multiple pieces of data
    to the got_parent_device() functions */
 typedef struct {

@@ -72,6 +72,8 @@ static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
 static void detect_fs (HalDevice *d);
 
+ClassDeviceHandler block_class_handler;
+
 static dbus_bool_t
 block_class_accept (ClassDeviceHandler *self,
 		    const char *path,
@@ -579,11 +581,19 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 					}
 				}
 
-				/* add new device */
-				g_signal_connect (
-					child, "callouts_finished",
-					G_CALLBACK (device_move_from_tdl_to_gdl), NULL);
-				hal_callout_device (child, TRUE);
+				{
+					ClassAsyncData *cad = 
+						g_new0 (ClassAsyncData, 1);
+					cad->device = child;
+					cad->handler = &block_class_handler;
+					cad->merge_or_add = block_class_handler.merge_or_add;
+
+					/* add new device */
+					g_signal_connect (
+						child, "callouts_finished",
+						G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
+					hal_callout_device (child, TRUE);
+				}
 
 				/* GDL was modified */
 				return TRUE;
@@ -944,10 +954,18 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 				}
 			}
 
-			/* add new device */
-			g_signal_connect (child, "callouts_finished",
-					  G_CALLBACK (device_move_from_tdl_to_gdl), NULL);
-			hal_callout_device (child, TRUE);
+			{
+				ClassAsyncData *cad = 
+					g_new0 (ClassAsyncData, 1);
+				cad->device = child;
+				cad->handler = &block_class_handler;
+				cad->merge_or_add = block_class_handler.merge_or_add;
+				
+				/* add new device */
+				g_signal_connect (child, "callouts_finished",
+						  G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
+				hal_callout_device (child, TRUE);
+			}
 
 			/* GDL was modified */
 			return TRUE;
@@ -1767,11 +1785,19 @@ mtab_handle_storage (HalDevice *d)
 					}
 				}
 
-				/* add new device */
-				g_signal_connect (
-					child, "callouts_finished",
-					G_CALLBACK (device_move_from_tdl_to_gdl), NULL);
-				hal_callout_device (child, TRUE);
+				{
+					ClassAsyncData *cad = 
+						g_new0 (ClassAsyncData, 1);
+					cad->device = child;
+					cad->handler = &block_class_handler;
+					cad->merge_or_add = block_class_handler.merge_or_add;
+
+					/* add new device */
+					g_signal_connect (
+						child, "callouts_finished",
+						G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
+					hal_callout_device (child, TRUE);
+				}
 
 				/* GDL was modified */
 				return TRUE;

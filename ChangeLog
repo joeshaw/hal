@@ -1,3 +1,16 @@
+2004-07-07  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (detect_media, mtab_handle_storage): 
+	Use class_device_move_from_tdl_to_gdl() instead of device_move_from_
+	tdl_to_gdl() so we get the in_gdl callback when callouts complete
+	that will detect media and process the mtab to update mount status
+
+	* hald/linux/class_device.h: Add class_device_move_from_tdl_to_gdl()
+	prototype
+
+	* hald/linux/class_device.c (class_device_move_from_tdl_to_gdl): 
+	Promote to project wide scope
+
 2004-07-06  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (detect_media): Fix media detection

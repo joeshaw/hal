@@ -401,7 +401,7 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
  *  @param  user_data           User data provided when connecting the signal
  *
  */
-static void
+void
 class_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
 {
 	ClassAsyncData *cad = (ClassAsyncData*) user_data;
