@@ -16,6 +16,8 @@ AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AM_PATH_PYTHON
 
+AC_ARG_WITH(init-scripts,       [  --with-init-scripts=<os>   Style of init scripts to install (redhat)])
+AC_ARG_WITH(pid-file,    [  --with-pid-file=<pidfile>    PID file HAL daemon])
 AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
 if ! test -z "$with_hwdata" ; then
    HWDATA_DIR="$with_hwdata"
@@ -197,6 +199,7 @@ AS_AC_EXPAND(LOCALSTATEDIR, $localstatedir)
 AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
 AS_AC_EXPAND(DATADIR, $datadir)
 AS_AC_EXPAND(BINDIR, $bindir)
+AS_AC_EXPAND(SBINDIR, $sbindir)
 AS_AC_EXPAND(LIBDIR, $libdir)
 
 
@@ -225,12 +228,46 @@ fi
 AC_SUBST(LINUX_HOTPLUG_DIR)
 AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d directory is])
 
+#### Check our operating system
+operating_system=unknown
+if test -f /etc/redhat-release || test -f SYSCONFDIR/redhat-release ; then
+   operating_system=redhat
+fi
+
+#### Sort out init scripts
+
+if test x$with_init_scripts = x; then
+    if test xredhat = x$operating_system ; then
+        with_init_scripts=redhat
+    else
+        with_init_scripts=none
+    fi
+fi
+
+#### Set up the pid file
+if ! test -z "$with_pid_file"; then
+   HALD_PID_FILE=$with_system_pid_file
+elif test x$operating_system = xredhat ; then
+   HALD_PID_FILE=${LOCALSTATEDIR}/run/haldaemon.pid
+else
+   HALD_PID_FILE=${LOCALSTATEDIR}/run/hald/pid
+fi
+
+AC_SUBST(HALD_PID_FILE)
+
+
+
+AM_CONDITIONAL(INIT_SCRIPTS_RED_HAT, test x$with_init_scripts = xredhat)
+
+
+
 AC_OUTPUT([
 hal.pc
 hal.conf
 Doxyfile
 Makefile
 hald/Makefile
+hald/haldaemon
 libhal/Makefile
 tools/Makefile
 tools/linux/Makefile
@@ -252,6 +289,7 @@ echo "
         prefix:                   ${prefix}
         libdir:                   ${LIBDIR}
         bindir:                   ${BINDIR}
+        sbindir:                  ${SBINDIR}
         datadir:                  ${DATADIR}
         sysconfdir:               ${SYSCONFDIR}
         localstatedir:            ${LOCALSTATEDIR}
@@ -264,6 +302,7 @@ echo "
         Doxygen:                  ${DOXYGEN}
         User for HAL:             ${HAL_USER}
         Group for HAL:            ${HAL_GROUP}
+        hald pidfile:             ${HALD_PID_FILE}
 "
 
 echo "
@@ -276,6 +315,13 @@ if test x$enable_verbose_mode = xyes; then
    echo "NOTE: building with verbose mode increases library size, may slightly increase security risk, and decreases performance."
    echo
 fi
+
+if test x$with_init_scripts = xredhat; then
+   echo "NOTE: Red Hat style init scripts will be installed"
+else
+   echo "NOTE: You have to install init scripts yourself"
+fi
+echo
 
 echo "NOTE: Remember to create user ${HAL_USER} and group ${HAL_GROUP} before make install"
 echo

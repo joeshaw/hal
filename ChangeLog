@@ -1,5 +1,15 @@
 2003-12-29  David Zeuthen  <david@fubar.dk>
 
+	* configure.in: add --with-init-scripts and --with-pid-file. Now
+	configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+	works like a charm on Fedora Core 1.
+
+	* hald/Makefile.am: handle initscripts fun
+
+	* hald/haldaemon.in: new file
+	
+2003-12-29  David Zeuthen  <david@fubar.dk>
+
 	* Makefile.am: add hal.conf.in to EXTRA_DIST to so make distcheck
 	passes
 

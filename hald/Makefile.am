@@ -41,5 +41,20 @@ hald_SOURCES +=                                                         \
 
 hald_LDADD = @PACKAGE_LIBS@
 
+#### Init scripts fun
+SCRIPT_IN_FILES=haldaemon.in
+
+## Red Hat start
+if INIT_SCRIPTS_RED_HAT
+
+initddir=$(sysconfdir)/rc.d/init.d
+
+initd_SCRIPTS= 	\
+	haldaemon
+
+endif
+ ## Red Hat end
+
+
 clean-local :
 	rm -f *~
