@@ -106,6 +106,7 @@ class_device_visit (ClassDeviceHandler *self,
 {
 	ClassAsyncData *cad;
 	HalDevice *d;
+	HalDevice *hal_target;
 	char dev_file[SYSFS_PATH_MAX];
 	char dev_file_prop_name[SYSFS_PATH_MAX];
 	gboolean merge_or_add;
@@ -133,11 +134,9 @@ class_device_visit (ClassDeviceHandler *self,
 		 * we want the bus to just be "unknown"
 		 */
 	        if (!self->merge_or_add) {
-		        hal_device_property_set_string (d, "info.bus", 
-							self->hal_class_name);
+		        hal_device_property_set_string (d, "info.bus", self->hal_class_name);
 		} else {
-		        hal_device_property_set_string (d, "info.bus",
-							"unknown");
+		        hal_device_property_set_string (d, "info.bus", "unknown");
 		}
 
 		hal_device_property_set_string (d, "linux.sysfs_path", path);
@@ -153,33 +152,25 @@ class_device_visit (ClassDeviceHandler *self,
 	if (self->require_device_file) {
 
 		/* Find the property name we should store the device file in */
-		self->get_device_file_target (self, d, path, class_device,
-					      dev_file_prop_name, 
-					      SYSFS_PATH_MAX);
+		self->get_device_file_target (self, d, path, class_device, dev_file_prop_name, SYSFS_PATH_MAX);
 
 		/* Temporary property used for _udev_event() */
-		hal_device_property_set_string (d, ".target_dev", 
-						dev_file_prop_name);
+		hal_device_property_set_string (d, ".target_dev", dev_file_prop_name);
 	}
 
-	hal_device_property_set_string (
-		d, ".udev.class_name", self->sysfs_class_name);
-	hal_device_property_set_string (
-		d, ".udev.sysfs_path", path);
+	hal_device_property_set_string (d, ".udev.class_name", self->sysfs_class_name);
+	hal_device_property_set_string (d, ".udev.sysfs_path", path);
 
 	if (self->require_device_file) {
 		/* Ask udev about the device file if we are probing */
 		if (hald_is_initialising) {
 
-			if (!class_device_get_device_file (path, dev_file, 
-							   SYSFS_PATH_MAX)) {
-				HAL_WARNING (("Couldn't get device file for "
-					      "sysfs path %s", path));
-				return NULL;
+			if (!class_device_get_device_file (path, dev_file, SYSFS_PATH_MAX)) {
+				HAL_WARNING (("Couldn't get device file for sysfs path %s", path));
+				goto error;
 			}
 
-			/* If we are not probing this function will be called 
-			 * upon receiving a dbus event */
+			/* If we are not probing this function will be called upon receiving a dbus event */
 			self->udev_event (self, d, dev_file);
 		} 
 	}
@@ -189,56 +180,49 @@ class_device_visit (ClassDeviceHandler *self,
 	cad->handler = self;
 	cad->merge_or_add = merge_or_add;
 
-	/* Now find the physical device; this happens asynchronously as it
-	 * might be added later. */
+	/* Find target (to either merge to or be child of); this can
+	 * happen synchronously as our parent is sure to be added
+	 * before us (we probe devices in the right order and we
+	 * reorder hotplug events)
+	 */
 	if (merge_or_add) {
 		what_to_find = sysdevice->path;
 
-		/* find the sysdevice */
-		hal_device_store_match_key_value_string_async (
-			hald_get_gdl (),
-			"linux.sysfs_path_device",
-			what_to_find,
-			class_device_got_sysdevice, cad,
-		HAL_LINUX_HOTPLUG_TIMEOUT);
+		/* find the sysdevice we should merge to */
+		hal_target = hal_device_store_match_key_value_string (hald_get_gdl (), 
+								      "linux.sysfs_path_device", 
+								      what_to_find);
+		if (hal_target == NULL)
+			goto error;
+
+		class_device_got_sysdevice (hald_get_gdl (), hal_target, cad);
+
+		/* return NULL as we are merging onto a device; TODO: maybe should return device we merge onto? */
+		return NULL;
 
 	} else {
 		if (sysdevice != NULL) {
 			what_to_find = get_parent_sysfs_path (sysdevice->path);
 		} else {
-			what_to_find = "(none)";
+			what_to_find = "(none)"; /* DZE: Yikes, hack to get added as a child to 'computer'? */
 		}
 
-		/* find the sysdevice */
-		hal_device_store_match_key_value_string_async (
-			hald_get_gdl (),
-			"linux.sysfs_path_device",
-			what_to_find,
-			class_device_got_parent_device, cad,
-			HAL_LINUX_HOTPLUG_TIMEOUT);
+		/* find the sysdevice we should be a child of */
+		hal_target = hal_device_store_match_key_value_string (hald_get_gdl (), 
+								      "linux.sysfs_path_device", 
+								      what_to_find);
+		if (hal_target == NULL)
+			goto error;
+
+		class_device_got_parent_device (hald_get_gdl(), hal_target, cad);
 	}
 
+	return d;
 
-	if (!merge_or_add) {
-		/* Now that a) hotplug happens in the right order; and b) the device
-		 * from a hotplug event is completely added to the GDL before the
-		 * next event is processed; the aysnc call above is actually
-		 * synchronous so we can test immediately whether we want to
-		 * proceed
-		 */
-		/*
-		if (hal_device_store_match_key_value_string (
-			    hald_get_gdl (),
-			    "linux.sysfs_path_device",
-			    what_to_find) == NULL)
-			return NULL;
-		else
-			return d;
-		*/
-		return d;
-
-	} else
-		return NULL;
+error:
+	HAL_INFO (("erroring on %s", path));
+	hal_device_store_remove (hald_get_tdl (), d);
+	return NULL;
 }
 
 /** Called when the class device instance have been removed
@@ -497,10 +481,13 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d,
 			   hal_device_get_udi (d),
 			   hal_device_get_udi (sysdevice)));
 
+		self->post_merge (self, sysdevice);
+
+		/* @todo : run capability callouts on new device */
+
 		/* get rid of temporary device */
 		hal_device_store_remove (hald_get_tdl (), d);
 
-		self->post_merge (self, sysdevice);
 	} else {
 		char *new_udi;
 		HalDevice *new_d;

@@ -53,8 +53,7 @@
  */
 
 /* fwd decl */
-static void bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
-				   gpointer user_data);
+static void bus_device_got_parent (HalDeviceStore *store, HalDevice *parent, gpointer user_data);
 
 /** Generic accept function that accepts the device if and only if
  *  the bus name from sysfs equals the bus name in the class
@@ -64,8 +63,7 @@ static void bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
  *  @param  device              libsysfs object for device
  */
 dbus_bool_t
-bus_device_accept (BusDeviceHandler *self, const char *path, 
-		   struct sysfs_device *device)
+bus_device_accept (BusDeviceHandler *self, const char *path, struct sysfs_device *device)
 {
 	/* only care about given bus name  */
 	return strcmp (device->bus, self->sysfs_bus_name) == 0;
@@ -87,9 +85,10 @@ HalDevice *
 bus_device_visit (BusDeviceHandler *self, const char *path, 
 		  struct sysfs_device *device)
 {
-	BusAsyncData *bad;
 	HalDevice *d;
+	HalDevice *parent;
 	char *parent_sysfs_path;
+	BusAsyncData *bad;
 	char buf[256];
 
 	/* Construct a new device and add to temporary device list */
@@ -119,40 +118,25 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 		 * with parent set to NULL 
 		 */
 		bus_device_got_parent (hald_get_gdl(), NULL, bad);
-	} else {
-		/* Find parent; this happens asynchronously as our parent might
-		 * be added later. If we are probing this can't happen so the
-		 * timeout is set to zero in that event
-		 */
-		hal_device_store_match_key_value_string_async (
-			hald_get_gdl (),
-			"linux.sysfs_path_device",
-			parent_sysfs_path,
-			bus_device_got_parent, bad,
-			0/*HAL_LINUX_HOTPLUG_TIMEOUT*/);
-	}
+		goto out;
+	} 
 
-	/* Now that a) hotplug happens in the right order; and b) the device
-	 * from a hotplug event is completely added to the GDL before the
-	 * next event is processed; the aysnc call above is actually
-	 * synchronous so we can test immediately whether we want to
-	 * proceed
+	/* Find parent; this can happen synchronously as our parent is
+	 * sure to be added before us (we probe devices in the right order
+	 * and we reorder hotplug events)
 	 */
-
-	/*
-	if (hal_device_store_match_key_value_string (
-		    hald_get_gdl (),
-		    "linux.sysfs_path_device",
-		    parent_sysfs_path) == NULL) {
-		
-		free (parent_sysfs_path);
-		return NULL;
-	} else {
-		free (parent_sysfs_path);
-		return d;
+	parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
+							  "linux.sysfs_path_device", 
+							  parent_sysfs_path);
+	if (parent == NULL) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		d = NULL;
+		goto out;
 	}
-	*/
 
+	bus_device_got_parent (hald_get_gdl(), parent, bad);
+
+out:
 	free (parent_sysfs_path);
 	return d;
 }
@@ -196,8 +180,7 @@ bus_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
  *  @param  user_data           User data from find call
  */
 static void
-bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
-		       gpointer user_data)
+bus_device_got_parent (HalDeviceStore *store, HalDevice *parent, gpointer user_data)
 {
 	const char *sysfs_path = NULL;
 	char *new_udi = NULL;

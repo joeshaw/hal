@@ -705,12 +705,15 @@ error1:
 
 static void process_coldplug_list (GSList *coldplug_list);
 
+static void process_coldplug_list_device_cancelled (HalDevice *device, gpointer user_data);
+
 static void
 process_coldplug_list_callouts_done_for_device (HalDevice *device, gpointer user_data)
 {
 	GSList *coldplug_list = user_data;
 
 	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_callouts_done_for_device, user_data);
+	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_device_cancelled, user_data);
 
 	process_coldplug_list (coldplug_list);
 }
@@ -720,6 +723,7 @@ process_coldplug_list_device_cancelled (HalDevice *device, gpointer user_data)
 {
 	GSList *coldplug_list = user_data;
 
+	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_callouts_done_for_device, user_data);
 	g_signal_handlers_disconnect_by_func (device, process_coldplug_list_device_cancelled, user_data);
 
 	process_coldplug_list (coldplug_list);
@@ -750,7 +754,7 @@ process_coldplug_list (GSList *coldplug_list)
 			g_signal_connect (device, "callouts_finished",
 					  G_CALLBACK (process_coldplug_list_callouts_done_for_device), coldplug_list);
 			g_signal_connect (device, "cancelled",
-					  G_CALLBACK (process_coldplug_list_device_cancelled), NULL);
+					  G_CALLBACK (process_coldplug_list_device_cancelled), coldplug_list);
 		} else {
 			process_coldplug_list (coldplug_list);
 		}
@@ -856,8 +860,9 @@ add_device (const char *sysfs_path, const char *subsystem)
 			if (strcmp (ch->sysfs_class_name, subsystem) == 0) {
 				if (ch->accept (ch, sysfs_path, class_device)) {
 					hal_device = ch->visit (ch, sysfs_path, class_device);
-					if (hal_device != NULL)
+					if (hal_device != NULL) {
 						break;
+					}
 				}
 			}
 			sysfs_close_class_device (class_device);
@@ -1090,16 +1095,20 @@ osspec_shutdown ()
 	process_shutdown_list (shutdown_list);
 }
 
+static void reenable_hotplug_proc (HalDevice *d, gpointer user_data);
+
 static void
 reenable_hotplug_proc_on_device_cancel (HalDevice *d, gpointer user_data)
 {
 	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc_on_device_cancel, user_data);
+	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc, user_data);
 	hotplug_sem_down ();
 }
 
 static void
 reenable_hotplug_proc (HalDevice *d, gpointer user_data)
 {
+	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc_on_device_cancel, user_data);
 	g_signal_handlers_disconnect_by_func (d, reenable_hotplug_proc, user_data);
 	hotplug_sem_down ();
 }

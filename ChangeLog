@@ -1,3 +1,27 @@
+2004-08-28  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c: 
+	(block_class_visit): Fail if parent isn't already there (this and
+	other things should close RH Bug #131154)
+
+	* hald/linux/bus_device.c: 
+	(bus_device_visit): Fail if parent isn't already there
+
+	* hald/linux/class_device.c:
+	(class_device_visit): Fail if parent isn't already there; return
+	NULL if we merge onto parent. Leave TODO about how to deal with
+	this (other devices will be processed while we merge; probably
+	not a big deal since we don't yet have callouts)
+	(class_device_final): Add a TODO about running callouts when merge
+	is complete
+
+	* hald/linux/osspec.c:
+	(process_coldplug_list_callouts_done_for_device): Also discon. cancelled
+	(process_coldplug_list_device_cancelled): Also discon. done_for_device
+	(process_coldplug_list): Pass coldplug_list as param to cancelled
+	(reenable_hotplug_proc_on_device_cancel): Also disconnect _proc
+	(reenable_hotplug_proc): Also disconnect _cancel
+
 2004-08-28  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/block_class_device.c:

@@ -190,11 +190,11 @@ void bus_device_in_gdl (BusDeviceHandler *self,
 			HalDevice *d,
 			const char *udi);
 
-/* Convenience structure for passing around multiple pieces of data to
-   the got_parent_device() functions */
+/* Convenience structure for passing around multiple pieces of data to asynchronous functions */
 typedef struct {
-	HalDevice *device;
-	BusDeviceHandler *handler;
+        HalDevice *device;
+        BusDeviceHandler *handler;
 } BusAsyncData;
+
 
 #endif /* BUS_DEVICE_H */

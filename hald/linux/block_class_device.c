@@ -174,6 +174,7 @@ block_class_visit (ClassDeviceHandler *self,
 		   struct sysfs_class_device *class_device)
 {
 	HalDevice *d;
+	HalDevice *parent;
 	char *parent_sysfs_path;
 	ClassAsyncData *cad;
 	struct sysfs_device *sysdevice;
@@ -224,34 +225,27 @@ block_class_visit (ClassDeviceHandler *self,
 		self->udev_event (self, d, dev_file);
 	}
 
-	/* Now find the parent device; this happens asynchronously as it
-	 * might be added later. */
 	cad = g_new0 (ClassAsyncData, 1);
 	cad->device = d;
 	cad->handler = self;
 
-	hal_device_store_match_key_value_string_async (
-		hald_get_gdl (),
-		"linux.sysfs_path_device",
-		parent_sysfs_path,
-		class_device_got_parent_device, cad,
-		HAL_LINUX_HOTPLUG_TIMEOUT);
-
-	/*hal_device_print (d);*/
-
-	/* Now that a) hotplug happens in the right order; and b) the device
-	 * from a hotplug event is completely added to the GDL before the
-	 * next event is processed; the aysnc call above is actually
-	 * synchronous so we can test immediately whether we want to
-	 * proceed
+	/* Find parent; this can happen synchronously as our parent is
+	 * sure to be added before us (we probe devices in the right order
+	 * and we reorder hotplug events)
 	 */
-	if (hal_device_store_match_key_value_string (
-		    hald_get_gdl (),
-		    "linux.sysfs_path_device",
-		    parent_sysfs_path) == NULL)
-		return NULL;
-	else
-		return d;
+	parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
+							  "linux.sysfs_path_device", 
+							  parent_sysfs_path);
+	if (parent == NULL) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		d = NULL;
+		goto out;
+	}
+
+	class_device_got_parent_device (hald_get_tdl (), parent, cad);
+
+out:
+	return d;
 }
 
 
