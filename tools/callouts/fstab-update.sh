@@ -73,28 +73,34 @@ if test "$1" = "add"; then
     # Add the device to fstab if it's not already there.
     grep "^$HAL_PROP_BLOCK_DEVICE" /etc/fstab > /dev/null
     if [ $? -ne 0 ]; then
-	echo -ne "$HAL_PROP_BLOCK_DEVICE\t" >> /etc/fstab
-	echo -ne "$MOUNTPOINT\t" >> /etc/fstab
+        cp /etc/fstab /etc/fstab-hal
+	echo -ne "$HAL_PROP_BLOCK_DEVICE\t" >> /etc/fstab-hal
+	echo -ne "$MOUNTPOINT\t" >> /etc/fstab-hal
 	# HAL might have autodetected the filesystem type for us - in that
         # case use it...
 	if test $HAL_PROP_VOLUME_FSTYPE; then
 	    if test $HAL_PROP_VOLUME_FSTYPE = "msdos"; then
-		echo -ne "vfat\t" >> /etc/fstab
+		echo -ne "vfat\t" >> /etc/fstab-hal
 	    else
-		echo -ne "$HAL_PROP_VOLUME_FSTYPE\t" >> /etc/fstab
+		echo -ne "$HAL_PROP_VOLUME_FSTYPE\t" >> /etc/fstab-hal
 	    fi
 	else
-	    echo -ne "auto\t" >> /etc/fstab
+	    echo -ne "auto\t" >> /etc/fstab-hal
 	fi
-	echo -e  "noauto,user,exec 0 0" >> /etc/fstab
+	echo -e  "noauto,user,exec 0 0" >> /etc/fstab-hal
+
+        # Make sure it's here
+        if [ -f /etc/fstab-hal -a -s /etc/fstab-hal ]; then
+            mv -f /etc/fstab-hal /etc/fstab
+        fi
     fi
 
 elif test "$1" = "remove"; then
-    grep -v "$MOUNTPOINT" /etc/fstab > /etc/fstab-tmp
+    grep -v "$MOUNTPOINT" /etc/fstab > /etc/fstab-hal
 
     # Make sure it's here
-    if [ -f /etc/fstab-tmp -a -s /etc/fstab-tmp ]; then
-	mv -f /etc/fstab-tmp /etc/fstab
+    if [ -f /etc/fstab-hal -a -s /etc/fstab-hal ]; then
+	mv -f /etc/fstab-hal /etc/fstab
     fi
 
     if [ -d $MOUNTPOINT ]; then

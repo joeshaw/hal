@@ -1,3 +1,10 @@
+2004-05-17  Joe Shaw  <joeshaw@novell.com>
+
+	* tools/callouts/fstab-update.sh: Guard against the script being
+	killed mid-execution by doing all the updates in a copy and then
+	moving it over later on add.  Patch from Martin Waitz
+	<tali@admingilde.org>.
+
 2004-05-15  Owen Fraser-Green  <owen@discobabe.net>
 
 	* packaging/fedora/hal.spec: bump version to 0.2.90, D-BUS version
