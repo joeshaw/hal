@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-14 18:59-0400\n"
+"POT-Creation-Date: 2004-11-01 18:06-0500\n"
 "PO-Revision-Date: 2004-10-19 13:12+0100\n"
 "Last-Translator: Pedro Morais <morais@kde.org>\n"
 "Language-Team: Portuguese <kde-i18n-pt@kdeorg>\n"
@@ -132,5 +132,3 @@ msgstr "Média Amovível %s"
 #, c-format
 msgid "%s Media"
 msgstr "Média %s"
-
-

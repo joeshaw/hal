@@ -1,5 +1,12 @@
 2004-11-01  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Bump to 0.4.1
+
+	* doc/spec/Makefile.am: Take FIGURE_FILES and EXTRA_DIST outside the
+	conditional DOCBOOK_DOCS_ENABLED so 'make distcheck' passes
+
+2004-11-01  David Zeuthen  <davidz@redhat.com>
+
 	* tools/device-manager/hal-device-manager.in: New file; append
 	path to where we install so we don't need a symlink to /usr/share.
 	Fixes issue with SELinux strict policy (RH Bug #134845)
