@@ -1,5 +1,10 @@
 2004-07-29  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/volume_id/volume_id.c: Include <config.h> to take
+	advantage of AC_SYS_LARGEFILE
+
+2004-07-29  David Zeuthen  <david@fubar.dk>
+
 	* libhal/libhal.[ch]: s/namespace/property_namespace/ to not break
 	using libhal from C++. Pointed out by Simone Gotti 
 	<simone.gotti@email.it>
