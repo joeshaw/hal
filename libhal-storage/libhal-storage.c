@@ -146,8 +146,6 @@ hal_storage_policy_lookup_icon (HalStoragePolicy *policy, HalStoragePolicyIcon i
 	IconMappingEntry *i;
 	const char *path;
 
-	printf ("looking up 0x%08x\n", icon);
-
 	path = NULL;
 	for (i = policy->icon_mappings; i != NULL; i = i->next) {
 		if (i->icon == icon) {
@@ -633,12 +631,16 @@ struct HalDrive_s {
 	char *model;              /* may be "", is never NULL */
 	dbus_bool_t is_hotpluggable;
 	dbus_bool_t is_removable;
+	dbus_bool_t requires_eject;
 
 	HalDriveType type;
 	char *type_textual;
 
 	char *physical_device;  /* UDI of physical device, e.g. the 
 				 * IDE, USB, IEEE1394 device */
+
+	char *dedicated_icon_drive;
+	char *dedicated_icon_volume;
 
 	char *serial;
 	char *firmware_version;
@@ -676,6 +678,18 @@ struct HalVolume_s {
 	unsigned int block_size;
 	unsigned int num_blocks;
 };
+
+const char *
+hal_drive_get_dedicated_icon_drive (HalDrive *drive)
+{
+	return drive->dedicated_icon_drive;
+}
+
+const char *
+hal_drive_get_dedicated_icon_volume (HalDrive *drive)
+{
+	return drive->dedicated_icon_volume;
+}
 
 /** Free all resources used by a HalDrive object.
  *
@@ -782,8 +796,12 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		HAL_PROP_EXTRACT_STRING ("storage.model",             drive->model);
 		HAL_PROP_EXTRACT_STRING ("storage.drive_type",        drive->type_textual);
 
+		HAL_PROP_EXTRACT_STRING ("storage.icon.drive",        drive->dedicated_icon_drive);
+		HAL_PROP_EXTRACT_STRING ("storage.icon.volume",       drive->dedicated_icon_volume);
+
 		HAL_PROP_EXTRACT_BOOL   ("storage.hotpluggable",      drive->is_hotpluggable);
 		HAL_PROP_EXTRACT_BOOL   ("storage.removable",         drive->is_removable);
+		HAL_PROP_EXTRACT_BOOL   ("storage.requires_eject",    drive->requires_eject);
 
 		HAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
 		HAL_PROP_EXTRACT_STRING ("storage.firmware_version",  drive->firmware_version);
@@ -874,6 +892,12 @@ hal_volume_get_storage_device_udi (HalVolume *volume)
 const char *hal_drive_get_physical_device_udi (HalDrive *drive)
 {
 	return drive->physical_device;
+}
+
+dbus_bool_t
+hal_drive_requires_eject (HalDrive *drive)
+{
+	return drive->requires_eject;
 }
 
 /** Given a UDI for a HAL device of capability 'volume', this

@@ -1,3 +1,29 @@
+2004-09-25  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Added fr to ALL_LINGUAS
+
+	* po/fr.op: Added french translations from Jérôme Lodewyck 
+	<lodewyck@clipper.ens.fr>
+
+	* libhal-storage/libhal-storage.h: Add prototypes for new functions
+	hal_drive_(requires_eject|get_dedication_icon_(drive|volume)).
+
+	* libhal-storage/libhal-storage.c (hal_storage_policy_lookup_icon): 
+	Remove printf debug statement.
+	(hal_drive_get_dedicated_icon_drive): New function
+	(hal_drive_get_dedicated_icon_volume): New function
+	(hal_drive_from_udi): Read storage.icon.* and storage.requires_eject
+	(hal_drive_requires_eject): New function
+
+	* hald/linux/block_class_device.c (block_class_pre_process): Add
+	and set boolean property storage.requires_eject; right now we
+	only add it for optical drives. Interestingly enough, my iPod Mini
+	requires to be ejected as well (see RH bug #132195 for some
+	discussion). 
+
+	* doc/spec/hal-spec.xml.in: Add docs for storage.requires_eject, 
+	storage.icon.drive and storage.icon.volume
+
 2004-09-24  David Zeuthen  <david@fubar.dk>
 
 	* libhal-storage/libhal-storage.c :

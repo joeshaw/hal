@@ -171,6 +171,7 @@ void              hal_drive_free                        (HalDrive      *drive);
 
 dbus_bool_t       hal_drive_is_hotpluggable             (HalDrive      *drive);
 dbus_bool_t       hal_drive_uses_removable_media        (HalDrive      *drive);
+dbus_bool_t       hal_drive_requires_eject              (HalDrive      *drive);
 HalDriveType      hal_drive_get_type                    (HalDrive      *drive);
 HalDriveBus       hal_drive_get_bus                     (HalDrive      *drive);
 HalDriveCdromCaps hal_drive_get_cdrom_caps              (HalDrive      *drive);
@@ -185,10 +186,14 @@ const char       *hal_drive_get_model                   (HalDrive      *drive);
 const char       *hal_drive_get_vendor                  (HalDrive      *drive);
 const char       *hal_drive_get_physical_device_udi     (HalDrive      *drive);
 
+const char       *hal_drive_get_dedicated_icon_drive    (HalDrive      *drive);
+const char       *hal_drive_get_dedicated_icon_volume   (HalDrive      *drive);
+
 char             *hal_drive_policy_compute_display_name (HalDrive      *drive, HalVolume *volume, HalStoragePolicy *policy);
 char             *hal_drive_policy_compute_icon_name    (HalDrive      *drive, HalVolume *volume, HalStoragePolicy *policy);
 
 char            **hal_drive_find_all_volumes            (LibHalContext *hal_ctx, HalDrive *drive, int *num_volumes);
+
 
 typedef enum {
 	HAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM,

@@ -2148,6 +2148,12 @@
               <entry>Media can be removed from the storage device</entry>
             </row>
             <row>
+              <entry><literal>storage.requires_eject</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The eject ioctl is required to properly eject the media</entry>
+            </row>
+            <row>
               <entry><literal>storage.hotpluggable</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
@@ -2229,6 +2235,37 @@
               <entry>No</entry>
               <entry>The revision of the firmware of the drive</entry>
             </row>
+
+            <row>
+              <entry><literal>storage.icon.drive</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Name of icon to use for displaying the drive. The name
+		must comply with freedesktop.org icon-theme specification
+		and must not be an absolute path.
+		
+		This property exists such that e.g. OEM's can install
+		icons in <literal>/usr/share/icons/hicolor</literal>
+		a device information file matching their device.
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>storage.icon.volume</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Name of icon to use for displaying volumes from the drive.
+		The name must comply with freedesktop.org icon-theme
+		specification and must not be an absolute path.
+		
+		This property exists such that e.g. OEM's can install
+		icons in <literal>/usr/share/icons/hicolor</literal>
+		a device information file matching their device.
+	      </entry>
+            </row>
+
 
           </tbody>
         </tgroup>

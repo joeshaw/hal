@@ -1112,6 +1112,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 	const char *device_file;
 	dbus_bool_t has_removable_media = FALSE;
 	dbus_bool_t is_hotpluggable = FALSE;
+	dbus_bool_t requires_eject = FALSE;
 	char attr_path[SYSFS_PATH_MAX];
 	struct sysfs_attribute *attr;
 
@@ -1588,26 +1589,24 @@ block_class_pre_process (ClassDeviceHandler *self,
 	hal_device_property_set_bool (stordev, "storage.removable", has_removable_media);
 
 	if (hal_device_has_property (stordev, "storage.drive_type") &&
-	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
-		    "cdrom") == 0) {
+	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), "cdrom") == 0) {
 		cdrom_get_properties (stordev, device_file);
 		hal_device_add_capability (stordev, "storage.cdrom");
 		hal_device_property_set_bool (stordev, "storage.no_partitions_hint", TRUE);
+		requires_eject = TRUE;
 	}
 
 
 	if (hal_device_has_property (stordev, "storage.drive_type") &&
-	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
-		    "floppy") == 0) {
+	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), "floppy") == 0) {
 		hal_device_property_set_bool (stordev, "storage.no_partitions_hint", TRUE);
 	}
 
 	hal_device_property_set_string (stordev, "info.category", "storage");
 	hal_device_add_capability (stordev, "storage");
 
-	hal_device_property_set_bool (stordev, "storage.hotpluggable",
-				      is_hotpluggable);
-
+	hal_device_property_set_bool (stordev, "storage.hotpluggable", is_hotpluggable);
+	hal_device_property_set_bool (stordev, "storage.requires_eject", requires_eject);
 	hal_device_property_set_bool (stordev, "block.no_partitions", 
 				      hal_device_property_get_bool (
 					      stordev, "storage.no_partitions_hint"));

@@ -400,21 +400,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1852"
+HREF="#AEN1872"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1863"
+HREF="#AEN1883"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1871"
+HREF="#AEN1891"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -4371,6 +4371,19 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>storage.requires_eject</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>The eject ioctl is required to properly eject the media</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >storage.hotpluggable</TT
 > (bool)</TD
 ><TD
@@ -4527,6 +4540,52 @@ CLASS="literal"
 ><TD
 >The revision of the firmware of the drive</TD
 ></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.icon.drive</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Name of icon to use for displaying the drive. The name
+		must comply with freedesktop.org icon-theme specification
+		and must not be an absolute path.
+		
+		This property exists such that e.g. OEM's can install
+		icons in <TT
+CLASS="literal"
+>/usr/share/icons/hicolor</TT
+>
+		a device information file matching their device.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.icon.volume</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Name of icon to use for displaying volumes from the drive.
+		The name must comply with freedesktop.org icon-theme
+		specification and must not be an absolute path.
+		
+		This property exists such that e.g. OEM's can install
+		icons in <TT
+CLASS="literal"
+>/usr/share/icons/hicolor</TT
+>
+		a device information file matching their device.
+	      </TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -4568,7 +4627,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1399"
+NAME="AEN1419"
 ></A
 ><TABLE
 BORDER="1"
@@ -4767,7 +4826,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1479"
+NAME="AEN1499"
 ></A
 ><TABLE
 BORDER="1"
@@ -4921,7 +4980,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1537"
+NAME="AEN1557"
 ></A
 ><TABLE
 BORDER="1"
@@ -5052,7 +5111,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1579"
+NAME="AEN1599"
 ></A
 ><TABLE
 BORDER="1"
@@ -5125,7 +5184,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1601"
+NAME="AEN1621"
 ></A
 ><TABLE
 BORDER="1"
@@ -5192,7 +5251,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1621"
+NAME="AEN1641"
 ></A
 ><TABLE
 BORDER="1"
@@ -5257,7 +5316,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1641"
+NAME="AEN1661"
 ></A
 ><TABLE
 BORDER="1"
@@ -5384,7 +5443,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1685"
+NAME="AEN1705"
 ></A
 ><TABLE
 BORDER="1"
@@ -5531,7 +5590,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1733"
+NAME="AEN1753"
 ></A
 ><TABLE
 BORDER="1"
@@ -5885,7 +5944,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1810"
+NAME="AEN1830"
 ></A
 ><TABLE
 BORDER="1"
@@ -6045,7 +6104,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1852"
+NAME="AEN1872"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -6161,7 +6220,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1863"
+NAME="AEN1883"
 >Example</A
 ></H3
 ><P
@@ -6279,7 +6338,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1871"
+NAME="AEN1891"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
