@@ -1,3 +1,16 @@
+2004-04-27  Joe Shaw  <joe@ximian.com>
+
+	* doc/TODO: Remove a now completed TODO item.
+
+	* hald/hald.c (gdl_store_changed): Don't call hal_callout_device()
+	in the removed case.
+
+	* hald/linux/osspec.c (remove_callouts_finished): Actually remove
+	the device from the GDL in this callback.
+	(remove_device, remove_class_device): Connect to the
+	callouts_finished signal and call device callouts instead of
+	removing it from the GDL here.
+
 2004-04-26  Joe Shaw  <joe@ximian.com>
 
 	* hald/callout.c (hal_callout_device): We still need to emit the

@@ -73,12 +73,10 @@ gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 
 	/*hal_device_print (device);*/
 
-	if (is_added) {
+	if (is_added)
 		manager_send_signal_device_added (device);
-	} else {
+	else
 		manager_send_signal_device_removed (device);
-		hal_callout_device (device, FALSE);
-	}
 }
 
 static void

@@ -430,6 +430,12 @@ osspec_probe ()
 }
 
 static void
+remove_callouts_finished (HalDevice *d, gpointer user_data)
+{
+	hal_device_store_remove (hald_get_gdl (), d);
+}
+
+static void
 remove_device (const char *path, const char *subsystem)
 
 {	HalDevice *d;
@@ -444,8 +450,11 @@ remove_device (const char *path, const char *subsystem)
 	} else {
 		/*HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
 		  path, d->udi));*/
-		
-		hal_device_store_remove (hald_get_gdl (), d);
+
+		g_signal_connect (d, "callouts_finished",
+				  G_CALLBACK (remove_callouts_finished), NULL);
+
+		hal_callout_device (d, FALSE);
 	}
 }
 
@@ -490,11 +499,12 @@ remove_class_device (const char *path, const char *subsystem)
 				ch->removed (ch, path, d);
 			}
 		}
-		
-		hal_device_store_remove (hald_get_gdl (), d);
-	}
 
-	
+		g_signal_connect (d, "callouts_finished",
+				  G_CALLBACK (remove_callouts_finished), NULL);
+
+		hal_callout_device (d, FALSE);
+	}
 
 	/* For now, just call the normal remove_device */
 	remove_device (path, subsystem);
