@@ -2,6 +2,29 @@
 
 	Patch from Sjoerd Simons <sjoerd@luon.net>.
 
+	* hald/Makefile.am: Add -lm to hald_LDADD so it actually compiles
+	on my debian system :)
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+	* tools/lshal.c: include <dbus/dbus-glib-lowlevel.h> so the
+	compiler doesn't complain about dbus_connection_setup_with_g_main
+	not being declared.
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+	* hald/hald_dbus.c: When hal is running with dropped priv's the
+	callouts are currently too. So allow hal's euid. And fix a compile
+	warning too.
+
+2004-10-14  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Sjoerd Simons <sjoerd@luon.net>.
+
 	* hald/linux/usb_bus_device.c (usb_ids_load): The usb id database
 	read functions never close the file descriptors. bad.  Fixed in
 	attached patch. 

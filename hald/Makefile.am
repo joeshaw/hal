@@ -78,7 +78,7 @@ hald_SOURCES +=                                                         \
 	linux/drive_id/drive_id_logging.h				\
 	linux/drive_id/drive_id.h	linux/drive_id/drive_id.c
 
-hald_LDADD = @PACKAGE_LIBS@ -lcap @EXPAT_LIB@
+hald_LDADD = @PACKAGE_LIBS@ -lm -lcap @EXPAT_LIB@
 
 if HAVE_SELINUX
 hald_LDADD += -lselinux
