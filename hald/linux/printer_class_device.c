@@ -89,10 +89,10 @@ printer_class_device_accept (ClassDeviceHandler *self,
  *                        instance
  */
 static void 
-printer_class_post_process (ClassDeviceHandler *self,
-			    HalDevice *d,
-			    const char *sysfs_path,
-			    struct sysfs_class_device *class_device)
+printer_class_pre_process (ClassDeviceHandler *self,
+			   HalDevice *d,
+			   const char *sysfs_path,
+			   struct sysfs_class_device *class_device)
 {
 	int fd;
 	char device_id[1024];
@@ -173,7 +173,8 @@ ClassDeviceHandler printer_class_handler = {
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
-	printer_class_post_process,         /**< add more properties */
+	printer_class_pre_process,          /**< add more properties */
+	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	NULL,                               /**< No UDI computation */
 	"usb",                              /**< sysfs class name */

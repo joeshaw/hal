@@ -35,6 +35,7 @@ hald_SOURCES +=	\
 					linux/usb_bus_device.c		\
 					linux/usbif_bus_device.c	\
 					linux/input_class_device.c	\
+					linux/net_class_device.c	\
 					linux/printer_class_device.c	\
 					linux/scsi_host_class_device.c	\
 					linux/scsi_device_class_device.c \

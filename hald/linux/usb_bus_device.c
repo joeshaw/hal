@@ -844,10 +844,10 @@ usb_merge_info_from_proc (HalDevice* d)
 
 
 static void 
-usb_device_post_process (BusDeviceHandler *self,
-			 HalDevice *d,
-			 const char *sysfs_path,
-			 struct sysfs_device *device)
+usb_device_pre_process (BusDeviceHandler *self,
+			HalDevice *d,
+			const char *sysfs_path,
+			struct sysfs_device *device)
 {
 	int i;
 	char attr_name[SYSFS_NAME_LEN];
@@ -997,7 +997,7 @@ BusDeviceHandler usb_bus_handler = {
  	bus_device_visit,          /**< visitor function */
 	bus_device_removed,        /**< device is removed */
 	usb_device_compute_udi,    /**< UDI computing function */
-	usb_device_post_process,   /**< add more properties */
+	usb_device_pre_process,    /**< add more properties */
 	bus_device_got_udi,        /**< got UDI */
 	"usb",                     /**< sysfs bus name */
 	"usb"                      /**< namespace */

@@ -267,7 +267,7 @@ class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent,
 	hal_device_property_set_string (d, "info.parent", parent->udi);
 
 	/* wait for the appropriate property for the device file */
-	if (self->require_device_file ) {
+	if (self->require_device_file) {
 		const char *target_dev;
 		target_dev = hal_device_property_get_string (d, ".target_dev");
 		assert (target_dev != NULL);
@@ -329,7 +329,7 @@ class_device_got_sysdevice (HalDeviceStore *store,
 	hal_device_property_set_string (d, ".sysdevice", sysdevice->udi);
 
 	/* wait for the appropriate property for the device file */
-	if (self->require_device_file ) {
+	if (self->require_device_file) {
 		const char *target_dev;
 		target_dev = hal_device_property_get_string (d, ".target_dev");
 		assert (target_dev != NULL);
@@ -377,7 +377,7 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d)
 	if (class_device == NULL)
 		DIE (("Coulnd't get sysfs class device object for path %s", 
 		      sysfs_path));
-	self->post_process (self, d, sysfs_path, class_device);
+	self->pre_process (self, d, sysfs_path, class_device);
 	sysfs_close_class_device (class_device);
 
 	if (self->merge_or_add) {
@@ -405,6 +405,7 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d)
 		hal_device_store_remove (hald_get_tdl (), d);
 		g_object_unref (d);
 
+		self->post_merge (self, sysdevice);
 	} else {
 		char *new_udi;
 		HalDevice *new_d;
@@ -475,10 +476,25 @@ class_device_shutdown (ClassDeviceHandler *self)
  *                        instance
  */
 void 
-class_device_post_process (ClassDeviceHandler *self,
-			   HalDevice *d,
-			   const char *sysfs_path,
-			   struct sysfs_class_device *class_device)
+class_device_pre_process (ClassDeviceHandler *self,
+			  HalDevice *d,
+			  const char *sysfs_path,
+			  struct sysfs_class_device *class_device)
+{
+	/* this function is left intentionally blank */
+}
+
+/** Called when an inferior HalDevice is merged.  This is the 
+ *  last step when merging in devices.  This is only invoked if
+ *  merge_or_add is TRUE.
+ *
+ *  @param  self          Pointer to the class members
+ *  @param  d             The HalDevice object recently merged
+ *
+ */
+void
+class_device_post_merge (ClassDeviceHandler *self,
+			 HalDevice *d)
 {
 	/* this function is left intentionally blank */
 }

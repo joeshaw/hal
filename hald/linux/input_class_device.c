@@ -67,10 +67,10 @@
  *                        instance
  */
 static void 
-input_class_post_process (ClassDeviceHandler *self,
-			  HalDevice *d,
-			  const char *sysfs_path,
-			  struct sysfs_class_device *class_device)
+input_class_pre_process (ClassDeviceHandler *self,
+			 HalDevice *d,
+			 const char *sysfs_path,
+			 struct sysfs_class_device *class_device)
 {
 	/* add capabilities for device */
 	hal_device_property_set_string (d, "info.category", "input");
@@ -133,7 +133,8 @@ ClassDeviceHandler input_class_handler = {
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	input_class_get_device_file_target, /**< where to store devfile name */
-	input_class_post_process,           /**< add more properties */
+	input_class_pre_process,            /**< add more properties */
+	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	NULL,                               /**< No UDI computation */
 	"input",                            /**< sysfs class name */

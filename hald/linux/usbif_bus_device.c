@@ -105,10 +105,10 @@ usbif_device_compute_udi (HalDevice *d, int append_num)
 
 
 static void 
-usbif_device_post_process (BusDeviceHandler *self,
-			   HalDevice *d,
-			   const char *sysfs_path,
-			   struct sysfs_device *device)
+usbif_device_pre_process (BusDeviceHandler *self,
+			  HalDevice *d,
+			  const char *sysfs_path,
+			  struct sysfs_device *device)
 {
 	int i;
 	int len;
@@ -157,7 +157,7 @@ BusDeviceHandler usbif_bus_handler = {
  	bus_device_visit,          /**< visitor function */
 	bus_device_removed,        /**< device is removed */
 	usbif_device_compute_udi,  /**< UDI computing function */
-	usbif_device_post_process, /**< add more properties */
+	usbif_device_pre_process,  /**< add more properties */
 	bus_device_got_udi,        /**< got UDI */
 	"usb",                     /**< sysfs bus name */
 	"usbif"                    /**< namespace */

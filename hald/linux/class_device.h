@@ -164,10 +164,21 @@ struct ClassDeviceHandler_s {
 	 *  @param  class_device  Libsysfs object representing class device
 	 *                        instance
 	 */
-	void (*post_process) (ClassDeviceHandler* self,
-			      HalDevice *d,
-			      const char *sysfs_path,
-			      struct sysfs_class_device *class_device);	
+	void (*pre_process) (ClassDeviceHandler* self,
+			     HalDevice *d,
+			     const char *sysfs_path,
+			     struct sysfs_class_device *class_device);	
+
+	/** Called when an inferior HalDevice is merged.  This is the 
+	 *  last step when merging in devices.  This is only invoked if
+	 *  merge_or_add is TRUE.
+	 *
+	 *  @param  self          Pointer to the class members
+	 *  @param  d             The HalDevice object recently merged
+	 *
+	 */
+	void (*post_merge) (ClassDeviceHandler *self,
+			    HalDevice *d);
 
 	/** Called when the UDI has been determined, but before the device
 	 *  is added to the GDL. Note that this is only invoked if 
@@ -248,10 +259,13 @@ void class_device_detection_done (ClassDeviceHandler *self);
 
 void class_device_shutdown (ClassDeviceHandler *self);
 
-void class_device_post_process (ClassDeviceHandler *self,
-				HalDevice *d,
-				const char *sysfs_path,
-				struct sysfs_class_device *class_device);
+void class_device_pre_process (ClassDeviceHandler *self,
+			       HalDevice *d,
+			       const char *sysfs_path,
+			       struct sysfs_class_device *class_device);
+
+void class_device_post_merge (ClassDeviceHandler *self,
+			      HalDevice *d);
 
 void class_device_got_udi (ClassDeviceHandler *self,
 			   HalDevice *d,

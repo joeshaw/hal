@@ -164,7 +164,7 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	if (device == NULL)
 		DIE (("Coulnd't get sysfs device object for path %s", 
 		      sysfs_path));
-	self->post_process (self, d, sysfs_path, device);
+	self->pre_process (self, d, sysfs_path, device);
 	sysfs_close_device (device);
 
 	/* Compute a proper UDI (unique device id) and try to locate a 
@@ -249,10 +249,10 @@ bus_device_removed (BusDeviceHandler *self, const char *sysfs_path,
  *  @param  device        Libsysfs object representing device instance
  */
 void 
-bus_device_post_process (BusDeviceHandler *self,
-			 HalDevice *d,
-			 const char *sysfs_path,
-			 struct sysfs_device *device)
+bus_device_pre_process (BusDeviceHandler *self,
+			HalDevice *d,
+			const char *sysfs_path,
+			struct sysfs_device *device)
 {
 }
 

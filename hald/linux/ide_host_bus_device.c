@@ -79,10 +79,10 @@ ide_host_device_compute_udi (HalDevice *d, int append_num)
 }
 
 static void 
-ide_host_device_post_process (BusDeviceHandler *self,
-			      HalDevice *d,
-			      const char *sysfs_path,
-			      struct sysfs_device *device)
+ide_host_device_pre_process (BusDeviceHandler *self,
+			     HalDevice *d,
+			     const char *sysfs_path,
+			     struct sysfs_device *device)
 {
 	int ide_host_number;
 
@@ -99,18 +99,18 @@ ide_host_device_post_process (BusDeviceHandler *self,
 
 /** Method specialisations for bustype pci */
 BusDeviceHandler ide_host_bus_handler = {
-	bus_device_init,           /**< init function */
-	bus_device_detection_done, /**< detection is done */
-	bus_device_shutdown,       /**< shutdown function */
-	bus_device_tick,           /**< timer function */
-	ide_host_device_accept,         /**< accept function */
- 	bus_device_visit,          /**< visitor function */
-	bus_device_removed,        /**< device is removed */
-	ide_host_device_compute_udi,    /**< UDI computing function */
-	ide_host_device_post_process,   /**< add more properties */
-	bus_device_got_udi,               /**< got UDI */
-	"ide_host",                /**< sysfs bus name */
-	"ide_host"                 /**< namespace */
+	bus_device_init,             /**< init function */
+	bus_device_detection_done,   /**< detection is done */
+	bus_device_shutdown,         /**< shutdown function */
+	bus_device_tick,             /**< timer function */
+	ide_host_device_accept,      /**< accept function */
+ 	bus_device_visit,            /**< visitor function */
+	bus_device_removed,          /**< device is removed */
+	ide_host_device_compute_udi, /**< UDI computing function */
+	ide_host_device_pre_process, /**< add more properties */
+	bus_device_got_udi,          /**< got UDI */
+	"ide_host",                  /**< sysfs bus name */
+	"ide_host"                   /**< namespace */
 };
 
 

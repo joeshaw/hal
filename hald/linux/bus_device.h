@@ -135,10 +135,10 @@ struct BusDeviceHandler_s {
 	 *                        the class device in sysfs
 	 *  @param  device        Libsysfs object representing device instance
 	 */
-	void (*post_process) (BusDeviceHandler *self,
-			      HalDevice *d,
-			      const char *sysfs_path,
-			      struct sysfs_device *device);
+	void (*pre_process) (BusDeviceHandler *self,
+			     HalDevice *d,
+			     const char *sysfs_path,
+			     struct sysfs_device *device);
 
 	/** Called when the UDI has been determined, but before the device
 	 *  is added to the GDL.
@@ -178,10 +178,10 @@ void bus_device_removed (BusDeviceHandler *self,
 			 const char *sysfs_path, 
 			 HalDevice *d);
 
-void bus_device_post_process (BusDeviceHandler *self,
-			      HalDevice *d,
-			      const char *sysfs_path,
-			      struct sysfs_device *device);
+void bus_device_pre_process (BusDeviceHandler *self,
+			     HalDevice *d,
+			     const char *sysfs_path,
+			     struct sysfs_device *device);
 
 void bus_device_got_udi (BusDeviceHandler *self,
 			 HalDevice *d,

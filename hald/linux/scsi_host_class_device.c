@@ -51,10 +51,10 @@
 
 
 static void 
-scsi_host_class_post_process (ClassDeviceHandler *self,
-			      HalDevice *d,
-			      const char *sysfs_path,
-			      struct sysfs_class_device *class_device)
+scsi_host_class_pre_process (ClassDeviceHandler *self,
+			     HalDevice *d,
+			     const char *sysfs_path,
+			     struct sysfs_class_device *class_device)
 {
 	int host_num;
 	const char *last_elem;
@@ -100,7 +100,8 @@ ClassDeviceHandler scsi_host_class_handler = {
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
-	scsi_host_class_post_process,       /**< add more properties */
+	scsi_host_class_pre_process,        /**< add more properties */
+	class_device_post_merge,            /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
 	scsi_host_class_compute_udi,        /**< No UDI computation */
 	"scsi_host",                        /**< sysfs class name */

@@ -1,3 +1,24 @@
+2004-04-12  Joe Shaw  <joe@ximian.com>
+
+	* hald/Makefile.am: Build the new net class device.
+
+	* hald/linux/*.c: Change "post_process" to "pre_process", since
+	we're actually doing all of this before our HalDevice merges into
+	a superior one or gets added to the GDL.
+
+	* hald/linux/class_device.h (ClassDeviceHandler): Add a new
+	handler, "post_merge", which is called after we merge devices in
+	class_device_final().
+
+	* hald/linux/class_device.c (class_device_final): Call our new
+	post_merge function after we've merged devices.
+
+	* hald/linux/net_class_device.c: Add back in network class device
+	support.  Uses MII registers to get the initial link state and
+	uses netlink sockets to update it in real-time.
+
+	* hald/linux/osspec.c: Add net_class_handler.
+
 2004-04-12  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/block_class_device.c (block_class_post_process): 

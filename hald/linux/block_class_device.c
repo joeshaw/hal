@@ -646,10 +646,10 @@ detect_fs (HalDevice *d)
 }
 
 static void 
-block_class_post_process (ClassDeviceHandler *self,
-			  HalDevice *d,
-			  const char *sysfs_path,
-			  struct sysfs_class_device *class_device)
+block_class_pre_process (ClassDeviceHandler *self,
+			 HalDevice *d,
+			 const char *sysfs_path,
+			 struct sysfs_class_device *class_device)
 {
 	int major, minor;
 	HalDevice *parent;
@@ -1407,16 +1407,17 @@ block_class_detection_done (ClassDeviceHandler *self)
 /** Method specialisations for block device class */
 ClassDeviceHandler block_class_handler = {
 	class_device_init,                  /**< init function */
-	block_class_detection_done,        /**< detection is done */
+	block_class_detection_done,         /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	block_class_tick,                   /**< timer function */
 	class_device_accept,                /**< accept function */
 	block_class_visit,                  /**< visitor function */
-	block_class_removed,               /**< class device is removed */
+	block_class_removed,                /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
-	block_class_post_process,           /**< add more properties */
-	block_class_got_udi,               /**< got UDI */
+	block_class_pre_process,            /**< add more properties */
+	class_device_post_merge,            /**< post merge function */
+	block_class_got_udi,                /**< got UDI */
 	block_class_compute_udi,            /**< UDI computation */
 	"block",                            /**< sysfs class name */
 	"block",                            /**< hal class name */

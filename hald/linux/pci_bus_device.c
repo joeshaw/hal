@@ -662,10 +662,10 @@ pci_device_shutdown (BusDeviceHandler *self)
 
 
 static void 
-pci_device_post_process (BusDeviceHandler *self,
-			 HalDevice *d,
-			 const char *sysfs_path,
-			 struct sysfs_device *device)
+pci_device_pre_process (BusDeviceHandler *self,
+			HalDevice *d,
+			const char *sysfs_path,
+			struct sysfs_device *device)
 {
 	int i;
 	int len;
@@ -768,7 +768,7 @@ BusDeviceHandler pci_bus_handler = {
  	bus_device_visit,          /**< visitor function */
 	bus_device_removed,        /**< device is removed */
 	pci_device_compute_udi,    /**< UDI computing function */
-	pci_device_post_process,   /**< add more properties */
+	pci_device_pre_process,    /**< add more properties */
 	bus_device_got_udi,        /**< got UDI */
 	"pci",                     /**< sysfs bus name */
 	"pci"                      /**< namespace */
