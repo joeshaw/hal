@@ -146,6 +146,12 @@ bus_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
 {
 	BusAsyncData *bad = (BusAsyncData*) user_data;
 
+	if (!hal_device_has_property (device, "info.parent")) {
+		hal_device_property_set_string (
+			device, "info.parent",
+			"/org/freedesktop/Hal/devices/computer");
+	}
+
 	g_object_ref (device);
 	hal_device_store_remove (hald_get_tdl (), device);
 	hal_device_store_add (hald_get_gdl (), device);

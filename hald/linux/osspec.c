@@ -343,26 +343,25 @@ dbus_bool_t hald_is_initialising;
 void
 osspec_probe ()
 {
-	HalDevice *fakeroot;
+	HalDevice *root;
 	int i;
 
 	hald_is_initialising = TRUE;
 
 	/*
-	 * Create the "fakeroot" device for all the devices which don't
-	 * have sysdevices in sysfs.
+	 * Create the toplevel "Computer" device, which will contain
+	 * system-wide info and also provide a parent device for devices
+	 * which don't have sysdevices in sysfs.
 	 */
-	fakeroot = hal_device_new ();
-	hal_device_property_set_string (fakeroot, "info.bus", "unknown");
-	hal_device_property_set_string (fakeroot,
+	root = hal_device_new ();
+	hal_device_property_set_string (root, "info.bus", "unknown");
+	hal_device_property_set_string (root,
 					"linux.sysfs_path_device",
 					"(none)");
-	hal_device_property_set_string (fakeroot, "info.product",
-					"City of Lost Devices");
-	hal_device_property_set_bool (fakeroot, "info.virtual", TRUE);
-	hal_device_set_udi (fakeroot, "/org/freedesktop/Hal/devices/fakeroot");
-	hal_device_store_add (hald_get_gdl (), fakeroot);
-	g_object_unref (fakeroot);
+	hal_device_property_set_string (root, "info.product", "Computer");
+	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
+	hal_device_store_add (hald_get_gdl (), root);
+	g_object_unref (root);
 
 	/** @todo When the kernel has all devices in /sys/devices
 	 *        under either /sys/bus or /sys/class then we can

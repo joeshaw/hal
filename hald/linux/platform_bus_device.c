@@ -139,11 +139,11 @@ platform_device_pre_process (BusDeviceHandler *self,
 
 	hal_device_property_set_string (
 		d, "storage.physical_device", 
-		"/org/freedesktop/Hal/devices/fakeroot");
+		"/org/freedesktop/Hal/devices/computer");
 
 	hal_device_property_set_string (
 		d, "info.parent", 
-		"/org/freedesktop/Hal/devices/fakeroot");
+		"/org/freedesktop/Hal/devices/computer");
 
 	hal_device_add_capability (d, "block");
 	hal_device_add_capability (d, "storage");

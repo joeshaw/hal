@@ -1,5 +1,25 @@
 2004-07-21  Joe Shaw  <joeshaw@novell.com>
 
+	* hald/linux/bus_device.c (bus_device_move_from_tdl_to_gdl): If
+	the info.parent property is not set, then set it to the computer
+	device's UDI.
+
+	* hald/linux/class_device.c (class_device_move_from_tdl_to_gdl):
+	Ditto.
+
+	* hald/linux/common.c (device_move_from_tdl_to_gdl): Remove this,
+	it's dead code.
+
+	* hald/linux/osspec.c (osspec_probe): Rename "fakeroot" to "root",
+	rename its product from "City of Lost Devices" to "Computer",
+	change its UDI to "computer" from "fakeroot", and make it
+	non-virtual.
+
+	* hald/linux/platform_bus_device.c (platform_device_pre_process):
+	Change "fakeroot" to "computer".
+	
+2004-07-21  Joe Shaw  <joeshaw@novell.com>
+
 	* tools/fstab-sync.c: #include "libhal/libhal.h" to fix the build
 	for me.
 
