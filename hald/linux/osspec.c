@@ -134,6 +134,7 @@ visit_class_device (const char *path, ClassDeviceHandler *handler,
 {
 	int i;
 	struct sysfs_class_device *class_device;
+	struct sysfs_directory *dir;
 
 	class_device = sysfs_open_class_device_path (path);
 	if (class_device == NULL) {

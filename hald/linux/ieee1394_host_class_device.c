@@ -27,6 +27,8 @@
 #  include <config.h>
 #endif
 
+#include <ctype.h>
+
 #include "../logger.h"
 #include "../device_store.h"
 #include "../hald.h"
@@ -57,11 +59,13 @@ ieee1394_host_class_pre_process (ClassDeviceHandler *self,
 				 const char *sysfs_path,
 				 struct sysfs_class_device *class_device)
 {
+	struct sysfs_device *sysdevice;
 	struct sysfs_attribute *cur;
 	char attr_name[SYSFS_NAME_LEN];
 	int tmp;
 
-	dlist_for_each_data (sysfs_get_device_attributes (class_device->sysdevice),
+	sysdevice = sysfs_get_classdev_device (class_device);
+	dlist_for_each_data (sysfs_get_device_attributes (sysdevice),
 			     cur, struct sysfs_attribute) {
 		int len, i;
 

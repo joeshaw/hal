@@ -1,3 +1,18 @@
+2004-07-20  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c: (block_class_visit):
+	* hald/linux/class_device.c: (class_device_accept),
+	(class_device_visit):
+	* hald/linux/common.c: (drivers_collect):
+	* hald/linux/ieee1394_class_device.c: (ieee1394_class_pre_process):
+	* hald/linux/ieee1394_host_class_device.c:
+	(ieee1394_host_class_pre_process):
+	* hald/linux/ieee1394_node_class_device.c:
+	(ieee1394_node_class_pre_process):
+	* hald/linux/osspec.c: (visit_class_device):
+	* hald/linux/volume_id/volume_id.c:
+	More updates to libsysfs 1.1; from Joe Shaw's earlier patch
+
 2004-07-18  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: Added a few items, 'UTF8 support' and 'Dependencies,

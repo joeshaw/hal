@@ -854,9 +854,11 @@ drivers_collect (const char *bus_name)
 			      path));
 		goto out;
 	}
-	if (dir->subdirs != NULL) {
-		dlist_for_each_data (dir->subdirs, current,
-				     struct sysfs_directory) {
+
+	if (sysfs_get_dir_subdirs (dir) != NULL) {
+		dlist_for_each_data (sysfs_get_dir_subdirs (dir),
+				     current, struct sysfs_directory) {
+			
 			/*printf("name=%s\n", current->name); */
 
 			dir2 = sysfs_open_directory (current->path);
@@ -867,9 +869,12 @@ drivers_collect (const char *bus_name)
 				DIE (("Error reading sysfs directory "
 				      "at %s\n", current->path));
 
-			if (dir2->links != NULL) {
-				dlist_for_each_data (dir2->links, current2,
-						     struct sysfs_link) {
+
+			if (sysfs_get_dir_links (dir2) != NULL) {
+				dlist_for_each_data (
+					sysfs_get_dir_links (dir2),
+					current2, 
+					struct sysfs_link) {
 					/*printf("link=%s\n",current2->target);
 					 */
 					drivers_add_entry (current->name,
@@ -880,7 +885,7 @@ drivers_collect (const char *bus_name)
 			}
 		}
 	}
-out:
+ out:
 	if (dir != NULL)
 		sysfs_close_directory (dir);
 }

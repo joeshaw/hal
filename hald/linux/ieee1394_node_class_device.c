@@ -57,13 +57,15 @@ ieee1394_node_class_pre_process (ClassDeviceHandler *self,
 				 const char *sysfs_path,
 				 struct sysfs_class_device *class_device)
 {
+	struct sysfs_device *sysdevice;
 	struct sysfs_attribute *cur;
 	char attr_name[SYSFS_NAME_LEN];
 	int tmp;
 	const char *vendor_name = NULL;
 	int vendor_id;
 
-	dlist_for_each_data (sysfs_get_device_attributes (class_device->sysdevice),
+	sysdevice = sysfs_get_classdev_device (class_device);
+	dlist_for_each_data (sysfs_get_device_attributes (sysdevice),
 			     cur, struct sysfs_attribute) {
 		int len, i;
 

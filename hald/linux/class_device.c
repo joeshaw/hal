@@ -78,7 +78,7 @@ class_device_accept (ClassDeviceHandler *self,
 	  path, self->sysfs_class_name));*/
 
 	/* Don't care if there's no sysdevice */
-	if (class_device->sysdevice == NULL)
+	if (sysfs_get_classdev_device (class_device) == NULL)
 		return FALSE;
 
 	/* only care about given sysfs class name */
@@ -107,8 +107,11 @@ class_device_visit (ClassDeviceHandler *self,
 	char dev_file[SYSFS_PATH_MAX];
 	char dev_file_prop_name[SYSFS_PATH_MAX];
 	gboolean merge_or_add;
+	struct sysfs_device *sysdevice;
 
-	if (class_device->sysdevice == NULL) {
+	sysdevice = sysfs_get_classdev_device (class_device);
+
+	if (sysdevice == NULL) {
 		merge_or_add = FALSE;
 	} else {
 		merge_or_add = self->merge_or_add;
@@ -136,9 +139,10 @@ class_device_visit (ClassDeviceHandler *self,
 
 		hal_device_property_set_string (d, "linux.sysfs_path", path);
 
-		if (class_device->sysdevice != NULL) {
-			hal_device_property_set_string (d, "linux.sysfs_path_device", 
-							class_device->sysdevice->path);
+		if (sysdevice != NULL) {
+			hal_device_property_set_string (
+				d, "linux.sysfs_path_device", 
+				sysdevice->path);
 		}
 	} 
 
@@ -184,16 +188,16 @@ class_device_visit (ClassDeviceHandler *self,
 		hal_device_store_match_key_value_string_async (
 			hald_get_gdl (),
 			"linux.sysfs_path_device",
-			class_device->sysdevice->path,
+			sysdevice->path,
 			class_device_got_sysdevice, cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		char *parent_sysfs_path;
 		ClassAsyncData *cad = g_new0 (ClassAsyncData, 1);
 
-		if (class_device->sysdevice != NULL) {
+		if (sysdevice != NULL) {
 			parent_sysfs_path = 
-				get_parent_sysfs_path (class_device->sysdevice->path);
+				get_parent_sysfs_path (sysdevice->path);
 		} else {
 			parent_sysfs_path = "(none)";
 		}

@@ -100,6 +100,7 @@ block_class_visit (ClassDeviceHandler *self,
 	HalDevice *d;
 	char *parent_sysfs_path;
 	ClassAsyncData *cad;
+	struct sysfs_device *sysdevice;
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, "block") != 0)
@@ -115,11 +116,13 @@ block_class_visit (ClassDeviceHandler *self,
 
 	hal_device_property_set_bool (d, "block.no_partitions", FALSE);
 
-	if (class_device->sysdevice == NULL) {
+	sysdevice = sysfs_get_classdev_device (class_device);
+
+	if (sysdevice == NULL) {
 		parent_sysfs_path = get_parent_sysfs_path (path);
 		hal_device_property_set_bool (d, "block.is_volume", TRUE);
 	} else {
-		parent_sysfs_path = class_device->sysdevice->path;
+		parent_sysfs_path = sysdevice->path;
 		hal_device_property_set_bool (d, "block.is_volume", FALSE);
 	}
 
