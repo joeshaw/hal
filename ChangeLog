@@ -1,5 +1,18 @@
 2004-09-02  Joe Shaw  <joeshaw@novell.com>
 
+	* hald/device.c (hal_device_property_get_bool): Aiee!  If the
+	property is not found, we want to return FALSE instead of -1.
+
+	* hald/property.c (hal_property_get_bool): Return FALSE if the
+	type isn't boolean in the assertion, not -1.
+
+	* hald/linux/common.c (rename_and_merge): Fix some broken logic
+	which only worked because it was depending on -1 being returned
+	from boolean functions.  If I understand its original intent
+	correctly, it should still work.  (Of course, info.not_available
+	is never set to TRUE programmatically, so unless it's set in FDI
+	files it never actually comes up)
+
 	* doc/TODO: Update the "Computer" HalDevice item, remove a 
 	duplicate item.
 

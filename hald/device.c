@@ -609,7 +609,7 @@ hal_device_property_get_bool (HalDevice *device, const char *key)
 	if (prop != NULL)
 		return hal_property_get_bool (prop);
 	else
-		return -1;
+		return FALSE;
 }
 
 double

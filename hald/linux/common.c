@@ -509,11 +509,8 @@ tryagain:
 
 	if (computed_d != NULL) {
 
-		if ((!hal_device_has_property
-		     (computed_d, "info.not_available"))
-		    &&
-		    (!hal_device_property_get_bool
-		     (computed_d, "info.not_available"))) {
+		if (hal_device_property_get_bool (computed_d,
+						  "info.not_available")) {
 			/* Danger, Will Robinson! Danger!
 			 *
 			 * Ok, this means that either
