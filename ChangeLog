@@ -1,3 +1,8 @@
+2004-09-26  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_vfat): Fix
+	end of directory marker recognition.
+
 2004-09-25  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Added fr to ALL_LINGUAS

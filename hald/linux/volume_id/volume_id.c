@@ -923,13 +923,13 @@ valid:
 
 	for (i = 0; i <= root_dir_entries; i++) {
 		/* end marker */
-		if (dir[i].attr == 0x00) {
+		if (dir[i].name[0] == 0x00) {
 			dbg("end of dir");
 			break;
 		}
 
 		/* empty entry */
-		if (dir[i].attr == 0xe5)
+		if (dir[i].name[0] == 0xe5)
 			continue;
 
 		if (dir[i].attr == FAT_ATTR_VOLUME) {
@@ -981,13 +981,13 @@ fat32:
 
 		for (i = 0; i <= count; i++) {
 			/* end marker */
-			if (dir[i].attr == 0x00) {
+			if (dir[i].name[0] == 0x00) {
 				dbg("end of dir");
 				goto fat32_label;
 			}
 
 			/* empty entry */
-			if (dir[i].attr == 0xe5)
+			if (dir[i].name[0] == 0xe5)
 				continue;
 
 			if (dir[i].attr == FAT_ATTR_VOLUME) {
