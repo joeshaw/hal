@@ -1,3 +1,11 @@
+2004-07-15  David Zeuthen  <david@fubar.dk>
+
+	Patch from Ray Strode <rstrode@redhat.com>
+
+	* tools/Makefile.am: Add rules for building fstab-sync
+
+	* tools/fstab-sync.c: New file
+
 2004-07-14  David Zeuthen  <david@fubar.dk>
 
 	Patch from Sjoerd Simons <sjoerd@luon.net>
