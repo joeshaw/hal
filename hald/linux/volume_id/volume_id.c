@@ -624,11 +624,6 @@ found:
 	set_label_string(id, ms->label, 11);
 	set_uuid(id, ms->serno, 4);
 
-/*
-	id->type_id = VOLUME_ID_FILESYSTEM;
-	id->format_id = VOLUME_ID_MSDOS;
-	id->format = "msdos";
-*/
 	id->type_id = VOLUME_ID_FILESYSTEM;
 	id->format_id = VOLUME_ID_VFAT;
 	id->format = "vfat";

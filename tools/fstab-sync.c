@@ -1019,7 +1019,14 @@ volume_new (const char *udi)
   volume->fs_type = get_hal_string_property (udi, "volume.fstype");
   if (volume->fs_type == NULL || strlen (volume->fs_type) == 0)
     {
+      free (volume->fs_type);
       volume->fs_type = strdup ("auto");
+    }
+
+  if (strcmp (volume->fs_type, "msdos") == 0)
+    {
+      free (volume->fs_type);
+      volume->fs_type = strdup ("vfat");
     }
 
   volume->label = get_hal_string_property (udi, "volume.label");
