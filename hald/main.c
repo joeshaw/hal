@@ -240,6 +240,333 @@ static void raise_syntax(DBusConnection* connection,
 /** @} */
 
 /**
+ * @defgroup ManagerInterface D-BUS interface org.freedesktop.Hal.Manager
+ * @ingroup HalDaemon
+ * @brief D-BUS interface for querying device objects
+ *
+ * @{
+ */
+
+/** Get all devices.
+ *
+ *  <pre>
+ *  array{object_reference} Manager.GetAllDevices()
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult manager_get_all_devices(DBusConnection* connection,
+                                                 DBusMessage* message)
+{
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusMessageIter iter_array;
+    HalDevice* d;
+    const char* udi;
+    HalDeviceIterator iter_device;
+
+    LOG_TRACE(("entering"));
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
+   
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        d = ds_device_iter_get(&iter_device);
+        /* only return devices in the GDL */
+        if( d->in_gdl )
+        {
+            udi = ds_device_get_udi(d);
+            dbus_message_iter_append_string(&iter_array, udi);
+        }
+    }
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref (reply);
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
+/** Find devices in the GDL where a single string property matches a given
+ *  value.
+ *
+ *  <pre>
+ *  array{object_reference} Manager.FindDeviceStringMatch(string key,
+ *                                                        string value)
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult manager_find_device_string_match(
+    DBusConnection* connection,
+    DBusMessage* message)
+{
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusMessageIter iter_array;
+    DBusError error;
+    const char* key;
+    const char* value;
+    HalDeviceIterator iter_device;
+    int type;
+    HalDevice* device;
+
+    LOG_TRACE(("entering"));
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &key,
+                               DBUS_TYPE_STRING, &value,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "Manager.FindDeviceStringMatch");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
+
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        device = ds_device_iter_get(&iter_device);
+
+        if( !device->in_gdl )
+            continue;
+
+        type = ds_property_get_type(device, key);
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strcmp(ds_property_get_string(device, key),
+                       value)==0 )
+                dbus_message_iter_append_string(&iter_array, device->udi);
+        }
+    }
+
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref (reply);
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
+/** Find devices in the GDL with a given capability.
+ *
+ *  <pre>
+ *  array{object_reference} Manager.FindDeviceByCapability(string capability)
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult manager_find_device_by_capability(
+    DBusConnection* connection,
+    DBusMessage* message)
+{
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusMessageIter iter_array;
+    DBusError error;
+    const char* capability;
+    HalDeviceIterator iter_device;
+    int type;
+    HalDevice* device;
+
+    LOG_TRACE(("entering"));
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &capability,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "Manager.FindDeviceByCapability");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
+
+    for(ds_device_iter_begin(&iter_device);
+        ds_device_iter_has_more(&iter_device);
+        ds_device_iter_next(&iter_device))
+    {
+        device = ds_device_iter_get(&iter_device);
+
+        if( !device->in_gdl )
+            continue;
+
+        type = ds_property_get_type(device, "Capabilities");
+        if( type==DBUS_TYPE_STRING )
+        {
+            if( strstr(ds_property_get_string(device, "Capabilities"),
+                       capability)!=NULL )
+                dbus_message_iter_append_string(&iter_array, device->udi);
+        }
+    }
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref (reply);
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
+/** Determine if a device exists.
+ *
+ *  <pre>
+ *  bool Manager.DeviceExists(string udi)
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult manager_device_exists(DBusConnection* connection,
+                                               DBusMessage* message)
+{
+    DBusMessage* reply;
+    DBusMessageIter iter;
+    DBusError error;
+    HalDevice* d;
+    const char* udi;
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &udi,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "Manager.DeviceExists");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    d = ds_device_find(udi);
+
+    reply = dbus_message_new_method_return(message);
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_boolean(&iter, d!=NULL);
+
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref(reply);
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+/** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
+ *  interface on the object /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void manager_send_signal_device_added(const char* udi)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "DeviceAdded");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
+
+/** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
+ *  interface on the object /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ */
+static void manager_send_signal_device_removed(const char* udi)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s", udi));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "DeviceRemoved");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
+
+/** Send signal NewCapability(string udi, string capability) on the 
+ *  org.freedesktop.Hal.Manager interface on the object 
+ *  /org/freedesktop/Hal/Manager.
+ *
+ *  @param  udi                 Unique Device Id
+ *  @param  capability          Capability
+ */
+static void manager_send_signal_new_capability(const char* udi, 
+                                               const char* capability)
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering, udi=%s, cap=%s", udi, cap));
+
+    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
+                                      "org.freedesktop.Hal.Manager",
+                                      "NewCapability");
+
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, udi);
+    dbus_message_iter_append_string(&iter, capability);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
+
+/** @} */
+
+/**
  * @defgroup DeviceInterface D-BUS interface org.freedesktop.Hal.Device
  * @ingroup HalDaemon
  * @brief D-BUS interface for generic device operations
@@ -596,6 +923,100 @@ static DBusHandlerResult device_set_property(DBusConnection* connection,
 }
 
 
+/** Maximum string length for capabilities; quite a hack :-/ */
+#define MAX_CAP_SIZE 2048
+
+/** This function is used to modify the Capabilities property. The reason
+ *  for having a dedicated function is that the HAL daemon will broadcast
+ *  a signal on the Manager interface to tell applications that the device
+ *  have got a new capability.
+ *
+ *  This is useful as capabilities can be merged after the device is created.
+ *  One example of this is networking cards under Linux 2.6; the net.ethernet
+ *  capability is not merged when the device is initially found by looking in 
+ *  /sys/devices; it is merged when the /sys/classes tree is searched.
+ *
+ *  Note that the signal is emitted every time this method is invoked even
+ *  though the capability already existed. This is useful in the above
+ *  scenario when the PCI class says ethernet networking card but we yet
+ *  don't have enough information to fill in the net.* and net.ethernet.*
+ *  fields since this only happens when we visit the /sys/classes tree.
+ *
+ *  <pre>
+ *  void Device.AddCapability(string capability)
+ *
+ *    raises org.freedesktop.Hal.NoSuchDevice, 
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult device_add_capability(DBusConnection* connection,
+                                               DBusMessage* message)
+{
+    const char* udi;
+    const char* capability;
+    const char* caps;
+    HalDevice* d;
+    DBusMessage *reply;
+    DBusError error;
+    char buf[MAX_CAP_SIZE];
+
+    LOG_TRACE(("entering"));
+
+    udi = dbus_message_get_path(message);
+
+    d = ds_device_find(udi);
+    if( d==NULL )
+    {
+        raise_no_such_device(connection, message, udi);
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &capability,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "AddCapability");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+
+    caps = ds_property_get_string(d, "Capabilities");
+    if( caps==NULL )
+    {
+        ds_property_set_string(d, "Capabilities", capability);
+    }
+    else
+    {
+        if( strstr(caps, capability)==NULL )
+        {
+            snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
+            ds_property_set_string(d, "Capabilities", buf);
+        }
+    }
+
+    if( d->in_gdl )
+    {
+        manager_send_signal_new_capability(udi, capability);
+    }
+
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref(reply);
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
+
 /** Remove a property on a device.
  *
  *  <pre>
@@ -885,304 +1306,6 @@ static DBusHandlerResult device_disable(DBusConnection* connection,
 
 /** @} */
 
-/**
- * @defgroup ManagerInterface D-BUS interface org.freedesktop.Hal.Manager
- * @ingroup HalDaemon
- * @brief D-BUS interface for querying device objects
- *
- * @{
- */
-
-/** Get all devices.
- *
- *  <pre>
- *  array{object_reference} Manager.GetAllDevices()
- *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult manager_get_all_devices(DBusConnection* connection,
-                                                 DBusMessage* message)
-{
-    DBusMessage* reply;
-    DBusMessageIter iter;
-    DBusMessageIter iter_array;
-    HalDevice* d;
-    const char* udi;
-    HalDeviceIterator iter_device;
-
-    LOG_TRACE(("entering"));
-
-    reply = dbus_message_new_method_return(message);
-    if( reply==NULL )
-        DIE(("No memory"));
-
-    dbus_message_iter_init(reply, &iter);
-    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
-   
-    for(ds_device_iter_begin(&iter_device);
-        ds_device_iter_has_more(&iter_device);
-        ds_device_iter_next(&iter_device))
-    {
-        d = ds_device_iter_get(&iter_device);
-        /* only return devices in the GDL */
-        if( d->in_gdl )
-        {
-            udi = ds_device_get_udi(d);
-            dbus_message_iter_append_string(&iter_array, udi);
-        }
-    }
-
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-  
-    dbus_message_unref (reply);
-
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-
-/** Find devices in the GDL where a single string property matches a given
- *  value.
- *
- *  <pre>
- *  array{object_reference} Manager.FindDeviceStringMatch(string key,
- *                                                        string value)
- *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult manager_find_device_string_match(
-    DBusConnection* connection,
-    DBusMessage* message)
-{
-    DBusMessage* reply;
-    DBusMessageIter iter;
-    DBusMessageIter iter_array;
-    DBusError error;
-    const char* key;
-    const char* value;
-    HalDeviceIterator iter_device;
-    int type;
-    HalDevice* device;
-
-    LOG_TRACE(("entering"));
-
-    dbus_error_init(&error);
-    if( !dbus_message_get_args(message, &error, 
-                               DBUS_TYPE_STRING, &key,
-                               DBUS_TYPE_STRING, &value,
-                               DBUS_TYPE_INVALID) )
-    {
-        raise_syntax(connection, message, "Manager.FindDeviceStringMatch");
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    reply = dbus_message_new_method_return(message);
-    if( reply==NULL )
-        DIE(("No memory"));
-
-    dbus_message_iter_init(reply, &iter);
-    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
-
-    for(ds_device_iter_begin(&iter_device);
-        ds_device_iter_has_more(&iter_device);
-        ds_device_iter_next(&iter_device))
-    {
-        device = ds_device_iter_get(&iter_device);
-
-        if( !device->in_gdl )
-            continue;
-
-        type = ds_property_get_type(device, key);
-        if( type==DBUS_TYPE_STRING )
-        {
-            if( strcmp(ds_property_get_string(device, key),
-                       value)==0 )
-                dbus_message_iter_append_string(&iter_array, device->udi);
-        }
-    }
-
-
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-  
-    dbus_message_unref (reply);
-
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-
-/** Find devices in the GDL with a given capability.
- *
- *  <pre>
- *  array{object_reference} Manager.FindDeviceByCapability(string capability)
- *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult manager_find_device_by_capability(
-    DBusConnection* connection,
-    DBusMessage* message)
-{
-    DBusMessage* reply;
-    DBusMessageIter iter;
-    DBusMessageIter iter_array;
-    DBusError error;
-    const char* capability;
-    HalDeviceIterator iter_device;
-    int type;
-    HalDevice* device;
-
-    LOG_TRACE(("entering"));
-
-    dbus_error_init(&error);
-    if( !dbus_message_get_args(message, &error, 
-                               DBUS_TYPE_STRING, &capability,
-                               DBUS_TYPE_INVALID) )
-    {
-        raise_syntax(connection, message, "Manager.FindDeviceByCapability");
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    reply = dbus_message_new_method_return(message);
-    if( reply==NULL )
-        DIE(("No memory"));
-
-    dbus_message_iter_init(reply, &iter);
-    dbus_message_iter_append_array(&iter, &iter_array, DBUS_TYPE_STRING);
-
-    for(ds_device_iter_begin(&iter_device);
-        ds_device_iter_has_more(&iter_device);
-        ds_device_iter_next(&iter_device))
-    {
-        device = ds_device_iter_get(&iter_device);
-
-        if( !device->in_gdl )
-            continue;
-
-        type = ds_property_get_type(device, "Capabilities");
-        if( type==DBUS_TYPE_STRING )
-        {
-            if( strstr(ds_property_get_string(device, "Capabilities"),
-                       capability)!=NULL )
-                dbus_message_iter_append_string(&iter_array, device->udi);
-        }
-    }
-
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-  
-    dbus_message_unref (reply);
-
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-
-/** Determine if a device exists.
- *
- *  <pre>
- *  bool Manager.DeviceExists(string udi)
- *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
- */
-static DBusHandlerResult manager_device_exists(DBusConnection* connection,
-                                               DBusMessage* message)
-{
-    DBusMessage* reply;
-    DBusMessageIter iter;
-    DBusError error;
-    HalDevice* d;
-    const char* udi;
-
-    dbus_error_init(&error);
-    if( !dbus_message_get_args(message, &error, 
-                               DBUS_TYPE_STRING, &udi,
-                               DBUS_TYPE_INVALID) )
-    {
-        raise_syntax(connection, message, "Manager.DeviceExists");
-        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-    }
-
-    LOG_TRACE(("entering, udi=%s", udi));
-
-    d = ds_device_find(udi);
-
-    reply = dbus_message_new_method_return(message);
-    dbus_message_iter_init(reply, &iter);
-    dbus_message_iter_append_boolean(&iter, d!=NULL);
-
-    if( reply==NULL )
-        DIE(("No memory"));
-
-    if( !dbus_connection_send(connection, reply, NULL) )
-        DIE(("No memory"));
-  
-    dbus_message_unref(reply);
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
-}
-
-/** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
- *  interface on the object /org/freedesktop/Hal/Manager.
- *
- *  @param  udi                 Unique Device Id
- */
-static void manager_send_signal_device_added(const char* udi)
-{
-    DBusMessage* message;
-    DBusMessageIter iter;
-
-    LOG_TRACE(("entering, udi=%s", udi));
-
-    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
-                                      "org.freedesktop.Hal.Manager",
-                                      "DeviceAdded");
-
-    dbus_message_iter_init(message, &iter);
-    dbus_message_iter_append_string(&iter, udi);
-
-    if( !dbus_connection_send(dbus_connection,message, NULL) )
-        DIE(("error broadcasting message"));
-
-    dbus_message_unref(message);
-}
-
-/** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
- *  interface on the object /org/freedesktop/Hal/Manager.
- *
- *  @param  udi                 Unique Device Id
- */
-static void manager_send_signal_device_removed(const char* udi)
-{
-    DBusMessage* message;
-    DBusMessageIter iter;
-
-    LOG_TRACE(("entering, udi=%s", udi));
-
-    message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
-                                      "org.freedesktop.Hal.Manager",
-                                      "DeviceRemoved");
-
-    dbus_message_iter_init(message, &iter);
-    dbus_message_iter_append_string(&iter, udi);
-
-    if( !dbus_connection_send(dbus_connection,message, NULL) )
-        DIE(("error broadcasting message"));
-
-    dbus_message_unref(message);
-}
-
-/** @} */
-
 
 /**
  * @defgroup AgentManagerInterface D-BUS interface org.freedesktop.Hal.AgentManager
@@ -1368,6 +1491,8 @@ static DBusHandlerResult agent_manager_remove(DBusConnection* connection,
     dbus_message_unref(reply);
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
+
+
 
 /** Merge properties one device to another.
  *
@@ -1714,6 +1839,12 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
                                          "PropertyExists") )
     {
         return device_property_exists(connection, message);
+    }
+    else if( dbus_message_is_method_call(message,
+                                         "org.freedesktop.Hal.Device",
+                                         "AddCapability") )
+    {
+        return device_add_capability(connection, message);
     }
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

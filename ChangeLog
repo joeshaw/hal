@@ -1,6 +1,47 @@
+2003-12-06  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal_monitor.c (ethmon_mdio_read): new function
+	(ethmon_process): new function
+	(ethmon_timeout): new function
+	(ethmon_add): new function
+	(ethmon_remove): new function
+	(ethernet_process_all_devices): new function
+	(device_added): new function
+	(device_new_capability): new function
+	(device_removed): new function
+	(hal_monitor_enter): Initiate monitoring of link status on ethernet
+	devices
+
+	* agents/linux26/sysfs/hal_net.c (visit_class_device_net): Shuffle
+	the code around so the capability is not set before the properties
+	under the capability namespace
+
+	* agents/linux26/sysfs/main.c: Add device_new_capability in 
+	hal_functions variable
+
+	* agents/linux26/sysfs/main.c: Add device_new_capability so it is
+	visible in other translation units
+
+	* hald/main.c (manager_send_signal_new_capability): new function
+	(device_add_capability): new function
+
+	* libhal/libhal.c (hal_free_string_array): Fixed critical bug
+	(hal_device_add_capability): Use new method on hal daemon instead
+	of local modification
+	(filter_func): Fix bug such that signals DeviceAdded and DeviceRemoved
+	are intercepted on the Manager interface. Add check for NewCapability
+	signal.
+	(main): More precise match rule for intercepting signals
+
+	* libhal/libhal.h: Add NewCapability callback
+
+	* tools/device-manager/DeviceManager.py: Fix a stupid bug where
+	we tried to call a get_current_focus_udi() method that is no more
+
+	
 2003-12-03  David Zeuthen  <david@fubar.dk>
 
-	* agents/linux26/sysfs/hal_net (visit_class_device_net): Change
+	* agents/linux26/sysfs/hal_net.c (visit_class_device_net): Change
 	mac address to be split into two 24-bit sizes. s/ethernet/net.ethernet/
 
 	* libhal/libhal.c (hal_find_all_devices): Put trailing NULL in result

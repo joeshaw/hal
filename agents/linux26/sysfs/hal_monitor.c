@@ -5,7 +5,8 @@
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  *
- * Licensed under the Academic Free License version 2.0
+ * Some parts of this file is based on mii-diag.c, Copyright 1997-2003 by
+ * Donald Becker <becker@scyld.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +45,14 @@
 #define _GNU_SOURCE 1
 #include <linux/fcntl.h>
 #include <linux/kdev_t.h>
+
+typedef unsigned short u16;
+typedef unsigned int u32;
+
+
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
 
 #include <sys/signal.h>
 
@@ -278,7 +287,7 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
         major = hal_device_get_property_int(udi, "block.major");
         minor = hal_device_get_property_int(udi, "block.minor");
 
-        printf("udi %s: major,minor=%d,%d\n", udi, major, minor);
+        /*printf("udi %s: major,minor=%d,%d\n", udi, major, minor);*/
 
         /* Search all mount points */
         found_mount_point = FALSE;
@@ -288,9 +297,11 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
 
             if( mp->major==major && mp->minor==minor )
             {
+                /*
                 printf("%s mounted at %s, major=%d, minor=%d, fstype=%s\n",
                        mp->device, mp->mount_point, mp->major, mp->minor, 
                        mp->fs_type);
+                */
 
                 /* Yay! Found a mount point; set properties accordingly */
                 hal_device_set_property_string(udi, "volume.device", 
@@ -323,14 +334,296 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
  */
 static void sigio_handler(int sig)
 {
-    printf("file changed, sig=%d, SIGIO=%d\n", sig, SIGIO);
+    /*printf("file changed, sig=%d, SIGIO=%d\n", sig, SIGIO);*/
 
-    /** @todo FIXME: Isn't it evil to sleep in a signal handler */
+    /** @todo FIXME: Isn't it evil to sleep in a signal handler? */
     sleep(1);
 
     etc_mtab_process_all_block_devices(TRUE);
 }
 
+
+/** Maximum length of Unique Device Identifer */
+#define HAL_UDI_MAXSIZE 256
+
+/** Structure for holding watching information for an ethernet interface */
+typedef struct ethmon_interface_s
+{
+    char udi[HAL_UDI_MAXSIZE];          /**< UDI of device */
+    int skfd;                           /**< File descriptor for socket */
+    struct ifreq ifr;                   /**< Structure used in ioctl() */
+    int new_ioctl_nums;                 /**< Is the new ioctl being used? */
+    dbus_uint16_t status_word_baseline; /**< Last status word read */
+    struct ethmon_interface_s* next;    /**< Pointer to next element */
+} ethmon_interface;
+
+/** Head of linked list of ethernet interfaces to watch */
+static ethmon_interface* ethmon_list_head = NULL;
+
+/** Read a word from the MII transceiver management registers 
+ *
+ *  @param  iface               Which interface
+ *  @param  location            Which register
+ *  @return                     Word that is read
+ */
+static dbus_uint16_t ethmon_mdio_read(ethmon_interface* iface, int location)
+{
+    dbus_uint16_t *data = (dbus_uint16_t *)(&(iface->ifr.ifr_data));
+
+    data[1] = location;
+
+    if( ioctl(iface->skfd, 
+              iface->new_ioctl_nums ? 0x8948 : SIOCDEVPRIVATE+1, 
+              &(iface->ifr)) < 0)
+    {
+        fprintf(stderr, "SIOCGMIIREG on %s failed: %s\n", iface->ifr.ifr_name,
+                strerror(errno));
+        return -1;
+    }
+    return data[3];
+}
+
+/** Check whether status has changed.
+ *
+ *  @param  iface               Which interface
+ */
+static void ethmon_process(ethmon_interface* iface)
+{
+    dbus_uint16_t status_word;
+    dbus_uint16_t link_word;
+    dbus_uint16_t status_word_new;
+
+    /*printf("iface = 0x%0x\n", iface);*/
+
+    status_word_new = ethmon_mdio_read(iface, 1);
+    if( status_word_new!=iface->status_word_baseline )
+    {
+        iface->status_word_baseline = status_word_new;
+
+        syslog(LOG_INFO, "Ethernet link status change on hal udi %s)",
+               iface->udi);
+
+        /* Read status_word again since some bits may be sticky */
+        status_word = ethmon_mdio_read(iface, 1);
+
+        /* Refer to http://www.scyld.com/diag/mii-status.html for
+         * the full explanation of the numbers
+         *
+         * 0x8000  Capable of 100baseT4.
+         * 0x7800  Capable of 10/100 HD/FD (most common).
+         * 0x0040  Preamble suppression permitted.
+         * 0x0020  Autonegotiation complete.
+         * 0x0010  Remote fault.
+         * 0x0008  Capable of Autonegotiation.
+         * 0x0004  Link established ("sticky"* on link failure)
+         * 0x0002  Jabber detected ("sticky"* on transmit jabber)
+         * 0x0001  Extended MII register exist.
+         *
+         */
+
+        if( (status_word&0x0016)==0x0004 )
+        {
+            hal_device_set_property_int(iface->udi, 
+                                         "net.ethernet.link", TRUE);
+        }
+        else
+        {
+            hal_device_set_property_int(iface->udi, 
+                                         "net.ethernet.link", FALSE);
+        }
+
+        /* Read link word
+         *
+         * 0x8000  Link partner can send more info.
+         * 0x4000  Link partner got our advertised abilities.
+         * 0x2000  Fault detected by link partner (uncommon).
+         * 0x0400  Flow control supported (currently uncommon)
+         * 0x0200  100baseT4 supported (uncommon)
+         * 0x0100  100baseTx-FD (full duplex) supported
+         * 0x0080  100baseTx supported
+         * 0x0040  10baseT-FD supported
+         * 0x0020  10baseT supported
+         * 0x001F  Protocol selection bits, always 0x0001 for Ethernet.
+         */
+        link_word = ethmon_mdio_read(iface, 1);
+
+        if( link_word&0x0300 )
+        {
+            hal_device_set_property_int(iface->udi, "net.ethernet.rate", 
+                                        100*1000*1000);
+        }
+        if( link_word&0x60 )
+        {
+            hal_device_set_property_int(iface->udi, "net.ethernet.rate", 
+                                        10*1000*1000);
+        }
+
+    }
+}
+
+/** Timeout handler for processing status on all watched interfaces
+ *
+ *  @param  data                User data when setting up timer
+ */
+static gboolean ethmon_timeout(gpointer data)
+{
+    ethmon_interface* iface;
+
+    for(iface=ethmon_list_head; iface!=NULL; iface=iface->next)
+        ethmon_process(iface);
+
+    return TRUE;
+}
+
+/** Add a watch for a HAL device; it must be a net.ethernet capable.
+ *
+ *  @param  udi                 UDI of device
+ */
+static void ethmon_add(const char* udi)
+{
+    char* interface_name;
+    ethmon_interface* iface;
+
+    iface = malloc(sizeof(ethmon_interface));
+    if( iface==NULL )
+        DIE(("No memory"));
+
+    interface_name = hal_device_get_property_string(udi, "net.interface");
+    if( interface_name==NULL )
+    {
+        fprintf(stderr, "device '%s' does not have net.interface\n", udi);
+        free(iface);
+        return;
+    }
+
+    strncpy(iface->udi, udi, HAL_UDI_MAXSIZE);
+
+    snprintf(iface->ifr.ifr_name, IFNAMSIZ, interface_name);
+
+    /* Open a basic socket. */
+    if( (iface->skfd = socket(AF_INET, SOCK_DGRAM,0))<0 )
+    {
+        fprintf(stderr, "cannot open socket on interface %s; errno=%d\n", 
+                interface_name, errno);
+        free(iface);
+        return;
+    }
+
+    if( ioctl(iface->skfd, 0x8947, &(iface->ifr))>=0 )
+    {
+        iface->new_ioctl_nums = 1;
+    } 
+    else if( ioctl(iface->skfd, SIOCDEVPRIVATE, &(iface->ifr))>=0 )
+    {
+        iface->new_ioctl_nums = 0;
+    } 
+    else
+    {
+        fprintf(stderr, "SIOCGMIIPHY on %s failed: %s\n", iface->ifr.ifr_name,
+                strerror(errno));
+        (void) close(iface->skfd);
+        free(iface);
+        return;
+    }
+
+    iface->status_word_baseline = 0x5555;
+
+
+    ethmon_process(iface);
+
+    iface->next = ethmon_list_head;
+    ethmon_list_head = iface;
+}
+
+/** Remove watch for a HAL device
+ *
+ */
+static void ethmon_remove(const char* udi)
+{
+    ethmon_interface* iface;
+    ethmon_interface* iface_prev = NULL;
+
+    for(iface=ethmon_list_head; iface!=NULL; iface=iface->next)
+    {
+        if( strcmp(udi, iface->udi)==0 )
+        {
+            if( iface_prev!=NULL )
+            {
+                iface_prev->next = iface->next;
+            }
+            else
+            {
+                ethmon_list_head = iface->next;
+            }
+
+            close(iface->skfd);
+            free(iface);
+        }
+
+        iface_prev = iface;
+    }
+}
+
+/** Scan all HAL devices of with capability net.ethernet and set link
+ *  properties. Also, optionally, this function sets up a watcher to
+ *  act on link changes.
+ *
+ *  @param  setup_watcher       Monitor link status
+ */
+static void ethernet_process_all_devices(dbus_bool_t setup_watcher)
+{
+    int i;
+    int num_ethernet_devices;
+    char** ethernet_devices;
+
+    ethernet_devices = hal_find_device_by_capability("net.ethernet", 
+                                                     &num_ethernet_devices);
+    /*printf("num: %d\n", num_ethernet_devices);*/
+    for(i=0; i<num_ethernet_devices; i++)
+    {
+        /*printf("device %d/%d : %s\n", 
+          i, num_ethernet_devices, ethernet_devices[i]);*/
+        ethmon_add(ethernet_devices[i]);
+    }
+
+    hal_free_string_array(ethernet_devices);
+
+    /** @todo FIXME Get rid of glib dependency */
+    g_timeout_add(1000, ethmon_timeout, NULL);
+}
+
+/** Callback when a HAL device is added
+ *
+ *  @param  udi                 UDI of device
+ */
+static void device_added(const char* udi)
+{
+    /*printf("in device_added, udi=%s\n", udi);*/
+    if( hal_device_query_capability(udi, "net.ethernet") )
+        ethmon_add(udi);
+}
+
+/** Callback when a HAL device got a new capability
+ *
+ *  @param  udi                 UDI of device
+ *  @param  cap                 Capability, e.g. net.ethernet, input.mouse etc.
+ */
+static void device_new_capability(const char* udi, const char* cap)
+{
+    /*printf("*** in device_new_capability, udi=%s, cap=%s\n", udi, cap);*/
+    if( hal_device_query_capability(udi, "net.ethernet") )
+        ethmon_add(udi);
+}
+
+/** Callback when a HAL device have been removed
+ *
+ *  @param  udi                 UDI of device
+ */
+static void device_removed(const char* udi)
+{
+    /*printf("in device_removed, udi=%s\n", udi);*/
+    ethmon_remove(udi);
+}
 
 /** Enter monitor mode
  *
@@ -340,7 +633,18 @@ void hal_monitor_enter(GMainLoop* loop)
 {
     syslog(LOG_INFO, "Entering monitor mode..");    
 
+    /* Find possible mount point for block devices and setup 
+     * a watcher */
     etc_mtab_process_all_block_devices(TRUE);
+
+    /* Process all ethernet devices for link and media detection
+     * and setup a watcher
+     */
+    ethernet_process_all_devices(TRUE);
+
+    hal_functions.device_added   = device_added;
+    hal_functions.device_removed = device_removed;
+    hal_functions.device_new_capability = device_new_capability;
 
     g_main_loop_run(loop);
 }

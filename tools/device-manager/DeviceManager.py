@@ -55,12 +55,19 @@ class DeviceManager(LibGladeApplication):
         self.main_window.show()
 
 
+    def get_current_focus_udi(self):
+        """Get the UDI of the currently focused device"""
+        (tree_model, tree_iter) = self.tree_selection.get_selected()
+        if tree_iter:
+            device_udi = tree_model.get_value(tree_iter, Const.UDI_COLUMN)
+            return device_udi
+        return None
+
     def on_device_tree_selection_changed(self, tree_selection):
         """This method is called when the selection has changed in the
         device tree"""
-        (tree_model, tree_iter) = tree_selection.get_selected()
-        if tree_iter:
-            device_udi = tree_model.get_value(tree_iter, Const.UDI_COLUMN)
+        device_udi = self.get_current_focus_udi()
+        if device_udi != None:
             device = self.udi_to_device(device_udi)
             self.update_device_notebook(device)
 
@@ -69,8 +76,8 @@ class DeviceManager(LibGladeApplication):
                        dbus_obj_path, dbus_message):
         """This method is called when properties for a HAL device changes"""
         [property_name] = dbus_message.get_args_list()
-        # TODO: Update appropriate device
-        #self.update_device_list()        
+        #print "property name", property_name
+        #print "dbus_obj_path", dbus_obj_path
         if property_name=="Parent":
             self.update_device_list()        
         else:
@@ -78,7 +85,7 @@ class DeviceManager(LibGladeApplication):
             device_udi_obj = self.hal_service.get_object(device_udi,
                                         "org.freedesktop.Hal.Device")
             device_obj = self.udi_to_device(device_udi)
-
+        
             if device_udi_obj.PropertyExists(property_name):
                 device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
             else:
@@ -87,8 +94,12 @@ class DeviceManager(LibGladeApplication):
                         del device_obj.properties[property_name]
                     except:
                         pass
-            if self.get_current_focus_udi()==device_udi:
-                self.update_device_notebook(device_obj)                
+
+            device_focus_udi = self.get_current_focus_udi()
+            if device_focus_udi != None:
+                device = self.udi_to_device(device_udi)
+                if device_focus_udi==device_udi:
+                    self.update_device_notebook(device)
 
 
     def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):

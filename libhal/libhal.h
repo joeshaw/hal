@@ -90,6 +90,13 @@ typedef void (*LibHalDeviceAdded)(const char* udi);
  */
 typedef void (*LibHalDeviceRemoved)(const char* udi);
 
+/** Type for callback when a device got a new capability
+ *
+ *  @param  udi                 Unique Device Id
+ *  @param  capability          Capability of the device
+ */
+typedef void (*LibHalNewCapability)(const char* udi, const char* capability);
+
 /** Type for callback when a device is booting. 
  *
  *  @param  udi                 Unique Device Id
@@ -169,6 +176,9 @@ typedef struct LibHalFunctions_s
     LibHalDeviceAdded                  device_added;
     /** Device removed */
     LibHalDeviceRemoved                device_removed;
+    /** Device got a new capability */
+    LibHalNewCapability                device_new_capability;
+
     /** Device is booting */
     LibHalDeviceBooting                device_booting;
     /** Device is shutting down */

@@ -102,6 +102,8 @@ char* find_udi_by_key_value(const char* key,
 const char* drivers_lookup(const char* device_path);
 void drivers_collect(const char* bus_name);
 
+extern LibHalFunctions hal_functions;
+
 /* @} */
 
 #endif /* MAIN_H */

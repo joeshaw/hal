@@ -1190,6 +1190,19 @@ static void usage()
 "\n");
 }
 
+LibHalFunctions hal_functions = {mainloop_integration,
+                                 NULL /*property_changed*/,
+                                 NULL /*device_added*/, 
+                                 NULL /*device_removed*/, 
+                                 NULL /*device_new_capability*/, 
+                                 NULL /*device_booting*/,
+                                 NULL /*device_shutting_down*/,
+                                 NULL /*device_disabled*/,
+                                 NULL /*device_need_device_info*/,
+                                 NULL /*device_boot_error*/,
+                                 NULL /*device_enabled*/,
+                                 NULL /*device_req_user*/ };
+
 /** Entry point for sysfs agent for HAL on GNU/Linux
  *
  *  @param  argc                Number of arguments
@@ -1199,17 +1212,6 @@ static void usage()
 int main(int argc, char* argv[])
 {
     GMainLoop* loop;
-    LibHalFunctions hal_functions = {mainloop_integration,
-                                     NULL /*property_changed*/,
-                                     NULL /*device_added*/, 
-                                     NULL /*device_remove*/, 
-                                     NULL /*device_booting*/,
-                                     NULL /*device_shutting_down*/,
-                                     NULL /*device_disabled*/,
-                                     NULL /*device_need_device_info*/,
-                                     NULL /*device_boot_error*/,
-                                     NULL /*device_enabled*/,
-                                     NULL /*device_req_user*/ };
 
     fprintf(stderr, "hal-sysfs-agent " PACKAGE_VERSION "\r\n");
 

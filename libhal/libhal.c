@@ -55,7 +55,6 @@ void hal_free_string_array(char** str_array)
         for(i=0; str_array[i]!=NULL; i++)
 	{
             free(str_array[i]);
-            i++;
 	}
         free(str_array);
     }
@@ -452,17 +451,49 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
 
     object_path = dbus_message_get_path(message);
 
-    if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
+    if( dbus_message_is_signal(message, "org.freedesktop.Hal.Manager",
                                "DeviceAdded") )
     {
-        if( functions->device_added!=NULL )
-            functions->device_added(object_path);
+        char* udi;
+        if( dbus_message_get_args(message, &error, 
+                                  DBUS_TYPE_STRING, &udi,
+                                  DBUS_TYPE_INVALID) )
+        {
+            if( functions->device_added!=NULL )
+            {
+                functions->device_added(udi);
+            }
+        }
     }
-    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
+    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Manager",
                                     "DeviceRemoved") )
     {
-        if( functions->device_removed!=NULL )
-            functions->device_removed(object_path);
+        char* udi;
+        if( dbus_message_get_args(message, &error, 
+                                  DBUS_TYPE_STRING, &udi,
+                                  DBUS_TYPE_INVALID) )
+        {
+            if( functions->device_removed!=NULL )
+            {
+                functions->device_removed(udi);
+            }
+        }
+    }
+    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Manager",
+                                    "NewCapability") )
+    {
+        char* udi;
+        char* capability;
+        if( dbus_message_get_args(message, &error, 
+                                  DBUS_TYPE_STRING, &udi,
+                                  DBUS_TYPE_STRING, &capability,
+                                  DBUS_TYPE_INVALID) )
+        {
+            if( functions->device_new_capability!=NULL )
+            {
+                functions->device_new_capability(udi, capability);
+            }
+        }
     }
     else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
                                     "DeviceBooting") )
@@ -589,18 +620,25 @@ int hal_initialize(const LibHalFunctions* cb_functions)
     {
 
         functions->main_loop_integration(connection);
+    }
 
-        if( !dbus_connection_add_filter(connection, filter_func, NULL, NULL) )
-        {
-            fprintf(stderr, "%s %d : Error creating connetion handler\r\n",
-                    __FILE__, __LINE__);
-            // TODO: clean up
-            return 1;
-        }
-
-        // TODO: narrow in instead of match *all* signals
-        dbus_bus_add_match(connection, "type='signal'", &error);
-        
+    if( !dbus_connection_add_filter(connection, filter_func, NULL, NULL) )
+    {
+        fprintf(stderr, "%s %d : Error creating connection handler\r\n",
+                __FILE__, __LINE__);
+        // TODO: clean up
+        return 1;
+    }
+    
+    // TODO: narrow in instead of match *all* signals
+    dbus_bus_add_match(connection, "type='signal',interface='org.freedesktop.Hal.Manager',sender='org.freedesktop.Hal',path='/org/freedesktop/Hal/Manager'", &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error subscribing to signals, "
+                "error=%s\r\n",
+                __FILE__, __LINE__, error.message);
+        // TODO: clean up
+        return 1;
     }
 
     is_initialized = 1;
@@ -1789,8 +1827,6 @@ char** hal_manager_find_device_string_match(const char* key,
     return hal_device_names;
 }
 
-/** Maximum string length for capabilities; quite a hack :-/ */
-#define MAX_CAP_SIZE 2048
 
 /** Assign a capability to a device.
  *
@@ -1802,28 +1838,44 @@ char** hal_manager_find_device_string_match(const char* key,
 dbus_bool_t hal_device_add_capability(const char* udi, 
                                       const char* capability)
 {
-    char* caps;
-    char buf[MAX_CAP_SIZE];
+    DBusError error;
+    DBusMessage* message;
+    DBusMessage* reply;
+    DBusMessageIter iter;
 
-    if( !hal_device_exists(udi) )
+    message = dbus_message_new_method_call("org.freedesktop.Hal", udi,
+                                           "org.freedesktop.Hal.Device",
+                                           "AddCapability");
+    if( message==NULL )
+    {
+        fprintf(stderr, "%s %d : Couldn't allocate D-BUS message\n",
+                __FILE__, __LINE__);
         return FALSE;
-
-    caps = hal_device_get_property_string(udi, "Capabilities");
-
-    if( caps!=NULL )
-    {
-        if( strstr(caps, capability)!=NULL )
-            return TRUE;
-
-        snprintf(buf, MAX_CAP_SIZE, "%s %s", caps, capability);
-        hal_device_set_property_string(udi, "Capabilities", buf);
-    }
-    else
-    {
-        hal_device_set_property_string(udi, "Capabilities", capability);
     }
 
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, capability);
 
+    dbus_error_init(&error);
+    reply = dbus_connection_send_with_reply_and_block(connection,
+                                                      message, -1,
+                                                      &error);
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d: %s raised\n\"%s\"\n\n", __FILE__, __LINE__, 
+                error.name, error.message);
+        dbus_message_unref(message);
+        return FALSE;
+    }
+
+    if( reply==NULL )
+    {
+        dbus_message_unref(message);
+        return FALSE;
+    }
+
+    dbus_message_unref(reply);
+    dbus_message_unref(message);
     return TRUE;
 }
 

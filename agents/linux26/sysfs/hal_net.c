@@ -60,6 +60,7 @@ void visit_class_device_net(const char* path,
     char attr_name[SYSFS_NAME_LEN];
     char* addr_store = NULL;
     int media_type = 0;
+    char* media;
 
     if( class_device->sysdevice==NULL )
     {
@@ -79,9 +80,6 @@ void visit_class_device_net(const char* path,
     hal_device_set_property_string(d, "net.interface", class_device->name);
     hal_device_set_property_string(d, "net.linux.sysfs_path", path);
 
-    hal_device_add_capability(d, "net");
-
-    hal_device_set_property_string(d, "Category", "net");
 
     dlist_for_each_data(sysfs_get_classdev_attributes(class_device), cur,
                         struct sysfs_attribute)
@@ -102,64 +100,6 @@ void visit_class_device_net(const char* path,
         else if( strcmp(attr_name, "type")==0 )
         {
             media_type = parse_dec(cur->value);
-            char* media;
-
-            /* type is decimal according to net/core/net-sysfs.c and it
-             * assumes values from /usr/include/net/if_arp.h. Either
-             * way we store both the 
-             */
-            switch(media_type)
-            {
-            case ARPHRD_NETROM: 
-                media="NET/ROM pseudo"; 
-                break;
-            case ARPHRD_ETHER: 
-                media="Ethernet"; 
-                hal_device_add_capability(d, "net.ethernet");
-                break;
-            case ARPHRD_EETHER: 
-                media="Experimenal Ethernet"; 
-                break;
-            case ARPHRD_AX25: 
-                media="AX.25 Level 2"; 
-                break;
-            case ARPHRD_PRONET: 
-                media="PROnet tokenring"; 
-                hal_device_add_capability(d, "net.tokenring");
-                break;
-            case ARPHRD_CHAOS: 
-                media="Chaosnet"; 
-                break;
-            case ARPHRD_IEEE802: 
-                media="IEEE802"; 
-                break;
-            case ARPHRD_ARCNET: 
-                media="ARCnet"; 
-                break;
-            case ARPHRD_APPLETLK: 
-                media="APPLEtalk"; 
-                break;
-            case ARPHRD_DLCI: 
-                media="Frame Relay DLCI"; 
-                break;
-            case ARPHRD_ATM: 
-                media="ATM"; 
-                hal_device_add_capability(d, "net.atm");
-                break;
-            case ARPHRD_METRICOM: 
-                media="Metricom STRIP (new IANA id)"; 
-                break;
-            case ARPHRD_IEEE1394: 
-                media="IEEE1394 IPv4 - RFC 2734"; 
-                break;
-            default: 
-                media="Unknown"; 
-                break;
-            }
-
-            hal_device_set_property_string(d, "net.media", media);
-            hal_device_set_property_int(d, "net.arpProtoHwId", 
-                                        media_type);
         }
     }
 
@@ -192,6 +132,71 @@ void visit_class_device_net(const char* path,
                                        class_device->driver->name);        
     }
 
+
+    hal_device_set_property_int(d, "net.arpProtoHwId", 
+                                media_type);
+
+    /* Always set capabilities as the last thing the addition of a 
+     * capability triggers a signal to other apps using HAL, monitoring
+     * daemons for instance
+     */
+
+    hal_device_set_property_string(d, "Category", "net");
+    hal_device_add_capability(d, "net");
+
+    /* type is decimal according to net/core/net-sysfs.c and it
+     * assumes values from /usr/include/net/if_arp.h. Either
+     * way we store both the 
+     */
+    switch(media_type)
+    {
+    case ARPHRD_NETROM: 
+        media="NET/ROM pseudo"; 
+        break;
+    case ARPHRD_ETHER: 
+        media="Ethernet"; 
+        break;
+    case ARPHRD_EETHER: 
+        media="Experimenal Ethernet"; 
+        hal_device_add_capability(d, "net.ethernet");
+        break;
+    case ARPHRD_AX25: 
+        media="AX.25 Level 2"; 
+        break;
+    case ARPHRD_PRONET: 
+        media="PROnet tokenring"; 
+        hal_device_add_capability(d, "net.tokenring");
+        break;
+    case ARPHRD_CHAOS: 
+        media="Chaosnet"; 
+        break;
+    case ARPHRD_IEEE802: 
+        media="IEEE802"; 
+        break;
+    case ARPHRD_ARCNET: 
+        media="ARCnet"; 
+        break;
+    case ARPHRD_APPLETLK: 
+        media="APPLEtalk"; 
+        break;
+    case ARPHRD_DLCI: 
+        media="Frame Relay DLCI"; 
+        break;
+    case ARPHRD_ATM: 
+        media="ATM"; 
+        hal_device_add_capability(d, "net.atm");
+        break;
+    case ARPHRD_METRICOM: 
+        media="Metricom STRIP (new IANA id)"; 
+        break;
+    case ARPHRD_IEEE1394: 
+        media="IEEE1394 IPv4 - RFC 2734"; 
+        break;
+    default: 
+        media="Unknown"; 
+        break;
+    }
+    hal_device_set_property_string(d, "net.media", media);    
 }
 
 /** Init function for block device handling
