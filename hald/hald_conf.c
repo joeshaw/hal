@@ -42,8 +42,7 @@
 /* default values */
 static HaldConf hald_conf = {
 	TRUE,  /* storage.media_check_enabled */
-	TRUE,  /* storage.automount_enabled */
-	TRUE,  /* storage.cdrom.eject_check_enabled */
+	TRUE,  /* storage.automount_enabled_hint */
 	FALSE  /* persistent_device_list */
 };
 
@@ -110,12 +109,9 @@ end (ParsingContext * pc, const char *el)
 	if ((strcmp (key, "storage_media_check_enabled") == 0) &&
 	    (strcmp (value, "false") == 0)) {
 		hald_conf.storage_media_check_enabled = FALSE;
-	} else if ((strcmp (key, "storage_automount_enabled") == 0) &&
+	} else if ((strcmp (key, "storage_automount_enabled_hint") == 0) &&
 		   (strcmp (value, "false") == 0)) {
-		hald_conf.storage_automount_enabled = FALSE;
-	} else if ((strcmp (key, "storage_cdrom_eject_check_enabled") == 0) &&
-		   (strcmp (value, "false") == 0)) {
-		hald_conf.storage_cdrom_eject_check_enabled = FALSE;
+		hald_conf.storage_automount_enabled_hint = FALSE;
 	} else if ((strcmp (key, "persistent_device_list") == 0) &&
 		   (strcmp (value, "true") == 0)) {
 		hald_conf.persistent_device_list = TRUE;

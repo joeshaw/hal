@@ -1519,6 +1519,15 @@
 	      </entry>
             </row>
             <row>
+              <entry><literal>block.have_scanned</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		An internal property used by HAL to specify whether a top
+		level block device have already been scanned for filesystems.
+	      </entry>
+            </row>
+            <row>
               <entry><literal>block.storage_device</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
@@ -1531,7 +1540,10 @@
           </tbody>
         </tgroup>
       </informaltable>
+
     </sect2>
+
+    
 
 
 
@@ -1592,6 +1604,16 @@
               <entry>A fully qualified path to the mount point of the volume</entry>
             </row>
             <row>
+              <entry><literal>volume.is_filesystem</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		This property is TRUE if the volume indeed contains a mountable
+		filesystem. If it's FALSE the volume contain other data such
+		as swap or partition maps.
+	      </entry>
+            </row>
+            <row>
               <entry><literal>volume.fstype</literal> (string)</entry>
               <entry>example: ext3</entry>
               <entry>Yes (is blank if the filesystem type is unknown)</entry>
@@ -1618,9 +1640,74 @@
               the capability <literal>volume.disc</literal></entry>
             </row>
 
+				      
           </tbody>
         </tgroup>
       </informaltable>
+
+      <para>
+	Device objects with this capability may emit the following
+	device conditions
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Condition Name</entry>
+              <entry>Parameters</entry>
+              <entry>Example</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>VolumeMount</literal></entry>
+              <entry>
+		<literal>block.device</literal> (string),
+		<literal>volume.mount_point</literal> (string)
+	      </entry>
+              <entry>
+		<literal>/dev/sda1</literal>,
+		<literal>/media/compact_flash</literal>
+	      </entry>
+              <entry>Emitted when a volume is mounted</entry>
+            </row>
+
+            <row>
+              <entry><literal>VolumeUnmount</literal></entry>
+              <entry>
+		<literal>block.device</literal> (string),
+		<literal>volume.mount_point</literal> (string)
+	      </entry>
+              <entry>
+		<literal>/dev/sda1</literal>,
+		<literal>/media/compact_flash</literal>
+	      </entry>
+              <entry>Emitted when a volume is unmounted</entry>
+            </row>
+
+            <row>
+              <entry><literal>VolumeUnmountForced</literal></entry>
+              <entry>
+		<literal>block.device</literal> (string),
+		<literal>volume.mount_point</literal> (string)
+	      </entry>
+              <entry>
+		<literal>/dev/sda1</literal>,
+		<literal>/media/compact_flash</literal>
+	      </entry>
+              <entry>
+		Emitted when a volume is forcibly unmounted because
+		the media backing the volume was removed.
+	      </entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+
     </sect2>
 
 
@@ -1737,6 +1824,12 @@
               <entry></entry>
               <entry>DVD+RW disc</entry>
             </row>
+            <row>
+              <entry></entry>
+              <entry>unknown</entry>
+              <entry></entry>
+              <entry>Unknown type or lack of support from drive to determine the type</entry>
+            </row>
 
           </tbody>
         </tgroup>
@@ -1756,6 +1849,12 @@
 	objects can only have the <literal>storage</literal> capability
 	if they already got capability <literal>block</literal> and the
 	property <literal>block.is_volume</literal> set to FALSE.
+	One significant between the <literal>storage</literal> and
+	<literal>block</literal> namespace is that the properties
+	exported in the <literal>storage</literal> represents
+	constant vital product information, whereas the properties
+	in the <literal>block</literal> namespace represent 
+	variable system-dependent information.
 
       </para>
 
@@ -1800,6 +1899,12 @@
               <entry>scsi</entry>
               <entry></entry>
               <entry>SCSI interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>platform</entry>
+              <entry></entry>
+              <entry>Legacy device that is part of the platform</entry>
             </row>
 
             <row>
@@ -1897,10 +2002,30 @@
               <entry>If this property is set to FALSE then HAL will not continuosly poll for media changes. </entry>
             </row>
             <row>
-              <entry><literal>storage.automount_enabled</literal> (bool)</entry>
+              <entry><literal>storage.automount_enabled_hint</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>This property is a hint to desktop file managers that they shouldn't automount volumes of the storage device when they appear.</entry>
+            </row>
+            <row>
+              <entry><literal>storage.no_partitions_hint</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		This property is a hint to programs that maintain the 
+		<literal>/etc/fstab</literal> file to signal, when
+		TRUE, that the storage drive (such as floppy or
+		optical drives) is used for media with no partition
+		table so an entry can be added ahead of media
+		insertion time. Note that this is only a hint; media
+		may be inserted that has partition tables that the
+		kernel may respect. Conversely, when this is FALSE
+		media without partition tables may be inserted (an
+		example is a Compact Flash card; this media is normally
+		formatted with a PC style partition table and a single
+		FAT partition. However, it may be formatted with just
+		a single FAT partition and no partition table).
+	      </entry>
             </row>
             <row>
               <entry><literal>storage.physical_device</literal> (string)</entry>
@@ -1908,7 +2033,9 @@
               <entry>Yes</entry>
               <entry>
 		This contains the UDI of the device object
-		representing the physical device. Additionally, a
+		representing the physical device or blank if 
+		there is no such device (which is TRUE for legacy
+		devices such as x86 floppy drives). Additionally, a
 		number of properties are merged from that device
 		object. Specifically, all properties prefixed
 		with <literal>storage</literal> and, if the physical

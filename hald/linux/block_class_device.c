@@ -72,7 +72,53 @@
 
 static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
-static void detect_fs (HalDevice *d);
+static char *block_class_compute_udi (HalDevice * d, int append_num);
+
+
+static void
+set_volume_id_values(HalDevice *d, struct volume_id *vid)
+{
+	char *product;
+
+	hal_device_property_set_string (d, "volume.fstype", vid->format);
+	hal_device_property_set_string (d, "volume.uuid", vid->uuid);
+	hal_device_property_set_string (d, "volume.label", vid->label);
+
+	hal_device_property_set_bool (d, "volume.is_filesystem", 
+				      (vid->type_id == VOLUME_ID_FILESYSTEM));
+
+	if (vid->label[0] != '\0') {
+		hal_device_property_set_string (d, "info.product", vid->label);
+	} else {
+		product = g_strdup_printf ("Volume (%s)", vid->format);
+		hal_device_property_set_string (d, "info.product", product);
+		g_free (product);
+	}
+}
+
+static HalDevice *
+get_child_device_gdl (HalDevice *d)
+{
+	HalDevice *child;
+
+	child = hal_device_store_match_key_value_string (
+		hald_get_gdl (), "info.parent",
+		hal_device_get_udi (d));
+
+	return child;
+}
+
+static HalDevice *
+get_child_device_tdl (HalDevice *d)
+{
+	HalDevice *child;
+
+	child = hal_device_store_match_key_value_string
+		(hald_get_tdl (), "info.parent",
+		hal_device_get_udi (d));
+
+	return child;
+}
 
 ClassDeviceHandler block_class_handler;
 
@@ -117,6 +163,7 @@ block_class_visit (ClassDeviceHandler *self,
 	hal_device_property_set_string (d, "linux.sysfs_path_device", path);
 
 	hal_device_property_set_bool (d, "block.no_partitions", FALSE);
+	hal_device_property_set_bool (d, "block.have_scanned", FALSE);
 
 	sysdevice = sysfs_get_classdev_device (class_device);
 
@@ -180,7 +227,7 @@ strip_space (char *str)
 
 
 static void
-cdrom_check(HalDevice *d, const char *device_file)
+cdrom_get_properties (HalDevice *d, const char *device_file)
 {
 	int fd, capabilities;
 	int read_speed, write_speed;
@@ -205,11 +252,6 @@ cdrom_check(HalDevice *d, const char *device_file)
 	hal_device_property_set_bool (d, "storage.cdrom.dvdram", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdplusr", FALSE);
 	hal_device_property_set_bool (d, "storage.cdrom.dvdplusrw", FALSE);
-
-	hal_device_property_set_bool (
-		d, 
-		"storage.cdrom.eject_check_enabled", 
-		(hald_get_conf ())->storage_cdrom_eject_check_enabled);
 
 	if (capabilities & CDC_CD_R) {
 		hal_device_property_set_bool (d, "storage.cdrom.cdr", TRUE);
@@ -283,6 +325,7 @@ force_unmount (HalDevice * d)
 
 	if (hal_device_has_property (d, "block.is_volume") &&
 	    hal_device_property_get_bool (d, "block.is_volume") &&
+	    hal_device_property_get_bool (d, "volume.is_mounted") &&
 	    device_mount_point != NULL &&
 	    strlen (device_mount_point) > 0) {
 		HAL_INFO (("attempting /bin/umount -l %s", device_file));
@@ -301,8 +344,8 @@ force_unmount (HalDevice * d)
 		}
 
 		if (umount_exitcode != 0) {
-			HAL_INFO (("/bin/umount returned %d",
-				   umount_exitcode));
+			HAL_ERROR (("/bin/umount returned %d",
+				    umount_exitcode));
 		} else {
 			/* Tell clients we are going to unmount so they close
 			 * can files - otherwise this unmount is going to stall
@@ -311,17 +354,15 @@ force_unmount (HalDevice * d)
 			 * File Alteration Monitor
 			 *
 			 * Lazy unmount been in Linux since 2.4.11, so we're
-			 * homefree (but other OS'es might not support this)
+			 * homefree (but other kernels might not support this)
 			 */
-			HAL_INFO (("Goint to emit BlockForcedUnmountPartition('%s', '%s', TRUE)", device_file, device_mount_point));
+			HAL_INFO (("Goint to emit VolumeUnmountForced('%s', '%s', TRUE)", device_file, device_mount_point));
 			device_send_signal_condition (d,
-						      "BlockForcedUnmountPartition",
+						      "VolumeUnmountForced",
 						      DBUS_TYPE_STRING,
 						      device_file,
 						      DBUS_TYPE_STRING,
 						      device_mount_point,
-						      DBUS_TYPE_BOOLEAN,
-						      TRUE,
 						      DBUS_TYPE_INVALID);
 
 			/* Woohoo, have to change volume.mount_point *afterwards*, other
@@ -367,7 +408,7 @@ force_unmount_of_all_childs (HalDevice * d)
 
 			force_unmount (child);
 
-		}		/* for all children */
+		} /* for all children */
 
 		g_slist_free (children);
 
@@ -383,18 +424,7 @@ force_unmount_of_all_childs (HalDevice * d)
 		 * remove the child devices 
 		 */
 
-		/* Finally, send a single signal on the device - this
-		 * is useful for desktop policy clients such as g-v-m
-		 * such that only a single annoying "dude, you need to
-		 * *stop* the device before pulling it out" popup is
-		 * displayed */
-		HAL_INFO (("Goint to emit BlockForcedUnmount('%s')",
-			   device_file));
-		device_send_signal_condition (d, "BlockForcedUnmount",
-					      DBUS_TYPE_STRING, device_file,
-					      DBUS_TYPE_INVALID);
-
-	}			/* childs!=NULL */
+	} /* childs!=NULL */
 }
 
 static void
@@ -439,6 +469,147 @@ out:
 	return rc;
 }
 
+/**
+ * if volume_id returns a parsed partition map instead of a filesystem,
+ * we just probe all partitions for a valid filesystem and return it
+ */
+static struct volume_id *
+get_first_valid_partition(struct volume_id *id)
+{
+	struct volume_id *p = volume_id_open_fd(id->fd);
+	if (p == NULL)
+		return NULL;
+
+	if (id->partition_count > 0) {
+		unsigned int i;
+
+		for (i = 0; i < id->partition_count; i++) {
+			unsigned long long off;
+			unsigned long long len;
+
+			off = id->partitions[i].off;
+			len = id->partitions[i].len;
+
+			if (len == 0)
+				continue;
+
+			if (volume_id_probe(p, VOLUME_ID_ALL, off) == 0 &&
+			    p->type_id == VOLUME_ID_FILESYSTEM)
+				return p;
+		}
+	}
+
+	volume_id_close(p);
+	return NULL;
+}
+
+
+static void
+detect_disc (HalDevice *d, const char *device_file)
+{
+	int fd;
+	int type;
+
+	/* defaults */
+	hal_device_property_set_string (d, "volume.disc.type", "unknown");
+	hal_device_property_set_bool (d, "volume.disc.has_audio", FALSE);
+	hal_device_property_set_bool (d, "volume.disc.has_data", FALSE);
+	hal_device_property_set_bool (d, "volume.disc.is_blank", FALSE);
+	hal_device_property_set_bool (d, "volume.disc.is_appendable", FALSE);
+	hal_device_property_set_bool (d, "volume.disc.is_rewritable", FALSE);
+
+	/* Check handling */
+	fd = open (device_file, O_RDONLY | O_NONBLOCK);
+	if (fd < 0)
+		return;
+	
+	/* check for audio/data/blank */
+	type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
+	switch (type) {
+	case CDS_AUDIO:		/* audio CD */
+		hal_device_property_set_bool (d, "volume.disc.has_audio", TRUE);
+		HAL_INFO (("Disc in %s has audio", device_file));
+		break;
+	case CDS_MIXED:		/* mixed mode CD */
+		hal_device_property_set_bool (d, "volume.disc.has_audio", TRUE);
+		hal_device_property_set_bool (d, "volume.disc.has_data", TRUE);
+		HAL_INFO (("Disc in %s has audio+data", device_file));
+		break;
+	case CDS_DATA_1:	/* data CD */
+	case CDS_DATA_2:
+	case CDS_XA_2_1:
+	case CDS_XA_2_2:
+		hal_device_property_set_bool (d, "volume.disc.has_data", TRUE);
+		HAL_INFO (("Disc in %s has data", device_file));
+		break;
+	case CDS_NO_INFO:	/* blank or invalid CD */
+		hal_device_property_set_bool (d, "volume.disc.is_blank", TRUE);
+		HAL_INFO (("Disc in %s is blank", device_file));
+		break;
+		
+	default:		/* should never see this */
+		hal_device_property_set_string (d, "volume.disc_type", "unknown");
+		HAL_INFO (("Disc in %s returned unknown CDROM_DISC_STATUS", device_file));
+		break;
+	}
+	
+	/* see table 373 in MMC-3 for details on disc type
+	 * http://www.t10.org/drafts.htm#mmc3
+	 */
+	type = get_disc_type (fd);
+	HAL_INFO (("get_disc_type returned 0x%02x", type));
+	if (type != -1) {
+		switch (type) {
+		case 0x08: /* CD-ROM */
+			hal_device_property_set_string (d, "volume.disc.type", "cd_rom");
+			break;
+		case 0x09: /* CD-R */
+			hal_device_property_set_string (d, "volume.disc.type", "cd_r");
+			break;
+		case 0x0a: /* CD-RW */
+			hal_device_property_set_string (d, "volume.disc.type", "cd_rw");
+			hal_device_property_set_bool (d, "volume.disc.is_rewritable", TRUE);
+			break;
+		case 0x10: /* DVD-ROM */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_rom");
+			break;
+		case 0x11: /* DVD-R Sequential */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_r");
+			break;
+		case 0x12: /* DVD-RAM */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_ram");
+			hal_device_property_set_bool (d, "volume.disc.is_rewritable", TRUE);
+			break;
+		case 0x13: /* DVD-RW Restricted Overwrite */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_rw");
+			hal_device_property_set_bool (d, "volume.disc.is_rewritable", TRUE);
+			break;
+		case 0x14: /* DVD-RW Sequential */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_rw");
+			hal_device_property_set_bool (d, "volume.disc.is_rewritable", TRUE);
+			break;
+		case 0x1A: /* DVD+RW */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_plus_rw");
+			hal_device_property_set_bool (d, "volume.disc.is_rewritable", TRUE);
+			break;
+		case 0x1B: /* DVD+R */
+			hal_device_property_set_string (d, "volume.disc.type", "dvd_plus_r");
+			hal_device_property_set_bool (d, "volume.disc.is_rewritable", TRUE);
+			break;
+		default: 
+			break;
+		}
+	}
+	
+	if (disc_is_appendable (fd)) {
+		hal_device_property_set_bool (
+			d, "volume.disc.is_appendable", TRUE);
+	}
+
+	close (fd);
+	return;
+}
+
 /** Check for media on a block device that is not a volume
  *
  *  @param  d                   Device to inspect; can be any device, but
@@ -447,280 +618,77 @@ out:
  *                              is not a volume
  *  @param force_poll           If TRUE, do polling even though 
  *                              storage.media_check_enabled==FALSE
- *  @return                     TRUE iff the GDL was modified
+ *  @return                     TRUE if the GDL was modified
  */
 static dbus_bool_t
 detect_media (HalDevice * d, dbus_bool_t force_poll)
 {
-	int fd;
-	dbus_bool_t is_cdrom;
 	const char *device_file;
 	HalDevice *child;
+	int fd;
+	struct volume_id *vid;
+	gboolean no_partitions;
+	dbus_bool_t is_cdrom;
+	dbus_bool_t got_media;
 
 	/* respect policy unless we force */
-	if (!force_poll && 
+	if (!force_poll &&
 	    !hal_device_property_get_bool (d, "storage.media_check_enabled"))
 		return FALSE;
 
 	/* need to be in GDL */
-	if (!hal_device_store_find (hald_get_gdl (),
-				    hal_device_get_udi (d)))
-	    return FALSE;
-	    
-	/* need to have a device and not be a volume */
+	if (!hal_device_store_find (hald_get_gdl (), hal_device_get_udi (d)))
+		return FALSE;
+
+	/* need to be a drive and not a volume */
 	if (!hal_device_has_property (d, "block.is_volume") ||
 	    !hal_device_has_property (d, "block.device") ||
 	    hal_device_property_get_bool (d, "block.is_volume"))
 		return FALSE;
 
+	/* we have to do special treatment for optical drives */
+	is_cdrom = hal_device_has_property (d, "storage.drive_type") &&
+		strcmp (hal_device_property_get_string (d, "storage.drive_type"), "cdrom") == 0 &&
+		hal_device_property_get_bool (d, "storage.cdrom.support_media_changed");
+
+	/* current state of media */
+	no_partitions = hal_device_property_get_bool (d, "block.no_partitions");
+
+	got_media = FALSE;
+
 	device_file = hal_device_property_get_string (d, "block.device");
 	if (device_file == NULL)
 		return FALSE;
 
-	/* we do special treatment for optical discs */
-	is_cdrom = hal_device_has_property (d, "storage.drive_type") &&
-	    strcmp (hal_device_property_get_string (d, "storage.drive_type"),
-		    "cdrom") == 0
-	    && hal_device_property_get_bool (d,
-				     "storage.cdrom.support_media_changed");
-
-	if (!is_cdrom) {
-		gboolean no_partitions = hal_device_property_get_bool (
-			d, "block.no_partitions");
-
+	if (is_cdrom)
+		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
+	else
 		fd = open (device_file, O_RDONLY);
 
-		if (fd == -1 && errno == ENOMEDIUM) {
-
-			/* No media */
-
-			if (no_partitions) {
-
-				child = hal_device_store_match_key_value_string (
-					hald_get_gdl (), "info.parent",
-					hal_device_get_udi (d));
-
-				if (child != NULL ) {
-					HAL_INFO (("Removing volume for "
-						   "no_partitions device %s", 
-						   device_file));
-
-					g_signal_connect (child, "callouts_finished",
-							  G_CALLBACK (volume_remove_from_gdl), NULL);
-					hal_callout_device (child, FALSE);
-
-					/* GDL was modified */
-					return TRUE;
-				}
-			} else {
-				/* Will cause storm of hotplug remove events */
-				force_unmount_of_all_childs (d);
-			}
-		} else if (fd > 0 && no_partitions) {
-
-			/* Media detected */
-
-			/* For drives with partitions, we simply get hotplug
-			 * events so only do something for e.g. floppies */
-
-			/* media in drive; check if the HAL device representing
-			 * the drive already got a child (it can have
-			 * only one child)
-			 */
-
-			child = hal_device_store_match_key_value_string (
-				hald_get_gdl (), "info.parent",
-				hal_device_get_udi (d));
-
-			if (child == NULL) {
-				child = hal_device_store_match_key_value_string
-					(hald_get_tdl (), "info.parent",
-					hal_device_get_udi (d));
-			}
-
-			if (child == NULL) {				
-				char udi[256];
-
-				HAL_INFO (("Media in no_partitions device %s",
-					   device_file));
-
-				child = hal_device_new ();
-				hal_device_store_add (hald_get_tdl (), child);
-				g_object_unref (child);
-
-				/* copy from parent */
-				hal_device_merge (child, d);
-
-				/* modify some properties */
-				hal_device_property_set_string (
-					child, "info.parent", d->udi);
-				hal_device_property_set_bool (
-					child, "block.is_volume", TRUE);
-				hal_device_property_set_string (
-					child, "info.capabilities",
-					"block volume");
-				hal_device_property_set_string (
-					child, "info.category","volume");
-				hal_device_property_set_string (
-					child, "info.product", "Volume");
-				/* clear these otherwise we'll
-				 * imposter the parent on hotplug
-				 * remove
-				 */
-				hal_device_property_set_string (
-					child, "linux.sysfs_path", "");
-				hal_device_property_set_string (
-					child, "linux.sysfs_path_device", "");
-
-				/* set defaults */
-				hal_device_property_set_string (
-					child, "volume.label", "");
-				hal_device_property_set_string (
-					child, "volume.uuid", "");
-				hal_device_property_set_string (
-					child, "volume.fstype", "");
-				hal_device_property_set_string (
-					child, "volume.mount_point", "");
-				hal_device_property_set_bool (
-					child, "volume.is_mounted", FALSE);
-				hal_device_property_set_bool (
-					child, "volume.is_disc", FALSE);
-
-				/* set UDI as appropriate */
-				strncpy (udi,
-					 hal_device_property_get_string (
-						 d, 
-						 "info.udi"), 256);
-				strncat (udi, "-volume", 256);
-				hal_device_property_set_string (
-					child, "info.udi", udi);
-				hal_device_set_udi (child, udi);
-
-
-				close(fd);
-				
-				detect_fs (child);
-				
-				/* If we have a nice volume label, set it */
-				if (hal_device_has_property (child, 
-							     "volume.label")) {
-					const char *label;
-					
-					label = hal_device_property_get_string
-						(child, "volume.label");
-					
-					if (label != NULL && 
-					    label[0] != '\0') {
-						hal_device_property_set_string
-							(child, "info.product",
-							 label);
-					}
-				}
-
-				{
-					ClassAsyncData *cad = 
-						g_new0 (ClassAsyncData, 1);
-					cad->device = child;
-					cad->handler = &block_class_handler;
-					cad->merge_or_add = block_class_handler.merge_or_add;
-
-					/* add new device */
-					g_signal_connect (
-						child, "callouts_finished",
-						G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
-					hal_callout_device (child, TRUE);
-				}
-
-				/* GDL was modified */
-				return TRUE;
-
-			} /* no child */
-
-		} /* media in no_partitions device */
-		
-	} /* device is not an optical drive */
-	else {
+	if (is_cdrom) {
 		int drive;
-		dbus_bool_t got_disc = FALSE;
-		dbus_bool_t eject_pressed = FALSE;
-		struct request_sense sense;
-		struct cdrom_generic_command cgc;
-		unsigned char buffer[8];
-		int ret;
 
-		/********** media detection for optical drives **********/
-
-		/* After talking to Hadess, magicdev maintainer, the
-		 * right thing is to use O_EXCL; it's in 2.6 mainline..
-		 */
-		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
-
-		if (fd == -1) {
-
+		if (fd < 0 && errno == EBUSY) {
 			/* this means the disc is mounted or some other app,
-			 * like a cd burner, has opened O_EXCL */
-			if (errno == EBUSY) {
-				/*HAL_INFO(("*** EBUSY for %s", device_file));*/
-
-				/* HOWEVER, when starting hald a disc may be
-				 * mounted; so check /etc/mtab to see if it
-				 * actually is mounted. If it is we open
-				 * without O_EXCL
-				 */
-				if (is_mounted (device_file)) {
-					fd = open (device_file, O_RDONLY | O_NONBLOCK);
-					if (fd == -1)
-						return FALSE;
-				} else {
-					return FALSE;
-				}
-			} else {
-				/* open failed */
-				HAL_INFO (("open(\"%s\", O_RDONLY|O_NONBLOCK|O_EXCL) failed, " "errno=%d", device_file, errno));
-				return FALSE;
-			}
-		}
-
-		/* respect policy */
-		if (hal_device_property_get_bool (
-			    d, "storage.cdrom.eject_check_enabled")) {
-
-			/* Check whether the 'eject' button is pressed..
-			 * Supposedly only works on MMC-2 drivers or higher.
-			 *
-			 * From http://www.ussg.iu.edu/hypermail/linux/kernel/0202.0/att-0603/01-cd_poll.c
+			 * like a cd burner, has already opened O_EXCL */
+			
+			/* HOWEVER, when starting hald, a disc may be
+			 * mounted; so check /etc/mtab to see if it
+			 * actually is mounted. If it is we retry to open
+			 * without O_EXCL
 			 */
+			if (!is_mounted (device_file))
+				return FALSE;
 		
-			memset (&cgc, 0, sizeof(struct cdrom_generic_command));
-			memset (buffer, 0, sizeof(buffer));		
-			cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
-			cgc.cmd[1] = 1;
-			cgc.cmd[4] = 16;
-			cgc.cmd[8] = sizeof (buffer);
-			memset (&sense, 0, sizeof (sense));
-			cgc.timeout = 600;
-			cgc.buffer = buffer;
-			cgc.buflen = sizeof (buffer);
-			cgc.data_direction = CGC_DATA_READ;
-			cgc.sense = &sense;
-			cgc.quiet = 1;
-			ret = ioctl (fd, CDROM_SEND_PACKET, &cgc);
-			if (ret < 0) {
-				HAL_ERROR (("GPCMD_GET_EVENT_STATUS_NOTIFICATION failed, errno=%d", errno));
-			} else {
-				if ((buffer[4]&0x0f) == 0x01) {
-					HAL_INFO (("Eject pressed on udi=%s!", 
-						   hal_device_get_udi (d)));
-					/* handle later */
-					eject_pressed = TRUE;
-					
-				}
-			}
+			fd = open (device_file, O_RDONLY | O_NONBLOCK);
 		}
+
+		if (fd < 0)
+			return FALSE;
 
 		/* Check if a disc is in the drive
 		 *
-		 * @todo Use API above if MMC-2 or higher drive
+		 * @todo Use MMC-2 API if applicable
 		 */
 		drive = ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
 		switch (drive) {
@@ -730,314 +698,244 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		case CDS_TRAY_OPEN:
 		case CDS_DRIVE_NOT_READY:
 			break;
-
+			
 		case CDS_DISC_OK:
-			got_disc = TRUE;
+			got_media = TRUE;
 			break;
-
+			
 		default:
 			break;
 		}
 
-		if (!got_disc) {
-			/* we get to here if there is no disc in the drive */
+	} else {
+		if (fd < 0 && errno == ENOMEDIUM) {
+			got_media = FALSE;
+		} else {
+			got_media = TRUE;
+		}
+
+	}
+
+	if (!got_media) {
+		/* No media in drive; if we had volumes for this drive,
+		 * now is a good time to remove them.. */
+		
+		if (no_partitions) {
 			child = hal_device_store_match_key_value_string (
 				hald_get_gdl (), "info.parent",
 				hal_device_get_udi (d));
+			
+			/* We can have only one child, simply remove it */
+			
+			if (child != NULL ) {
+				HAL_INFO (("Removing volume for "
+					   "no_partitions device %s",
+					   device_file));
 
-			if (child != NULL) {
-				HAL_INFO (("Removing volume for optical device %s", device_file));
+				force_unmount (child);
+				
 				g_signal_connect (child, "callouts_finished",
 						  G_CALLBACK (volume_remove_from_gdl), NULL);
 				hal_callout_device (child, FALSE);
+				
+				hal_device_property_set_bool (d, "block.no_partitions", 
+							      hal_device_property_get_bool (
+								      d, "storage.no_partitions_hint"));
+				hal_device_property_set_bool (d, "block.have_scanned", FALSE);
 
-				close (fd);
-
-				/* GDL was modified */
+				if (fd >= 0)
+					close (fd);
 				return TRUE;
 			}
+			
+		} else {
+			
+			/* Just unmount the childs already mounted (otherwise
+			 * no hotplug will happen). This causes storm of hotplug
+			 * remove events and The Right Stuff Happens(tm)
+			 */
+			
+			force_unmount_of_all_childs (d);
+			
+			hal_device_property_set_bool (d, "block.no_partitions", 
+						      hal_device_property_get_bool (
+							      d, "storage.no_partitions_hint"));
 
+			hal_device_property_set_bool (d, "block.have_scanned", FALSE);
+		}
+
+		if (fd >= 0)
 			close (fd);
+		return FALSE;
+	}
+
+	if (fd < 0)
+		return FALSE;
+
+	/* Now got_media==TRUE and fd>0.. So, Yay!, we got media
+	 *
+	 * See if we already got children (or children underway :-),
+	 * if so, just exit this function as life is good as nothing
+	 * really changed
+	 */
+
+	child = get_child_device_gdl (d);
+	if (child == NULL) {
+		get_child_device_tdl (d);
+	}
+	if (child != NULL) {
+		close (fd);
+		return FALSE;
+	}
+
+	/* No children... So, this means that the media have just been
+	 * inserted. The poll we just did will make the kernel search
+	 * for partition tables. If there is indeed a known, to the
+	 * kernel, partition table then we'll get hotplug events and
+	 * life is good because these are handled elsewhere.
+	 *
+	 * In the event there is no partition table, then we get no
+	 * feedback whatsoever. Which is kind of rude of the kernel,
+	 * but hey...
+	 *
+	 * Therefore, we need to scan the media to see if if the
+	 * top-level block device is indeed a filesystem we know. If
+	 * yes, then there can't be any partition table. If we find
+	 * anything, we set the block.no_partitions to TRUE. And then
+	 * we add a child. This needs to be set to the value of
+	 * storage.no_partitions_hint when we detect that the media 
+	 * is removed.
+	 *
+	 * We also set block.have_scanned to TRUE so we won't do this
+	 * again (in the event that the kernel didn't find a partition
+	 * table and the top-level block device didn't contain an
+	 * known (to HAL) filesystem). Clearly, this must be set to
+	 * FALSE when media is removed.
+	 */
+
+	if (!hal_device_property_get_bool (d, "block.have_scanned")) {
+		ClassAsyncData *cad;
+
+		hal_device_property_set_bool (d, "block.have_scanned", TRUE);
+
+		child = hal_device_new ();
+
+		/* copy block.* properties from parent */
+		hal_device_merge_with_rewrite (child, d, "block", "block");
+
+		/* modify some properties */
+		hal_device_property_set_bool (child, "block.is_volume", TRUE);
+		hal_device_property_set_bool (child, "block.have_scanned", FALSE);
+
+		/* add info.* properties */
+		hal_device_property_set_string (child, "info.bus", "block");
+		hal_device_property_set_string (child, "info.capabilities", "block volume");
+		hal_device_property_set_string (child, "info.category", "volume");
+		hal_device_property_set_string (child, "info.parent", d->udi);
+		hal_device_property_set_string (child, "info.product", "Volume");
+
+		/* set defaults */
+		hal_device_property_set_string (child, "volume.fstype", "");
+		hal_device_property_set_string (child, "volume.uuid", "");
+		hal_device_property_set_string (child, "volume.label", "");
+		hal_device_property_set_string (child, "volume.mount_point", "");
+		hal_device_property_set_bool (child, "volume.is_mounted", FALSE);
+		hal_device_property_set_bool (child, "volume.is_disc", is_cdrom);
+
+		if (is_cdrom )
+			detect_disc (child, device_file);
+
+		vid = NULL;
+
+		if (!is_cdrom || 
+		    (is_cdrom && hal_device_property_get_bool (child, "volume.disc.has_data"))) {
+
+			HAL_INFO (("Detecting if %s contains a fs", device_file));
+
+			vid = volume_id_open_fd (fd);
+			if (vid == NULL) {
+				close (fd);
+				g_object_unref (child);
+				return FALSE;
+			}
+			
+			if (volume_id_probe (vid, VOLUME_ID_ALL, 0) != 0) {
+				if (is_cdrom) {
+					/* volume_id cannot yet probe blank/audio discs etc,
+					 * so don't fail for them, just set vid to NULL */
+					volume_id_close (vid);
+					vid = NULL;
+				} else {
+					close (fd);
+					g_object_unref (child);
+					volume_id_close (vid);
+					return FALSE;
+				}
+			}
+		}
+
+		/* In Linux, optical discs never have partition
+		 * tables; at least Linux doesn't use it.. This is
+		 * especially true for blank discs, audio discs
+		 * etc. */
+		no_partitions = is_cdrom || (vid != NULL && vid->type_id == VOLUME_ID_FILESYSTEM);
+		hal_device_property_set_bool (d, "block.no_partitions", no_partitions);
+
+		if (!no_partitions) {
+			if (vid != NULL)
+				volume_id_close (vid);
+			close (fd);
+			g_object_unref (child);
 			return FALSE;
 		}
 
+		HAL_INFO (("Media in no_partitions device %s", device_file));
 
-		/* got a disc in drive, */
+		hal_device_store_add (hald_get_tdl (), child);
+		g_object_unref (child);
 
-		/* disc in drive; check if the HAL device representing
-		 * the optical drive already got a child (it can have
-		 * only one child)
+		/* Set the stuff we obtained from volume_id
+		 *
+		 * if we detect a partition table like a apple hfs cd, we just
+		 * stop at the first partiton with a valid filesystem and add
+		 * it as a child as the linux kernel doesn't create childs for us
 		 */
-
-		child = hal_device_store_match_key_value_string (
-			hald_get_gdl (), "info.parent",
-			hal_device_get_udi (d));
-
-		if (child == NULL) {
-			child = hal_device_store_match_key_value_string (
-				hald_get_tdl (), "info.parent",
-				hal_device_get_udi (d));
-		}
-
-		
-		/* handle eject if we already got a disc */
-		if (child != NULL && eject_pressed ) {
-			device_send_signal_condition (
-				child,
-				"EjectPressed",
-				DBUS_TYPE_STRING,
-				hal_device_property_get_string (
-					child,
-					"block.device"),
-				DBUS_TYPE_INVALID);
-			
-
-		}
-
-		if (child == NULL) {
-			int type;
-			char udi[256];
-
-			/* nope, add child */
-			HAL_INFO (("Adding volume for optical device %s",
-				   device_file));
-
-			child = hal_device_new ();
-			hal_device_store_add (hald_get_tdl (), child);
-			g_object_unref (child);
-
-			/* copy from parent */
-			hal_device_merge (child, d);
-
-			/* modify some properties */
-			hal_device_property_set_string (child, "info.parent",
-						d->udi);
-			hal_device_property_set_bool (child, "block.is_volume",
-					      TRUE);
-			hal_device_property_set_string (child, "info.capabilities",
-						"block volume");
-			hal_device_property_set_string (child, "info.category",
-						"volume");
-			hal_device_property_set_string (child, "info.product",
-						"Disc");
-			/* clear these otherwise we'll imposter the parent
-			 * on hotplug remove
-			 */
-			hal_device_property_set_string (
-				child, "linux.sysfs_path", "");
-			hal_device_property_set_string (
-				child, "linux.sysfs_path_device", "");
-
-			/* set defaults */
-			hal_device_property_set_string (
-				child, "volume.label", "");
-			hal_device_property_set_string (
-				child, "volume.uuid", "");
-			hal_device_property_set_string (
-				child, "volume.fstype", "");
-			hal_device_property_set_string (
-				child, "volume.mount_point", "");
-			hal_device_property_set_bool (
-				child, "volume.is_mounted", FALSE);
-			hal_device_property_set_bool (
-				child, "volume.is_disc", TRUE);
-			hal_device_property_set_string (
-				child, "volume.disc.type", "unknown");
-			hal_device_property_set_bool (
-				child, "volume.disc.has_audio", FALSE);
-			hal_device_property_set_bool (
-				child, "volume.disc.has_data", FALSE);
-			hal_device_property_set_bool (
-				child, "volume.disc.is_blank", FALSE);
-			hal_device_property_set_bool (
-				child, "volume.disc.is_appendable", FALSE);
-			hal_device_property_set_bool (
-				child, "volume.disc.is_rewritable", FALSE);
-
-
-			/* set UDI as appropriate */
-			strncpy (udi,
-				 hal_device_property_get_string (d, "info.udi"),
-				 256);
-			strncat (udi, "-disc", 256);
-			hal_device_property_set_string (child, "info.udi", udi);
-			hal_device_set_udi (child, udi);
-
-			/* check for audio/data/blank */
-			type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
-			switch (type) {
-			case CDS_AUDIO:		/* audio CD */
-				hal_device_property_set_bool (
-					child, "volume.disc.has_audio", TRUE);
-				break;
-			case CDS_MIXED:		/* mixed mode CD */
-				hal_device_property_set_bool (
-					child, "volume.disc.has_audio", TRUE);
-				hal_device_property_set_bool (
-					child, "volume.disc.has_data", TRUE);
-				break;
-			case CDS_DATA_1:	/* data CD */
-			case CDS_DATA_2:
-			case CDS_XA_2_1:
-			case CDS_XA_2_2:
-				hal_device_property_set_bool (
-					child, "volume.disc.has_data", TRUE);
-				break;
-			case CDS_NO_INFO:	/* blank or invalid CD */
-				hal_device_property_set_bool (
-					child, "volume.disc.is_blank", TRUE);
-				break;
-
-			default:		/* should never see this */
-				hal_device_property_set_string (child,
-						"volume.disc_type",
-						"unknown");
-				break;
-			}
-
-			/* see table 373 in MMC-3 for details on disc type
-			 * http://www.t10.org/drafts.htm#mmc3
-			 */
-			type = get_disc_type (fd);
-			HAL_INFO (("get_disc_type returned 0x%02x", type));
-			if (type != -1) {
-				switch (type) {
-				case 0x08: /* CD-ROM */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"cd_rom");
-					break;
-				case 0x09: /* CD-R */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"cd_r");
-					break;
-				case 0x0a: /* CD-RW */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"cd_rw");
-					hal_device_property_set_bool (
-						child, 
-						"volume.disc.is_rewritable", 
-						TRUE);
-					break;
-				case 0x10: /* DVD-ROM */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_rom");
-					break;
-				case 0x11: /* DVD-R Sequential */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_r");
-					break;
-				case 0x12: /* DVD-RAM */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_ram");
-					hal_device_property_set_bool (
-						child, 
-						"volume.disc.is_rewritable", 
-						TRUE);
-					break;
-				case 0x13: /* DVD-RW Restricted Overwrite */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_rw");
-					hal_device_property_set_bool (
-						child, 
-						"volume.disc.is_rewritable", 
-						TRUE);
-					break;
-				case 0x14: /* DVD-RW Sequential */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_rw");
-					hal_device_property_set_bool (
-						child, 
-						"volume.disc.is_rewritable", 
-						TRUE);
-					break;
-				case 0x1A: /* DVD+RW */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_plus_rw");
-					hal_device_property_set_bool (
-						child, 
-						"volume.disc.is_rewritable", 
-						TRUE);
-					break;
-				case 0x1B: /* DVD+R */
-					hal_device_property_set_string (
-						child, 
-						"volume.disc.type",
-						"dvd_plus_r");
-					hal_device_property_set_bool (
-						child, 
-						"volume.disc.is_rewritable", 
-						TRUE);
-					break;
-				default: 
-					break;
-				}
-			}
-
-			if (disc_is_appendable (fd)) {
-				hal_device_property_set_bool (
-					child, 
-					"volume.disc.is_appendable", 
-					TRUE);
-			}
-
-			close(fd);
-
-			detect_fs (child);
-
-			/* If we have a nice volume label, set it */
-			if (hal_device_has_property (child, "volume.label")) {
-				const char *label;
-
-				label = hal_device_property_get_string (
-					child, "volume.label");
-
-				if (label != NULL && label[0] != '\0') {
-					hal_device_property_set_string (
-						child, "info.product", label);
-				}
-			}
-
-			{
-				ClassAsyncData *cad = 
-					g_new0 (ClassAsyncData, 1);
-				cad->device = child;
-				cad->handler = &block_class_handler;
-				cad->merge_or_add = block_class_handler.merge_or_add;
+		if (vid != NULL) {
+			if (vid->partition_count > 0) {
+				struct volume_id *p;
 				
-				/* add new device */
-				g_signal_connect (child, "callouts_finished",
-						  G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
-				hal_callout_device (child, TRUE);
+				p = get_first_valid_partition(vid);
+				if (p != NULL) {
+					set_volume_id_values(child, p);
+					volume_id_close(p);
+				}
+			} else {
+				set_volume_id_values(child, vid);
 			}
-
-			/* GDL was modified */
-			return TRUE;
 		}
+			
+		/* set UDI (will scan .fdi files and merge from unplugged) */
+		rename_and_merge (child, block_class_compute_udi, "volume");
 
-	}			/* if( is optical drive ) */
+		cad = g_new0 (ClassAsyncData, 1);
+		cad->device = child;
+		cad->handler = &block_class_handler;
+		cad->merge_or_add = block_class_handler.merge_or_add;
+
+		/* add new device */
+		g_signal_connect (child, "callouts_finished",
+			G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
+		hal_callout_device (child, TRUE);
+
+		volume_id_close (vid);
+		close (fd);
+		return TRUE;
+	}
 
 	close (fd);
-
 	return FALSE;
 }
+
 
 static void
 block_class_got_udi (ClassDeviceHandler *self,
@@ -1060,35 +958,6 @@ block_class_got_udi (ClassDeviceHandler *self,
 }
 
 static void
-detect_fs (HalDevice *d)
-{
-	struct volume_id *vid;
-	const char *device_file;
-	int rc;
-
-	device_file = hal_device_property_get_string (d, "block.device");
-	vid = volume_id_open_node(device_file);
-	if (vid == NULL)
-		return;
-
-	rc = volume_id_probe(vid, VOLUME_ID_ALL);
-	if (rc != 0) {
-		volume_id_close(vid);
-		return;
-	}
-
-	hal_device_property_set_string (d, "volume.fstype", vid->fs_name);
-	if (vid->label_string[0] != '\0')
-		hal_device_property_set_string (d, "volume.label", vid->label_string);
-	if (vid->uuid_string[0] != '\0')
-		hal_device_property_set_string (d, "volume.uuid", vid->uuid_string);
-
-	volume_id_close(vid);
-
-	return;
-}
-
-static void 
 block_class_pre_process (ClassDeviceHandler *self,
 			 HalDevice *d,
 			 const char *sysfs_path,
@@ -1134,18 +1003,15 @@ block_class_pre_process (ClassDeviceHandler *self,
 		stordev = d;
 
 		/* Defaults */
-		hal_device_property_set_string (
-			stordev, "storage.bus", "unknown");
+		hal_device_property_set_string (stordev, "storage.bus", "unknown");
+		hal_device_property_set_bool (stordev, "storage.media_check_enabled", 
+					      (hald_get_conf ())->storage_media_check_enabled);
+		hal_device_property_set_bool (stordev, "storage.no_partitions_hint", FALSE);
 
 		hal_device_property_set_bool (
 			stordev, 
-			"storage.media_check_enabled", 
-			(hald_get_conf ())->storage_media_check_enabled);
-
-		hal_device_property_set_bool (
-			stordev, 
-			"storage.automount_enabled", 
-			(hald_get_conf ())->storage_automount_enabled);
+			"storage.automount_enabled_hint", 
+			(hald_get_conf ())->storage_automount_enabled_hint);
 
 		hal_device_property_set_string (stordev, 
 						"storage.model", "");
@@ -1216,52 +1082,34 @@ block_class_pre_process (ClassDeviceHandler *self,
 					stordev_udi);
 
 	if (hal_device_property_get_bool (d, "block.is_volume")) {
-		char *volume_name;
+		/* block device that is a partition; e.g. a storage volume */
+		struct volume_id *vid;
 
-		/* We are a volume */
-		find_and_set_physical_device (d);
 		hal_device_add_capability (d, "volume");
 		hal_device_property_set_string (d, "info.category", "volume");
+		hal_device_property_set_string (d, "info.product", "Volume");
+		hal_device_property_set_string (d, "volume.fstype", "");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.uuid", "");
 		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 
-		/* block device that is a partition; e.g. a storage volume */
-
-		/* Detect filesystem and volume label */
-		detect_fs (d);
-
-		volume_name = g_strdup (
-			hal_device_property_get_string (d, "volume.label"));
-
-		if (volume_name == NULL || volume_name[0] == '\0') {
-			const char *fstype;
-
-			g_free (volume_name);
-
-			fstype = hal_device_property_get_string (
-				d,
-				"volume.fstype");
-
-			if (fstype == NULL || fstype[0] == '\0')
-				volume_name = g_strdup ("Volume");
-			else {
-				volume_name = g_strdup_printf ("Volume (%s)",
-							       fstype);
+		vid = volume_id_open_node(device_file);
+		if (vid != NULL) {
+			if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0) {
+				set_volume_id_values(d, vid);
 			}
+			volume_id_close(vid);
 		}
 
-		hal_device_property_set_string (d, "info.product",
-						volume_name);
-
-		g_free (volume_name);
-
-		/* Not much to do for volumes; our parent already set the
-		 * appropriate values for the storage device backing us */
-
 		return;
-	} 
+	}
+
+
+	/************************************************************
+	 * FOLLOWING CODE ONLY APPLY FOR TOPLEVEL BLOCK DEVICES
+	 *       (e.g. for setting storage.* properties)
+	 ************************************************************/
 
 
 	/* We are a disk or cdrom drive; maybe we even offer 
@@ -1332,20 +1180,14 @@ block_class_pre_process (ClassDeviceHandler *self,
 			} else if (strcmp (media, "floppy") == 0) {
 				has_removable_media = TRUE;
 
-				/* No partitions */
-				hal_device_property_set_bool (
-					d, "block.no_partitions", TRUE);
-
 				/* I've got a LS120 that identifies as a
 				 * floppy; polling doesn't work so disable
 				 * media check and automount
 				 */
 				hal_device_property_set_bool (
-					d, "storage.media_check_enabled",
-					FALSE);
+					d, "storage.media_check_enabled", FALSE);
 				hal_device_property_set_bool (
-					d, "storage.automount_enabled",
-					FALSE);
+					d, "storage.automount_enabled_hint", FALSE);
 
 			} else if (strcmp (media, "tape") == 0) {
 				has_removable_media = TRUE;
@@ -1468,11 +1310,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 							"storage.drive_type", 
 							"floppy");
 
-			/* Indeed no partitions */
-			hal_device_property_set_bool (d, 
-						      "block.no_partitions",
-						      TRUE);
-
 			/* My experiments with my USB LaCie Floppy disk
 			 * drive is that polling indeed work (Yay!), so
 			 * we don't set storage.media_check_enabled to 
@@ -1492,18 +1329,27 @@ block_class_pre_process (ClassDeviceHandler *self,
 	}
 	
 	
+	/* XYZME: Read the removable file in sysfs, 
+	 *        e.g. /sys/block/sdb/removable
+	 */
 	hal_device_property_set_bool (
 		stordev, 
 		"storage.removable", 
 		has_removable_media);
 
 	if (hal_device_has_property (stordev, "storage.drive_type") &&
-	    strcmp (hal_device_property_get_string (stordev, 
-						    "storage.drive_type"), 
+	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
 		    "cdrom") == 0) {
-		hal_device_property_set_bool (d, "block.no_partitions", TRUE);
-		cdrom_check (stordev, device_file);
+		cdrom_get_properties (stordev, device_file);
 		hal_device_add_capability (stordev, "storage.cdrom");
+		hal_device_property_set_bool (stordev, "storage.no_partitions_hint", TRUE);
+	}
+
+
+	if (hal_device_has_property (stordev, "storage.drive_type") &&
+	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
+		    "floppy") == 0) {
+		hal_device_property_set_bool (stordev, "storage.no_partitions_hint", TRUE);
 	}
 
 	hal_device_property_set_string (stordev, "info.category", "storage");
@@ -1511,6 +1357,10 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 	hal_device_property_set_bool (stordev, "storage.hotpluggable",
 				      is_hotpluggable);
+
+	hal_device_property_set_bool (stordev, "block.no_partitions", 
+				      hal_device_property_get_bool (
+					      stordev, "storage.no_partitions_hint"));
 
 	/* FINALLY, merge information derived from a .fdi file, from the 
 	 * physical device that is backing this block device.
@@ -1833,149 +1683,116 @@ mtab_handle_storage (HalDevice *d)
 	struct mount_point_s *mp = NULL;
 	int i;
 	
-	if (!hal_device_property_get_bool (d, "block.no_partitions") ||
-	    !hal_device_has_property (d, "storage.media_check_enabled") ||
+	if (!hal_device_has_property (d, "storage.media_check_enabled") ||
 	    hal_device_property_get_bool (d, "storage.media_check_enabled"))
 		return TRUE;
 
-	/* Only handle storage devices where block.no_parition==TRUE and
-	 * where we can't check for media. Typically this is only legacy
-	 * floppy drives on x86 boxes.
+	/* Only handle storage devices we don't regulary poll for media.
 	 *
-	 * So, in this very specific situation we maintain a child volume
-	 * exactly when media is mounted.
+	 * So, in this very specific situation we do poll for media
 	 */
 
 	major = hal_device_property_get_int (d, "block.major");
 	minor = hal_device_property_get_int (d, "block.minor");
 
-	child = hal_device_store_match_key_value_string (
-		hald_get_gdl (), "info.parent",
-		hal_device_get_udi (d));
-
-	if (child == NULL) {
-		child = hal_device_store_match_key_value_string (
-			hald_get_tdl (), "info.parent",
-			hal_device_get_udi (d));
-
-	}
+	/* See if we already got children */
+	child = get_child_device_gdl (d);
+	if (child == NULL)
+		get_child_device_tdl (d);
 
 	/* Search all mount points */
 	found_mount_point = FALSE;
 	for (i = 0; i < num_mount_points; i++) {
+		char udi[256];
+		const char *device_file;
+		struct volume_id *vid;
+		ClassAsyncData *cad;
+
 		mp = &mount_points[i];
-			
-		if (mp->major == major && mp->minor == minor) {
 
-			if (child == NULL ) {
-				char udi[256];
+		if (mp->major != major || mp->minor != minor)
+			continue;
 
-				/* is now mounted, and we didn't have a child,
-				 * so add the child */
-				HAL_INFO (("%s now mounted at %s, "
-					   "major:minor=%d:%d, "
-					   "fstype=%s, udi=%s", 
-					   mp->device, mp->mount_point, 
-					   mp->major, mp->minor, 
-					   mp->fs_type, d->udi));
-
-				child = hal_device_new ();
-				hal_device_store_add (hald_get_tdl (), child);
-				g_object_unref (child);
-
-				/* copy from parent */
-				hal_device_merge (child, d);
-
-				/* modify some properties */
-				hal_device_property_set_string (
-					child, "info.parent", d->udi);
-				hal_device_property_set_bool (
-					child, "block.is_volume", TRUE);
-				hal_device_property_set_string (
-					child, "info.capabilities",
-					"block volume");
-				hal_device_property_set_string (
-					child, "info.category","volume");
-				hal_device_property_set_string (
-					child, "info.product", "Volume");
-				/* clear these otherwise we'll
-				 * imposter the parent on hotplug
-				 * remove
-				 */
-				hal_device_property_set_string (
-					child, "linux.sysfs_path", "");
-				hal_device_property_set_string (
-					child, "linux.sysfs_path_device", "");
-
-				/* set defaults */
-				hal_device_property_set_string (
-					child, "volume.label", "");
-				hal_device_property_set_string (
-					child, "volume.uuid", "");
-				hal_device_property_set_string (
-					child, "volume.fstype",
-					mp->fs_type);
-				hal_device_property_set_string (
-					child, "volume.mount_point",
-					mp->mount_point);
-				hal_device_property_set_bool (
-					child, "volume.is_mounted", TRUE);
-				hal_device_property_set_bool (
-					child, "volume.is_disc", FALSE);
-
-				/* set UDI as appropriate */
-				strncpy (udi,
-					 hal_device_property_get_string (
-						 d, 
-						 "info.udi"), 256);
-				strncat (udi, "-volume", 256);
-				hal_device_property_set_string (
-					child, "info.udi", udi);
-				hal_device_set_udi (child, udi);
-				
-				detect_fs (child);
-				
-				/* If we have a nice volume label, set it */
-				if (hal_device_has_property (child, 
-							     "volume.label")) {
-					const char *label;
-					
-					label = hal_device_property_get_string
-						(child, "volume.label");
-					
-					if (label != NULL && 
-					    label[0] != '\0') {
-						hal_device_property_set_string
-							(child, "info.product",
-							 label);
-					}
-				}
-
-				{
-					ClassAsyncData *cad = 
-						g_new0 (ClassAsyncData, 1);
-					cad->device = child;
-					cad->handler = &block_class_handler;
-					cad->merge_or_add = block_class_handler.merge_or_add;
-
-					/* add new device */
-					g_signal_connect (
-						child, "callouts_finished",
-						G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
-					hal_callout_device (child, TRUE);
-				}
-
-				/* GDL was modified */
-				return TRUE;
-
-			} else {
-				/* Is mounted and we did have a child,
-				 * just bail
-				 */
-				found_mount_point = TRUE;
-				return FALSE;
-			}
+		if (child != NULL ) {
+			found_mount_point = TRUE;
+			return FALSE;
 		}
+
+		/* is now mounted, and we didn't have a child.. */
+		HAL_INFO (("%s now mounted at %s, "
+			   "major:minor=%d:%d, " "fstype=%s, udi=%s",
+			   mp->device, mp->mount_point,
+			   mp->major, mp->minor, mp->fs_type, d->udi));
+
+		child = hal_device_new ();
+		hal_device_store_add (hald_get_tdl (), child);
+		g_object_unref (child);
+
+		/* copy from parent */
+		hal_device_merge (child, d);
+
+		/* modify some properties */
+		hal_device_property_set_string (child, "info.parent", d->udi);
+		hal_device_property_set_bool (child, "block.is_volume", TRUE);
+		hal_device_property_set_string (child,
+						"info.capabilities",
+						"block volume");
+		hal_device_property_set_string (child,
+						"info.category",
+						"volume");
+		hal_device_property_set_string (child,
+						"info.product",
+						"Volume");
+		/* clear these otherwise we'll
+		 * imposter the parent on hotplug
+		 * remove
+		 */
+		hal_device_property_set_string (child, "linux.sysfs_path", "");
+		hal_device_property_set_string (child,
+						"linux.sysfs_path_device", "");
+
+		/* set defaults */
+		hal_device_property_set_string (
+			child, "volume.label", "");
+		hal_device_property_set_string (
+			child, "volume.uuid", "");
+		hal_device_property_set_string (
+			child, "volume.fstype", mp->fs_type);
+		hal_device_property_set_string (
+			child, "volume.mount_point", mp->mount_point);
+		hal_device_property_set_bool (
+			child, "volume.is_mounted", TRUE);
+		hal_device_property_set_bool (
+			child, "volume.is_disc", FALSE);
+
+		/* set UDI as appropriate */
+		strncpy (udi, hal_device_property_get_string (
+				d, "info.udi"), 256);
+		strncat (udi, "-volume", 256);
+		hal_device_property_set_string (child, "info.udi", udi);
+		hal_device_set_udi (child, udi);
+
+		device_file = hal_device_property_get_string (d,
+							      "block.device");
+		vid = volume_id_open_node(device_file);
+		if (vid != NULL) {
+			if (volume_id_probe(vid, VOLUME_ID_ALL, 0) == 0)
+				set_volume_id_values(d, vid);
+			volume_id_close(vid);
+		}
+
+		cad = g_new0 (ClassAsyncData, 1);
+		cad->device = child;
+		cad->handler = &block_class_handler;
+		cad->merge_or_add = block_class_handler.merge_or_add;
+
+		/* add new device */
+		g_signal_connect (
+			child, "callouts_finished",
+			G_CALLBACK (class_device_move_from_tdl_to_gdl), cad);
+		hal_callout_device (child, TRUE);
+
+		return TRUE;
 	}
 
 	/* No mount point found */
@@ -1993,12 +1810,9 @@ mtab_handle_storage (HalDevice *d)
 			g_signal_connect (child, "callouts_finished",
 					  G_CALLBACK (volume_remove_from_gdl), NULL);
 			hal_callout_device (child, FALSE);
-					
-			/* GDL was modified */
+
 			return TRUE;
 		}
-
-		
 	}
 
 	return TRUE;
@@ -2072,15 +1886,13 @@ mtab_handle_volume (HalDevice *d)
 			if (!was_mounted) {
 				device_send_signal_condition (
 					d,
-					"BlockMountEvent",
+					"VolumeMount",
 					DBUS_TYPE_STRING,
 					hal_device_property_get_string (
 						d,
 						"block.device"),
 					DBUS_TYPE_STRING,
 					mp->mount_point,
-					DBUS_TYPE_STRING,
-					mp->fs_type,
 					DBUS_TYPE_INVALID);
 			}
 
@@ -2092,7 +1904,9 @@ mtab_handle_volume (HalDevice *d)
 	/* No mount point found; (possibly) remove all information */
 	if (!found_mount_point) {
 		dbus_bool_t was_mounted;
+		gchar *device_mount_point;
 
+		device_mount_point = g_strdup (hal_device_property_get_string (d, "volume.mount_point"));
 		device_property_atomic_update_begin ();
 		
 		was_mounted =
@@ -2107,13 +1921,17 @@ mtab_handle_volume (HalDevice *d)
 
 		if (was_mounted) {
 			device_send_signal_condition (
-				d, "BlockUnmountEvent",
+				d, "VolumeUnmount",
 				DBUS_TYPE_STRING,
 				hal_device_property_get_string (
 					d,
 					"block.device"),
+				DBUS_TYPE_STRING,
+				device_mount_point,
 				DBUS_TYPE_INVALID);
 		}
+
+		g_free (device_mount_point);
 		
 	}
 
@@ -2135,9 +1953,10 @@ mtab_foreach_device (HalDeviceStore *store, HalDevice *d,
 }
 
 
-/** Load /etc/mtab and process all HAL block devices and set properties
- *  according to mount status. Also, optionally, sets up a watcher to do
- *  this whenever /etc/mtab changes
+/** Load /etc/mtab and process all HAL storage and volume devices
+ *  (that in turn each will process every entry) and set properties
+ *  according to mount status. Also, optionally, sets up a watcher to
+ *  do this whenever /etc/mtab changes
  *
  *  @param  force               Force reading of mtab
  */

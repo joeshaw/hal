@@ -1,3 +1,45 @@
+2004-08-11  David Zeuthen  <david@fubar.dk>
+
+	* doc/spec/hal-spec.xml.in: Add docs for block.have_scanned,
+	volume.is_filesystem, Device Conditions on volume device
+	objects (now with new names), 'unknown' value for
+	volume.disc.type, 'platform' value for storage.bus, rename
+	storage.automount_enabled to storage.automount_enabled_hint. Add
+	property storage.no_partitions_hint
+
+	* hald/hald.conf:
+	* hald/hald_conf.[ch]:
+	Rename storage.automount_enabled to storage.automount_enabled_hint
+	and remove storage.cdrom_eject_check_enabled.
+
+	* hald/linux/common.[ch]:
+
+	* hald/linux/platform_bus_device.c: (platform_device_pre_process):
+
+	* hald/property.c (hal_property_get_bool): Return FALSE instead of
+	-1 if property not found.
+
+	* hald/linux/block_class_device.c: (set_volume_id_values),
+	(get_child_device_gdl), (get_child_device_tdl),
+	(block_class_visit), (cdrom_get_properties), (force_unmount),
+	(force_unmount_of_all_childs), (get_first_valid_partition),
+	(detect_disc), (detect_media), (block_class_pre_process),
+	(mtab_handle_storage), (mtab_handle_volume):
+	Unified codepaths for handling optical discs and other removable
+	storage. Handle media with no partition table much nicer
+	
+	* hald/linux/volume_id/volume_id.c: (set_label_string),
+	(set_label_unicode16), (set_uuid), (get_buffer),
+	(probe_msdos_part_table), (probe_ext), (probe_reiser), (probe_xfs),
+	(probe_jfs), (probe_vfat), (probe_msdos), (probe_udf),
+	(probe_iso9660), (probe_ufs), (probe_mac_partition_map),
+	(probe_hfs_hfsplus), (probe_ntfs), (probe_swap), (volume_id_probe),
+	(volume_id_close):
+	* hald/linux/volume_id/volume_id.h:
+	Add support for parsing partition tables from Kay Sievers 
+	<kay.sievers@vrfy.org>. Change 'reiser' to 'reiserfs' because
+	the that's the name on Linux.
+	
 2004-08-11  Ray Strode  <rstrode@redhat.com>
 
 	* tools/fstab-sync.c: don't require callout wrapper shell

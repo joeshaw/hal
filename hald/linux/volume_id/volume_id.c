@@ -101,15 +101,15 @@ static void set_label_string(struct volume_id *id,
 {
 	unsigned int i;
 
-	memcpy(id->label_string, buf, count);
+	memcpy(id->label, buf, count);
 
 	/* remove trailing whitespace */
-	i = strnlen(id->label_string, count);
+	i = strnlen(id->label, count);
 	while (i--) {
-		if (! isspace(id->label_string[i]))
+		if (! isspace(id->label[i]))
 			break;
 	}
-	id->label_string[i+1] = '\0';
+	id->label[i+1] = '\0';
 }
 
 #define LE		0
@@ -129,17 +129,17 @@ static void set_label_unicode16(struct volume_id *id,
 		else
 			c = (buf[i] << 8) | buf[i+1];
 		if (c == 0) {
-			id->label_string[j] = '\0';
+			id->label[j] = '\0';
 			break;
 		} else if (c < 0x80) {
-			id->label_string[j++] = (__u8) c;
+			id->label[j++] = (__u8) c;
 		} else if (c < 0x800) {
-			id->label_string[j++] = (__u8) (0xc0 | (c >> 6));
-			id->label_string[j++] = (__u8) (0x80 | (c & 0x3f));
+			id->label[j++] = (__u8) (0xc0 | (c >> 6));
+			id->label[j++] = (__u8) (0x80 | (c & 0x3f));
 		} else {
-			id->label_string[j++] = (__u8) (0xe0 | (c >> 12));
-			id->label_string[j++] = (__u8) (0x80 | ((c >> 6) & 0x3f));
-			id->label_string[j++] = (__u8) (0x80 | (c & 0x3f));
+			id->label[j++] = (__u8) (0xe0 | (c >> 12));
+			id->label[j++] = (__u8) (0x80 | ((c >> 6) & 0x3f));
+			id->label[j++] = (__u8) (0x80 | (c & 0x3f));
 		}
 	}
 }
@@ -149,7 +149,7 @@ static void set_uuid(struct volume_id *id,
 {
 	unsigned int i;
 
-	memcpy(id->uuid, buf, count);
+	memcpy(id->uuid_raw, buf, count);
 
 	/* create string if uuid is set */
 	for (i = 0; i < count; i++) 
@@ -160,11 +160,11 @@ static void set_uuid(struct volume_id *id,
 set:
 	switch(count) {
 	case 4:
-		sprintf(id->uuid_string, "%02X%02X-%02X%02X",
+		sprintf(id->uuid, "%02X%02X-%02X%02X",
 			buf[3], buf[2], buf[1], buf[0]);
 		break;
 	case 16:
-		sprintf(id->uuid_string,
+		sprintf(id->uuid,
 			"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
 			"%02x%02x%02x%02x%02x%02x",
 			buf[0], buf[1], buf[2], buf[3],
@@ -176,11 +176,11 @@ set:
 	}
 }
 
-static __u8 *get_buffer(struct volume_id *id,
-			unsigned long off, unsigned int len)
+static __u8 *get_buffer(struct volume_id *id, __u64 off, unsigned int len)
 {
 	unsigned int buf_len;
 
+	dbg("get buffer off 0x%llx, len 0x%x", off, len);
 	/* check if requested area fits in superblock buffer */
 	if (off + len <= SB_BUFFER_SIZE) {
 		if (id->sbbuf == NULL) {
@@ -191,7 +191,7 @@ static __u8 *get_buffer(struct volume_id *id,
 
 		/* check if we need to read */
 		if ((off + len) > id->sbbuf_len) {
-			dbg("read sbbuf len:0x%lx", off + len);
+			dbg("read sbbuf len:0x%llx", off + len);
 			lseek(id->fd, 0, SEEK_SET);
 			buf_len = read(id->fd, id->sbbuf, off + len);
 			dbg("got 0x%x (%i) bytes", buf_len, buf_len);
@@ -215,7 +215,7 @@ static __u8 *get_buffer(struct volume_id *id,
 		/* check if we need to read */
 		if ((off < id->seekbuf_off) ||
 		    ((off + len) > (id->seekbuf_off + id->seekbuf_len))) {
-			dbg("read seekbuf off:0x%lx len:0x%x", off, len);
+			dbg("read seekbuf off:0x%llx len:0x%x", off, len);
 			if (lseek(id->fd, off, SEEK_SET) == -1)
 				return NULL;
 			buf_len = read(id->fd, id->seekbuf, len);
@@ -244,10 +244,81 @@ static void free_buffer(struct volume_id *id)
 	}
 }
 
+#define MSDOS_MAGIC		"\x55\xaa"
+static int probe_msdos_part_table(struct volume_id *id, __u64 off)
+{
+	struct msdos_partition_entry {
+		__u8	boot_ind;
+		__u8	head;
+		__u8	sector;
+		__u8	cyl;
+		__u8	sys_ind;
+		__u8	end_head;
+		__u8	end_sector;
+		__u8	end_cyl;
+		__u32	start_sect;
+		__u32	nr_sects;
+	} __attribute__((packed)) *part;
+
+	const __u8 *buf;
+	unsigned int bsize = 0x200;
+	unsigned int part_count = 4;
+	int i;
+
+	buf = get_buffer(id, off, 0x200);
+	if (buf == NULL)
+		return -1;
+
+	if (strncmp(&buf[510], MSDOS_MAGIC, 2) != 0)
+		return -1;
+
+	/* check flags on all entries to be sure to have partition table */
+	part = (struct msdos_partition_entry*) &buf[0x1be];
+	for (i = 0; i < 4; i++) {
+		if (part[i].boot_ind != 0 &&
+		    part[i].boot_ind != 0x80)
+			return -1;
+	}
+
+	if (id->partitions != NULL)
+		free(id->partitions);
+	id->partitions =
+		malloc(part_count * sizeof(struct volume_id_partition));
+	if (id->partitions == NULL)
+		return -1;
+	memset(id->partitions, 0x00, sizeof(struct volume_id_partition));
+
+	for (i = 0; i < 4; i++) {
+		__u64 poff;
+		__u64 plen;
+
+		poff = (__u64) le32_to_cpu(part[i].start_sect) * bsize;
+		plen = (__u64) le32_to_cpu(part[i].nr_sects) * bsize;
+
+		dbg("found 0x%x partition entry at 0x%llx, len 0x%llx",
+		    part[i].sys_ind, poff, plen);
+
+		if (plen == 0)
+			continue;
+
+		/* FIXME: parse logical partition and add entries */
+
+		id->partitions[i].off = poff;
+		id->partitions[i].len = plen;
+	}
+	id->partition_count = part_count;
+
+	id->type_id = VOLUME_ID_PARTITIONTABLE;
+	id->format_id = VOLUME_ID_MSDOSPARTTABLE;
+	id->format = "msdos_partition_table";
+
+	return 0;
+}
+
 #define EXT3_FEATURE_COMPAT_HAS_JOURNAL		0x00000004
 #define EXT3_FEATURE_INCOMPAT_JOURNAL_DEV	0x00000008
 #define EXT_SUPERBLOCK_OFFSET			0x400
-static int probe_ext(struct volume_id *id)
+static int probe_ext(struct volume_id *id, __u64 off)
 {
 	struct ext2_super_block {
 		__u32	inodes_count;
@@ -269,7 +340,7 @@ static int probe_ext(struct volume_id *id)
 	} __attribute__((__packed__)) *es;
 
 	es = (struct ext2_super_block *)
-	     get_buffer(id, EXT_SUPERBLOCK_OFFSET, 0x200);
+	     get_buffer(id, off + EXT_SUPERBLOCK_OFFSET, 0x200);
 	if (es == NULL)
 		return -1;
 
@@ -283,11 +354,13 @@ static int probe_ext(struct volume_id *id)
 
 	if ((le32_to_cpu(es->feature_compat) &
 	     EXT3_FEATURE_COMPAT_HAS_JOURNAL) != 0) {
-		id->fs_type = VOLUME_ID_EXT3;
-		id->fs_name = "ext3";
+		id->type_id = VOLUME_ID_FILESYSTEM;
+		id->format_id = VOLUME_ID_EXT3;
+		id->format = "ext3";
 	} else {
-		id->fs_type = VOLUME_ID_EXT2;
-		id->fs_name = "ext2";
+		id->type_id = VOLUME_ID_FILESYSTEM;
+		id->format_id = VOLUME_ID_EXT2;
+		id->format = "ext2";
 	}
 
 	return 0;
@@ -295,7 +368,7 @@ static int probe_ext(struct volume_id *id)
 
 #define REISER1_SUPERBLOCK_OFFSET		0x2000
 #define REISER_SUPERBLOCK_OFFSET		0x10000
-static int probe_reiser(struct volume_id *id)
+static int probe_reiser(struct volume_id *id, __u64 off)
 {
 	struct reiser_super_block {
 		__u32	blocks_count;
@@ -314,7 +387,7 @@ static int probe_reiser(struct volume_id *id)
 	} __attribute__((__packed__)) *rs;
 
 	rs = (struct reiser_super_block *)
-	     get_buffer(id, REISER_SUPERBLOCK_OFFSET, 0x200);
+	     get_buffer(id, off + REISER_SUPERBLOCK_OFFSET, 0x200);
 	if (rs == NULL)
 		return -1;
 
@@ -324,7 +397,7 @@ static int probe_reiser(struct volume_id *id)
 		goto found;
 
 	rs = (struct reiser_super_block *)
-	     get_buffer(id, REISER1_SUPERBLOCK_OFFSET, 0x200);
+	     get_buffer(id, off + REISER1_SUPERBLOCK_OFFSET, 0x200);
 	if (rs == NULL)
 		return -1;
 
@@ -338,13 +411,14 @@ found:
 	set_label_string(id, rs->label, 16);
 	set_uuid(id, rs->uuid, 16);
 
-	id->fs_type = VOLUME_ID_REISER;
-	id->fs_name = "reiser";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_REISER;
+	id->format = "reiserfs";
 
 	return 0;
 }
 
-static int probe_xfs(struct volume_id *id)
+static int probe_xfs(struct volume_id *id, __u64 off)
 {
 	struct xfs_super_block {
 		__u8	magic[4];
@@ -361,7 +435,7 @@ static int probe_xfs(struct volume_id *id)
 		__u64	fdblocks;
 	} __attribute__((__packed__)) *xs;
 
-	xs = (struct xfs_super_block *) get_buffer(id, 0, 0x200);
+	xs = (struct xfs_super_block *) get_buffer(id, off, 0x200);
 	if (xs == NULL)
 		return -1;
 
@@ -372,14 +446,15 @@ static int probe_xfs(struct volume_id *id)
 	set_label_string(id, xs->fname, 12);
 	set_uuid(id, xs->uuid, 16);
 
-	id->fs_type = VOLUME_ID_XFS;
-	id->fs_name = "xfs";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_XFS;
+	id->format = "xfs";
 
 	return 0;
 }
 
 #define JFS_SUPERBLOCK_OFFSET			0x8000
-static int probe_jfs(struct volume_id *id)
+static int probe_jfs(struct volume_id *id, __u64 off)
 {
 	struct jfs_super_block {
 		__u8	magic[4];
@@ -395,7 +470,7 @@ static int probe_jfs(struct volume_id *id)
 	} __attribute__((__packed__)) *js;
 
 	js = (struct jfs_super_block *)
-	     get_buffer(id, JFS_SUPERBLOCK_OFFSET, 0x200);
+	     get_buffer(id, off + JFS_SUPERBLOCK_OFFSET, 0x200);
 	if (js == NULL)
 		return -1;
 
@@ -406,13 +481,14 @@ static int probe_jfs(struct volume_id *id)
 	set_label_string(id, js->label, 16);
 	set_uuid(id, js->uuid, 16);
 
-	id->fs_type = VOLUME_ID_JFS;
-	id->fs_name = "jfs";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_JFS;
+	id->format = "jfs";
 
 	return 0;
 }
 
-static int probe_vfat(struct volume_id *id)
+static int probe_vfat(struct volume_id *id, __u64 off)
 {
 	struct vfat_super_block {
 		__u8	ignored[3];
@@ -444,7 +520,7 @@ static int probe_vfat(struct volume_id *id)
 		__u8	pmagic[2];
 	} __attribute__((__packed__)) *vs;
 
-	vs = (struct vfat_super_block *) get_buffer(id, 0, 0x200);
+	vs = (struct vfat_super_block *) get_buffer(id, off, 0x200);
 	if (vs == NULL)
 		return -1;
 
@@ -459,13 +535,14 @@ found:
 	set_label_string(id, vs->label, 11);
 	set_uuid(id, vs->serno, 4);
 
-	id->fs_type = VOLUME_ID_VFAT;
-	id->fs_name = "vfat";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_VFAT;
+	id->format = "vfat";
 
 	return 0;
 }
 
-static int probe_msdos(struct volume_id *id)
+static int probe_msdos(struct volume_id *id, __u64 off)
 {
 	struct msdos_super_block {
 		__u8	boot_jump[3];
@@ -492,7 +569,7 @@ static int probe_msdos(struct volume_id *id)
 
 	unsigned int	sector_size;
 
-	ms = (struct msdos_super_block *) get_buffer(id, 0, 0x200);
+	ms = (struct msdos_super_block *) get_buffer(id, off, 0x200);
 	if (ms == NULL)
 		return -1;
 
@@ -534,14 +611,15 @@ found:
 	set_label_string(id, ms->label, 11);
 	set_uuid(id, ms->serno, 4);
 
-	id->fs_type = VOLUME_ID_MSDOS;
-	id->fs_name = "msdos";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_MSDOS;
+	id->format = "msdos";
 
 	return 0;
 }
 
 #define UDF_VSD_OFFSET			0x8000
-static int probe_udf(struct volume_id *id)
+static int probe_udf(struct volume_id *id, __u64 off)
 {
 	struct volume_descriptor {
 		struct descriptor_tag {
@@ -584,7 +662,7 @@ static int probe_udf(struct volume_id *id)
 	unsigned int clen;
 
 	vsd = (struct volume_structure_descriptor *)
-	      get_buffer(id, UDF_VSD_OFFSET, 0x200);
+	      get_buffer(id, off + UDF_VSD_OFFSET, 0x200);
 	if (vsd == NULL)
 		return -1;
 
@@ -608,7 +686,7 @@ blocksize:
 	/* search the next VSD to get the logical block size of the volume */
 	for (bs = 0x800; bs < 0x8000; bs += 0x800) {
 		vsd = (struct volume_structure_descriptor *)
-		      get_buffer(id, UDF_VSD_OFFSET + bs, 0x800);
+		      get_buffer(id, off + UDF_VSD_OFFSET + bs, 0x800);
 		if (vsd == NULL)
 			return -1;
 		dbg("test for blocksize: 0x%x", bs);
@@ -621,7 +699,7 @@ nsr:
 	/* search the list of VSDs for a NSR descriptor */
 	for (b = 0; b < 64; b++) {
 		vsd = (struct volume_structure_descriptor *)
-		      get_buffer(id, UDF_VSD_OFFSET + (b * bs), 0x800);
+		      get_buffer(id, off + UDF_VSD_OFFSET + (b * bs), 0x800);
 		if (vsd == NULL)
 			return -1;
 
@@ -639,7 +717,8 @@ nsr:
 
 anchor:
 	/* read anchor volume descriptor */
-	vd = (struct volume_descriptor *) get_buffer(id, 256 * bs, 0x200);
+	vd = (struct volume_descriptor *)
+		get_buffer(id, off + (256 * bs), 0x200);
 	if (vd == NULL)
 		return -1;
 
@@ -655,7 +734,7 @@ anchor:
 	/* pick the primary descriptor from the list */
 	for (b = 0; b < count; b++) {
 		vd = (struct volume_descriptor *)
-		     get_buffer(id, (loc + b) * bs, 0x200);
+		     get_buffer(id, off + ((loc + b) * bs), 0x200);
 		if (vd == NULL)
 			return -1;
 
@@ -684,14 +763,15 @@ pvd:
 		set_label_unicode16(id, vd->type.primary.ident.c, BE,31);
 
 found:
-	id->fs_type = VOLUME_ID_UDF;
-	id->fs_name = "udf";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_UDF;
+	id->format = "udf";
 
 	return 0;
 }
 
 #define ISO_SUPERBLOCK_OFFSET		0x8000
-static int probe_iso9660(struct volume_id *id)
+static int probe_iso9660(struct volume_id *id, __u64 off)
 {
 	union iso_super_block {
 		struct iso_header {
@@ -711,7 +791,7 @@ static int probe_iso9660(struct volume_id *id)
 	} __attribute__((__packed__)) *is;
 
 	is = (union iso_super_block *)
-	     get_buffer(id, ISO_SUPERBLOCK_OFFSET, 0x200);
+	     get_buffer(id, off + ISO_SUPERBLOCK_OFFSET, 0x200);
 	if (is == NULL)
 		return -1;
 
@@ -725,19 +805,20 @@ static int probe_iso9660(struct volume_id *id)
 	return -1;
 
 found:
-	id->fs_type = VOLUME_ID_ISO9660;
-	id->fs_name = "iso9660";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_ISO9660;
+	id->format = "iso9660";
 
 	return 0;
 }
 
-#define UFS_MAGIC			0x00011954                                      
-#define UFS2_MAGIC			0x19540119 
+#define UFS_MAGIC			0x00011954
+#define UFS2_MAGIC			0x19540119
 #define UFS_MAGIC_FEA			0x00195612
 #define UFS_MAGIC_LFN			0x00095014
 
 
-static int probe_ufs(struct volume_id *id)
+static int probe_ufs(struct volume_id *id, __u64 off)
 {
 	struct ufs_super_block {
 		__u32	fs_link;
@@ -882,7 +963,7 @@ static int probe_ufs(struct volume_id *id)
 
 	for (i = 0; offsets[i] >= 0; i++) {	
 		ufs = (struct ufs_super_block *)
-			get_buffer(id, offsets[i] * 0x400, 0x800);
+			get_buffer(id, off + (offsets[i] * 0x400), 0x800);
 		if (ufs == NULL)
 			return -1;
 
@@ -907,16 +988,14 @@ static int probe_ufs(struct volume_id *id)
 	return -1;
 
 found:
-	id->fs_type = VOLUME_ID_UFS;
-	id->fs_name = "ufs";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_UFS;
+	id->format = "ufs";
 
 	return 0;
 }
 
-#define HFS_SUPERBLOCK_OFFSET		0x400
-#define HFS_NODE_LEAF			0xff
-#define HFSPLUS_POR_CNID		1
-static int probe_hfs_hfsplus(struct volume_id *id)
+static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 {
 	struct mac_driver_desc { 
 		__u8	signature[2];
@@ -934,6 +1013,87 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 		__u8	type[32];
 	} __attribute__((__packed__)) *part;
 
+	const __u8 *buf;
+
+	buf = get_buffer(id, off, 0x200);
+	if (buf == NULL)
+		return -1;
+
+	part = (struct mac_partition *) buf;
+	if ((strncmp(part->signature, "PM", 2) == 0) &&
+	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
+		/* linux creates a own subdevice for the map
+		 * just return the type if the drive header is missing */
+		id->type_id = VOLUME_ID_PARTITIONTABLE;
+		id->format_id = VOLUME_ID_MACPARTMAP;
+		id->format = "mac_partition_map";
+		return 0;
+	}
+
+	driver = (struct mac_driver_desc *) buf;
+	if (strncmp(driver->signature, "ER", 2) == 0) {
+		/* we are on a main device, like a CD
+		 * just try to probe the first partition from the map */
+		unsigned int bsize = be16_to_cpu(driver->block_size);
+		int part_count;
+		int i;
+
+		/* get first entry of partition table */
+		buf = get_buffer(id, off +  bsize, 0x200);
+		if (buf == NULL)
+			return -1;
+
+		part = (struct mac_partition *) buf;
+		if (strncmp(part->signature, "PM", 2) != 0)
+			return -1;
+
+		part_count = be32_to_cpu(part->map_count);
+		dbg("expecting %d partition entries", part_count);
+
+		if (id->partitions != NULL)
+			free(id->partitions);
+		id->partitions =
+			malloc(part_count * sizeof(struct volume_id_partition));
+		if (id->partitions == NULL)
+			return -1;
+		memset(id->partitions, 0x00, sizeof(struct volume_id_partition));
+
+		id->partition_count = part_count;
+
+		for (i = 0; i < part_count; i++) {
+			__u64 poff;
+			__u64 plen;
+
+			buf = get_buffer(id, off + ((i+1) * bsize), 0x200);
+			if (buf == NULL)
+				return -1;
+
+			part = (struct mac_partition *) buf;
+			if (strncmp(part->signature, "PM", 2) != 0)
+				return -1;
+
+			poff = be32_to_cpu(part->start_block) * bsize;
+			plen = be32_to_cpu(part->block_count) * bsize;
+			dbg("found '%s' partition entry at 0x%llx, len 0x%llx",
+			    part->type, poff, plen);
+
+			id->partitions[i].off = poff;
+			id->partitions[i].len = plen;
+		}
+		id->type_id = VOLUME_ID_PARTITIONTABLE;
+		id->format_id = VOLUME_ID_MACPARTMAP;
+		id->format = "mac_partition_map";
+		return 0;
+	}
+
+	return -1;
+}
+
+#define HFS_SUPERBLOCK_OFFSET		0x400
+#define HFS_NODE_LEAF			0xff
+#define HFSPLUS_POR_CNID		1
+static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
+{
 	struct finder_info {
 		__u32	boot_folder;
 		__u32	start_app;
@@ -998,7 +1158,7 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 		__u16	unicode_len;
 		__u8	unicode[255 * 2];
 	} __attribute__((__packed__));
-	
+
 	struct hfsplus_extent {
 		__u32 start_block;
 		__u32 block_count;
@@ -1040,80 +1200,23 @@ static int probe_hfs_hfsplus(struct volume_id *id)
 		struct hfsplus_fork start_file;
 	} __attribute__((__packed__)) *hfsplus;
 
-	unsigned int	blocksize;
-	unsigned int	cat_block;
-	unsigned int	cat_block_count;
-	unsigned int	cat_off;
-	unsigned int	cat_len;
-	unsigned int	leaf_node_head;
-	unsigned int	leaf_node_size;
-	unsigned int	alloc_block_size;
-	unsigned int	alloc_first_block;
-	unsigned int	embed_first_block;
-	unsigned int	partition_off = 0;
+	unsigned int blocksize;
+	unsigned int cat_block;
+	unsigned int cat_block_count;
+	unsigned int cat_off;
+	unsigned int cat_len;
+	unsigned int leaf_node_head;
+	unsigned int leaf_node_size;
+	unsigned int alloc_block_size;
+	unsigned int alloc_first_block;
+	unsigned int embed_first_block;
 	struct hfsplus_bnode_descriptor *descr;
 	struct hfsplus_bheader_record *bnode;
 	struct hfsplus_catalog_key *key;
 	unsigned int	label_len;
 	const __u8 *buf;
 
-	buf = get_buffer(id, 0, 0x200);
-	if (buf == NULL)
-                return -1;
-
-	part = (struct mac_partition *) buf;
-	if ((strncmp(part->signature, "PM", 2) == 0) &&
-	    (strncmp(part->type, "Apple_partition_map", 19) == 0)) {
-		id->fs_type = VOLUME_ID_MACPARTMAP;
-		id->fs_name = "mac_partition_map";
-		return 0;
-	}
-
-	driver = (struct mac_driver_desc *) buf;
-	if (strncmp(driver->signature, "ER", 2) == 0) {
-		/* we are on a main device, like a CD
-		 * just try to probe the first partition from the map */
-		unsigned int bsize = be16_to_cpu(driver->block_size);
-		unsigned long start;
-		int part_count;
-		int i;
-
-		/* get first entry of partition table */
-		buf = get_buffer(id,  bsize, 0x200);
-		if (buf == NULL)
-			return -1;
-
-		part = (struct mac_partition *) buf;
-		if (strncmp(part->signature, "PM", 2) != 0)
-			return -1;
-
-		part_count = be32_to_cpu(part->map_count);
-		dbg("expecting %d partition entries", part_count);
-
-		for (i = 1; i <= part_count; i++) {
-			buf = get_buffer(id, i *  bsize, 0x200);
-			if (buf == NULL)
-				return -1;
-
-			part = (struct mac_partition *) buf;
-			if (strncmp(part->signature, "PM", 2) != 0)
-				return -1;
-
-			start = be32_to_cpu(part->start_block) * bsize;
-			dbg("found '%s' partition entry pointing to 0x%lx",
-			    part->type, start);
-
-			if (strncmp(part->type, "Apple_HFS", 9) == 0) {
-				partition_off = start;
-				goto check;
-			}
-		}
-		return -1;
-	}
-
-
-check:
-	buf = get_buffer(id, partition_off + HFS_SUPERBLOCK_OFFSET, 0x200);
+	buf = get_buffer(id, off + HFS_SUPERBLOCK_OFFSET, 0x200);
 	if (buf == NULL)
                 return -1;
 
@@ -1132,23 +1235,24 @@ check:
 		embed_first_block = be16_to_cpu(hfs->embed_startblock);
 		dbg("embed_first_block 0x%x", embed_first_block);
 
-		partition_off += (alloc_first_block * 512) +
-				 (embed_first_block * alloc_block_size);
-		dbg("hfs wrapped hfs+ found at offset 0x%x", partition_off);
+		off += (alloc_first_block * 512) +
+		       (embed_first_block * alloc_block_size);
+		dbg("hfs wrapped hfs+ found at offset 0x%llx", off);
 
-		buf = get_buffer(id, partition_off + HFS_SUPERBLOCK_OFFSET, 0x200);
+		buf = get_buffer(id, off + HFS_SUPERBLOCK_OFFSET, 0x200);
 		if (buf == NULL)
-	                return -1;
+			return -1;
 		goto checkplus;
 	}
 
-	if (hfs->label_len > 0 && hfs->label_len < 28) {	
+	if (hfs->label_len > 0 && hfs->label_len < 28) {
 		set_label_raw(id, hfs->label, hfs->label_len);
 		set_label_string(id, hfs->label, hfs->label_len) ;
 	}
 
-	id->fs_type = VOLUME_ID_HFS;
-	id->fs_name = "hfs";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_HFS;
+	id->format = "hfs";
 
 	return 0;
 
@@ -1164,11 +1268,11 @@ hfsplus:
 	blocksize = be32_to_cpu(hfsplus->blocksize);
 	cat_block = be32_to_cpu(hfsplus->cat_file.extents[0].start_block);
 	cat_block_count = be32_to_cpu(hfsplus->cat_file.extents[0].block_count);
-	cat_off = (cat_block * blocksize) + partition_off;
+	cat_off = (cat_block * blocksize);
 	cat_len = cat_block_count * blocksize;
-	dbg("catalog start 0x%x, len 0x%x", cat_off, cat_len);
+	dbg("catalog start 0x%llx, len 0x%x", off + cat_off, cat_len);
 
-	buf = get_buffer(id, cat_off, 0x2000);
+	buf = get_buffer(id, off + cat_off, 0x2000);
 	if (buf == NULL)
 		goto found;
 
@@ -1181,7 +1285,7 @@ hfsplus:
 	dbg("catalog leaf node 0x%x, size 0x%x",
 	    leaf_node_head, leaf_node_size);
 
-	buf = get_buffer(id, cat_off + (leaf_node_head * leaf_node_size),
+	buf = get_buffer(id, off + cat_off + (leaf_node_head * leaf_node_size),
 			 leaf_node_size);
 	if (buf == NULL)
 		goto found;
@@ -1204,8 +1308,9 @@ hfsplus:
 	set_label_unicode16(id, key->unicode, BE, label_len);
 
 found:
-	id->fs_type = VOLUME_ID_HFSPLUS;
-	id->fs_name = "hfsplus";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_HFSPLUS;
+	id->format = "hfsplus";
 
 	return 0;
 }
@@ -1214,7 +1319,7 @@ found:
 #define MFT_RECORD_ATTR_VOLUME_NAME		0x60u
 #define MFT_RECORD_ATTR_OBJECT_ID		0x40u
 #define MFT_RECORD_ATTR_END			0xffffffffu
-static int probe_ntfs(struct volume_id *id)
+static int probe_ntfs(struct volume_id *id, __u64 off)
 {
 	struct ntfs_super_block {
 		__u8	jump[3];
@@ -1265,25 +1370,27 @@ static int probe_ntfs(struct volume_id *id)
 		__u16	value_offset;
 	} __attribute__((__packed__)) *attr;
 
-	unsigned int	sector_size;
-	unsigned int	cluster_size;
-	unsigned long	mft_cluster;
-	unsigned long	mft_off;
-	unsigned int	mft_record_size;
-	unsigned int	attr_type;
-	unsigned int	attr_off;
-	unsigned int	attr_len;
-	unsigned int	val_off;
-	unsigned int	val_len;
+	unsigned int sector_size;
+	unsigned int cluster_size;
+	__u64 mft_cluster;
+	__u64 mft_off;
+	unsigned int mft_record_size;
+	unsigned int attr_type;
+	unsigned int attr_off;
+	unsigned int attr_len;
+	unsigned int val_off;
+	unsigned int val_len;
 	const __u8 *buf;
 	const __u8 *val;
 
-	ns = (struct ntfs_super_block *) get_buffer(id, 0, 0x200);
+	ns = (struct ntfs_super_block *) get_buffer(id, off, 0x200);
 	if (ns == NULL)
 		return -1;
 
 	if (strncmp(ns->oem_id, "NTFS", 4) != 0)
 		return -1;
+
+	dbg("+++++++++ 1");
 
 	sector_size = le16_to_cpu(ns->bpb.bytes_per_sector);
 	cluster_size = ns->bpb.sectors_per_cluster * sector_size;
@@ -1298,12 +1405,12 @@ static int probe_ntfs(struct volume_id *id)
 
 	dbg("sectorsize  0x%x", sector_size);
 	dbg("clustersize 0x%x", cluster_size);
-	dbg("mftcluster  %li", mft_cluster);
-	dbg("mftoffset  0x%lx", mft_off);
+	dbg("mftcluster  %lli", mft_cluster);
+	dbg("mftoffset  0x%llx", mft_off);
 	dbg("cluster per mft_record  %i", ns->cluster_per_mft_record);
 	dbg("mft record size  %i", mft_record_size);
 
-	buf = get_buffer(id, mft_off + (MFT_RECORD_VOLUME * mft_record_size),
+	buf = get_buffer(id, off + mft_off + (MFT_RECORD_VOLUME * mft_record_size),
 			 mft_record_size);
 	if (buf == NULL)
 		goto found;
@@ -1361,21 +1468,22 @@ static int probe_ntfs(struct volume_id *id)
 	}
 
 found:
-	id->fs_type = VOLUME_ID_NTFS;
-	id->fs_name = "ntfs";
+	id->type_id = VOLUME_ID_FILESYSTEM;
+	id->format_id = VOLUME_ID_NTFS;
+	id->format = "ntfs";
 
 	return 0;
 }
 
 #define LARGEST_PAGESIZE			0x4000
-static int probe_swap(struct volume_id *id)
+static int probe_swap(struct volume_id *id, __u64 off)
 {
 	const __u8 *sig;
 	unsigned int page;
 
 	/* huhh, the swap signature is on the end of the PAGE_SIZE */
 	for (page = 0x1000; page <= LARGEST_PAGESIZE; page <<= 1) {
-			sig = get_buffer(id, page-10, 10);
+			sig = get_buffer(id, off + page-10, 10);
 			if (sig == NULL)
 				return -1;
 
@@ -1387,101 +1495,114 @@ static int probe_swap(struct volume_id *id)
 	return -1;
 
 found:
-	id->fs_type = VOLUME_ID_SWAP;
-	id->fs_name = "swap";
+	id->type_id = VOLUME_ID_OTHER;
+	id->format_id = VOLUME_ID_SWAP;
+	id->format = "swap";
 
 	return 0;
 }
 
 /* probe volume for filesystem type and try to read label+uuid */
-int volume_id_probe(struct volume_id *id, enum filesystem_type fs_type)
+int volume_id_probe(struct volume_id *id,
+		    enum volume_id_type type, unsigned long long off)
 {
 	int rc;
 
 	if (id == NULL)
 		return -EINVAL;
 
-	switch (fs_type) {
+	switch (type) {
+	case VOLUME_ID_MSDOSPARTTABLE:
+		rc = probe_msdos_part_table(id, off);
+		break;
 	case VOLUME_ID_EXT3:
 	case VOLUME_ID_EXT2:
-		rc = probe_ext(id);
+		rc = probe_ext(id, off);
 		break;
 	case VOLUME_ID_REISER:
-		rc = probe_reiser(id);
+		rc = probe_reiser(id, off);
 		break;
 	case VOLUME_ID_XFS:
-		rc = probe_xfs(id);
+		rc = probe_xfs(id, off);
 		break;
 	case VOLUME_ID_JFS:
-		rc = probe_jfs(id);
+		rc = probe_jfs(id, off);
 		break;
 	case VOLUME_ID_MSDOS:
-		rc = probe_msdos(id);
+		rc = probe_msdos(id, off);
 		break;
 	case VOLUME_ID_VFAT:
-		rc = probe_vfat(id);
+		rc = probe_vfat(id, off);
 		break;
 	case VOLUME_ID_UDF:
-		rc = probe_udf(id);
+		rc = probe_udf(id, off);
 		break;
 	case VOLUME_ID_ISO9660:
-		rc = probe_iso9660(id);
+		rc = probe_iso9660(id, off);
 		break;
 	case VOLUME_ID_MACPARTMAP:
+		rc = probe_mac_partition_map(id, off);
+		break;
 	case VOLUME_ID_HFS:
 	case VOLUME_ID_HFSPLUS:
-		rc = probe_hfs_hfsplus(id);
+		rc = probe_hfs_hfsplus(id, off);
 		break;
 	case VOLUME_ID_UFS:
-		rc = probe_ufs(id);
+		rc = probe_ufs(id, off);
 		break;
 	case VOLUME_ID_NTFS:
-		rc = probe_ntfs(id);
+		rc = probe_ntfs(id, off);
 		break;
 	case VOLUME_ID_SWAP:
-		rc = probe_swap(id);
+		rc = probe_swap(id, off);
 		break;
 	case VOLUME_ID_ALL:
 	default:
 		/* read only minimal buffer, cause of the slow floppies */
-		rc = probe_vfat(id);
+		rc = probe_vfat(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_msdos(id);
+		rc = probe_msdos(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_msdos_part_table(id, off);
 		if (rc == 0)
 			break;
 
 		/* fill buffer with maximum */
 		get_buffer(id, 0, SB_BUFFER_SIZE);
 
-		rc = probe_swap(id);
+		rc = probe_swap(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_ext(id);
+		rc = probe_ext(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_reiser(id);
+		rc = probe_reiser(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_xfs(id);
+		rc = probe_xfs(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_jfs(id);
+		rc = probe_jfs(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_udf(id);
+		rc = probe_udf(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_iso9660(id);
+		rc = probe_iso9660(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_ntfs(id);
+		rc = probe_ntfs(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_hfs_hfsplus(id);
+		rc = probe_mac_partition_map(id, off);
 		if (rc == 0)
 			break;
-		rc = probe_ufs(id);
+		rc = probe_hfs_hfsplus(id, off);
+		if (rc == 0)
+			break;
+		rc = probe_ufs(id, off);
 		if (rc == 0)
 			break;
 		rc = -1;
@@ -1564,6 +1685,9 @@ void volume_id_close(struct volume_id *id)
 		close(id->fd);
 
 	free_buffer(id);
+
+	if (id->partitions != NULL)
+		free(id->partitions);
 
 	free(id);
 }

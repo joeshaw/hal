@@ -384,26 +384,26 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1617"
+HREF="#AEN1690"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1628"
+HREF="#AEN1701"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1636"
+HREF="#AEN1709"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ><DT
 ><A
-HREF="#AEN1645"
+HREF="#AEN1718"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></DT
 ></DL
@@ -3188,6 +3188,21 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>block.have_scanned</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		An internal property used by HAL to specify whether a top
+		level block device have already been scanned for filesystems.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >block.storage_device</TT
 > (string)</TD
 ><TD
@@ -3268,7 +3283,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN900"
+NAME="AEN906"
 ></A
 ><TABLE
 BORDER="1"
@@ -3314,6 +3329,22 @@ CLASS="literal"
 >Yes (is blank only when volume.is_mounted is FALSE)</TD
 ><TD
 >A fully qualified path to the mount point of the volume</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.is_filesystem</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		This property is TRUE if the volume indeed contains a mountable
+		filesystem. If it's FALSE the volume contain other data such
+		as swap or partition maps.
+	      </TD
 ></TR
 ><TR
 ><TD
@@ -3377,6 +3408,130 @@ CLASS="literal"
 ><P
 ></P
 ></DIV
+><P
+>&#13;	Device objects with this capability may emit the following
+	device conditions
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN959"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Condition Name</TH
+><TH
+>Parameters</TH
+><TH
+>Example</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>VolumeMount</TT
+></TD
+><TD
+>&#13;		<TT
+CLASS="literal"
+>block.device</TT
+> (string),
+		<TT
+CLASS="literal"
+>volume.mount_point</TT
+> (string)
+	      </TD
+><TD
+>&#13;		<TT
+CLASS="literal"
+>/dev/sda1</TT
+>,
+		<TT
+CLASS="literal"
+>/media/compact_flash</TT
+>
+	      </TD
+><TD
+>Emitted when a volume is mounted</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>VolumeUnmount</TT
+></TD
+><TD
+>&#13;		<TT
+CLASS="literal"
+>block.device</TT
+> (string),
+		<TT
+CLASS="literal"
+>volume.mount_point</TT
+> (string)
+	      </TD
+><TD
+>&#13;		<TT
+CLASS="literal"
+>/dev/sda1</TT
+>,
+		<TT
+CLASS="literal"
+>/media/compact_flash</TT
+>
+	      </TD
+><TD
+>Emitted when a volume is unmounted</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>VolumeUnmountForced</TT
+></TD
+><TD
+>&#13;		<TT
+CLASS="literal"
+>block.device</TT
+> (string),
+		<TT
+CLASS="literal"
+>volume.mount_point</TT
+> (string)
+	      </TD
+><TD
+>&#13;		<TT
+CLASS="literal"
+>/dev/sda1</TT
+>,
+		<TT
+CLASS="literal"
+>/media/compact_flash</TT
+>
+	      </TD
+><TD
+>&#13;		Emitted when a volume is forcibly unmounted because
+		the media backing the volume was removed.
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
 ></DIV
 ><DIV
 CLASS="sect2"
@@ -3408,7 +3563,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN952"
+NAME="AEN1004"
 ></A
 ><TABLE
 BORDER="1"
@@ -3597,6 +3752,16 @@ CLASS="literal"
 ><TD
 >DVD+RW disc</TD
 ></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>unknown</TD
+><TD
+>&nbsp;</TD
+><TD
+>Unknown type or lack of support from drive to determine the type</TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -3635,6 +3800,24 @@ CLASS="literal"
 CLASS="literal"
 >block.is_volume</TT
 > set to FALSE.
+	One significant between the <TT
+CLASS="literal"
+>storage</TT
+> and
+	<TT
+CLASS="literal"
+>block</TT
+> namespace is that the properties
+	exported in the <TT
+CLASS="literal"
+>storage</TT
+> represents
+	constant vital product information, whereas the properties
+	in the <TT
+CLASS="literal"
+>block</TT
+> namespace represent 
+	variable system-dependent information.
 
       </P
 ><DIV
@@ -3642,7 +3825,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1050"
+NAME="AEN1111"
 ></A
 ><TABLE
 BORDER="1"
@@ -3715,6 +3898,16 @@ CLASS="literal"
 >&nbsp;</TD
 ><TD
 >SCSI interface</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>platform</TD
+><TD
+>&nbsp;</TD
+><TD
+>Legacy device that is part of the platform</TD
 ></TR
 ><TR
 ><TD
@@ -3880,7 +4073,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->storage.automount_enabled</TT
+>storage.automount_enabled_hint</TT
 > (bool)</TD
 ><TD
 >&nbsp;</TD
@@ -3888,6 +4081,35 @@ CLASS="literal"
 >Yes</TD
 ><TD
 >This property is a hint to desktop file managers that they shouldn't automount volumes of the storage device when they appear.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>storage.no_partitions_hint</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		This property is a hint to programs that maintain the 
+		<TT
+CLASS="literal"
+>/etc/fstab</TT
+> file to signal, when
+		TRUE, that the storage drive (such as floppy or
+		optical drives) is used for media with no partition
+		table so an entry can be added ahead of media
+		insertion time. Note that this is only a hint; media
+		may be inserted that has partition tables that the
+		kernel may respect. Conversely, when this is FALSE
+		media without partition tables may be inserted (an
+		example is a Compact Flash card; this media is normally
+		formatted with a PC style partition table and a single
+		FAT partition. However, it may be formatted with just
+		a single FAT partition and no partition table).
+	      </TD
 ></TR
 ><TR
 ><TD
@@ -3901,7 +4123,9 @@ CLASS="literal"
 >Yes</TD
 ><TD
 >&#13;		This contains the UDI of the device object
-		representing the physical device. Additionally, a
+		representing the physical device or blank if 
+		there is no such device (which is TRUE for legacy
+		devices such as x86 floppy drives). Additionally, a
 		number of properties are merged from that device
 		object. Specifically, all properties prefixed
 		with <TT
@@ -3994,7 +4218,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1195"
+NAME="AEN1268"
 ></A
 ><TABLE
 BORDER="1"
@@ -4193,7 +4417,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1275"
+NAME="AEN1348"
 ></A
 ><TABLE
 BORDER="1"
@@ -4320,7 +4544,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1321"
+NAME="AEN1394"
 ></A
 ><TABLE
 BORDER="1"
@@ -4444,7 +4668,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1366"
+NAME="AEN1439"
 ></A
 ><TABLE
 BORDER="1"
@@ -4511,7 +4735,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1386"
+NAME="AEN1459"
 ></A
 ><TABLE
 BORDER="1"
@@ -4576,7 +4800,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1406"
+NAME="AEN1479"
 ></A
 ><TABLE
 BORDER="1"
@@ -4703,7 +4927,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1450"
+NAME="AEN1523"
 ></A
 ><TABLE
 BORDER="1"
@@ -4850,7 +5074,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1498"
+NAME="AEN1571"
 ></A
 ><TABLE
 BORDER="1"
@@ -5204,7 +5428,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1575"
+NAME="AEN1648"
 ></A
 ><TABLE
 BORDER="1"
@@ -5364,7 +5588,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1617"
+NAME="AEN1690"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -5480,7 +5704,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1628"
+NAME="AEN1701"
 >Example</A
 ></H3
 ><P
@@ -5598,7 +5822,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1636"
+NAME="AEN1709"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -5751,7 +5975,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1645"
+NAME="AEN1718"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></H2
 ><P

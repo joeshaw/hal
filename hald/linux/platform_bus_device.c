@@ -93,13 +93,10 @@ platform_device_pre_process (BusDeviceHandler *self,
 	char fd_sysfs_path[256];
 
 	sscanf (device->bus_id, "floppy%d", &number);
-	hal_device_property_set_int (d, "storage.legacy_floppy.number", 
-				     number);
+	hal_device_property_set_int (d, "storage.legacy_floppy.number", number);
 
-	hal_device_property_set_string (d, "info.product",
-					"Legacy Floppy Drive");
-	hal_device_property_set_string (d, "info.vendor",
-					"");
+	hal_device_property_set_string (d, "info.product", "Legacy Floppy Drive");
+	hal_device_property_set_string (d, "info.vendor", "");
 
 	/* All the following is a little but of cheating, but hey, what
 	 * can you do when the kernel doesn't properly export legacy
@@ -126,28 +123,30 @@ platform_device_pre_process (BusDeviceHandler *self,
 	hal_device_property_set_int (d, "block.major", major);
 	hal_device_property_set_int (d, "block.minor", minor);
 	hal_device_property_set_bool (d, "block.no_partitions", TRUE);
+	hal_device_property_set_bool (d, "block.have_scanned", FALSE);
 
 	hal_device_property_set_string (d, "storage.bus", "platform");
 	hal_device_property_set_string (d, "storage.drive_type", "floppy");
 	hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
 	hal_device_property_set_bool (d, "storage.removable", TRUE);
 	hal_device_property_set_bool (d, "storage.media_check_enabled", FALSE);
-	hal_device_property_set_bool (d, "storage.automount_enabled", FALSE);
+	hal_device_property_set_bool (d, "storage.automount_enabled_hint", FALSE);
+	hal_device_property_set_bool (d, "storage.no_partitions_hint", TRUE);
+	hal_device_property_set_string (d, "storage.physical_device", "");
 	
 	hal_device_property_set_string (d, "storage.vendor", "");
 	hal_device_property_set_string (d, "storage.model", "Floppy Drive");
 
-	hal_device_property_set_string (
-		d, "storage.physical_device", 
-		"/org/freedesktop/Hal/devices/computer");
+	hal_device_property_set_string (d, "storage.physical_device", 
+					"/org/freedesktop/Hal/devices/computer");
 
-	hal_device_property_set_string (
-		d, "info.parent", 
-		"/org/freedesktop/Hal/devices/computer");
+	hal_device_property_set_string (d, "info.parent", 
+					"/org/freedesktop/Hal/devices/computer");
 
 	hal_device_add_capability (d, "block");
 	hal_device_add_capability (d, "storage");
-	hal_device_add_capability (d, "storage.floppy");
+	hal_device_property_set_string (d, "info.category", 
+					"storage");
 }
 
 

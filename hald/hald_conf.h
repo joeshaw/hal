@@ -65,24 +65,7 @@ struct _HaldConf {
 	 *
 	 *  Default value is TRUE, this may be overridden in hald.conf.
 	 */
-	dbus_bool_t storage_automount_enabled;
-
-	/** Default value for storage.cdrom.eject_check_enabled for
-	 *  devices of capability storage.cdrom - this can be overridden by
-	 *  .fdi files.
-	 *
-	 *  Setting this to FALSE results a whitelist policy,
-	 *  e.g. the eject button is only checked if this property is
-	 *  overridden in a .fdi file.
-	 *
-	 *  Conversely, setting it to TRUE results in a blacklist
-	 *  policy where the eject button is always checked unless
-	 *  this is explicitly overridden by .fdi file for devices
-	 *  causing trouble.
-	 *
-	 *  Default value is TRUE, this may be overridden in hald.conf.
-	 */
-	dbus_bool_t storage_cdrom_eject_check_enabled;
+	dbus_bool_t storage_automount_enabled_hint;
 
 	/** If true, then the device list is saved to disk such that
          *  properties are kept between invocations of hald.

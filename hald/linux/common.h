@@ -69,8 +69,6 @@ char *rename_and_merge (HalDevice *d, ComputeFDI naming_func, const char *namesp
 
 char *get_parent_sysfs_path (const char *path);
 
-void find_and_set_physical_device (HalDevice * device);
-
 dbus_bool_t class_device_get_major_minor (const char *sysfs_path, int *major, int *minor);
 
 dbus_bool_t class_device_get_device_file (const char *sysfs_path, char *dev_file, int dev_file_length);

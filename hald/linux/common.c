@@ -603,51 +603,6 @@ get_parent_sysfs_path (const char *path)
 	return parent_path;
 }
 
-/** Set the physical device for a device.
- *
- *  This function visits all parent devices and sets the property
- *  info.physical_device to the first parent device that doesn't have the
- *  info.physical_device property set.
- *
- *  @param  device              HalDevice to process
- */
-void
-find_and_set_physical_device (HalDevice * device)
-{
-	HalDevice *d;
-	HalDevice *parent;
-	const char *parent_udi;
-
-	d = device;
-	do {
-		parent_udi = hal_device_property_get_string (d,
-							      "info.parent");
-		if (parent_udi == NULL) {
-			HAL_ERROR (("Error finding parent for %s\n",
-				    d->udi));
-			return;
-		}
-
-		parent = hal_device_store_find (hald_get_gdl (), parent_udi);
-		if (parent == NULL) {
-			HAL_ERROR (("Error resolving UDI %s\n",
-				    parent_udi));
-			return;
-		}
-
-		if (!hal_device_has_property (parent,
-					       "info.physical_device")) {
-			hal_device_property_set_string (device,
-							 "info.physical_device",
-							 parent_udi);
-			return;
-		}
-
-		d = parent;
-	}
-	while (TRUE);
-}
-
 /** Utility function to retrieve major and minor number for a class device.
  *
  *  The class device must have a dev file in the #sysfs_path directory and

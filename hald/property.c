@@ -165,7 +165,7 @@ hal_property_get_int (HalProperty *prop)
 dbus_bool_t
 hal_property_get_bool (HalProperty *prop)
 {
-	g_return_val_if_fail (prop != NULL, -1);
+	g_return_val_if_fail (prop != NULL, FALSE);
 	g_return_val_if_fail (prop->type == DBUS_TYPE_BOOLEAN, -1);
 
 	return prop->bool_value;
