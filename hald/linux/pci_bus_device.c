@@ -482,7 +482,6 @@ pci_device_pre_process (BusDeviceHandler *self,
 /** Method specialisations for bustype pci */
 BusDeviceHandler pci_bus_handler = {
 	pci_device_init,           /**< init function */
-	bus_device_detection_done, /**< detection is done */
 	pci_device_shutdown,       /**< shutdown function */
 	bus_device_tick,           /**< timer function */
 	bus_device_accept,         /**< accept function */

@@ -40,12 +40,6 @@ struct ClassDeviceHandler_s {
 	 */
 	void (*init) (ClassDeviceHandler* self);
 
-	/** Called when all device detection (on bootstrap) is done 
-	 *
-	 *  @param  self        Pointer to class members
-	 */
-	void (*detection_done) (ClassDeviceHandler* self);
-
 	/** Called just before the HAL daemon is shutting down 
 	 *
 	 *  @param  self        Pointer to class members
@@ -248,8 +242,6 @@ void class_device_udev_event (ClassDeviceHandler *self,
 			      HalDevice *d, char *dev_file);
 
 void class_device_init (ClassDeviceHandler *self);
-
-void class_device_detection_done (ClassDeviceHandler *self);
 
 void class_device_shutdown (ClassDeviceHandler *self);
 

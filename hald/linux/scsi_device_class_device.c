@@ -103,7 +103,6 @@ scsi_device_class_compute_udi (HalDevice * d, int append_num)
 /** Method specialisations for input device class */
 ClassDeviceHandler scsi_device_class_handler = {
 	class_device_init,                  /**< init function */
-	class_device_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
 	class_device_accept,                /**< accept function */

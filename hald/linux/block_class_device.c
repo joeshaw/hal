@@ -67,6 +67,8 @@
  * @{
  */
 
+static void etc_mtab_process_all_block_devices (dbus_bool_t force);
+
 typedef struct {
 	HalDevice *device;
 	ClassDeviceHandler *handler;
@@ -964,6 +966,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 	/* check for media on the device */
 	detect_media (d);
+
+	/* Check the mtab to see if the device is mounted */
+	etc_mtab_process_all_block_devices (TRUE);
 }
 
 static char *
@@ -1295,7 +1300,10 @@ etc_mtab_process_all_block_devices (dbus_bool_t force)
 	if (!read_etc_mtab (force))
 		return;
 
-	HAL_INFO (("/etc/mtab changed, processing all block devices"));
+	if (!force)
+		HAL_INFO (("/etc/mtab changed, processing all block devices"));
+	else
+		HAL_INFO (("processing /etc/mtab"));
 
 	hal_device_store_foreach (hald_get_gdl (), foreach_block_device, NULL);
 }
@@ -1368,16 +1376,9 @@ block_class_tick (ClassDeviceHandler *self)
 	/* HAL_INFO (("exiting")); */
 }
 
-static void
-block_class_detection_done (ClassDeviceHandler *self)
-{
-	etc_mtab_process_all_block_devices (TRUE);
-}
-
 /** Method specialisations for block device class */
 ClassDeviceHandler block_class_handler = {
 	class_device_init,                  /**< init function */
-	block_class_detection_done,         /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	block_class_tick,                   /**< timer function */
 	class_device_accept,                /**< accept function */

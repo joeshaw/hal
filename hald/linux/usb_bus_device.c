@@ -940,7 +940,6 @@ usb_device_pre_process (BusDeviceHandler *self,
 /** Method specialisations for bustype usb */
 BusDeviceHandler usb_bus_handler = {
 	usb_device_init,           /**< init function */
-	bus_device_detection_done, /**< detection is done */
 	usb_device_shutdown,       /**< shutdown function */
 	bus_device_tick,           /**< timer function */
 	usb_device_accept,         /**< accept function */

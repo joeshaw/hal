@@ -42,6 +42,7 @@
 #include "../osspec.h"
 #include "../logger.h"
 #include "../hald.h"
+#include "../callout.h"
 
 #include "common.h"
 #include "bus_device.h"
@@ -414,19 +415,6 @@ osspec_probe ()
 	}
 
 	hald_is_initialising = FALSE;
-
-	/* Notify various device and class types that detection is done, so 
-	 * they can do some (optional) batch processing
-	 */
-	for (i=0; bus_device_handlers[i] != NULL; i++) {
-		BusDeviceHandler *bh = bus_device_handlers[i];
-		bh->detection_done (bh);
-	}
-
-	for (i=0; class_device_handlers[i] != NULL; i++) {
-		ClassDeviceHandler *ch = class_device_handlers[i];
-		ch->detection_done (ch);
-	}
 }
 
 static void

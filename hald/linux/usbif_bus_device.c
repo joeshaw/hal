@@ -149,7 +149,6 @@ usbif_device_pre_process (BusDeviceHandler *self,
 /** Method specialisations for bustype usbif */
 BusDeviceHandler usbif_bus_handler = {
 	bus_device_init,           /**< init function */
-	bus_device_detection_done, /**< detection is done */
 	bus_device_shutdown,       /**< shutdown function */
 	bus_device_tick,           /**< timer function */
 	usbif_device_accept,       /**< accept function */

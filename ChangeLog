@@ -1,5 +1,16 @@
 2004-04-30  Joe Shaw  <joe@ximian.com>
 
+	* hald/linux/block_class_device.c (block_class_pre_process):
+	Process the mtab here, so that our fstype and mount_point
+	properties are set.
+
+	* hald/linux/bus_device.h, hald/linux/class_device.h: Remove the
+	detection_done function.  It's not really useful with all the
+	asynchronicity.
+	
+	* hald/linux/*_bus_device.c, hald/linux/*_class_device.c: Remove
+	the detection_done functions.
+
 	* hald/hald_dbus.c (foreach_device_by_capability): Make sure caps
 	is not NULL before comparing strings.
 

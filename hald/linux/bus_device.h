@@ -40,12 +40,6 @@ struct BusDeviceHandler_s {
 	 */
 	void (*init) (BusDeviceHandler *self);
 
-	/** Called when all device detection (on bootstrap) is done 
-	 *
-	 *  @param  self        Pointer to class members
-	 */
-	void (*detection_done) (BusDeviceHandler *self);
-
 	/** Called just before the HAL daemon is shutting down 
 	 *
 	 *  @param  self        Pointer to class members
@@ -160,8 +154,6 @@ dbus_bool_t bus_device_accept (BusDeviceHandler *self, const char *path,
 
 void bus_device_visit (BusDeviceHandler *self, const char *path, 
 		       struct sysfs_device *device);
-
-void bus_device_detection_done (BusDeviceHandler *self);
 
 void bus_device_init (BusDeviceHandler *self);
 

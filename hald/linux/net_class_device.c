@@ -481,7 +481,6 @@ net_class_post_merge (ClassDeviceHandler *self, HalDevice *d)
 /** Method specialisations for input device class */
 ClassDeviceHandler net_class_handler = {
 	class_device_init,                  /**< init function */
-	class_device_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
 	class_device_accept,                /**< accept function */

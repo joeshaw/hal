@@ -164,7 +164,6 @@ printer_class_pre_process (ClassDeviceHandler *self,
 /** Method specialisations for input device class */
 ClassDeviceHandler printer_class_handler = {
 	class_device_init,                  /**< init function */
-	class_device_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
 	printer_class_device_accept,        /**< accept function */
