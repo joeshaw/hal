@@ -2835,7 +2835,17 @@
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-               Card number in system as registered by ALSA.
+		Card number in system as registered by ALSA.
+             </entry>
+            </row>
+            <row>
+              <entry><literal>alsa.card_id</literal> (string)</entry>
+              <entry>
+                Examples: <literal>I82801DBICH4</literal>, <literal>MP3</literal>
+              </entry>
+              <entry>No</entry>
+              <entry>
+		Textual description of the card.
              </entry>
             </row>
             <row>
@@ -2843,25 +2853,25 @@
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-               Device number assigned by ALSA for the current card.
+		Device number assigned by ALSA for a current card.
              </entry>
             </row>
             <row>
-              <entry><literal>alsa.id</literal> (string)</entry>
+              <entry><literal>alsa.device_id</literal> (string)</entry>
               <entry>
-                Examples: <literal>I82801DBICH4</literal>, <literal>MP3</literal>
+                Examples: <literal>Intel 82801DB-ICH4 MIC2 ADC</literal>
               </entry>
               <entry>No</entry>
               <entry>
-               The ALSA ID used to represent the device.
+		Textual description of the specific device for a card
              </entry>
-           </row>
+            </row>
             <row>
-              <entry><literal>alsa.physical_device</literal> (int)</entry>
+              <entry><literal>alsa.physical_device</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-               The physical device the ALSA stream is bound to.
+		UDI of the physical device the ALSA device is bound to.
              </entry>
            </row>
             <row>

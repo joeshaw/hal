@@ -443,9 +443,11 @@ static HalDevice *
 sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
 {
 	HalDevice *d;
-	const gchar *device;
 	int cardnum, devicenum;
 	char type;
+	const gchar *device;
+	char aprocdir[256];
+	char buf[256];
 
 	d = NULL;
 
@@ -462,21 +464,53 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 
 	device = hal_util_get_last_element(sysfs_path);
 	if (sscanf (device, "controlC%d", &cardnum) == 1) {
-		hal_device_property_set_string (d, "alsa.type", "control");
-		hal_device_property_set_string (d, "info.product", "ALSA Control Device");
 		hal_device_property_set_int (d, "alsa.card", cardnum);
+		hal_device_property_set_string (d, "alsa.type", "control");
+
+		snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
+		hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+
+		snprintf (buf, sizeof (buf), "%s ALSA Control Device", 
+			  hal_device_property_get_string (d, "alsa.card_id"));
+		hal_device_property_set_string (d, "info.product", buf);
+
 	} else if (sscanf (device, "pcmC%dD%d%c", &cardnum, &devicenum, &type) == 3) {
+		gchar *device_id;
+
 		hal_device_property_set_int (d, "alsa.card", cardnum);
 		hal_device_property_set_int (d, "alsa.device", devicenum);
+
+		snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
+		hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+
+		snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d/pcm%d%c", 
+			  get_hal_proc_path (), cardnum, devicenum, type);
+		device_id = hal_util_grep_file (aprocdir, "info", "name: ");
+		if (device_id != NULL) {
+			hal_device_property_set_string (d, "alsa.device_id", device_id);
+		}
+
 		if (type == 'p') {
 			hal_device_property_set_string (d, "alsa.type", "playback");
-			hal_device_property_set_string (d, "info.product", "ALSA Playback Device");
+			if (device_id != NULL) {
+				snprintf (buf, sizeof (buf), "%s ALSA Playback Device", device_id);
+				hal_device_property_set_string (d, "info.product", buf);
+			} else
+				hal_device_property_set_string (d, "info.product", "ALSA Playback Device");
 		} else if (type == 'c') {
 			hal_device_property_set_string (d, "alsa.type", "capture");
-			hal_device_property_set_string (d, "info.product", "ALSA Capture Device");
+			if (device_id != NULL) {
+				snprintf (buf, sizeof (buf), "%s ALSA Capture Device", device_id);
+				hal_device_property_set_string (d, "info.product", buf);
+			} else
+				  hal_device_property_set_string (d, "info.product", "ALSA Capture Device");
 		} else {
 			hal_device_property_set_string (d, "alsa.type", "unknown");
-			hal_device_property_set_string (d, "info.product", "ALSA Device");
+			if (device_id != NULL) {
+				snprintf (buf, sizeof (buf), "%s ALSA Device", device_id);
+				hal_device_property_set_string (d, "info.product", buf);
+			} else
+				  hal_device_property_set_string (d, "info.product", "ALSA Device");
 		}
 	} else {
 		g_object_unref (d);

@@ -1,3 +1,10 @@
+2005-03-02  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux2/classdev.c (sound_add): Rename alsa.id to alsa.card_id;
+	add alsa.device_id; fixup info.product to be more useful
+
+	* doc/spec/hal-spec.xml.in: Update for alsa.* properties
+
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
 	* libhal/libhal.c (filter_func): Remove foo[012] messages
