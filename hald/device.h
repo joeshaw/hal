@@ -121,6 +121,8 @@ const char   *hal_device_property_get_as_string (HalDevice    *device,
 						 const char   *key,
 						 char *buf,
 						 size_t bufsize);
+
+
 const char   *hal_device_property_get_string (HalDevice    *device,
 					      const char   *key);
 dbus_int32_t  hal_device_property_get_int    (HalDevice    *device,
@@ -131,6 +133,10 @@ dbus_bool_t   hal_device_property_get_bool   (HalDevice    *device,
 					      const char   *key);
 double        hal_device_property_get_double (HalDevice    *device,
 					      const char   *key);
+GSList       *hal_device_property_get_strlist (HalDevice    *device,
+					       const char   *key);
+
+
 
 gboolean      hal_device_property_set_string (HalDevice    *device,
 					      const char   *key,
@@ -147,6 +153,22 @@ gboolean      hal_device_property_set_bool   (HalDevice    *device,
 gboolean      hal_device_property_set_double (HalDevice    *device,
 					      const char   *key,
 					      double        value);
+gboolean      hal_device_property_strlist_append (HalDevice    *device,
+						  const char   *key,
+						  const char *value);
+gboolean      hal_device_property_strlist_prepend (HalDevice    *device,
+						  const char   *key,
+						  const char *value);
+gboolean      hal_device_property_strlist_remove_elem (HalDevice    *device,
+						       const char   *key,
+						       guint index);
+gboolean      hal_device_property_strlist_add (HalDevice    *device,
+					       const char   *key,
+					       const char *value);
+gboolean      hal_device_property_strlist_remove (HalDevice    *device,
+						  const char   *key,
+						  const char *value);
+
 
 gboolean      hal_device_property_remove     (HalDevice    *device,
 					      const char   *key);

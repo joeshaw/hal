@@ -655,32 +655,51 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 	key = hal_property_get_key (p);
 	type = hal_property_get_type (p);
 
-	dbus_message_iter_append_dict_key (iter, key);
-
 	switch (type) {
-	case DBUS_TYPE_STRING:
-		dbus_message_iter_append_string (iter,
-						 hal_property_get_string (p));
+	case HAL_PROPERTY_TYPE_STRING:
+		dbus_message_iter_append_dict_key (iter, key);
+		dbus_message_iter_append_string (iter, hal_property_get_string (p));
 		break;
-	case DBUS_TYPE_INT32:
-		dbus_message_iter_append_int32 (iter,
-						hal_property_get_int (p));
+	case HAL_PROPERTY_TYPE_INT32:
+		dbus_message_iter_append_dict_key (iter, key);
+		dbus_message_iter_append_int32 (iter, hal_property_get_int (p));
 		break;
-	case DBUS_TYPE_UINT64:
-		dbus_message_iter_append_uint64 (iter,
-						hal_property_get_uint64 (p));
+	case HAL_PROPERTY_TYPE_UINT64:
+		dbus_message_iter_append_dict_key (iter, key);
+		dbus_message_iter_append_uint64 (iter, hal_property_get_uint64 (p));
 		break;
-	case DBUS_TYPE_DOUBLE:
-		dbus_message_iter_append_double (iter,
-						 hal_property_get_double (p));
+	case HAL_PROPERTY_TYPE_DOUBLE:
+		dbus_message_iter_append_dict_key (iter, key);
+		dbus_message_iter_append_double (iter, hal_property_get_double (p));
 		break;
-	case DBUS_TYPE_BOOLEAN:
-		dbus_message_iter_append_boolean (iter,
-						  hal_property_get_bool (p));
+	case HAL_PROPERTY_TYPE_BOOLEAN:
+		dbus_message_iter_append_dict_key (iter, key);
+		dbus_message_iter_append_boolean (iter, hal_property_get_bool (p));
+		break;
+	case HAL_PROPERTY_TYPE_STRLIST:
+	{
+		char buf[256];
+
+		/* yikes, this is *really* ugly - we kind of have to do it, as D-BUS as of 0.23 doesn't
+		 * support anything but primitive types as dict values. D-BUS CVS as of Jan 27, 2005
+		 * should work (since it got recursive data types); TODO FIXME HACK XXX
+		 *
+		 * So, instead, send it over the wire as '\tval1\tval2\tval3\t' and put some brains
+		 * in the other end (libhal) to clean it up... 
+		 *
+		 * Of course, this will sort of break stuff not using libhal.
+		 *
+		 * I did say *really* ugly... sue me..
+		 */
+		
+		dbus_message_iter_append_dict_key (iter, key);
+		dbus_message_iter_append_string (iter, 
+						 hal_device_property_get_as_string (device, key, buf, sizeof (buf)));
+	}
 		break;
 		
 	default:
-		HAL_WARNING (("Unknown property type %d", type));
+		HAL_WARNING (("Unknown property type 0x%04x", type));
 		break;
 	}
 
@@ -808,25 +827,30 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 
 	type = hal_property_get_type (p);
 	switch (type) {
-	case DBUS_TYPE_STRING:
-		dbus_message_iter_append_string (&iter,
-						 hal_property_get_string (p));
+	case HAL_PROPERTY_TYPE_STRING:
+		dbus_message_iter_append_string (&iter, hal_property_get_string (p));
 		break;
-	case DBUS_TYPE_INT32:
-		dbus_message_iter_append_int32 (&iter,
-						hal_property_get_int (p));
+	case HAL_PROPERTY_TYPE_INT32:
+		dbus_message_iter_append_int32 (&iter, hal_property_get_int (p));
 		break;
-	case DBUS_TYPE_UINT64:
-		dbus_message_iter_append_uint64 (&iter,
-						hal_property_get_uint64 (p));
+	case HAL_PROPERTY_TYPE_UINT64:
+		dbus_message_iter_append_uint64 (&iter, hal_property_get_uint64 (p));
 		break;
-	case DBUS_TYPE_DOUBLE:
-		dbus_message_iter_append_double (&iter,
-						 hal_property_get_double (p));
+	case HAL_PROPERTY_TYPE_DOUBLE:
+		dbus_message_iter_append_double (&iter, hal_property_get_double (p));
 		break;
-	case DBUS_TYPE_BOOLEAN:
-		dbus_message_iter_append_boolean (&iter,
-						  hal_property_get_bool (p));
+	case HAL_PROPERTY_TYPE_BOOLEAN:
+		dbus_message_iter_append_boolean (&iter, hal_property_get_bool (p));
+		break;
+	case HAL_PROPERTY_TYPE_STRLIST:
+	{
+		GSList *l;
+		DBusMessageIter iter_array;
+		dbus_message_iter_append_array (&iter, &iter_array, DBUS_TYPE_STRING);
+		for (l = hal_property_get_strlist (p); l != NULL; l = g_slist_next (l)) {
+			dbus_message_iter_append_string (&iter_array, l->data);
+		}
+	}
 		break;
 
 	default:
@@ -1039,11 +1063,6 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 		break;
 	}
 
-	/* FIXME: temporary pstore test only */
-	hal_device_property_set_attribute (device, key, PERSISTENCE, TRUE);
-	HAL_WARNING (("FIXME: persistence set for all D-BUS props; "
-		      "udi=%s, key=%s", udi, key));
-
 	if (!rc) {
 		raise_property_type_error (connection, message, udi, key);
 		return DBUS_HANDLER_RESULT_HANDLED;
@@ -1143,6 +1162,61 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 	}
 
 	manager_send_signal_new_capability (d, capability);
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+/* TODO: docs */
+static DBusHandlerResult
+device_string_list_append_prepend (DBusConnection * connection, DBusMessage * message, dbus_bool_t do_prepend)
+{
+	const char *udi;
+	const char *key;
+	const char *value;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	gboolean ret;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &key,
+				    DBUS_TYPE_STRING, &value,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, do_prepend ? "StringListPrepend" : "StringListAppend");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (do_prepend)
+		ret = hal_device_property_strlist_prepend (d, key, value);
+	else
+		ret = hal_device_property_strlist_append (d, key, value);
+	if (!ret) {
+		raise_property_type_error (connection, message, udi, key);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
 
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
@@ -1788,16 +1862,16 @@ service_deleted (DBusMessage *message)
  *  @param  user_data           User data
  *  @return                     What to do with the message
  */
-static DBusHandlerResult
-filter_function (DBusConnection * connection,
-		 DBusMessage * message, void *user_data)
+DBusHandlerResult
+hald_dbus_filter_function (DBusConnection * connection,
+			   DBusMessage * message, void *user_data)
 {
-/*
-    HAL_INFO (("obj_path=%s interface=%s method=%s", 
-	       dbus_message_get_path(message), 
-	       dbus_message_get_interface(message),
-	       dbus_message_get_member(message)));
-*/
+
+	HAL_INFO (("obj_path=%s interface=%s method=%s", 
+		   dbus_message_get_path(message), 
+		   dbus_message_get_interface(message),
+		   dbus_message_get_member(message)));
+
 
 	if (dbus_message_is_signal (message,
 				    DBUS_INTERFACE_ORG_FREEDESKTOP_LOCAL,
@@ -1854,6 +1928,10 @@ filter_function (DBusConnection * connection,
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyString")) {
+		return device_get_property (connection, message);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"GetPropertyStringList")) {
 		return device_get_property (connection, message);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
@@ -1915,6 +1993,14 @@ filter_function (DBusConnection * connection,
 						"org.freedesktop.Hal.Device",
 						"Unlock")) {
 		return device_unlock (connection, message);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"StringListAppend")) {
+		return device_string_list_append_prepend (connection, message, FALSE);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"StringListPrepend")) {
+		return device_string_list_append_prepend (connection, message, TRUE);
 	} else
 		osspec_filter_function (connection, message, user_data);
 
@@ -1946,7 +2032,7 @@ hald_dbus_init (void)
 		return FALSE;
 	}
 
-	dbus_connection_add_filter (dbus_connection, filter_function, NULL,
+	dbus_connection_add_filter (dbus_connection, hald_dbus_filter_function, NULL,
 				    NULL);
 
 	dbus_bus_add_match (dbus_connection,

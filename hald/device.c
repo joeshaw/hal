@@ -33,7 +33,6 @@
 
 #include "hald.h"
 #include "device.h"
-#include "pstore.h"
 #include "hald_marshal.h"
 #include "logger.h"
 #include "hald_conf.h"
@@ -205,36 +204,36 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 
 		/* only remove target if it exists with a different type */
 		target_type = hal_device_property_get_type (target, key);
-		if (target_type != DBUS_TYPE_NIL && target_type != type)
+		if (target_type != HAL_PROPERTY_TYPE_NIL && target_type != type)
 			hal_device_property_remove (target, key);
 
 		switch (type) {
 
-		case DBUS_TYPE_STRING:
+		case HAL_PROPERTY_TYPE_STRING:
 			hal_device_property_set_string (
 				target, target_key,
 				hal_property_get_string (p));
 			break;
 
-		case DBUS_TYPE_INT32:
+		case HAL_PROPERTY_TYPE_INT32:
 			hal_device_property_set_int (
 				target, target_key,
 				hal_property_get_int (p));
 			break;
 
-		case DBUS_TYPE_UINT64:
+		case HAL_PROPERTY_TYPE_UINT64:
 			hal_device_property_set_uint64 (
 				target, target_key,
 				hal_property_get_uint64 (p));
 			break;
 
-		case DBUS_TYPE_BOOLEAN:
+		case HAL_PROPERTY_TYPE_BOOLEAN:
 			hal_device_property_set_bool (
 				target, target_key,
 				hal_property_get_bool (p));
 			break;
 
-		case DBUS_TYPE_DOUBLE:
+		case HAL_PROPERTY_TYPE_DOUBLE:
 			hal_device_property_set_double (
 				target, target_key,
 				hal_property_get_double (p));
@@ -275,36 +274,36 @@ hal_device_merge (HalDevice *target, HalDevice *source)
 
 		/* only remove target if it exists with a different type */
 		target_type = hal_device_property_get_type (target, key);
-		if (target_type != DBUS_TYPE_NIL && target_type != type)
+		if (target_type != HAL_PROPERTY_TYPE_NIL && target_type != type)
 			hal_device_property_remove (target, key);
 
 		switch (type) {
 
-		case DBUS_TYPE_STRING:
+		case HAL_PROPERTY_TYPE_STRING:
 			hal_device_property_set_string (
 				target, key,
 				hal_property_get_string (p));
 			break;
 
-		case DBUS_TYPE_INT32:
+		case HAL_PROPERTY_TYPE_INT32:
 			hal_device_property_set_int (
 				target, key,
 				hal_property_get_int (p));
 			break;
 
-		case DBUS_TYPE_UINT64:
+		case HAL_PROPERTY_TYPE_UINT64:
 			hal_device_property_set_uint64 (
 				target, key,
 				hal_property_get_uint64 (p));
 			break;
 
-		case DBUS_TYPE_BOOLEAN:
+		case HAL_PROPERTY_TYPE_BOOLEAN:
 			hal_device_property_set_bool (
 				target, key,
 				hal_property_get_bool (p));
 			break;
 
-		case DBUS_TYPE_DOUBLE:
+		case HAL_PROPERTY_TYPE_DOUBLE:
 			hal_device_property_set_double (
 				target, key,
 				hal_property_get_double (p));
@@ -358,32 +357,32 @@ hal_device_matches (HalDevice *device1, HalDevice *device2,
 
 		switch (type) {
 
-		case DBUS_TYPE_STRING:
+		case HAL_PROPERTY_TYPE_STRING:
 			if (strcmp (hal_property_get_string (p),
 				    hal_device_property_get_string (device2,
 								    key)) != 0)
 				return FALSE;
 			break;
 
-		case DBUS_TYPE_INT32:
+		case HAL_PROPERTY_TYPE_INT32:
 			if (hal_property_get_int (p) !=
 			    hal_device_property_get_int (device2, key))
 				return FALSE;
 			break;
 
-		case DBUS_TYPE_UINT64:
+		case HAL_PROPERTY_TYPE_UINT64:
 			if (hal_property_get_uint64 (p) !=
 				hal_device_property_get_uint64 (device2, key))
 				return FALSE;
 			break;
 
-		case DBUS_TYPE_BOOLEAN:
+		case HAL_PROPERTY_TYPE_BOOLEAN:
 			if (hal_property_get_bool (p) !=
 			    hal_device_property_get_bool (device2, key))
 				return FALSE;
 			break;
 
-		case DBUS_TYPE_DOUBLE:
+		case HAL_PROPERTY_TYPE_DOUBLE:
 			if (hal_property_get_double (p) !=
 			    hal_device_property_get_double (device2, key))
 				return FALSE;
@@ -537,15 +536,15 @@ hal_device_property_get_type (HalDevice *device, const char *key)
 {
 	HalProperty *prop;
 
-	g_return_val_if_fail (device != NULL, DBUS_TYPE_NIL);
-	g_return_val_if_fail (key != NULL, DBUS_TYPE_NIL);
+	g_return_val_if_fail (device != NULL, HAL_PROPERTY_TYPE_NIL);
+	g_return_val_if_fail (key != NULL, HAL_PROPERTY_TYPE_NIL);
 
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL)
 		return hal_property_get_type (prop);
 	else
-		return DBUS_TYPE_NIL;
+		return HAL_PROPERTY_TYPE_NIL;
 }
 
 const char *
@@ -577,20 +576,48 @@ hal_device_property_get_as_string (HalDevice *device, const char *key, char *buf
 
 	if (prop != NULL) {
 		switch (hal_property_get_type (prop)) {
-		case DBUS_TYPE_STRING:
+		case HAL_PROPERTY_TYPE_STRING:
 			strncpy (buf, hal_property_get_string (prop), bufsize);
 			break;
-		case DBUS_TYPE_INT32:
+		case HAL_PROPERTY_TYPE_INT32:
 			snprintf (buf, bufsize, "%d", hal_property_get_int (prop));
 			break;
-		case DBUS_TYPE_UINT64:
+		case HAL_PROPERTY_TYPE_UINT64:
 			snprintf (buf, bufsize, "%lld", hal_property_get_uint64 (prop));
 			break;
-		case DBUS_TYPE_DOUBLE:
+		case HAL_PROPERTY_TYPE_DOUBLE:
 			snprintf (buf, bufsize, "%f", hal_property_get_double (prop));
 			break;
-		case DBUS_TYPE_BOOLEAN:
+		case HAL_PROPERTY_TYPE_BOOLEAN:
 			strncpy (buf, hal_property_get_bool (prop) ? "true" : "false", bufsize);
+			break;
+
+		case HAL_PROPERTY_TYPE_STRLIST:
+			/* print out as "\tval1\tval2\val3\t" */
+		        {
+				GSList *iter;
+				guint i;
+
+				if (bufsize > 0)
+					buf[0] = '\t';
+				i = 1;
+				for (iter = hal_property_get_strlist (prop); 
+				     iter != NULL && i < bufsize; 
+				     iter = g_slist_next (iter)) {
+					guint len;
+					const char *str;
+					
+					str = (const char *) iter->data;
+					len = strlen (str);
+					strncpy (buf + i, str, bufsize - i);
+					i += len;
+
+					if (i < bufsize) {
+						buf[i] = '\t';
+						i++;
+					}
+				}
+			}
 			break;
 		}
 		return buf;
@@ -674,7 +701,7 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL) {
-		if (hal_property_get_type (prop) != DBUS_TYPE_STRING)
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		/* don't bother setting the same value */
@@ -686,12 +713,6 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
-
-		if (hal_property_get_attribute (prop, PERSISTENCE) &&
-		    hald_get_conf ()->persistent_device_list) {
-			hal_pstore_save_property (hald_get_pstore_sys (), 
-						  device, prop); 
-		}
 
 	} else {
 
@@ -716,7 +737,7 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL) {
-		if (hal_property_get_type (prop) != DBUS_TYPE_INT32)
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_INT32)
 			return FALSE;
 
 		/* don't bother setting the same value */
@@ -727,12 +748,6 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
-
-		if (hal_property_get_attribute (prop, PERSISTENCE) &&
-		    hald_get_conf ()->persistent_device_list) {
-			hal_pstore_save_property (hald_get_pstore_sys (), 
-						  device, prop); 
-		}
 
 	} else {
 		prop = hal_property_new_int (key, value);
@@ -756,7 +771,7 @@ hal_device_property_set_uint64 (HalDevice *device, const char *key,
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL) {
-		if (hal_property_get_type (prop) != DBUS_TYPE_UINT64)
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_UINT64)
 			return FALSE;
 
 		/* don't bother setting the same value */
@@ -767,12 +782,6 @@ hal_device_property_set_uint64 (HalDevice *device, const char *key,
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
-
-		if (hal_property_get_attribute (prop, PERSISTENCE) &&
-		    hald_get_conf ()->persistent_device_list) {
-			hal_pstore_save_property (hald_get_pstore_sys (), 
-						  device, prop); 
-		}
 
 	} else {
 		prop = hal_property_new_uint64 (key, value);
@@ -796,7 +805,7 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL) {
-		if (hal_property_get_type (prop) != DBUS_TYPE_BOOLEAN)
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_BOOLEAN)
 			return FALSE;
 
 		/* don't bother setting the same value */
@@ -807,12 +816,6 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
-
-		if (hal_property_get_attribute (prop, PERSISTENCE) &&
-		    hald_get_conf ()->persistent_device_list) {
-			hal_pstore_save_property (hald_get_pstore_sys (), 
-						  device, prop);
-		} 
 
 	} else {
 		prop = hal_property_new_bool (key, value);
@@ -836,7 +839,7 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 	prop = hal_device_property_find (device, key);
 
 	if (prop != NULL) {
-		if (hal_property_get_type (prop) != DBUS_TYPE_DOUBLE)
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_DOUBLE)
 			return FALSE;
 
 		/* don't bother setting the same value */
@@ -847,12 +850,6 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
-
-		if (hal_property_get_attribute (prop, PERSISTENCE) &&
-		    hald_get_conf ()->persistent_device_list) {
-			hal_pstore_save_property (hald_get_pstore_sys (), 
-						  device, prop); 
-		}
 
 	} else {
 		prop = hal_property_new_double (key, value);
@@ -875,23 +872,23 @@ hal_device_copy_property (HalDevice *from_device, const char *from, HalDevice *t
 
 	if (hal_device_has_property (from_device, from)) {
 		switch (hal_device_property_get_type (from_device, from)) {
-		case DBUS_TYPE_STRING:
+		case HAL_PROPERTY_TYPE_STRING:
 			rc = hal_device_property_set_string (
 				to_device, to, hal_device_property_get_string (from_device, from));
 			break;
-		case DBUS_TYPE_INT32:
+		case HAL_PROPERTY_TYPE_INT32:
 			rc = hal_device_property_set_int (
 				to_device, to, hal_device_property_get_int (from_device, from));
 			break;
-		case DBUS_TYPE_UINT64:
+		case HAL_PROPERTY_TYPE_UINT64:
 			rc = hal_device_property_set_uint64 (
 				to_device, to, hal_device_property_get_uint64 (from_device, from));
 			break;
-		case DBUS_TYPE_BOOLEAN:
+		case HAL_PROPERTY_TYPE_BOOLEAN:
 			rc = hal_device_property_set_bool (
 				to_device, to, hal_device_property_get_bool (from_device, from));
 			break;
-		case DBUS_TYPE_DOUBLE:
+		case HAL_PROPERTY_TYPE_DOUBLE:
 			rc = hal_device_property_set_double (
 				to_device, to, hal_device_property_get_double (from_device, from));
 			break;
@@ -910,12 +907,6 @@ hal_device_property_remove (HalDevice *device, const char *key)
 
 	if (prop == NULL)
 		return FALSE;
-
-	if (hal_property_get_attribute (prop, PERSISTENCE) &&
-	    hald_get_conf ()->persistent_device_list) {
-		hal_pstore_delete_property (hald_get_pstore_sys (), 
-					    device, prop); 
-	}
 
 	device->properties = g_slist_remove (device->properties, prop);
 
@@ -940,20 +931,6 @@ hal_device_property_set_attribute (HalDevice *device,
 	if (prop == NULL)
 		return FALSE;
 
-	hal_property_set_attribute (prop, PERSISTENCE, val);
-
-	if (attr == PERSISTENCE &&
-	    hald_get_conf ()->persistent_device_list) {
-		/* Save property to disk, or delete it */
-		if (val) {
-			hal_pstore_save_property (hald_get_pstore_sys (), 
-						  device, prop);
-		} else {
-			hal_pstore_delete_property (hald_get_pstore_sys (), 
-						    device, prop);
-		}
-	}
-
 	return TRUE;
 }
 
@@ -973,29 +950,29 @@ hal_device_print (HalDevice *device)
                 type = hal_property_get_type (p);
 
                 switch (type) {
-                case DBUS_TYPE_STRING:
+                case HAL_PROPERTY_TYPE_STRING:
                         fprintf (stderr, "  %s = '%s'  (string)\n", key,
                                 hal_property_get_string (p));
                         break;
  
-                case DBUS_TYPE_INT32:
+                case HAL_PROPERTY_TYPE_INT32:
                         fprintf (stderr, "  %s = %d  0x%x  (int)\n", key,
                                 hal_property_get_int (p),
                                 hal_property_get_int (p));
                         break;
  
-                case DBUS_TYPE_UINT64:
+                case HAL_PROPERTY_TYPE_UINT64:
                         fprintf (stderr, "  %s = %lld  0x%llx  (uint64)\n", key,
                                 hal_property_get_uint64 (p),
                                 hal_property_get_uint64 (p));
                         break;
  
-                case DBUS_TYPE_DOUBLE:
+                case HAL_PROPERTY_TYPE_DOUBLE:
                         fprintf (stderr, "  %s = %g  (double)\n", key,
                                 hal_property_get_double (p));
                         break;
  
-                case DBUS_TYPE_BOOLEAN:
+                case HAL_PROPERTY_TYPE_BOOLEAN:
                         fprintf (stderr, "  %s = %s  (bool)\n", key,
                                 (hal_property_get_bool (p) ? "true" :
                                  "false"));
@@ -1110,3 +1087,167 @@ hal_device_cancel (HalDevice *device)
 	g_signal_emit (device, signals[CANCELLED], 0);
 }
 
+
+
+
+GSList *
+hal_device_property_get_strlist (HalDevice    *device, 
+				 const char   *key)
+{
+	HalProperty *prop;
+
+	g_return_val_if_fail (device != NULL, NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL)
+		return hal_property_get_strlist (prop);
+	else
+		return NULL;
+}
+
+gboolean
+hal_device_property_strlist_append (HalDevice    *device,
+				    const char   *key,
+				    const char *value)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+			return FALSE;
+
+		hal_property_strlist_append (prop, value);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+
+	} else {
+		prop = hal_property_new_strlist (key);
+		hal_property_strlist_append (prop, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
+	}
+
+	return TRUE;
+}
+
+gboolean 
+hal_device_property_strlist_prepend (HalDevice    *device,
+				     const char   *key,
+				     const char *value)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+			return FALSE;
+
+		hal_property_strlist_prepend (prop, value);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+
+	} else {
+		prop = hal_property_new_strlist (key);
+		hal_property_strlist_prepend (prop, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
+	}
+
+	return TRUE;
+}
+
+gboolean
+hal_device_property_strlist_remove_elem (HalDevice    *device,
+					 const char   *key,
+					 guint index)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop == NULL)
+		return FALSE;
+
+	if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+		return FALSE;
+	
+	if (hal_property_strlist_remove_elem (prop, index)) {
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+gboolean
+hal_device_property_strlist_add (HalDevice *device,
+				 const char *key,
+				 const char *value)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+			return FALSE;
+
+		if (hal_property_strlist_add (prop, value)) {
+			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+				       key, FALSE, FALSE);
+		}
+
+	} else {
+		prop = hal_property_new_strlist (key);
+		hal_property_strlist_prepend (prop, value);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
+	}
+
+	return TRUE;
+}
+
+gboolean
+hal_device_property_strlist_remove (HalDevice *device,
+				    const char *key,
+				    const char *value)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop == NULL)
+		return FALSE;
+
+	if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+		return FALSE;
+	
+	if (hal_property_strlist_remove (prop, value)) {
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+	}
+	
+	return TRUE;
+}

@@ -720,15 +720,15 @@ hal_drive_free (HalDrive *drive)
 		return;
 
 	free (drive->udi);
-	hal_free_string (drive->device_file);
-	hal_free_string (drive->vendor);
-	hal_free_string (drive->model);
-	hal_free_string (drive->type_textual);
-	hal_free_string (drive->physical_device);
-	hal_free_string (drive->serial);
-	hal_free_string (drive->firmware_version);
-	hal_free_string (drive->desired_mount_point);
-	hal_free_string (drive->mount_filesystem);
+	libhal_free_string (drive->device_file);
+	libhal_free_string (drive->vendor);
+	libhal_free_string (drive->model);
+	libhal_free_string (drive->type_textual);
+	libhal_free_string (drive->physical_device);
+	libhal_free_string (drive->serial);
+	libhal_free_string (drive->firmware_version);
+	libhal_free_string (drive->desired_mount_point);
+	libhal_free_string (drive->mount_filesystem);
 }
 
 
@@ -743,14 +743,14 @@ hal_volume_free (HalVolume *vol)
 		return;
 
 	free (vol->udi);
-	hal_free_string (vol->device_file);
-	hal_free_string (vol->volume_label);
-	hal_free_string (vol->fstype);
-	hal_free_string (vol->mount_point);
-	hal_free_string (vol->fsversion);
-	hal_free_string (vol->uuid);
-	hal_free_string (vol->desired_mount_point);
-	hal_free_string (vol->mount_filesystem);
+	libhal_free_string (vol->device_file);
+	libhal_free_string (vol->volume_label);
+	libhal_free_string (vol->fstype);
+	libhal_free_string (vol->mount_point);
+	libhal_free_string (vol->fsversion);
+	libhal_free_string (vol->uuid);
+	libhal_free_string (vol->desired_mount_point);
+	libhal_free_string (vol->mount_filesystem);
 }
 
 
@@ -758,10 +758,10 @@ hal_volume_free (HalVolume *vol)
 
 #define HAL_PROP_EXTRACT_BEGIN if (FALSE)
 #define HAL_PROP_EXTRACT_END ;
-#define HAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_INT32) _where_ = hal_psi_get_int (&it)
-#define HAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_STRING) _where_ = (hal_psi_get_string (&it) != NULL && strlen (hal_psi_get_string (&it)) > 0) ? strdup (hal_psi_get_string (&it)) : NULL
-#define HAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ = hal_psi_get_bool (&it)
-#define HAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ |= hal_psi_get_bool (&it) ? _field_ : 0
+#define HAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_INT32) _where_ = libhal_psi_get_int (&it)
+#define HAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
+#define HAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
+#define HAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == DBUS_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
 
 /** Given a UDI for a HAL device of capability 'storage', this
  *  function retrieves all the relevant properties into convenient
@@ -778,12 +778,14 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	HalDrive *drive;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
+	DBusError error;
 
 	drive = NULL;
 	properties = NULL;
 	bus_textual = NULL;
 
-	if (!hal_device_query_capability (hal_ctx, udi, "storage"))
+	dbus_error_init (&error);
+	if (!libhal_device_query_capability (hal_ctx, udi, "storage", &error))
 		goto error;
 
 	drive = malloc (sizeof (HalDrive));
@@ -797,17 +799,17 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	if (drive->udi == NULL)
 		goto error;
 
-	properties = hal_device_get_all_properties (hal_ctx, udi);
+	properties = libhal_device_get_all_properties (hal_ctx, udi, &error);
 	if (properties == NULL)
 		goto error;
 
 	/* we can count on hal to give us all these properties */
-	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+	for (libhal_psi_init (&it, properties); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
 		int type;
 		char *key;
 		
-		type = hal_psi_get_type (&it);
-		key = hal_psi_get_key (&it);
+		type = libhal_psi_get_type (&it);
+		key = libhal_psi_get_key (&it);
 
 		HAL_PROP_EXTRACT_BEGIN;
 
@@ -885,8 +887,10 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	/* check if physical device is a camera or mp3 player */
 	if (drive->physical_device != NULL) {
 		char *category;
+		DBusError err1;
 
-		category = hal_device_get_property_string (hal_ctx, drive->physical_device, "info.category");
+		dbus_error_init (&err1);
+		category = libhal_device_get_property_string (hal_ctx, drive->physical_device, "info.category", &err1);
 		if (category != NULL) {
 			if (strcmp (category, "portable_audio_player") == 0) {
 				drive->type = HAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER;
@@ -894,7 +898,7 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 				drive->type = HAL_DRIVE_TYPE_CAMERA;
 			}
 
-			hal_free_string (category);
+			libhal_free_string (category);
 		}
 	}
 
@@ -910,14 +914,14 @@ hal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		}
 	}
 
-	hal_free_string (bus_textual);
-	hal_free_property_set (properties);
+	libhal_free_string (bus_textual);
+	libhal_free_property_set (properties);
 
 	return drive;
 
 error:
-	hal_free_string (bus_textual);
-	hal_free_property_set (properties);
+	libhal_free_string (bus_textual);
+	libhal_free_property_set (properties);
 	hal_drive_free (drive);
 	return NULL;
 }
@@ -954,12 +958,14 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 	HalVolume *vol;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
+	DBusError error;
 
 	vol = NULL;
 	properties = NULL;
 	disc_type_textual = NULL;
 
-	if (!hal_device_query_capability (hal_ctx, udi, "volume"))
+	dbus_error_init (&error);
+	if (!libhal_device_query_capability (hal_ctx, udi, "volume", &error))
 		goto error;
 
 	vol = malloc (sizeof (HalVolume));
@@ -969,17 +975,17 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 	vol->udi = strdup (udi);
 
-	properties = hal_device_get_all_properties (hal_ctx, udi);
+	properties = libhal_device_get_all_properties (hal_ctx, udi, &error);
 	if (properties == NULL)
 		goto error;
 
 	/* we can count on hal to give us all these properties */
-	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+	for (libhal_psi_init (&it, properties); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
 		int type;
 		char *key;
 		
-		type = hal_psi_get_type (&it);
-		key = hal_psi_get_key (&it);
+		type = libhal_psi_get_type (&it);
+		key = libhal_psi_get_key (&it);
 
 		HAL_PROP_EXTRACT_BEGIN;
 
@@ -1035,12 +1041,12 @@ hal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		}
 	}
 
-	hal_free_string (disc_type_textual);
-	hal_free_property_set (properties);
+	libhal_free_string (disc_type_textual);
+	libhal_free_property_set (properties);
 	return vol;
 error:
-	hal_free_string (disc_type_textual);
-	hal_free_property_set (properties);
+	libhal_free_string (disc_type_textual);
+	libhal_free_property_set (properties);
 	hal_volume_free (vol);
 	return NULL;
 }
@@ -1077,32 +1083,39 @@ hal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 	int num_hal_udis;
 	HalDrive *result;
 	char *found_udi;
+	DBusError error;
 
 	result = NULL;
 	found_udi = NULL;
 
-	if ((hal_udis = hal_manager_find_device_string_match (hal_ctx, "block.device", 
-							      device_file, &num_hal_udis)) == NULL)
+	dbus_error_init (&error);
+	if ((hal_udis = libhal_manager_find_device_string_match (hal_ctx, "block.device", 
+								 device_file, &num_hal_udis, &error)) == NULL)
 		goto out;
 
 	for (i = 0; i < num_hal_udis; i++) {
 		char *udi;
 		char *storage_udi;
+		DBusError err1;
+		DBusError err2;
 		udi = hal_udis[i];
-		if (hal_device_query_capability (hal_ctx, udi, "volume")) {
 
-			storage_udi = hal_device_get_property_string (hal_ctx, udi, "block.storage_device");
+		dbus_error_init (&err1);
+		dbus_error_init (&err2);
+		if (libhal_device_query_capability (hal_ctx, udi, "volume", &err1)) {
+
+			storage_udi = libhal_device_get_property_string (hal_ctx, udi, "block.storage_device", &err1);
 			if (storage_udi == NULL)
 				continue;
 			found_udi = strdup (storage_udi);
-			hal_free_string (storage_udi);
+			libhal_free_string (storage_udi);
 			break;
-		} else if (hal_device_query_capability (hal_ctx, udi, "storage")) {
+		} else if (libhal_device_query_capability (hal_ctx, udi, "storage", &err2)) {
 			found_udi = strdup (udi);
 		}
 	}
 
-	hal_free_string_array (hal_udis);
+	libhal_free_string_array (hal_udis);
 
 	if (found_udi != NULL)
 		result = hal_drive_from_udi (hal_ctx, found_udi);
@@ -1127,24 +1140,26 @@ hal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 	int num_hal_udis;
 	HalVolume *result;
 	char *found_udi;
+	DBusError error;
 
 	result = NULL;
 	found_udi = NULL;
 
-	if ((hal_udis = hal_manager_find_device_string_match (hal_ctx, "block.device", 
-							      device_file, &num_hal_udis)) == NULL)
+	dbus_error_init (&error);
+	if ((hal_udis = libhal_manager_find_device_string_match (hal_ctx, "block.device", 
+								 device_file, &num_hal_udis, &error)) == NULL)
 		goto out;
 
 	for (i = 0; i < num_hal_udis; i++) {
 		char *udi;
 		udi = hal_udis[i];
-		if (hal_device_query_capability (hal_ctx, udi, "volume")) {
+		if (libhal_device_query_capability (hal_ctx, udi, "volume", &error)) {
 			found_udi = strdup (udi);
 			break;
 		}
 	}
 
-	hal_free_string_array (hal_udis);
+	libhal_free_string_array (hal_udis);
 
 	if (found_udi != NULL)
 		result = hal_volume_from_udi (hal_ctx, found_udi);
@@ -1373,6 +1388,7 @@ hal_drive_find_all_volumes (LibHalContext *hal_ctx, HalDrive *drive, int *num_vo
 	int num_udis;
 	const char *drive_udi;
 	char **result;
+	DBusError error;
 
 	udis = NULL;
 	result = NULL;
@@ -1383,8 +1399,9 @@ hal_drive_find_all_volumes (LibHalContext *hal_ctx, HalDrive *drive, int *num_vo
 		goto out;
 
 	/* get initial list... */
-	if ((udis = hal_manager_find_device_string_match (hal_ctx, "block.storage_device", 
-							  drive_udi, &num_udis)) == NULL)
+	dbus_error_init (&error);
+	if ((udis = libhal_manager_find_device_string_match (hal_ctx, "block.storage_device", 
+							     drive_udi, &num_udis, &error)) == NULL)
 		goto out;
 
 	result = malloc (sizeof (char *) * num_udis);
@@ -1400,7 +1417,7 @@ hal_drive_find_all_volumes (LibHalContext *hal_ctx, HalDrive *drive, int *num_vo
 	}
 
 out:
-	hal_free_string_array (udis);
+	libhal_free_string_array (udis);
 	return result;
 }
 
@@ -1409,29 +1426,37 @@ out:
 char *
 hal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
 {
-	return hal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-					       "storage.policy.default.mount_root");
+	DBusError error;
+	dbus_error_init (&error);
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						  "storage.policy.default.mount_root", &error);
 }
 
 dbus_bool_t
 hal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 {
-	return hal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-					     "storage.policy.default.use_managed_keyword");
+	DBusError error;
+	dbus_error_init (&error);
+	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						"storage.policy.default.use_managed_keyword", &error);
 }
 
 char *
 hal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
 {
-	return hal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-					       "storage.policy.default.managed_keyword.primary");
+	DBusError error;
+	dbus_error_init (&error);
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						  "storage.policy.default.managed_keyword.primary", &error);
 }
 
 char *
 hal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx)
 {
-	return hal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-					       "storage.policy.default.managed_keyword.secondary");
+	DBusError error;
+	dbus_error_init (&error);
+	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						  "storage.policy.default.managed_keyword.secondary", &error);
 }
 
 /*************************************************************************/
@@ -1461,18 +1486,21 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 {
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
+	DBusError error;
+
+	dbus_error_init (&error);
 
 	/* first collect from root computer device */
-	properties = hal_device_get_all_properties (hal_ctx, udi);
+	properties = libhal_device_get_all_properties (hal_ctx, udi, &error);
 	if (properties == NULL)
 		goto error;
-	for (hal_psi_init (&it, properties); hal_psi_has_more (&it); hal_psi_next (&it)) {
+	for (libhal_psi_init (&it, properties); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
 		int type;
 		char *key;
 		
-		type = hal_psi_get_type (&it);
-		key = hal_psi_get_key (&it);
-		if (hal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN &&
+		type = libhal_psi_get_type (&it);
+		key = libhal_psi_get_key (&it);
+		if (libhal_psi_get_type (&it) == DBUS_TYPE_BOOLEAN &&
 		    strncmp (key, namespace, namespace_len - 1) == 0) {
 			const char *option = key + namespace_len - 1;
 			char *location;
@@ -1494,7 +1522,7 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 					continue;
 			}
 
-			if (hal_psi_get_bool (&it)) {
+			if (libhal_psi_get_bool (&it)) {
 				/* see if option is already there */
 				location = strstr (options_string, option);
 				if (location == NULL) {
@@ -1520,7 +1548,7 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 		}
 	}
 error:
-	hal_free_property_set (properties);
+	libhal_free_property_set (properties);
 }
 
 

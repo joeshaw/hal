@@ -158,7 +158,7 @@ typedef struct {
  *  @param  prop_result_size    Size of property string
  *  @return                     TRUE if and only if the path resolved.
  */
-gboolean
+static gboolean
 resolve_udiprop_path (const char *path, const char *source_udi,
 		      char *udi_result, size_t udi_result_size, 
 		      char *prop_result, size_t prop_result_size)
@@ -270,29 +270,29 @@ match_compare_property (HalDevice *d, const char *key, const char *right_side, d
 
 	proptype = hal_device_property_get_type (d, key);
 	switch (proptype) {
-	case DBUS_TYPE_STRING:
+	case HAL_PROPERTY_TYPE_STRING:
 		*result = (dbus_int64_t) strcmp (hal_device_property_get_string (d, key), right_side);
 		rc = TRUE;
 		break;
 
-	case DBUS_TYPE_INT32:
+	case HAL_PROPERTY_TYPE_INT32:
 		*result = ((dbus_int64_t) hal_device_property_get_int (d, key)) - strtoll (right_side, NULL, 0);
 		rc = TRUE;
 		break;
 
-	case DBUS_TYPE_UINT64:
+	case HAL_PROPERTY_TYPE_UINT64:
 		*result = ((dbus_int64_t) hal_device_property_get_uint64 (d, key)) - ((dbus_int64_t) strtoll (right_side, NULL, 0));
 		rc = TRUE;
 		break;
 
-	case DBUS_TYPE_DOUBLE:
+	case HAL_PROPERTY_TYPE_DOUBLE:
 		*result = (dbus_int64_t) ceil (hal_device_property_get_double (d, key) - atof (right_side));
 		rc = TRUE;
 		break;
 
 	default:
 		/* explicit fallthrough */
-	case DBUS_TYPE_BOOLEAN:
+	case HAL_PROPERTY_TYPE_BOOLEAN:
 		/* explicit blank since this doesn't make sense */
 		break;
 	}
@@ -355,7 +355,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO(("Checking that key='%s' is a string that "
 		  "equals '%s'", key, value)); */
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		if (strcmp (hal_device_property_get_string (d, prop_to_check),
@@ -375,7 +375,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
 		  key, value));*/
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_INT32)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_INT32)
 			return FALSE;
 
 		if (hal_device_property_get_int (d, prop_to_check) != value) {
@@ -394,7 +394,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
 		  key, value));*/
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_UINT64)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_UINT64)
 			return FALSE;
 
 		if (hal_device_property_get_uint64 (d, prop_to_check) != value) {
@@ -418,7 +418,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		  key, value ? "TRUE" : "FALSE"));*/
 
 		if (hal_device_property_get_type (d, prop_to_check) != 
-		    DBUS_TYPE_BOOLEAN)
+		    HAL_PROPERTY_TYPE_BOOLEAN)
 			return FALSE;
 
 		if (hal_device_property_get_bool (d, prop_to_check) != value)
@@ -450,7 +450,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		if (strcmp (attr[3], "false") == 0)
 			should_be_empty = FALSE;
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		if (hal_device_has_property (d, prop_to_check))
@@ -477,7 +477,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		if (strcmp (attr[3], "false") == 0)
 			should_be_ascii = FALSE;
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		is_ascii = TRUE;
@@ -509,7 +509,7 @@ handle_match (ParsingContext * pc, const char **attr)
 
 		/*HAL_INFO (("d->udi='%s', prop_to_check='%s'", d->udi, prop_to_check));*/
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		if (hal_device_has_property (d, prop_to_check)) {
@@ -538,7 +538,7 @@ handle_match (ParsingContext * pc, const char **attr)
 
 		needle = attr[3];
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		if (hal_device_has_property (d, prop_to_check)) {
@@ -557,7 +557,7 @@ handle_match (ParsingContext * pc, const char **attr)
 
 		needle = attr[3];
 
-		if (hal_device_property_get_type (d, prop_to_check) != DBUS_TYPE_STRING)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
 
 		if (hal_device_has_property (d, prop_to_check)) {
@@ -933,7 +933,7 @@ end (ParsingContext * pc, const char *el)
 			break;
 		}
 	} else if (pc->curelem == CURELEM_APPEND && pc->match_ok && 
-		   hal_device_property_get_type (pc->device, pc->merge_key) == DBUS_TYPE_STRING) {
+		   hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING) {
 		char buf[256];
 		char buf2[256];
 

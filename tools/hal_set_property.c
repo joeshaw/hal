@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#include <libhal/libhal.h>
+#include "libhal/libhal.h"
 
 static LibHalContext *hal_ctx;
 
@@ -90,7 +90,7 @@ usage (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-	int rc = 0;
+	dbus_bool_t rc = 0;
 	char *udi = NULL;
 	char *key = NULL;
 	char *str_value = NULL;
@@ -101,6 +101,7 @@ main (int argc, char *argv[])
 	dbus_bool_t remove = FALSE;
 	dbus_bool_t is_version = FALSE;
 	int type = DBUS_TYPE_NIL;
+	DBusError error;
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -124,7 +125,7 @@ main (int argc, char *argv[])
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
-
+		
 		c = getopt_long (argc, argv, "",
 				 long_options, &option_index);
 		if (c == -1)
@@ -183,51 +184,58 @@ main (int argc, char *argv[])
 	}
 
 	/* must have at least one, but not neither or both */
-	if ((remove && type != DBUS_TYPE_NIL) ||
-	    ((!remove) && type == DBUS_TYPE_NIL)) {
+	if ((remove && type != DBUS_TYPE_NIL) || ((!remove) && type == DBUS_TYPE_NIL)) {
 		usage (argc, argv);
 		return 1;
 	}
-
+	
 	fprintf (stderr, "\n");
-
-	if ((hal_ctx = hal_initialize (NULL, FALSE)) == NULL) {
-		fprintf (stderr, "error: hal_initialize failed\n");
+	
+	dbus_error_init (&error);	
+	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
+		fprintf (stderr, "error: libhal_ctx_new\n");
+		return 1;
+	}
+	if (!libhal_ctx_set_dbus_connection (hal_ctx, dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
+		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+		return 1;
+	}
+	if (!libhal_ctx_init (hal_ctx, &error)) {
+		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
 		return 1;
 	}
 
 	if (remove) {
-		rc = hal_device_remove_property (hal_ctx, udi, key);
-		if (rc != 0)
+		rc = libhal_device_remove_property (hal_ctx, udi, key, &error);
+		if (rc != 0) {
+			fprintf (stderr, "error: libhal_device_remove_property: %s: %s\n", error.name, error.message);
 			return 1;
+		}
 	} else {
 		switch (type) {
 		case DBUS_TYPE_STRING:
-			rc = hal_device_set_property_string (hal_ctx, udi, key,
-							     str_value);
+			rc = libhal_device_set_property_string (hal_ctx, udi, key, str_value, &error);
 			break;
 		case DBUS_TYPE_INT32:
-			rc = hal_device_set_property_int (hal_ctx, udi, key,
-							  int_value);
+			rc = libhal_device_set_property_int (hal_ctx, udi, key, int_value, &error);
 			break;
 		case DBUS_TYPE_UINT64:
-			rc = hal_device_set_property_uint64 (hal_ctx, udi, key,
-							  uint64_value);
+			rc = libhal_device_set_property_uint64 (hal_ctx, udi, key, uint64_value, &error);
 			break;
 		case DBUS_TYPE_DOUBLE:
-			rc = hal_device_set_property_double (hal_ctx, udi, key,
-							     double_value);
+			rc = libhal_device_set_property_double (hal_ctx, udi, key, double_value, &error);
 			break;
 		case DBUS_TYPE_BOOLEAN:
-			rc = hal_device_set_property_bool (hal_ctx, udi, key,
-							   bool_value);
+			rc = libhal_device_set_property_bool (hal_ctx, udi, key, bool_value, &error);
 			break;
 		}
-		if (rc != 0)
+		if (!rc) {
+			fprintf (stderr, "error: libhal_device_set_property: %s: %s\n", error.name, error.message);
 			return 1;
+		}
 	}
-
-	return 0;
+	    
+	return rc ? 0 : 1;
 }
 
 /**

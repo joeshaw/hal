@@ -11,6 +11,26 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
+check_PROGRAMS = hald-test
+
+hald_test_SOURCES =                                                     \
+	hald_marshal.h			hald_marshal.c			\
+	callout.h			callout.c			\
+	device.h			device.c			\
+	device_info.h			device_info.c			\
+	device_store.h			device_store.c			\
+	logger.h			logger.c			\
+	property.h			property.c                      \
+	hald_conf.h                     hald_conf.c			\
+	hald_dbus.h			hald_dbus.c			\
+	hald_test.c							\
+	hald_test_libhal.c
+
+hald_test_LDADD = @PACKAGE_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/libhal/libhal.la
+
+TESTS = hald-test
+
+
 sbin_PROGRAMS = hald
 
 BUILT_SOURCES =		\
@@ -28,7 +48,6 @@ hald_SOURCES =                                                          \
 	logger.h			logger.c			\
 	osspec.h							\
 	property.h			property.c                      \
-	pstore.h                        pstore.c                        \
 	hald_conf.h                     hald_conf.c
 
 hald_LDADD = @PACKAGE_LIBS@ -lm -lcap @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la

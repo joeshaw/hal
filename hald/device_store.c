@@ -284,7 +284,7 @@ hal_device_store_match_key_value_string (HalDeviceStore *store,
 			continue;
 
 		type = hal_device_property_get_type (d, key);
-		if (type != DBUS_TYPE_STRING)
+		if (type != HAL_PROPERTY_TYPE_STRING)
 			continue;
 
 		if (strcmp (hal_device_property_get_string (d, key),
@@ -313,7 +313,7 @@ hal_device_store_match_key_value_int (HalDeviceStore *store,
 			continue;
 
 		type = hal_device_property_get_type (d, key);
-		if (type != DBUS_TYPE_INT32)
+		if (type != HAL_PROPERTY_TYPE_INT32)
 			continue;
 
 		if (hal_device_property_get_int (d, key) == value)
@@ -343,7 +343,7 @@ hal_device_store_match_multiple_key_value_string (HalDeviceStore *store,
 			continue;
 
 		type = hal_device_property_get_type (d, key);
-		if (type != DBUS_TYPE_STRING)
+		if (type != HAL_PROPERTY_TYPE_STRING)
 			continue;
 
 		if (strcmp (hal_device_property_get_string (d, key),

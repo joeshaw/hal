@@ -60,8 +60,8 @@
 
 
 #define DBUS_API_SUBJECT_TO_CHANGE
-#include "libhal/libhal.h"
-#include "libhal-storage/libhal-storage.h"
+#include "../libhal/libhal.h"
+#include "../libhal-storage/libhal-storage.h"
 
 typedef int boolean;
 
@@ -888,9 +888,11 @@ fs_table_has_device (FSTable *table, const char *block_device, const char *label
 		    }
 
 		    if (strcmp (block_device, buf) == 0) {
-		      /* update block.device with new value */
-		      fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), pid, field->value, buf);
-		      hal_device_set_property_string (hal_context, udi, "block.device", field->value);
+			    DBusError error;
+			    /* update block.device with new value */
+			    fstab_update_debug (_("%d: Found %s pointing to %s in" _PATH_FSTAB), pid, field->value, buf);
+			    dbus_error_init (&error);
+			    libhal_device_set_property_string (hal_context, udi, "block.device", field->value, &error);
 		      return TRUE;
 		    }
 
@@ -1159,12 +1161,14 @@ static char* add_hal_device (FSTable *table, const char *udi)
 	/*fstab_update_debug (_("%d: drive=%x, volume=%x\n"), pid, drive, volume);*/
 	if (drive == NULL) {
 		char *udi_storage_device;
+		DBusError error;
 		/* try block.storage_device */
-		udi_storage_device = hal_device_get_property_string (hal_context, udi, "block.storage_device");
+		dbus_error_init (&error);
+		udi_storage_device = libhal_device_get_property_string (hal_context, udi, "block.storage_device", &error);
 		if (udi_storage_device == NULL)
 			goto out;
 		drive = hal_drive_from_udi (hal_context, udi_storage_device);
-		hal_free_string (udi_storage_device);
+		libhal_free_string (udi_storage_device);
 		if (drive == NULL)
 			goto out;
 	}
@@ -1323,6 +1327,7 @@ add_udi (const char *udi)
 	char *last_slash;
 	char *mount_point;
 	char *device_file;
+	DBusError error;
 	
 	dir = strdup (_PATH_FSTAB); 	 
 	last_slash = strrchr (dir, '/'); 	 
@@ -1370,14 +1375,15 @@ add_udi (const char *udi)
 	if (!create_mount_point_for_volume (mount_point))
 		goto error;
 
-	device_file = hal_device_get_property_string (hal_context, udi, "block.device");
+	dbus_error_init (&error);
+	device_file = libhal_device_get_property_string (hal_context, udi, "block.device", &error);
 	
 	fstab_update_debug (_("%d: added mount point '%s' for device '%s'\n"),
 			    pid, mount_point, device_file);
 	syslog (LOG_INFO, _("added mount point %s for %s"), 
 		mount_point, device_file);
 	
-	hal_free_string (device_file);
+	libhal_free_string (device_file);
 	
 	close (fd);
 	
@@ -1405,18 +1411,21 @@ remove_udi (const char *udi)
   boolean is_volume;
   char *dir = NULL;
   char *last_slash;
+  DBusError error;
 
-  is_volume = hal_device_query_capability (hal_context, udi, "volume");
+  dbus_error_init (&error);
+
+  is_volume = libhal_device_query_capability (hal_context, udi, "volume", &error);
 
   /* don't remove the fstab entry if we were spawned of a device with
    * storage.no_partitions_hint set to TRUE. Per the spec this is
    * exactly when block.no_partitions is TRUE on the volume. E.g.
    * floppies and optical discs
    */
-  if (is_volume && hal_device_get_property_bool (hal_context, udi, "block.no_partitions"))
+  if (is_volume && libhal_device_get_property_bool (hal_context, udi, "block.no_partitions", &error))
     return FALSE;
 
-  block_device = hal_device_get_property_string (hal_context, udi, "block.device");
+  block_device = libhal_device_get_property_string (hal_context, udi, "block.device", &error);
 
   dir = strdup (_PATH_FSTAB); 	 
   last_slash = strrchr (dir, '/'); 	 
@@ -1653,6 +1662,8 @@ main (int argc, const char *argv[])
   char *udi_to_add = NULL, *udi_to_remove = NULL, *hal_device_udi;
   const char **left_over_args = NULL;
   int lockfd = -1;
+  DBusError error;
+  DBusConnection *conn;
 
   pid = getpid ();
 
@@ -1763,7 +1774,25 @@ main (int argc, const char *argv[])
 		  }
 	  }
 
-  hal_context = hal_initialize (NULL, FALSE);
+  dbus_error_init (&error);	
+  conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+  if (conn == NULL) {
+	  fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
+	  goto out;
+  }		
+  if ((hal_context = libhal_ctx_new ()) == NULL) {
+	  fprintf (stderr, "error: libhal_ctx_new\n");
+	  goto out;
+  }
+  if (!libhal_ctx_set_dbus_connection (hal_context, conn)) {
+	  fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+	  goto out;
+  }
+  if (!libhal_ctx_init (hal_context, &error)) {
+	  fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+	  goto out;
+  }
+
   fsy_mount_root = hal_drive_policy_default_get_mount_root (hal_context);
   if (fsy_mount_root == NULL)
 	  goto out;
@@ -1787,7 +1816,8 @@ main (int argc, const char *argv[])
       if (udi_to_remove)
         retval |= !remove_udi (udi_to_remove);
 
-      hal_shutdown (hal_context);
+      libhal_ctx_shutdown (hal_context, &error);
+      libhal_ctx_free (hal_context);
     }
   else if (should_clean)
     retval = clean ();

@@ -18,5 +18,8 @@ libhal_storage_la_SOURCES =                                       \
 
 libhal_storage_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
+libhal_storage_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+
+
 clean-local :
 	rm -f *~

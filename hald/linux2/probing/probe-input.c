@@ -36,7 +36,7 @@
 
 #include <linux/input.h>
 
-#include <libhal/libhal.h>
+#include "libhal/libhal.h"
 
 #define test_bit(bit, array) (array[(bit) / 8] & (1 << ((bit) % 8)))
 
@@ -55,7 +55,7 @@ check_abs (int fd, LibHalContext *ctx, const char *udi)
 		goto out;
 	}
 
-	hal_device_add_capability (ctx, udi, "input.tablet");
+	libhal_device_add_capability (ctx, udi, "input.tablet", NULL);
 
 out:
 	;
@@ -84,7 +84,7 @@ check_key (int fd, LibHalContext *ctx, const char *udi)
 	}
 
 	if (is_keyboard) {
-		hal_device_add_capability (ctx, udi, "input.keyboard");
+		libhal_device_add_capability (ctx, udi, "input.keyboard", NULL);
 	}
 
 out:
@@ -106,7 +106,7 @@ check_rel (int fd, LibHalContext *ctx, const char *udi)
 		goto out;
 	}
 
-	hal_device_add_capability (ctx, udi, "input.mouse");
+	libhal_device_add_capability (ctx, udi, "input.mouse", NULL);
 
 out:
 	;
@@ -133,8 +133,11 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		goto out;
 
-	ctx = hal_initialize (NULL, FALSE);
-	if (ctx == NULL)
+	if ((ctx = libhal_ctx_new ()) == NULL)
+		goto out;
+	if (!libhal_ctx_set_dbus_connection (ctx, dbus_bus_get (DBUS_BUS_SYSTEM, NULL)))
+		goto out;
+	if (libhal_ctx_init (ctx, NULL))
 		goto out;
 
 	device_file = getenv ("HAL_PROP_INPUT_DEVICE");
@@ -172,8 +175,8 @@ main (int argc, char *argv[])
 		fprintf(stderr, "ioctl EVIOCGNAME failed\n");
 		goto out;
 	}
-	hal_device_set_property_string (ctx, udi, "info.product", name);
-	hal_device_set_property_string (ctx, udi, "input.product", name);
+	libhal_device_set_property_string (ctx, udi, "info.product", name, NULL);
+	libhal_device_set_property_string (ctx, udi, "input.product", name, NULL);
 
 	check_abs (fd, ctx, udi);
 	check_rel (fd, ctx, udi);
@@ -186,8 +189,10 @@ out:
 	if (fd >= 0)
 		close (fd);
 
-	if (ctx != NULL)
-		hal_shutdown (ctx);
+	if (ctx != NULL) {
+		libhal_ctx_shutdown (ctx, NULL);
+		libhal_ctx_free (ctx);
+	}
 
 	return ret;
 }

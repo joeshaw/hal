@@ -26,28 +26,48 @@ handle_usb_found (const char *module)
 {
 	char *udi;
 	LibHalContext *hal_context = NULL;
+	DBusConnection *conn;
+	DBusError error;
 
 	udi = getenv ("UDI");
 	if (udi == NULL)
 		return FALSE;
 
-	hal_context = hal_initialize (NULL, 0);
-	if (hal_context == NULL)
-		return FALSE;
-
-	if (strcmp (module, "usbcam") == 0 || strcmp(module, "libgphoto2") == 0) {
-		hal_device_add_capability (hal_context, udi, "camera");
-		hal_device_set_property_string (hal_context, udi, "info.category", "camera");
-		hal_device_set_property_string (hal_context, udi, "camera.access_method", "user");
-		hal_device_set_property_bool (hal_context, udi, "camera.libgphoto2_support", TRUE);
-	} else if (strcmp (module, "libusbscanner") == 0) {
-		hal_device_add_capability (hal_context, udi, "scanner");
-		hal_device_set_property_string (hal_context, udi, "info.category", "scanner");
-		hal_device_set_property_string (hal_context, udi, "scanner.access_method", "user");
-		hal_device_set_property_bool (hal_context, udi, "scanner.libsane_support", TRUE);
+	dbus_error_init (&error);	
+	conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (conn == NULL) {
+		fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
+		goto out;
+	}		
+	if ((hal_context = libhal_ctx_new ()) == NULL) {
+		fprintf (stderr, "error: libhal_ctx_new\n");
+		goto out;
+	}
+	if (!libhal_ctx_set_dbus_connection (hal_context, conn)) {
+		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+		goto out;
+	}
+	if (!libhal_ctx_init (hal_context, &error)) {
+		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+		goto out;
 	}
 
-	hal_shutdown (hal_context);
+
+	if (strcmp (module, "usbcam") == 0 || strcmp(module, "libgphoto2") == 0) {
+		libhal_device_add_capability (hal_context, udi, "camera", &error);
+		libhal_device_set_property_string (hal_context, udi, "info.category", "camera", &error);
+		libhal_device_set_property_string (hal_context, udi, "camera.access_method", "user", &error);
+		libhal_device_set_property_bool (hal_context, udi, "camera.libgphoto2_support", TRUE, &error);
+	} else if (strcmp (module, "libusbscanner") == 0) {
+		libhal_device_add_capability (hal_context, udi, "scanner", &error);
+		libhal_device_set_property_string (hal_context, udi, "info.category", "scanner", &error);
+		libhal_device_set_property_string (hal_context, udi, "scanner.access_method", "user", &error);
+		libhal_device_set_property_bool (hal_context, udi, "scanner.libsane_support", TRUE, &error);
+	}
+
+	libhal_ctx_shutdown (hal_context, &error);
+	libhal_ctx_free (hal_context);
+out:
 	return TRUE;
 }
 

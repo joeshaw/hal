@@ -28,6 +28,7 @@
 #  include <config.h>
 #endif
 
+#include <string.h>
 #include <glib.h>
 
 #include "logger.h"
@@ -43,6 +44,7 @@ struct _HalProperty {
  		dbus_uint64_t uint64_value;
 		dbus_bool_t bool_value;
 		double double_value;
+		GSList *strlist_value;
 	};
 	gboolean readonly;
 	gboolean persistence;
@@ -52,10 +54,18 @@ struct _HalProperty {
 void
 hal_property_free (HalProperty *prop)
 {
+
 	g_free (prop->key);
 
-	if (prop->type == DBUS_TYPE_STRING)
+	if (prop->type == HAL_PROPERTY_TYPE_STRING) {
 		g_free (prop->str_value);
+	} else if (prop->type == HAL_PROPERTY_TYPE_STRLIST) {
+		GSList *i;
+		for (i = prop->strlist_value; i != NULL; i = g_slist_next (i)) {
+			g_free (i->data);
+		}
+		g_slist_free (prop->strlist_value);
+	}
 
 	g_free (prop);
 }
@@ -69,7 +79,7 @@ hal_property_new_string (const char *key, const char *value)
 
 	prop = g_new0 (HalProperty, 1);
 
-	prop->type = DBUS_TYPE_STRING;
+	prop->type = HAL_PROPERTY_TYPE_STRING;
 	prop->key = g_strdup (key);
 	prop->str_value = g_strdup (value);
 
@@ -94,7 +104,7 @@ hal_property_new_int (const char *key, dbus_int32_t value)
 
 	prop = g_new0 (HalProperty, 1);
 
-	prop->type = DBUS_TYPE_INT32;
+	prop->type = HAL_PROPERTY_TYPE_INT32;
 	prop->key = g_strdup (key);
 	prop->int_value = value;
 
@@ -108,7 +118,7 @@ hal_property_new_uint64 (const char *key, dbus_uint64_t value)
 
 	prop = g_new0 (HalProperty, 1);
 
-	prop->type = DBUS_TYPE_UINT64;
+	prop->type = HAL_PROPERTY_TYPE_UINT64;
 	prop->key = g_strdup (key);
 	prop->uint64_value = value;
 
@@ -122,7 +132,7 @@ hal_property_new_bool (const char *key, dbus_bool_t value)
 
 	prop = g_new0 (HalProperty, 1);
 
-	prop->type = DBUS_TYPE_BOOLEAN;
+	prop->type = HAL_PROPERTY_TYPE_BOOLEAN;
 	prop->key = g_strdup (key);
 	prop->bool_value = value;
 
@@ -136,7 +146,7 @@ hal_property_new_double (const char *key, double value)
 
 	prop = g_new0 (HalProperty, 1);
 
-	prop->type = DBUS_TYPE_DOUBLE;
+	prop->type = HAL_PROPERTY_TYPE_DOUBLE;
 	prop->key = g_strdup (key);
 	prop->double_value = value;
 
@@ -154,7 +164,7 @@ hal_property_get_key (HalProperty *prop)
 int
 hal_property_get_type (HalProperty *prop)
 {
-	g_return_val_if_fail (prop != NULL, DBUS_TYPE_INVALID);
+	g_return_val_if_fail (prop != NULL, HAL_PROPERTY_TYPE_NIL);
 
 	return prop->type;
 }
@@ -163,7 +173,7 @@ const char *
 hal_property_get_string (HalProperty *prop)
 {
 	g_return_val_if_fail (prop != NULL, NULL);
-	g_return_val_if_fail (prop->type == DBUS_TYPE_STRING, NULL);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRING, NULL);
 
 	return prop->str_value;
 }
@@ -172,7 +182,7 @@ dbus_int32_t
 hal_property_get_int (HalProperty *prop)
 {
 	g_return_val_if_fail (prop != NULL, -1);
-	g_return_val_if_fail (prop->type == DBUS_TYPE_INT32, -1);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_INT32, -1);
 
 	return prop->int_value;
 }
@@ -181,7 +191,7 @@ dbus_uint64_t
 hal_property_get_uint64 (HalProperty *prop)
 {
 	g_return_val_if_fail (prop != NULL, -1);
-	g_return_val_if_fail (prop->type == DBUS_TYPE_UINT64, -1);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_UINT64, -1);
 
 	return prop->uint64_value;
 }
@@ -190,7 +200,7 @@ dbus_bool_t
 hal_property_get_bool (HalProperty *prop)
 {
 	g_return_val_if_fail (prop != NULL, FALSE);
-	g_return_val_if_fail (prop->type == DBUS_TYPE_BOOLEAN, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_BOOLEAN, FALSE);
 
 	return prop->bool_value;
 }
@@ -201,16 +211,16 @@ hal_property_to_string (HalProperty *prop)
 	g_return_val_if_fail (prop != NULL, NULL);
 
 	switch (prop->type) {
-	case DBUS_TYPE_STRING:
+	case HAL_PROPERTY_TYPE_STRING:
 		return g_strdup (prop->str_value);
-	case DBUS_TYPE_INT32:
+	case HAL_PROPERTY_TYPE_INT32:
 		return g_strdup_printf ("%d", prop->int_value);
-	case DBUS_TYPE_UINT64:
+	case HAL_PROPERTY_TYPE_UINT64:
 		return g_strdup_printf ("%lld", prop->uint64_value);
-	case DBUS_TYPE_BOOLEAN:
+	case HAL_PROPERTY_TYPE_BOOLEAN:
 		/* FIXME: Maybe use 1 and 0 here instead? */
 		return g_strdup (prop->bool_value ? "true" : "false");
-	case DBUS_TYPE_DOUBLE:
+	case HAL_PROPERTY_TYPE_DOUBLE:
 		return g_strdup_printf ("%f", prop->double_value);
 	default:
 		return NULL;
@@ -221,7 +231,7 @@ double
 hal_property_get_double (HalProperty *prop)
 {
 	g_return_val_if_fail (prop != NULL, -1.0);
-	g_return_val_if_fail (prop->type == DBUS_TYPE_DOUBLE, -1.0);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_DOUBLE, -1.0);
 
 	return prop->double_value;
 }
@@ -233,10 +243,10 @@ hal_property_set_string (HalProperty *prop, const char *value)
 	gboolean validated = TRUE;
 
 	g_return_if_fail (prop != NULL);
-	g_return_if_fail (prop->type == DBUS_TYPE_STRING ||
-			  prop->type == DBUS_TYPE_NIL);
+	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_STRING ||
+			  prop->type == HAL_PROPERTY_TYPE_NIL);
 
-	prop->type = DBUS_TYPE_STRING;
+	prop->type = HAL_PROPERTY_TYPE_STRING;
 	prop->str_value = g_strdup (value);
 
 	while (!g_utf8_validate (prop->str_value, -1,
@@ -255,10 +265,10 @@ void
 hal_property_set_int (HalProperty *prop, dbus_int32_t value)
 {
 	g_return_if_fail (prop != NULL);
-	g_return_if_fail (prop->type == DBUS_TYPE_INT32 ||
-			  prop->type == DBUS_TYPE_NIL);
+	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_INT32 ||
+			  prop->type == HAL_PROPERTY_TYPE_NIL);
 
-	prop->type = DBUS_TYPE_INT32;
+	prop->type = HAL_PROPERTY_TYPE_INT32;
 	prop->int_value = value;
 }
 
@@ -266,10 +276,10 @@ void
 hal_property_set_uint64 (HalProperty *prop, dbus_uint64_t value)
 {
 	g_return_if_fail (prop != NULL);
-	g_return_if_fail (prop->type == DBUS_TYPE_UINT64 ||
-			  prop->type == DBUS_TYPE_NIL);
+	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_UINT64 ||
+			  prop->type == HAL_PROPERTY_TYPE_NIL);
 
-	prop->type = DBUS_TYPE_UINT64;
+	prop->type = HAL_PROPERTY_TYPE_UINT64;
 	prop->uint64_value = value;
 }
 
@@ -277,10 +287,10 @@ void
 hal_property_set_bool (HalProperty *prop, dbus_bool_t value)
 {
 	g_return_if_fail (prop != NULL);
-	g_return_if_fail (prop->type == DBUS_TYPE_BOOLEAN ||
-			  prop->type == DBUS_TYPE_NIL);
+	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_BOOLEAN ||
+			  prop->type == HAL_PROPERTY_TYPE_NIL);
 
-	prop->type = DBUS_TYPE_BOOLEAN;
+	prop->type = HAL_PROPERTY_TYPE_BOOLEAN;
 	prop->bool_value = value;
 }
 
@@ -288,10 +298,10 @@ void
 hal_property_set_double (HalProperty *prop, double value)
 {
 	g_return_if_fail (prop != NULL);
-	g_return_if_fail (prop->type == DBUS_TYPE_DOUBLE ||
-			  prop->type == DBUS_TYPE_NIL);
+	g_return_if_fail (prop->type == HAL_PROPERTY_TYPE_DOUBLE ||
+			  prop->type == HAL_PROPERTY_TYPE_NIL);
 
-	prop->type = DBUS_TYPE_DOUBLE;
+	prop->type = HAL_PROPERTY_TYPE_DOUBLE;
 	prop->double_value = value;
 }
 
@@ -331,4 +341,105 @@ hal_property_get_attribute (HalProperty *prop,
 	default:
 		return -1;
 	}
+}
+
+HalProperty *
+hal_property_new_strlist (const char *key)
+{
+	HalProperty *prop;
+
+	prop = g_new0 (HalProperty, 1);
+
+	prop->type = HAL_PROPERTY_TYPE_STRLIST;
+	prop->key = g_strdup (key);
+	prop->strlist_value = NULL;
+
+	return prop;
+}
+
+GSList *
+hal_property_get_strlist (HalProperty *prop)
+{
+	g_return_val_if_fail (prop != NULL, NULL);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, NULL);
+
+	return prop->strlist_value;
+}
+
+gboolean
+hal_property_strlist_append (HalProperty *prop, const char *value)
+{
+	g_return_val_if_fail (prop != NULL, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, FALSE);
+
+	prop->strlist_value = g_slist_append (prop->strlist_value, g_strdup (value));
+
+	return TRUE;
+}
+
+gboolean
+hal_property_strlist_prepend (HalProperty *prop, const char *value)
+{
+	g_return_val_if_fail (prop != NULL, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, FALSE);
+
+	prop->strlist_value = g_slist_prepend (prop->strlist_value, g_strdup (value));
+
+	return TRUE;
+}
+
+gboolean
+hal_property_strlist_remove_elem (HalProperty *prop, guint index)
+{
+	GSList *elem;
+
+	g_return_val_if_fail (prop != NULL, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, FALSE);
+
+	if (prop->strlist_value == NULL)
+		return FALSE;
+
+	elem = g_slist_nth (prop->strlist_value, index);
+	if (elem == NULL)
+		return FALSE;
+
+	g_free (elem->data);
+	prop->strlist_value = g_slist_delete_link (prop->strlist_value, elem);
+	return TRUE;
+}
+
+
+gboolean 
+hal_property_strlist_add (HalProperty  *prop, const char *value)
+{
+	GSList *elem;
+
+	g_return_val_if_fail (prop != NULL, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, FALSE);
+
+	for (elem = prop->strlist_value; elem != NULL; elem = g_slist_next (elem)) {
+		if (strcmp (elem->data, value) == 0) {
+			return FALSE;
+		}
+	}
+
+	return hal_property_strlist_append (prop, value);
+}
+
+gboolean 
+hal_property_strlist_remove (HalProperty *prop, const char *value)
+{
+	guint i;
+	GSList *elem;
+
+	g_return_val_if_fail (prop != NULL, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, FALSE);
+
+	for (elem = prop->strlist_value, i = 0; elem != NULL; elem = g_slist_next (elem), i++) {
+		if (strcmp (elem->data, value) == 0) {
+			return hal_property_strlist_remove_elem (prop, i);
+		}
+	}
+
+	return FALSE;
 }

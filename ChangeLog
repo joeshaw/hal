@@ -1,3 +1,100 @@
+2005-01-31  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Prebump to 0.5.0 - but we're not doing a release yet!
+	Add libtool versioning since libhal and libhal-storage are going
+	to break API and ABI backwards compatibility.
+
+	* hald/hald_test.c: Add the beginnings of a test suite
+
+	* hald/hald_test_libhal.c: -do-
+
+	* hald/Makefile.am: Add build rules for test suite
+
+	* tools/linux/hal_hotplug_map.c: Update to use new libhal API.
+
+	* tools/lshal.c: Update to use new libhal API.
+
+	* tools/hal_set_property.c: Update to use new libhal API.
+
+	* tools/hal_get_property.c: Update to use new libhal API.
+
+	* tools/fstab-sync.c: Update to use new libhal API.
+
+	* libhal-storage/libhal-storage.c: Update to use new libhal API.
+	This library will also go through a renaming/cleanup before 0.5.0.
+
+	* libhal-storage/Makefile.am: Use library versioning
+
+	* libhal/libhal.[ch]: Prefix all function names and other identifiers
+	with libhal instead of hal. Add code for string lists. Change the
+	way libhal is initialized to be a multistep process. Use HAL_PROPERTY_
+	TYPE_* instead of DBUS_TYPE_*. Make all functions using IPC take
+	a DBusError argument for better error handling. Notable changes
+	(libhal_device_get_all_properties): Teach this function about 
+	string lists
+	(libhal_psi_get_strlist): New function
+	(hal_initialize): Removed
+	(hal_shutdown): Removed
+	(libhal_device_get_property_strlist): New function
+	(libhal_device_property_strlist_append): New function
+	(libhal_device_property_strlist_prepend): New function
+	(libhal_device_property_strlist_remove_index): New function
+	(libhal_device_property_strlist_remove): New function
+	(libhal_ctx_new): New function
+	(libhal_ctx_set_cache): New function
+	(libhal_ctx_set_dbus_connection): New function
+	(libhal_ctx_init): New function
+	(libhal_ctx_shutdown): New function
+	(libhal_ctx_free): New function
+	(libhal_ctx_set_device_added): New function
+	(libhal_ctx_set_device_removed): New function
+	(libhal_ctx_set_device_new_capability): New function
+	(libhal_ctx_set_device_lost_capability): New function
+	(libhal_ctx_set_device_property_modified): New function
+	(libhal_ctx_set_device_condition): New function
+
+	* libhal/Makefile.am: Use library versioning
+
+	* hald/linux2/probing/probe-input.c: Port to new libhal API
+
+	* hald/property.h: Rename property types to HAL_PROPERTY_TYPE_*.
+	Add prototypes for new string list properties.
+
+	* hald/property.c: Rename property types to HAL_PROPERTY_TYPE_*.
+	(hal_property_free): Teach this function about string lists.
+	(hal_property_new_strlist): New function
+	(hal_property_get_strlist): New function
+	(hal_property_strlist_append): New function
+	(hal_property_strlist_prepend): New function
+	(hal_property_strlist_remove_elem): New function
+	(hal_property_strlist_add): New function
+	(hal_property_strlist_remove): New function
+
+	* hald/hald_dbus.c: Rename property types to HAL_PROPERTY_TYPE_*.
+	Add new ugly code to handle string lists with the current D-BUS.
+	(device_string_list_append_prepend): New function
+	(hald_dbus_filter_function): Rename from filter_function. Add
+	handlers for new D-BUS methods. Export this function 
+
+	* hald/hald.[ch]: Rip out persistent property code.
+
+	* hald/device_info.c: Rename property types to HAL_PROPERTY_TYPE_*.
+
+	* hald/device.c: Rename to property to HAL_PROPERTY_TYPE_*. Rip out
+	persistent property code.
+	(hal_device_property_get_as_string): Add code for strlist type
+	(hal_device_property_get_strlist): New function
+	(hal_device_property_strlist_append): New function
+	(hal_device_property_strlist_prepend): New function
+	(hal_device_property_strlist_remove_elem): New function
+	(hal_device_property_strlist_add): New function
+	(hal_device_property_strlist_remove): New function
+
+	* hald/device.h: Add new strlist prototypes
+
+	* pstore.[ch]: Remove for now as persistent properties needs to be
+	reworked
+
 2005-01-26  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/osspec.c (link_detection_handle_message): New function.

@@ -64,9 +64,11 @@ dump_devices ()
 	int i;
 	int num_devices;
 	char **device_names;
+	DBusError error;
 
-	device_names = hal_get_all_devices (hal_ctx, &num_devices);
+	dbus_error_init (&error);
 
+	device_names = libhal_get_all_devices (hal_ctx, &num_devices, &error);
 	if (device_names == NULL)
 		DIE (("Couldn't obtain list of devices\n"));
 
@@ -80,8 +82,7 @@ dump_devices ()
 		LibHalPropertySetIterator it;
 		int type;
 
-		props = hal_device_get_all_properties (hal_ctx, 
-						       device_names[i]);
+		props = libhal_device_get_all_properties (hal_ctx, device_names[i], &error);
 
 		/* NOTE NOTE NOTE: This may be NULL if the device was removed
 		 *                 in the daemon; this is because 
@@ -94,49 +95,69 @@ dump_devices ()
 
 		printf ("udi = '%s'\n", device_names[i]);
 
-		for (hal_psi_init (&it, props); hal_psi_has_more (&it);
-		     hal_psi_next (&it)) {
-			type = hal_psi_get_type (&it);
+		for (libhal_psi_init (&it, props); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
+			type = libhal_psi_get_type (&it);
 			switch (type) {
-			case DBUS_TYPE_STRING:
+			case LIBHAL_PROPERTY_TYPE_STRING:
 				printf ("  %s = '%s'  (string)\n",
-					hal_psi_get_key (&it),
-					hal_psi_get_string (&it));
+					libhal_psi_get_key (&it),
+					libhal_psi_get_string (&it));
 				break;
 
-			case DBUS_TYPE_INT32:
+			case LIBHAL_PROPERTY_TYPE_INT32:
 				printf ("  %s = %d  (0x%x)  (int)\n",
-					hal_psi_get_key (&it),
-					hal_psi_get_int (&it),
-					hal_psi_get_int (&it));
+					libhal_psi_get_key (&it),
+					libhal_psi_get_int (&it),
+					libhal_psi_get_int (&it));
 				break;
 
-			case DBUS_TYPE_UINT64:
+			case LIBHAL_PROPERTY_TYPE_UINT64:
 				printf ("  %s = %lld  (0x%llx)  (uint64)\n",
-					hal_psi_get_key (&it),
-					hal_psi_get_uint64 (&it),
-					hal_psi_get_uint64 (&it));
+					libhal_psi_get_key (&it),
+					libhal_psi_get_uint64 (&it),
+					libhal_psi_get_uint64 (&it));
 				break;
 
-			case DBUS_TYPE_DOUBLE:
+			case LIBHAL_PROPERTY_TYPE_DOUBLE:
 				printf ("  %s = %g  (double)\n",
-					hal_psi_get_key (&it),
-					hal_psi_get_double (&it));
+					libhal_psi_get_key (&it),
+					libhal_psi_get_double (&it));
 				break;
 
-			case DBUS_TYPE_BOOLEAN:
+			case LIBHAL_PROPERTY_TYPE_BOOLEAN:
 				printf ("  %s = %s  (bool)\n",
-					hal_psi_get_key (&it),
-					hal_psi_get_bool (&it) ? "true" :
+					libhal_psi_get_key (&it),
+					libhal_psi_get_bool (&it) ? "true" :
 					"false");
+				break;
+
+			case LIBHAL_PROPERTY_TYPE_STRLIST:
+			{
+				unsigned int i;
+				char **strlist;
+
+				printf ("  %s = {", libhal_psi_get_key (&it));
+
+				strlist = libhal_psi_get_strlist (&it);
+				for (i = 0; strlist[i] != 0; i++) {
+					printf ("'%s'", strlist[i]);
+					if (strlist[i+1] != NULL)
+						printf (", ");
+				}
+				printf ("} (string list)\n");
+				break;
+			}
+
+			default:
+				printf ("Unknown type %d=0x%02x\n", type, type);
 				break;
 			}
 		}
-		hal_free_property_set (props);
+		libhal_free_property_set (props);
 		printf ("\n");
 	}
 
-	hal_free_string_array (device_names);
+	libhal_free_string_array (device_names);
 
 	printf ("\n"
 		"Dumped %d device(s) from the Global Device List:\n"
@@ -156,7 +177,7 @@ device_added (LibHalContext *ctx,
 	      const char *udi)
 {
 	fprintf (stderr, "*** lshal: device_added, udi='%s'\n", udi);
-	dump_devices ();
+	/*dump_devices ();*/
 }
 
 /** Invoked when a device is removed from the Global Device List. Simply
@@ -169,7 +190,7 @@ device_removed (LibHalContext *ctx,
 		const char *udi)
 {
 	fprintf (stderr, "*** lshal: device_removed, udi='%s'\n", udi);
-	dump_devices ();
+	/*dump_devices ();*/
 }
 
 /** Invoked when device in the Global Device List acquires a new capability.
@@ -204,7 +225,6 @@ device_lost_capability (LibHalContext *ctx,
 	/*dump_devices(); */
 }
 
-
 /** Acquires and prints the value of of a property to stderr.
  *
  *  @param  udi                 Universal Device Id
@@ -215,43 +235,59 @@ print_property (const char *udi, const char *key)
 {
 	int type;
 	char *str;
+	DBusError error;
 
-	type = hal_device_get_property_type (hal_ctx, udi, key);
+	dbus_error_init (&error);
+
+	type = libhal_device_get_property_type (hal_ctx, udi, key, &error);
 
 	switch (type) {
-	case DBUS_TYPE_STRING:
-		str = hal_device_get_property_string (hal_ctx, udi, key);
+	case LIBHAL_PROPERTY_TYPE_STRING:
+		str = libhal_device_get_property_string (hal_ctx, udi, key, &error);
 		fprintf (stderr, "*** new value: '%s'  (string)\n", str);
-		hal_free_string (str);
+		libhal_free_string (str);
 		break;
-	case DBUS_TYPE_INT32:
+	case LIBHAL_PROPERTY_TYPE_INT32:
 		{
-			dbus_int32_t value =
-			    hal_device_get_property_int (hal_ctx, udi, key);
+			dbus_int32_t value = libhal_device_get_property_int (hal_ctx, udi, key, &error);
 			fprintf (stderr,
 				 "*** new value: %d (0x%x)  (int)\n",
 				 value, value);
 		}
 		break;
-	case DBUS_TYPE_UINT64:
+	case LIBHAL_PROPERTY_TYPE_UINT64:
 		{
-			dbus_uint64_t value =
-			    hal_device_get_property_uint64 (hal_ctx, udi, key);
+			dbus_uint64_t value = libhal_device_get_property_uint64 (hal_ctx, udi, key, &error);
 			fprintf (stderr,
 				 "*** new value: %lld (0x%llx)  (uint64)\n",
 				 value, value);
 		}
 		break;
-	case DBUS_TYPE_DOUBLE:
+	case LIBHAL_PROPERTY_TYPE_DOUBLE:
 		fprintf (stderr, "*** new value: %g  (double)\n",
-			 hal_device_get_property_double (hal_ctx, udi, key));
+			 libhal_device_get_property_double (hal_ctx, udi, key, &error));
 		break;
-	case DBUS_TYPE_BOOLEAN:
+	case LIBHAL_PROPERTY_TYPE_BOOLEAN:
 		fprintf (stderr, "*** new value: %s  (bool)\n",
-			 hal_device_get_property_bool (hal_ctx, udi,
-						       key) ? "true" :
-			 "false");
+			 libhal_device_get_property_bool (hal_ctx, udi, key, &error) ? "true" : "false");
 		break;
+	case LIBHAL_PROPERTY_TYPE_STRLIST:
+	{
+		unsigned int i;
+		char **strlist;
+		
+		fprintf (stderr, "*** new value: {");
+
+		strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
+		for (i = 0; strlist[i] != 0; i++) {
+			fprintf (stderr, "'%s'", strlist[i]);
+			if (strlist[i+1] != NULL)
+				fprintf (stderr, ", ");
+		}
+		fprintf (stderr, "}  (string list)\n");
+		libhal_free_string_array (strlist);
+		break;
+	}
 
 	default:
 		fprintf (stderr, "Unknown type %d='%c'\n", type, type);
@@ -305,17 +341,6 @@ device_condition (LibHalContext *ctx,
 }
 
 
-/** Invoked by libhal for integration with our mainloop. We take the
- *  easy route and use link with glib for painless integrate.
- *
- *  @param  dbus_connection     D-BUS connection to integrate
- */
-static void
-mainloop_integration (LibHalContext *ctx, DBusConnection * dbus_connection)
-{
-	dbus_connection_setup_with_g_main (dbus_connection, NULL);
-}
-
 
 /** Print out program usage.
  *
@@ -345,16 +370,10 @@ usage (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
+	DBusError error;
 	dbus_bool_t do_monitor = FALSE;
 	GMainLoop *loop;
-	LibHalFunctions hal_functions = { mainloop_integration,
-		device_added,
-		device_removed,
-		device_new_capability,
-		device_lost_capability,
-		property_modified,
-		device_condition
-	};
+	DBusConnection *conn;
 
 	fprintf (stderr, "lshal version " PACKAGE_VERSION "\n");
 
@@ -394,24 +413,46 @@ main (int argc, char *argv[])
 		}
 	}
 
+	dbus_error_init (&error);	
+	conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (conn == NULL) {
+		fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
+		return 1;
+	}		
+	dbus_connection_setup_with_g_main (conn, NULL);
 
-	if ((hal_ctx = hal_initialize (&hal_functions, FALSE)) == NULL) {
-		fprintf (stderr, "error: hal_initialize failed\n");
-		exit (1);
+	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
+		fprintf (stderr, "error: libhal_ctx_new\n");
+		return 1;
 	}
+	if (!libhal_ctx_set_dbus_connection (hal_ctx, conn)) {
+		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+		return 1;
+	}
+	if (!libhal_ctx_init (hal_ctx, &error)) {
+		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+		return 1;
+	}
+
+	libhal_ctx_set_device_added (hal_ctx, device_added);
+	libhal_ctx_set_device_removed (hal_ctx, device_removed);
+	libhal_ctx_set_device_new_capability (hal_ctx, device_new_capability);
+	libhal_ctx_set_device_lost_capability (hal_ctx, device_lost_capability);
+	libhal_ctx_set_device_property_modified (hal_ctx, property_modified);
+	libhal_ctx_set_device_condition (hal_ctx, device_condition);
 
 	dump_devices ();
 
 	/* run the main loop only if we should monitor */
 	if (do_monitor) {
-		hal_device_property_watch_all (hal_ctx);
+		libhal_device_property_watch_all (hal_ctx, &error);
 		g_main_loop_run (loop);
 	}
 
-	hal_shutdown (hal_ctx);
+	libhal_ctx_shutdown (hal_ctx, &error);
+	libhal_ctx_free (hal_ctx);
 	return 0;
 }
-
 
 /**
  * @}

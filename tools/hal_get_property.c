@@ -89,6 +89,7 @@ main (int argc, char *argv[])
 	dbus_bool_t is_verbose = FALSE;
 	dbus_bool_t is_version = FALSE;
 	char *str;
+	DBusError error;
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -151,51 +152,59 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-	if ((hal_ctx = hal_initialize (NULL, FALSE)) == NULL) {
-		fprintf (stderr, "error: hal_initialize failed\n");
+	dbus_error_init (&error);	
+	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
+		fprintf (stderr, "error: libhal_ctx_new\n");
+		return 1;
+	}
+	if (!libhal_ctx_set_dbus_connection (hal_ctx, dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
+		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+		return 1;
+	}
+	if (!libhal_ctx_init (hal_ctx, &error)) {
+		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
 		return 1;
 	}
 
-	type = hal_device_get_property_type (hal_ctx, udi, key);
+	type = libhal_device_get_property_type (hal_ctx, udi, key, &error);
 	if (type == DBUS_TYPE_NIL) {
+		fprintf (stderr, "error: libhal_device_get_property_type: %s: %s\n", error.name, error.message);
 		return 1;
 	}
-	// emit the value to stdout
+	/* emit the value to stdout */
 	switch (type) {
 	case DBUS_TYPE_STRING:
-		str = hal_device_get_property_string (hal_ctx, udi, key);
+		str = libhal_device_get_property_string (hal_ctx, udi, key, &error);
 		if (is_verbose)
 			printf ("Type is string\n");
 		printf ("%s\n", str);
-		hal_free_string (str);
+		libhal_free_string (str);
 		break;
 	case DBUS_TYPE_INT32:
 		if (is_verbose)
 			printf ("Type is integer (shown in %s)\n",
 				(is_hex ? "hexadecimal" : "decimal"));
 		printf ((is_hex ? "%x\n" : "%d\n"),
-			hal_device_get_property_int (hal_ctx, udi, key));
+			libhal_device_get_property_int (hal_ctx, udi, key, &error));
 		break;
 	case DBUS_TYPE_UINT64:
 		if (is_verbose)
 			printf ("Type is uint64 (shown in %s)\n",
 				(is_hex ? "hexadecimal" : "decimal"));
 		printf ((is_hex ? "%llx\n" : "%lld\n"),
-			hal_device_get_property_uint64 (hal_ctx, udi, key));
+			libhal_device_get_property_uint64 (hal_ctx, udi, key, &error));
 		break;
 	case DBUS_TYPE_DOUBLE:
 		if (is_verbose)
 			printf ("Type is double\n");
 		printf ("%f\n",
-			hal_device_get_property_double (hal_ctx, udi, key));
+			libhal_device_get_property_double (hal_ctx, udi, key, &error));
 		break;
 	case DBUS_TYPE_BOOLEAN:
 		if (is_verbose)
 			printf ("Type is boolean\n");
 		printf ("%s\n",
-			hal_device_get_property_bool (hal_ctx, udi,
-						      key) ? "true" :
-			"false");
+			libhal_device_get_property_bool (hal_ctx, udi, key, &error) ? "true" : "false");
 		break;
 
 	default:
@@ -203,6 +212,12 @@ main (int argc, char *argv[])
 		return 1;
 		break;
 	}
+
+	if (dbus_error_is_set (&error)) {
+		fprintf (stderr, "error: %s: %s\n", error.name, error.message);
+		return 1;
+	}
+
 
 	return 0;
 }

@@ -31,7 +31,6 @@
 #include <dbus/dbus.h>
 
 #include "device_store.h"
-#include "pstore.h"
 
 /**
  *  @addtogroup HalDaemon
@@ -41,7 +40,6 @@
 
 HalDeviceStore *hald_get_gdl (void);
 HalDeviceStore *hald_get_tdl (void);
-HalPStore *hald_get_pstore_sys (void);
 
 void property_atomic_update_begin ();
 void property_atomic_update_end ();
