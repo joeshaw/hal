@@ -1,5 +1,19 @@
 2004-04-20  Joe Shaw  <joe@ximian.com>
 
+	* hald/callout.c (Callout): Add the HalDevice to the structure, we
+	need it for getting the properties.  Add the starting index for
+	the envp.
+	(add_property_to_env): Deal with Callout structs instead of
+	ForeachPropInfo.
+	(process_callouts): Add the properties to the environment here, at
+	callout time, instead of up front, since callouts may have changed
+	properties, and we want later callouts to have the most up-to-date
+	info.
+	(process_callouts): Change the idle to a timeout.  This is a
+	copout.
+
+2004-04-20  Joe Shaw  <joe@ximian.com>
+
 	* hald/callout.c: Rework this some to make the callouts
 	asynchronous and tied in with the main loop, so that callouts can
 	either link against libhal or use hal-{get|set}-property without

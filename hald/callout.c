@@ -39,15 +39,25 @@
 #define CAPABILITY_CALLOUT_DIR PACKAGE_SYSCONF_DIR "/hal/capability.d"
 
 typedef struct {
+	const char *working_dir;
+	char *filename;
+	gboolean added;
+	HalDevice *device;
 	char **envp;
-	int index;
-} ForeachPropInfo;
+	int envp_index;
+	int pid;
+} Callout;
+
+static void process_callouts (void);
+
+static GSList *pending_callouts = NULL;
+static gboolean processing_callouts = FALSE;
 
 static gboolean
 add_property_to_env (HalDevice *device, HalProperty *property, 
 		     gpointer user_data)
 {
-	ForeachPropInfo *info = user_data;
+	Callout *callout = user_data;
 	char *prop_upper;
 	char *c;
 
@@ -60,30 +70,17 @@ add_property_to_env (HalDevice *device, HalProperty *property,
 			*c = '_';
 	}
 
-	info->envp[info->index] =
+	callout->envp[callout->envp_index] =
 		g_strdup_printf ("HAL_PROP_%s=%s",
 				 prop_upper,
 				 hal_property_get_as_string (property));
 
 	g_free (prop_upper);
 
-	info->index++;
+	callout->envp_index++;
 
 	return TRUE;
 }
-
-typedef struct {
-	const char *working_dir;
-	char *filename;
-	gboolean added;
-	char **envp;
-	GPid pid;
-} Callout;
-
-static void process_callouts (void);
-
-static GSList *pending_callouts = NULL;
-static gboolean processing_callouts = FALSE;
 
 static gboolean
 wait_for_callout (gpointer user_data)
@@ -106,6 +103,7 @@ wait_for_callout (gpointer user_data)
 	} else {
 		g_free (callout->filename);
 		g_strfreev (callout->envp);
+		g_object_unref (callout->device);
 		g_free (callout);
 
 		process_callouts ();
@@ -135,6 +133,9 @@ process_callouts (void)
 	argv[1] = callout->added == TRUE ? "add" : "remove";
 	argv[2] = NULL;
 
+	hal_device_property_foreach (callout->device, add_property_to_env,
+				     callout);
+
 	if (!g_spawn_async (callout->working_dir, argv, callout->envp,
 			    G_SPAWN_DO_NOT_REAP_CHILD, NULL, NULL,
 			    &callout->pid, &err)) {
@@ -143,7 +144,7 @@ process_callouts (void)
 		g_error_free (err);
 	}
 
-	g_idle_add (wait_for_callout, callout);
+	g_timeout_add (250, wait_for_callout, callout);
 }
 
 void
@@ -171,7 +172,6 @@ hal_callout_device (HalDevice *device, gboolean added)
 		char *full_filename;
 		Callout *callout;
 		int num_props;
-		ForeachPropInfo info;
 
 		full_filename = g_build_filename (DEVICE_CALLOUT_DIR,
 						  filename, NULL);
@@ -188,6 +188,7 @@ hal_callout_device (HalDevice *device, gboolean added)
 		callout->working_dir = DEVICE_CALLOUT_DIR;
 		callout->filename = g_strdup (filename);
 		callout->added = added;
+		callout->device = g_object_ref (device);
 
 		num_props = hal_device_num_properties (device);
 
@@ -196,12 +197,7 @@ hal_callout_device (HalDevice *device, gboolean added)
 		
 		callout->envp[0] = g_strdup_printf ("UDI=%s",
 						    hal_device_get_udi (device));
-
-		info.envp = callout->envp;
-		info.index = 1;
-
-		hal_device_property_foreach (device, add_property_to_env,
-					     &info);
+		callout->envp_index = 1;
 
 		pending_callouts = g_slist_append (pending_callouts, callout);
 	}
@@ -237,7 +233,6 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		char *full_filename;
 		Callout *callout;
 		int num_props;
-		ForeachPropInfo info;
 
 		full_filename = g_build_filename (CAPABILITY_CALLOUT_DIR,
 						  filename, NULL);
@@ -254,6 +249,7 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 		callout->working_dir = CAPABILITY_CALLOUT_DIR;
 		callout->filename = g_strdup (filename);
 		callout->added = added;
+		callout->device = g_object_ref (device);
 
 		num_props = hal_device_num_properties (device);
 
@@ -264,12 +260,7 @@ hal_callout_capability (HalDevice *device, const char *capability, gboolean adde
 						    hal_device_get_udi (device));
 		callout->envp[1] = g_strdup_printf ("CAPABILITY=%s",
 						    capability);
-
-		info.envp = callout->envp;
-		info.index = 2;
-
-		hal_device_property_foreach (device, add_property_to_env,
-					     &info);
+		callout->envp_index = 2;
 
 		pending_callouts = g_slist_append (pending_callouts, callout);
 	}
