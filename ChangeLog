@@ -1,3 +1,17 @@
+2004-10-07  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/osspec.c (hald_helper_hotplug_process_queue): Have a
+	list of hotplug events received during the sleep of the first hotplug
+	event and process that in order
+	(hotplug_sem_down): Typo in debug output
+	(hald_helper_first_hotplug_event): Determine last_hotplug_seqnum by
+	looking at list of hotplug events received during the sleep of the
+	first hotplug event
+	(hald_helper_msg_compare): New function
+	(hald_helper_data): Insert, into a sorted list, hotplug events received 
+	when sleeping on the first hotplug event
+	(FIRST_HOTPLUG_SLEEP): New constant instead of hardcoding 2500 ms
+
 2004-10-06  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/osspec.c (hald_helper_data): New handling of hotplug

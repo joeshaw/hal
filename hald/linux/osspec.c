@@ -58,6 +58,8 @@
 
 #include "libsysfs/libsysfs.h"
 
+#define FIRST_HOTPLUG_SLEEP 3500
+
 extern ClassDeviceHandler input_class_handler;
 extern ClassDeviceHandler net_class_handler;
 extern ClassDeviceHandler printer_class_handler;
@@ -1316,6 +1318,9 @@ hald_helper_device_name (gchar *action, guint64 seqnum, gchar *subsystem,
 /** queue of hotplug events (struct hald_helper_msg pointers) */
 static GList *hotplug_queue = NULL;
 
+/** queue of hotplug events received when sleeping on the first hotplug event (struct hald_helper_msg pointers) */
+static GList *hotplug_queue_first = NULL;
+
 /** Last hotplug sequence number */
 static guint64 last_hotplug_seqnum = 0;
 
@@ -1331,6 +1336,17 @@ hald_helper_hotplug_process_queue (void)
 trynext:
 	if (hotplug_counter > 0)
 		return;
+
+	/* Empty the list of events received while sleeping on the first hotplug event (this list is sorted) */
+	if (hotplug_queue_first != NULL) {
+		msg = (struct hald_helper_msg *) hotplug_queue_first->data;
+		HAL_INFO (("Processing event around first hotplug with SEQNUM=%llu", msg->seqnum));
+		hald_helper_hotplug (msg->action, msg->seqnum, g_strdup (msg->subsystem), 
+				     g_strdup (msg->sysfs_path), msg);
+		g_free (msg);
+		hotplug_queue_first = g_list_delete_link (hotplug_queue_first, hotplug_queue_first);
+		goto trynext;
+	}
 
 	for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
 		msg = (struct hald_helper_msg *) i->data;
@@ -1388,7 +1404,7 @@ hotplug_sem_down (void)
 	if (hotplug_counter < 0) {
 		HAL_ERROR (("****************************************"));
 		HAL_ERROR (("****************************************"));
-		HAL_ERROR (("DANGER WILL ROBISON! hotplug semaphore<0!"));
+		HAL_ERROR (("DANGER WILL ROBINSON! hotplug semaphore<0!"));
 		HAL_ERROR (("****************************************"));
 		HAL_ERROR (("****************************************"));
 		hotplug_counter = 0;
@@ -1399,26 +1415,46 @@ hotplug_sem_down (void)
 		hald_helper_hotplug_process_queue ();
 }
 
+/** This variable is TRUE exactly when we are sleeping on the first hotplug event */
+static gboolean hotplug_sleep_first_event = FALSE;
+
 static gboolean
 hald_helper_first_hotplug_event (gpointer data)
 {
 	GList *i;
 	struct hald_helper_msg *msg;
 
-	/* find the lowest seqnum we should start with */
-	for (i = hotplug_queue; i != NULL; i = g_list_next (i)) {
-		msg = (struct hald_helper_msg *) i->data;
-		if (msg->seqnum < last_hotplug_seqnum)
-			last_hotplug_seqnum = msg->seqnum;
-	}
-	--last_hotplug_seqnum;
+	HAL_INFO (("Slept %dms, now processing events", FIRST_HOTPLUG_SLEEP));
 
-	HAL_INFO (("Starting with SEQNUM=%llu", last_hotplug_seqnum+1));
+	/* First process the queue of events receieved while sleeping on the first hotplug events
+	 * in order to find the last seqnum
+	 *
+	 * This list is sorted.
+	 */
+	for (i = hotplug_queue_first; i != NULL; i = g_list_next (i)) {
+		msg = (struct hald_helper_msg *) i->data;
+		HAL_INFO (("*** msg->seqnum = %lld", msg->seqnum));
+		last_hotplug_seqnum = msg->seqnum;
+	}
+
+	/* Done sleeping on the first hotplug event */
+	hotplug_sleep_first_event = FALSE;
+
+	HAL_INFO (("Starting with last_hotplug_seqnum=%llu", last_hotplug_seqnum));
 
 	hotplug_sem_down ();
 
 	/* no further timer event */
 	return FALSE;
+}
+
+static gint
+hald_helper_msg_compare (gconstpointer pa, gconstpointer pb)
+{
+	const struct hald_helper_msg *a = (const struct hald_helper_msg *) pa;
+	const struct hald_helper_msg *b = (const struct hald_helper_msg *) pb;
+
+	return (gint) (a->seqnum - b->seqnum);
 }
 
 static gboolean
@@ -1489,26 +1525,50 @@ hald_helper_data (GIOChannel *source,
 			 * @todo TODO: read SEQNUM from sysfs
 			 */
 
-			HAL_WARNING (("First SEQNUM=%llu; sleeping 2500ms to get a few more events", msg.seqnum));
+			HAL_INFO (("First SEQNUM=%llu; sleeping %dms to get a few more events", 
+				   msg.seqnum, FIRST_HOTPLUG_SLEEP));
 
 			hotplug_sem_up ();
-			g_timeout_add (2500, hald_helper_first_hotplug_event, NULL);
+			g_timeout_add (FIRST_HOTPLUG_SLEEP, hald_helper_first_hotplug_event, NULL);
+			hotplug_sleep_first_event = TRUE;
+
+			hotplug_queue_first = g_list_insert_sorted (hotplug_queue_first, 
+								    g_memdup (&msg, sizeof (struct hald_helper_msg)),
+								    hald_helper_msg_compare);
 
 			/* so we only setup one timer */
 			last_hotplug_seqnum = msg.seqnum;
+
+			goto out;
 		}
 
-		if (msg.seqnum < last_hotplug_seqnum) {
+		/* If sleeping on the first hotplug event queue up the events in a special queue */
+		if (hotplug_sleep_first_event) {
+			HAL_INFO (("first hotplug sleep; got SEQNUM=%d", msg.seqnum));
+			hotplug_queue_first = g_list_insert_sorted (hotplug_queue_first, 
+								    g_memdup (&msg, sizeof (struct hald_helper_msg)),
+								    hald_helper_msg_compare);
+		} else {
 
-			/* Just reduce the last_hotplug_seqnum counter */
-			last_hotplug_seqnum = msg.seqnum;
+			if (msg.seqnum < last_hotplug_seqnum) {
+				/* yikes, this means were started during a hotplug */
+				HAL_WARNING (("Got SEQNUM=%llu, but last_hotplug_seqnum=%llu", 
+					      msg.seqnum, last_hotplug_seqnum));
+                                /* have to process immediately other we may deadlock due to the hotplug semaphore */
+				hald_helper_hotplug (msg.action, msg.seqnum, g_strdup (msg.subsystem), 	 
+						     g_strdup (msg.sysfs_path), &msg); 	 
+				/* still process the queue though */
+				hald_helper_hotplug_process_queue ();
+
+			} else {
+				/* Queue up this hotplug event and process the queue */
+				HAL_INFO (("Queing up seqnum=%llu, sysfspath=%s, subsys=%s", 
+					   msg.seqnum, msg.sysfs_path, msg.subsystem));
+				hotplug_queue = g_list_append (hotplug_queue, 
+							       g_memdup (&msg, sizeof (struct hald_helper_msg)));
+				hald_helper_hotplug_process_queue ();
+			}
 		}
-
-		/* Queue up this hotplug event and process the queue */
-		HAL_INFO (("Queing up seqnum=%llu, sysfspath=%s, subsys=%s", 
-			   msg.seqnum, msg.sysfs_path, msg.subsystem));
-		hotplug_queue = g_list_append (hotplug_queue, g_memdup (&msg, sizeof (struct hald_helper_msg)));
-		hald_helper_hotplug_process_queue ();
 		break;
 	}
 out:
