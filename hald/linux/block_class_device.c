@@ -654,11 +654,13 @@ block_class_post_process (ClassDeviceHandler *self,
 	int major, minor;
 	HalDevice *parent;
 	HalDevice *stordev = NULL;
+	HalDevice *physdev = NULL;
+	HalDevice *scsidev = NULL;
 	const char *stordev_udi;
 	const char *device_file;
 	dbus_bool_t has_removable_media = FALSE;
 	dbus_bool_t is_hotplugable = FALSE;
-		
+
 	parent = hal_device_store_find (hald_get_gdl (),
 					hal_device_property_get_string (
 						d, "info.parent"));
@@ -682,7 +684,6 @@ block_class_post_process (ClassDeviceHandler *self,
 		stordev = hal_device_store_find (hald_get_gdl (), stordev_udi);
 	} else {
 		const char *udi_it;
-		HalDevice *physdev = NULL;
 
 		/* Set ourselves to be the storage.* keeper */
 		stordev_udi = d->udi;
@@ -694,9 +695,9 @@ block_class_post_process (ClassDeviceHandler *self,
 
 
 		/* walk up the device chain to find the physical device, 
-		 * start with our parent */
+		 * start with our parent. On the way, optionally pick up
+		 * the scsi_device if it exists */
 		udi_it = parent->udi;
-		physdev = NULL; /* be pessimistic */
 
 		while (udi_it != NULL) {
 			HalDevice *d_it;
@@ -708,6 +709,11 @@ block_class_post_process (ClassDeviceHandler *self,
 
 			/* Check info.bus */
 			bus = hal_device_property_get_string (d_it,"info.bus");
+
+			if (strcmp (bus, "scsi_device") == 0) {
+				scsidev = d_it;
+			}
+
 			if (strcmp (bus, "usb") == 0) {
 				physdev = d_it;
 				is_hotplugable = TRUE;
@@ -732,11 +738,6 @@ block_class_post_process (ClassDeviceHandler *self,
 			udi_it = hal_device_property_get_string (
 				d_it, "info.parent");
 		}
-
-		/* physdev is either NULL or the physical device (ide,
-		 * usb, iee1394 etc.) of which we are the offspring */
-
-		/* TODO: Merge storage.* from physdev onto stordev */
 
 	}
 
@@ -939,6 +940,45 @@ block_class_post_process (ClassDeviceHandler *self,
 				      is_hotplugable);
 	if (is_hotplugable) {
 		hal_device_add_capability (stordev, "storage.hotplugable");
+	}
+
+
+
+	/* FINALLY, merge information derived from a .fdi file, from the 
+	 * physical device that is backing this block device.
+	 *
+	 * - physdev is either NULL or the physical device (ide,
+	 *   usb, iee1394 etc.) of which we are the offspring
+	 *
+	 * - scsidev is either NULL or the SCSI device inbetween
+	 *   us and the physical device 
+	 */
+	
+	/* Merge storage.lun%d.* to storage.* from physical device for the
+	 * appropriate LUN */
+	if (physdev != NULL) {
+
+		/* Merge storage.* from physdev to stordev */
+		hal_device_merge_with_rewrite (stordev, physdev, 
+					       "storage.", "storage.");
+
+		/* If there's a scsi device inbetween merge all 
+		 * storage.lun%d.* properties */
+		if (scsidev != NULL) {
+			int lun;
+			char propname[64];
+		
+			lun = hal_device_property_get_int (
+				scsidev, "scsi_device.lun");
+		
+			/* See 6in1-card-reader.fdi for an example */
+		       		
+			snprintf (propname, sizeof (propname), 
+				  "storage_lun%d.", lun);
+
+			hal_device_merge_with_rewrite (stordev, physdev, 
+						       "storage.", propname);
+		}
 	}
 
 	/* check for media on the device */

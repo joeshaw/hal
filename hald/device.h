@@ -81,6 +81,12 @@ HalDevice   *hal_device_new                  (void);
 
 void          hal_device_merge               (HalDevice    *target,
 					      HalDevice    *source);
+
+void          hal_device_merge_with_rewrite  (HalDevice    *target,
+					      HalDevice    *source,
+					      const char   *target_namespace,
+					      const char   *source_namespace);
+
 gboolean      hal_device_matches             (HalDevice    *device1,
 					      HalDevice    *device2,
 					      const char   *namespace);

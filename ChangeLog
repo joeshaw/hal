@@ -1,5 +1,22 @@
 2004-04-12  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (block_class_post_process): Merge
+	storage.* and storage_lun%d.* properties from physical device (eg.
+	usb, ieee1394, ide) onto storage device
+
+	* hald/device.c (hal_device_merge_with_rewrite): new function
+
+	* hald/device.h: add prototype for hal_device_merge_with_rewrite
+
+	* fdi/20freedesktop/lexar-media-cf-reader.fdi: new file
+
+	* fdi/20freedesktop/6in1-card-reader.fdi: new file
+
+	* fdi/20freedesktop/Makefile.am: add fdi files for my two card reader
+	devices
+
+2004-04-12  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (detect_fs_fat): make data an
 	unsigned char array
 	(block_class_post_process): Always choose the block.storage_device

@@ -136,6 +136,91 @@ hal_device_new (void)
 	return device;
 }
 
+/** Merge all properties from source where the key starts with 
+ *  source_namespace and put them onto target replacing source_namespace
+ *  with target_namespace
+ *
+ *  @param  target              Device to put properties onto
+ *  @param  source              Device to retrieve properties from
+ *  @param  target_namespace    Replace source namespace with this namespace
+ *  @param  source_namespace    Source namespace that property keys must match
+ */
+void
+hal_device_merge_with_rewrite  (HalDevice    *target,
+				HalDevice    *source,
+				const char   *target_namespace,
+				const char   *source_namespace)
+{
+	GSList *iter;
+	size_t source_ns_len;
+
+	source_ns_len = strlen (source_namespace);
+
+	/* doesn't handle info.capabilities */
+
+	/* device_property_atomic_update_begin (); */
+
+	for (iter = source->properties; iter != NULL; iter = iter->next) {
+		HalProperty *p = iter->data;
+		int type;
+		const char *key;
+		int target_type;
+		gchar *target_key;
+
+		key = hal_property_get_key (p);
+
+		/* only care about properties that match source namespace */
+		if (strncmp(key, source_namespace, source_ns_len) != 0)
+			continue;
+
+		target_key = g_strdup_printf("%s%s", target_namespace,
+					     key+source_ns_len);
+
+		type = hal_property_get_type (p);
+
+		/* only remove target if it exists with a different type */
+		target_type = hal_device_property_get_type (target, key);
+		if (target_type != DBUS_TYPE_NIL && target_type != type)
+			hal_device_property_remove (target, key);
+
+		switch (type) {
+
+		case DBUS_TYPE_STRING:
+			hal_device_property_set_string (
+				target, target_key,
+				hal_property_get_string (p));
+			break;
+
+		case DBUS_TYPE_INT32:
+			hal_device_property_set_int (
+				target, target_key,
+				hal_property_get_int (p));
+			break;
+
+		case DBUS_TYPE_BOOLEAN:
+			hal_device_property_set_bool (
+				target, target_key,
+				hal_property_get_bool (p));
+			break;
+
+		case DBUS_TYPE_DOUBLE:
+			hal_device_property_set_double (
+				target, target_key,
+				hal_property_get_double (p));
+			break;
+
+		default:
+			HAL_WARNING (("Unknown property type %d", type));
+			break;
+		}
+
+		g_free (target_key);
+	}
+
+	/* device_property_atomic_update_end (); */
+
+}
+
 void
 hal_device_merge (HalDevice *target, HalDevice *source)
 {
