@@ -68,6 +68,7 @@ extern BusDeviceHandler usb_bus_handler;
 extern BusDeviceHandler usbif_bus_handler;
 extern BusDeviceHandler ide_host_bus_handler;
 extern BusDeviceHandler ide_bus_handler;
+extern BusDeviceHandler macio_bus_handler;
 
 /*
  * NOTE!  Order can be significant here, especially at startup time
@@ -95,6 +96,7 @@ static BusDeviceHandler* bus_device_handlers[] = {
 	&usbif_bus_handler,
 	&ide_host_bus_handler,
         &ide_bus_handler,
+	&macio_bus_handler,
 	NULL
 };
 

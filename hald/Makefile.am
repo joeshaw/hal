@@ -44,6 +44,7 @@ hald_SOURCES +=	\
 					linux/ide_host_bus_device.c	\
 					linux/ide_bus_device.c		\
 					linux/pcmcia_socket_class_device.c \
+					linux/macio_bus_device.c	\
 	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c
 
 #					linux/ieee1394_host_class_device.c

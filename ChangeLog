@@ -1,3 +1,15 @@
+2004-04-26  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/macio_bus_device.c: new file because with the recent
+	change in how probing is handled, my CD-ROM wasn't added until 30
+	seconds late into the process as the macio glue wasn't handled
+
+	* hald/Makefile.am (hald_SOURCES): add linux/macio_bus_device.c
+
+	* hald/linux/osspec.c: add macio_bus_handler to bus_device_handlers
+
+	* tools/device-manager/Const.py.in (BUS_NAMES): Add macio mapping
+
 2004-04-25  David Zeuthen  <david@fubar.dk>
 
 	* doc/TODO: Add our notes about current issues with the Linux 2.6

@@ -27,6 +27,7 @@ BUS_NAMES = {"usb"         : "USB",
              "block"       : "Block",
              "ide"         : "IDE",
              "ide_host"    : "IDE Host",
+             "macio"       : "MacIO",
              "ieee1394_host" : "IEEE1394 Host",
              "ieee1394_node" : "IEEE1394 Node",
              "ieee1394" : "IEEE1394 Device"}
