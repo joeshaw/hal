@@ -1,5 +1,5 @@
 
-fdidir = $(sysconfdir)/hal/policy/10osvendor
+fdidir = $(datadir)/hal/fdi/policy/10osvendor
 
 dist_fdi_DATA = 10-storage-policy.fdi 10-power-mgmt-policy.fdi
 

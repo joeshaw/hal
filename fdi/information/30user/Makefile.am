@@ -1,5 +1,5 @@
 
-fdidir = $(datadir)/hal/fdi/30user
+fdidir = $(sysconfdir)/hal/fdi/information
 
 dist_fdi_DATA =
 

@@ -1,5 +1,5 @@
 
-fdidir = $(sysconfdir)/hal/policy/30osvendor
+fdidir = $(sysconfdir)/hal/fdi/policy
 
 dist_fdi_DATA =
 

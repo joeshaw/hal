@@ -1,5 +1,5 @@
 
-fdidir = $(sysconfdir)/hal/preprobe/30osvendor
+fdidir = $(sysconfdir)/hal/fdi/preprobe
 
 dist_fdi_DATA =
 

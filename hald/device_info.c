@@ -1309,7 +1309,7 @@ my_alphasort(const void *a, const void *b)
  *  @param  d                   Device to merge information into
  *  @return                     #TRUE if information was merged
  */
-static int
+static dbus_bool_t
 scan_fdi_files (const char *dir, HalDevice * d)
 {
 	int i;
@@ -1412,7 +1412,11 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type)
 	static char *hal_fdi_source_preprobe = NULL;
 	static char *hal_fdi_source_information = NULL;
 	static char *hal_fdi_source_policy = NULL;
-	char *s;
+	dbus_bool_t ret;
+	char *s1;
+	char *s2;
+
+	ret = FALSE;
 
 	if (!have_checked_hal_fdi_source) {
 		hal_fdi_source_preprobe    = getenv ("HAL_FDI_SOURCE_PREPROBE");
@@ -1423,24 +1427,48 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type)
 
 	switch (type) {
 	case DEVICE_INFO_TYPE_PREPROBE:
-		s = hal_fdi_source_preprobe != NULL ? hal_fdi_source_preprobe : PACKAGE_SYSCONF_DIR "/hal/preprobe";
+		if (hal_fdi_source_preprobe != NULL) {
+			s1 = hal_fdi_source_preprobe;
+			s2 = NULL;
+		} else {
+			s1 = PACKAGE_DATA_DIR "/hal/fdi/preprobe";
+			s2 = PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe";
+		}
 		break;
 
 	case DEVICE_INFO_TYPE_INFORMATION:
-		s = hal_fdi_source_information != NULL ? hal_fdi_source_information : PACKAGE_DATA_DIR "/hal/fdi";
+		if (hal_fdi_source_preprobe != NULL) {
+			s1 = hal_fdi_source_preprobe;
+			s2 = NULL;
+		} else {
+			s1 = PACKAGE_DATA_DIR "/hal/fdi/information";
+			s2 = PACKAGE_SYSCONF_DIR "/hal/fdi/information";
+		}
 		break;
 
 	case DEVICE_INFO_TYPE_POLICY:
-		s = hal_fdi_source_policy != NULL ? hal_fdi_source_policy : PACKAGE_SYSCONF_DIR "/hal/policy";
+		if (hal_fdi_source_preprobe != NULL) {
+			s1 = hal_fdi_source_preprobe;
+			s2 = NULL;
+		} else {
+			s1 = PACKAGE_DATA_DIR "/hal/fdi/policy";
+			s2 = PACKAGE_SYSCONF_DIR "/hal/fdi/policy";
+		}
 		break;
 
 	default:
+		s1 = NULL;
+		s2 = NULL;
 		HAL_ERROR (("Bogus device information type %d", type));
-		return FALSE;
 		break;
 	}
 
-	return scan_fdi_files (s, d);
+	if (s1 != NULL)
+		ret = scan_fdi_files (s1, d) || ret;
+	if (s2 != NULL)
+		ret = scan_fdi_files (s2, d) || ret;
+
+	return ret;
 }
 
 /** @} */

@@ -1,5 +1,5 @@
 
-fdidir = $(datadir)/hal/fdi/20thirdparty
+fdidir = $(datadir)/hal/fdi/information/20thirdparty
 
 dist_fdi_DATA =
 

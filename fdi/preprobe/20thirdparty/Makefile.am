@@ -1,5 +1,5 @@
 
-fdidir = $(sysconfdir)/hal/preprobe/20thirdparty
+fdidir = $(datadir)/hal/fdi/preprobe/20thirdparty
 
 dist_fdi_DATA =
 

@@ -1,5 +1,21 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/README: Change so this fits better with current packaging
+	policies; see this message and thread at
+	http://lists.freedesktop.org/archives/hal/2005-February/002217.html
+
+	* fdi/preprobe/*/Makefile.am, fdi/information/*/Makefile.am,
+ 	fdi/policy/*/Makefile.am: Fix up Makefile.am to install to the
+	correct location. Also add 10-ide-drives.fdi to
+
+	* fdi/preprobe/10osvendor/Makefile.am (dist_fdi_DATA): Add 
+	10-ide-drives.fdi
+
+	* hald/device_info.c (di_search_and_merge): Use new search
+	logic as outlined in fdi/README
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* tools/Makefile.am: Don't install the 50-fstab-sync.hal symlink
 	as we do callouts in a different way now!
 

@@ -29,8 +29,11 @@ Subdirs are installed in $(sysconfdir)/hal/preprobe (e.g. /etc/hal/preprobe)
 
   preprobe
   |-- 10osvendor    # From the hal tarball and/or supplied by the os vendor
+  |                 # -> installs into /usr/share/hal/fdi/preprobe/10osvendor
   |-- 20thirdparty  # 3rd party projects and IHV's install here
-  `-- 30user        # Installed by the user
+  |                 # -> installs into /usr/share/hal/fdi/preprobe/20thirdparty
+  `-- 30user        # Installed by the user/admin
+                    # -> installs into /etc/hal/fdi/preprobe/
 
 [1] : http://lists.freedesktop.org/archives/hal/2004-August/000858.html
 
@@ -49,8 +52,11 @@ Subdirs are installed in $(datadir)/hal/fdi (e.g. /usr/share/hal/fdi)
 
   information
   |-- 10freedesktop # From the hal tarball
+  |                 # -> installs into /usr/share/hal/fdi/information/10freedesktop
   |-- 20thirdparty  # 3rd party projects and IHV's install here
-  `-- 30user        # Installed by the user
+  |                 # -> installs into /usr/share/hal/fdi/information/20thirdparty
+  `-- 30user        # Installed by the user/admin
+                    # -> installs into /etc/hal/fdi/information
 
 
 3. Policy
@@ -66,6 +72,9 @@ Subdirs are installed in $(sysconfdir)/hal/policy (e.g. /etc/hal/policy)
 
   policy
   |-- 10osvendor    # From the hal tarball and/or supplied by the os vendor
+  |                 # -> installs into /usr/share/hal/fdi/policy/10freedesktop
   |-- 20thirdparty  # 3rd party projects and IHV's install here
-  `-- 30user        # Installed by the user
+  |                 # -> installs into /usr/share/hal/fdi/policy/20thirdparty
+  `-- 30user        # Installed by the user/admin
+                    # -> installs into /etc/hal/fdi/policy
   

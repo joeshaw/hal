@@ -1,5 +1,5 @@
 
-fdidir = $(datadir)/hal/fdi/10freedesktop
+fdidir = $(datadir)/hal/fdi/information/10freedesktop
 
 dist_fdi_DATA =
 
