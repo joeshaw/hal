@@ -1,5 +1,11 @@
 2004-10-08  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/pci_bus_device.c (pci_ids_load): The {pci, usb} id
+	database read functions never close the file descriptors.  bad.
+	Fixed in attached patch. Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+2004-10-08  David Zeuthen  <david@fubar.dk>
+
 	* configure.in: look for BLKGETSIZE64 to be provided. From
 	Jonathan Blandford  <jrb@gnome.org>
 

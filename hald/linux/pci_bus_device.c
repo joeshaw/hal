@@ -302,9 +302,11 @@ pci_ids_load (const char *path)
 		HAL_ERROR (("Error loading PCI database file\n"));
 		free (pci_ids);
 		pci_ids = NULL;
+		fclose(fp);
 		return FALSE;
 	}
 
+	fclose(fp);
 	return TRUE;
 }
 
