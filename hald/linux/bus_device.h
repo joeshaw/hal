@@ -174,4 +174,11 @@ void bus_device_got_udi (BusDeviceHandler *self,
 			 HalDevice *d,
 			 const char *udi);
 
+/* Convenience structure for passing around multiple pieces of data to
+   the got_parent_device() functions */
+typedef struct {
+	HalDevice *device;
+	BusDeviceHandler *handler;
+} BusAsyncData;
+
 #endif /* BUS_DEVICE_H */

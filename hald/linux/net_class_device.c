@@ -431,8 +431,10 @@ net_class_pre_process (ClassDeviceHandler *self,
 
 	attr = sysfs_get_classdev_attr (class_device, "address");
 
-	if (attr != NULL)
+	if (attr != NULL) {
 		address = g_strstrip (g_strdup (attr->value));
+		hal_device_property_set_string (d, "net.address", address);
+	}
 
 	attr = sysfs_get_classdev_attr (class_device, "type");
 
@@ -477,6 +479,36 @@ net_class_pre_process (ClassDeviceHandler *self,
 	hal_device_property_set_string (d, "info.category", "net.ethernet");
 }
 
+static dbus_bool_t
+net_class_accept (ClassDeviceHandler *self, const char *path,
+		  struct sysfs_class_device *class_device)
+{
+	struct sysfs_attribute *attr;
+
+	/* If the class name isn't 'net', deny it. */
+	if (strcmp (class_device->classname, self->sysfs_class_name) != 0)
+		return FALSE;
+
+	/* If we have a sysdevice, allow it. */
+	if (class_device->sysdevice != NULL)
+		return TRUE;
+
+	/*
+	 * Get the "type" attribute from sysfs to see if this is a
+	 * network device we're interested in.
+	 */
+	attr = sysfs_get_classdev_attr (class_device, "type");
+
+	if (attr == NULL || attr->value == NULL)
+		return FALSE;
+
+	/* 1 is the type for ethernet (incl. wireless) devices */
+	if (attr->value[0] == '1')
+		return TRUE;
+	else
+		return FALSE;
+}
+
 static void
 net_class_post_merge (ClassDeviceHandler *self, HalDevice *d)
 {
@@ -484,12 +516,32 @@ net_class_post_merge (ClassDeviceHandler *self, HalDevice *d)
 		link_detection_init (d);
 }
 
+static char *
+net_class_compute_udi (HalDevice *d, int append_num)
+{
+	const char *format;
+	static char buf[256];
+
+	hal_device_print (d);
+
+	if (append_num == -1)
+		format = "/org/freedesktop/Hal/devices/net-%s";
+	else
+		format = "/org/freedesktop/Hal/devices_net-%s-%d";
+
+	snprintf (buf, 256, format,
+		  hal_device_property_get_string (d, "net.address"),
+		  append_num);
+
+	return buf;
+}
+
 /** Method specialisations for input device class */
 ClassDeviceHandler net_class_handler = {
 	class_device_init,                  /**< init function */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
-	class_device_accept,                /**< accept function */
+	net_class_accept,                   /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
@@ -497,7 +549,7 @@ ClassDeviceHandler net_class_handler = {
 	net_class_pre_process,              /**< add more properties */
 	net_class_post_merge,               /**< post merge function */
 	class_device_got_udi,               /**< got UDI */
-	NULL,                               /**< No UDI computation */
+	net_class_compute_udi,              /**< compute UDI */
 	"net",                              /**< sysfs class name */
 	"net",                              /**< hal class name */
 	FALSE,                              /**< require device file */

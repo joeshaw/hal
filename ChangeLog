@@ -1,3 +1,50 @@
+2004-05-25  Joe Shaw <joeshaw@novell.com>
+
+	* hald/Makefile.am: Add the ieee1394 class devices.
+
+	* hald/linux/block_class_device.c: Replace use of locally defined
+	AsyncInfo with ClassAsyncData.
+
+	* hald/linux/bus_device.c: Replace use of locally defined
+	AsyncInfo with BusAsyncData.
+
+	* hald/linux/class_device.c: Replace use of locally defined
+	AsyncInfo with ClassAsyncData.
+	(class_device_accept): Check here if the class device has a
+	sysdevice and reject it if it doesn't.
+	(class_device_visit): Don't check for it here.  If it is NULL, set
+	merge_or_add to FALSE so that we don't try to merge it onto a fake
+	device.  If the sysdevice is NULL, set the parent sysfs path to
+	"(none)", which will match our fake parent device.
+	(class_device_final): Take a third argument for merge_or_add and
+	check it instead of the ClassDeviceHandler's default behavior.
+
+	* hald/linux/ieee1394_class_device.c,
+	hald/linux/ieee1394_host_class_device.c,
+	hald/linux/ieee1394_node_class_device.c: New IEEE1394 class device
+	implementation.  Seems to even work somewhat on some small subset
+	of the world's computers.
+
+	* hald/linux/net_class_device.c (net_class_pre_process): If there
+	is an address, set the net.address property to it, regardless of
+	what type of net device it is.
+	(net_class_accept): Added.  Allows us to have net class devices
+	without an associated sysdevice.  Only allow it if it's an
+	ethernet device for now.
+	(net_class_compute_udi): Added.  Needed in situations where the
+	class device has no sysdevice, we need to generate a UDI since we
+	aren't merging onto a parent device.
+
+	* hald/linux/osspec.c: Reenable the ieee1394 class device
+	handlers.
+	(osspec_probe): Create a fake root device to be the parent for all
+	of our sysdevice-less devices.  It's a virtual device, has the UDI
+	"/org/freedesktop/Hal/devices/fakeroot", and the sysfs path device
+	of "(none)".
+
+	* tools/device-manager/Const.py.in (BUS_NAMES): Add "unknown" to
+	the list of known bus names.
+	
 2004-05-25  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Bump to 0.2.91
@@ -18,7 +65,7 @@
 	there was a blank cd inside :). Patch from Sjoerd Simons
 	<sjoerd@luon.net>.
 
-2004-05-18  Joe shaw  <joeshaw@novell.com>
+2004-05-18  Joe Shaw  <joeshaw@novell.com>
 
 	* tools/callouts/fstab-update.sh: Use /media as long as it's there
 	and /mnt doesn't exist.  Otherwise fallback to /mnt.  Should

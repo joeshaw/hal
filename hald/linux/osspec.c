@@ -58,11 +58,9 @@ extern ClassDeviceHandler scsi_device_class_handler;
 extern ClassDeviceHandler scsi_generic_class_handler;
 extern ClassDeviceHandler block_class_handler;
 extern ClassDeviceHandler pcmcia_socket_class_handler;
-
-/*
-extern ClassDeviceHandler ieee1394_host_class_handler;
+extern ClassDeviceHandler ieee1394_class_handler;
 extern ClassDeviceHandler ieee1394_node_class_handler;
-*/
+extern ClassDeviceHandler ieee1394_host_class_handler;
 
 extern BusDeviceHandler pci_bus_handler;
 extern BusDeviceHandler usb_bus_handler;
@@ -86,8 +84,9 @@ static ClassDeviceHandler* class_device_handlers[] = {
 	&scsi_generic_class_handler,
 	&block_class_handler,
 	&pcmcia_socket_class_handler,
-	/*&ieee1394_host_class_handler,
-	  &ieee1394_node_class_handler,*/
+	&ieee1394_host_class_handler,
+	&ieee1394_node_class_handler,
+	&ieee1394_class_handler,
 	NULL
 };
 
@@ -370,9 +369,25 @@ dbus_bool_t hald_is_initialising;
 void
 osspec_probe ()
 {
+	HalDevice *fakeroot;
 	int i;
 
 	hald_is_initialising = TRUE;
+
+	/*
+	 * Create the "fakeroot" device for all the devices which don't
+	 * have sysdevices in sysfs.
+	 */
+	fakeroot = hal_device_new ();
+	hal_device_property_set_string (fakeroot, "info.bus", "unknown");
+	hal_device_property_set_string (fakeroot,
+					"linux.sysfs_path_device",
+					"(none)");
+	hal_device_property_set_string (fakeroot, "info.product",
+					"City of Lost Devices");
+	hal_device_property_set_bool (fakeroot, "info.virtual", TRUE);
+	hal_device_set_udi (fakeroot, "/org/freedesktop/Hal/devices/fakeroot");
+	hal_device_store_add (hald_get_gdl (), fakeroot);
 
 	/** @todo When the kernel has all devices in /sys/devices
 	 *        under either /sys/bus or /sys/class then we can

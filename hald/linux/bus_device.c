@@ -52,11 +52,6 @@
  * @{
  */
 
-typedef struct {
-	HalDevice *device;
-	BusDeviceHandler *handler;
-} AsyncInfo;
-
 /* fwd decl */
 static void bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 				   gpointer user_data);
@@ -89,7 +84,7 @@ void
 bus_device_visit (BusDeviceHandler *self, const char *path, 
 		  struct sysfs_device *device)
 {
-	AsyncInfo *ai;
+	BusAsyncData *bad;
 	HalDevice *d;
 	char *parent_sysfs_path;
 	char buf[256];
@@ -110,15 +105,15 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 
 	parent_sysfs_path = get_parent_sysfs_path (path);
 
-	ai = g_new0 (AsyncInfo, 1);
-	ai->device = d;
-	ai->handler = self;
+	bad = g_new0 (BusAsyncData, 1);
+	bad->device = d;
+	bad->handler = self;
 
 	if (!got_parent(path)) {
 		/* no need to find parent; we have none; just add directly 
 		 * with parent set to NULL 
 		 */
-		bus_device_got_parent (hald_get_gdl(), NULL, ai);
+		bus_device_got_parent (hald_get_gdl(), NULL, bad);
 	} else {
 		/* Find parent; this happens asynchronously as our parent might
 		 * be added later. If we are probing this can't happen so the
@@ -128,7 +123,7 @@ bus_device_visit (BusDeviceHandler *self, const char *path,
 			hald_get_gdl (),
 			"linux.sysfs_path_device",
 			parent_sysfs_path,
-			bus_device_got_parent, ai,
+			bus_device_got_parent, bad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 
@@ -149,12 +144,12 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	const char *sysfs_path = NULL;
 	char *new_udi = NULL;
 	HalDevice *new_d = NULL;
-	AsyncInfo *ai = (AsyncInfo*) user_data;
-	HalDevice *d = (HalDevice *) ai->device;
-	BusDeviceHandler *self = (BusDeviceHandler *) ai->handler;
+	BusAsyncData *bad = (BusAsyncData*) user_data;
+	HalDevice *d = (HalDevice *) bad->device;
+	BusDeviceHandler *self = (BusDeviceHandler *) bad->handler;
 	struct sysfs_device *device;
 
-	g_free (ai);
+	g_free (bad);
 
 	/* set parent, if any */
 	if (parent != NULL) {

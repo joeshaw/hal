@@ -276,4 +276,12 @@ void class_device_got_parent_device (HalDeviceStore *store,
 				     gpointer user_data);
 
 
+/* Convenience structure for passing around multiple pieces of data
+   to the got_parent_device() functions */
+typedef struct {
+	HalDevice *device;
+	ClassDeviceHandler *handler;
+	gboolean merge_or_add;
+} ClassAsyncData;
+
 #endif /* CLASS_DEVICE_H */

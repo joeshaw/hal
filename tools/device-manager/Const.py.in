@@ -16,7 +16,8 @@ PIXBUF_COLUMN = 0
 TITLE_COLUMN  = 1
 UDI_COLUMN    = 2
 
-BUS_NAMES = {"usb"         : "USB",
+BUS_NAMES = {"unknown"     : "Unknown",
+             "usb"         : "USB",
              "usbif"       : "USB Interface",
              "pci"         : "PCI",
              "i2c"         : "I2C",

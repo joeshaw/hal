@@ -52,17 +52,13 @@
  * @{
  */
 
-typedef struct {
-	HalDevice *device;
-	ClassDeviceHandler *handler;
-} AsyncInfo;
-
 static void
 class_device_got_device_file (HalDevice *d, gpointer user_data, 
 			      gboolean prop_exists);
 
 static void
-class_device_final (ClassDeviceHandler* self, HalDevice *d);
+class_device_final (ClassDeviceHandler* self, HalDevice *d,
+		    gboolean merge_or_add);
 
 
 /** Generic accept function that accepts the device if and only if
@@ -80,6 +76,10 @@ class_device_accept (ClassDeviceHandler *self,
 
 	/*HAL_INFO (("path = %s, classname = %s", 
 	  path, self->sysfs_class_name));*/
+
+	/* Don't care if there's no sysdevice */
+	if (class_device->sysdevice == NULL)
+		return FALSE;
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {
@@ -106,10 +106,12 @@ class_device_visit (ClassDeviceHandler *self,
 	HalDevice *d;
 	char dev_file[SYSFS_PATH_MAX];
 	char dev_file_prop_name[SYSFS_PATH_MAX];
+	gboolean merge_or_add;
 
-	/* don't care if there is no sysdevice */
 	if (class_device->sysdevice == NULL) {
-		return;
+		merge_or_add = FALSE;
+	} else {
+		merge_or_add = self->merge_or_add;
 	}
 
 	/* Construct a new device and add to temporary device list */
@@ -117,12 +119,26 @@ class_device_visit (ClassDeviceHandler *self,
 	hal_device_store_add (hald_get_tdl (), d);
 
 	/* Need some properties if we are to appear in the tree on our own */
-	if (!self->merge_or_add) {
-		hal_device_property_set_string (d, "info.bus", 
-						self->hal_class_name);
+	if (!merge_or_add) {
+	        /* 
+		 * Kind of a hack... we only want to set the bus if
+		 * our handler's merge_or_add is normally false.  Otherwise
+		 * we want the bus to just be "unknown"
+		 */
+	        if (!self->merge_or_add) {
+		        hal_device_property_set_string (d, "info.bus", 
+							self->hal_class_name);
+		} else {
+		        hal_device_property_set_string (d, "info.bus",
+							"unknown");
+		}
+
 		hal_device_property_set_string (d, "linux.sysfs_path", path);
-		hal_device_property_set_string (d, "linux.sysfs_path_device", 
-					class_device->sysdevice->path);
+
+		if (class_device->sysdevice != NULL) {
+			hal_device_property_set_string (d, "linux.sysfs_path_device", 
+							class_device->sysdevice->path);
+		}
 	} 
 
 	/* Temporary property used for _udev_event() */
@@ -157,34 +173,40 @@ class_device_visit (ClassDeviceHandler *self,
 
 	/* Now find the physical device; this happens asynchronously as it
 	 * might be added later. */
-	if (self->merge_or_add) {
-		AsyncInfo *ai = g_new0 (AsyncInfo, 1);
-		ai->device = d;
-		ai->handler = self;
+	if (merge_or_add) {
+		ClassAsyncData *cad = g_new0 (ClassAsyncData, 1);
+		cad->device = d;
+		cad->handler = self;
+		cad->merge_or_add = merge_or_add;
 
 		/* find the sysdevice */
 		hal_device_store_match_key_value_string_async (
 			hald_get_gdl (),
 			"linux.sysfs_path_device",
 			class_device->sysdevice->path,
-			class_device_got_sysdevice, ai,
+			class_device_got_sysdevice, cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
 		char *parent_sysfs_path;
-		AsyncInfo *ai = g_new0 (AsyncInfo, 1);
+		ClassAsyncData *cad = g_new0 (ClassAsyncData, 1);
 
-		parent_sysfs_path = 
-			get_parent_sysfs_path (class_device->sysdevice->path);
+		if (class_device->sysdevice != NULL) {
+			parent_sysfs_path = 
+				get_parent_sysfs_path (class_device->sysdevice->path);
+		} else {
+			parent_sysfs_path = "(none)";
+		}
 
-		ai->device = d;
-		ai->handler = self;
+		cad->device = d;
+		cad->handler = self;
+		cad->merge_or_add = merge_or_add;
 
 		/* find the parent */
 		hal_device_store_match_key_value_string_async (
 			hald_get_gdl (),
 			"linux.sysfs_path_device",
 			parent_sysfs_path,
-			class_device_got_parent_device, ai,
+			class_device_got_parent_device, cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	}
 }
@@ -246,11 +268,10 @@ void
 class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent, 
 				gpointer user_data)
 {
-	AsyncInfo *ai = user_data;
-	HalDevice *d = (HalDevice *) ai->device;
-	ClassDeviceHandler *self = ai->handler;
-
-	g_free (ai);
+	ClassAsyncData *cad = user_data;
+	HalDevice *d = (HalDevice *) cad->device;
+	ClassDeviceHandler *self = cad->handler;
+	gboolean merge_or_add = cad->merge_or_add;
 
 	if (parent == NULL) {
 		HAL_WARNING (("No parent for class device at sysfs path %s",
@@ -273,10 +294,12 @@ class_device_got_parent_device (HalDeviceStore *store, HalDevice *parent,
 		hal_device_async_wait_property (
 			d, target_dev, 
 			class_device_got_device_file,
-			(gpointer) self,
+			(gpointer) cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
-		class_device_final (self, d);
+		class_device_final (self, d, merge_or_add);
+
+		g_free (cad);
 	}
 }
 
@@ -294,9 +317,10 @@ class_device_got_sysdevice (HalDeviceStore *store,
 			    HalDevice *sysdevice, 
 			    gpointer user_data)
 {
-	AsyncInfo *ai = user_data;
-	HalDevice *d = (HalDevice *) ai->device;
-	ClassDeviceHandler *self = ai->handler;
+	ClassAsyncData *cad = user_data;
+	HalDevice *d = (HalDevice *) cad->device;
+	ClassDeviceHandler *self = cad->handler;
+	gboolean merge_or_add = cad->merge_or_add;
 
 	HAL_INFO (("Entering d=0x%0x, sysdevice=0x%0x!", d, sysdevice));
 
@@ -337,10 +361,12 @@ class_device_got_sysdevice (HalDeviceStore *store,
 		hal_device_async_wait_property (
 			d, target_dev, 
 			class_device_got_device_file,
-			(gpointer) self,
+			(gpointer) cad,
 			HAL_LINUX_HOTPLUG_TIMEOUT);
 	} else {
-		class_device_final (self, d);
+		class_device_final (self, d, merge_or_add);
+		
+		g_free (cad);
 	}
 }
 
@@ -348,9 +374,13 @@ static void
 class_device_got_device_file (HalDevice *d, gpointer user_data, 
 			      gboolean prop_exists)
 {
-	ClassDeviceHandler *self = (ClassDeviceHandler *) user_data;
+	ClassAsyncData *cad = (ClassAsyncData *) user_data;
+	ClassDeviceHandler *self = cad->handler;
+	gboolean merge_or_add = cad->merge_or_add;
 
 	/*HAL_INFO (("entering"));*/
+
+	g_free (cad);
 
 	if (!prop_exists) {
 		HAL_WARNING (("Never got device file for class device at %s", 
@@ -360,11 +390,12 @@ class_device_got_device_file (HalDevice *d, gpointer user_data,
 		return;
 	}
 
-	class_device_final (self, d);
+	class_device_final (self, d, merge_or_add);
 }
 
 static void
-class_device_final (ClassDeviceHandler* self, HalDevice *d)
+class_device_final (ClassDeviceHandler* self, HalDevice *d,
+		    gboolean merge_or_add)
 {
 	const char *sysfs_path = NULL;
 	struct sysfs_class_device *class_device;
@@ -380,7 +411,7 @@ class_device_final (ClassDeviceHandler* self, HalDevice *d)
 	self->pre_process (self, d, sysfs_path, class_device);
 	sysfs_close_class_device (class_device);
 
-	if (self->merge_or_add) {
+	if (merge_or_add) {
 		const char *sysdevice_udi;
 		HalDevice *sysdevice;
 

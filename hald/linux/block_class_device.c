@@ -71,11 +71,6 @@ static void etc_mtab_process_all_block_devices (dbus_bool_t force);
 
 static void detect_fs (HalDevice *d);
 
-typedef struct {
-	HalDevice *device;
-	ClassDeviceHandler *handler;
-} AsyncInfo;
-
 static void
 block_class_visit (ClassDeviceHandler *self,
 		   const char *path,
@@ -83,7 +78,7 @@ block_class_visit (ClassDeviceHandler *self,
 {
 	HalDevice *d;
 	char *parent_sysfs_path;
-	AsyncInfo *ai;
+	ClassAsyncData *cad;
 
 	/* only care about given sysfs class name */
 	if (strcmp (class_device->classname, "block") != 0)
@@ -128,15 +123,15 @@ block_class_visit (ClassDeviceHandler *self,
 
 	/* Now find the parent device; this happens asynchronously as it
 	 * might be added later. */
-	ai = g_new0 (AsyncInfo, 1);
-	ai->device = d;
-	ai->handler = self;
+	cad = g_new0 (ClassAsyncData, 1);
+	cad->device = d;
+	cad->handler = self;
 
 	hal_device_store_match_key_value_string_async (
 		hald_get_gdl (),
 		"linux.sysfs_path_device",
 		parent_sysfs_path,
-		class_device_got_parent_device, ai,
+		class_device_got_parent_device, cad,
 		HAL_LINUX_HOTPLUG_TIMEOUT);
 }
 
