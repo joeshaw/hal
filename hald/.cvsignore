@@ -4,3 +4,5 @@ Makefile
 Makefile.in
 hald
 haldaemon
+hald_marshal.c
+hald_marshal.h
