@@ -107,13 +107,18 @@ set_volume_id_values(HalDevice *d, struct volume_id *vid)
 		usage = "";
 	}
 	hal_device_property_set_string (d, "volume.fsusage", usage);
+	HAL_INFO (("volume.fsusage = '%s'", usage));
 
 	hal_device_property_set_string (d, "volume.fstype", vid->type);
-	if (vid->type_version[0] != '\0')
-		hal_device_property_set_string (d, "volume.fsversion",
-						vid->type_version);
+	HAL_INFO (("volume.fstype = '%s'", vid->type));
+	if (vid->type_version[0] != '\0') {
+		hal_device_property_set_string (d, "volume.fsversion", vid->type_version);
+		HAL_INFO (("volume.fsversion = '%s'", vid->type_version));
+	}
 	hal_device_property_set_string (d, "volume.uuid", vid->uuid);
+	HAL_INFO (("volume.uuid = '%s'", vid->uuid));
 	hal_device_property_set_string (d, "volume.label", vid->label);
+	HAL_INFO (("volume.label = '%s'", vid->label));
 
 	if (vid->label[0] != '\0') {
 		hal_device_property_set_string (d, "info.product", vid->label);
@@ -958,6 +963,7 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 		hal_device_property_set_string (child, "volume.mount_point", "");
 		hal_device_property_set_bool (child, "volume.is_mounted", FALSE);
 		hal_device_property_set_bool (child, "volume.is_disc", is_cdrom);
+		hal_device_property_set_bool (d, "volume.is_partition", FALSE);
 
 		/* set the size */
 		volume_set_size (child, force_poll);
@@ -1204,6 +1210,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 	if (hal_device_property_get_bool (d, "block.is_volume")) {
 		/* block device that is a partition; e.g. a storage volume */
 		struct volume_id *vid;
+		const char *last_elem;
+		const char *s;
+		unsigned int partition_number;
 
 		hal_device_add_capability (d, "volume");
 		hal_device_property_set_string (d, "info.category", "volume");
@@ -1215,6 +1224,14 @@ block_class_pre_process (ClassDeviceHandler *self,
 		hal_device_property_set_string (d, "volume.uuid", "");
 		hal_device_property_set_bool (d, "volume.is_disc", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
+		hal_device_property_set_bool (d, "volume.is_partition", TRUE);
+
+		/* get partition number */
+		last_elem = get_last_element (sysfs_path);
+		for (s = last_elem; *s != '\0' && !isdigit(*s); s++)
+			;
+		partition_number = (unsigned int) atoi (s);
+		hal_device_property_set_int (d, "volume.partition.number", partition_number);
 
 		/* only check for volume_id if we are allowed to poll, otherwise we may
 		 * cause inifite loops of hotplug events, cf. broken ide-cs driver and
@@ -1225,6 +1242,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 			unsigned long long size = 0;
 			int bcount;
 			int bsize;
+			const char *stordev_device_file;
 
 			volume_set_size (d, FALSE);
 
@@ -1239,6 +1257,53 @@ block_class_pre_process (ClassDeviceHandler *self,
 				if (volume_id_probe(vid, VOLUME_ID_ALL, 0, size) == 0) {
 					set_volume_id_values(d, vid);
 				}
+				volume_id_close(vid);
+			}
+
+			/* get partition type - presently we only support PC style partition tables */
+			stordev_device_file = hal_device_property_get_string (stordev, "block.device");
+			vid = volume_id_open_node (stordev_device_file);
+			if (vid != NULL) {
+				unsigned int i;
+
+				if (volume_id_probe(vid, VOLUME_ID_MSDOSPARTTABLE, 0, size) == 0) {
+					HAL_INFO (("Number of partitions = %d", vid->partition_count));
+
+					for (i = 0; i < vid->partition_count; i++) {
+						struct volume_id_partition *p;
+
+						p = &vid->partitions[i];
+
+						HAL_INFO (("%d: partition %d, type 0x%02x", i, 
+							   p->partition_number, 
+							   p->partition_msdosparttable_type));
+
+						if (p->partition_number == partition_number) {
+							hal_device_property_set_int (
+								d, "volume.partition.x86_type",
+								p->partition_msdosparttable_type);
+
+							/* NOTE: We trust the type from the partition table
+							 * if it explicitly got correct entries for RAID and
+							 * LVM partitions.
+							 *
+							 * Btw, in general it's not a good idea to trust the
+							 * partition table type as many geek^Wexpert users use 
+							 * FAT filesystems on type 0x83 which is Linux.
+							 *
+							 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
+							 */
+							if (p->partition_msdosparttable_type == 0xfd ||
+							    p->partition_msdosparttable_type == 0x8e ) {
+								hal_device_property_set_string (
+									d, "volume.fsusage", "raid");
+							}
+
+
+						}						
+					}
+				}
+				
 				volume_id_close(vid);
 			}
 

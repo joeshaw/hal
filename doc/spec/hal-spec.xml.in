@@ -1692,13 +1692,44 @@
 		The block size of the volume
 	      </entry>
             </row>
-
             <row>
               <entry><literal>volume.num_blocks</literal> (string)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>
 		Number of blocks on the volume
+	      </entry>
+            </row>
+
+            <row>
+              <entry><literal>volume.is_partition</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		If the volume stems from a partition on e.g. a hard
+		disk, this property is set to <literal>TRUE</literal>.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>volume.partition.number</literal> (int)</entry>
+              <entry></entry>
+              <entry>
+		If, and only if, <literal>volume.is_partition</literal>
+		is set to <literal>TRUE</literal>.
+	      </entry>
+              <entry>
+		The number of the partition.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>volume.partition.x86_type</literal> (int)</entry>
+              <entry>examples: 0x83, 0xfd, 0x8e</entry>
+              <entry>
+		No
+	      </entry>
+              <entry>
+		If available, this is the partition type if the disk for which
+		this volume stems from is using an MS-DOS-style partition table.
 	      </entry>
             </row>
 

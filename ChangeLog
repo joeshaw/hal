@@ -1,3 +1,20 @@
+2004-09-20  David Zeuthen  <david@fubar.dk>
+
+	* doc/spec/hal-spec.xml.in: Add docs for volume.is_partition,
+	volume.partition.number and volume.partition.x86_type
+	
+	* hald/linux/block_class_device.c:
+	(set_volume_id_values): Add some more debug
+	(detect_media): Set volume.is_partition to FALSE
+	(block_class_pre_process): Set the new volume.is_partition,
+	volume.partition.number and volume.partition.x86_type properties
+
+	* hald/linux/volume_id/volume_id.c (probe_msdos_part_table): Set
+	partition_number and partition_msdosparttable_type
+	
+	* hald/linux/volume_id/volume_id.h: Add partition_number and
+	partition_msdosparttable_type members
+
 2004-09-20  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_vfat): Trivial fix
