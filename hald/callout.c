@@ -222,14 +222,18 @@ iochn_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 				break;
 			}
 		}
-	
+
 		if (callout == NULL) {
 			/* this should never happen */
 			HAL_ERROR (("Cannot find callout for terminated "
 				    "child with pid %d", child_pid));
 			goto out;
 		}
-	
+
+
+		/* remove element from active_callouts list */
+		active_callouts = g_slist_delete_link (active_callouts,
+							       it);
 
 		if (callout->last_of_device)
 			hal_device_callouts_finished (callout->device);

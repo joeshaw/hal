@@ -1,5 +1,12 @@
 2004-05-01  David Zeuthen  <david@fubar.dk>
 
+	* hald/callout.c (iochn_data): remember to remove element from 
+	active_callouts list
+
+	* hald/linux/class_device.c (class_device_detection_done): remove
+
+2004-05-01  David Zeuthen  <david@fubar.dk>
+
 	* hald/Makefile.am (install-data-local): create /etc/hal/property.d
 
 	* tools/callouts/fstab-update.sh: s/msdos/vfat/ if applicable

@@ -456,15 +456,6 @@ class_device_init (ClassDeviceHandler *self)
 {
 }
 
-/** This function is called when all device detection on startup is done
- *  in order to perform optional batch processing on devices. Does nothing.
- *
- */
-void
-class_device_detection_done (ClassDeviceHandler *self)
-{
-}
-
 /** Shutdown function for block device handling. Does nothing.
  *
  */
