@@ -9,6 +9,7 @@ config.log
 config.status
 config.sub
 configure
+hal.conf
 hal.pc
 libtool
 ltmain.sh
