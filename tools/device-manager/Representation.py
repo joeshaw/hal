@@ -52,11 +52,14 @@ class Representation:
             return self.icons["computer"]
 
         # First look at bus type, every device got Bus property
-        bus = device.properties["info.bus"]
-        if bus=="usb_device":
-            icon = self.icons["bus_usb"]
-        elif bus=="pci":
-            icon = self.icons["bus_pci"]
+        if device.properties.has_key("info.bus"):
+	    bus = device.properties["info.bus"]
+	    if bus=="usb_device":
+		icon = self.icons["bus_usb"]
+	    elif bus=="pci":
+		icon = self.icons["bus_pci"]
+	else:
+	    bus = "unknown"
 
         # Then look at Category, if available
         if not device.properties.has_key("info.category"):

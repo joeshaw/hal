@@ -1,3 +1,29 @@
+2005-01-19  David Zeuthen  <davidz@redhat.com>
+
+	Some more refactoring... You want to redo 'make install' to
+	get h-d-m working after this...
+
+	* hald/linux2/classdev.c:
+	(input_add): Don't set info.bus as it doesn't really make sense
+	since it is a class device
+	(input_post_probing): New function
+	(input_compute_udi): New function
+	(bluetooth_add): New function
+	(bluetooth_compute_udi): New function
+	(add_classdev_after_probing): New function
+	(add_classdev_probing_helper_done): New function
+	(hotplug_event_begin_add_classdev): Create and use a framework
+	where we don't have to think about asynchronous issues per
+	logical device class.
+	(hotplug_event_begin_remove_classdev): -do-
+	(input_helper_done): Deleted due to new framework
+
+	* tools/device-manager/DeviceManager.py: Do not assume that
+	info.bus is available
+
+	* tools/device-manager/Representation.py: Do not assume that
+	info.bus is available
+
 2005-01-18  David Zeuthen  <davidz@redhat.com>
 
 	* hald/run-hald.sh: New file; used to run hald from the development
