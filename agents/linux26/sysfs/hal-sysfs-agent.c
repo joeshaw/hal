@@ -34,7 +34,7 @@
 #include <getopt.h>
 #include <assert.h>
 #include <unistd.h>
-//#include <syslog.h>
+#include <syslog.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -1127,21 +1127,25 @@ static void usb_proc_parse()
  */
 static char* usb_compute_udi(const char* udi, int append_num)
 {
+    char* serial;
+    char* format;
     static char buf[256];
 
-    /** @todo Rework this function to use e.g. serial number */
-
     if( append_num==-1 )
-        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%x_%x_%x", 
-                hal_device_get_property_int(udi, "usb.idVendor"),
-                hal_device_get_property_int(udi, "usb.idProduct"),
-                hal_device_get_property_int(udi, "usb.bcdDevice"));
+        format = "/org/freedesktop/Hal/devices/usb_%x_%x_%x_%d_%s";
     else
-        sprintf(buf, "/org/freedesktop/Hal/devices/usb_%x_%x_%x/%d", 
-                hal_device_get_property_int(udi, "usb.idVendor"),
-                hal_device_get_property_int(udi, "usb.idProduct"),
-                hal_device_get_property_int(udi, "usb.bcdDevice"),
-                append_num);
+        format = "/org/freedesktop/Hal/devices/usb_%x_%x_%x_%d_%s-%d";
+
+    serial = hal_device_get_property_string(udi, "usb.serial");
+    if( serial==NULL )
+    serial = "noserial";
+
+    snprintf(buf, 256, format, 
+             hal_device_get_property_int(udi, "usb.idVendor"),
+             hal_device_get_property_int(udi, "usb.idProduct"),
+             hal_device_get_property_int(udi, "usb.bcdDevice"),
+             hal_device_get_property_int(udi, "usb.configurationValue"),
+             serial, append_num);
     
     return buf;
 }
@@ -1392,6 +1396,63 @@ static char* find_udi_from_sysfs_path(const char* path)
     return NULL;
 }
 
+/** Given a sysfs-path for an USB interface, this function finds the
+ *  HAL device representing the USB device. This function may sleep
+ *  for a while because we may race against the /sbin/hotplug invoked
+ *  event for the USB device.
+ *
+ *  @param  path                Sysfs-path of USB interface
+ *  @return                     UDI (unique device id) of USB device
+ */
+static char* find_usb_device_from_interface_sysfs_path(const char* path)
+{
+    int i;
+    int len;
+    char* d;
+    char parent_path[SYSFS_PATH_MAX+1];
+    int time_to_sleep = 500*1000;
+    dbus_bool_t have_slept;
+
+    /* First find parent device; that's easy; just remove chars from end
+     * until and including first '/' */
+    strncpy(parent_path, path, SYSFS_PATH_MAX);
+    len = strlen(parent_path);
+    for(i=len-1; i>0; --i)
+    {
+        if( parent_path[i]=='/' )
+            break;
+        parent_path[i]='\0';
+    }
+    parent_path[i]='\0';
+    //printf("parent_path = '%s'\n", parent_path);
+    /* Lookup HAL device from parent_path */
+
+    have_slept = FALSE;
+
+    while( time_to_sleep<5*1000*1000 ) /* we'll sleep a max of 10 seconds */
+    {
+        d = find_udi_from_sysfs_path(parent_path);
+        if( d!=NULL )
+        {
+            if( have_slept )
+                syslog(LOG_NOTICE, "Found USB device for USB interface %s", 
+                       path);
+            return d;
+        }
+
+        syslog(LOG_NOTICE, "Cannot find USB device for USB interface %s! "
+               "Sleeping %d ms...", path, time_to_sleep/1000);
+
+        usleep(time_to_sleep); 
+        have_slept = TRUE;
+        time_to_sleep*=2;
+    }
+
+    syslog(LOG_CRIT, "Couldn't find USB device for USB interface %s! "
+           "Giving up", path);
+    DIE(("Giving up"));
+
+}
 
 /** Visitor function for interfaces on a USB device.
  *
@@ -1409,30 +1470,10 @@ static void visit_device_usb_interface(const char* path,
     char* d;
     char buf[256];
     char attr_name[SYSFS_NAME_LEN];
-    char parent_path[SYSFS_PATH_MAX+1];
 
     //printf("usb_interface: path=%s\n", path);
 
-    /* First find parent device; that's easy; just remove chars from end
-     * until and including first '/'
-     */
-    strncpy(parent_path, path, SYSFS_PATH_MAX);
-    len = strlen(parent_path);
-    for(i=len-1; i>0; --i)
-    {
-        if( parent_path[i]=='/' )
-            break;
-        parent_path[i]='\0';
-    }
-    parent_path[i]='\0';
-    //printf("parent_path = '%s'\n", parent_path);
-    /* Lookup HAL device from parent_path */
-    d = find_udi_from_sysfs_path(parent_path);
-    //printf("parent udi = '%s'\n", d);
-
-
-    if( d==NULL )
-        return;
+    d = find_usb_device_from_interface_sysfs_path(path);
 
     if( device->directory==NULL || device->directory->attributes==NULL )
         return;
@@ -1587,9 +1628,9 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
 
         /* strip whitespace */
         len = strlen(cur->value);
-        for(i=len-1; isspace(cur->value[i]) && i>0; --i)
-                cur->value[i] = '\0';
-        
+        for(i=len-1; isspace(cur->value[i]) && i>=0; --i)
+            cur->value[i] = '\0';
+
         /*printf("attr_name=%s -> '%s'\n", attr_name, cur->value);*/
         
         if( strcmp(attr_name, "idProduct")==0 )
@@ -1805,6 +1846,13 @@ static void visit_device_usb(const char* path, struct sysfs_device *device)
                                     proc_info->d_version_bcd);
     }
 
+    /* Uncomment this line to test that sleeping works when handling USB
+     * interfaces on not-yet added USB devices
+     *
+     * (you might need to tweak number of seconds to fit with your system)
+     */
+    /*sleep(5);*/
+
     /* Finally, Compute a proper UDI (unique device id), try to locate
      * a persistent unplugged device or add it
      */
@@ -2013,9 +2061,14 @@ static void visit_device_scsi(const char* path, struct sysfs_device *device)
  *  appropriate visit_device_<bustype> function if matched.
  *
  *  @param  path                Sysfs-path for device
- *  @param  device              libsysfs object for device
+ *  @param  visit_children      If children of this device should be visited
+ *                              set this to #TRUE. For device-probing, this
+ *                              should set be set to true so as to visit
+ *                              all devices. For hotplug events, it should
+ *                              be set to #FALSE as each sysfs object will
+ *                              generate a separate event.
  */
-static void visit_device(const char* path)
+static void visit_device(const char* path, dbus_bool_t visit_children)
 {
     struct sysfs_device* device;
     struct sysfs_directory* subdir;
@@ -2039,14 +2092,14 @@ static void visit_device(const char* path)
     }
 
     /* Visit children */
-    if( device->directory->subdirs!=NULL )
+    if( visit_children && device->directory->subdirs!=NULL )
     {
         dlist_for_each_data(device->directory->subdirs, subdir, 
                             struct sysfs_directory)
         {
             char newpath[SYSFS_PATH_MAX];
             snprintf(newpath, SYSFS_PATH_MAX, "%s/%s", path, subdir->name);
-            visit_device(newpath);
+            visit_device(newpath, TRUE);
         }
     }
 
@@ -2087,14 +2140,14 @@ static void hal_sysfs_probe()
     {
         dlist_for_each_data(dir->subdirs, current, struct sysfs_directory)
         {
-            visit_device(current->path);
+            visit_device(current->path, TRUE);
         }
     }
     sysfs_close_directory(dir);
 }
 
 /** This function is invoked on hotplug add events */
-static void device_hotplug_add()
+static void device_hotplug_add(char* bus)
 {
     int rc;
     const char* devpath;
@@ -2102,11 +2155,6 @@ static void device_hotplug_add()
     char path[SYSFS_PATH_MAX];
     char sysfs_path[SYSFS_PATH_MAX];
     struct sysfs_device* device;
-
-    /* Discard USB interface hotplug events */
-    interface = getenv("INTERFACE");
-    if( interface!=NULL )
-        return;
 
     /* Must have $DEVPATH */
     devpath = getenv("DEVPATH");
@@ -2120,12 +2168,28 @@ static void device_hotplug_add()
 
     snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
 
-    visit_device(path);
+    if( strcmp(bus, "usb")==0 )
+    {
+        if( getenv("INTERFACE")!=NULL )
+            syslog(LOG_INFO, "adding usb interface at %s", path);
+        else
+            syslog(LOG_INFO, "adding usb device at %s", path);
+    }
+    else if( strcmp(bus, "pci")==0 )
+    {
+        syslog(LOG_INFO, "adding pci device at %s", path);
+    }
+    else
+    {
+        syslog(LOG_INFO, "ignoring device add of bus=%s at %s", bus, path);
+        return;
+    }
 
+    visit_device(path, FALSE);
 }
 
 /** This function is invoked on hotplug remove events */
-static void device_hotplug_remove()
+static void device_hotplug_remove(char* bus)
 {
     int rc;
     const char* devpath;
@@ -2149,6 +2213,23 @@ static void device_hotplug_remove()
 
     snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
 
+    if( strcmp(bus, "usb")==0 )
+    {
+        if( getenv("INTERFACE")!=NULL )
+            syslog(LOG_INFO, "removing usb interface at %s", path);
+        else
+            syslog(LOG_INFO, "removing usb device at %s", path);
+    }
+    else if( strcmp(bus, "pci")==0 )
+    {
+        syslog(LOG_INFO, "removing pci device at %s", path);
+    }
+    else
+    {
+        syslog(LOG_INFO, "ignoring device removal of bus=%s at %s", bus, path);
+        return;
+    }
+
     /* Now find corresponding HAL device */
     device_udis = hal_manager_find_device_string_match("Linux.sysfs_path",
                                                        path,
@@ -2156,17 +2237,19 @@ static void device_hotplug_remove()
     if( device_udis==NULL || num_device_udis!=1 )
     {
         //syslog(LOG_ERR, "device_hotplug_remove(), Could not find UDI!");
+        syslog(LOG_ERR, "couldn't find device UDI %s", device_udi);
     }
     else
     {
         device_udi = device_udis[0];
         //syslog(LOG_INFO, "device_hotplug_remove(), device_udi=%s", device_udi);
+        syslog(LOG_INFO, "device UDI %s", device_udi);
         hal_agent_remove_device(device_udi);
     }
 }
 
 /** This function is invoked on hotplug events */
-static void device_hotplug()
+static void device_hotplug(char* bus)
 {
     const char* action;
 
@@ -2175,9 +2258,9 @@ static void device_hotplug()
         return;
 
     if( strcmp(action, "add")==0 )
-        device_hotplug_add();
+        device_hotplug_add(bus);
     else if( strcmp(action, "remove")==0 )
-        device_hotplug_remove();
+        device_hotplug_remove(bus);
 
 }
 
@@ -2235,23 +2318,13 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    //openlog("hal-sysfs-agent", LOG_CONS|LOG_PID, LOG_DAEMON);
+    openlog("hal-sysfs-agent", LOG_CONS|LOG_PID, LOG_DAEMON);
 
     pci_ids_load("/usr/share/hwdata/pci.ids");
     usb_ids_load("/usr/share/hwdata/usb.ids");
 
     /* Parse /proc/bus/usb/devices */
     usb_proc_parse();
-
-    if( argc==2 && 
-        (strcmp(argv[1], "usb")==0 ||
-         strcmp(argv[1], "pci")==0) )
-    {
-        device_hotplug();
-
-        sleep(1);
-        return 0;
-    }
 
     while(TRUE)
     {
@@ -2293,6 +2366,13 @@ int main(int argc, char* argv[])
             exit(1);
             break;
         }         
+    }
+
+    if( argc==2 )
+    {
+        device_hotplug(argv[1]);
+        sleep(1);
+        return 0;
     }
 
     usage();

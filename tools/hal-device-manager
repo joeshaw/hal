@@ -322,8 +322,9 @@ def on_device_tree_selection_changed(tree_selection):
 def device_changed(dbus_if,dbus_member, dbus_svc, dbus_obj_path, dbus_message):
     [property_name] = dbus_message.get_args_list()
     # TODO: Update appropriate device
-    if property_name=="Parent":
-        update_device_list()        
+    #if property_name=="Parent":
+    #    update_device_list()        
+    update_device_list()        
 
 def gdl_changed(dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
     if dbus_member=="DeviceAdded":

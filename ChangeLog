@@ -1,3 +1,25 @@
+2003-11-23  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal-sysfs-agent.c:
+	(usb_compute_udi): Make the device configuration entry part of the
+	device udi; use serial number, if available.
+	(find_usb_device_from_interface_sysfs_path): new function
+	(visit_device_usb_interface): Bugfix in white-space stripping
+	(visit_device): Make visit of children optional
+	(device_hotplug_add): Don't visit children when adding devices; handle
+	interfaces seperately. Consequently the interfaces appear later.
+	Added syslog calls.
+	NOTE: Need to wait for enabling an USB device until all interfaces are
+	collected.
+	(device_hotplug_remove): Added syslog calls
+	(main): Moved hotplug call after getopt switch, and handle all sorts
+	of events.
+
+	* tools/hal-device-manager: Call update_device_list() whenever a
+	property changes; this is quite ineffective and should be changed
+	later.
+	
+	
 2003-11-22  David Zeuthen  <david@fubar.dk>
 
 	* COPYING: Updated to mention some source files may be LGPL also
