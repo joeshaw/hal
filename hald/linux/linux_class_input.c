@@ -43,6 +43,14 @@
 #include "../device_store.h"
 #include "linux_class_input.h"
 
+/**
+ * @defgroup HalDaemonLinuxInput Input class
+ * @ingroup HalDaemonLinux
+ * @brief Input class
+ * @{
+ */
+
+
 /** Key information about input devices from /proc that is not available 
  *  in sysfs
  */
@@ -297,6 +305,7 @@ static void input_proc_parse()
         input_proc_info* i;
         for(i=input_proc_head; i!=NULL; i=i->next)
         {
+/*
             printf("/p/b/i/d entry\n");
             printf("  bus               %d\n", i->bus);
             printf("  vendor            %d\n", i->vendor);
@@ -307,6 +316,7 @@ static void input_proc_parse()
             printf("  phys_name         '%s'\n", i->phys_name);
             printf("  handlers          '%s'\n", i->handlers);
             printf("\n");
+*/
         }
     }
 }
@@ -440,8 +450,13 @@ static void process_input_proc_info(input_proc_info* i)
                                  i->evbit&(1<<EV_FF));
     ds_property_set_bool(d, "input.misc", 
                                  i->evbit&(1<<EV_MSC));
+#ifdef EV_RST
     ds_property_set_bool(d, "input.rst", 
                                  i->evbit&(1<<EV_RST));
+#elif EV_SYN
+    ds_property_set_bool(d, "input.rst", 
+                                 i->evbit&(1<<EV_SYN));
+#endif
     
     if( i->evbit&(1<<EV_LED) )
     {
@@ -582,7 +597,7 @@ static void input_got_sysdevice(HalDevice* sysdevice,
 
     if( sysdevice==NULL )
     {
-        LOG_WARNING(("Sysdevice for a class input device never appeared!"));
+        HAL_WARNING(("Sysdevice for a class input device never appeared!"));
     }
     else
     {
@@ -625,3 +640,4 @@ void linux_class_input_shutdown()
 {
 }
 
+/** @} */

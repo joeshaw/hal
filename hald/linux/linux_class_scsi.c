@@ -40,6 +40,13 @@
 #include "../device_store.h"
 #include "linux_class_scsi.h"
 
+/**
+ * @defgroup HalDaemonLinuxScsi SCSI class
+ * @ingroup HalDaemonLinux
+ * @brief SCSI class
+ * @{
+ */
+
 
 /** This function will compute the device uid based on other properties
  *  of the device. For SCSI hosts it is the parent name device UDI
@@ -133,7 +140,7 @@ void visit_class_device_scsi_host(const char* path,
 
     if( class_device->sysdevice==NULL )
     {
-        LOG_INFO(("Skipping virtual class device at path %s\n", path));
+        HAL_INFO(("Skipping virtual class device at path %s\n", path));
         return;
     }
 
@@ -189,7 +196,7 @@ static void visit_class_device_scsi_host_got_parent(HalDevice* parent,
     }
     else
     {
-        LOG_ERROR(("No parent for SCSI device!"));
+        HAL_ERROR(("No parent for SCSI device!"));
         ds_device_destroy(d);
         return;
     }
@@ -221,7 +228,7 @@ void visit_class_device_scsi_device(const char* path,
 
     if( class_device->sysdevice==NULL )
     {
-        LOG_INFO(("Skipping virtual class device at path %s\n", path));
+        HAL_INFO(("Skipping virtual class device at path %s\n", path));
         return;
     }
 
@@ -276,7 +283,7 @@ static void visit_class_device_scsi_device_got_parent(HalDevice* parent,
     }
     else
     {
-        LOG_ERROR(("No parent for SCSI device!"));
+        HAL_ERROR(("No parent for SCSI device!"));
         ds_device_destroy(d);
         return;
     }
@@ -300,3 +307,5 @@ void linux_class_scsi_init()
 void linux_class_scsi_shutdown()
 {
 }
+
+/** @} */

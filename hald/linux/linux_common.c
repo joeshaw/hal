@@ -43,6 +43,13 @@
 #include "../device_store.h"
 #include "linux_common.h"
 
+/**
+ * @defgroup HalDaemonLinuxCommon Utility functions
+ * @ingroup HalDaemonLinux
+ * @brief Utility functions
+ * @{
+ */
+
 /** Parse a double represented as a decimal number (base 10) in a string. 
  *
  *  @param  str                 String to parse
@@ -433,7 +440,7 @@ tryagain:
         if( ds_property_exists(computed_d, "RequireEnable") &&
             !ds_property_get_bool(computed_d, "RequireEnable") )
         {
-            /*LOG_INFO(("TODO: enable %s!", computed_udi));*/
+            /*HAL_INFO(("TODO: enable %s!", computed_udi));*/
             /*hal_device_enable(computed_udi);*/
         }
     }
@@ -453,7 +460,7 @@ tryagain:
         /* Now try to enable the device - if a .fdi is found 
          * and merged, the HAL daemon will know to respect the
          * RequireEnable property */
-        /*LOG_INFO(("TODO: enable %s!", computed_udi));*/
+        /*HAL_INFO(("TODO: enable %s!", computed_udi));*/
         /*hal_device_enable(computed_udi);*/
 
     }
@@ -507,14 +514,14 @@ void find_and_set_physical_device(HalDevice* device)
         parent_udi = ds_property_get_string(d, "Parent");
         if( parent_udi==NULL )
         {
-            LOG_ERROR(("Error finding parent for %s\n", d->udi));
+            HAL_ERROR(("Error finding parent for %s\n", d->udi));
             return;
         }
 
         parent = ds_device_find(parent_udi);
         if( parent==NULL )
         {
-            LOG_ERROR(("Error resolving UDI %s\n", parent_udi));
+            HAL_ERROR(("Error resolving UDI %s\n", parent_udi));
             return;
         }
 
@@ -625,3 +632,5 @@ void drivers_collect(const char* bus_name)
     }
     sysfs_close_directory(dir);
 }
+
+/** @} */

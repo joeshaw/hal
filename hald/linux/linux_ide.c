@@ -41,6 +41,13 @@
 #include "linux_ide.h"
 
 
+/**
+ * @defgroup HalDaemonLinuxIde IDE
+ * @ingroup HalDaemonLinux
+ * @brief IDE
+ * @{
+ */
+
 /** This function will compute the device uid based on other properties
  *  of the device. For an IDE device it's simply ide appended with the
  *  channel and sub_channel
@@ -114,7 +121,7 @@ void visit_device_ide_host(const char* path, struct sysfs_device *device)
     /*printf("ide_host: %s\n", path);*/
     if( sscanf(device->bus_id, "ide%d", &ide_host_number)!=1 )
     {
-        LOG_ERROR(("Couldn't find ide_host_number in %s\n",
+        HAL_ERROR(("Couldn't find ide_host_number in %s\n",
                    device->bus_id));
         return;
     }
@@ -200,7 +207,7 @@ void visit_device_ide(const char* path, struct sysfs_device *device)
     /*printf("ide: %s\n", path);*/
     if( sscanf(device->bus_id, "%d.%d", &channel, &sub_channel)!=2 )
     {
-        LOG_ERROR(("Couldn't find channel and sub_channel in %s\n",
+        HAL_ERROR(("Couldn't find channel and sub_channel in %s\n",
                    device->bus_id));
         return;
     }
@@ -275,3 +282,5 @@ void linux_ide_init()
 void linux_ide_shutdown()
 {
 }
+
+/** @} */

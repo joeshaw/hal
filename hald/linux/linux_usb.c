@@ -40,6 +40,13 @@
 #include "../device_store.h"
 #include "linux_usb.h"
 
+/**
+ * @defgroup HalDaemonLinuxUsb USB
+ * @ingroup HalDaemonLinux
+ * @brief USB
+ * @{
+ */
+
 /** Pointer to where the usb.ids file is loaded */
 static char* usb_ids = NULL;
 
@@ -751,7 +758,7 @@ static void visit_device_usbif_got_parent(HalDevice* parent,
     if( parent==NULL )
     {
         /* An USB interface should always have a parent! */
-        LOG_ERROR(("No parent for USB interface!"));
+        HAL_ERROR(("No parent for USB interface!"));
         ds_device_destroy(d);
         return;
     }
@@ -996,7 +1003,7 @@ static void visit_device_usb_got_parent(HalDevice* parent,
     else
     {
         /* An USB device should always have a parent! */
-        LOG_WARNING(("No parent for USB device!"));
+        HAL_WARNING(("No parent for USB device!"));
     }
 
     /* Merge information from /proc/bus/usb/devices */
@@ -1178,8 +1185,7 @@ void linux_usb_init()
     drivers_collect("usb");
 
     /* Load /usr/share/hwdata/usb.ids */
-    /** @todo Hardcoding path to usb.ids is a hack */
-    usb_ids_load("/usr/share/hwdata/usb.ids");
+    usb_ids_load(HWDATA_DIR "/usb.ids");
 
     /* Parse /proc/bus/usb/devices */
 
@@ -1195,3 +1201,4 @@ void linux_usb_shutdown()
     usb_ids_free();
 }
 
+/** @} */

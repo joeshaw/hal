@@ -40,28 +40,6 @@
 #include "device_info.h"
 #include "osspec.h"
 
-/* We need somewhere to define these groups somewhere */
-
-/**
- * @defgroup HalAgents HAL agents
- * @brief HAL agents are responsible for interfacing with the operating
- *        system. An agent can be invoked to probe a bus and it can be
- *        invoked when a device is hotplugged. 
- *
- *        When the HAL daemon is started it invokes the HAL agents listed
- *        in the hald.conf configuration with the single option
- *        <tt>--probe</tt>. On GNU/Linux, when a device is hotplugged the
- *        appropriate HAL agent is invoked by the linux-hotplug subsystem.
- */
-
-/**
- * @defgroup HalAgentsLinux Linux
- * @ingroup HalAgents
- * @brief HAL agents for GNU/Linux
- */
-
-
-
 
 /**
  * @defgroup HalDaemon HAL daemon
@@ -93,7 +71,7 @@ static void raise_no_such_device(DBusConnection* connection,
     DBusMessage *reply;
 
     snprintf(buf, 511, "No device with id %s", udi);
-    LOG_WARNING((buf));
+    HAL_WARNING((buf));
     reply = dbus_message_new_error(in_reply_to, 
                                    "org.freedesktop.Hal.NoSuchDevice", 
                                    buf);
@@ -118,7 +96,7 @@ static void raise_wrong_state(DBusConnection* connection,
     DBusMessage *reply;
 
     snprintf(buf, 511, "No device with id %s", udi);
-    LOG_WARNING((buf));
+    HAL_WARNING((buf));
     reply = dbus_message_new_error(in_reply_to, 
                                    "org.freedesktop.Hal.WrongState", 
                                    buf);
@@ -143,7 +121,7 @@ static void raise_udi_in_use(DBusConnection* connection,
     DBusMessage *reply;
 
     snprintf(buf, 511, "Unique device id '%s' is already in use", udi);
-    LOG_WARNING((buf));
+    HAL_WARNING((buf));
     reply = dbus_message_new_error(in_reply_to, 
                                    "org.freedesktop.Hal.UdiInUse",
                                    buf);
@@ -170,7 +148,7 @@ static void raise_no_such_property(DBusConnection* connection,
     DBusMessage *reply;
 
     snprintf(buf, 511, "No property %s on device with id %s", key, device_id);
-    LOG_WARNING((buf));
+    HAL_WARNING((buf));
     reply = dbus_message_new_error(in_reply_to, 
                                    "org.freedesktop.Hal.NoSuchProperty", 
                                    buf);
@@ -199,7 +177,7 @@ static void raise_property_type_error(DBusConnection* connection,
     snprintf(buf, 511, 
              "Type mismatch setting property %s on device with id %s", 
              key, device_id);
-    LOG_WARNING((buf));
+    HAL_WARNING((buf));
     reply = dbus_message_new_error(in_reply_to, 
                                    "org.freedesktop.Hal.TypeMismatch", 
                                    buf);
@@ -227,7 +205,7 @@ static void raise_syntax(DBusConnection* connection,
     snprintf(buf, 511, 
              "There is a syntax error in the invocation of "
              "the method %s", method_name);
-    LOG_WARNING((buf));
+    HAL_WARNING((buf));
     reply = dbus_message_new_error(in_reply_to, 
                                    "org.freedesktop.Hal.SyntaxError", 
                                    buf);
@@ -268,7 +246,7 @@ static DBusHandlerResult manager_get_all_devices(DBusConnection* connection,
     const char* udi;
     HalDeviceIterator iter_device;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     reply = dbus_message_new_method_return(message);
     if( reply==NULL )
@@ -325,7 +303,7 @@ static DBusHandlerResult manager_find_device_string_match(
     int type;
     HalDevice* device;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     dbus_error_init(&error);
     if( !dbus_message_get_args(message, &error, 
@@ -395,7 +373,7 @@ static DBusHandlerResult manager_find_device_by_capability(
     int type;
     HalDevice* device;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     dbus_error_init(&error);
     if( !dbus_message_get_args(message, &error, 
@@ -468,7 +446,7 @@ static DBusHandlerResult manager_device_exists(DBusConnection* connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    HAL_TRACE(("entering, udi=%s", udi));
 
     d = ds_device_find(udi);
 
@@ -496,7 +474,7 @@ static void manager_send_signal_device_added(const char* udi)
     DBusMessage* message;
     DBusMessageIter iter;
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    HAL_TRACE(("entering, udi=%s", udi));
 
     message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
                                       "org.freedesktop.Hal.Manager",
@@ -521,7 +499,7 @@ static void manager_send_signal_device_removed(const char* udi)
     DBusMessage* message;
     DBusMessageIter iter;
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    HAL_TRACE(("entering, udi=%s", udi));
 
     message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
                                       "org.freedesktop.Hal.Manager",
@@ -549,7 +527,7 @@ static void manager_send_signal_new_capability(const char* udi,
     DBusMessage* message;
     DBusMessageIter iter;
 
-    LOG_TRACE(("entering, udi=%s, cap=%s", udi, cap));
+    HAL_TRACE(("entering, udi=%s, cap=%s", udi, capability));
 
     message = dbus_message_new_signal("/org/freedesktop/Hal/Manager", 
                                       "org.freedesktop.Hal.Manager",
@@ -598,7 +576,7 @@ static DBusHandlerResult device_get_all_properties(DBusConnection* connection,
 
     udi = dbus_message_get_path(message);
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    HAL_TRACE(("entering, udi=%s", udi));
 
     d = ds_device_find(udi);
     if( d==NULL )
@@ -648,7 +626,7 @@ static DBusHandlerResult device_get_all_properties(DBusConnection* connection,
             break;
 
         default:
-            LOG_WARNING(("Unknown property type %d", type));
+            HAL_WARNING(("Unknown property type %d", type));
             break;
         }
     }
@@ -693,7 +671,7 @@ static DBusHandlerResult device_get_property(DBusConnection* connection,
 
     udi = dbus_message_get_path(message);
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    HAL_TRACE(("entering, udi=%s", udi));
 
     d = ds_device_find(udi);
     if( d==NULL )
@@ -745,7 +723,7 @@ static DBusHandlerResult device_get_property(DBusConnection* connection,
         break;
         
     default:
-        LOG_WARNING(("Unknown property type %d", type));
+        HAL_WARNING(("Unknown property type %d", type));
         break;
     }
 
@@ -784,7 +762,7 @@ static DBusHandlerResult device_get_property_type(DBusConnection* connection,
 
     udi = dbus_message_get_path(message);
 
-    LOG_TRACE(("entering, udi=%s", udi));
+    HAL_TRACE(("entering, udi=%s", udi));
 
     d = ds_device_find(udi);
     if( d==NULL )
@@ -855,7 +833,7 @@ static DBusHandlerResult device_set_property(DBusConnection* connection,
     DBusMessageIter iter;
     DBusMessage *reply;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -868,7 +846,7 @@ static DBusHandlerResult device_set_property(DBusConnection* connection,
     }
     key = dbus_message_iter_get_string(&iter);
 
-    LOG_DEBUG(("udi=%s, key=%s", udi, key));
+    HAL_DEBUG(("udi=%s, key=%s", udi, key));
 
     device = ds_device_find(udi);
     if( device==NULL )
@@ -902,7 +880,7 @@ static DBusHandlerResult device_set_property(DBusConnection* connection,
         break;
 
     default:
-        LOG_WARNING(("Unsupported property type %d", type));
+        HAL_WARNING(("Unsupported property type %d", type));
         break;
     }
 
@@ -964,7 +942,7 @@ static DBusHandlerResult device_add_capability(DBusConnection* connection,
     DBusError error;
     char buf[MAX_CAP_SIZE];
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -1040,7 +1018,7 @@ static DBusHandlerResult device_remove_property(DBusConnection* connection,
     DBusMessage *reply;
     DBusError error;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -1101,7 +1079,7 @@ static DBusHandlerResult device_property_exists(DBusConnection* connection,
     DBusError error;
     DBusMessageIter iter;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -1160,7 +1138,7 @@ static DBusHandlerResult device_query_capability(DBusConnection* connection,
     DBusError error;
     DBusMessageIter iter;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -1226,7 +1204,7 @@ static DBusHandlerResult device_enable(DBusConnection* connection,
     dbus_bool_t ok_to_enable;
     int device_state;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -1259,7 +1237,7 @@ static DBusHandlerResult device_enable(DBusConnection* connection,
     }
 
     /* Now enable device */
-    LOG_INFO(("Enabling device %s", udi));
+    HAL_INFO(("Enabling device %s", udi));
     
     /* First, make sure we got an .fdi file */
     if( (!ds_property_exists(d, "GotDeviceInfo")) || 
@@ -1283,7 +1261,7 @@ static DBusHandlerResult device_enable(DBusConnection* connection,
     if( ds_property_get_bool(d, "GotDeviceInfo") )
     {
         /** @todo boot device */
-        LOG_INFO(("Now booting device"));
+        HAL_INFO(("Now booting device"));
 
         ds_property_set_int(d, "State", HAL_STATE_ENABLED);        
     }
@@ -1327,7 +1305,7 @@ static DBusHandlerResult device_disable(DBusConnection* connection,
     dbus_bool_t ok_to_disable;
     int device_state;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     udi = dbus_message_get_path(message);
 
@@ -1359,7 +1337,7 @@ static DBusHandlerResult device_disable(DBusConnection* connection,
     }
 
     /** @todo: disable device */
-    LOG_INFO(("Disabling device %s", udi));
+    HAL_INFO(("Disabling device %s", udi));
 
     dbus_message_iter_init(reply, &iter);
     dbus_message_iter_append_boolean(&iter, ok_to_disable);
@@ -1403,7 +1381,7 @@ static DBusHandlerResult agent_manager_new_device(DBusConnection* connection,
     DBusMessageIter iter;
     const char* udi;
 
-    LOG_TRACE(("entering"));
+    HAL_TRACE(("entering"));
 
     reply = dbus_message_new_method_return(message);
     if( reply==NULL )
@@ -1412,7 +1390,7 @@ static DBusHandlerResult agent_manager_new_device(DBusConnection* connection,
     d = ds_device_new();
     udi = ds_device_get_udi(d);
 
-    LOG_TRACE(("udi=%s", udi));
+    HAL_TRACE(("udi=%s", udi));
 
     dbus_message_iter_init(reply, &iter);
     dbus_message_iter_append_string(&iter, udi);
@@ -1467,7 +1445,7 @@ static DBusHandlerResult agent_manager_commit_to_gdl(
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    LOG_TRACE(("entering, old_udi=%s, new_udi=%s", old_udi, new_udi));
+    HAL_TRACE(("entering, old_udi=%s, new_udi=%s", old_udi, new_udi));
 
     d = ds_device_find(old_udi);
     if( d==NULL )
@@ -1534,7 +1512,7 @@ static DBusHandlerResult agent_manager_remove(DBusConnection* connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    LOG_INFO(("entering, udi=%s", udi));
+    HAL_INFO(("entering, udi=%s", udi));
 
     d = ds_device_find(udi);
     if( d==NULL )
@@ -1597,7 +1575,7 @@ static DBusHandlerResult agent_merge_properties(DBusConnection* connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    LOG_TRACE(("entering, target_udi=%s, source_udi=%s", 
+    HAL_TRACE(("entering, target_udi=%s, source_udi=%s", 
                target_udi, source_udi));
 
     target_d = ds_device_find(target_udi);
@@ -1674,7 +1652,7 @@ static DBusHandlerResult agent_device_matches(DBusConnection* connection,
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
 
-    LOG_TRACE(("entering, udi1=%s, udi2=%s, namespace=%s", 
+    HAL_TRACE(("entering, udi1=%s, udi2=%s, namespace=%s", 
                udi1, udi2, namespace));
 
     d1 = ds_device_find(udi1);
@@ -1732,7 +1710,7 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
                                          void* user_data)
 {
 /*
-    LOG_INFO(("obj_path=%s interface=%s method=%s", 
+    HAL_INFO(("obj_path=%s interface=%s method=%s", 
               dbus_message_get_path(message), 
               dbus_message_get_interface(message),
               dbus_message_get_member(message)));
@@ -1948,7 +1926,7 @@ static void property_changed(HalDevice* device,
     const char* signal_name;
 
 /*
-    LOG_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
+    HAL_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
               device->udi, key, 
               in_gdl ? "true" : "false",
               removed ? "true" : "false",
@@ -2018,7 +1996,9 @@ int main(int argc, char* argv[])
     GMainLoop* loop;
     DBusError dbus_error;
 
-    fprintf(stderr, "hald version " PACKAGE_VERSION "\r\n");
+    logger_init();
+
+    HAL_INFO(("HAL daemon version " PACKAGE_VERSION " starting up"));
 
     // initialize the device store
     ds_init();
@@ -2035,7 +2015,7 @@ int main(int argc, char* argv[])
     dbus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
     if( dbus_connection==NULL )
     {
-        LOG_ERROR(("dbus_bus_get(): '%s'", dbus_error.message));
+        HAL_ERROR(("dbus_bus_get(): '%s'", dbus_error.message));
         exit(1);
     }
 
@@ -2045,7 +2025,7 @@ int main(int argc, char* argv[])
                              0, &dbus_error);
     if( dbus_error_is_set(&dbus_error) )
     {
-        LOG_ERROR(("dbus_bus_acquire_service(): '%s'", dbus_error.message));
+        HAL_ERROR(("dbus_bus_acquire_service(): '%s'", dbus_error.message));
         exit(1);
     }
 

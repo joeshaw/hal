@@ -40,6 +40,13 @@
 #include "../device_store.h"
 #include "linux_pci.h"
 
+/**
+ * @defgroup HalDaemonLinuxPci PCI
+ * @ingroup HalDaemonLinux
+ * @brief PCI
+ * @{
+ */
+
 
 /** Pointer to where the pci.ids file is loaded */
 static char* pci_ids = NULL;
@@ -279,7 +286,7 @@ static dbus_bool_t pci_ids_load(const char* path)
     fp = fopen(path, "r");
     if( fp==NULL )
     {
-        LOG_ERROR(("couldn't open PCI database at %s,", path));
+        HAL_ERROR(("couldn't open PCI database at %s,", path));
         return FALSE;
     }
 
@@ -297,7 +304,7 @@ static dbus_bool_t pci_ids_load(const char* path)
     num_read = fread(pci_ids, sizeof(char), pci_ids_len, fp);
     if( pci_ids_len!=num_read )
     {
-        LOG_ERROR(("Error loading PCI database file\n"));
+        HAL_ERROR(("Error loading PCI database file\n"));
         free(pci_ids);
         pci_ids=NULL;
         return FALSE;
@@ -818,8 +825,7 @@ void linux_pci_init()
     drivers_collect("pci");
 
     /* Load /usr/share/hwdata/pci.ids */
-    /** @todo Hardcoding path to pci.ids is a hack */
-    pci_ids_load("/usr/share/hwdata/pci.ids");
+    pci_ids_load(HWDATA_DIR "/pci.ids");
 }
 
 /** Shutdown function for PCI handling
@@ -830,3 +836,4 @@ void linux_pci_shutdown()
     pci_ids_free();
 }
 
+/** @} */

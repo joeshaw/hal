@@ -22,21 +22,21 @@ class Representation:
     def __init__(self):
         """Init the class and load neccessary resources."""
         self.icons = {}
-        self.icons["bus_pci"] = self.load_and_scale_icon("hal-bus-pci.png")
-        self.icons["bus_usb"] = self.load_and_scale_icon("hal-bus-usb.png")
-        self.icons["abstract"] = self.load_and_scale_icon("hal-abstract.png");
-        self.icons["harddisk"] = self.load_and_scale_icon("hal-harddisk.png");
-        self.icons["cdrom"] = self.load_and_scale_icon("hal-cdrom.png");
-        self.icons["floppy"] = self.load_and_scale_icon("hal-floppy.png");
-        self.icons["unknown"] = self.load_and_scale_icon("hal-unknown.png")
-        self.icons["mouse"] = self.load_and_scale_icon("hal-cat-mouse.png")
-        self.icons["keyboard"] = self.load_and_scale_icon("hal-cat-keyboard.png")
-        self.icons["cardbus"] = self.load_and_scale_icon("hal-cat-cardbus.png")
-        self.icons["video"] = self.load_and_scale_icon("hal-video.png")
-        self.icons["flash"] = self.load_and_scale_icon("hal-flash.png")
-        self.icons["network"] = self.load_and_scale_icon("hal-network.png")
-        self.icons["audio"] = self.load_and_scale_icon("hal-audio.png")
-        self.icons["camera"] = self.load_and_scale_icon("hal-camera.png")
+        self.icons["bus_pci"] = self.load_and_scale_icon(Const.DATADIR + "/hal-bus-pci.png")
+        self.icons["bus_usb"] = self.load_and_scale_icon(Const.DATADIR + "/hal-bus-usb.png")
+        self.icons["abstract"] = self.load_and_scale_icon(Const.DATADIR + "/hal-abstract.png");
+        self.icons["harddisk"] = self.load_and_scale_icon(Const.DATADIR + "/hal-harddisk.png");
+        self.icons["cdrom"] = self.load_and_scale_icon(Const.DATADIR + "/hal-cdrom.png");
+        self.icons["floppy"] = self.load_and_scale_icon(Const.DATADIR + "/hal-floppy.png");
+        self.icons["unknown"] = self.load_and_scale_icon(Const.DATADIR + "/hal-unknown.png")
+        self.icons["mouse"] = self.load_and_scale_icon(Const.DATADIR + "/hal-cat-mouse.png")
+        self.icons["keyboard"] = self.load_and_scale_icon(Const.DATADIR + "/hal-cat-keyboard.png")
+        self.icons["cardbus"] = self.load_and_scale_icon(Const.DATADIR + "/hal-cat-cardbus.png")
+        self.icons["video"] = self.load_and_scale_icon(Const.DATADIR + "/hal-video.png")
+        self.icons["flash"] = self.load_and_scale_icon(Const.DATADIR + "/hal-flash.png")
+        self.icons["network"] = self.load_and_scale_icon(Const.DATADIR + "/hal-network.png")
+        self.icons["audio"] = self.load_and_scale_icon(Const.DATADIR + "/hal-audio.png")
+        self.icons["camera"] = self.load_and_scale_icon(Const.DATADIR + "/hal-camera.png")
 
         
     def get_icon(self, device):

@@ -13,16 +13,21 @@ AM_PROG_CC_STDC
 AC_HEADER_STDC
 AM_PROG_LIBTOOL
 AC_PROG_MAKE_SET
+AM_PATH_PYTHON
 
-AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is (default is /etc/dbus-1/system.d)])
-
-if ! test -z "$with_dbus_sys" ; then
-   DBUS_SYS_DIR="$with_dbus_sys"
+AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
+if ! test -z "$with_hwdata" ; then
+   HWDATA_DIR="$with_hwdata"
 else
-   DBUS_SYS_DIR="/etc/dbus-1/system.d"
+   for dir in /usr/share/hwdata /usr/share/misc; do
+      AC_CHECK_FILE($dir/pci.ids,HWDATA_DIR=$dir)
+   done
 fi
-AC_SUBST(DBUS_SYS_DIR)
-AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
+if test -z "$HWDATA_DIR"; then
+   AC_ERROR(cannot find pci.ids. Use --with-hwdata to specify location)
+fi
+AC_SUBST(HWDATA_DIR)
+AC_DEFINE_UNQUOTED(HWDATA_DIR,"$HWDATA_DIR", [Where PCI and USB IDs are found])
 
 
 # Taken from dbus
@@ -36,10 +41,12 @@ fi
 
 BUILD_DIR=`pwd`
 AC_SUBST(BUILD_DIR)
-if test x$USE_MAINTAINER_MODE = xyes; then
-    AC_DEFINE(USE_MAINTAINER_MODE, 1 , [Building in maintainer mode])
-    AC_DEFINE_UNQUOTED(BUILD_DIR, "$BUILD_DIR", [Path to source of project])
-fi
+#if test x$USE_MAINTAINER_MODE = xyes; then
+#    AC_DEFINE(USE_MAINTAINER_MODE, 1 , [Building in maintainer mode])
+#    AC_DEFINE_UNQUOTED(BUILD_DIR, "$BUILD_DIR", [Path to source of project])
+#fi
+AM_CONDITIONAL(USE_MAINTAINER_MODE, test x$USE_MAINTAINER_MODE = xyes)
+AC_DEFINE_UNQUOTED(BUILD_DIR, "$BUILD_DIR", [Path to source of build dir])
 
 #### gcc warning flags
 
@@ -123,7 +130,7 @@ fi
 
 
 
-pkg_modules="glib-2.0 >= 2.2.2, dbus-glib-1 >= 0.11"
+pkg_modules="glib-2.0 >= 2.2.2, dbus-1 >= 0.20, dbus-glib-1 >= 0.20"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
@@ -135,10 +142,6 @@ AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
                       )
 AC_CHECK_HEADERS(expat.h)
 AC_CHECK_LIB(expat,XML_ParserCreate)
-
-dnl Check for libpci
-AC_CHECK_HEADERS(pci/pci.h)
-AC_CHECK_LIB(pci, pci_init)
 
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
@@ -226,12 +229,36 @@ LIBDIR_TMP="$libdir"
 EXPANDED_LIBDIR=`eval echo $LIBDIR_TMP`
 AC_SUBST(EXPANDED_LIBDIR)
 
+
+AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is])
+
+if ! test -z "$with_dbus_sys" ; then
+    DBUS_SYS_DIR="$with_dbus_sys"
+else
+    DBUS_SYS_DIR="$EXPANDED_SYSCONFDIR/dbus-1/system.d"
+fi
+AC_SUBST(DBUS_SYS_DIR)
+AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
+
+
+AC_ARG_WITH(hotplug-dir, [  --with-hotplug=<dir>    where hotplug.d directory is])
+
+if ! test -z "$with_hotplug" ; then
+    LINUX_HOTPLUG_DIR="$with_hotplug"
+else
+#    LINUX_HOTPLUG_DIR="$EXPANDED_SYSCONFDIR/hotplug.d"
+# It's quite uncommon to have hotplug.d other places than this, so default
+# to it
+    LINUX_HOTPLUG_DIR=/etc/hotplug.d
+fi
+AC_SUBST(LINUX_HOTPLUG_DIR)
+AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d directory is])
+
+
 ## put prefix and exec_prefix back
 prefix=$old_prefix
 exec_prefix=$old_exec_prefix
 
-#agents/linux/Makefile
-#agents/linux/usb/Makefile
 AC_OUTPUT([
 hal.pc
 Doxyfile
@@ -240,6 +267,7 @@ hald/Makefile
 libhal/Makefile
 tools/Makefile
 tools/linux/Makefile
+tools/device-manager/Makefile
 ])
 
 dnl ==========================================================================
@@ -247,17 +275,19 @@ echo "
                     HAL $VERSION
                   ===========
 
-	prefix:                   ${prefix}
-	exec_prefix:              ${exec_prefix}
+        prefix:                   ${prefix}
+        exec_prefix:              ${REAL_EXEC_PREFIX}
         libdir:                   ${EXPANDED_LIBDIR}
         bindir:                   ${EXPANDED_BINDIR}
         datadir:                  ${EXPANDED_DATADIR}
         sysconfdir:               ${EXPANDED_SYSCONFDIR}
         localstatedir:            ${EXPANDED_LOCALSTATEDIR}
         dbus-1 system.d dir:      ${DBUS_SYS_DIR}
-	compiler:		  ${CC}
-	cflags:		          ${CFLAGS}
-	cppflags:		  ${CPPFLAGS}
+        pci.ids, usb.ids dir:     ${HWDATA_DIR}
+        linux hotplug.d dir:      ${LINUX_HOTPLUG_DIR}
+        compiler:                 ${CC}
+        cflags:                   ${CFLAGS}
+        cppflags:                 ${CPPFLAGS}
         Doxygen:                  ${DOXYGEN}"
 
 echo "

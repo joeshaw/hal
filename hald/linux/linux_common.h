@@ -31,6 +31,13 @@
 #include "../device_store.h"
 #include "libsysfs/libsysfs.h"
 
+/**
+ * @addtogroup HalDaemonLinuxCommon
+ *
+ * @{
+ */
+
+
 double parse_double(const char* str);
 dbus_int32_t parse_dec(const char* str);
 dbus_int32_t parse_hex(const char* str);
@@ -84,5 +91,7 @@ void drivers_collect(const char* bus_name);
 extern dbus_bool_t is_probing;
 
 extern char sysfs_mount_path[SYSFS_PATH_MAX];
+
+/* @} */
 
 #endif /* LINUX_COMMON_H */

@@ -26,7 +26,7 @@ class DeviceManager(LibGladeApplication):
 
     def __init__(self):
         """Init the GUI and connect to the HAL daemon."""
-        LibGladeApplication.__init__(self, "hal-device-manager.glade")
+        LibGladeApplication.__init__(self, Const.DATADIR + "/hal-device-manager.glade")
 
         self.representation = Representation()
 

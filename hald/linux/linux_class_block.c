@@ -40,6 +40,13 @@
 #include "../device_store.h"
 #include "linux_class_block.h"
 
+/**
+ * @defgroup HalDaemonLinuxBlock Block class
+ * @ingroup HalDaemonLinux
+ * @brief Block class
+ * @{
+ */
+
 /** This function will compute the device uid based on other properties
  *  of the device. For block device it's simply block appended with the
  *  major and minor number
@@ -92,7 +99,7 @@ void visit_class_device_block(const char* path,
     if( sysfs_get_classdev_attr(class_device, "dev")==NULL )
     {
         /* Must have major:minor number before we are interested */
-        /*LOG_INFO(("Block device with sysfs path %s doesn't have major:minor",
+        /*HAL_INFO(("Block device with sysfs path %s doesn't have major:minor",
           path));*/
         return;
     }
@@ -186,7 +193,7 @@ static void visit_class_device_block_got_parent(HalDevice* parent,
 
     if( parent==NULL )
     {
-        LOG_ERROR(("No parent for block device!"));
+        HAL_WARNING(("No parent for block device!"));
         ds_device_destroy(d);
         return;
     }

@@ -26,19 +26,71 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-/*#define LOG_TRACE(expr)   do {printf("[T] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)*/
-#define LOG_TRACE(expr) do {;} while(0)
+/**
+ * @addtogroup HalDaemonLogging
+ *
+ * @{
+ */
 
 
-#define LOG_DEBUG(expr)   do {printf("[D] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
+/** Logging levels for HAL daemon
+ */
+enum
+{
+    HAL_LOGPRI_TRACE   =  (1<<0),  /**< function call sequences */
+    HAL_LOGPRI_DEBUG   =  (1<<1),  /**< debug statements in code */
+    HAL_LOGPRI_INFO    =  (1<<2),  /**< informational level */
+    HAL_LOGPRI_WARNING =  (1<<3),  /**< warnings */
+    HAL_LOGPRI_ERROR   =  (1<<4)   /**< error */
+};
 
-#define LOG_INFO(expr)    do {printf("[I] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
+void logger_init();
 
-#define LOG_WARNING(expr) do {printf("[W] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
+void logger_setup(int priority, const char* file, int line, 
+                  const char* function);
 
-#define LOG_ERROR(expr)   do {printf("[E] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); } while(0)
+void logger_emit(const char* format,...);
+
+
+#ifdef ENABLE_VERBOSE_MODE
+
+/* Verbose mode */
+
+/** Trace logging macro */
+#define HAL_TRACE(expr)   do {logger_setup(HAL_LOGPRI_TRACE,   __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
+
+/** Debug information logging macro */
+#define HAL_DEBUG(expr)   do {logger_setup(HAL_LOGPRI_DEBUG,   __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
+
+/** Information level logging macro */
+#define HAL_INFO(expr)    do {logger_setup(HAL_LOGPRI_INFO,    __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
+
+/** Warning level logging macro */
+#define HAL_WARNING(expr) do {logger_setup(HAL_LOGPRI_WARNING, __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
+
+/** Error leve logging macro */
+#define HAL_ERROR(expr)   do {logger_setup(HAL_LOGPRI_ERROR,   __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
+
+/** Macro for terminating the program on an unrecoverable error */
+#define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
+
+#else
+
+/* If verbose mode is not requested only handle warning and error */
+
+#define HAL_TRACE(expr) do {;} while(0)
+#define HAL_DEBUG(expr) do {;} while(0)
+#define HAL_INFO(expr) do {;} while(0)
+
+#define HAL_WARNING(expr) do {logger_setup(HAL_LOGPRI_WARNING, __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
+
+#define HAL_ERROR(expr)   do {logger_setup(HAL_LOGPRI_ERROR,   __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)
 
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
+
+#endif /* ENABLE_VERBOSE_MODE */
+
+/** @} */
 
 #endif /* LOGGER_H */

@@ -50,6 +50,13 @@
 #include "../device_store.h"
 #include "linux_class_net.h"
 
+/**
+ * @defgroup HalDaemonLinuxNet Networking class
+ * @ingroup HalDaemonLinux
+ * @brief Networking class
+ * @{
+ */
+
 
 /* fwd decl */
 static void visit_class_device_net_got_sysdevice(HalDevice* parent, 
@@ -77,7 +84,7 @@ void visit_class_device_net(const char* path,
 
     if( class_device->sysdevice==NULL )
     {
-        LOG_WARNING(("Net class device at sysfs path %s doesn't have "
+        HAL_WARNING(("Net class device at sysfs path %s doesn't have "
                      "sysdevice", path));
         return;
     }
@@ -230,7 +237,7 @@ static void visit_class_device_net_got_sysdevice(HalDevice* sysdevice,
 
     if( sysdevice==NULL )
     {
-        LOG_WARNING(("Sysdevice for a class net device never appeared!"));
+        HAL_WARNING(("Sysdevice for a class net device never appeared!"));
     }
     else
     {
@@ -276,8 +283,8 @@ static dbus_uint16_t mdio_read(link_detection_if* iface, int location)
               iface->new_ioctl_nums ? 0x8948 : SIOCDEVPRIVATE+1, 
               &(iface->ifr)) < 0)
     {
-        fprintf(stderr, "SIOCGMIIREG on %s failed: %s\n", iface->ifr.ifr_name,
-                strerror(errno));
+        HAL_ERROR(("SIOCGMIIREG on %s failed: %s\n", 
+                   iface->ifr.ifr_name, strerror(errno)));
         return -1;
     }
     return data[3];
@@ -300,7 +307,7 @@ static void link_detection_process(link_detection_if* iface)
     {
         iface->status_word_baseline = status_word_new;
 
-        LOG_INFO(("Ethernet link status change on hal udi %s)",
+        HAL_INFO(("Ethernet link status change on hal udi %s)",
                   iface->device->udi));
 
         /* Read status_word again since some bits may be sticky */
@@ -369,8 +376,6 @@ static gboolean link_detection_timer_handler(gpointer data)
 {
     link_detection_if* iface;
 
-    LOG_INFO(("here"));
-
     for(iface=link_detection_list_head; iface!=NULL; iface=iface->next)
         link_detection_process(iface);
 
@@ -386,8 +391,6 @@ static void link_detection_add(HalDevice* device)
     const char* interface_name;
     link_detection_if* iface;
 
-    LOG_INFO(("************************ ENTERING **************"));
-
     iface = malloc(sizeof(link_detection_if));
     if( iface==NULL )
         DIE(("No memory"));
@@ -395,8 +398,8 @@ static void link_detection_add(HalDevice* device)
     interface_name = ds_property_get_string(device, "net.interface");
     if( interface_name==NULL )
     {
-        fprintf(stderr, "device '%s' does not have net.interface\n", 
-                device->udi);
+        HAL_WARNING(("device '%s' does not have net.interface\n", 
+                     device->udi));
         free(iface);
         return;
     }
@@ -408,8 +411,8 @@ static void link_detection_add(HalDevice* device)
     /* Open a basic socket. */
     if( (iface->skfd = socket(AF_INET, SOCK_DGRAM,0))<0 )
     {
-        fprintf(stderr, "cannot open socket on interface %s; errno=%d\n", 
-                interface_name, errno);
+        HAL_ERROR(("cannot open socket on interface %s; errno=%d\n", 
+                   interface_name, errno));
         free(iface);
         return;
     }
@@ -424,8 +427,8 @@ static void link_detection_add(HalDevice* device)
     } 
     else
     {
-        fprintf(stderr, "SIOCGMIIPHY on %s failed: %s\n", iface->ifr.ifr_name,
-                strerror(errno));
+        HAL_ERROR(("SIOCGMIIPHY on %s failed: %s\n", iface->ifr.ifr_name,
+                   strerror(errno)));
         (void) close(iface->skfd);
         free(iface);
         return;
@@ -496,8 +499,6 @@ static void new_capability(HalDevice* device, const char* capability,
  */
 static void gdl_changed(HalDevice* device, dbus_bool_t is_added)
 {
-    LOG_INFO(("½½½½½½½ is_added=%d, caps=%s", is_added,
-              ds_property_get_string(device, "Capabilities")));
     if( is_added )
     {
         if( ds_query_capability(device, "net.ethernet") )
@@ -536,3 +537,4 @@ void linux_class_net_shutdown()
 {
 }
 
+/** @} */

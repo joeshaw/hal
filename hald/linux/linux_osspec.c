@@ -52,6 +52,14 @@
 
 #include "libsysfs/libsysfs.h"
 
+/**
+ * @defgroup HalDaemonLinux Linux 2.6 support
+ * @ingroup HalDaemon
+ * @brief Device detection and monitoring code for version 2.6 of Linux
+ * @{
+ */
+
+
 /** Mount path for sysfs */
 char sysfs_mount_path[SYSFS_PATH_MAX];
 
@@ -129,7 +137,7 @@ static void visit_class(const char* class_name, dbus_bool_t visit_children)
     cls = sysfs_open_class(class_name);
     if( cls==NULL )
     {
-        fprintf(stderr, "Error opening class %s\n", class_name);
+        HAL_ERROR(("Error opening class %s\n", class_name));
         return;
     }
 
@@ -166,7 +174,7 @@ static void visit_device(const char* path, dbus_bool_t visit_children)
     if( device==NULL )
         DIE(("Coulnd't get sysfs device object for path %s", path));
 
-    printf("    %s  busid=%s\n", device->bus, device->bus_id);
+    /*printf("    %s  busid=%s\n", device->bus, device->bus_id);*/
 
     if( device->bus!=NULL )
     {
@@ -217,7 +225,7 @@ void osspec_init(DBusConnection* dbus_connection)
     {
         DIE(("Couldn't get mount path for sysfs"));
     }
-    LOG_INFO(("Mountpoint for sysfs is %s", sysfs_mount_path));
+    HAL_INFO(("Mountpoint for sysfs is %s", sysfs_mount_path));
 
     linux_pci_init();
     linux_usb_init();
@@ -310,7 +318,7 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
     dbus_message_iter_next(&iter);
     dbus_message_iter_init_dict_iterator(&iter, &dict_iter);
 
-    printf("subsystem = %s\n", subsystem);
+    /*printf("subsystem = %s\n", subsystem);*/
 
     is_add = FALSE;
 
@@ -323,7 +331,7 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
         key = dbus_message_iter_get_dict_key(&dict_iter);
         value = dbus_message_iter_get_string(&dict_iter);
 
-        printf("  key/value = %s |-> %s\n", key, value);
+        /*printf("  key/value = %s |-> %s\n", key, value);*/
 
         if( strcmp(key, "ACTION")==0 )
         {
@@ -346,7 +354,7 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
     {
         if( is_add )
         {
-            LOG_INFO(("Adding device @ sysfspath %s\n", sysfs_devpath));
+            HAL_INFO(("Adding device @ sysfspath %s\n", sysfs_devpath));
             visit_device(sysfs_devpath, FALSE);
         }
         else
@@ -357,7 +365,7 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
                                                    sysfs_devpath);
             if( d==NULL )
             {
-                LOG_WARNING(("Couldn't remove device @ %s on hotplug remove",
+                HAL_WARNING(("Couldn't remove device @ %s on hotplug remove",
                              sysfs_devpath));
             }
             else
@@ -375,7 +383,7 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
     {
         if( is_add )
         {
-            LOG_INFO(("Adding device @ sysfspath %s\n", sysfs_devpath));
+            HAL_INFO(("Adding device @ sysfspath %s\n", sysfs_devpath));
             visit_class_device(sysfs_devpath, FALSE);
         }
         else
@@ -385,7 +393,7 @@ static DBusHandlerResult osspec_hotplug(DBusConnection* connection,
                                                    sysfs_devpath);
             if( d==NULL )
             {
-                LOG_WARNING(("Couldn't remove device @ %s on hotplug remove",
+                HAL_WARNING(("Couldn't remove device @ %s on hotplug remove",
                              sysfs_devpath));
             }
             else
@@ -411,7 +419,7 @@ DBusHandlerResult osspec_filter_function(DBusConnection* connection,
                                          void* user_data)
 {
 /*
-    LOG_INFO(("obj_path=%s interface=%s method=%s", 
+    HAL_INFO(("obj_path=%s interface=%s method=%s", 
               dbus_message_get_path(message), 
               dbus_message_get_interface(message),
               dbus_message_get_member(message)));
@@ -429,3 +437,5 @@ DBusHandlerResult osspec_filter_function(DBusConnection* connection,
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
+
+/** @} */

@@ -6,12 +6,12 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = hald
+sbin_PROGRAMS = hald
 
 hald_SOURCES =                                                          \
                                         main.c                          \
         osspec.h                                                        \
-        logger.h                                                        \
+        logger.h                        logger.c                        \
         device_store.h                  device_store.c                  \
         device_info.h                   device_info.c         
 

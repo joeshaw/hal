@@ -158,7 +158,7 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
 
         value = attr[3];
 
-        LOG_INFO(("Checking that key='%s' is a string that equals '%s'",
+        HAL_INFO(("Checking that key='%s' is a string that equals '%s'",
                   key, value));
 
         if( ds_property_get_type(pc->device, key)!=DBUS_TYPE_STRING )
@@ -167,7 +167,7 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
         if( strcmp(ds_property_get_string(pc->device, key), value)!=0 )
             return FALSE;
 
-        LOG_INFO(("*** string match for key %s", key));
+        HAL_INFO(("*** string match for key %s", key));
         return TRUE;
     }
     else if( strcmp(attr[2], "int")==0 )
@@ -179,7 +179,7 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
 
         /** @todo Check error condition */
 
-        LOG_INFO(("Checking that key='%s' is a int that equals %d",
+        HAL_INFO(("Checking that key='%s' is a int that equals %d",
                   key, value));
 
         if( ds_property_get_type(pc->device, key)!=DBUS_TYPE_INT32 )
@@ -205,7 +205,7 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
         else
             return FALSE;
 
-        LOG_INFO(("Checking that key='%s' is a bool that equals %s",
+        HAL_INFO(("Checking that key='%s' is a bool that equals %s",
                   key, value ? "TRUE" : "FALSE"));
 
         if( ds_property_get_type(pc->device, key)!=DBUS_TYPE_BOOLEAN )
@@ -214,7 +214,7 @@ static dbus_bool_t handle_match(ParsingContext* pc, const char** attr)
         if( ds_property_get_bool(pc->device, key)!=value )
             return FALSE;
 
-        LOG_INFO(("*** bool match for key %s", key));
+        HAL_INFO(("*** bool match for key %s", key));
         return TRUE;
     }
 
@@ -261,7 +261,7 @@ static void handle_merge(ParsingContext* pc, const char** attr)
 static void parsing_abort(ParsingContext* pc)
 {
     /* Grr, expat can't abort parsing */
-    LOG_ERROR(("Aborting parsing of document"));
+    HAL_ERROR(("Aborting parsing of document"));
     pc->aborted = TRUE;
 }
 
@@ -295,7 +295,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
     {
         if( pc->curelem!=CURELEM_DEVICE && pc->curelem!=CURELEM_MATCH )
         {
-            LOG_ERROR(("%s:%d:%d: Element <match> can only be inside "
+            HAL_ERROR(("%s:%d:%d: Element <match> can only be inside "
                        "<device> and <match>", 
                        pc->file, 
                        XML_GetCurrentLineNumber(pc->parser), 
@@ -319,7 +319,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
     {
         if( pc->curelem!=CURELEM_DEVICE && pc->curelem!=CURELEM_MATCH )
         {
-            LOG_ERROR(("%s:%d:%d: Element <merge> can only be inside "
+            HAL_ERROR(("%s:%d:%d: Element <merge> can only be inside "
                        "<device> and <match>", 
                        pc->file, 
                        XML_GetCurrentLineNumber(pc->parser), 
@@ -334,14 +334,14 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
         }
         else
         {
-            LOG_INFO(("No merge!"));
+            HAL_INFO(("No merge!"));
         }
     }
     else if( strcmp(el, "device")==0 )
     {
         if( pc->curelem!=CURELEM_DEVICE_INFO )
         {
-            LOG_ERROR(("%s:%d:%d: Element <device> can only be inside "
+            HAL_ERROR(("%s:%d:%d: Element <device> can only be inside "
                        "<deviceinfo>", 
                        pc->file, 
                        XML_GetCurrentLineNumber(pc->parser), 
@@ -354,7 +354,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
     {
         if( pc->curelem!=CURELEM_UNKNOWN )
         {
-            LOG_ERROR(("%s:%d:%d: Element <deviceinfo> must be a top-level "
+            HAL_ERROR(("%s:%d:%d: Element <deviceinfo> must be a top-level "
                        "element", 
                        pc->file, 
                        XML_GetCurrentLineNumber(pc->parser), 
@@ -365,7 +365,7 @@ static void start(ParsingContext *pc, const char *el, const char **attr)
     }
     else
     {
-        LOG_ERROR(("%s:%d:%d: Unknown element <%s>",
+        HAL_ERROR(("%s:%d:%d: Unknown element <%s>",
                    pc->file, 
                    XML_GetCurrentLineNumber(pc->parser), 
                    XML_GetCurrentColumnNumber(pc->parser), el));
@@ -408,7 +408,7 @@ static void end(ParsingContext* pc, const char* el)
             break;
 
         default:
-            LOG_ERROR(("Unknown merge_type=%d='%c'", 
+            HAL_ERROR(("Unknown merge_type=%d='%c'", 
                        pc->merge_type, pc->merge_type));
             break;
         }
@@ -576,7 +576,7 @@ static int scan_fdi_files(const char* dir, HalDevice* d)
 
     found_fdi_file = 0;
 
-    LOG_INFO(("scan_fdi_files: Processing dir '%s'", dir));
+    HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));
 
     num_entries = scandir(dir, &name_list, 0, alphasort);
     if( num_entries==-1 )
@@ -603,11 +603,11 @@ static int scan_fdi_files(const char* dir, HalDevice* d)
                 filename[len-2]=='d' &&
                 filename[len-1]=='i' )
             {        
-                LOG_INFO(("scan_fdi_files: Processing file '%s'", filename));
+                HAL_INFO(("scan_fdi_files: Processing file '%s'", filename));
                 found_fdi_file = process_fdi_file(dir, filename, d);
                 if( found_fdi_file )
                 {
-                    LOG_INFO(("*** Matched file %s/%s", dir, filename));
+                    HAL_INFO(("*** Matched file %s/%s", dir, filename));
                     break;
                 }
             }
@@ -625,7 +625,7 @@ static int scan_fdi_files(const char* dir, HalDevice* d)
             dirname = (char*) malloc(num_bytes);
             if( dirname==NULL )
             {
-                LOG_ERROR(("couldn't allocated %d bytes\r\n", num_bytes));
+                HAL_ERROR(("couldn't allocated %d bytes\r\n", num_bytes));
                 break;
             }
 

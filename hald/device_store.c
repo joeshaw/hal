@@ -204,7 +204,7 @@ void ds_print(HalDevice* device)
             break;
 
         default:
-            LOG_WARNING(("Unknown property type %d", type));
+            HAL_WARNING(("Unknown property type %d", type));
             break;
         }
     }
@@ -1131,7 +1131,7 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
             ds_property_set_bool(target, key, ds_property_iter_get_bool(p));
             break;
         default:
-            LOG_WARNING(("Unknown property type %d", type));
+            HAL_WARNING(("Unknown property type %d", type));
             break;
         }
     }    
@@ -1338,7 +1338,7 @@ dbus_bool_t ds_device_matches(HalDevice* device1, HalDevice* device2,
                 return FALSE;
             break;
         default:
-            LOG_WARNING(("Unknown property type %d", type));
+            HAL_WARNING(("Unknown property type %d", type));
             break;
         }
     }
@@ -1394,7 +1394,6 @@ dbus_bool_t ds_query_capability(HalDevice* device, const char* capability)
     caps = ds_property_get_string(device, "Capabilities");
     if( caps!=NULL )
     {
-        LOG_INFO(("¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡¡ caps=%s", caps));
         if( strstr(caps, capability)!=NULL )
             return TRUE;
     }

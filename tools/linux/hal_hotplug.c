@@ -35,6 +35,19 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
+/**
+ * @defgroup HalMisc  Misc tools for HAL
+ * @brief  Misc. tools for HAL
+ */
+
+
+/**
+ * @defgroup HalLinuxHotplug  HAL hotplug helper for Linux
+ * @ingroup HalMisc
+ * @brief A short program for translating linux-hotplug events into
+ *        D-BUS messages. The messages are sent to the HAL daemon.
+ * @{
+ */
 
 /** Entry point
  *
@@ -100,3 +113,4 @@ int main(int argc, char* argv[], char* envp[])
     return 0;
 }
 
+/** @} */
