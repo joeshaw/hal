@@ -7,6 +7,12 @@ you want to work on one of these you might want to send a patch that
 updates this file to reflect it.
 
 ============================================================================
+* Ensure that all children are removed before removing a device
+============================================================================
+
+Especially this causes problems for the tools/fstab-sync code.
+
+============================================================================
 * Rescan() method on HalDevice
 ============================================================================
 

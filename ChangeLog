@@ -1,3 +1,22 @@
+2004-08-13  David Zeuthen  <david@fubar.dk>
+
+	* tools/fstab-sync.c: All debug statements now prints the pid
+	(volume_determine_device_type): Aiih. Due to hal not removing all
+	children devices before parent devices and the fact that we use
+	properties on a parent device when removing a volume we end up
+	with a problem. Thing is, we don't need this info when removing
+	fstab entries so simple fix is to call hal_device_exists() for the
+	UDI.
+	(volume_new): Typo, volume.fs_type should be volume.fstype
+	(add_udi): Print out debug when an entry was added
+	(remove_udi): Print out debug when an entry was removed
+	(clean):
+	(main): Use flock(2) to lock the /etc/fstab file. Also bail out
+	when there are no info.capabilities and we were invoked by hald.
+	Store PID in the global variable pid.
+
+	* doc/TODO: Added TODO about removing childs before their parent
+
 2004-08-12  David Zeuthen  <david@fubar.dk>
 
 	* configure.in: Bump to 0.2.96

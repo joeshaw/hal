@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 #include <time.h>
 #include <unistd.h>
 #include <mntent.h>
@@ -52,7 +53,7 @@
 #define _(a) (a)
 #define N_(a) a
 
-#define PROGRAM_NAME "update-fstab"
+#define PROGRAM_NAME "fstab-sync"
 #define TEMP_FSTAB_PREFIX ".fstab.hal."
 #define TEMP_FSTAB_MAX_LENGTH 64
 #define MOUNT_ROOT "/media/"
@@ -131,6 +132,7 @@ typedef struct
 
 static LibHalContext *hal_context = NULL;
 static boolean verbose = FALSE;
+static pid_t pid;
 
 static void fs_table_line_add_field (FSTableLine *line, FSTableField *field);
 static boolean fs_table_line_is_generated (FSTableLine *line);
@@ -430,14 +432,15 @@ fs_table_new (const char *filename)
           if (errno == EINTR)
             continue;
 
-          fstab_update_debug (_("Could not read from '%s': %s\n"),
-                              filename, strerror (errno));
+          fstab_update_debug (_("%d: Could not read from '%s': %s\n"),
+                              pid, filename, strerror (errno));
           goto error;
         }
 
       if (!fs_table_parse_data (table, read_buf, (size_t) bytes_read))
         {
-          fstab_update_debug (_("Could not parse data from '%s'\n"), filename);
+          fstab_update_debug (_("%d: Could not parse data from '%s'\n"), 
+			      pid, filename);
           goto error;
         }
     }
@@ -473,8 +476,8 @@ fs_table_write (FSTable *table, int fd)
           if (errno == EINTR)
             continue;
 
-          fstab_update_debug (_("Could not write to temporary file: %s\n"),
-                              strerror (errno));
+          fstab_update_debug (_("%d: Could not write to temporary file: %s\n"),
+                              pid, strerror (errno));
           return FALSE;
         }
 
@@ -570,7 +573,7 @@ fs_table_parse_line (FSTable *table, const char *line, size_t length)
       if (current_field != FS_TABLE_FIELD_TYPE_WHITE_SPACE
           && (i > length || (line[i] == '\0' && current_field != 0)))
         {
-          fstab_update_debug (_("Line ended prematurely\n"));
+          fstab_update_debug (_("%d: Line ended prematurely\n"), pid);
           return FALSE;
         }
 
@@ -612,7 +615,7 @@ fs_table_parse_line (FSTable *table, const char *line, size_t length)
             break;
           else
             {
-              fstab_update_debug (_("Line ended prematurely\n"));
+              fstab_update_debug (_("%d: Line ended prematurely\n"), pid);
               return FALSE;
             }
         }
@@ -768,9 +771,9 @@ open_temp_fstab_file (const char *dir, char **filename)
         {
           if (errno != EEXIST)
             {
-              fstab_update_debug (_("Could not open temporary file for "
+              fstab_update_debug (_("%d: Could not open temporary file for "
                                     "writing in directory '%s': %s\n"),
-                                  dir, strerror (errno));
+                                  pid, dir, strerror (errno));
               break;
             }
         }
@@ -790,22 +793,22 @@ static boolean
 mount_device (const char *mount_point)
 {
   char *argv[] = { "/bin/mount", NULL, NULL };
-  pid_t pid;
+  pid_t mpid;
   int status;
 
   argv[1] = (char *) mount_point;
 
-  if (!(pid = fork ()))
+  if (!(mpid = fork ()))
     {
       execv (argv[0], argv);
       _exit (1);
     }
 
-  waitpid (pid, &status, 0);
+  waitpid (mpid, &status, 0);
 
   if (!WIFEXITED (status) || WEXITSTATUS (status))
     {
-      fstab_update_debug (_("/bin/mount failed\n"));
+      fstab_update_debug (_("%d: /bin/mount failed\n"), pid);
       return FALSE;
     }
 
@@ -955,11 +958,10 @@ volume_determine_device_type (Volume *volume)
   storage_device_udi = get_hal_string_property (volume->udi,
                                                 "block.storage_device");
 
-  if (storage_device_udi == NULL) {
+  if (storage_device_udi == NULL || !hal_device_exists (hal_context, storage_device_udi)) {
     volume->type = strdup ("disk");
     return;
   }
-
 
   bus = hal_device_get_property_string (hal_context, storage_device_udi,
 					"storage.bus");
@@ -1010,7 +1012,7 @@ volume_new (const char *udi)
 
   volume_determine_device_type (volume);
 
-  volume->fs_type = get_hal_string_property (udi, "volume.fs_type");
+  volume->fs_type = get_hal_string_property (udi, "volume.fstype");
   if (volume->fs_type == NULL)
     {
       volume->fs_type = strdup ("auto");
@@ -1174,8 +1176,8 @@ fs_table_add_volume (FSTable *table, Volume *volume)
 
   if (fs_table_has_volume (table, volume))
     {
-      fstab_update_debug (_("Could not add entry to fstab file: "
-                            "block device already listed\n"));
+      fstab_update_debug (_("%d: Could not add entry to fstab file: "
+                            "block device already listed\n"), pid);
       return FALSE;
     }
 
@@ -1271,8 +1273,8 @@ get_file_modification_time (const char *filename)
 
   if (stat (filename, &buf) < 0)
     {
-      fstab_update_debug (_("Could not stat '%s': %s\n"),
-                          filename, strerror (errno));
+      fstab_update_debug (_("%d: Could not stat '%s': %s\n"),
+                          pid, filename, strerror (errno));
     }
   
   return buf.st_mtime;
@@ -1289,8 +1291,8 @@ open_and_lock_file (const char *filename)
 
   if (fd < 0)
     {
-      fstab_update_debug (_("failed to open '%s': %s\n"),
-                          filename, strerror (errno));
+      fstab_update_debug (_("%d: failed to open '%s': %s\n"),
+                          pid, filename, strerror (errno));
       return FALSE;
     }
 
@@ -1314,8 +1316,8 @@ open_and_lock_file (const char *filename)
 
       if (time (NULL) > timeout)
         {
-          fstab_update_debug (_("timed out waiting for read lock on '%s'\n"),
-                              filename);
+          fstab_update_debug (_("%d: timed out waiting for read lock on '%s'\n"),
+                              pid, filename);
           close (fd);
           return FALSE;
         }
@@ -1323,8 +1325,8 @@ open_and_lock_file (const char *filename)
 
   if (lock_status < 0)
     {
-      fstab_update_debug (_("Could not get read lock on '%s': %s\n"),
-                          filename, strerror (saved_errno));
+      fstab_update_debug (_("%d: Could not get read lock on '%s': %s\n"),
+                          pid, filename, strerror (saved_errno));
       close (fd);
       return FALSE;
     }
@@ -1403,8 +1405,8 @@ volume_determine_mount_point (Volume *volume, FSTable *table)
   else if (snprintf (volume->mount_point, length, MOUNT_ROOT"%s%lu",
                      volume->type, next_available_device_number) > length)
     {
-      fstab_update_debug (_("Could not use mount point '%s': %s\n"),
-                          volume->mount_point, "too long");
+      fstab_update_debug (_("%d: Could not use mount point '%s': %s\n"),
+                          pid, volume->mount_point, "too long");
 
       free (volume->mount_point);
       volume->mount_point = NULL;
@@ -1413,8 +1415,8 @@ volume_determine_mount_point (Volume *volume, FSTable *table)
 
   if (stat (volume->mount_point, &buf) < 0 && errno != ENOENT)
     {
-      fstab_update_debug (_("Could not use mount point '%s': %s\n"),
-                          volume->mount_point, strerror (errno));
+      fstab_update_debug (_("%d: Could not use mount point '%s': %s\n"),
+                          pid, volume->mount_point, strerror (errno));
 
       free (volume->mount_point);
       volume->mount_point = NULL;
@@ -1486,8 +1488,8 @@ add_udi (const char *udi, boolean should_mount_device)
 
   if (rename (temp_filename, _PATH_FSTAB) < 0)
     {
-      fstab_update_debug (_("Failed to rename '%s' to '%s': %s\n"),
-                          temp_filename, _PATH_FSTAB, strerror (errno));
+      fstab_update_debug (_("%d: Failed to rename '%s' to '%s': %s\n"),
+                          pid, temp_filename, _PATH_FSTAB, strerror (errno));
       goto error;
     }
 
@@ -1496,6 +1498,9 @@ add_udi (const char *udi, boolean should_mount_device)
 
   if (should_mount_device && !mount_device (volume->mount_point))
     goto error;
+
+  fstab_update_debug (_("%d: added mount point '%s' for device '%s'\n"),
+		      pid, volume->mount_point, volume->block_device);
 
   close (fd);
   volume_free (volume);
@@ -1554,9 +1559,9 @@ remove_udi (const char *udi)
 
   if (line == NULL)
     {
-      fstab_update_debug (_("Could not remove device '%s' with UDI '%s' from "
+      fstab_update_debug (_("%d: Could not remove device '%s' with UDI '%s' from "
                             "fs table: not found\n"),
-                          volume->block_device, udi);
+                          pid, volume->block_device, udi);
       goto error;
     }
 
@@ -1564,8 +1569,8 @@ remove_udi (const char *udi)
 
   if (rmdir (line->mount_point) < 0)
     {
-      fstab_update_debug (_("Failed to remove mount point '%s': %s\n"),
-                          line->mount_point, strerror (errno));
+      fstab_update_debug (_("%d: Failed to remove mount point '%s': %s\n"),
+                          pid, line->mount_point, strerror (errno));
       goto error;
     }
 
@@ -1586,10 +1591,13 @@ remove_udi (const char *udi)
 
   if (rename (temp_filename, _PATH_FSTAB) < 0)
     {
-      fstab_update_debug (_("Failed to rename '%s' to '%s': %s\n"),
-                          temp_filename, _PATH_FSTAB, strerror (errno));
+      fstab_update_debug (_("%d: Failed to rename '%s' to '%s': %s\n"),
+                          pid, temp_filename, _PATH_FSTAB, strerror (errno));
       goto error;
     }
+
+  fstab_update_debug (_("%d: removed mount point for device '%s'\n"),
+		      pid, volume->block_device);
 
   close (fd);
   volume_free (volume);
@@ -1677,8 +1685,8 @@ clean (void)
 
   if (rename (temp_filename, _PATH_FSTAB) < 0)
     {
-      fstab_update_debug (_("Failed to rename '%s' to '%s': %s\n"),
-                          temp_filename, _PATH_FSTAB, strerror (errno));
+      fstab_update_debug (_("%d: Failed to rename '%s' to '%s': %s\n"),
+                          pid, temp_filename, _PATH_FSTAB, strerror (errno));
       goto error;
     }
 
@@ -1702,7 +1710,10 @@ main (int argc, const char *argv[])
   boolean should_clean = FALSE, should_mount_device = FALSE;
   char *udi_to_add = NULL, *udi_to_remove = NULL, *hal_device_udi;
   const char **left_over_args = NULL;
+  int lockfd = -1;
 
+  pid = getpid ();
+  
   struct poptOption options[] = {
       {"add", 'a', POPT_ARG_STRING, &udi_to_add, 0,
         N_("add an entry to fstab"), N_("UDI")},
@@ -1744,16 +1755,46 @@ main (int argc, const char *argv[])
      * exported environment so we don't have to connect to hald */
 
     caps = getenv ("HAL_PROP_INFO_CAPABILITIES");
+
+    /* if there are no info.capabilities just bail out */
+    if (caps == NULL) {
+      retval = 0;
+      goto out;
+    }
+
+    /* we only handle hal device objects of capability 'volume' or 'storage' */
     if (caps != NULL) {
 
-      /* we only handle hal device objects of capability 'volume' or 'storage' */
       if (strstr (caps, "volume") == NULL &&
 	  strstr (caps, "storage") == NULL) {
 	retval = 0;
 	goto out;
       }
     }
+
+
+    fstab_update_debug (_("%d: ###################################\n"), pid);
+    fstab_update_debug (_("%d: %s entering; %s udi=%s\n"), 
+			pid, PROGRAM_NAME, argv[1], hal_device_udi);
+    
+    lockfd = open (_PATH_FSTAB, O_RDONLY);
+    if (lockfd < 0) {
+      fstab_update_debug (_("%d: couldn't open %s O_RDONLY; bailing out\n"), 
+			  pid, _PATH_FSTAB);
+      retval = 1;
+      goto out;
+    }
+    fstab_update_debug (_("%d: Acquiring advisory lock on " 
+			  _PATH_FSTAB "\n"), pid);
+    if (flock (lockfd, LOCK_EX) != 0) {
+      fstab_update_debug (_("%d: Error acquiring lock '%s'; bailing out\n"),
+			    pid, strerror(errno));
+      retval = 1;
+      goto out;
+    }
+    fstab_update_debug (_("%d: Lock acquired\n"), pid);
   }
+  
 
   if (left_over_args)
   for (i = 0; left_over_args[i] != NULL; i++)
@@ -1793,6 +1834,26 @@ main (int argc, const char *argv[])
       poptPrintHelp (popt_context, stderr, 0);
       return 1;
     }
+
+  if (hal_device_udi != NULL) {
+
+    fstab_update_debug (_("%d: Releasing advisory lock on %s\n"), 
+			pid, _PATH_FSTAB);
+    if (flock (lockfd, LOCK_EX) != 0) {
+      fstab_update_debug (_("%d: Error releasing lock '%s'\n"), pid, 
+	      strerror(errno));
+      retval = 1;
+    } else {
+      fstab_update_debug (_("%d: Lock released\n"), pid);
+    }
+    close (lockfd);
+
+    fstab_update_debug (_("%d: %s exiting; %s udi=%s\n"), 
+			pid, PROGRAM_NAME, argv[1], hal_device_udi);
+
+    fstab_update_debug (_("%d: ###################################\n"), pid);
+    fstab_update_debug (_("\n"));
+  }
 
 out:
   return retval;
