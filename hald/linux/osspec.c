@@ -55,6 +55,11 @@ extern ClassDeviceHandler scsi_host_class_handler;
 extern ClassDeviceHandler scsi_device_class_handler;
 extern ClassDeviceHandler block_class_handler;
 
+/*
+extern ClassDeviceHandler ieee1394_host_class_handler;
+extern ClassDeviceHandler ieee1394_node_class_handler;
+*/
+
 extern BusDeviceHandler pci_bus_handler;
 extern BusDeviceHandler usb_bus_handler;
 extern BusDeviceHandler usbif_bus_handler;
@@ -67,6 +72,8 @@ static ClassDeviceHandler* class_device_handlers[] = {
 	&scsi_host_class_handler,
 	&scsi_device_class_handler,
 	&block_class_handler,
+	/*&ieee1394_host_class_handler,
+	  &ieee1394_node_class_handler,*/
 	NULL
 };
 
@@ -115,7 +122,7 @@ visit_class_device (const char *path, dbus_bool_t visit_children)
 		DIE (("Coulnd't get sysfs class device object for path %s",
 		      path));
 
-	HAL_INFO (("*** visit_class_device classname=%s name=%s path=%s\n",
+	HAL_INFO (("*** classname=%s name=%s path=%s\n",
 		   class_device->classname,
 		   class_device->name,
 		   class_device->path));
@@ -339,6 +346,75 @@ osspec_probe ()
 	}
 }
 
+static void
+remove_device (const char *path, const char *subsystem)
+
+{	HalDevice *d;
+
+	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
+						     "linux.sysfs_path",
+						     path);
+
+	if (d == NULL) {
+		HAL_WARNING (("Couldn't remove device @ %s on hotplug remove", 
+			      path));
+	} else {
+		HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
+			   path, d->udi));
+		
+		hal_device_store_remove (hald_get_gdl (), d);
+	}
+}
+
+static void
+remove_class_device (const char *path, const char *subsystem)
+{
+	int i;
+	const char *bus_name;
+	HalDevice *d;
+
+	d = hal_device_store_match_key_value_string (hald_get_gdl (), 
+						     "linux.sysfs_path",
+						     path);
+
+	if (d == NULL) {
+		/* Right now we only handle class devices that are put in the
+		 * tree rather than merged, ie. merge_or_add is FALSE. That
+		 * happens in the other branch below.
+		 *
+		 * What we need to do here is to unmerge the device from the
+		 * sysdevice it belongs to. Ughh.. It's only a big deal when
+		 * loading/unloading drivers and this should never happen
+		 * on a desktop anyway?
+		 */
+
+		HAL_WARNING (("Cannot yet remove class device @ %s on "
+			      "hotplug remove", path));
+
+	} else {
+		HAL_INFO (("Removing device @ sysfspath %s, udi %s", 
+			   path, d->udi));
+
+		bus_name = hal_device_property_get_string (d, "info.bus");
+
+		for (i=0; class_device_handlers[i] != NULL; i++) {
+			ClassDeviceHandler *ch = class_device_handlers[i];
+			
+			/* See class_device_visit() where this is merged */
+			if (strcmp (ch->hal_class_name, bus_name) == 0) {
+				ch->removed (ch, path, d);
+			}
+		}
+		
+		hal_device_store_remove (hald_get_gdl (), d);
+	}
+
+	
+
+	/* For now, just call the normal remove_device */
+	remove_device (path, subsystem);
+}
+
 /** Handle a org.freedesktop.Hal.HotplugEvent message. This message
  *  origins from the hal.hotplug program, tools/linux/hal_hotplug.c,
  *  and is basically just a D-BUS-ification of the hotplug event.
@@ -350,12 +426,12 @@ osspec_probe ()
 static DBusHandlerResult
 handle_hotplug (DBusConnection * connection, DBusMessage * message)
 {
-	int i;
 	DBusMessageIter iter;
 	DBusMessageIter dict_iter;
 	dbus_bool_t is_add;
 	char *subsystem;
 	char sysfs_devpath[SYSFS_PATH_MAX];
+	char sysfs_devpath_wo_mp[SYSFS_PATH_MAX];
 
 	sysfs_devpath[0] = '\0';
 
@@ -390,6 +466,7 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 			strncpy (sysfs_devpath, sysfs_mount_path,
 				 SYSFS_PATH_MAX);
 			strncat (sysfs_devpath, value, SYSFS_PATH_MAX);
+			strncpy (sysfs_devpath_wo_mp, value, SYSFS_PATH_MAX);
 		}
 	} while (dbus_message_iter_has_next (&dict_iter) &&
 		 dbus_message_iter_next (&dict_iter));
@@ -398,136 +475,27 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 	if (sysfs_devpath[0] == '\0')
 		goto out;
 
-	HAL_INFO (("HotplugEvent %s, subsystem=%s devpath=%s",
+	HAL_INFO (("HotplugEvent %s, subsystem=%s devpath=%s foo=%s",
 		   (is_add ? "add" : "remove"), subsystem,
-		   sysfs_devpath[0] != '\0' ? sysfs_devpath : "(none)"));
+		   sysfs_devpath[0] != '\0' ? sysfs_devpath : "(none)",
+		   sysfs_devpath_wo_mp));
 
-	/* class device */
-	if (is_add) {
-		/* add */
-		for (i=0; class_device_handlers[i] != NULL; i++) {
-			ClassDeviceHandler *ch = class_device_handlers[i];
-			if (strcmp (subsystem, ch->sysfs_class_name) == 0) {
-				/* @todo call ch stuff directly */
-				visit_class_device (sysfs_devpath, FALSE);
-				goto out;
-			}
-		}
+	/* See if this is a class device or a bus device */
+	if (strncmp (sysfs_devpath_wo_mp, "/block", 6)==0 ||
+	    strncmp (sysfs_devpath_wo_mp, "/class", 6)==0 ) {
+		/* handle class devices */
+		if (is_add)
+			visit_class_device (sysfs_devpath, FALSE);
+		else
+			remove_class_device (sysfs_devpath, subsystem);
 	} else {
-		/* remove */
-		for (i=0; class_device_handlers[i] != NULL; i++) {
-			ClassDeviceHandler *ch = class_device_handlers[i];
-			if (strcmp (subsystem, ch->sysfs_class_name) == 0) {
-				if (!ch->merge_or_add) {
-					/* was actually added, so it makes sense to remove */
-
-					HalDevice *d;
-					d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_devpath);
-					if (d == NULL) {
-						HAL_WARNING (("Couldn't remove classdevice @ %s on hotplug remove", sysfs_devpath));
-					} else {
-						HAL_INFO (("Removing classdevice @ sysfspath %s, udi %s", sysfs_devpath, d->udi));
-						ch->removed (ch, sysfs_devpath, d);
-
-						hal_device_store_remove (hald_get_gdl (), d);
-						goto out;
-					}
-
-				}
-				HAL_INFO (("sysfs_devpath=%s by %s", sysfs_devpath, subsystem));
-			}
-		}
-	}
-
-	/* bus device */
-	if (is_add) {
-		/* add */
-		for (i=0; bus_device_handlers[i] != NULL; i++) {
-			BusDeviceHandler *bh = bus_device_handlers[i];
-			if (strcmp (subsystem, bh->sysfs_bus_name) == 0) {
-				/* @todo call bh stuff directly */
-				visit_device (sysfs_devpath, FALSE);
-				goto out;
-			}
-		}
-	} else {
-		/* remove */
-
-		/* @todo refine me and add support for persistent devices */
-
-		HalDevice *d;
-
-		d = hal_device_store_match_key_value_string (
-			hald_get_gdl (), "linux.sysfs_path",
-			sysfs_devpath);
-
-		if (d == NULL) {
-			HAL_WARNING (("Couldn't remove device @ %s "
-				      "on hotplug remove", 
-				      sysfs_devpath));
-		} else {
-			HAL_INFO (("Removing device @ sysfspath %s, "
-				   "udi %s", sysfs_devpath, d->udi));
-
-			hal_device_store_remove (hald_get_gdl (), d);
-			goto out;
-		}
-	}
-
-#if 0
-	if (sysfs_devpath[0] != '\0' &&
-	    (strcmp (subsystem, "usb") == 0 ||
-	     strcmp (subsystem, "pci") == 0 ||
-	     strcmp (subsystem, "ieee1394") == 0 ||
-	     strcmp (subsystem, "i2c") == 0)) {
-
-		if (is_add) {
-			HAL_INFO (("Adding device @ sysfspath %s",
-				   sysfs_devpath));
+		/* handle bus devices */
+		if (is_add)
 			visit_device (sysfs_devpath, FALSE);
-		} else {
-			HalDevice *d;
-
-			d = hal_device_store_match_key_value_string (
-				hald_get_gdl (), "linux.sysfs_path",
-				sysfs_devpath);
-
-			if (d == NULL) {
-				HAL_WARNING (("Couldn't remove device @ %s "
-					      "on hotplug remove", 
-					      sysfs_devpath));
-			} else {
-				HAL_INFO (("Removing device @ sysfspath %s, "
-					   "udi %s", sysfs_devpath, d->udi));
-
-				if (ds_property_exists
-				    (d, "info.persistent")
-				    && hal_device_property_get_bool (
-					    d, "info.persistent"))
-				{
-					ds_property_set_bool (
-						d, "info.not_available", TRUE);
-					/* Remove enough specific details so 
-					 * we are not found by child devices 
-					 * when being plugged in again.. 
-					 */
-					ds_property_remove (d, "info.parent");
-					ds_property_remove (
-						d, "info.physical_device");
-					ds_property_remove (
-						d, "linux.sysfs_path");
-					ds_property_remove (
-						d, "linux.sysfs_path_device");
-					HAL_INFO (("Device %s is persistent, "
-						   "so not removed", d->udi));
-				} else {
-					hal_device_store_remove (
-						hald_get_gdl (), d);
-				}
-			}
-		}
+		else
+			remove_device (sysfs_devpath, subsystem);
 	}
-#endif
+		
 
 out:
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;

@@ -26,7 +26,10 @@ BUS_NAMES = {"usb"         : "USB",
              "scsi_device" : "SCSI",
              "block"       : "Block",
              "ide"         : "IDE",
-             "ide_host"    : "IDE Host"}
+             "ide_host"    : "IDE Host",
+             "ieee1394_host" : "IEEE1394 Host",
+             "ieee1394_node" : "IEEE1394 Node",
+             "ieee1394" : "IEEE1394 Device"}
 
 STATE_NAMES = { 0 : "No device information file was found",
                 1 : "Enabling...",

@@ -1,3 +1,9 @@
+2004-04-08  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/osspec.c (remove_device): new function
+	(remove_class_device): new function
+	(handle_hotplug): simplify
+
 2004-04-07  David Zeuthen  <david@fubar.dk>
 
 	* tools/linux/hal_dev.c: New file for sending device event

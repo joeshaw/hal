@@ -126,7 +126,7 @@ block_class_visit (ClassDeviceHandler *self,
 	ai = g_new0 (AsyncInfo, 1);
 	ai->device = d;
 	ai->handler = self;
-		
+
 	hal_device_store_match_key_value_string_async (
 		hald_get_gdl (),
 		"linux.sysfs_path_device",

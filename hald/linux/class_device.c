@@ -75,9 +75,16 @@ class_device_accept (ClassDeviceHandler *self,
 		     struct sysfs_class_device *class_device,
 		     dbus_bool_t is_probing)
 {
+
+	HAL_INFO (("path = %s, classname = %s", path, self->sysfs_class_name));	
+
 	/* only care about given sysfs class name */
-	if (strcmp (class_device->classname, self->sysfs_class_name) == 0)
+	if (strcmp (class_device->classname, self->sysfs_class_name) == 0) {
+		HAL_INFO (("########################################"));
+		HAL_INFO (("########################################"));
+		HAL_INFO (("########################################"));
 		return TRUE;
+	}
 
 	return FALSE;
 }
