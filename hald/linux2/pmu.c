@@ -75,7 +75,7 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 	hal_device_property_set_string (d, "info.category", "battery");
 	hal_device_add_capability (d, "battery");
 
-	flags = hal_util_grep_int_elem_from_file (path, "", "flags", 0, 16);
+	flags = hal_util_grep_int_elem_from_file (path, "", "flags", 0, 16, FALSE);
 
 	hal_device_property_set_bool (d, "battery.present", flags & PMU_BATT_PRESENT);
 
@@ -92,12 +92,15 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 			char buf[HAL_PATH_MAX];
 			snprintf (buf, sizeof (buf), "%s/pmu/info", get_hal_proc_path ());
 			hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", buf, "", 
-							  "AC Power", 0, "0");
+							  "AC Power", 0, "0", FALSE);
 		}
 
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, "", "charge", 0, 10);
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, "", "max_charge", 0, 10);
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, "", "max_charge", 0, 10);
+		hal_util_set_int_elem_from_file (d, "battery.charge_level.current", 
+						 path, "", "charge", 0, 10, FALSE);
+		hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", 
+						 path, "", "max_charge", 0, 10, FALSE);
+		hal_util_set_int_elem_from_file (d, "battery.charge_level.design", 
+						 path, "", "max_charge", 0, 10, FALSE);
 
 		device_property_atomic_update_end ();
 	} else {
@@ -128,7 +131,7 @@ ac_adapter_refresh (HalDevice *d, PMUDevHandler *handler)
 	hal_device_property_set_string (d, "info.category", "ac_adapter");
 	hal_device_add_capability (d, "ac_adapter");
 
-	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "", "AC Power", 0, "1");	
+	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "", "AC Power", 0, "1", FALSE);
 
 	return TRUE;
 }

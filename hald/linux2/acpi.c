@@ -44,7 +44,7 @@ enum {
 	ACPI_TYPE_BUTTON
 };
 
-#define ACPI_POLL_INTERVAL 2000
+#define ACPI_POLL_INTERVAL 5000
 
 static gboolean
 acpi_poll (gpointer data)
@@ -90,7 +90,10 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_property_set_string (d, "info.category", "battery");
 	hal_device_add_capability (d, "battery");
 
-	hal_util_set_bool_elem_from_file (d, "battery.present", path, "info", "present", 0, "yes");
+	/* Since we're using reuse==TRUE make sure we get fresh data for first read */
+	hal_util_grep_discard_existing_data ();
+
+	hal_util_set_bool_elem_from_file (d, "battery.present", path, "info", "present", 0, "yes", TRUE);
 	if (!hal_device_property_get_bool (d, "battery.present")) {
 		device_property_atomic_update_begin ();
 		hal_device_property_remove (d, "battery.is_rechargeable");
@@ -110,25 +113,33 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		device_property_atomic_update_begin ();
 		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
 		hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
-						  "state", "charging state", 0, "charging");
-
+						  "state", "charging state", 0, "charging", TRUE);
 		hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path, 
-						  "state", "charging state", 0, "discharging");
-		
-		hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0);
-		hal_util_set_string_elem_from_file (d, "battery.model", path, "info", "model number", 0);
-		hal_util_set_string_elem_from_file (d, "battery.serial", path, "info", "serial number", 0);
-		hal_util_set_string_elem_from_file (d, "battery.technology", path, "info", "battery type", 0);
-		hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0);
-		hal_util_set_string_elem_from_file (d, "battery.charge_level.unit", path, "info", "design capacity", 1);
-		
+						  "state", "charging state", 0, "discharging", TRUE);
 		hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, 
-						 "state", "remaining capacity", 0, 10);
+						 "state", "remaining capacity", 0, 10, TRUE);
 
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
-						 "info", "last full capacity", 0, 10);
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, 
-						 "info", "design capacity", 0, 10);
+		/* So, it's pretty expensive to read from
+		 * /proc/acpi/battery/BAT%d/[info|state] so don't read
+		 * static data that don't change
+		 */
+		if (!hal_device_has_property (d, "battery.vendor")) {
+			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
+			hal_util_set_string_elem_from_file (d, "battery.model", path, "info", "model number", 0, TRUE);
+			hal_util_set_string_elem_from_file (d, "battery.serial", path, "info", 
+							    "serial number", 0, TRUE);
+			hal_util_set_string_elem_from_file (d, "battery.technology", path, "info", 
+							    "battery type", 0, TRUE);
+			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
+			hal_util_set_string_elem_from_file (d, "battery.charge_level.unit", path, "info", 
+							    "design capacity", 1, TRUE);
+			
+			hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
+							 "info", "last full capacity", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, 
+							 "info", "design capacity", 0, 10, TRUE);
+		}
+
 		device_property_atomic_update_end ();
 	}
 
@@ -148,9 +159,9 @@ processor_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_property_set_string (d, "info.category", "processor");
 	hal_device_add_capability (d, "processor");
 	hal_util_set_int_elem_from_file (d, "processor.number", path, 
-					 "info", "processor id", 0, 10);
+					 "info", "processor id", 0, 10, FALSE);
 	hal_util_set_bool_elem_from_file (d, "processor.can_throttle", path, 
-					  "info", "throttling control", 0, "yes");
+					  "info", "throttling control", 0, "yes", FALSE);
 	return TRUE;
 }
 
@@ -166,10 +177,8 @@ fan_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_property_set_string (d, "info.product", "Fan");
 	hal_device_property_set_string (d, "info.category", "fan");
 	hal_device_add_capability (d, "fan");
-	hal_util_set_int_elem_from_file (d, "processor.number", path, 
-					 "info", "processor id", 0, 10);
 	hal_util_set_bool_elem_from_file (d, "fan.enabled", path, 
-					  "state", "status", 0, "on");
+					  "state", "status", 0, "on", FALSE);
 	return TRUE;
 }
 
@@ -185,7 +194,7 @@ ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_property_set_string (d, "info.product", "AC Adapter");
 	hal_device_property_set_string (d, "info.category", "ac_adapter");
 	hal_device_add_capability (d, "ac_adapter");
-	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line");
+	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line", FALSE);
 
 	return TRUE;
 }
@@ -215,7 +224,7 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 	hal_device_property_set_string (d, "info.category", "button");
 	hal_device_add_capability (d, "button");
-	if (!hal_util_set_bool_elem_from_file (d, "button.state.value", path, "state", "state", 0, "closed")) {
+	if (!hal_util_set_bool_elem_from_file (d, "button.state.value", path, "state", "state", 0, "closed", FALSE)) {
 		hal_device_property_set_bool (d, "button.has_state", FALSE);
 	} else {
 		hal_device_property_set_bool (d, "button.has_state", TRUE);
@@ -294,7 +303,7 @@ acpi_synthesize_hotplug_events (void)
 	hal_device_property_set_bool (computer, "power_management.is_enabled", TRUE);
 	hal_device_property_set_string (computer, "power_management.type", "acpi");
 	hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version", 
-					    "/proc/acpi", "info", "version", 0);
+					    "/proc/acpi", "info", "version", 0, FALSE);
 
 	/* collect batteries */
 	snprintf (path, sizeof (path), "%s/acpi/battery", get_hal_proc_path ());

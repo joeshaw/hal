@@ -645,6 +645,14 @@ hal_util_path_ascend (gchar *path)
 	return TRUE;
 }
 
+static gboolean _grep_can_reuse = FALSE;
+
+void 
+hal_util_grep_discard_existing_data (void)
+{
+	_grep_can_reuse = FALSE;
+}
+
 /** Given a directory and filename, open the file and search for the
  *  first line that starts with the given linestart string. Returns
  *  the rest of the line as a string if found.
@@ -652,6 +660,9 @@ hal_util_path_ascend (gchar *path)
  *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
  *  @param  file                File, e.g. "info"
  *  @param  linestart           Start of line, e.g. "serial number"
+ *  @param  reuse               Whether we should reuse the file contents
+ *                              if the file is the same; can be cleared
+ *                              with hal_util_grep_discard_existing_data()
  *  @return                     NULL if not found, otherwise the remainder
  *                              of the line, e.g. ":           21805" if
  *                              the file /proc/acpi/battery/BAT0 contains
@@ -660,7 +671,7 @@ hal_util_path_ascend (gchar *path)
  *                              invocation of this function.
  */
 gchar *
-hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart)
+hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse)
 {
 	FILE *f;
 	static gchar buf[512];
@@ -669,6 +680,10 @@ hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *line
 	gsize linestart_len;
 
 	result = NULL;
+
+	/* TODO: use reuse and _grep_can_reuse parameters to avoid loading
+	 *       the file again and again
+	 */
 
 	if (file != NULL && strlen (file) > 0)
 		snprintf (filename, sizeof (filename), "%s/%s", directory, file);
@@ -709,7 +724,7 @@ out:
 
 gchar *
 hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file, 
-				     const gchar *linestart, guint elem)
+				     const gchar *linestart, guint elem, gboolean reuse)
 {
 	gchar *line;
 	gchar *res;
@@ -720,7 +735,7 @@ hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file,
 	res = NULL;
 	tokens = NULL;
 
-	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+	if (((line = hal_util_grep_file (directory, file, linestart, reuse)) == NULL) || (strlen (line) == 0))
 		goto out;
 
 	tokens = g_strsplit_set (line, " \t:", 0);
@@ -744,7 +759,7 @@ out:
 
 gint
 hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file, 
-				  const gchar *linestart, guint elem, guint base)
+				  const gchar *linestart, guint elem, guint base, gboolean reuse)
 {
 	gchar *endptr;
 	gchar *strvalue;
@@ -752,7 +767,7 @@ hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file,
 
 	value = G_MAXINT;
 
-	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem)) == NULL)
+	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse)) == NULL)
 		goto out;
 
 	value = strtol (strvalue, &endptr, base);
@@ -790,14 +805,14 @@ out:
 gboolean
 hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key, 
 				    const gchar *directory, const gchar *file, 
-				    const gchar *linestart, guint elem)
+				    const gchar *linestart, guint elem, gboolean reuse)
 {
 	gboolean res;
 	gchar *value;
 
 	res = FALSE;
 
-	if ((value = hal_util_grep_string_elem_from_file (directory, file, linestart, elem)) == NULL)
+	if ((value = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse)) == NULL)
 		goto out;
 
 	res = hal_device_property_set_string (d, key, value);
@@ -830,7 +845,7 @@ out:
 gboolean
 hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
 				 const gchar *directory, const gchar *file, 
-				 const gchar *linestart, guint elem, guint base)
+				 const gchar *linestart, guint elem, guint base, gboolean reuse)
 {
 	gchar *endptr;
 	gboolean res;
@@ -839,7 +854,7 @@ hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key,
 
 	res = FALSE;
 
-	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem)) == NULL)
+	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse)) == NULL)
 		goto out;
 
 	value = strtol (strvalue, &endptr, base);
@@ -886,7 +901,7 @@ out:
 gboolean
 hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key, 
 				  const gchar *directory, const gchar *file, 
-				  const gchar *linestart, guint elem, const gchar *expected)
+				  const gchar *linestart, guint elem, const gchar *expected, gboolean reuse)
 {
 	gchar *line;
 	gboolean res;
@@ -896,7 +911,7 @@ hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key,
 	res = FALSE;
 	tokens = NULL;
 
-	if (((line = hal_util_grep_file (directory, file, linestart)) == NULL) || (strlen (line) == 0))
+	if (((line = hal_util_grep_file (directory, file, linestart, reuse)) == NULL) || (strlen (line) == 0))
 		goto out;
 
 	tokens = g_strsplit_set (line, " \t:", 0);

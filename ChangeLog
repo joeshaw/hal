@@ -1,3 +1,32 @@
+2005-03-07  David Zeuthen  <davidz@redhat.com>
+
+	* doc/TODO: Updated this to reflect reality
+
+	* hald/linux2/pmu.c (battery_refresh): Pass reuse=FALSE
+	(ac_adapter_refresh): Pass reuse=FALSE
+
+	* hald/linux2/classdev.c (sound_add): pass reuse=FALSE
+
+	* hald/linux2/acpi.c: Poll every five secs instead of every two secs
+	as this actually is a very expensive operation - someone needs to
+	optimize hald/util.c:hal_util_grep_file before we can change this -
+	see the TODO in that function
+	(battery_refresh): Use the hal_util_grep_discard_existing_data() since
+	we are passing reuse=TRUE. Minimize amount of reads.
+	(fan_refresh): Don't set processor.number here (!)
+
+	* hald/util.c (hal_util_grep_discard_existing_data): New function to
+	purge "reused" data
+	(hal_util_grep_file): Take the reuse parameter
+	(hal_util_grep_string_elem_from_file): Take and pass reuse param
+	(hal_util_grep_int_elem_from_file): Take and pass reuse param
+	(hal_util_set_string_elem_from_file): Take and pass reuse param
+	(hal_util_set_int_elem_from_file): Take and pass reuse param
+	(hal_util_set_bool_elem_from_file): Take and pass reuse param
+
+	* hald/util.h: Fixup prototypes for functions above and add prototype
+	for hal_util_grep_discard_existing_data
+
 2005-03-04  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/acpi.c (ACPI_POLL_INTERVAL): Change this to every

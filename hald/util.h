@@ -55,26 +55,28 @@ void hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, con
 
 gboolean hal_util_path_ascend (gchar *path);
 
+void hal_util_grep_discard_existing_data (void);
 
-gchar *hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart);
+gchar *hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse_file);
 
 gint hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file, 
-				       const gchar *linestart, guint elem, guint base);
+				       const gchar *linestart, guint elem, guint base, gboolean reuse_file);
 
 gchar *hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file, 
-					    const gchar *linestart, guint elem);
+					    const gchar *linestart, guint elem, gboolean reuse_file);
 
 gboolean hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key, 
 					     const gchar *directory, const gchar *file, 
-					     const gchar *linestart, guint elem);
+					     const gchar *linestart, guint elem, gboolean reuse_file);
 
 gboolean hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
 					  const gchar *directory, const gchar *file, 
-					  const gchar *linestart, guint elem, guint base);
+					  const gchar *linestart, guint elem, guint base, gboolean reuse_file);
 
 gboolean hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key, 
 					   const gchar *directory, const gchar *file, 
-					   const gchar *linestart, guint elem, const gchar *expected);
+					   const gchar *linestart, guint elem, const gchar *expected, 
+					   gboolean reuse_file);
 
 struct HalHelperData_s;
 typedef struct HalHelperData_s HalHelperData;
