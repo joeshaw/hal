@@ -1049,6 +1049,7 @@ static dbus_bool_t detect_media(HalDevice* d)
             return FALSE;
         }
 
+
         /* got a disc in drive, */
         
         /* disc in drive; check if the HAL device representing
@@ -1056,6 +1057,8 @@ static dbus_bool_t detect_media(HalDevice* d)
          * only one child)
          */
             
+        close(fd);
+
         child = ds_device_find_by_key_value_string("info.parent", 
                                                    d->udi, 
                                                    TRUE);
@@ -1097,6 +1100,8 @@ static dbus_bool_t detect_media(HalDevice* d)
         }
 
     } /* if( is optical drive ) */
+
+    close(fd);
     
     return FALSE;
 }
