@@ -1,5 +1,16 @@
 2004-08-23  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/osspec.c (osspec_probe): Add info.udi to computer
+	(process_shutdown_list_callouts_done_for_device): New function
+	(process_shutdown_list): New function
+	(shutdown_add_recursively_to_list): New function
+	(osspec_shutdown): Completely rewrite the shutdown code
+
+	* hald/haldaemon.in: Add 'sleep 3' when restarting the hal daemon
+	to get a chance for the shutdown callouts to run
+
+2004-08-23  David Zeuthen  <david@fubar.dk>
+
 	* tools/Makefile.am (install-data-local): Install the fstab-sync
 	if applicable.
 

@@ -57,11 +57,13 @@ case "$1" in
         ;;
     restart)
         stop
+	sleep 3
         start
         ;;
     condrestart)
         if [ -f @LOCALSTATEDIR@/lock/subsys/$servicename ]; then
             stop
+	    sleep 3
             start
         fi
         ;;

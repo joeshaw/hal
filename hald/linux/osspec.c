@@ -789,6 +789,7 @@ osspec_probe (void)
 	hal_device_property_set_string (root, "info.bus", "unknown");
 	hal_device_property_set_string (root, "linux.sysfs_path_device", "(none)");
 	hal_device_property_set_string (root, "info.product", "Computer");
+	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 
 	/* begin processing the coldplug_list when computer is added */
@@ -986,50 +987,82 @@ osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *
 }
 
 
+/*****************************************************************************************************/
 
-/* number of devices for whom the shutdown callouts are pending */
-static int num_shutdown_devices_remaining;
+
+static void process_shutdown_list (GSList *coldplug_list);
 
 static void
-shutdown_callouts_finished (HalDevice *d, gpointer user_data)
+process_shutdown_list_callouts_done_for_device (HalDevice *device, gpointer user_data)
 {
-	HAL_INFO (("entering for udi=%s", d->udi));
+	GSList *shutdown_list = user_data;
 
-	num_shutdown_devices_remaining--;
+	g_signal_handlers_disconnect_by_func (device, process_shutdown_list_callouts_done_for_device, user_data);
 
-	if (num_shutdown_devices_remaining == 0) {
-		HAL_INFO (("All devices shutdown callouts done"));
+	process_shutdown_list (shutdown_list);
+}
+
+static void
+process_shutdown_list (GSList *shutdown_list)
+{
+
+
+	if (shutdown_list != NULL) {
+		HalDevice *device;
+
+		device = (HalDevice *) shutdown_list->data;
+
+		shutdown_list = g_slist_delete_link (shutdown_list, shutdown_list);
+
+		HAL_INFO (("handling %s", device->udi));
+
+		g_signal_connect (device, "callouts_finished",
+				  G_CALLBACK (process_shutdown_list_callouts_done_for_device), shutdown_list);
+		hal_callout_device (device, FALSE);
+
+	} else {
+		/* Inform the generic part of hald that we are done with probing */
 		osspec_shutdown_done ();
 	}
 }
 
 
-static gboolean
-do_shutdown_callouts (HalDeviceStore *store, HalDevice *device,
-		      gpointer user_data)
+static void 
+shutdown_add_recursively_to_list (GSList **shutdown_list, HalDevice *device)
 {
-	HAL_INFO (("doing shutdown callouts for udi %s", device->udi));
+	GSList *i;
+	GSList *devices;
+	
+	/* add children before ourselves */
+	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", device->udi);
+	for (i = devices; i != NULL; i = i->next) {
+		HalDevice *child = (HalDevice *) i->data;
+		shutdown_add_recursively_to_list (shutdown_list, child);
+	}
 
-	num_shutdown_devices_remaining++;
+	*shutdown_list = g_slist_append (*shutdown_list, device);
 
-	g_signal_connect (device, "callouts_finished",
-			  G_CALLBACK (shutdown_callouts_finished), NULL);
-	hal_callout_device (device, FALSE);
-	return TRUE;
+	g_slist_free (devices);
 }
 
 /* This function is documented in ../osspec.h */
 void
 osspec_shutdown ()
 {
+	GSList *shutdown_list = NULL;
+	HalDevice *computer;
 	HAL_INFO (("entering"));
 
-	num_shutdown_devices_remaining = 0;
-	hal_device_store_foreach (hald_get_gdl (),
-				  do_shutdown_callouts,
-				  NULL);
-}
+	/* disabled hotplug processing */
+	hotplug_sem_up ();
 
+	/* build list of UDI's we want to shutdown ... */       
+	computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	shutdown_add_recursively_to_list (&shutdown_list, computer);
+
+	/* ... and then process sequentially */  
+	process_shutdown_list (shutdown_list);
+}
 
 static void
 reenable_hotplug_proc (HalDevice *d, gpointer user_data)
