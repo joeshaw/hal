@@ -1,7 +1,19 @@
+2004-04-11  David Zeuthen  <david@fubar.dk>
+
+	* tools/callouts/fstab-update.sh: Use HAL_PROP_BLOCK_FSTYPE if
+	available
+
+	* hald/linux/block_class_device.c (block_class_post_process): Move
+	check for storage.is_hotplugable
+	(block_class_post_process): Call detect_fs() to detect volume name
+	(detect_fs_fat): new function, sets block.fstype to vfat and 
+	block.volume_label for volumes with FAT filesystems
+	(detect_fs): new function
+
 2004-04-10  David Zeuthen  <david@fubar.dk>
 
-	* libhal/libhal.[ch]: Added LibHalContext object so a stack of libraries
-	and applications can simultaneously use libhal
+	* libhal/libhal.[ch]: Added LibHalContext object so a stack of 
+	libraries and applications can simultaneously use libhal
 
 	* libhal/libhal.h : Added LibHalLostCapability
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This shell script updates your /etc/fstab when volumes when they
+# This shell script updates your /etc/fstab with volumes when they
 # appear and disappear from HAL.
 #
 # ** WARNING **
@@ -33,6 +33,9 @@ if test "$HAL_PROP_BLOCK_IS_VOLUME" != "true"; then
     exit 0
 fi
 
+# NOTE: We could use HAL_PROP_BLOCK_VOLUME_LABEL (which may or may not be 
+# available) but that would be a bad idea since it won't work for two
+# volumes with the same label
 MEDIAROOT="/mnt"
 MOUNTPOINT="$MEDIAROOT/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR"
 
@@ -47,7 +50,13 @@ if test "$1" = "add"; then
     if [ $? -ne 0 ]; then
 	echo -ne "$HAL_PROP_BLOCK_DEVICE\t" >> /etc/fstab
 	echo -ne "$MOUNTPOINT\t" >> /etc/fstab
-	echo -ne "auto\t" >> /etc/fstab
+	# HAL might have autodetected the filesystem type for us - in that
+        # case use it...
+	if test $HAL_PROP_BLOCK_FSTYPE; then
+	    echo -ne "$HAL_PROP_BLOCK_FSTYPE\t" >> /etc/fstab
+	else
+	    echo -ne "auto\t" >> /etc/fstab
+	fi
 	echo -e  "noauto,user,exec 0 0" >> /etc/fstab
     fi
 

@@ -579,6 +579,72 @@ block_class_got_udi (ClassDeviceHandler *self,
 	}
 }
 
+static dbus_bool_t
+detect_fs_fat (HalDevice *d)
+{
+	int i, len;
+	int fd;
+	const char *device_file;
+	char data[512];
+	char label[12];
+	dbus_bool_t matched = FALSE;
+
+	/* See http://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html for
+	 * more information
+	 */
+
+	device_file = hal_device_property_get_string (d, "block.device");
+
+	fd = open (device_file, O_RDONLY);
+	if (fd < 0)
+		return FALSE;
+
+	if (512 != read (fd, data, 512))
+		goto out;
+
+	/* signature must be 0x55aa on the last two bytes of the first 512
+	 * byte sector */
+	if (data[510] != 0x55 && 
+	    data[511] != 0xaa)
+		goto out;
+
+	memset (label, 0, 12);
+
+	if (data[82] == 'F' &&
+	    data[83] == 'A' &&
+	    data[84] == 'T' &&
+	    data[85] == '3' &&
+	    data[86] == '2' ) {
+		/* FAT32 */
+		memcpy (label, data+71, 11);
+		hal_device_property_set_string (d, "block.fstype", "vfat");
+		matched = TRUE;
+	} else if (data[54] == 'F' &&
+		   data[55] == 'A' &&
+		   data[56] == 'T' ) {
+		/* FAT12/FAT16/FAT */
+		memcpy (label, data+43, 11);
+		hal_device_property_set_string (d, "block.fstype", "vfat");
+		matched = TRUE;
+	}
+
+	len = strlen (label);
+	for (i=len-1; i>=0 && isspace (label[i]); --i)
+		label[i] = '\0';
+	hal_device_property_set_string (d, "block.volume_label", label);
+	
+out:
+	close (fd);
+	return matched;
+}
+
+static void
+detect_fs (HalDevice *d)
+{
+	if (detect_fs_fat(d))
+		return;
+}
+
 static void 
 block_class_post_process (ClassDeviceHandler *self,
 			  HalDevice *d,
@@ -594,7 +660,8 @@ block_class_post_process (ClassDeviceHandler *self,
 	dbus_bool_t is_hotplugable = FALSE;
 		
 	parent = hal_device_store_find (hald_get_gdl (),
-					hal_device_property_get_string (d, "info.parent"));
+					hal_device_property_get_string (
+						d, "info.parent"));
 	assert (parent != NULL);
 
 	/* add capabilities for device */
@@ -646,6 +713,16 @@ block_class_post_process (ClassDeviceHandler *self,
 							       "info.parent");
 		}
 
+		if (hal_device_has_property (stordev, "info.bus") &&
+		    ( strcmp (hal_device_property_get_string (stordev, 
+							      "info.bus"), 
+			      "usb") == 0 ||
+		      strcmp (hal_device_property_get_string (stordev, 
+							      "info.bus"), 
+			      "ieee1394") == 0) ) {
+			is_hotplugable = TRUE;
+		} 
+
 		/* XXX HACK FIXME TODO : Always choose ourselves as the
 		 * device holding the storage.* properties otherwise optical
 		 * disc handling breaks */
@@ -677,9 +754,13 @@ block_class_post_process (ClassDeviceHandler *self,
 
 		/** @todo  Guestimate product name; use volume label */
 		hal_device_property_set_string (d, "info.product", "Volume");
+		
+		/* Detect filesystem and volume label */
+		detect_fs (d);
 
 		/* Not much to do for volumes; our parent already set the
 		 * appropriate values for the storage device backing us */
+
 		return;
 	} 
 
@@ -854,23 +935,12 @@ block_class_post_process (ClassDeviceHandler *self,
 	hal_device_property_set_string (stordev, "info.category", "storage");
 	hal_device_add_capability (stordev, "storage");
 
-
-
-	if (hal_device_has_property (stordev, "info.bus") &&
-	    ( strcmp (hal_device_property_get_string (stordev, "info.bus"), 
-		      "usb") == 0 ||
-	      strcmp (hal_device_property_get_string (stordev, "info.bus"), 
-		      "ieee1394") == 0) ) {
-		is_hotplugable = TRUE;
-	} 
-
 	hal_device_property_set_bool (stordev, "storage.hotplugable",
 				      is_hotplugable);
 	if (is_hotplugable) {
 		hal_device_add_capability (stordev, "storage.hotplugable");
 	}
 
-					
 	/* check for media on the device */
 	detect_media (d);
 }
