@@ -1,5 +1,10 @@
 2005-02-11  David Zeuthen  <davidz@redhat.com>
 
+	* Makefile.am (SUBDIRS): Rearrange order so volume_id and drive_id
+	is built before anything else.
+
+2005-02-11  David Zeuthen  <davidz@redhat.com>
+
 	With this path, all storage devices should be working just as
 	well as on the 0.4.x branch. 
 

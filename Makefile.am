@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = libhal libhal-storage hald tools fdi doc examples po \
-	  volume_id drive_id
+SUBDIRS = volume_id drive_id libhal libhal-storage hald tools fdi doc	\
+	  examples po
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = hal.pc hal-storage.pc
