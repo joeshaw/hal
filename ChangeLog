@@ -1,5 +1,14 @@
 2004-07-06  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/bus_device.c (bus_device_move_from_tdl_to_gdl): Removed
+	the wrong handler so on remove this was called and the device was
+	added to the GDL again. Resulting in the device was never removed.
+
+	* hald/linux/class_device.c (class_device_move_from_tdl_to_gdl): 
+	Same as above
+
+2004-07-06  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/block_class_device.c (block_class_pre_process): Disable
 	media_check+automount and set block.no_partitions to TRUE for
 	floppy drives - Now my LS120 drive in my Dell laptop works fine

@@ -150,7 +150,7 @@ bus_device_move_from_tdl_to_gdl (HalDevice *device, gpointer user_data)
 	hal_device_store_remove (hald_get_tdl (), device);
 	hal_device_store_add (hald_get_gdl (), device);
 	g_signal_handlers_disconnect_by_func (device,
-					      device_move_from_tdl_to_gdl,
+					      bus_device_move_from_tdl_to_gdl,
 					      user_data);
 	g_object_unref (device);
 

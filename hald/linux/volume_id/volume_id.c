@@ -39,6 +39,7 @@
 
 #include "volume_id.h"
 
+#define DEBUG
 #ifdef DEBUG
 #define dbg(format, arg...)						\
 	do {								\
@@ -914,12 +915,14 @@ label:
 		goto found;
 
 	descr = (struct hfsplus_bnode_descriptor *) buf;
+	dbg("descriptor type 0x%x", descr->type);
 	if (descr->type != HFS_NODE_LEAF)
 		goto found;
 	
 	key = (struct hfsplus_catalog_key *)
 		&buf[sizeof(struct hfsplus_bnode_descriptor)];
 
+	dbg("parent id 0x%x", be32_to_cpu(key->parent_id));
 	if (be32_to_cpu(key->parent_id) != HFSPLUS_POR_CNID)
 		goto found;
 
