@@ -1,5 +1,10 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* hald/hald.c (parent_wait_for_child): Fixup accidental message being
+	printed
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	Finally got around to implementing the bit that made the parent wait
 	for device probing when daemonizing. Hope that it's right this time
 	cause the last time it resulted in breaking peoples pkg updates :-):

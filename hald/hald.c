@@ -365,8 +365,6 @@ parent_wait_for_child (int child_fd, pid_t child_pid)
 	tv.tv_sec = 25;
 	tv.tv_usec = 0;
 
-	fprintf (stderr, "start waiting\n");
-
 	retval = select (child_fd + 1, &rfds, NULL, &efds, &tv);
 
 	if (child_died) {
@@ -376,7 +374,7 @@ parent_wait_for_child (int child_fd, pid_t child_pid)
 	}
 
 	if (retval > 0) {
-		/* means child wrote to socket or closed it */
+		/* means child wrote to socket or closed it; all good */
 		ret = 0;
 		goto out;
 	}
