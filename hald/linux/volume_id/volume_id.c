@@ -136,34 +136,56 @@ static void set_label_unicode16(struct volume_id *id,
 	}
 }
 
-static void set_uuid(struct volume_id *id,
-		     const __u8 *buf, unsigned int count)
+enum uuid_format {
+	UUID_DCE,
+	UUID_DOS,
+	UUID_NTFS,
+	UUID_HFS,
+};
+
+static void set_uuid(struct volume_id *id, const __u8 *buf, enum uuid_format format)
 {
 	unsigned int i;
+	unsigned int count = 0;
 
+	switch(format) {
+	case UUID_DOS:
+		count = 4;
+		break;
+	case UUID_NTFS:
+	case UUID_HFS:
+		count = 8;
+		break;
+	case UUID_DCE:
+		count = 16;
+	}
 	memcpy(id->uuid_raw, buf, count);
 
-	/* create string if uuid is set */
+	/* if set, create string in the same format, the native platform uses */
 	for (i = 0; i < count; i++)
 		if (buf[i] != 0)
 			goto set;
 	return;
 
 set:
-	switch(count) {
-	case 4:
+	switch(format) {
+	case UUID_DOS:
 		sprintf(id->uuid, "%02X%02X-%02X%02X",
 			buf[3], buf[2], buf[1], buf[0]);
 		break;
-	case 8:
-		sprintf(id->uuid,"%02X%02X-%02X%02X-%02X%02X-%02X%02X",
+	case UUID_NTFS:
+		sprintf(id->uuid,"%02X%02X%02X%02X%02X%02X%02X%02X",
 			buf[7], buf[6], buf[5], buf[4],
 			buf[3], buf[2], buf[1], buf[0]);
 		break;
-	case 16:
+	case UUID_HFS:
+		sprintf(id->uuid,"%02X%02X%02X%02X%02X%02X%02X%02X",
+			buf[0], buf[1], buf[2], buf[3],
+			buf[4], buf[5], buf[6], buf[7]);
+		break;
+	case UUID_DCE:
 		sprintf(id->uuid,
-			"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
-			"%02x%02x%02x%02x%02x%02x",
+			"%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 			buf[0], buf[1], buf[2], buf[3],
 			buf[4], buf[5],
 			buf[6], buf[7],
@@ -347,7 +369,7 @@ static int probe_linux_raid(struct volume_id *id, __u64 off, __u64 size)
 
 	memcpy(uuid, &mdp->set_uuid0, 4);
 	memcpy(&uuid[4], &mdp->set_uuid1, 12);
-	set_uuid(id, uuid, 16);
+	set_uuid(id, uuid, UUID_DCE);
 
 	snprintf(id->type_version, VOLUME_ID_FORMAT_SIZE-1, "%u.%u.%u",
 		 le32_to_cpu(mdp->major_version),
@@ -565,7 +587,7 @@ static int probe_ext(struct volume_id *id, __u64 off)
 
 	set_label_raw(id, es->volume_name, 16);
 	set_label_string(id, es->volume_name, 16);
-	set_uuid(id, es->uuid, 16);
+	set_uuid(id, es->uuid, UUID_DCE);
 
 	if ((le32_to_cpu(es->feature_compat) &
 	     EXT3_FEATURE_COMPAT_HAS_JOURNAL) != 0) {
@@ -631,7 +653,7 @@ static int probe_reiserfs(struct volume_id *id, __u64 off)
 found:
 	set_label_raw(id, rs->label, 16);
 	set_label_string(id, rs->label, 16);
-	set_uuid(id, rs->uuid, 16);
+	set_uuid(id, rs->uuid, UUID_DCE);
 
 	id->usage_id = VOLUME_ID_FILESYSTEM;
 	id->type_id = VOLUME_ID_REISERFS;
@@ -666,7 +688,7 @@ static int probe_xfs(struct volume_id *id, __u64 off)
 
 	set_label_raw(id, xs->fname, 12);
 	set_label_string(id, xs->fname, 12);
-	set_uuid(id, xs->uuid, 16);
+	set_uuid(id, xs->uuid, UUID_DCE);
 
 	id->usage_id = VOLUME_ID_FILESYSTEM;
 	id->type_id = VOLUME_ID_XFS;
@@ -701,7 +723,7 @@ static int probe_jfs(struct volume_id *id, __u64 off)
 
 	set_label_raw(id, js->label, 16);
 	set_label_string(id, js->label, 16);
-	set_uuid(id, js->uuid, 16);
+	set_uuid(id, js->uuid, UUID_DCE);
 
 	id->usage_id = VOLUME_ID_FILESYSTEM;
 	id->type_id = VOLUME_ID_JFS;
@@ -930,7 +952,7 @@ valid:
 		set_label_raw(id, vs->type.fat.label, 11);
 		set_label_string(id, vs->type.fat.label, 11);
 	}
-	set_uuid(id, vs->type.fat.serno, 4);
+	set_uuid(id, vs->type.fat.serno, UUID_DOS);
 	goto found;
 
 fat32:
@@ -979,7 +1001,7 @@ fat32:
 		set_label_raw(id, vs->type.fat32.label, 11);
 		set_label_string(id, vs->type.fat32.label, 11);
 	}
-	set_uuid(id, vs->type.fat32.serno, 4);
+	set_uuid(id, vs->type.fat32.serno, UUID_DCE);
 
 found:
 	id->usage_id = VOLUME_ID_FILESYSTEM;
@@ -1475,14 +1497,6 @@ static int probe_mac_partition_map(struct volume_id *id, __u64 off)
 #define HFSPLUS_EXTENT_COUNT		8
 static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
 {
-	union hfs_uuid {
-		char id[8];
-		struct {
-			__u32 high;
-			__u32 low;
-		} __attribute__((__packed__)) v;
-	} __attribute__((__packed__));
-
 	struct hfs_finder_info{
 		__u32	boot_folder;
 		__u32	start_app;
@@ -1490,7 +1504,7 @@ static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
 		__u32	os9_folder;
 		__u32	reserved;
 		__u32	osx_folder;
-		union hfs_uuid uuid;
+		__u8	id[8];
 	} __attribute__((__packed__));
 
 	struct hfs_mdb {
@@ -1589,7 +1603,6 @@ static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
 		struct hfsplus_fork start_file;
 	} __attribute__((__packed__)) *hfsplus;
 
-	union hfs_uuid uuid;
 	unsigned int blocksize;
 	unsigned int cat_block;
 	unsigned int ext_block_start;
@@ -1644,10 +1657,7 @@ static int probe_hfs_hfsplus(struct volume_id *id, __u64 off)
 		set_label_string(id, hfs->label, hfs->label_len) ;
 	}
 
-	/* convert big endian numbers to byte array (little endian)*/
-	uuid.v.high = bswap32(hfs->finder_info.uuid.v.high);
-	uuid.v.low = bswap32(hfs->finder_info.uuid.v.low);
-	set_uuid(id, uuid.id, 8);
+	set_uuid(id, hfs->finder_info.id, UUID_HFS);
 
 	id->usage_id = VOLUME_ID_FILESYSTEM;
 	id->type_id = VOLUME_ID_HFS;
@@ -1664,10 +1674,7 @@ checkplus:
 	return -1;
 
 hfsplus:
-	/* convert big endian numbers to byte array (little endian)*/
-	uuid.v.high = bswap32(hfsplus->finder_info.uuid.v.high);
-	uuid.v.low = bswap32(hfsplus->finder_info.uuid.v.low);
-	set_uuid(id, uuid.id, 8);
+	set_uuid(id, hfsplus->finder_info.id, UUID_HFS);
 
 	blocksize = be32_to_cpu(hfsplus->blocksize);
 	dbg("blocksize %u", blocksize);
@@ -1836,7 +1843,7 @@ static int probe_ntfs(struct volume_id *id, __u64 off)
 	if (strncmp(ns->oem_id, "NTFS", 4) != 0)
 		return -1;
 
-	set_uuid(id, ns->volume_serial, 8);
+	set_uuid(id, ns->volume_serial, UUID_NTFS);
 
 	sector_size = le16_to_cpu(ns->bytes_per_sector);
 	cluster_size = ns->sectors_per_cluster * sector_size;

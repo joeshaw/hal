@@ -1,5 +1,17 @@
 2004-09-14  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/linux/volume_id/volume_id.c: (set_uuid): Swicht from
+	length parameter to the type of uuid to be able to use the
+	same format for the uuid string, the native platform uses.
+	(probe_hfs_hfsplus): Switch the uper and lower part of the number to
+	match the number OS X prints with hfs.util.
+	(probe_linux_raid), (probe_ext), (probe_reiserfs), (probe_xfs),
+	(probe_jfs), (probe_vfat),(probe_hfs_hfsplus), (probe_ntfs): Set uuid
+	by type instead of length
+
+
+2004-09-14  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Patch from: Sjoerd Simons <sjoerd@luon.net>
 
 	* hald/linux/multimedia_class_device.c:
