@@ -1,5 +1,13 @@
 2004-10-18  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Added ru and hu to ALL_LINGUAS
+
+	* po/ru.po: Russian translations from Leonid Kanter (leon@bcl.bz)
+
+	* po/hu.po: Hungarian translations Laszlo Dvornik <dvornik@gnome.hu>
+
+2004-10-18  David Zeuthen  <davidz@redhat.com>
+
 	* tools/fstab-sync.8.in: Fixup some typos and clarify how .fdi files
 	are processed
 

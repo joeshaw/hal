@@ -6870,6 +6870,9 @@ CLASS="programlisting"
       &#60;match key="storage.bus" string="sata"&#62;
 	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
       &#60;/match&#62;
+      &#60;match key="storage.bus" string="platform"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;
+      &#60;/match&#62;
     &#60;/match&#62;
 
     &#60;!-- Handle drives with non-partitioned media  --&#62;
