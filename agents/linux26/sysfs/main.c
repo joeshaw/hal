@@ -431,10 +431,10 @@ tryagain:
     return computed_udi;
 }
 
-/** Given a sysfs-path for a device, this functions finds the HAL device
- *  representing the parent of the given device by truncating the sysfs
- *  path. There may not be a parent device, in which case this function
- *  returns #NULL.
+/** Given a sysfs-path for a device, this functions finds the HAL
+ *  device representing the the given device by looking at the sysfs
+ *  path. There may not be a such a device, in which case this
+ *  function returns #NULL.
  *
  *  Optionally, the caller may specify for many how seconds to try. This is
  *  useful for hotplug situations where the many hotplug events for a
@@ -840,19 +840,13 @@ static void hal_sysfs_probe()
 {
     int rc;
     char path[SYSFS_PATH_MAX];
-    char sysfs_path[SYSFS_PATH_MAX];
     struct sysfs_directory* current;
     struct sysfs_directory* dir;
 
     is_probing = TRUE;
 
-    /* get mount path */
-    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
-    if( rc!=0 )
-        DIE(("Couldn't get mount path for sysfs"));
-
     /* traverse /sys/devices */
-    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, SYSFS_DEVICES_DIR);
+    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, SYSFS_DEVICES_DIR);
     dir = sysfs_open_directory(path);
     if( dir==NULL )
     {
@@ -898,7 +892,6 @@ static void device_hotplug_add(char* bus)
     int rc;
     const char* devpath;
     char path[SYSFS_PATH_MAX];
-    char sysfs_path[SYSFS_PATH_MAX];
 
     if( strcmp(bus, "input")==0 )
     {
@@ -912,12 +905,7 @@ static void device_hotplug_add(char* bus)
     if( devpath==NULL )
         return;
 
-    /* get mount path for sysfs */
-    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
-    if( rc!=0 )
-        DIE(("Couldn't get mount path for sysfs"));
-
-    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
+    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, devpath);
 
     if( strcmp(bus, "usb")==0 )
     {
@@ -966,7 +954,6 @@ static void device_hotplug_remove(char* bus)
     const char* devpath;
     const char* device_udi = NULL;
     char path[SYSFS_PATH_MAX];
-    char sysfs_path[SYSFS_PATH_MAX];
     char** device_udis;
     int num_device_udis;
 
@@ -983,14 +970,7 @@ static void device_hotplug_remove(char* bus)
     if( devpath==NULL )
         return;
 
-    /* get mount path for sysfs */
-    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
-    if( rc!=0 )
-    {
-        DIE(("Couldn't get mount path for sysfs"));
-    }
-
-    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_path, devpath);
+    snprintf(path, SYSFS_PATH_MAX, "%s%s", sysfs_mount_path, devpath);
 
     if( strcmp(bus, "usb")==0 )
     {
@@ -1117,21 +1097,13 @@ void drivers_collect(const char* bus_name)
 {
     int rc;
     char path[SYSFS_PATH_MAX];
-    char sysfs_path[SYSFS_PATH_MAX];
     struct sysfs_directory* current;
     struct sysfs_link* current2;
     struct sysfs_directory* dir;
     struct sysfs_directory* dir2;
 
-    /* get mount path for sysfs */
-    rc = sysfs_get_mnt_path(sysfs_path, SYSFS_PATH_MAX);
-    if( rc!=0 )
-    {
-        DIE(("Couldn't get mount path for sysfs"));
-    }
-
     /* traverse /sys/bus/<bus>/drivers */
-    snprintf(path, SYSFS_PATH_MAX, "%s/bus/%s/drivers", sysfs_path, bus_name);
+    snprintf(path, SYSFS_PATH_MAX, "%s/bus/%s/drivers", sysfs_mount_path, bus_name);
     dir = sysfs_open_directory(path);
     if( dir==NULL )
         DIE(("Error opening sysfs directory at %s\n", path));
@@ -1165,13 +1137,20 @@ void drivers_collect(const char* bus_name)
 }
 
 
+/** D-BUS connection object for out connection */
+DBusConnection* dbus_connection;
+
+/** Mount path for sysfs */
+char sysfs_mount_path[SYSFS_PATH_MAX];
+
 /** D-BUS mainloop integration for libhal.
  *
- *  @param  dbus_connection     D-BUS connection to integrate
+ *  @param  connection          D-BUS connection to integrate
  */
-static void mainloop_integration(DBusConnection* dbus_connection)
+static void mainloop_integration(DBusConnection* connection)
 {
-    dbus_connection_setup_with_g_main(dbus_connection, NULL);
+    dbus_connection = connection;
+    dbus_connection_setup_with_g_main(connection, NULL);
 }
 
 /** Usage */
@@ -1211,11 +1190,19 @@ LibHalFunctions hal_functions = {mainloop_integration,
  */
 int main(int argc, char* argv[])
 {
+    int rc;
     GMainLoop* loop;
 
     fprintf(stderr, "hal-sysfs-agent " PACKAGE_VERSION "\r\n");
 
     loop = g_main_loop_new(NULL, FALSE);
+
+    /* get mount path for sysfs */
+    rc = sysfs_get_mnt_path(sysfs_mount_path, SYSFS_PATH_MAX);
+    if( rc!=0 )
+    {
+        DIE(("Couldn't get mount path for sysfs"));
+    }
 
     if( hal_initialize(&hal_functions)  )
     {

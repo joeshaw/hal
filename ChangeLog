@@ -1,3 +1,34 @@
+2003-12-08  David Zeuthen  <david@fubar.dk>
+
+	* agents/linux26/sysfs/hal_monitor.c:
+	(etc_mtab_process_all_block_devices): s/volume./block./
+	(udev_filter_func): new function for filtering D-BUS messages from udev
+	(setup_udev_listener): setup filter for udev messages
+	(hal_monitor_enter): Listen to D-BUS messages
+
+	* agents/linux26/sysfs/main.c:
+	(hal_sysfs_probe): Use global sysfs path
+	(device_hotplug_add): Use global sysfs path
+	(device_hotplug_remove): Use global sysfs path
+	(drivers_collect): Use global sysfs path
+	(mainloop_integration): Save D-BUS connection object for later use
+	(main): Get sysfs mount path once and for all
+
+	* agents/linux26/sysfs/main.h: Add dbus_connection and sysfs_mount_path
+	as extern variables
+
+	* hald/main.c:
+	(device_query_capability): new function
+	(filter_function): add check for Device.QueryCapability
+
+	* libhal/libhal.c: Minor formatting stuff
+
+	* examples/volumed/volumed.py: Crude example of volume manager now
+	that we got udev integration in place. It doesn't really mount anything
+	but prints out when it should mount. You'll need a very recent udev
+	from BitKeeper with D-BUS enabled (got the patch accepted today)
+
+	
 2003-12-06  David Zeuthen  <david@fubar.dk>
 
 	* tools/device-manager/hal-device-manager.glade: Forgot to add file

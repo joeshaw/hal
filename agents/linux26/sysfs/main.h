@@ -104,6 +104,10 @@ void drivers_collect(const char* bus_name);
 
 extern LibHalFunctions hal_functions;
 
+extern DBusConnection* dbus_connection;
+
+extern char sysfs_mount_path[SYSFS_PATH_MAX];
+
 /* @} */
 
 #endif /* MAIN_H */

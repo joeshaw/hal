@@ -451,6 +451,8 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
 
     object_path = dbus_message_get_path(message);
 
+    /*printf("*** in filter_func, object_path=%s\n", object_path);*/
+
     if( dbus_message_is_signal(message, "org.freedesktop.Hal.Manager",
                                "DeviceAdded") )
     {
@@ -631,7 +633,11 @@ int hal_initialize(const LibHalFunctions* cb_functions)
     }
     
     // TODO: narrow in instead of match *all* signals
-    dbus_bus_add_match(connection, "type='signal',interface='org.freedesktop.Hal.Manager',sender='org.freedesktop.Hal',path='/org/freedesktop/Hal/Manager'", &error);
+    dbus_bus_add_match(connection, 
+                       "type='signal',"
+                       "interface='org.freedesktop.Hal.Manager',"
+                       "sender='org.freedesktop.Hal',"
+                       "path='/org/freedesktop/Hal/Manager'", &error);
     if( dbus_error_is_set(&error) )
     {
         fprintf(stderr, "%s %d : Error subscribing to signals, "

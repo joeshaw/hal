@@ -304,13 +304,13 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
                 */
 
                 /* Yay! Found a mount point; set properties accordingly */
-                hal_device_set_property_string(udi, "volume.device", 
+                hal_device_set_property_string(udi, "block.device", 
                                                mp->device);
-                hal_device_set_property_string(udi, "volume.mountPoint", 
+                hal_device_set_property_string(udi, "block.mountPoint", 
                                                mp->mount_point);
-                hal_device_set_property_string(udi, "volume.fileSystem", 
+                hal_device_set_property_string(udi, "block.fileSystem", 
                                                mp->fs_type);
-                hal_device_set_property_bool(udi, "volume.isMounted", TRUE);
+                hal_device_set_property_bool(udi, "block.isMounted", TRUE);
 
                 found_mount_point = TRUE;
             }
@@ -319,10 +319,9 @@ void etc_mtab_process_all_block_devices(dbus_bool_t setup_watcher)
         /* No mount point found; (possibly) remove all information */
         if( !found_mount_point )
         {
-            hal_device_set_property_bool(udi, "volume.isMounted", FALSE);
-            hal_device_remove_property(udi, "volume.mountPoint");
-            hal_device_remove_property(udi, "volume.fileSystem");
-            hal_device_remove_property(udi, "volume.device");
+            hal_device_set_property_bool(udi, "block.isMounted", FALSE);
+            hal_device_remove_property(udi, "block.mountPoint");
+            hal_device_remove_property(udi, "block.fileSystem");
         }
     }
 
@@ -625,12 +624,113 @@ static void device_removed(const char* udi)
     ethmon_remove(udi);
 }
 
+
+static DBusHandlerResult udev_filter_func(DBusConnection* connection,
+                                          DBusMessage*    message,
+                                          void*           user_data)
+{  
+    char* filename;
+    char* sysfs_path;
+    char sysfs_dev_path[SYSFS_PATH_MAX];
+    char* udi;
+    const char* object_path;
+    DBusError error;
+
+    dbus_error_init(&error);
+
+    object_path = dbus_message_get_path(message);
+
+    /*printf("*** in udev_filter_func, object_path=%s\n", object_path);*/
+
+    if( dbus_message_is_signal(message, "org.kernel.udev.NodeMonitor",
+                               "NodeCreated") )
+    {
+        if( dbus_message_get_args(message, &error, 
+                                  DBUS_TYPE_STRING, &filename,
+                                  DBUS_TYPE_STRING, &sysfs_path,
+                                  DBUS_TYPE_INVALID) )
+        {
+            strncpy(sysfs_dev_path, sysfs_mount_path, SYSFS_PATH_MAX);
+            strncat(sysfs_dev_path, sysfs_path, SYSFS_PATH_MAX);
+            printf("NodeCreated: %s %s\n", filename, sysfs_dev_path);
+
+            udi = find_udi_from_sysfs_path(sysfs_dev_path, 
+                                     HAL_LINUX_HOTPLUG_TIMEOUT);
+            if( udi!=NULL )
+            {
+                hal_device_set_property_string(udi, "block.device", filename);
+            }
+        }
+    }
+    else if( dbus_message_is_signal(message, "org.kernel.udev.NodeMonitor",
+                                    "NodeDeleted") )
+    {
+        if( dbus_message_get_args(message, &error, 
+                                  DBUS_TYPE_STRING, &filename,
+                                  DBUS_TYPE_STRING, &sysfs_path,
+                                  DBUS_TYPE_INVALID) )
+        {
+            /* This is left intentionally blank since this means that a
+             * block device is removed and we'll catch that other places..
+
+            strncpy(sysfs_dev_path, sysfs_mount_path, SYSFS_PATH_MAX);
+            strncat(sysfs_dev_path, sysfs_path, SYSFS_PATH_MAX);
+            printf("NodeDeleted: %s %s\n", filename, sysfs_dev_path);
+
+            udi = find_udi_from_sysfs_path(sysfs_dev_path, 
+                                     HAL_LINUX_HOTPLUG_TIMEOUT);
+            if( udi!=NULL )
+            {
+                hal_device_remove_property(udi, "block.device");
+            }
+            */
+        }
+    }
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
+static void setup_udev_listener()
+{
+    DBusError error;
+    DBusConnection* connection;
+
+    /* Add filter for listening to udev */
+    if( !dbus_connection_add_filter(dbus_connection, 
+                                    udev_filter_func, NULL, NULL) )
+    {
+        fprintf(stderr, "%s %d : Error creating connection handler\r\n",
+                __FILE__, __LINE__);
+        // TODO: clean up
+        return 1;
+    }
+    
+    dbus_error_init(&error);
+    dbus_bus_add_match(dbus_connection, 
+                       "type='signal',"
+                       "interface='org.kernel.udev.NodeMonitor',"
+                       /*"sender='org.kernel.udev',"*/
+                       "path='/org/kernel/udev/NodeMonitor'", &error);
+
+    if( dbus_error_is_set(&error) )
+    {
+        fprintf(stderr, "%s %d : Error subscribing to signals, "
+                "error=%s\r\n",
+                __FILE__, __LINE__, error.message);
+        // TODO: clean up
+        return 1;
+    }
+}
+
 /** Enter monitor mode
  *
  *  @param  loop                G-Lib mainloop
  */
 void hal_monitor_enter(GMainLoop* loop)
 {
+    DBusError error;
+
     syslog(LOG_INFO, "Entering monitor mode..");    
 
     /* Find possible mount point for block devices and setup 
@@ -645,6 +745,11 @@ void hal_monitor_enter(GMainLoop* loop)
     hal_functions.device_added   = device_added;
     hal_functions.device_removed = device_removed;
     hal_functions.device_new_capability = device_new_capability;
+
+    /* Setup listener for udev signals */
+    setup_udev_listener();
+
+
 
     g_main_loop_run(loop);
 }

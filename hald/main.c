@@ -1135,6 +1135,73 @@ static DBusHandlerResult device_property_exists(DBusConnection* connection,
 }
 
 
+/** Determine if a device got a capability
+ *
+ *  <pre>
+ *  bool Device.QueryCapability(string capability_name)
+ *
+ *    raises org.freedesktop.Hal.NoSuchDevice, 
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult device_query_capability(DBusConnection* connection,
+                                                 DBusMessage* message)
+{
+    dbus_bool_t rc;
+    const char* udi;
+    const char* caps;
+    char* capability;
+    HalDevice* d;
+    DBusMessage *reply;
+    DBusError error;
+    DBusMessageIter iter;
+
+    LOG_TRACE(("entering"));
+
+    udi = dbus_message_get_path(message);
+
+    d = ds_device_find(udi);
+    if( d==NULL )
+    {
+        raise_no_such_device(connection, message, udi);
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    dbus_error_init(&error);
+    if( !dbus_message_get_args(message, &error, 
+                               DBUS_TYPE_STRING, &capability,
+                               DBUS_TYPE_INVALID) )
+    {
+        raise_syntax(connection, message, "QueryCapability");
+        return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    }
+
+    reply = dbus_message_new_method_return(message);
+    if( reply==NULL )
+        DIE(("No memory"));
+
+    rc = FALSE;
+    caps = ds_property_get_string(d, "Capabilities");
+    if( caps!=NULL )
+    {
+        if( strstr(caps, capability)!=NULL )
+            rc = TRUE;
+    }
+
+    dbus_message_iter_init(reply, &iter);
+    dbus_message_iter_append_boolean(&iter, rc);
+
+    if( !dbus_connection_send(connection, reply, NULL) )
+        DIE(("No memory"));
+  
+    dbus_message_unref(reply);
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+
 /** Enable a device.
  *
  *  <pre>
@@ -1845,6 +1912,12 @@ static DBusHandlerResult filter_function(DBusConnection* connection,
                                          "AddCapability") )
     {
         return device_add_capability(connection, message);
+    }
+    else if( dbus_message_is_method_call(message,
+                                         "org.freedesktop.Hal.Device",
+                                         "QueryCapability") )
+    {
+        return device_query_capability(connection, message);
     }
 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
