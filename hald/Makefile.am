@@ -50,7 +50,7 @@ hald_SOURCES =                                                          \
 	property.h			property.c                      \
 	hald_conf.h                     hald_conf.c
 
-hald_LDADD = @PACKAGE_LIBS@ -lm -lcap @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+hald_LDADD = @PACKAGE_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 if HAVE_SELINUX
 hald_LDADD += -lselinux

@@ -1,5 +1,41 @@
 2005-02-08  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Sjoerd Simons <sjoerd@luon.net>. 
+	
+	Since i seem to be in an extreme mood anyway, attached it is a
+	patch that will make hal always drop permissions to non-root. Also
+	it removes keeping the net admin capability as it's not being used
+	anymore.
+
+	I think it's the right way to do things. There should be no reason
+	to run hald as root ever and forcing it from the start of the
+	development cycle is a good way of ensuring that :)
+
+	It would also be nice to have the addons that need to start out as
+	root (like the ups one) drop permission as soon as possible (one
+	can never be too sure)... Probably a utility function would be
+	nice for that, but i don't know where to place it (as the addons
+	and probers live in different dirs)
+
+	Slightly mangled by myself to remove libcap dep and introduce
+	the --retain-privileges option.
+
+	* configure.in: Don't require libcap
+
+	* hald/Makefile.am (hald_LDADD): Don't link with libcap
+
+	* hald/run-hald.sh: Use new --retain-privileges option since this
+	is the development runscript
+
+	* hald/hald.c (usage): Remove option --drop-privileges and introduce
+	new option --retain-privileges
+	(drop_privileges): Just drop to uid/gid of specified haldaemon user
+	and group. Don't use libcap anymore.
+	(main): Enforce new --retain-privileges option since it's useful for
+	development
+
+2005-02-08  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/osspec.c: Do not care about link detection, NM and other
 	tools are going to do this on their own now.
 	(link_detection_handle_message): Remove

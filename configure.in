@@ -190,8 +190,6 @@ else
   fi
 fi
 
-AC_CHECK_HEADERS([sys/capability.h],, [AC_MSG_ERROR([Please install libcap and the libcap development package])])
-
 dbus_module="dbus-1 >= 0.20"
 pkg_modules="glib-2.0 >= 2.2.2, gobject-2.0 >= 2.2.2, dbus-glib-1 >= 0.20, $dbus_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
