@@ -1,5 +1,14 @@
 2004-09-14  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Patch from: Sjoerd Simons <sjoerd@luon.net>
+
+	* hald/linux/multimedia_class_device.c:
+	Debian does have the v4l2 stuff in the kernel headers. So just
+	copying causes the compile to fail on my system. Luckily it
+	defines HAVE_V4L2, so we can check for that.
+
+2004-09-14  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Change Hotplug handling to better match the kernel. The next kernel
 	version will have a u64 hotplug sequence number starting at 1.
 	We can't be sure, that an ACTION != "add" is everytime a "remove" event,

@@ -87,6 +87,7 @@ multimedia_class_device_accept (ClassDeviceHandler *self,
  *                        instance
  */
 
+#ifndef HAVE_V4L2
 /* Red Hat doesn't have v4l2 headers, just copy that in
    until we find a better solution */
 #define VIDIOC_QUERYCAP			_IOR  ('V',  0, struct v4l2_capability)
@@ -103,6 +104,8 @@ struct v4l2_capability {
 	__u32	capabilities;
 		__u32	reserved[4];
 } __attribute__((__packed__)) v2cap;
+
+#endif /* HAVE_V4L2 */
 
 static void
 multimedia_class_pre_process (ClassDeviceHandler *self,
