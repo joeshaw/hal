@@ -1187,9 +1187,12 @@ double ds_property_iter_get_double(HalProperty* property)
     return property->double_value;
 }
 
-/** Merge properties from one device to another. If the Capabilities property
- *  is set in the source, then #new_capability_cb will be invoked for every
- *  capability on the target device.
+/** Merge properties from one device to another. 
+ *
+ *  The info.capabilities property is handled in a special way; like
+ *  the other properties it isn't overwritten, but rather merged. If
+ *  new capabilities are introduced then #new_capability_cb will be
+ *  invoked for every new capability merged onto the target device.
  *
  *  @param  target              Target device receiving properties
  *  @param  source              Source device contributing properties
@@ -1213,6 +1216,10 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
         p = ds_property_iter_get(&iter);
         key = ds_property_iter_get_key(p);
         type = ds_property_iter_get_type(p);
+
+        /* handle info.capabilities in a special way */
+        if( strcmp(key, "info.capabilities")==0 )
+            continue;
 
         /* only remove target if it exists with different type */
         target_type = ds_property_get_type(target, key);
@@ -1252,8 +1259,10 @@ void ds_device_merge(HalDevice* target, HalDevice* source)
         tok = strtok_r((char*)caps, " ", &bufp);
         while( tok!=NULL )
         {
-            for(i=0; i<num_new_capability_cb; i++)
-                (*(new_capability_cb[i]))(target, tok, target->in_gdl);
+            if( !ds_query_capability(target, tok) )
+            {
+                ds_add_capability(target, tok);
+            }
             tok = strtok_r(NULL, " ", &bufp);
         }
     }

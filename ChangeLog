@@ -1,3 +1,14 @@
+2004-01-18  David Zeuthen  <david@fubar.dk>
+
+	* hald/device_store.c (ds_device_merge): treat info.properties in
+	a special way such that capabilities entries are actually merged
+
+	* hald/linux/linux_class_v4l.c (visit_class_device_v4l): Replaced
+	parent with sysdevice, since that is what we really search for;
+	split properties onto v4l.[vbi,video,radio]
+	(visit_class_device_v4l_got_parent): renamed to _got_sysdevice. Merge
+	information onto sysdevice instead of creating a new device
+
 2004-01-18  Bastien Nocera  <hadess@hadess.net>
 
 	* hald/linux/linux_dvd_rw_utils.c (get_read_write_speed): fixed bug
