@@ -63,7 +63,6 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../device_info.h"
-#include "../hald_conf.h"
 
 #include "osspec_linux.h"
 
@@ -424,7 +423,7 @@ usbclass_compute_udi (HalDevice *d)
 		hal_device_set_udi (d, udi);
 		hal_device_property_set_string (d, "info.udi", udi);
 	} else if (hal_device_has_capability (d, "printer")) {
-		char *serial;
+		const char *serial;
 
 		serial = hal_device_property_get_string (d, "printer.serial");
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
@@ -525,9 +524,9 @@ static ClassDevHandler *classdev_handlers[] = {
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static void 
-classdev_callouts_add_done (HalDevice *d, gpointer userdata)
+classdev_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Add callouts completed udi=%s", d->udi));
 
@@ -539,9 +538,9 @@ classdev_callouts_add_done (HalDevice *d, gpointer userdata)
 }
 
 static void 
-classdev_callouts_remove_done (HalDevice *d, gpointer userdata)
+classdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
 
@@ -556,7 +555,8 @@ static void
 add_classdev_after_probing (HalDevice *d, ClassDevHandler *handler, void *end_token)
 {
 	/* Merge properties from .fdi files */
-	di_search_and_merge (d);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 
 	/* Compute UDI */
 	if (!handler->compute_udi (d)) {
@@ -568,7 +568,7 @@ add_classdev_after_probing (HalDevice *d, ClassDevHandler *handler, void *end_to
 	/* TODO: Merge persistent properties */
 
 	/* Run callouts */
-	hal_util_callout_device_add (d, classdev_callouts_add_done, end_token);
+	hal_util_callout_device_add (d, classdev_callouts_add_done, end_token, NULL);
 
 out:
 	;
@@ -604,6 +604,53 @@ out:
 	;
 }
 
+static void 
+classdev_callouts_preprobing_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	void *end_token = (void *) userdata1;
+	ClassDevHandler *handler = (ClassDevHandler *) userdata2;
+	const gchar *prober;
+
+	if (hal_device_property_get_bool (d, "info.ignore")) {
+		/* Leave the device here with info.ignore==TRUE so we won't pick up children 
+		 * Also remove category and all capabilities
+		 */
+		hal_device_property_remove (d, "info.category");
+		hal_device_property_remove (d, "info.capabilities");
+		hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/ignored-device");
+		hal_device_property_set_string (d, "info.product", "Ignored Device");
+
+		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
+		
+		/* Move from temporary to global device store */
+		hal_device_store_remove (hald_get_tdl (), d);
+		hal_device_store_add (hald_get_gdl (), d);
+		
+		hotplug_event_end (end_token);
+		goto out;
+	}
+	
+	if (handler->get_prober != NULL)
+		prober = handler->get_prober (d);
+	else
+		prober = NULL;
+	if (prober != NULL) {
+		/* probe the device */
+		if (hal_util_helper_invoke (prober, NULL, d, (gpointer) end_token, 
+					    (gpointer) handler, add_classdev_probing_helper_done, 
+					    HAL_HELPER_TIMEOUT) == NULL) {
+			hal_device_store_remove (hald_get_tdl (), d);
+			hotplug_event_end (end_token);
+		}
+		goto out;
+	} else {
+		add_classdev_after_probing (d, handler, end_token);
+		goto out;
+	}
+out:
+	;
+}
+
 void
 hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file, 
 				  HalDevice *physdev, const gchar *sysfs_path_in_devices, void *end_token)
@@ -612,13 +659,18 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 
 	HAL_INFO (("class_add: subsys=%s sysfs_path=%s dev=%s physdev=0x%08x", subsystem, sysfs_path, device_file, physdev));
 
+	if (physdev != NULL && hal_device_property_get_bool (physdev, "info.ignore")) {
+		HAL_INFO (("Ignoring class_add since physdev has info.ignore==TRUE"));
+		hotplug_event_end (end_token);
+		goto out;
+	}
+
 	for (i = 0; classdev_handlers [i] != NULL; i++) {
 		ClassDevHandler *handler;
 
 		handler = classdev_handlers[i];
 		if (strcmp (handler->subsystem, subsystem) == 0) {
 			HalDevice *d;
-			const gchar *prober;
 
 			/* attempt to add the device */
 			d = handler->add (sysfs_path, device_file, physdev, sysfs_path_in_devices);
@@ -637,23 +689,12 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
 
-			if (handler->get_prober != NULL)
-				prober = handler->get_prober (d);
-			else
-				prober = NULL;
-			if (prober != NULL) {
-				/* probe the device */
-				if (hal_util_helper_invoke (prober, NULL, d, (gpointer) end_token, 
-							    (gpointer) handler, add_classdev_probing_helper_done, 
-							    HAL_HELPER_TIMEOUT) == NULL) {
-					hal_device_store_remove (hald_get_tdl (), d);
-					hotplug_event_end (end_token);
-				}
-				goto out;
-			} else {
-				add_classdev_after_probing (d, handler, end_token);
-				goto out;
-			}				
+			/* Process preprobe fdi files */
+			di_search_and_merge (d, DEVICE_INFO_TYPE_PREPROBE);
+
+			/* Run preprobe callouts */
+			hal_util_callout_device_preprobe (d, classdev_callouts_preprobing_done, end_token, handler);
+			goto out;
 		}
 	}
 
@@ -684,7 +725,7 @@ hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_
 			if (strcmp (handler->subsystem, subsystem) == 0) {
 				handler->remove (d);
 
-				hal_util_callout_device_remove (d, classdev_callouts_remove_done, end_token);
+				hal_util_callout_device_remove (d, classdev_callouts_remove_done, end_token, NULL);
 				goto out;
 			}
 		}

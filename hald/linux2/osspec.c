@@ -71,7 +71,6 @@
 #include "../hald.h"
 #include "../hald_dbus.h"
 #include "../device_info.h"
-#include "../hald_conf.h"
 
 #include "util.h"
 #include "hotplug.h"
@@ -347,7 +346,7 @@ osspec_shutdown (void)
 }
 
 static void 
-computer_callouts_add_done (HalDevice *d, gpointer userdata)
+computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	HAL_INFO (("Add callouts completed udi=%s", d->udi));
 
@@ -389,9 +388,10 @@ osspec_probe (void)
 	}
 	HAL_INFO (("Done synthesizing events"));
 
-	di_search_and_merge (root);
+	di_search_and_merge (root, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (root, DEVICE_INFO_TYPE_POLICY);
 
-	hal_util_callout_device_add (root, computer_callouts_add_done, NULL);	
+	hal_util_callout_device_add (root, computer_callouts_add_done, NULL, NULL);
 
 	/*osspec_probe_done ();*/
 }

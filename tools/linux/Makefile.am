@@ -9,12 +9,9 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
-libexec_PROGRAMS = hal.hotplug hal-hotplug-map
+libexec_PROGRAMS = hal.hotplug
 
 hal_hotplug_SOURCES = hal_hotplug.c
-
-hal_hotplug_map_SOURCES = hal_hotplug_map.c
-hal_hotplug_map_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 clean-local :
 	rm -f *~
@@ -22,15 +19,8 @@ clean-local :
 install-data-local :
 	$(mkinstalldirs) $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default
 	- cd $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default && $(LN_S) $(libexecdir)/hal.hotplug 20-hal.hotplug
-if HOTPLUG_MAP_ENABLED
-	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
-	- cd $(DESTDIR)$(SYSCONFDIR)/hal/device.d && $(LN_S) $(libexecdir)/hal-hotplug-map 40-hal-hotplug-map.hal
-endif
 
 uninstall-local :
 	- rm -f $(DESTDIR)$(LINUX_HOTPLUG_DIR)/default/20-hal.hotplug
-if HOTPLUG_MAP_ENABLED
-	- rm -f $(DESTDIR)$(SYSCONFDIR)/hal/device.d/40-hal-hotplug-map.hal
-endif
 
 

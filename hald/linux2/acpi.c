@@ -319,9 +319,9 @@ static ACPIDevHandler *acpi_handlers[] = {
 };
 
 static void 
-acpi_callouts_add_done (HalDevice *d, gpointer userdata)
+acpi_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Add callouts completed udi=%s", d->udi));
 
@@ -333,9 +333,9 @@ acpi_callouts_add_done (HalDevice *d, gpointer userdata)
 }
 
 static void 
-acpi_callouts_remove_done (HalDevice *d, gpointer userdata)
+acpi_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
 
@@ -373,7 +373,8 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 			hal_device_store_add (hald_get_tdl (), d);
 
 			/* Merge properties from .fdi files */
-			di_search_and_merge (d);
+			di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+			di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 
 			
 			/* Compute UDI */
@@ -384,7 +385,7 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 			}
 
 			/* Run callouts */
-			hal_util_callout_device_add (d, acpi_callouts_add_done, end_token);
+			hal_util_callout_device_add (d, acpi_callouts_add_done, end_token, NULL);
 			goto out;
 		}
 	}
@@ -415,7 +416,7 @@ hotplug_event_begin_remove_acpi (const gchar *acpi_path, int acpi_type, void *en
 		handler = acpi_handlers[i];
 		if (handler->acpi_type == acpi_type) {
 			if (handler->remove (d, handler)) {
-				hal_util_callout_device_remove (d, acpi_callouts_remove_done, end_token);
+				hal_util_callout_device_remove (d, acpi_callouts_remove_done, end_token, NULL);
 				goto out2;
 			}
 		}

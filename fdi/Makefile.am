@@ -1,5 +1,5 @@
 
-SUBDIRS = 10generic 20freedesktop 30osvendor 40oem 50user 90defaultpolicy 95userpolicy
+SUBDIRS = information policy preprobe
 
 EXTRA_DIST = fdi.dtd fdi.rng
 

@@ -1,5 +1,11 @@
 dnl Process this file with autoconf to produce a configure script.
 
+# If porting the hal tarball to work well on a distribution search
+# for the string "(distro-tweaks required)" for what to tweak.
+#
+# Patches for that are welcome.
+#
+
 AC_PREREQ(2.57)
 AC_INIT(hal, 0.5.0, david@fubar.dk)
 AM_INIT_AUTOMAKE(hal, 0.5.0)
@@ -27,7 +33,7 @@ AC_PROG_LN_S
 AM_PATH_PYTHON
 AC_SYS_LARGEFILE
 
-AC_ARG_WITH(init-scripts,       [  --with-init-scripts=<os> Style of init scripts to install (redhat)])
+AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
 AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
 if ! test -z "$with_hwdata" ; then
@@ -68,7 +74,6 @@ AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedanti
 AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
 AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs   build DOXYGEN documentation (requires Doxygen)],enable_doxygen_docs=$enableval,enable_doxygen_docs=auto)
 AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build DocBook documentation (requires docbook2html)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
-AC_ARG_ENABLE(selinux,          [  --enable-selinux        build with SELinux support],enable_selinux=$enableval,enable_selinux=auto)
 
 if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
@@ -101,14 +106,6 @@ else
 fi
 AC_SUBST(PCMCIA_STAB_FILE)
 AC_DEFINE_UNQUOTED(PCMCIA_STAB_FILE,"$PCMCIA_STAB_FILE", [PCMCIA socket table file])
-
-AC_ARG_ENABLE(hotplug_map,         [  --enable-hotplug-map    Install hotplug-map callout],enable_hotplug_map=yes,enable_hotplug_map=no)
-if test "x$enable_hotplug_map" = "xyes" ; then
-   AC_DEFINE(HOTPLUG_MAP_ENABLED,1,[Whether hotplug-map callout should be installed])
-fi
-AC_SUBST(HOTPLUG_MAP_ENABLED)
-AM_CONDITIONAL(HOTPLUG_MAP_ENABLED, test x$enable_hotplug_map = xyes)
-
 
 #### gcc warning flags
 
@@ -206,7 +203,7 @@ AC_CHECK_HEADERS(expat.h)
 AC_CHECK_LIB(expat,XML_ParserCreate, EXPAT_LIB="-lexpat")
 AC_SUBST(EXPAT_LIB)
 
-AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux/dummy)],
+AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux2/dummy)],
                       [
                       backend=$withval
                       ]
@@ -346,26 +343,30 @@ fi
 AC_SUBST(LINUX_HOTPLUG_DIR)
 AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d directory is])
 
-#### Check our operating system
+#### Check our operating system (distro-tweaks required)
 operating_system=unknown
 if test -f /etc/redhat-release || test -f SYSCONFDIR/redhat-release ; then
    operating_system=redhat
 fi
 
-#### Sort out init scripts
+#### Sort out OS (distro-tweaks required)
 
-if test x$with_init_scripts = x; then
-    if test xredhat = x$operating_system ; then
-        with_init_scripts=redhat
+if test x$with_os_type = x; then
+    if test x$operating_system = xredhat ; then
+        with_os_type=redhat
     else
-        with_init_scripts=none
+        with_os_type=unknown
     fi
 fi
 
-#### Set up the pid file
+# (distro-tweaks required)
+AM_CONDITIONAL(OS_TYPE_UNKNOWN, test x$with_os_type = xunknown, [Running on unknown OS])
+AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red Hat OS'es])
+
+#### Set up the pid file (distro-tweaks required)
 if ! test -z "$with_pid_file"; then
    HALD_PID_FILE=$with_pid_file
-elif test x$operating_system = xredhat ; then
+elif test x$with_os_type = xredhat ; then
    HALD_PID_FILE=${LOCALSTATEDIR}/run/haldaemon.pid
 else
    HALD_PID_FILE=${LOCALSTATEDIR}/run/hald/pid
@@ -373,40 +374,6 @@ fi
 
 AC_SUBST(HALD_PID_FILE)
 AC_DEFINE_UNQUOTED(HALD_PID_FILE, "$HALD_PID_FILE", [pid file])
-
-
-AM_CONDITIONAL(INIT_SCRIPTS_RED_HAT, test x$with_init_scripts = xredhat)
-
-
-
-# SELinux detection
-if test x$enable_selinux = xno ; then
-    have_selinux=no;
-else
-    # See if we have sufficiently new SELinux library
-    AC_CHECK_LIB(selinux, selinux_removable_context_path, 
-                 have_selinux=yes, have_selinux=no)
-
-    if test x$enable_selinux = xauto ; then
-        if test x$have_selinux = xno ; then
-                AC_MSG_WARN([Sufficiently new SELinux library not found])
-        fi
-    else 
-        if test x$have_selinux = xno ; then
-                AC_MSG_ERROR([SELinux explicitly required, and sufficiently new SELinux library not found])
-        fi
-    fi
-fi
-
-AM_CONDITIONAL(HAVE_SELINUX, test x$have_selinux = xyes)
-
-if test x$have_selinux = xyes ; then
-    SELINUX_LIBS=-lselinux
-    AC_DEFINE(HAVE_SELINUX,1,[SELinux support])
-else
-    SELINUX_LIBS=
-fi
-
 
 ALL_LINGUAS="da fr de nl ru hu pt it"
 AC_SUBST(ALL_LINGUAS)
@@ -438,13 +405,18 @@ tools/device-manager/hal-device-manager
 tools/device-manager/Makefile
 tools/device-manager/Const.py
 fdi/Makefile
-fdi/10generic/Makefile
-fdi/20freedesktop/Makefile
-fdi/30osvendor/Makefile
-fdi/40oem/Makefile
-fdi/50user/Makefile
-fdi/90defaultpolicy/Makefile
-fdi/95userpolicy/Makefile
+fdi/preprobe/Makefile
+fdi/preprobe/10osvendor/Makefile
+fdi/preprobe/20thirdparty/Makefile
+fdi/preprobe/30user/Makefile
+fdi/information/Makefile
+fdi/information/10freedesktop/Makefile
+fdi/information/20thirdparty/Makefile
+fdi/information/30user/Makefile
+fdi/policy/Makefile
+fdi/policy/10osvendor/Makefile
+fdi/policy/20thirdparty/Makefile
+fdi/policy/30user/Makefile
 doc/Makefile
 doc/api/Makefile
 doc/api/Doxyfile
@@ -482,19 +454,12 @@ echo "
         User for HAL:             ${HAL_USER}
         Group for HAL:            ${HAL_GROUP}
         hald pidfile:             ${HALD_PID_FILE}
-
         hald backend:             ${HALD_BACKEND}
 
-        Building SELinux support: ${have_selinux}
-
         install fstab-sync:       ${enable_fstab_sync}
-
         Extended PCMCIA support:  ${enable_pcmcia_support}
         PCMCIA stab file:         ${PCMCIA_STAB_FILE}
 
-        install hal-hotplug-map:  ${enable_hotplug_map}"
-
-echo "
         Maintainer mode:          ${USE_MAINTAINER_MODE}
         Building verbose mode:    ${enable_verbose_mode}
         Building Doxygen docs:    ${enable_doxygen_docs}
@@ -502,27 +467,25 @@ echo "
 "
 
 if test x$enable_verbose_mode = xyes; then
-   echo "NOTE: building with verbose mode increases library size, may slightly increase security risk, and decreases performance."
+   echo "NOTE: building with verbose mode increases library size, may slightly "
+   echo "      increase security risk, and decreases performance."
    echo
 fi
 
-if test x$with_init_scripts = xredhat; then
-   echo "NOTE: Red Hat style init scripts will be installed"
+# (distro-tweaks required)
+if test x$with_os_type = xredhat; then
+   echo "NOTE: Red Hat style init scripts and policy will be installed"
 else
-   echo "NOTE: You have to install init scripts yourself"
+   echo "NOTE: You have to install init scripts yourself and tweak your own policy"
 fi
 echo
 
 echo "NOTE: Remember to create user ${HAL_USER} and group ${HAL_GROUP} before make install"
 echo
 
-dnl if test x${USE_MAINTAINER_MODE} = xyes; then
-dnl    echo "NOTE: device info files will be read from the device_info_files directory in the source distribution rather than from ${LOCALSTATEDIR}/hal/fdi"
-dnl   echo
-dnl fi
-
-dnl if test x${USE_MAINTAINER_MODE} = xyes; then
-dnl    echo "NOTE: do NOT issue 'make install' when in maintainer mode"
-dnl    echo
-dnl fi
+echo "NOTE: For development, use hald/run-hald.sh and hald/debug-hald.sh scripts to "
+echo "      use programs (callouts, probers, addons) and device information files "
+echo "      from build directories."
+echo "      (You still need 'make install' to set up hotplug.d agent)"
+echo
 

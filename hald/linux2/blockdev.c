@@ -57,7 +57,6 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../device_info.h"
-#include "../hald_conf.h"
 #include "../hald_dbus.h"
 
 #include "osspec_linux.h"
@@ -126,9 +125,9 @@ blockdev_compute_udi (HalDevice *d)
 
 
 static void 
-blockdev_callouts_add_done (HalDevice *d, gpointer userdata)
+blockdev_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Add callouts completed udi=%s", d->udi));
 
@@ -140,9 +139,9 @@ blockdev_callouts_add_done (HalDevice *d, gpointer userdata)
 }
 
 static void 
-blockdev_callouts_remove_done (HalDevice *d, gpointer userdata)
+blockdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
 
@@ -290,12 +289,13 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	}
 
 	/* Merge properties from .fdi files */
-	di_search_and_merge (d);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 	
 	/* TODO: Merge persistent properties */
 
 	/* Run callouts */
-	hal_util_callout_device_add (d, blockdev_callouts_add_done, end_token);
+	hal_util_callout_device_add (d, blockdev_callouts_add_done, end_token, NULL);
 
 	/* Yay, got a file system on the main block device...
 	 *
@@ -310,6 +310,84 @@ out:
 	;
 }
 
+static void 
+blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	void *end_token = (void *) userdata1;
+
+	if (hal_device_property_get_bool (d, "info.ignore")) {
+		/* Leave the device here with info.ignore==TRUE so we won't pick up children 
+		 * Also remove category and all capabilities
+		 */
+		hal_device_property_remove (d, "info.category");
+		hal_device_property_remove (d, "info.capabilities");
+		hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/ignored-device");
+		hal_device_property_set_string (d, "info.product", "Ignored Device");
+
+		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
+		
+		/* Move from temporary to global device store */
+		hal_device_store_remove (hald_get_tdl (), d);
+		hal_device_store_add (hald_get_gdl (), d);
+		
+		hotplug_event_end (end_token);
+		goto out;
+	}
+
+	/* run prober for 
+	 *
+	 *  - drive_id
+	 *  - cdrom drive properties
+	 *  - non-partitioned filesystem on main block device
+	 */
+	
+	/* probe the device */
+	if (hal_util_helper_invoke ("hald-probe-storage", NULL, d, (gpointer) end_token, 
+				    NULL, add_blockdev_probing_helper_done, 
+				    HAL_HELPER_TIMEOUT) == NULL) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		hotplug_event_end (end_token);
+	}
+
+out:
+	;
+}
+
+static void 
+blockdev_callouts_preprobing_volume_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	void *end_token = (void *) userdata1;
+
+	if (hal_device_property_get_bool (d, "info.ignore")) {
+		/* Leave the device here with info.ignore==TRUE so we won't pick up children 
+		 * Also remove category and all capabilities
+		 */
+		hal_device_property_remove (d, "info.category");
+		hal_device_property_remove (d, "info.capabilities");
+		hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/ignored-device");
+		hal_device_property_set_string (d, "info.product", "Ignored Device");
+
+		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
+		
+		/* Move from temporary to global device store */
+		hal_device_store_remove (hald_get_tdl (), d);
+		hal_device_store_add (hald_get_gdl (), d);
+		
+		hotplug_event_end (end_token);
+		goto out;
+	}
+
+	/* probe the device */
+	if (hal_util_helper_invoke ("hald-probe-volume", NULL, d, (gpointer) end_token, 
+				    NULL, add_blockdev_probing_helper_done, 
+				    HAL_HELPER_TIMEOUT) == NULL) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		hotplug_event_end (end_token);
+	}
+
+out:
+	;
+}
 
 
 void
@@ -320,10 +398,15 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	HalDevice *d;
 	unsigned int major, minor;
 	gboolean is_fakevolume;
-	char *sysfs_path_real;
+	char *sysfs_path_real = NULL;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
+
+	if (parent != NULL && hal_device_property_get_bool (parent, "info.ignore")) {
+		HAL_INFO (("Ignoring block_add since parent has info.ignore==TRUE"));
+		goto out;
+	}
 
 	if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0) {
 		is_fakevolume = TRUE;
@@ -576,23 +659,14 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (d, "storage.requires_eject", requires_eject);
 		hal_device_property_set_bool (d, "storage.no_partitions_hint", no_partitions_hint);
 
-		/* add to TDL so prober can access it */
+		/* add to TDL so preprobing callouts and prober can access it */
 		hal_device_store_add (hald_get_tdl (), d);
 
-		/* TODO: run prober for 
-		 *
-		 *  - drive_id
-		 *  - cdrom drive properties
-		 *  - non-partitioned filesystem on main block device
-		 */
+		/* Process preprobe fdi files */
+		di_search_and_merge (d, DEVICE_INFO_TYPE_PREPROBE);
 
-		/* probe the device */
-		if (hal_util_helper_invoke ("hald-probe-storage", NULL, d, (gpointer) end_token, 
-					    NULL, add_blockdev_probing_helper_done, 
-					    HAL_HELPER_TIMEOUT) == NULL) {
-			hal_device_store_remove (hald_get_tdl (), d);
-			goto error;
-		}
+		/* Run preprobe callouts */
+		hal_util_callout_device_preprobe (d, blockdev_callouts_preprobing_storage_done, end_token, NULL);
 
 	} else {
 		guint sysfs_path_len;
@@ -655,16 +729,14 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			((dbus_uint64_t)(512)) * 
 			((dbus_uint64_t)(hal_device_property_set_int (d, "volume.block_size", 512))));
 
-		/* add to TDL so prober can access it */
+		/* add to TDL so preprobing callouts and prober can access it */
 		hal_device_store_add (hald_get_tdl (), d);
 
-		/* probe the device */
-		if (hal_util_helper_invoke ("hald-probe-volume", NULL, d, (gpointer) end_token, 
-					    NULL, add_blockdev_probing_helper_done, 
-					    HAL_HELPER_TIMEOUT) == NULL) {
-			hal_device_store_remove (hald_get_tdl (), d);
-			goto error;
-		}
+		/* Process preprobe fdi files */
+		di_search_and_merge (d, DEVICE_INFO_TYPE_PREPROBE);
+
+		/* Run preprobe callouts */
+		hal_util_callout_device_preprobe (d, blockdev_callouts_preprobing_volume_done, end_token, NULL);
 	}
 
 	g_free (sysfs_path_real);
@@ -675,7 +747,6 @@ error:
 		g_object_unref (d);
 out:
 	hotplug_event_end (end_token);
-
 	g_free (sysfs_path_real);
 }
 
@@ -875,7 +946,7 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 			force_unmount (d);
 		}
 
-		hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token);
+		hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
 	}
 out:
 	;

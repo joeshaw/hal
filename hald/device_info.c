@@ -1406,23 +1406,41 @@ scan_fdi_files (const char *dir, HalDevice * d)
  *  @return                     #TRUE if information was merged
  */
 dbus_bool_t
-di_search_and_merge (HalDevice *d)
+di_search_and_merge (HalDevice *d, DeviceInfoType type)
 {
 	static gboolean have_checked_hal_fdi_source = FALSE;
-	static char *hal_fdi_source = NULL;
-	char *source;
+	static char *hal_fdi_source_preprobe = NULL;
+	static char *hal_fdi_source_information = NULL;
+	static char *hal_fdi_source_policy = NULL;
+	char *s;
 
 	if (!have_checked_hal_fdi_source) {
-		hal_fdi_source = getenv ("HAL_FDI_SOURCE");
+		hal_fdi_source_preprobe    = getenv ("HAL_FDI_SOURCE_PREPROBE");
+		hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
+		hal_fdi_source_policy      = getenv ("HAL_FDI_SOURCE_POLICY");
 		have_checked_hal_fdi_source = TRUE;
 	}
 
-	if (hal_fdi_source != NULL)
-		source = hal_fdi_source;
-	else
-		source = PACKAGE_DATA_DIR "/hal/fdi";
+	switch (type) {
+	case DEVICE_INFO_TYPE_PREPROBE:
+		s = hal_fdi_source_preprobe != NULL ? hal_fdi_source_preprobe : PACKAGE_SYSCONF_DIR "/hal/preprobe";
+		break;
 
-	return scan_fdi_files (source, d);
+	case DEVICE_INFO_TYPE_INFORMATION:
+		s = hal_fdi_source_information != NULL ? hal_fdi_source_information : PACKAGE_DATA_DIR "/hal/fdi";
+		break;
+
+	case DEVICE_INFO_TYPE_POLICY:
+		s = hal_fdi_source_policy != NULL ? hal_fdi_source_policy : PACKAGE_SYSCONF_DIR "/hal/policy";
+		break;
+
+	default:
+		HAL_ERROR (("Bogus device information type %d", type));
+		return FALSE;
+		break;
+	}
+
+	return scan_fdi_files (s, d);
 }
 
 /** @} */

@@ -32,6 +32,12 @@
 
 #include "device_store.h"
 
-dbus_bool_t di_search_and_merge (HalDevice *d);
+typedef enum {
+	DEVICE_INFO_TYPE_PREPROBE,
+	DEVICE_INFO_TYPE_INFORMATION,
+	DEVICE_INFO_TYPE_POLICY
+} DeviceInfoType;
+
+dbus_bool_t di_search_and_merge (HalDevice *d, DeviceInfoType type);
 
 #endif				/* DEVICE_INFO_H */

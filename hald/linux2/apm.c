@@ -322,7 +322,8 @@ hotplug_event_begin_add_apm (const gchar *apm_path, int apm_type, HalDevice *par
 			hal_device_store_add (hald_get_tdl (), d);
 
 			/* Merge properties from .fdi files */
-			di_search_and_merge (d);
+			di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+			di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 
 			/* TODO: Run callouts */
 			

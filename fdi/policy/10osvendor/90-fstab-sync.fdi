@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+
+  <device>
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+      <append key="info.callouts.add" type="strlist">fstab-sync --clean</append>
+    </match>
+
+    <match key="volume.policy.should_mount" bool="true">
+      <match key="@block.storage_device:storage.policy.should_mount" bool="true">
+	<append key="info.callouts.add" type="strlist">fstab-sync</append>
+	<append key="info.callouts.remove" type="strlist">fstab-sync</append>
+      </match>
+    </match>
+
+    <match key="storage.policy.should_mount" bool="true">
+      <match key="storage.no_partitions_hint" bool="true">
+	<append key="info.callouts.add" type="strlist">fstab-sync</append>
+	<append key="info.callouts.remove" type="strlist">fstab-sync</append>
+      </match>
+    </match>
+  </device>
+
+</deviceinfo>
+

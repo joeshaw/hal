@@ -1,3 +1,127 @@
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
+	* tools/linux/hal_hotplug_map.c: Removed
+
+	* tools/linux/Makefile.am: Remove build rules for hal-hotplug-map
+
+	* hald/linux2/physdev.c: Callouts now take two userdata pointers
+	(physdev_callouts_preprobing_done): New function
+	(hotplug_event_begin_add_physdev): Run preprobing callouts
+	just before real probing (flow continues in the above function)
+
+	* hald/linux2/osspec.c: Callouts now take two userdata pointers
+
+	* hald/linux2/classdev.c: Callouts now take two userdata pointers
+	(classdev_callouts_preprobing_done): New function
+	(hotplug_event_begin_add_classdev): Run preprobing callouts
+	just before real probing (flow continues in the above function)
+
+	* hald/linux2/blockdev.c: Callouts now take two userdata pointers
+	(blockdev_callouts_preprobing_storage_done): New function
+	(blockdev_callouts_preprobing_volume_done): New function
+	(hotplug_event_begin_add_blockdev): Run preprobing callouts just
+	before real probing (flow continues in the two above
+	functions)
+
+	* hald/linux2/apm.c: Callouts now take two userdata pointers
+
+	* hald/linux2/acpi.c: Callouts now take two userdata pointers
+
+	* hald/util.h: Fix up prototypes for callouts to take two userdata
+	pointers. Add hal_util_callout_device_preprobe prototype.
+
+	* hald/util.c: Change callouts to take two userdata pointers
+	(hal_util_callout_device_preprobe): New function
+
+	* hald/hald.c (main): Don't call hald_read_conf_file() as this
+	is now gone.
+
+	* hald/device_info.h (di_search_and_merge): Tweak prototype for
+	di_search_and_merge to take a DeviceInfoType parameter
+
+	* hald/device_info.c (di_search_and_merge): Lookup new environment
+	variables
+
+	* hald/run-hald.sh: Use new environment variables for specifying
+	fdi file location
+
+	* hald/debug-hald.sh: Use new environment variables for specifying
+	fdi file location
+
+	* hald/Makefile.am: Don't link with libselinux and don't install
+	callout directories
+	(hald_test_SOURCES): Remove hald_conf.[ch]
+	(hald_SOURCES): Remove hald_conf.[ch].
+
+	* configure.in: Add notes about how to tweak the hal tarball for a
+	particular distribution or OS. Rework the details a bit. Remove the
+	hotplug_map rules. Remove selinux bits (for now). Rework what fdi
+	file directory Makefile's to generate.
+
+	* hald/hald.conf: Removed
+
+	* hald/hald_conf.[ch]: Removed
+
+	* fdi/Makefile.am (SUBDIRS): Specificy new subdirs
+
+	* fdi/preprobe: New
+
+	* fdi/preprobe/Makefile.am: New
+
+	* fdi/preprobe/10osvendor: New
+
+	* fdi/preprobe/10osvendor/10-ide-drives.fdi: New
+
+	* fdi/preprobe/10osvendor/Makefile.am: New
+
+	* fdi/preprobe/20thirdparty: New
+
+	* fdi/preprobe/20thirdparty/Makefile.am: New
+
+	* fdi/preprobe/30user: New
+
+	* fdi/preprobe/30user/Makefile.am: New
+
+	* fdi/information: New
+
+	* fdi/information/Makefile.am: New
+
+	* fdi/information/10freedesktop: New
+
+	* fdi/information/10freedesktop/Makefile.am: New
+
+	* fdi/information/20thirdparty: New
+
+	* fdi/information/20thirdparty/Makefile.am: New
+
+	* fdi/information/30user: New
+
+	* fdi/information/30user/Makefile.am: New
+
+	* fdi/policy: New
+
+	* fdi/policy/Makefile.am: New
+
+	* fdi/policy/10osvendor: New
+
+	* fdi/policy/10osvendor/10-storage-policy.fdi: New
+
+	* fdi/policy/10osvendor/10-power-mgmt-policy.fdi: New
+
+	* fdi/policy/10osvendor/90-fstab-sync.fdi: New
+
+	* fdi/policy/10osvendor/Makefile.am: New
+
+	* fdi/policy/20thirdparty: New
+
+	* fdi/policy/20thirdparty/Makefile.am: New
+
+	* fdi/policy/30user: New
+
+	* fdi/policy/30user/Makefile.am: New
+
+	* fdi/README: New file to describe the new directory structure
+
 2005-02-23  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/blockdev.c (force_unmount): Change to use new prototype

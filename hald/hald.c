@@ -54,7 +54,6 @@
 #include "device_info.h"
 #include "osspec.h"
 #include "hald_dbus.h"
-#include "hald_conf.h"
 #include "util.h"
 
 static void delete_pid(void) {
@@ -519,9 +518,6 @@ main (int argc, char *argv[])
 	
 	/* Finally, setup unix signal handler for TERM */
 	signal (SIGTERM, handle_sigterm);
-
-
-	hald_read_conf_file ();
 
 	/* set up the dbus services */
 	if (!hald_dbus_init ())

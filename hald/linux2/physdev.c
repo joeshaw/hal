@@ -46,7 +46,6 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../device_info.h"
-#include "../hald_conf.h"
 
 #include "util.h"
 #include "coldplug.h"
@@ -830,9 +829,9 @@ static PhysDevHandler *phys_handlers[] = {
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static void 
-physdev_callouts_add_done (HalDevice *d, gpointer userdata)
+physdev_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Add callouts completed udi=%s", d->udi));
 
@@ -844,9 +843,9 @@ physdev_callouts_add_done (HalDevice *d, gpointer userdata)
 }
 
 static void 
-physdev_callouts_remove_done (HalDevice *d, gpointer userdata)
+physdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	void *end_token = (void *) userdata;
+	void *end_token = (void *) userdata1;
 
 	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
 
@@ -857,12 +856,63 @@ physdev_callouts_remove_done (HalDevice *d, gpointer userdata)
 	hotplug_event_end (end_token);
 }
 
+
+static void 
+physdev_callouts_preprobing_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	void *end_token = (void *) userdata1;
+	PhysDevHandler *handler = (PhysDevHandler *) userdata2;
+
+	if (hal_device_property_get_bool (d, "info.ignore")) {
+		/* Leave the device here with info.ignore==TRUE so we won't pick up children 
+		 * Also remove category and all capabilities
+		 */
+		hal_device_property_remove (d, "info.category");
+		hal_device_property_remove (d, "info.capabilities");
+		hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/ignored-device");
+		hal_device_property_set_string (d, "info.product", "Ignored Device");
+		
+		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
+		
+		/* Move from temporary to global device store */
+		hal_device_store_remove (hald_get_tdl (), d);
+		hal_device_store_add (hald_get_gdl (), d);
+		
+		hotplug_event_end (end_token);
+		goto out;
+	}
+	
+	
+	/* Merge properties from .fdi files */
+	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
+	
+	/* Compute UDI */
+	if (!handler->compute_udi (d)) {
+		hal_device_store_remove (hald_get_tdl (), d);
+		hotplug_event_end (end_token);
+		goto out;
+	}
+	
+	/* Run callouts */
+	hal_util_callout_device_add (d, physdev_callouts_add_done, end_token, NULL);
+
+out:
+	;
+}
+
 void
 hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path, HalDevice *parent, void *end_token)
 {
 	guint i;
 
 	HAL_INFO (("phys_add: subsys=%s sysfs_path=%s, parent=0x%08x", subsystem, sysfs_path, parent));
+
+	if (parent != NULL && hal_device_property_get_bool (parent, "info.ignore")) {
+		HAL_INFO (("Ignoring phys_add since parent has info.ignore==TRUE"));
+		hotplug_event_end (end_token);
+		goto out;
+	}
 
 	for (i = 0; phys_handlers [i] != NULL; i++) {
 		PhysDevHandler *handler;
@@ -884,18 +934,11 @@ hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
 
-			/* Merge properties from .fdi files */
-			di_search_and_merge (d);
+			/* Process preprobe fdi files */
+			di_search_and_merge (d, DEVICE_INFO_TYPE_PREPROBE);
 
-			/* Compute UDI */
-			if (!handler->compute_udi (d)) {
-				hal_device_store_remove (hald_get_tdl (), d);
-				hotplug_event_end (end_token);
-				goto out;
-			}
-
-			/* Run callouts */
-			hal_util_callout_device_add (d, physdev_callouts_add_done, end_token);
+			/* Run preprobe callouts */
+			hal_util_callout_device_preprobe (d, physdev_callouts_preprobing_done, end_token, handler);
 			goto out;
 		}
 	}
@@ -929,7 +972,7 @@ hotplug_event_begin_remove_physdev (const gchar *subsystem, const gchar *sysfs_p
 		if (strcmp (handler->subsystem, subsystem) == 0) {
 			handler->remove (d);
 			
-			hal_util_callout_device_remove (d, physdev_callouts_remove_done, end_token);
+			hal_util_callout_device_remove (d, physdev_callouts_remove_done, end_token, NULL);
 			goto out2;
 		}
 	}

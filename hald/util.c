@@ -47,7 +47,6 @@
 #include "logger.h"
 #include "hald.h"
 #include "device_info.h"
-#include "hald_conf.h"
 
 #include "util.h"
 
@@ -916,7 +915,8 @@ typedef struct {
 	guint next_program;
 
 	HalCalloutsDone callback;
-	gpointer userdata;
+	gpointer userdata1;
+	gpointer userdata2;
 
 } Callout;
 
@@ -939,18 +939,20 @@ callout_do_next (Callout *c)
 	/* Check if we're done */
 	if (c->programs[c->next_program] == NULL) {
 		HalDevice *d;
-		gpointer userdata;
+		gpointer userdata1;
+		gpointer userdata2;
 		HalCalloutsDone callback;
 
 		d = c->d;
-		userdata = c->userdata;
+		userdata1 = c->userdata1;
+		userdata2 = c->userdata2;
 		callback = c->callback;
 
 		g_strfreev (c->programs);
 		g_strfreev (c->extra_env);
 		g_free (c);
 
-		callback (d, userdata);
+		callback (d, userdata1, userdata2);
 
 	} else {
 		hal_util_helper_invoke (c->programs[c->next_program], c->extra_env, c->d, 
@@ -960,14 +962,16 @@ callout_do_next (Callout *c)
 }
 
 static void
-hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata, GSList *programs, gchar **extra_env)
+hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2, 
+		    GSList *programs, gchar **extra_env)
 {
 	Callout *c;
 
 	c = g_new0 (Callout, 1);
 	c->d = d;
 	c->callback = callback;
-	c->userdata = userdata;
+	c->userdata1 = userdata1;
+	c->userdata2 = userdata2;
 	c->programs = hal_util_dup_strv_from_g_slist (programs);
 	c->extra_env = g_strdupv (extra_env);
 	c->next_program = 0;
@@ -976,37 +980,55 @@ hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata, G
 }
 
 void
-hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata)
+hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2)
 {
 	GSList *programs;
 	gchar *extra_env[2] = {"HALD_ACTION=add", NULL};
 
 	if ((programs = hal_device_property_get_strlist (d, "info.callouts.add")) == NULL) {
-		callback (d, userdata);
+		callback (d, userdata1, userdata2);
 		goto out;
 	}	
 
 	HAL_INFO (("Add callouts for udi=%s", d->udi));
 
-	hal_callout_device (d, callback, userdata, programs, extra_env);
+	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:
 	;
 }
 
 void
-hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata)
+hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2)
 {
 	GSList *programs;
 	gchar *extra_env[2] = {"HALD_ACTION=remove", NULL};
 
 	if ((programs = hal_device_property_get_strlist (d, "info.callouts.remove")) == NULL) {
-		callback (d, userdata);
+		callback (d, userdata1, userdata2);
 		goto out;
 	}	
 
 	HAL_INFO (("Remove callouts for udi=%s", d->udi));
 
-	hal_callout_device (d, callback, userdata, programs, extra_env);
+	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
+out:
+	;
+}
+
+void
+hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2)
+{
+	GSList *programs;
+	gchar *extra_env[2] = {"HALD_ACTION=preprobe", NULL};
+
+	if ((programs = hal_device_property_get_strlist (d, "info.callouts.preprobe")) == NULL) {
+		callback (d, userdata1, userdata2);
+		goto out;
+	}	
+
+	HAL_INFO (("Preprobe callouts for udi=%s", d->udi));
+
+	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:
 	;
 }

@@ -102,10 +102,11 @@ void hal_util_terminate_helper (HalHelperData *helper_data);
 
 gchar **hal_util_dup_strv_from_g_slist (GSList *strlist);
 
-typedef void (*HalCalloutsDone) (HalDevice *d, gpointer userdata);
+typedef void (*HalCalloutsDone) (HalDevice *d, gpointer userdata1, gpointer userdata2);
 
-void hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata);
-void hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata);
+void hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
+void hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
+void hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
 
 #define HAL_HELPER_TIMEOUT 10000
 

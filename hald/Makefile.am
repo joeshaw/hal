@@ -20,7 +20,6 @@ hald_test_SOURCES =                                                     \
 	device_store.h			device_store.c			\
 	logger.h			logger.c			\
 	property.h			property.c                      \
-	hald_conf.h                     hald_conf.c			\
 	hald_dbus.h			hald_dbus.c			\
 	hald_test.c							\
 	hald_test_libhal.c
@@ -46,20 +45,15 @@ hald_SOURCES =                                                          \
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\
-	property.h			property.c                      \
-	hald_conf.h                     hald_conf.c
+	property.h			property.c
 
 hald_LDADD = @PACKAGE_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
-
-if HAVE_SELINUX
-hald_LDADD += -lselinux
-endif
 
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in
 
 ## Red Hat start
-if INIT_SCRIPTS_RED_HAT
+if OS_TYPE_RED_HAT
 
 initddir=$(sysconfdir)/rc.d/init.d
 
@@ -87,14 +81,4 @@ hald_marshal.c: hald_marshal.list
 clean-local:
 	rm -f *~
 	rm -f hald_marshal.c hald_marshal.h
-
-confdir = $(sysconfdir)/hal
-
-dist_conf_DATA = hald.conf
-
-install-data-local :
-	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/device.d
-	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/capability.d
-	$(mkinstalldirs) $(DESTDIR)$(SYSCONFDIR)/hal/property.d
-	$(mkinstalldirs) $(DESTDIR)$(LOCALSTATEDIR)/lib/hal
 

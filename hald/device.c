@@ -35,7 +35,6 @@
 #include "device.h"
 #include "hald_marshal.h"
 #include "logger.h"
-#include "hald_conf.h"
 
 static GObjectClass *parent_class;
 

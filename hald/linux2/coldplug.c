@@ -43,7 +43,6 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../device_info.h"
-#include "../hald_conf.h"
 
 #include "osspec_linux.h"
 
