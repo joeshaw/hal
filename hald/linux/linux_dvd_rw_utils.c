@@ -401,3 +401,28 @@ disc_is_appendable (int fd)
 	scsi_command_free (cmd);
 	return retval;
 }
+
+int
+disc_is_rewritable (int fd)
+{
+	ScsiCommand *cmd;
+	int retval = -1;
+	unsigned char header[32];
+
+	cmd = scsi_command_new_from_fd (fd);
+
+	/* see section 5.19 of MMC-3 from http://www.t10.org/drafts.htm#mmc3 */
+	scsi_command_init (cmd, 0, 0x51); /* READ_DISC_INFORMATION */
+	scsi_command_init (cmd, 8, 32);
+	scsi_command_init (cmd, 9, 0);
+	if (scsi_command_transport (cmd, READ, header, 32)) {
+		/* READ_DISC_INFORMATION failed */
+		scsi_command_free (cmd);
+		return 0;
+	}
+	
+	retval = ((header[2]&0x10) != 0);
+
+	scsi_command_free (cmd);
+	return retval;
+}

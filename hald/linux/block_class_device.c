@@ -692,7 +692,14 @@ detect_disc (HalDevice *d, const char *device_file)
 			break;
 		}
 	}
-	
+
+	/* On some hardware the get_disc_type call fails,
+	   so we use this as a backup */
+	if (disc_is_rewritable (fd)) {
+		hal_device_property_set_bool (
+			d, "volume.disc.is_rewritable", TRUE);
+	}
+
 	if (disc_is_appendable (fd)) {
 		hal_device_property_set_bool (
 			d, "volume.disc.is_appendable", TRUE);

@@ -1,5 +1,21 @@
 2004-09-19  David Zeuthen  <david@fubar.dk>
 
+	Patch from Alexander Larsson <alexl@redhat.com>. It seems that
+	some models of cd-rw drives doesn't seem to support the GET
+	CONFIGURATION command. At least mine returns sense 5h. However, to
+	automatically support cdrom blanking, nautilus-cd-burner needs to
+	correctly know if the medium is rewritable. Thus the attached
+	patch uses the READ DISC INFORMATION command to get that
+	information.
+
+	* hald/linux/block_class_device.c (detect_disc): Use disc_is_rewriteable
+
+	* hald/linux/linux_dvd_rw_utils.c (disc_is_rewritable): New function
+
+	* hald/linux/linux_dvd_rw_utils.h: Add prototype for new function
+
+2004-09-19  David Zeuthen  <david@fubar.dk>
+
 	* hald/hald_dbus.c: Include dbus-glib-lowlevel.h instead of dbus-glib.h
 	(filter_function): Remove some debug output
 
