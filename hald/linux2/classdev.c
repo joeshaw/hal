@@ -439,6 +439,8 @@ usbclass_compute_udi (HalDevice *d)
 	return TRUE;
 }
 
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static HalDevice *
 sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
 {
@@ -544,6 +546,96 @@ sound_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	int portnum;
+	HalDevice *d;
+	const gchar *last_elem;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL || device_file == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.category", "serial");
+	hal_device_add_capability (d, "serial");
+	hal_device_property_set_string (d, "serial.physical_device", physdev->udi);
+	hal_device_property_set_string (d, "serial.device", device_file);
+
+	last_elem = hal_util_get_last_element(sysfs_path);
+	if (sscanf (last_elem, "ttyS%d", &portnum) == 1) {
+		hal_device_property_set_int (d, "serial.port", portnum);
+		hal_device_property_set_string (d, "serial.type", "platform");
+		hal_device_property_set_string (d, "info.product",
+						hal_device_property_get_string (physdev, "info.product"));
+
+	} else if (sscanf (last_elem, "ttyUSB%d", &portnum) == 1) {
+		HalDevice *usbdev;
+
+		hal_device_property_set_int (d, "serial.port", portnum);
+		hal_device_property_set_string (d, "serial.type", "usb");
+
+		usbdev = hal_device_store_find (hald_get_gdl (), 
+						hal_device_property_get_string (physdev, "info.parent"));
+		if (usbdev != NULL) {
+			hal_device_property_set_string (d, "info.product",
+							hal_device_property_get_string (usbdev, "info.product"));
+		} else {
+			hal_device_property_set_string (d, "info.product", "USB Serial Port");
+		}
+	} else {
+		size_t len;
+		unsigned int i;
+
+		len = strlen (last_elem);
+
+		for (i = len - 1; i >= 0 && isdigit (last_elem[i]); --i)
+			;
+		if (i == len - 1)
+			portnum = 0;
+		else
+			portnum = atoi (last_elem + i + 1);
+
+		hal_device_property_set_int (d, "serial.port", portnum);
+		hal_device_property_set_string (d, "serial.type", "unknown");
+		hal_device_property_set_string (d, "info.product", "Serial Port");
+	}
+
+
+
+	/* TODO: run prober to see if there actually is a physical
+	 *       serial port if possible (on my T41, the kernel
+	 *       exports ttyS0 but there is no real port on the
+	 *       laptop; only on the docking station)
+	 */
+
+out:
+	return d;
+}
+
+static gboolean
+serial_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_serial_%s_%d",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_string (d, "serial.type"),
+			      hal_device_property_get_int (d, "serial.port"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 classdev_remove (HalDevice *d)
 {
@@ -627,6 +719,16 @@ static ClassDevHandler classdev_handler_sound =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_serial = 
+{ 
+	.subsystem    = "tty",
+	.add          = serial_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = serial_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_input,
 	&classdev_handler_bluetooth,
@@ -634,6 +736,7 @@ static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_scsi_host,
 	&classdev_handler_usbclass,
 	&classdev_handler_sound,
+	&classdev_handler_serial,
 	NULL
 };
 

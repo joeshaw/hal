@@ -1,3 +1,8 @@
+2005-03-03  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux2/classdev.c (serial_add): New function (note the TODO :-)
+	(serial_compute_udi): New function
+
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/acpi.c (battery_refresh): Remove .last_full, not .maximum
