@@ -1,5 +1,26 @@
 2004-09-19  David Zeuthen  <david@fubar.dk>
 
+	* hald/hald_dbus.c (agent_device_matches): Removed
+	(agent_merge_properties): Removed
+	(agent_manager_remove): Removed
+	(agent_manager_commit_to_gdl): Removed
+	(agent_manager_new_device): Removed
+	(filter_function): Removed all the AgentManager methods
+	(raise_udi_in_use): Removed
+
+	* doc/spec/hal-spec.xml.in: Add docs for info.locked. Remove section
+	about HAL agents as they are now gone. Fixed up renaming of scsi_device
+	to scsi.
+
+	* doc/spec/hal-arch.dia: Remove HAL Agents
+
+	* doc/spec/hal-linux26.dia: Update diagram since we now use a local
+	socket from hal.hotplug and hal.dev helpers.
+
+	* examples/locking.py: New file; shows how to use locking
+
+2004-09-19  David Zeuthen  <david@fubar.dk>
+
 	Patch from Sjoerd Simons <sjoerd@luon.net>.
 
 	* hald/linux/usb_bus_device.c (usb_proc_parse): usb_proc_parse()

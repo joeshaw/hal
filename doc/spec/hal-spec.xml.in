@@ -174,27 +174,6 @@
 	<!-- ####################################################### -->
 
         <listitem><para>
-          <emphasis>HAL agents</emphasis></para><para> 
-
-          The term <emphasis>HAL agent</emphasis> is used to
-          characterize a program that is involved in the detection and
-          monitoring of devices not supported directly by the HAL
-          daemon.
-
-          </para><para>
-
-          Any program can be a HAL agent; all it means is that the
-          program communicates with the HAL daemon using a specific
-          interface.  Examples of use that come to mind are prototypes
-          for supporting vendor or OEM specific buses/devices,
-          integration of existing device detection/monitoring
-          frameworks etc.
-
-        </para></listitem>
-
-	<!-- ####################################################### -->
-
-        <listitem><para>
           <emphasis>Applications</emphasis></para><para> 
 
             This represents the end consumers of the HAL and comprises
@@ -246,14 +225,13 @@
       </para>
       <para>
 
-      The HAL uses D-BUS to provide a ''network API'' to both desktop
-      applications and the aforementioned HAL agents. As D-BUS is
-      designed to be language independent, potentially many languages
-      / runtime systems will be able to easily access the services
-      offered by HAL. The D-BUS API is detailed in <xref
-      linkend="dbus-api"/>. Note that HAL doesn't enforce any policy
-      at all, this is left for desktop environments and operating
-      systems vendors to implement.  However, to ensure
+      The HAL uses D-BUS to provide a ''network API'' to
+      applications. As D-BUS is designed to be language independent,
+      potentially many languages / runtime systems will be able to
+      easily access the services offered by HAL. The D-BUS API is
+      detailed in <xref linkend="dbus-api"/>. Note that HAL doesn't
+      enforce any policy at all, this is left for desktop environments
+      and operating systems vendors to implement.  However, to ensure
       interoperability between operating systems and desktop
       environments, recommendations and best practises on how to
       enforce policy is discussed in <xref
@@ -640,7 +618,7 @@
 
             <row>
               <entry><literal>info.bus</literal> (string)</entry>
-              <entry>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi_device</entry>
+              <entry>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi</entry>
               <entry>Yes</entry>
               <entry>Describes what ''physical'' bus the device is connected to</entry>
             </row>
@@ -695,6 +673,41 @@
               <entry>The UDI of the device object that this device object
 	      is connected to.</entry>
             </row>
+
+	    <row>
+              <entry><literal>info.locked</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		If this property is available and set
+		to <literal>TRUE</literal> it means that a process
+		is using the device that the hal device object in
+		question represents and no other process should attempt
+		to use or configure the device. The lock is only
+		advisory.
+	      </entry>
+	    </row>
+	    <row>
+              <entry><literal>info.locked.reason</literal> (string)</entry>
+              <entry>
+		example: ''The optical drive is currently being used to
+		record a CD-RW disc.''
+	      </entry>
+              <entry>
+		Only available if <literal>info.locked</literal> is set
+		to <literal>TRUE</literal>.
+	      </entry>
+              <entry>A localized text suitable for UI display</entry>
+	    </row>
+	    <row>
+              <entry><literal>info.locked.dbus_service</literal> (string)</entry>
+              <entry>example: :1.278</entry>
+              <entry>
+		Only available if <literal>info.locked</literal> is set
+		to <literal>TRUE</literal>.
+	      </entry>
+              <entry>The base D-BUS service of the process holding the lock.</entry>
+	    </row>
 
           </tbody>
         </tgroup>
@@ -1249,11 +1262,11 @@
 
 
     <sect2 id="device-properties-scsi">
-      <title><literal>scsi_device</literal> namespace</title>
+      <title><literal>scsi</literal> namespace</title>
       <para>
 
 	SCSI devices are represented by device objects where
-	<literal>info.bus</literal> equals <literal>scsi_device</literal>.
+	<literal>info.bus</literal> equals <literal>scsi</literal>.
 	The following properties are available for such device objects.
 
       </para>
@@ -3273,87 +3286,6 @@ void Condition(string condition, ...)
       Note that D-BUS supports that applications can opt to receive
       signals for only a subset of the devices available.
 
-      </para>
-
-      </sect1>
-
-      <sect1><title>Interface org.freedesktop.Hal.AgentManager</title><para>
-
-      The API described above is available to all applications. There is 
-      an additional D-BUS interface on the /org/freedesktop/Hal/Manager
-      object called org.freedesktop.Hal.AgentManager which is only available
-      for processes running with administrative privileges. 
-      </para>
-
-<programlisting>
-
-# Create a new device object not in the GDL (ie. hidden from 
-# applications). This object can be obtained using the given UDI as
-# as the D-BUS object reference. 
-#
-# The object implements the org.freedesktop.Hal.Device interface
-#
-# @return                       Temporary UDI for new device object
-#
-string NewDevice()
-
-# When a device have been built, an application can add it to the GDL.
-#
-# A side-effect of this call, is that the Manager object will emit the
-# signal DeviceAdded.
-# 
-# @param  tempUdi               Temporary UDI as obtained from the NewDevice call
-# @param  newUdi                New UDI to use.
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|UdiInUse)
-#
-void CommitToGDL(string tempUdi, string newUdi)
-
-# Remove a device object. 
-#
-# Depending on the info.persistent property, the device may not be removed but
-# rather acquire the property info.not_available with value true.
-#
-# @param  udi                   UDI of device
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void Remove(string udi)
-
-# Merge all properties from one device to another device.
-#
-# If the source device got any capabilities, then the target device
-# will acquire these capabilities and a NewCapability signal will be
-# emitted for the target device for every capability in the source
-# device.
-#
-# @param  targetUdi             UDI of device to receive properties
-# @param  sourceUdi             UDI of device to copy properties from
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void MergeProperties(string targetUdi, string sourceUdi)
-
-# Checks that all properties where keys, starting with a given value
-# (namespace), of the first device is present in the second device and that
-# they got the same value and type. 
-#
-# Note that the other inclusion isn't tested, so there could be
-# properties (from the given namespace) in the second device not present
-# in the first device.
-#
-# @param  udi1                  UDI of device 1
-# @param  udi2                  UDI of device 2
-# @param  namespace             Namespace used for matching, e.g. 'usb'
-# @return                       TRUE if, and only if, all properties starting
-#                               with the namespace parameter from udi1 is
-#                               in udi2 and assume the same value
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-bool DeviceMatches(string udi1, string udi2, string namespace)
-
-</programlisting>
-      <para>
-      HAL Agents uses the org.freedesktop.Hal.AgentManager API when 
-      discovering devices either through detection, handling hotplug
-      events or through some other way.
       </para>
 
       </sect1>

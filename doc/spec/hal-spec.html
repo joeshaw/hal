@@ -105,7 +105,7 @@ HREF="#ov_hal_linux26"
 ></DD
 ><DT
 ><A
-HREF="#AEN114"
+HREF="#AEN108"
 >Device Objects</A
 ></DT
 ><DT
@@ -210,7 +210,7 @@ CLASS="literal"
 HREF="#device-properties-scsi"
 ><TT
 CLASS="literal"
->scsi_device</TT
+>scsi</TT
 > namespace</A
 ></DT
 ><DT
@@ -400,27 +400,22 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN1808"
+HREF="#AEN1825"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN1819"
+HREF="#AEN1836"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN1827"
+HREF="#AEN1844"
 >Interface org.freedesktop.Hal.Device</A
-></DT
-><DT
-><A
-HREF="#AEN1836"
->Interface org.freedesktop.Hal.AgentManager</A
 ></DT
 ></DL
 ></DD
@@ -674,35 +669,6 @@ CLASS="emphasis"
 ><P
 >&#13;          <I
 CLASS="emphasis"
->HAL agents</I
-></P
-><P
-> 
-
-          The term <I
-CLASS="emphasis"
->HAL agent</I
-> is used to
-          characterize a program that is involved in the detection and
-          monitoring of devices not supported directly by the HAL
-          daemon.
-
-          </P
-><P
->&#13;
-          Any program can be a HAL agent; all it means is that the
-          program communicates with the HAL daemon using a specific
-          interface.  Examples of use that come to mind are prototypes
-          for supporting vendor or OEM specific buses/devices,
-          integration of existing device detection/monitoring
-          frameworks etc.
-
-        </P
-></LI
-><LI
-><P
->&#13;          <I
-CLASS="emphasis"
 >Applications</I
 ></P
 ><P
@@ -767,18 +733,18 @@ CLASS="literal"
       </P
 ><P
 >&#13;
-      The HAL uses D-BUS to provide a ''network API'' to both desktop
-      applications and the aforementioned HAL agents. As D-BUS is
-      designed to be language independent, potentially many languages
-      / runtime systems will be able to easily access the services
-      offered by HAL. The D-BUS API is detailed in <A
+      The HAL uses D-BUS to provide a ''network API'' to
+      applications. As D-BUS is designed to be language independent,
+      potentially many languages / runtime systems will be able to
+      easily access the services offered by HAL. The D-BUS API is
+      detailed in <A
 HREF="#dbus-api"
 >the chapter called <I
 >D-BUS Network API</I
 ></A
->. Note that HAL doesn't enforce any policy
-      at all, this is left for desktop environments and operating
-      systems vendors to implement.  However, to ensure
+>. Note that HAL doesn't
+      enforce any policy at all, this is left for desktop environments
+      and operating systems vendors to implement.  However, to ensure
       interoperability between operating systems and desktop
       environments, recommendations and best practises on how to
       enforce policy is discussed in <A
@@ -903,7 +869,7 @@ HREF="#enforcing-policy"
 CLASS="chapter"
 ><HR><H1
 ><A
-NAME="AEN114"
+NAME="AEN108"
 ></A
 >Device Objects</H1
 ><P
@@ -1366,7 +1332,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN201"
+NAME="AEN195"
 ></A
 ><TABLE
 BORDER="1"
@@ -1394,7 +1360,7 @@ CLASS="literal"
 >info.bus</TT
 > (string)</TD
 ><TD
->pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi_device</TD
+>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi</TD
 ><TD
 >Yes</TD
 ><TD
@@ -1510,6 +1476,72 @@ CLASS="literal"
 >The UDI of the device object that this device object
 	      is connected to.</TD
 ></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>info.locked</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		If this property is available and set
+		to <TT
+CLASS="literal"
+>TRUE</TT
+> it means that a process
+		is using the device that the hal device object in
+		question represents and no other process should attempt
+		to use or configure the device. The lock is only
+		advisory.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>info.locked.reason</TT
+> (string)</TD
+><TD
+>&#13;		example: ''The optical drive is currently being used to
+		record a CD-RW disc.''
+	      </TD
+><TD
+>&#13;		Only available if <TT
+CLASS="literal"
+>info.locked</TT
+> is set
+		to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+	      </TD
+><TD
+>A localized text suitable for UI display</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>info.locked.dbus_service</TT
+> (string)</TD
+><TD
+>example: :1.278</TD
+><TD
+>&#13;		Only available if <TT
+CLASS="literal"
+>info.locked</TT
+> is set
+		to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+	      </TD
+><TD
+>The base D-BUS service of the process holding the lock.</TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -1536,7 +1568,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN269"
+NAME="AEN286"
 ></A
 ><TABLE
 BORDER="1"
@@ -1675,7 +1707,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN313"
+NAME="AEN330"
 ></A
 ><TABLE
 BORDER="1"
@@ -1898,7 +1930,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN402"
+NAME="AEN419"
 ></A
 ><TABLE
 BORDER="1"
@@ -2290,7 +2322,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN565"
+NAME="AEN582"
 ></A
 ><TABLE
 BORDER="1"
@@ -2419,7 +2451,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN612"
+NAME="AEN629"
 ></A
 ><TABLE
 BORDER="1"
@@ -2504,7 +2536,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN640"
+NAME="AEN657"
 ></A
 ><TABLE
 BORDER="1"
@@ -2600,7 +2632,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN670"
+NAME="AEN687"
 ></A
 ><TABLE
 BORDER="1"
@@ -2648,7 +2680,7 @@ CLASS="sect2"
 NAME="device-properties-scsi"
 ><TT
 CLASS="literal"
->scsi_device</TT
+>scsi</TT
 > namespace</A
 ></H3
 ><P
@@ -2659,7 +2691,7 @@ CLASS="literal"
 >info.bus</TT
 > equals <TT
 CLASS="literal"
->scsi_device</TT
+>scsi</TT
 >.
 	The following properties are available for such device objects.
 
@@ -2669,7 +2701,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN691"
+NAME="AEN708"
 ></A
 ><TABLE
 BORDER="1"
@@ -2786,7 +2818,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN732"
+NAME="AEN749"
 ></A
 ><TABLE
 BORDER="1"
@@ -2908,7 +2940,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN777"
+NAME="AEN794"
 ></A
 ><TABLE
 BORDER="1"
@@ -3029,7 +3061,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN822"
+NAME="AEN839"
 ></A
 ><TABLE
 BORDER="1"
@@ -3102,7 +3134,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN844"
+NAME="AEN861"
 ></A
 ><TABLE
 BORDER="1"
@@ -3299,7 +3331,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN904"
+NAME="AEN921"
 ></A
 ><TABLE
 BORDER="1"
@@ -3522,7 +3554,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1000"
+NAME="AEN1017"
 ></A
 ><TABLE
 BORDER="1"
@@ -3660,7 +3692,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1043"
+NAME="AEN1060"
 ></A
 ><TABLE
 BORDER="1"
@@ -3771,7 +3803,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1079"
+NAME="AEN1096"
 ></A
 ><TABLE
 BORDER="1"
@@ -4033,7 +4065,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1186"
+NAME="AEN1203"
 ></A
 ><TABLE
 BORDER="1"
@@ -4452,7 +4484,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1355"
+NAME="AEN1372"
 ></A
 ><TABLE
 BORDER="1"
@@ -4651,7 +4683,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1435"
+NAME="AEN1452"
 ></A
 ><TABLE
 BORDER="1"
@@ -4805,7 +4837,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1493"
+NAME="AEN1510"
 ></A
 ><TABLE
 BORDER="1"
@@ -4936,7 +4968,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1535"
+NAME="AEN1552"
 ></A
 ><TABLE
 BORDER="1"
@@ -5009,7 +5041,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1557"
+NAME="AEN1574"
 ></A
 ><TABLE
 BORDER="1"
@@ -5076,7 +5108,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1577"
+NAME="AEN1594"
 ></A
 ><TABLE
 BORDER="1"
@@ -5141,7 +5173,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1597"
+NAME="AEN1614"
 ></A
 ><TABLE
 BORDER="1"
@@ -5268,7 +5300,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1641"
+NAME="AEN1658"
 ></A
 ><TABLE
 BORDER="1"
@@ -5415,7 +5447,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1689"
+NAME="AEN1706"
 ></A
 ><TABLE
 BORDER="1"
@@ -5769,7 +5801,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1766"
+NAME="AEN1783"
 ></A
 ><TABLE
 BORDER="1"
@@ -5929,7 +5961,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1808"
+NAME="AEN1825"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -6045,7 +6077,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1819"
+NAME="AEN1836"
 >Example</A
 ></H3
 ><P
@@ -6163,7 +6195,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN1827"
+NAME="AEN1844"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
@@ -6326,102 +6358,6 @@ void Condition(string condition, ...)
       Note that D-BUS supports that applications can opt to receive
       signals for only a subset of the devices available.
 
-      </P
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN1836"
->Interface org.freedesktop.Hal.AgentManager</A
-></H2
-><P
->&#13;
-      The API described above is available to all applications. There is 
-      an additional D-BUS interface on the /org/freedesktop/Hal/Manager
-      object called org.freedesktop.Hal.AgentManager which is only available
-      for processes running with administrative privileges. 
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;
-# Create a new device object not in the GDL (ie. hidden from 
-# applications). This object can be obtained using the given UDI as
-# as the D-BUS object reference. 
-#
-# The object implements the org.freedesktop.Hal.Device interface
-#
-# @return                       Temporary UDI for new device object
-#
-string NewDevice()
-
-# When a device have been built, an application can add it to the GDL.
-#
-# A side-effect of this call, is that the Manager object will emit the
-# signal DeviceAdded.
-# 
-# @param  tempUdi               Temporary UDI as obtained from the NewDevice call
-# @param  newUdi                New UDI to use.
-# @raises                       org.freedesktop.Hal.(NoSuchDevice|UdiInUse)
-#
-void CommitToGDL(string tempUdi, string newUdi)
-
-# Remove a device object. 
-#
-# Depending on the info.persistent property, the device may not be removed but
-# rather acquire the property info.not_available with value true.
-#
-# @param  udi                   UDI of device
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void Remove(string udi)
-
-# Merge all properties from one device to another device.
-#
-# If the source device got any capabilities, then the target device
-# will acquire these capabilities and a NewCapability signal will be
-# emitted for the target device for every capability in the source
-# device.
-#
-# @param  targetUdi             UDI of device to receive properties
-# @param  sourceUdi             UDI of device to copy properties from
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-void MergeProperties(string targetUdi, string sourceUdi)
-
-# Checks that all properties where keys, starting with a given value
-# (namespace), of the first device is present in the second device and that
-# they got the same value and type. 
-#
-# Note that the other inclusion isn't tested, so there could be
-# properties (from the given namespace) in the second device not present
-# in the first device.
-#
-# @param  udi1                  UDI of device 1
-# @param  udi2                  UDI of device 2
-# @param  namespace             Namespace used for matching, e.g. 'usb'
-# @return                       TRUE if, and only if, all properties starting
-#                               with the namespace parameter from udi1 is
-#                               in udi2 and assume the same value
-# @raises                       org.freedesktop.Hal.NoSuchDevice
-#
-bool DeviceMatches(string udi1, string udi2, string namespace)
-
-</PRE
-></TD
-></TR
-></TABLE
-><P
->&#13;      HAL Agents uses the org.freedesktop.Hal.AgentManager API when 
-      discovering devices either through detection, handling hotplug
-      events or through some other way.
       </P
 ></DIV
 ></DIV
