@@ -356,8 +356,16 @@ class DeviceManager(LibGladeApplication):
             vendor.set_label("Unknown")
 
         # clear category, capabilities
-        category.set_label("Unknown")
-        capabilities.set_label("Unknown")
+        # set category, capabilities
+        if device.properties.has_key("info.category"):
+            category.set_label("%s"%device.properties["info.category"])
+        else:
+	    category.set_label("Unknown")
+
+	if device.properties.has_key("info.capabilities"):
+            capabilities.set_label("%s"%device.properties["info.capabilities"])
+	else:
+	    capabilities.set_label("Unknown")
 
     def update_tab_usb(self, device):
         """Updates the 'USB' tab given a Device object; may hide it"""
