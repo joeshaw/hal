@@ -295,7 +295,7 @@ coldplug_synthesize_events (void)
 		printf ("class: %s (%s) (no device link)\n", sysfs_path, subsystem);
 #endif
 		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->is_add = TRUE;
+		hotplug_event->action = HOTPLUG_ACTION_ADD;
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
 		g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
@@ -367,7 +367,7 @@ coldplug_synthesize_block_event(const gchar *f)
 	}
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
 	g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
@@ -395,7 +395,7 @@ coldplug_synthesize_block_event(const gchar *f)
 #endif
 
 			hotplug_event = g_new0 (HotplugEvent, 1);
-			hotplug_event->is_add = TRUE;
+			hotplug_event->action = HOTPLUG_ACTION_ADD;
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 			g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
 			g_strlcpy (hotplug_event->sysfs.sysfs_path, path1, sizeof (hotplug_event->sysfs.sysfs_path));
@@ -436,7 +436,7 @@ coldplug_compute_visit_device (const gchar *path,
 #endif
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->is_add = TRUE;
+		hotplug_event->action = HOTPLUG_ACTION_ADD;
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, bus, sizeof (hotplug_event->sysfs.subsystem));
 		g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
@@ -464,7 +464,7 @@ coldplug_compute_visit_device (const gchar *path,
 		printf ("class: %s (%s) (%s)\n", path, subsystem, sysfs_path);
 #endif
 		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->is_add = TRUE;
+		hotplug_event->action = HOTPLUG_ACTION_ADD;
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
 		g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));

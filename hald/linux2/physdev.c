@@ -1004,7 +1004,7 @@ physdev_generate_add_hotplug_event (HalDevice *d)
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
 	g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
@@ -1025,7 +1025,7 @@ physdev_generate_remove_hotplug_event (HalDevice *d)
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = FALSE;
+	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
 	g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));

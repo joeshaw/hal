@@ -218,14 +218,13 @@ apm_synthesize_hotplug_events (void)
 	snprintf (path, sizeof (path), "%s/apm", get_hal_proc_path ());
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, path, sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_BATTERY;
 	hotplug_event_enqueue (hotplug_event);
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, path, sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_AC_ADAPTER;
@@ -421,7 +420,7 @@ apm_generate_add_hotplug_event (HalDevice *d)
 	apm_type = hal_device_property_get_int (d, "linux.apm_type");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, apm_path, sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = apm_type;
@@ -439,7 +438,7 @@ apm_generate_remove_hotplug_event (HalDevice *d)
 	apm_type = hal_device_property_get_int (d, "linux.apm_type");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = FALSE;
+	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, apm_path, sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = apm_type;

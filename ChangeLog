@@ -1,3 +1,44 @@
+2005-03-16  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Replace boolean action type of hotplug event with enum, cause
+	hotplug actions are not limited to "add" and "remove" events. The
+	kernel already emits "online", "offline" hotplug events for
+	hotplugging cpu's.
+
+	* hald/linux2/acpi.c: (acpi_synthesize),
+	(acpi_generate_add_hotplug_event),
+	(acpi_generate_remove_hotplug_event):
+
+	* hald/linux2/apm.c: (apm_synthesize_hotplug_events),
+	(apm_generate_add_hotplug_event),
+	(apm_generate_remove_hotplug_event):
+
+	* hald/linux2/blockdev.c:
+	(generate_fakevolume_hotplug_event_add_for_storage_device),
+	(blockdev_generate_add_hotplug_event),
+	(blockdev_generate_remove_hotplug_event):
+
+	* hald/linux2/classdev.c: (classdev_generate_add_hotplug_event),
+	(classdev_generate_remove_hotplug_event):
+
+	* hald/linux2/coldplug.c: (coldplug_synthesize_events),
+	(coldplug_synthesize_block_event), (coldplug_compute_visit_device):
+
+	* hald/linux2/hotplug.c: (hotplug_event_begin_sysfs),
+	(hotplug_event_begin_acpi), (hotplug_event_begin_apm),
+	(hotplug_event_begin_pmu):
+
+	* hald/linux2/hotplug.h:
+
+	* hald/linux2/osspec.c: (hald_helper_data):
+
+	* hald/linux2/physdev.c: (physdev_generate_add_hotplug_event),
+	(physdev_generate_remove_hotplug_event):
+
+	* hald/linux2/pmu.c: (pmu_synthesize_hotplug_events),
+	(pmu_generate_add_hotplug_event),
+	(pmu_generate_remove_hotplug_event):
+
 2005-03-15  David Zeuthen  <davidz@redhat.com>
 
 	* hald/util.c (hal_util_get_string_from_file): Yikes, variable i

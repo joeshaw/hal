@@ -146,29 +146,30 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
 	}
 
-	if (hotplug_event->is_add && hal_device_store_match_key_value_string (hald_get_gdl (),
-									      "linux.sysfs_path",
-									      hotplug_event->sysfs.sysfs_path)) {
+	if (hotplug_event->action == HOTPLUG_ACTION_ADD &&
+	    hal_device_store_match_key_value_string (hald_get_gdl (),
+						     "linux.sysfs_path",
+						     hotplug_event->sysfs.sysfs_path)) {
 		HAL_ERROR (("devpath %s already present in the store, ignore event", hotplug_event->sysfs.sysfs_path));
 		hotplug_event_end ((void *) hotplug_event);
 		return;
 	}
 
-	if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {		
-		if (hotplug_event->is_add) {
+	if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {
+		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent;
 			parent = hal_util_find_closest_ancestor (hotplug_event->sysfs.sysfs_path);
 			hotplug_event_begin_add_physdev (hotplug_event->sysfs.subsystem, 
 							 hotplug_event->sysfs.sysfs_path, 
 							 parent,
 							 (void *) hotplug_event);
-		} else {
+		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 			hotplug_event_begin_remove_physdev (hotplug_event->sysfs.subsystem, 
 							    hotplug_event->sysfs.sysfs_path, 
 							    (void *) hotplug_event);
 		}
 	} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_class_path, sys_class_path_len) == 0) {
-		if (hotplug_event->is_add) {
+		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			gchar *target;
 			HalDevice *physdev;
 			char physdevpath[256];
@@ -218,7 +219,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 
 			g_free (sysfs_path_in_devices);
 
-		} else {
+		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 			hotplug_event_begin_remove_classdev (hotplug_event->sysfs.subsystem,
 							     hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
@@ -230,7 +231,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
 		is_partition = (strcmp (parent_path, sys_block_path) != 0);
 		
-		if (hotplug_event->is_add) {
+		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent;
 
 			if (is_partition) {
@@ -261,7 +262,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							  is_partition,
 							  parent,
 							  (void *) hotplug_event);
-		} else {
+		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 			hotplug_event_begin_remove_blockdev (hotplug_event->sysfs.sysfs_path,
 							     is_partition,
 							     (void *) hotplug_event);
@@ -277,12 +278,12 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 static void
 hotplug_event_begin_acpi (HotplugEvent *hotplug_event)
 {
-	if (hotplug_event->is_add) {
+	if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 		hotplug_event_begin_add_acpi (hotplug_event->acpi.acpi_path, 
 					      hotplug_event->acpi.acpi_type,
 					      NULL,
 					      (void *) hotplug_event);
-	} else {
+	} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 		hotplug_event_begin_remove_acpi (hotplug_event->acpi.acpi_path, 
 						 hotplug_event->acpi.acpi_type,
 						 (void *) hotplug_event);
@@ -292,12 +293,12 @@ hotplug_event_begin_acpi (HotplugEvent *hotplug_event)
 static void
 hotplug_event_begin_apm (HotplugEvent *hotplug_event)
 {
-	if (hotplug_event->is_add) {
+	if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 		hotplug_event_begin_add_apm (hotplug_event->apm.apm_path, 
 					     hotplug_event->apm.apm_type,
 					     NULL,
 					     (void *) hotplug_event);
-	} else {
+	} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 		hotplug_event_begin_remove_apm (hotplug_event->apm.apm_path, 
 						hotplug_event->apm.apm_type,
 						(void *) hotplug_event);
@@ -307,12 +308,12 @@ hotplug_event_begin_apm (HotplugEvent *hotplug_event)
 static void
 hotplug_event_begin_pmu (HotplugEvent *hotplug_event)
 {
-	if (hotplug_event->is_add) {
+	if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 		hotplug_event_begin_add_pmu (hotplug_event->pmu.pmu_path, 
 					     hotplug_event->pmu.pmu_type,
 					     NULL,
 					     (void *) hotplug_event);
-	} else {
+	} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 		hotplug_event_begin_remove_pmu (hotplug_event->pmu.pmu_path, 
 						hotplug_event->pmu.pmu_type,
 						(void *) hotplug_event);

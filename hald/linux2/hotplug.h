@@ -32,6 +32,13 @@
 #include "../util.h"
 
 typedef enum {
+	HOTPLUG_ACTION_ADD,
+	HOTPLUG_ACTION_REMOVE,
+	HOTPLUG_ACTION_ONLINE,
+	HOTPLUG_ACTION_OFFLINE,
+} HotplugActionType;
+
+typedef enum {
 	HOTPLUG_EVENT_SYSFS       = 0,
 	HOTPLUG_EVENT_SYSFS_BUS   = 1,
 	HOTPLUG_EVENT_SYSFS_CLASS = 2,
@@ -46,8 +53,7 @@ typedef enum {
  */
 typedef struct
 {
-	gboolean is_add;                        /**< Whether the event is add or remove */
-
+	HotplugActionType action;               /**< Whether the event is add or remove */
 	HotplugEventType type;                  /**< Type of hotplug event */
 
 	union {

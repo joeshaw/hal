@@ -157,7 +157,7 @@ hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data
 		HotplugEvent *hotplug_event;
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->is_add = TRUE;
+		hotplug_event->action = HOTPLUG_ACTION_ADD;
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, msg.subsystem, sizeof (hotplug_event->sysfs.subsystem));
 		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
@@ -174,7 +174,7 @@ hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data
 		HotplugEvent *hotplug_event;
 
 		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->is_add = FALSE;
+		hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, msg.subsystem, sizeof (hotplug_event->sysfs.subsystem));
 		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 

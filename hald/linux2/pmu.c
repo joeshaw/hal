@@ -172,7 +172,7 @@ pmu_synthesize_hotplug_events (void)
 	/* AC Adapter */
 	snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_PMU;
 	g_strlcpy (hotplug_event->pmu.pmu_path, path, sizeof (hotplug_event->pmu.pmu_path));
 	hotplug_event->pmu.pmu_type = PMU_TYPE_AC_ADAPTER;
@@ -194,7 +194,7 @@ pmu_synthesize_hotplug_events (void)
 				HAL_INFO (("Processing %s", buf));
 				
 				hotplug_event = g_new0 (HotplugEvent, 1);
-				hotplug_event->is_add = TRUE;
+				hotplug_event->action = HOTPLUG_ACTION_ADD;
 				hotplug_event->type = HOTPLUG_EVENT_PMU;
 				g_strlcpy (hotplug_event->pmu.pmu_path, buf, sizeof (hotplug_event->pmu.pmu_path));
 				hotplug_event->pmu.pmu_type = PMU_TYPE_BATTERY;
@@ -402,7 +402,7 @@ pmu_generate_add_hotplug_event (HalDevice *d)
 	pmu_type = hal_device_property_get_int (d, "linux.pmu_type");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = TRUE;
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_PMU;
 	g_strlcpy (hotplug_event->pmu.pmu_path, pmu_path, sizeof (hotplug_event->pmu.pmu_path));
 	hotplug_event->pmu.pmu_type = pmu_type;
@@ -420,7 +420,7 @@ pmu_generate_remove_hotplug_event (HalDevice *d)
 	pmu_type = hal_device_property_get_int (d, "linux.pmu_type");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->is_add = FALSE;
+	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_PMU;
 	g_strlcpy (hotplug_event->pmu.pmu_path, pmu_path, sizeof (hotplug_event->pmu.pmu_path));
 	hotplug_event->pmu.pmu_type = pmu_type;
