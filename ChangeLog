@@ -1,3 +1,8 @@
+2004-09-29  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (block_class_pre_process): Check for
+	USB floppy drive by looking at interface class instead
+
 2004-09-27  David Zeuthen  <david@fubar.dk>
 
 	* libhal/libhal.c (hal_shutdown): Remember to init error var

@@ -1448,8 +1448,6 @@ block_class_pre_process (ClassDeviceHandler *self,
 		const char *device_file;
 		struct drive_id *did;
 		const char *sysfs_path;
-		int scsi_host;
-		char *scsi_protocol;
 		
 		sysfs_path = hal_device_property_get_string (
 			d, "linux.sysfs_path");
@@ -1545,36 +1543,26 @@ block_class_pre_process (ClassDeviceHandler *self,
 			}
 		}
 
-		/* Check for (USB) floppy - Yuck, this is pretty ugly in
-		 * quite a few ways!! Reading /proc-files, looking at
-		 * some hardcoded string from the kernel etc. etc.
+		/* Check for USB floppy drive by looking at USB Mass Storage interface class
+		 * instead of Protocol: Uniform Floppy Interface (UFI) in /proc as we did before.
 		 *
-		 * @todo : Get Protocol into sysfs or something more sane
-		 * giving us the type of the SCSI device
+		 * (should fix RH bug 133834)
 		 */
-		scsi_host = hal_device_property_get_int (
-			parent, "scsi.host");
-		scsi_protocol = read_single_line_grep (
-			"     Protocol: ", 
-			"/proc/scsi/usb-storage/%d", 
-			scsi_host);
-		if (scsi_protocol != NULL &&
-		    strcmp (scsi_protocol,
-			    "Uniform Floppy Interface (UFI)") == 0) {
+		if (physdev != NULL) {
+			if (hal_device_property_get_int (physdev, "usb.interface.class") == 8 &&
+			    hal_device_property_get_int (physdev, "usb.interface.subclass") == 4 ) {
 
-			/* Indeed a (USB) floppy drive */
+				hal_device_property_set_string (d, "storage.drive_type", "floppy");
 
-			hal_device_property_set_string (d, 
-							"storage.drive_type", 
-							"floppy");
+				/* My experiments with my USB LaCie Floppy disk
+				 * drive is that polling indeed work (Yay!), so
+				 * we don't set storage.media_check_enabled to 
+				 * FALSE - for devices where this doesn't work,
+				 * we can override it with .fdi files
+				 */
+				has_removable_media = TRUE;
 
-			/* My experiments with my USB LaCie Floppy disk
-			 * drive is that polling indeed work (Yay!), so
-			 * we don't set storage.media_check_enabled to 
-			 * FALSE - for devices where this doesn't work,
-			 * we can override it with .fdi files
-			 */
-			has_removable_media = TRUE;
+			}
 		}
 
 	} else {
