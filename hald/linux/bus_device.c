@@ -173,6 +173,9 @@ bus_device_got_parent (HalDeviceStore *store, HalDevice *parent,
 	new_udi = rename_and_merge (d, self->compute_udi, self->hal_bus_name);
 	if (new_udi != NULL) {
 		new_d = hal_device_store_find (hald_get_gdl (), new_udi);
+
+		self->got_udi (self, new_d != NULL ? new_d : d, new_udi);
+
 		hal_device_store_add (hald_get_gdl (),
 				      new_d != NULL ? new_d : d);
 	}
@@ -250,6 +253,13 @@ bus_device_post_process (BusDeviceHandler *self,
 			 HalDevice *d,
 			 const char *sysfs_path,
 			 struct sysfs_device *device)
+{
+}
+
+void 
+bus_device_got_udi (BusDeviceHandler *self,
+		    HalDevice *d,
+		    const char *udi)
 {
 }
 

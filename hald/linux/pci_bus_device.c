@@ -769,6 +769,7 @@ BusDeviceHandler pci_bus_handler = {
 	bus_device_removed,        /**< device is removed */
 	pci_device_compute_udi,    /**< UDI computing function */
 	pci_device_post_process,   /**< add more properties */
+	bus_device_got_udi,        /**< got UDI */
 	"pci",                     /**< sysfs bus name */
 	"pci"                      /**< namespace */
 };

@@ -154,6 +154,8 @@ struct ClassDeviceHandler_s {
 	 *  through e.g. ioctl's using the device file property and also
 	 *  for setting info.category|capability.
 	 *
+	 *  Note that the UDI is not yet valid, use function got_udi to
+	 *
 	 *  @param  self          Pointer to class members
 	 *  @param  d             The HalDevice object of the instance of
 	 *                        this device class
@@ -166,6 +168,18 @@ struct ClassDeviceHandler_s {
 			      HalDevice *d,
 			      const char *sysfs_path,
 			      struct sysfs_class_device *class_device);	
+
+	/** Called when the UDI has been determined, but before the device
+	 *  is added to the GDL. Note that this is only invoked if 
+	 *  merge_or_add is FALSE.
+	 *
+	 *  @param  self          Pointer to class members
+	 *  @param  d             The HalDevice object, see above
+	 *  @param  udi           UDI of device
+	 */
+	void (*got_udi) (ClassDeviceHandler *self, 
+			 HalDevice *d, 
+			 const char *udi);
 
 	/** This function will compute the device udi based on other properties
 	 *  of the device. 
@@ -238,6 +252,11 @@ void class_device_post_process (ClassDeviceHandler *self,
 				HalDevice *d,
 				const char *sysfs_path,
 				struct sysfs_class_device *class_device);
+
+void class_device_got_udi (ClassDeviceHandler *self,
+			   HalDevice *d,
+			   const char *udi);
+
 
 void class_device_tick (ClassDeviceHandler *self);
 

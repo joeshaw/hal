@@ -112,6 +112,7 @@ ClassDeviceHandler scsi_device_class_handler = {
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	scsi_device_class_post_process,     /**< add more properties */
+	class_device_got_udi,               /**< got UDI */
 	scsi_device_class_compute_udi,      /**< No UDI computation */
 	"scsi_device",                      /**< sysfs class name */
 	"scsi_device",                      /**< hal class name */

@@ -1,3 +1,20 @@
+2004-04-10  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/class_device.h: add got_udi() method
+
+	* hald/linux/class_device.c (class_device_final): move add/merge of
+	class device to a single function
+
+	* hald/linux/bus_device.h: add got_udi() method
+
+	* hald/linux/bus_device.c (bus_device_got_parent): call got_udi()
+	before adding
+	(bus_device_got_udi): new function
+
+	* hald/linux/block_class_device.c (block_class_got_udi): new function
+	(block_class_post_process): set block.storage_device to the physical
+	device, e.g. USB etc., backing the block device; simplify a bit
+
 2004-04-08  Joe Shaw  <joe@ximian.com>
 
 	* hald/linux/printer_class_device.c (printer_class_device_accept):

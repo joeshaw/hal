@@ -174,6 +174,7 @@ ClassDeviceHandler printer_class_handler = {
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	printer_class_post_process,         /**< add more properties */
+	class_device_got_udi,               /**< got UDI */
 	NULL,                               /**< No UDI computation */
 	"usb",                              /**< sysfs class name */
 	"printer",                          /**< hal class name */

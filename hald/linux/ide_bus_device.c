@@ -81,10 +81,10 @@ ide_device_post_process (BusDeviceHandler *self,
 
 	if (channel == 0) {
 		hal_device_property_set_string (d, "info.product",
-						"IDE channel (master)");
+						"IDE device (master)");
 	} else {
 		hal_device_property_set_string (d, "info.product",
-						"IDE channel (slave)");
+						"IDE device (slave)");
 	}
 
 	hal_device_property_set_bool (d, "info.virtual", TRUE);
@@ -102,6 +102,7 @@ BusDeviceHandler ide_bus_handler = {
 	bus_device_removed,        /**< device is removed */
 	ide_device_compute_udi,    /**< UDI computing function */
 	ide_device_post_process,   /**< add more properties */
+	bus_device_got_udi,               /**< got UDI */
 	"ide",                /**< sysfs bus name */
 	"ide"                 /**< namespace */
 };

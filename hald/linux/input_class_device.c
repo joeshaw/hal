@@ -134,6 +134,7 @@ ClassDeviceHandler input_class_handler = {
 	class_device_udev_event,            /**< handle udev event */
 	input_class_get_device_file_target, /**< where to store devfile name */
 	input_class_post_process,           /**< add more properties */
+	class_device_got_udi,               /**< got UDI */
 	NULL,                               /**< No UDI computation */
 	"input",                            /**< sysfs class name */
 	"input",                            /**< hal class name */

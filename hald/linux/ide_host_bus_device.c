@@ -108,6 +108,7 @@ BusDeviceHandler ide_host_bus_handler = {
 	bus_device_removed,        /**< device is removed */
 	ide_host_device_compute_udi,    /**< UDI computing function */
 	ide_host_device_post_process,   /**< add more properties */
+	bus_device_got_udi,               /**< got UDI */
 	"ide_host",                /**< sysfs bus name */
 	"ide_host"                 /**< namespace */
 };

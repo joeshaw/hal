@@ -559,6 +559,26 @@ detect_media (HalDevice * d)
 	return FALSE;
 }
 
+static void
+block_class_got_udi (ClassDeviceHandler *self,
+		     HalDevice *d,
+		     const char *udi)
+{
+	const char *stordev_udi;
+	char temp_prefix[] = "/org/freedesktop/Hal/devices/temp";
+
+	/* fixup from setting block.storage_device below to a temporary 
+	 * device */
+	stordev_udi = hal_device_property_get_string (d, 
+						      "block.storage_device");
+
+	if (strncmp (stordev_udi, temp_prefix, strlen(temp_prefix)) == 0) {
+		hal_device_property_set_string (d,
+						"block.storage_device",
+						udi);
+	}
+}
+
 static void 
 block_class_post_process (ClassDeviceHandler *self,
 			  HalDevice *d,
@@ -567,10 +587,12 @@ block_class_post_process (ClassDeviceHandler *self,
 {
 	int major, minor;
 	HalDevice *parent;
-	HalDevice *stordev;
-	char *stordev_udi;
+	HalDevice *stordev = NULL;
+	const char *stordev_udi;
 	const char *device_file;
-
+	dbus_bool_t has_removable_media = FALSE;
+	dbus_bool_t is_hotplugable = FALSE;
+		
 	parent = hal_device_store_find (hald_get_gdl (),
 					hal_device_property_get_string (d, "info.parent"));
 	assert (parent != NULL);
@@ -587,11 +609,53 @@ block_class_post_process (ClassDeviceHandler *self,
 
 	/* Determine physical device that is backing this block device */
 	if (hal_device_property_get_bool (d, "block.is_volume")) {
-		stordev_udi = parent->udi;
-		stordev = parent;
+		/* Take the block parent */
+		stordev_udi = hal_device_property_get_string (
+			parent, "block.storage_device");
+		stordev = hal_device_store_find (hald_get_gdl (), stordev_udi);
 	} else {
-		stordev_udi = d->udi;
-		stordev = d;
+		const char *udi_it;
+
+		stordev_udi = NULL;
+
+		/* walk up the device chain, start with our parent */
+		udi_it = parent->udi;
+
+		while (udi_it != NULL) {
+			HalDevice *d_it;
+			const char *bus;
+
+			/* Find device */
+			d_it = hal_device_store_find (hald_get_gdl (), udi_it);
+			assert (d_it != NULL);
+
+			/* Check info.bus */
+			bus = hal_device_property_get_string (d_it,"info.bus");
+			if (strcmp (bus, "usb") == 0) {
+				stordev_udi = udi_it;
+				stordev = d_it;
+				break;
+			} else if (strcmp (bus, "ide") == 0) {
+				stordev_udi = udi_it;
+				stordev = d_it;
+				break;
+			}
+
+			/* Go to parent */
+			udi_it = hal_device_property_get_string (d_it, 
+							       "info.parent");
+		}
+
+		if (stordev_udi == NULL) {
+			/* We couldn't find a storage device, use our own udi
+			 *
+			 * Ayeii, note - this is a temporary UDI but we will 
+			 * remedy such a situation in _got_udi() above
+			 */
+			stordev_udi = d->udi;
+			stordev = d;
+		}
+
 	}
 
 	hal_device_property_set_string (d, "block.storage_device",
@@ -609,201 +673,201 @@ block_class_post_process (ClassDeviceHandler *self,
 		/** @todo  Guestimate product name; use volume label */
 		hal_device_property_set_string (d, "info.product", "Volume");
 
-	} else {
-		dbus_bool_t removable_media = FALSE;
+		/* Not much to do for volumes; our parent already set the
+		 * appropriate values for the storage device backing us */
+		return;
+	} 
 
-		/* be pessimistic */
-		hal_device_property_set_bool (stordev, "storage.cdr", FALSE);
-		hal_device_property_set_bool (stordev, "storage.cdrw", FALSE);
-		hal_device_property_set_bool (stordev, "storage.dvd", FALSE);
-		hal_device_property_set_bool (stordev, "storage.dvdr", FALSE);
-		hal_device_property_set_bool (stordev, "storage.dvdram", FALSE);
+	/* be pessimistic */
+	hal_device_property_set_bool (stordev, "storage.cdr", FALSE);
+	hal_device_property_set_bool (stordev, "storage.cdrw", FALSE);
+	hal_device_property_set_bool (stordev, "storage.dvd", FALSE);
+	hal_device_property_set_bool (stordev, "storage.dvdr", FALSE);
+	hal_device_property_set_bool (stordev, "storage.dvdram", FALSE);
 
-		/* We are a disk or cdrom drive; maybe we even offer 
-		 * removable media 
-		 */
-		hal_device_property_set_string (d, "info.category", "block");
+	/* We are a disk or cdrom drive; maybe we even offer 
+	 * removable media 
+	 */
+	hal_device_property_set_string (d, "info.category", "block");
 
-		HAL_INFO (("Bus type is %s!",
-			   hal_device_property_get_string (parent, "info.bus")));
+	HAL_INFO (("Bus type is %s!",
+		   hal_device_property_get_string (parent, "info.bus")));
 
-		if (strcmp (hal_device_property_get_string (parent, "info.bus"), 
+	if (strcmp (hal_device_property_get_string (parent, "info.bus"), 
 			    "ide") == 0) {
-			const char *ide_name;
-			char *model;
-			char *media;
+		const char *ide_name;
+		char *model;
+		char *media;
 
-			ide_name = get_last_element (hal_device_property_get_string
-						     (d, "linux.sysfs_path"));
+		ide_name = get_last_element (hal_device_property_get_string
+					     (d, "linux.sysfs_path"));
 
-			model = read_single_line ("/proc/ide/%s/model",
-						  ide_name);
-			if (model != NULL) {
-				hal_device_property_set_string (stordev, "storage.model", model);
-				hal_device_property_set_string (d, "info.product",
+		model = read_single_line ("/proc/ide/%s/model", ide_name);
+		if (model != NULL) {
+			hal_device_property_set_string (stordev, 
+							"storage.model", 
 							model);
-			}
-
-
-			/* According to the function proc_ide_read_media() in 
-			 * drivers/ide/ide-proc.c in the Linux sources, media
-			 * can only assume "disk", "cdrom", "tape", "floppy", 
-			 * "UNKNOWN"
-			 */
-
-			/** @todo Given floppy how
-			 *        do we determine it's LS120?
-			 */
-			
-			media = read_single_line ("/proc/ide/%s/media",
-						  ide_name);
-			if (media != NULL) {
-				hal_device_property_set_string (stordev, "storage.media",
-							media);
-
-				/* Set for removable media */
-				if (strcmp (media, "disk") == 0) {
-					hal_device_add_capability (stordev, "storage");
-					hal_device_property_set_string (stordev,
-							       "info.category",
-								"storage");
-				} else if (strcmp (media, "cdrom") == 0) {
-
-					hal_device_add_capability (stordev, "storage");
-					hal_device_add_capability (stordev,
-							   "storage.removable");
-					hal_device_property_set_string (stordev,
-							      "info.category",
-							  "storage.removable");
-
-					removable_media = TRUE;
-				} else if (strcmp (media, "floppy") == 0) {
-					hal_device_add_capability (stordev, "storage");
-					hal_device_add_capability (stordev,
-							  "storage.removable");
-					hal_device_property_set_string (stordev,
-						       	"info.category",
-						       	"storage.removable");
-					removable_media = TRUE;
-				} else if (strcmp (media, "tape") == 0) {
-					hal_device_add_capability (stordev, "storage");
-					hal_device_add_capability (stordev,
-							  "storage.removable");
-					hal_device_property_set_string (stordev,
-							      "info.category",
-							  "storage.removable");
-					removable_media = TRUE;
-				}
-
-			}
-
-		} 
-		else if (strcmp (hal_device_property_get_string (parent, "info.bus"),
-				 "scsi_device") == 0) {
-			const char *sysfs_path;
-			char attr_path[SYSFS_PATH_MAX];
-			struct sysfs_attribute *attr;
-			
-			sysfs_path = hal_device_property_get_string (
-				d, 
-				"linux.sysfs_path");
-
-			snprintf (attr_path, SYSFS_PATH_MAX,
-				  "%s/device/vendor", sysfs_path);
-			attr = sysfs_open_attribute (attr_path);
-			if (sysfs_read_attribute (attr) >= 0) {
-				hal_device_property_set_string (d, "info.vendor",
-							strip_space (attr->
-								     value));
-				sysfs_close_attribute (attr);
-			}
-
-			snprintf (attr_path, SYSFS_PATH_MAX,
-				  "%s/device/model", sysfs_path);
-			attr = sysfs_open_attribute (attr_path);
-			if (sysfs_read_attribute (attr) >= 0) {
-				hal_device_property_set_string (d, "info.product",
-							strip_space (attr->
-								     value));
-				sysfs_close_attribute (attr);
-			}
-
-			snprintf (attr_path, SYSFS_PATH_MAX,
-				  "%s/device/type", sysfs_path);
-			attr = sysfs_open_attribute (attr_path);
-			if (sysfs_read_attribute (attr) >= 0) {
-				int type = parse_dec (attr->value);
-				switch (type) {
-				case 0:	/* Disk */
-					hal_device_add_capability (stordev, "storage");
-					hal_device_property_set_string (
-						stordev, "info.category", "storage");
-					hal_device_property_set_string (
-						stordev, "storage.media", "disk");
-					break;
-				case 1:	/* Tape */
-					hal_device_add_capability (stordev, "storage");
-					hal_device_add_capability (
-						stordev, "storage.removable");
-					hal_device_property_set_string (
-						stordev, "info.category",
-						"storage.removable");
-					hal_device_property_set_string (
-						stordev,
-						"storage.media", "tape");
-					removable_media = TRUE;
-					break;
-				case 5:	/* CD-ROM */
-					hal_device_add_capability (stordev, "storage");
-					hal_device_add_capability (
-						stordev, "storage.removable");
-					hal_device_property_set_string (
-						stordev, "storage.media", "cdrom");
-					hal_device_property_set_string (
-						stordev, "info.category",
-						"storage.removable");
-
-					removable_media = TRUE;
-					break;
-				default:
-					/** @todo add more SCSI types */
-					HAL_WARNING (("Don't know how to "
-						      "handle SCSI type %d", 
-						      type));
-				}
-			}
-		} else {
-			/** @todo block device on non-IDE and non-SCSI device;
-			 *  how to find the name and the media-type? Right now
-			 *  we just assume that the disk is fixed and of type
-			 *  flash.
-			 *       
-			 */
-			
-			hal_device_property_set_string (stordev, "storage.media",
-						"flash");
-			
-			hal_device_add_capability (stordev, "storage");
-			hal_device_property_set_string (stordev, "info.category",
-						"storage");
-			
-			/* guestimate product name */
-			hal_device_property_set_string (d, "info.product", "Disk");
-			
+			hal_device_property_set_string (d, 
+							"info.product",
+							model);
 		}
 
-		hal_device_property_set_bool (stordev, "storage.removable", removable_media);
+
+		/* According to the function proc_ide_read_media() in 
+		 * drivers/ide/ide-proc.c in the Linux sources, media
+		 * can only assume "disk", "cdrom", "tape", "floppy", 
+		 * "UNKNOWN"
+		 */
+		
+		/** @todo Given floppy how
+		 *        do we determine it's LS120?
+		 */
+			
+		media = read_single_line ("/proc/ide/%s/media",
+					  ide_name);
+		if (media != NULL) {
+			hal_device_property_set_string (stordev, "storage.media",
+							media);
+			
+			/* Set for removable media */
+			if (strcmp (media, "disk") == 0) {
+				/* left blank */
+			} else if (strcmp (media, "cdrom") == 0) {
+				has_removable_media = TRUE;
+			} else if (strcmp (media, "floppy") == 0) {
+				has_removable_media = TRUE;
+			} else if (strcmp (media, "tape") == 0) {
+				has_removable_media = TRUE;
+			}
+			
+		}
+		
+	} else if (strcmp (hal_device_property_get_string (parent, 
+							 "info.bus"),
+			   "scsi_device") == 0) {
+		const char *sysfs_path;
+		char attr_path[SYSFS_PATH_MAX];
+		struct sysfs_attribute *attr;
+		
+		sysfs_path = hal_device_property_get_string (
+			d, "linux.sysfs_path");
+		
+		snprintf (attr_path, SYSFS_PATH_MAX,
+			  "%s/device/vendor", sysfs_path);
+		attr = sysfs_open_attribute (attr_path);
+		if (sysfs_read_attribute (attr) >= 0) {
+			hal_device_property_set_string (d, "info.vendor",
+							strip_space (attr->
+								     value));
+			sysfs_close_attribute (attr);
+		}
+		
+		snprintf (attr_path, SYSFS_PATH_MAX,
+			  "%s/device/model", sysfs_path);
+		attr = sysfs_open_attribute (attr_path);
+		if (sysfs_read_attribute (attr) >= 0) {
+			strip_space (attr->value);
+			hal_device_property_set_string (d, 
+							"info.product",
+							attr->value);
+			hal_device_property_set_string (stordev,
+							"storage.model",
+							attr->value);
+			sysfs_close_attribute (attr);
+		}
+		
+		snprintf (attr_path, SYSFS_PATH_MAX,
+			  "%s/device/type", sysfs_path);
+		attr = sysfs_open_attribute (attr_path);
+		if (sysfs_read_attribute (attr) >= 0) {
+			int type = parse_dec (attr->value);
+			switch (type) {
+			case 0:	/* Disk */
+				hal_device_property_set_string (
+					stordev, 
+					"storage.media", 
+					"disk");
+				break;
+			case 1:	/* Tape */
+				has_removable_media = TRUE;
+				hal_device_property_set_string (
+					stordev,
+					"storage.media", 
+					"tape");
+				has_removable_media = TRUE;
+				break;
+			case 5:	/* CD-ROM */
+				hal_device_property_set_string (
+					stordev, 
+					"storage.media", 
+					"cdrom");
+				has_removable_media = TRUE;
+				break;
+			default:
+				/** @todo add more SCSI types */
+				HAL_WARNING (("Don't know how to "
+					      "handle SCSI type %d", 
+					      type));
+			}
+		}
+	} else {
+		/** @todo block device on non-IDE and non-SCSI device;
+		 *  how to find the name and the media-type? Right now
+		 *  we just assume that the disk is fixed and of type
+		 *  flash.
+		 */
+		
+		hal_device_property_set_string (
+			stordev, 
+			"storage.media",
+			"flash");
+		
+		/* guestimate product name */
+		hal_device_property_set_string (d, "info.product", "Disk");
+		
+	}
+	
+	
+	hal_device_property_set_bool (
+		stordev, 
+		"storage.removable", 
+		has_removable_media);
+	
+	if (has_removable_media) {
+		hal_device_add_capability (
+			stordev, 
+			"storage.removable");
 	}
 
 
 	if (hal_device_has_property (stordev, "storage.media") &&
-	    strcmp (hal_device_property_get_string (stordev, "storage.media"), "cdrom") == 0) {
+	    strcmp (hal_device_property_get_string (stordev, "storage.media"), 
+		    "cdrom") == 0) {
 		cdrom_check (stordev, device_file);
 	}
+
+	hal_device_property_set_string (stordev, "info.category", "storage");
+	hal_device_add_capability (stordev, "storage");
+
+
+
+	if (hal_device_has_property (stordev, "info.bus") &&
+	    ( strcmp (hal_device_property_get_string (stordev, "info.bus"), 
+		      "usb") == 0 ||
+	      strcmp (hal_device_property_get_string (stordev, "info.bus"), 
+		      "ieee1394") == 0) ) {
+		is_hotplugable = TRUE;
+	} 
+
+	hal_device_property_set_bool (stordev, "storage.hotplugable",
+				      is_hotplugable);
+	if (is_hotplugable) {
+		hal_device_add_capability (stordev, "storage.hotplugable");
+	}
+
 					
 	/* check for media on the device */
 	detect_media (d);
-
 }
 
 static char *
@@ -823,8 +887,6 @@ block_class_compute_udi (HalDevice * d, int append_num)
  
         return buf;
 }
-
-
 
 
 
@@ -1228,6 +1290,7 @@ ClassDeviceHandler block_class_handler = {
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	block_class_post_process,           /**< add more properties */
+	block_class_got_udi,               /**< got UDI */
 	block_class_compute_udi,            /**< UDI computation */
 	"block",                            /**< sysfs class name */
 	"block",                            /**< hal class name */

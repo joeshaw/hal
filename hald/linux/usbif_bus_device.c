@@ -158,6 +158,7 @@ BusDeviceHandler usbif_bus_handler = {
 	bus_device_removed,        /**< device is removed */
 	usbif_device_compute_udi,  /**< UDI computing function */
 	usbif_device_post_process, /**< add more properties */
+	bus_device_got_udi,        /**< got UDI */
 	"usb",                     /**< sysfs bus name */
 	"usbif"                    /**< namespace */
 };

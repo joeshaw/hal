@@ -138,7 +138,19 @@ struct BusDeviceHandler_s {
 	void (*post_process) (BusDeviceHandler *self,
 			      HalDevice *d,
 			      const char *sysfs_path,
-			      struct sysfs_device *device);	
+			      struct sysfs_device *device);
+
+	/** Called when the UDI has been determined, but before the device
+	 *  is added to the GDL.
+	 *
+	 *  @param  self          Pointer to class members
+	 *  @param  d             The HalDevice object
+	 *  @param  udi           UDI of device
+	 */
+	void (*got_udi) (BusDeviceHandler *self, 
+			 HalDevice *d, 
+			 const char *udi);
+
 
 	/** name of bus the instance handles (name mentioned in /sys/bus) */
 	const char *sysfs_bus_name;
@@ -170,5 +182,9 @@ void bus_device_post_process (BusDeviceHandler *self,
 			      HalDevice *d,
 			      const char *sysfs_path,
 			      struct sysfs_device *device);
+
+void bus_device_got_udi (BusDeviceHandler *self,
+			 HalDevice *d,
+			 const char *udi);
 
 #endif /* BUS_DEVICE_H */
