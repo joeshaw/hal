@@ -1,3 +1,13 @@
+2004-05-07  Joe Shaw  <joe@ximian.com>
+
+	* doc/TODO: Add an item about clean daemon shutdown.
+
+	* tools/callouts/fstab-update.sh: Add locking on the fstab so
+	things don't race for it.  Timeout after 10 seconds.  Also be
+	overly cautious about when we remove the block device from the
+	fstab and check to make sure that the resulting fstab exists and
+	is larger than 0 bytes in size.
+
 2004-05-05  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux/linux_dvd_rw_utils.c (get_dvd_media_type): new function

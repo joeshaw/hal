@@ -39,6 +39,22 @@ fi
 MEDIAROOT="/mnt"
 MOUNTPOINT="$MEDIAROOT/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR-"
 
+max_loops=10
+loop_times=0
+while [ -e /etc/fstab-lock -a $loop_times -lt $max_loops ]; do
+    loop_times=$((loop_times+1))
+    echo "waiting for fstab lock... ($HAL_PROP_BLOCK_DEVICE: $loop_times of $max_loops)"
+    sleep 1
+done
+
+# Took too long!
+if [ $loop_times -eq $max_loops ]; then
+    echo "couldn't get lock after $max_loops seconds.  bailing out!"
+    exit 1
+fi
+
+touch /etc/fstab-lock
+
 if test "$1" = "add"; then
 
     if [ ! -d $MOUNTPOINT ]; then
@@ -66,7 +82,11 @@ if test "$1" = "add"; then
 
 elif test "$1" = "remove"; then
     grep -v "$MOUNTPOINT" /etc/fstab > /etc/fstab-tmp
-    mv -f /etc/fstab-tmp /etc/fstab
+
+    # Make sure it's here
+    if [ -f /etc/fstab-tmp -a -s /etc/fstab-tmp ]; then
+	mv -f /etc/fstab-tmp /etc/fstab
+    fi
 
     if [ -d $MOUNTPOINT ]; then
 	rmdir $MOUNTPOINT
@@ -75,3 +95,5 @@ elif test "$1" = "remove"; then
 else
     echo "invalid action!"
 fi
+
+rm /etc/fstab-lock
