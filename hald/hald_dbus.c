@@ -244,7 +244,7 @@ manager_get_all_devices (DBusConnection * connection,
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 typedef struct {
@@ -307,7 +307,7 @@ manager_find_device_string_match (DBusConnection * connection,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message,
 			      "Manager.FindDeviceStringMatch");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -331,7 +331,7 @@ manager_find_device_string_match (DBusConnection * connection,
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 typedef struct {
@@ -385,7 +385,7 @@ manager_find_device_by_capability (DBusConnection * connection,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message,
 			      "Manager.FindDeviceByCapability");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -408,7 +408,7 @@ manager_find_device_by_capability (DBusConnection * connection,
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -436,7 +436,7 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &udi,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "Manager.DeviceExists");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	HAL_TRACE (("entering, udi=%s", udi));
@@ -457,7 +457,7 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
@@ -627,7 +627,7 @@ device_get_all_properties (DBusConnection * connection,
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -646,7 +646,7 @@ device_get_all_properties (DBusConnection * connection,
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -689,7 +689,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	dbus_error_init (&error);
@@ -697,13 +697,13 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "GetProperty");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	p = hal_device_property_find (d, key);
 	if (p == NULL) {
 		raise_no_such_property (connection, message, udi, key);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -741,7 +741,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -780,7 +780,7 @@ device_get_property_type (DBusConnection * connection,
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	dbus_error_init (&error);
@@ -788,13 +788,13 @@ device_get_property_type (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "GetPropertyType");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	p = hal_device_property_find (d, key);
 	if (p == NULL) {
 		raise_no_such_property (connection, message, udi, key);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -810,7 +810,7 @@ device_get_property_type (DBusConnection * connection,
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -852,7 +852,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 	type = dbus_message_iter_get_arg_type (&iter);
 	if (type != DBUS_TYPE_STRING) {
 		raise_syntax (connection, message, "SetProperty");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 	key = dbus_message_iter_get_string (&iter);
 
@@ -864,7 +864,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 
 	if (device == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 	dbus_message_iter_next (&iter);
 
@@ -907,7 +907,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 
 	if (!rc) {
 		raise_property_type_error (connection, message, udi, key);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -918,7 +918,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -972,7 +972,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	dbus_error_init (&error);
@@ -980,7 +980,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &capability,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "AddCapability");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 
@@ -1007,7 +1007,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -1044,7 +1044,7 @@ device_remove_property (DBusConnection * connection, DBusMessage * message)
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	dbus_error_init (&error);
@@ -1052,12 +1052,12 @@ device_remove_property (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "RemoveProperty");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	if (!hal_device_property_remove (d, key)) {
 		raise_no_such_property (connection, message, udi, key);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 
@@ -1069,7 +1069,7 @@ device_remove_property (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -1105,7 +1105,7 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	dbus_error_init (&error);
@@ -1113,7 +1113,7 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "RemoveProperty");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -1128,7 +1128,7 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -1167,7 +1167,7 @@ device_query_capability (DBusConnection * connection,
 
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	dbus_error_init (&error);
@@ -1175,7 +1175,7 @@ device_query_capability (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &capability,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "QueryCapability");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = dbus_message_new_method_return (message);
@@ -1196,7 +1196,7 @@ device_query_capability (DBusConnection * connection,
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** Counter for atomic updating */
@@ -1456,7 +1456,7 @@ agent_manager_new_device (DBusConnection * connection,
 
 	dbus_message_unref (reply);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** When a hidden device have been built (using the Device interface),
@@ -1497,7 +1497,7 @@ agent_manager_commit_to_gdl (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &new_udi,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "CommitToGdl");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	HAL_TRACE (("entering, old_udi=%s, new_udi=%s", old_udi, new_udi));
@@ -1505,12 +1505,12 @@ agent_manager_commit_to_gdl (DBusConnection * connection,
 	d = hal_device_store_find (hald_get_gdl (), old_udi);
 	if (d == NULL) {
 		raise_no_such_device (connection, message, old_udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	if (hal_device_store_find (hald_get_gdl (), new_udi) != NULL) {
 		raise_udi_in_use (connection, message, new_udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	/* add to the GDL */
@@ -1528,7 +1528,7 @@ agent_manager_commit_to_gdl (DBusConnection * connection,
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -1561,7 +1561,7 @@ agent_manager_remove (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &udi,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "Remove");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	HAL_INFO (("entering, udi=%s", udi));
@@ -1569,7 +1569,7 @@ agent_manager_remove (DBusConnection * connection, DBusMessage * message)
 	d = hal_device_store_find (hald_get_gdl (), udi);
 	if (d == NULL) {
 		raise_no_such_device (connection, message, udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	g_object_unref (d);
@@ -1588,7 +1588,7 @@ agent_manager_remove (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -1622,7 +1622,7 @@ agent_merge_properties (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &source_udi,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "MergeProperties");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	HAL_TRACE (("entering, target_udi=%s, source_udi=%s",
@@ -1634,7 +1634,7 @@ agent_merge_properties (DBusConnection * connection, DBusMessage * message)
 
 	if (target_d == NULL) {
 		raise_no_such_device (connection, message, target_udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	source_d = hal_device_store_find (hald_get_gdl (), source_udi);
@@ -1643,7 +1643,7 @@ agent_merge_properties (DBusConnection * connection, DBusMessage * message)
 
 	if (source_d == NULL) {
 		raise_no_such_device (connection, message, source_udi);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	hal_device_merge (target_d, source_d);
@@ -1656,7 +1656,7 @@ agent_merge_properties (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 
@@ -1702,7 +1702,7 @@ agent_device_matches (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &namespace,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "DeviceMatches");
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	HAL_TRACE (("entering, udi1=%s, udi2=%s, namespace=%s",
@@ -1714,7 +1714,7 @@ agent_device_matches (DBusConnection * connection, DBusMessage * message)
 
 	if (d1 == NULL) {
 		raise_no_such_device (connection, message, udi1);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	d2 = hal_device_store_find (hald_get_gdl (), udi2);
@@ -1723,7 +1723,7 @@ agent_device_matches (DBusConnection * connection, DBusMessage * message)
 
 	if (d2 == NULL) {
 		raise_no_such_device (connection, message, udi2);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	rc = hal_device_matches (d1, d2, namespace);
@@ -1739,7 +1739,7 @@ agent_device_matches (DBusConnection * connection, DBusMessage * message)
 		DIE (("No memory"));
 
 	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** Message handler for method invocations. All invocations on any object
@@ -1890,7 +1890,7 @@ filter_function (DBusConnection * connection,
 	} else
 		osspec_filter_function (connection, message, user_data);
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 DBusConnection *

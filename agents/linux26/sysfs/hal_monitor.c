@@ -687,7 +687,7 @@ static DBusHandlerResult udev_filter_func(DBusConnection* connection,
         }
     }
 
-    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 

@@ -1,3 +1,16 @@
+2004-06-23  David Zeuthen  <david@fubar.dk>
+
+	Patch from Kay Sievers <kay.sievers@vrfy.org>
+
+	* libhal/libhal.c (filter_func): Use DBUS_HANDLER_RESULT_HANDLED
+	instead of NOT_YET_HANDLED
+
+	* hald/hald.dbus.c: Use DBUS_HANDLER_RESULT_HANDLED
+	instead of NOT_YET_HANDLED
+
+	* hald/linux/osspec.c: Use DBUS_HANDLER_RESULT_HANDLED
+	instead of NOT_YET_HANDLED
+
 2004-06-23  Joe Shaw  <joeshaw@novell.com>
 
 	Patch from Sjoerd Simons <sjoerd@luon.net>

@@ -527,7 +527,7 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_STRING) {
 		/** @todo Report error */
 		dbus_message_unref (message);
-		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 	subsystem = dbus_message_iter_get_string (&iter);
 
@@ -588,7 +588,7 @@ handle_hotplug (DBusConnection * connection, DBusMessage * message)
 		
 
 out:
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /* fwd decl */
@@ -653,7 +653,7 @@ handle_device_event (DBusConnection * connection,
 		dbus_free (sysfs_path);
 	}
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** Callback when the block device is found or if there is none..
@@ -719,7 +719,7 @@ osspec_filter_function (DBusConnection * connection,
 		return handle_device_event (connection, message);
 	} 
 
-	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** @} */
