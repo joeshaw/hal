@@ -1,5 +1,7 @@
 2004-09-17  Joe Shaw  <joeshaw@novell.com>
 
+	* doc/TODO: Remove the device locking section, it's done now. Woo!
+
 	* doc/spec/hal-spec.xml.in: Add the Lock and Unlock methods to the
 	spec.
 
