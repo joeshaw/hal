@@ -377,6 +377,15 @@ disc_add_to_gdl (HalDevice *device, gpointer user_data)
 					      user_data);
 }
 
+static void
+disc_remove_from_gdl (HalDevice *device, gpointer user_data)
+{
+	hal_device_store_remove (hald_get_gdl (), device);
+	g_signal_handlers_disconnect_by_func (device, disc_remove_from_gdl, 
+					      user_data);
+	g_object_unref (device);
+}
+
 /** Check for media on a block device that is not a volume
  *
  *  @param  d                   Device to inspect; can be any device, but
@@ -467,8 +476,9 @@ detect_media (HalDevice * d)
 
 			if (child != NULL) {
 				HAL_INFO (("Removing volume for optical device %s", device_file));
-				hal_device_store_remove (hald_get_gdl (), child);
-				g_object_unref (child);
+				g_signal_connect (child, "callouts_finished",
+						  G_CALLBACK (disc_remove_from_gdl), NULL);
+				hal_callout_device (child, FALSE);
 
 				close (fd);
 

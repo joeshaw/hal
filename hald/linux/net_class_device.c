@@ -115,11 +115,11 @@ media_type_to_string (int media_type)
  *
  *  @param  iface               Which interface
  *  @param  location            Which register
- *  @return                     Word that is read
+ *  @return                     0 on success, -1 on failure
  */
-static guint16
+static int
 mdio_read (int sockfd, struct ifreq *ifr, int location,
-	   gboolean new_ioctl_nums)
+	   gboolean new_ioctl_nums, guint16 *result)
 {
 	guint16 *data = (guint16 *) &(ifr->ifr_data);
 
@@ -132,7 +132,9 @@ mdio_read (int sockfd, struct ifreq *ifr, int location,
 			    ifr->ifr_name, strerror (errno)));
 		return -1;
 	}
-	return data[3];
+	*result = data[3];
+	
+	return 0;
 }
 
 static void
@@ -142,6 +144,7 @@ mii_get_rate (HalDevice *d)
 	int sockfd;
 	struct ifreq ifr;
 	gboolean new_ioctl_nums;
+	int res;
 	guint16 link_word;
 
 	ifname = hal_device_property_get_string (d, "net.interface");
@@ -179,14 +182,14 @@ mii_get_rate (HalDevice *d)
 	 * 0x0020  10baseT supported
 	 * 0x001F  Protocol selection bits, always 0x0001 for Ethernet.
 	 */
-	link_word = mdio_read (sockfd, &ifr, 5, new_ioctl_nums);
+	res = mdio_read (sockfd, &ifr, 5, new_ioctl_nums, &link_word);
 
-	if (link_word & 0x380) {
+	if (res < 0) {
+		HAL_WARNING (("Error reading rate info"));
+	} else if (link_word & 0x380) {
 		hal_device_property_set_int (d, "net.ethernet.rate",
 					     100 * 1000 * 1000);
-	}
-
-	if (link_word & 0x60) {
+	} else if (link_word & 0x60) {
 		hal_device_property_set_int (d, "net.ethernet.rate",
 					     10 * 1000 * 1000);
 	}
@@ -201,6 +204,7 @@ mii_get_link (HalDevice *d)
 	int sockfd;
 	struct ifreq ifr;
 	gboolean new_ioctl_nums;
+	int res;
 	guint16 status_word;
 
 	ifname = hal_device_property_get_string (d, "net.interface");
@@ -241,10 +245,12 @@ mii_get_link (HalDevice *d)
 	 */
 
 	/* We have to read it twice to clear any "sticky" bits */
-	status_word = mdio_read (sockfd, &ifr, 1, new_ioctl_nums);
-	status_word = mdio_read (sockfd, &ifr, 1, new_ioctl_nums);
+	res = mdio_read (sockfd, &ifr, 1, new_ioctl_nums, &status_word);
+	res = mdio_read (sockfd, &ifr, 1, new_ioctl_nums, &status_word);
 
-	if ((status_word & 0x0016) == 0x0004)
+	if (res < 0)
+		HAL_WARNING (("Error reading link info"));
+	else if ((status_word & 0x0016) == 0x0004)
 		hal_device_property_set_bool (d, "net.ethernet.link", TRUE);
 	else
 		hal_device_property_set_bool (d, "net.ethernet.link", FALSE);

@@ -1,3 +1,17 @@
+2004-05-13  Joe Shaw  <joe@ximian.com>
+
+	* hald/linux/block_class_device.c (detect_media): Connect to the
+	"callouts_finished" signal and call the callouts rather than
+	removing the volume from the GDL here.  Patch from Sjoerd Simons
+	<sjoerd@luon.net>
+
+	* hald/linux/net_class_device.c (mdio_read): Make the result an
+	out parameter and return 0 on success and -1 on failure.
+	(mii_get_rate): Check the result of mdio_read().  Put the check
+	for whether it's 10mbit in an else-if.
+	(mii_get_link): Check the result of mdio_read().  Based on a patch
+	from Sjoerd Simons <sjoerd@luon.net>
+
 2004-05-08  Joe Shaw  <joe@ximian.com>
 
 	* tools/callouts/fstab-update.sh: Improve the locking loop.
