@@ -109,6 +109,8 @@ block_class_visit (ClassDeviceHandler *self,
 	hal_device_property_set_string (d, "linux.sysfs_path", path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", path);
 
+	hal_device_property_set_bool (d, "block.no_partitions", FALSE);
+
 	if (class_device->sysdevice == NULL) {
 		parent_sysfs_path = get_parent_sysfs_path (path);
 		hal_device_property_set_bool (d, "block.is_volume", TRUE);
@@ -1157,6 +1159,7 @@ block_class_pre_process (ClassDeviceHandler *self,
 	if (hal_device_has_property (stordev, "storage.drive_type") &&
 	    strcmp (hal_device_property_get_string (stordev, "storage.drive_type"), 
 		    "cdrom") == 0) {
+		hal_device_property_set_bool (d, "block.no_partitions", TRUE);
 		cdrom_check (stordev, device_file);
 		hal_device_add_capability (stordev, "storage.cdrom");
 	}

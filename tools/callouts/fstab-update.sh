@@ -24,9 +24,16 @@ if test "$HAL_PROP_BLOCK_MINOR" = ""; then
     exit 0
 fi
 
-if test "$HAL_PROP_BLOCK_IS_VOLUME" != "true"; then
-    echo "not a volume"
-    exit 0
+if test "$HAL_PROP_BLOCK_NO_PARTITIONS" != "true"; then
+    if test "$HAL_PROP_BLOCK_IS_VOLUME" != "true"; then
+	echo "not a volume"
+	exit 0
+    fi
+else
+    if test "$HAL_PROP_BLOCK_IS_VOLUME" = "true"; then
+	echo "volume, but on a block.no_partition device"
+	exit 0
+    fi
 fi
 
 # NOTE: We could use HAL_PROP_BLOCK_VOLUME_LABEL (which may or may not be 
@@ -76,7 +83,7 @@ if test "$1" = "add"; then
         cp /etc/fstab /etc/fstab-hal
 	echo -ne "$HAL_PROP_BLOCK_DEVICE\t" >> /etc/fstab-hal
 	echo -ne "$MOUNTPOINT\t" >> /etc/fstab-hal
-	# HAL might have autodetected the filesystem type for us - in that
+        # HAL might have autodetected the filesystem type for us - in that
         # case use it...
 	if test $HAL_PROP_VOLUME_FSTYPE; then
 	    if test $HAL_PROP_VOLUME_FSTYPE = "msdos"; then

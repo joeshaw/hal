@@ -1,3 +1,19 @@
+2004-06-06  David Zeuthen  <david@fubar.dk>
+
+	* hald/linux/block_class_device.c (block_class_visit): Add the
+	block.no_partitions boolean property and set it to FALSE by
+	default. If this is TRUE it means that media for this toplevel
+	block device will appear as children but there can be at maximum
+	one child and the block.device will be the same. This applies to
+	floppy and cdrom media. This property have been introduced such
+	that a callout can update the fstab in advance of media insertion
+	on e.g. floppy drives and optical drives.
+	(block_class_pre_process): Set block.no_partitions to TRUE for
+	optical drives.
+
+	* tools/callouts/fstab-update.sh: When block.no_partitions is TRUE
+	create entry only for top-level block device.
+
 2004-06-05  David Zeuthen  <david@fubar.dk>
 
 	* packaging/fedora/hal.spec: Add hald.conf to %files. Patch from
