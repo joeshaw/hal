@@ -789,6 +789,19 @@ detect_media (HalDevice * d)
 
 			detect_fs (child);
 
+			/* If we have a nice volume label, set it */
+			if (hal_device_has_property (child, "volume.label")) {
+				const char *label;
+
+				label = hal_device_property_get_string (
+					child, "volume.label");
+
+				if (label != NULL && label[0] != '\0') {
+					hal_device_property_set_string (
+						child, "info.product", label);
+				}
+			}
+
 			/* add new device */
 			g_signal_connect (child, "callouts_finished",
 					  G_CALLBACK (device_move_from_tdl_to_gdl), NULL);
@@ -978,6 +991,8 @@ block_class_pre_process (ClassDeviceHandler *self,
 					stordev_udi);
 
 	if (hal_device_property_get_bool (d, "block.is_volume")) {
+		char *volume_name;
+
 		/* We are a volume */
 		find_and_set_physical_device (d);
 		hal_device_property_set_bool (d, "info.virtual", TRUE);
@@ -990,11 +1005,33 @@ block_class_pre_process (ClassDeviceHandler *self,
 
 		/* block device that is a partition; e.g. a storage volume */
 
-		/** @todo  Guestimate product name; use volume label */
-		hal_device_property_set_string (d, "info.product", "Volume");
-		
 		/* Detect filesystem and volume label */
 		detect_fs (d);
+
+		volume_name = g_strdup (
+			hal_device_property_get_string (d, "volume.label"));
+
+		if (volume_name == NULL || volume_name[0] == '\0') {
+			const char *fstype;
+
+			g_free (volume_name);
+
+			fstype = hal_device_property_get_string (
+				d,
+				"volume.fstype");
+
+			if (fstype == NULL || fstype[0] == '\0')
+				volume_name = g_strdup ("Volume");
+			else {
+				volume_name = g_strdup_printf ("Volume (%s)",
+							       fstype);
+			}
+		}
+
+		hal_device_property_set_string (d, "info.product",
+						volume_name);
+
+		g_free (volume_name);
 
 		/* Not much to do for volumes; our parent already set the
 		 * appropriate values for the storage device backing us */

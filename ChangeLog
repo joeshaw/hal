@@ -1,5 +1,12 @@
 2004-06-09  Joe Shaw  <joeshaw@novell.com>
 
+	* hald/linux/block_class_device.c (detect_media): Set info.product
+	to volume.label if it's set.
+	(block_class_pre_process): Set info.product to volume.label if
+	it's set, otherwise try to append the fstype to "Volume".
+
+2004-06-09  Joe Shaw  <joeshaw@novell.com>
+
 	Fix some refcounting issues
 
 	* hald/linux/block_class_device.c: Unref the device after we add
