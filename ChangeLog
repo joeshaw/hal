@@ -1,3 +1,8 @@
+2004-09-27  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/volume_id/volume_id.c: (probe_vfat): Fix
+	typo in FAT uuid conversion.
+
 2004-09-26  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/volume_id/volume_id.c: (probe_vfat): Fix

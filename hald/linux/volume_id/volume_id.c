@@ -910,7 +910,7 @@ valid:
 
 	/* the label may be an attribute in the root directory */
 	root_start = (reserved + fat_size) * sector_size;
-	dbg("root dir start 0x%x", root_start);
+	dbg("root dir start 0x%llx", root_start);
 	root_dir_entries = le16_to_cpu(vs->dir_entries);
 	dbg("expected entries 0x%x", root_dir_entries);
 
@@ -968,7 +968,7 @@ fat32:
 		dbg("next cluster %u", next);
 		next_sect_off = (next - 2) * vs->sectors_per_cluster;
 		next_off = (start_data_sect + next_sect_off) * sector_size;
-		dbg("cluster offset 0x%x", next_off);
+		dbg("cluster offset 0x%llx", next_off);
 
 		/* get cluster */
 		buf = get_buffer(id, off + next_off, buf_size);
@@ -1021,7 +1021,7 @@ fat32_label:
 		set_label_raw(id, vs->type.fat32.label, 11);
 		set_label_string(id, vs->type.fat32.label, 11);
 	}
-	set_uuid(id, vs->type.fat32.serno, UUID_DCE);
+	set_uuid(id, vs->type.fat32.serno, UUID_DOS);
 
 found:
 	id->usage_id = VOLUME_ID_FILESYSTEM;
