@@ -1,5 +1,15 @@
 2004-08-02  David Zeuthen  <david@fubar.dk>
 
+	Patch from Dan Williams <dcbw@redhat.com>
+
+	* hald/linux/ieee1394_class_device.c:
+	* hald/linux/ieee1394_host_class_device.c:
+	* hald/linux/ieee1394_node_class_device.c:
+	Gets rid of warnings and potential bugs due to default function return
+	type of 'int'.
+
+2004-08-02  David Zeuthen  <david@fubar.dk>
+
 	* doc/spec/Makefile.am (FIGURE_FILES): Add hal-linux26.png
 
 	* doc/spec/hal-spec.xml.in: Work-in-progress commit

@@ -29,6 +29,12 @@
 
 #include <ctype.h>
 
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#endif
+
+#include <ctype.h>
+
 #include "../logger.h"
 #include "../device_store.h"
 #include "../hald.h"
