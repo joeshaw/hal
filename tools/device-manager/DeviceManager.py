@@ -48,6 +48,17 @@ class DeviceManager(LibGladeApplication):
         # gdl_changed will be invoked when the Global Device List is changed
         # per the hal spec
         self.bus.add_signal_receiver(self.gdl_changed,
+				     "DeviceAdded",
+                                     "org.freedesktop.Hal.Manager",
+                                     "org.freedesktop.Hal",
+                                     "/org/freedesktop/Hal/Manager")
+        self.bus.add_signal_receiver(self.gdl_changed,
+				     "DeviceRemoved",
+                                     "org.freedesktop.Hal.Manager",
+                                     "org.freedesktop.Hal",
+                                     "/org/freedesktop/Hal/Manager")
+        self.bus.add_signal_receiver(self.gdl_changed,
+				     "NewCapability",
                                      "org.freedesktop.Hal.Manager",
                                      "org.freedesktop.Hal",
                                      "/org/freedesktop/Hal/Manager")
@@ -64,14 +75,45 @@ class DeviceManager(LibGladeApplication):
             sys.exit(1)
 
         for name in device_names:
-            self.bus.add_signal_receiver(self.device_changed,
-                                         "org.freedesktop.Hal.Device",
-                                         "org.freedesktop.Hal",
-                                         name)    
+	    self.add_device_signal_recv (name);
 
         self.dont_show_virtual = 1
         self.update_device_list()
         self.main_window.show()
+
+    def add_device_signal_recv (self, udi):
+	self.bus.add_signal_receiver(self.device_changed,
+				     "PropertyAdded",
+				     "org.freedesktop.Hal.Device",
+				     "org.freedesktop.Hal",
+				     udi)
+	self.bus.add_signal_receiver(self.device_changed,
+				     "PropertyRemoved",
+				     "org.freedesktop.Hal.Device",
+				     "org.freedesktop.Hal",
+				     udi)
+	self.bus.add_signal_receiver(self.device_changed,
+				     "PropertyChanged",
+				     "org.freedesktop.Hal.Device",
+				     "org.freedesktop.Hal",
+				     udi)
+
+    def remove_device_signal_recv (self, udi):
+	self.bus.remove_signal_receiver(self.device_changed,
+				     "PropertyAdded",
+				     "org.freedesktop.Hal.Device",
+				     "org.freedesktop.Hal",
+				     udi)
+	self.bus.remove_signal_receiver(self.device_changed,
+				     "PropertyRemoved",
+				     "org.freedesktop.Hal.Device",
+				     "org.freedesktop.Hal",
+				     udi)
+	self.bus.remove_signal_receiver(self.device_changed,
+				     "PropertyChanged",
+				     "org.freedesktop.Hal.Device",
+				     "org.freedesktop.Hal",
+				     udi)
 
 
     def get_current_focus_udi(self):
@@ -137,21 +179,16 @@ class DeviceManager(LibGladeApplication):
 
     def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):
         """This method is called when a HAL device is added or removed."""
+
         if dbus_member=="DeviceAdded":
             [device_udi] = dbus_message.get_args_list()
             print "\nDeviceAdded, udi=%s"%(device_udi)
-            self.bus.add_signal_receiver(self.device_changed,
-                                         "org.freedesktop.Hal.Device",
-                                         "org.freedesktop.Hal",
-                                         device_udi)
+	    self.add_device_signal_recv (device_udi)
             self.update_device_list()
         elif dbus_member=="DeviceRemoved":
             [device_udi] = dbus_message.get_args_list()
             print "\nDeviceRemoved, udi=%s"%(device_udi)
-            self.bus.remove_signal_receiver(self.device_changed,
-                                            "org.freedesktop.Hal.Device",
-                                            "org.freedesktop.Hal",
-                                            device_udi)
+	    self.remove_device_signal_recv (device_udi)
             self.update_device_list()
         elif dbus_member=="NewCapability":
             [device_udi, cap] = dbus_message.get_args_list()

@@ -1,5 +1,10 @@
 2004-08-02  David Zeuthen  <david@fubar.dk>
 
+	* tools/device-manager/DeviceManager.py (DeviceManager.gdl_changed): 
+	Upgrade to latest D-BUS python API
+
+2004-08-02  David Zeuthen  <david@fubar.dk>
+
 	* libhal/libhal.c (filter_func): Only return RESULT_HANDLED if we
 	really handle the message. Otherwise return RESULT_NOT_YET_HANDLED.
 	Bug identified by Dan Williams <dcbw@redhat.com>. 

@@ -74,7 +74,7 @@ HREF="#AEN102"
 ></DT
 ><DT
 ><A
-HREF="#AEN143"
+HREF="#AEN146"
 >D-BUS Network API</A
 ></DT
 ><DT
@@ -465,7 +465,7 @@ NAME="ov_scopearch"
 ><P
 >&#13;
         Merging class device information (derived from the hardware)
-        into a device object.  For example, for an USB mouse HAL will
+        into a device object.  For example, for a USB mouse HAL will
         merge well-defined properties describing the input-related
         capabilities of the mouse (e.g. how many buttons), and for
 	optical discs HAL will merge information about the disc (e.g.
@@ -480,7 +480,8 @@ NAME="ov_scopearch"
         from device information files.  This allows applications to
         think in terms of ''capabilities'' rather than relying on
         device class information derived from the hardware. For example,
-	for MP3 players the set of audio formats can be merged.
+	for an MP3 player, the set of audio formats that the device is
+	capable to playback can be merged.
 
         </P
 ></LI
@@ -569,8 +570,7 @@ NAME="AEN102"
 ><P
 >&#13;
         A device as recognized by the USB, PCI etc. standards and treated as
-        such by the operating system kernel and base OS. Note that a physical
-	PCI board may appear as two PCI devices.
+        such by the operating system kernel and base OS.
 
         </P
 ></LI
@@ -590,12 +590,12 @@ NAME="AEN102"
 >
 
       Note there is not necessarily a one-to-one relationship between
-      physical devices attached to a computer system and ''device objects''. 
-      A multi-function device, which appears (and is marketed) to users 
-      as a multi-function printer may show up as several device objects; e.g. 
-      printer, scanner, fax and storage. 
-      On the other hand, an USB keyboard with a scroll-wheel may appear as
-      a single USB device with multiple USB interfaces.
+      physical devices attached to a computer system and ''device
+      objects''.  A multi-function device, which appears (and is
+      marketed) to users as a multi-function printer may show up as
+      several device objects; e.g.  printer, scanner, fax and storage.
+      On the other hand, PCI networking equipment with multiple ports
+      may show up as several networking devices and so on.
 
       </P
 ><P
@@ -704,21 +704,25 @@ CLASS="emphasis"
 ></UL
 >
 
-      The first category is determined by HAL itself, the next is
-      merged from either the hardware itself or device information
-      files and the last is intercepted by monitoring the operating
-      system.
+      The first category is determined by HAL, the next is merged from
+      either the hardware itself or device information files and the
+      last is intercepted by monitoring the operating system.
 
-      This specification is concerned with precisely defining several 
-      properties; see 
-      <A
+      </P
+><P
+>&#13;
+      This specification is concerned with precisely defining several
+      properties; see <A
 HREF="#device-properties"
 >the Section called <I
 >Properties of a device</I
 ></A
-> and onwards for more
-      information. 
+> and onwards
+      for more information.
 
+      </P
+><P
+>&#13;
       As a complement to device properties, HAL also provides 
       <I
 CLASS="emphasis"
@@ -728,8 +732,11 @@ CLASS="emphasis"
       not easily expressed in properties. This includes events such as
       ''processor is overheating'' or ''block device unmounted''.
 
+      </P
+><P
+>&#13;
       The fundamental idea about HAL is that all ''interesting'' information
-      that a desktop application would be using can be obtained by HAL.
+      about hardware a desktop application needs can be obtained by HAL.
 
       </P
 ><P
@@ -752,7 +759,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN143"
+NAME="AEN146"
 >D-BUS Network API</A
 ></H2
 ><P
@@ -761,12 +768,12 @@ NAME="AEN143"
       The HAL daemon is a system-wide process that keeps track of a
       number of device objects. It communicates with the operating
       system and intercepts hotplug events as devices are plugged in
-      and removed.
-      The daemon is also responsible for providing services to
-      applications that wants to locate devices and perform
-      generic operations them such as obtaining exclusive access.
-      Non-generic operations, such as obtaining pictures from a camera
-      device, is outside the scope of the HAL daemon; see <A
+      and removed.  The daemon is also responsible for providing
+      services to applications that wants to locate devices and
+      perform generic operations them such as obtaining exclusive
+      access.  Non-generic operations, such as obtaining pictures from
+      a camera device, is outside the scope of the HAL daemon; see
+      <A
 HREF="#using-devices"
 >the Section called <I
 >Using devices</I
@@ -776,13 +783,12 @@ HREF="#using-devices"
       </P
 ><P
 >&#13;
-      Note that the HAL daemon has the concept of a Global Device List
-      (GDL in the following) that contains the devices that the
-      clients can search and subscribe on changes to. 
-
-      When a device have been detected, either from inside the HAL daemon 
-      or from an HAL agent, devices are not initially in the GDL; instead, 
-      they are added later when a number of properties have been merged.
+      HAL has the concept of device stores. When a device is detected
+      it is placed in the TDL (temporary device list) and then properties
+      are merged from several sources including device information files
+      and possibly callouts. Eventually, the device transitions to the
+      GDL (global device list) and first then it becomes ''visible'' for 
+      desktop applications.
 
       </P
 ><DIV
@@ -790,16 +796,27 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN148"
+NAME="AEN151"
 >Interface org.freedesktop.Hal.Manager</A
 ></H3
 ><P
 > 
 
-      Using D-BUS terminology, the HAL daemon provides the D-BUS service
-      org.freedesktop.Hal. This service offers a D-BUS object at a 
-      well-known location /org/freedesktop/Hal/Manager. This object
-      offers a D-BUS interface, org.freedesktop.Hal.Manager, for 
+      Using D-BUS terminology, the HAL daemon provides the D-BUS
+      service <TT
+CLASS="literal"
+>org.freedesktop.Hal</TT
+>. This service
+      offers a D-BUS object at a well-known
+      location <TT
+CLASS="literal"
+>/org/freedesktop/Hal/Manager</TT
+>. This
+      object offers a D-BUS
+      interface, <TT
+CLASS="literal"
+>org.freedesktop.Hal.Manager</TT
+>, for
       querying device objects with the following methods:
       </P
 ><TABLE
@@ -891,7 +908,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN154"
+NAME="AEN160"
 >Interface org.freedesktop.Hal.Device</A
 ></H3
 ><P
@@ -1035,7 +1052,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN161"
+NAME="AEN167"
 >Interface org.freedesktop.Hal.AgentManager</A
 ></H3
 ><P
@@ -1302,7 +1319,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN190"
+NAME="AEN196"
 ></A
 ><TABLE
 BORDER="1"
@@ -1682,7 +1699,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN357"
+NAME="AEN363"
 ></A
 ><TABLE
 BORDER="1"
@@ -1873,7 +1890,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN429"
+NAME="AEN435"
 ></A
 ><TABLE
 BORDER="1"
@@ -1974,7 +1991,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN467"
+NAME="AEN473"
 ></A
 ><TABLE
 BORDER="1"
@@ -2150,7 +2167,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN540"
+NAME="AEN546"
 ></A
 ><TABLE
 BORDER="1"
@@ -2432,7 +2449,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN670"
+NAME="AEN676"
 ></A
 ><TABLE
 BORDER="1"
@@ -2582,7 +2599,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN721"
+NAME="AEN727"
 ></A
 ><TABLE
 BORDER="1"
@@ -2626,7 +2643,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN736"
+NAME="AEN742"
 ></A
 ><TABLE
 BORDER="1"
@@ -2711,7 +2728,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN762"
+NAME="AEN768"
 ></A
 ><TABLE
 BORDER="1"
@@ -3313,7 +3330,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1045"
+NAME="AEN1051"
 ></A
 ><TABLE
 BORDER="1"
@@ -3468,7 +3485,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1108"
+NAME="AEN1114"
 ></A
 ><TABLE
 BORDER="1"
@@ -3543,7 +3560,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1138"
+NAME="AEN1144"
 ></A
 ><TABLE
 BORDER="1"
@@ -3704,7 +3721,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN1184"
+NAME="AEN1190"
 >Linux 2.6 and udev</A
 ></H3
 ><P
