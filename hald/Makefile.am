@@ -43,7 +43,7 @@ hald_SOURCES +=	\
 					linux/ide_bus_device.c		\
 	linux/linux_dvd_rw_utils.h	linux/linux_dvd_rw_utils.c
 
-#					linux/ieee1394_host_class_device.c	\
+#					linux/ieee1394_host_class_device.c
 
 
 hald_SOURCES +=                                                         \

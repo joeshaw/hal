@@ -60,6 +60,19 @@
  * @{
  */
 
+static dbus_bool_t
+printer_class_device_accept (ClassDeviceHandler *self,
+			     const char *path,
+			     struct sysfs_class_device *class_device,
+			     dbus_bool_t is_probing)
+{
+	int lp_number;
+
+	if (sscanf (class_device->name, "lp%d", &lp_number) == 1)
+		return TRUE;
+
+	return FALSE;
+}
 
 /** This method is called just before the device is either merged
  *  onto the sysdevice or added to the GDL (cf. merge_or_add). 
@@ -84,7 +97,7 @@ printer_class_post_process (ClassDeviceHandler *self,
 	int fd;
 	char device_id[1024];
 	char **props, **iter;
-	char *mfg = NULL, *model = NULL, *serial = NULL;
+	char *mfg = NULL, *model = NULL, *serial = NULL, *desc = NULL;
 
 	/* add capabilities for device */
 	hal_device_property_set_string (d, "info.category", "printer");
@@ -104,7 +117,7 @@ printer_class_post_process (ClassDeviceHandler *self,
 
 	close (fd);
 
-	HAL_TRACE (("device_id: %s", device_id+2));
+	HAL_TRACE (("printer IEEE-1284 device_id: %s", device_id+2));
 
 	props = g_strsplit (device_id+2, ";", 0);
 	for (iter = props; *iter != NULL; iter++) {
@@ -122,6 +135,10 @@ printer_class_post_process (ClassDeviceHandler *self,
 			serial = *iter + 5;
 		else if (strncmp (*iter, "SERIALNUMBER:", 13) == 0)
 			serial = *iter + 13;
+		else if (strncmp (*iter, "DES:", 4) == 0)
+			desc = *iter + 4;
+		else if (strncmp (*iter, "DESCRIPTION:", 12) == 0)
+			desc = *iter + 12;
 	}
 
 	if (mfg != NULL) {
@@ -137,6 +154,11 @@ printer_class_post_process (ClassDeviceHandler *self,
 	if (serial != NULL)
 		hal_device_property_set_string (d, "printer.serial", serial);
 
+	if (desc != NULL) {
+		hal_device_property_set_string (d, "printer.description",
+						desc);
+	}
+
 	g_strfreev (props);
 }
 
@@ -146,14 +168,14 @@ ClassDeviceHandler printer_class_handler = {
 	class_device_detection_done,        /**< detection is done */
 	class_device_shutdown,              /**< shutdown function */
 	class_device_tick,                  /**< timer function */
-	class_device_accept,                /**< accept function */
+	printer_class_device_accept,        /**< accept function */
 	class_device_visit,                 /**< visitor function */
 	class_device_removed,               /**< class device is removed */
 	class_device_udev_event,            /**< handle udev event */
 	class_device_get_device_file_target,/**< where to store devfile name */
 	printer_class_post_process,         /**< add more properties */
 	NULL,                               /**< No UDI computation */
-	"printer",                          /**< sysfs class name */
+	"usb",                              /**< sysfs class name */
 	"printer",                          /**< hal class name */
 	TRUE,                               /**< require device file */
 	TRUE                                /**< merge onto sysdevice */

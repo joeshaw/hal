@@ -1,3 +1,17 @@
+2004-04-08  Joe Shaw  <joe@ximian.com>
+
+	* hald/linux/printer_class_device.c (printer_class_device_accept):
+	Added.  Only accept class devices which have a name of "lpN".
+	(printer_class_post_process): Get a description from the IEEE-1284
+	output and put it in printer.description.
+	(printer_class_handler): Set the accept function to be
+	printer_class_device_accept(), and change the sysfs class name
+	from "printer" back to "usb".
+
+	* tools/callouts/fstab-update.sh: Add some introductory text to
+	the top of it, including a big warning.  Create the mountpoint
+	with mkdir -p instead of each individual directory.
+
 2004-04-08  David Zeuthen  <david@fubar.dk>
 
 	* tools/callouts/fstab-update.sh: Callout script for fstab management

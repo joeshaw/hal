@@ -1,4 +1,18 @@
 #!/bin/bash
+#
+# This shell script updates your /etc/fstab when volumes when they
+# appear and disappear from HAL.
+#
+# ** WARNING **
+# This file is for informational purposes only and as an example
+# of how one might write a HAL callout script.  There are no
+# guarantees for safety of this script.  If you want to try it
+# out, you should make a backup of your existing /etc/fstab
+# file, and you shouldn't use this on any production system!
+#
+# If you are running SUSE (or another FHS 2.3-compliant OS)
+# you should probably change the MEDIAROOT from "/mnt" to
+# "/media"
 
 if test "$HAL_PROP_BLOCK_DEVICE" = ""; then
     exit 0
@@ -19,20 +33,13 @@ if test "$HAL_PROP_BLOCK_IS_VOLUME" != "true"; then
     exit 0
 fi
 
-MOUNTPOINT="/mnt/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR"
+MEDIAROOT="/mnt"
+MOUNTPOINT="$MEDIAROOT/hal/disk-$HAL_PROP_BLOCK_MAJOR-$HAL_PROP_BLOCK_MINOR"
 
 if test "$1" = "add"; then
 
-    if [ ! -d /mnt ]; then
-        mkdir /mnt
-    fi
-
-    if [ ! -d /mnt/hal ]; then
-        mkdir /mnt/hal
-    fi
-
     if [ ! -d $MOUNTPOINT ]; then
-	mkdir $MOUNTPOINT
+	mkdir -p $MOUNTPOINT
     fi
 
     # Add the device to fstab if it's not already there.
