@@ -74,40 +74,46 @@ class DeviceManager(LibGladeApplication):
 
     def device_changed(self, dbus_if, dbus_member, dbus_svc,
                        dbus_obj_path, dbus_message):
-        """This method is called when properties for a HAL device changes"""
-        args = dbus_message.get_args_list()
-        num_modifications = args[0]
-        print "\nPropertyModified, device=%s"%dbus_obj_path
-        #print "dbus_obj_path", dbus_obj_path
-        for i in range(0, num_modifications):
-            property_name = args[1+3*i]
-            removed = args[2+3*i]
-            added = args[3+3*i]
+        """This method is called when signals on the Device interface is
+        received"""
+        if dbus_member=="Condition":
+            args = dbus_message.get_args_list()
+            print "\nCondition %s, device=%s"%(args[0], dbus_obj_path)
+            print "  message = ", args 
+        elif dbus_member=="PropertyModified":
+            args = dbus_message.get_args_list()
+            num_modifications = args[0]
+            print "\nPropertyModified, device=%s"%dbus_obj_path
+            #print "dbus_obj_path", dbus_obj_path
+            for i in range(0, num_modifications):
+                property_name = args[1+3*i]
+                removed = args[2+3*i]
+                added = args[3+3*i]
 
-            print "  key=%s, rem=%d, add=%d"%(property_name, removed, added)
-            if property_name=="info.parent":
-                self.update_device_list()        
-            else:
-                device_udi = dbus_obj_path
-                device_udi_obj = self.hal_service.get_object(device_udi,
-                                               "org.freedesktop.Hal.Device")
-                device_obj = self.udi_to_device(device_udi)
-        
-                if device_udi_obj.PropertyExists(property_name):
-                    device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
-                    print "  value=%s"%(device_obj.properties[property_name])
+                print "  key=%s, rem=%d, add=%d"%(property_name, removed, added)
+                if property_name=="info.parent":
+                    self.update_device_list()        
                 else:
-                    if device_obj != None:
-                        try:
-                            del device_obj.properties[property_name]
-                        except:
-                            pass
+                    device_udi = dbus_obj_path
+                    device_udi_obj = self.hal_service.get_object(device_udi,
+                                                   "org.freedesktop.Hal.Device")
+                    device_obj = self.udi_to_device(device_udi)
 
-                device_focus_udi = self.get_current_focus_udi()
-                if device_focus_udi != None:
-                    device = self.udi_to_device(device_udi)
-                    if device_focus_udi==device_udi:
-                        self.update_device_notebook(device)
+                    if device_udi_obj.PropertyExists(property_name):
+                        device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
+                        print "  value=%s"%(device_obj.properties[property_name])
+                    else:
+                        if device_obj != None:
+                            try:
+                                del device_obj.properties[property_name]
+                            except:
+                                pass
+
+                    device_focus_udi = self.get_current_focus_udi()
+                    if device_focus_udi != None:
+                        device = self.udi_to_device(device_udi)
+                        if device_focus_udi==device_udi:
+                            self.update_device_notebook(device)
 
 
     def gdl_changed(self, dbus_if, dbus_member, dbus_svc, dbus_obj_path, dbus_message):

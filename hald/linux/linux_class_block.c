@@ -797,6 +797,7 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
             if( mp->major==major && mp->minor==minor )
             {
                 const char* existing_block_device;
+                dbus_bool_t was_mounted;
 
                 HAL_INFO((
                     "%s mounted at %s, major:minor=%d:%d, fstype=%s, udi=%s",
@@ -807,6 +808,8 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 
                 existing_block_device = ds_property_get_string(d,
                                                                "block.device");
+
+                was_mounted = ds_property_get_bool(d, "block.is_mounted");
 
                 /* Yay! Found a mount point; set properties accordingly */
                 ds_property_set_string(d, "block.mount_point",mp->mount_point);
@@ -823,6 +826,16 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
 
                 property_atomic_update_end();
 
+                if( !was_mounted )
+                {
+                    emit_condition(d, "BlockMountEvent", 
+                                   DBUS_TYPE_STRING,
+                                     ds_property_get_string(d, "block.device"),
+                                   DBUS_TYPE_STRING, mp->mount_point,
+                                   DBUS_TYPE_STRING, mp->fs_type,
+                                   DBUS_TYPE_INVALID);
+                }
+
                 found_mount_point = TRUE;
                 break;
             }
@@ -831,13 +844,26 @@ static void etc_mtab_process_all_block_devices(dbus_bool_t force)
         /* No mount point found; (possibly) remove all information */
         if( !found_mount_point )
         {
+            dbus_bool_t was_mounted;
+
             property_atomic_update_begin();
+
+            was_mounted = ds_property_get_bool(d, "block.is_mounted");
 
             ds_property_set_bool(d, "block.is_mounted", FALSE);
             ds_property_set_string(d, "block.mount_point", "");
             ds_property_set_string(d, "block.fstype", "");
 
             property_atomic_update_end();
+
+            if( was_mounted )
+            {
+                emit_condition(d, "BlockUnmountEvent", 
+                               DBUS_TYPE_STRING, 
+                                 ds_property_get_string(d, "block.device"),
+                               DBUS_TYPE_INVALID);
+            }
+
         }        
     }
 }

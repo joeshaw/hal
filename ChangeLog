@@ -1,3 +1,30 @@
+2004-01-13  David Zeuthen  <david@fubar.dk>
+
+	* configure.in: Bump version number to 0.2.3
+
+	* tools/device-manager/DeviceManager.py 
+	(DeviceManager.device_changed): Add support for Condition signal
+
+	* tools/lshal.c (device_condition): new function
+	(main): add device_condition to LibHalFunctions variable
+
+	* libhal/libhal.c (filter_func): Process DeviceCondition
+
+	* libhal/libhal.h (LibHalFunctions_s): Add device_condition
+	and type LibHalDeviceCondition
+
+	* hald/linux/linux_class_net.c (link_detection_process): Emit 
+	NetLinkEvent(bool got_link) condition
+
+	* hald/linux/linux_class_block.c 
+	(etc_mtab_process_all_block_devices): emit BlockMount(string device,
+	string mount_point, string fstype) and BlockUnmount(string device)
+	events
+
+	* hald/hald.h: added emit_condition()
+
+	* hald/main.c (emit_condition): new function
+
 2004-01-13  Matthew Mastracci  <matt@aclaro.com>
 
 	* tools/device-manager/Const.py.in (BUS_NAMES): add i2c_adapter

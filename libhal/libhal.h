@@ -76,6 +76,19 @@ typedef void (*LibHalDevicePropertyModified)(const char* udi,
                                              dbus_bool_t is_removed,
                                              dbus_bool_t is_added);
 
+/** Type for callback when a non-continuos condition occurs on a device
+ *
+ *  @param  udi                 Unique Device Id
+ *  @param  condition_name      Name of the condition, e.g. 
+ *                              ProcessorOverheating. Consult the HAL spec
+ *                              for possible conditions
+ *  @param  message             D-BUS message with variable parameters
+ *                              depending on condition
+ */
+typedef void (*LibHalDeviceCondition)(const char* udi, 
+                                      const char* condition_name,
+                                      DBusMessage* message);
+
 
 /** Big convenience chunk for all callback function pointers. 
  *
@@ -100,6 +113,9 @@ typedef struct LibHalFunctions_s
 
     /** A property of a device changed  */
     LibHalDevicePropertyModified       device_property_modified;
+
+    /** A non-continous event on the device occured  */
+    LibHalDeviceCondition              device_condition;
 
 } LibHalFunctions;
 

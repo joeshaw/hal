@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include <dbus/dbus.h>
 
+#include "device_store.h"
 
 /**
  *  @addtogroup HalDaemon
@@ -42,6 +43,9 @@ void* xmalloc(unsigned int how_much);
 
 void property_atomic_update_begin();
 void property_atomic_update_end();
+
+void emit_condition(HalDevice* device, const char* condition_name,
+                    int first_arg_type, ... );
 
 /**
  *  @}

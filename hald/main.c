@@ -1815,6 +1815,50 @@ void property_atomic_update_end()
     }
 }
 
+/** Emits a condition on a device; the device has to be in the GDL for
+ *  this function to have effect.
+ *
+ *  Is intended for non-continuous events on the device like
+ *  ProcesserOverheating, BlockDeviceGotDevice, e.g. conditions that
+ *  are exceptional and may not be inferred by looking at properties
+ *  (though some may).
+ *
+ *  This function accepts a number of parameters that are passed along
+ *  in the D-BUS message. The recipient is supposed to extract the parameters
+ *  himself, by looking at the HAL specification.
+ *
+ * @param  device               The device
+ * @param  condition_name       Name of condition
+ * @param  first_arg_type       Type of the first argument
+ * @param  ...                  value of first argument, list of additional
+ *                              type-value pairs. Must be terminated with
+ *                              DBUS_TYPE_INVALID
+ */
+void emit_condition(HalDevice* device, const char* condition_name,
+                    int first_arg_type, ... )
+{
+    DBusMessage* message;
+    DBusMessageIter iter;
+    va_list var_args;
+
+    if( !device->in_gdl )
+        return;
+
+    message = dbus_message_new_signal(device->udi, 
+                                      "org.freedesktop.Hal.Device",
+                                      "Condition");
+    dbus_message_iter_init(message, &iter);
+    dbus_message_iter_append_string(&iter, condition_name);
+
+    va_start(var_args, first_arg_type);
+    dbus_message_append_args_valist(message, first_arg_type, var_args);
+    va_end(var_args);
+
+    if( !dbus_connection_send(dbus_connection,message, NULL) )
+        DIE(("error broadcasting message"));
+
+    dbus_message_unref(message);
+}
 
 /** Function in the HAL daemon that is called whenever a property on a device
  *  is changed. Will broadcast the changes using D-BUS signals.

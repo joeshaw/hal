@@ -426,6 +426,22 @@ static DBusHandlerResult filter_func(DBusConnection* connection,
         }
     }
     else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
+                                    "Condition") )
+    {
+        if( functions->device_condition!=NULL )
+        {
+            DBusMessageIter iter;
+            char* condition_name;
+
+            dbus_message_iter_init(message, &iter);
+            condition_name = dbus_message_iter_get_string(&iter);
+
+            functions->device_condition(object_path, condition_name, message);
+
+            dbus_free(condition_name);
+        }
+    }
+    else if( dbus_message_is_signal(message, "org.freedesktop.Hal.Device",
                                     "PropertyModified") )
     {
         if( functions->device_property_modified!=NULL )
@@ -469,6 +485,7 @@ static LibHalFunctions hal_null_functions = {
     NULL /*device_removed*/, 
     NULL /*device_new_capability*/,
     NULL /*property_modified*/,
+    NULL /*device_condition*/
 };
 
 /** Initialize the HAL library. 

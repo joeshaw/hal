@@ -226,6 +226,24 @@ static void property_modified(const char* udi, const char* key,
 }
 
 
+/** Invoked when a property of a device in the Global Device List is
+ *  changed, and we have we have subscribed to changes for that device.
+ *
+ *  @param  udi                 Univerisal Device Id
+ *  @param  condition_name      Name of condition
+ *  @param  message             D-BUS message with parameters
+ */
+static void device_condition(const char* udi, const char* condition_name,
+                             DBusMessage* message)
+{
+    fprintf(stderr, "*** lshal: device_condition, udi=%s\n", udi);
+    fprintf(stderr, "           condition_name=%s\n", condition_name);
+    /** @todo FIXME print out message */
+    fprintf(stderr, "\n");
+    /*dump_devices();*/
+}
+
+
 /** Invoked by libhal for integration with our mainloop. We take the
  *  easy route and use link with glib for painless integrate.
  *
@@ -271,7 +289,8 @@ int main(int argc, char* argv[])
                                       device_added, 
                                       device_removed, 
                                       device_new_capability,
-                                      property_modified };
+                                      property_modified,
+                                      device_condition };
 
     fprintf(stderr, "lshal version " PACKAGE_VERSION "\n");
 

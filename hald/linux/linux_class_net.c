@@ -300,6 +300,7 @@ static dbus_uint16_t mdio_read(link_detection_if* iface, int location)
  */
 static void link_detection_process(link_detection_if* iface)
 {
+    dbus_bool_t got_link = FALSE;
     dbus_uint16_t status_word;
     dbus_uint16_t link_word;
     dbus_uint16_t status_word_new;
@@ -338,6 +339,7 @@ static void link_detection_process(link_detection_if* iface)
         {
             ds_property_set_bool(iface->device, 
                                  "net.ethernet.link", TRUE);
+            got_link = TRUE;
         }
         else
         {
@@ -373,6 +375,10 @@ static void link_detection_process(link_detection_if* iface)
         }
 
         property_atomic_update_end();
+
+        emit_condition(iface->device, "NetLinkEvent", 
+                       DBUS_TYPE_BOOLEAN, got_link,
+                       DBUS_TYPE_INVALID);
     }
 }
 
