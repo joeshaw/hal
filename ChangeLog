@@ -1,3 +1,8 @@
+2004-09-23  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux/block_class_device.c: (block_class_pre_process): fix
+	matching of volume_id partition index to block device partition index
+
 2004-09-21  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/block_class_device.c: (block_class_accept):

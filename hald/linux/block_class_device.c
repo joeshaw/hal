@@ -1276,9 +1276,9 @@ block_class_pre_process (ClassDeviceHandler *self,
 				if (volume_id_probe(vid, VOLUME_ID_MSDOSPARTTABLE, 0, size) == 0) {
 					HAL_INFO (("Number of partitions = %d", vid->partition_count));
 
-					if (partition_number >= 0 && partition_number < vid->partition_count) {
+					if (partition_number > 0 && partition_number <= vid->partition_count) {
 						struct volume_id_partition *p;
-						p = &vid->partitions[partition_number];
+						p = &vid->partitions[partition_number-1];
 
 
 						hal_device_property_set_int (
