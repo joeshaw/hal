@@ -1,5 +1,10 @@
 2005-03-04  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/acpi.c (ACPI_POLL_INTERVAL): Change this to every
+	two secs instead of every ten secs
+
+2005-03-04  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/blockdev.c (blockdev_get_luks_uuid): Only sleep
 	the 0.5s if we are not initialising
 	(hotplug_event_begin_add_blockdev): Don't leak the HalDevice object

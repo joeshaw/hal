@@ -44,7 +44,7 @@ enum {
 	ACPI_TYPE_BUTTON
 };
 
-#define ACPI_POLL_INTERVAL 10000
+#define ACPI_POLL_INTERVAL 2000
 
 static gboolean
 acpi_poll (gpointer data)
