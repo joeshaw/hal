@@ -1,5 +1,10 @@
 2004-10-18  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/90defaultpolicy/storage-policy.fdi: Allows allow legacy floppy
+	drives to be mounted by matching storage.bus=platform
+
+2004-10-18  David Zeuthen  <davidz@redhat.com>
+
 	* libhal-storage/libhal-storage.c:
 	(mopts_collect): New convenience function
 	(hal_drive_policy_get_mount_options): Ensure that 'pamconsole', 'user',

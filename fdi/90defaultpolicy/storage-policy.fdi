@@ -30,6 +30,9 @@
       <match key="storage.bus" string="sata">
 	<merge key="storage.policy.should_mount" type="bool">true</merge>
       </match>
+      <match key="storage.bus" string="platform">
+	<merge key="storage.policy.should_mount" type="bool">true</merge>
+      </match>
     </match>
 
     <!-- Handle drives with non-partitioned media  -->
