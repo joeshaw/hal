@@ -1,3 +1,8 @@
+2003-11-17  David Zeuthen  <david@fubar.dk>
+
+	* libhal/libhal.c (hal_initialized): Fixed stupied error that prevented
+	libhal from compiling
+	
 2003-11-27  David Zeuthen  <david@fubar.dk>
 
 	* agents/linux26/sysfs/hal-sysfs-agent.c: Removed; splitted into

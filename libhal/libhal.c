@@ -571,7 +571,7 @@ int hal_initialize(const LibHalFunctions* cb_functions)
     functions = cb_functions;
     /* allow caller to pass NULL */
     if( functions==NULL )
-        functions = hal_null_functions;
+        functions = &hal_null_functions;
 
     // connect to hald service on the system bus
     dbus_error_init(&error);
