@@ -27,6 +27,8 @@
 #  include <config.h>
 #endif
 
+#define _GNU_SOURCE 1
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,6 +40,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <mntent.h>
+#include <signal.h>
 #include <sys/un.h>
 #include <sys/utsname.h>
 #include <unistd.h>
@@ -81,6 +84,7 @@
 #include "acpi.h"
 #include "apm.h"
 #include "pmu.h"
+#include "blockdev.h"
 
 #include "osspec_linux.h"
 
@@ -190,14 +194,55 @@ out:
 	return TRUE;
 }
 
+static int sigio_unix_signal_pipe_fds[2];
+static GIOChannel *sigio_iochn;
+
+static void
+sigio_handler (int sig)
+{
+	static char marker[1] = {'S'};
+
+	/* write a 'S' character to the other end to tell about
+	 * the signal. Note that 'the other end' is a GIOChannel thingy
+	 * that is only called from the mainloop - thus this is how we
+	 * defer this since UNIX signal handlers are evil
+	 *
+	 * Oh, and write(2) is indeed reentrant */
+	write (sigio_unix_signal_pipe_fds[1], marker, 1);
+}
+
+static gboolean
+sigio_iochn_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
+{
+	GError *err = NULL;
+	gchar data[1];
+	gsize bytes_read;
+
+	/* Empty the pipe */
+	if (G_IO_STATUS_NORMAL != g_io_channel_read_chars (source, data, 1, &bytes_read, &err)) {
+		HAL_ERROR (("Error emptying callout notify pipe: %s", err->message));
+		g_error_free (err);
+		goto out;
+	}
+
+	/* TODO: check mtime on /etc/mtab file */
+	HAL_INFO (("/etc/mtab changed"));
+	blockdev_mtab_changed ();
+	
+out:
+	return TRUE;
+}
+
 void
 osspec_init (void)
 {
+	int etcfd;
 	int socketfd;
 	struct sockaddr_un saddr;
 	socklen_t addrlen;
 	GIOChannel *channel;	
 	const int on = 1;
+	guint sigio_iochn_listener_source_id;
 
 	/* setup socket for listening from datagrams from the hal.hotplug helper */
 	memset(&saddr, 0x00, sizeof(saddr));
@@ -234,6 +279,21 @@ osspec_init (void)
 		goto error;
 	}
 	HAL_INFO (("proc mount point is '%s'", hal_proc_path));
+
+	/* start watching /etc so we know when mtab is updated */
+	etcfd = open ("/etc", O_RDONLY);
+	if (etcfd < 0)
+		DIE (("Could not open /etc"));
+	fcntl (etcfd, F_NOTIFY, DN_MODIFY | DN_MULTISHOT);
+
+	if (pipe (sigio_unix_signal_pipe_fds) != 0) {
+		DIE (("Could not setup pipe: %s", strerror (errno)));
+	}	
+	if ((sigio_iochn = g_io_channel_unix_new (sigio_unix_signal_pipe_fds[0])) == NULL)
+		DIE (("Could not create GIOChannel"));
+	sigio_iochn_listener_source_id = g_io_add_watch (sigio_iochn, G_IO_IN, sigio_iochn_data, NULL);
+	signal (SIGIO, sigio_handler);
+
 
 	/* Load various hardware id databases */
 	ids_init ();

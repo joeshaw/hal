@@ -1,3 +1,76 @@
+2005-02-10  David Zeuthen  <davidz@redhat.com>
+
+	* volume_id/fat.c (volume_id_probe_vfat): Must have been a typo by Kay,
+	changed from VOLUME_ID_DISKLABEL to VOLUME_ID_FILESYSTEM.
+
+	* tools/fstab-sync.c (remove_udi): Remember to init the DBusError since
+	some operations may fail.
+	(main): Look at $HALD_ACTION for add, remove instead of first 
+	positional parameter $1.
+
+	* hald/linux2/probing/probe-volume.c: New file
+
+	* hald/linux2/probing/probe-storage.c: New file
+
+	* hald/linux2/probing/linux_dvd_rw_utils.[ch]: New files (imported
+	from hal-0.4.x)
+
+	* hald/linux2/probing/Makefile.am: Add rules for hald-probe-storage
+	and hald-probe-volume
+
+	* hald/linux2/addons/addon-storage.c: New file
+
+	* hald/linux2/addons/Makefile.am: Add rules for hald-addon-storage
+
+	* hald/linux2/osspec.c (sigio_handler): New function
+	(sigio_iochn_data): New function
+	(osspec_init): Set up signal handler for SIGIO and the neccesary
+	pipes to handle it safely. Set up directory watcher for /etc and
+	invoke blockdev_mtab_changed whenever that happens
+
+	* hald/linux2/hotplug.c (hotplug_rescan_device): Call blockdev_*
+	if appropriate
+
+	* hald/linux2/blockdev.h: Add some new prototype for interacting
+	with hotplug.c (much like what physdev.h and classdev.h)
+	exported. Also add the prototype for a new function
+	blockdev_mtab_changed.
+
+	* hald/linux2/blockdev.c: Actually put some code here (the previous
+	code was just boiler plate).
+
+	* hald/util.h (struct HalHelperData_s): Add boolean already_issued_
+	callback
+
+	* hald/util.c (hal_util_get_string_from_file): Truncate whitespace
+	from string read
+	(hal_util_terminate_helper): Don't remove the child watcher source,
+	but set a flag that we already did the callback and helper_child_exited
+	will reap the child (including removing sources). This helps reap the
+	zombies I've been seeing.
+	(helper_child_timeout): -do-
+	(helper_child_exited): Only do callback if we haven't already done
+	so.
+
+	* hald/debug-hald.sh: Another nice script for running gdb on hald;
+	just run this script and invoke the run command from the gdb console.
+
+	* hald/run-hald.sh: Also export ../tools so we can get fstab-sync
+	going. Set HAL_FDI_SOURCE
+
+	* hald/device_info.c (di_search_and_merge): Respect the env
+	var HAL_FDI_SOURCE which is useful for development as hald will
+	read you local .fdi files
+
+	* fdi/90defaultpolicy/storage-policy.fdi: Temporarily add
+	fstab-sync add/rem callouts (mental note: move to other file
+	soon); also add the media detection addon
+
+	* fdi/90defaultpolicy/power-mgmt-policy.fdi: New file
+
+	* fdi/90defaultpolicy/Makefile.am (fdi90defaultpolicydir): Add
+	power-mgmt-policy.fdi
+
 2005-02-08  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/osspec.c (get_hal_proc_path): Return hal_proc_path,

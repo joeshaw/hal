@@ -1414,7 +1414,6 @@ remove_udi (const char *udi)
   DBusError error;
 
   dbus_error_init (&error);
-
   is_volume = libhal_device_query_capability (hal_context, udi, "volume", &error);
 
   /* don't remove the fstab entry if we were spawned of a device with
@@ -1422,9 +1421,11 @@ remove_udi (const char *udi)
    * exactly when block.no_partitions is TRUE on the volume. E.g.
    * floppies and optical discs
    */
+  dbus_error_init (&error);
   if (is_volume && libhal_device_get_property_bool (hal_context, udi, "block.no_partitions", &error))
     return FALSE;
 
+  dbus_error_init (&error);
   block_device = libhal_device_get_property_string (hal_context, udi, "block.device", &error);
 
   dir = strdup (_PATH_FSTAB); 	 
@@ -1702,7 +1703,9 @@ main (int argc, const char *argv[])
   hal_device_udi = getenv ("UDI");
   if (hal_device_udi != NULL) {
       char *caps;
-      
+      char *action;
+     
+ 
       /* when invoked for the /org/freedesktop/Hal/devices/computer UDI we clean the fstab */
       if (getenv ("HALD_STARTUP") != NULL && strcmp (hal_device_udi, "/org/freedesktop/Hal/devices/computer") == 0) {
 	should_clean = TRUE;
@@ -1727,6 +1730,13 @@ main (int argc, const char *argv[])
 	    retval = 0;
 	    goto out;
 	  }
+	}
+
+	if ((action = getenv ("HALD_ACTION")) != NULL) {
+		if (strcmp (action, "add") == 0)
+			udi_to_add = hal_device_udi;
+		else if (strcmp (action, "remove") == 0)
+			udi_to_remove = hal_device_udi;
 	}
 
 	/* we don't want to remove entries just because hald is shutting down */

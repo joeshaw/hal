@@ -1399,7 +1399,6 @@ scan_fdi_files (const char *dir, HalDevice * d)
 	return found_fdi_file;
 }
 
-
 /** Search the device info file repository for a .fdi file to merge
  *  more information into the device object.
  *
@@ -1409,8 +1408,21 @@ scan_fdi_files (const char *dir, HalDevice * d)
 dbus_bool_t
 di_search_and_merge (HalDevice *d)
 {
+	static gboolean have_checked_hal_fdi_source = FALSE;
+	static char *hal_fdi_source = NULL;
+	char *source;
 
-	return scan_fdi_files (PACKAGE_DATA_DIR "/hal/fdi", d);
+	if (!have_checked_hal_fdi_source) {
+		hal_fdi_source = getenv ("HAL_FDI_SOURCE");
+		have_checked_hal_fdi_source = TRUE;
+	}
+
+	if (hal_fdi_source != NULL)
+		source = hal_fdi_source;
+	else
+		source = PACKAGE_DATA_DIR "/hal/fdi";
+
+	return scan_fdi_files (source, d);
 }
 
 /** @} */

@@ -91,6 +91,8 @@ struct HalHelperData_s
 	gpointer data1;
 	gpointer data2;
 	HalDevice *d;
+
+	gboolean already_issued_callback;
 };
 
 HalHelperData  *hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 

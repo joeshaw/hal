@@ -386,7 +386,7 @@ hotplug_rescan_device (HalDevice *d)
 		break;
 
 	case HOTPLUG_EVENT_SYSFS_BLOCK:
-		ret = FALSE; /* TODO */
+		ret = blockdev_rescan_device (d);
 		break;
 
 	case HOTPLUG_EVENT_ACPI:
@@ -438,7 +438,7 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 		break;
 
 	case HOTPLUG_EVENT_SYSFS_BLOCK:
-		e = NULL; /* TODO */
+		e = blockdev_generate_remove_hotplug_event (d);
 		break;
 
 	case HOTPLUG_EVENT_ACPI:
@@ -483,7 +483,7 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 		break;
 
 	case HOTPLUG_EVENT_SYSFS_BLOCK:
-		e = NULL; /* TODO */
+		e = blockdev_generate_add_hotplug_event (d);
 		break;
 
 	case HOTPLUG_EVENT_ACPI:

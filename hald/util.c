@@ -340,6 +340,7 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 	gchar path[HAL_PATH_MAX];
 	gchar *result;
 	gsize len;
+	guint i;
 	
 	f = NULL;
 	result = NULL;
@@ -356,10 +357,17 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 		HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
 	}
-
+       
 	len = strlen (buf);
 	if (len>0)
 		buf[len-1] = '\0';
+
+	/* Clear remaining whitespace */
+	for (i = len-2; i >= 0; --i) {
+		if (!g_ascii_isspace (buf[i]))
+			break;
+		buf[i] = '\0';
+	}
 
 	result = buf;
 
@@ -418,14 +426,16 @@ hal_util_terminate_helper (HalHelperData *ed)
 	kill (ed->pid, SIGTERM);
 	/* TODO: yikes; what about removing the zombie? */
 
-	if (ed->timeout_watch_id != (guint) -1)
+	if (ed->timeout_watch_id != (guint) -1) {
 		g_source_remove (ed->timeout_watch_id);
-	g_source_remove (ed->child_watch_id);
-	g_spawn_close_pid (ed->pid);
+		ed->timeout_watch_id = -1;
+	}
+
+	ed->already_issued_callback = TRUE;
 
 	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
 
-	g_free (ed);
+	/* ed will be cleaned up when helper_child_exited reaps the child */
 	return;
 }
 
@@ -438,14 +448,13 @@ helper_child_timeout (gpointer data)
 
 	/* kill kenny! kill it!! */
 	kill (ed->pid, SIGTERM);
-	/* TODO: yikes; what about removing the zombie? */
 
-	g_source_remove (ed->child_watch_id);
-	g_spawn_close_pid (ed->pid);
+	ed->timeout_watch_id = -1;
+	ed->already_issued_callback = TRUE;
 
 	ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
 
-	g_free (ed);
+	/* ed will be cleaned up when helper_child_exited reaps the child */
 	return FALSE;
 }
 
@@ -454,14 +463,15 @@ helper_child_exited (GPid pid, gint status, gpointer data)
 {
 	HalHelperData *ed = (HalHelperData *) data;
 
-	HAL_INFO (("child exited for pid %d", ed->pid));
+	HAL_INFO (("child exited for pid %d", pid));
 
 	if (ed->timeout_watch_id != (guint) -1)
 		g_source_remove (ed->timeout_watch_id);
 	g_spawn_close_pid (ed->pid);
 
-	ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2, ed);
-
+	if (!ed->already_issued_callback)
+		ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2, ed);
+		
 	g_free (ed);
 }
 
