@@ -1,4 +1,10 @@
-2005-03-15  David Zeuthen  <david@fubar.dk>
+2005-03-15  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/information/10freedesktop/10-usb-card-readers.fdi: Add
+	device-information for the builtin USB2 card reader in my HP Media
+	Center x86_64 box
+
+2005-03-15  David Zeuthen  <davidz@redhat.com>
 
 	* doc/TODO (CVSID): Add a few items
 
