@@ -1,5 +1,8 @@
 2003-12-29  David Zeuthen  <david@fubar.dk>
 
+	* Makefile.am: add hal.conf.in to EXTRA_DIST to so make distcheck
+	passes
+
 	* configure.in: add --with-hal-user and --with-hal-group, defaults
 	to hal:hal. Autogenerate hal.conf
 
