@@ -94,6 +94,9 @@ do
   fi
 done
 
+glib-gettextize --force --copy                              || exit 1
+intltoolize --copy --force --automake                  || exit 1
+
 conf_flags="--enable-maintainer-mode"
 
 if test x$NOCONFIGURE = x; then

@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: hal-storage
+Description: hal library for storage devices and volumes
+Version: @VERSION@
+Requires: dbus-1 hal
+Libs: -L${libdir} -lhal-storage
+Cflags: -DDBUS_API_SUBJECT_TO_CHANGE -I${includedir}/hal

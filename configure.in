@@ -372,14 +372,25 @@ else
 fi
 
 
+ALL_LINGUAS="da"
+AC_SUBST(ALL_LINGUAS)
+
+GETTEXT_PACKAGE=AC_PACKAGE_NAME
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Name of the gettext package])
+
+AC_PROG_INTLTOOL([0.22])
+AM_GLIB_GNU_GETTEXT
 
 AC_OUTPUT([
 hal.pc
+hal-storage.pc
 hal.conf
 Makefile
 hald/Makefile
 hald/haldaemon
 libhal/Makefile
+libhal-storage/Makefile
 tools/Makefile
 tools/linux/Makefile
 tools/device-manager/Makefile
@@ -394,8 +405,9 @@ doc/spec/Makefile
 doc/spec/hal-spec.xml
 examples/Makefile
 examples/volumed/Makefile
+po/Makefile.in
 ])
-
+	
 dnl ==========================================================================
 echo "
                     HAL $VERSION

@@ -34,6 +34,25 @@
 
 #include "libhal.h"
 
+#ifdef ENABLE_NLS
+# include <libintl.h>
+# define _(String) dgettext (GETTEXT_PACKAGE, String)
+# ifdef gettext_noop
+#   define N_(String) gettext_noop (String)
+# else
+#   define N_(String) (String)
+# endif
+#else
+/* Stubs that do something close enough.  */
+# define textdomain(String) (String)
+# define gettext(String) (String)
+# define dgettext(Domain,Message) (Message)
+# define dcgettext(Domain,Message,Type) (Message)
+# define bindtextdomain(Domain,Directory) (Domain)
+# define _(String)
+# define N_(String) (String)
+#endif
+
 /**
  * @defgroup LibHal HAL convenience library
  * @brief A convenience library used to communicate with the HAL daemon
@@ -557,6 +576,9 @@ static LibHalFunctions hal_null_functions = {
 };
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
+/* for i18n purposes */
+static dbus_bool_t hal_already_initialized_once = FALSE;
+
 /** Initialize the HAL library. 
  *
  *  @param  cb_functions	  Callback functions. If this is set top NULL
@@ -581,6 +603,13 @@ hal_initialize (const LibHalFunctions * cb_functions,
 {
 	DBusError error;
 	LibHalContext *ctx;
+
+	if (!hal_already_initialized_once) {
+		bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+		bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+		
+		hal_already_initialized_once = TRUE;
+	}
 	
 	ctx = malloc (sizeof (LibHalContext));
 	if (ctx == NULL) {

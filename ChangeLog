@@ -1,3 +1,27 @@
+2004-09-23  David Zeuthen  <david@fubar.dk>
+
+	* po/POTFILES.in: New file
+
+	* libhal-storage/libhal-storage.h: New file
+
+	* libhal-storage/libhal-storage.c: New file
+
+	* libhal/libhal.c: Add dgettext support
+	(hal_initialize): Bind to translation domain (but only once)
+
+	* doc/api/Makefile.am (htmldocdir): Rename to api from libhal
+
+	* Doxyfile.in: Add libhal-storage
+
+	* configure.in: Add checks for i18n tools. Add hal-storage.pc,
+	libhal-storage/Makefile and po/Makefile.in to AC_OUTPUT
+
+	* autogen.sh: Add checks for i18n tools
+
+	* hal-storage.pc.in: New file
+
+	* Makefile.am: Add libhal-storage and po to SUBDIRS. Add hal-storage.pc
+
 2004-09-23  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux/block_class_device.c: (block_class_pre_process): fix

@@ -1,0 +1,3 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+libhal-storage/libhal-storage.c
