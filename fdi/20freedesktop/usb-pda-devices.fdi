@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <!-- Palm Tungsten T -->
+  <device>
+    <match key="info.bus" string="usb">
+      <match key="usb.vendor_id" int="0x0830">
+        <match key="usb.product_id" int="0x0060">
+          <merge key="info.category" type="string">pda</merge>
+          <merge key="info.capabilities" type="string">pda</merge>
+          <merge key="pda.serial.use_net" type="bool">true</merge>
+          <merge key="pda.access_method" type="string">serial</merge>
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>

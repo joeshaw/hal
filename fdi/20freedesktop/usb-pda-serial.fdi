@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb-serial">
+      <match key="@info.parent:pda.access_method" string="serial">
+        <merge key="info.category" type="string">pda_endpoint_serial</merge>
+        <merge key="info.capabilities" type="string">pda_endpoint_serial</merge>
+        <merge key="pda_endpoint_serial.pda_device" type="copy_property">info.parent</merge>
+      </match>
+    </match>
+  </device>
+</deviceinfo>

@@ -1,5 +1,11 @@
 2004-12-16  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/20freedesktop/usb-pda-serial.fdi: New file
+
+	* fdi/20freedesktop/usb-pda-devices.fdi: New file
+
+2004-12-16  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux/volume_id/volume_id.c (sesame_parse): Support really long
 	lines
 	(probe_crypto_sesame): Read 1024 bytes instead of only 0x100
