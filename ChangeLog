@@ -1,5 +1,11 @@
 2004-07-06  David Zeuthen  <david@fubar.dk>
 
+	* hald/linux/block_class_device.c (detect_media): Fix media detection
+	that was broken when introducing support for floppy drives twelwe
+	days ago :-/
+
+2004-07-06  David Zeuthen  <david@fubar.dk>
+
 	* hald/linux/volume_id/volume_id.c: Remove #define DEBUG
 
 2004-07-06  David Zeuthen  <david@fubar.dk>

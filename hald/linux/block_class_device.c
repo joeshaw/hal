@@ -447,25 +447,22 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 				     "storage.cdrom.support_media_changed");
 
 	if (!is_cdrom) {
+		gboolean no_partitions = hal_device_property_get_bool (
+			d, "block.no_partitions");
+
 		fd = open (device_file, O_RDONLY);
 
-		if (fd == -1) {
-			/* open failed */
-			/*HAL_WARNING (("open(\"%s\", O_RDONLY) failed, "
-			  "errno=%d", device_file, errno));*/
+		if (fd == -1 && errno == ENOMEDIUM) {
 
-			if (errno == ENOMEDIUM &&
-			    hal_device_property_get_bool (
-				    d, "block.no_partitions") ) {
-				
+			/* No media */
+
+			if (no_partitions) {
 
 				child = hal_device_store_match_key_value_string (
 					hald_get_gdl (), "info.parent",
 					hal_device_get_udi (d));
 
 				if (child != NULL ) {
-					force_unmount_of_all_childs (d);
-
 					HAL_INFO (("Removing volume for "
 						   "no_partitions device %s", 
 						   device_file));
@@ -473,16 +470,17 @@ detect_media (HalDevice * d, dbus_bool_t force_poll)
 					g_signal_connect (child, "callouts_finished",
 							  G_CALLBACK (volume_remove_from_gdl), NULL);
 					hal_callout_device (child, FALSE);
-					
-					close (fd);
 
 					/* GDL was modified */
 					return TRUE;
 				}
-			} 
-			
-		} else if (hal_device_property_get_bool (
-				   d, "block.no_partitions")) {
+			} else {
+				/* Will cause storm of hotplug remove events */
+				force_unmount_of_all_childs (d);
+			}
+		} else if (fd > 0 && no_partitions) {
+
+			/* Media detected */
 
 			/* For drives with partitions, we simply get hotplug
 			 * events so only do something for e.g. floppies */
