@@ -44,27 +44,7 @@ enum {
 	ACPI_TYPE_BUTTON
 };
 
-#define ACPI_POLL_INTERVAL 5000
-
-static gboolean
-acpi_poll (gpointer data)
-{
-	GSList *i;
-	GSList *devices;
-
-	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
-								    "battery.type",
-								    "primary");
-	for (i = devices; i != NULL; i = g_slist_next (i)) {
-		HalDevice *d;
-		
-		d = HAL_DEVICE (i->data);
-		if (hal_device_has_property (d, "linux.acpi_type"))
-			acpi_rescan_device (d);
-	}
-
-	return TRUE;
-}
+#define ACPI_POLL_INTERVAL 30000
 
 
 typedef struct ACPIDevHandler_s
@@ -75,6 +55,23 @@ typedef struct ACPIDevHandler_s
 	gboolean (*remove) (HalDevice *d, struct ACPIDevHandler_s *handler);
 	gboolean (*refresh) (HalDevice *d, struct ACPIDevHandler_s *handler);
 } ACPIDevHandler;
+
+static void
+battery_refresh_poll (HalDevice *d)
+{
+	const char *path;
+
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return;
+	
+	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
+					  "state", "charging state", 0, "charging", TRUE);
+	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path, 
+					  "state", "charging state", 0, "discharging", TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, 
+					 "state", "remaining capacity", 0, 10, TRUE);
+}
 
 static gboolean
 battery_refresh (HalDevice *d, ACPIDevHandler *handler)
@@ -111,13 +108,6 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();
-		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
-		hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
-						  "state", "charging state", 0, "charging", TRUE);
-		hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path, 
-						  "state", "charging state", 0, "discharging", TRUE);
-		hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, 
-						 "state", "remaining capacity", 0, 10, TRUE);
 
 		/* So, it's pretty expensive to read from
 		 * /proc/acpi/battery/BAT%d/[info|state] so don't read
@@ -139,6 +129,10 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 			hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, 
 							 "info", "design capacity", 0, 10, TRUE);
 		}
+
+		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
+
+		battery_refresh_poll (d);
 
 		device_property_atomic_update_end ();
 	}
@@ -271,6 +265,29 @@ acpi_synthesize (const gchar *path, int acpi_type)
 
 out:
 	;
+}
+
+
+static gboolean
+acpi_poll (gpointer data)
+{
+	GSList *i;
+	GSList *devices;
+
+	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "battery.type",
+								    "primary");
+	for (i = devices; i != NULL; i = g_slist_next (i)) {
+		HalDevice *d;
+		
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.acpi_type")) {
+			hal_util_grep_discard_existing_data ();
+			battery_refresh_poll (d);
+		}
+	}
+
+	return TRUE;
 }
 
 /** Scan the data structures exported by the kernel and add hotplug

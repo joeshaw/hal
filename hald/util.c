@@ -673,11 +673,13 @@ hal_util_grep_discard_existing_data (void)
 gchar *
 hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse)
 {
-	FILE *f;
-	static gchar buf[512];
+	static gchar buf[2048];
+	static unsigned int bufsize;
 	static gchar filename[HAL_PATH_MAX];
+	static gchar oldfilename[HAL_PATH_MAX];
 	gchar *result;
 	gsize linestart_len;
+	gchar *p;
 
 	result = NULL;
 
@@ -689,36 +691,54 @@ hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *line
 		snprintf (filename, sizeof (filename), "%s/%s", directory, file);
 	else
 		strncpy (filename, directory, sizeof (filename));
-	f = fopen (filename, "r");
-	if (f == NULL)
-		goto out;
+
+	if (_grep_can_reuse && reuse && strcmp (oldfilename, filename) == 0) {
+		/* just reuse old file; e.g. bufsize, buf */
+		HAL_INFO (("hal_util_grep_file: reusing buf for %s", filename));
+	} else {
+		FILE *f;
+
+		f = fopen (filename, "r");
+		if (f == NULL)
+			goto out;
+		bufsize = fread (buf, sizeof (char), sizeof (buf) - 1, f);
+		buf[bufsize] = '\0';
+		fclose (f);
+
+		HAL_INFO (("hal_util_grep_file: read %s of %d bytes", filename, bufsize));
+	}
+
+	/* book keeping */
+	_grep_can_reuse = TRUE;
+	strncpy (oldfilename, filename, sizeof(oldfilename));
 
 	linestart_len = strlen (linestart);
 
+	/* analyze buf */
+	p = buf;
 	do {
-		if (fgets (buf, sizeof (buf), f) == NULL)
-			goto out;
+		unsigned int linelen;
+		static char line[256];
 
-		if (strncmp (buf, linestart, linestart_len) == 0) {
-			guint i;
-			gsize len;
+		for (linelen = 0; p[linelen] != '\n' && p[linelen] != '\0'; linelen++)
+			;
 
-			len = strlen (buf);
-			for (i = len - 1; i > 0; --i) {
-				if (buf[i] == '\n' || buf[i] == '\r')
-					buf[i] = '\0';
-				else
-					break;
+		if (linelen < sizeof (line)) {
+
+			strncpy (line, p, linelen);
+			line[linelen] = '\0';
+
+			if (strncmp (line, linestart, linestart_len) == 0) {
+				result = line + linestart_len;
+				goto out;
 			}
-			break;
 		}
-	} while (TRUE);
 
-	result = buf + linestart_len;
+		p += linelen + 1;
+
+	} while (p < buf + bufsize);
 
 out:
-	if (f != NULL)
-		fclose (f);
 	return result;
 }
 

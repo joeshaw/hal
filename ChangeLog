@@ -1,3 +1,24 @@
+2005-03-10  David Zeuthen  <davidz@redhat.com>
+
+	Bah, so it turns out that crappy BIOS'es and what-have-you gets really
+	upset of hald, every five seconds, accessing the state file three
+	times and the info file one time (in /proc/acpi/battery/BAT%d)
+
+	https://www.redhat.com/archives/fedora-devel-list/2005-March/msg00704.html
+
+	So, off to read the battstat applet source - fix this up so we
+	only access a single file every 30 seconds; just like battstat applet.
+
+	I really hate hardware.
+
+	* hald/linux2/acpi.c (ACPI_POLL_INTERVAL): Only poll every 30 seconds
+	(battery_refresh_poll): New function
+	(battery_refresh): Call battery_refresh_poll
+	(acpi_poll): Call battery_refresh_poll instead of acpi_rescan_device
+
+	* hald/util.c (hal_util_grep_file): Fix this so the last read buffer
+	is cached for reuse
+
 2005-03-09  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-acpi.c (main): Handle /proc/acpi/event
