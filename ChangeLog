@@ -1,5 +1,31 @@
 2005-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/osspec.c (osspec_shutdown): Remove this function
+
+	* hald/dummy/osspec.c (computer_callouts_add_done): New function
+	(osspec_probe): Fixup to use new di_search_and_merge stuff
+
+	* hald/util.h: Export prototype for hal_util_kill_all_helpers
+
+	* hald/util.c (helper_child_exited): Remove from running_helpers list
+	(hal_util_helper_invoke): Add to running_helpers list
+	(hal_util_kill_all_helpers): New function (uses running_helpers list)
+
+	* hald/osspec.h: Don't export osspec_shutdown and osspec_shutdown_done
+
+	* hald/haldaemon.in: No need to add @LIBEXECDIR@ to PATH now that
+	hald does that itself
+
+	* hald/hald.c (main): Add PACKAGE_LIBEXEC_DIR to out path. Fix a fd
+	leak also (pointed out by Kay Sievers).
+	(sigterm_iochn_data): Kill all pending helpers and exit
+
+	* hald/device_info.c (di_search_and_merge): Fixup some stupid typos
+
+	* hald/Makefile.am (INCLUDES): Include PACKAGE_LIBEXEC_DIR
+
+2005-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/README: Change so this fits better with current packaging
 	policies; see this message and thread at
 	http://lists.freedesktop.org/archives/hal/2005-February/002217.html

@@ -41,12 +41,6 @@ void osspec_probe (void);
 /* Called by kernel specific parts when probing is done */
 void osspec_probe_done (void);
 
-/** Prepare shutdown */
-void osspec_shutdown (void);
-
-/* Called by kernel specific parts when probing is done */
-void osspec_shutdown_done (void);
-
 gboolean osspec_device_rescan (HalDevice *d);
 
 gboolean osspec_device_reprobe (HalDevice *d);

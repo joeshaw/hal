@@ -25,7 +25,6 @@ RETVAL=0
 
 start() {
     echo -n $"Starting HAL daemon: "
-    export PATH=@LIBEXECDIR@:$PATH
     daemon --check $servicename $processname --retain-privileges
     RETVAL=$?
     echo

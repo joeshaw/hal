@@ -56,8 +56,9 @@
 #include "hald_dbus.h"
 #include "util.h"
 
-static void delete_pid(void) {
-    unlink(HALD_PID_FILE);
+static void delete_pid(void)
+{
+	unlink(HALD_PID_FILE);
 }
 
 /**
@@ -255,38 +256,29 @@ sigterm_iochn_data (GIOChannel *source,
 	GError *err = NULL;
 	gchar data[1];
 	gsize bytes_read;
+	unsigned int num_helpers;
 
 	/* Empty the pipe */
 	if (G_IO_STATUS_NORMAL != 
 	    g_io_channel_read_chars (source, data, 1, &bytes_read, &err)) {
-		HAL_ERROR (("Error emptying callout notify pipe: %s",
+		HAL_ERROR (("Error emptying sigterm pipe: %s",
 				   err->message));
 		g_error_free (err);
 		goto out;
 	}
 
-	fprintf (stderr, "SIGTERM, initiating shutdown");
-
-	hald_is_shutting_down = TRUE;
-
-	osspec_shutdown();
+	HAL_INFO (("Caught SIGTERM, initiating shutdown"));
+	num_helpers = hal_util_kill_all_helpers ();
+	HAL_INFO (("Killed %d helpers; exiting"));
+	exit (0);
 
 out:
 	return TRUE;
 }
 
-void 
-osspec_shutdown_done (void)
-{
-	exit (0);
-}
-
 
 /** This is set to #TRUE if we are probing and #FALSE otherwise */
 dbus_bool_t hald_is_initialising;
-
-/** This is set to #TRUE if we are shutting down and #FALSE otherwise */
-dbus_bool_t hald_is_shutting_down;
 
 static int startup_daemonize_pipe[2];
 
@@ -342,6 +334,8 @@ main (int argc, char *argv[])
 	GMainLoop *loop;
 	guint sigterm_iochn_listener_source_id;
 	gboolean retain_privs;
+	char *path;
+	char newpath[512];
 
 	retain_privs = FALSE;
   
@@ -354,6 +348,15 @@ main (int argc, char *argv[])
 		hald_is_verbose = TRUE;
 	else
 		hald_is_verbose = FALSE;
+
+	/* our helpers are installed into libexec, so adjust out $PATH to include this */
+	path = getenv ("PATH");
+	g_strlcpy (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
+	if (path != NULL) {
+		g_strlcat (newpath, ":", sizeof (newpath));
+		g_strlcat (newpath, path, sizeof (newpath));
+	}
+	setenv ("PATH", newpath, TRUE);
 
 	while (1) {
 		int c;
@@ -463,6 +466,7 @@ main (int argc, char *argv[])
 				dup2 (dev_null_fd, 0);
 				dup2 (dev_null_fd, 1);
 				dup2 (dev_null_fd, 2);
+				close (dev_null_fd);
 			}
 
 			umask (022);
@@ -482,18 +486,15 @@ main (int argc, char *argv[])
 		setsid ();
 
 		/* remove old pid file */
-		unlink(HALD_PID_FILE);
+		unlink (HALD_PID_FILE);
 
 		/* Make a new one */
-		if ((pf=open(HALD_PID_FILE, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL,
-			0644)) == -1) {
-			HAL_ERROR (("Cannot create pid file"));
-			exit(1);
+		if ((pf= open (HALD_PID_FILE, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0644)) > 0) {
+			snprintf (pid, sizeof(pid), "%lu\n", (long unsigned) getpid ());
+			write (pf, pid, strlen(pid));
+			close (pf);
+			atexit (delete_pid);
 		}
-		sprintf(pid, "%lu\n", (long unsigned)getpid());
-		write(pf, pid, strlen(pid));
-		close(pf);
-		atexit(delete_pid);
 	}
 
 

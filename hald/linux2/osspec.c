@@ -340,11 +340,6 @@ error:
 	;
 }
 
-void
-osspec_shutdown (void)
-{
-}
-
 static void 
 computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {

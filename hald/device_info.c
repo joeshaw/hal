@@ -1437,8 +1437,8 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type)
 		break;
 
 	case DEVICE_INFO_TYPE_INFORMATION:
-		if (hal_fdi_source_preprobe != NULL) {
-			s1 = hal_fdi_source_preprobe;
+		if (hal_fdi_source_information != NULL) {
+			s1 = hal_fdi_source_information;
 			s2 = NULL;
 		} else {
 			s1 = PACKAGE_DATA_DIR "/hal/fdi/information";
@@ -1447,8 +1447,8 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type)
 		break;
 
 	case DEVICE_INFO_TYPE_POLICY:
-		if (hal_fdi_source_preprobe != NULL) {
-			s1 = hal_fdi_source_preprobe;
+		if (hal_fdi_source_policy != NULL) {
+			s1 = hal_fdi_source_policy;
 			s2 = NULL;
 		} else {
 			s1 = PACKAGE_DATA_DIR "/hal/fdi/policy";

@@ -34,15 +34,24 @@
 #include "../osspec.h"
 #include "../logger.h"
 #include "../hald.h"
+#include "../util.h"
+#include "../device_info.h"
 
 void
 osspec_init (void)
 {
 }
 
-void
-osspec_shutdown (void)
+static void 
+computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
+
+	osspec_probe_done ();
 }
 
 void 
@@ -59,13 +68,10 @@ osspec_probe (void)
 
 	hal_device_store_add (hald_get_tdl (), root);
 
-	di_search_and_merge (root);
+	di_search_and_merge (root, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (root, DEVICE_INFO_TYPE_POLICY);
 
-	hal_device_store_remove (hald_get_tdl (), root);
-	hal_device_store_add (hald_get_gdl (), root);
-
-
-	osspec_probe_done ();
+	hal_util_callout_device_add (root, computer_callouts_add_done, NULL, NULL);
 }
 
 DBusHandlerResult

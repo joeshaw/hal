@@ -463,6 +463,8 @@ helper_child_timeout (gpointer data)
 	return FALSE;
 }
 
+static GSList *running_helpers = NULL;
+
 static void 
 helper_child_exited (GPid pid, gint status, gpointer data)
 {
@@ -476,7 +478,8 @@ helper_child_exited (GPid pid, gint status, gpointer data)
 
 	if (!ed->already_issued_callback)
 		ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2, ed);
-		
+
+	running_helpers = g_slist_remove (running_helpers, ed);		
 	g_free (ed);
 }
 
@@ -542,8 +545,6 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 		num_env_vars++;
 	if (hald_is_initialising)
 		num_env_vars++;
-	if (hald_is_shutting_down)
-		num_env_vars++;
 
 	envp = g_new (char *, num_env_vars);
 	ienvp = envp;
@@ -554,8 +555,6 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 		envp[i++] = g_strdup ("HALD_VERBOSE=1");
 	if (hald_is_initialising)
 		envp[i++] = g_strdup ("HALD_STARTUP=1");
-	if (hald_is_shutting_down)
-		envp[i++] = g_strdup ("HALD_SHUTDOWN=1");
 	for (j = 0; j < num_extras; j++) {
 		envp[i++] = g_strdup (extra_env[j]);
 	}
@@ -587,6 +586,8 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 				ed->timeout_watch_id = g_timeout_add (timeout, helper_child_timeout, (gpointer) ed);
 			else
 				ed->timeout_watch_id = (guint) -1;
+
+			running_helpers = g_slist_prepend (running_helpers, ed);
 		}
 	}
 
@@ -1031,4 +1032,27 @@ hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpoint
 	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:
 	;
+}
+
+/** Kill all helpers we have running; useful when exiting hald.
+ *
+ *  @return                     Number of childs killed
+ */
+unsigned int 
+hal_util_kill_all_helpers (void)
+{
+	unsigned int n;
+	GSList *i;
+
+	n = 0;
+	for (i = running_helpers; i != NULL; i = i->next) {
+		HalHelperData *ed;
+
+		ed = i->data;
+		HAL_INFO (("Killing helper with pid %d", ed->pid));
+		kill (ed->pid, SIGTERM);
+		n++;
+	}
+
+	return n;
 }
