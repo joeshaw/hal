@@ -1788,21 +1788,8 @@ main (int argc, const char *argv[])
 	  }
 
   dbus_error_init (&error);	
-  conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-  if (conn == NULL) {
-	  fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
-	  goto out;
-  }		
-  if ((hal_context = libhal_ctx_new ()) == NULL) {
-	  fprintf (stderr, "error: libhal_ctx_new\n");
-	  goto out;
-  }
-  if (!libhal_ctx_set_dbus_connection (hal_context, conn)) {
-	  fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
-	  goto out;
-  }
-  if (!libhal_ctx_init (hal_context, &error)) {
-	  fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+  if ((hal_context = libhal_ctx_init_direct (&error)) == NULL) {
+	  fprintf (stderr, "error: libhal_ctx_init_direct: %s: %s\n", error.name, error.message);
 	  goto out;
   }
 

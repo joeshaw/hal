@@ -53,9 +53,6 @@ main (int argc, char *argv[])
 	int ret;
 	char *udi;
 	char *device_file;
-	LibHalContext *ctx = NULL;
-	DBusError error;
-	DBusConnection *conn;
 	char name[256];
 	struct floppy_drive_struct ds;
 
@@ -106,12 +103,6 @@ main (int argc, char *argv[])
 out:
 	if (fd >= 0)
 		close (fd);
-
-	if (ctx != NULL) {
-		dbus_error_init (&error);
-		libhal_ctx_shutdown (ctx, &error);
-		libhal_ctx_free (ctx);
-	}
 
 	return ret;
 }

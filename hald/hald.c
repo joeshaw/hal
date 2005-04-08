@@ -586,8 +586,8 @@ main (int argc, char *argv[])
 	/* Finally, setup unix signal handler for TERM */
 	signal (SIGTERM, handle_sigterm);
 
-	/* set up the dbus services */
-	if (!hald_dbus_init ())
+	/* set up the local dbus server */
+	if (!hald_dbus_local_server_init ())
 		return 1;
 
 	/* initialize operating system specific parts */
@@ -636,6 +636,11 @@ osspec_probe_done (void)
 	char buf[1] = {0};
 
 	HAL_INFO (("Device probing completed"));
+
+	if (!hald_dbus_init ()) {
+		hal_util_kill_all_helpers ();
+		exit (1);
+	}
 
 	/* tell parent to exit */
 	write (startup_daemonize_pipe[1], buf, sizeof (buf));

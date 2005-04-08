@@ -152,6 +152,8 @@ dbus_bool_t    libhal_ctx_init                         (LibHalContext *ctx, DBus
 dbus_bool_t    libhal_ctx_shutdown                     (LibHalContext *ctx, DBusError *error);
 dbus_bool_t    libhal_ctx_free                         (LibHalContext *ctx);
 
+LibHalContext *libhal_ctx_init_direct                  (DBusError *error);
+
 
 char        **libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error);
 dbus_bool_t   libhal_device_exists   (LibHalContext *ctx, const char *udi,  DBusError *error);

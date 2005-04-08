@@ -1,3 +1,79 @@
+2005-04-08  David Zeuthen  <davidz@redhat.com>
+
+	Make all hal helpers use a direct connection to hald rather than
+	going through the bus. This is for both performance and security
+	reasons. Also, fix the reconnect issue and don't connect to the
+	system message bus before probing is done.
+
+	* configure.in: Require dbus 0.33; that, for now, means D-BUS CVS
+	HEAD since it requires the patch in fd.o bug #2889 and D-BUS made
+	a post-release version bump. I'll look into doing a D-BUS release
+	soon.
+
+	* libhal/libhal.h: Export prototype for libhal_ctx_init_direct()
+
+	* libhal/libhal.c (libhal_ctx_init_direct): New convenience function
+	for connecting directly to hald instead of going through the message
+	bus (requires the address in the HALD_DIRECT_ADDR environment variable)
+
+	* hald/util.c (hal_util_helper_invoke): Export the local hald dbus
+	server address in HALD_DIRECT_ADDR
+
+	* hald/hald_dbus.c (manager_send_signal_device_added): Handle the
+	case where we're not connected to the system message bus
+	(manager_send_signal_device_removed): -do-
+	(manager_send_signal_new_capability): -do-
+	(device_property_atomic_update_end): -do-
+	(device_send_signal_property_modified): -do-
+	(device_send_signal_condition): -do-
+	(device_set_property): Always allow local interface
+	(device_add_capability): -do-
+	(device_remove_property): -do-
+	(device_rescan): -do-
+	(device_reprobe): -do-
+	(device_emit_condition): -do-
+	(hald_dbus_filter_handle_methods): New function
+	(hald_dbus_filter_function): Move bulk of functionality to the new
+	hald_dbus_filter_handle_methods() and pass local_interface==FALSE.
+	Handle Disconnect from local libdbus properly and attempt to
+	reconnect to the system message bus every so often (every 3 secs)
+	(local_server_message_handler): New function
+	(local_server_unregister_handler): New function
+	(local_server_handle_connection): New function
+	(hald_dbus_local_server_addr): New function
+	(hald_dbus_local_server_init): New function
+
+	* hald/hald.c (main): Register a local dbus server instead of
+	connection to the system bus as startup
+	(osspec_probe_done): Only connect to the system bus once probing
+	is done
+
+	* tools/fstab-sync.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-volume.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-storage.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-smbios.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-printer.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-hiddev.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-input.c (main): Use direct connection
+
+	* hald/linux2/addons/addon-usb-csr.c (main): Use direct connection
+
+	* hald/linux2/addons/addon-storage.c (main): Use direct connection
+
+	* hald/linux2/addons/addon-hid-ups.c (main): Use direct connection
+
+	* hald/linux2/addons/addon-acpi.c (main): Use direct connection
+
+	* hald/linux2/probing/probe-pc-floppy.c (main): Remove all references
+	to hal and dbus since this program just returns the result in the
+	exit code
+
 2005-04-06  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/probing/probe-volume.c: (main): read volume label

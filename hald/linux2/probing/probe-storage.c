@@ -137,14 +137,7 @@ main (int argc, char *argv[])
 		only_check_for_fs = FALSE;
 
 	dbus_error_init (&error);
-	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
-		goto out;
-
-	if ((ctx = libhal_ctx_new ()) == NULL)
-		goto out;
-	if (!libhal_ctx_set_dbus_connection (ctx, conn))
-		goto out;
-	if (!libhal_ctx_init (ctx, &error))
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
 	dbg ("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 

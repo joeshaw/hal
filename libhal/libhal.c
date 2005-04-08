@@ -191,6 +191,7 @@ struct LibHalContext_s {
 	dbus_bool_t is_initialized;           /**< Are we initialised */
 	dbus_bool_t is_shutdown;              /**< Have we been shutdown */
 	dbus_bool_t cache_enabled;            /**< Is the cache enabled */
+	dbus_bool_t is_direct;                /**< Whether the connection to hald is direct */
 
 	/** Device added */
 	LibHalDeviceAdded device_added;
@@ -2709,6 +2710,7 @@ libhal_ctx_new (void)
 	ctx->is_initialized = FALSE;
 	ctx->is_shutdown = FALSE;
 	ctx->connection = NULL;
+	ctx->is_direct = FALSE;
 
 	return ctx;
 }
@@ -2763,8 +2765,42 @@ libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 		return FALSE;
 	}
 	ctx->is_initialized = TRUE;
+	ctx->is_direct = FALSE;
 
 	return TRUE;
+}
+
+LibHalContext *
+libhal_ctx_init_direct (DBusError *error)
+{
+	char *hald_addr;
+	LibHalContext *ctx;
+	DBusError _error;
+
+	ctx = libhal_ctx_new ();
+	if (ctx == NULL)
+		goto out;
+
+	if (((hald_addr = getenv ("HALD_DIRECT_ADDR"))) == NULL) {
+		libhal_ctx_free (ctx);
+		ctx = NULL;
+		goto out;
+	}
+
+	dbus_error_init (&_error);
+	ctx->connection = dbus_connection_open (hald_addr, &_error);
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
+		libhal_ctx_free (ctx);
+		ctx = NULL;
+		goto out;
+	}
+
+	ctx->is_initialized = TRUE;
+	ctx->is_direct = TRUE;
+
+out:
+	return ctx;
 }
 
 dbus_bool_t    
@@ -2772,21 +2808,26 @@ libhal_ctx_shutdown (LibHalContext *ctx, DBusError *error)
 {
 	DBusError myerror;
 
-	dbus_error_init (&myerror);
-	dbus_bus_add_match (ctx->connection, 
-			    "type='signal',"
-			    "interface='org.freedesktop.Hal.Manager',"
-			    "sender='org.freedesktop.Hal',"
-			    "path='/org/freedesktop/Hal/Manager'", &myerror);
-	if (dbus_error_is_set (&myerror)) {
-		fprintf (stderr, "%s %d : Error unsubscribing to signals, error=%s\n", 
-			 __FILE__, __LINE__, error->message);
-		/** @todo  clean up */
+	if (ctx->is_direct) {
+		/* for some reason dbus_connection_set_exit_on_disconnect doesn't work yet so don't unref */
+		/*dbus_connection_unref (ctx->connection);*/
+	} else {
+		dbus_error_init (&myerror);
+		dbus_bus_remove_match (ctx->connection, 
+				       "type='signal',"
+				       "interface='org.freedesktop.Hal.Manager',"
+				       "sender='org.freedesktop.Hal',"
+				       "path='/org/freedesktop/Hal/Manager'", &myerror);
+		if (dbus_error_is_set (&myerror)) {
+			fprintf (stderr, "%s %d : Error unsubscribing to signals, error=%s\n", 
+				 __FILE__, __LINE__, error->message);
+			/** @todo  clean up */
+		}
+
+		/* TODO: remove other matches */
+
+		dbus_connection_remove_filter (ctx->connection, filter_func, ctx);
 	}
-
-	/* TODO: remove other matches */
-
-	dbus_connection_remove_filter (ctx->connection, filter_func, ctx);
 
 	ctx->is_initialized = FALSE;
 

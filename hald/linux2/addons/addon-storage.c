@@ -182,14 +182,7 @@ main (int argc, char *argv[])
 		support_media_changed = FALSE;
 
 	dbus_error_init (&error);
-	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
-		goto out;
-
-	if ((ctx = libhal_ctx_new ()) == NULL)
-		goto out;
-	if (!libhal_ctx_set_dbus_connection (ctx, conn))
-		goto out;
-	if (!libhal_ctx_init (ctx, &error))
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
 	printf ("**************************************************\n");

@@ -45,13 +45,13 @@ DBusHandlerResult device_get_property               (DBusConnection *conn,
 DBusHandlerResult device_get_property_type          (DBusConnection *conn,
 						     DBusMessage    *msg);
 DBusHandlerResult device_set_property               (DBusConnection *conn,
-						     DBusMessage    *msg);
+						     DBusMessage    *msg, dbus_bool_t local_interface);
 DBusHandlerResult device_add_capability             (DBusConnection *conn,
-						     DBusMessage    *msg);
+						     DBusMessage    *msg, dbus_bool_t local_interface);
 DBusHandlerResult device_remove_capability          (DBusConnection *conn,
-						     DBusMessage    *msg);
+						     DBusMessage    *msg, dbus_bool_t local_interface);
 DBusHandlerResult device_remove_property            (DBusConnection *conn,
-						     DBusMessage    *msg);
+						     DBusMessage    *msg, dbus_bool_t local_interface);
 DBusHandlerResult device_property_exists            (DBusConnection *conn,
 						     DBusMessage    *msg);
 DBusHandlerResult device_query_capability           (DBusConnection *conn,
@@ -89,7 +89,11 @@ void device_property_atomic_update_end   (void);
 
 gboolean hald_dbus_init (void);
 
+gboolean hald_dbus_local_server_init (void);
+
 DBusHandlerResult hald_dbus_filter_function (DBusConnection * connection, DBusMessage * message, void *user_data);
+
+char *hald_dbus_local_server_addr (void);
 
 
 #endif /* HAL_DBUS_H */

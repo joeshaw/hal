@@ -554,6 +554,7 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 	guint i, j;
 	guint num_properties;
 	guint num_extras;
+	char *local_addr;
 
 	ed = g_new0 (HalHelperData, 1);
 	ed->data1 = data1;
@@ -573,6 +574,8 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 		num_env_vars++;
 	if (hald_is_initialising)
 		num_env_vars++;
+	if ((local_addr = hald_dbus_local_server_addr ()) != NULL)
+		num_env_vars++;
 
 	envp = g_new (char *, num_env_vars);
 	ienvp = envp;
@@ -583,6 +586,8 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 		envp[i++] = g_strdup ("HALD_VERBOSE=1");
 	if (hald_is_initialising)
 		envp[i++] = g_strdup ("HALD_STARTUP=1");
+	if (local_addr != NULL)
+		envp[i++] = g_strdup_printf ("HALD_DIRECT_ADDR=%s", local_addr);
 	for (j = 0; j < num_extras; j++) {
 		envp[i++] = g_strdup (extra_env[j]);
 	}

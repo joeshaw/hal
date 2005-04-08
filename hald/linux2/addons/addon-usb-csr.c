@@ -398,7 +398,6 @@ main (int argc, char *argv[])
 	the_device_udi = getenv ("UDI");
 
 	dbg ("device:[%s]\n", the_device_udi);
-
 	if (the_device_udi == NULL)
 	{
 		fprintf (stderr, "No device specified\n");
@@ -406,24 +405,8 @@ main (int argc, char *argv[])
 	}
 
 	dbus_error_init (&err);
-
-        if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &err)) == NULL)
-	{
-		fprintf (stderr, "Could not obtain dbus connection\n");
-		return -3;
-	}
-	dbg ("DBUS connection: %p\n", conn);
-
-	hal_context = libhal_ctx_new ();
-        if (!libhal_ctx_set_dbus_connection (hal_context, conn))
-	{
-		fprintf (stderr, "Could not bind to DBUS\n");
-		return -4;
-	}
-	dbg ("New context: %p\n", hal_context);
-
-	libhal_ctx_init (hal_context, &err);
-	libhal_ctx_set_device_removed (hal_context, device_removed);
+	if ((ctx = libhal_ctx_init_direct (&err)) == NULL)
+		goto out;
 
 	update_properties ();
 

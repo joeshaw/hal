@@ -43,7 +43,7 @@
 #include "logger.h"
 #include "osspec.h"
 
-static DBusConnection *dbus_connection;
+static DBusConnection *dbus_connection = NULL;
 
 /**
  * @defgroup DaemonErrors Error conditions
@@ -581,6 +581,9 @@ manager_send_signal_device_added (HalDevice *device)
 	DBusMessage *message;
 	DBusMessageIter iter;
 
+	if (dbus_connection == NULL)
+		goto out;
+
 	HAL_TRACE (("entering, udi=%s", udi));
 
 	message = dbus_message_new_signal ("/org/freedesktop/Hal/Manager",
@@ -594,6 +597,9 @@ manager_send_signal_device_added (HalDevice *device)
 		DIE (("error broadcasting message"));
 
 	dbus_message_unref (message);
+
+out:
+	;
 }
 
 /** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
@@ -608,6 +614,9 @@ manager_send_signal_device_removed (HalDevice *device)
 	DBusMessage *message;
 	DBusMessageIter iter;
 
+	if (dbus_connection == NULL)
+		goto out;
+
 	HAL_TRACE (("entering, udi=%s", udi));
 
 	message = dbus_message_new_signal ("/org/freedesktop/Hal/Manager",
@@ -621,6 +630,8 @@ manager_send_signal_device_removed (HalDevice *device)
 		DIE (("error broadcasting message"));
 
 	dbus_message_unref (message);
+out:
+	;
 }
 
 /** Send signal NewCapability(string udi, string capability) on the 
@@ -638,6 +649,9 @@ manager_send_signal_new_capability (HalDevice *device,
 	DBusMessage *message;
 	DBusMessageIter iter;
 
+	if (dbus_connection == NULL)
+		goto out;
+
 	HAL_TRACE (("entering, udi=%s, cap=%s", udi, capability));
 
 	message = dbus_message_new_signal ("/org/freedesktop/Hal/Manager",
@@ -652,6 +666,8 @@ manager_send_signal_new_capability (HalDevice *device,
 		DIE (("error broadcasting message"));
 
 	dbus_message_unref (message);
+out:
+	;
 }
 
 /** @} */
@@ -1153,7 +1169,7 @@ out:
  *  @return                     What to do with the message
  */
 DBusHandlerResult
-device_set_property (DBusConnection * connection, DBusMessage * message)
+device_set_property (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	char *key;
@@ -1175,7 +1191,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
 	}
 	dbus_message_iter_get_basic (&iter, &key);
 
-	if (!sender_has_privileges (connection, message)) {
+	if (!local_interface && !sender_has_privileges (connection, message)) {
 		raise_permission_denied (connection, message, "SetProperty: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1297,7 +1313,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message)
  *  @return                     What to do with the message
  */
 DBusHandlerResult
-device_add_capability (DBusConnection * connection, DBusMessage * message)
+device_add_capability (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	const char *capability;
@@ -1307,7 +1323,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message)
 
 	HAL_TRACE (("entering"));
 
-	if (!sender_has_privileges (connection, message)) {
+	if (!local_interface && !sender_has_privileges (connection, message)) {
 		raise_permission_denied (connection, message, "AddCapability: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1417,7 +1433,7 @@ device_string_list_append_prepend (DBusConnection * connection, DBusMessage * me
  *  @return                     What to do with the message
  */
 DBusHandlerResult
-device_remove_property (DBusConnection * connection, DBusMessage * message)
+device_remove_property (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	char *key;
@@ -1429,7 +1445,7 @@ device_remove_property (DBusConnection * connection, DBusMessage * message)
 
 	udi = dbus_message_get_path (message);
 
-	if (!sender_has_privileges (connection, message)) {
+	if (!local_interface && !sender_has_privileges (connection, message)) {
 		raise_permission_denied (connection, message, "RemoveProperty: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1905,9 +1921,11 @@ device_property_atomic_update_end (void)
 			g_free (pu_iter->udi);
 			dbus_message_iter_close_container (&iter, &iter_array);
 
-			if (!dbus_connection_send
-			    (dbus_connection, message, NULL))
-				DIE (("error broadcasting message"));
+			if (dbus_connection != NULL) {
+				if (!dbus_connection_send (dbus_connection, message, NULL))
+					DIE (("error broadcasting message"));
+			}
+
 			dbus_message_unref (message);
 
 		already_processed:
@@ -1954,6 +1972,9 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 		dbus_int32_t i;
 		DBusMessageIter iter_struct;
 		DBusMessageIter iter_array;
+
+		if (dbus_connection == NULL)
+			goto out;
 		
 		message = dbus_message_new_signal (udi,
 						  "org.freedesktop.Hal.Device",
@@ -1989,6 +2010,8 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 
 		dbus_message_unref (message);
 	}
+out:
+	;
 }
 
 /** Emits a condition on a device; the device has to be in the GDL for
@@ -2017,6 +2040,9 @@ device_send_signal_condition (HalDevice *device, const char *condition_name, con
 	DBusMessage *message;
 	DBusMessageIter iter;
 
+	if (dbus_connection == NULL)
+		goto out;
+
 	message = dbus_message_new_signal (udi,
 					   "org.freedesktop.Hal.Device",
 					   "Condition");
@@ -2032,6 +2058,8 @@ device_send_signal_condition (HalDevice *device, const char *condition_name, con
 		DIE (("error broadcasting message"));
 
 	dbus_message_unref (message);
+out:
+	;
 }
 
 
@@ -2039,6 +2067,7 @@ device_send_signal_condition (HalDevice *device, const char *condition_name, con
 static gboolean
 reinit_dbus (gpointer user_data)
 {
+	HAL_INFO (("entering!"));
 	if (hald_dbus_init ())
 		return FALSE;
 	else
@@ -2072,7 +2101,7 @@ service_deleted (DBusMessage *message)
 }
 
 static DBusHandlerResult
-device_rescan (DBusConnection * connection, DBusMessage * message)
+device_rescan (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	HalDevice *device;
@@ -2080,11 +2109,11 @@ device_rescan (DBusConnection * connection, DBusMessage * message)
 	DBusMessageIter iter;
 	gboolean res;	
 
-	HAL_TRACE (("entering"));
+	HAL_INFO (("entering, local_interface=%d", local_interface));
 
 	udi = dbus_message_get_path (message);
 
-	if (!sender_has_privileges (connection, message)) {
+	if (!local_interface && !sender_has_privileges (connection, message)) {
 		raise_permission_denied (connection, message, "Rescan: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2116,7 +2145,7 @@ device_rescan (DBusConnection * connection, DBusMessage * message)
 }
 
 static DBusHandlerResult
-device_reprobe (DBusConnection * connection, DBusMessage * message)
+device_reprobe (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	HalDevice *device;
@@ -2128,7 +2157,7 @@ device_reprobe (DBusConnection * connection, DBusMessage * message)
 
 	udi = dbus_message_get_path (message);
 
-	if (!sender_has_privileges (connection, message)) {
+	if (!local_interface && !sender_has_privileges (connection, message)) {
 		raise_permission_denied (connection, message, "Reprobe: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2161,7 +2190,7 @@ device_reprobe (DBusConnection * connection, DBusMessage * message)
 
 
 static DBusHandlerResult
-device_emit_condition (DBusConnection * connection, DBusMessage * message)
+device_emit_condition (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	HalDevice *device;
@@ -2176,8 +2205,8 @@ device_emit_condition (DBusConnection * connection, DBusMessage * message)
 
 	udi = dbus_message_get_path (message);
 
-	if (!sender_has_privileges (connection, message)) {
-		raise_permission_denied (connection, message, "Reprobe: not privileged");
+	if (!local_interface && !sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "EmitCondition: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2220,39 +2249,11 @@ device_emit_condition (DBusConnection * connection, DBusMessage * message)
 }
 
 
-/** Message handler for method invocations. All invocations on any object
- *  or interface is routed through this function.
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @param  user_data           User data
- *  @return                     What to do with the message
- */
-DBusHandlerResult
-hald_dbus_filter_function (DBusConnection * connection,
-			   DBusMessage * message, void *user_data)
+static DBusHandlerResult
+hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *message, 
+				 void *user_data, dbus_bool_t local_interface)
 {
-	/*HAL_INFO (("obj_path=%s interface=%s method=%s", 
-		   dbus_message_get_path(message), 
-		   dbus_message_get_interface(message),
-		   dbus_message_get_member(message)));*/
-
-	if (dbus_message_is_signal (message,
-				    DBUS_INTERFACE_DBUS,
-				    "Disconnected") &&
-	    strcmp (dbus_message_get_path (message),
-		    DBUS_PATH_LOCAL) == 0) {
-
-		dbus_connection_unref (dbus_connection);
-		g_timeout_add (3000, reinit_dbus, NULL);
-
-	} else if (dbus_message_is_signal (message,
-					   DBUS_INTERFACE_DBUS,
-					   "NameOwnerChanged")) {
-
-		if (services_with_locks != NULL)
-			service_deleted (message);
-	} else if (dbus_message_is_method_call (message,
+	if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Manager",
 					 "GetAllDevices") &&
 		   strcmp (dbus_message_get_path (message),
@@ -2271,12 +2272,11 @@ hald_dbus_filter_function (DBusConnection * connection,
 			   "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_find_device_string_match (connection,
 							 message);
-	} else
-	    if (dbus_message_is_method_call
-		(message, "org.freedesktop.Hal.Manager",
-		 "FindDeviceByCapability")
-		&& strcmp (dbus_message_get_path (message),
-			   "/org/freedesktop/Hal/Manager") == 0) {
+	} else if (dbus_message_is_method_call
+		   (message, "org.freedesktop.Hal.Manager",
+		    "FindDeviceByCapability")
+		   && strcmp (dbus_message_get_path (message),
+			      "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_find_device_by_capability (connection,
 							  message);
 	}
@@ -2312,27 +2312,27 @@ hald_dbus_filter_function (DBusConnection * connection,
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"SetProperty")) {
-		return device_set_property (connection, message);
+		return device_set_property (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"SetPropertyString")) {
-		return device_set_property (connection, message);
+		return device_set_property (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"SetPropertyInteger")) {
-		return device_set_property (connection, message);
+		return device_set_property (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"SetPropertyBoolean")) {
-		return device_set_property (connection, message);
+		return device_set_property (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"SetPropertyDouble")) {
-		return device_set_property (connection, message);
+		return device_set_property (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"RemoveProperty")) {
-		return device_remove_property (connection, message);
+		return device_remove_property (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyType")) {
@@ -2344,7 +2344,7 @@ hald_dbus_filter_function (DBusConnection * connection,
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"AddCapability")) {
-		return device_add_capability (connection, message);
+		return device_add_capability (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"QueryCapability")) {
@@ -2368,25 +2368,168 @@ hald_dbus_filter_function (DBusConnection * connection,
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"Rescan")) {
-		return device_rescan (connection, message);
+		return device_rescan (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"Reprobe")) {
-		return device_reprobe (connection, message);
+		return device_reprobe (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"EmitCondition")) {
-		return device_emit_condition (connection, message);
+		return device_emit_condition (connection, message, local_interface);
 	} else
 		osspec_filter_function (connection, message, user_data);
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+/** Message handler for method invocations. All invocations on any object
+ *  or interface is routed through this function.
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @param  user_data           User data
+ *  @return                     What to do with the message
+ */
+DBusHandlerResult
+hald_dbus_filter_function (DBusConnection * connection,
+			   DBusMessage * message, void *user_data)
+{
+	HAL_INFO (("obj_path=%s interface=%s method=%s", 
+		   dbus_message_get_path(message), 
+		   dbus_message_get_interface(message),
+		   dbus_message_get_member(message)));
+
+	if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
+	    strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
+
+		/* this is a local message; e.g. from libdbus in this process */
+
+		HAL_INFO (("Got disconnected from the system message bus; "
+			   "retrying to reconnect every 3000 ms"));
+		dbus_connection_unref (dbus_connection);
+		dbus_connection = NULL;
+
+		g_timeout_add (3000, reinit_dbus, NULL);
+
+	} else if (dbus_message_is_signal (message,
+					   DBUS_INTERFACE_DBUS,
+					   "NameOwnerChanged")) {
+
+		if (services_with_locks != NULL)
+			service_deleted (message);
+	} else 
+		return hald_dbus_filter_handle_methods (connection, message, user_data, FALSE);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+
+static DBusHandlerResult 
+local_server_message_handler (DBusConnection *connection, 
+			      DBusMessage *message, 
+			      void *user_data)
+{
+	HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
+		   dbus_message_get_destination (message), 
+		   dbus_message_get_path (message), 
+		   dbus_message_get_interface (message),
+		   dbus_message_get_member (message)));
+
+	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
+		DBusMessage *reply;
+
+                /* cheat, and handle AddMatch since libhal will try to invoke this method */
+		reply = dbus_message_new_method_return (message);
+		if (reply == NULL)
+			DIE (("No memory"));
+		if (!dbus_connection_send (connection, reply, NULL))
+			DIE (("No memory"));
+		dbus_message_unref (reply);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	} else if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
+		   strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
+		
+		HAL_INFO (("Client to local_server was disconnected"));
+		dbus_connection_unref (connection);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	} 
+	else return hald_dbus_filter_handle_methods (connection, message, user_data, TRUE);
+}
+
+static void
+local_server_unregister_handler (DBusConnection *connection, void *user_data)
+{
+	HAL_INFO (("unregistered"));
+}
+
+static void
+local_server_handle_connection (DBusServer *server,
+			  DBusConnection *new_connection,
+			  void *data)
+{
+	DBusObjectPathVTable vtable = { &local_server_unregister_handler, 
+					&local_server_message_handler, 
+					NULL, NULL, NULL, NULL};
+
+	HAL_INFO (("%d: Got a connection", getpid ()));
+	HAL_INFO (("dbus_connection_get_is_connected = %d", dbus_connection_get_is_connected (new_connection)));
+
+	/*dbus_connection_add_filter (new_connection, server_filter_function, NULL, NULL);*/
+
+	dbus_connection_register_fallback (new_connection, 
+					   "/org/freedesktop",
+					   &vtable,
+					   NULL);
+	dbus_connection_ref (new_connection);
+	dbus_connection_setup_with_g_main (new_connection, NULL);
+}
+
+
+static DBusServer *local_server = NULL;
+
+char *
+hald_dbus_local_server_addr (void)
+{
+	if (local_server == NULL)
+		return NULL;
+
+	return dbus_server_get_address (local_server);
+}
+
+gboolean
+hald_dbus_local_server_init (void)
+{
+	gboolean ret;
+	DBusError error;
+
+	ret = FALSE;
+
+	/* setup a server listening on a socket so we can do point to point
+	 * connections for programs spawned by hald
+	 */
+	dbus_error_init (&error);
+	if ((local_server = dbus_server_listen ("unix:tmpdir=/tmp/hald-local", &error)) == NULL) { 
+		HAL_ERROR (("Cannot create D-BUS server"));
+		goto out;
+	}
+	HAL_INFO (("local server is listening at %s", dbus_server_get_address (local_server)));
+	dbus_server_setup_with_g_main (local_server, NULL);
+	dbus_server_set_new_connection_function (local_server, local_server_handle_connection, NULL, NULL);	
+
+	ret = TRUE;
+
+out:
+	return ret;
+}
+
 gboolean
 hald_dbus_init (void)
 {
 	DBusError dbus_error;
+
+	HAL_INFO (("entering"));
 
 	dbus_connection_set_change_sigpipe (TRUE);
 
@@ -2408,8 +2551,7 @@ hald_dbus_init (void)
 		return FALSE;
 	}
 
-	dbus_connection_add_filter (dbus_connection, hald_dbus_filter_function, NULL,
-				    NULL);
+	dbus_connection_add_filter (dbus_connection, hald_dbus_filter_function, NULL, NULL);
 
 	dbus_bus_add_match (dbus_connection,
 			    "type='signal'"
