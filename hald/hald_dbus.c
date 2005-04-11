@@ -2395,10 +2395,12 @@ DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
 			   DBusMessage * message, void *user_data)
 {
+	/*
 	HAL_INFO (("obj_path=%s interface=%s method=%s", 
 		   dbus_message_get_path(message), 
 		   dbus_message_get_interface(message),
 		   dbus_message_get_member(message)));
+	*/
 
 	if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
 	    strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {

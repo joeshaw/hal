@@ -1,3 +1,8 @@
+2005-04-11  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Add /var/lib/music to the search path for pci.ids.
+	Patch from Murray Cumming <murrayc@murrayc.com>, fdo bug #2547.
+
 2005-04-08  David Zeuthen  <davidz@redhat.com>
 
 	Make all hal helpers use a direct connection to hald rather than
