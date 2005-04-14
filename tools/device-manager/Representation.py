@@ -11,7 +11,7 @@ class Representation:
     def load_and_scale_icon(self, path):
         """Helper function for loading an icon and scaling it to 16x16"""
         orig = gtk.gdk.pixbuf_new_from_file(path)
-        icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, gtk.TRUE, 8, 16, 16)
+        icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, TRUE, 8, 16, 16)
         orig.scale(icon, 0, 0, 16, 16,
                    0, 0,
                    16.0/orig.get_width(),

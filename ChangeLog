@@ -1,3 +1,14 @@
+2005-04-13  David Zeuthen  <davidz@redhat.com>
+
+	Some patches from Martin Pitt <martin@piware.de>.
+
+	* tools/device-manager/Representation.py:
+	(Representation.load_and_scale_icon): Use TRUE instead of gtk.TRUE
+	since the latter is deprecated
+
+	* hald/hald.c (main): Drop privileges a bit later so we have a
+	chance to bind to the netlink socket
+
 2005-04-11  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Add /var/lib/music to the search path for pci.ids.

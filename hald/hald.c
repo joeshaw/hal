@@ -490,9 +490,6 @@ main (int argc, char *argv[])
 	/* will fork into two; only the child will return here if we are successful */
 	/*master_slave_setup ();*/
 
-	if (!retain_privs)
-		drop_privileges();
-
 	loop = g_main_loop_new (NULL, FALSE);
 
 	HAL_INFO ((PACKAGE_STRING));
@@ -592,6 +589,9 @@ main (int argc, char *argv[])
 
 	/* initialize operating system specific parts */
 	osspec_init ();
+
+	if (!retain_privs)
+		drop_privileges();
 
 	hald_is_initialising = TRUE;
 
