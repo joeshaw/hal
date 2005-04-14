@@ -1,3 +1,13 @@
+2005-04-14  David Zeuthen  <davidz@redhat.com>
+
+	Make hal handle APM nicely.
+
+	* hald/linux2/apm.c (apm_poll): New function
+	(battery_refresh): Hmm, APM reports -1 if battery is absent.
+	s/system.ac_adapter/ac_adapter/ - Patch from Bill
+	Nottingham <notting@redhat.com>
+	(apm_synthesize_hotplug_events): Add time for APM polling
+
 2005-04-13  David Zeuthen  <davidz@redhat.com>
 
 	Some patches from Martin Pitt <martin@piware.de>.

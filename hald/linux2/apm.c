@@ -64,6 +64,26 @@ typedef struct {
 	int using_minutes;
 } APMInfo;
 
+#define APM_POLL_INTERVAL 2000
+
+static gboolean
+apm_poll (gpointer data)
+{
+	GSList *i;
+	GSList *devices;
+
+	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "linux.apm_path",
+								    "/proc/apm");
+	for (i = devices; i != NULL; i = g_slist_next (i)) {
+		HalDevice *d;		
+		d = HAL_DEVICE (i->data);
+		apm_rescan_device (d);
+	}
+
+	return TRUE;
+}
+
 static gboolean 
 read_from_apm (const char *apm_file, APMInfo *i)
 {
@@ -120,7 +140,7 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 
 	read_from_apm (path, &i);
 
-	if (i.battery_percentage == 0) {
+	if (i.battery_percentage <= 0) {
 		device_property_atomic_update_begin ();
 		hal_device_property_remove (d, "battery.is_rechargeable");
 		hal_device_property_remove (d, "battery.rechargeable.is_charging");
@@ -129,6 +149,7 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		hal_device_property_remove (d, "battery.charge_level.current");
 		hal_device_property_remove (d, "battery.charge_level.last_full");
 		hal_device_property_remove (d, "battery.charge_level.design");
+		hal_device_property_set_bool (d, "battery.present", FALSE);
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();
@@ -171,8 +192,8 @@ ac_adapter_refresh (HalDevice *d, APMDevHandler *handler)
 		return FALSE;
 
 	hal_device_property_set_string (d, "info.product", "AC Adapter");
-	hal_device_property_set_string (d, "info.category", "system.ac_adapter");
-	hal_device_add_capability (d, "system.ac_adapter");
+	hal_device_property_set_string (d, "info.category", "ac_adapter");
+	hal_device_add_capability (d, "ac_adapter");
 
 	read_from_apm(path, &i);
 
@@ -229,6 +250,10 @@ apm_synthesize_hotplug_events (void)
 	g_strlcpy (hotplug_event->apm.apm_path, path, sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_AC_ADAPTER;
 	hotplug_event_enqueue (hotplug_event);
+
+	g_timeout_add (APM_POLL_INTERVAL,
+		       apm_poll,
+		       NULL);
 
 out:
 	return ret;
