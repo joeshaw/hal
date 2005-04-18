@@ -1,3 +1,9 @@
+2005-04-18  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Bump glib-2.0 requirement to 2.6.0; change dbus-1 and
+	dbus-glib-1 to back 0.32 so it works with patched 0.32 tarballs. glib
+	observation from Rohan <rohan.pm@gmail.com>.
+
 2005-04-14  David Zeuthen  <davidz@redhat.com>
 
 	Make hal handle APM nicely.
