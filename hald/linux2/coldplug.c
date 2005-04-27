@@ -52,13 +52,164 @@
 
 #define DMPREFIX "dm-"
 
+
+
+/* Returns the path of the udevinfo program 
+ *
+ * @return                      Path or NULL if udevinfo program is not found
+ */
+static const gchar *
+hal_util_get_udevinfo_path (void)
+{
+	guint i;
+	struct stat s;
+	static gchar *path = NULL;
+	gchar *possible_paths[] = { 
+		"/sbin/udevinfo",
+		"/usr/bin/udevinfo",
+		"/usr/sbin/udevinfo",
+		"/usr/local/sbin/udevinfo"
+	};
+
+	if (path != NULL)
+		return path;
+
+	for (i = 0; i < sizeof (possible_paths) / sizeof (char *); i++) {
+		if (stat (possible_paths[i], &s) == 0 && S_ISREG (s.st_mode)) {
+			path = possible_paths[i];
+			break;
+		}
+	}
+	return path;
+}
+
+static GHashTable *
+hal_util_get_sysfs_to_dev_map (void)
+{
+	GHashTable *sysfs_to_dev_map;
+	char *udevinfo_argv[7] = {NULL, "-d", NULL};
+	char *udevinfo_stdout;
+	char *udevinfo_stderr;
+	int udevinfo_exitcode;
+        char *p;
+	char *q;
+	char *r;
+	int len;
+	char sysfs_path[PATH_MAX + 1];
+	char device_file[PATH_MAX + 1];
+	const char *sysfs_mount_path;
+	gboolean has_more_lines;
+
+	sysfs_mount_path = get_hal_sysfs_path ();
+
+	sysfs_to_dev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+
+	/* get path to udevinfo */
+	udevinfo_argv[0] = (char *) hal_util_get_udevinfo_path ();
+	if (udevinfo_argv[0] == NULL)
+		goto error;
+
+
+	/* Invoke udevinfo */
+	if (udevinfo_argv[0] == NULL || g_spawn_sync ("/",
+						  udevinfo_argv,
+						  NULL,
+						  0,
+						  NULL,
+						  NULL,
+						  &udevinfo_stdout,
+						  &udevinfo_stderr,
+						  &udevinfo_exitcode,
+						  NULL) != TRUE) {
+		HAL_ERROR (("Couldn't invoke %s", udevinfo_argv[0]));
+		goto error;
+	}
+
+	if (udevinfo_exitcode != 0) {
+		HAL_ERROR (("%s returned %d", udevinfo_argv[0], udevinfo_exitcode));
+		goto error;
+	}
+
+	has_more_lines = TRUE;
+
+	p = udevinfo_stdout;
+
+	do {
+		if (*p == '\0') {
+			has_more_lines = FALSE;
+			break;
+		}
+
+		for (q = p; *q != '\n' && *q != '\0' && *q != '='; q++)
+			;
+		
+		len = q - p;
+		switch (*q) {
+		case '=':
+			strncpy (sysfs_path, p, len > PATH_MAX ? PATH_MAX : len);
+			sysfs_path [len > PATH_MAX ? PATH_MAX : len] = '\0';
+			break;
+			
+		case '\n':
+			HAL_ERROR (("Expected '=', not '\\n' in line '%s'", p));
+			goto error;
+			
+		case '\0':
+			HAL_ERROR (("Expected '=', not '\\0' in line '%s'", p));
+			goto error;
+			
+		default:
+			HAL_ERROR (("Expected '=', not '%c' in line '%s'", *q, p));
+			goto error;
+		}
+		
+		q++;
+		r = q;
+		for ( ; *q != '\n' && *q != '\0'; q++)
+			;
+		
+		len = q - r;
+		switch (*q) {
+		case '\0':
+			has_more_lines = FALSE;
+			/* explicit fallthrough */
+
+		case '\n':
+			strncpy (device_file, r, len > PATH_MAX ? PATH_MAX : len);
+			device_file [len > PATH_MAX ? PATH_MAX : len] = '\0';
+			break;
+			
+		default:
+			HAL_ERROR (("Expected '\\n' or '\\0', not '%c' in line '%s'", *q, p));
+			goto error;
+		}
+
+		g_hash_table_insert (sysfs_to_dev_map, g_strdup_printf ("%s%s", sysfs_mount_path, sysfs_path), 
+				     g_strdup(device_file));
+		
+#ifdef HAL_COLDPLUG_VERBOSE
+		printf ("Got '%s' -> '%s'\n", sysfs_path, device_file);
+#endif
+		p = q + 1;
+
+	} while (has_more_lines);
+
+	return sysfs_to_dev_map;
+
+error:
+	g_hash_table_destroy (sysfs_to_dev_map);
+	return NULL;
+}
+
+
 static gboolean
-coldplug_synthesize_block_event(const gchar *f);
+coldplug_synthesize_block_event(const gchar *f, GHashTable *sysfs_to_dev_map);
 
 static void
 coldplug_compute_visit_device (const gchar *path, 
 			       GHashTable *sysfs_to_bus_map, 
-			       GHashTable *sysfs_to_class_in_devices_map);
+			       GHashTable *sysfs_to_class_in_devices_map,
+			       GHashTable *sysfs_to_dev_map);
 
 /* For debugging */
 /*#define HAL_COLDPLUG_VERBOSE*/
@@ -145,6 +296,15 @@ coldplug_synthesize_events (void)
 	 * (/sys/block/dm-0)
 	 */
 	GSList *sysfs_dm_dev = NULL;
+
+	GHashTable *sysfs_to_dev_map = NULL;
+
+	
+	if ((sysfs_to_dev_map = hal_util_get_sysfs_to_dev_map ()) == NULL) {
+		HAL_ERROR (("Unable to get sysfs to dev map"));
+		goto error;
+	}
+
 
 	/* build bus map */
 	sysfs_to_bus_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
@@ -271,7 +431,7 @@ coldplug_synthesize_events (void)
 		while ((f1 = g_dir_read_name (dir1)) != NULL) {
 
 			g_snprintf (path, HAL_PATH_MAX, "%s/devices/%s/%s", get_hal_sysfs_path (), f, f1);
-			coldplug_compute_visit_device (path, sysfs_to_bus_map, sysfs_to_class_in_devices_map);
+			coldplug_compute_visit_device (path, sysfs_to_bus_map, sysfs_to_class_in_devices_map, sysfs_to_dev_map);
 		}
 		g_dir_close (dir1);
 	}
@@ -287,6 +447,7 @@ coldplug_synthesize_events (void)
 		gchar *sysfs_path;
 		gchar *subsystem;
 		HotplugEvent *hotplug_event;
+		gchar *device_file;
 
 		sysfs_path = (gchar *) li->data;
 		subsystem = (gchar *) li->next->data;
@@ -299,7 +460,11 @@ coldplug_synthesize_events (void)
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
 		g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
-		hal_util_get_device_file (sysfs_path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+
+		device_file = (gchar *) g_hash_table_lookup (sysfs_to_dev_map, sysfs_path);
+		if (device_file != NULL) {
+			strncpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+		}
 		hotplug_event->sysfs.net_ifindex = -1;
 		
 		hotplug_event_enqueue (hotplug_event);
@@ -322,17 +487,19 @@ coldplug_synthesize_events (void)
 			sysfs_dm_dev = g_slist_append(sysfs_dm_dev, g_strdup(f));
 			continue;
 		}
-		if (coldplug_synthesize_block_event(f) == FALSE)
+		if (coldplug_synthesize_block_event(f, sysfs_to_dev_map) == FALSE)
 			goto error;
 	}
 	/* process all dm devices last so that their backing devices exist */
 	for (li = sysfs_dm_dev; li != NULL; li = g_slist_next (g_slist_next (li))) {
-		if (coldplug_synthesize_block_event(li->data) == FALSE)
+		if (coldplug_synthesize_block_event (li->data, sysfs_to_dev_map) == FALSE)
 			goto error;
 		g_free (li->data);
 	}
 	g_slist_free (sysfs_dm_dev);
 	g_dir_close (dir);
+
+	g_hash_table_destroy (sysfs_to_dev_map);
        
 	return TRUE;
 error:
@@ -341,7 +508,7 @@ error:
 }
 
 static gboolean
-coldplug_synthesize_block_event(const gchar *f)
+coldplug_synthesize_block_event(const gchar *f, GHashTable *sysfs_to_dev_map)
 {
 	GDir *dir1;
 	gsize flen;
@@ -352,6 +519,7 @@ coldplug_synthesize_block_event(const gchar *f)
 	gchar path[HAL_PATH_MAX];
 	gchar path1[HAL_PATH_MAX];
 	const gchar *f1;
+	gchar *device_file;
 
 	g_snprintf (path, HAL_PATH_MAX, "%s/block/%s", get_hal_sysfs_path (), f);
 #ifdef HAL_COLDPLUG_VERBOSE
@@ -371,7 +539,12 @@ coldplug_synthesize_block_event(const gchar *f)
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
 	g_strlcpy (hotplug_event->sysfs.sysfs_path, path, sizeof (hotplug_event->sysfs.sysfs_path));
-	hal_util_get_device_file (path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+
+	device_file = (gchar *) g_hash_table_lookup (sysfs_to_dev_map, path);
+	if (device_file != NULL) {
+		strncpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+	}
+
 	if (normalized_target != NULL)
 		g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, normalized_target, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
 	else
@@ -400,7 +573,10 @@ coldplug_synthesize_block_event(const gchar *f)
 			g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
 			g_strlcpy (hotplug_event->sysfs.sysfs_path, path1, sizeof (hotplug_event->sysfs.sysfs_path));
 			g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
-			hal_util_get_device_file (path1, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+			device_file = (gchar *) g_hash_table_lookup (sysfs_to_dev_map, path1);
+			if (device_file != NULL) {
+				strncpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+			}
 			hotplug_event->sysfs.net_ifindex = -1;
 			hotplug_event_enqueue (hotplug_event);
 		}
@@ -416,7 +592,8 @@ error:
 static void
 coldplug_compute_visit_device (const gchar *path, 
 			       GHashTable *sysfs_to_bus_map, 
-			       GHashTable *sysfs_to_class_in_devices_map)
+			       GHashTable *sysfs_to_class_in_devices_map,
+			       GHashTable *sysfs_to_dev_map)
 {
 	gchar *bus;
 	GError *err = NULL;
@@ -455,6 +632,7 @@ coldplug_compute_visit_device (const gchar *path,
 	for (i = class_devs; i != NULL; i = g_slist_next (g_slist_next (i))) {
 		gchar *sysfs_path;
 		gchar *subsystem;
+		gchar *device_file;
 		HotplugEvent *hotplug_event;
 
 		sysfs_path = (gchar *) i->data;
@@ -468,7 +646,11 @@ coldplug_compute_visit_device (const gchar *path,
 		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
 		g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
-		hal_util_get_device_file (sysfs_path, hotplug_event->sysfs.device_file, sizeof (hotplug_event->sysfs.device_file));
+
+		device_file = (gchar *) g_hash_table_lookup (sysfs_to_dev_map, sysfs_path);
+		if (device_file != NULL) {
+			strncpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+		}
 		if (path != NULL)
 			g_strlcpy (hotplug_event->sysfs.wait_for_sysfs_path, path, sizeof (hotplug_event->sysfs.wait_for_sysfs_path));
 		else
@@ -496,7 +678,8 @@ coldplug_compute_visit_device (const gchar *path,
 				/* recursion fun */
 				coldplug_compute_visit_device (path_child, 
 							       sysfs_to_bus_map, 
-							       sysfs_to_class_in_devices_map);
+							       sysfs_to_class_in_devices_map,
+							       sysfs_to_dev_map);
 			}
 		}
 	}

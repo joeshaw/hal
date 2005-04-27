@@ -188,8 +188,8 @@ else
   fi
 fi
 
-dbus_module="dbus-1 >= 0.32"
-pkg_modules="glib-2.0 >= 2.6.0, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.32, $dbus_module"
+dbus_module="dbus-1 >= 0.33"
+pkg_modules="glib-2.0 >= 2.6.0, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 EXPAT_LIB=""

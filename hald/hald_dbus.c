@@ -1132,22 +1132,24 @@ sender_has_privileges (DBusConnection *connection, DBusMessage *message)
 	HAL_DEBUG (("base_svc = %s", user_base_svc));
 
 	dbus_error_init (&error);
-	if ((user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error)) == (unsigned long) -1) {
-		HAL_WARNING (("Could not get uid for connection"));
+	user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error);
+	if (user_uid == (unsigned long) -1 || dbus_error_is_set (&error)) {
+		HAL_WARNING (("Could not get uid for connection: %s %s", error.name, error.message));
+		dbus_error_free (&error);
 		goto out;
 	}
 
 	HAL_INFO (("uid for caller is %ld", user_uid));
 
 	if (user_uid != 0 && user_uid != geteuid()) {
-		HAL_WARNING (("uid %d is doesn't have the right priviledges", user_uid));
+		HAL_WARNING (("uid %d is not privileged", user_uid));
 		goto out;
 	}
 
 	ret = TRUE;
 
 out:
-	return TRUE;
+	return ret;
 }
 
 /** Set a property on a device.
@@ -1217,51 +1219,36 @@ device_set_property (DBusConnection * connection, DBusMessage * message, dbus_bo
 	case DBUS_TYPE_STRING:
 	{
 		const char *v;
-
 		dbus_message_iter_get_basic (&iter, &v);
-		
 		rc = hal_device_property_set_string (device, key, v);
-		
 		break;
 	}
 	case DBUS_TYPE_INT32:
 	{
 		dbus_int32_t v;
-
 		dbus_message_iter_get_basic (&iter, &v);
-		
 		rc = hal_device_property_set_int (device, key, v);
-		
 		break;
 	}
 	case DBUS_TYPE_UINT64:
 	{
 		dbus_uint64_t v;
-
 		dbus_message_iter_get_basic (&iter, &v);
-
 		rc = hal_device_property_set_uint64 (device, key, v);
-
 		break;
 	}
 	case DBUS_TYPE_DOUBLE:
 	{
 		double v;
-
 		dbus_message_iter_get_basic (&iter, &v);
-
 		rc = hal_device_property_set_double (device, key, v);
-
 		break;
 	}
 	case DBUS_TYPE_BOOLEAN:
 	{
 		dbus_bool_t v;
-
 		dbus_message_iter_get_basic (&iter, &v);
-
 		rc = hal_device_property_set_bool (device, key, v);
-
 		break;
 	}
 	default:

@@ -1499,6 +1499,9 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 		return FALSE;
 	}
 
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
 	return TRUE;
 }
 

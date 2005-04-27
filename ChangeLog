@@ -1,3 +1,28 @@
+2005-04-27  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/osspec_linux.h: Remove prototype for the function
+	hal_util_get_device_file().
+
+	* hald/linux2/osspec.c (hal_util_get_udevinfo_path): Remove 
+	(hal_util_get_device_file): Remove 
+
+	* hald/linux2/coldplug.c (hal_util_get_udevinfo_path): Move from 
+	osspec.c 
+	(hal_util_get_sysfs_to_dev_map): New function
+	(coldplug_synthesize_events): Get the sysfs->dev map in one go using
+	'udevinfo -d' available in udev since at least version 057.
+
+	* configure.in: Bump dbus requirement to 0.33 since the new dbus is
+	out.
+
+2005-04-27  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.c (libhal_device_set_property_helper): Don't leak the
+	DBusMessage objects
+
+	* hald/hald_dbus.c (sender_has_privileges): Don't leak the error and
+	actually return FALSE if sender is unprivileged. Also fix up spelling.
+
 2005-04-18  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Bump glib-2.0 requirement to 2.6.0; change dbus-1 and
