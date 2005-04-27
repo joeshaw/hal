@@ -1,5 +1,12 @@
 2005-04-27  David Zeuthen  <davidz@redhat.com>
 
+	* tools/device-manager/*.py: Patch from John (J5) Palmieri
+	<johnp@redhat.com>: I am about to check in my changes to the dbus
+	python bindings and roll a release.  Here is a patch to get Hal
+	working with it.  
+
+2005-04-27  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-usb-csr.c (main): Fix compilation error
 	now that this piece of code actually compiles.
 

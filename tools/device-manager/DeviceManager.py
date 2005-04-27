@@ -4,7 +4,6 @@ import sys
 import gobject
 import gtk
 import dbus
-import dbus_bindings
 
 try:
     import gnome.ui
@@ -37,47 +36,34 @@ class DeviceManager(LibGladeApplication):
         """Init the GUI and connect to the HAL daemon."""
         LibGladeApplication.__init__(self, Const.DATADIR + "/hal-device-manager.glade")
 
+        ver = getattr(dbus, 'version', (0, 0, 0))
+        if ver < (0, 40, 0):
+            dialog = gtk.MessageDialog(None, gtk.DIALOG_MODAL, 
+                                       gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE,
+                                       "The DBus Python Bindings you are using are too old. "
+                                       "Make sure you have the latest version!")
+            dialog.run()
+            sys.exit(1)
+
         if not gnome_imported:
             self.xml.get_widget("about1").set_sensitive(0)
 
         self.representation = Representation()
 
-        self.bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)
-        self.hal_service = self.bus.get_service("org.freedesktop.Hal")
-        self.hal_manager = self.hal_service.get_object("/org/freedesktop/Hal/Manager",
-                                         "org.freedesktop.Hal.Manager")
+        self.bus = dbus.SystemBus()
+        self.hal_manager_obj = self.bus.get_object("org.freedesktop.Hal", 
+                                                   "/org/freedesktop/Hal/Manager")
+        self.hal_manager = dbus.Interface(self.hal_manager_obj,
+                                          "org.freedesktop.Hal.Manager")
 
         # gdl_changed will be invoked when the Global Device List is changed
         # per the hal spec
-        self.bus.add_signal_receiver(self.gdl_changed,
-				     "DeviceAdded",
-                                     "org.freedesktop.Hal.Manager",
-                                     "org.freedesktop.Hal",
-                                     "/org/freedesktop/Hal/Manager",
-				     expand_args=False)
-        self.bus.add_signal_receiver(self.gdl_changed,
-				     "DeviceRemoved",
-                                     "org.freedesktop.Hal.Manager",
-                                     "org.freedesktop.Hal",
-                                     "/org/freedesktop/Hal/Manager",
-				     expand_args=False)
-        self.bus.add_signal_receiver(self.gdl_changed,
-				     "NewCapability",
-                                     "org.freedesktop.Hal.Manager",
-                                     "org.freedesktop.Hal",
-                                     "/org/freedesktop/Hal/Manager",
-				     expand_args=False)
-
-	#self.bus.add_signal_receiver(self.property_modified,
-	#			     "PropertyModified",
-	#			     "org.freedesktop.Hal.Device",
-	#			     "org.freedesktop.Hal",
-	#			     None)#"/org/freedesktop/Hal/devices/acpi_LID")
-	#self.bus.add_signal_receiver(self.device_condition,
-	#			     "Condition",
-	#			     "org.freedesktop.Hal.Device",
-	#			     "org.freedesktop.Hal",
-	#			     None)#"/org/freedesktop/Hal/devices/acpi_LID")
+        self.hal_manager.connect_to_signal("DeviceAdded", 
+                         lambda *args: self.gdl_changed("DeviceAdded", *args))
+        self.hal_manager.connect_to_signal("DeviceRemoved", 
+                         lambda *args: self.gdl_changed("DeviceRemoved", *args))
+        self.hal_manager.connect_to_signal("NewCapability", 
+                         lambda *args: self.gdl_changed("NewCapability", *args))
 
         # Add listeners for all devices
         try:
@@ -98,26 +84,26 @@ class DeviceManager(LibGladeApplication):
         self.main_window.show()
 
     def add_device_signal_recv (self, udi):
-	self.bus.add_signal_receiver(self.property_modified,
+	self.bus.add_signal_receiver(lambda *args: self.property_modified(udi, *args),
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 	return
-	self.bus.add_signal_receiver(self.device_condition,
+	self.bus.add_signal_receiver(lambda *args: self.device_condition(udi, *args),
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 
     def remove_device_signal_recv (self, udi):
-	self.bus.remove_signal_receiver(self.property_modified,
+	self.bus.remove_signal_receiver(lambda *args: self.property_modified(udi, *args),
 				     "PropertyModified",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
 	return
-	self.bus.remove_signal_receiver(self.device_condition,
+	self.bus.remove_signal_receiver(lambda *args: self.device_condition(udi, *args),
 				     "Condition",
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
@@ -141,21 +127,18 @@ class DeviceManager(LibGladeApplication):
             self.update_device_notebook(device)
 
 
-    def device_condition(self, sender, condition_name, condition_details):
+    def device_condition(self, device_udi, condition_name, condition_details):
         """This method is called when signals on the Device interface is
         received"""
 
-	device_udi = sender.path
-	print "\nCondition device=%s"%sender.path
+	print "\nCondition device=%s"%device_udi
 	print "  (condition_name, condition_details) = ('%s', '%s')"%(condition_name, condition_details)
 
-    def property_modified(self, sender, num_changes, change_list):
+    def property_modified(self, device_udi, num_changes, change_list):
         """This method is called when signals on the Device interface is
         received"""
 
-	device_udi = sender.path
-	print "\nPropertyModified, device=%s"%sender.path
-	#print "dbus_obj_path", sender.path
+	print "\nPropertyModified, device=%s"%device_udi
 	for i in change_list:
 	    property_name = i[0]
 	    removed = i[1]
@@ -185,24 +168,22 @@ class DeviceManager(LibGladeApplication):
 		    if device_focus_udi==device_udi:
 			self.update_device_notebook(device)
 			
-    def gdl_changed(self, sender):
+    def gdl_changed(self, signal_name, device_udi, *args):
         """This method is called when a HAL device is added or removed."""
 
-        if sender.signal_name=="DeviceAdded":
-            [device_udi] = sender.message.get_args_list()
+        if signal_name=="DeviceAdded":
             print "\nDeviceAdded, udi=%s"%(device_udi)
 	    self.add_device_signal_recv (device_udi)
             self.update_device_list()
-        elif sender.signal_name=="DeviceRemoved":
-            [device_udi] = sender.message.get_args_list()
+        elif signal_name=="DeviceRemoved":
             print "\nDeviceRemoved, udi=%s"%(device_udi)
 	    self.remove_device_signal_recv (device_udi)
             self.update_device_list()
-        elif sender.signal_name=="NewCapability":
-            [device_udi, cap] = sender.message.get_args_list()
+        elif signal_name=="NewCapability":
+            [cap] = args 
             print "\nNewCapability, cap=%s, udi=%s"%(cap, device_udi)
         else:
-            print "*** Unknown signal %s"% sender.signal_name
+            print "*** Unknown signal %s"% signal_name
 
 
     def update_device_list(self):
@@ -278,9 +259,8 @@ class DeviceManager(LibGladeApplication):
         
         # first build list of Device objects
         for name in device_names:
-            device_dbus_obj = self.hal_service.get_object(name,
-                                                     "org.freedesktop.Hal.Device")
-            properties = device_dbus_obj.GetAllProperties()
+            device_dbus_obj = self.bus.get_object("org.freedesktop.Hal" ,name)
+            properties = device_dbus_obj.GetAllProperties(dbus_interface="org.freedesktop.Hal.Device")
             try:
                 parent_name = properties["info.parent"]
             except KeyError:
