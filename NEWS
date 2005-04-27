@@ -1,4 +1,40 @@
 ==========
+HAL 0.5.1 "Sonny...?"
+==========
+
+Release Apr 27, 2005
+
+ - Teach volume_id about Minix and a bunch of ATA raid signatures
+   and use last label on multi-session discs (Kay Sievers)
+ - Extract certain stuff using dmidecode and populate smbios.*
+   properties and populate some newer computer.* properties
+ - Change sesame to luks (W. Michael Petullo)
+ - Cope with double hotplug events and other boundary conditions
+   wrt. hotplug events (Kay Sievers)
+ - Add some more USB2 card reader .fdi files
+ - Make hal know about Firewire devices yet again
+ - Export info.linux.driver for every physical device
+ - Match PalmOS style pda's (Andrei Yurkevich)
+ - zh_TW translation (chaoweilun@pcmail.com.tw)
+ - Use direct d-bus connection for helpers instead of routing
+   the traffic through the system bus
+ - Several memory leak fixes
+ - Update h-d-m to use Python bindings in D-BUS 0.33 or later
+ - Use new udev feature to read all device file names in one go
+ - Various fixes (Richard Hughes, Steve Grubb, Kay Sivers, 
+                  Murray Cumming, Martin Pitt, Bill Nottingham)
+
+Requirements for HAL 0.5.1 "Sonny...?"
+
+ - Linux 2.6.11 or later
+ - udev 057 or later (using udevsend as hotplug multiplexer)
+ - dbus 0.33 or later (with glib bindings)
+ - glib 2.6 or later
+ - expat
+ - popt (optional)
+ - libusb (optional)
+
+==========
 HAL 0.5.0 "The family had a lot of buffers."
 ==========
 

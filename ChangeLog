@@ -1,5 +1,11 @@
 2005-04-27  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Bump for release
+
+	* NEWS: Update for release
+
+2005-04-27  David Zeuthen  <davidz@redhat.com>
+
 	* tools/device-manager/*.py: Patch from John (J5) Palmieri
 	<johnp@redhat.com>: I am about to check in my changes to the dbus
 	python bindings and roll a release.  Here is a patch to get Hal
