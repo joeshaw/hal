@@ -1,5 +1,13 @@
 2005-04-27  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-usb-csr.c (main): Fix compilation error
+	now that this piece of code actually compiles.
+
+	* configure.in: Doh, check for libusb-config, not libusb-configxxx.
+	Fix from Richard Hughes <hughsient@gmail.com>.
+
+2005-04-27  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/osspec_linux.h: Remove prototype for the function
 	hal_util_get_device_file().
 

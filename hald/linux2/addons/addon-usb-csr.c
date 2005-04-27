@@ -405,8 +405,10 @@ main (int argc, char *argv[])
 	}
 
 	dbus_error_init (&err);
-	if ((ctx = libhal_ctx_init_direct (&err)) == NULL)
-		goto out;
+	if ((hal_context = libhal_ctx_init_direct (&err)) == NULL) {
+		fprintf (stderr, "Cannot connect to hald\n");
+		return -3;
+	}
 
 	update_properties ();
 
