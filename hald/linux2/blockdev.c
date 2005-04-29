@@ -162,9 +162,13 @@ update_mount_point (HalDevice *d)
 	struct mntent *mnte;
 	const char *device_file;
 	char buf[512];
+	unsigned int major, minor;
 	
 	if ((device_file = hal_device_property_get_string (d, "block.device")) == NULL)
 		goto out;
+
+	major = hal_device_property_get_int (d, "block.major");
+	minor = hal_device_property_get_int (d, "block.minor");
 
 	HAL_INFO (("Update mount point for %s (device_file %s)", d->udi, device_file));
 
@@ -174,9 +178,13 @@ update_mount_point (HalDevice *d)
 		goto out;
 	}
 
-	/* TODO: should use major:minor numbers to catch /dev/root */
 	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
-		if (strcmp (mnt.mnt_fsname, device_file) == 0) {
+		struct stat statbuf;
+
+		if (stat (mnt.mnt_fsname, &statbuf) != 0)
+			continue;
+
+		if ((major (statbuf.st_rdev) == major) && (minor (statbuf.st_rdev) == minor)) {
 			device_property_atomic_update_begin ();
 			hal_device_property_set_bool (d, "volume.is_mounted", TRUE);
 			hal_device_property_set_string (d, "volume.mount_point", mnt.mnt_dir);
@@ -971,14 +979,14 @@ force_unmount (HalDevice *d)
 		}
 	}
 
-	umount_argv[2] = device_file;
+	umount_argv[2] = device_mount_point;
 
 	if (hal_device_has_property (d, "block.is_volume") &&
 	    hal_device_property_get_bool (d, "block.is_volume") &&
 	    hal_device_property_get_bool (d, "volume.is_mounted") &&
 	    device_mount_point != NULL &&
 	    strlen (device_mount_point) > 0) {
-		HAL_INFO (("attempting /bin/umount -l %s", device_file));
+		HAL_INFO (("attempting /bin/umount -l %s", device_mount_point));
 
 		/* TODO: this is a bit dangerous; rather spawn async and do some timout on it */
 

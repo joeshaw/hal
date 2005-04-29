@@ -1,3 +1,13 @@
+2005-04-29  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/blockdev.c (update_mount_point): Fix the TODO about
+	using major:minor to check for whether something is mounted. Now
+	it works with e.g. 'mount /dev/dvd /mnt/tmp' where /dev/dvd is
+	a symlink to the real device and /mnt/tmp nor /dev/dvd is mentioned
+	in the /etc/fstab file.
+	(force_unmount): Use mount point, not device name (from Rohan
+	McGovern <rohan.pm@gmail.com>).
+
 2005-04-27  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Bump for release
