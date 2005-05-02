@@ -1,5 +1,13 @@
 2005-05-02  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/information/10freedesktop/Makefile.am: Add 10-camera-ptp.fdi.
+	Also add 10-usb-pda.fdi that was forgotten
+
+	* fdi/information/10freedesktop/10-camera-ptp.fdi: New file to detect
+	PTP cameras
+
+2005-05-02  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-storage.c (unmount_childs): Also unmount
 	by mount point here
 
