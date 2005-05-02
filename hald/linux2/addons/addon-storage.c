@@ -48,7 +48,7 @@
 #include "../probing/shared.h"
 
 static void 
-force_unmount (const char *device_file)
+force_unmount (const char *device_file_or_mount_point)
 {
 	pid_t pid;
 
@@ -56,7 +56,7 @@ force_unmount (const char *device_file)
 	case -1:
 		break;
 	case 0:
-		execl ("/bin/umount", "-l", device_file);
+		execl ("/bin/umount", "-l", device_file_or_mount_point);
 		break;
 	default:
 		waitpid (pid, NULL, 0);
@@ -85,17 +85,18 @@ unmount_childs(LibHalContext *ctx, const char *udi)
 			if (libhal_device_get_property_bool (ctx, vol_udi, "block.is_volume", &error)) {
 				dbus_error_init (&error);
 				if (libhal_device_get_property_bool (ctx, vol_udi, "volume.is_mounted", &error)) {
-					char *vol_device_file;
+					char *vol_mount_point;
 
 					dbus_error_init (&error);
-					vol_device_file = libhal_device_get_property_string (ctx, vol_udi, 
-											     "block.device", &error);
-					if (vol_device_file != NULL) {
-						dbg ("Forcing unmount for %s", vol_device_file);
+					vol_mount_point = libhal_device_get_property_string (ctx, vol_udi, 
+											     "volume.mount_point", 
+											     &error);
+					if (vol_mount_point != NULL) {
+						dbg ("Forcing unmount for %s", vol_mount_point);
 
 						/* TODO: emit DeviceCondition */
-						force_unmount (vol_device_file);
-						libhal_free_string (vol_device_file);
+						force_unmount (vol_mount_point);
+						libhal_free_string (vol_mount_point);
 					}
 				}
 			}

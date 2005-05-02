@@ -1,3 +1,8 @@
+2005-05-02  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/addons/addon-storage.c (unmount_childs): Also unmount
+	by mount point here
+
 2005-04-29  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/blockdev.c (update_mount_point): Fix the TODO about
