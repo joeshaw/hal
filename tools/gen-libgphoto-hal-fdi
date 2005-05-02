@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Generate a HAL device information file exporting what cameras are supported
+# by libgphoto2.
+#
+# This script was coded by Pozsar Balazs <pozsy@uhulinux.hu> and slightly
+# tweaked by David Zeuthen <david@fubar.dk>. 
+
+cat <<EOF
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+<!--
+To get back the original script which generated this file, use:
+  cat libgphoto2.fdi | uudecode | gunzip >gen-libgphoto-hal-fdi
+
+EOF
+cat $0 | gzip -9 | uuencode -m -
+cat <<EOF
+-->
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb">
+EOF
+
+/usr/lib/libgphoto2/print-usb-usermap | grep -v '^#' | tr -s ' ' | cut -d' ' -f 3,4 | sort -u | grep -v "^0x0000" | while read ven dev; do
+cat <<EOF
+      <match key="usb.vendor_id" int="$ven">
+        <match key="usb.product_id" int="$dev">
+          <merge key="info.category" type="string">camera</merge>
+	  <append key="info.capabilities" type="strlist">camera</append>
+          <merge key="camera.access_method" type="string">libgphoto2</merge>
+        </match>
+      </match>
+EOF
+done
+
+cat <<EOF
+    </match>
+  </device>
+</deviceinfo>
+EOF

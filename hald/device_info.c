@@ -1227,7 +1227,7 @@ process_fdi_file (const char *dir, const char *filename,
 
 	snprintf (buf, sizeof (buf), "%s/%s", dir, filename);
 
-	/*HAL_INFO(("analysing file %s", buf)); */
+	/*HAL_INFO(("analyzing file %s", buf));*/
 
 	/* open file and read it into a buffer; it's a small file... */
 	file = fopen (buf, "r");

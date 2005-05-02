@@ -1,5 +1,10 @@
 2005-05-02  David Zeuthen  <davidz@redhat.com>
 
+	* tools/gen-libgphoto-hal-fdi: Generate HAL fdi file - script from 
+	Pozsar Balazs <pozsy@uhulinux.hu>; slightly tweaked by me
+
+2005-05-02  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/Makefile.am: Add 10-camera-ptp.fdi.
 	Also add 10-usb-pda.fdi that was forgotten
 
