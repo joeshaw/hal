@@ -1,3 +1,9 @@
+2005-05-09  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/policy/10osvendor/10-storage-policy.fdi: Add the 'mmc' bus
+	to whitelist of storage devices we don't mind mounting. Verified to
+	work by Pierre Ossman <drzeus-list@drzeus.cx>.
+
 2005-05-08  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-hid-ups.c (ups_get_static): Assume
