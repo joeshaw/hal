@@ -1,5 +1,10 @@
 2005-05-08  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-hid-ups.c (ups_get_static): Assume
+	battery is present (from Richard Hughes <hughsient@gmail.com>)
+
+2005-05-08  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-pmu.c: New file (polls /dev/apm for
 	lid button events)
 

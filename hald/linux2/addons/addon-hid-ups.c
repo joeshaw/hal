@@ -228,6 +228,7 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 		}
 	}
 
+	libhal_device_set_property_bool (ctx, udi, "battery.present", TRUE, &error);
 	libhal_device_set_property_string (ctx, udi, "battery.type", "ups", &error);
 	libhal_device_add_capability (ctx, udi, "battery", &error);
 
