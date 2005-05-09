@@ -14,4 +14,12 @@
     </match>
   </device>
 
+  <device>
+    <match key="button.type" string="lid">
+      <match key="linux.pmu_type" exists="true">
+	<append key="info.addons" type="strlist">hald-addon-pmu</append>
+      </match>
+    </match>
+  </device>
+
 </deviceinfo>

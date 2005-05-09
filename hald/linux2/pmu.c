@@ -38,7 +38,8 @@
 
 enum {
 	PMU_TYPE_BATTERY,
-	PMU_TYPE_AC_ADAPTER
+	PMU_TYPE_AC_ADAPTER,
+	PMU_TYPE_LID_BUTTON
 };
 
 
@@ -60,6 +61,8 @@ typedef struct PMUDevHandler_s
 #define PMU_BATT_TYPE_HOOPER  0x00000020  /* 3400/3500 */
 #define PMU_BATT_TYPE_COMET 0x00000030	  /* 2400 */
 
+#define PMU_POLL_INTERVAL 2000
+
 static gboolean
 battery_refresh (HalDevice *d, PMUDevHandler *handler)
 {
@@ -80,6 +83,8 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 	hal_device_property_set_bool (d, "battery.present", flags & PMU_BATT_PRESENT);
 
 	if (flags & PMU_BATT_PRESENT) {
+		int current;
+
 		device_property_atomic_update_begin ();
 		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
 
@@ -101,6 +106,12 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 						 path, "", "max_charge", 0, 10, FALSE);
 		hal_util_set_int_elem_from_file (d, "battery.charge_level.design", 
 						 path, "", "max_charge", 0, 10, FALSE);
+
+		current = hal_util_grep_int_elem_from_file (path, "", "current", 0, 10, FALSE);
+		if (current > 0)
+			hal_device_property_set_int (d, "battery.charge_level.rate", current);
+		else
+			hal_device_property_set_int (d, "battery.charge_level.rate", -current);
 
 		device_property_atomic_update_end ();
 	} else {
@@ -136,6 +147,71 @@ ac_adapter_refresh (HalDevice *d, PMUDevHandler *handler)
 	return TRUE;
 }
 
+static gboolean
+lid_button_refresh (HalDevice *d, PMUDevHandler *handler)
+{
+	hal_device_property_set_string (d, "info.product", "Lid Switch");
+	hal_device_add_capability (d, "button");
+	hal_device_property_set_string (d, "info.category", "button");
+	hal_device_property_set_string (d, "button.type", "lid");
+	hal_device_property_set_bool (d, "button.has_state", TRUE);
+	hal_device_property_set_bool (d, "button.state.value", FALSE); 
+
+        /* assume lid is open, polling will tell us otherwise (TODO: figure out initial state) */
+	return TRUE;
+}
+
+static gboolean
+pmu_lid_compute_udi (HalDevice *d, PMUDevHandler *handler)
+{
+	gchar udi[256];
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/pmu_lid");
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+static gboolean
+pmu_poll (gpointer data)
+{
+	GSList *i;
+	GSList *devices;
+
+	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "battery.type",
+								    "primary");
+	for (i = devices; i != NULL; i = g_slist_next (i)) {
+		HalDevice *d;
+		
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.pmu_type")) {
+			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
+			battery_refresh (d, NULL);
+			device_property_atomic_update_end ();		
+		}
+	}
+
+	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "info.category",
+								    "ac_adapter");
+	for (i = devices; i != NULL; i = g_slist_next (i)) {
+		HalDevice *d;
+		
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.pmu_type")) {
+			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
+			ac_adapter_refresh (d, NULL);
+			device_property_atomic_update_end ();		
+		}
+	}
+
+	return TRUE;
+}
+
+
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding PMU objects.
  *
@@ -151,8 +227,11 @@ pmu_synthesize_hotplug_events (void)
 	HotplugEvent *hotplug_event;
 	GError *error;
 	GDir *dir;
+	gboolean has_battery_bays;
 
 	ret = FALSE;
+
+	has_battery_bays = FALSE;
 
 	if (!g_file_test ("/proc/pmu/info", G_FILE_TEST_EXISTS))
 		goto out;
@@ -192,6 +271,8 @@ pmu_synthesize_hotplug_events (void)
 			snprintf (buf, sizeof (buf), "%s/pmu/%s", get_hal_proc_path (), f);
 			if (sscanf (f, "battery_%d", &battery_num) == 1) {
 				HAL_INFO (("Processing %s", buf));
+
+				has_battery_bays = TRUE;
 				
 				hotplug_event = g_new0 (HotplugEvent, 1);
 				hotplug_event->action = HOTPLUG_ACTION_ADD;
@@ -210,6 +291,24 @@ pmu_synthesize_hotplug_events (void)
 
 	/* close directory */
 	g_dir_close (dir);
+
+	/* FIXME: Bah, here we need to make another assumption -
+	 * namely that there is a lid button, if, and only if, the
+	 * machine has got battery bays
+	 */
+	if (has_battery_bays) {
+		hotplug_event = g_new0 (HotplugEvent, 1);
+		hotplug_event->action = HOTPLUG_ACTION_ADD;
+		hotplug_event->type = HOTPLUG_EVENT_PMU;
+		g_strlcpy (hotplug_event->pmu.pmu_path, path, sizeof (hotplug_event->pmu.pmu_path));
+		hotplug_event->pmu.pmu_type = PMU_TYPE_LID_BUTTON;
+		hotplug_event_enqueue (hotplug_event);
+	}
+
+	/* setup timer for things that we need to poll */
+	g_timeout_add (PMU_POLL_INTERVAL,
+		       pmu_poll,
+		       NULL);
 
 out:
 	return ret;
@@ -272,9 +371,18 @@ static PMUDevHandler pmudev_handler_ac_adapter = {
 	.remove      = pmu_generic_remove
 };
 
+static PMUDevHandler pmudev_handler_lid_button = { 
+	.pmu_type    = PMU_TYPE_LID_BUTTON,
+	.add         = pmu_generic_add,
+	.compute_udi = pmu_lid_compute_udi,
+	.refresh     = lid_button_refresh,
+	.remove      = pmu_generic_remove
+};
+
 static PMUDevHandler *pmu_handlers[] = {
 	&pmudev_handler_battery,
 	&pmudev_handler_ac_adapter,
+	&pmudev_handler_lid_button,
 	NULL
 };
 

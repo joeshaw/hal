@@ -32,7 +32,7 @@
 #include <string.h>
 #include <mntent.h>
 #include <errno.h>
-
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -793,7 +793,8 @@ hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file,
 
 	value = G_MAXINT;
 
-	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse)) == NULL)
+	strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse);
+	if (strvalue == NULL)
 		goto out;
 
 	value = strtol (strvalue, &endptr, base);
@@ -880,7 +881,8 @@ hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key,
 
 	res = FALSE;
 
-	if ((strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse)) == NULL)
+	strvalue = hal_util_grep_string_elem_from_file (directory, file, linestart, elem, reuse);
+	if (strvalue == NULL)
 		goto out;
 
 	value = strtol (strvalue, &endptr, base);

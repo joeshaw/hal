@@ -1,3 +1,21 @@
+2005-05-08  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/addons/addon-pmu.c: New file (polls /dev/apm for
+	lid button events)
+
+	* hald/linux2/addons/Makefile.am (libexec_PROGRAMS): Also build
+	hald-addon-pmu
+
+	* hald/linux2/pmu.c (battery_refresh): Support battery.current
+	(lid_button_refresh): New function
+	(pmu_lid_compute_udi): New function
+	(pmu_poll): New function
+	(pmu_synthesize_hotplug_events): Add lid object and setup a timeout
+	for polling
+
+	* fdi/policy/10osvendor/10-power-mgmt-policy.fdi: Run the pmu addon
+	to detect lid button events.
+
 2005-05-02  David Zeuthen  <davidz@redhat.com>
 
 	* tools/gen-libgphoto-hal-fdi: Generate HAL fdi file - script from 
