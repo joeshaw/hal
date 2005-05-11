@@ -1,3 +1,8 @@
+2005-05-11  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.[ch]: Patch from Rohan McGovern <rohan.pm@gmail.com>
+	to fix up Doxygen documentation. Thanks!
+
 2005-05-09  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/policy/10osvendor/10-storage-policy.fdi: Add the 'mmc' bus
