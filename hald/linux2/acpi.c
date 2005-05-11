@@ -73,6 +73,15 @@ battery_refresh_poll (HalDevice *d)
 					 "state", "remaining capacity", 0, 10, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.charge_level.rate", path, 
 					 "state", "present rate", 0, 10, TRUE);
+	
+	hal_device_property_set_int (d, "battery.remaining_time", 
+				     util_compute_time_remaining (
+					     d->udi,
+					     hal_device_property_get_int (d, "battery.charge_level.rate"),
+					     hal_device_property_get_int (d, "battery.charge_level.current"),
+					     hal_device_property_get_int (d, "battery.charge_level.last_full"),
+					     hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
+					     hal_device_property_get_bool (d, "battery.rechargeable.is_charging")));
 }
 
 static gboolean

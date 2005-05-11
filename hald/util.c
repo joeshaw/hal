@@ -50,6 +50,36 @@
 
 #include "util.h"
 
+/** Given all the required parameters, this function will return the number 
+ *  of seconds until the battery is charged (if charging) or the number
+ *  of seconds until empty (if discharging)
+ *
+ *  @param  id                  Optional ID given to this battery. Unused at present.
+ *  @param  chargeRate          The "rate" (typically mW)
+ *  @param  chargeLevel         The current charge level of the battery (typically mWh)
+ *  @param  chargeLastFull      The last "full" charge of the battery (typically mWh)
+ *  @param  isDischarging       If battery is discharging
+ *  @param  isCharging          If battery is charging
+ *  @return                     Number of seconds, or zero if n/a
+ */
+int 
+util_compute_time_remaining (const char *id,
+			     int chargeRate,
+			     int chargeLevel,
+			     int chargeLastFull,
+			     gboolean isDischarging,
+			     gboolean isCharging)
+{
+
+	if (chargeRate <= 0)
+		return 0;
+	if (isDischarging)
+		return ((double) chargeLevel / (double) chargeRate) * 60 * 60;
+	if (isCharging)
+		return ((double) (chargeLastFull - chargeLevel) / (double) chargeRate) * 60 * 60;
+	return 0;
+}
+
 gboolean 
 hal_util_remove_trailing_slash (gchar *path)
 {

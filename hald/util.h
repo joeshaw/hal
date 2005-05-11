@@ -29,6 +29,8 @@
 #include "device.h"
 #include "device_store.h"
 
+int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, gboolean isDischarging, gboolean isCharging);
+
 gboolean hal_util_remove_trailing_slash (gchar *path);
 
 gboolean hal_util_get_fs_mnt_path (const gchar *fs_type, gchar *mnt_path, gsize len);

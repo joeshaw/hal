@@ -1,5 +1,22 @@
 2005-05-11  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/pmu.c (battery_refresh): Also use the
+	util_compute_time_remaining here
+
+2005-05-11  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Richard Hughes <richard@hughsie.com>
+
+	* hald/util.c (util_compute_time_remaining): New function
+	used to calculate the time remaining for ACPI laptops as the
+	information is not provided.
+
+	* hald/linux2/acpi.c (battery_refresh_poll): Add code to
+	refresh "battery.remaining_time" using the new function
+	util_compute_time_remaining.
+
+2005-05-11  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/libhal.[ch]: Patch from Rohan McGovern <rohan.pm@gmail.com>
 	to fix up Doxygen documentation. Thanks!
 
@@ -12,7 +29,7 @@
 2005-05-08  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-hid-ups.c (ups_get_static): Assume
-	battery is present (from Richard Hughes <hughsient@gmail.com>)
+	battery is present (from Richard Hughes <richard@hughsie.com>)
 
 2005-05-08  David Zeuthen  <davidz@redhat.com>
 

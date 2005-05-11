@@ -113,6 +113,16 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		else
 			hal_device_property_set_int (d, "battery.charge_level.rate", -current);
 
+		/* TODO: could read some pmu file? */
+		hal_device_property_set_int (d, "battery.remaining_time", 
+					     util_compute_time_remaining (
+						     d->udi,
+						     hal_device_property_get_int (d, "battery.charge_level.rate"),
+						     hal_device_property_get_int (d, "battery.charge_level.current"),
+						     hal_device_property_get_int (d, "battery.charge_level.last_full"),
+						     hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
+						     hal_device_property_get_bool (d, "battery.rechargeable.is_charging")));
+
 		device_property_atomic_update_end ();
 	} else {
 		device_property_atomic_update_begin ();
