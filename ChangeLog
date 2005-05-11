@@ -1,5 +1,10 @@
 2005-05-11  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-usb-csr.c: Remove all extra new-lines as
+	we don't nede them (from Richard Hughes <richard@hughsie.com>)
+
+2005-05-11  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/pmu.c (battery_refresh): Also use the
 	util_compute_time_remaining here
 
