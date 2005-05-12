@@ -137,7 +137,7 @@ property_cache_item_get (const char * hal_device_udi)
 							     &err);
 	if (dbus_error_is_set (&err))
 	{
-		dbg (stderr, "Error: [%s]/[%s]", err.name, err.message);	
+		dbg ("Error: [%s]/[%s]", err.name, err.message);	
 	}
 
 	if (pci->bus_no_present)
