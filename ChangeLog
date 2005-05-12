@@ -1,5 +1,15 @@
 2005-05-12  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Bump version to 0.5.2
+
+	* NEWS: Update for release 0.5.2
+
+2005-05-12  David Zeuthen  <davidz@redhat.com>
+
+	* tools/Makefile.am (EXTRA_DIST): Also dist gen-libgphoto-hal-fdi
+
+2005-05-12  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-usb-csr.c (property_cache_item_get): Bah,
 	make this file actually compile again.
 

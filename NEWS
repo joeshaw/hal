@@ -1,8 +1,22 @@
 ==========
+HAL 0.5.2 "Can't do it, Sally."
+==========
+
+Released May 12, 2005
+
+ - Calculate remaining time for batteries (Richard Hughes)
+ - libhal documentation update (Rohan McGovern)
+ - Tweak default policy to automount 'mmc' devices (Pierre Ossman)
+ - PMU lid button and battery polling fixes (David Zeuthen)
+ - Detect PTP cameras (Pozsar Balazs)
+ - Include script to generate libgphoto2 .fdi file (Pozsar Balazs)
+ - Unmount by mount point instead of by device file (Rohan McGovern)
+
+==========
 HAL 0.5.1 "Sonny...?"
 ==========
 
-Release Apr 27, 2005
+Released Apr 27, 2005
 
  - Teach volume_id about Minix and a bunch of ATA raid signatures
    and use last label on multi-session discs (Kay Sievers)
