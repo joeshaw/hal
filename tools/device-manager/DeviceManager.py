@@ -148,12 +148,12 @@ class DeviceManager(LibGladeApplication):
 	    if property_name=="info.parent":
 		self.update_device_list()        
 	    else:
-		device_udi_obj = self.hal_service.get_object(device_udi,
-                                                   "org.freedesktop.Hal.Device")
+		device_udi_obj = self.bus.get_object("org.freedesktop.Hal", device_udi)
 		device_obj = self.udi_to_device(device_udi)
 
-		if device_udi_obj.PropertyExists(property_name):
-		    device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name)
+		if device_udi_obj.PropertyExists(property_name, dbus_interface="org.freedesktop.Hal.Device"):
+		    device_obj.properties[property_name] = device_udi_obj.GetProperty(property_name, 
+										      dbus_interface="org.freedesktop.Hal.Device")
 		    print "  value=%s"%(device_obj.properties[property_name])
 		else:
 		    if device_obj != None:
