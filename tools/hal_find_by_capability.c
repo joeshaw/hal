@@ -1,9 +1,9 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * hal_get_property.c : Get property for a device
+ * hal_find_by_capability.c : Find hal devices
  *
- * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 David Zeuthen, <david@fubar.dk>
  *
  * Licensed under the Academic Free License version 2.0
  *
@@ -35,16 +35,6 @@
 
 #include <libhal/libhal.h>
 
-/**
- * @defgroup HalGetProperty  Get HAL device property
- * @ingroup HalMisc
- *
- * @brief A commandline tool getting a property of a device. Uses libhal
- *
- * @{
- */
-
-static LibHalContext *hal_ctx;
 
 /** Print out program usage.
  *
@@ -56,20 +46,19 @@ usage (int argc, char *argv[])
 {
 	fprintf (stderr,
  "\n"
- "usage : hal-get-property --udi <udi> --key <key> \n"
- "                        [--hex] [--help] [--verbose] [--version]\n");
+ "usage : hal-find-by-capability --capability <capability>\n"
+ "                              [--help] [--verbose] [--version]\n");
 	fprintf (stderr,
  "\n"
- "        --udi            Unique Device Id\n"
- "        --key            Key of the property to get\n"
- "        --hex            Show integer values in hex (without leading 0x)\n"
+ "        --capability     HAL Device Capability to search for\n"
  "        --verbose        Be verbose\n"
  "        --version        Show version and exit\n"
  "        --help           Show this information and exit\n"
  "\n"
- "This program retrieves a property from a device. If the property exist\n"
- "then it is printed on stdout and this program exits with exit code 0.\n"
- "On error, the program exits with an exit code different from 0\n"
+ "This program prints the Unique Device Identifiers for HAL device\n"
+ "objects of a given capability on stdout and exits with exit code 0\n"
+ "If there is an error, the program exits with an exit code different\n"
+ "from 0.\n"
  "\n");
 }
 
@@ -82,14 +71,14 @@ usage (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-	char *udi = NULL;
-	char *key = NULL;
-	int type;
-	dbus_bool_t is_hex = FALSE;
+	int i;
+	int num_udis;
+	char **udis;
+	char *capability = NULL;
 	dbus_bool_t is_verbose = FALSE;
 	dbus_bool_t is_version = FALSE;
-	char *str;
 	DBusError error;
+	LibHalContext *hal_ctx;
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -101,9 +90,7 @@ main (int argc, char *argv[])
 		int option_index = 0;
 		const char *opt;
 		static struct option long_options[] = {
-			{"udi", 1, NULL, 0},
-			{"key", 1, NULL, 0},
-			{"hex", 0, NULL, 0},
+			{"capability", 1, NULL, 0},
 			{"verbose", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
@@ -122,16 +109,12 @@ main (int argc, char *argv[])
 			if (strcmp (opt, "help") == 0) {
 				usage (argc, argv);
 				return 0;
-			} else if (strcmp (opt, "hex") == 0) {
-				is_hex = TRUE;
 			} else if (strcmp (opt, "verbose") == 0) {
 				is_verbose = TRUE;
 			} else if (strcmp (opt, "version") == 0) {
 				is_version = TRUE;
-			} else if (strcmp (opt, "key") == 0) {
-				key = strdup (optarg);
-			} else if (strcmp (opt, "udi") == 0) {
-				udi = strdup (optarg);
+			} else if (strcmp (opt, "capability") == 0) {
+				capability = strdup (optarg);
 			}
 			break;
 
@@ -143,11 +126,11 @@ main (int argc, char *argv[])
 	}
 
 	if (is_version) {
-		printf ("hal-get-property " PACKAGE_VERSION "\n");
+		printf ("hal-find-by-capability " PACKAGE_VERSION "\n");
 		return 0;
 	}
 
-	if (udi == NULL || key == NULL) {
+	if (capability == NULL) {
 		usage (argc, argv);
 		return 1;
 	}
@@ -166,71 +149,26 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-	type = libhal_device_get_property_type (hal_ctx, udi, key, &error);
-	if (type == LIBHAL_PROPERTY_TYPE_INVALID) {
-		fprintf (stderr, "error: libhal_device_get_property_type: %s: %s\n", error.name, error.message);
-		return 1;
-	}
-	/* emit the value to stdout */
-	switch (type) {
-	case LIBHAL_PROPERTY_TYPE_STRING:
-		str = libhal_device_get_property_string (hal_ctx, udi, key, &error);
-		if (is_verbose)
-			printf ("Type is string\n");
-		printf ("%s\n", str);
-		libhal_free_string (str);
-		break;
-	case LIBHAL_PROPERTY_TYPE_INT32:
-		if (is_verbose)
-			printf ("Type is integer (shown in %s)\n",
-				(is_hex ? "hexadecimal" : "decimal"));
-		printf ((is_hex ? "%x\n" : "%d\n"),
-			libhal_device_get_property_int (hal_ctx, udi, key, &error));
-		break;
-	case LIBHAL_PROPERTY_TYPE_UINT64:
-		if (is_verbose)
-			printf ("Type is uint64 (shown in %s)\n",
-				(is_hex ? "hexadecimal" : "decimal"));
-		printf ((is_hex ? "%llx\n" : "%lld\n"),
-			libhal_device_get_property_uint64 (hal_ctx, udi, key, &error));
-		break;
-	case LIBHAL_PROPERTY_TYPE_DOUBLE:
-		if (is_verbose)
-			printf ("Type is double\n");
-		printf ("%f\n",
-			libhal_device_get_property_double (hal_ctx, udi, key, &error));
-		break;
-	case LIBHAL_PROPERTY_TYPE_BOOLEAN:
-		if (is_verbose)
-			printf ("Type is boolean\n");
-		printf ("%s\n",
-			libhal_device_get_property_bool (hal_ctx, udi, key, &error) ? "true" : "false");
-		break;
 
-	case LIBHAL_PROPERTY_TYPE_STRLIST:
-	{
-		unsigned int i;
-		char **strlist;
-		
-		strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
-		for (i = 0; strlist[i] != 0; i++) {
-			printf ("%s", strlist[i]);
-			if (strlist[i+1] != NULL)
-				printf (" ");
-		}
-		break;
-	}
-	default:
-		printf ("Unknown type %d='%c'\n", type, type);
-		return 1;
-		break;
-	}
+	udis = libhal_find_device_by_capability (hal_ctx, capability, &num_udis, &error);
 
 	if (dbus_error_is_set (&error)) {
 		fprintf (stderr, "error: %s: %s\n", error.name, error.message);
 		return 1;
 	}
 
+	if (is_verbose)
+		printf ("Found %d device objects of capability '%s'\n", num_udis, capability);
+
+	if (num_udis == 0) {
+		return 1;
+	}
+
+	for (i = 0; i < num_udis; i++) {
+		printf ("%s\n", udis[i]);
+	}
+
+	libhal_free_string_array (udis);
 
 	return 0;
 }
