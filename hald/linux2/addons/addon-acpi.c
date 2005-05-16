@@ -149,7 +149,7 @@ main (int argc, char *argv[])
 
 			snprintf (udi, sizeof (udi), "/org/freedesktop/Hal/devices/acpi_%s", acpi_name);
 
-			if (strncmp (acpi_path, "button/", sizeof ("button/") - 1) == 0) {
+			if (strncmp (acpi_path, "button", sizeof ("button") - 1) == 0) {
 				dbg ("button event");
 
 				/* TODO: only rescan if button got state */
@@ -159,7 +159,7 @@ main (int argc, char *argv[])
 				dbus_error_init (&error);
 				libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
 
-			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter/") - 1) == 0) {
+			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
 				dbg ("ac_adapter event");
 				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
