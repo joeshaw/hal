@@ -1,3 +1,11 @@
+2005-05-20  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-storage.c (main): Here is a fix for
+	the dvdram entry in hal (0.4.x and 0.5.x).  Currently the correct
+	default key (storage.cdrom.dvdram = false) is created but if the
+	device can write dvdram, hal add a new key named "storage.dvdram". 
+	Patch from Danny Kukawka <danny.kukawka@web.de>.
+
 2005-05-16  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-acpi.c (main): Whilst using CVS, I've

@@ -268,7 +268,7 @@ main (int argc, char *argv[])
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdr", TRUE, &error);
 			}
 			if (capabilities & CDC_DVD_RAM) {
-				libhal_device_set_property_bool (ctx, udi, "storage.dvdram", TRUE, &error);
+				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdram", TRUE, &error);
 			}
 			
 			/* while we're at it, check if we support media changed */
