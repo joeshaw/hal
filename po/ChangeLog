@@ -1,3 +1,8 @@
+2005-05-23  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* POTFILES.in: Add two missing files.
+	* nb.po: Add this.
+
 2005-04-04  David Zeuthen  <david@fubar.dk>
 
 	* zh_TW.po: Translation from chaoweilun@pcmail.com.tw
