@@ -131,19 +131,6 @@
 	    </match>
 	  </match>
 	  
-	  <!-- Use noatime and sync options for all hotpluggable or removable
-	       volumes smaller than 2GB -->
-	  <match key="volume.size" compare_lt="2147483648">
-	    <match key="@block.storage_device:storage.hotpluggable" bool="true">
-	      <merge key="volume.policy.mount_option.sync" type="bool">true</merge>
-	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
-	    </match>
-	    <match key="@block.storage_device:storage.removable" bool="true">
-	      <merge key="volume.policy.mount_option.sync" type="bool">true</merge>
-	      <merge key="volume.policy.mount_option.noatime" type="bool">true</merge>
-	    </match>
-	  </match>
-	  
 	  <!-- Attempt mount point 'ipod' for iPod's -->
 	  <match key="@block.storage_device:portable_audio_player.type" string="ipod">
 	    <merge key="volume.policy.desired_mount_point" type="string">ipod</merge>

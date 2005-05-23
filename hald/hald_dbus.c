@@ -1687,8 +1687,6 @@ device_lock (DBusConnection * connection,
 	g_hash_table_insert (services_with_locks, g_strdup (sender),
 			     g_object_ref (d));
 
-	dbus_free (reason);
-
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
 

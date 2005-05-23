@@ -1,3 +1,17 @@
+2005-05-23  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/policy/10osvendor/10-storage-policy.fdi: Never ever use
+	sync as it reduces performance and makes people believe that
+	it wears out their drives (RH bug #157674)
+
+	* examples/locking.py: Fixup this a little bit
+
+	* tools/fstab-sync.8.in: Update the man page to reflect latest
+	changes.
+
+	* hald/hald_dbus.c (device_lock): Fix a doublefree when acquiring
+	lock (RH bug #158474)
+
 2005-05-20  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-storage.c (main): Here is a fix for

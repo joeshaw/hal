@@ -16,12 +16,16 @@ pid = os.getpid()
 reason = "locking.py pid %d"%pid
 
 bus = dbus.Bus(dbus.Bus.TYPE_SYSTEM)
-hal_service = bus.get_service("org.freedesktop.Hal")
+
+devobj = bus.get_object("org.freedesktop.Hal", dev_udi)
+dev = dbus.Interface(devobj, "org.freedesktop.Hal.Device")
+#hal_service = bus.get_service("org.freedesktop.Hal")
+#dev = hal_service.get_object (dev_udi, "org.freedesktop.Hal.Device")
+
 
 print "I am %s with pid %d"%(bus.get_connection().get_unique_name(), pid)
 print
 
-dev = hal_service.get_object (dev_udi, "org.freedesktop.Hal.Device")
 
 print "Attempting to lock %s for %d secs"%(dev_udi, duration)
 print "with reason '%s'"%reason

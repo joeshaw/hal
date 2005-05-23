@@ -20,9 +20,7 @@ This program serves one major purpose: Update the file systems table file
 and create/remove mount points in
 .B /media
 in response to HAL events. This program is usually never run directly
-from a shell; instead it is invoked as a callout from the
-.B @SYSCONFDIR@/hal/device.d
-directory by the HAL daemon.
+from a shell; instead it is invoked as a callout by the HAL daemon.
 
 .PP
 Additionally, this program offers an option of removing any trace of
@@ -84,27 +82,13 @@ for more information.
 
 .PP
 By default, the 
-.B @DATADIR@/hal/fdi/90defaultpolicy/storage-policy.fdi
+.B @DATADIR@/hal/fdi/policy/10osvendor/10-storage-policy.fdi
 file specifies the policy - this file should never be edited by the
 system administrator as it might get updated by the OS vendor for security
 updates. Instead, system- or site-specific rules can be put in
 the
-.B @DATADIR@/hal/fdi/95userpolicy
-directory.
-
-Device information files are processed for every hal device object in the
-.B @DATADIR@/hal/fdi/ 
-directory in alphabetical order including directories. Hence, files in the
-.B 90defaultpolicy
-directory are processed before files
-.B 95userpolicy
-directory, 
-.B 95userpolicy/a.fdi 
-is processed before
-.B 95userpolicy/b.fdi 
-and so on. In addition, directives in specific files are processed in a
-top-down fashion.
-
+.B @SYSCONFDIR@/hal/fdi/policy/
+directory as separate files.
 
 .PP
 A number of sample policy files for various uses should
@@ -125,13 +109,11 @@ Automatic updates of the
 .B /etc/fstab
 file by the
 .B fstab-sync
-program from the HAL daemon can be disabled by changing the
-.B 50-fstab-sync.hal
-symlink in
-.B @SYSCONFDIR@/hal/device.d
-directory to point to
-.B /bin/false
-.
+program from the HAL daemon can be disabled by making the 
+.B /etc/fstab
+file immutable (using
+.B chattr +i /etc/fstab
+for example)
 
 .SH OPTIONS
 The following options are supported:
