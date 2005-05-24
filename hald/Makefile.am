@@ -43,6 +43,7 @@ hald_SOURCES =                                                          \
 	device_info.h			device_info.c			\
 	device_store.h			device_store.c			\
         hald.h				hald.c				\
+	master_slave.h			master_slave.c			\
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\

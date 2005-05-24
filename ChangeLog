@@ -1,3 +1,9 @@
+2005-05-24  David Zeuthen  <davidz@redhat.com>
+
+	* hald/property.c (hal_property_new_string): Just assign an
+	empty string to the property if the value argument is NULL.
+	Patch from Martin Pitt <martin@piware.de> (Ubuntu bug #11060)
+
 2005-05-23  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* configure.in: Add nb to ALL_LINGUAS.

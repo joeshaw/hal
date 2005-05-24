@@ -81,7 +81,7 @@ hal_property_new_string (const char *key, const char *value)
 
 	prop->type = HAL_PROPERTY_TYPE_STRING;
 	prop->key = g_strdup (key);
-	prop->str_value = g_strdup (value);
+	prop->str_value = g_strdup (value != NULL ? value : "");
 
 	while (!g_utf8_validate (prop->str_value, -1,
 				 (const char **) &endchar)) {
@@ -91,7 +91,7 @@ hal_property_new_string (const char *key, const char *value)
 
 	if (!validated) {
 		HAL_WARNING (("Key '%s' has invalid UTF-8 string '%s'",
-			      key, value));
+			      key, prop->str_value));
 	}
 
 	return prop;

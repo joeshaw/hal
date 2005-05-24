@@ -488,7 +488,8 @@ main (int argc, char *argv[])
 		logger_disable ();
 
 	/* will fork into two; only the child will return here if we are successful */
-	/*master_slave_setup ();*/
+	/*master_slave_setup ();
+	  sleep (100000000);*/
 
 	loop = g_main_loop_new (NULL, FALSE);
 
