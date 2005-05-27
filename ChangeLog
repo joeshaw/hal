@@ -1,3 +1,8 @@
+2005-05-28  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* hald/Makefile.am: Putting on the build sherrif hat and removing
+	references to master_slave.[ch] to get the build going again.
+
 2005-05-24  David Zeuthen  <davidz@redhat.com>
 
 	* hald/property.c (hal_property_new_string): Just assign an
