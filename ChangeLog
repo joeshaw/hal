@@ -1,3 +1,11 @@
+2005-06-10  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald.c (usage): This diff contains a little fix for the
+	description of --retain-privileges in "hald --help". Looks like
+	only replaced --drop-privileges through --retain-privileges
+	without to change the description. 
+	Patch from Danny Kukawka <danny.kukawka@web.de>.
+
 2005-05-28  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* hald/Makefile.am: Putting on the build sherrif hat and removing
