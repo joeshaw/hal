@@ -1,3 +1,8 @@
+2005-06-15  William Jon McCann  <mccann@jhu.edu>
+
+	* hald/linux2/probing/probe-volume.c (main): Add support for
+	DVD+R DL media.  (fdo bug #3269)
+
 2005-06-10  David Zeuthen  <davidz@redhat.com>
 
 	* hald/hald.c (usage): This diff contains a little fix for the
