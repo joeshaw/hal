@@ -1,5 +1,10 @@
 2005-06-21  David Zeuthen  <davidz@redhat.com>
 
+	* .cvsignore: update this and add a bunch of other .cvsignore files.
+	Patch from William Jon McCann <mccannwj@pha.jhu.edu>.
+
+2005-06-21  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: Patch from
 	Mattias Eriksson <snaggen@acc.umu.se> to detect a bunch of iRiver
 	music players (ported from 0.4.x to HEAD by me).

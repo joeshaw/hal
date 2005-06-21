@@ -1,0 +1,13 @@
+.deps
+.libs
+Makefile
+Makefile.in
+*.lo
+*.la
+hald-probe-hiddev
+hald-probe-input
+hald-probe-pc-floppy
+hald-probe-printer
+hald-probe-smbios
+hald-probe-storage
+hald-probe-volume

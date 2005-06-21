@@ -14,3 +14,11 @@ hal.pc
 libtool
 ltmain.sh
 stamp-h1
+hal-storage.pc
+intltool-extract
+intltool-extract.in
+intltool-merge
+intltool-merge.in
+intltool-update
+intltool-update.in
+mkinstalldirs

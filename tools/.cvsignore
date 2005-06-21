@@ -5,3 +5,6 @@ Makefile.in
 hal-get-property
 hal-set-property
 lshal
+fstab-sync.8
+hal-find-by-capability
+hal-find-by-property

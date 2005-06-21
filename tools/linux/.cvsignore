@@ -4,3 +4,4 @@ Makefile
 Makefile.in
 hal.hotplug
 hal.dev
+hald-add-selinux-mount-option
