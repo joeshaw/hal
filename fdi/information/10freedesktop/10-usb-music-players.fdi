@@ -3,25 +3,24 @@
 <deviceinfo version="0.2">
   <device>
 
-    <!-- Apple iPod - TODO: use USB ids to determine exact output formats  -->
     <match key="info.category" string="storage">
+      <!-- Apple iPod - TODO: use USB ids to determine exact output formats  -->
       <match key="storage.vendor" contains="Apple">
 	<match key="storage.model" contains="iPod">
 	  <append key="info.capabilities" type="strlist">portable_audio_player</append>
           <merge key="portable_audio_player.access_method" type="string">storage</merge>
-            <merge key="portable_audio_player.type" type="string">ipod</merge>
+          <merge key="portable_audio_player.type" type="string">ipod</merge>
           <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
-          <append key="portable_audio_player.output_formats" type="strlist">audio/x-mp3</append>
           <append key="portable_audio_player.output_formats" type="strlist">audio/aac</append>
           <merge key="storage.requires_eject" type="bool">true</merge>
 	</match>
       </match>
-    </match>	    
 
-    <!-- Jetflash MP3 Player -->
-    <match key="info.category" string="storage">
+      <!-- USB Mass Storage devices that are music players -->
+      
       <match key="@storage.physical_device:info.bus" string="usb">
+	<!-- Jetflash MP3 Player -->
 	<match key="@storage.physical_device:usb.vendor_id" int="0x066f">
           <match key="@storage.physical_device:usb.product_id" int="0x8000">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
@@ -32,6 +31,295 @@
             <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
             <append key="portable_audio_player.input_formats" type="strlist">audio/x-wav</append>
           </match>
+        </match>
+
+	<match key="@storage.physical_device:usb.vendor_id" int="0x4102">
+          <!-- iFP 100 UMS (supports application/ogg only after firmware upgrade)-->
+	  <match key="@storage.physical_device:usb.product_id" int="0x1101">
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+	  <!-- iFP 300 UMS (supports application/ogg only after firmware upgrade)-->
+	  <match key="@storage.physical_device:usb.product_id" int="0x1103">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+	  <!-- iFP 500 UMS (supports application/ogg only after firmware upgrade)-->
+	  <match key="@storage.physical_device:usb.product_id" int="0x1105">
+	    <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- iFP 700 UMS-->
+	  <match key="@storage.physical_device:usb.product_id" int="0x1107">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- iFP 800 UMS-->
+          <match key="@storage.physical_device:usb.product_id" int="0x1108">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- iFP 900 UMS-->
+          <match key="@storage.physical_device:usb.product_id" int="0x1109">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- iFP 1000 UMS-->
+          <match key="@storage.physical_device:usb.product_id" int="0x1110">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- N10 UMS-->
+          <match key="@storage.physical_device:usb.product_id" int="0x1111">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- H10 20GB UMS-->
+          <match key="@storage.physical_device:usb.product_id" int="0x2001">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- H10 5GB UMS-->
+          <match key="@storage.physical_device:usb.product_id" int="0x2002">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+	</match>
+	<match key="@storage.physical_device:usb.vendor_id" int="0x1006">
+          <!-- iGP 100 -->
+          <match key="@storage.physical_device:usb.product_id" int="0x2001">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- iHP-100,115 -->
+          <match key="@storage.physical_device:usb.product_id" int="0x3001">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+	    <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+	    <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+	    <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- HP-120,140 -->
+          <match key="@storage.physical_device:usb.product_id" int="0x3002">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+	    <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+	    <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+	    <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+          <!-- H320, H340 -->
+          <match key="@storage.physical_device:usb.product_id" int="0x3003">
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+	    <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+	    <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+	    <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+          </match>
+	</match>
+      </match>
+    </match>      
+
+    <!-- USB devices that are music players but uses a user-space library -->
+
+    <match key="info.bus" string="usb">
+      <match key="usb.vendor_id" int="0x4102">
+	<!-- iFP 100 IMM (supports application/ogg only after firmware upgrade)-->
+	<match key="usb.product_id" int="0x1001">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+	<!-- iFP 300 IMM (supports application/ogg only after firmware upgrade)-->
+	<match key="usb.product_id" int="0x1003">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+	<!-- iFP 500 IMM (supports application/ogg only after firmware upgrade)-->
+	<match key="usb.product_id" int="0x1005">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- iFP 700 IMM-->
+	<match key="usb.product_id" int="0x1007">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- iFP 800 IMM-->
+        <match key="usb.product_id" int="0x1008">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- iFP 900 IMM-->
+        <match key="usb.product_id" int="0x1009">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- iFP 1000 IMM-->
+        <match key="usb.product_id" int="0x1010">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- N10 IMM-->
+        <match key="usb.product_id" int="0x1011">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- H10 20GB MTP-->
+        <match key="usb.product_id" int="0x2101">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- H10 5GB MTP-->
+        <match key="usb.product_id" int="0x2102">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+        <!-- H10 5,6GB MTP-->
+        <match key="usb.product_id" int="0x2105">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+          <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+          <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
+        </match>
+      </match>
+      <match key="usb.vendor_id" int="0x1006">
+	<!-- iDP 100 UMS-->
+	<match key="usb.product_id" int="0x0001">
+          <merge key="info.category" type="string">portable_audio_player</merge>
+          <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="portable_audio_player.type" type="string">generic</merge>
+          <merge key="portable_audio_player.access_method" type="string">user</merge>
+          <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
         </match>
       </match>
     </match>

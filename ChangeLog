@@ -1,3 +1,9 @@
+2005-06-21  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: Patch from
+	Mattias Eriksson <snaggen@acc.umu.se> to detect a bunch of iRiver
+	music players (ported from 0.4.x to HEAD by me).
+
 2005-06-15  William Jon McCann  <mccann@jhu.edu>
 
 	* hald/linux2/probing/probe-volume.c (main): Add support for
