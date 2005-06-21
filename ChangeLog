@@ -1,5 +1,11 @@
 2005-06-21  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: This little patch fixes the configure.in file in
+	order to allow non-Linux machines to execute the whole configure
+	script. Patch from Alvaro Lopez Ortega <alvaro@sun.com>.
+
+2005-06-21  David Zeuthen  <davidz@redhat.com>
+
 	* .cvsignore: update this and add a bunch of other .cvsignore files.
 	Patch from William Jon McCann <mccannwj@pha.jhu.edu>.
 

@@ -285,7 +285,13 @@ AC_TRY_COMPILE(
 ], have_size64=yes, have_size64=no)
 AC_MSG_RESULT($have_size64)
 if test x$have_size64 = xno; then
-  AC_MSG_ERROR([BLKGETSIZE64 is not defined])
+  case "$host" in
+        *-*-linux*)
+	     AC_MSG_ERROR([BLKGETSIZE64 is not defined])
+		;;
+        *)
+		;;
+  esac
 fi
 
 # DocBook Documentation
