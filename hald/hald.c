@@ -38,7 +38,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
-#include <sys/prctl.h>
 #include <grp.h>
 #include <syslog.h>
 

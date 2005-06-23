@@ -63,15 +63,6 @@ xlc )
   am_opt=--include-deps;;
 esac
 
-for coin in `find $srcdir -path $srcdir/CVS -prune -o -name configure.in -print`
-do 
-  dr=`dirname $coin`
-  if test -f $dr/NO-AUTO-GEN; then
-    echo skipping $dr -- flagged as no auto-gen
-  else
-    echo processing $dr
-    ( cd $dr
-
       aclocalinclude="$ACLOCAL_FLAGS"
 
       if grep "^AM_PROG_LIBTOOL" configure.in >/dev/null; then
@@ -90,9 +81,6 @@ do
       automake --add-missing --gnu $am_opt
       echo "Running autoconf ..."
       autoconf
-    )
-  fi
-done
 
 glib-gettextize --force --copy                              || exit 1
 intltoolize --copy --force --automake                  || exit 1

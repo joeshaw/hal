@@ -10,7 +10,9 @@ INCLUDES = \
 	-I$(top_srcdir) -I.. \
 	@PACKAGE_CFLAGS@
 
+if HALD_COMPILE_LINUX2
 noinst_LTLIBRARIES = libhald_linux2.la
+endif
 
 libhald_linux2_la_SOURCES =					\
 				osspec.c			\

@@ -33,8 +33,6 @@ int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel
 
 gboolean hal_util_remove_trailing_slash (gchar *path);
 
-gboolean hal_util_get_fs_mnt_path (const gchar *fs_type, gchar *mnt_path, gsize len);
-
 const gchar *hal_util_get_last_element (const gchar *s);
 
 gchar *hal_util_get_parent_path (const gchar *path);

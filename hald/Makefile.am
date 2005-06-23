@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = dummy linux2 .
+SUBDIRS = dummy linux2 solaris .
 
 INCLUDES = \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \

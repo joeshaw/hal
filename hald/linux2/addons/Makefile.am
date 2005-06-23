@@ -8,10 +8,12 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
+if HALD_COMPILE_LINUX2
 libexec_PROGRAMS  = hald-addon-hid-ups hald-addon-acpi hald-addon-storage hald-addon-pmu
 
 if HAVE_LIBUSB
 libexec_PROGRAMS += hald-addon-usb-csr
+endif
 endif
 
 hald_addon_hid_ups_SOURCES = addon-hid-ups.c

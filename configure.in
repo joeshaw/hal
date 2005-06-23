@@ -214,7 +214,7 @@ fi
 
 
 
-AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux2/dummy)],
+AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux2/solaris/dummy)],
                       [
                       backend=$withval
                       ]
@@ -222,10 +222,18 @@ AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux2/dummy)],
 if ! test -z "$with_backend" ; then
     HALD_BACKEND="$with_backend"
 else
-    HALD_BACKEND="linux2"
+    case "$host" in
+        *-*-solaris*)
+		   HALD_BACKEND="solaris"
+		   ;;
+	   *)
+		   HALD_BACKEND="linux2"
+             ;;
+    esac
 fi
+AM_CONDITIONAL(HALD_COMPILE_LINUX2, test x$HALD_BACKEND = xlinux2, [Compiling for Linux])
+AM_CONDITIONAL(HALD_COMPILE_SOLARIS, test x$HALD_BACKEND = xsolaris, [Compiling for Solaris])
 AC_SUBST(HALD_BACKEND)
-
 
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
@@ -441,6 +449,7 @@ hald/dummy/Makefile
 hald/linux2/Makefile
 hald/linux2/probing/Makefile
 hald/linux2/addons/Makefile
+hald/solaris/Makefile
 hald/haldaemon
 libhal/Makefile
 libhal-storage/Makefile

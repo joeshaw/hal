@@ -1,3 +1,14 @@
+2005-06-23  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Alvaro Lopez Ortega <alvaro@sun.com> to add an empty
+	Solaris backend to HAL.
+
+	* hald/solaris/osspec.c: New file
+
+	* hald/solaris/Makefile.am: New file
+
+	* configure.in: Add checks for Solaris
+
 2005-06-21  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: This little patch fixes the configure.in file in

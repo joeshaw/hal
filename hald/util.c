@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <mntent.h>
 #include <errno.h>
 #include <ctype.h>
 #include <sys/types.h>
@@ -98,52 +97,6 @@ hal_util_remove_trailing_slash (gchar *path)
 		*c = '\0';
 
 	return TRUE;
-}
-
-gboolean 
-hal_util_get_fs_mnt_path (const gchar *fs_type, gchar *mnt_path, gsize len)
-{
-	FILE *mnt;
-	struct mntent *mntent;
-	gboolean rc;
-	gsize dirlen;
-
-	rc = FALSE;
-	dirlen = 0;
-
-	if (fs_type == NULL || mnt_path == NULL || len == 0) {
-		HAL_ERROR (("Arguments not sane"));
-		return -1;
-	}
-
-	if ((mnt = setmntent ("/proc/mounts", "r")) == NULL) {
-		HAL_ERROR (("Error getting mount information"));
-		return -1;
-	}
-
-	while (rc == FALSE && dirlen == 0 && (mntent = getmntent(mnt)) != NULL) {
-		if (strcmp (mntent->mnt_type, fs_type) == 0) {
-			dirlen = strlen (mntent->mnt_dir);
-			if (dirlen <= (len - 1)) {
-				g_strlcpy (mnt_path, mntent->mnt_dir, len);
-				rc = TRUE;
-			} else {
-				HAL_ERROR (("Error - mount path too long"));
-				rc = FALSE;
-			}
-		}
-	}
-	endmntent (mnt);
-	
-	if (dirlen == 0 && rc == TRUE) {
-		HAL_ERROR (("Filesystem %s not found", fs_type));
-		rc = FALSE;
-	}
-
-	if ((!hal_util_remove_trailing_slash (mnt_path)))
-		rc = FALSE;
-	
-	return rc;
 }
 
 /** Given a path, /foo/bar/bat/foobar, return the last element, e.g.
