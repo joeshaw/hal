@@ -1,5 +1,17 @@
 2005-06-27  David Zeuthen  <davidz@redhat.com>
 
+	* volume_id/util.h: Include stdint.h to get uint8_t and friends so
+	we compile on Linux.
+
+2005-06-27  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in, volume_id/*.c: This patch check for some internal
+	Linux kernel types and redefine it using the standard system
+	types. It also removes the a private Linux kernel include. Patch
+	from Alvaro Lopez Ortega <alvaro@sun.com>.
+
+2005-06-27  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Alvaro Lopez Ortega <alvaro@sun.com>.
 
 	* volume_id/dasd.c: Use HAVE_SYS_IOCCOM_H to conditionally include

@@ -34,7 +34,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <asm/types.h>
 
 #include "volume_id.h"
 #include "logging.h"

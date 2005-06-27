@@ -29,6 +29,8 @@
 #  include <config.h>
 #endif
 
+#include <stdint.h>
+
 /* size of superblock buffer, reiserfs block is at 64k */
 #define SB_BUFFER_SIZE				0x11000
 /* size of seek buffer, FAT cluster is 32k max */

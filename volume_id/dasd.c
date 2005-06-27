@@ -32,7 +32,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <asm/types.h>
 
 #ifdef HAVE_SYS_IOCCOM_H
 # include <sys/ioccom.h>
