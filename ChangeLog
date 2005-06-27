@@ -1,5 +1,58 @@
 2005-06-27  David Zeuthen  <davidz@redhat.com>
 
+	Patch-set from Cornelia Huck <cohuck@de.ibm.com>. I've been
+	working on support for Linux on S/390 specific devices in HAL. The
+	following patchset includes some non-s390 specific patches and
+	support for the S/390 bus types.
+
+	* doc/spec/hal-spec.xml.in: Document the properties of ccw,
+	ccwgroup, iucv, and tape devices.
+
+	* hald/linux2/classdev.c (tape_add, tape_compute_udi): This
+	comprises support for both the generic tape class and the tape390
+	class, as the two don't differ in anything but name.
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): ccw
+	devices need to be considered for block devices.
+
+	* hald/linux2/physdev.c (iucv_add_netiucv_properties)
+	(iucv_add, iucv_compute_udi): The iucv bus is for virtual devices
+	under z/VM - currently only netiucv is implemented.
+
+	* hald/linux2/physdev.c (ccwgroup_add_qeth_properties)
+	(ccwgroup_add_ctc_properties, ccwgroup_add_lcs_properties)
+	(ccwgroup_add_claw_properties, ccwgroup_add)
+	(ccwgroup_compute_udi): The ccwgroup on S/390 contains devices
+	consisting of grouped ccw devices - usually networking devices. As
+	with the ccw bus, there are some common properties and lots of
+	device specific ones.
+
+	* hald/linux2/physdev.c (ccw_add_dasd_properties)
+	(ccw_add_zfcp_properties, ccw_add_tape_properties)
+	(ccw_add_3270_properties, ccw_add, ccw_compute_udi): The ccw bus
+	on s390 contains all classic channel-attached devices. They all
+	have a few common properties, but also driver-specific ones.
+
+	* hald/linux2/osspec_linux.h: Export hal_util_get_driver_name ()
+
+	* hald/linux2/osspec.c (hal_util_get_driver_name): New function
+	(hal_util_set_driver): Refactor to use hal_util_get_driver_name
+
+	* hald/linux2/classdev.c (net_add): Set MAC-address to zero's
+	if we can't read it.
+	(net_compute_udi): Use some other unique ID if MAC address is
+	missing or set to all zero's.
+
+	* hald/linux2/blockdev.c (blockdev_compute_udi): Generate a
+	sensible name for block devices for which the model is an
+	empty string.
+
+	* hald/util.c: This patch adds a needed include for some
+	interfaces, or gcc 4.0 will make incorrect assumptions on the
+	format of some functions.
+
+2005-06-27  David Zeuthen  <davidz@redhat.com>
+
 	* volume_id/util.h: Include stdint.h to get uint8_t and friends so
 	we compile on Linux.
 

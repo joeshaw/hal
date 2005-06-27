@@ -33,6 +33,8 @@ const gchar *get_hal_sysfs_path (void);
 
 const gchar *get_hal_proc_path (void);
 
+gboolean hal_util_get_driver_name (const char *sysfs_path, gchar *driver_name);
+
 gboolean hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path);
 
 HalDevice *hal_util_find_closest_ancestor (const gchar *sysfs_path);

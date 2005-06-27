@@ -193,8 +193,10 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
 
-	if (!hal_util_set_string_from_file (d, "net.address", sysfs_path, "address"))
-		goto error;
+	if (!hal_util_set_string_from_file (d, "net.address", sysfs_path, "address")) {
+		hal_device_property_set_string (d, "net.address", "00:00:00:00:00:00");	
+	}
+
 	if (!hal_util_set_int_from_file (d, "net.linux.ifindex", sysfs_path, "ifindex", 10))
 		goto error;
 
@@ -294,10 +296,16 @@ static gboolean
 net_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
+	const gchar *id;
 
+	id = hal_device_property_get_string (d, "net.address");
+	if (id == NULL || (strcmp (id, "00:00:00:00:00:00") == 0)) {
+		/* Need to fall back to something else if mac not available. */
+		id = hal_util_get_last_element(hal_device_property_get_string(d, "net.physical_device"));
+	}
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 			      "/org/freedesktop/Hal/devices/net_%s",
-			      hal_device_property_get_string (d, "net.address"));
+			      id);
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -630,6 +638,56 @@ serial_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+tape_add (const gchar *sysfs_path, const gchar *device_file, 
+	  HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	const gchar *dev_entry;
+
+	if (physdev == NULL)
+		return NULL;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.category", "tape");
+	hal_device_add_capability (d, "tape");
+	hal_device_add_capability (physdev, "tape");
+
+	dev_entry = hal_util_get_string_from_file (sysfs_path, "dev");
+	if (dev_entry != NULL) {
+		unsigned int major, minor;
+
+		if (sscanf (dev_entry, "%d:%d", &major, &minor) != 2) {
+			hal_device_property_set_int (d, "tape.major", major);
+			hal_device_property_set_int (d, "tape.minor", minor);
+		}
+	}
+	return d;
+}
+
+static gboolean
+tape_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	const gchar *sysfs_name;
+
+	sysfs_name = hal_util_get_last_element (hal_device_property_get_string
+						(d, "linux.sysfs_path"));
+	if (!sysfs_name)
+		return FALSE;
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/tape_%s",
+			      sysfs_name);
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 classdev_remove (HalDevice *d)
 {
@@ -723,6 +781,26 @@ static ClassDevHandler classdev_handler_serial =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_tape =
+{
+	.subsystem    = "tape",
+	.add          = tape_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = tape_compute_udi,
+	.remove       = classdev_remove
+};
+
+static ClassDevHandler classdev_handler_tape390 =
+{
+	.subsystem    = "tape390",
+	.add          = tape_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = tape_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_input,
 	&classdev_handler_bluetooth,
@@ -731,6 +809,8 @@ static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_usbclass,
 	&classdev_handler_sound,
 	&classdev_handler_serial,
+	&classdev_handler_tape,
+	&classdev_handler_tape390,
 	NULL
 };
 

@@ -1496,7 +1496,664 @@
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-ccw">
+      <title><literal>ccw</literal> namespace</title>
 
+      <para>
+
+	Device objects that represent s390 ccw devices (when <literal>info.bus
+	</literal> is set to <literal>ccw</literal>) are represented by the
+	properties below.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>ccw.devtype</literal> (string)</entry>
+              <entry>example: 1732/01</entry>
+              <entry>Yes</entry>
+              <entry>Device type/model or n/a</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.cutype</literal> (string)</entry>
+              <entry>example: 1731/01</entry>
+              <entry>Yes</entry>
+              <entry>Control unit type/model</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.cmb_enable</literal> (int)</entry>
+              <entry>example: 1</entry>
+              <entry>Yes</entry>
+              <entry>If channel measurements are enabled</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.availability</literal> (string)</entry>
+              <entry>example: good</entry>
+              <entry>Yes</entry>
+              <entry>Can be one of 'good', 'boxed', 'no path',
+		or 'no device'</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.online</literal> (int)</entry>
+              <entry>example: 1</entry>
+              <entry>Yes</entry>
+              <entry>Online status</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.bus_id</literal> (string)</entry>
+              <entry>example: 0.0.f588</entry>
+              <entry>Yes</entry>
+              <entry>The device's bus id in sysfs</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.subchannel.pim</literal> (int)</entry>
+              <entry>example: 0x80</entry>
+              <entry>No</entry>
+              <entry>path installed mask</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.subchannel.pam</literal> (int)</entry>
+              <entry>example: 0x80</entry>
+              <entry>No</entry>
+              <entry>path available mask</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.subchannel.pom</literal> (int)</entry>
+              <entry>example: 0xff</entry>
+              <entry>No</entry>
+              <entry>path operational mask</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.subchannel.chpid0..7</literal> (int)</entry>
+              <entry>example: 0x40</entry>
+              <entry>No</entry>
+              <entry>channel path ids</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+	<para>
+
+	The following properties describe <literal>ccw</literal> devices where
+	<literal>linux.driver</literal> is either <literal>dasd-eckd</literal>
+	or <literal>dasd-fba</literal>.
+
+	</para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ccw.dasd.use_diag</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>If the device driver shall use diagnose calls to access
+	      the device</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.dasd.readonly</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>If the device can only be accessed readonly</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.dasd.discipline</literal> (string)</entry>
+              <entry>example: ECKD</entry>
+              <entry>No</entry>
+              <entry>The dasd discipline used to access the device</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+	<para>
+
+	The following properties describe <literal>ccw</literal> devices where
+	<literal>linux.driver</literal> is <literal>zfcp</literal>. They are
+	only present when <literal>ccw.online = 1</literal>.
+
+	</para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ccw.zfcp.in_recovery</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>Shows whether the adapter is currently in recovery</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.zfcp.failed</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>Shows whether the adapter is in failed state</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+	<para>
+
+	The following properties describe <literal>ccw</literal> devices where
+	<literal>linux.driver</literal> is of the form <literal>tape_3xxx
+	</literal>.
+
+	</para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ccw.tape.state</literal> (string)</entry>
+              <entry>example: IN_USE</entry>
+              <entry>Yes</entry>
+              <entry>The current status of the tape</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.tape.operation</literal> (string)</entry>
+              <entry>example: REW</entry>
+              <entry>Yes</entry>
+              <entry>A three-letter mnemonic of the current tape operation
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>ccw.tape.mediumstate</literal> (string)</entry>
+              <entry>example: no medium</entry>
+              <entry>No</entry>
+              <entry>If <literal>ccw.online = 1</literal>, shows whether a tape 
+	      is loaded</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.tape.blocksize</literal> (int)</entry>
+              <entry>example: 512</entry>
+              <entry>No</entry>
+              <entry>If <literal>ccw.online = 1</literal>, shows the blocksize
+	      used for reads and writes to the tape</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+	<para>
+
+	The following properties describe <literal>ccw</literal> devices where
+	<literal>linux.driver</literal> is <literal>3270</literal>.
+
+	</para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>ccw.3270.model</literal> (int)</entry>
+              <entry>example: 3</entry>
+              <entry>Yes</entry>
+              <entry>The model of the device, determining rows and columns
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>ccw.3270.rows</literal> (int)</entry>
+              <entry>example: 32</entry>
+              <entry>Yes</entry>
+              <entry>The number of rows</entry>
+            </row>
+            <row>
+              <entry><literal>ccw.3270.columns</literal> (int)</entry>
+              <entry>example: 80</entry>
+              <entry>Yes</entry>
+              <entry>The number of columns</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-ccwgroup">
+      <title><literal>ccwgroup</literal> namespace</title>
+
+      <para>
+
+	Device objects that represent groups of <literal>ccw</literal> devices
+	(when <literal>info.bus</literal> is set to <literal>ccwgroup</literal>
+	have the properties specified below.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>ccwgroup.online</literal> (int)</entry>
+              <entry>example: 1</entry>
+              <entry>Yes</entry>
+              <entry>Online status</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.bus_id</literal> (string)</entry>
+              <entry>example: 0.0.f588</entry>
+              <entry>Yes</entry>
+              <entry>The device's bus id in sysfs</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+
+      The following properties describe <literal>ccwgroup</literal> devices
+      where <literal>linux.driver</literal> is <literal>qeth</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>ccwgroup.qeth.large_send</literal> (string)
+	      </entry>
+              <entry>example: TSO</entry>
+              <entry>No</entry>
+              <entry>Whether large send is provided. Can be "no", "EDDP"
+	      (software) or "TSO" (hardware).</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.card_type</literal> (string)</entry>
+              <entry>example: OSD_1000</entry>
+              <entry>Yes</entry>
+              <entry>Type of the card</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.checksumming</literal> (string)
+	      </entry>
+              <entry>example: sw checksumming</entry>
+              <entry>No</entry>
+              <entry>The method used to checksum incoming packets</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.canonical_macaddr</literal> (int)
+	      </entry>
+              <entry>example: 0</entry>
+              <entry>No</entry>
+              <entry>Specifies the token ring macaddress format. Not valid in
+	      layer2 mode and for ethernet devices.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.broadcast_mode</literal> (string)
+	      </entry>
+              <entry>example: broadcast_allrings</entry>
+              <entry>No</entry>
+              <entry>The scope of token ring broadcasts. Not valid in layer2
+	      mode and for ethernet devices.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.fake_broadcast</literal> (int)
+	      </entry>
+              <entry>example: 0</entry>
+              <entry>No</entry>
+              <entry>Whether to fake broadcast capability. Not valid in layer2
+	      mode.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.fake_ll</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>No</entry>
+              <entry>Whether to add a faked link level header to packets.
+	      Not valid in layer2 mode.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.layer2</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>No</entry>
+              <entry>Whether the card operates in layer 2 mode</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.portname</literal> (string)</entry>
+              <entry>example: OSAPORT</entry>
+              <entry>No</entry>
+              <entry>The port name which has been specified for the card</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.portno</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>No</entry>
+              <entry>The relative port number on the card</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.buffer_count</literal> (int)</entry>
+              <entry>example: 16</entry>
+              <entry>Yes</entry>
+              <entry>Number of inbound buffers used</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.add_hhlen</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>No</entry>
+              <entry>How much additional space is provided in the hardware
+	      header in skbs in front of packets</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.priority_queueing</literal> 
+	      (string)</entry>
+              <entry>example: always queue 2</entry>
+              <entry>No</entry>
+              <entry>Which priority queueing algorithm is to be used</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.route4</literal> (string)</entry>
+              <entry>example: no</entry>
+              <entry>No</entry>
+              <entry>Whether the card has a routing functionality for ipv4.
+	      Not valid in layer2 mode.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.route6</literal> (string)</entry>
+              <entry>example: no</entry>
+              <entry>No</entry>
+              <entry>Whether the card has a routing functionality for ipv6.
+	      Not valid in layer2 mode.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.qeth.state</literal> (string)</entry>
+              <entry>example: UP (LAN ONLINE)</entry>
+              <entry>Yes</entry>
+              <entry>The device's current state</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+
+      The following properties describe <literal>ccwgroup</literal> devices
+      where <literal>linux.driver</literal> is <literal>ctc</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>ccwgroup.ctc.protocol</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>The protocol/method used by the connection</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.ctc.type</literal> (string)</entry>
+              <entry>example: CTC/A</entry>
+              <entry>Yes</entry>
+              <entry>The device/connection type</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.ctc.buffer</literal> (int) </entry>
+              <entry>example: 32768</entry>
+              <entry>No</entry>
+              <entry>The maximum buffer size of the connection</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+
+      The following properties describe <literal>ccwgroup</literal> devices
+      where <literal>linux.driver</literal> is <literal>lcs</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>ccwgroup.lcs.portnumber</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>The port on the card that is used</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.lcs.type</literal> (string)</entry>
+              <entry>example: OSA LCS card</entry>
+              <entry>Yes</entry>
+              <entry>The type of the card</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.lcs.lancmd_timeout</literal> (int)
+	      </entry>
+              <entry>example: 5</entry>
+              <entry>Yes</entry>
+              <entry>The timeout value for LAN commands in seconds</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+
+      The following properties describe <literal>ccwgroup</literal> devices
+      where <literal>linux.driver</literal> is <literal>claw</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>ccwgroup.claw.api_type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Determines the packing algorithm for outgoing pakets
+	      (matching the remote peer)
+	      </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>IP</entry>
+              <entry></entry>
+              <entry>Using the IP protocol</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>PACKED</entry>
+              <entry></entry>
+              <entry>Using an enhanced packing algorithm</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>TCPIP</entry>
+              <entry></entry>
+              <entry>Using the TCP/IP protocol</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.claw.adapter_name</literal> (string)
+	      </entry>
+              <entry>example: RS1</entry>
+              <entry>Yes</entry>
+              <entry>The host name of the remote communication peer.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.claw.host_name</literal> (string)</entry>
+              <entry>example: LNX1</entry>
+              <entry>Yes</entry>
+              <entry>The host name of the local adapter.</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.claw.read_buffer</literal> (int)</entry>
+              <entry>example: 4</entry>
+              <entry>Yes</entry>
+              <entry>The number of read buffers allocated</entry>
+            </row>
+            <row>
+              <entry><literal>ccwgroup.claw.write_buffer</literal> (int)</entry>
+              <entry>example: 5</entry>
+              <entry>Yes</entry>
+              <entry>The number of write buffers allocated</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-iucv">
+      <title><literal>iucv</literal> namespace</title>
+
+      <para>
+
+	Device objects with <literal>info.bus</literal> set to <literal>iucv
+	</literal> are using the "Intra-User Comminication Vehicle" and are
+	described by the following properties.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>iucv.bus_id</literal> (string)</entry>
+              <entry>example: netiucv0</entry>
+              <entry>Yes</entry>
+              <entry>The device's bus id in sysfs</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+
+      The following properties describe <literal>iucv</literal> devices
+      where <literal>linux.driver</literal> is <literal>netiucv</literal>.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>iucv.netiucv.user</literal> (string) </entry>
+              <entry>example: linux12</entry>
+              <entry>Yes</entry>
+              <entry>The guest name of the connection's target</entry>
+            </row>
+            <row>
+              <entry><literal>iucv.netiucv.buffer</literal> (int) </entry>
+              <entry>example: 32768</entry>
+              <entry>Yes</entry>
+              <entry>The maximum buffer size of the connection</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
 
     <sect2 id="device-properties-block">
       <title><literal>block</literal> namespace</title>
@@ -3546,6 +4203,42 @@
               <entry>unknown</entry>
               <entry></entry>
               <entry>Measuring other source</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-tape">
+      <title><literal>tape</literal> namespace</title>
+      <para>
+
+	Device objects with the capability <literal>tape</literal>
+	represent tape devices.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>tape.major</literal> (int)</entry>
+              <entry>example: 254</entry>
+              <entry>Yes</entry>
+              <entry>The device's major number</entry>
+            </row>
+            <row>
+              <entry><literal>tape.minor</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>The device's minor number</entry>
             </row>
           </tbody>
         </tgroup>

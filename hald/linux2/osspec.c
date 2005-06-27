@@ -569,23 +569,33 @@ osspec_device_reprobe (HalDevice *d)
 }
 
 gboolean
-hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path)
+hal_util_get_driver_name (const char *sysfs_path, gchar *driver_name)
 {
-	gboolean ret;
 	gchar driver_path[HAL_PATH_MAX];
 	struct stat statbuf;
-
-	ret = FALSE;
 
 	g_snprintf (driver_path, sizeof (driver_path), "%s/driver", sysfs_path);
 	if (stat (driver_path, &statbuf) == 0) {
 		gchar buf[256];
 		memset (buf, '\0', sizeof (buf));
 		if (readlink (driver_path, buf, sizeof (buf) - 1) > 0) {
-			hal_device_property_set_string (d, property_name, hal_util_get_last_element (buf));
-			ret = TRUE;
+			g_snprintf (driver_name, strlen(buf), "%s", hal_util_get_last_element(buf));
+			return TRUE;
 		}
 	}
+	return FALSE;
+}
+
+gboolean
+hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_path)
+{
+	gboolean ret;
+	gchar driver_name[256];
+
+	memset (driver_name, '\0', sizeof (driver_name));
+	ret = hal_util_get_driver_name (sysfs_path, driver_name);
+	if (ret == TRUE)
+		hal_device_property_set_string (d, property_name, driver_name);
 
 	return ret;
 }

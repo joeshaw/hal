@@ -107,7 +107,7 @@ blockdev_compute_udi (HalDevice *d)
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "/org/freedesktop/Hal/devices/storage_serial_%s", 
 					      serial);
-		} else if (model != NULL) {
+		} else if ((model != NULL) && (strlen(model) != 0) ) {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "/org/freedesktop/Hal/devices/storage_model_%s", 
 					      model);
@@ -726,7 +726,14 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev_udi = udi_it;
 					hal_device_property_set_string (d, "storage.bus", "mmc");
 					break;
+				} else if (strcmp (bus, "ccw") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+					is_hotpluggable = TRUE;
+					hal_device_property_set_string
+						(d, "storage.bus", "ccw");
 				}
+									
 			}
 
 			/* Go to parent */

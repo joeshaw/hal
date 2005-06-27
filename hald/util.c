@@ -47,6 +47,7 @@
 #include "hald.h"
 #include "device_info.h"
 
+#include "hald_dbus.h"
 #include "util.h"
 
 /** Given all the required parameters, this function will return the number 

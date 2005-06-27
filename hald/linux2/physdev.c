@@ -841,6 +841,365 @@ ieee1394_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static inline void
+ccw_add_dasd_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	const gchar *disc;
+	
+	hal_util_set_int_from_file (d, "ccw.dasd.use_diag", sysfs_path,
+				    "use_diag", 2);
+	hal_util_set_int_from_file (d, "ccw.dasd.readonly", sysfs_path,
+				    "readonly", 2);
+	disc = hal_util_get_string_from_file (sysfs_path, "discipline");
+	if (disc)
+		hal_device_property_set_string(d, "ccw.dasd.discipline", disc);
+}
+
+static inline void
+ccw_add_zfcp_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	int online;
+
+	/* zfcp adapter properties are only valid for online devices. */
+	if (!hal_util_get_int_from_file (sysfs_path, "online", &online, 2))
+		return;
+	if (!online)
+		return;
+
+	hal_util_set_int_from_file (d, "ccw.zfcp.in_recovery", sysfs_path,
+				    "in_recovery", 2);
+	hal_util_set_int_from_file (d, "ccw.zfcp.failed", sysfs_path,
+				    "failed", 2);
+}
+
+static inline void
+ccw_add_tape_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	int medium_state, online;
+
+	const gchar *state_text[3] = {"unknown", "loaded", "no medium"};
+
+	hal_util_set_string_from_file (d, "ccw.tape.state", sysfs_path, "state");
+	hal_util_set_string_from_file (d, "ccw.tape.operation", sysfs_path,
+				       "operation");
+	/* The following properties are only valid for online devices. */
+	if (!hal_util_get_int_from_file (sysfs_path, "online", &online, 2))
+		return;
+	if (!online)
+		return;
+	hal_util_set_int_from_file (d, "ccw.tape.blocksize", sysfs_path,
+				    "blocksize", 10);
+	if (!hal_util_get_int_from_file (sysfs_path, "medium_state",
+					&medium_state, 10))
+		return;
+	hal_device_property_set_string (d, "tape.ccw.medium_state",
+					state_text[medium_state]);
+}
+
+static inline void
+ccw_add_3270_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	hal_util_set_int_from_file (d, "ccw.3270.model", sysfs_path,
+				    "model", 10);
+	hal_util_set_int_from_file (d, "ccw.3270.rows", sysfs_path, "rows", 10);
+	hal_util_set_int_from_file (d, "ccw.3270.columns", sysfs_path,
+				    "columns", 10);
+}
+
+static HalDevice *
+ccw_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	const gchar *pimpampom;
+	int pim, pam, pom;
+	const gchar *chpids;
+	int chpid[8];
+	gchar attr[25];
+	int i;
+	gchar driver_name[256];
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device",
+					sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "ccw");
+	if (parent != NULL)
+                hal_device_property_set_string (d, "info.parent", parent->udi);
+        else
+                hal_device_property_set_string
+		  (d, "info.parent",
+		   "/org/freedesktop/Hal/devices/computer");
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "ccw.bus_id", bus_id);
+	hal_util_set_int_from_file (d, "ccw.online", sysfs_path, "online", 2);
+	hal_util_set_string_from_file (d, "ccw.availablity", sysfs_path,
+				       "availability");
+	hal_util_set_int_from_file (d, "ccw.cmb_enable", sysfs_path,
+				    "cmb_enable", 2);
+	hal_util_set_string_from_file (d, "ccw.cutype", sysfs_path, "cutype");
+	hal_util_set_string_from_file (d, "ccw.devtype", sysfs_path, "devtype");
+
+	/* Get some values from the higher level subchannel structure.*/
+	pimpampom = hal_util_get_string_from_file (sysfs_path, "../pimpampom");
+	if (pimpampom) {
+		sscanf (pimpampom, "%x %x %x", &pim, &pam, &pom);
+		hal_device_property_set_int (d, "ccw.subchannel.pim", pim);
+		hal_device_property_set_int (d, "ccw.subchannel.pam", pam);
+		hal_device_property_set_int (d, "ccw.subchannel.pom", pom);
+	}
+
+	chpids = hal_util_get_string_from_file (sysfs_path, "../chpids");
+	if (chpids) {
+		sscanf (chpids, "%x %x %x %x %x %x %x %x", &chpid[0], &chpid[1],
+			&chpid[2], &chpid[3], &chpid[4], &chpid[5], &chpid[6],
+			&chpid[7]);
+		for (i=0; i<8 && (chpid[i] != 0); i++) {
+			g_snprintf (attr, sizeof (attr),
+				    "ccw.subchannel.chpid%x", i);
+			hal_device_property_set_int (d, attr, chpid[i]);
+		}
+	}
+
+	/* Add some special properties. */
+	if (hal_util_get_driver_name (sysfs_path, driver_name)) {
+		if (!strncmp (driver_name, "dasd", 4))
+			/* Same attributes for dasd_eckd and dasd_fba. */
+			ccw_add_dasd_properties (d, sysfs_path);
+		if (!strncmp (driver_name, "zfcp", 4))
+			ccw_add_zfcp_properties (d, sysfs_path);
+		if (!strncmp (driver_name, "tape_3", 6))
+			/* For all channel attached tapes. */
+			ccw_add_tape_properties (d, sysfs_path);
+		if (!strncmp (driver_name, "3270", 4))
+			ccw_add_3270_properties (d, sysfs_path);
+	}
+	return d;
+}
+
+static gboolean
+ccw_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ccw_%s",
+			      hal_device_property_get_string
+			      (d, "ccw.bus_id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static inline void
+ccwgroup_add_qeth_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	int is_layer2;
+
+	/* Some attributes are not applicable for devices in layer2 mode. */
+	hal_util_get_int_from_file (sysfs_path, "layer2", &is_layer2, 2);
+
+	hal_util_set_string_from_file (d, "ccwgroup.qeth.large_send",
+				       sysfs_path, "large_send");
+	hal_util_set_string_from_file (d, "ccwgroup.qeth.card_type", sysfs_path,
+				       "card_type");
+	hal_util_set_string_from_file (d, "ccwgroup.qeth.checksumming",
+				       sysfs_path, "checksumming");
+	if (!is_layer2) {
+		//CH: the next two are only valid for token ring devices
+		hal_util_set_int_from_file (d,
+					    "ccwgroup.qeth.canonical_macaddr",
+					    sysfs_path, "canonical_macaddr", 2);
+		hal_util_set_string_from_file (d,
+					       "ccwgroup.qeth.broadcast_mode",
+					       sysfs_path, "broadcast_mode");
+		hal_util_set_int_from_file (d, "ccwgroup.qeth.fake_broadcast",
+					    sysfs_path, "fake_broadcast", 2);
+		hal_util_set_int_from_file (d, "ccwgroup.qeth.fake_ll",
+					    sysfs_path, "fake_ll", 2);
+	}
+	hal_device_property_set_int (d, "ccwgroup.qeth.layer2", is_layer2);
+	hal_util_set_string_from_file (d, "ccwgroup.qeth.portname", sysfs_path,
+				       "portname");
+	hal_util_set_int_from_file (d, "ccwgroup.qeth.portno", sysfs_path,
+				    "portno", 10);
+	hal_util_set_int_from_file (d, "ccwgroup.qeth.buffer_count", sysfs_path,
+				    "buffer_count", 10);
+	hal_util_set_int_from_file (d, "ccwgroup.qeth.add_hhlen", sysfs_path,
+				    "add_hhlen", 10);
+	hal_util_set_string_from_file (d, "ccwgroup.qeth.priority_queueing",
+				       sysfs_path, "priority_queueing");
+	if (!is_layer2) {
+		hal_util_set_string_from_file (d, "ccwgroup.qeth.route4",
+					       sysfs_path, "route4");
+		hal_util_set_string_from_file (d, "ccwgroup.qeth.route6",
+					       sysfs_path, "route6");
+	}
+	hal_util_set_string_from_file (d, "ccwgroup.qeth.state", sysfs_path,
+				       "state");
+}
+
+static inline void
+ccwgroup_add_ctc_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	//CH: use protocol descriptions?
+	hal_util_set_int_from_file (d, "ccwgroup.ctc.protocol", sysfs_path,
+				    "protocol", 2);
+	hal_util_set_string_from_file (d, "ccwgroup.ctc.type", sysfs_path,
+				       "type");
+	hal_util_set_int_from_file (d, "ccwgroup.ctc.buffer", sysfs_path,
+				    "buffer", 10);
+}
+
+static inline void
+ccwgroup_add_lcs_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	hal_util_set_int_from_file (d, "ccwgroup.lcs.portnumber", sysfs_path,
+				    "portno", 2);
+	hal_util_set_string_from_file (d, "ccwgroup.lcs.type", sysfs_path,
+				       "type");
+	hal_util_set_int_from_file (d, "ccwgroup.lcs.lancmd_timeout",
+				    sysfs_path, "lancmd_timeout", 10);
+}
+
+static inline void
+ccwgroup_add_claw_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	hal_util_set_string_from_file (d, "ccwgroup.claw.api_type", sysfs_path,
+				       "api_type");
+	hal_util_set_string_from_file (d, "ccwgroup.claw.adapter_name",
+				       sysfs_path, "adapter_name");
+	hal_util_set_string_from_file (d, "ccwgroup.claw.host_name", sysfs_path,
+				       "host_name");
+	hal_util_set_int_from_file (d, "ccwgroup.claw.read_buffer", sysfs_path,
+				    "read_buffer", 10);
+	hal_util_set_int_from_file (d, "ccwgroup.claw.write_buffer", sysfs_path,
+				    "write_buffer", 10);
+}
+
+static HalDevice *
+ccwgroup_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	gchar driver_name[256];
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device",
+					sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "ccwgroup");
+	if (parent != NULL)
+                hal_device_property_set_string (d, "info.parent", parent->udi);
+        else
+                hal_device_property_set_string
+		  (d, "info.parent",
+		   "/org/freedesktop/Hal/devices/computer");
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "ccwgroup.bus_id", bus_id);
+	hal_util_set_int_from_file (d, "ccwgroup.online", sysfs_path,
+				    "online", 2);
+
+	/* Some devices have extra properties. */
+	if (hal_util_get_driver_name (sysfs_path, driver_name)) {
+		if (!strncmp (driver_name, "qeth", 4))
+			ccwgroup_add_qeth_properties (d, sysfs_path);
+		if (!strncmp (driver_name, "ctc", 3))
+			ccwgroup_add_ctc_properties (d, sysfs_path);
+		if (!strncmp (driver_name, "lcs", 3))
+			ccwgroup_add_lcs_properties (d, sysfs_path);
+		if (!strncmp (driver_name, "claw", 4))
+			ccwgroup_add_claw_properties (d, sysfs_path);
+	}
+	return d;
+}
+
+static gboolean
+ccwgroup_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ccwgroup_%s",
+			      hal_device_property_get_string
+			      (d, "ccwgroup.bus_id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static inline void
+iucv_add_netiucv_properties (HalDevice *d, const gchar *sysfs_path)
+{
+	hal_util_set_string_from_file (d, "iucv.netiucv.user", sysfs_path,
+				       "user");
+	hal_util_set_int_from_file (d, "iucv.netiucv.buffer", sysfs_path,
+				    "buffer", 10);
+}
+
+static HalDevice *
+iucv_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	gchar driver_name[256];
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device",
+					sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "iucv");
+	if (parent != NULL)
+                hal_device_property_set_string (d, "info.parent", parent->udi);
+        else
+                hal_device_property_set_string
+		  (d, "info.parent",
+		   "/org/freedesktop/Hal/devices/computer");
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "iucv.bus_id", bus_id);
+
+	if (hal_util_get_driver_name (sysfs_path, driver_name)) {
+		if (!strncmp (driver_name, "netiucv", 7))
+			iucv_add_netiucv_properties (d, sysfs_path);
+	}
+	return d;
+}
+
+static gboolean
+iucv_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/iucv_%s",
+			      hal_device_property_get_string
+			      (d, "iucv.bus_id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 physdev_remove (HalDevice *d)
 {
@@ -919,7 +1278,29 @@ static PhysDevHandler physdev_handler_ieee1394 = {
 	.compute_udi = ieee1394_compute_udi,
 	.remove      = physdev_remove
 };
-	
+
+
+/* s390 specific busses */	
+static PhysDevHandler physdev_handler_ccw = {
+	.subsystem   = "ccw",
+	.add         = ccw_add,
+	.compute_udi = ccw_compute_udi,
+	.remove      = physdev_remove
+};
+
+static PhysDevHandler physdev_handler_ccwgroup = {
+	.subsystem   = "ccwgroup",
+	.add         = ccwgroup_add,
+	.compute_udi = ccwgroup_compute_udi,
+	.remove      = physdev_remove
+};
+
+static PhysDevHandler physdev_handler_iucv = {
+	.subsystem   = "iucv",
+	.add         = iucv_add,
+	.compute_udi = iucv_compute_udi,
+	.remove      = physdev_remove
+};
 
 static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_pci,
@@ -931,6 +1312,9 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_scsi,
 	&physdev_handler_mmc,
 	&physdev_handler_ieee1394,
+	&physdev_handler_ccw,
+	&physdev_handler_ccwgroup,
+	&physdev_handler_iucv,
 	NULL
 };
 

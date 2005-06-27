@@ -239,6 +239,30 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
+HREF="#device-properties-ccw"
+><TT
+CLASS="literal"
+>ccw</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-ccwgroup"
+><TT
+CLASS="literal"
+>ccwgroup</TT
+> namespace</A
+></DT
+><DT
+><A
+HREF="#device-properties-iucv"
+><TT
+CLASS="literal"
+>iucv</TT
+> namespace</A
+></DT
+><DT
+><A
 HREF="#device-properties-block"
 ><TT
 CLASS="literal"
@@ -414,6 +438,14 @@ CLASS="literal"
 >sensor</TT
 > namespace</A
 ></DT
+><DT
+><A
+HREF="#device-properties-tape"
+><TT
+CLASS="literal"
+>tape</TT
+> namespace</A
+></DT
 ></DL
 ></DD
 ><DT
@@ -512,21 +544,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN2606"
+HREF="#AEN3138"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN2617"
+HREF="#AEN3149"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN2625"
+HREF="#AEN3157"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -3286,6 +3318,1362 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
+NAME="device-properties-ccw"
+><TT
+CLASS="literal"
+>ccw</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects that represent s390 ccw devices (when <TT
+CLASS="literal"
+>info.bus
+	</TT
+> is set to <TT
+CLASS="literal"
+>ccw</TT
+>) are represented by the
+	properties below.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN876"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.devtype</TT
+> (string)</TD
+><TD
+>example: 1732/01</TD
+><TD
+>Yes</TD
+><TD
+>Device type/model or n/a</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.cutype</TT
+> (string)</TD
+><TD
+>example: 1731/01</TD
+><TD
+>Yes</TD
+><TD
+>Control unit type/model</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.cmb_enable</TT
+> (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>If channel measurements are enabled</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.availability</TT
+> (string)</TD
+><TD
+>example: good</TD
+><TD
+>Yes</TD
+><TD
+>Can be one of 'good', 'boxed', 'no path',
+		or 'no device'</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.online</TT
+> (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Online status</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.bus_id</TT
+> (string)</TD
+><TD
+>example: 0.0.f588</TD
+><TD
+>Yes</TD
+><TD
+>The device's bus id in sysfs</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.subchannel.pim</TT
+> (int)</TD
+><TD
+>example: 0x80</TD
+><TD
+>No</TD
+><TD
+>path installed mask</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.subchannel.pam</TT
+> (int)</TD
+><TD
+>example: 0x80</TD
+><TD
+>No</TD
+><TD
+>path available mask</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.subchannel.pom</TT
+> (int)</TD
+><TD
+>example: 0xff</TD
+><TD
+>No</TD
+><TD
+>path operational mask</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.subchannel.chpid0..7</TT
+> (int)</TD
+><TD
+>example: 0x40</TD
+><TD
+>No</TD
+><TD
+>channel path ids</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+	The following properties describe <TT
+CLASS="literal"
+>ccw</TT
+> devices where
+	<TT
+CLASS="literal"
+>linux.driver</TT
+> is either <TT
+CLASS="literal"
+>dasd-eckd</TT
+>
+	or <TT
+CLASS="literal"
+>dasd-fba</TT
+>.
+
+	</P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN950"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.dasd.use_diag</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>If the device driver shall use diagnose calls to access
+	      the device</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.dasd.readonly</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>If the device can only be accessed readonly</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.dasd.discipline</TT
+> (string)</TD
+><TD
+>example: ECKD</TD
+><TD
+>No</TD
+><TD
+>The dasd discipline used to access the device</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+	The following properties describe <TT
+CLASS="literal"
+>ccw</TT
+> devices where
+	<TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>zfcp</TT
+>. They are
+	only present when <TT
+CLASS="literal"
+>ccw.online = 1</TT
+>.
+
+	</P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN982"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.zfcp.in_recovery</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Shows whether the adapter is currently in recovery</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.zfcp.failed</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>Shows whether the adapter is in failed state</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+	The following properties describe <TT
+CLASS="literal"
+>ccw</TT
+> devices where
+	<TT
+CLASS="literal"
+>linux.driver</TT
+> is of the form <TT
+CLASS="literal"
+>tape_3xxx
+	</TT
+>.
+
+	</P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1007"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.tape.state</TT
+> (string)</TD
+><TD
+>example: IN_USE</TD
+><TD
+>Yes</TD
+><TD
+>The current status of the tape</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.tape.operation</TT
+> (string)</TD
+><TD
+>example: REW</TD
+><TD
+>Yes</TD
+><TD
+>A three-letter mnemonic of the current tape operation
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.tape.mediumstate</TT
+> (string)</TD
+><TD
+>example: no medium</TD
+><TD
+>No</TD
+><TD
+>If <TT
+CLASS="literal"
+>ccw.online = 1</TT
+>, shows whether a tape 
+	      is loaded</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.tape.blocksize</TT
+> (int)</TD
+><TD
+>example: 512</TD
+><TD
+>No</TD
+><TD
+>If <TT
+CLASS="literal"
+>ccw.online = 1</TT
+>, shows the blocksize
+	      used for reads and writes to the tape</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+	The following properties describe <TT
+CLASS="literal"
+>ccw</TT
+> devices where
+	<TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>3270</TT
+>.
+
+	</P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1046"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.3270.model</TT
+> (int)</TD
+><TD
+>example: 3</TD
+><TD
+>Yes</TD
+><TD
+>The model of the device, determining rows and columns
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.3270.rows</TT
+> (int)</TD
+><TD
+>example: 32</TD
+><TD
+>Yes</TD
+><TD
+>The number of rows</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccw.3270.columns</TT
+> (int)</TD
+><TD
+>example: 80</TD
+><TD
+>Yes</TD
+><TD
+>The number of columns</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-ccwgroup"
+><TT
+CLASS="literal"
+>ccwgroup</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects that represent groups of <TT
+CLASS="literal"
+>ccw</TT
+> devices
+	(when <TT
+CLASS="literal"
+>info.bus</TT
+> is set to <TT
+CLASS="literal"
+>ccwgroup</TT
+>
+	have the properties specified below.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1080"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.online</TT
+> (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Online status</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.bus_id</TT
+> (string)</TD
+><TD
+>example: 0.0.f588</TD
+><TD
+>Yes</TD
+><TD
+>The device's bus id in sysfs</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      The following properties describe <TT
+CLASS="literal"
+>ccwgroup</TT
+> devices
+      where <TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>qeth</TT
+>.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1105"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.large_send</TT
+> (string)
+	      </TD
+><TD
+>example: TSO</TD
+><TD
+>No</TD
+><TD
+>Whether large send is provided. Can be "no", "EDDP"
+	      (software) or "TSO" (hardware).</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.card_type</TT
+> (string)</TD
+><TD
+>example: OSD_1000</TD
+><TD
+>Yes</TD
+><TD
+>Type of the card</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.checksumming</TT
+> (string)
+	      </TD
+><TD
+>example: sw checksumming</TD
+><TD
+>No</TD
+><TD
+>The method used to checksum incoming packets</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.canonical_macaddr</TT
+> (int)
+	      </TD
+><TD
+>example: 0</TD
+><TD
+>No</TD
+><TD
+>Specifies the token ring macaddress format. Not valid in
+	      layer2 mode and for ethernet devices.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.broadcast_mode</TT
+> (string)
+	      </TD
+><TD
+>example: broadcast_allrings</TD
+><TD
+>No</TD
+><TD
+>The scope of token ring broadcasts. Not valid in layer2
+	      mode and for ethernet devices.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.fake_broadcast</TT
+> (int)
+	      </TD
+><TD
+>example: 0</TD
+><TD
+>No</TD
+><TD
+>Whether to fake broadcast capability. Not valid in layer2
+	      mode.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.fake_ll</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>No</TD
+><TD
+>Whether to add a faked link level header to packets.
+	      Not valid in layer2 mode.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.layer2</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>No</TD
+><TD
+>Whether the card operates in layer 2 mode</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.portname</TT
+> (string)</TD
+><TD
+>example: OSAPORT</TD
+><TD
+>No</TD
+><TD
+>The port name which has been specified for the card</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.portno</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>No</TD
+><TD
+>The relative port number on the card</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.buffer_count</TT
+> (int)</TD
+><TD
+>example: 16</TD
+><TD
+>Yes</TD
+><TD
+>Number of inbound buffers used</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.add_hhlen</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>No</TD
+><TD
+>How much additional space is provided in the hardware
+	      header in skbs in front of packets</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.priority_queueing</TT
+> 
+	      (string)</TD
+><TD
+>example: always queue 2</TD
+><TD
+>No</TD
+><TD
+>Which priority queueing algorithm is to be used</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.route4</TT
+> (string)</TD
+><TD
+>example: no</TD
+><TD
+>No</TD
+><TD
+>Whether the card has a routing functionality for ipv4.
+	      Not valid in layer2 mode.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.route6</TT
+> (string)</TD
+><TD
+>example: no</TD
+><TD
+>No</TD
+><TD
+>Whether the card has a routing functionality for ipv6.
+	      Not valid in layer2 mode.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.qeth.state</TT
+> (string)</TD
+><TD
+>example: UP (LAN ONLINE)</TD
+><TD
+>Yes</TD
+><TD
+>The device's current state</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      The following properties describe <TT
+CLASS="literal"
+>ccwgroup</TT
+> devices
+      where <TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>ctc</TT
+>.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1214"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.ctc.protocol</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>The protocol/method used by the connection</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.ctc.type</TT
+> (string)</TD
+><TD
+>example: CTC/A</TD
+><TD
+>Yes</TD
+><TD
+>The device/connection type</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.ctc.buffer</TT
+> (int) </TD
+><TD
+>example: 32768</TD
+><TD
+>No</TD
+><TD
+>The maximum buffer size of the connection</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      The following properties describe <TT
+CLASS="literal"
+>ccwgroup</TT
+> devices
+      where <TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>lcs</TT
+>.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1245"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.lcs.portnumber</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>The port on the card that is used</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.lcs.type</TT
+> (string)</TD
+><TD
+>example: OSA LCS card</TD
+><TD
+>Yes</TD
+><TD
+>The type of the card</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.lcs.lancmd_timeout</TT
+> (int)
+	      </TD
+><TD
+>example: 5</TD
+><TD
+>Yes</TD
+><TD
+>The timeout value for LAN commands in seconds</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      The following properties describe <TT
+CLASS="literal"
+>ccwgroup</TT
+> devices
+      where <TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>claw</TT
+>.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1276"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.claw.api_type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Determines the packing algorithm for outgoing pakets
+	      (matching the remote peer)
+	      </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>IP</TD
+><TD
+>&nbsp;</TD
+><TD
+>Using the IP protocol</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>PACKED</TD
+><TD
+>&nbsp;</TD
+><TD
+>Using an enhanced packing algorithm</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>TCPIP</TD
+><TD
+>&nbsp;</TD
+><TD
+>Using the TCP/IP protocol</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.claw.adapter_name</TT
+> (string)
+	      </TD
+><TD
+>example: RS1</TD
+><TD
+>Yes</TD
+><TD
+>The host name of the remote communication peer.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.claw.host_name</TT
+> (string)</TD
+><TD
+>example: LNX1</TD
+><TD
+>Yes</TD
+><TD
+>The host name of the local adapter.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.claw.read_buffer</TT
+> (int)</TD
+><TD
+>example: 4</TD
+><TD
+>Yes</TD
+><TD
+>The number of read buffers allocated</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>ccwgroup.claw.write_buffer</TT
+> (int)</TD
+><TD
+>example: 5</TD
+><TD
+>Yes</TD
+><TD
+>The number of write buffers allocated</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-iucv"
+><TT
+CLASS="literal"
+>iucv</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects with <TT
+CLASS="literal"
+>info.bus</TT
+> set to <TT
+CLASS="literal"
+>iucv
+	</TT
+> are using the "Intra-User Comminication Vehicle" and are
+	described by the following properties.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1336"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>iucv.bus_id</TT
+> (string)</TD
+><TD
+>example: netiucv0</TD
+><TD
+>Yes</TD
+><TD
+>The device's bus id in sysfs</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;
+      The following properties describe <TT
+CLASS="literal"
+>iucv</TT
+> devices
+      where <TT
+CLASS="literal"
+>linux.driver</TT
+> is <TT
+CLASS="literal"
+>netiucv</TT
+>.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN1355"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>iucv.netiucv.user</TT
+> (string) </TD
+><TD
+>example: linux12</TD
+><TD
+>Yes</TD
+><TD
+>The guest name of the connection's target</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>iucv.netiucv.buffer</TT
+> (int) </TD
+><TD
+>example: 32768</TD
+><TD
+>Yes</TD
+><TD
+>The maximum buffer size of the connection</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
 NAME="device-properties-block"
 ><TT
 CLASS="literal"
@@ -3314,7 +4702,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN877"
+NAME="AEN1383"
 ></A
 ><TABLE
 BORDER="1"
@@ -3511,7 +4899,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN937"
+NAME="AEN1443"
 ></A
 ><TABLE
 BORDER="1"
@@ -3804,7 +5192,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1060"
+NAME="AEN1566"
 ></A
 ><TABLE
 BORDER="1"
@@ -3942,7 +5330,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1103"
+NAME="AEN1609"
 ></A
 ><TABLE
 BORDER="1"
@@ -4053,7 +5441,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1139"
+NAME="AEN1645"
 ></A
 ><TABLE
 BORDER="1"
@@ -4315,7 +5703,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1246"
+NAME="AEN1752"
 ></A
 ><TABLE
 BORDER="1"
@@ -4803,7 +6191,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1440"
+NAME="AEN1946"
 ></A
 ><TABLE
 BORDER="1"
@@ -5002,7 +6390,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1520"
+NAME="AEN2026"
 ></A
 ><TABLE
 BORDER="1"
@@ -5156,7 +6544,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1578"
+NAME="AEN2084"
 ></A
 ><TABLE
 BORDER="1"
@@ -5287,7 +6675,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1620"
+NAME="AEN2126"
 ></A
 ><TABLE
 BORDER="1"
@@ -5360,7 +6748,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1642"
+NAME="AEN2148"
 ></A
 ><TABLE
 BORDER="1"
@@ -5427,7 +6815,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1662"
+NAME="AEN2168"
 ></A
 ><TABLE
 BORDER="1"
@@ -5492,7 +6880,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1682"
+NAME="AEN2188"
 ></A
 ><TABLE
 BORDER="1"
@@ -5619,7 +7007,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1726"
+NAME="AEN2232"
 ></A
 ><TABLE
 BORDER="1"
@@ -5756,7 +7144,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1774"
+NAME="AEN2280"
 ></A
 ><TABLE
 BORDER="1"
@@ -5969,7 +7357,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1851"
+NAME="AEN2357"
 ></A
 ><TABLE
 BORDER="1"
@@ -6090,7 +7478,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1893"
+NAME="AEN2399"
 ></A
 ><TABLE
 BORDER="1"
@@ -6158,7 +7546,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1913"
+NAME="AEN2419"
 ></A
 ><TABLE
 BORDER="1"
@@ -6605,7 +7993,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2080"
+NAME="AEN2586"
 ></A
 ><TABLE
 BORDER="1"
@@ -6719,7 +8107,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2124"
+NAME="AEN2630"
 ></A
 ><TABLE
 BORDER="1"
@@ -6787,7 +8175,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2145"
+NAME="AEN2651"
 ></A
 ><TABLE
 BORDER="1"
@@ -6881,7 +8269,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2177"
+NAME="AEN2683"
 ></A
 ><TABLE
 BORDER="1"
@@ -6992,7 +8380,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2219"
+NAME="AEN2725"
 ></A
 ><TABLE
 BORDER="1"
@@ -7105,6 +8493,84 @@ CLASS="literal"
 ></P
 ></DIV
 ></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-tape"
+><TT
+CLASS="literal"
+>tape</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects with the capability <TT
+CLASS="literal"
+>tape</TT
+>
+	represent tape devices.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2781"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>tape.major</TT
+> (int)</TD
+><TD
+>example: 254</TD
+><TD
+>Yes</TD
+><TD
+>The device's major number</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>tape.minor</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>The device's minor number</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
 ></DIV
 ><DIV
 CLASS="sect1"
@@ -7144,7 +8610,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2277"
+NAME="AEN2809"
 ></A
 ><TABLE
 BORDER="1"
@@ -7303,7 +8769,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2329"
+NAME="AEN2861"
 ></A
 ><TABLE
 BORDER="1"
@@ -7432,7 +8898,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2370"
+NAME="AEN2902"
 ></A
 ><TABLE
 BORDER="1"
@@ -8500,7 +9966,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2564"
+NAME="AEN3096"
 ></A
 ><TABLE
 BORDER="1"
@@ -8660,7 +10126,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2606"
+NAME="AEN3138"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -8776,7 +10242,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN2617"
+NAME="AEN3149"
 >Example</A
 ></H3
 ><P
@@ -8894,7 +10360,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN2625"
+NAME="AEN3157"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
