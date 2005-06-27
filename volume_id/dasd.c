@@ -34,6 +34,10 @@
 #include <sys/ioctl.h>
 #include <asm/types.h>
 
+#ifdef HAVE_SYS_IOCCOM_H
+# include <sys/ioccom.h>
+#endif
+
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"

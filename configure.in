@@ -33,6 +33,8 @@ AC_PROG_LN_S
 AM_PATH_PYTHON
 AC_SYS_LARGEFILE
 
+AC_CHECK_HEADERS([sys/ioccom.h])
+
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
 AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])

@@ -1,3 +1,12 @@
+2005-06-27  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Alvaro Lopez Ortega <alvaro@sun.com>.
+
+	* volume_id/dasd.c: Use HAVE_SYS_IOCCOM_H to conditionally include
+	sys/ioccom.h
+
+	* configure.in: Check for sys/ioccom.h
+
 2005-06-23  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Alvaro Lopez Ortega <alvaro@sun.com> to add an empty
