@@ -934,6 +934,8 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 			drive->bus = LIBHAL_DRIVE_BUS_IDE;
 		} else if (strcmp (bus_textual, "scsi") == 0) {
 			drive->bus = LIBHAL_DRIVE_BUS_SCSI;
+		} else if (strcmp (bus_textual, "ccw") == 0) {
+			drive->bus = LIBHAL_DRIVE_BUS_CCW;
 		}
 	}
 
@@ -1057,10 +1059,12 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDR;
 		} else if (strcmp (disc_type_textual, "dvd_rw") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDRW;
-		} else if (strcmp (disc_type_textual, "dvd_plusr") == 0) {
+		} else if (strcmp (disc_type_textual, "dvd_plus_r") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR;
-		} else if (strcmp (disc_type_textual, "dvd_plusrw") == 0) {
+		} else if (strcmp (disc_type_textual, "dvd_plus_rw") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSRW;
+		} else if (strcmp (disc_type_textual, "dvd_plus_r_dl") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR_DL;
 		}
 	}
 

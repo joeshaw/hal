@@ -1,3 +1,14 @@
+2005-06-28  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.h: Add new LibHalVolumeDiscType field
+	LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR_DL. Add new LibHalDriveBus field
+	LIBHAL_DRIVE_BUS_CCW.
+
+	* libhal-storage/libhal-storage.c (libhal_drive_from_udi): Set
+	drive->bus to LIBHAL_DRIVE_BUS_CCW if appropriate
+	(libhal_volume_from_udi): Fix a bug: it's dvd_plus_[r|rw] not
+	dvd_plus[r|rw]. Add support for dvd_plus_r_dl.
+
 2005-06-27  David Zeuthen  <davidz@redhat.com>
 
 	Patch-set from Cornelia Huck <cohuck@de.ibm.com>. I've been
