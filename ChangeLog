@@ -1,3 +1,10 @@
+2005-06-29  David Zeuthen  <davidz@redhat.com>
+
+	* po/es.po: Add spanish translation from Francisco Javier F. Serrador
+	<serrador@hispafuentes.com>.
+
+	* configure.in: Add es to ALL_LINGUAS
+
 2005-06-28  David Zeuthen  <davidz@redhat.com>
 
 	* libhal-storage/libhal-storage.h: Add new LibHalVolumeDiscType field
