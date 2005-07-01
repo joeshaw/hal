@@ -1,3 +1,8 @@
+2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/addons/addon-storage.c: (force_unmount):
+	Terminate execl() argument list.
+
 2005-06-29  David Zeuthen  <davidz@redhat.com>
 
 	* po/es.po: Add spanish translation from Francisco Javier F. Serrador

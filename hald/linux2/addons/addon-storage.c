@@ -56,7 +56,7 @@ force_unmount (const char *device_file_or_mount_point)
 	case -1:
 		break;
 	case 0:
-		execl ("/bin/umount", "-l", device_file_or_mount_point);
+		execl ("/bin/umount", "-l", device_file_or_mount_point, NULL);
 		break;
 	default:
 		waitpid (pid, NULL, 0);
