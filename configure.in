@@ -294,8 +294,7 @@ AC_MSG_RESULT(yes)
 AC_MSG_CHECKING(for BLKGETSIZE64)
 AC_TRY_COMPILE(
 [#include <sys/types.h>
-#include <linux/ioctl.h>
-#include <linux/fs.h>],
+#include <sys/mount.h>],
 [int main(int argc, char *argv[])
 {
 	int fd = 0;

@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <linux/kdev_t.h>
 #include <linux/cdrom.h>
-#include <linux/fs.h>
+#include <sys/mount.h>
 #include <mntent.h>
 #include <selinux/selinux.h>
 

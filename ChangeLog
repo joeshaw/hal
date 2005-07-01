@@ -1,5 +1,16 @@
 2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* configure.in:
+	* hald/linux2/addons/addon-storage.c:
+	* hald/linux2/probing/probe-pc-floppy.c:
+	* hald/linux2/probing/probe-storage.c:
+	* hald/linux2/probing/probe-volume.c:
+	* tools/linux/add_selinux.c:
+	Switch <linux/fs.h> include to <sys/mount.h> to fix missing
+	typedefs in the kernel headers on exotic architectures.
+
+2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/linux2/addons/addon-storage.c: (force_unmount):
 	Terminate execl() argument list.
 

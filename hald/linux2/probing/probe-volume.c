@@ -40,7 +40,7 @@
 #include <ctype.h>
 #include <linux/kdev_t.h>
 #include <linux/cdrom.h>
-#include <linux/fs.h>
+#include <sys/mount.h>
 #include <time.h>
 #include <sys/time.h>
 
