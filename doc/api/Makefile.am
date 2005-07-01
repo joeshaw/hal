@@ -3,7 +3,7 @@ if DOXYGEN_DOCS_ENABLED
 
 EXTRA_DIST = Doxyfile Doxyfile.in
 
-htmldocdir = $(datadir)/doc/hal-$(VERSION)/api
+htmldocdir = $(DOCDIR)/api
 htmldoc_DATA = html/*
 
 html/* : Doxyfile

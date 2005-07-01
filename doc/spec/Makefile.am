@@ -10,7 +10,7 @@ FIGURE_FILES =                        	\
 
 if DOCBOOK_DOCS_ENABLED
 
-htmldocdir = $(datadir)/doc/hal-$(VERSION)/spec
+htmldocdir = $(DOCDIR)/spec
 htmldoc_DATA = hal-spec.html $(FIGURE_FILES)
 
 hal-spec.html : hal-spec.xml $(FIGURE_FILES)

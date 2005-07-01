@@ -441,6 +441,17 @@ else
 fi
 
 
+# documentation target
+AC_ARG_WITH(doc-dir,   [  --with-doc-dir=[dirname] directory to install documentation])
+if ! test -z "$with_doc_dir"; then
+   DOCDIR=$with_doc_dir
+else
+   DOCDIR="$DATADIR/doc/hal-$VERSION"
+fi
+
+AC_SUBST(DOCDIR)
+
+
 ALL_LINGUAS="da fr de nb nl ru hu pt it zh_TW es"
 AC_SUBST(ALL_LINGUAS)
 
@@ -510,6 +521,7 @@ echo "
         datadir:                  ${DATADIR}
         sysconfdir:               ${SYSCONFDIR}
         localstatedir:            ${LOCALSTATEDIR}
+        docdir:                   ${DOCDIR}
         dbus-1 system.d dir:      ${DBUS_SYS_DIR}
         pci.ids, usb.ids dir:     ${HWDATA_DIR}
         linux hotplug.d dir:      ${LINUX_HOTPLUG_DIR}

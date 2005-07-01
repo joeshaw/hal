@@ -1,5 +1,13 @@
 2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* configure.in:
+	* doc/api/Makefile.am:
+	* doc/conf/Makefile.am:
+	* doc/spec/Makefile.am:
+	Allow to configure the documentation target directory.
+
+2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* tools/device-manager/Device.py:
 	* tools/device-manager/DeviceManager.py:
 	* tools/device-manager/Representation.py:
