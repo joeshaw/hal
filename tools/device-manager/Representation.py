@@ -47,7 +47,13 @@ class Representation:
         # Default to abstract icon
         icon = self.icons["abstract"]
 
-        product = device.properties.get("info.product", "")
+        try:
+            product = device.properties["info.product"]
+        except KeyError:
+            product = "Unknown"
+        except TypeError:
+            return icon
+            
         if product=="Computer":
             return self.icons["computer"]
 

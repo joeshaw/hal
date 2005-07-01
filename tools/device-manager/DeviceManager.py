@@ -266,6 +266,9 @@ class DeviceManager(LibGladeApplication):
             except KeyError:
                 # no parent, must be parent of virtual_root
                 parent_name = "/"
+            except TypeError:
+                print "Error: no properties for device %s"%name
+                continue
             device = Device(name, parent_name, properties)
             self.device_list.append(device)
 

@@ -21,7 +21,7 @@ class Device:
     def populate_gtk_tree(self, tree_model, dont_show_virtual, representation):
         # see if we should show virtual devices
         if dont_show_virtual:
-            if self.properties.has_key("info.virtual"):
+            try:
                 if self.properties["info.virtual"]:
                     # do show all block devices, ide channels
                     if not self.properties["info.bus"] in ["block", "ide_host"]:
@@ -32,7 +32,8 @@ class Device:
                                                 dont_show_virtual,
                                                 representation)
                         return
-
+            except:
+                pass
         if self.parent_device==None:
             self.row = None
         else:
@@ -46,6 +47,8 @@ class Device:
             try:
                 title_name = self.properties["info.product"]
             except KeyError:
+                title_name = "Unknown Device"
+            except TypeError:
                 title_name = "Unknown Device"
             tree_model.set_value(self.row, Const.TITLE_COLUMN, title_name)
             tree_model.set_value(self.row, Const.UDI_COLUMN, self.device_name)

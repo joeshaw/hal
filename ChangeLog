@@ -1,5 +1,12 @@
 2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* tools/device-manager/Device.py:
+	* tools/device-manager/DeviceManager.py:
+	* tools/device-manager/Representation.py:
+	Make h-d-m tolerate expected device properties which are empty.
+
+2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* configure.in:
 	* hald/linux2/addons/addon-storage.c:
 	* hald/linux2/probing/probe-pc-floppy.c:
