@@ -291,10 +291,14 @@ AM_CONDITIONAL(DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
 AC_MSG_RESULT(yes)
 
 # Check for BLKGETSIZE64
+AC_CHECK_TYPE(pgoff_t, ,
+              [AC_DEFINE(pgoff_t, unsigned long, [Index into the pagecache])],
+               /usr/include/sys/types.h)
 AC_MSG_CHECKING(for BLKGETSIZE64)
 AC_TRY_COMPILE(
 [#include <sys/types.h>
-#include <sys/mount.h>],
+#include <linux/ioctl.h>
+#include <linux/fs.h>],
 [int main(int argc, char *argv[])
 {
 	int fd = 0;

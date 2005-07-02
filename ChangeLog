@@ -1,3 +1,14 @@
+2005-07-02  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* configure.in:
+	* hald/linux2/addons/addon-storage.c:
+	* hald/linux2/probing/probe-pc-floppy.c:
+	* hald/linux2/probing/probe-storage.c:
+	* hald/linux2/probing/probe-volume.c:
+	* tools/linux/add_selinux.c:
+	Revert <sys/mount.h> include, as some popular systems
+	still use ancient libc-kernel-headers.
+
 2005-07-01  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* configure.in:
