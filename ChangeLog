@@ -1,5 +1,16 @@
 2005-07-07  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* tools/device-manager/DeviceManager.py:
+	h-d-m raises:
+		Traceback (most recent call last):
+		File "/usr/share/hal/device-manager/DeviceManager.py", line 182, in
+		DBusException: Trying to remove unkown rule:
+		type='signal',interface='org.freedesktop.Hal.Device',sender=':1.1'...
+
+	just make it useable again until we found the real reason.
+
+2005-07-07  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/hald_dbus.c: (raise_error), (raise_no_such_device),
 	(raise_no_such_property), (raise_property_type_error),
 	(raise_syntax), (raise_device_not_locked),

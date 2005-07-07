@@ -97,11 +97,14 @@ class DeviceManager(LibGladeApplication):
 				     udi)
 
     def remove_device_signal_recv (self, udi):
-	self.bus.remove_signal_receiver(lambda *args: self.property_modified(udi, *args),
-				     "PropertyModified",
-				     "org.freedesktop.Hal.Device",
-				     "org.freedesktop.Hal",
-				     udi)
+	try:
+		self.bus.remove_signal_receiver(lambda *args: self.property_modified(udi, *args),
+					     "PropertyModified",
+					     "org.freedesktop.Hal.Device",
+					     "org.freedesktop.Hal",
+					     udi)
+	except:
+		print "FIXME: unknown reason for the error while removing this rule from dbus"
 	return
 	self.bus.remove_signal_receiver(lambda *args: self.device_condition(udi, *args),
 				     "Condition",
