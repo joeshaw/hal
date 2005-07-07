@@ -1,3 +1,19 @@
+2005-07-07  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/coldplug.c: (hal_util_get_udevinfo_path),
+	(hal_util_init_sysfs_to_dev_map), (coldplug_get_device_file),
+	(coldplug_synthesize_events), (coldplug_synthesize_block_event),
+	(coldplug_compute_visit_device):
+	The next udev version will not store anything in its database if not
+	neccessary. So udev does not need to write 600 pretty useless database
+	files and HAL does not need to process the information that is already
+	contained in the sysfs-path.
+
+	The udevinfo-dump of the next udev version will only print devices which
+	have a custom configuration. This changes HAL to look for the default
+	device-node derived from the kernels devpath if udev has not specified
+	anything else.
+
 2005-07-02  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* configure.in:
