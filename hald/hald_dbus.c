@@ -40,10 +40,18 @@
 #include "hald_dbus.h"
 #include "device.h"
 #include "device_store.h"
+#include "device_info.h"
 #include "logger.h"
 #include "osspec.h"
+#include "util.h"
 
 static DBusConnection *dbus_connection = NULL;
+
+static void
+raise_error (DBusConnection *connection,
+	     DBusMessage *in_reply_to,
+	     const char *error_name,
+	     char *format, ...) __attribute__((format (printf, 4, 5)));
 
 /**
  * @defgroup DaemonErrors Error conditions
@@ -52,6 +60,36 @@ static DBusConnection *dbus_connection = NULL;
  * @{
  */
 
+/** Raise HAL error
+ *
+ *  @param  connection          D-Bus connection
+ *  @param  in_reply_to         message to report error on
+ *  @param  error_name          D-Bus error name
+ *  @param  format              printf-style format for error message
+ */
+static void
+raise_error (DBusConnection *connection,
+	     DBusMessage *in_reply_to,
+	     const char *error_name,
+	     char *format, ...)
+{
+	char buf[512];
+	DBusMessage *reply;
+
+	va_list args;
+	va_start(args, format);
+	vsnprintf(buf, sizeof buf, format, args);
+	va_end(args);
+
+	HAL_WARNING ((buf));
+	reply = dbus_message_new_error (in_reply_to, error_name, buf);
+	if (reply == NULL)
+		DIE (("No memory"));
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+	dbus_message_unref (reply);
+}
+
 /** Raise the org.freedesktop.Hal.NoSuchDevice error
  *
  *  @param  connection          D-Bus connection
@@ -59,22 +97,15 @@ static DBusConnection *dbus_connection = NULL;
  *  @param  udi                 Unique device id given
  */
 static void
-raise_no_such_device (DBusConnection * connection,
-		      DBusMessage * in_reply_to, const char *udi)
+raise_no_such_device (DBusConnection *connection,
+		      DBusMessage *in_reply_to, const char *udi)
 {
-	char buf[512];
-	DBusMessage *reply;
-
-	snprintf (buf, 511, "No device with id %s", udi);
-	HAL_WARNING ((buf));
-	reply = dbus_message_new_error (in_reply_to,
-					"org.freedesktop.Hal.NoSuchDevice",
-					buf);
-	if (reply == NULL)
-		DIE (("No memory"));
-	if (!dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-	dbus_message_unref (reply);
+	raise_error (
+		connection, in_reply_to,
+		"org.freedesktop.Hal.NoSuchDevice",
+		"No device with id %s",
+		udi
+	);
 }
 
 /** Raise the org.freedesktop.Hal.NoSuchProperty error
@@ -85,24 +116,16 @@ raise_no_such_device (DBusConnection * connection,
  *  @param  key                 Key of the property that didn't exist
  */
 static void
-raise_no_such_property (DBusConnection * connection,
-			DBusMessage * in_reply_to,
+raise_no_such_property (DBusConnection *connection,
+			DBusMessage *in_reply_to,
 			const char *device_id, const char *key)
 {
-	char buf[512];
-	DBusMessage *reply;
-
-	snprintf (buf, 511, "No property %s on device with id %s", key,
-		  device_id);
-	/*HAL_WARNING ((buf));*/
-	reply = dbus_message_new_error (in_reply_to,
-					"org.freedesktop.Hal.NoSuchProperty",
-					buf);
-	if (reply == NULL)
-		DIE (("No memory"));
-	if (!dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-	dbus_message_unref (reply);
+	raise_error (
+		connection, in_reply_to,
+		"org.freedesktop.Hal.NoSuchProperty",
+		"No property %s on device with id %s",
+		key, device_id
+	);
 }
 
 /** Raise the org.freedesktop.Hal.TypeMismatch error
@@ -113,25 +136,16 @@ raise_no_such_property (DBusConnection * connection,
  *  @param  key                 Key of the property
  */
 static void
-raise_property_type_error (DBusConnection * connection,
-			   DBusMessage * in_reply_to,
+raise_property_type_error (DBusConnection *connection,
+			   DBusMessage *in_reply_to,
 			   const char *device_id, const char *key)
 {
-	char buf[512];
-	DBusMessage *reply;
-
-	snprintf (buf, 511,
-		  "Type mismatch setting property %s on device with id %s",
-		  key, device_id);
-	HAL_WARNING ((buf));
-	reply = dbus_message_new_error (in_reply_to,
-					"org.freedesktop.Hal.TypeMismatch",
-					buf);
-	if (reply == NULL)
-		DIE (("No memory"));
-	if (!dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-	dbus_message_unref (reply);
+	raise_error (
+		connection, in_reply_to,
+		"org.freedesktop.Hal.TypeMismatch",
+		"Type mismatch setting property %s on device with id %s",
+		key, device_id
+	);
 }
 
 /** Raise the org.freedesktop.Hal.SyntaxError error
@@ -142,24 +156,15 @@ raise_property_type_error (DBusConnection * connection,
  *                              the wrong signature
  */
 static void
-raise_syntax (DBusConnection * connection,
-	      DBusMessage * in_reply_to, const char *method_name)
+raise_syntax (DBusConnection *connection,
+	      DBusMessage *in_reply_to, const char *method_name)
 {
-	char buf[512];
-	DBusMessage *reply;
-
-	snprintf (buf, 511,
-		  "There is a syntax error in the invocation of "
-		  "the method %s", method_name);
-	HAL_WARNING ((buf));
-	reply = dbus_message_new_error (in_reply_to,
-					"org.freedesktop.Hal.SyntaxError",
-					buf);
-	if (reply == NULL)
-		DIE (("No memory"));
-	if (!dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-	dbus_message_unref (reply);
+	raise_error (
+		connection, in_reply_to,
+		"org.freedesktop.Hal.SyntaxError",
+		"There is a syntax error in the invocation of the method %s",
+		method_name
+	);
 }
 
 /** Raise the org.freedesktop.Hal.DeviceNotLocked error
@@ -173,20 +178,12 @@ raise_device_not_locked (DBusConnection *connection,
 			 DBusMessage    *in_reply_to,
 			 HalDevice      *device)
 {
-	char buf[512];
-	DBusMessage *reply;
-
-	snprintf (buf, 511, "The device %s is not locked",
-		  hal_device_get_udi (device));
-	HAL_WARNING ((buf));
-	reply = dbus_message_new_error (in_reply_to,
-					"org.freedesktop.Hal.DeviceNotLocked",
-					buf);
-
-	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-
-	dbus_message_unref (reply);
+	raise_error (
+		connection, in_reply_to,
+		"org.freedesktop.Hal.DeviceNotLocked",
+		"The device %s is not locked",
+		 hal_device_get_udi (device)
+	);
 }
 
 /** Raise the org.freedesktop.Hal.DeviceAlreadyLocked error
@@ -210,7 +207,6 @@ raise_device_already_locked (DBusConnection *connection,
 
 	reply = dbus_message_new_error (in_reply_to,
 					"org.freedesktop.Hal.DeviceAlreadyLocked",
-					
 					reason);
 
 	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
@@ -230,19 +226,12 @@ raise_permission_denied (DBusConnection *connection,
 			 DBusMessage    *in_reply_to,
 			 const char     *reason)
 {
-	char buf[512];
-	DBusMessage *reply;
-
-	snprintf (buf, 511, "Permission denied: %s", reason);
-	HAL_WARNING ((buf));
-	reply = dbus_message_new_error (in_reply_to,
-					"org.freedesktop.Hal.PermissionDenied",
-					buf);
-
-	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-
-	dbus_message_unref (reply);
+	raise_error (
+		connection, in_reply_to,
+		"org.freedesktop.Hal.PermissionDenied",
+		"Permission denied: %s",
+		 reason
+	);
 }
 
 /** @} */
@@ -263,7 +252,6 @@ foreach_device_get_udi (HalDeviceStore *store, HalDevice *device,
 	const char *udi;
 
 	udi = hal_device_get_udi (device);
-
 	dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &udi);
 
 	return TRUE;
@@ -2032,19 +2020,19 @@ device_send_signal_condition (HalDevice *device, const char *condition_name, con
 					   "org.freedesktop.Hal.Device",
 					   "Condition");
 	dbus_message_iter_init_append (message, &iter);
-	dbus_message_iter_append_basic (&iter, 
-	                                DBUS_TYPE_STRING, 
-	                                &condition_name);
-	dbus_message_iter_append_basic (&iter, 
-	                                DBUS_TYPE_STRING, 
-	                                &condition_details);
+	dbus_message_iter_append_basic (&iter,
+					DBUS_TYPE_STRING, 
+					&condition_name);
+	dbus_message_iter_append_basic (&iter,
+					DBUS_TYPE_STRING, 
+					&condition_details);
 
 	if (!dbus_connection_send (dbus_connection, message, NULL))
 		DIE (("error broadcasting message"));
 
 	dbus_message_unref (message);
 out:
-	;
+	return;
 }
 
 
@@ -2427,7 +2415,7 @@ local_server_message_handler (DBusConnection *connection,
 	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
 		DBusMessage *reply;
 
-                /* cheat, and handle AddMatch since libhal will try to invoke this method */
+		/* cheat, and handle AddMatch since libhal will try to invoke this method */
 		reply = dbus_message_new_method_return (message);
 		if (reply == NULL)
 			DIE (("No memory"));

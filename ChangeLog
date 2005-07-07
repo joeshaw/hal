@@ -1,5 +1,16 @@
 2005-07-07  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/hald_dbus.c: (raise_error), (raise_no_such_device),
+	(raise_no_such_property), (raise_property_type_error),
+	(raise_syntax), (raise_device_not_locked),
+	(raise_device_already_locked), (raise_permission_denied),
+	(foreach_device_get_udi), (device_send_signal_condition),
+	(local_server_message_handler):
+	Unify the error handling into one common function.
+	Thanks to Steffen Winterfeldt <snwint@suse.de>.
+
+2005-07-07  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/linux2/coldplug.c: (hal_util_get_udevinfo_path),
 	(hal_util_init_sysfs_to_dev_map), (coldplug_get_device_file),
 	(coldplug_synthesize_events), (coldplug_synthesize_block_event),
