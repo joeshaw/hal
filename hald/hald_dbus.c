@@ -31,7 +31,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -2222,6 +2224,264 @@ device_emit_condition (DBusConnection * connection, DBusMessage * message, dbus_
 }
 
 
+/*
+ * Create new device in tdl. Return temporary udi.
+ */
+DBusHandlerResult
+manager_new_device (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
+{
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	DBusError error;
+	HalDevice *d;
+	gchar *udi;
+	int i;
+	struct timeval tv;
+
+	dbus_error_init (&error);
+
+	if (!local_interface && !sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "NewDevice: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+	d = hal_device_new ();
+
+	gettimeofday(&tv, NULL);
+	for (i = 0; i < 1000000 ; i++) {
+		udi = g_strdup_printf ("/org/freedesktop/Hal/devices/tmp%05x", ((unsigned) tv.tv_usec & 0xfffff)) + i;
+		if (!hal_device_store_find (hald_get_tdl (), udi)) break;
+		g_free (udi);
+		udi = NULL;
+	}
+
+	if (!udi) {
+		raise_error (connection, message, "org.freedesktop.Hal.NoSpace", "NewDevice: no space for device");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	hal_device_store_add (hald_get_tdl (), d);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
+	g_free (udi);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+/*
+ * Callout helper.
+ */
+static void 
+manager_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+
+	if (!hal_device_store_remove (hald_get_gdl (), d)) {
+		HAL_WARNING (("Error removing device"));
+	}
+}
+
+
+/*
+ * Remove device. Looks in gdl and tdl.
+ */
+DBusHandlerResult
+manager_remove (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
+{
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	DBusError error;
+	HalDevice *d;
+	char *udi;
+	int in_tdl = 0;
+
+	dbus_error_init (&error);
+
+	if (!local_interface && !sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "Remove: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &udi,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "CommitToGdl");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL) {
+		hal_device_store_find (hald_get_tdl (), udi);
+		in_tdl = 1;
+	}
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	/* FIXME:
+	 * run "info.callouts.remove" ?
+	 * delete in gdl ?
+	 * (auto) stop "info.addons" ?
+	 */
+
+	if (!in_tdl) {
+		hal_util_callout_device_remove (d, manager_remove_done, NULL, NULL);
+	}
+
+	hal_device_store_remove (in_tdl ? hald_get_tdl () : hald_get_gdl (), d);
+	g_object_unref (d);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+/*
+ * Callout helper.
+ */
+static void
+manager_commit_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+}
+
+/*
+ * Preprobing helper.
+ */
+static void
+manager_commit_preprobing_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	if (hal_device_property_get_bool (d, "info.ignore")) {
+		/* Leave the device here with info.ignore==TRUE so we won't pick up children 
+		 * Also remove category and all capabilities
+		 */
+		hal_device_property_remove (d, "info.category");
+		hal_device_property_remove (d, "info.capabilities");
+		hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/ignored-device");
+		hal_device_property_set_string (d, "info.product", "Ignored Device");
+
+		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
+
+		return;
+	}
+
+	/* Merge properties from .fdi files */
+	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
+
+	hal_util_callout_device_add (d, manager_commit_done, NULL, NULL);
+}
+
+
+/*
+ * Move device from tdl to gdl. Runs helpers and callouts.
+ */
+DBusHandlerResult
+manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
+{
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	DBusError error;
+	HalDevice *d;
+	char udi[256], *udi0, *tmp_udi;
+
+	dbus_error_init (&error);
+
+	if (!local_interface && !sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "CommitToGdl: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &tmp_udi,
+				    DBUS_TYPE_STRING, &udi0,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "CommitToGdl");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+
+	/* look it up in tdl */
+
+	d = hal_device_store_find (hald_get_tdl (), tmp_udi);
+	if (d == NULL) {
+		raise_no_such_device (connection, message, tmp_udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	/* sanity check & avoid races */
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof udi, "%s", udi0);
+
+	if (hal_device_store_find (hald_get_gdl (), udi)) {
+		/* loose it */
+		hal_device_store_remove (hald_get_tdl (), d);
+		g_object_unref (d);
+		raise_error (connection, message, "org.freedesktop.Hal.DeviceExists", "CommitToGdl: Device exists: %s", udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	/* set new udi */
+	hal_device_property_remove (d, "info.udi");
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	/* FIXME:
+	 * 'RequireEnable' property?
+	 * fdi "preprobe"?
+	 * run "info.callouts.preprobe"?
+	 * remove "info.ignore" devices?
+	 * fdi "information"?
+	 * fdi "policy"?
+	 * run "info.callouts.add"?
+	 * tdl -> gdl?
+	 * (auto) start "info.addons"?
+	 */
+
+	/* Process preprobe fdi files */
+	di_search_and_merge (d, DEVICE_INFO_TYPE_PREPROBE);
+	hal_util_callout_device_preprobe (d, manager_commit_preprobing_done, NULL, NULL);
+
+	/* move from tdl to gdl */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
 static DBusHandlerResult
 hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *message, 
 				 void *user_data, dbus_bool_t local_interface)
@@ -2253,7 +2513,27 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		return manager_find_device_by_capability (connection,
 							  message);
 	}
-
+	else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Manager",
+						"NewDevice") &&
+		   strcmp (dbus_message_get_path (message),
+			    "/org/freedesktop/Hal/Manager") == 0) {
+		return manager_new_device (connection, message, local_interface);
+	}
+	else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Manager",
+						"Remove") &&
+		   strcmp (dbus_message_get_path (message),
+			    "/org/freedesktop/Hal/Manager") == 0) {
+		return manager_remove (connection, message, local_interface);
+	}
+	else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Manager",
+						"CommitToGdl") &&
+		   strcmp (dbus_message_get_path (message),
+			    "/org/freedesktop/Hal/Manager") == 0) {
+		return manager_commit_to_gdl (connection, message, local_interface);
+	}
 	else if (dbus_message_is_method_call (message,
 					      "org.freedesktop.Hal.Device",
 					      "GetAllProperties")) {

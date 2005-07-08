@@ -390,35 +390,35 @@ void libhal_free_string_array (char **str_array);
 void libhal_free_string (char *str);
 
 /* Create a new device object which will be hidden from applications
- * until the CommitToGdl(), ie. libhal_agent_commit_to_gdl(), method is called.
+ * until the CommitToGdl(), ie. libhal_device_commit_to_gdl(), method is called.
  */
-char *libhal_agent_new_device (LibHalContext *ctx, DBusError *error);
+char *libhal_new_device (LibHalContext *ctx, DBusError *error);
 
 /* When a hidden device has been built using the NewDevice method, ie.
- * libhal_agent_new_device(), and the org.freedesktop.Hal.Device interface
+ * libhal_new_device(), and the org.freedesktop.Hal.Device interface
  * this function will commit it to the global device list. 
  */
-dbus_bool_t libhal_agent_commit_to_gdl (LibHalContext *ctx,
-					const char *temp_udi,
-					const char *udi,
-					DBusError *error);
+dbus_bool_t libhal_device_commit_to_gdl (LibHalContext *ctx,
+					 const char *temp_udi,
+					 const char *udi,
+					 DBusError *error);
 
 /* This method can be invoked when a device is removed. The HAL daemon
  * will shut down the device. Note that the device may still be in the device
  * list if the Persistent property is set to true. 
  */
-dbus_bool_t libhal_agent_remove_device (LibHalContext *ctx, 
+dbus_bool_t libhal_remove_device (LibHalContext *ctx, 
 					const char *udi,
 					DBusError *error);
 
 /* Merge properties from one device to another. */
-dbus_bool_t libhal_agent_merge_properties (LibHalContext *ctx,
+dbus_bool_t libhal_merge_properties (LibHalContext *ctx,
 					   const char *target_udi,
 					   const char *source_udi,
 					   DBusError *error);
 
 /* Check a set of properties for two devices matches. */
-dbus_bool_t libhal_agent_device_matches (LibHalContext *ctx,
+dbus_bool_t libhal_device_matches (LibHalContext *ctx,
 					 const char *udi1,
 					 const char *udi2,
 					 const char *property_namespace,

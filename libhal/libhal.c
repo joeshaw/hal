@@ -1964,7 +1964,7 @@ libhal_device_unlock (LibHalContext *ctx,
 
 
 /** Create a new device object which will be hidden from applications
- *  until the CommitToGdl(), ie. libhal_agent_commit_to_gdl(), method is called.
+ *  until the CommitToGdl(), ie. libhal_device_commit_to_gdl(), method is called.
  *
  *  Note that the program invoking this method needs to run with super user
  *  privileges.
@@ -1977,7 +1977,7 @@ libhal_device_unlock (LibHalContext *ctx,
  *                              by the caller.
  */
 char *
-libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
+libhal_new_device (LibHalContext *ctx, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
@@ -1987,7 +1987,7 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.AgentManager",
+						"org.freedesktop.Hal.Manager",
 						"NewDevice");
 	if (message == NULL) {
 		fprintf (stderr,
@@ -2037,7 +2037,7 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
 
 
 /** When a hidden device has been built using the NewDevice method, ie.
- *  libhal_agent_new_device(), and the org.freedesktop.Hal.Device interface
+ *  libhal_new_device(), and the org.freedesktop.Hal.Device interface
  *  this function will commit it to the global device list. 
  *
  *  This means that the device object will be visible to applications and
@@ -2049,7 +2049,7 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
  *
  *  @param  ctx                 The context for the connection to hald
  *  @param  temp_udi            The temporary unique device id as returned by
- *                              libhal_agent_new_device()
+ *                              libhal_new_device()
  *  @param  udi                 The new unique device id.
  *  @param  error               Pointer to an initialized dbus error object for
  *                              returning errors or #NULL
@@ -2057,8 +2057,8 @@ libhal_agent_new_device (LibHalContext *ctx, DBusError *error)
  *                              in use.
  */
 dbus_bool_t
-libhal_agent_commit_to_gdl (LibHalContext *ctx, 
-			    const char *temp_udi, const char *udi, DBusError *error)
+libhal_device_commit_to_gdl (LibHalContext *ctx, 
+			     const char *temp_udi, const char *udi, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
@@ -2066,7 +2066,7 @@ libhal_agent_commit_to_gdl (LibHalContext *ctx,
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.AgentManager",
+						"org.freedesktop.Hal.Manager",
 						"CommitToGdl");
 	if (message == NULL) {
 		fprintf (stderr,
@@ -2111,7 +2111,7 @@ libhal_agent_commit_to_gdl (LibHalContext *ctx,
  *  @return                     TRUE if the device was removed, FALSE otherwise
  */
 dbus_bool_t
-libhal_agent_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
+libhal_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
@@ -2119,7 +2119,7 @@ libhal_agent_remove_device (LibHalContext *ctx, const char *udi, DBusError *erro
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.AgentManager",
+						"org.freedesktop.Hal.Manager",
 						"Remove");
 	if (message == NULL) {
 		fprintf (stderr,
@@ -2289,8 +2289,8 @@ libhal_device_property_exists (LibHalContext *ctx,
  *  @return                     TRUE if the properties were merged, FALSE otherwise
  */
 dbus_bool_t
-libhal_agent_merge_properties (LibHalContext *ctx, 
-			       const char *target_udi, const char *source_udi, DBusError *error)
+libhal_merge_properties (LibHalContext *ctx, 
+			 const char *target_udi, const char *source_udi, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
@@ -2298,7 +2298,7 @@ libhal_agent_merge_properties (LibHalContext *ctx,
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.AgentManager",
+						"org.freedesktop.Hal.Manager",
 						"MergeProperties");
 	if (message == NULL) {
 		fprintf (stderr,
@@ -2351,7 +2351,7 @@ libhal_agent_merge_properties (LibHalContext *ctx,
  *                              have the same value.
  */
 dbus_bool_t
-libhal_agent_device_matches (LibHalContext *ctx, 
+libhal_device_matches (LibHalContext *ctx, 
 			     const char *udi1, const char *udi2,
 			     const char *property_namespace, DBusError *error)
 {
@@ -2363,7 +2363,7 @@ libhal_agent_device_matches (LibHalContext *ctx,
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.AgentManager",
+						"org.freedesktop.Hal.Manager",
 						"DeviceMatches");
 	if (message == NULL) {
 		fprintf (stderr,

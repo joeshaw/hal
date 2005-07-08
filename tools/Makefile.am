@@ -9,7 +9,7 @@ INCLUDES = \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = lshal hal-get-property hal-set-property hal-find-by-capability hal-find-by-property
+bin_PROGRAMS = lshal hal-get-property hal-set-property hal-find-by-capability hal-find-by-property hal-device
 
 if FSTAB_SYNC_ENABLED
 sbin_PROGRAMS = fstab-sync
@@ -29,6 +29,9 @@ hal_find_by_capability_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_find_by_property_SOURCES = hal_find_by_property.c
 hal_find_by_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+
+hal_device_SOURCES = hal-device.c
+hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 if FSTAB_SYNC_ENABLED
 fstab_sync_SOURCES = fstab-sync.c

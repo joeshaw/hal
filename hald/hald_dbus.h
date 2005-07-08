@@ -60,16 +60,16 @@ DBusHandlerResult device_lock                       (DBusConnection *conn,
 						     DBusMessage    *msg);
 DBusHandlerResult device_unlock                     (DBusConnection *conn,
 						     DBusMessage    *msg);
-DBusHandlerResult agent_manager_new_device          (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult agent_manager_commit_to_gdl       (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult agent_manager_remove              (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult agent_merge_properties            (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult agent_device_matches              (DBusConnection *conn,
-						     DBusMessage    *msg);
+DBusHandlerResult manager_new_device          (DBusConnection *conn,
+					       DBusMessage    *msg, dbus_bool_t local_interface);
+DBusHandlerResult manager_commit_to_gdl       (DBusConnection *conn,
+					       DBusMessage    *msg, dbus_bool_t local_interface);
+DBusHandlerResult manager_remove              (DBusConnection *conn,
+					       DBusMessage    *msg, dbus_bool_t local_interface);
+DBusHandlerResult merge_properties            (DBusConnection *conn,
+					       DBusMessage    *msg);
+DBusHandlerResult device_matches              (DBusConnection *conn,
+					       DBusMessage    *msg);
 
 void manager_send_signal_device_added   (HalDevice *device);
 void manager_send_signal_device_removed (HalDevice *device);

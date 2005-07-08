@@ -1,3 +1,26 @@
+2005-07-08  David Zeuthen  <davidz@redhat.com>
+
+	Make it possible to create and remove HAL devices without kernel and
+	sysfs support. Some legacy devices or userspace driven devices may be
+	useful in HAL too, but need to be maintained by an application instead
+	of the kernel itself. Patch from Steffen Winterfeldt <snwint@suse.de>.
+
+	* tools/hal-device.c: New file
+
+	* tools/Makefile.am: Add build rules for hal-device
+
+	* libhal/libhal.[ch]: Remove the _agent prefix from the agent_manager 
+	functions
+
+	* hald/hald_dbus.h: Add prototypes for new functions
+
+	* hald/hald_dbus.c (manager_new_device)
+	(manager_remove_done, manager_remove)
+	(manager_commit_done)
+	(manager_commit_preprobing_done)
+	(manager_commit_to_gdl): New functions
+	(hald_dbus_filter_handle_methods): Add handlers for new D-BUS methods
+
 2005-07-07  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* tools/device-manager/DeviceManager.py:
