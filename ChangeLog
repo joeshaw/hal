@@ -1,3 +1,9 @@
+2005-07-11  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Cards
+	on the MMC bus got an incorrect storage.drive_type. Patch from
+	Pierre Ossman <drzeus@drzeus.cx>.
+
 2005-07-08  David Zeuthen  <davidz@redhat.com>
 
 	Make it possible to create and remove HAL devices without kernel and

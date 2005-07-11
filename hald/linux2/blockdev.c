@@ -839,6 +839,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				}
 			}
 
+		} else if (strcmp (parent_bus, "mmc") == 0) {
+			hal_device_property_set_string (d, "storage.drive_type", "sd_mmc");
 		}
 
 		hal_device_property_set_string (d, "info.category", "storage");
