@@ -73,7 +73,9 @@ battery_refresh_poll (HalDevice *d)
 					 "state", "remaining capacity", 0, 10, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.charge_level.rate", path, 
 					 "state", "present rate", 0, 10, TRUE);
-	
+	hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
+					 "info", "last full capacity", 0, 10, TRUE);
+ 		
 	hal_device_property_set_int (d, "battery.remaining_time", 
 				     util_compute_time_remaining (
 					     d->udi,

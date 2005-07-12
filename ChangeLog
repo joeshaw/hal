@@ -1,5 +1,13 @@
 2005-07-11  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/acpi.c (battery_refresh_poll): When the battery is
+	degrading a bit, and the last full battery info value is updated
+	by ACPI, the new value is not reflected in HAL database. Reported
+	by Paul Ionescu (i_p_a_u_l@yahoo.com); fix by Richard
+	Hughes (richard@hughsie.com) (RH #162215).
+
+2005-07-11  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Cards
 	on the MMC bus got an incorrect storage.drive_type. Patch from
 	Pierre Ossman <drzeus@drzeus.cx>.
