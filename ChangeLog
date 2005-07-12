@@ -7,7 +7,7 @@
 2005-07-12  David Zeuthen  <davidz@redhat.com>
 
 	* hald/Makefile.am: Disable our regression test for now since it's
-	busted and we want 'make ditcheck' to pass for the new release.
+	busted and we want 'make distcheck' to pass for the new release.
 
 2005-07-12  David Zeuthen  <davidz@redhat.com>
 
