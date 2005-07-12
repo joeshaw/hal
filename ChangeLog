@@ -1,3 +1,8 @@
+2005-07-12  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.c (libhal_ctx_init): Make init fail if hald is
+	actually not running
+
 2005-07-11  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/acpi.c (battery_refresh_poll): When the battery is

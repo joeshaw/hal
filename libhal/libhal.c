@@ -2868,6 +2868,7 @@ dbus_bool_t
 libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 {
 	DBusError _error;
+	dbus_bool_t hald_exists;
 
 	if (ctx == NULL)
 		return FALSE;
@@ -2875,12 +2876,22 @@ libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 	if (ctx->connection == NULL)
 		return FALSE;
 
+	dbus_error_init (&_error);
+	hald_exists = dbus_bus_name_has_owner (ctx->connection, "org.freedesktop.Hal", &_error);
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
+
+	if (!hald_exists) {
+		return FALSE;
+	}
+
 	
 	if (!dbus_connection_add_filter (ctx->connection, filter_func, ctx, NULL)) {
 		return FALSE;
 	}
 
-	dbus_error_init (&_error);
 	dbus_bus_add_match (ctx->connection, 
 			    "type='signal',"
 			    "interface='org.freedesktop.Hal.Manager',"
