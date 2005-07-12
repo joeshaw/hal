@@ -12,7 +12,7 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 
-check_PROGRAMS = hald-test
+## check_PROGRAMS = hald-test
 
 hald_test_SOURCES =                                                     \
 	hald_marshal.h			hald_marshal.c			\
@@ -27,7 +27,7 @@ hald_test_SOURCES =                                                     \
 
 hald_test_LDADD = @PACKAGE_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/libhal/libhal.la
 
-TESTS = hald-test
+# TESTS = hald-test
 
 
 sbin_PROGRAMS = hald
