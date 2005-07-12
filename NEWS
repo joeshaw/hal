@@ -1,4 +1,29 @@
 ==========
+HAL 0.5.3 "I didn't ask who gave the order, because it had nothing to do with business."
+==========
+
+Released July 12, 2005
+
+ - hal-find-by-capability and hal-find-by-property tools (David Zeuthen)
+ - Fix some of the bugs from johnp's port of h-d-m (David Zeuthen, Kay Sievers)
+ - Trigger rescan of ACPI objects when receiving events (Richard Hughes)
+ - Fix key for storage.cdrom.dvdram (Danny Kukawka)
+ - Don't use sync as part of the normal mount option policy (David Zeuthen)
+ - Update fstab-sync man page (David Zeuthen)
+ - Fix a bug in hal_property_new_string (Martin Pitt)
+ - Fix --help output (Danny Kukawka)
+ - Detect DVD+R DL media (William Jon McCann, David Zeuthen)
+ - Add empty Solaris backend and fix build for Solaris (Alvaro Lopez Ortega)
+ - Support various S390 devices (Cornelia Huck)
+ - Prepare hald to work with newer udev versions (Kay Sievers)
+ - Unify various error handling functions (Steffen Winterfeldt)
+ - Add infrastructure + tools to populate the hal db (Steffen Winterfeldt)
+ - Fixup MMC storage cards drive type on MMC bus (Pierre Ossman)
+ - Handle case where the battery life is degrading (Richard Hughes)
+ - Make libhal_ctx_init() fail if hald is not running (David Zeuthen)
+ - New translations: nb (Kjartan Maraas), es (Francisco Javier F. Serrador)
+
+==========
 HAL 0.5.2 "Can't do it, Sally."
 ==========
 

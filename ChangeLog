@@ -1,5 +1,11 @@
 2005-07-12  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Bump version to 0.5.3
+
+	* NEWS: Update for release 0.5.3
+
+2005-07-12  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/libhal.c (libhal_ctx_init): Make init fail if hald is
 	actually not running
 
