@@ -1,5 +1,22 @@
 2005-07-12  David Zeuthen  <davidz@redhat.com>
 
+	* hald/util.h: Add prototype for hal_util_helper_invoke_with_pipes
+
+	* hald/util.c (hal_util_helper_invoke_with_pipes): New function (is
+	based on hal_util_helper_invoke)
+	(hal_util_helper_invoke): Use the with_pipes
+
+	* hald/hald_dbus.c (hald_exec_method_cb): New function
+	(hald_exec_method): New function
+	(hald_dbus_filter_handle_methods): Check and handle methods on
+	individual hal device objects
+
+	* hald/device.h: Add prototype for hal_device_property_get_strlist_elem
+
+	* hald/device.c (hal_device_property_get_strlist_elem): New function
+
+2005-07-12  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Post release version bump
 
 2005-07-12  David Zeuthen  <davidz@redhat.com>

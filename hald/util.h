@@ -103,6 +103,11 @@ unsigned int hal_util_kill_all_helpers (void);
 HalHelperData  *hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
 					gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout);
 
+HalHelperData  *hal_util_helper_invoke_with_pipes (const gchar *command_line, gchar **extra_env, HalDevice *d, 
+						   gpointer data1, gpointer data2, HalHelperTerminatedCB cb, 
+						   guint timeout,
+						   int *standard_input, int *standard_output, int *standard_error);
+
 void hal_util_terminate_helper (HalHelperData *helper_data);
 
 gchar **hal_util_dup_strv_from_g_slist (GSList *strlist);

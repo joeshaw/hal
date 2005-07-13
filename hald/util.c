@@ -528,6 +528,14 @@ HalHelperData *
 hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
 			gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout)
 {
+	return hal_util_helper_invoke_with_pipes (command_line, extra_env, d, data1, data2, cb, timeout, NULL, NULL, NULL);
+}
+
+HalHelperData *
+hal_util_helper_invoke_with_pipes (const gchar *command_line, gchar **extra_env, HalDevice *d, 
+				   gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout,
+				   int *standard_input, int *standard_output, int *standard_error)
+{
 	HalHelperData *ed;
 	gint argc;
 	gchar **argv;
@@ -585,14 +593,17 @@ hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice 
 		ed = NULL;
 	} else {
 		err = NULL;
-		if (!g_spawn_async (NULL, 
-				    argv, 
-				    envp, 
-				    G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH,
-				    NULL,
-				    NULL,
-				    &ed->pid,
-				    &err)) {
+		if (!g_spawn_async_with_pipes (NULL, 
+					       argv, 
+					       envp, 
+					       G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH,
+					       NULL,
+					       NULL,
+					       &ed->pid,
+					       standard_input,
+					       standard_output,
+					       standard_error,
+					       &err)) {
 			HAL_ERROR (("Couldn't spawn '%s' err=%s!", command_line, err->message));
 			g_error_free (err);
 			g_free (ed);

@@ -2481,6 +2481,214 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static void
+hald_exec_method_cb (HalDevice *d, gboolean timed_out, gint return_code, 
+		     gpointer data1, gpointer data2, HalHelperData *helper_data)
+{
+	dbus_uint32_t result;
+	DBusMessage *reply;
+	DBusMessage *message;
+	DBusMessageIter iter;
+	int *stderr_fd;
+	char buf[512]; /* TODO: don't hardcode error message size */
+	char *exp_name;
+	char *exp_detail;
+
+	message = (DBusMessage *) data1;
+	stderr_fd = (int *) data2;
+
+	exp_name = NULL;
+	exp_detail = NULL;
+
+	/* read back possible error conditions from stderr */
+	if (stderr_fd != NULL) {
+		ssize_t num_read;
+
+		num_read = read (*stderr_fd, buf, sizeof (buf) - 2);
+		buf[sizeof (buf) - 2] = '\0';
+		buf[sizeof (buf) - 1] = '\0';
+		if (num_read > 0) {
+			char *p;
+			char *s;
+			p = buf;
+			for (s = p; *s != '\n' && *s != '\0'; s++)
+				;
+			if (*s != '\0') {
+				exp_name = g_strndup (p, s - p);
+				p = s + 1;
+				for (s = p; *s != '\n' && *s != '\0'; s++)
+					;
+				if (*s != '\0') {
+					exp_detail = g_strndup (p, s - p);
+				}
+			}
+		}
+	}
+
+	if (exp_name != NULL && exp_detail != NULL) {
+		HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
+
+		/* throw exception */
+
+		reply = dbus_message_new_error (message, exp_name, exp_detail);
+		if (reply == NULL)
+			DIE (("No memory"));
+		if (dbus_connection != NULL) {
+			if (!dbus_connection_send (dbus_connection, reply, NULL))
+				DIE (("No memory"));
+		}
+		dbus_message_unref (reply);
+
+	} else {
+		result = (dbus_uint32_t) return_code;
+
+		reply = dbus_message_new_method_return (message);
+		if (reply == NULL)
+			DIE (("No memory"));
+		
+		dbus_message_iter_init_append (reply, &iter);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &result);
+		
+		if (dbus_connection != NULL) {
+			if (!dbus_connection_send (dbus_connection, reply, NULL))
+				DIE (("No memory"));
+		}
+
+		dbus_message_unref (reply);
+	}
+
+	dbus_message_unref (message);
+	g_free (stderr_fd);
+	g_free (exp_name);
+	g_free (exp_detail);
+}
+
+static DBusHandlerResult
+hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message, const char *execpath)
+{
+	int type;
+	char *stdin;
+	GString *stdin_str;
+	DBusMessageIter iter;
+	int stdin_fd;
+	int *stderr_fd;
+
+	/* TODO: check that sender is e.g. at console */
+/*
+	if (!sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+*/
+
+	stdin_str = g_string_sized_new (256); /* reasonable default size for passing params; can grow */
+
+	/* prepare stdin with parameters */
+	dbus_message_iter_init (message, &iter);
+	while ((type = dbus_message_iter_get_arg_type (&iter)) != DBUS_TYPE_INVALID) {
+		switch (type) {
+		case DBUS_TYPE_BYTE:
+		{
+			unsigned char value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%u", value);
+			break;
+		}
+		case DBUS_TYPE_INT16:
+		{
+			dbus_int16_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%d", value);
+			break;
+		}
+		case DBUS_TYPE_UINT16:
+		{
+			dbus_uint16_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%u", value);
+			break;
+		}
+		case DBUS_TYPE_INT32:
+		{
+			dbus_int32_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%d", value);
+			break;
+		}
+		case DBUS_TYPE_UINT32:
+		{
+			dbus_uint32_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%u", value);
+			break;
+		}
+		case DBUS_TYPE_INT64:
+		{
+			dbus_int64_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%lld", value);
+			break;
+		}
+		case DBUS_TYPE_UINT64:
+		{
+			dbus_uint64_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%llu", value);
+			break;
+		}
+		case DBUS_TYPE_DOUBLE:
+		{
+			double value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append_printf (stdin_str, "%g", value);
+			break;
+		}
+		case DBUS_TYPE_BOOLEAN:
+		{
+			dbus_bool_t value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append (stdin_str, value ? "true" : "false");
+			break;
+		}
+		case DBUS_TYPE_STRING:
+		{
+			char *value;
+			dbus_message_iter_get_basic (&iter, &value);
+			g_string_append (stdin_str, value);
+			break;
+		}
+
+		default:
+			goto error;
+		}
+
+		g_string_append_c (stdin_str, '\n');
+		
+		dbus_message_iter_next (&iter);
+	}
+
+	stdin = g_string_free (stdin_str, FALSE);
+
+	stderr_fd = (int *) g_new0 (int, 1);
+
+	/* no timeout */
+	if (hal_util_helper_invoke_with_pipes (execpath, NULL, d, 
+					       (gpointer) message, (gpointer) stderr_fd, 
+					       hald_exec_method_cb, 0, &stdin_fd, NULL, stderr_fd) != NULL) {
+		write (stdin_fd, stdin, strlen (stdin));
+		close (stdin_fd);
+	}
+
+	dbus_message_ref (message);
+
+	g_free (stdin);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+
+error:
+	g_string_free (stdin_str, TRUE);
+	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
 
 static DBusHandlerResult
 hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *message, 
@@ -2630,11 +2838,76 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"org.freedesktop.Hal.Device",
 						"EmitCondition")) {
 		return device_emit_condition (connection, message, local_interface);
-	} else
-		osspec_filter_function (connection, message, user_data);
+	} else {
+		const char *interface;
+		const char *udi;
+		const char *method;
+		const char *signature;
+		HalDevice *d;
 
-	return DBUS_HANDLER_RESULT_HANDLED;
+		/* check for device-specific interfaces that individual objects may support */
+
+		udi = dbus_message_get_path (message);
+		interface = dbus_message_get_interface (message);
+		method = dbus_message_get_member (message);
+		signature = dbus_message_get_signature (message);
+
+		d = NULL;
+
+		if (method != NULL) {
+			d = hal_device_store_find (hald_get_gdl (), udi);
+			if (d == NULL)
+				d = hal_device_store_find (hald_get_tdl (), udi);
+		}
+
+		if (d != NULL && interface != NULL && method != NULL && signature != NULL) {
+			GSList *interfaces;
+			GSList *i;
+
+			interfaces = hal_device_property_get_strlist (d, "info.interfaces");
+			for (i = interfaces; i != NULL; i = g_slist_next (i)) {
+				const char *ifname = (const char *) i->data;
+
+				if (strcmp (ifname, interface) == 0) {
+					guint num;
+					GSList *method_names;
+					char *s;
+
+					s = g_strdup_printf ("%s.method_names", interface);
+					method_names = hal_device_property_get_strlist (d, s);
+					g_free (s);
+					for (i = method_names, num = 0; i != NULL; i = g_slist_next (i), num++) {
+						const char *methodname = (const char *) i->data;
+						if (strcmp (methodname, method) == 0) {
+							const char *execpath;
+							const char *sig;
+
+							s = g_strdup_printf ("%s.method_execpaths", interface);
+							execpath = hal_device_property_get_strlist_elem (d, s, num);
+							g_free (s);
+							s = g_strdup_printf ("%s.method_signatures", interface);
+							sig = hal_device_property_get_strlist_elem (d, s, num);
+							g_free (s);
+							
+							if (execpath != NULL && sig != NULL && 
+							    strcmp (sig, signature) == 0) {
+
+								HAL_INFO (("OK for method '%s' with signature '%s' on interface '%s' for UDI '%s' and execpath '%s'", method, signature, interface, udi, execpath));
+
+								return hald_exec_method (d, connection, message, execpath);
+							}
+							
+						}
+					}
+				}
+			}
+			
+		}
+	}
+		
+	return osspec_filter_function (connection, message, user_data);
 }
+       
 
 /** Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function.
@@ -2648,12 +2921,10 @@ DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
 			   DBusMessage * message, void *user_data)
 {
-	/*
-	HAL_INFO (("obj_path=%s interface=%s method=%s", 
+	/*HAL_INFO (("obj_path=%s interface=%s method=%s", 
 		   dbus_message_get_path(message), 
 		   dbus_message_get_interface(message),
-		   dbus_message_get_member(message)));
-	*/
+		   dbus_message_get_member(message)));*/
 
 	if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
 	    strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {

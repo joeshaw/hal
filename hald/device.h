@@ -135,6 +135,9 @@ double        hal_device_property_get_double (HalDevice    *device,
 					      const char   *key);
 GSList       *hal_device_property_get_strlist (HalDevice    *device,
 					       const char   *key);
+const char   *hal_device_property_get_strlist_elem (HalDevice    *device,
+						    const char   *key,
+						    guint index);
 
 
 

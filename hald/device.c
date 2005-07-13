@@ -1090,6 +1090,25 @@ hal_device_property_get_strlist (HalDevice    *device,
 		return NULL;
 }
 
+const char *
+hal_device_property_get_strlist_elem (HalDevice    *device,
+				      const char   *key,
+				      guint index)
+{
+	GSList *strlist;
+	GSList *i;
+
+	strlist = hal_device_property_get_strlist (device, key);
+	if (strlist == NULL)
+		return NULL;
+
+	i = g_slist_nth (strlist, index);
+	if (i == NULL)
+		return NULL;
+
+	return (const char *) i->data;
+}
+
 gboolean
 hal_device_property_strlist_append (HalDevice    *device,
 				    const char   *key,
