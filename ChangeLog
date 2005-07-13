@@ -1,5 +1,9 @@
 2005-07-12  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Post release version bump
+
+2005-07-12  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Bump version to 0.5.3
 
 	* NEWS: Update for release 0.5.3
