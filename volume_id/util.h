@@ -29,7 +29,12 @@
 #  include <config.h>
 #endif
 
+#ifdef HAVE_ASM_TYPES_H
+#  include <asm/types.h>
+#endif
+
 #include <stdint.h>
+#include <asm/types.h>
 
 /* size of superblock buffer, reiserfs block is at 64k */
 #define SB_BUFFER_SIZE				0x11000
