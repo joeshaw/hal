@@ -1,5 +1,23 @@
 2005-07-15  David Zeuthen  <davidz@redhat.com>
 
+	I added support for detection of DVD+R Dual-Layer write
+	support (new key: storage.cdrom.dvdplusrdl). Here a fix for DVD+R
+	DL media in libhal_volume_policy_compute_display_name(). Patches
+	from Danny Kukawka <danny.kukawka@web.de>.
+
+	* libhal-storage/libhal-storage.h: 
+
+	* libhal-storage/libhal-storage.c (libhal_drive_policy_compute_display_name)
+	(libhal_volume_policy_compute_display_name): 
+
+	* hald/linux2/probing/probe-storage.c (main): 
+
+	* hald/linux2/probing/linux_dvd_rw_utils.c (get_dvd_r_rw_profile): 
+
+	* doc/spec/hal-spec.xml.in: 
+
+2005-07-15  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Alvaro Lopez Ortega <alvaro@sun.com>
 
 	* volume_id/util.h: include asm/types.h if we have it

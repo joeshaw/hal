@@ -277,11 +277,19 @@ libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volu
 		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDRAM)
 			second = "/DVD-RAM";
 		if ((drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDR) &&
-		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR))
-			second = "/DVD±R";
+		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR)) {
+			if(drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL)
+				second = "/DVD±R DL";
+			else
+				second = "/DVD±R";
+		}
 		if ((drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDRW) &&
-		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW))
-			second = "/DVD±RW";
+		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW)) {
+                        if(drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL)
+                                second = "/DVD±RW DL";
+                        else
+                                second = "/DVD±RW";
+                }
 
 
 		if (drive_is_hotpluggable) {
@@ -429,6 +437,13 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 				name = strdup (_("Blank DVD+RW Disc"));
 			else
 				name = strdup (_("DVD+RW Disc"));
+			break;
+		
+		case LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR_DL:
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank DVD+R Dual-Layer Disc"));
+			else
+				name = strdup (_("DVD+R Dual-Layer Disc"));
 			break;
 		}
 		
@@ -865,6 +880,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvd", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDROM);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrdl", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDR);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRW);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdram", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRAM);

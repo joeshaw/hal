@@ -180,6 +180,7 @@ get_dvd_r_rw_profile (int fd)
 {
 	ScsiCommand *cmd;
 	int retval = -1;
+	int dvd_plusr_dl = -1;
 	unsigned char page[20];
 	unsigned char *list;
 	int i, len;
@@ -220,8 +221,9 @@ get_dvd_r_rw_profile (int fd)
 
 	for (i = 12; i < list[11]; i += 4) {
 		int profile = (list[i] << 8 | list[i + 1]);
-		/* 0x1B: DVD+R
-		 * 0x1A: DVD+RW */
+		/* 0x1B: DVD+R  == 0
+		 * 0x1A: DVD+RW == 1 
+		 * 0x2B: DVD+R DL == 3 */
 		if (profile == 0x1B) {
 			if (retval == 1)
 				retval = 2;
@@ -232,13 +234,27 @@ get_dvd_r_rw_profile (int fd)
 				retval = 2;
 			else
 				retval = 1;
+		} else if (profile == 0x2B) {
+			/* DVD+R DL*/
+			dvd_plusr_dl = 1;
 		}
 	}
 
 	scsi_command_free (cmd);
 	free (list);
-
+	
+	/* to do: 
+	 * - check if DVD+R DL always implied also DVD+R and DVD+RW. 
+	 *   If so, we don't need this code. */
+	if (dvd_plusr_dl == 1) {
+		if(retval == 2 || retval == 1 ) 	
+			retval = 4;
+		else 
+			retval = 3; 
+	} 
+	
 	return retval;
+	
 }
 
 static unsigned char *

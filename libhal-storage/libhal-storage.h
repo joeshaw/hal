@@ -176,7 +176,9 @@ typedef enum {
 	LIBHAL_DRIVE_CDROM_CAPS_DVDR       = 0x0020,
 	LIBHAL_DRIVE_CDROM_CAPS_DVDRW      = 0x0040,
 	LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR   = 0x0080,
-	LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW  = 0x0100
+	LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW  = 0x0100,
+	LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL = 0x0120
+
 } LibHalDriveCdromCaps;
 
 LibHalDrive         *libhal_drive_from_udi                    (LibHalContext *hal_ctx, 

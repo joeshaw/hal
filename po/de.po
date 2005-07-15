@@ -120,6 +120,14 @@ msgstr "Leeres DVD+RW Medium"
 msgid "DVD+RW Disc"
 msgstr "DVD+RW Medium"
 
+#: libhal-storage/libhal-storage.c:
+msgid "Blank DVD+R Dual-Layer Disc"
+msgstr "Leeres DVD+R Dual-Layer Medium"
+
+#: libhal-storage/libhal-storage.c:
+msgid "DVD+R Dual-Layer Disc"
+msgstr "DVD+R Dual-Layer Medium"
+
 #: libhal-storage/libhal-storage.c:438
 msgid "Audio Disc"
 msgstr "Audio CD"

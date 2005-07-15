@@ -237,6 +237,7 @@ main (int argc, char *argv[])
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdram", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", FALSE, &error);
 			
 			if (capabilities & CDC_CD_R) {
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdr", TRUE, &error);
@@ -262,6 +263,13 @@ main (int argc, char *argv[])
 					libhal_device_set_property_bool(ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
 				} else if (profile == 1) {
 					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", TRUE, &error);
+				} else if (profile == 3) {
+					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
+					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", TRUE, &error);
+				} else if (profile == 4) {
+					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
+                                	libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", TRUE, &error);
+				        libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", TRUE, &error);
 				}
 			}
 			if (capabilities & CDC_DVD_R) {
