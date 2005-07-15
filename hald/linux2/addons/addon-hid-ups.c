@@ -52,17 +52,24 @@
 
 #define UPS_USAGE		0x840000
 #define UPS_SERIAL		0x8400fe
-#define BAT_CHEMISTRY		0x850089
+#define UPS_CHEMISTRY		0x850089
 #define UPS_CAPACITY_MODE	0x85002c
-
-#define UPS_SHUTDOWN_IMMINENT	0x840069
 #define UPS_BATTERY_VOLTAGE	0x840030
 #define UPS_BELOW_RCL		0x840042
-#define UPS_CHARING		0x840044
+#define UPS_SHUTDOWN_IMMINENT	0x840069
+#define UPS_PRODUCT		0x8400fe
+#define UPS_SERIALNUMBER	0x8400ff
+#define UPS_CHARGING		0x850044
 #define UPS_DISCHARGING 	0x850045
 #define UPS_REMAINING_CAPACITY	0x850066
 #define UPS_RUNTIME_TO_EMPTY	0x850068
 #define UPS_AC_PRESENT		0x8500d0
+#define UPS_BATTERYPRESENT	0x8500d1
+#define UPS_DESIGNCAPACITY	0x850083
+#define UPS_DEVICENAME		0x850088
+#define UPS_DEVICECHEMISTRY	0x850089
+#define UPS_RECHARGEABLE	0x85008b
+#define UPS_OEMINFORMATION	0x85008f
 
 #define STATE_NORMAL 0		      /* unit powered */
 #define STATE_DEBOUNCE 1	      /* power failure */
@@ -150,69 +157,69 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 
 					switch (uref.usage_code) {
 
-					case 0x850066: /* RemainingCapacity */
+					case UPS_REMAINING_CAPACITY:
 						libhal_device_set_property_int (
 							ctx, udi, "battery.charge_level.current", uref.value, &error);
 						libhal_device_set_property_string (
 							ctx, udi, "battery.charge_level.unit", "percent", &error);
 						break;
 
-					case 0x850068: /* RunTimeToEmpty */
+					case UPS_RUNTIME_TO_EMPTY:
 						libhal_device_set_property_int (
 							ctx, udi, "battery.remaining_time", uref.value, &error);
 						break;
 
-					case 0x850044: /* Charging */
+					case UPS_CHARGING:
 						libhal_device_set_property_bool (
 							ctx, udi, "battery.rechargeable.is_charging", uref.value != 0, &error);
 						break;
 
-					case 0x850045: /* Discharging */
+					case UPS_DISCHARGING:
 						libhal_device_set_property_bool (
 							ctx, udi, "battery.rechargeable.is_discharging", uref.value != 0, &error);
 						break;
 
-					case 0x8500d1: /* BatteryPresent */
+					case UPS_BATTERYPRESENT:
 						libhal_device_set_property_bool (
 							ctx, udi, "battery.present", uref.value != 0, &error);
 						break;
 
-					case 0x850088: /* iDeviceName */
+					case UPS_DEVICENAME:
 						libhal_device_set_property_string (
 							ctx, udi, "foo", 
 							ups_get_string (fd, uref.value), &error);
 						break;
 
-					case 0x850089: /* iDeviceChemistry */
+					case UPS_CHEMISTRY:
 						libhal_device_set_property_string (
 							ctx, udi, "battery.technology", 
 							ups_get_string (fd, uref.value), &error);
 						break;
 
-					case 0x85008b: /* Rechargeable */
+					case UPS_RECHARGEABLE:
 						libhal_device_set_property_bool (
 							ctx, udi, "battery.is_rechargeable", uref.value != 0, &error);
 						break;
 
-					case 0x85008f: /* iOEMInformation */
+					case UPS_OEMINFORMATION:
 						libhal_device_set_property_string (
 							ctx, udi, "battery.vendor", 
 							ups_get_string (fd, uref.value), &error);
 						break;
 
-					case 0x8400fe: /* iProduct */
+					case UPS_PRODUCT:
 						libhal_device_set_property_string (
 							ctx, udi, "battery.model", 
 							ups_get_string (fd, uref.value), &error);
 						break;
 
-					case 0x8400ff: /* iSerialNumber */
+					case UPS_SERIALNUMBER:
 						libhal_device_set_property_string (
 							ctx, udi, "battery.serial", 
 							ups_get_string (fd, uref.value), &error);
 						break;
 
-					case 0x850083: /* DesignCapacity */
+					case UPS_DESIGNCAPACITY:
 						libhal_device_set_property_int (
 							ctx, udi, "battery.charge_level.design", uref.value, &error);
 						libhal_device_set_property_int (
@@ -246,7 +253,6 @@ main (int argc, char *argv[])
 	char *device_file;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	unsigned int i;
 	fd_set fdset;
 	struct hiddev_event ev[64];
@@ -288,22 +294,22 @@ main (int argc, char *argv[])
 				
 				dbus_error_init (&error);
 				switch (ev[i].hid) {
-				case 0x850066: /* RemainingCapacity */
+				case UPS_REMAINING_CAPACITY:
 					libhal_device_set_property_int (
 						ctx, udi, "battery.charge_level.current", ev[i].value, &error);
 					break;
 					
-				case 0x850068: /* RunTimeToEmpty */
+				case UPS_RUNTIME_TO_EMPTY:
 					libhal_device_set_property_int (
 						ctx, udi, "battery.remaining_time", ev[i].value, &error);
 					break;
 					
-				case 0x850044: /* Charging */
+				case UPS_CHARGING:
 					libhal_device_set_property_bool (
 						ctx, udi, "battery.rechargeable.is_charging", ev[i].value != 0, &error);
 					break;
 					
-				case 0x850045: /* Discharging */
+				case UPS_DISCHARGING:
 					libhal_device_set_property_bool (
 						ctx, udi, "battery.rechargeable.is_discharging", ev[i].value != 0, &error);
 					break;

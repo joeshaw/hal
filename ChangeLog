@@ -1,5 +1,10 @@
 2005-07-15  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-hid-ups.c: Minor cleanup and fix for a
+	compiler warning. Patch from Richard Hughes <hughsient@gmail.com>.
+
+2005-07-15  David Zeuthen  <davidz@redhat.com>
+
 	* tools/device-manager/DeviceManager.py: Here is a patch to fix up
 	hal-device-manager.  This will still run with older D-BUS's but
 	you will need 0.35 to get all the fixes since there were some
