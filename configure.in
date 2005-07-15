@@ -35,16 +35,16 @@ AC_SYS_LARGEFILE
 
 AC_CHECK_HEADERS([sys/ioccom.h])
 
-AC_CHECK_TYPE(__u8, ,
-              [AC_DEFINE(__s8,  int8_t,   [Signed 8 bits type])
-               AC_DEFINE(__u8,  uint8_t,  [Unsigned 8 bits type])
-               AC_DEFINE(__s16, int16_t,  [Signed 16 bits type])
-               AC_DEFINE(__u16, uint16_t, [Unsigned 16 bits type])
-               AC_DEFINE(__s32, int32_t,  [Signed 32 bits type])
-               AC_DEFINE(__u32, uint32_t, [Unsigned 32 bits type])
-               AC_DEFINE(__s64, int64_t,  [Signed 64 bits type])
-               AC_DEFINE(__u64, uint64_t, [Unsigned 64 bits type])],
-               /usr/include/sys/types.h)
+AC_CHECK_HEADERS([asm/types.h],,
+                 [AC_DEFINE(__s8,  int8_t,   [Signed 8 bits type])
+                  AC_DEFINE(__u8,  uint8_t,  [Unsigned 8 bits type])
+                  AC_DEFINE(__s16, int16_t,  [Signed 16 bits type])
+                  AC_DEFINE(__u16, uint16_t, [Unsigned 16 bits type])
+                  AC_DEFINE(__s32, int32_t,  [Signed 32 bits type])
+                  AC_DEFINE(__u32, uint32_t, [Unsigned 32 bits type])
+                  AC_DEFINE(__s64, int64_t,  [Signed 64 bits type])
+                  AC_DEFINE(__u64, uint64_t, [Unsigned 64 bits type])],
+			   [#include <sys/types.h>])
 
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])

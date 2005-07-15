@@ -1,3 +1,11 @@
+2005-07-15  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Alvaro Lopez Ortega <alvaro@sun.com>
+
+	* volume_id/util.h: include asm/types.h if we have it
+
+	* configure.in: Fixup check for headers
+
 2005-07-12  David Zeuthen  <davidz@redhat.com>
 
 	* hald/util.h: Add prototype for hal_util_helper_invoke_with_pipes
