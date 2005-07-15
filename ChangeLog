@@ -1,5 +1,14 @@
 2005-07-15  David Zeuthen  <davidz@redhat.com>
 
+	* tools/device-manager/DeviceManager.py: Here is a patch to fix up
+	hal-device-manager.  This will still run with older D-BUS's but
+	you will need 0.35 to get all the fixes since there were some
+	problems with the signal removal code.  I am working on getting
+	0.35 out the door today. Patch from John (J5) Palmieri
+	<johnp@redhat.com>.
+
+2005-07-15  David Zeuthen  <davidz@redhat.com>
+
 	I added support for detection of DVD+R Dual-Layer write
 	support (new key: storage.cdrom.dvdplusrdl). Here a fix for DVD+R
 	DL media in libhal_volume_policy_compute_display_name(). Patches

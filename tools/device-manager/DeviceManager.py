@@ -4,6 +4,10 @@ import sys
 import gobject
 import gtk
 import dbus
+if getattr(dbus, "version", (0,0,0)) >= (0,41,0):
+    import dbus.glib
+
+
 
 try:
     import gnome.ui
@@ -89,29 +93,17 @@ class DeviceManager(LibGladeApplication):
 				     "org.freedesktop.Hal.Device",
 				     "org.freedesktop.Hal",
 				     udi)
-	return
-	self.bus.add_signal_receiver(lambda *args: self.device_condition(udi, *args),
-				     "Condition",
-				     "org.freedesktop.Hal.Device",
-				     "org.freedesktop.Hal",
-				     udi)
 
     def remove_device_signal_recv (self, udi):
-	try:
-		self.bus.remove_signal_receiver(lambda *args: self.property_modified(udi, *args),
-					     "PropertyModified",
-					     "org.freedesktop.Hal.Device",
-					     "org.freedesktop.Hal",
-					     udi)
-	except:
-		print "FIXME: unknown reason for the error while removing this rule from dbus"
-	return
-	self.bus.remove_signal_receiver(lambda *args: self.device_condition(udi, *args),
-				     "Condition",
-				     "org.freedesktop.Hal.Device",
-				     "org.freedesktop.Hal",
-				     udi)
-
+        try:
+            self.bus.remove_signal_receiver(None,
+				            "PropertyModified",
+				            "org.freedesktop.Hal.Device",
+				            "org.freedesktop.Hal",
+				            udi)
+        except Exception, e:
+            print "Older versions of the D-BUS bindings have an error when removing signals. Please upgrade."
+            print e
 
     def get_current_focus_udi(self):
         """Get the UDI of the currently focused device"""
