@@ -510,6 +510,7 @@ examples/volumed/Makefile
 po/Makefile.in
 drive_id/Makefile
 volume_id/Makefile
+tools/hal-luks-setup
 ])
 	
 dnl ==========================================================================

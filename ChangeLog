@@ -1,3 +1,16 @@
+2005-07-20  David Zeuthen  <davidz@redhat.com>
+
+	Patch from W. Michael Petullo <mike@flyn.org>.
+
+	* configure.in: Add tools/hal-luks-setup to AC_OUTPUT
+
+	* tools/hal-luks-setup.in: New file
+
+	* fdi/policy/10osvendor/15-storage-luks.fdi: New file
+
+	* hald/linux2/blockdev.c (blockdev_get_luks_uuid): Minor changes
+	to give for informational debug
+	
 2005-07-15  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-hid-ups.c: Minor cleanup and fix for a

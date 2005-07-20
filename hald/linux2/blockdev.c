@@ -478,9 +478,10 @@ blockdev_get_luks_uuid(const gchar *device_file)
 			struct stat statbuf;
 			while ((f = g_dir_read_name (dir)) != NULL) {
 				char luks_prefix[] = "luks_crypto_";
-				HAL_INFO (("looking at /dev/mapper/%s", f));
 				g_snprintf (devpath, sizeof (devpath), "/dev/mapper/%s", f);
 				if (stat (devpath, &statbuf) == 0) {
+					HAL_INFO (("looking at /dev/mapper/%s with %d:%d", 
+						   f, MAJOR(statbuf.st_rdev), MINOR(statbuf.st_rdev)));
 					if (S_ISBLK (statbuf.st_mode) && 
 					    MAJOR(statbuf.st_rdev) == major && 
 					    MINOR(statbuf.st_rdev) == minor &&
