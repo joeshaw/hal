@@ -1,8 +1,28 @@
+2005-07-21  David Zeuthen  <david@fubar.dk>
+	
+	* doc/spec/hal-spec.xml.in, hald/linux2/acpi.c (battery_refresh):
+	Here is a patch for additional information about ACPI Batteries. I
+	added the following new keys:
+
+	battery.charge_level.capacity_state (poll)
+	battery.charge_level.warning
+	battery.charge_level.low
+	battery.charge_level.granularity_1
+	battery.charge_level.granularity_2
+	battery.voltage.unit
+	battery.voltage.design
+	battery.voltage.current (poll)
+	battery.alarm.unit
+	battery.alarm.design
+
+	Also attached a related patch for the spec. Patch from Danny
+	Kukawka <danny.kukawka@web.de>.
+
 2005-07-21  David Zeuthen  <davidz@redhat.com>
 
 	* libhal/libhal.c: This is a fix to prevent segmentation faults in
 	libhal if a function called with parameter LibHalContext *ctx ==
-	NULL/0. Patch from Danny Kukawka <danny.kukawka@web.de>.
+	NULL/0.
 
 2005-07-20  David Zeuthen  <davidz@redhat.com>
 

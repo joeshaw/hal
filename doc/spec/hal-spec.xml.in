@@ -3861,6 +3861,107 @@
 	      </entry>
 	    </row>
             <row>
+              <entry><literal>battery.charge_level.warning</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Once the charge level of the battery drops below this value its 
+		state changes to 'warning'.
+		Measured in <literal>"battery.charge_level.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.charge_level.low</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Once the charge level of the battery drops below this value its
+                state changes to 'low'.
+		Measured in <literal>"battery.charge_level.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.charge_level.granularity_1</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Granularity value one of the battery measured
+		in <literal>"battery.charge_level.unit"</literal>
+		units .
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.charge_level.granularity_2</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Granularity value two of the battery measured
+		in <literal>"battery.charge_level.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+	    <row>
+              <entry><literal>battery.charge_level.capacity_state</literal> (string)</entry>
+              <entry>Examples: <literal>ok</literal>, <literal>critical</literal></entry>
+              <entry>No</entry>
+              <entry>
+		The capacity state of the battery.
+	      </entry>
+	    </row>
+	    
+            <row>
+              <entry><literal>battery.voltage.unit</literal> (string)</entry>
+              <entry>Examples: <literal>mV</literal></entry>
+              <entry>No</entry>
+              <entry>
+		The physical measurement unit used by the voltage properties 
+		(design and current).
+	      </entry>
+	    </row>              
+	    <row>
+              <entry><literal>battery.voltage.design</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+	        The voltage level for which the battery is designed for.
+		Measured in <literal>"battery.voltage.unit"</literal>
+		units.
+	      </entry>
+	    </row>   
+	    <row>
+              <entry><literal>battery.charge_voltage.current</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+	        The voltage level currently emitted by the battery.
+		Measured in <literal>"battery.charge_level.unit"</literal> 
+		units.
+	      </entry>
+	    </row>
+             
+	     <row>
+              <entry><literal>battery.alarm.unit</literal> (string)</entry>
+              <entry>Examples: <literal>mWh</literal>, <literal>mAh</literal></entry>
+              <entry>No</entry>
+              <entry>
+		The physical measurement unit used by the alarm property.
+	      </entry>
+	    </row>              
+	    <row>
+              <entry><literal>battery.alarm.design</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+	        Once the charge level of the battery drops below this value 
+		its state changes to 'alarm'.
+		Measured in <literal>"battery.alarm.unit"</literal>
+		units.
+	      </entry>
+	    </row>   
+	    
+	    <row>
               <entry><literal>battery.remaining_time</literal> (int)</entry>
               <entry></entry>
               <entry>No</entry>

@@ -75,7 +75,11 @@ battery_refresh_poll (HalDevice *d)
 					 "state", "present rate", 0, 10, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
 					 "info", "last full capacity", 0, 10, TRUE);
- 		
+	hal_util_set_string_elem_from_file (d, "battery.charge_level.capacity_state", path,
+					    "state", "capacity state", 0, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.voltage.current", path,
+					 "state", "present voltage", 0, 10, TRUE);
+	
 	hal_device_property_set_int (d, "battery.remaining_time", 
 				     util_compute_time_remaining (
 					     d->udi,
@@ -118,6 +122,16 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_device_property_remove (d, "battery.charge_level.current");
 		hal_device_property_remove (d, "battery.charge_level.last_full");
 		hal_device_property_remove (d, "battery.charge_level.design");
+		hal_device_property_remove (d, "battery.charge_level.capacity_state");
+		hal_device_property_remove (d, "battery.voltage.unit");
+		hal_device_property_remove (d, "battery.voltage.design");
+		hal_device_property_remove (d, "battery.voltage.current");
+		hal_device_property_remove (d, "battery.charge_level.warning");
+		hal_device_property_remove (d, "battery.charge_level.low");
+		hal_device_property_remove (d, "battery.charge_level.granularity_1");
+		hal_device_property_remove (d, "battery.charge_level.granularity_2");
+		hal_device_property_remove (d, "battery.alarm.unit");
+		hal_device_property_remove (d, "battery.alarm.design");
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();
@@ -136,11 +150,27 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
 			hal_util_set_string_elem_from_file (d, "battery.charge_level.unit", path, "info", 
 							    "design capacity", 1, TRUE);
-			
+			hal_util_set_string_elem_from_file (d, "battery.voltage.unit", path, "info",
+							    "design voltage", 1, TRUE);
 			hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
 							 "info", "last full capacity", 0, 10, TRUE);
 			hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, 
 							 "info", "design capacity", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.charge_level.warning", path,
+							 "info", "design capacity warning", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.charge_level.low", path,
+							 "info", "design capacity low", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.charge_level.granularity_1", path,
+							 "info", "capacity granularity 1", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.charge_level.granularity_2", path,
+							 "info", "capacity granularity 2", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.voltage.design", path,
+							 "info", "design voltage", 0, 10, TRUE);
+
+			if (hal_util_set_int_elem_from_file (d, "battery.alarm.design", path,
+							     "alarm", "alarm", 0, 10, TRUE))
+				hal_util_set_string_elem_from_file (d, "battery.alarm.unit", path, "alarm",
+								    "alarm", 1, TRUE);
 		}
 
 		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
