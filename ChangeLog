@@ -1,3 +1,9 @@
+2005-07-21  David Zeuthen  <davidz@redhat.com>
+
+	* libhal/libhal.c: This is a fix to prevent segmentation faults in
+	libhal if a function called with parameter LibHalContext *ctx ==
+	NULL/0. Patch from Danny Kukawka <danny.kukawka@web.de>.
+
 2005-07-20  David Zeuthen  <davidz@redhat.com>
 
 	Patch from W. Michael Petullo <mike@flyn.org>.

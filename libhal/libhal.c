@@ -224,8 +224,12 @@ struct LibHalContext_s {
 dbus_bool_t
 libhal_ctx_set_user_data(LibHalContext *ctx, void *user_data)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
 	ctx->user_data = user_data;
 	return TRUE;
 }
@@ -239,6 +243,12 @@ libhal_ctx_set_user_data(LibHalContext *ctx, void *user_data)
 void*
 libhal_ctx_get_user_data(LibHalContext *ctx)
 {
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
 	return ctx->user_data;
 }
 
@@ -348,6 +358,13 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 	LibHalProperty *p_last;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
+	
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetAllProperties");
@@ -501,6 +518,9 @@ libhal_property_set_get_num_elems (LibHalPropertySet *set)
 	unsigned int num_elems;
 	LibHalProperty *p;
 
+	if (set == NULL)
+		return 0;
+	
 	num_elems = 0;
 	for (p = set->properties_head; p != NULL; p = p->next)
 		num_elems++;
@@ -517,6 +537,9 @@ libhal_property_set_get_num_elems (LibHalPropertySet *set)
 void
 libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 {
+	if (set == NULL)
+		return;
+
 	iter->set = set;
 	iter->index = 0;
 	iter->cur_prop = set->properties_head;
@@ -912,6 +935,13 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	char **hal_device_names;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return hal_device_names;
+	}
+
 	*num_devices = 0;
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
@@ -976,6 +1006,13 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 	int type;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return LIBHAL_PROPERTY_TYPE_INVALID; // or NULL?
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyType");
@@ -1035,6 +1072,13 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 	char **our_strings;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
+	
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyStringList");
@@ -1104,6 +1148,13 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	char *dbus_str;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
+	
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyString");
@@ -1176,6 +1227,13 @@ libhal_device_get_property_int (LibHalContext *ctx,
 	dbus_int32_t value;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return -1;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyInteger");
@@ -1243,6 +1301,13 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 	dbus_uint64_t value;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return -1;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyInteger");
@@ -1309,6 +1374,13 @@ libhal_device_get_property_double (LibHalContext *ctx,
 	double value;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return -1.0;
+	}
+	
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyDouble");
@@ -1375,6 +1447,13 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 	dbus_bool_t value;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+	
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyBoolean");
@@ -1441,6 +1520,13 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 	DBusMessageIter iter;
 	char *method_name = NULL;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+	
 	/** @todo  sanity check incoming params */
 	switch (type) {
 	case DBUS_TYPE_INVALID:
@@ -1666,6 +1752,13 @@ libhal_device_property_strlist_append (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"StringListAppend");
@@ -1715,6 +1808,13 @@ libhal_device_property_strlist_prepend (LibHalContext *ctx,
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter iter;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1766,6 +1866,13 @@ libhal_device_property_strlist_remove_index (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"StringListRemoveIndex");
@@ -1814,6 +1921,13 @@ libhal_device_property_strlist_remove (LibHalContext *ctx,
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter iter;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1866,6 +1980,13 @@ libhal_device_lock (LibHalContext *ctx,
 	DBusMessage *message;
 	DBusMessageIter iter;
 	DBusMessage *reply;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	if (reason_why_locked != NULL)
 		*reason_why_locked = NULL;
@@ -1930,6 +2051,13 @@ libhal_device_unlock (LibHalContext *ctx,
 	DBusMessage *message;
 	DBusMessage *reply;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
 						"org.freedesktop.Hal.Device",
@@ -1984,6 +2112,13 @@ libhal_new_device (LibHalContext *ctx, DBusError *error)
 	DBusMessageIter reply_iter;
 	char *value;
 	char *dbus_str;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2063,6 +2198,13 @@ libhal_device_commit_to_gdl (LibHalContext *ctx,
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter iter;
+	
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2117,6 +2259,13 @@ libhal_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusMessage *reply;
 	DBusMessageIter iter;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
 						"org.freedesktop.Hal.Manager",
@@ -2165,6 +2314,13 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
 	DBusError _error;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2233,6 +2389,13 @@ libhal_device_property_exists (LibHalContext *ctx,
 	dbus_bool_t value;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"PropertyExists");
@@ -2295,6 +2458,13 @@ libhal_merge_properties (LibHalContext *ctx,
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter iter;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2360,6 +2530,13 @@ libhal_device_matches (LibHalContext *ctx,
 	DBusMessageIter iter, reply_iter;
 	dbus_bool_t value;
 	DBusError _error;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2427,6 +2604,13 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 	LibHalPropertySet *pset;
 	LibHalPropertySetIterator i;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+	
 	printf ("device_id = %s\n", udi);
 
 	if ((pset = libhal_device_get_all_properties (ctx, udi, error)) == NULL)
@@ -2511,6 +2695,13 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 	char **hal_device_names;
 	DBusError _error;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
 						"org.freedesktop.Hal.Manager",
@@ -2577,6 +2768,13 @@ libhal_device_add_capability (LibHalContext *ctx,
 	DBusMessage *reply;
 	DBusMessageIter iter;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"AddCapability");
@@ -2627,6 +2825,13 @@ libhal_device_query_capability (LibHalContext *ctx, const char *udi, const char 
 	unsigned int i;
 	dbus_bool_t ret;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	ret = FALSE;
 
 	caps = libhal_device_get_property_strlist (ctx, udi, "info.capabilities", error);
@@ -2662,6 +2867,13 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	DBusMessageIter iter, iter_array, reply_iter;
 	char **hal_device_names;
 	DBusError _error;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return NULL;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2720,6 +2932,13 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 dbus_bool_t
 libhal_device_property_watch_all (LibHalContext *ctx, DBusError *error)
 {
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	dbus_bus_add_match (ctx->connection,
 			    "type='signal',"
 			    "interface='org.freedesktop.Hal.Device',"
@@ -2748,6 +2967,13 @@ libhal_device_add_property_watch (LibHalContext *ctx, const char *udi, DBusError
 {
 	char buf[512];
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	snprintf (buf, 512,
 		  "type='signal',"
 		  "interface='org.freedesktop.Hal.Device',"
@@ -2773,6 +2999,13 @@ dbus_bool_t
 libhal_device_remove_property_watch (LibHalContext *ctx, const char *udi, DBusError *error)
 {
 	char buf[512];
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	snprintf (buf, 512,
 		  "type='signal',"
@@ -2805,7 +3038,9 @@ libhal_ctx_new (void)
 
 	ctx = calloc (1, sizeof (LibHalContext));
 	if (ctx == NULL) {
-		fprintf (stderr, "%s %d : Failed to allocate %d bytes\n", __FILE__, __LINE__, sizeof (LibHalContext));
+		fprintf (stderr, 
+			 "%s %d : Failed to allocate %d bytes\n",
+			 __FILE__, __LINE__, sizeof (LibHalContext));
 		return NULL;
 	}
 
@@ -2829,8 +3064,12 @@ libhal_ctx_new (void)
 dbus_bool_t
 libhal_ctx_set_cache (LibHalContext *ctx, dbus_bool_t use_cache)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
 
 	ctx->cache_enabled = use_cache;
 	return TRUE;
@@ -2846,8 +3085,12 @@ libhal_ctx_set_cache (LibHalContext *ctx, dbus_bool_t use_cache)
 dbus_bool_t
 libhal_ctx_set_dbus_connection (LibHalContext *ctx, DBusConnection *conn)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
 
 	if (conn == NULL)
 		return FALSE;
@@ -2870,8 +3113,12 @@ libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 	DBusError _error;
 	dbus_bool_t hald_exists;
 
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
 
 	if (ctx->connection == NULL)
 		return FALSE;
@@ -2959,6 +3206,13 @@ libhal_ctx_shutdown (LibHalContext *ctx, DBusError *error)
 {
 	DBusError myerror;
 
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	if (ctx->is_direct) {
 		/* for some reason dbus_connection_set_exit_on_disconnect doesn't work yet so don't unref */
 		/*dbus_connection_unref (ctx->connection);*/
@@ -3007,8 +3261,13 @@ libhal_ctx_free (LibHalContext *ctx)
 dbus_bool_t
 libhal_ctx_set_device_added (LibHalContext *ctx, LibHalDeviceAdded callback)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
+	
 	ctx->device_added = callback;
 	return TRUE;
 }
@@ -3023,8 +3282,13 @@ libhal_ctx_set_device_added (LibHalContext *ctx, LibHalDeviceAdded callback)
 dbus_bool_t
 libhal_ctx_set_device_removed (LibHalContext *ctx, LibHalDeviceRemoved callback)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
+	
 	ctx->device_removed = callback;
 	return TRUE;
 }
@@ -3040,8 +3304,13 @@ libhal_ctx_set_device_removed (LibHalContext *ctx, LibHalDeviceRemoved callback)
 dbus_bool_t
 libhal_ctx_set_device_new_capability (LibHalContext *ctx, LibHalDeviceNewCapability callback)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
+	
 	ctx->device_new_capability = callback;
 	return TRUE;
 }
@@ -3057,8 +3326,13 @@ libhal_ctx_set_device_new_capability (LibHalContext *ctx, LibHalDeviceNewCapabil
 dbus_bool_t
 libhal_ctx_set_device_lost_capability (LibHalContext *ctx, LibHalDeviceLostCapability callback)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
+	
 	ctx->device_lost_capability = callback;
 	return TRUE;
 }
@@ -3074,8 +3348,13 @@ libhal_ctx_set_device_lost_capability (LibHalContext *ctx, LibHalDeviceLostCapab
 dbus_bool_t
 libhal_ctx_set_device_property_modified (LibHalContext *ctx, LibHalDevicePropertyModified callback)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
+	
 	ctx->device_property_modified = callback;
 	return TRUE;
 }
@@ -3090,8 +3369,13 @@ libhal_ctx_set_device_property_modified (LibHalContext *ctx, LibHalDevicePropert
 dbus_bool_t
 libhal_ctx_set_device_condition (LibHalContext *ctx, LibHalDeviceCondition callback)
 {
-	if (ctx == NULL)
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
+	
 	ctx->device_condition = callback;
 	return TRUE;
 }
@@ -3122,6 +3406,13 @@ libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -3169,6 +3460,13 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3232,6 +3530,13 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	if (ctx == NULL) {
+		fprintf (stderr, 
+			 "%s %d : LibHalContext *ctx is NULL\n", 
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
