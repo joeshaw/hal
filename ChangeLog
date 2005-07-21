@@ -1,4 +1,4 @@
-2005-07-21  David Zeuthen  <david@fubar.dk>
+2005-07-21  David Zeuthen  <davidz@redhat.com>
 	
 	* doc/spec/hal-spec.xml.in, hald/linux2/acpi.c (battery_refresh):
 	Here is a patch for additional information about ACPI Batteries. I
