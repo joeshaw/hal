@@ -35,6 +35,17 @@ extern "C" {
 #endif
 #endif
 
+/** Checks if LibHalContext *ctx == NULL */
+#define LIBHAL_CHECK_LIBHALCONTEXT(_ctx_, _ret_)					\
+	do {									\
+		if (_ctx_ == NULL) {						\
+			fprintf (stderr,					\
+				 "%s %d : LibHalContext *ctx is NULL\n", 	\
+				 __FILE__, __LINE__);				\
+			return _ret_;						\
+		}								\
+	} while(0)
+
 /**
  * @addtogroup LibHal
  *
