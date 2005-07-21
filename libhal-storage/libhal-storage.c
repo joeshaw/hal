@@ -814,15 +814,15 @@ out:
  */
 LibHalDrive *
 libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
-{
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
-	
+{	
 	char *bus_textual;
 	LibHalDrive *drive;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
 	DBusError error;
 	unsigned int i;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	drive = NULL;
 	properties = NULL;
@@ -997,13 +997,13 @@ libhal_drive_requires_eject (LibHalDrive *drive)
 LibHalVolume *
 libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
-
 	char *disc_type_textual;
 	LibHalVolume *vol;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
 	DBusError error;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	vol = NULL;
 	properties = NULL;
@@ -1125,14 +1125,14 @@ libhal_volume_get_msdos_part_table_type (LibHalVolume *volume)
 LibHalDrive *
 libhal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
-
 	int i;
 	char **hal_udis;
 	int num_hal_udis;
 	LibHalDrive *result;
 	char *found_udi;
 	DBusError error;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	result = NULL;
 	found_udi = NULL;
@@ -1184,14 +1184,14 @@ out:
 LibHalVolume *
 libhal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
-
 	int i;
 	char **hal_udis;
 	int num_hal_udis;
 	LibHalVolume *result;
 	char *found_udi;
 	DBusError error;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	result = NULL;
 	found_udi = NULL;
@@ -1434,14 +1434,14 @@ libhal_volume_get_disc_type (LibHalVolume *volume)
 char ** 
 libhal_drive_find_all_volumes (LibHalContext *hal_ctx, LibHalDrive *drive, int *num_volumes)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
-
 	int i;
 	char **udis;
 	int num_udis;
 	const char *drive_udi;
 	char **result;
 	DBusError error;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	udis = NULL;
 	result = NULL;
@@ -1479,9 +1479,10 @@ out:
 char *
 libhal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
 {
+	DBusError error;
+
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
-	DBusError error;
 	dbus_error_init (&error);
 	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						  "storage.policy.default.mount_root", &error);
@@ -1490,9 +1491,10 @@ libhal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
 dbus_bool_t
 libhal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 {
+	DBusError error;
+
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
-	DBusError error;
 	dbus_error_init (&error);
 	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						"storage.policy.default.use_managed_keyword", &error);
@@ -1501,9 +1503,10 @@ libhal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 char *
 libhal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
 {
+	DBusError error;
+
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
-	DBusError error;
 	dbus_error_init (&error);
 	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						  "storage.policy.default.managed_keyword.primary", &error);
@@ -1512,9 +1515,10 @@ libhal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
 char *
 libhal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx)
 {
+	DBusError error;
+
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
-	DBusError error;
 	dbus_error_init (&error);
 	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
 						  "storage.policy.default.managed_keyword.secondary", &error);
@@ -1547,11 +1551,11 @@ static void
 mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len, 
 	       const char *udi, char *options_string, size_t options_max_len, dbus_bool_t only_collect_imply_opts)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
-
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
 	DBusError error;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	dbus_error_init (&error);
 

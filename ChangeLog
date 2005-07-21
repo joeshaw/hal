@@ -1,5 +1,11 @@
 2005-07-21  David Zeuthen  <davidz@redhat.com>
 
+	* libhal-storage/libhal-storage.c, libhal/libhal.c: Move the
+	LIBHAL_CHECK_LIBHALCONTEXT down to after declerations so we
+	don't depend on C99.
+
+2005-07-21  David Zeuthen  <davidz@redhat.com>
+
 	* libhal-storage/libhal-storage.c, libhal/libhal.[ch]: Patch from
 	Danny Kukawka <danny.kukawka@web.de>: here the new patch with a
 	macro instead of always the same codeblock in so many funtions. 
