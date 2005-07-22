@@ -283,11 +283,9 @@ main (int argc, char *argv[])
 				break;
 			case 0x1B: /* DVD+R */
 				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_r", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
 				break;
 			case 0x2B: /* DVD+R Double Layer */
                           	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_r_dl", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
 				break;
 			default: 
 				break;
