@@ -50,7 +50,6 @@ main (int argc, char *argv[])
 	char *device_file;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	char name[256] = "Unknown HID device";
 	unsigned int i;
 	struct hiddev_devinfo device_info;
@@ -135,6 +134,8 @@ main (int argc, char *argv[])
 	}
 
 #if 0
+	DBusConnection *conn;
+
 	if (fork () == 0) {
 		sleep (10);
 

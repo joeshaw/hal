@@ -108,7 +108,6 @@ main (int argc, char *argv[])
 	char *device_file;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	char *bus;
 	char *drive_type;
 	struct volume_id *vid;

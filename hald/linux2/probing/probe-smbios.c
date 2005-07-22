@@ -63,7 +63,6 @@ main (int argc, char *argv[])
 	char *udi;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	char buf[512];
 	int dmipipe[2];
 	int nullfd;

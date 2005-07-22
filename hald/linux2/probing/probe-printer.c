@@ -54,8 +54,6 @@ main (int argc, char *argv[])
 	char *device_file;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
-	unsigned int i;
 	char device_id[1024];
 	char **props;
 	char **iter;

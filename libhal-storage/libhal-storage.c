@@ -1493,7 +1493,7 @@ libhal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 {
 	DBusError error;
 
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, FALSE);
 
 	dbus_error_init (&error);
 	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
@@ -1555,7 +1555,10 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 	LibHalPropertySetIterator it;
 	DBusError error;
 
-	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
+	if(hal_ctx == 0) {
+		fprintf (stderr,"%s %d : LibHalContext *ctx is NULL\n",__FILE__, __LINE__);
+		return;
+	}
 
 	dbus_error_init (&error);
 

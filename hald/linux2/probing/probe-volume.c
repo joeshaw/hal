@@ -127,7 +127,6 @@ main (int argc, char *argv[])
 	char *device_file;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	char *parent_udi;
 	char *sysfs_path;
 	struct volume_id *vid;

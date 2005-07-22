@@ -128,7 +128,6 @@ main (int argc, char *argv[])
 	char *physical_device;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	char name[128];
 	struct input_id id;
 

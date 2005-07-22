@@ -1,5 +1,16 @@
 2005-07-22  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/probing/probe-hiddev.c,
+	hald/linux2/probing/probe-input.c,
+	hald/linux2/probing/probe-printer.c,
+	hald/linux2/probing/probe-smbios.c,
+	hald/linux2/probing/probe-storage.c,
+	hald/linux2/probing/probe-volume.c: Here a little patch (against
+	CVS) to fix several compiler warnings. Patch from Danny Kukawka
+	<danny.kukawka@web.de>.
+
+2005-07-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/probing/probe-volume.c (main): hal sets
 	volume.disc.is_rewriteable for DVD+R and DVD+R DL
 	wrong (TRUE). This patch (against CVS) fix this to
