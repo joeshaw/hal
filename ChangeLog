@@ -1,3 +1,9 @@
+2005-07-25  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/classdev.c (sound_add): Forgot to add alsa_.device_file
+
+	* doc/spec/hal-spec.xml.in: Add docs for alsa.device_file
+
 2005-07-22  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-hiddev.c,

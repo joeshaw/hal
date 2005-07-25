@@ -468,6 +468,7 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 	hal_device_property_set_string (d, "info.category", "alsa");
 	hal_device_add_capability (d, "alsa");
 	hal_device_property_set_string (d, "alsa.physical_device", physdev->udi);
+	hal_device_property_set_string (d, "alsa.device_file", device_file);
 
 	device = hal_util_get_last_element(sysfs_path);
 	if (sscanf (device, "controlC%d", &cardnum) == 1) {

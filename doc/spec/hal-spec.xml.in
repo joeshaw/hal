@@ -3520,6 +3520,14 @@
              </entry>
             </row>
             <row>
+              <entry><literal>alsa.device_file</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		The device node to access the ALSA device.
+             </entry>
+            </row>
+            <row>
               <entry><literal>alsa.device_id</literal> (string)</entry>
               <entry>
                 Examples: <literal>Intel 82801DB-ICH4 MIC2 ADC</literal>
