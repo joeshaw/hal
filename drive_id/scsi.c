@@ -121,9 +121,9 @@ int drive_id_probe_scsi(struct drive_id *id)
 		return -1;
 	}
 
-	set_str(id->vendor, &buf[8], 8);
-	set_str(id->model, &buf[16], 16);
-	set_str(id->revision, &buf[32], 12);
+	set_str((char *) id->vendor, &buf[8], 8);
+	set_str((char *) id->model, &buf[16], 16);
+	set_str((char *) id->revision, &buf[32], 12);
 
 	/* get serial number from page 0x80 */
 	memset(buf, 0, BUFFER_SIZE);
@@ -136,7 +136,7 @@ int drive_id_probe_scsi(struct drive_id *id)
 	dbg("page 0x80 serial number length %i", len);
 	if (len > DRIVE_ID_SERIAL_SIZE)
 		len = DRIVE_ID_SERIAL_SIZE;
-	set_str(id->serial, &buf[4], len);
+	set_str((char *) id->serial, &buf[4], len);
 
 	return 0;
 }

@@ -110,7 +110,7 @@ int volume_id_probe_iso9660(struct volume_id *id, __u64 off)
 				}
 
 				volume_id_set_label_raw(id, is->volume_id, 32);
-				volume_id_set_label_string(id, svd_label, 32);
+				volume_id_set_label_string(id, (__u8 *) svd_label, 32);
 				strcpy(id->type_version, "Joliet Extension");
 				goto found;
 			}

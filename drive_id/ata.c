@@ -59,9 +59,9 @@ int drive_id_probe_ata(struct drive_id *id)
 	if (ioctl(id->fd, HDIO_GET_IDENTITY, &ata_id) != 0)
 		return -1;
 
-	set_str(id->model, ata_id.model, 40);
-	set_str(id->serial, ata_id.serial_no, 20);
-	set_str(id->firmware, ata_id.fw_rev, 8);
+	set_str((char *) id->model, ata_id.model, 40);
+	set_str((char *) id->serial, ata_id.serial_no, 20);
+	set_str((char *) id->firmware, ata_id.fw_rev, 8);
 
 	return 0;
 }

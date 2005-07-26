@@ -127,7 +127,7 @@ static char *get_attr_volume_id(struct vfat_dir_entry *dir, unsigned int count)
 				continue;
 
 			dbg("found ATTR_VOLUME_ID id in root dir");
-			return dir[i].name;
+			return (char *) dir[i].name;
 		}
 
 		dbg("skip dir entry");
@@ -267,7 +267,7 @@ valid:
 
 	dir = (struct vfat_dir_entry*) buf;
 
-	label = get_attr_volume_id(dir, root_dir_entries);
+	label = (__u8 *) get_attr_volume_id(dir, root_dir_entries);
 
 	vs = (struct vfat_super_block *) volume_id_get_buffer(id, off, 0x200);
 	if (vs == NULL)
@@ -312,7 +312,7 @@ fat32:
 		count = buf_size / sizeof(struct vfat_dir_entry);
 		dbg("expected entries 0x%x", count);
 
-		label = get_attr_volume_id(dir, count);
+		label = (__u8 *) get_attr_volume_id(dir, count);
 		if (label)
 			break;
 

@@ -101,7 +101,7 @@ int volume_id_probe_lvm2(struct volume_id *id, __u64 off)
 	return -1;
 
 found:
-	strncpy(id->type_version, lvm->type, 8);
+	strncpy(id->type_version, (char *) lvm->type, 8);
 	volume_id_set_usage(id, VOLUME_ID_RAID);
 	id->type = "LVM2_member";
 

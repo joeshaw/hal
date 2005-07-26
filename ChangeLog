@@ -1,3 +1,15 @@
+2005-07-26  David Zeuthen  <davidz@redhat.com>
+
+	* drive_id/ata.c, drive_id/drive_id.c, drive_id/scsi.c,
+	hald/device.c, hald/device_store.c, hald/linux2/apm.c,
+	hald/linux2/osspec.c, hald/linux2/pcmcia_utils.c,
+	hald/linux2/probing/probe-storage.c, tools/hal-device.c,
+	volume_id/fat.c, volume_id/iso9660.c, volume_id/isw_raid.c,
+	volume_id/lvm.c, volume_id/romfs.c, volume_id/volume_id.c: This is
+	a patch (against CVS) to fix several compiler warnings with gcc
+	3.x and 4.x. Please review. Patch from Danny Kukawka
+	<danny.kukawka@web.de>.
+	
 2005-07-25  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/classdev.c (sound_add): Forgot to add alsa_.device_file

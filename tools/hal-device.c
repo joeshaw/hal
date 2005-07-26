@@ -304,7 +304,7 @@ int remove_udi(LibHalContext *hal_ctx, char *arg)
 
 	dbus_error_init(&error);
 
-	if (remove) {
+	if (opt.remove) {
 		if (!libhal_remove_device(hal_ctx, udi, &error)) {
 			fprintf(stderr, "%s: %s\n", error.name, error.message);
 			return 12;

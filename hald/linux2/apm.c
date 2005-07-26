@@ -96,7 +96,7 @@ read_from_apm (const char *apm_file, APMInfo *i)
 		goto out;
 
 	if (sscanf (buf, "%s %d.%d %x %x %x %x %d%% %d",
-		    &i->driver_version,
+		    i->driver_version,
 		    &i->version_major,
 		    &i->version_minor,
 		    &i->flags,

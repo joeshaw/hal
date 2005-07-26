@@ -71,7 +71,7 @@ int volume_id_probe_intel_software_raid(struct volume_id *id, __u64 off, __u64 s
 		return -1;
 
 	volume_id_set_usage(id, VOLUME_ID_RAID);
-	strncpy(id->type_version, &isw->sig[sizeof(ISW_SIGNATURE)-1], 6);
+	strncpy(id->type_version, (char *) &isw->sig[sizeof(ISW_SIGNATURE)-1], 6);
 	id->type = "isw_raid_member";
 
 	return 0;

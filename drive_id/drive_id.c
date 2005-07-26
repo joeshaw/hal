@@ -113,18 +113,18 @@ struct drive_id *drive_id_open_dev_t(dev_t devt)
 	struct drive_id *id;
 	__u8 tmp_node[DRIVE_ID_PATH_MAX];
 
-	snprintf(tmp_node, DRIVE_ID_PATH_MAX,
+	snprintf((char *) tmp_node, DRIVE_ID_PATH_MAX,
 		 "/dev/.drive_id-%u-%u-%u", getpid(), major(devt), minor(devt));
 	tmp_node[DRIVE_ID_PATH_MAX] = '\0';
 
 	/* create tempory node to open the block device */
-	unlink(tmp_node);
-	if (mknod(tmp_node, (S_IFBLK | 0600), devt) != 0)
+	unlink((char *) tmp_node);
+	if (mknod((char *) tmp_node, (S_IFBLK | 0600), devt) != 0)
 		return NULL;
 
-	id = drive_id_open_node(tmp_node);
+	id = drive_id_open_node((char *) tmp_node);
 
-	unlink(tmp_node);
+	unlink((char *) tmp_node);
 
 	return id;
 }

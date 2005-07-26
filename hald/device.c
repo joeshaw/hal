@@ -147,7 +147,8 @@ hal_device_get_type (void)
 			NULL, NULL,
 			sizeof (HalDevice),
 			0,
-			(GInstanceInitFunc) hal_device_init
+			(GInstanceInitFunc) hal_device_init,
+			NULL
 		};
 
 		type = g_type_register_static (G_TYPE_OBJECT,
@@ -165,7 +166,7 @@ hal_device_new (void)
 {
 	HalDevice *device;
 
-	device = g_object_new (HAL_TYPE_DEVICE, NULL);
+	device = g_object_new (HAL_TYPE_DEVICE, NULL, NULL);
 
 #ifdef HALD_MEMLEAK_DBG
 	dbg_hal_device_object_delta++;

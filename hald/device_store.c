@@ -140,7 +140,7 @@ hal_device_store_new (void)
 {
 	HalDeviceStore *store;
 
-	store = g_object_new (HAL_TYPE_DEVICE_STORE, NULL);
+	store = g_object_new (HAL_TYPE_DEVICE_STORE, NULL, NULL);
 
 	return store;
 }

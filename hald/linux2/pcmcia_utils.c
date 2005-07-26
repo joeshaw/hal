@@ -259,7 +259,7 @@ pcmcia_stab_entry *pcmcia_stab_entry_get (int socket)
 						int g;
 						char dev[50];
 
-						if (sscanf (buf, "%d\t%s\t%s\t%d\t%s", &s, &func, &driver, &g, &dev) == 5) {
+						if (sscanf (buf, "%d\t%s\t%s\t%d\t%s", &s, func, driver, &g, dev) == 5) {
 							PCMCIA_card_type t = pcmcia_card_type_from_type_string (func);
 							if (t != PCMCIA_TYPE_INVALID) {
 								entry = calloc (1, sizeof (pcmcia_stab_entry));

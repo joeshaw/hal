@@ -56,7 +56,7 @@ int volume_id_probe_romfs(struct volume_id *id, __u64 off)
 		return -1;
 
 	if (memcmp(rfs->magic, "-rom1fs-", 4) == 0) {
-		size_t len = strlen(rfs->name);
+		size_t len = strlen((char *) rfs->name);
 
 		if (len) {
 			volume_id_set_label_raw(id, rfs->name, len);

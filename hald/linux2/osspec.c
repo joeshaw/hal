@@ -262,7 +262,7 @@ netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 	return TRUE;
 }
 
-gboolean 
+static gboolean 
 hal_util_get_fs_mnt_path (const gchar *fs_type, gchar *mnt_path, gsize len)
 {
 	FILE *mnt;

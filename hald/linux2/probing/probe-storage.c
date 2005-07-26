@@ -167,7 +167,7 @@ main (int argc, char *argv[])
 				if (did->serial[0] != '\0') {
 					dbus_error_init (&error);
 					if (!libhal_device_set_property_string (ctx, udi, "storage.serial", 
-										did->serial, &error)) {
+										(char *) did->serial, &error)) {
 						dbg ("Error setting storage.serial");
 					}
 				}
@@ -175,7 +175,7 @@ main (int argc, char *argv[])
 				if (did->firmware[0] != '\0') {
 					dbus_error_init (&error);
 					if (!libhal_device_set_property_string (ctx, udi, "storage.firmware_version", 
-										did->firmware, &error)) {
+										(char *) did->firmware, &error)) {
 						dbg ("Error setting storage.firmware_version");
 					}
 				}
