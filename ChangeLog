@@ -1,5 +1,12 @@
 2005-07-27  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/blockdev.c: This is a patch to compute 'nicer' UDIs,
+	/org/freedesktop/Hal/devices/volume_empty_%disc.type, for emtpy
+	CD/DVD volumes/discs. Patch from Danny Kukawka
+	<danny.kukawka@web.de>.
+
+2005-07-27  David Zeuthen  <davidz@redhat.com>
+
 	* tools/hal-luks-remove.in: Unmount the cleartext volume, if mounted,
 	before tearing down the dm-crypt mapping
 

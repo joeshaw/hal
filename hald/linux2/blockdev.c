@@ -89,6 +89,12 @@ blockdev_compute_udi (HalDevice *d)
 		} else if (label != NULL && strlen (label) > 0) {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "/org/freedesktop/Hal/devices/volume_label_%s", uuid);
+		} else if (hal_device_property_get_bool(d, "volume.is_disc") &&
+			   hal_device_property_get_bool(d, "volume.disc.is_blank")) {
+			/* this should be a empty CD/DVD */
+			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+                                             "/org/freedesktop/Hal/devices/volume_empty_%s",
+					      hal_device_property_get_string (d, "volume.disc.type"));
 		} else {
 			/* fallback to partition number, size */
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
