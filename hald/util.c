@@ -50,6 +50,43 @@
 #include "hald_dbus.h"
 #include "util.h"
 
+/** Given all the required parameters, this function will return the percentage
+ *  charge remaining. There are lots of checks here as ACPI is often broken.
+ *
+ *  @param  id                  Optional ID given to this battery. Unused at present.
+ *  @param  chargeLevel         The current charge level of the battery (typically mWh)
+ *  @param  chargeLastFull      The last "full" charge of the battery (typically mWh)
+ *  @return                     Percentage
+ */
+int 
+util_compute_percentage_charge (const char *id,
+			     int chargeLevel,
+			     int chargeLastFull)
+{
+	int percentage;
+	/* make sure we have chargelevel */
+	if (chargeLevel <= 0) {
+		HAL_WARNING (("chargeLevel %i, returning 0!", chargeLevel));
+		return 0;
+	}
+	/* make sure not division by zero */
+	if (chargeLastFull > 0)
+		percentage = ((double) chargeLevel / (double) chargeLastFull) * 100;
+	else {
+		HAL_WARNING (("chargeLastFull %i, percentage returning 0!", chargeLastFull));
+		return 0;
+	}
+	/* make sure results are sensible */
+	if (percentage < 0) {
+		HAL_WARNING (("Percentage %i, returning 0!", percentage));
+		return 0;
+	} else if (percentage > 100) {
+		HAL_WARNING (("Percentage %i, returning 100!", percentage));
+		return 100;
+	}
+	return percentage;
+}
+
 /** Given all the required parameters, this function will return the number 
  *  of seconds until the battery is charged (if charging) or the number
  *  of seconds until empty (if discharging)

@@ -1,5 +1,17 @@
 2005-07-27  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Richard Hughes  <richard@hughsie.com>.
+	
+	* hald/util.c (util_compute_percentage_charge): New function used
+	to calculate the percentage charge, initially for ACPI batteries,
+	but could be used by all devices as contains lots of error checks.
+
+	* hald/linux2/acpi.c (battery_refresh_poll): Call
+	util_compute_percentage_charge so we can populate
+	battery.charge_level.percentage
+
+2005-07-27  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/blockdev.c: This is a patch to compute 'nicer' UDIs,
 	/org/freedesktop/Hal/devices/volume_empty_%disc.type, for emtpy
 	CD/DVD volumes/discs. Patch from Danny Kukawka

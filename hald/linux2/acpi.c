@@ -60,6 +60,7 @@ static void
 battery_refresh_poll (HalDevice *d)
 {
 	const char *path;
+	int current, last_full;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
@@ -80,14 +81,23 @@ battery_refresh_poll (HalDevice *d)
 	hal_util_set_int_elem_from_file (d, "battery.voltage.current", path,
 					 "state", "present voltage", 0, 10, TRUE);
 	
+	current = hal_device_property_get_int (d, "battery.charge_level.current");
+	last_full = hal_device_property_get_int (d, "battery.charge_level.last_full");
+
 	hal_device_property_set_int (d, "battery.remaining_time", 
 				     util_compute_time_remaining (
 					     d->udi,
 					     hal_device_property_get_int (d, "battery.charge_level.rate"),
-					     hal_device_property_get_int (d, "battery.charge_level.current"),
-					     hal_device_property_get_int (d, "battery.charge_level.last_full"),
+					     current,
+					     last_full,
 					     hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
 					     hal_device_property_get_bool (d, "battery.rechargeable.is_charging")));
+
+	hal_device_property_set_int (d, "battery.charge_level.percentage", 
+				     util_compute_percentage_charge (
+					     d->udi,
+					     current,
+					     last_full));
 }
 
 static gboolean
@@ -120,6 +130,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_device_property_remove (d, "battery.vendor");
 		hal_device_property_remove (d, "battery.charge_level.unit");
 		hal_device_property_remove (d, "battery.charge_level.current");
+		hal_device_property_remove (d, "battery.charge_level.percentage");
 		hal_device_property_remove (d, "battery.charge_level.last_full");
 		hal_device_property_remove (d, "battery.charge_level.design");
 		hal_device_property_remove (d, "battery.charge_level.capacity_state");

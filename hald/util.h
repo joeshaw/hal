@@ -31,6 +31,8 @@
 
 int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, gboolean isDischarging, gboolean isCharging);
 
+int util_compute_percentage_charge (const char *id, int chargeLevel, int chargeLastFull);
+
 gboolean hal_util_remove_trailing_slash (gchar *path);
 
 const gchar *hal_util_get_last_element (const gchar *s);
