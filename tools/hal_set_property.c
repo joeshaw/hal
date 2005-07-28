@@ -38,6 +38,18 @@
 
 static LibHalContext *hal_ctx;
 
+enum property_op {
+	PROP_INT,
+	PROP_UINT64,
+	PROP_STRING,
+	PROP_DOUBLE,
+	PROP_BOOL,
+	PROP_STRLIST_PRE,
+	PROP_STRLIST_POST,
+	PROP_STRLIST_REM,
+	PROP_INVALID
+};
+
 /**
  * @defgroup HalSetProperty  Set HAL device property
  * @ingroup HalMisc
@@ -59,7 +71,9 @@ usage (int argc, char *argv[])
  "\n"
  "usage : hal-set-property --udi <udi> --key <key>\n"
  "           (--int <value> | --string <value> | --bool <value> |\n"
- "            --double <value> | --remove) [--help] [--version]\n");
+ "            --strlist-pre <value> | --strlist-post <value> |\n"
+ "            --strlist-rem <value> | --double <value> | --remove)\n"
+ "           [--help] [--version]\n");
 	fprintf (stderr,
  "\n" "        --udi            Unique Device Id\n"
  "        --key            Key of the property to set\n"
@@ -70,6 +84,9 @@ usage (int argc, char *argv[])
  "        --string         Set value to a string\n"
  "        --double         Set value to a floating point number\n"
  "        --bool           Set value to a boolean, ie. true or false\n"
+ "        --strlist-pre    Prepend a string to a list\n"
+ "        --strlist-post   Append a string to a list\n"
+ "        --strlist-rem    Remove a string from a list\n"
  "        --remove         Indicates that the property should be removed\n"
  "        --verbose        Be verbose\n"
  "        --version        Show version and exit\n"
@@ -100,7 +117,7 @@ main (int argc, char *argv[])
 	dbus_bool_t bool_value = TRUE;
 	dbus_bool_t remove = FALSE;
 	dbus_bool_t is_version = FALSE;
-	int type = DBUS_TYPE_INVALID;
+	int type = PROP_INVALID;
 	DBusError error;
 
 	if (argc <= 1) {
@@ -120,6 +137,9 @@ main (int argc, char *argv[])
 			{"string", 1, NULL, 0},
 			{"double", 1, NULL, 0},
 			{"bool", 1, NULL, 0},
+			{"strlist-pre", 1, NULL, 0},
+			{"strlist-post", 1, NULL, 0},
+			{"strlist-rem", 1, NULL, 0},
 			{"remove", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
@@ -142,16 +162,16 @@ main (int argc, char *argv[])
 				key = strdup (optarg);
 			} else if (strcmp (opt, "string") == 0) {
 				str_value = strdup (optarg);
-				type = DBUS_TYPE_STRING;
+				type = PROP_STRING;
 			} else if (strcmp (opt, "int") == 0) {
 				int_value = strtol (optarg, NULL, 0);
-				type = DBUS_TYPE_INT32;
+				type = PROP_INT;
 			} else if (strcmp (opt, "uint64") == 0) {
 				uint64_value = strtoull (optarg, NULL, 0);
-				type = DBUS_TYPE_UINT64;
+				type = PROP_UINT64;
 			} else if (strcmp (opt, "double") == 0) {
 				double_value = (double) atof (optarg);
-				type = DBUS_TYPE_DOUBLE;
+				type = PROP_DOUBLE;
 			} else if (strcmp (opt, "bool") == 0) {
 				if (strcmp (optarg, "true") == 0)
 					bool_value = TRUE;
@@ -161,7 +181,16 @@ main (int argc, char *argv[])
 					usage (argc, argv);
 					return 1;
 				}
-				type = DBUS_TYPE_BOOLEAN;
+				type = PROP_BOOL;
+			} else if (strcmp (opt, "strlist-pre") == 0) {
+				str_value = strdup (optarg);
+				type = PROP_STRLIST_PRE;
+			} else if (strcmp (opt, "strlist-post") == 0) {
+				str_value = strdup (optarg);
+				type = PROP_STRLIST_POST;
+			} else if (strcmp (opt, "strlist-rem") == 0) {
+				str_value = strdup (optarg);
+				type = PROP_STRLIST_REM;
 			} else if (strcmp (opt, "remove") == 0) {
 				remove = TRUE;
 			} else if (strcmp (opt, "udi") == 0) {
@@ -184,7 +213,7 @@ main (int argc, char *argv[])
 	}
 
 	/* must have at least one, but not neither or both */
-	if ((remove && type != DBUS_TYPE_INVALID) || ((!remove) && type == DBUS_TYPE_INVALID)) {
+	if ((remove && type != PROP_INVALID) || ((!remove) && type == PROP_INVALID)) {
 		usage (argc, argv);
 		return 1;
 	}
@@ -213,20 +242,29 @@ main (int argc, char *argv[])
 		}
 	} else {
 		switch (type) {
-		case DBUS_TYPE_STRING:
+		case PROP_STRING:
 			rc = libhal_device_set_property_string (hal_ctx, udi, key, str_value, &error);
 			break;
-		case DBUS_TYPE_INT32:
+		case PROP_INT:
 			rc = libhal_device_set_property_int (hal_ctx, udi, key, int_value, &error);
 			break;
-		case DBUS_TYPE_UINT64:
+		case PROP_UINT64:
 			rc = libhal_device_set_property_uint64 (hal_ctx, udi, key, uint64_value, &error);
 			break;
-		case DBUS_TYPE_DOUBLE:
+		case PROP_DOUBLE:
 			rc = libhal_device_set_property_double (hal_ctx, udi, key, double_value, &error);
 			break;
-		case DBUS_TYPE_BOOLEAN:
+		case PROP_BOOL:
 			rc = libhal_device_set_property_bool (hal_ctx, udi, key, bool_value, &error);
+			break;
+		case PROP_STRLIST_PRE:
+			rc = libhal_device_property_strlist_prepend (hal_ctx, udi, key, str_value, &error);
+			break;
+		case PROP_STRLIST_POST:
+			rc = libhal_device_property_strlist_append (hal_ctx, udi, key, str_value, &error);
+			break;
+		case PROP_STRLIST_REM:
+			rc = libhal_device_property_strlist_remove (hal_ctx, udi, key, str_value, &error);
 			break;
 		}
 		if (!rc) {

@@ -1053,6 +1053,8 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 		HalDevice *stor_dev;
 		gboolean is_fakevolume;
 
+		is_partition = hal_device_property_get_bool (d, "volume.is_partition");
+
 		if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0)
 			is_fakevolume = TRUE;
 		else

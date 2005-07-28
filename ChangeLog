@@ -1,3 +1,23 @@
+2005-07-27  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-luks-remove.in: Unmount the cleartext volume, if mounted,
+	before tearing down the dm-crypt mapping
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_remove_blockdev):
+	Actually read the is_partition from the device since e.g.
+	/sys/block/dm-0 probably is a partition
+
+2005-07-26  W. Michael Petullo  <mike@flyn.org>
+
+	* tools/hal_set_property.c: Add --strlist-pre, --strlist-post
+	and --strlist-rem options to hal-set-property
+
+	* tools/hal-luks-setup.in: Use --strlist-pre to add hal-luks-remove to
+	a LUKS device's info.callouts.remove.
+
+	* tools/hal-luks-remove.in: New script to tear down dm-crypt
+	device.
+
 2005-07-26  David Zeuthen  <davidz@redhat.com>
 
 	* drive_id/ata.c, drive_id/drive_id.c, drive_id/scsi.c,
