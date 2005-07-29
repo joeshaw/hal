@@ -1,5 +1,10 @@
 2005-07-29  David Zeuthen  <davidz@redhat.com>
 
+	The FSF moved to a new address, so I updated all license headers
+	and the COPYING file. Patch from Danny Kukawka <danny.kukawka@web.de>.
+
+2005-07-29  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Richard Hughes <richard@hughsie.com>.
 
 	* hald/linux2/addons/addon-usb-csr.c: Change default polling to 30
