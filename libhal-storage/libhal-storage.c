@@ -382,75 +382,74 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 		default:
 			/* explict fallthrough */
 		case LIBHAL_VOLUME_DISC_TYPE_CDROM:
-			name = strdup (_("CD-ROM Disc"));
+			name = strdup (_("CD-ROM "));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_CDR:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank CD-R Disc"));
+				name = strdup (_("Blank CD-R"));
 			else
-				name = strdup (_("CD-R Disc"));
+				name = strdup (_("CD-R"));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_CDRW:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank CD-RW Disc"));
+				name = strdup (_("Blank CD-RW"));
 			else
-				name = strdup (_("CD-RW Disc"));
+				name = strdup (_("CD-RW"));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_DVDROM:
-			name = strdup (_("DVD-ROM Disc"));
+			name = strdup (_("DVD-ROM"));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_DVDRAM:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank DVD-RAM Disc"));
+				name = strdup (_("Blank DVD-RAM"));
 			else
-				name = strdup (_("DVD-RAM Disc"));
+				name = strdup (_("DVD-RAM"));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_DVDR:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank DVD-R Disc"));
+				name = strdup (_("Blank DVD-R"));
 			else
-				name = strdup (_("DVD-R Disc"));
+				name = strdup (_("DVD-R"));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_DVDRW:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank DVD-RW Disc"));
+				name = strdup (_("Blank DVD-RW"));
 			else
-				name = strdup (_("DVD-RW Disc"));
-
+				name = strdup (_("DVD-RW"));
 			break;
 
 		case LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank DVD+R Disc"));
+				name = strdup (_("Blank DVD+R"));
 			else
-				name = strdup (_("DVD+R Disc"));
+				name = strdup (_("DVD+R"));
 			break;
 			
 		case LIBHAL_VOLUME_DISC_TYPE_DVDPLUSRW:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank DVD+RW Disc"));
+				name = strdup (_("Blank DVD+RW"));
 			else
-				name = strdup (_("DVD+RW Disc"));
+				name = strdup (_("DVD+RW"));
 			break;
 		
 		case LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR_DL:
 			if (libhal_volume_disc_is_blank (volume))
-				name = strdup (_("Blank DVD+R Dual-Layer Disc"));
+				name = strdup (_("Blank DVD+R Dual-Layer"));
 			else
-				name = strdup (_("DVD+R Dual-Layer Disc"));
+				name = strdup (_("DVD+R Dual-Layer"));
 			break;
 		}
 		
 		/* Special case for pure audio disc */
 		if (libhal_volume_disc_has_audio (volume) && !libhal_volume_disc_has_data (volume)) {
 			free (name);
-			name = strdup (_("Audio Disc"));
+			name = strdup (_("Audio CD"));
 		}
 
 		goto out;

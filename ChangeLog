@@ -1,4 +1,13 @@
 2005-07-29  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Danny Kukawka <danny.kukawka@web.de>.
+
+	* libhal-storage/libhal-storage.c,
+	tools/device-manager/hal-device-manager.glade, tools/fstab-sync.c:
+	this is a patch to fix typos of translatable strings. New
+	translation files will follow due to end of August.
+	
+2005-07-29  David Zeuthen  <davidz@redhat.com>
 	
 	Patch from Richard Hughes <richard@hughsie.com>.
 
