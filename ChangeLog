@@ -1,5 +1,17 @@
 2005-07-29  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Richard Hughes <richard@hughsie.com>.
+
+	* hald/linux2/addons/addon-usb-csr.c: Change default polling to 30
+	seconds as mice discharge *very* slowly and do not need to be polled
+	once every 10 seconds.
+	Add to addon-usb-csr the key battery.charge_level.percentage so we can
+	provide a better interface to programs that use this data.
+	Also reformat this file so that it matches the rest of the HAL source
+	in style, and get rid of the spaces-for-tabs.
+
+2005-07-29  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Danny Kukawka <danny.kukawka@web.de>.
 
 	* libhal-storage/libhal-storage.c,
