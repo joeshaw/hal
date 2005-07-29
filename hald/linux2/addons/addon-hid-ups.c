@@ -160,6 +160,8 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 					case UPS_REMAINING_CAPACITY:
 						libhal_device_set_property_int (
 							ctx, udi, "battery.charge_level.current", uref.value, &error);
+						libhal_device_set_property_int (
+							ctx, udi, "battery.charge_level.percentage", uref.value, &error);
 						libhal_device_set_property_string (
 							ctx, udi, "battery.charge_level.unit", "percent", &error);
 						break;
@@ -297,6 +299,8 @@ main (int argc, char *argv[])
 				case UPS_REMAINING_CAPACITY:
 					libhal_device_set_property_int (
 						ctx, udi, "battery.charge_level.current", ev[i].value, &error);
+					libhal_device_set_property_int (
+						ctx, udi, "battery.charge_level.percentage", ev[i].value, &error);
 					break;
 					
 				case UPS_RUNTIME_TO_EMPTY:

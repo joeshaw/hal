@@ -1,5 +1,14 @@
 2005-07-29  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-hid-ups.c: This one for UPS's (which
+	are always measured in percent, so no division needed). I think
+	that's all of the capability battery devices now. All I have to do
+	is wait for the next release of HAL, and i can depend on that new
+	version (but I'm guessing it'll be a long wait :-). Patch from
+	Richard Hughes <richard@hughsie.com>.
+
+2005-07-29  David Zeuthen  <davidz@redhat.com>
+
 	The FSF moved to a new address, so I updated all license headers
 	and the COPYING file. Patch from Danny Kukawka <danny.kukawka@web.de>.
 
