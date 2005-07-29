@@ -1,6 +1,14 @@
+2005-07-29  David Zeuthen  <davidz@redhat.com>
+	
+	Patch from Richard Hughes <richard@hughsie.com>.
+
+	* hald/linux2/pmu.c (battery_refresh): Call
+	util_compute_percentage_charge so we can populate
+	battery.charge_level.percentage.
+
 2005-07-27  David Zeuthen  <davidz@redhat.com>
 
-	Patch from Richard Hughes  <richard@hughsie.com>.
+	Patch from Richard Hughes <richard@hughsie.com>.
 	
 	* hald/util.c (util_compute_percentage_charge): New function used
 	to calculate the percentage charge, initially for ACPI batteries,
