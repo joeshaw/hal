@@ -544,21 +544,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN3222"
+HREF="#AEN3286"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN3233"
+HREF="#AEN3297"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN3241"
+HREF="#AEN3305"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -7753,17 +7753,16 @@ CLASS="literal"
 >battery.charge_level.unit</TT
 > (string)</TD
 ><TD
->Examples: <TT
+>Examples: 
+              	<TT
 CLASS="literal"
 >mWh</TT
->, <TT
-CLASS="literal"
->VA</TT
 >, 
 		<TT
 CLASS="literal"
 >percent</TT
-></TD
+>
+	      </TD
 ><TD
 >No</TD
 ><TD
@@ -7771,6 +7770,8 @@ CLASS="literal"
 		(maximum and current). In many cases, this property is
 		omitted - which indicates that the charge properties
 		are measured in some unknown units.
+		The units should never be mAh as this is not a measurement
+		of charge.
 	      </TD
 ></TR
 ><TR
@@ -7823,7 +7824,7 @@ CLASS="literal"
 ><TD
 >Yes</TD
 ><TD
->&#13;		The current level of charge which the device can hold. 
+>&#13;		The current level of charge which the device can is holding. 
 	        Measured in <TT
 CLASS="literal"
 >"battery.charge_level.unit"</TT
@@ -7924,6 +7925,193 @@ CLASS="literal"
 		in <TT
 CLASS="literal"
 >"battery.charge_level.unit"</TT
+>
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.unit</TT
+> (string)</TD
+><TD
+>Examples: 
+              	<TT
+CLASS="literal"
+>mWh</TT
+>, 
+              	<TT
+CLASS="literal"
+>mAh</TT
+>, 
+		<TT
+CLASS="literal"
+>percent</TT
+>
+	      </TD
+><TD
+>No</TD
+><TD
+>&#13;		The physical unit used by the charge level properties
+		(maximum and current) as reported by the hardware.
+		In many cases, this property is omitted - which indicates 
+		that the charge properties are measured in some unknown units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.design</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The maximum level of charge the device was designed for,
+		as reported by the hardware.
+	        Measured in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+>
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.last_full</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The maximum level of charge the device could hold the last
+		time it was full, as reported by the hardware.
+	        Measured in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+>
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.current</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The current level of charge which the device is holding,
+		as reported by the hardware.
+	        Measured in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+> 
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.rate</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		The discharge/charge rate as reported by the hardware measured 
+		in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+>
+		units per second.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.warning</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Once the hardware charge level of the battery drops below
+		this value its state changes to 'warning'.
+		Measured in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+>
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.low</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Once the hardware charge level of the battery drops below 
+		this value its state changes to 'low'.
+		Measured in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+>
+		units.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.granularity_1</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Hardware granularity value one of the battery measured
+		in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
+>
+		units .
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>battery.reporting.granularity_2</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		Hardware granularity value two of the battery measured
+		in <TT
+CLASS="literal"
+>"battery.reporting.unit"</TT
 >
 		units.
 	      </TD
@@ -8214,7 +8402,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2670"
+NAME="AEN2734"
 ></A
 ><TABLE
 BORDER="1"
@@ -8328,7 +8516,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2714"
+NAME="AEN2778"
 ></A
 ><TABLE
 BORDER="1"
@@ -8396,7 +8584,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2735"
+NAME="AEN2799"
 ></A
 ><TABLE
 BORDER="1"
@@ -8490,7 +8678,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2767"
+NAME="AEN2831"
 ></A
 ><TABLE
 BORDER="1"
@@ -8601,7 +8789,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2809"
+NAME="AEN2873"
 ></A
 ><TABLE
 BORDER="1"
@@ -8739,7 +8927,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2865"
+NAME="AEN2929"
 ></A
 ><TABLE
 BORDER="1"
@@ -8831,7 +9019,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2893"
+NAME="AEN2957"
 ></A
 ><TABLE
 BORDER="1"
@@ -8990,7 +9178,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2945"
+NAME="AEN3009"
 ></A
 ><TABLE
 BORDER="1"
@@ -9119,7 +9307,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2986"
+NAME="AEN3050"
 ></A
 ><TABLE
 BORDER="1"
@@ -10187,7 +10375,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3180"
+NAME="AEN3244"
 ></A
 ><TABLE
 BORDER="1"
@@ -10347,7 +10535,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3222"
+NAME="AEN3286"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -10463,7 +10651,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN3233"
+NAME="AEN3297"
 >Example</A
 ></H3
 ><P
@@ -10581,7 +10769,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3241"
+NAME="AEN3305"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

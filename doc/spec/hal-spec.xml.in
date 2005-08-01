@@ -3817,14 +3817,18 @@
 	    </row>
             <row>
               <entry><literal>battery.charge_level.unit</literal> (string)</entry>
-              <entry>Examples: <literal>mWh</literal>, <literal>VA</literal>, 
-		<literal>percent</literal></entry>
+              <entry>Examples: 
+              	<literal>mWh</literal>, 
+		<literal>percent</literal>
+	      </entry>
               <entry>No</entry>
               <entry>
 		The physical unit used by the charge level properties
 		(maximum and current). In many cases, this property is
 		omitted - which indicates that the charge properties
 		are measured in some unknown units.
+		The units should never be mAh as this is not a measurement
+		of charge.
 	      </entry>
 	    </row>
             <row>
@@ -3853,7 +3857,7 @@
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-		The current level of charge which the device can hold. 
+		The current level of charge which the device can is holding. 
 	        Measured in <literal>"battery.charge_level.unit"</literal> 
 		units.
 	      </entry>
@@ -3910,6 +3914,108 @@
 		units.
 	      </entry>
 	    </row>
+
+            <row>
+              <entry><literal>battery.reporting.unit</literal> (string)</entry>
+              <entry>Examples: 
+              	<literal>mWh</literal>, 
+              	<literal>mAh</literal>, 
+		<literal>percent</literal>
+	      </entry>
+              <entry>No</entry>
+              <entry>
+		The physical unit used by the charge level properties
+		(maximum and current) as reported by the hardware.
+		In many cases, this property is omitted - which indicates 
+		that the charge properties are measured in some unknown units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.design</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		The maximum level of charge the device was designed for,
+		as reported by the hardware.
+	        Measured in <literal>"battery.reporting.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.last_full</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		The maximum level of charge the device could hold the last
+		time it was full, as reported by the hardware.
+	        Measured in <literal>"battery.reporting.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.current</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		The current level of charge which the device is holding,
+		as reported by the hardware.
+	        Measured in <literal>"battery.reporting.unit"</literal> 
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.rate</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		The discharge/charge rate as reported by the hardware measured 
+		in <literal>"battery.reporting.unit"</literal>
+		units per second.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.warning</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Once the hardware charge level of the battery drops below
+		this value its state changes to 'warning'.
+		Measured in <literal>"battery.reporting.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.low</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Once the hardware charge level of the battery drops below 
+		this value its state changes to 'low'.
+		Measured in <literal>"battery.reporting.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.granularity_1</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Hardware granularity value one of the battery measured
+		in <literal>"battery.reporting.unit"</literal>
+		units .
+	      </entry>
+	    </row>
+            <row>
+              <entry><literal>battery.reporting.granularity_2</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Hardware granularity value two of the battery measured
+		in <literal>"battery.reporting.unit"</literal>
+		units.
+	      </entry>
+	    </row>
+
 	    <row>
               <entry><literal>battery.charge_level.capacity_state</literal> (string)</entry>
               <entry>Examples: <literal>ok</literal>, <literal>critical</literal></entry>

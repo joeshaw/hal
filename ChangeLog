@@ -1,3 +1,25 @@
+2005-08-01  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Richard Hughes <hughsient@gmail.com>. Reported by Ryan
+	Lortie <desrt@desrt.ca>.
+	
+	* hald/linux2/acpi.c (battery_refresh_poll, battery_refresh):
+	convert the current values from mAh to mWh (some laptops report in
+	other than mWh) by multiplying by the current voltage. This gives
+	us "energy" units that are not dependent on the current voltage of
+	the battery. This fixes the
+	bug (http://bugzilla.gnome.org/show_bug.cgi?id=309944) where the
+	remaining time was being worked out with incorrect logic. The
+	util_compute_time_remaining and util_compute_percentage_charge
+	functions now take the sanitised values too. This patch introduces
+	the new keys battery.reporting.* representing the raw values from
+	ACPI. This will not change API for existing programs (as the old
+	charge_level keys are just re-used for the sanitised values). A
+	battery.charge_level.design key of "Unknown ACPI Unit" represents
+	an unknown unit that may have to be calculated like mAh.
+
+	* doc/spec/hal-spec.xml.in: Update spec with new keys
+
 2005-07-31  David Zeuthen  <davidz@redhat.com>
 
 	* hald/device_store.c (hal_device_store_add): this is a patch to

@@ -60,50 +60,117 @@ static void
 battery_refresh_poll (HalDevice *d)
 {
 	const char *path;
-	int current, last_full;
+	const char *reporting_unit;
+	int reporting_current;
+	int reporting_lastfull;
+	int reporting_rate;
+	int mwh_current;
+	int mwh_lastfull;
+	int mwh_rate;
+	int voltage_current;
+	int voltage_design;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
 		return;
-	
+
 	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
 					  "state", "charging state", 0, "charging", TRUE);
 	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path, 
 					  "state", "charging state", 0, "discharging", TRUE);
-	hal_util_set_int_elem_from_file (d, "battery.charge_level.current", path, 
+	/* 
+	 * we'll use the .reporting prefix as we don't know
+	 * if this data is energy (mWh) or unit enery (mAh)
+	 */
+	hal_util_set_int_elem_from_file (d, "battery.reporting.current", path, 
 					 "state", "remaining capacity", 0, 10, TRUE);
-	hal_util_set_int_elem_from_file (d, "battery.charge_level.rate", path, 
+	hal_util_set_int_elem_from_file (d, "battery.reporting.rate", path, 
 					 "state", "present rate", 0, 10, TRUE);
-	hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
+	hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path, 
 					 "info", "last full capacity", 0, 10, TRUE);
-	hal_util_set_string_elem_from_file (d, "battery.charge_level.capacity_state", path,
-					    "state", "capacity state", 0, TRUE);
+	/* 
+	 * we'll need this if we need to convert mAh to mWh, but we should
+	 * also update it here anyway as the value will have changed
+	 */
 	hal_util_set_int_elem_from_file (d, "battery.voltage.current", path,
 					 "state", "present voltage", 0, 10, TRUE);
-	
-	current = hal_device_property_get_int (d, "battery.charge_level.current");
-	last_full = hal_device_property_get_int (d, "battery.charge_level.last_full");
+	/* get all the data we know */
+	reporting_unit = hal_device_property_get_string (d, 
+					"battery.reporting.unit");
+	reporting_current = hal_device_property_get_int (d, 
+					"battery.reporting.current");
+	reporting_lastfull = hal_device_property_get_int (d, 
+					"battery.reporting.last_full");
+	reporting_rate = hal_device_property_get_int (d, 
+					"battery.reporting.rate");
+	/* 
+	 * we are converting the unknown units into mWh because of ACPI's nature
+	 * of not having a standard "energy" unit. 
+	 *
+	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=309944
+	 */
+	if (strcmp (reporting_unit, "mWh") == 0) {
+		/* units do not need conversion */
+		mwh_current = reporting_current;
+		mwh_lastfull = reporting_lastfull;
+		mwh_rate = reporting_rate;
+	} else if (strcmp (reporting_unit, "mAh") == 0) {
+		voltage_current = hal_device_property_get_int (d, 
+					"battery.voltage.current");
+		voltage_design = hal_device_property_get_int (d, 
+					"battery.voltage.design");
+		/* 
+		 * we really want battery.voltage.last_full, but ACPI doesn't provide it 
+		 * we can use battery.voltage.last_full ~= battery.voltage.design
+		 */
+		mwh_current = reporting_current * voltage_current;
+		mwh_lastfull = reporting_lastfull * voltage_design;
+		mwh_rate = reporting_rate * voltage_current;
+	} else {
+		/* 
+		 * report as 0 so we get some bug reports on types other than mWh 
+		 * and mAh, although I suspect these would cover 99.99% of cases.
+		 */
+		mwh_current = 0;
+		mwh_lastfull = 0;
+		mwh_rate = 0;
+	}
+
+	/*
+	* Set these new mWh only keys. 
+	*/
+	hal_device_property_set_int (d, "battery.charge_level.current", mwh_current);
+	hal_device_property_set_int (d, "battery.charge_level.last_full", mwh_lastfull);
+	hal_device_property_set_int (d, "battery.charge_level.rate", mwh_rate);
 
 	hal_device_property_set_int (d, "battery.remaining_time", 
 				     util_compute_time_remaining (
 					     d->udi,
-					     hal_device_property_get_int (d, "battery.charge_level.rate"),
-					     current,
-					     last_full,
+					     mwh_rate,
+					     mwh_current,
+					     mwh_lastfull,
 					     hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
 					     hal_device_property_get_bool (d, "battery.rechargeable.is_charging")));
 
 	hal_device_property_set_int (d, "battery.charge_level.percentage", 
 				     util_compute_percentage_charge (
 					     d->udi,
-					     current,
-					     last_full));
+					     mwh_current,
+					     mwh_lastfull));
 }
 
 static gboolean
 battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
 	const char *path;
+	int reporting_design;
+	int reporting_warning;
+	int reporting_low;
+	int reporting_gran1;
+	int reporting_gran2;
+	int voltage_design;
+	
+	const char *reporting_unit;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
@@ -134,22 +201,30 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_device_property_remove (d, "battery.charge_level.last_full");
 		hal_device_property_remove (d, "battery.charge_level.design");
 		hal_device_property_remove (d, "battery.charge_level.capacity_state");
-		hal_device_property_remove (d, "battery.voltage.unit");
-		hal_device_property_remove (d, "battery.voltage.design");
-		hal_device_property_remove (d, "battery.voltage.current");
 		hal_device_property_remove (d, "battery.charge_level.warning");
 		hal_device_property_remove (d, "battery.charge_level.low");
 		hal_device_property_remove (d, "battery.charge_level.granularity_1");
 		hal_device_property_remove (d, "battery.charge_level.granularity_2");
+		hal_device_property_remove (d, "battery.voltage.unit");
+		hal_device_property_remove (d, "battery.voltage.design");
+		hal_device_property_remove (d, "battery.voltage.current");
 		hal_device_property_remove (d, "battery.alarm.unit");
 		hal_device_property_remove (d, "battery.alarm.design");
+		hal_device_property_remove (d, "battery.reporting.current");
+		hal_device_property_remove (d, "battery.reporting.last_full");
+		hal_device_property_remove (d, "battery.reporting.design");
+		hal_device_property_remove (d, "battery.reporting.rate");
+		hal_device_property_remove (d, "battery.reporting.warning");
+		hal_device_property_remove (d, "battery.reporting.low");
+		hal_device_property_remove (d, "battery.reporting.granularity_1");
+		hal_device_property_remove (d, "battery.reporting.granularity_2");
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();
 
 		/* So, it's pretty expensive to read from
 		 * /proc/acpi/battery/BAT%d/[info|state] so don't read
-		 * static data that don't change
+		 * static data that won't change
 		 */
 		if (!hal_device_has_property (d, "battery.vendor")) {
 			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
@@ -159,25 +234,101 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 			hal_util_set_string_elem_from_file (d, "battery.technology", path, "info", 
 							    "battery type", 0, TRUE);
 			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
-			hal_util_set_string_elem_from_file (d, "battery.charge_level.unit", path, "info", 
+
+			/* 
+			 * we'll use the .reporting prefix as we don't know
+			 * if this data is energy (mWh) or unit enery (mAh)
+			 */
+			hal_util_set_string_elem_from_file (d, "battery.reporting.unit", path, "info", 
 							    "design capacity", 1, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path, 
+							 "info", "last full capacity", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.reporting.design", path, 
+							 "info", "design capacity", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.reporting.warning", path,
+							 "info", "design capacity warning", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.reporting.low", path,
+							 "info", "design capacity low", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_1", path,
+							 "info", "capacity granularity 1", 0, 10, TRUE);
+			hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_2", path,
+							 "info", "capacity granularity 2", 0, 10, TRUE);
+			/* 
+			 * we'll need this is we want to convert mAh to mWh
+			 */
 			hal_util_set_string_elem_from_file (d, "battery.voltage.unit", path, "info",
 							    "design voltage", 1, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.charge_level.last_full", path, 
-							 "info", "last full capacity", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.charge_level.design", path, 
-							 "info", "design capacity", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.charge_level.warning", path,
-							 "info", "design capacity warning", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.charge_level.low", path,
-							 "info", "design capacity low", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.charge_level.granularity_1", path,
-							 "info", "capacity granularity 1", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.charge_level.granularity_2", path,
-							 "info", "capacity granularity 2", 0, 10, TRUE);
 			hal_util_set_int_elem_from_file (d, "battery.voltage.design", path,
 							 "info", "design voltage", 0, 10, TRUE);
+			/* 
+			 * Convert the mWh or mAh units into mWh...
+			 * We'll do as many as we can here as the values
+			 * are not going to change.
+			 * We'll set the correct unit (or unknown) also.
+			 */
+			reporting_unit = hal_device_property_get_string (d, 
+					"battery.reporting.unit");
+			reporting_design = hal_device_property_get_int (d, 
+					"battery.reporting.design");
+			reporting_warning = hal_device_property_get_int (d, 
+					"battery.reporting.warning");
+			reporting_low = hal_device_property_get_int (d, 
+					"battery.reporting.low");
+			reporting_gran1 = hal_device_property_get_int (d, 
+					"battery.reporting.granularity_1");
+			reporting_gran2 = hal_device_property_get_int (d, 
+					"battery.reporting.granularity_2");
+			if (strcmp (reporting_unit, "mWh") == 0) {
+				/* do not scale */
+				hal_device_property_set_int (d, 
+					"battery.charge_level.design", reporting_design);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.warning", reporting_warning);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.low", reporting_low);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.granularity_1", reporting_gran1);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.granularity_2", reporting_gran2);
 
+				/* set unit */
+				hal_device_property_set_string (d, 
+					"battery.charge_level.design", "mWh");
+			} else if (strcmp (reporting_unit, "mAh") == 0) {
+				voltage_design = hal_device_property_get_int (d, 
+					"battery.voltage.design");
+
+				/* scale by factor battery.voltage.design */
+				hal_device_property_set_int (d, 
+					"battery.charge_level.design", 
+					reporting_design * voltage_design);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.warning", 
+					reporting_warning * voltage_design);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.low", 
+					reporting_low * voltage_design);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.granularity_1", 
+					reporting_gran1 * voltage_design);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.granularity_2", 
+					reporting_gran2 * voltage_design);
+
+				/* set unit */
+				hal_device_property_set_string (d, 
+					"battery.charge_level.design", 
+					"mWh"); /* not mAh! */
+			} else {
+				hal_device_property_set_int (d, 
+					"battery.charge_level.design", 0);
+
+				/* set "Unknown ACPI Unit" unit so we can debug */
+				hal_device_property_set_string (d, 
+					"battery.charge_level.design",
+					"Unknown ACPI Unit");
+			}
+			/* set alarm if present */
 			if (hal_util_set_int_elem_from_file (d, "battery.alarm.design", path,
 							     "alarm", "alarm", 0, 10, TRUE))
 				hal_util_set_string_elem_from_file (d, "battery.alarm.unit", path, "alarm",
