@@ -172,6 +172,14 @@ emit_device_capability_added (HalDevice *device,
 void
 hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 {
+	const char buf[] = "/org/freedesktop/Hal/devices/";
+
+	if (strncmp(device->udi, buf, sizeof (buf) - 1) != 0) {
+		
+		HAL_ERROR(("Can't add HalDevice with incorrect UDI. Valid "
+			   "UDI must start with '/org/freedesktop/Hal/devices/'"));
+		goto out;
+	}
 	store->devices = g_slist_prepend (store->devices,
 					  g_object_ref (device));
 
@@ -181,6 +189,9 @@ hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 			  G_CALLBACK (emit_device_capability_added), store);
 
 	g_signal_emit (store, signals[STORE_CHANGED], 0, device, TRUE);
+
+out:
+	;
 }
 
 gboolean

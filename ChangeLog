@@ -1,3 +1,13 @@
+2005-07-31  David Zeuthen  <davidz@redhat.com>
+
+	* hald/device_store.c (hal_device_store_add): this is a patch to
+	prevent adding a device with invalid UDI (doesn't start with
+	"/org/freedesktop/Hal/devices/") to the 'global device
+	list'. Without this patch it's possible to add a device with
+	invalid UDI. If so, you can't see the device e.g. via lshal and
+	get always a dbus error. Original patch from Danny Kukawka
+	<danny.kukawka@web.de>; slightly tweaked.
+
 2005-07-29  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-hid-ups.c: This one for UPS's (which
