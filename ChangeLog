@@ -1,5 +1,13 @@
 2005-08-01  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Danny Kukawka <danny.kukawka@web.de>.
+
+	* libhal/libhal.c, hald/linux2/ids.c: This is a patch to fix usage
+	of #NULL within the doxygen code documentation (replaced through 
+	'NULL' since '#NULL' generates a warning).
+
+2005-08-01  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Richard Hughes <hughsient@gmail.com>. Reported by Ryan
 	Lortie <desrt@desrt.ca>.
 	

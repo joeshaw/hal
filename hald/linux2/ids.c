@@ -115,10 +115,10 @@ pci_ids_line_iter_has_more ()
  *  @param  product_id          PCI product id or 0 if unknown
  *  @param  subsys_vendor_id    PCI subsystem vendor id or 0 if unknown
  *  @param  subsys_product_id   PCI subsystem product id or 0 if unknown
- *  @param  vendor_name         Set to pointer of result or #NULL
- *  @param  product_name        Set to pointer of result or #NULL
- *  @param  subsys_vendor_name  Set to pointer of result or #NULL
- *  @param  subsys_product_name Set to pointer of result or #NULL
+ *  @param  vendor_name         Set to pointer of result or NULL
+ *  @param  product_name        Set to pointer of result or NULL
+ *  @param  subsys_vendor_name  Set to pointer of result or NULL
+ *  @param  subsys_product_name Set to pointer of result or NULL
  */
 void
 ids_find_pci (int vendor_id, int product_id,
@@ -394,8 +394,8 @@ usb_ids_line_iter_has_more ()
  *
  *  @param  vendor_id           USB vendor id or 0 if unknown
  *  @param  product_id          USB product id or 0 if unknown
- *  @param  vendor_name         Set to pointer of result or #NULL
- *  @param  product_name        Set to pointer of result or #NULL
+ *  @param  vendor_name         Set to pointer of result or NULL
+ *  @param  product_name        Set to pointer of result or NULL
  */
 void
 ids_find_usb (int vendor_id, int product_id,
