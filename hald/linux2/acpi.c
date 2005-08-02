@@ -72,7 +72,7 @@ battery_refresh_poll (HalDevice *d)
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
-		return;
+		goto out;
 
 	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
 					  "state", "charging state", 0, "charging", TRUE);
@@ -97,12 +97,16 @@ battery_refresh_poll (HalDevice *d)
 	/* get all the data we know */
 	reporting_unit = hal_device_property_get_string (d, 
 					"battery.reporting.unit");
+	if (reporting_unit == NULL)
+		goto out;
+
 	reporting_current = hal_device_property_get_int (d, 
 					"battery.reporting.current");
 	reporting_lastfull = hal_device_property_get_int (d, 
 					"battery.reporting.last_full");
 	reporting_rate = hal_device_property_get_int (d, 
 					"battery.reporting.rate");
+
 	/* 
 	 * we are converting the unknown units into mWh because of ACPI's nature
 	 * of not having a standard "energy" unit. 
@@ -157,6 +161,8 @@ battery_refresh_poll (HalDevice *d)
 					     d->udi,
 					     mwh_current,
 					     mwh_lastfull));
+out:
+	;
 }
 
 static gboolean
@@ -486,7 +492,8 @@ acpi_poll (gpointer data)
 		HalDevice *d;
 		
 		d = HAL_DEVICE (i->data);
-		if (hal_device_has_property (d, "linux.acpi_type")) {
+		if (hal_device_has_property (d, "linux.acpi_type") &&
+		    hal_device_property_get_bool (d, "battery.present")) {
 			hal_util_grep_discard_existing_data ();
 			device_property_atomic_update_begin ();
 			battery_refresh_poll (d);

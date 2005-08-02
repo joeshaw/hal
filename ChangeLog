@@ -1,5 +1,12 @@
 2005-08-01  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/acpi.c (acpi_poll): Only poll if the battery is actually
+	present. Patch from Danny Kukawka <danny.kukawka@web.de>.
+	(battery_refresh_poll): Be a little bit more
+	careful and don't segfault if battery.reporting_unit doesn't exist
+
+2005-08-01  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Danny Kukawka <danny.kukawka@web.de>.
 
 	* libhal/libhal.c, hald/linux2/ids.c: This is a patch to fix usage
