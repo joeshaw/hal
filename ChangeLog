@@ -1,3 +1,22 @@
+2005-08-02  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/acpi.c (acpi_poll): Fix a memory leak here
+
+2005-08-02  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Richard Hughes <hughsient@gmail.com>.
+
+	* hald/linux2/acpi.c (ac_adapter_refresh_poll): New function, just
+	set the present key. This is quicker than setting the capability
+	and category on every forced refresh.
+	(ac_adapter_refresh): Use ac_adapter_refresh_poll and while we are
+	here, add device_property_atomic_update_begin and
+	device_property_atomic_update_end to make atomic.
+	(acpi_poll): Add the ac_adapter updates to make sure we get the
+	value of ac_adapter correct at least on every 30 second forced
+	refresh. This fixes really broken ACPI BIOS's that don't emit acad
+	or batt events.
+
 2005-08-01  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/acpi.c (acpi_poll): Only poll if the battery is actually

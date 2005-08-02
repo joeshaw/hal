@@ -387,20 +387,32 @@ fan_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
+static void
+ac_adapter_refresh_poll (HalDevice *d)
+{
+	const char *path;
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return;
+	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line", FALSE);
+}
+
 static gboolean
 ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
 	const char *path;
-
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
 		return FALSE;
 
+	device_property_atomic_update_begin ();
 	hal_device_property_set_string (d, "info.product", "AC Adapter");
 	hal_device_property_set_string (d, "info.category", "ac_adapter");
 	hal_device_add_capability (d, "ac_adapter");
-	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line", FALSE);
 
+	/* get .present value */
+	ac_adapter_refresh_poll (d);
+	device_property_atomic_update_end ();
 	return TRUE;
 }
 
@@ -483,14 +495,21 @@ static gboolean
 acpi_poll (gpointer data)
 {
 	GSList *i;
-	GSList *devices;
+	GSList *battery_devices;
+	GSList *acadap_devices;
+	HalDevice *d;
 
-	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
 								    "battery.type",
 								    "primary");
-	for (i = devices; i != NULL; i = g_slist_next (i)) {
-		HalDevice *d;
-		
+	acadap_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "info.category",
+								    "ac_adapter");
+	/* 
+	 * These forced updates take care of really broken BIOS's that don't 
+	 * emit acad or batt events.
+	 */
+	for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
 		d = HAL_DEVICE (i->data);
 		if (hal_device_has_property (d, "linux.acpi_type") &&
 		    hal_device_property_get_bool (d, "battery.present")) {
@@ -500,6 +519,18 @@ acpi_poll (gpointer data)
 			device_property_atomic_update_end ();		
 		}
 	}
+	for (i = acadap_devices; i != NULL; i = g_slist_next (i)) {
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.acpi_type")) {
+			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
+			ac_adapter_refresh_poll (d);
+			device_property_atomic_update_end ();		
+		}
+	}
+
+	g_slist_free (battery_devices);
+	g_slist_free (acadap_devices);
 
 	return TRUE;
 }
