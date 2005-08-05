@@ -1,3 +1,16 @@
+2005-08-05  Danny Kukawka  <danny.kukawka@web.de>
+
+	* doc/spec/hal-spec.xml.in: Added new namespace for OSS devices
+	and updated ALSA namespace for new devices.
+	
+	* hald/linux2/classdev.c, hald/linux2/classdev.h (sound_add), 
+	(sound_compute_udi): Added OSS devices and ALSA/OSS global devices. 
+	OSS devices are only added if the kernel supports device links to the 
+	related physical device. Adapted sound_compute_udi() to generate
+	UDIs for the new devices. For the required kernel patch (going  
+	upstream soon) see: 
+	http://thread.gmane.org/gmane.comp.freedesktop.hal/2862
+
 2005-08-02  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/acpi.c (acpi_poll): Fix a memory leak here

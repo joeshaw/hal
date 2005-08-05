@@ -3579,6 +3579,24 @@
            </row>
            <row>
              <entry></entry>
+             <entry><literal>timer</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is the global ALSA timer device.
+               This means, the device is for all ALSA devices/cards.
+             </entry>
+           </row>
+           <row>
+             <entry></entry>
+             <entry><literal>sequencer</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is the global ALSA sequencer device.
+               This means, the device is for all ALSA devices/cards.
+             </entry>
+           </row>
+           <row>
+             <entry></entry>
              <entry><literal>unknown</literal></entry>
              <entry></entry>
              <entry>
@@ -3590,6 +3608,139 @@
       </informaltable>
     </sect2>
 
+   <sect2 id="device-properties-oss">
+      <title><literal>oss</literal> namespace</title>
+      <para>
+
+       Device objects with the capability <literal>oss</literal>
+       represent all the streams available through OSS on a soundcard.
+       OSS devices could be emulated by ALSA.  
+       
+       <note>
+        <para> 
+         All OSS devices, except the global devices, are only added if the 
+         kernel supports links from oss device to physical device in sysfs. For a patch 
+         see:  http://thread.gmane.org/gmane.comp.freedesktop.hal/2862.
+        </para>
+       </note>
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>oss.card</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		Card number in system as registered by OSS (and/or ALSA).
+             </entry>
+            </row>
+            <row>
+              <entry><literal>oss.card_id</literal> (string)</entry>
+              <entry>
+                Examples: <literal>I82801DBICH4</literal>, <literal>MP3</literal>
+              </entry>
+              <entry>No</entry>
+              <entry>
+		Textual description of the card.
+             </entry>
+            </row>
+            <row>
+              <entry><literal>oss.device</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		Device number assigned by OSS/ALSA for a current card.
+             </entry>
+            </row>
+            <row>
+              <entry><literal>alsa.device_file</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		The device node to access the OSS device.
+             </entry>
+            </row>
+            <row>
+              <entry><literal>oss.device_id</literal> (string)</entry>
+              <entry>
+                Examples: <literal>Intel 82801DB-ICH4 MIC2 ADC</literal>
+              </entry>
+              <entry>No</entry>
+              <entry>
+		Textual description of the specific device for a card
+             </entry>
+            </row>
+            <row>
+              <entry><literal>oss.physical_device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		UDI of the physical device the OSS device is bound to.
+             </entry>
+           </row>
+            <row>
+              <entry><literal>oss.type</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+               The type of the stream.
+             </entry>
+            </row>
+           <row>
+             <entry></entry>
+             <entry><literal>mixer</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is control/mixer device.
+             </entry>
+           </row>
+           <row>
+             <entry></entry>
+             <entry><literal>pcm</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is PCM device.
+             </entry>
+           </row>
+           <row>
+             <entry></entry>
+             <entry><literal>midi</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is MIDI device.
+             </entry>
+           </row>
+           <row>
+             <entry></entry>
+             <entry><literal>sequencer</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is a global OSS sequencer device.
+               This means, the device is for all OSS devices/cards.
+             </entry>
+           </row>
+           <row>
+             <entry></entry>
+             <entry><literal>unknown</literal></entry>
+             <entry></entry>
+             <entry>
+               Stream is unknown device.
+             </entry>
+           </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+    
     <sect2 id="device-properties-camera">
       <title><literal>camera</literal> namespace</title>
       <para>

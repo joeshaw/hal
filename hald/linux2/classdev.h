@@ -29,6 +29,16 @@
 #include <glib.h>
 #include "hotplug.h"
 
+typedef enum {
+	OSS_DEVICE_TYPE_DSP,
+	OSS_DEVICE_TYPE_ADSP,
+	OSS_DEVICE_TYPE_MIDI,
+	OSS_DEVICE_TYPE_AMIDI,
+	OSS_DEVICE_TYPE_AUDIO,
+	OSS_DEVICE_TYPE_MIXER,
+	OSS_DEVICE_TYPE_UNKNOWN
+} ClassDevOSSDeviceTypes;
+
 void hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices, void *end_token);
 
 void hotplug_event_begin_remove_classdev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
