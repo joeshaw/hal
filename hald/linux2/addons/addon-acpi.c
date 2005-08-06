@@ -109,26 +109,36 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	/* TODO: get mountpoint of proc from... /proc/mounts.. :-) */
-	fd = open ("/proc/acpi/event", O_RDONLY);
+#ifdef ACPI_ACPID
+	/* receive event from acpi daemon */
+	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd < 0) {
-		dbg ("Cannot open /proc/acpi/event: %s - trying /var/run/acpid.socket", strerror (errno));
-		
-		/* TODO: make /var/run/acpid.socket a configure option */
-
-		fd = socket(AF_UNIX, SOCK_STREAM, 0);
-		if (fd < 0) {
-			return fd;
-		}
-		memset(&addr, 0, sizeof(addr));
-		addr.sun_family = AF_UNIX;
-		snprintf (addr.sun_path, sizeof (addr.sun_path), "%s", "/var/run/acpid.socket");
-		if (connect (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
-			dbg ("Cannot open /var/run/acpid.socket - bailing out");
-			goto out;
-		}
+		dbg ("Cannot create socket");
+		goto out;
 	}
-		
+	memset(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
+	snprintf (addr.sun_path, sizeof (addr.sun_path), "%s", "/var/run/acpid.socket");
+	if (connect (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
+		close (fd);
+		dbg ("Cannot connect to acpid socket");
+		fd = -1;
+	}
+#endif
+
+#ifdef ACPI_PROC
+	/* connect directly to the kernel */
+	if (fd < 0) {
+		fd = open ("/proc/acpi/event", O_RDONLY);
+		dbg ("Cannot open /proc/acpi/event: %s", strerror (errno));
+	}
+#endif
+
+	if (fd < 0) {
+		dbg ("Cannot connect to acpi event source - bailing out");
+		goto out;
+	}
+
 	/* main loop */
 	while (1) {
 		char *event;
