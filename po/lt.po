@@ -1,16 +1,16 @@
-# Hungarian translation of hal.
-# Copyright (C) 2004 Free Software Foundation, Inc.
-# This file is distributed under the same license as the hal package.
-# Laszlo Dvornik <dvornik@gnome.hu>, 2004.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: hal\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-07-20 10:21+0200\n"
-"PO-Revision-Date: 2005-08-05 19:32+0100\n"
-"Last-Translator: Szabolcs Varga <shirokuma@shirokuma.hu>\n"
-"Language-Team: Hungarian <gnome@gnome.hu>\n"
+"PO-Revision-Date: 2005-08-04 14:13+0200\n"
+"Last-Translator: Linas Spraunius <linas@operis.org>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -53,7 +53,7 @@ msgstr "/DVD-RAM"
 
 #: ../libhal-storage/libhal-storage.c:282
 msgid "/DVD±R DL"
-msgstr "/DVD+R DL"
+msgstr "/DVD±R DL"
 
 #: ../libhal-storage/libhal-storage.c:284
 msgid "/DVD±R"
@@ -61,7 +61,7 @@ msgstr "/DVD±R"
 
 #: ../libhal-storage/libhal-storage.c:289
 msgid "/DVD±RW DL"
-msgstr "/DVD+RW DL"
+msgstr "/DVD±RW DL"
 
 #: ../libhal-storage/libhal-storage.c:291
 msgid "/DVD±RW"
@@ -70,213 +70,213 @@ msgstr "/DVD±RW"
 #: ../libhal-storage/libhal-storage.c:296
 #, c-format
 msgid "External %s%s Drive"
-msgstr "Külső %s%s-meghajtó"
+msgstr "Išorinis %s%s diskasukis"
 
 #: ../libhal-storage/libhal-storage.c:299
 #, c-format
 msgid "%s%s Drive"
-msgstr "%s%s-meghajtó"
+msgstr "%s%s diskasukis"
 
 #: ../libhal-storage/libhal-storage.c:308
 msgid "External Floppy Drive"
-msgstr "Külső floppy-meghajtó"
+msgstr "Išorinis diskelių įrenginys"
 
 #: ../libhal-storage/libhal-storage.c:310
 msgid "Floppy Drive"
-msgstr "Floppy-meghajtó"
+msgstr "Diskelių įrenginys"
 
 #: ../libhal-storage/libhal-storage.c:317
 #, c-format
 msgid "%s External Hard Drive"
-msgstr "%s külső merevlemez"
+msgstr "%s Išorinis standusis diskas"
 
 #: ../libhal-storage/libhal-storage.c:320
 #, c-format
 msgid "%s Hard Drive"
-msgstr "%s merevlemez"
+msgstr "%s Standusis diskas"
 
 #: ../libhal-storage/libhal-storage.c:325
 msgid "External Hard Drive"
-msgstr "Külső merevlemez"
+msgstr "Išorinis standusis diskas"
 
 #: ../libhal-storage/libhal-storage.c:327
 msgid "Hard Drive"
-msgstr "Merevlemez"
+msgstr "Standusis diskas"
 
 #: ../libhal-storage/libhal-storage.c:336
 msgid "Drive"
-msgstr "Meghajtó"
+msgstr "Diskasukis"
 
 #: ../libhal-storage/libhal-storage.c:390
 msgid "Blank CD-R"
-msgstr "Üres CD-R lemez"
+msgstr "Tuščias CD-R"
 
 #: ../libhal-storage/libhal-storage.c:397
 msgid "Blank CD-RW"
-msgstr "Üres CD-RW lemez"
+msgstr "Tuščias CD-RW"
 
 #: ../libhal-storage/libhal-storage.c:408
 msgid "Blank DVD-RAM"
-msgstr "Üres DVD-RAM lemez"
+msgstr "Tuščias DVD-RAM"
 
 #: ../libhal-storage/libhal-storage.c:410
 msgid "DVD-RAM"
-msgstr "DVD-RAM lemez"
+msgstr "DVD-RAM"
 
 #: ../libhal-storage/libhal-storage.c:415
 msgid "Blank DVD-R"
-msgstr "Üres DVD-R lemez"
+msgstr "Tuščias DVD-R"
 
 #: ../libhal-storage/libhal-storage.c:417
 msgid "DVD-R"
-msgstr "DVD-R lemez"
+msgstr "DVD-R"
 
 #: ../libhal-storage/libhal-storage.c:422
 msgid "Blank DVD-RW"
-msgstr "Üres DVD-RW lemez"
+msgstr "Tuščias DVD-RW"
 
 #: ../libhal-storage/libhal-storage.c:424
 msgid "DVD-RW"
-msgstr "DVD-RW lemez"
+msgstr "DVD-RW"
 
 #: ../libhal-storage/libhal-storage.c:430
 msgid "Blank DVD+R"
-msgstr "Üres DVD+R lemez"
+msgstr "Tuščias DVD+R"
 
 #: ../libhal-storage/libhal-storage.c:432
 msgid "DVD+R"
-msgstr "DVD+R lemez"
+msgstr "DVD+R"
 
 #: ../libhal-storage/libhal-storage.c:437
 msgid "Blank DVD+RW"
-msgstr "Üres DVD+RW lemez"
+msgstr "Tuščias DVD+RW"
 
 #: ../libhal-storage/libhal-storage.c:439
 msgid "DVD+RW"
-msgstr "DVD+RW lemez"
+msgstr "DVD+RW"
 
 #: ../libhal-storage/libhal-storage.c:444
 msgid "Blank DVD+R Dual-Layer"
-msgstr "Üres DVD+R lemez"
+msgstr "Tuščias dvisluoksnis DVD+R"
 
 #: ../libhal-storage/libhal-storage.c:446
 msgid "DVD+R Dual-Layer"
-msgstr "DVD+R lemez"
+msgstr "Dvisluoksnis DVD+R"
 
 #: ../libhal-storage/libhal-storage.c:453
 msgid "Audio CD"
-msgstr "Audio lemez"
+msgstr "Audio CD"
 
 #: ../libhal-storage/libhal-storage.c:461
 #, c-format
 msgid "%s Removable Media"
-msgstr "%s cserélhető adathordozó"
+msgstr "%s Keičiama laikmena"
 
 #: ../libhal-storage/libhal-storage.c:464
 #, c-format
 msgid "%s Media"
-msgstr "%s adathordozó"
+msgstr "%s Laikmena"
 
 #: ../tools/device-manager/hal-device-manager.glade:10
 msgid "Device Manager"
-msgstr "Eszközkezelő"
+msgstr "Įrenginių tvarkyklė"
 
 #: ../tools/device-manager/hal-device-manager.glade:172
 #: ../tools/device-manager/hal-device-manager.glade:582
 #: ../tools/device-manager/hal-device-manager.glade:918
 msgid "<b>Vendor:</b>"
-msgstr "<b>Gyártó:</b>"
+msgstr "<b>Gamintojas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:198
 msgid "<b>Device:</b>"
-msgstr "<b>Eszköz:</b>"
+msgstr "<b>Įrenginys:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:224
 msgid "Device Name"
-msgstr "Eszköz neve"
+msgstr "Įrenginio pavadinimas"
 
 #: ../tools/device-manager/hal-device-manager.glade:250
 msgid "<b>Bus Type:</b>"
-msgstr "<b>Busz típusa:</b>"
+msgstr "<b>Magistralės tipas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:276
 msgid "Status"
-msgstr "Állapot"
+msgstr "Būsena"
 
 #: ../tools/device-manager/hal-device-manager.glade:302
 msgid "Bus Type"
-msgstr "Busz típusa"
+msgstr "Magistralės tipas"
 
 #: ../tools/device-manager/hal-device-manager.glade:328
 msgid "<b>Device Type:</b>"
-msgstr "<b>Eszköz típusa:</b>"
+msgstr "<b>Įrenginio tipas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:354
 msgid "Device Type"
-msgstr "Eszköz típusa"
+msgstr "Įrenginio tipas"
 
 #: ../tools/device-manager/hal-device-manager.glade:406
 msgid "Device Vendor"
-msgstr "Eszköz gyártója"
+msgstr "Įrenginio gamintojas"
 
 #: ../tools/device-manager/hal-device-manager.glade:429
 msgid "<b>Capabilities:</b>"
-msgstr "<b>Funkciók:</b>"
+msgstr "<b>Galimybės:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:455
 msgid "<b>Status:</b>"
-msgstr "<b>Állapot:</b>"
+msgstr "<b>Būsena:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:525
 msgid "Device"
-msgstr "Eszköz"
+msgstr "Įrenginys"
 
 #: ../tools/device-manager/hal-device-manager.glade:556
 msgid "<b>Bandwidth:</b>"
-msgstr "<b>Sávszélesség:</b>"
+msgstr "<b>Juosta:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:608
 #: ../tools/device-manager/hal-device-manager.glade:996
 msgid "<b>Product:</b>"
-msgstr "<b>Termék:</b>"
+msgstr "<b>Produktas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:634
 msgid "<b>Revision:</b>"
-msgstr "<b>Revízió:</b>"
+msgstr "<b>Versija:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:660
 msgid "USB Version"
-msgstr "USB-verzió"
+msgstr "USB versija"
 
 #: ../tools/device-manager/hal-device-manager.glade:685
 msgid "USB Bandwidth"
-msgstr "USB-sávszélesség"
+msgstr "USB juosta"
 
 #: ../tools/device-manager/hal-device-manager.glade:711
 msgid "Max \tPower Drain"
-msgstr "Max. \tenergiafogyasztás"
+msgstr ""
 
 #: ../tools/device-manager/hal-device-manager.glade:737
 #: ../tools/device-manager/hal-device-manager.glade:1042
 msgid "Manufacturer ID"
-msgstr "Gyártóazonosító"
+msgstr "Gamintojo ID"
 
 #: ../tools/device-manager/hal-device-manager.glade:763
 #: ../tools/device-manager/hal-device-manager.glade:1067
 msgid "Product ID"
-msgstr "Termékazonosító"
+msgstr "Produkto ID"
 
 #: ../tools/device-manager/hal-device-manager.glade:789
 msgid "Product Revision"
-msgstr "Termék revízió"
+msgstr "Produkto versija"
 
 #: ../tools/device-manager/hal-device-manager.glade:833
 msgid "<b>USB Version:</b>"
-msgstr "<b>USB-verzió:</b>"
+msgstr "<b>USB versija:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:857
 msgid "<b>Power Usage:</b>"
-msgstr "<b>Energiafogyasztás:</b>"
+msgstr "<b>Galios naudojimas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:887
 msgid "USB"
@@ -284,19 +284,19 @@ msgstr "USB"
 
 #: ../tools/device-manager/hal-device-manager.glade:944
 msgid "<b>OEM Product:</b>"
-msgstr "<b>OEM termék:</b>"
+msgstr "<b>OEM produktas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:970
 msgid "<b>OEM Vendor:</b>"
-msgstr "<b>OEM gyártó:</b>"
+msgstr "<b>OEM gamintojas:</b>"
 
 #: ../tools/device-manager/hal-device-manager.glade:1093
 msgid "OEM Manufacturer ID"
-msgstr "OEM gyártó azonosítója"
+msgstr "OEM Gamintojo ID"
 
 #: ../tools/device-manager/hal-device-manager.glade:1119
 msgid "OEM Product ID"
-msgstr "OEM termék azonosítója"
+msgstr "OEM produkto ID"
 
 #: ../tools/device-manager/hal-device-manager.glade:1149
 msgid "PCI"
@@ -304,21 +304,21 @@ msgstr "PCI"
 
 #: ../tools/device-manager/hal-device-manager.glade:1194
 msgid "Advanced"
-msgstr "Speciális"
+msgstr "Papildoma"
 
 #: ../tools/fstab-sync.c:1677
 msgid "Add an entry to fstab"
-msgstr "Bejegyzés felvétele az fstab fájlba"
+msgstr "Įtraukti įrašą į fstab"
 
 #: ../tools/fstab-sync.c:1678
 msgid "Remove an entry from fstab"
-msgstr "Bejegyzés törlése az fstab fájlból"
+msgstr "Pašalinti įrašą iš fstab"
 
 #: ../tools/fstab-sync.c:1679
 msgid "Remove all generated entries from fstab"
-msgstr "Összes előállított bejegyzés törlése az fstab fájlból"
+msgstr "Pašalinti visus sugeneruotus įrašus iš fstab"
 
 #: ../tools/fstab-sync.c:1680
 msgid "Report detailed information about operation progress"
-msgstr "Részletes kimutatás a művelet előmeneteléről"
+msgstr "Išsamiai informuoti apie vykdymo eigą"
 
