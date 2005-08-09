@@ -892,7 +892,7 @@ ccw_add_tape_properties (HalDevice *d, const gchar *sysfs_path)
 	if (!hal_util_get_int_from_file (sysfs_path, "medium_state",
 					&medium_state, 10))
 		return;
-	hal_device_property_set_string (d, "tape.ccw.medium_state",
+	hal_device_property_set_string (d, "ccw.tape.medium_state",
 					state_text[medium_state]);
 }
 

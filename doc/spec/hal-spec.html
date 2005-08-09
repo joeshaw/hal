@@ -384,6 +384,14 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
+HREF="#device-properties-oss"
+><TT
+CLASS="literal"
+>oss</TT
+> namespace</A
+></DT
+><DT
+><A
 HREF="#device-properties-camera"
 ><TT
 CLASS="literal"
@@ -544,21 +552,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN3286"
+HREF="#AEN3389"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN3297"
+HREF="#AEN3400"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN3305"
+HREF="#AEN3408"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -7335,6 +7343,300 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>timer</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is the global ALSA timer device.
+               This means, the device is for all ALSA devices/cards.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>sequencer</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is the global ALSA sequencer device.
+               This means, the device is for all ALSA devices/cards.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>unknown</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is unknown device.
+             </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-oss"
+><TT
+CLASS="literal"
+>oss</TT
+> namespace</A
+></H3
+><P
+>&#13;
+       Device objects with the capability <TT
+CLASS="literal"
+>oss</TT
+>
+       represent all the streams available through OSS on a soundcard.
+       OSS devices could be emulated by ALSA.  
+       
+       <DIV
+CLASS="note"
+><P
+></P
+><TABLE
+CLASS="note"
+WIDTH="100%"
+BORDER="0"
+><TR
+><TD
+WIDTH="25"
+ALIGN="CENTER"
+VALIGN="TOP"
+><IMG
+SRC="./stylesheet-images/note.gif"
+HSPACE="5"
+ALT="Note"></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+><P
+> 
+         All OSS devices, except the global devices, are only added if the 
+         kernel supports links from oss device to physical device in sysfs. For a patch 
+         see:  http://thread.gmane.org/gmane.comp.freedesktop.hal/2862.
+        </P
+></TD
+></TR
+></TABLE
+></DIV
+>
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2383"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>oss.card</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		Card number in system as registered by OSS (and/or ALSA).
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>oss.card_id</TT
+> (string)</TD
+><TD
+>&#13;                Examples: <TT
+CLASS="literal"
+>I82801DBICH4</TT
+>, <TT
+CLASS="literal"
+>MP3</TT
+>
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;		Textual description of the card.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>oss.device</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		Device number assigned by OSS/ALSA for a current card.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>alsa.device_file</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The device node to access the OSS device.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>oss.device_id</TT
+> (string)</TD
+><TD
+>&#13;                Examples: <TT
+CLASS="literal"
+>Intel 82801DB-ICH4 MIC2 ADC</TT
+>
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;		Textual description of the specific device for a card
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>oss.physical_device</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		UDI of the physical device the OSS device is bound to.
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>oss.type</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;               The type of the stream.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>mixer</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is control/mixer device.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>pcm</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is PCM device.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>midi</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is MIDI device.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>sequencer</TT
+></TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;               Stream is a global OSS sequencer device.
+               This means, the device is for all OSS devices/cards.
+             </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
 >unknown</TT
 ></TD
 ><TD
@@ -7384,7 +7686,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2369"
+NAME="AEN2472"
 ></A
 ><TABLE
 BORDER="1"
@@ -7505,7 +7807,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2411"
+NAME="AEN2514"
 ></A
 ><TABLE
 BORDER="1"
@@ -7573,7 +7875,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2431"
+NAME="AEN2534"
 ></A
 ><TABLE
 BORDER="1"
@@ -8402,7 +8704,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2734"
+NAME="AEN2837"
 ></A
 ><TABLE
 BORDER="1"
@@ -8516,7 +8818,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2778"
+NAME="AEN2881"
 ></A
 ><TABLE
 BORDER="1"
@@ -8584,7 +8886,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2799"
+NAME="AEN2902"
 ></A
 ><TABLE
 BORDER="1"
@@ -8678,7 +8980,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2831"
+NAME="AEN2934"
 ></A
 ><TABLE
 BORDER="1"
@@ -8789,7 +9091,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2873"
+NAME="AEN2976"
 ></A
 ><TABLE
 BORDER="1"
@@ -8927,7 +9229,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2929"
+NAME="AEN3032"
 ></A
 ><TABLE
 BORDER="1"
@@ -9019,7 +9321,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2957"
+NAME="AEN3060"
 ></A
 ><TABLE
 BORDER="1"
@@ -9178,7 +9480,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3009"
+NAME="AEN3112"
 ></A
 ><TABLE
 BORDER="1"
@@ -9307,7 +9609,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3050"
+NAME="AEN3153"
 ></A
 ><TABLE
 BORDER="1"
@@ -10375,7 +10677,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3244"
+NAME="AEN3347"
 ></A
 ><TABLE
 BORDER="1"
@@ -10535,7 +10837,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3286"
+NAME="AEN3389"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -10651,7 +10953,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN3297"
+NAME="AEN3400"
 >Example</A
 ></H3
 ><P
@@ -10769,7 +11071,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3305"
+NAME="AEN3408"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

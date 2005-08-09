@@ -1,3 +1,9 @@
+2005-08-09  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/physdev.c (ccw_add_tape_properties):
+	tape.ccw.mediumstate should be ccw.tape.mediumstate, fix the typo.
+	Patch from Cornelia Huck <cohuck@de.ibm.com>.
+
 2005-08-06  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* configure.in:
