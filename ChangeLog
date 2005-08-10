@@ -1,3 +1,8 @@
+2005-08-10  Danny Kukawka <danny.kukawka@web.de>
+
+	* hald/linux2/blockdev.c: (blockdev_compute_udi): fix compute of 
+	volume_label_* UDIs.
+
 2005-08-09  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/physdev.c (ccw_add_tape_properties):

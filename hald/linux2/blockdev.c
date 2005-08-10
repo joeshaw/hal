@@ -88,7 +88,7 @@ blockdev_compute_udi (HalDevice *d)
 					      "/org/freedesktop/Hal/devices/volume_uuid_%s", uuid);
 		} else if (label != NULL && strlen (label) > 0) {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_label_%s", uuid);
+					      "/org/freedesktop/Hal/devices/volume_label_%s", label);
 		} else if (hal_device_property_get_bool(d, "volume.is_disc") &&
 			   hal_device_property_get_bool(d, "volume.disc.is_blank")) {
 			/* this should be a empty CD/DVD */
