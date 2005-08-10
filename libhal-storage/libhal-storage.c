@@ -997,6 +997,7 @@ LibHalVolume *
 libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 {
 	char *disc_type_textual;
+	char *vol_fsusage_textual;
 	LibHalVolume *vol;
 	LibHalPropertySet *properties;
 	LibHalPropertySetIterator it;
@@ -1007,6 +1008,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 	vol = NULL;
 	properties = NULL;
 	disc_type_textual = NULL;
+	vol_fsusage_textual = NULL;
 
 	dbus_error_init (&error);
 	if (!libhal_device_query_capability (hal_ctx, udi, "volume", &error))
@@ -1047,6 +1049,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("volume.mount_point",        vol->mount_point);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_mounted",         vol->is_mounted);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.fsusage",            vol_fsusage_textual);
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_disc",            vol->is_disc);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.disc.type",          disc_type_textual);
@@ -1087,10 +1090,26 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		}
 	}
 
+	if (vol_fsusage_textual != NULL) {
+		if (strcmp (vol_fsusage_textual, "filesystem") == 0) {
+			vol->fsusage = LIBHAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM;
+		} else if (strcmp (vol_fsusage_textual, "partitiontable") == 0) {
+			vol->fsusage = LIBHAL_VOLUME_USAGE_PARTITION_TABLE;
+		} else if (strcmp (vol_fsusage_textual, "raid") == 0) {
+			vol->fsusage = LIBHAL_VOLUME_USAGE_RAID_MEMBER;
+		} else if (strcmp (vol_fsusage_textual, "crypto") == 0) {
+			vol->fsusage = LIBHAL_VOLUME_USAGE_CRYPTO;
+		} else {
+			vol->fsusage = LIBHAL_VOLUME_USAGE_UNKNOWN;
+		} 
+	}
+
+	libhal_free_string (vol_fsusage_textual);
 	libhal_free_string (disc_type_textual);
 	libhal_free_property_set (properties);
 	return vol;
 error:
+	libhal_free_string (vol_fsusage_textual);
 	libhal_free_string (disc_type_textual);
 	libhal_free_property_set (properties);
 	libhal_volume_free (vol);

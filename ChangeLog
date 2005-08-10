@@ -1,3 +1,8 @@
+2005-08-10  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c (libhal_volume_from_udi): Actually
+	export the right volume.fsusage
+
 2005-08-10  Danny Kukawka <danny.kukawka@web.de>
 
 	* hald/linux2/blockdev.c: (blockdev_compute_udi): fix compute of 

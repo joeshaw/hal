@@ -238,7 +238,9 @@ char        *libhal_drive_policy_default_get_managed_keyword_secondary (LibHalCo
 typedef enum {
 	LIBHAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM,
 	LIBHAL_VOLUME_USAGE_PARTITION_TABLE,
-	LIBHAL_VOLUME_USAGE_RAID_MEMBER
+	LIBHAL_VOLUME_USAGE_RAID_MEMBER,
+	LIBHAL_VOLUME_USAGE_CRYPTO,
+	LIBHAL_VOLUME_USAGE_UNKNOWN
 } LibHalVolumeUsage;
 
 typedef enum {
