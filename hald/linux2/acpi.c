@@ -57,6 +57,16 @@ typedef struct ACPIDevHandler_s
 } ACPIDevHandler;
 
 static void
+ac_adapter_refresh_poll (HalDevice *d)
+{
+	const char *path;
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return;
+	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line", FALSE);
+}
+
+static void
 battery_refresh_poll (HalDevice *d)
 {
 	const char *path;
@@ -86,8 +96,6 @@ battery_refresh_poll (HalDevice *d)
 					 "state", "remaining capacity", 0, 10, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.reporting.rate", path, 
 					 "state", "present rate", 0, 10, TRUE);
-	hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path, 
-					 "info", "last full capacity", 0, 10, TRUE);
 	/* 
 	 * we'll need this if we need to convert mAh to mWh, but we should
 	 * also update it here anyway as the value will have changed
@@ -165,6 +173,129 @@ out:
 	;
 }
 
+static void
+battery_poll_infrequently (gpointer data) {
+	
+	GSList *i;
+	GSList *battery_devices;
+	HalDevice *d;
+	const char *path;
+
+	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "battery.type",
+								    "primary");
+	
+	for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.acpi_type") &&
+		    hal_device_property_get_bool (d, "battery.present")) {
+			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
+			path = hal_device_property_get_string (d, "linux.acpi_path");
+			if (path != NULL)
+				hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path, 
+								 "info", "last full capacity", 0, 10, TRUE);
+			device_property_atomic_update_end ();		
+		}
+	}
+
+	g_slist_free (battery_devices);
+}
+
+
+static gboolean
+acpi_poll_battery ()
+{
+	GSList *i;
+	GSList *battery_devices;
+	HalDevice *d;
+
+	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "battery.type",
+								    "primary");
+	/* 
+	 * These forced updates take care of really broken BIOS's that don't 
+	 * emit batt events.
+	 */
+	for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.acpi_type") &&
+		    hal_device_property_get_bool (d, "battery.present")) {
+			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
+			battery_refresh_poll (d);
+			device_property_atomic_update_end ();		
+		}
+	}
+
+	g_slist_free (battery_devices);
+	return TRUE;
+}
+
+static gboolean
+acpi_poll_acadap ()
+{
+	GSList *i;
+	GSList *acadap_devices;
+	HalDevice *d;
+
+	acadap_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+								    "info.category",
+								    "ac_adapter");
+	/* 
+	 * These forced updates take care of really broken BIOS's that don't 
+	 * emit acad events.
+	 */
+	for (i = acadap_devices; i != NULL; i = g_slist_next (i)) {
+		d = HAL_DEVICE (i->data);
+		if (hal_device_has_property (d, "linux.acpi_type")) {
+			hal_util_grep_discard_existing_data ();
+			device_property_atomic_update_begin ();
+			ac_adapter_refresh_poll (d);
+			device_property_atomic_update_end ();		
+		}
+	}
+	g_slist_free (acadap_devices);
+	return TRUE;
+}
+
+static gboolean
+acpi_poll (gpointer data)
+{
+	/* 
+	 * These forced updates take care of really broken BIOS's that don't 
+	 * emit acad or acadapt events.
+	 */
+	acpi_poll_acadap();
+	acpi_poll_battery();
+	return TRUE;
+}
+
+static gboolean
+ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
+{
+	const char *path;
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return FALSE;
+
+	device_property_atomic_update_begin ();
+	/* only set up device new if really needed */
+	if (!hal_device_has_capability (d, "ac_adapter")){
+		hal_device_property_set_string (d, "info.product", "AC Adapter");
+		hal_device_property_set_string (d, "info.category", "ac_adapter");
+		hal_device_add_capability (d, "ac_adapter");
+	}
+	/* get .present value */
+	ac_adapter_refresh_poll (d);
+	device_property_atomic_update_end ();
+
+	/* refresh last full if ac plugged in/out */
+	battery_poll_infrequently(NULL);
+	
+	return TRUE;
+}
+
 static gboolean
 battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
@@ -190,7 +321,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 	/* Since we're using reuse==TRUE make sure we get fresh data for first read */
 	hal_util_grep_discard_existing_data ();
 
-	hal_util_set_bool_elem_from_file (d, "battery.present", path, "info", "present", 0, "yes", TRUE);
+	hal_util_set_bool_elem_from_file (d, "battery.present", path, "state", "present", 0, "yes", TRUE);
 	if (!hal_device_property_get_bool (d, "battery.present")) {
 		device_property_atomic_update_begin ();
 		hal_device_property_remove (d, "battery.is_rechargeable");
@@ -346,6 +477,9 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		battery_refresh_poll (d);
 
 		device_property_atomic_update_end ();
+
+		/* poll ac adapter for machines which n */
+		acpi_poll_acadap();
 	}
 
 	return TRUE;
@@ -384,35 +518,6 @@ fan_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_add_capability (d, "fan");
 	hal_util_set_bool_elem_from_file (d, "fan.enabled", path, 
 					  "state", "status", 0, "on", FALSE);
-	return TRUE;
-}
-
-static void
-ac_adapter_refresh_poll (HalDevice *d)
-{
-	const char *path;
-	path = hal_device_property_get_string (d, "linux.acpi_path");
-	if (path == NULL)
-		return;
-	hal_util_set_bool_elem_from_file (d, "ac_adapter.present", path, "state", "state", 0, "on-line", FALSE);
-}
-
-static gboolean
-ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
-{
-	const char *path;
-	path = hal_device_property_get_string (d, "linux.acpi_path");
-	if (path == NULL)
-		return FALSE;
-
-	device_property_atomic_update_begin ();
-	hal_device_property_set_string (d, "info.product", "AC Adapter");
-	hal_device_property_set_string (d, "info.category", "ac_adapter");
-	hal_device_add_capability (d, "ac_adapter");
-
-	/* get .present value */
-	ac_adapter_refresh_poll (d);
-	device_property_atomic_update_end ();
 	return TRUE;
 }
 
@@ -491,50 +596,6 @@ out:
 }
 
 
-static gboolean
-acpi_poll (gpointer data)
-{
-	GSList *i;
-	GSList *battery_devices;
-	GSList *acadap_devices;
-	HalDevice *d;
-
-	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
-								    "battery.type",
-								    "primary");
-	acadap_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
-								    "info.category",
-								    "ac_adapter");
-	/* 
-	 * These forced updates take care of really broken BIOS's that don't 
-	 * emit acad or batt events.
-	 */
-	for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
-		d = HAL_DEVICE (i->data);
-		if (hal_device_has_property (d, "linux.acpi_type") &&
-		    hal_device_property_get_bool (d, "battery.present")) {
-			hal_util_grep_discard_existing_data ();
-			device_property_atomic_update_begin ();
-			battery_refresh_poll (d);
-			device_property_atomic_update_end ();		
-		}
-	}
-	for (i = acadap_devices; i != NULL; i = g_slist_next (i)) {
-		d = HAL_DEVICE (i->data);
-		if (hal_device_has_property (d, "linux.acpi_type")) {
-			hal_util_grep_discard_existing_data ();
-			device_property_atomic_update_begin ();
-			ac_adapter_refresh_poll (d);
-			device_property_atomic_update_end ();		
-		}
-	}
-
-	g_slist_free (battery_devices);
-	g_slist_free (acadap_devices);
-
-	return TRUE;
-}
-
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding ACPI objects.
  *
@@ -594,6 +655,10 @@ acpi_synthesize_hotplug_events (void)
 	/* setup timer for things that we need to poll */
 	g_timeout_add (ACPI_POLL_INTERVAL,
 		       acpi_poll,
+		       NULL);
+	/* setup timer for things that we need only to poll infrequently*/
+	g_timeout_add (ACPI_POLL_INTERVAL*120,
+		       battery_poll_infrequently,
 		       NULL);
 
 out:

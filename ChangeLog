@@ -1,3 +1,26 @@
+2005-08-11  Danny Kukawka <danny.kukawka@web.de>
+
+	* hald/linux2/acpi.c (acpi_poll_battery), (acpi_poll_acadap), 
+	(acpi_poll): Splitted acpi_poll() into acpi_poll_battery() and 
+	acpi_poll_acadapt(). 
+	(battery_refresh):battery.present is now read 
+	from /proc/acpi/battery/*/state instead of reading the information 
+	from /proc/acpi/battery/*/info since reading from the info proc entry 
+	takes very long on several systems. If a ACPI battery event occurs, 
+	we now also gather the information for ac_adapter.present. This helps 
+	to detect the AC online/offline state for machine which do not trigger 
+	an ACPI event for AC online/offline but still report battery events 
+	by an issuing ACPI event.
+	(ac_adapter_refresh_poll), (battery_refresh_poll), 
+	(battery_poll_infrequently), (ac_adapter_refresh), 
+	(acpi_synthesize_hotplug_events): Status for battery.reporting.last_full 
+	is now read by battery_poll_infrequently ().  This saves several 
+	open/read calls to /proc/acpi/battery/*/{info,state} and enables 
+	reuse of the information gathered (makes reopening of the {info,state} 
+	proc entries unnecessary). battery_poll_infrequently () is invoked:
+	every 60 minutes and once a AC adapter ACPI event occurs. This prevents
+	open/read calls to /proc/acpi/battery/*/info more often then intended.
+
 2005-08-10  David Zeuthen  <davidz@redhat.com>
 
 	* libhal-storage/libhal-storage.c (libhal_volume_from_udi): Actually
