@@ -336,6 +336,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_device_property_remove (d, "battery.charge_level.low");
 		hal_device_property_remove (d, "battery.charge_level.granularity_1");
 		hal_device_property_remove (d, "battery.charge_level.granularity_2");
+		hal_device_property_remove (d, "battery.charge_level.rate");
 		hal_device_property_remove (d, "battery.voltage.unit");
 		hal_device_property_remove (d, "battery.voltage.design");
 		hal_device_property_remove (d, "battery.voltage.current");
@@ -349,6 +350,8 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		hal_device_property_remove (d, "battery.reporting.low");
 		hal_device_property_remove (d, "battery.reporting.granularity_1");
 		hal_device_property_remove (d, "battery.reporting.granularity_2");
+		hal_device_property_remove (d, "battery.reporting.unit");
+		hal_device_property_remove (d, "battery.remaining_time");
 		device_property_atomic_update_end ();		
 	} else {
 		device_property_atomic_update_begin ();

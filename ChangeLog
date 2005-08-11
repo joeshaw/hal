@@ -1,5 +1,11 @@
 2005-08-11  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/acpi.c: (battery_refresh): remove also 
+	battery.charge_level.rate, battery.reporting.unit and 
+	battery.remaining_time if the battery is removed. 
+
+2005-08-11  Danny Kukawka <danny.kukawka@web.de>
+
 	* hald/linux2/acpi.c: (battery_refresh_poll): Normalise 
 	battery.reporting.last_full with voltage_current instead of 
 	voltage_design because battery.charge_level.last_full is a changing and 
