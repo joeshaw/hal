@@ -1,5 +1,12 @@
 2005-08-11  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/acpi.c, hald/linux2/addons/addon-acpi.c
+	hald/linux2/addons/addon-pmu.c, hald/linux2/addons/addon-storage.c,
+	hald/linux2/pmu.c: (battery_refresh): Fixed several compiler warnings 
+	and removed unused variables.
+
+2005-08-11  Danny Kukawka <danny.kukawka@web.de>
+
 	* hald/linux2/acpi.c: (battery_refresh_poll): Fixed several battery keys 
 	to be sure that hal not provides battery key with not up-to-date values,
 	if the battery is full charged. Now we set all values which are in  

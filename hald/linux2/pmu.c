@@ -68,7 +68,7 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 {
 	const char *path;
 	int flags;
-	int current, last_full;
+	int last_full;
 
 	path = hal_device_property_get_string (d, "linux.pmu_path");
 	if (path == NULL)

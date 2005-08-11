@@ -79,7 +79,6 @@ battery_refresh_poll (HalDevice *d)
 	int mwh_lastfull;
 	int mwh_rate;
 	int voltage_current;
-	int voltage_design;
 	int remaining_time;
 	int remaining_percentage;
 
@@ -179,7 +178,7 @@ out:
 	;
 }
 
-static void
+static gboolean
 battery_poll_infrequently (gpointer data) {
 	
 	GSList *i;
@@ -206,6 +205,7 @@ battery_poll_infrequently (gpointer data) {
 	}
 
 	g_slist_free (battery_devices);
+	return TRUE;
 }
 
 
@@ -666,7 +666,7 @@ acpi_synthesize_hotplug_events (void)
 		       acpi_poll,
 		       NULL);
 	/* setup timer for things that we need only to poll infrequently*/
-	g_timeout_add (ACPI_POLL_INTERVAL*120,
+	g_timeout_add ((ACPI_POLL_INTERVAL*120),
 		       battery_poll_infrequently,
 		       NULL);
 

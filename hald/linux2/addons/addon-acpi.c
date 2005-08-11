@@ -94,7 +94,6 @@ main (int argc, char *argv[])
 	struct sockaddr_un addr;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	char acpi_path[256];
 	char acpi_name[256];
 	unsigned int acpi_num1;

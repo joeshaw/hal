@@ -99,8 +99,6 @@ main (int argc, char *argv[])
 
 		n = write (fd, buf, 2);
 		if (n == 2) {
-			int i;
-
 			rd = read (fd, buf, sizeof (buf));
 			if (rd <= 0) {
 				dbg ("Error reading from fd; read returned %d; err=%s", strerror (errno));
@@ -108,6 +106,8 @@ main (int argc, char *argv[])
 			}
 
 #if 0
+			int i;
+			
 			dbg ("Read 0x%02x bytes", rd);				
 			for (i = 0; i < rd; i++) {
 				dbg ("%02x : 0x%02x", i, buf[i]);
