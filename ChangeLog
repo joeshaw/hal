@@ -1,5 +1,17 @@
 2005-08-11  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/acpi.c: (battery_refresh_poll): Check now if computed 
+	remaining percentage and remaining time values are valid. Now we only 
+	add positive values.
+
+	* hald/util.c: (util_compute_percentage_charge),
+	(util_compute_time_remaining): Return -1 instead of 0 if an error occurs 
+	to differentiate between an error and an empty battery. Return now -1 if 
+	parameter chargeRate, chargeLevel or chargeLastFull are negative. Removed
+	unneeded warning.
+
+2005-08-11  Danny Kukawka <danny.kukawka@web.de>
+
 	* hald/linux2/acpi.c: (battery_refresh): remove also 
 	battery.charge_level.rate, battery.reporting.unit and 
 	battery.remaining_time if the battery is removed. 

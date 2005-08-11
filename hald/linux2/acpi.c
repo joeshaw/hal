@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2005 Richard Hughes <richard@hughsie.com>
  * Copyright (C) 2005 David Zeuthen, Red Hat Inc., <davidz@redhat.com>
+ * Copyright (C) 2005 Danny Kukawka, <danny.kukawka@web.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,6 +80,8 @@ battery_refresh_poll (HalDevice *d)
 	int mwh_rate;
 	int voltage_current;
 	int voltage_design;
+	int remaining_time;
+	int remaining_percentage;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
@@ -143,26 +146,25 @@ battery_refresh_poll (HalDevice *d)
 	}
 
 	/*
-	* Set these new mWh only keys. 
+	* Set these new mWh only keys. Only add valid keys!
 	*/
-	hal_device_property_set_int (d, "battery.charge_level.current", mwh_current);
-	hal_device_property_set_int (d, "battery.charge_level.last_full", mwh_lastfull);
-	hal_device_property_set_int (d, "battery.charge_level.rate", mwh_rate);
+	if (mwh_current >= 0) 
+		hal_device_property_set_int (d, "battery.charge_level.current", mwh_current);
+	if (mwh_lastfull >= 0)
+		hal_device_property_set_int (d, "battery.charge_level.last_full", mwh_lastfull);
+	if (mwh_rate >= 0)
+		hal_device_property_set_int (d, "battery.charge_level.rate", mwh_rate);
 
-	hal_device_property_set_int (d, "battery.remaining_time", 
-				     util_compute_time_remaining (
-					     d->udi,
-					     mwh_rate,
-					     mwh_current,
-					     mwh_lastfull,
-					     hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-					     hal_device_property_get_bool (d, "battery.rechargeable.is_charging")));
+	remaining_time = util_compute_time_remaining ( d->udi, mwh_rate, mwh_current, mwh_lastfull,
+					     	       hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
+						       hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
+	remaining_percentage = util_compute_percentage_charge ( d->udi, mwh_current, mwh_lastfull);
+	
+	if (remaining_time >= 0) 
+		hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+	if (remaining_percentage >= 0)
+		hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
 
-	hal_device_property_set_int (d, "battery.charge_level.percentage", 
-				     util_compute_percentage_charge (
-					     d->udi,
-					     mwh_current,
-					     mwh_lastfull));
 out:
 	;
 }

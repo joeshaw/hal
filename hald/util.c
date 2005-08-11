@@ -66,21 +66,18 @@ util_compute_percentage_charge (const char *id,
 	int percentage;
 	/* make sure we have chargelevel */
 	if (chargeLevel <= 0) {
-		HAL_WARNING (("chargeLevel %i, returning 0!", chargeLevel));
-		return 0;
+		HAL_WARNING (("chargeLevel %i, returning -1!", chargeLevel));
+		return -1;
 	}
 	/* make sure not division by zero */
 	if (chargeLastFull > 0)
 		percentage = ((double) chargeLevel / (double) chargeLastFull) * 100;
 	else {
-		HAL_WARNING (("chargeLastFull %i, percentage returning 0!", chargeLastFull));
-		return 0;
+		HAL_WARNING (("chargeLastFull %i, percentage returning -1!", chargeLastFull));
+		return -1;
 	}
 	/* make sure results are sensible */
-	if (percentage < 0) {
-		HAL_WARNING (("Percentage %i, returning 0!", percentage));
-		return 0;
-	} else if (percentage > 100) {
+	if (percentage > 100) {
 		HAL_WARNING (("Percentage %i, returning 100!", percentage));
 		return 100;
 	}
@@ -108,12 +105,19 @@ util_compute_time_remaining (const char *id,
 			     gboolean isCharging)
 {
 
-	if (chargeRate <= 0)
-		return 0;
+	if ((chargeRate <= 0) || (chargeLevel < 0) || (chargeLastFull < 0)) {
+		HAL_WARNING (("chargeRate, chargeLevel or chargeLastFull unknown, returning -1"));
+		return -1;
+	}
 	if (isDischarging)
 		return ((double) chargeLevel / (double) chargeRate) * 60 * 60;
-	if (isCharging)
+	if (isCharging) {
+		if(chargeLevel > chargeLastFull ) {
+			HAL_WARNING (("chargeLevel > chargeLastFull, returning -1"));
+			return -1;
+		}
 		return ((double) (chargeLastFull - chargeLevel) / (double) chargeRate) * 60 * 60;
+	}
 	return 0;
 }
 
