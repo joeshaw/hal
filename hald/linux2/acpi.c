@@ -129,14 +129,8 @@ battery_refresh_poll (HalDevice *d)
 	} else if (strcmp (reporting_unit, "mAh") == 0) {
 		voltage_current = hal_device_property_get_int (d, 
 					"battery.voltage.current");
-		voltage_design = hal_device_property_get_int (d, 
-					"battery.voltage.design");
-		/* 
-		 * we really want battery.voltage.last_full, but ACPI doesn't provide it 
-		 * we can use battery.voltage.last_full ~= battery.voltage.design
-		 */
 		mwh_current = reporting_current * voltage_current;
-		mwh_lastfull = reporting_lastfull * voltage_design;
+		mwh_lastfull = reporting_lastfull * voltage_current;
 		mwh_rate = reporting_rate * voltage_current;
 	} else {
 		/* 
