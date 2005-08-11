@@ -1,5 +1,13 @@
 2005-08-11  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/acpi.c: (battery_refresh_poll): Fixed several battery keys 
+	to be sure that hal not provides battery key with not up-to-date values,
+	if the battery is full charged. Now we set all values which are in  
+	/proc/acpi/battery/*/{info,state} already 'unknown' (e.g. 'present rate')
+	to 0.
+
+2005-08-11  Danny Kukawka <danny.kukawka@web.de>
+
 	* hald/linux2/acpi.c: (battery_refresh_poll): Check now if computed 
 	remaining percentage and remaining time values are valid. Now we only 
 	add positive values.
