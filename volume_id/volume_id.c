@@ -68,8 +68,9 @@
 #include "minix.h"
 #include "mac.h"
 #include "msdos.h"
+#include "ocfs2.h"
 
-int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned long long size)
+int volume_id_probe_all(struct volume_id *id, uint64_t off, uint64_t size)
 {
 	if (id == NULL)
 		return -EINVAL;
@@ -168,6 +169,9 @@ int volume_id_probe_all(struct volume_id *id, unsigned long long off, unsigned l
 	if (volume_id_probe_minix(id, off) == 0)
 		goto exit;
 
+	if (volume_id_probe_ocfs2(id, off) == 0)
+		goto exit;
+
 	return -1;
 
 exit:
@@ -219,20 +223,20 @@ struct volume_id *volume_id_open_node(const char *path)
 struct volume_id *volume_id_open_dev_t(dev_t devt)
 {
 	struct volume_id *id;
-	__u8 tmp_node[VOLUME_ID_PATH_MAX];
+	char tmp_node[VOLUME_ID_PATH_MAX];
 
-	snprintf((char *) tmp_node, VOLUME_ID_PATH_MAX,
+	snprintf(tmp_node, VOLUME_ID_PATH_MAX,
 		 "/dev/.volume_id-%u-%u-%u", getpid(), major(devt), minor(devt));
-	tmp_node[VOLUME_ID_PATH_MAX] = '\0';
+	tmp_node[VOLUME_ID_PATH_MAX-1] = '\0';
 
 	/* create tempory node to open the block device */
-	unlink((char *) tmp_node);
-	if (mknod((char *) tmp_node, (S_IFBLK | 0600), devt) != 0)
+	unlink(tmp_node);
+	if (mknod(tmp_node, (S_IFBLK | 0600), devt) != 0)
 		return NULL;
 
-	id = volume_id_open_node((char *) tmp_node);
+	id = volume_id_open_node(tmp_node);
 
-	unlink((char *) tmp_node);
+	unlink(tmp_node);
 
 	return id;
 }

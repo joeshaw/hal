@@ -115,7 +115,7 @@ struct drive_id *drive_id_open_dev_t(dev_t devt)
 
 	snprintf((char *) tmp_node, DRIVE_ID_PATH_MAX,
 		 "/dev/.drive_id-%u-%u-%u", getpid(), major(devt), minor(devt));
-	tmp_node[DRIVE_ID_PATH_MAX] = '\0';
+	tmp_node[DRIVE_ID_PATH_MAX-1] = '\0';
 
 	/* create tempory node to open the block device */
 	unlink((char *) tmp_node);

@@ -4,7 +4,6 @@ noinst_LTLIBRARIES = libvolume_id.la
 INCLUDES = -DDEBUG
 
 libvolume_id_la_SOURCES =				\
-	dasd.h			dasd.c			\
 	ext.h			ext.c			\
 	fat.h			fat.c			\
 	hfs.h			hfs.c			\
@@ -33,6 +32,7 @@ libvolume_id_la_SOURCES =				\
 	sysv.h			sysv.c			\
 	cramfs.h		cramfs.c		\
 	minix.h			minix.c			\
+	ocfs2.h			ocfs2.c			\
 	logging.h					\
 	util.h			util.c			\
 	volume_id.h		volume_id.c
