@@ -1,5 +1,12 @@
 2005-08-13  Kay Sievers  <kay.sievers@vrfy.org>
 
+Add missing files.
+
+	* volume_id/ocfs2.c: (volume_id_probe_ocfs2):
+	* volume_id/ocfs2.h:
+
+2005-08-13  Kay Sievers  <kay.sievers@vrfy.org>
+
 Sync up volume_id with the udev version.
 
 	* drive_id/drive_id.c: (drive_id_open_dev_t):
