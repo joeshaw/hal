@@ -1,3 +1,9 @@
+2005-08-14  Richard Hughes <richard@hughsie.com>
+
+	* .cvsignore, tools/.cvsignore: adds a few generated files to .cvsignore
+
+	* hald/solaris/.cvsignore: New file, copy from hald/linux2/
+
 2005-08-13  Kay Sievers  <kay.sievers@vrfy.org>
 
 Add missing files.
