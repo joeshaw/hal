@@ -8,3 +8,7 @@ lshal
 fstab-sync.8
 hal-find-by-capability
 hal-find-by-property
+fstab-sync
+hal-device
+hal-luks-remove
+hal-luks-setup
