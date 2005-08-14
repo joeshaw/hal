@@ -22,3 +22,8 @@ intltool-merge.in
 intltool-update
 intltool-update.in
 mkinstalldirs
+depcomp
+install-sh
+missing
+py-compile
+INSTALL
