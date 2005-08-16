@@ -22,4 +22,22 @@
     </match>
   </device>
 
+  <device>
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+      <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.SystemPowerManagement</append>
+
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">Suspend</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist">i</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-suspend</append>
+
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">Hibernate</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist"></append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-hibernate</append>
+
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">SetPowerSave</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist">b</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-set-power-save</append>
+    </match>
+  </device>
+      
 </deviceinfo>

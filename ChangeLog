@@ -1,3 +1,25 @@
+2005-08-16  David Zeuthen  <davidz@redhat.com>
+
+	First stab at system power management... Need to put this in the
+	hal spec too..
+
+	* hal.conf.in: Add security policy for Device.SystemPowerManagement
+	and Device.Volume.Crypto interfaces - only allow the console user to
+	invoke methods on these interfaces
+
+	* fdi/policy/10osvendor/10-power-mgmt-policy.fdi: Add methods
+	Suspend(int secondsBeforeWakeup), Hibernate() and
+	SetPowerSave(bool shouldSavePower) to the
+	org.freedesktop.Hal.Device.SystemPowerManagement interface
+
+	* tools/Makefile.am (sbin_SCRIPTS): Add hal-system-power-*
+
+	* tools/hal-system-power-hibernate: New file
+
+	* tools/hal-system-power-suspend: New file
+
+	* tools/hal-system-power-set-power-save: New file
+
 2005-08-14  Richard Hughes <richard@hughsie.com>
 
 	* .cvsignore, tools/.cvsignore: adds a few generated files to .cvsignore
@@ -6,14 +28,14 @@
 
 2005-08-13  Kay Sievers  <kay.sievers@vrfy.org>
 
-Add missing files.
+	Add missing files.
 
 	* volume_id/ocfs2.c: (volume_id_probe_ocfs2):
 	* volume_id/ocfs2.h:
 
 2005-08-13  Kay Sievers  <kay.sievers@vrfy.org>
 
-Sync up volume_id with the udev version.
+	Sync up volume_id with the udev version.
 
 	* drive_id/drive_id.c: (drive_id_open_dev_t):
 	* volume_id/Makefile.am:

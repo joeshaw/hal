@@ -43,7 +43,11 @@ man_MANS = fstab-sync.8
 endif
 ## FSTAB_SYNC_ENABLED end
 
-sbin_SCRIPTS = hal-luks-setup hal-luks-remove
+sbin_SCRIPTS =                            \
+	hal-luks-setup hal-luks-remove    \
+	hal-system-power-suspend          \
+	hal-system-power-hibernate        \
+	hal-system-power-set-power-save
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi
 

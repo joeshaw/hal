@@ -1,0 +1,31 @@
+#!/bin/sh
+
+alarm_not_supported() {
+    echo org.freedesktop.Hal.Device.SystemPowerManagement.AlarmNotSupported >&2
+    echo Waking the system up is not supported >&2
+    exit 1
+}
+
+unknown_distro() {
+    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+    echo No suspend script found >&2
+    exit 1
+}
+
+read seconds_to_sleep
+
+if [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+    # TODO: fix pm-suspend to take a --wakeup-alarm argument
+    if [ $seconds_to_sleep != "0" ] ; then
+	alarm_not_supported
+    fi
+    /usr/sbin/pm-suspend
+    RET=$?
+    # TODO: fixup pm-suspend to define erroc code (see alarm above) and throw
+    #       the appropriate exception
+else
+    # TODO: support other distros
+    unknown_distro
+fi
+
+exit $RET

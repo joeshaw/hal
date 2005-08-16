@@ -1,0 +1,10 @@
+#!/bin/sh
+
+read value
+
+# TODO: write code here
+if [ $value = "true" ]; then
+    echo TODO: enable power savings
+elif [ $value = "false" ]; then
+    echo TODO: disable power savings
+fi

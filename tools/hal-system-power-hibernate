@@ -1,0 +1,18 @@
+#!/bin/sh
+
+unknown_distro() {
+    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+    echo No hibernate script found >&2
+    exit 1
+}
+
+
+if [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+    /usr/sbin/pm-hibernate
+    RET=$?
+else
+    # TODO: support other distros
+    unknown_distro
+fi
+
+exit $RET
