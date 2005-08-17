@@ -9,7 +9,7 @@
 	<append key="info.capabilities" type="strlist">pda</append>
 	<merge key="pda.platform" type="string">pocketpc</merge>
 	<merge key="info.product" type="string">Pocket PC PDA</merge>
-	<merge key="pda.pocketpc.hotsync_interface" type="copy_property">serial_device</merge>
+	<merge key="pda.pocketpc.hotsync_interface" type="copy_property">serial.device</merge>
       </match>
     </match>
   </device>
@@ -33,7 +33,7 @@
               <append key="info.capabilities" type="strlist">pda</append>
               <merge key="pda.platform" type="string">palm</merge>
               <merge key="info.product" type="string">PalmOS PDA</merge>
-              <merge key="pda.palm.hotsync_interface" type="copy_property">serial_device</merge>
+              <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
             </match>
           </match>
 	</match>
@@ -50,7 +50,7 @@
             <append key="info.capabilities" type="strlist">pda</append>
             <merge key="pda.platform" type="string">palm</merge>
             <merge key="info.product" type="string">PalmOS PDA</merge>
-            <merge key="pda.palm.hotsync_interface" type="copy_property">serial_device</merge>
+            <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
           </match>
 	</match>
       </match>

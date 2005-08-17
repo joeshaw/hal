@@ -1,3 +1,9 @@
+2005-08-18  Danny  Danny Kukawka <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-pda.fdi: fixed merge
+	pda.*.hotsync_interface to copy correct property ('serial.device'
+	instead of nonexistent 'serial_device')
+
 2005-08-16  David Zeuthen  <davidz@redhat.com>
 
 	First stab at system power management... Need to put this in the
