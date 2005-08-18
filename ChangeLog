@@ -1,4 +1,10 @@
-2005-08-18  Danny  Danny Kukawka <danny.kukawka@web.de>
+2005-08-18  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: Add
+	identification for Rio Forge nusic player. Patch from Pierre
+	Ossman <drzeus-list@drzeus.cx>.
+
+2005-08-18  Danny Kukawka <danny.kukawka@web.de>
 
 	* fdi/information/10freedesktop/10-usb-pda.fdi: fixed merge
 	pda.*.hotsync_interface to copy correct property ('serial.device'
