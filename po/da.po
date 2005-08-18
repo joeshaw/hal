@@ -1,135 +1,329 @@
+# translation of hal.po to Dansk
+# translation of da.po to Dansk
 # Danish translation of hal
 # Copyright (C) 2004
 # This file is distributed under the same license as the hal package.
-# David Zeuthen <davidz@redhat.com>, 2004
-#
-#, fuzzy
+# David Zeuthen <davidz@redhat.com>, 2004.
+# Martin Møller <martin@martinm-76.dk>, 2005.
+#: ../libhal-storage/libhal-storage.c:239
+#: ../libhal-storage/libhal-storage.c:266 ../tools/fstab-sync.c:680
 msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-28 11:50-0500\n"
-"PO-Revision-Date: 2004-09-22 23:26+0200\n"
-"Last-Translator: David Zeuthen <davidz@redhat.com>\n"
-"Language-Team: Danish <dansk@klid.dk>\n"
+"POT-Creation-Date: 2005-07-20 10:21+0200\n"
+"PO-Revision-Date: 2005-08-17 10:08+0200\n"
+"Last-Translator: Martin Møller <martin@martinm-76.dk>\n"
+"Language-Team: Dansk <da@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.10.1\n"
 
-#: libhal-storage/libhal-storage.c:288
+#: ../libhal-storage/libhal-storage.c:260
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:262
+msgid "CD-R"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:264
+msgid "CD-RW"
+msgstr "CD-RW"
+
+#: ../libhal-storage/libhal-storage.c:268
+msgid "/DVD-ROM"
+msgstr "/DVD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:270
+msgid "/DVD+R"
+msgstr "/DVD+R"
+
+#: ../libhal-storage/libhal-storage.c:272
+msgid "/DVD+RW"
+msgstr "/DVD+RW"
+
+#: ../libhal-storage/libhal-storage.c:274
+msgid "/DVD-R"
+msgstr "/DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:276
+msgid "/DVD-RW"
+msgstr "/DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:278
+msgid "/DVD-RAM"
+msgstr "/DVD-RAM"
+
+#: ../libhal-storage/libhal-storage.c:282
+msgid "/DVD±R DL"
+msgstr "/DVD±R DL"
+
+#: ../libhal-storage/libhal-storage.c:284
+msgid "/DVD±R"
+msgstr "/DVD±R"
+
+#: ../libhal-storage/libhal-storage.c:289
+msgid "/DVD±RW DL"
+msgstr "/DVD±RW DL"
+
+#: ../libhal-storage/libhal-storage.c:291
+msgid "/DVD±RW"
+msgstr "/DVD±RW"
+
+#: ../libhal-storage/libhal-storage.c:296
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Eksternt %s%s drev"
 
-#: libhal-storage/libhal-storage.c:291
+#: ../libhal-storage/libhal-storage.c:299
 #, c-format
 msgid "%s%s Drive"
 msgstr "%s%s drev"
 
-#: libhal-storage/libhal-storage.c:300
+#: ../libhal-storage/libhal-storage.c:308
 msgid "External Floppy Drive"
-msgstr "Eksternt Diskette Drev"
+msgstr "Eksternt diskettedrev"
 
-#: libhal-storage/libhal-storage.c:302
+#: ../libhal-storage/libhal-storage.c:310
 msgid "Floppy Drive"
-msgstr "Diskette Drev"
+msgstr "Diskettedrev"
 
-#: libhal-storage/libhal-storage.c:309
+#: ../libhal-storage/libhal-storage.c:317
 #, c-format
 msgid "%s External Hard Drive"
-msgstr "%s Ekstern Hard Disk Drev"
+msgstr "%s Ekstern Harddisk"
 
-#: libhal-storage/libhal-storage.c:312
+#: ../libhal-storage/libhal-storage.c:320
 #, c-format
 msgid "%s Hard Drive"
-msgstr "%s Hard Disk Drev"
+msgstr "%s Harddisk"
 
-#: libhal-storage/libhal-storage.c:317
+#: ../libhal-storage/libhal-storage.c:325
 msgid "External Hard Drive"
-msgstr "Ekstern Hard Disk"
+msgstr "Ekstern Harddisk"
 
-#: libhal-storage/libhal-storage.c:319
+#: ../libhal-storage/libhal-storage.c:327
 msgid "Hard Drive"
-msgstr "Hard Disk"
+msgstr "Harddisk"
 
-#: libhal-storage/libhal-storage.c:328
+#: ../libhal-storage/libhal-storage.c:336
 msgid "Drive"
 msgstr "Drev"
 
-#: libhal-storage/libhal-storage.c:377
-msgid "CD-ROM Disc"
-msgstr "CD-ROM medie"
-
-#: libhal-storage/libhal-storage.c:382
-msgid "Blank CD-R Disc"
+#: ../libhal-storage/libhal-storage.c:390
+msgid "Blank CD-R"
 msgstr "Blankt CD-R medie"
 
-#: libhal-storage/libhal-storage.c:384
-msgid "CD-R Disc"
-msgstr "CD-R medie"
-
-#: libhal-storage/libhal-storage.c:389
-msgid "Blank CD-RW Disc"
+#: ../libhal-storage/libhal-storage.c:397
+msgid "Blank CD-RW"
 msgstr "Blankt CD-RW medie"
 
-#: libhal-storage/libhal-storage.c:391
-msgid "CD-RW Disc"
-msgstr "CD-RW medie"
-
-#: libhal-storage/libhal-storage.c:395
-msgid "DVD-ROM Disc"
-msgstr "DVD-ROM medie"
-
-#: libhal-storage/libhal-storage.c:400
-msgid "Blank DVD-RAM Disc"
+#: ../libhal-storage/libhal-storage.c:408
+msgid "Blank DVD-RAM"
 msgstr "Blankt DVD-RAM medie"
 
-#: libhal-storage/libhal-storage.c:402
-msgid "DVD-RAM Disc"
+#: ../libhal-storage/libhal-storage.c:410
+msgid "DVD-RAM"
 msgstr "DVD-RAM medie"
 
-#: libhal-storage/libhal-storage.c:407
-msgid "Blank DVD-R Disc"
+#: ../libhal-storage/libhal-storage.c:415
+msgid "Blank DVD-R"
 msgstr "Blankt DVD-R medie"
 
-#: libhal-storage/libhal-storage.c:409
-msgid "DVD-R Disc"
+#: ../libhal-storage/libhal-storage.c:417
+msgid "DVD-R"
 msgstr "DVD-R medie"
 
-#: libhal-storage/libhal-storage.c:414
-msgid "Blank DVD-RW Disc"
+#: ../libhal-storage/libhal-storage.c:422
+msgid "Blank DVD-RW"
 msgstr "Blankt DVD-RW medie"
 
-#: libhal-storage/libhal-storage.c:416
-msgid "DVD-RW Disc"
+#: ../libhal-storage/libhal-storage.c:424
+msgid "DVD-RW"
 msgstr "DVD-RW medie"
 
-#: libhal-storage/libhal-storage.c:422
-msgid "Blank DVD+R Disc"
+#: ../libhal-storage/libhal-storage.c:430
+msgid "Blank DVD+R"
 msgstr "Blankt DVD+R medie"
 
-#: libhal-storage/libhal-storage.c:424
-msgid "DVD+R Disc"
+#: ../libhal-storage/libhal-storage.c:432
+msgid "DVD+R"
 msgstr "DVD+R medie"
 
-#: libhal-storage/libhal-storage.c:429
-msgid "Blank DVD+RW Disc"
+#: ../libhal-storage/libhal-storage.c:437
+msgid "Blank DVD+RW"
 msgstr "Blankt DVD+RW medie"
 
-#: libhal-storage/libhal-storage.c:431
-msgid "DVD+RW Disc"
+#: ../libhal-storage/libhal-storage.c:439
+msgid "DVD+RW"
 msgstr "DVD+RW medie"
 
-#: libhal-storage/libhal-storage.c:438
-msgid "Audio Disc"
+#: ../libhal-storage/libhal-storage.c:444
+msgid "Blank DVD+R Dual-Layer"
+msgstr "Blankt DVD+R medie"
+
+#: ../libhal-storage/libhal-storage.c:446
+msgid "DVD+R Dual-Layer"
+msgstr "DVD+R medie"
+
+#: ../libhal-storage/libhal-storage.c:453
+msgid "Audio CD"
 msgstr "Lyd CD"
 
-#: libhal-storage/libhal-storage.c:446
+#: ../libhal-storage/libhal-storage.c:461
 #, c-format
 msgid "%s Removable Media"
 msgstr "%s flytbart medie"
 
-#: libhal-storage/libhal-storage.c:449
+#: ../libhal-storage/libhal-storage.c:464
 #, c-format
 msgid "%s Media"
 msgstr "%s medie"
+
+#: ../tools/device-manager/hal-device-manager.glade:10
+msgid "Device Manager"
+msgstr "Enhedsopsætning"
+
+#: ../tools/device-manager/hal-device-manager.glade:172
+#: ../tools/device-manager/hal-device-manager.glade:582
+#: ../tools/device-manager/hal-device-manager.glade:918
+msgid "<b>Vendor:</b>"
+msgstr "<b>Forhandler:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:198
+msgid "<b>Device:</b>"
+msgstr "<b>Enhed:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:224
+msgid "Device Name"
+msgstr "Enhedsnavn"
+
+#: ../tools/device-manager/hal-device-manager.glade:250
+msgid "<b>Bus Type:</b>"
+msgstr "<b>Bustype:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:276
+msgid "Status"
+msgstr "Status"
+
+#: ../tools/device-manager/hal-device-manager.glade:302
+msgid "Bus Type"
+msgstr "Bustype"
+
+#: ../tools/device-manager/hal-device-manager.glade:328
+msgid "<b>Device Type:</b>"
+msgstr "<b>Enhedstype:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:354
+msgid "Device Type"
+msgstr "Enhedstype"
+
+#: ../tools/device-manager/hal-device-manager.glade:406
+msgid "Device Vendor"
+msgstr "Enhedsforhandler"
+
+#: ../tools/device-manager/hal-device-manager.glade:429
+msgid "<b>Capabilities:</b>"
+msgstr "<b>Egenskaber:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:455
+msgid "<b>Status:</b>"
+msgstr "<b>Status:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:525
+msgid "Device"
+msgstr "Enhed"
+
+#: ../tools/device-manager/hal-device-manager.glade:556
+msgid "<b>Bandwidth:</b>"
+msgstr "<b>Båndbredde:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:608
+#: ../tools/device-manager/hal-device-manager.glade:996
+msgid "<b>Product:</b>"
+msgstr "<b>Produkt:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:634
+msgid "<b>Revision:</b>"
+msgstr "<b>Revision:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:660
+msgid "USB Version"
+msgstr "USB version"
+
+#: ../tools/device-manager/hal-device-manager.glade:685
+msgid "USB Bandwidth"
+msgstr "USB båndbredde"
+
+#: ../tools/device-manager/hal-device-manager.glade:711
+msgid "Max \tPower Drain"
+msgstr "Maksimum\tStrømdræn"
+
+#: ../tools/device-manager/hal-device-manager.glade:737
+#: ../tools/device-manager/hal-device-manager.glade:1042
+msgid "Manufacturer ID"
+msgstr "Fabrikants ID"
+
+#: ../tools/device-manager/hal-device-manager.glade:763
+#: ../tools/device-manager/hal-device-manager.glade:1067
+msgid "Product ID"
+msgstr "Produkt ID"
+
+#: ../tools/device-manager/hal-device-manager.glade:789
+msgid "Product Revision"
+msgstr "Produktrevision"
+
+#: ../tools/device-manager/hal-device-manager.glade:833
+msgid "<b>USB Version:</b>"
+msgstr "<b>USB version:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:857
+msgid "<b>Power Usage:</b>"
+msgstr "<b>Strømforbrug:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:887
+msgid "USB"
+msgstr "USB"
+
+#: ../tools/device-manager/hal-device-manager.glade:944
+msgid "<b>OEM Product:</b>"
+msgstr "<b>OEM produkt:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:970
+msgid "<b>OEM Vendor:</b>"
+msgstr "<b>OEM forhandler</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:1093
+msgid "OEM Manufacturer ID"
+msgstr "OEM fabrikants ID"
+
+#: ../tools/device-manager/hal-device-manager.glade:1119
+msgid "OEM Product ID"
+msgstr "OEM produkt ID"
+
+#: ../tools/deviceF-manager/hal-device-manager.glade:1149
+msgid "PCI"
+msgstr "PCI"
+
+#: ../tools/device-manager/hal-device-manager.glade:1194
+msgid "Advanced"
+msgstr "Avanceret"
+
+#: ../tools/fstab-sync.c:1677
+msgid "Add an entry to fstab"
+msgstr "Tilføj en linie i fstab"
+
+#: ../tools/fstab-sync.c:1678
+msgid "Remove an entry from fstab"
+msgstr "Fjern en linie fra fstab"
+
+#: ../tools/fstab-sync.c:1679
+msgid "Remove all generated entries from fstab"
+msgstr "Fjern alle genererede linier fra fstab"
+
+#: ../tools/fstab-sync.c:1680
+msgid "Report detailed information about operation progress"
+msgstr "Rapportér detaljeret information om fremgangen"
+
