@@ -1,5 +1,14 @@
 2005-08-18  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: From my
+	point of view all of these devices should have the capability
+	'portable_audio_player'. Those who are a disk drive with the extra
+	feature of playing stuff should probably keep 'storage' as
+	category. The rest should have 'portable_audio_player'. Patch from
+	Pierre Ossman <drzeus-list@drzeus.cx>.
+
+2005-08-18  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: Add
 	identification for Rio Forge nusic player. Patch from Pierre
 	Ossman <drzeus-list@drzeus.cx>.
