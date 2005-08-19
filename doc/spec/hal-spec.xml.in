@@ -4232,8 +4232,19 @@
               <entry>No</entry>
               <entry>
 		Remaining time, in seconds, that the battery can provide
-		power if it's discharging. This is an estimate and may be
-		imprecise.
+		power (if discharging) or the time until charged (if charging). 
+		This is an estimate and may be imprecise.
+		This key is not present for invalid data.
+	      </entry>
+	    </row>
+	    <row>
+              <entry><literal>battery.charge_level.percentage</literal> (int)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Charge, normalised to percent. This is useful if an application
+		does not want to process the raw values and do all the extra
+		checks on the result. This key is not present for invalid data.
 	      </entry>
 	    </row>
             <row>
