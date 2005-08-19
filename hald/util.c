@@ -56,7 +56,7 @@
  *  @param  id                  Optional ID given to this battery. Unused at present.
  *  @param  chargeLevel         The current charge level of the battery (typically mWh)
  *  @param  chargeLastFull      The last "full" charge of the battery (typically mWh)
- *  @return                     Percentage
+ *  @return                     Percentage, -1 if invalid
  */
 int 
 util_compute_percentage_charge (const char *id,
@@ -79,7 +79,11 @@ util_compute_percentage_charge (const char *id,
 	/* make sure results are sensible */
 	if (percentage > 100) {
 		HAL_WARNING (("Percentage %i, returning 100!", percentage));
-		return 100;
+		return -1;
+	}
+	if (percentage < 0) {
+		HAL_WARNING (("Percentage %i, returning -1!", percentage));
+		return -1;
 	}
 	return percentage;
 }
@@ -94,7 +98,7 @@ util_compute_percentage_charge (const char *id,
  *  @param  chargeLastFull      The last "full" charge of the battery (typically mWh)
  *  @param  isDischarging       If battery is discharging
  *  @param  isCharging          If battery is charging
- *  @return                     Number of seconds, or zero if n/a
+ *  @return                     Number of seconds, or -1 if invalid
  */
 int 
 util_compute_time_remaining (const char *id,
@@ -104,21 +108,32 @@ util_compute_time_remaining (const char *id,
 			     gboolean isDischarging,
 			     gboolean isCharging)
 {
-
+	int remaining_time = 0;
 	if ((chargeRate <= 0) || (chargeLevel < 0) || (chargeLastFull < 0)) {
 		HAL_WARNING (("chargeRate, chargeLevel or chargeLastFull unknown, returning -1"));
 		return -1;
 	}
+	if (isDischarging && isCharging) {
+		HAL_WARNING (("isDischarging & isCharging TRUE, returning -1"));
+		return -1;
+	}
 	if (isDischarging)
-		return ((double) chargeLevel / (double) chargeRate) * 60 * 60;
-	if (isCharging) {
+		remaining_time = ((double) chargeLevel / (double) chargeRate) * 60 * 60;
+	else if (isCharging) {
 		if(chargeLevel > chargeLastFull ) {
 			HAL_WARNING (("chargeLevel > chargeLastFull, returning -1"));
 			return -1;
 		}
-		return ((double) (chargeLastFull - chargeLevel) / (double) chargeRate) * 60 * 60;
+		remaining_time = ((double) (chargeLastFull - chargeLevel) / (double) chargeRate) * 60 * 60;
 	}
-	return 0;
+	if (remaining_time < 0)
+		remaining_time = -1;
+	/* 60 hours */
+	else if (remaining_time > 60*60*60) {
+		HAL_WARNING (("remaining_time *very* high, returning -1"));
+		remaining_time = -1;
+	}
+	return remaining_time;
 }
 
 gboolean 
