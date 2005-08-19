@@ -146,18 +146,6 @@ battery_refresh_poll (HalDevice *d)
 		mwh_rate = 0;
 	}
 
-	remaining_time = util_compute_time_remaining ( d->udi, mwh_rate, mwh_current, mwh_lastfull,
-					     	       hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-						       hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
-	remaining_percentage = util_compute_percentage_charge ( d->udi, mwh_current, mwh_lastfull);
-	
-	/*
-	* Only add valid keys!
-	*/
-	if (remaining_time < 0)
-		remaining_time = 0;
-	if (remaining_percentage < 0)
-		remaining_percentage = 0; 
 	/*
 	* Set these new mWh only keys. 
 	*/
@@ -171,8 +159,25 @@ battery_refresh_poll (HalDevice *d)
 	hal_device_property_set_int (d, "battery.charge_level.current", mwh_current);
 	hal_device_property_set_int (d, "battery.charge_level.last_full", mwh_lastfull);
 	hal_device_property_set_int (d, "battery.charge_level.rate", mwh_rate);
-	hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
-	hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
+
+	remaining_time = util_compute_time_remaining (d->udi, mwh_rate, mwh_current, mwh_lastfull,
+				hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
+				hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
+	remaining_percentage = util_compute_percentage_charge (d->udi, mwh_current, mwh_lastfull);
+	/* 
+	 * Only set keys if no error (signified with negative return value)
+	 * Scrict checking is needed to ensure that the values presented by HAL
+	 * are 100% acurate.
+	 */
+	if (remaining_time > 0)
+		hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+	else
+		hal_device_property_remove (d, "battery.remaining_time");
+
+	if (remaining_percentage > 0)
+		hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
+	else
+		hal_device_property_remove (d, "battery.charge_level.percentage");
 
 out:
 	;
