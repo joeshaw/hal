@@ -1,132 +1,350 @@
 # Italian translation of hal
 # This file is distributed under the same license as the PACKAGE package.
 # Pier Luigi Fiorini <pierluigi.fiorini@mockup.org>, 2004.
+#: ../libhal-storage/libhal-storage.c:239
+#: ../libhal-storage/libhal-storage.c:266 ../tools/fstab-sync.c:680
 msgid ""
 msgstr ""
 "Project-Id-Version: hal 0.4.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-28 11:50-0500\n"
+"POT-Creation-Date: 2005-07-20 10:21+0200\n"
 "PO-Revision-Date: 2004-12-25 09:47+0100\n"
-"Last-Translator: Pier Luigi Fiorini <pierluigi.fiorini@mockup.org>\n"
-"Language-Team: Italian <it@li.org>\n"
+"Last-Translator: Novell Language <language@novell.com>\n"
+"Language-Team: Novell Language <language@novell.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: libhal-storage/libhal-storage.c:288
+#: ../libhal-storage/libhal-storage.c:260
+msgid "CD-ROM"
+msgstr "CD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:262
+msgid "CD-R"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:264
+msgid "CD-RW"
+msgstr "CD-RW"
+
+#: ../libhal-storage/libhal-storage.c:268
+msgid "/DVD-ROM"
+msgstr "/DVD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:270
+msgid "/DVD+R"
+msgstr "/DVD+R"
+
+#: ../libhal-storage/libhal-storage.c:272
+msgid "/DVD+RW"
+msgstr "/DVD+RW"
+
+#: ../libhal-storage/libhal-storage.c:274
+msgid "/DVD-R"
+msgstr "/DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:276
+msgid "/DVD-RW"
+msgstr "/DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:278
+msgid "/DVD-RAM"
+msgstr "/DVD-RAM"
+
+#: ../libhal-storage/libhal-storage.c:282
+msgid "/DVD±R DL"
+msgstr "/DVD±R DL"
+
+#: ../libhal-storage/libhal-storage.c:284
+msgid "/DVD±R"
+msgstr "/DVD±R"
+
+#: ../libhal-storage/libhal-storage.c:289
+msgid "/DVD±RW DL"
+msgstr "/DVD±RW DL"
+
+#: ../libhal-storage/libhal-storage.c:291
+msgid "/DVD±RW"
+msgstr "/DVD±RW"
+
+#: ../libhal-storage/libhal-storage.c:296
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Unità %s%s esterna"
 
-#: libhal-storage/libhal-storage.c:291
+#: ../libhal-storage/libhal-storage.c:299
 #, c-format
 msgid "%s%s Drive"
 msgstr "Unità %s%s"
 
-#: libhal-storage/libhal-storage.c:300
+#: ../libhal-storage/libhal-storage.c:308
 msgid "External Floppy Drive"
 msgstr "Unità floppy esterna"
 
-#: libhal-storage/libhal-storage.c:302
+#: ../libhal-storage/libhal-storage.c:310
 msgid "Floppy Drive"
 msgstr "Unità floppy"
 
-#: libhal-storage/libhal-storage.c:309
+#: ../libhal-storage/libhal-storage.c:317
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "Disco rigido esterno %s"
 
-#: libhal-storage/libhal-storage.c:312
+#: ../libhal-storage/libhal-storage.c:320
 #, c-format
 msgid "%s Hard Drive"
 msgstr "Disco rigido %s"
 
-#: libhal-storage/libhal-storage.c:317
+#: ../libhal-storage/libhal-storage.c:325
 msgid "External Hard Drive"
 msgstr "Disco rigido esterno"
 
-#: libhal-storage/libhal-storage.c:319
+#: ../libhal-storage/libhal-storage.c:327
 msgid "Hard Drive"
 msgstr "Disco rigido"
 
-#: libhal-storage/libhal-storage.c:328
+#: ../libhal-storage/libhal-storage.c:336
 msgid "Drive"
 msgstr "Unità"
 
-#: libhal-storage/libhal-storage.c:377
-msgid "CD-ROM Disc"
-msgstr "Disco CD-ROM"
+#: ../libhal-storage/libhal-storage.c:390
+msgid "Blank CD-R"
+msgstr "CD-R vergine"
 
-#: libhal-storage/libhal-storage.c:382
-msgid "Blank CD-R Disc"
-msgstr "Disco CD-R vergine"
+#: ../libhal-storage/libhal-storage.c:397
+msgid "Blank CD-RW"
+msgstr "CD-RW vergine"
 
-#: libhal-storage/libhal-storage.c:384
-msgid "CD-R Disc"
-msgstr "Disco CD-R"
+#: ../libhal-storage/libhal-storage.c:408
+msgid "Blank DVD-RAM"
+msgstr "DVD-RAM vergine"
 
-#: libhal-storage/libhal-storage.c:389
-msgid "Blank CD-RW Disc"
-msgstr "Disco CD-RW vergine"
+#: ../libhal-storage/libhal-storage.c:410
+msgid "DVD-RAM"
+msgstr "DVD-RAM"
 
-#: libhal-storage/libhal-storage.c:391
-msgid "CD-RW Disc"
-msgstr "Disco CD-RW"
+#: ../libhal-storage/libhal-storage.c:415
+msgid "Blank DVD-R"
+msgstr "DVD-R vergine"
 
-#: libhal-storage/libhal-storage.c:395
-msgid "DVD-ROM Disc"
-msgstr "Disco DVD-ROM"
+#: ../libhal-storage/libhal-storage.c:417
+msgid "DVD-R"
+msgstr "DVD-R"
 
-#: libhal-storage/libhal-storage.c:400
-msgid "Blank DVD-RAM Disc"
-msgstr "Disco DVD-RAM vergine"
+#: ../libhal-storage/libhal-storage.c:422
+msgid "Blank DVD-RW"
+msgstr "DVD-RW vergine"
 
-#: libhal-storage/libhal-storage.c:402
-msgid "DVD-RAM Disc"
-msgstr "Disco DVD-RAM"
+#: ../libhal-storage/libhal-storage.c:424
+msgid "DVD-RW"
+msgstr "DVD-RW"
 
-#: libhal-storage/libhal-storage.c:407
-msgid "Blank DVD-R Disc"
-msgstr "Disco DVD-R vergine"
+#: ../libhal-storage/libhal-storage.c:430
+msgid "Blank DVD+R"
+msgstr "DVD+R vergine"
 
-#: libhal-storage/libhal-storage.c:409
-msgid "DVD-R Disc"
-msgstr "Disco DVD-R"
+#: ../libhal-storage/libhal-storage.c:432
+msgid "DVD+R"
+msgstr "DVD+R"
 
-#: libhal-storage/libhal-storage.c:414
-msgid "Blank DVD-RW Disc"
-msgstr "Disco DVD-RW vergine"
+#: ../libhal-storage/libhal-storage.c:437
+msgid "Blank DVD+RW"
+msgstr "DVD+RW vergine"
 
-#: libhal-storage/libhal-storage.c:416
-msgid "DVD-RW Disc"
-msgstr "Disco DVD-RW"
+#: ../libhal-storage/libhal-storage.c:439
+msgid "DVD+RW"
+msgstr "DVD+RW"
 
-#: libhal-storage/libhal-storage.c:422
-msgid "Blank DVD+R Disc"
-msgstr "Disco DVD+R vergine"
+#: ../libhal-storage/libhal-storage.c:444
+msgid "Blank DVD+R Dual-Layer"
+msgstr "DVD+R Dual-Layer vergine"
 
-#: libhal-storage/libhal-storage.c:424
-msgid "DVD+R Disc"
-msgstr "Disco DVD+R"
+#: ../libhal-storage/libhal-storage.c:446
+msgid "DVD+R Dual-Layer"
+msgstr "DVD+R Dual-Layer"
 
-#: libhal-storage/libhal-storage.c:429
-msgid "Blank DVD+RW Disc"
-msgstr "Disco DVD+RW vergine"
+#: ../libhal-storage/libhal-storage.c:453
+msgid "Audio CD"
+msgstr "CD Audio"
 
-#: libhal-storage/libhal-storage.c:431
-msgid "DVD+RW Disc"
-msgstr "Disco DVD+RW"
-
-#: libhal-storage/libhal-storage.c:438
-msgid "Audio Disc"
-msgstr "Disco audio"
-
-#: libhal-storage/libhal-storage.c:446
+#: ../libhal-storage/libhal-storage.c:461
 #, c-format
 msgid "%s Removable Media"
 msgstr "Dispositivo rimovibile %s"
 
-#: libhal-storage/libhal-storage.c:449
+#: ../libhal-storage/libhal-storage.c:464
 #, c-format
 msgid "%s Media"
 msgstr "Dispositivo %s"
+
+#: ../tools/device-manager/hal-device-manager.glade:10
+msgid "Device Manager"
+msgstr "Gestione periferiche"
+
+#: ../tools/device-manager/hal-device-manager.glade:172
+#: ../tools/device-manager/hal-device-manager.glade:582
+#: ../tools/device-manager/hal-device-manager.glade:918
+msgid "<b>Vendor:</b>"
+msgstr "<b>Marca:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:198
+msgid "<b>Device:</b>"
+msgstr "<b>Dispositivo:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:224
+msgid "Device Name"
+msgstr "Nome del dispositivo"
+
+#: ../tools/device-manager/hal-device-manager.glade:250
+msgid "<b>Bus Type:</b>"
+msgstr "<b>Tipo di bus:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:276
+msgid "Status"
+msgstr "Stato"
+
+#: ../tools/device-manager/hal-device-manager.glade:302
+msgid "Bus Type"
+msgstr "Tipo di bus"
+
+#: ../tools/device-manager/hal-device-manager.glade:328
+msgid "<b>Device Type:</b>"
+msgstr "<b>Tipo di dispositivo:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:354
+msgid "Device Type"
+msgstr "Tipo di dispositivo"
+
+#: ../tools/device-manager/hal-device-manager.glade:406
+msgid "Device Vendor"
+msgstr "Marca dispositivo"
+
+#: ../tools/device-manager/hal-device-manager.glade:429
+msgid "<b>Capabilities:</b>"
+msgstr "<b>Funzionalità:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:455
+msgid "<b>Status:</b>"
+msgstr "<b>Stato:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:525
+msgid "Device"
+msgstr "Dispositivo"
+
+#: ../tools/device-manager/hal-device-manager.glade:556
+msgid "<b>Bandwidth:</b>"
+msgstr "<b>Larghezza di banda:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:608
+#: ../tools/device-manager/hal-device-manager.glade:996
+msgid "<b>Product:</b>"
+msgstr "<b>Prodotto:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:634
+msgid "<b>Revision:</b>"
+msgstr "<b>Revisione:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:660
+msgid "USB Version"
+msgstr "Versione USB"
+
+#: ../tools/device-manager/hal-device-manager.glade:685
+msgid "USB Bandwidth"
+msgstr "Larghezza di banda USB"
+
+#: ../tools/device-manager/hal-device-manager.glade:711
+msgid "Max \tPower Drain"
+msgstr "Consumo \tmax."
+
+#: ../tools/device-manager/hal-device-manager.glade:737
+#: ../tools/device-manager/hal-device-manager.glade:1042
+msgid "Manufacturer ID"
+msgstr "ID produttore"
+
+#: ../tools/device-manager/hal-device-manager.glade:763
+#: ../tools/device-manager/hal-device-manager.glade:1067
+msgid "Product ID"
+msgstr "ID prodotto"
+
+#: ../tools/device-manager/hal-device-manager.glade:789
+msgid "Product Revision"
+msgstr "Revisione prodotto"
+
+#: ../tools/device-manager/hal-device-manager.glade:833
+msgid "<b>USB Version:</b>"
+msgstr "<b>Versione USB:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:857
+msgid "<b>Power Usage:</b>"
+msgstr "<b>Consumo elettrico:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:887
+msgid "USB"
+msgstr "USB"
+
+#: ../tools/device-manager/hal-device-manager.glade:944
+msgid "<b>OEM Product:</b>"
+msgstr "<b>Prodotto OEM:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:970
+msgid "<b>OEM Vendor:</b>"
+msgstr "<b>Marca OEM:</b>"
+
+#: ../tools/device-manager/hal-device-manager.glade:1093
+msgid "OEM Manufacturer ID"
+msgstr "ID produttore OEM"
+
+#: ../tools/device-manager/hal-device-manager.glade:1119
+msgid "OEM Product ID"
+msgstr "ID prodotto OEM"
+
+#: ../tools/device-manager/hal-device-manager.glade:1149
+msgid "PCI"
+msgstr "PCI"
+
+#: ../tools/device-manager/hal-device-manager.glade:1194
+msgid "Advanced"
+msgstr "Avanzato"
+
+#: ../tools/fstab-sync.c:1677
+msgid "Add an entry to fstab"
+msgstr "Aggiungi voce a fstab"
+
+#: ../tools/fstab-sync.c:1678
+msgid "Remove an entry from fstab"
+msgstr "Rimuovi voce da fstab"
+
+#: ../tools/fstab-sync.c:1679
+msgid "Remove all generated entries from fstab"
+msgstr "Rimuovi tutte le voci generate da fstab"
+
+#: ../tools/fstab-sync.c:1680
+msgid "Report detailed information about operation progress"
+msgstr "Segnala informazioni dettagliate sull'avanzamento dell'operazione"
+
+#~ msgid "CD-ROM Disc"
+#~ msgstr "Disco CD-ROM"
+
+#~ msgid "CD-R Disc"
+#~ msgstr "Disco CD-R"
+
+#~ msgid "CD-RW Disc"
+#~ msgstr "Disco CD-RW"
+
+#~ msgid "DVD-ROM Disc"
+#~ msgstr "Disco DVD-ROM"
+
+#~ msgid "DVD-RAM Disc"
+#~ msgstr "Disco DVD-RAM"
+
+#~ msgid "DVD-R Disc"
+#~ msgstr "Disco DVD-R"
+
+#~ msgid "DVD-RW Disc"
+#~ msgstr "Disco DVD-RW"
+
+#~ msgid "DVD+R Disc"
+#~ msgstr "Disco DVD+R"
+
+#~ msgid "DVD+RW Disc"
+#~ msgstr "Disco DVD+RW"
