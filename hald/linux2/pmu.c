@@ -69,6 +69,8 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 	const char *path;
 	int flags;
 	int last_full;
+	int remaining_time;
+	int remaining_percentage;
 
 	path = hal_device_property_get_string (d, "linux.pmu_path");
 	if (path == NULL)
@@ -118,20 +120,27 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		last_full = hal_device_property_get_int (d, "battery.charge_level.last_full");
 
 		/* TODO: could read some pmu file? */
-		hal_device_property_set_int (d, "battery.remaining_time", 
-					     util_compute_time_remaining (
-						     d->udi,
-						     hal_device_property_get_int (d, "battery.charge_level.rate"),
-						     current,
-						     last_full,
-						     hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-						     hal_device_property_get_bool (d, "battery.rechargeable.is_charging")));
-
-		hal_device_property_set_int (d, "battery.charge_level.percentage", 
-				  	     util_compute_percentage_charge (
-						     d->udi,
-						     current,
-						     last_full));
+		remaining_time = util_compute_time_remaining (
+					d->udi,
+					hal_device_property_get_int (d, "battery.charge_level.rate"),
+					current,
+					last_full,
+					hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
+					hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
+		remaining_percentage = util_compute_percentage_charge (d->udi, current, last_full);
+		/*
+		 * Only set keys if no error (signified with negative return value)
+		 * Scrict checking is needed to ensure that the values presented by HAL
+		 * are 100% acurate.
+		 */
+		if (remaining_time > 0)
+			hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+		else
+			hal_device_property_remove (d, "battery.remaining_time");
+		if (remaining_percentage > 0)
+			hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
+		else
+			hal_device_property_remove (d, "battery.charge_level.percentage");
 
 		device_property_atomic_update_end ();
 	} else {
