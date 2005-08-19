@@ -2,17 +2,46 @@
 
 unknown_distro() {
     echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+    echo Unsupported Operating System >&2
+    exit 1
+}
+
+unsupported() {
+    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
     echo No hibernate script found >&2
     exit 1
 }
 
 
-if [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+if [ -f /etc/altlinux-release ] ; then
+    if [ -x /usr/bin/powersave ] ; then
+        /usr/bin/powersave --suspend-to-disk
+        RET=$?
+    else
+        # TODO: add support
+        unsupported
+    fi
+elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
     /usr/sbin/pm-hibernate
     RET=$?
+elif [ -f /etc/SuSE-release ] ; then
+    /usr/bin/powersave --suspend-to-disk
+    RET=$?
+elif [ -f /etc/mandrake-release ] ; then
+    # TODO: add support
+    unsupported
+elif [ -f /etc/gentoo-release ] ; then
+    # TODO: add support
+    unsupported
+elif [ -f /etc/slackware-version ] ; then
+    # TODO: add support
+    unsupported
+elif [ -f /etc/debian_version ] ; then
+    # TODO: add support
+    unsupported
 else
     # TODO: support other distros
     unknown_distro
-fi
+fi 
 
 exit $RET

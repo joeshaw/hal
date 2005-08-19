@@ -1,3 +1,12 @@
+2005-08-19  Danny  Danny Kukawka <danny.kukawka@web.de>
+
+	* tools/hal-system-power-hibernate, 
+	  tools/hal-system-power-set-power-save, 
+	  tools/hal-system-power-suspend: Add dectection of ALTLinux, SUSE, 
+	Mandrake, Slackware, Debian and Gentoo and add support for powersave 
+	for SUSE and ALTLinux (powersave will be included to next release ALT 
+	Linux 3.0) to the scripts.
+
 2005-08-18  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: From my

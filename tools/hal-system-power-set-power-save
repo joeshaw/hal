@@ -1,10 +1,56 @@
 #!/bin/sh
-
 read value
 
-# TODO: write code here
-if [ $value = "true" ]; then
-    echo TODO: enable power savings
-elif [ $value = "false" ]; then
-    echo TODO: disable power savings
-fi
+unknown_distro() {
+    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+    echo Unsupported Operating System >&2
+    todo
+}
+
+todo() {
+    if [ $value = "true" ]; then
+        echo TODO: enable power savings
+    elif [ $value = "false" ]; then
+        echo TODO: disable power savings
+    fi
+    exit 1
+}
+
+
+if [ -f /etc/altlinux-release ] ; then
+    if [ -x /usr/bin/powersave ] ; then
+        if [ $value = "true" ]; then
+            /usr/bin/powersave -e Powersave
+            RET=$?
+        elif [ $value = "false" ]; then
+            /usr/bin/powersave -e Performance
+            RET=$?
+        fi
+    else
+        todo
+    fi
+elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+    todo
+elif [ -f /etc/SuSE-release ] ; then
+    if [ $value = "true" ]; then
+        /usr/bin/powersave -e Powersave
+        RET=$?
+    elif [ $value = "false" ]; then
+        /usr/bin/powersave -e Performance
+        RET=$?
+    fi
+elif [ -f /etc/mandrake-release ] ; then
+    todo
+elif [ -f /etc/gentoo-release ] ; then
+    todo
+elif [ -f /etc/slackware-version ] ; then
+    todo
+elif [ -f /etc/debian_version ] ; then
+    todo
+else
+    # TODO: support other distros
+    unknown_distro
+fi 
+
+exit $RET
+

@@ -6,26 +6,55 @@ alarm_not_supported() {
     exit 1
 }
 
-unknown_distro() {
+unsupported() {
     echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
     echo No suspend script found >&2
     exit 1
 }
 
+unknown_distro() {
+    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+    echo Unsupported Operating System >&2
+    exit 1
+}
+
 read seconds_to_sleep
 
-if [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+if [ -f /etc/altlinux-release ] ; then
+    if [ -x /usr/bin/powersave ] ; then
+        /usr/bin/powersave --suspend-to-ram
+        RET=$?
+    else
+        # TODO: add support
+        unsupported
+    fi
+elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
     # TODO: fix pm-suspend to take a --wakeup-alarm argument
     if [ $seconds_to_sleep != "0" ] ; then
-	alarm_not_supported
+        alarm_not_supported
     fi
     /usr/sbin/pm-suspend
     RET=$?
     # TODO: fixup pm-suspend to define erroc code (see alarm above) and throw
     #       the appropriate exception
+elif [ -f /etc/SuSE-release ] ; then
+    /usr/bin/powersave --suspend-to-ram
+    RET=$?
+elif [ -f /etc/mandrake-release ] ; then
+    # TODO: add support
+    unsupported
+elif [ -f /etc/gentoo-release ] ; then
+    # TODO: add support
+    unsupported
+elif [ -f /etc/slackware-version ] ; then
+    # TODO: add support
+    unsupported
+elif [ -f /etc/debian_version ] ; then
+    # TODO: add support
+    unsupported
 else
     # TODO: support other distros
     unknown_distro
-fi
+fi 
 
 exit $RET
