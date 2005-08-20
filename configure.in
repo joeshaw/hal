@@ -471,7 +471,7 @@ fi
 AC_SUBST(DOCDIR)
 
 
-ALL_LINGUAS="da fr de nb nl ru hu pt it zh_TW es"
+ALL_LINGUAS="cs da de es fi fr hu it ja lt nb nl pa pt_BR pt ru zh_CN zh_TW"
 AC_SUBST(ALL_LINGUAS)
 
 GETTEXT_PACKAGE=AC_PACKAGE_NAME
