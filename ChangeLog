@@ -1,5 +1,9 @@
 2005-08-21  Danny Kukawka <danny.kukawka@web.de>
 
+	* packaging/suse/hal.spec: Added rpm spec-file for SUSE/openSUSE.
+
+2005-08-21  Danny Kukawka <danny.kukawka@web.de>
+
 	* hald/util.c: (util_compute_percentage_charge): Fix to return 100 for 
 	computed percentage values > 100% instead of -1. This can happen on
 	ACPI systems wich reports temporarily a higher 'remaining capacity' 
