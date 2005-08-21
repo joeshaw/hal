@@ -1,4 +1,11 @@
-2005-08-20  Danny  Danny Kukawka <danny.kukawka@web.de>
+2005-08-21  Danny Kukawka <danny.kukawka@web.de>
+
+	* hald/util.c: (util_compute_percentage_charge): Fix to return 100 for 
+	computed percentage values > 100% instead of -1. This can happen on
+	ACPI systems wich reports temporarily a higher 'remaining capacity' 
+	then the 'last full capacity'.
+
+2005-08-20  Danny Kukawka <danny.kukawka@web.de>
 
 	* configure.in: Fix to get all current available translations.
 
@@ -27,7 +34,7 @@
 	Also modified description of battery.remaining_time explaining the
 	different meanings while charging and discharging.
 
-2005-08-19  Danny  Danny Kukawka <danny.kukawka@web.de>
+2005-08-19  Danny Kukawka <danny.kukawka@web.de>
 
 	* tools/hal-system-power-hibernate, 
 	  tools/hal-system-power-set-power-save, 

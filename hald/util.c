@@ -79,7 +79,7 @@ util_compute_percentage_charge (const char *id,
 	/* make sure results are sensible */
 	if (percentage > 100) {
 		HAL_WARNING (("Percentage %i, returning 100!", percentage));
-		return -1;
+		return 100;
 	}
 	if (percentage < 0) {
 		HAL_WARNING (("Percentage %i, returning -1!", percentage));
