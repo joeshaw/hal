@@ -2,6 +2,31 @@
 
 	* configure.in: Fix to get all current available translations.
 
+2005-08-19  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/acpi.c (battery_refresh_poll): Remove checks for negative
+	times and percentages.
+	Also remove key if invalid data is returned.
+
+	* hald/util.c (util_compute_time_remaining, 
+	util_compute_percentage_charge): Add checks for negative times and 
+	percentages - this lets up remove lots of checks for each subsystem.
+	The keys will only be populated when the data is valid, as discussed:
+	http://article.gmane.org/gmane.comp.freedesktop.hal/2944
+
+	* hald/linux2/apm.c (battery_refresh): Add calculation of 
+	the key "battery.charge_level.percentage" so that it matches acpi.
+	Also remove key if invalid data is returned.
+
+	* hald/linux2/pmu.c (battery_refresh): Make the calculation and logic of
+	remaining_percentage and remaining_time match that of acpi and apm.
+	Also remove key if invalid data is returned.
+
+	* doc/spec/hal-spec.xml.in: Add description of the key
+	battery.charge_level.percentage and explain why it's sometimes missing.
+	Also modified description of battery.remaining_time explaining the
+	different meanings while charging and discharging.
+
 2005-08-19  Danny  Danny Kukawka <danny.kukawka@web.de>
 
 	* tools/hal-system-power-hibernate, 
