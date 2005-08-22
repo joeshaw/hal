@@ -209,8 +209,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 		goto error;
 	hal_device_property_set_bool (d, "net.interface_up", flags & IFF_UP);
 
-	hal_device_property_set_string (d, "info.product", "Networking Interface");
-
 	media_type = hal_device_property_get_int (d, "net.arp_proto_hw_id");
 	if (media_type == ARPHRD_ETHER) {
 		FILE *f;
@@ -253,9 +251,11 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 		snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
 		if (stat (wireless_path, &statbuf) == 0) {
 		*/
+			hal_device_property_set_string (d, "info.product", "WLAN Interface");
 			hal_device_property_set_string (d, "info.category", "net.80211");
 			hal_device_add_capability (d, "net.80211");
 		} else {
+			hal_device_property_set_string (d, "info.product", "Networking Interface");
 			hal_device_property_set_string (d, "info.category", "net.80203");
 			hal_device_add_capability (d, "net.80203");
 		}
