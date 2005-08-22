@@ -46,6 +46,12 @@
     <match key="info.capabilities" contains="serial">
       <match key="@serial.physical_device:info.linux.driver" string="visor">
 	<match key="pda.platform" exists="false">
+          <match key="serial.port" int="0">
+            <append key="info.capabilities" type="strlist">pda</append>
+            <merge key="pda.platform" type="string">palm</merge>
+            <merge key="info.product" type="string">PalmOS PDA</merge>
+            <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
+          </match>
           <match key="serial.port" int="1">
             <append key="info.capabilities" type="strlist">pda</append>
             <merge key="pda.platform" type="string">palm</merge>

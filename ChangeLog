@@ -1,3 +1,9 @@
+2005-08-22  Danny Kukawka <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-pda.fdi: Added for all Palm 
+	PDAs, not handled by special matches, also port 0 as hotsync port to be 
+	sure that there is at least one correct port.
+
 2005-08-21  David Zeuthen  <davidz@redhat.com>
 
 	As of Linux 2.6.14, the kernel will export a mmc_host class for
