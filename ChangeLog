@@ -1,3 +1,9 @@
+2005-08-22  Richard Hughes <richard@hughsie.com>
+
+	* hald/util.c (util_compute_time_remaining, 
+	util_compute_percentage_charge): Add some more checks for broken BIOS's
+	and add some more comments.
+
 2005-08-22  Danny Kukawka <danny.kukawka@web.de>
 
 	* hald/linux2/classdev.c: (net_add): Fix for more informative 
