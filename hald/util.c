@@ -76,11 +76,12 @@ util_compute_percentage_charge (const char *id,
 		HAL_WARNING (("chargeLastFull %i, percentage returning -1!", chargeLastFull));
 		return -1;
 	}
-	/* make sure results are sensible */
+	/* Some bios's will report this higher than 100, limit it here */
 	if (percentage > 100) {
 		HAL_WARNING (("Percentage %i, returning 100!", percentage));
 		return 100;
 	}
+	/* Something really isn't right if we get a negative... */
 	if (percentage < 0) {
 		HAL_WARNING (("Percentage %i, returning -1!", percentage));
 		return -1;
@@ -109,10 +110,20 @@ util_compute_time_remaining (const char *id,
 			     gboolean isCharging)
 {
 	int remaining_time = 0;
-	if ((chargeRate <= 0) || (chargeLevel < 0) || (chargeLastFull < 0)) {
-		HAL_WARNING (("chargeRate, chargeLevel or chargeLastFull unknown, returning -1"));
+	if (chargeRate == 0) {
+		/* Some ACPI BIOS's don't report rate */
+		if (isDischarging || isCharging)
+			HAL_WARNING (("chargeRate is 0, but discharging or charging. ACPI bug?."));
+		else
+			HAL_INFO (("chargeRate is 0 (or unknown)"));
 		return -1;
 	}
+	/* should not get negative values */
+	if (chargeRate < 0 || chargeLevel < 0 || chargeLastFull < 0) {
+		HAL_WARNING (("chargeRate, chargeLevel or chargeLastFull < 0, returning -1"));
+		return -1;
+	}
+	/* batteries cannot charge and discharge at the same time */
 	if (isDischarging && isCharging) {
 		HAL_WARNING (("isDischarging & isCharging TRUE, returning -1"));
 		return -1;
@@ -120,15 +131,22 @@ util_compute_time_remaining (const char *id,
 	if (isDischarging)
 		remaining_time = ((double) chargeLevel / (double) chargeRate) * 60 * 60;
 	else if (isCharging) {
-		if(chargeLevel > chargeLastFull ) {
+		/* 
+		 * Some ACPI BIOS's don't update chargeLastFull, 
+		 * so return 0 as we don't know how much more there is left
+		 */
+		if (chargeLevel > chargeLastFull ) {
 			HAL_WARNING (("chargeLevel > chargeLastFull, returning -1"));
 			return -1;
 		}
 		remaining_time = ((double) (chargeLastFull - chargeLevel) / (double) chargeRate) * 60 * 60;
 	}
-	if (remaining_time < 0)
+	/* This shouldn't happen, but check for completeness */
+	if (remaining_time < 0) {
+		HAL_WARNING (("remaining_time %i, returning -1", remaining_time));
 		remaining_time = -1;
-	/* 60 hours */
+	}
+	/* Battery life cannot be above 60 hours */
 	else if (remaining_time > 60*60*60) {
 		HAL_WARNING (("remaining_time *very* high, returning -1"));
 		remaining_time = -1;
