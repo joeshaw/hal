@@ -848,6 +848,53 @@ tape_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+mmc_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	gint host_num;
+	const gchar *last_elem;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
+
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+
+	hal_device_property_set_string (d, "info.category", "mmc_host");
+	hal_device_add_capability (d, "mmc_host");
+
+	hal_device_property_set_string (d, "info.product", "MMC/SD Host Adapter");
+
+	last_elem = hal_util_get_last_element (sysfs_path);
+	sscanf (last_elem, "mmc%d", &host_num);
+	hal_device_property_set_int (d, "mmc_host.host", host_num);
+
+out:
+	return d;
+}
+
+static gboolean
+mmc_host_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_mmc_host",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 classdev_remove (HalDevice *d)
 {
@@ -961,6 +1008,16 @@ static ClassDevHandler classdev_handler_tape390 =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_mmc_host =
+{
+	.subsystem    = "mmc_host",
+	.add          = mmc_host_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = mmc_host_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_input,
 	&classdev_handler_bluetooth,
@@ -971,6 +1028,7 @@ static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_serial,
 	&classdev_handler_tape,
 	&classdev_handler_tape390,
+	&classdev_handler_mmc_host,
 	NULL
 };
 

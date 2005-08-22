@@ -1,3 +1,12 @@
+2005-08-21  David Zeuthen  <davidz@redhat.com>
+
+	As of Linux 2.6.14, the kernel will export a mmc_host class for
+	MMC- devices. This patch teaches hal about this. Patch from Pierre
+	Ossman <drzeus-list@drzeus.cx>.
+
+	* hald/linux2/classdev.c (mmc_host_add): New function
+	(mmc_host_compute_udi): New function
+
 2005-08-21  Danny Kukawka <danny.kukawka@web.de>
 
 	* packaging/suse/hal.spec: Added rpm spec-file for SUSE/openSUSE.
