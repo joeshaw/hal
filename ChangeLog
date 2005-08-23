@@ -1,3 +1,11 @@
+2005-08-23  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Fix sloppy error handling in volume_id.
+
+	* volume_id/util.c: (volume_id_get_buffer):
+	* volume_id/volume_id.c: (volume_id_probe_all):
+	* volume_id/volume_id.h:
+
 2005-08-23  Danny Kukawka <danny.kukawka@web.de>  
 
 	* doc/spec/hal-spec.xml.in: Updated spec for new keys from the
