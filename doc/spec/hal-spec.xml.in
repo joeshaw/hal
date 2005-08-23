@@ -2594,6 +2594,24 @@
               <entry>Is true only if the disc contains data</entry>
             </row>
             <row>
+              <entry><literal>volume.disc.is_vcd</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc is a Video CD</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.is_svcd</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc is a Super Video CD</entry>
+            </row>
+            <row>
+              <entry><literal>volume.disc.is_videodvd</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Is true only if the disc is a Video DVD</entry>
+            </row>
+            <row>
               <entry><literal>volume.disc.is_appendable</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>

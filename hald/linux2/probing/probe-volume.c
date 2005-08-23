@@ -50,6 +50,7 @@
 #include "volume_id/volume_id.h"
 #include "volume_id/logging.h"
 #include "volume_id/msdos.h"
+#include "volume_id/util.h"
 
 #include "linux_dvd_rw_utils.h"
 
@@ -116,6 +117,141 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
 		libhal_device_set_property_string (ctx, udi, "info.product", buf, &error);
 	}
+}
+
+static void
+advanced_disc_detect (LibHalContext *ctx, const char *udi,
+                      int fd, const char *device_file)
+{
+	/* the discs block size */
+	unsigned short bs; 
+	/* the path table size */
+	unsigned short ts;
+	/* the path table location (in blocks) */
+	unsigned int tl;
+	/* length of the directory name in current path table entry */
+	unsigned char len_di = 0;
+	/* the number of the parent directory's path table entry */
+	unsigned int parent = 0; 
+	/* filename for the current path table entry */
+	char dirname[256];
+	/* our position into the path table */
+	int pos = 0; 
+	/* the path table record we're on */
+	int curr_record = 1; 
+	/* loop counter */
+	int i; 
+	DBusError error;
+	
+	dbus_error_init (&error);
+	
+	/* set defaults */
+	libhal_device_set_property_bool (ctx, udi, "volume.disc.is_videodvd", FALSE, &error);
+	libhal_device_set_property_bool (ctx, udi, "volume.disc.is_vcd", FALSE, &error);
+	libhal_device_set_property_bool (ctx, udi, "volume.disc.is_svcd", FALSE, &error);
+	
+	/* read the block size */
+	lseek (fd, 0x8080, SEEK_CUR);
+	if (read (fd, &bs, 2) != 2)
+	{
+		dbg ("Advanced probing on %s failed while reading block size", device_file);
+		goto out;
+	}
+
+	/* read in size of path table */
+	lseek (fd, 2, SEEK_CUR);
+	if (read (fd, &ts, 2) != 2)
+	{
+		dbg ("Advanced probing on %s failed while reading path table size", device_file);
+		goto out;
+	}
+
+	/* read in which block path table is in */
+	lseek (fd, 6, SEEK_CUR);
+	if (read (fd, &tl, 4) != 4)
+	{
+		dbg ("Advanced probing on %s failed while reading path table block", device_file);
+		goto out;
+	}
+
+	/* seek to the path table */
+	lseek (fd, le16_to_cpu(bs) * le32_to_cpu (tl), SEEK_SET);
+
+	/* loop through the path table entriesi */
+	while (pos < le16_to_cpu (ts))
+	{
+		/* get the length of the filename of the current entry */
+		if (read (fd, &len_di, 1) != 1)
+		{
+			dbg ("Advanced probing on %s failed, cannot read more entries", device_file);
+			break;
+		}
+
+		/* get the record number of this entry's parent
+		   i'm pretty sure that the 1st entry is always the top directory */
+		lseek (fd, 5, SEEK_CUR);
+		if (read (fd, &parent, 2) != 2)
+		{
+			dbg ("Advanced probing on %s failed, couldn't read parent entry", device_file);
+			break;
+		}
+		
+		/* read the name */
+		if (read (fd, dirname, len_di) != len_di)
+		{
+			dbg ("Advanced probing on %s failed, couldn't read the entry name", device_file);
+			break;
+		}
+		dirname[len_di] = 0;
+
+		/* strcasecmp is not POSIX or ANSI C unfortunately */
+		i=0;
+		while (dirname[i]!=0)
+		{
+			dirname[i] = (char)toupper (dirname[i]);
+			i++;
+		}
+
+		/* if we found a folder that has the root as a parent, and the directory name matches 
+		   one of the special directories then set the properties accordingly */
+		if (le16_to_cpu (parent) == 1)
+		{
+			if (!strcmp (dirname, "VIDEO_TS"))
+			{
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_videodvd", TRUE, &error);
+				dbg ("Disc in %s is a Video DVD", device_file);
+				break;
+			}
+			else if (!strcmp (dirname, "VCD"))
+			{
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_vcd", TRUE, &error);
+				dbg ("Disc in %s is a Video CD", device_file);
+				break;
+			}
+			else if (!strcmp (dirname, "SVCD"))
+			{
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_svcd", TRUE, &error);
+				dbg ("Disc in %s is a Super Video CD", device_file);
+				break;
+			}
+		}
+
+		/* all path table entries are padded to be even, 
+		   so if this is an odd-length table, seek a byte to fix it */
+		if (len_di%2 == 1)
+		{
+			lseek (fd, 1, SEEK_CUR);
+			pos++;
+		}
+
+		/* update our position */
+		pos += 8 + len_di;
+		curr_record++;
+	}
+
+out:
+	/* go back to the start of the file */
+	lseek (fd, 0, SEEK_SET);
 }
 
 int 
@@ -227,6 +363,7 @@ main (int argc, char *argv[])
 		case CDS_XA_2_2:
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
 			dbg ("Disc in %s has data", device_file);
+			advanced_disc_detect (ctx, udi, fd, device_file);
 			break;
 		case CDS_NO_INFO:	/* blank or invalid CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", TRUE, &error);
