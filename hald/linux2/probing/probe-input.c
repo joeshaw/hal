@@ -29,6 +29,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -37,6 +39,8 @@
 #include <linux/input.h>
 
 #include "libhal/libhal.h"
+
+#include "shared.h"
 
 #define test_bit(bit, array) (array[(bit) / 8] & (1 << ((bit) % 8)))
 
@@ -158,18 +162,23 @@ main (int argc, char *argv[])
 	if (device_file == NULL)
 		goto out;
 
-	fprintf(stderr, "*** handling %s\n", device_file);
+	if ((getenv ("HALD_VERBOSE")) != NULL)
+		is_verbose = TRUE;
 
+	dbg ("Doing probe-input for %s (udi=%s)",
+	     device_file, udi);
 
 	fd = open (device_file, O_RDONLY);
-	if (fd < 0)
+	if (fd < 0) {
+		dbg ("Cannot open %s: %s", device_file, strerror (errno));
 		goto out;
+	}
 
 	/* if we don't have a physical device then only accept input buses
 	 * that we now aren't hotpluggable
 	 */
 	if (ioctl (fd, EVIOCGID, &id) < 0) {
-		fprintf(stderr, "ioctl EVIOCGID failed\n");
+		dbg ("Error: EVIOCGID failed: %s\n", strerror(errno));
 		goto out;
 	}
 	physical_device = getenv ("HAL_PROP_INPUT_PHYSICAL_DEVICE");
@@ -186,7 +195,7 @@ main (int argc, char *argv[])
 
 	/* only consider devices with the event interface */
 	if (ioctl (fd, EVIOCGNAME(sizeof (name)), name) < 0) {
-		fprintf(stderr, "ioctl EVIOCGNAME failed\n");
+		dbg ("Error: EVIOCGNAME failed: %s\n", strerror(errno));
 		goto out;
 	}
 	if (!libhal_device_set_property_string (ctx, udi, "info.product", name, &error))

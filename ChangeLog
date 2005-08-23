@@ -1,5 +1,11 @@
 2005-08-23  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/probing/probe-input.c (main): Proper debug output
+	for input class probe helper. Patch from Pierre Ossman
+	<drzeus@drzeus.cx>.
+
+2005-08-23  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/Makefile.am, configure.in: Since gcc 3.4.4, 4.0.1 and
 	4.1.0, some gcov symbols have been declared hidden, resulting in a
 	link error when trying to link hald-probe-*. The problem is that
