@@ -44,6 +44,7 @@ static void
 check_abs (int fd, LibHalContext *ctx, const char *udi)
 {
 	char bitmask[(ABS_MAX + 7) / 8];
+	char bitmask_touch[(KEY_MAX + 7) / 8];
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_ABS, sizeof (bitmask)), bitmask) < 0) {
@@ -51,13 +52,22 @@ check_abs (int fd, LibHalContext *ctx, const char *udi)
 		goto out;
 	}
 
+	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask_touch)), bitmask_touch) < 0) {
+		fprintf(stderr, "ioctl EVIOCGBIT failed\n");
+		goto out;
+	}
+	
 	if (!test_bit(ABS_X, bitmask) || !test_bit(ABS_Y, bitmask)) {
 		fprintf (stderr, "missing x or y absolute axes\n");
 		goto out;
 	}
 
 	dbus_error_init (&error);
-	libhal_device_add_capability (ctx, udi, "input.tablet", &error);
+	if (test_bit(BTN_TOUCH, bitmask_touch) != 0) {
+		libhal_device_add_capability (ctx, udi, "input.tablet", &error);
+		goto out;
+	}
+	libhal_device_add_capability (ctx, udi, "input.joystick", &error);
 
 out:
 	;

@@ -1,5 +1,10 @@
 2005-08-23  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/probing/probe-input.c: (check_abs): Fixed detection of
+	input capability for joysticks (input.joystick).
+
+2005-08-23  Danny Kukawka <danny.kukawka@web.de>
+
 	* configure.in: Added Korean translation file to configure.
 
 2005-08-22  David Zeuthen  <davidz@redhat.com>
