@@ -78,13 +78,13 @@ battery_refresh_poll (HalDevice *d)
 	int mwh_current;
 	int mwh_lastfull;
 	int mwh_rate;
-	int voltage_current;
+	int voltage;
 	int remaining_time;
 	int remaining_percentage;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
-		goto out;
+		return;
 
 	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
 					  "state", "charging state", 0, "charging", TRUE);
@@ -109,9 +109,6 @@ battery_refresh_poll (HalDevice *d)
 	/* get all the data we know */
 	reporting_unit = hal_device_property_get_string (d, 
 					"battery.reporting.unit");
-	if (reporting_unit == NULL)
-		goto out;
-
 	reporting_current = hal_device_property_get_int (d, 
 					"battery.reporting.current");
 	reporting_lastfull = hal_device_property_get_int (d, 
@@ -125,25 +122,44 @@ battery_refresh_poll (HalDevice *d)
 	 *
 	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=309944
 	 */
-	if (strcmp (reporting_unit, "mWh") == 0) {
+	if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
 		/* units do not need conversion */
 		mwh_current = reporting_current;
 		mwh_lastfull = reporting_lastfull;
 		mwh_rate = reporting_rate;
-	} else if (strcmp (reporting_unit, "mAh") == 0) {
-		voltage_current = hal_device_property_get_int (d, 
-					"battery.voltage.current");
-		mwh_current = reporting_current * voltage_current;
-		mwh_lastfull = reporting_lastfull * voltage_current;
-		mwh_rate = reporting_rate * voltage_current;
+	} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
+		/*
+		 * Some ACPI BIOS's (Sony Vaio FS215M for example) report
+		 * battery.voltage.design but not battery.voltage.current
+		 * We can use the design voltage at a small loss of accuracy.
+		 *
+		 * This fixes the bug reported by Paolo Borelli here:
+		 * http://bugzilla.gnome.org/show_bug.cgi?id=314182
+		 */
+		voltage = hal_device_property_get_int (d, "battery.voltage.current");
+		if (voltage <= 0) {
+			HAL_WARNING (("battery.voltage.current invalid, using battery.voltage.design"));
+			voltage = hal_device_property_get_int (d, "battery.voltage.design");
+		}
+		/* Just in case we don't get -any- voltage information, then
+		 * we will pretend that we have 1mV.  This impacts our ability
+		 * to report accurate times but will always prevent negative
+		 * charge levels.
+		 */
+		if (voltage <= 0) {
+			HAL_WARNING (("battery.voltage.design invalid, using 1mV as a fallback"));
+			voltage = 1;
+		}
+		mwh_current = reporting_current * voltage;
+		mwh_lastfull = reporting_lastfull * voltage;
+		mwh_rate = reporting_rate * voltage;
 	} else {
 		/* 
-		 * report as 0 so we get some bug reports on types other than mWh 
-		 * and mAh, although I suspect these would cover 99.99% of cases.
+		 * handle as if mWh, which is the most common case.
 		 */
-		mwh_current = 0;
-		mwh_lastfull = 0;
-		mwh_rate = 0;
+		mwh_current = reporting_current;
+		mwh_lastfull = reporting_lastfull;
+		mwh_rate = reporting_rate;
 	}
 
 	/*
@@ -178,9 +194,6 @@ battery_refresh_poll (HalDevice *d)
 		hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
 	else
 		hal_device_property_remove (d, "battery.charge_level.percentage");
-
-out:
-	;
 }
 
 static gboolean
@@ -429,7 +442,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 					"battery.reporting.granularity_1");
 			reporting_gran2 = hal_device_property_get_int (d, 
 					"battery.reporting.granularity_2");
-			if (strcmp (reporting_unit, "mWh") == 0) {
+			if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
 				/* do not scale */
 				hal_device_property_set_int (d, 
 					"battery.charge_level.design", reporting_design);
@@ -444,8 +457,8 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 				/* set unit */
 				hal_device_property_set_string (d, 
-					"battery.charge_level.design", "mWh");
-			} else if (strcmp (reporting_unit, "mAh") == 0) {
+					"battery.charge_level.unit", "mWh");
+			} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
 				voltage_design = hal_device_property_get_int (d, 
 					"battery.voltage.design");
 
@@ -468,15 +481,30 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 				/* set unit */
 				hal_device_property_set_string (d, 
-					"battery.charge_level.design", 
+					"battery.charge_level.unit", 
 					"mWh"); /* not mAh! */
 			} else {
+				/*
+				 * Some ACPI BIOS's do not report the unit,
+				 * so we'll assume they are mWh.
+				 * We will report the guessing with the 
+				 * battery.charge_level.unit key.
+				 */
 				hal_device_property_set_int (d, 
-					"battery.charge_level.design", 0);
+					"battery.charge_level.design", reporting_design);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.warning", reporting_warning);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.low", reporting_low);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.granularity_1", reporting_gran1);
+				hal_device_property_set_int (d, 
+					"battery.charge_level.granularity_2", reporting_gran2);
 
 				/* set "Unknown ACPI Unit" unit so we can debug */
+				HAL_WARNING (("Unknown ACPI Unit!"));
 				hal_device_property_set_string (d, 
-					"battery.charge_level.design",
+					"battery.charge_level.unit",
 					"Unknown ACPI Unit");
 			}
 			/* set alarm if present */
