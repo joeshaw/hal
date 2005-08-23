@@ -1,3 +1,7 @@
+2005-08-23  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Added Basque (eu) to ALL_LINGUAS
+
 2005-08-23  Danny Kukawka <danny.kukawka@web.de>
 
 	* hald/linux2/probing/probe-input.c: (check_abs): Fixed detection of
