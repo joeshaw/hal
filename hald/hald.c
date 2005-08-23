@@ -358,8 +358,8 @@ parent_wait_for_child (int child_fd, pid_t child_pid)
 	FD_SET(child_fd, &rfds);
 	FD_ZERO(&efds);
 	FD_SET(child_fd, &efds);
-	/* Wait up to 25 seconds for device probing */
-	tv.tv_sec = 25;
+	/* Wait up to 250 seconds for device probing */
+	tv.tv_sec = 250;
 	tv.tv_usec = 0;
 
 	retval = select (child_fd + 1, &rfds, NULL, &efds, &tv);

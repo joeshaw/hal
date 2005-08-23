@@ -1,3 +1,15 @@
+2005-08-22  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Cornelia Huck <cohuck@de.ibm.com> to change timeout from
+	25 seconds to 250 seconds as a temporary workaround.
+
+	* hald/hald.c (parent_wait_for_child): I'm running into some
+	problems when trying to start the HAL daemon on large
+	installations (like a S/390 LPAR with several thousands of
+	devices). Device detection may take quite some time, more than the
+	25 seconds specified as a timeout value for select() in
+	hald/hald.c, and as a result, the daemon will abort.	
+
 2005-08-22  Richard Hughes <richard@hughsie.com>
 
 	* hald/util.c (util_compute_time_remaining, 
