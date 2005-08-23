@@ -21,6 +21,24 @@
 
 2005-08-22  Richard Hughes <richard@hughsie.com>
 
+	* hald/linux2/acpi.c (battery_refresh, battery_refresh_poll): 
+	Fix up the typos where we were not setting battery.charge_level.unit.
+	Also fix the segfault reported by Martin Pitt where HAL would segfault
+	where reporting_unit was NULL. I've protected the strcmp, and have
+	changed the code to assume mWh so that the users of these BIOS's get
+	some values set.
+	I've changed battery_refresh_poll to use this scheme too, as users of
+	broken BIOS's would currently get no updates (as it was handled with 
+	"goto out") and with this they will.
+
+	* hald/linux2/acpi.c (battery_refresh_poll): Fix the bug reported by 
+	Paolo Borelli [http://bugzilla.gnome.org/show_bug.cgi?id=314182]
+	by checking the battery.voltage.current, and if not valid, using
+	battery.voltage.design, and if that's not valid, using 1 as a fallback.
+	
+
+2005-08-22  Richard Hughes <richard@hughsie.com>
+
 	* hald/util.c (util_compute_time_remaining, 
 	util_compute_percentage_charge): Add some more checks for broken BIOS's
 	and add some more comments.
