@@ -1,5 +1,13 @@
 2005-08-23  David Zeuthen  <davidz@redhat.com>
 
+	* libhal/Makefile.am, configure.in: Since gcc 3.4.4, 4.0.1 and
+	4.1.0, some gcov symbols have been declared hidden, resulting in a
+	link error when trying to link hald-probe-*. The problem is that
+	libhal.so hasn't been linked with libgcov. Patch from Cornelia
+	Huck <cohuck@de.ibm.com>.
+
+2005-08-23  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Added Basque (eu) to ALL_LINGUAS
 
 2005-08-23  Danny Kukawka <danny.kukawka@web.de>
