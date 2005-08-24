@@ -505,7 +505,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 				HAL_WARNING (("Unknown ACPI Unit!"));
 				hal_device_property_set_string (d, 
 					"battery.charge_level.unit",
-					"Unknown ACPI Unit");
+					"unknown");
 			}
 			/* set alarm if present */
 			if (hal_util_set_int_elem_from_file (d, "battery.alarm.design", path,
