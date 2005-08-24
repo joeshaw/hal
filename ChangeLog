@@ -1,3 +1,10 @@
+2005-08-24  Danny Kukawka <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-pda.fdi: Updated fdi file
+	for Sony Clie SJ-22, Palm m130, Palm Tungsten T5 and Handspring
+	Visor. Removed merge of info.product to serial device for Palm 
+	devices since the strings from the device are more informatively.
+
 2005-08-23  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Fix sloppy error handling in volume_id.

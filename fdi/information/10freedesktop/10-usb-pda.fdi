@@ -28,11 +28,19 @@
     <match key="info.capabilities" contains="serial">
       <match key="@serial.physical_device:info.linux.driver" string="visor">
 	<match key="@serial.physical_device:usb.vendor_id" int="0x054c">
+  	  <!-- Sony Clie 3.5 -->
           <match key="@serial.physical_device:usb.product_id" int="0x0038">
             <match key="serial.port" int="0">
               <append key="info.capabilities" type="strlist">pda</append>
               <merge key="pda.platform" type="string">palm</merge>
-              <merge key="info.product" type="string">PalmOS PDA</merge>
+              <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
+            </match>
+          </match>
+  	  <!-- Sony Clie SJ-22 -->
+          <match key="@serial.physical_device:usb.product_id" int="0x0066">
+            <match key="serial.port" int="0">
+              <append key="info.capabilities" type="strlist">pda</append>
+              <merge key="pda.platform" type="string">palm</merge>
               <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
             </match>
           </match>
@@ -41,7 +49,51 @@
     </match>
   </device>
   
-  <!-- All the other PalmOS PDAs -->
+  <!-- Handspring -->
+  <device>
+    <match key="info.capabilities" contains="serial">
+      <match key="@serial.physical_device:info.linux.driver" string="visor">
+	<match key="@serial.physical_device:usb.vendor_id" int="0x082d">
+  	  <!-- Visor -->
+          <match key="@serial.physical_device:usb.product_id" int="0x0100">
+            <match key="serial.port" int="1">
+              <append key="info.capabilities" type="strlist">pda</append>
+              <merge key="pda.platform" type="string">palm</merge>
+              <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
+            </match>
+          </match>
+	</match>
+      </match>
+    </match>
+  </device>
+  
+  <!-- Known Palm PDAs from Palm, Inc. -->
+  <device>
+    <match key="info.capabilities" contains="serial">
+      <match key="@serial.physical_device:info.linux.driver" string="visor">
+	<match key="@serial.physical_device:usb.vendor_id" int="0x0830">
+  	  <!-- Palm m130 -->
+          <match key="@serial.physical_device:usb.product_id" int="0x0050">
+            <match key="serial.port" int="0">
+              <append key="info.capabilities" type="strlist">pda</append>
+              <merge key="pda.platform" type="string">palm</merge>
+              <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
+            </match>
+          </match>
+  	  <!-- Tungsten T5 -->
+          <match key="@serial.physical_device:usb.product_id" int="0x0061">
+            <match key="serial.port" int="1">
+              <append key="info.capabilities" type="strlist">pda</append>
+              <merge key="pda.platform" type="string">palm</merge>
+              <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
+            </match>
+          </match>
+	</match>
+      </match>
+    </match>
+  </device>
+  
+  <!-- All the other PalmOS PDAs as fallback -->
   <device>
     <match key="info.capabilities" contains="serial">
       <match key="@serial.physical_device:info.linux.driver" string="visor">
@@ -49,13 +101,11 @@
           <match key="serial.port" int="0">
             <append key="info.capabilities" type="strlist">pda</append>
             <merge key="pda.platform" type="string">palm</merge>
-            <merge key="info.product" type="string">PalmOS PDA</merge>
             <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
           </match>
           <match key="serial.port" int="1">
             <append key="info.capabilities" type="strlist">pda</append>
             <merge key="pda.platform" type="string">palm</merge>
-            <merge key="info.product" type="string">PalmOS PDA</merge>
             <merge key="pda.palm.hotsync_interface" type="copy_property">serial.device</merge>
           </match>
 	</match>
