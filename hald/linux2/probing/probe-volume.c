@@ -44,6 +44,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <glib.h>
+
 #include "libhal/libhal.h"
 
 #include "drive_id/drive_id.h"
@@ -55,6 +57,23 @@
 #include "linux_dvd_rw_utils.h"
 
 #include "shared.h"
+
+static char *
+strdup_valid_utf8 ( const char *String )
+{
+	char *endchar;
+	char *newString;
+
+	if (String == NULL)
+		return NULL;
+
+	newString = g_strdup( String );        
+        
+	while (!g_utf8_validate (newString, -1, (const char **) &endchar)) {
+		*endchar = '?';
+	}
+	return newString;
+}
 
 void 
 volume_id_log (const char *format, ...)
@@ -69,6 +88,7 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 {
 	char buf[256];
 	const char *usage;
+	char *volume_label;
 	DBusError error;
 
 	dbus_error_init (&error);
@@ -108,11 +128,15 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 	}
 	libhal_device_set_property_string (ctx, udi, "volume.uuid", vid->uuid, &error);
 	dbg ("volume.uuid = '%s'", vid->uuid);
-	libhal_device_set_property_string (ctx, udi, "volume.label", vid->label, &error);
-	dbg ("volume.label = '%s'", vid->label);
 
-	if (vid->label[0] != '\0') {
-		libhal_device_set_property_string (ctx, udi, "info.product", vid->label, &error);
+	/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
+	volume_label = strdup_valid_utf8 ( vid->label );
+	if( volume_label != NULL ) {
+		libhal_device_set_property_string (ctx, udi, "volume.label", volume_label, &error);
+		dbg ("volume.label = '%s'", volume_label);
+		
+		libhal_device_set_property_string (ctx, udi, "info.product", volume_label, &error);
+		g_free(volume_label);
 	} else {
 		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
 		libhal_device_set_property_string (ctx, udi, "info.product", buf, &error);

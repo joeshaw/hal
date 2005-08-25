@@ -1,5 +1,13 @@
 2005-08-25  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/probing/Makefile.am: Added glib to Makefile.
+	* hald/linux2/probing/probe-volume.c: (strdup_valid_utf8),
+	(set_volume_id_values): Fix to prevent sending invalid UTF8 
+	strings from volumelabels to D-BUS. The invalid, non UTF8, 
+	characters replaced now with '?'. 
+
+2005-08-25  Danny Kukawka <danny.kukawka@web.de>
+
 	* configure.in: Added Polish po file.
 
 2005-08-24  Danny Kukawka <danny.kukawka@web.de>
