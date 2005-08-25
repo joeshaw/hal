@@ -1,3 +1,7 @@
+2005-08-25  Danny Kukawka <danny.kukawka@web.de>
+
+	* configure.in: Added Polish po file.
+
 2005-08-24  Danny Kukawka <danny.kukawka@web.de>
 
 	* hald/linux2/acpi.c: (battery_refresh): Little string fix from
