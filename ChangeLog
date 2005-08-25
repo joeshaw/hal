@@ -1,5 +1,10 @@
 2005-08-25  Danny Kukawka <danny.kukawka@web.de>
 
+	* hald/linux2/probing/probe-volume.c: (set_volume_id_values):
+	Fixed to prevent set a empty info.product from the patch before.
+
+2005-08-25  Danny Kukawka <danny.kukawka@web.de>
+
 	* hald/linux2/probing/Makefile.am: Added glib to Makefile.
 	* hald/linux2/probing/probe-volume.c: (strdup_valid_utf8),
 	(set_volume_id_values): Fix to prevent sending invalid UTF8 

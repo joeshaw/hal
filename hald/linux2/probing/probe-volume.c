@@ -135,7 +135,13 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 		libhal_device_set_property_string (ctx, udi, "volume.label", volume_label, &error);
 		dbg ("volume.label = '%s'", volume_label);
 		
-		libhal_device_set_property_string (ctx, udi, "info.product", volume_label, &error);
+		if (strlen(volume_label) > 0) {	
+			libhal_device_set_property_string (ctx, udi, "info.product", volume_label, &error);
+		}
+		else {
+			snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+			libhal_device_set_property_string (ctx, udi, "info.product", buf, &error);
+		}
 		g_free(volume_label);
 	} else {
 		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
