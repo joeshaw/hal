@@ -1,3 +1,7 @@
+2005-08-26  David Zeuthen  <davidz@redhat.com>
+
+	* NEWS: Update for release 0.5.4
+
 2005-08-26  Danny Kukawka <danny.kukawka@web.de>
 
 	* configure.in: added sl_SI to ALL_LINGUAS 
@@ -197,7 +201,7 @@
 2005-08-18  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: Add
-	identification for Rio Forge nusic player. Patch from Pierre
+	identification for Rio Forge music player. Patch from Pierre
 	Ossman <drzeus-list@drzeus.cx>.
 
 2005-08-18  Danny Kukawka <danny.kukawka@web.de>

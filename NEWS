@@ -1,4 +1,41 @@
 ==========
+HAL 0.5.4 "Never tell anybody outside the family what you're thinking again."
+==========
+
+Released August 26, 2005
+
+ - Fixes to build on Solaris (Alvaro Lopez Ortega)
+ - Detect DVD+R Dual Layer (Danny Kukawka)
+ - Fix hal-device-manager (John 'J5' Palmieri)
+ - Methods on hal device objects (David Zeuthen)
+ - LUKS integration (W. Michael Petullo)
+ - Add defensive measures to libhal to avoid potential segfaults (Danny Kukawka)
+ - Add extra ACPI information (Danny Kukawka)
+ - Fix volume.disc.is_rewriteable for DVD+R/DVD+R DL (Danny Kukawka)
+ - Add new features to hal-set-property (W. Michael Petullo)
+ - Fixup percentage computation for batteries (Richard Hughes)
+ - Updated translations (Novell/SUSE translation team)
+ - Update all GPL license headers to FSF's new address (Danny Kukawka)
+ - Use consistent battery charge units (Ryan 'desrt' Lortie)
+ - Various battery-related fixes (Richard Hughes, Danny Kukawka)
+ - ALSA/OSS fixes (Danny Kukawka)
+ - Tape device fixes for S390 (Cornelia Huck)
+ - Export correct volume.fsuage from libhal-storage (David Zeuthen)
+ - Introduce battery.reporting properties (Richard Hughes, Danny Kukawka)
+ - Sync up to latest volume_id from udev (Kay Sievers)
+ - Introduce system-wide power management scripts (David Zeuthen)
+ - Fix how HAL detects PDA's (Danny Kukawka)
+ - Fix misc audio player stuff (Pierre Ossman)
+ - Integration for SUSE powersave (Danny Kukawka)
+ - Export mmc_host capability (Pierre Ossman)
+ - Bump timeout on detection time (Cornelia Huck)
+ - Detect joysticks (Danny Kukawka)
+ - Fix symbol visiblity with gcov (Cornelia Huck)
+ - Stop sending invalid UTF-8 characters from volume labels (Danny Kukawka)
+ - Handle non-existing callouts in a graceful manner (Kay Sievers)
+ - Various cleanups and fixes (Richard Hughes, Danny Kukawka)
+
+==========
 HAL 0.5.3 "I didn't ask who gave the order, because it had nothing to do with business."
 ==========
 
