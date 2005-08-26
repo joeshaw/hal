@@ -598,6 +598,9 @@ helper_add_property_to_env (HalDevice *device, HalProperty *property, gpointer u
 	return TRUE;
 }
 
+static void
+callout_failed (HalHelperData *ed);
+
 HalHelperData *
 hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
 			gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout)
@@ -680,6 +683,10 @@ hal_util_helper_invoke_with_pipes (const gchar *command_line, gchar **extra_env,
 					       &err)) {
 			HAL_ERROR (("Couldn't spawn '%s' err=%s!", command_line, err->message));
 			g_error_free (err);
+
+			/* move ahead in list */
+			callout_failed(ed);
+
 			g_free (ed);
 			ed = NULL;
 		} else {
@@ -1066,6 +1073,16 @@ typedef struct {
 } Callout;
 
 static void callout_do_next (Callout *c);
+
+static void
+callout_failed (HalHelperData *ed)
+{
+	Callout *c;
+	c = (Callout *) ed->data1;
+
+	c->next_program++;
+	callout_do_next(c);
+}
 
 static void 
 callout_terminated (HalDevice *d, gboolean timed_out, gint return_code, 
