@@ -2,6 +2,10 @@
 
 	* NEWS: Update for release 0.5.4
 
+2005-08-26  David Zeuthen  <davidz@redhat.com>
+
+	* tools/Makefile.am (EXTRA_DIST): Also dist $(sbin_SCRIPTS)
+
 2005-08-26  Danny Kukawka <danny.kukawka@web.de>
 
 	* configure.in: added sl_SI to ALL_LINGUAS 

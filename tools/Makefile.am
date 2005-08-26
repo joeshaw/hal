@@ -49,7 +49,7 @@ sbin_SCRIPTS =                            \
 	hal-system-power-hibernate        \
 	hal-system-power-set-power-save
 
-EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi
+EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(sbin_SCRIPTS)
 
 clean-local :
 	rm -f *~
