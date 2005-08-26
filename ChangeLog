@@ -4,6 +4,8 @@
 
 2005-08-26  David Zeuthen  <davidz@redhat.com>
 
+	* Makefile.am: Add mkinstalldirs to EXTRA_DIST for now
+
 	* tools/Makefile.am (EXTRA_DIST): Also dist $(sbin_SCRIPTS)
 
 2005-08-26  Danny Kukawka <danny.kukawka@web.de>
