@@ -1,3 +1,10 @@
+2005-08-29  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/physdev.c (ccwgroup_add_lcs_properties): The
+	following fix is needed to get a correct ccwgroup.lcs.portnumber
+	property, since the underlying portno sysfs attribute is decimal,
+	not binary. Patch from Cornelia Huck <cohuck@de.ibm.com>.
+
 2005-08-26  David Zeuthen  <davidz@redhat.com>
 
 	* NEWS: Update for release 0.5.4

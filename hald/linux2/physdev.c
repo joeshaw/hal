@@ -1062,7 +1062,7 @@ static inline void
 ccwgroup_add_lcs_properties (HalDevice *d, const gchar *sysfs_path)
 {
 	hal_util_set_int_from_file (d, "ccwgroup.lcs.portnumber", sysfs_path,
-				    "portno", 2);
+				    "portno", 10);
 	hal_util_set_string_from_file (d, "ccwgroup.lcs.type", sysfs_path,
 				       "type");
 	hal_util_set_int_from_file (d, "ccwgroup.lcs.lancmd_timeout",
