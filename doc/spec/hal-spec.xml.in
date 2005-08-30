@@ -1694,7 +1694,7 @@
 	      </entry>
             </row>
             <row>
-              <entry><literal>ccw.tape.mediumstate</literal> (string)</entry>
+              <entry><literal>ccw.tape.medium_state</literal> (string)</entry>
               <entry>example: no medium</entry>
               <entry>No</entry>
               <entry>If <literal>ccw.online = 1</literal>, shows whether a tape 

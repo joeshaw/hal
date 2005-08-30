@@ -1,3 +1,8 @@
+2005-08-30  David Zeuthen  <davidz@redhat.com>
+
+	* doc/spec/hal-spec.xml.in: s/mediumstate/medium_state/. Yes, I'll
+	learn to type someday. Patch from Cornelia Huck <cohuck@de.ibm.com>.
+
 2005-08-29  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/physdev.c (ccwgroup_add_lcs_properties): The
