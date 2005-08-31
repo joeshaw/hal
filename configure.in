@@ -558,6 +558,8 @@ echo "
         hald pidfile:             ${HALD_PID_FILE}
         hald backend:             ${HALD_BACKEND}
         Building SELinux support: ${have_selinux}
+        acpi proc support:        ${acpi_proc}
+        acpi daemon support:      ${acpi_acpid}
 
         install fstab-sync:       ${enable_fstab_sync}
         Extended PCMCIA support:  ${enable_pcmcia_support}

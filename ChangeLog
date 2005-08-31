@@ -1,3 +1,7 @@
+2005-08-31  Richard Hughes <richard@hughsie.com>
+
+	* configure.in: Display in summery if we are building in acpid support.
+
 2005-08-30  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: s/mediumstate/medium_state/. Yes, I'll
