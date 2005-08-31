@@ -1,3 +1,10 @@
+2005-08-31  Danny Kukawka <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi:
+	Removed merge of not useful key info.category=portable_audio_player.
+	This merge breakes the storage policy and prevent mount of USB storage
+	players. See bug: https://bugzilla.novell.com/show_bug.cgi?id=113966
+
 2005-08-31  Richard Hughes <richard@hughsie.com>
 
 	* configure.in: Display in summery if we are building in acpid support.
@@ -1362,7 +1369,7 @@
 	the capability was being added before the charge_level key
 	way set, causing programs watching for the "new capability"
 	to not be able to query the key until it was restarted.
- 
+
 2005-03-30  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/information/10freedesktop/10-usb-pda.fdi: Match for info.
@@ -1809,7 +1816,7 @@
 
 	* hald/linux2/acpi.c (acpi_synthesize_hotplug_events): Added
 	processor and fan handlers.
- 
+
 2005-03-02  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux2/classdev.c (sound_add): Rename alsa.id to alsa.card_id;
@@ -1835,12 +1842,12 @@
 
 	* hald/linux2/acpi.c (ac_adapter_refresh, button_refresh):
 	Removed 'system.' prefix.
- 
+
 	* hald/linux2/pmu.c (ac_adapter_refresh): Removed 
 	'system.' prefix.
- 
+
 	* hald/util.c: Updated comment regarding 'system.'
- 
+
 2005-03-02  David Zeuthen  <davidz@redhat.com>
 
 	* tools/device-manager/DeviceManager.py: Move some things around
@@ -1988,21 +1995,21 @@
 
 	497664 bytes in 486 blocks are still reachable in loss record 33 of 35
 	     at 0x1B908984: malloc (vg_replace_malloc.c:131)
-             by 0x4DE983: (within /usr/lib/libexpat.so.0.5.0)
-             by 0x4E1729: XML_ParserCreate_MM (in /usr/lib/libexpat.so.0.5.0)
-             by 0x4E17C1: XML_ParserCreate (in /usr/lib/libexpat.so.0.5.0)
+	     by 0x4DE983: (within /usr/lib/libexpat.so.0.5.0)
+	     by 0x4E1729: XML_ParserCreate_MM (in /usr/lib/libexpat.so.0.5.0)
+	     by 0x4E17C1: XML_ParserCreate (in /usr/lib/libexpat.so.0.5.0)
 
 	1003104 bytes in 972 blocks are still reachable in loss record 34 of 35
-             at 0x1B908984: malloc (vg_replace_malloc.c:131)
-             by 0x4DD4A2: (within /usr/lib/libexpat.so.0.5.0)
-             by 0x4DD5F1: (within /usr/lib/libexpat.so.0.5.0)
-             by 0x4E0596: (within /usr/lib/libexpat.so.0.5.0)
+	     at 0x1B908984: malloc (vg_replace_malloc.c:131)
+	     by 0x4DD4A2: (within /usr/lib/libexpat.so.0.5.0)
+	     by 0x4DD5F1: (within /usr/lib/libexpat.so.0.5.0)
+	     by 0x4E0596: (within /usr/lib/libexpat.so.0.5.0)
 
 	2115584 bytes in 486 blocks are still reachable in loss record 35 of 35
-             at 0x1B908984: malloc (vg_replace_malloc.c:131)
-             by 0x4DC64E: XML_GetBuffer (in /usr/lib/libexpat.so.0.5.0)
-             by 0x4DC91E: XML_Parse (in /usr/lib/libexpat.so.0.5.0)
-             by 0x805093E: scan_fdi_files (device_info.c:1282)
+	     at 0x1B908984: malloc (vg_replace_malloc.c:131)
+	     by 0x4DC64E: XML_GetBuffer (in /usr/lib/libexpat.so.0.5.0)
+	     by 0x4DC91E: XML_Parse (in /usr/lib/libexpat.so.0.5.0)
+	     by 0x805093E: scan_fdi_files (device_info.c:1282)
 
 	LEAK SUMMARY:
 	   definitely lost: 20034 bytes in 769 blocks.
@@ -2627,26 +2634,26 @@
 2005-02-11  John (J5) Palmieri  <johnp@redhat.com>
 
 	* hald/device.c, hald/device_info.c, hald/property.c, hald/property.h,
-        tools/hal_set_property.c, tools/hal_get_property.c: 
-        s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
+	tools/hal_set_property.c, tools/hal_get_property.c: 
+	s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
 
 	* hald/hald_dbus.c: ported to new dbus-0.30 API
 	(foreach_property_append): implemented real string lists 
-        and got rid of the \tval\tval\tval\t hack
+	and got rid of the \tval\tval\tval\t hack
 
 	* libhal/libhal.c: ported to new dbus-0.30 API
-        s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
+	s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
 	(libhal_get_string_array_from_iter): new helper function to create
-        string arrays from dbus arrays
+	string arrays from dbus arrays
 	(libhal_property_fill_value_from_variant): new helper function
-        that fills in properties from variants.  Used when getting
-        a hash of properties from hald
-        
+	that fills in properties from variants.  Used when getting
+	a hash of properties from hald
+
 	* libhal/libhal.h: s/HAL_PROPERTY_TYPE_NIL/HAL_PROPERTY_TYPE_INVALID
-        HAL_PROPERTY_TYPE_INVALID = DBUS_TYPE_INVALID
+	HAL_PROPERTY_TYPE_INVALID = DBUS_TYPE_INVALID
 
 	* hald/hald_test_libhal.c: ported to new dbus-0.30 API
-        Added success messages and more detailed failed messages
+	Added success messages and more detailed failed messages
 
 	* hald/util.c (hal_util_compute_udi): Change all illegal characters
 	to underscores '_'
@@ -4275,7 +4282,10 @@
 	For (my own) reference, this is the parameters used to bootstrap
 	when building for Red Hat distros
 
-	./autogen.sh --enable-mnt-noop --enable-fstab-sync --enable-hotplug-map --with-mnt-noop=managed --enable-mnt-noop-sec --with-mnt-noop-sec=kudzu --enable-mnt-access --with-mnt-access=console --with-init-scripts=redhat --with-pid-file=/var/run/haldaemon.pid --enable-selinux
+	./autogen.sh --enable-mnt-noop --enable-fstab-sync --enable-hotplug-map 
+	--with-mnt-noop=managed --enable-mnt-noop-sec --with-mnt-noop-sec=kudzu 
+	--enable-mnt-access --with-mnt-access=console --with-init-scripts=redhat 
+	--with-pid-file=/var/run/haldaemon.pid --enable-selinux
 
 	note: the util-linux package must be patched with the patch in RH bug
 	133941 in order for --with-mnt-access=console to work; should hit 
@@ -5400,7 +5410,7 @@
 	  if available. We can provide vfat(FAT32) or NTFS(3.1) now.
 	o no longer trust the version string in the fat superblock,
 	  it's not correct to do this. The type of FAT is _only_ de-
- 	  termined by the count of clusters.
+	  termined by the count of clusters.
 	o vfat's "NO NAME" is a empty label now
 	o support for FAT labels stored in the directory instead of the
 	  superblock (XP does this). volume_id ignores the label in the
@@ -5859,7 +5869,7 @@
 	Here is the code, that reads the serial number of a drive,
 	directly connected to an ATA or SCSI bus. HAL probes for the
 	values and adds: storage.serial, storage.firmware_version,
-        storage.revision if available.
+	storage.revision if available.
 	Note: This will only work on native interfaces. For devices behind
 	USB, it's not possible to get any of these values. There are some
 	bridges out there, which are capable to set the USB-values itself,
@@ -7973,32 +7983,32 @@
 
 	* hald/main.c (PendingUpdate_s): Remove the "const" from the
 	"key" field, since it's supposed to be freed.
- 
+
 	* hald/linux/linux_class_block.c: #include <glib.h>.
 	(visit_class_device_block_got_parent): The path should be declared
 	const.  g_spawn_sync() was missing a NULL GError argument.
 	(etc_mtab_process_all_block_devices): existing_block_device should
 	be declared const.
 	(get_udev_root): g_spawn_sync() needs a GError argument.
- 
+
 	* hald/linux/linux_class_net.c: Add #include "../hald.h".
 	(visit_class_device_net): Wrap the check for ARPHRD_IEEE1394 in an
 	#ifdef, since my machine doesn't seem to define it.
- 
+
 	* hald/linux/linux_common.c: #define _GNU_SOURCE since we're using
 	strndup().
- 
+
 2004-01-04  Joe Shaw  <joe@ximian.com>
- 
+
 	* configure.in: Do a separate check for dbus alone, so that we can
 	link libhal to it and not the glib libs.  This fixes things for
 	a dbus installed into a separate prefix.
- 
+
 	* libhal/Makefile.am: Use the DBUS_CFLAGS for the INCLUDES and
 	DBUS_LIBS for the libhal_la_LIBADD.
 
 	* tools/linux/Makefile.am: Ditto for hal_hotplug
- 
+
 2004-01-04  Anders Carlsson  <andersca@gnome.org>
 
 	* tools/device-manager/DeviceManager.py:
