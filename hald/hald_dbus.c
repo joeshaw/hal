@@ -2531,8 +2531,13 @@ hald_exec_method_cb (HalDevice *d, gboolean timed_out, gint return_code,
 		/* throw exception */
 
 		reply = dbus_message_new_error (message, exp_name, exp_detail);
-		if (reply == NULL)
-			DIE (("No memory"));
+		if (reply == NULL) {
+			/* error name may be invalid - assume caller fucked up and use a generic HAL error name */
+			reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");
+			if (reply == NULL) {
+				DIE (("No memory"));
+			}
+		}
 		if (dbus_connection != NULL) {
 			if (!dbus_connection_send (dbus_connection, reply, NULL))
 				DIE (("No memory"));
