@@ -1,3 +1,41 @@
+2005-09-03  Richard Hughes <richard@hughsie.com>
+
+	* tools/hal-system-lcd-set-brightness,
+	tools/hal-system-lcd-get-brightness: New files needed for the
+	SetBrightness and GetBrightness support.
+
+	* tools/Makefile.am: Add hal-system-lcd-set-brightness and
+	hal-system-lcd-get-brightness.
+
+	* fdi/policy/10osvendor/10-laptop-panel-mgmt-policy.fdi: New file, add
+	the SetBrightness and GetBrightness methods to the LaptopPanel object.
+
+	To test, use:
+	dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+	/org/freedesktop/Hal/devices/acpi_toshiba \
+	org.freedesktop.Hal.Device.LaptopPanel.SetBrightness \
+	int32:20
+
+	dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+	/org/freedesktop/Hal/devices/acpi_toshiba \
+	org.freedesktop.Hal.Device.LaptopPanel.GetBrightness
+
+	* hal.conf.in: Set so that org.freedesktop.Hal.Device.LaptopPanel can
+	only be accessed from just the console user. This is tested to work.
+
+	* hald/linux2/acpi.c (acpi_synthesize_item): New function, factor the 
+	code out from acpi_synthesize.
+
+	* hald/linux2/acpi.c (acpi_synthesize_hotplug_events, 
+	laptop_panel_refresh): Add detection for the module toshiba, asus,
+	ibm, sony and panasonic, and add the laptop_panel for these ACPI 
+	extensions.
+
+	* doc/spec/hal-spec.xml.in: Document laptop_panel.num_levels and 
+	laptop_panel.acpi_method.
+
+	* doc/TODO: Add the note about dbus return types for scripts.
+
 2005-09-01  David Zeuthen  <davidz@redhat.com>
 
 	* hald/hald_dbus.c (hald_exec_method_cb): Fix up a bug where the
