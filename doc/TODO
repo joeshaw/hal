@@ -35,6 +35,10 @@ Small items
  - Make the helpers (probers, addons) use a direct connection to hald
    instead of routing it through the system message bus
 
+ - Method calls should have a method to return string, bool int etc.
+   Perhaps use dbus-send style, 
+   e.g. int32:<number>' or 'string:the_string' or 'bool:true'
+
 Medium items
 ------------
 
