@@ -3839,6 +3839,45 @@
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-laptop-panel">
+      <title><literal>laptop_panel</literal> namespace</title>
+      <para>
+
+        Device objects with the capability <literal>laptop_panel</literal>
+        represent devices capable of changing the brightness of the display.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>laptop_panel.num_levels</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The brightness levels supported by the adaptor.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>laptop_panel.acpi_method</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The acpi method to use in scripts, e.g. toshiba, ibm, sony etc.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
 
     <sect2 id="device-properties-ac_adaptor">
       <title><literal>ac_adaptor</literal> namespace</title>
