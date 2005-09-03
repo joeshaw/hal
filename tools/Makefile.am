@@ -47,6 +47,8 @@ sbin_SCRIPTS =                            \
 	hal-luks-setup hal-luks-remove    \
 	hal-system-power-suspend          \
 	hal-system-power-hibernate        \
+	hal-system-lcd-get-brightness     \
+	hal-system-lcd-set-brightness     \
 	hal-system-power-set-power-save
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(sbin_SCRIPTS)
