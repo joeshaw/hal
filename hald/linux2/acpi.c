@@ -42,6 +42,11 @@ enum {
 	ACPI_TYPE_PROCESSOR,
 	ACPI_TYPE_FAN,
 	ACPI_TYPE_AC_ADAPTER,
+	ACPI_TYPE_TOSHIBA_DISPLAY,
+	ACPI_TYPE_ASUS_DISPLAY,
+	ACPI_TYPE_IBM_DISPLAY,
+	ACPI_TYPE_PANASONIC_DISPLAY,
+	ACPI_TYPE_SONY_DISPLAY,
 	ACPI_TYPE_BUTTON
 };
 
@@ -563,6 +568,68 @@ fan_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
+/*
+ * The different laptop_panel ACPI handling code is below. When a nice sysfs
+ * interface comes along, we'll use that instead of these hacks.
+ * Using /proc/acpi/video does not work, this method is much more reliable.
+ */
+static gboolean
+laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
+{
+	const char *path;
+	int acpi_type;
+	char *type = NULL;
+	char *desc = NULL;
+	int br_levels = -1;
+
+	path = hal_device_property_get_string (d, "linux.acpi_path");
+	if (path == NULL)
+		return FALSE;
+
+	acpi_type = hal_device_property_get_int (d, "linux.acpi_type");
+	hal_device_property_set_string (d, "info.category", "laptop_panel");
+	if (acpi_type == ACPI_TYPE_TOSHIBA_DISPLAY) {
+		type = "toshiba";
+		desc = "Toshiba LCD Panel";
+		br_levels = 8;
+	} else if (acpi_type == ACPI_TYPE_ASUS_DISPLAY) {
+		type = "asus";
+		desc = "ASUS LCD Panel";
+		br_levels = 16;
+	} else if (acpi_type == ACPI_TYPE_IBM_DISPLAY) {
+		type = "ibm";
+		desc = "IBM LCD Panel";
+		br_levels = 8;
+	} else if (acpi_type == ACPI_TYPE_PANASONIC_DISPLAY) {
+		type = "panasonic";
+		desc = "Panasonic LCD Panel";
+		br_levels = 16;
+	} else if (acpi_type == ACPI_TYPE_SONY_DISPLAY) {
+		type = "sony";
+		desc = "Sony LCD Panel";
+		br_levels = 8;
+	} else {
+		type = "unknown";
+		desc = "Unknown LCD Panel";
+		br_levels = 0;
+		HAL_WARNING (("acpi_type not recognised!"));
+	}
+
+	hal_device_property_set_string (d, "info.product", desc);
+	/*
+	 * We will set laptop_panel.acpi_method as the scripts can use this to
+	 * determine the set/get parameters.
+	 */
+	hal_device_property_set_string (d, "laptop_panel.acpi_method", type);
+	/*
+	 * We can set laptop_panel.num_levels as it will not change, and allows us
+	 * to work out the percentage in the scripts.
+	 */
+	hal_device_property_set_int (d, "laptop_panel.num_levels", br_levels);
+	hal_device_add_capability (d, "laptop_panel");
+	return TRUE;
+}
+
 static gboolean
 button_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
@@ -599,6 +666,18 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
+static void
+acpi_synthesize_item (const gchar *fullpath, int acpi_type)
+{
+	HotplugEvent *hotplug_event;
+	HAL_INFO (("Processing %s", fullpath));
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
+	hotplug_event->type = HOTPLUG_EVENT_ACPI;
+	g_strlcpy (hotplug_event->acpi.acpi_path, fullpath, sizeof (hotplug_event->acpi.acpi_path));
+	hotplug_event->acpi.acpi_type = acpi_type;
+	hotplug_event_enqueue (hotplug_event);
+}
 
 static void
 acpi_synthesize (const gchar *path, int acpi_type)
@@ -614,20 +693,11 @@ acpi_synthesize (const gchar *path, int acpi_type)
 		goto out;
 	}
 
+	/* do for each object in directory */
 	while ((f = g_dir_read_name (dir)) != NULL) {
-		HotplugEvent *hotplug_event;
 		gchar buf[HAL_PATH_MAX];
-
 		snprintf (buf, sizeof (buf), "%s/%s", path, f);
-		HAL_INFO (("Processing %s", buf));
-
-		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->action = HOTPLUG_ACTION_ADD;
-		hotplug_event->type = HOTPLUG_EVENT_ACPI;
-		g_strlcpy (hotplug_event->acpi.acpi_path, buf, sizeof (hotplug_event->acpi.acpi_path));
-		hotplug_event->acpi.acpi_type = acpi_type;
-
-		hotplug_event_enqueue (hotplug_event);
+		acpi_synthesize_item (buf, acpi_type);
 	}
 
 	/* close directory */
@@ -637,6 +707,25 @@ out:
 	;
 }
 
+/** If {procfs_path}/acpi/{vendor}/{display} is found, then add the 
+ *  LaptopPanel device.
+ *
+ *  @param vendor		The vendor name, e.g. sony
+ *  @param display		The *possible* name of the brightness file
+ *  @param method		The HAL enumerated type.
+ */
+static void
+acpi_synthesize_display (char *vendor, char *display, int method)
+{
+	gchar path[HAL_PATH_MAX];
+	snprintf (path, sizeof (path), "%s/acpi/%s/%s", get_hal_proc_path (), vendor, display);
+	/*
+	 * We do not use acpi_synthesize as the target is not a directory full
+	 * of directories, but a flat file list.
+	 */
+	if (g_file_test (path, G_FILE_TEST_EXISTS))
+		acpi_synthesize_item (path, method);
+}
 
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding ACPI objects.
@@ -693,6 +782,19 @@ acpi_synthesize_hotplug_events (void)
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
 	snprintf (path, sizeof (path), "%s/acpi/button/sleep", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
+
+	/* 
+	 * Collect video adaptors (from vendor added modules)
+	 * I *know* we should use the /proc/acpi/video/LCD method, but this
+	 * doesn't work. And it's depreciated.
+	 * When the sysfs code comes into mainline, we can use that, but until
+	 * then we can supply an abstracted interface to the user.
+	 */
+	acpi_synthesize_display ("toshiba", "lcd", ACPI_TYPE_TOSHIBA_DISPLAY);
+	acpi_synthesize_display ("asus", "brn", ACPI_TYPE_ASUS_DISPLAY);
+	acpi_synthesize_display ("pcc", "brightness", ACPI_TYPE_PANASONIC_DISPLAY);
+	acpi_synthesize_display ("ibm", "brightness", ACPI_TYPE_IBM_DISPLAY);
+	acpi_synthesize_display ("sony", "brightness", ACPI_TYPE_SONY_DISPLAY);
 
 	/* setup timer for things that we need to poll */
 	g_timeout_add (ACPI_POLL_INTERVAL,
@@ -768,6 +870,46 @@ static ACPIDevHandler acpidev_handler_fan = {
 	.remove      = acpi_generic_remove
 };
 
+static ACPIDevHandler acpidev_handler_laptop_panel_toshiba = { 
+	.acpi_type   = ACPI_TYPE_TOSHIBA_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
+static ACPIDevHandler acpidev_handler_laptop_panel_asus = { 
+	.acpi_type   = ACPI_TYPE_ASUS_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
+static ACPIDevHandler acpidev_handler_laptop_panel_panasonic = { 
+	.acpi_type   = ACPI_TYPE_PANASONIC_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
+static ACPIDevHandler acpidev_handler_laptop_panel_ibm = { 
+	.acpi_type   = ACPI_TYPE_IBM_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
+static ACPIDevHandler acpidev_handler_laptop_panel_sony = { 
+	.acpi_type   = ACPI_TYPE_SONY_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
 static ACPIDevHandler acpidev_handler_button = { 
 	.acpi_type   = ACPI_TYPE_BUTTON,
 	.add         = acpi_generic_add,
@@ -790,6 +932,11 @@ static ACPIDevHandler *acpi_handlers[] = {
 	&acpidev_handler_fan,
 	&acpidev_handler_button,
 	&acpidev_handler_ac_adapter,
+	&acpidev_handler_laptop_panel_toshiba,
+	&acpidev_handler_laptop_panel_ibm,
+	&acpidev_handler_laptop_panel_panasonic,
+	&acpidev_handler_laptop_panel_asus,
+	&acpidev_handler_laptop_panel_sony,
 	NULL
 };
 
