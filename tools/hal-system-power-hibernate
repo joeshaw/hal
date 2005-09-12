@@ -12,7 +12,6 @@ unsupported() {
     exit 1
 }
 
-
 if [ -f /etc/altlinux-release ] ; then
     if [ -x /usr/bin/powersave ] ; then
         /usr/bin/powersave --suspend-to-disk
@@ -28,20 +27,44 @@ elif [ -f /etc/SuSE-release ] ; then
     /usr/bin/powersave --suspend-to-disk
     RET=$?
 elif [ -f /etc/mandrake-release ] ; then
-    # TODO: add support
-    unsupported
+    # Try to use hibernate2 (if user has installed tools)
+    if [ -x /usr/sbin/hibernate ] ; then
+        /usr/sbin/hibernate --force
+        RET=$?
+    else
+        # TODO: add distro specific support
+        unsupported
 elif [ -f /etc/gentoo-release ] ; then
-    # TODO: add support
-    unsupported
+    # Try to use hibernate2 (if user has installed tools)
+    if [ -x /usr/sbin/hibernate ] ; then
+        /usr/sbin/hibernate --force
+        RET=$?
+    else
+        # TODO: add distro specific support
+        unsupported
 elif [ -f /etc/slackware-version ] ; then
-    # TODO: add support
-    unsupported
+    # Try to use hibernate2 (if user has installed tools)
+    if [ -x /usr/sbin/hibernate ] ; then
+        /usr/sbin/hibernate --force
+        RET=$?
+    else
+        # TODO: add distro specific support
 elif [ -f /etc/debian_version ] ; then
-    # TODO: add support
-    unsupported
+    # Try to use hibernate2 (if user has installed tools)
+    if [ -x /usr/sbin/hibernate ] ; then
+        /usr/sbin/hibernate --force
+        RET=$?
+    else
+        # TODO: add distro specific support
+        unsupported
 else
-    # TODO: support other distros
-    unknown_distro
+    # Try to use hibernate2 (if user has installed tools)
+    if [ -x /usr/sbin/hibernate ] ; then
+        /usr/sbin/hibernate --force
+        RET=$?
+    else
+        # TODO: add distro specific support
+        unknown_distro
 fi 
 
 exit $RET
