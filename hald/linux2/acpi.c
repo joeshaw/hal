@@ -80,9 +80,10 @@ battery_refresh_poll (HalDevice *d)
 	int reporting_current;
 	int reporting_lastfull;
 	int reporting_rate;
-	int mwh_current;
-	int mwh_lastfull;
-	int mwh_rate;
+	int normalised_current;
+	int normalised_lastfull;
+	int normalised_rate;
+	int design_voltage;
 	int voltage;
 	int remaining_time;
 	int remaining_percentage;
@@ -129,67 +130,74 @@ battery_refresh_poll (HalDevice *d)
 	 */
 	if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
 		/* units do not need conversion */
-		mwh_current = reporting_current;
-		mwh_lastfull = reporting_lastfull;
-		mwh_rate = reporting_rate;
+		normalised_current = reporting_current;
+		normalised_lastfull = reporting_lastfull;
+		normalised_rate = reporting_rate;
 	} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
-		/*
-		 * Some ACPI BIOS's (Sony Vaio FS215M for example) report
-		 * battery.voltage.design but not battery.voltage.current
-		 * We can use the design voltage at a small loss of accuracy.
-		 *
-		 * This fixes the bug reported by Paolo Borelli here:
-		 * http://bugzilla.gnome.org/show_bug.cgi?id=314182
+		/* convert mAh to mWh by multiplying by voltage.  due to the
+		 * general wonkiness of ACPI implementations, this is a lot
+		 * harder than it should have to be...
 		 */
+
+		design_voltage = hal_device_property_get_int (d, "battery.voltage.design");
 		voltage = hal_device_property_get_int (d, "battery.voltage.current");
-		if (voltage <= 0) {
-			HAL_WARNING (("battery.voltage.current invalid, using battery.voltage.design"));
-			voltage = hal_device_property_get_int (d, "battery.voltage.design");
-		}
-		/* Just in case we don't get -any- voltage information, then
-		 * we will pretend that we have 1mV.  This impacts our ability
-		 * to report accurate times but will always prevent negative
-		 * charge levels.
+
+		/* Just in case we don't get design voltage information, then
+		 * this will pretend that we have 1mV.  This degrades our
+		 * ability to report accurate times on multi-battery systems
+		 * but will always prevent negative charge levels and allow
+		 * accurate reporting on single-battery systems.
 		 */
-		if (voltage <= 0) {
-			HAL_WARNING (("battery.voltage.design invalid, using 1mV as a fallback"));
-			voltage = 1;
-		}
-		mwh_current = reporting_current * voltage;
-		mwh_lastfull = reporting_lastfull * voltage;
-		mwh_rate = reporting_rate * voltage;
+		if (design_voltage <= 0)
+			design_voltage = 1;
+
+		/* If the current voltage is unknown or greater than design,
+		 * then use design voltage.
+		 */
+		if (voltage <= 0 || voltage > design_voltage)
+			voltage = design_voltage;
+
+		normalised_current = reporting_current * voltage;
+		normalised_lastfull = reporting_lastfull * voltage;
+		normalised_rate = reporting_rate * voltage;
 	} else {
 		/* 
 		 * handle as if mWh, which is the most common case.
 		 */
-		mwh_current = reporting_current;
-		mwh_lastfull = reporting_lastfull;
-		mwh_rate = reporting_rate;
+		normalised_current = reporting_current;
+		normalised_lastfull = reporting_lastfull;
+		normalised_rate = reporting_rate;
 	}
 
 	/*
-	* Set these new mWh only keys. 
+	* Set the normalised keys. 
 	*/
-	if (mwh_current < 0)
-		mwh_current = 0; 
-	if (mwh_lastfull < 0)
-		mwh_lastfull = 0;
-	if (mwh_rate  < 0)
-		mwh_rate = 0;
+	if (normalised_current < 0)
+		normalised_current = 0; 
+	if (normalised_lastfull < 0)
+		normalised_lastfull = 0;
+	if (normalised_rate < 0)
+		normalised_rate = 0;
 
-	hal_device_property_set_int (d, "battery.charge_level.current", mwh_current);
-	hal_device_property_set_int (d, "battery.charge_level.last_full", mwh_lastfull);
-	hal_device_property_set_int (d, "battery.charge_level.rate", mwh_rate);
+	/* Some laptops report current charge much larger than
+	 * full charge when at 100%.  Clamp back down to 100%. */
+	if (normalised_current > normalised_lastfull)
+	  	normalised_current = normalised_lastfull;
 
-	remaining_time = util_compute_time_remaining (d->udi, mwh_rate, mwh_current, mwh_lastfull,
+	hal_device_property_set_int (d, "battery.charge_level.current", normalised_current);
+	hal_device_property_set_int (d, "battery.charge_level.last_full", normalised_lastfull);
+	hal_device_property_set_int (d, "battery.charge_level.rate", normalised_rate);
+
+	remaining_time = util_compute_time_remaining (d->udi, normalised_rate, normalised_current, normalised_lastfull,
 				hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
 				hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
-	remaining_percentage = util_compute_percentage_charge (d->udi, mwh_current, mwh_lastfull);
+	remaining_percentage = util_compute_percentage_charge (d->udi, normalised_current, normalised_lastfull);
 	/* 
 	 * Only set keys if no error (signified with negative return value)
 	 * Scrict checking is needed to ensure that the values presented by HAL
 	 * are 100% acurate.
 	 */
+
 	if (remaining_time > 0)
 		hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
 	else
@@ -466,6 +474,10 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 			} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
 				voltage_design = hal_device_property_get_int (d, 
 					"battery.voltage.design");
+	
+				/* If design voltage is unknown, use 1mV. */
+				if (voltage_design <= 0)
+					voltage_design = 1;
 
 				/* scale by factor battery.voltage.design */
 				hal_device_property_set_int (d, 

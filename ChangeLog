@@ -1,3 +1,14 @@
+2005-09-12  Ryan Lortie  <desrt@desrt.ca>
+
+	* hald/linux2/acpi.c: Some more workarounds for buggy ACPI
+	  implementations.  Clamp current capacity to never exceed last full
+	  capacity (to prevent >100% readings).  Make sure the voltage that we
+	  use to calculate current and last full capacity never exceeds design
+	  voltage.  Add a check to battery_refresh to ensure design voltage is
+	  not unknown (and use 1mV if it is).  Variable rename to indicate
+	  that the quantities that we're dealing with are arbitrary
+	  'normalised' units that might not be mWh (often µWh).
+
 2005-09-03  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-lcd-set-brightness,
