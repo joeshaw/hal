@@ -1,3 +1,11 @@
+2005-09-12  Richard Hughes <richard@hughsie.com>
+
+	* tools/hal-system-power-hibernate: Add suspend2 functionality for
+	mandrake, gentoo, slackware and debian, but don't add for redhat, 
+	fedora, suse or altlinux as they have alternative distro tools to do
+	this. I have not done this for all distros as suspend2 is not upstream
+	and some users may not want to use suspend2 functionality.
+
 2005-09-12  Ryan Lortie  <desrt@desrt.ca>
 
 	* hald/linux2/acpi.c: Some more workarounds for buggy ACPI
