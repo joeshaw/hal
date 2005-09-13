@@ -1,3 +1,7 @@
+2005-09-13  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-system-power-hibernate: Actually make this script work
+
 2005-09-12  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-power-hibernate: Add suspend2 functionality for
