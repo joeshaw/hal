@@ -333,6 +333,11 @@ pmu_synthesize_hotplug_events (void)
 		hotplug_event->pmu.pmu_type = PMU_TYPE_LID_BUTTON;
 		hotplug_event_enqueue (hotplug_event);
 	}
+	/* FIXME: *another* assumption - if the machine has got battery bays
+	 * then this makes it a laptop.
+	 */
+	if (has_battery_bays)
+		hal_device_property_set_string (computer, "system.formfactor", "laptop");
 
 	/* setup timer for things that we need to poll */
 	g_timeout_add (PMU_POLL_INTERVAL,
