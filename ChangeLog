@@ -1,3 +1,9 @@
+2005-09-26  Richard Hughes <richard@hughsie.com>
+
+	* tools/hal-system-lcd-{get|set}-brightness: use the raw values in the
+	SetBrightness and GetBrightness methods, as some laptops have an odd
+	number of steps that cannot be easily expressed in percent.
+
 2005-09-20  Richard Hughes <richard@hughsie.com>
 
 	* hald/linux2/pmu.c (pmu_synthesize_hotplug_events): Set the key
