@@ -44,7 +44,4 @@ else
 	exit 1
 	fi
 
-# Work out the percentage to return
-let "percentage =  ( ( $value + 1 ) *  100 ) / $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS"
-
-exit ${percentage}
+exit ${value}
