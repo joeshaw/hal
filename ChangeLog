@@ -1,3 +1,52 @@
+2005-09-27  Richard Hughes <richard@hughsie.com>
+
+	* Apply patch from Martin Pitt <martin@piware.de> to fix the build on
+	AMD64 by replacing kernel-style datatypes (like _u8 and __s16) with
+	their appropriate standard datatype (uint8_t and int16_t).
+	Also change to use <stdint.h> instead of <sys/types.h> for maximum 
+	portability.
+
+	* agents/linux26/sysfs/hal_monitor.c:
+	* agents/linux26/sysfs/libsysfs/libsysfs.h:
+	* configure.in:
+	* drive_id/ata.c:
+	* drive_id/drive_id.c:
+	* drive_id/scsi.c:
+	* drive_id/util.c:
+	* hald/hald.c:
+	* hald/hald_dbus.c:
+	* hald/hald_test.c:
+	* hald/hald_test_libhal.c:
+	* hald/linux2/addons/addon-acpi.c:
+	* hald/linux2/addons/addon-hid-ups.c:
+	* hald/linux2/addons/addon-pmu.c:
+	* hald/linux2/addons/addon-storage.c:
+	* hald/linux2/blockdev.c:
+	* hald/linux2/classdev.c:
+	* hald/linux2/coldplug.c:
+	* hald/linux2/hotplug.c:
+	* hald/linux2/ids.c:
+	* hald/linux2/osspec.c:
+	* hald/linux2/pcmcia_cs.h:
+	* hald/linux2/pcmcia_utils.h:
+	* hald/linux2/physdev.c:
+	* hald/linux2/probing/linux_dvd_rw_utils.c:
+	* hald/linux2/probing/probe-hiddev.c:
+	* hald/linux2/probing/probe-input.c:
+	* hald/linux2/probing/probe-pc-floppy.c:
+	* hald/linux2/probing/probe-printer.c:
+	* hald/linux2/probing/probe-smbios.c:
+	* hald/linux2/probing/probe-storage.c:
+	* hald/linux2/probing/probe-volume.c:
+	* hald/util.c:
+	* tools/fstab-sync.c:
+	* tools/linux/add_selinux.c:
+	* tools/linux/hal_hotplug.c:
+	* volume_id/mac.c:
+	* volume_id/ocfs2.c:
+	* volume_id/reiserfs.c:
+	* volume_id/sysv.c:
+
 2005-09-26  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-lcd-{get|set}-brightness: use the raw values in the

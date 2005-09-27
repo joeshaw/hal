@@ -32,9 +32,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>

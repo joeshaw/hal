@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/time.h>
 
 #include <dbus/dbus.h>

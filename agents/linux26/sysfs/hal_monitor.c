@@ -38,7 +38,7 @@
 #include <stdarg.h>
 #include <syslog.h>
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
 

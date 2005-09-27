@@ -30,9 +30,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/stat.h>
-#include <asm/types.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
 

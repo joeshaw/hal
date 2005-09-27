@@ -45,7 +45,7 @@
 #include <sys/stat.h>
 #include <scsi/sg.h>
 #include <linux/hdreg.h>
-#include <asm/types.h>
+#include <stdint.h>
 
 #include "drive_id.h"
 #include "logging.h"
@@ -111,7 +111,7 @@ struct drive_id *drive_id_open_node(const char *path)
 struct drive_id *drive_id_open_dev_t(dev_t devt)
 {
 	struct drive_id *id;
-	__u8 tmp_node[DRIVE_ID_PATH_MAX];
+	uint8_t tmp_node[DRIVE_ID_PATH_MAX];
 
 	snprintf((char *) tmp_node, DRIVE_ID_PATH_MAX,
 		 "/dev/.drive_id-%u-%u-%u", getpid(), major(devt), minor(devt));

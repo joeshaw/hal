@@ -23,7 +23,7 @@
 #ifndef _LIBSYSFS_H_
 #define _LIBSYSFS_H_
 
-#include <sys/types.h>
+#include <stdint.h>
 #include "dlist.h"
 
 /*

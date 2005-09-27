@@ -44,7 +44,7 @@
 #include <sys/un.h>
 #include <sys/utsname.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>

@@ -33,7 +33,7 @@
 #include <string.h>
 #include <mntent.h>
 #include <errno.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -45,7 +45,7 @@
 
 #include <limits.h>
 #include <errno.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>

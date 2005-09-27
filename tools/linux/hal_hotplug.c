@@ -39,7 +39,7 @@
 #include <errno.h>
 #include <mntent.h>
 #include <syslog.h>
-#include <sys/types.h>
+#include <stdint.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>

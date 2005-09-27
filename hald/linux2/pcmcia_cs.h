@@ -32,7 +32,7 @@
 #ifndef PCMCIA_CS_H
 #define PCMCIA_CS_H
 
-#include <sys/types.h>
+#include <stdint.h>
 
 /* cs_types.h */
 typedef u_short	ioaddr_t;

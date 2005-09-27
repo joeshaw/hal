@@ -34,7 +34,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <asm/types.h>
+#include <stdint.h>
 
 #include "drive_id.h"
 #include "logging.h"

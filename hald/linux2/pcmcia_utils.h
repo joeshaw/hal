@@ -35,7 +35,7 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+#include <stdint.h>
 
 #include "pcmcia_cs.h"
 
