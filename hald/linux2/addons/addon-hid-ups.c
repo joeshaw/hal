@@ -44,6 +44,8 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
+/* asm/types.h required for __s32 in linux/hiddev.h */
+#include <asm/types.h>
 #include <linux/hiddev.h>
 
 #include "libhal/libhal.h"
