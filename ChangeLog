@@ -1,5 +1,12 @@
 2005-09-28  Richard Hughes <richard@hughsie.com>
 
+	* tools/hal-system-power-hibernate, 
+	tools/hal-system-power-set-power-save,
+	tools/hal-system-power-suspend: Use sensible fallbacks as discussed:
+	http://article.gmane.org/gmane.comp.freedesktop.hal/3239
+
+2005-09-28  Richard Hughes <richard@hughsie.com>
+
 	* doc/spec/hal-spec.xml.in: Apply patch from 
 	Pierre Ossman <drzeus-list@drzeus.cx> to add documentation for the
 	new mmc.* properties and the platform.* descriptions for 

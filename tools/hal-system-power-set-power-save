@@ -1,56 +1,44 @@
 #!/bin/sh
 read value
 
-unknown_distro() {
-    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
-    echo Unsupported Operating System >&2
-    todo
+unsupported() {
+	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+	echo No powersave script found >&2
+	exit 1
 }
 
-todo() {
-    if [ $value = "true" ]; then
-        echo TODO: enable power savings
-    elif [ $value = "false" ]; then
-        echo TODO: disable power savings
-    fi
-    exit 1
-}
+#SuSE and ALTLinux only support powersave
+if [ -f /etc/altlinux-release ] || [ -f /etc/SuSE-release ] ; then
+	if [ -x "/usr/bin/powersave" ] ; then
+		if [ $value = "true" ]; then
+			/usr/bin/powersave -e Powersave
+			RET=$?
+		elif [ $value = "false" ]; then
+			/usr/bin/powersave -e Performance
+			RET=$?
+		fi
+	else
+		unsupported
+	fi
 
-
-if [ -f /etc/altlinux-release ] ; then
-    if [ -x /usr/bin/powersave ] ; then
-        if [ $value = "true" ]; then
-            /usr/bin/powersave -e Powersave
-            RET=$?
-        elif [ $value = "false" ]; then
-            /usr/bin/powersave -e Performance
-            RET=$?
-        fi
-    else
-        todo
-    fi
+#RedHat/Fedora only support pm-utils
 elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
-    todo
-elif [ -f /etc/SuSE-release ] ; then
-    if [ $value = "true" ]; then
-        /usr/bin/powersave -e Powersave
-        RET=$?
-    elif [ $value = "false" ]; then
-        /usr/bin/powersave -e Performance
-        RET=$?
-    fi
-elif [ -f /etc/mandrake-release ] ; then
-    todo
-elif [ -f /etc/gentoo-release ] ; then
-    todo
-elif [ -f /etc/slackware-version ] ; then
-    todo
-elif [ -f /etc/debian_version ] ; then
-    todo
+	if [ -x "/usr/sbin/pm-powersave" ] ; then
+		if [ $value = "true" ]; then
+			/usr/sbin/pm-powersave on
+			RET=$?
+		elif [ $value = "false" ]; then
+			/usr/sbin/pm-powersave off
+			RET=$?
+		fi
+	else
+		unsupported
+	fi
+
 else
-    # TODO: support other distros
-    unknown_distro
-fi 
+	# cannot set proc stuff here, so error out
+	unsupported
+	fi 
 
 exit $RET
 

@@ -1,76 +1,51 @@
 #!/bin/sh
 
-unknown_distro() {
-    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
-    echo Unsupported Operating System >&2
-    exit 1
-}
-
 unsupported() {
-    echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
-    echo No hibernate script found >&2
-    exit 1
+	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+	echo No hibernate script found >&2
+	exit 1
 }
 
-if [ -f /etc/altlinux-release ] ; then
-    if [ -x /usr/bin/powersave ] ; then
-        /usr/bin/powersave --suspend-to-disk
-        RET=$?
-    else
-        # TODO: add support
-        unsupported
-    fi
+#SuSE and ALTLinux only support powersave
+if [ -f /etc/altlinux-release ] || [ -f "/etc/SuSE-release" ] ; then
+	if [ -x /usr/bin/powersave ] ; then
+		/usr/bin/powersave --suspend-to-disk
+		RET=$?
+	else
+		unsupported
+	fi
+
+#RedHat/Fedora only support pm-utils
 elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
-    /usr/sbin/pm-hibernate
-    RET=$?
-elif [ -f /etc/SuSE-release ] ; then
-    /usr/bin/powersave --suspend-to-disk
-    RET=$?
-elif [ -f /etc/mandrake-release ] ; then
-    # Try to use hibernate2 (if user has installed tools)
-    if [ -x /usr/sbin/hibernate ] ; then
-        /usr/sbin/hibernate --force
-        RET=$?
-    else
-        # TODO: add distro specific support
-        unsupported
-    fi
-elif [ -f /etc/gentoo-release ] ; then
-    # Try to use hibernate2 (if user has installed tools)
-    if [ -x /usr/sbin/hibernate ] ; then
-        /usr/sbin/hibernate --force
-        RET=$?
-    else
-        # TODO: add distro specific support
-        unsupported
-    fi
-elif [ -f /etc/slackware-version ] ; then
-    # Try to use hibernate2 (if user has installed tools)
-    if [ -x /usr/sbin/hibernate ] ; then
-        /usr/sbin/hibernate --force
-        RET=$?
-    else
-        # TODO: add distro specific support
-	unsupported
-    fi
-elif [ -f /etc/debian_version ] ; then
-    # Try to use hibernate2 (if user has installed tools)
-    if [ -x /usr/sbin/hibernate ] ; then
-        /usr/sbin/hibernate --force
-        RET=$?
-    else
-        # TODO: add distro specific support
-        unsupported
-    fi
+	if [ -x /usr/sbin/pm-hibernate ] ; then
+		/usr/sbin/pm-hibernate
+		RET=$?
+	else
+		unsupported
+	fi
+
+#Other distros just need to have *any* tools installed
 else
-    # Try to use hibernate2 (if user has installed tools)
-    if [ -x /usr/sbin/hibernate ] ; then
-        /usr/sbin/hibernate --force
-        RET=$?
-    else
-        # TODO: add distro specific support
-        unknown_distro
-    fi
-fi 
+	if [ -x "/usr/bin/powersave" ] ; then
+		/usr/bin/powersave --suspend-to-disk
+		RET=$?
+	elif [ -x "/usr/sbin/pmi" ] ; then
+		/usr/sbin/pmi action hibernate force
+		RET=$?
+	elif [ -x "/usr/sbin/pm-hibernate" ] ; then
+		/usr/sbin/pm-hibernate
+		RET=$?
+	elif [ -x "/usr/sbin/hibernate" ] ; then
+		# Suspend2 tools installed
+		/usr/sbin/hibernate --force
+		RET=$?
+	elif [ -w "/sys/power/state" ] ; then
+		# Use the raw kernel sysfs interface
+		echo "disk" > /sys/power/state
+		RET=$?
+	else
+		unsupported
+		fi
+	fi
 
 exit $RET
