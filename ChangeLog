@@ -1,3 +1,36 @@
+2005-09-28  Richard Hughes <richard@hughsie.com>
+
+	* doc/spec/hal-spec.xml.in: Apply patch from 
+	Pierre Ossman <drzeus-list@drzeus.cx> to add documentation for the
+	new mmc.* properties and the platform.* descriptions for 
+	"platform bus" support.
+
+	* hald/linux2/probing/probe-serial.c: New file to probe serial ports
+	to see if they actually exist. Drivers such as 8250 are considered
+	legacy and very enumeration-unfriendly, and just create up to 32
+	devices that don't actually exist.
+	Patch from Pierre Ossman <drzeus-list@drzeus.cx>
+
+	* hald/linux2/probing/Makefile.am: Add the probe-serial prober.
+
+	* hald/linux2/probing/.cvsignore: Add hald-probe-serial.
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): There was
+	some debate about the interpretation of the kernel's removable
+	attribute. The result is that removable means that the device stays
+	but the media disappears. Because of this MMC needs to set the
+	hotpluggable attribute to be handled correctly.
+	Patch from Pierre Ossman <drzeus-list@drzeus.cx>
+
+	* hald/linux2/physdev.c (platform_add): New function, to add support
+	to devices connected to the platform bus.
+	These kind of devices are commonly, incorrectly, called legacy devices.
+	Patch from Pierre Ossman <drzeus-list@drzeus.cx>
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): 
+	Properly enumerate a flopy drive connected to the platform bus.
+	Patch from Pierre Ossman <drzeus-list@drzeus.cx>
+
 2005-09-27  Richard Hughes <richard@hughsie.com>
 
 	* Apply patch from Martin Pitt <martin@piware.de> to fix the build on
