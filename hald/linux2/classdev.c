@@ -770,14 +770,14 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 		hal_device_property_set_string (d, "info.product", "Serial Port");
 	}
 
-	/* TODO: run prober to see if there actually is a physical
-	 *       serial port if possible (on my T41, the kernel
-	 *       exports ttyS0 but there is no real port on the
-	 *       laptop; only on the docking station)
-	 */
-
 out:
 	return d;
+}
+
+static const gchar *
+serial_get_prober (HalDevice *d)
+{
+	return "hald-probe-serial";
 }
 
 static gboolean
@@ -982,7 +982,7 @@ static ClassDevHandler classdev_handler_serial =
 { 
 	.subsystem    = "tty",
 	.add          = serial_add,
-	.get_prober   = NULL,
+	.get_prober   = serial_get_prober,
 	.post_probing = NULL,
 	.compute_udi  = serial_compute_udi,
 	.remove       = classdev_remove

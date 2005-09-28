@@ -571,36 +571,28 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	d = hal_device_new ();
 
-	/* lip service for PC floppy drives */
-	if (parent == NULL && sscanf (hal_util_get_last_element (sysfs_path), "fd%d", &floppy_num) == 1) {
-		;
-	} else {
-		floppy_num = -1;
-
-		if (parent == NULL) {
-			const gchar *luks_uuid = blockdev_get_luks_uuid (device_file);
-			if (luks_uuid != NULL) {
-				is_partition = TRUE;
-				parent = blockdev_get_luks_parent (luks_uuid, d);
-			}
+	if (parent == NULL) {
+		const gchar *luks_uuid = blockdev_get_luks_uuid (device_file);
+		if (luks_uuid != NULL) {
+			is_partition = TRUE;
+			parent = blockdev_get_luks_parent (luks_uuid, d);
 		}
+	}
 
-		if (parent == NULL) {
-			HAL_INFO (("Ignoring hotplug event - no parent"));
-			goto error;
-		}
+	if (parent == NULL) {
+		HAL_INFO (("Ignoring hotplug event - no parent"));
+		goto error;
+	}
 
-		if (!is_fakevolume && hal_device_property_get_bool (parent, "storage.no_partitions_hint")) {
-			HAL_INFO (("Ignoring blockdev since not a fakevolume and parent has "
-				   "storage.no_partitions_hint==TRUE"));
-			goto error;
-		}
+	if (!is_fakevolume && hal_device_property_get_bool (parent, "storage.no_partitions_hint")) {
+		HAL_INFO (("Ignoring blockdev since not a fakevolume and parent has "
+			   "storage.no_partitions_hint==TRUE"));
+		goto error;
 	}
 
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
-	if (parent != NULL)
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_string (d, "info.parent", parent->udi);
 	hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_BLOCK);
 
 	hal_device_property_set_string (d, "block.device", device_file);
@@ -614,7 +606,9 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	hal_device_property_set_int (d, "block.minor", minor);
 	hal_device_property_set_bool (d, "block.is_volume", is_partition);
 
-	if (floppy_num >= 0) {
+	if (hal_device_has_property(parent, "info.bus") &&
+		(strcmp(hal_device_property_get_string(parent, "info.bus"), "platform") == 0) &&
+		(sscanf(hal_device_property_get_string(parent, "platform.id"), "floppy.%d", &floppy_num) == 1)) {
 		/* for now, just cheat here for floppy drives */
 
 		HAL_INFO (("doing floppy drive hack for floppy %d", floppy_num));
@@ -628,8 +622,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "info.vendor", "");
 		hal_device_property_set_string (d, "info.product", "PC Floppy Drive");
 		hal_device_property_set_string (d, "storage.drive_type", "floppy");
-		hal_device_property_set_string (d, "storage.physical_device", "/org/freedesktop/Hal/devices/computer");
-		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+		hal_device_property_set_string (d, "storage.physical_device", parent->udi);
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
 		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
 		hal_device_property_set_bool (d, "storage.requires_eject", FALSE);
@@ -731,6 +724,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				} else if (strcmp (bus, "mmc") == 0) {
 					physdev = d_it;
 					physdev_udi = udi_it;
+					is_hotpluggable = TRUE;
 					hal_device_property_set_string (d, "storage.bus", "mmc");
 					break;
 				} else if (strcmp (bus, "ccw") == 0) {

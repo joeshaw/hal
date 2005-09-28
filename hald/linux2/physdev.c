@@ -484,6 +484,52 @@ pnp_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+platform_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *dev_id;
+	gchar buf[64];
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "platform");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	dev_id = hal_util_get_last_element (sysfs_path);
+
+	hal_device_property_set_string (d, "platform.id", dev_id);
+
+	g_snprintf (buf, sizeof (buf), "Platform Device (%s)", hal_device_property_get_string (d, "platform.id"));
+	hal_device_property_set_string (d, "info.product", buf);
+
+	return d;
+}
+
+static gboolean
+platform_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/platform_%s",
+			      hal_device_property_get_string (d, "platform.id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 serio_add (const gchar *sysfs_path, HalDevice *parent)
 {
 	HalDevice *d;
@@ -1244,6 +1290,13 @@ static PhysDevHandler physdev_handler_pnp = {
 	.remove      = physdev_remove
 };
 
+static PhysDevHandler physdev_handler_platform = {
+	.subsystem   = "platform",
+	.add         = platform_add,
+	.compute_udi = platform_compute_udi,
+	.remove      = physdev_remove
+};
+
 static PhysDevHandler physdev_handler_serio = { 
 	.subsystem   = "serio",
 	.add         = serio_add,
@@ -1307,6 +1360,7 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_usb,
 	&physdev_handler_ide,
 	&physdev_handler_pnp,
+	&physdev_handler_platform,
 	&physdev_handler_serio,
 	&physdev_handler_pcmcia,
 	&physdev_handler_scsi,
