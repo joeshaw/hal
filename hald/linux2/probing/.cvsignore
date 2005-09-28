@@ -11,3 +11,4 @@ hald-probe-printer
 hald-probe-smbios
 hald-probe-storage
 hald-probe-volume
+hald-probe-serial
