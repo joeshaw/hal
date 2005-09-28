@@ -400,6 +400,14 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
+HREF="#device-properties-laptop-panel"
+><TT
+CLASS="literal"
+>laptop_panel</TT
+> namespace</A
+></DT
+><DT
+><A
 HREF="#device-properties-ac_adaptor"
 ><TT
 CLASS="literal"
@@ -552,21 +560,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN3395"
+HREF="#AEN3439"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN3406"
+HREF="#AEN3450"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN3414"
+HREF="#AEN3458"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -3746,7 +3754,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->ccw.tape.mediumstate</TT
+>ccw.tape.medium_state</TT
 > (string)</TD
 ><TD
 >example: no medium</TD
@@ -5500,6 +5508,45 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>volume.disc.is_vcd</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Is true only if the disc is a Video CD</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.disc.is_svcd</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Is true only if the disc is a Super Video CD</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>volume.disc.is_videodvd</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Is true only if the disc is a Video DVD</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >volume.disc.is_appendable</TT
 > (bool)</TD
 ><TD
@@ -5711,7 +5758,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1752"
+NAME="AEN1770"
 ></A
 ><TABLE
 BORDER="1"
@@ -6199,7 +6246,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1946"
+NAME="AEN1964"
 ></A
 ><TABLE
 BORDER="1"
@@ -6411,7 +6458,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2032"
+NAME="AEN2050"
 ></A
 ><TABLE
 BORDER="1"
@@ -6565,7 +6612,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2090"
+NAME="AEN2108"
 ></A
 ><TABLE
 BORDER="1"
@@ -6696,7 +6743,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2132"
+NAME="AEN2150"
 ></A
 ><TABLE
 BORDER="1"
@@ -6769,7 +6816,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2154"
+NAME="AEN2172"
 ></A
 ><TABLE
 BORDER="1"
@@ -6836,7 +6883,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2174"
+NAME="AEN2192"
 ></A
 ><TABLE
 BORDER="1"
@@ -6901,7 +6948,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2194"
+NAME="AEN2212"
 ></A
 ><TABLE
 BORDER="1"
@@ -7028,7 +7075,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2238"
+NAME="AEN2256"
 ></A
 ><TABLE
 BORDER="1"
@@ -7165,7 +7212,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2286"
+NAME="AEN2304"
 ></A
 ><TABLE
 BORDER="1"
@@ -7444,7 +7491,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2383"
+NAME="AEN2401"
 ></A
 ><TABLE
 BORDER="1"
@@ -7686,7 +7733,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2472"
+NAME="AEN2490"
 ></A
 ><TABLE
 BORDER="1"
@@ -7787,6 +7834,86 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
+NAME="device-properties-laptop-panel"
+><TT
+CLASS="literal"
+>laptop_panel</TT
+> namespace</A
+></H3
+><P
+>&#13;
+        Device objects with the capability <TT
+CLASS="literal"
+>laptop_panel</TT
+>
+        represent devices capable of changing the brightness of the display.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN2532"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>laptop_panel.num_levels</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The brightness levels supported by the adaptor.
+              </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>laptop_panel.acpi_method</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The acpi method to use in scripts, e.g. toshiba, ibm, sony etc.
+              </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
 NAME="device-properties-ac_adaptor"
 ><TT
 CLASS="literal"
@@ -7807,7 +7934,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2514"
+NAME="AEN2558"
 ></A
 ><TABLE
 BORDER="1"
@@ -7875,7 +8002,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2534"
+NAME="AEN2578"
 ></A
 ><TABLE
 BORDER="1"
@@ -8721,7 +8848,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2843"
+NAME="AEN2887"
 ></A
 ><TABLE
 BORDER="1"
@@ -8835,7 +8962,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2887"
+NAME="AEN2931"
 ></A
 ><TABLE
 BORDER="1"
@@ -8903,7 +9030,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2908"
+NAME="AEN2952"
 ></A
 ><TABLE
 BORDER="1"
@@ -8997,7 +9124,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2940"
+NAME="AEN2984"
 ></A
 ><TABLE
 BORDER="1"
@@ -9108,7 +9235,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2982"
+NAME="AEN3026"
 ></A
 ><TABLE
 BORDER="1"
@@ -9246,7 +9373,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3038"
+NAME="AEN3082"
 ></A
 ><TABLE
 BORDER="1"
@@ -9338,7 +9465,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3066"
+NAME="AEN3110"
 ></A
 ><TABLE
 BORDER="1"
@@ -9497,7 +9624,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3118"
+NAME="AEN3162"
 ></A
 ><TABLE
 BORDER="1"
@@ -9626,7 +9753,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3159"
+NAME="AEN3203"
 ></A
 ><TABLE
 BORDER="1"
@@ -10694,7 +10821,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3353"
+NAME="AEN3397"
 ></A
 ><TABLE
 BORDER="1"
@@ -10854,7 +10981,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3395"
+NAME="AEN3439"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -10970,7 +11097,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN3406"
+NAME="AEN3450"
 >Example</A
 ></H3
 ><P
@@ -11088,7 +11215,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3414"
+NAME="AEN3458"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

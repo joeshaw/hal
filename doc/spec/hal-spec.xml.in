@@ -1176,6 +1176,43 @@
     </sect2>
 
 
+    <sect2 id="device-properties-platform">
+      <title><literal>platform</literal> namespace</title>
+      <para>
+
+	Devices that are built into the platform or present on busses that
+	cannot be properly enumerated (e.g. ISA) are represented by device
+	objects where <literal>info.bus</literal> equals
+	<literal>platform</literal>. These kind of devices are commonly,
+	somewhat incorrectly, called legacy devices.
+
+      </para>
+
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>platform.id</literal> (string)</entry>
+              <entry>example: serial</entry>
+              <entry>Yes</entry>
+              <entry>Device identification</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+    </sect2>
+
+
     <sect2 id="device-properties-ide-host">
       <title><literal>ide_host</literal> namespace</title>
 
@@ -1495,6 +1532,130 @@
         </tgroup>
       </informaltable>
     </sect2>
+
+
+    <sect2 id="device-properties-mmc_host">
+      <title><literal>mmc_host</literal> namespace</title>
+      <para>
+
+	Device objects with <literal>info.bus</literal> set to
+	<literal>mmc_host</literal> represent MultiMediaCard or
+	Secure Digital host adaptors. The following properties
+	are available for such device objects.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>mmc_host.host</literal> (int)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>A unique number identifying the MMC/SD host adaptor</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
+    <sect2 id="device-properties-mmc">
+      <title><literal>mmc</literal> namespace</title>
+      <para>
+
+	Device objects with <literal>info.bus</literal> set to
+	<literal>mmc</literal> represent MultiMediaCard or Secure
+	Digital cards. The following properties are available for
+	such device objects.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>mmc.cid</literal> (string)</entry>
+              <entry>example: 0150415330303842413a1a8083003a9d</entry>
+              <entry>Yes</entry>
+              <entry>Card Identification Data register (unique for every card
+              in existence)</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.csd</literal> (string)</entry>
+              <entry>example: 005d013213598067b6d9cfff1640002d</entry>
+              <entry>Yes</entry>
+              <entry>Card Specific Data register</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.scr</literal> (string)</entry>
+              <entry>example: 00a5000000410000</entry>
+              <entry>Only for SD cards</entry>
+              <entry>SD Card Register</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.rca</literal> (int)</entry>
+              <entry>example: 8083</entry>
+              <entry>Yes</entry>
+              <entry>Card bus address</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.oem</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Card OEM distributor</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.date</literal> (string)</entry>
+              <entry>example: 10/2003</entry>
+              <entry>Yes</entry>
+              <entry>Manufacturing date</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.serial</literal> (int)</entry>
+              <entry>example: 0x3a1a8083</entry>
+              <entry>Yes</entry>
+              <entry>Card serial number</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.hwrev</literal> (int)</entry>
+              <entry>example: 4</entry>
+              <entry>Yes</entry>
+              <entry>Hardware revision</entry>
+            </row>
+
+            <row>
+              <entry><literal>mmc.fwrev</literal> (int)</entry>
+              <entry>example: 1</entry>
+              <entry>Yes</entry>
+              <entry>Firmware revision</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
 
     <sect2 id="device-properties-ccw">
       <title><literal>ccw</literal> namespace</title>
