@@ -1,5 +1,17 @@
 2005-10-10  Richard Hughes <richard@hughsie.com>
 
+	* tools/fstab-sync.c: Add a patch by Pascal Terjan 
+	<pterjan@mandriva.com> to fix fstab parsing:
+	According to fstab manpage, fields 5 and 6 are optional (and 
+	treated as 0 if they are not present).
+	However, if you have a fstab with one (or both) field missing and
+	some whitespaces at the end of the line, fstab-sync will fail to
+	parse the file.
+	The patch has been in Mandrake Cooker since September, 6 with no
+	ill effects.
+
+2005-10-10  Richard Hughes <richard@hughsie.com>
+
 	* hald/linux2/probing/probe-smbios.c: the smbios prober now works with
 	the new version of dmidecode (found in latest Ubuntu and Fedora Core 
 	Rawhide) that has a different output than the older format.
