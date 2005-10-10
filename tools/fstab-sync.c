@@ -574,11 +574,19 @@ fs_table_parse_line (FSTable *table, const char *line, size_t length)
       /* If it's not before the first field or after the last field
        * then we don't want to accept the line ending with whitespace
        */
-      if (current_field != FS_TABLE_FIELD_TYPE_WHITE_SPACE
-          && (i > length || (line[i] == '\0' && current_field != 0)))
+      if (i > length || (line[i] == '\0' && current_field != 0))
         {
-          fstab_update_debug (_("%d: Line ended prematurely\n"), pid);
-          return FALSE;
+          if (current_field < FS_TABLE_FIELD_TYPE_DUMP_FREQUENCY)
+            {
+              fstab_update_debug (_("%d: Line ended prematurely\n"), pid);
+              return FALSE;
+            }
+          else
+            {
+              /* The last 2 fields are not mandatory, it they are not there,
+               * we are at the end of the line */
+              current_field = FS_TABLE_FIELD_TYPE_WHITE_SPACE;
+            } 
         }
 
       if (line + i != p)
