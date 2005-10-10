@@ -4,6 +4,7 @@
  * probe-smbios.c : Probe system BIOS according to the SMBIOS/DMI standard
  *
  * Copyright (C) 2005 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Richard Hughes, <richard@hughsie.com>
  *
  * Licensed under the Academic Free License version 2.0
  *
@@ -39,37 +40,62 @@
 #include "libhal/libhal.h"
 #include "shared.h"
 
-#define DMIPARSER_STATE_IGNORE 0
-#define DMIPARSER_STATE_BIOS 1
-#define DMIPARSER_STATE_SYSTEM 2
-#define DMIPARSER_STATE_CHASSIS 3
+#define DMIPARSER_STATE_IGNORE		0
+#define DMIPARSER_STATE_BIOS		1
+#define DMIPARSER_STATE_SYSTEM		2
+#define DMIPARSER_STATE_CHASSIS		3
 
 #define strbegin(buf, str) (strncmp (buf, str, sizeof (str) - 1) == 0)
 
-#define setstr(buf, str, prop)				                                                    \
-	do {								                                    \
-		if (strbegin (buf, str)) {				                                    \
-			dbus_error_init (&error);                                                           \
-			libhal_device_set_property_string (ctx, udi, prop, buf + sizeof(str), &error);      \
-			dbg ("Setting %s='%s'", prop, buf + sizeof(str));                                   \
-		}							                                    \
-	} while (FALSE);
+/* global */
+char *udi = NULL;
+LibHalContext *ctx = NULL;
 
+/** Finds the start of a null terminated string and sets HAL
+ *  property if valid.
+ *
+ *  @param	buf		The non tabbed prefixed, null terminated string
+ *  @param	str		The strings to compare with e.g. "Vendor:"
+ *  @param	prop		The HAL property to set
+ *  @return			TRUE is found, FALSE otherwise.
+ */
+static int
+setstr (char *buf, char *str, char *prop)
+{
+	DBusError error;
+	char *value;
 
+	if (strbegin (buf, str)) {
+		dbus_error_init (&error);
+		value = buf + strlen (str) + 1;
+		libhal_device_set_property_string (ctx, udi, prop, value, &error);
+		dbg ("Setting %s='%s'", prop, value);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/** Main entry point
+ *
+ *  @param	argc		Number of arguments given to program
+ *  @param	argv		Arguments given to program
+ *  @return			Return code
+ */
 int 
 main (int argc, char *argv[])
 {
 	int ret;
-	char *udi;
-	LibHalContext *ctx = NULL;
 	DBusError error;
 	char buf[512];
+	char *nbuf;
 	int dmipipe[2];
 	int nullfd;
 	FILE *f;
 	int dmiparser_state = DMIPARSER_STATE_IGNORE;
 
-	/* on some system chassis pops up several times; so only take the first entry for each */
+	/* on some system chassis pops up several times,
+	 * so only take the first entry for each
+	 */
 	int dmiparser_done_bios = FALSE;
 	int dmiparser_done_system = FALSE;
 	int dmiparser_done_chassis = FALSE;
@@ -78,15 +104,19 @@ main (int argc, char *argv[])
 	ret = 1;
 
 	udi = getenv ("UDI");
-	if (udi == NULL)
+	if (udi == NULL) {
+		dbg ("UDI not set");
 		goto out;
+	}
 
 	if ((getenv ("HALD_VERBOSE")) != NULL)
 		is_verbose = TRUE;
 
 	dbus_error_init (&error);
-	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
+		dbg ("ctx init failed");
 		goto out;
+	}
 
 	pipe (dmipipe);	
 	f = fdopen (dmipipe[0], "r");
@@ -106,6 +136,7 @@ main (int argc, char *argv[])
 		execl ("/usr/sbin/dmidecode", "/usr/sbin/dmidecode", NULL);
 		
 		/* throw an error if we ever reach this point */
+		dbg ("Failed to execute dmidecode!");
 		exit (1);
 		break;
 	case -1:
@@ -123,61 +154,86 @@ main (int argc, char *argv[])
 	{
 		unsigned int i;
 		unsigned int len;
+		unsigned int tabs = 0;
 
 		/* trim whitespace */
 		len = strlen (buf);
+
+		/* check that will fit in buffer */
 		if (len >= sizeof (buf))
 			continue;
 
-		for (i = len - 1; isspace (buf[i]) && i >= 0; --i)
-			buf[i] = '\0';
-
-		if (!strbegin (buf, "\t\t"))
+		/* not big enough for data, and protects us from underflow */
+		if (len < 3) {
 			dmiparser_state = DMIPARSER_STATE_IGNORE;
+			continue;
+		}
 
-		switch (dmiparser_state)
-		{
-		case DMIPARSER_STATE_IGNORE:
-			if (strbegin (buf, "\tBIOS Information")) {
-				if (!dmiparser_done_bios)
-					dmiparser_state = DMIPARSER_STATE_BIOS;
-			} else if (strbegin (buf, "\tSystem Information")) {
-				if (!dmiparser_done_system)
-					dmiparser_state = DMIPARSER_STATE_SYSTEM;
-			} else if (strbegin (buf, "\tChassis Information")) {
-				if (!dmiparser_done_chassis)
-					dmiparser_state = DMIPARSER_STATE_CHASSIS;
-			}
-			break;
+		/* find out number of leading tabs */
+		if (buf[0] == '\t' && buf[1] == '\t')
+			tabs = 2; /* this is list data */
+		else if (buf[0] == '\t')
+			tabs = 1; /* this is data, 0 is section type */
+
+		if (tabs == 2)
+			/* we do not proccess data at depth 2 */
+			continue;
 			
-		case DMIPARSER_STATE_BIOS:
-			setstr (buf, "\t\tVendor:", "smbios.bios.vendor");
-			setstr (buf, "\t\tVersion:", "smbios.bios.version");
-			setstr (buf, "\t\tRelease Date:", "smbios.bios.release_date");
+		/* set the section type */
+		if (tabs == 0) {
+			if (!dmiparser_done_bios && strbegin (buf, "BIOS Information"))
+				dmiparser_state = DMIPARSER_STATE_BIOS;
+			else if (!dmiparser_done_system && strbegin (buf, "System Information"))
+				dmiparser_state = DMIPARSER_STATE_SYSTEM;
+			else if (!dmiparser_done_chassis && strbegin (buf, "Chassis Information"))
+				dmiparser_state = DMIPARSER_STATE_CHASSIS;
+			else
+				/*
+				 * We do not match the other sections,
+				 * or sections we have processed before
+				 */
+				dmiparser_state = DMIPARSER_STATE_IGNORE;
+			continue; /* next line */
+		}
+
+		/* we are not in a section we know, no point continueing */
+		if (dmiparser_state == DMIPARSER_STATE_IGNORE)
+			continue;
+
+		/* removes the leading tab */
+		nbuf = &buf[1];
+
+		/* removes the trailing spaces */
+		for (i = len - 2; isspace (nbuf[i]) && i >= 0; --i)
+			nbuf[i] = '\0';
+
+		if (dmiparser_state == DMIPARSER_STATE_BIOS) {
+			setstr (nbuf, "Vendor:", "smbios.bios.vendor");
+			setstr (nbuf, "Version:", "smbios.bios.version");
+			setstr (nbuf, "Release Date:", "smbios.bios.release_date");
 			dmiparser_done_bios = TRUE;
-			break;
-
-		case DMIPARSER_STATE_SYSTEM:
-			setstr (buf, "\t\tManufacturer:", "smbios.system.manufacturer");
-			setstr (buf, "\t\tProduct Name:", "smbios.system.product");
-			setstr (buf, "\t\tVersion:", "smbios.system.version");
-			setstr (buf, "\t\tSerial Number:", "smbios.system.serial");
-			setstr (buf, "\t\tUUID:", "smbios.system.uuid");
+		} else if (dmiparser_state == DMIPARSER_STATE_BIOS) {
+			setstr (nbuf, "Manufacturer:", "smbios.system.manufacturer");
+			setstr (nbuf, "Product Name:", "smbios.system.product");
+			setstr (nbuf, "Version:", "smbios.system.version");
+			setstr (nbuf, "Serial Number:", "smbios.system.serial");
+			setstr (nbuf, "UUID:", "smbios.system.uuid");
 			dmiparser_done_system = TRUE;
-			break;
-
-		case DMIPARSER_STATE_CHASSIS:
-			setstr (buf, "\t\tManufacturer:", "smbios.chassis.manufacturer");
-			setstr (buf, "\t\tType:", "smbios.chassis.type");
+		} else if (dmiparser_state == DMIPARSER_STATE_CHASSIS) {
+			setstr (nbuf, "Manufacturer:", "smbios.chassis.manufacturer");
+			setstr (nbuf, "Type:", "smbios.chassis.type");
 			dmiparser_done_chassis = TRUE;
-			break;
 		}
 	}
-	
+
+	/* as read to EOF, close */
 	fclose (f);
 
+	/* return success */
+	ret = 0;
 
 out:
+	/* free ctx */
 	if (ctx != NULL) {
 		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
