@@ -1,3 +1,10 @@
+2005-10-10  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/probing/probe-smbios.c: the smbios prober now works with
+	the new version of dmidecode (found in latest Ubuntu and Fedora Core 
+	Rawhide) that has a different output than the older format.
+	I've also cleaned up the file substantially.
+
 2005-09-28  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-power-hibernate, 
