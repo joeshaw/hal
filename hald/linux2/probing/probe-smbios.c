@@ -212,7 +212,7 @@ main (int argc, char *argv[])
 			setstr (nbuf, "Version:", "smbios.bios.version");
 			setstr (nbuf, "Release Date:", "smbios.bios.release_date");
 			dmiparser_done_bios = TRUE;
-		} else if (dmiparser_state == DMIPARSER_STATE_BIOS) {
+		} else if (dmiparser_state == DMIPARSER_STATE_SYSTEM) {
 			setstr (nbuf, "Manufacturer:", "smbios.system.manufacturer");
 			setstr (nbuf, "Product Name:", "smbios.system.product");
 			setstr (nbuf, "Version:", "smbios.system.version");
