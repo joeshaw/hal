@@ -4,6 +4,7 @@
  * addon-acpi.c : Listen to ACPI events and modify hal device objects
  *
  * Copyright (C) 2005 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Ryan Lortie <desrt@desrt.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +31,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <stdint.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -40,117 +41,70 @@
 
 #include "../probing/shared.h"
 
-static char *
-read_line (int fd)
+static FILE *
+acpi_get_event_fp_kernel (void)
 {
-	unsigned int i;
-	unsigned int r;
-	static char buf[256];
-	char *res;
-	dbus_bool_t searching;
-
-	i = 0;
-	res = NULL;
-	searching = TRUE;
-
-	while (searching) {
-		while (i < sizeof (buf)) {
-			r = read(fd, buf + i, 1);
-			if (r < 0 && errno != EINTR) {
-				/* we should do something with the data */
-				dbg ("ERR read(): %s\n", strerror(errno));
-				goto out;
-			} else if (r == 0) {
-				/* signal this in an almost standard way */
-				errno = EPIPE;
-				return NULL;
-			} else if (r == 1) {
-				/* scan for a newline */
-				if (buf[i] == '\n') {
-					searching = FALSE;
-					buf[i] = '\0';
-					res = buf;
-					goto out;
-				}
-				i++;
-			}
-		}
-
-		if (i >= sizeof (buf)) {
-			dbg ("ERR: buffer size of %d is too small\n", sizeof (buf));
-			goto out;
-		}
-
-	}
-
-out:	
-	return res;
-}
-
-int
-main (int argc, char *argv[])
-{
-	int fd;
-	struct sockaddr_un addr;
-	LibHalContext *ctx = NULL;
-	DBusError error;
-	char acpi_path[256];
-	char acpi_name[256];
-	unsigned int acpi_num1;
-	unsigned int acpi_num2;
-
-	fd = -1;
-
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
-
-	dbus_error_init (&error);
-	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
-		goto out;
-
-#ifdef ACPI_ACPID
-	/* receive event from acpi daemon */
-	fd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (fd < 0) {
-		dbg ("Cannot create socket");
-		goto out;
-	}
-	memset(&addr, 0, sizeof(addr));
-	addr.sun_family = AF_UNIX;
-	snprintf (addr.sun_path, sizeof (addr.sun_path), "%s", "/var/run/acpid.socket");
-	if (connect (fd, (struct sockaddr *) &addr, sizeof (addr)) < 0) {
-		close (fd);
-		dbg ("Cannot connect to acpid socket");
-		fd = -1;
-	}
-#endif
+	FILE *fp = NULL;
 
 #ifdef ACPI_PROC
-	/* connect directly to the kernel */
-	if (fd < 0) {
-		fd = open ("/proc/acpi/event", O_RDONLY);
+	fp = fopen ("/proc/acpi/event", "r");
+
+	if (fp == NULL)
 		dbg ("Cannot open /proc/acpi/event: %s", strerror (errno));
+#endif
+
+	return fp;
+}
+
+static FILE *
+acpi_get_event_fp_acpid (void)
+{
+	FILE *fp = NULL;
+
+#ifdef ACPI_ACPID
+	struct sockaddr_un addr;
+	int fd;
+
+	if( (fd = socket (AF_UNIX, SOCK_STREAM, 0)) < 0 ) {
+		dbg ("Cannot create socket: %s", strerror (errno));
+		return NULL;
+	}
+
+	memset (&addr, 0, sizeof addr);
+	addr.sun_family = AF_UNIX;
+	strncpy (addr.sun_path, "/var/run/acpid.socket", sizeof addr.sun_path);
+
+	if (connect (fd, (struct sockaddr *) &addr, sizeof addr) < 0) {
+		dbg ("Cannot connect to acpid socket: %s", strerror (errno));
+		close (fd);
+	} else {
+		fp = fdopen (fd, "r");
+
+		if (fp == NULL)
+		{
+			dbg ("fdopen failed: %s", strerror (errno));
+			close (fd);
+		}
 	}
 #endif
 
-	if (fd < 0) {
-		dbg ("Cannot connect to acpi event source - bailing out");
-		goto out;
-	}
+	return fp;
+}
 
-	/* main loop */
-	while (1) {
-		char *event;
+static void
+main_loop (LibHalContext *ctx, FILE *eventfp)
+{
+	unsigned int acpi_num1;
+	unsigned int acpi_num2;
+	char acpi_path[256];
+	char acpi_name[256];
+	DBusError error;
+	char event[256];
 
-		/* read and handle an event */
-		event = read_line (fd);
-		if (event) {
-			dbg ("ACPI event %s\n", event);
-		} else if (errno == EPIPE) {
-			dbg ("connection closed\n");
-			break;
-		}
+	dbus_error_init (&error);
 
+	while (fgets (event, sizeof event, eventfp))
+	{
 		dbg ("event is '%s'", event);
 
 		if (sscanf (event, "%s %s %x %x", acpi_path, acpi_name, &acpi_num1, &acpi_num2) == 4) {
@@ -162,19 +116,15 @@ main (int argc, char *argv[])
 				dbg ("button event");
 
 				/* TODO: only rescan if button got state */
-				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 
-				dbus_error_init (&error);
 				libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
 
 			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
 				dbg ("ac_adapter event");
-				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 			} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
 				dbg ("battery event");
-				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 			}
 
@@ -183,11 +133,50 @@ main (int argc, char *argv[])
 		}
 		
 	}
-	
-	
-out:
-	if (fd >= 0)
-		close (fd);
 
-	return 0;
+	dbus_error_free (&error);
+	fclose (eventfp);
 }
+
+int
+main (int argc, char **argv)
+{
+	LibHalContext *ctx = NULL;
+	int reconnecting = FALSE;
+	DBusError error;
+	FILE *eventfp;
+
+	if (getenv ("HALD_VERBOSE") != NULL)
+		is_verbose = TRUE;
+
+	dbus_error_init (&error);
+
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
+		dbg ("Unable to initialise libhal context: %s", error.message);
+		return 1;
+	}
+
+	/* If we can connect directly to the kernel then do so. */
+	if ((eventfp = acpi_get_event_fp_kernel ())) {
+		main_loop (ctx, eventfp);
+		return 1;
+	}
+
+	/* Else, try to use acpid. */
+	while ((eventfp = acpi_get_event_fp_acpid ()) || reconnecting)
+	{
+		if (eventfp != NULL)
+			main_loop (ctx, eventfp);
+
+		/* If main_loop exits or we failed a reconnect attempt then
+		 * sleep for 5s and try to reconnect (again). */
+		reconnecting = TRUE;
+		sleep (5);
+	}
+
+	dbg ("Cannot connect to acpi event source - bailing out");
+
+	return 1;
+}
+
+/* vim:set sw=8 noet: */

@@ -1,3 +1,9 @@
+2005-10-11  Ryan Lortie  <desrt@desrt.ca>
+
+	* hald/linux2/addons/addon-acpi.c: Cleanup existing code to avoid
+	  reinventing the fgets() wheel.  Also deal gracefully with acpid
+	  restarts (we used to exit in this case).
+
 2005-10-10  Richard Hughes <richard@hughsie.com>
 
 	* tools/fstab-sync.c: Add a patch by Pascal Terjan 
