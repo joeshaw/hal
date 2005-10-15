@@ -1,3 +1,8 @@
+2005-10-15  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/acpi.c: Whitespace cleanups and doxygen markup
+	additions. No code changes.
+
 2005-10-11  Ryan Lortie  <desrt@desrt.ca>
 
 	* hald/linux2/addons/addon-acpi.c: Cleanup existing code to avoid
