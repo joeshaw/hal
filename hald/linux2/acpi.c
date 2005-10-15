@@ -52,7 +52,6 @@ enum {
 
 #define ACPI_POLL_INTERVAL 30000
 
-
 typedef struct ACPIDevHandler_s
 {
 	int acpi_type;
@@ -62,6 +61,10 @@ typedef struct ACPIDevHandler_s
 	gboolean (*refresh) (HalDevice *d, struct ACPIDevHandler_s *handler);
 } ACPIDevHandler;
 
+/** Just sets the ac_adapter.present key when called
+ *
+ *  @param	d		valid ac_adaptor HalDevice
+ */
 static void
 ac_adapter_refresh_poll (HalDevice *d)
 {
@@ -92,39 +95,39 @@ battery_refresh_poll (HalDevice *d)
 	if (path == NULL)
 		return;
 
-	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path, 
+	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_charging", path,
 					  "state", "charging state", 0, "charging", TRUE);
-	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path, 
+	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path,
 					  "state", "charging state", 0, "discharging", TRUE);
-	/* 
+	/*
 	 * we'll use the .reporting prefix as we don't know
 	 * if this data is energy (mWh) or unit enery (mAh)
 	 */
-	if (!hal_util_set_int_elem_from_file (d, "battery.reporting.current", path, 
+	if (!hal_util_set_int_elem_from_file (d, "battery.reporting.current", path,
 					      "state", "remaining capacity", 0, 10, TRUE))
 		hal_device_property_set_int (d, "battery.reporting.current", 0);
-	if (!hal_util_set_int_elem_from_file (d, "battery.reporting.rate", path, 
+	if (!hal_util_set_int_elem_from_file (d, "battery.reporting.rate", path,
 					      "state", "present rate", 0, 10, TRUE))
 		hal_device_property_set_int (d, "battery.reporting.rate", 0);
-	/* 
+	/*
 	 * we'll need this if we need to convert mAh to mWh, but we should
 	 * also update it here anyway as the value will have changed
 	 */
 	hal_util_set_int_elem_from_file (d, "battery.voltage.current", path,
 					 "state", "present voltage", 0, 10, TRUE);
 	/* get all the data we know */
-	reporting_unit = hal_device_property_get_string (d, 
+	reporting_unit = hal_device_property_get_string (d,
 					"battery.reporting.unit");
-	reporting_current = hal_device_property_get_int (d, 
+	reporting_current = hal_device_property_get_int (d,
 					"battery.reporting.current");
-	reporting_lastfull = hal_device_property_get_int (d, 
+	reporting_lastfull = hal_device_property_get_int (d,
 					"battery.reporting.last_full");
-	reporting_rate = hal_device_property_get_int (d, 
+	reporting_rate = hal_device_property_get_int (d,
 					"battery.reporting.rate");
 
-	/* 
-	 * we are converting the unknown units into mWh because of ACPI's nature
-	 * of not having a standard "energy" unit. 
+	/*
+	 * We are converting the unknown units into mWh because of ACPI's nature
+	 * of not having a standard "energy" unit.
 	 *
 	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=309944
 	 */
@@ -161,7 +164,7 @@ battery_refresh_poll (HalDevice *d)
 		normalised_lastfull = reporting_lastfull * voltage;
 		normalised_rate = reporting_rate * voltage;
 	} else {
-		/* 
+		/*
 		 * handle as if mWh, which is the most common case.
 		 */
 		normalised_current = reporting_current;
@@ -170,17 +173,19 @@ battery_refresh_poll (HalDevice *d)
 	}
 
 	/*
-	* Set the normalised keys. 
-	*/
+	 * Set the normalised keys.
+	 */
 	if (normalised_current < 0)
-		normalised_current = 0; 
+		normalised_current = 0;
 	if (normalised_lastfull < 0)
 		normalised_lastfull = 0;
 	if (normalised_rate < 0)
 		normalised_rate = 0;
 
-	/* Some laptops report current charge much larger than
-	 * full charge when at 100%.  Clamp back down to 100%. */
+	/*
+	 * Some laptops report current charge much larger than
+	 * full charge when at 100%.  Clamp back down to 100%.
+	 */
 	if (normalised_current > normalised_lastfull)
 	  	normalised_current = normalised_lastfull;
 
@@ -192,7 +197,7 @@ battery_refresh_poll (HalDevice *d)
 				hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
 				hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
 	remaining_percentage = util_compute_percentage_charge (d->udi, normalised_current, normalised_lastfull);
-	/* 
+	/*
 	 * Only set keys if no error (signified with negative return value)
 	 * Scrict checking is needed to ensure that the values presented by HAL
 	 * are 100% acurate.
@@ -209,6 +214,14 @@ battery_refresh_poll (HalDevice *d)
 		hal_device_property_remove (d, "battery.charge_level.percentage");
 }
 
+/** Recalculates the battery.reporting.last_full key as this may drift
+ *  over time.
+ *
+ *  @param	data		Ignored
+ *  @return			TRUE if we updated values
+ *
+ *  @note	This is called 120x less often than battery_refresh_poll
+ */
 static gboolean
 battery_poll_infrequently (gpointer data) {
 	
@@ -229,7 +242,7 @@ battery_poll_infrequently (gpointer data) {
 			device_property_atomic_update_begin ();
 			path = hal_device_property_get_string (d, "linux.acpi_path");
 			if (path != NULL)
-				hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path, 
+				hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path,
 								 "info", "last full capacity", 0, 10, TRUE);
 			device_property_atomic_update_end ();		
 		}
@@ -240,8 +253,14 @@ battery_poll_infrequently (gpointer data) {
 }
 
 
+/** Fallback polling method to refresh battery bojects is plugged in
+ *
+ *  @return			TRUE
+ *
+ *  @note	This just calls battery_refresh_poll for each battery
+ */
 static gboolean
-acpi_poll_battery ()
+acpi_poll_battery (void)
 {
 	GSList *i;
 	GSList *battery_devices;
@@ -250,8 +269,8 @@ acpi_poll_battery ()
 	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
 								    "battery.type",
 								    "primary");
-	/* 
-	 * These forced updates take care of really broken BIOS's that don't 
+	/*
+	 * These forced updates take care of really broken BIOS's that don't
 	 * emit batt events.
 	 */
 	for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
@@ -269,8 +288,14 @@ acpi_poll_battery ()
 	return TRUE;
 }
 
+/** Fallback polling method to detect if the ac_adaptor is plugged in
+ *
+ *  @return			TRUE
+ *
+ *  @note	This just calls ac_adapter_refresh_poll for each ac_adapter
+ */
 static gboolean
-acpi_poll_acadap ()
+acpi_poll_acadap (void)
 {
 	GSList *i;
 	GSList *acadap_devices;
@@ -279,8 +304,8 @@ acpi_poll_acadap ()
 	acadap_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
 								    "info.category",
 								    "ac_adapter");
-	/* 
-	 * These forced updates take care of really broken BIOS's that don't 
+	/*
+	 * These forced updates take care of really broken BIOS's that don't
 	 * emit acad events.
 	 */
 	for (i = acadap_devices; i != NULL; i = g_slist_next (i)) {
@@ -296,15 +321,23 @@ acpi_poll_acadap ()
 	return TRUE;
 }
 
+/** Fallback polling method called every minute.
+ *
+ *  @param	data		Ignored
+ *  @return			TRUE
+ *
+ *  @note	This just forces a poll refresh for *every* ac_adaptor
+ *		and primary battery in the system.
+ */
 static gboolean
 acpi_poll (gpointer data)
 {
-	/* 
-	 * These forced updates take care of really broken BIOS's that don't 
+	/*
+	 * These forced updates take care of really broken BIOS's that don't
 	 * emit acad or acadapt events.
 	 */
-	acpi_poll_acadap();
-	acpi_poll_battery();
+	acpi_poll_acadap ();
+	acpi_poll_battery ();
 	return TRUE;
 }
 
@@ -328,8 +361,186 @@ ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
 	device_property_atomic_update_end ();
 
 	/* refresh last full if ac plugged in/out */
-	battery_poll_infrequently(NULL);
+	battery_poll_infrequently (NULL);
 	
+	return TRUE;
+}
+
+/** Removes all the possible battery.* keys.
+ *
+ *  @param	d		Valid battery HalDevice
+ *
+ *  @note	Removing a key that doesn't exist is OK.
+ */
+static void
+battery_refresh_remove (HalDevice *d)
+{
+	hal_device_property_remove (d, "battery.is_rechargeable");
+	hal_device_property_remove (d, "battery.rechargeable.is_charging");
+	hal_device_property_remove (d, "battery.rechargeable.is_discharging");
+	hal_device_property_remove (d, "battery.vendor");
+	hal_device_property_remove (d, "battery.model");
+	hal_device_property_remove (d, "battery.serial");
+	hal_device_property_remove (d, "battery.technology");
+	hal_device_property_remove (d, "battery.vendor");
+	hal_device_property_remove (d, "battery.charge_level.unit");
+	hal_device_property_remove (d, "battery.charge_level.current");
+	hal_device_property_remove (d, "battery.charge_level.percentage");
+	hal_device_property_remove (d, "battery.charge_level.last_full");
+	hal_device_property_remove (d, "battery.charge_level.design");
+	hal_device_property_remove (d, "battery.charge_level.capacity_state");
+	hal_device_property_remove (d, "battery.charge_level.warning");
+	hal_device_property_remove (d, "battery.charge_level.low");
+	hal_device_property_remove (d, "battery.charge_level.granularity_1");
+	hal_device_property_remove (d, "battery.charge_level.granularity_2");
+	hal_device_property_remove (d, "battery.charge_level.rate");
+	hal_device_property_remove (d, "battery.voltage.unit");
+	hal_device_property_remove (d, "battery.voltage.design");
+	hal_device_property_remove (d, "battery.voltage.current");
+	hal_device_property_remove (d, "battery.alarm.unit");
+	hal_device_property_remove (d, "battery.alarm.design");
+	hal_device_property_remove (d, "battery.reporting.current");
+	hal_device_property_remove (d, "battery.reporting.last_full");
+	hal_device_property_remove (d, "battery.reporting.design");
+	hal_device_property_remove (d, "battery.reporting.rate");
+	hal_device_property_remove (d, "battery.reporting.warning");
+	hal_device_property_remove (d, "battery.reporting.low");
+	hal_device_property_remove (d, "battery.reporting.granularity_1");
+	hal_device_property_remove (d, "battery.reporting.granularity_2");
+	hal_device_property_remove (d, "battery.reporting.unit");
+	hal_device_property_remove (d, "battery.remaining_time");
+}
+
+/** Adds all the possible battery.* keys and does coldplug (slowpath)
+ *  type calculations.
+ *
+ *  @param	d		Valid battery HalDevice
+ */
+static gboolean
+battery_refresh_add (HalDevice *d, const char *path)
+{
+	int reporting_design;
+	int reporting_warning;
+	int reporting_low;
+	int reporting_gran1;
+	int reporting_gran2;
+	int voltage_design;
+
+	const char *reporting_unit;
+
+	hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info",
+					    "OEM info", 0, TRUE);
+	hal_util_set_string_elem_from_file (d, "battery.model", path, "info",
+					    "model number", 0, TRUE);
+	hal_util_set_string_elem_from_file (d, "battery.serial", path, "info",
+					    "serial number", 0, TRUE);
+	hal_util_set_string_elem_from_file (d, "battery.technology", path, "info",
+					    "battery type", 0, TRUE);
+	hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info",
+					    "OEM info", 0, TRUE);
+
+	/*
+	 * we'll use the .reporting prefix as we don't know
+	 * if this data is energy (mWh) or unit enery (mAh)
+	 */
+	hal_util_set_string_elem_from_file (d, "battery.reporting.unit", path,
+					 "info", "design capacity", 1, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path,
+					 "info", "last full capacity", 0, 10, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.reporting.design", path,
+					 "info", "design capacity", 0, 10, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.reporting.warning", path,
+					 "info", "design capacity warning", 0, 10, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.reporting.low", path,
+					 "info", "design capacity low", 0, 10, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_1", path,
+					 "info", "capacity granularity 1", 0, 10, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_2", path,
+					 "info", "capacity granularity 2", 0, 10, TRUE);
+	/*
+	 * we'll need this is we want to convert mAh to mWh
+	 */
+	hal_util_set_string_elem_from_file (d, "battery.voltage.unit", path, "info",
+					    "design voltage", 1, TRUE);
+	hal_util_set_int_elem_from_file (d, "battery.voltage.design", path,
+					 "info", "design voltage", 0, 10, TRUE);
+	/*
+	 * Convert the mWh or mAh units into mWh...
+	 * We'll do as many as we can here as the values
+	 * are not going to change.
+	 * We'll set the correct unit (or unknown) also.
+	 */
+	reporting_unit = hal_device_property_get_string (d, "battery.reporting.unit");
+	reporting_design = hal_device_property_get_int (d, "battery.reporting.design");
+	reporting_warning = hal_device_property_get_int (d, "battery.reporting.warning");
+	reporting_low = hal_device_property_get_int (d, "battery.reporting.low");
+	reporting_gran1 = hal_device_property_get_int (d, "battery.reporting.granularity_1");
+	reporting_gran2 = hal_device_property_get_int (d, "battery.reporting.granularity_2");
+
+	if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
+		/* do not scale */
+		hal_device_property_set_int (d, "battery.charge_level.design", reporting_design);
+		hal_device_property_set_int (d, "battery.charge_level.warning", reporting_warning);
+		hal_device_property_set_int (d, "battery.charge_level.low", reporting_low);
+		hal_device_property_set_int (d, "battery.charge_level.granularity_1", reporting_gran1);
+		hal_device_property_set_int (d, "battery.charge_level.granularity_2", reporting_gran2);
+
+		/* set unit */
+		hal_device_property_set_string (d, "battery.charge_level.unit", "mWh");
+	} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
+		voltage_design = hal_device_property_get_int (d, "battery.voltage.design");
+	
+		/* If design voltage is unknown, use 1mV. */
+		if (voltage_design <= 0)
+			voltage_design = 1;
+
+		/* scale by factor battery.voltage.design */
+		hal_device_property_set_int (d, "battery.charge_level.design",
+			reporting_design * voltage_design);
+		hal_device_property_set_int (d, "battery.charge_level.warning",
+			reporting_warning * voltage_design);
+		hal_device_property_set_int (d, "battery.charge_level.low",
+			reporting_low * voltage_design);
+		hal_device_property_set_int (d, "battery.charge_level.granularity_1",
+			reporting_gran1 * voltage_design);
+		hal_device_property_set_int (d, "battery.charge_level.granularity_2",
+			reporting_gran2 * voltage_design);
+
+		/* set unit */
+		hal_device_property_set_string (d, "battery.charge_level.unit",
+			"mWh"); /* not mAh! */
+	} else {
+		/*
+		 * Some ACPI BIOS's do not report the unit,
+		 * so we'll assume they are mWh.
+		 * We will report the guessing with the
+		 * battery.charge_level.unit key.
+		 */
+		hal_device_property_set_int (d,
+			"battery.charge_level.design", reporting_design);
+		hal_device_property_set_int (d,
+			"battery.charge_level.warning", reporting_warning);
+		hal_device_property_set_int (d,
+			"battery.charge_level.low", reporting_low);
+		hal_device_property_set_int (d,
+			"battery.charge_level.granularity_1", reporting_gran1);
+		hal_device_property_set_int (d,
+			"battery.charge_level.granularity_2", reporting_gran2);
+
+		/* set "Unknown ACPI Unit" unit so we can debug */
+		HAL_WARNING (("Unknown ACPI Unit!"));
+		hal_device_property_set_string (d, "battery.charge_level.unit",
+			"unknown");
+	}
+
+	/* set alarm if present */
+	if (hal_util_set_int_elem_from_file (d, "battery.alarm.design", path,
+					     "alarm", "alarm", 0, 10, TRUE))
+		hal_util_set_string_elem_from_file (d, "battery.alarm.unit", path, "alarm",
+						    "alarm", 1, TRUE);
+
+	/* we are assuming a laptop battery is rechargeable */
+	hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
 	return TRUE;
 }
 
@@ -337,14 +548,6 @@ static gboolean
 battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
 	const char *path;
-	int reporting_design;
-	int reporting_warning;
-	int reporting_low;
-	int reporting_gran1;
-	int reporting_gran2;
-	int voltage_design;
-	
-	const char *reporting_unit;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
@@ -360,43 +563,12 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 	hal_util_set_bool_elem_from_file (d, "battery.present", path, "state", "present", 0, "yes", TRUE);
 	if (!hal_device_property_get_bool (d, "battery.present")) {
+		/* remove battery.* tags as battery not present */
 		device_property_atomic_update_begin ();
-		hal_device_property_remove (d, "battery.is_rechargeable");
-		hal_device_property_remove (d, "battery.rechargeable.is_charging");
-		hal_device_property_remove (d, "battery.rechargeable.is_discharging");
-		hal_device_property_remove (d, "battery.vendor");
-		hal_device_property_remove (d, "battery.model");
-		hal_device_property_remove (d, "battery.serial");
-		hal_device_property_remove (d, "battery.technology");
-		hal_device_property_remove (d, "battery.vendor");
-		hal_device_property_remove (d, "battery.charge_level.unit");
-		hal_device_property_remove (d, "battery.charge_level.current");
-		hal_device_property_remove (d, "battery.charge_level.percentage");
-		hal_device_property_remove (d, "battery.charge_level.last_full");
-		hal_device_property_remove (d, "battery.charge_level.design");
-		hal_device_property_remove (d, "battery.charge_level.capacity_state");
-		hal_device_property_remove (d, "battery.charge_level.warning");
-		hal_device_property_remove (d, "battery.charge_level.low");
-		hal_device_property_remove (d, "battery.charge_level.granularity_1");
-		hal_device_property_remove (d, "battery.charge_level.granularity_2");
-		hal_device_property_remove (d, "battery.charge_level.rate");
-		hal_device_property_remove (d, "battery.voltage.unit");
-		hal_device_property_remove (d, "battery.voltage.design");
-		hal_device_property_remove (d, "battery.voltage.current");
-		hal_device_property_remove (d, "battery.alarm.unit");
-		hal_device_property_remove (d, "battery.alarm.design");
-		hal_device_property_remove (d, "battery.reporting.current");
-		hal_device_property_remove (d, "battery.reporting.last_full");
-		hal_device_property_remove (d, "battery.reporting.design");
-		hal_device_property_remove (d, "battery.reporting.rate");
-		hal_device_property_remove (d, "battery.reporting.warning");
-		hal_device_property_remove (d, "battery.reporting.low");
-		hal_device_property_remove (d, "battery.reporting.granularity_1");
-		hal_device_property_remove (d, "battery.reporting.granularity_2");
-		hal_device_property_remove (d, "battery.reporting.unit");
-		hal_device_property_remove (d, "battery.remaining_time");
+		battery_refresh_remove (d);
 		device_property_atomic_update_end ();		
 	} else {
+		/* battery is present */
 		device_property_atomic_update_begin ();
 
 		/* So, it's pretty expensive to read from
@@ -404,141 +576,17 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		 * static data that won't change
 		 */
 		if (!hal_device_has_property (d, "battery.vendor")) {
-			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
-			hal_util_set_string_elem_from_file (d, "battery.model", path, "info", "model number", 0, TRUE);
-			hal_util_set_string_elem_from_file (d, "battery.serial", path, "info", 
-							    "serial number", 0, TRUE);
-			hal_util_set_string_elem_from_file (d, "battery.technology", path, "info", 
-							    "battery type", 0, TRUE);
-			hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info", "OEM info", 0, TRUE);
-
-			/* 
-			 * we'll use the .reporting prefix as we don't know
-			 * if this data is energy (mWh) or unit enery (mAh)
-			 */
-			hal_util_set_string_elem_from_file (d, "battery.reporting.unit", path, "info", 
-							    "design capacity", 1, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path, 
-							 "info", "last full capacity", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.reporting.design", path, 
-							 "info", "design capacity", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.reporting.warning", path,
-							 "info", "design capacity warning", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.reporting.low", path,
-							 "info", "design capacity low", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_1", path,
-							 "info", "capacity granularity 1", 0, 10, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_2", path,
-							 "info", "capacity granularity 2", 0, 10, TRUE);
-			/* 
-			 * we'll need this is we want to convert mAh to mWh
-			 */
-			hal_util_set_string_elem_from_file (d, "battery.voltage.unit", path, "info",
-							    "design voltage", 1, TRUE);
-			hal_util_set_int_elem_from_file (d, "battery.voltage.design", path,
-							 "info", "design voltage", 0, 10, TRUE);
-			/* 
-			 * Convert the mWh or mAh units into mWh...
-			 * We'll do as many as we can here as the values
-			 * are not going to change.
-			 * We'll set the correct unit (or unknown) also.
-			 */
-			reporting_unit = hal_device_property_get_string (d, 
-					"battery.reporting.unit");
-			reporting_design = hal_device_property_get_int (d, 
-					"battery.reporting.design");
-			reporting_warning = hal_device_property_get_int (d, 
-					"battery.reporting.warning");
-			reporting_low = hal_device_property_get_int (d, 
-					"battery.reporting.low");
-			reporting_gran1 = hal_device_property_get_int (d, 
-					"battery.reporting.granularity_1");
-			reporting_gran2 = hal_device_property_get_int (d, 
-					"battery.reporting.granularity_2");
-			if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
-				/* do not scale */
-				hal_device_property_set_int (d, 
-					"battery.charge_level.design", reporting_design);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.warning", reporting_warning);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.low", reporting_low);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.granularity_1", reporting_gran1);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.granularity_2", reporting_gran2);
-
-				/* set unit */
-				hal_device_property_set_string (d, 
-					"battery.charge_level.unit", "mWh");
-			} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
-				voltage_design = hal_device_property_get_int (d, 
-					"battery.voltage.design");
-	
-				/* If design voltage is unknown, use 1mV. */
-				if (voltage_design <= 0)
-					voltage_design = 1;
-
-				/* scale by factor battery.voltage.design */
-				hal_device_property_set_int (d, 
-					"battery.charge_level.design", 
-					reporting_design * voltage_design);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.warning", 
-					reporting_warning * voltage_design);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.low", 
-					reporting_low * voltage_design);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.granularity_1", 
-					reporting_gran1 * voltage_design);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.granularity_2", 
-					reporting_gran2 * voltage_design);
-
-				/* set unit */
-				hal_device_property_set_string (d, 
-					"battery.charge_level.unit", 
-					"mWh"); /* not mAh! */
-			} else {
-				/*
-				 * Some ACPI BIOS's do not report the unit,
-				 * so we'll assume they are mWh.
-				 * We will report the guessing with the 
-				 * battery.charge_level.unit key.
-				 */
-				hal_device_property_set_int (d, 
-					"battery.charge_level.design", reporting_design);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.warning", reporting_warning);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.low", reporting_low);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.granularity_1", reporting_gran1);
-				hal_device_property_set_int (d, 
-					"battery.charge_level.granularity_2", reporting_gran2);
-
-				/* set "Unknown ACPI Unit" unit so we can debug */
-				HAL_WARNING (("Unknown ACPI Unit!"));
-				hal_device_property_set_string (d, 
-					"battery.charge_level.unit",
-					"unknown");
-			}
-			/* set alarm if present */
-			if (hal_util_set_int_elem_from_file (d, "battery.alarm.design", path,
-							     "alarm", "alarm", 0, 10, TRUE))
-				hal_util_set_string_elem_from_file (d, "battery.alarm.unit", path, "alarm",
-								    "alarm", 1, TRUE);
+			/* battery has no information, so coldplug */
+			battery_refresh_add (d, path);
 		}
 
-		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
-
+		/* fill in the fast-path refresh values */
 		battery_refresh_poll (d);
 
 		device_property_atomic_update_end ();
 
-		/* poll ac adapter for machines which n */
-		acpi_poll_acadap();
+		/* poll ac adapter for machines which never give ACAP events */
+		acpi_poll_acadap ();
 	}
 
 	return TRUE;
@@ -556,9 +604,9 @@ processor_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_property_set_string (d, "info.product", "Processor");
 	hal_device_property_set_string (d, "info.category", "processor");
 	hal_device_add_capability (d, "processor");
-	hal_util_set_int_elem_from_file (d, "processor.number", path, 
+	hal_util_set_int_elem_from_file (d, "processor.number", path,
 					 "info", "processor id", 0, 10, FALSE);
-	hal_util_set_bool_elem_from_file (d, "processor.can_throttle", path, 
+	hal_util_set_bool_elem_from_file (d, "processor.can_throttle", path,
 					  "info", "throttling control", 0, "yes", FALSE);
 	return TRUE;
 }
@@ -575,7 +623,7 @@ fan_refresh (HalDevice *d, ACPIDevHandler *handler)
 	hal_device_property_set_string (d, "info.product", "Fan");
 	hal_device_property_set_string (d, "info.category", "fan");
 	hal_device_add_capability (d, "fan");
-	hal_util_set_bool_elem_from_file (d, "fan.enabled", path, 
+	hal_util_set_bool_elem_from_file (d, "fan.enabled", path,
 					  "state", "status", 0, "on", FALSE);
 	return TRUE;
 }
@@ -658,11 +706,11 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 	hal_device_property_set_string (d, "button.type", button_type);
 
-	if (strcmp (button_type, "power") == 0)   
+	if (strcmp (button_type, "power") == 0)  
 		hal_device_property_set_string (d, "info.product", "Power Button");
-	else if (strcmp (button_type, "lid") == 0)   
+	else if (strcmp (button_type, "lid") == 0)  
 		hal_device_property_set_string (d, "info.product", "Lid Switch");
-	else if (strcmp (button_type, "sleep") == 0)   
+	else if (strcmp (button_type, "sleep") == 0)  
 		hal_device_property_set_string (d, "info.product", "Sleep Button");
 
 	hal_device_property_set_string (d, "info.category", "button");
@@ -678,6 +726,11 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
+/** Synthesizes a *specific* acpi object.
+ *
+ *  @param	fullpath	The ACPI path, e.g. "/proc/acpi/battery/BAT1"
+ *  @param	acpi_type	The type of device, e.g. ACPI_TYPE_BATTERY
+ */
 static void
 acpi_synthesize_item (const gchar *fullpath, int acpi_type)
 {
@@ -691,6 +744,13 @@ acpi_synthesize_item (const gchar *fullpath, int acpi_type)
 	hotplug_event_enqueue (hotplug_event);
 }
 
+/** Synthesizes generic acpi objects, i.e. registers all the objects of type
+ *  into HAL. This lets us have more than one type of device e.g. BATx
+ *  in the same battery class.
+ *
+ *  @param	path		The ACPI path, e.g. "/proc/acpi/battery"
+ *  @param	acpi_type	The type of device, e.g. ACPI_TYPE_BATTERY
+ */
 static void
 acpi_synthesize (const gchar *path, int acpi_type)
 {
@@ -702,7 +762,7 @@ acpi_synthesize (const gchar *path, int acpi_type)
 	if (dir == NULL) {
 		HAL_ERROR (("Couldn't open %s: %s", path, error->message));
 		g_error_free (error);
-		goto out;
+		return;
 	}
 
 	/* do for each object in directory */
@@ -714,17 +774,14 @@ acpi_synthesize (const gchar *path, int acpi_type)
 
 	/* close directory */
 	g_dir_close (dir);
-
-out:
-	;
 }
 
-/** If {procfs_path}/acpi/{vendor}/{display} is found, then add the 
+/** If {procfs_path}/acpi/{vendor}/{display} is found, then add the
  *  LaptopPanel device.
  *
- *  @param vendor		The vendor name, e.g. sony
- *  @param display		The *possible* name of the brightness file
- *  @param method		The HAL enumerated type.
+ *  @param	vendor		The vendor name, e.g. sony
+ *  @param	display		The *possible* name of the brightness file
+ *  @param	method		The HAL enumerated type.
  */
 static void
 acpi_synthesize_display (char *vendor, char *display, int method)
@@ -742,33 +799,28 @@ acpi_synthesize_display (char *vendor, char *display, int method)
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding ACPI objects.
  *
- *  @param                      TRUE if, and only if, ACPI capabilities
- *                              were detected
+ *  @return			TRUE if, and only if, ACPI capabilities
+ *				were detected
  */
 gboolean
 acpi_synthesize_hotplug_events (void)
 {
-	gboolean ret;
 	HalDevice *computer;
 	gchar path[HAL_PATH_MAX];
 
-	ret = FALSE;
-
 	if (!g_file_test ("/proc/acpi/info", G_FILE_TEST_EXISTS))
-		goto out;
-
-	ret = TRUE;
+		return FALSE;
 
 	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL &&
 	    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
 		HAL_ERROR (("No computer object?"));
-		goto out;
+		return TRUE;
 	}
 
 	/* Set appropriate properties on the computer object */
 	hal_device_property_set_bool (computer, "power_management.is_enabled", TRUE);
 	hal_device_property_set_string (computer, "power_management.type", "acpi");
-	hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version", 
+	hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
 					    "/proc/acpi", "info", "version", 0, FALSE);
 
 	/* collect batteries */
@@ -795,7 +847,7 @@ acpi_synthesize_hotplug_events (void)
 	snprintf (path, sizeof (path), "%s/acpi/button/sleep", get_hal_proc_path ());
 	acpi_synthesize (path, ACPI_TYPE_BUTTON);
 
-	/* 
+	/*
 	 * Collect video adaptors (from vendor added modules)
 	 * I *know* we should use the /proc/acpi/video/LCD method, but this
 	 * doesn't work. And it's depreciated.
@@ -817,8 +869,7 @@ acpi_synthesize_hotplug_events (void)
 		       battery_poll_infrequently,
 		       NULL);
 
-out:
-	return ret;
+	return TRUE;
 }
 
 static HalDevice *
@@ -858,7 +909,7 @@ acpi_generic_remove (HalDevice *d, ACPIDevHandler *handler)
 }
 
 
-static ACPIDevHandler acpidev_handler_battery = { 
+static ACPIDevHandler acpidev_handler_battery = {
 	.acpi_type   = ACPI_TYPE_BATTERY,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -866,7 +917,7 @@ static ACPIDevHandler acpidev_handler_battery = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_processor = { 
+static ACPIDevHandler acpidev_handler_processor = {
 	.acpi_type   = ACPI_TYPE_PROCESSOR,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -874,7 +925,7 @@ static ACPIDevHandler acpidev_handler_processor = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_fan = { 
+static ACPIDevHandler acpidev_handler_fan = {
 	.acpi_type   = ACPI_TYPE_FAN,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -882,7 +933,7 @@ static ACPIDevHandler acpidev_handler_fan = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_laptop_panel_toshiba = { 
+static ACPIDevHandler acpidev_handler_laptop_panel_toshiba = {
 	.acpi_type   = ACPI_TYPE_TOSHIBA_DISPLAY,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -890,7 +941,7 @@ static ACPIDevHandler acpidev_handler_laptop_panel_toshiba = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_laptop_panel_asus = { 
+static ACPIDevHandler acpidev_handler_laptop_panel_asus = {
 	.acpi_type   = ACPI_TYPE_ASUS_DISPLAY,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -898,7 +949,7 @@ static ACPIDevHandler acpidev_handler_laptop_panel_asus = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_laptop_panel_panasonic = { 
+static ACPIDevHandler acpidev_handler_laptop_panel_panasonic = {
 	.acpi_type   = ACPI_TYPE_PANASONIC_DISPLAY,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -906,7 +957,7 @@ static ACPIDevHandler acpidev_handler_laptop_panel_panasonic = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_laptop_panel_ibm = { 
+static ACPIDevHandler acpidev_handler_laptop_panel_ibm = {
 	.acpi_type   = ACPI_TYPE_IBM_DISPLAY,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -914,7 +965,7 @@ static ACPIDevHandler acpidev_handler_laptop_panel_ibm = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_laptop_panel_sony = { 
+static ACPIDevHandler acpidev_handler_laptop_panel_sony = {
 	.acpi_type   = ACPI_TYPE_SONY_DISPLAY,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -922,7 +973,7 @@ static ACPIDevHandler acpidev_handler_laptop_panel_sony = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_button = { 
+static ACPIDevHandler acpidev_handler_button = {
 	.acpi_type   = ACPI_TYPE_BUTTON,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -930,7 +981,7 @@ static ACPIDevHandler acpidev_handler_button = {
 	.remove      = acpi_generic_remove
 };
 
-static ACPIDevHandler acpidev_handler_ac_adapter = { 
+static ACPIDevHandler acpidev_handler_ac_adapter = {
 	.acpi_type   = ACPI_TYPE_AC_ADAPTER,
 	.add         = acpi_generic_add,
 	.compute_udi = acpi_generic_compute_udi,
@@ -952,7 +1003,7 @@ static ACPIDevHandler *acpi_handlers[] = {
 	NULL
 };
 
-static void 
+static void
 acpi_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	void *end_token = (void *) userdata1;
@@ -966,7 +1017,7 @@ acpi_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 	hotplug_event_end (end_token);
 }
 
-static void 
+static void
 acpi_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	void *end_token = (void *) userdata1;
@@ -998,7 +1049,7 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 			if (d == NULL) {
 				/* didn't find anything - thus, ignore this hotplug event */
 				hotplug_event_end (end_token);
-				goto out;
+				return;
 			}
 
 			hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_ACPI);
@@ -1015,19 +1066,17 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 			if (!handler->compute_udi (d, handler)) {
 				hal_device_store_remove (hald_get_tdl (), d);
 				hotplug_event_end (end_token);
-				goto out;
+				return;
 			}
 
 			/* Run callouts */
 			hal_util_callout_device_add (d, acpi_callouts_add_done, end_token, NULL);
-			goto out;
+			return;
 		}
 	}
 	
 	/* didn't find anything - thus, ignore this hotplug event */
 	hotplug_event_end (end_token);
-out:
-	;
 }
 
 void
@@ -1066,10 +1115,7 @@ gboolean
 acpi_rescan_device (HalDevice *d)
 {
 	guint i;
-	gboolean ret;
 	int acpi_type;
-
-	ret = FALSE;
 
 	acpi_type = hal_device_property_get_int (d, "linux.acpi_type");
 
@@ -1078,15 +1124,12 @@ acpi_rescan_device (HalDevice *d)
 
 		handler = acpi_handlers[i];
 		if (handler->acpi_type == acpi_type) {
-			ret = handler->refresh (d, handler);
-			goto out;
+			return handler->refresh (d, handler);
 		}
 	}
 
 	HAL_WARNING (("Didn't find a rescan handler for udi %s", d->udi));
-
-out:
-	return ret;
+	return TRUE;
 }
 
 HotplugEvent *
