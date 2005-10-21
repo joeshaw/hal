@@ -1,3 +1,7 @@
+2005-10-21  Danny Kukawka  <danny.kukawka@web.de>
+
+	* configure.in: added Hellenic translation to ALL_LINGUAS 
+
 2005-10-15  Richard Hughes <richard@hughsie.com>
 
 	* hald/linux2/acpi.c: Whitespace cleanups and doxygen markup
