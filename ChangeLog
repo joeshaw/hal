@@ -1,5 +1,10 @@
 2005-10-21  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/util.c: (callout_failed): This patch fix possible segfault if
+	the callout of a non-existing addon from key info.addons fails.
+
+2005-10-21  Danny Kukawka  <danny.kukawka@web.de>
+
 	* configure.in: added Hellenic translation to ALL_LINGUAS 
 
 2005-10-15  Richard Hughes <richard@hughsie.com>

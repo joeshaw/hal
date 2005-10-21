@@ -1077,11 +1077,13 @@ static void callout_do_next (Callout *c);
 static void
 callout_failed (HalHelperData *ed)
 {
-	Callout *c;
-	c = (Callout *) ed->data1;
+	if (ed->data1 != NULL) {
+		Callout *c;
+		c = (Callout *) ed->data1;
 
-	c->next_program++;
-	callout_do_next(c);
+		c->next_program++;
+		callout_do_next(c);
+	}
 }
 
 static void 
