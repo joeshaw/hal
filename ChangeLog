@@ -1,5 +1,11 @@
 2005-10-21  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/preprobe/10osvendor/10-ide-drives.fdi: removed no longer
+	needed blacklist entry for 'HL-DT-STCD-RW/DVD-ROM GCC-4240N'.
+	This work fine at least with kernel 2.6.13 (tested with SUSE).
+
+2005-10-21  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/util.c: (callout_failed): This patch fix possible segfault if
 	the callout of a non-existing addon from key info.addons fails.
 
