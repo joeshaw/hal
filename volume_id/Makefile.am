@@ -32,7 +32,8 @@ libvolume_id_la_SOURCES =				\
 	sysv.h			sysv.c			\
 	cramfs.h		cramfs.c		\
 	minix.h			minix.c			\
-	ocfs2.h			ocfs2.c			\
+	ocfs.h			ocfs.c			\
+	vxfs.h			vxfs.c			\
 	logging.h					\
 	util.h			util.c			\
 	volume_id.h		volume_id.c

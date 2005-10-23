@@ -4,19 +4,9 @@
  * Copyright (C) 2004 Kay Sievers <kay.sievers@vrfy.org>
  * Copyright (C) 2005 Tobias Klauser <tklauser@access.unizh.ch>
  *
- *	This library is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU Lesser General Public
- *	License as published by the Free Software Foundation; either
- *	version 2.1 of the License, or (at your option) any later version.
- *
- *	This library is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *	Lesser General Public License for more details.
- *
- *	You should have received a copy of the GNU Lesser General Public
- *	License along with this library; if not, write to the Free Software
- *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *	This program is free software; you can redistribute it and/or modify it
+ *	under the terms of the GNU General Public License as published by the
+ *	Free Software Foundation version 2 of the License.
  */
 
 #ifndef _GNU_SOURCE
@@ -33,7 +23,6 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include <stdint.h>
 
 #include "volume_id.h"
 #include "logging.h"
@@ -82,14 +71,17 @@ int volume_id_probe_reiserfs(struct volume_id *id, uint64_t off)
 	rs = (struct reiserfs_super_block *) buf;;
 	if (memcmp(rs->magic, "ReIsErFs", 8) == 0) {
 		strcpy(id->type_version, "3.5");
+		id->type = "reiserfs";
 		goto found;
 	}
 	if (memcmp(rs->magic, "ReIsEr2Fs", 9) == 0) {
 		strcpy(id->type_version, "3.6");
+		id->type = "reiserfs";
 		goto found_label;
 	}
 	if (memcmp(rs->magic, "ReIsEr3Fs", 9) == 0) {
 		strcpy(id->type_version, "JR");
+		id->type = "reiserfs";
 		goto found_label;
 	}
 
@@ -99,15 +91,18 @@ int volume_id_probe_reiserfs(struct volume_id *id, uint64_t off)
 		volume_id_set_label_raw(id, rs4->label, 16);
 		volume_id_set_label_string(id, rs4->label, 16);
 		volume_id_set_uuid(id, rs4->uuid, UUID_DCE);
+		id->type = "reiser4";
 		goto found;
 	}
 
-	rs = (struct reiserfs_super_block *) volume_id_get_buffer(id, off + REISERFS1_SUPERBLOCK_OFFSET, 0x200);
-	if (rs == NULL)
+	buf = volume_id_get_buffer(id, off + REISERFS1_SUPERBLOCK_OFFSET, 0x200);
+	if (buf == NULL)
 		return -1;
 
+	rs = (struct reiserfs_super_block *) buf;
 	if (memcmp(rs->magic, "ReIsErFs", 8) == 0) {
 		strcpy(id->type_version, "3.5");
+		id->type = "reiserfs";
 		goto found;
 	}
 
@@ -120,7 +115,6 @@ found_label:
 
 found:
 	volume_id_set_usage(id, VOLUME_ID_FILESYSTEM);
-	id->type = "reiserfs";
 
 	return 0;
 }

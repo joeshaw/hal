@@ -3,19 +3,9 @@
  *
  * Copyright (C) 2005 Kay Sievers <kay.sievers@vrfy.org>
  *
- *	This library is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU Lesser General Public
- *	License as published by the Free Software Foundation; either
- *	version 2.1 of the License, or (at your option) any later version.
- *
- *	This library is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *	Lesser General Public License for more details.
- *
- *	You should have received a copy of the GNU Lesser General Public
- *	License along with this library; if not, write to the Free Software
- *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *	This program is free software; you can redistribute it and/or modify it
+ *	under the terms of the GNU General Public License as published by the
+ *	Free Software Foundation version 2 of the License.
  */
 
 #ifndef _VOLUME_ID_UTIL_
@@ -61,6 +51,7 @@
 #define le64_to_cpu(x) (x)
 #define be16_to_cpu(x) bswap16(x)
 #define be32_to_cpu(x) bswap32(x)
+#define cpu_to_le16(x) (x)
 #define cpu_to_le32(x) (x)
 #define cpu_to_be32(x) bswap32(x)
 #elif (__BYTE_ORDER == __BIG_ENDIAN)
@@ -69,6 +60,7 @@
 #define le64_to_cpu(x) bswap64(x)
 #define be16_to_cpu(x) (x)
 #define be32_to_cpu(x) (x)
+#define cpu_to_le16(x) bswap16(x)
 #define cpu_to_le32(x) bswap32(x)
 #define cpu_to_be32(x) (x)
 #endif

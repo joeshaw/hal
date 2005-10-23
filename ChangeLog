@@ -1,3 +1,32 @@
+2005-10-23  Kay Sievers  <kay.sievers@vrfy.org>
+
+	volume_id version 52:
+
+	* volume_id/Makefile.am: add ocfs1 and vxfs
+
+	* volume_id/ext.c: (volume_id_probe_ext): Check for
+	valid block size, cause the signature is only 2 bytes long.
+	Also detect ext3 external journals and fsversion for ext fs's.
+
+	* volume_id/fat.c: (volume_id_probe_vfat): Detect invalid
+	formatted FAT32 volumes. mkdosfs can create fs layouts which
+	no sane formatting program would do.
+
+	* volume_id/ocfs.c: (volume_id_probe_ocfs1),
+	(volume_id_probe_ocfs2): Add ocfs1 and correct wrong probing
+	for ocfs2.
+
+	* volume_id/reiserfs.c: (volume_id_probe_reiserfs): Match
+	fs names with the kernel module names.
+
+	* volume_id/util.c: (volume_id_get_buffer): Use ssize to
+	catch returned error.
+
+	* volume_id/volume_id.c: (volume_id_probe_all): Probe for
+	ocfs1 and vxfs.
+
+	* volume_id/volume_id.h: Version 52.
+
 2005-10-21  Danny Kukawka  <danny.kukawka@web.de>
 
 	* fdi/preprobe/10osvendor/10-ide-drives.fdi: removed no longer

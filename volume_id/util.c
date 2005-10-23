@@ -3,19 +3,9 @@
  *
  * Copyright (C) 2005 Kay Sievers <kay.sievers@vrfy.org>
  *
- *	This library is free software; you can redistribute it and/or
- *	modify it under the terms of the GNU Lesser General Public
- *	License as published by the Free Software Foundation; either
- *	version 2.1 of the License, or (at your option) any later version.
- *
- *	This library is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- *	Lesser General Public License for more details.
- *
- *	You should have received a copy of the GNU Lesser General Public
- *	License along with this library; if not, write to the Free Software
- *	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *	This program is free software; you can redistribute it and/or modify it
+ *	under the terms of the GNU General Public License as published by the
+ *	Free Software Foundation version 2 of the License.
  */
 
 #ifndef _GNU_SOURCE
@@ -197,7 +187,7 @@ set:
 
 uint8_t *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 {
-	size_t buf_len;
+	ssize_t buf_len;
 
 	dbg("get buffer off 0x%llx(%llu), len 0x%zx", (unsigned long long) off, (unsigned long long) off, len);
 	/* check if requested area fits in superblock buffer */
@@ -224,7 +214,7 @@ uint8_t *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 			}
 			dbg("got 0x%zx (%zi) bytes", buf_len, buf_len);
 			id->sbbuf_len = buf_len;
-			if (buf_len < off + len) {
+			if ((size_t)buf_len < off + len) {
 				dbg("requested 0x%zx bytes, got only 0x%zx bytes", len, buf_len);
 				return NULL;
 			}
@@ -261,7 +251,7 @@ uint8_t *volume_id_get_buffer(struct volume_id *id, uint64_t off, size_t len)
 			dbg("got 0x%zx (%zi) bytes", buf_len, buf_len);
 			id->seekbuf_off = off;
 			id->seekbuf_len = buf_len;
-			if (buf_len < len) {
+			if ((size_t)buf_len < len) {
 				dbg("requested 0x%zx bytes, got only 0x%zx bytes", len, buf_len);
 				return NULL;
 			}
