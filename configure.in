@@ -226,8 +226,10 @@ AC_SUBST(EXPAT_LIB)
 dnl Check libusb
 AC_PATH_PROG(LIBUSB_CONFIG, libusb-config)
 if test -n "${LIBUSB_CONFIG}"; then
+	USE_LIBUSB=yes
 	AM_CONDITIONAL(HAVE_LIBUSB,true)
 else
+	USE_LIBUSB=no
 	AM_CONDITIONAL(HAVE_LIBUSB,false)
 fi
 
@@ -537,6 +539,7 @@ echo "
         dbus-1 system.d dir:      ${DBUS_SYS_DIR}
         pci.ids, usb.ids dir:     ${HWDATA_DIR}
         linux hotplug.d dir:      ${LINUX_HOTPLUG_DIR}
+      
         compiler:                 ${CC}
         cflags:                   ${CFLAGS}
         cppflags:                 ${CPPFLAGS}
@@ -553,6 +556,7 @@ echo "
         install fstab-sync:       ${enable_fstab_sync}
         Extended PCMCIA support:  ${enable_pcmcia_support}
         PCMCIA stab file:         ${PCMCIA_STAB_FILE}
+        use libusb (for usb-csr): ${USE_LIBUSB}
 
         Maintainer mode:          ${USE_MAINTAINER_MODE}
         Building verbose mode:    ${enable_verbose_mode}

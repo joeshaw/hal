@@ -1,3 +1,8 @@
+2005-10-24  Danny Kukawka  <danny.kukawka@web.de>
+
+	* configure.in: added info about libusb support for addon-usb-csr
+	to display whether the addon is compiled or not.
+
 2005-10-23  Kay Sievers  <kay.sievers@vrfy.org>
 
 	volume_id version 52:
