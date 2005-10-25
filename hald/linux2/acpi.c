@@ -253,7 +253,7 @@ battery_poll_infrequently (gpointer data) {
 }
 
 
-/** Fallback polling method to refresh battery bojects is plugged in
+/** Fallback polling method to refresh battery objects is plugged in
  *
  *  @return			TRUE
  *
@@ -755,6 +755,8 @@ static void
 acpi_synthesize (const gchar *path, int acpi_type)
 {
 	const gchar *f;
+	gchar _path[HAL_PATH_MAX];
+	gboolean is_laptop = FALSE;
 	GDir *dir;
 	GError *error = NULL;
 
@@ -768,6 +770,29 @@ acpi_synthesize (const gchar *path, int acpi_type)
 	/* do for each object in directory */
 	while ((f = g_dir_read_name (dir)) != NULL) {
 		gchar buf[HAL_PATH_MAX];
+		
+		/* check if there is a battery bay or a LID button */
+		if (!is_laptop) {
+			if ( acpi_type == ACPI_TYPE_BATTERY ) { 
+				is_laptop = TRUE;
+			} else if ( acpi_type == ACPI_TYPE_BUTTON ) {
+				snprintf (_path, sizeof (_path), "%s/acpi/button/lid", get_hal_proc_path ());
+				if ( strcmp (path, _path) == 0 )
+					is_laptop = TRUE;
+			}
+		}
+		/* if there is a battery bay or LID, this is a laptop -> set the formfactor */
+		if ( is_laptop ) {
+			HalDevice *computer;
+
+			if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL &&
+			    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
+				HAL_ERROR (("No computer object?"));
+        		} else {
+				hal_device_property_set_string (computer, "system.formfactor", "laptop");
+			}
+		}
+
 		snprintf (buf, sizeof (buf), "%s/%s", path, f);
 		acpi_synthesize_item (buf, acpi_type);
 	}

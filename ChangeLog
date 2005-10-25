@@ -1,5 +1,23 @@
 2005-10-25  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/acpi.c: (acpi_synthesize): Check if there is a battery
+	bay and/or a LID button to verify if the machine is a latop. If so 
+	change the key system.formfactor to 'laptop' (to workaround missing/
+	unknown information from smbios).
+	Fixed typo in code documentation.
+
+	* hald/linux2/apm.c: (battery_refresh),
+	(apm_synthesize_hotplug_events), (apm_generic_compute_udi): Fixed keys
+	if the battery is removed. Changed check for battery and added more 
+	criterions to be sure that we add only known values. Also fixed the 
+	udi of APM devices, now the udi contains the name of the devicetype. 
+
+	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done):
+	Fixed creation of key system.formfactor from smbios information to be
+	sure never overwrite already set key (e.g. from APM/ACPI/PMU).
+
+2005-10-25  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/ids.c: updated list of PNP IDs and added some comments.
 
 2005-10-24  Kay Sievers  <kay.sievers@vrfy.org>

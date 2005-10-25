@@ -478,7 +478,9 @@ computer_probing_pcbios_helper_done (HalDevice *d, gboolean timed_out, gint retu
 
 		for (i = 0; chassis_map[i] != NULL; i += 2) {
 			if (strcmp (chassis_map[i], chassis_type) == 0) {
-				hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
+				/* check if the key is already set to prevent overwrite keys */
+				if (!hal_device_has_property(d, "system.formfactor"))
+					hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
 				break;
 			}
 		}

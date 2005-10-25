@@ -129,6 +129,7 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 	int remaining_time;
 	gboolean is_charging;
 	gboolean is_discharging;
+	HalDevice *computer;
 	APMInfo i;
 
 	path = hal_device_property_get_string (d, "linux.apm_path");
@@ -144,18 +145,38 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 
 	read_from_apm (path, &i);
 
-	if (i.battery_percentage <= 0) {
+	/* we check this to know if there is a battery: 
+	 * - if i.battery_percentage < 0: no battery   
+	 * - if driver version starts with [B]: old style (pre-0.7), not supported -> no battery
+	 * - if battery status == 0xff : no battery present
+	 */
+	if (i.battery_percentage < 0 || i.driver_version[0] == 'B' || i.battery_status == 0xff ) {
 		device_property_atomic_update_begin ();
 		hal_device_property_remove (d, "battery.is_rechargeable");
 		hal_device_property_remove (d, "battery.rechargeable.is_charging");
 		hal_device_property_remove (d, "battery.rechargeable.is_discharging");
 		hal_device_property_remove (d, "battery.charge_level.unit");
 		hal_device_property_remove (d, "battery.charge_level.current");
+		/* Is this key really needed? We don't know the value of this key */
 		hal_device_property_remove (d, "battery.charge_level.last_full");
 		hal_device_property_remove (d, "battery.charge_level.design");
+		hal_device_property_remove (d, "battery.charge_level.percentage");
+		hal_device_property_remove (d, "battery.remaining_time");
 		hal_device_property_set_bool (d, "battery.present", FALSE);
 		device_property_atomic_update_end ();		
 	} else {
+		if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL &&
+		    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) == NULL) {
+			HAL_ERROR (("No computer object?"));
+		} else {
+			if (!hal_device_has_property(computer, "system.formfactor")) {
+				hal_device_property_set_string (computer, "system.formfactor", "laptop");
+			}
+			else if (strcmp (hal_device_property_get_string (computer, "system.formfactor"), "laptop") != 0) {
+				hal_device_property_set_string (computer, "system.formfactor", "laptop");
+			}
+		}
+		
 		device_property_atomic_update_begin ();
 		hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
 		hal_device_property_set_bool (d, "battery.present", TRUE);
@@ -163,7 +184,8 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		hal_device_property_set_string (d, "battery.charge_level.unit", "percent");
 
 		hal_device_property_set_int (d, "battery.charge_level.design", 100);
-		hal_device_property_set_int (d, "battery.charge_level.last_full", 100);
+		/* Is this key really needed? We don't know the value of this key */
+		hal_device_property_set_int (d, "battery.charge_level.last_full", 100); 
 
 		/* TODO: clean the logic below up; it appears my T41
 		 * with 2.6.10-1.1110_FC4 and acpi=off always report
@@ -305,9 +327,20 @@ static gboolean
 apm_generic_compute_udi (HalDevice *d, APMDevHandler *handler)
 {
 	gchar udi[256];
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/apm_%d",
-			      hal_device_property_get_int (d, "linux.apm_type"));
+
+	if (handler->apm_type == APM_TYPE_BATTERY ) {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "/org/freedesktop/Hal/devices/apm_battery");
+	
+	} else if (handler->apm_type == APM_TYPE_AC_ADAPTER ) {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "/org/freedesktop/Hal/devices/apm_ac_adapter");
+	} else {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "/org/freedesktop/Hal/devices/apm_%d",
+				      hal_device_property_get_int (d, "info.category"));
+	}
+
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
