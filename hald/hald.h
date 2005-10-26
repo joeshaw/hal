@@ -45,6 +45,7 @@ void property_atomic_update_begin ();
 void property_atomic_update_end ();
 
 extern dbus_bool_t hald_is_verbose;
+extern dbus_bool_t hald_use_syslog;
 extern dbus_bool_t hald_is_initialising;
 extern dbus_bool_t hald_is_shutting_down;
 

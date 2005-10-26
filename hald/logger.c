@@ -33,6 +33,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/syslog.h>
 
 #include "logger.h"
 
@@ -50,15 +51,8 @@ static int line;
 static const char *function;
 
 static int is_enabled = 1;
+static int syslog_enabled = 0;
 
-
-/** Initialize logging system
- *
- */
-void
-logger_init (void)
-{
-}
 
 /** Disable all logging
  *
@@ -76,6 +70,24 @@ void
 logger_enable (void)
 {
 	is_enabled = 1;
+}
+
+/** enable usage of syslog for logging  
+ *
+ */
+void 
+logger_enable_syslog (void)
+{
+	syslog_enabled = 1;
+}
+
+/** disable usage of syslog for logging  
+ *
+ */
+void 
+logger_disable_syslog (void)
+{
+	syslog_enabled = 0;
 }
 
 /** Setup logging entry
@@ -140,8 +152,24 @@ logger_emit (const char *format, ...)
 	strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
 
 	/** @todo Make programmatic interface to logging */
-	if (priority != HAL_LOGPRI_TRACE)
+	if (priority != HAL_LOGPRI_TRACE && !syslog_enabled ) {
 		fprintf (stderr, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf);
+	} else if (priority != HAL_LOGPRI_TRACE && syslog_enabled ) {   
+		/* use syslog for debug/log messages if HAL started as daemon */
+		switch (priority) {
+			case HAL_LOGPRI_DEBUG:
+			case HAL_LOGPRI_INFO:
+				syslog(LOG_INFO, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf );
+				break;			
+			case HAL_LOGPRI_WARNING:
+				syslog(LOG_WARNING, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf );
+				break;
+			default:		 /* explicit fallthrough */
+			case HAL_LOGPRI_ERROR:
+				syslog(LOG_ERR, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf );
+				break;
+		}
+	}
 
 	va_end (args);
 }

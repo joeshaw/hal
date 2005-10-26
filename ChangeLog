@@ -1,3 +1,16 @@
+2005-10-26  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/hald.c: (usage), (main); hald/hald.h : Added new command 
+	line option '--use-syslog' to write debug messages to syslog 
+	instead of stderr. With this option HAL writes debug messages also 
+	if run as daemon. 
+	Removed useless call of logger_init (). Moved first debug message 
+	to reduce unneeded double check of opt_become_daemon.
+
+	* hald/logger.c: (logger_enable_syslog), (logger_disable_syslog),
+	(logger_emit); hald/logger.h: Added write to syslog instead of
+	stderr. Remove empty and useless function logger_init ().
+
 2005-10-26  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/addons/addon-storage.c: (main): Emit "EjectPressed" event

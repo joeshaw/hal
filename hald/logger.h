@@ -46,14 +46,16 @@ enum {
 	HAL_LOGPRI_ERROR = (1 << 4)    /**< error */
 };
 
-void logger_init (void);
-
 void logger_setup (int priority, const char *file, int line, const char *function);
 
 void logger_emit (const char *format, ...);
 
 void logger_enable (void);
 void logger_disable (void);
+
+void logger_enable_syslog (void);
+void logger_disable_syslog (void);
+
 
 /** Trace logging macro */
 #define HAL_TRACE(expr)   do {logger_setup(HAL_LOGPRI_TRACE,   __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)

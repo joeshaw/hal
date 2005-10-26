@@ -211,7 +211,10 @@ usage ()
 		 "\n"
 		 "        --daemon=yes|no      Become a daemon\n"
 		 "        --verbose=yes|no     Print out debug (overrides HALD_VERBOSE)\n"
- 		 "        --retain-privileges  Run as root instead of normal user (calling of\n"
+ 		 "        --use-syslog         Print out debug messages to syslog instead of stderr.\n"
+		 "                             Use this option to get debug messages if HAL runs as\n"
+		 "                             daemon.\n"
+		 "        --retain-privileges  Run as root instead of normal user (calling of\n"
  		 "                             external scripts to modify fstab etc. will work)\n" 
 		 "        --help               Show this information and exit\n"
 		 "\n"
@@ -228,6 +231,7 @@ static dbus_bool_t opt_become_daemon = TRUE;
 
 /** If #TRUE, we will spew out debug */
 dbus_bool_t hald_is_verbose = FALSE;
+dbus_bool_t hald_use_syslog = FALSE;
 
 static int sigterm_unix_signal_pipe_fds[2];
 static GIOChannel *sigterm_iochn;
@@ -408,7 +412,6 @@ main (int argc, char *argv[])
 
 	g_type_init ();
 
-	logger_init ();
 	if (getenv ("HALD_VERBOSE"))
 		hald_is_verbose = TRUE;
 	else
@@ -433,6 +436,7 @@ main (int argc, char *argv[])
 		static struct option long_options[] = {
 			{"daemon", 1, NULL, 0},
 			{"verbose", 1, NULL, 0},
+			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"retain-privileges", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
@@ -470,7 +474,10 @@ main (int argc, char *argv[])
 				}
 			} else if (strcmp (opt, "retain-privileges") == 0) {
 				retain_privs = TRUE;
+			} else if (strcmp (opt, "use-syslog") == 0) {
+                                hald_use_syslog = TRUE;
 			}
+
 			break;
 
 		default:
@@ -485,6 +492,11 @@ main (int argc, char *argv[])
 	else
 		logger_disable ();
 
+	if (hald_use_syslog)
+		logger_enable_syslog ();
+	else
+		logger_disable_syslog ();
+
 	/* will fork into two; only the child will return here if we are successful */
 	/*master_slave_setup ();
 	  sleep (100000000);*/
@@ -492,10 +504,6 @@ main (int argc, char *argv[])
 	loop = g_main_loop_new (NULL, FALSE);
 
 	HAL_INFO ((PACKAGE_STRING));
-	if (opt_become_daemon)
-		HAL_INFO (("Will daemonize"));
-	else
-		HAL_INFO (("Will not daemonize"));
 
 	if (opt_become_daemon) {
 		int child_pid;
@@ -503,6 +511,7 @@ main (int argc, char *argv[])
 		int pf;
 		char pid[9];
 		
+		HAL_INFO (("Will daemonize"));
 		HAL_INFO (("Becoming a daemon"));
 
 		if (pipe (startup_daemonize_pipe) != 0) {
@@ -557,6 +566,8 @@ main (int argc, char *argv[])
 			close (pf);
 			atexit (delete_pid);
 		}
+	} else {
+		HAL_INFO (("Will not daemonize"));
 	}
 
 
