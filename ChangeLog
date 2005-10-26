@@ -1,5 +1,14 @@
 2005-10-26  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/blockdev.c: (update_mount_point): Added, to workaround 
+	kernel problem with announce mounted device in /proc/mounts before 
+	send netlink event (currently reported for gentoo kernel, see: 
+	http://lists.freedesktop.org/archives/hal/2005-October/003634.html),
+	one retry after 0.3 seconds to check /proc/mounts. 
+	This is specially for voluntary preemption kernel.
+
+2005-10-26  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/hald.c: (usage), (main); hald/hald.h : Added new command 
 	line option '--use-syslog' to write debug messages to syslog 
 	instead of stderr. With this option HAL writes debug messages also 

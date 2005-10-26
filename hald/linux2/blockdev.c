@@ -169,7 +169,8 @@ update_mount_point (HalDevice *d)
 	const char *device_file;
 	char buf[512];
 	unsigned int major, minor;
-	
+	gboolean retry = FALSE;
+
 	if ((device_file = hal_device_property_get_string (d, "block.device")) == NULL)
 		goto out;
 
@@ -178,27 +179,45 @@ update_mount_point (HalDevice *d)
 
 	HAL_INFO (("Update mount point for %s (device_file %s)", d->udi, device_file));
 
-	snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
-	if ((f = setmntent (buf, "r")) == NULL) {
-		HAL_ERROR (("Could not open /proc/mounts"));
-		goto out;
-	}
 
-	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
-		struct stat statbuf;
-
-		if (stat (mnt.mnt_fsname, &statbuf) != 0)
-			continue;
-
-		if ((major (statbuf.st_rdev) == major) && (minor (statbuf.st_rdev) == minor)) {
-			device_property_atomic_update_begin ();
-			hal_device_property_set_bool (d, "volume.is_mounted", TRUE);
-			hal_device_property_set_string (d, "volume.mount_point", mnt.mnt_dir);
-			device_property_atomic_update_end ();
-			HAL_INFO (("Setting mount point %s for %s", mnt.mnt_dir, device_file));
-			goto found;
+	do {
+		snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
+		if ((f = setmntent (buf, "r")) == NULL) {
+			HAL_ERROR (("Could not open /proc/mounts"));
+			goto out;
 		}
-	}
+
+		while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
+			struct stat statbuf;
+
+			if (stat (mnt.mnt_fsname, &statbuf) != 0)
+				continue;
+
+			if ((major (statbuf.st_rdev) == major) && (minor (statbuf.st_rdev) == minor)) {
+				device_property_atomic_update_begin ();
+				hal_device_property_set_bool (d, "volume.is_mounted", TRUE);
+				hal_device_property_set_string (d, "volume.mount_point", mnt.mnt_dir);
+				device_property_atomic_update_end ();
+				HAL_INFO (("Setting mount point %s for %s", mnt.mnt_dir, device_file));
+				goto found;
+			}
+		}
+
+		/* to workaround http://lists.freedesktop.org/archives/hal/2005-October/003634.html 
+		 * If device is not in proc: sleep 0.3 seconds and retry _one time_ to check again.
+		 * 
+		 * NOTE: This workaround is for voluntary preemption kernel and should be removed if
+		 *       the problem is fixed in the kernel.
+		 */
+		if (retry) {
+			HAL_WARNING (("Could not find %s in %s/mounts, no second retry.", device_file, get_hal_proc_path ()));
+			retry = FALSE;
+		} else {
+			retry = TRUE;
+			usleep (300000);
+			HAL_WARNING (("Could not find %s in %s/mounts retry to find.", device_file, get_hal_proc_path ()));
+		}	
+	} while (retry);
 
 	device_property_atomic_update_begin ();
 	hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
