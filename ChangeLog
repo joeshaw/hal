@@ -1,3 +1,9 @@
+2005-10-26  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/addons/addon-storage.c: (main): Emit "EjectPressed" event
+	for an optical drive, when it has a media inserted and the tray button is
+	pressed.
+
 2005-10-25  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/acpi.c: (acpi_synthesize): Check if there is a battery

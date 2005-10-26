@@ -76,10 +76,10 @@ unmount_childs(LibHalContext *ctx, const char *udi)
 	if ((volumes = libhal_manager_find_device_string_match (
 		     ctx, "block.storage_device", udi, &num_volumes, &error)) != NULL) {
 		int i;
-		
+
 		for (i = 0; i < num_volumes; i++) {
 			char *vol_udi;
-			
+
 			vol_udi = volumes[i];
 			dbus_error_init (&error);
 			if (libhal_device_get_property_bool (ctx, vol_udi, "block.is_volume", &error)) {
@@ -102,7 +102,7 @@ unmount_childs(LibHalContext *ctx, const char *udi)
 			}
 		}
 		libhal_free_string_array (volumes);
-	} 
+	}
 }
 
 /** Check if a filesystem on a special device file is mounted
@@ -145,7 +145,7 @@ enum {
 	MEDIA_STATUS_NO_MEDIA = 2
 };
 
-int 
+int
 main (int argc, char *argv[])
 {
 	char *udi;
@@ -217,7 +217,7 @@ main (int argc, char *argv[])
 			if (fd < 0 && errno == EBUSY) {
 				/* this means the disc is mounted or some other app,
 				 * like a cd burner, has already opened O_EXCL */
-				
+
 				/* HOWEVER, when starting hald, a disc may be
 				 * mounted; so check /etc/mtab to see if it
 				 * actually is mounted. If it is we retry to open
@@ -241,13 +241,12 @@ main (int argc, char *argv[])
 			 */
 			drive = ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
 			switch (drive) {
-				/* explicit fallthrough */
 			case CDS_NO_INFO:
 			case CDS_NO_DISC:
 			case CDS_TRAY_OPEN:
 			case CDS_DRIVE_NOT_READY:
 				break;
-			
+
 			case CDS_DISC_OK:
 				/* some CD-ROMs report CDS_DISK_OK even with an open
 				 * tray; if media check has the same value two times in
@@ -260,17 +259,47 @@ main (int argc, char *argv[])
 					got_media = TRUE;
 				}
 				break;
-			
+
 			case -1:
 				dbg ("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno));
 				break;
-				
+
 			default:
 				break;
 			}
+
+			/* check if eject button was pressed */
+			if (got_media) {
+				struct cdrom_generic_command cgc;
+				struct request_sense sense;
+				unsigned char buffer[8];
+				int ret;
+
+				memset (&cgc, 0, sizeof (struct cdrom_generic_command));
+				memset (&sense, 0, sizeof (struct request_sense));
+				memset (buffer, 0, sizeof (buffer));
+				cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
+				cgc.cmd[1] = 1;
+				cgc.cmd[4] = 16;
+				cgc.cmd[8] = sizeof (buffer);
+				cgc.timeout = 600;
+				cgc.buffer = buffer;
+				cgc.buflen = sizeof (buffer);
+				cgc.data_direction = CGC_DATA_READ;
+				cgc.sense = &sense;
+				cgc.quiet = 1;
+				ret = ioctl (fd, CDROM_SEND_PACKET, &cgc);
+				if (ret == 0 && (buffer[4] & 0x0f) == 0x01) {
+					DBusError error;
+
+					/* emit signal from drive device object */
+					dbus_error_init (&error);
+					libhal_device_emit_condition (ctx, udi, "EjectPressed", "", &error);
+				}
+			}
+
 			close (fd);
 		} else {
-
 			fd = open (device_file, O_RDONLY);
 			if (fd < 0 && errno == ENOMEDIUM) {
 				got_media = FALSE;
@@ -285,8 +314,7 @@ main (int argc, char *argv[])
 			}
 		}
 
-		switch (media_status)
-		{
+		switch (media_status) {
 		case MEDIA_STATUS_GOT_MEDIA:
 			if (!got_media) {
 				DBusError error;
@@ -312,35 +340,32 @@ main (int argc, char *argv[])
 		case MEDIA_STATUS_NO_MEDIA:
 			if (got_media) {
 				DBusError error;
-				
+
 				dbg ("Media insertion detected on %s", device_file);
 				/* our probe will trigger the appropriate hotplug events */
-				
+
 				/* could have a fs on the main block device; do a rescan to add it */
 				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 				
 			}
 			break;
-			
-		default:
+
 		case MEDIA_STATUS_UNKNOWN:
+		default:
 			break;
 		}
-		
+
 		/* update our current status */
 		if (got_media)
 			media_status = MEDIA_STATUS_GOT_MEDIA;
 		else
 			media_status = MEDIA_STATUS_NO_MEDIA;
-		
-		
+
 		/*dbg ("polling %s; got media=%d", device_file, got_media);*/
-		
+
 	skip_check:
-
 		sleep (2);
-
 	}
 
 out:
