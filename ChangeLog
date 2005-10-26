@@ -1,5 +1,10 @@
 2005-10-26  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/hald.c: (usage), (main): added --version command line option
+	to print the PACKAGE_VERSION of HAL.
+
+2005-10-26  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/blockdev.c: (update_mount_point): Added, to workaround 
 	kernel problem with announce mounted device in /proc/mounts before 
 	send netlink event (currently reported for gentoo kernel, see: 

@@ -217,6 +217,7 @@ usage ()
 		 "        --retain-privileges  Run as root instead of normal user (calling of\n"
  		 "                             external scripts to modify fstab etc. will work)\n" 
 		 "        --help               Show this information and exit\n"
+		 "        --version            Output version information and exit"
 		 "\n"
 		 "The HAL daemon detects devices present in the system and provides the\n"
 		 "org.freedesktop.Hal service through the system-wide message bus provided\n"
@@ -439,6 +440,7 @@ main (int argc, char *argv[])
 			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"retain-privileges", 0, NULL, 0},
+			{"version", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
 
@@ -453,6 +455,9 @@ main (int argc, char *argv[])
 
 			if (strcmp (opt, "help") == 0) {
 				usage ();
+				return 0;
+			} else if (strcmp (opt, "version") == 0) {
+				fprintf (stderr, "HAL package version: " PACKAGE_VERSION "\n");
 				return 0;
 			} else if (strcmp (opt, "daemon") == 0) {
 				if (strcmp ("yes", optarg) == 0) {
