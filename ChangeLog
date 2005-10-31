@@ -1,3 +1,9 @@
+2005-10-31  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/osspec.c (netlink_detection_data_ready): Look at all
+	netlink messages, not just the first one. 
+	Patch from Jon Nettleton <jon.nettleton@gmail.com>.
+
 2005-10-26  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/hald.c: (usage), (main): added --version command line option

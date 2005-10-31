@@ -217,9 +217,7 @@ netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 
 	do {
 		errno = 0;
-		bytes_read = recvfrom (fd,
-				   buf + total_read,
-				   sizeof (buf) - total_read,
+		bytes_read = recvfrom (fd, buf, sizeof (buf),
 				   MSG_DONTWAIT,
 				   (struct sockaddr*)&nladdr, &nladdrlen);
 		if (nladdrlen != sizeof(nladdr)) {
@@ -230,34 +228,33 @@ netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 			HAL_ERROR(("Spoofed packet received on netlink socket"));
 			return TRUE;
 		}
-		if (bytes_read > 0)
-			total_read += bytes_read;
+
+		if (bytes_read < 0 && errno != EAGAIN) {
+			HAL_ERROR (("Error reading data off netlink socket"));
+			return TRUE;
+		} else if ( bytes_read < 0 ) {
+			return TRUE;
+		} else {
+			HAL_INFO (("bytes_read=%d buf='%s'", bytes_read, buf));
+		}
+
+		/* Handle event: "mount@/block/hde" */
+		if (g_str_has_prefix (buf, "mount")) {
+			gchar sysfs_path[HAL_PATH_MAX];
+			g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
+			g_strlcat (sysfs_path, ((char *) buf) + sizeof ("mount"), sizeof (sysfs_path));
+			blockdev_mount_status_changed (sysfs_path, TRUE);
+		}
+
+		/* Handle event: "umount@/block/hde" */
+		if (g_str_has_prefix (buf, "umount")) {
+			gchar sysfs_path[HAL_PATH_MAX];
+			g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
+			g_strlcat (sysfs_path, ((char *) buf) + sizeof ("umount"), sizeof (sysfs_path));
+			blockdev_mount_status_changed (sysfs_path, FALSE);
+		}
+
 	} while (bytes_read > 0 || errno == EINTR);
-
-	if (bytes_read < 0 && errno != EAGAIN) {
-		HAL_ERROR (("Error reading data off netlink socket"));
-		return TRUE;
-	}
-
-	if (total_read > 0) {
-		HAL_INFO (("total_read=%d buf='%s'", total_read, buf));
-	}
-
-	/* Handle event: "mount@/block/hde" */
-	if (g_str_has_prefix (buf, "mount")) {
-		gchar sysfs_path[HAL_PATH_MAX];
-		g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
-		g_strlcat (sysfs_path, ((char *) buf) + sizeof ("mount"), sizeof (sysfs_path));
-		blockdev_mount_status_changed (sysfs_path, TRUE);
-	}
-
-	/* Handle event: "umount@/block/hde" */
-	if (g_str_has_prefix (buf, "umount")) {
-		gchar sysfs_path[HAL_PATH_MAX];
-		g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
-		g_strlcat (sysfs_path, ((char *) buf) + sizeof ("umount"), sizeof (sysfs_path));
-		blockdev_mount_status_changed (sysfs_path, FALSE);
-	}
 
 	return TRUE;
 }
