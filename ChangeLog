@@ -1,5 +1,10 @@
 2005-11-01  Danny Kukawka  <danny.kukawka@web.de>
 
+	* libhal-storage/libhal-storage.c: fixed code documentation to remove
+	warnings from doxygen
+
+2005-11-01  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/conf/Makefile.am: added new fdi-files to Makefile
 
 	* doc/conf/match-USB-camera.fdi, doc/conf/match-USB-mp3-player.fdi, 

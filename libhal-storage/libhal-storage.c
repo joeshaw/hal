@@ -64,6 +64,10 @@
  *  @{
  */
 
+/**
+ * @typedef typedef struct IconMappingEntry_s {} IconMappingEntry
+ * @brief typdef of IconMappingEntry_s
+ */
 typedef struct IconMappingEntry_s {
 	LibHalStoragePolicyIcon icon;
 	char *path;
@@ -751,7 +755,7 @@ libhal_drive_free (LibHalDrive *drive)
 
 /** Free all resources used by a LibHalVolume object.
  *
- *  @param  volume              Object to free
+ *  @param  vol              Object to free
  */
 void
 libhal_volume_free (LibHalVolume *vol)
