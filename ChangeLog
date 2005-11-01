@@ -1,3 +1,10 @@
+2005-11-01  Richard Hughes <richard@hughsie.com>
+
+	* fdi/information/10freedesktop/10-usb-card-readers.fdi:
+	Add yet another common naming theme for a generic card reader, 
+	apparently with a Realtek chip. Vendor ID = 0xbda, Device ID = 0x103
+	Patch from Jerome Lodewyck <lodewyck@clipper.ens.fr>, many thanks.
+
 2005-10-31  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/osspec.c (netlink_detection_data_ready): Look at all
