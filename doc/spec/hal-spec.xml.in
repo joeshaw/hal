@@ -212,11 +212,10 @@
           <emphasis>Callouts</emphasis></para><para> 
 
 	    Callouts are programs invoked when the device object list
-	    is modified or when a device property changes. As such, callouts
-	    can be used to maintain system-wide policy (that may be
-	    specific to the particular OS) such as changing
-	    permissions on device nodes, updating the
-	    systemwide <literal>/etc/fstab</literal> file or
+	    is modified  As such, callouts can be used to maintain 
+	    system-wide policy (that may be specific to the particular 
+	    OS) such as changing permissions on device nodes, updating 
+	    the systemwide <literal>/etc/fstab</literal> file or
 	    configuring the networking subsystem.
 
         </para></listitem>
@@ -5381,81 +5380,70 @@
     <para>
 
       Callouts are programs invoked when the device object list is
-      modified or when a device changes. As such, callouts can be used
-      to maintain system-wide policy (that may be specific to the
-      particular OS) such as changing permissions on device nodes,
-      updating the systemwide <literal>/etc/fstab</literal> file or
-      configuring the networking subsystem.
+      modified. As such, callouts can be used to maintain system-wide 
+      policy (that may be specific to the particular OS) such as 
+      changing permissions on device nodes, updating the systemwide 
+      <literal>/etc/fstab</literal> file or configuring the networking 
+      subsystem.
       
     </para><para>
       
-      There are three different classes of callouts. A callout
-      involves sequentially invoking all executable programs in a
-      given directory in alphabetic order.
+      There are two different classes of callouts. A callout
+      involves sequentially invoking all executable programs in the
+      string list in listed order.
 
     </para>
-    <informaltable>
-      <tgroup cols="2">
-        <thead>
-          <row>
-            <entry>Type</entry>
-            <entry>Description</entry>
-            <entry>Callout Directory</entry>
-            <entry>Positional Parameters</entry>
-          </row>
-        </thead>
-        <tbody>
-	  
-          <row>
-            <entry>Device Add/Remove</entry>
-            <entry>
-	      When a new device object have been added, this callout
-	      is invoked just after a device have entered the GDL
-	      (global device list) but just before it is announced
-	      through the D-BUS network API (the device isn't
-	      announced until the last callout has finished).
-	      When a device object is to be removed this callout is
-	      invoked and the device isn't removed before the last
-	      callout has finished.
-	    </entry>
-            <entry><literal>/etc/hal/device.d</literal></entry>
-            <entry><literal>add</literal> or <literal>remove</literal></entry>
-          </row>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
 
-          <row>
-            <entry>Capability Add/Remove</entry>
-            <entry>
-	      Invoked when a capability have been added or removed.
-	    </entry>
-            <entry><literal>/etc/hal/capability.d</literal></entry>
-            <entry><literal>add</literal> or <literal>remove</literal></entry>
-          </row>
-
-          <row>
-            <entry>Property Change</entry>
-            <entry>
-	      Invoked when a device property have been added, removed
-	      or is modified.
-	    </entry>
-            <entry><literal>/etc/hal/property.d</literal></entry>
-            <entry>
-	      <literal>add</literal>, <literal>remove</literal> or 
-	      <literal>modify</literal>
-	    </entry>
-          </row>
-	  
-        </tbody>
-      </tgroup>
-    </informaltable>
+            <row>
+              <entry><literal>info.callouts.add</literal> (string list)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		A string list with all programmes/callouts which should be 
+		executed when the device is added to the GDL (global device list) 
+		but just before it is announced through the D-BUS network API.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>info.callouts.remove</literal> (string list)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		A string list with all programmes/callouts which should be 
+		executed when the device is removed from the GDL (global device list).
+		The device isn't removed before the last callout has finished. 
+	      </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
     <para>
       
       All callouts execute in the same environment as which the HAL
       daemon was started. In addition, the UDI of the device object is
       exported in the environment variable <literal>UDI</literal>. All
       properties of the device object are exported in the environment
-      prefixed with <literal>HAL_</literal>. The HAL daemon isn't
-      suspended while callouts are executing. Thus, callouts can
-      communicate with the HAL daemon using the D-BUS network
+      prefixed with <literal>HAL_</literal>. If a device is added or
+      removed is exported in the environment variable <literal>HALD_ACTION
+      </literal>, if HAL is in shutdown mode the variable <literal>
+      HALD_SHUTDOWN</literal> is set to environment.
+    
+    </para>
+    <para>  
+    
+      The HAL daemon isn't suspended while callouts are executing. Thus, 
+      callouts can communicate with the HAL daemon using the D-BUS network
       API. Hence, one application of callouts is to merge or modify
       properties on a device object.
 
