@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<!-- Example: This device information file matches a Sony digital still 
+              camera by matching on the USB vendor and product identifers.  -->
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.bus" string="usb">
+      <match key="usb.vendor_id" int="0x054c">
+        <match key="usb.product_id" int="0x0010">
+          <merge key="info.category" type="string">camera</merge>
+          <merge key="info.capabilities" type="string">camera</merge>
+          <merge key="camera.access_method" type="string">storage</merge>
+        </match>
+      </match>
+    </match>
+  </device>
+</deviceinfo>

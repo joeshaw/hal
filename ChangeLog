@@ -1,5 +1,16 @@
 2005-11-01  Danny Kukawka  <danny.kukawka@web.de>
 
+	* doc/conf/Makefile.am: added new fdi-files to Makefile
+
+	* doc/conf/match-USB-camera.fdi, doc/conf/match-USB-mp3-player.fdi, 
+	  doc/conf/match-cardreader.fdi: added and updated fdi-files from 
+	older HAL version to fix rebuild hal spec from distributed package
+
+	* doc/spec/hal-spec.xml.in: fixed problem with rebuild spec from the
+	distributed package and missing included fdi-files.
+
+2005-11-01  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/spec/hal-spec.xml.in: added strlist property and updated part
 	about fdi-files depending on the current sourcecode
 

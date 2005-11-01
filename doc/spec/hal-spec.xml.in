@@ -5295,16 +5295,8 @@
     <sect2 id="fdi-example-mp3player">
       <title>Example: MP3 player</title>
       
-      <para>
-	
-	This device information file matches an USB Mass Storage
-	based MP3 player by the matching on the USB vendor and
-	product identifiers.
-	
-      </para>
-      
       <programlisting>
-	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/jetflash-mp3-player.fdi"/>
+	<inlinegraphic format="linespecific" fileref="../conf/match-USB-mp3-player.fdi"/>
       </programlisting>
       
       <para>
@@ -5322,15 +5314,8 @@
     <sect2 id="fdi-example-camera">
       <title>Example: Digital Still Camera</title>
       
-      <para>
-	
-	This device information file matches a Sony digital still camera
-	by matching on the USB vendor and product identifers.
-	
-      </para>
-      
       <programlisting>
-	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/sony_dsc.fdi"/>
+	<inlinegraphic format="linespecific" fileref="../conf/match-USB-camera.fdi"/>
       </programlisting>
       
       <para>
@@ -5346,15 +5331,8 @@
     <sect2 id="fdi-example-6in1">
       <title>Example: Card Reader</title>
       
-      <para>
-	
-	This device information file matches a memory card reader with
-	multiple storage ports that can be active at the same time.
-	
-      </para>
-      
       <programlisting>
-	<inlinegraphic format="linespecific" fileref="../../fdi/20freedesktop/6in1-card-reader.fdi"/>
+	<inlinegraphic format="linespecific" fileref="../conf/match-cardreader.fdi"/>
       </programlisting>
       
       <para>
@@ -5402,7 +5380,7 @@
       </para>
 
       <programlisting>
-	<inlinegraphic format="linespecific" fileref="../../fdi/90defaultpolicy/storage-policy.fdi"/>
+	<inlinegraphic format="linespecific" fileref="../../fdi/policy/10osvendor/10-storage-policy.fdi"/>
       </programlisting>
 
       <para>
