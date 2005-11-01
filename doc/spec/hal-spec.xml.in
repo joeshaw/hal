@@ -384,6 +384,8 @@
           <itemizedlist>
             <listitem><para><literal>string</literal> - 
 		UTF8 string</para></listitem>
+            <listitem><para><literal>strlist</literal> - 
+		sorted list with UTF8 strings</para></listitem>
             <listitem><para><literal>int</literal> - 
 		32-bit signed integer</para></listitem>
             <listitem><para><literal>uint64</literal> - 
@@ -658,10 +660,10 @@
                      or powered down)</entry>
             </row>
             <row>
-              <entry><literal>info.capabilities</literal> (string)</entry>
-              <entry>example: block storage storage.cdrom</entry>
+              <entry><literal>info.capabilities</literal> (strlist)</entry>
+              <entry>example: 'block, storage, storage.cdrom'</entry>
               <entry>No</entry>
-              <entry>A white-space separated list of capabilities describing what the devices does</entry>
+              <entry>A string list of capabilities describing what the devices does</entry>
             </row>
             <row>
               <entry><literal>info.category</literal> (string)</entry>
@@ -5098,7 +5100,7 @@
       [string|int|bool|..]="required_value" &#62;</literal> directives
       that is tested against the properties of the device object. If
       all the match directives passes then the device information can
-      include <literal>&#60;[merge|append] key="some_property"
+      include <literal>&#60;[merge|append|prepend] key="some_property"
       type="[string|int|bool|..]"&#62;</literal> directives to
       respectively merge new properties or append to existing
       properties on the device object. It's important to emphasize
@@ -5108,8 +5110,8 @@
     </para><para>
 
       The <literal>&#60;match&#62;</literal>, 
-      <literal>&#60;merge&#62;</literal> and
-      <literal>&#60;append&#62;</literal> directives always requires
+      <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal> 
+      and <literal>&#60;prepend&#62;</literal> directives always requires
       the <literal>key</literal> attribute which must be either a
       property name on the device object in question or a path to a
       property on another device object. The latter case is expressed
@@ -5179,10 +5181,19 @@
          <listitem><para>
 	     <literal>compare_ge</literal> - like <literal>compare_lt</literal> but matches when greater than or equal.
 	 </para></listitem>
+         <listitem><para>
+	     <literal>contains</literal> - can only be used with string and strlist (string list). For a string key this
+	     matches when the property contains the given (sub-)string. For a string list this match if the given 
+	     string match a item of the list.
+	 </para></listitem>
+         <listitem><para>
+	     <literal>contains_ncase</literal> - like <literal>contains</literal> but the property and the 
+	     given key are converted to lowercase before check.
+	 </para></listitem>
        </itemizedlist>
 
-       The <literal>&#60;merge&#62;</literal> 
-       and <literal>&#60;append&#62;</literal> directives all require 
+       The <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal> 
+       and <literal>&#60;prepend&#62;</literal> directives all require 
        the <literal>type</literal> attribute which specifies what to
        merge. The following values are supported
 
@@ -5191,6 +5202,12 @@
 	     <literal>string</literal> - The value is copied to the property. For example
 	     <literal>&#60;merge key="foo.bar" type="string"&#62;baz&#60;/merge&#62;</literal>
 	     will merge the value 'baz' into the property 'foo.bar'.	     
+	 </para></listitem>
+         <listitem><para>
+	     <literal>strlist</literal> - For <literal>&#60;merge&#62;</literal> the value is 
+	     copied to the property and the current property will be overwritten. For 
+	     <literal>&#60;append&#62;</literal> and <literal>&#60;prepend&#62;</literal> the 
+	     value is append or prepend to the list as new item.
 	 </para></listitem>
          <listitem><para>
 	     <literal>bool</literal> - Can merge the values 'true' or 'false'
@@ -5214,27 +5231,58 @@
 	 </para></listitem>
        </itemizedlist>
 
-       Device Information files are stored in the following standard hierachy with the following default
-       top level directories:
+       The <literal>&#60;remove&#62;</literal>, directive require only a key and can be used with all keys. 
+       For <literal>strlist</literal> there is additionally a special syntax to remove a item from the 
+       string list. For example to remove item 'bla' from property 'foo.bar':   
+       <literal>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/merge&#62;</literal>
+
+       <para>Device Information files are stored in the following standard hierachy with the following default
+       top level directories <literal>information</literal>, <literal>policy</literal> and 
+       <literal>preprobe</literal></para>:
 
        <itemizedlist>
-         <listitem><para>
-	     <literal>20freedesktop</literal> - device information files included with the hal tarball
-	 </para></listitem>
-         <listitem><para>
-	     <literal>30osvendor</literal> - device information files supplied by the operating system vendor
-	 </para></listitem>
-         <listitem><para>
-	     <literal>40oem</literal> - device information files from the device manufacturer and 
-	     installed from media accompanying the hardware
-	 </para></listitem>
-         <listitem><para>
-	     <literal>90defaultpolicy</literal> - Default policy determined by the operating system vendor and
-	     possibly edited by the system administrator
-	 </para></listitem>
-         <listitem><para>
-	     <literal>95userpolicy</literal> - Policy rules for specific devices.
-	 </para></listitem>
+         <listitem>
+           <para>
+	     <literal>information</literal> - device information files to merge device information 
+            
+             <itemizedlist>
+               <listitem><para><literal>10freedesktop</literal> - device information files included with 
+		the hal tarball</para></listitem>
+               <listitem><para><literal>20thirdparty</literal> - device information files from the device 
+	       manufacturer and installed from media accompanying the hardware</para></listitem>
+               <listitem><para><literal>30user</literal> - device information for specific devices</para>
+               </listitem>
+	     </itemizedlist>
+           </para>
+	 </listitem>
+         <listitem>
+           <para>
+	     <literal>policy</literal> - device information files to merge policy propertys 
+            
+             <itemizedlist>
+               <listitem><para><literal>10osvendor</literal> - device information files included with the 
+		hal tarball and supplied by the operating system vendor for policy rules</para></listitem>
+               <listitem><para><literal>20thirdparty</literal> -  Policy rules from the device 
+	       manufacturer and installed from media accompanying the hardware</para></listitem>
+               <listitem><para><literal>30user</literal> - Policy rules for specific devices</para>
+               </listitem>
+             </itemizedlist>
+           </para>
+	 </listitem>
+         <listitem>
+           <para>
+	     <literal>information</literal> - device information files to information before probe devices 
+            
+             <itemizedlist>
+               <listitem><para><literal>10osvendor</literal> - device information files included with the
+                hal tarball and supplied by the operating system vendor</para></listitem>
+               <listitem><para><literal>20thirdparty</literal> - device information files from the device 
+	       manufacturer and installed from media accompanying the hardware</para></listitem>
+               <listitem><para><literal>30user</literal> -  device information for specific devices</para>
+	       </listitem>
+	     </itemizedlist>
+           </para>
+	 </listitem>
        </itemizedlist>
 
        All device information files are matched for every hal device object.
@@ -5388,7 +5436,7 @@
       
     </para><para>
       
-      There are two different classes of callouts. A callout
+      There are three different classes of callouts. A callout
       involves sequentially invoking all executable programs in the
       string list in listed order.
 
@@ -5411,8 +5459,9 @@
               <entry>No</entry>
               <entry>
 		A string list with all programmes/callouts which should be 
-		executed when the device is added to the GDL (global device list) 
-		but just before it is announced through the D-BUS network API.
+		executed (with <literal>HALD_ACTION=add</literal>) when the device 
+		is added to the GDL (global device list) but just before it is 
+		announced through the D-BUS network API.
 	      </entry>
             </row>
             <row>
@@ -5421,8 +5470,20 @@
               <entry>No</entry>
               <entry>
 		A string list with all programmes/callouts which should be 
-		executed when the device is removed from the GDL (global device list).
-		The device isn't removed before the last callout has finished. 
+		executed (with <literal>HALD_ACTION=remove</literal>) when the 
+		device is removed from the GDL (global device list). The device 
+		isn't removed before the last callout has finished. 
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>info.callouts.preprobe</literal> (string list)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		A string list with all programmes/callouts which should be 
+		executed (with <literal>HALD_ACTION=preprobe</literal>) before 
+		the device is added to the GDL (global device list) and before 
+		the callouts from <literal>info.callouts.add</literal> are executed.
 	      </entry>
             </row>
           </tbody>
