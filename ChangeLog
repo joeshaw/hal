@@ -1,3 +1,11 @@
+2005-11-02  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/coldplug.c: (coldplug_synthesize_events): Prepare for 2.6.15.
+	Check if we find a symlink instead of a class device pointing to a device
+	below a class device. This kernel sysfs layout will change again in the future,
+	for now resolve the link to the "real" device path, like real hotplug events
+	devpath would have.
+
 2005-11-01  Danny Kukawka  <danny.kukawka@web.de>
 
 	* libhal-storage/libhal-storage.c: fixed code documentation to remove

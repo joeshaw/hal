@@ -415,7 +415,7 @@ coldplug_synthesize_events (void)
 
 		g_snprintf (path, HAL_PATH_MAX, "%s/class/%s" , get_hal_sysfs_path (), f);
 		if ((dir1 = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_ERROR (("Unable to open %/class/%s: %s", get_hal_sysfs_path (), f, err->message));
+			HAL_ERROR (("Unable to open %s/class/%s: %s", get_hal_sysfs_path (), f, err->message));
 			g_error_free (err);
 			goto error;
 		}
@@ -423,17 +423,33 @@ coldplug_synthesize_events (void)
 			gchar *target;
 			gchar *normalized_target;
 
-			g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s/device", get_hal_sysfs_path (), f, f1);
+			g_snprintf (path2, HAL_PATH_MAX, "%s/class/%s/%s", get_hal_sysfs_path (), f, f1);
+
+			/* check if we find a symlink here pointing to a device _inside_ a class device,
+			 * like "input" in 2.6.15. This kernel sysfs layout will change again in the future,
+			 * for now resolve the link to the "real" device path, like real hotplug events
+			 * devpath would have
+			 */
+			if ((target = g_file_read_link (path2, NULL)) != NULL) {
+				char *pos = strrchr(path2, '/');
+
+				if (pos)
+					pos[0] = '\0';
+				normalized_target = hal_util_get_normalized_path (path2, target);
+				g_free (target);
+				g_strlcpy(path2, normalized_target, sizeof(path2));
+				g_free (normalized_target);
+			}
+
 			/* Accept net devices without device links too, they may be coldplugged PCMCIA devices */
+			g_snprintf (path1, HAL_PATH_MAX, "%s/device", path2);
 			if (((target = g_file_read_link (path1, NULL)) == NULL)) {
 				/* no device link */
-				g_snprintf (path1, HAL_PATH_MAX, "%s/class/%s/%s", get_hal_sysfs_path (), f, f1);
-				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (path1));
+				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (path2));
 				sysfs_other_class_dev = g_slist_append (sysfs_other_class_dev, g_strdup (f));
 			} else {
 				GSList *classdev_strings;
 
-				g_snprintf (path2, HAL_PATH_MAX, "%s/class/%s/%s", get_hal_sysfs_path (), f, f1);
 				normalized_target = hal_util_get_normalized_path (path2, target);
 				g_free (target);
 
