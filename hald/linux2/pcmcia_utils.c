@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2003 Dan Williams <dcbw@redhat.com>
  *
- * Licensed under the Academic Free License version 2.0
+ * Licensed under the Academic Free License version 2.1
  *
  * Some of this code was derived from pcmcia-cs code, originally
  * developed by David A. Hinds <dahinds@users.sourceforge.net>.

@@ -6,7 +6,7 @@
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  * Copyright (C) 2004 Novell, Inc.
  *
- * Licensed under the Academic Free License version 2.0
+ * Licensed under the Academic Free License version 2.1
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
