@@ -595,9 +595,9 @@
     <para>
       Properties are arranged in a namespaces using ''.'' as a separator
       and are key/value pairs. The value may assume different types; currently
-      int32, double, bool and UTF8 strings are supported. The key of a property
-      is always an ASCII string without any whitespace. The properties are
-      updated in real-time.
+      int32, double, bool, UTF8 strings and UTF8 string lists are supported. 
+      The key of a property is always an ASCII string without any whitespace. 
+      The properties are updated in real-time.
     </para>
 
     <sect1 id="properties-metadata">
@@ -650,14 +650,14 @@
               <entry></entry>
               <entry>No, but required if <literal>info.not_available</literal> is set to TRUE</entry>
               <entry>If this property is set, the device will remain in the
-                     the GDL even if the device is unplugged</entry>
+                     the GDL even if the device is unplugged. NOTE: property not implemented yet </entry>
             </row>
             <row>
               <entry><literal>info.not_available</literal> (bool)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>The device is currently not available (it may be unplugged
-                     or powered down)</entry>
+                     or powered down) NOTE: property not implemented yet </entry>
             </row>
             <row>
               <entry><literal>info.capabilities</literal> (strlist)</entry>
@@ -753,14 +753,14 @@
             <row>
               <entry><literal>linux.sysfs_path</literal> (string)</entry>
               <entry>examples: /sys/block/sda/sda1, /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0</entry>
-              <entry>Yes</entry>
+              <entry>Yes (only if available for the device) </entry>
               <entry>A fully-qualified path into the sysfs filesystem for the
               physical device</entry>
             </row>
             <row>
               <entry><literal>linux.sysfs_path_device</literal> (string)</entry>
               <entry></entry>
-              <entry>Yes</entry>
+              <entry>Yes (only if available for the device) </entry>
               <entry>Normally this property assumes the same value as 
               linux.sysfs_path, however for some devices it assumes an
               alternate location in the sysfs filesystem. It is used
@@ -927,6 +927,60 @@
       </para>
     </sect2>
 
+
+    <sect2 id="device-properties-serialif">
+      <title><literal>serial</literal> namespace</title>
+      <para>
+
+	Device objects that represent serial devices (e.g. /dev/ttyS* or 
+	/dev/ttyUSB*).
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+
+            <row>
+              <entry><literal>serial.physical_device</literal> (string)</entry>
+              <entry>example: <literal>/org/freedesktop/Hal/devices/pnp_PNP0501</literal></entry>
+              <entry>Yes</entry>
+              <entry>UDI of the physical device the serial device is bound to.</entry>
+            </row>
+            <row>
+              <entry><literal>serial.device</literal> (string)</entry>
+              <entry>example: /dev/ttyS0</entry>
+              <entry>Yes</entry>
+              <entry>The device node to access the OSS device.</entry>
+            </row>
+            <row>
+              <entry><literal>serial.port</literal> (int)</entry>
+              <entry>example: 0</entry>
+              <entry>Yes</entry>
+              <entry>
+		The port number of the device, based on the number in 
+                <literal>serial.device</literal>
+             </entry>
+            </row>
+            <row>
+              <entry><literal>serial.type</literal> (string)</entry>
+              <entry>example: platform, usb, unknown</entry>
+              <entry>Yes</entry>
+              <entry>This property defines the type of the serial device.</entry>
+            </row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+	
+    </sect2>
 
     <sect2 id="device-properties-usb">
       <title><literal>usb_device</literal> namespace</title>
@@ -2665,11 +2719,12 @@
 
 
     <sect2 id="device-properties-kernel">
-      <title><literal>kernel</literal> namespace</title>
+      <title><literal>system</literal> namespace</title>
       <para>
 
 	This namespace is found on the toplevel "Computer" device,
-	and represents information about the currently running kernel.
+	and represents information about the system and the currently 
+	running kernel.
 
       </para>
 
@@ -2686,7 +2741,7 @@
           <tbody>
 
             <row>
-              <entry><literal>kernel.name</literal> (string)</entry>
+              <entry><literal>system.kernel.name</literal> (string)</entry>
               <entry>example: Linux</entry>
               <entry>No</entry>
               <entry>
@@ -2695,7 +2750,7 @@
               </entry>
             </row>
             <row>
-              <entry><literal>kernel.version</literal> (string)</entry>
+              <entry><literal>system.kernel.version</literal> (string)</entry>
               <entry>example: 2.6.5-7.104-default</entry>
               <entry>No</entry>
               <entry>
@@ -2704,12 +2759,41 @@
               </entry>
             </row>
             <row>
-              <entry><literal>kernel.machine</literal> (string)</entry>
+              <entry><literal>system.kernel.machine</literal> (string)</entry>
               <entry>example: i686</entry>
               <entry>No</entry>
               <entry>
                 The "machine hardware name" of the currently running kernel.
                 Usually the equivalent of <literal>uname -m</literal>.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>system.formfactor</literal> (string)</entry>
+              <entry>example: laptop, desktop, server, unknown</entry>
+              <entry>Yes</entry>
+              <entry>
+		 The formfactor of the system. Usually the equivalent of 
+		 <literal>smbios.chassis.type</literal> or set from information
+		 about ACPI/APM/PMU properties.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>system.vendor</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		 The name of the manufacturer of the machine. Usually the equivalent of 
+		 <literal>smbios.system.manufacturer</literal>.
+	      </entry>
+            </row>
+            <row>
+              <entry><literal>system.product</literal> (string)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		 The product name of the machine. Usually the equivalent of 
+		 <literal>smbios.system.product</literal> and
+		 <literal>smbios.system.version</literal>.
 	      </entry>
             </row>
 				      
@@ -3630,7 +3714,7 @@
 
             <row>
               <entry><literal>portable_audio_player.output_formats</literal> (string)</entry>
-              <entry>example: 'audio/mpeg audio/x-ms-wma</entry>
+              <entry>example: audio/mpeg audio/x-ms-wma</entry>
               <entry>Yes</entry>
               <entry>
 		A whitespace-separated list of MIME-types representing 
@@ -3640,7 +3724,7 @@
 
             <row>
               <entry><literal>portable_audio_player.input_formats</literal> (string)</entry>
-              <entry>example: 'audio/x-wav</entry>
+              <entry>example: audio/x-wav</entry>
               <entry>Yes</entry>
               <entry>
 		A whitespace-separated list of MIME-types representing 

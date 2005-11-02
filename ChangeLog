@@ -1,5 +1,10 @@
 2005-11-02  Danny Kukawka  <danny.kukawka@web.de>
 
+	* doc/spec/hal-spec.xml.in: updated spec for serial and system namespace
+	and little updates for different properties
+
+2005-11-02  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done): changed
 	compute system.product to prevent adding "Not Specified" from 
 	smbios.system.version to the property.
