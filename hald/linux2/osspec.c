@@ -427,9 +427,14 @@ computer_probing_pcbios_helper_done (HalDevice *d, gboolean timed_out, gint retu
 	    (system_version = hal_device_property_get_string (d, "smbios.system.version")) != NULL) {
 		char buf[128];
 
-		g_snprintf (buf, sizeof (buf), "%s %s", system_product, system_version);
 		hal_device_property_set_string (d, "system.vendor", system_manufacturer);
-		hal_device_property_set_string (d, "system.product", buf);
+
+		if (strcmp(system_version, "Not Specified" ) != 0 ) {
+			g_snprintf (buf, sizeof (buf), "%s %s", system_product, system_version);
+			hal_device_property_set_string (d, "system.product", buf);
+		} else {
+			hal_device_property_set_string (d, "system.product", system_product);
+		}
 	}
 
 

@@ -931,7 +931,7 @@ out:
  *
  *    "design voltage:          10800 mV"
  *
- *  then hal_util_set_int_elem_from_file (d, "battery.bar",
+ *  then hal_util_set_int_elem_from_file (d, "battery.foo",
  *  "/proc/acpi/battery/BAT0", "info", "design voltage", 0) will assign
  *  the integer 10800 to the property "battery.foo" on d.
  *

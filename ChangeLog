@@ -1,3 +1,11 @@
+2005-11-02  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done): changed
+	compute system.product to prevent adding "Not Specified" from 
+	smbios.system.version to the property.
+
+	* hald/util.c: fixed code documentation
+
 2005-11-02  David Zeuthen  <david@fubar.dk>
 
 	* COPYING: Update to Academic Free License 2.1. Also fix all C source
