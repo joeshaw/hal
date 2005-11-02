@@ -3790,20 +3790,18 @@
 
    <sect2 id="device-properties-oss">
       <title><literal>oss</literal> namespace</title>
-      <para>
 
+      <para>
        Device objects with the capability <literal>oss</literal>
        represent all the streams available through OSS on a soundcard.
-       OSS devices could be emulated by ALSA.  
-       
-       <note>
-        <para> 
-         All OSS devices, except the global devices, are only added if the 
-         kernel supports links from oss device to physical device in sysfs. For a patch 
-         see:  http://thread.gmane.org/gmane.comp.freedesktop.hal/2862.
-        </para>
-       </note>
+       OSS devices could be emulated by ALSA. 
+      </para> 
+      <para> 
+       Note: All OSS devices, except the global devices, are only added if the 
+       kernel supports links from oss device to physical device in sysfs. For a patch 
+       see:  http://thread.gmane.org/gmane.comp.freedesktop.hal/2862.
       </para>
+
       <informaltable>
         <tgroup cols="2">
           <thead>
@@ -5236,9 +5234,11 @@
        string list. For example to remove item 'bla' from property 'foo.bar':   
        <literal>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/merge&#62;</literal>
 
-       <para>Device Information files are stored in the following standard hierachy with the following default
-       top level directories <literal>information</literal>, <literal>policy</literal> and 
-       <literal>preprobe</literal></para>:
+       
+       </para><para>
+	Device Information files are stored in the following standard hierachy with the following default
+        top level directories <literal>information</literal>, <literal>policy</literal> and 
+        <literal>preprobe</literal>:
 
        <itemizedlist>
          <listitem>
@@ -5271,7 +5271,7 @@
 	 </listitem>
          <listitem>
            <para>
-	     <literal>information</literal> - device information files to information before probe devices 
+	     <literal>preprobe</literal> - device information files to information before probe devices 
             
              <itemizedlist>
                <listitem><para><literal>10osvendor</literal> - device information files included with the

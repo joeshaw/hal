@@ -1,3 +1,8 @@
+2005-11-02  Danny Kukawka  <danny.kukawka@web.de>
+
+	* doc/spec/hal-spec.xml.in: fixed some bugs in the xml spec code and removed
+	<note> tag to prevent not included pic in the html version.
+
 2005-11-02  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/coldplug.c: (coldplug_synthesize_events): Prepare for 2.6.15.
