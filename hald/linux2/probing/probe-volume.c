@@ -467,6 +467,10 @@ main (int argc, char *argv[])
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", TRUE, &error);
 		}
 
+#if 0
+		/* This seems to cause problems on some drives with broken firmware,
+		 * comment it out until we really need multisession support */
+
 		/* check for multisession disks */
 		if (ioctl (fd, CDROMREADTOCHDR, &toc_hdr) == 0) {
 			struct cdrom_tocentry toc_entr;
@@ -485,6 +489,7 @@ main (int argc, char *argv[])
 					vol_probe_offset = toc_entr.cdte_addr.lba * block_size;
 				}
 		}
+#endif
 
 		/* try again, to get last session that way */
 		if (vol_probe_offset == 0) {

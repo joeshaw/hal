@@ -1,3 +1,9 @@
+2005-11-03  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/probing/probe-volume.c: (main): Comment out multisession
+	query to determine the starting block of an optical media. It fails on
+	some drives with broken firmware.
+
 2005-11-02  Danny Kukawka  <danny.kukawka@web.de>
 
 	* doc/spec/hal-spec.xml.in: updated spec for serial and system namespace
