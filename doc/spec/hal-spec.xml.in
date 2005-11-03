@@ -3396,10 +3396,10 @@
               <entry>Index of the interface</entry>
             </row>
             <row>
-              <entry><literal>net.linux.sysfs_path</literal> (string)</entry>
+              <entry><literal>net.physical_device</literal> (string)</entry>
               <entry></entry>
-              <entry>Yes (only on Linux)</entry>
-              <entry>Path of device in sysfs</entry>
+              <entry>Yes</entry>
+              <entry>UDI of the physical device the network device is bound to.</entry>
             </row>
             <row>
               <entry><literal>net.media</literal> (string)</entry>
@@ -3448,8 +3448,8 @@
 		and <literal>net.interface_up</literal> is
 		<literal>TRUE</literal>.
 	      </entry>
-              <entry>True iff the ethernet adaptor is connected to a
-              another transceiver</entry>
+              <entry>True if the ethernet adaptor is connected to a
+              another transceiver. NOTE: property not implemented yet.</entry>
             </row>
             <row>
               <entry><literal>net.80203.rate</literal> (uint64)</entry>
@@ -3459,7 +3459,8 @@
 		and <literal>net.80203.link</literal> is
 		<literal>TRUE</literal>.
 	      </entry>
-              <entry>Bandwidth of connection, in bits/s</entry>
+              <entry>Bandwidth of connection, in bits/s. NOTE: property not 
+		implemented yet.</entry>
             </row>
             <row>
               <entry><literal>net.80203.mac_address</literal> (uint64)</entry>
