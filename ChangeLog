@@ -1,3 +1,10 @@
+2005-11-07  Richard Hughes <richard@hughsie.com>
+
+	* tools/lshal.c: Commit a rewrite of lshal by 
+	Pierre Ossman <drzeus@drzeus.cx>. Minor updates by me to make all
+	program output go to stdout rather than stderr, and to not dump devices
+	if we have specified we want to monitor.
+
 2005-11-03  Danny Kukawka  <danny.kukawka@web.de>
 
 	* doc/spec/hal-spec.xml.in: updated net and net.80203 namespace

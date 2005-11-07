@@ -4,6 +4,7 @@
  * lshal.c : Show devices managed by HAL
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Pierre Ossman, <drzeus@drzeus.cx>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -52,7 +53,188 @@
 /** Macro for terminating the program on an unrecoverable error */
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
+#define UDI_BASE "/org/freedesktop/Hal/devices/"
+
 static LibHalContext *hal_ctx;
+static dbus_bool_t long_list = FALSE;
+static dbus_bool_t tree_view = FALSE;
+static char *show_device = NULL;
+
+struct Device {
+	char *name;
+	char *parent;
+};
+
+/** Generate a short name for a device
+ *
+ *  @param  udi                 Universal Device Id
+ */
+static const char *
+short_name (const char *udi)
+{
+	return &udi[sizeof(UDI_BASE) - 1];
+}
+
+/** Print all properties of a device
+ *
+ *  @param  udi                 Universal Device Id
+ */
+
+static void
+print_props (const char *udi)
+{
+	DBusError error;
+	LibHalPropertySet *props;
+	LibHalPropertySetIterator it;
+	int type;
+
+	dbus_error_init (&error);
+
+	props = libhal_device_get_all_properties (hal_ctx, udi, &error);
+
+	/* NOTE : This may be NULL if the device was removed
+	 *        in the daemon; this is because
+	 *        hal_device_get_all_properties() is a in
+	 *        essence an IPC call and other stuff may
+	 *        be happening..
+	 */
+	if (props == NULL)
+		return;
+
+	for (libhal_psi_init (&it, props); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
+		type = libhal_psi_get_type (&it);
+		switch (type) {
+		case LIBHAL_PROPERTY_TYPE_STRING:
+			printf ("  %s = '%s'  (string)\n",
+				libhal_psi_get_key (&it),
+				libhal_psi_get_string (&it));
+			break;
+
+		case LIBHAL_PROPERTY_TYPE_INT32:
+			printf ("  %s = %d  (0x%x)  (int)\n",
+				libhal_psi_get_key (&it),
+				libhal_psi_get_int (&it),
+				libhal_psi_get_int (&it));
+			break;
+
+		case LIBHAL_PROPERTY_TYPE_UINT64:
+			printf ("  %s = %lld  (0x%llx)  (uint64)\n",
+				libhal_psi_get_key (&it),
+				libhal_psi_get_uint64 (&it),
+				libhal_psi_get_uint64 (&it));
+			break;
+
+		case LIBHAL_PROPERTY_TYPE_DOUBLE:
+			printf ("  %s = %g  (double)\n",
+				libhal_psi_get_key (&it),
+				libhal_psi_get_double (&it));
+			break;
+
+		case LIBHAL_PROPERTY_TYPE_BOOLEAN:
+			printf ("  %s = %s  (bool)\n",
+				libhal_psi_get_key (&it),
+				libhal_psi_get_bool (&it) ? "true" :
+				"false");
+			break;
+
+		case LIBHAL_PROPERTY_TYPE_STRLIST:
+		{
+			unsigned int i;
+			char **strlist;
+
+			printf ("  %s = {", libhal_psi_get_key (&it));
+
+			strlist = libhal_psi_get_strlist (&it);
+			for (i = 0; strlist[i] != 0; i++) {
+				printf ("'%s'", strlist[i]);
+				if (strlist[i+1] != NULL)
+					printf (", ");
+			}
+			printf ("} (string list)\n");
+			break;
+		}
+
+		default:
+			printf ("Unknown type %d=0x%02x\n", type, type);
+			break;
+		}
+	}
+
+	libhal_free_property_set (props);
+}
+
+/** Dumps information about a single device
+ *
+ *  @param  udi                 Universal Device Id
+ */
+
+static void
+dump_device (const char *udi)
+{
+	DBusError error;
+
+	dbus_error_init (&error);
+
+	if (!libhal_device_exists (hal_ctx, udi, &error))
+		return;
+
+	if (long_list) {
+		printf ("udi = '%s'\n", udi);
+
+		print_props (udi);
+		printf ("\n");
+	}
+	else
+		printf ("%s\n", short_name (udi));
+}
+
+/** Dump all children of device
+ *
+ *  @param  udi                 Universal Device Id of parent
+ *  @param  num_devices         Total number of devices in device list
+ *  @param  devices             List of devices
+ *  @param  depth               Current recursion depth
+ */
+
+static void
+dump_children (char *udi, int num_devices, struct Device *devices, int depth)
+{
+	int i;
+	DBusError error;
+
+	dbus_error_init (&error);
+
+	for (i = 0; i < num_devices; i++) {
+		if (!udi) {
+			if (devices[i].parent)
+				continue;
+		}
+		else {
+			if (!devices[i].parent)
+				continue;
+			if (strcmp (devices[i].parent, udi))
+				continue;
+		}
+
+		if (long_list)
+			printf ("udi = '%s'\n", devices[i].name);
+		else {
+			int j;
+			if (tree_view) {
+				for (j = 0;j < depth;j++)
+					printf("  ");
+			}
+			printf ("%s\n", short_name (devices[i].name));
+		}
+
+		if (long_list) {
+			print_props (devices[i].name);
+			printf ("\n");
+		}
+
+		dump_children(devices[i].name, num_devices, devices, depth + 1);
+	}
+}
 
 /** Dump all devices to stdout
  *
@@ -63,6 +245,7 @@ dump_devices (void)
 	int i;
 	int num_devices;
 	char **device_names;
+	struct Device *devices;
 	DBusError error;
 
 	dbus_error_init (&error);
@@ -71,103 +254,47 @@ dump_devices (void)
 	if (device_names == NULL)
 		DIE (("Couldn't obtain list of devices\n"));
 
-	printf ("\n"
-		"Dumping %d device(s) from the Global Device List:\n"
-		"-------------------------------------------------\n",
-		num_devices);
-
-	for (i = 0; i < num_devices; i++) {
-		LibHalPropertySet *props;
-		LibHalPropertySetIterator it;
-		int type;
-
-		props = libhal_device_get_all_properties (hal_ctx, device_names[i], &error);
-
-		/* NOTE NOTE NOTE: This may be NULL if the device was removed
-		 *                 in the daemon; this is because 
-		 *                 hal_device_get_all_properties() is a in
-		 *                 essence an IPC call and other stuff may 
-		 *                 be happening..
-		 */
-		if (props == NULL)
-			continue;
-
-		printf ("udi = '%s'\n", device_names[i]);
-
-		for (libhal_psi_init (&it, props); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
-			type = libhal_psi_get_type (&it);
-			switch (type) {
-			case LIBHAL_PROPERTY_TYPE_STRING:
-				printf ("  %s = '%s'  (string)\n",
-					libhal_psi_get_key (&it),
-					libhal_psi_get_string (&it));
-				break;
-
-			case LIBHAL_PROPERTY_TYPE_INT32:
-				printf ("  %s = %d  (0x%x)  (int)\n",
-					libhal_psi_get_key (&it),
-					libhal_psi_get_int (&it),
-					libhal_psi_get_int (&it));
-				break;
-
-			case LIBHAL_PROPERTY_TYPE_UINT64:
-				printf ("  %s = %lld  (0x%llx)  (uint64)\n",
-					libhal_psi_get_key (&it),
-					libhal_psi_get_uint64 (&it),
-					libhal_psi_get_uint64 (&it));
-				break;
-
-			case LIBHAL_PROPERTY_TYPE_DOUBLE:
-				printf ("  %s = %g  (double)\n",
-					libhal_psi_get_key (&it),
-					libhal_psi_get_double (&it));
-				break;
-
-			case LIBHAL_PROPERTY_TYPE_BOOLEAN:
-				printf ("  %s = %s  (bool)\n",
-					libhal_psi_get_key (&it),
-					libhal_psi_get_bool (&it) ? "true" :
-					"false");
-				break;
-
-			case LIBHAL_PROPERTY_TYPE_STRLIST:
-			{
-				unsigned int i;
-				char **strlist;
-
-				printf ("  %s = {", libhal_psi_get_key (&it));
-
-				strlist = libhal_psi_get_strlist (&it);
-				for (i = 0; strlist[i] != 0; i++) {
-					printf ("'%s'", strlist[i]);
-					if (strlist[i+1] != NULL)
-						printf (", ");
-				}
-				printf ("} (string list)\n");
-				break;
-			}
-
-			default:
-				printf ("Unknown type %d=0x%02x\n", type, type);
-				break;
-			}
-		}
-		libhal_free_property_set (props);
-		printf ("\n");
+	devices = malloc (sizeof(struct Device) * num_devices);
+	if (!devices) {
+		libhal_free_string_array (device_names);
+		return;
 	}
 
+	for (i = 0;i < num_devices;i++) {
+		devices[i].name = device_names[i];
+		devices[i].parent = libhal_device_get_property_string (hal_ctx,
+				device_names[i], "info.parent", &error);
+	}
+
+	if (long_list) {
+		printf ("\n"
+			"Dumping %d device(s) from the Global Device List:\n"
+			"-------------------------------------------------\n",
+			num_devices);
+	}
+
+	dump_children(NULL, num_devices, devices, 0);
+
+	for (i = 0;i < num_devices;i++) {
+		if (devices[i].parent)
+			libhal_free_string (devices[i].parent);
+	}
+
+	free (devices);
 	libhal_free_string_array (device_names);
 
-	printf ("\n"
-		"Dumped %d device(s) from the Global Device List:\n"
-		"------------------------------------------------\n",
-		num_devices);
+	if (long_list) {
+		printf ("\n"
+			"Dumped %d device(s) from the Global Device List:\n"
+			"------------------------------------------------\n",
+			num_devices);
 
-	printf ("\n");
+		printf ("\n");
+	}
 }
 
 /** Invoked when a device is added to the Global Device List. Simply prints
- *  a message on stderr.
+ *  a message on stdout.
  *
  *  @param  udi                 Universal Device Id
  */
@@ -175,12 +302,18 @@ static void
 device_added (LibHalContext *ctx,
 	      const char *udi)
 {
-	fprintf (stderr, "*** lshal: device_added, udi='%s'\n", udi);
-	/*dump_devices ();*/
+	if (show_device && strcmp(show_device, udi))
+		return;
+
+	if (long_list) {
+		printf ("*** lshal: device_added, udi='%s'\n", udi);
+		print_props (udi);
+	} else
+		printf ("%s added\n", short_name (udi));
 }
 
 /** Invoked when a device is removed from the Global Device List. Simply
- *  prints a message on stderr.
+ *  prints a message on stdout.
  *
  *  @param  udi                 Universal Device Id
  */
@@ -188,43 +321,60 @@ static void
 device_removed (LibHalContext *ctx,
 		const char *udi)
 {
-	fprintf (stderr, "*** lshal: device_removed, udi='%s'\n", udi);
-	/*dump_devices ();*/
+	if (show_device && strcmp(show_device, udi))
+		return;
+
+	if (long_list)
+		printf ("*** lshal: device_removed, udi='%s'\n", udi);
+	else
+		printf ("%s removed\n", short_name (udi));
 }
 
 /** Invoked when device in the Global Device List acquires a new capability.
- *  Prints the name of the capability to stderr.
+ *  Prints the name of the capability to stdout.
  *
  *  @param  udi                 Universal Device Id
  *  @param  capability          Name of capability
  */
 static void
 device_new_capability (LibHalContext *ctx,
-		       const char *udi, 
+		       const char *udi,
 		       const char *capability)
 {
-	fprintf (stderr, "*** lshal: new_capability, udi='%s'\n", udi);
-	fprintf (stderr, "*** capability: %s\n", capability);
-	/*dump_devices(); */
+	if (show_device && strcmp(show_device, udi))
+		return;
+
+	if (long_list) {
+		printf ("*** lshal: new_capability, udi='%s'\n", udi);
+		printf ("*** capability: %s\n", capability);
+	} else
+		printf ("%s capability %s added\n", short_name (udi),
+			capability);
 }
 
 /** Invoked when device in the Global Device List loses a capability.
- *  Prints the name of the capability to stderr.
+ *  Prints the name of the capability to stdout.
  *
  *  @param  udi                 Universal Device Id
  *  @param  capability          Name of capability
  */
 static void
 device_lost_capability (LibHalContext *ctx,
-			const char *udi, 
+			const char *udi,
 			const char *capability)
 {
-	fprintf (stderr, "*** lshal: lost_capability, udi='%s'\n", udi);
-	fprintf (stderr, "*** capability: %s\n", capability);
-	/*dump_devices(); */
+	if (show_device && strcmp(show_device, udi))
+		return;
+
+	if (long_list) {
+		printf ("*** lshal: lost_capability, udi='%s'\n", udi);
+		printf ("*** capability: %s\n", capability);
+	} else
+		printf ("%s capability %s lost\n", short_name (udi),
+			capability);
 }
 
-/** Acquires and prints the value of of a property to stderr.
+/** Acquires and prints the value of of a property to stdout.
  *
  *  @param  udi                 Universal Device Id
  *  @param  key                 Key of property
@@ -243,47 +393,51 @@ print_property (const char *udi, const char *key)
 	switch (type) {
 	case LIBHAL_PROPERTY_TYPE_STRING:
 		str = libhal_device_get_property_string (hal_ctx, udi, key, &error);
-		fprintf (stderr, "*** new value: '%s'  (string)\n", str);
+		printf (long_list?"*** new value: '%s'  (string)\n":"'%s'", str);
 		libhal_free_string (str);
 		break;
 	case LIBHAL_PROPERTY_TYPE_INT32:
 		{
 			dbus_int32_t value = libhal_device_get_property_int (hal_ctx, udi, key, &error);
-			fprintf (stderr,
-				 "*** new value: %d (0x%x)  (int)\n",
+			printf (long_list?"*** new value: %d (0x%x)  (int)\n":"%d (0x%x)",
 				 value, value);
 		}
 		break;
 	case LIBHAL_PROPERTY_TYPE_UINT64:
 		{
 			dbus_uint64_t value = libhal_device_get_property_uint64 (hal_ctx, udi, key, &error);
-			fprintf (stderr,
-				 "*** new value: %lld (0x%llx)  (uint64)\n",
-				 value, value);
+			printf (long_list?"*** new value: %lld (0x%llx)  (uint64)\n":"%lld (0x%llx)",
+				value, value);
 		}
 		break;
 	case LIBHAL_PROPERTY_TYPE_DOUBLE:
-		fprintf (stderr, "*** new value: %g  (double)\n",
-			 libhal_device_get_property_double (hal_ctx, udi, key, &error));
+		printf (long_list?"*** new value: %g  (double)\n":"%g",
+			libhal_device_get_property_double (hal_ctx, udi, key, &error));
 		break;
 	case LIBHAL_PROPERTY_TYPE_BOOLEAN:
-		fprintf (stderr, "*** new value: %s  (bool)\n",
-			 libhal_device_get_property_bool (hal_ctx, udi, key, &error) ? "true" : "false");
+		printf (long_list?"*** new value: %s  (bool)\n":"%s",
+			libhal_device_get_property_bool (hal_ctx, udi, key, &error) ? "true" : "false");
 		break;
 	case LIBHAL_PROPERTY_TYPE_STRLIST:
 	{
 		unsigned int i;
 		char **strlist;
-		
-		fprintf (stderr, "*** new value: {");
+
+		if (long_list)
+			printf ("*** new value: {");
+		else
+			printf ("{");
 
 		strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
 		for (i = 0; strlist[i] != 0; i++) {
-			fprintf (stderr, "'%s'", strlist[i]);
+			printf ("'%s'", strlist[i]);
 			if (strlist[i+1] != NULL)
-				fprintf (stderr, ", ");
+				printf (", ");
 		}
-		fprintf (stderr, "}  (string list)\n");
+		if (long_list)
+			printf ("}  (string list)\n");
+		else
+			printf ("}");
 		libhal_free_string_array (strlist);
 		break;
 	}
@@ -302,20 +456,36 @@ print_property (const char *udi, const char *key)
  */
 static void
 property_modified (LibHalContext *ctx,
-		   const char *udi, 
+		   const char *udi,
 		   const char *key,
-		   dbus_bool_t is_removed, 
+		   dbus_bool_t is_removed,
 		   dbus_bool_t is_added)
 {
-	fprintf (stderr, "*** lshal: property_modified, udi=%s, key=%s\n",
-		 udi, key);
-	fprintf (stderr, "           is_removed=%s, is_added=%s\n",
-		 is_removed ? "true" : "false",
-		 is_added ? "true" : "false");
-	if (!is_removed)
-		print_property (udi, key);
-	fprintf (stderr, "\n");
-	/*dump_devices(); */
+	if (show_device && strcmp(show_device, udi))
+		return;
+
+	if (long_list) {
+		printf ("*** lshal: property_modified, udi=%s, key=%s\n",
+			udi, key);
+		printf ("           is_removed=%s, is_added=%s\n",
+			is_removed ? "true" : "false",
+			is_added ? "true" : "false");
+		if (!is_removed)
+			print_property (udi, key);
+		printf ("\n");
+	} else {
+		printf ("%s property %s ", short_name (udi), key);
+		if (is_removed)
+			printf ("removed");
+		else {
+			printf ("= ");
+			print_property (udi, key);
+
+			if (is_added)
+				printf (" (new)");
+		}
+		printf ("\n");
+	}
 }
 
 
@@ -328,17 +498,23 @@ property_modified (LibHalContext *ctx,
  */
 static void
 device_condition (LibHalContext *ctx,
-		  const char *udi, 
+		  const char *udi,
 		  const char *condition_name,
 		  const char *condition_details)
 {
-	fprintf (stderr, "*** lshal: device_condition, udi=%s\n", udi);
-	fprintf (stderr, "           condition_name=%s\n", condition_name);
-	fprintf (stderr, "           condition_details=%s\n", condition_details);
-	fprintf (stderr, "\n");
-	/*dump_devices(); */
-}
+	if (show_device && strcmp(show_device, udi))
+		return;
 
+	if (long_list) {
+		printf ("*** lshal: device_condition, udi=%s\n", udi);
+		printf ("           condition_name=%s\n", condition_name);
+		printf ("           condition_details=%s\n", condition_details);
+		printf ("\n");
+	} else {
+		printf ("%s condition %s = %s\n", short_name (udi),
+			condition_name, condition_details);
+	}
+}
 
 
 /** Print out program usage.
@@ -349,11 +525,18 @@ device_condition (LibHalContext *ctx,
 static void
 usage (int argc, char *argv[])
 {
-	fprintf (stderr, "\n" "usage : %s --monitor [--help]\n", argv[0]);
+	fprintf (stderr, "lshal version " PACKAGE_VERSION "\n");
+
+	fprintf (stderr, "\n" "usage : %s [options]\n", argv[0]);
 	fprintf (stderr,
 		 "\n"
-		 "        --monitor        Monitor device list\n"
-		 "        --help           Show this information and exit\n"
+		 "Options:\n"
+		 "    -m, --monitor        Monitor device list\n"
+		 "    -l, --long           Long output\n"
+		 "    -t, --tree           Tree view\n"
+		 "    -s, --show <udi>     Show only the specified device\n"
+		 "    -h, --help           Show this information and exit\n"
+		 "    -V, --version        Print version number\n"
 		 "\n"
 		 "Shows all devices and their properties. If the --monitor option is given\n"
 		 "then the device list and all devices are monitored for changes.\n"
@@ -374,34 +557,53 @@ main (int argc, char *argv[])
 	GMainLoop *loop;
 	DBusConnection *conn;
 
-	fprintf (stderr, "lshal version " PACKAGE_VERSION "\n");
-
 	while (1) {
 		int c;
-		int option_index = 0;
-		const char *opt;
-		static struct option long_options[] = {
-			{"monitor", 0, NULL, 0},
-			{"help", 0, NULL, 0},
+		static const struct option long_options[] = {
+			{"monitor", no_argument, NULL, 'm'},
+			{"long", no_argument, NULL, 'l'},
+			{"tree", no_argument, NULL, 't'},
+			{"show", required_argument, NULL, 's'},
+			{"help", no_argument, NULL, 'h'},
+			{"version", no_argument, NULL, 'V'},
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long (argc, argv, "",
-				 long_options, &option_index);
+		c = getopt_long (argc, argv, "mlts:hV",
+				 long_options, NULL);
 		if (c == -1)
 			break;
 
 		switch (c) {
-		case 0:
-			opt = long_options[option_index].name;
+		case 'm':
+			do_monitor = TRUE;
+			break;
 
-			if (strcmp (opt, "help") == 0) {
-				usage (argc, argv);
-				return 0;
-			} else if (strcmp (opt, "monitor") == 0) {
-				do_monitor = TRUE;
+		case 'l':
+			long_list = TRUE;
+			break;
+
+		case 't':
+			tree_view = TRUE;
+			break;
+
+		case 's':
+			if (strchr(optarg, '/') != NULL)
+				show_device = strdup(optarg);
+			else {
+				show_device = malloc(strlen(UDI_BASE) + strlen(optarg) + 1);
+				memcpy(show_device, UDI_BASE, strlen(UDI_BASE));
+				memcpy(show_device + strlen(UDI_BASE), optarg, strlen(optarg) + 1);
 			}
 			break;
+
+		case 'h':
+			usage (argc, argv);
+			return 0;
+
+		case 'V':
+			printf ("lshal version " PACKAGE_VERSION "\n");
+			return 0;
 
 		default:
 			usage (argc, argv);
@@ -415,10 +617,11 @@ main (int argc, char *argv[])
 	else
 		loop = NULL;
 
-	dbus_error_init (&error);	
+	dbus_error_init (&error);
 	conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (conn == NULL) {
-		fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
+		fprintf (stderr, "error: dbus_bus_get: %s: %s\n",
+			 error.name, error.message);
 		return 1;
 	}
 
@@ -430,11 +633,13 @@ main (int argc, char *argv[])
 		return 1;
 	}
 	if (!libhal_ctx_set_dbus_connection (hal_ctx, conn)) {
-		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n",
+			 error.name, error.message);
 		return 1;
 	}
 	if (!libhal_ctx_init (hal_ctx, &error)) {
-		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n",
+			 error.name, error.message);
 		return 1;
 	}
 
@@ -445,7 +650,10 @@ main (int argc, char *argv[])
 	libhal_ctx_set_device_property_modified (hal_ctx, property_modified);
 	libhal_ctx_set_device_condition (hal_ctx, device_condition);
 
-	dump_devices ();
+	if (show_device)
+		dump_device (show_device);
+	else if (!do_monitor)
+		dump_devices ();
 
 	/* run the main loop only if we should monitor */
 	if (do_monitor && loop != NULL) {
@@ -458,6 +666,10 @@ main (int argc, char *argv[])
 
 	dbus_connection_disconnect (conn);
 	dbus_connection_unref (conn);
+
+	if (show_device)
+		free(show_device);
+
 	return 0;
 }
 
