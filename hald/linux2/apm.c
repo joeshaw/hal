@@ -61,7 +61,6 @@ typedef struct {
 	int battery_flags;
 	int battery_percentage;
 	int battery_time;
-	int using_minutes;
 } APMInfo;
 
 #define APM_POLL_INTERVAL 2000
@@ -200,7 +199,7 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 			is_charging = FALSE;
 			is_discharging = (i.ac_line_status == FALSE);
 			/* apm returns time in minutes, not seconds */
-			remaining_time = i.using_minutes * 60;
+			remaining_time = i.battery_time * 60;
 			if (remaining_time < 0)
 				remaining_time = 0; 
 		}

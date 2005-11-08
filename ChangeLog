@@ -1,3 +1,8 @@
+2005-11-08  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/apm.c: (battery_refresh): fixed fd.o-Bug #4871 with slightly
+	adopted patch from Shun-ichi Tahara <jado@flowernet.gr.jp> 
+
 2005-11-07  Richard Hughes <richard@hughsie.com>
 
 	* tools/lshal.c: Commit a rewrite of lshal by 
