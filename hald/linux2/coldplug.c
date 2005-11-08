@@ -560,7 +560,7 @@ coldplug_synthesize_events (void)
 
 	return TRUE;
 error:
-	HAL_ERROR (("Error building the orderered list of sysfs paths"));
+	HAL_ERROR (("Error building the ordered list of sysfs paths"));
 	return FALSE;
 }
 

@@ -88,7 +88,6 @@ usage (int argc, char *argv[])
  "        --strlist-post   Append a string to a list\n"
  "        --strlist-rem    Remove a string from a list\n"
  "        --remove         Indicates that the property should be removed\n"
- "        --verbose        Be verbose\n"
  "        --version        Show version and exit\n"
  "        --help           Show this information and exit\n"
  "\n"

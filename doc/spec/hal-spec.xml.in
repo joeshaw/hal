@@ -5143,7 +5143,7 @@
 	      </entry>
             </row>
             <row>
-              <entry><literal>volume.policy.mount_options.*</literal> (string)</entry>
+              <entry><literal>volume.policy.mount_option.*</literal> (string)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>

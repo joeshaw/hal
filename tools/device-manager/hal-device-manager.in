@@ -15,5 +15,7 @@ import LibGladeApplication
 from DeviceManager import DeviceManager
 
 gnome.program_init(Const.NAME, Const.VERSION)
++gtk.glade.bindtextdomain('@PACKAGE@', '@DATADIR@/locale')
++gtk.glade.textdomain('@PACKAGE@')
 DeviceManager()
 gtk.main()

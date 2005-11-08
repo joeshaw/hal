@@ -1,5 +1,24 @@
 2005-11-08  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/coldplug.c: (coldplug_synthesize_events): fixed typo from 
+	fd.o bug #2115
+	
+	* doc/spec/hal-spec.xml.in: fixed fd.o bug #4644 and fixed typo in spec
+
+	* tools/device-manager/DeviceManager.py,
+	  tools/device-manager/hal-device-manager.glade: slightly adopted fix from
+	fd.o bug #3954 from Benjamin Berg <benjamin@sipsolutions.net> to make
+	all fields in hal-device-manager selectable to copy the content
+
+	* tools/device-manager/hal-device-manager.in: fixed fd.o bug #2121 with 
+	patch from #4266 (Young-Ho, Cha, <ganadist@chollian.net>) to enable 
+	translation for hal-device-manager
+	
+	* tools/hal_set_property.c: (usage): fixed fd.o bug #2850, removed option
+	from the help text.
+
+2005-11-08  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/apm.c: (battery_refresh): fixed fd.o-Bug #4871 with slightly
 	adopted patch from Shun-ichi Tahara <jado@flowernet.gr.jp> 
 

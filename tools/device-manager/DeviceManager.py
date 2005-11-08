@@ -465,10 +465,13 @@ class DeviceManager(LibGladeApplication):
         cols = prop_tree_view.get_columns()
         for cr in cols:
             prop_tree_view.remove_column(cr)
-
-        column0 = gtk.TreeViewColumn("Key", gtk.CellRendererText(), text=0)
-        column1 = gtk.TreeViewColumn("Type", gtk.CellRendererText(), text=1)
-        column2 = gtk.TreeViewColumn("Value", gtk.CellRendererText(), text=2)
+        
+        cell_renderer = gtk.CellRendererText()
+        cell_renderer.set_property("editable", True)
+        
+        column0 = gtk.TreeViewColumn("Key", cell_renderer, text=0)
+        column1 = gtk.TreeViewColumn("Type", cell_renderer, text=1)
+        column2 = gtk.TreeViewColumn("Value", cell_renderer, text=2)
         prop_tree_view.append_column(column0)
         prop_tree_view.append_column(column1)
         prop_tree_view.append_column(column2)
