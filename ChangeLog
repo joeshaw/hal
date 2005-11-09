@@ -1,3 +1,13 @@
+2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/osspec.c: (netlink_detection_data_ready): fixed compiler 
+	warning
+
+	* hald/linux2/probing/probe-volume.c: (main): fixed compiler warning
+
+	* tools/device-manager/hal-device-manager.in: fixed bug from last fix, 
+	removed '+' from inserted lines.
+
 2005-11-08  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/coldplug.c: (coldplug_synthesize_events): fixed typo from 

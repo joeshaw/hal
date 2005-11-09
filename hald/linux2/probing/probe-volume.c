@@ -358,7 +358,7 @@ main (int argc, char *argv[])
 
 	if (is_disc) {
 		int type;
-		struct cdrom_tochdr toc_hdr;
+		struct cdrom_tochdr ; /* toc_hdr; */
 
 		/* defaults */
 		libhal_device_set_property_string (ctx, udi, "volume.disc.type", "unknown", &error);

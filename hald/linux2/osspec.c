@@ -203,7 +203,6 @@ netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
 {
 	int fd;
 	int bytes_read;
-	guint total_read = 0;
 	struct sockaddr_nl nladdr;
 	socklen_t nladdrlen = sizeof(nladdr);
 	char buf[1024];
