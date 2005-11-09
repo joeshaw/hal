@@ -1,5 +1,20 @@
 2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/addons/addon-acpi.c: (acpi_get_event_fp_kernel),
+	(acpi_get_event_fp_acpid), (main): fix problems with addon if acpid socket
+	is not available if HAL starts. In this case retry to connect until we get 
+	the socket. Also added the proc kernel eventinterface to the loop to prevent
+	problems on resume from suspend. This should prevent restart the whole HAL
+	if lost acpid or proc event source.
+
+	* tools/lshal.c: (dump_devices), (usage), (main): added new option -s|--short
+	for short output, changed short option for show to -u, added new status line 
+	to --monitor mode, allowed combine --monitor with --long|short|tree, added 
+	restrict check for incorrect command options (e.g. 'lshal --'), set --long
+	as default if called lshal without option.
+
+2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/spec/hal-spec.xml.in: added battery.remaining_time.calculate_per_time
 
 	* hald/linux2/acpi.c: (battery_refresh_poll): added check for new property

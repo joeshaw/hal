@@ -58,6 +58,7 @@
 static LibHalContext *hal_ctx;
 static dbus_bool_t long_list = FALSE;
 static dbus_bool_t tree_view = FALSE;
+static dbus_bool_t short_list = FALSE;
 static char *show_device = NULL;
 
 struct Device {
@@ -285,7 +286,7 @@ dump_devices (void)
 
 	if (long_list) {
 		printf ("\n"
-			"Dumped %d device(s) from the Global Device List:\n"
+			"Dumped %d device(s) from the Global Device List.\n"
 			"------------------------------------------------\n",
 			num_devices);
 
@@ -532,11 +533,15 @@ usage (int argc, char *argv[])
 		 "\n"
 		 "Options:\n"
 		 "    -m, --monitor        Monitor device list\n"
+		 "    -s, --short          short output (print only nonstatic part of udi)\n"
 		 "    -l, --long           Long output\n"
 		 "    -t, --tree           Tree view\n"
-		 "    -s, --show <udi>     Show only the specified device\n"
+		 "    -u, --show <udi>     Show only the specified device\n"
+		 "\n"
 		 "    -h, --help           Show this information and exit\n"
 		 "    -V, --version        Print version number\n"
+		 "\n"
+		 "Without any given options lshal will start with option --long."
 		 "\n"
 		 "Shows all devices and their properties. If the --monitor option is given\n"
 		 "then the device list and all devices are monitored for changes.\n"
@@ -557,61 +562,83 @@ main (int argc, char *argv[])
 	GMainLoop *loop;
 	DBusConnection *conn;
 
-	while (1) {
-		int c;
+	if (argc == 1) {
+		/* This is the default case lshal without any options */
+		long_list = TRUE;
+	}
+	else {
 		static const struct option long_options[] = {
 			{"monitor", no_argument, NULL, 'm'},
 			{"long", no_argument, NULL, 'l'},
+			{"short", no_argument, NULL, 's'},
 			{"tree", no_argument, NULL, 't'},
-			{"show", required_argument, NULL, 's'},
+			{"show", required_argument, NULL, 'u'},
 			{"help", no_argument, NULL, 'h'},
+			{"usage", no_argument, NULL, 'U'},
 			{"version", no_argument, NULL, 'V'},
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long (argc, argv, "mlts:hV",
-				 long_options, NULL);
-		if (c == -1)
-			break;
+		while (1) {
+			int c;
+			
+			c = getopt_long (argc, argv, "mlstu:hUV", long_options, NULL);
 
-		switch (c) {
-		case 'm':
-			do_monitor = TRUE;
-			break;
-
-		case 'l':
-			long_list = TRUE;
-			break;
-
-		case 't':
-			tree_view = TRUE;
-			break;
-
-		case 's':
-			if (strchr(optarg, '/') != NULL)
-				show_device = strdup(optarg);
-			else {
-				show_device = malloc(strlen(UDI_BASE) + strlen(optarg) + 1);
-				memcpy(show_device, UDI_BASE, strlen(UDI_BASE));
-				memcpy(show_device + strlen(UDI_BASE), optarg, strlen(optarg) + 1);
+			if (c == -1) {
+				/* this should happen e.g. if 'lshal -' and this is incorrect/incomplete option */
+				if (!do_monitor && !long_list && !short_list && !tree_view && !show_device) {
+					usage (argc, argv);
+					return 1;
+				}
+				
+				break;
 			}
-			break;
 
-		case 'h':
-			usage (argc, argv);
-			return 0;
+			switch (c) {
+			case 'm': 
+				do_monitor = TRUE;
+				break;
 
-		case 'V':
-			printf ("lshal version " PACKAGE_VERSION "\n");
-			return 0;
+			case 'l':
+				long_list = TRUE;
+				break;
 
-		default:
-			usage (argc, argv);
-			return 1;
-			break;
+			case 's':
+				short_list = TRUE;
+				long_list = FALSE;
+				break;
+			
+			case 't':
+				tree_view = TRUE;
+				break;
+				
+			case 'u':
+				if (strchr(optarg, '/') != NULL)
+					show_device = strdup(optarg);
+				else {
+					show_device = malloc(strlen(UDI_BASE) + strlen(optarg) + 1);
+					memcpy(show_device, UDI_BASE, strlen(UDI_BASE));
+					memcpy(show_device + strlen(UDI_BASE), optarg, strlen(optarg) + 1);
+				}
+				
+				break;
+			
+			case 'h':
+			case 'U':
+				usage (argc, argv);
+				return 0;
+			
+			case 'V':
+				printf ("lshal version " PACKAGE_VERSION "\n");
+				return 0;
+
+			default:
+				usage (argc, argv);
+				return 1;
+			}
 		}
 	}
-
+	
 	if (do_monitor)
 		loop = g_main_loop_new (NULL, FALSE);
 	else
@@ -657,6 +684,11 @@ main (int argc, char *argv[])
 
 	/* run the main loop only if we should monitor */
 	if (do_monitor && loop != NULL) {
+		if( long_list || short_list || tree_view )
+			dump_devices ();
+		
+		printf ("\nStart monitoring devicelist:\n"
+			"-------------------------------------------------\n");
 		libhal_device_property_watch_all (hal_ctx, &error);
 		g_main_loop_run (loop);
 	}

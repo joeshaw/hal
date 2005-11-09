@@ -41,27 +41,27 @@
 
 #include "../probing/shared.h"
 
+#ifdef ACPI_PROC
 static FILE *
 acpi_get_event_fp_kernel (void)
 {
 	FILE *fp = NULL;
 
-#ifdef ACPI_PROC
 	fp = fopen ("/proc/acpi/event", "r");
 
 	if (fp == NULL)
 		dbg ("Cannot open /proc/acpi/event: %s", strerror (errno));
-#endif
 
 	return fp;
 }
+#endif
 
+#ifdef ACPI_ACPID
 static FILE *
 acpi_get_event_fp_acpid (void)
 {
 	FILE *fp = NULL;
 
-#ifdef ACPI_ACPID
 	struct sockaddr_un addr;
 	int fd;
 
@@ -86,10 +86,11 @@ acpi_get_event_fp_acpid (void)
 			close (fd);
 		}
 	}
-#endif
 
 	return fp;
 }
+#endif
+
 
 static void
 main_loop (LibHalContext *ctx, FILE *eventfp)
@@ -142,7 +143,6 @@ int
 main (int argc, char **argv)
 {
 	LibHalContext *ctx = NULL;
-	int reconnecting = FALSE;
 	DBusError error;
 	FILE *eventfp;
 
@@ -156,25 +156,27 @@ main (int argc, char **argv)
 		return 1;
 	}
 
-	/* If we can connect directly to the kernel then do so. */
-	if ((eventfp = acpi_get_event_fp_kernel ())) {
-		main_loop (ctx, eventfp);
-		return 1;
-	}
-
-	/* Else, try to use acpid. */
-	while ((eventfp = acpi_get_event_fp_acpid ()) || reconnecting)
+	while (1)
 	{
-		if (eventfp != NULL)
+#ifdef ACPI_PROC
+		/* If we can connect directly to the kernel then do so. */
+		if ((eventfp = acpi_get_event_fp_kernel ())) {
 			main_loop (ctx, eventfp);
-
+			dbg ("Lost connection to kernel acpi event source - retry connect");
+		}
+#endif
+#ifdef ACPI_ACPID
+		/* Else, try to use acpid. */
+		if ((eventfp = acpi_get_event_fp_acpid ())) {
+			main_loop (ctx, eventfp);
+			dbg ("Cannot connect to acpid event socket - retry connect");
+		}
+#endif
+		
 		/* If main_loop exits or we failed a reconnect attempt then
 		 * sleep for 5s and try to reconnect (again). */
-		reconnecting = TRUE;
 		sleep (5);
 	}
-
-	dbg ("Cannot connect to acpi event source - bailing out");
 
 	return 1;
 }
