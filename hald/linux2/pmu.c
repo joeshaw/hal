@@ -126,7 +126,8 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 					current,
 					last_full,
 					hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-					hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
+					hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
+					hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
 		remaining_percentage = util_compute_percentage_charge (d->udi, current, last_full);
 		/*
 		 * Only set keys if no error (signified with negative return value)

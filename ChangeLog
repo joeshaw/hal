@@ -1,5 +1,21 @@
 2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* doc/spec/hal-spec.xml.in: added battery.remaining_time.calculate_per_time
+
+	* hald/linux2/acpi.c: (battery_refresh_poll): added check for new property
+	battery.remaining_time.calculate_per_time for util_compute_time_remaining()
+
+	* hald/linux2/pmu.c: (battery_refresh): added check for new property
+	battery.remaining_time.calculate_per_time for util_compute_time_remaining()
+
+	* hald/util.c (util_compute_time_remaining), hald/util.h: added slightly 
+	adopted and extended patch from Søren Hansen <sh@linux2go.dk> to fix 
+	calculation for machines which does not report current rate. This calculate 
+	the chargRate from time and chargeLevel.
+	Added a new parameter to enable/disable the new calculation.  
+
+2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* fdi/information/10freedesktop/10-cd-dvd-burner.fdi, 
 	  fdi/information/10freedesktop/Makefile.am: added new fdi-file to fix  
 	wrong detected capabilities for burn CD/DVD on some devices (fd.o bug #3036). 

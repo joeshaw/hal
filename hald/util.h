@@ -29,7 +29,8 @@
 #include "device.h"
 #include "device_store.h"
 
-int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, gboolean isDischarging, gboolean isCharging);
+int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, 
+				 gboolean isDischarging, gboolean isCharging, gboolean guessChargeRate);
 
 int util_compute_percentage_charge (const char *id, int chargeLevel, int chargeLastFull);
 

@@ -4540,6 +4540,16 @@
 	      </entry>
 	    </row>
 	    <row>
+              <entry><literal>battery.remaining_time.calculate_per_time</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		If this property is <literal>true</literal> the 
+		<literal>battery.remaining_time</literal> becomes guessed from
+		<literal>battery.charge_level.current</literal> and time.
+	      </entry>
+	    </row>
+	    <row>
               <entry><literal>battery.charge_level.percentage</literal> (int)</entry>
               <entry></entry>
               <entry>No</entry>

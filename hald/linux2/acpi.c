@@ -195,7 +195,8 @@ battery_refresh_poll (HalDevice *d)
 
 	remaining_time = util_compute_time_remaining (d->udi, normalised_rate, normalised_current, normalised_lastfull,
 				hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-				hal_device_property_get_bool (d, "battery.rechargeable.is_charging"));
+				hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
+				hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
 	remaining_percentage = util_compute_percentage_charge (d->udi, normalised_current, normalised_lastfull);
 	/*
 	 * Only set keys if no error (signified with negative return value)
