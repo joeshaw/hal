@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?> <!-- -*- SGML -*- -->
+
+<deviceinfo version="0.2">
+
+  <device>
+
+    <!-- Handle broken CD/DVD burner which reports from capabilities. 
+	 Taken from nautilus-cd-burner-2.12. (fd.o Bug #3036) -->
+      <match key="storage.model" string="IOMEGA - CDRW9602EXT-B">
+        <merge key="storage.cdrom.cdr" type="bool">true</merge>
+        <merge key="storage.cdrom.cdrw" type="bool">true</merge>
+        <merge key="storage.cdrom.dvdr" type="bool">false</merge>
+        <merge key="storage.cdrom.dvdram" type="bool">false</merge>
+      </match>
+      <match key="storage.model" string="SONY - CD-R   CDU948S">
+        <merge key="storage.cdrom.cdr" type="bool">true</merge>
+        <merge key="storage.cdrom.cdrw" type="bool">false</merge>
+        <merge key="storage.cdrom.dvdr" type="bool">false</merge>
+        <merge key="storage.cdrom.dvdram" type="bool">false</merge>
+      </match>
+
+  </device>
+</deviceinfo>

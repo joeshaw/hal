@@ -1,5 +1,11 @@
 2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/information/10freedesktop/10-cd-dvd-burner.fdi, 
+	  fdi/information/10freedesktop/Makefile.am: added new fdi-file to fix  
+	wrong detected capabilities for burn CD/DVD on some devices (fd.o bug #3036). 
+
+2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/osspec.c: (netlink_detection_data_ready): fixed compiler 
 	warning
 
