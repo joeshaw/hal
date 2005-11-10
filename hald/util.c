@@ -157,7 +157,7 @@ util_compute_time_remaining (const char *id,
 			battery_info->last_time = cur_time;
 		} else {
 			battery_info = g_new0(batteryInfo, 1);
-			g_hash_table_insert(saved_battery_info, id, battery_info);
+			g_hash_table_insert(saved_battery_info, (char*) id, battery_info);
 
 			battery_info->last_level = chargeLevel;
 			battery_info->last_time = cur_time;

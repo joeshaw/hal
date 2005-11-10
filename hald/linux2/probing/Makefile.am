@@ -30,7 +30,7 @@ hald_probe_serial_SOURCES = probe-serial.c shared.h
 hald_probe_serial_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_probe_storage_SOURCES = probe-storage.c linux_dvd_rw_utils.c linux_dvd_rw_utils.h shared.h
-hald_probe_storage_LDADD = $(top_builddir)/libhal/libhal.la $(top_builddir)/drive_id/libdrive_id.la $(top_builddir)/volume_id/libvolume_id.la
+hald_probe_storage_LDADD = $(top_builddir)/libhal/libhal.la $(top_builddir)/drive_id/libdrive_id.la $(top_builddir)/volume_id/libvolume_id.la @PACKAGE_LIBS@
 
 hald_probe_pc_floppy_SOURCES = probe-pc-floppy.c
 

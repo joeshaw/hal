@@ -42,6 +42,8 @@
 #include <linux/fs.h>
 #include <mntent.h>
 
+#include <glib.h>
+
 #include "libhal/libhal.h"
 
 #include "drive_id/drive_id.h"
@@ -64,6 +66,29 @@ drive_id_log (const char *format, ...)
 	va_list args;
 	va_start (args, format);
 	_do_dbg (format, args);
+}
+
+static char *
+strdup_valid_utf8 ( const char *String )
+{
+	char *endchar;
+	char *newString;
+	unsigned int count = 0;
+
+	if (String == NULL)
+		return NULL;
+
+	newString = g_strdup( String );
+
+	while (!g_utf8_validate (newString, -1, (const char **) &endchar)) {
+		*endchar = '?';
+		count++;
+	}
+
+	if (strlen(newString) == count)
+		return NULL;
+	else
+		return newString;
 }
 
 /** Check if a filesystem on a special device file is mounted
@@ -152,7 +177,8 @@ main (int argc, char *argv[])
 		if (strcmp (bus, "ide") == 0 ||
 		    strcmp (bus, "scsi") == 0) {
 			struct drive_id *did;
-			
+			char *serial;		
+	
 			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
 			if (fd < 0) {
@@ -164,10 +190,14 @@ main (int argc, char *argv[])
 			did = drive_id_open_fd (fd);
 			if (drive_id_probe_all (did) == 0) {
 				dbg ("serial = '%s', firmware = '%s'", did->serial, did->firmware);
-				if (did->serial[0] != '\0') {
+				
+				/* validate this string to UTF8 to prevent problems with dbus if there is garbage */
+				serial = strdup_valid_utf8 ((const char *) did->serial);
+				
+				if (did->serial[0] != '\0' && serial != NULL) {
 					dbus_error_init (&error);
 					if (!libhal_device_set_property_string (ctx, udi, "storage.serial", 
-										(char *) did->serial, &error)) {
+										serial, &error)) {
 						dbg ("Error setting storage.serial");
 					}
 				}

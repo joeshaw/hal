@@ -1,3 +1,15 @@
+2005-11-10  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/probing/Makefile.am: updated for glib 
+
+	* hald/linux2/probing/probe-storage.c: (strdup_valid_utf8), (main):
+	Fix to prevent sending invalid UTF8 strings from storage serials to D-BUS
+	which prevent adding the whole storage divice to the device store. The 
+	invalid, non UTF8, characters replaced now with '?' and the serial only 
+	added if there is at least one valid character left in the string. 
+
+	* hald/util.c: (util_compute_time_remaining): fixed compiler warning
+
 2005-11-09  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/addons/addon-acpi.c: (acpi_get_event_fp_kernel),
