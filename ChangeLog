@@ -1,3 +1,9 @@
+2005-11-14  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/util.c: (util_compute_time_remaining): fixed multiple 'devision
+	by zero' bugs which could happen, if calculate the 'remaining time'  
+	based on time and nothing is changed on battery. 
+
 2005-11-14  David Zeuthen  <davidz@redhat.com>
 
 	* NEWS: Update for 0.5.5

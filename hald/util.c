@@ -145,6 +145,10 @@ util_compute_time_remaining (const char *id,
 			saved_battery_info = g_hash_table_new(g_str_hash, g_str_equal);
 
 		if ((battery_info = g_hash_table_lookup(saved_battery_info, id))) {
+			/* check this to prevent division by zero */
+			if ((cur_time == battery_info->last_time) || (chargeLevel == battery_info->last_level))
+				return -1;
+
 			chargeRate = ((chargeLevel - battery_info->last_level) * 60 * 60) / (cur_time - battery_info->last_time);
 			/*
 			 * During discharging chargeRate would be negative, which would
@@ -163,9 +167,13 @@ util_compute_time_remaining (const char *id,
 			battery_info->last_time = cur_time;
  			return -1;
 		}
-	}
+	} 
 
-	if (isDischarging)
+	/* paranoic, but better than crash: check this to prevent division by zero */
+	if (chargeRate == 0)
+		return -1;
+
+	if (isDischarging) 
 		remaining_time = ((double) chargeLevel / (double) chargeRate) * 60 * 60;
 	else if (isCharging) {
 		/* 
