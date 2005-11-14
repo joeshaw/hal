@@ -1,4 +1,53 @@
 ==========
+HAL 0.5.5 "I want you to see what he's got under his fingernails."
+==========
+
+Released November 14, 2005
+
+ - Handle invalid UTF-8 from serial numbers of storage devices (Danny Kukawka)
+ - Try reconnect to acpid (Danny Kukawka)
+ - Calculate rate when not reported (Søren Hansen, Danny Kukawka)
+ - fd.o bugs #4871, #2850, #2121, #3954, #4266, #4644, #2115, 
+   #3036(Danny Kukawka, Others)
+ - Major rework of lshal (Pierre Ossman)
+ - Comment out multi-session query for optical discs (Kay Sievers)
+ - Update to from AFL 2.0 to AFL 2.1 (David Zeuthen)
+ - Prepare for 2.6.15 compatibility (Kay Sievers)
+ - Update spec some (Danny Kukawka)
+ - Card reader .fdi files (Jerome Lodewyck)
+ - Look at all netlink messages, not just the first one (Jon Nettleton)
+ - Add --version to hald (Danny Kukawka)
+ - Add some hack to work around broken and racy /proc/mounts (Danny Kukawka)
+ - Add option for using the syslog (Danny Kukawka)
+ - Support 'EjectPressed' condition for optical drives (Kay Sievers)
+ - More checks for if a system is a laptop (Danny Kukawka, Richard Hughes)
+ - Update list of PNP ID's (Danny Kukawka)
+ - Update to volume_id version 52 (Kay Sievers)
+ - Remove non-polling blacklist entry for HL-DT-STCD-RW/DVD-ROM GCC-4240N
+   since this works on Linux 2.6.13 (Danny Kukawka)
+ - Handle non-existing add-ons (Danny Kukawka)
+ - Deal with acpid restarts (Ryan Lortie)
+ - Fix fstab-sync parsing (Pascal Terjan)
+ - Work with newer dmidecode (Richard Hughes)
+ - Some serial port support and MMC storage fixes (Pierre Ossman)
+ - Fix build by not using kernel-style data types (Martin Pitt)
+ - Suspend/hibernate functionality for distros without tools (Richard Hughes)
+ - Workaround for some buggy ACPI implementations (Ryan Lortie)
+ - SetBrightness and GetBrightness methods (Richard Hughes)
+ - Various S390 device handling fixes (Cornelia Huck)
+
+Requirements for HAL 0.5.5 "I want you to see what he's got under his fingernails."
+
+ - Linux 2.6.13 or later
+ - udev 071 or later (using udevsend as hotplug multiplexer)
+ - dbus 0.50 or later (with glib bindings)
+ - glib 2.6 or later
+ - expat
+ - popt (optional)
+ - libusb (optional)
+ - dmidecode (optional)
+
+==========
 HAL 0.5.4 "Never tell anybody outside the family what you're thinking again."
 ==========
 
