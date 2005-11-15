@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "isw_raid.h"
 
 struct isw_meta {
 	uint8_t		sig[32];

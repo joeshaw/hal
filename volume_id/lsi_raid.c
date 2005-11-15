@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "lsi_raid.h"
 
 struct lsi_meta {
 	uint8_t		sig[6];

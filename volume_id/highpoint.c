@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "highpoint.h"
 
 struct hpt37x_meta {
 	uint8_t		filler1[32];

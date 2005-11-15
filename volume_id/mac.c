@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "mac.h"
 
 struct mac_driver_desc {
 	uint8_t		signature[2];

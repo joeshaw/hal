@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "silicon_raid.h"
 
 struct silicon_meta {
 	uint8_t		unknown0[0x2E];

@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "cramfs.h"
 
 struct cramfs_super {
 	uint8_t		magic[4];

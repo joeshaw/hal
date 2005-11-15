@@ -50,10 +50,6 @@
 
 #include "drive_id/drive_id.h"
 #include "volume_id/volume_id.h"
-#include "volume_id/logging.h"
-#include "volume_id/msdos.h"
-#include "volume_id/util.h"
-
 #include "linux_dvd_rw_utils.h"
 
 #include "shared.h"
@@ -205,10 +201,10 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi,
 	}
 
 	/* seek to the path table */
-	lseek (fd, le16_to_cpu(bs) * le32_to_cpu (tl), SEEK_SET);
+	lseek (fd, GUINT16_FROM_LE (bs) * GUINT32_FROM_LE (tl), SEEK_SET);
 
 	/* loop through the path table entriesi */
-	while (pos < le16_to_cpu (ts))
+	while (pos < GUINT16_FROM_LE (ts))
 	{
 		/* get the length of the filename of the current entry */
 		if (read (fd, &len_di, 1) != 1)
@@ -244,7 +240,7 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi,
 
 		/* if we found a folder that has the root as a parent, and the directory name matches 
 		   one of the special directories then set the properties accordingly */
-		if (le16_to_cpu (parent) == 1)
+		if (GUINT16_FROM_LE (parent) == 1)
 		{
 			if (!strcmp (dirname, "VIDEO_TS"))
 			{

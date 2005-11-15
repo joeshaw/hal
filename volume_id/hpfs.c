@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "hpfs.h"
 
 struct hpfs_super
 {

@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "sysv.h"
 
 #define SYSV_NICINOD			100
 #define SYSV_NICFREE			50

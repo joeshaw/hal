@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "linux_raid.h"
 
 struct mdp_super_block {
 	uint32_t	md_magic;

@@ -27,7 +27,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "ocfs.h"
 
 
 struct ocfs1_super_block_header {

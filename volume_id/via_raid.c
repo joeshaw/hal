@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "via_raid.h"
 
 struct via_meta {
 	uint16_t	signature;

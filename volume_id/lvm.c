@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "lvm.h"
 
 struct lvm1_super_block {
 	uint8_t	id[2];

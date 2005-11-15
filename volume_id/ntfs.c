@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "ntfs.h"
 
 struct ntfs_super_block {
 	uint8_t		jump[3];

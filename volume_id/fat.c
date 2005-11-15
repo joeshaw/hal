@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "fat.h"
 
 #define FAT12_MAX			0xff5
 #define FAT16_MAX			0xfff5

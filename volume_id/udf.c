@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "udf.h"
 
 struct volume_descriptor {
 	struct descriptor_tag {

@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "msdos.h"
 
 struct msdos_partition_entry {
 	uint8_t		boot_ind;

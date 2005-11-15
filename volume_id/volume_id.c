@@ -30,36 +30,6 @@
 #include "logging.h"
 #include "util.h"
 
-#include "ext.h"
-#include "reiserfs.h"
-#include "fat.h"
-#include "hfs.h"
-#include "jfs.h"
-#include "xfs.h"
-#include "ufs.h"
-#include "ntfs.h"
-#include "iso9660.h"
-#include "udf.h"
-#include "highpoint.h"
-#include "isw_raid.h"
-#include "lsi_raid.h"
-#include "via_raid.h"
-#include "silicon_raid.h"
-#include "nvidia_raid.h"
-#include "promise_raid.h"
-#include "luks.h"
-#include "linux_swap.h"
-#include "linux_raid.h"
-#include "lvm.h"
-#include "cramfs.h"
-#include "hpfs.h"
-#include "romfs.h"
-#include "sysv.h"
-#include "minix.h"
-#include "mac.h"
-#include "msdos.h"
-#include "ocfs.h"
-#include "vxfs.h"
 
 int volume_id_probe_all(struct volume_id *id, uint64_t off, uint64_t size)
 {
@@ -209,28 +179,6 @@ struct volume_id *volume_id_open_node(const char *path)
 
 	/* close fd on device close */
 	id->fd_close = 1;
-
-	return id;
-}
-
-/* open volume by major/minor */
-struct volume_id *volume_id_open_dev_t(dev_t devt)
-{
-	struct volume_id *id;
-	char tmp_node[VOLUME_ID_PATH_MAX];
-
-	snprintf(tmp_node, VOLUME_ID_PATH_MAX,
-		 "/dev/.volume_id-%u-%u-%u", getpid(), major(devt), minor(devt));
-	tmp_node[VOLUME_ID_PATH_MAX-1] = '\0';
-
-	/* create tempory node to open the block device */
-	unlink(tmp_node);
-	if (mknod(tmp_node, (S_IFBLK | 0600), devt) != 0)
-		return NULL;
-
-	id = volume_id_open_node(tmp_node);
-
-	unlink(tmp_node);
 
 	return id;
 }

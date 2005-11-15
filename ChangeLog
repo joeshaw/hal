@@ -1,3 +1,77 @@
+2005-11-15  Kay Sievers  <kay.sievers@vrfy.org>
+
+	libvolume_id: sync with udev version and prepare
+	for a possible future external dependency.
+
+	* hald/linux2/probing/probe-volume.c: (advanced_disc_detect): Switch
+	to glib function instead of the volume_id private ones.
+
+	* volume_id/Makefile.am: Merge individual headers into the main
+	public header.
+	* volume_id/cramfs.c:
+	* volume_id/cramfs.h:
+	* volume_id/ext.c:
+	* volume_id/ext.h:
+	* volume_id/fat.c:
+	* volume_id/fat.h:
+	* volume_id/hfs.c:
+	* volume_id/hfs.h:
+	* volume_id/highpoint.c:
+	* volume_id/highpoint.h:
+	* volume_id/hpfs.c:
+	* volume_id/hpfs.h:
+	* volume_id/iso9660.c:
+	* volume_id/iso9660.h:
+	* volume_id/isw_raid.c:
+	* volume_id/isw_raid.h:
+	* volume_id/jfs.c:
+	* volume_id/jfs.h:
+	* volume_id/linux_raid.c:
+	* volume_id/linux_raid.h:
+	* volume_id/linux_swap.c:
+	* volume_id/linux_swap.h:
+	* volume_id/lsi_raid.c:
+	* volume_id/lsi_raid.h:
+	* volume_id/luks.c:
+	* volume_id/luks.h:
+	* volume_id/lvm.c:
+	* volume_id/lvm.h:
+	* volume_id/mac.c:
+	* volume_id/mac.h:
+	* volume_id/minix.c:
+	* volume_id/minix.h:
+	* volume_id/msdos.c:
+	* volume_id/msdos.h:
+	* volume_id/ntfs.c:
+	* volume_id/ntfs.h:
+	* volume_id/nvidia_raid.c:
+	* volume_id/nvidia_raid.h:
+	* volume_id/ocfs.c:
+	* volume_id/ocfs.h:
+	* volume_id/promise_raid.c:
+	* volume_id/promise_raid.h:
+	* volume_id/reiserfs.c:
+	* volume_id/reiserfs.h:
+	* volume_id/romfs.c:
+	* volume_id/romfs.h:
+	* volume_id/silicon_raid.c:
+	* volume_id/silicon_raid.h:
+	* volume_id/sysv.c:
+	* volume_id/sysv.h:
+	* volume_id/udf.c:
+	* volume_id/udf.h:
+	* volume_id/ufs.c:
+	* volume_id/ufs.h:
+	* volume_id/util.h:
+	* volume_id/via_raid.c:
+	* volume_id/via_raid.h:
+	* volume_id/volume_id.c:
+	* volume_id/volume_id.h:
+	* volume_id/vxfs.c:
+	* volume_id/vxfs.h:
+	* volume_id/xfs.c:
+	* volume_id/xfs.h:
+
 2005-11-14  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Bump version to 0.5.6

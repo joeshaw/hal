@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "vxfs.h"
 
 #define VXFS_SUPER_MAGIC	0xa501FCF5
 

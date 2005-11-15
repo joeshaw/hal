@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "romfs.h"
 
 struct romfs_super {
 	uint8_t magic[8];

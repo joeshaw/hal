@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "ufs.h"
 
 struct ufs_super_block {
 	uint32_t	fs_link;

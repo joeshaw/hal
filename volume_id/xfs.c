@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "xfs.h"
 
 struct xfs_super_block {
 	uint8_t	magic[4];

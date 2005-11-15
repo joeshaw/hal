@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "promise_raid.h"
 
 struct promise_meta {
 	uint8_t	sig[24];

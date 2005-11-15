@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "hfs.h"
 
 struct hfs_finder_info{
 	uint32_t	boot_folder;

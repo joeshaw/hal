@@ -27,7 +27,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "reiserfs.h"
 
 struct reiserfs_super_block {
 	uint32_t	blocks_count;

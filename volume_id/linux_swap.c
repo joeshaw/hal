@@ -26,7 +26,6 @@
 #include "volume_id.h"
 #include "logging.h"
 #include "util.h"
-#include "linux_swap.h"
 
 struct swap_header_v1_2 {
 	uint8_t		bootbits[1024];
