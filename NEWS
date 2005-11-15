@@ -1,4 +1,12 @@
 ==========
+HAL 0.5.5.1
+==========
+
+Released November 14, 2005
+
+ - Fix a few division by zero bugs (Danny Kukawka)
+
+==========
 HAL 0.5.5 "I want you to see what he's got under his fingernails."
 ==========
 
