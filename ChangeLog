@@ -1,5 +1,22 @@
 2005-11-15  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/linux2/osspec.c: (hald_udev_data), (hald_helper_data),
+	(osspec_init): Listen to socket: /org/freedesktop/hal/udev_event
+	Udev will pass all data over this socket to HAL, if the following
+	rule is given:
+	  RUN+="socket:/org/freedesktop/hal/udev_event"
+
+	The HAL hotplug helper /usr/sbin/hal.hotplug is no longer needed
+	and should be replaced by the direct udev connection which will
+	no longer fork a process for every event.
+
+	This is the preparation to reuse the persistent data udev collects
+	from the hardware, instead of querying it a second time with HAL.
+	If we reach this, drive_id/* and the hotplug helper will be removed
+	from HAL.
+
+2005-11-15  Kay Sievers  <kay.sievers@vrfy.org>
+
 	libvolume_id: sync with udev version and prepare
 	for a possible future external dependency.
 
