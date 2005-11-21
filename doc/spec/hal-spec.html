@@ -1,8 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <HTML
 ><HEAD
 ><TITLE
->HAL 0.5.4 Specification</TITLE
+>HAL 0.5.5.1 Specification</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.79"></HEAD
@@ -24,7 +24,7 @@ CLASS="TITLEPAGE"
 CLASS="title"
 ><A
 NAME="AEN2"
->HAL 0.5.4 Specification</A
+>HAL 0.5.5.1 Specification</A
 ></H1
 ><H3
 CLASS="author"
@@ -49,9 +49,6 @@ HREF="mailto:david@fubar.dk"
 	&nbsp;&nbsp;</P
 ></DIV
 ></DIV
-><SPAN
-CLASS="releaseinfo"
->Version 0.5.4<BR></SPAN
 ><HR></DIV
 ><DIV
 CLASS="TOC"
@@ -61,79 +58,79 @@ CLASS="TOC"
 >Table of Contents</B
 ></DT
 ><DT
-><A
+>1. <A
 HREF="#introduction"
 >Introduction</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>1.1. <A
 HREF="#AEN15"
 >About</A
 ></DT
 ><DT
-><A
+>1.2. <A
 HREF="#AEN24"
 >Document History</A
 ></DT
 ><DT
-><A
+>1.3. <A
 HREF="#AEN46"
 >Acknowledgements</A
 ></DT
 ></DL
 ></DD
 ><DT
-><A
+>2. <A
 HREF="#overview"
 >Overview</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>2.1. <A
 HREF="#ov_halarch"
 >Architecture of HAL</A
 ></DT
 ><DT
-><A
+>2.2. <A
 HREF="#ov_hal_linux26"
 >HAL on Linux 2.6</A
 ></DT
 ></DL
 ></DD
 ><DT
-><A
+>3. <A
 HREF="#AEN108"
 >Device Objects</A
 ></DT
 ><DT
-><A
+>4. <A
 HREF="#device-capabilities"
 >Device Capabilities</A
 ></DT
 ><DT
-><A
+>5. <A
 HREF="#using-devices"
 >Using devices</A
 ></DT
 ><DT
-><A
+>6. <A
 HREF="#device-properties"
 >Device Properties</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>6.1. <A
 HREF="#properties-metadata"
 >Metadata Properties</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>6.1.1. <A
 HREF="#device-properties-info"
 ><TT
 CLASS="literal"
@@ -141,7 +138,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.1.2. <A
 HREF="#device-properties-linux"
 ><TT
 CLASS="literal"
@@ -151,14 +148,14 @@ CLASS="literal"
 ></DL
 ></DD
 ><DT
-><A
+>6.2. <A
 HREF="#properties-bus"
 >Physical Properties</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>6.2.1. <A
 HREF="#device-properties-pci"
 ><TT
 CLASS="literal"
@@ -166,7 +163,15 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.2. <A
+HREF="#device-properties-serialif"
+><TT
+CLASS="literal"
+>serial</TT
+> namespace</A
+></DT
+><DT
+>6.2.3. <A
 HREF="#device-properties-usb"
 ><TT
 CLASS="literal"
@@ -174,7 +179,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.4. <A
 HREF="#device-properties-usbif"
 ><TT
 CLASS="literal"
@@ -182,7 +187,15 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.5. <A
+HREF="#device-properties-platform"
+><TT
+CLASS="literal"
+>platform</TT
+> namespace</A
+></DT
+><DT
+>6.2.6. <A
 HREF="#device-properties-ide-host"
 ><TT
 CLASS="literal"
@@ -190,7 +203,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.7. <A
 HREF="#device-properties-ide"
 ><TT
 CLASS="literal"
@@ -198,7 +211,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.8. <A
 HREF="#device-properties-scsi_host"
 ><TT
 CLASS="literal"
@@ -206,7 +219,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.9. <A
 HREF="#device-properties-scsi"
 ><TT
 CLASS="literal"
@@ -214,7 +227,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.10. <A
 HREF="#device-properties-ieee1394_host"
 ><TT
 CLASS="literal"
@@ -222,7 +235,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.11. <A
 HREF="#device-properties-ieee1394_node"
 ><TT
 CLASS="literal"
@@ -230,7 +243,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.12. <A
 HREF="#device-properties-ieee1394"
 ><TT
 CLASS="literal"
@@ -238,7 +251,23 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.13. <A
+HREF="#device-properties-mmc_host"
+><TT
+CLASS="literal"
+>mmc_host</TT
+> namespace</A
+></DT
+><DT
+>6.2.14. <A
+HREF="#device-properties-mmc"
+><TT
+CLASS="literal"
+>mmc</TT
+> namespace</A
+></DT
+><DT
+>6.2.15. <A
 HREF="#device-properties-ccw"
 ><TT
 CLASS="literal"
@@ -246,7 +275,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.16. <A
 HREF="#device-properties-ccwgroup"
 ><TT
 CLASS="literal"
@@ -254,7 +283,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.17. <A
 HREF="#device-properties-iucv"
 ><TT
 CLASS="literal"
@@ -262,7 +291,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.2.18. <A
 HREF="#device-properties-block"
 ><TT
 CLASS="literal"
@@ -272,14 +301,14 @@ CLASS="literal"
 ></DL
 ></DD
 ><DT
-><A
+>6.3. <A
 HREF="#properties-functional"
 >Functional Properties</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>6.3.1. <A
 HREF="#device-properties-volume"
 ><TT
 CLASS="literal"
@@ -287,15 +316,15 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.2. <A
 HREF="#device-properties-kernel"
 ><TT
 CLASS="literal"
->kernel</TT
+>system</TT
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.3. <A
 HREF="#device-properties-volume-disc"
 ><TT
 CLASS="literal"
@@ -303,7 +332,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.4. <A
 HREF="#device-properties-storage"
 ><TT
 CLASS="literal"
@@ -311,7 +340,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.5. <A
 HREF="#device-properties-storage-cdrom"
 ><TT
 CLASS="literal"
@@ -319,7 +348,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.6. <A
 HREF="#device-properties-net"
 ><TT
 CLASS="literal"
@@ -327,7 +356,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.7. <A
 HREF="#device-properties-net-80203"
 ><TT
 CLASS="literal"
@@ -335,7 +364,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.8. <A
 HREF="#device-properties-net-80211"
 ><TT
 CLASS="literal"
@@ -343,7 +372,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.9. <A
 HREF="#device-properties-input"
 ><TT
 CLASS="literal"
@@ -351,7 +380,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.10. <A
 HREF="#device-properties-pcmcia_socket"
 ><TT
 CLASS="literal"
@@ -359,7 +388,7 @@ CLASS="literal"
 ></A
 ></DT
 ><DT
-><A
+>6.3.11. <A
 HREF="#device-properties-printer"
 ><TT
 CLASS="literal"
@@ -367,7 +396,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.12. <A
 HREF="#device-properties-portable_audio_player"
 ><TT
 CLASS="literal"
@@ -375,7 +404,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.13. <A
 HREF="#device-properties-alsa"
 ><TT
 CLASS="literal"
@@ -383,7 +412,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.14. <A
 HREF="#device-properties-oss"
 ><TT
 CLASS="literal"
@@ -391,7 +420,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.15. <A
 HREF="#device-properties-camera"
 ><TT
 CLASS="literal"
@@ -399,7 +428,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.16. <A
 HREF="#device-properties-laptop-panel"
 ><TT
 CLASS="literal"
@@ -407,7 +436,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.17. <A
 HREF="#device-properties-ac_adaptor"
 ><TT
 CLASS="literal"
@@ -415,7 +444,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.18. <A
 HREF="#device-properties-battery"
 ><TT
 CLASS="literal"
@@ -423,7 +452,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.19. <A
 HREF="#device-properties-button"
 ><TT
 CLASS="literal"
@@ -431,7 +460,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.20. <A
 HREF="#device-properties-processor"
 ><TT
 CLASS="literal"
@@ -439,7 +468,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.21. <A
 HREF="#device-properties-display_device"
 ><TT
 CLASS="literal"
@@ -447,7 +476,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.22. <A
 HREF="#device-properties-sensor"
 ><TT
 CLASS="literal"
@@ -455,7 +484,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.3.23. <A
 HREF="#device-properties-tape"
 ><TT
 CLASS="literal"
@@ -465,14 +494,14 @@ CLASS="literal"
 ></DL
 ></DD
 ><DT
-><A
+>6.4. <A
 HREF="#properties-policy"
 >Policy Properties</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>6.4.1. <A
 HREF="#device-properties-storage-policy-default"
 ><TT
 CLASS="literal"
@@ -480,7 +509,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.4.2. <A
 HREF="#device-properties-storage-policy"
 ><TT
 CLASS="literal"
@@ -488,7 +517,7 @@ CLASS="literal"
 > namespace</A
 ></DT
 ><DT
-><A
+>6.4.3. <A
 HREF="#device-properties-volume-policy"
 ><TT
 CLASS="literal"
@@ -500,45 +529,45 @@ CLASS="literal"
 ></DL
 ></DD
 ><DT
-><A
+>7. <A
 HREF="#spec-device-info"
 >Device Information Files</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>7.1. <A
 HREF="#fdi-facts"
 >Facts about devices</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>7.1.1. <A
 HREF="#fdi-example-mp3player"
 >Example: MP3 player</A
 ></DT
 ><DT
-><A
+>7.1.2. <A
 HREF="#fdi-example-camera"
 >Example: Digital Still Camera</A
 ></DT
 ><DT
-><A
+>7.1.3. <A
 HREF="#fdi-example-6in1"
 >Example: Card Reader</A
 ></DT
 ></DL
 ></DD
 ><DT
-><A
+>7.2. <A
 HREF="#fdi-policy"
 >Policy settings for devices</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>7.2.1. <A
 HREF="#fdi-example-mountsetting"
 >Storage Devices</A
 ></DT
@@ -547,64 +576,64 @@ HREF="#fdi-example-mountsetting"
 ></DL
 ></DD
 ><DT
-><A
+>8. <A
 HREF="#callouts"
 >Callouts</A
 ></DT
 ><DT
-><A
+>9. <A
 HREF="#dbus-api"
 >D-BUS Network API</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
-HREF="#AEN3439"
+>9.1. <A
+HREF="#AEN3665"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
-HREF="#AEN3450"
+>9.1.1. <A
+HREF="#AEN3676"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
-><A
-HREF="#AEN3458"
+>9.2. <A
+HREF="#AEN3684"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
 ></DD
 ><DT
-><A
+>10. <A
 HREF="#enforcing-policy"
 >Enforcing Policy</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>10.1. <A
 HREF="#enforcing-stor-vol"
 >Storage Devices</A
 ></DT
 ><DD
 ><DL
 ><DT
-><A
+>10.1.1. <A
 HREF="#stor-vol-policy"
 >Policy for Volumes and Storage devices</A
 ></DT
 ><DT
-><A
+>10.1.2. <A
 HREF="#enforcing-storage-fstab"
 >File systems file</A
 ></DT
 ><DT
-><A
+>10.1.3. <A
 HREF="#enforcing-storage-locking"
 >Disabling policy agents</A
 ></DT
@@ -620,14 +649,14 @@ CLASS="chapter"
 ><A
 NAME="introduction"
 ></A
->Introduction</H1
+>Chapter 1. Introduction</H1
 ><DIV
 CLASS="sect1"
 ><H2
 CLASS="sect1"
 ><A
 NAME="AEN15"
->About</A
+>1.1. About</A
 ></H2
 ><P
 >&#13;	This document concerns the specification of HAL which is a
@@ -642,20 +671,29 @@ NAME="AEN15"
 ><P
 >&#13;
 	HAL represents a piece of hardware as a 
-	<I
+	<SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >device object</I
+></SPAN
 >. A device object is
 	identified by a unique identifer and carries a set of
-	key/value paris referred to as <I
+	key/value paris referred to as <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >device
 	properties</I
+></SPAN
 >. Some properties are derived from the
-	actual hardware, some are merged from <I
+	actual hardware, some are merged from <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >device
 	information files</I
+></SPAN
 > and some are related to the
 	actual device configuration. This document specifies the set
 	of device properties and gives them well-defined meaning. This
@@ -693,7 +731,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="AEN24"
->Document History</A
+>1.2. Document History</A
 ></H2
 ><DIV
 CLASS="informaltable"
@@ -704,11 +742,8 @@ NAME="AEN26"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><COL><THEAD
 ><TR
 ><TH
 >Version</TH
@@ -738,7 +773,7 @@ CLASS="CALSTABLE"
 ></TR
 ><TR
 ><TD
->0.5.4</TD
+>0.5.5.1</TD
 ><TD
 >&nbsp;</TD
 ><TD
@@ -756,7 +791,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="AEN46"
->Acknowledgements</A
+>1.3. Acknowledgements</A
 ></H2
 ><P
 >&#13;
@@ -796,14 +831,14 @@ CLASS="chapter"
 ><A
 NAME="overview"
 ></A
->Overview</H1
+>Chapter 2. Overview</H1
 ><DIV
 CLASS="sect1"
 ><H2
 CLASS="sect1"
 ><A
 NAME="ov_halarch"
->Architecture of HAL</A
+>2.1. Architecture of HAL</A
 ></H2
 ><P
 >&#13;
@@ -825,9 +860,12 @@ SRC="hal-arch.png">
 ><UL
 ><LI
 ><P
->&#13;          <I
+>&#13;          <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >HAL daemon</I
+></SPAN
 ></P
 ><P
 > 
@@ -846,9 +884,12 @@ CLASS="emphasis"
 ></LI
 ><LI
 ><P
->&#13;          <I
+>&#13;          <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >Applications</I
+></SPAN
 ></P
 ><P
 > 
@@ -887,19 +928,21 @@ CLASS="emphasis"
 ></LI
 ><LI
 ><P
->&#13;          <I
+>&#13;          <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >Callouts</I
+></SPAN
 ></P
 ><P
 > 
 
 	    Callouts are programs invoked when the device object list
-	    is modified or when a device property changes. As such, callouts
-	    can be used to maintain system-wide policy (that may be
-	    specific to the particular OS) such as changing
-	    permissions on device nodes, updating the
-	    systemwide <TT
+	    is modified  As such, callouts can be used to maintain 
+	    system-wide policy (that may be specific to the particular 
+	    OS) such as changing permissions on device nodes, updating 
+	    the systemwide <TT
 CLASS="literal"
 >/etc/fstab</TT
 > file or
@@ -918,9 +961,7 @@ CLASS="literal"
       easily access the services offered by HAL. The D-BUS API is
       detailed in <A
 HREF="#dbus-api"
->the Chapter called <I
->D-BUS Network API</I
-></A
+>Chapter 9</A
 >. Note that HAL doesn't
       enforce any policy at all, this is left for desktop environments
       and operating systems vendors to implement.  However, to ensure
@@ -928,9 +969,7 @@ HREF="#dbus-api"
       environments, recommendations and best practises on how to
       enforce policy is discussed in <A
 HREF="#enforcing-policy"
->the Chapter called <I
->Enforcing Policy</I
-></A
+>Chapter 10</A
 >.
 
     </P
@@ -941,7 +980,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="ov_hal_linux26"
->HAL on Linux 2.6</A
+>2.2. HAL on Linux 2.6</A
 ></H2
 ><P
 >&#13;
@@ -1033,9 +1072,7 @@ CLASS="literal"
 	    or use another setuid mount wrapper.
 	    See <A
 HREF="#enforcing-policy"
->the Chapter called <I
->Enforcing Policy</I
-></A
+>Chapter 10</A
 > for more details.
         </P
 ></LI
@@ -1051,7 +1088,7 @@ CLASS="chapter"
 ><A
 NAME="AEN108"
 ></A
->Device Objects</H1
+>Chapter 3. Device Objects</H1
 ><P
 >&#13;
 	It is important to precisely define the term HAL device
@@ -1114,15 +1151,11 @@ CLASS="literal"
 	checking the properties that export the USB vendor and product
 	identifiers.  See <A
 HREF="#device-capabilities"
->the Chapter called <I
->Device Capabilities</I
-></A
+>Chapter 4</A
 > and
 	<A
 HREF="#device-properties"
->the Chapter called <I
->Device Properties</I
-></A
+>Chapter 6</A
 > for details.
 
       </P
@@ -1137,9 +1170,12 @@ HREF="#device-properties"
 ><LI
 ><P
 >&#13;
-          <I
+          <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >UDI</I
+></SPAN
 ></P
 ><P
 > 
@@ -1156,9 +1192,12 @@ CLASS="emphasis"
 ><LI
 ><P
 >&#13;
-          <I
+          <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >Properties</I
+></SPAN
 ></P
 ><P
 > 
@@ -1177,6 +1216,14 @@ CLASS="literal"
 >string</TT
 > - 
 		UTF8 string</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>strlist</TT
+> - 
+		sorted list with UTF8 strings</P
 ></LI
 ><LI
 ><P
@@ -1268,14 +1315,15 @@ CLASS="literal"
 	administrator can edit. This specification is concerned with
 	precisely defining several properties; see <A
 HREF="#device-properties"
->the Chapter called <I
->Device Properties</I
-></A
+>Chapter 6</A
 > and onwards for more
 	information.  As a complement to device properties, HAL also
-	provides <I
+	provides <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >conditions</I
+></SPAN
 > on HAL device
 	objects. Conditions are used to relay events that are
 	happening on devices which are not easily expressed in
@@ -1324,7 +1372,7 @@ CLASS="chapter"
 ><A
 NAME="device-capabilities"
 ></A
->Device Capabilities</H1
+>Chapter 4. Device Capabilities</H1
 ><P
 >&#13;
        Mainstream hardware isn't very good at reporting what they are,
@@ -1350,20 +1398,29 @@ CLASS="literal"
 CLASS="literal"
 >info.capabilities</TT
 >. The former describes
-       <I
+       <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >what the device is</I
+></SPAN
 > (as a single
        alphanumeric keyword) and the latter describes
-       <I
+       <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >what the device does</I
+></SPAN
 > (as a number of
        alphanumeric keywords separated by whitespace). The keywords
        available for use is defined in this document; we'll refer to
-       them in following simply as <I
+       them in following simply as <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >capabilities</I
+></SPAN
 >.
 
      </P
@@ -1433,7 +1490,7 @@ CLASS="chapter"
 ><A
 NAME="using-devices"
 ></A
->Using devices</H1
+>Chapter 5. Using devices</H1
 ><P
 >&#13;
       While the HAL daemon provides generic operations that apply to
@@ -1483,13 +1540,13 @@ CLASS="chapter"
 ><A
 NAME="device-properties"
 ></A
->Device Properties</H1
+>Chapter 6. Device Properties</H1
 ><P
 >&#13;      Properties are arranged in a namespaces using ''.'' as a separator
       and are key/value pairs. The value may assume different types; currently
-      int32, double, bool and UTF8 strings are supported. The key of a property
-      is always an ASCII string without any whitespace. The properties are
-      updated in real-time.
+      int32, double, bool, UTF8 strings and UTF8 string lists are supported. 
+      The key of a property is always an ASCII string without any whitespace. 
+      The properties are updated in real-time.
     </P
 ><DIV
 CLASS="sect1"
@@ -1497,7 +1554,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="properties-metadata"
->Metadata Properties</A
+>6.1. Metadata Properties</A
 ></H2
 ><P
 >&#13;
@@ -1512,7 +1569,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-info"
-><TT
+>6.1.1. <TT
 CLASS="literal"
 >info</TT
 > namespace</A
@@ -1532,15 +1589,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN199"
+NAME="AEN202"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -1594,7 +1648,7 @@ CLASS="literal"
 > is set to TRUE</TD
 ><TD
 >If this property is set, the device will remain in the
-                     the GDL even if the device is unplugged</TD
+                     the GDL even if the device is unplugged. NOTE: property not implemented yet </TD
 ></TR
 ><TR
 ><TD
@@ -1608,20 +1662,20 @@ CLASS="literal"
 >No</TD
 ><TD
 >The device is currently not available (it may be unplugged
-                     or powered down)</TD
+                     or powered down) NOTE: property not implemented yet </TD
 ></TR
 ><TR
 ><TD
 ><TT
 CLASS="literal"
 >info.capabilities</TT
-> (string)</TD
+> (strlist)</TD
 ><TD
->example: block storage storage.cdrom</TD
+>example: 'block, storage, storage.cdrom'</TD
 ><TD
 >No</TD
 ><TD
->A white-space separated list of capabilities describing what the devices does</TD
+>A string list of capabilities describing what the devices does</TD
 ></TR
 ><TR
 ><TD
@@ -1754,7 +1808,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-linux"
-><TT
+>6.1.2. <TT
 CLASS="literal"
 >linux</TT
 > namespace</A
@@ -1768,15 +1822,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN290"
+NAME="AEN293"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -1798,7 +1849,7 @@ CLASS="literal"
 ><TD
 >examples: /sys/block/sda/sda1, /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0</TD
 ><TD
->Yes</TD
+>Yes (only if available for the device) </TD
 ><TD
 >A fully-qualified path into the sysfs filesystem for the
               physical device</TD
@@ -1812,7 +1863,7 @@ CLASS="literal"
 ><TD
 >&nbsp;</TD
 ><TD
->Yes</TD
+>Yes (only if available for the device) </TD
 ><TD
 >Normally this property assumes the same value as 
               linux.sysfs_path, however for some devices it assumes an
@@ -1889,7 +1940,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="properties-bus"
->Physical Properties</A
+>6.2. Physical Properties</A
 ></H2
 ><P
 >&#13;
@@ -1912,7 +1963,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-pci"
-><TT
+>6.2.1. <TT
 CLASS="literal"
 >pci</TT
 > namespace</A
@@ -1935,15 +1986,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN346"
+NAME="AEN349"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -2132,8 +2180,114 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="device-properties-usb"
+NAME="device-properties-serialif"
+>6.2.2. <TT
+CLASS="literal"
+>serial</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects that represent serial devices (e.g. /dev/ttyS* or 
+	/dev/ttyUSB*).
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN436"
+></A
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
 ><TT
+CLASS="literal"
+>serial.physical_device</TT
+> (string)</TD
+><TD
+>example: <TT
+CLASS="literal"
+>/org/freedesktop/Hal/devices/pnp_PNP0501</TT
+></TD
+><TD
+>Yes</TD
+><TD
+>UDI of the physical device the serial device is bound to.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>serial.device</TT
+> (string)</TD
+><TD
+>example: /dev/ttyS0</TD
+><TD
+>Yes</TD
+><TD
+>The device node to access the OSS device.</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>serial.port</TT
+> (int)</TD
+><TD
+>example: 0</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		The port number of the device, based on the number in 
+                <TT
+CLASS="literal"
+>serial.device</TT
+>
+             </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>serial.type</TT
+> (string)</TD
+><TD
+>example: platform, usb, unknown</TD
+><TD
+>Yes</TD
+><TD
+>This property defines the type of the serial device.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-usb"
+>6.2.3. <TT
 CLASS="literal"
 >usb_device</TT
 > namespace</A
@@ -2158,15 +2312,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN435"
+NAME="AEN477"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -2514,7 +2665,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-usbif"
-><TT
+>6.2.4. <TT
 CLASS="literal"
 >usb</TT
 > namespace</A
@@ -2550,15 +2701,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN598"
+NAME="AEN640"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -2650,8 +2798,76 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="device-properties-ide-host"
+NAME="device-properties-platform"
+>6.2.5. <TT
+CLASS="literal"
+>platform</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Devices that are built into the platform or present on busses that
+	cannot be properly enumerated (e.g. ISA) are represented by device
+	objects where <TT
+CLASS="literal"
+>info.bus</TT
+> equals
+	<TT
+CLASS="literal"
+>platform</TT
+>. These kind of devices are commonly,
+	somewhat incorrectly, called legacy devices.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN686"
+></A
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
 ><TT
+CLASS="literal"
+>platform.id</TT
+> (string)</TD
+><TD
+>example: serial</TD
+><TD
+>Yes</TD
+><TD
+>Device identification</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-ide-host"
+>6.2.6. <TT
 CLASS="literal"
 >ide_host</TT
 > namespace</A
@@ -2679,15 +2895,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN645"
+NAME="AEN708"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -2741,7 +2954,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-ide"
-><TT
+>6.2.7. <TT
 CLASS="literal"
 >ide</TT
 > namespace</A
@@ -2764,15 +2977,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN673"
+NAME="AEN736"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -2832,7 +3042,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-scsi_host"
-><TT
+>6.2.8. <TT
 CLASS="literal"
 >scsi_host</TT
 > namespace</A
@@ -2860,15 +3070,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN703"
+NAME="AEN766"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -2906,7 +3113,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-scsi"
-><TT
+>6.2.9. <TT
 CLASS="literal"
 >scsi</TT
 > namespace</A
@@ -2929,15 +3136,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN724"
+NAME="AEN787"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3022,7 +3226,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-ieee1394_host"
-><TT
+>6.2.10. <TT
 CLASS="literal"
 >ieee1394_host</TT
 > namespace</A
@@ -3046,15 +3250,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN765"
+NAME="AEN828"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3144,7 +3345,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-ieee1394_node"
-><TT
+>6.2.11. <TT
 CLASS="literal"
 >ieee1394_node</TT
 > namespace</A
@@ -3168,15 +3369,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN810"
+NAME="AEN873"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3266,7 +3464,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-ieee1394"
-><TT
+>6.2.12. <TT
 CLASS="literal"
 >ieee1394</TT
 > namespace</A
@@ -3289,15 +3487,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN855"
+NAME="AEN918"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3334,8 +3529,247 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="device-properties-ccw"
+NAME="device-properties-mmc_host"
+>6.2.13. <TT
+CLASS="literal"
+>mmc_host</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects with <TT
+CLASS="literal"
+>info.bus</TT
+> set to
+	<TT
+CLASS="literal"
+>mmc_host</TT
+> represent MultiMediaCard or
+	Secure Digital host adaptors. The following properties
+	are available for such device objects.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN939"
+></A
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
 ><TT
+CLASS="literal"
+>mmc_host.host</TT
+> (int)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>A unique number identifying the MMC/SD host adaptor</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-mmc"
+>6.2.14. <TT
+CLASS="literal"
+>mmc</TT
+> namespace</A
+></H3
+><P
+>&#13;
+	Device objects with <TT
+CLASS="literal"
+>info.bus</TT
+> set to
+	<TT
+CLASS="literal"
+>mmc</TT
+> represent MultiMediaCard or Secure
+	Digital cards. The following properties are available for
+	such device objects.
+
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN960"
+></A
+><TABLE
+BORDER="1"
+CLASS="CALSTABLE"
+><COL><COL><THEAD
+><TR
+><TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.cid</TT
+> (string)</TD
+><TD
+>example: 0150415330303842413a1a8083003a9d</TD
+><TD
+>Yes</TD
+><TD
+>Card Identification Data register (unique for every card
+              in existence)</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.csd</TT
+> (string)</TD
+><TD
+>example: 005d013213598067b6d9cfff1640002d</TD
+><TD
+>Yes</TD
+><TD
+>Card Specific Data register</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.scr</TT
+> (string)</TD
+><TD
+>example: 00a5000000410000</TD
+><TD
+>Only for SD cards</TD
+><TD
+>SD Card Register</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.rca</TT
+> (int)</TD
+><TD
+>example: 8083</TD
+><TD
+>Yes</TD
+><TD
+>Card bus address</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.oem</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Card OEM distributor</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.date</TT
+> (string)</TD
+><TD
+>example: 10/2003</TD
+><TD
+>Yes</TD
+><TD
+>Manufacturing date</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.serial</TT
+> (int)</TD
+><TD
+>example: 0x3a1a8083</TD
+><TD
+>Yes</TD
+><TD
+>Card serial number</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.hwrev</TT
+> (int)</TD
+><TD
+>example: 4</TD
+><TD
+>Yes</TD
+><TD
+>Hardware revision</TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>mmc.fwrev</TT
+> (int)</TD
+><TD
+>example: 1</TD
+><TD
+>Yes</TD
+><TD
+>Firmware revision</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="device-properties-ccw"
+>6.2.15. <TT
 CLASS="literal"
 >ccw</TT
 > namespace</A
@@ -3358,15 +3792,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN876"
+NAME="AEN1029"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3539,15 +3970,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN950"
+NAME="AEN1103"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3629,15 +4057,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN982"
+NAME="AEN1135"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3702,15 +4127,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1007"
+NAME="AEN1160"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3809,15 +4231,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1046"
+NAME="AEN1199"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3882,7 +4301,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-ccwgroup"
-><TT
+>6.2.16. <TT
 CLASS="literal"
 >ccwgroup</TT
 > namespace</A
@@ -3908,15 +4327,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1080"
+NAME="AEN1233"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -3980,15 +4396,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1105"
+NAME="AEN1258"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4248,15 +4661,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1214"
+NAME="AEN1367"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4333,15 +4743,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1245"
+NAME="AEN1398"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4419,15 +4826,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1276"
+NAME="AEN1429"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4550,7 +4954,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-iucv"
-><TT
+>6.2.17. <TT
 CLASS="literal"
 >iucv</TT
 > namespace</A
@@ -4573,15 +4977,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1336"
+NAME="AEN1489"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4632,15 +5033,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1355"
+NAME="AEN1508"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4691,7 +5089,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-block"
-><TT
+>6.2.18. <TT
 CLASS="literal"
 >block</TT
 > namespace</A
@@ -4718,15 +5116,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1383"
+NAME="AEN1536"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -4863,7 +5258,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="properties-functional"
->Functional Properties</A
+>6.3. Functional Properties</A
 ></H2
 ><P
 >&#13;
@@ -4882,7 +5277,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-volume"
-><TT
+>6.3.1. <TT
 CLASS="literal"
 >volume</TT
 > namespace</A
@@ -4915,15 +5310,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1443"
+NAME="AEN1596"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -5208,15 +5600,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1566"
+NAME="AEN1719"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Condition Name</TH
@@ -5330,15 +5719,16 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-kernel"
-><TT
+>6.3.2. <TT
 CLASS="literal"
->kernel</TT
+>system</TT
 > namespace</A
 ></H3
 ><P
 >&#13;
 	This namespace is found on the toplevel "Computer" device,
-	and represents information about the currently running kernel.
+	and represents information about the system and the currently 
+	running kernel.
 
       </P
 ><DIV
@@ -5346,15 +5736,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1609"
+NAME="AEN1762"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -5371,7 +5758,7 @@ CLASS="CALSTABLE"
 ><TD
 ><TT
 CLASS="literal"
->kernel.name</TT
+>system.kernel.name</TT
 > (string)</TD
 ><TD
 >example: Linux</TD
@@ -5389,7 +5776,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->kernel.version</TT
+>system.kernel.version</TT
 > (string)</TD
 ><TD
 >example: 2.6.5-7.104-default</TD
@@ -5407,7 +5794,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->kernel.machine</TT
+>system.kernel.machine</TT
 > (string)</TD
 ><TD
 >example: i686</TD
@@ -5418,6 +5805,65 @@ CLASS="literal"
                 Usually the equivalent of <TT
 CLASS="literal"
 >uname -m</TT
+>.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.formfactor</TT
+> (string)</TD
+><TD
+>example: laptop, desktop, server, unknown</TD
+><TD
+>Yes</TD
+><TD
+>&#13;		 The formfactor of the system. Usually the equivalent of 
+		 <TT
+CLASS="literal"
+>smbios.chassis.type</TT
+> or set from information
+		 about ACPI/APM/PMU properties.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.vendor</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		 The name of the manufacturer of the machine. Usually the equivalent of 
+		 <TT
+CLASS="literal"
+>smbios.system.manufacturer</TT
+>.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>system.product</TT
+> (string)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		 The product name of the machine. Usually the equivalent of 
+		 <TT
+CLASS="literal"
+>smbios.system.product</TT
+> and
+		 <TT
+CLASS="literal"
+>smbios.system.version</TT
 >.
 	      </TD
 ></TR
@@ -5433,7 +5879,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-volume-disc"
-><TT
+>6.3.3. <TT
 CLASS="literal"
 >volume.disc</TT
 > namespace</A
@@ -5457,15 +5903,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1645"
+NAME="AEN1820"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -5707,7 +6150,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-storage"
-><TT
+>6.3.4. <TT
 CLASS="literal"
 >storage</TT
 > namespace</A
@@ -5758,15 +6201,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1770"
+NAME="AEN1945"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6099,11 +6539,7 @@ CLASS="literal"
 >storage</TT
 >.  See <A
 HREF="#fdi-example-6in1"
->the Section called <I
->Example: Card Reader</I
-> in the Chapter called <I
->Device Information Files</I
-></A
+>Section 7.1.3</A
 > for an example.
 	      </TD
 ></TR
@@ -6217,7 +6653,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-storage-cdrom"
-><TT
+>6.3.5. <TT
 CLASS="literal"
 >storage.cdrom</TT
 > namespace</A
@@ -6246,15 +6682,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1964"
+NAME="AEN2139"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6435,7 +6868,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-net"
-><TT
+>6.3.6. <TT
 CLASS="literal"
 >net</TT
 > namespace</A
@@ -6458,15 +6891,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2050"
+NAME="AEN2225"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6549,14 +6979,14 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->net.linux.sysfs_path</TT
+>net.physical_device</TT
 > (string)</TD
 ><TD
 >&nbsp;</TD
 ><TD
->Yes (only on Linux)</TD
+>Yes</TD
 ><TD
->Path of device in sysfs</TD
+>UDI of the physical device the network device is bound to.</TD
 ></TR
 ><TR
 ><TD
@@ -6583,7 +7013,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-net-80203"
-><TT
+>6.3.7. <TT
 CLASS="literal"
 >net.80203</TT
 > namespace</A
@@ -6612,15 +7042,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2108"
+NAME="AEN2283"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6656,8 +7083,8 @@ CLASS="literal"
 >.
 	      </TD
 ><TD
->True iff the ethernet adaptor is connected to a
-              another transceiver</TD
+>True if the ethernet adaptor is connected to a
+              another transceiver. NOTE: property not implemented yet.</TD
 ></TR
 ><TR
 ><TD
@@ -6682,7 +7109,8 @@ CLASS="literal"
 >.
 	      </TD
 ><TD
->Bandwidth of connection, in bits/s</TD
+>Bandwidth of connection, in bits/s. NOTE: property not 
+		implemented yet.</TD
 ></TR
 ><TR
 ><TD
@@ -6714,7 +7142,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-net-80211"
-><TT
+>6.3.8. <TT
 CLASS="literal"
 >net.80211</TT
 > namespace</A
@@ -6743,15 +7171,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2150"
+NAME="AEN2325"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6795,7 +7220,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-input"
-><TT
+>6.3.9. <TT
 CLASS="literal"
 >input</TT
 > namespace</A
@@ -6816,15 +7241,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2172"
+NAME="AEN2347"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6862,7 +7284,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-pcmcia_socket"
-><TT
+>6.3.10. <TT
 CLASS="literal"
 >pcmcia_socket namespace</TT
 ></A
@@ -6883,15 +7305,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2192"
+NAME="AEN2367"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -6929,7 +7348,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-printer"
-><TT
+>6.3.11. <TT
 CLASS="literal"
 >printer</TT
 > namespace</A
@@ -6948,15 +7367,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2212"
+NAME="AEN2387"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7046,7 +7462,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-portable_audio_player"
-><TT
+>6.3.12. <TT
 CLASS="literal"
 >portable_audio_player</TT
 > namespace</A
@@ -7075,15 +7491,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2256"
+NAME="AEN2431"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7157,7 +7570,7 @@ CLASS="literal"
 >portable_audio_player.output_formats</TT
 > (string)</TD
 ><TD
->example: 'audio/mpeg audio/x-ms-wma</TD
+>example: audio/mpeg audio/x-ms-wma</TD
 ><TD
 >Yes</TD
 ><TD
@@ -7172,7 +7585,7 @@ CLASS="literal"
 >portable_audio_player.input_formats</TT
 > (string)</TD
 ><TD
->example: 'audio/x-wav</TD
+>example: audio/x-wav</TD
 ><TD
 >Yes</TD
 ><TD
@@ -7193,7 +7606,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-alsa"
-><TT
+>6.3.13. <TT
 CLASS="literal"
 >alsa</TT
 > namespace</A
@@ -7212,15 +7625,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2304"
+NAME="AEN2479"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7440,66 +7850,36 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-oss"
-><TT
+>6.3.14. <TT
 CLASS="literal"
 >oss</TT
 > namespace</A
 ></H3
 ><P
->&#13;
-       Device objects with the capability <TT
+>&#13;       Device objects with the capability <TT
 CLASS="literal"
 >oss</TT
 >
        represent all the streams available through OSS on a soundcard.
-       OSS devices could be emulated by ALSA.  
-       
-       <DIV
-CLASS="note"
-><P
-></P
-><TABLE
-CLASS="note"
-WIDTH="100%"
-BORDER="0"
-><TR
-><TD
-WIDTH="25"
-ALIGN="CENTER"
-VALIGN="TOP"
-><IMG
-SRC="./stylesheet-images/note.gif"
-HSPACE="5"
-ALT="Note"></TD
-><TD
-ALIGN="LEFT"
-VALIGN="TOP"
+       OSS devices could be emulated by ALSA. 
+      </P
 ><P
 > 
-         All OSS devices, except the global devices, are only added if the 
-         kernel supports links from oss device to physical device in sysfs. For a patch 
-         see:  http://thread.gmane.org/gmane.comp.freedesktop.hal/2862.
-        </P
-></TD
-></TR
-></TABLE
-></DIV
->
+       Note: All OSS devices, except the global devices, are only added if the 
+       kernel supports links from oss device to physical device in sysfs. For a patch 
+       see:  http://thread.gmane.org/gmane.comp.freedesktop.hal/2862.
       </P
 ><DIV
 CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2401"
+NAME="AEN2575"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7704,7 +8084,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-camera"
-><TT
+>6.3.15. <TT
 CLASS="literal"
 >camera</TT
 > namespace</A
@@ -7733,15 +8113,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2490"
+NAME="AEN2664"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7835,7 +8212,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-laptop-panel"
-><TT
+>6.3.16. <TT
 CLASS="literal"
 >laptop_panel</TT
 > namespace</A
@@ -7854,15 +8231,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2532"
+NAME="AEN2706"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7915,7 +8289,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-ac_adaptor"
-><TT
+>6.3.17. <TT
 CLASS="literal"
 >ac_adaptor</TT
 > namespace</A
@@ -7934,15 +8308,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2558"
+NAME="AEN2732"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -7982,7 +8353,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-battery"
-><TT
+>6.3.18. <TT
 CLASS="literal"
 >battery</TT
 > namespace</A
@@ -8002,15 +8373,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2578"
+NAME="AEN2752"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -8682,6 +9050,31 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
+>battery.remaining_time.calculate_per_time</TT
+> (bool)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		If this property is <TT
+CLASS="literal"
+>true</TT
+> the 
+		<TT
+CLASS="literal"
+>battery.remaining_time</TT
+> becomes guessed from
+		<TT
+CLASS="literal"
+>battery.charge_level.current</TT
+> and time.
+	      </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
 >battery.charge_level.percentage</TT
 > (int)</TD
 ><TD
@@ -8829,7 +9222,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-button"
-><TT
+>6.3.19. <TT
 CLASS="literal"
 >button</TT
 > namespace</A
@@ -8848,15 +9241,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2887"
+NAME="AEN3070"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -8962,15 +9352,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2931"
+NAME="AEN3114"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Condition Name</TH
@@ -9011,7 +9398,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-processor"
-><TT
+>6.3.20. <TT
 CLASS="literal"
 >processor</TT
 > namespace</A
@@ -9030,15 +9417,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2952"
+NAME="AEN3135"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9105,7 +9489,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-display_device"
-><TT
+>6.3.21. <TT
 CLASS="literal"
 >display_device</TT
 > namespace</A
@@ -9124,15 +9508,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2984"
+NAME="AEN3167"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9216,7 +9597,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-sensor"
-><TT
+>6.3.22. <TT
 CLASS="literal"
 >sensor</TT
 > namespace</A
@@ -9235,15 +9616,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3026"
+NAME="AEN3209"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9354,7 +9732,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-tape"
-><TT
+>6.3.23. <TT
 CLASS="literal"
 >tape</TT
 > namespace</A
@@ -9373,15 +9751,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3082"
+NAME="AEN3265"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9433,7 +9808,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="properties-policy"
->Policy Properties</A
+>6.4. Policy Properties</A
 ></H2
 ><P
 >&#13;
@@ -9450,7 +9825,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-storage-policy-default"
-><TT
+>6.4.1. <TT
 CLASS="literal"
 >storage.policy.default</TT
 > namespace</A
@@ -9465,15 +9840,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3110"
+NAME="AEN3293"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9497,10 +9869,13 @@ CLASS="literal"
 ><TD
 >No</TD
 ><TD
->&#13;		Whether to use a <I
+>&#13;		Whether to use a <SPAN
+CLASS="emphasis"
+><I
 CLASS="emphasis"
 >managed no
 	        operation</I
+></SPAN
 > keyword when adding entries to
 	        the File Systems file (<TT
 CLASS="literal"
@@ -9609,7 +9984,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-storage-policy"
-><TT
+>6.4.2. <TT
 CLASS="literal"
 >storage.policy</TT
 > namespace</A
@@ -9624,15 +9999,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3162"
+NAME="AEN3345"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9738,7 +10110,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="device-properties-volume-policy"
-><TT
+>6.4.3. <TT
 CLASS="literal"
 >volume.policy</TT
 > namespace</A
@@ -9753,15 +10125,12 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3203"
+NAME="AEN3386"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
 >Key (type)</TH
@@ -9822,7 +10191,7 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->volume.policy.mount_options.*</TT
+>volume.policy.mount_option.*</TT
 > (string)</TD
 ><TD
 >&nbsp;</TD
@@ -9850,7 +10219,7 @@ CLASS="chapter"
 ><A
 NAME="spec-device-info"
 ></A
->Device Information Files</H1
+>Chapter 7. Device Information Files</H1
 ><P
 >&#13;
       Device information files (<TT
@@ -9877,7 +10246,7 @@ CLASS="literal"
       all the match directives passes then the device information can
       include <TT
 CLASS="literal"
->&#60;[merge|append] key="some_property"
+>&#60;[merge|append|prepend] key="some_property"
       type="[string|int|bool|..]"&#62;</TT
 > directives to
       respectively merge new properties or append to existing
@@ -9895,10 +10264,13 @@ CLASS="literal"
       <TT
 CLASS="literal"
 >&#60;merge&#62;</TT
-> and
-      <TT
+>, <TT
 CLASS="literal"
 >&#60;append&#62;</TT
+> 
+      and <TT
+CLASS="literal"
+>&#60;prepend&#62;</TT
 > directives always requires
       the <TT
 CLASS="literal"
@@ -10076,16 +10448,41 @@ CLASS="literal"
 > but matches when greater than or equal.
 	 </P
 ></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>contains</TT
+> - can only be used with string and strlist (string list). For a string key this
+	     matches when the property contains the given (sub-)string. For a string list this match if the given 
+	     string match a item of the list.
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>contains_ncase</TT
+> - like <TT
+CLASS="literal"
+>contains</TT
+> but the property and the 
+	     given key are converted to lowercase before check.
+	 </P
+></LI
 ></UL
 >
 
        The <TT
 CLASS="literal"
 >&#60;merge&#62;</TT
+>, <TT
+CLASS="literal"
+>&#60;append&#62;</TT
 > 
        and <TT
 CLASS="literal"
->&#60;append&#62;</TT
+>&#60;prepend&#62;</TT
 > directives all require 
        the <TT
 CLASS="literal"
@@ -10107,6 +10504,26 @@ CLASS="literal"
 >&#60;merge key="foo.bar" type="string"&#62;baz&#60;/merge&#62;</TT
 >
 	     will merge the value 'baz' into the property 'foo.bar'.	     
+	 </P
+></LI
+><LI
+><P
+>&#13;	     <TT
+CLASS="literal"
+>strlist</TT
+> - For <TT
+CLASS="literal"
+>&#60;merge&#62;</TT
+> the value is 
+	     copied to the property and the current property will be overwritten. For 
+	     <TT
+CLASS="literal"
+>&#60;append&#62;</TT
+> and <TT
+CLASS="literal"
+>&#60;prepend&#62;</TT
+> the 
+	     value is append or prepend to the list as new item.
 	 </P
 ></LI
 ><LI
@@ -10169,8 +10586,35 @@ CLASS="literal"
 ></UL
 >
 
-       Device Information files are stored in the following standard hierachy with the following default
-       top level directories:
+       The <TT
+CLASS="literal"
+>&#60;remove&#62;</TT
+>, directive require only a key and can be used with all keys. 
+       For <TT
+CLASS="literal"
+>strlist</TT
+> there is additionally a special syntax to remove a item from the 
+       string list. For example to remove item 'bla' from property 'foo.bar':   
+       <TT
+CLASS="literal"
+>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/merge&#62;</TT
+>
+
+       
+       </P
+><P
+>&#13;	Device Information files are stored in the following standard hierachy with the following default
+        top level directories <TT
+CLASS="literal"
+>information</TT
+>, <TT
+CLASS="literal"
+>policy</TT
+> and 
+        <TT
+CLASS="literal"
+>preprobe</TT
+>:
 
        <P
 ></P
@@ -10179,43 +10623,112 @@ CLASS="literal"
 ><P
 >&#13;	     <TT
 CLASS="literal"
->20freedesktop</TT
-> - device information files included with the hal tarball
-	 </P
+>information</TT
+> - device information files to merge device information 
+            
+             <P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="literal"
+>10freedesktop</TT
+> - device information files included with 
+		the hal tarball</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>20thirdparty</TT
+> - device information files from the device 
+	       manufacturer and installed from media accompanying the hardware</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>30user</TT
+> - device information for specific devices</P
+></LI
+></UL
+>
+           </P
 ></LI
 ><LI
 ><P
 >&#13;	     <TT
 CLASS="literal"
->30osvendor</TT
-> - device information files supplied by the operating system vendor
-	 </P
+>policy</TT
+> - device information files to merge policy propertys 
+            
+             <P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="literal"
+>10osvendor</TT
+> - device information files included with the 
+		hal tarball and supplied by the operating system vendor for policy rules</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>20thirdparty</TT
+> -  Policy rules from the device 
+	       manufacturer and installed from media accompanying the hardware</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>30user</TT
+> - Policy rules for specific devices</P
+></LI
+></UL
+>
+           </P
 ></LI
 ><LI
 ><P
 >&#13;	     <TT
 CLASS="literal"
->40oem</TT
-> - device information files from the device manufacturer and 
-	     installed from media accompanying the hardware
-	 </P
+>preprobe</TT
+> - device information files to information before probe devices 
+            
+             <P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="literal"
+>10osvendor</TT
+> - device information files included with the
+                hal tarball and supplied by the operating system vendor</P
 ></LI
 ><LI
 ><P
->&#13;	     <TT
+><TT
 CLASS="literal"
->90defaultpolicy</TT
-> - Default policy determined by the operating system vendor and
-	     possibly edited by the system administrator
-	 </P
+>20thirdparty</TT
+> - device information files from the device 
+	       manufacturer and installed from media accompanying the hardware</P
 ></LI
 ><LI
 ><P
->&#13;	     <TT
+><TT
 CLASS="literal"
->95userpolicy</TT
-> - Policy rules for specific devices.
-	 </P
+>30user</TT
+> -  device information for specific devices</P
+></LI
+></UL
+>
+           </P
 ></LI
 ></UL
 >
@@ -10229,7 +10742,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="fdi-facts"
->Facts about devices</A
+>7.1. Facts about devices</A
 ></H2
 ><DIV
 CLASS="sect2"
@@ -10237,24 +10750,14 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="fdi-example-mp3player"
->Example: MP3 player</A
+>7.1.1. Example: MP3 player</A
 ></H3
-><P
->&#13;	
-	This device information file matches an USB Mass Storage
-	based MP3 player by the matching on the USB vendor and
-	product identifiers.
-	
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;!-- Example: This device information file matches an USB Mass Storage based MP3 player 
+              by the matching on the USB vendor and product identifiers. --&#62;
 
 &#60;deviceinfo version="0.2"&#62;
   &#60;device&#62;
@@ -10272,9 +10775,6 @@ CLASS="programlisting"
   &#60;/device&#62;
 &#60;/deviceinfo&#62;
       </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;	
 	The final set of properties look like this:
@@ -10291,23 +10791,14 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="fdi-example-camera"
->Example: Digital Still Camera</A
+>7.1.2. Example: Digital Still Camera</A
 ></H3
-><P
->&#13;	
-	This device information file matches a Sony digital still camera
-	by matching on the USB vendor and product identifers.
-	
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;!-- Example: This device information file matches a Sony digital still 
+              camera by matching on the USB vendor and product identifers.  --&#62;
 
 &#60;deviceinfo version="0.2"&#62;
   &#60;device&#62;
@@ -10323,9 +10814,6 @@ CLASS="programlisting"
   &#60;/device&#62;
 &#60;/deviceinfo&#62;
       </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;	
 	The final set of properties look like this:
@@ -10342,23 +10830,14 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="fdi-example-6in1"
->Example: Card Reader</A
+>7.1.3. Example: Card Reader</A
 ></H3
-><P
->&#13;	
-	This device information file matches a memory card reader with
-	multiple storage ports that can be active at the same time.
-	
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+
+&#60;!-- Example: This device information file matches a memory card reader with 
+              multiple storage ports that can be active at the same time. --&#62;
 
 &#60;deviceinfo version="0.2"&#62;
   &#60;device&#62;
@@ -10383,9 +10862,6 @@ CLASS="programlisting"
   &#60;/device&#62;
 &#60;/deviceinfo&#62;
       </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;	
 	As described in the documentation for the
@@ -10394,14 +10870,7 @@ CLASS="literal"
 >storage.physical_device</TT
 > property in <A
 HREF="#device-properties-storage"
->the Section called <I
-><TT
-CLASS="literal"
->storage</TT
-> namespace</I
-> in the Chapter called <I
->Device Properties</I
-></A
+>Section 6.3.4</A
 > this device information
 	file export information about each storage port through the
 	property <TT
@@ -10428,7 +10897,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="fdi-policy"
->Policy settings for devices</A
+>7.2. Policy settings for devices</A
 ></H2
 ><P
 >&#13;	Policy settings specifies system specific settings that a
@@ -10443,7 +10912,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="fdi-example-mountsetting"
->Storage Devices</A
+>7.2.1. Storage Devices</A
 ></H3
 ><P
 >&#13;
@@ -10462,26 +10931,16 @@ CLASS="literal"
 > namespaces, see
 	<A
 HREF="#properties-policy"
->the Section called <I
->Policy Properties</I
-> in the Chapter called <I
->Device Properties</I
-></A
+>Section 6.4</A
 > for details.
 
       </P
 ><P
 >&#13;	The default policy for storage devices shipped with hal looks like this
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
->&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+>&#13;	&#60;?xml version="1.0" encoding="UTF-8"?&#62; &#60;!-- -*- SGML -*- --&#62; 
 
 &#60;deviceinfo version="0.2"&#62;
 
@@ -10501,6 +10960,9 @@ CLASS="programlisting"
   &#60;device&#62;
     &#60;!-- Whitelist bus types of storage devices we care about  --&#62;
     &#60;match key="info.category" string="storage"&#62;
+      &#60;match key="storage.bus" string="mmc"&#62;
+	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;      
+      &#60;/match&#62;
       &#60;match key="storage.bus" string="usb"&#62;
 	&#60;merge key="storage.policy.should_mount" type="bool"&#62;true&#60;/merge&#62;      
       &#60;/match&#62;
@@ -10551,36 +11013,24 @@ CLASS="programlisting"
 	&#60;match key="storage.cdrom.dvdrw" bool="true"&#62;
 	  &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;cdrecorder&#60;/merge&#62;
 	&#60;/match&#62;
-	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
-	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
-	&#60;/match&#62;
       &#60;/match&#62;
 
       &#60;!-- floppy drives --&#62;
       &#60;match key="storage.drive_type" string="floppy"&#62;
 	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
 	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;floppy&#60;/merge&#62;
-	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
-	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
-	&#60;/match&#62;
       &#60;/match&#62;
 
       &#60;!-- zip drives --&#62;
       &#60;match key="storage.drive_type" string="zip"&#62;
 	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
 	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
-	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
-	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
-	&#60;/match&#62;
       &#60;/match&#62;
 
       &#60;!-- jaz drives --&#62;
       &#60;match key="storage.drive_type" string="jaz"&#62;
 	&#60;merge key="storage.policy.mount_filesystem" type="string"&#62;auto&#60;/merge&#62;
 	&#60;merge key="storage.policy.desired_mount_point" type="string"&#62;jaz&#60;/merge&#62;
-	&#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
-	  &#60;merge key="storage.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
-	&#60;/match&#62;
       &#60;/match&#62;
     &#60;/match&#62;
 
@@ -10597,11 +11047,11 @@ CLASS="programlisting"
 	       idedisk, scsidisk etc. --&#62;
 	  &#60;merge key="volume.policy.desired_mount_point" type="copy_property"&#62;@block.storage_device:storage.bus&#60;/merge&#62;
 	  &#60;append key="volume.policy.desired_mount_point" type="string"&#62;disk&#60;/append&#62;
-
-         &#60;!-- zip drives --&#62;
-         &#60;match key="storage.drive_type" string="zip"&#62;
- 	   &#60;merge key="storage.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
-         &#60;/match&#62;
+	  
+          &#60;!-- zip drives --&#62;
+          &#60;match key="@block.storage_device:storage.drive_type" string="zip"&#62;
+ 	    &#60;merge key="volume.policy.desired_mount_point" type="string"&#62;zip&#60;/merge&#62;
+          &#60;/match&#62;
 	  
           &#60;!-- Best: If available use filesystem label --&#62;
           &#60;match key="volume.label" empty="false"&#62;
@@ -10623,28 +11073,9 @@ CLASS="programlisting"
 	    &#60;/match&#62;
 	  &#60;/match&#62;
 	  
-	  &#60;!-- Use selinux mount options for hotpluggable and removable
-	       volumes --&#62;
-	  &#60;match key="/org/freedesktop/Hal/devices/computer:linux.is_selinux_enabled" bool="true"&#62;
-	    &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
-	      &#60;merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
-	    &#60;/match&#62;
-	    &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
-	      &#60;merge key="volume.policy.mount_option.fscontext=system_u:object_r:removable_t" type="bool"&#62;true&#60;/merge&#62;
-	    &#60;/match&#62;
-	  &#60;/match&#62;
-
-	  &#60;!-- Use noatime and sync options for all hotpluggable or removable
-	       volumes smaller than 2GB --&#62;
-	  &#60;match key="volume.size" compare_lt="2147483648"&#62;
-	    &#60;match key="@block.storage_device:storage.hotpluggable" bool="true"&#62;
-	      &#60;merge key="volume.policy.mount_option.sync" type="bool"&#62;true&#60;/merge&#62;
-	      &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
-	    &#60;/match&#62;
-	    &#60;match key="@block.storage_device:storage.removable" bool="true"&#62;
-	      &#60;merge key="volume.policy.mount_option.sync" type="bool"&#62;true&#60;/merge&#62;
-	      &#60;merge key="volume.policy.mount_option.noatime" type="bool"&#62;true&#60;/merge&#62;
-	    &#60;/match&#62;
+	  &#60;!-- Attempt mount point 'ipod' for iPod's --&#62;
+	  &#60;match key="@block.storage_device:portable_audio_player.type" string="ipod"&#62;
+	    &#60;merge key="volume.policy.desired_mount_point" type="string"&#62;ipod&#60;/merge&#62;
 	  &#60;/match&#62;
 	  
 	  &#60;!-- whitelist of partition table id's, if from a msdos partition table --&#62;
@@ -10689,7 +11120,7 @@ CLASS="programlisting"
     &#60;/match&#62;
     
   &#60;/device&#62;
-
+  
   &#60;!-- Dont want to mount non-hotpluggable fixed disks since ideraid
        detection isnt complete as hald wrongly detects e.g. partitions
        from some IDE RAID controllers --&#62;
@@ -10700,45 +11131,21 @@ CLASS="programlisting"
       &#60;/match&#62;
     &#60;/match&#62;
   &#60;/device&#62;
-
+  
   &#60;device&#62;
-    &#60;match key="info.udi" string="/org/freedesktop/Hal/devices/computer"&#62;
-      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync --clean&#60;/append&#62;
-    &#60;/match&#62;
-
-    &#60;match key="volume.policy.should_mount" bool="true"&#62;
-      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync&#60;/append&#62;
-      &#60;append key="info.callouts.remove" type="strlist"&#62;fstab-sync&#60;/append&#62;
-    &#60;/match&#62;
-
-    &#60;match key="storage.policy.should_mount" bool="true"&#62;
-      &#60;append key="info.callouts.add" type="strlist"&#62;fstab-sync&#60;/append&#62;
-      &#60;append key="info.callouts.remove" type="strlist"&#62;fstab-sync&#60;/append&#62;
-    &#60;/match&#62;
-
     &#60;match key="storage.media_check_enabled" bool="true"&#62;
       &#60;append key="info.addons" type="strlist"&#62;hald-addon-storage&#60;/append&#62;
     &#60;/match&#62;
-
   &#60;/device&#62;
-
+  
 &#60;/deviceinfo&#62;
       </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;	and can be overridden by OS vendors to suit their purposes.
       </P
 ><P
 >&#13;	Users can also customize their own rules; some examples follow	
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;	&#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
@@ -10783,9 +11190,6 @@ CLASS="programlisting"
 
 &#60;/deviceinfo&#62;
       </PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ></DIV
 ></DIV
@@ -10795,25 +11199,25 @@ CLASS="chapter"
 ><A
 NAME="callouts"
 ></A
->Callouts</H1
+>Chapter 8. Callouts</H1
 ><P
 >&#13;
       Callouts are programs invoked when the device object list is
-      modified or when a device changes. As such, callouts can be used
-      to maintain system-wide policy (that may be specific to the
-      particular OS) such as changing permissions on device nodes,
-      updating the systemwide <TT
+      modified. As such, callouts can be used to maintain system-wide 
+      policy (that may be specific to the particular OS) such as 
+      changing permissions on device nodes, updating the systemwide 
+      <TT
 CLASS="literal"
 >/etc/fstab</TT
-> file or
-      configuring the networking subsystem.
+> file or configuring the networking 
+      subsystem.
       
     </P
 ><P
 >&#13;      
       There are three different classes of callouts. A callout
-      involves sequentially invoking all executable programs in a
-      given directory in alphabetic order.
+      involves sequentially invoking all executable programs in the
+      string list in listed order.
 
     </P
 ><DIV
@@ -10821,99 +11225,86 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3397"
+NAME="AEN3623"
 ></A
 ><TABLE
 BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
 CLASS="CALSTABLE"
-><THEAD
+><COL><COL><THEAD
 ><TR
 ><TH
->Type</TH
+>Key (type)</TH
+><TH
+>Values</TH
+><TH
+>Mandatory</TH
 ><TH
 >Description</TH
-><TH
->Callout Directory</TH
-><TH
->Positional Parameters</TH
 ></TR
 ></THEAD
 ><TBODY
 ><TR
 ><TD
->Device Add/Remove</TD
-><TD
->&#13;	      When a new device object have been added, this callout
-	      is invoked just after a device have entered the GDL
-	      (global device list) but just before it is announced
-	      through the D-BUS network API (the device isn't
-	      announced until the last callout has finished).
-	      When a device object is to be removed this callout is
-	      invoked and the device isn't removed before the last
-	      callout has finished.
-	    </TD
-><TD
 ><TT
 CLASS="literal"
->/etc/hal/device.d</TT
-></TD
+>info.callouts.add</TT
+> (string list)</TD
 ><TD
-><TT
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		A string list with all programmes/callouts which should be 
+		executed (with <TT
 CLASS="literal"
->add</TT
-> or <TT
-CLASS="literal"
->remove</TT
-></TD
+>HALD_ACTION=add</TT
+>) when the device 
+		is added to the GDL (global device list) but just before it is 
+		announced through the D-BUS network API.
+	      </TD
 ></TR
 ><TR
 ><TD
->Capability Add/Remove</TD
-><TD
->&#13;	      Invoked when a capability have been added or removed.
-	    </TD
-><TD
 ><TT
 CLASS="literal"
->/etc/hal/capability.d</TT
-></TD
+>info.callouts.remove</TT
+> (string list)</TD
 ><TD
-><TT
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		A string list with all programmes/callouts which should be 
+		executed (with <TT
 CLASS="literal"
->add</TT
-> or <TT
-CLASS="literal"
->remove</TT
-></TD
+>HALD_ACTION=remove</TT
+>) when the 
+		device is removed from the GDL (global device list). The device 
+		isn't removed before the last callout has finished. 
+	      </TD
 ></TR
 ><TR
 ><TD
->Property Change</TD
-><TD
->&#13;	      Invoked when a device property have been added, removed
-	      or is modified.
-	    </TD
-><TD
 ><TT
 CLASS="literal"
->/etc/hal/property.d</TT
-></TD
+>info.callouts.preprobe</TT
+> (string list)</TD
 ><TD
->&#13;	      <TT
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;		A string list with all programmes/callouts which should be 
+		executed (with <TT
 CLASS="literal"
->add</TT
->, <TT
+>HALD_ACTION=preprobe</TT
+>) before 
+		the device is added to the GDL (global device list) and before 
+		the callouts from <TT
 CLASS="literal"
->remove</TT
-> or 
-	      <TT
-CLASS="literal"
->modify</TT
->
-	    </TD
+>info.callouts.add</TT
+> are executed.
+	      </TD
 ></TR
 ></TBODY
 ></TABLE
@@ -10932,9 +11323,22 @@ CLASS="literal"
       prefixed with <TT
 CLASS="literal"
 >HAL_</TT
->. The HAL daemon isn't
-      suspended while callouts are executing. Thus, callouts can
-      communicate with the HAL daemon using the D-BUS network
+>. If a device is added or
+      removed is exported in the environment variable <TT
+CLASS="literal"
+>HALD_ACTION
+      </TT
+>, if HAL is in shutdown mode the variable <TT
+CLASS="literal"
+>&#13;      HALD_SHUTDOWN</TT
+> is set to environment.
+    
+    </P
+><P
+>  
+    
+      The HAL daemon isn't suspended while callouts are executing. Thus, 
+      callouts can communicate with the HAL daemon using the D-BUS network
       API. Hence, one application of callouts is to merge or modify
       properties on a device object.
 
@@ -10946,7 +11350,7 @@ CLASS="chapter"
 ><A
 NAME="dbus-api"
 ></A
->D-BUS Network API</H1
+>Chapter 9. D-BUS Network API</H1
 ><P
 > 
 
@@ -10960,9 +11364,7 @@ NAME="dbus-api"
       a camera device, is outside the scope of the HAL daemon; see
       <A
 HREF="#using-devices"
->the Chapter called <I
->Using devices</I
-></A
+>Chapter 5</A
 > for more information.
 
       </P
@@ -10981,8 +11383,8 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3439"
->Interface org.freedesktop.Hal.Manager</A
+NAME="AEN3665"
+>9.1. Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
 > 
@@ -11004,12 +11406,6 @@ CLASS="literal"
 >, for
       querying device objects with the following methods:
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;# Return a list of all devices in the GDL
@@ -11042,9 +11438,6 @@ array{string} FindDeviceStringMatch(string key, string value)
 array{string} FindDeviceByCapability(string capability)
   
 </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;
       This object also emits the following signals on the
@@ -11059,12 +11452,6 @@ CLASS="literal"
       applications can subscribe to using D-BUS:
 
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;
@@ -11089,28 +11476,19 @@ void DeviceRemoved(string udi)
 void NewCapability(string udi, string capability)
 
 </PRE
-></TD
-></TR
-></TABLE
 ><DIV
 CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN3450"
->Example</A
+NAME="AEN3676"
+>9.1.1. Example</A
 ></H3
 ><P
 >&#13;
       The following brief Python program demonstrates some of the API
 
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;  #!/usr/bin/python
@@ -11148,20 +11526,11 @@ bus.add_signal_receiver (device_removed,
 			 '/org/freedesktop/Hal/Manager')
 gtk.main()
 </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;
       which gives the following output
 
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001-disc
@@ -11202,9 +11571,6 @@ Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was add
 Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was removed
 Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was removed
 </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;
       </P
@@ -11215,8 +11581,8 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3458"
->Interface org.freedesktop.Hal.Device</A
+NAME="AEN3684"
+>9.2. Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
 >&#13;
@@ -11236,12 +11602,6 @@ CLASS="literal"
       methods
 
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;
@@ -11334,9 +11694,6 @@ void Lock(string reason)
 #
 void Unlock()
 </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;
       The device objects also emits the following signals on the
@@ -11344,12 +11701,6 @@ void Unlock()
       using D-BUS
 
       </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
 ><PRE
 CLASS="programlisting"
 >&#13;# Notification that property have been modified
@@ -11370,9 +11721,6 @@ void PropertyModified(string key, bool added, bool removed)
 void Condition(string condition, ...)
 
 </PRE
-></TD
-></TR
-></TABLE
 ><P
 >&#13;
       Note that D-BUS supports that applications can opt to receive
@@ -11387,7 +11735,7 @@ CLASS="chapter"
 ><A
 NAME="enforcing-policy"
 ></A
->Enforcing Policy</H1
+>Chapter 10. Enforcing Policy</H1
 ><P
 > 
 
@@ -11404,7 +11752,7 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="enforcing-stor-vol"
->Storage Devices</A
+>10.1. Storage Devices</A
 ></H2
 ><DIV
 CLASS="sect2"
@@ -11412,7 +11760,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="stor-vol-policy"
->Policy for Volumes and Storage devices</A
+>10.1.1. Policy for Volumes and Storage devices</A
 ></H3
 ><P
 >&#13;	  The properties in the <TT
@@ -11430,11 +11778,7 @@ CLASS="literal"
 	  be the preferred way to determine how and if a filesystem
 	  can be mounted. See <A
 HREF="#properties-policy"
->the Section called <I
->Policy Properties</I
-> in the Chapter called <I
->Device Properties</I
-></A
+>Section 6.4</A
 >
 	  for details.
 	</P
@@ -11445,7 +11789,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="enforcing-storage-fstab"
->File systems file</A
+>10.1.2. File systems file</A
 ></H3
 ><P
 >&#13;	  An operating system vendor should maintain the 
@@ -11464,9 +11808,7 @@ CLASS="literal"
 	  a corresponding entry if applicable cf. 
 	  <A
 HREF="#stor-vol-policy"
->the Section called <I
->Policy for Volumes and Storage devices</I
-></A
+>Section 10.1.1</A
 >.
 	</P
 ><P
@@ -11497,7 +11839,7 @@ CLASS="sect2"
 CLASS="sect2"
 ><A
 NAME="enforcing-storage-locking"
->Disabling policy agents</A
+>10.1.3. Disabling policy agents</A
 ></H3
 ><P
 >&#13;	  Policy agents like volume mounters should ignore when media

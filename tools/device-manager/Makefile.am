@@ -36,3 +36,7 @@ dist_devicemanager_DATA =                                          \
 #
 #uninstall-local :
 #	- rm -f $(DESTDIR)$(bindir)/hal-device-manager
+
+clean-local :
+	rm -f *~
+	rm -f hal-device-manager.glade.h
