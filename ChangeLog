@@ -1,5 +1,11 @@
 2005-11-21  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/information/10freedesktop/10-usb-card-readers.fdi: Added 
+	Sony Ericsson mobile phones with Memory Stick (Pro Duo). 
+	Remove unneeded multiple checks for storage.bus == usb.
+
+2005-11-21  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/spec/hal-spec.html: generated for 0.5.5.1 spec
 
 	* tools/device-manager/Makefile.am: fix for make distcheck

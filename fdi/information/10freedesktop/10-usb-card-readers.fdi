@@ -17,10 +17,8 @@
       <match key="storage.model" contains="HS-SD/MMC">
         <merge key="storage.drive_type" type="string">sd_mmc</merge>
       </match>      
-    </match>
 
-    <!-- Another common theme -->
-    <match key="storage.bus" string="usb">
+      <!-- Another common theme -->
       <match key="storage.model" contains="USB CF Reader">
         <merge key="storage.drive_type" type="string">compact_flash</merge>
       </match>      
@@ -33,10 +31,8 @@
       <match key="storage.model" contains="USB SD Reader">
         <merge key="storage.drive_type" type="string">sd_mmc</merge>
       </match>      
-    </match>
 
-    <!-- Yet another common theme -->
-    <match key="storage.bus" string="usb">
+      <!-- Yet another common theme -->
       <match key="storage.model" contains="Reader-CF">
         <merge key="storage.drive_type" type="string">compact_flash</merge>
       </match>
@@ -49,10 +45,8 @@
       <match key="storage.model" contains="Reader-SD">
         <merge key="storage.drive_type" type="string">sd_mmc</merge>
       </match>
-    </match>
 
-    <!-- Yet another common theme -->
-    <match key="storage.bus" string="usb">
+      <!-- Yet another common theme -->
       <match key="storage.model" contains="Storage-CFC">
         <merge key="storage.drive_type" type="string">compact_flash</merge>
       </match>
@@ -65,16 +59,31 @@
       <match key="storage.model" contains="Storage-MMC">
         <merge key="storage.drive_type" type="string">sd_mmc</merge>
       </match>
-    </match>
 
-    <!-- Lexar CF Reader -->
-    <match key="storage.bus" string="usb">
+      <!-- Lexar CF Reader -->
       <match key="@storage.physical_device:usb.vendor_id" int="0x05dc">
         <match key="@storage.physical_device:usb.product_id" int="0x0002">
           <merge key="storage.drive_type" type="string">compact_flash</merge>
         </match>
       </match>
-    </match>    
+
+      <!-- Sony Ericsson Handys with Memory Stick (Duo) -->
+      <match key="@storage.physical_device:usb.vendor_id" int="0xfce">
+        <!-- K750i -->
+	<match key="@storage.physical_device:usb.product_id" int="0xd016">
+          <merge key="storage.drive_type" type="string">memory_stick</merge>
+          <merge key="info.vendor" type="copy_property">@storage.physical_device:usb.vendor</merge>
+          <merge key="storage.vendor" type="copy_property">@storage.physical_device:usb.vendor</merge>
+	</match>
+	<!-- General match-->
+	<match key="storage.model" contains="Memory Stick">
+          <merge key="storage.drive_type" type="string">memory_stick</merge>
+          <merge key="info.vendor" type="copy_property">@storage.physical_device:usb.vendor</merge>
+          <merge key="storage.vendor" type="copy_property">@storage.physical_device:usb.vendor</merge>
+	</match>
+      </match>
+
+    </match>
 
   </device>
 </deviceinfo>
