@@ -51,6 +51,22 @@
       </match>
     </match>
 
+    <!-- Yet another common theme -->
+    <match key="storage.bus" string="usb">
+      <match key="storage.model" contains="Storage-CFC">
+        <merge key="storage.drive_type" type="string">compact_flash</merge>
+      </match>
+      <match key="storage.model" contains="Storage-MSC">
+        <merge key="storage.drive_type" type="string">memory_stick</merge>
+      </match>
+      <match key="storage.model" contains="Storage-SMC">
+        <merge key="storage.drive_type" type="string">smart_media</merge>
+      </match>
+      <match key="storage.model" contains="Storage-MMC">
+        <merge key="storage.drive_type" type="string">sd_mmc</merge>
+      </match>
+    </match>
+
     <!-- Lexar CF Reader -->
     <match key="storage.bus" string="usb">
       <match key="@storage.physical_device:usb.vendor_id" int="0x05dc">
