@@ -1,3 +1,10 @@
+2005-11-28  Richard Hughes <richard@hughsie.com>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi:
+	Add a patch from Davide Ferrari <vide80@gmail.com> which adds the
+	Samsung Yepp YP-ST5. It is a portable device capable of playing
+	MPEG1/2/2.5 Layer3, WMA, ASF and Ogg/Vorbis.
+
 2005-11-21  Danny Kukawka  <danny.kukawka@web.de>
 
 	* fdi/information/10freedesktop/10-usb-card-readers.fdi: Added 
