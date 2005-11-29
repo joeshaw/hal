@@ -1,5 +1,10 @@
 2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/policy/10osvendor/10-storage-policy.fdi: changed
+	mount point for dvd recorder.
+
+2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/Makefile.am, hald/hald.c: (main): Added PATH to the with
 	hal distributed scripts to the hald environment PATH.
 

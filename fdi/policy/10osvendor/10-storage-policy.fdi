@@ -57,19 +57,19 @@
 	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
 	</match>
 	<match key="storage.cdrom.dvdplusr" bool="true">
-	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
+	  <merge key="storage.policy.desired_mount_point" type="string">dvdrecorder</merge>
 	</match>
 	<match key="storage.cdrom.dvdplusrw" bool="true">
-	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
+	  <merge key="storage.policy.desired_mount_point" type="string">dvdrecorder</merge>
 	</match>
 	<match key="storage.cdrom.dvdram" bool="true">
-	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
+	  <merge key="storage.policy.desired_mount_point" type="string">dvdrecorder</merge>
 	</match>
 	<match key="storage.cdrom.dvdr" bool="true">
-	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
+	  <merge key="storage.policy.desired_mount_point" type="string">dvdrecorder</merge>
 	</match>
 	<match key="storage.cdrom.dvdrw" bool="true">
-	  <merge key="storage.policy.desired_mount_point" type="string">cdrecorder</merge>
+	  <merge key="storage.policy.desired_mount_point" type="string">dvdrecorder</merge>
 	</match>
       </match>
 
