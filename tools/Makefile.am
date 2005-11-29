@@ -43,7 +43,9 @@ man_MANS = fstab-sync.8
 endif
 ## FSTAB_SYNC_ENABLED end
 
-sbin_SCRIPTS =                            \
+scriptdir = $(datadir)/hal/scripts
+
+script_SCRIPTS =                         \
 	hal-luks-setup hal-luks-remove    \
 	hal-system-power-suspend          \
 	hal-system-power-hibernate        \

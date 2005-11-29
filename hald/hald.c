@@ -427,6 +427,8 @@ main (int argc, char *argv[])
 	if (path != NULL) {
 		g_strlcat (newpath, ":", sizeof (newpath));
 		g_strlcat (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
+		g_strlcat (newpath, ":", sizeof (newpath));
+		g_strlcat (newpath, PACKAGE_SCRIPT_DIR, sizeof (newpath));
 	}
 	setenv ("PATH", newpath, TRUE);
 

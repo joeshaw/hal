@@ -9,6 +9,7 @@ INCLUDES = \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
+	-DPACKAGE_SCRIPT_DIR=\""$(datadir)/hal/scripts"\" \
 	-I$(top_srcdir) \
 	@PACKAGE_CFLAGS@
 

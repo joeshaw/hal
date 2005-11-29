@@ -1,5 +1,15 @@
 2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/Makefile.am, hald/hald.c: (main): Added PATH to the with
+	hal distributed scripts to the hald environment PATH.
+
+	* tools/Makefile.am: moved scripts to $(datadir)/hal/scripts to
+	remove them from PATH of the root user, because they should only
+	be called by hald and not by a user (at least because of 
+	missing environment variable , normaly set by hald)
+
+2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
+
 	* tools/hal-luks-remove.in, tools/hal-luks-setup.in,
 	  tools/hal-system-lcd-get-brightness, 
 	  tools/hal-system-lcd-set-brightness, 
