@@ -1,5 +1,15 @@
 2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
 
+	* tools/hal-luks-remove.in, tools/hal-luks-setup.in,
+	  tools/hal-system-lcd-get-brightness, 
+	  tools/hal-system-lcd-set-brightness, 
+	  tools/hal-system-power-set-power-save, 
+	  tools/hal-system-power-suspend: Added checks for needed 
+	environment variables to prevent call them from commandline if a
+	variable is missing. Fixed error messages. 
+
+2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
+
 	* tools/device-manager/Makefile.am: removed hal-device-manager from
 	 $(datadir)/hal/device-manager to prevent unneeded double install.
 

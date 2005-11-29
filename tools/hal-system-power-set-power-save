@@ -3,7 +3,7 @@ read value
 
 unsupported() {
 	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
-	echo No powersave script found >&2
+	echo No powersave method found >&2
 	exit 1
 }
 
