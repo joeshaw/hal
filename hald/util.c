@@ -53,6 +53,7 @@
 
 typedef struct {
 	int last_level;
+	int last_chargeRate;
 	time_t last_time;
 } batteryInfo;
 
@@ -146,36 +147,41 @@ util_compute_time_remaining (const char *id,
 
 		if ((battery_info = g_hash_table_lookup(saved_battery_info, id))) {
 			/* check this to prevent division by zero */
-			if ((cur_time == battery_info->last_time) || (chargeLevel == battery_info->last_level))
-				return -1;
-
-			chargeRate = ((chargeLevel - battery_info->last_level) * 60 * 60) / (cur_time - battery_info->last_time);
-			/*
-			 * During discharging chargeRate would be negative, which would
-			 * mess up the the calculation below, so we make sure it's always
-			 * positive.
-			 */ 
-			chargeRate = (chargeRate > 0) ? chargeRate : -chargeRate;
-
-			battery_info->last_level = chargeLevel;
-			battery_info->last_time = cur_time;
+			if ((cur_time == battery_info->last_time) || (chargeLevel == battery_info->last_level)) {
+				/* if we can't calculate because nothing changed, use last 
+				 * chargeRate to prevent removing battery.remaining_time.
+				 */
+				chargeRate = battery_info->last_chargeRate;
+			} else {
+				chargeRate = ((chargeLevel - battery_info->last_level) * 60 * 60) / (cur_time - battery_info->last_time);
+				/*
+				 * During discharging chargeRate would be negative, which would
+				 * mess up the the calculation below, so we make sure it's always
+				 * positive.
+				 */ 
+				chargeRate = (chargeRate > 0) ? chargeRate : -chargeRate;
+	
+				battery_info->last_level = chargeLevel;
+				battery_info->last_time = cur_time;
+				battery_info->last_chargeRate = chargeRate;
+			}
 		} else {
 			battery_info = g_new0(batteryInfo, 1);
 			g_hash_table_insert(saved_battery_info, (char*) id, battery_info);
 
 			battery_info->last_level = chargeLevel;
 			battery_info->last_time = cur_time;
+			battery_info->last_chargeRate = 0;
  			return -1;
 		}
 	} 
 
-	/* paranoic, but better than crash: check this to prevent division by zero */
 	if (chargeRate == 0)
 		return -1;
 
-	if (isDischarging) 
+	if (isDischarging) { 
 		remaining_time = ((double) chargeLevel / (double) chargeRate) * 60 * 60;
-	else if (isCharging) {
+	} else if (isCharging) {
 		/* 
 		 * Some ACPI BIOS's don't update chargeLastFull, 
 		 * so return 0 as we don't know how much more there is left
