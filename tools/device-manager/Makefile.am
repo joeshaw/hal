@@ -5,8 +5,6 @@ dist_devicemanagerbin_SCRIPTS = hal-device-manager
 
 devicemanagerdir = $(datadir)/hal/device-manager
 
-dist_devicemanager_SCRIPTS = hal-device-manager
-
 nodist_devicemanager_PYTHON =                      \
                        Const.py
 

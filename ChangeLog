@@ -1,5 +1,10 @@
 2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
 
+	* tools/device-manager/Makefile.am: removed hal-device-manager from
+	 $(datadir)/hal/device-manager to prevent unneeded double install.
+
+2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/util.c: (util_compute_time_remaining): added calculated 
 	chargeRate to hash table and use if nothing changed between events
 	to prevent remove battery.remaining_time.
