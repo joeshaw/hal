@@ -53,7 +53,7 @@ script_SCRIPTS =                         \
 	hal-system-lcd-set-brightness     \
 	hal-system-power-set-power-save
 
-EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(sbin_SCRIPTS)
+EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 
 clean-local :
 	rm -f *~
