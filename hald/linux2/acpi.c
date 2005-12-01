@@ -363,6 +363,14 @@ ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 	/* refresh last full if ac plugged in/out */
 	battery_poll_infrequently (NULL);
+
+	/*
+	 * Refresh all the data for each battery.
+	 * This is required as the batteries may go from charging->
+	 * discharging, or charged -> discharging state, and we don't
+	 * want to wait for the next random refresh from acpi_poll.
+	 */
+	acpi_poll_battery ();
 	
 	return TRUE;
 }

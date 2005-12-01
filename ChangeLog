@@ -1,3 +1,12 @@
+2005-12-01  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/acpi.c: Small patch to fix a problem with refreshing
+	battery values. When the ac_adapter is removed, the 
+	battery_poll_infrequently() method is called which updates last_full.
+	The other states the battery may be in are also going to change at that
+	instance (for example going from charged to discharging) and so we
+	should be updating those too.
+
 2005-11-29  Danny Kukawka  <danny.kukawka@web.de>
 
 	* fdi/policy/10osvendor/10-storage-policy.fdi: changed
