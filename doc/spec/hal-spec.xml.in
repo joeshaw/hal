@@ -4904,6 +4904,63 @@
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-power-management">
+      <title><literal>power_management</literal> namespace</title>
+      <para>
+
+        Keys with the prefix <literal>power_management</literal>
+        provide information about power management supported by
+	your computer.
+
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>power_management.type</literal> (string)</entry>
+              <entry>Examples: 
+              	<literal>apm</literal>, 
+              	<literal>acpi</literal>, 
+		<literal>pmu</literal>
+	      </entry>
+              <entry>Yes</entry>
+              <entry>
+                The power management subsystem used on the computer.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>power_management.can_suspend_to_ram</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                If suspend support is compiled into the kernel. 
+		NB. This may not mean the machine is able to suspend
+		successfully.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>power_management.can_suspend_to_disk</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                If hibernation support is compiled into the kernel. 
+		NB. This may not mean the machine is able to hibernate
+		successfully.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     <sect2 id="device-properties-tape">
       <title><literal>tape</literal> namespace</title>
       <para>

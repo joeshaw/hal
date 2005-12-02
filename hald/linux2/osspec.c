@@ -661,6 +661,40 @@ computer_probing_pcbios_helper_done (HalDevice *d, gboolean timed_out, gint retu
 	computer_probing_helper_done (d);
 }
 
+static void
+set_suspend_hibernate_keys (HalDevice *d)
+{
+	int can_suspend;
+	int can_hibernate;
+	unsigned int len;
+	char *poweroptions;
+	FILE *fp;
+
+	can_suspend = FALSE;
+	can_hibernate = FALSE;
+	fp = fopen ("/sys/power/state", "r");
+	if (fp == NULL) {
+		HAL_WARNING (("Could not open /sys/power/state"));
+		goto out;
+	}
+	poweroptions = NULL;
+	len = 0;
+	getline (&poweroptions, &len, fp);
+	fclose (fp);
+	if (poweroptions == NULL) {
+		HAL_WARNING (("Contents of /sys/power/state invalid"));
+		goto out;
+	}
+	if (strstr (poweroptions, "mem"))
+		can_suspend = TRUE;
+	if (strstr (poweroptions, "disk"))
+		can_hibernate = TRUE;
+	free (poweroptions);
+out:
+	hal_device_property_set_bool (d, "power_management.can_suspend_to_ram", can_suspend);
+	hal_device_property_set_bool (d, "power_management.can_suspend_to_disk", can_hibernate);
+}
+
 void 
 osspec_probe (void)
 {
@@ -708,8 +742,15 @@ osspec_probe (void)
 	}
 	HAL_INFO (("Done synthesizing events"));
 
-	/* TODO: add prober for PowerMac's */
+	/*
+	 * Populate the powermgmt keys according to the kernel options.
+	 * NOTE: This may not mean the machine is able to suspend
+	 *	 or hibernate successfully, only that the machine has
+	 *	 support compiled into the kernel.
+	 */
+	set_suspend_hibernate_keys (root);
 
+	/* TODO: add prober for PowerMac's */
 	if (should_decode_dmi) {
 		if (hal_util_helper_invoke ("hald-probe-smbios", NULL, root, NULL, NULL,
 					    computer_probing_pcbios_helper_done, 
