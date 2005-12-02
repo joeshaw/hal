@@ -275,7 +275,6 @@ pmu_synthesize_hotplug_events (void)
 	}
 
 	/* Set appropriate properties on the computer object */
-	hal_device_property_set_bool (computer, "power_management.is_enabled", TRUE);
 	hal_device_property_set_string (computer, "power_management.type", "pmu");
 
 	/* AC Adapter */

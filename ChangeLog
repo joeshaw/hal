@@ -1,5 +1,12 @@
 2005-12-02  Richard Hughes <richard@hughsie.com>
 
+	* hald/linux2/acpi.c, hald/linux2/apm.c, hald/linux2/pmu.c:
+	Now we have can_suspend and can_hibernate we should remove the
+	power_management.is_enabled key as .type and .can_* convey the
+	information better.
+
+2005-12-02  Richard Hughes <richard@hughsie.com>
+
 	* hald/linux2/osspec.c, doc/spec/hal-spec.xml.in:
 	Add the new keys power_management.can_suspend and 
 	power_management.can_hibernate using a new function

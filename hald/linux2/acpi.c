@@ -852,7 +852,6 @@ acpi_synthesize_hotplug_events (void)
 	}
 
 	/* Set appropriate properties on the computer object */
-	hal_device_property_set_bool (computer, "power_management.is_enabled", TRUE);
 	hal_device_property_set_string (computer, "power_management.type", "acpi");
 	hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
 					    "/proc/acpi", "info", "version", 0, FALSE);
