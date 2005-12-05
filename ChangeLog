@@ -1,3 +1,13 @@
+2005-12-05  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/osspec.c (set_suspend_hibernate_keys):
+	Software Suspend 2 enabled kernels don't have "disk" in
+	/sys/power/state, but still they can still hibernate.
+	Some older versions have a /proc/software_suspend config directory
+	but new versions switched to the /proc/suspend2 config directory.
+	Add the detection for these to set the correct value for the 
+	power_management.can_hibernate key.
+
 2005-12-02  Richard Hughes <richard@hughsie.com>
 
 	* hald/linux2/acpi.c, hald/linux2/apm.c, hald/linux2/pmu.c:
