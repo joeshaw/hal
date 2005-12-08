@@ -1,5 +1,10 @@
 2005-12-08  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/hald_dbus.c: (hald_exec_method):
+	Correct error path.
+
+2005-12-08  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/hald_dbus.c: (hald_exec_method): Allow stringlists
 	to be passed to method calls. Signature "sas" will expect:
 	Method(string: array:string:abc,xyz)
