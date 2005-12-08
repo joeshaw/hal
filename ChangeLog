@@ -1,5 +1,11 @@
 2005-12-08  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/hald_dbus.c: (hald_exec_method): Allow stringlists
+	to be passed to method calls. Signature "sas" will expect:
+	Method(string: array:string:abc,xyz)
+
+2005-12-08  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Kernel 2.6.15 will have a poll()'able /proc/mounts file, which
 	tells us about mount tree changes. Kernel 2.6.16 will no longer
 	have any netlink event regarding block devices mount/claim.

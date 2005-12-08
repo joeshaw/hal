@@ -2663,12 +2663,28 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 			break;
 		}
 
+		case DBUS_TYPE_ARRAY:
+		{
+			DBusMessageIter iter_strlist;
+			if (dbus_message_iter_get_element_type (&iter) != DBUS_TYPE_STRING)
+				return FALSE;
+
+			dbus_message_iter_recurse (&iter, &iter_strlist);
+			while (dbus_message_iter_get_arg_type (&iter_strlist) == DBUS_TYPE_STRING) {
+				const char *value;
+				dbus_message_iter_get_basic (&iter_strlist, &value);
+				g_string_append (stdin_str, value);
+				g_string_append (stdin_str, "\t");
+				dbus_message_iter_next(&iter_strlist);
+			}
+			break;
+		}
+
 		default:
 			goto error;
 		}
 
 		g_string_append_c (stdin_str, '\n');
-		
 		dbus_message_iter_next (&iter);
 	}
 
