@@ -49,16 +49,11 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
-#include <net/if_arp.h> /* for ARPHRD_... */
+#include <net/if_arp.h>
 #include <sys/socket.h>
 #include <linux/types.h>
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
-
-#include <linux/netlink.h>
-#include <linux/rtnetlink.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 
@@ -87,8 +82,8 @@
 
 #include "osspec_linux.h"
 
-char hal_sysfs_path [HAL_PATH_MAX];
-char hal_proc_path [HAL_PATH_MAX];
+static char *hal_sysfs_path;
+static char *hal_proc_path;
 
 const gchar *
 get_hal_sysfs_path (void)
@@ -300,7 +295,6 @@ hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data
 		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
 			    hal_sysfs_path, msg.sysfs_path);
 		g_strlcpy (hotplug_event->sysfs.device_file, msg.device_name, sizeof (hotplug_event->sysfs.device_file));
-		/* TODO: set wait_for_sysfs_path */
 		hotplug_event->sysfs.net_ifindex = msg.net_ifindex;
 
 		/* queue up and process */
@@ -317,7 +311,6 @@ hald_helper_data (GIOChannel *source, GIOCondition condition, gpointer user_data
 		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
 			    hal_sysfs_path, msg.sysfs_path);
 		g_strlcpy (hotplug_event->sysfs.device_file, msg.device_name, sizeof (hotplug_event->sysfs.device_file));
-		/* TODO: set wait_for_sysfs_path */
 		hotplug_event->sysfs.net_ifindex = msg.net_ifindex;
 
 		/* queue up and process */
@@ -329,120 +322,23 @@ out:
 	return TRUE;
 }
 
-#define VALID_NLMSG(h, s) ((NLMSG_OK (h, s) && \
-                           s >= sizeof (struct nlmsghdr) && \
-                           s >= h->nlmsg_len))
-
 static gboolean
-netlink_detection_data_ready (GIOChannel *channel, GIOCondition cond,
-			   gpointer user_data)
+mount_tree_changed_event (GIOChannel *channel, GIOCondition cond,
+		    gpointer user_data)
 {
-	int fd;
-	int bytes_read;
-	struct sockaddr_nl nladdr;
-	socklen_t nladdrlen = sizeof(nladdr);
-	char buf[1024];
-
-	if (cond & ~(G_IO_IN | G_IO_PRI)) {
-		HAL_ERROR (("Error occurred on netlink socket"));
+	if (cond & ~G_IO_ERR)
 		return TRUE;
-	}
 
-	fd = g_io_channel_unix_get_fd (channel);
-
-	do {
-		errno = 0;
-		bytes_read = recvfrom (fd, buf, sizeof (buf),
-				   MSG_DONTWAIT,
-				   (struct sockaddr*)&nladdr, &nladdrlen);
-		if (nladdrlen != sizeof(nladdr)) {
-			HAL_ERROR(("Bad address size reading netlink socket"));
-			return TRUE;
-		}
-		if (nladdr.nl_pid) {
-			HAL_ERROR(("Spoofed packet received on netlink socket"));
-			return TRUE;
-		}
-
-		if (bytes_read < 0 && errno != EAGAIN) {
-			HAL_ERROR (("Error reading data off netlink socket"));
-			return TRUE;
-		} else if ( bytes_read < 0 ) {
-			return TRUE;
-		} else {
-			HAL_INFO (("bytes_read=%d buf='%s'", bytes_read, buf));
-		}
-
-		/* Handle event: "mount@/block/hde" */
-		if (g_str_has_prefix (buf, "mount")) {
-			gchar sysfs_path[HAL_PATH_MAX];
-			g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
-			g_strlcat (sysfs_path, ((char *) buf) + sizeof ("mount"), sizeof (sysfs_path));
-			blockdev_mount_status_changed (sysfs_path, TRUE);
-		}
-
-		/* Handle event: "umount@/block/hde" */
-		if (g_str_has_prefix (buf, "umount")) {
-			gchar sysfs_path[HAL_PATH_MAX];
-			g_strlcpy (sysfs_path, get_hal_sysfs_path (), sizeof (sysfs_path));
-			g_strlcat (sysfs_path, ((char *) buf) + sizeof ("umount"), sizeof (sysfs_path));
-			blockdev_mount_status_changed (sysfs_path, FALSE);
-		}
-
-	} while (bytes_read > 0 || errno == EINTR);
+	HAL_INFO (("/proc/mounts tells, that the mount has tree changed"));
+	blockdev_refresh_mount_state (NULL);
 
 	return TRUE;
-}
-
-static gboolean 
-hal_util_get_fs_mnt_path (const gchar *fs_type, gchar *mnt_path, gsize len)
-{
-	FILE *mnt;
-	struct mntent *mntent;
-	gboolean rc;
-	gsize dirlen;
-
-	rc = FALSE;
-	dirlen = 0;
-
-	if (fs_type == NULL || mnt_path == NULL || len == 0) {
-		HAL_ERROR (("Arguments not sane"));
-		return -1;
-	}
-
-	if ((mnt = setmntent ("/proc/mounts", "r")) == NULL) {
-		HAL_ERROR (("Error getting mount information"));
-		return -1;
-	}
-
-	while (rc == FALSE && dirlen == 0 && (mntent = getmntent(mnt)) != NULL) {
-		if (strcmp (mntent->mnt_type, fs_type) == 0) {
-			dirlen = strlen (mntent->mnt_dir);
-			if (dirlen <= (len - 1)) {
-				g_strlcpy (mnt_path, mntent->mnt_dir, len);
-				rc = TRUE;
-			} else {
-				HAL_ERROR (("Error - mount path too long"));
-				rc = FALSE;
-			}
-		}
-	}
-	endmntent (mnt);
-	
-	if (dirlen == 0 && rc == TRUE) {
-		HAL_ERROR (("Filesystem %s not found", fs_type));
-		rc = FALSE;
-	}
-
-	if ((!hal_util_remove_trailing_slash (mnt_path)))
-		rc = FALSE;
-	
-	return rc;
 }
 
 void
 osspec_init (void)
 {
+	gchar path[HAL_PATH_MAX];
 	int udev_socket;
 	int helper_socket;
 	struct sockaddr_un saddr;
@@ -450,9 +346,7 @@ osspec_init (void)
 	GIOChannel *udev_channel;
 	GIOChannel *helper_channel;
 	const int on = 1;
-	static int netlink_fd = -1;
-	struct sockaddr_nl netlink_addr;
-	GIOChannel *netlink_channel;
+	GIOChannel *mounts_channel;
 
 	/*
 	 * setup socket for listening from messages from udev
@@ -505,51 +399,30 @@ osspec_init (void)
 	g_io_channel_unref (helper_channel);
 
 	/*
-	 * get mount points for /proc and /sys
+	 * set mount points for /proc and /sys, possibly overridden for testing
 	 */
-	if (!hal_util_get_fs_mnt_path ("sysfs", hal_sysfs_path, sizeof (hal_sysfs_path))) {
-		HAL_ERROR (("Could not get sysfs mount point"));
-		goto error;
-	}
-	HAL_INFO (("sysfs mount point is '%s'", hal_sysfs_path));
-	if (!hal_util_get_fs_mnt_path ("proc", hal_proc_path, sizeof (hal_proc_path))) {
-		HAL_ERROR (("Could not get proc mount point"));
-		goto error;
-	}
-	HAL_INFO (("proc mount point is '%s'", hal_proc_path));
+	hal_sysfs_path = getenv ("SYSFS_PATH");
+	if (hal_sysfs_path == NULL)
+		hal_sysfs_path = "/sys";
+
+	hal_proc_path = getenv ("PROC_PATH");
+	if (hal_proc_path == NULL)
+		hal_proc_path = "/proc";
 
 	/*
-	 * hook up to netlink socket to receive events from the Kernel Events
-	 * Layer (available since 2.6.10) - TODO: Don't use the constant 15 but
-	 * rather the NETLINK_KOBJECT_UEVENT symbol
+	 * watch /proc/mounts for mount tree changes
+	 * kernel 2.6.15 vfs throws a POLLERR event for every change
 	 */
-	netlink_fd = socket (PF_NETLINK, SOCK_DGRAM, 15/*NETLINK_KOBJECT_UEVENT*/);
-
-	if (netlink_fd < 0) {
-		DIE (("Unable to create netlink socket"));
-	}
-
-	memset (&netlink_addr, 0, sizeof (netlink_addr));
-	netlink_addr.nl_family = AF_NETLINK;
-	netlink_addr.nl_pid = getpid ();
-	netlink_addr.nl_groups = 0xffffffff;//RTMGRP_LINK;//1 << 15 /*NETLINK_KOBJECT_UEVENT*/;
-
-	if (bind (netlink_fd, (struct sockaddr *) &netlink_addr, sizeof (netlink_addr)) < 0) {
-		DIE (("Unable to bind to netlink socket"));
-	}
-
-	netlink_channel = g_io_channel_unix_new (netlink_fd);
-
-	g_io_add_watch (netlink_channel, G_IO_IN | G_IO_PRI | G_IO_ERR | G_IO_NVAL,
-			netlink_detection_data_ready, NULL);
+	g_snprintf (path, sizeof (path), "%s/mounts", get_hal_proc_path ());
+	mounts_channel = g_io_channel_new_file (path, "r", NULL);
+	if (mounts_channel == NULL)
+		DIE (("Unable to read /proc/mounts"));
+	g_io_add_watch (mounts_channel, G_IO_ERR, mount_tree_changed_event, NULL);
 
 	/*
 	 *Load various hardware id databases
 	 */
 	ids_init ();
-
-error:
-	;
 }
 
 static void 

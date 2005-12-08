@@ -1,3 +1,24 @@
+2005-12-08  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Kernel 2.6.15 will have a poll()'able /proc/mounts file, which
+	tells us about mount tree changes. Kernel 2.6.16 will no longer
+	have any netlink event regarding block devices mount/claim.
+	We watch only /proc/mounts from now, remove all netlink listening
+	and depend on kernel version 2.6.15.
+
+	With every mount event, we update all known devices now, to the
+	current state found in /proc/mounts. The device name in /proc/mounts
+	is ignored, but the dev_t of the underlying block device is
+	looked up to find the hal device. That way, /dev/root and rootdev
+	will also be recognized and the current mount state becomes visible.
+
+	* hald/linux2/blockdev.c: (blockdev_refresh_mount_state),
+	(add_blockdev_probing_helper_done):
+	* hald/linux2/blockdev.h:
+	* hald/linux2/classdev.c:
+	* hald/linux2/osspec.c: (hald_helper_data),
+	(mount_tree_changed_event), (osspec_init):
+
 2005-12-05  Richard Hughes <richard@hughsie.com>
 
 	* hald/linux2/osspec.c (set_suspend_hibernate_keys):

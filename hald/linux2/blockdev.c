@@ -160,104 +160,84 @@ blockdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userda
 	hotplug_event_end (end_token);
 }
 
-static void 
-update_mount_point (HalDevice *d)
+void
+blockdev_refresh_mount_state (HalDevice *d)
 {
 	FILE *f;
 	struct mntent mnt;
 	struct mntent *mnte;
-	const char *device_file;
-	char buf[512];
-	unsigned int major, minor;
-	gboolean retry = FALSE;
+	char buf[1024];
+	unsigned int major;
+	unsigned int minor;
+	dev_t devt = makedev(0, 0);
+	GSList *volumes = NULL;
+	GSList *volume;
 
-	if ((device_file = hal_device_property_get_string (d, "block.device")) == NULL)
-		goto out;
-
-	major = hal_device_property_get_int (d, "block.major");
-	minor = hal_device_property_get_int (d, "block.minor");
-
-	HAL_INFO (("Update mount point for %s (device_file %s)", d->udi, device_file));
-
-
-	do {
-		snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
-		if ((f = setmntent (buf, "r")) == NULL) {
-			HAL_ERROR (("Could not open /proc/mounts"));
-			goto out;
-		}
-
-		while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
-			struct stat statbuf;
-
-			if (stat (mnt.mnt_fsname, &statbuf) != 0)
-				continue;
-
-			if ((major (statbuf.st_rdev) == major) && (minor (statbuf.st_rdev) == minor)) {
-				device_property_atomic_update_begin ();
-				hal_device_property_set_bool (d, "volume.is_mounted", TRUE);
-				hal_device_property_set_string (d, "volume.mount_point", mnt.mnt_dir);
-				device_property_atomic_update_end ();
-				HAL_INFO (("Setting mount point %s for %s", mnt.mnt_dir, device_file));
-				goto found;
-			}
-		}
-
-		/* to workaround http://lists.freedesktop.org/archives/hal/2005-October/003634.html 
-		 * If device is not in proc: sleep 0.3 seconds and retry _one time_ to check again.
-		 * 
-		 * NOTE: This workaround is for voluntary preemption kernel and should be removed if
-		 *       the problem is fixed in the kernel.
-		 */
-		if (retry) {
-			HAL_WARNING (("Could not find %s in %s/mounts, no second retry.", device_file, get_hal_proc_path ()));
-			retry = FALSE;
-		} else {
-			retry = TRUE;
-			usleep (300000);
-			HAL_WARNING (("Could not find %s in %s/mounts retry to find.", device_file, get_hal_proc_path ()));
-		}	
-	} while (retry);
-
-	device_property_atomic_update_begin ();
-	hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
-	hal_device_property_set_string (d, "volume.mount_point", "");
-	device_property_atomic_update_end ();
-
-	HAL_INFO (("Clearing mount point for %s", device_file));
-
-found:		
-	endmntent (f);
-out:
-	;
-}
-
-void 
-blockdev_mount_status_changed (const gchar *sysfs_path, gboolean is_mounted)
-{
-	HalDevice *d;
-	HAL_INFO (("mount_status_changed for '%s', is_mounted=%d", sysfs_path, is_mounted));
-
-	if ((d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path)) == NULL)
-		goto error;
-
-	if (!hal_device_has_capability (d, "volume")) {
-		/* may have a fakevolume */
-		d = hal_device_store_match_key_value_string (hald_get_gdl (),
-							     "info.parent",
-							     d->udi);
-		if (d == NULL || !hal_device_has_capability (d, "volume"))
-			goto error;
+	/* open /proc/mounts */
+	g_snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
+	if ((f = setmntent (buf, "r")) == NULL) {
+		HAL_ERROR (("Could not open /proc/mounts"));
+		return;
 	}
 
-	HAL_INFO (("Applies to %s", d->udi));
+	if (d)
+		volumes = g_slist_append (NULL, d);
+	else
+		volumes = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.category", "volume");
 
-	update_mount_point (d);
-	return;
+	if (!volumes)
+		goto exit;
 
-error:
-	HAL_INFO (("Couldn't find hal volume for %s", sysfs_path));
-	;
+	/* loop over /proc/mounts */
+	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
+		struct stat statbuf;
+
+		/* check the underlying device of the mount point */
+		if (stat (mnt.mnt_dir, &statbuf) != 0)
+			continue;
+		if (major(statbuf.st_dev) == 0)
+			continue;
+
+		HAL_INFO (("* found mounts dev %s (%i:%i)", mnt.mnt_fsname, major(statbuf.st_dev), minor(statbuf.st_dev)));
+		/* match against all hal volumes */
+		for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
+			HalDevice *dev;
+
+			dev = HAL_DEVICE (volume->data);
+			major = hal_device_property_get_int (dev, "block.major");
+			if (major == 0)
+				continue;
+			minor = hal_device_property_get_int (dev, "block.minor");
+			devt = makedev(major, minor);
+			HAL_INFO (("  match %s (%i:%i)", hal_device_get_udi (dev), major, minor));
+
+			if (statbuf.st_dev == devt) {
+				/* found entry for this device in /proc/mounts */
+				device_property_atomic_update_begin ();
+				hal_device_property_set_bool (dev, "volume.is_mounted", TRUE);
+				hal_device_property_set_string (dev, "volume.mount_point", mnt.mnt_dir);
+				device_property_atomic_update_end ();
+				HAL_INFO (("  set %s to be mounted at %s", hal_device_get_udi (dev), mnt.mnt_dir));
+				volumes = g_slist_delete_link (volumes, volume);
+				break;
+			}
+		}
+	}
+
+	/* all remaining volumes are not mounted */
+	for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
+		HalDevice *dev;
+
+		dev = HAL_DEVICE (volume->data);
+		device_property_atomic_update_begin ();
+		hal_device_property_set_bool (dev, "volume.is_mounted", FALSE);
+		hal_device_property_set_string (dev, "volume.mount_point", "");
+		device_property_atomic_update_end ();
+		HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));
+	}
+	g_slist_free (volumes);
+exit:
+	endmntent (f);
 }
 
 static void
@@ -330,13 +310,13 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 		hal_device_copy_property (d, "info.udi", d, "block.storage_device");
 	} else {
 		/* check for mount point */
-		update_mount_point (d);
+		blockdev_refresh_mount_state (d);
 	}
 
 	/* Merge properties from .fdi files */
 	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
 	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
-	
+
 	/* TODO: Merge persistent properties */
 
 	/* Run callouts */
