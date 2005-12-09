@@ -1,3 +1,17 @@
+2005-12-09  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add methods to storage objects to request:
+	  Mount(string:mountpointname string:fstype stringlist:mountoptions)
+	  Unmount()
+	  Eject()
+
+	* fdi/policy/10osvendor/Makefile.am:
+	* fdi/policy/10osvendor/20-storage-methods.fdi:
+	* tools/Makefile.am:
+	* tools/hal-system-storage-eject:
+	* tools/hal-system-storage-mount:
+	* tools/hal-system-storage-unmount:
+
 2005-12-08  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/hald_dbus.c: (hald_exec_method):

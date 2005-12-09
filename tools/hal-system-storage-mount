@@ -1,0 +1,124 @@
+#!/bin/sh -e
+
+# Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2.
+
+MOUNT_ROOT="/media"
+
+# Check for environment variables
+if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] ; then
+    echo "Missing or empty environment variable(s)." >&2
+    echo "This script should be started by hald." >&2
+    exit 1
+fi
+
+# check if device is already mounted
+if [ "$HAL_PROP_VOLUME_IS_MOUNTED" = "true" ]; then
+    echo "org.freedesktop.Hal.Device.Volume.AlreadyMounted" >&2
+    echo "$HAL_PROP_VOLUME_MOUNT_POINT" >&2
+    exit 1
+fi
+
+# read parameters
+# "MyDisk\n"
+# "fuse\n"
+# "ro\tsync\n"
+read GIVEN_MOUNTPOINT
+read GIVEN_MOUNTTYPE
+read GIVEN_MOUNTOPTIONS
+
+# if no mountpoint, get mountpoint from label
+if [ "$GIVEN_MOUNTPOINT" == "" ]; then
+    case "$HAL_PROP_VOLUME_LABEL" in
+	*[!A-Za-z0-9_\-\+:]*)
+	break
+	;;
+    esac
+    GIVEN_MOUNTPOINT="$HAL_PROP_VOLUME_LABEL"
+fi
+
+# if no mountpoint, use default name
+if [ "$GIVEN_MOUNTPOINT" == "" ]; then
+    GIVEN_MOUNTPOINT="disk"
+fi
+
+# validate characters in mountpoint
+case "$GIVEN_MOUNTPOINT" in
+    *[!A-Za-z0-9_\-\+:]*)
+	echo "org.freedesktop.Hal.Device.Volume.InvalidMountpoint" >&2
+	echo "" >&2
+	exit 1
+	;;
+esac
+MOUNTPOINT="$GIVEN_MOUNTPOINT"
+
+# pass only whitelisted mount options
+if [ "$GIVEN_MOUNTOPTIONS" != "" ]; then
+    for OPTION in $GIVEN_MOUNTOPTIONS; do
+	case "$OPTION" in
+	    ro)
+		MOUNTOPTIONS="$MOUNTOPTIONS,ro"
+		;;
+	    sync)
+		MOUNTOPTIONS="$MOUNTOPTIONS,sync"
+		;;
+	    dirsync)
+		MOUNTOPTIONS="$MOUNTOPTIONS,dirsync"
+		;;
+	    noatime)
+		MOUNTOPTIONS="$MOUNTOPTIONS,noatime"
+		;;
+	    nodiratime)
+		MOUNTOPTIONS="$MOUNTOPTIONS,nodiratime"
+		;;
+	    noexec)
+		MOUNTOPTIONS="$MOUNTOPTIONS,noexec"
+		;;
+	    quiet)
+		MOUNTOPTIONS="$MOUNTOPTIONS,quiet"
+		;;
+	    *)
+		echo "org.freedesktop.Hal.Device.Volume.InvalidMountOption" >&2
+		echo "" >&2
+		exit 1
+	esac
+    done
+fi
+
+# append number to mountpoint if it already exists
+if [ -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
+    NUM=1;
+    while [ -e "$MOUNT_ROOT/$MOUNTPOINT-$NUM" ]; do
+	NUM=$(($NUM + 1))
+    done
+    MOUNTPOINT="$MOUNTPOINT-$NUM"
+fi
+
+# create directory and mark it for cleanup with an extended attribute
+if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
+    MOUNTPOINT_CREATED=1
+    mkdir "$MOUNT_ROOT/$MOUNTPOINT"
+    attr -s HAL_MOUNTPOINT -V "$HAL_PROP_INFO_UDI" "$MOUNT_ROOT/$MOUNTPOINT"  > /dev/null 2>&1
+fi
+
+if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
+    echo "org.freedesktop.Hal.Device.Volume.FailedToCreateMountpoint" >&2
+    echo "$MOUNT_ROOT/$MOUNTPOINT" >&2
+    exit 1
+fi
+
+# mount and return status
+mount -o "nosuid,nodev$MOUNTOPTIONS" -t "$HAL_PROP_VOLUME_FSTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
+logger O="nosuid,nodev$MOUNTOPTIONS" T="$HAL_PROP_VOLUME_FSTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT"
+if [ $? -ne 0 ]; then
+    if [ -n "$MOUNTPOINT_CREATED" ]; then
+	rmdir "$MOUNT_ROOT/$MOUNTPOINT"
+    fi
+    echo "org.freedesktop.Hal.Device.Volume.MountFailed" >&2
+    echo "$MOUNT_ROOT/$MOUNTPOINT" >&2
+    exit 1
+fi
+
+exit 0

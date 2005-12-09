@@ -45,13 +45,16 @@ endif
 
 scriptdir = $(datadir)/hal/scripts
 
-script_SCRIPTS =                         \
-	hal-luks-setup hal-luks-remove    \
-	hal-system-power-suspend          \
-	hal-system-power-hibernate        \
-	hal-system-lcd-get-brightness     \
-	hal-system-lcd-set-brightness     \
-	hal-system-power-set-power-save
+script_SCRIPTS =				\
+	hal-luks-setup hal-luks-remove		\
+	hal-system-power-suspend		\
+	hal-system-power-hibernate		\
+	hal-system-lcd-get-brightness		\
+	hal-system-lcd-set-brightness		\
+	hal-system-power-set-power-save		\
+	hal-system-storage-mount		\
+	hal-system-storage-unmount		\
+	hal-system-storage-eject
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 

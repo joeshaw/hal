@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deviceinfo version="0.2">
+  <device>
+    <match key="volume.fsusage" string="filesystem">
+      <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
+
+      <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Mount</append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">ssas</append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-mount</append>
+
+      <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Unmount</append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist"></append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-unmount</append>
+
+      <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist"></append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+    </match>
+  </device>
+</deviceinfo>

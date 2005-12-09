@@ -1,0 +1,32 @@
+#!/bin/sh -e
+
+# Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2.
+
+# Check for environment variables
+if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] ; then
+    echo "Missing or empty environment variable(s)." >&2
+    echo "This script should be started by hald." >&2
+    exit 1
+fi
+
+if [ "$HAL_PROP_VOLUME_IS_MOUNTED" != "true" ]; then
+    echo "org.freedesktop.Hal.Device.Volume.NotMounted" >&2
+    echo "$HAL_PROP_VOLUME_MOUNT_POINT" >&2
+    exit 1
+fi
+
+umount "$HAL_PROP_VOLUME_MOUNT_POINT" > /dev/null 2>&1 || true
+if [ $? -ne 0 ]; then
+    echo "org.freedesktop.Hal.Device.Volume.UnmountFailed" >&2
+    echo "$HAL_PROP_VOLUME_MOUNT_POINT" >&2
+    exit 1
+fi
+
+# remove directory only if HAL has created it
+attr -q -g HAL_MOUNTPOINT "$HAL_PROP_VOLUME_MOUNT_POINT" > /dev/null 2>&1 || exit 0
+rmdir --ignore-fail-on-non-empty "$HAL_PROP_VOLUME_MOUNT_POINT"
+
+exit 0
