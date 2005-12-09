@@ -1179,6 +1179,12 @@ hotplug_event_begin_add_classdev (const gchar *subsystem, const gchar *sysfs_pat
 
 	HAL_INFO (("class_add: subsys=%s sysfs_path=%s dev=%s physdev=0x%08x", subsystem, sysfs_path, device_file, physdev));
 
+	/* update driver property of the physical device, cause manual driver bind/unbind
+	 * may change change this without sending events for the bus device
+	 */
+	if (physdev != NULL)
+		hal_util_set_driver (physdev, "info.linux.driver", sysfs_path_in_devices);
+
 	if (physdev != NULL && hal_device_property_get_bool (physdev, "info.ignore")) {
 		HAL_INFO (("Ignoring class_add since physdev has info.ignore==TRUE"));
 		hotplug_event_end (end_token);

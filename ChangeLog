@@ -1,5 +1,12 @@
 2005-12-09  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/linux2/classdev.c: (hotplug_event_begin_add_classdev): Update
+	the driver property if we add a class device. A module load or manual
+	driver bind did not update "info.linux.driver" of the parent device
+	and NetworkManager depends on that property.
+
+2005-12-09  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Add methods to storage objects to request:
 	  Mount(string:mountpointname string:fstype stringlist:mountoptions)
 	  Unmount()
