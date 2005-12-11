@@ -90,6 +90,8 @@ battery_refresh_poll (HalDevice *d)
 	int voltage;
 	int remaining_time;
 	int remaining_percentage;
+	gboolean charging;
+	gboolean discharging;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
@@ -180,6 +182,18 @@ battery_refresh_poll (HalDevice *d)
 	if (normalised_lastfull < 0)
 		normalised_lastfull = 0;
 	if (normalised_rate < 0)
+		normalised_rate = 0;
+
+	/*
+	 * Some laptops report a rate even when not charging or discharging.
+	 * If not charging and not discharging force rate to be zero.
+         *
+         * http://bugzilla.gnome.org/show_bug.cgi?id=323186
+	 */
+	charging = hal_device_property_get_bool (d, "battery.rechargeable.is_charging");
+	discharging = hal_device_property_get_bool (d, "battery.rechargeable.is_discharging");
+
+	if (!charging && !discharging)
 		normalised_rate = 0;
 
 	/*

@@ -1,3 +1,9 @@
+2005-12-11  Ryan Lortie  <desrt@desrt.ca>
+
+	* hald/linux2/acpi.c (battery_refresh_poll):  Force 'rate' to be zero
+	in the case that the battery is neither charging nor discharging.
+	This workaround is required for some buggy ACPI implementations.
+
 2005-12-09  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/classdev.c: (hotplug_event_begin_add_classdev): Update
