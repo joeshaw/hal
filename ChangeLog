@@ -1,3 +1,10 @@
+2005-12-12  Danny Kukawka  <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/Makefile.am,
+	  fdi/policy/10osvendor/Makefile.am,
+	  fdi/preprobe/10osvendor/Makefile.am: fixed validate fdi files for
+	correct XML in target check to fix broken 'make distcheck'
+
 2005-12-12  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-power-shutdown, tools/hal-system-power-reboot,
