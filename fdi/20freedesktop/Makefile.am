@@ -13,5 +13,8 @@ dist_fdi20freedesktop_DATA = 		\
         usb-pda-devices.fdi             \
         usb-pda-serial.fdi
 
+check:
+	xmllint --noout --dtdvalid $(top_srcdir)/fdi/fdi.dtd $(dist_fdi_DATA)
+
 
 

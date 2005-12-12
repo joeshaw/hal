@@ -9,6 +9,6 @@ dist_fdi_DATA = 10-usb-card-readers.fdi    \
 		10-usb-pda.fdi		   \
 		10-cd-dvd-burner.fdi
 
-
-
+check:
+	xmllint --noout --dtdvalid $(top_srcdir)/fdi/fdi.dtd $(dist_fdi_DATA)
 

@@ -1,3 +1,17 @@
+2005-12-12  David Zeuthen  <david@fubar.dk>
+
+	Patch from Artem Kachitchkine <Artem.Kachitchkin@Sun.COM>.
+
+	* fdi/fdi.dtd: I tried to validate fdi files using fdi.dtd and got
+	a whole lot of errors. Looks like DTD is out of date. This patch
+	updates the DTD and adds fdi validation to 'make check'. I'm not
+	an XML expert, please review carefully.
+
+	* fdi/preprobe/10osvendor/Makefile.am,
+	fdi/policy/10osvendor/Makefile.am,
+	fdi/information/10freedesktop/Makefile.am: Add xmllint to the
+	check target
+
 2005-12-11  Ryan Lortie  <desrt@desrt.ca>
 
 	* hald/linux2/acpi.c (battery_refresh_poll):  Force 'rate' to be zero

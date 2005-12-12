@@ -16,5 +16,8 @@ if FSTAB_SYNC_ENABLED
 dist_fdi_DATA += 90-fstab-sync.fdi
 endif
 
+check:
+	xmllint --noout --dtdvalid $(top_srcdir)/fdi/fdi.dtd $(dist_fdi_DATA)
+
 clean-local :
 	rm -f *~

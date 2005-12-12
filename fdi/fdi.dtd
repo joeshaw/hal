@@ -9,16 +9,44 @@
 
 <!ELEMENT device (match|merge)*  >
 
-<!ELEMENT match (match|merge)* >
+<!ELEMENT match (match|merge|prepend|append|remove)* >
 <!ATTLIST match 
-    key    CDATA #REQUIRED
-    string CDATA #IMPLIED
-    int    CDATA #IMPLIED
-    bool   CDATA #IMPLIED
+    key              CDATA #REQUIRED
+    string           CDATA #IMPLIED
+    int              CDATA #IMPLIED
+    bool             (false|true) #IMPLIED
+    exists           (false|true) #IMPLIED
+    empty            (false|true) #IMPLIED
+    is_ascii         (false|true) #IMPLIED
+    is_absolute_path (false|true) #IMPLIED
+    contains         CDATA #IMPLIED
+    contains_ncase   CDATA #IMPLIED
+    compare_lt       CDATA #IMPLIED
+    compare_le       CDATA #IMPLIED
+    compare_gt       CDATA #IMPLIED
+    compare_ge       CDATA #IMPLIED
 >
 
 <!ELEMENT merge (#PCDATA) >
 <!ATTLIST merge 
     key    CDATA #REQUIRED
-    type   (string|int|bool|double) #REQUIRED
+    type   (string|int|uint64|bool|double|strlist|copy_property) #REQUIRED
+>
+
+<!ELEMENT prepend (#PCDATA) >
+<!ATTLIST prepend 
+    key    CDATA #REQUIRED
+    type   (string|strlist|int|bool|double|copy_property) #REQUIRED
+>
+
+<!ELEMENT append (#PCDATA) >
+<!ATTLIST append 
+    key    CDATA #REQUIRED
+    type   (string|strlist|int|bool|double|copy_property) #REQUIRED
+>
+
+<!ELEMENT remove (#PCDATA) >
+<!ATTLIST remove
+    key    CDATA #REQUIRED
+    type   (strlist) #REQUIRED
 >
