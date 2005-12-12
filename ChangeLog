@@ -1,3 +1,8 @@
+2005-12-12  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* tools/hal-system-storage-mount: Fix fallback to default mount
+	point which failed if the volume label was not valid.
+
 2005-12-12  David Zeuthen  <david@fubar.dk>
 
 	Patch from Artem Kachitchkine <Artem.Kachitchkin@Sun.COM>.

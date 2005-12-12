@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 #
@@ -33,13 +33,14 @@ read GIVEN_MOUNTOPTIONS
 if [ "$GIVEN_MOUNTPOINT" == "" ]; then
     case "$HAL_PROP_VOLUME_LABEL" in
 	*[!A-Za-z0-9_\-\+:]*)
-	break
-	;;
+	    break
+	    ;;
+	*)
+	    GIVEN_MOUNTPOINT="$HAL_PROP_VOLUME_LABEL"
     esac
-    GIVEN_MOUNTPOINT="$HAL_PROP_VOLUME_LABEL"
 fi
 
-# if no mountpoint, use default name
+# if no mountpoint is given, use default name
 if [ "$GIVEN_MOUNTPOINT" == "" ]; then
     GIVEN_MOUNTPOINT="disk"
 fi
@@ -53,6 +54,24 @@ case "$GIVEN_MOUNTPOINT" in
 	;;
 esac
 MOUNTPOINT="$GIVEN_MOUNTPOINT"
+
+# pass only whitelisted types
+if [ "$GIVEN_MOUNTTYPE" != "" ]; then
+    case "$GIVEN_MOUNTTYPE" in
+	subfs)
+	    MOUNTTYPE="subfs"
+	    ;;
+	*)
+	    echo "org.freedesktop.Hal.Device.Volume.InvalidMountType" >&2
+	    echo "" >&2
+	    exit 1
+   esac
+fi
+
+# if no type is given, use default name
+if [ "$MOUNTTYPE" == "" ]; then
+    MOUNTTYPE=$HAL_PROP_VOLUME_FSTYPE
+fi
 
 # pass only whitelisted mount options
 if [ "$GIVEN_MOUNTOPTIONS" != "" ]; then
@@ -110,8 +129,7 @@ if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
 fi
 
 # mount and return status
-mount -o "nosuid,nodev$MOUNTOPTIONS" -t "$HAL_PROP_VOLUME_FSTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
-logger O="nosuid,nodev$MOUNTOPTIONS" T="$HAL_PROP_VOLUME_FSTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT"
+mount -o "nosuid,nodev$MOUNTOPTIONS" -t "$MOUNTTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     if [ -n "$MOUNTPOINT_CREATED" ]; then
 	rmdir "$MOUNT_ROOT/$MOUNTPOINT"
