@@ -1,3 +1,13 @@
+2005-12-12  Richard Hughes <richard@hughsie.com>
+
+	* tools/hal-system-power-shutdown, tools/hal-system-power-reboot,
+	tools/Makefile.am: As discussed, add the Shutdown() and Reboot()
+	methods so that different distros can add the particular command
+	in one central place, rather than in lots of patches to other programs.
+
+	* fdi/policy/10osvendor/10-power-mgmt-policy.fdi:
+	Add Shutdown() and Reboot() methods to HAL.
+
 2005-12-12  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* tools/hal-system-storage-mount: Fix fallback to default mount

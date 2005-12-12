@@ -49,6 +49,8 @@ script_SCRIPTS =				\
 	hal-luks-setup hal-luks-remove		\
 	hal-system-power-suspend		\
 	hal-system-power-hibernate		\
+	hal-system-power-shutdown		\
+	hal-system-power-reboot			\
 	hal-system-lcd-get-brightness		\
 	hal-system-lcd-set-brightness		\
 	hal-system-power-set-power-save		\
