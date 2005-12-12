@@ -2,21 +2,17 @@
 
 unsupported() {
 	echo "org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported" >&2
-	echo "No shutdown script found" >&2
+	echo "No shutdown command found" >&2
 	exit 1
 }
 
 #Try for common tools
+if [ -x "/sbin/shutdown" ] ; then
+	/sbin/shutdown -h now
+	exit $?
+elif [ -x "/usr/sbin/shutdown" ] ; then
+	/usr/sbin/shutdown -h now
+	exit $?
 else
-	if [ -x "/sbin/shutdown" ] ; then
-		/sbin/shutdown -h now
-		RET=$?
-	elif [ -x "/usr/sbin/shutdown" ] ; then
-		/usr/sbin/shutdown -h now
-		RET=$?
-	else
-		unsupported
-		fi
-	fi
-
-exit $RET
+	unsupported
+fi

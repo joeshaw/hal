@@ -2,21 +2,17 @@
 
 unsupported() {
 	echo "org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported" >&2
-	echo "No reboot script found" >&2
+	echo "No reboot command found" >&2
 	exit 1
 }
 
 #Try for common tools
+if [ -x "/sbin/shutdown" ] ; then
+	/sbin/shutdown -r now
+	exit $?
+elif [ -x "/usr/sbin/shutdown" ] ; then
+	/usr/sbin/shutdown -r now
+	exit $?
 else
-	if [ -x "/sbin/shutdown" ] ; then
-		/sbin/shutdown -r now
-		RET=$?
-	elif [ -x "/usr/sbin/shutdown" ] ; then
-		/usr/sbin/shutdown -r now
-		RET=$?
-	else
-		unsupported
-		fi
-	fi
-
-exit $RET
+	unsupported
+fi
