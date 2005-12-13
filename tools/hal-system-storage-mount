@@ -8,9 +8,15 @@
 MOUNT_ROOT="/media"
 
 # Check for environment variables
-if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] ; then
+if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ]; then
     echo "Missing or empty environment variable(s)." >&2
     echo "This script should be started by hald." >&2
+    exit 1
+fi
+
+if [ "$HAL_METHOD_INVOKED_BY_UID" == "" ]; then
+    echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
+    echo "" >&2
     exit 1
 fi
 
@@ -106,6 +112,22 @@ if [ "$GIVEN_MOUNTOPTIONS" != "" ]; then
     done
 fi
 
+# special handling for certain filesystems
+case "$MOUNTTYPE" in
+    vfat)
+	MOUNTOPTIONS="$MOUNTOPTIONS,quiet,shortname=winnt,uid=$HAL_METHOD_INVOKED_BY_UID"
+	;;
+    ntfs)
+	MOUNTOPTIONS="$MOUNTOPTIONS,uid=$HAL_METHOD_INVOKED_BY_UID"
+	;;
+    hfs|hfsplus)
+	MOUNTOPTIONS="$MOUNTOPTIONS,uid=$HAL_METHOD_INVOKED_BY_UID"
+	;;
+    iso9660|udf)
+	MOUNTOPTIONS="$MOUNTOPTIONS,uid=$HAL_METHOD_INVOKED_BY_UID"
+	;;
+esac
+
 # append number to mountpoint if it already exists
 if [ -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
     NUM=1;
@@ -129,7 +151,7 @@ if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
 fi
 
 # mount and return status
-mount -o "nosuid,nodev$MOUNTOPTIONS" -t "$MOUNTTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
+mount -o "noexec,nosuid,nodev$MOUNTOPTIONS" -t "$MOUNTTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     if [ -n "$MOUNTPOINT_CREATED" ]; then
 	rmdir "$MOUNT_ROOT/$MOUNTPOINT"

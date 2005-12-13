@@ -1,3 +1,11 @@
+2005-12-14  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add HAL_METHOD_INVOKED_BY_UID to the method call environment 
+	and use it to mount FAT, NTFS and hfs volumes to make them available
+	to the user who invoked the method.
+	* hald/hald_dbus.c: (hald_exec_method):
+	* tools/hal-system-storage-mount:
+
 2005-12-13  Danny Kukawka  <danny.kukawka@web.de>
 
 	* tools/hal-system-power-reboot,

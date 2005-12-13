@@ -2577,18 +2577,30 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 	DBusMessageIter iter;
 	int stdin_fd;
 	int *stderr_fd;
+	const char *sender;
+	char *extra_env[2];
 
-	/* TODO: check that sender is e.g. at console */
-/*
-	if (!sender_has_privileges (connection, message)) {
-		raise_permission_denied (connection, message, "not privileged");
-		return DBUS_HANDLER_RESULT_HANDLED;
+	/* add calling uid */
+	extra_env[0] = NULL;
+	sender = dbus_message_get_sender (message);
+	if (sender != NULL) {
+		DBusError error;
+		unsigned long uid;
+
+		dbus_error_init (&error);
+		uid = dbus_bus_get_unix_user (connection, sender, &error);
+		if (!dbus_error_is_set (&error)) {
+			char uid_export[128];
+
+			sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", uid);
+			extra_env[0] = uid_export;
+			extra_env[1] = NULL;
+			HAL_INFO(("%s", uid_export));
+		}
 	}
-*/
-
-	stdin_str = g_string_sized_new (256); /* reasonable default size for passing params; can grow */
 
 	/* prepare stdin with parameters */
+	stdin_str = g_string_sized_new (256); /* default size for passing params; can grow */
 	dbus_message_iter_init (message, &iter);
 	while ((type = dbus_message_iter_get_arg_type (&iter)) != DBUS_TYPE_INVALID) {
 		switch (type) {
@@ -2693,7 +2705,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 	stderr_fd = (int *) g_new0 (int, 1);
 
 	/* no timeout */
-	if (hal_util_helper_invoke_with_pipes (execpath, NULL, d, 
+	if (hal_util_helper_invoke_with_pipes (execpath, extra_env, d, 
 					       (gpointer) message, (gpointer) stderr_fd, 
 					       hald_exec_method_cb, 0, &stdin_fd, NULL, stderr_fd) != NULL) {
 		write (stdin_fd, stdin, strlen (stdin));
