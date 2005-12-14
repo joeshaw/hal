@@ -31,11 +31,9 @@ fi
 # "MyDisk\n"
 # "fuse\n"
 # "ro\tsync\n"
-# "[true|false]\n"
 read GIVEN_MOUNTPOINT
 read GIVEN_MOUNTTYPE
 read GIVEN_MOUNTOPTIONS
-read GIVEN_DRYRUN
 
 # if no mountpoint, get mountpoint from label
 if [ "$GIVEN_MOUNTPOINT" == "" ]; then
@@ -129,12 +127,6 @@ case "$MOUNTTYPE" in
 	MOUNTOPTIONS="$MOUNTOPTIONS,uid=$HAL_METHOD_INVOKED_BY_UID"
 	;;
 esac
-
-# If it's a dryrun we're done at this point
-if [ "$GIVEN_DRYRUN" == "true" ]; then
-    echo "dryrun done"
-    exit 0
-fi
 
 # append number to mountpoint if it already exists
 if [ -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then

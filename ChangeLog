@@ -1,3 +1,11 @@
+2005-12-14  David Zeuthen  <david@fubar.dk>
+
+	Remove the dry-run boolean option. Need a better way to figure out
+	what mount options are available.
+
+	* tools/hal-system-storage-mount : 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: 
+
 2005-12-13  David Zeuthen  <david@fubar.dk>
 
 	Add a boolean parameter to Mount for dry-run.
