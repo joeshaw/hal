@@ -1,3 +1,10 @@
+2005-12-13  David Zeuthen  <david@fubar.dk>
+
+	Add a boolean parameter to Mount for dry-run.
+
+	* tools/hal-system-storage-mount : 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: 
+
 2005-12-14  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Add HAL_METHOD_INVOKED_BY_UID to the method call environment 
