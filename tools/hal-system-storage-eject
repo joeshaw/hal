@@ -12,10 +12,17 @@ if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] ; then
     exit 1
 fi
 
-eject "$HAL_PROP_BLOCK_DEVICE" > /dev/null 2>&1
+RESULT=$(eject "$HAL_PROP_BLOCK_DEVICE" 2>&1)
 if [ $? -ne 0 ]; then
-    echo "org.freedesktop.Hal.Device.Volume.EjectFailed" >&2
-    echo "$HAL_PROP_BLOCK_DEVICE" >&2
+    case "$RESULT" in
+	*busy*)
+	    echo "org.freedesktop.Hal.Device.Volume.Busy" >&2
+	    echo "Device is busy." >&2
+	    ;;
+	*)
+	    echo "org.freedesktop.Hal.Device.Volume.UnknowFailure" >&2
+	    echo "Unknown failure." >&2
+    esac
     exit 1
 fi
 

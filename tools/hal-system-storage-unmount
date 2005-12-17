@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 #
@@ -14,14 +14,25 @@ fi
 
 if [ "$HAL_PROP_VOLUME_IS_MOUNTED" != "true" ]; then
     echo "org.freedesktop.Hal.Device.Volume.NotMounted" >&2
-    echo "$HAL_PROP_VOLUME_MOUNT_POINT" >&2
+    echo "Device is not mounted." >&2
     exit 1
 fi
 
-umount "$HAL_PROP_VOLUME_MOUNT_POINT" > /dev/null 2>&1 || true
+RESULT=$(umount "$HAL_PROP_VOLUME_MOUNT_POINT" 2>&1)
 if [ $? -ne 0 ]; then
-    echo "org.freedesktop.Hal.Device.Volume.UnmountFailed" >&2
-    echo "$HAL_PROP_VOLUME_MOUNT_POINT" >&2
+    case "$RESULT" in
+	*busy*)
+	    echo "org.freedesktop.Hal.Device.Volume.Busy" >&2
+	    echo "Device is busy." >&2
+	    ;;
+	*"not mounted"*)
+	    echo "org.freedesktop.Hal.Device.Volume.NotMounted" >&2
+	    echo "Device is not mounted." >&2
+	    ;;
+	*)
+	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
+	    echo "Unknown failure." >&2
+    esac
     exit 1
 fi
 

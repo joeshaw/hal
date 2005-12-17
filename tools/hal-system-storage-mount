@@ -23,7 +23,7 @@ fi
 # check if device is already mounted
 if [ "$HAL_PROP_VOLUME_IS_MOUNTED" = "true" ]; then
     echo "org.freedesktop.Hal.Device.Volume.AlreadyMounted" >&2
-    echo "$HAL_PROP_VOLUME_MOUNT_POINT" >&2
+    echo "Device is already mounted." >&2
     exit 1
 fi
 
@@ -55,7 +55,7 @@ fi
 case "$GIVEN_MOUNTPOINT" in
     *[!A-Za-z0-9_\-\+:]*)
 	echo "org.freedesktop.Hal.Device.Volume.InvalidMountpoint" >&2
-	echo "" >&2
+	echo "The mountpoint is invalid." >&2
 	exit 1
 	;;
 esac
@@ -68,8 +68,8 @@ if [ "$GIVEN_MOUNTTYPE" != "" ]; then
 	    MOUNTTYPE="subfs"
 	    ;;
 	*)
-	    echo "org.freedesktop.Hal.Device.Volume.InvalidMountType" >&2
-	    echo "" >&2
+	    echo "org.freedesktop.Hal.Device.Volume.InvalidFilesystemType" >&2
+	    echo "Invalid filesystem type." >&2
 	    exit 1
    esac
 fi
@@ -112,7 +112,7 @@ if [ "$GIVEN_MOUNTOPTIONS" != "" ]; then
     done
 fi
 
-# special handling for certain filesystems
+# special options handling for certain filesystems
 case "$MOUNTTYPE" in
     vfat)
 	MOUNTOPTIONS="$MOUNTOPTIONS,quiet,shortname=winnt,uid=$HAL_METHOD_INVOKED_BY_UID"
@@ -146,18 +146,25 @@ fi
 
 if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
     echo "org.freedesktop.Hal.Device.Volume.FailedToCreateMountpoint" >&2
-    echo "$MOUNT_ROOT/$MOUNTPOINT" >&2
+    echo "Failed to create moutpoint $MOUNT_ROOT/$MOUNTPOINT." >&2
     exit 1
 fi
 
 # mount and return status
-mount -o "noexec,nosuid,nodev$MOUNTOPTIONS" -t "$MOUNTTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
+RESULT=$(mount -o "noexec,nosuid,nodev$MOUNTOPTIONS" -t "$MOUNTTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" 2>&1)
 if [ $? -ne 0 ]; then
+    case "$RESULT" in
+	*"unknown filesystem"*)
+	    echo "org.freedesktop.Hal.Device.Volume.UnknownFilesystemType" >&2
+	    echo "Invalid filesystem type." >&2
+	    ;;
+	*)
+	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
+	    echo "Failed to mount device." >&2
+    esac
     if [ -n "$MOUNTPOINT_CREATED" ]; then
 	rmdir "$MOUNT_ROOT/$MOUNTPOINT"
     fi
-    echo "org.freedesktop.Hal.Device.Volume.MountFailed" >&2
-    echo "$MOUNT_ROOT/$MOUNTPOINT" >&2
     exit 1
 fi
 
