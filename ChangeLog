@@ -1,5 +1,13 @@
 2005-12-20  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Remove HAL created mountpoints on HAL startup.
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi:
+	* tools/Makefile.am:
+	* tools/callouts/hal-system-storage-cleanup-mountpoints:
+
+2005-12-20  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Switch extended attributes use to .created-by-hal file to
 	mark created mountpoints for removal on unmount.
 	* tools/hal-system-storage-mount:

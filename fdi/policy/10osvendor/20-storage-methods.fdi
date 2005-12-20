@@ -2,6 +2,9 @@
 
 <deviceinfo version="0.2">
   <device>
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+      <append key="info.callouts.add" type="strlist">hal-system-storage-cleanup-mountpoints</append>
+    </match>
     <match key="volume.fsusage" string="filesystem">
       <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
 
