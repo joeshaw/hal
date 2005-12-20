@@ -141,7 +141,7 @@ fi
 if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
     MOUNTPOINT_CREATED=1
     mkdir "$MOUNT_ROOT/$MOUNTPOINT"
-    attr -s HAL_MOUNTPOINT -V "$HAL_PROP_INFO_UDI" "$MOUNT_ROOT/$MOUNTPOINT"  > /dev/null 2>&1
+    touch "$MOUNT_ROOT/$MOUNTPOINT/.created-by-hal"
 fi
 
 if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then

@@ -1,3 +1,10 @@
+2005-12-20  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Switch extended attributes use to .created-by-hal file to
+	mark created mountpoints for removal on unmount.
+	* tools/hal-system-storage-mount:
+	* tools/hal-system-storage-unmount:
+
 2005-12-18  Danny Kukawka  <danny.kukawka@web.de>
 
 	* tools/Makefile.am: added simple check of scripts for correct bash 

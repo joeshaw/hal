@@ -37,7 +37,9 @@ if [ $? -ne 0 ]; then
 fi
 
 # remove directory only if HAL has created it
-attr -q -g HAL_MOUNTPOINT "$HAL_PROP_VOLUME_MOUNT_POINT" > /dev/null 2>&1 || exit 0
-rmdir --ignore-fail-on-non-empty "$HAL_PROP_VOLUME_MOUNT_POINT"
+if [ -e $HAL_PROP_VOLUME_MOUNT_POINT/.created-by-hal ]; then
+  rm -f $HAL_PROP_VOLUME_MOUNT_POINT/.created-by-hal
+  rmdir --ignore-fail-on-non-empty "$HAL_PROP_VOLUME_MOUNT_POINT"
+fi
 
 exit 0
