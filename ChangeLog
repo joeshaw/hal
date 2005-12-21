@@ -1,3 +1,11 @@
+2005-12-21  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Move callout one level up.
+
+	* tools/Makefile.am:
+	* tools/callouts/hal-system-storage-cleanup-mountpoints:
+	* tools/hal-system-storage-cleanup-mountpoints:
+
 2005-12-20  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Remove HAL created mountpoints on HAL startup.
