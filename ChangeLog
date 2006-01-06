@@ -1,3 +1,9 @@
+2006-01-06  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/blockdev.c: (hotplug_event_begin_add_blockdev):
+	Set 'storage.drive_type' to 'disk' for new TYPE_RBC devices 
+	(e.g. FireWire Disks) from kernel >= 2.6.14
+
 2006-01-06  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Add "at_console" restrictions for storage methods.

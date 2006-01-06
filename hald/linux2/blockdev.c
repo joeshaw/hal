@@ -807,7 +807,11 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 			/* These magic values are documented in the kernel source */
 			switch (type) {
-			case 0:	/* Disk */
+			case 0:	 /* Disk */
+			case 14: /* TYPE_RBC (Reduced Block Commands) from kernel >= 2.6.14 
+				  * Simple Direct Access Device, set it to disk (this should be
+				  * Firewire Disks), for more see kernel code and comments 
+				  */
 				hal_device_property_set_string (d, "storage.drive_type", "disk");
 				break;
 
