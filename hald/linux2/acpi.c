@@ -101,6 +101,8 @@ battery_refresh_poll (HalDevice *d)
 					  "state", "charging state", 0, "charging", TRUE);
 	hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", path,
 					  "state", "charging state", 0, "discharging", TRUE);
+	hal_util_set_string_elem_from_file (d, "battery.charge_level.capacity_state", path, 
+					    "state", "capacity state", 0, TRUE);
 	/*
 	 * we'll use the .reporting prefix as we don't know
 	 * if this data is energy (mWh) or unit enery (mAh)

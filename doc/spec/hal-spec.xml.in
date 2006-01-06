@@ -4498,12 +4498,12 @@
 	      </entry>
 	    </row>   
 	    <row>
-              <entry><literal>battery.charge_voltage.current</literal> (int)</entry>
+              <entry><literal>battery.voltage.current</literal> (int)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
 	        The voltage level currently emitted by the battery.
-		Measured in <literal>"battery.charge_level.unit"</literal> 
+		Measured in <literal>"battery.voltage.unit"</literal> 
 		units.
 	      </entry>
 	    </row>
