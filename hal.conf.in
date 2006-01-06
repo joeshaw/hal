@@ -40,6 +40,13 @@
   </policy>
 
   <policy context="default">
+    <deny send_interface="org.freedesktop.Hal.Device.Volume"/>
+  </policy>
+  <policy at_console="true">
+    <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
+  </policy>
+
+  <policy context="default">
     <deny send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
   </policy>
   <policy at_console="true">

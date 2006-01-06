@@ -1,3 +1,9 @@
+2006-01-06  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add "at_console" restrictions for storage methods.
+
+	* hal.conf.in:
+
 2006-01-05  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Add scsi_generic devices.
