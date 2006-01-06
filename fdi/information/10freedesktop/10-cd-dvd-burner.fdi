@@ -18,6 +18,14 @@
         <merge key="storage.cdrom.dvdr" type="bool">false</merge>
         <merge key="storage.cdrom.dvdram" type="bool">false</merge>
       </match>
+      
+    <!-- Handle TEAC CD-R55S, taken from :
+         http://lists.freedesktop.org/archives/hal/2005-November/003925.html -->
+      <match key="storage.vendor" string="TEAC">
+        <match key="storage.model" string="CD-R55S">
+          <merge key="storage.cdrom.cdr" type="bool">true</merge>
+        </match>
+      </match>
 
   </device>
 </deviceinfo>
