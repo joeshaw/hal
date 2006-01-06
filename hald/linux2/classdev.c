@@ -314,6 +314,43 @@ net_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+scsi_generic_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL)
+		goto out;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.category", "scsi_generic");
+	hal_device_add_capability (d, "scsi_generic");
+	hal_device_property_set_string (d, "info.product", "SCSI Generic Interface");
+	hal_device_property_set_string (d, "scsi_generic.device", device_file);
+
+out:
+	return d;
+}
+
+static gboolean
+scsi_generic_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_scsi_generic",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
 {
 	HalDevice *d;
@@ -946,6 +983,16 @@ static ClassDevHandler classdev_handler_net =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_scsi_generic =
+{ 
+	.subsystem    = "scsi_generic",
+	.add          = scsi_generic_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = scsi_generic_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler classdev_handler_scsi_host = 
 { 
 	.subsystem    = "scsi_host",
@@ -1020,6 +1067,7 @@ static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_input,
 	&classdev_handler_bluetooth,
 	&classdev_handler_net,
+	&classdev_handler_scsi_generic,
 	&classdev_handler_scsi_host,
 	&classdev_handler_usbclass,
 	&classdev_handler_sound,

@@ -1,3 +1,10 @@
+2006-01-05  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add scsi_generic devices.
+
+	* hald/linux2/classdev.c: (scsi_generic_add),
+	(scsi_generic_compute_udi):
+
 2005-12-21  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Move callout one level up.
