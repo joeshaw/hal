@@ -1,5 +1,10 @@
 2006-01-06  Danny Kukawka  <danny.kukawka@web.de>
 
+	* doc/spec/hal-spec.xml.in: fixed type of volume.policy.mount_option
+	from string to bool as in the code/existing fdi-files.
+
+2006-01-06  Danny Kukawka  <danny.kukawka@web.de>
+
 	* fdi/information/10freedesktop/10-cd-dvd-burner.fdi:
 	Added missdetected TEAC CD-R55S to list of broken CD/DVD burner,
 	from: http://lists.freedesktop.org/archives/hal/2005-November/003925.html

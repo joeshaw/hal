@@ -5210,7 +5210,7 @@
 	      </entry>
             </row>
             <row>
-              <entry><literal>volume.policy.mount_option.*</literal> (string)</entry>
+              <entry><literal>volume.policy.mount_option.*</literal> (bool)</entry>
               <entry></entry>
               <entry>No</entry>
               <entry>
