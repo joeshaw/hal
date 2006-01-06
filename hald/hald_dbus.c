@@ -2579,6 +2579,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 	int *stderr_fd;
 	const char *sender;
 	char *extra_env[2];
+	char uid_export[128];
 
 	/* add calling uid */
 	extra_env[0] = NULL;
@@ -2590,8 +2591,6 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 		dbus_error_init (&error);
 		uid = dbus_bus_get_unix_user (connection, sender, &error);
 		if (!dbus_error_is_set (&error)) {
-			char uid_export[128];
-
 			sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", uid);
 			extra_env[0] = uid_export;
 			extra_env[1] = NULL;

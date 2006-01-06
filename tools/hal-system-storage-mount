@@ -163,6 +163,7 @@ if [ $? -ne 0 ]; then
 	    echo "Failed to mount device." >&2
     esac
     if [ -n "$MOUNTPOINT_CREATED" ]; then
+	rm -f "$MOUNT_ROOT/$MOUNTPOINT/.created-by-hal"
 	rmdir "$MOUNT_ROOT/$MOUNTPOINT"
     fi
     exit 1

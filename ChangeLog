@@ -1,3 +1,11 @@
+2006-01-04  Aaron Bockover  <aaron@aaronbock.net>
+
+	* hald/hald_dbus.c (hald_exec_method): move uid_export to root scope
+	in function to avoid corruption
+
+	* tools/hal-system-storage-mount: remove .created-by-hal before
+	removing mount directory in case where mount fails
+
 2006-01-06  Danny Kukawka  <danny.kukawka@web.de>
 
 	* doc/spec/hal-spec.xml.in: fixed type of volume.policy.mount_option
