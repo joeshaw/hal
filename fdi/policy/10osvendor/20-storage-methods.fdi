@@ -19,6 +19,42 @@
       <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist"></append>
       <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+
+      <!-- allow these mount options for all file systems -->
+      <append key="volume.mount.valid_options" type="strlist">ro</append>
+      <append key="volume.mount.valid_options" type="strlist">sync</append>
+      <append key="volume.mount.valid_options" type="strlist">dirsync</append>
+      <append key="volume.mount.valid_options" type="strlist">noatime</append>
+      <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
+      <append key="volume.mount.valid_options" type="strlist">noexec</append>
+      <append key="volume.mount.valid_options" type="strlist">quiet</append>
+
+      <append key="volume.mount.valid_other_fs" type="strlist">subfs</append>
+
+      <!-- allow these mount options for vfat -->
+      <match key="volume.fstype" string="vfat">
+	<append key="volume.mount.valid_options" type="strlist">utf8</append>
+	<append key="volume.mount.valid_options" type="strlist">shortname=</append>
+	<append key="volume.mount.valid_options" type="strlist">codepage=</append>
+	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+	<append key="volume.mount.valid_options" type="strlist">umask=</append>
+	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+      </match>
+
+      <!-- udf -->
+      <match key="volume.fstype" string="udf">
+	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+	<append key="volume.mount.valid_options" type="strlist">umask=</append>
+      </match>
+
+      <!-- iso9660 -->
+      <match key="volume.fstype" string="iso9660">
+	<append key="volume.mount.valid_options" type="strlist">utf8</append>
+	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+	<append key="volume.mount.valid_options" type="strlist">mode=</append>
+	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+      </match>
+
     </match>
   </device>
 </deviceinfo>

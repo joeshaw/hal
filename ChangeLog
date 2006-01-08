@@ -1,3 +1,18 @@
+2006-01-08  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Populate the new
+	property volume.mount.valid_options
+
+	* tools/hal-system-storage-mount: Don't add any options at all (we
+	used to add e.g. quiet,shortname=winnt,uid=$UID for vfat and others)
+	as this is now the responsibility of the client (e.g. gnome-mount).
+
+	Use the white-list from the new property volume.mount.valid_options
+	and perform special handling for the entry "uid=".
+
+	* tools/hal-system-storage-eject: Also attempt to remove directory
+	on eject
+
 2006-01-04  Aaron Bockover  <aaron@aaronbock.net>
 
 	* hald/hald_dbus.c (hald_exec_method): move uid_export to root scope

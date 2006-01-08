@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
+# Copyright (C) 2006, David Zeuthen <david@fubar.dk>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2.
@@ -24,6 +25,12 @@ if [ $? -ne 0 ]; then
 	    echo "Unknown failure." >&2
     esac
     exit 1
+fi
+
+# remove directory only if HAL has created it
+if [ -e $HAL_PROP_VOLUME_MOUNT_POINT/.created-by-hal ]; then
+  rm -f $HAL_PROP_VOLUME_MOUNT_POINT/.created-by-hal
+  rmdir --ignore-fail-on-non-empty "$HAL_PROP_VOLUME_MOUNT_POINT"
 fi
 
 exit 0
