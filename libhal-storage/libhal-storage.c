@@ -1490,6 +1490,8 @@ libhal_drive_find_all_volumes (LibHalContext *hal_ctx, LibHalDrive *drive, int *
 		result[*num_volumes] = strdup (udis[i]);
 		*num_volumes = (*num_volumes) + 1;
 	}
+	/* set last element (above removed UDI) to NULL for libhal_free_string_array()*/
+	result[*num_volumes] = NULL;
 
 out:
 	libhal_free_string_array (udis);

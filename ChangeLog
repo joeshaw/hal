@@ -1,5 +1,11 @@
 2006-01-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* libhal-storage/libhal-storage.c: (libhal_drive_find_all_volumes):
+	added slightly adopted patch from Chris Spiegel <l@happyjack.org> 
+	to fix fd.o bug #5279 (added NULL termination of array).
+
+2006-01-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* tools/lshal.c: (dump_children): removed unneeded code, (main):
 	added more informative error message if connection to hald fails.
 
