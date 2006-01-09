@@ -201,9 +201,6 @@ static void
 dump_children (char *udi, int num_devices, struct Device *devices, int depth)
 {
 	int i;
-	DBusError error;
-
-	dbus_error_init (&error);
 
 	for (i = 0; i < num_devices; i++) {
 		if (!udi) {
@@ -667,6 +664,8 @@ main (int argc, char *argv[])
 	if (!libhal_ctx_init (hal_ctx, &error)) {
 		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n",
 			 error.name, error.message);
+		fprintf (stderr, "Could not initialise connection to hald. \n "
+				 "Normally this mean the HAL daemon (hald) is not running or not ready.\n");
 		return 1;
 	}
 

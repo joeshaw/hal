@@ -1,3 +1,8 @@
+2006-01-09  Danny Kukawka  <danny.kukawka@web.de>
+
+	* tools/lshal.c: (dump_children): removed unneeded code, (main):
+	added more informative error message if connection to hald fails.
+
 2006-01-08  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Populate the new
