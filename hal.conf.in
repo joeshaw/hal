@@ -25,31 +25,27 @@
            receive_sender="org.freedesktop.Hal"/>
   </policy>
 
+  <!-- Default policy for the exported interfaces -->
   <policy context="default">
     <deny send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
-  </policy>
-  <policy at_console="true">
-    <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
-  </policy>
-
-  <policy context="default">
     <deny send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
-  </policy>
-  <policy at_console="true">
-    <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
-  </policy>
-
-  <policy context="default">
     <deny send_interface="org.freedesktop.Hal.Device.Volume"/>
-  </policy>
-  <policy at_console="true">
-    <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
-  </policy>
-
-  <policy context="default">
     <deny send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
   </policy>
+
+  <!-- This will not work if pam_console support is not enabled -->
   <policy at_console="true">
+    <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
+    <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
+    <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
+    <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
+  </policy>
+
+  <!-- You can change this to a more suitable user, or make per-group -->
+  <policy user="0">
+    <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
+    <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
+    <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
   </policy>
 

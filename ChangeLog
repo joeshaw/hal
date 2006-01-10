@@ -1,3 +1,11 @@
+2006-01-08  Richard Hughes <richard@hughsie.com>
+
+	* hal.conf.in: Add a fallback for the root user for distros that do
+	not have working at_console support. Also refactor these a little to
+	make updating easier, and to stop the multiple matches overhead.
+	We use user="0" because some paranoid system administrators rename 
+	the user for uid 0 and make a dummy user named root.
+
 2006-01-09  Danny Kukawka  <danny.kukawka@web.de>
 
 	* libhal-storage/libhal-storage.c: (libhal_drive_find_all_volumes):
