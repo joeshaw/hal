@@ -1,3 +1,8 @@
+2006-01-11  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/addons/addon-hid-ups.c: Also add battery.reporting.*
+	properties
+
 2006-01-10  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-system-storage-mount: Fix a potential security hole where

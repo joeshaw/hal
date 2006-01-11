@@ -166,6 +166,12 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 							ctx, udi, "battery.charge_level.percentage", uref.value, &error);
 						libhal_device_set_property_string (
 							ctx, udi, "battery.charge_level.unit", "percent", &error);
+						libhal_device_set_property_int (
+							ctx, udi, "battery.reporting.current", uref.value, &error);
+						libhal_device_set_property_int (
+							ctx, udi, "battery.reporting.percentage", uref.value, &error);
+						libhal_device_set_property_string (
+							ctx, udi, "battery.reporting.unit", "percent", &error);
 						break;
 
 					case UPS_RUNTIME_TO_EMPTY:
@@ -228,6 +234,10 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 							ctx, udi, "battery.charge_level.design", uref.value, &error);
 						libhal_device_set_property_int (
 							ctx, udi, "battery.charge_level.last_full", uref.value, &error);
+						libhal_device_set_property_int (
+							ctx, udi, "battery.reporting.design", uref.value, &error);
+						libhal_device_set_property_int (
+							ctx, udi, "battery.reporting.last_full", uref.value, &error);
 						break;
 
 					default:
@@ -303,6 +313,10 @@ main (int argc, char *argv[])
 						ctx, udi, "battery.charge_level.current", ev[i].value, &error);
 					libhal_device_set_property_int (
 						ctx, udi, "battery.charge_level.percentage", ev[i].value, &error);
+					libhal_device_set_property_int (
+						ctx, udi, "battery.reporting.current", ev[i].value, &error);
+					libhal_device_set_property_int (
+						ctx, udi, "battery.reporting.percentage", ev[i].value, &error);
 					break;
 					
 				case UPS_RUNTIME_TO_EMPTY:
