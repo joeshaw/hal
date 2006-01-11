@@ -1,3 +1,10 @@
+2006-01-10  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-system-storage-mount: Fix a potential security hole where
+	the user could pass e.g. umask=`/bin/evil` and thus execute /bin/evil
+	with root priviliges. Also require /bin/bash instead of just /bin/sh.
+	Reported by Kay Sievers <kay.sievers@vrfy.org>.
+
 2006-01-08  Richard Hughes <richard@hughsie.com>
 
 	* hal.conf.in: Add a fallback for the root user for distros that do

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # Copyright (C) 2006, David Zeuthen <david@fubar.dk>
@@ -106,10 +106,10 @@ if [ "$GIVEN_MOUNTOPTIONS" != "" ]; then
 			fi
 		    fi
 		    		    
-		    # make sure the part after the '=' don't contain any commas otherwise an attacker may
-		    # pass e.g. umask=0600,suid,dev and this will get merged into $MOUNTOPTIONS - just replace
-		    # ',' with '_'
-		    MODIFIED_OPTION=${OPTION//,/_}
+		    # Only allow ^a-zA-Z0-9_= in the string because otherwise an attacker may
+		    # pass e.g. umask=0600,suid,dev or umask=`/bin/evil` and this will get merged
+		    # into $MOUNTOPTIONS - Simply replace illegal characters with an underscore
+		    MODIFIED_OPTION=${OPTION//[^a-zA-Z0-9_=]/_}
 		    MOUNTOPTIONS="$MOUNTOPTIONS,$MODIFIED_OPTION"
 		    OPTION_WAS_OK="1"
 		fi
