@@ -1,3 +1,13 @@
+2006-01-11  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Don't trust any user input, replace all suspicious chars with '_'.
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: add
+	volume.unmount.valid_options
+	* tools/hal-system-storage-eject:
+	* tools/hal-system-storage-mount:
+	* tools/hal-system-storage-unmount: allow "lazy" to be passed
+
 2006-01-11  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-hid-ups.c: Also add battery.reporting.*

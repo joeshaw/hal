@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 #
@@ -18,7 +18,48 @@ if [ "$HAL_PROP_VOLUME_IS_MOUNTED" != "true" ]; then
     exit 1
 fi
 
-RESULT=$(umount "$HAL_PROP_VOLUME_MOUNT_POINT" 2>&1)
+# read parameters
+# "lazy\tforce\n"
+# Only allow ^a-zA-Z0-9_= in the string because otherwise someone may
+# pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
+
+read GIVEN_UNMOUNTOPTIONS
+GIVEN_UNMOUNTOPTIONS=${GIVEN_UNMOUNTOPTIONS//[^a-zA-Z0-9_=[:space:]]/_}
+
+if [ "$GIVEN_UNMOUNTOPTIONS" != "" ]; then
+    for OPTION in $GIVEN_UNMOUNTOPTIONS; do
+	OPTION_WAS_OK="0"
+	for VALID_OPTION in $HAL_PROP_VOLUME_UNMOUNT_VALID_OPTIONS; do
+	    if [ "$OPTION" == "$VALID_OPTION" ]; then
+		OPTION_WAS_OK="1"
+		break
+	    fi
+	done
+
+	if [ "$OPTION_WAS_OK" == "1" ]; then
+		case "$OPTION" in
+		    "lazy")
+			UNMOUNTOPTIONS="$UNMOUNTOPTIONS -l"
+			OPTION_WAS_OK="1"
+			;;
+		    "force")
+			UNMOUNTOPTIONS="$UNMOUNTOPTIONS -f"
+			OPTION_WAS_OK="1"
+			;;
+		    *)
+			echo "org.freedesktop.Hal.Device.Volume.UnsupportedUnmountOption" >&2
+			echo "The option '$OPTION' is not supported" >&2
+			exit 1
+		esac
+	else
+		echo "org.freedesktop.Hal.Device.Volume.InvalidUnmountOption" >&2
+		echo "The option '$OPTION' is invalid" >&2
+		exit 1
+	fi
+    done
+fi
+
+RESULT=$(umount $UNMOUNTOPTIONS "$HAL_PROP_VOLUME_MOUNT_POINT" 2>&1)
 if [ $? -ne 0 ]; then
     case "$RESULT" in
 	*busy*)

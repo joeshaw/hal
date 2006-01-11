@@ -13,11 +13,11 @@
       <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-mount</append>
 
       <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Unmount</append>
-      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist"></append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-unmount</append>
 
       <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
-      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist"></append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
 
       <!-- allow these mount options for all file systems -->
@@ -54,6 +54,9 @@
 	<append key="volume.mount.valid_options" type="strlist">mode=</append>
 	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
       </match>
+
+      <!-- allow these unmount options -->
+      <append key="volume.unmount.valid_options" type="strlist">lazy</append>
 
     </match>
   </device>
