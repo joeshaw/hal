@@ -2577,6 +2577,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 	DBusMessageIter iter;
 	int stdin_fd;
 	int *stderr_fd;
+	ssize_t written;
 	const char *sender;
 	char *extra_env[2];
 	char uid_export[128];
@@ -2707,7 +2708,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 	if (hal_util_helper_invoke_with_pipes (execpath, extra_env, d, 
 					       (gpointer) message, (gpointer) stderr_fd, 
 					       hald_exec_method_cb, 0, &stdin_fd, NULL, stderr_fd) != NULL) {
-		write (stdin_fd, stdin, strlen (stdin));
+		written = write (stdin_fd, stdin, strlen (stdin));
 		close (stdin_fd);
 	}
 

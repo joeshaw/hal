@@ -90,6 +90,7 @@ main (int argc, char *argv[])
 	char *nbuf;
 	int dmipipe[2];
 	int nullfd;
+	int tmp_ret;
 	FILE *f;
 	int dmiparser_state = DMIPARSER_STATE_IGNORE;
 
@@ -118,7 +119,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	pipe (dmipipe);	
+	tmp_ret = pipe (dmipipe);	
 	f = fdopen (dmipipe[0], "r");
 	nullfd = open ("/dev/null", O_RDONLY);
 	

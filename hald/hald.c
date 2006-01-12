@@ -4,6 +4,7 @@
  * hald.c : main startup for HAL daemon
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Danny Kukawka, <danny.kukawka@web.de>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -240,6 +241,7 @@ static GIOChannel *sigterm_iochn;
 static void 
 handle_sigterm (int value)
 {
+	ssize_t written;
 	static char marker[1] = {'S'};
 
 	/* write a 'S' character to the other end to tell about
@@ -248,7 +250,7 @@ handle_sigterm (int value)
 	 * defer this since UNIX signal handlers are evil
 	 *
 	 * Oh, and write(2) is indeed reentrant */
-	write (sigterm_unix_signal_pipe_fds[1], marker, 1);
+	written = write (sigterm_unix_signal_pipe_fds[1], marker, 1);
 }
 
 static gboolean
@@ -516,6 +518,7 @@ main (int argc, char *argv[])
 		int child_pid;
 		int dev_null_fd;
 		int pf;
+		ssize_t written;
 		char pid[9];
 		
 		HAL_INFO (("Will daemonize"));
@@ -569,7 +572,7 @@ main (int argc, char *argv[])
 		/* Make a new one */
 		if ((pf= open (HALD_PID_FILE, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0644)) > 0) {
 			snprintf (pid, sizeof(pid), "%lu\n", (long unsigned) getpid ());
-			write (pf, pid, strlen(pid));
+			written = write (pf, pid, strlen(pid));
 			close (pf);
 			atexit (delete_pid);
 		}
@@ -650,6 +653,7 @@ next:
 void 
 osspec_probe_done (void)
 {
+	ssize_t written;
 	char buf[1] = {0};
 
 	HAL_INFO (("Device probing completed"));
@@ -660,7 +664,7 @@ osspec_probe_done (void)
 	}
 
 	/* tell parent to exit */
-	write (startup_daemonize_pipe[1], buf, sizeof (buf));
+	written = write (startup_daemonize_pipe[1], buf, sizeof (buf));
 	close (startup_daemonize_pipe[0]);
 	close (startup_daemonize_pipe[1]);
 

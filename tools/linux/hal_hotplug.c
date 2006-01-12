@@ -156,6 +156,7 @@ main (int argc, char *argv[], char *envp[])
 	 * hotplug event handler will screw us otherwise */
 	if (strcmp (subsystem, "net") == 0) {
 		FILE *f;
+		size_t read;
 		char buf[32];
 		char path[PATH_MAX];
 
@@ -164,7 +165,7 @@ main (int argc, char *argv[], char *envp[])
 			strcat_len (path, "/ifindex");
 			if ((f = fopen (path, "r")) != NULL) {
 				memset (buf, 0, sizeof (buf));
-				fread (buf, sizeof (buf) - 1, 1, f);
+				read = fread (buf, sizeof (buf) - 1, 1, f);
 				fclose (f);
 				net_ifindex = atoi(buf);
 			}

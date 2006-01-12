@@ -1,3 +1,14 @@
+2006-01-12  Danny Kukawka  <danny.kukawka@web.de>
+
+	Fixed compiler warnings if compile with flag warn_unused_result.
+	
+	* hald/device_info.c: (process_fdi_file):
+	* hald/hald.c: (handle_sigterm), (main), (osspec_probe_done):
+	* hald/hald_dbus.c: (hald_exec_method):
+	* hald/linux2/osspec.c: (set_suspend_hibernate_keys):
+	* hald/linux2/probing/probe-smbios.c: (main):
+	* tools/linux/hal_hotplug.c: (main):
+
 2006-01-11  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Don't trust any user input, replace all suspicious chars with '_'.

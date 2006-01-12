@@ -4,6 +4,7 @@
  * osspec.c : New and improved HAL backend for Linux 2.6
  *
  * Copyright (C) 2004 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Danny Kukawka, <danny.kukawka@web.de>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -539,6 +540,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 {
 	int can_suspend;
 	int can_hibernate;
+	ssize_t read;
 	unsigned int len;
 	char *poweroptions;
 	FILE *fp;
@@ -554,7 +556,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 	}
 	poweroptions = NULL;
 	len = 0;
-	getline (&poweroptions, &len, fp);
+	read = getline (&poweroptions, &len, fp);
 	fclose (fp);
 	if (poweroptions == NULL) {
 		HAL_WARNING (("Contents of /sys/power/state invalid"));
