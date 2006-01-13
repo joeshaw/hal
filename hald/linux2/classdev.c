@@ -514,6 +514,84 @@ usbraw_compute_udi (HalDevice *d)
 			      hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+video4linux_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL)
+		goto out;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.category", "video4linux");
+	hal_device_add_capability (d, "video4linux");
+	hal_device_property_set_string (d, "info.product", "Video Device");
+	hal_device_property_set_string (d, "video4linux.device", device_file);
+
+out:
+	return d;
+}
+
+static gboolean
+video4linux_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi), "%s_video4linux",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+dvb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+
+	d = NULL;
+
+	if (physdev == NULL || sysfs_path_in_devices == NULL)
+		goto out;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.category", "dvb");
+	hal_device_add_capability (d, "dvb");
+	hal_device_property_set_string (d, "info.product", "DVB Device");
+	hal_device_property_set_string (d, "dvb.device", device_file);
+
+out:
+	return d;
+}
+
+static gboolean
+dvb_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi), "%s_dvb",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
 }
 
 
@@ -1059,6 +1137,26 @@ static ClassDevHandler classdev_handler_usbraw =
 	.remove       = classdev_remove
 };
 
+static ClassDevHandler classdev_handler_video4linux =
+{ 
+	.subsystem    = "video4linux",
+	.add          = video4linux_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = video4linux_compute_udi,
+	.remove       = classdev_remove
+};
+
+static ClassDevHandler classdev_handler_dvb =
+{ 
+	.subsystem    = "dvb",
+	.add          = dvb_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = dvb_compute_udi,
+	.remove       = classdev_remove
+};
+
 static ClassDevHandler classdev_handler_sound = 
 { 
 	.subsystem    = "sound",
@@ -1117,6 +1215,8 @@ static ClassDevHandler *classdev_handlers[] = {
 	&classdev_handler_scsi_host,
 	&classdev_handler_usbclass,
 	&classdev_handler_usbraw,
+	&classdev_handler_video4linux,
+	&classdev_handler_dvb,
 	&classdev_handler_sound,
 	&classdev_handler_serial,
 	&classdev_handler_tape,

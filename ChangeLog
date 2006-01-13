@@ -1,5 +1,16 @@
 2006-01-13  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/linux2/classdev.c: (usbraw_compute_udi), (video4linux_add),
+	(video4linux_compute_udi), (dvb_add), (dvb_compute_udi): Add device
+	objects for video and dvb devices, to have a way for applications to
+	find the associated device nodes. Meaningful properties need to be
+	added by someone who knows about this device class.
+
+	* tools/device-manager/Representation.py: Add match to show icon
+	in hal-device-manager.
+
+2006-01-13  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/linux2/classdev.c: (usbraw_add), (usbraw_compute_udi): Add
 	"usbraw" device object, that contains the name of the device node
 	to catch for libusb access.

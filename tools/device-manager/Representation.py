@@ -77,7 +77,9 @@ class Representation:
             icon = self.icons["keyboard"]
         elif cat=="pcmcia_socket":
             icon = self.icons["cardbus"]
-        elif cat=="multimedia":
+        elif cat=="video4linux":
+            icon = self.icons["video"]
+        elif cat=="dvb":
             icon = self.icons["video"]
         elif cat=="camera":
             icon = self.icons["camera"]
