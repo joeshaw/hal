@@ -136,6 +136,11 @@
 	    <merge key="volume.policy.desired_mount_point" type="string">ipod</merge>
 	  </match>
 	  
+	  <!-- Attempt mount point 'psp' for Sony PSP -->
+	  <match key="@block.storage_device:portable_audio_player.type" string="psp">
+	    <merge key="volume.policy.desired_mount_point" type="string">psp</merge>
+	  </match>
+	  
 	  <!-- whitelist of partition table id's, if from a msdos partition table -->
 	  <match key="volume.partition.msdos_part_table_type" exists="true">
 	    <!-- Default to no mount and punch holes -->

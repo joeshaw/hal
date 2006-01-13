@@ -1,5 +1,17 @@
 2006-01-13  Danny Kukawka  <danny.kukawka@web.de>
 
+	Fixed fd.o bug #5137 with slightly adopted and split off patch 
+	from James Henstridge <james@jamesh.id.au>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: added 
+	Sony PSP to usb music players.
+
+	* fdi/policy/10osvendor/10-storage-policy.fdi: added 
+	desired_mount_point for Sony PSP.
+
+
+2006-01-13  Danny Kukawka  <danny.kukawka@web.de>
+
 	* fdi/information/10freedesktop/10-usb-music-players.fdi:
 	revert my patch from 2005-08-31 and added property info.category 
 	back
