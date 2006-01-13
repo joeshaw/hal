@@ -1,3 +1,13 @@
+2006-01-13  Danny Kukawka  <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi:
+	revert my patch from 2005-08-31 and added property info.category 
+	back
+
+	* fdi/policy/10osvendor/10-storage-policy.fdi: added by John (J5) 
+	Palmieri proposed fix and changed match from info.category to
+	info.capabilities. 
+
 2006-01-13  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/classdev.c: (usbraw_compute_udi), (video4linux_add),

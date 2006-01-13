@@ -17,7 +17,7 @@
 
   <device>
     <!-- Whitelist bus types of storage devices we care about  -->
-    <match key="info.category" string="storage">
+    <match key="info.capabilities" contains="storage">
       <match key="storage.bus" string="mmc">
 	<merge key="storage.policy.should_mount" type="bool">true</merge>      
       </match>

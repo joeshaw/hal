@@ -8,6 +8,7 @@
       <match key="storage.vendor" contains="Apple">
 	<match key="storage.model" contains="iPod">
 	  <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.access_method" type="string">storage</merge>
           <merge key="portable_audio_player.type" type="string">ipod</merge>
           <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -24,6 +25,7 @@
 	<match key="@storage.physical_device:usb.vendor_id" int="0x066f">
           <match key="@storage.physical_device:usb.product_id" int="0x8000">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -37,6 +39,7 @@
 	<match key="@storage.physical_device:usb.vendor_id" int="0x045a">
           <match key="@storage.physical_device:usb.product_id" int="0x5042">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -54,6 +57,7 @@
           <!-- iFP 100 UMS (supports application/ogg only after firmware upgrade)-->
 	  <match key="@storage.physical_device:usb.product_id" int="0x1101">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -64,6 +68,7 @@
 	  <!-- iFP 300 UMS (supports application/ogg only after firmware upgrade)-->
 	  <match key="@storage.physical_device:usb.product_id" int="0x1103">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -74,6 +79,7 @@
 	  <!-- iFP 500 UMS (supports application/ogg only after firmware upgrade)-->
 	  <match key="@storage.physical_device:usb.product_id" int="0x1105">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+	    <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -84,6 +90,7 @@
           <!-- iFP 700 UMS-->
 	  <match key="@storage.physical_device:usb.product_id" int="0x1107">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -95,6 +102,7 @@
           <!-- iFP 800 UMS-->
           <match key="@storage.physical_device:usb.product_id" int="0x1108">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -106,6 +114,7 @@
           <!-- iFP 900 UMS-->
           <match key="@storage.physical_device:usb.product_id" int="0x1109">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -117,6 +126,7 @@
           <!-- iFP 1000 UMS-->
           <match key="@storage.physical_device:usb.product_id" int="0x1110">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -128,6 +138,7 @@
           <!-- N10 UMS-->
           <match key="@storage.physical_device:usb.product_id" int="0x1111">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -139,6 +150,7 @@
           <!-- H10 20GB UMS-->
           <match key="@storage.physical_device:usb.product_id" int="0x2001">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -150,6 +162,7 @@
           <!-- H10 5GB UMS-->
           <match key="@storage.physical_device:usb.product_id" int="0x2002">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -163,6 +176,7 @@
           <!-- iGP 100 -->
           <match key="@storage.physical_device:usb.product_id" int="0x2001">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -173,6 +187,7 @@
           <!-- iHP-100,115 -->
           <match key="@storage.physical_device:usb.product_id" int="0x3001">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -184,6 +199,7 @@
           <!-- HP-120,140 -->
           <match key="@storage.physical_device:usb.product_id" int="0x3002">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -195,6 +211,7 @@
           <!-- H320, H340 -->
           <match key="@storage.physical_device:usb.product_id" int="0x3003">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
             <merge key="portable_audio_player.type" type="string">generic</merge>
             <merge key="portable_audio_player.access_method" type="string">storage</merge>
             <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
@@ -229,6 +246,7 @@
 	<!-- iFP 100 IMM (supports application/ogg only after firmware upgrade)-->
 	<match key="usb.product_id" int="0x1001">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -238,6 +256,7 @@
 	<!-- iFP 300 IMM (supports application/ogg only after firmware upgrade)-->
 	<match key="usb.product_id" int="0x1003">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -247,6 +266,7 @@
 	<!-- iFP 500 IMM (supports application/ogg only after firmware upgrade)-->
 	<match key="usb.product_id" int="0x1005">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -256,6 +276,7 @@
         <!-- iFP 700 IMM-->
 	<match key="usb.product_id" int="0x1007">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -266,6 +287,7 @@
         <!-- iFP 800 IMM-->
         <match key="usb.product_id" int="0x1008">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -276,6 +298,7 @@
         <!-- iFP 900 IMM-->
         <match key="usb.product_id" int="0x1009">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -286,6 +309,7 @@
         <!-- iFP 1000 IMM-->
         <match key="usb.product_id" int="0x1010">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -296,6 +320,7 @@
         <!-- N10 IMM-->
         <match key="usb.product_id" int="0x1011">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -306,6 +331,7 @@
         <!-- H10 20GB MTP-->
         <match key="usb.product_id" int="0x2101">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -316,6 +342,7 @@
         <!-- H10 5GB MTP-->
         <match key="usb.product_id" int="0x2102">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -326,6 +353,7 @@
         <!-- H10 5,6GB MTP-->
         <match key="usb.product_id" int="0x2105">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
@@ -338,6 +366,7 @@
 	<!-- iDP 100 UMS-->
 	<match key="usb.product_id" int="0x0001">
           <append key="info.capabilities" type="strlist">portable_audio_player</append>
+          <merge key="info.category" type="string">portable_audio_player</merge>
           <merge key="portable_audio_player.type" type="string">generic</merge>
           <merge key="portable_audio_player.access_method" type="string">user</merge>
           <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
