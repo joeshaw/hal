@@ -1,3 +1,7 @@
+2006-01-13  Danny Kukawka  <danny.kukawka@web.de>
+
+	* configure.in: added uk.po to configure
+
 2006-01-12  Danny Kukawka  <danny.kukawka@web.de>
 
 	Fixed compiler warnings if compile with flag warn_unused_result.
