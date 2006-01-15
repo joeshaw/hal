@@ -1094,6 +1094,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		}
 	}
 
+	vol->fsusage = LIBHAL_VOLUME_USAGE_UNKNOWN;
 	if (vol_fsusage_textual != NULL) {
 		if (strcmp (vol_fsusage_textual, "filesystem") == 0) {
 			vol->fsusage = LIBHAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM;

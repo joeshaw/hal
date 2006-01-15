@@ -1,3 +1,12 @@
+2006-01-15  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c (libhal_volume_from_udi): Auch,
+	volume.fsusage may be an empty string and our string extraction
+	macro then yields NULL. Hence vol->fsusage is never set and just
+	left as a 0 from the memset meaning _USAGE_MOUNTABLE_FILESYSTEM.
+	Thus, gnome-vfs thinks the volume is mountable and displays it.
+	Fix this by initializing vol->fsuage to _USAGE_UNKNOWN.
+
 2006-01-13  Danny Kukawka  <danny.kukawka@web.de>
 
 	Fixed fd.o bug #5137 with slightly adopted and split off patch 
