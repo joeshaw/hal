@@ -28,6 +28,13 @@ if [ "$HAL_PROP_VOLUME_IS_MOUNTED" = "true" ]; then
     exit 1
 fi
 
+# check if device should be ignored
+if [ "$HAL_PROP_VOLUME_IGNORE" = "true" ]; then
+    echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
+    echo "Device has volume.ignore set to TRUE. Refusing to mount." >&2
+    exit 1
+fi
+
 # read parameters
 # "MyDisk\n"
 # "fuse\n"

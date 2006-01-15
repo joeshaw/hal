@@ -3,6 +3,13 @@
 <deviceinfo version="0.2">
   <device>
 
+    <!-- Should probably move to separate file for firewire devices -->
+    <match key="storage.bus" string="ieee1394">
+      <match key="storage.model" string="FWIRE CF READER">
+        <merge key="storage.drive_type" type="string">compact_flash</merge>
+      </match>
+    </match>
+
     <!-- Generic catch all -->
     <match key="storage.bus" string="usb">
       <match key="storage.model" contains="HS-CF">

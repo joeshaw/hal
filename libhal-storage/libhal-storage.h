@@ -288,6 +288,8 @@ LibHalVolumeDiscType libhal_volume_get_disc_type              (LibHalVolume     
 
 int               libhal_volume_get_msdos_part_table_type     (LibHalVolume     *volume);
 
+dbus_bool_t       libhal_volume_should_ignore 	              (LibHalVolume     *volume);
+
 char             *libhal_volume_policy_compute_size_as_string (LibHalVolume     *volume);
 
 char             *libhal_volume_policy_compute_display_name   (LibHalDrive         *drive, 

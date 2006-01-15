@@ -714,6 +714,9 @@ struct LibHalVolume_s {
 	char *mount_filesystem;
 	dbus_bool_t should_mount;
 
+	dbus_bool_t ignore_volume;
+
+
 	char mount_options[MOUNT_OPTIONS_SIZE];
 };
 
@@ -1054,6 +1057,8 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_mounted",         vol->is_mounted);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fsusage",            vol_fsusage_textual);
+
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.ignore",             vol->ignore_volume);
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_disc",            vol->is_disc);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.disc.type",          disc_type_textual);
@@ -1452,6 +1457,12 @@ LibHalVolumeDiscType
 libhal_volume_get_disc_type (LibHalVolume *volume)
 {
 	return volume->disc_type;
+}
+
+dbus_bool_t
+libhal_volume_should_ignore (LibHalVolume     *volume)
+{
+	return volume->ignore_volume;
 }
 
 char ** 

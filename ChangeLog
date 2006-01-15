@@ -1,5 +1,24 @@
 2006-01-15  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-system-storage-mount: Respect volume.ignore and refuse to
+	mount if set to TRUE
+
+	* libhal-storage/libhal-storage.h: Export libhal_volume_should_ignore
+	as a public method (API addition, no breakage)
+
+	* libhal-storage/libhal-storage.c (libhal_volume_should_ignore): New
+	function.
+	(libhal_volume_from_udi): Set vol->ignore_volume from property
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Introduce volume.ignore
+	as a way for vendors and admins to signify a volume should be ignored.
+
+	* fdi/information/10freedesktop/10-usb-card-readers.fdi: Add an entry
+	for my Firewire card reader (yes, it works perfectly on my PB 12" G4
+	running Fedora Rawhide - it's fast too.. vroom vroom). 
+
+2006-01-15  David Zeuthen  <davidz@redhat.com>
+
 	* libhal-storage/libhal-storage.c (libhal_volume_from_udi): Auch,
 	volume.fsusage may be an empty string and our string extraction
 	macro then yields NULL. Hence vol->fsusage is never set and just
