@@ -2507,6 +2507,18 @@
           <tbody>
 
             <row>
+              <entry><literal>volume.ignore</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This is a hint to software higher in the stack
+              that this volume should be ignored. If TRUE, the volume
+              should be invisible in the UI and mount wrappers should
+              refuse to mount it on behalf on an unprivileged
+              user. This is useful for hiding e.g. firmware partitions
+              (e.g. bootstrap on Mac's) and OS reinstall partitions on
+              e.g. OEM systems.</entry>
+            </row>
+            <row>
               <entry><literal>volume.is_mounted</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>

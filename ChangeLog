@@ -1,5 +1,9 @@
 2006-01-15  David Zeuthen  <davidz@redhat.com>
 
+	* doc/spec/hal-spec.xml.in: Add docs for volume.ignore
+
+2006-01-15  David Zeuthen  <davidz@redhat.com>
+
 	* tools/hal-system-storage-mount: Respect volume.ignore and refuse to
 	mount if set to TRUE
 
