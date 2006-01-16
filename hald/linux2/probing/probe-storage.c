@@ -323,11 +323,12 @@ main (int argc, char *argv[])
 					libhal_device_set_property_int (ctx, udi, "storage.cdrom.write_speed", write_speed, &error);
 					if (write_speeds != NULL)
 					{
-						char *wspeed;
-						wspeed = strtok (write_speeds, ",");
-						while (wspeed != NULL) {
-							libhal_device_property_strlist_append (ctx, udi, "storage.cdrom.write_speeds", wspeed, &error);
-							wspeed = strtok (NULL, ",");
+						gchar **wspeeds;
+						int i;
+						wspeeds = g_strsplit_set (write_speeds, ",", -1);
+						for (i = 0 ; wspeeds[i] != NULL; i++) {
+					                if (strlen (wspeeds[i]) > 0)
+								libhal_device_property_strlist_append (ctx, udi, "storage.cdrom.write_speeds", wspeeds[i], &error);
 						}
 						free (write_speeds);
 					}

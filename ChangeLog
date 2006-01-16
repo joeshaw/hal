@@ -1,5 +1,10 @@
 2006-01-16  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/probing/probe-storage.c: (main): relaced usage of
+	strtok with g_strsplit_set.
+
+2006-01-16  Danny Kukawka  <danny.kukawka@web.de>
+
 	* tools/hal-system-power-hibernate, tools/hal-system-power-suspend:
 	Changed call of powersave fom call binary to call powersave dbus 
 	interface to be able to differ between root and normal user (patch
