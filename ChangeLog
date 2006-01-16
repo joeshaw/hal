@@ -1,5 +1,12 @@
 2006-01-16  Danny Kukawka  <danny.kukawka@web.de>
 
+	* tools/hal-system-power-hibernate, tools/hal-system-power-suspend:
+	Changed call of powersave fom call binary to call powersave dbus 
+	interface to be able to differ between root and normal user (patch
+	from Holger Macht <hmacht@suse.de>) if HAL run as root.
+
+2006-01-16  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/spec/hal-spec.xml.in: added storage.cdrom.write_speeds to spec 
 
 	* hald/linux2/probing/probe-storage.c, 

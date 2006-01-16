@@ -1,5 +1,9 @@
 #!/bin/sh
 
+POWERSAVED_SUSPEND2DISK="dbus-send --system --dest=com.novell.powersave \
+                         --print-reply /com/novell/powersave \
+                         com.novell.powersave.action.SuspendToDisk"
+
 unsupported() {
 	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
 	echo No hibernate script found >&2
@@ -9,7 +13,7 @@ unsupported() {
 #SuSE and ALTLinux only support powersave
 if [ -f /etc/altlinux-release ] || [ -f "/etc/SuSE-release" ] ; then
 	if [ -x /usr/bin/powersave ] ; then
-		/usr/bin/powersave --suspend-to-disk
+	        $POWERSAVED_SUSPEND2DISK
 		RET=$?
 	else
 		unsupported
@@ -27,7 +31,7 @@ elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
 #Other distros just need to have *any* tools installed
 else
 	if [ -x "/usr/bin/powersave" ] ; then
-		/usr/bin/powersave --suspend-to-disk
+	        $POWERSAVED_SUSPEND2DISK
 		RET=$?
 	elif [ -x "/usr/sbin/pmi" ] ; then
 		/usr/sbin/pmi action hibernate force
