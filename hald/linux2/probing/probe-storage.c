@@ -4,6 +4,7 @@
  * probe-storage.c : Probe storage devices
  *
  * Copyright (C) 2004 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005 Danny Kukawka, <danny.kukawka@web.de>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -237,6 +238,7 @@ main (int argc, char *argv[])
 		if (strcmp (drive_type, "cdrom") == 0) {
 			int capabilities;
 			int read_speed, write_speed;
+			char *write_speeds;
 			
 			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
@@ -315,10 +317,21 @@ main (int argc, char *argv[])
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.support_media_changed", FALSE, &error);
 			}
 			
-			if (get_read_write_speed(fd, &read_speed, &write_speed) >= 0) {
+			if (get_read_write_speed(fd, &read_speed, &write_speed, &write_speeds) >= 0) {
 				libhal_device_set_property_int (ctx, udi, "storage.cdrom.read_speed", read_speed, &error);
-				if (write_speed > 0)
+				if (write_speed > 0) {
 					libhal_device_set_property_int (ctx, udi, "storage.cdrom.write_speed", write_speed, &error);
+					if (write_speeds != NULL)
+					{
+						char *wspeed;
+						wspeed = strtok (write_speeds, ",");
+						while (wspeed != NULL) {
+							libhal_device_property_strlist_append (ctx, udi, "storage.cdrom.write_speeds", wspeed, &error);
+							wspeed = strtok (NULL, ",");
+						}
+						free (write_speeds);
+					}
+				}	
 				else
 					libhal_device_set_property_int (ctx, udi, "storage.cdrom.write_speed", 0, &error);
 			}

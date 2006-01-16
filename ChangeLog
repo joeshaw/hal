@@ -1,3 +1,14 @@
+2006-01-16  Danny Kukawka  <danny.kukawka@web.de>
+
+	* doc/spec/hal-spec.xml.in: added storage.cdrom.write_speeds to spec 
+
+	* hald/linux2/probing/probe-storage.c, 
+	hald/linux2/probing/linux_dvd_rw_utils.h, 
+	hald/linux2/probing/linux_dvd_rw_utils.c: (int_compare),
+	(get_write_speeds), (get_read_write_speed): added slightly adopted patch
+	from Ryan Lortie <desrt@desrt.ca> (changed from comma-separated string 
+	to strlist) to add list of write speeds supported by a CD/DVD Burner.
+
 2006-01-15  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Add docs for volume.ignore

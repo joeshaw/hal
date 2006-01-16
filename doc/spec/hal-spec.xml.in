@@ -3343,6 +3343,12 @@
               <entry>Yes</entry>
               <entry>The maximum writing speed, in kb/s</entry>
             </row>
+            <row>
+              <entry><literal>storage.cdrom.write_speeds</literal> (strlist)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>By the device supported write speeds in kb/s</entry>
+            </row>
 
           </tbody>
         </tgroup>

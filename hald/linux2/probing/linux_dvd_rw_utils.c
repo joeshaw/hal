@@ -325,8 +325,97 @@ pull_page2a_from_fd (int fd)
 	return page2A;
 }
 
+static int
+int_compare (const void *a, const void *b)
+{
+	/* descending order */
+	return *((int *) b) - *((int *) a);
+}
+
+/* gets the list of supported write speeds.  in the event
+ * that anything goes wrong, returns NULL.
+ */
+static char *
+get_write_speeds (const unsigned char *p, int length, int max_speed)
+{
+	char *result, *str;
+	int nr_records;
+	int *tmpspeeds;
+	int i, j;
+
+	result = NULL;
+
+	/* paranoia */
+	if (length < 32)
+		return NULL;
+
+	nr_records = p[30] << 8 | p[31];
+
+	/* paranoia */
+	if (length < 32 + 4 * nr_records)
+		return NULL;
+
+	tmpspeeds = malloc (nr_records * sizeof (int));
+
+	for (i = 0; i < nr_records; i++)
+	{
+		tmpspeeds[i] = p[4*i + 34] << 8 | p[4*i + 35];
+
+		/* i'm not sure how likely this is to show up, but it's
+		 * definitely wrong.  if we see it, abort.
+		 */
+		if (tmpspeeds[i] == 0)
+			goto free_tmpspeeds;
+	}
+
+	/* sort */
+	qsort (tmpspeeds, nr_records, sizeof (int), int_compare);
+
+	/* uniq */
+	for (i = j = 0; i < nr_records; i++)
+	{
+		tmpspeeds[j] = tmpspeeds[i];
+
+		/* make sure we don't look past the end of the array */
+		if (i >= (nr_records - 1) || tmpspeeds[i+1] != tmpspeeds[i])
+			j++;
+	}
+
+	/* j is now the number of unique entries in the array */
+	if (j == 0)
+		/* no entries?  this isn't right. */
+		goto free_tmpspeeds;
+
+	/* sanity check: the first item in the descending order
+	 * list ought to be the highest speed as detected through
+	 * other means
+	 */
+	if (tmpspeeds[0] != max_speed)
+		/* sanity check failed. */
+		goto free_tmpspeeds;
+
+	/* our values are 16-bit.  8 bytes per value
+	 * is more than enough including space for
+	 * ',' and '\0'.  we know j is not zero.
+	 */
+	result = str = malloc (8 * j);
+
+	for (i = 0; i < j; i++)
+	{
+		if (i > 0)
+			*(str++) = ',';
+
+		str += sprintf (str, "%d", tmpspeeds[i]);
+	}
+
+free_tmpspeeds:
+	free (tmpspeeds);
+
+	return result;
+}
+
 int
-get_read_write_speed (int fd, int *read_speed, int *write_speed)
+get_read_write_speed (int fd, int *read_speed, int *write_speed, char **write_speeds)
 {
 	unsigned char *page2A;
 	int len, hlen;
@@ -334,6 +423,7 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 
 	*read_speed = 0;
 	*write_speed = 0;
+	*write_speeds = NULL;
 
 	page2A = pull_page2a_from_fd (fd);
 	if (page2A == NULL) {
@@ -363,6 +453,8 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed)
 	    *read_speed = p[8] << 8 | p[9];
 	else
 	    *read_speed = 0;
+
+	*write_speeds = get_write_speeds (p, len, *write_speed);
 
 	free (page2A);
 
