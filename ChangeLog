@@ -1,3 +1,7 @@
+2006-01-16  David Zeuthen  <davidz@redhat.com>
+
+	* NEWS: Update for 0.5.6
+
 2006-01-16  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/probing/probe-storage.c: (main): relaced usage of

@@ -1,4 +1,72 @@
 ==========
+HAL 0.5.6 "Leave the gun. Take the cannoli."
+==========
+
+Released January 16, 2006
+
+ - new volume_id from udev upstream (Kay Sievers)
+ - listen to udev via a socket (Kay Sievers)
+ - Another USB card reader common theme (Pozsar Balazs)
+ - volume_id version 55 to fix strange FAT detection issues (Kay Sievers)
+ - Sony Ericsson mobile phones with Memory Stick (Pro Duo) fdi (Danny Kukawka)
+ - Samsung Yepp YP-ST5 fdi (Davide Ferrari)
+ - Use hash table for calculated charge rate (Danny Kukawka)
+ - Add checks to power management scripts (Danny Kukawka)
+ - Move scripts to $(datadir)/hal/scripts (Danny Kukawka)
+ - Fix for refreshing battery values on AC adapter transition (Richard Hughes)
+ - Add power_management.[can_suspend,can_hibernate] and remove the
+   power_management.is_enabled keys (Richard Hughes)
+ - Use the new poll-able /proc/mounts file from 2.6.15 (Kay Sievers)
+ - Allow strlists to be passed to method calls (Kay Sievers)
+ - Add Mount, Unmount, Eject methods to the new org.freedesktop.Hal.Device.
+   Volume interface (Kay Sievers)
+ - Update driver prop on physical device if class device binds (Kay Sievers)
+ - Force 'rate' to be zero if battery is neither charging nor 
+   discharging (Ryan Lortie)
+ - Fix our DTD file and add validation for fdi files (Artem Kachitchkine)
+ - Add Shutdown() and Reboot() methods (Richard Hughes)
+ - Add HAL_METHOD_INVOKED_BY_UID to method call environment (Kay Sievers)
+ - Switch from xattr to .create-by-hal-file at mount point to determine
+   if a mount point is created by HAL's Mount() method (Kay Sievers)
+ - Remove HAL-created mount points at startup (Kay Sievers)
+ - SCSI generic device recognizition (Kay Sievers)
+ - Restrict org.freedesktop.Hal.Device.Volume to the console user (Kay Sievers)
+ - Set drive_type to 'disk' for new TYPE_RBC (Firewire) devices (Danny Kukawka)
+ - Added TEAC CD-R55S to list of broken CD/DVD burner (Danny Kukawka)
+ - Move uid_export to root scope to avoid corruption (Aaron Bockover)
+ - Introduce volume.mount.valid_options and generalize mount 
+   script (David Zeuthen)
+ - Remove dead code in lshal (Danny Kukawka)
+ - Add neeeded NULL termination of an array (Chris Spiegel, fd.o #5279)
+ - Also let uid 0 invoke methods restricted to console user (Richard Hughes)
+ - Fix more vulnerabilities in script for Mount(), Unmount(), Eject()
+   (Kay Sievers, David Zeuthen)
+ - Add battery.reporting.* to UPS'es (David Zeuthen)
+ - Fixup a few compiler warnings (Danny Kukawka)
+ - UK translations (Ivan Petrouchtchak)
+ - V4L and DVB device recognizition (Kay Sievers)
+ - Match on info.capabilities, not info.category (John Palmieri)
+ - Sony PSP music player fdi file (James Henstridge, fd.o #5137)
+ - Fix incorrect reporting of volume.fsuage in libhal-storage (David Zeuthen)
+ - Introduce volume.ignore property, document it, make it available
+   in libhal-storage and make our Mount() script respect it (David Zeuthen)
+ - Add optical disc write speeds (Ryan Lortie, Danny Kukuwka)
+ - Use D-BUS calls for powersaved backend (Holger Macht)
+
+Requirements for HAL 0.5.6 "Leave the gun. Take the cannoli."
+
+ - Linux kernel  >= 2.6.15
+ - util-linux    >= 2.13
+ - bash          >= 2.0
+ - udev          >= 078       (using udevsend as hotplug multiplexer)
+ - dbus          >= 0.60      (with glib bindings)
+ - glib          >= 2.6.0
+ - expat         >= 1.95.8
+ - popt          >= 1.10.2    (optional)
+ - libusb        >= 0 0.1.10a (optional)
+ - dmidecode     >= 2.7       (optional)
+
+==========
 HAL 0.5.5.1
 ==========
 
