@@ -29,7 +29,7 @@ if [ $? -ne 0 ]; then
 	    echo "Device is busy." >&2
 	    ;;
 	*)
-	    echo "org.freedesktop.Hal.Device.Volume.UnknowFailure" >&2
+	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
 	    echo "Unknown failure." >&2
     esac
     exit 1
