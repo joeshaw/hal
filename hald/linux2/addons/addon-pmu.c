@@ -49,7 +49,6 @@ main (int argc, char *argv[])
 	char *udi;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	DBusConnection *conn;
 	int rd;
 	char buf[256];
 	int state;
@@ -66,15 +65,24 @@ main (int argc, char *argv[])
 		goto out;
 
 	dbus_error_init (&error);
-	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
+
+#if 0
+	{
+		DBusConnection *conn;
+		if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
+			goto out;
+		
+		if ((ctx = libhal_ctx_new ()) == NULL)
+			goto out;
+		if (!libhal_ctx_set_dbus_connection (ctx, conn))
+			goto out;
+		if (!libhal_ctx_init (ctx, &error))
+			goto out;
+	}
+#else
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
-	
-	if ((ctx = libhal_ctx_new ()) == NULL)
-		goto out;
-	if (!libhal_ctx_set_dbus_connection (ctx, conn))
-		goto out;
-	if (!libhal_ctx_init (ctx, &error))
-		goto out;
+#endif
 
 	/* initial state */
 	if ((strstate = getenv ("HAL_PROP_BUTTON_STATE_VALUE")) == NULL) {
@@ -98,10 +106,15 @@ main (int argc, char *argv[])
 		buf[1] = PMU_GET_COVER;
 
 		n = write (fd, buf, 2);
+
+		usleep (100 * 1000);
+
 		if (n == 2) {
 			rd = read (fd, buf, sizeof (buf));
 			if (rd <= 0) {
-				dbg ("Error reading from fd; read returned %d; err=%s", strerror (errno));
+				if (errno == EAGAIN)
+					goto tryagain;
+				dbg ("Error reading from fd; read returned %d; err=%s", errno, strerror (errno));
 				goto out;
 			}
 
@@ -131,8 +144,8 @@ main (int argc, char *argv[])
 
 			
 		}
-
-		sleep (1);
+	tryagain:
+		usleep (900 * 1000);
 	}
 
 
