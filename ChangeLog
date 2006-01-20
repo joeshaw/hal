@@ -1,5 +1,10 @@
 2006-01-20  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Add "flush"
+	as a valid option for FAT.
+
+2006-01-20  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/device_info.c: (resolve_udiprop_path), (handle_match):
 	* hald/linux2/blockdev.c: (hotplug_event_begin_add_blockdev):
 	* hald/linux2/physdev.c: (scsi_add): Add scsi.type, scsi.vendor,
