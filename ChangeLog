@@ -1,5 +1,10 @@
 2006-01-20  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi:
+	* tools/hal-system-storage-mount: kill subfs
+
+2006-01-20  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Add "flush"
 	as a valid option for FAT.
 

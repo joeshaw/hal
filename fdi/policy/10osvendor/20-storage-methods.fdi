@@ -45,8 +45,6 @@
       <append key="volume.mount.valid_options" type="strlist">noexec</append>
       <append key="volume.mount.valid_options" type="strlist">quiet</append>
 
-      <append key="volume.mount.valid_other_fs" type="strlist">subfs</append>
-
       <!-- allow these mount options for vfat -->
       <match key="volume.fstype" string="vfat">
 	<append key="volume.mount.valid_options" type="strlist">flush</append>

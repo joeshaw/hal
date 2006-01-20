@@ -78,9 +78,6 @@ MOUNTPOINT="$GIVEN_MOUNTPOINT"
 # pass only whitelisted types
 if [ "$GIVEN_MOUNTTYPE" != "" ]; then
     case "$GIVEN_MOUNTTYPE" in
-	subfs)
-	    MOUNTTYPE="subfs"
-	    ;;
 	*)
 	    echo "org.freedesktop.Hal.Device.Volume.InvalidFilesystemType" >&2
 	    echo "Invalid filesystem type." >&2
