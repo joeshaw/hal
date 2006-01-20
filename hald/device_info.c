@@ -190,7 +190,6 @@ resolve_udiprop_path (const char *path, const char *source_udi,
 		goto out;
 	}
 
-	
 	/* Start with the source udi */
 	strncpy (udi_result, source_udi, udi_result_size);
 
@@ -232,7 +231,7 @@ resolve_udiprop_path (const char *path, const char *source_udi,
 			strncpy (udi_result, newudi, udi_result_size);
 		} else {
 			/*HAL_INFO (("new_udi = '%s'", curtoken));*/
-			strncpy (udi_result, curtoken, udi_result_size);			
+			strncpy (udi_result, curtoken, udi_result_size);
 		}
 
 	}
@@ -527,7 +526,6 @@ handle_match (ParsingContext * pc, const char **attr)
 		}
 
 		/*HAL_INFO (("is_absolute=%d, should_be=%d, path='%s'", is_absolute_path, should_be_absolute_path, path));*/
-
 
 		if (should_be_absolute_path) {
 			if (is_absolute_path)

@@ -1,3 +1,11 @@
+2006-01-20  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/device_info.c: (resolve_udiprop_path), (handle_match):
+	* hald/linux2/blockdev.c: (hotplug_event_begin_add_blockdev):
+	* hald/linux2/physdev.c: (scsi_add): Add scsi.type, scsi.vendor,
+	scsi.model for the scsi device and merge these properties to the
+	storage device instead of using the "device" link in sysfs.
+
 2006-01-18  David Zeuthen  <david@fubar.dk>
 
 	* hald/linux2/addons/addon-pmu.c (main): Use a direct connection to

@@ -681,6 +681,7 @@ scsi_add (const gchar *sysfs_path, HalDevice *parent)
 	HalDevice *d;
 	const gchar *bus_id;
 	gint host_num, bus_num, target_num, lun_num;
+	int type;
 
 	if (parent == NULL) {
 		d = NULL;
@@ -702,8 +703,34 @@ scsi_add (const gchar *sysfs_path, HalDevice *parent)
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
-	/* guestimate product name */
 	hal_device_property_set_string (d, "info.product", "SCSI Device");
+
+	hal_util_set_string_from_file (d, "scsi.model", sysfs_path, "model");
+	hal_util_set_string_from_file (d, "scsi.vendor", sysfs_path, "vendor");
+	hal_util_get_int_from_file (sysfs_path, "type", &type, 0);
+	switch (type) {
+	case 0:
+		/* Disk */
+	case 14:
+		/* TYPE_RBC (Reduced Block Commands)
+		 * Simple Direct Access Device, set it to disk
+		 * (some Firewire Disks use it)
+		 */
+		hal_device_property_set_string (d, "scsi.type", "disk");
+		break;
+	case 1:
+		/* Tape */
+		hal_device_property_set_string (d, "scsi.type", "tape");
+		break;
+	case 4:
+		/* WORM */
+	case 5:
+		/* CD-ROM */
+		hal_device_property_set_string (d, "scsi.type", "cdrom");
+		break;
+	default:
+		hal_device_property_set_string (d, "scsi.type", "unknown");
+	}
 
 out:
 	return d;

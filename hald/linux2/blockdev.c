@@ -795,33 +795,14 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			}
 
 		} else if (strcmp (parent_bus, "scsi") == 0) {
-			gint type;
-
-			if (hal_util_set_string_from_file (d, "storage.vendor", sysfs_path, "device/vendor"))
-				hal_device_copy_property (d, "storage.vendor", d, "info.vendor");
-			if (hal_util_set_string_from_file (d, "storage.model", sysfs_path, "device/model"))
-				hal_device_copy_property (d, "storage.model", d, "info.product");
-
-			if (!hal_util_get_int_from_file (sysfs_path, "device/type", &type, 0))
+			if (strcmp (hal_device_property_get_string (parent, "scsi.type"), "unknown") == 0)
 				goto error;
+			hal_device_copy_property (parent, "scsi.type", d, "storage.drive_type");
+			hal_device_copy_property (parent, "scsi.vendor", d, "storage.vendor");
+			hal_device_copy_property (parent, "scsi.model", d, "storage.model");
 
-			/* These magic values are documented in the kernel source */
-			switch (type) {
-			case 0:	 /* Disk */
-			case 14: /* TYPE_RBC (Reduced Block Commands) from kernel >= 2.6.14 
-				  * Simple Direct Access Device, set it to disk (this should be
-				  * Firewire Disks), for more see kernel code and comments 
-				  */
-				hal_device_property_set_string (d, "storage.drive_type", "disk");
-				break;
-
-			case 5:	/* CD-ROM */
-				hal_device_property_set_string (d, "storage.drive_type", "cdrom");
-				break;
-
-			default:
-				goto error;
-			}
+			hal_device_copy_property (d, "storage.vendor", d, "info.vendor");
+			hal_device_copy_property (d, "storage.model", d, "info.product");
 
 			/* Check for USB floppy drive by looking at USB Mass Storage interface class
 			 * instead of Protocol: Uniform Floppy Interface (UFI) in /proc as we did before.
@@ -856,7 +837,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			no_partitions_hint = TRUE;
 			requires_eject = TRUE;
 		}
-
 
 		if (strcmp (hal_device_property_get_string (d, "storage.drive_type"), "floppy") == 0) {
 			no_partitions_hint = TRUE;
