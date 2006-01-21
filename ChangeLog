@@ -1,5 +1,10 @@
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Add HP_RECOVERY to
+	list of volumes to ignore
+
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Remove selinux detection as it is not used anywhere
 
 2006-01-21  David Zeuthen  <davidz@redhat.com>
