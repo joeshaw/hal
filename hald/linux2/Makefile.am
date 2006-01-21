@@ -26,9 +26,7 @@ libhald_linux2_la_SOURCES =					\
 	acpi.h			acpi.c				\
 	apm.h			apm.c				\
 	pmu.h			pmu.c				\
-	ids.h			ids.c				\
-	pcmcia_utils.h		pcmcia_utils.c			\
-	pcmcia_cs.h
+	ids.h			ids.c
 
 
 

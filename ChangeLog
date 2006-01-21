@@ -1,3 +1,16 @@
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Remove options for pcmcia as we now rely on sysfs on
+	Linux
+
+	* hald/linux2/Makefile.am (libhald_linux2_la_SOURCES): Remove
+	pcmcia_cs.h and pcmcia.utils.[ch]
+
+	* hald/linux2/pcmcia_cs.h, hald/linux2/pcmcia_utils.[ch]: Removed
+
+	* hald/linux2/physdev.c (pcmcia_add): Read properties from sysfs
+	instead of relying on e.g. /var/pcmcia/stab
+
 2006-01-21  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Remove hotplug helper and depend on udev passing events over

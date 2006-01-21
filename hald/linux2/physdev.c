@@ -56,8 +56,6 @@
 
 #include "ids.h"
 
-#include "pcmcia_utils.h"
-
 #include "osspec_linux.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -580,6 +578,8 @@ pcmcia_add (const gchar *sysfs_path, HalDevice *parent)
 	HalDevice *d;
 	const gchar *bus_id;
 	guint socket, function;
+	const char *prod_id1;
+	const char *prod_id2;
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
@@ -599,61 +599,35 @@ pcmcia_add (const gchar *sysfs_path, HalDevice *parent)
 	sscanf (bus_id, "%d.%d", &socket, &function);
 	hal_device_property_set_int (d, "pcmcia.socket_number", socket);
 
-	/* TODO: need to read this from sysfs instead of relying on stab */
-	{
-		pcmcia_card_info *info;
+	hal_util_set_string_from_file (d, "pcmcia.prod_id1", sysfs_path, "prod_id1");
+	hal_util_set_string_from_file (d, "pcmcia.prod_id2", sysfs_path, "prod_id2");
+	hal_util_set_string_from_file (d, "pcmcia.prod_id3", sysfs_path, "prod_id3");
+	hal_util_set_string_from_file (d, "pcmcia.prod_id4", sysfs_path, "prod_id4");
 
-		info = pcmcia_card_info_get (socket);
-		if (info != NULL) {
-			const char *type;
+	hal_util_set_int_from_file (d, "pcmcia.manf_id", sysfs_path, "manf_id", 16);
+	hal_util_set_int_from_file (d, "pcmcia.card_id", sysfs_path, "card_id", 16);
+	hal_util_set_int_from_file (d, "pcmcia.func_id", sysfs_path, "func_id", 16);
 
-			if (info->productid_1 != NULL && strlen (info->productid_1) > 0)
-				hal_device_property_set_string (d, "pcmcia.productid_1", info->productid_1);
-			else
-				hal_device_property_set_string (d, "pcmcia.productid_1", "");
-			if (info->productid_2 != NULL && strlen (info->productid_2) > 0)
-				hal_device_property_set_string (d, "pcmcia.productid_2", info->productid_2);
-			else
-				hal_device_property_set_string (d, "pcmcia.productid_2", "");
-			if (info->productid_3 != NULL && strlen (info->productid_3) > 0)
-				hal_device_property_set_string (d, "pcmcia.productid_3", info->productid_3);
-			else
-				hal_device_property_set_string (d, "pcmcia.productid_3", "");
-			if (info->productid_4 != NULL && strlen (info->productid_4) > 0)
-				hal_device_property_set_string (d, "pcmcia.productid_4", info->productid_4);
-			else
-				hal_device_property_set_string (d, "pcmcia.productid_4", "");
+	prod_id1 = hal_device_property_get_string (d, "pcmcia.prod_id1");
+	prod_id2 = hal_device_property_get_string (d, "pcmcia.prod_id2");
 
-			if ((type = pcmcia_card_type_string_from_type (info->type)))
-				hal_device_property_set_string (d, "pcmcia.function", type);
-			else
-				hal_device_property_set_string (d, "pcmcia.function", "");
-
-			hal_device_property_set_int (d, "pcmcia.manfid1", info->manfid_1);
-			hal_device_property_set_int (d, "pcmcia.manfid2", info->manfid_2);
-
-			/* Provide best-guess of vendor, goes in Vendor property */
-			if (info->productid_1 != NULL) {
-				hal_device_property_set_string (d, "info.vendor", info->productid_1);
-			} else {
-				gchar buf[50];
-				g_snprintf (buf, sizeof(buf), "Unknown (0x%04x)", info->manfid_1);
-				hal_device_property_set_string (d, "info.vendor", buf);
-			}
-
-			/* Provide best-guess of name, goes in Product property */
-			if (info->productid_2 != NULL) {
-				hal_device_property_set_string (d, "info.product", info->productid_2);
-			} else {
-				gchar buf[50];
-				g_snprintf (buf, sizeof(buf), "Unknown (0x%04x)", info->manfid_2);
-				hal_device_property_set_string (d, "info.product", buf);
-			}
-
-			pcmcia_card_info_free (info);
-		}
+	/* Provide best-guess of vendor, goes in Vendor property */
+	if (prod_id1 != NULL) {
+		hal_device_property_set_string (d, "info.vendor", prod_id1);
+	} else {
+		char buf[50];
+		g_snprintf (buf, sizeof(buf), "Unknown (0x%04x)", hal_device_property_get_int (d, "pcmcia.manf_id"));
+		hal_device_property_set_string (d, "info.vendor", buf);
 	}
 
+	/* Provide best-guess of name, goes in Product property */
+	if (prod_id2 != NULL) {
+		hal_device_property_set_string (d, "info.product", prod_id2);
+	} else {
+		char buf[50];
+		g_snprintf (buf, sizeof(buf), "Unknown (0x%04x)", hal_device_property_get_int (d, "pcmcia.card_id"));
+		hal_device_property_set_string (d, "info.product", buf);
+	}
 
 	return d;
 }

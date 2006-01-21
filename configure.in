@@ -82,22 +82,6 @@ if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
 fi
 
-AC_ARG_ENABLE(pcmcia-support,         [  --enable-pcmcia-support Extended PCMCIA card support],enable_pcmcia_support=yes,enable_pcmcia_support=no)
-if test "x$enable_pcmcia_support" = "xyes" ; then
-   AC_DEFINE(PCMCIA_SUPPORT_ENABLE,1,[Whether PCMCIA card workarounds should be used (for kernels that don't have a sysfsized PCMCIA layer)])
-fi
-AC_SUBST(PCMCIA_SUPPORT_ENABLE)
-AM_CONDITIONAL(PCMCIA_SUPPORT_ENABLE, test x$enable_pcmcia_support = xyes)
-
-AC_ARG_WITH(stab_file,[  --with-stab-file=<file>  PCMCIA socket table file (/var/lib/pcmcia/stab)])
-if test -z "$with_stab_file" ; then
-    PCMCIA_STAB_FILE=/var/lib/pcmcia/stab
-else
-    PCMCIA_STAB_FILE=$with_stab_file
-fi
-AC_SUBST(PCMCIA_STAB_FILE)
-AC_DEFINE_UNQUOTED(PCMCIA_STAB_FILE,"$PCMCIA_STAB_FILE", [PCMCIA socket table file])
-
 # ACPI event source
 AC_ARG_ENABLE(acpi-acpid, [  --disable-acpi-acpid     Use ACPI daemon event source],acpi_acpid=no,acpi_acpid=yes)
 if test "x$acpi_acpid" == "xyes" ; then
@@ -525,8 +509,6 @@ echo "
         acpi proc support:        ${acpi_proc}
         acpi daemon support:      ${acpi_acpid}
 
-        Extended PCMCIA support:  ${enable_pcmcia_support}
-        PCMCIA stab file:         ${PCMCIA_STAB_FILE}
         use libusb (for usb-csr): ${USE_LIBUSB}
 
         Maintainer mode:          ${USE_MAINTAINER_MODE}
