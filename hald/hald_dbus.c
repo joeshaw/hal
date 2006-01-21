@@ -1541,7 +1541,7 @@ device_query_capability (DBusConnection * connection,
 {
 	dbus_bool_t rc;
 	const char *udi;
-	const char *caps;
+	GSList *caps;
 	char *capability;
 	HalDevice *d;
 	DBusMessage *reply;
@@ -1574,22 +1574,17 @@ device_query_capability (DBusConnection * connection,
 		DIE (("No memory"));
 
 	rc = FALSE;
-	caps = hal_device_property_get_string (d, "info.capabilities");
+	caps = hal_device_property_get_strlist (d, "info.capabilities");
 	if (caps != NULL) {
-		char **capsv, **iter;
+		GSList *iter;
 
-		capsv = g_strsplit (caps, " ", 0);
-		for (iter = capsv; *iter != NULL; iter++) {
-			if (strcmp (*iter, capability) == 0) {
+		for (iter = caps; iter != NULL; iter=g_slist_next(iter)) {
+			if (strcmp (iter->data, capability) == 0) {
 				rc = TRUE;
 				break;
 			}
 		}
-
-		g_strfreev (capsv);
 	}
-
-	dbus_free (capability);
 
 	dbus_message_iter_init_append (reply, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &rc);

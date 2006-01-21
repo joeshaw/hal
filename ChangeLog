@@ -1,5 +1,15 @@
 2006-01-20  David Zeuthen  <davidz@redhat.com>
 
+	* hald/hald_dbus.c (device_query_capability): Yesterday while unit
+	testing my HAL wrapper I noticed that calling QueryCapability make
+	hald to quit. I looked at hald code and found the issues, you'll
+	find a patch attached that makes QueryCapability to work correctly
+	again. Basically it wasn't able to retrieve the capability
+	list (string vs string list) and the requested capability was
+	free'd when it shouldn't. Patch from Kevin Ottens <ervin@kde.org>.
+
+2006-01-20  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Add Eject method
 	for audio CD's. Patch from John Palmieri <johnp@redhat.com>.
 
