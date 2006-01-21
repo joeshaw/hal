@@ -486,6 +486,7 @@ hald/linux2/probing/Makefile
 hald/linux2/addons/Makefile
 hald/solaris/Makefile
 hald/haldaemon
+hald-runner/Makefile
 libhal/Makefile
 libhal-storage/Makefile
 tools/Makefile

@@ -66,6 +66,7 @@
 #include "../logger.h"
 #include "../hald.h"
 #include "../hald_dbus.h"
+#include "../hald_runner.h"
 #include "../device_info.h"
 #include "../util.h"
 
@@ -457,8 +458,9 @@ computer_probing_helper_done (HalDevice *d)
 }
 
 static void 
-computer_probing_pcbios_helper_done (HalDevice *d, gboolean timed_out, gint return_code, 
-				     gpointer data1, gpointer data2, HalHelperData *helper_data)
+computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type, 
+		                                 gint return_code, gchar **error, 
+				                             gpointer data1, gpointer data2)
 {
 	const char *chassis_type;
 	const char *system_manufacturer;
@@ -635,16 +637,15 @@ osspec_probe (void)
 
 	/* TODO: add prober for PowerMac's */
 	if (should_decode_dmi) {
-		if (hal_util_helper_invoke ("hald-probe-smbios", NULL, root, NULL, NULL,
-					    computer_probing_pcbios_helper_done, 
-					    HAL_HELPER_TIMEOUT) != NULL)
-			goto out;
-	}
+		hald_runner_run (root, "hald-probe-smbios", NULL,
+                         HAL_HELPER_TIMEOUT,
+                         computer_probing_pcbios_helper_done, 
+                         NULL, NULL);
+	} else {
+		/* no probing */
+		computer_probing_helper_done (root);
+  }
 
-	/* no probing or probing failed */
-	computer_probing_helper_done (root);
-out:
-	;
 }
 
 DBusHandlerResult

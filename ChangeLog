@@ -1,3 +1,57 @@
+2006-01-20  David Zeuthen  <davidz@redhat.com>
+
+	Great patch from Sjoerd Simons <sjoerd@luon.net>: As most people
+	probably know by now, various people don't really like that hal
+	running as root. We'd much rather see only a small process running
+	as root and the main hal process running unpriviledged. Which is
+	exactly what this patch does :)
+
+	How does it work? Just before drops it's root privs. a small
+	program is startup which will remain running as root and does the
+	real execution of the addons/probes/callouts on hals
+	behalf. Communication between hald and hald-runner is done via a
+	p2p dbus connection. Resulting in a process tree like this:
+
+	  hal       /usr/sbin/hald
+	  root      \_ /usr/lib/hal/hald-runner
+	  root          \_ /usr/lib/hal/hald-addon-acpi
+	  root          \_ /usr/lib/hal/hald-addon-storage
+	  root          \_ /usr/lib/hal/hald-addon-storage
+
+	The patch consists out of two parts. First the implementation of
+	hald-runner, which is about 700 lines of code. And then a part
+	transforming the hald code from the current spawning code in utils
+	to an interface that can talk to the runner.
+
+	* AUTHORS: Add Sjoerd Simons <sjoerd@luon.net>. Revise my own
+	email address.
+
+	* configure.in (AC_OUTPUT): Add hald-runner
+
+	* Makefile.am (SUBDIRS): Add hald-runner
+
+	* hald/Makefile.am (hald_SOURCES): add hald_runner.[ch]
+
+	* hald-runner/utils.c, hald-runner/utils.h, hald-runner/runner.c,
+	hald-runner/runner.h, hald-runner/main.c, hald-runner/Makefile.am,
+	hald/linux2/osspec.c, hald/linux2/classdev.c,
+	hald/linux2/blockdev.c, hald/util.[ch], hald/hald_dbus.c,
+	hald/hald.c, hald/hald_runner.[ch]: New and changed files with
+	slight changes. See the descriptive text above and discussion at
+	http://lists.freedesktop.org/archives/hal/2006-January/004327.html
+	for details. 
+	Changed function hald_runner_start_runner() in hald/hald_runner.c
+	to print out runner path and improve error handling when runner
+	is not found. Also removed dbus_server_unref (server) in 
+	handle_connection() in same file.
+
+	* hald/haldaemon.in: Remove --retain-privileges as this is no longer
+	needed
+
+	* hald/run-hald.sh, hald/debug-hald.sh, hald/valgrind-hald.sh:
+	Remove --retain-privileges and use --with-runner pointing to
+	../hald-runner/hald-runner
+
 2006-01-20  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* fdi/policy/10osvendor/20-storage-methods.fdi:
@@ -16,7 +70,7 @@
 	scsi.model for the scsi device and merge these properties to the
 	storage device instead of using the "device" link in sysfs.
 
-2006-01-18  David Zeuthen  <david@fubar.dk>
+2006-01-18  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/addons/addon-pmu.c (main): Use a direct connection to
 	the bus; sleep between writing and reading as otherwise we may get

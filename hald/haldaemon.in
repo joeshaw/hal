@@ -25,7 +25,7 @@ RETVAL=0
 
 start() {
     echo -n $"Starting HAL daemon: "
-    daemon --check $servicename $processname --retain-privileges
+    daemon --check $servicename $processname
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch @LOCALSTATEDIR@/lock/subsys/$servicename

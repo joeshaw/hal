@@ -46,6 +46,7 @@
 #include "logger.h"
 #include "osspec.h"
 #include "util.h"
+#include "hald_runner.h"
 
 static DBusConnection *dbus_connection = NULL;
 
@@ -2482,55 +2483,35 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 }
 
 static void
-hald_exec_method_cb (HalDevice *d, gboolean timed_out, gint return_code, 
-		     gpointer data1, gpointer data2, HalHelperData *helper_data)
+hald_exec_method_cb (HalDevice *d, guint32 exit_type, 
+                    gint return_code, gchar **error,
+                    gpointer data1, gpointer data2)
 {
 	dbus_uint32_t result;
-	DBusMessage *reply;
+	DBusMessage *reply = NULL;
 	DBusMessage *message;
 	DBusMessageIter iter;
-	int *stderr_fd;
-	char buf[512]; /* TODO: don't hardcode error message size */
-	char *exp_name;
-	char *exp_detail;
-
 	message = (DBusMessage *) data1;
-	stderr_fd = (int *) data2;
+  gchar *exp_name = NULL;
+  gchar *exp_detail = NULL;
 
-	exp_name = NULL;
-	exp_detail = NULL;
+	if (exit_type == HALD_RUN_SUCCESS && error != NULL) {
+    exp_name = error[0];
+    if (error[0] != NULL) {
+      exp_detail = error[1];
+    }
+    HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
+  }
 
-	/* read back possible error conditions from stderr */
-	if (stderr_fd != NULL) {
-		ssize_t num_read;
-
-		num_read = read (*stderr_fd, buf, sizeof (buf) - 2);
-		buf[sizeof (buf) - 2] = '\0';
-		buf[sizeof (buf) - 1] = '\0';
-		if (num_read > 0) {
-			char *p;
-			char *s;
-			p = buf;
-			for (s = p; *s != '\n' && *s != '\0'; s++)
-				;
-			if (*s != '\0') {
-				exp_name = g_strndup (p, s - p);
-				p = s + 1;
-				for (s = p; *s != '\n' && *s != '\0'; s++)
-					;
-				if (*s != '\0') {
-					exp_detail = g_strndup (p, s - p);
-				}
-			}
+  if (exit_type != HALD_RUN_SUCCESS) {
+		reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");
+		if (dbus_connection != NULL) {
+			if (!dbus_connection_send (dbus_connection, reply, NULL))
+				DIE (("No memory"));
 		}
-	}
-
-	if (exp_name != NULL && exp_detail != NULL) {
-		HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
-
-		/* throw exception */
-
-		reply = dbus_message_new_error (message, exp_name, exp_detail);
+		dbus_message_unref (reply);
+  } else if (exp_name != NULL && exp_detail != NULL) {
+    reply = dbus_message_new_error (message, exp_name, exp_detail);
 		if (reply == NULL) {
 			/* error name may be invalid - assume caller fucked up and use a generic HAL error name */
 			reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");
@@ -2562,22 +2543,17 @@ hald_exec_method_cb (HalDevice *d, gboolean timed_out, gint return_code,
 		dbus_message_unref (reply);
 	}
 
-	dbus_message_unref (message);
-	g_free (stderr_fd);
 	g_free (exp_name);
 	g_free (exp_detail);
+	dbus_message_unref (message);
 }
 
 static DBusHandlerResult
 hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message, const char *execpath)
 {
 	int type;
-	char *stdin;
 	GString *stdin_str;
 	DBusMessageIter iter;
-	int stdin_fd;
-	int *stderr_fd;
-	ssize_t written;
 	const char *sender;
 	char *extra_env[2];
 	char uid_export[128];
@@ -2700,21 +2676,15 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 		dbus_message_iter_next (&iter);
 	}
 
-	stdin = g_string_free (stdin_str, FALSE);
-
-	stderr_fd = (int *) g_new0 (int, 1);
-
 	/* no timeout */
-	if (hal_util_helper_invoke_with_pipes (execpath, extra_env, d, 
-					       (gpointer) message, (gpointer) stderr_fd, 
-					       hald_exec_method_cb, 0, &stdin_fd, NULL, stderr_fd) != NULL) {
-		written = write (stdin_fd, stdin, strlen (stdin));
-		close (stdin_fd);
-	}
-
+	hald_runner_run_method(d, 
+                         execpath, extra_env, 
+                         stdin_str->str, TRUE,
+                         0,
+                         hald_exec_method_cb,
+                         (gpointer) message, NULL);
 	dbus_message_ref (message);
-
-	g_free (stdin);
+	g_string_free (stdin_str, TRUE);
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 

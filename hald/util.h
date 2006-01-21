@@ -81,38 +81,6 @@ gboolean hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key,
 					   const gchar *linestart, guint elem, const gchar *expected, 
 					   gboolean reuse_file);
 
-struct HalHelperData_s;
-typedef struct HalHelperData_s HalHelperData;
-
-typedef void (*HalHelperTerminatedCB) (HalDevice *d, gboolean timed_out, gint return_code, 
-				       gpointer data1, gpointer data2, HalHelperData *helper_data);
-
-struct HalHelperData_s
-{
-	GPid pid;
-	guint timeout_watch_id;
-	guint child_watch_id;
-	HalHelperTerminatedCB cb;
-	gpointer data1;
-	gpointer data2;
-	HalDevice *d;
-
-	gboolean already_issued_callback;
-	gboolean already_issued_kill;
-};
-
-unsigned int hal_util_kill_all_helpers (void);
-
-HalHelperData  *hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
-					gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout);
-
-HalHelperData  *hal_util_helper_invoke_with_pipes (const gchar *command_line, gchar **extra_env, HalDevice *d, 
-						   gpointer data1, gpointer data2, HalHelperTerminatedCB cb, 
-						   guint timeout,
-						   int *standard_input, int *standard_output, int *standard_error);
-
-void hal_util_terminate_helper (HalHelperData *helper_data);
-
 gchar **hal_util_dup_strv_from_g_slist (GSList *strlist);
 
 typedef void (*HalCalloutsDone) (HalDevice *d, gpointer userdata1, gpointer userdata2);

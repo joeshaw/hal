@@ -65,6 +65,7 @@
 #include "../device_info.h"
 #include "../device_store.h"
 #include "../util.h"
+#include "../hald_runner.h"
 
 #include "osspec_linux.h"
 
@@ -1282,13 +1283,14 @@ out:
 }
 
 static void 
-add_classdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_code, 
-				  gpointer data1, gpointer data2, HalHelperData *helper_data)
+add_classdev_probing_helper_done (HalDevice *d, guint32 exit_type, 
+                                  gint return_code, char **error,
+                                  gpointer data1, gpointer data2) 
 {
 	void *end_token = (void *) data1;
 	ClassDevHandler *handler = (ClassDevHandler *) data2;
 
-	HAL_INFO (("entering; timed_out=%d, return_code=%d", timed_out, return_code));
+	HAL_INFO (("entering; exit_type=%d, return_code=%d", exit_type, return_code));
 
 	if (d == NULL) {
 		HAL_INFO (("Device object already removed"));
@@ -1297,7 +1299,7 @@ add_classdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	}
 
 	/* Discard device if probing reports failure */
-	if (return_code != 0) {
+	if (exit_type != HALD_RUN_SUCCESS || return_code != 0) {
 		hal_device_store_remove (hald_get_tdl (), d);
 		g_object_unref (d);
 		hotplug_event_end (end_token);
@@ -1350,20 +1352,16 @@ classdev_callouts_preprobing_done (HalDevice *d, gpointer userdata1, gpointer us
 		prober = NULL;
 	if (prober != NULL) {
 		/* probe the device */
-		if (hal_util_helper_invoke (prober, NULL, d, (gpointer) end_token, 
-					    (gpointer) handler, add_classdev_probing_helper_done, 
-					    HAL_HELPER_TIMEOUT) == NULL) {
-			hal_device_store_remove (hald_get_tdl (), d);
-			g_object_unref (d);
-			hotplug_event_end (end_token);
-		}
-		goto out;
+		hald_runner_run(d, 
+		                    prober, NULL, 
+		                    HAL_HELPER_TIMEOUT, 
+		                    add_classdev_probing_helper_done,
+		                    (gpointer) end_token, (gpointer) handler);
 	} else {
 		add_classdev_after_probing (d, handler, end_token);
-		goto out;
 	}
 out:
-	;
+  ;
 }
 
 void

@@ -7,5 +7,5 @@ export HAL_FDI_SOURCE_POLICY=../fdi/policy
 echo ========================================
 echo Just type \'run\' to start debugging hald
 echo ========================================
-gdb run --args ./hald --daemon=no --verbose=yes --retain-privileges
+gdb run --args ./hald --daemon=no --verbose=yes --with-runner=../hald-runner/hald-runner
 

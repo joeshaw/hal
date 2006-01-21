@@ -60,6 +60,7 @@
 #include "../device_info.h"
 #include "../hald_dbus.h"
 #include "../util.h"
+#include "../hald_runner.h"
 
 #include "osspec_linux.h"
 
@@ -269,15 +270,16 @@ generate_fakevolume_hotplug_event_add_for_storage_device (HalDevice *d)
 }
 
 static void 
-add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_code, 
-				  gpointer data1, gpointer data2, HalHelperData *helper_data)
+add_blockdev_probing_helper_done (HalDevice *d, guint32 exit_type, 
+                                  gint return_code, char **error,
+                                  gpointer data1, gpointer data2) 
 {
 	void *end_token = (void *) data1;
 	gboolean is_volume;
 
 	/* helper_data may be null if probing is skipped */
 
-	HAL_INFO (("entering; timed_out=%d, return_code=%d", timed_out, return_code));
+	HAL_INFO (("entering; exit_type=%d, return_code=%d", exit_type, return_code));
 
 	if (d == NULL) {
 		HAL_INFO (("Device object already removed"));
@@ -291,7 +293,8 @@ add_blockdev_probing_helper_done (HalDevice *d, gboolean timed_out, gint return_
 	 * 
 	 * (return code 2 means fs found on main block device (for non-volumes)) 
 	 */
-	if (timed_out || !(return_code == 0 || (!is_volume && return_code == 2))) {
+	if (exit_type != HALD_RUN_SUCCESS
+      || !(return_code == 0 || (!is_volume && return_code == 2))) {
 		hal_device_store_remove (hald_get_tdl (), d);
 		g_object_unref (d);
 		hotplug_event_end (end_token);
@@ -369,15 +372,12 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 			HAL_INFO (("Probing PC floppy %s to see if it is present", 
 				   hal_device_property_get_string (d, "block.device")));
 
-			if (hal_util_helper_invoke ("hald-probe-pc-floppy", NULL, d, (gpointer) end_token, 
-						    NULL, add_blockdev_probing_helper_done, 
-						    HAL_HELPER_TIMEOUT) == NULL) {
-				hal_device_store_remove (hald_get_tdl (), d);
-				g_object_unref (d);
-				hotplug_event_end (end_token);
-			}
+			hald_runner_run(d, 
+			                    "hald-probe-pc-floppy", NULL,
+			                    HAL_HELPER_TIMEOUT,
+			                    add_blockdev_probing_helper_done,
+			                    (gpointer) end_token, NULL);
 			goto out;
-
 		} else {
 			HAL_INFO (("Not probing storage device %s", 
 				   hal_device_property_get_string (d, "block.device")));
@@ -397,14 +397,12 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 	HAL_INFO (("Probing storage device %s", hal_device_property_get_string (d, "block.device")));
 
 	/* probe the device */
-	if (hal_util_helper_invoke ("hald-probe-storage", NULL, d, (gpointer) end_token, 
-				    NULL, add_blockdev_probing_helper_done, 
-				    HAL_HELPER_TIMEOUT) == NULL) {
-		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
-		hotplug_event_end (end_token);
-	}
-
+	hald_runner_run(d, 
+	                    "hald-probe-storage", NULL,
+	                    HAL_HELPER_TIMEOUT,
+	                    add_blockdev_probing_helper_done,
+	                    (gpointer) end_token, NULL);
+	                    
 out:
 	;
 }
@@ -434,14 +432,11 @@ blockdev_callouts_preprobing_volume_done (HalDevice *d, gpointer userdata1, gpoi
 	}
 
 	/* probe the device */
-	if (hal_util_helper_invoke ("hald-probe-volume", NULL, d, (gpointer) end_token, 
-				    NULL, add_blockdev_probing_helper_done, 
-				    HAL_HELPER_TIMEOUT) == NULL) {
-		hal_device_store_remove (hald_get_tdl (), d);
-		g_object_unref (d);
-		hotplug_event_end (end_token);
-	}
-
+	hald_runner_run (d,
+	                     "hald-probe-volume", NULL, 
+	                     HAL_HELPER_TIMEOUT,
+	                     add_blockdev_probing_helper_done,
+	                     (gpointer) end_token, NULL);
 out:
 	;
 }
@@ -1142,14 +1137,15 @@ out:
 }
 
 static void 
-block_rescan_storage_done (HalDevice *d, gboolean timed_out, gint return_code, 
-			   gpointer data1, gpointer data2, HalHelperData *helper_data)
+block_rescan_storage_done (HalDevice *d, guint32 exit_type, 
+                           gint return_code, gchar **error,
+                           gpointer data1, gpointer data2)
 {
 	const char *sysfs_path;
 	HalDevice *fakevolume;
 	char fake_sysfs_path[HAL_PATH_MAX];
 
-	HAL_INFO (("hald-probe-storage --only-check-for-media returned %d (timed_out=%d)", return_code, timed_out));
+	HAL_INFO (("hald-probe-storage --only-check-for-media returned %d (exit_type=%d)", return_code, exit_type));
 
 	if (d == NULL) {
 		HAL_INFO (("Device object already removed"));
@@ -1200,13 +1196,11 @@ blockdev_rescan_device (HalDevice *d)
 	}
 
 	/* now see if we got a file system on the main block device */
-	if (hal_util_helper_invoke ("hald-probe-storage --only-check-for-media", NULL, d, NULL, 
-				    NULL, block_rescan_storage_done, 
-				    HAL_HELPER_TIMEOUT) == NULL) {
-		HAL_INFO (("Could not invoke 'hald-probe-storage --only-check-for-media'"));
-		goto out;
-	}
-	
+	hald_runner_run (d,
+	                 "hald-probe-storage --only-check-for-media", NULL, 
+	                 HAL_HELPER_TIMEOUT,
+	                 block_rescan_storage_done,
+	                 NULL, NULL);
 	ret = TRUE;
 
 out:

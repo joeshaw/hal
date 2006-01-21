@@ -50,6 +50,7 @@
 
 #include "hald_dbus.h"
 #include "util.h"
+#include "hald_runner.h"
 
 typedef struct {
 	int last_level;
@@ -534,235 +535,6 @@ out:
 	;
 }
 
-void
-hal_util_terminate_helper (HalHelperData *ed)
-{
-	if (ed->already_issued_kill) {
-		HAL_INFO (("Already issued SIGTERM for pid %d, udi %s",
-			   ed->pid, ed->d != NULL ? ed->d->udi : "(finalized object)"));
-		goto out;
-	}
-
-	HAL_INFO (("killing %d for udi %s", ed->pid, ed->d != NULL ? ed->d->udi : "(finalized object)"));
-
-	/* kill kenny! kill it!! */
-	ed->already_issued_kill = TRUE;
-	kill (ed->pid, SIGTERM);
-
-	if (ed->timeout_watch_id != (guint) -1) {
-		g_source_remove (ed->timeout_watch_id);
-		ed->timeout_watch_id = -1;
-	}
-
-	if (!ed->already_issued_callback) {
-		ed->already_issued_callback = TRUE;
-		ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
-	}
-
-	/* ed will be cleaned up when helper_child_exited reaps the child */
-out:
-	;
-}
-
-static gboolean
-helper_child_timeout (gpointer data)
-{
-	HalHelperData *ed = (HalHelperData *) data;
-
-	HAL_INFO (("child timeout for pid %d", ed->pid));
-
-	/* kill kenny! kill it!! */
-	ed->already_issued_kill = TRUE;
-	kill (ed->pid, SIGTERM);
-
-	ed->timeout_watch_id = -1;
-
-	if (!ed->already_issued_callback) {
-		ed->already_issued_callback = TRUE;
-		ed->cb (ed->d, TRUE, -1, ed->data1, ed->data2, ed);
-	}
-
-	/* ed will be cleaned up when helper_child_exited reaps the child */
-	return FALSE;
-}
-
-static GSList *running_helpers = NULL;
-
-static void 
-helper_device_object_finalized (gpointer data, GObject *where_the_object_was)
-{
-	HalHelperData *ed = (HalHelperData *) data;
-
-	HAL_INFO (("device object finalized for helper with pid %d", ed->pid));
-
-	ed->d = NULL;
-	hal_util_terminate_helper (ed);
-}
-
-static void 
-helper_child_exited (GPid pid, gint status, gpointer data)
-{
-	HalHelperData *ed = (HalHelperData *) data;
-
-	HAL_INFO (("child exited for pid %d", pid));
-
-	if (ed->timeout_watch_id != (guint) -1)
-		g_source_remove (ed->timeout_watch_id);
-	g_spawn_close_pid (ed->pid);
-
-	if (ed->d != NULL)
-		g_object_weak_unref (G_OBJECT (ed->d), helper_device_object_finalized, ed);
-
-	if (!ed->already_issued_callback)
-		ed->cb (ed->d, FALSE, WEXITSTATUS (status), ed->data1, ed->data2, ed);
-
-	running_helpers = g_slist_remove (running_helpers, ed);
-
-	g_free (ed);
-}
-
-static gboolean
-helper_add_property_to_env (HalDevice *device, HalProperty *property, gpointer user_data)
-{
-	char *prop_upper, *value;
-	char *c;
-	gchar ***ienvp = (gchar ***) user_data;
-	gchar **envp;
-
-	envp = *ienvp;
-	*ienvp = *ienvp + 1;
-
-	prop_upper = g_ascii_strup (hal_property_get_key (property), -1);
-	
-	/* periods aren't valid in the environment, so replace them with
-	 * underscores. */
-	for (c = prop_upper; *c; c++) {
-		if (*c == '.')
-			*c = '_';
-	}
-	
-	value = hal_property_to_string (property);
-	
-	*envp = g_strdup_printf ("HAL_PROP_%s=%s", prop_upper, value);
-
-	g_free (value);
-	g_free (prop_upper);
-
-	return TRUE;
-}
-
-static void
-callout_failed (HalHelperData *ed);
-
-HalHelperData *
-hal_util_helper_invoke (const gchar *command_line, gchar **extra_env, HalDevice *d, 
-			gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout)
-{
-	return hal_util_helper_invoke_with_pipes (command_line, extra_env, d, data1, data2, cb, timeout, NULL, NULL, NULL);
-}
-
-HalHelperData *
-hal_util_helper_invoke_with_pipes (const gchar *command_line, gchar **extra_env, HalDevice *d, 
-				   gpointer data1, gpointer data2, HalHelperTerminatedCB cb, guint timeout,
-				   int *standard_input, int *standard_output, int *standard_error)
-{
-	HalHelperData *ed;
-	gint argc;
-	gchar **argv;
-	gchar **envp;
-	gchar **ienvp;
-	GError *err = NULL;
-	guint num_env_vars;
-	guint i, j;
-	guint num_properties;
-	guint num_extras;
-	char *local_addr;
-
-	ed = g_new0 (HalHelperData, 1);
-	ed->data1 = data1;
-	ed->data2 = data2;
-	ed->d = d;
-	ed->cb = cb;
-	ed->already_issued_callback = FALSE;
-	ed->already_issued_kill = FALSE;
-
-	num_properties = hal_device_num_properties (d);
-	if (extra_env == NULL)
-		num_extras = 0;
-	else
-		num_extras = g_strv_length ((gchar **) extra_env);
-	num_env_vars = num_properties + 2 + num_extras;
-	if (hald_is_verbose)
-		num_env_vars++;
-	if (hald_is_initialising)
-		num_env_vars++;
-	if ((local_addr = hald_dbus_local_server_addr ()) != NULL)
-		num_env_vars++;
-
-	envp = g_new (char *, num_env_vars);
-	ienvp = envp;
-	hal_device_property_foreach (d, helper_add_property_to_env, &ienvp);
-	i = num_properties;
-	envp[i++] = g_strdup_printf ("UDI=%s", hal_device_get_udi (d));
-	if (hald_is_verbose)
-		envp[i++] = g_strdup ("HALD_VERBOSE=1");
-	if (hald_is_initialising)
-		envp[i++] = g_strdup ("HALD_STARTUP=1");
-	if (local_addr != NULL)
-		envp[i++] = g_strdup_printf ("HALD_DIRECT_ADDR=%s", local_addr);
-	for (j = 0; j < num_extras; j++) {
-		envp[i++] = g_strdup (extra_env[j]);
-	}
-	envp[i++] = NULL;
-
-	err = NULL;
-	if (!g_shell_parse_argv (command_line, &argc, &argv, &err)) {
-		HAL_ERROR (("Error parsing commandline '%s': %s", command_line, err->message));
-		g_error_free (err);
-		g_free (ed);
-		ed = NULL;
-	} else {
-		err = NULL;
-		if (!g_spawn_async_with_pipes (NULL, 
-					       argv, 
-					       envp, 
-					       G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH,
-					       NULL,
-					       NULL,
-					       &ed->pid,
-					       standard_input,
-					       standard_output,
-					       standard_error,
-					       &err)) {
-			HAL_ERROR (("Couldn't spawn '%s' err=%s!", command_line, err->message));
-			g_error_free (err);
-
-			/* move ahead in list */
-			callout_failed(ed);
-
-			g_free (ed);
-			ed = NULL;
-		} else {
-			ed->child_watch_id = g_child_watch_add (ed->pid, helper_child_exited, (gpointer) ed);
-			if (timeout > 0)
-				ed->timeout_watch_id = g_timeout_add (timeout, helper_child_timeout, (gpointer) ed);
-			else
-				ed->timeout_watch_id = (guint) -1;
-
-			running_helpers = g_slist_prepend (running_helpers, ed);
-			/* device object may disappear from underneath us - this is
-			 * used to terminate the helper and pass d=NULL in the
-			 * HalHelperTerminatedCB callback
-			 */
-			g_object_weak_ref (G_OBJECT (d), helper_device_object_finalized, ed);
-		}
-	}
-
-	g_strfreev (envp);
-	g_free (argv);
-
-	return ed;
-}
 
 gboolean
 hal_util_path_ascend (gchar *path)
@@ -1127,21 +899,10 @@ typedef struct {
 
 static void callout_do_next (Callout *c);
 
-static void
-callout_failed (HalHelperData *ed)
-{
-	if (ed->data1 != NULL) {
-		Callout *c;
-		c = (Callout *) ed->data1;
-
-		c->next_program++;
-		callout_do_next(c);
-	}
-}
-
 static void 
-callout_terminated (HalDevice *d, gboolean timed_out, gint return_code, 
-		    gpointer data1, gpointer data2, HalHelperData *helper_data)
+callout_terminated (HalDevice *d, guint32 exit_type, 
+                   gint return_code, gchar **error, 
+                   gpointer data1, gpointer data2)
 {
 	Callout *c;
 
@@ -1172,8 +933,9 @@ callout_do_next (Callout *c)
 		callback (d, userdata1, userdata2);
 
 	} else {
-		hal_util_helper_invoke (c->programs[c->next_program], c->extra_env, c->d, 
-					(gpointer) c, NULL, callout_terminated, HAL_HELPER_TIMEOUT);
+    hald_runner_run(c->d, c->programs[c->next_program], c->extra_env,
+                    HAL_HELPER_TIMEOUT, callout_terminated,
+                    (gpointer)c, NULL);
 		c->next_program++;
 	}
 }
@@ -1248,29 +1010,6 @@ hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpoint
 	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:
 	;
-}
-
-/** Kill all helpers we have running; useful when exiting hald.
- *
- *  @return                     Number of childs killed
- */
-unsigned int 
-hal_util_kill_all_helpers (void)
-{
-	unsigned int n;
-	GSList *i;
-
-	n = 0;
-	for (i = running_helpers; i != NULL; i = i->next) {
-		HalHelperData *ed;
-
-		ed = i->data;
-		HAL_INFO (("Killing helper with pid %d", ed->pid));
-		kill (ed->pid, SIGTERM);
-		n++;
-	}
-
-	return n;
 }
 
 void
