@@ -1,5 +1,10 @@
 2006-01-20  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Add Eject method
+	for audio CD's. Patch from John Palmieri <johnp@redhat.com>.
+
+2006-01-20  David Zeuthen  <davidz@redhat.com>
+
 	Great patch from Sjoerd Simons <sjoerd@luon.net>: As most people
 	probably know by now, various people don't really like that hal
 	running as root. We'd much rather see only a small process running

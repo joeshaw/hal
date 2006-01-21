@@ -5,6 +5,16 @@
     <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
       <append key="info.callouts.add" type="strlist">hal-system-storage-cleanup-mountpoints</append>
     </match>
+    
+    <match key="volume.disc.type" string="cd_rom">
+      <match key="volume.disc.has_audio" bool="true">
+        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+      </match>
+    </match>
+
     <match key="volume.fsusage" string="filesystem">
 
       <!-- Here follow volumes we specifically want to ignore - it is the
