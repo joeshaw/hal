@@ -197,14 +197,21 @@ gboolean find_program(char **argv) {
 
   if (argv[0] == NULL) 
     return FALSE;
+
   program = g_path_get_basename(argv[0]);
-  for (i = 0; dirs[i] != NULL; i++) {
-    path = g_build_filename(dirs[i], program, NULL);
-    if (stat(path, &buf) == 0) {
-        break;
+
+  /* first search $PATH to make e.g. run-hald.sh work */
+  path = g_find_program_in_path (program);
+  /* otherwise check allowed paths */
+  if (path == NULL) {
+    for (i = 0; dirs[i] != NULL; i++) {
+      path = g_build_filename(dirs[i], program, NULL);
+      if (stat(path, &buf) == 0) {
+          break;
+      }
+      g_free(path);
+      path = NULL;
     }
-    g_free(path);
-    path = NULL;
   }
   g_free(program);
   if (path == NULL) 
@@ -214,6 +221,7 @@ gboolean find_program(char **argv) {
     g_free(argv[0]);
     argv[0] = path;
   }
+  fprintf (stderr, "foobar '%s'!\n", argv[0]);
   return TRUE;
 }
 
@@ -240,7 +248,7 @@ run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg) {
   }
 
   if (!find_program(r->argv) ||
-      !g_spawn_async_with_pipes("/", r->argv, r->environment, 
+      !g_spawn_async_with_pipes(NULL, r->argv, r->environment, 
                                 G_SPAWN_DO_NOT_REAP_CHILD,
                                 NULL, NULL, &pid, 
                                 stdin_p, NULL, stderr_p, &error)) {

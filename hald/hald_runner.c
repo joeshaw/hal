@@ -70,13 +70,14 @@ runner_died(GPid pid, gint status, gpointer data) {
 }
 
 gboolean
-hald_runner_start_runner(gchar *runner_location) {
+hald_runner_start_runner(gchar *runner_location)
+{
   DBusServer *server = NULL;
   DBusError err;
   GError *error = NULL;
   GPid pid;
   char *argv[] = { NULL, NULL};
-  char *env[] =  { NULL, NULL};
+  char *env[] =  { NULL, NULL, NULL};
 
   dbus_error_init(&err);
   server = dbus_server_listen(DBUS_SERVER_ADDRESS, &err);
@@ -97,6 +98,7 @@ hald_runner_start_runner(gchar *runner_location) {
   argv[0] = runner_location;
   env[0] = g_strdup_printf("HALD_RUNNER_DBUS_ADDRESS=%s",
              dbus_server_get_address(server));
+  env[1] = g_strdup_printf("PATH=%s", getenv("PATH"));
 
   if (!g_spawn_async(NULL, argv, env, G_SPAWN_DO_NOT_REAP_CHILD, 
         NULL, NULL, &pid, &error)) {
@@ -106,6 +108,7 @@ hald_runner_start_runner(gchar *runner_location) {
   }
   g_free(argv[0]);
   g_free(env[0]);
+  g_free(env[1]);
 
   g_child_watch_add(pid, runner_died, NULL);
   while (runner_connection == NULL) {
@@ -294,8 +297,10 @@ call_notify(DBusPendingCall *pending, void *user_data) {
   while (dbus_message_iter_next(&iter) &&
     dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_STRING) {
     const char *value;
+    const char *copy;
     dbus_message_iter_get_basic(&iter, &value);
-    g_array_append_vals(error, &value, 1);
+    copy = g_strdup (value);
+    g_array_append_vals(error, &copy, 1);
   }
 
   hb->cb(hb->d, exitt, return_code, 

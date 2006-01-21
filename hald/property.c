@@ -471,3 +471,19 @@ hal_property_strlist_remove (HalProperty *prop, const char *value)
 
 	return FALSE;
 }
+
+gboolean 
+hal_property_strlist_clear (HalProperty *prop)
+{
+	GSList *elem;
+
+	g_return_val_if_fail (prop != NULL, FALSE);
+	g_return_val_if_fail (prop->type == HAL_PROPERTY_TYPE_STRLIST, FALSE);
+
+	for (elem = prop->strlist_value; elem != NULL; elem = g_slist_next (elem)) {
+		g_free (elem->data);
+	}
+	g_slist_free (prop->strlist_value);
+
+	return FALSE;
+}

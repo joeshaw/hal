@@ -79,24 +79,28 @@ enum {
 	/** Processing an append element */
 	CURELEM_APPEND = 4,
 
-	/** Processing an prepend element */
+	/** Processing a prepend element */
 	CURELEM_PREPEND = 5,
 
-	/** Processing an prepend element */
-	CURELEM_REMOVE = 6
+	/** Processing a remove element */
+	CURELEM_REMOVE = 6,
+
+	/** Processing a clear element */
+	CURELEM_CLEAR = 7
 };
 
 /** What and how to merge */
 enum {
-	MERGE_TYPE_UNKNOWN,
-	MERGE_TYPE_STRING,
-	MERGE_TYPE_BOOLEAN,
-	MERGE_TYPE_INT32,
-	MERGE_TYPE_UINT64,
-	MERGE_TYPE_DOUBLE,
-	MERGE_TYPE_COPY_PROPERTY,
-	MERGE_TYPE_STRLIST,
-	MERGE_TYPE_REMOVE
+	MERGE_TYPE_UNKNOWN       = 0,
+	MERGE_TYPE_STRING        = 1,
+	MERGE_TYPE_BOOLEAN       = 2,
+	MERGE_TYPE_INT32         = 3,
+	MERGE_TYPE_UINT64        = 4,
+	MERGE_TYPE_DOUBLE        = 5,
+	MERGE_TYPE_COPY_PROPERTY = 6,
+	MERGE_TYPE_STRLIST       = 7,
+	MERGE_TYPE_REMOVE        = 8,
+	MERGE_TYPE_CLEAR         = 9
 };
 
 /** Parsing Context
@@ -744,7 +748,7 @@ handle_append_prepend (ParsingContext * pc, const char **attr)
 	return;
 }
 
-/** Called when the append or prepend element begins.
+/** Called when the remove element begins.
  *
  *  @param  pc                  Parsing context
  *  @param  attr                Attribute key/value pairs
@@ -782,6 +786,39 @@ handle_remove (ParsingContext * pc, const char **attr)
 	} else {
 		pc->merge_type = MERGE_TYPE_REMOVE;
 	}
+
+	return;
+}
+
+/** Called when the clear element begins.
+ *
+ *  @param  pc                  Parsing context
+ *  @param  attr                Attribute key/value pairs
+ */
+static void
+handle_clear (ParsingContext * pc, const char **attr)
+{
+	int num_attrib;
+
+	pc->merge_type = MERGE_TYPE_UNKNOWN;
+
+	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
+		;
+	}
+
+	if (num_attrib != 4)
+		return;
+	
+	if (strcmp (attr[0], "key") != 0)
+		return;
+
+
+	if (strcmp (attr[3], "strlist") != 0)
+		return;
+	
+	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
+	
+	pc->merge_type = MERGE_TYPE_CLEAR;
 
 	return;
 }
@@ -911,6 +948,23 @@ start (ParsingContext * pc, const char *el, const char **attr)
 		pc->curelem = CURELEM_REMOVE;
 		if (pc->match_ok) {
 			handle_remove (pc, attr);
+		} else {
+			/*HAL_INFO(("No merge!")); */
+		}
+	} else if (strcmp (el, "clear") == 0) {
+		if (pc->curelem != CURELEM_DEVICE
+		    && pc->curelem != CURELEM_MATCH) {
+			HAL_ERROR (("%s:%d:%d: Element <remove> can only be "
+				    "inside <device> and <match>", 
+				    pc->file, 
+				    XML_GetCurrentLineNumber (pc->parser), 
+				    XML_GetCurrentColumnNumber (pc->parser)));
+			parsing_abort (pc);
+		}
+
+		pc->curelem = CURELEM_CLEAR;
+		if (pc->match_ok) {
+			handle_clear (pc, attr);
 		} else {
 			/*HAL_INFO(("No merge!")); */
 		}
@@ -1146,6 +1200,10 @@ end (ParsingContext * pc, const char *el)
 			if (strlen (pc->cdata_buf) == 0) {
 				hal_device_property_remove (pc->device, pc->merge_key);
 			}
+		}
+	} else if (pc->curelem == CURELEM_CLEAR && pc->match_ok) {
+		if (pc->merge_type == MERGE_TYPE_CLEAR) {
+			hal_device_property_strlist_clear (pc->device, pc->merge_key);
 		}
 	}
 

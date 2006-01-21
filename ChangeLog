@@ -1,3 +1,26 @@
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
+	* hald-runner/runner.c: Search $PATH before searching allowed dirs;
+	this is needed to make e.g. run-hald.sh work - note that passing
+	"/bin/sh /path/to/evil/program" will _not_ work as we don't do
+	shell-ish stuff. Also, don't force working dir to be "/" for
+	same reasons.	
+
+	* hald/property.h: Export hal_property_strlist_clear
+
+	* hald/property.c (hal_property_strlist_clear): New function
+
+	* hald/hald_runner.c (hald_runner_start_runner): Pass $PATH to runner
+
+	* hald/hald_dbus.c (hald_exec_method_cb): Fix up indenting
+
+	* hald/device_info.c (handle_clear): New function
+	(start): Check for new fdi tag "clear"
+
+	* hald/device.h: Export hal_device_property_strlist_clear
+
+	* hald/device.c (hal_device_property_strlist_clear): New function
+
 2006-01-20  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/hal-spec.xml.in: Add docs for volume.disc.capacity

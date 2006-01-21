@@ -165,6 +165,8 @@ gboolean      hal_device_property_strlist_prepend (HalDevice    *device,
 gboolean      hal_device_property_strlist_remove_elem (HalDevice    *device,
 						       const char   *key,
 						       guint index);
+gboolean      hal_device_property_strlist_clear (HalDevice    *device,
+						 const char   *key);
 gboolean      hal_device_property_strlist_add (HalDevice    *device,
 					       const char   *key,
 					       const char *value);

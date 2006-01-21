@@ -2486,27 +2486,28 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 	DBusMessage *reply = NULL;
 	DBusMessage *message;
 	DBusMessageIter iter;
+	gchar *exp_name = NULL;
+	gchar *exp_detail = NULL;
+
 	message = (DBusMessage *) data1;
-  gchar *exp_name = NULL;
-  gchar *exp_detail = NULL;
-
+	
 	if (exit_type == HALD_RUN_SUCCESS && error != NULL) {
-    exp_name = error[0];
-    if (error[0] != NULL) {
-      exp_detail = error[1];
-    }
-    HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
-  }
-
-  if (exit_type != HALD_RUN_SUCCESS) {
+		exp_name = error[0];
+		if (error[0] != NULL) {
+			exp_detail = error[1];
+		}
+		HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
+	}
+	
+	if (exit_type != HALD_RUN_SUCCESS) {
 		reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");
 		if (dbus_connection != NULL) {
 			if (!dbus_connection_send (dbus_connection, reply, NULL))
 				DIE (("No memory"));
 		}
 		dbus_message_unref (reply);
-  } else if (exp_name != NULL && exp_detail != NULL) {
-    reply = dbus_message_new_error (message, exp_name, exp_detail);
+	} else if (exp_name != NULL && exp_detail != NULL) {
+		reply = dbus_message_new_error (message, exp_name, exp_detail);
 		if (reply == NULL) {
 			/* error name may be invalid - assume caller fucked up and use a generic HAL error name */
 			reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");

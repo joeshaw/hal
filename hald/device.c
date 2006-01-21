@@ -1200,6 +1200,39 @@ hal_device_property_strlist_remove_elem (HalDevice    *device,
 }
 
 gboolean
+hal_device_property_strlist_clear (HalDevice    *device,
+				   const char   *key)
+{
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop == NULL) {
+		prop = hal_property_new_strlist (key);
+
+		device->properties = g_slist_prepend (device->properties, prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
+
+		return TRUE;
+	}
+
+	if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+		return FALSE;
+	
+	if (hal_property_strlist_clear (prop)) {
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
+
+gboolean
 hal_device_property_strlist_add (HalDevice *device,
 				 const char *key,
 				 const char *value)

@@ -91,6 +91,7 @@ gboolean      hal_property_strlist_add        (HalProperty  *prop,
 					       const char *value);
 gboolean      hal_property_strlist_remove     (HalProperty  *prop,
 					       const char *value);
+gboolean      hal_property_strlist_clear      (HalProperty  *prop);
 
 
 void          hal_property_set_attribute      (HalProperty *prop,
