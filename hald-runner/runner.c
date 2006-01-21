@@ -187,13 +187,11 @@ run_timedout(gpointer data) {
 }
 
 static
-gboolean find_program(char **argv) {
+gboolean find_program(char **argv) 
+{
   /* Search for the program in the dirs where it's allowed to be */
-  char *dirs[] = { PACKAGE_LIBEXEC_DIR, PACKAGE_SCRIPT_DIR, NULL };
   char *program;
   char *path = NULL;
-  struct stat buf;
-  int i;
 
   if (argv[0] == NULL) 
     return FALSE;
@@ -202,17 +200,6 @@ gboolean find_program(char **argv) {
 
   /* first search $PATH to make e.g. run-hald.sh work */
   path = g_find_program_in_path (program);
-  /* otherwise check allowed paths */
-  if (path == NULL) {
-    for (i = 0; dirs[i] != NULL; i++) {
-      path = g_build_filename(dirs[i], program, NULL);
-      if (stat(path, &buf) == 0) {
-          break;
-      }
-      g_free(path);
-      path = NULL;
-    }
-  }
   g_free(program);
   if (path == NULL) 
     return FALSE;
@@ -221,7 +208,6 @@ gboolean find_program(char **argv) {
     g_free(argv[0]);
     argv[0] = path;
   }
-  fprintf (stderr, "foobar '%s'!\n", argv[0]);
   return TRUE;
 }
 

@@ -2,6 +2,7 @@
 fdidir = $(datadir)/hal/fdi/policy/10osvendor
 
 dist_fdi_DATA = 			\
+	10-security-policy.fdi		\
 	10-storage-policy.fdi		\
 	10-power-mgmt-policy.fdi	\
 	10-laptop-panel-mgmt-policy.fdi	\

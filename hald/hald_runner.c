@@ -70,7 +70,7 @@ runner_died(GPid pid, gint status, gpointer data) {
 }
 
 gboolean
-hald_runner_start_runner(gchar *runner_location)
+hald_runner_start_runner(void)
 {
   DBusServer *server = NULL;
   DBusError err;
@@ -78,6 +78,7 @@ hald_runner_start_runner(gchar *runner_location)
   GPid pid;
   char *argv[] = { NULL, NULL};
   char *env[] =  { NULL, NULL, NULL};
+  const char *hald_runner_path;
 
   dbus_error_init(&err);
   server = dbus_server_listen(DBUS_SERVER_ADDRESS, &err);
@@ -89,24 +90,23 @@ hald_runner_start_runner(gchar *runner_location)
   dbus_server_setup_with_g_main(server, NULL);
   dbus_server_set_new_connection_function(server, handle_connection, 
                                           NULL, NULL);
-  if (runner_location == NULL) {
-    runner_location = g_strdup_printf("%s/hald-runner", PACKAGE_LIBEXEC_DIR);
-  } else {
-    runner_location = g_strdup(runner_location);
-  }
-  HAL_INFO (("Using runner '%s'\n", runner_location));
-  argv[0] = runner_location;
+  argv[0] = "hald-runner";
   env[0] = g_strdup_printf("HALD_RUNNER_DBUS_ADDRESS=%s",
              dbus_server_get_address(server));
-  env[1] = g_strdup_printf("PATH=%s", getenv("PATH"));
-
-  if (!g_spawn_async(NULL, argv, env, G_SPAWN_DO_NOT_REAP_CHILD, 
+  hald_runner_path = g_getenv("HALD_RUNNER_PATH");
+  if (hald_runner_path != NULL) {
+	  env[1] = g_strdup_printf ("PATH=%s:" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR, hald_runner_path);
+  } else {
+	  env[1] = g_strdup_printf ("PATH=" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR);
+  }
+  
+  
+  if (!g_spawn_async(NULL, argv, env, G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, 
         NULL, NULL, &pid, &error)) {
     HAL_ERROR (("Could not spawn runner : '%s'", error->message));
     g_error_free (error);
     goto error;
   }
-  g_free(argv[0]);
   g_free(env[0]);
   g_free(env[1]);
 

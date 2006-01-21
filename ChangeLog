@@ -1,5 +1,41 @@
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
+	* hald-runner/runner.c (find_program): Simply use glib convience
+	g_find_program_in_path() on the basename of the desired helper since
+	our allowed paths are now in $PATH
+
+	* hald-runner/main.c (main): Print out allowed paths
+
+	* hald/linux2/blockdev.c (add_blockdev_probing_helper_done): Fix up
+	indenting
+
+	* hald/hald_runner.h: Modify prototype of hald_runner_start_runner to
+	not take the path to the runner
+
+	* hald/hald_runner.c (hald_runner_start_runner): Use the flag
+	G_SPAWN_SEARCH_PATH to search for hald-runner. Export HALD_RUNNER_PATH
+	as PATH for the runner. Always include standard locations, e.g.
+	$(libexecdir) and $(datadir)/hal/scripts.
+
+	* hald/hald_dbus.c (hald_exec_method_cb): Check if there really
+	was an error
+
+	* hald/hald.c (usage): Remove usage for --with-runner
+	(main): Remove --with-runner option; just search $PATH for it
+
+	* hald/run-hald.sh, hald/debug-hald.sh, hald/valgrind-hald.sh: 
+	Set $HALD_RUNNER_PATH and modify $PATH to include local hald-runner
+
+	* tools/hal-system-storage-mount: Read and enforce security policy
+	as specified in fdi/policy/10osvendor/10-security-policy.fdi
+
+	* fdi/policy/10osvendor/Makefile.am (dist_fdi_DATA): 
+	Add 10-security-policy.fdi
+
+	* fdi/policy/10osvendor/10-security-policy.fdi: New file
+
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald_dbus.c (hald_exec_method_cb): Don't free errors as the
 	caller owns the value
 

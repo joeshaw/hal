@@ -47,7 +47,7 @@ typedef void (*HalRunTerminatedCB) (HalDevice *d, guint32 exit_type,
 
 /* Start the runner daemon */
 gboolean
-hald_runner_start_runner(gchar *runner_location);
+hald_runner_start_runner(void);
 
 /* Start a helper, returns true on a successfull start */
 gboolean

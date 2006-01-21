@@ -172,7 +172,7 @@ hald_get_tdl (void)
 static void
 usage ()
 {
-	fprintf (stderr, "\n" "usage : hald [--daemon=yes|no] [--verbose=yes|no] [--help]  [--with-runner=location]\n");
+	fprintf (stderr, "\n" "usage : hald [--daemon=yes|no] [--verbose=yes|no] [--help]\n");
 	fprintf (stderr,
 		 "\n"
 		 "        --daemon=yes|no      Become a daemon\n"
@@ -180,8 +180,6 @@ usage ()
  		 "        --use-syslog         Print out debug messages to syslog instead of stderr.\n"
 		 "                             Use this option to get debug messages if HAL runs as\n"
 		 "                             daemon.\n"
-		 "        --with-runner        Use the program at the specified location as the\n"
-		                               "helper.\n"
 		 "        --help               Show this information and exit\n"
 		 "        --version            Output version information and exit"
 		 "\n"
@@ -369,7 +367,6 @@ main (int argc, char *argv[])
 	guint sigterm_iochn_listener_source_id;
 	char *path;
 	char newpath[512];
-	char *runner_location = NULL;
 
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
@@ -403,7 +400,6 @@ main (int argc, char *argv[])
 			{"verbose", 1, NULL, 0},
 			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
-			{"with-runner", 1, NULL, 0},
 			{"version", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
@@ -441,8 +437,6 @@ main (int argc, char *argv[])
 					usage ();
 					return 1;
 				}
-			} else if (strcmp (opt, "with-runner") == 0) {
-				runner_location = strdup(optarg);
 			} else if (strcmp (opt, "use-syslog") == 0) {
                                 hald_use_syslog = TRUE;
 			}
@@ -567,7 +561,7 @@ main (int argc, char *argv[])
 	if (!hald_dbus_local_server_init ())
 		return 1;
 	/* Start the runner helper daemon */
-	if (!hald_runner_start_runner(runner_location)) {
+	if (!hald_runner_start_runner ()) {
 		return 1;
 	}
 

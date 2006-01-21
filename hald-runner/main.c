@@ -188,7 +188,8 @@ filter(DBusConnection *con, DBusMessage *msg, void *user_data) {
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
   DBusConnection *c;
   DBusError error;
   GMainLoop *loop;
@@ -198,6 +199,8 @@ main(int argc, char **argv) {
   dbus_error_init(&error);
   dbus_address = getenv("HALD_RUNNER_DBUS_ADDRESS");
   g_assert(dbus_address != NULL);
+
+  fprintf(stderr, "Runner started - allowed paths are '%s'\n", getenv("PATH"));
 
   c = dbus_connection_open(dbus_address, &error);
   if (c == NULL) 

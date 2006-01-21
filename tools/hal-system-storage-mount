@@ -15,12 +15,6 @@ if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ]; then
     exit 1
 fi
 
-if [ "$HAL_METHOD_INVOKED_BY_UID" == "" ]; then
-    echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
-    echo "" >&2
-    exit 1
-fi
-
 # check if device is already mounted
 if [ "$HAL_PROP_VOLUME_IS_MOUNTED" = "true" ]; then
     echo "org.freedesktop.Hal.Device.Volume.AlreadyMounted" >&2
@@ -32,6 +26,46 @@ fi
 if [ "$HAL_PROP_VOLUME_IGNORE" = "true" ]; then
     echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
     echo "Device has volume.ignore set to TRUE. Refusing to mount." >&2
+    exit 1
+fi
+
+# read our security policy (see policy/10osvendor/10-security-policy.fdi)
+SECPOL_ALLOW_UID_MOUNT_FIXED=`hal-get-property --udi /org/freedesktop/Hal/devices/computer --key security_policy.system.storage.allow_uid_mount_fixed`
+SECPOL_ALLOW_UID_MOUNT_NONFIXED=`hal-get-property --udi /org/freedesktop/Hal/devices/computer --key security_policy.system.storage.allow_uid_mount_nonfixed`
+
+# determine what kind of drive we stem from
+IS_HOTPLUGGABLE=`hal-get-property --udi $HAL_PROP_BLOCK_STORAGE_DEVICE --key storage.hotpluggable`
+IS_REMOVABLE=`hal-get-property --udi $HAL_PROP_BLOCK_STORAGE_DEVICE --key storage.removable`
+
+# enforce security policy
+ALLOW="false"
+if [ "$IS_HOTPLUGGABLE" == "true" ] || [ "$IS_REMOVABLE" == "true" ]; then
+    # nonfixed media, e.g. removable and/or hotpluggable
+    if [ "$SECPOL_ALLOW_UID_MOUNT_NONFIXED" == "" ]; then
+	ALLOW="true"
+    else
+	for i in $SECPOL_ALLOW_UID_MOUNT_NONFIXED; do
+	    if [ "$i" == "$HAL_METHOD_INVOKED_BY_UID" ]; then
+		ALLOW="true"
+	    fi
+	done
+    fi
+else
+    # fixed media
+    if [ "$SECPOL_ALLOW_UID_MOUNT_FIXED" == "" ]; then
+	ALLOW="true"
+    else
+	for i in $SECPOL_ALLOW_UID_MOUNT_FIXED; do
+	    if [ "$i" == "$HAL_METHOD_INVOKED_BY_UID" ]; then
+		ALLOW="true"
+	    fi
+	done
+    fi
+fi
+
+if [ "$ALLOW" != "true" ]; then
+    echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
+    echo "uid $HAL_METHOD_INVOKED_BY_UID is not authorized according to security policy" >&2
     exit 1
 fi
 

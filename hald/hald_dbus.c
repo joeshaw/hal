@@ -2491,7 +2491,8 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 
 	message = (DBusMessage *) data1;
 	
-	if (exit_type == HALD_RUN_SUCCESS && error != NULL) {
+	if (exit_type == HALD_RUN_SUCCESS && error != NULL && 
+	    error[0] != NULL && error[1] != NULL) {
 		exp_name = error[0];
 		if (error[0] != NULL) {
 			exp_detail = error[1];

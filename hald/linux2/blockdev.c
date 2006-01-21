@@ -294,7 +294,7 @@ add_blockdev_probing_helper_done (HalDevice *d, guint32 exit_type,
 	 * (return code 2 means fs found on main block device (for non-volumes)) 
 	 */
 	if (exit_type != HALD_RUN_SUCCESS
-      || !(return_code == 0 || (!is_volume && return_code == 2))) {
+	    || !(return_code == 0 || (!is_volume && return_code == 2))) {
 		hal_device_store_remove (hald_get_tdl (), d);
 		g_object_unref (d);
 		hotplug_event_end (end_token);

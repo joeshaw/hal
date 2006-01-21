@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+
+<deviceinfo version="0.2">
+
+  <device>
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+
+      <append key="security_policy.system.storage.allow_uid_mount_fixed" type="strlist">0</append>
+      <clear key="security_policy.system.storage.allow_uid_mount_nonfixed" type="strlist" />
+
+    </match>
+  </device>
+</deviceinfo>
+
