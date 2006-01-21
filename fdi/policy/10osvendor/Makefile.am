@@ -9,14 +9,6 @@ dist_fdi_DATA = 			\
 	15-storage-luks.fdi		\
 	20-storage-methods.fdi
 
-if HAVE_SELINUX
-dist_fdi_DATA += 20-storage-add-selinux.fdi
-endif
-
-if FSTAB_SYNC_ENABLED
-dist_fdi_DATA += 90-fstab-sync.fdi
-endif
-
 check:
 	for f in $(dist_fdi_DATA); do \
             echo -n "Validate XML in $$f : "; \

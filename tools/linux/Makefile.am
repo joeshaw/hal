@@ -11,12 +11,6 @@ INCLUDES = \
 
 libexec_PROGRAMS = hal.hotplug
 
-if HAVE_SELINUX
-libexec_PROGRAMS += hald-add-selinux-mount-option
-hald_add_selinux_mount_option_SOURCES = add_selinux.c
-hald_add_selinux_mount_option_LDADD = -lselinux $(top_builddir)/libhal/libhal.la
-endif
-
 hal_hotplug_SOURCES = hal_hotplug.c
 
 

@@ -82,18 +82,6 @@ if test x$enable_verbose_mode = xyes; then
     AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
 fi
 
-AC_ARG_ENABLE(fstab-sync,         [  --enable-fstab-sync     Install fstab-sync callout],enable_fstab_sync=yes,enable_fstab_sync=no)
-if test "x$enable_fstab_sync" = "xyes" ; then
-   # fstab-sync needs popt, so check for it here
-   AC_CHECK_HEADERS(popt.h,, [AC_MSG_ERROR([You need popt to build fstab-sync])])
-   AC_CHECK_LIB(popt, poptGetContext,, [AC_MSG_ERROR([You need popt to build fstab-sync])])
-
-   AC_DEFINE(FSTAB_SYNC_ENABLED,1,[Whether fstab-sync callout should be installed])
-fi
-AC_SUBST(FSTAB_SYNC_ENABLED)
-AM_CONDITIONAL(FSTAB_SYNC_ENABLED, test x$enable_fstab_sync = xyes)
-
-
 AC_ARG_ENABLE(pcmcia-support,         [  --enable-pcmcia-support Extended PCMCIA card support],enable_pcmcia_support=yes,enable_pcmcia_support=no)
 if test "x$enable_pcmcia_support" = "xyes" ; then
    AC_DEFINE(PCMCIA_SUPPORT_ENABLE,1,[Whether PCMCIA card workarounds should be used (for kernels that don't have a sysfsized PCMCIA layer)])
@@ -490,7 +478,6 @@ hald-runner/Makefile
 libhal/Makefile
 libhal-storage/Makefile
 tools/Makefile
-tools/fstab-sync.8
 tools/linux/Makefile
 tools/device-manager/hal-device-manager
 tools/device-manager/Makefile
@@ -554,7 +541,6 @@ echo "
         acpi proc support:        ${acpi_proc}
         acpi daemon support:      ${acpi_acpid}
 
-        install fstab-sync:       ${enable_fstab_sync}
         Extended PCMCIA support:  ${enable_pcmcia_support}
         PCMCIA stab file:         ${PCMCIA_STAB_FILE}
         use libusb (for usb-csr): ${USE_LIBUSB}

@@ -11,10 +11,6 @@ INCLUDES = \
 
 bin_PROGRAMS = lshal hal-get-property hal-set-property hal-find-by-capability hal-find-by-property hal-device
 
-if FSTAB_SYNC_ENABLED
-sbin_PROGRAMS = fstab-sync
-endif
-
 lshal_SOURCES = lshal.c
 lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
 
@@ -32,16 +28,6 @@ hal_find_by_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_device_SOURCES = hal-device.c
 hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
-
-if FSTAB_SYNC_ENABLED
-fstab_sync_SOURCES = fstab-sync.c
-fstab_sync_LDADD = -lpopt $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
-
-MAN_IN_FILES = fstab-sync.8.in
-man_MANS = fstab-sync.8
-
-endif
-## FSTAB_SYNC_ENABLED end
 
 scriptdir = $(datadir)/hal/scripts
 
