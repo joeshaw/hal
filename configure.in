@@ -345,8 +345,6 @@ AC_MSG_RESULT(yes)
 
 
 
-
-
 AS_AC_EXPAND(LOCALSTATEDIR, $localstatedir)
 AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
 AS_AC_EXPAND(DATADIR, $datadir)
@@ -366,19 +364,6 @@ fi
 AC_SUBST(DBUS_SYS_DIR)
 AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
 
-
-AC_ARG_WITH(hotplug-dir, [  --with-hotplug=<dir>    where hotplug.d directory is])
-
-if ! test -z "$with_hotplug" ; then
-    LINUX_HOTPLUG_DIR="$with_hotplug"
-else
-#    LINUX_HOTPLUG_DIR="$SYSCONFDIR/hotplug.d"
-# It's quite uncommon to have hotplug.d other places than this, so default
-# to it
-    LINUX_HOTPLUG_DIR=/etc/hotplug.d
-fi
-AC_SUBST(LINUX_HOTPLUG_DIR)
-AC_DEFINE_UNQUOTED(LINUX_HOTPLUG_DIR, "$LINUX_HOTPLUG_DIR", [where hotplug.d directory is])
 
 #### Check our operating system (distro-tweaks required)
 operating_system=unknown
@@ -526,8 +511,7 @@ echo "
         docdir:                   ${DOCDIR}
         dbus-1 system.d dir:      ${DBUS_SYS_DIR}
         pci.ids, usb.ids dir:     ${HWDATA_DIR}
-        linux hotplug.d dir:      ${LINUX_HOTPLUG_DIR}
-      
+
         compiler:                 ${CC}
         cflags:                   ${CFLAGS}
         cppflags:                 ${CPPFLAGS}
@@ -571,6 +555,6 @@ echo
 echo "NOTE: For development, use run-hald.sh and debug-hald.sh scripts in hald/ to "
 echo "      use programs (callouts, probers, addons) and device information files "
 echo "      from build directories."
-echo "      (You still need 'make install' to set up hotplug.d agent)"
+echo "      (You may still need 'make install' to install the udev rule to receive events)"
 echo
 

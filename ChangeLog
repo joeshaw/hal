@@ -1,3 +1,15 @@
+2006-01-21  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Remove hotplug helper and depend on udev passing events over
+	a socket.
+
+	* configure.in:
+	* hald/linux2/osspec.c: (osspec_init):
+	* tools/linux/.cvsignore:
+	* tools/linux/90-hal.rules:
+	* tools/linux/Makefile.am:
+	* tools/linux/hal_hotplug.c:
+
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
 	* hald/property.c (hal_property_to_string): Ugh, make this work on
