@@ -1,4 +1,5 @@
-/***************************************************************************
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8 -*-
+ ***************************************************************************
  * CVSID: $Id$
  *
  * probe-volume.c : Probe for volume type (filesystems etc.)
@@ -354,7 +355,8 @@ main (int argc, char *argv[])
 
 	if (is_disc) {
 		int type;
-		struct cdrom_tochdr ; /* toc_hdr; */
+		guint64 capacity;
+		struct cdrom_tochdr; /* toc_hdr; */
 
 		/* defaults */
 		libhal_device_set_property_string (ctx, udi, "volume.disc.type", "unknown", &error);
@@ -452,6 +454,11 @@ main (int argc, char *argv[])
 			default: 
 				break;
 			}
+		}
+
+		if (get_disc_capacity_for_type (fd, type, &capacity) == 0) {
+			dbg ("volume.disc.capacity = %llu", capacity);
+			libhal_device_set_property_uint64 (ctx, udi, "volume.disc.capacity", capacity, &error);
 		}
 
 		/* On some hardware the get_disc_type call fails, so we use this as a backup */

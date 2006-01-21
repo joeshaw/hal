@@ -9,8 +9,11 @@
 #ifndef LINUX_DVD_RW_UTILS_H
 #define LINUX_DVD_RW_UTILS_H
 
+#include <glib.h>
+
 int get_dvd_r_rw_profile (int fd);
 int get_read_write_speed (int fd, int *read_speed, int *write_speed, char **write_speeds);
+int get_disc_capacity_for_type (int fd, int type, guint64 *capacity);
 int get_disc_type (int fd);
 int disc_is_appendable (int fd);
 int disc_is_rewritable (int fd);

@@ -2888,6 +2888,12 @@
               <entry>Is true only if the disc is rewritable</entry>
             </row>
             <row>
+              <entry><literal>volume.disc.capacity</literal> (uint64)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Capacity of disc, in bytes</entry>
+            </row>
+            <row>
               <entry><literal>volume.disc.type</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>

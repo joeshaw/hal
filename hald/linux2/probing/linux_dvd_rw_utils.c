@@ -1,10 +1,13 @@
-/*
+/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 8; tab-width: 8 -*-
+ *
  * This is part of dvd+rw-tools by Andy Polyakov <appro@fy.chalmers.se>
  *
  * Use-it-on-your-own-risk, GPL bless...
  *
  * For further details see http://fy.chalmers.se/~appro/linux/DVD+RW/
 */
+
+#include <glib.h>
 
 #define CREAM_ON_ERRNO(s)	do {				\
     switch ((s)[2]&0x0F)					\
@@ -459,6 +462,282 @@ get_read_write_speed (int fd, int *read_speed, int *write_speed, char **write_sp
 	free (page2A);
 
 	return 0;
+}
+
+
+static int
+get_disc_capacity_cd (int fd,
+		      guint64 *size)
+{
+	ScsiCommand *cmd;
+	int retval;
+	guint64 block_size;
+	guint64 num_blocks;
+	unsigned char header [8];
+
+	retval = -1;
+
+	cmd = scsi_command_new_from_fd (fd);
+	scsi_command_init (cmd, 0, 0x25);
+	scsi_command_init (cmd, 9, 0);
+	if (scsi_command_transport (cmd, READ, header, 8)) {
+		/* READ CDROM CAPACITY failed */
+		goto done;
+	}
+
+	num_blocks = (header [0] << 24) | (header [1] << 16) | (header [2] << 8) | header [3];
+	num_blocks++;
+	block_size = header [4] << 24 | header [5] << 16 | header [6] << 8 | header [7];
+
+	if (size) {
+		*size = num_blocks * block_size;
+	}
+	retval = 0;
+
+ done:
+	scsi_command_free (cmd);
+
+	return retval;
+}
+
+static int
+get_disc_capacity_cdr (int fd,
+		       guint64 *size)
+{
+	ScsiCommand *cmd;
+	int retval;
+	guint64 secs;
+	unsigned char toc [8];
+	unsigned char *atip;
+	int len;
+
+	retval = -1;
+
+	cmd = scsi_command_new_from_fd (fd);
+	/* READ_TOC */
+	scsi_command_init (cmd, 0, 0x43);
+	/* FMT_ATIP */
+	scsi_command_init (cmd, 2, 4 & 0x0F);
+	scsi_command_init (cmd, 6, 0);
+	scsi_command_init (cmd, 8, 4);
+	scsi_command_init (cmd, 9, 0);
+
+	if (scsi_command_transport (cmd, READ, toc, 4)) {
+		/* READ TOC failed */
+		goto done;
+	}
+
+	len = 2 + (toc [0] << 8 | toc [1]);
+
+	atip = (unsigned char *) malloc (len);
+
+	scsi_command_init (cmd, 0, 0x43);
+	scsi_command_init (cmd, 2, 4 & 0x0F);
+	scsi_command_init (cmd, 6, 0);
+	scsi_command_init (cmd, 7, len >> 8);
+	scsi_command_init (cmd, 8, len);
+	scsi_command_init (cmd, 9, 0);
+
+	if (scsi_command_transport (cmd, READ, atip, len)) {
+		/* READ TOC failed */
+		free (atip);
+		goto done;
+	}
+
+	secs = atip [12] * 60 + atip [13] + (atip [14] / 75 + 1);
+
+	if (size) {
+		*size = (1 + secs * 7 / 48) * 1024 * 1024;
+	}
+	retval = 0;
+
+	free (atip);
+ done:
+	scsi_command_free (cmd);
+
+	return retval;
+}
+
+static int
+get_disc_capacity_dvdr_from_type (int fd,
+				  int type,
+				  guint64 *size)
+{
+	ScsiCommand *cmd;
+	unsigned char formats [260];
+	unsigned char buf [32];
+	guint64 blocks;
+	guint64 nwa;
+	int i;
+	int len;
+	int obligatory;
+	int retval;
+	int next_track;
+
+	retval = -1;
+	blocks = 0;
+	next_track = 1;
+
+	cmd = scsi_command_new_from_fd (fd);
+
+ retry:
+	if (type == 0x1A || type == 0x14 || type == 0x13 || type == 0x12) {
+
+		/* READ FORMAT CAPACITIES */
+		scsi_command_init (cmd, 0, 0x23);
+		scsi_command_init (cmd, 8, 12);
+		scsi_command_init (cmd, 9, 0);
+		if (scsi_command_transport (cmd, READ, formats, 12)) {
+			/* READ FORMAT CAPACITIES failed */
+			goto done;
+		}
+
+		len = formats [3];
+		if (len & 7 || len < 16) {
+			/* Length isn't sane */
+			goto done;
+		}
+
+		scsi_command_init (cmd, 0, 0x23);
+		scsi_command_init (cmd, 7, (4 + len) >> 8);
+		scsi_command_init (cmd, 8, (4 + len) & 0xFF);
+		scsi_command_init (cmd, 9, 0);
+		if (scsi_command_transport (cmd, READ, formats, 4 + len)) {
+			/* READ FORMAT CAPACITIES failed */
+			goto done;
+		}
+
+		if (len != formats [3]) {
+			/* Parameter length inconsistency */
+			goto done;
+		}
+	}
+
+	obligatory = 0x00;
+
+	switch (type) {
+    	case 0x1A:		/* DVD+RW */
+		obligatory = 0x26;
+	case 0x13:		/* DVD-RW Restricted Overwrite */
+	case 0x14:		/* DVD-RW Sequential */
+		for (i = 8, len = formats [3]; i < len; i += 8) {
+			if ((formats [4 + i + 4] >> 2) == obligatory) {
+				break;
+			}
+		}
+
+		if (i == len) {
+			/* Can't find obligatory format descriptor */
+			goto done;
+		}
+
+		blocks  = formats [4 + i + 0] << 24;
+		blocks |= formats [4 + i + 1] << 16;
+		blocks |= formats [4 + i + 2] << 8;
+		blocks |= formats [4 + i + 3];
+		nwa = formats [4 + 5] << 16 | formats [4 + 6] << 8 | formats [4 + 7];
+		if (nwa > 2048) {
+			blocks *= nwa / 2048;
+		} else if (nwa < 2048) {
+			blocks /= 2048 / nwa;
+		}
+
+		retval = 0;
+		break;
+
+	case 0x12:		/* DVD-RAM */
+
+		blocks  = formats [4 + 0] << 24;
+		blocks |= formats [4 + 1] << 16;
+		blocks |= formats [4 + 2] << 8;
+		blocks |= formats [4 + 3];
+		nwa = formats [4 + 5] << 16 | formats [4 + 6] << 8 | formats [4 + 7];
+		if (nwa > 2048) {
+			blocks *= nwa / 2048;
+		} else if (nwa < 2048) {
+			blocks /= 2048 / nwa;
+		}
+
+		retval = 0;
+		break;
+
+	case 0x11:		/* DVD-R */
+	case 0x1B:		/* DVD+R */
+	case 0x2B:		/* DVD+R Double Layer */
+
+		/* READ TRACK INFORMATION */
+		scsi_command_init (cmd, 0, 0x52);
+		scsi_command_init (cmd, 1, 1);
+		scsi_command_init (cmd, 4, next_track >> 8);
+		scsi_command_init (cmd, 5, next_track & 0xFF);
+		scsi_command_init (cmd, 8, sizeof (buf));
+		scsi_command_init (cmd, 9, 0);
+		if (scsi_command_transport (cmd, READ, buf, sizeof (buf))) {
+			/* READ TRACK INFORMATION failed */
+			if (next_track > 0) {
+				goto done;
+			} else {
+				next_track = 1;
+				goto retry;
+			}
+		}
+
+		blocks = buf [24] << 24;
+		blocks |= buf [25] << 16;
+		blocks |= buf [26] << 8;
+		blocks |= buf [27];
+
+		retval = 0;
+		break;
+	default:
+		blocks = 0;
+		break;
+	}
+
+ done:
+	scsi_command_free (cmd);
+
+	if (size) {
+		*size = blocks * 2048;
+	}
+
+	return retval;
+}
+
+int
+get_disc_capacity_for_type (int fd,
+			    int type,
+			    guint64 *size)
+{
+	int retval;
+
+	retval = -1;
+
+	switch (type) {
+	case 0x8:
+		retval = get_disc_capacity_cd (fd, size);
+		break;
+	case 0x9:
+	case 0xa:
+		retval = get_disc_capacity_cdr (fd, size);
+		break;
+	case 0x10:
+		retval = get_disc_capacity_cd (fd, size);
+		break;
+	case 0x11:
+	case 0x13:
+	case 0x14:
+	case 0x1B:
+	case 0x2B:
+	case 0x1A:
+	case 0x12:
+		retval = get_disc_capacity_dvdr_from_type (fd, type, size);
+		break;
+	default:
+		retval = -1;
+	}
+
+	return retval;
 }
 
 int
