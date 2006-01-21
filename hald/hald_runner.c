@@ -77,7 +77,7 @@ hald_runner_start_runner(void)
   GError *error = NULL;
   GPid pid;
   char *argv[] = { NULL, NULL};
-  char *env[] =  { NULL, NULL, NULL};
+  char *env[] =  { NULL, NULL, NULL, NULL};
   const char *hald_runner_path;
 
   dbus_error_init(&err);
@@ -99,6 +99,8 @@ hald_runner_start_runner(void)
   } else {
 	  env[1] = g_strdup_printf ("PATH=" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR);
   }
+
+  /*env[2] = "DBUS_VERBOSE=1";*/
   
   
   if (!g_spawn_async(NULL, argv, env, G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, 
@@ -109,6 +111,8 @@ hald_runner_start_runner(void)
   }
   g_free(env[0]);
   g_free(env[1]);
+
+  HAL_INFO (("Runner has pid %d", pid));
 
   g_child_watch_add(pid, runner_died, NULL);
   while (runner_connection == NULL) {
@@ -145,7 +149,7 @@ add_property_to_msg (HalDevice *device, HalProperty *property,
   env = g_strdup_printf ("HAL_PROP_%s=%s", prop_upper, value);
   dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &env);
 
-  g_free(env);
+  g_free (env);
   g_free (value);
   g_free (prop_upper);
 

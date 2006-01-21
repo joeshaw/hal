@@ -229,6 +229,7 @@ hal_property_to_string (HalProperty *prop)
 		char buf[256];
 		
 		i = 0;
+		buf[0] = '\0';
 		for (iter = hal_property_get_strlist (prop); 
 		     iter != NULL && i < sizeof(buf); 
 		     iter = g_slist_next (iter)) {

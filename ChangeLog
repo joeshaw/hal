@@ -1,5 +1,15 @@
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
+	* hald/property.c (hal_property_to_string): Ugh, make this work on
+	empty strlists otherwise we return corrupt data and may crash the
+	runner via D-BUS since we pass non-UTF-8 over D-BUS.
+
+	* hald/hald_runner.c (hald_runner_start_runner): Print pid of runner
+	and make space for passing DBUS_VERBOSE=1 in the environment (right
+	now commented out)
+
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/policy/10osvendor/Makefile.am (dist_fdi_DATA): Rip out
 	10-storage-policy.fdi
 
