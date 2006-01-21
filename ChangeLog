@@ -1,5 +1,12 @@
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/Makefile.am (dist_fdi_DATA): Rip out
+	10-storage-policy.fdi
+
+	* fdi/policy/10osvendor/10-storage-policy.fdi: Remove
+
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
 	Remove fstab-sync.
 
 	* tools/fstab-sync.c: Remove
