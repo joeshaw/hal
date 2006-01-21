@@ -1,7 +1,11 @@
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Remove selinux detection as it is not used anywhere
+
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Remove options for pcmcia as we now rely on sysfs on
-	Linux
+	Linux	
 
 	* hald/linux2/Makefile.am (libhald_linux2_la_SOURCES): Remove
 	pcmcia_cs.h and pcmcia.utils.[ch]
