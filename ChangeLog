@@ -1,5 +1,12 @@
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
+	* hald/hald_dbus.c (hald_exec_method_cb): Don't free errors as the
+	caller owns the value
+
+	* hald/hald_runner.c (call_notify): Don't copy value on error
+
+2006-01-21  David Zeuthen  <davidz@redhat.com>
+
 	* hald-runner/runner.c: Search $PATH before searching allowed dirs;
 	this is needed to make e.g. run-hald.sh work - note that passing
 	"/bin/sh /path/to/evil/program" will _not_ work as we don't do
@@ -11,6 +18,7 @@
 	* hald/property.c (hal_property_strlist_clear): New function
 
 	* hald/hald_runner.c (hald_runner_start_runner): Pass $PATH to runner
+	(call_notify): Copy value on error as e.g. hald_exec_method_cb frees it
 
 	* hald/hald_dbus.c (hald_exec_method_cb): Fix up indenting
 

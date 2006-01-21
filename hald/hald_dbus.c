@@ -2539,8 +2539,6 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 		dbus_message_unref (reply);
 	}
 
-	g_free (exp_name);
-	g_free (exp_detail);
 	dbus_message_unref (message);
 }
 

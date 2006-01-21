@@ -270,7 +270,8 @@ error:
 }
 
 static void
-call_notify(DBusPendingCall *pending, void *user_data) {
+call_notify(DBusPendingCall *pending, void *user_data)
+{
   HelperData *hb = (HelperData *)user_data;
   dbus_uint32_t exitt = HALD_RUN_SUCCESS;
   dbus_int32_t return_code = 0;
@@ -297,10 +298,8 @@ call_notify(DBusPendingCall *pending, void *user_data) {
   while (dbus_message_iter_next(&iter) &&
     dbus_message_iter_get_arg_type(&iter) == DBUS_TYPE_STRING) {
     const char *value;
-    const char *copy;
     dbus_message_iter_get_basic(&iter, &value);
-    copy = g_strdup (value);
-    g_array_append_vals(error, &copy, 1);
+    g_array_append_vals(error, &value, 1);
   }
 
   hb->cb(hb->d, exitt, return_code, 
