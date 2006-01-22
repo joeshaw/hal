@@ -1,3 +1,11 @@
+2006-01-22  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/policy/10osvendor/Makefile.am (dist_fdi_DATA): Remove
+	10-security-policy.fdi
+
+	* fdi/policy/10osvendor/10-security-policy.fdi: Remove this file
+	as this approach to managing privileges wasn't so good after all
+	
 2006-01-21  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Add HP_RECOVERY to
