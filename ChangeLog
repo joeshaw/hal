@@ -1,5 +1,10 @@
 2006-01-22  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-system-storage-mount: Also remove code expecting
+	the now removed attempt at managing privileges
+
+2006-01-22  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/policy/10osvendor/Makefile.am (dist_fdi_DATA): Remove
 	10-security-policy.fdi
 
