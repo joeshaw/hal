@@ -4,6 +4,7 @@
  * blockdev.c : Handling of block devices
  *
  * Copyright (C) 2005 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005,2006 Kay Sievers, <kay.sievers@vrfy.org>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -335,7 +336,7 @@ add_blockdev_probing_helper_done (HalDevice *d, guint32 exit_type,
 
 
 out:
-	;
+	return;
 }
 
 static void 
@@ -353,7 +354,7 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 		hal_device_property_set_string (d, "info.product", "Ignored Device");
 
 		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
-		
+
 		/* Move from temporary to global device store */
 		hal_device_store_remove (hald_get_tdl (), d);
 		hal_device_store_add (hald_get_gdl (), d);
@@ -364,7 +365,6 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 
 	if (!hal_device_property_get_bool (d, "storage.media_check_enabled") &&
 	    hal_device_property_get_bool (d, "storage.no_partitions_hint")) {
-
 
 		/* special probe for PC floppy drives */
 		if (strcmp (hal_device_property_get_string (d, "storage.bus"), "platform") == 0 &&
@@ -389,7 +389,6 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 
 	/* run prober for 
 	 *
-	 *  - drive_id
 	 *  - cdrom drive properties
 	 *  - non-partitioned filesystem on main block device
 	 */
@@ -397,23 +396,23 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 	HAL_INFO (("Probing storage device %s", hal_device_property_get_string (d, "block.device")));
 
 	/* probe the device */
-	hald_runner_run(d, 
-	                    "hald-probe-storage", NULL,
-	                    HAL_HELPER_TIMEOUT,
-	                    add_blockdev_probing_helper_done,
-	                    (gpointer) end_token, NULL);
-	                    
+	hald_runner_run(d,
+			"hald-probe-storage", NULL,
+			HAL_HELPER_TIMEOUT,
+			add_blockdev_probing_helper_done,
+			(gpointer) end_token, NULL);
+
 out:
-	;
+	return;
 }
 
-static void 
+static void
 blockdev_callouts_preprobing_volume_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	void *end_token = (void *) userdata1;
 
 	if (hal_device_property_get_bool (d, "info.ignore")) {
-		/* Leave the device here with info.ignore==TRUE so we won't pick up children 
+		/* Leave the device here with info.ignore==TRUE so we won't pick up children
 		 * Also remove category and all capabilities
 		 */
 		hal_device_property_remove (d, "info.category");
@@ -422,23 +421,23 @@ blockdev_callouts_preprobing_volume_done (HalDevice *d, gpointer userdata1, gpoi
 		hal_device_property_set_string (d, "info.product", "Ignored Device");
 
 		HAL_INFO (("Preprobing merged info.ignore==TRUE"));
-		
+
 		/* Move from temporary to global device store */
 		hal_device_store_remove (hald_get_tdl (), d);
 		hal_device_store_add (hald_get_gdl (), d);
-		
+
 		hotplug_event_end (end_token);
 		goto out;
 	}
 
 	/* probe the device */
 	hald_runner_run (d,
-	                     "hald-probe-volume", NULL, 
-	                     HAL_HELPER_TIMEOUT,
-	                     add_blockdev_probing_helper_done,
-	                     (gpointer) end_token, NULL);
+			 "hald-probe-volume", NULL, 
+			 HAL_HELPER_TIMEOUT,
+			 add_blockdev_probing_helper_done,
+			 (gpointer) end_token, NULL);
 out:
-	;
+	return;
 }
 
 static const gchar *
@@ -530,6 +529,7 @@ void
 hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_file, gboolean is_partition,
 				  HalDevice *parent, void *end_token)
 {
+	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
 	gchar *major_minor;
 	HalDevice *d;
 	unsigned int major, minor;
@@ -654,7 +654,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 		scsidev = NULL;
 		physdev = NULL;
-		physdev_udi = NULL;		
+		physdev_udi = NULL;
 
 		is_removable = FALSE;
 		is_hotpluggable = FALSE;
@@ -666,9 +666,15 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (d, "storage.no_partitions_hint", TRUE);
 		hal_device_property_set_bool (d, "storage.media_check_enabled", TRUE);
 		hal_device_property_set_bool (d, "storage.automount_enabled_hint", TRUE);
-		hal_device_property_set_string (d, "storage.model", "");
-		hal_device_property_set_string (d, "storage.vendor", "");
 		hal_device_property_set_string (d, "storage.drive_type", "disk");
+
+		/* persistent properties from udev (may be empty) */
+		hal_device_property_set_string (d, "storage.model", hotplug_event->sysfs.model);
+		hal_device_property_set_string (d, "storage.vendor", hotplug_event->sysfs.vendor);
+		if (hotplug_event->sysfs.serial[0] != '\0')
+			hal_device_property_set_string (d, "storage.serial", hotplug_event->sysfs.serial);
+		if (hotplug_event->sysfs.revision[0] != '\0')
+			hal_device_property_set_string (d, "storage.firmware_version", hotplug_event->sysfs.revision);
 
 		/* walk up the device chain to find the physical device, 
 		 * start with our parent. On the way, optionally pick up
@@ -728,7 +734,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					hal_device_property_set_string
 						(d, "storage.bus", "ccw");
 				}
-									
 			}
 
 			/* Go to parent */
@@ -858,10 +863,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 * VOLUMES
 		 *
 		 ************************/
-
 		hal_device_property_set_string (d, "block.storage_device", parent->udi);
 
-		/* set defaults */
+		/* defaults */
+		hal_device_property_set_string (d, "storage.model", "");
 		hal_device_property_set_string (d, "volume.fstype", "");
 		hal_device_property_set_string (d, "volume.fsusage", "");
 		hal_device_property_set_string (d, "volume.fsversion", "");
@@ -907,9 +912,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			goto error;
 		}
 		hal_device_property_set_uint64 (
-			d, "volume.size", 
-			((dbus_uint64_t)(512)) * 
-			((dbus_uint64_t)(hal_device_property_set_int (d, "volume.block_size", 512))));
+			d, "volume.size",
+			((dbus_uint64_t)(512)) * ((dbus_uint64_t)(hal_device_property_set_int (d, "volume.block_size", 512))));
 
 		/* add to TDL so preprobing callouts and prober can access it */
 		hal_device_store_add (hald_get_tdl (), d);

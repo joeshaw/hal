@@ -1,3 +1,40 @@
+2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Remove drive_id and use the udev provided data for block device
+	serial numbers and vendor/product information.
+
+	* Makefile.am:
+	* configure.in:
+	* drive_id/Makefile.am:
+	* drive_id/ata.c:
+	* drive_id/ata.h:
+	* drive_id/drive_id.c:
+	* drive_id/drive_id.h:
+	* drive_id/logging.h:
+	* drive_id/scsi.c:
+	* drive_id/scsi.h:
+	* drive_id/util.c:
+	* drive_id/util.h:
+	* hald/linux2/blockdev.c: (add_blockdev_probing_helper_done),
+	(blockdev_callouts_preprobing_storage_done),
+	(blockdev_callouts_preprobing_volume_done),
+	(hotplug_event_begin_add_blockdev):
+	* hald/linux2/coldplug.c: (hal_util_get_udevinfo_path),
+	(hal_util_init_sysfs_to_udev_map), (coldplug_get_hotplug_event),
+	(coldplug_synthesize_events), (coldplug_synthesize_block_event),
+	(coldplug_compute_visit_device):
+	* hald/linux2/hotplug.c: (fixup_net_device_for_renaming),
+	(hotplug_event_begin_sysfs):
+	* hald/linux2/hotplug.h:
+	* hald/linux2/osspec.c: (hald_udev_data), (osspec_init):
+	* hald/linux2/probing/Makefile.am:
+	* hald/linux2/probing/probe-storage.c: (main):
+	* hald/linux2/probing/probe-volume.c: (volume_id_log),
+	(strdup_valid_utf8), (set_volume_id_values):
+	* hald/util.c: (hal_util_strdup_valid_utf8):
+	* hald/util.h:
+
+
 2006-01-22  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-system-storage-mount: Also remove code expecting

@@ -53,36 +53,42 @@ typedef enum {
  */
 typedef struct
 {
-	HotplugActionType action;               /**< Whether the event is add or remove */
-	HotplugEventType type;                  /**< Type of hotplug event */
+	HotplugActionType action;				/* Whether the event is add or remove */
+	HotplugEventType type;					/* Type of event */
 
 	union {
 		struct {
-			char subsystem[HAL_PATH_MAX];           /**< Subsystem e.g. usb, pci (only for hotplug msg) */
-			char sysfs_path[HAL_PATH_MAX];          /**< Path into sysfs e.g. /sys/block/sda */
-		
-			char wait_for_sysfs_path[HAL_PATH_MAX];	/**< Wait for completion of events that a) comes 
-								 *   before this one ; AND b) has a sysfs path that
-								 *   is contained in or equals this */
-			
-			char device_file [HAL_PATH_MAX];        /**< Path to special device file (may be NULL) */
-			
-			int net_ifindex;                        /**< For network only; the value of the ifindex file */
+			char subsystem[HAL_NAME_MAX];		/* Kernel subsystem the device belongs to */
+			char sysfs_path[HAL_PATH_MAX];		/* Kernel device devpath */
+			char device_file[HAL_PATH_MAX];	/* Device node for the device */
+			unsigned long long seqnum;		/* kernel uevent sequence number */
+			int net_ifindex;			/* Kernel ifindex for network devices */
+
+			/* stuff udev may tell us about the device and we don't want to query */
+			char vendor[HAL_NAME_MAX];
+			char model[HAL_NAME_MAX];
+			char revision[HAL_NAME_MAX];
+			char serial[HAL_NAME_MAX];
+			char fsusage[HAL_NAME_MAX];
+			char fstype[HAL_NAME_MAX];
+			char fsversion[HAL_NAME_MAX];
+			char fslabel[HAL_NAME_MAX];
+			char fsuuid[HAL_NAME_MAX];
 		} sysfs;
 
 		struct {
-			int  acpi_type;                         /**< Type of ACPI object; see acpi.c */
-			char acpi_path[HAL_PATH_MAX];           /**< Path into procfs, e.g. /proc/acpi/battery/BAT0/ */
+			int  acpi_type;				/* Type of ACPI object; see acpi.c */
+			char acpi_path[HAL_PATH_MAX];		/* Path into procfs, e.g. /proc/acpi/battery/BAT0/ */
 		} acpi;
 
 		struct {
-			int  apm_type;                          /**< Type of APM object; see apm.c */
-			char apm_path[HAL_PATH_MAX];            /**< Path into procfs, e.g. /proc/apm */
+			int  apm_type;				/* Type of APM object; see apm.c */
+			char apm_path[HAL_PATH_MAX];		/* Path into procfs, e.g. /proc/apm */
 		} apm;
 
 		struct {
-			int  pmu_type;                          /**< Type of PMU object; see pmu.c */
-			char pmu_path[HAL_PATH_MAX];            /**< Path into procfs, e.g. /proc/pmu/battery_0 */
+			int  pmu_type;				/* Type of PMU object; see pmu.c */
+			char pmu_path[HAL_PATH_MAX];		/* Path into procfs, e.g. /proc/pmu/battery_0 */
 		} pmu;
 	};
 

@@ -29,6 +29,10 @@
 #include "device.h"
 #include "device_store.h"
 
+#define HAL_NAME_MAX 256
+#define HAL_PATH_MAX 256
+#define HAL_HELPER_TIMEOUT 10000
+
 int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, 
 				 gboolean isDischarging, gboolean isCharging, gboolean guessChargeRate);
 
@@ -89,10 +93,8 @@ void hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpoint
 void hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
 void hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2);
 
+gchar *hal_util_strdup_valid_utf8 (const char *str);
+
 void hal_util_hexdump (const void *buf, unsigned int size);
-
-#define HAL_HELPER_TIMEOUT 10000
-
-#define HAL_PATH_MAX 256
 
 #endif /* UTIL_H */

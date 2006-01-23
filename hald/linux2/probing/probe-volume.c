@@ -48,36 +48,34 @@
 #include <glib.h>
 
 #include "libhal/libhal.h"
-
-#include "drive_id/drive_id.h"
 #include "volume_id/volume_id.h"
 #include "linux_dvd_rw_utils.h"
 
 #include "shared.h"
 
-static char *
-strdup_valid_utf8 ( const char *String )
-{
-	char *endchar;
-	char *newString;
-
-	if (String == NULL)
-		return NULL;
-
-	newString = g_strdup( String );        
-        
-	while (!g_utf8_validate (newString, -1, (const char **) &endchar)) {
-		*endchar = '?';
-	}
-	return newString;
-}
-
-void 
+void
 volume_id_log (const char *format, ...)
 {
 	va_list args;
 	va_start (args, format);
 	_do_dbg (format, args);
+}
+
+static gchar *
+strdup_valid_utf8 (const char *str)
+{
+	char *endchar;
+	char *newstr;
+
+	if (str == NULL)
+		return NULL;
+
+	newstr = g_strdup (str);
+
+	while (!g_utf8_validate (str, -1, (const char **) &endchar)) {
+		*endchar = '?';
+	}
+	return newstr;
 }
 
 static void
@@ -127,7 +125,7 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 	dbg ("volume.uuid = '%s'", vid->uuid);
 
 	/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
-	volume_label = strdup_valid_utf8 ( vid->label );
+	volume_label = strdup_valid_utf8 (vid->label);
 	if( volume_label != NULL ) {
 		libhal_device_set_property_string (ctx, udi, "volume.label", volume_label, &error);
 		dbg ("volume.label = '%s'", volume_label);

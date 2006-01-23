@@ -63,7 +63,7 @@ GQueue *hotplug_event_queue;
 /** List of HotplugEvent objects we are currently processing */
 GSList *hotplug_events_in_progress = NULL;
 
-void 
+void
 hotplug_event_end (void *end_token)
 {
 	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
@@ -81,8 +81,6 @@ hotplug_event_reposted (void *end_token)
 	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
 	hotplug_event_process_queue ();
 }
-
-
 
 static void
 fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
@@ -103,7 +101,6 @@ fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 			HAL_WARNING (("Net interface @ %s with ifindex %d was probably renamed",
 				      hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.net_ifindex));
 			
-			
 			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , get_hal_sysfs_path());
 			if ((dir = g_dir_open (path, 0, &err)) == NULL) {
 				HAL_ERROR (("Unable to open %/class/net: %s", get_hal_sysfs_path(), err->message));
@@ -122,11 +119,11 @@ fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 				}
 				
 			}
-			g_dir_close (dir);	
+			g_dir_close (dir);
 		}
 	}
 out:
-	;
+	return;
 }
 
 
@@ -136,18 +133,15 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	static char sys_devices_path[HAL_PATH_MAX];
 	static char sys_class_path[HAL_PATH_MAX];
 	static char sys_block_path[HAL_PATH_MAX];
-	static gsize sys_devices_path_len = 0;
-	static gsize sys_class_path_len = 0;
-	static gsize sys_block_path_len = 0;
+	static gsize sys_devices_path_len;
+	static gsize sys_class_path_len;
+	static gsize sys_block_path_len;
 
-	if (sys_block_path_len == 0) {
-		sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
-		sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
-		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
-	}
+	sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
+	sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
+	sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
 
-	if (hotplug_event->action == HOTPLUG_ACTION_ADD &&
-	    hal_device_store_match_key_value_string (hald_get_gdl (),
+	if (hotplug_event->action == HOTPLUG_ACTION_ADD && hal_device_store_match_key_value_string (hald_get_gdl (),
 						     "linux.sysfs_path",
 						     hotplug_event->sysfs.sysfs_path)) {
 		HAL_ERROR (("devpath %s already present in the store, ignore event", hotplug_event->sysfs.sysfs_path));
@@ -227,36 +221,36 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
 		gchar *parent_path;
 		gboolean is_partition;
-		
+
 		parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
 		is_partition = (strcmp (parent_path, sys_block_path) != 0);
-		
+
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent;
 
 			if (is_partition) {
-				parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
-										  "linux.sysfs_path_device", 
+				parent = hal_device_store_match_key_value_string (hald_get_gdl (),
+										  "linux.sysfs_path_device",
 										  parent_path);
 			} else {
 				gchar *target;
 				char physdevpath[256];
-				
+
 				g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
 				if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
 					gchar *normalized_target;
 
 					normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs.sysfs_path, target);
 					g_free (target);
-					parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
-											  "linux.sysfs_path_device", 
+					parent = hal_device_store_match_key_value_string (hald_get_gdl (),
+											  "linux.sysfs_path_device",
 											  normalized_target);
 					g_free (normalized_target);
 				} else {
 					parent = NULL;
 				}
 			}
-			
+
 			hotplug_event_begin_add_blockdev (hotplug_event->sysfs.sysfs_path,
 							  hotplug_event->sysfs.device_file,
 							  is_partition,

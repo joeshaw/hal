@@ -4,6 +4,7 @@
  * osspec.c : New and improved HAL backend for Linux 2.6
  *
  * Copyright (C) 2004 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2005,2006 Kay Sievers, <kay.sievers@vrfy.org>
  * Copyright (C) 2005 Danny Kukawka, <danny.kukawka@web.de>
  *
  * Licensed under the Academic Free License version 2.1
@@ -107,13 +108,8 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 
 	char buf[2048];
 	size_t bufpos = 0;
-	const char *devpath = NULL;
-	const char *physdevpath = NULL;
 	const char *action = NULL;
-	const char *subsystem = NULL;
-	const char *devname = NULL;
-	int ifindex = -1;
-	unsigned long long seqnum = 0;
+	HotplugEvent *hotplug_event;
 
 	fd = g_io_channel_unix_get_fd (source);
 
@@ -150,9 +146,13 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		goto out;
 	}
 
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+
 	while (bufpos < sizeof (buf)) {
 		size_t keylen;
 		char *key;
+		char *str;
 
 		key = &buf[bufpos];
 		keylen = strlen(key);
@@ -163,69 +163,88 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		if (strncmp(key, "ACTION=", 7) == 0)
 			action = &key[7];
 		else if (strncmp(key, "DEVPATH=", 8) == 0)
-			devpath = &key[8];
+			g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path),
+				    "%s%s", hal_sysfs_path, &key[8]);
 		else if (strncmp(key, "SUBSYSTEM=", 10) == 0)
-			subsystem = &key[10];
-		else if (strncmp(key, "PHYSDEVPATH=", 12) == 0)
-			physdevpath = &key[12];
+			g_strlcpy (hotplug_event->sysfs.subsystem, &key[10], sizeof (hotplug_event->sysfs.subsystem));
 		else if (strncmp(key, "DEVNAME=", 8) == 0)
-			devname = &key[8];
+			g_strlcpy (hotplug_event->sysfs.device_file, &key[8], sizeof (hotplug_event->sysfs.device_file));
 		else if (strncmp(key, "SEQNUM=", 7) == 0)
-			seqnum = strtoull(&key[7], NULL, 10);
+			hotplug_event->sysfs.seqnum = strtoull(&key[7], NULL, 10);
 		else if (strncmp(key, "IFINDEX=", 8) == 0)
-			ifindex = strtoul(&key[8], NULL, 10);
+			hotplug_event->sysfs.net_ifindex = strtoul(&key[8], NULL, 10);
+		else if (strncmp(key, "ID_VENDOR=", 10) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[10]);
+			g_strlcpy (hotplug_event->sysfs.vendor, str, sizeof(hotplug_event->sysfs.vendor));
+			g_free (str);
+		} else if (strncmp(key, "ID_MODEL=", 9) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[9]);
+			g_strlcpy (hotplug_event->sysfs.model, str, sizeof(hotplug_event->sysfs.model));
+			g_free (str);
+		} else if (strncmp(key, "ID_REVISION=", 12) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[12]);
+			g_strlcpy (hotplug_event->sysfs.revision, str, sizeof(hotplug_event->sysfs.revision));
+			g_free (str);
+		} else if (strncmp(key, "ID_SERIAL=", 10) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[10]);
+			g_strlcpy (hotplug_event->sysfs.serial, str, sizeof(hotplug_event->sysfs.serial));
+			g_free (str);
+		} else if (strncmp(key, "ID_FS_USAGE=", 12) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[12]);
+			g_strlcpy (hotplug_event->sysfs.fsusage, str, sizeof(hotplug_event->sysfs.fsusage));
+			g_free (str);
+		} else if (strncmp(key, "ID_FS_TYPE=", 11) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[11]);
+			g_strlcpy (hotplug_event->sysfs.fstype, str, sizeof(hotplug_event->sysfs.fstype));
+			g_free (str);
+		} else if (strncmp(key, "ID_FS_VERSION=", 14) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[14]);
+			g_strlcpy (hotplug_event->sysfs.fsversion, str, sizeof(hotplug_event->sysfs.fsversion));
+			g_free (str);
+		} else if (strncmp(key, "ID_FS_UUID=", 11) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[11]);
+			g_strlcpy (hotplug_event->sysfs.fsuuid, str, sizeof(hotplug_event->sysfs.fsuuid));
+			g_free (str);
+		} else if (strncmp(key, "ID_FS_LABEL=", 12) == 0) {
+			str = hal_util_strdup_valid_utf8(&key[12]);
+			g_strlcpy (hotplug_event->sysfs.fslabel, str, sizeof(hotplug_event->sysfs.fslabel));
+			g_free (str);
+		}
 	}
 
-	if (!devpath) {
-		HAL_INFO (("missing DEVPATH"));
-		goto out;
-	}
 	if (!action) {
 		HAL_INFO (("missing ACTION"));
-		goto out;
+		goto invalid;
 	}
-	if (!subsystem) {
+	if (hotplug_event->sysfs.sysfs_path == NULL) {
+		HAL_INFO (("missing DEVPATH"));
+		goto invalid;
+	}
+	if (hotplug_event->sysfs.subsystem == NULL) {
 		HAL_INFO (("missing SUSBSYSTEM"));
-		goto out;
+		goto invalid;
 	}
-	if (!devname)
-		devname = "";
 
-	HAL_INFO (("SEQNUM=%lld, ACTION=%s, SUBSYS=%s, SYSFSPATH=%s, DEVNAME=%s, IFINDEX=%d",
-		   seqnum, action, subsystem, devpath, devname, ifindex));
+	HAL_INFO (("SEQNUM=%lld, ACTION=%s, SUBSYSTEM=%s, DEVPATH=%s, DEVNAME=%s, IFINDEX=%d",
+		   hotplug_event->sysfs.seqnum, action, hotplug_event->sysfs.subsystem, hotplug_event->sysfs.sysfs_path,
+		   hotplug_event->sysfs.device_file, hotplug_event->sysfs.net_ifindex));
 
 	if (strcmp (action, "add") == 0) {
-		HotplugEvent *hotplug_event;
-
-		hotplug_event = g_new0 (HotplugEvent, 1);
 		hotplug_event->action = HOTPLUG_ACTION_ADD;
-		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
-		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
-		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
-			    hal_sysfs_path, devpath);
-		g_strlcpy (hotplug_event->sysfs.device_file, devname, sizeof (hotplug_event->sysfs.device_file));
-		hotplug_event->sysfs.net_ifindex = ifindex;
-
-		/* queue up and process */
 		hotplug_event_enqueue (hotplug_event);
 		hotplug_event_process_queue ();
-
-	} else if (strcmp (action, "remove") == 0) {
-		HotplugEvent *hotplug_event;
-
-		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->action = HOTPLUG_ACTION_REMOVE;
-		hotplug_event->type = HOTPLUG_EVENT_SYSFS;
-		g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
-		g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path), "%s%s", 
-			    hal_sysfs_path, devpath);
-		g_strlcpy (hotplug_event->sysfs.device_file, devname, sizeof (hotplug_event->sysfs.device_file));
-		hotplug_event->sysfs.net_ifindex = ifindex;
-
-		/* queue up and process */
-		hotplug_event_enqueue (hotplug_event);
-		hotplug_event_process_queue ();
+		goto out;
 	}
+
+	if (strcmp (action, "remove") == 0) {
+		hotplug_event->action = HOTPLUG_ACTION_REMOVE;
+		hotplug_event_enqueue (hotplug_event);
+		hotplug_event_process_queue ();
+		goto out;
+	}
+
+invalid:
+	g_free (hotplug_event);
 
 out:
 	return TRUE;
@@ -249,7 +268,6 @@ osspec_init (void)
 {
 	gchar path[HAL_PATH_MAX];
 	int udev_socket;
-	int helper_socket;
 	struct sockaddr_un saddr;
 	socklen_t addrlen;
 	const int on = 1;

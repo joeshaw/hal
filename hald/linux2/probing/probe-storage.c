@@ -47,7 +47,6 @@
 
 #include "libhal/libhal.h"
 
-#include "drive_id/drive_id.h"
 #include "volume_id/volume_id.h"
 #include "linux_dvd_rw_utils.h"
 
@@ -55,14 +54,6 @@
 
 void 
 volume_id_log (const char *format, ...)
-{
-	va_list args;
-	va_start (args, format);
-	_do_dbg (format, args);
-}
-
-void 
-drive_id_log (const char *format, ...)
 {
 	va_list args;
 	va_start (args, format);
@@ -169,71 +160,6 @@ main (int argc, char *argv[])
 	     device_file, bus, drive_type, udi, only_check_for_fs);
 
 	if (!only_check_for_fs) {
-		/* Only do drive_id on IDE and real SCSI disks - specifically
-		 * not on USB which uses emulated SCSI since an INQUIRY on
-		 * most USB devices may crash the storage device if the
-		 * transfer length isn't exactly 36 bytes. See Red Hat bug
-		 * #145256 for details.
-		 */
-		if (strcmp (bus, "ide") == 0 ||
-		    strcmp (bus, "scsi") == 0) {
-			struct drive_id *did;
-			char *serial;		
-	
-			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
-			fd = open (device_file, O_RDONLY | O_NONBLOCK);
-			if (fd < 0) {
-				dbg ("Cannot open %s: %s", device_file, strerror (errno));
-				goto out;
-			}
-			dbg ("Returned from open(2)");
-
-			did = drive_id_open_fd (fd);
-			if (drive_id_probe_all (did) == 0) {
-				dbg ("serial = '%s', firmware = '%s'", did->serial, did->firmware);
-				
-				/* validate this string to UTF8 to prevent problems with dbus if there is garbage */
-				serial = strdup_valid_utf8 ((const char *) did->serial);
-				
-				if (did->serial[0] != '\0' && serial != NULL) {
-					dbus_error_init (&error);
-					if (!libhal_device_set_property_string (ctx, udi, "storage.serial", 
-										serial, &error)) {
-						dbg ("Error setting storage.serial");
-					}
-				}
-				
-				if (did->firmware[0] != '\0') {
-					dbus_error_init (&error);
-					if (!libhal_device_set_property_string (ctx, udi, "storage.firmware_version", 
-										(char *) did->firmware, &error)) {
-						dbg ("Error setting storage.firmware_version");
-					}
-				}
-
-				dbus_error_init (&error);
-
-			}
-			drive_id_close (did);
-
-			close (fd);
-		}
-
-#if 0
-		/* TODO: test for SATA drives once that gets exported to user space */
-		{
-			int fd;
-			unsigned char unused;
-			
-			if ((fd = open (device_file, O_RDONLY|O_NDELAY)) != -1) {
-				if (ioctl (fd, ATA_IOC_GET_IO32, &unused) >= 0) {
-					hal_device_property_set_string (stordev, "storage.bus", "sata");
-				}
-				close (fd);
-		}
-		}
-#endif
-
 		/* Get properties for CD-ROM drive */
 		if (strcmp (drive_type, "cdrom") == 0) {
 			int capabilities;
