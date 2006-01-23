@@ -31,12 +31,12 @@
 #include <glib.h>
 
 typedef struct {
-  gchar *udi;
-  gchar **environment;
-  gchar **argv;
-  gchar *input;
-  gboolean error_on_stderr;
-  guint32 timeout;
+	gchar *udi;
+	gchar **environment;
+	gchar **argv;
+	gchar *input;
+	gboolean error_on_stderr;
+	guint32 timeout;
 } run_request;
 
 run_request *new_run_request(void);
@@ -53,4 +53,5 @@ void run_kill_all();
 
 /* initialise the actual runner data */
 void run_init();
+
 #endif /*  RUNNER_H */

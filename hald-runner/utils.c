@@ -31,56 +31,59 @@
 #include "utils.h"
 
 char **
-get_string_array(DBusMessageIter *iter) {
-  GArray *array;
-  char **result;
-  array = g_array_new(TRUE, FALSE, sizeof(char *));
+get_string_array(DBusMessageIter *iter)
+{
+	GArray *array;
+	char **result;
+	array = g_array_new(TRUE, FALSE, sizeof(char *));
 
-  while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRING) {
-    const char *value;
-    char *t;
-    dbus_message_iter_get_basic(iter, &value);
-    t = g_strdup(value);
-    g_array_append_vals(array, &t, 1);
-    dbus_message_iter_next(iter);
-  }
-  result = (char **) array->data;
-  g_array_free(array, FALSE);
-  return result;
+	while (dbus_message_iter_get_arg_type(iter) == DBUS_TYPE_STRING) {
+		const char *value;
+		char *t;
+		dbus_message_iter_get_basic(iter, &value);
+		t = g_strdup(value);
+		g_array_append_vals(array, &t, 1);
+		dbus_message_iter_next(iter);
+	}
+	result = (char **) array->data;
+	g_array_free(array, FALSE);
+	return result;
 }
 
 char **
-get_string_array_from_fd(int fd) {
-  GArray *array;
-  char **result;
-  GString *str;
-  gsize pos;
-  GIOChannel *io;
-  int i = 0;
+get_string_array_from_fd(int fd)
+{
+	GArray *array;
+	char **result;
+	GString *str;
+	gsize pos;
+	GIOChannel *io;
+	int i = 0;
 
-  array = g_array_new(TRUE, FALSE, sizeof(char *));
-  str = g_string_new("");
-  io = g_io_channel_unix_new(fd);
-  while (g_io_channel_read_line_string(io, str, &pos, NULL) 
-          == G_IO_STATUS_NORMAL && (i++ < 128)) {
-    char *t;
-    /* Remove the terminting char aka \n*/
-    g_string_erase(str, pos, 1);
-    t = g_strdup(str->str);
-    g_array_append_vals(array, &t, 1);
-  }
-  g_string_free(str, TRUE);
-  g_io_channel_unref(io);
-  result = (char **) array->data;
-  g_array_free(array, FALSE);
-  return result;
+	array = g_array_new(TRUE, FALSE, sizeof(char *));
+	str = g_string_new("");
+	io = g_io_channel_unix_new(fd);
+	while (g_io_channel_read_line_string(io, str, &pos, NULL) == G_IO_STATUS_NORMAL && (i++ < 128)) {
+		char *t;
+
+		/* Remove the terminting char aka \n */
+		g_string_erase(str, pos, 1);
+		t = g_strdup(str->str);
+		g_array_append_vals(array, &t, 1);
+	}
+	g_string_free(str, TRUE);
+	g_io_channel_unref(io);
+	result = (char **) array->data;
+	g_array_free(array, FALSE);
+	return result;
 }
 
 void 
-free_string_array(char **array) {
-  char **p;
-  for (p = array; p != NULL && *p != NULL; p++) {
-    g_free(*p);
-  }
-  g_free(array);
+free_string_array(char **array)
+{
+	char **p;
+
+	for (p = array; p != NULL && *p != NULL; p++)
+		g_free(*p);
+	g_free(array);
 }

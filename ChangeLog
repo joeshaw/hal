@@ -1,5 +1,20 @@
 2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Adopt hald-runner to usual HAL coding style.
+
+	* hald-runner/main.c: (parse_first_part), (handle_run),
+	(handle_start), (handle_kill), (filter), (main):
+	* hald-runner/runner.c: (del_run_data), (new_run_request),
+	(del_run_request), (send_reply), (remove_from_hash_table),
+	(run_exited), (run_timedout), (find_program), (run_request_run),
+	(kill_rd), (do_kill_udi), (run_kill_udi), (hash_kill_udi),
+	(run_kill_all), (run_init):
+	* hald-runner/runner.h:
+	* hald-runner/utils.c: (get_string_array),
+	(get_string_array_from_fd), (free_string_array):
+
+2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Remove drive_id and use the udev provided data for block device
 	serial numbers and vendor/product information.
 
@@ -33,7 +48,6 @@
 	(strdup_valid_utf8), (set_volume_id_values):
 	* hald/util.c: (hal_util_strdup_valid_utf8):
 	* hald/util.h:
-
 
 2006-01-22  David Zeuthen  <davidz@redhat.com>
 
