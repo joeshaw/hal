@@ -47,7 +47,6 @@ GIVEN_MOUNTOPTIONS=${GIVEN_MOUNTOPTIONS//[^a-zA-Z0-9_=[:space:]]/_}
 if [ "$GIVEN_MOUNTPOINT" == "" ]; then
     case "$HAL_PROP_VOLUME_LABEL" in
 	*[!A-Za-z0-9_\-\+:]*)
-	    break
 	    ;;
 	*)
 	    GIVEN_MOUNTPOINT="$HAL_PROP_VOLUME_LABEL"

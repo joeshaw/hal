@@ -1,5 +1,11 @@
 2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Remove bogus "break" statement.
+
+	* tools/hal-system-storage-mount:
+
+2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Adopt hald-runner to usual HAL coding style.
 
 	* hald-runner/main.c: (parse_first_part), (handle_run),
