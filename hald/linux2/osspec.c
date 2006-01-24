@@ -106,7 +106,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 	struct ucred *cred;
 	char cred_msg[CMSG_SPACE(sizeof(struct ucred))];
 
-	char buf[2048];
+	char buf[4096];
 	size_t bufpos = 0;
 	const char *action = NULL;
 	HotplugEvent *hotplug_event;

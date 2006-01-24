@@ -1,3 +1,9 @@
+2006-01-24  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/osspec.c: (hald_udev_data): Increase udev event buffer
+	size, cause some MODALIAS strings are getting too large and the kernel
+	uevent buffer size is going to be increased.
+
 2006-01-24  David Zeuthen  <davidz@redhat.com>
 
 	* fdi/policy/10osvendor/20-storage-methods.fdi: For providing eject
@@ -6,9 +12,7 @@
 
 2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
 
-	Remove bogus "break" statement.
-
-	* tools/hal-system-storage-mount:
+	* tools/hal-system-storage-mount: Remove bogus "break" statement.
 
 2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
 
