@@ -6,8 +6,14 @@
       <append key="info.callouts.add" type="strlist">hal-system-storage-cleanup-mountpoints</append>
     </match>
     
-    <match key="volume.disc.type" string="cd_rom">
+    <match key="@block.storage_device:storage.drive_type" string="cdrom">
       <match key="volume.disc.has_audio" bool="true">
+        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+      </match>
+      <match key="volume.disc.is_blank" bool="true">
         <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>

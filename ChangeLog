@@ -1,3 +1,9 @@
+2006-01-24  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: For providing eject
+	on audio discs, also match on the cdrom drive instead of a cd_rom
+	disc. Also put Eject on blank discs.
+
 2006-01-23  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Remove bogus "break" statement.
