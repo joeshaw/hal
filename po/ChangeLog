@@ -1,3 +1,7 @@
+2006-01-26  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* POTFILES.in: Remove fstab-sync.c.
+
 2006-01-13  Danny Kukawka  <danny.kukawka@web.de>
 
 	* lt.po: updated header lines (by SuSE/Novell Translation Team)
