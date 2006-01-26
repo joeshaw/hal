@@ -1,3 +1,10 @@
+2006-01-26  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Allow data= mount
+	option for ext3 filesystems.
+	* tools/hal-system-storage-mount: Allow "." in mount point
+	directories.
+
 2006-01-24  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/osspec.c: (hald_udev_data): Increase udev event buffer

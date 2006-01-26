@@ -37,7 +37,7 @@ fi
 # pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
 
 read GIVEN_MOUNTPOINT
-GIVEN_MOUNTPOINT=${GIVEN_MOUNTPOINT//[^a-zA-Z0-9_+-]/@}
+GIVEN_MOUNTPOINT=${GIVEN_MOUNTPOINT//[^a-zA-Z0-9_.+-]/@}
 read GIVEN_MOUNTTYPE
 GIVEN_MOUNTTYPE=${GIVEN_MOUNTTYPE//[^a-zA-Z0-9_=]/_}
 read GIVEN_MOUNTOPTIONS
