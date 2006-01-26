@@ -1,5 +1,10 @@
 2006-01-26  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* tools/hal-system-storage-mount: Don't allow mountpoints to start
+	with a "." like "/media/." Thanks Coolo!
+
+2006-01-26  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Allow data= mount
 	option for ext3 filesystems.
 	* tools/hal-system-storage-mount: Allow "." in mount point

@@ -33,20 +33,24 @@ fi
 # "MyDisk\n"
 # "fuse\n"
 # "ro\tsync\n"
-# Only allow ^a-zA-Z0-9_= in the string because otherwise someone may
+#
+# only allow ^a-zA-Z0-9_= in the string because otherwise someone may
 # pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
 
 read GIVEN_MOUNTPOINT
-GIVEN_MOUNTPOINT=${GIVEN_MOUNTPOINT//[^a-zA-Z0-9_.+-]/@}
+GIVEN_MOUNTPOINT=${GIVEN_MOUNTPOINT//[^a-zA-Z0-9_:.+-]/@}
 read GIVEN_MOUNTTYPE
 GIVEN_MOUNTTYPE=${GIVEN_MOUNTTYPE//[^a-zA-Z0-9_=]/_}
 read GIVEN_MOUNTOPTIONS
 GIVEN_MOUNTOPTIONS=${GIVEN_MOUNTOPTIONS//[^a-zA-Z0-9_=[:space:]]/_}
 
-# if no mountpoint, get mountpoint from label
+# if no mountpoint is requested, get the mountpoint from the filesystem
+# label if it does not contain invalid chars or starts with a "."
 if [ "$GIVEN_MOUNTPOINT" == "" ]; then
     case "$HAL_PROP_VOLUME_LABEL" in
-	*[!A-Za-z0-9_\-\+:]*)
+	*[!A-Za-z0-9_:.+-]*)
+	    ;;
+	.*)
 	    ;;
 	*)
 	    GIVEN_MOUNTPOINT="$HAL_PROP_VOLUME_LABEL"
@@ -58,9 +62,10 @@ if [ "$GIVEN_MOUNTPOINT" == "" ]; then
     GIVEN_MOUNTPOINT="disk"
 fi
 
-# we've replaced invalid characters in requested mountpoint with '@'
+# last check, we've replaced invalid characters in requested mountpoint
+# with '@' and don't allow a specified mountpoint starting with "."
 case "$GIVEN_MOUNTPOINT" in
-    *@*)
+    .*|*@*)
 	echo "org.freedesktop.Hal.Device.Volume.InvalidMountpoint" >&2
 	echo "The mountpoint is invalid." >&2
 	exit 1
