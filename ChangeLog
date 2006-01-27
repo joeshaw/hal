@@ -1,3 +1,10 @@
+2006-01-27  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/addons/addon-storage.c: (main): Switch EjectButton
+	event detection to SG_IO interface. This should solve problems with
+	some SCSI drives and be the better interface anyway. For details see:
+		https://bugzilla.novell.com/show_bug.cgi?id=145147
+
 2006-01-26  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* tools/hal-system-storage-mount: Don't allow mountpoints to start

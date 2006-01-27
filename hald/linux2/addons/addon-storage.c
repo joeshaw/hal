@@ -42,6 +42,7 @@
 #include <linux/cdrom.h>
 #include <linux/fs.h>
 #include <mntent.h>
+#include <scsi/sg.h>
 
 #include "libhal/libhal.h"
 
@@ -270,26 +271,22 @@ main (int argc, char *argv[])
 
 			/* check if eject button was pressed */
 			if (got_media) {
-				struct cdrom_generic_command cgc;
-				struct request_sense sense;
+				unsigned char cdb[10] = { 0x4a, 1, 0, 0, 16, 0, 0, 0, 8, 0};
 				unsigned char buffer[8];
-				int ret;
+				struct sg_io_hdr sg_h;
+				int retval;
 
-				memset (&cgc, 0, sizeof (struct cdrom_generic_command));
-				memset (&sense, 0, sizeof (struct request_sense));
-				memset (buffer, 0, sizeof (buffer));
-				cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
-				cgc.cmd[1] = 1;
-				cgc.cmd[4] = 16;
-				cgc.cmd[8] = sizeof (buffer);
-				cgc.timeout = 600;
-				cgc.buffer = buffer;
-				cgc.buflen = sizeof (buffer);
-				cgc.data_direction = CGC_DATA_READ;
-				cgc.sense = &sense;
-				cgc.quiet = 1;
-				ret = ioctl (fd, CDROM_SEND_PACKET, &cgc);
-				if (ret == 0 && (buffer[4] & 0x0f) == 0x01) {
+				memset(buffer, 0, sizeof(buffer));
+				memset(&sg_h, 0, sizeof(struct sg_io_hdr));
+				sg_h.interface_id = 'S';
+				sg_h.cmd_len = sizeof(cdb);
+				sg_h.dxfer_direction = SG_DXFER_FROM_DEV;
+				sg_h.dxfer_len = sizeof(buffer);
+				sg_h.dxferp = buffer;
+				sg_h.cmdp = cdb;
+				sg_h.timeout = 5000;
+				retval = ioctl(fd, SG_IO, &sg_h);
+				if (retval == 0 && sg_h.status == 0 && (buffer[4] & 0x0f) == 0x01) {
 					DBusError error;
 
 					/* emit signal from drive device object */
@@ -297,7 +294,6 @@ main (int argc, char *argv[])
 					libhal_device_emit_condition (ctx, udi, "EjectPressed", "", &error);
 				}
 			}
-
 			close (fd);
 		} else {
 			fd = open (device_file, O_RDONLY);
