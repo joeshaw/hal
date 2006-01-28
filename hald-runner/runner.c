@@ -225,6 +225,8 @@ run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg)
 	gint stdin_v;
 	gint stderr_v = -1;
 	run_data *rd = NULL;
+	gboolean program_exists = FALSE;
+	char *program_dir = NULL;
 	GList *list;
 
 	printf("Run started %s (%d) (%d) \n!", r->argv[0], r->timeout,
@@ -236,16 +238,23 @@ run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg)
 		stderr_p = &stderr_v;
 	}
 
-	if (!find_program(r->argv) ||
-		!g_spawn_async_with_pipes(NULL, r->argv, r->environment,
+	program_exists = find_program(r->argv);
+
+	if (program_exists)
+		program_dir = g_path_get_dirname (r->argv);
+
+	if (!program_exists ||
+		!g_spawn_async_with_pipes(program_dir, r->argv, r->environment,
 		                          G_SPAWN_DO_NOT_REAP_CHILD,
 		                          NULL, NULL, &pid,
 		                          stdin_p, NULL, stderr_p, &error)) {
+		g_free (program_dir);
 		del_run_request(r);
 		if (con && msg)
 			send_reply(con, msg, HALD_RUN_FAILED, 0, NULL);
 		return FALSE;
 	}
+	g_free (program_dir);
 
 	if (r->input) {
 		write(stdin_v, r->input, strlen(r->input));

@@ -1,3 +1,8 @@
+2006-01-28  David Zeuthen  <davidz@redhat.com>
+
+	* hald-runner/runner.c (run_request_run): Set working directory
+	to where the program exists.
+
 2006-01-27  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/addons/addon-storage.c: (main): Switch EjectButton
