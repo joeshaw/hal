@@ -823,18 +823,18 @@ sound_compute_udi (HalDevice *d)
 	gchar udi[256];
 
 	if (hal_device_has_property(d, "alsa.card")) {
+		/* don't include card number as it may not be persistent across reboots */
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_alsa_%s_%i_%i",
+				      "%s_alsa_%s_%i",
 				      hal_device_property_get_string (d, "info.parent"),
 				      hal_device_property_get_string (d, "alsa.type"),
-				      hal_device_property_get_int (d, "alsa.card"),
 				      hal_device_property_get_int (d, "alsa.device"));
 	} else if (hal_device_has_property(d, "oss.card")) {
+		/* don't include card number as it may not be persistent across reboots */
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_oss_%s_%i_%i",
+				      "%s_oss_%s_%i",
 				      hal_device_property_get_string (d, "info.parent"),
 				      hal_device_property_get_string (d, "oss.type"),
-			 	      hal_device_property_get_int (d, "oss.card"),
 				      hal_device_property_get_int (d, "oss.device"));
 	} else if (hal_device_has_property(d, "alsa.type")) {
 		/* handle global ALAS devices */

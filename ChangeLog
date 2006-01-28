@@ -1,3 +1,8 @@
+2006-01-28  Jürg Billeter  <j@bitron.ch>
+ 
+	* hald/linux2/classdev.c (sound_compute_udi): Remove card number from
+ 	alsa and oss udi as it may not be persistent across reboots.
+
 2006-01-28  David Zeuthen  <davidz@redhat.com>
 
 	* hald-runner/runner.c (run_request_run): Set working directory
