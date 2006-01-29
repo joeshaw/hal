@@ -241,7 +241,7 @@ run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg)
 	program_exists = find_program(r->argv);
 
 	if (program_exists)
-		program_dir = g_path_get_dirname (r->argv);
+		program_dir = g_path_get_dirname (r->argv[0]);
 
 	if (!program_exists ||
 		!g_spawn_async_with_pipes(program_dir, r->argv, r->environment,

@@ -1,3 +1,8 @@
+2006-01-29  Richard Hughes <richard@hughsie.com>
+
+	* hald-runner/runner.c (run_request_run): Use r->argv[0] rather than
+	r->argv so the cwd works.
+
 2006-01-28  Jürg Billeter  <j@bitron.ch>
  
 	* hald/linux2/classdev.c (sound_compute_udi): Remove card number from
