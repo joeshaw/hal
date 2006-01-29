@@ -8,10 +8,21 @@
 # (at your option) any later version.
 
 # Check for environment variables
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "" ] || [ "$HAL_PROP_LINUX_ACPI_PATH" == "" ]; then
+if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "" ]; then
 	echo "Missing or empty environment variable(s)." >&2
 	echo "This script should be started by hald." >&2
 	exit 1
+fi
+
+#FIXME: HAL_PROP_LAPTOP_PANEL_ACPI_METHOD should really be
+#       HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD as now not just ACPI
+if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "pmu" ]; then
+	value="`./hal-system-power-pmu getlcd`"
+	if [ $? -ne 0 ]; then
+		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
+		exit 1
+	fi
+	exit ${value}
 fi
 
 # Check for file existance and that it's readable

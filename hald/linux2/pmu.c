@@ -23,8 +23,12 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../device_info.h"
 #include "../logger.h"
@@ -39,7 +43,8 @@
 enum {
 	PMU_TYPE_BATTERY,
 	PMU_TYPE_AC_ADAPTER,
-	PMU_TYPE_LID_BUTTON
+	PMU_TYPE_LID_BUTTON,
+	PMU_TYPE_LAPTOP_PANEL
 };
 
 
@@ -54,14 +59,17 @@ typedef struct PMUDevHandler_s
 
 
 /* defines from the kernel PMU driver (include/linux/pmu.h) */
-#define PMU_BATT_PRESENT  0x00000001
-#define PMU_BATT_CHARGING 0x00000002
-#define PMU_BATT_TYPE_MASK  0x000000f0
-#define PMU_BATT_TYPE_SMART 0x00000010	  /* Smart battery */
-#define PMU_BATT_TYPE_HOOPER  0x00000020  /* 3400/3500 */
-#define PMU_BATT_TYPE_COMET 0x00000030	  /* 2400 */
+#define PMU_BATT_PRESENT	0x00000001
+#define PMU_BATT_CHARGING	0x00000002
+#define PMU_BATT_TYPE_MASK	0x000000f0
+#define PMU_BATT_TYPE_SMART	0x00000010	/* Smart battery */
+#define PMU_BATT_TYPE_HOOPER	0x00000020	/* 3400/3500 */
+#define PMU_BATT_TYPE_COMET	0x00000030	/* 2400 */
 
-#define PMU_POLL_INTERVAL 2000
+#define PMU_POLL_INTERVAL	2000
+
+#define PMUDEV			"/dev/pmu"
+
 
 static gboolean
 battery_refresh (HalDevice *d, PMUDevHandler *handler)
@@ -187,7 +195,33 @@ lid_button_refresh (HalDevice *d, PMUDevHandler *handler)
 	hal_device_property_set_bool (d, "button.has_state", TRUE);
 	hal_device_property_set_bool (d, "button.state.value", FALSE); 
 
-        /* assume lid is open, polling will tell us otherwise (TODO: figure out initial state) */
+	/* assume lid is open, polling will tell us otherwise 
+	 * (TODO: figure out initial state)
+	 */
+	return TRUE;
+}
+
+/** Refreshes a laptop screen connected to a PMU controller.
+ *  This is much simpler than ACPI as we have a *standard* ioctl to use.
+ *
+ *  @param	d		The hal device
+ *  @param	handler		What to do
+ */
+static gboolean
+laptop_panel_refresh (HalDevice *d, PMUDevHandler *handler)
+{
+	hal_device_property_set_string (d, "info.category", "laptop_panel");
+	hal_device_property_set_string (d, "info.product", "Apple Laptop Panel");
+
+	/* this should really be laptop_panel.access_method */
+	hal_device_property_set_string (d, "laptop_panel.acpi_method", "pmu");
+	/*
+	 * We can set laptop_panel.num_levels as it will not change, 
+	 * all powerbooks have 15 steps for brightness, where state 0
+	 * is backlight disable.
+	 */
+	hal_device_property_set_int (d, "laptop_panel.num_levels", 14);
+	hal_device_add_capability (d, "laptop_panel");
 	return TRUE;
 }
 
@@ -197,6 +231,17 @@ pmu_lid_compute_udi (HalDevice *d, PMUDevHandler *handler)
 	gchar udi[256];
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 			      "/org/freedesktop/Hal/devices/pmu_lid");
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+static gboolean
+pmu_laptop_panel_compute_udi (HalDevice *d, PMUDevHandler *handler)
+{
+	gchar udi[256];
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/pmu_lcd");
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -241,6 +286,23 @@ pmu_poll (gpointer data)
 	return TRUE;
 }
 
+/** Synthesizes a *specific* PMU object.
+ *
+ *  @param	fullpath	The PMU path, e.g. "/dev/pmu/info"
+ *  @param	pmu_type	The type of device, e.g. PMU_TYPE_BATTERY
+ */
+static void
+pmu_synthesize_item (const gchar *fullpath, int pmu_type)
+{
+	HotplugEvent *hotplug_event;
+	HAL_INFO (("Processing %s", fullpath));
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
+	hotplug_event->type = HOTPLUG_EVENT_PMU;
+	g_strlcpy (hotplug_event->pmu.pmu_path, fullpath, sizeof (hotplug_event->pmu.pmu_path));
+	hotplug_event->acpi.acpi_type = pmu_type;
+	hotplug_event_enqueue (hotplug_event);
+}
 
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding PMU objects.
@@ -254,7 +316,6 @@ pmu_synthesize_hotplug_events (void)
 	gboolean ret;
 	HalDevice *computer;
 	gchar path[HAL_PATH_MAX];
-	HotplugEvent *hotplug_event;
 	GError *error;
 	GDir *dir;
 	gboolean has_battery_bays;
@@ -279,37 +340,21 @@ pmu_synthesize_hotplug_events (void)
 
 	/* AC Adapter */
 	snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
-	hotplug_event = g_new0 (HotplugEvent, 1);
-	hotplug_event->action = HOTPLUG_ACTION_ADD;
-	hotplug_event->type = HOTPLUG_EVENT_PMU;
-	g_strlcpy (hotplug_event->pmu.pmu_path, path, sizeof (hotplug_event->pmu.pmu_path));
-	hotplug_event->pmu.pmu_type = PMU_TYPE_AC_ADAPTER;
-	hotplug_event_enqueue (hotplug_event);
+	pmu_synthesize_item (path, PMU_TYPE_AC_ADAPTER);
 
 	error = NULL;
 	snprintf (path, sizeof (path), "%s/pmu", get_hal_proc_path ());
 	dir = g_dir_open (path, 0, &error);
 	if (dir != NULL) {
 		const gchar *f;
-			
 		while ((f = g_dir_read_name (dir)) != NULL) {
-			HotplugEvent *hotplug_event;
 			gchar buf[HAL_PATH_MAX];
 			int battery_num;
 
 			snprintf (buf, sizeof (buf), "%s/pmu/%s", get_hal_proc_path (), f);
 			if (sscanf (f, "battery_%d", &battery_num) == 1) {
-				HAL_INFO (("Processing %s", buf));
-
 				has_battery_bays = TRUE;
-				
-				hotplug_event = g_new0 (HotplugEvent, 1);
-				hotplug_event->action = HOTPLUG_ACTION_ADD;
-				hotplug_event->type = HOTPLUG_EVENT_PMU;
-				g_strlcpy (hotplug_event->pmu.pmu_path, buf, sizeof (hotplug_event->pmu.pmu_path));
-				hotplug_event->pmu.pmu_type = PMU_TYPE_BATTERY;
-				
-				hotplug_event_enqueue (hotplug_event);
+				pmu_synthesize_item (buf, PMU_TYPE_BATTERY);
 			}
 			
 		}
@@ -321,23 +366,21 @@ pmu_synthesize_hotplug_events (void)
 	/* close directory */
 	g_dir_close (dir);
 
-	/* FIXME: Bah, here we need to make another assumption -
-	 * namely that there is a lid button, if, and only if, the
-	 * machine has got battery bays
+	/* We need to make another assumption - that there is a lid button,
+	 * if, and only if, the machine has got battery bays
 	 */
 	if (has_battery_bays) {
-		hotplug_event = g_new0 (HotplugEvent, 1);
-		hotplug_event->action = HOTPLUG_ACTION_ADD;
-		hotplug_event->type = HOTPLUG_EVENT_PMU;
-		g_strlcpy (hotplug_event->pmu.pmu_path, path, sizeof (hotplug_event->pmu.pmu_path));
-		hotplug_event->pmu.pmu_type = PMU_TYPE_LID_BUTTON;
-		hotplug_event_enqueue (hotplug_event);
-	}
-	/* FIXME: *another* assumption - if the machine has got battery bays
-	 * then this makes it a laptop.
-	 */
-	if (has_battery_bays)
+		/* Add lid button */
+		snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
+		pmu_synthesize_item (path, PMU_TYPE_LID_BUTTON);
+
+		/* Add Laptop Panel */
+		snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
+		pmu_synthesize_item (path, PMU_TYPE_LAPTOP_PANEL);
+
+		/* If the machine has got battery bays then this is a laptop. */
 		hal_device_property_set_string (computer, "system.formfactor", "laptop");
+	}
 
 	/* setup timer for things that we need to poll */
 	g_timeout_add (PMU_POLL_INTERVAL,
@@ -413,10 +456,19 @@ static PMUDevHandler pmudev_handler_lid_button = {
 	.remove      = pmu_generic_remove
 };
 
+static PMUDevHandler pmudev_handler_laptop_panel = { 
+	.pmu_type    = PMU_TYPE_LAPTOP_PANEL,
+	.add         = pmu_generic_add,
+	.compute_udi = pmu_laptop_panel_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = pmu_generic_remove
+};
+
 static PMUDevHandler *pmu_handlers[] = {
 	&pmudev_handler_battery,
 	&pmudev_handler_ac_adapter,
 	&pmudev_handler_lid_button,
+	&pmudev_handler_laptop_panel,
 	NULL
 };
 

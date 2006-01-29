@@ -1,5 +1,29 @@
 2006-01-29  Richard Hughes <richard@hughsie.com>
 
+	* hald/linux2/pmu.c: Add the methods laptop_panel_refresh() and
+	pmu_laptop_panel_compute_udi so we can generate a laptop_panel
+	object.
+
+	* hald/linux2/pmu.c (pmu_synthesize_hotplug_events): Tidy up the
+	hotplug code into a new function pmu_synthesize_item() that
+	synthesizes a specific PMU object.
+	Also add the laptop_panel if we have batteries (i.e. a laptop).
+
+	* tools/hal-system-power-pmu.c: This is a new source file to allow
+	us to issue ioctl's from methods invoked by HAL.
+	Its arguments are: setlcd, getlcd, backlightoff, sleep and help.
+
+	* tools/Makefile.am, tools/.cvsignore: Add the source file
+	hal-system-power-pmu to be built.
+
+	* tools/hal-system-lcd-get-brightness,
+	tools/hal-system-lcd-set-brightness: Use the new functionality
+	providied by hal-system-power-pmu for ppc and ppc64 computers.
+	Also remove the check for HAL_PROP_LINUX_ACPI_PATH as pmu does not
+	require or provide this.
+
+2006-01-29  Richard Hughes <richard@hughsie.com>
+
 	* hald-runner/runner.c (run_request_run): Use r->argv[0] rather than
 	r->argv so the cwd works.
 

@@ -9,10 +9,20 @@ INCLUDES = \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = lshal hal-get-property hal-set-property hal-find-by-capability hal-find-by-property hal-device
+bin_PROGRAMS = \
+	lshal \
+	hal-system-power-pmu \
+	hal-get-property \
+	hal-set-property \
+	hal-find-by-capability \
+	hal-find-by-property \
+	hal-device
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
+
+hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
+hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_get_property_SOURCES = hal_get_property.c
 hal_get_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
