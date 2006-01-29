@@ -213,8 +213,7 @@ laptop_panel_refresh (HalDevice *d, PMUDevHandler *handler)
 	hal_device_property_set_string (d, "info.category", "laptop_panel");
 	hal_device_property_set_string (d, "info.product", "Apple Laptop Panel");
 
-	/* this should really be laptop_panel.access_method */
-	hal_device_property_set_string (d, "laptop_panel.acpi_method", "pmu");
+	hal_device_property_set_string (d, "laptop_panel.access_method", "pmu");
 	/*
 	 * We can set laptop_panel.num_levels as it will not change, 
 	 * all powerbooks have 15 steps for brightness, where state 0

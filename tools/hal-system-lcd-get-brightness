@@ -8,15 +8,13 @@
 # (at your option) any later version.
 
 # Check for environment variables
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "" ]; then
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "" ]; then
 	echo "Missing or empty environment variable(s)." >&2
 	echo "This script should be started by hald." >&2
 	exit 1
 fi
 
-#FIXME: HAL_PROP_LAPTOP_PANEL_ACPI_METHOD should really be
-#       HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD as now not just ACPI
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "pmu" ]; then
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "pmu" ]; then
 	value="`./hal-system-power-pmu getlcd`"
 	if [ $? -ne 0 ]; then
 		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
@@ -32,26 +30,26 @@ if [ ! -r $HAL_PROP_LINUX_ACPI_PATH ]; then
 	exit 1
 fi
 
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "toshiba" ]; then
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "toshiba" ]; then
 	# cat /proc/acpi/toshiba/lcd
 	#  brightness:              5
 	#  brightness_levels:       8
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH | grep brightness: | awk '{print $2;}'`"
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "asus" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "asus" ]; then
 	# cat /proc/acpi/asus/brn
 	#  5
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH`"
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "panasonic" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "panasonic" ]; then
 	# cat /proc/acpi/pcc/brightness
 	#  5
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH`"
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "ibm" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "ibm" ]; then
 	# cat /proc/acpi/ibm/brightness
 	#  level:          5
 	#  commands:       up, down
 	#  commands:       level <level> (<level> is 0-7)
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH | grep level: | awk '{print $2;}'`"
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "sony" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "sony" ]; then
 	# cat /proc/acpi/sony/brightness
 	#  5
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH`"

@@ -4136,11 +4136,11 @@
               </entry>
             </row>
             <row>
-              <entry><literal>laptop_panel.acpi_method</literal> (string)</entry>
+              <entry><literal>laptop_panel.access_method</literal> (string)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-                The acpi method to use in scripts, e.g. toshiba, ibm, sony etc.
+                The access method to use in scripts, e.g. pmu, toshiba, ibm, sony.
               </entry>
             </row>
           </tbody>

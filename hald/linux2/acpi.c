@@ -702,10 +702,10 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 
 	hal_device_property_set_string (d, "info.product", desc);
 	/*
-	 * We will set laptop_panel.acpi_method as the scripts can use this to
+	 * We will set laptop_panel.access_method as the scripts can use this to
 	 * determine the set/get parameters.
 	 */
-	hal_device_property_set_string (d, "laptop_panel.acpi_method", type);
+	hal_device_property_set_string (d, "laptop_panel.access_method", type);
 	/*
 	 * We can set laptop_panel.num_levels as it will not change, and allows us
 	 * to work out the percentage in the scripts.

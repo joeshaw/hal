@@ -8,7 +8,7 @@
 # (at your option) any later version.
 
 # Check for environment variables
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "" ] || 
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "" ] || 
    [ "$HAL_PROP_LAPTOP_PANEL_NUM_LEVELS" == "" ] ; then
         echo "Missing or empty environment variable(s)." >&2
         echo "This script should be started by hald." >&2
@@ -18,7 +18,7 @@ fi
 # read value for set brightness
 read value
 
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "pmu" ]; then
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "pmu" ]; then
 	./hal-system-power-pmu setlcd $value
 	if [ $? -ne 0 ]; then
 		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
@@ -41,22 +41,22 @@ if [ ${value} -lt 0 ] || [ ${value} -gt $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS ]; the
 	exit 1
 fi
 
-if [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "toshiba" ]; then
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "toshiba" ]; then
 	# echo "brightness: {0..x}" >/proc/acpi/toshiba/lcd
 	echo "brightness: $value" > $HAL_PROP_LINUX_ACPI_PATH
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "asus" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "asus" ]; then
 	# echo {0..15} > /proc/acpi/asus/brn
 	# http://www.taupro.com/wiki/ChemBook/LCDdisplayPowerConfiguration
 	echo "$value" > $HAL_PROP_LINUX_ACPI_PATH
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "panasonic" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "panasonic" ]; then
 	# echo {0..15} > /proc/acpi/pcc/brightness
 	# http://readlist.com/lists/vger.kernel.org/linux-kernel/7/36405.html
 	echo "$value" > $HAL_PROP_LINUX_ACPI_PATH
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "ibm" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "ibm" ]; then
 	# echo "level {0..7}" > /proc/acpi/ibm/brightness
 	# http://ibm-acpi.sourceforge.net/README
 	echo "level $value" > $HAL_PROP_LINUX_ACPI_PATH
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACPI_METHOD" == "sony" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "sony" ]; then
 	# echo "{1..8}" > /proc/acpi/sony/brightness
 	# http://popies.net/sonypi/2.6-sony_acpi4.patch
 	echo "$value" > $HAL_PROP_LINUX_ACPI_PATH

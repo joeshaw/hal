@@ -1,3 +1,17 @@
+2006-01-29  Richard Hughes <richard@hughsie.com>
+
+	* doc/spec/hal-spec.xml.in,
+	hald/linux2/acpi.c (laptop_panel_refresh),
+	hald/linux/pmu.c (laptop_panel_refresh),
+	tools/hal-system-lcd-get-brightness,
+	tools/hal-system-lcd-set-brightness:
+	Rename acpi_method to access_method and 
+	HAL_PROP_LAPTOP_PANEL_ACPI_METHOD->HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD
+	for the laptop_panel device.
+	This is required as the access method can now be "pmu" which is
+	nothing to do with acpi. I'm not aware of this being used anywhere
+	outside of HAL, so we should be okay changing the key name.
+
 2006-01-29  David Zeuthen  <davidz@redhat.com>
 
 	* tools/linux/Makefile.am: Also dist 90-hal.rules
