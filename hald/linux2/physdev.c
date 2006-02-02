@@ -1247,6 +1247,51 @@ iucv_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+static HalDevice *
+pseudo_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *dev_id;
+	gchar buf[64];
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "pseudo");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	dev_id = hal_util_get_last_element (sysfs_path);
+	hal_device_property_set_string (d, "pseudo.id", dev_id);
+
+	g_snprintf (buf, sizeof (buf), "SCSI Debug Device (%s)", hal_device_property_get_string (d, "pseudo.id"));
+	hal_device_property_set_string (d, "info.product", buf);
+
+	return d;
+}
+
+static gboolean
+pseudo_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/pseudo",
+			      hal_device_property_get_string (d, "platform.id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static gboolean
 physdev_remove (HalDevice *d)
 {
@@ -1333,8 +1378,7 @@ static PhysDevHandler physdev_handler_ieee1394 = {
 	.remove      = physdev_remove
 };
 
-
-/* s390 specific busses */	
+/* s390 specific busses */
 static PhysDevHandler physdev_handler_ccw = {
 	.subsystem   = "ccw",
 	.add         = ccw_add,
@@ -1356,6 +1400,14 @@ static PhysDevHandler physdev_handler_iucv = {
 	.remove      = physdev_remove
 };
 
+/* SCSI debug, to test thousends of fake devices */
+static PhysDevHandler physdev_handler_pseudo = {
+	.subsystem   = "pseudo",
+	.add         = pseudo_add,
+	.compute_udi = pseudo_compute_udi,
+	.remove      = physdev_remove
+};
+
 static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_pci,
 	&physdev_handler_usb,
@@ -1370,6 +1422,7 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_ccw,
 	&physdev_handler_ccwgroup,
 	&physdev_handler_iucv,
+	&physdev_handler_pseudo,
 	NULL
 };
 

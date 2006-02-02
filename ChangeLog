@@ -1,3 +1,9 @@
+2006-02-02  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/physdev.c: (pseudo_add), (pseudo_compute_udi):
+	Add "pseudo" bus to make it possible to use:
+	  modprobe scsi_debug num_tgts=5 add_host=5 num_parts=2
+
 2006-01-29  Richard Hughes <richard@hughsie.com>
 
 	* doc/spec/hal-spec.xml.in,
