@@ -1,5 +1,11 @@
 2006-02-03  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: adde allowed option
+	for ntfs filesystem (uid=,umask=,dmask=) to prevent files owned only
+	by root and also only readable by root. 
+
+2006-02-03  Danny Kukawka  <danny.kukawka@web.de>
+
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: added 
 	Samsung YP-U1 (patch from Andrew Smith <andrew.smith@neworbit.org>)
 
@@ -57,9 +63,9 @@
 	r->argv so the cwd works.
 
 2006-01-28  Jürg Billeter  <j@bitron.ch>
- 
+
 	* hald/linux2/classdev.c (sound_compute_udi): Remove card number from
- 	alsa and oss udi as it may not be persistent across reboots.
+	alsa and oss udi as it may not be persistent across reboots.
 
 2006-01-28  David Zeuthen  <davidz@redhat.com>
 

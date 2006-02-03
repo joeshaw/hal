@@ -89,6 +89,13 @@
 	<append key="volume.mount.valid_options" type="strlist">data=</append>
       </match>
 
+      <!-- allow these mount options for ntfs -->
+      <match key="volume.fstype" string="ntfs">
+	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+	<append key="volume.mount.valid_options" type="strlist">umask=</append>
+	<append key="volume.mount.valid_options" type="strlist">dmask=</append>
+      </match>
+      
       <!-- udf -->
       <match key="volume.fstype" string="udf">
 	<append key="volume.mount.valid_options" type="strlist">uid=</append>
