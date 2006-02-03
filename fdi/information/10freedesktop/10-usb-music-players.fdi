@@ -234,6 +234,7 @@
             <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
           </match>
 	</match>
+        <!-- Samsung -->
 	<match key="@storage.physical_device:usb.vendor_id" int="0x04e8">
 	  <!-- Samsung Yepp YP-ST5 -->
 	  <match key="@storage.physical_device:usb.product_id" int="0x5021">
@@ -248,6 +249,18 @@
 	    <append key="portable_audio_player.output_formats" type="strlist">video/x-ms-asf</append>
 	    <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
 	  </match>	
+          <!-- Samsung YP-U1 -->
+          <match key="@storage.physical_device:usb.product_id" int="0x503b">
+            <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/x-ms-wma</append>
+            <append key="portable_audio_player.output_formats" type="strlist">application/ogg</append>
+            <append key="portable_audio_player.input_formats" type="strlist">audio/x-wav</append>
+          </match>  
 	</match>
       </match>
     </match>      

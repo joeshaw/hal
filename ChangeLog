@@ -1,3 +1,8 @@
+2006-02-03  Danny Kukawka  <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: added 
+	Samsung YP-U1 (patch from Andrew Smith <andrew.smith@neworbit.org>)
+
 2006-02-02  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/physdev.c: (pseudo_add), (pseudo_compute_udi):
