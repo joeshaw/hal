@@ -382,13 +382,18 @@ main (int argc, char *argv[])
 	 * run-hald.sh and friends)
 	 */
 	path = getenv ("PATH");
-	g_strlcpy (newpath, path, sizeof (newpath));
 	if (path != NULL) {
+		g_strlcpy (newpath, path, sizeof (newpath));
 		g_strlcat (newpath, ":", sizeof (newpath));
-		g_strlcat (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
-		g_strlcat (newpath, ":", sizeof (newpath));
-		g_strlcat (newpath, PACKAGE_SCRIPT_DIR, sizeof (newpath));
-	}
+	} else {
+		/* No PATH was set */
+		newpath[0] = '\0';
+	} 
+
+	g_strlcat (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
+	g_strlcat (newpath, ":", sizeof (newpath));
+	g_strlcat (newpath, PACKAGE_SCRIPT_DIR, sizeof (newpath));
+
 	setenv ("PATH", newpath, TRUE);
 
 	while (1) {
