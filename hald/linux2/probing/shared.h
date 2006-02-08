@@ -5,6 +5,11 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
+
 static dbus_bool_t is_verbose = FALSE;
 
 static void
@@ -46,5 +51,38 @@ _dbg (const char *format, ...)
 	do {									\
 		_dbg ("%s:%d: " format "\n", __FILE__, __LINE__, ## arg); \
 	} while (0)
+
+/** Drop all but necessary privileges.  Set the running user id to HAL_USER and
+ *  group to HAL_GROUP
+ */
+static 
+void drop_privileges () { 
+    struct passwd *pw = NULL; 
+    struct group *gr = NULL;
+
+    /* determine user id */
+    pw = getpwnam (HAL_USER);
+    if (!pw)  {
+        printf ("drop_privileges: user " HAL_USER " does not exist");
+        exit (-1);
+    }
+
+    /* determine primary group id */
+    gr = getgrnam (HAL_GROUP);
+    if(!gr) {
+        printf("drop_privileges: group " HAL_GROUP " does not exist");
+        exit (-1);
+    }
+
+    if( setgid (gr->gr_gid) ) {
+        printf ("drop_privileges: could not set group id");
+        exit (-1);
+    }
+
+    if( setuid (pw->pw_uid)) {
+        printf ("drop_privileges: could not set user id");
+        exit (-1);
+    }
+}
 
 #endif

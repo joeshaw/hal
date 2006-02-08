@@ -9,7 +9,7 @@ INCLUDES = \
 	@PACKAGE_CFLAGS@
 
 if HALD_COMPILE_LINUX2
-libexec_PROGRAMS  = hald-addon-hid-ups hald-addon-acpi hald-addon-storage hald-addon-pmu
+libexec_PROGRAMS  = hald-addon-hid-ups hald-addon-acpi hald-addon-storage hald-addon-pmu hald-addon-keyboard
 
 if HAVE_LIBUSB
 libexec_PROGRAMS += hald-addon-usb-csr
@@ -27,6 +27,9 @@ hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_addon_storage_SOURCES = addon-storage.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la
+
+hald_addon_keyboard_SOURCES = addon-keyboard.c
+hald_addon_keyboard_LDADD = $(top_builddir)/libhal/libhal.la
 
 if HAVE_LIBUSB
 hald_addon_usb_csr_SOURCES = addon-usb-csr.c

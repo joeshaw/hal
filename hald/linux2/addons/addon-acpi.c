@@ -114,13 +114,23 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 			snprintf (udi, sizeof (udi), "/org/freedesktop/Hal/devices/acpi_%s", acpi_name);
 
 			if (strncmp (acpi_path, "button", sizeof ("button") - 1) == 0) {
+				char *type;
+
 				dbg ("button event");
 
 				/* TODO: only rescan if button got state */
 				libhal_device_rescan (ctx, udi, &error);
 
-				libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
-
+				type = libhal_device_get_property_string(ctx, udi, 
+									 "button.type",
+									 &error);
+				if (type != NULL) {
+					libhal_device_emit_condition (ctx, udi, "ButtonPressed",
+								      type, &error);
+					libhal_free_string(type);
+				} else {
+					libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
+				}
 			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
 				dbg ("ac_adapter event");
 				libhal_device_rescan (ctx, udi, &error);
