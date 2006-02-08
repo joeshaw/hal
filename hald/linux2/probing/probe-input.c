@@ -185,6 +185,7 @@ main (int argc, char *argv[])
 	if (physical_device == NULL) {
 		switch (id.bustype) {
 		case 17: /* TODO: x86 legacy port; use symbol instead of hardcoded constant */
+		case 21: /* BUS_HOST, not hotpluggable */
 			break;
 
 			/* TODO: ADB on Apple computers */

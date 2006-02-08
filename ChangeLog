@@ -1,5 +1,12 @@
 2006-02-07  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/probing/probe-input.c (main): The attached patch
+	lets hal listen for input devices that are of type BUS_HOST. These
+	are pieces of built-in hardware, so won't be hotpluggable. Patch
+	from Matthew Garrett <mjg59@srcf.ucam.org>.
+
+2006-02-07  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald.c (main): Hald doesn't handle the case that PATH is
 	not set (getenv returns NULL).  Fixed in attached patch. From
 	Sjoerd Simons <sjoerd@luon.net>.
