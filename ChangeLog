@@ -1,5 +1,9 @@
 2006-02-09  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-keyboard.c: Add KEY_POWER -> "power"
+
+2006-02-09  David Zeuthen  <davidz@redhat.com>
+
 	* hald-runner/runner.c (run_request_run): Print out some useful
 	debug information
 

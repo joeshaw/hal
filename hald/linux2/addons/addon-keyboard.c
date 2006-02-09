@@ -137,7 +137,8 @@ static char *key_name[KEY_MAX + 1] = {
 	[KEY_CANCEL] = "cancel",
 	[KEY_BRIGHTNESSDOWN] = "brightnessdown",
 	[KEY_BRIGHTNESSUP] = "brightnessup",
-	[KEY_MEDIA] = "media"
+	[KEY_MEDIA] = "media",
+	[KEY_POWER] = "power"
 };
 
 static void
