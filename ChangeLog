@@ -1,5 +1,12 @@
 2006-02-09  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/blockdev.c
+	(blockdev_callouts_preprobing_storage_done): Fix lockup for ATAPI
+	Zip drives as we pass end_token to the function
+	add_blockdev_probing_helper_done() in the wrong position.
+
+2006-02-09  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-keyboard.c: Add KEY_POWER -> "power"
 
 2006-02-09  David Zeuthen  <davidz@redhat.com>

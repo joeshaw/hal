@@ -379,10 +379,12 @@ blockdev_callouts_preprobing_storage_done (HalDevice *d, gpointer userdata1, gpo
 			                    (gpointer) end_token, NULL);
 			goto out;
 		} else {
+			char *synerror[1] = {NULL};
+
 			HAL_INFO (("Not probing storage device %s", 
 				   hal_device_property_get_string (d, "block.device")));
 
-			add_blockdev_probing_helper_done (d, FALSE, 0, (gpointer) end_token, NULL, NULL);
+			add_blockdev_probing_helper_done (d, FALSE, 0, synerror, (gpointer) end_token, NULL);
 			goto out;
 		}
 	}
