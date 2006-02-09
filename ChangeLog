@@ -1,5 +1,10 @@
 2006-02-09  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Ugh, make sure to
+	launch hald-addon-storage if appropriate
+
+2006-02-09  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/blockdev.c
 	(blockdev_callouts_preprobing_storage_done): Fix lockup for ATAPI
 	Zip drives as we pass end_token to the function
