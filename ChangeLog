@@ -1,3 +1,20 @@
+2006-02-09  David Zeuthen  <davidz@redhat.com>
+
+	* hald-runner/runner.c (run_request_run): Print out some useful
+	debug information
+
+	* hald/linux2/addons/addon-keyboard.c (main): Don't set button.type
+	or button.has_state as these are merged from the fdi file.
+
+	* hald/run-hald.sh: Use absolute paths in HALD_RUNNER_PATH and PATH
+	cuz otherwise helpers won't get invoked...
+
+	* fdi/policy/10osvendor/Makefile.am: Add 10-keyboard-policy.fdi
+
+	* fdi/policy/10osvendor/10-keyboard-policy.fdi: Forgot to add file.
+	Also from Matthew Garrett <mjg59@srcf.ucam.org>. Tweak file to 
+	merge button.type and button.has_state instead of setting
+
 2006-02-08  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Matthew Garrett <mjg59@srcf.ucam.org>.

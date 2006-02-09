@@ -145,6 +145,9 @@ main (int argc, char *argv[])
 	char name[128];
 	struct input_id id;
 
+	if ((getenv ("HALD_VERBOSE")) != NULL)
+		is_verbose = TRUE;
+
 	fd = -1;
 
 	/* assume failure */
@@ -161,9 +164,6 @@ main (int argc, char *argv[])
 	device_file = getenv ("HAL_PROP_INPUT_DEVICE");
 	if (device_file == NULL)
 		goto out;
-
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
 
 	dbg ("Doing probe-input for %s (udi=%s)",
 	     device_file, udi);

@@ -169,10 +169,10 @@ main (int argc, char **argv)
 	char *device_file;
 	FILE *eventfp;
 
-	dbus_error_init (&error);
-
 	if (getenv ("HALD_VERBOSE") != NULL)
 		is_verbose = TRUE;
+
+	dbus_error_init (&error);
 
 	if ((udi = getenv ("UDI")) == NULL)
 		goto out;
@@ -187,10 +187,6 @@ main (int argc, char **argv)
 
 	if (!eventfp)
 		goto out;
-
-	libhal_device_add_capability (ctx, udi, "button", &error);
-	libhal_device_set_property_string (ctx, udi, "button.type", "", &error);
-	libhal_device_set_property_bool (ctx, udi, "button.has_state", FALSE, &error);
 
 	drop_privileges();
 
