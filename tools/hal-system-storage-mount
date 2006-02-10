@@ -77,14 +77,18 @@ case "$GIVEN_MOUNTPOINT" in
 esac
 MOUNTPOINT="$GIVEN_MOUNTPOINT"
 
-# pass only whitelisted types
+# pass only whitelisted types; allow anything if it's on a non-pollable drive
 if [ "$GIVEN_MOUNTTYPE" != "" ]; then
-    case "$GIVEN_MOUNTTYPE" in
-	*)
-	    echo "org.freedesktop.Hal.Device.Volume.InvalidFilesystemType" >&2
-	    echo "Invalid filesystem type." >&2
-	    exit 1
-   esac
+    if [ "$HAL_PROP_STORAGE_MEDIA_CHECK_ENABLED" == "false" ]; then
+	MOUNTTYPE=$GIVEN_MOUNTTYPE
+    else
+	case "$GIVEN_MOUNTTYPE" in
+	    *)
+		echo "org.freedesktop.Hal.Device.Volume.InvalidFilesystemType" >&2
+		echo "Invalid filesystem type." >&2
+		exit 1
+	esac
+    fi
 fi
 
 # if no type is given, use default name
@@ -155,7 +159,7 @@ if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
 fi
 
 if [ "$MOUNTTYPE" != "" ]; then
-    MOUNTTYPE_EXPANDED="-t \"$MOUNTTYPE\""
+    MOUNTTYPE_EXPANDED="-t $MOUNTTYPE"
 else
     MOUNTTYPE_EXPANDED=""
 fi
