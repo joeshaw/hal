@@ -52,7 +52,6 @@
         <append key="volume.mount.valid_options" type="strlist">noexec</append>
         <append key="volume.mount.valid_options" type="strlist">quiet</append>
         <!-- As this is removable media give some leeway -->
-	<append key="volume.mount.valid_options" type="strlist">flush</append>
 	<append key="volume.mount.valid_options" type="strlist">utf8</append>
 	<append key="volume.mount.valid_options" type="strlist">shortname=</append>
 	<append key="volume.mount.valid_options" type="strlist">codepage=</append>
@@ -118,7 +117,6 @@
 
       <!-- allow these mount options for vfat -->
       <match key="volume.fstype" string="vfat">
-	<append key="volume.mount.valid_options" type="strlist">flush</append>
 	<append key="volume.mount.valid_options" type="strlist">utf8</append>
 	<append key="volume.mount.valid_options" type="strlist">shortname=</append>
 	<append key="volume.mount.valid_options" type="strlist">codepage=</append>

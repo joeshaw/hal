@@ -134,7 +134,7 @@ if [ "$GIVEN_MOUNTOPTIONS" != "" ]; then
     done
 fi
 
-echo "options = '$MOUNTOPTIONS'"
+# echo "options = '$MOUNTOPTIONS'"
 
 # append number to mountpoint if it already exists
 if [ -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then

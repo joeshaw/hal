@@ -13,6 +13,16 @@ if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] ; then
     exit 1
 fi
 
+if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ]; then
+    if [ "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" != "" ]; then
+	if [ "$HAL_METHOD_INVOKED_BY_UID" != "$HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID" ]; then
+	    echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
+	    echo "Volume mounted by uid $HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID cannot be ejected by uid $HAL_METHOD_INVOKED_BY_UID." >&2
+	    exit 1
+	fi
+    fi
+fi
+
 # read parameters
 # "<option1>\t<option2>\n"
 # Only allow ^a-zA-Z0-9_= in the string because otherwise someone may
@@ -35,10 +45,12 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# remove directory only if HAL has created it
-if [ -e $HAL_PROP_VOLUME_MOUNT_POINT/.created-by-hal ]; then
-  rm -f $HAL_PROP_VOLUME_MOUNT_POINT/.created-by-hal
-  rmdir --ignore-fail-on-non-empty "$HAL_PROP_VOLUME_MOUNT_POINT"
+if [ "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" != "" ]; then
+    # remove directory only if HAL has created it
+    if [ -e $HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT/.created-by-hal ]; then
+	rm -f $HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT/.created-by-hal
+	rmdir --ignore-fail-on-non-empty "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT"
+    fi
 fi
 
 exit 0
