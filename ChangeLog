@@ -1,5 +1,22 @@
 2006-02-09  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-system-storage-unmount: Use new property on the hal
+	device object to figure out where hal mounted the device. This
+	also ensures we only unmount stuff that we mounted ourselves
+	... where we = the hal mount/unmount methods. Also only allow the
+	user who mounted the volume to unmount it (also allow uid 0).
+
+	* tools/hal-system-storage-mount: Allow mounting of drives we
+	don't poll. Export mount point and what uid mounted it as
+	properties on the hal device object
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Fix up detection
+	of blank and audio discs for the purpose of adding Eject methods.
+	Export Mount, Unmount and Eject methods on drives we don't poll.
+	Give some leeway with what mount options we support.
+
+2006-02-09  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Ugh, make sure to
 	launch hald-addon-storage if appropriate
 

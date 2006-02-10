@@ -59,7 +59,11 @@ fi
 
 # if no mountpoint is given, use default name
 if [ "$GIVEN_MOUNTPOINT" == "" ]; then
-    GIVEN_MOUNTPOINT="disk"
+    if [ "$HAL_PROP_STORAGE_MEDIA_CHECK_ENABLED" == "false" ]; then
+	GIVEN_MOUNTPOINT="$HAL_PROP_STORAGE_DRIVE_TYPE"
+    else
+	GIVEN_MOUNTPOINT="disk"
+    fi
 fi
 
 # last check, we've replaced invalid characters in requested mountpoint
@@ -150,8 +154,14 @@ if [ ! -e "$MOUNT_ROOT/$MOUNTPOINT" ]; then
     exit 1
 fi
 
+if [ "$MOUNTTYPE" != "" ]; then
+    MOUNTTYPE_EXPANDED="-t \"$MOUNTTYPE\""
+else
+    MOUNTTYPE_EXPANDED=""
+fi
+
 # mount and return status
-RESULT=$(mount -o "noexec,nosuid,nodev$MOUNTOPTIONS" -t "$MOUNTTYPE" "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" 2>&1)
+RESULT=$(mount -o "noexec,nosuid,nodev$MOUNTOPTIONS" $MOUNTTYPE_EXPANDED "$HAL_PROP_BLOCK_DEVICE" "$MOUNT_ROOT/$MOUNTPOINT" 2>&1)
 if [ $? -ne 0 ]; then
     case "$RESULT" in
 	*"unknown filesystem"*)
@@ -168,5 +178,8 @@ if [ $? -ne 0 ]; then
     fi
     exit 1
 fi
+
+hal-set-property --udi $UDI --key info.hal_mount.created_mount_point --string "$MOUNT_ROOT/$MOUNTPOINT" > /dev/null 2>&1
+hal-set-property --udi $UDI --key info.hal_mount.mounted_by_uid --int "$HAL_METHOD_INVOKED_BY_UID" > /dev/null 2>&1
 
 exit 0

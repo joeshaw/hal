@@ -10,7 +10,7 @@
       <append key="info.addons" type="strlist">hald-addon-storage</append>
     </match>
 
-    <match key="@block.storage_device:storage.drive_type" string="cdrom">
+    <match key="volume.is_disc" bool="true">
       <match key="volume.disc.has_audio" bool="true">
         <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
@@ -24,6 +24,45 @@
         <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
       </match>
     </match>
+
+    <!-- this is to be able to mount media in drives we cannot poll, e.g. IDE Zip Drives and PC style floppy drives -->
+    <match key="storage.media_check_enabled" bool="false">
+      <match key="storage.no_partitions_hint" bool="true">
+
+        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
+
+        <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Mount</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">ssas</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-mount</append>
+
+        <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Unmount</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-unmount</append>
+
+        <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+
+        <!-- allow these mount options for all file systems -->
+        <append key="volume.mount.valid_options" type="strlist">ro</append>
+        <append key="volume.mount.valid_options" type="strlist">sync</append>
+        <append key="volume.mount.valid_options" type="strlist">dirsync</append>
+        <append key="volume.mount.valid_options" type="strlist">noatime</append>
+        <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
+        <append key="volume.mount.valid_options" type="strlist">noexec</append>
+        <append key="volume.mount.valid_options" type="strlist">quiet</append>
+        <!-- As this is removable media give some leeway -->
+	<append key="volume.mount.valid_options" type="strlist">flush</append>
+	<append key="volume.mount.valid_options" type="strlist">utf8</append>
+	<append key="volume.mount.valid_options" type="strlist">shortname=</append>
+	<append key="volume.mount.valid_options" type="strlist">codepage=</append>
+	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+	<append key="volume.mount.valid_options" type="strlist">umask=</append>
+	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+
+      </match>
+    </match>
+
 
     <match key="volume.fsusage" string="filesystem">
 
