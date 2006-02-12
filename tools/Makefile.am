@@ -53,6 +53,7 @@ script_SCRIPTS =				\
 	hal-system-storage-mount		\
 	hal-system-storage-unmount		\
 	hal-system-storage-eject		\
+	hal-system-storage-cleanup-mountpoint   \
 	hal-system-storage-cleanup-mountpoints
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)

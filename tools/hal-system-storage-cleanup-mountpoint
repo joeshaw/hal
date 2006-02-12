@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# Copyright (C) 2006, David Zeuthen <davidz@redhat.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2.
+
+if [ "$HALD_CLEANUP" = "" ]; then
+    echo Specify directory to clean up with the environment variable HALD_CLEANUP
+    exit 1
+fi
+
+# check if we created it
+if [ ! -e "$HALD_CLEANUP/.created-by-hal" ]; then
+    exit 1
+fi
+
+rm -f "$HALD_CLEANUP/.created-by-hal"
+rmdir --ignore-fail-on-non-empty "$HALD_CLEANUP"

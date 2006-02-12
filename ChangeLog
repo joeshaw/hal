@@ -1,8 +1,18 @@
 2006-02-12  David Zeuthen  <davidz@redhat.com>
 
-	* tools/hal-system-storage-unmount (MOUNT_POINT): Attempt to use
-	volume.mount_point if we cannot find
-	info.hal_mount.created_mount_point
+	* tools/Makefile.am (script_SCRIPTS): Add
+	tools/hal-system-storage-cleanup-mountpoint
+
+	* tools/hal-system-storage-cleanup-mountpoint: New file
+
+	* hald/linux2/blockdev.c (blockdev_refresh_mount_state)
+	(cleanup_mountpoint_cb): Clean up mount point if we can see it was
+	created by hal
+
+2006-02-12  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-system-storage-unmount: Attempt to use volume.mount_point
+	if we cannot find info.hal_mount.created_mount_point
 
 	* libhal/libhal.h: Export prototype for new function
 	libhal_ctx_get_dbus_connection()

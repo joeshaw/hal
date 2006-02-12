@@ -162,6 +162,17 @@ blockdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userda
 	hotplug_event_end (end_token);
 }
 
+static void
+cleanup_mountpoint_cb (HalDevice *d, guint32 exit_type, 
+		       gint return_code, gchar **error,
+		       gpointer data1, gpointer data2)
+{
+	char *mount_point = (char *) data1;
+	HAL_INFO (("In cleanup_mountpoint_cb for '%s'", mount_point));
+	g_free (mount_point);
+}
+
+
 void
 blockdev_refresh_mount_state (HalDevice *d)
 {
@@ -229,13 +240,39 @@ blockdev_refresh_mount_state (HalDevice *d)
 	/* all remaining volumes are not mounted */
 	for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
 		HalDevice *dev;
+		char *mount_point;
+		char *mount_point_hal_file;
 
 		dev = HAL_DEVICE (volume->data);
+		mount_point = g_strdup (hal_device_property_get_string (dev, "volume.mount_point"));
 		device_property_atomic_update_begin ();
 		hal_device_property_set_bool (dev, "volume.is_mounted", FALSE);
 		hal_device_property_set_string (dev, "volume.mount_point", "");
 		device_property_atomic_update_end ();
 		HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));
+
+		mount_point_hal_file = g_strdup_printf ("%s/.created-by-hal", mount_point);
+		if (g_file_test (mount_point_hal_file, G_FILE_TEST_EXISTS)) {
+			char *cleanup_stdin;
+			char *extra_env[2];
+
+			HAL_INFO (("Cleaning up directory '%s' since it was created by hal Mount()", mount_point));
+
+			extra_env[0] = g_strdup_printf ("HALD_CLEANUP=%s", mount_point);
+			extra_env[1] = NULL;
+			cleanup_stdin = "\n";
+
+			hald_runner_run_method (dev, 
+						"hal-system-storage-cleanup-mountpoint", 
+						extra_env, 
+						cleanup_stdin, TRUE,
+						0,
+						cleanup_mountpoint_cb,
+						g_strdup (mount_point), NULL);
+		}
+
+		g_free (mount_point_hal_file);
+		g_free (mount_point);
 	}
 	g_slist_free (volumes);
 exit:
