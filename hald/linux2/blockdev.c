@@ -939,86 +939,49 @@ out:
 }
 
 static void
-force_unmount (HalDevice *d)
+force_unmount_cb (HalDevice *d, guint32 exit_type, 
+		  gint return_code, gchar **error,
+		  gpointer data1, gpointer data2)
 {
-	const char *storudi;
-	HalDevice *stordev;
-	const char *device_file;
-	const char *device_mount_point;
-	const char *umount_argv[4] = { "/bin/umount", "-l", NULL, NULL };
-	char *umount_stdout;
-	char *umount_stderr;
-	int umount_exitcode;
+	void *end_token = (void *) data1;
 
-	device_file = hal_device_property_get_string (d, "block.device");
-	device_mount_point = hal_device_property_get_string (d, "volume.mount_point");
+	HAL_INFO (("force_unmount_cb for udi='%s', exit_type=%d, return_code=%d", d->udi, exit_type, return_code));
 
-	HAL_INFO (("Entering... udi=%s device_file=%s mount_point=%s", d->udi, device_file, device_mount_point));
+	if (exit_type == HALD_RUN_SUCCESS && error != NULL && 
+	    error[0] != NULL && error[1] != NULL) {
+		char *exp_name = NULL;
+		char *exp_detail = NULL;
 
-	/* Only attempt to 'umount -l' if some hal policy piece are performing policy on the device */
-	storudi = hal_device_property_get_string (d, "block.storage_device");
-	if (storudi == NULL) {
-		HAL_WARNING (("Could not get block.storage_device"));
-		goto out;
-	}
-	stordev = hal_device_store_find (hald_get_gdl (), storudi);
-	if (stordev == NULL) {
-		HAL_WARNING (("Could not get device object for storage device"));
-		goto out;
-	} else {
-		if ((!hal_device_has_property (stordev, "storage.policy.should_mount")) ||
-		    (!hal_device_property_get_bool (stordev, "storage.policy.should_mount"))) {
-			HAL_WARNING (("storage device doesn't have storage.policy.should_mount"));
-			goto out;
+		exp_name = error[0];
+		if (error[0] != NULL) {
+			exp_detail = error[1];
 		}
+		HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
 	}
 
-	umount_argv[2] = device_mount_point;
+	hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
 
-	if (hal_device_has_property (d, "block.is_volume") &&
-	    hal_device_property_get_bool (d, "block.is_volume") &&
-	    hal_device_property_get_bool (d, "volume.is_mounted") &&
-	    device_mount_point != NULL &&
-	    strlen (device_mount_point) > 0) {
-		HAL_INFO (("attempting /bin/umount -l %s", device_mount_point));
+}
 
-		/* TODO: this is a bit dangerous; rather spawn async and do some timout on it */
+static void
+force_unmount (HalDevice *d, void *end_token)
+{
+	char *unmount_stdin;
+	char *extra_env[2];
 
-		/* invoke umount */
-		if (g_spawn_sync ("/",
-				  (char **) umount_argv,
-				  NULL,
-				  0,
-				  NULL,
-				  NULL,
-				  &umount_stdout,
-				  &umount_stderr,
-				  &umount_exitcode, NULL) != TRUE) {
-			HAL_ERROR (("Couldn't invoke /bin/umount"));
-		}
+	extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
+	extra_env[1] = NULL;
 
-		if (umount_exitcode != 0) {
-			HAL_ERROR (("/bin/umount returned %d", umount_exitcode));
-		} else {
-			/* Tell clients we are going to unmount so they close
-			 * can files - otherwise this unmount is going to stall
-			 *
-			 * One candidate for catching this would be FAM - the
-			 * File Alteration Monitor
-			 *
-			 * Lazy unmount been in Linux since 2.4.11, so we're
-			 * homefree (but other kernels might not support this)
-			 */
-			HAL_INFO (("Goint to emit VolumeUnmountForced('%s', '%s', TRUE)", device_file, device_mount_point));
-			device_send_signal_condition (d,
-						      "VolumeUnmountForced",
-						      device_file);
-		}
-	} else {
-		HAL_INFO (("Didn't want to unmount %s", device_file));
-	}
-out:
-	;
+	HAL_INFO (("force_unmount for udi='%s'", d->udi));
+
+	unmount_stdin = "lazy\n";
+
+	hald_runner_run_method (d, 
+				"hal-system-storage-unmount", extra_env, 
+				unmount_stdin, TRUE,
+				0,
+				force_unmount_cb,
+				end_token, NULL);
 }
 
 void
@@ -1133,10 +1096,10 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 
 		/* if we're mounted, then do a lazy unmount so the system can gracefully recover */
 		if (hal_device_property_get_bool (d, "volume.is_mounted")) {
-			force_unmount (d);
+			force_unmount (d, end_token);
+		} else {
+			hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
 		}
-
-		hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
 	}
 out:
 	;

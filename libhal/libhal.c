@@ -2924,6 +2924,20 @@ libhal_ctx_set_dbus_connection (LibHalContext *ctx, DBusConnection *conn)
 	return TRUE;
 }
 
+/** Get DBus connection to use to talk to hald.
+ *
+ *  @param  ctx                 Context to set connection for
+ *  @return conn                DBus connection to use or NULL
+ */
+DBusConnection *
+libhal_ctx_get_dbus_connection (LibHalContext *ctx)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+
+	return ctx->connection;
+}
+
+
 /** Initialize the connection to hald
  *
  *  @param  ctx                 Context for connection to hald (connection

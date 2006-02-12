@@ -111,6 +111,8 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 	const char *action = NULL;
 	HotplugEvent *hotplug_event;
 
+	memset(buf, 0x00, sizeof (buf));
+
 	fd = g_io_channel_unix_get_fd (source);
 
 	iov.iov_base = &buf;

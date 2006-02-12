@@ -163,6 +163,9 @@ dbus_bool_t    libhal_ctx_set_cache                    (LibHalContext *ctx, dbus
 /* Set DBus connection to use to talk to hald. */
 dbus_bool_t    libhal_ctx_set_dbus_connection          (LibHalContext *ctx, DBusConnection *conn);
 
+/* Get DBus connection to use to talk to hald. */
+DBusConnection *libhal_ctx_get_dbus_connection          (LibHalContext *ctx);
+
 /* Set user data for the context */
 dbus_bool_t    libhal_ctx_set_user_data                (LibHalContext *ctx, void *user_data);
 

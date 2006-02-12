@@ -94,4 +94,5 @@ gboolean hald_dbus_local_server_init (void);
 DBusHandlerResult hald_dbus_filter_function (DBusConnection * connection, DBusMessage * message, void *user_data);
 
 char *hald_dbus_local_server_addr (void);
+
 #endif /* HAL_DBUS_H */

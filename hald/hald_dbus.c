@@ -2479,17 +2479,19 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 
 static void
 hald_exec_method_cb (HalDevice *d, guint32 exit_type, 
-                    gint return_code, gchar **error,
-                    gpointer data1, gpointer data2)
+		     gint return_code, gchar **error,
+		     gpointer data1, gpointer data2)
 {
 	dbus_uint32_t result;
 	DBusMessage *reply = NULL;
 	DBusMessage *message;
 	DBusMessageIter iter;
+	DBusConnection *conn;
 	gchar *exp_name = NULL;
 	gchar *exp_detail = NULL;
 
 	message = (DBusMessage *) data1;
+	conn = (DBusConnection *) data2;
 	
 	if (exit_type == HALD_RUN_SUCCESS && error != NULL && 
 	    error[0] != NULL && error[1] != NULL) {
@@ -2502,8 +2504,8 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 	
 	if (exit_type != HALD_RUN_SUCCESS) {
 		reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");
-		if (dbus_connection != NULL) {
-			if (!dbus_connection_send (dbus_connection, reply, NULL))
+		if (conn != NULL) {
+			if (!dbus_connection_send (conn, reply, NULL))
 				DIE (("No memory"));
 		}
 		dbus_message_unref (reply);
@@ -2516,8 +2518,8 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 				DIE (("No memory"));
 			}
 		}
-		if (dbus_connection != NULL) {
-			if (!dbus_connection_send (dbus_connection, reply, NULL))
+		if (conn != NULL) {
+			if (!dbus_connection_send (conn, reply, NULL))
 				DIE (("No memory"));
 		}
 		dbus_message_unref (reply);
@@ -2532,8 +2534,8 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 		dbus_message_iter_init_append (reply, &iter);
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &result);
 		
-		if (dbus_connection != NULL) {
-			if (!dbus_connection_send (dbus_connection, reply, NULL))
+		if (conn != NULL) {
+			if (!dbus_connection_send (conn, reply, NULL))
 				DIE (("No memory"));
 		}
 
@@ -2544,31 +2546,36 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 }
 
 static DBusHandlerResult
-hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message, const char *execpath)
+hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_interface, 
+		  DBusMessage *message, const char *execpath)
 {
 	int type;
 	GString *stdin_str;
 	DBusMessageIter iter;
-	const char *sender;
 	char *extra_env[2];
 	char uid_export[128];
 
 	/* add calling uid */
 	extra_env[0] = NULL;
-	sender = dbus_message_get_sender (message);
-	if (sender != NULL) {
-		DBusError error;
-		unsigned long uid;
-
-		dbus_error_init (&error);
-		uid = dbus_bus_get_unix_user (connection, sender, &error);
-		if (!dbus_error_is_set (&error)) {
-			sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", uid);
-			extra_env[0] = uid_export;
-			extra_env[1] = NULL;
-			HAL_INFO(("%s", uid_export));
+	if (local_interface) {
+		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
+	} else {
+		const char *sender;
+		
+		sender = dbus_message_get_sender (message);
+		if (sender != NULL) {
+			DBusError error;
+			unsigned long uid;
+			
+			dbus_error_init (&error);
+			uid = dbus_bus_get_unix_user (connection, sender, &error);
+			if (!dbus_error_is_set (&error)) {
+				sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", uid);
+				extra_env[0] = uid_export;
+			}
 		}
 	}
+	extra_env[1] = NULL;
 
 	/* prepare stdin with parameters */
 	stdin_str = g_string_sized_new (256); /* default size for passing params; can grow */
@@ -2673,11 +2680,11 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, DBusMessage *message
 
 	/* no timeout */
 	hald_runner_run_method(d, 
-                         execpath, extra_env, 
-                         stdin_str->str, TRUE,
-                         0,
-                         hald_exec_method_cb,
-                         (gpointer) message, NULL);
+			       execpath, extra_env, 
+			       stdin_str->str, TRUE,
+			       0,
+			       hald_exec_method_cb,
+			       (gpointer) message, (gpointer) connection);
 	dbus_message_ref (message);
 	g_string_free (stdin_str, TRUE);
 
@@ -2892,7 +2899,8 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 
 								HAL_INFO (("OK for method '%s' with signature '%s' on interface '%s' for UDI '%s' and execpath '%s'", method, signature, interface, udi, execpath));
 
-								return hald_exec_method (d, connection, message, execpath);
+								return hald_exec_method (d, connection, local_interface,
+											 message, execpath);
 							}
 							
 						}

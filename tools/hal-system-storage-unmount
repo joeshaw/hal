@@ -15,9 +15,12 @@ fi
 
 MOUNT_POINT="$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT"
 if [ "$MOUNT_POINT" == "" ]; then
-    echo "org.freedesktop.Hal.Device.Volume.NotMounted" >&2
-    echo "Cannot figure out where device is mounted." >&2
-    exit 1
+    MOUNT_POINT="$HAL_PROP_VOLUME_MOUNT_POINT"
+    if [ "$MOUNT_POINT" == "" ]; then
+	echo "org.freedesktop.Hal.Device.Volume.NotMounted" >&2
+	echo "Cannot figure out where device is mounted." >&2
+	exit 1
+    fi
 fi
 
 if [ "$HAL_PROP_STORAGE_MEDIA_CHECK_ENABLED" != "false" ]; then
@@ -30,8 +33,12 @@ fi
 
 if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ]; then
     if [ "$HAL_METHOD_INVOKED_BY_UID" != "$HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID" ]; then
+	UID_MOUNTED="$HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID"
+	if [ "$UID_MOUNTED" == "" ]; then
+	    UID_MOUNTED="UNKNOWN"
+	fi
 	echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
-	echo "Volume mounted by uid $HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID cannot be unmounted by uid $HAL_METHOD_INVOKED_BY_UID." >&2
+	echo "Volume mounted by uid $UID_MOUNTED cannot be unmounted by uid $HAL_METHOD_INVOKED_BY_UID." >&2
 	exit 1
     fi
 fi

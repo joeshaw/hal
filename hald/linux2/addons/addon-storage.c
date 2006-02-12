@@ -49,24 +49,68 @@
 #include "../probing/shared.h"
 
 static void 
-force_unmount (const char *device_file_or_mount_point)
+force_unmount (LibHalContext *ctx, const char *udi)
 {
-	pid_t pid;
+	DBusError error;
+	DBusMessage *msg = NULL;
+	DBusMessage *reply = NULL;
+	char **options = NULL;
+	unsigned int num_options = 0;
+	DBusConnection *dbus_connection;
 
-	switch (pid = fork ()) {
-	case -1:
-		break;
-	case 0:
-		execl ("/bin/umount", "-l", device_file_or_mount_point, NULL);
-		break;
-	default:
-		waitpid (pid, NULL, 0);
-		break;
+	dbus_connection = libhal_ctx_get_dbus_connection (ctx);
+
+	msg = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
+					    "org.freedesktop.Hal.Device.Volume",
+					    "Unmount");
+	if (msg == NULL) {
+		dbg ("Could not create dbus message for %s", udi);
+		goto out;
 	}
+
+
+	options = calloc (1, sizeof (char *));
+	if (options == NULL) {
+		dbg ("Could not allocate options array");
+		goto out;
+	}
+
+	options[0] = "lazy";
+	num_options = 1;
+
+	if (!dbus_message_append_args (msg, 
+				       DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &options, num_options,
+				       DBUS_TYPE_INVALID)) {
+		dbg ("Could not append args to dbus message for %s", udi);
+		goto out;
+	}
+	
+	dbus_error_init (&error);
+	if (!(reply = dbus_connection_send_with_reply_and_block (dbus_connection, msg, -1, &error))) {
+		dbg ("Unmount failed for %s: %s : %s\n", udi, error.name, error.message);
+		dbus_error_free (&error);
+		goto out;
+	}
+
+	if (dbus_error_is_set (&error)) {
+		dbg ("Unmount failed for %s\n%s : %s\n", udi, error.name, error.message);
+		dbus_error_free (&error);
+		goto out;
+	}
+
+	dbg ("Succesfully unmounted udi '%s'", udi);
+
+out:
+	if (options != NULL)
+		free (options);
+	if (msg != NULL)
+		dbus_message_unref (msg);
+	if (reply != NULL)
+		dbus_message_unref (reply);
 }
 
 static void 
-unmount_childs(LibHalContext *ctx, const char *udi)
+unmount_childs (LibHalContext *ctx, const char *udi)
 {
 	int num_volumes;
 	char **volumes;
@@ -86,19 +130,8 @@ unmount_childs(LibHalContext *ctx, const char *udi)
 			if (libhal_device_get_property_bool (ctx, vol_udi, "block.is_volume", &error)) {
 				dbus_error_init (&error);
 				if (libhal_device_get_property_bool (ctx, vol_udi, "volume.is_mounted", &error)) {
-					char *vol_mount_point;
-
-					dbus_error_init (&error);
-					vol_mount_point = libhal_device_get_property_string (ctx, vol_udi, 
-											     "volume.mount_point", 
-											     &error);
-					if (vol_mount_point != NULL) {
-						dbg ("Forcing unmount for %s", vol_mount_point);
-
-						/* TODO: emit DeviceCondition */
-						force_unmount (vol_mount_point);
-						libhal_free_string (vol_mount_point);
-					}
+					dbg ("Forcing unmount of child '%s'", vol_udi);
+					force_unmount (ctx, vol_udi);
 				}
 			}
 		}
@@ -157,10 +190,10 @@ main (int argc, char *argv[])
 	char *drive_type;
 	int is_cdrom;
 	int media_status;
-	int storage_policy_should_mount;
-	char *storage_policy_should_mount_str;
 	char *support_media_changed_str;
 	int support_media_changed;
+
+	
 
 	if ((udi = getenv ("UDI")) == NULL)
 		goto out;
@@ -173,8 +206,6 @@ main (int argc, char *argv[])
 
 	if ((getenv ("HALD_VERBOSE")) != NULL)
 		is_verbose = TRUE;
-
-	storage_policy_should_mount_str = getenv ("HAL_PROP_STORAGE_POLICY_SHOULD_MOUNT");
 
 	support_media_changed_str = getenv ("HAL_PROP_STORAGE_CDROM_SUPPORT_MEDIA_CHANGED");
 	if (support_media_changed_str != NULL && strcmp (support_media_changed_str, "true") == 0)
@@ -196,11 +227,6 @@ main (int argc, char *argv[])
 		is_cdrom = 1;
 	else
 		is_cdrom = 0;
-
-	if (storage_policy_should_mount_str != NULL && strcmp (storage_policy_should_mount_str, "true") == 0)
-		storage_policy_should_mount = 1;
-	else
-		storage_policy_should_mount = 0;
 
 	media_status = MEDIA_STATUS_UNKNOWN;
 
@@ -317,9 +343,8 @@ main (int argc, char *argv[])
 				
 				dbg ("Media removal detected on %s", device_file);
 				
-				/* have to unmount all childs, but only if we're doing policy on the device */
-				if (storage_policy_should_mount)
-					unmount_childs (ctx, udi);
+				/* attempt to unmount all childs */
+				unmount_childs (ctx, udi);
 				
 				/* could have a fs on the main block device; do a rescan to remove it */
 				dbus_error_init (&error);
