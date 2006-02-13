@@ -1,6 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
+# Copyright (C) 2006, David Zeuthen <davidz@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2.
@@ -8,25 +9,24 @@
 MOUNT_ROOT="/media"
 
 for DIR in $MOUNT_ROOT/*; do
+
+    # /proc/mounts substitute spaces with 040
+    DIRMOD=${DIR//[[:space:]]/040}
+
     # check if we created it
-    if [ ! -e $DIR/.created-by-hal ]; then
-	continue
-    fi
-
-    # don't touch mounted volumes
-    BUSY=
-    while read dev dir type options; do
-	if [ "$dir" = "$DIR" ]; then
-	    BUSY=1
-	    break
+    if [ -e "$DIR/.created-by-hal" ]; then
+	BUSY=0
+	while read dev dir type options; do
+	    if [ "$dir" = "$MDIR" ]; then
+		BUSY=1
+		break
+	    fi
+	done < /proc/mounts
+	if [ "$BUSY" != "1" ]; then
+	    rm -f "$DIR/.created-by-hal"
+	    rmdir --ignore-fail-on-non-empty "$DIR"
 	fi
-    done < /proc/mounts
-    if [ "$BUSY" = "1" ]; then
-	continue
     fi
-
-    rm -f $DIR/.created-by-hal
-    rmdir --ignore-fail-on-non-empty "$DIR"
 done
 
 exit 0

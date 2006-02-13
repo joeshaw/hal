@@ -269,6 +269,10 @@ blockdev_refresh_mount_state (HalDevice *d)
 						0,
 						cleanup_mountpoint_cb,
 						g_strdup (mount_point), NULL);
+
+			hal_device_property_remove (dev, "info.hal_mount.created_mount_point");
+			hal_device_property_remove (dev, "info.hal_mount.mounted_by_uid");
+
 		}
 
 		g_free (mount_point_hal_file);
@@ -1219,20 +1223,35 @@ blockdev_generate_add_hotplug_event (HalDevice *d)
 {
 	const char *sysfs_path;
 	const char *device_file;
+	const char *model;
+	const char *vendor;
+	const char *serial;
+	const char *revision;
 	HotplugEvent *hotplug_event;
+	const char *nul;
+
+	nul = "\0";
 
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
+
 	device_file = hal_device_property_get_string (d, "block.device");
+	model       = hal_device_property_get_string (d, "storage.model");
+	vendor      = hal_device_property_get_string (d, "storage.vendor");
+	serial      = hal_device_property_get_string (d, "storage.serial");
+	revision    = hal_device_property_get_string (d, "storage.firmware_revision");
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
 	g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
-	if (device_file != NULL)
-		g_strlcpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
-	else
-		hotplug_event->sysfs.device_file[0] = '\0';
+
+	g_strlcpy (hotplug_event->sysfs.device_file, device_file != NULL ? device_file : nul, HAL_NAME_MAX);
+	g_strlcpy (hotplug_event->sysfs.vendor,           vendor != NULL ?      vendor : nul, HAL_NAME_MAX);
+	g_strlcpy (hotplug_event->sysfs.model,             model != NULL ?       model : nul, HAL_NAME_MAX);
+	g_strlcpy (hotplug_event->sysfs.serial,           serial != NULL ?      serial : nul, HAL_NAME_MAX);
+	g_strlcpy (hotplug_event->sysfs.revision,       revision != NULL ?    revision : nul, HAL_NAME_MAX);
+
 	hotplug_event->sysfs.net_ifindex = -1;
 
 	return hotplug_event;

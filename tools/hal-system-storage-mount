@@ -37,12 +37,15 @@ fi
 # only allow ^a-zA-Z0-9_= in the string because otherwise someone may
 # pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
 
+# Used to get :alnum: to be somewhat useful
+LANG=en_US.UTF-8
+
 read GIVEN_MOUNTPOINT
-GIVEN_MOUNTPOINT=${GIVEN_MOUNTPOINT//[^a-zA-Z0-9_:.+-]/@}
+GIVEN_MOUNTPOINT=${GIVEN_MOUNTPOINT//[^[:alnum:]_=[:space:]:.+-]/@}
 read GIVEN_MOUNTTYPE
 GIVEN_MOUNTTYPE=${GIVEN_MOUNTTYPE//[^a-zA-Z0-9_=]/_}
 read GIVEN_MOUNTOPTIONS
-GIVEN_MOUNTOPTIONS=${GIVEN_MOUNTOPTIONS//[^a-zA-Z0-9_=[:space:]]/_}
+GIVEN_MOUNTOPTIONS=${GIVEN_MOUNTOPTIONS//[^a-zA-Z0-9_=-[:space:]]/_}
 
 # if no mountpoint is requested, get the mountpoint from the filesystem
 # label if it does not contain invalid chars or starts with a "."

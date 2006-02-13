@@ -1,5 +1,21 @@
 2006-02-12  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-system-storage-mount: Use [:alnum:] and [:space:]
+	instead of a-zA-Z0-9 so we support mount points like "foobar der
+	√¶√∏√• „Çµ„Ç§„Éà„ÅÆ". Set LANG to en_US.UTF-8 to get bash to do this.
+	Also allow - in GIVEN_MOUNTOPTIONS (Reported by Jeffrey Stedfast
+	<fejj@novell.com>) in order to get iocharset= to work.
+
+	* tools/hal-system-storage-cleanup-mountpoints: Make this work for
+	mountpoints with spaces in them
+
+	* hald/linux2/blockdev.c (blockdev_refresh_mount_state): Also
+	remove info.hal_mount properties.
+	(blockdev_generate_add_hotplug_event): For Reprobe, pass the
+	model, vendor, serial and firmware rev.
+
+2006-02-12  David Zeuthen  <davidz@redhat.com>
+
 	* tools/Makefile.am (script_SCRIPTS): Add
 	tools/hal-system-storage-cleanup-mountpoint
 
@@ -226,7 +242,7 @@
 	* hald-runner/runner.c (run_request_run): Use r->argv[0] rather than
 	r->argv so the cwd works.
 
-2006-01-28  J¸rg Billeter  <j@bitron.ch>
+2006-01-28  J√ºrg Billeter  <j@bitron.ch>
 
 	* hald/linux2/classdev.c (sound_compute_udi): Remove card number from
 	alsa and oss udi as it may not be persistent across reboots.
@@ -1217,7 +1233,7 @@
 	battery.remaining_time.calculate_per_time for util_compute_time_remaining()
 
 	* hald/util.c (util_compute_time_remaining), hald/util.h: added slightly 
-	adopted and extended patch from S¯ren Hansen <sh@linux2go.dk> to fix 
+	adopted and extended patch from S√∏ren Hansen <sh@linux2go.dk> to fix 
 	calculation for machines which does not report current rate. This calculate 
 	the chargRate from time and chargeLevel.
 	Added a new parameter to enable/disable the new calculation.  
@@ -1612,7 +1628,7 @@
 	  voltage.  Add a check to battery_refresh to ensure design voltage is
 	  not unknown (and use 1mV if it is).  Variable rename to indicate
 	  that the quantities that we're dealing with are arbitrary
-	  'normalised' units that might not be mWh (often µWh).
+	  'normalised' units that might not be mWh (often ¬µWh).
 
 2005-09-03  Richard Hughes <richard@hughsie.com>
 
@@ -5176,7 +5192,7 @@
 	2005-01-06  David Zeuthen  <davidz@redhat.com>
 
 	* libhal/libhal.c (hal_device_query_capability): Patch from Tim
-	M¸ller <t.i.m@zen.co.uk>. The attached patch fixes a small memory
+	M√ºller <t.i.m@zen.co.uk>. The attached patch fixes a small memory
 	leak in libhal's hal_device_query_capability().
 
 	2005-01-03  David Zeuthen  <davidz@redhat.com>
@@ -5466,7 +5482,7 @@
 
 2004-10-27  David Zeuthen  <davidz@redhat.com>
 
-	Patch from Tim M¸ller <t.i.m@zen.co.uk>
+	Patch from Tim M√ºller <t.i.m@zen.co.uk>
 
 	* configure.in: Require libcap development packages by checking for
 	sys/capability.h
@@ -5872,7 +5888,7 @@
 2004-10-08  David Zeuthen  <david@fubar.dk>
 
 	* libhal-storage/libhal-storage.h (LIBHAL_STORAGE_H): Only use one
-	underscore, not two. Reported by JÈrÙme Lodewyck
+	underscore, not two. Reported by J√©r√¥me Lodewyck
 	<lodewyck@clipper.ens.fr>.
 
 2004-10-07  David Zeuthen  <david@fubar.dk>
@@ -6037,7 +6053,7 @@
 
 	* configure.in: Added fr to ALL_LINGUAS
 
-	* po/fr.op: Added french translations from JÈrÙme Lodewyck 
+	* po/fr.op: Added french translations from J√©r√¥me Lodewyck 
 	<lodewyck@clipper.ens.fr>
 
 	* libhal-storage/libhal-storage.h: Add prototypes for new functions
@@ -8286,7 +8302,7 @@
 	* configure.in: Bump to 0.2.92
 
 	* packaging/fedora/hal.spec: Install the symlink in
-	/etc/dev.d/default/hal.dev. Patch from Kristian H¯gsberg
+	/etc/dev.d/default/hal.dev. Patch from Kristian H√∏gsberg
 	<krh@bitplanet.net>. Bump version to 0.2.92
 
 2004-06-06  David Zeuthen  <david@fubar.dk>
@@ -8308,14 +8324,14 @@
 2004-06-05  David Zeuthen  <david@fubar.dk>
 
 	* packaging/fedora/hal.spec: Add hald.conf to %files. Patch from
-	Kristian H¯gsberg <krh@bitplanet.net>
+	Kristian H√∏gsberg <krh@bitplanet.net>
 
-	* ChangeLog: Fixup the danish character ¯ in Kristians last name
+	* ChangeLog: Fixup the danish character √∏ in Kristians last name
 	since we want to use ISO-8859-1 in ChangeLog :-)
 
 2004-06-04  Joe Shaw  <joeshaw@novell.com>
 
-	Patch from Kristian H¯gsberg <krh@bitplanet.net>
+	Patch from Kristian H√∏gsberg <krh@bitplanet.net>
 
 	* hald/linux/input_class_device.c (input_class_accept): New
 	function.  Accepts devices with no sysdevice but which begin with
