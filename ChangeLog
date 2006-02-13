@@ -1,5 +1,12 @@
 2006-02-12  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/probing/probe-volume.c (strdup_valid_utf8): Fixup
+	this function as it didn't work at all. Replace invalid characters
+	with '_' instead of '?' as the latter is not allowed as a
+	mountpoint. 
+
+2006-02-12  David Zeuthen  <davidz@redhat.com>
+
 	* tools/hal-system-storage-mount: Use [:alnum:] and [:space:]
 	instead of a-zA-Z0-9 so we support mount points like "foobar der
 	æøå サイトの". Set LANG to en_US.UTF-8 to get bash to do this.

@@ -66,15 +66,17 @@ strdup_valid_utf8 (const char *str)
 {
 	char *endchar;
 	char *newstr;
+	char *s;
 
 	if (str == NULL)
 		return NULL;
 
 	newstr = g_strdup (str);
-
-	while (!g_utf8_validate (str, -1, (const char **) &endchar)) {
-		*endchar = '?';
+	s = newstr;
+	while (!g_utf8_validate (s, -1, (const char **) &endchar)) {
+		*endchar = '_';
 	}
+
 	return newstr;
 }
 
