@@ -42,7 +42,9 @@ hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 scriptdir = $(datadir)/hal/scripts
 
 script_SCRIPTS =				\
-	hal-luks-setup hal-luks-remove		\
+	hal-luks-setup                          \
+	hal-luks-teardown                       \
+	hal-luks-remove		                \
 	hal-system-power-suspend		\
 	hal-system-power-hibernate		\
 	hal-system-power-shutdown		\

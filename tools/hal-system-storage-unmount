@@ -103,8 +103,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # remove directory only if HAL has created it
-if [ -e $MOUNT_POINT/.created-by-hal ]; then
-  rm -f $MOUNT_POINT/.created-by-hal
+if [ -e "$MOUNT_POINT/.created-by-hal" ]; then
+  rm -f "$MOUNT_POINT/.created-by-hal"
   rmdir --ignore-fail-on-non-empty "$MOUNT_POINT"
 fi
 
