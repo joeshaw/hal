@@ -1,5 +1,10 @@
 2006-02-13  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-luks-setup: Refuse to setup the device if it's already
+	setup once
+
+2006-02-13  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Don't generate tools/hal-luks-remove.in,
 	tools/hal-luks-setup.in
 
