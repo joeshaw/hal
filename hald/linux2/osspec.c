@@ -426,8 +426,8 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 
 		for (i = 0; chassis_map[i] != NULL; i += 2) {
 			if (strcmp (chassis_map[i], chassis_type) == 0) {
-				/* check if the key is already set to prevent overwrite keys */
-				if (!hal_device_has_property(d, "system.formfactor"))
+				/* check if the key is 'unknown' to prevent overwrite keys */
+				if (strcmp (hal_device_property_get_string (d, "system.formfactor"), "unknown"))
 					hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
 				break;
 			}
