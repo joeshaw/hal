@@ -1,3 +1,11 @@
+2006-02-13  David Zeuthen  <davidz@redhat.com>
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Revert patch from
+	Danny that adds mounts options for ntfs
+
+	* tools/hal-system-storage-mount: Also allow comma "," as a valid
+	character in a mount point
+
 2006-02-13  Danny Kukawka  <danny.kukawka@web.de>
 
 	Fixed problems with usage of dbus_error within a for-block. Need 
