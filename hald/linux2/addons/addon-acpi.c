@@ -142,7 +142,12 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 		} else {
 			dbg ("cannot parse event");
 		}
-		
+
+		if (dbus_error_is_set (&error)) {
+	        	/* Free the error (which include a dbus_error_init()) 
+			   This should prevent errors if a call above fails */
+			dbus_error_free (&error);
+		}
 	}
 
 	dbus_error_free (&error);

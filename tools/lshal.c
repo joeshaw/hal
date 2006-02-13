@@ -262,6 +262,12 @@ dump_devices (void)
 		devices[i].name = device_names[i];
 		devices[i].parent = libhal_device_get_property_string (hal_ctx,
 				device_names[i], "info.parent", &error);
+
+		if (dbus_error_is_set (&error)) {
+			/* Free the error (which include a dbus_error_init())
+			   This should prevent errors if a call above fails */
+			dbus_error_free (&error);
+		}
 	}
 
 	if (long_list) {
