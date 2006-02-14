@@ -1,3 +1,15 @@
+2006-02-13  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-luks-teardown: Remove hal-luks-remove on
+	info.callouts.remove on successful teardown
+
+	* tools/hal-luks-setup: Throw SetupPasswordError instead of just
+	SetupError when cryptsetup is failing - used to ask for password
+	again if the one from e.g. the keyring didn't work.
+
+	* hald/hald_dbus.c (device_string_list_remove): New function
+	(hald_dbus_filter_handle_methods): Handle StringListRemove
+
 2006-02-13  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done):

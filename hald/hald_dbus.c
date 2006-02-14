@@ -1394,6 +1394,57 @@ device_string_list_append_prepend (DBusConnection * connection, DBusMessage * me
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+/* TODO: docs */
+static DBusHandlerResult
+device_string_list_remove (DBusConnection * connection, DBusMessage * message)
+{
+	const char *udi;
+	const char *key;
+	const char *value;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	gboolean ret;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &key,
+				    DBUS_TYPE_STRING, &value,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "StringListRemove");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	ret = hal_device_property_strlist_remove (d, key, value);
+	if (!ret) {
+		raise_property_type_error (connection, message, udi, key);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+	
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+	
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 
 
 /** Remove a property on a device.
@@ -2831,6 +2882,10 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"org.freedesktop.Hal.Device",
 						"StringListPrepend")) {
 		return device_string_list_append_prepend (connection, message, TRUE);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"StringListRemove")) {
+		return device_string_list_remove (connection, message);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"Rescan")) {
