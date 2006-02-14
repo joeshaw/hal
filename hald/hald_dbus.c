@@ -2528,6 +2528,102 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+typedef struct {
+	char *udi;
+	char *execpath;
+	char **extra_env;
+	char *stdin;
+	DBusMessage *message;
+	DBusConnection *connection;
+} MethodInvocation;
+
+static void
+hald_exec_method_cb (HalDevice *d, guint32 exit_type, 
+		     gint return_code, gchar **error,
+		     gpointer data1, gpointer data2);
+
+static void
+hald_exec_method_do_invocation (MethodInvocation *mi)
+{
+	HalDevice *d;
+
+	d = hal_device_store_find (hald_get_gdl (), mi->udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), mi->udi);
+
+	if (d != NULL) {
+		/* no timeout */
+		hald_runner_run_method(d, 
+				       mi->execpath, 
+				       mi->extra_env, 
+				       mi->stdin, 
+				       TRUE,
+				       0,
+				       hald_exec_method_cb,
+				       (gpointer) mi->message, 
+				       (gpointer) mi->connection);
+	} else {
+		HAL_WARNING (("In-queue method call on non-existant device"));
+	}
+
+	g_free (mi->udi);
+	g_free (mi->execpath);
+	g_strfreev (mi->extra_env);
+	g_free (mi->stdin);
+	g_free (mi);
+}
+
+
+static GHashTable *udi_to_method_queue = NULL;
+
+static void
+hald_exec_method_enqueue (MethodInvocation *mi)
+{
+	gpointer origkey;
+	GList *queue;
+
+	if (udi_to_method_queue == NULL) {
+		udi_to_method_queue = g_hash_table_new (g_str_hash,
+							g_str_equal);
+	}
+
+	if (g_hash_table_lookup_extended (udi_to_method_queue, mi->udi, &origkey, (gpointer) &queue)) {
+		HAL_INFO (("enqueue"));;
+		queue = g_list_append (queue, mi);
+		g_hash_table_replace (udi_to_method_queue, g_strdup (mi->udi), queue);
+	} else {
+		HAL_INFO (("no need to enqueue"));;
+		queue = g_list_append (NULL, mi);
+		g_hash_table_insert (udi_to_method_queue, g_strdup (mi->udi), queue);
+
+		hald_exec_method_do_invocation (mi);
+	}
+}
+
+
+static void 
+hald_exec_method_process_queue (const char *udi)
+{
+	gpointer origkey;
+	GList *queue;
+
+	if (g_hash_table_lookup_extended (udi_to_method_queue, udi, &origkey, (gpointer) &queue)) {
+		if (queue != NULL) {
+			queue = g_list_delete_link (queue, queue);
+		}
+
+		if (queue == NULL) {
+			HAL_INFO (("No more methods in queue"));;
+			g_hash_table_remove (udi_to_method_queue, udi);
+		} else {
+			HAL_INFO (("Execing next method in queue"));;
+			g_hash_table_replace (udi_to_method_queue, g_strdup (udi), queue);
+
+			hald_exec_method_do_invocation ((MethodInvocation *) queue->data);
+		}
+	}
+}
+
 static void
 hald_exec_method_cb (HalDevice *d, guint32 exit_type, 
 		     gint return_code, gchar **error,
@@ -2540,6 +2636,8 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 	DBusConnection *conn;
 	gchar *exp_name = NULL;
 	gchar *exp_detail = NULL;
+
+	hald_exec_method_process_queue (d->udi);
 
 	message = (DBusMessage *) data1;
 	conn = (DBusConnection *) data2;
@@ -2605,6 +2703,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 	DBusMessageIter iter;
 	char *extra_env[2];
 	char uid_export[128];
+	MethodInvocation *mi;
 
 	/* add calling uid */
 	extra_env[0] = NULL;
@@ -2729,13 +2828,15 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 		dbus_message_iter_next (&iter);
 	}
 
-	/* no timeout */
-	hald_runner_run_method(d, 
-			       execpath, extra_env, 
-			       stdin_str->str, TRUE,
-			       0,
-			       hald_exec_method_cb,
-			       (gpointer) message, (gpointer) connection);
+	mi = g_new0 (MethodInvocation, 1);
+	mi->udi = g_strdup (d->udi);
+	mi->execpath = g_strdup (execpath);
+	mi->extra_env = g_strdupv (extra_env);
+	mi->stdin = g_strdup (stdin_str->str);
+	mi->message = message;
+	mi->connection = connection;
+	hald_exec_method_enqueue (mi);
+
 	dbus_message_ref (message);
 	g_string_free (stdin_str, TRUE);
 

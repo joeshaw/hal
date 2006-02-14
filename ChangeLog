@@ -1,3 +1,17 @@
+2006-02-14  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald_dbus.c (hald_exec_method_do_invocation)
+	(hald_exec_method_enqueue, hald_exec_method_process_queue)
+	(hald_exec_method_cb, hald_exec_method): To avoid a race of
+	several processes invoking methods at the same time we now
+	maintain a queue of method calls per-device. One very real example
+	of this is gnome-mount when setting up crypto devices; after
+	Crypto.Setup() gnome-mount waits for the cleartext block device
+	and attempts to mount it; meanwhile g-v-m sees the cleartext block
+	device too and attempts to mount too. Since mounting is a
+	relatively slow operation both methods are executed at the same
+	time and we end up with two mounts. This patch fixes this problem.
+
 2006-02-13  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-luks-teardown: Remove hal-luks-remove on
