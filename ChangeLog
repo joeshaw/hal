@@ -1,5 +1,11 @@
 2006-02-14  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-system-storage-mount: Refuse to mount a volume if it's
+	already listed in /etc/fstab - includes checking symlinks. Patch
+	from Ludwig Nussel <ludwig.nussel@suse.de>.
+
+2006-02-14  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald_dbus.c (hald_exec_method_do_invocation)
 	(hald_exec_method_enqueue, hald_exec_method_process_queue)
 	(hald_exec_method_cb, hald_exec_method): To avoid a race of

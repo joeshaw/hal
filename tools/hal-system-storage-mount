@@ -29,6 +29,36 @@ if [ "$HAL_PROP_VOLUME_IGNORE" = "true" ]; then
     exit 1
 fi
 
+
+check_fstab()
+{
+	awk -v dev="$1" \
+	'
+	BEGIN {
+		sub(/^\/dev\//,"", dev)
+		cmd = "/usr/bin/udevinfo -q symlink -n " dev
+		if (( cmd | getline) < 0 ) {
+			print "org.freedesktop.Hal.Device.Volume.PermissionDenied" >/dev/stderr
+			exit 1
+		}
+
+		for(i=1; i <= NF; i++) {
+			a["/dev/" $i] = 1
+		}
+		a["/dev/" dev] = 1
+	}
+	{
+		if ($1 in a) { 
+			print "org.freedesktop.Hal.Device.Volume.PermissionDenied" >"/dev/stderr"
+			print $1 " found in /etc/fstab" >"/dev/stderr"
+			exit 1
+		}
+	}
+	' /etc/fstab
+}
+
+check_fstab "$HAL_PROP_BLOCK_DEVICE" || exit 1
+
 # read parameters
 # "MyDisk\n"
 # "fuse\n"
