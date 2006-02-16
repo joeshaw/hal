@@ -1055,6 +1055,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("volume.label",              vol->volume_label);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.mount_point",        vol->mount_point);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.fsversion",             vol->fsversion);
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_mounted",         vol->is_mounted);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fsusage",            vol_fsusage_textual);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.uuid",               vol->uuid);
