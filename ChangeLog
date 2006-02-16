@@ -1,3 +1,8 @@
+2006-02-15  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.c (libhal_volume_from_udi): Forgot
+	to set uuid so libhal_volume_get_uuid() would always return NULL.
+
 2006-02-14  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-system-storage-mount: Refuse to mount a volume if it's
