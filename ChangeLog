@@ -1,5 +1,11 @@
 2006-02-18  David Zeuthen  <davidz@redhat.com>
 
+	* libhal-storage/libhal-storage.c (libhal_drive_free)
+	(libhal_volume_free): Remeber to free structures; reported by
+	Brendan Creane <bcreane@yahoo.com>.
+
+2006-02-18  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald.c (drop_privileges): Don't initgroups as we don't need
 	privileges for now. Patch from Martin Pitt <martin@piware.de>.
 

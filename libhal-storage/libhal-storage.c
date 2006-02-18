@@ -753,6 +753,8 @@ libhal_drive_free (LibHalDrive *drive)
 	libhal_free_string (drive->desired_mount_point);
 	libhal_free_string (drive->mount_filesystem);
 	libhal_free_string_array (drive->capabilities);
+
+	free (drive);
 }
 
 
@@ -775,6 +777,8 @@ libhal_volume_free (LibHalVolume *vol)
 	libhal_free_string (vol->uuid);
 	libhal_free_string (vol->desired_mount_point);
 	libhal_free_string (vol->mount_filesystem);
+
+	free (vol);
 }
 
 
