@@ -1,3 +1,16 @@
+2006-02-18  Richard Hughes <richard@hughsie.com>
+
+	* tools/Makefile.am: Move hal-system-power-pmu from bin to libexec
+	as it's only meant to be called by hal, not a user.
+
+	* tools/hal-system-lcd-get-brightness,
+	tools/hal-system-lcd-set-brightness: Change the path of 
+	hal-system-power-pmu as libexec is now in our path and we are not
+	installed in scripts anymore.
+
+	* tools/hal-system-power-suspend: Add the sleep command for
+	hal-system-power-pmu so that suspend works on ppc hardware.
+
 2006-02-18  David Zeuthen  <davidz@redhat.com>
 
 	* libhal-storage/libhal-storage.c (libhal_drive_free)

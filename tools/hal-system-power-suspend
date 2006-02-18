@@ -18,6 +18,16 @@ unsupported() {
 
 read seconds_to_sleep
 
+#PMU systems cannot use /sys/power/state yet, so use a helper to issue an ioctl
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "pmu" ]; then
+	hal-system-power-pmu sleep
+	if [ $? -ne 0 ]; then
+		echo "org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported" >&2
+		exit 1
+	fi
+	exit 0
+fi
+
 #SuSE and ALTLinux only support powersave
 if [ -f "/etc/altlinux-release" ] || [ -f "/etc/SuSE-release" ] ; then
 	if [ -x /usr/bin/powersave ] ; then

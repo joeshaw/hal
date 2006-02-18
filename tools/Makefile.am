@@ -11,7 +11,6 @@ INCLUDES = \
 
 bin_PROGRAMS = \
 	lshal \
-	hal-system-power-pmu \
 	hal-get-property \
 	hal-set-property \
 	hal-find-by-capability \
@@ -20,9 +19,6 @@ bin_PROGRAMS = \
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
-
-hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
-hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_get_property_SOURCES = hal_get_property.c
 hal_get_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -38,6 +34,11 @@ hal_find_by_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_device_SOURCES = hal-device.c
 hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+
+libexec_PROGRAMS = hal-system-power-pmu
+
+hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
+hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 scriptdir = $(datadir)/hal/scripts
 

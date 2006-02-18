@@ -15,7 +15,7 @@ if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "" ]; then
 fi
 
 if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "pmu" ]; then
-	value="`./hal-system-power-pmu getlcd`"
+	value="`hal-system-power-pmu getlcd`"
 	if [ $? -ne 0 ]; then
 		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
 		exit 1
