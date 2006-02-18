@@ -271,11 +271,6 @@ drop_privileges ()
 	exit (-1);
     }
 
-    if( initgroups (HAL_USER, gr->gr_gid)) {
-	HAL_ERROR (("drop_privileges: could not initialize groups"));
-	exit (-1);
-    }
-
     if( setgid (gr->gr_gid) ) {
 	HAL_ERROR (("drop_privileges: could not set group id"));
 	exit (-1);
