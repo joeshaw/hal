@@ -1,5 +1,17 @@
 2006-02-18  Richard Hughes <richard@hughsie.com>
 
+	* hald/linux2/acpi.c (laptop_panel_refresh,
+	acpi_synthesize_hotplug_events): add handler for omnibook displays.
+
+	* tools/hal-system-lcd-get-brightness,
+	tools/hal-system-lcd-set-brightness: Add omnibook support.
+
+	* hald/linux2/acpi.c (acpi_synthesize_display): don't prepend the
+	acpi/ here as the new omnibook isn't under /proc/acpi.
+	See http://bugzilla.gnome.org/show_bug.cgi?id=331458 for details.
+
+2006-02-18  Richard Hughes <richard@hughsie.com>
+
 	* tools/Makefile.am: Move hal-system-power-pmu from bin to libexec
 	as it's only meant to be called by hal, not a user.
 

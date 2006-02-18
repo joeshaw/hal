@@ -47,6 +47,7 @@ enum {
 	ACPI_TYPE_IBM_DISPLAY,
 	ACPI_TYPE_PANASONIC_DISPLAY,
 	ACPI_TYPE_SONY_DISPLAY,
+	ACPI_TYPE_OMNIBOOK_DISPLAY,
 	ACPI_TYPE_BUTTON
 };
 
@@ -693,6 +694,10 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 		type = "sony";
 		desc = "Sony LCD Panel";
 		br_levels = 8;
+	} else if (acpi_type == ACPI_TYPE_OMNIBOOK_DISPLAY) {
+		type = "omnibook";
+		desc = "Omnibook LCD Panel";
+		br_levels = 8;
 	} else {
 		type = "unknown";
 		desc = "Unknown LCD Panel";
@@ -837,7 +842,7 @@ static void
 acpi_synthesize_display (char *vendor, char *display, int method)
 {
 	gchar path[HAL_PATH_MAX];
-	snprintf (path, sizeof (path), "%s/acpi/%s/%s", get_hal_proc_path (), vendor, display);
+	snprintf (path, sizeof (path), "%s/%s/%s", get_hal_proc_path (), vendor, display);
 	/*
 	 * We do not use acpi_synthesize as the target is not a directory full
 	 * of directories, but a flat file list.
@@ -903,11 +908,13 @@ acpi_synthesize_hotplug_events (void)
 	 * When the sysfs code comes into mainline, we can use that, but until
 	 * then we can supply an abstracted interface to the user.
 	 */
-	acpi_synthesize_display ("toshiba", "lcd", ACPI_TYPE_TOSHIBA_DISPLAY);
-	acpi_synthesize_display ("asus", "brn", ACPI_TYPE_ASUS_DISPLAY);
-	acpi_synthesize_display ("pcc", "brightness", ACPI_TYPE_PANASONIC_DISPLAY);
-	acpi_synthesize_display ("ibm", "brightness", ACPI_TYPE_IBM_DISPLAY);
-	acpi_synthesize_display ("sony", "brightness", ACPI_TYPE_SONY_DISPLAY);
+	acpi_synthesize_display ("acpi/toshiba", "lcd", ACPI_TYPE_TOSHIBA_DISPLAY);
+	acpi_synthesize_display ("acpi/asus", "brn", ACPI_TYPE_ASUS_DISPLAY);
+	acpi_synthesize_display ("acpi/pcc", "brightness", ACPI_TYPE_PANASONIC_DISPLAY);
+	acpi_synthesize_display ("acpi/ibm", "brightness", ACPI_TYPE_IBM_DISPLAY);
+	acpi_synthesize_display ("acpi/sony", "brightness", ACPI_TYPE_SONY_DISPLAY);
+	/* onmibook does not live under acpi GNOME#331458 */
+	acpi_synthesize_display ("omnibook", "lcd", ACPI_TYPE_OMNIBOOK_DISPLAY);
 
 	/* setup timer for things that we need to poll */
 	g_timeout_add (ACPI_POLL_INTERVAL,
@@ -1022,6 +1029,14 @@ static ACPIDevHandler acpidev_handler_laptop_panel_sony = {
 	.remove      = acpi_generic_remove
 };
 
+static ACPIDevHandler acpidev_handler_laptop_panel_omnibook = {
+	.acpi_type   = ACPI_TYPE_OMNIBOOK_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
 static ACPIDevHandler acpidev_handler_button = {
 	.acpi_type   = ACPI_TYPE_BUTTON,
 	.add         = acpi_generic_add,
@@ -1049,6 +1064,7 @@ static ACPIDevHandler *acpi_handlers[] = {
 	&acpidev_handler_laptop_panel_panasonic,
 	&acpidev_handler_laptop_panel_asus,
 	&acpidev_handler_laptop_panel_sony,
+	&acpidev_handler_laptop_panel_omnibook,
 	NULL
 };
 
