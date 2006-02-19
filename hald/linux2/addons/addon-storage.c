@@ -109,6 +109,44 @@ out:
 		dbus_message_unref (reply);
 }
 
+static dbus_bool_t
+unmount_cleartext_devices (LibHalContext *ctx, const char *udi)
+{
+	DBusError error;
+	char **clear_devices;
+	int num_clear_devices;
+	dbus_bool_t ret;
+
+	ret = FALSE;
+
+	/* check if the volume we back is mounted.. if it is.. unmount it */
+	dbus_error_init (&error);
+	clear_devices = libhal_manager_find_device_string_match (ctx,
+								 "volume.crypto_luks.clear.backing_volume",
+								 udi,
+								 &num_clear_devices,
+								 &error);
+
+	if (clear_devices != NULL && num_clear_devices > 0) {
+		int i;
+
+		ret = TRUE;
+
+		for (i = 0; i < num_clear_devices; i++) {
+			char *clear_udi;
+			clear_udi = clear_devices[i];
+			dbus_error_init (&error);
+			if (libhal_device_get_property_bool (ctx, clear_udi, "volume.is_mounted", &error)) {
+				dbg ("Forcing unmount of child '%s' (crypto)", clear_udi);
+				force_unmount (ctx, clear_udi);
+			}
+		}
+		libhal_free_string_array (clear_devices);
+	}
+
+	return ret;
+}
+
 static void 
 unmount_childs (LibHalContext *ctx, const char *udi)
 {
@@ -128,12 +166,51 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 			vol_udi = volumes[i];
 			dbus_error_init (&error);
 			if (libhal_device_get_property_bool (ctx, vol_udi, "block.is_volume", &error)) {
+				dbus_bool_t is_crypto;
+
+				/* unmount all cleartext devices associated with us */
+				is_crypto = unmount_cleartext_devices (ctx, vol_udi);
+
 				dbus_error_init (&error);
 				if (libhal_device_get_property_bool (ctx, vol_udi, "volume.is_mounted", &error)) {
 					dbg ("Forcing unmount of child '%s'", vol_udi);
 					force_unmount (ctx, vol_udi);
 				}
+
+				/* teardown crypto */
+				if (is_crypto) {
+					DBusMessage *msg = NULL;
+					DBusMessage *reply = NULL;
+
+					/* tear down mapping */
+					dbg ("Teardown crypto for '%s'", vol_udi);
+
+					msg = dbus_message_new_method_call ("org.freedesktop.Hal", vol_udi,
+									    "org.freedesktop.Hal.Device.Volume.Crypto",
+									    "Teardown");
+					if (msg == NULL) {
+						dbg ("Could not create dbus message for %s", vol_udi);
+						goto teardown_failed;
+					}
+
+					dbus_error_init (&error);
+					if (!(reply = dbus_connection_send_with_reply_and_block (
+						      libhal_ctx_get_dbus_connection (ctx), msg, -1, &error)) || 
+					    dbus_error_is_set (&error)) {
+						dbg ("Teardown failed for %s: %s : %s\n", 
+						     udi, error.name, error.message);
+						dbus_error_free (&error);
+					}
+
+				teardown_failed:
+					if (msg != NULL)
+						dbus_message_unref (msg);
+					if (reply != NULL)
+						dbus_message_unref (reply);
+				}
+
 			}
+
 		}
 		libhal_free_string_array (volumes);
 	}

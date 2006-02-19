@@ -1,3 +1,14 @@
+2006-02-18  David Zeuthen  <davidz@redhat.com>
+
+	While surprise removal of hotpluggable fixed disks with crypted
+	volumes worked fine, it didn't work so well for crypted volumes on
+	removable media. This patch should fix it.
+
+	* hald/linux2/addons/addon-storage.c (unmount_cleartext_devices):
+	New function
+	(unmount_childs): If device is a crypto device, unmount all
+	cleartext devices and tear down the crypt link.
+
 2006-02-18  Richard Hughes <richard@hughsie.com>
 
 	* hald/linux2/acpi.c (laptop_panel_refresh,
