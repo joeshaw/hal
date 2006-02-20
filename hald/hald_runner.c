@@ -309,6 +309,8 @@ call_notify(DBusPendingCall *pending, void *user_data)
   hb->cb(hb->d, exitt, return_code, 
       (gchar **)error->data, hb->data1, hb->data2);
 
+  g_object_unref (hb->d);
+
   dbus_message_unref(m);
   g_array_free(error, FALSE);
 
@@ -317,6 +319,9 @@ malformed:
   /* Send a Fail callback on malformed messages */
   HAL_ERROR (("Malformed or unexpected reply message"));
   hb->cb(hb->d, HALD_RUN_FAILED, return_code, NULL, hb->data1, hb->data2);
+
+  g_object_unref (hb->d);
+
   dbus_message_unref(m);
   g_array_free(error, FALSE);
 }
@@ -358,6 +363,8 @@ hald_runner_run_method(HalDevice *device,
   hd->cb = cb;
   hd->data1 = data1;
   hd->data2 = data2;
+
+  g_object_ref (device);
 
   dbus_pending_call_set_notify(call, call_notify, hd, free);
   dbus_message_unref(msg);

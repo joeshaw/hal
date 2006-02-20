@@ -1,3 +1,16 @@
+2006-02-19  David Zeuthen  <davidz@redhat.com>
+
+	* hald/hald_dbus.c (hald_exec_method_free_mi): New function
+	(hald_exec_method_do_invocation): Throw the exception
+	org.freedesktop.Hal.NoSuchDevice if the device went away while we
+	were in a queue. Move freeing of the MethodInvocation structure
+	into a separate function and require callers to call this. Return
+	FALSE if the device wasn't there.
+	(hald_exec_method_enqueue): Free the method invocation
+	(hald_exec_method_process_queue): Handle when device wasn't there
+	and process the next element instead
+	(local_server_message_handler): Comment out some debug information
+
 2006-02-18  David Zeuthen  <davidz@redhat.com>
 
 	While surprise removal of hotpluggable fixed disks with crypted

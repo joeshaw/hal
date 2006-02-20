@@ -2542,10 +2542,25 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 		     gint return_code, gchar **error,
 		     gpointer data1, gpointer data2);
 
+
 static void
+hald_exec_method_free_mi (MethodInvocation *mi)
+{
+	g_free (mi->udi);
+	g_free (mi->execpath);
+	g_strfreev (mi->extra_env);
+	g_free (mi->stdin);
+	g_free (mi);
+}
+
+/* returns FALSE if we don't actually invoke anything */
+static gboolean
 hald_exec_method_do_invocation (MethodInvocation *mi)
 {
+	gboolean ret;
 	HalDevice *d;
+
+	ret = FALSE;
 
 	d = hal_device_store_find (hald_get_gdl (), mi->udi);
 	if (d == NULL)
@@ -2562,19 +2577,22 @@ hald_exec_method_do_invocation (MethodInvocation *mi)
 				       hald_exec_method_cb,
 				       (gpointer) mi->message, 
 				       (gpointer) mi->connection);
+
+		ret = TRUE;
 	} else {
 		HAL_WARNING (("In-queue method call on non-existant device"));
+
+		raise_no_such_device (mi->connection, mi->message, mi->udi);
 	}
 
-	g_free (mi->udi);
-	g_free (mi->execpath);
-	g_strfreev (mi->extra_env);
-	g_free (mi->stdin);
-	g_free (mi);
+	return ret;
 }
 
 
 static GHashTable *udi_to_method_queue = NULL;
+
+static void 
+hald_exec_method_process_queue (const char *udi);
 
 static void
 hald_exec_method_enqueue (MethodInvocation *mi)
@@ -2597,6 +2615,7 @@ hald_exec_method_enqueue (MethodInvocation *mi)
 		g_hash_table_insert (udi_to_method_queue, g_strdup (mi->udi), queue);
 
 		hald_exec_method_do_invocation (mi);
+		hald_exec_method_free_mi (mi);
 	}
 }
 
@@ -2616,10 +2635,20 @@ hald_exec_method_process_queue (const char *udi)
 			HAL_INFO (("No more methods in queue"));;
 			g_hash_table_remove (udi_to_method_queue, udi);
 		} else {
+			MethodInvocation *mi;
+
 			HAL_INFO (("Execing next method in queue"));;
 			g_hash_table_replace (udi_to_method_queue, g_strdup (udi), queue);
 
-			hald_exec_method_do_invocation ((MethodInvocation *) queue->data);
+			mi = (MethodInvocation *) queue->data;
+
+			if (!hald_exec_method_do_invocation (mi)) {
+				/* the device went away before we got to it... */
+				hald_exec_method_process_queue (mi->udi);
+			}
+
+			hald_exec_method_free_mi (mi);
+
 		}
 	}
 }
@@ -3119,11 +3148,13 @@ local_server_message_handler (DBusConnection *connection,
 			      DBusMessage *message, 
 			      void *user_data)
 {
+/*
 	HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
 		   dbus_message_get_destination (message), 
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
 		   dbus_message_get_member (message)));
+*/
 
 	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
 		DBusMessage *reply;
