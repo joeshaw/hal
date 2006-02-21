@@ -31,7 +31,7 @@ struct mac_driver_desc {
 	uint8_t		signature[2];
 	uint16_t	block_size;
 	uint32_t	block_count;
-} __attribute__((__packed__));
+} PACKED;
 
 struct mac_partition {
 	uint8_t		signature[2];
@@ -41,7 +41,7 @@ struct mac_partition {
 	uint32_t	block_count;
 	uint8_t		name[32];
 	uint8_t		type[32];
-} __attribute__((__packed__));
+} PACKED;
 
 int volume_id_probe_mac_partition_map(struct volume_id *id, uint64_t off)
 {
@@ -84,14 +84,15 @@ int volume_id_probe_mac_partition_map(struct volume_id *id, uint64_t off)
 
 		part_count = be32_to_cpu(part->map_count);
 		dbg("expecting %d partition entries", part_count);
+		if (part_count < 1 || part_count > 256)
+			return -1;
 
 		if (id->partitions != NULL)
 			free(id->partitions);
-		id->partitions =
-			malloc(part_count * sizeof(struct volume_id_partition));
+		id->partitions = malloc(part_count * sizeof(struct volume_id_partition));
 		if (id->partitions == NULL)
 			return -1;
-		memset(id->partitions, 0x00, sizeof(struct volume_id_partition));
+		memset(id->partitions, 0x00, part_count * sizeof(struct volume_id_partition));
 
 		id->partition_count = part_count;
 

@@ -1,3 +1,7 @@
+2006-02-21  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Sync volume_id with udev version.
+
 2006-02-19  David Zeuthen  <davidz@redhat.com>
 
 	* hald/hald_dbus.c (hald_exec_method_free_mi): New function
