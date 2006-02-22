@@ -1,5 +1,10 @@
 2006-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Allow fmask and
+	dmask for vfat
+
+2006-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* libhal-storage/libhal-storage.h: Export prototypes for
 	libhal_volume_crypto_get_clear_volume_udi and
 	libhal_volume_crypto_get_backing_volume_udi
