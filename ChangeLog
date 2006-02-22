@@ -1,5 +1,15 @@
 2006-02-22  David Zeuthen  <davidz@redhat.com>
 
+	* hald/linux2/addons/addon-pmu.c (main): Attached patch makes the
+	addon-pmu work in blocking mode (thus open /dev/adb
+	blocking). I've been running a little daemon on my system for some
+	years that also does this without any problems, so it should be
+	fine and makes the code somewhat nice imho. I've also removed some
+	old dead code, don't think there is much use in keeping it around
+	right? Patch from Sjoerd Simons <sjoerd@luon.net>.
+
+2006-02-22  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Artem Kachitchkine <Artem.Kachitchkin@Sun.COM>. Add
 	Blu-ray and HD DVD to storage.cdrom and volume.disc.type per the
 	latest MMC-5 draft. See Table 87 - Profile List in

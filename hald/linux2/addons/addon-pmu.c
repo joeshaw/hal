@@ -66,23 +66,8 @@ main (int argc, char *argv[])
 
 	dbus_error_init (&error);
 
-#if 0
-	{
-		DBusConnection *conn;
-		if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
-			goto out;
-		
-		if ((ctx = libhal_ctx_new ()) == NULL)
-			goto out;
-		if (!libhal_ctx_set_dbus_connection (ctx, conn))
-			goto out;
-		if (!libhal_ctx_init (ctx, &error))
-			goto out;
-	}
-#else
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
-#endif
 
 	/* initial state */
 	if ((strstate = getenv ("HAL_PROP_BUTTON_STATE_VALUE")) == NULL) {
@@ -94,7 +79,7 @@ main (int argc, char *argv[])
 	else
 		state = FALSE;
 
-	if ((fd = open ("/dev/adb", O_RDWR | O_NONBLOCK)) < 0) {
+	if ((fd = open ("/dev/adb", O_RDWR)) < 0) {
                 dbg ("Cannot open /dev/adb");
                 goto out;
 	}
@@ -108,14 +93,9 @@ main (int argc, char *argv[])
 		buf[1] = PMU_GET_COVER;
 
 		n = write (fd, buf, 2);
-
-		usleep (100 * 1000);
-
 		if (n == 2) {
 			rd = read (fd, buf, sizeof (buf));
 			if (rd <= 0) {
-				if (errno == EAGAIN)
-					goto tryagain;
 				dbg ("Error reading from fd; read returned %d; err=%s", errno, strerror (errno));
 				goto out;
 			}
@@ -146,8 +126,7 @@ main (int argc, char *argv[])
 
 			
 		}
-	tryagain:
-		usleep (900 * 1000);
+		usleep (1000 * 1000);
 	}
 
 
