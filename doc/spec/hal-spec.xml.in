@@ -2955,6 +2955,42 @@
             </row>
             <row>
               <entry></entry>
+              <entry>bd_rom</entry>
+              <entry></entry>
+              <entry>BD-ROM disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>bd_r</entry>
+              <entry></entry>
+              <entry>BD-R disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>bd_re</entry>
+              <entry></entry>
+              <entry>BD-RE disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>hddvd_rom</entry>
+              <entry></entry>
+              <entry>HD DVD-ROM disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>hddvd_r</entry>
+              <entry></entry>
+              <entry>HD DVD-R disc</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>hddvd_rw</entry>
+              <entry></entry>
+              <entry>HD DVD-Rewritable disc</entry>
+            </row>
+            <row>
+              <entry></entry>
               <entry>unknown</entry>
               <entry></entry>
               <entry>Unknown type or lack of support from drive to determine the type</entry>
@@ -3330,7 +3366,42 @@
               <entry>Yes</entry>
               <entry>TRUE when the optical drive can write to DVD+R Dual-Layer discs</entry>
             </row>
-
+            <row>
+              <entry><literal>storage.cdrom.bd</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can read Blu-ray ROM discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.bdr</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to Blu-ray Recordable discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.bdre</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to Blu-ray Rewritable discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.hddvd</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can read Read-only HD DVD discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.hddvdr</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to Write-once HD DVD discs</entry>
+            </row>
+            <row>
+              <entry><literal>storage.cdrom.hddvdrw</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write to Rewritable HD DVD discs</entry>
+            </row>
             <row>
               <entry><literal>storage.cdrom.support_media_changed</literal> (bool)</entry>
               <entry></entry>

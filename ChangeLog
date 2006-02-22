@@ -1,5 +1,20 @@
 2006-02-22  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Artem Kachitchkine <Artem.Kachitchkin@Sun.COM>. Add
+	Blu-ray and HD DVD to storage.cdrom and volume.disc.type per the
+	latest MMC-5 draft. See Table 87 - Profile List in
+	http://www.t10.org/drafts.htm#mmc5 . Probe-volume should do the
+	right thing, but probe-storage needs fixing (noted in FIXME
+	comment).
+
+	* doc/spec/hal-spec.xml.in: 
+
+	* hald/linux2/probing/probe-volume.c (main): 
+
+	* hald/linux2/probing/probe-storage.c (main): 
+
+2006-02-22  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Martin Pitt <martin@piware.de>.
 
 	* hald/linux2/probing/shared.h (drop_privileges): Take an

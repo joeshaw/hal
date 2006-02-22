@@ -406,8 +406,8 @@ main (int argc, char *argv[])
 			break;
 		}
 		
-		/* see table 373 in MMC-3 for details on disc type
-		 * http://www.t10.org/drafts.htm#mmc3
+		/* see table 87 - Profile List in MMC-5 for details on disc type
+		 * http://www.t10.org/drafts.htm#mmc5
 		 */
 		type = get_disc_type (fd);
 		dbg ("get_disc_type returned 0x%02x", type);
@@ -450,6 +450,29 @@ main (int argc, char *argv[])
 				break;
 			case 0x2B: /* DVD+R Double Layer */
                           	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_r_dl", &error);
+				break;
+			case 0x40: /* BD-ROM  */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_rom", &error);
+				break;
+			case 0x41: /* BD-R Sequential */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_r", &error);
+				break;
+			case 0x42: /* BD-R Random */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_r", &error);
+				break;
+			case 0x43: /* BD-RE */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_re", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				break;
+			case 0x50: /* HD DVD-ROM */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "hddvd_rom", &error);
+				break;
+			case 0x51: /* HD DVD-R */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "hddvd_r", &error);
+				break;
+			case 0x52: /* HD DVD-Rewritable */
+                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "hddvd_rw", &error);
+				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
 				break;
 			default: 
 				break;

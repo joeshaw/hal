@@ -195,6 +195,12 @@ main (int argc, char *argv[])
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bd", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bdr", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bdre", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.hddvd", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.hddvdr", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.hddvdrw", FALSE, &error);
 			
 			if (capabilities & CDC_CD_R) {
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdr", TRUE, &error);
@@ -206,8 +212,8 @@ main (int argc, char *argv[])
 			if (capabilities & CDC_DVD) {
 				int profile;
 				
-				/** @todo FIXME BUG XXX: need to check for dvdrw (prolly need to rewrite much of 
-				 *  the linux_dvdrw_utils.c file)
+				/** @todo FIXME BUG XXX: need to check for dvdrw, Blue-ray and HD DVD
+				 * (prolly need to rewrite much of the linux_dvdrw_utils.c file)
 				 */
 				
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvd", TRUE, &error);
