@@ -279,6 +279,10 @@ const char          *libhal_volume_get_mount_point               (LibHalVolume  
 const char          *libhal_volume_get_uuid                      (LibHalVolume     *volume);
 const char          *libhal_volume_get_storage_device_udi        (LibHalVolume     *volume);
 
+const char          *libhal_volume_crypto_get_backing_volume_udi (LibHalVolume     *volume);
+char                *libhal_volume_crypto_get_clear_volume_udi   (LibHalContext    *hal_ctx, LibHalVolume *volume);
+
+
 dbus_bool_t          libhal_volume_disc_has_audio             (LibHalVolume     *volume);
 dbus_bool_t          libhal_volume_disc_has_data              (LibHalVolume     *volume);
 dbus_bool_t          libhal_volume_disc_is_blank              (LibHalVolume     *volume);

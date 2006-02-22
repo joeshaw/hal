@@ -1,3 +1,16 @@
+2006-02-22  David Zeuthen  <davidz@redhat.com>
+
+	* libhal-storage/libhal-storage.h: Export prototypes for
+	libhal_volume_crypto_get_clear_volume_udi and
+	libhal_volume_crypto_get_backing_volume_udi
+
+	* libhal-storage/libhal-storage.c:
+	(libhal_volume_crypto_get_clear_volume_udi): New function
+	(libhal_volume_crypto_get_backing_volume_udi): New function
+
+	* ChangeLog: fix my commit entry for 2006-02-19 - missed changes to
+	hald/hald_runner.c
+
 2006-02-21  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Sync volume_id with udev version.
@@ -15,6 +28,10 @@
 	and process the next element instead
 	(local_server_message_handler): Comment out some debug information
 
+	* hald/hald_runner.c (hald_runner_run_method): Ref the hal device
+	object as it may disappear while the method is executing
+	(call_notify): Unref the hal device object when done
+	
 2006-02-18  David Zeuthen  <davidz@redhat.com>
 
 	While surprise removal of hotpluggable fixed disks with crypted

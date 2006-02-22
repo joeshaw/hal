@@ -716,6 +716,7 @@ struct LibHalVolume_s {
 
 	dbus_bool_t ignore_volume;
 
+	char *crypto_backing_volume;
 
 	char mount_options[MOUNT_OPTIONS_SIZE];
 };
@@ -777,6 +778,7 @@ libhal_volume_free (LibHalVolume *vol)
 	libhal_free_string (vol->uuid);
 	libhal_free_string (vol->desired_mount_point);
 	libhal_free_string (vol->mount_filesystem);
+	libhal_free_string (vol->crypto_backing_volume);
 
 	free (vol);
 }
@@ -1053,6 +1055,8 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("block.device",              vol->device_file);
 
 		LIBHAL_PROP_EXTRACT_STRING ("block.storage_device",      vol->storage_device);
+
+		LIBHAL_PROP_EXTRACT_STRING ("volume.crypto_luks.clear.backing_volume", vol->crypto_backing_volume);
 
 		LIBHAL_PROP_EXTRACT_INT    ("volume.block_size",         vol->block_size);
 		LIBHAL_PROP_EXTRACT_INT    ("volume.num_blocks",         vol->num_blocks);
@@ -1515,6 +1519,42 @@ out:
 	libhal_free_string_array (udis);
 	return result;
 }
+
+const char *
+libhal_volume_crypto_get_backing_volume_udi (LibHalVolume *volume)
+{
+	return volume->crypto_backing_volume;
+}
+
+char *
+libhal_volume_crypto_get_clear_volume_udi (LibHalContext *hal_ctx, LibHalVolume *volume)
+{
+	DBusError error;
+	char **clear_devices;
+	int num_clear_devices;
+	char *result;
+
+	result = NULL;
+
+	LIBHAL_CHECK_LIBHALCONTEXT (hal_ctx, NULL);
+
+	dbus_error_init (&error);
+	clear_devices = libhal_manager_find_device_string_match (hal_ctx,
+								 "volume.crypto_luks.clear.backing_volume",
+								 volume->udi,
+								 &num_clear_devices,
+								 &error);
+	if (clear_devices != NULL) {
+
+		if (num_clear_devices >= 1) {
+			result = strdup (clear_devices[0]);
+		}
+		libhal_free_string_array (clear_devices);
+	}
+
+	return result;
+}
+
 
 /*************************************************************************/
 
