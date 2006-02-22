@@ -161,6 +161,12 @@ main (int argc, char **argv)
 	DBusError error;
 	FILE *eventfp;
 
+	/* If we don't even consider the /proc ACPI interface, drop privileges
+	 * right away */
+#ifndef ACPI_PROC
+	drop_privileges (0);
+#endif
+
 	if (getenv ("HALD_VERBOSE") != NULL)
 		is_verbose = TRUE;
 
@@ -171,15 +177,20 @@ main (int argc, char **argv)
 		return 1;
 	}
 
+#ifdef ACPI_PROC
+	/* If we can connect directly to the kernel then do so. */
+	eventfp = acpi_get_event_fp_kernel ();
+	drop_privileges (0);
+
+	if (eventfp) {
+		main_loop (ctx, eventfp);
+		dbg ("Lost connection to kernel acpi event source - exiting");
+		return 1;
+	}
+#endif
+
 	while (1)
 	{
-#ifdef ACPI_PROC
-		/* If we can connect directly to the kernel then do so. */
-		if ((eventfp = acpi_get_event_fp_kernel ())) {
-			main_loop (ctx, eventfp);
-			dbg ("Lost connection to kernel acpi event source - retry connect");
-		}
-#endif
 #ifdef ACPI_ACPID
 		/* Else, try to use acpid. */
 		if ((eventfp = acpi_get_event_fp_acpid ())) {

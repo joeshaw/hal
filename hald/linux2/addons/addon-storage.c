@@ -270,7 +270,10 @@ main (int argc, char *argv[])
 	char *support_media_changed_str;
 	int support_media_changed;
 
-	
+	/* We could drop privs if we know that the haldaemon user is
+	 * to be able to access block devices...
+	 */
+        /*drop_privileges (1);*/
 
 	if ((udi = getenv ("UDI")) == NULL)
 		goto out;

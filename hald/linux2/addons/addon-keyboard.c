@@ -189,7 +189,7 @@ main (int argc, char **argv)
 	if (!eventfp)
 		goto out;
 
-	drop_privileges();
+	drop_privileges (0);
 
 	while (1)
 	{

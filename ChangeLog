@@ -1,5 +1,22 @@
 2006-02-22  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Martin Pitt <martin@piware.de>.
+
+	* hald/linux2/probing/shared.h (drop_privileges): Take an
+	additional parameter "keep_auxgroups"
+
+	* hald/linux2/addons/addon-storage.c (main): Add some comment that
+	we *could* drop privileges provided we were in the right group
+
+	* hald/linux2/addons/addon-pmu.c (main): Drop privileges
+
+	* hald/linux2/addons/addon-keyboard.c (main): Pass right parameter
+	to drop_privileges
+
+	* hald/linux2/addons/addon-acpi.c (main): Drop privileges
+
+2006-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/policy/10osvendor/20-storage-methods.fdi: Allow fmask and
 	dmask for vfat
 

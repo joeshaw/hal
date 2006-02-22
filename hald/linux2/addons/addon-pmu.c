@@ -99,6 +99,8 @@ main (int argc, char *argv[])
                 goto out;
 	}
 
+        drop_privileges (0);
+
 	while (1) {
 		int n;
 
