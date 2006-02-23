@@ -1,3 +1,10 @@
+2006-02-23  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/probing/probe-input.c: Add the bustype for ADB keyboards
+	so that the keyboard addon is lauched for my iBook clamshell.
+	This means that the power button now emits ButtonPressed conditions
+	and the machine thus works with gnome-power-manager.
+
 2006-02-22  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Artem Kachitchkine <Artem.Kachitchkin@Sun.COM>,

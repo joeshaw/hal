@@ -182,13 +182,14 @@ main (int argc, char *argv[])
 		goto out;
 	}
 	physical_device = getenv ("HAL_PROP_INPUT_PHYSICAL_DEVICE");
+
+	dbg ("probe-input: id.bustype=%i", id.bustype);
 	if (physical_device == NULL) {
 		switch (id.bustype) {
 		case 17: /* TODO: x86 legacy port; use symbol instead of hardcoded constant */
 		case 21: /* BUS_HOST, not hotpluggable */
+		case 23: /* ADB on Apple computers */
 			break;
-
-			/* TODO: ADB on Apple computers */
 		default:
 			goto out;
 		}
