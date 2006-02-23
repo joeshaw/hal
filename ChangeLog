@@ -1,5 +1,13 @@
 2006-02-22  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Artem Kachitchkine <Artem.Kachitchkin@Sun.COM>,
+	slightly tweaked by myself.
+
+	* libhal-storage/libhal-storage.[ch]: Teach libhal-storage about
+	Blu-ray and HD DVD.
+
+2006-02-22  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/addons/addon-pmu.c (main): Attached patch makes the
 	addon-pmu work in blocking mode (thus open /dev/adb
 	blocking). I've been running a little daemon on my system for some

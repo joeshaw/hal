@@ -294,7 +294,18 @@ libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volu
                         else
                                 second = "/DVD±RW";
                 }
-
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_BDROM)
+			second = "/BD-ROM";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_BDR)
+			second = "/BD-R";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_BDRE)
+			second = "/BD-RE";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_HDDVDROM)
+			second = "/HD DVD-ROM";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_HDDVDR)
+			second = "/HD DVD-R";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW)
+			second = "/HD DVD-RW";
 
 		if (drive_is_hotpluggable) {
 			snprintf (buf, MAX_STRING_SZ, _("External %s%s Drive"), first, second);
@@ -448,6 +459,43 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 			else
 				name = strdup (_("DVD+R Dual-Layer"));
 			break;
+		
+		case LIBHAL_VOLUME_DISC_TYPE_BDROM:
+			name = strdup (_("BD-ROM"));
+			break;
+			
+		case LIBHAL_VOLUME_DISC_TYPE_BDR:
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank BD-R"));
+			else
+				name = strdup (_("BD-R"));
+			break;
+		
+		case LIBHAL_VOLUME_DISC_TYPE_BDRE:
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank BD-RE"));
+			else
+				name = strdup (_("BD-RE"));
+			break;
+		
+		case LIBHAL_VOLUME_DISC_TYPE_HDDVDROM:
+			name = strdup (_("HD DVD-ROM"));
+			break;
+			
+		case LIBHAL_VOLUME_DISC_TYPE_HDDVDR:
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank HD DVD-R"));
+			else
+				name = strdup (_("HD DVD-R"));
+			break;
+			
+		case LIBHAL_VOLUME_DISC_TYPE_HDDVDRW:
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank HD DVD-RW"));
+			else
+				name = strdup (_("HD DVD-RW"));
+			break;
+
 		}
 		
 		/* Special case for pure audio disc */
@@ -898,6 +946,12 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDR);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRW);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdram", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRAM);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.bd", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_BDROM);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.bdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_BDR);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.bdre", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_BDRE);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.hddvd", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_HDDVDROM);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.hddvdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_HDDVDR);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.hddvdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW);
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.policy.should_mount",        drive->should_mount);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.policy.desired_mount_point", drive->desired_mount_point);
@@ -1106,6 +1160,18 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSRW;
 		} else if (strcmp (disc_type_textual, "dvd_plus_r_dl") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR_DL;
+		} else if (strcmp (disc_type_textual, "bd_rom") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_BDROM;
+		} else if (strcmp (disc_type_textual, "bd_r") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_BDR;
+		} else if (strcmp (disc_type_textual, "bd_re") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_BDRE;
+		} else if (strcmp (disc_type_textual, "hddvd_rom") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_HDDVDROM;
+		} else if (strcmp (disc_type_textual, "hddvd_r") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_HDDVDR;
+		} else if (strcmp (disc_type_textual, "hddvd_rw") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_HDDVDRW;
 		}
 	}
 
