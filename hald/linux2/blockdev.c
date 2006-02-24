@@ -784,13 +784,17 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 
 		/* needs physical device */
-		if (physdev_udi == NULL)
+		if (physdev_udi == NULL) {
+			HAL_WARNING (("No physical device?"));
 			goto error;
+		}
 
 		hal_device_property_set_string (d, "storage.physical_device", physdev_udi);
 
-		if (!hal_util_get_int_from_file (sysfs_path, "removable", (gint *) &is_removable, 10))
+		if (!hal_util_get_int_from_file (sysfs_path, "removable", (gint *) &is_removable, 10)) {
+			HAL_WARNING (("Cannot get 'removable' file"));
 			goto error;
+		}
 
 		hal_device_property_set_bool (d, "storage.removable", is_removable);
 
@@ -823,6 +827,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				    strcmp (media, "floppy") == 0) {
 					hal_device_property_set_string (d, "storage.drive_type", media);
 				} else {
+					HAL_WARNING (("Cannot determine IDE drive type from file %s/media", buf));
 					goto error;
 				}
 
@@ -838,8 +843,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			}
 
 		} else if (strcmp (parent_bus, "scsi") == 0) {
-			if (strcmp (hal_device_property_get_string (parent, "scsi.type"), "unknown") == 0)
+			if (strcmp (hal_device_property_get_string (parent, "scsi.type"), "unknown") == 0) {
+				HAL_WARNING (("scsi.type is unknown"));
 				goto error;
+			}
 			hal_device_copy_property (parent, "scsi.type", d, "storage.drive_type");
 			hal_device_copy_property (parent, "scsi.vendor", d, "storage.vendor");
 			hal_device_copy_property (parent, "scsi.model", d, "storage.model");
@@ -938,9 +945,11 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					partition_number = atoi (&sysfs_path[i+1]);
 					hal_device_property_set_int (d, "volume.partition.number", partition_number);
 				} else {
+					HAL_WARNING (("Cannot determine partition number?"));
 					goto error;
 				}
 			} else {
+				HAL_WARNING (("Cannot determine partition number"));
 				goto error;
 			}
 		}
@@ -972,6 +981,7 @@ out2:
 	return;
 
 error:
+	HAL_WARNING (("Not adding device object"));
 	if (d != NULL)
 		g_object_unref (d);
 out:

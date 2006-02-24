@@ -1,3 +1,11 @@
+2006-02-23  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Add
+	some useful debugging on errors
+
+	* tools/hal-luks-setup: Sleep three seconds on error to avoid
+	attacks for cracking the password
+
 2006-02-23  Richard Hughes <richard@hughsie.com>
 
 	* hald/linux2/probing/probe-input.c: Add the bustype for ADB keyboards
