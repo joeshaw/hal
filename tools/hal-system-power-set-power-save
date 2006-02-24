@@ -25,10 +25,10 @@ if [ -f /etc/altlinux-release ] || [ -f /etc/SuSE-release ] ; then
 elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
 	if [ -x "/usr/sbin/pm-powersave" ] ; then
 		if [ $value = "true" ]; then
-			/usr/sbin/pm-powersave on
+			/usr/sbin/pm-powersave true
 			RET=$?
 		elif [ $value = "false" ]; then
-			/usr/sbin/pm-powersave off
+			/usr/sbin/pm-powersave false
 			RET=$?
 		fi
 	else

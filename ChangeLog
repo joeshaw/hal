@@ -1,5 +1,10 @@
 2006-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-system-power-set-power-save: Fix for
+	/usr/sbin/pm-powersave for Fedora pm-utils 0.10-1
+
+2006-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Post-release version bump to 0.5.8
 
 	* NEWS: Fix small typo in 0.5.7 release notes
