@@ -50,6 +50,18 @@ Released February 24, 2006
  - Use blocking mode for PMU (Sjoerd Simons)
  - Use a safe PATH in hald by default (Sjoerd Simons)
 
+Requirements for HAL 0.5.6 "Leave the gun. Take the cannoli."
+
+ - Linux kernel  >= 2.6.15
+ - util-linux    >= 2.13
+ - bash          >= 2.0
+ - udev          >= 078       (using udevsend as hotplug multiplexer)
+ - dbus          >= 0.60      (with glib bindings)
+ - glib          >= 2.6.0
+ - expat         >= 1.95.8
+ - libusb        >= 0 0.1.10a (optional)
+ - dmidecode     >= 2.7       (optional)
+
 ==========
 HAL 0.5.6 "Leave the gun. Take the cannoli."
 ==========
