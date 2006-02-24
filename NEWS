@@ -1,4 +1,56 @@
 ==========
+HAL 0.5.7 "Dead as Dillinger."
+==========
+
+Released February 24, 2006
+
+ - Fix spelling error for UnknowFailure in eject method (David Zeuthen)
+ - Kill subfs support in mount scripts (Kay Sievers)
+ - Privilege separation mega patch (Sjoerd Simons)
+ - Allow ejection of audio and blank discs (John Palmieri, David Zeuthen)
+ - Fix QueryCapability (Kevin Ottens)
+ - Disc capacity, fdo #2233 (William Jon McCann)
+ - Remove fstab-sync and related things (David Zeuthen)
+ - Remove volume.policy.* and storage.policy.* properties (David Zeuthen)
+ - Remove hotplug helper and use a udev rule instead (Kay Sievers)
+ - Remove old code for pcmcia fstab files (David Zeuthen)
+ - Add HP_RECOVERY to black-list of volumes to ignore (David Zeuthen)
+ - Remove drive_id and use udev data on coldplug (Kay Sievers)
+ - Switch eject detection to SG_IO interface, Novell #145147 (Kay Sievers)
+ - Start scripts in the directory they exist in (David Zeuthen)
+ - Don't use card id in ALSA and OSS UDI's (Jürg Billeter)
+ - Laptop panel objects and fixes (Richard Hughes)
+ - Pseudo bus for scsi_debug support (Kay Sievers)
+ - Samsung YP-U1 music player fdi file (Andrew Smith)
+ - Listen on appropriate input devices and generate appropriate
+   ButtonPressed events (Matthew Garrett)
+ - Export Mount, Unmount, Eject on drives we cannot poll (David Zeuthen)
+ - Only allow uid 0 and uid who mounted a volume to unmount it (David Zeuthen)
+ - Use hal's Unmount() for surprise removal (David Zeuthen)
+ - Make HAL cleanup mountpoints created by Mount() even if it was unmounted
+   by e.g. umount(1) (David Zeuthen)
+ - Allow spaces and UTF-8 in mount points (Jeffrey Stedfast, David Zeuthen)
+ - Fix UTF-8 validation of filesystem labels (David Zeuthen)
+ - Add Teardown to the Device.Volume.Crypto interface (David Zeuthen)
+ - Fix problems with dbus_error (Danny Kukawka)
+ - fix mapping system.formfactor from smbios (Danny Kukawka)
+ - Make StringListRemove actually work (David Zeuthen)
+ - Serialize method calls and don't crash if the device object went away
+   while methods were enqueued (David Zeuthen)
+ - Refuse to Mount() volumes listed in /etc/fstab (Ludwig Nussel)
+ - Fix get_uuid() and get_fsversion() in libhal-storage (David Zeuthen)
+ - Don't do initgroups (Martin Pitt)
+ - Fix libhal-storage memory leaks (David Zeuthen, reported by Brendan Creane)
+ - Tear down crypto links on surprise removal (David Zeuthen)
+ - Sync volume_id with udev version (Kay Sievers)
+ - Add two functions crypto_get_clear_volume_udi and 
+   crypto_get_backing_volume_udi to libhal-storage (David Zeuthen)
+ - More privilege dropping (Martin Pitt)
+ - Add Blu-ray and HD DVD to code and spec (Artem Kachitchkine)
+ - Use blocking mode for PMU (Sjoerd Simons)
+ - Use a safe PATH in hald by default (Sjoerd Simons)
+
+==========
 HAL 0.5.6 "Leave the gun. Take the cannoli."
 ==========
 

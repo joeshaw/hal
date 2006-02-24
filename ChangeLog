@@ -1,3 +1,7 @@
+2006-02-24  David Zeuthen  <davidz@redhat.com>
+
+	* NEWS: Update for 0.5.7
+
 2006-02-23  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Sjoerd Simons <sjoerd@luon.net>.  It adds a save PATH
