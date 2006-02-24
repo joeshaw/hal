@@ -1,5 +1,9 @@
 2006-02-23  David Zeuthen  <davidz@redhat.com>
 
+	* tools/hal-luks-setup.in: Actually remove this file
+	
+2006-02-23  David Zeuthen  <davidz@redhat.com>
+
 	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Add
 	some useful debugging on errors
 
