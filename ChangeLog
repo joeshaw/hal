@@ -1,5 +1,13 @@
 2006-02-24  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Post-release version bump to 0.5.8
+
+	* NEWS: Fix small typo in 0.5.7 release notes
+
+====== HAL 0.5.7 released ======
+
+2006-02-24  David Zeuthen  <davidz@redhat.com>
+
 	* NEWS: Update for 0.5.7
 
 2006-02-23  David Zeuthen  <davidz@redhat.com>

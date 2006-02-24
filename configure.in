@@ -7,8 +7,8 @@ dnl Process this file with autoconf to produce a configure script.
 #
 
 AC_PREREQ(2.57)
-AC_INIT(hal, 0.5.7, david@fubar.dk)
-AM_INIT_AUTOMAKE(hal, 0.5.7)
+AC_INIT(hal, 0.5.8, david@fubar.dk)
+AM_INIT_AUTOMAKE(hal, 0.5.8)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 

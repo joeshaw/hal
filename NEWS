@@ -50,7 +50,7 @@ Released February 24, 2006
  - Use blocking mode for PMU (Sjoerd Simons)
  - Use a safe PATH in hald by default (Sjoerd Simons)
 
-Requirements for HAL 0.5.6 "Leave the gun. Take the cannoli."
+Requirements for HAL 0.5.7 "Dead as Dillinger."
 
  - Linux kernel     >= 2.6.15
  - util-linux       >= 2.13
