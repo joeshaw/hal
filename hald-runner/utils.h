@@ -28,7 +28,7 @@
 #define DBUS_API_SUBJECT_TO_CHANGE 
 #include <dbus/dbus-glib-lowlevel.h>
 
-char **get_string_array(DBusMessageIter *iter);
+char **get_string_array(DBusMessageIter *iter, gchar *extra);
 char **get_string_array_from_fd(int fd);
 void free_string_array(char **array);
 

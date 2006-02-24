@@ -31,7 +31,7 @@
 #include "utils.h"
 
 char **
-get_string_array(DBusMessageIter *iter)
+get_string_array(DBusMessageIter *iter, char *extra)
 {
 	GArray *array;
 	char **result;
@@ -45,6 +45,8 @@ get_string_array(DBusMessageIter *iter)
 		g_array_append_vals(array, &t, 1);
 		dbus_message_iter_next(iter);
 	}
+	if (extra != NULL) 
+		g_array_append_vals(array, &extra, 1);
 	result = (char **) array->data;
 	g_array_free(array, FALSE);
 	return result;

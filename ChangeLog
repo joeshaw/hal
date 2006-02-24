@@ -1,5 +1,18 @@
 2006-02-23  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Sjoerd Simons <sjoerd@luon.net>.  It adds a save PATH
+	to the enviroment by default (hald should never ever specify need
+	to add a path to the enviroment send to the runner, so we're not
+	overriding anything...).
+
+	* hald-runner/utils.h:
+
+	* hald-runner/utils.c (get_string_array): 
+
+	* hald-runner/main.c (parse_first_part): 
+
+2006-02-23  David Zeuthen  <davidz@redhat.com>
+
 	* tools/hal-luks-setup.in: Actually remove this file
 	
 2006-02-23  David Zeuthen  <davidz@redhat.com>

@@ -47,13 +47,15 @@ parse_first_part(run_request *r, DBusMessage *msg, DBusMessageIter *iter)
 	if (!dbus_message_iter_next(iter) || dbus_message_iter_get_arg_type(iter) != DBUS_TYPE_ARRAY)
 		goto malformed;
 	dbus_message_iter_recurse(iter, &sub_iter);
-	r->environment = get_string_array(&sub_iter);
+	/* Add default path for the programs we start */
+	tmpstr = g_strdup_printf("PATH=/sbin:/usr/sbin:/bin:/usr/bin:%s", getenv("PATH"));
+	r->environment = get_string_array(&sub_iter, tmpstr);
 
 	/* Then argv */
 	if (!dbus_message_iter_next(iter) || dbus_message_iter_get_arg_type(iter) != DBUS_TYPE_ARRAY) 
 		goto malformed;
 	dbus_message_iter_recurse(iter, &sub_iter);
-	r->argv = get_string_array(&sub_iter);
+	r->argv = get_string_array(&sub_iter, NULL);
 
 	return TRUE;
 
