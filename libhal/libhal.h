@@ -42,7 +42,7 @@ extern "C" {
  *
  * Handy macro for checking whether a context is valid.
  */
-#define LIBHAL_CHECK_LIBHALCONTEXT(_ctx_, _ret_)					\
+#define LIBHAL_CHECK_LIBHALCONTEXT(_ctx_, _ret_)				\
 	do {									\
 		if (_ctx_ == NULL) {						\
 			fprintf (stderr,					\
@@ -79,6 +79,9 @@ typedef enum {
 	/** Type for list of UTF-8 strings property */
 	LIBHAL_PROPERTY_TYPE_STRLIST =    ((int) (DBUS_TYPE_STRING<<8)+('l'))
 } LibHalPropertyType;
+
+
+typedef struct LibHalContext_s LibHalContext;
 
 /** 
  * LibHalIntegrateDBusIntoMainLoop:
@@ -375,6 +378,9 @@ struct LibHalPropertySetIterator_s {
 	void *reservered0;         /**< Reserved for future use */
 	void *reservered1;         /**< Reserved for future use */
 };
+
+
+typedef struct LibHalPropertySetIterator_s LibHalPropertySetIterator;
 
 /* Initialize a property set iterator. */
 void libhal_psi_init (LibHalPropertySetIterator *iter, LibHalPropertySet *set);

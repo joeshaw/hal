@@ -1,5 +1,10 @@
 2006-02-25  David Zeuthen  <davidz@redhat.com>
 
+	* libhal/libhal.h: Add back typedefs for LibHalPropertySetIterator
+	and LibHalContext as they were accidently removed in last commit.
+
+2006-02-25  David Zeuthen  <davidz@redhat.com>
+
 	* gtk-doc.make: New file
 
 2006-02-25  David Zeuthen  <davidz@redhat.com>
