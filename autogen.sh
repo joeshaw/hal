@@ -85,7 +85,7 @@ esac
 glib-gettextize --force --copy                              || exit 1
 intltoolize --copy --force --automake                  || exit 1
 
-conf_flags="--enable-maintainer-mode"
+conf_flags="--enable-maintainer-mode --enable-gtk-doc"
 
 if test x$NOCONFIGURE = x; then
   echo Running $srcdir/configure $conf_flags "$@" ...

@@ -59,17 +59,11 @@ static dbus_bool_t libhal_property_fill_value_from_variant (LibHalProperty *p, D
 
 
 
-/**
- * @defgroup LibHal HAL convenience library
- * @brief A convenience library used to communicate with the HAL daemon
- *	  using D-BUS
+/** 
+ * libhal_free_string_array:
+ * @str_array: the array to be freed
  *
- *  @{
- */
-
-/** Frees a NULL-terminated array of strings. If passed NULL, does nothing.
- *
- *  @param  str_array           The array to be freed
+ * Frees a NULL-terminated array of strings. If passed NULL, does nothing.
  */
 void
 libhal_free_string_array (char **str_array)
@@ -85,11 +79,14 @@ libhal_free_string_array (char **str_array)
 }
 
 
-/** Creates a NULL terminated array of strings from a dbus message iterator.
+/**
+ * libhal_get_string_array_from_iter:
+ * @iter: the message iterator to extract the strings from
+ * @num_elements: pointer to an integer where to store number of elements (can be NULL)
  *
- *  @param  iter		The message iterator to extract the strings from
- *  @param  num_elements        Pointer to an integer where to store number of elements (can be NULL)
- *  @return			Pointer to the string array
+ * Creates a NULL terminated array of strings from a dbus message iterator.
+ *
+ * Returns: pointer to the string array
  */
 static char **
 libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements)
@@ -142,19 +139,25 @@ oom:
 
 }
 
-/** Frees a nul-terminated string
+/** 
+ * libhal_free_string:
+ * @str: the nul-terminated sting to free
  *
- *  @param  str                 The nul-terminated sting to free
+ * Used to free strings returned by libhal.
  */
 void
 libhal_free_string (char *str)
 {
-	/** @todo implement for UTF8 */
 	free (str);
 }
 
 
-/** Represents a set of properties */
+/**
+ * LibHalPropertySet:
+ *
+ * Represents a set of properties. Opaque; use the
+ * libhal_property_set_*() family of functions to access it.
+ */
 struct LibHalPropertySet_s {
 	unsigned int num_properties; /**< Number of properties in set */
 	LibHalProperty *properties_head;
@@ -162,7 +165,11 @@ struct LibHalPropertySet_s {
 				      *	  if there are no properties */
 };
 
-/** Device property class */
+/** 
+ * LibHalProperty:
+ *
+ * Represents a property. Opaque.
+ */
 struct LibHalProperty_s {
 	int type;		     /**< Type of property */
 	char *key;		     /**< ASCII string */
@@ -185,7 +192,12 @@ struct LibHalProperty_s {
 				      *	  the last */
 };
 
-/** Context for connection to the HAL daemon */
+/** 
+ * LibHalContext:
+ *
+ * Context for connection to the HAL daemon. Opaque, use the
+ * libhal_ctx_*() family of functions to access it.
+ */
 struct LibHalContext_s {
 	DBusConnection *connection;           /**< D-BUS connection */
 	dbus_bool_t is_initialized;           /**< Are we initialised */
@@ -214,12 +226,14 @@ struct LibHalContext_s {
 	void *user_data;                      /**< User data */
 };
 
-/** Set user data for the context
+/**
+ * libhal_ctx_set_user_data:
+ * @ctx: the context for the connection to hald
+ * @user_data: user data
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  user_data           Opaque pointer
- *  @return                     TRUE if user data was successfully set,
- *                              FALSE if otherwise
+ * Set user data for the context.
+ *
+ * Returns: TRUE if user data was successfully set, FALSE if otherwise
  */
 dbus_bool_t
 libhal_ctx_set_user_data(LibHalContext *ctx, void *user_data)
@@ -229,11 +243,13 @@ libhal_ctx_set_user_data(LibHalContext *ctx, void *user_data)
 	return TRUE;
 }
 
-/** Get user data for the context
+/**
+ * libhal_ctx_get_user_data:
+ * @ctx: the context for the connection to hald
  *
- *  @param  ctx                 The context for the connection to hald
- *  @return                     Opaque pointer stored through 
- *                              libhal_ctx_set_user_data or NULL if not set
+ * Get user data for the context.
+ *
+ * Returns: opaque pointer stored through libhal_ctx_set_user_data() or NULL if not set.
  */
 void*
 libhal_ctx_get_user_data(LibHalContext *ctx)
@@ -243,10 +259,14 @@ libhal_ctx_get_user_data(LibHalContext *ctx)
 }
 
 
-/** Fills in the value for the LibHalProperty given a variant iterator. 
+/**
+ * libhal_property_fill_value_from_variant: 
+ * @p: the property to fill in
+ * @var_iter: variant iterator to extract the value from
  *
- *  @param  p                 The property to fill in
- *  @param  var_iter	      Varient iterator to extract the value from
+ * Fills in the value for the LibHalProperty given a variant iterator. 
+ *
+ * Returns: Whether the value was put in.
  */
 static dbus_bool_t
 libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var_iter)
@@ -328,14 +348,15 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 	return TRUE;
 }
 
-/** Retrieve all the properties on a device. 
+/**
+ * libhal_device_get_all_properties:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique id of device
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     An object represent all properties. Must be
- *                              freed with libhal_free_property_set
+ * Retrieve all the properties on a device.
+ *
+ * Returns: An object represent all properties. Must be freed with libhal_free_property_set().
  */
 LibHalPropertySet *
 libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError *error)
@@ -467,9 +488,11 @@ oom:
 	return NULL;
 }
 
-/** Free a property set earlier obtained with libhal_device_get_all_properties().
+/** 
+ * libhal_free_property_set:
+ * @set: property-set to free
  *
- *  @param  set                 Property-set to free
+ * Free a property set earlier obtained with libhal_device_get_all_properties().
  */
 void
 libhal_free_property_set (LibHalPropertySet * set)
@@ -492,10 +515,13 @@ libhal_free_property_set (LibHalPropertySet * set)
 	free (set);
 }
 
-/** Get the number of properties in a property set.
+/**
+ * libhal_property_set_get_num_elems: 
+ * @set: property set to consider
  *
- *  @param set                  Property set to consider
- *  @return                     Number of properties in given property set
+ * Get the number of properties in a property set.
+ *
+ * Returns: number of properties in given property set
  */
 unsigned int 
 libhal_property_set_get_num_elems (LibHalPropertySet *set)
@@ -514,10 +540,13 @@ libhal_property_set_get_num_elems (LibHalPropertySet *set)
 }
 
 
-/** Initialize a property set iterator.
+/** 
+ * libhal_psi_init:
+ * @iter: iterator object
+ * @set: property set to iterate over
  *
- *  @param  iter                Iterator object
- *  @param  set                 Property set to iterate over
+ * Initialize a property set iterator.
+ *
  */
 void
 libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
@@ -526,38 +555,45 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 		return;
 
 	iter->set = set;
-	iter->index = 0;
+	iter->idx = 0;
 	iter->cur_prop = set->properties_head;
 }
 
 
-/** Determine whether there are more properties to iterate over
+/**
+ * libhal_psi_has_more:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     TRUE if there are more properties,
- *                              FALSE otherwise
+ * Determine whether there are more properties to iterate over.
+ *
+ * Returns: TRUE if there are more properties, FALSE otherwise.
  */
 dbus_bool_t
 libhal_psi_has_more (LibHalPropertySetIterator * iter)
 {
-	return iter->index < iter->set->num_properties;
+	return iter->idx < iter->set->num_properties;
 }
 
-/** Advance iterator to next property.
+/** 
+ * libhal_psi_next:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
+ * Advance iterator to next property.
  */
 void
 libhal_psi_next (LibHalPropertySetIterator * iter)
 {
-	iter->index++;
+	iter->idx++;
 	iter->cur_prop = iter->cur_prop->next;
 }
 
-/** Get type of property.
+/**
+ * libhal_psi_get_type:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     The property type at the iterator's position
+ * Get type of property.
+ *
+ * Returns: the property type at the iterator's position
  */
 LibHalPropertyType
 libhal_psi_get_type (LibHalPropertySetIterator * iter)
@@ -565,13 +601,15 @@ libhal_psi_get_type (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->type;
 }
 
-/** Get the key of a property. 
+/** 
+ * libhal_psi_get_key:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     ASCII nul-terminated string. This pointer is
- *                              only valid until libhal_free_property_set() is
- *                              invoked on the property set this property
- *                              belongs to
+ * Get the key of a property. 
+ *
+ * Returns: ASCII nul-terminated string. This pointer is only valid
+ * until libhal_free_property_set() is invoked on the property set
+ * this property belongs to.
  */
 char *
 libhal_psi_get_key (LibHalPropertySetIterator * iter)
@@ -579,13 +617,15 @@ libhal_psi_get_key (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->key;
 }
 
-/** Get the value of a property of type string. 
+/** 
+ * libhal_psi_get_string:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     UTF8 nul-terminated string. This pointer is
- *                              only valid until libhal_free_property_set() is
- *                              invoked on the property set this property
- *                              belongs to
+ * Get the value of a property of type string.
+ *
+ * Returns: UTF8 nul-terminated string. This pointer is only valid
+ * until libhal_free_property_set() is invoked on the property set
+ * this property belongs to.
  */
 char *
 libhal_psi_get_string (LibHalPropertySetIterator * iter)
@@ -593,10 +633,13 @@ libhal_psi_get_string (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->str_value;
 }
 
-/** Get the value of a property of type signed integer. 
+/** 
+ * libhal_psi_get_int:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     Property value (32-bit signed integer)
+ * Get the value of a property of type signed integer. 
+ *
+ * Returns: property value (32-bit signed integer)
  */
 dbus_int32_t
 libhal_psi_get_int (LibHalPropertySetIterator * iter)
@@ -604,10 +647,13 @@ libhal_psi_get_int (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->int_value;
 }
 
-/** Get the value of a property of type unsigned integer. 
+/**
+ * libhal_psi_get_uint64:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     Property value (64-bit unsigned integer)
+ * Get the value of a property of type unsigned integer. 
+ *
+ * Returns: property value (64-bit unsigned integer)
  */
 dbus_uint64_t
 libhal_psi_get_uint64 (LibHalPropertySetIterator * iter)
@@ -615,10 +661,13 @@ libhal_psi_get_uint64 (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->uint64_value;
 }
 
-/** Get the value of a property of type double.
+/** 
+ * libhal_psi_get_double:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     Property value (IEEE754 double precision float)
+ * Get the value of a property of type double.
+ *
+ * Returns: property value (IEEE754 double precision float)
  */
 double
 libhal_psi_get_double (LibHalPropertySetIterator * iter)
@@ -626,10 +675,13 @@ libhal_psi_get_double (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->double_value;
 }
 
-/** Get the value of a property of type bool. 
+/**
+ * libhal_psi_get_bool:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     Property value (bool)
+ * Get the value of a property of type bool. 
+ *
+ * Returns: property value (bool)
  */
 dbus_bool_t
 libhal_psi_get_bool (LibHalPropertySetIterator * iter)
@@ -637,10 +689,13 @@ libhal_psi_get_bool (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->bool_value;
 }
 
-/** Get the value of a property of type string list. 
+/** 
+ * libhal_psi_get_strlist:
+ * @iter: iterator object
  *
- *  @param  iter                Iterator object
- *  @return                     Pointer to array of strings
+ * Get the value of a property of type string list. 
+ *
+ * Returns: pointer to array of strings
  */
 char **
 libhal_psi_get_strlist (LibHalPropertySetIterator * iter)
@@ -649,7 +704,6 @@ libhal_psi_get_strlist (LibHalPropertySetIterator * iter)
 }
 
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 static DBusHandlerResult
 filter_func (DBusConnection * connection,
 	     DBusMessage * message, void *user_data)
@@ -754,162 +808,21 @@ filter_func (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-
 /* for i18n purposes */
 static dbus_bool_t libhal_already_initialized_once = FALSE;
 
-#if 0
-/** Initialize the HAL library. 
+
+/** 
+ * libhal_get_all_devices:
+ * @ctx: the context for the connection to hald
+ * @num_devices: the number of devices will be stored here
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  cb_functions	  Callback functions. If this is set top NULL
- *				  then the library will not listen for
- *				  notifications. 
- *  @param  use_cache		  Retrieve all device information and cache it.
- *				  This is expensive both in terms of memory
- *				  (there may be 50 device objects with 20
- *				  properties each) and in terms of processing
- *				  power (your process will be woken up every
- *				  time a property is changed). 
- *				  Use with caution.
- *				  NOTE NOTE NOTE: Caching isn't actually
- *				  implemented yet, this is just a placeholder
- *				  to preserve API compatibility.
- *  @return			  A LibHalContext object if succesful, and
- *				  NULL if an error occured
- */
-LibHalContext*
-libhal_initialize (const LibHalFunctions * cb_functions,
-		dbus_bool_t use_cache)
-{
-	DBusError error;
-	LibHalContext *ctx;
-
-	if (!libhal_already_initialized_once) {
-		bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
-		bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-		
-		libhal_already_initialized_once = TRUE;
-	}
-	
-	ctx = malloc (sizeof (LibHalContext));
-	if (ctx == NULL) {
-		fprintf (stderr, "%s %d : Cannot allocated %d bytes!\n",
-			 __FILE__, __LINE__, sizeof (LibHalContext));
-		return NULL;
-	}
-
-	ctx->is_initialized = FALSE;
-	ctx->is_shutdown = FALSE;
-
-	ctx->cache_enabled = use_cache;
-
-	ctx->functions = cb_functions;
-	/* allow caller to pass NULL */
-	if (ctx->functions == NULL)
-		ctx->functions = &libhal_null_functions;
-
-	/* connect to hald service on the system bus */
-	
-	ctx->connection = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-	if (ctx->connection == NULL) {
-		fprintf (stderr,
-			 "%s %d : Error connecting to system bus: %s\n",
-			 __FILE__, __LINE__, error.message);
-		dbus_error_free (&error);
-		return NULL;
-	}
-
-	if (ctx->main_loop_integration != NULL) {
-
-		ctx->main_loop_integration (ctx, ctx->connection);
-	}
-
-	if (!dbus_connection_add_filter
-	    (ctx->connection, filter_func, ctx, NULL)) {
-		fprintf (stderr,
-			 "%s %d : Error creating connection handler\r\n",
-			 __FILE__, __LINE__);
-		/** @todo  clean up */
-		return NULL;
-	}
-
-	dbus_bus_add_match (ctx->connection,
-			    "type='signal',"
-			    "interface='org.freedesktop.Hal.Manager',"
-			    "sender='org.freedesktop.Hal',"
-			    "path='/org/freedesktop/Hal/Manager'", &error);
-	if (dbus_error_is_set (&error)) {
-		fprintf (stderr, "%s %d : Error subscribing to signals, "
-			 "error=%s\r\n",
-			 __FILE__, __LINE__, error.message);
-		/** @todo  clean up */
-		return NULL;
-	}
-
-	ctx->is_initialized = TRUE;
-	return ctx;
-}
-
-/** Shutdown the HAL library. All resources allocated are freed. 
+ * Get all devices in the Global Device List (GDL).
  *
- *  @param  ctx                 The context for the connection to hald
- *  @return			Zero if the shutdown went well, otherwise
- *				non-zero if an error occured
- */
-int
-libhal_shutdown (LibHalContext *ctx)
-{
-	DBusError error;
-
-	if (!ctx->is_initialized)
-		return 1;
-
-	/* unsubscribe the match rule we added in initialize; this is safe even with multiple
-	 * instances of libhal running - see the dbus docs */
-	
-	dbus_bus_remove_match (ctx->connection,
-			       "type='signal',"
-			       "interface='org.freedesktop.Hal.Manager',"
-			       "sender='org.freedesktop.Hal',"
-			       "path='/org/freedesktop/Hal/Manager'", &error);
-	if (dbus_error_is_set (&error)) {
-		fprintf (stderr, "%s %d : Error removing match rule, error=%s\r\n",
-			 __FILE__, __LINE__, error.message);
-	}
-
-	/* TODO: remove all other match rules */
-
-	/* set a flag so we don't propagte callbacks from this context anymore */
-	ctx->is_shutdown = TRUE;
-
-	/* yikes, it's dangerous to unref the connection since it will terminate the process
-	 * because this connection may be shared so we cannot set the exit_on_disconnect flag
-	 *
-	 * so we don't do that right now 
-	 *
-	 */
-	/*dbus_connection_unref (ctx->connection);*/
-
-	/* we also refuse to free the resources as filter_function may reference these 
-	 * 
-	 * should free async when our connection goes away.
-	 */
-	/* free (ctx); */
-	return 0;
-}
-#endif
-
-/** Get all devices in the Global Device List (GDL).
- *
- *  @param  ctx                 The context for the connection to hald
- *  @param  num_devices         The number of devices will be stored here
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     An array of device identifiers terminated
- *                              with NULL. It is the responsibility of the
- *                              caller to free with libhal_free_string_array().
- *                              If an error occurs NULL is returned.
+ * Returns: An array of device identifiers terminated with NULL. It is
+ * the responsibility of the caller to free with
+ * libhal_free_string_array(). If an error occurs NULL is returned.
  */
 char **
 libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
@@ -964,18 +877,17 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	return hal_device_names;
 }
 
-/** Query a property type of a device.
+/** 
+ * libhal_device_get_property_type:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     One of LIBHAL_PROPERTY_TYPE_INT32,
- *                              LIBHAL_PROPERTY_TYPE_UINT64, LIBHAL_PROPERTY_TYPE_DOUBLE,
- *                              LIBHAL_PROPERTY_TYPE_BOOLEAN, LIBHAL_PROPERTY_TYPE_STRING,
- *                              LIBHAL_PROPERTY_TYPE_STRLIST or
- *                              LIBHAL_PROPERTY_TYPE_INVALID if property doesn't exist.
+ * Query a property type of a device.
+ *
+ * Returns: A LibHalPropertyType. LIBHAL_PROPERTY_TYPE_INVALID is
+ * return if the property doesn't exist.
  */
 LibHalPropertyType
 libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char *key, DBusError *error)
@@ -1023,20 +935,19 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 	return type;
 }
 
-/** Get the value of a property of type string list. 
+/** 
+ * libhal_device_get_property_strlist:
+ * @ctx: the context for the connection to hald
+ * @udi: unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     Array of pointers to UTF8 nul-terminated
- *                              strings terminated by NULL. The caller is
- *                              responsible for freeing this string
- *                              array with the function
- *                              libhal_free_string_array().
- *                              Returns NULL if the property didn't exist
- *                              or we are OOM
+ * Get the value of a property of type string list. 
+ *
+ * Returns: Array of pointers to UTF8 nul-terminated strings
+ * terminated by NULL. The caller is responsible for freeing this
+ * string array with the function libhal_free_string_array(). Returns
+ * NULL if the property didn't exist or we are OOM
  */
 char **
 libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const char *key, DBusError *error)
@@ -1094,18 +1005,18 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 	return our_strings;
 }
 
-/** Get the value of a property of type string. 
+/** 
+ * libhal_device_get_property_string:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: the name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ * 
+ * Get the value of a property of type string. 
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     UTF8 nul-terminated string. The caller is
- *                              responsible for freeing this string with the
- *                              function libhal_free_string(). 
- *                              Returns NULL if the property didn't exist
- *                              or we are OOM
+ * Returns: UTF8 nul-terminated string. The caller is responsible for
+ * freeing this string with the function libhal_free_string(). Returns
+ * NULL if the property didn't exist or we are OOM.
  */
 char *
 libhal_device_get_property_string (LibHalContext *ctx,
@@ -1173,14 +1084,16 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	return value;
 }
 
-/** Get the value of a property of type integer. 
+/** 
+ * libhal_device_get_property_int:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     Property value (32-bit signed integer)
+ * Get the value of a property of type integer. 
+ *
+ * Returns: Property value (32-bit signed integer)
  */
 dbus_int32_t
 libhal_device_get_property_int (LibHalContext *ctx, 
@@ -1242,14 +1155,16 @@ libhal_device_get_property_int (LibHalContext *ctx,
 	return value;
 }
 
-/** Get the value of a property of type signed integer.
+/** 
+ * libhal_device_get_property_uint64:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     Property value (64-bit unsigned integer)
+ * Get the value of a property of type signed integer.
+ *
+ * Returns: Property value (64-bit unsigned integer)
  */
 dbus_uint64_t
 libhal_device_get_property_uint64 (LibHalContext *ctx, 
@@ -1310,14 +1225,16 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 	return value;
 }
 
-/** Get the value of a property of type double.
+/** 
+ * libhal_device_get_property_double:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     Property value (IEEE754 double precision float)
+ * Get the value of a property of type double.
+ *
+ * Returns: Property value (IEEE754 double precision float)
  */
 double
 libhal_device_get_property_double (LibHalContext *ctx, 
@@ -1378,14 +1295,16 @@ libhal_device_get_property_double (LibHalContext *ctx,
 	return (double) value;
 }
 
-/** Get the value of a property of type bool. 
+/** 
+ * libhal_device_get_property_bool:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     Property value (boolean)
+ * Get the value of a property of type bool. 
+ *
+ * Returns: Property value (boolean)
  */
 dbus_bool_t
 libhal_device_get_property_bool (LibHalContext *ctx, 
@@ -1541,17 +1460,18 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Set a property of type string.
+/** 
+ * libhal_device_set_property_string:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value of the property; a UTF8 string
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value of the property; a UTF8 string
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the property was set, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Set a property of type string.
+ *
+ * Returns: TRUE if the property was set, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_set_property_string (LibHalContext *ctx, 
@@ -1565,17 +1485,18 @@ libhal_device_set_property_string (LibHalContext *ctx,
 						  value, 0, 0, 0.0f, FALSE, error);
 }
 
-/** Set a property of type signed integer.
+/** 
+ * libhal_device_set_property_int:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value of the property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the property was set, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Set a property of type signed integer.
+ *
+ * Returns: TRUE if the property was set, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_set_property_int (LibHalContext *ctx, const char *udi,
@@ -1586,17 +1507,18 @@ libhal_device_set_property_int (LibHalContext *ctx, const char *udi,
 						  NULL, value, 0, 0.0f, FALSE, error);
 }
 
-/** Set a property of type unsigned integer.
+/** 
+ * libhal_device_set_property_uint64:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value of the property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the property was set, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Set a property of type unsigned integer.
+ *
+ * Returns: TRUE if the property was set, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_set_property_uint64 (LibHalContext *ctx, const char *udi,
@@ -1607,17 +1529,18 @@ libhal_device_set_property_uint64 (LibHalContext *ctx, const char *udi,
 						  NULL, 0, value, 0.0f, FALSE, error);
 }
 
-/** Set a property of type double.
+/** 
+ * libhal_device_set_property_double:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value of the property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the property was set, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Set a property of type double.
+ *
+ * Returns: TRUE if the property was set, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_set_property_double (LibHalContext *ctx, const char *udi,
@@ -1628,17 +1551,18 @@ libhal_device_set_property_double (LibHalContext *ctx, const char *udi,
 						  NULL, 0, 0, value, FALSE, error);
 }
 
-/** Set a property of type bool.
+/** 
+ * libhal_device_set_property_bool:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value of the property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the property was set, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Set a property of type bool.
+ *
+ * Returns: TRUE if the property was set, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_set_property_bool (LibHalContext *ctx, const char *udi,
@@ -1650,15 +1574,17 @@ libhal_device_set_property_bool (LibHalContext *ctx, const char *udi,
 }
 
 
-/** Remove a property.
+/** 
+ * libhal_device_remove_property:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the property was set, FALSE if
- *                              the device didn't exist
+ * Remove a property.
+ *
+ * Returns: TRUE if the property was set, FALSE if the device didn't
+ * exist
  */
 dbus_bool_t
 libhal_device_remove_property (LibHalContext *ctx, 
@@ -1669,17 +1595,18 @@ libhal_device_remove_property (LibHalContext *ctx,
 						  NULL, 0, 0, 0.0f, FALSE, error);
 }
 
-/** Append to a property of type strlist.
+/**
+ * libhal_device_property_strlist_append:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value to append to property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value to append to property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the value was appended, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Append to a property of type strlist.
+ *
+ * Returns: TRUE if the value was appended, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_property_strlist_append (LibHalContext *ctx, 
@@ -1721,17 +1648,18 @@ libhal_device_property_strlist_append (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Prepend to a property of type strlist.
+/** 
+ * libhal_device_property_strlist_prepend:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: value to prepend to property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               Value to prepend to property
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the value was prepended, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Prepend to a property of type strlist.
+ *
+ * Returns: TRUE if the value was prepended, FALSE if the device
+ * didn't exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_property_strlist_prepend (LibHalContext *ctx, 
@@ -1773,23 +1701,24 @@ libhal_device_property_strlist_prepend (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Remove a specified string from a property of type strlist.
+/** 
+ * libhal_device_property_strlist_remove_index:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @idx: index of string to remove in the strlist
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  index               Index of string to remove in the strlist
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the string was removed, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Remove a specified string from a property of type strlist.
+ *
+ * Returns: TRUE if the string was removed, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_property_strlist_remove_index (LibHalContext *ctx, 
 					     const char *udi,
 					     const char *key,
-					     unsigned int index,
+					     unsigned int idx,
 					     DBusError *error)
 {
 	DBusMessage *message;
@@ -1809,7 +1738,7 @@ libhal_device_property_strlist_remove_index (LibHalContext *ctx,
 	}
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &key);
-	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &index);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &idx);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -1825,17 +1754,18 @@ libhal_device_property_strlist_remove_index (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Remove a specified string from a property of type strlist.
+/** 
+ * libhal_device_property_strlist_remove:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property
+ * @value: the string to remove
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property
- *  @param  value               The string to search for and remove
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the string was removed, FALSE if
- *                              the device didn't exist or the property
- *                              had a different type.
+ * Remove a specified string from a property of type strlist.
+ *
+ * Returns: TRUE if the string was removed, FALSE if the device didn't
+ * exist or the property had a different type.
  */
 dbus_bool_t
 libhal_device_property_strlist_remove (LibHalContext *ctx, 
@@ -1877,19 +1807,17 @@ libhal_device_property_strlist_remove (LibHalContext *ctx,
 }
 
 
-/** Take an advisory lock on the device.
+/** 
+ * libhal_device_lock:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @reason_to_lock: a user-presentable reason why the device is locked.
+ * @reason_why_locked: a pointer to store the reason why the device cannot be locked on failure, or NULL
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  reason_to_lock      A user-presentable reason why the device
- *                              is locked.
- *  @param  reason_why_locked   A pointer to store the reason why the
- *                              device cannot be locked on failure, or
- *                              NULL
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the lock was obtained, FALSE
- *                              otherwise
+ * Take an advisory lock on the device.
+ *
+ * Returns: TRUE if the lock was obtained, FALSE otherwise
  */
 dbus_bool_t
 libhal_device_lock (LibHalContext *ctx,
@@ -1950,13 +1878,15 @@ libhal_device_lock (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Release an advisory lock on the device.
+/** 
+ * libhal_device_unlock:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the device was successfully unlocked,
+ * Release an advisory lock on the device.
+ *
+ * Returns: TRUE if the device was successfully unlocked,
  *                              FALSE otherwise
  */
 dbus_bool_t
@@ -2001,18 +1931,18 @@ libhal_device_unlock (LibHalContext *ctx,
 }
 
 
-/** Create a new device object which will be hidden from applications
- *  until the CommitToGdl(), ie. libhal_device_commit_to_gdl(), method is called.
+/** 
+ * libhal_new_device:
+ * @ctx: the context for the connection to hald
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  Note that the program invoking this method needs to run with super user
- *  privileges.
+ * Create a new device object which will be hidden from applications
+ * until the CommitToGdl(), ie. libhal_device_commit_to_gdl(), method
+ * is called. Note that the program invoking this method needs to run
+ * with super user privileges.
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     Temporary device unique id or NULL if there
- *                              was a problem. This string must be freed
- *                              by the caller.
+ * Returns: Temporary device unique id or NULL if there was a
+ * problem. This string must be freed by the caller.
  */
 char *
 libhal_new_device (LibHalContext *ctx, DBusError *error)
@@ -2076,25 +2006,25 @@ libhal_new_device (LibHalContext *ctx, DBusError *error)
 }
 
 
-/** When a hidden device has been built using the NewDevice method, ie.
- *  libhal_new_device(), and the org.freedesktop.Hal.Device interface
- *  this function will commit it to the global device list. 
+/** 
+ * libhal_device_commit_to_gdl:
+ * @ctx: the context for the connection to hald
+ * @temp_udi: the temporary unique device id as returned by libhal_new_device()
+ * @udi: the new unique device id.
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  This means that the device object will be visible to applications and
- *  the HAL daemon will possibly attempt to boot the device (depending on
- *  the property RequireEnable).
+ * When a hidden device has been built using the NewDevice method,
+ * ie. libhal_new_device(), and the org.freedesktop.Hal.Device
+ * interface this function will commit it to the global device list.
  *
- *  Note that the program invoking this method needs to run with super user
- *  privileges.
+ * This means that the device object will be visible to applications
+ * and the HAL daemon will possibly attempt to boot the device
+ * (depending on the property RequireEnable).
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  temp_udi            The temporary unique device id as returned by
- *                              libhal_new_device()
- *  @param  udi                 The new unique device id.
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     FALSE if the given unique device id is already
- *                              in use.
+ * Note that the program invoking this method needs to run with super
+ * user privileges.
+ *
+ * Returns: FALSE if the given unique device id is already in use.
  */
 dbus_bool_t
 libhal_device_commit_to_gdl (LibHalContext *ctx, 
@@ -2139,18 +2069,20 @@ libhal_device_commit_to_gdl (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** This method can be invoked when a device is removed. The HAL daemon
- *  will shut down the device. Note that the device may still be in the device
- *  list if the Persistent property is set to true. 
+/** 
+ * libhal_remove_device:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique device id.
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  Note that the program invoking this method needs to run with super user
- *  privileges.
+ * This method can be invoked when a device is removed. The HAL daemon
+ * will shut down the device. Note that the device may still be in the
+ * device list if the Persistent property is set to true.
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 The new unique device id.
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if the device was removed, FALSE otherwise
+ * Note that the program invoking this method needs to run with super
+ * user privileges.
+ *
+ * Returns: TRUE if the device was removed, FALSE otherwise
  */
 dbus_bool_t
 libhal_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
@@ -2193,13 +2125,15 @@ libhal_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
 	return TRUE;
 }
 
-/** Determine if a device exists.
+/** 
+ * libhal_device_exists:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique device id.
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique device id.
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if the device exists
+ * Determine if a device exists.
+ *
+ * Returns: TRUE if the device exists
  */
 dbus_bool_t
 libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
@@ -2260,14 +2194,16 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 	return value;
 }
 
-/** Determine if a property on a device exists.
+/** 
+ * libhal_device_property_exists:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique device id.
+ * @key: name of the property
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique device id.
- *  @param  key                 Name of the property
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if the device exists, FALSE otherwise
+ * Determine if a property on a device exists.
+ *
+ * Returns: TRUE if the device exists, FALSE otherwise
  */
 dbus_bool_t
 libhal_device_property_exists (LibHalContext *ctx, 
@@ -2327,14 +2263,16 @@ libhal_device_property_exists (LibHalContext *ctx,
 	return value;
 }
 
-/** Merge properties from one device to another.
+/** 
+ * libhal_merge_properties:
+ * @ctx: the context for the connection to hald
+ * @target_udi: the Unique device id of target device to merge to
+ * @source_udi: the Unique device id of device to merge from
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  target_udi          Unique device id of target device to merge to
- *  @param  source_udi          Unique device id of device to merge from
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if the properties were merged, FALSE otherwise
+ * Merge properties from one device to another.
+ *
+ * Returns: TRUE if the properties were merged, FALSE otherwise
  */
 dbus_bool_t
 libhal_merge_properties (LibHalContext *ctx, 
@@ -2379,31 +2317,31 @@ libhal_merge_properties (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Check a set of properties for two devices matches. 
+/**
+ * libhal_device_matches:
+ * @ctx: the context for the connection to hald
+ * @udi1: the Unique Device Id for device 1
+ * @udi2: the Unique Device Id for device 2
+ * @property_namespace: the namespace for set of devices, e.g. "usb"
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  Checks that all properties where keys, starting with a given value
- *  (namespace), of the first device is in the second device and that
- *  they got the same value and type. 
+ * Check a set of properties for two devices matches. 
  *
- *  Note that the other inclusion isn't tested, so there could be properties
- *  (from the given namespace) in the second device not present in the 
- *  first device.
+ * Checks that all properties where keys, starting with a given value
+ * (namespace), of the first device is in the second device and that
+ * they got the same value and type.
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi1                Unique Device Id for device 1
- *  @param  udi2                Unique Device Id for device 2
- *  @param  property_namespace  Namespace for set of devices, e.g. "usb"
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if all properties starting
- *                              with the given namespace parameter
- *                              from one device is in the other and 
- *                              have the same value.
+ * Note that the other inclusion isn't tested, so there could be
+ * properties (from the given namespace) in the second device not
+ * present in the first device.
+ *
+ * Returns: TRUE if all properties starting with the given namespace
+ * parameter from one device is in the other and have the same value.
  */
 dbus_bool_t
 libhal_device_matches (LibHalContext *ctx, 
-			     const char *udi1, const char *udi2,
-			     const char *property_namespace, DBusError *error)
+		       const char *udi1, const char *udi2,
+		       const char *property_namespace, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessage *reply;
@@ -2462,14 +2400,15 @@ libhal_device_matches (LibHalContext *ctx,
 	return value;
 }
 
-/** Print a device to stdout; useful for debugging.
+/** 
+ * libhal_device_print:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  error               Pointer to an initialized dbus error object for
- *                              returning errors or NULL
- *  @return                     TRUE if device's information could be obtained,
- *                              FALSE otherwise
+ * Print a device to stdout; useful for debugging.
+ *
+ * Returns: TRUE if device's information could be obtained, FALSE otherwise
  */
 dbus_bool_t
 libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
@@ -2542,17 +2481,18 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 	return TRUE;
 }
 
-/** Find a device in the GDL where a single string property matches a
- *  given value.
+/** 
+ * libhal_manager_find_device_string_match:
+ * @ctx: the context for the connection to hald
+ * @key: name of the property
+ * @value: the value to match
+ * @num_devices: pointer to store number of devices
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  key                 Name of the property
- *  @param  value               Value to match
- *  @param  num_devices         Pointer to store number of devices
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     UDI of devices; free with 
- *                              libhal_free_string_array()
+ * Find a device in the GDL where a single string property matches a
+ * given value.
+ *
+ * Returns: UDI of devices; free with libhal_free_string_array()
  */
 char **
 libhal_manager_find_device_string_match (LibHalContext *ctx, 
@@ -2615,15 +2555,16 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 }
 
 
-/** Assign a capability to a device.
+/** 
+ * libhal_device_add_capability:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @capability: the capability name to add
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  capability          Capability name
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if the capability was added, FALSE if
- *                              the device didn't exist
+ * Assign a capability to a device.
+ *
+ * Returns: TRUE if the capability was added, FALSE if the device didn't exist
  */
 dbus_bool_t
 libhal_device_add_capability (LibHalContext *ctx, 
@@ -2667,16 +2608,17 @@ libhal_device_add_capability (LibHalContext *ctx,
 	return TRUE;
 }
 
-/** Check if a device has a capability. The result is undefined if the
- *  device doesn't exist.
+/** 
+ * libhal_device_query_capability:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @capability: the capability name
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  capability          Capability name
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if the device has the capability,
- *                              otherwise FALSE
+ * Check if a device has a capability. The result is undefined if the
+ * device doesn't exist.
+ *
+ * Returns: TRUE if the device has the capability, otherwise FALSE
  */
 dbus_bool_t
 libhal_device_query_capability (LibHalContext *ctx, const char *udi, const char *capability, DBusError *error)
@@ -2703,15 +2645,16 @@ libhal_device_query_capability (LibHalContext *ctx, const char *udi, const char 
 	return ret;
 }
 
-/** Find devices with a given capability. 
+/** 
+ * libhal_find_device_by_capability:
+ * @ctx: the context for the connection to hald
+ * @capability: the capability name
+ * @num_devices: pointer to store number of devices
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  capability          Capability name
- *  @param  num_devices         Pointer to store number of devices
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     UDI of devices; free with 
- *                              libhal_free_string_array()
+ * Find devices with a given capability.
+ *
+ * Returns: UDI of devices; free with libhal_free_string_array()
  */
 char **
 libhal_find_device_by_capability (LibHalContext *ctx, 
@@ -2771,13 +2714,15 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	return hal_device_names;
 }
 
-/** Watch all devices, ie. the device_property_changed callback is
- *  invoked when the properties on any device changes.
+/** 
+ * libhal_device_property_watch_all:
+ * @ctx: the context for the connection to hald
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE only if the operation succeeded
+ * Watch all devices, ie. the device_property_changed callback is
+ * invoked when the properties on any device changes.
+ *
+ * Returns: TRUE only if the operation succeeded
  */
 dbus_bool_t
 libhal_device_property_watch_all (LibHalContext *ctx, DBusError *error)
@@ -2795,17 +2740,19 @@ libhal_device_property_watch_all (LibHalContext *ctx, DBusError *error)
 }
 
 
-/** Add a watch on a device, so the device_property_changed callback is
- *  invoked when the properties on the given device changes.
+/** 
+ * libhal_device_add_property_watch:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  The application itself is responsible for deleting the watch, using
- *  libhal_device_remove_property_watch, if the device is removed.
+ * Add a watch on a device, so the device_property_changed callback is
+ * invoked when the properties on the given device changes.
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE only if the operation succeeded
+ * The application itself is responsible for deleting the watch, using
+ * libhal_device_remove_property_watch, if the device is removed.
+ *
+ * Returns: TRUE only if the operation succeeded
  */
 dbus_bool_t
 libhal_device_add_property_watch (LibHalContext *ctx, const char *udi, DBusError *error)
@@ -2827,13 +2774,15 @@ libhal_device_add_property_watch (LibHalContext *ctx, const char *udi, DBusError
 }
 
 
-/** Remove a watch on a device.
+/** 
+ * libhal_device_remove_property_watch:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE only if the operation succeeded
+ * Remove a watch on a device.
+ *
+ * Returns: TRUE only if the operation succeeded
  */
 dbus_bool_t
 libhal_device_remove_property_watch (LibHalContext *ctx, const char *udi, DBusError *error)
@@ -2855,9 +2804,12 @@ libhal_device_remove_property_watch (LibHalContext *ctx, const char *udi, DBusEr
 }
 
 
-/** Create a new LibHalContext
+/** 
+ * libhal_ctx_new:
  *
- *  @return a new uninitialized LibHalContext
+ * Create a new LibHalContext
+ *
+ * Returns: a new uninitialized LibHalContext object
  */
 LibHalContext *
 libhal_ctx_new (void)
@@ -2887,14 +2839,15 @@ libhal_ctx_new (void)
 	return ctx;
 }
 
-/** Enable or disable caching
+/** 
+ * libhal_ctx_set_cache:
+ * @ctx: context to enable/disable cache for
+ * @use_cache: whether or not to use cache
  *
- *  @note                       Cache is not actually implemented yet.
+ * Enable or disable caching. Note: Caching is not actually
+ * implemented yet.
  *
- *  @param  ctx                 Context to enable/disable cache for
- *  @param  use_cache           Whether or not to use cache
- *  @return                     TRUE if cache was successfully enabled/disabled,
- *                              FALSE otherwise
+ * Returns: TRUE if cache was successfully enabled/disabled, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_cache (LibHalContext *ctx, dbus_bool_t use_cache)
@@ -2905,12 +2858,14 @@ libhal_ctx_set_cache (LibHalContext *ctx, dbus_bool_t use_cache)
 	return TRUE;
 }
 
-/** Set DBus connection to use to talk to hald.
+/** 
+ * libhal_ctx_set_dbus_connection:
+ * @ctx: context to set connection for
+ * @conn: DBus connection to use
  *
- *  @param  ctx                 Context to set connection for
- *  @param  conn                DBus connection to use
- *  @return                     TRUE if connection was successfully set,
- *                              FALSE otherwise
+ * Set DBus connection to use to talk to hald.
+ *
+ * Returns: TRUE if connection was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_dbus_connection (LibHalContext *ctx, DBusConnection *conn)
@@ -2924,10 +2879,13 @@ libhal_ctx_set_dbus_connection (LibHalContext *ctx, DBusConnection *conn)
 	return TRUE;
 }
 
-/** Get DBus connection to use to talk to hald.
+/** 
+ * libhal_ctx_get_dbus_connection:
+ * @ctx: context to get connection for
  *
- *  @param  ctx                 Context to set connection for
- *  @return conn                DBus connection to use or NULL
+ * Get DBus connection used for talking to hald.
+ *
+ * Returns: DBus connection to use or NULL
  */
 DBusConnection *
 libhal_ctx_get_dbus_connection (LibHalContext *ctx)
@@ -2938,13 +2896,14 @@ libhal_ctx_get_dbus_connection (LibHalContext *ctx)
 }
 
 
-/** Initialize the connection to hald
+/** 
+ * libhal_ctx_init:
+ * @ctx: Context for connection to hald (D-BUS connection should be set with libhal_ctx_set_dbus_connection)
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 Context for connection to hald (connection
- *                              should be set with libhal_ctx_set_dbus_connection)
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if initialization succeeds, FALSE otherwise
+ * Initialize the connection to hald.
+ *
+ * Returns: TRUE if initialization succeeds, FALSE otherwise
  */
 dbus_bool_t 
 libhal_ctx_init (LibHalContext *ctx, DBusError *error)
@@ -2988,11 +2947,13 @@ libhal_ctx_init (LibHalContext *ctx, DBusError *error)
 	return TRUE;
 }
 
-/** Create an already initialized connection to hald
+/** 
+ * libhal_ctx_init_direct:
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     A pointer to an already initialized LibHalContext
+ * Create an already initialized connection to hald. This function should only be used by HAL helpers.
+ *
+ * Returns: A pointer to an already initialized LibHalContext
  */
 LibHalContext *
 libhal_ctx_init_direct (DBusError *error)
@@ -3027,13 +2988,14 @@ out:
 	return ctx;
 }
 
-/** Shut down a connection to hald
+/** 
+ * libhal_ctx_shutdown:
+ * @ctx: the context for the connection to hald
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if connection successfully shut down,
- *                              FALSE otherwise
+ * Shut down a connection to hald.
+ *
+ * Returns: TRUE if connection successfully shut down, FALSE otherwise
  */
 dbus_bool_t    
 libhal_ctx_shutdown (LibHalContext *ctx, DBusError *error)
@@ -3068,10 +3030,13 @@ libhal_ctx_shutdown (LibHalContext *ctx, DBusError *error)
 	return TRUE;
 }
 
-/** Free a LibHalContext resource
+/** 
+ * libhal_ctx_free:
+ * @ctx: pointer to a LibHalContext
  *
- *  @param  ctx                 Pointer to a LibHalContext
- *  @return                     TRUE
+ * Free a LibHalContext resource.
+ *
+ * Returns: TRUE
  */
 dbus_bool_t    
 libhal_ctx_free (LibHalContext *ctx)
@@ -3080,12 +3045,14 @@ libhal_ctx_free (LibHalContext *ctx)
 	return TRUE;
 }
 
-/** Set the callback for when a device is added
+/** 
+ * libhal_ctx_set_device_added:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device is added
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  callback            The function to call when a device is added
- *  @return                     TRUE if callback was successfully set,
- *                              FALSE otherwise
+ * Set the callback for when a device is added
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_device_added (LibHalContext *ctx, LibHalDeviceAdded callback)
@@ -3096,12 +3063,14 @@ libhal_ctx_set_device_added (LibHalContext *ctx, LibHalDeviceAdded callback)
 	return TRUE;
 }
 
-/** Set the callback for when a device is removed
+/** 
+ * libhal_ctx_set_device_removed:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device is removed
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  callback            The function to call when a device is removed
- *  @return                     TRUE if callback was successfully set,
- *                              FALSE otherwise
+ * Set the callback for when a device is removed.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_device_removed (LibHalContext *ctx, LibHalDeviceRemoved callback)
@@ -3112,13 +3081,14 @@ libhal_ctx_set_device_removed (LibHalContext *ctx, LibHalDeviceRemoved callback)
 	return TRUE;
 }
 
-/** Set the callback for when a device gains a new capability
+/** 
+ * libhal_ctx_set_device_new_capability:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device gains a new capability
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  callback            The function to call when a device gains
- *                              a new capability
- *  @return                     TRUE if callback was successfully set,
- *                              FALSE otherwise
+ * Set the callback for when a device gains a new capability.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_device_new_capability (LibHalContext *ctx, LibHalDeviceNewCapability callback)
@@ -3129,13 +3099,14 @@ libhal_ctx_set_device_new_capability (LibHalContext *ctx, LibHalDeviceNewCapabil
 	return TRUE;
 }
 
-/** Set the callback for when a device loses a capability
+/** 
+ * libhal_ctx_set_device_lost_capability:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device loses a capability
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  callback            The function to call when a device loses
- *                              a capability
- *  @return                     TRUE if callback was successfully set,
- *                              FALSE otherwise
+ * Set the callback for when a device loses a capability
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_device_lost_capability (LibHalContext *ctx, LibHalDeviceLostCapability callback)
@@ -3146,13 +3117,14 @@ libhal_ctx_set_device_lost_capability (LibHalContext *ctx, LibHalDeviceLostCapab
 	return TRUE;
 }
 
-/** Set the callback for when a property is modified on a device
+/** 
+ * libhal_ctx_set_device_property_modified:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a property is modified on a device
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  callback            The function to call when a property is
- *                              modified on a device
- *  @return                     TRUE if callback was successfully set,
- *                              FALSE otherwise
+ * Set the callback for when a property is modified on a device.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_device_property_modified (LibHalContext *ctx, LibHalDevicePropertyModified callback)
@@ -3163,12 +3135,14 @@ libhal_ctx_set_device_property_modified (LibHalContext *ctx, LibHalDevicePropert
 	return TRUE;
 }
 
-/** Set the callback for when a device emits a condition
+/** 
+ * libhal_ctx_set_device_condition:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device emits a condition
  *
- *  @param  ctx                 The context for the connection to hald
- *  @param  callback            The function to call when a device emits a condition
- *  @return                     TRUE if callback was successfully set,
- *                              FALSE otherwise
+ * Set the callback for when a device emits a condition
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
  */
 dbus_bool_t
 libhal_ctx_set_device_condition (LibHalContext *ctx, LibHalDeviceCondition callback)
@@ -3179,12 +3153,16 @@ libhal_ctx_set_device_condition (LibHalContext *ctx, LibHalDeviceCondition callb
 	return TRUE;
 }
 
-/** Get the length of an array of strings
+/** 
+ * libhal_string_array_length:
+ * @str_array: array of strings to consider
  *
- *  @param  str_array           Array of strings to consider
- *  @return                     Amount of strings in array
+ * Get the length of an array of strings.
+ *
+ * Returns: Number of strings in array
  */
-unsigned int libhal_string_array_length (char **str_array)
+unsigned int 
+libhal_string_array_length (char **str_array)
 {
 	unsigned int i;
 
@@ -3198,6 +3176,16 @@ unsigned int libhal_string_array_length (char **str_array)
 }
 
 
+/** 
+ * libhal_device_rescan:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ *
+ * TODO document me.
+ *
+ * Returns: Whether the operation succeeded
+ */
 dbus_bool_t 
 libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 {
@@ -3247,6 +3235,16 @@ libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 	return result;
 }
 
+/** 
+ * libhal_device_reprobe:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ *
+ * TODO document me.
+ *
+ * Returns: Whether the operation succeeded
+ */
 dbus_bool_t
 libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 {
@@ -3297,15 +3295,17 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 	return result;
 }
 
-/** Emit a condition from a device
+/** 
+ * libhal_device_emit_condition:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @condition_name: user-readable name of condition
+ * @condition_details: user-readable details of condition
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  condition_name      User-readable name of condition
- *  @param  condition_details   User-readable details of condition
- *  @param  error               Pointer to an initialized dbus error object for 
- *                              returning errors or NULL
- *  @return                     TRUE if condition successfully emitted,
+ * Emit a condition from a device.
+ *
+ * Returns: TRUE if condition successfully emitted,
  *                              FALSE otherwise
  */
 dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
@@ -3365,5 +3365,3 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 
 	return result;	
 }
-
-/** @} */

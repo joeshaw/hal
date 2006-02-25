@@ -1,5 +1,24 @@
 2006-02-25  David Zeuthen  <davidz@redhat.com>
 
+	* libhal/libhal.[ch]: Convert doc comments from Doxygen to gtk-doc
+
+	* libhal-storage/libhal-storage.[ch]: Convert doc comments from
+	Doxygen to gtk-doc (not completely done)
+
+	* doc/api/hal-docs.xml: New file
+
+	* doc/api/Doxyfile.in: Remove
+
+	* doc/api/Makefile.am: Use gtk-doc instead of Doxygen
+
+	* configure.in: Various cleanups; use gtk-doc instead of Doxygen
+
+	* autogen.sh: Pass --enable-gtk-doc to configure.
+
+	* acinclude.m4: Add GTK_DOC_CHECK, from cairo, thanks.
+
+2006-02-25  David Zeuthen  <davidz@redhat.com>
+
 	* hal-policy.pc.in: New file
 
 	* libhal-policy/libhal-policy-test.c: New file

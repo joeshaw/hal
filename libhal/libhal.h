@@ -35,7 +35,13 @@ extern "C" {
 #endif
 #endif
 
-/** Checks if LibHalContext *ctx == NULL */
+/**
+ * LIBHAL_CHECK_LIBHALCONTEXT:
+ * @_ctx_: the context
+ * @_ret_: what to use for return value if context is invalid
+ *
+ * Handy macro for checking whether a context is valid.
+ */
 #define LIBHAL_CHECK_LIBHALCONTEXT(_ctx_, _ret_)					\
 	do {									\
 		if (_ctx_ == NULL) {						\
@@ -46,16 +52,14 @@ extern "C" {
 		}								\
 	} while(0)
 
-/**
- * @addtogroup LibHal
+/** 
+ * LibHalPropertyType:
  *
- * @{
+ * Possible types for properties on hal device objects 
  */
-
-/** Possible types for properties on hal device objects */
 typedef enum {
         /** Used to report error condition */
-	LIBHAL_PROPERTY_TYPE_INVALID     =    DBUS_TYPE_INVALID,
+	LIBHAL_PROPERTY_TYPE_INVALID =    DBUS_TYPE_INVALID,
 
 	/** Type for 32-bit signed integer property */
 	LIBHAL_PROPERTY_TYPE_INT32   =    DBUS_TYPE_INT32,
@@ -73,65 +77,75 @@ typedef enum {
 	LIBHAL_PROPERTY_TYPE_STRING  =    DBUS_TYPE_STRING,
 
 	/** Type for list of UTF-8 strings property */
-	LIBHAL_PROPERTY_TYPE_STRLIST =     ((int) (DBUS_TYPE_STRING<<8)+('l'))
+	LIBHAL_PROPERTY_TYPE_STRLIST =    ((int) (DBUS_TYPE_STRING<<8)+('l'))
 } LibHalPropertyType;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-typedef struct LibHalContext_s LibHalContext;
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
-
-/** Type for function in application code that integrates a DBusConnection 
- *  object into its own mainloop.
+/** 
+ * LibHalIntegrateDBusIntoMainLoop:
+ * @ctx: context for connection to hald
+ * @dbus_connection: DBus connection to use in ctx
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  dbus_connection     DBus connection to use in ctx
+ * Type for function in application code that integrates a
+ * DBusConnection object into its own mainloop.
  */
 typedef void (*LibHalIntegrateDBusIntoMainLoop) (LibHalContext *ctx,
 						 DBusConnection *dbus_connection);
 
-/** Type for callback when a device is added.
+/** 
+ * LibHalDeviceAdded:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
+ * Type for callback when a device is added.
  */
 typedef void (*LibHalDeviceAdded) (LibHalContext *ctx, 
 				   const char *udi);
 
-/** Type for callback when a device is removed. 
+/** 
+ * LibHalDeviceRemoved:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
+ * Type for callback when a device is removed. 
  */
 typedef void (*LibHalDeviceRemoved) (LibHalContext *ctx, 
 				     const char *udi);
 
-/** Type for callback when a device gains a new capability
+/** 
+ * LibHalDeviceNewCapability:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @capability: capability of the device
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  capability          Capability of the device
+ * Type for callback when a device gains a new capability.
+ *
  */
 typedef void (*LibHalDeviceNewCapability) (LibHalContext *ctx, 
 					   const char *udi,
 					   const char *capability);
 
-/** Type for callback when a device loses a capability
+/** 
+ * LibHalDeviceLostCapability:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @capability: capability of the device
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  capability          Capability of the device
+ * Type for callback when a device loses a capability.
+ *
  */
 typedef void (*LibHalDeviceLostCapability) (LibHalContext *ctx, 
 					    const char *udi,
 					    const char *capability);
 
-/** Type for callback when a property of a device changes. 
+/** 
+ * LibHalDevicePropertyModified:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @key: name of the property that has changed
+ * @is_removed: whether or not property was removed
+ * @is_added: whether or not property was added
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  key                 Name of the property that has changed
- *  @param  is_removed          Whether or not property was removed
- *  @param  is_added            Whether or not property was added
+ * Type for callback when a property of a device changes. 
  */
 typedef void (*LibHalDevicePropertyModified) (LibHalContext *ctx,
 					      const char *udi,
@@ -139,14 +153,14 @@ typedef void (*LibHalDevicePropertyModified) (LibHalContext *ctx,
 					      dbus_bool_t is_removed,
 					      dbus_bool_t is_added);
 
-/** Type for callback when a non-continuous condition occurs on a device
+/** 
+ * LibHalDeviceCondition:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @condition_name: name of the condition, e.g. ProcessorOverheating. Consult the HAL spec for details
+ * @condition_detail: detail of condition
  *
- *  @param  ctx                 Context for connection to hald
- *  @param  udi                 Unique Device Id
- *  @param  condition_name      Name of the condition, e.g. 
- *                              ProcessorOverheating. Consult the HAL spec
- *                              for possible conditions
- *  @param  condition_detail    User-readable details of condition
+ * Type for callback when a non-continuous condition occurs on a device.
  */
 typedef void (*LibHalDeviceCondition) (LibHalContext *ctx,
 				       const char *udi,
@@ -306,7 +320,7 @@ dbus_bool_t libhal_device_property_strlist_prepend (LibHalContext *ctx,
 dbus_bool_t libhal_device_property_strlist_remove_index (LibHalContext *ctx, 
 							 const char *udi,
 							 const char *key,
-							 unsigned int index,
+							 unsigned int idx,
 							 DBusError *error);
 
 /* Remove a specified string from a property of type strlist. */
@@ -348,18 +362,19 @@ void libhal_free_property_set (LibHalPropertySet *set);
 /* Get the number of properties in a property set. */
 unsigned int libhal_property_set_get_num_elems (LibHalPropertySet *set);
 
-/** Iterator for inspecting all properties */
+/** 
+ * LibHalPropertySetIterator: 
+ * 
+ * Iterator for inspecting all properties. Do not access any members;
+ * use the libhal_psi_* family of functions instead.
+ */
 struct LibHalPropertySetIterator_s {
 	LibHalPropertySet *set;    /**< Property set we are iterating over */
-	unsigned int index;        /**< Index into current element */
+	unsigned int idx;          /**< Index into current element */
 	LibHalProperty *cur_prop;  /**< Current property being visited */
 	void *reservered0;         /**< Reserved for future use */
 	void *reservered1;         /**< Reserved for future use */
 };
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-typedef struct LibHalPropertySetIterator_s LibHalPropertySetIterator;
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 /* Initialize a property set iterator. */
 void libhal_psi_init (LibHalPropertySetIterator *iter, LibHalPropertySet *set);
@@ -512,7 +527,6 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 					  const char *condition_details,
 					  DBusError *error);
 
-/** @} */
 
 #if defined(__cplusplus)
 }

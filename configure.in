@@ -74,24 +74,22 @@ AC_DEFINE_UNQUOTED(HAL_GROUP,"$HAL_GROUP", [Group for HAL])
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
 AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
-AC_ARG_ENABLE(doxygen-docs,     [  --enable-doxygen-docs   build DOXYGEN documentation (requires Doxygen)],enable_doxygen_docs=$enableval,enable_doxygen_docs=auto)
-AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build DocBook documentation (requires docbook2html)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
+AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build documentation (requires docbook2html)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
 
-if test x$enable_verbose_mode = xyes; then
-    AC_DEFINE(ENABLE_VERBOSE_MODE,1,[Support a verbose mode])
-fi
+
+GTK_DOC_CHECK([1.3])
 
 # ACPI event source
-AC_ARG_ENABLE(acpi-acpid, [  --disable-acpi-acpid     Use ACPI daemon event source],acpi_acpid=no,acpi_acpid=yes)
+AC_ARG_ENABLE(acpi-acpid, [  --disable-acpi-acpid    do not use acpid event source],acpi_acpid=no,acpi_acpid=yes)
 if test "x$acpi_acpid" == "xyes" ; then
    AC_DEFINE(ACPI_ACPID,1,[Common event source of ACPI events])
 fi
 AC_SUBST(ACPI_ACPID)
 AM_CONDITIONAL(ACPI_ACPID, test x$acpi_acpid != xyes)
 
-AC_ARG_ENABLE(acpi-proc, [  --disable-acpi-proc      Use ACPI kernel-interface directly(the kernel supports only one listener)],acpi_proc=no,acpi_proc=yes)
+AC_ARG_ENABLE(acpi-proc, [  --disable-acpi-proc     do not use acpi kernel interface directly],acpi_proc=no,acpi_proc=yes)
 if test "x$acpi_proc" == "xyes" ; then
-   AC_DEFINE(ACPI_PROC,1,[Direct kernel connection for ACPI events, the kernel interface is exclusiv to one user only])
+   AC_DEFINE(ACPI_PROC,1,[Direct kernel connection for ACPI events, the kernel interface is exclusive to one user only])
 fi
 AC_SUBST(ACPI_PROC)
 AM_CONDITIONAL(ACPI_PROC, test x$acpi_proc == xyes)
@@ -184,7 +182,7 @@ pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_modu
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 EXPAT_LIB=""
-AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
+AC_ARG_WITH(expat, [  --with-expat=<dir>      ese expat from here],
                       [
                       expat=$withval
                       CPPFLAGS="$CPPFLAGS -I$withval/include"
@@ -207,7 +205,7 @@ fi
 
 
 
-AC_ARG_WITH(backend, [  --with-backend=<name>   Backend to use (linux2/solaris/dummy)],
+AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux2/solaris/dummy)],
                       [
                       backend=$withval
                       ]
@@ -244,37 +242,6 @@ PKG_CHECK_MODULES(GLIB, [$glib_module])
 
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-
-### All this also from dbus
-
-### Doxygen Documentation
-
-AC_PATH_PROG(DOXYGEN, doxygen, no)
-
-AC_MSG_CHECKING([whether to build Doxygen documentation])
-
-if test x$DOXYGEN = xno ; then
-    have_doxygen=no
-else
-    have_doxygen=yes
-fi
-
-if test x$enable_doxygen_docs = xauto ; then
-    if test x$have_doxygen = xno ; then
-        enable_doxygen_docs=no
-    else
-        enable_doxygen_docs=yes
-    fi
-fi
-
-if test x$enable_doxygen_docs = xyes; then
-    if test x$have_doxygen = xno; then
-	AC_MSG_ERROR([Building Doxygen docs explicitly required, but Doxygen not found])
-    fi
-fi
-
-AM_CONDITIONAL(DOXYGEN_DOCS_ENABLED, test x$enable_doxygen_docs = xyes)
-AC_MSG_RESULT(yes)
 
 # Check for BLKGETSIZE64
 AC_CHECK_TYPE(pgoff_t, ,
@@ -388,7 +355,7 @@ AC_SUBST(HALD_PID_FILE)
 AC_DEFINE_UNQUOTED(HALD_PID_FILE, "$HALD_PID_FILE", [pid file])
 
 # documentation target
-AC_ARG_WITH(doc-dir,   [  --with-doc-dir=[dirname] directory to install documentation])
+AC_ARG_WITH(doc-dir,   [  --with-doc-dir=[dirname]  directory to install documentation])
 if ! test -z "$with_doc_dir"; then
    DOCDIR=$with_doc_dir
 else
@@ -445,7 +412,6 @@ fdi/policy/20thirdparty/Makefile
 fdi/policy/30user/Makefile
 doc/Makefile
 doc/api/Makefile
-doc/api/Doxyfile
 doc/conf/Makefile
 doc/spec/Makefile
 doc/spec/hal-spec.xml
@@ -460,36 +426,34 @@ echo "
                     HAL $VERSION
                   ==============
 
-        prefix:                   ${prefix}
-        libdir:                   ${LIBDIR}
-        libexecdir:               ${LIBEXECDIR}
-        bindir:                   ${BINDIR}
-        sbindir:                  ${SBINDIR}
-        datadir:                  ${DATADIR}
-        sysconfdir:               ${SYSCONFDIR}
-        localstatedir:            ${LOCALSTATEDIR}
-        docdir:                   ${DOCDIR}
-        dbus-1 system.d dir:      ${DBUS_SYS_DIR}
-        pci.ids, usb.ids dir:     ${HWDATA_DIR}
+        prefix:                     ${prefix}
+        libdir:                     ${LIBDIR}
+        libexecdir:                 ${LIBEXECDIR}
+        bindir:                     ${BINDIR}
+        sbindir:                    ${SBINDIR}
+        datadir:                    ${DATADIR}
+        sysconfdir:                 ${SYSCONFDIR}
+        localstatedir:              ${LOCALSTATEDIR}
+        docdir:                     ${DOCDIR}
+        dbus-1 system.d dir:        ${DBUS_SYS_DIR}
+        pci.ids, usb.ids dir:       ${HWDATA_DIR}
 
-        compiler:                 ${CC}
-        cflags:                   ${CFLAGS}
-        cppflags:                 ${CPPFLAGS}
-        Doxygen:                  ${DOXYGEN}
-        DocBook:                  ${DOCBOOK}
-        User for HAL:             ${HAL_USER}
-        Group for HAL:            ${HAL_GROUP}
-        hald pidfile:             ${HALD_PID_FILE}
-        hald backend:             ${HALD_BACKEND}
-        acpi proc support:        ${acpi_proc}
-        acpi daemon support:      ${acpi_acpid}
+        compiler:                   ${CC}
+        cflags:                     ${CFLAGS}
+        cppflags:                   ${CPPFLAGS}
+        DocBook:                    ${DOCBOOK}
+        User for HAL:               ${HAL_USER}
+        Group for HAL:              ${HAL_GROUP}
+        hald pidfile:               ${HALD_PID_FILE}
+        hald backend:               ${HALD_BACKEND}
+        use acpi kernel interface:  ${acpi_proc}
+        use acpid interface:        ${acpi_acpid}
+        use libusb:                 ${USE_LIBUSB}
 
-        use libusb (for usb-csr): ${USE_LIBUSB}
-
-        Maintainer mode:          ${USE_MAINTAINER_MODE}
-        Building verbose mode:    ${enable_verbose_mode}
-        Building Doxygen docs:    ${enable_doxygen_docs}
-        Building docs:            ${enable_docbook_docs}
+        Maintainer mode:            ${USE_MAINTAINER_MODE}
+        Building verbose mode:      ${enable_verbose_mode}
+        Building api docs:          ${enable_gtk_doc}
+        Building docs:              ${enable_docbook_docs}
 "
 
 if test x$enable_verbose_mode = xyes; then
@@ -511,7 +475,7 @@ echo
 
 echo "NOTE: For development, use run-hald.sh and debug-hald.sh scripts in hald/ to "
 echo "      use programs (callouts, probers, addons) and device information files "
-echo "      from build directories."
-echo "      (You may still need 'make install' to install the udev rule to receive events)"
+echo "      from build directories. You may still need 'make install' to"
+echo "      install the udev rule to receive events from udev."
 echo
 

@@ -34,20 +34,12 @@
 extern "C" {
 #endif
 
-/**
- * @addtogroup HAL Storage and Volume abstraction
- *
- * @{
- */
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 struct LibHalDrive_s;
 typedef struct LibHalDrive_s LibHalDrive;
 struct LibHalVolume_s;
 typedef struct LibHalVolume_s LibHalVolume;
 struct LibHalStoragePolicy_s;
 typedef struct LibHalStoragePolicy_s LibHalStoragePolicy;
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
 
 typedef enum {
@@ -339,7 +331,6 @@ const char       *libhal_volume_policy_get_mount_fs        	(LibHalDrive        
 							    	 LibHalVolume        *volume, 
 							    	 LibHalStoragePolicy *policy);
 
-/** @} */
 
 #if defined(__cplusplus)
 }

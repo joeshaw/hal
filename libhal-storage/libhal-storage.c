@@ -57,17 +57,6 @@
 # define N_(String) (String)
 #endif
 
-/**
- * @defgroup LibHalStorage HAL Storage and Volumes library
- * @brief HAL Storage and Volumes library
- *
- *  @{
- */
-
-/**
- * @typedef typedef struct IconMappingEntry_s {} IconMappingEntry
- * @brief typdef of IconMappingEntry_s
- */
 typedef struct IconMappingEntry_s {
 	LibHalStoragePolicyIcon icon;
 	char *path;
