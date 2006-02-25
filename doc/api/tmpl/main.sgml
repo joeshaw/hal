@@ -1,0 +1,207 @@
+<!-- ##### SECTION Title ##### -->
+main
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO HAL_LINUX_HOTPLUG_TIMEOUT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DIE ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+
+<!-- ##### VARIABLE is_probing ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION parse_double ##### -->
+<para>
+
+</para>
+
+@str: 
+@Returns: 
+
+
+<!-- ##### FUNCTION parse_dec ##### -->
+<para>
+
+</para>
+
+@str: 
+@Returns: 
+
+
+<!-- ##### FUNCTION parse_hex ##### -->
+<para>
+
+</para>
+
+@str: 
+@Returns: 
+
+
+<!-- ##### FUNCTION find_double ##### -->
+<para>
+
+</para>
+
+@pre: 
+@s: 
+@Returns: 
+
+
+<!-- ##### FUNCTION find_bcd2 ##### -->
+<para>
+
+</para>
+
+@pre: 
+@s: 
+@Returns: 
+
+
+<!-- ##### FUNCTION find_string ##### -->
+<para>
+
+</para>
+
+@pre: 
+@s: 
+@Returns: 
+
+
+<!-- ##### USER_FUNCTION ComputeFDI ##### -->
+<para>
+
+</para>
+
+@udi: 
+@append_num: 
+@Returns: 
+
+
+<!-- ##### FUNCTION rename_and_maybe_add ##### -->
+<para>
+
+</para>
+
+@udi: 
+@naming_func: 
+@namespace: 
+@Returns: 
+
+
+<!-- ##### FUNCTION find_udi_from_sysfs_path ##### -->
+<para>
+
+</para>
+
+@path: 
+@max_time_to_try: 
+@Returns: 
+
+
+<!-- ##### FUNCTION find_parent_udi_from_sysfs_path ##### -->
+<para>
+
+</para>
+
+@path: 
+@max_time_to_try: 
+@Returns: 
+
+
+<!-- ##### FUNCTION get_last_element ##### -->
+<para>
+
+</para>
+
+@s: 
+@Returns: 
+
+
+<!-- ##### FUNCTION read_single_line ##### -->
+<para>
+
+</para>
+
+@filename_format: 
+@Varargs: 
+@Returns: 
+
+
+<!-- ##### FUNCTION find_and_set_physical_device ##### -->
+<para>
+
+</para>
+
+@udi: 
+
+
+<!-- ##### FUNCTION find_udi_by_key_value ##### -->
+<para>
+
+</para>
+
+@key: 
+@value: 
+@max_time_to_try: 
+@Returns: 
+
+
+<!-- ##### FUNCTION drivers_lookup ##### -->
+<para>
+
+</para>
+
+@device_path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION drivers_collect ##### -->
+<para>
+
+</para>
+
+@bus_name: 
+
+
+<!-- ##### VARIABLE hal_functions ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE dbus_connection ##### -->
+<para>
+
+</para>
+
+

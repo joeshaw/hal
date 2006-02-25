@@ -1,0 +1,44 @@
+<!-- ##### SECTION Title ##### -->
+hal_usb
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION visit_device_usb ##### -->
+<para>
+
+</para>
+
+@path: 
+@device: 
+
+
+<!-- ##### FUNCTION hal_usb_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_usb_shutdown ##### -->
+<para>
+
+</para>
+
+
+

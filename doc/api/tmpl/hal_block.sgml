@@ -1,0 +1,44 @@
+<!-- ##### SECTION Title ##### -->
+hal_block
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION visit_class_device_block ##### -->
+<para>
+
+</para>
+
+@path: 
+@class_device: 
+
+
+<!-- ##### FUNCTION hal_block_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_block_shutdown ##### -->
+<para>
+
+</para>
+
+
+

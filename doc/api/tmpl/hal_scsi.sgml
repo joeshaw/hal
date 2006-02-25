@@ -1,0 +1,53 @@
+<!-- ##### SECTION Title ##### -->
+hal_scsi
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION visit_class_device_scsi_host ##### -->
+<para>
+
+</para>
+
+@path: 
+@class_device: 
+
+
+<!-- ##### FUNCTION visit_class_device_scsi_device ##### -->
+<para>
+
+</para>
+
+@path: 
+@class_device: 
+
+
+<!-- ##### FUNCTION hal_scsi_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_scsi_shutdown ##### -->
+<para>
+
+</para>
+
+
+

@@ -1,0 +1,636 @@
+<!-- ##### SECTION Title ##### -->
+libsysfs
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO SYSFS_FSTYPE_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_PROC_MNTS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_BUS_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_BUS_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_CLASS_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_CLASS_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_BLOCK_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_BLOCK_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_DEVICES_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_DEVICES_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_DRIVERS_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_DRIVERS_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_NAME_ATTRIBUTE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_UNKNOWN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_PATH_ENV ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_PATH_MAX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_NAME_LEN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_BUS_ID_SIZE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_METHOD_SHOW ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SYSFS_METHOD_STORE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### STRUCT sysfs_attribute ##### -->
+<para>
+
+</para>
+
+@value: 
+@name: 
+@path: 
+
+<!-- ##### STRUCT sysfs_link ##### -->
+<para>
+
+</para>
+
+@name: 
+@path: 
+@target: 
+
+<!-- ##### STRUCT sysfs_directory ##### -->
+<para>
+
+</para>
+
+@subdirs: 
+@links: 
+@attributes: 
+@name: 
+@path: 
+
+<!-- ##### STRUCT sysfs_driver ##### -->
+<para>
+
+</para>
+
+@devices: 
+@name: 
+@path: 
+@directory: 
+
+<!-- ##### STRUCT sysfs_device ##### -->
+<para>
+
+</para>
+
+@parent: 
+@children: 
+@name: 
+@bus_id: 
+@bus: 
+@driver_name: 
+@path: 
+@directory: 
+
+<!-- ##### STRUCT sysfs_root_device ##### -->
+<para>
+
+</para>
+
+@devices: 
+@name: 
+@path: 
+@directory: 
+
+<!-- ##### STRUCT sysfs_bus ##### -->
+<para>
+
+</para>
+
+@drivers: 
+@devices: 
+@name: 
+@path: 
+@directory: 
+
+<!-- ##### STRUCT sysfs_class_device ##### -->
+<para>
+
+</para>
+
+@sysdevice: 
+@driver: 
+@name: 
+@classname: 
+@path: 
+@directory: 
+
+<!-- ##### STRUCT sysfs_class ##### -->
+<para>
+
+</para>
+
+@devices: 
+@name: 
+@path: 
+@directory: 
+
+<!-- ##### FUNCTION sysfs_get_mnt_path ##### -->
+<para>
+
+</para>
+
+@mnt_path: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_name_from_path ##### -->
+<para>
+
+</para>
+
+@path: 
+@name: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_link ##### -->
+<para>
+
+</para>
+
+@path: 
+@target: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_open_subsystem_list ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_open_bus_devices_list ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_list ##### -->
+<para>
+
+</para>
+
+@list: 
+
+
+<!-- ##### FUNCTION sysfs_close_attribute ##### -->
+<para>
+
+</para>
+
+@sysattr: 
+
+
+<!-- ##### FUNCTION sysfs_open_attribute ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_read_attribute ##### -->
+<para>
+
+</para>
+
+@sysattr: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_read_attribute_value ##### -->
+<para>
+
+</para>
+
+@attrpath: 
+@value: 
+@vsize: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_write_attribute ##### -->
+<para>
+
+</para>
+
+@sysattr: 
+@new_value: 
+@len: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_value_from_attributes ##### -->
+<para>
+
+</para>
+
+@attr: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_directory ##### -->
+<para>
+
+</para>
+
+@sysdir: 
+
+
+<!-- ##### FUNCTION sysfs_open_directory ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_read_directory ##### -->
+<para>
+
+</para>
+
+@sysdir: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_read_all_subdirs ##### -->
+<para>
+
+</para>
+
+@sysdir: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_link ##### -->
+<para>
+
+</para>
+
+@ln: 
+
+
+<!-- ##### FUNCTION sysfs_open_link ##### -->
+<para>
+
+</para>
+
+@lnpath: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_directory_link ##### -->
+<para>
+
+</para>
+
+@dir: 
+@linkname: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_driver ##### -->
+<para>
+
+</para>
+
+@driver: 
+
+
+<!-- ##### FUNCTION sysfs_open_driver ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_driver_attributes ##### -->
+<para>
+
+</para>
+
+@driver: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_driver_links ##### -->
+<para>
+
+</para>
+
+@driver: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_driver_by_name ##### -->
+<para>
+
+</para>
+
+@driver: 
+
+
+<!-- ##### FUNCTION sysfs_open_driver_attr ##### -->
+<para>
+
+</para>
+
+@bus: 
+@drv: 
+@attrib: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_root_device ##### -->
+<para>
+
+</para>
+
+@root: 
+
+
+<!-- ##### FUNCTION sysfs_close_device ##### -->
+<para>
+
+</para>
+
+@dev: 
+
+
+<!-- ##### FUNCTION sysfs_open_device ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_device_attributes ##### -->
+<para>
+
+</para>
+
+@device: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_open_device_attr ##### -->
+<para>
+
+</para>
+
+@bus: 
+@bus_id: 
+@attrib: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_bus ##### -->
+<para>
+
+</para>
+
+@bus: 
+
+
+<!-- ##### FUNCTION sysfs_open_bus ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_bus_device ##### -->
+<para>
+
+</para>
+
+@bus: 
+@id: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_bus_driver ##### -->
+<para>
+
+</para>
+
+@bus: 
+@drvname: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_bus_attributes ##### -->
+<para>
+
+</para>
+
+@bus: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_get_bus_attribute ##### -->
+<para>
+
+</para>
+
+@bus: 
+@attrname: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_open_bus_device ##### -->
+<para>
+
+</para>
+
+@busname: 
+@dev_id: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_find_driver_bus ##### -->
+<para>
+
+</para>
+
+@driver: 
+@busname: 
+@bsize: 
+@Returns: 
+
+
+<!-- ##### FUNCTION sysfs_close_class_device ##### -->
+<para>
+
+</para>
+
+@dev: 
+
+
+<!-- ##### FUNCTION sysfs_close_class ##### -->
+<para>
+
+</para>
+
+@cls: 
+
+
+<!-- ##### FUNCTION sysfs_open_class ##### -->
+<para>
+
+</para>
+
+@name: 
+@Returns: 
+
+

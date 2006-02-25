@@ -1,0 +1,37 @@
+<!-- ##### SECTION Title ##### -->
+hal_monitor
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION hal_monitor_enter ##### -->
+<para>
+
+</para>
+
+@loop: 
+
+
+<!-- ##### FUNCTION etc_mtab_process_all_block_devices ##### -->
+<para>
+
+</para>
+
+@setup_watcher: 
+
+

@@ -1,5 +1,11 @@
 2006-02-25  David Zeuthen  <davidz@redhat.com>
 
+	* doc/api/tmpl: New directory
+
+	* doc/api/tmpl/*.sgml: Templates
+
+2006-02-25  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/libhal.h: Add back typedefs for LibHalPropertySetIterator
 	and LibHalContext as they were accidently removed in last commit.
 

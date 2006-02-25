@@ -1,0 +1,117 @@
+<!-- ##### SECTION Title ##### -->
+logger
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION logger_setup ##### -->
+<para>
+
+</para>
+
+@priority: 
+@file: 
+@line: 
+@function: 
+
+
+<!-- ##### FUNCTION logger_emit ##### -->
+<para>
+
+</para>
+
+@format: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION logger_enable ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION logger_disable ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION logger_enable_syslog ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION logger_disable_syslog ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_TRACE ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+
+<!-- ##### MACRO HAL_DEBUG ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+
+<!-- ##### MACRO HAL_INFO ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+
+<!-- ##### MACRO HAL_WARNING ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+
+<!-- ##### MACRO HAL_ERROR ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+
+<!-- ##### MACRO DIE ##### -->
+<para>
+
+</para>
+
+@expr: 
+
+

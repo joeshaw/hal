@@ -1,0 +1,80 @@
+<!-- ##### SECTION Title ##### -->
+linux_dvd_rw_utils
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION get_dvd_r_rw_profile ##### -->
+<para>
+
+</para>
+
+@fd: 
+@Returns: 
+
+
+<!-- ##### FUNCTION get_read_write_speed ##### -->
+<para>
+
+</para>
+
+@fd: 
+@read_speed: 
+@write_speed: 
+@write_speeds: 
+@Returns: 
+
+
+<!-- ##### FUNCTION get_disc_capacity_for_type ##### -->
+<para>
+
+</para>
+
+@fd: 
+@type: 
+@capacity: 
+@Returns: 
+
+
+<!-- ##### FUNCTION get_disc_type ##### -->
+<para>
+
+</para>
+
+@fd: 
+@Returns: 
+
+
+<!-- ##### FUNCTION disc_is_appendable ##### -->
+<para>
+
+</para>
+
+@fd: 
+@Returns: 
+
+
+<!-- ##### FUNCTION disc_is_rewritable ##### -->
+<para>
+
+</para>
+
+@fd: 
+@Returns: 
+
+

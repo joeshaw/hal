@@ -1,0 +1,359 @@
+<!-- ##### SECTION Title ##### -->
+util
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO HAL_NAME_MAX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PATH_MAX ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_HELPER_TIMEOUT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION util_compute_time_remaining ##### -->
+<para>
+
+</para>
+
+@id: 
+@chargeRate: 
+@chargeLevel: 
+@chargeLastFull: 
+@isDischarging: 
+@isCharging: 
+@guessChargeRate: 
+@Returns: 
+
+
+<!-- ##### FUNCTION util_compute_percentage_charge ##### -->
+<para>
+
+</para>
+
+@id: 
+@chargeLevel: 
+@chargeLastFull: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_remove_trailing_slash ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_last_element ##### -->
+<para>
+
+</para>
+
+@s: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_parent_path ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_normalized_path ##### -->
+<para>
+
+</para>
+
+@path1: 
+@path2: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_int_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@result: 
+@base: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_int_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@base: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_string_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_string_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_bcd2_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_bcd2_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_compute_udi ##### -->
+<para>
+
+</para>
+
+@store: 
+@dst: 
+@dstsize: 
+@format: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION hal_util_path_ascend ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_grep_discard_existing_data ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_util_grep_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@linestart: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_grep_int_elem_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@base: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_grep_string_elem_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_string_elem_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_int_elem_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@base: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_bool_elem_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@expected: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_dup_strv_from_g_slist ##### -->
+<para>
+
+</para>
+
+@strlist: 
+@Returns: 
+
+
+<!-- ##### USER_FUNCTION HalCalloutsDone ##### -->
+<para>
+
+</para>
+
+@d: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_callout_device_add ##### -->
+<para>
+
+</para>
+
+@d: 
+@callback: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_callout_device_remove ##### -->
+<para>
+
+</para>
+
+@d: 
+@callback: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_callout_device_preprobe ##### -->
+<para>
+
+</para>
+
+@d: 
+@callback: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_strdup_valid_utf8 ##### -->
+<para>
+
+</para>
+
+@str: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_hexdump ##### -->
+<para>
+
+</para>
+
+@buf: 
+@size: 
+
+

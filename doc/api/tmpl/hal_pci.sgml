@@ -1,0 +1,44 @@
+<!-- ##### SECTION Title ##### -->
+hal_pci
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION visit_device_pci ##### -->
+<para>
+
+</para>
+
+@path: 
+@device: 
+
+
+<!-- ##### FUNCTION hal_pci_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_pci_shutdown ##### -->
+<para>
+
+</para>
+
+
+

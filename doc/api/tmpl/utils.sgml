@@ -1,0 +1,55 @@
+<!-- ##### SECTION Title ##### -->
+utils
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO DBUS_API_SUBJECT_TO_CHANGE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION get_string_array ##### -->
+<para>
+
+</para>
+
+@iter: 
+@extra: 
+@Returns: 
+
+
+<!-- ##### FUNCTION get_string_array_from_fd ##### -->
+<para>
+
+</para>
+
+@fd: 
+@Returns: 
+
+
+<!-- ##### FUNCTION free_string_array ##### -->
+<para>
+
+</para>
+
+@array: 
+
+

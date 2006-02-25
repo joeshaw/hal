@@ -1,0 +1,71 @@
+<!-- ##### SECTION Title ##### -->
+osspec
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION osspec_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION osspec_probe ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION osspec_probe_done ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION osspec_device_rescan ##### -->
+<para>
+
+</para>
+
+@d: 
+@Returns: 
+
+
+<!-- ##### FUNCTION osspec_device_reprobe ##### -->
+<para>
+
+</para>
+
+@d: 
+@Returns: 
+
+
+<!-- ##### FUNCTION osspec_filter_function ##### -->
+<para>
+
+</para>
+
+@connection: 
+@message: 
+@user_data: 
+@Returns: 
+
+

@@ -1,0 +1,53 @@
+<!-- ##### SECTION Title ##### -->
+hal_ide
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION visit_device_ide_host ##### -->
+<para>
+
+</para>
+
+@path: 
+@device: 
+
+
+<!-- ##### FUNCTION visit_device_ide ##### -->
+<para>
+
+</para>
+
+@path: 
+@device: 
+
+
+<!-- ##### FUNCTION hal_ide_init ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_ide_shutdown ##### -->
+<para>
+
+</para>
+
+
+

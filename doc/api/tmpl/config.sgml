@@ -1,0 +1,266 @@
+<!-- ##### SECTION Title ##### -->
+config
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### MACRO ACPI_ACPID ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO ACPI_PROC ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DBUS_API_SUBJECT_TO_CHANGE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DBUS_SYSTEMD_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO ENABLE_NLS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO GETTEXT_PACKAGE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HALD_PID_FILE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_GROUP ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_USER ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_BIND_TEXTDOMAIN_CODESET ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_DCGETTEXT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_DLFCN_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_EXPAT_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_GETTEXT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_INTTYPES_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_LC_MESSAGES ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_LOCALE_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_MEMORY_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STDINT_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STDLIB_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STRINGS_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_STRING_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_SYS_STAT_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_SYS_TYPES_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_UNISTD_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HWDATA_DIR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO PACKAGE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO PACKAGE_BUGREPORT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO PACKAGE_NAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO PACKAGE_STRING ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO PACKAGE_TARNAME ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO PACKAGE_VERSION ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO STDC_HEADERS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO VERSION ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO pgoff_t ##### -->
+<para>
+
+</para>
+
+
+

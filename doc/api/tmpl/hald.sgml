@@ -1,0 +1,75 @@
+<!-- ##### SECTION Title ##### -->
+hald
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION hald_get_gdl ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hald_get_tdl ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION property_atomic_update_begin ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION property_atomic_update_end ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### VARIABLE hald_is_verbose ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE hald_use_syslog ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE hald_is_initialising ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE hald_is_shutting_down ##### -->
+<para>
+
+</para>
+
+

@@ -1,0 +1,143 @@
+<!-- ##### SECTION Title ##### -->
+HalDeviceStore
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### USER_FUNCTION HalDeviceStoreAsyncCallback ##### -->
+<para>
+
+</para>
+
+@store: 
+@device: 
+@user_data: 
+
+
+<!-- ##### USER_FUNCTION HalDeviceStoreForeachFn ##### -->
+<para>
+
+</para>
+
+@store: 
+@device: 
+@user_data: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_add ##### -->
+<para>
+
+</para>
+
+@store: 
+@device: 
+
+
+<!-- ##### FUNCTION hal_device_store_remove ##### -->
+<para>
+
+</para>
+
+@store: 
+@device: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_find ##### -->
+<para>
+
+</para>
+
+@store: 
+@udi: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_foreach ##### -->
+<para>
+
+</para>
+
+@store: 
+@callback: 
+@user_data: 
+
+
+<!-- ##### FUNCTION hal_device_store_match_key_value_string ##### -->
+<para>
+
+</para>
+
+@store: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_match_key_value_int ##### -->
+<para>
+
+</para>
+
+@store: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_match_multiple_key_value_string ##### -->
+<para>
+
+</para>
+
+@store: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_store_match_key_value_string_async ##### -->
+<para>
+
+</para>
+
+@store: 
+@key: 
+@value: 
+@callback: 
+@user_data: 
+@timeout: 
+
+
+<!-- ##### FUNCTION hal_device_store_print ##### -->
+<para>
+
+</para>
+
+@store: 
+
+

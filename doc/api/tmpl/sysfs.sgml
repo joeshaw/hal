@@ -1,0 +1,68 @@
+<!-- ##### SECTION Title ##### -->
+sysfs
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION lstat ##### -->
+<para>
+
+</para>
+
+@file_name: 
+@buf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION readlink ##### -->
+<para>
+
+</para>
+
+@path: 
+@buf: 
+@bufsize: 
+@Returns: 
+
+
+<!-- ##### FUNCTION getpagesize ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION isascii ##### -->
+<para>
+
+</para>
+
+@c: 
+@Returns: 
+
+
+<!-- ##### MACRO dprintf ##### -->
+<para>
+
+</para>
+
+@format: 
+@arg...: 
+
+

@@ -1,0 +1,77 @@
+<!-- ##### SECTION Title ##### -->
+pmu
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION pmu_synthesize_hotplug_events ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION hotplug_event_begin_add_pmu ##### -->
+<para>
+
+</para>
+
+@pmu_path: 
+@pmu_type: 
+@parent: 
+@end_token: 
+
+
+<!-- ##### FUNCTION hotplug_event_begin_remove_pmu ##### -->
+<para>
+
+</para>
+
+@pmu_path: 
+@pmu_type: 
+@end_token: 
+
+
+<!-- ##### FUNCTION pmu_rescan_device ##### -->
+<para>
+
+</para>
+
+@d: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pmu_generate_add_hotplug_event ##### -->
+<para>
+
+</para>
+
+@d: 
+@Returns: 
+
+
+<!-- ##### FUNCTION pmu_generate_remove_hotplug_event ##### -->
+<para>
+
+</para>
+
+@d: 
+@Returns: 
+
+

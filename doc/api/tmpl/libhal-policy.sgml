@@ -1,0 +1,357 @@
+<!-- ##### SECTION Title ##### -->
+libhal-policy
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### ENUM LibHalPolicyResult ##### -->
+<para>
+
+</para>
+
+@LIBHAL_POLICY_RESULT_OK: 
+@LIBHAL_POLICY_RESULT_ERROR: 
+@LIBHAL_POLICY_RESULT_INVALID_CONTEXT: 
+@LIBHAL_POLICY_RESULT_PERMISSON_DENIED: 
+@LIBHAL_POLICY_RESULT_NO_SUCH_POLICY: 
+
+<!-- ##### STRUCT LibHalPolicyContext_s ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### TYPEDEF LibHalPolicyContext ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM LibHalPolicyElementType ##### -->
+<para>
+
+</para>
+
+@LIBHAL_POLICY_ELEMENT_TYPE_UID: 
+@LIBHAL_POLICY_ELEMENT_TYPE_GID: 
+
+<!-- ##### STRUCT LibHalPolicyElement_s ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### TYPEDEF LibHalPolicyElement ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION libhal_policy_new_context ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_context_set_txt_source ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@directory: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_free_context ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_get_policies ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_is_uid_allowed_for_policy ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@uid: 
+@policy: 
+@resource: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_is_uid_gid_allowed_for_policy ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@uid: 
+@num_gids: 
+@gid_list: 
+@policy: 
+@resource: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_get_whitelist ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@policy: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_get_blacklist ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@policy: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_set_whitelist ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@policy: 
+@whitelist: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_set_blacklist ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@policy: 
+@blacklist: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_get_type ##### -->
+<para>
+
+</para>
+
+@elem: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_get_include_all ##### -->
+<para>
+
+</para>
+
+@elem: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_get_exclude_all ##### -->
+<para>
+
+</para>
+
+@elem: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_get_uid ##### -->
+<para>
+
+</para>
+
+@elem: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_get_gid ##### -->
+<para>
+
+</para>
+
+@elem: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_get_resource ##### -->
+<para>
+
+</para>
+
+@elem: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_new ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_set_type ##### -->
+<para>
+
+</para>
+
+@elem: 
+@type: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_set_include_all ##### -->
+<para>
+
+</para>
+
+@elem: 
+@value: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_set_exclude_all ##### -->
+<para>
+
+</para>
+
+@elem: 
+@value: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_set_uid ##### -->
+<para>
+
+</para>
+
+@elem: 
+@uid: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_set_gid ##### -->
+<para>
+
+</para>
+
+@elem: 
+@gid: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_set_resource ##### -->
+<para>
+
+</para>
+
+@elem: 
+@resource: 
+
+
+<!-- ##### FUNCTION libhal_policy_free_element ##### -->
+<para>
+
+</para>
+
+@elem: 
+
+
+<!-- ##### FUNCTION libhal_policy_free_element_list ##### -->
+<para>
+
+</para>
+
+@policy_element_list: 
+
+
+<!-- ##### FUNCTION libhal_policy_util_uid_to_name ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@uid: 
+@default_gid: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_util_gid_to_name ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@gid: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_util_name_to_uid ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@username: 
+@default_gid: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_util_name_to_gid ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@groupname: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_policy_element_dump ##### -->
+<para>
+
+</para>
+
+@elem: 
+@fp: 
+
+

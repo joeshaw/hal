@@ -1,0 +1,345 @@
+<!-- ##### SECTION Title ##### -->
+property
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT HalProperty ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_INVALID ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_INT32 ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_UINT64 ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_DOUBLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_BOOLEAN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_STRING ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAL_PROPERTY_TYPE_STRLIST ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_property_free ##### -->
+<para>
+
+</para>
+
+@prop: 
+
+
+<!-- ##### FUNCTION hal_property_new_string ##### -->
+<para>
+
+</para>
+
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_new_int ##### -->
+<para>
+
+</para>
+
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_new_uint64 ##### -->
+<para>
+
+</para>
+
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_new_bool ##### -->
+<para>
+
+</para>
+
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_new_double ##### -->
+<para>
+
+</para>
+
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_new_strlist ##### -->
+<para>
+
+</para>
+
+@key: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_key ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_type ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_to_string ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_string ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_int ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_uint64 ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_bool ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_double ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_get_strlist ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_set_string ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+
+
+<!-- ##### FUNCTION hal_property_set_int ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+
+
+<!-- ##### FUNCTION hal_property_set_uint64 ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+
+
+<!-- ##### FUNCTION hal_property_set_bool ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+
+
+<!-- ##### FUNCTION hal_property_set_double ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+
+
+<!-- ##### FUNCTION hal_property_strlist_append ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_strlist_prepend ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_strlist_remove_elem ##### -->
+<para>
+
+</para>
+
+@prop: 
+@index: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_strlist_add ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_strlist_remove ##### -->
+<para>
+
+</para>
+
+@prop: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_strlist_clear ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_property_set_attribute ##### -->
+<para>
+
+</para>
+
+@prop: 
+
+
+<!-- ##### FUNCTION hal_property_get_attribute ##### -->
+<para>
+
+</para>
+
+@prop: 
+@Returns: 
+
+

@@ -1,0 +1,937 @@
+<!-- ##### SECTION Title ##### -->
+libhal-storage
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT LibHalDrive_s ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### TYPEDEF LibHalDrive ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT LibHalVolume_s ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### TYPEDEF LibHalVolume ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT LibHalStoragePolicy_s ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### TYPEDEF LibHalStoragePolicy ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### ENUM LibHalStoragePolicyIcon ##### -->
+<para>
+
+</para>
+
+@LIBHAL_STORAGE_ICON_DRIVE_REMOVABLE_DISK: 
+@LIBHAL_STORAGE_ICON_DRIVE_REMOVABLE_DISK_IDE: 
+@LIBHAL_STORAGE_ICON_DRIVE_REMOVABLE_DISK_SCSI: 
+@LIBHAL_STORAGE_ICON_DRIVE_REMOVABLE_DISK_USB: 
+@LIBHAL_STORAGE_ICON_DRIVE_REMOVABLE_DISK_IEEE1394: 
+@LIBHAL_STORAGE_ICON_DRIVE_DISK: 
+@LIBHAL_STORAGE_ICON_DRIVE_DISK_IDE: 
+@LIBHAL_STORAGE_ICON_DRIVE_DISK_SCSI: 
+@LIBHAL_STORAGE_ICON_DRIVE_DISK_USB: 
+@LIBHAL_STORAGE_ICON_DRIVE_DISK_IEEE1394: 
+@LIBHAL_STORAGE_ICON_DRIVE_CDROM: 
+@LIBHAL_STORAGE_ICON_DRIVE_CDROM_IDE: 
+@LIBHAL_STORAGE_ICON_DRIVE_CDROM_SCSI: 
+@LIBHAL_STORAGE_ICON_DRIVE_CDROM_USB: 
+@LIBHAL_STORAGE_ICON_DRIVE_CDROM_IEEE1394: 
+@LIBHAL_STORAGE_ICON_DRIVE_FLOPPY: 
+@LIBHAL_STORAGE_ICON_DRIVE_FLOPPY_IDE: 
+@LIBHAL_STORAGE_ICON_DRIVE_FLOPPY_SCSI: 
+@LIBHAL_STORAGE_ICON_DRIVE_FLOPPY_USB: 
+@LIBHAL_STORAGE_ICON_DRIVE_FLOPPY_IEEE1394: 
+@LIBHAL_STORAGE_ICON_DRIVE_TAPE: 
+@LIBHAL_STORAGE_ICON_DRIVE_COMPACT_FLASH: 
+@LIBHAL_STORAGE_ICON_DRIVE_MEMORY_STICK: 
+@LIBHAL_STORAGE_ICON_DRIVE_SMART_MEDIA: 
+@LIBHAL_STORAGE_ICON_DRIVE_SD_MMC: 
+@LIBHAL_STORAGE_ICON_DRIVE_CAMERA: 
+@LIBHAL_STORAGE_ICON_DRIVE_PORTABLE_AUDIO_PLAYER: 
+@LIBHAL_STORAGE_ICON_DRIVE_ZIP: 
+@LIBHAL_STORAGE_ICON_DRIVE_JAZ: 
+@LIBHAL_STORAGE_ICON_DRIVE_FLASH_KEY: 
+@LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK: 
+@LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK_IDE: 
+@LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK_SCSI: 
+@LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK_USB: 
+@LIBHAL_STORAGE_ICON_VOLUME_REMOVABLE_DISK_IEEE1394: 
+@LIBHAL_STORAGE_ICON_VOLUME_DISK: 
+@LIBHAL_STORAGE_ICON_VOLUME_DISK_IDE: 
+@LIBHAL_STORAGE_ICON_VOLUME_DISK_SCSI: 
+@LIBHAL_STORAGE_ICON_VOLUME_DISK_USB: 
+@LIBHAL_STORAGE_ICON_VOLUME_DISK_IEEE1394: 
+@LIBHAL_STORAGE_ICON_VOLUME_CDROM: 
+@LIBHAL_STORAGE_ICON_VOLUME_CDROM_IDE: 
+@LIBHAL_STORAGE_ICON_VOLUME_CDROM_SCSI: 
+@LIBHAL_STORAGE_ICON_VOLUME_CDROM_USB: 
+@LIBHAL_STORAGE_ICON_VOLUME_CDROM_IEEE1394: 
+@LIBHAL_STORAGE_ICON_VOLUME_FLOPPY: 
+@LIBHAL_STORAGE_ICON_VOLUME_FLOPPY_IDE: 
+@LIBHAL_STORAGE_ICON_VOLUME_FLOPPY_SCSI: 
+@LIBHAL_STORAGE_ICON_VOLUME_FLOPPY_USB: 
+@LIBHAL_STORAGE_ICON_VOLUME_FLOPPY_IEEE1394: 
+@LIBHAL_STORAGE_ICON_VOLUME_TAPE: 
+@LIBHAL_STORAGE_ICON_VOLUME_COMPACT_FLASH: 
+@LIBHAL_STORAGE_ICON_VOLUME_MEMORY_STICK: 
+@LIBHAL_STORAGE_ICON_VOLUME_SMART_MEDIA: 
+@LIBHAL_STORAGE_ICON_VOLUME_SD_MMC: 
+@LIBHAL_STORAGE_ICON_VOLUME_CAMERA: 
+@LIBHAL_STORAGE_ICON_VOLUME_PORTABLE_AUDIO_PLAYER: 
+@LIBHAL_STORAGE_ICON_VOLUME_ZIP: 
+@LIBHAL_STORAGE_ICON_VOLUME_JAZ: 
+@LIBHAL_STORAGE_ICON_VOLUME_FLASH_KEY: 
+@LIBHAL_STORAGE_ICON_DISC_CDROM: 
+@LIBHAL_STORAGE_ICON_DISC_CDR: 
+@LIBHAL_STORAGE_ICON_DISC_CDRW: 
+@LIBHAL_STORAGE_ICON_DISC_DVDROM: 
+@LIBHAL_STORAGE_ICON_DISC_DVDRAM: 
+@LIBHAL_STORAGE_ICON_DISC_DVDR: 
+@LIBHAL_STORAGE_ICON_DISC_DVDRW: 
+@LIBHAL_STORAGE_ICON_DISC_DVDPLUSR: 
+@LIBHAL_STORAGE_ICON_DISC_DVDPLUSRW: 
+@LIBHAL_STORAGE_ICON_DISC_DVDPLUSRWDL: 
+@LIBHAL_STORAGE_ICON_DISC_BDROM: 
+@LIBHAL_STORAGE_ICON_DISC_BDR: 
+@LIBHAL_STORAGE_ICON_DISC_BDRE: 
+@LIBHAL_STORAGE_ICON_DISC_HDDVDROM: 
+@LIBHAL_STORAGE_ICON_DISC_HDDVDR: 
+@LIBHAL_STORAGE_ICON_DISC_HDDVDRW: 
+
+<!-- ##### STRUCT LibHalStoragePolicyIconPair ##### -->
+<para>
+
+</para>
+
+@icon: 
+@icon_path: 
+
+<!-- ##### FUNCTION libhal_storage_policy_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_storage_policy_free ##### -->
+<para>
+
+</para>
+
+@policy: 
+
+
+<!-- ##### FUNCTION libhal_storage_policy_set_icon_path ##### -->
+<para>
+
+</para>
+
+@policy: 
+@icon: 
+@path: 
+
+
+<!-- ##### FUNCTION libhal_storage_policy_set_icon_mapping ##### -->
+<para>
+
+</para>
+
+@policy: 
+@pairs: 
+
+
+<!-- ##### FUNCTION libhal_storage_policy_lookup_icon ##### -->
+<para>
+
+</para>
+
+@policy: 
+@icon: 
+@Returns: 
+
+
+<!-- ##### ENUM LibHalDriveBus ##### -->
+<para>
+
+</para>
+
+@LIBHAL_DRIVE_BUS_UNKNOWN: 
+@LIBHAL_DRIVE_BUS_IDE: 
+@LIBHAL_DRIVE_BUS_SCSI: 
+@LIBHAL_DRIVE_BUS_USB: 
+@LIBHAL_DRIVE_BUS_IEEE1394: 
+@LIBHAL_DRIVE_BUS_CCW: 
+
+<!-- ##### ENUM LibHalDriveType ##### -->
+<para>
+
+</para>
+
+@LIBHAL_DRIVE_TYPE_REMOVABLE_DISK: 
+@LIBHAL_DRIVE_TYPE_DISK: 
+@LIBHAL_DRIVE_TYPE_CDROM: 
+@LIBHAL_DRIVE_TYPE_FLOPPY: 
+@LIBHAL_DRIVE_TYPE_TAPE: 
+@LIBHAL_DRIVE_TYPE_COMPACT_FLASH: 
+@LIBHAL_DRIVE_TYPE_MEMORY_STICK: 
+@LIBHAL_DRIVE_TYPE_SMART_MEDIA: 
+@LIBHAL_DRIVE_TYPE_SD_MMC: 
+@LIBHAL_DRIVE_TYPE_CAMERA: 
+@LIBHAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER: 
+@LIBHAL_DRIVE_TYPE_ZIP: 
+@LIBHAL_DRIVE_TYPE_JAZ: 
+@LIBHAL_DRIVE_TYPE_FLASHKEY: 
+
+<!-- ##### ENUM LibHalDriveCdromCaps ##### -->
+<para>
+
+</para>
+
+@LIBHAL_DRIVE_CDROM_CAPS_CDROM: 
+@LIBHAL_DRIVE_CDROM_CAPS_CDR: 
+@LIBHAL_DRIVE_CDROM_CAPS_CDRW: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDRAM: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDROM: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDR: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDRW: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW: 
+@LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL: 
+@LIBHAL_DRIVE_CDROM_CAPS_BDROM: 
+@LIBHAL_DRIVE_CDROM_CAPS_BDR: 
+@LIBHAL_DRIVE_CDROM_CAPS_BDRE: 
+@LIBHAL_DRIVE_CDROM_CAPS_HDDVDROM: 
+@LIBHAL_DRIVE_CDROM_CAPS_HDDVDR: 
+@LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW: 
+
+<!-- ##### FUNCTION libhal_drive_from_udi ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@udi: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_from_device_file ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@device_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_free ##### -->
+<para>
+
+</para>
+
+@drive: 
+
+
+<!-- ##### FUNCTION libhal_drive_is_hotpluggable ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_uses_removable_media ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_no_partitions_hint ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_requires_eject ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_type ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_bus ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_cdrom_caps ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_device_major ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_device_minor ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_type_textual ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_device_file ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_udi ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_serial ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_firmware_version ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_model ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_vendor ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_physical_device_udi ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_dedicated_icon_drive ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_dedicated_icon_volume ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_compute_display_name ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_compute_icon_name ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_is_mountable ##### -->
+<para>
+
+</para>
+
+@drive: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_get_desired_mount_point ##### -->
+<para>
+
+</para>
+
+@drive: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_get_mount_options ##### -->
+<para>
+
+</para>
+
+@drive: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_get_mount_fs ##### -->
+<para>
+
+</para>
+
+@drive: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_find_all_volumes ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@drive: 
+@num_volumes: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_default_get_mount_root ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_default_use_managed_keyword ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_default_get_managed_keyword_primary ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_policy_default_get_managed_keyword_secondary ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@Returns: 
+
+
+<!-- ##### ENUM LibHalVolumeUsage ##### -->
+<para>
+
+</para>
+
+@LIBHAL_VOLUME_USAGE_MOUNTABLE_FILESYSTEM: 
+@LIBHAL_VOLUME_USAGE_PARTITION_TABLE: 
+@LIBHAL_VOLUME_USAGE_RAID_MEMBER: 
+@LIBHAL_VOLUME_USAGE_CRYPTO: 
+@LIBHAL_VOLUME_USAGE_UNKNOWN: 
+
+<!-- ##### ENUM LibHalVolumeDiscType ##### -->
+<para>
+
+</para>
+
+@LIBHAL_VOLUME_DISC_TYPE_CDROM: 
+@LIBHAL_VOLUME_DISC_TYPE_CDR: 
+@LIBHAL_VOLUME_DISC_TYPE_CDRW: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDROM: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDRAM: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDR: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDRW: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDPLUSRW: 
+@LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR_DL: 
+@LIBHAL_VOLUME_DISC_TYPE_BDROM: 
+@LIBHAL_VOLUME_DISC_TYPE_BDR: 
+@LIBHAL_VOLUME_DISC_TYPE_BDRE: 
+@LIBHAL_VOLUME_DISC_TYPE_HDDVDROM: 
+@LIBHAL_VOLUME_DISC_TYPE_HDDVDR: 
+@LIBHAL_VOLUME_DISC_TYPE_HDDVDRW: 
+
+<!-- ##### FUNCTION libhal_volume_from_udi ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@udi: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_from_device_file ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@device_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_free ##### -->
+<para>
+
+</para>
+
+@volume: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_size ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_udi ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_device_file ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_device_major ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_device_minor ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_fstype ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_fsversion ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_fsusage ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_is_mounted ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_is_partition ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_is_disc ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_partition_number ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_label ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_mount_point ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_uuid ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_storage_device_udi ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_crypto_get_backing_volume_udi ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_crypto_get_clear_volume_udi ##### -->
+<para>
+
+</para>
+
+@hal_ctx: 
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_disc_has_audio ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_disc_has_data ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_disc_is_blank ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_disc_is_rewritable ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_disc_is_appendable ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_disc_type ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_type ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_should_ignore ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_compute_size_as_string ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_compute_display_name ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_compute_icon_name ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_should_be_visible ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@target_mount_point: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_is_mountable ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_get_desired_mount_point ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_get_mount_options ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_policy_get_mount_fs ##### -->
+<para>
+
+</para>
+
+@drive: 
+@volume: 
+@policy: 
+@Returns: 
+
+
