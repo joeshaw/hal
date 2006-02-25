@@ -1,5 +1,9 @@
 2006-02-25  David Zeuthen  <davidz@redhat.com>
 
+	* gtk-doc.make: New file
+
+2006-02-25  David Zeuthen  <davidz@redhat.com>
+
 	* libhal/libhal.[ch]: Convert doc comments from Doxygen to gtk-doc
 
 	* libhal-storage/libhal-storage.[ch]: Convert doc comments from
