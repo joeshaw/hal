@@ -12,7 +12,7 @@ AM_INIT_AUTOMAKE(hal, 0.5.8)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
-# libtool versioning - this applies to libhal and libhal-storage
+# libtool versioning - this applies to libhal, libhal-storage and libhal-policy
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
@@ -178,8 +178,9 @@ fi
 
 AM_CONDITIONAL(GCOV, test x$enable_gcov = xyes)
 
+glib_module="glib-2.0 >= 2.6.0"
 dbus_module="dbus-1 >= 0.33"
-pkg_modules="glib-2.0 >= 2.6.0, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module"
+pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 EXPAT_LIB=""
@@ -237,6 +238,12 @@ PKG_CHECK_MODULES(DBUS, [$dbus_module])
 
 AC_SUBST(DBUS_CFLAGS)
 AC_SUBST(DBUS_LIBS)
+
+# glib libs
+PKG_CHECK_MODULES(GLIB, [$glib_module])
+
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
 ### All this also from dbus
 
@@ -404,6 +411,7 @@ AM_GLIB_GNU_GETTEXT
 AC_OUTPUT([
 hal.pc
 hal-storage.pc
+hal-policy.pc
 hal.conf
 Makefile
 hald/Makefile
@@ -416,6 +424,7 @@ hald/haldaemon
 hald-runner/Makefile
 libhal/Makefile
 libhal-storage/Makefile
+libhal-policy/Makefile
 tools/Makefile
 tools/linux/Makefile
 tools/device-manager/hal-device-manager

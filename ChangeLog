@@ -1,3 +1,23 @@
+2006-02-25  David Zeuthen  <davidz@redhat.com>
+
+	* hal-policy.pc.in: New file
+
+	* libhal-policy/libhal-policy-test.c: New file
+
+	* libhal-policy/libhal-policy.[ch]: New files
+
+	* libhal-policy/Makefile.am: New file
+
+	* hald/Makefile.am: Uncomment hald-test as this is currently
+	somewhat broken
+
+	* doc/api/Doxyfile.in: Add libhal-policy to INPUT
+
+	* configure.in: Add stuff of libhal-policy
+
+	* Makefile.am: Add libhal-policy to SUBDIRS and hal-policy.pc to
+	pkgconfig_DATA and hal-policy.pc.in to EXTRA_DIST
+
 2006-02-24  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-system-power-set-power-save: Fix for
