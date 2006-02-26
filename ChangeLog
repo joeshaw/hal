@@ -1,5 +1,15 @@
 2006-02-26  David Zeuthen  <davidz@redhat.com>
 
+	* configure.in: Generate policy/Makefile and policy/txt/Makefile
+
+	* policy/Makefile.am: New file
+
+	* policy/txt/Makefile.am: Install policy files to /etc/hal/policy
+
+	* policy/txt/*.policy: Policy files
+
+2006-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* tools/Makefile.am: Add build rules for hal-policy-is-privileged
 
 	* tools/hal-policy-is-privileged.c: New file, used to query policy

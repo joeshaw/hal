@@ -397,6 +397,8 @@ tools/linux/Makefile
 tools/device-manager/hal-device-manager
 tools/device-manager/Makefile
 tools/device-manager/Const.py
+policy/Makefile
+policy/txt/Makefile
 fdi/Makefile
 fdi/preprobe/Makefile
 fdi/preprobe/10osvendor/Makefile
