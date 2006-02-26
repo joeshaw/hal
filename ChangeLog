@@ -1,5 +1,19 @@
 2006-02-26  David Zeuthen  <davidz@redhat.com>
 
+	* policy/txt/power-hibernate.policy (Allow),
+	* policy/txt/power-poweroff.policy (Allow),
+	* policy/txt/power-suspend.policy (Allow),
+	* policy/txt/storage-removable-mount.policy (Allow),
+	* policy/txt/storage-removable-mount-change-uid.policy (Allow):
+	Ugh, replace uid:all with uid:__all__ as the former was malformed
+
+	* tools/hal-policy-is-privileged.c: Add verbose operation
+
+	* tools/Makefile.am (bin_PROGRAMS): Ugh, forgot backslash when
+	adding hal-policy-is-privileged
+
+2006-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in: Generate policy/Makefile and policy/txt/Makefile
 
 	* policy/Makefile.am: New file

@@ -13,13 +13,13 @@ INCLUDES = \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal \
 	@PACKAGE_CFLAGS@
 
-bin_PROGRAMS = \
-	lshal \
-	hal-get-property \
-	hal-set-property \
-	hal-find-by-capability \
-	hal-find-by-property \
-	hal-device
+bin_PROGRAMS =                    \
+	lshal                     \
+	hal-get-property          \
+	hal-set-property          \
+	hal-find-by-capability    \
+	hal-find-by-property      \
+	hal-device                \
 	hal-policy-is-privileged
 
 hal_policy_is_privileged_SOURCES = hal-policy-is-privileged.c

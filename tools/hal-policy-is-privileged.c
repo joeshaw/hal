@@ -47,6 +47,7 @@ usage (int argc, char *argv[])
 		 "    -r, --resource       Resource\n"
 		 "    -p, --policy         policy to test for\n"
 		 "    -h, --help           Show this information and exit\n"
+		 "    -v, --verbose        Verbose operation\n"
 		 "    -V, --version        Print version number\n"
 		 "\n"
 		 "Queries system policy whether a given user is allowed for a given\n"
@@ -69,6 +70,7 @@ main (int argc, char *argv[])
 		{"resource", required_argument, NULL, 'r'},
 		{"policy", required_argument, NULL, 'p'},
 		{"help", no_argument, NULL, 'h'},
+		{"verbose", no_argument, NULL, 'v'},
 		{"version", no_argument, NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
@@ -76,13 +78,14 @@ main (int argc, char *argv[])
 	char *endp;
 	gboolean is_allowed;
 	LibHalPolicyResult result;
+	gboolean is_verbose = FALSE;
 
 	rc = 1;
 	
 	while (TRUE) {
 		int c;
 		
-		c = getopt_long (argc, argv, "u:r:p:UhV", long_options, NULL);
+		c = getopt_long (argc, argv, "u:r:p:UhVv", long_options, NULL);
 
 		if (c == -1)
 			break;
@@ -100,11 +103,15 @@ main (int argc, char *argv[])
 			policy = g_strdup (optarg);
 			break;
 			
+		case 'v':
+			is_verbose = TRUE;
+			break;
+
 		case 'h':
 			usage (argc, argv);
 			rc = 0;
 			goto out;
-			
+
 		case 'V':
 			printf ("hal-policy-is-privileged version " PACKAGE_VERSION "\n");
 			rc = 0;
@@ -121,11 +128,11 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-/*
-	printf ("user = '%s'\n", user);
-	printf ("policy = '%s'\n", policy);
-	printf ("resource = '%s'\n", resource);
-*/
+	if (is_verbose) {
+		printf ("user     = '%s'\n", user);
+		printf ("policy   = '%s'\n", policy);
+		printf ("resource = '%s'\n", resource);
+	}
 
 	ctx = libhal_policy_new_context ();
 	if (ctx == NULL) {
@@ -142,9 +149,10 @@ main (int argc, char *argv[])
 		}
 	}
 
-/*
-	printf ("uid %d\n", (int) uid);
-*/
+	if (is_verbose) {
+		printf ("user '%s' is uid %d\n", user, (int) uid);
+	}
+
 	result = libhal_policy_is_uid_allowed_for_policy (ctx, 
 							  uid,
 							  policy,
@@ -171,10 +179,11 @@ main (int argc, char *argv[])
 		g_warning ("no such policy '%s'", policy);
 		break;
 	}
-/*
-	printf ("result %d\n", result);
-	printf ("is_allowed %d\n", is_allowed);
-*/
+
+	if (is_verbose) {
+		printf ("result %d\n", result);
+		printf ("is_allowed %d\n", is_allowed);
+	}
 
 out:
 	if (ctx != NULL)
