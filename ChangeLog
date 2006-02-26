@@ -1,5 +1,11 @@
 2006-02-26  David Zeuthen  <davidz@redhat.com>
 
+	* tools/Makefile.am: Add build rules for hal-policy-is-privileged
+
+	* tools/hal-policy-is-privileged.c: New file, used to query policy
+
+2006-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* NEWS: Write requirements for HAL 0.5.8 (and CVS HEAD)
 
 2006-02-25  David Zeuthen  <davidz@redhat.com>

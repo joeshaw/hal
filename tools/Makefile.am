@@ -3,8 +3,12 @@
 SUBDIRS =  linux device-manager
 
 INCLUDES = \
+	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
+	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
+	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
+	-DPACKAGE_SCRIPT_DIR=\""$(datadir)/hal/scripts"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal \
 	@PACKAGE_CFLAGS@
@@ -16,6 +20,10 @@ bin_PROGRAMS = \
 	hal-find-by-capability \
 	hal-find-by-property \
 	hal-device
+	hal-policy-is-privileged
+
+hal_policy_is_privileged_SOURCES = hal-policy-is-privileged.c
+hal_policy_is_privileged_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal-policy/libhal-policy.la
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
