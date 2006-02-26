@@ -1,5 +1,5 @@
 # who is allowed to reboot the machine
 
 [Policy]
-Allow=uid:all
+Allow=uid:__all__
 Deny=
