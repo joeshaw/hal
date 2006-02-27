@@ -1,5 +1,26 @@
 2006-02-26  David Zeuthen  <davidz@redhat.com>
 
+	Use new policy framework to enforce policy. Always throw the same
+	exception org.freedesktop.Hal.Device.PermissionDeniedByPolicy as
+	callers can use that to identify that policy prevented the user
+	from invoking this method.
+
+	* tools/hal-system-storage-mount: 
+
+	* tools/hal-system-storage-umount: 
+
+	* tools/hal-system-storage-eject: 
+
+	* tools/hal-system-power-suspend: 
+
+	* tools/hal-system-power-hibernate: 
+
+	* tools/hal-system-power-reboot: 
+
+	* tools/hal-system-power-poweroff: 
+
+2006-02-26  David Zeuthen  <davidz@redhat.com>
+
 	* policy/txt/power-hibernate.policy (Allow),
 	* policy/txt/power-poweroff.policy (Allow),
 	* policy/txt/power-suspend.policy (Allow),
