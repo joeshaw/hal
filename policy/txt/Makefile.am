@@ -1,7 +1,7 @@
 
 txtpolicydir = $(sysconfdir)/hal/policy
 
-txtpolicy_DATA =                                   \
+dist_txtpolicy_DATA =                              \
 	storage-fixed-mount.policy                 \
 	storage-fixed-mount-change-uid.policy	   \
 	storage-removable-mount.policy             \

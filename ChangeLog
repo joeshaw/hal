@@ -1,3 +1,9 @@
+2006-03-01  Richard Hughes <richard@hughsie.com>
+
+	* Makefile.am, policy/txt/Makefile.am: Fix build by including the new
+	policy directory in the tarball, and by shipping the files as part of
+	the dist.
+
 2006-02-26  David Zeuthen  <davidz@redhat.com>
 
 	Use new policy framework to enforce policy. Always throw the same
