@@ -3809,23 +3809,23 @@
             </row>
 
             <row>
-              <entry><literal>portable_audio_player.output_formats</literal> (string)</entry>
+              <entry><literal>portable_audio_player.output_formats</literal> (strlist)</entry>
               <entry>example: audio/mpeg audio/x-ms-wma</entry>
               <entry>Yes</entry>
               <entry>
-		A whitespace-separated list of MIME-types representing 
-		the kind of audio formats that the device can play back
+		A string list of MIME-types representing the kind of audio 
+		formats that the device can play back
 	      </entry>
             </row>
 
             <row>
-              <entry><literal>portable_audio_player.input_formats</literal> (string)</entry>
+              <entry><literal>portable_audio_player.input_formats</literal> (strlist)</entry>
               <entry>example: audio/x-wav</entry>
               <entry>Yes</entry>
               <entry>
-		A whitespace-separated list of MIME-types representing 
-		the kind of audio formats that the device can record. If
-		empty, it means that the device is not capable of recording.
+		A string list of MIME-types representing the kind of audio 
+		formats that the device can record. If empty, it means that 
+		the device is not capable of recording.
 	      </entry>
             </row>
 

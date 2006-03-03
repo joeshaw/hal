@@ -1,3 +1,8 @@
+2006-03-03  Danny Kukawka  <danny.kukawka@web.de>
+
+	* doc/spec/hal-spec.xml.in: fixed spec for portable_audio_player 
+	namespace properties which not use string but strlist 
+
 2006-03-03  Richard Hughes <richard@hughsie.com>
 
 	* doc/spec/hal-spec.xml.in: Ammend the spec as now button.has_state
