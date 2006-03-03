@@ -4,6 +4,7 @@ fdidir = $(datadir)/hal/fdi/policy/10osvendor
 dist_fdi_DATA = 			\
 	10-keyboard-policy.fdi		\
 	10-power-mgmt-policy.fdi	\
+	10-toshiba-buttons.fdi		\
 	10-laptop-panel-mgmt-policy.fdi	\
 	15-storage-luks.fdi		\
 	20-storage-methods.fdi

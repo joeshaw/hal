@@ -9,7 +9,13 @@ INCLUDES = \
 	@PACKAGE_CFLAGS@
 
 if HALD_COMPILE_LINUX2
-libexec_PROGRAMS  = hald-addon-hid-ups hald-addon-acpi hald-addon-storage hald-addon-pmu hald-addon-keyboard
+libexec_PROGRAMS  = \
+	hald-addon-hid-ups \
+	hald-addon-acpi \
+	hald-addon-acpi-buttons-toshiba \
+	hald-addon-storage \
+	hald-addon-keyboard \
+	hald-addon-pmu
 
 if HAVE_LIBUSB
 libexec_PROGRAMS += hald-addon-usb-csr
@@ -24,6 +30,9 @@ hald_addon_acpi_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_addon_pmu_SOURCES = addon-pmu.c
 hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
+
+hald_addon_acpi_buttons_toshiba_SOURCES = addon-acpi-buttons-toshiba.c
+hald_addon_acpi_buttons_toshiba_LDADD = $(top_builddir)/libhal/libhal.la @PACKAGE_LIBS@
 
 hald_addon_storage_SOURCES = addon-storage.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la
