@@ -1,5 +1,16 @@
 2006-03-03  Richard Hughes <richard@hughsie.com>
 
+	* hald/linux2/addons/.cvsignore: Append hald-addon-acpi-buttons-toshiba
+
+	* .cvsignore: Append hal-policy.pc
+
+	* tools/.cvsignore: Append hal-policy-is-privileged
+
+	* libhal-policy/.cvsignore, policy/.cvsignore, policy/txt/.cvsignore:
+	Add this file, copied from libhal-storage.
+
+2006-03-03  Richard Hughes <richard@hughsie.com>
+
 	* hald/linux2/addons/addon-acpi-buttons-toshiba.c,
 	hald/linux2/addons/Makefile.am: Build hald-addon-acpi-buttons-toshiba.
 	When the acpi->input patches get sent to the kernel, and HAL has a

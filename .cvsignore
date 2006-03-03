@@ -11,6 +11,7 @@ config.sub
 configure
 hal.conf
 hal.pc
+hal-policy.pc
 libtool
 ltmain.sh
 stamp-h1
