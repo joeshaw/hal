@@ -1,3 +1,10 @@
+2006-03-03  Richard Hughes <richard@hughsie.com>
+
+	* hald/linux2/addons/addon-keyboard.c: Convert the key names to include
+	a central dash between words, e.g. converting "brightnessdown" and
+	"ejectcdto" to "brightness-down" and "eject-cd" to conform to the new
+	standard for key names. I think the only thing this breaks is g-p-m.
+
 2006-03-01  Richard Hughes <richard@hughsie.com>
 
 	* Makefile.am, policy/txt/Makefile.am: Fix build by including the new
