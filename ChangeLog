@@ -1,5 +1,10 @@
 2006-03-03  Richard Hughes <richard@hughsie.com>
 
+	* doc/spec/hal-spec.xml.in: Ammend the spec as now button.has_state
+	and button.type are not mandatory.
+
+2006-03-03  Richard Hughes <richard@hughsie.com>
+
 	* hald/linux2/addons/.cvsignore: Append hald-addon-acpi-buttons-toshiba
 
 	* .cvsignore: Append hal-policy.pc

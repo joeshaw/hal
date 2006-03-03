@@ -4753,7 +4753,7 @@
             <row>
               <entry><literal>button.type</literal> (string)</entry>
               <entry></entry>
-              <entry>Yes</entry>
+              <entry>No</entry>
               <entry>The type of button</entry>
             </row>
             <row>
@@ -4783,7 +4783,7 @@
             <row>
               <entry><literal>button.has_state</literal> (bool)</entry>
               <entry></entry>
-              <entry>Yes</entry>
+              <entry>no</entry>
               <entry>True if the button maintains state, e.g. can toggled on/off</entry>
             </row>
             <row>
