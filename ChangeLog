@@ -1,5 +1,11 @@
 2006-03-03  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/classdev.c: (serial_get_prober): fixed to be sure that 
+	the prober is only called for ttyS* devices. Only this devices 
+	support TIOCGSERIAL, other tty devices like ttyACM* or ttyUSB* not.
+
+2006-03-03  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/spec/hal-spec.xml.in: fixed spec for portable_audio_player 
 	namespace properties which not use string but strlist 
 

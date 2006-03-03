@@ -927,7 +927,12 @@ out:
 static const gchar *
 serial_get_prober (HalDevice *d)
 {
-	return "hald-probe-serial";
+	/* FIXME TODO: check if there is an other way, to call the porber only
+		 on ttyS* devices, than check the name of the device file */
+	if (!strncmp(hal_device_property_get_string (d, "linux.device_file"), "/dev/ttyS", 9))
+		return "hald-probe-serial";
+	else 
+		return NULL;
 }
 
 static gboolean
