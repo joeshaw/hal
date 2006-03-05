@@ -1,3 +1,29 @@
+2006-03-04  Artem Kachitchkine  <artem.kachitchkin@sun.com>
+
+	* configure.in: check for getgrouplist() and use the local version
+	if not provided by the system.
+
+	* hald/hald_dbus.c: (hald_exec_method_free_mi),
+	(hald_exec_method_do_invocation), (hald_exec_method): stdin is
+	a macro in Solaris, can't use to name struct members.
+
+	* hald/logger.h: if using Sun compiler, define __FUNCTION__
+	through __func__.
+
+	* libhal-policy/Makefile.am: posix thread flags required on Solaris
+	for getgrgid_r() to have 5 arguments (otherwise it has 4).
+
+	* libhal-policy/libhal-policy.c: (afp_process_elem),
+	(libhal_policy_util_uid_to_name), (libhal_policy_element_set_uid),
+	(libhal_policy_element_set_gid), (libhal_policy_element_get_uid),
+	(libhal_policy_element_get_gid), (libhal_policy_element_dump):
+	anonymous unions are not supported in C99, fixed LibHalPolicyElement.
+	(getgrouplist): check for getgrouplist() and use the local version
+	if not provided by the system.
+
+	* tools/lshal.c: if using Sun compiler, define __FUNCTION__
+	through __func__.
+
 2006-03-03  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/classdev.c: (serial_get_prober): fixed to be sure that 

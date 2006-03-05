@@ -50,6 +50,10 @@
 
 #define LIBHAL_POLICY_MAGIC 0x3117beef
 
+#ifdef __SUNPRO_C
+#define __FUNCTION__ __func__
+#endif
+
 /** Checks if LibHalContext *ctx == NULL */
 #define LIBHAL_POLICY_CHECK_CONTEXT(_ctx_, _ret_)				\
 	do {									\
@@ -79,7 +83,7 @@ struct LibHalPolicyElement_s
 	union {
 		uid_t uid;
 		gid_t gid;
-	};
+	} id;
 	gboolean include_all;
 	gboolean exclude_all;
 	char *resource;
@@ -298,7 +302,7 @@ afp_process_elem(LibHalPolicyElement *elem, gboolean *flag, uid_t uid, guint num
 		} else if (elem->exclude_all) {
 			*flag = FALSE;
 		}else {
-			if (elem->uid == uid)
+			if (elem->id.uid == uid)
 				*flag = TRUE;
 		}
 		break;
@@ -311,7 +315,7 @@ afp_process_elem(LibHalPolicyElement *elem, gboolean *flag, uid_t uid, guint num
 		}else {
 			guint i;
 			for (i = 0; i < num_gids; i++) {
-				if (elem->gid == gid_list[i])
+				if (elem->id.gid == gid_list[i])
 					*flag = TRUE;
 			}
 		}
@@ -401,7 +405,7 @@ libhal_policy_util_uid_to_name (LibHalPolicyContext *ctx, uid_t uid, gid_t *defa
 
 	bufsize = sysconf (_SC_GETPW_R_SIZE_MAX);
 	buf = g_new0 (char, bufsize);
-		
+
 	rc = getpwuid_r (uid, &pwd, buf, bufsize, &pwdp);
 	if (rc != 0 || pwdp == NULL) {
 		/*g_warning ("getpwuid_r() returned %d", rc);*/
@@ -690,14 +694,14 @@ void
 libhal_policy_element_set_uid (LibHalPolicyElement     *elem, 
 			       uid_t                    uid)
 {
-	elem->uid = uid;
+	elem->id.uid = uid;
 }
 
 void
 libhal_policy_element_set_gid (LibHalPolicyElement     *elem, 
 			       gid_t                    gid)
 {
-	elem->gid = gid;
+	elem->id.gid = gid;
 }
 
 void
@@ -751,13 +755,13 @@ libhal_policy_element_get_exclude_all (LibHalPolicyElement     *elem)
 uid_t
 libhal_policy_element_get_uid (LibHalPolicyElement     *elem)
 {
-	return elem->uid;
+	return elem->id.uid;
 }
 
 gid_t
 libhal_policy_element_get_gid (LibHalPolicyElement     *elem)
 {
-	return elem->gid;
+	return elem->id.gid;
 }
 
 const char *
@@ -785,7 +789,7 @@ libhal_policy_element_dump (LibHalPolicyElement *elem, FILE* fp)
 		} else if (elem->exclude_all) {
 			fprintf (fp, "uid:      none\n");
 		} else {
-			fprintf (fp, "uid:      %d\n", (int) elem->uid);
+			fprintf (fp, "uid:      %d\n", (int) elem->id.uid);
 		}
 	} else if (elem->type == LIBHAL_POLICY_ELEMENT_TYPE_GID) {
 		if (elem->include_all) {
@@ -793,10 +797,50 @@ libhal_policy_element_dump (LibHalPolicyElement *elem, FILE* fp)
 		} else if (elem->exclude_all) {
 			fprintf (fp, "gid:      none\n");
 		} else {
-			fprintf (fp, "gid:      %d\n", (int) elem->gid);
+			fprintf (fp, "gid:      %d\n", (int) elem->id.gid);
 		}
 	}
 	fprintf (fp, "resource: %s\n", elem->resource != NULL ? elem->resource : "(None)");
 }
+
+#ifndef HAVE_GETGROUPLIST
+/* Get group list for the named user.
+ * Return up to ngroups in the groups array.
+ * Return actual number of groups in ngroups.
+ * Return -1 if more groups found than requested.
+ */
+int
+getgrouplist (const char *name, int baseid, int *groups, int *ngroups)
+{
+	struct group *g;
+	int n = 0;
+	int i;
+	int ret;
+
+	if (*ngroups <= 0) {
+		return (-1);
+	}
+
+	*groups++ = baseid;
+	n++;
+
+	setgrent ();
+	while ((g = getgrent ()) != NULL) {
+		for (i = 0; g->gr_mem[i]; i++) {
+			if (strcmp (name, g->gr_mem[0]) == 0) {
+				*groups++ = g->gr_gid;
+				if (++n > *ngroups) {
+					break;
+				}
+			}
+		}
+	}
+	endgrent ();
+
+	ret = (n > *ngroups) ? -1 : n;
+	*ngroups = n;
+	return (ret);
+}
+#endif
 
 /** @} */

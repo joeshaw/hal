@@ -1,5 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 
+if HALD_COMPILE_SOLARIS
+CFLAGS += -D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT
+endif
+
 INCLUDES = \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
@@ -23,7 +27,6 @@ libhal_policy_la_SOURCES =                                \
 libhal_policy_la_LIBADD = @GLIB_LIBS@
 
 libhal_policy_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
-
 
 check_PROGRAMS = libhal-policy-test
 

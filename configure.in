@@ -271,6 +271,8 @@ if test x$have_size64 = xno; then
   esac
 fi
 
+AC_CHECK_FUNCS(getgrouplist)
+
 # DocBook Documentation
 
 AC_PATH_PROG(DOCBOOK, docbook2html, no)

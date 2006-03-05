@@ -56,6 +56,9 @@ void logger_disable (void);
 void logger_enable_syslog (void);
 void logger_disable_syslog (void);
 
+#ifdef __SUNPRO_C
+#define __FUNCTION__ __func__
+#endif
 
 /** Trace logging macro */
 #define HAL_TRACE(expr)   do {logger_setup(HAL_LOGPRI_TRACE,   __FILE__, __LINE__, __FUNCTION__); logger_emit expr; } while(0)

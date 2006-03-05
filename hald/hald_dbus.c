@@ -2532,7 +2532,7 @@ typedef struct {
 	char *udi;
 	char *execpath;
 	char **extra_env;
-	char *stdin;
+	char *mstdin;
 	DBusMessage *message;
 	DBusConnection *connection;
 } MethodInvocation;
@@ -2549,7 +2549,7 @@ hald_exec_method_free_mi (MethodInvocation *mi)
 	g_free (mi->udi);
 	g_free (mi->execpath);
 	g_strfreev (mi->extra_env);
-	g_free (mi->stdin);
+	g_free (mi->mstdin);
 	g_free (mi);
 }
 
@@ -2571,7 +2571,7 @@ hald_exec_method_do_invocation (MethodInvocation *mi)
 		hald_runner_run_method(d, 
 				       mi->execpath, 
 				       mi->extra_env, 
-				       mi->stdin, 
+				       mi->mstdin, 
 				       TRUE,
 				       0,
 				       hald_exec_method_cb,
@@ -2861,7 +2861,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 	mi->udi = g_strdup (d->udi);
 	mi->execpath = g_strdup (execpath);
 	mi->extra_env = g_strdupv (extra_env);
-	mi->stdin = g_strdup (stdin_str->str);
+	mi->mstdin = g_strdup (stdin_str->str);
 	mi->message = message;
 	mi->connection = connection;
 	hald_exec_method_enqueue (mi);
