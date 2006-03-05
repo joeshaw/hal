@@ -1,5 +1,9 @@
 2006-03-04  Artem Kachitchkine  <artem.kachitchkin@sun.com>
 
+	* libhal-policy/Makefile.am: use AM_CFLAGS instead of CFLAGS
+
+2006-03-04  Artem Kachitchkine  <artem.kachitchkin@sun.com>
+
 	* configure.in: check for getgrouplist() and use the local version
 	if not provided by the system.
 

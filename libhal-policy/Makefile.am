@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 if HALD_COMPILE_SOLARIS
-CFLAGS += -D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT
+AM_CFLAGS = -D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT
 endif
 
 INCLUDES = \
