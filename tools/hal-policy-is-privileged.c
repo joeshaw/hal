@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * hal_.c : Show devices managed by HAL
+ * hal-policy-is-privileged.c : Small command line wrapper for libhal-policy
  *
  * Copyright (C) 2006 David Zeuthen, <david@fubar.dk>
  *

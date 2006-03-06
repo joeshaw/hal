@@ -1,3 +1,17 @@
+2006-03-06  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-storage-mount.c: New file
+
+	* tools/Makefile.am: Add rules for hal-storage-mount
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Use new C program
+	hal-storage-mount instead of hal-system-storage-mount (shell
+	script). Don't require ignored firmware partitions to be internal,
+	otherwise 'bootstrap' would show up when attaching my Powerbook G4
+	in target disk mode. Allow a bunch of uid= options for other file
+	systems than vfat as storage-[fixed|removable]-mount-change-uid
+	policies will refuse to mount.
+
 2006-03-06  Sjoerd Simons <sjoerd@luon.net>
 
 	* hald/linux2/addons/addon-keyboard.c:  Also recognize mute,

@@ -43,7 +43,12 @@ hal_find_by_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 hal_device_SOURCES = hal-device.c
 hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
-libexec_PROGRAMS = hal-system-power-pmu
+libexec_PROGRAMS =               \
+	hal-storage-mount	 \
+	hal-system-power-pmu
+
+hal_storage_mount_SOURCES = hal-storage-mount.c
+hal_storage_mount_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la $(top_builddir)/libhal-policy/libhal-policy.la
 
 hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
 hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
