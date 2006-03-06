@@ -1,3 +1,9 @@
+2006-03-06  Sjoerd Simons <sjoerd@luon.net>
+
+	* hald/linux2/addons/addon-keyboard.c:  Also recognize mute,
+	volume up/down buttons, switchvideo mode button and keyboard illumination
+	toggle/down/up buttons.
+
 2006-03-04  Artem Kachitchkine  <artem.kachitchkin@sun.com>
 
 	* libhal-policy/Makefile.am: use AM_CFLAGS instead of CFLAGS

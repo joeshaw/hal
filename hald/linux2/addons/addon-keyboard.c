@@ -138,7 +138,26 @@ static char *key_name[KEY_MAX + 1] = {
 	[KEY_BRIGHTNESSDOWN] = "brightness-down",
 	[KEY_BRIGHTNESSUP] = "brightness-up",
 	[KEY_MEDIA] = "media",
-	[KEY_POWER] = "power"
+	[KEY_POWER] = "power",
+	[KEY_MUTE] = "mute",
+	[KEY_VOLUMEDOWN] = "volume-down",
+	[KEY_VOLUMEUP] = "volume-up",
+#ifndef KEY_SWITCHVIDEOMODE
+#define KEY_SWITCHVIDEOMODE	227
+#endif
+	[KEY_SWITCHVIDEOMODE] = "switch-videomode",
+#ifndef KEY_KBDILLUMTOGGLE
+#define KEY_KBDILLUMTOGGLE	228
+#endif
+	[KEY_KBDILLUMTOGGLE] = "kbd-illum-toggle",
+#ifndef KEY_KBDILLUMDOWN
+#define KEY_KBDILLUMDOWN	229
+#endif
+	[KEY_KBDILLUMDOWN] = "kbd-illum-down",
+#ifndef KEY_KBDILLUMUP
+#define KEY_KBDILLUMUP		230
+#endif
+	[KEY_KBDILLUMUP] = "kbd-illum-up"
 };
 
 static void
