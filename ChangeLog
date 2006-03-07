@@ -1,3 +1,12 @@
+2006-03-07  Danny Kukawka  <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi:
+	Added several USB mp3 player to fdi file:
+	- added patch from Gabriel Burt <gabriel.burt@gmail.com> for 17 new
+	  devices
+	- applied patches and added new devices from fd.o bugs: 6095, 6102,
+	  6107, 6130, 6135, 6140, 6148, 6155, 6156, 6160 
+
 2006-03-06  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-storage-mount.c: New file
