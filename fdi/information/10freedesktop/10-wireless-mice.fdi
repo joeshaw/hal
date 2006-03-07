@@ -23,6 +23,18 @@
           <merge key="battery.csr.has_sms" type="bool">false</merge>
           <merge key="battery.csr.is_dual" type="bool">false</merge>
         </match>
+
+        <!-- Logitech, Inc. Cordless Mouse+Keyboard Receiver -->
+        <match key="usb_device.product_id" int="0xc505"> 
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">keyboard</merge>
+	  <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+
       </match>
     </match>
   </device>
