@@ -1,5 +1,9 @@
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
+	* doc/api/Makefile.am, doc/api/hal-docs.xml: Remove libhal-policy bits
+
+2006-03-07  David Zeuthen  <davidz@redhat.com>
+
 	Move libhal-policy to a dedicated package PolicyKit (available in
 	HAL CVS).
 

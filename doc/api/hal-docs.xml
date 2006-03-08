@@ -16,8 +16,4 @@
     <xi:include href="xml/libhal-storage.xml"/>
   </chapter>
 
-  <chapter>
-    <title>Querying and modifying policies</title>
-    <xi:include href="xml/libhal-policy.xml"/>
-  </chapter>
 </book>

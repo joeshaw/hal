@@ -16,8 +16,8 @@ DOC_MAIN_SGML_FILE=hal-docs.xml
 DOC_SOURCE_DIR=../..
 
 # Used for dependencies
-HFILE_GLOB=$(top_srcdir)/libhal/*.h $(top_srcdir)/libhal-storage/*.h $(top_srcdir)/libhal-policy/*.h
-CFILE_GLOB=$(top_srcdir)/libhal/*.c $(top_srcdir)/libhal-storage/*.c $(top_srcdir)/libhal-policy/*.c
+HFILE_GLOB=$(top_srcdir)/libhal/*.h $(top_srcdir)/libhal-storage/*.h
+CFILE_GLOB=$(top_srcdir)/libhal/*.c $(top_srcdir)/libhal-storage/*.c
 
 # Headers to ignore
 IGNORE_HFILES=
