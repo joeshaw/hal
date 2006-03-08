@@ -3829,6 +3829,56 @@
 	      </entry>
             </row>
 
+            <row>
+              <entry><literal>portable_audio_player.filepath_format</literal> (string)</entry>
+              <entry>examples: MUSIC/%Track or %Artist/%Album/%Track or mp3s/%Artist/%Album - %Track</entry>
+              <entry>No</entry>
+              <entry>
+                If portable_audio_player.access_method = "storage",
+                this may contain a string that will be used to format the file's name
+                and path before writing it to the device.  If audio files must be placed
+                in a particular subdirectory, or the device only allows one
+                sub-directory deep hierarchies, that information should be embedded
+                here. The variables available for this string are %Artist, %Album, and %Track.
+                Applications using this key are responsible for substituting the
+                appropriate values for these variables when formatting the file's path.
+	          </entry>
+            </row>
+
+            <row>
+              <entry><literal>portable_audio_player.audio_folders</literal> (strlist)</entry>
+              <entry>example: music/ voice/ linein/</entry>
+              <entry>No</entry>
+              <entry>
+                If portable_audio_player.access_method = "storage",
+                this may contain a string list of folders in which music
+                can be found.  Paths are relative to the mount point of the device.
+	          </entry>
+            </row>
+
+            <row>
+              <entry><literal>portable_audio_player.playlist_format</literal> (strlist)</entry>
+              <entry>example: audio/x-mpegurl audio/x-somethingelse</entry>
+              <entry>No</entry>
+              <entry>
+                A string list of the MIME-type of the playlist formats accepted by
+                this device.  Leave blank if none.
+	          </entry>
+            </row>
+
+            <row>
+              <entry><literal>portable_audio_player.playlist_path</literal> (string)</entry>
+              <entry>examples: playlists/%File or Playlist.m3u</entry>
+              <entry>No</entry>
+              <entry>
+                Set to the path to which playlists should be written.  Leave
+                blank if playlist files are not supported.  If the device supports a single playlist with a specific name/path,
+                set this to the path relative to the mount point that it should be saved to.  If it supports multiple
+                playlists, use the %File variable as needed.  Applications are responsible for substituting %File with the
+                desired playlist file name, noting that it's use in this string is optional.
+	          </entry>
+            </row>
+
           </tbody>
         </tgroup>
       </informaltable>

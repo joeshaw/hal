@@ -600,21 +600,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN3784"
+HREF="#AEN3808"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN3795"
+HREF="#AEN3819"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN3803"
+HREF="#AEN3827"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -7897,6 +7897,76 @@ CLASS="literal"
 		the device is not capable of recording.
 	      </TD
 ></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>portable_audio_player.filepath_format</TT
+> (string)</TD
+><TD
+>examples: MUSIC/%Track or %Artist/%Album/%Track or mp3s/%Artist/%Album - %Track</TD
+><TD
+>No</TD
+><TD
+>&#13;                If portable_audio_player.access_method = "storage",
+                this may contain a string that will be used to format the file's name
+                and path before writing it to the device.  If audio files must be placed
+                in a particular subdirectory, or the device only allows one
+                sub-directory deep hierarchies, that information should be embedded
+                here. The variables available for this string are %Artist, %Album, and %Track.
+                Applications using this key are responsible for substituting the
+                appropriate values for these variables when formatting the file's path.
+	          </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>portable_audio_player.audio_folders</TT
+> (strlist)</TD
+><TD
+>example: music/ voice/ linein/</TD
+><TD
+>No</TD
+><TD
+>&#13;                If portable_audio_player.access_method = "storage",
+                this may contain a string list of folders in which music
+                can be found.  Paths are relative to the mount point of the device.
+	          </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>portable_audio_player.playlist_format</TT
+> (strlist)</TD
+><TD
+>example: audio/x-mpegurl audio/x-somethingelse</TD
+><TD
+>No</TD
+><TD
+>&#13;                A string list of the MIME-type of the playlist formats accepted by
+                this device.  Leave blank if none.
+	          </TD
+></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>portable_audio_player.playlist_path</TT
+> (string)</TD
+><TD
+>examples: playlists/%File or Playlist.m3u</TD
+><TD
+>No</TD
+><TD
+>&#13;                Set to the path to which playlists should be written.  Leave
+                blank if playlist files are not supported.  If the device supports a single playlist with a specific name/path,
+                set this to the path relative to the mount point that it should be saved to.  If it supports multiple
+                playlists, use the %File variable as needed.  Applications are responsible for substituting %File with the
+                desired playlist file name, noting that it's use in this string is optional.
+	          </TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -7928,7 +7998,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2563"
+NAME="AEN2587"
 ></A
 ><TABLE
 BORDER="1"
@@ -8180,7 +8250,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2659"
+NAME="AEN2683"
 ></A
 ><TABLE
 BORDER="1"
@@ -8422,7 +8492,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2748"
+NAME="AEN2772"
 ></A
 ><TABLE
 BORDER="1"
@@ -8543,7 +8613,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2790"
+NAME="AEN2814"
 ></A
 ><TABLE
 BORDER="1"
@@ -8623,7 +8693,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2816"
+NAME="AEN2840"
 ></A
 ><TABLE
 BORDER="1"
@@ -8691,7 +8761,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2836"
+NAME="AEN2860"
 ></A
 ><TABLE
 BORDER="1"
@@ -9562,7 +9632,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3154"
+NAME="AEN3178"
 ></A
 ><TABLE
 BORDER="1"
@@ -9676,7 +9746,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3198"
+NAME="AEN3222"
 ></A
 ><TABLE
 BORDER="1"
@@ -9744,7 +9814,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3219"
+NAME="AEN3243"
 ></A
 ><TABLE
 BORDER="1"
@@ -9838,7 +9908,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3251"
+NAME="AEN3275"
 ></A
 ><TABLE
 BORDER="1"
@@ -9949,7 +10019,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3293"
+NAME="AEN3317"
 ></A
 ><TABLE
 BORDER="1"
@@ -10088,7 +10158,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3349"
+NAME="AEN3373"
 ></A
 ><TABLE
 BORDER="1"
@@ -10199,7 +10269,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3384"
+NAME="AEN3408"
 ></A
 ><TABLE
 BORDER="1"
@@ -10291,7 +10361,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3412"
+NAME="AEN3436"
 ></A
 ><TABLE
 BORDER="1"
@@ -10450,7 +10520,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3464"
+NAME="AEN3488"
 ></A
 ><TABLE
 BORDER="1"
@@ -10579,7 +10649,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3505"
+NAME="AEN3529"
 ></A
 ><TABLE
 BORDER="1"
@@ -11540,7 +11610,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3742"
+NAME="AEN3766"
 ></A
 ><TABLE
 BORDER="1"
@@ -11703,7 +11773,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3784"
+NAME="AEN3808"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -11819,7 +11889,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN3795"
+NAME="AEN3819"
 >Example</A
 ></H3
 ><P
@@ -11937,7 +12007,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3803"
+NAME="AEN3827"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P

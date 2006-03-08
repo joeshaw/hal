@@ -1,3 +1,9 @@
+2006-03-08  David Zeuthen  <davidz@redhat.com>
+
+	* doc/spec/hal-spec.xml.in: Patch from Gabriel Burt
+	<gabriel.burt@gmail.com>. Add some useful keys for
+	portable_audio_player.
+
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
 	* doc/api/Makefile.am, doc/api/hal-docs.xml: Remove libhal-policy bits
