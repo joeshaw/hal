@@ -1,5 +1,35 @@
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
+	Move libhal-policy to a dedicated package PolicyKit (available in
+	HAL CVS).
+
+	* configure.in: Require PolicyKit (available in hal CVS) and don't
+	build libhal-policy. Extract some useful POLKIT variables for
+	user, group and txtsrc for PolicyKit
+
+	* Makefile.am: Don't build libhal-policy or hal-policy.pc
+
+	* policy/txt/Makefile.am: Use new POLKIT_TXTSRC variable on where
+	to install policy
+
+	* tools/Makefile.am: Don't build hal-policy-is-privileged as it is
+	obsoleted by PolicyKit's polkit-is-privileged
+
+	* tools/hal-storage-mount.c: Use new libpolkit instead of
+	libhal-policy
+
+	* tools/hal-system-power-hibernate,
+	tools/hal-system-power-suspend, tools/hal-system-power-reboot,
+	tools/hal-system-power-shutdown: Use polkit-is-privileged instead
+	of hal-policy-is-privileged
+
+	* libhal-policy/libhal-policy.c, libhal-policy/libhal-policy.h,
+	libhal-policy/libhal-policy-test.c, libhal-policy/Makefile.am,
+	tools/hal-policy-is-privileged.c, tools/hal-system-storage-mount:
+	Remove these files.
+
+2006-03-07  David Zeuthen  <davidz@redhat.com>
+
 	* fdi/information/10freedesktop/10-wireless-mice.fdi: Add entry for
 	my wireless mouse+keyboard combo
 

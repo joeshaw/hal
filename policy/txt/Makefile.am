@@ -1,5 +1,5 @@
 
-txtpolicydir = $(sysconfdir)/hal/policy
+txtpolicydir = $(POLKIT_TXTSRC)
 
 dist_txtpolicy_DATA =                              \
 	storage-fixed-mount.policy                 \

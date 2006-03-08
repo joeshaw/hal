@@ -178,8 +178,19 @@ AM_CONDITIONAL(GCOV, test x$enable_gcov = xyes)
 
 glib_module="glib-2.0 >= 2.6.0"
 dbus_module="dbus-1 >= 0.33"
-pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module"
+polkit_module="polkit >= 0.1"
+pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module, $polkit_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
+
+POLKIT_USER=`$PKG_CONFIG --variable=user polkit`
+POLKIT_GROUP=`$PKG_CONFIG --variable=group polkit`
+POLKIT_TXTSRC=`$PKG_CONFIG --variable=txtsrc polkit`
+AC_SUBST(POLKIT_USER)
+AC_SUBST(POLKIT_GROUP)
+AC_SUBST(POLKIT_TXTSRC)
+AC_DEFINE_UNQUOTED(POLKIT_USER,"$POLKIT_USER", [User for PolicyKit])
+AC_DEFINE_UNQUOTED(POLKIT_GROUP,"$POLKIT_GROUP", [Group for PolicyKit])
+AC_DEFINE_UNQUOTED(POLKIT_TXTSRC,"$POLKIT_TXTSRC", [Location of text files for PolicyKit])
 
 EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      ese expat from here],
@@ -239,9 +250,13 @@ AC_SUBST(DBUS_LIBS)
 
 # glib libs
 PKG_CHECK_MODULES(GLIB, [$glib_module])
-
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+
+# polkit libs
+PKG_CHECK_MODULES(POLKIT, [$polkit_module])
+AC_SUBST(POLKIT_CFLAGS)
+AC_SUBST(POLKIT_LIBS)
 
 # Check for BLKGETSIZE64
 AC_CHECK_TYPE(pgoff_t, ,
@@ -380,7 +395,6 @@ AM_GLIB_GNU_GETTEXT
 AC_OUTPUT([
 hal.pc
 hal-storage.pc
-hal-policy.pc
 hal.conf
 Makefile
 hald/Makefile
@@ -393,7 +407,6 @@ hald/haldaemon
 hald-runner/Makefile
 libhal/Makefile
 libhal-storage/Makefile
-libhal-policy/Makefile
 tools/Makefile
 tools/linux/Makefile
 tools/device-manager/hal-device-manager

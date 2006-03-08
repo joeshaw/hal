@@ -46,11 +46,11 @@ fi
 # TODO: need to select storage-[fixed|removable][-change-uid]
 #POLICY=storage-fixed-mount
 #if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
-#    hal-policy-is-privileged --policy $POLICY --uid $HAL_METHOD_INVOKED_BY_UID
+#    polkit-is-privileged --policy $POLICY --uid $HAL_METHOD_INVOKED_BY_UID
 #    IS_PRIVILEGED=$?
 #    if [ "$IS_PRIVILEGED" != "0" ] ; then
 #	echo org.freedesktop.Hal.Device.PermissionDeniedByPolicy >&2
-#	echo uid $HAL_METHOD_INVOKED_BY_UID refused by policy "$POLICY" >&2
+#	echo $POLICY refused uid $HAL_METHOD_INVOKED_BY_UID >&2
 #	exit 1
 #    fi
 #fi

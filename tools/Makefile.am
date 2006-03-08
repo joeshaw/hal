@@ -19,11 +19,7 @@ bin_PROGRAMS =                    \
 	hal-set-property          \
 	hal-find-by-capability    \
 	hal-find-by-property      \
-	hal-device                \
-	hal-policy-is-privileged
-
-hal_policy_is_privileged_SOURCES = hal-policy-is-privileged.c
-hal_policy_is_privileged_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal-policy/libhal-policy.la
+	hal-device
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -48,7 +44,7 @@ libexec_PROGRAMS =               \
 	hal-system-power-pmu
 
 hal_storage_mount_SOURCES = hal-storage-mount.c
-hal_storage_mount_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la $(top_builddir)/libhal-policy/libhal-policy.la
+hal_storage_mount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
 hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
 hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -66,7 +62,6 @@ script_SCRIPTS =				\
 	hal-system-lcd-get-brightness		\
 	hal-system-lcd-set-brightness		\
 	hal-system-power-set-power-save		\
-	hal-system-storage-mount		\
 	hal-system-storage-unmount		\
 	hal-system-storage-eject		\
 	hal-system-storage-cleanup-mountpoint   \

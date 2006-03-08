@@ -35,7 +35,7 @@
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
-#include <libhal-policy/libhal-policy.h>
+#include <libpolkit/libpolkit.h>
 
 /*#define DEBUG*/
 #define DEBUG
@@ -287,7 +287,7 @@ bailout_if_mounted (const char *device)
 
 
 static void
-handle_mount (LibHalContext *hal_ctx, LibHalPolicyContext *pol_ctx, const char *udi,
+handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
 	      LibHalVolume *volume, LibHalDrive *drive, const char *device, uid_t invoked_by)
 {
 	int i, j;
@@ -538,11 +538,11 @@ handle_mount (LibHalContext *hal_ctx, LibHalPolicyContext *pol_ctx, const char *
 	printf ("using policy %s for uid %d\n", policy, invoked_by);
 #endif
 
-	if (libhal_policy_is_uid_allowed_for_policy (pol_ctx, 
-						     invoked_by,
-						     policy,
-						     udi,
-						     &allowed_by_policy) != LIBHAL_POLICY_RESULT_OK) {
+	if (libpolkit_is_uid_allowed_for_policy (pol_ctx, 
+						 invoked_by,
+						 policy,
+						 udi,
+						 &allowed_by_policy) != LIBPOLKIT_RESULT_OK) {
 		printf ("cannot lookup policy\n");
 		unknown_error ();
 	}
@@ -660,7 +660,7 @@ main (int argc, char *argv[])
 	LibHalVolume *volume;
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
-	LibHalPolicyContext *pol_ctx = NULL;
+	LibPolKitContext *pol_ctx = NULL;
 	uid_t invoked_by;
 
 	device = getenv ("HAL_PROP_BLOCK_DEVICE");
@@ -679,7 +679,7 @@ main (int argc, char *argv[])
 		usage ();
 	}
 
-	pol_ctx = libhal_policy_new_context ();
+	pol_ctx = libpolkit_new_context ();
 	if (pol_ctx == NULL) {
 		printf ("Cannot get policy context\n");
 		unknown_error ();
