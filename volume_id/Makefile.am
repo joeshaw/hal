@@ -34,6 +34,7 @@ libvolume_id_la_SOURCES =	\
 	minix.c			\
 	ocfs.c			\
 	vxfs.c			\
+	squashfs.c		\
 	logging.h		\
 	util.h			\
 	util.c			\
