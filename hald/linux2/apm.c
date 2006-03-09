@@ -200,12 +200,13 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 			is_discharging = (i.ac_line_status == FALSE);
 			/* apm returns time in minutes, not seconds */
 			remaining_time = i.battery_time * 60;
-			if (remaining_time < 0)
-				remaining_time = 0; 
 		}
 
-		/* set the time to discharge, or 0 for charging */
-		hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+		/* set the time on discharge, and remove property on charging because unknown on APM */
+		if (remaining_time > 0)
+			hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+		else
+			hal_device_property_remove (d, "battery.remaining_time");
 
 		/* set the correct charge states */
 		hal_device_property_set_bool (d, "battery.rechargeable.is_charging", is_charging);
