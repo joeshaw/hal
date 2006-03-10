@@ -2525,6 +2525,14 @@
               <entry>This property is TRUE if and only if the volume is mounted</entry>
             </row>
             <row>
+              <entry><literal>volume.is_mounted_read_only</literal> (bool)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This property is TRUE if and only if the volume is mounted and
+              the volume's file-system is read-only.
+              </entry>
+            </row>
+            <row>
               <entry><literal>volume.mount_point</literal> (string)</entry>
               <entry>example: /media/compact_flash1  </entry>
               <entry>Yes (is blank only when volume.is_mounted is FALSE)</entry>

@@ -722,6 +722,7 @@ struct LibHalVolume_s {
 	char *device_file;
 	char *volume_label; /* may be NULL, is never "" */
 	dbus_bool_t is_mounted;
+	dbus_bool_t is_mounted_read_only; /* TRUE iff is_mounted and r/o fs */
 	char *mount_point;  /* NULL iff !is_mounted */
 	char *fstype;       /* NULL iff !is_mounted or unknown */
 	char *fsversion;
@@ -1108,6 +1109,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fsversion",             vol->fsversion);
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_mounted",         vol->is_mounted);
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_mounted_read_only", vol->is_mounted_read_only);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fsusage",            vol_fsusage_textual);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.uuid",               vol->uuid);
 
@@ -1450,6 +1452,12 @@ dbus_bool_t
 libhal_volume_is_mounted (LibHalVolume *volume)
 {
 	return volume->is_mounted;
+}
+
+dbus_bool_t 
+libhal_volume_is_mounted_read_only (LibHalVolume *volume)
+{
+	return volume->is_mounted_read_only;
 }
 
 dbus_bool_t 

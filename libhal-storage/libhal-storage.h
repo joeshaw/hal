@@ -281,6 +281,7 @@ const char          *libhal_volume_get_fstype                    (LibHalVolume  
 const char          *libhal_volume_get_fsversion                 (LibHalVolume     *volume);
 LibHalVolumeUsage    libhal_volume_get_fsusage                   (LibHalVolume     *volume);
 dbus_bool_t          libhal_volume_is_mounted                    (LibHalVolume     *volume);
+dbus_bool_t          libhal_volume_is_mounted_read_only          (LibHalVolume     *volume);
 dbus_bool_t          libhal_volume_is_partition                  (LibHalVolume     *volume);
 dbus_bool_t          libhal_volume_is_disc                       (LibHalVolume     *volume);
 unsigned int         libhal_volume_get_partition_number          (LibHalVolume     *volume);

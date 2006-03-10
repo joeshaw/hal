@@ -228,9 +228,13 @@ blockdev_refresh_mount_state (HalDevice *d)
 				/* found entry for this device in /proc/mounts */
 				device_property_atomic_update_begin ();
 				hal_device_property_set_bool (dev, "volume.is_mounted", TRUE);
+				hal_device_property_set_bool (dev, "volume.is_mounted_read_only",
+							      hasmntopt (&mnt, MNTOPT_RO) ? TRUE : FALSE);
 				hal_device_property_set_string (dev, "volume.mount_point", mnt.mnt_dir);
 				device_property_atomic_update_end ();
-				HAL_INFO (("  set %s to be mounted at %s", hal_device_get_udi (dev), mnt.mnt_dir));
+				HAL_INFO (("  set %s to be mounted at %s (%s)",
+					   hal_device_get_udi (dev), mnt.mnt_dir,
+					   hasmntopt (&mnt, MNTOPT_RO) ? "ro" : "rw"));
 				volumes = g_slist_delete_link (volumes, volume);
 				break;
 			}
@@ -247,6 +251,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		mount_point = g_strdup (hal_device_property_get_string (dev, "volume.mount_point"));
 		device_property_atomic_update_begin ();
 		hal_device_property_set_bool (dev, "volume.is_mounted", FALSE);
+		hal_device_property_set_bool (dev, "volume.is_mounted_read_only", FALSE);
 		hal_device_property_set_string (dev, "volume.mount_point", "");
 		device_property_atomic_update_end ();
 		HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));
@@ -924,6 +929,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.mount_point", "");
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
+		hal_device_property_set_bool (d, "volume.is_mounted_read_only", FALSE);
 		hal_device_property_set_bool (
 			d, "volume.is_disc", 
 			strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);

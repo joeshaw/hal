@@ -1,3 +1,22 @@
+2006-03-10  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Christian Neumair <chris@gnome-de.org>.
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Set
+	FALSE for volume.is_mounted_read_only
+
+	* libhal-storage/libhal-storage.c (libhal_drive_from_udi): Extract
+	volume.is_mounted_read_only
+	(libhal_volume_is_mounted_read_only): New function
+
+	* libhal-storage/libhal-storage.h: Export prototype for
+	libhal_volume_is_mounted_read_only()
+
+	* hald/linux2/blockdev.c (blockdev_refresh_mount_state): Set
+	volume.is_mounted_read_only
+
+	* doc/spec/hal-spec.xml.in: Document volume.is_mounted_read_only
+
 2006-03-09  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/apm.c: (battery_refresh): fixed remaining_time 
