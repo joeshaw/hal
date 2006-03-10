@@ -1,3 +1,12 @@
+2006-03-10  Richard Hughes <richard@hughsie.com>
+
+	Patch from Paolo Borelli <pborelli@katamail.com>.
+
+	* tools/hal-system-lcd-set-brightness: Sony laptops have a brightness
+	range from 1..8 not 0..7 and so we need to add 1 before we echo this
+	brightness value to /proc/acpi/sony/brightness. Fixes g-p-m not setting
+	the screen to full brightness when set to 100%.
+
 2006-03-10  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Christian Neumair <chris@gnome-de.org>.
