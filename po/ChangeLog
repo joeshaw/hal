@@ -1,3 +1,8 @@
+2006-03-13  Danny Kukawka  <danny.kukawka@web.de>
+
+	* km.po: added new translation file for Khmer from SUSE/Novell
+	translation team 
+
 2006-01-26  Kjartan Maraas  <kmaraas@gnome.org>
 
 	* POTFILES.in: Remove fstab-sync.c.
