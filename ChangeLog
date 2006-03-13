@@ -1,3 +1,9 @@
+2006-03-13  Danny Kukawka  <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi:
+	applied slightly adopted patch and added new device from fd.o bugs:
+	6169, 6228
+
 2006-03-10  Richard Hughes <richard@hughsie.com>
 
 	Patch from Paolo Borelli <pborelli@katamail.com>.
