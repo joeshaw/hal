@@ -1,3 +1,16 @@
+2006-03-14  David Zeuthen  <davidz@redhat.com>
+
+	* policy/txt/*: Use new suffix .privilege instead of .policy and
+	prefix privilege files with "hal-".
+	
+	* tools/hal-storage-mount.c: (invalid_mount_option),
+	(permission_denied_privilege), (handle_mount), (main): Update to
+	new libpolkit from PolicyKit CVS HEAD. Also read the environment
+	variable $HAL_METHOD_INVOKED_BY_PID which is yet to be exported
+	by hald and hald-runner
+	
+	* tools/hal-system-*: Use new hal- prefix for the privilege name
+
 2006-03-13  Danny Kukawka  <danny.kukawka@web.de>
 
 	* configure.in: Added Khmer translation to ALL_LINGUAS 

@@ -16,7 +16,7 @@ unsupported() {
 	exit 1
 }
 
-POLICY=power-suspend
+POLICY=hal-power-suspend
 if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
     polkit-is-privileged --policy $POLICY --uid $HAL_METHOD_INVOKED_BY_UID
     IS_PRIVILEGED=$?

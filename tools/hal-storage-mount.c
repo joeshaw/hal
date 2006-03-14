@@ -32,10 +32,12 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <mntent.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
-#include <libpolkit/libpolkit.h>
+#include <libpolkit.h>
 
 /*#define DEBUG*/
 #define DEBUG
@@ -80,10 +82,10 @@ already_mounted (const char *device)
 }
 
 static void
-invalid_mount_option (const char *option, uid_t uid)
+invalid_mount_option (const char *option, const char *uid)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.Volume.InvalidMountOption\n");
-	fprintf (stderr, "The option '%s' is not allowed for uid=%d\n", option, uid);
+	fprintf (stderr, "The option '%s' is not allowed for uid=%s\n", option, uid);
 	exit (1);
 }
 
@@ -113,10 +115,10 @@ mount_point_not_available (const char *mount_point)
 
 
 static void
-refused_by_policy (const char *policy, uid_t uid)
+permission_denied_privilege (const char *privilege, const char *uid)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.PermissionDeniedByPolicy\n");
-	fprintf (stderr, "%s refused uid %d\n", policy, uid);
+	fprintf (stderr, "%s refused uid %s\n", privilege, uid);
 	exit (1);
 }
 
@@ -288,7 +290,8 @@ bailout_if_mounted (const char *device)
 
 static void
 handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
-	      LibHalVolume *volume, LibHalDrive *drive, const char *device, uid_t invoked_by)
+	      LibHalVolume *volume, LibHalDrive *drive, const char *device, 
+	      const char *invoked_by_uid, pid_t invoked_by_pid)
 {
 	int i, j;
 	DBusError error;
@@ -310,14 +313,15 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	GString *mount_option_str;
 	gboolean pol_is_fixed;
 	gboolean pol_change_uid;
-	char *policy;
-	gboolean allowed_by_policy;
+	char *privilege;
+	gboolean allowed_by_privilege;
 	gboolean explicit_mount_point_given;
 	const char *end;
 
 #ifdef DEBUG
 	printf ("device         = %s\n", device);
-	printf ("invoked by uid = %d\n", (int) invoked_by);
+	printf ("invoked by uid = %s\n", invoked_by_uid);
+	printf ("invoked by pid = %d\n", invoked_by_pid);
 #endif
 
 	if (volume != NULL) {
@@ -496,13 +500,13 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		}
 
 		/* apparently option was not ok */
-		invalid_mount_option (given, invoked_by);
+		invalid_mount_option (given, invoked_by_uid);
 
 	option_ok:
 		;
 	}
 
-	/* Check policy */
+	/* Check privilege */
 	pol_is_fixed = TRUE;
 	if (libhal_drive_is_hotpluggable (drive) || libhal_drive_uses_removable_media (drive))
 		pol_is_fixed = FALSE;
@@ -522,38 +526,39 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 
 	if (pol_is_fixed) {
 		if (pol_change_uid) {
-			policy = "storage-fixed-mount-change-uid";
+			privilege = "hal-storage-fixed-mount-change-uid";
 		} else {
-			policy = "storage-fixed-mount";
+			privilege = "hal-storage-fixed-mount";
 		}
 	} else {
 		if (pol_change_uid) {
-			policy = "storage-removable-mount-change-uid";
+			privilege = "hal-storage-removable-mount-change-uid";
 		} else {
-			policy = "storage-removable-mount";
+			privilege = "hal-storage-removable-mount";
 		}
 	}
 
 #ifdef DEBUG
-	printf ("using policy %s for uid %d\n", policy, invoked_by);
+	printf ("using privilege %s for uid %s, pid %d\n", privilege, invoked_by_uid, invoked_by_pid);
 #endif
 
-	if (libpolkit_is_uid_allowed_for_policy (pol_ctx, 
-						 invoked_by,
-						 policy,
-						 udi,
-						 &allowed_by_policy) != LIBPOLKIT_RESULT_OK) {
-		printf ("cannot lookup policy\n");
+	if (libpolkit_is_uid_allowed_for_privilege (pol_ctx, 
+						    invoked_by_pid,
+						    invoked_by_uid,
+						    privilege,
+						    udi,
+						    &allowed_by_privilege) != LIBPOLKIT_RESULT_OK) {
+		printf ("cannot lookup privilege\n");
 		unknown_error ();
 	}
 
-	if (!allowed_by_policy) {
-		printf ("refused by policy\n");
-		refused_by_policy (policy, invoked_by);
+	if (!allowed_by_privilege) {
+		printf ("caller don't possess privilege\n");
+		permission_denied_privilege (privilege, invoked_by_uid);
 	}
 
 #ifdef DEBUG
-	printf ("passed policy\n");
+	printf ("passed privilege\n");
 #endif
 
 	/* create directory and the .created-by-hal file */
@@ -640,7 +645,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	dbus_error_init (&error);
 	libhal_device_set_property_int (hal_ctx, udi, 
 					"info.hal_mount.mounted_by_uid",
-					(dbus_int32_t) invoked_by,
+					(dbus_int32_t) atoi (invoked_by_uid),
 					&error);
 
 	g_free (sout);
@@ -660,8 +665,11 @@ main (int argc, char *argv[])
 	LibHalVolume *volume;
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
+	DBusConnection *system_bus = NULL;
 	LibPolKitContext *pol_ctx = NULL;
-	uid_t invoked_by;
+	char *invoked_by_uid;
+	char *invoked_by_pid_str;
+	pid_t invoked_by_pid;
 
 	device = getenv ("HAL_PROP_BLOCK_DEVICE");
 	if (device == NULL)
@@ -671,7 +679,13 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		usage ();
 
-	invoked_by = (uid_t) atoi (getenv ("HAL_METHOD_INVOKED_BY_UID"));
+	invoked_by_uid = getenv ("HAL_METHOD_INVOKED_BY_UID");
+
+	invoked_by_pid_str = getenv ("HAL_METHOD_INVOKED_BY_PID");
+	if (invoked_by_pid_str != NULL)
+		invoked_by_pid = atoi (invoked_by_pid_str);
+	else
+		invoked_by_pid = -1;
 
 	dbus_error_init (&error);
 	if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
@@ -679,9 +693,15 @@ main (int argc, char *argv[])
 		usage ();
 	}
 
-	pol_ctx = libpolkit_new_context ();
+	dbus_error_init (&error);
+	system_bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (system_bus == NULL) {
+		printf ("Cannot connect to the system bus\n");
+		usage ();
+	}
+	pol_ctx = libpolkit_new_context (system_bus);
 	if (pol_ctx == NULL) {
-		printf ("Cannot get policy context\n");
+		printf ("Cannot get libpolkit context\n");
 		unknown_error ();
 	}
 
@@ -693,7 +713,7 @@ main (int argc, char *argv[])
 		if (drive == NULL) {
 			usage ();
 		} else {
-			handle_mount (hal_ctx, pol_ctx, udi, NULL, drive, device, invoked_by);
+			handle_mount (hal_ctx, pol_ctx, udi, NULL, drive, device, invoked_by_uid, invoked_by_pid);
 		}
 
 	} else {
@@ -708,7 +728,7 @@ main (int argc, char *argv[])
 		if (drive == NULL)
 			unknown_error ();
 
-		handle_mount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by);
+		handle_mount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by_uid, invoked_by_pid);
 
 	}
 
