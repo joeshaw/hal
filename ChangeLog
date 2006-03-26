@@ -1,5 +1,17 @@
 2006-03-26  David Zeuthen  <davidz@redhat.com>
 
+	Fix for RH bug #185557
+
+	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Introduce
+	"pcmcia" as a value storage.bus and mark devices of this bus as being
+	hotpluggable
+
+	* fdi/information/10freedesktop/10-usb-card-readers.fdi: When 
+	storage.bus="pcmcia" mark all drives with "FLASH" in the model
+	string as having drive_type="compact_flash"
+
+2006-03-26  David Zeuthen  <davidz@redhat.com>
+
 	* tools/hal-system-power-hibernate, 
 	  tools/hal-system-power-suspend,
 	  tools/hal-system-power-reboot,

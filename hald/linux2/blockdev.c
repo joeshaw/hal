@@ -768,6 +768,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev = d_it;
 					physdev_udi = udi_it;
 					hal_device_property_set_string (d, "storage.bus", "ide");
+					/* want to continue here, because it may be pcmcia */
+				} else if (strcmp (bus, "pcmcia") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+					is_hotpluggable = TRUE;
+					hal_device_property_set_string (d, "storage.bus", "pcmcia");
 					break;
 				} else if (strcmp (bus, "mmc") == 0) {
 					physdev = d_it;
