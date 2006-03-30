@@ -83,4 +83,15 @@ else
 	    fi
 	fi
 
+#Refresh devices as a resume can do funny things
+for type in button battery ac_adapter
+do
+	devices=`hal-find-by-capability --capability $type`
+	for device in $devices
+	do
+		dbus-send --system --dest=org.freedesktop.Hal \
+			  $device org.freedesktop.Hal.Device.Rescan
+	done
+done
+
 exit $RET

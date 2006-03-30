@@ -1,3 +1,11 @@
+2006-03-30  Richard Hughes <richard@hughsie.com>
+
+	* tools/hal-system-power-hibernate, tools/hal-system-power-suspend:
+	Refresh device types button, battery and ac_adapter on resume, as
+	a suspend or hibernate can do funny things to ACPI.
+	This fixes a common problem where HAL forgets the value of the lid
+	button when it is resuming and may fix other related problems also.
+
 2006-03-26  David Zeuthen  <davidz@redhat.com>
 
 	Fix for RH bug #185557
