@@ -1,3 +1,10 @@
+2006-04-12  Danny Kukawka  <danny.kukawka@web.de>
+
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: Applied 
+	slightly adopted patches from fd.o bugs 6317, 6462, 6464, 6561.
+	Reorganized the listed devices ordered my the vendor id and removed
+	double vendor matches.
+
 2006-03-30  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-power-hibernate, tools/hal-system-power-suspend:
