@@ -1,3 +1,9 @@
+2006-04-16  Richard Hughes <richard@hughsie.com>
+
+	* fdi/information/10freedesktop/10-wireless-mice.fdi: Added new
+	Logitech csr mice, mainly from Bastien Nocera for fd.o 6397.
+	Also added Coordless Click! which has also been tested working.
+
 2006-04-12  Danny Kukawka  <danny.kukawka@web.de>
 
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: Applied 

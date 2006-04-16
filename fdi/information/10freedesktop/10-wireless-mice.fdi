@@ -4,10 +4,21 @@
     <match key="info.bus" string="usb_device">
       <match key="usb_device.vendor_id" int="0x046d"> <!-- Logitech, Inc. -->
 
-        <match key="usb_device.product_id" int="0xc50e"> <!-- Receiver for MX1000 Laser -->
+        <!-- Receiver for MX1000 Laser -->
+        <match key="usb_device.product_id" int="0xc50e">
           <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
           <merge key="battery.type" type="string">mouse</merge>
           <merge key="battery.is_rechargeable" type="bool">true</merge>
+	  <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- Receiver for Coordless Click! -->
+        <match key="usb_device.product_id" int="0xc510"> 
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
 	  <!-- proprietary properties defining the behavior -->
           <merge key="battery.csr.has_res" type="bool">false</merge>
           <merge key="battery.csr.has_sms" type="bool">false</merge>
@@ -34,6 +45,137 @@
           <merge key="battery.csr.is_dual" type="bool">false</merge>
         </match>
 
+        <!-- Wheel Mouse Optical -->
+        <match key="usb_device.product_id" int="0xc00e">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">true</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- MouseMan Traveler -->
+        <match key="usb_device.product_id" int="0xc00f">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">true</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- MouseMan Dual Optical -->
+        <match key="usb_device.product_id" int="0xc012">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">true</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- MX300 Optical Mouse -->
+        <match key="usb_device.product_id" int="0xc024">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">true</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- MX500 Optical Mouse -->
+        <match key="usb_device.product_id" int="0xc025">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">true</merge>
+          <merge key="battery.csr.has_sms" type="bool">true</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- iFeel Mouse (silver) -->
+        <match key="usb_device.product_id" int="0xc031">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">true</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- Mouse Receiver -->
+        <match key="usb_device.product_id" int="0xc501">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- Dual Receiver -->
+        <match key="usb_device.product_id" int="0xc502">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">true</merge>
+        </match>
+
+        <!-- Receiver for Cordless Freedom Optical -->
+        <match key="usb_device.product_id" int="0xc504">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">true</merge>
+        </match>
+
+        <!-- Receiver for MX700 Optical Mouse -->
+        <match key="usb_device.product_id" int="0xc506">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">true</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- Receiver for Cordless Optical TrackMan -->
+        <match key="usb_device.product_id" int="0xc508">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">true</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
+
+        <!-- Receiver for Cordless Presenter -->
+        <match key="usb_device.product_id" int="0xc702">
+          <append key="info.addons" type="strlist">hald-addon-usb-csr</append>
+          <merge key="battery.type" type="string">mouse</merge>
+          <merge key="battery.is_rechargeable" type="bool">true</merge>
+          <!-- proprietary properties defining the behavior -->
+          <merge key="battery.csr.has_res" type="bool">false</merge>
+          <merge key="battery.csr.has_sms" type="bool">false</merge>
+          <merge key="battery.csr.is_dual" type="bool">false</merge>
+        </match>
 
       </match>
     </match>
