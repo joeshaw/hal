@@ -618,22 +618,90 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
+static gchar *
+get_processor_model_name (gint proc_num)
+{
+	gchar *model_name;
+
+	gchar  *contents = NULL;
+	GError *error    = NULL;
+
+	gchar **lines;
+
+	gint proc_num_i;
+
+	gchar *cursor;
+	gint   i;
+
+
+	if (g_file_get_contents ("/proc/cpuinfo", & contents, NULL, & error)) {
+		lines = g_strsplit (contents, "\n", 0);
+
+		for (i = 0; lines [i]; ++i) {
+			if (strstr (lines [i], "processor\t:")) {
+				cursor = strstr (lines [i], ":");
+
+				proc_num_i = atoi (cursor + 1);
+
+				if (proc_num_i == proc_num) {
+					for (; lines [i]; ++i) {
+						if (strstr (lines [i], "model name\t:")) {
+							cursor = strstr (lines [i], ":");
+
+							g_strstrip (++ cursor);
+
+							model_name = g_strdup (cursor);
+
+							g_strfreev (lines);
+							g_free     (contents);
+
+							return model_name;
+						}
+					}
+				}
+			}
+		}
+	}
+	else {
+		HAL_ERROR (("Couldn't open /proc/cpuinfo: %s", error->message));
+
+		g_error_free (error);
+	}
+
+	return NULL;
+}
+
 static gboolean
 processor_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
 	const char *path;
 
+	gchar *model_name;
+	gint   proc_num;
+
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
 		return FALSE;
 
-	hal_device_property_set_string (d, "info.product", "Processor");
+	proc_num = hal_util_grep_int_elem_from_file (
+		path, "info", "processor id", 0, 10, FALSE
+	);
+
+	if ((model_name = get_processor_model_name (proc_num))) {
+		hal_device_property_set_string (d, "info.product", model_name);
+
+		g_free (model_name);
+	}
+	else
+		hal_device_property_set_string (d, "info.product", "Unknown Processor");
+
 	hal_device_property_set_string (d, "info.category", "processor");
 	hal_device_add_capability (d, "processor");
 	hal_util_set_int_elem_from_file (d, "processor.number", path,
 					 "info", "processor id", 0, 10, FALSE);
 	hal_util_set_bool_elem_from_file (d, "processor.can_throttle", path,
 					  "info", "throttling control", 0, "yes", FALSE);
+
 	return TRUE;
 }
 

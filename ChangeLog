@@ -1,5 +1,15 @@
 2006-04-17  Kay Sievers  <kay.sievers@vrfy.org>
 
+	Read name of cpu from /proc/cpuinfo. Some day we will
+	have this in sysfs, but it's not ready for now.
+	Thanks for the patch to:
+	  Jim Krehl <jimmyk@novell.com>
+
+	* hald/linux2/acpi.c: (get_processor_model_name),
+	(processor_refresh):
+
+2006-04-17  Kay Sievers  <kay.sievers@vrfy.org>
+
 	Add printer command set returned by 1284 query.
 	"Each key will have at least one value, and may have more than one
          value. The minimum necessary keys (case-sensitive) are MANUFACTURER,
