@@ -61,6 +61,7 @@ main (int argc, char *argv[])
 	char *model;
 	char *serial;
 	char *desc;
+	char *cmd;
 
 	fd = -1;
 
@@ -97,6 +98,7 @@ main (int argc, char *argv[])
 	model = NULL;
 	serial = NULL;
 	desc = NULL;
+	cmd = NULL;
 
 	dbg ("device_id = %s", device_id + 2);
 
@@ -120,6 +122,10 @@ main (int argc, char *argv[])
 			desc = *iter + 4;
 		else if (strncmp (*iter, "DESCRIPTION:", 12) == 0)
 			desc = *iter + 12;
+		else if (strncmp (*iter, "COMMAND SET:", 12) == 0)
+			cmd = *iter + 12;
+		else if (strncmp (*iter, "CMD:", 4) == 0)
+			cmd = *iter + 4;
 	}
 
 	dbus_error_init (&error);
@@ -139,6 +145,13 @@ main (int argc, char *argv[])
 
 	if (desc != NULL) {
 		libhal_device_set_property_string (ctx, udi, "printer.description", desc, &error);
+	}
+
+	if (cmd != NULL) {
+		char **cmdset = g_strsplit (cmd, ",", 0);
+		for (iter = cmdset; *iter != NULL; iter++)
+			libhal_device_property_strlist_append (ctx, udi, "printer.commandset", *iter, &error);
+		g_strfreev (cmdset);
 	}
 
 	g_strfreev (props);

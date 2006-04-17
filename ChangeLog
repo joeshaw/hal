@@ -1,3 +1,16 @@
+2006-04-17  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add printer command set returned by 1284 query.
+	"Each key will have at least one value, and may have more than one
+         value. The minimum necessary keys (case-sensitive) are MANUFACTURER,
+         COMMAND SET, and MODEL. (These keys may be abbreviated as MFG, CMD,
+         and MDL respectively.) Each implementation will supply these three
+         keys and possibly additional ones as well"
+	http://www.longrange.net/ParallelPort/1284d12.pdf
+
+	* doc/spec/hal-spec.xml.in:
+	* hald/linux2/probing/probe-printer.c: (main):
+
 2006-04-16  Richard Hughes <richard@hughsie.com>
 
 	* fdi/information/10freedesktop/10-wireless-mice.fdi: Added new

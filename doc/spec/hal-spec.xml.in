@@ -3743,6 +3743,12 @@
               <entry>Yes</entry>
               <entry>TODO</entry>
             </row>
+            <row>
+              <entry><literal>printer.commandset</literal> (strlist)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>List of supported commands / printer languages.</entry>
+            </row>
 
           </tbody>
         </tgroup>
