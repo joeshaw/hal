@@ -124,6 +124,8 @@ main (int argc, char *argv[])
 			desc = *iter + 12;
 		else if (strncmp (*iter, "COMMAND SET:", 12) == 0)
 			cmd = *iter + 12;
+		else if (strncmp (*iter, "COMMANDSET:", 11) == 0)
+			cmd = *iter + 11;
 		else if (strncmp (*iter, "CMD:", 4) == 0)
 			cmd = *iter + 4;
 	}

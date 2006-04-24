@@ -1,3 +1,8 @@
+2006-04-24  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add "COMMANDSET:" to the printer query parsing.
+	* hald/linux2/probing/probe-printer.c: (main):
+
 2006-04-24  Richard Hughes <richard@hughsie.com>
 
 	* tools/hal-system-power-hibernate, tools/hal-system-power-suspend:
