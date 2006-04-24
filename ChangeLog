@@ -1,3 +1,9 @@
+2006-04-24  Richard Hughes <richard@hughsie.com>
+
+	* tools/hal-system-power-hibernate, tools/hal-system-power-suspend:
+	Add --print-reply to dbus-send else the Rescan does not work.
+	This should fix a whole load of bugs related to ACPI values on resume.
+
 2006-04-17  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Read name of cpu from /proc/cpuinfo. Some day we will
