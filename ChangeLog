@@ -1,3 +1,10 @@
+2006-04-24  Richard Hughes <richard@hughsie.com>
+
+	* fdi/information/10freedesktop/10-wireless-mice.fdi: Update the patch
+	from http://bugs.freedesktop.org/show_bug.cgi?id=6397 as we are trying
+	to detect wired mice here as well. Also add the proper product names,
+	giving a nicer name in hal-device-manager.
+
 2006-04-24  Kay Sievers  <kay.sievers@vrfy.org>
 
 	Add "COMMANDSET:" to the printer query parsing.
