@@ -1,3 +1,17 @@
+2006-04-26  Richard Hughes  <richard@hughsie.com>
+
+	Patch from Bastien Nocera <hadess@hadess.net>:
+
+	* hald/linux2/acpi.c: (laptop_panel_refresh),
+	(acpi_synthesize_sonypi_display), (acpi_synthesize_hotplug_events):
+	Create an LCD Panel object of type sonypi, necessary for getting the
+	methods supported for panasonic notebooks.
+	Fixes https://bugs.freedesktop.org/show_bug.cgi?id=6729
+
+	* tools/hal-system-lcd-get-brightness:
+	* tools/hal-system-lcd-set-brightness:
+	Support the sonypi brightness type.
+
 2006-04-26  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Gabriel Burt <gabriel.burt@gmail.com>.

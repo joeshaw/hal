@@ -27,15 +27,16 @@ if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "pmu" ]; then
 	exit 0
 fi
 
-# Check for file existance and that it's writable
-if [ ! -w $HAL_PROP_LINUX_ACPI_PATH ]; then
+# Check for file existance and that it's writable and that we don't have a sonypi
+# access method
+if [ ! -w $HAL_PROP_LINUX_ACPI_PATH -a "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" != "sonypi" ]; then
 	echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
 	echo "$1 not writable!" >&2
 	exit 1
 fi
 
 # Check for values outside range
-if [ ${value} -lt 0 ] || [ ${value} -gt $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS ]; then
+if [ ${value} -lt 0 ] || [ ${value} -ge $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS ]; then
 	echo "org.freedesktop.Hal.Device.LaptopPanel.Invalid" >&2
 	echo "Brightness has to be between 0 and $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS!" >&2
 	exit 1
@@ -64,6 +65,9 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "omnibook" ]; then
 	# echo "{0..7}" > /proc/omnibook/lcd
 	# http://bugzilla.gnome.org/show_bug.cgi?id=331458
 	echo "$value" > $HAL_PROP_LINUX_ACPI_PATH
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "sonypi" ]; then
+	# spicctrl -b "{0..255}"
+	/usr/sbin/spicctrl -b ${value}
 else
 	echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
 	echo "No ACPI method found" >&2

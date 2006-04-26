@@ -58,6 +58,17 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "omnibook" ]; then
 	# cat /proc/omnibook/lcd
 	#  LCD brightness:  7
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH | awk '{print $3;}'`"
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "sonypi" ]; then
+		# spicctrl -B
+		# 70
+		# 0..255
+		value="`/usr/sbin/spicctrl -B`"
+		RETVAL=$?
+		if [ $RETVAL != 0 ]; then
+			echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
+			exit 1;
+		fi
+		exit ${value}
 else
 	echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
 	echo "No ACPI method found" >&2

@@ -48,6 +48,7 @@ enum {
 	ACPI_TYPE_PANASONIC_DISPLAY,
 	ACPI_TYPE_SONY_DISPLAY,
 	ACPI_TYPE_OMNIBOOK_DISPLAY,
+	ACPI_TYPE_SONYPI_DISPLAY,
 	ACPI_TYPE_BUTTON
 };
 
@@ -766,6 +767,10 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 		type = "omnibook";
 		desc = "Omnibook LCD Panel";
 		br_levels = 8;
+	} else if (acpi_type == ACPI_TYPE_SONYPI_DISPLAY) {
+		type = "sonypi";
+		desc = "Sony LCD Panel";
+		br_levels = 256;
 	} else {
 		type = "unknown";
 		desc = "Unknown LCD Panel";
@@ -919,6 +924,44 @@ acpi_synthesize_display (char *vendor, char *display, int method)
 		acpi_synthesize_item (path, method);
 }
 
+static int sonypi_irq_list[] = { 11, 10, 9, 6, 5 };
+
+/** Synthesizes a sonypi object.
+ */
+static void
+acpi_synthesize_sonypi_display (void)
+{
+	HotplugEvent *hotplug_event;
+	gboolean found = FALSE;
+	guint i;
+	gchar *path;
+
+	HAL_INFO (("Processing sonypi display"));
+
+	/* Find the sonypi device, this doesn't work
+	 * if the sonypi device doesn't have an IRQ, sorry */
+	for (i = 0; i < G_N_ELEMENTS (sonypi_irq_list); i++) {
+		path =  g_strdup_printf ("/proc/irq/%d/sonypi", sonypi_irq_list[i]);
+		if (g_file_test (path, G_FILE_TEST_IS_DIR)) {
+			found = TRUE;
+			break;
+		}
+		g_free (path);
+	}
+
+	if (!found)
+		return;
+
+	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event->action = HOTPLUG_ACTION_ADD;
+	hotplug_event->type = HOTPLUG_EVENT_ACPI;
+	g_strlcpy (hotplug_event->acpi.acpi_path, path, sizeof (hotplug_event->acpi.acpi_path));
+	hotplug_event->acpi.acpi_type = ACPI_TYPE_SONYPI_DISPLAY;
+	hotplug_event_enqueue (hotplug_event);
+
+	g_free (path);
+}
+
 /** Scan the data structures exported by the kernel and add hotplug
  *  events for adding ACPI objects.
  *
@@ -981,8 +1024,10 @@ acpi_synthesize_hotplug_events (void)
 	acpi_synthesize_display ("acpi/pcc", "brightness", ACPI_TYPE_PANASONIC_DISPLAY);
 	acpi_synthesize_display ("acpi/ibm", "brightness", ACPI_TYPE_IBM_DISPLAY);
 	acpi_synthesize_display ("acpi/sony", "brightness", ACPI_TYPE_SONY_DISPLAY);
-	/* onmibook does not live under acpi GNOME#331458 */
+	/* omnibook does not live under acpi GNOME#331458 */
 	acpi_synthesize_display ("omnibook", "lcd", ACPI_TYPE_OMNIBOOK_DISPLAY);
+	/* sonypi doesn't have an acpi object fd.o#6729 */
+	acpi_synthesize_sonypi_display ();
 
 	/* setup timer for things that we need to poll */
 	g_timeout_add (ACPI_POLL_INTERVAL,
@@ -1105,6 +1150,14 @@ static ACPIDevHandler acpidev_handler_laptop_panel_omnibook = {
 	.remove      = acpi_generic_remove
 };
 
+static ACPIDevHandler acpidev_handler_laptop_panel_sonypi = {
+	.acpi_type   = ACPI_TYPE_SONYPI_DISPLAY,
+	.add         = acpi_generic_add,
+	.compute_udi = acpi_generic_compute_udi,
+	.refresh     = laptop_panel_refresh,
+	.remove      = acpi_generic_remove
+};
+
 static ACPIDevHandler acpidev_handler_button = {
 	.acpi_type   = ACPI_TYPE_BUTTON,
 	.add         = acpi_generic_add,
@@ -1133,6 +1186,7 @@ static ACPIDevHandler *acpi_handlers[] = {
 	&acpidev_handler_laptop_panel_asus,
 	&acpidev_handler_laptop_panel_sony,
 	&acpidev_handler_laptop_panel_omnibook,
+	&acpidev_handler_laptop_panel_sonypi,
 	NULL
 };
 
