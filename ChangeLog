@@ -1,3 +1,28 @@
+2006-04-26  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Gabriel Burt <gabriel.burt@gmail.com>.
+
+	After some further consideration, I think the
+	portable_audio_player.filepath_format property should be removed
+	and a new property, folder_depth, should be created.  The main
+	point of the filepath_format property was to convey whether the
+	device only supported a limited file hierarchy, but it ended up
+	conveying much more than that - specifying exactly what directory
+	structure the music files should go in, when that's really not
+	appropriate (since the hardware doesn't care except in the
+	hierarchy depth case).  The folder to write files out to can be
+	taken from the first entry in the audio_folders property.  This
+	change will allow the application to choose the appropriate
+	directory structure (/podcasts/NPR/****, /Artist/Album/00 - Title,
+	etc). I've attached a patch that make this change in the
+	hal-spec.xml.in as well as another patch that adds some of these
+	new properties for a few audio devices.
+		
+	* doc/spec/hal-spec.xml.in: Update spec
+	
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: Update
+	to reflect new spec
+
 2006-04-24  Richard Hughes <richard@hughsie.com>
 
 	* fdi/information/10freedesktop/10-wireless-mice.fdi: Update the patch

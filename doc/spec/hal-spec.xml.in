@@ -3844,18 +3844,16 @@
             </row>
 
             <row>
-              <entry><literal>portable_audio_player.filepath_format</literal> (string)</entry>
-              <entry>examples: MUSIC/%Track or %Artist/%Album/%Track or mp3s/%Artist/%Album - %Track</entry>
+              <entry><literal>portable_audio_player.folder_depth </literal> (int)</entry>
+              <entry>example: 1 (If the device only supports one sub-folder)</entry>
               <entry>No</entry>
               <entry>
                 If portable_audio_player.access_method = "storage",
-                this may contain a string that will be used to format the file's name
-                and path before writing it to the device.  If audio files must be placed
-                in a particular subdirectory, or the device only allows one
-                sub-directory deep hierarchies, that information should be embedded
-                here. The variables available for this string are %Artist, %Album, and %Track.
-                Applications using this key are responsible for substituting the
-                appropriate values for these variables when formatting the file's path.
+                this tells applications how deep of directory hierarchies
+                files can be placed in.  If all files are put in a
+                sub-folder (with the audio_folders property), that folder
+                should not be included in the folder_depth.  If the device
+                does not have a limit, do not set this property.
 	          </entry>
             </row>
 
@@ -3866,7 +3864,14 @@
               <entry>
                 If portable_audio_player.access_method = "storage",
                 this may contain a string list of folders in which music
-                can be found.  Paths are relative to the mount point of the device.
+                can be found.  Paths are relative to the mount point of the
+                device. If there is one or more entry in this property, the
+                first one is where files will be written to by applications.
+
+                Do not enter a folder and a parent of that folder.
+
+                If the device places files in its root directory, then do not
+                set this property.
 	          </entry>
             </row>
 
