@@ -65,7 +65,7 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "omnibook" ]; then
 	# echo "{0..7}" > /proc/omnibook/lcd
 	# http://bugzilla.gnome.org/show_bug.cgi?id=331458
 	echo "$value" > $HAL_PROP_LINUX_ACPI_PATH
-elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "sonypi" ]; then
+elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "sonypi" -a -x /usr/sbin/spicctrl ]; then
 	# spicctrl -b "{0..255}"
 	/usr/sbin/spicctrl -b ${value}
 else

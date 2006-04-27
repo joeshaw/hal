@@ -1,3 +1,12 @@
+2006-04-27  Richard Hughes  <richard@hughsie.com>
+
+	Patch from Bastien Nocera <hadess@hadess.net>:
+
+	* tools/hal-system-lcd-get-brightness:
+	* tools/hal-system-lcd-set-brightness:
+	Commit a patch to check whether we have the userspace tool spicctrl
+	as well. Could cause a few problems otherwise.
+
 2006-04-26  Richard Hughes  <richard@hughsie.com>
 
 	Patch from Bastien Nocera <hadess@hadess.net>:
