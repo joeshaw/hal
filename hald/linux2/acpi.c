@@ -938,6 +938,11 @@ acpi_synthesize_sonypi_display (void)
 
 	HAL_INFO (("Processing sonypi display"));
 
+        /* Check that we don't support brightness change through ACPI,
+	 * for type3 VAIOs */
+	if (g_file_test ("/proc/acpi/sony/brightness", G_FILE_TEST_EXISTS))
+		return;
+
 	/* Find the sonypi device, this doesn't work
 	 * if the sonypi device doesn't have an IRQ, sorry */
 	for (i = 0; i < G_N_ELEMENTS (sonypi_irq_list); i++) {

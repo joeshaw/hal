@@ -2,6 +2,14 @@
 
 	Patch from Bastien Nocera <hadess@hadess.net>:
 
+	* hald/linux2/acpi.c: (acpi_synthesize_sonypi_display):
+	Check that we don't support brightness change through ACPI
+	with the presence of /proc/acpi/sony/brightness for type3 VAIOs.
+
+2006-04-27  Richard Hughes  <richard@hughsie.com>
+
+	Patch from Bastien Nocera <hadess@hadess.net>:
+
 	* tools/hal-system-lcd-get-brightness:
 	* tools/hal-system-lcd-set-brightness:
 	Commit a patch to check whether we have the userspace tool spicctrl
