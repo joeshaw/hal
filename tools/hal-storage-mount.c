@@ -315,6 +315,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	gboolean pol_change_uid;
 	char *privilege;
 	gboolean allowed_by_privilege;
+	gboolean is_temporary_privilege;
 	gboolean explicit_mount_point_given;
 	const char *end;
 
@@ -547,7 +548,8 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 						    invoked_by_uid,
 						    privilege,
 						    udi,
-						    &allowed_by_privilege) != LIBPOLKIT_RESULT_OK) {
+						    &allowed_by_privilege,
+						    &is_temporary_privilege) != LIBPOLKIT_RESULT_OK) {
 		printf ("cannot lookup privilege\n");
 		unknown_error ();
 	}

@@ -1,3 +1,8 @@
+2006-04-28  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-storage-mount.c (handle_mount): Update to new
+	PolicyKit API.
+
 2006-04-27  Richard Hughes  <richard@hughsie.com>
 
 	Patch from Bastien Nocera <hadess@hadess.net>:

@@ -600,21 +600,21 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN3814"
+HREF="#AEN3820"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN3825"
+HREF="#AEN3831"
 >Example</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN3833"
+HREF="#AEN3839"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -7765,6 +7765,19 @@ CLASS="literal"
 ><TD
 >TODO</TD
 ></TR
+><TR
+><TD
+><TT
+CLASS="literal"
+>printer.commandset</TT
+> (strlist)</TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>List of supported commands / printer languages.</TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -7806,7 +7819,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2521"
+NAME="AEN2527"
 ></A
 ><TABLE
 BORDER="1"
@@ -7916,21 +7929,19 @@ CLASS="literal"
 ><TD
 ><TT
 CLASS="literal"
->portable_audio_player.filepath_format</TT
-> (string)</TD
+>portable_audio_player.folder_depth </TT
+> (int)</TD
 ><TD
->examples: MUSIC/%Track or %Artist/%Album/%Track or mp3s/%Artist/%Album - %Track</TD
+>example: 1 (If the device only supports one sub-folder)</TD
 ><TD
 >No</TD
 ><TD
 >&#13;                If portable_audio_player.access_method = "storage",
-                this may contain a string that will be used to format the file's name
-                and path before writing it to the device.  If audio files must be placed
-                in a particular subdirectory, or the device only allows one
-                sub-directory deep hierarchies, that information should be embedded
-                here. The variables available for this string are %Artist, %Album, and %Track.
-                Applications using this key are responsible for substituting the
-                appropriate values for these variables when formatting the file's path.
+                this tells applications how deep of directory hierarchies
+                files can be placed in.  If all files are put in a
+                sub-folder (with the audio_folders property), that folder
+                should not be included in the folder_depth.  If the device
+                does not have a limit, do not set this property.
 	          </TD
 ></TR
 ><TR
@@ -7946,7 +7957,14 @@ CLASS="literal"
 ><TD
 >&#13;                If portable_audio_player.access_method = "storage",
                 this may contain a string list of folders in which music
-                can be found.  Paths are relative to the mount point of the device.
+                can be found.  Paths are relative to the mount point of the
+                device. If there is one or more entry in this property, the
+                first one is where files will be written to by applications.
+
+                Do not enter a folder and a parent of that folder.
+
+                If the device places files in its root directory, then do not
+                set this property.
 	          </TD
 ></TR
 ><TR
@@ -8013,7 +8031,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2593"
+NAME="AEN2599"
 ></A
 ><TABLE
 BORDER="1"
@@ -8265,7 +8283,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2689"
+NAME="AEN2695"
 ></A
 ><TABLE
 BORDER="1"
@@ -8507,7 +8525,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2778"
+NAME="AEN2784"
 ></A
 ><TABLE
 BORDER="1"
@@ -8628,7 +8646,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2820"
+NAME="AEN2826"
 ></A
 ><TABLE
 BORDER="1"
@@ -8708,7 +8726,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2846"
+NAME="AEN2852"
 ></A
 ><TABLE
 BORDER="1"
@@ -8776,7 +8794,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2866"
+NAME="AEN2872"
 ></A
 ><TABLE
 BORDER="1"
@@ -9647,7 +9665,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3184"
+NAME="AEN3190"
 ></A
 ><TABLE
 BORDER="1"
@@ -9761,7 +9779,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3228"
+NAME="AEN3234"
 ></A
 ><TABLE
 BORDER="1"
@@ -9829,7 +9847,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3249"
+NAME="AEN3255"
 ></A
 ><TABLE
 BORDER="1"
@@ -9923,7 +9941,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3281"
+NAME="AEN3287"
 ></A
 ><TABLE
 BORDER="1"
@@ -10034,7 +10052,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3323"
+NAME="AEN3329"
 ></A
 ><TABLE
 BORDER="1"
@@ -10173,7 +10191,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3379"
+NAME="AEN3385"
 ></A
 ><TABLE
 BORDER="1"
@@ -10284,7 +10302,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3414"
+NAME="AEN3420"
 ></A
 ><TABLE
 BORDER="1"
@@ -10376,7 +10394,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3442"
+NAME="AEN3448"
 ></A
 ><TABLE
 BORDER="1"
@@ -10535,7 +10553,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3494"
+NAME="AEN3500"
 ></A
 ><TABLE
 BORDER="1"
@@ -10664,7 +10682,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3535"
+NAME="AEN3541"
 ></A
 ><TABLE
 BORDER="1"
@@ -11625,7 +11643,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3772"
+NAME="AEN3778"
 ></A
 ><TABLE
 BORDER="1"
@@ -11788,7 +11806,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3814"
+NAME="AEN3820"
 >Interface org.freedesktop.Hal.Manager</A
 ></H2
 ><P
@@ -11904,7 +11922,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN3825"
+NAME="AEN3831"
 >Example</A
 ></H3
 ><P
@@ -12022,7 +12040,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN3833"
+NAME="AEN3839"
 >Interface org.freedesktop.Hal.Device</A
 ></H2
 ><P
