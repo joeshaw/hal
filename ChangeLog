@@ -1,3 +1,7 @@
+2006-04-28  Artem Kachitchkine <artem.kachitchkin@sun.com>
+
+	* tools/hal_set_property.c: (main): --remove confuses return values.
+
 2006-04-28  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-storage-mount.c (handle_mount): Update to new

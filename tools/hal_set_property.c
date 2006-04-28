@@ -235,7 +235,7 @@ main (int argc, char *argv[])
 
 	if (remove) {
 		rc = libhal_device_remove_property (hal_ctx, udi, key, &error);
-		if (rc != 0) {
+		if (!rc) {
 			fprintf (stderr, "error: libhal_device_remove_property: %s: %s\n", error.name, error.message);
 			return 1;
 		}
