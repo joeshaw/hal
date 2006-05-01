@@ -444,7 +444,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 	int can_suspend;
 	int can_hibernate;
 	ssize_t read;
-	unsigned int len;
+	size_t len;
 	char *poweroptions;
 	FILE *fp;
 
