@@ -46,7 +46,7 @@ typedef struct {
   gpointer data2;
 } HelperData;
 
-#define DBUS_SERVER_ADDRESS "unix:tmpdir=/tmp/hald-runner" 
+#define DBUS_SERVER_ADDRESS "unix:tmpdir=" HALD_SOCKET_DIR
 
 static DBusConnection *runner_connection = NULL;
 

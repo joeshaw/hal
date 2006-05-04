@@ -1,3 +1,13 @@
+2006-05-04  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Joe Marcus Clarke <marcus@freebsd.org>. Move sockets to
+	/var/run/hald and create this directoy on 'make install'
+
+	* configure.in:
+	* hald/Makefile.am:
+	* hald/hald_dbus.c: (hald_dbus_local_server_init):
+	* hald/hald_runner.c:
+
 2006-05-01  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* hald/linux2/osspec.c: (set_suspend_hibernate_keys):

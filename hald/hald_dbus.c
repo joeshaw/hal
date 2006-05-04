@@ -48,6 +48,8 @@
 #include "util.h"
 #include "hald_runner.h"
 
+#define HALD_DBUS_ADDRESS "unix:tmpdir=" HALD_SOCKET_DIR
+
 static DBusConnection *dbus_connection = NULL;
 
 static void
@@ -3229,7 +3231,7 @@ hald_dbus_local_server_init (void)
 	 * connections for programs spawned by hald
 	 */
 	dbus_error_init (&error);
-	if ((local_server = dbus_server_listen ("unix:tmpdir=/tmp/hald-local", &error)) == NULL) { 
+	if ((local_server = dbus_server_listen (HALD_DBUS_ADDRESS, &error)) == NULL) { 
 		HAL_ERROR (("Cannot create D-BUS server"));
 		goto out;
 	}

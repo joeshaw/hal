@@ -81,6 +81,13 @@ hald_marshal.c: hald_marshal.list
 	&& (cmp -s xgen-gmc hald_marshal.c || cp xgen-gmc hald_marshal.c) \
 	&& rm -f xgen-gmc xgen-gmc~
 
+install-data-local:
+	-$(mkdir_p) $(HALD_SOCKET_DIR)
+	-chown $(HAL_USER):$(HAL_GROUP) $(HALD_SOCKET_DIR)
+	-chmod 0755 $(HALD_SOCKET_DIR)
+	-$(mkdir_p) $(HALD_SOCKET_DIR)/hald-local
+	-$(mkdir_p) $(HALD_SOCKET_DIR)/hald-runner
+
 clean-local:
 	rm -f *~
 	rm -f hald_marshal.c hald_marshal.h

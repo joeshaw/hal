@@ -38,6 +38,7 @@ AC_CHECK_HEADERS([sys/ioccom.h])
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
 AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
+AC_ARG_WITH(socket-dir,[  --with-socket-dir=<dir>  Location of the HAL D-BUS listening sockets (auto)])
 if ! test -z "$with_hwdata" ; then
    HWDATA_DIR="$with_hwdata"
 else
@@ -371,6 +372,15 @@ fi
 AC_SUBST(HALD_PID_FILE)
 AC_DEFINE_UNQUOTED(HALD_PID_FILE, "$HALD_PID_FILE", [pid file])
 
+if ! test -z "$with_socket_dir"; then
+    HALD_SOCKET_DIR=$with_socket_dir
+else
+    HALD_SOCKET_DIR=${LOCALSTATEDIR}/run/hald
+fi
+
+AC_SUBST(HALD_SOCKET_DIR)
+AC_DEFINE_UNQUOTED(HALD_SOCKET_DIR, "$HALD_SOCKET_DIR", [socket dir])
+
 # documentation target
 AC_ARG_WITH(doc-dir,   [  --with-doc-dir=[dirname]  directory to install documentation])
 if ! test -z "$with_doc_dir"; then
@@ -462,6 +472,7 @@ echo "
         User for HAL:               ${HAL_USER}
         Group for HAL:              ${HAL_GROUP}
         hald pidfile:               ${HALD_PID_FILE}
+        hald socket dir:            ${HALD_SOCKET_DIR}
         hald backend:               ${HALD_BACKEND}
         use acpi kernel interface:  ${acpi_proc}
         use acpid interface:        ${acpi_acpid}
