@@ -1,3 +1,14 @@
+2006-05-08  Richard Hughes  <davidz@redhat.com>
+
+	* doc/spec/hal-spec.xml.in:
+	* hald/linux2/osspec.c: (set_suspend_hibernate_keys):
+	Depreciate the keys power_management.can_suspend_to_ram and
+	power_management.can_suspend_to_disk in favour of
+	power_management.can_suspend and power_management.can_hibernate so it's
+	all consistent between the method names and the can_* keys.
+	We'll remove the former keys in a year or so, but leave them now for
+	compatability.
+
 2006-05-08  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-input.c: This patch fixes endian-ness

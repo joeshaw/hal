@@ -5101,7 +5101,7 @@
               </entry>
             </row>
             <row>
-              <entry><literal>power_management.can_suspend_to_ram</literal> (bool)</entry>
+              <entry><literal>power_management.can_suspend</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
@@ -5111,13 +5111,80 @@
               </entry>
             </row>
             <row>
-              <entry><literal>power_management.can_suspend_to_disk</literal> (bool)</entry>
+              <entry><literal>power_management.can_hibernate</literal> (bool)</entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
                 If hibernation support is compiled into the kernel. 
 		NB. This may not mean the machine is able to hibernate
 		successfully.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>power_management.can_suspend_to_ram</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                If suspend support is compiled into the kernel. 
+		NB. This may not mean the machine is able to suspend
+		successfully.
+		WARNING: This key is depreciated and power_management.can_suspend
+		should be used in its place. This key will be removed, but not before May 1st 2007.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>power_management.can_suspend_to_disk</literal> (bool)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                If hibernation support is compiled into the kernel. 
+		NB. This may not mean the machine is able to hibernate
+		successfully.
+		WARNING: This key is depreciated and power_management.can_hibernate
+		should be used in its place. This key will be removed, but not before May 1st 2007.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+        The following methods exist on the interface
+        <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Method (parameter types)</entry>
+              <entry>Parameters</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>Suspend</literal> (integer)</entry>
+              <entry>
+                The number of seconds until we resume automatically, or zero if
+                we should not auto-resume.
+              </entry>
+              <entry>No</entry>
+              <entry>
+                This method puts the system in a state where little power is consumed.
+		The system is not operational while in this state.
+		Latency for the system to return to an operational state is in
+		the order of magnitude of 5 seconds.
+              </entry>
+            </row>
+            <row>
+              <entry><literal>Hibernate</literal> (void)</entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                This method puts the system in a state where no power is consumed.
+		The system is not operational while in this state.
+		Latency for the system to return to an operational state is in
+		the order of magnitude of one minute.
               </entry>
             </row>
           </tbody>

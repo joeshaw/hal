@@ -477,6 +477,12 @@ set_suspend_hibernate_keys (HalDevice *d)
 	if (access ("/proc/suspend2", F_OK) == 0)
 		can_hibernate = TRUE;
 out:
+	hal_device_property_set_bool (d, "power_management.can_suspend", can_suspend);
+	hal_device_property_set_bool (d, "power_management.can_hibernate", can_hibernate);
+
+	/* WARNING: These keys are depreciated and power_management.can_suspend
+	 * and power_management.can_hibernate should be used instead.
+	 * These properties will be removed, but not before May 1st 2007. */
 	hal_device_property_set_bool (d, "power_management.can_suspend_to_ram", can_suspend);
 	hal_device_property_set_bool (d, "power_management.can_suspend_to_disk", can_hibernate);
 }
