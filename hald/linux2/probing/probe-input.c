@@ -42,13 +42,19 @@
 
 #include "shared.h"
 
-#define test_bit(bit, array) (array[(bit) / 8] & (1 << ((bit) % 8)))
+/* we must use this kernel-compatible implementation */
+#define BITS_PER_LONG (sizeof(long) * 8)
+#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
+#define OFF(x)  ((x)%BITS_PER_LONG)
+#define BIT(x)  (1UL<<OFF(x))
+#define LONG(x) ((x)/BITS_PER_LONG)
+#define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
 static void 
 check_abs (int fd, LibHalContext *ctx, const char *udi)
 {
-	char bitmask[(ABS_MAX + 7) / 8];
-	char bitmask_touch[(KEY_MAX + 7) / 8];
+	long bitmask[NBITS(ABS_MAX)];
+	long bitmask_touch[NBITS(KEY_MAX)];
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_ABS, sizeof (bitmask)), bitmask) < 0) {
@@ -81,7 +87,7 @@ static void
 check_key (int fd, LibHalContext *ctx, const char *udi)
 {
 	unsigned int i;
-	char bitmask[(KEY_MAX + 7) / 8];
+	long bitmask[NBITS(KEY_MAX)];
 	int is_keyboard;
 	DBusError error;
 
@@ -112,7 +118,7 @@ out:
 static void 
 check_rel (int fd, LibHalContext *ctx, const char *udi)
 {
-	char bitmask[(REL_MAX + 7) / 8];
+	long bitmask[NBITS(REL_MAX)];
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_REL, sizeof (bitmask)), bitmask) < 0) {

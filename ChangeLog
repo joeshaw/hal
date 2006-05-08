@@ -1,3 +1,10 @@
+2006-05-08  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-input.c: This patch fixes endian-ness
+	issues with the input device support of hal, and thus makes the
+	special buttons on a big-endian machine show up through hal. Patch
+	from Johannes Berg <johannes@sipsolutions.net>.
+	
 2006-05-04  David Zeuthen  <davidz@redhat.com>
 
 	Patch from Joe Marcus Clarke <marcus@freebsd.org>. Move sockets to
