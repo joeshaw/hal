@@ -4058,6 +4058,56 @@
           </tbody>
         </tgroup>
       </informaltable>
+      <para>
+        The following methods exist on the interface
+        <literal>org.freedesktop.Hal.Device.LaptopPanel</literal>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Method (parameter types)</entry>
+              <entry>Parameters</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>SetBrightness</literal> (integer)
+              </entry>
+              <entry>
+                The hardware brightness state, which should be between 0 and 
+                <literal>laptop_panel.num_levels</literal> - 1.
+              </entry>
+              <entry>No</entry>
+              <entry>
+                This method adjusts the brightness on an laptop screen.
+                The values are returned as hardware values rather than
+                percentages as we cannot easily to floating point rounding in
+                shell code and therefore use the raw values to prevent integer
+                rounding errors.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                integer <literal>GetBrightness</literal> (void)
+              </entry>
+              <entry>
+                Returns the hardware brightness state, which should be
+                between 0 and <literal>laptop_panel.num_levels</literal> - 1.
+              </entry>
+              <entry>No</entry>
+              <entry>
+                This method gets the hardware brightness of the laptop screen,
+                which we may need to do fairly regually on hardware that
+                changes the values in hardware without a software event.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
     </sect2>
     <sect2 id="device-properties-ac_adaptor">
       <title>
