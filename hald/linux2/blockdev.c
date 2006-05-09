@@ -205,6 +205,14 @@ blockdev_refresh_mount_state (HalDevice *d)
 	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
 		struct stat statbuf;
 
+		/* If this is a nfs mount (fstype == 'nfs') ignore the mount. Reason:
+		 *  1. we don't list nfs devices in HAL
+		 *  2. more problematic: stat on mountpoints with 'stale nfs handle' never come
+		 *     back and block complete HAL and all applications using HAL fail.
+		 */
+		if (strcmp(mnt.mnt_type, "nfs") == 0)
+			continue;
+
 		/* check the underlying device of the mount point */
 		if (stat (mnt.mnt_dir, &statbuf) != 0)
 			continue;

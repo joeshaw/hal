@@ -1,4 +1,10 @@
-2006-05-05  Danny Kukawka  <danny.kukawka@web.de>
+2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/blockdev.c: (blockdev_refresh_mount_state): Skip stat
+	nfs mounts. This should solve blocked hald (and failing aplications
+	which use hal) if there are nfs share mounts with 'stale nfs handle'.
+
+2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
 
 	Moved hal scripts to $(libdir)/hal/scripts instead of 
 	$(datadir)/hal/scripts to be more in compliance with FHS related 
