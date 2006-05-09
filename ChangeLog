@@ -1,5 +1,10 @@
 2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/information/10freedesktop/10-usb-music-players.fdi:
+	Added new mp3-player from fd.o bug #6646
+
+2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	Added support for --use-syslog option to prober and addons. This 
 	should allow easy logging complete hal debug information to syslog 
 	if hald run in daemon mode:
