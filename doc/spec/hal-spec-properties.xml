@@ -3841,7 +3841,7 @@
             </row>
             <row>
               <entry>
-                <literal>alsa.device_file</literal> (string)
+                <literal>oss.device_file</literal> (string)
               </entry>
               <entry></entry>
               <entry>Yes</entry>

@@ -1,6 +1,12 @@
 2006-05-09  Richard Hughes  <richard@hughsie.com>
 
 	* doc/spec/hal-spec-properties.xml:
+	Rework a patch from Joe Marcus Clarke <marcus@FreeBSD.org> to fix a
+	typo in an oss keyname.
+
+2006-05-09  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/hal-spec-properties.xml:
 	Add org.freedesktop.Hal.Device.LaptopPanel.GetBrightness and 
 	org.freedesktop.Hal.Device.LaptopPanel.SetBrightness descriptions
 	to the spec file.
