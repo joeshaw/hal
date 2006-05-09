@@ -8,11 +8,13 @@
 #include <grp.h>
 
 #include <sys/types.h>
+#include <sys/syslog.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <grp.h>
 
 static dbus_bool_t is_verbose = FALSE;
+static dbus_bool_t use_syslog = FALSE;
 
 static void
 _do_dbg (const char *format, va_list args)
@@ -36,7 +38,10 @@ _do_dbg (const char *format, va_list args)
 	tlocaltime = localtime (&tnow.tv_sec);
 	strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
 
-	fprintf (stderr, "%d: %s.%03d: %s", pid, tbuf, (int)(tnow.tv_usec/1000), buf);
+	if (use_syslog)
+		syslog (LOG_INFO, "%d: %s.%03d: %s", pid, tbuf, (int)(tnow.tv_usec/1000), buf);
+	else
+		fprintf (stderr, "%d: %s.%03d: %s", pid, tbuf, (int)(tnow.tv_usec/1000), buf);
 
 	va_end (args);
 }
@@ -47,6 +52,16 @@ _dbg (const char *format, ...)
 	va_list args;
 	va_start (args, format);
 	_do_dbg (format, args);
+}
+
+static void
+_set_debug ()
+{
+        if ((getenv ("HALD_VERBOSE")) != NULL)
+                is_verbose = TRUE;
+
+        if ((getenv ("HALD_USE_SYSLOG")) != NULL)
+                use_syslog = TRUE;
 }
 
 #define dbg(format, arg...)							\

@@ -144,8 +144,7 @@ main (int argc, char *argv[])
 	if ((drive_type = getenv ("HAL_PROP_STORAGE_DRIVE_TYPE")) == NULL)
 		goto out;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+	_set_debug ();
 
 	if (argc == 2 && strcmp (argv[1], "--only-check-for-media") == 0)
 		only_check_for_fs = TRUE;

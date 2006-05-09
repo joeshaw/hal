@@ -167,8 +167,7 @@ main (int argc, char **argv)
 	drop_privileges (0);
 #endif
 
-	if (getenv ("HALD_VERBOSE") != NULL)
-		is_verbose = TRUE;
+	_set_debug ();
 
 	dbus_error_init (&error);
 

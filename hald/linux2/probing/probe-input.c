@@ -151,8 +151,7 @@ main (int argc, char *argv[])
 	char name[128];
 	struct input_id id;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+	_set_debug ();
 
 	fd = -1;
 

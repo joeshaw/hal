@@ -327,8 +327,7 @@ main (int argc, char *argv[])
 	else
 		is_disc = FALSE;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+	_set_debug ();
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)

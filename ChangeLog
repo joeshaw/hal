@@ -1,5 +1,32 @@
 2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	Added support for --use-syslog option to prober and addons. This 
+	should allow easy logging complete hal debug information to syslog 
+	if hald run in daemon mode:
+
+	* hald/hald_runner.c: (add_basic_env): added HALD_USE_SYSLOG to env
+	* hald/linux2/probing/shared.h: added support for HALD_USE_SYSLOG
+	
+	Replaced in prober and addons old debug code with support for 
+	--use-syslog instead of log to sterr. 
+
+	* hald/linux2/addons/addon-acpi.c: (main):
+	* hald/linux2/addons/addon-hid-ups.c: (ups_get_string), (main):
+	* hald/linux2/addons/addon-pmu.c: (main):
+	* hald/linux2/addons/addon-storage.c: (main):
+	* hald/linux2/addons/addon-usb-csr.c: (main):
+	* hald/linux2/probing/probe-input.c: (main):
+	* hald/linux2/probing/probe-pc-floppy.c: (main):
+	* hald/linux2/probing/probe-printer.c: (main):
+	* hald/linux2/probing/probe-serial.c: (main):
+	* hald/linux2/probing/probe-smbios.c: (main): also fixed set debug
+	option before use dbg() the first time
+	* hald/linux2/probing/probe-storage.c: (main): replaced printf with
+	dbg() and removed some needless debug lines.
+	* hald/linux2/probing/probe-volume.c: (main):
+
+2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/probing/probe-smbios.c: fixed problem with parse 
 	information from output of dmidecode where the search string is 
 	shorter than 7 chars: replaced in strbegin() 'sizeof(char *) -1'

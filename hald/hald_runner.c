@@ -172,6 +172,10 @@ add_basic_env(DBusMessageIter *iter, const gchar *udi) {
   if (hald_is_initialising) {
     add_env(iter, "HALD_STARTUP", "1");
   }
+  if (hald_use_syslog) {
+    add_env(iter, "HALD_USE_SYSLOG", "1");
+  }
+
   add_env(iter, "UDI", udi);
   add_env(iter, "HALD_DIRECT_ADDR", hald_dbus_local_server_addr());
 }

@@ -260,9 +260,8 @@ int
 main (int argc, char *argv[])
 {
 	DBusError err;
-	
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+
+	_set_debug ();	
 
 	device_udi = getenv ("UDI");
 

@@ -57,8 +57,7 @@ main (int argc, char *argv[])
 
 	fd = -1;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+	_set_debug ();
 
 	udi = getenv ("UDI");
 	if (udi == NULL)

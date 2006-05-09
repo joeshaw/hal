@@ -63,9 +63,7 @@ main (int argc, char *argv[])
 	if ((device_file = getenv ("HAL_PROP_SERIAL_DEVICE")) == NULL)
 		goto out;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
-	
+	_set_debug ();
 	
 	dbg ("Checking if %s is actually present", device_file);
 	

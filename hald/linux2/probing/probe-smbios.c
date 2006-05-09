@@ -104,14 +104,13 @@ main (int argc, char *argv[])
 	/* assume failure */
 	ret = 1;
 
+	_set_debug ();
+	
 	udi = getenv ("UDI");
 	if (udi == NULL) {
 		dbg ("UDI not set");
 		goto out;
 	}
-
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {

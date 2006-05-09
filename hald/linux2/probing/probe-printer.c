@@ -76,9 +76,8 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
-
+	_set_debug ();
+	
 	device_file = getenv ("HAL_PROP_PRINTER_DEVICE");
 	if (device_file == NULL)
 		goto out;

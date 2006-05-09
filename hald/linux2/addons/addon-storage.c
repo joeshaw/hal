@@ -284,8 +284,7 @@ main (int argc, char *argv[])
 	if ((drive_type = getenv ("HAL_PROP_STORAGE_DRIVE_TYPE")) == NULL)
 		goto out;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+	_set_debug ();
 
 	support_media_changed_str = getenv ("HAL_PROP_STORAGE_CDROM_SUPPORT_MEDIA_CHANGED");
 	if (support_media_changed_str != NULL && strcmp (support_media_changed_str, "true") == 0)
@@ -297,11 +296,9 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	printf ("**************************************************\n");
-	printf ("**************************************************\n");
-	printf ("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)\n", device_file, bus, drive_type, udi);
-	printf ("**************************************************\n");
-	printf ("**************************************************\n");
+	dbg ("**************************************************");
+	dbg ("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi);
+	dbg ("**************************************************");
 
 	if (strcmp (drive_type, "cdrom") == 0)
 		is_cdrom = 1;

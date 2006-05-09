@@ -112,7 +112,7 @@ ups_get_string (int fd, int sindex)
 	if (ioctl (fd, HIDIOCGSTRING, &sdesc) < 0) {
 		return "";
 	}
-	fprintf (stderr, "foo: '%s'\n", sdesc.value);
+	dbg ("foo: '%s'", sdesc.value);
 	return sdesc.value;
 }
 
@@ -272,6 +272,8 @@ main (int argc, char *argv[])
 	struct hiddev_event ev[64];
 	int rd;
 
+	_set_debug ();
+	
 	udi = getenv ("UDI");
 	if (udi == NULL)
 		goto out;
