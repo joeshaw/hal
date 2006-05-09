@@ -1,5 +1,13 @@
 2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/probing/probe-smbios.c: fixed problem with parse 
+	information from output of dmidecode where the search string is 
+	shorter than 7 chars: replaced in strbegin() 'sizeof(char *) -1'
+	(which returns the size of the pointer) with 'strlen(char *)' which
+	returns the size of the string.
+
+2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* doc/spec/hal-spec.xml.in: added property for DVD+RW DL to spec
 	* hald/linux2/probing/linux_dvd_rw_utils.c, 
 	  hald/linux2/probing/linux_dvd_rw_utils.h: (get_dvd_r_rw_profile):

@@ -45,7 +45,7 @@
 #define DMIPARSER_STATE_SYSTEM		2
 #define DMIPARSER_STATE_CHASSIS		3
 
-#define strbegin(buf, str) (strncmp (buf, str, sizeof (str) - 1) == 0)
+#define strbegin(buf, str) (strncmp (buf, str, strlen (str)) == 0)
 
 /* global */
 char *udi = NULL;
