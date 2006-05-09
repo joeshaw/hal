@@ -1,5 +1,19 @@
 2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
 
+	* doc/spec/hal-spec.xml.in: added property for DVD+RW DL to spec
+	* hald/linux2/probing/linux_dvd_rw_utils.c, 
+	  hald/linux2/probing/linux_dvd_rw_utils.h: (get_dvd_r_rw_profile):
+	reworked detection of device capabilities to get correct DVD-RW info
+	and added DVD+RW DL detection.
+	* hald/linux2/probing/probe-storage.c: (main): fixed mapping of
+	return value of get_dvd_r_rw_profile() related to changes
+	* libhal-storage/libhal-storage.c:
+	(libhal_drive_policy_compute_display_name),
+	(libhal_drive_from_udi): 
+	* libhal-storage/libhal-storage.h: added property DVD+RW DL
+
+2006-05-09  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/blockdev.c: (blockdev_refresh_mount_state): Skip stat
 	nfs mounts. This should solve blocked hald (and failing aplications
 	which use hal) if there are nfs share mounts with 'stale nfs handle'.

@@ -194,6 +194,7 @@ main (int argc, char *argv[])
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdram", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", FALSE, &error);
+			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrwdl", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bd", FALSE, &error);
 			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bdr", FALSE, &error);
@@ -212,28 +213,21 @@ main (int argc, char *argv[])
 			if (capabilities & CDC_DVD) {
 				int profile;
 				
-				/** @todo FIXME BUG XXX: need to check for dvdrw, Blue-ray and HD DVD
-				 * (prolly need to rewrite much of the linux_dvdrw_utils.c file)
-				 */
-				
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvd", TRUE, &error);
-				
+
 				profile = get_dvd_r_rw_profile (fd);
-				if (profile == 2) {
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", TRUE, &error);
-				} else if (profile == 0) {
+				dbg ("get_dvd_r_rw_profile returned: %d", profile);
+
+				if (profile & DRIVE_CDROM_CAPS_DVDRW)
+					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdrw", TRUE, &error);
+				if (profile & DRIVE_CDROM_CAPS_DVDPLUSR)
 					libhal_device_set_property_bool(ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
-				} else if (profile == 1) {
+				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRW)
 					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", TRUE, &error);
-				} else if (profile == 3) {
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", TRUE, &error);
-				} else if (profile == 4) {
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
-                                	libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", TRUE, &error);
-				        libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", TRUE, &error);
-				}
+				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRWDL)
+					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrwdl", TRUE, &error);
+				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRDL)
+                                        libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", TRUE, &error);
 			}
 			if (capabilities & CDC_DVD_R) {
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdr", TRUE, &error);

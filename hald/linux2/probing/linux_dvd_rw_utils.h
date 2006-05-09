@@ -11,6 +11,12 @@
 
 #include <glib.h>
 
+#define DRIVE_CDROM_CAPS_DVDRW        1
+#define DRIVE_CDROM_CAPS_DVDPLUSR     2
+#define DRIVE_CDROM_CAPS_DVDPLUSRW    4
+#define DRIVE_CDROM_CAPS_DVDPLUSRWDL  8
+#define DRIVE_CDROM_CAPS_DVDPLUSRDL  16
+
 int get_dvd_r_rw_profile (int fd);
 int get_read_write_speed (int fd, int *read_speed, int *write_speed, char **write_speeds);
 int get_disc_capacity_for_type (int fd, int type, guint64 *capacity);

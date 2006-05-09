@@ -3056,6 +3056,14 @@
             </row>
             <row>
               <entry>
+                <literal>storage.cdrom.dvdplusrwdl</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can blank and write to DVD+RW Dual-Layer discs</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>storage.cdrom.dvdplusrdl</literal> (bool)
               </entry>
               <entry></entry>

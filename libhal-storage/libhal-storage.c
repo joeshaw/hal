@@ -278,7 +278,8 @@ libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volu
 		}
 		if ((drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDRW) &&
 		    (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW)) {
-                        if(drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL)
+                        if(drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL || 
+			   drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRWDL)
                                 second = "/DVD±RW DL";
                         else
                                 second = "/DVD±RW";
@@ -932,6 +933,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvd", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDROM);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSR);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrwdl", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRWDL);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdplusrdl", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDPLUSRDL);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDR);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.dvdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_DVDRW);
