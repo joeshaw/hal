@@ -49,7 +49,7 @@ hal_storage_mount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/
 hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
 hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
-scriptdir = $(datadir)/hal/scripts
+scriptdir = $(libdir)/hal/scripts
 
 script_SCRIPTS =				\
 	hal-luks-setup                          \

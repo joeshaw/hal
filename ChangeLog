@@ -1,3 +1,12 @@
+2006-05-05  Danny Kukawka  <danny.kukawka@web.de>
+
+	Moved hal scripts to $(libdir)/hal/scripts instead of 
+	$(datadir)/hal/scripts to be more in compliance with FHS related 
+	to fd.o bug #5655
+
+	* hald/Makefile.am:
+	* tools/Makefile.am:
+
 2006-05-09  Richard Hughes  <richard@hughsie.com>
 
 	* doc/spec/hal-spec-properties.xml:
