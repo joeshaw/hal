@@ -1,4 +1,19 @@
-2006-05-08  Richard Hughes  <davidz@redhat.com>
+2006-05-09  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/Makefile.am:
+	* doc/spec/hal-spec.html:
+	* doc/spec/hal-spec.xml.in:
+	* doc/spec/hal-spec-introduction.xml:
+	* doc/spec/hal-spec-fdi-files.xml:
+	* doc/spec/hal-spec-properties.xml:
+	* doc/spec/hal-spec-examples.xml:
+	Split up the spec file into more managable lumps using XInclude, and
+	change to using xmlto to convert the docbook xml to html as
+	docbook2html cannot handle the XInclude stuff as it's not valid docbook.
+	This is the first of many cleanup patches to the spec, so expect the
+	filenames to (maybe) change, or for files to be split even further.
+
+2006-05-08  Richard Hughes  <richard@hughsie.com>
 
 	* doc/spec/hal-spec.xml.in:
 	* hald/linux2/osspec.c: (set_suspend_hibernate_keys):

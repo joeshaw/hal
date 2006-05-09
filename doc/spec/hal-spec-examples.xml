@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- CVSID: $Id$ -->
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="examples">
+  <title>Examples and other stuff</title>
+
+  <sect1 id="callouts">
+    <title>Callouts</title>
+    <para>
+      Callouts are programs invoked when the device object list is
+      modified. As such, callouts can be used to maintain system-wide
+      policy (that may be specific to the particular OS) such as
+      changing permissions on device nodes, updating the systemwide
+      <literal>/etc/fstab</literal> file or configuring the networking
+      subsystem.
+    </para>
+    <para>
+      There are three different classes of callouts. A callout
+      involves sequentially invoking all executable programs in the
+      string list in listed order.
+    </para>
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Key (type)</entry>
+            <entry>Values</entry>
+            <entry>Mandatory</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>
+              <literal>info.callouts.add</literal> (string list)
+            </entry>
+            <entry></entry>
+            <entry>No</entry>
+            <entry>
+              A string list with all programmes/callouts which should be
+              executed (with <literal>HALD_ACTION=add</literal>) when the device
+              is added to the GDL (global device list) but just before it is
+              announced through the D-BUS network API.
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <literal>info.callouts.remove</literal> (string list)
+            </entry>
+            <entry></entry>
+            <entry>No</entry>
+            <entry>
+              A string list with all programmes/callouts which should be
+              executed (with <literal>HALD_ACTION=remove</literal>) when the
+              device is removed from the GDL (global device list). The device
+              isn't removed before the last callout has finished.
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <literal>info.callouts.preprobe</literal> (string list)
+            </entry>
+            <entry></entry>
+            <entry>No</entry>
+            <entry>
+              A string list with all programmes/callouts which should be
+              executed (with <literal>HALD_ACTION=preprobe</literal>) before
+              the device is added to the GDL (global device list) and before
+              the callouts from <literal>info.callouts.add</literal> are executed.
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+    <para>
+      All callouts execute in the same environment as which the HAL
+      daemon was started. In addition, the UDI of the device object is
+      exported in the environment variable <literal>UDI</literal>. All
+      properties of the device object are exported in the environment
+      prefixed with <literal>HAL_</literal>. If a device is added or
+      removed is exported in the environment variable <literal>HALD_ACTION
+      </literal>
+      ,if HAL is in shutdown mode the variable <literal>
+        HALD_SHUTDOWN
+      </literal>
+      is set to environment.
+    </para>
+    <para>
+      The HAL daemon isn't suspended while callouts are executing. Thus,
+      callouts can communicate with the HAL daemon using the D-BUS network
+      API. Hence, one application of callouts is to merge or modify
+      properties on a device object.
+    </para>
+  </sect1>
+
+  <sect1 id="dbus-api">
+    <title>D-BUS Network API</title> <para>
+      The HAL daemon is a system-wide process that keeps track of a
+      number of device objects. It communicates with the operating
+      system and intercepts hotplug events as devices are plugged in
+      and removed.  The daemon is also responsible for providing
+      services to applications that wants to locate devices and
+      perform generic operations on them such as obtaining exclusive
+      access.  Non-generic operations, such as obtaining pictures from
+      a camera device, is outside the scope of the HAL daemon; see
+      <xref linkend="using-devices"/>
+       for more information.
+    </para>
+    <para>
+      HAL has the concept of device stores. When a device is detected
+      it is placed in the TDL (temporary device list) and then properties
+      are merged from several sources including device information files
+      and possibly callouts. Eventually, the device transitions to the
+      GDL (global device list) and first then it becomes ''visible'' for
+      desktop applications.
+    </para>
+
+    <sect2>
+      <title>Interface org.freedesktop.Hal.Manager</title>
+      <para>
+        Using D-BUS terminology, the HAL daemon provides the D-BUS
+        service <literal>org.freedesktop.Hal</literal>. This service
+        offers a D-BUS object at a well-known
+        location <literal>/org/freedesktop/Hal/Manager</literal>. This
+        object offers a D-BUS
+        interface, <literal>org.freedesktop.Hal.Manager</literal>, for
+        querying device objects with the following methods:
+      </para>
+      <programlisting>
+# Return a list of all devices in the GDL
+#
+# @return                       List of UDI's
+#
+array{string} GetAllDevices()
+# Determine if a device with a given Unique Device Id exists in the GDL
+#
+# @param  udi                   Device UDI, for example '/org/freedesktop/Hal/devices/pci_8086_7111'
+# @return                       TRUE iff the device with the given UDI exists
+#
+bool DeviceExists(string udi)
+# Find the set of devices in the GDL that has a given property matching
+# a given value
+#
+# @param  key                   Key, for example 'block.fstype'
+# @param  value                 Value, for example 'ext3'
+# @return                       Array of UDI's, may be empty
+#
+array{string} FindDeviceStringMatch(string key, string value)
+# Find the set of devices in the GDL that has a given capability
+#
+# @param  capability            Capability, for example 'volume'
+# @return                       Array of UDI's, may be empty
+#
+array{string} FindDeviceByCapability(string capability)
+      </programlisting>
+      <para>
+        This object also emits the following signals on the
+        <literal>/org/freedesktop/Hal/Manager</literal> object on the
+        <literal>org.freedesktop.Hal.Manager</literal> interface that
+        applications can subscribe to using D-BUS:
+      </para>
+      <programlisting>
+# Notification that a new device have been added to the GDL
+#
+# @param  udi                   Unique Device Id
+#
+void DeviceAdded(string udi)
+# Notification that a new device have been removed from the GDL. The
+# application cannot use this UDI anymore.
+#
+# @param  udi                   Unique Device Id
+#
+void DeviceRemoved(string udi)
+# Notification that a device in the GDL have got a new capability. Note that
+# this is emitted even though the device already had the old capability
+#
+# @param  udi                   Unique Device Id
+#
+void NewCapability(string udi, string capability)
+      </programlisting>
+      <sect3>
+        <title>Example</title>
+        <para>
+          The following brief Python program demonstrates some of the API
+        </para>
+        <programlisting>
+          <inlinegraphic format="linespecific" fileref="example-manager.py"/>
+        </programlisting>
+        <para>
+          which gives the following output
+        </para>
+        <programlisting>
+Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001-disc
+Found device /org/freedesktop/Hal/devices/block_TORiSAN DVD-ROM DRD-U624-00000000000000000001
+Found device /org/freedesktop/Hal/devices/block_37332a77-105e-4e76-8e99-27d3746e0531
+Found device /org/freedesktop/Hal/devices/block_3_2
+Found device /org/freedesktop/Hal/devices/block_LS-120 SLIM3 00 UHD Floppy-0208MBA00211
+Found device /org/freedesktop/Hal/devices/block_IC25N020ATCS05-0-CLP225F2G3UR4A
+Found device /org/freedesktop/Hal/devices/ide_1_1
+Found device /org/freedesktop/Hal/devices/ide_0_0
+Found device /org/freedesktop/Hal/devices/ide_1_0
+Found device /org/freedesktop/Hal/devices/usbif_usb_0_0_206_-1_0000:00:07.2_0
+Found device /org/freedesktop/Hal/devices/ide_host_0
+Found device /org/freedesktop/Hal/devices/ide_host_1
+Found device /org/freedesktop/Hal/devices/pci_104c_8400
+Found device /org/freedesktop/Hal/devices/usb_0_0_206_-1_0000:00:07.2
+Found device /org/freedesktop/Hal/devices/pci_1002_4c4d
+Found device /org/freedesktop/Hal/devices/pci_125d_1978
+Found device /org/freedesktop/Hal/devices/pci_8086_7111
+Found device /org/freedesktop/Hal/devices/pci_104c_ac1c/0
+Found device /org/freedesktop/Hal/devices/pci_8086_7112
+Found device /org/freedesktop/Hal/devices/pci_8086_7110
+Found device /org/freedesktop/Hal/devices/input_13_65
+Found device /org/freedesktop/Hal/devices/pci_104c_ac1c
+Found device /org/freedesktop/Hal/devices/pci_8086_7190
+Found device /org/freedesktop/Hal/devices/input_13_64
+Found device /org/freedesktop/Hal/devices/pci_8086_7113
+Found device /org/freedesktop/Hal/devices/pci_8086_7191
+Found device /org/freedesktop/Hal/devices/computer
+(insert USB mouse)
+Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was added
+Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was added
+(remove USB mouse)
+Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was removed
+Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was removed
+        </programlisting>
+        <para>
+        </para>
+      </sect3>
+    </sect2>
+
+    <sect2>
+      <title>Interface org.freedesktop.Hal.Device</title>
+      <para>
+        Applications use
+        the <literal>org.freedesktop.Hal.Manager</literal> interface to
+        locate the device objects they are interested in. When a device
+        object (which is really a D-BUS object, note that the UDI is the
+        objects object_path) is obtained, the HAL daemon provides the
+        <literal>org.freedesktop.Hal.Device</literal> interface on the
+        object denoted by the UDI. This interface has the following
+        methods
+      </para>
+      <programlisting>
+# Set property
+#
+# @param  key                   Property to set
+# @param  value                 Value to set
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|TypeMismatch|PermissionDenied)
+#
+void SetProperty(string key, any value)
+void SetPropertyString(string key, string value)
+void SetPropertyInteger(string key, int32 value)
+void SetPropertyBoolean(string key, bool value)
+void SetPropertyDouble(string key, double value)
+# Get property
+#
+# @param  key                   Property to get
+# @return                       The value of the property
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|TypeMismatch)
+#
+any GetProperty(string key)
+string GetPropertyString(string key)
+int32 GetPropertyInteger(string key)
+bool GetPropertyBoolean(string key)
+double GetPropertyDouble(string key)
+# Get all properties
+#
+# @return                       Dictionary from key to value
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+map{string, any} GetAllProperties()
+# Remove a property
+#
+# @param  key                   Property to remove
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty|PermissionDenied)
+#
+void RemoveProperty(string key)
+# Get the type of a property
+#
+# @param  key                   Property
+# @return                       D-BUS type of property
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|NoSuchProperty)
+#
+int32 GetPropertyType(string key)
+# Determine if a property exists
+#
+# @param  key                   Property
+# @return                       TRUE iff the property exists
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool PropertyExists(string key)
+# Add a capability to a device. Note that this will trigger a NewCapability
+# signal to all client applications subscribing to signals from the Manager
+# interface.
+#
+# @param  capability            Capability, e.g. 'net.80211'
+# @raises                       org.freedesktop.Hal.(NoSuchDevice|PermissionDenied)
+#
+void AddCapability(string capability)
+# Determine if a device got a given capability
+#
+# @param  capability            Capability, e.g. 'storage.cdrom'
+# @return                       TRUE iff the device got the given capability
+# @raises                       org.freedesktop.Hal.NoSuchDevice
+#
+bool QueryCapability(string capability)
+# Take an advisory lock on the device.
+#
+# @param  reason                A user-presentable reason why the device
+#                               is locked.
+# @raises                       org.freedesktop.Hal.NoSuchDevice,
+#                               org.freedesktop.Hal.DeviceAlreadyLocked
+#
+void Lock(string reason)
+# Release an advisory lock on the device.
+#
+# @raises                       org.freedesktop.Hal.NoSuchDevice,
+#                               org.freedesktop.Hal.DeviceAlreadyLocked,
+#                               org.freedesktop.Hal.PermissionDenied
+#
+void Unlock()
+      </programlisting>
+      <para>
+        The device objects also emits the following signals on the
+        org.freedesktop.Hal interface that applications can subscribe to
+        using D-BUS
+      </para>
+      <programlisting>
+# Notification that property have been modified
+#
+# @param  key                   Property
+# @param  added                 True iff the property have been added
+# @param  removed               True iff the property have been removed
+#
+void PropertyModified(string key, bool added, bool removed)
+# Notification that an event happened on the device has occured.
+#
+# Normally this is used to signal events that aren't or can't be expressed
+# in properties, e.g. 'ProcessorOverheating' etc.
+#
+# @param  condition             Name of condition
+# @param  ...                   Dependent on the condition name
+void Condition(string condition, ...)
+      </programlisting>
+      <para>
+        Note that D-BUS supports that applications can opt to receive
+        signals for only a subset of the devices available.
+      </para>
+    </sect2>
+  </sect1>
+
+  <sect1 id="enforcing-policy">
+    <title>Enforcing Policy</title>
+    <para>
+      Notwithstanding the fact that HAL avoids to enforce any policy,
+      it is useful to have a minimal set of guidelines such that
+      applications using HAL written for one operating system can
+      easily run on another. This section contains recommendations
+      about how to enforce policy to achieve that goal.
+    </para>
+    <sect2 id="enforcing-stor-vol">
+      <title>Storage Devices</title>
+      <sect3 id="stor-vol-policy">
+        <title>Policy for Volumes and Storage devices</title>
+        <para>
+          The properties in the <literal>storage.policy</literal>,
+          <literal>volume.policy</literal> and
+          <literal>storage.policy.default</literal> namespaces should
+          be the preferred way to determine how and if a filesystem
+          can be mounted. See <xref linkend="properties-policy"/>
+          for details.
+        </para>
+      </sect3>
+      <sect3 id="enforcing-storage-fstab">
+        <title>File systems file</title>
+        <para>
+          An operating system vendor should maintain the
+          <literal>/etc/fstab</literal> file through the HAL callout
+          mechanism such that device objects of capability
+          <literal>volume</literal> and <literal>storage</literal> has
+          a corresponding entry if applicable cf.
+          <xref linkend="stor-vol-policy"/>
+          .
+        </para>
+        <para>
+          The reasoning behind this is, among other things, to
+          maintain the invariant that <literal>/etc/fstab</literal>
+          list all available filesystems. In addition
+          the <literal>mount(1)</literal> program should enable users
+          without superuser privileges to mount filesystems mentioned
+          in the <literal>/etc/fstab</literal> file as long as they
+          have the <literal>user</literal> option set.
+        </para>
+      </sect3>
+      <sect3 id="enforcing-storage-locking">
+        <title>Disabling policy agents</title>
+        <para>
+          Policy agents like volume mounters should ignore when media
+          is inserted into a drive that is locked by another
+          application. Thus, CD burning applications should lock the
+          device to disable auto mounting or automatic start of the
+          users preferred CD burning application when respectively
+          non-blank rewritable or blank media is inserted.
+        </para>
+      </sect3>
+    </sect2>
+  </sect1>
+
+</chapter>

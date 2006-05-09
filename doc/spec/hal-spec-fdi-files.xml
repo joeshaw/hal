@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- CVSID: $Id$ -->
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="spec-device-info">
+  <title>Device Information Files</title>
+  <para>
+    Device information files (<literal>.fdi</literal> files is a
+    shorthand) are used to merge arbitrary properties onto device
+    objects. The way device information files works is that once all
+    physical properties are merged onto a device object it is tried
+    against the set of installed device information files.  Device
+    information files are used for both merging facts and policy
+    settings about devices.
+  </para>
+  <para>
+    Each device information file got a number of
+    <literal>&#60;match key="some_property"
+      [string|int|bool|..]="required_value" &#62;
+    </literal>
+    directives
+    that is tested against the properties of the device object. If
+    all the match directives passes then the device information can
+    include <literal>&#60;[merge|append|prepend] key="some_property"
+      type="[string|int|bool|..]"&#62;
+    </literal>
+    directives to
+    respectively merge new properties or append to existing
+    properties on the device object. It's important to emphasize
+    that any previously property stemming from device detection can
+    be overridden by a device information file.
+  </para>
+  <para>
+    The <literal>&#60;match&#62;</literal>,
+    <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal>
+    and <literal>&#60;prepend&#62;</literal> directives always requires
+    the <literal>key</literal> attribute which must be either a
+    property name on the device object in question or a path to a
+    property on another device object. The latter case is expressed
+    either through direct specification of the UDI, such as
+    <literal>/org/freedesktop/Hal/devices/computer:foo.bar</literal>
+    or indirect references such as
+    <literal>@info.parent:baz</literal> where the latter means that
+    the device object specified by the UDI in the string property
+    <literal>info.parent</literal> should be used to query the
+    property <literal>baz</literal>. It is also possible to use
+    multiple indirections, e.g. for a volume on a USB memory stick
+    the indirection <literal>@block.storage_device:@storage.physical_device:usb.vendor_id</literal>
+    will reference the <literal>usb.vendor_id</literal> property
+    on the device object representing the USB interface.
+  </para>
+  <para>
+    When the property to match have been determined a number of
+    attributes can be used within the <literal>&#60;match&#62;</literal>
+    tag:
+    <itemizedlist>
+      <listitem>
+        <para>
+          <literal>string</literal> - match a string property; for example
+          <literal>&#60;match key="foo.bar" string="baz"&#62;</literal>
+          will match only if 'foo.bar' is a string property assuming the value 'baz'.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>int</literal> - match an integer property
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>uint64</literal> - match property with the 64-bit unsigned type
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>bool</literal> - match a boolean property
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>double</literal> - match a property of type double
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>exists</literal> - used as
+          <literal>&#60;match key="foo.bar" exists="true"&#62;</literal>. Can be used with
+          'true' and 'false' respectively to match when a property exists and it doesn't.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>empty</literal> - can only be used on string properties
+          with 'true' and 'false'.
+          The semantics for 'true' is to match only when the string is non-empty.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>is_absolute_path</literal> - matches only when a string
+          property represents an absolute path (the path doesn't have to exist).
+          Can be used with 'true' or 'false'.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>is_ascii</literal> - matches only when a string property
+          contain only ASCII characters. Can be used with 'true' or 'false'.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>compare_lt</literal> - can be used on int, uint64, double
+          and string properties to compare with a constant.
+          Matches when the given property is less than the given constant
+          using the default ordering.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>compare_le</literal> - like <literal>compare_lt</literal>
+          but matches when less than or equal.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>compare_gt</literal> - like <literal>compare_lt</literal>
+          but matches when greater than.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>compare_ge</literal> - like <literal>compare_lt</literal>
+          but matches when greater than or equal.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>contains</literal> - can only be used with string and
+          strlist (string list).
+          For a string key this matches when the property contains the given
+          (sub-)string. For a string list this match if the given string match
+          a item of the list.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>contains_ncase</literal> - like <literal>contains</literal>
+          but the property and the given key are converted to lowercase before check.
+        </para>
+      </listitem>
+    </itemizedlist>
+    The <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal>
+    and <literal>&#60;prepend&#62;</literal> directives all require
+    the <literal>type</literal> attribute which specifies what to
+    merge. The following values are supported
+    <itemizedlist>
+      <listitem>
+        <para>
+          <literal>string</literal> - The value is copied to the property. For example
+          <literal>&#60;merge key="foo.bar" type="string"&#62;baz&#60;/merge&#62;</literal>
+          will merge the value 'baz' into the property 'foo.bar'.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>strlist</literal> - For <literal>&#60;merge&#62;</literal> the value is
+          copied to the property and the current property will be overwritten. For
+          <literal>&#60;append&#62;</literal> and <literal>&#60;prepend&#62;</literal> the
+          value is append or prepend to the list as new item.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>bool</literal> - Can merge the values 'true' or 'false'
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>int</literal> - Merges an integer
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>uint64</literal> - Merges an unsigned 64-bit integer
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>double</literal> - Merges a double precision floating point number
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>copy_property</literal> - Copies the value of a given
+          property - supports paths with direct and indirect UDI's. For example
+          <literal>&#60;merge key="foo.bar" type="copy_property"&#62;@info.parent:baz.bat&#60;/merge&#62;</literal>
+          will merge the value of the property <literal>baz.bat</literal> on the device object with the UDI from
+          the property <literal>info.parent</literal> into the property <literal>foo.bar</literal> on
+          the device object being processed.
+        </para>
+      </listitem>
+    </itemizedlist>
+    The <literal>&#60;remove&#62;</literal>, directive require only a key and can be used with all keys.
+    For <literal>strlist</literal> there is additionally a special syntax to remove a item from the
+    string list. For example to remove item 'bla' from property 'foo.bar':
+    <literal>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/merge&#62;</literal>
+  </para>
+  <para>
+    Device Information files are stored in the following standard hierachy with the following default
+    top level directories <literal>information</literal>, <literal>policy</literal> and
+    <literal>preprobe</literal>:
+    <itemizedlist>
+      <listitem>
+        <para>
+          <literal>information</literal> - device information files to merge device information
+          <itemizedlist>
+            <listitem>
+              <para>
+                <literal>10freedesktop</literal> - device information files included with
+                the hal tarball
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>20thirdparty</literal> - device information files from the device
+                manufacturer and installed from media accompanying the hardware
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>30user</literal> - device information for specific devices
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>policy</literal> - device information files to merge policy propertys
+          <itemizedlist>
+            <listitem>
+              <para>
+                <literal>10osvendor</literal> - device information files included with the
+                hal tarball and supplied by the operating system vendor for policy rules
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>20thirdparty</literal> -  Policy rules from the device
+                manufacturer and installed from media accompanying the hardware
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>30user</literal> - Policy rules for specific devices
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>preprobe</literal> - device information files to information before probe devices
+          <itemizedlist>
+            <listitem>
+              <para>
+                <literal>10osvendor</literal> - device information files included with the
+                hal tarball and supplied by the operating system vendor
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>20thirdparty</literal> - device information files from the device
+                manufacturer and installed from media accompanying the hardware
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>30user</literal> -  device information for specific devices
+              </para>
+            </listitem>
+          </itemizedlist>
+        </para>
+      </listitem>
+    </itemizedlist>
+    All device information files are matched for every hal device object.
+  </para>
+  <sect1 id="fdi-facts">
+    <title>Facts about devices</title>
+    <sect2 id="fdi-example-mp3player">
+      <title>Example: MP3 player</title>
+      <programlisting>
+        <inlinegraphic format="linespecific" fileref="../conf/match-USB-mp3-player.fdi"/>
+      </programlisting>
+      <para>
+        The final set of properties look like this:
+      </para>
+      <para>
+        <inlinegraphic fileref="hal-fdi-example2.png" format="PNG"/>
+      </para>
+    </sect2>
+    <sect2 id="fdi-example-camera">
+      <title>Example: Digital Still Camera</title>
+      <programlisting>
+        <inlinegraphic format="linespecific" fileref="../conf/match-USB-camera.fdi"/>
+      </programlisting>
+      <para>
+        The final set of properties look like this:
+      </para>
+      <para>
+        <inlinegraphic fileref="hal-fdi-example1.png" format="PNG"/>
+      </para>
+    </sect2>
+    <sect2 id="fdi-example-6in1">
+      <title>Example: Card Reader</title>
+      <programlisting>
+        <inlinegraphic format="linespecific" fileref="../conf/match-cardreader.fdi"/>
+      </programlisting>
+      <para>
+        As described in the documentation for the
+        <literal>storage.physical_device</literal> property in
+        <xref linkend="device-properties-storage"/> this device information
+        file export information about each storage port through the
+        property <literal>storage.drive_type</literal>. Thus, one
+        of the four <literal>storage</literal> devices has the
+        following properties that are merged from the device object
+        that the device information file targets:
+      </para>
+      <para>
+        <inlinegraphic fileref="hal-fdi-example3.png" format="PNG"/>
+      </para>
+    </sect2>
+  </sect1>
+  <sect1 id="fdi-policy">
+    <title>Policy settings for devices</title>
+    <para>
+      Policy settings specifies system specific settings that a
+      system administrator associates with a device instance. In the
+      context of hal, this can be expressed in terms of device
+      properties merged on the device object in question. Default
+      policy can also be merged on the root computer device object.
+    </para>
+    <sect2 id="fdi-example-mountsetting">
+      <title>Storage Devices</title>
+      <para>
+        Policy for storage devices is expressed in the
+        <literal>storage.policy.default</literal>,
+        <literal>storage.policy</literal> and
+        <literal>volume.policy</literal> namespaces, see
+        <xref linkend="properties-policy"/>
+         for details.
+      </para>
+      <programlisting>
+        <inlinegraphic format="linespecific" fileref="../conf/storage-policy-examples.fdi"/>
+      </programlisting>
+    </sect2>
+  </sect1>
+</chapter>
