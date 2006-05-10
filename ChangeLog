@@ -1,5 +1,10 @@
 2006-05-10  Danny Kukawka  <danny.kukawka@web.de>
 
+	* hald/linux2/probing/probe-input.c: (check_abs), (check_key),
+	(check_rel): replaced fprintf () with dbg ()
+
+2006-05-10  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/probing/probe-volume.c: (strdup_valid_utf8):
 	removed unneeded code and validate the returned string directly.
 

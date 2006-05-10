@@ -58,17 +58,17 @@ check_abs (int fd, LibHalContext *ctx, const char *udi)
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_ABS, sizeof (bitmask)), bitmask) < 0) {
-		fprintf(stderr, "ioctl EVIOCGBIT failed\n");
+		dbg ("ioctl EVIOCGBIT for EV_ABS failed");
 		goto out;
 	}
 
 	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask_touch)), bitmask_touch) < 0) {
-		fprintf(stderr, "ioctl EVIOCGBIT failed\n");
+		dbg ("ioctl EVIOCGBIT for EV_KEY failed");
 		goto out;
 	}
 	
 	if (!test_bit(ABS_X, bitmask) || !test_bit(ABS_Y, bitmask)) {
-		fprintf (stderr, "missing x or y absolute axes\n");
+		dbg ("missing x or y absolute axes");
 		goto out;
 	}
 
@@ -92,7 +92,7 @@ check_key (int fd, LibHalContext *ctx, const char *udi)
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask)), bitmask) < 0) {
-		fprintf(stderr, "ioctl EVIOCGBIT failed\n");
+		dbg ("ioctl EVIOCGBIT for EV_KEY failed");
 		goto out;
 	}
 
@@ -122,12 +122,12 @@ check_rel (int fd, LibHalContext *ctx, const char *udi)
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_REL, sizeof (bitmask)), bitmask) < 0) {
-		fprintf(stderr, "ioctl EVIOCGBIT failed: %m\n");
+		dbg ("ioctl EVIOCGBIT for EV_REL failed");
 		goto out;
 	}
 
 	if (!test_bit (REL_X, bitmask) || !test_bit (REL_Y, bitmask)) {
-		fprintf (stderr, "missing x or y relative axes\n");
+		dbg ("missing x or y relative axes");
 		goto out;
 	}
 
