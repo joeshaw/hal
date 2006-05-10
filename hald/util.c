@@ -1023,7 +1023,7 @@ hal_util_strdup_valid_utf8 (const char *str)
 
 	newstr = g_strdup (str);
 
-	while (!g_utf8_validate (str, -1, (const char **) &endchar)) {
+	while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
 		*endchar = '?';
 	}
 	return newstr;
