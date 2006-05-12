@@ -1,3 +1,9 @@
+2006-05-12  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/probing/probe-volume.c: (strdup_valid_utf8):
+	removed (again) unneeded code and validate the returned string 
+	directly.
+
 2006-05-12  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/probing/probe-volume.c (strdup_valid_utf8): In

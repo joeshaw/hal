@@ -66,7 +66,6 @@ strdup_valid_utf8 (const char *str)
 {
 	char *endchar;
 	char *newstr;
-	char *s;
 	unsigned int fixes;
 
 	if (str == NULL)
@@ -75,8 +74,7 @@ strdup_valid_utf8 (const char *str)
 	newstr = g_strdup (str);
 
 	fixes = 0;
-	s = newstr;
-	while (!g_utf8_validate (s, -1, (const char **) &endchar)) {
+	while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
 		*endchar = '_';
 		++fixes;
 	}
