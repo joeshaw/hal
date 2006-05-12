@@ -441,6 +441,8 @@ HalDevice
 
 @device: 
 @key: 
+@attr: 
+@persistence: 
 @Returns: 
 
 

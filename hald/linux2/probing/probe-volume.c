@@ -66,14 +66,25 @@ strdup_valid_utf8 (const char *str)
 {
 	char *endchar;
 	char *newstr;
+	char *s;
+	unsigned int fixes;
 
 	if (str == NULL)
 		return NULL;
 
 	newstr = g_strdup (str);
 
-	while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
+	fixes = 0;
+	s = newstr;
+	while (!g_utf8_validate (s, -1, (const char **) &endchar)) {
 		*endchar = '_';
+		++fixes;
+	}
+
+	/* If we had to fix more than 20% of the characters, give up */
+	if (fixes > 0 && g_utf8_strlen (newstr, -1) / fixes < 5) {
+	    g_free (newstr);
+	    newstr = g_strdup("");
 	}
 
 	return newstr;

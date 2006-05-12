@@ -330,6 +330,8 @@ property
 </para>
 
 @prop: 
+@attr: 
+@val: 
 
 
 <!-- ##### FUNCTION hal_property_get_attribute ##### -->
@@ -338,6 +340,7 @@ property
 </para>
 
 @prop: 
+@attr: 
 @Returns: 
 
 

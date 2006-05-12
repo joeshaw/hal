@@ -1,3 +1,16 @@
+2006-05-12  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/probing/probe-volume.c (strdup_valid_utf8): In
+	Ubuntu we got several bug reports about device label gibberish,
+	for example: https://launchpad.net/bugs/27897. This happens if the
+	label is either truly bogus, or in a non-UTF-8 compatible
+	encoding. The blunt solution would be to just ignore any non-UTF-8
+	labels, but since it might be preferable to retain labels which
+	are only 'lightly' damaged (maybe one Umlaut in an otherwise valid
+	string), I wrote a small patch to ignore invalid labels if they
+	contain more than 20% illegal characters. Patch from Martin Pitt
+	<martin@piware.de>.
+
 2006-05-12  Danny Kukawka  <danny.kukawka@web.de>
 
 	cleanup: s/;;/;/
