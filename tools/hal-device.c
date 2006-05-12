@@ -493,7 +493,7 @@ void process_property(LibHalContext *hal_ctx, char *buf, lh_prop_t **prop)
 		if (strstr(s1, "(int)")) {
 			*s1++ = 0;
 			p->type = LIBHAL_PROPERTY_TYPE_INT32;
-			p->int_value = strtol(s, NULL, 10);;
+			p->int_value = strtol(s, NULL, 10);
 		} else if (strstr(s1, "(uint64)")) {
 			*s1++ = 0;
 			p->type = LIBHAL_PROPERTY_TYPE_UINT64;

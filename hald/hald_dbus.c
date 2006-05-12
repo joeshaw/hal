@@ -2608,11 +2608,11 @@ hald_exec_method_enqueue (MethodInvocation *mi)
 	}
 
 	if (g_hash_table_lookup_extended (udi_to_method_queue, mi->udi, &origkey, (gpointer) &queue)) {
-		HAL_INFO (("enqueue"));;
+		HAL_INFO (("enqueue"));
 		queue = g_list_append (queue, mi);
 		g_hash_table_replace (udi_to_method_queue, g_strdup (mi->udi), queue);
 	} else {
-		HAL_INFO (("no need to enqueue"));;
+		HAL_INFO (("no need to enqueue"));
 		queue = g_list_append (NULL, mi);
 		g_hash_table_insert (udi_to_method_queue, g_strdup (mi->udi), queue);
 
@@ -2634,12 +2634,12 @@ hald_exec_method_process_queue (const char *udi)
 		}
 
 		if (queue == NULL) {
-			HAL_INFO (("No more methods in queue"));;
+			HAL_INFO (("No more methods in queue"));
 			g_hash_table_remove (udi_to_method_queue, udi);
 		} else {
 			MethodInvocation *mi;
 
-			HAL_INFO (("Execing next method in queue"));;
+			HAL_INFO (("Execing next method in queue"));
 			g_hash_table_replace (udi_to_method_queue, g_strdup (udi), queue);
 
 			mi = (MethodInvocation *) queue->data;

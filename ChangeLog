@@ -1,3 +1,12 @@
+2006-05-12  Danny Kukawka  <danny.kukawka@web.de>
+
+	cleanup: s/;;/;/
+
+	* hald/hald_dbus.c: (hald_exec_method_enqueue),
+	(hald_exec_method_process_queue):
+	* tools/hal-device.c: (process_property):
+	* volume_id/reiserfs.c: (volume_id_probe_reiserfs):
+
 2006-05-10  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/probing/probe-input.c: (check_abs), (check_key),
