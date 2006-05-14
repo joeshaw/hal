@@ -1,3 +1,15 @@
+2006-05-14  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/hal-spec-properties.xml:
+	* fdi/policy/10osvendor/10-laptop-panel-mgmt-policy.fdi:
+	On some laptops, the brightness control is all done in hardware
+	but the hardware also synthesizes keypresses when the brightness is
+	changed.
+	If laptop_panel.brightness_in_hardware is set true, then any
+	power manager software should not attempt to set any new values on
+	brightness keypress, as it may cause the panel to flash uncontrollably.
+	This patch sets the aforementioned key for the IBM ThinkPad X31.
+
 2006-05-14  Joe Marcus Clarke <marcus@freebsd.org>
 
 	* hald/hald_runner.c: (add_basic_env)

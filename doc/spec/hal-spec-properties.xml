@@ -4063,6 +4063,21 @@
                 The access method to use in scripts, e.g. pmu, toshiba, ibm, sony.
               </entry>
             </row>
+            <row>
+              <entry>
+                <literal>laptop_panel.brightness_in_hardware</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                On some laptops, the brightness control is all done in hardware
+                but the hardware also synthesizes keypresses when the
+                brightness is changed.
+                If this key is set true, then any power manager software should
+                not attempt to set any new values on brightness keypress, as it
+                may cause the panel to flash uncontrollably.
+              </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
