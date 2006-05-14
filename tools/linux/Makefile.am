@@ -18,7 +18,6 @@ script_SCRIPTS =					\
 	hal-system-power-set-power-save-linux		\
 	hal-system-storage-unmount-linux		\
 	hal-system-storage-eject-linux			\
-	hal-system-storage-cleanup-mountpoint-linux   	\
 	hal-system-storage-cleanup-mountpoints-linux
 
 EXTRA_DIST = 90-hal.rules $(script_SCRIPTS)

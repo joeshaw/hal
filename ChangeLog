@@ -1,3 +1,8 @@
+2006-05-14  Joe Marcus Clarke <marcus@freebsd.org>
+
+	* tools/linux/Makefile.am: Remove a script which is only found
+	in the OS-independent section.  Spotted by Richard Hughes.
+
 2006-05-14  Richard Hughes  <richard@hughsie.com>
 
 	* configure.in:
