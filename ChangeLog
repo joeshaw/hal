@@ -1,5 +1,12 @@
 2006-05-14  Joe Marcus Clarke <marcus@freebsd.org>
 
+	* tools/linux/hal-luks-remove-linux.in:
+	* tools/linux/hal-luks-remove.in-linux: (removed): Rename
+	hal-luks-remove.in-linux to hal-luks-remove-linux.in to preserve
+	the .in extension.
+
+2006-05-14  Joe Marcus Clarke <marcus@freebsd.org>
+
 	* tools/linux/Makefile.am: Remove a script which is only found
 	in the OS-independent section.  Spotted by Richard Hughes.
 
