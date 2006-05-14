@@ -1,0 +1,23 @@
+#!/bin/sh
+read value
+
+unsupported() {
+	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+	echo No powersave method found >&2
+	exit 1
+}
+
+if [ -x "/etc/rc.d/power_profile" ] ; then
+	if [ $value = "true" ]; then
+		/etc/rc.d/power_profile 0x00
+		RET=$?
+	elif [ $value = "false" ]; then
+		/etc/rc.d/power_profile 0x01
+		RET=$?
+	fi
+else
+	unsupported
+fi
+
+exit $RET
+

@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# Copyright (C) 2006, Jean-Yves Lefort <jylefort@FreeBSD.org>
+# Copyright (C) 2006, Joe Marcus Clarke <marcus@FreeBSD.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2.
+#
+
+# read parameters
+# "<option1>\t<option2>\n"
+# Only allow ^a-zA-Z0-9_= in the string because otherwise someone may
+# pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
+
+rc=0
+read GIVEN_EJECTOPTIONS
+GIVEN_EJECTOPTIONS="`echo \"$GIVEN_EJECTOPTIONS\" | tr -Cd \"a-zA-Z0-9_=[:space:]\"`"
+if [ -n "$HAL_PROP_VOLUME_MOUNT_POINT" ]; then
+    RESULT=$(umount $HAL_PROP_VOLUME_MOUNT_POINT 2>&1)
+    rc=$?
+
+    if [ $? -eq 0 ]; then
+        RESULT=$(cdcontrol -f "$HAL_PROP_BLOCK_DEVICE" eject 2>&1)
+        rc=$?
+    fi
+else
+    RESULT=$(cdcontrol -f "$HAL_PROP_BLOCK_DEVICE" eject 2>&1)
+    rc=$?
+fi
+
+if [ $rc -ne 0 ]; then
+    case "$RESULT" in
+	*busy*)
+	    echo "org.freedesktop.Hal.Device.Volume.Busy" >&2
+	    echo "Device is busy." >&2
+	    ;;
+	*)
+	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
+	    echo "Unknown failure." >&2
+    esac
+    exit 1
+fi
+
+if [ -n "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" ]; then
+    # remove directory only if HAL has created it
+    if [ -e $HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT/.created-by-hal ]; then
+	rm -f $HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT/.created-by-hal
+	rmdir "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" 2>/dev/null || true
+    fi
+fi
+
+exit 0

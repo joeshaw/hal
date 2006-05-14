@@ -7,24 +7,15 @@
 # it under the terms of the GNU General Public License version 2.
 
 # Check for environment variables
-if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] || [ "$HAL_PROP_VOLUME_UUID" == "" ] ; then
+if [ -z "$HAL_PROP_BLOCK_DEVICE" ] || [ -z "$HAL_PROP_INFO_UDI" ] || [ -z "$HAL_PROP_VOLUME_UUID" ] ; then
         echo "Missing or empty environment variable(s)." >&2
         echo "This script should be started by hald." >&2
         exit 1
 fi
 
-CRYPTSETUP=/sbin/cryptsetup
-
-if [ ! -f $CRYPTSETUP ]; then
-	echo org.freedesktop.Hal.Device.Volume.Crypto.TeardownError >&2
-	echo Error tearing down $HAL_PROP_BLOCK_DEVICE - $CRYPTSETUP not found >&2
-	exit 1
+if [ -n "$HALD_UNAME_S" -a -x ./$0-$HALD_UNAME_S ]; then
+    exec ./$0-$HALD_UNAME_S $@
+else
+    echo "No back-end for your operating system" >&2
+    exit 1
 fi
-
-if ! $CRYPTSETUP luksClose luks_crypto_$HAL_PROP_VOLUME_UUID  2> /dev/null; then
-	echo org.freedesktop.Hal.Device.Volume.Crypto.TeardownError >&2
-	echo Error tearing down $HAL_PROP_BLOCK_DEVICE - fs still mounted? >&2
-	exit 1
-fi
-
-hal-set-property --udi=$UDI --key="info.callouts.remove" --strlist-rem="hal-luks-remove" > /dev/null 2>&1

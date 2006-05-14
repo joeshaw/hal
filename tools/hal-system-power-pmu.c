@@ -35,7 +35,9 @@
 #include <fcntl.h>
 
 #include <sys/ioctl.h>
+#ifdef __linux__
 #include <linux/pmu.h>
+#endif
 #include <libhal/libhal.h>
 
 #define PMUDEV		"/dev/pmu"
@@ -57,6 +59,9 @@
 static int
 pmac_sleep (void)
 {
+#ifdef __FreeBSD__
+	return FALSE;			/* FIXME implement */
+#else
 	int ret;
 	int fd;
 
@@ -73,6 +78,7 @@ pmac_sleep (void)
 		return FALSE;
 	}
 	return TRUE;
+#endif /* ! __FreeBSD__ */
 }
 
 /** Gets the LCD brightness
@@ -83,6 +89,9 @@ pmac_sleep (void)
 static int
 pmac_get_lcd_brightness (int *val)
 {
+#ifdef __FreeBSD__
+	return FALSE;			/* FIXME implement */
+#else
 	int ret;
 	int fd;
 
@@ -99,6 +108,7 @@ pmac_get_lcd_brightness (int *val)
 		return FALSE;
 	}
 	return TRUE;
+#endif /* ! __FreeBSD__ */
 }
 
 /** Sets the LCD brightness
@@ -109,6 +119,9 @@ pmac_get_lcd_brightness (int *val)
 static int
 pmac_set_lcd_brightness (int val)
 {
+#ifdef __FreeBSD__
+	return FALSE;			/* FIXME implement */
+#else
 	int ret;
 	int fd;
 
@@ -125,6 +138,7 @@ pmac_set_lcd_brightness (int val)
 		return FALSE;
 	}
 	return TRUE;
+#endif /* ! __FreeBSD__ */
 }
 
 /** Print out program usage.

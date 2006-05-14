@@ -27,6 +27,7 @@
 #  include <config.h>
 #endif
 
+#include <sys/utsname.h>
 #include <stdio.h>
 
 #include <glib.h>
@@ -166,6 +167,8 @@ add_env(DBusMessageIter *iter, const gchar *key, const gchar *value) {
 
 static void
 add_basic_env(DBusMessageIter *iter, const gchar *udi) {
+  struct utsname un;
+
   if (hald_is_verbose) {
     add_env(iter, "HALD_VERBOSE", "1");
   }
@@ -175,9 +178,16 @@ add_basic_env(DBusMessageIter *iter, const gchar *udi) {
   if (hald_use_syslog) {
     add_env(iter, "HALD_USE_SYSLOG", "1");
   }
-
   add_env(iter, "UDI", udi);
   add_env(iter, "HALD_DIRECT_ADDR", hald_dbus_local_server_addr());
+
+  if (uname(&un) == 0) {
+    char *sysname;
+
+    sysname = g_ascii_strdown(un.sysname, -1);
+    add_env(iter, "HALD_UNAME_S", sysname);
+    g_free(sysname);
+  }
 }
 
 static void

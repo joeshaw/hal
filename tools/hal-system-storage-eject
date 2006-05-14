@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # Copyright (C) 2006, David Zeuthen <david@fubar.dk>
@@ -7,14 +7,14 @@
 # it under the terms of the GNU General Public License version 2.
 #
 # Check for environment variables
-if [ "$HAL_PROP_BLOCK_DEVICE" == "" ] || [ "$HAL_PROP_INFO_UDI" == "" ] ; then
+if [ -z "$HAL_PROP_BLOCK_DEVICE" ] || [ -z "$HAL_PROP_INFO_UDI" ] ; then
     echo "Missing or empty environment variable(s)." >&2
     echo "This script should be started by hald." >&2
     exit 1
 fi
 
 if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ]; then
-    if [ "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" != "" ]; then
+    if [ -n "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" ]; then
 	if [ "$HAL_METHOD_INVOKED_BY_UID" != "$HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID" ]; then
 	    echo "org.freedesktop.Hal.Device.Volume.PermissionDenied" >&2
 	    echo "Volume mounted by uid $HAL_PROP_INFO_HAL_MOUNT_MOUNTED_BY_UID cannot be ejected by uid $HAL_METHOD_INVOKED_BY_UID." >&2
@@ -35,34 +35,9 @@ fi
 #    fi
 #fi
 
-# read parameters
-# "<option1>\t<option2>\n"
-# Only allow ^a-zA-Z0-9_= in the string because otherwise someone may
-# pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
-
-read GIVEN_EJECTOPTIONS
-GIVEN_EJECTOPTIONS=${GIVEN_EJECTOPTIONS//[^a-zA-Z0-9_=[:space:]]/_}
-
-RESULT=$(eject "$HAL_PROP_BLOCK_DEVICE" 2>&1)
-if [ $? -ne 0 ]; then
-    case "$RESULT" in
-	*busy*)
-	    echo "org.freedesktop.Hal.Device.Volume.Busy" >&2
-	    echo "Device is busy." >&2
-	    ;;
-	*)
-	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
-	    echo "Unknown failure." >&2
-    esac
+if [ -n "$HALD_UNAME_S" -a -x ./$0-$HALD_UNAME_S ]; then
+    exec ./$0-$HALD_UNAME_S $@
+else
+    echo "No back-end for your operating system" >&2
     exit 1
 fi
-
-if [ "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT" != "" ]; then
-    # remove directory only if HAL has created it
-    if [ -e $HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT/.created-by-hal ]; then
-	rm -f $HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT/.created-by-hal
-	rmdir --ignore-fail-on-non-empty "$HAL_PROP_INFO_HAL_MOUNT_CREATED_MOUNT_POINT"
-    fi
-fi
-
-exit 0

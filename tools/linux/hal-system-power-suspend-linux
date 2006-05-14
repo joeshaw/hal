@@ -1,0 +1,95 @@
+#!/bin/sh
+
+POWERSAVED_SUSPEND2RAM="dbus-send --system --dest=com.novell.powersave \
+                        --print-reply /com/novell/powersave \
+                        com.novell.powersave.action.SuspendToRam"
+
+alarm_not_supported() {
+	echo org.freedesktop.Hal.Device.SystemPowerManagement.AlarmNotSupported >&2
+	echo Waking the system up is not supported >&2
+	exit 1
+}
+
+unsupported() {
+	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+	echo No suspend method found >&2
+	exit 1
+}
+
+read seconds_to_sleep
+
+#PMU systems cannot use /sys/power/state yet, so use a helper to issue an ioctl
+if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" == "pmu" ]; then
+	hal-system-power-pmu sleep
+	if [ $? -ne 0 ]; then
+		echo "org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported" >&2
+		exit 1
+	fi
+	exit 0
+fi
+
+#SuSE and ALTLinux only support powersave
+if [ -f "/etc/altlinux-release" ] || [ -f "/etc/SuSE-release" ] ; then
+	if [ -x /usr/bin/powersave ] ; then
+	        $POWERSAVED_SUSPEND2RAM
+		RET=$?
+	else
+		# TODO: add support
+		unsupported
+	fi
+
+#RedHat/Fedora only support pm-utils
+elif [ -f "/etc/redhat-release" ] || [ -f "/etc/fedora-release" ] ; then
+	# TODO: fix pm-suspend to take a --wakeup-alarm argument
+	if [ $seconds_to_sleep != "0" ] ; then
+		alarm_not_supported
+	fi
+	# TODO: fixup pm-suspend to define erroc code (see alarm above) and throw
+	#	   the appropriate exception
+	if [ -x "/usr/sbin/pm-suspend" ] ; then
+		/usr/sbin/pm-suspend
+		RET=$?
+	else
+		# TODO: add support
+		unsupported
+	fi
+
+#FreeBSD uses zzz to suspend for both ACPI and APM
+elif [ "x`uname -s`" = "xFreeBSD" ] ; then
+	if [ -x /usr/sbin/zzz ] ; then
+		/usr/sbin/zzz
+		RET=$?
+	else
+		unsupported
+	fi
+
+#Other distros just need to have *any* tools installed
+else
+	if [ -x "/usr/bin/powersave" ] ; then
+	    $POWERSAVED_SUSPEND2RAM
+	    RET=$?
+	elif [ -x "/usr/sbin/pmi" ] ; then
+	    /usr/sbin/pmi action suspend force
+	    RET=$?
+	elif [ -w "/sys/power/state" ] ; then
+	    # Use the raw kernel sysfs interface
+	    echo "mem" > /sys/power/state
+	    RET=$?
+	else
+	    # TODO: add other scripts support
+	    unsupported
+	    fi
+	fi
+
+#Refresh devices as a resume can do funny things
+for type in button battery ac_adapter
+do
+	devices=`hal-find-by-capability --capability $type`
+	for device in $devices
+	do
+		dbus-send --system --dest=org.freedesktop.Hal \
+			  $device org.freedesktop.Hal.Device.Rescan
+	done
+done
+
+exit $RET

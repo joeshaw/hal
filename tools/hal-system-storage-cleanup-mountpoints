@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Copyright (C) 2005, Kay Sievers <kay.sievers@vrfy.org>
 # Copyright (C) 2006, David Zeuthen <davidz@redhat.com>
@@ -6,27 +6,9 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2.
 
-MOUNT_ROOT="/media"
-
-for DIR in $MOUNT_ROOT/*; do
-
-    # /proc/mounts substitute spaces with 040
-    DIRMOD=${DIR//[[:space:]]/040}
-
-    # check if we created it
-    if [ -e "$DIR/.created-by-hal" ]; then
-	BUSY=0
-	while read dev dir type options; do
-	    if [ "$dir" = "$DIRMOD" ]; then
-		BUSY=1
-		break
-	    fi
-	done < /proc/mounts
-	if [ "$BUSY" != "1" ]; then
-	    rm -f "$DIR/.created-by-hal"
-	    rmdir --ignore-fail-on-non-empty "$DIR"
-	fi
-    fi
-done
-
-exit 0
+if [ -n "$HALD_UNAME_S" -a -x ./$0-$HALD_UNAME_S ]; then
+    exec ./$0-$HALD_UNAME_S $@
+else
+    echo "No back-end for your operating system" >&2
+    exit 1
+fi

@@ -1,3 +1,58 @@
+2006-05-14  Joe Marcus Clarke <marcus@freebsd.org>
+
+	* hald/hald_runner.c: (add_basic_env)
+	* configure.in:
+	* tools/Makefile.am:
+	* tools/freebsd/Makefile.am:
+	* tools/freebsd/hal-system-lcd-get-brightness-freebsd:
+	* tools/freebsd/hal-system-lcd-set-brightness-freebsd:
+	* tools/freebsd/hal-system-power-reboot-freebsd:
+	* tools/freebsd/hal-system-power-set-power-save-freebsd:
+	* tools/freebsd/hal-system-power-shutdown-freebsd:
+	* tools/freebsd/hal-system-power-suspend-freebsd:
+	* tools/freebsd/hal-system-storage-cleanup-mountpoints-freebsd:
+	* tools/freebsd/hal-system-storage-eject-freebsd:
+	* tools/freebsd/hal-system-storage-unmount-freebsd:
+	* tools/hal-luks-remove:
+	* tools/hal-luks-remove.in:
+	* tools/hal-luks-setup:
+	* tools/hal-luks-teardown:
+	* tools/hal-storage-mount.c: (fstab_open, fstab_next, fstab_close,
+	  mtab_open, mtab_next, mtab_close, map_fstype): New functions
+	  (bailout_if_in_fstab, bailout_if_mounted, handle_mount):
+	* tools/hal-system-lcd-get-brightness:
+	* tools/hal-system-lcd-set-brightness:
+	* tools/hal-system-power-hibernate:
+	* tools/hal-system-power-pmu.c: (pmac_sleep, pmac_get_lcd_brightness,
+	  pmac_get_lcd_brightness, pmac_set_lcd_brightness):
+	* tools/hal-system-power-reboot:
+	* tools/hal-system-power-set-power-save:
+	* tools/hal-system-power-shutdown:
+	* tools/hal-system-power-suspend:
+	* tools/hal-system-storage-cleanup-mountpoint:
+	* tools/hal-system-storage-cleanup-mountpoints:
+	* tools/hal-system-storage-eject:
+	* tools/hal-system-storage-unmount:
+	* tools/linux/Makefile.am:
+	* tools/linux/hal-luks-remove-linux:
+	* tools/linux/hal-luks-remove.in-linux:
+	* tools/linux/hal-luks-setup-linux:
+	* tools/linux/hal-luks-teardown-linux:
+	* tools/linux/hal-system-lcd-get-brightness-linux:
+	* tools/linux/hal-system-lcd-set-brightness-linux:
+	* tools/linux/hal-system-power-hibernate-linux:
+	* tools/linux/hal-system-power-reboot-linux:
+	* tools/linux/hal-system-power-set-power-save-linux:
+	* tools/linux/hal-system-power-shutdown-linux:
+	* tools/linux/hal-system-power-suspend-linux:
+	* tools/linux/hal-system-storage-cleanup-mountpoints-linux:
+	* tools/linux/hal-system-storage-eject-linux:
+	* tools/linux/hal-system-storage-unmount-linux: Split out the
+	tools scripts into an OS-independent wrapper, and an OS-dependent
+	backend.  The backend selection with be based on the utsname.sysname
+	value.  Also, add FreeBSD support to hal-storage-mount.c (code
+	from Jean-Yves Lefort <jylefort@FreeBSD.org>).
+
 2006-05-12  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/probing/probe-volume.c: (strdup_valid_utf8):

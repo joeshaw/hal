@@ -418,6 +418,7 @@ hald-runner/Makefile
 libhal/Makefile
 libhal-storage/Makefile
 tools/Makefile
+tools/freebsd/Makefile
 tools/linux/Makefile
 tools/device-manager/hal-device-manager
 tools/device-manager/Makefile

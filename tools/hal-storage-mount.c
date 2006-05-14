@@ -31,7 +31,16 @@
 #include <string.h>
 #include <glib.h>
 #include <glib/gstdio.h>
+#ifdef __FreeBSD__
+#include <fstab.h>
+#include <sys/param.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
+#include <limits.h>
+#include <pwd.h>
+#else
 #include <mntent.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -41,6 +50,23 @@
 
 /*#define DEBUG*/
 #define DEBUG
+
+#ifdef __FreeBSD__
+struct mtab_handle
+{
+  struct statfs	*mounts;
+  int		n_mounts;
+  int		iter;
+};
+#endif
+
+#ifdef __FreeBSD__
+#define MOUNT		"/sbin/mount"
+#define MOUNT_OPTIONS	"noexec,nosuid"
+#else
+#define MOUNT		"/bin/mount"
+#define MOUNT_OPTIONS	"noexec,nosuid,nodev"
+#endif
 
 static void
 usage (void)
@@ -229,64 +255,166 @@ out:
 	return f;
 }
 
+static gboolean
+fstab_open (gpointer *handle)
+{
+#ifdef __FreeBSD__
+	return setfsent () == 1;
+#else
+	*handle = fopen ("/etc/fstab", "r");
+	return *handle != NULL;
+#endif
+}
+
+static char *
+fstab_next (gpointer handle)
+{
+#ifdef __FreeBSD__
+	struct fstab *fstab;
+
+	fstab = getfsent ();
+
+	return fstab ? fstab->fs_spec : NULL;
+#else
+	struct mntent *mnt;
+
+	mnt = getmntent (handle);
+
+	return mnt ? mnt->mnt_fsname : NULL;
+#endif
+}
+
+static void
+fstab_close (gpointer handle)
+{
+#ifdef __FreeBSD__
+	endfsent ();
+#else
+	fclose (handle);
+#endif
+}
+
 static void
 bailout_if_in_fstab (const char *device)
 {
-	FILE *fstab;
-	struct mntent *mnt;
+	gpointer handle;
+	char *entry;
 
 	/* check if /etc/fstab mentions this device... (with symlinks etc) */
-	fstab = fopen ("/etc/fstab", "r");
-	if (fstab == NULL) {
+	if (! fstab_open (&handle)) {
 		printf ("cannot open /etc/fstab\n");
 		unknown_error ();		
 	}
-	while ((mnt = getmntent (fstab)) != NULL) {
+	while ((entry = fstab_next (handle)) != NULL) {
 		char *resolved;
 
-		resolved = resolve_symlink (mnt->mnt_fsname);
+		resolved = resolve_symlink (entry);
 #ifdef DEBUG
-		printf ("/etc/fstab: device %s -> %s \n", mnt->mnt_fsname, resolved);
+		printf ("/etc/fstab: device %s -> %s \n", entry, resolved);
 #endif
 		if (strcmp (device, resolved) == 0) {
-			printf ("%s (-> %s) found in /etc/fstab. Not mounting.\n", mnt->mnt_fsname, resolved);
+			printf ("%s (-> %s) found in /etc/fstab. Not mounting.\n", entry, resolved);
 			permission_denied_etc_fstab (device);
 		}
 
 		g_free (resolved);
 	}
-	fclose (fstab);
+	fstab_close (handle);
+}
+
+static gboolean
+mtab_open (gpointer *handle)
+{
+#ifdef __FreeBSD__
+	struct mtab_handle *mtab;
+
+	mtab = g_new0 (struct mtab_handle, 1);
+	mtab->n_mounts = getmntinfo (&mtab->mounts, MNT_NOWAIT);
+	if (mtab->n_mounts == 0) {
+		g_free (mtab);
+		return FALSE;
+	}
+
+	*handle = mtab;
+	return TRUE;
+#else
+	*handle = fopen ("/proc/mounts", "r");
+	return *handle != NULL;
+#endif
+}
+
+static char *
+mtab_next (gpointer handle)
+{
+#ifdef __FreeBSD__
+	struct mtab_handle *mtab = handle;
+
+	if (mtab->iter < mtab->n_mounts)
+		return mtab->mounts[mtab->iter++].f_mntfromname;
+	else
+		return NULL;
+#else
+	struct mntent *mnt;
+
+	mnt = getmntent (handle);
+
+	return mnt ? mnt->mnt_fsname : NULL;
+#endif
+}
+
+static void
+mtab_close (gpointer handle)
+{
+#ifdef __FreeBSD__
+	g_free (handle);
+#else
+	fclose (handle);
+#endif
 }
 
 static void
 bailout_if_mounted (const char *device)
 {
-	FILE *mtab;
-	struct mntent *mnt;
+	gpointer handle;
+	char *entry;
 
 	/* check if /proc/mounts mentions this device... (with symlinks etc) */
-	mtab = fopen ("/proc/mounts", "r");
-	if (mtab == NULL) {
-		printf ("cannot open /proc/mounts\n");
+	if (! mtab_open (&handle)) {
+		printf ("cannot open mount list\n");
 		unknown_error ();		
 	}
-	while ((mnt = getmntent (mtab)) != NULL) {
+	while ((entry = mtab_next (handle)) != NULL) {
 		char *resolved;
 
-		resolved = resolve_symlink (mnt->mnt_fsname);
+		resolved = resolve_symlink (entry);
 #ifdef DEBUG
-		printf ("/proc/mounts: device %s -> %s \n", mnt->mnt_fsname, resolved);
+		printf ("/proc/mounts: device %s -> %s \n", entry, resolved);
 #endif
 		if (strcmp (device, resolved) == 0) {
-			printf ("%s (-> %s) found in /proc/mounts. Not mounting.\n", mnt->mnt_fsname, resolved);
+			printf ("%s (-> %s) found in mount list. Not mounting.\n", entry, resolved);
 			already_mounted (device);
 		}
 
 		g_free (resolved);
 	}
-	fclose (mtab);
+	mtab_close (handle);
 }
 
+/* maps volume_id fs types to the appropriate -t mount option */
+static const char *
+map_fstype (const char *fstype)
+{
+#ifdef __FreeBSD__
+	if (! strcmp (fstype, "iso9660"))
+		return "cd9660";
+	else if (! strcmp (fstype, "ext2"))
+		return "ext2fs";
+	else if (! strcmp (fstype, "vfat"))
+		return "msdosfs";
+#endif
+
+	return fstype;
+}
 
 static void
 handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
@@ -318,6 +446,11 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	gboolean is_temporary_privilege;
 	gboolean explicit_mount_point_given;
 	const char *end;
+#ifdef __FreeBSD__
+	struct passwd *pw;
+	uid_t calling_uid;
+	gid_t calling_gid;
+#endif
 
 #ifdef DEBUG
 	printf ("device         = %s\n", device);
@@ -569,6 +702,22 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		unknown_error ();
 	}
 
+#ifdef __FreeBSD__
+	calling_uid = (uid_t) strtol (invoked_by_uid, (char **) NULL, 10);
+	pw = getpwuid (calling_uid);
+	if (pw != NULL) {
+		calling_gid = pw->pw_gid;
+	} else {
+		calling_gid = 0;
+	}
+	if (chown (mount_dir, calling_uid, calling_gid) != 0) {
+		printf ("Cannot chown '%s' to uid: %d, gid: %d\n", mount_dir,
+		        calling_uid, calling_gid);
+		g_rmdir (mount_dir);
+		unknown_error ();
+	}
+#endif
+
 	cbh_path = g_strdup_printf ("%s/.created-by-hal", mount_dir);
 	cbh = fopen (cbh_path, "w");
 	if (cbh == NULL) {
@@ -580,21 +729,21 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 
 	/* construct arguments to mount */
 	na = 0;
-	args[na++] = "/bin/mount";
+	args[na++] = MOUNT;
 	if (strlen (mount_fstype) > 0) {
 		args[na++] = "-t";
-		args[na++] = mount_fstype;
+		args[na++] = (char *) map_fstype (mount_fstype);
 	} else if (volume == NULL) {
 		/* non-pollable drive; force auto */
 		args[na++] = "-t";
 		args[na++] = "auto";
 	} else if (libhal_volume_get_fstype (volume) != NULL && strlen (libhal_volume_get_fstype (volume)) > 0) {
 		args[na++] = "-t";
-		args[na++] = (char *) libhal_volume_get_fstype (volume);
+		args[na++] = (char *) map_fstype (libhal_volume_get_fstype (volume));
 	}
 
 	args[na++] = "-o";
-	mount_option_str = g_string_new("noexec,nosuid,nodev");
+	mount_option_str = g_string_new(MOUNT_OPTIONS);
 	for (i = 0; given_options[i] != NULL; i++) {
 		g_string_append (mount_option_str, ",");
 		g_string_append (mount_option_str, given_options[i]);
@@ -615,7 +764,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 			   &serr,
 			   &exit_status,
 			   &err)) {
-		printf ("Cannot execute /bin/mount\n");
+		printf ("Cannot execute %s\n", MOUNT);
 		g_unlink (cbh_path);
 		g_rmdir (mount_dir);
 		unknown_error ();
@@ -625,7 +774,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	if (exit_status != 0) {
 		char errstr[] = "mount: unknown filesystem type";
 
-		printf ("/bin/mount error %d, stdout='%s', stderr='%s'\n", exit_status, sout, serr);
+		printf ("%s error %d, stdout='%s', stderr='%s'\n", MOUNT, exit_status, sout, serr);
 
 		g_unlink (cbh_path);
 		g_rmdir (mount_dir);

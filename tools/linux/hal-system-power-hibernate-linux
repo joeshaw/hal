@@ -1,0 +1,66 @@
+#!/bin/sh
+
+POWERSAVED_SUSPEND2DISK="dbus-send --system --dest=com.novell.powersave \
+                         --print-reply /com/novell/powersave \
+                         com.novell.powersave.action.SuspendToDisk"
+
+unsupported() {
+	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
+	echo No hibernate script found >&2
+	exit 1
+}
+
+#SuSE and ALTLinux only support powersave
+if [ -f /etc/altlinux-release ] || [ -f "/etc/SuSE-release" ] ; then
+	if [ -x /usr/bin/powersave ] ; then
+	        $POWERSAVED_SUSPEND2DISK
+		RET=$?
+	else
+		unsupported
+	fi
+
+#RedHat/Fedora only support pm-utils
+elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+	if [ -x /usr/sbin/pm-hibernate ] ; then
+		/usr/sbin/pm-hibernate
+		RET=$?
+	else
+		unsupported
+	fi
+
+#Other distros just need to have *any* tools installed
+else
+	if [ -x "/usr/bin/powersave" ] ; then
+	        $POWERSAVED_SUSPEND2DISK
+		RET=$?
+	elif [ -x "/usr/sbin/pmi" ] ; then
+		/usr/sbin/pmi action hibernate force
+		RET=$?
+	elif [ -x "/usr/sbin/pm-hibernate" ] ; then
+		/usr/sbin/pm-hibernate
+		RET=$?
+	elif [ -x "/usr/sbin/hibernate" ] ; then
+		# Suspend2 tools installed
+		/usr/sbin/hibernate --force
+		RET=$?
+	elif [ -w "/sys/power/state" ] ; then
+		# Use the raw kernel sysfs interface
+		echo "disk" > /sys/power/state
+		RET=$?
+	else
+		unsupported
+		fi
+	fi
+
+#Refresh devices as a resume can do funny things
+for type in button battery ac_adapter
+do
+	devices=`hal-find-by-capability --capability $type`
+	for device in $devices
+	do
+		dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+			  $device org.freedesktop.Hal.Device.Rescan
+	done
+done
+
+exit $RET

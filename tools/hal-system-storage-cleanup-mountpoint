@@ -5,7 +5,7 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2.
 
-if [ "$HALD_CLEANUP" = "" ]; then
+if [ -z "$HALD_CLEANUP" ]; then
     echo Specify directory to clean up with the environment variable HALD_CLEANUP
     exit 1
 fi
@@ -16,4 +16,5 @@ if [ ! -e "$HALD_CLEANUP/.created-by-hal" ]; then
 fi
 
 rm -f "$HALD_CLEANUP/.created-by-hal"
-rmdir --ignore-fail-on-non-empty "$HALD_CLEANUP"
+rmdir "$HALD_CLEANUP" 2>/dev/null || true
+

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+# Copyright (C) 2006, Jean-Yves Lefort <jylefort@FreeBSD.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2.
+
+MOUNT_ROOT="/media"
+
+for DIR in $MOUNT_ROOT/*; do
+
+    # check if we created it
+    if [ -e "$DIR/.created-by-hal" ]; then
+	BUSY=0
+	/sbin/mount | while read dev on dir rest; do
+	    if [ "x$dir" = "x$DIR" ]; then
+	        exit 1
+	    fi
+	done
+	BUSY=$?
+
+	if [ "$BUSY" != "1" ]; then
+	    rm -f "$DIR/.created-by-hal"
+	    rmdir "$DIR" 2>/dev/null || true
+	fi
+    fi
+done
+
+exit 0
