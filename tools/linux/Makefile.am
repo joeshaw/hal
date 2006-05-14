@@ -21,5 +21,5 @@ script_SCRIPTS =					\
 	hal-system-storage-cleanup-mountpoint-linux   	\
 	hal-system-storage-cleanup-mountpoints-linux
 
-EXTRA_DIST = 90-hal.rules
+EXTRA_DIST = 90-hal.rules $(script_SCRIPTS)
 

@@ -13,3 +13,4 @@ script_SCRIPTS =					\
 	hal-system-storage-eject-freebsd		\
 	hal-system-storage-cleanup-mountpoints-freebsd
 
+EXTRA_DIST = $(script_SCRIPTS)
