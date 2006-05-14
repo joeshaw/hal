@@ -20,7 +20,7 @@ htmldocdir = $(DOCDIR)/spec
 htmldoc_DATA = hal-spec.html $(FIGURE_FILES)
 
 hal-spec.html : $(SPEC_XML_FILES) $(FIGURE_FILES)
-	xmlto html-nochunks hal-spec.xml
+	$(XMLTO) html-nochunks hal-spec.xml
 
 clean-local:
 	rm -f *~
