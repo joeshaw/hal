@@ -22,3 +22,18 @@ script_SCRIPTS =					\
 
 EXTRA_DIST = 90-hal.rules $(script_SCRIPTS)
 
+check:
+	for f in $(script_SCRIPTS); do \
+            echo -n "Validate bash syntax in $$f : "; \
+            bash -n $(srcdir)/$$f 2> bash.error;\
+            if test -s bash.error; then \
+                echo failed; \
+                cat bash.error; \
+                rm -f bash.error; \
+                exit 1; \
+            else \
+                echo ok; \
+                rm -f bash.error; \
+            fi; \
+        done;
+

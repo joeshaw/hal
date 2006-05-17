@@ -1,3 +1,10 @@
+2006-05-18  Danny Kukawka  <danny.kukawka@web.de>
+
+	Added check for bash syntax in scipts to the new backend dirs.
+	
+	* tools/freebsd/Makefile.am:
+	* tools/linux/Makefile.am:
+
 2006-05-17  Danny Kukawka  <danny.kukawka@web.de>
 
 	Fixed path to the helper of the related backends, added several
