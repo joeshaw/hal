@@ -8,6 +8,7 @@
 
 # Check for environment variables
 if [ -z "$HAL_PROP_BLOCK_DEVICE" ] || [ -z "$HAL_PROP_INFO_UDI" ] ; then
+    echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "Missing or empty environment variable(s)." >&2
     echo "This script should be started by hald." >&2
     exit 1
@@ -46,7 +47,7 @@ fi
 # TODO: need to select storage-[fixed|removable][-change-uid]
 #POLICY=hal-storage-fixed-mount
 #if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
-#    polkit-is-privileged --privilege $POLICY --user $HAL_METHOD_INVOKED_BY_UID
+#    RESULT=$(polkit-is-privileged --privilege $POLICY --user $HAL_METHOD_INVOKED_BY_UID 2>&1)
 #    IS_PRIVILEGED=$?
 #    if [ "$IS_PRIVILEGED" != "0" ] ; then
 #	echo org.freedesktop.Hal.Device.PermissionDeniedByPolicy >&2
@@ -55,9 +56,12 @@ fi
 #    fi
 #fi
 
-if [ -n "$HALD_UNAME_S" -a -x ./$0-$HALD_UNAME_S ]; then
-    exec ./$0-$HALD_UNAME_S $@
+export MOUNT_POINT
+
+if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
+    exec $0-$HALD_UNAME_S $@
 else
+    echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2
     exit 1
 fi

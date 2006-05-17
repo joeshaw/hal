@@ -1,3 +1,34 @@
+2006-05-17  Danny Kukawka  <danny.kukawka@web.de>
+
+	Fixed path to the helper of the related backends, added several
+	messages as e.g. UnknownError if backend not found (William Jon 
+	McCann <mccann@jhu.edu>) and if a needed environment variable is
+	not set. Capture result of command polkit-is-privileged (William i
+	Jon McCann <mccann@jhu.edu>)
+
+	* hald/hald_runner.c: (hald_runner_start_runner): added 
+	PACKAGE_BIN_DIR to PATH
+	* tools/hal-luks-remove:
+	* tools/hal-luks-remove.in:
+	* tools/hal-luks-setup:
+	* tools/hal-luks-teardown:
+	* tools/hal-system-lcd-get-brightness:
+	* tools/hal-system-lcd-set-brightness:
+	* tools/hal-system-power-hibernate:
+	* tools/hal-system-power-reboot:
+	* tools/hal-system-power-set-power-save:
+	* tools/hal-system-power-shutdown:
+	* tools/hal-system-power-suspend:
+	* tools/hal-system-storage-cleanup-mountpoint:
+	* tools/hal-system-storage-cleanup-mountpoints:
+	* tools/hal-system-storage-eject: 
+	* tools/hal-system-storage-unmount: export MOUNT_POINT for the
+	backend script William Jon McCann <mccann@jhu.edu>
+	* tools/linux/hal-system-storage-eject-linux: added result of failed
+	eject to error message (<mccann@jhu.edu>), added GIVEN_EJECTOPTIONS 
+	to the eject command
+	* tools/linux/hal-system-storage-unmount-linux:
+
 2006-05-14  Joe Marcus Clarke <marcus@freebsd.org>
 
 	* tools/linux/hal-luks-remove-linux.in:

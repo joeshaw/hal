@@ -12,10 +12,10 @@
 # Only allow ^a-zA-Z0-9_= in the string because otherwise someone may
 # pass e.g. umask=0600,suid,dev or umask=`/bin/evil`
 
-rc=0
 read GIVEN_EJECTOPTIONS
 GIVEN_EJECTOPTIONS="`echo \"$GIVEN_EJECTOPTIONS\" | tr -cd \"a-zA-Z0-9_=[:space:]\"`"
-RESULT=$(eject "$HAL_PROP_BLOCK_DEVICE" 2>&1)
+
+RESULT=$(eject $GIVEN_EJECTOPTIONS "$HAL_PROP_BLOCK_DEVICE" 2>&1)
 
 if [ $? -ne 0 ]; then
     case "$RESULT" in
@@ -25,7 +25,7 @@ if [ $? -ne 0 ]; then
 	    ;;
 	*)
 	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
-	    echo "Unknown failure." >&2
+	    echo "Unknown failure: $RESULT" >&2
     esac
     exit 1
 fi

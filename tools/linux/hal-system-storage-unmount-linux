@@ -14,6 +14,12 @@
 read GIVEN_UNMOUNTOPTIONS
 GIVEN_UNMOUNTOPTIONS="`echo \"$GIVEN_UNMOUNTOPTIONS\" | tr -cd \"a-zA-Z0-9_=[:space:]\"`"
 
+if [ -z "$MOUNT_POINT" ]; then
+	echo "org.freedesktop.Hal.Device.Volume.UnknownMountpoint" >&2
+	echo "Missing mountpoint, cannot figure out where device is mounted." >&2
+	exit 1
+fi
+
 if [ -n "$GIVEN_UNMOUNTOPTIONS" ]; then
     for OPTION in $GIVEN_UNMOUNTOPTIONS; do
 	OPTION_WAS_OK="0"
@@ -60,7 +66,7 @@ if [ $? -ne 0 ]; then
 	    ;;
 	*)
 	    echo "org.freedesktop.Hal.Device.Volume.UnknownFailure" >&2
-	    echo "Unknown failure." >&2
+	    echo "Unknown failure: $RESULT" >&2
     esac
     exit 1
 fi

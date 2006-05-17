@@ -96,9 +96,9 @@ hald_runner_start_runner(void)
              dbus_server_get_address(server));
   hald_runner_path = g_getenv("HALD_RUNNER_PATH");
   if (hald_runner_path != NULL) {
-	  env[1] = g_strdup_printf ("PATH=%s:" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR, hald_runner_path);
+	  env[1] = g_strdup_printf ("PATH=%s:" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR ":" PACKAGE_BIN_DIR, hald_runner_path);
   } else {
-	  env[1] = g_strdup_printf ("PATH=" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR);
+	  env[1] = g_strdup_printf ("PATH=" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR ":" PACKAGE_BIN_DIR);
   }
 
   /*env[2] = "DBUS_VERBOSE=1";*/

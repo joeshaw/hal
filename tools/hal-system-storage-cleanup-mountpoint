@@ -6,6 +6,7 @@
 # it under the terms of the GNU General Public License version 2.
 
 if [ -z "$HALD_CLEANUP" ]; then
+    echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo Specify directory to clean up with the environment variable HALD_CLEANUP
     exit 1
 fi

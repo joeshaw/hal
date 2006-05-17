@@ -2,7 +2,7 @@
 
 POLICY=hal-power-poweroff
 if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
-    polkit-is-privileged --privilege $POLICY --user $HAL_METHOD_INVOKED_BY_UID
+    RESULT=$(polkit-is-privileged --privilege $POLICY --user $HAL_METHOD_INVOKED_BY_UID 2>&1)
     IS_PRIVILEGED=$?
     if [ "$IS_PRIVILEGED" != "0" ] ; then
 	echo org.freedesktop.Hal.Device.PermissionDeniedByPolicy >&2
@@ -11,9 +11,10 @@ if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
     fi
 fi
 
-if [ -n "$HALD_UNAME_S" -a -x ./$0-$HALD_UNAME_S ]; then
-    exec ./$0-$HALD_UNAME_S $@
+if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
+    exec $0-$HALD_UNAME_S $@
 else
+    echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2
     exit 1
 fi

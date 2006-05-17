@@ -10,6 +10,7 @@
 # Check for environment variables
 if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" ] || 
    [ -z "$HAL_PROP_LAPTOP_PANEL_NUM_LEVELS" ] ; then
+        echo "org.freedesktop.Hal.Device.UnknownError" >&2
         echo "Missing or empty environment variable(s)." >&2
         echo "This script should be started by hald." >&2
         exit 1
@@ -27,9 +28,10 @@ fi
 
 export value
 
-if [ -n "$HALD_UNAME_S" -a -x ./$0-$HALD_UNAME_S ]; then
-    exec ./$0-$HALD_UNAME_S $@
+if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
+    exec $0-$HALD_UNAME_S $@
 else
+    echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2
     exit 1
 fi
