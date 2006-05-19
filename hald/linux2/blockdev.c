@@ -185,6 +185,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 	dev_t devt = makedev(0, 0);
 	GSList *volumes = NULL;
 	GSList *volume;
+        GSList *autofs_mounts = NULL;
 
 	/* open /proc/mounts */
 	g_snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
@@ -212,6 +213,28 @@ blockdev_refresh_mount_state (HalDevice *d)
 		 */
 		if (strcmp(mnt.mnt_type, "nfs") == 0)
 			continue;
+
+		/* If this is an autofs mount (fstype == 'autofs') 
+		 * store the mount in a list for later use. 
+		 * On mounts managed by autofs accessing files below the mount
+		 * point cause the mount point to be remounted after an 
+		 * unmount.  We keep the list so we do not check for
+		 * the .created-by-hal file on mounts under autofs mount points
+		 */
+		if (strcmp(mnt.mnt_type, "autofs") == 0) {
+			char *mnt_dir;
+
+			if (mnt.mnt_dir[strlen (mnt.mnt_dir) - 1] != '/')
+				mnt_dir = g_strdup_printf ("%s/", mnt.mnt_dir);
+			else
+				mnt_dir = g_strdup (mnt.mnt_dir);
+
+			autofs_mounts = g_slist_append (autofs_mounts,
+							mnt_dir);
+
+
+			continue;
+		}
 
 		/* check the underlying device of the mount point */
 		if (stat (mnt.mnt_dir, &statbuf) != 0)
@@ -254,6 +277,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		HalDevice *dev;
 		char *mount_point;
 		char *mount_point_hal_file;
+		GSList *autofs_node;
 
 		dev = HAL_DEVICE (volume->data);
 		mount_point = g_strdup (hal_device_property_get_string (dev, "volume.mount_point"));
@@ -264,8 +288,20 @@ blockdev_refresh_mount_state (HalDevice *d)
 		device_property_atomic_update_end ();
 		HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));
 
+		/* check to see if mount point falls under autofs */
+		autofs_node = autofs_mounts;
+		while (autofs_node != NULL) {
+			char *am = (char *)autofs_node->data;
+
+			if (strncmp (am, mount_point, strlen (am)) == 0);
+				break;
+
+			autofs_node = autofs_node->next;
+		}
+
 		mount_point_hal_file = g_strdup_printf ("%s/.created-by-hal", mount_point);
-		if (g_file_test (mount_point_hal_file, G_FILE_TEST_EXISTS)) {
+		if (!autofs_node && 
+		     g_file_test (mount_point_hal_file, G_FILE_TEST_EXISTS)) {
 			char *cleanup_stdin;
 			char *extra_env[2];
 
@@ -292,6 +328,8 @@ blockdev_refresh_mount_state (HalDevice *d)
 		g_free (mount_point);
 	}
 	g_slist_free (volumes);
+	g_slist_foreach (autofs_mounts, (GFunc) g_free, NULL);
+	g_slist_free (autofs_mounts);
 exit:
 	endmntent (f);
 }

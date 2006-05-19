@@ -1,3 +1,9 @@
+2006-05-19  David Zeuthen  <davidz@redhat.com>
+
+	* hald/linux2/blockdev.c (blockdev_refresh_mount_state): Don't
+	stat autofs mounts. Patch from John (J5) Palmieri
+	<johnp@redhat.com>.
+
 2006-05-18  Danny Kukawka  <danny.kukawka@web.de>
 
 	Added check for bash syntax in scipts to the new backend dirs.
