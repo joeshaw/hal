@@ -1,3 +1,14 @@
+2006-05-05  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done): Fixed 
+	mapping of system.formfactor from smbios.chassis.type. Added a check 
+	if the key is already set to avoid overwrite values e.g. set in the 
+	ACPI/APM/PMU code. 
+	Added check for exit_type to skip mapping if execution of the smbios
+	prober failed.
+	(osspec_probe): Removed set default value for system.formfactor for
+	all cases and readded to case if !should_decode_dmi is set.
+
 2006-05-19  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/blockdev.c (blockdev_refresh_mount_state): Don't

@@ -360,13 +360,20 @@ computer_probing_helper_done (HalDevice *d)
 
 static void 
 computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type, 
-		                                 gint return_code, gchar **error, 
-				                             gpointer data1, gpointer data2)
+	                             gint return_code, gchar **error, 
+				     gpointer data1, gpointer data2)
 {
 	const char *chassis_type;
 	const char *system_manufacturer;
 	const char *system_product;
 	const char *system_version;
+
+	if (exit_type == HALD_RUN_FAILED) {
+		/* set a default value */
+		if (!hal_device_has_property (d, "system.formfactor"))
+			hal_device_property_set_string (d, "system.formfactor", "unknown");
+		goto out;
+	}
 
 	if ((system_manufacturer = hal_device_property_get_string (d, "smbios.system.manufacturer")) != NULL &&
 	    (system_product = hal_device_property_get_string (d, "smbios.system.product")) != NULL &&
@@ -384,57 +391,60 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 	}
 
 
-	/* now map the smbios.* properties to our generic system.formfactor property */
-	if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
-		unsigned int i;
+	if (!hal_device_has_property (d, "system.formfactor")) {
+		/* now map the smbios.* properties to our generic system.formfactor property */
+		if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
+			unsigned int i;
 
-		/* Map the chassis type from dmidecode.c to a sensible type used in hal 
-		 *
-		 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
-		 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
-		 *
-		 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
-		 */
-		static const char *chassis_map[] = {
-			"Other",                 "unknown",
-			"Unknown",               "unknown",
-			"Desktop",               "desktop",
-			"Low Profile Desktop",   "desktop",
-			"Pizza Box",             "server",
-			"Mini Tower",            "desktop",
-			"Tower",                 "desktop",
-			"Portable",              "laptop",
-			"Laptop",                "laptop",
-			"Notebook",              "laptop",
-			"Hand Held",             "handheld",
-			"Docking Station",       "laptop",
-			"All In One",            "unknown",
-			"Sub Notebook",          "laptop",
-			"Space-saving",          "unknown",
-			"Lunch Box",             "unknown",
-			"Main Server Chassis",   "server",
-			"Expansion Chassis",     "unknown",
-			"Sub Chassis",           "unknown",
-			"Bus Expansion Chassis", "unknown",
-			"Peripheral Chassis",    "unknown",
-			"RAID Chassis",          "unknown",
-			"Rack Mount Chassis",    "unknown",
-			"Sealed-case PC",        "unknown",
-			"Multi-system",          "unknown",
-			NULL
-		};
-
-		for (i = 0; chassis_map[i] != NULL; i += 2) {
-			if (strcmp (chassis_map[i], chassis_type) == 0) {
-				/* check if the key is 'unknown' to prevent overwrite keys */
-				if (strcmp (hal_device_property_get_string (d, "system.formfactor"), "unknown"))
+			/* Map the chassis type from dmidecode.c to a sensible type used in hal 
+			 *
+			 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
+			 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
+			 *
+			 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
+			 */
+			static const char *chassis_map[] = {
+				"Other",                 "unknown",
+				"Unknown",               "unknown",
+				"Desktop",               "desktop",
+				"Low Profile Desktop",   "desktop",
+				"Pizza Box",             "server",
+				"Mini Tower",            "desktop",
+				"Tower",                 "desktop",
+				"Portable",              "laptop",
+				"Laptop",                "laptop",
+				"Notebook",              "laptop",
+				"Hand Held",             "handheld",
+				"Docking Station",       "laptop",
+				"All In One",            "unknown",
+				"Sub Notebook",          "laptop",
+				"Space-saving",          "unknown",
+				"Lunch Box",             "unknown",
+				"Main Server Chassis",   "server",
+				"Expansion Chassis",     "unknown",
+				"Sub Chassis",           "unknown",
+				"Bus Expansion Chassis", "unknown",
+				"Peripheral Chassis",    "unknown",
+				"RAID Chassis",          "unknown",
+				"Rack Mount Chassis",    "unknown",
+				"Sealed-case PC",        "unknown",
+				"Multi-system",          "unknown",
+				NULL
+			};
+			
+			for (i = 0; chassis_map[i] != NULL; i += 2) {
+				if (strcmp (chassis_map[i], chassis_type) == 0) {
 					hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
-				break;
+					break;
+				}
 			}
+		       
+		} else {
+			/* set a default value */
+			hal_device_property_set_string (d, "system.formfactor", "unknown");
 		}
-	       
 	}
-
+out:
 	computer_probing_helper_done (d);
 }
 
@@ -509,10 +519,6 @@ osspec_probe (void)
 		hal_device_property_set_string (root, "system.kernel.machine", un.machine);
 	}
 
-	/* can be overridden by dmidecode, others */
-	hal_device_property_set_string (root, "system.formfactor", "unknown");
-
-
 	/* Let computer be in TDL while synthesizing all other events because some may write to the object */
 	hal_device_store_add (hald_get_tdl (), root);
 
@@ -544,15 +550,14 @@ osspec_probe (void)
 
 	/* TODO: add prober for PowerMac's */
 	if (should_decode_dmi) {
-		hald_runner_run (root, "hald-probe-smbios", NULL,
-                         HAL_HELPER_TIMEOUT,
-                         computer_probing_pcbios_helper_done, 
-                         NULL, NULL);
+		hald_runner_run (root, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
+        	                 computer_probing_pcbios_helper_done, NULL, NULL);
 	} else {
+		/* set a default value, can be overridden by others */
+		hal_device_property_set_string (root, "system.formfactor", "unknown");
 		/* no probing */
 		computer_probing_helper_done (root);
-  }
-
+  	}
 }
 
 DBusHandlerResult
