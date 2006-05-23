@@ -87,7 +87,7 @@ do
 	devices=`hal-find-by-capability --capability $type`
 	for device in $devices
 	do
-		dbus-send --system --dest=org.freedesktop.Hal \
+		dbus-send --system --print-reply --dest=org.freedesktop.Hal \
 			  $device org.freedesktop.Hal.Device.Rescan
 	done
 done

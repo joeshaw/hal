@@ -1,3 +1,11 @@
+2006-05-23  Richard Hughes <richard@hughsie.com>
+
+	* tools/linux/hal-system-power-suspend-linux:
+	* tools/freebsd/hal-system-power-suspend-freebsd:
+	Re-add --print-reply to dbus-send else the Rescan does not work.
+	This fixes numerous recent bugs where the lid value is not correct on
+	resume. This must have been changed incorrectly in the last few weeks.
+
 2006-05-05  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done): Fixed 
