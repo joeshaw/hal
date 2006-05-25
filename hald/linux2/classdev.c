@@ -206,7 +206,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 
 	if (!hal_util_get_int_from_file (sysfs_path, "flags", &flags, 16))
 		goto error;
-	hal_device_property_set_bool (d, "net.interface_up", flags & IFF_UP);
 
 	media_type = hal_device_property_get_int (d, "net.arp_proto_hw_id");
 	if (media_type == ARPHRD_ETHER) {

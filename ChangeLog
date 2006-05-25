@@ -1,3 +1,11 @@
+2006-05-25  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/classdev.c: (net_add): removed net.interface_up 
+	property because we never refresh the value, since this info is gone
+	into NetworkMananger and removed from HAL (see fd.o bug #6233).
+	* doc/spec/hal-spec-properties.xml: changed net.interface_up to not
+	mandatory
+
 2006-05-23  Richard Hughes <richard@hughsie.com>
 
 	* tools/linux/hal-system-power-suspend-linux:
@@ -6,7 +14,7 @@
 	This fixes numerous recent bugs where the lid value is not correct on
 	resume. This must have been changed incorrectly in the last few weeks.
 
-2006-05-05  Danny Kukawka  <danny.kukawka@web.de>
+2006-05-21  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/osspec.c: (computer_probing_pcbios_helper_done): Fixed 
 	mapping of system.formfactor from smbios.chassis.type. Added a check 

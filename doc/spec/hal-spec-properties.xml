@@ -3208,7 +3208,7 @@
                 <literal>net.interface_up</literal> (bool)
               </entry>
               <entry></entry>
-              <entry>Yes</entry>
+              <entry>No</entry>
               <entry>Whether the interface is up</entry>
             </row>
             <row>
