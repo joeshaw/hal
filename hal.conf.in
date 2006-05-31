@@ -28,6 +28,7 @@
   <!-- Default policy for the exported interfaces -->
   <policy context="default">
     <deny send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
+    <deny send_interface="org.freedesktop.Hal.Device.VideoAdapterPM"/>
     <deny send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
     <deny send_interface="org.freedesktop.Hal.Device.Volume"/>
     <deny send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
@@ -44,6 +45,7 @@
   <!-- You can change this to a more suitable user, or make per-group -->
   <policy user="0">
     <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
+    <allow send_interface="org.freedesktop.Hal.Device.VideoAdapterPM"/>
     <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>

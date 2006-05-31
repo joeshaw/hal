@@ -1,5 +1,10 @@
 2006-05-31  Richard Hughes  <richard@hughsie.com>
 
+	* hal.conf.in:
+	Only allow org.freedesktop.Hal.Device.VideoAdapterPM to be used by root.
+
+2006-05-31  Richard Hughes  <richard@hughsie.com>
+
 	* doc/spec/hal-spec-properties.xml:
 	* doc/spec/hal-spec.html:
 	Add the video_adapter_pm namespace key descriptions for video power
