@@ -1,3 +1,10 @@
+2006-05-31  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/hal-spec-properties.xml:
+	* doc/spec/hal-spec.html:
+	Add the video_adapter_pm namespace key descriptions for video power
+	management control.
+
 2006-05-25  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald/linux2/classdev.c: (net_add): removed net.interface_up 

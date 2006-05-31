@@ -1,6 +1,6 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>HAL 0.5.8 Specification</title><meta name="generator" content="DocBook XSL Stylesheets V1.69.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="index"></a>HAL 0.5.8 Specification</h1></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">David</span> <span class="surname">Zeuthen</span></h3><div class="affiliation"><div class="address"><p><br>
             <code class="email">&lt;<a href="mailto:david@fubar.dk">david@fubar.dk</a>&gt;</code><br>
-          </p></div></div></div></div></div><div><p class="releaseinfo">Version 0.5.8</p></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#introduction">1. Introduction</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id3015260">About</a></span></dt><dt><span class="sect1"><a href="#id2959676">Acknowledgements</a></span></dt><dt><span class="sect1"><a href="#ov_halarch">Architecture of HAL</a></span></dt><dt><span class="sect1"><a href="#ov_hal_linux26">HAL on Linux 2.6</a></span></dt><dt><span class="sect1"><a href="#id3031654">Device Objects</a></span></dt><dt><span class="sect1"><a href="#device-capabilities">Device Capabilities</a></span></dt><dt><span class="sect1"><a href="#using-devices">Using devices</a></span></dt></dl></dd><dt><span class="chapter"><a href="#device-properties">2. Device Properties</a></span></dt><dd><dl><dt><span class="sect1"><a href="#properties-metadata">Metadata Properties</a></span></dt><dd><dl><dt><span class="sect2"><a href="#device-properties-info">
+          </p></div></div></div></div></div><div><p class="releaseinfo">Version 0.5.8</p></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#introduction">1. Introduction</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2542234">About</a></span></dt><dt><span class="sect1"><a href="#id2501784">Acknowledgements</a></span></dt><dt><span class="sect1"><a href="#ov_halarch">Architecture of HAL</a></span></dt><dt><span class="sect1"><a href="#ov_hal_linux26">HAL on Linux 2.6</a></span></dt><dt><span class="sect1"><a href="#id2550424">Device Objects</a></span></dt><dt><span class="sect1"><a href="#device-capabilities">Device Capabilities</a></span></dt><dt><span class="sect1"><a href="#using-devices">Using devices</a></span></dt></dl></dd><dt><span class="chapter"><a href="#device-properties">2. Device Properties</a></span></dt><dd><dl><dt><span class="sect1"><a href="#properties-metadata">Metadata Properties</a></span></dt><dd><dl><dt><span class="sect2"><a href="#device-properties-info">
         <code class="literal">info</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-linux">
         <code class="literal">linux</code> namespace
@@ -72,6 +72,8 @@
         <code class="literal">camera</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-laptop-panel">
         <code class="literal">laptop_panel</code> namespace
+      </a></span></dt><dt><span class="sect2"><a href="#device-properties-video_adapter_pm">
+        <code class="literal">video_adapter_pm</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-ac_adaptor">
         <code class="literal">ac_adaptor</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-battery">
@@ -94,7 +96,7 @@
         <code class="literal">storage.policy</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-volume-policy">
         <code class="literal">volume.policy</code> namespace
-      </a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#spec-device-info">3. Device Information Files</a></span></dt><dd><dl><dt><span class="sect1"><a href="#fdi-facts">Facts about devices</a></span></dt><dd><dl><dt><span class="sect2"><a href="#fdi-example-mp3player">Example: MP3 player</a></span></dt><dt><span class="sect2"><a href="#fdi-example-camera">Example: Digital Still Camera</a></span></dt><dt><span class="sect2"><a href="#fdi-example-6in1">Example: Card Reader</a></span></dt></dl></dd><dt><span class="sect1"><a href="#fdi-policy">Policy settings for devices</a></span></dt><dd><dl><dt><span class="sect2"><a href="#fdi-example-mountsetting">Storage Devices</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#examples">4. Examples and other stuff</a></span></dt><dd><dl><dt><span class="sect1"><a href="#callouts">Callouts</a></span></dt><dt><span class="sect1"><a href="#dbus-api">D-BUS Network API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id3041797">Interface org.freedesktop.Hal.Manager</a></span></dt><dt><span class="sect2"><a href="#id3044392">Interface org.freedesktop.Hal.Device</a></span></dt></dl></dd><dt><span class="sect1"><a href="#enforcing-policy">Enforcing Policy</a></span></dt><dd><dl><dt><span class="sect2"><a href="#enforcing-stor-vol">Storage Devices</a></span></dt></dl></dd></dl></dd></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="introduction"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id3015260">About</a></span></dt><dt><span class="sect1"><a href="#id2959676">Acknowledgements</a></span></dt><dt><span class="sect1"><a href="#ov_halarch">Architecture of HAL</a></span></dt><dt><span class="sect1"><a href="#ov_hal_linux26">HAL on Linux 2.6</a></span></dt><dt><span class="sect1"><a href="#id3031654">Device Objects</a></span></dt><dt><span class="sect1"><a href="#device-capabilities">Device Capabilities</a></span></dt><dt><span class="sect1"><a href="#using-devices">Using devices</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id3015260"></a>About</h2></div></div></div><p>
+      </a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#spec-device-info">3. Device Information Files</a></span></dt><dd><dl><dt><span class="sect1"><a href="#fdi-facts">Facts about devices</a></span></dt><dd><dl><dt><span class="sect2"><a href="#fdi-example-mp3player">Example: MP3 player</a></span></dt><dt><span class="sect2"><a href="#fdi-example-camera">Example: Digital Still Camera</a></span></dt><dt><span class="sect2"><a href="#fdi-example-6in1">Example: Card Reader</a></span></dt></dl></dd><dt><span class="sect1"><a href="#fdi-policy">Policy settings for devices</a></span></dt><dd><dl><dt><span class="sect2"><a href="#fdi-example-mountsetting">Storage Devices</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#examples">4. Examples and other stuff</a></span></dt><dd><dl><dt><span class="sect1"><a href="#callouts">Callouts</a></span></dt><dt><span class="sect1"><a href="#dbus-api">D-BUS Network API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2536112">Interface org.freedesktop.Hal.Manager</a></span></dt><dt><span class="sect2"><a href="#id2566926">Interface org.freedesktop.Hal.Device</a></span></dt></dl></dd><dt><span class="sect1"><a href="#enforcing-policy">Enforcing Policy</a></span></dt><dd><dl><dt><span class="sect2"><a href="#enforcing-stor-vol">Storage Devices</a></span></dt></dl></dd></dl></dd></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="introduction"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2542234">About</a></span></dt><dt><span class="sect1"><a href="#id2501784">Acknowledgements</a></span></dt><dt><span class="sect1"><a href="#ov_halarch">Architecture of HAL</a></span></dt><dt><span class="sect1"><a href="#ov_hal_linux26">HAL on Linux 2.6</a></span></dt><dt><span class="sect1"><a href="#id2550424">Device Objects</a></span></dt><dt><span class="sect1"><a href="#device-capabilities">Device Capabilities</a></span></dt><dt><span class="sect1"><a href="#using-devices">Using devices</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2542234"></a>About</h2></div></div></div><p>
       This document concerns the specification of HAL which is a
       piece of software that provides a view of the various hardware
       attached to a system. In addition to this, HAL keeps detailed
@@ -130,7 +132,7 @@
       which, given sufficient infrastructure, allows it to be
       implemented on many UNIX-like systems. The major focus,
       initially, is systems running the Linux 2.6 series kernels.
-    </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2959676"></a>Acknowledgements</h2></div></div></div><p>
+    </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2501784"></a>Acknowledgements</h2></div></div></div><p>
       Havoc Pennington's article
       <a href="http://www.ometer.com/hardware.html" target="_top">''Making Hardware Just Work''
       </a>
@@ -247,7 +249,7 @@
             See <a href="#enforcing-policy" title="Enforcing Policy">the section called &#8220;Enforcing Policy&#8221;</a>
             for more details.
           </p></li></ul></div><p>
-    </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id3031654"></a>Device Objects</h2></div></div></div><p>
+    </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2550424"></a>Device Objects</h2></div></div></div><p>
       It is important to precisely define the term HAL device
       object. It's actually a bit blurry to define in general, it
       includes what most UNIX-like systems consider first class
@@ -538,6 +540,8 @@
         <code class="literal">camera</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-laptop-panel">
         <code class="literal">laptop_panel</code> namespace
+      </a></span></dt><dt><span class="sect2"><a href="#device-properties-video_adapter_pm">
+        <code class="literal">video_adapter_pm</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-ac_adaptor">
         <code class="literal">ac_adaptor</code> namespace
       </a></span></dt><dt><span class="sect2"><a href="#device-properties-battery">
@@ -1528,7 +1532,7 @@
                 renamed
               </td></tr><tr><td>
                 <code class="literal">net.interface_up</code> (bool)
-              </td><td> </td><td>Yes</td><td>Whether the interface is up</td></tr><tr><td>
+              </td><td> </td><td>No</td><td>Whether the interface is up</td></tr><tr><td>
                 <code class="literal">net.linux.ifindex</code> (string)
               </td><td> </td><td>Yes (only on Linux)</td><td>Index of the interface</td></tr><tr><td>
                 <code class="literal">net.physical_device</code> (string)
@@ -1887,6 +1891,39 @@
                 This method gets the hardware brightness of the laptop screen,
                 which we may need to do fairly regually on hardware that
                 changes the values in hardware without a software event.
+              </td></tr></tbody></table></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="device-properties-video_adapter_pm"></a>
+        <code class="literal">video_adapter_pm</code> namespace
+      </h3></div></div></div><p>
+        Device objects with the capability <code class="literal">video_adapter_pm</code>
+        represent video adapters that need to be suspended or resumed in device
+        specific ways.
+      </p><div class="informaltable"><table border="1"><colgroup><col><col></colgroup><thead><tr><th>Key (type)</th><th>Values</th><th>Mandatory</th><th>Description</th></tr></thead><tbody><tr><td>
+                <code class="literal">video_adapter_pm.s3_bios</code> (bool)
+              </td><td> </td><td>No</td><td>Use the S3_BIOS kernel command for suspend.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.s3_mode</code> (bool)
+              </td><td> </td><td>No</td><td>Use the S3_MODE kernel command for suspend.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.dpms_suspend</code> (bool)
+              </td><td> </td><td>No</td><td>Suspend the video card via DPMS.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.vga_mode_3</code> (bool)
+              </td><td> </td><td>No</td><td>Reset the VGA text mode to mode 3 on resume.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.dpms_on</code> (bool)
+              </td><td> </td><td>No</td><td>Reactivate the screen with DPMS on resume.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.vbe_post</code> (bool)
+              </td><td> </td><td>No</td><td>Run the VGA BIOS Power On Self Test (POST) on resume.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.vbestate_restore</code> (bool)
+              </td><td> </td><td>No</td><td>Save the VGA BIOS state before suspend, and restore it on resume.</td></tr><tr><td>
+                <code class="literal">video_adapter_pm.vbemode_restore</code> (bool)
+              </td><td> </td><td>No</td><td>Save the VGA BIOS mode before suspend, and restore it on resume.</td></tr></tbody></table></div><p>
+        The following methods exist on the interface
+        <code class="literal">org.freedesktop.Hal.Device.VideoAdapterPM</code>.
+      </p><div class="informaltable"><table border="1"><colgroup><col><col></colgroup><thead><tr><th>Method (parameter types)</th><th>Parameters</th><th>Mandatory</th><th>Description</th></tr></thead><tbody><tr><td>
+                void <code class="literal">SuspendVideo</code> (void)
+              </td><td>None</td><td>No</td><td>
+                Suspends the video adapter using the quirks specified.
+              </td></tr><tr><td>
+                void <code class="literal">ResumeVideo</code> (void)
+              </td><td>None</td><td>No</td><td>
+                Resumes the video adapter using the quirks specified.
               </td></tr></tbody></table></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="device-properties-ac_adaptor"></a>
         <code class="literal">ac_adaptor</code> namespace
       </h3></div></div></div><p>
@@ -2638,7 +2675,7 @@
          for details.
       </p><pre class="programlisting">
         <a xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" href="../conf/storage-policy-examples.fdi"></a>
-      </pre></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="examples"></a>Chapter 4. Examples and other stuff</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#callouts">Callouts</a></span></dt><dt><span class="sect1"><a href="#dbus-api">D-BUS Network API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id3041797">Interface org.freedesktop.Hal.Manager</a></span></dt><dt><span class="sect2"><a href="#id3044392">Interface org.freedesktop.Hal.Device</a></span></dt></dl></dd><dt><span class="sect1"><a href="#enforcing-policy">Enforcing Policy</a></span></dt><dd><dl><dt><span class="sect2"><a href="#enforcing-stor-vol">Storage Devices</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="callouts"></a>Callouts</h2></div></div></div><p>
+      </pre></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="examples"></a>Chapter 4. Examples and other stuff</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#callouts">Callouts</a></span></dt><dt><span class="sect1"><a href="#dbus-api">D-BUS Network API</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2536112">Interface org.freedesktop.Hal.Manager</a></span></dt><dt><span class="sect2"><a href="#id2566926">Interface org.freedesktop.Hal.Device</a></span></dt></dl></dd><dt><span class="sect1"><a href="#enforcing-policy">Enforcing Policy</a></span></dt><dd><dl><dt><span class="sect2"><a href="#enforcing-stor-vol">Storage Devices</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="callouts"></a>Callouts</h2></div></div></div><p>
       Callouts are programs invoked when the device object list is
       modified. As such, callouts can be used to maintain system-wide
       policy (that may be specific to the particular OS) such as
@@ -2705,7 +2742,7 @@
       and possibly callouts. Eventually, the device transitions to the
       GDL (global device list) and first then it becomes ''visible'' for
       desktop applications.
-    </p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id3041797"></a>Interface org.freedesktop.Hal.Manager</h3></div></div></div><p>
+    </p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2536112"></a>Interface org.freedesktop.Hal.Manager</h3></div></div></div><p>
         Using D-BUS terminology, the HAL daemon provides the D-BUS
         service <code class="literal">org.freedesktop.Hal</code>. This service
         offers a D-BUS object at a well-known
@@ -2762,7 +2799,7 @@ void DeviceRemoved(string udi)
 # @param  udi                   Unique Device Id
 #
 void NewCapability(string udi, string capability)
-      </pre><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id3015185"></a>Example</h4></div></div></div><p>
+      </pre><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2560280"></a>Example</h4></div></div></div><p>
           The following brief Python program demonstrates some of the API
         </p><pre class="programlisting">
           <a xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:show="embed" xlink:actuate="onLoad" href="example-manager.py"></a>
@@ -2803,7 +2840,7 @@ Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was add
 Device /org/freedesktop/Hal/devices/usb_46d_c001_410_-1_noserial was removed
 Device /org/freedesktop/Hal/devices/usbif_usb_46d_c001_410_-1_noserial_0 was removed
         </pre><p>
-        </p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id3044392"></a>Interface org.freedesktop.Hal.Device</h3></div></div></div><p>
+        </p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2566926"></a>Interface org.freedesktop.Hal.Device</h3></div></div></div><p>
         Applications use
         the <code class="literal">org.freedesktop.Hal.Manager</code> interface to
         locate the device objects they are interested in. When a device
