@@ -1,3 +1,7 @@
+2006-06-05  Sjoerd Simons <sjoerd@luon.net>
+
+	* configure.in: Added Catalan translation to ALL_LINGUAS 
+
 2006-05-31  Richard Hughes  <richard@hughsie.com>
 
 	* hal.conf.in:
