@@ -12,7 +12,7 @@ AM_INIT_AUTOMAKE(hal, 0.5.8)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
-# libtool versioning - this applies to libhal, libhal-storage and libhal-policy
+# libtool versioning - this applies to libhal and libhal-storage
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
@@ -179,19 +179,9 @@ AM_CONDITIONAL(GCOV, test x$enable_gcov = xyes)
 
 glib_module="glib-2.0 >= 2.6.0"
 dbus_module="dbus-1 >= 0.33"
-polkit_module="polkit >= 0.1"
+polkit_module="polkit >= 0.2"
 pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module, $polkit_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
-
-POLKIT_USER=`$PKG_CONFIG --variable=user polkit`
-POLKIT_GROUP=`$PKG_CONFIG --variable=group polkit`
-POLKIT_TXTSRC=`$PKG_CONFIG --variable=txtsrc polkit`
-AC_SUBST(POLKIT_USER)
-AC_SUBST(POLKIT_GROUP)
-AC_SUBST(POLKIT_TXTSRC)
-AC_DEFINE_UNQUOTED(POLKIT_USER,"$POLKIT_USER", [User for PolicyKit])
-AC_DEFINE_UNQUOTED(POLKIT_GROUP,"$POLKIT_GROUP", [Group for PolicyKit])
-AC_DEFINE_UNQUOTED(POLKIT_TXTSRC,"$POLKIT_TXTSRC", [Location of text files for PolicyKit])
 
 EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      ese expat from here],
@@ -423,8 +413,7 @@ tools/linux/Makefile
 tools/device-manager/hal-device-manager
 tools/device-manager/Makefile
 tools/device-manager/Const.py
-policy/Makefile
-policy/txt/Makefile
+privileges/Makefile
 fdi/Makefile
 fdi/preprobe/Makefile
 fdi/preprobe/10osvendor/Makefile

@@ -1,11 +1,11 @@
 
-txtpolicydir = $(POLKIT_TXTSRC)
+polkit_privilegedir = $(sysconfdir)/PolicyKit/privilege.d
 
-dist_txtpolicy_DATA =                                     \
+dist_polkit_privilege_DATA =                              \
 	hal-storage-fixed-mount.privilege                 \
-	hal-storage-fixed-mount-change-uid.privilege	  \
+	hal-storage-fixed-mount-all-options.privilege     \
 	hal-storage-removable-mount.privilege             \
-	hal-storage-removable-mount-change-uid.privilege  \
+	hal-storage-removable-mount-all-options.privilege \
 	hal-power-suspend.privilege                       \
 	hal-power-hibernate.privilege                     \
 	hal-power-poweroff.privilege                      \

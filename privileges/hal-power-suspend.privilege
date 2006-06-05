@@ -1,0 +1,12 @@
+
+# This privilege specifies who is allowed to suspend the system.
+
+[Privilege]
+RequiredPrivileges=desktop-console
+SufficientPrivileges=
+Allow=uid:__all__
+Deny=
+CanObtain=True
+CanGrant=True
+ObtainRequireRoot=False
+

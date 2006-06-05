@@ -2732,14 +2732,17 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 	int type;
 	GString *stdin_str;
 	DBusMessageIter iter;
-	char *extra_env[2];
+	char *extra_env[3];
 	char uid_export[128];
+	char sender_export[128];
 	MethodInvocation *mi;
 
 	/* add calling uid */
 	extra_env[0] = NULL;
+	extra_env[1] = NULL;
 	if (local_interface) {
 		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
+		extra_env[1] = "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=0";
 	} else {
 		const char *sender;
 		
@@ -2753,10 +2756,20 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 			if (!dbus_error_is_set (&error)) {
 				sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", uid);
 				extra_env[0] = uid_export;
-			}
+			} 
+			snprintf (sender_export, sizeof (sender_export), 
+				  "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=%s", sender);
+			extra_env[1] = sender_export;
 		}
 	}
-	extra_env[1] = NULL;
+
+	if (extra_env[0] == NULL)
+		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=nobody";
+	if (extra_env[1] == NULL)
+		extra_env[1] = "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=0";
+
+
+	extra_env[2] = NULL;
 
 	/* prepare stdin with parameters */
 	stdin_str = g_string_sized_new (256); /* default size for passing params; can grow */

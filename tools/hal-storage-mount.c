@@ -419,7 +419,7 @@ map_fstype (const char *fstype)
 static void
 handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
 	      LibHalVolume *volume, LibHalDrive *drive, const char *device, 
-	      const char *invoked_by_uid, pid_t invoked_by_pid)
+	      const char *invoked_by_uid, const char *invoked_by_syscon_name)
 {
 	int i, j;
 	DBusError error;
@@ -453,9 +453,9 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 #endif
 
 #ifdef DEBUG
-	printf ("device         = %s\n", device);
-	printf ("invoked by uid = %s\n", invoked_by_uid);
-	printf ("invoked by pid = %d\n", invoked_by_pid);
+	printf ("device                           = %s\n", device);
+	printf ("invoked by uid                   = %s\n", invoked_by_uid);
+	printf ("invoked by system bus connection = %s\n", invoked_by_syscon_name);
 #endif
 
 	if (volume != NULL) {
@@ -660,29 +660,31 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 
 	if (pol_is_fixed) {
 		if (pol_change_uid) {
-			privilege = "hal-storage-fixed-mount-change-uid";
+			privilege = "hal-storage-fixed-mount-all-options";
 		} else {
 			privilege = "hal-storage-fixed-mount";
 		}
 	} else {
 		if (pol_change_uid) {
-			privilege = "hal-storage-removable-mount-change-uid";
+			privilege = "hal-storage-removable-mount-all-options";
 		} else {
 			privilege = "hal-storage-removable-mount";
 		}
 	}
 
 #ifdef DEBUG
-	printf ("using privilege %s for uid %s, pid %d\n", privilege, invoked_by_uid, invoked_by_pid);
+	printf ("using privilege %s for uid %s, system_bus_connection %s\n", privilege, invoked_by_uid, 
+		invoked_by_syscon_name);
 #endif
 
 	if (libpolkit_is_uid_allowed_for_privilege (pol_ctx, 
-						    invoked_by_pid,
+						    invoked_by_syscon_name,
 						    invoked_by_uid,
 						    privilege,
 						    udi,
 						    &allowed_by_privilege,
-						    &is_temporary_privilege) != LIBPOLKIT_RESULT_OK) {
+						    &is_temporary_privilege,
+						    NULL) != LIBPOLKIT_RESULT_OK) {
 		printf ("cannot lookup privilege\n");
 		unknown_error ();
 	}
@@ -819,8 +821,7 @@ main (int argc, char *argv[])
 	DBusConnection *system_bus = NULL;
 	LibPolKitContext *pol_ctx = NULL;
 	char *invoked_by_uid;
-	char *invoked_by_pid_str;
-	pid_t invoked_by_pid;
+	char *invoked_by_syscon_name;
 
 	device = getenv ("HAL_PROP_BLOCK_DEVICE");
 	if (device == NULL)
@@ -832,11 +833,7 @@ main (int argc, char *argv[])
 
 	invoked_by_uid = getenv ("HAL_METHOD_INVOKED_BY_UID");
 
-	invoked_by_pid_str = getenv ("HAL_METHOD_INVOKED_BY_PID");
-	if (invoked_by_pid_str != NULL)
-		invoked_by_pid = atoi (invoked_by_pid_str);
-	else
-		invoked_by_pid = -1;
+	invoked_by_syscon_name = getenv ("HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME");
 
 	dbus_error_init (&error);
 	if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
@@ -864,7 +861,8 @@ main (int argc, char *argv[])
 		if (drive == NULL) {
 			usage ();
 		} else {
-			handle_mount (hal_ctx, pol_ctx, udi, NULL, drive, device, invoked_by_uid, invoked_by_pid);
+			handle_mount (hal_ctx, pol_ctx, udi, NULL, drive, device, invoked_by_uid, 
+				      invoked_by_syscon_name);
 		}
 
 	} else {
@@ -879,7 +877,8 @@ main (int argc, char *argv[])
 		if (drive == NULL)
 			unknown_error ();
 
-		handle_mount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by_uid, invoked_by_pid);
+		handle_mount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by_uid, 
+			      invoked_by_syscon_name);
 
 	}
 

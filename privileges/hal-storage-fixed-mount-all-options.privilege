@@ -1,0 +1,14 @@
+
+# This privilege specifies what users can mount volumes from internal
+# drives using mount options besides those specified in the
+# volume.mount.valid_options on the volume in question (such as
+# uid=<userid>).
+
+[Privilege]
+RequiredPrivileges=desktop-console
+SufficientPrivileges=
+Allow=
+Deny=
+CanObtain=True
+CanGrant=True
+ObtainRequireRoot=True

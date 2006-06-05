@@ -1,18 +1,20 @@
 #!/bin/sh
 
-POLICY=hal-power-hibernate
+PRIVILEGE=hal-power-hibernate
 if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
-    RESULT=$(polkit-is-privileged --privilege $POLICY --user $HAL_METHOD_INVOKED_BY_UID 2>&1)
+    RESULT=$(polkit-is-privileged --privilege $PRIVILEGE \
+                                  --user $HAL_METHOD_INVOKED_BY_UID \
+	                          --system-bus-unique-name $HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME 2>&1)
     IS_PRIVILEGED=$?
     if [ "$IS_PRIVILEGED" != "0" ] ; then
 	echo org.freedesktop.Hal.Device.PermissionDeniedByPolicy >&2
-	echo $POLICY refused uid $HAL_METHOD_INVOKED_BY_UID >&2
+	echo $PRIVILEGE refused uid $HAL_METHOD_INVOKED_BY_UID >&2
 	exit 1
     fi
 fi
 
-if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
-    exec $0-$HALD_UNAME_S $@
+if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-system-power-hibernate-$HALD_UNAME_S ]; then
+    exec ./$HALD_UNAME_S/hal-system-power-hibernate-$HALD_UNAME_S $@
 else
     echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2

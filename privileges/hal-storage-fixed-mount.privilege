@@ -1,0 +1,16 @@
+
+# This privilege specifies what users can mount volumes from internal
+# drives using only the mount options as specified by the property
+# volume.mount.valid_options on the volume in question. If mount
+# options besides these are needed, one will need the privilege
+# hal-storage-fixed-mount-all-options.privilege.
+#
+
+[Privilege]
+RequiredPrivileges=desktop-console
+SufficientPrivileges=
+Allow=
+Deny=
+CanObtain=True
+CanGrant=True
+ObtainRequireRoot=True

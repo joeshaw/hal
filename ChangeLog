@@ -1,3 +1,23 @@
+2006-06-05  David Zeuthen  <davidz@redhat.com>
+	
+	* hald/hald_dbus.c:
+	(hald_exec_method): Export a new environment variable with the
+	unique name for callers system bus connection called
+	HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME
+
+	* policy/*: Move these to privileges instead
+
+	* privileges/*: Moved from policy/txt/*
+	
+	* Makefile.am: Fix up subdirs
+
+	* configure.in: Adjust for new dirs and remove comment about
+	libhal-policy. Require PolicyKit >= 0.2 (which is polkit CVS).
+	Don't read weird options from the polkit pc file.
+
+	* tools/*: Update to new PolicyKit API and DTRT so things work
+	using hald/run-hald.sh
+
 2006-06-05  Sjoerd Simons <sjoerd@luon.net>
 
 	* configure.in: Added Catalan translation to ALL_LINGUAS 

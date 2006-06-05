@@ -16,6 +16,8 @@ if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" ] ||
         exit 1
 fi
 
+# TODO: check privilege
+
 # read value for set brightness
 read value
 
@@ -28,8 +30,8 @@ fi
 
 export value
 
-if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
-    exec $0-$HALD_UNAME_S $@
+if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-system-lcd-set-brightness-$HALD_UNAME_S ]; then
+    exec ./$HALD_UNAME_S/hal-system-lcd-set-brightness-$HALD_UNAME_S $@
 else
     echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2
