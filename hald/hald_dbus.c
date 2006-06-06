@@ -2891,6 +2891,272 @@ error:
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+
+static DBusHandlerResult
+do_introspect (DBusConnection  *connection, 
+	       DBusMessage     *message,
+	       dbus_bool_t      local_interface)
+{
+	const char *path;
+	DBusMessage *reply;
+	GString *xml;
+	char *xml_string;
+
+	HAL_TRACE (("entering do_introspect"));
+
+	path = dbus_message_get_path (message);
+
+	xml = g_string_new ("<!DOCTYPE node PUBLIC \"-//freedesktop//DTD D-BUS Object Introspection 1.0//EN\"\n"
+			    "\"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd\">\n"
+			    "<node>\n"
+			    "  <interface name=\"org.freedesktop.DBus.Introspectable\">\n"
+			    "    <method name=\"Introspect\">\n"
+			    "      <arg name=\"data\" direction=\"out\" type=\"s\"/>\n"
+			    "    </method>\n"
+			    "  </interface>\n");
+
+	if (strcmp (path, "/org/freedesktop/Hal/Manager") == 0) {
+
+		xml = g_string_append (xml,
+				       "  <interface name=\"org.freedesktop.Hal.Manager\">\n"
+				       "    <method name=\"GetAllDevices\">\n"
+				       "      <arg name=\"devices\" direction=\"out\" type=\"ao\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"DeviceExists\">\n"
+				       "      <arg name=\"does_it_exist\" direction=\"out\" type=\"b\"/>\n"
+				       "      <arg name=\"udi\" direction=\"in\" type=\"o\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"FindDeviceStringMatch\">\n"
+				       "      <arg name=\"devices\" direction=\"out\" type=\"ao\"/>\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"FindDeviceByCapability\">\n"
+				       "      <arg name=\"devices\" direction=\"out\" type=\"ao\"/>\n"
+				       "      <arg name=\"capability\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"NewDevice\">\n"
+				       "      <arg name=\"temporary_udi\" direction=\"out\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"Remove\">\n"
+				       "      <arg name=\"udi\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"CommitToGdl\">\n"
+				       "      <arg name=\"temporary_udi\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"global_udi\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "  </interface>\n");
+	} else {
+		HalDevice *d;
+
+		d = hal_device_store_find (hald_get_gdl (), path);
+		if (d == NULL)
+			d = hal_device_store_find (hald_get_tdl (), path);
+		
+		if (d == NULL) {
+			raise_no_such_device (connection, message, path);
+			return DBUS_HANDLER_RESULT_HANDLED;
+		}
+
+		xml = g_string_append (xml,
+				       "  <interface name=\"org.freedesktop.Hal.Device\">\n"
+				       "    <method name=\"GetAllProperties\">\n"
+				       "      <arg name=\"properties\" direction=\"out\" type=\"a{sv}\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetProperty\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"out\" type=\"v\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetPropertyString\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"out\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetPropertyStringList\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"out\" type=\"as\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetPropertyInteger\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"out\" type=\"i\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetPropertyBoolean\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetPropertyDouble\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"out\" type=\"d\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"SetProperty\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"v\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"SetPropertyString\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"SetPropertyStringList\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"as\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"SetPropertyInteger\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"i\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"SetPropertyBoolean\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"SetPropertyDouble\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"d\"/>\n"
+				       "    </method>\n"
+
+				       "    <method name=\"RemoveProperty\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"GetPropertyType\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"type\" direction=\"out\" type=\"i\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"PropertyExists\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"does_it_exist\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"AddCapability\">\n"
+				       "      <arg name=\"capability\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"QueryCapability\">\n"
+				       "      <arg name=\"capability\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"does_it_have_capability\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"Lock\">\n"
+				       "      <arg name=\"reason\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"acquired_lock\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"Unlock\">\n"
+				       "      <arg name=\"released_lock\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+
+				       "    <method name=\"StringListAppend\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"StringListPrepend\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"StringListRemove\">\n"
+				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"value\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"EmitCondition\">\n"
+				       "      <arg name=\"condition_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"condition_details\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "  </interface>\n");
+
+			GSList *interfaces;
+			GSList *i;
+
+			interfaces = hal_device_property_get_strlist (d, "info.interfaces");
+			for (i = interfaces; i != NULL; i = g_slist_next (i)) {
+				const char *ifname = (const char *) i->data;
+				char *method_names_prop;
+				char *method_signatures_prop;
+				char *method_argnames_prop;
+				GSList *method_names;
+				GSList *method_signatures;
+				GSList *method_argnames;
+				GSList *j;
+				GSList *k;
+				GSList *l;
+
+				g_string_append_printf (xml, "  <interface name=\"%s\">\n", ifname);
+
+				method_names_prop = g_strdup_printf ("%s.method_names", ifname);
+				method_signatures_prop = g_strdup_printf ("%s.method_signatures", ifname);
+				method_argnames_prop = g_strdup_printf ("%s.method_argnames", ifname);
+
+				method_names = hal_device_property_get_strlist (d, method_names_prop);
+				method_signatures = hal_device_property_get_strlist (d, method_signatures_prop);
+				method_argnames = hal_device_property_get_strlist (d, method_argnames_prop);
+				for (j = method_names, k = method_signatures, l = method_argnames;
+				     j != NULL && k != NULL && l != NULL;
+				     j = g_slist_next (j), k = g_slist_next (k), l = g_slist_next (l)) {
+					const char *name;
+					const char *sig;
+					const char *argnames;
+					char **args;
+					unsigned int n;
+					unsigned int m;
+
+					name = j->data;
+					sig = k->data;
+					argnames = l->data;
+
+					args = g_strsplit (argnames, " ", 0);
+
+					g_string_append_printf (xml, "    <method name=\"%s\">\n", name);
+
+					for (n = 0, m = 0; n < strlen (sig) && args[m] != NULL; n++, m++) {
+						switch (sig[n]) {
+						case 'a':
+							if (n == strlen (sig) - 1) {
+								HAL_WARNING (("Broken signature for method %s on interface %s for object %s", name, ifname, path));
+								continue;
+							}
+							g_string_append_printf (
+								xml, 
+								"      <arg name=\"%s\" direction=\"in\" type=\"a%c\"/>\n", args[m], sig[n + 1]);
+							n++;
+							break;
+
+						default:
+							g_string_append_printf (
+								xml, 
+								"      <arg name=\"%s\" direction=\"in\" type=\"%c\"/>\n", args[m], sig[n]);
+							break;
+						}
+					}
+					xml = g_string_append (xml, 
+								"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n");
+					xml = g_string_append  (xml, "    </method>\n");
+
+				}
+				
+
+				xml = g_string_append (xml, "  </interface>\n");
+
+				g_free (method_names_prop);
+				g_free (method_signatures_prop);
+				g_free (method_argnames_prop);
+			}		
+
+	}
+
+	reply = dbus_message_new_method_return (message);
+
+	xml = g_string_append (xml, "</node>\n");
+	xml_string = g_string_free (xml, FALSE);
+
+	dbus_message_append_args (reply, 
+				  DBUS_TYPE_STRING, &xml_string,
+				  DBUS_TYPE_INVALID);
+
+	g_free (xml_string);
+
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
 static DBusHandlerResult
 hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *message, 
 				 void *user_data, dbus_bool_t local_interface)
@@ -3043,6 +3309,10 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"org.freedesktop.Hal.Device",
 						"EmitCondition")) {
 		return device_emit_condition (connection, message, local_interface);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.DBus.Introspectable",
+						"Introspect")) {
+		return do_introspect (connection, message, local_interface);
 	} else {
 		const char *interface;
 		const char *udi;

@@ -8,10 +8,12 @@
 
         <append key="org.freedesktop.Hal.Device.Volume.Crypto.method_names" type="strlist">Setup</append>
         <append key="org.freedesktop.Hal.Device.Volume.Crypto.method_signatures" type="strlist">s</append>
+	<append key="org.freedesktop.Hal.Device.Volume.Crypto.method_argnames" type="strlist">passphrase</append>
         <append key="org.freedesktop.Hal.Device.Volume.Crypto.method_execpaths" type="strlist">hal-luks-setup</append>
 
         <append key="org.freedesktop.Hal.Device.Volume.Crypto.method_names" type="strlist">Teardown</append>
         <append key="org.freedesktop.Hal.Device.Volume.Crypto.method_signatures" type="strlist"></append>
+	<append key="org.freedesktop.Hal.Device.Volume.Crypto.method_argnames" type="strlist"></append>
         <append key="org.freedesktop.Hal.Device.Volume.Crypto.method_execpaths" type="strlist">hal-luks-teardown</append>
       </match>
     </match>

@@ -8,10 +8,12 @@
 
       <append key="org.freedesktop.Hal.Device.LaptopPanel.method_names" type="strlist">SetBrightness</append>
       <append key="org.freedesktop.Hal.Device.LaptopPanel.method_signatures" type="strlist">i</append>
+      <append key="org.freedesktop.Hal.Device.LaptopPanel.method_argnames" type="strlist">brightness_value</append>
       <append key="org.freedesktop.Hal.Device.LaptopPanel.method_execpaths" type="strlist">hal-system-lcd-set-brightness</append>
 
       <append key="org.freedesktop.Hal.Device.LaptopPanel.method_names" type="strlist">GetBrightness</append>
       <append key="org.freedesktop.Hal.Device.LaptopPanel.method_signatures" type="strlist"></append>
+      <append key="org.freedesktop.Hal.Device.LaptopPanel.method_argnames" type="strlist"></append>
       <append key="org.freedesktop.Hal.Device.LaptopPanel.method_execpaths" type="strlist">hal-system-lcd-get-brightness</append>
     </match>
   </device>

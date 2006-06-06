@@ -1,3 +1,19 @@
+2006-06-06  David Zeuthen  <davidz@redhat.com>
+
+	Add introspection support to hald.
+
+	* hald/hald_dbus.c:
+	(do_introspect): New function
+	(hald_dbus_filter_handle_methods): Handle method "Introspect" on
+	interface "org.freedesktop.DBus.Introspectable"
+
+	* fdi/policy/10osvendor/10-laptop-panel-mgmt-policy.fdi,
+	  fdi/policy/10osvendor/10-power-mgmt-policy.fdi,
+	  fdi/policy/10osvendor/15-storage-luks.fdi,
+	  fdi/policy/10osvendor/20-storage-methods.fdi: Add new property
+	  *.method_argnames to describe each argument for a method; it's
+	  just a space delimited list.
+
 2006-06-06  Richard Hughes  <richard@hughsie.com>
 
 	* doc/spec/Makefile.am:
