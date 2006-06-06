@@ -1,5 +1,15 @@
 2006-06-05  David Zeuthen  <davidz@redhat.com>
 
+	* tools/Makefile.am: Be explicit about DIST_SUBDIRS as otherwise
+	'make distcheck' breaks.
+
+	* configure.in: Disable building docbook by default as it
+	currently breaks 'make distcheck'.
+
+	* doc/spec/Makefile.am: Also dist other XML files
+
+2006-06-05  David Zeuthen  <davidz@redhat.com>
+
 	* configure.in, tools/Makefile.am: Patch from Joe Marcus Clarke
 	<marcus@freebsd.org> and Danny Kukawka <danny.kukawka@web.de> to
 	only install the backend we're building for.
