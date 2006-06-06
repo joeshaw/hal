@@ -19,7 +19,7 @@ htmldocdir = $(DOCDIR)/spec
 htmldoc_DATA = hal-spec.html $(FIGURE_FILES)
 
 hal-spec.html : hal-spec.xml $(SPEC_XML_EXTRA_FILES) $(FIGURE_FILES)
-	$(XMLTO) html-nochunks hal-spec.xml
+	$(XMLTO) html-nochunks -m config.xsl hal-spec.xml
 
 clean-local:
 	rm -f *~
@@ -30,6 +30,8 @@ endif # DOCBOOK_DOCS_ENABLED
 EXTRA_DIST =              \
   hal-spec.html           \
   hal-spec.xml.in         \
+  config.xsl              \
+  docbook.css             \
   $(SPEC_XML_EXTRA_FILES) \
   example-manager.py	  \
   hal-arch.dia	          \

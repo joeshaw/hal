@@ -1,3 +1,14 @@
+2006-06-06  Richard Hughes  <richard@hughsie.com>
+
+	* doc/spec/Makefile.am:
+	* doc/spec/config.xsl:
+	* doc/spec/docbook.css:
+	This adds a css style file to the generated html file. It makes the
+	tables much prettier and smart. The old tables make my eyes bleed.
+
+	* doc/spec/hal-spec.html:
+	Regenerate this file.
+
 2006-06-06  David Zeuthen  <davidz@redhat.com>
 
 	* hald/linux2/blockdev.c (hotplug_event_begin_add_blockdev): Set
