@@ -219,12 +219,20 @@ else
         *-*-solaris*)
 		   HALD_BACKEND="solaris"
 		   ;;
-	   *)
+        *-*-freebsd*)
+                   HALD_BACKEND="freebsd"
+                   ;;
+	*-linux*)
 		   HALD_BACKEND="linux2"
-             ;;
+      		   ;;
+        *)
+		   HALD_BACKEND="dummy"
+		   ;;
     esac
 fi
+AM_CONDITIONAL(HALD_COMPILE_DUMMY, test x$HALD_BACKEND = xdummy, [Compiling for Dummy backend])
 AM_CONDITIONAL(HALD_COMPILE_LINUX2, test x$HALD_BACKEND = xlinux2, [Compiling for Linux])
+AM_CONDITIONAL(HALD_COMPILE_FREEBSD, test x$HALD_BACKEND = xfreebsd, [Compiling for FreeBSD])
 AM_CONDITIONAL(HALD_COMPILE_SOLARIS, test x$HALD_BACKEND = xsolaris, [Compiling for Solaris])
 AC_SUBST(HALD_BACKEND)
 

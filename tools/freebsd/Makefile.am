@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-scriptdir = $(libdir)/hal/scripts
+scriptdir = $(libdir)/hal/scripts/freebsd
 
 script_SCRIPTS =					\
 	hal-system-power-suspend-freebsd		\

@@ -1,6 +1,16 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS =  freebsd linux device-manager
+
+SUBDIRS = device-manager
+
+if HALD_COMPILE_LINUX2
+SUBDIRS += linux
+endif
+if HALD_COMPILE_FREEBSD
+SUBDIRS += freebsd
+endif
+
+DIST_SUBDIRS = $(SUBDIRS) freebsd linux
 
 INCLUDES = \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \

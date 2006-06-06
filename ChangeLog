@@ -1,5 +1,11 @@
 2006-06-05  David Zeuthen  <davidz@redhat.com>
-	
+
+	* configure.in, tools/Makefile.am: Patch from Joe Marcus Clarke
+	<marcus@freebsd.org> and Danny Kukawka <danny.kukawka@web.de> to
+	only install the backend we're building for.
+
+2006-06-05  David Zeuthen  <davidz@redhat.com>
+
 	* hald/hald_dbus.c:
 	(hald_exec_method): Export a new environment variable with the
 	unique name for callers system bus connection called
