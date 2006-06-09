@@ -340,6 +340,16 @@ volume_id
 @Returns: 
 
 
+<!-- ##### FUNCTION volume_id_probe_squashfs ##### -->
+<para>
+
+</para>
+
+@id: 
+@off: 
+@Returns: 
+
+
 <!-- ##### FUNCTION volume_id_probe_linux_swap ##### -->
 <para>
 

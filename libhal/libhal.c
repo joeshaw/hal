@@ -3303,7 +3303,7 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
  * @condition_details: user-readable details of condition
  * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
- * Emit a condition from a device.
+ * Emit a condition from a device. Can only be used from hald helpers.
  *
  * Returns: TRUE if condition successfully emitted,
  *                              FALSE otherwise
@@ -3337,6 +3337,79 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &condition_name);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &condition_details);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) !=
+		   DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return FALSE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &result);
+
+	dbus_message_unref (reply);
+
+	return result;	
+}
+
+/** 
+ * libhal_device_claim_interface:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @interface_name: Name of interface to claim, e.g. org.freedesktop.Hal.Device.FoobarKindOfThing
+ * @introspection_xml: Introspection XML containing what would be inside the interface XML tag
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ *
+ * Claim an interface for a device. All messages to this interface
+ * will be forwarded to the helper. Can only be used from hald
+ * helpers.
+ *
+ * Returns: TRUE if interface was claimed, FALSE otherwise
+ */
+dbus_bool_t
+libhal_device_claim_interface (LibHalContext *ctx,
+			       const char *udi,
+			       const char *interface_name,
+			       const char *introspection_xml,
+			       DBusError *error)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
+	DBusMessage *reply;
+	dbus_bool_t result;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"ClaimInterface");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface_name);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &introspection_xml);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,

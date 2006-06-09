@@ -17,6 +17,14 @@ HalDeviceStore
 <!-- ##### SECTION Stability_Level ##### -->
 
 
+<!-- ##### STRUCT HalDeviceStore ##### -->
+<para>
+
+</para>
+
+@parent: 
+@devices: 
+
 <!-- ##### USER_FUNCTION HalDeviceStoreAsyncCallback ##### -->
 <para>
 

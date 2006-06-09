@@ -2229,8 +2229,8 @@ device_emit_condition (DBusConnection * connection, DBusMessage * message, dbus_
 
 	udi = dbus_message_get_path (message);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
-		raise_permission_denied (connection, message, "EmitCondition: not privileged");
+	if (!local_interface) {
+		raise_permission_denied (connection, message, "EmitCondition: only allowed for helpers");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2258,6 +2258,87 @@ device_emit_condition (DBusConnection * connection, DBusMessage * message, dbus_
 	device_send_signal_condition (device, condition_name, condition_details);
 
 	res = TRUE;
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &res);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+typedef struct
+{
+	DBusConnection  *connection;
+	char            *interface_name;
+	char            *introspection_xml;
+	char            *udi;
+} HelperInterfaceHandler;
+
+static GSList *helper_interface_handlers = NULL;
+
+static DBusHandlerResult
+device_claim_interface (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *device;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	DBusError error;
+	const char *interface_name;
+	const char *introspection_xml;
+	dbus_bool_t res;
+	
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	if (!local_interface) {
+		raise_permission_denied (connection, message, "ClaimInterface: only allowed for helpers");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	HAL_DEBUG (("udi=%s", udi));
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &interface_name,
+				    DBUS_TYPE_STRING, &introspection_xml,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "ClaimInterface");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	device = hal_device_store_find (hald_get_gdl (), udi);
+	if (device == NULL)
+		device = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (device == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	res = TRUE;
+
+	HAL_INFO (("Local connection 0x%x to handle interface '%s' on udi '%s'",
+		   connection,
+		   interface_name, 
+		   udi));
+
+	hal_device_property_strlist_add (device, "info.interfaces", interface_name);
+
+	HelperInterfaceHandler *hih = g_new0 (HelperInterfaceHandler, 1);
+	hih->connection = connection;
+	hih->interface_name = g_strdup (interface_name);
+	hih->introspection_xml = g_strdup (introspection_xml);
+	hih->udi = g_strdup (udi);
+	helper_interface_handlers = g_slist_append (helper_interface_handlers, hih);
+	
 
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
@@ -3054,6 +3135,12 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"condition_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"condition_details\" direction=\"in\" type=\"s\"/>\n"
 				       "    </method>\n"
+
+				       "    <method name=\"ClaimInterface\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"introspection_xml\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+
 				       "  </interface>\n");
 
 			GSList *interfaces;
@@ -3081,6 +3168,20 @@ do_introspect (DBusConnection  *connection,
 				method_names = hal_device_property_get_strlist (d, method_names_prop);
 				method_signatures = hal_device_property_get_strlist (d, method_signatures_prop);
 				method_argnames = hal_device_property_get_strlist (d, method_argnames_prop);
+
+				/* consult local list */
+				if (method_names == NULL) {
+					GSList *i;
+
+					for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
+						HelperInterfaceHandler *hih = i->data;
+						if (strcmp (hih->udi, path) == 0) {
+							xml = g_string_append (xml, hih->introspection_xml);
+						}
+					}
+					
+				}
+
 				for (j = method_names, k = method_signatures, l = method_argnames;
 				     j != NULL && k != NULL && l != NULL;
 				     j = g_slist_next (j), k = g_slist_next (k), l = g_slist_next (l)) {
@@ -3103,25 +3204,32 @@ do_introspect (DBusConnection  *connection,
 						switch (sig[n]) {
 						case 'a':
 							if (n == strlen (sig) - 1) {
-								HAL_WARNING (("Broken signature for method %s on interface %s for object %s", name, ifname, path));
+								HAL_WARNING (("Broken signature for method %s "
+									      "on interface %s for object %s", 
+									      name, ifname, path));
 								continue;
 							}
 							g_string_append_printf (
-								xml, 
-								"      <arg name=\"%s\" direction=\"in\" type=\"a%c\"/>\n", args[m], sig[n + 1]);
+							  xml, 
+							  "      <arg name=\"%s\" direction=\"in\" type=\"a%c\"/>\n", 
+							  args[m], sig[n + 1]);
 							n++;
 							break;
 
 						default:
 							g_string_append_printf (
-								xml, 
-								"      <arg name=\"%s\" direction=\"in\" type=\"%c\"/>\n", args[m], sig[n]);
+							  xml, 
+							  "      <arg name=\"%s\" direction=\"in\" type=\"%c\"/>\n", 
+							  args[m], sig[n]);
 							break;
 						}
 					}
-					xml = g_string_append (xml, 
-								"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n");
-					xml = g_string_append  (xml, "    </method>\n");
+					xml = g_string_append (
+						xml, 
+						"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n");
+					xml = g_string_append  (
+						xml, 
+						"    </method>\n");
 
 				}
 				
@@ -3156,11 +3264,43 @@ do_introspect (DBusConnection  *connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static void
+reply_from_fwd_message (DBusPendingCall *pending_call,
+			void            *user_data)
+{
+	DBusMessage *reply_from_addon;
+	DBusMessage *method_from_caller;
+	DBusMessage *reply;
+
+	/*HAL_INFO (("in reply_from_fwd_message : user_data = 0x%x", user_data));*/
+
+	method_from_caller = (DBusMessage *) user_data;
+	reply_from_addon = dbus_pending_call_steal_reply (pending_call);
+
+	reply = dbus_message_copy (reply_from_addon);
+	dbus_message_set_destination (reply, dbus_message_get_sender (method_from_caller));
+	dbus_message_set_reply_serial (reply, dbus_message_get_serial (method_from_caller));
+
+	if (dbus_connection != NULL)
+		dbus_connection_send (dbus_connection, reply, NULL);
+
+	dbus_message_unref (reply_from_addon);
+	dbus_message_unref (reply);
+}
 
 static DBusHandlerResult
 hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *message, 
 				 void *user_data, dbus_bool_t local_interface)
 {
+	/*
+	  HAL_INFO (("connection=0x%x obj_path=%s interface=%s method=%s local_interface=%d", 
+		   connection,
+		   dbus_message_get_path (message), 
+		   dbus_message_get_interface (message),
+		   dbus_message_get_member (message),
+		   local_interface));
+	*/
+
 	if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Manager",
 					 "GetAllDevices") &&
@@ -3310,6 +3450,16 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"EmitCondition")) {
 		return device_emit_condition (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"ClaimInterface")) {
+		return device_claim_interface (connection, message, local_interface);
+#if 0
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"ReleaseInterface")) {
+		return device_release_interface (connection, message, local_interface);
+#endif
+	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.DBus.Introspectable",
 						"Introspect")) {
 		return do_introspect (connection, message, local_interface);
@@ -3329,11 +3479,47 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 
 		d = NULL;
 
-		if (method != NULL) {
+		if (udi != NULL) {
 			d = hal_device_store_find (hald_get_gdl (), udi);
 			if (d == NULL)
 				d = hal_device_store_find (hald_get_tdl (), udi);
 		}
+
+		if (d != NULL && interface != NULL) {
+			GSList *i;
+
+			for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
+				HelperInterfaceHandler *hih = i->data;
+				if (strcmp (hih->udi, udi) == 0 &&
+				    strcmp (hih->interface_name, interface) == 0) {
+					DBusPendingCall *pending_call;
+					DBusMessage *copy;
+
+					/*HAL_INFO (("forwarding method to connection 0x%x", hih->connection));*/
+
+					dbus_message_ref (message);
+
+					/* send a copy of the message */
+					copy = dbus_message_copy (message);
+					if (!dbus_connection_send_with_reply (hih->connection,
+									      copy,
+									      &pending_call,
+									      /*-1*/ 8000)) {
+						/* TODO: handle error */
+					} else {
+						/*HAL_INFO (("connection=%x message=%x", connection, message));*/
+						dbus_pending_call_set_notify (pending_call,
+									      reply_from_fwd_message,
+									      (void *) message,
+									      NULL);
+					}
+
+					dbus_message_unref (copy);
+
+					return DBUS_HANDLER_RESULT_HANDLED;
+				}
+			}
+		} 
 
 		if (d != NULL && interface != NULL && method != NULL && signature != NULL) {
 			GSList *interfaces;
@@ -3397,11 +3583,6 @@ DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
 			   DBusMessage * message, void *user_data)
 {
-	/*HAL_INFO (("obj_path=%s interface=%s method=%s", 
-		   dbus_message_get_path(message), 
-		   dbus_message_get_interface(message),
-		   dbus_message_get_member(message)));*/
-
 	if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
 	    strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
 
@@ -3433,13 +3614,11 @@ local_server_message_handler (DBusConnection *connection,
 			      DBusMessage *message, 
 			      void *user_data)
 {
-/*
-	HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
+	/*HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
 		   dbus_message_get_destination (message), 
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
-		   dbus_message_get_member (message)));
-*/
+		   dbus_message_get_member (message)));*/
 
 	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
 		DBusMessage *reply;
@@ -3454,12 +3633,41 @@ local_server_message_handler (DBusConnection *connection,
 		return DBUS_HANDLER_RESULT_HANDLED;
 	} else if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
 		   strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
+		GSList *i;
+		GSList *j;
 		
 		HAL_INFO (("Client to local_server was disconnected"));
+
+		for (i = helper_interface_handlers; i != NULL; i = j) {
+			HelperInterfaceHandler *hih = i->data;
+
+			j = g_slist_next (i);
+
+			if (hih->connection == connection) {
+				g_free (hih->interface_name);
+				g_free (hih->introspection_xml);
+				g_free (hih->udi);
+				g_free (hih);
+				helper_interface_handlers = g_slist_remove (helper_interface_handlers, i);
+			}
+		}
+
 		dbus_connection_unref (connection);
 		return DBUS_HANDLER_RESULT_HANDLED;
-	} 
-	else return hald_dbus_filter_handle_methods (connection, message, user_data, TRUE);
+	} else if (dbus_message_get_type (message) == DBUS_MESSAGE_TYPE_SIGNAL) {
+		DBusMessage *copy;
+
+		/* it's a signal, just forward it onto the system message bus */
+		copy = dbus_message_copy (message);
+		if (dbus_connection != NULL) {
+			dbus_connection_send (dbus_connection, copy, NULL);
+		}
+		dbus_message_unref (copy);
+	} else {
+		return hald_dbus_filter_handle_methods (connection, message, user_data, TRUE);
+	}
+
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 static void

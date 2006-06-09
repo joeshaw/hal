@@ -31,4 +31,24 @@
     </match>
   </device>
 
+  <!-- this is for controlling backlight on the Macbook Pro -->
+  <device>
+    <match key="system.kernel.name" string="Linux">
+      <match key="smbios.system.manufacturer" string="Apple Computer, Inc.">
+        <match key="smbios.system.product" string="MacBookPro1,1">
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
+        </match>
+      </match>
+    </match>
+  </device>
+  <device>
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel">
+      <append key="info.capabilities" type="strlist">laptop_panel</append>
+      <merge key="info.product" type="string">MacBook Pro Laptop Panel</merge>
+      <merge key="laptop_panel.access_method" type="string">custom</merge>
+      <merge key="laptop_panel.num_levels" type="int">229</merge>
+      <append key="info.addons" type="strlist">hald-addon-macbookpro-backlight</append>
+    </match>
+  </device>
+
 </deviceinfo>

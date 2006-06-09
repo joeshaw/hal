@@ -526,12 +526,19 @@ dbus_bool_t libhal_device_reprobe (LibHalContext *ctx,
 				   const char *udi,
 				   DBusError *error);
 
-/* Emit a condition from a device */
+/* Emit a condition from a device (for hald helpers only) */
 dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 					  const char *udi,
 					  const char *condition_name,
 					  const char *condition_details,
 					  DBusError *error);
+
+/* Claim an interface for a device (for hald helpers only) */
+dbus_bool_t libhal_device_claim_interface (LibHalContext *ctx,
+					   const char *udi,
+					   const char *interface_name,
+					   const char *introspection_xml,
+					   DBusError *error);
 
 
 #if defined(__cplusplus)

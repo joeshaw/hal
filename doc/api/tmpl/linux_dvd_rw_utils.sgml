@@ -17,6 +17,41 @@ linux_dvd_rw_utils
 <!-- ##### SECTION Stability_Level ##### -->
 
 
+<!-- ##### MACRO DRIVE_CDROM_CAPS_DVDRW ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DRIVE_CDROM_CAPS_DVDPLUSR ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DRIVE_CDROM_CAPS_DVDPLUSRW ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DRIVE_CDROM_CAPS_DVDPLUSRWDL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO DRIVE_CDROM_CAPS_DVDPLUSRDL ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### FUNCTION get_dvd_r_rw_profile ##### -->
 <para>
 

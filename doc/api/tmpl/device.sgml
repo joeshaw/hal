@@ -17,6 +17,15 @@ HalDevice
 <!-- ##### SECTION Stability_Level ##### -->
 
 
+<!-- ##### STRUCT HalDevice ##### -->
+<para>
+
+</para>
+
+@parent: 
+@udi: 
+@properties: 
+
 <!-- ##### USER_FUNCTION HalDeviceAsyncCallback ##### -->
 <para>
 

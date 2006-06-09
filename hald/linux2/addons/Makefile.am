@@ -20,6 +20,9 @@ libexec_PROGRAMS  = \
 if HAVE_LIBUSB
 libexec_PROGRAMS += hald-addon-usb-csr
 endif
+if HAVE_LIBPCI
+libexec_PROGRAMS += hald-addon-macbookpro-backlight
+endif
 endif
 
 hald_addon_hid_ups_SOURCES = addon-hid-ups.c
@@ -43,4 +46,10 @@ hald_addon_keyboard_LDADD = $(top_builddir)/libhal/libhal.la
 if HAVE_LIBUSB
 hald_addon_usb_csr_SOURCES = addon-usb-csr.c
 hald_addon_usb_csr_LDADD = $(top_builddir)/libhal/libhal.la -lusb @PACKAGE_LIBS@
+endif
+
+
+if HAVE_LIBPCI
+hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c
+hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @PACKAGE_LIBS@
 endif

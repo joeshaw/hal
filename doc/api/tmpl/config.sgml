@@ -66,6 +66,13 @@ config
 
 
 
+<!-- ##### MACRO HALD_SOCKET_DIR ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO HAL_GROUP ##### -->
 <para>
 
@@ -102,6 +109,13 @@ config
 
 
 <!-- ##### MACRO HAVE_EXPAT_H ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO HAVE_GETGROUPLIST ##### -->
 <para>
 
 </para>

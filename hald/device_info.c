@@ -41,6 +41,7 @@
 #include "logger.h"
 #include "device_info.h"
 #include "device_store.h"
+#include "util.h"
 
 /**
  * @defgroup DeviceInfo Device Info File Parsing
@@ -86,7 +87,10 @@ enum {
 	CURELEM_REMOVE = 6,
 
 	/** Processing a clear element */
-	CURELEM_CLEAR = 7
+	CURELEM_CLEAR = 7,
+
+	/** Processing a spawn element */
+	CURELEM_SPAWN = 8
 };
 
 /** What and how to merge */
@@ -100,7 +104,8 @@ enum {
 	MERGE_TYPE_COPY_PROPERTY = 6,
 	MERGE_TYPE_STRLIST       = 7,
 	MERGE_TYPE_REMOVE        = 8,
-	MERGE_TYPE_CLEAR         = 9
+	MERGE_TYPE_CLEAR         = 9,
+	MERGE_TYPE_SPAWN         = 10
 };
 
 /** Parsing Context
@@ -748,6 +753,36 @@ handle_append_prepend (ParsingContext * pc, const char **attr)
 	return;
 }
 
+
+/** Called when the spawn element begins.
+ *
+ *  @param  pc                  Parsing context
+ *  @param  attr                Attribute key/value pairs
+ */
+static void
+handle_spawn (ParsingContext * pc, const char **attr)
+{
+	int num_attrib;
+
+	pc->merge_type = MERGE_TYPE_UNKNOWN;
+
+	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
+		;
+	}
+
+	if (num_attrib != 2)
+		return;
+
+	if (strcmp (attr[0], "udi") != 0)
+		return;
+
+	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
+
+	pc->merge_type = MERGE_TYPE_SPAWN;
+
+	return;
+}
+
 /** Called when the remove element begins.
  *
  *  @param  pc                  Parsing context
@@ -988,6 +1023,21 @@ start (ParsingContext * pc, const char *el, const char **attr)
 			parsing_abort (pc);
 		}
 		pc->curelem = CURELEM_DEVICE_INFO;
+	} else if (strcmp (el, "spawn") == 0) {
+		if (pc->curelem != CURELEM_MATCH) {
+			HAL_ERROR (("%s:%d:%d: Element <spawn> can only be "
+				    "inside <match>", 
+				    pc->file, 
+				    XML_GetCurrentLineNumber (pc->parser), 
+				    XML_GetCurrentColumnNumber (pc->parser)));
+			parsing_abort (pc);
+		}
+
+		pc->curelem = CURELEM_SPAWN;
+		if (pc->match_ok) {
+			handle_spawn (pc, attr);
+		} 
+
 	} else {
 		HAL_ERROR (("%s:%d:%d: Unknown element <%s>",
 			    pc->file,
@@ -1003,6 +1053,17 @@ start (ParsingContext * pc, const char *el, const char **attr)
 
 	/* store depth */
 	pc->curelem_stack[pc->depth] = pc->curelem;
+
+}
+
+static void 
+spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+
+	/* Move from temporary to global device store */
+	hal_device_store_remove (hald_get_tdl (), d);
+	hal_device_store_add (hald_get_gdl (), d);
 
 }
 
@@ -1201,12 +1262,36 @@ end (ParsingContext * pc, const char *el)
 				hal_device_property_remove (pc->device, pc->merge_key);
 			}
 		}
+	} else if (pc->merge_type == MERGE_TYPE_SPAWN) {
+		HalDevice *spawned;
+
+		spawned = hal_device_store_find (hald_get_gdl (), pc->merge_key);
+		if (spawned == NULL)
+			spawned = hal_device_store_find (hald_get_tdl (), pc->merge_key);
+
+		if (spawned == NULL) {
+			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'", 
+				   pc->merge_key, pc->device->udi));
+
+			spawned = hal_device_new ();
+			hal_device_property_set_string (spawned, "info.bus", "unknown");
+			hal_device_property_set_string (spawned, "info.udi", pc->merge_key);
+			hal_device_property_set_string (spawned, "info.parent", pc->device->udi);
+			hal_device_set_udi (spawned, pc->merge_key);
+			
+			hal_device_store_add (hald_get_tdl (), spawned);
+			
+			di_search_and_merge (spawned, DEVICE_INFO_TYPE_INFORMATION);
+			di_search_and_merge (spawned, DEVICE_INFO_TYPE_POLICY);
+			
+			hal_util_callout_device_add (spawned, spawned_device_callouts_add_done, NULL, NULL);
+		}
+
 	} else if (pc->curelem == CURELEM_CLEAR && pc->match_ok) {
 		if (pc->merge_type == MERGE_TYPE_CLEAR) {
 			hal_device_property_strlist_clear (pc->device, pc->merge_key);
 		}
 	}
-
 
 
 	pc->cdata_buf_len = 0;

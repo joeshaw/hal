@@ -1,3 +1,53 @@
+2006-06-08  David Zeuthen  <davidz@redhat.com>
+
+	Adds code so addons can claim interfaces and handle the methods on
+	them in the addon daemon code. The example here is setting the LCD
+	backlight on a Macbook Pro. Actual code for setting the backlight
+	is based on code from Nicolas Boichat found on the mactel-linux
+	mailing list.
+
+	* hald/linux2/addons/addon-macbookpro-backlight.c: New file.
+
+	* tools/hal-system-power-set-power-save: Bugfix so the right
+	backend script is invoked.
+
+	* libhal/libhal.h: Add prototype for libhal_device_claim_interface().
+
+	* libhal/libhal.c (libhal_device_claim_interface): New function.
+
+	* hald/linux2/addons/Makefile.am: Add rules for
+	hald-addon-macbookpro-backlight. 
+
+	* hald/hald_dbus.c (device_emit_condition): Only allow helpers,
+	e.g.  only messages from direct connections.
+	(device_claim_interface): New function to handle the
+	ClaimInterface() method
+	(do_introspect): Include introspection XML for ClaimInterface()
+	and the introspection XML returned by ClaimInterface()
+	invocations.
+	(reply_from_fwd_message): New function
+	(hald_dbus_filter_handle_methods): Handle ClaimInterface() and
+	forward messages to the claimed interfaces on the appropriate
+	objects.
+	(local_server_message_handler): Forward signals from helpers onto
+	the system message bus and DTRT when a helper disconnects.
+
+	* hald/device_info.c (handle_spawn): New function. One can now do
+	a <spawn udi="foo"> to spawn a child device. See the fdi file below
+	for usage.
+	(start, spawned_device_callouts_add_done, end):  Handle spawning
+	device objects in response to <spawn>.
+
+	* fdi/policy/10osvendor/10-laptop-panel-mgmt-policy.fdi: Add rules
+	for matching the Macbook Pro in order to spawn a new device object
+	with an addon for handing methods on the org.fd.H.D.LaptopPanel
+	interface.
+
+	* hal.conf.in: Allow some interfaces to also emit signals.
+
+	* configure.in: Check for libpci so we can use it as an optional
+	dependency. 
+
 2006-06-06  David Zeuthen  <davidz@redhat.com>
 
 	Add introspection support to hald.

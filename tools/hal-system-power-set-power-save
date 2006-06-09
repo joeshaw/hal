@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
-    exec $0-$HALD_UNAME_S $@
+if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-system-power-set-power-save-$HALD_UNAME_S ]; then
+    exec ./$HALD_UNAME_S/hal-system-power-set-power-save-$HALD_UNAME_S $@
 else
     echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2

@@ -1,3 +1,27 @@
+<!-- ##### SECTION ./tmpl/libhal-policy.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/libhal-policy.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/libhal-policy.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/libhal-policy.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/libhal-policy.sgml:Title ##### -->
+libhal-policy
+
+
 <!-- ##### TYPEDEF LibHalPolicyContext ##### -->
 <para>
 
