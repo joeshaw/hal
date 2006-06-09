@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Copyright (C) 2006 Richard Hughes <richard@hughsie.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# Check we are the root user
+if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
+    echo "org.freedesktop.Hal.Device.Video.PermissionDeniedByUID" >&2
+    echo "hal-system-video-suspend refused uid $HAL_METHOD_INVOKED_BY_UID" >&2
+    exit 1
+fi
+
+# 1=s3_bios, 2=s3_mode, 3=both
+if [ "$HAL_PROP_VIDEO_ADAPTER_PM_S3_BIOS" == "true" ] && [ "$HAL_PROP_VIDEO_ADAPTER_PM_S3_MODE" == "true" ]; then
+	echo -n 3 > /proc/sys/kernel/acpi_video_flags
+elif [ "$HAL_PROP_VIDEO_ADAPTER_PM_S3_BIOS" == "true" ]; then
+	echo -n 1 > /proc/sys/kernel/acpi_video_flags
+elif [ "$HAL_PROP_VIDEO_ADAPTER_PM_S3_MODE" == "true" ]; then
+	echo -n 2 > /proc/sys/kernel/acpi_video_flags
+fi
+
+# We might need to do one or many of these quirks
+#if [ "$HAL_PROP_VIDEO_ADAPTER_PM_VGA_MODE_3" == "true" ]; then
+#	# TODO: we need to set mode3
+#fi
+if [ "$HAL_PROP_VIDEO_ADAPTER_PM_DPMS_SUSPEND" == "true" ]; then
+	/usr/sbin/vbetool dpms suspend
+fi
+if [ "$HAL_PROP_VIDEO_ADAPTER_PM_VBESTATE_RESTORE" == "true" ]; then
+	/usr/sbin/vbetool vbestate save > /var/run/vbestate
+fi
+if [ "$HAL_PROP_VIDEO_ADAPTER_PM_VBEMODE_RESTORE" == "true" ]; then
+	/usr/sbin/vbetool vbemode get > /var/run/vbemode
+fi
+
+exit 0

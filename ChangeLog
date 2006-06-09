@@ -1,3 +1,12 @@
+2006-06-09  Richard Hughes  <richard@hughsie.com>
+
+	* tools/hal-system-video-resume:
+	* tools/hal-system-video-suspend:
+	* tools/linux/hal-system-video-resume-linux:
+	* tools/linux/hal-system-video-suspend-linux:
+	Add the video adapter suspend and resume functionality so we can just
+	drop in one fdi file and get the adapter to do the correct thing.
+
 2006-06-08  David Zeuthen  <davidz@redhat.com>
 
 	Adds code so addons can claim interfaces and handle the methods on
