@@ -14,3 +14,4 @@ hal-luks-remove
 hal-luks-setup
 hal-system-power-pmu
 hal-policy-is-privileged
+hal-storage-mount

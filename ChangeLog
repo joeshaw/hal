@@ -1,5 +1,13 @@
 2006-06-09  Richard Hughes  <richard@hughsie.com>
 
+	* hald/linux2/addons/.cvsignore:
+	* privileges/.cvsignore:
+	* tools/.cvsignore:
+	* tools/freebsd/.cvsignore:
+	Update these with the new files to keep cvs diff happy.
+
+2006-06-09  Richard Hughes  <richard@hughsie.com>
+
 	* tools/hal-system-video-resume:
 	* tools/hal-system-video-suspend:
 	* tools/linux/hal-system-video-resume-linux:
