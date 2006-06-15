@@ -1,3 +1,8 @@
+2006-06-14  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Check properly for libpci. Patch from Frederic
+	Peters <fpeters@0d.be>.
+
 2006-06-09  Richard Hughes  <richard@hughsie.com>
 
 	* hald/linux2/addons/.cvsignore:

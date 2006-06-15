@@ -206,8 +206,11 @@ else
 fi
 
 dnl Check for libpci
-AC_CHECK_HEADERS(pci/pci.h)
-AC_CHECK_LIB(pci, pci_init, [USE_LIBPCI=yes AM_CONDITIONAL(HAVE_LIBPCI,true)], [USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])
+AC_CHECK_HEADERS(pci/pci.h, [
+	AC_CHECK_LIB(pci, pci_init, [
+		USE_LIBPCI=yes AM_CONDITIONAL(HAVE_LIBPCI,true)], [
+		USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
+	USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])
 
 
 AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux2/solaris/dummy)],
