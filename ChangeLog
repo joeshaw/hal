@@ -1,3 +1,16 @@
+2006-06-20  David Zeuthen  <davidz@redhat.com>
+
+	* tools/hal-storage-mount.c (bailout_if_in_fstab): Handle LABEL=
+	and UUID= in this function.
+	(handle_mount): Also allow uid= on iso9660 and udf like we do for
+	vfat.
+
+	* fdi/policy/10osvendor/20-storage-methods.fdi: Ignore EFI
+	firmware partition.
+
+	* tools/hal-system-storage-cleanup-mountpoints: Fix OS-specific
+	script invocation
+
 2006-06-14  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Check properly for libpci. Patch from Frederic

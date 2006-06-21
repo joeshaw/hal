@@ -92,6 +92,13 @@
 	    <merge key="volume.ignore" type="bool">true</merge>
 	  </match>
         </match>
+
+        <!-- EFI firmware partitions -->
+        <match key="volume.fstype" string="vfat">
+	  <match key="volume.label" string="EFI">
+	    <merge key="volume.ignore" type="bool">true</merge>
+	  </match>
+        </match>
 	
       </match>
 
@@ -150,6 +157,8 @@
       <!-- allow these mount options for ntfs -->
       <match key="volume.fstype" string="ntfs">
 	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+	<append key="volume.mount.valid_options" type="strlist">gid=</append>
+	<append key="volume.mount.valid_options" type="strlist">umask=</append>
       </match>
 
       <!-- allow these mount options for ext3 -->

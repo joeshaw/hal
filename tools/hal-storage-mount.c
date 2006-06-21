@@ -295,10 +295,12 @@ fstab_close (gpointer handle)
 }
 
 static void
-bailout_if_in_fstab (const char *device)
+bailout_if_in_fstab (const char *device, const char *label, const char *uuid)
 {
 	gpointer handle;
 	char *entry;
+
+	printf (" label '%s'  uuid '%s'\n", label, uuid);
 
 	/* check if /etc/fstab mentions this device... (with symlinks etc) */
 	if (! fstab_open (&handle)) {
@@ -307,6 +309,23 @@ bailout_if_in_fstab (const char *device)
 	}
 	while ((entry = fstab_next (handle)) != NULL) {
 		char *resolved;
+
+#ifdef DEBUG
+		printf ("Looking at /etc/fstab entry '%s'\n", entry);
+#endif
+		if (label != NULL && g_str_has_prefix (entry, "LABEL=")) {
+			if (strcmp (entry + 6, label) == 0) {
+				printf ("%s found in /etc/fstab. Not mounting.\n", entry);
+				permission_denied_etc_fstab (device);
+			}
+		} 
+
+		if (uuid != NULL && g_str_has_prefix (entry, "UUID=")) {
+			if (strcmp (entry + 5, uuid) == 0) {
+				printf ("%s found in /etc/fstab. Not mounting.\n", entry);
+				permission_denied_etc_fstab (device);
+			}
+		} 
 
 		resolved = resolve_symlink (entry);
 #ifdef DEBUG
@@ -451,6 +470,8 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	uid_t calling_uid;
 	gid_t calling_gid;
 #endif
+	const char *label;
+	const char *uuid;
 
 #ifdef DEBUG
 	printf ("device                           = %s\n", device);
@@ -474,7 +495,15 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		}
 	}
 
-	bailout_if_in_fstab (device);
+	if (volume != NULL) {
+		label = libhal_volume_get_label (volume);
+		uuid = libhal_volume_get_uuid (volume);
+	} else {
+		label = NULL;
+		uuid = NULL;
+	}
+
+	bailout_if_in_fstab (device, label, uuid);
 
 	/* TODO: sanity check that what hal exports is correct (cf. Martin Pitt's email) */
 
@@ -650,10 +679,12 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	 * (since these drives normally use vfat)
 	 */
 	if (volume != NULL) {
-		/* don't consider uid= on vfat change-uid for the purpose of policy
-		 * (since vfat doesn't contain uid/gid bits) 
+		/* don't consider uid= on vfat, iso9660, udf change-uid for the purpose of policy
+		 * (since these doesn't contain uid/gid bits) 
 		 */
-		if (strcmp (libhal_volume_get_fstype (volume), "vfat") != 0) {
+		if (strcmp (libhal_volume_get_fstype (volume), "vfat") != 0 &&
+		    strcmp (libhal_volume_get_fstype (volume), "iso9660") != 0 &&
+		    strcmp (libhal_volume_get_fstype (volume), "udf") != 0) {
 			pol_change_uid = wants_to_change_uid;
 		}
 	}
