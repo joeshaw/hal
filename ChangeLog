@@ -1,3 +1,11 @@
+2006-07-03  Danny Kukawka  <danny.kukawka@web.de>
+
+	* libhal-storage/libhal-storage.c: (libhal_drive_free),
+	(libhal_volume_free): set pointer adress to NULL after free()
+
+	* libhal/libhal.c: (libhal_free_string_array),
+	(libhal_free_string): Fixed some memory leaks.
+
 2006-06-20  David Zeuthen  <davidz@redhat.com>
 
 	* tools/hal-storage-mount.c (bailout_if_in_fstab): Handle LABEL=

@@ -73,8 +73,10 @@ libhal_free_string_array (char **str_array)
 
 		for (i = 0; str_array[i] != NULL; i++) {
 			free (str_array[i]);
+			str_array[i] = NULL;
 		}
 		free (str_array);
+		str_array = NULL;
 	}
 }
 
@@ -148,7 +150,10 @@ oom:
 void
 libhal_free_string (char *str)
 {
-	free (str);
+	if (str != NULL) {
+		free (str);
+		str = NULL;
+	}
 }
 
 

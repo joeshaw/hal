@@ -788,6 +788,8 @@ libhal_drive_free (LibHalDrive *drive)
 	libhal_free_string (drive->model);
 	libhal_free_string (drive->type_textual);
 	libhal_free_string (drive->physical_device);
+	libhal_free_string (drive->dedicated_icon_drive);
+	libhal_free_string (drive->dedicated_icon_volume);
 	libhal_free_string (drive->serial);
 	libhal_free_string (drive->firmware_version);
 	libhal_free_string (drive->desired_mount_point);
@@ -818,6 +820,7 @@ libhal_volume_free (LibHalVolume *vol)
 	libhal_free_string (vol->desired_mount_point);
 	libhal_free_string (vol->mount_filesystem);
 	libhal_free_string (vol->crypto_backing_volume);
+	libhal_free_string (vol->storage_device);
 
 	free (vol);
 }
