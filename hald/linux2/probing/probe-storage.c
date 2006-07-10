@@ -44,20 +44,21 @@
 #include <mntent.h>
 
 #include <glib.h>
+#include <libvolume_id.h>
 
 #include "libhal/libhal.h"
-
-#include "volume_id/volume_id.h"
 #include "linux_dvd_rw_utils.h"
-
 #include "shared.h"
 
-void 
-volume_id_log (const char *format, ...)
+static void vid_log(int priority, const char *file, int line, const char *format, ...)
 {
+	char log_str[1024];
 	va_list args;
-	va_start (args, format);
-	_do_dbg (format, args);
+
+	va_start(args, format);
+	vsnprintf(log_str, sizeof(log_str), format, args);
+	dbg("%s:%i %s", file, line, log_str);
+	va_end(args);
 }
 
 static char *
@@ -131,6 +132,9 @@ main (int argc, char *argv[])
 	dbus_bool_t only_check_for_fs;
 
 	fd = -1;
+
+	/* hook in our debug into libvolume_id */
+	volume_id_log_fn = vid_log;
 
 	/* assume failure */
 	ret = 1;

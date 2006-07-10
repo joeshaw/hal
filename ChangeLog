@@ -1,5 +1,14 @@
 2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* configure.in:
+	* hald/linux2/probing/Makefile.am:
+	* hald/linux2/probing/probe-storage.c: (vid_log), (main):
+	* hald/linux2/probing/probe-volume.c: (vid_log),
+	(probe_msdos_part_table), (set_volume_id_values), (main):
+	Depend on external shared version of libvolume_id.
+
+2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/linux2/hotplug.c: (hotplug_event_begin_sysfs): Prepare for
 	new class devices showing up in /sys/devices instead of /sys/class.
 

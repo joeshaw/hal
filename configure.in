@@ -180,7 +180,8 @@ AM_CONDITIONAL(GCOV, test x$enable_gcov = xyes)
 glib_module="glib-2.0 >= 2.6.0"
 dbus_module="dbus-1 >= 0.33"
 polkit_module="polkit >= 0.2"
-pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module, $polkit_module"
+volume_id_module="libvolume_id >= 0.66"
+pkg_modules="$glib_module, gobject-2.0 >= 2.6.0, dbus-glib-1 >= 0.33, $dbus_module, $polkit_module, $volume_id_module"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])
 
 EXPAT_LIB=""
@@ -262,6 +263,11 @@ AC_SUBST(GLIB_LIBS)
 PKG_CHECK_MODULES(POLKIT, [$polkit_module])
 AC_SUBST(POLKIT_CFLAGS)
 AC_SUBST(POLKIT_LIBS)
+
+# volume_id
+PKG_CHECK_MODULES(VOLUME_ID, [$volume_id_module])
+AC_SUBST(VOLUME_ID_CFLAGS)
+AC_SUBST(VOLUME_ID_LIBS)
 
 # Check for BLKGETSIZE64
 AC_CHECK_TYPE(pgoff_t, ,

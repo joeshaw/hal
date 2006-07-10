@@ -46,19 +46,21 @@
 #include <sys/time.h>
 
 #include <glib.h>
+#include <libvolume_id.h>
 
 #include "libhal/libhal.h"
-#include "volume_id/volume_id.h"
 #include "linux_dvd_rw_utils.h"
-
 #include "shared.h"
 
-void
-volume_id_log (const char *format, ...)
+static void vid_log(int priority, const char *file, int line, const char *format, ...)
 {
+	char log_str[1024];
 	va_list args;
-	va_start (args, format);
-	_do_dbg (format, args);
+
+	va_start(args, format);
+	vsnprintf(log_str, sizeof(log_str), format, args);
+	dbg("%s:%i %s", file, line, log_str);
+	va_end(args);
 }
 
 static gchar *
@@ -88,6 +90,138 @@ strdup_valid_utf8 (const char *str)
 	return newstr;
 }
 
+/* probe_msdos_part_table: return array of partiton type numbers */
+#define BSIZE				0x200
+#define MSDOS_MAGIC			"\x55\xaa"
+#define MSDOS_PARTTABLE_OFFSET		0x1be
+#define MSDOS_SIG_OFF			0x1fe
+#define DOS_EXTENDED_PARTITION		0x05
+#define LINUX_EXTENDED_PARTITION	0x85
+#define WIN98_EXTENDED_PARTITION	0x0f
+#define is_extended(type) \
+	(type == DOS_EXTENDED_PARTITION ||	\
+	 type == WIN98_EXTENDED_PARTITION ||	\
+	 type == LINUX_EXTENDED_PARTITION)
+
+static unsigned char *probe_msdos_part_table(int fd)
+{
+	static unsigned char partition_id_index[256];
+	unsigned int partition_count;
+	const uint8_t buf[BSIZE];
+	int i;
+	uint64_t poff;
+	uint64_t plen;
+	uint64_t extended = 0;
+	uint64_t next;
+	int limit;
+	int empty = 1;
+	struct msdos_partition_entry {
+		uint8_t		boot_ind;
+		uint8_t		head;
+		uint8_t		sector;
+		uint8_t		cyl;
+		uint8_t		sys_ind;
+		uint8_t		end_head;
+		uint8_t		end_sector;
+		uint8_t		end_cyl;
+		uint32_t	start_sect;
+		uint32_t	nr_sects;
+	} __attribute__((packed)) *part;
+
+	if (lseek(fd, 0, SEEK_SET) < 0) {
+		dbg("lseek failed (%s)", strerror(errno));
+		return NULL;
+	}
+	if (read(fd, &buf, BSIZE) < BSIZE) {
+		dbg("read failed (%s)", strerror(errno));
+		return NULL;
+	}
+	if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
+		return NULL;
+
+	part = (struct msdos_partition_entry*) &buf[MSDOS_PARTTABLE_OFFSET];
+	/* check flags on all entries for a valid partition table */
+	for (i = 0; i < 4; i++) {
+		if (part[i].boot_ind != 0 &&
+		    part[i].boot_ind != 0x80)
+			return NULL;
+
+		if (GINT32_FROM_LE(part[i].nr_sects) != 0)
+			empty = 0;
+	}
+	if (empty == 1)
+		return NULL;
+
+	memset(partition_id_index, 0x00, sizeof(partition_id_index));
+
+	for (i = 0; i < 4; i++) {
+		poff = (uint64_t) GINT32_FROM_LE(part[i].start_sect) * BSIZE;
+		plen = (uint64_t) GINT32_FROM_LE(part[i].nr_sects) * BSIZE;
+
+		if (plen == 0)
+			continue;
+
+		partition_id_index[i] = part[i].sys_ind;
+
+		if (is_extended(part[i].sys_ind)) {
+			dbg("found extended partition at 0x%llx", (unsigned long long) poff);
+			if (extended == 0)
+				extended = poff;
+		} else {
+			dbg("found 0x%x primary data partition at 0x%llx, len 0x%llx",
+			    part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
+		}
+	}
+
+	/* follow extended partition chain and add data partitions */
+	partition_count = 4;
+	limit = 255;
+	next = extended;
+	while (next != 0) {
+		if (limit-- == 0) {
+			dbg("extended chain limit reached");
+			break;
+		}
+
+		dbg("read 0x%llx (%llu)", next, next);
+		if (lseek(fd, next, SEEK_SET) < 0) {
+			dbg("lseek failed (%s)", strerror(errno));
+			return NULL;
+		}
+		if (read(fd, &buf, BSIZE) < BSIZE) {
+			dbg("read failed (%s)", strerror(errno));
+			return NULL;
+		}
+		if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
+			break;
+
+		next = 0;
+
+		part = (struct msdos_partition_entry*) &buf[MSDOS_PARTTABLE_OFFSET];
+		for (i = 0; i < 4; i++) {
+			poff = (uint64_t) GINT32_FROM_LE(part[i].start_sect) * BSIZE;
+			plen = (uint64_t) GINT32_FROM_LE(part[i].nr_sects) * BSIZE;
+
+			if (plen == 0)
+				continue;
+
+			if (is_extended(part[i].sys_ind)) {
+				dbg("found extended partition (chain) at 0x%llx", (unsigned long long) poff);
+				if (next == 0)
+					next = extended + poff;
+			} else {
+				dbg("found 0x%x logical data partition at 0x%llx, len 0x%llx",
+					part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
+
+				partition_id_index[partition_count] = part[i].sys_ind;
+				partition_count++;
+			}
+		}
+	}
+
+	return partition_id_index;
+}
+
 static void
 set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid)
 {
@@ -101,9 +235,6 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 	switch (vid->usage_id) {
 	case VOLUME_ID_FILESYSTEM:
 		usage = "filesystem";
-		break;
-	case VOLUME_ID_PARTITIONTABLE:
-		usage = "partitiontable";
 		break;
 	case VOLUME_ID_OTHER:
 		usage = "other";
@@ -311,6 +442,9 @@ main (int argc, char *argv[])
 	dbus_bool_t should_probe_for_fs;
 	dbus_uint64_t vol_probe_offset = 0;
 	fd = -1;
+
+	/* hook in our debug into libvolume_id */
+	volume_id_log_fn = vid_log;
 
 	/* assume failure */
 	ret = 1;
@@ -558,51 +692,45 @@ main (int argc, char *argv[])
 			volume_id_close(vid);
 		}
 
-		/* get partition type (if we are from partitioned media)
-		 *
-		 * (presently we only support PC style partition tables)
-		 */
+		/* get partition type number, if we find a msdos partition table */
 		if (partition_number_str != NULL) {
+			unsigned char *idx;
+			int fd;
+
 			if ((stordev_dev_file = libhal_device_get_property_string (
-				     ctx, parent_udi, "block.device", &error)) == NULL) {
+					ctx, parent_udi, "block.device", &error)) == NULL) {
 				goto out;
 			}
-			vid = volume_id_open_node (stordev_dev_file);
-			if (vid != NULL) {
-				if (volume_id_probe_msdos_part_table (vid, 0) == 0) {
-					dbg ("Number of partitions = %d", vid->partition_count);
-					
-					if (partition_number > 0 && partition_number <= vid->partition_count) {
-						struct volume_id_partition *p;
-						p = &vid->partitions[partition_number-1];
-						
+			fd = open(stordev_dev_file, O_RDONLY);
+			if (fd >= 0) {
+				idx = probe_msdos_part_table(fd);
+				if (idx != NULL) {
+					unsigned char type;
+
+					type = idx[partition_number - 1];
+					if (type > 0) {
 						libhal_device_set_property_int (
 							ctx, udi, "volume.partition.msdos_part_table_type",
-							p->partition_type_raw, &error);
-						
+							type, &error);
+
 						/* NOTE: We trust the type from the partition table
 						 * if it explicitly got correct entries for RAID and
 						 * LVM partitions.
 						 *
-						 * Btw, in general it's not a good idea to trust the
+						 * But in general it's not a good idea to trust the
 						 * partition table type as many geek^Wexpert users use 
 						 * FAT filesystems on type 0x83 which is Linux.
 						 *
 						 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
 						 */
-						if (p->partition_type_raw == 0xfd ||
-						    p->partition_type_raw == 0x8e ) {
+						if (type == 0xfd || type == 0x8e ) {
 							libhal_device_set_property_string (
 								ctx, udi, "volume.fsusage", "raid", &error);
 						}
-						
-					} else {
-						dbg ("warning: partition_number=%d not in [0;%d[", 
-						     partition_number, vid->partition_count);
 					}
 				}
-				volume_id_close(vid);
-			}		
+				close (fd);
+			}
 			libhal_free_string (stordev_dev_file);
 		}
 	}
