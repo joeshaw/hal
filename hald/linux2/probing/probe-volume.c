@@ -402,6 +402,8 @@ main (int argc, char *argv[])
 			break;
 		case CDS_NO_INFO:	/* blank or invalid CD */
 			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", TRUE, &error);
+			/* set the volume size to 0 if disc is blank and not as 4 from BLKGETSIZE64 */
+			libhal_device_set_property_int (ctx, udi, "volume.block_size", 0, &error);
 			dbg ("Disc in %s is blank", device_file);
 			should_probe_for_fs = FALSE;
 			break;

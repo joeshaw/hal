@@ -1,3 +1,9 @@
+2006-07-10  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald/linux2/probing/probe-volume.c: (main): set volume.block_size
+	for blank CD/DVD to 0 to avoid stange values for volume size if 
+	volume.block_size and volume.num_blocks.
+
 2006-07-03  Danny Kukawka  <danny.kukawka@web.de>
 
 	* libhal-storage/libhal-storage.c: (libhal_drive_free),
