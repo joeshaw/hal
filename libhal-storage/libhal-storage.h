@@ -273,6 +273,7 @@ LibHalVolume     *libhal_volume_from_device_file              (LibHalContext *ha
 							       const char *device_file);
 void              libhal_volume_free                          (LibHalVolume     *volume);
 dbus_uint64_t     libhal_volume_get_size                      (LibHalVolume     *volume);
+dbus_uint64_t     libhal_volume_get_disc_capacity             (LibHalVolume     *volume);
 
 const char          *libhal_volume_get_udi                       (LibHalVolume     *volume);
 const char          *libhal_volume_get_device_file               (LibHalVolume     *volume);

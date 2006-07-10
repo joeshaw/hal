@@ -1,5 +1,16 @@
 2006-07-10  Danny Kukawka  <danny.kukawka@web.de>
 
+	* libhal-storage/libhal-storage.c: (libhal_volume_from_udi),
+	(libhal_volume_get_size), (libhal_volume_get_disc_capacity):
+	Fixed libhal_volume_get_size to return volume.size if available
+	instead of compute the value from volume.block_size and 
+	volume.num_blocks which can be wrong values. Added slightly
+	adopted patch from Wouter Paesen <wouter@kangaroot.net> to get 
+	disc_capacity of a volume via lib (fd.o bug #6496)
+	* libhal-storage/libhal-storage.h: fd.o bug #6496
+
+2006-07-10  Danny Kukawka  <danny.kukawka@web.de>
+
 	* hald/linux2/probing/probe-volume.c: (main): set volume.block_size
 	for blank CD/DVD to 0 to avoid stange values for volume size if 
 	volume.block_size and volume.num_blocks.

@@ -737,7 +737,6 @@ struct LibHalVolume_s {
 
 	int msdos_part_table_type;
 	
-
 	dbus_bool_t is_disc;
 	LibHalVolumeDiscType disc_type;
 	dbus_bool_t disc_has_audio;
@@ -758,6 +757,9 @@ struct LibHalVolume_s {
 	char *crypto_backing_volume;
 
 	char mount_options[MOUNT_OPTIONS_SIZE];
+
+	dbus_uint64_t volume_size;
+	dbus_uint64_t disc_capacity;
 };
 
 const char *
@@ -853,6 +855,7 @@ out:
 #define LIBHAL_PROP_EXTRACT_BEGIN if (FALSE)
 #define LIBHAL_PROP_EXTRACT_END ;
 #define LIBHAL_PROP_EXTRACT_INT(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_INT32) _where_ = libhal_psi_get_int (&it)
+#define LIBHAL_PROP_EXTRACT_UINT64(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_UINT64) _where_ = libhal_psi_get_uint64 (&it)
 #define LIBHAL_PROP_EXTRACT_STRING(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_STRING) _where_ = (libhal_psi_get_string (&it) != NULL && strlen (libhal_psi_get_string (&it)) > 0) ? strdup (libhal_psi_get_string (&it)) : NULL
 #define LIBHAL_PROP_EXTRACT_BOOL(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ = libhal_psi_get_bool (&it)
 #define LIBHAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
@@ -1109,6 +1112,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		LIBHAL_PROP_EXTRACT_INT    ("volume.block_size",         vol->block_size);
 		LIBHAL_PROP_EXTRACT_INT    ("volume.num_blocks",         vol->num_blocks);
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.size", 		 vol->volume_size); 
 		LIBHAL_PROP_EXTRACT_STRING ("volume.label",              vol->volume_label);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.mount_point",        vol->mount_point);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.fstype",             vol->fstype);
@@ -1127,6 +1131,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.is_appendable", vol->disc_is_appendable);
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.is_blank",      vol->disc_is_blank);
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.disc.is_rewritable", vol->disc_is_rewritable);
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.disc.capacity",      vol->disc_capacity);
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.policy.should_mount",        vol->should_mount);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.policy.desired_mount_point", vol->desired_mount_point);
@@ -1323,7 +1328,16 @@ out:
 dbus_uint64_t
 libhal_volume_get_size (LibHalVolume *volume)
 {
-	return ((dbus_uint64_t)volume->block_size) * ((dbus_uint64_t)volume->num_blocks);
+	if (volume->volume_size > 0)
+		return volume->volume_size;
+	else
+		return ((dbus_uint64_t)volume->block_size) * ((dbus_uint64_t)volume->num_blocks):
+}
+
+dbus_uint64_t
+libhal_volume_get_disc_capacity (LibHalVolume *volume)
+{
+	return volume->disc_capacity;
 }
 
 
