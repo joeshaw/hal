@@ -130,26 +130,87 @@ out:
 static void
 hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 {
-	static char sys_devices_path[HAL_PATH_MAX];
-	static char sys_class_path[HAL_PATH_MAX];
-	static char sys_block_path[HAL_PATH_MAX];
-	static gsize sys_devices_path_len;
-	static gsize sys_class_path_len;
-	static gsize sys_block_path_len;
+	HalDevice *d;
+	char subsystem[HAL_PATH_MAX];
+	gchar *subsystem_target;
 
-	sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
-	sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
-	sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
-
-	if (hotplug_event->action == HOTPLUG_ACTION_ADD && hal_device_store_match_key_value_string (hald_get_gdl (),
+	d = hal_device_store_match_key_value_string (hald_get_gdl (),
 						     "linux.sysfs_path",
-						     hotplug_event->sysfs.sysfs_path)) {
+						     hotplug_event->sysfs.sysfs_path);
+
+	/* FIXME: we should reprobe the device instead of skipping the event */
+	if (d != NULL && hotplug_event->action == HOTPLUG_ACTION_ADD) {
 		HAL_ERROR (("devpath %s already present in the store, ignore event", hotplug_event->sysfs.sysfs_path));
 		hotplug_event_end ((void *) hotplug_event);
 		return;
 	}
 
-	if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {
+	/* get device type from already known device object */
+	if (d != NULL) {
+		HotplugEventType type;
+
+		type = hal_device_property_get_int (d, "linux.hotplug_type");
+		if (type == HOTPLUG_EVENT_SYSFS_BUS) {
+			HAL_INFO (("%s is a bus device (store)", hotplug_event->sysfs.sysfs_path));
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
+		} else if (type == HOTPLUG_EVENT_SYSFS_CLASS) {
+			HAL_INFO (("%s is a class device (store)", hotplug_event->sysfs.sysfs_path));
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
+		} else if (type == HOTPLUG_EVENT_SYSFS_BLOCK) {
+			HAL_INFO (("%s is a block device (store)", hotplug_event->sysfs.sysfs_path));
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+		}
+	}
+
+	/*
+	 * determine device type by "subsystem" link (from kernel 2.6.18, class devices
+	 * start to move from /class to /devices and have a "subsystem" link pointing
+	 * back to the "class" or "bus" directory
+	 */
+	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS) {
+		g_snprintf (subsystem, HAL_PATH_MAX, "%s/subsystem", hotplug_event->sysfs.sysfs_path);
+		subsystem_target = g_file_read_link (subsystem, NULL);
+		if (subsystem_target != NULL) {
+			if (strstr(subsystem_target, "/bus/") != NULL) {
+				HAL_INFO (("%s is a bus device (subsystem)", hotplug_event->sysfs.sysfs_path));
+				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
+			} else if (strstr(subsystem_target, "/class/") != NULL) {
+				HAL_INFO (("%s is a class device (subsystem)", hotplug_event->sysfs.sysfs_path));
+				hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
+			} else if (strstr(subsystem_target, "/block") != NULL) {
+				HAL_INFO (("%s is a block device (subsystem)", hotplug_event->sysfs.sysfs_path));
+				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+			}
+			g_free (subsystem_target);
+		}
+	}
+
+	/* older kernels get the device type from the devpath */
+	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS) {
+		char sys_devices_path[HAL_PATH_MAX];
+		char sys_class_path[HAL_PATH_MAX];
+		char sys_block_path[HAL_PATH_MAX];
+		gsize sys_devices_path_len;
+		gsize sys_class_path_len;
+		gsize sys_block_path_len;
+
+		sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
+		sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
+		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
+
+		if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {
+			HAL_INFO (("%s is a bus device (devpath)", hotplug_event->sysfs.sysfs_path));
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
+		} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_class_path, sys_class_path_len) == 0) {
+			HAL_INFO (("%s is a class device (devpath)", hotplug_event->sysfs.sysfs_path));
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
+		} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
+			HAL_INFO (("%s is a block device (devpath)", hotplug_event->sysfs.sysfs_path));
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+		}
+	}
+
+	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BUS) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent;
 			parent = hal_util_find_closest_ancestor (hotplug_event->sysfs.sysfs_path);
@@ -162,11 +223,11 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							    hotplug_event->sysfs.sysfs_path, 
 							    (void *) hotplug_event);
 		}
-	} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_class_path, sys_class_path_len) == 0) {
+	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_CLASS) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			gchar *target;
 			HalDevice *physdev;
-			char physdevpath[256];
+			char physdevpath[HAL_PATH_MAX];
 			gchar *sysfs_path_in_devices;
 
 			sysfs_path_in_devices = NULL;
@@ -175,7 +236,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			 * so if index doesn't match, go ahead and find a new sysfs path
 			 */
 			fixup_net_device_for_renaming (hotplug_event);
-			
+
 			g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
 			if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
 				gchar *normalized_target;
@@ -196,9 +257,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 					/* go up one directory */
 					if (!hal_util_path_ascend (normalized_target))
 						break;
-
 				} while (physdev == NULL);
-
 				g_free (normalized_target);
 			} else {
 				physdev = NULL;
@@ -218,23 +277,29 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							     hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
 		}
-	} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
-		gchar *parent_path;
+	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) {
 		gboolean is_partition;
+		size_t len;
 
-		parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
-		is_partition = (strcmp (parent_path, sys_block_path) != 0);
+		len = strlen(hotplug_event->sysfs.sysfs_path);
+		is_partition = isdigit(hotplug_event->sysfs.sysfs_path[len - 1]) ||
+			       strstr (hotplug_event->sysfs.sysfs_path, "/fakevolume") ;
 
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
-			HalDevice *parent;
+			HalDevice *parent = NULL;
 
 			if (is_partition) {
+				gchar *parent_path;
+
+				parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
+
 				parent = hal_device_store_match_key_value_string (hald_get_gdl (),
 										  "linux.sysfs_path_device",
 										  parent_path);
+				g_free (parent_path);
 			} else {
 				gchar *target;
-				char physdevpath[256];
+				char physdevpath[HAL_PATH_MAX];
 
 				g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
 				if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
@@ -246,8 +311,6 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 											  "linux.sysfs_path_device",
 											  normalized_target);
 					g_free (normalized_target);
-				} else {
-					parent = NULL;
 				}
 			}
 
@@ -261,8 +324,6 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							     is_partition,
 							     (void *) hotplug_event);
 		}
-
-		g_free (parent_path);
 	} else {
 		/* just ignore this hotplug event */
 		hotplug_event_end ((void *) hotplug_event);

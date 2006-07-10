@@ -1,3 +1,8 @@
+2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* hald/linux2/hotplug.c: (hotplug_event_begin_sysfs): Prepare for
+	new class devices showing up in /sys/devices instead of /sys/class.
+
 2006-07-10  Danny Kukawka  <danny.kukawka@web.de>
 
 	* libhal-storage/libhal-storage.c: (libhal_volume_from_udi),
