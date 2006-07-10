@@ -1331,7 +1331,7 @@ libhal_volume_get_size (LibHalVolume *volume)
 	if (volume->volume_size > 0)
 		return volume->volume_size;
 	else
-		return ((dbus_uint64_t)volume->block_size) * ((dbus_uint64_t)volume->num_blocks):
+		return ((dbus_uint64_t)volume->block_size) * ((dbus_uint64_t)volume->num_blocks);
 }
 
 dbus_uint64_t
