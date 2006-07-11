@@ -1,5 +1,10 @@
 2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/util.h:
+	Increase HAL_PATH_MAX from 256 to 512.
+
+2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* Makefile.am:
 	* volume_id/.cvsignore:
 	* volume_id/Makefile.am:

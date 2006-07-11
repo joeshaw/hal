@@ -30,7 +30,7 @@
 #include "device_store.h"
 
 #define HAL_NAME_MAX 256
-#define HAL_PATH_MAX 256
+#define HAL_PATH_MAX 512
 #define HAL_HELPER_TIMEOUT 10000
 
 int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, 
