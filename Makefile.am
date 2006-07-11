@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = volume_id libhal libhal-storage hald hald-runner tools \
+SUBDIRS = libhal libhal-storage hald hald-runner tools \
           fdi doc examples po privileges
 
 pkgconfigdir = $(libdir)/pkgconfig

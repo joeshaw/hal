@@ -1,5 +1,47 @@
 2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* Makefile.am:
+	* volume_id/.cvsignore:
+	* volume_id/Makefile.am:
+	* volume_id/cramfs.c:
+	* volume_id/ext.c:
+	* volume_id/fat.c:
+	* volume_id/hfs.c:
+	* volume_id/highpoint.c:
+	* volume_id/hpfs.c:
+	* volume_id/iso9660.c:
+	* volume_id/isw_raid.c:
+	* volume_id/jfs.c:
+	* volume_id/linux_raid.c:
+	* volume_id/linux_swap.c:
+	* volume_id/logging.h:
+	* volume_id/lsi_raid.c:
+	* volume_id/luks.c:
+	* volume_id/lvm.c:
+	* volume_id/mac.c:
+	* volume_id/minix.c:
+	* volume_id/msdos.c:
+	* volume_id/ntfs.c:
+	* volume_id/nvidia_raid.c:
+	* volume_id/ocfs.c:
+	* volume_id/promise_raid.c:
+	* volume_id/reiserfs.c:
+	* volume_id/romfs.c:
+	* volume_id/silicon_raid.c:
+	* volume_id/squashfs.c:
+	* volume_id/sysv.c:
+	* volume_id/udf.c:
+	* volume_id/ufs.c:
+	* volume_id/util.c:
+	* volume_id/util.h:
+	* volume_id/via_raid.c:
+	* volume_id/volume_id.c:
+	* volume_id/volume_id.h:
+	* volume_id/vxfs.c:
+	Remove internal copy of libvolume_id.
+
+2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/linux2/probing/probe-storage.c: (main):
 	If HAL finds already created partitions, it will not longer probe
 	for a filesystem on the disk. This should work with kernel 2.6.17.
