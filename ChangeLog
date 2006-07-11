@@ -1,5 +1,44 @@
 2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* agents/Makefile.am:
+	* agents/linux/Makefile.am:
+	* agents/linux/usb/Makefile.am:
+	* agents/linux/usb/usb_agent.c:
+	* agents/linux26/Makefile.am:
+	* agents/linux26/sysfs/Makefile.am:
+	* agents/linux26/sysfs/hal_block.c:
+	* agents/linux26/sysfs/hal_block.h:
+	* agents/linux26/sysfs/hal_ide.c:
+	* agents/linux26/sysfs/hal_ide.h:
+	* agents/linux26/sysfs/hal_input.c:
+	* agents/linux26/sysfs/hal_input.h:
+	* agents/linux26/sysfs/hal_monitor.c:
+	* agents/linux26/sysfs/hal_monitor.h:
+	* agents/linux26/sysfs/hal_net.c:
+	* agents/linux26/sysfs/hal_net.h:
+	* agents/linux26/sysfs/hal_pci.c:
+	* agents/linux26/sysfs/hal_pci.h:
+	* agents/linux26/sysfs/hal_scsi.c:
+	* agents/linux26/sysfs/hal_scsi.h:
+	* agents/linux26/sysfs/hal_usb.c:
+	* agents/linux26/sysfs/hal_usb.h:
+	* agents/linux26/sysfs/libsysfs/Makefile.am:
+	* agents/linux26/sysfs/libsysfs/dlist.c:
+	* agents/linux26/sysfs/libsysfs/dlist.h:
+	* agents/linux26/sysfs/libsysfs/libsysfs.h:
+	* agents/linux26/sysfs/libsysfs/sysfs.h:
+	* agents/linux26/sysfs/libsysfs/sysfs_bus.c:
+	* agents/linux26/sysfs/libsysfs/sysfs_class.c:
+	* agents/linux26/sysfs/libsysfs/sysfs_device.c:
+	* agents/linux26/sysfs/libsysfs/sysfs_dir.c:
+	* agents/linux26/sysfs/libsysfs/sysfs_driver.c:
+	* agents/linux26/sysfs/libsysfs/sysfs_utils.c:
+	* agents/linux26/sysfs/main.c:
+	* agents/linux26/sysfs/main.h:
+	Remove dead code.
+
+2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* hald/util.h:
 	Increase HAL_PATH_MAX from 256 to 512.
 
