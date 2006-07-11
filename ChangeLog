@@ -1,3 +1,11 @@
+2006-07-11  Danny Kukawka  <danny.kukawka@web.de>
+
+	Added checks if vbetool is available and executable in /usr/sbin/,
+	added check if /var/run/{vbemode,vbestate} is available, if needed.
+
+	* tools/linux/hal-system-video-resume-linux:
+	* tools/linux/hal-system-video-suspend-linux: 
+
 2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
 
 	* agents/Makefile.am:

@@ -14,17 +14,41 @@ if [ "$HAL_METHOD_INVOKED_BY_UID" != "0" ] ; then
     exit 1
 fi
 
+checkvbetool() {
+    if ! [ -x "/usr/sbin/vbetool" ]; then
+        echo org.freedesktop.Hal.Device.Video.NotSupported >&2
+        echo vbetool not found or not executable >&2
+        exit 1
+    fi
+}
+
 # We might need to do one or many of these quirks
 if [ "$HAL_PROP_VIDEO_ADAPTER_PM_VBE_POST" == "true" ]; then
+	checkvbetool
 	/usr/sbin/vbetool post
 fi
 if [ "$HAL_PROP_VIDEO_ADAPTER_PM_VBESTATE_RESTORE" == "true" ]; then
-	/usr/sbin/vbetool vbestate restore < /var/run/vbestate
+	checkvbetool
+	if [ -f /var/run/vbestate ]; then
+		/usr/sbin/vbetool vbestate restore < /var/run/vbestate
+	else
+		echo org.freedesktop.Hal.Device.Video.UnableToRetore>&2
+	        echo /var/run/vbestate is missing, can not restore >&2
+        	exit 1
+	fi
 fi
 if [ "$HAL_PROP_VIDEO_ADAPTER_PM_VBEMODE_RESTORE" == "true" ]; then
-	/usr/sbin/vbetool vbemode set `cat /var/run/vbemode`
+	checkvbetool
+	if [ -f /var/run/vbemode ]; then
+		/usr/sbin/vbetool vbemode set `cat /var/run/vbemode`
+	else
+		echo org.freedesktop.Hal.Device.Video.UnableToRetore>&2
+	        echo /var/run/vbemode is missing, can not restore >&2
+        	exit 1
+	fi
 fi
 if [ "$HAL_PROP_VIDEO_ADAPTER_PM_DPMS_ON" == "true" ]; then
+	checkvbetool
 	/usr/sbin/vbetool dpms on > /dev/null 2>&1
 fi
 
