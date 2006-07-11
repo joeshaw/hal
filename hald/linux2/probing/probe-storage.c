@@ -38,6 +38,7 @@
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <linux/kdev_t.h>
 #include <linux/cdrom.h>
 #include <linux/fs.h>
@@ -128,7 +129,7 @@ main (int argc, char *argv[])
 	DBusError error;
 	char *bus;
 	char *drive_type;
-	struct volume_id *vid;
+	char *sysfs_path;
 	dbus_bool_t only_check_for_fs;
 
 	fd = -1;
@@ -146,6 +147,8 @@ main (int argc, char *argv[])
 	if ((bus = getenv ("HAL_PROP_STORAGE_BUS")) == NULL)
 		goto out;
 	if ((drive_type = getenv ("HAL_PROP_STORAGE_DRIVE_TYPE")) == NULL)
+		goto out;
+	if ((sysfs_path = getenv ("HAL_PROP_LINUX_SYSFS_PATH")) == NULL)
 		goto out;
 
 	_set_debug ();
@@ -353,6 +356,11 @@ main (int argc, char *argv[])
 
 		close (fd);
 	} else {
+		struct volume_id *vid;
+		GDir *dir;
+		const gchar *partition;
+		const gchar *main_device;
+		size_t main_device_len;
 
 		dbg ("Checking for file system on %s", device_file);
 
@@ -367,7 +375,28 @@ main (int argc, char *argv[])
 			goto out;
 		}
 		dbg ("Returned from open(2)");
-		
+
+		/* if the kernel has created partitions, we don't look for a filesystem */
+		main_device = strrchr (sysfs_path, '/');
+		if (main_device == NULL)
+			goto out;
+		main_device = &main_device[1];
+		main_device_len = strlen (main_device);
+		dbg ("look for existing partitions for %s", main_device);
+		if ((dir = g_dir_open (sysfs_path, 0, NULL)) == NULL) {
+			dbg ("failed to open sysfs dir");
+			goto out;
+		}
+		while ((partition = g_dir_read_name (dir)) != NULL) {
+			if (strncmp (main_device, partition, main_device_len) == 0 &&
+			    isdigit (partition[main_device_len])) {
+				dbg ("partition %s found, skip probing for filesystem", partition);
+				g_dir_close (dir);
+				goto out;
+			}
+		}
+		g_dir_close (dir);
+
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {

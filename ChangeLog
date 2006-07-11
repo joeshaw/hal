@@ -1,5 +1,11 @@
 2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
 
+	* hald/linux2/probing/probe-storage.c: (main):
+	If HAL finds already created partitions, it will not longer probe
+	for a filesystem on the disk. This should work with kernel 2.6.17.
+
+2006-07-11  Kay Sievers  <kay.sievers@vrfy.org>
+
 	* configure.in:
 	* hald/linux2/probing/Makefile.am:
 	* hald/linux2/probing/probe-storage.c: (vid_log), (main):
