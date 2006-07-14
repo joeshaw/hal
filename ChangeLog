@@ -1,3 +1,10 @@
+2006-07-14  Kay Sievers  <kay.sievers@vrfy.org>
+
+	* tools/hal-device.c: (main):
+	* tools/lshal.c: (main):
+	Replace dbus_connection_disconnect() with dbus_connection_close()
+	(D-BUS api rename)
+
 2006-07-14  Richard Hughes  <richard@hughsie.com>
 
 	* fdi/policy/10osvendor/10-laptop-panel-mgmt-policy.fdi:
