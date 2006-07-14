@@ -1,3 +1,11 @@
+2006-07-14  Richard Hughes  <richard@hughsie.com>
+
+	* fdi/policy/10osvendor/10-laptop-panel-mgmt-policy.fdi:
+	As found in http://bugzilla.gnome.org/show_bug.cgi?id=345257 the hal
+	property "laptop_panel.brightness_in_hardware" is found the root
+	computer object, not on the actual laptop_panel object which is
+	obviously wrong. Patch fixes the issue for Crispin Flowerday.
+
 2006-07-11  Danny Kukawka  <danny.kukawka@web.de>
 
 	Added checks if vbetool is available and executable in /usr/sbin/,

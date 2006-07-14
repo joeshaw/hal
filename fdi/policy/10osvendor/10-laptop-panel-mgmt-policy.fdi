@@ -24,9 +24,11 @@
        can get into a feedback state so the panel flashes uncontrollably.
        This is a hardware "feature" seen on IBM x31 laptops. -->
   <device>
-    <match key="smbios.system.manufacturer" string="IBM">
-      <match key="smbios.system.version" string="ThinkPad X31">
-        <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
+    <match key="info.category" string="laptop_panel">
+      <match key="/org/freedesktop/Hal/devices/computer:smbios.system.manufacturer" string="IBM">
+        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad X31">
+          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
+        </match>
       </match>
     </match>
   </device>
