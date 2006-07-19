@@ -1,5 +1,11 @@
 2006-07-19  Danny Kukawka  <danny.kukawka@web.de>
 
+	* fdi/information/10freedesktop/10-usb-music-players.fdi: Added
+	slightly adopted patch from Bob Copeland <me@bobcopeland.com> to 
+	add Rio Karma to list of USB mp3 players and close fd.o bug #7379 
+
+2006-07-19  Danny Kukawka  <danny.kukawka@web.de>
+
 	* fdi/information/10freedesktop/10-usb-music-players.fdi:
 	Patch from <chris.hollenbeck@gmail.com> to fix fd.o bug #7029 and 
 	correct audio_folders and playlist_path for iAudio X5 .
