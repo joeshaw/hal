@@ -386,9 +386,9 @@
 	    <append key="portable_audio_player.output_formats" type="strlist">audio/flac</append>
 	    <append key="portable_audio_player.output_formats" type="strlist">audio/x-wav</append>
 	    <append key="portable_audio_player.input_formats" type="strlist">audio/mpeg</append>
-	    <append key="portable_audio_player.audio_folders" type="strlist">music/</append>
+	    <append key="portable_audio_player.audio_folders" type="strlist">MUSIC/</append>
 	    <append key="portable_audio_player.playlist_format" type="strlist">audio/x-mpegurl</append>
-	    <append key="portable_audio_player.playlist_path" type="strlist">playlist/%File</append>
+	    <append key="portable_audio_player.playlist_path" type="strlist">PLAYLIST/%File</append>
 	  </match>
 	  <!-- iAudio M5 -->
 	  <match key="@storage.physical_device:usb.product_id" int="0x520">
