@@ -1,3 +1,8 @@
+2006-07-20  Danny Kukawka  <danny.kukawka@web.de>
+
+	* configure.in: fix configure and remove no longer available 
+	volume_id/Makefile from AC_OUTPUT (fd.o bug #7541)
+
 2006-07-19  Danny Kukawka  <danny.kukawka@web.de>
 
 	* fdi/information/10freedesktop/10-usb-music-players.fdi: Added
