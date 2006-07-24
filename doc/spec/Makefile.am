@@ -19,7 +19,8 @@ htmldocdir = $(DOCDIR)/spec
 htmldoc_DATA = hal-spec.html $(FIGURE_FILES)
 
 hal-spec.html : hal-spec.xml $(SPEC_XML_EXTRA_FILES) $(FIGURE_FILES)
-	$(XMLTO) html-nochunks -m config.xsl hal-spec.xml
+	${XMLLINT} --xinclude hal-spec.xml.in > hal-spec.xml 
+	$(DOCBOOK) --nochunks hal-spec.xml -o .
 
 clean-local:
 	rm -f *~
