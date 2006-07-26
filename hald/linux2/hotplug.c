@@ -27,6 +27,7 @@
 #  include <config.h>
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <mntent.h>

@@ -1,3 +1,10 @@
+2006-07-26  Danny Kukawka  <danny.kukawka@web.de>
+
+	* hald-runner/runner.c: (hash_kill_udi): fixed compiler warning 
+	about incompatible pointer types
+
+	* hald/linux2/hotplug.c: include ctype.h to fix compiler warning
+
 2006-07-24  Danny Kukawka  <danny.kukawka@web.de>
 
 	Fixed build hal-spec.html to avoid invalid chars in the html page and 

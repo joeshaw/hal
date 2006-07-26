@@ -330,9 +330,10 @@ run_kill_udi(gchar *udi)
 	g_hash_table_remove(udi_hash, udi);
 }
 
-static void
+static gboolean 
 hash_kill_udi(gpointer key, gpointer value, gpointer user_data) {
 	do_kill_udi(key);
+	return TRUE;
 }
 
 /* Kill all running request*/
