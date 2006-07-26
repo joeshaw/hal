@@ -2,3 +2,11 @@ Makefile
 Makefile.in
 Doxyfile
 html
+xml
+hal.hierarchy
+hal.interfaces
+hal.prerequisites
+hal.signals
+*.txt
+*.args
+*.stamp
