@@ -10,3 +10,4 @@ hal.signals
 *.txt
 *.args
 *.stamp
+*.o

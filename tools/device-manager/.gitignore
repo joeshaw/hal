@@ -3,3 +3,4 @@ Makefile.in
 Const.py
 *.pyc
 hal-device-manager
+*.o
