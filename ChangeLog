@@ -1,3 +1,9 @@
+2006-07-27  Danny Kukawka  <danny.kukawka@web.de>
+
+	* doc/spec/Makefile.am: fixed building of hal-spec.html
+
+	* doc/spec/hal-spec.html: submitted html to fix invalid chars
+
 2006-07-26  Danny Kukawka  <danny.kukawka@web.de>
 
 	* hald-runner/runner.c: (hash_kill_udi): fixed compiler warning 
