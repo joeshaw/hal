@@ -486,6 +486,8 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_hibernate = TRUE;
 	if (access ("/proc/suspend2", F_OK) == 0)
 		can_hibernate = TRUE;
+	if (access ("/sys/power/suspend2/version", F_OK) == 0)
+		can_hibernate = TRUE;
 out:
 	hal_device_property_set_bool (d, "power_management.can_suspend", can_suspend);
 	hal_device_property_set_bool (d, "power_management.can_hibernate", can_hibernate);
