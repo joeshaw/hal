@@ -9,7 +9,7 @@
 
 <!ELEMENT device (match|merge)*  >
 
-<!ELEMENT match (match|merge|prepend|append|remove)* >
+<!ELEMENT match (match|merge|prepend|append|remove|spawn)* >
 <!ATTLIST match 
     key              CDATA #REQUIRED
     string           CDATA #IMPLIED
@@ -49,4 +49,9 @@
 <!ATTLIST remove
     key    CDATA #REQUIRED
     type   (strlist) #REQUIRED
+>
+
+<!ELEMENT spawn (#PCDATA) >
+<!ATTLIST spawn
+    udi    CDATA #REQUIRED
 >
