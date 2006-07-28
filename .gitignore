@@ -2,6 +2,7 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
+ChangeLog
 config.guess
 config.h
 config.h.in
@@ -29,3 +30,4 @@ missing
 py-compile
 INSTALL
 *.o
+*.tar.gz
