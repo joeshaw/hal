@@ -8,10 +8,7 @@ script_SCRIPTS =					\
 	hal-system-power-reboot-freebsd			\
 	hal-system-lcd-get-brightness-freebsd		\
 	hal-system-lcd-set-brightness-freebsd		\
-	hal-system-power-set-power-save-freebsd		\
-	hal-system-storage-unmount-freebsd		\
-	hal-system-storage-eject-freebsd		\
-	hal-system-storage-cleanup-mountpoints-freebsd
+	hal-system-power-set-power-save-freebsd
 
 EXTRA_DIST = $(script_SCRIPTS)
 

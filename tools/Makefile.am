@@ -87,11 +87,7 @@ script_SCRIPTS =				\
 	hal-system-power-reboot			\
 	hal-system-lcd-get-brightness		\
 	hal-system-lcd-set-brightness		\
-	hal-system-power-set-power-save		\
-	hal-system-storage-unmount		\
-	hal-system-storage-eject		\
-	hal-system-storage-cleanup-mountpoint   \
-	hal-system-storage-cleanup-mountpoints
+	hal-system-power-set-power-save
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 
