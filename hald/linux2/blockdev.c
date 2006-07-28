@@ -48,8 +48,10 @@
 #include <errno.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
+#include <syslog.h>
 
 #include <glib.h>
 #include <dbus/dbus.h>
@@ -172,6 +174,116 @@ cleanup_mountpoint_cb (HalDevice *d, guint32 exit_type,
 	g_free (mount_point);
 }
 
+static gboolean
+is_mounted_by_hald (const char *mount_point)
+{
+	int i;
+	FILE *hal_mtab;
+	int hal_mtab_len;
+	int num_read;
+	char *hal_mtab_buf;
+	char **lines;
+	gboolean found;
+	int lock_mtab_fd;
+
+	hal_mtab = NULL;
+	hal_mtab_buf = NULL;
+	found = FALSE;
+
+	/* take the lock on /media/.hal-mtab-lock so we don't race with the Mount() and Unmount() methods */
+	
+	/* do not attempt to create the file; tools/hal-storage-shared.c will create it and 
+	 * set the correct ownership so this unprivileged process (running as haldaemon) can
+	 * lock it too
+	 */
+	lock_mtab_fd = open ("/media/.hal-mtab-lock", 0);
+	if (lock_mtab_fd < 0) {
+		HAL_INFO (("Cannot open /media/.hal-mtab for locking"));
+		goto out;
+	}
+
+tryagain:
+	if (flock (lock_mtab_fd, LOCK_EX) != 0) {
+		if (errno == EINTR)
+			goto tryagain;
+		HAL_ERROR (("Cannot obtain lock on /media/.hal-mtab"));
+		goto out;
+	}
+
+	/*HAL_DEBUG (("examining /media/.hal-mtab for %s", mount_point));*/
+
+	hal_mtab = fopen ("/media/.hal-mtab", "r");
+	if (hal_mtab == NULL) {
+		HAL_ERROR (("Cannot open /media/.hal-mtab"));
+		goto out;
+	}
+	if (fseek (hal_mtab, 0L, SEEK_END) != 0) {
+		HAL_ERROR (("Cannot seek to end of /media/.hal-mtab"));
+		goto out;
+	}
+	hal_mtab_len = ftell (hal_mtab);
+	if (hal_mtab_len < 0) {
+		HAL_ERROR (("Cannot determine size of /media/.hal-mtab"));
+		goto out;
+	}
+	rewind (hal_mtab);
+
+	hal_mtab_buf = g_new0 (char, hal_mtab_len + 1);
+	num_read = fread (hal_mtab_buf, 1, hal_mtab_len, hal_mtab);
+	if (num_read != hal_mtab_len) {
+		HAL_ERROR (("Cannot read from /media/.hal-mtab"));
+		goto out;
+	}
+	fclose (hal_mtab);
+	hal_mtab = NULL;
+
+	/*HAL_DEBUG (("hal_mtab = '%s'\n", hal_mtab_buf));*/
+
+	lines = g_strsplit (hal_mtab_buf, "\n", 0);
+	g_free (hal_mtab_buf);
+	hal_mtab_buf = NULL;
+
+	/* find the entry we're going to unmount */
+	for (i = 0; lines[i] != NULL && !found; i++) {
+		char **line_elements;
+
+		/*HAL_DEBUG ((" line = '%s'", lines[i]));*/
+
+		if ((lines[i])[0] == '#')
+			continue;
+
+		line_elements = g_strsplit (lines[i], "\t", 6);
+		if (g_strv_length (line_elements) == 6) {
+/*
+			HAL_DEBUG (("  devfile     = '%s'", line_elements[0]));
+			HAL_DEBUG (("  uid         = '%s'", line_elements[1]));
+			HAL_DEBUG (("  session id  = '%s'", line_elements[2]));
+			HAL_DEBUG (("  fs          = '%s'", line_elements[3]));
+			HAL_DEBUG (("  options     = '%s'", line_elements[4]));
+			HAL_DEBUG (("  mount_point = '%s'", line_elements[5]));
+			HAL_DEBUG (("  (comparing against '%s')", mount_point));
+*/
+
+			if (strcmp (line_elements[5], mount_point) == 0) {
+				found = TRUE;
+				/*HAL_INFO (("device at '%s' is indeed mounted by HAL's Mount()", mount_point));*/
+			}
+			
+		}
+
+		g_strfreev (line_elements);
+	}
+
+out:
+	if (lock_mtab_fd >= 0)
+		close (lock_mtab_fd);
+	if (hal_mtab != NULL)
+		fclose (hal_mtab);
+	if (hal_mtab_buf != NULL)
+		g_free (hal_mtab_buf);
+
+	return found;
+}
 
 void
 blockdev_refresh_mount_state (HalDevice *d)
@@ -242,7 +354,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		if (major(statbuf.st_dev) == 0)
 			continue;
 
-		HAL_INFO (("* found mounts dev %s (%i:%i)", mnt.mnt_fsname, major(statbuf.st_dev), minor(statbuf.st_dev)));
+		/*HAL_INFO (("* found mounts dev %s (%i:%i)", mnt.mnt_fsname, major(statbuf.st_dev), minor(statbuf.st_dev)));*/
 		/* match against all hal volumes */
 		for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
 			HalDevice *dev;
@@ -253,7 +365,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 				continue;
 			minor = hal_device_property_get_int (dev, "block.minor");
 			devt = makedev(major, minor);
-			HAL_INFO (("  match %s (%i:%i)", hal_device_get_udi (dev), major, minor));
+			/*HAL_INFO (("  match %s (%i:%i)", hal_device_get_udi (dev), major, minor));*/
 
 			if (statbuf.st_dev == devt) {
 				/* found entry for this device in /proc/mounts */
@@ -263,9 +375,9 @@ blockdev_refresh_mount_state (HalDevice *d)
 							      hasmntopt (&mnt, MNTOPT_RO) ? TRUE : FALSE);
 				hal_device_property_set_string (dev, "volume.mount_point", mnt.mnt_dir);
 				device_property_atomic_update_end ();
-				HAL_INFO (("  set %s to be mounted at %s (%s)",
+				/*HAL_INFO (("  set %s to be mounted at %s (%s)",
 					   hal_device_get_udi (dev), mnt.mnt_dir,
-					   hasmntopt (&mnt, MNTOPT_RO) ? "ro" : "rw"));
+					   hasmntopt (&mnt, MNTOPT_RO) ? "ro" : "rw"));*/
 				volumes = g_slist_delete_link (volumes, volume);
 				break;
 			}
@@ -276,7 +388,6 @@ blockdev_refresh_mount_state (HalDevice *d)
 	for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
 		HalDevice *dev;
 		char *mount_point;
-		char *mount_point_hal_file;
 		GSList *autofs_node;
 
 		dev = HAL_DEVICE (volume->data);
@@ -286,7 +397,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		hal_device_property_set_bool (dev, "volume.is_mounted_read_only", FALSE);
 		hal_device_property_set_string (dev, "volume.mount_point", "");
 		device_property_atomic_update_end ();
-		HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));
+		/*HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));*/
 
 		/* check to see if mount point falls under autofs */
 		autofs_node = autofs_mounts;
@@ -299,32 +410,26 @@ blockdev_refresh_mount_state (HalDevice *d)
 			autofs_node = autofs_node->next;
 		}
 
-		mount_point_hal_file = g_strdup_printf ("%s/.created-by-hal", mount_point);
-		if (!autofs_node && 
-		     g_file_test (mount_point_hal_file, G_FILE_TEST_EXISTS)) {
+		/* look up in /media/.hal-mtab to see if we mounted this one */
+		if (mount_point != NULL && strlen (mount_point) > 0 && is_mounted_by_hald (mount_point)) {
 			char *cleanup_stdin;
 			char *extra_env[2];
 
-			HAL_INFO (("Cleaning up directory '%s' since it was created by hal Mount()", mount_point));
+			HAL_INFO (("Cleaning up directory '%s' since it was created by HAL's Mount()", mount_point));
 
 			extra_env[0] = g_strdup_printf ("HALD_CLEANUP=%s", mount_point);
 			extra_env[1] = NULL;
 			cleanup_stdin = "\n";
 
 			hald_runner_run_method (dev, 
-						"hal-system-storage-cleanup-mountpoint", 
+						"hal-storage-cleanup-mountpoint", 
 						extra_env, 
 						cleanup_stdin, TRUE,
 						0,
 						cleanup_mountpoint_cb,
 						g_strdup (mount_point), NULL);
-
-			hal_device_property_remove (dev, "info.hal_mount.created_mount_point");
-			hal_device_property_remove (dev, "info.hal_mount.mounted_by_uid");
-
 		}
 
-		g_free (mount_point_hal_file);
 		g_free (mount_point);
 	}
 	g_slist_free (volumes);
@@ -1078,22 +1183,55 @@ force_unmount_cb (HalDevice *d, guint32 exit_type,
 static void
 force_unmount (HalDevice *d, void *end_token)
 {
-	char *unmount_stdin;
-	char *extra_env[2];
+	const char *device_file;
+	const char *mount_point;
 
-	extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
-	extra_env[1] = NULL;
+	device_file = hal_device_property_get_string (d, "block.device");
+	mount_point = hal_device_property_get_string (d, "volume.mount_point");
 
-	HAL_INFO (("force_unmount for udi='%s'", d->udi));
+	/* look up in /media/.hal-mtab to see if we mounted this one */
+	if (mount_point != NULL && strlen (mount_point) > 0 && is_mounted_by_hald (mount_point)) {
+		char *unmount_stdin;
+		char *extra_env[2];
 
-	unmount_stdin = "lazy\n";
+		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
+		extra_env[1] = NULL;
+		
+		HAL_INFO (("force_unmount for udi='%s'", d->udi));
+		syslog (LOG_NOTICE, "forcibly attempting to lazy unmount %s as enclosing drive was disconnected", device_file);
+		
+		unmount_stdin = "lazy\n";
+		
+		/* so, yea, calling the Unmount methods handler.. is cheating a bit :-) */
+		hald_runner_run_method (d, 
+					"hal-storage-unmount", 
+					extra_env, 
+					unmount_stdin, TRUE,
+					0,
+					force_unmount_cb,
+					end_token, NULL);
 
-	hald_runner_run_method (d, 
-				"hal-system-storage-unmount", extra_env, 
-				unmount_stdin, TRUE,
-				0,
-				force_unmount_cb,
-				end_token, NULL);
+/*
+		char *cleanup_stdin;
+		char *extra_env[2];
+		
+		HAL_INFO (("Cleaning up directory '%s' since it was created by HAL's Mount()", mount_point));
+		
+		extra_env[0] = g_strdup_printf ("HALD_CLEANUP=%s", mount_point);
+		extra_env[1] = NULL;
+		cleanup_stdin = "\n";
+		
+		hald_runner_run_method (dev, 
+					"hal-storage-cleanup-mountpoint", 
+					extra_env, 
+					cleanup_stdin, TRUE,
+					0,
+					cleanup_mountpoint_cb,
+					g_strdup (mount_point), NULL);
+*/
+	}
+
+
 }
 
 void

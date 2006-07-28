@@ -17,19 +17,3 @@ hal_monitor
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION hal_monitor_enter ##### -->
-<para>
-
-</para>
-
-@loop: 
-
-
-<!-- ##### FUNCTION etc_mtab_process_all_block_devices ##### -->
-<para>
-
-</para>
-
-@setup_watcher: 
-
-

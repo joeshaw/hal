@@ -3136,6 +3136,13 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"condition_details\" direction=\"in\" type=\"s\"/>\n"
 				       "    </method>\n"
 
+				       "    <method name=\"Rescan\">\n"
+				       "      <arg name=\"call_had_sideeffect\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"Reprobe\">\n"
+				       "      <arg name=\"call_had_sideeffect\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+
 				       "    <method name=\"ClaimInterface\">\n"
 				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"introspection_xml\" direction=\"in\" type=\"s\"/>\n"
@@ -3286,6 +3293,8 @@ reply_from_fwd_message (DBusPendingCall *pending_call,
 
 	dbus_message_unref (reply_from_addon);
 	dbus_message_unref (reply);
+	dbus_message_unref (method_from_caller);
+	dbus_pending_call_unref (pending_call);
 }
 
 static DBusHandlerResult

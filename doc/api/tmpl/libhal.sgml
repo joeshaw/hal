@@ -917,3 +917,16 @@ libhal
 @Returns: 
 
 
+<!-- ##### FUNCTION libhal_device_claim_interface ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@udi: 
+@interface_name: 
+@introspection_xml: 
+@error: 
+@Returns: 
+
+

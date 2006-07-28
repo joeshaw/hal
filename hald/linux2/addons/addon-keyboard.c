@@ -189,6 +189,8 @@ main (int argc, char **argv)
 	char *device_file;
 	FILE *eventfp;
 
+	hal_set_proc_title_init (argc, argv);
+
 	if (getenv ("HALD_VERBOSE") != NULL)
 		is_verbose = TRUE;
 
@@ -209,6 +211,8 @@ main (int argc, char **argv)
 		goto out;
 
 	drop_privileges (0);
+
+	hal_set_proc_title ("hald-addon-keyboard: listening on %s", device_file);
 
 	while (1)
 	{

@@ -17,35 +17,3 @@ hal_scsi
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION visit_class_device_scsi_host ##### -->
-<para>
-
-</para>
-
-@path: 
-@class_device: 
-
-
-<!-- ##### FUNCTION visit_class_device_scsi_device ##### -->
-<para>
-
-</para>
-
-@path: 
-@class_device: 
-
-
-<!-- ##### FUNCTION hal_scsi_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_scsi_shutdown ##### -->
-<para>
-
-</para>
-
-
-

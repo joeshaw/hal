@@ -6,7 +6,7 @@
  * Boichat found on the mactel-linux mailing list.
  *
  * Copyright (C) 2006 David Zeuthen <david@fubar.dk>
- * Copyright (C) 2006 Nicolas Boichat <nicolas@bo...>
+ * Copyright (C) 2006 Nicolas Boichat <nicolas@boichat.ch>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,13 +64,157 @@ static inline void writel(unsigned int b, volatile void *addr)
 #define INREG(addr)		readl(memory+addr)
 #define OUTREG(addr,val)	writel(val, memory+addr)
 
-unsigned char read_backlight() {
+static unsigned char 
+read_backlight (void)
+{
  	return INREG(0x7af8) >> 8;
 }
 
-void write_backlight(unsigned char value) {
+static void 
+write_backlight (unsigned char value)
+{
  	OUTREG(0x7af8, 0x00000001 | ((unsigned int)value << 8));
 }
+
+
+#define LIGHT_SENSOR_LEFT_KEY	"ALV0" //0x414c5630, r-o length 6
+#define LIGHT_SENSOR_RIGHT_KEY	"ALV1" //0x414c5631, r-o length 6
+#define BACKLIGHT_KEY 		"LKSB" //0x4c4b5342, w-o
+
+static int debug = 0;
+
+static struct timeval lasttv;
+static struct timeval newtv;
+
+
+static void
+ssleep (const int usec)
+{
+	gettimeofday(&lasttv, NULL);
+	while (1) {
+		gettimeofday(&newtv, NULL);
+		if (((newtv.tv_usec - lasttv.tv_usec) + ((newtv.tv_sec - lasttv.tv_sec)*1000000)) > usec) {
+			break;
+		}
+	}
+}
+
+static unsigned char 
+get_status (void)
+{
+	return inb(0x304);
+}
+
+static int 
+waitfree (char num)
+{
+	char c, pc = -1;
+	int retry = 100;
+	while (((c = get_status())&0x0F) != num && retry) {
+		ssleep(10);
+		retry--;
+		if (pc != c) {
+			//printf("%x-%d:", c, retry);
+			pc = c;
+		}
+	}
+	if (retry == 0) {
+		printf("Waitfree failed %x != %x.\n", c, num);
+		return 0;
+	}
+	/*else
+		printf("Waitfree ok %x.\n", c);*/
+
+	return 1;
+}
+
+
+static int
+writekey (char* key, char len, unsigned char* buffer)
+{
+	int i;
+
+	outb(0x11, 0x304);
+	if (!waitfree(0x0c)) return 0;
+	
+	for (i = 0; i < 4; i++) {
+		outb(key[i], 0x300);
+		if (!waitfree(0x04)) return 0;
+	}
+	if (debug) printf(">%s", key);
+
+	outb(len, 0x300);
+	if (debug) printf(">%x", len);
+
+	for (i = 0; i < len; i++) {
+		if (!waitfree(0x04)) return 0;
+		outb(buffer[i], 0x300);
+		if (debug) printf(">%x", buffer[i]);
+	}
+	if (debug) printf("\n");
+	return 1;
+}
+
+static int 
+readkey (char* key, char len, unsigned char* buffer)
+{
+	int i; unsigned char c;
+
+	outb(0x10, 0x304);
+	if (!waitfree(0x0c)) return 0;
+	
+	for (i = 0; i < 4; i++) {
+		outb(key[i], 0x300);
+		if (!waitfree(0x04)) return 0;
+	}
+	if (debug) printf("<%s", key);
+
+	outb(len, 0x300);
+	if (debug) printf(">%x", len);
+
+	for (i = 0; i < len; i++) {
+		if (!waitfree(0x05)) return 0;
+		c = inb(0x300);
+		buffer[i] = c;
+		if (debug) printf("<%x", c);
+	}
+	if (debug) printf("\n");
+	return 1;
+}
+
+static int 
+read_light_sensor (gboolean left)
+{
+	unsigned char buffer[6];
+
+	if (readkey (left ? LIGHT_SENSOR_LEFT_KEY : LIGHT_SENSOR_RIGHT_KEY, 6, buffer))
+		return buffer[2];
+	else
+		return -1;
+}
+
+static int
+set_keyboard_backlight (char value)
+{
+	unsigned char buffer[2];
+	buffer[0] = value;
+	buffer[1] = 0x00;
+	return writekey (BACKLIGHT_KEY, 2, buffer);	
+}
+
+
+static int
+read_keyboard_backlight (void)
+{
+	unsigned char buffer[6];
+
+	if (readkey (BACKLIGHT_KEY, 6, buffer))
+		return buffer[2];
+	else
+		return -1;
+}
+
+static int last_keyboard_brightness = -1;
 
 static DBusHandlerResult
 filter_function (DBusConnection *connection, DBusMessage *message, void *userdata)
@@ -97,7 +241,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
 					   DBUS_TYPE_INVALID)) {
-			dbg ("setting brightness %d", brightness);
+			/* dbg ("setting brightness %d", brightness); */
 			if (brightness < 0 || brightness > 228) {
 				reply = dbus_message_new_error (message,
 								"org.freedesktop.Hal.Device.LaptopPanel.Invalid",
@@ -137,7 +281,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 			if (brightness > 228)
 				brightness = 228;
 
-			dbg ("getting brightness, it's %d", brightness);
+			/* dbg ("getting brightness, it's %d", brightness); */
 
 			reply = dbus_message_new_method_return (message);
 			if (reply == NULL)
@@ -149,6 +293,101 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 			dbus_connection_send (connection, reply, NULL);
 		}
 		
+	} else if (dbus_message_is_method_call (message, 
+						"org.freedesktop.Hal.Device.LightSensor", 
+						"GetBrightness")) {
+		int brightness[2];
+
+		brightness[0] = read_light_sensor (FALSE); /* right */
+		brightness[1] = read_light_sensor (TRUE); /* left */
+
+		if (brightness[0] == -1 || brightness[1] == -1) {
+			reply = dbus_message_new_error (message,
+							"org.freedesktop.Hal.Device.LightSensors.Error",
+							"Error poking hardware");
+			dbus_connection_send (connection, reply, NULL);
+		} else {
+			int **pb = &brightness;
+
+			reply = dbus_message_new_method_return (message);
+			if (reply == NULL)
+				goto error;
+			
+			dbus_message_append_args (reply,
+						  DBUS_TYPE_ARRAY, DBUS_TYPE_INT32, &pb, 2,
+						  DBUS_TYPE_INVALID);
+			dbus_connection_send (connection, reply, NULL);
+		}
+	} else if (dbus_message_is_method_call (message, 
+						"org.freedesktop.Hal.Device.KeyboardBacklight", 
+						"GetBrightness")) {
+
+		/* I can't get this working so just cache last SetBrightness value :-/ */
+		if (last_keyboard_brightness == -1 ) {
+			reply = dbus_message_new_error (message,
+							"org.freedesktop.Hal.Device.KeyboardBacklight.Error",
+							"Error poking hardware");
+			dbus_connection_send (connection, reply, NULL);
+		} else {
+			reply = dbus_message_new_method_return (message);
+			if (reply == NULL)
+				goto error;
+			
+			dbus_message_append_args (reply,
+						  DBUS_TYPE_INT32, &last_keyboard_brightness,
+						  DBUS_TYPE_INVALID);
+			dbus_connection_send (connection, reply, NULL);
+		}
+#if 0
+		int brightness;
+
+		brightness = read_keyboard_backlight ();
+
+		if (brightness == -1) {
+			reply = dbus_message_new_error (message,
+							"org.freedesktop.Hal.Device.KeyboardBacklight.Error",
+							"Error poking hardware");
+			dbus_connection_send (connection, reply, NULL);
+		} else {
+			reply = dbus_message_new_method_return (message);
+			if (reply == NULL)
+				goto error;
+			
+			dbus_message_append_args (reply,
+						  DBUS_TYPE_INT32, &brightness,
+						  DBUS_TYPE_INVALID);
+			dbus_connection_send (connection, reply, NULL);
+		}
+#endif
+	} else if (dbus_message_is_method_call (message, 
+						"org.freedesktop.Hal.Device.KeyboardBacklight", 
+						"SetBrightness")) {
+		int brightness;
+
+
+		dbus_error_init (&err);
+		if (dbus_message_get_args (message, 
+					   &err,
+					   DBUS_TYPE_INT32, &brightness,
+					   DBUS_TYPE_INVALID)) {
+			/*dbg ("setting keyboard brightness %d", brightness);*/
+			if (brightness < 0 || brightness > 255) {
+				reply = dbus_message_new_error (message,
+								"org.freedesktop.Hal.Device.KeyboardBacklight.Invalid",
+								"Brightness has to be between 0 and 255!");
+
+			} else {
+				set_keyboard_backlight (brightness);
+				last_keyboard_brightness = brightness;
+
+				reply = dbus_message_new_method_return (message);
+				if (reply == NULL)
+					goto error;
+			}
+
+			dbus_connection_send (connection, reply, NULL);
+		}
+
 	}
 	
 error:
@@ -161,8 +400,6 @@ error:
 int
 main (int argc, char *argv[])
 {
- 	char* endptr;
- 	int ret = 0;
  	off_t address = 0;
  	size_t length = 0;
  	int fd;
@@ -233,9 +470,14 @@ main (int argc, char *argv[])
  	state = INREG(0x7ae4);
  	OUTREG(0x7ae4, state);
 
+	if (ioperm (0x300, 0x304, 1) < 0) {
+		perror("ioperm failed (you should be root).");
+		exit(1);
+	}
 
+	/* this works because we hardcoded the udi's in the <spawn> in the fdi files */
 	if (!libhal_device_claim_interface (halctx, 
-					    udi, 
+					    "/org/freedesktop/Hal/devices/macbook_pro_lcd_panel", 
 					    "org.freedesktop.Hal.Device.LaptopPanel", 
 					    "    <method name=\"SetBrightness\">\n"
 					    "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n"
@@ -243,6 +485,29 @@ main (int argc, char *argv[])
 					    "    </method>\n"
 					    "    <method name=\"GetBrightness\">\n"
 					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"i\"/>\n"
+					    "    </method>\n",
+					    &err)) {
+		fprintf (stderr, "Cannot claim interface");
+		return -4;
+	}
+	if (!libhal_device_claim_interface (halctx, 
+					    "/org/freedesktop/Hal/devices/macbook_pro_light_sensor",
+					    "org.freedesktop.Hal.Device.LightSensor", 
+					    "    <method name=\"GetBrightness\">\n"
+					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"ai\"/>\n"
+					    "    </method>\n",
+					    &err)) {
+		fprintf (stderr, "Cannot claim interface");
+		return -4;
+	}
+	if (!libhal_device_claim_interface (halctx, 
+					    "/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight",
+					    "org.freedesktop.Hal.Device.KeyboardBacklight", 
+					    "    <method name=\"GetBrightness\">\n"
+					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"i\"/>\n"
+					    "    </method>\n"
+					    "    <method name=\"SetBrightness\">\n"
+					    "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n"
 					    "    </method>\n",
 					    &err)) {
 		fprintf (stderr, "Cannot claim interface");

@@ -9,181 +9,349 @@ util
 
 </para>
 
-
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
 
-
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### MACRO SB_BUFFER_SIZE ##### -->
+<!-- ##### MACRO HAL_NAME_MAX ##### -->
 <para>
 
 </para>
 
 
 
-<!-- ##### MACRO SEEK_BUFFER_SIZE ##### -->
+<!-- ##### MACRO HAL_PATH_MAX ##### -->
 <para>
 
 </para>
 
 
 
-<!-- ##### MACRO le16_to_cpu ##### -->
+<!-- ##### MACRO HAL_HELPER_TIMEOUT ##### -->
 <para>
 
 </para>
 
-@x: 
 
 
-<!-- ##### MACRO le32_to_cpu ##### -->
+<!-- ##### FUNCTION util_compute_time_remaining ##### -->
 <para>
 
 </para>
 
-@x: 
+@id: 
+@chargeRate: 
+@chargeLevel: 
+@chargeLastFull: 
+@isDischarging: 
+@isCharging: 
+@guessChargeRate: 
+@Returns: 
 
 
-<!-- ##### MACRO le64_to_cpu ##### -->
+<!-- ##### FUNCTION util_compute_percentage_charge ##### -->
 <para>
 
 </para>
 
-@x: 
+@id: 
+@chargeLevel: 
+@chargeLastFull: 
+@Returns: 
 
 
-<!-- ##### MACRO be16_to_cpu ##### -->
+<!-- ##### FUNCTION hal_util_remove_trailing_slash ##### -->
 <para>
 
 </para>
 
-@x: 
+@path: 
+@Returns: 
 
 
-<!-- ##### MACRO be32_to_cpu ##### -->
+<!-- ##### FUNCTION hal_util_get_last_element ##### -->
 <para>
 
 </para>
 
-@x: 
+@s: 
+@Returns: 
 
 
-<!-- ##### MACRO cpu_to_le16 ##### -->
+<!-- ##### FUNCTION hal_util_get_parent_path ##### -->
 <para>
 
 </para>
 
-@x: 
+@path: 
+@Returns: 
 
 
-<!-- ##### MACRO cpu_to_le32 ##### -->
+<!-- ##### FUNCTION hal_util_get_normalized_path ##### -->
 <para>
 
 </para>
 
-@x: 
+@path1: 
+@path2: 
+@Returns: 
 
 
-<!-- ##### MACRO cpu_to_be32 ##### -->
+<!-- ##### FUNCTION hal_util_get_int_from_file ##### -->
 <para>
 
 </para>
 
-@x: 
+@directory: 
+@file: 
+@result: 
+@base: 
+@Returns: 
 
 
-<!-- ##### FUNCTION volume_id_set_unicode16 ##### -->
+<!-- ##### FUNCTION hal_util_set_int_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@base: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_string_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_string_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_get_bcd2_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_bcd2_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_compute_udi ##### -->
+<para>
+
+</para>
+
+@store: 
+@dst: 
+@dstsize: 
+@format: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION hal_util_path_ascend ##### -->
+<para>
+
+</para>
+
+@path: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_grep_discard_existing_data ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION hal_util_grep_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@linestart: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_grep_int_elem_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@base: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_grep_string_elem_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_string_elem_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_int_elem_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@base: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_bool_elem_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@linestart: 
+@elem: 
+@expected: 
+@reuse_file: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_dup_strv_from_g_slist ##### -->
+<para>
+
+</para>
+
+@strlist: 
+@Returns: 
+
+
+<!-- ##### USER_FUNCTION HalCalloutsDone ##### -->
+<para>
+
+</para>
+
+@d: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_callout_device_add ##### -->
+<para>
+
+</para>
+
+@d: 
+@callback: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_callout_device_remove ##### -->
+<para>
+
+</para>
+
+@d: 
+@callback: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_callout_device_preprobe ##### -->
+<para>
+
+</para>
+
+@d: 
+@callback: 
+@userdata1: 
+@userdata2: 
+
+
+<!-- ##### FUNCTION hal_util_strdup_valid_utf8 ##### -->
 <para>
 
 </para>
 
 @str: 
-@len: 
-@buf: 
-@endianess: 
-@count: 
-
-
-<!-- ##### FUNCTION volume_id_set_usage ##### -->
-<para>
-
-</para>
-
-@id: 
-@usage_id: 
-
-
-<!-- ##### FUNCTION volume_id_set_usage_part ##### -->
-<para>
-
-</para>
-
-@part: 
-@usage_id: 
-
-
-<!-- ##### FUNCTION volume_id_set_label_raw ##### -->
-<para>
-
-</para>
-
-@id: 
-@buf: 
-@count: 
-
-
-<!-- ##### FUNCTION volume_id_set_label_string ##### -->
-<para>
-
-</para>
-
-@id: 
-@buf: 
-@count: 
-
-
-<!-- ##### FUNCTION volume_id_set_label_unicode16 ##### -->
-<para>
-
-</para>
-
-@id: 
-@buf: 
-@endianess: 
-@count: 
-
-
-<!-- ##### FUNCTION volume_id_set_uuid ##### -->
-<para>
-
-</para>
-
-@id: 
-@buf: 
-@format: 
-
-
-<!-- ##### FUNCTION volume_id_get_buffer ##### -->
-<para>
-
-</para>
-
-@id: 
-@off: 
-@len: 
 @Returns: 
 
 
-<!-- ##### FUNCTION volume_id_free_buffer ##### -->
+<!-- ##### FUNCTION hal_util_hexdump ##### -->
 <para>
 
 </para>
 
-@id: 
+@buf: 
+@size: 
 
 

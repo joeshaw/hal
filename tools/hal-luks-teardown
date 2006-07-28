@@ -14,8 +14,9 @@ if [ -z "$HAL_PROP_BLOCK_DEVICE" ] || [ -z "$HAL_PROP_INFO_UDI" ] || [ -z "$HAL_
         exit 1
 fi
 
-if [ -n "$HALD_UNAME_S" -a -x $0-$HALD_UNAME_S ]; then
-    exec $0-$HALD_UNAME_S $@
+
+if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-luks-teardown-$HALD_UNAME_S ]; then
+    exec ./$HALD_UNAME_S/hal-luks-teardown-$HALD_UNAME_S $@
 else
     echo "org.freedesktop.Hal.Device.UnknownError" >&2
     echo "No back-end for your operating system" >&2

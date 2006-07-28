@@ -157,6 +157,13 @@ config
 
 
 
+<!-- ##### MACRO HAVE_PCI_PCI_H ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO HAVE_STDINT_H ##### -->
 <para>
 

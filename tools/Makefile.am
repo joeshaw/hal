@@ -49,12 +49,28 @@ hal_find_by_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 hal_device_SOURCES = hal-device.c
 hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
-libexec_PROGRAMS =               \
-	hal-storage-mount	 \
+libexec_PROGRAMS =                          \
+	hal-storage-mount	            \
+	hal-storage-unmount 	            \
+	hal-storage-eject	            \
+	hal-storage-cleanup-mountpoint      \
+	hal-storage-cleanup-all-mountpoints \
 	hal-system-power-pmu
 
-hal_storage_mount_SOURCES = hal-storage-mount.c
+hal_storage_mount_SOURCES = hal-storage-mount.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_mount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+
+hal_storage_unmount_SOURCES = hal-storage-unmount.c hal-storage-shared.c hal-storage-shared.h
+hal_storage_unmount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+
+hal_storage_eject_SOURCES = hal-storage-eject.c hal-storage-shared.c hal-storage-shared.h
+hal_storage_eject_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+
+hal_storage_cleanup_mountpoint_SOURCES = hal-storage-cleanup-mountpoint.c hal-storage-shared.c hal-storage-shared.h
+hal_storage_cleanup_mountpoint_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+
+hal_storage_cleanup_all_mountpoints_SOURCES = hal-storage-cleanup-all-mountpoints.c hal-storage-shared.c hal-storage-shared.h
+hal_storage_cleanup_all_mountpoints_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
 hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
 hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la

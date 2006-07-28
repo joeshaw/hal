@@ -17,26 +17,3 @@ hal_net
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION visit_class_device_net ##### -->
-<para>
-
-</para>
-
-@path: 
-@class_device: 
-
-
-<!-- ##### FUNCTION hal_net_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_net_shutdown ##### -->
-<para>
-
-</para>
-
-
-

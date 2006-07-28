@@ -43,22 +43,14 @@
 #endif
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
+#include <syslog.h>
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
 #include <libpolkit.h>
 
-/*#define DEBUG*/
-#define DEBUG
-
-#ifdef __FreeBSD__
-struct mtab_handle
-{
-  struct statfs	*mounts;
-  int		n_mounts;
-  int		iter;
-};
-#endif
+#include "hal-storage-shared.h"
 
 #ifdef __FreeBSD__
 #define MOUNT		"/sbin/mount"
@@ -71,15 +63,7 @@ struct mtab_handle
 static void
 usage (void)
 {
-	fprintf (stderr, "This script should only be started by hald.\n");
-	exit (1);
-}
-
-static void
-unknown_error (void)
-{
-	fprintf (stderr, "org.freedesktop.Hal.Device.UnknownError\n");
-	fprintf (stderr, "An unexpected error occured\n");
+	fprintf (stderr, "This program should only be started by hald.\n");
 	exit (1);
 }
 
@@ -255,59 +239,55 @@ out:
 	return f;
 }
 
-static gboolean
-fstab_open (gpointer *handle)
+static LibHalVolume *
+volume_findby (LibHalContext *hal_ctx, const char *property, const char *value)
 {
-#ifdef __FreeBSD__
-	return setfsent () == 1;
-#else
-	*handle = fopen ("/etc/fstab", "r");
-	return *handle != NULL;
-#endif
-}
+	int i;
+	char **hal_udis;
+	int num_hal_udis;
+	LibHalVolume *result = NULL;
+	char *found_udi = NULL;
+	DBusError error;
 
-static char *
-fstab_next (gpointer handle)
-{
-#ifdef __FreeBSD__
-	struct fstab *fstab;
+	dbus_error_init (&error);
+	if ((hal_udis = libhal_manager_find_device_string_match (hal_ctx, property, 
+								 value, &num_hal_udis, &error)) == NULL)
+		goto out;
 
-	fstab = getfsent ();
+	for (i = 0; i < num_hal_udis; i++) {
+		char *udi;
+		udi = hal_udis[i];
+		if (libhal_device_query_capability (hal_ctx, udi, "volume", &error)) {
+			found_udi = strdup (udi);
+			break;
+		}
+	}
 
-	return fstab ? fstab->fs_spec : NULL;
-#else
-	struct mntent *mnt;
+	libhal_free_string_array (hal_udis);
 
-	mnt = getmntent (handle);
+	if (found_udi != NULL)
+		result = libhal_volume_from_udi (hal_ctx, found_udi);
 
-	return mnt ? mnt->mnt_fsname : NULL;
-#endif
-}
-
-static void
-fstab_close (gpointer handle)
-{
-#ifdef __FreeBSD__
-	endfsent ();
-#else
-	fclose (handle);
-#endif
+	free (found_udi);
+out:
+	return result;
 }
 
 static void
-bailout_if_in_fstab (const char *device, const char *label, const char *uuid)
+bailout_if_in_fstab (LibHalContext *hal_ctx, const char *device, const char *label, const char *uuid)
 {
 	gpointer handle;
 	char *entry;
+	char *_mount_point;
 
 	printf (" label '%s'  uuid '%s'\n", label, uuid);
 
 	/* check if /etc/fstab mentions this device... (with symlinks etc) */
 	if (! fstab_open (&handle)) {
 		printf ("cannot open /etc/fstab\n");
-		unknown_error ();		
+		unknown_error ("Cannot open /etc/fstab");		
 	}
-	while ((entry = fstab_next (handle)) != NULL) {
+	while ((entry = fstab_next (handle, &_mount_point)) != NULL) {
 		char *resolved;
 
 #ifdef DEBUG
@@ -315,80 +295,75 @@ bailout_if_in_fstab (const char *device, const char *label, const char *uuid)
 #endif
 		if (label != NULL && g_str_has_prefix (entry, "LABEL=")) {
 			if (strcmp (entry + 6, label) == 0) {
-				printf ("%s found in /etc/fstab. Not mounting.\n", entry);
-				permission_denied_etc_fstab (device);
-			}
-		} 
+				gboolean skip_fstab_entry;
 
-		if (uuid != NULL && g_str_has_prefix (entry, "UUID=")) {
+				skip_fstab_entry = FALSE;
+
+				/* (heck, we also do the stuff below in gnome-mount) */
+
+				/* OK, so what's if someone attaches an external disk with the label '/' and
+				 * /etc/fstab has
+				 *
+				 *    LABEL=/    /    ext3    defaults    1 1
+				 *
+				 * in /etc/fstab as most Red Hat systems do? Bugger, this is a very common use
+				 * case; suppose that you take the disk from your Fedora server and attaches it
+				 * to your laptop. Bingo, you now have two disks with the label '/'. One must
+				 * seriously wonder if using things like LABEL=/ for / is a good idea; just
+				 * what happens if you boot in this configuration? (answer: the initrd gets
+				 * it wrong most of the time.. sigh)
+				 *
+				 * To work around this, check if the listed entry in /etc/fstab is already mounted,
+				 * if it is, then check if it's the same device_file as the given one...
+				 */
+
+				/* see if a volume is mounted at this mount point  */
+				if (_mount_point != NULL) {
+					LibHalVolume *mounted_vol;
+
+					mounted_vol = volume_findby (hal_ctx, "volume.mount_point", _mount_point);
+					if (mounted_vol != NULL) {
+						const char *mounted_vol_device_file;
+
+						mounted_vol_device_file = libhal_volume_get_device_file (mounted_vol);
+						/* no need to resolve symlinks, hal uses the canonical device file */
+						if (mounted_vol_device_file != NULL &&
+						    strcmp (mounted_vol_device_file, device) !=0) {
+#ifdef DEBUG
+							printf ("Wanting to mount %s that has label %s, but /etc/fstab says LABEL=%s is to be mounted at mount point '%s'. However %s (that also has label %s), is already mounted at said mount point. So, skipping said /etc/fstab entry.\n", 
+								   device, label, label, _mount_point, mounted_vol_device_file, _mount_point);
+#endif
+							skip_fstab_entry = TRUE;
+						}
+						libhal_volume_free (mounted_vol);
+					}
+				}
+				
+				if (!skip_fstab_entry) {
+					printf ("%s found in /etc/fstab. Not mounting.\n", entry);
+					permission_denied_etc_fstab (device);
+				}
+			}
+		} else if (uuid != NULL && g_str_has_prefix (entry, "UUID=")) {
 			if (strcmp (entry + 5, uuid) == 0) {
 				printf ("%s found in /etc/fstab. Not mounting.\n", entry);
 				permission_denied_etc_fstab (device);
 			}
-		} 
+		} else {
 
-		resolved = resolve_symlink (entry);
+			resolved = resolve_symlink (entry);
 #ifdef DEBUG
-		printf ("/etc/fstab: device %s -> %s \n", entry, resolved);
+			printf ("/etc/fstab: device %s -> %s \n", entry, resolved);
 #endif
-		if (strcmp (device, resolved) == 0) {
-			printf ("%s (-> %s) found in /etc/fstab. Not mounting.\n", entry, resolved);
-			permission_denied_etc_fstab (device);
-		}
+			if (strcmp (device, resolved) == 0) {
+				printf ("%s (-> %s) found in /etc/fstab. Not mounting.\n", entry, resolved);
+				permission_denied_etc_fstab (device);
+			}
 
-		g_free (resolved);
+			g_free (resolved);
+		}
 	}
 	fstab_close (handle);
-}
-
-static gboolean
-mtab_open (gpointer *handle)
-{
-#ifdef __FreeBSD__
-	struct mtab_handle *mtab;
-
-	mtab = g_new0 (struct mtab_handle, 1);
-	mtab->n_mounts = getmntinfo (&mtab->mounts, MNT_NOWAIT);
-	if (mtab->n_mounts == 0) {
-		g_free (mtab);
-		return FALSE;
-	}
-
-	*handle = mtab;
-	return TRUE;
-#else
-	*handle = fopen ("/proc/mounts", "r");
-	return *handle != NULL;
-#endif
-}
-
-static char *
-mtab_next (gpointer handle)
-{
-#ifdef __FreeBSD__
-	struct mtab_handle *mtab = handle;
-
-	if (mtab->iter < mtab->n_mounts)
-		return mtab->mounts[mtab->iter++].f_mntfromname;
-	else
-		return NULL;
-#else
-	struct mntent *mnt;
-
-	mnt = getmntent (handle);
-
-	return mnt ? mnt->mnt_fsname : NULL;
-#endif
-}
-
-static void
-mtab_close (gpointer handle)
-{
-#ifdef __FreeBSD__
-	g_free (handle);
-#else
-	fclose (handle);
-#endif
 }
 
 static void
@@ -400,7 +375,7 @@ bailout_if_mounted (const char *device)
 	/* check if /proc/mounts mentions this device... (with symlinks etc) */
 	if (! mtab_open (&handle)) {
 		printf ("cannot open mount list\n");
-		unknown_error ();		
+		unknown_error ("Cannot open /etc/mtab or equivalent");		
 	}
 	while ((entry = mtab_next (handle)) != NULL) {
 		char *resolved;
@@ -449,8 +424,6 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	char **given_options;
 	gboolean wants_to_change_uid;
 	char *mount_dir;
-	char *cbh_path;
-	FILE *cbh;
 	GError *err = NULL;
 	char *sout = NULL;
 	char *serr = NULL;
@@ -503,7 +476,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		uuid = NULL;
 	}
 
-	bailout_if_in_fstab (device, label, uuid);
+	bailout_if_in_fstab (hal_ctx, device, label, uuid);
 
 	/* TODO: sanity check that what hal exports is correct (cf. Martin Pitt's email) */
 
@@ -519,11 +492,19 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		mount_options [strlen (mount_options) - 1] = '\0';
 	/* validate that input from stdin is UTF-8 */
 	if (!g_utf8_validate (mount_point, -1, &end))
-		unknown_error ();
+		unknown_error ("Error validating mount_point as UTF-8");
 	if (!g_utf8_validate (mount_fstype, -1, &end))
-		unknown_error ();
+		unknown_error ("Error validating mount_fstype as UTF-8");
 	if (!g_utf8_validate (mount_options, -1, &end))
-		unknown_error ();
+		unknown_error ("Error validating mount_options as UTF-8");
+
+	for (i = 0; mount_point[i] != '\0'; i++) {
+		if (mount_point[i] == '\n' ||
+		    mount_point[i] == G_DIR_SEPARATOR) {
+			unknown_error ("mount_point cannot contain the following characters: newline, G_DIR_SEPARATOR (usually /)");
+		}
+	}
+
 #ifdef DEBUG
 	printf ("mount_point    = '%s'\n", mount_point);
 	printf ("mount_fstype   = '%s'\n", mount_fstype);
@@ -604,12 +585,10 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		i++;
 	}
 
-	/* TODO: possible race here... need to have only one hal-storage-mount copy run at a time */
-
 	dbus_error_init (&error);
 	allowed_options = libhal_device_get_property_strlist (hal_ctx, udi, "volume.mount.valid_options", &error);
 	if (dbus_error_is_set (&error)) {
-		unknown_error ();
+		unknown_error ("Cannot get volume.mount.valid_options");
 	}
 
 #ifdef DEBUG
@@ -647,7 +626,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 					uid = (uid_t) strtol (given + allow_len, &endp, 10);
 					if (*endp != '\0') {
 						printf ("'%s' is not a number?\n", given);
-						unknown_error ();
+						unknown_error ("option uid is malformed");
 					}
 #ifdef DEBUG
 					printf ("%s with uid %d\n", allow, uid);
@@ -717,7 +696,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 						    &is_temporary_privilege,
 						    NULL) != LIBPOLKIT_RESULT_OK) {
 		printf ("cannot lookup privilege\n");
-		unknown_error ();
+		unknown_error ("Cannot lookup privilege from PolicyKit");
 	}
 
 	if (!allowed_by_privilege) {
@@ -729,10 +708,10 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	printf ("passed privilege\n");
 #endif
 
-	/* create directory and the .created-by-hal file */
+	/* create directory */
 	if (g_mkdir (mount_dir, 0700) != 0) {
 		printf ("Cannot create '%s'\n", mount_dir);
-		unknown_error ();
+		unknown_error ("Cannot create mount directory");
 	}
 
 #ifdef __FreeBSD__
@@ -751,29 +730,22 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	}
 #endif
 
-	cbh_path = g_strdup_printf ("%s/.created-by-hal", mount_dir);
-	cbh = fopen (cbh_path, "w");
-	if (cbh == NULL) {
-		printf ("Cannot create '%s'\n", cbh_path);
-		g_rmdir (mount_dir);
-		unknown_error ();
-	}
-	fclose (cbh);
+	char *mount_option_commasep = NULL;
+	char *mount_do_fstype = "auto";
 
 	/* construct arguments to mount */
 	na = 0;
 	args[na++] = MOUNT;
 	if (strlen (mount_fstype) > 0) {
-		args[na++] = "-t";
-		args[na++] = (char *) map_fstype (mount_fstype);
+		mount_do_fstype = (char *) map_fstype (mount_fstype);
 	} else if (volume == NULL) {
 		/* non-pollable drive; force auto */
-		args[na++] = "-t";
-		args[na++] = "auto";
+		mount_do_fstype = "auto";
 	} else if (libhal_volume_get_fstype (volume) != NULL && strlen (libhal_volume_get_fstype (volume)) > 0) {
-		args[na++] = "-t";
-		args[na++] = (char *) map_fstype (libhal_volume_get_fstype (volume));
+		mount_do_fstype = (char *) map_fstype (libhal_volume_get_fstype (volume));
 	}
+	args[na++] = "-t";
+	args[na++] = mount_do_fstype;
 
 	args[na++] = "-o";
 	mount_option_str = g_string_new(MOUNT_OPTIONS);
@@ -781,10 +753,83 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		g_string_append (mount_option_str, ",");
 		g_string_append (mount_option_str, given_options[i]);
 	}
-	args[na++] = g_string_free (mount_option_str, FALSE); /* leak! */
+	mount_option_commasep = g_string_free (mount_option_str, FALSE); /* leak! */
+	args[na++] = mount_option_commasep;
 	args[na++] = (char *) device;
 	args[na++] = mount_dir;
 	args[na++] = NULL;
+
+	FILE *hal_mtab;
+	char *mount_dir_escaped;
+
+	/* Maintain a list in /media/.hal-mtab with entries of the following format
+	 *
+	 *  <device_file>\t<uid>\t<session-id>\t<fstype>\t<options_sep_by_comma>\t<mount point>\n
+	 *
+	 * where session-id currently is unused and thus set to 0.
+	 *
+	 * Example:
+	 *
+	 *  /dev/sda2	500	0	hfsplus	noexec,nosuid,nodev	/media/Macintosh HD
+	 *  /dev/sda4	500	0	ntfs	noexec,nosuid,nodev,umask=222	/media/Windows
+	 *  /dev/sdb1	500	0	vfat	noexec,nosuid,nodev,shortname=winnt,uid=500	/media/davidz
+	 */
+
+	FILE *hal_mtab_orig;
+	int hal_mtab_orig_len;
+	int num_read;
+	char *hal_mtab_buf;
+	char *hal_mtab_buf_old;
+
+	if (g_file_test ("/media/.hal-mtab", G_FILE_TEST_EXISTS)) {
+		hal_mtab_orig = fopen ("/media/.hal-mtab", "r");
+		if (hal_mtab_orig == NULL) {
+			unknown_error ("Cannot open /media/.hal-mtab");
+		}
+		if (fseek (hal_mtab_orig, 0L, SEEK_END) != 0) {
+			unknown_error ("Cannot seek to end of /media/.hal-mtab");
+		}
+		hal_mtab_orig_len = ftell (hal_mtab_orig);
+		if (hal_mtab_orig_len < 0) {
+			unknown_error ("Cannot determine size of /media/.hal-mtab");
+		}
+		rewind (hal_mtab_orig);
+		hal_mtab_buf = g_new0 (char, hal_mtab_orig_len + 1);
+		num_read = fread (hal_mtab_buf, 1, hal_mtab_orig_len, hal_mtab_orig);
+		if (num_read != hal_mtab_orig_len) {
+			unknown_error ("Cannot read from /media/.hal-mtab");
+		}
+		fclose (hal_mtab_orig);
+	} else {
+		hal_mtab_buf = g_strdup ("");
+	}
+	
+	mount_dir_escaped = g_strescape (mount_dir, NULL);
+#ifdef DEBUG
+	printf ("%d: XYA creating /media/.hal-mtab~\n", getpid ());
+#endif
+	hal_mtab = fopen ("/media/.hal-mtab~", "w");
+	if (hal_mtab == NULL) {
+		unknown_error ("Cannot create /media/.hal-mtab~");
+	}
+	hal_mtab_buf_old = hal_mtab_buf;
+	hal_mtab_buf = g_strdup_printf ("%s%s\t%s\t0\t%s\t%s\t%s\n", 
+					hal_mtab_buf_old,
+					device, invoked_by_uid, mount_do_fstype, 
+					mount_option_commasep, mount_dir_escaped);
+	g_free (hal_mtab_buf_old);
+	if (hal_mtab_buf_old == NULL) {
+		unknown_error ("Out of memory appending to /media/.hal-mtab~");
+	}
+	if (fwrite (hal_mtab_buf, 1, strlen (hal_mtab_buf), hal_mtab) != strlen (hal_mtab_buf)) {
+		unknown_error ("Cannot write to /media/.hal-mtab~");
+	}
+	fclose (hal_mtab);
+	g_free (hal_mtab_buf);
+	g_free (mount_dir_escaped);
+#ifdef DEBUG
+	printf ("%d: XYA closing /media/.hal-mtab~\n", getpid ());
+#endif
 
 	/* now try to mount */
 	if (!g_spawn_sync ("/",
@@ -798,43 +843,53 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 			   &exit_status,
 			   &err)) {
 		printf ("Cannot execute %s\n", MOUNT);
-		g_unlink (cbh_path);
 		g_rmdir (mount_dir);
-		unknown_error ();
+		unlink ("/media/.hal-mtab~");
+		unknown_error ("Cannot spawn " MOUNT);
 	}
 
 
 	if (exit_status != 0) {
-		char errstr[] = "mount: unknown filesystem type";
+		char errstr[]  = "mount: unknown filesystem type";
 
 		printf ("%s error %d, stdout='%s', stderr='%s'\n", MOUNT, exit_status, sout, serr);
 
-		g_unlink (cbh_path);
 		g_rmdir (mount_dir);
+		unlink ("/media/.hal-mtab~");
 
 		if (strncmp (errstr, serr, sizeof (errstr) - 1) == 0) {
 			unknown_filesystem (strlen (mount_fstype) > 0 ? 
 					    mount_fstype : 
 					    (volume != NULL ? libhal_volume_get_fstype (volume) : "") );
+		} else {
+			int n;
+			for (n = 0; serr[n] != '\0'; n++) {
+				if (serr[n] == '\n') {
+					serr[n] = ' ';
+				}
+			}
+			unknown_error (serr);
 		}
-		unknown_error ();
 	}
 
-	dbus_error_init (&error);
-	libhal_device_set_property_string (hal_ctx, udi, 
-					   "info.hal_mount.created_mount_point",
-					   mount_dir,
-					   &error);
+	if (rename ("/media/.hal-mtab~", "/media/.hal-mtab") != 0) {
+		printf ("rename(2) failed, errno=%d -> '%s'\n", errno, strerror (errno));
+		unlink ("/media/.hal-mtab~");
+#ifdef DEBUG
+	printf ("%d: XYA failed renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
+#endif
+		unknown_error ("Cannot rename /media/.hal-mtab~ to /media/.hal-mtab");
+	}
+#ifdef DEBUG
+	printf ("%d: XYA done renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
+#endif
 
-	dbus_error_init (&error);
-	libhal_device_set_property_int (hal_ctx, udi, 
-					"info.hal_mount.mounted_by_uid",
-					(dbus_int32_t) atoi (invoked_by_uid),
-					&error);
+	openlog ("hald", 0, LOG_DAEMON);
+	syslog (LOG_INFO, "mounted %s at '%s' on behalf of uid %s", device, mount_dir, invoked_by_uid);
+	closelog ();
 
 	g_free (sout);
 	g_free (serr);
-	g_free (cbh_path);
 	g_free (mount_dir);
 	libhal_free_string_array (allowed_options);
 	g_strfreev (given_options);
@@ -853,6 +908,10 @@ main (int argc, char *argv[])
 	LibPolKitContext *pol_ctx = NULL;
 	char *invoked_by_uid;
 	char *invoked_by_syscon_name;
+
+	if (!lock_hal_mtab ()) {
+		unknown_error ("Cannot obtain lock on /media/.hal-mtab");
+	}
 
 	device = getenv ("HAL_PROP_BLOCK_DEVICE");
 	if (device == NULL)
@@ -881,7 +940,7 @@ main (int argc, char *argv[])
 	pol_ctx = libpolkit_new_context (system_bus);
 	if (pol_ctx == NULL) {
 		printf ("Cannot get libpolkit context\n");
-		unknown_error ();
+		unknown_error ("Cannot get libpolkit context");
 	}
 
 	volume = libhal_volume_from_udi (hal_ctx, udi);
@@ -903,17 +962,17 @@ main (int argc, char *argv[])
 		drive_udi = libhal_volume_get_storage_device_udi (volume);
 		
 		if (drive_udi == NULL)
-			unknown_error ();
+			unknown_error ("Cannot get drive_udi from volume");
 		drive = libhal_drive_from_udi (hal_ctx, drive_udi);
 		if (drive == NULL)
-			unknown_error ();
+			unknown_error ("Cannot get drive from hal");
 
 		handle_mount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by_uid, 
 			      invoked_by_syscon_name);
 
 	}
 
+	unlock_hal_mtab ();
+
 	return 0;
 }
-
-

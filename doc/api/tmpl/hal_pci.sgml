@@ -17,26 +17,3 @@ hal_pci
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION visit_device_pci ##### -->
-<para>
-
-</para>
-
-@path: 
-@device: 
-
-
-<!-- ##### FUNCTION hal_pci_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_pci_shutdown ##### -->
-<para>
-
-</para>
-
-
-

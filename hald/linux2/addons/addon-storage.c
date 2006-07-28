@@ -57,6 +57,7 @@ force_unmount (LibHalContext *ctx, const char *udi)
 	char **options = NULL;
 	unsigned int num_options = 0;
 	DBusConnection *dbus_connection;
+	char *device_file;
 
 	dbus_connection = libhal_ctx_get_dbus_connection (ctx);
 
@@ -77,6 +78,14 @@ force_unmount (LibHalContext *ctx, const char *udi)
 
 	options[0] = "lazy";
 	num_options = 1;
+
+	device_file = libhal_device_get_property_string (ctx, udi, "block.device", NULL);
+	if (device_file != NULL) {
+		openlog ("hald", 0, LOG_DAEMON);
+		syslog (LOG_NOTICE, "forcibly attempting to lazy unmount %s as media was removed", device_file);
+		closelog ();
+		libhal_free_string (device_file);
+	}
 
 	if (!dbus_message_append_args (msg, 
 				       DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &options, num_options,
@@ -270,6 +279,8 @@ main (int argc, char *argv[])
 	char *support_media_changed_str;
 	int support_media_changed;
 
+	hal_set_proc_title_init (argc, argv);
+
 	/* We could drop privs if we know that the haldaemon user is
 	 * to be able to access block devices...
 	 */
@@ -299,6 +310,8 @@ main (int argc, char *argv[])
 	dbg ("**************************************************");
 	dbg ("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi);
 	dbg ("**************************************************");
+
+	hal_set_proc_title ("hald-addon-storage: polling %s", device_file);
 
 	if (strcmp (drive_type, "cdrom") == 0)
 		is_cdrom = 1;

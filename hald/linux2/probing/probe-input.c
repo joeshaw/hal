@@ -191,10 +191,12 @@ main (int argc, char *argv[])
 	dbg ("probe-input: id.bustype=%i", id.bustype);
 	if (physical_device == NULL) {
 		switch (id.bustype) {
-		case 17: /* TODO: x86 legacy port; use symbol instead of hardcoded constant */
-		case 21: /* BUS_HOST, not hotpluggable */
-		case 23: /* ADB on Apple computers */
+		case BUS_I8042: /* x86 legacy port */
+		case BUS_HOST: /* not hotpluggable */
+		case BUS_PARPORT: /* XXX: really needed? */
+		case BUS_ADB: /* ADB on Apple computers */
 			break;
+
 		default:
 			goto out;
 		}

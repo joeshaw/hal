@@ -17,26 +17,3 @@ hal_block
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION visit_class_device_block ##### -->
-<para>
-
-</para>
-
-@path: 
-@class_device: 
-
-
-<!-- ##### FUNCTION hal_block_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_block_shutdown ##### -->
-<para>
-
-</para>
-
-
-

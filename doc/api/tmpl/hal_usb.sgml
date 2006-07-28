@@ -17,26 +17,3 @@ hal_usb
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION visit_device_usb ##### -->
-<para>
-
-</para>
-
-@path: 
-@device: 
-
-
-<!-- ##### FUNCTION hal_usb_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_usb_shutdown ##### -->
-<para>
-
-</para>
-
-
-

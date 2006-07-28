@@ -3,7 +3,7 @@
 <deviceinfo version="0.2">
   <device>
     <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
-      <append key="info.callouts.add" type="strlist">hal-system-storage-cleanup-mountpoints</append>
+      <append key="info.callouts.add" type="strlist">hal-storage-cleanup-all-mountpoints</append>
     </match>
 
     <match key="storage.media_check_enabled" bool="true">
@@ -16,14 +16,14 @@
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
 	<append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
       </match>
       <match key="volume.disc.is_blank" bool="true">
         <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
 	<append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
       </match>
     </match>
 
@@ -41,12 +41,12 @@
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Unmount</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
 	<append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-unmount</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-unmount</append>
 
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
         <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
 	<append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
 
         <!-- allow these mount options for all file systems -->
         <append key="volume.mount.valid_options" type="strlist">ro</append>
@@ -113,12 +113,12 @@
       <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Unmount</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-unmount</append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-unmount</append>
 
       <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-system-storage-eject</append>
+      <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
 
       <!-- allow these mount options for all file systems -->
       <append key="volume.mount.valid_options" type="strlist">ro</append>

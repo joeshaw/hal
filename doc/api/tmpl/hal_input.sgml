@@ -17,38 +17,3 @@ hal_input
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### FUNCTION hal_input_handle_hotplug_add ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_input_handle_hotplug_remove ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_input_init ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_input_shutdown ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION hal_input_probe ##### -->
-<para>
-
-</para>
-
-
-
