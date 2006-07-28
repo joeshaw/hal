@@ -104,7 +104,7 @@ fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
 			
 			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , get_hal_sysfs_path());
 			if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-				HAL_ERROR (("Unable to open %/class/net: %s", get_hal_sysfs_path(), err->message));
+				HAL_ERROR (("Unable to open %s/class/net: %s", get_hal_sysfs_path(), err->message));
 				g_error_free (err);
 				goto out;
 			}

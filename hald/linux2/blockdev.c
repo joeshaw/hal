@@ -639,89 +639,111 @@ out:
 	return;
 }
 
-static const gchar *
-blockdev_get_luks_uuid(const gchar *device_file)
+/* borrowed from gtk/gtkfilesystemunix.c in GTK+ on 02/23/2006 
+ * (which is LGPL, so can't go into hald/utils.[ch] until it's relicensed)
+ */
+static void
+canonicalize_filename (gchar *filename)
 {
-	const gchar *luks_uuid = NULL;
-	unsigned int major;
-	unsigned int minor;
-	const char *last_elem;
-
-	HAL_INFO (("get_luks_uuid: device_file=%s", device_file));
-
-	major = 253; /* FIXME: replace by devmapper constant */
-	last_elem = hal_util_get_last_element (device_file);
-	if (sscanf (last_elem, "dm-%d", &minor) == 1) {
-		GDir *dir;
-		HAL_INFO (("path=%s is a device mapper dev, major/minor=%d/%d", device_file, major, minor));
-		/* Ugly hack to see if we're a LUKS crypto device; should
-		* be replaced by some ioctl or libdevmapper stuff by where
-		* we can ask about the name for /dev/dm-0; as e.g. given by
-		* 'dmsetup info'
-		*
-		* Our assumption is that luks-setup have invoked
-		* dmsetup; e.g. the naming convention is 
-		*
-		*    luks_crypto_<luks_uuid>
-		*
-		* where <luks_uuid> is the UUID encoded in the luks
-		* metadata.
-		*/
-		/* Ugly sleep of 0.5s here as well to allow dmsetup to do the mknod */
-		if (!hald_is_initialising)
-			usleep (1000 * 1000 * 5 / 10);
-		if ((dir = g_dir_open ("/dev/mapper", 0, NULL)) != NULL) {
-			const gchar *f;
-			char devpath[256];
-			struct stat statbuf;
-			while ((f = g_dir_read_name (dir)) != NULL) {
-				char luks_prefix[] = "luks_crypto_";
-				g_snprintf (devpath, sizeof (devpath), "/dev/mapper/%s", f);
-				if (stat (devpath, &statbuf) == 0) {
-					HAL_INFO (("looking at /dev/mapper/%s with %d:%d", 
-						   f, MAJOR(statbuf.st_rdev), MINOR(statbuf.st_rdev)));
-					if (S_ISBLK (statbuf.st_mode) && 
-					    MAJOR(statbuf.st_rdev) == major && 
-					    MINOR(statbuf.st_rdev) == minor &&
-					    strncmp (f, luks_prefix, sizeof (luks_prefix) - 1) == 0) {
-						luks_uuid = f + sizeof (luks_prefix) - 1;
-						HAL_INFO (("found %s; luks_uuid='%s'!", devpath, luks_uuid));
+	gchar *p, *q;
+	gboolean last_was_slash = FALSE;
+	
+	p = filename;
+	q = filename;
+	
+	while (*p)
+	{
+		if (*p == G_DIR_SEPARATOR)
+		{
+			if (!last_was_slash)
+				*q++ = G_DIR_SEPARATOR;
+			
+			last_was_slash = TRUE;
+		}
+		else
+		{
+			if (last_was_slash && *p == '.')
+			{
+				if (*(p + 1) == G_DIR_SEPARATOR ||
+				    *(p + 1) == '\0')
+				{
+					if (*(p + 1) == '\0')
 						break;
+					
+					p += 1;
+				}
+				else if (*(p + 1) == '.' &&
+					 (*(p + 2) == G_DIR_SEPARATOR ||
+					  *(p + 2) == '\0'))
+				{
+					if (q > filename + 1)
+					{
+						q--;
+						while (q > filename + 1 &&
+						       *(q - 1) != G_DIR_SEPARATOR)
+							q--;
 					}
+					
+					if (*(p + 2) == '\0')
+						break;
+					
+					p += 2;
+				}
+				else
+				{
+					*q++ = *p;
+					last_was_slash = FALSE;
 				}
 			}
-			g_dir_close (dir);
-		}
-	}
-	return luks_uuid;
-}
-
-static HalDevice *
-blockdev_get_luks_parent (const gchar *luks_uuid, HalDevice *device)
-{
-	HalDevice *parent = NULL;
-	HalDevice *backing_volume;
-
-	HAL_INFO (("get_luks_parent: luks_uuid=%s device=0x%08x", 
-		   luks_uuid, device));
-
-	backing_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
-								  "volume.uuid", 
-								  luks_uuid);
-	if (backing_volume != NULL) {
-		const char *backing_volume_stordev_udi;
-		HAL_INFO (("backing_volume udi='%s'!", backing_volume->udi));
-		backing_volume_stordev_udi = hal_device_property_get_string (backing_volume, "block.storage_device");
-		if (backing_volume_stordev_udi != NULL) {
-			HAL_INFO (("backing_volume_stordev_udi='%s'!", backing_volume_stordev_udi));
-			parent = hal_device_store_find (hald_get_gdl (), backing_volume_stordev_udi);
-			if (parent != NULL) {
-				HAL_INFO (("parent='%s'!", parent->udi));
-				hal_device_property_set_string (device, "volume.crypto_luks.clear.backing_volume", backing_volume->udi);
+			else
+			{
+				*q++ = *p;
+				last_was_slash = FALSE;
 			}
 		}
+		
+		p++;
 	}
-	return parent;
+	
+	if (q > filename + 1 && *(q - 1) == G_DIR_SEPARATOR)
+		q--;
+	
+	*q = '\0';
+}
+
+static char *
+resolve_symlink (const char *file)
+{
+	GError *error;
+	char *dir;
+	char *link;
+	char *f;
+	char *f1;
+
+	f = g_strdup (file);
+
+	while (g_file_test (f, G_FILE_TEST_IS_SYMLINK)) {
+		link = g_file_read_link (f, &error);
+		if (link == NULL) {
+			g_warning ("Cannot resolve symlink %s: %s", f, error->message);
+			g_error_free (error);
+			g_free (f);
+			f = NULL;
+			goto out;
+		}
+		
+		dir = g_path_get_dirname (f);
+		f1 = g_strdup_printf ("%s/%s", dir, link);
+		g_free (dir);
+		g_free (link);
+		g_free (f);
+		f = f1;
+	}
+
+out:
+	if (f != NULL)
+		canonicalize_filename (f);
+	return f;
 }
 
 void
@@ -764,12 +786,61 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	d = hal_device_new ();
 
+	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
 	if (parent == NULL) {
-		const gchar *luks_uuid = blockdev_get_luks_uuid (device_file);
-		if (luks_uuid != NULL) {
-			is_partition = TRUE;
-			parent = blockdev_get_luks_parent (luks_uuid, d);
+		GDir *dir;
+		GError *err = NULL;
+		char path[HAL_PATH_MAX];
+
+		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
+		if ((dir = g_dir_open (path, 0, &err)) == NULL) {
+			HAL_WARNING (("Unable to open %s: %s", path, err->message));
+			g_error_free (err);
+		} else {
+			const char *f;
+			while (((f = g_dir_read_name (dir)) != NULL) && (parent == NULL)) {
+				char *link;
+				char *target;
+
+				link = g_strdup_printf ("%s/%s", path, f);
+				target = resolve_symlink (link);
+				HAL_INFO ((" %s -> %s", link, target));
+
+				if (target != NULL) {
+					HalDevice *slave_volume;
+					
+					slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
+												"linux.sysfs_path", 
+												target);
+					if (slave_volume != NULL) {
+						const char *slave_volume_stordev_udi;
+						const char *slave_volume_fstype;
+
+						slave_volume_stordev_udi = hal_device_property_get_string (slave_volume, "block.storage_device");
+						slave_volume_fstype = hal_device_property_get_string (slave_volume, "volume.fstype");
+
+						/* Yup, we only support crypto_LUKS right now.
+						 *
+						 * In the future we can support other device-mapper mappings
+						 * such as LVM etc.
+						 */ 
+						if (slave_volume_stordev_udi != NULL &&
+						    slave_volume_fstype != NULL &&
+						    (strcmp (slave_volume_fstype, "crypto_LUKS") == 0)) {
+							HAL_INFO ((" slave_volume_stordev_udi='%s'!", slave_volume_stordev_udi));
+							parent = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
+							if (parent != NULL) {
+								HAL_INFO ((" parent='%s'!", parent->udi));
+								hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", slave_volume->udi);
+							}
+						}
+					}
+				}
+				g_free (target);
+			}
+			g_dir_close (dir);
 		}
+		
 	}
 
 	if (parent == NULL) {
