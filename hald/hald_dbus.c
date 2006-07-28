@@ -2447,7 +2447,7 @@ manager_remove (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 	if (!dbus_message_get_args (message, &error,
 				    DBUS_TYPE_STRING, &udi,
 				    DBUS_TYPE_INVALID)) {
-		raise_syntax (connection, message, "CommitToGdl");
+		raise_syntax (connection, message, "Remove");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
