@@ -11,3 +11,4 @@ hal.signals
 *.args
 *.stamp
 *.o
+tmpl

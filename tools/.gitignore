@@ -15,4 +15,8 @@ hal-luks-setup
 hal-system-power-pmu
 hal-policy-is-privileged
 hal-storage-mount
+hal-storage-cleanup-all-mountpoints
+hal-storage-cleanup-mountpoint
+hal-storage-eject
+hal-storage-unmount
 *.o
