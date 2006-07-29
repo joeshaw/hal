@@ -46,7 +46,9 @@
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
+#ifdef HAVE_POLKIT
 #include <libpolkit.h>
+#endif
 
 #include "hal-storage-shared.h"
 
@@ -75,7 +77,9 @@ main (int argc, char *argv[])
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
 	DBusConnection *system_bus = NULL;
+#ifdef HAVE_POLKIT
 	LibPolKitContext *pol_ctx = NULL;
+#endif
 	char *invoked_by_uid;
 	char *invoked_by_syscon_name;
 	int i;
@@ -113,11 +117,13 @@ main (int argc, char *argv[])
 		printf ("Cannot connect to the system bus\n");
 		usage ();
 	}
+#ifdef HAVE_POLKIT
 	pol_ctx = libpolkit_new_context (system_bus);
 	if (pol_ctx == NULL) {
 		printf ("Cannot get libpolkit context\n");
 		unknown_error ("Cannot get libpolkit context");
 	}
+#endif
 
 	/* read from stdin */
 	fgets (unmount_options, sizeof (unmount_options), stdin);
@@ -164,7 +170,11 @@ main (int argc, char *argv[])
 		if (drive == NULL) {
 			usage ();
 		} else {
-			handle_unmount (hal_ctx, pol_ctx, udi, NULL, drive, device, invoked_by_uid, 
+			handle_unmount (hal_ctx, 
+#ifdef HAVE_POLKIT
+					pol_ctx, 
+#endif
+					udi, NULL, drive, device, invoked_by_uid, 
 					invoked_by_syscon_name, use_lazy, use_force);
 		}
 
@@ -180,7 +190,11 @@ main (int argc, char *argv[])
 		if (drive == NULL)
 			unknown_error ("Cannot get drive from hal");
 
-		handle_unmount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by_uid, 
+		handle_unmount (hal_ctx, 
+#ifdef HAVE_POLKIT
+				pol_ctx, 
+#endif
+				udi, volume, drive, device, invoked_by_uid, 
 				invoked_by_syscon_name, use_lazy, use_force);
 
 	}

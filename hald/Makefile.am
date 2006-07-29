@@ -11,7 +11,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_SCRIPT_DIR=\""$(libdir)/hal/scripts"\" \
 	-I$(top_srcdir) \
-	@PACKAGE_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 ## check_PROGRAMS = hald-test
 
@@ -50,7 +50,7 @@ hald_SOURCES =                                                          \
 	osspec.h							\
 	property.h			property.c
 
-hald_LDADD = @PACKAGE_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in

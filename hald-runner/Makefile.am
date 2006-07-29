@@ -8,9 +8,9 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_SCRIPT_DIR=\""$(datadir)/hal/scripts"\" \
 	-I$(top_srcdir) \
-	@PACKAGE_CFLAGS@
+	@DBUS_CFLAGS@ @GLIB_CFLAGS@
 
 libexec_PROGRAMS = hald-runner
 
 hald_runner_SOURCES = main.c runner.c runner.h utils.h utils.c
-hald_runner_LDADD = @PACKAGE_LIBS@ @DBUS_LIBS@
+hald_runner_LDADD = @GLIB_LIBS@ @DBUS_LIBS@

@@ -217,7 +217,11 @@ permission_denied_volume_ignore (const char *device)
 }
 
 void
-handle_unmount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
+handle_unmount (LibHalContext *hal_ctx, 
+#ifdef HAVE_POLKIT
+		LibPolKitContext *pol_ctx, 
+#endif
+		const char *udi,
 		LibHalVolume *volume, LibHalDrive *drive, const char *device, 
 		const char *invoked_by_uid, const char *invoked_by_syscon_name,
 		gboolean option_lazy, gboolean option_force)

@@ -21,7 +21,7 @@ INCLUDES = \
 	-DPACKAGE_SCRIPT_DIR=\""$(datadir)/hal/scripts"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal \
-	@PACKAGE_CFLAGS@
+	@DBUS_CFLAGS@ @GLIB_CFLAGS@ @POLKIT_CFLAGS@
 
 bin_PROGRAMS =                    \
 	lshal                     \
@@ -32,7 +32,7 @@ bin_PROGRAMS =                    \
 	hal-device
 
 lshal_SOURCES = lshal.c
-lshal_LDADD = @PACKAGE_LIBS@ $(top_builddir)/libhal/libhal.la
+lshal_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_get_property_SOURCES = hal_get_property.c
 hal_get_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la

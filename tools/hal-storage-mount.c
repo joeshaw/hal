@@ -48,7 +48,9 @@
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
+#ifdef HAVE_POLKIT
 #include <libpolkit.h>
+#endif
 
 #include "hal-storage-shared.h"
 
@@ -124,6 +126,7 @@ mount_point_not_available (const char *mount_point)
 }
 
 
+#ifdef HAVE_POLKIT
 static void
 permission_denied_privilege (const char *privilege, const char *uid)
 {
@@ -131,7 +134,7 @@ permission_denied_privilege (const char *privilege, const char *uid)
 	fprintf (stderr, "%s refused uid %s\n", privilege, uid);
 	exit (1);
 }
-
+#endif
 
 
 /* borrowed from gtk/gtkfilesystemunix.c in GTK+ on 02/23/2006 */
@@ -411,7 +414,11 @@ map_fstype (const char *fstype)
 }
 
 static void
-handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
+handle_mount (LibHalContext *hal_ctx, 
+#ifdef HAVE_POLKIT
+	      LibPolKitContext *pol_ctx, 
+#endif
+	      const char *udi,
 	      LibHalVolume *volume, LibHalDrive *drive, const char *device, 
 	      const char *invoked_by_uid, const char *invoked_by_syscon_name)
 {
@@ -434,8 +441,10 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 	gboolean pol_is_fixed;
 	gboolean pol_change_uid;
 	char *privilege;
+#ifdef HAVE_POLKIT
 	gboolean allowed_by_privilege;
 	gboolean is_temporary_privilege;
+#endif
 	gboolean explicit_mount_point_given;
 	const char *end;
 #ifdef __FreeBSD__
@@ -687,6 +696,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		invoked_by_syscon_name);
 #endif
 
+#ifdef HAVE_POLKIT
 	if (libpolkit_is_uid_allowed_for_privilege (pol_ctx, 
 						    invoked_by_syscon_name,
 						    invoked_by_uid,
@@ -703,6 +713,7 @@ handle_mount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi
 		printf ("caller don't possess privilege\n");
 		permission_denied_privilege (privilege, invoked_by_uid);
 	}
+#endif
 
 #ifdef DEBUG
 	printf ("passed privilege\n");
@@ -905,7 +916,9 @@ main (int argc, char *argv[])
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
 	DBusConnection *system_bus = NULL;
+#ifdef HAVE_POLKIT
 	LibPolKitContext *pol_ctx = NULL;
+#endif
 	char *invoked_by_uid;
 	char *invoked_by_syscon_name;
 
@@ -937,11 +950,13 @@ main (int argc, char *argv[])
 		printf ("Cannot connect to the system bus\n");
 		usage ();
 	}
+#ifdef HAVE_POLKIT
 	pol_ctx = libpolkit_new_context (system_bus);
 	if (pol_ctx == NULL) {
 		printf ("Cannot get libpolkit context\n");
 		unknown_error ("Cannot get libpolkit context");
 	}
+#endif
 
 	volume = libhal_volume_from_udi (hal_ctx, udi);
 	if (volume == NULL) {
@@ -951,7 +966,11 @@ main (int argc, char *argv[])
 		if (drive == NULL) {
 			usage ();
 		} else {
-			handle_mount (hal_ctx, pol_ctx, udi, NULL, drive, device, invoked_by_uid, 
+			handle_mount (hal_ctx, 
+#ifdef HAVE_POLKIT
+				      pol_ctx, 
+#endif
+				      udi, NULL, drive, device, invoked_by_uid, 
 				      invoked_by_syscon_name);
 		}
 
@@ -967,7 +986,11 @@ main (int argc, char *argv[])
 		if (drive == NULL)
 			unknown_error ("Cannot get drive from hal");
 
-		handle_mount (hal_ctx, pol_ctx, udi, volume, drive, device, invoked_by_uid, 
+		handle_mount (hal_ctx, 
+#ifdef HAVE_POLKIT
+			      pol_ctx, 
+#endif
+			      udi, volume, drive, device, invoked_by_uid, 
 			      invoked_by_syscon_name);
 
 	}

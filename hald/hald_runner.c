@@ -180,6 +180,9 @@ add_basic_env(DBusMessageIter *iter, const gchar *udi) {
   }
   add_env(iter, "UDI", udi);
   add_env(iter, "HALD_DIRECT_ADDR", hald_dbus_local_server_addr());
+#ifdef HAVE_POLKIT
+  add_env(iter, "HAVE_POLKIT", "1");
+#endif
 
   if (uname(&un) == 0) {
     char *sysname;

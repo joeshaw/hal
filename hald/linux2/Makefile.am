@@ -8,7 +8,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-I$(top_srcdir) -I.. \
-	@PACKAGE_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 if HALD_COMPILE_LINUX2
 noinst_LTLIBRARIES = libhald_linux2.la

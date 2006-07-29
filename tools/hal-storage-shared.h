@@ -26,7 +26,9 @@
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
+#ifdef HAVE_POLKIT
 #include <libpolkit.h>
+#endif
 
 /*#define DEBUG*/
 #define DEBUG
@@ -44,7 +46,11 @@ void unlock_hal_mtab (void);
 
 void unknown_error (const char *detail);
 
-void handle_unmount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
+void handle_unmount (LibHalContext *hal_ctx, 
+#ifdef HAVE_POLKIT
+		     LibPolKitContext *pol_ctx, 
+#endif
+		     const char *udi,
 		     LibHalVolume *volume, LibHalDrive *drive, const char *device, 
 		     const char *invoked_by_uid, const char *invoked_by_syscon_name,
 		     gboolean option_lazy, gboolean option_force);

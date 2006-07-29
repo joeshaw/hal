@@ -36,7 +36,9 @@
 
 #include <libhal/libhal.h>
 #include <libhal-storage/libhal-storage.h>
+#ifdef HAVE_POLKIT
 #include <libpolkit.h>
+#endif
 
 #include "hal-storage-shared.h"
 
@@ -63,7 +65,11 @@ invalid_eject_option (const char *option, const char *uid)
 #define EJECT "/usr/bin/eject"
 
 static void
-handle_eject (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *udi,
+handle_eject (LibHalContext *hal_ctx, 
+#ifdef HAVE_POLKIT
+	      LibPolKitContext *pol_ctx, 
+#endif
+	      const char *udi,
 	      LibHalDrive *drive, const char *device, 
 	      const char *invoked_by_uid, const char *invoked_by_syscon_name)
 {
@@ -134,7 +140,9 @@ main (int argc, char *argv[])
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
 	DBusConnection *system_bus = NULL;
+#ifdef HAVE_POLKIT
 	LibPolKitContext *pol_ctx = NULL;
+#endif
 	char *invoked_by_uid;
 	char *invoked_by_syscon_name;
 	char **volume_udis;
@@ -168,11 +176,13 @@ main (int argc, char *argv[])
 		printf ("Cannot connect to the system bus\n");
 		usage ();
 	}
+#ifdef HAVE_POLKIT
 	pol_ctx = libpolkit_new_context (system_bus);
 	if (pol_ctx == NULL) {
 		printf ("Cannot get libpolkit context\n");
 		unknown_error ("Cannot get libpolkit context");
 	}
+#endif
 
 	/* read from stdin */
 	fgets (eject_options, sizeof (eject_options), stdin);
@@ -220,7 +230,10 @@ main (int argc, char *argv[])
 			/* TODO: should try to unmount? */
 
 			/* attempt the eject */
-			handle_eject (hal_ctx, pol_ctx, 
+			handle_eject (hal_ctx, 
+#ifdef HAVE_POLKIT
+				      pol_ctx, 
+#endif
 				      libhal_drive_get_udi (drive),
 				      drive,
 				      libhal_drive_get_device_file (drive),
@@ -270,7 +283,11 @@ main (int argc, char *argv[])
 				if (!lock_hal_mtab ()) {
 					unknown_error ("Cannot obtain lock on /media/.hal-mtab");
 				}
-				handle_unmount (hal_ctx, pol_ctx, udi, volume_to_unmount, drive, 
+				handle_unmount (hal_ctx, 
+#ifdef HAVE_POLKIT
+						pol_ctx, 
+#endif
+						udi, volume_to_unmount, drive, 
 						libhal_volume_get_device_file (volume_to_unmount), 
 						invoked_by_uid, invoked_by_syscon_name,
 						FALSE, FALSE); /* use neither lazy nor force */
@@ -287,7 +304,10 @@ main (int argc, char *argv[])
 		libhal_free_string_array (volume_udis);
 
 		/* now attempt the eject */
-		handle_eject (hal_ctx, pol_ctx, 
+		handle_eject (hal_ctx, 
+#ifdef HAVE_POLKIT
+			      pol_ctx, 
+#endif
 			      libhal_drive_get_udi (drive),
 			      drive,
 			      libhal_drive_get_device_file (drive),

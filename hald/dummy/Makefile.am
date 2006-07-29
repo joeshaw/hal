@@ -6,7 +6,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-I$(top_srcdir) -I.. \
-	@PACKAGE_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 noinst_LTLIBRARIES = libhald_dummy.la
 libhald_dummy_la_SOURCES =                                      \
