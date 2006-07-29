@@ -1027,6 +1027,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 	return drive;
 
 error:
+	LIBHAL_FREE_DBUS_ERROR(&error);
 	libhal_free_string (bus_textual);
 	libhal_free_property_set (properties);
 	libhal_drive_free (drive);
@@ -1196,6 +1197,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 	libhal_free_property_set (properties);
 	return vol;
 error:
+	LIBHAL_FREE_DBUS_ERROR(&error);
 	libhal_free_string (vol_fsusage_textual);
 	libhal_free_string (disc_type_textual);
 	libhal_free_property_set (properties);
@@ -1244,8 +1246,10 @@ libhal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 
 	dbus_error_init (&error);
 	if ((hal_udis = libhal_manager_find_device_string_match (hal_ctx, "block.device", 
-								 device_file, &num_hal_udis, &error)) == NULL)
+								 device_file, &num_hal_udis, &error)) == NULL) {
+		LIBHAL_FREE_DBUS_ERROR(&error);
 		goto out;
+	}
 
 	for (i = 0; i < num_hal_udis; i++) {
 		char *udi;
@@ -1267,6 +1271,8 @@ libhal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 		} else if (libhal_device_query_capability (hal_ctx, udi, "storage", &err2)) {
 			found_udi = strdup (udi);
 		}
+		LIBHAL_FREE_DBUS_ERROR(&err1);
+		LIBHAL_FREE_DBUS_ERROR(&err2);
 	}
 
 	libhal_free_string_array (hal_udis);
@@ -1322,6 +1328,7 @@ libhal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
 
 	free (found_udi);
 out:
+	LIBHAL_FREE_DBUS_ERROR(&error);
 	return result;
 }
 
@@ -1580,8 +1587,10 @@ libhal_drive_find_all_volumes (LibHalContext *hal_ctx, LibHalDrive *drive, int *
 	/* get initial list... */
 	dbus_error_init (&error);
 	if ((udis = libhal_manager_find_device_string_match (hal_ctx, "block.storage_device", 
-							     drive_udi, &num_udis, &error)) == NULL)
+							     drive_udi, &num_udis, &error)) == NULL) {
+		LIBHAL_FREE_DBUS_ERROR(&error);
 		goto out;
+	}
 
 	result = malloc (sizeof (char *) * num_udis);
 	if (result == NULL)
@@ -1643,49 +1652,65 @@ libhal_volume_crypto_get_clear_volume_udi (LibHalContext *hal_ctx, LibHalVolume 
 char *
 libhal_drive_policy_default_get_mount_root (LibHalContext *hal_ctx)
 {
+	char *result;
 	DBusError error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-						  "storage.policy.default.mount_root", &error);
+	if ((result = libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						    "storage.policy.default.mount_root", &error)) == NULL) 
+		LIBHAL_FREE_DBUS_ERROR(&error);
+
+	return result;
 }
 
 dbus_bool_t
 libhal_drive_policy_default_use_managed_keyword (LibHalContext *hal_ctx)
 {
+	dbus_bool_t result;
 	DBusError error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, FALSE);
 
 	dbus_error_init (&error);
-	return libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-						"storage.policy.default.use_managed_keyword", &error);
+	if ((result = libhal_device_get_property_bool (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						  "storage.policy.default.use_managed_keyword", &error)) == FALSE)
+		LIBHAL_FREE_DBUS_ERROR(&error);
+
+	return result;
 }
 
 char *
 libhal_drive_policy_default_get_managed_keyword_primary (LibHalContext *hal_ctx)
 {
+	char *result;
 	DBusError error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-						  "storage.policy.default.managed_keyword.primary", &error);
+	if ((result = libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						    "storage.policy.default.managed_keyword.primary", &error)) == NULL)
+		LIBHAL_FREE_DBUS_ERROR(&error);
+
+	return result;
 }
 
 char *
 libhal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ctx)
 {
+	char *result;
 	DBusError error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
 
 	dbus_error_init (&error);
-	return libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
-						  "storage.policy.default.managed_keyword.secondary", &error);
+	if ((result = libhal_device_get_property_string (hal_ctx, "/org/freedesktop/Hal/devices/computer",
+						    "storage.policy.default.managed_keyword.secondary", &error)) == NULL)
+		LIBHAL_FREE_DBUS_ERROR(&error);
+
+	return result;
 }
 
 /*************************************************************************/
@@ -1728,8 +1753,11 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 
 	/* first collect from root computer device */
 	properties = libhal_device_get_all_properties (hal_ctx, udi, &error);
-	if (properties == NULL)
-		goto error;
+	if (properties == NULL ) {
+		LIBHAL_FREE_DBUS_ERROR(&error);
+		return;
+	}
+
 	for (libhal_psi_init (&it, properties); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
 		int type;
 		char *key;
@@ -1783,7 +1811,7 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 			}
 		}
 	}
-error:
+	
 	libhal_free_property_set (properties);
 }
 

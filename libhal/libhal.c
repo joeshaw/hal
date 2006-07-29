@@ -735,6 +735,8 @@ filter_func (DBusConnection * connection,
 			if (ctx->device_added != NULL) {
 				ctx->device_added (ctx, udi);
 			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager", "DeviceRemoved")) {
@@ -745,6 +747,8 @@ filter_func (DBusConnection * connection,
 			if (ctx->device_removed != NULL) {
 				ctx->device_removed (ctx, udi);
 			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager","NewCapability")) {
@@ -757,6 +761,8 @@ filter_func (DBusConnection * connection,
 			if (ctx->device_new_capability != NULL) {
 				ctx->device_new_capability (ctx, udi, capability);
 			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "Condition")) {
@@ -769,6 +775,8 @@ filter_func (DBusConnection * connection,
 			if (ctx->device_condition != NULL) {
 				ctx->device_condition (ctx, object_path, condition_name, condition_detail);
 			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "PropertyModified")) {
@@ -2001,8 +2009,6 @@ libhal_new_device (LibHalContext *ctx, DBusError *error)
 	if (value == NULL) {
 		fprintf (stderr, "%s %d : error allocating memory\n",
 			 __FILE__, __LINE__);
-		/** @todo FIXME cleanup */
-		return NULL;
 	}
 
 	dbus_message_unref (message);
@@ -3020,6 +3026,7 @@ libhal_ctx_shutdown (LibHalContext *ctx, DBusError *error)
 				       "sender='org.freedesktop.Hal',"
 				       "path='/org/freedesktop/Hal/Manager'", &myerror);
 		if (dbus_error_is_set (&myerror)) {
+			dbus_move_error (&myerror, error);
 			fprintf (stderr, "%s %d : Error unsubscribing to signals, error=%s\n", 
 				 __FILE__, __LINE__, error->message);
 			/** @todo  clean up */

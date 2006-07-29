@@ -35,6 +35,18 @@ extern "C" {
 #endif
 #endif
 
+#define LIBHAL_FREE_DBUS_ERROR(_dbus_error_)					\
+	do {									\
+		if (dbus_error_is_set(_dbus_error_))				\
+			dbus_error_free (_dbus_error_);				\
+		else								\
+			fprintf (stderr,					\
+				 "%s %d : INFO: called LIBHAL_FREE_DBUS_ERROR "	\
+				 "but dbusError was not set.\n", 		\
+				 __FILE__, __LINE__);				\
+	} while (0)
+
+
 /**
  * LIBHAL_CHECK_LIBHALCONTEXT:
  * @_ctx_: the context
