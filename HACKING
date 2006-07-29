@@ -29,6 +29,12 @@ SCM
 
  - diff of local repository vs. master repository at fd.o
 
+   synchronize with upstream repo:
+   $ git pull
+
+   (possibly merge changes)
+
+   generate the diff:
    $ git diff origin HEAD
 
  - influential environment variables (set these in e.g. .bash_profile)
