@@ -254,9 +254,10 @@ volume_findby (LibHalContext *hal_ctx, const char *property, const char *value)
 
 	dbus_error_init (&error);
 	if ((hal_udis = libhal_manager_find_device_string_match (hal_ctx, property, 
-								 value, &num_hal_udis, &error)) == NULL)
+								 value, &num_hal_udis, &error)) == NULL) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		goto out;
-
+	}
 	for (i = 0; i < num_hal_udis; i++) {
 		char *udi;
 		udi = hal_udis[i];
@@ -465,22 +466,18 @@ handle_mount (LibHalContext *hal_ctx,
 		if (libhal_volume_is_mounted (volume)) {
 			already_mounted (device);
 		}
-	} else {
-		bailout_if_mounted (device);
-	}
-
-	if (volume != NULL) {
+		
 		dbus_error_init (&error);
 		if (libhal_device_get_property_bool (hal_ctx, udi, "volume.ignore", &error) || 
 		    dbus_error_is_set (&error)) {
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			permission_denied_volume_ignore (device);
 		}
-	}
 
-	if (volume != NULL) {
 		label = libhal_volume_get_label (volume);
 		uuid = libhal_volume_get_uuid (volume);
 	} else {
+		bailout_if_mounted (device);
 		label = NULL;
 		uuid = NULL;
 	}
@@ -598,6 +595,7 @@ handle_mount (LibHalContext *hal_ctx,
 	allowed_options = libhal_device_get_property_strlist (hal_ctx, udi, "volume.mount.valid_options", &error);
 	if (dbus_error_is_set (&error)) {
 		unknown_error ("Cannot get volume.mount.valid_options");
+		dbus_error_free (&error);
 	}
 
 #ifdef DEBUG
@@ -941,6 +939,7 @@ main (int argc, char *argv[])
 	dbus_error_init (&error);
 	if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
 		printf ("Cannot connect to hald\n");
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		usage ();
 	}
 
@@ -948,6 +947,7 @@ main (int argc, char *argv[])
 	system_bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (system_bus == NULL) {
 		printf ("Cannot connect to the system bus\n");
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		usage ();
 	}
 #ifdef HAVE_POLKIT

@@ -167,6 +167,7 @@ main (int argc, char *argv[])
 	dbus_error_init (&error);
 	if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
 		printf ("Cannot connect to hald\n");
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		usage ();
 	}
 
@@ -174,6 +175,7 @@ main (int argc, char *argv[])
 	system_bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (system_bus == NULL) {
 		printf ("Cannot connect to the system bus\n");
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		usage ();
 	}
 #ifdef HAVE_POLKIT

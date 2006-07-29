@@ -132,6 +132,7 @@ int main(int argc, char **argv)
 
 	if (!(conn = dbus_bus_get(DBUS_BUS_SYSTEM, &error))) {
 		fprintf(stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 2;
 	}
 
@@ -140,6 +141,7 @@ int main(int argc, char **argv)
 	if (!libhal_ctx_set_dbus_connection(hal_ctx, conn)) return 4;
 	if (!libhal_ctx_init(hal_ctx, &error)) {
 		fprintf(stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 5;
 	}
 
@@ -201,6 +203,7 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 	if (!udi) {
 		if (!(device_names = libhal_get_all_devices(hal_ctx, &num_devices, &error))) {
 			fprintf(stderr, "Empty HAL device list.\n");
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			return 31;
 		}
 	} else {
@@ -307,6 +310,7 @@ int remove_udi(LibHalContext *hal_ctx, char *arg)
 	if (opt.remove) {
 		if (!libhal_remove_device(hal_ctx, udi, &error)) {
 			fprintf(stderr, "%s: %s\n", error.name, error.message);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			return 12;
 		}
 
@@ -350,6 +354,7 @@ int add_udi(LibHalContext *hal_ctx, char *arg)
 
 		if (!new_dev.real_udi) {
 			fprintf(stderr, "%s: %s\n", error.name, error.message);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			free(new_dev.real_udi);
 
 			return 22;
@@ -371,6 +376,7 @@ int add_udi(LibHalContext *hal_ctx, char *arg)
 	if (!dev_exists) {
 		if (!libhal_device_commit_to_gdl(hal_ctx, new_dev.real_udi, new_dev.udi, &error)) {
 			fprintf(stderr, "%s: %s\n", error.name, error.message);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			free(new_dev.real_udi);
 
 			err = err ?: 23;
@@ -538,6 +544,7 @@ int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop)
 		    ( p->type != old_type || p->type == LIBHAL_PROPERTY_TYPE_STRLIST)) {
 			if (!libhal_device_remove_property(hal_ctx, nd->real_udi, p->key, &error)) {
 				fprintf(stderr, "%s: %s\n", error.name, error.message);
+				LIBHAL_FREE_DBUS_ERROR (&error);
 				return 41;
 			}
 		}
@@ -548,24 +555,28 @@ int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop)
 			case LIBHAL_PROPERTY_TYPE_BOOLEAN:
 				if (!libhal_device_set_property_bool(hal_ctx, nd->real_udi, p->key, p->bool_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
+					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_INT32:
 				if (!libhal_device_set_property_int(hal_ctx, nd->real_udi, p->key, p->int_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
+					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_UINT64:
 				if (!libhal_device_set_property_uint64(hal_ctx, nd->real_udi, p->key, p->uint64_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
+					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_DOUBLE:
 				if (!libhal_device_set_property_double(hal_ctx, nd->real_udi, p->key, p->double_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
+					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
@@ -573,6 +584,7 @@ int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop)
 				if (!strcmp(p->key, "info.udi")) udi3 = p->str_value;
 				if (!libhal_device_set_property_string(hal_ctx, nd->real_udi, p->key, p->str_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
+					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
@@ -580,6 +592,7 @@ int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop)
 				for(s = p->strlist_value; *s; s++) {
 					if (!libhal_device_property_strlist_append(hal_ctx, nd->real_udi, p->key, *s, &error)) {
 						fprintf(stderr, "%s: %s\n", error.name, error.message);
+						LIBHAL_FREE_DBUS_ERROR (&error);
 						return 42;
 					}
 				}

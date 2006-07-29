@@ -276,7 +276,6 @@ hal_util_get_parent_path (const gchar *path)
 gchar *
 hal_util_get_normalized_path (const gchar *path1, const gchar *path2)
 {
-	int i;
 	int len1;
 	int len2;
 	const gchar *p1;
@@ -284,18 +283,21 @@ hal_util_get_normalized_path (const gchar *path1, const gchar *path2)
 	gchar buf[HAL_PATH_MAX];
 
 	len1 = strlen (path1);
-	len2 = strlen (path1);
+	len2 = strlen (path2);
 
 	p1 = path1 + len1;
 
-	i = 0;
 	p2 = path2;
 	while (p2 < path2 + len2 && strncmp (p2, "../", 3) == 0) {
 		p2 += 3;
 
 		while (p1 >= path1 && *(--p1)!='/')
 			;
+	}
 
+	if ((p1-path1) < 0) {
+		HAL_ERROR (("Could not normalize '%s' and '%s', return 'NULL'", path1, path2)); 
+		return NULL;
 	}
 
 	strncpy (buf, path1, (p1-path1));
