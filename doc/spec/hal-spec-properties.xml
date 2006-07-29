@@ -3578,11 +3578,11 @@
               <entry>No</entry>
               <entry>
                 If portable_audio_player.access_method = "storage",
-                this tells applications how deep of directory hierarchies
-                files can be placed in.  If all files are put in a
-                sub-folder (with the audio_folders property), that folder
-                should not be included in the folder_depth.  If the device
-                does not have a limit, do not set this property.
+                this tells applications exactly how deep of directory hierarchies
+                files should be placed in.  If all files are put in a
+                sub-folder (with the audio_folders property), only the depth within
+                that sub-folder should be entered here. If the device does not have
+                a limit, do not set this property.
               </entry>
             </row>
             <row>
