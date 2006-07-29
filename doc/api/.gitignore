@@ -12,3 +12,4 @@ hal.signals
 *.stamp
 *.o
 tmpl
+*~

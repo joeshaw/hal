@@ -20,3 +20,4 @@ hal-storage-cleanup-mountpoint
 hal-storage-eject
 hal-storage-unmount
 *.o
+*~

@@ -13,3 +13,4 @@ hald-addon-keyboard
 hald-addon-acpi-buttons-toshiba
 hald-addon-macbookpro-backlight
 *.o
+*~

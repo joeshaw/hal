@@ -2,3 +2,4 @@ Makefile
 Makefile.in
 hal-spec.xml
 *.o
+*~

@@ -31,3 +31,5 @@ py-compile
 INSTALL
 *.o
 *.tar.gz
+*~
+
