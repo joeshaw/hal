@@ -150,10 +150,12 @@ main (int argc, char *argv[])
 	}
 	if (!libhal_ctx_set_dbus_connection (hal_ctx, dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
 		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 1;
 	}
 	if (!libhal_ctx_init (hal_ctx, &error)) {
 		fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 1;
 	}
 
@@ -162,6 +164,7 @@ main (int argc, char *argv[])
 
 	if (dbus_error_is_set (&error)) {
 		fprintf (stderr, "error: %s: %s\n", error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 1;
 	}
 

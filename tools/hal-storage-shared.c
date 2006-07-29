@@ -249,6 +249,7 @@ handle_unmount (LibHalContext *hal_ctx, LibPolKitContext *pol_ctx, const char *u
 		dbus_error_init (&error);
 		if (libhal_device_get_property_bool (hal_ctx, udi, "volume.ignore", &error) || 
 		    dbus_error_is_set (&error)) {
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			permission_denied_volume_ignore (device);
 		}
 

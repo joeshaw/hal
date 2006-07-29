@@ -103,8 +103,10 @@ print_props (const char *udi)
 	 *        essence an IPC call and other stuff may
 	 *        be happening..
 	 */
-	if (props == NULL)
+	if (props == NULL) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return;
+	}
 
 	for (libhal_psi_init (&it, props); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
 		type = libhal_psi_get_type (&it);
@@ -180,8 +182,10 @@ dump_device (const char *udi)
 
 	dbus_error_init (&error);
 
-	if (!libhal_device_exists (hal_ctx, udi, &error))
+	if (!libhal_device_exists (hal_ctx, udi, &error)) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return;
+	}
 
 	if (long_list) {
 		printf ("udi = '%s'\n", udi);
@@ -253,8 +257,10 @@ dump_devices (void)
 	dbus_error_init (&error);
 
 	device_names = libhal_get_all_devices (hal_ctx, &num_devices, &error);
-	if (device_names == NULL)
+	if (device_names == NULL) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		DIE (("Couldn't obtain list of devices\n"));
+	}
 
 	devices = malloc (sizeof(struct Device) * num_devices);
 	if (!devices) {
@@ -454,6 +460,8 @@ print_property (const char *udi, const char *key)
 		fprintf (stderr, "Unknown type %d='%c'\n", type, type);
 		break;
 	}
+
+	LIBHAL_FREE_DBUS_ERROR (&error);
 }
 
 /** Invoked when a property of a device in the Global Device List is
@@ -656,6 +664,7 @@ main (int argc, char *argv[])
 	if (conn == NULL) {
 		fprintf (stderr, "error: dbus_bus_get: %s: %s\n",
 			 error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 1;
 	}
 
@@ -676,6 +685,7 @@ main (int argc, char *argv[])
 			 error.name, error.message);
 		fprintf (stderr, "Could not initialise connection to hald. \n "
 				 "Normally this mean the HAL daemon (hald) is not running or not ready.\n");
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 1;
 	}
 
@@ -696,13 +706,19 @@ main (int argc, char *argv[])
 		if( long_list || short_list || tree_view )
 			dump_devices ();
 		
+		if ( libhal_device_property_watch_all (hal_ctx, &error) == FALSE) {
+			fprintf (stderr, "error: monitoring devicelist - libhal_device_property_watch_all: %s: %s\n",
+				 error.name, error.message);
+			LIBHAL_FREE_DBUS_ERROR (&error);
+			return 1;
+		}
 		printf ("\nStart monitoring devicelist:\n"
 			"-------------------------------------------------\n");
-		libhal_device_property_watch_all (hal_ctx, &error);
 		g_main_loop_run (loop);
 	}
 
-	libhal_ctx_shutdown (hal_ctx, &error);
+	if ( libhal_ctx_shutdown (hal_ctx, &error) == FALSE)
+		LIBHAL_FREE_DBUS_ERROR (&error);
 	libhal_ctx_free (hal_ctx);
 
 	dbus_connection_close (conn);
