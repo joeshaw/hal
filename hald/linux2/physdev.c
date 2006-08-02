@@ -810,6 +810,64 @@ mmc_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+xen_add (const gchar *sysfs_path, HalDevice *parent)
+{
+	HalDevice *d;
+	const gchar *devtype;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "xen");
+	if (parent != NULL) {
+		hal_device_property_set_string (d, "info.parent", parent->udi);
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "xen.bus_id",
+					hal_util_get_last_element (sysfs_path));
+
+	hal_util_set_string_from_file (d, "xen.path", sysfs_path, "nodename");
+
+	devtype = hal_util_get_string_from_file (sysfs_path, "devtype");
+	hal_device_property_set_string (d, "xen.type", devtype);
+
+	if (strcmp (devtype, "pci") == 0) {
+		hal_device_property_set_string (d, "info.product", "Xen PCI Device");
+	} else if (strcmp (devtype, "vbd") == 0) {
+		hal_device_property_set_string (d, "info.product", "Xen Virtual Block Device");
+	} else if (strcmp (devtype, "vif") == 0) {
+		hal_device_property_set_string (d, "info.product", "Xen Virtual Network Device");
+	} else if (strcmp (devtype, "vtpm") == 0) {
+		hal_device_property_set_string (d, "info.product", "Xen Virtual Trusted Platform Module");
+	} else {
+		char buf[64];
+		g_snprintf (buf, sizeof (buf), "Xen Device (%s)", devtype);
+		hal_device_property_set_string (d, "info.product", buf);
+	}
+
+	return d;
+}
+
+static gboolean
+xen_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/xen_%s",
+			      hal_device_property_get_string (d, "xen.bus_id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 ieee1394_add (const gchar *sysfs_path, HalDevice *parent)
 {
 	HalDevice *d;
@@ -1378,6 +1436,13 @@ static PhysDevHandler physdev_handler_ieee1394 = {
 	.remove      = physdev_remove
 };
 
+static PhysDevHandler physdev_handler_xen = {
+	.subsystem   = "xen",
+	.add         = xen_add,
+	.compute_udi = xen_compute_udi,
+	.remove      = physdev_remove
+};
+
 /* s390 specific busses */
 static PhysDevHandler physdev_handler_ccw = {
 	.subsystem   = "ccw",
@@ -1419,6 +1484,7 @@ static PhysDevHandler *phys_handlers[] = {
 	&physdev_handler_scsi,
 	&physdev_handler_mmc,
 	&physdev_handler_ieee1394,
+	&physdev_handler_xen,
 	&physdev_handler_ccw,
 	&physdev_handler_ccwgroup,
 	&physdev_handler_iucv,

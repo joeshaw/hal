@@ -2080,6 +2080,48 @@
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-xen">
+      <title><literal>xen</literal> namespace</title>
+      <para>
+	Device objects representing virtual devices under the Xen
+	Virtual Machine Monitor, such as frontend network or block
+	devices, will have <literal>info.bus</literal> set to
+	<literal>block</literal> and will export a number of
+	properties in then <literal>xen</literal> namespace.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>xen.bus_id</literal> (string)</entry>
+              <entry>example: vif-0 </entry>
+              <entry>Yes</entry>
+              <entry>The XenBus ID of the device</entry>
+            </row>
+            <row>
+              <entry><literal>xen.path</literal> (string)</entry>
+              <entry>example: device/vif/0 </entry>
+              <entry>Yes</entry>
+              <entry>The XenBus path of the device</entry>
+            </row>
+            <row>
+              <entry><literal>xen.type</literal> (string)</entry>
+              <entry>example: vif</entry>
+              <entry>Yes</entry>
+              <entry>The type of Xen device</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
   </sect1>
 
   <sect1 id="properties-functional">
