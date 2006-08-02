@@ -19,6 +19,15 @@ if [ -f /etc/altlinux-release ] || [ -f "/etc/SuSE-release" ] ; then
 		unsupported
 	fi
 
+#Mandriva support suspend-scripts 
+elif [ -f /etc/mandriva-release ] ; then 
+    if [ -x /usr/sbin/pmsuspend ] ; then 
+	/usr/sbin/pmsuspend disk 
+	RET=$? 
+    else 
+	unsupported 
+    fi 
+
 #RedHat/Fedora only support pm-utils
 elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
 	if [ -x /usr/sbin/pm-hibernate ] ; then
