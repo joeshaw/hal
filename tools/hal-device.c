@@ -63,7 +63,7 @@ typedef struct lh_prop_s {
 		double double_value;
 		dbus_bool_t bool_value;
 		char **strlist_value;
-	};
+	} v;
 } lh_prop_t;
 
 
@@ -93,7 +93,7 @@ struct option options[] = {
 	{ "remove", 1, NULL, 'r' },
 	{ "add", 1, NULL, 'a' },
 	{ "help", 0, NULL, 'h' },
-	{}
+	{ 0, 0, 0, 0 }
 };
 
 
@@ -194,7 +194,13 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 		if (*arg == '/') {
 			udi = arg;
 		} else {
+#ifdef HAVE_ASPRINTF
 			asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg);
+#else
+			udi = calloc(1, sizeof ("/org/freedesktop/Hal/devices/%s") + strlen(arg));
+			sprintf(udi, "/org/freedesktop/Hal/devices/%s", arg);
+
+#endif
 		}
 	}
 
@@ -302,7 +308,13 @@ int remove_udi(LibHalContext *hal_ctx, char *arg)
 	if (*arg == '/') {
 		udi = arg;
 	} else {
+#ifdef HAVE_ASPRINTF
 		asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg);
+#else
+		udi = calloc(1, sizeof ("/org/freedesktop/Hal/devices/%s") + strlen(arg));
+		sprintf(udi, "/org/freedesktop/Hal/devices/%s", arg);
+#endif
+
 	}
 
 	dbus_error_init(&error);
@@ -336,7 +348,12 @@ int add_udi(LibHalContext *hal_ctx, char *arg)
 	if (*arg == '/') {
 		udi = arg;
 	} else {
+#ifdef HAVE_ASPRINTF
 		asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg);
+#else
+		udi = calloc(1, sizeof ("/org/freedesktop/Hal/devices/%s") + strlen(arg));
+		sprintf(udi, "/org/freedesktop/Hal/devices/%s", arg);
+#endif
 	}
 
 	if (udi)
@@ -379,7 +396,7 @@ int add_udi(LibHalContext *hal_ctx, char *arg)
 			LIBHAL_FREE_DBUS_ERROR (&error);
 			free(new_dev.real_udi);
 
-			err = err ?: 23;
+			err = err ? err : 23;
 		}
 	}
 
@@ -469,44 +486,44 @@ void process_property(LibHalContext *hal_ctx, char *buf, lh_prop_t **prop)
 	if (*s == '\'') {
 		s_val = s + 1;
 		s = strrchr(s_val, '\'');
-		*(s ?: s_val) = 0;
+		*(s ? s : s_val) = 0;
 		p->type = LIBHAL_PROPERTY_TYPE_STRING;
-		p->str_value = strdup(s_val);
+		p->v.str_value = strdup(s_val);
 	} else if (*s == '{') {
 		s_val = s + 1;
 		s1 = strrchr(s_val, '}');
 		if (s1) *s1 = 0;
 		p->type = LIBHAL_PROPERTY_TYPE_STRLIST;
 		len = 0;
-		p->strlist_value = calloc(1, sizeof *p->strlist_value);
+		p->v.strlist_value = calloc(1, sizeof *p->v.strlist_value);
 		while (*s_val++ == '\'') {
 			s = skip_nonquote(s_val);
 			if (*s) *s++ = 0;
-			p->strlist_value = realloc(p->strlist_value, (len + 2) * sizeof *p->strlist_value);
-			p->strlist_value[len] = strdup(s_val);
-			p->strlist_value[++len] = NULL;
+			p->v.strlist_value = realloc(p->v.strlist_value, (len + 2) * sizeof *p->v.strlist_value);
+			p->v.strlist_value[len] = strdup(s_val);
+			p->v.strlist_value[++len] = NULL;
 			s_val = skip_nonquote(s);
 		}
 	} else if (!strncmp(s, "true", 4)) {
 		s += 4;
 		p->type = LIBHAL_PROPERTY_TYPE_BOOLEAN;
-		p->bool_value = TRUE;
+		p->v.bool_value = TRUE;
 	} else if (!strncmp(s, "false", 5)) {
 		s += 5;
 		p->type = LIBHAL_PROPERTY_TYPE_BOOLEAN;
-		p->bool_value = FALSE;
+		p->v.bool_value = FALSE;
 	} else if ((s1 = skip_number(s)) != s) {
 		if (strstr(s1, "(int)")) {
 			*s1++ = 0;
 			p->type = LIBHAL_PROPERTY_TYPE_INT32;
-			p->int_value = strtol(s, NULL, 10);
+			p->v.int_value = strtol(s, NULL, 10);
 		} else if (strstr(s1, "(uint64)")) {
 			*s1++ = 0;
 			p->type = LIBHAL_PROPERTY_TYPE_UINT64;
-			p->uint64_value = strtoull(s, NULL, 10);
+			p->v.uint64_value = strtoull(s, NULL, 10);
 		} else if (strstr(s1, "(double)")) {
 			p->type = LIBHAL_PROPERTY_TYPE_DOUBLE;
-			p->double_value = strtod(s, NULL);
+			p->v.double_value = strtod(s, NULL);
 		}
 
 		s = s1;
@@ -533,7 +550,7 @@ int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop)
 
 	for(p = prop; p; p = p->next) {
 		if (!strcmp(p->key, "udi") && p->type == LIBHAL_PROPERTY_TYPE_STRING) {
-			udi2 = p->str_value;
+			udi2 = p->v.str_value;
 			continue;
 		}
 
@@ -553,43 +570,43 @@ int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop)
 			case LIBHAL_PROPERTY_TYPE_INVALID:
 				break;
 			case LIBHAL_PROPERTY_TYPE_BOOLEAN:
-				if (!libhal_device_set_property_bool(hal_ctx, nd->real_udi, p->key, p->bool_value, &error)) {
+				if (!libhal_device_set_property_bool(hal_ctx, nd->real_udi, p->key, p->v.bool_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
 					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_INT32:
-				if (!libhal_device_set_property_int(hal_ctx, nd->real_udi, p->key, p->int_value, &error)) {
+				if (!libhal_device_set_property_int(hal_ctx, nd->real_udi, p->key, p->v.int_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
 					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_UINT64:
-				if (!libhal_device_set_property_uint64(hal_ctx, nd->real_udi, p->key, p->uint64_value, &error)) {
+				if (!libhal_device_set_property_uint64(hal_ctx, nd->real_udi, p->key, p->v.uint64_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
 					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_DOUBLE:
-				if (!libhal_device_set_property_double(hal_ctx, nd->real_udi, p->key, p->double_value, &error)) {
+				if (!libhal_device_set_property_double(hal_ctx, nd->real_udi, p->key, p->v.double_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
 					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_STRING:
-				if (!strcmp(p->key, "info.udi")) udi3 = p->str_value;
-				if (!libhal_device_set_property_string(hal_ctx, nd->real_udi, p->key, p->str_value, &error)) {
+				if (!strcmp(p->key, "info.udi")) udi3 = p->v.str_value;
+				if (!libhal_device_set_property_string(hal_ctx, nd->real_udi, p->key, p->v.str_value, &error)) {
 					fprintf(stderr, "%s: %s\n", error.name, error.message);
 					LIBHAL_FREE_DBUS_ERROR (&error);
 					return 42;
 				}
 				break;
 			case LIBHAL_PROPERTY_TYPE_STRLIST:
-				for(s = p->strlist_value; *s; s++) {
+				for(s = p->v.strlist_value; *s; s++) {
 					if (!libhal_device_property_strlist_append(hal_ctx, nd->real_udi, p->key, *s, &error)) {
 						fprintf(stderr, "%s: %s\n", error.name, error.message);
 						LIBHAL_FREE_DBUS_ERROR (&error);
@@ -619,10 +636,10 @@ lh_prop_t *free_properties(lh_prop_t *prop)
 		next = prop->next;
 
 		free(prop->key);
-		if (prop->type == LIBHAL_PROPERTY_TYPE_STRING) free(prop->str_value);
-		if (prop->type == LIBHAL_PROPERTY_TYPE_STRLIST && prop->strlist_value) {
-			for(s = prop->strlist_value; *s; ) free(*s++);
-			free(prop->strlist_value);
+		if (prop->type == LIBHAL_PROPERTY_TYPE_STRING) free(prop->v.str_value);
+		if (prop->type == LIBHAL_PROPERTY_TYPE_STRLIST && prop->v.strlist_value) {
+			for(s = prop->v.strlist_value; *s; ) free(*s++);
+			free(prop->v.strlist_value);
 		}
 		free(prop);
 	}

@@ -29,6 +29,14 @@
 #include "device.h"
 #include "device_store.h"
 
+#ifndef __FUNCTION__
+#define __FUNCTION__ __func__
+#endif
+
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 #define HAL_NAME_MAX 256
 #define HAL_PATH_MAX 512
 #define HAL_HELPER_TIMEOUT 10000

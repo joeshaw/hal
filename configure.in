@@ -273,9 +273,14 @@ AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
 # volume_id
-PKG_CHECK_MODULES(VOLUME_ID, [$volume_id_module])
-AC_SUBST(VOLUME_ID_CFLAGS)
-AC_SUBST(VOLUME_ID_LIBS)
+case "$host" in
+*-*-solaris*)
+	;;
+*)
+	PKG_CHECK_MODULES(VOLUME_ID, [$volume_id_module])
+	AC_SUBST(VOLUME_ID_CFLAGS)
+	AC_SUBST(VOLUME_ID_LIBS)
+esac
 
 # Check for BLKGETSIZE64
 AC_CHECK_TYPE(pgoff_t, ,
@@ -306,6 +311,7 @@ if test x$have_size64 = xno; then
 fi
 
 AC_CHECK_FUNCS(getgrouplist)
+AC_CHECK_FUNCS(asprintf)
 
 # DocBook Documentation
 

@@ -38,6 +38,10 @@
 #include <sys/mount.h>
 #include <limits.h>
 #include <pwd.h>
+#elif sun
+#include <fcntl.h>
+#include <sys/mnttab.h>
+#include <sys/vfstab.h>
 #else
 #include <mntent.h>
 #endif

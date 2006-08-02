@@ -38,6 +38,10 @@
 #include <sys/mount.h>
 #include <limits.h>
 #include <pwd.h>
+#elif sun
+#include <fcntl.h>
+#include <sys/mnttab.h>
+#include <sys/vfstab.h>
 #else
 #include <mntent.h>
 #endif
@@ -74,6 +78,9 @@ mtab_open (gpointer *handle)
 
 	*handle = mtab;
 	return TRUE;
+#elif sun
+	*handle = fopen (MNTTAB, "r");
+	return *handle != NULL;
 #else
 	*handle = fopen ("/proc/mounts", "r");
 	return *handle != NULL;
@@ -90,6 +97,10 @@ mtab_next (gpointer handle)
 		return mtab->mounts[mtab->iter++].f_mntfromname;
 	else
 		return NULL;
+#elif sun
+	static struct mnttab mnt;
+
+	return getmntent (handle, &mnt) == 0 ? mnt.mnt_special : NULL;
 #else
 	struct mntent *mnt;
 
@@ -116,6 +127,9 @@ fstab_open (gpointer *handle)
 {
 #ifdef __FreeBSD__
 	return setfsent () == 1;
+#elif sun
+	*handle = fopen (VFSTAB, "r");
+	return *handle != NULL;
 #else
 	*handle = fopen ("/etc/fstab", "r");
 	return *handle != NULL;
@@ -136,6 +150,10 @@ fstab_next (gpointer handle, char **mount_point)
 	}
 
 	return fstab ? fstab->fs_spec : NULL;
+#elif sun
+	static struct vfstab v;
+
+	return getvfsent (handle, &v) == 0 ? v.vfs_special : NULL;
 #else
 	struct mntent *mnt;
 
@@ -160,6 +178,8 @@ fstab_close (gpointer handle)
 }
 
 #ifdef __FreeBSD__
+#define UMOUNT		"/sbin/umount"
+#elif sun
 #define UMOUNT		"/sbin/umount"
 #else
 #define UMOUNT		"/bin/umount"
@@ -458,13 +478,17 @@ lock_hal_mtab (void)
 
 	printf ("%d: XYA attempting to get lock on /media/.hal-mtab-lock\n", getpid ());
 
-	lock_mtab_fd = open ("/media/.hal-mtab-lock", O_CREAT);
+	lock_mtab_fd = open ("/media/.hal-mtab-lock", O_CREAT | O_RDWR);
 
 	if (lock_mtab_fd < 0)
 		return FALSE;
 
 tryagain:
+#if sun
+	if (lockf (lock_mtab_fd, F_LOCK, 0) != 0) {
+#else
 	if (flock (lock_mtab_fd, LOCK_EX) != 0) {
+#endif
 		if (errno == EINTR)
 			goto tryagain;
 		return FALSE;
@@ -479,7 +503,11 @@ tryagain:
 void 
 unlock_hal_mtab (void)
 {
+#if sun
+	lockf (lock_mtab_fd, F_ULOCK, 0);
+#else
 	flock (lock_mtab_fd, LOCK_UN);
+#endif
 	close (lock_mtab_fd);
 	lock_mtab_fd = -1;
 	printf ("%d: XYA released lock on /media/.hal-mtab-lock\n", getpid ());

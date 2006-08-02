@@ -191,7 +191,7 @@ struct LibHalProperty_s {
 				     /**< Truth value */
 
 		char **strlist_value; /**< List of UTF-8 zero-terminated strings */
-	};
+	} v;
 
 	LibHalProperty *next;	     /**< Next property or NULL if this is 
 				      *	  the last */
@@ -283,7 +283,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 			return FALSE;
 
 		dbus_message_iter_recurse (var_iter, &iter_array);
-		p->strlist_value = libhal_get_string_array_from_iter (&iter_array, NULL);
+		p->v.strlist_value = libhal_get_string_array_from_iter (&iter_array, NULL);
 
 		p->type = LIBHAL_PROPERTY_TYPE_STRLIST; 
 
@@ -294,8 +294,8 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 
 		dbus_message_iter_get_basic (var_iter, &v);
 
-		p->str_value = strdup (v);
-		if (p->str_value == NULL) 
+		p->v.str_value = strdup (v);
+		if (p->v.str_value == NULL) 
 			return FALSE;
 		p->type = LIBHAL_PROPERTY_TYPE_STRING; 
 
@@ -307,7 +307,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 		
 		dbus_message_iter_get_basic (var_iter, &v);
 		
-		p->int_value = v;
+		p->v.int_value = v;
 		p->type = LIBHAL_PROPERTY_TYPE_INT32; 
 
 		break;
@@ -318,7 +318,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 		
 		dbus_message_iter_get_basic (var_iter, &v);
 
-		p->uint64_value = v;
+		p->v.uint64_value = v;
 		p->type = LIBHAL_PROPERTY_TYPE_UINT64; 
 		
 		break;
@@ -329,7 +329,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 
 		dbus_message_iter_get_basic (var_iter, &v);
 
-		p->double_value = v;
+		p->v.double_value = v;
 		p->type = LIBHAL_PROPERTY_TYPE_DOUBLE; 
 
 		break;
@@ -340,7 +340,7 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 
 		dbus_message_iter_get_basic (var_iter, &v);
 
-		p->double_value = v;
+		p->v.double_value = v;
 		p->type = LIBHAL_PROPERTY_TYPE_BOOLEAN; 
 
 		break;
@@ -511,9 +511,9 @@ libhal_free_property_set (LibHalPropertySet * set)
 	for (p = set->properties_head; p != NULL; p = q) {
 		free (p->key);
 		if (p->type == DBUS_TYPE_STRING)
-			free (p->str_value);
+			free (p->v.str_value);
 		if (p->type == LIBHAL_PROPERTY_TYPE_STRLIST)
-			libhal_free_string_array (p->strlist_value);
+			libhal_free_string_array (p->v.strlist_value);
 		q = p->next;
 		free (p);
 	}
@@ -635,7 +635,7 @@ libhal_psi_get_key (LibHalPropertySetIterator * iter)
 char *
 libhal_psi_get_string (LibHalPropertySetIterator * iter)
 {
-	return iter->cur_prop->str_value;
+	return iter->cur_prop->v.str_value;
 }
 
 /** 
@@ -649,7 +649,7 @@ libhal_psi_get_string (LibHalPropertySetIterator * iter)
 dbus_int32_t
 libhal_psi_get_int (LibHalPropertySetIterator * iter)
 {
-	return iter->cur_prop->int_value;
+	return iter->cur_prop->v.int_value;
 }
 
 /**
@@ -663,7 +663,7 @@ libhal_psi_get_int (LibHalPropertySetIterator * iter)
 dbus_uint64_t
 libhal_psi_get_uint64 (LibHalPropertySetIterator * iter)
 {
-	return iter->cur_prop->uint64_value;
+	return iter->cur_prop->v.uint64_value;
 }
 
 /** 
@@ -677,7 +677,7 @@ libhal_psi_get_uint64 (LibHalPropertySetIterator * iter)
 double
 libhal_psi_get_double (LibHalPropertySetIterator * iter)
 {
-	return iter->cur_prop->double_value;
+	return iter->cur_prop->v.double_value;
 }
 
 /**
@@ -691,7 +691,7 @@ libhal_psi_get_double (LibHalPropertySetIterator * iter)
 dbus_bool_t
 libhal_psi_get_bool (LibHalPropertySetIterator * iter)
 {
-	return iter->cur_prop->bool_value;
+	return iter->cur_prop->v.bool_value;
 }
 
 /** 
@@ -705,7 +705,7 @@ libhal_psi_get_bool (LibHalPropertySetIterator * iter)
 char **
 libhal_psi_get_strlist (LibHalPropertySetIterator * iter)
 {
-	return iter->cur_prop->strlist_value;
+	return iter->cur_prop->v.strlist_value;
 }
 
 

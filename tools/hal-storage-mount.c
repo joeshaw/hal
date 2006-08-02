@@ -38,6 +38,9 @@
 #include <sys/mount.h>
 #include <limits.h>
 #include <pwd.h>
+#elif sun
+#include <sys/mnttab.h>
+#include <sys/vfstab.h>
 #else
 #include <mntent.h>
 #endif
@@ -57,9 +60,15 @@
 #ifdef __FreeBSD__
 #define MOUNT		"/sbin/mount"
 #define MOUNT_OPTIONS	"noexec,nosuid"
+#define MOUNT_TYPE_OPT	"-t"
+#elif sun
+#define MOUNT		"/sbin/mount"
+#define MOUNT_OPTIONS	"noexec,nosuid"
+#define MOUNT_TYPE_OPT	"-F"
 #else
 #define MOUNT		"/bin/mount"
 #define MOUNT_OPTIONS	"noexec,nosuid,nodev"
+#define MOUNT_TYPE_OPT	"-t"
 #endif
 
 static void
@@ -284,7 +293,7 @@ bailout_if_in_fstab (LibHalContext *hal_ctx, const char *device, const char *lab
 	char *entry;
 	char *_mount_point;
 
-	printf (" label '%s'  uuid '%s'\n", label, uuid);
+	printf (" label '%s'  uuid '%s'\n", label ? label : "" , uuid ? uuid : "");
 
 	/* check if /etc/fstab mentions this device... (with symlinks etc) */
 	if (! fstab_open (&handle)) {
@@ -409,6 +418,11 @@ map_fstype (const char *fstype)
 		return "ext2fs";
 	else if (! strcmp (fstype, "vfat"))
 		return "msdosfs";
+#elif sun
+	if (! strcmp (fstype, "iso9660"))
+		return "hsfs";
+	else if (! strcmp (fstype, "vfat"))
+		return "pcfs";
 #endif
 
 	return fstype;
@@ -753,7 +767,7 @@ handle_mount (LibHalContext *hal_ctx,
 	} else if (libhal_volume_get_fstype (volume) != NULL && strlen (libhal_volume_get_fstype (volume)) > 0) {
 		mount_do_fstype = (char *) map_fstype (libhal_volume_get_fstype (volume));
 	}
-	args[na++] = "-t";
+	args[na++] = MOUNT_TYPE_OPT;
 	args[na++] = mount_do_fstype;
 
 	args[na++] = "-o";
