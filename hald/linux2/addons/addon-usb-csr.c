@@ -26,6 +26,7 @@
 
 #include <config.h>
 #include <stdio.h>
+#include <string.h>
 #include <usb.h>
 
 #include <glib/gmain.h>
