@@ -35,6 +35,23 @@ Items specifically planned for 0.5.8
 Other items
 -----------
 
+ - Provide mechanism for polling storage devices we can't poll regulary
+   e.g. PC floppy drives and Zip drives. When that it is, actually go back
+   to provide children for volumes detected like we did in HAL 0.4.x
+
+ - Provide mechanism for tuning the readahead size. For example, a DVD
+   player application (such as GNOME's Totem) might want to read ahead
+   several hundreds of megabyte so the drive only needs to spin up every
+   e.g. 20 minutes while watching a DVD movie. This enables the kernel
+   driver to put the drive in a low-power mode to get substantially better
+   battery life.
+
+ - Provide mechanism for making an application inhibit polling of a drive.
+   This is useful combined with the TODO right above. It will probably mean
+   that the eject button on the drive is rendered useless but that is
+   justified by the DVD player application displays a soft button for ejecting
+   the media.
+
  - Use udev data instead of probing (whenever possible)
 
  - Performance! Profile and optimize! Too big of a task to describe in
