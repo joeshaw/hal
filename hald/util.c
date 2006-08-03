@@ -355,6 +355,57 @@ hal_util_set_int_from_file (HalDevice *d, const gchar *key, const gchar *directo
 	return ret;
 }
 
+
+gboolean
+hal_util_get_uint64_from_file (const gchar *directory, const gchar *file, guint64 *result, gint base)
+{
+	FILE *f;
+	char buf[64];
+	gchar path[HAL_PATH_MAX];
+	gboolean ret;
+
+	f = NULL;
+	ret = FALSE;
+
+	g_snprintf (path, sizeof (path), "%s/%s", directory, file);
+
+	f = fopen (path, "rb");
+	if (f == NULL) {
+		HAL_ERROR (("Cannot open '%s'", path));
+		goto out;
+	}
+
+	if (fgets (buf, sizeof (buf), f) == NULL) {
+		HAL_ERROR (("Cannot read from '%s'", path));
+		goto out;
+	}
+
+	/* TODO: handle error condition */
+	*result = strtoll (buf, NULL, base);
+
+	ret = TRUE;
+
+out:
+	if (f != NULL)
+		fclose (f);
+
+	return ret;
+}
+
+gboolean
+hal_util_set_uint64_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file, gint base)
+{
+	guint64 value;
+	gboolean ret;
+
+	ret = FALSE;
+
+	if (hal_util_get_uint64_from_file (directory, file, &value, base))
+		ret = hal_device_property_set_uint64 (d, key, value);
+
+	return ret;
+}
+
 gboolean
 hal_util_get_bcd2_from_file (const gchar *directory, const gchar *file, gint *result)
 {

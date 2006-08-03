@@ -708,6 +708,8 @@ struct LibHalDrive_s {
 
 	dbus_bool_t no_partitions_hint;
 
+	dbus_uint64_t drive_size;
+
 	LibHalContext *hal_ctx;
 
 	char **capabilities;
@@ -760,6 +762,9 @@ struct LibHalVolume_s {
 
 	dbus_uint64_t volume_size;
 	dbus_uint64_t disc_capacity;
+
+	dbus_uint64_t partition_start_offset;
+	dbus_uint64_t partition_media_size;
 };
 
 const char *
@@ -921,7 +926,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("storage.vendor",            drive->vendor);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.model",             drive->model);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.drive_type",        drive->type_textual);
-
+		LIBHAL_PROP_EXTRACT_UINT64 ("storage.size", 		 drive->drive_size); 
 
 		LIBHAL_PROP_EXTRACT_STRING ("storage.icon.drive",        drive->dedicated_icon_drive);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.icon.volume",       drive->dedicated_icon_volume);
@@ -1101,6 +1106,10 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		LIBHAL_PROP_EXTRACT_BEGIN;
 
+		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_partition",                    vol->is_partition);
+		LIBHAL_PROP_EXTRACT_INT    ("volume.partition.number",                vol->partition_number);
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.start", 		      vol->partition_start_offset); 
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.media_size",            vol->partition_media_size); 
 		LIBHAL_PROP_EXTRACT_INT    ("volume.partition.msdos_part_table_type", vol->msdos_part_table_type);
 
 		LIBHAL_PROP_EXTRACT_INT    ("block.minor",               vol->device_minor);
@@ -1360,6 +1369,12 @@ libhal_drive_uses_removable_media (LibHalDrive *drive)
 	return drive->is_removable;
 }
 
+dbus_uint64_t
+libhal_drive_get_size (LibHalDrive *drive)
+{
+	return drive->drive_size;
+}
+
 LibHalDriveType
 libhal_drive_get_type (LibHalDrive *drive)
 {
@@ -1502,6 +1517,18 @@ unsigned int
 libhal_volume_get_partition_number (LibHalVolume *volume)
 {
 	return volume->partition_number;
+}
+
+dbus_uint64_t 
+libhal_volume_get_partition_start_offset (LibHalVolume *volume)
+{
+	return volume->partition_start_offset;
+}
+
+dbus_uint64_t
+libhal_volume_get_partition_media_size (LibHalVolume *volume)
+{
+	return volume->partition_media_size;
 }
 
 const char *

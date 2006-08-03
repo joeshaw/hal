@@ -17,14 +17,6 @@ libhal
 <!-- ##### SECTION Stability_Level ##### -->
 
 
-<!-- ##### MACRO LIBHAL_FREE_DBUS_ERROR ##### -->
-<para>
-
-</para>
-
-@_dbus_error_: 
-
-
 <!-- ##### MACRO LIBHAL_CHECK_LIBHALCONTEXT ##### -->
 <para>
 

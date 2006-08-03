@@ -58,6 +58,10 @@ gboolean hal_util_get_int_from_file (const gchar *directory, const gchar *file, 
 
 gboolean hal_util_set_int_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file, gint base);
 
+gboolean hal_util_get_uint64_from_file (const gchar *directory, const gchar *file, guint64 *result, gint base);
+
+gboolean hal_util_set_uint64_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file, gint base);
+
 gchar *hal_util_get_string_from_file (const gchar *directory, const gchar *file);
 
 gboolean hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file);

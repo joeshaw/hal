@@ -194,6 +194,7 @@ void                 libhal_drive_free                        (LibHalDrive *driv
 
 dbus_bool_t          libhal_drive_is_hotpluggable          (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_uses_removable_media     (LibHalDrive      *drive);
+dbus_uint64_t        libhal_drive_get_size                 (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_no_partitions_hint       (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_requires_eject           (LibHalDrive      *drive);
 LibHalDriveType      libhal_drive_get_type                 (LibHalDrive      *drive);
@@ -287,6 +288,8 @@ dbus_bool_t          libhal_volume_is_mounted_read_only          (LibHalVolume  
 dbus_bool_t          libhal_volume_is_partition                  (LibHalVolume     *volume);
 dbus_bool_t          libhal_volume_is_disc                       (LibHalVolume     *volume);
 unsigned int         libhal_volume_get_partition_number          (LibHalVolume     *volume);
+dbus_uint64_t        libhal_volume_get_partition_start_offset    (LibHalVolume     *volume);
+dbus_uint64_t        libhal_volume_get_partition_media_size      (LibHalVolume     *volume);
 const char          *libhal_volume_get_label                     (LibHalVolume     *volume);
 const char          *libhal_volume_get_mount_point               (LibHalVolume     *volume);
 const char          *libhal_volume_get_uuid                      (LibHalVolume     *volume);

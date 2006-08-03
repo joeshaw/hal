@@ -755,6 +755,9 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	gboolean is_fakevolume;
 	char *sysfs_path_real = NULL;
 	int floppy_num;
+	gboolean is_device_mapper;
+
+	is_device_mapper = FALSE;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
@@ -830,6 +833,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 							if (parent != NULL) {
 								HAL_INFO ((" parent='%s'!", parent->udi));
 								hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", slave_volume->udi);
+								is_device_mapper = TRUE;
 							}
 						}
 					}
@@ -888,6 +892,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
 		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
 		hal_device_property_set_bool (d, "storage.requires_eject", FALSE);
+		hal_device_property_set_uint64 (d, "storage.size", 0);
 
 		hal_device_property_set_string (d, "info.category", "storage");
 		hal_device_add_capability (d, "storage");
@@ -1028,6 +1033,17 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 
 		hal_device_property_set_bool (d, "storage.removable", is_removable);
+		/* set storage.size only if we have fixed media */
+		if (!is_removable) {
+			guint64 num_blocks;
+			if (hal_util_get_uint64_from_file (sysfs_path, "size", &num_blocks, 0)) {
+				/* TODO: sane to assume this is always 512 for non-removable? 
+				 * I think genhd.c guarantees this... */
+				hal_device_property_set_uint64 (d, "storage.size", num_blocks * 512);
+			}
+		} else {
+			hal_device_property_set_uint64 (d, "storage.size", 0);
+		}
 
 		/* by default, do checks for media if, and only if, the removable file is set to 1
 		 *
@@ -1138,6 +1154,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	} else {
 		guint sysfs_path_len;
+		gboolean is_physical_partition;
 
 		/*************************
 		 *
@@ -1159,7 +1176,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (
 			d, "volume.is_disc", 
 			strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
-		hal_device_property_set_bool (d, "volume.is_partition", TRUE);
+
+
+		is_physical_partition = TRUE;
+		if (is_fakevolume || is_device_mapper)
+			is_physical_partition = FALSE;
+
+		hal_device_property_set_bool (d, "volume.is_partition", is_physical_partition);
 
 		hal_device_property_set_string (d, "info.category", "volume");
 		if (strcmp(hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0) {
@@ -1168,9 +1191,9 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_add_capability (d, "volume");
 		hal_device_add_capability (d, "block");
 
-		/* determine partition number - unless, of course, we're a fakevolume */
+		/* determine partition number */
 		sysfs_path_len = strlen (sysfs_path);
-		if (!is_fakevolume) {
+		if (is_physical_partition) {
 			if (sysfs_path_len > 0 && isdigit (sysfs_path[sysfs_path_len - 1])) {
 				guint i;
 				for (i = sysfs_path_len - 1; isdigit (sysfs_path[i]); --i)
@@ -1200,7 +1223,19 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 		hal_device_property_set_uint64 (
 			d, "volume.size",
-			((dbus_uint64_t)(512)) * ((dbus_uint64_t)(hal_device_property_set_int (d, "volume.block_size", 512))));
+			((dbus_uint64_t)(512)) * ((dbus_uint64_t)(hal_device_property_get_int (d, "volume.num_blocks"))));
+		/* TODO: move to prober? */
+		if (is_partition) {
+			guint64 start_block;
+			guint64 parent_size;
+			if (hal_util_get_uint64_from_file (sysfs_path, "start", &start_block, 0)) {
+				hal_device_property_set_uint64 (d, "volume.partition.start", start_block * 512);
+			}
+			if (hal_util_get_uint64_from_file (sysfs_path, "../size", &parent_size, 0)) {
+				hal_device_property_set_uint64 (d, "volume.partition.media_size", parent_size * 512);
+			}
+		}
+
 
 		/* add to TDL so preprobing callouts and prober can access it */
 		hal_device_store_add (hald_get_tdl (), d);

@@ -2339,7 +2339,7 @@
             </row>
             <row>
               <entry>
-                <literal>volume.partition.x86_type</literal> (int)
+                <literal>volume.partition.msdos_part_table_type</literal> (int)
               </entry>
               <entry>examples: 0x83, 0xfd, 0x8e</entry>
               <entry>
@@ -2348,6 +2348,32 @@
               <entry>
                 If available, this is the partition type if the disk for which
                 this volume stems from is using an MS-DOS-style partition table.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.partition.media_size</literal> (uint64)
+              </entry>
+              <entry>example: 500107862016</entry>
+              <entry>
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
+              </entry>
+              <entry>
+                If available, size of the current media or the fixed disk in the storage device.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.partition.start</literal> (uint64)
+              </entry>
+              <entry>example: 32256</entry>
+              <entry>
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
+              </entry>
+              <entry>
+                If available, the offset where the physical partition starts on the media or the fixed disk in the storage device.
               </entry>
             </row>
           </tbody>
@@ -2862,11 +2888,19 @@
             </row>
             <row>
               <entry>
-                <literal>storage.removable</literal> (bool)
+	        <literal>storage.removable</literal> (bool)
               </entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>Media can be removed from the storage device</entry>
+            </row>
+            <row>
+              <entry>
+	        <literal>storage.size</literal> (uint64)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>size in bytes of the storage device - only meaningful if storage.removable is FALSE</entry>
             </row>
             <row>
               <entry>
