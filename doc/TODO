@@ -1,82 +1,114 @@
 
-CVSID:$Id$
- 
-This document is the TODO list for the HAL project. Feel free to
-add/remove entries if you get an idea or implement one of these. If
-you want to work on one of these you might want to send a patch that
-updates this file to reflect it.
 
 Ongoing items that always need work
 -----------------------------------
- - Valgrind once in a while to fix memory leaks / memory corruption
 
- - Keeping the spec in sync with the code
+ - Valgrind once in a while to check / fix memory leaks / memory corruption
 
- - Extend test suite coverage
+ - Keep the spec in sync with the code
+
+ - Write / check / update docs of exported libraries
+
+ - Audit all code and drop privileges in helpers where appropriate
 
 
-Small items
+Items specifically planned for 0.5.8
+------------------------------------
+
+ - Export hal user and group in pkg-config file
+
+ - Provide a libhal_device_set_all_properties plus functions to construct
+   a LibHalPropertySet
+
+ - Require that addons poke hald before the device is visible - this is for
+   addons that also probes the hardware and provide the initial state..
+
+ - Move /usr/libexec to /usr/lib/hal/ - drop /usr/lib/hal/scripts -
+   use /usr/lib/hal/methods
+
+ - Think hard about the interfaces HAL exports to addons as out-of-tree
+   code like NUT now starts to use it. Includes interface stability thoughts
+   and what we guarantee and what we don't. Might have license implications
+   too.
+
+
+Other items
 -----------
 
- - Fix GtkDeprecationWarning: gtk.TRUE is deprecated, use True instead
-   icon = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB, gtk.TRUE, 8, 16, 16)
-   - even better; get rid of h-d-m when something  better is available
+ - Use udev data instead of probing (whenever possible)
 
- - Fix doxygen documentation for exported libraries, e.g. libhal and 
-   libhal-storage
+ - Performance! Profile and optimize! Too big of a task to describe in
+   one bullet. Feel free to provide patches to this file to break it up
+   after some analysis.
 
- - Figure out how to fix configure.in so we can build the spec in build
-   systems that are firewalled off the Internet (e.g. replace the URL
-   http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd
-   with a local path on the system from the installed Docbook packages)
+ - It would be nice if method calls could return string, bool int etc.
+   Perhaps use dbus-send style, e.g. int32:<number>' or 'string:the_string'
+   or 'bool:true'. Granted, this is already possible today through addons
+   so maybe not important.
 
- - Fix storage policy properties now that we have string lists
+ - Finish up and merge mjg59's Bluetooth code
 
- - Make the helpers (probers, addons) use a direct connection to hald
-   instead of routing it through the system message bus
+ - Configuration of serial and other legacy ports
 
- - Method calls should have a method to return string, bool int etc.
-   Perhaps use dbus-send style, 
-   e.g. int32:<number>' or 'string:the_string' or 'bool:true'
+ - Device firmware. It would be nice to export a property and some 
+   DeviceCondition when a device asked for firmware that was missing
+   and is such in a state where it cannot operate. Might need kernel
+   work.
 
-Medium items
-------------
+ - Devices with device files should export an interface with for
+   requesting / dropping access to the device, e.g. 
 
- - Make probers/helpers/addons use a point-to-point connection to hald
+    RequestAccess()
+    GiveupAccess()   (better naming welcome)
 
- - Support more kind of class/bus devices
-   - Bluetooth devices that is connected should appear in sysfs as a
-     bus device so the device link from e.g. input or tty abstraction
-     should point to the bus device in sysfs
+   which will change device file ownership or add/remove an ACL.
 
-Big items
----------
+ - Take a few days out of the calender and give some love to the spec
 
- - Finish volume_id so it's safe to use on IDE drives; e.g. make it detect
-   various IDE RAID signatures
+ - Export ink levels for printers
+   https://bugs.freedesktop.org/show_bug.cgi?id=2295
 
- - Port server code to new glib/gobject D-BUS bindings when they're cooked
-   and ready
-   - We get introspection for free
-   - GNOME projects etc. would use D-BUS glib bindings instead of libhal
+ - LVM support
+   https://bugs.freedesktop.org/show_bug.cgi?id=6427
 
- - Method invocations - have some way to specify that that a hal device
-   object exports the org.freedesktop.Hal.Device.Foo.Bar interface -
-   suggest to use a property info.interfaces (strlist) with what interfaces
-   is supported and set info.interface.Foo.Bar.methodXYZ='/path/to/methodXYZ'
-   for all methods on the Foo.Bar interface.
-   - Need to define the interfaces and their meaning in the spec
+ - Signal when a USB device doesn't have enough power
+   https://bugs.freedesktop.org/show_bug.cgi?id=4452
 
- - Persistent properties, e.g. the ability for someone using libhal to
-   say libhal_device_property_set_persistent (udi, "some.property.name") -
-   should be a privileged operation
+ - Format volume methods
 
- - Persistent device objects
+ - Disk partitioning methods
 
- - Move all privilege checking to D-BUS configuration files - the one shipped
-   with hal wouldn't allow much but distributors are free to change this as
-   the like (for Fedora we would rely on SELinux probably, Debian would perhaps
-   rely on the plugdev group)
+Items that might be interesting or maybe not:
+---------------------------------------------
 
- - Privilege separation - discussed here 
-   http://lists.freedesktop.org/archives/hal/2005-February/002163.html
+ - Port hal daemon core to use dbus-glib bindings? I'm not convinced this
+   will buy us much, the core code is already done, debugged and working
+   plus dbus-glib bindings only support one interface per proxy...
+
+External projects:
+------------------
+
+ - We need to finish PolicyKit, at least get 0.2 out and bring it to
+   1.0 rather fast (ideally before Spring 2007).
+
+ - D-BUS needs to go to 1.0
+
+ - We need secure ways to track user sessions and from what user
+   session a D-BUS call into HAL originates from. We also want
+   to know when a user session is inactive (e.g. fast user 
+   switching). This is Very Important, without this we cannot
+
+   - clean up what the user did by invoking methods on HAL
+     - e.g. unmount storage devices
+     - adjust ACL's cf. RequestAccess() and GiveupAccess() above
+     - other things
+
+   - refuse service to inactive sessions
+     - e.g. refuse Suspend() or Hibernate() from the inactive
+       user when another user is active on the same console from
+       e.g. fast-user-switching
+
+ - pm-utils guys need to release their stuff - when a working
+   release is out give a grace period of a number of months for
+   distros to switch to pm-utils before ripping out the callouts
+   to distro specific scripts.

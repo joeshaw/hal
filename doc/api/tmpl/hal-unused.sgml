@@ -346,13 +346,6 @@ sysfs
 </para>
 
 
-<!-- ##### MACRO LIBHAL_FREE_DBUS_ERROR ##### -->
-<para>
-
-</para>
-
-@_dbus_error_: 
-
 <!-- ##### TYPEDEF LibHalPolicyContext ##### -->
 <para>
 
