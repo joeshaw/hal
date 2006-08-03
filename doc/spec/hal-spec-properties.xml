@@ -2326,6 +2326,16 @@
             </row>
             <row>
               <entry>
+                <literal>volume.linux.is_device_mapper</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes, but only on Linux</entry>
+              <entry>
+                If the volume stems from the Linux Device Mapper this property is set to <literal>TRUE</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry>
                 <literal>volume.partition.number</literal> (int)
               </entry>
               <entry></entry>

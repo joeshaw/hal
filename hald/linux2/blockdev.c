@@ -1173,6 +1173,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "volume.mount_point", "");
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted_read_only", FALSE);
+		hal_device_property_set_bool (d, "volume.linux.is_device_mapper", is_device_mapper);
 		hal_device_property_set_bool (
 			d, "volume.is_disc", 
 			strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
@@ -1353,8 +1354,10 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 		const char *stor_udi;
 		HalDevice *stor_dev;
 		gboolean is_fakevolume;
+		gboolean is_device_mapper;
 
 		is_partition = hal_device_property_get_bool (d, "volume.is_partition");
+		is_device_mapper = hal_device_property_get_bool (d, "volume.linux.is_device_mapper");
 
 		if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0)
 			is_fakevolume = TRUE;
@@ -1385,7 +1388,7 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 					goto out;
 				}
 			}
-		} else if (!is_partition) {
+		} else if ((!is_partition) && (!is_device_mapper)) {
 			GSList *i;
 			GSList *partitions;
 			unsigned int num_childs;
