@@ -129,3 +129,10 @@ External projects:
    release is out give a grace period of a number of months for
    distros to switch to pm-utils before ripping out the callouts
    to distro specific scripts.
+
+ - Runtime power management in the kernel. This is still ongoing
+   and AFAIK there is no concrete idea about the user space interface.
+   Once the user space interface is set in stone we can easily
+   export this via HAL for selective suspend and/or tuning of knobs.
+
+
