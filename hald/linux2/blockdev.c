@@ -788,12 +788,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	d = hal_device_new ();
 
 	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
-	if (parent == NULL) {
+	if (parent == NULL && !is_partition) {
 		GDir *dir;
 		GError *err = NULL;
 		char path[HAL_PATH_MAX];
 
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
+		HAL_INFO (("Looking in %s", path));
 		if ((dir = g_dir_open (path, 0, &err)) == NULL) {
 			HAL_WARNING (("Unable to open %s: %s", path, err->message));
 			g_error_free (err);
@@ -841,6 +842,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				g_free (target);
 			}
 			g_dir_close (dir);
+			HAL_INFO (("Done looking in %s", path));
 		}
 		
 	}
@@ -909,7 +911,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		goto out2;
 	}
 
-	if (!is_partition) {
+	if (!is_partition && !is_device_mapper) {
 		const char *udi_it;
 		const char *physdev_udi;
 		HalDevice *scsidev;
@@ -1052,6 +1054,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (d, "storage.media_check_enabled", is_removable);
 
 		parent_bus = hal_device_property_get_string (parent, "info.bus");
+		if (parent_bus == NULL) {
+			HAL_INFO (("parent_bus is NULL - wrong parent?"));
+			goto error;
+		}
 		HAL_INFO (("parent_bus is %s", parent_bus));
 
 		/* per-bus specific properties */

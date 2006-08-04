@@ -280,11 +280,16 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		}
 	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) {
 		gboolean is_partition;
-		size_t len;
+		char **tokens;
 
-		len = strlen(hotplug_event->sysfs.sysfs_path);
-		is_partition = isdigit(hotplug_event->sysfs.sysfs_path[len - 1]) ||
-			       strstr (hotplug_event->sysfs.sysfs_path, "/fakevolume") ;
+		/* it's a partition if and only if it's of the form /sys/block/sda/sda1 e.g.
+		 * four instead of three elements in the path
+		 */
+		is_partition = FALSE;
+		tokens = g_strsplit (hotplug_event->sysfs.sysfs_path, "/", 0);
+		if (g_strv_length (tokens) > 4 ) /* includes terminating NULL */
+			is_partition = TRUE;
+		g_strfreev (tokens);
 
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent = NULL;

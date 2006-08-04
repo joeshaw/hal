@@ -682,6 +682,7 @@ scsi_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_util_set_string_from_file (d, "scsi.model", sysfs_path, "model");
 	hal_util_set_string_from_file (d, "scsi.vendor", sysfs_path, "vendor");
 	hal_util_get_int_from_file (sysfs_path, "type", &type, 0);
+	HAL_INFO (("%s/type -> %d (-> scsi.type)", sysfs_path, type));
 	switch (type) {
 	case 0:
 		/* Disk */
