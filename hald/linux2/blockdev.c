@@ -793,6 +793,20 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		GError *err = NULL;
 		char path[HAL_PATH_MAX];
 
+
+		/* sleep one second since device mapper needs additional
+		 * time before the device file is ready
+		 *
+		 * this is a hack and will only affect device mapper block
+		 * devices. It can go away once the kernel emits a "changed"
+		 * event for the device file (this is about to go upstream)
+		 * and we can depend on a released kernel with this feature.
+		 */
+		if (strncmp (hal_util_get_last_element (sysfs_path), "dm-", 3) == 0) {
+			HAL_INFO (("Waiting 1000ms to wait for device mapper to be ready", path));
+			usleep (1000 * 1000);
+		}
+
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
 		HAL_INFO (("Looking in %s", path));
 		if ((dir = g_dir_open (path, 0, &err)) == NULL) {
@@ -810,7 +824,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 				if (target != NULL) {
 					HalDevice *slave_volume;
-					
+
 					slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
 												"linux.sysfs_path", 
 												target);
