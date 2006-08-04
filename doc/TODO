@@ -15,8 +15,6 @@ Ongoing items that always need work
 Items specifically planned for 0.5.8
 ------------------------------------
 
- - Export hal user and group in pkg-config file
-
  - Provide a libhal_device_set_all_properties plus functions to construct
    a LibHalPropertySet
 
