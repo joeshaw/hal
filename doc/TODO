@@ -31,6 +31,7 @@ Items specifically planned for 0.5.8
    and what we guarantee and what we don't. Might have license implications
    too.
 
+ - Make Mount() support option 'remount' in a sane way
 
 Other items
 -----------
