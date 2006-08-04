@@ -279,20 +279,18 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							     (void *) hotplug_event);
 		}
 	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) {
-		gboolean is_partition;
-		char **tokens;
-
-		/* it's a partition if and only if it's of the form /sys/block/sda/sda1 e.g.
-		 * four instead of three elements in the path
-		 */
-		is_partition = FALSE;
-		tokens = g_strsplit (hotplug_event->sysfs.sysfs_path, "/", 0);
-		if (g_strv_length (tokens) > 4 ) /* includes terminating NULL */
-			is_partition = TRUE;
-		g_strfreev (tokens);
-
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent = NULL;
+			int range;
+			gboolean is_partition;
+			
+			/* it's a partition if and only if it doesn't have the range file...
+			 * notably the device mapper partitions do have a range file, but that's
+			 * fine, we don't count them as partitions anyway...
+			 */
+			is_partition = TRUE;
+			if (hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0))
+				is_partition = FALSE;
 
 			if (is_partition) {
 				gchar *parent_path;
@@ -327,7 +325,6 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							  (void *) hotplug_event);
 		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 			hotplug_event_begin_remove_blockdev (hotplug_event->sysfs.sysfs_path,
-							     is_partition,
 							     (void *) hotplug_event);
 		}
 	} else {

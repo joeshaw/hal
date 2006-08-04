@@ -872,7 +872,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	hal_device_property_set_int (d, "block.major", major);
 	hal_device_property_set_int (d, "block.minor", minor);
-	hal_device_property_set_bool (d, "block.is_volume", is_partition);
+	hal_device_property_set_bool (d, "block.is_volume", is_partition || is_device_mapper);
 
 	if (hal_device_has_property(parent, "info.bus") &&
 		(strcmp(hal_device_property_get_string(parent, "info.bus"), "platform") == 0) &&
@@ -1346,11 +1346,11 @@ force_unmount (HalDevice *d, void *end_token)
 }
 
 void
-hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partition, void *end_token)
+hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token)
 {
 	HalDevice *d;
 
-	HAL_INFO (("block_rem: sysfs_path=%s is_part=%d", sysfs_path, is_partition));
+	HAL_INFO (("block_rem: sysfs_path=%s is_part=%d", sysfs_path));
 
 	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
 	if (d == NULL) {
@@ -1361,6 +1361,7 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partit
 		HalDevice *stor_dev;
 		gboolean is_fakevolume;
 		gboolean is_device_mapper;
+		gboolean is_partition;
 
 		is_partition = hal_device_property_get_bool (d, "volume.is_partition");
 		is_device_mapper = hal_device_property_get_bool (d, "volume.linux.is_device_mapper");

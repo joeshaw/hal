@@ -30,7 +30,7 @@
 
 void hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const char *device_file, gboolean is_partition, HalDevice *parent, void *end_token);
 
-void hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, gboolean is_partition, void *end_token);
+void hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token);
 
 gboolean blockdev_rescan_device (HalDevice *d);
 
