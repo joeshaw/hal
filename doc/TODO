@@ -33,6 +33,9 @@ Items specifically planned for 0.5.8
 
  - Make Mount() support option 'remount' in a sane way
 
+ - Finalize the work on org.freedesktop.Hal.Device.VideoAdapterPM
+   including the XML file format matching most adapters
+
 Other items
 -----------
 
