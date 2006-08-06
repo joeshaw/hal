@@ -161,6 +161,8 @@ main (int argc, char **argv)
 	DBusError error;
 	FILE *eventfp;
 
+	hal_set_proc_title_init (argc, argv);
+
 	/* If we don't even consider the /proc ACPI interface, drop privileges
 	 * right away */
 #ifndef ACPI_PROC
@@ -182,6 +184,7 @@ main (int argc, char **argv)
 	drop_privileges (0);
 
 	if (eventfp) {
+		hal_set_proc_title ("hald-addon-acpi: listening on acpi kernel interface /proc/acpi/event");
 		main_loop (ctx, eventfp);
 		dbg ("Lost connection to kernel acpi event source - exiting");
 		return 1;
@@ -193,6 +196,7 @@ main (int argc, char **argv)
 #ifdef ACPI_ACPID
 		/* Else, try to use acpid. */
 		if ((eventfp = acpi_get_event_fp_acpid ())) {
+			hal_set_proc_title ("hald-addon-acpi: listening on acpid socket /var/run/acpid.socket");
 			main_loop (ctx, eventfp);
 			dbg ("Cannot connect to acpid event socket - retry connect");
 		}

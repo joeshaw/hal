@@ -262,6 +262,8 @@ main (int argc, char *argv[])
 {
 	DBusError err;
 
+	hal_set_proc_title_init (argc, argv);
+	
 	_set_debug ();	
 
 	device_udi = getenv ("UDI");
@@ -311,6 +313,10 @@ main (int argc, char *argv[])
 	/* only add capability when initial charge_level key has been set */
 	dbus_error_init (&err);
 	libhal_device_add_capability (halctx, device_udi, "battery", &err);
+
+	hal_set_proc_title ("hald-addon-usb-csr: listening on '%s'", 
+			    libhal_device_get_property_string(halctx, device_udi,
+							      "info.product", &err));
 
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_timeout_add (1000L * TIMEOUT, check_all_batteries, NULL);

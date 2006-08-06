@@ -272,6 +272,8 @@ main (int argc, char *argv[])
 	struct hiddev_event ev[64];
 	int rd;
 
+	hal_set_proc_title_init (argc, argv);
+
 	_set_debug ();
 	
 	udi = getenv ("UDI");
@@ -292,6 +294,8 @@ main (int argc, char *argv[])
 
 	if (!ups_get_static (ctx, udi, fd))
 		goto out;
+
+	hal_set_proc_title ("hald-addon-hid-ups: listening on %s", device_file);
 
 	FD_ZERO(&fdset);
 	while (1) {
