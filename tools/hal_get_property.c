@@ -194,8 +194,8 @@ main (int argc, char *argv[])
 		if (is_verbose)
 			printf ("Type is uint64 (shown in %s)\n",
 				(is_hex ? "hexadecimal" : "decimal"));
-		printf ((is_hex ? "%llx\n" : "%lld\n"),
-			libhal_device_get_property_uint64 (hal_ctx, udi, key, &error));
+		printf ((is_hex ? "%llx\n" : "%llu\n"),
+			(long long unsigned int) libhal_device_get_property_uint64 (hal_ctx, udi, key, &error));
 		break;
 	case LIBHAL_PROPERTY_TYPE_DOUBLE:
 		if (is_verbose)

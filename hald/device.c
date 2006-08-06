@@ -567,7 +567,7 @@ hal_device_property_get_as_string (HalDevice *device, const char *key, char *buf
 			snprintf (buf, bufsize, "%d", hal_property_get_int (prop));
 			break;
 		case HAL_PROPERTY_TYPE_UINT64:
-			snprintf (buf, bufsize, "%lld", hal_property_get_uint64 (prop));
+			snprintf (buf, bufsize, "%llu", (long long unsigned int) hal_property_get_uint64 (prop));
 			break;
 		case HAL_PROPERTY_TYPE_DOUBLE:
 			snprintf (buf, bufsize, "%f", hal_property_get_double (prop));
@@ -946,9 +946,9 @@ hal_device_print (HalDevice *device)
                         break;
  
                 case HAL_PROPERTY_TYPE_UINT64:
-                        fprintf (stderr, "  %s = %lld  0x%llx  (uint64)\n", key,
-                                hal_property_get_uint64 (p),
-                                hal_property_get_uint64 (p));
+                        fprintf (stderr, "  %s = %llu  0x%llx  (uint64)\n", key,
+                                (long long unsigned int) hal_property_get_uint64 (p),
+                                (long long unsigned int) hal_property_get_uint64 (p));
                         break;
  
                 case HAL_PROPERTY_TYPE_DOUBLE:

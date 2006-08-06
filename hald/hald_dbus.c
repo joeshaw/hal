@@ -2896,14 +2896,14 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 		{
 			dbus_int64_t value;
 			dbus_message_iter_get_basic (&iter, &value);
-			g_string_append_printf (stdin_str, "%lld", value);
+			g_string_append_printf (stdin_str, "%lld", (long long int) value);
 			break;
 		}
 		case DBUS_TYPE_UINT64:
 		{
 			dbus_uint64_t value;
 			dbus_message_iter_get_basic (&iter, &value);
-			g_string_append_printf (stdin_str, "%llu", value);
+			g_string_append_printf (stdin_str, "%llu", (long long unsigned int) value);
 			break;
 		}
 		case DBUS_TYPE_DOUBLE:

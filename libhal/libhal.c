@@ -2452,9 +2452,9 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 				libhal_psi_get_int (&i));
 			break;
 		case LIBHAL_PROPERTY_TYPE_UINT64:
-			printf ("    %s = %lld = 0x%llx (uint64)\n", key,
-				libhal_psi_get_uint64 (&i),
-				libhal_psi_get_uint64 (&i));
+			printf ("    %s = %llu = 0x%llx (uint64)\n", key,
+				(long long unsigned int) libhal_psi_get_uint64 (&i),
+				(long long unsigned int) libhal_psi_get_uint64 (&i));
 			break;
 		case LIBHAL_PROPERTY_TYPE_BOOLEAN:
 			printf ("    %s = %s (bool)\n", key,

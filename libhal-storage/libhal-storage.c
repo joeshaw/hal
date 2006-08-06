@@ -177,7 +177,7 @@ libhal_volume_policy_compute_size_as_string (LibHalVolume *volume)
 					  ((double)size)/((double)cur), sizes_str[cur_str]);
 				result = strdup (buf);
 			} else {
-				snprintf (buf, MAX_STRING_SZ, "%lld%s", size / cur, sizes_str[cur_str]);
+				snprintf (buf, MAX_STRING_SZ, "%llu%s", (long long unsigned int) size / cur, sizes_str[cur_str]);
 				result = strdup (buf);
 				}
 			goto out;

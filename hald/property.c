@@ -216,7 +216,7 @@ hal_property_to_string (HalProperty *prop)
 	case HAL_PROPERTY_TYPE_INT32:
 		return g_strdup_printf ("%d", prop->v.int_value);
 	case HAL_PROPERTY_TYPE_UINT64:
-		return g_strdup_printf ("%lld", prop->v.uint64_value);
+		return g_strdup_printf ("%llu", (long long unsigned int) prop->v.uint64_value);
 	case HAL_PROPERTY_TYPE_BOOLEAN:
 		/* FIXME: Maybe use 1 and 0 here instead? */
 		return g_strdup (prop->v.bool_value ? "true" : "false");

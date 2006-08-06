@@ -63,8 +63,8 @@ toshiba_key_flush (void)
 		fprintf (fp, "hotkey_ready:0\n");
 		fclose (fp);
 		fp = fopen (TOSHIBA_ACPI_KEYS, "r+");
-		fscanf (fp, "hotkey_ready: %d\nhotkey: 0x%4x",
-			&hotkey_ready, &value);
+		if (fscanf (fp, "hotkey_ready: %d\nhotkey: 0x%4x", &hotkey_ready, &value) < 2)
+			dbg ("Warning: failure while parse %s", TOSHIBA_ACPI_KEYS);
 	}
 	if (fp)
 		fclose (fp);
@@ -84,8 +84,8 @@ toshiba_key_ready (int *value)
 	if (!fp)
 		return FALSE;
 
-	fscanf (fp, "hotkey_ready: %1d\nhotkey: 0x%4x",
-		&hotkey_ready, value);
+	if (fscanf (fp, "hotkey_ready: %1d\nhotkey: 0x%4x", &hotkey_ready, value) < 2)
+		dbg ("Warning: failure while parse %s", TOSHIBA_ACPI_KEYS); 
 
 	if (hotkey_ready) {
 		fprintf (fp, "hotkey_ready:0\n");

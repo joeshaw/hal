@@ -132,8 +132,7 @@ main (int argc, char *argv[])
 #endif
 
 	/* read from stdin */
-	fgets (unmount_options, sizeof (unmount_options), stdin);
-	if (strlen (unmount_options) > 0)
+	if (strlen (fgets (unmount_options, sizeof (unmount_options), stdin)) > 0)
 		unmount_options [strlen (unmount_options) - 1] = '\0';
 	/* validate that input from stdin is UTF-8 */
 	if (!g_utf8_validate (unmount_options, -1, &end))

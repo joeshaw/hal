@@ -125,10 +125,10 @@ print_props (const char *udi)
 			break;
 
 		case LIBHAL_PROPERTY_TYPE_UINT64:
-			printf ("  %s = %lld  (0x%llx)  (uint64)\n",
+			printf ("  %s = %llu  (0x%llx)  (uint64)\n",
 				libhal_psi_get_key (&it),
-				libhal_psi_get_uint64 (&it),
-				libhal_psi_get_uint64 (&it));
+				(long long unsigned int) libhal_psi_get_uint64 (&it),
+				(long long unsigned int) libhal_psi_get_uint64 (&it));
 			break;
 
 		case LIBHAL_PROPERTY_TYPE_DOUBLE:
@@ -420,8 +420,8 @@ print_property (const char *udi, const char *key)
 	case LIBHAL_PROPERTY_TYPE_UINT64:
 		{
 			dbus_uint64_t value = libhal_device_get_property_uint64 (hal_ctx, udi, key, &error);
-			printf (long_list?"*** new value: %lld (0x%llx)  (uint64)\n":"%lld (0x%llx)",
-				value, value);
+			printf (long_list?"*** new value: %llu (0x%llx)  (uint64)\n":"%llu (0x%llx)",
+				(long long unsigned int) value, (long long unsigned int) value);
 		}
 		break;
 	case LIBHAL_PROPERTY_TYPE_DOUBLE:

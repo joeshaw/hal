@@ -501,14 +501,11 @@ handle_mount (LibHalContext *hal_ctx,
 	/* TODO: sanity check that what hal exports is correct (cf. Martin Pitt's email) */
 
 	/* read from stdin */
-	fgets (mount_point,   sizeof (mount_point),   stdin);
-	fgets (mount_fstype,  sizeof (mount_fstype),  stdin);
-	fgets (mount_options, sizeof (mount_options), stdin);
-	if (strlen (mount_point) > 0)
+	if (strlen (fgets (mount_point, sizeof (mount_point), stdin)) > 0)
 		mount_point   [strlen (mount_point)   - 1] = '\0';
-	if (strlen (mount_fstype) > 0)
+	if (strlen (fgets (mount_fstype, sizeof (mount_fstype), stdin)) > 0)
 		mount_fstype  [strlen (mount_fstype)  - 1] = '\0';
-	if (strlen (mount_options) > 0)
+	if (strlen (fgets (mount_options, sizeof (mount_options), stdin)) > 0)
 		mount_options [strlen (mount_options) - 1] = '\0';
 	/* validate that input from stdin is UTF-8 */
 	if (!g_utf8_validate (mount_point, -1, &end))

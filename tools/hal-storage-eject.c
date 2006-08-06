@@ -187,8 +187,7 @@ main (int argc, char *argv[])
 #endif
 
 	/* read from stdin */
-	fgets (eject_options, sizeof (eject_options), stdin);
-	if (strlen (eject_options) > 0)
+	if (strlen (fgets (eject_options, sizeof (eject_options), stdin)) > 0)
 		eject_options [strlen (eject_options) - 1] = '\0';
 	/* validate that input from stdin is UTF-8 */
 	if (!g_utf8_validate (eject_options, -1, &end))
