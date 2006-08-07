@@ -101,6 +101,10 @@ Other items
 
  - CPU frequency stuff from hmacht
 
+ - Teach HAL about multisession and partitioned optical discs - may
+   require reworking the 'fakevolume' code as we'd be adding more
+   than one fakevolume
+
 Items that might be interesting or maybe not:
 ---------------------------------------------
 

@@ -283,16 +283,27 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			HalDevice *parent = NULL;
 			int range;
 			gboolean is_partition;
+			gboolean is_fakevolume;
 			
 			/* it's a partition if and only if it doesn't have the range file...
+			 *
 			 * notably the device mapper partitions do have a range file, but that's
 			 * fine, we don't count them as partitions anyway...
+			 *
+			 * also, if the sysfs ends with "fakevolume" the hotplug event is synthesized
+			 * from within HAL for partitions on the main block device
 			 */
+			is_fakevolume = FALSE;
+			if (strcmp (hal_util_get_last_element (hotplug_event->sysfs.sysfs_path), "fakevolume") == 0) {
+				is_fakevolume = TRUE;
+			}
 			is_partition = TRUE;
-			if (hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0))
+			if (is_fakevolume ||
+			    hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0)) {
 				is_partition = FALSE;
+			}
 
-			if (is_partition) {
+			if (is_partition || is_fakevolume) {
 				gchar *parent_path;
 
 				parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
