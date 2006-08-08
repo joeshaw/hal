@@ -904,6 +904,197 @@ device_get_all_properties (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static dbus_bool_t 
+sender_has_privileges (DBusConnection *connection, DBusMessage *message)
+{
+	DBusError error;
+	unsigned long user_uid;
+	const char *user_base_svc;
+	dbus_bool_t ret;
+
+	ret = FALSE;
+
+	user_base_svc = dbus_message_get_sender (message);
+	if (user_base_svc == NULL) {
+		HAL_WARNING (("Cannot determine base service of caller"));
+		goto out;
+	}
+
+	HAL_DEBUG (("base_svc = %s", user_base_svc));
+
+	dbus_error_init (&error);
+	user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error);
+	if (user_uid == (unsigned long) -1 || dbus_error_is_set (&error)) {
+		HAL_WARNING (("Could not get uid for connection: %s %s", error.name, error.message));
+		dbus_error_free (&error);
+		goto out;
+	}
+
+	HAL_INFO (("uid for caller is %ld", user_uid));
+
+	if (user_uid != 0 && user_uid != geteuid()) {
+		HAL_WARNING (("uid %d is not privileged", user_uid));
+		goto out;
+	}
+
+	ret = TRUE;
+
+out:
+	return ret;
+}
+
+
+/** Set multiple properties on a device in an atomic fashion.
+ *
+ *  <pre>
+ *  Device.GetAllProperties(map{string, any} properties)
+ *
+ *    raises org.freedesktop.Hal.NoSuchDevice
+ *  </pre>
+ *
+ *  @param  connection          D-BUS connection
+ *  @param  message             Message
+ *  @return                     What to do with the message
+ */
+static DBusHandlerResult
+device_set_multiple_properties (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	DBusMessageIter dict_iter;
+	HalDevice *d;
+	const char *udi;
+
+	udi = dbus_message_get_path (message);
+
+	HAL_TRACE (("entering, udi=%s", udi));
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (!local_interface && !sender_has_privileges (connection, message)) {
+		raise_permission_denied (connection, message, "SetProperty: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_message_iter_init (message, &iter);
+
+	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_ARRAY  &&
+	    dbus_message_iter_get_element_type (&iter) != DBUS_TYPE_DICT_ENTRY) {
+		HAL_ERROR (("error, expecting an array of dict entries", __FILE__, __LINE__));
+		raise_syntax (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_message_iter_recurse (&iter, &dict_iter);
+
+	/* update atomically */
+	device_property_atomic_update_begin ();
+
+	while (dbus_message_iter_get_arg_type (&dict_iter) == DBUS_TYPE_DICT_ENTRY)
+	{
+		DBusMessageIter dict_entry_iter, var_iter, array_iter;
+		const char *key;
+		int change_type;
+		dbus_bool_t rc;
+
+		dbus_message_iter_recurse (&dict_iter, &dict_entry_iter);
+		dbus_message_iter_get_basic (&dict_entry_iter, &key);
+
+		dbus_message_iter_next (&dict_entry_iter);
+		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
+		change_type = dbus_message_iter_get_arg_type (&var_iter);
+
+		rc = FALSE;
+
+		switch (change_type) {
+		case DBUS_TYPE_ARRAY:
+			if (dbus_message_iter_get_element_type (&var_iter) != DBUS_TYPE_STRING) {
+				/* TODO: error */
+			}
+			dbus_message_iter_recurse (&var_iter, &array_iter);
+
+			hal_device_property_strlist_clear (d, key);
+
+			while (dbus_message_iter_get_arg_type (&array_iter) == DBUS_TYPE_STRING) {
+				const char *v;
+				dbus_message_iter_get_basic (&array_iter, &v);
+				HAL_INFO ((" strlist elem %s -> %s", key, v));
+				rc = hal_device_property_strlist_append (d, key, v);
+				dbus_message_iter_next (&array_iter);
+			}
+
+			break;
+		case DBUS_TYPE_STRING:
+		{
+			const char *v;
+			dbus_message_iter_get_basic (&var_iter, &v);
+			HAL_INFO (("%s -> %s", key, v));
+			rc = hal_device_property_set_string (d, key, v);
+			break;
+		}
+		case DBUS_TYPE_INT32:
+		{
+			dbus_int32_t v;			
+			dbus_message_iter_get_basic (&var_iter, &v);
+			HAL_INFO (("%s -> %d", key, v));
+			rc = hal_device_property_set_int (d, key, v);
+			break;
+		}
+		case DBUS_TYPE_UINT64:
+		{
+			dbus_uint64_t v;
+			dbus_message_iter_get_basic (&var_iter, &v);
+			HAL_INFO (("%s -> %lld", key, v));
+			rc = hal_device_property_set_uint64 (d, key, v);
+			break;
+		}
+		case DBUS_TYPE_DOUBLE:
+		{
+			double v;
+			dbus_message_iter_get_basic (&var_iter, &v);
+			HAL_INFO (("%s -> %g", key, v));
+			rc = hal_device_property_set_double (d, key, v);
+			break;
+		}
+		case DBUS_TYPE_BOOLEAN:
+		{
+			gboolean v;
+			dbus_message_iter_get_basic (&var_iter, &v);
+			HAL_INFO (("%s -> %s", key, v ? "True" : "False"));
+			rc = hal_device_property_set_bool (d, key, v);
+			break;
+		}
+		default:
+			/* TODO: error */
+			break;
+		}
+
+		/* TODO: error out on rc==FALSE? */
+
+		dbus_message_iter_next (&dict_iter);
+	}
+
+	device_property_atomic_update_end ();
+
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 
 /** Get a property on a device.
  *
@@ -1103,46 +1294,6 @@ device_get_property_type (DBusConnection * connection,
 	dbus_message_unref (reply);
 
 	return DBUS_HANDLER_RESULT_HANDLED;
-}
-
-
-static dbus_bool_t 
-sender_has_privileges (DBusConnection *connection, DBusMessage *message)
-{
-	DBusError error;
-	unsigned long user_uid;
-	const char *user_base_svc;
-	dbus_bool_t ret;
-
-	ret = FALSE;
-
-	user_base_svc = dbus_message_get_sender (message);
-	if (user_base_svc == NULL) {
-		HAL_WARNING (("Cannot determine base service of caller"));
-		goto out;
-	}
-
-	HAL_DEBUG (("base_svc = %s", user_base_svc));
-
-	dbus_error_init (&error);
-	user_uid = dbus_bus_get_unix_user (connection, user_base_svc, &error);
-	if (user_uid == (unsigned long) -1 || dbus_error_is_set (&error)) {
-		HAL_WARNING (("Could not get uid for connection: %s %s", error.name, error.message));
-		dbus_error_free (&error);
-		goto out;
-	}
-
-	HAL_INFO (("uid for caller is %ld", user_uid));
-
-	if (user_uid != 0 && user_uid != geteuid()) {
-		HAL_WARNING (("uid %d is not privileged", user_uid));
-		goto out;
-	}
-
-	ret = TRUE;
-
-out:
-	return ret;
 }
 
 /** Set a property on a device.
@@ -3044,6 +3195,9 @@ do_introspect (DBusConnection  *connection,
 				       "    <method name=\"GetAllProperties\">\n"
 				       "      <arg name=\"properties\" direction=\"out\" type=\"a{sv}\"/>\n"
 				       "    </method>\n"
+				       "    <method name=\"SetMultipleProperties\">\n"
+				       "      <arg name=\"properties\" direction=\"in\" type=\"a{sv}\"/>\n"
+				       "    </method>\n"
 				       "    <method name=\"GetProperty\">\n"
 				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"value\" direction=\"out\" type=\"v\"/>\n"
@@ -3336,32 +3490,32 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 			      "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_find_device_by_capability (connection,
 							  message);
-	}
-	else if (dbus_message_is_method_call (message,
+	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Manager",
 						"NewDevice") &&
 		   strcmp (dbus_message_get_path (message),
 			    "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_new_device (connection, message, local_interface);
-	}
-	else if (dbus_message_is_method_call (message,
+	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Manager",
 						"Remove") &&
 		   strcmp (dbus_message_get_path (message),
 			    "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_remove (connection, message, local_interface);
-	}
-	else if (dbus_message_is_method_call (message,
+	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Manager",
 						"CommitToGdl") &&
 		   strcmp (dbus_message_get_path (message),
 			    "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_commit_to_gdl (connection, message, local_interface);
-	}
-	else if (dbus_message_is_method_call (message,
+	} else if (dbus_message_is_method_call (message,
 					      "org.freedesktop.Hal.Device",
 					      "GetAllProperties")) {
 		return device_get_all_properties (connection, message);
+	} else if (dbus_message_is_method_call (message,
+					      "org.freedesktop.Hal.Device",
+					      "SetMultipleProperties")) {
+		return device_set_multiple_properties (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"GetProperty")) {

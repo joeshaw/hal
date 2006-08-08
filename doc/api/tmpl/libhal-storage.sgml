@@ -289,6 +289,15 @@ libhal-storage
 @Returns: 
 
 
+<!-- ##### FUNCTION libhal_drive_get_size ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
 <!-- ##### FUNCTION libhal_drive_no_partitions_hint ##### -->
 <para>
 
@@ -730,6 +739,24 @@ libhal-storage
 
 
 <!-- ##### FUNCTION libhal_volume_get_partition_number ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_partition_start_offset ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_partition_media_size ##### -->
 <para>
 
 </para>

@@ -35,7 +35,6 @@ blockdev
 </para>
 
 @sysfs_path: 
-@is_partition: 
 @end_token: 
 
 

@@ -357,14 +357,48 @@ LibHalPropertyType libhal_device_get_property_type (LibHalContext *ctx,
 						    const char *key,
 						    DBusError *error);
 
+struct LibHalChangeSet_s;
+typedef struct LibHalChangeSet_s LibHalChangeSet;
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+LibHalChangeSet *libhal_device_new_changeset (const char *udi);
+
+dbus_bool_t libhal_changeset_set_property_string (LibHalChangeSet *changeset,
+						  const char *key,
+						  const char *value);
+
+dbus_bool_t libhal_changeset_set_property_int (LibHalChangeSet *changeset,
+					       const char *key,
+					       dbus_int32_t value);
+
+dbus_bool_t libhal_changeset_set_property_uint64 (LibHalChangeSet *changeset,
+						  const char *key,
+						  dbus_uint64_t value);
+
+dbus_bool_t libhal_changeset_set_property_double (LibHalChangeSet *changeset,
+						  const char *key,
+						  double value);
+
+dbus_bool_t libhal_changeset_set_property_bool (LibHalChangeSet *changeset,
+						const char *key,
+						dbus_bool_t value);
+
+dbus_bool_t libhal_changeset_set_property_strlist (LibHalChangeSet *changeset,
+						   const char *key,
+						   const char **value);
+
+dbus_bool_t libhal_device_commit_changeset (LibHalContext *ctx,
+					    LibHalChangeSet *changeset,
+					    DBusError *error);
+
+void libhal_device_free_changeset (LibHalChangeSet *changeset);
+
+
 struct LibHalProperty_s;
 typedef struct LibHalProperty_s LibHalProperty;
 
 struct LibHalPropertySet_s;
 typedef struct LibHalPropertySet_s LibHalPropertySet;
-#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
 
 /* Retrieve all the properties on a device. */
 LibHalPropertySet *libhal_device_get_all_properties (LibHalContext *ctx, 

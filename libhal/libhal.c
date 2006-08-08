@@ -3450,3 +3450,462 @@ libhal_device_claim_interface (LibHalContext *ctx,
 
 	return result;	
 }
+
+
+
+struct LibHalChangeSetElement_s;
+
+typedef struct LibHalChangeSetElement_s LibHalChangeSetElement;
+
+struct LibHalChangeSetElement_s {
+	char *key;
+	int change_type;
+	union {
+		char *val_str;
+		dbus_int32_t val_int;
+		dbus_uint64_t val_uint64;
+		double val_double;
+		dbus_bool_t val_bool;
+		char **val_strlist;
+	} value;
+	LibHalChangeSetElement *next;
+};
+
+struct LibHalChangeSet_s {
+	char *udi;
+	LibHalChangeSetElement *head;
+};
+
+/**
+ * libhal_device_new_changeset:
+ * @udi: unique device identifier
+ *
+ * Request a new changeset object. Used for changing multiple properties at once. Useful when
+ * performance is critical and also for atomically updating several properties.
+ * 
+ * Returns: A new changeset object or NULL on error
+ */
+LibHalChangeSet *
+libhal_device_new_changeset (const char *udi)
+{
+	LibHalChangeSet *changeset;
+
+	changeset = calloc (1, sizeof (LibHalChangeSet));
+	if (changeset == NULL)
+		goto out;
+
+	changeset->udi = strdup (udi);
+	if (changeset->udi == NULL) {
+		free (changeset);
+		changeset = NULL;
+		goto out;
+	}
+
+	changeset->head = NULL;
+
+out:
+	return changeset;
+}
+
+/**
+ * libhal_device_set_property_string:
+ * @changeset: the changeset
+ * @key: key of property 
+ * @value: the value to set
+ * 
+ * Set a property.
+ * 
+ * Returns: FALSE on OOM
+ */
+dbus_bool_t
+libhal_changeset_set_property_string (LibHalChangeSet *changeset, const char *key, const char *value)
+{
+	LibHalChangeSetElement *elem;
+
+	elem = calloc (1, sizeof (LibHalChangeSetElement));
+	if (elem == NULL)
+		goto out;
+	elem->key = strdup (key);
+	if (elem->key == NULL) {
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	elem->change_type = LIBHAL_PROPERTY_TYPE_STRING;
+	elem->value.val_str = strdup (value);
+	if (elem->value.val_str == NULL) {
+		free (elem->key);
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	elem->next = changeset->head;
+	changeset->head = elem;
+out:
+	return elem != NULL;
+}
+
+/**
+ * libhal_device_set_property_int:
+ * @changeset: the changeset
+ * @key: key of property 
+ * @value: the value to set
+ * 
+ * Set a property.
+ * 
+ * Returns: FALSE on OOM
+ */
+dbus_bool_t
+libhal_changeset_set_property_int (LibHalChangeSet *changeset, const char *key, dbus_int32_t value)
+{
+	LibHalChangeSetElement *elem;
+
+	elem = calloc (1, sizeof (LibHalChangeSetElement));
+	if (elem == NULL)
+		goto out;
+	elem->key = strdup (key);
+	if (elem->key == NULL) {
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	elem->change_type = LIBHAL_PROPERTY_TYPE_INT32;
+	elem->value.val_int = value;
+
+	elem->next = changeset->head;
+	changeset->head = elem;
+out:
+	return elem != NULL;
+}
+
+/**
+ * libhal_device_set_property_uint64:
+ * @changeset: the changeset
+ * @key: key of property 
+ * @value: the value to set
+ * 
+ * Set a property.
+ * 
+ * Returns: FALSE on OOM
+ */
+dbus_bool_t
+libhal_changeset_set_property_uint64 (LibHalChangeSet *changeset, const char *key, dbus_uint64_t value)
+{
+	LibHalChangeSetElement *elem;
+
+	elem = calloc (1, sizeof (LibHalChangeSetElement));
+	if (elem == NULL)
+		goto out;
+	elem->key = strdup (key);
+	if (elem->key == NULL) {
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	elem->change_type = LIBHAL_PROPERTY_TYPE_UINT64;
+	elem->value.val_uint64 = value;
+
+	elem->next = changeset->head;
+	changeset->head = elem;
+out:
+	return elem != NULL;
+}
+
+/**
+ * libhal_device_set_property_double:
+ * @changeset: the changeset
+ * @key: key of property 
+ * @value: the value to set
+ * 
+ * Set a property.
+ * 
+ * Returns: FALSE on OOM
+ */
+dbus_bool_t
+libhal_changeset_set_property_double (LibHalChangeSet *changeset, const char *key, double value)
+{
+	LibHalChangeSetElement *elem;
+
+	elem = calloc (1, sizeof (LibHalChangeSetElement));
+	if (elem == NULL)
+		goto out;
+	elem->key = strdup (key);
+	if (elem->key == NULL) {
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	elem->change_type = LIBHAL_PROPERTY_TYPE_DOUBLE;
+	elem->value.val_double = value;
+
+	elem->next = changeset->head;
+	changeset->head = elem;
+out:
+	return elem != NULL;
+}
+
+/**
+ * libhal_device_set_property_bool:
+ * @changeset: the changeset
+ * @key: key of property 
+ * @value: the value to set
+ * 
+ * Set a property.
+ * 
+ * Returns: FALSE on OOM
+ */
+dbus_bool_t
+libhal_changeset_set_property_bool (LibHalChangeSet *changeset, const char *key, dbus_bool_t value)
+{
+	LibHalChangeSetElement *elem;
+
+	elem = calloc (1, sizeof (LibHalChangeSetElement));
+	if (elem == NULL)
+		goto out;
+	elem->key = strdup (key);
+	if (elem->key == NULL) {
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	elem->change_type = LIBHAL_PROPERTY_TYPE_BOOLEAN;
+	elem->value.val_bool = value;
+
+	elem->next = changeset->head;
+	changeset->head = elem;
+out:
+	return elem != NULL;
+}
+
+/**
+ * libhal_device_set_property_strlist:
+ * @changeset: the changeset
+ * @key: key of property 
+ * @value: the value to set - NULL terminated array of strings
+ * 
+ * Set a property.
+ * 
+ * Returns: FALSE on OOM
+ */
+dbus_bool_t
+libhal_changeset_set_property_strlist (LibHalChangeSet *changeset, const char *key, const char **value)
+{
+	LibHalChangeSetElement *elem;
+	char **value_copy;
+	int len;
+	int i, j;
+
+	elem = calloc (1, sizeof (LibHalChangeSetElement));
+	if (elem == NULL)
+		goto out;
+	elem->key = strdup (key);
+	if (elem->key == NULL) {
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	for (i = 0; value[i] != NULL; i++)
+		;
+	len = i;
+
+	value_copy = calloc (len + 1, sizeof (char *));
+	if (value_copy == NULL) {
+		free (elem->key);
+		free (elem);
+		elem = NULL;
+		goto out;
+	}
+
+	for (i = 0; i < len; i++) {
+		value_copy[i] = strdup (value[i]);
+		if (value_copy[i] == NULL) {
+			for (j = 0; j < i; j++) {
+				free (value_copy[j]);
+			}
+			free (value_copy);
+			free (elem->key);
+			free (elem);
+			elem = NULL;
+			goto out;
+		}
+	}
+	value_copy[i] = NULL;
+
+	elem->change_type = LIBHAL_PROPERTY_TYPE_STRLIST;
+	elem->value.val_strlist = value_copy;
+
+	elem->next = changeset->head;
+	changeset->head = elem;
+out:
+	return elem != NULL;
+}
+
+/**
+ * libhal_device_commit_changeset:
+ * @ctx: the context for the connection to hald
+ * @changeset: the changeset to commit
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ * 
+ * Commit a changeset to the daemon.
+ * 
+ * Returns: True if the changeset was committed on the daemon side
+ */
+dbus_bool_t
+libhal_device_commit_changeset (LibHalContext *ctx, LibHalChangeSet *changeset, DBusError *error)
+{
+	LibHalChangeSetElement *elem;
+	DBusMessage *message;
+	DBusMessage *reply;
+	DBusError _error;
+	DBusMessageIter iter;
+	DBusMessageIter sub;
+	DBusMessageIter sub2;
+	DBusMessageIter sub3;
+	DBusMessageIter sub4;
+	int i;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal", changeset->udi,
+						"org.freedesktop.Hal.Device",
+						"SetMultipleProperties");
+
+	if (message == NULL) {
+		fprintf (stderr, "%s %d : Couldn't allocate D-BUS message\n", __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+
+	dbus_message_iter_open_container (&iter, 
+					  DBUS_TYPE_ARRAY,
+					  DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
+					  DBUS_TYPE_STRING_AS_STRING
+					  DBUS_TYPE_VARIANT_AS_STRING
+					  DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
+					  &sub);
+
+	for (elem = changeset->head; elem != NULL; elem = elem->next) {
+
+		dbus_message_iter_open_container (&sub,
+						  DBUS_TYPE_DICT_ENTRY,
+						  NULL,
+						  &sub2);
+		dbus_message_iter_append_basic (&sub2, DBUS_TYPE_STRING, &(elem->key));
+
+		switch (elem->change_type) {
+		case LIBHAL_PROPERTY_TYPE_STRING:
+			dbus_message_iter_open_container (&sub2, DBUS_TYPE_VARIANT, DBUS_TYPE_STRING_AS_STRING, &sub3);
+			dbus_message_iter_append_basic (&sub3, DBUS_TYPE_STRING, &(elem->value.val_str));
+			dbus_message_iter_close_container (&sub2, &sub3);
+			break;
+		case LIBHAL_PROPERTY_TYPE_STRLIST:
+			dbus_message_iter_open_container (&sub2, DBUS_TYPE_VARIANT, 
+							  DBUS_TYPE_ARRAY_AS_STRING DBUS_TYPE_STRING_AS_STRING, &sub3);
+			dbus_message_iter_open_container (&sub3, DBUS_TYPE_ARRAY, 
+							  DBUS_TYPE_STRING_AS_STRING, &sub4);
+			for (i = 0; elem->value.val_strlist[i] != NULL; i++) {
+				dbus_message_iter_append_basic (&sub4, DBUS_TYPE_STRING, 
+								&(elem->value.val_strlist[i]));
+			}
+			dbus_message_iter_close_container (&sub3, &sub4);
+			dbus_message_iter_close_container (&sub2, &sub3);
+			break;
+		case LIBHAL_PROPERTY_TYPE_INT32:
+			dbus_message_iter_open_container (&sub2, DBUS_TYPE_VARIANT, DBUS_TYPE_INT32_AS_STRING, &sub3);
+			dbus_message_iter_append_basic (&sub3, DBUS_TYPE_INT32, &(elem->value.val_int));
+			dbus_message_iter_close_container (&sub2, &sub3);
+			break;
+		case LIBHAL_PROPERTY_TYPE_UINT64:
+			dbus_message_iter_open_container (&sub2, DBUS_TYPE_VARIANT, DBUS_TYPE_UINT64_AS_STRING, &sub3);
+			dbus_message_iter_append_basic (&sub3, DBUS_TYPE_UINT64, &(elem->value.val_uint64));
+			dbus_message_iter_close_container (&sub2, &sub3);
+			break;
+		case LIBHAL_PROPERTY_TYPE_DOUBLE:
+			dbus_message_iter_open_container (&sub2, DBUS_TYPE_VARIANT, DBUS_TYPE_DOUBLE_AS_STRING, &sub3);
+			dbus_message_iter_append_basic (&sub3, DBUS_TYPE_DOUBLE, &(elem->value.val_double));
+			dbus_message_iter_close_container (&sub2, &sub3);
+			break;
+		case LIBHAL_PROPERTY_TYPE_BOOLEAN:
+			dbus_message_iter_open_container (&sub2, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING,&sub3);
+			dbus_message_iter_append_basic (&sub3, DBUS_TYPE_BOOLEAN, &(elem->value.val_bool));
+			dbus_message_iter_close_container (&sub2, &sub3);
+			break;
+		default:
+			fprintf (stderr, "%s %d : unknown change_type %d\n", __FILE__, __LINE__, elem->change_type);
+			break;
+		}
+		dbus_message_iter_close_container (&sub, &sub2);
+	}
+
+	dbus_message_iter_close_container (&iter, &sub);
+
+	
+	dbus_error_init (&_error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
+		fprintf (stderr,
+			 "%s %d : %s\n",
+			 __FILE__, __LINE__, error->message);
+
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	if (reply == NULL) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/**
+ * libhal_device_free_changeset:
+ * @changeset: the changeset to free
+ * 
+ * Free a changeset.
+ */
+void
+libhal_device_free_changeset (LibHalChangeSet *changeset)
+{
+	LibHalChangeSetElement *elem;
+	LibHalChangeSetElement *elem2;
+
+	for (elem = changeset->head; elem != NULL; elem = elem2) {
+		elem2 = elem->next;
+
+		switch (elem->change_type) {
+		case LIBHAL_PROPERTY_TYPE_STRING:
+			free (elem->value.val_str);
+			break;
+		case LIBHAL_PROPERTY_TYPE_STRLIST:
+			libhal_free_string_array (elem->value.val_strlist);
+			break;
+                /* explicit fallthrough */
+		case LIBHAL_PROPERTY_TYPE_INT32:
+		case LIBHAL_PROPERTY_TYPE_UINT64:
+		case LIBHAL_PROPERTY_TYPE_DOUBLE:
+		case LIBHAL_PROPERTY_TYPE_BOOLEAN:
+			break;
+		default:
+			fprintf (stderr, "%s %d : unknown change_type %d\n", __FILE__, __LINE__, elem->change_type);
+			break;
+		}
+		free (elem);
+	}
+
+	free (changeset->udi);
+	free (changeset);
+}

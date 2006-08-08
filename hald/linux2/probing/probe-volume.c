@@ -223,7 +223,7 @@ static unsigned char *probe_msdos_part_table(int fd)
 }
 
 static void
-set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid)
+set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *changes, struct volume_id *vid)
 {
 	char buf[256];
 	const char *usage;
@@ -246,47 +246,47 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, struct volume_id *vid
 		usage = "crypto";
 		break;
 	case VOLUME_ID_UNUSED:
-		libhal_device_set_property_string (ctx, udi, "info.product", "Volume (unused)", &error);
+		libhal_changeset_set_property_string (changes, "info.product", "Volume (unused)");
 		usage = "unused";
 		return;
 	default:
 		usage = "";
 	}
 
-	libhal_device_set_property_string (ctx, udi, "volume.fsusage", usage, &error);
+	libhal_changeset_set_property_string (changes, "volume.fsusage", usage);
 	dbg ("volume.fsusage = '%s'", usage);
 
-	libhal_device_set_property_string (ctx, udi, "volume.fstype", vid->type, &error);
+	libhal_changeset_set_property_string (changes, "volume.fstype", vid->type);
 	dbg ("volume.fstype = '%s'", vid->type);
 	if (vid->type_version[0] != '\0') {
-		libhal_device_set_property_string (ctx, udi, "volume.fsversion", vid->type_version, &error);
+		libhal_changeset_set_property_string (changes, "volume.fsversion", vid->type_version);
 		dbg ("volume.fsversion = '%s'", vid->type_version);
 	}
-	libhal_device_set_property_string (ctx, udi, "volume.uuid", vid->uuid, &error);
+	libhal_changeset_set_property_string (changes, "volume.uuid", vid->uuid);
 	dbg ("volume.uuid = '%s'", vid->uuid);
 
 	/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
 	volume_label = strdup_valid_utf8 (vid->label);
 	if( volume_label != NULL ) {
-		libhal_device_set_property_string (ctx, udi, "volume.label", volume_label, &error);
+		libhal_changeset_set_property_string (changes, "volume.label", volume_label);
 		dbg ("volume.label = '%s'", volume_label);
 		
 		if (strlen(volume_label) > 0) {	
-			libhal_device_set_property_string (ctx, udi, "info.product", volume_label, &error);
+			libhal_changeset_set_property_string (changes, "info.product", volume_label);
 		}
 		else {
 			snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
-			libhal_device_set_property_string (ctx, udi, "info.product", buf, &error);
+			libhal_changeset_set_property_string (changes, "info.product", buf);
 		}
 		g_free(volume_label);
 	} else {
 		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
-		libhal_device_set_property_string (ctx, udi, "info.product", buf, &error);
+		libhal_changeset_set_property_string (changes, "info.product", buf);
 	}
 }
 
 static void
-advanced_disc_detect (LibHalContext *ctx, const char *udi,
+advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *changes,
                       int fd, const char *device_file)
 {
 	/* the discs block size */
@@ -312,9 +312,9 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi,
 	dbus_error_init (&error);
 	
 	/* set defaults */
-	libhal_device_set_property_bool (ctx, udi, "volume.disc.is_videodvd", FALSE, &error);
-	libhal_device_set_property_bool (ctx, udi, "volume.disc.is_vcd", FALSE, &error);
-	libhal_device_set_property_bool (ctx, udi, "volume.disc.is_svcd", FALSE, &error);
+	libhal_changeset_set_property_bool (changes, "volume.disc.is_videodvd", FALSE);
+	libhal_changeset_set_property_bool (changes, "volume.disc.is_vcd", FALSE);
+	libhal_changeset_set_property_bool (changes, "volume.disc.is_svcd", FALSE);
 	
 	/* read the block size */
 	lseek (fd, 0x8080, SEEK_CUR);
@@ -384,19 +384,19 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi,
 		{
 			if (!strcmp (dirname, "VIDEO_TS"))
 			{
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_videodvd", TRUE, &error);
+				libhal_changeset_set_property_bool (changes, "volume.disc.is_videodvd", TRUE);
 				dbg ("Disc in %s is a Video DVD", device_file);
 				break;
 			}
 			else if (!strcmp (dirname, "VCD"))
 			{
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_vcd", TRUE, &error);
+				libhal_changeset_set_property_bool (changes, "volume.disc.is_vcd", TRUE);
 				dbg ("Disc in %s is a Video CD", device_file);
 				break;
 			}
 			else if (!strcmp (dirname, "SVCD"))
 			{
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_svcd", TRUE, &error);
+				libhal_changeset_set_property_bool (changes, "volume.disc.is_svcd", TRUE);
 				dbg ("Disc in %s is a Super Video CD", device_file);
 				break;
 			}
@@ -441,6 +441,7 @@ main (int argc, char *argv[])
 	dbus_uint64_t vol_size;
 	dbus_bool_t should_probe_for_fs;
 	dbus_uint64_t vol_probe_offset = 0;
+	LibHalChangeSet *changeset;
 	fd = -1;
 
 	/* hook in our debug into libvolume_id */
@@ -475,6 +476,12 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
+	changeset = libhal_device_new_changeset (udi);
+	if (changeset == NULL) {
+		dbg ("Cannot initialize changeset");
+		goto out;
+	}
+
 	dbg ("Doing probe-volume for %s\n", device_file);
 
 	fd = open (device_file, O_RDONLY);
@@ -484,11 +491,11 @@ main (int argc, char *argv[])
 	/* block size and total size */
 	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
 		dbg ("volume.block_size = %d", block_size);
-		libhal_device_set_property_int (ctx, udi, "volume.block_size", block_size, &error);
+		libhal_changeset_set_property_int (changeset, "volume.block_size", block_size);
 	}
 	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
 		dbg ("volume.size = %llu", vol_size);
-		libhal_device_set_property_uint64 (ctx, udi, "volume.size", vol_size, &error);
+		libhal_changeset_set_property_uint64 (changeset, "volume.size", vol_size);
 	} else
 		vol_size = 0;
 
@@ -500,12 +507,12 @@ main (int argc, char *argv[])
 		struct cdrom_tochdr; /* toc_hdr; */
 
 		/* defaults */
-		libhal_device_set_property_string (ctx, udi, "volume.disc.type", "unknown", &error);
-		libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", FALSE, &error);
-		libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", FALSE, &error);
-		libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", FALSE, &error);
-		libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", FALSE, &error);
-		libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", FALSE, &error);
+		libhal_changeset_set_property_string (changeset, "volume.disc.type", "unknown");
+		libhal_changeset_set_property_bool (changeset, "volume.disc.has_audio", FALSE);
+		libhal_changeset_set_property_bool (changeset, "volume.disc.has_data", FALSE);
+		libhal_changeset_set_property_bool (changeset, "volume.disc.is_blank", FALSE);
+		libhal_changeset_set_property_bool (changeset, "volume.disc.is_appendable", FALSE);
+		libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", FALSE);
 
 		/* Suggested by Alex Larsson to get rid of log spewage
 		 * on Alan's cd changer (RH bug 130649) */
@@ -517,33 +524,33 @@ main (int argc, char *argv[])
 		type = ioctl (fd, CDROM_DISC_STATUS, CDSL_CURRENT);
 		switch (type) {
 		case CDS_AUDIO:		/* audio CD */
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.has_audio", TRUE);
 			dbg ("Disc in %s has audio", device_file);
 			should_probe_for_fs = FALSE;
 			break;
 		case CDS_MIXED:		/* mixed mode CD */
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_audio", TRUE, &error);
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.has_audio", TRUE);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.has_data", TRUE);
 			dbg ("Disc in %s has audio+data", device_file);
 			break;
 		case CDS_DATA_1:	/* data CD */
 		case CDS_DATA_2:
 		case CDS_XA_2_1:
 		case CDS_XA_2_2:
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.has_data", TRUE, &error);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.has_data", TRUE);
 			dbg ("Disc in %s has data", device_file);
-			advanced_disc_detect (ctx, udi, fd, device_file);
+			advanced_disc_detect (ctx, udi, changeset, fd, device_file);
 			break;
 		case CDS_NO_INFO:	/* blank or invalid CD */
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_blank", TRUE, &error);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.is_blank", TRUE);
 			/* set the volume size to 0 if disc is blank and not as 4 from BLKGETSIZE64 */
-			libhal_device_set_property_int (ctx, udi, "volume.block_size", 0, &error);
+			libhal_changeset_set_property_int (changeset, "volume.block_size", 0);
 			dbg ("Disc in %s is blank", device_file);
 			should_probe_for_fs = FALSE;
 			break;
 			
 		default:		/* should never see this */
-			libhal_device_set_property_string (ctx, udi, "volume.disc_type", "unknown", &error);
+			libhal_changeset_set_property_string (changeset, "volume.disc_type", "unknown");
 			dbg ("Disc in %s returned unknown CDROM_DISC_STATUS", device_file);
 			should_probe_for_fs = FALSE;
 			break;
@@ -557,65 +564,65 @@ main (int argc, char *argv[])
 		if (type != -1) {
 			switch (type) {
 			case 0x08: /* CD-ROM */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "cd_rom", &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "cd_rom");
 				break;
 			case 0x09: /* CD-R */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "cd_r", &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "cd_r");
 				break;
 			case 0x0a: /* CD-RW */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "cd_rw", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "cd_rw");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x10: /* DVD-ROM */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_rom", &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_rom");
 				break;
 			case 0x11: /* DVD-R Sequential */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_r", &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_r");
 				break;
 			case 0x12: /* DVD-RAM */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_ram", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_ram");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x13: /* DVD-RW Restricted Overwrite */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_rw", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_rw");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x14: /* DVD-RW Sequential */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_rw", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_rw");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x1A: /* DVD+RW */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_rw", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_plus_rw");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x1B: /* DVD+R */
-				libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_r", &error);
+				libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_plus_r");
 				break;
 			case 0x2B: /* DVD+R Double Layer */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "dvd_plus_r_dl", &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "dvd_plus_r_dl");
 				break;
 			case 0x40: /* BD-ROM  */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_rom", &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "bd_rom");
 				break;
 			case 0x41: /* BD-R Sequential */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_r", &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "bd_r");
 				break;
 			case 0x42: /* BD-R Random */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_r", &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "bd_r");
 				break;
 			case 0x43: /* BD-RE */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "bd_re", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "bd_re");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x50: /* HD DVD-ROM */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "hddvd_rom", &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "hddvd_rom");
 				break;
 			case 0x51: /* HD DVD-R */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "hddvd_r", &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "hddvd_r");
 				break;
 			case 0x52: /* HD DVD-Rewritable */
-                          	libhal_device_set_property_string (ctx, udi, "volume.disc.type", "hddvd_rw", &error);
-				libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+                          	libhal_changeset_set_property_string (changeset, "volume.disc.type", "hddvd_rw");
+				libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 				break;
 			default: 
 				break;
@@ -624,16 +631,16 @@ main (int argc, char *argv[])
 
 		if (get_disc_capacity_for_type (fd, type, &capacity) == 0) {
 			dbg ("volume.disc.capacity = %llu", capacity);
-			libhal_device_set_property_uint64 (ctx, udi, "volume.disc.capacity", capacity, &error);
+			libhal_changeset_set_property_uint64 (changeset, "volume.disc.capacity", capacity);
 		}
 
 		/* On some hardware the get_disc_type call fails, so we use this as a backup */
 		if (disc_is_rewritable (fd)) {
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_rewritable", TRUE, &error);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.is_rewritable", TRUE);
 		}
 		
 		if (disc_is_appendable (fd)) {
-			libhal_device_set_property_bool (ctx, udi, "volume.disc.is_appendable", TRUE, &error);
+			libhal_changeset_set_property_bool (changeset, "volume.disc.is_appendable", TRUE);
 		}
 
 #if 0
@@ -685,9 +692,9 @@ main (int argc, char *argv[])
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
 			if (volume_id_probe_all (vid, vol_probe_offset , vol_size) == 0) {
-				set_volume_id_values(ctx, udi, vid);
+				set_volume_id_values(ctx, udi, changeset, vid);
 			} else {
-				libhal_device_set_property_string (ctx, udi, "info.product", "Volume", &error);
+				libhal_changeset_set_property_string (changeset, "info.product", "Volume");
 			}
 			volume_id_close(vid);
 		}
@@ -709,9 +716,8 @@ main (int argc, char *argv[])
 
 					type = idx[partition_number - 1];
 					if (type > 0) {
-						libhal_device_set_property_int (
-							ctx, udi, "volume.partition.msdos_part_table_type",
-							type, &error);
+						libhal_changeset_set_property_int (
+							changeset, "volume.partition.msdos_part_table_type", type);
 
 						/* NOTE: We trust the type from the partition table
 						 * if it explicitly got correct entries for RAID and
@@ -724,8 +730,8 @@ main (int argc, char *argv[])
 						 * Linux RAID autodetect is 0xfd and Linux LVM is 0x8e
 						 */
 						if (type == 0xfd || type == 0x8e ) {
-							libhal_device_set_property_string (
-								ctx, udi, "volume.fsusage", "raid", &error);
+							libhal_changeset_set_property_string (
+								changeset, "volume.fsusage", "raid");
 						}
 					}
 				}
@@ -738,6 +744,13 @@ main (int argc, char *argv[])
 	/* good so far */
 	ret = 0;
 
+	/* for testing...
+	  char *values[4] = {"foo", "bar", "baz", NULL};
+	  libhal_changeset_set_property_strlist (changeset, "foo.bar", values);
+	*/
+
+	libhal_device_commit_changeset (ctx, changeset, &error);
+	libhal_device_free_changeset (changeset);
 
 out:
 	if (fd >= 0)

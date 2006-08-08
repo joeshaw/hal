@@ -126,6 +126,31 @@ util
 @Returns: 
 
 
+<!-- ##### FUNCTION hal_util_get_uint64_from_file ##### -->
+<para>
+
+</para>
+
+@directory: 
+@file: 
+@result: 
+@base: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_util_set_uint64_from_file ##### -->
+<para>
+
+</para>
+
+@d: 
+@key: 
+@directory: 
+@file: 
+@base: 
+@Returns: 
+
+
 <!-- ##### FUNCTION hal_util_get_string_from_file ##### -->
 <para>
 
