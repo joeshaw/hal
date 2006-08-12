@@ -687,6 +687,7 @@ struct LibHalDrive_s {
 	char *model;              /* may be "", is never NULL */
 	dbus_bool_t is_hotpluggable;
 	dbus_bool_t is_removable;
+	dbus_bool_t is_media_detected;
 	dbus_bool_t requires_eject;
 
 	LibHalDriveType type;
@@ -933,6 +934,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.hotpluggable",      drive->is_hotpluggable);
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.removable",         drive->is_removable);
+		LIBHAL_PROP_EXTRACT_BOOL   ("storage.removable.media_available", drive->is_media_detected);
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.requires_eject",    drive->requires_eject);
 
 		LIBHAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
@@ -1367,6 +1369,12 @@ dbus_bool_t
 libhal_drive_uses_removable_media (LibHalDrive *drive)
 {
 	return drive->is_removable;
+}
+
+dbus_bool_t
+libhal_drive_is_media_detected (LibHalDrive *drive)
+{
+	return drive->is_media_detected;
 }
 
 dbus_uint64_t

@@ -432,6 +432,7 @@ main (int argc, char *argv[])
 				DBusError error;
 				
 				dbg ("Media removal detected on %s", device_file);
+				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
 				
 				/* attempt to unmount all childs */
 				unmount_childs (ctx, udi);
@@ -453,7 +454,7 @@ main (int argc, char *argv[])
 				DBusError error;
 
 				dbg ("Media insertion detected on %s", device_file);
-				/* our probe will trigger the appropriate hotplug events */
+				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);				/* our probe will trigger the appropriate hotplug events */
 
 				/* could have a fs on the main block device; do a rescan to add it */
 				dbus_error_init (&error);

@@ -351,8 +351,12 @@ main (int argc, char *argv[])
 			break;
 		}
 
-		if (got_media)
+		if (got_media) {
 			ret = 2;
+			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
+		} else {
+			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
+		}
 
 		close (fd);
 	} else {
@@ -372,9 +376,14 @@ main (int argc, char *argv[])
 		fd = open (device_file, O_RDONLY);
 		if (fd < 0) {
 			dbg ("Cannot open %s: %s", device_file, strerror (errno));
+			/* no media */
+			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
 			goto out;
 		}
 		dbg ("Returned from open(2)");
+
+		/* if we get to here, we have media */
+		libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
 
 		/* if the kernel has created partitions, we don't look for a filesystem */
 		main_device = strrchr (sysfs_path, '/');
@@ -400,12 +409,20 @@ main (int argc, char *argv[])
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
-			if (volume_id_probe_all (vid, 0, 0 /* size */) == 0) {
-				/* signal to hald that we've found a file system and a fakevolume
+			uint64_t size;
+
+			if (ioctl(vid->fd, BLKGETSIZE64, &size) != 0)
+				size = 0;
+
+			if (volume_id_probe_all (vid, 0, size) == 0) {
+				/* signal to hald that we've found something and a fakevolume
 				 * should be added - see hald/linux2/blockdev.c:add_blockdev_probing_helper_done()
 				 * and hald/linux2/blockdev.c:block_rescan_storage_done().
 				 */
-				if (vid->usage_id == VOLUME_ID_FILESYSTEM)
+				if (vid->usage_id == VOLUME_ID_FILESYSTEM ||
+				    vid->usage_id == VOLUME_ID_RAID ||
+				    vid->usage_id == VOLUME_ID_OTHER ||
+				    vid->usage_id == VOLUME_ID_CRYPTO)
 					ret = 2;
 			} else {
 				;

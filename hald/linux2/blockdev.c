@@ -906,6 +906,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "storage.drive_type", "floppy");
 		hal_device_property_set_string (d, "storage.physical_device", parent->udi);
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
+		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
 		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
 		hal_device_property_set_bool (d, "storage.requires_eject", FALSE);
 		hal_device_property_set_uint64 (d, "storage.size", 0);
@@ -1048,6 +1049,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			goto error;
 		}
 
+		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
 		hal_device_property_set_bool (d, "storage.removable", is_removable);
 		/* set storage.size only if we have fixed media */
 		if (!is_removable) {
@@ -1432,7 +1434,7 @@ block_rescan_storage_done (HalDevice *d, guint32 exit_type,
 	fakevolume = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", fake_sysfs_path);
 
 	if (return_code == 2) {
-		/* we've got a fs on the main block device - add fakevolume if we haven't got one already */
+		/* we've got something on the main block device - add fakevolume if we haven't got one already */
 		if (fakevolume == NULL) {
 			HAL_INFO (("Media insertion detected with file system on main block device; synthesizing hotplug add"));
 			generate_fakevolume_hotplug_event_add_for_storage_device (d);

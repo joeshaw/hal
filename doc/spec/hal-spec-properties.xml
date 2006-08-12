@@ -2906,6 +2906,14 @@
             </row>
             <row>
               <entry>
+	        <literal>storage.removable.media_available</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>true, if and only if, media have been detected in storage device</entry>
+            </row>
+            <row>
+              <entry>
 	        <literal>storage.size</literal> (uint64)
               </entry>
               <entry></entry>
