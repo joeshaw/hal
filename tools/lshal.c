@@ -462,7 +462,7 @@ print_property (const char *udi, const char *key)
 	}
 
 	if (dbus_error_is_set (&error))
-		LIBHAL_FREE_DBUS_ERROR (&error);
+		dbus_error_free (&error);
 }
 
 /** Invoked when a property of a device in the Global Device List is
