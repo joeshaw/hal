@@ -163,6 +163,7 @@ run_exited(GPid pid, gint status, gpointer data)
 	if (rd->stderr_v >= 0) {
 		/* Need to read stderr */
 		error = get_string_array_from_fd(rd->stderr_v);
+		close(rd->stderr_v);
 		rd->stderr_v = -1;
 	}
 	if (rd->msg != NULL)
