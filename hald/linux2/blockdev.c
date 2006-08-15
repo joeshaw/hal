@@ -1206,7 +1206,7 @@ force_unmount (HalDevice *d, void *end_token)
 	mount_point = hal_device_property_get_string (d, "volume.mount_point");
 
 	/* look up in /media/.hal-mtab to see if we mounted this one */
-	if (mount_point != NULL && strlen (mount_point) > 0 && is_mounted_by_hald (mount_point)) {
+	if (mount_point != NULL && strlen (mount_point) > 0 && hal_util_is_mounted_by_hald (mount_point)) {
 		char *unmount_stdin;
 		char *extra_env[2];
 

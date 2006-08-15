@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 
 #include <glib.h>
 #include <dbus/dbus.h>
