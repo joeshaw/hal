@@ -24,8 +24,8 @@
 #ifndef HAL_STORAGE_SHARED_H
 #define HAL_STORAGE_SHARED_H
 
-#include <libhal/libhal.h>
-#include <libhal-storage/libhal-storage.h>
+#include <libhal.h>
+#include <libhal-storage.h>
 #ifdef HAVE_POLKIT
 #include <libpolkit.h>
 #endif

@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#include "libhal/libhal.h"
+#include <libhal.h>
 
 static LibHalContext *hal_ctx;
 

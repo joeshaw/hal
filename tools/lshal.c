@@ -38,7 +38,7 @@
 #include <glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include <dbus/dbus-glib.h>
-#include <libhal/libhal.h>
+#include <libhal.h>
 
 #ifdef __SUNPRO_C
 #define __FUNCTION__ __func__

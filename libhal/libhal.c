@@ -375,7 +375,7 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
-	
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetAllProperties");
@@ -911,8 +911,8 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 	int type;
 	DBusError _error;
 
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, LIBHAL_PROPERTY_TYPE_INVALID); // or return NULL?
-	
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, LIBHAL_PROPERTY_TYPE_INVALID); /* or return NULL? */
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
 						"GetPropertyType");
@@ -1398,7 +1398,7 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 	char *method_name = NULL;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	/** @todo  sanity check incoming params */
 	switch (type) {
 	case DBUS_TYPE_INVALID:
@@ -3070,7 +3070,7 @@ dbus_bool_t
 libhal_ctx_set_device_added (LibHalContext *ctx, LibHalDeviceAdded callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	ctx->device_added = callback;
 	return TRUE;
 }
@@ -3088,7 +3088,7 @@ dbus_bool_t
 libhal_ctx_set_device_removed (LibHalContext *ctx, LibHalDeviceRemoved callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	ctx->device_removed = callback;
 	return TRUE;
 }
@@ -3106,7 +3106,7 @@ dbus_bool_t
 libhal_ctx_set_device_new_capability (LibHalContext *ctx, LibHalDeviceNewCapability callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	ctx->device_new_capability = callback;
 	return TRUE;
 }
@@ -3124,7 +3124,7 @@ dbus_bool_t
 libhal_ctx_set_device_lost_capability (LibHalContext *ctx, LibHalDeviceLostCapability callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	ctx->device_lost_capability = callback;
 	return TRUE;
 }
@@ -3142,7 +3142,7 @@ dbus_bool_t
 libhal_ctx_set_device_property_modified (LibHalContext *ctx, LibHalDevicePropertyModified callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	ctx->device_property_modified = callback;
 	return TRUE;
 }
@@ -3160,7 +3160,7 @@ dbus_bool_t
 libhal_ctx_set_device_condition (LibHalContext *ctx, LibHalDeviceCondition callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
+
 	ctx->device_condition = callback;
 	return TRUE;
 }
@@ -3201,12 +3201,12 @@ libhal_string_array_length (char **str_array)
 dbus_bool_t 
 libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
 	DBusMessage *message;
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -3260,12 +3260,12 @@ libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 dbus_bool_t
 libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
 	DBusMessage *message;
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3326,13 +3326,13 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 					  const char *condition_details,
 					  DBusError *error)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
 	DBusMessage *message;
 	DBusMessageIter iter;
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3399,13 +3399,13 @@ libhal_device_claim_interface (LibHalContext *ctx,
 			       const char *introspection_xml,
 			       DBusError *error)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	
 	DBusMessage *message;
 	DBusMessageIter iter;
 	DBusMessageIter reply_iter;
 	DBusMessage *reply;
 	dbus_bool_t result;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,

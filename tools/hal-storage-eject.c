@@ -34,8 +34,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <libhal/libhal.h>
-#include <libhal-storage/libhal-storage.h>
+#include <libhal.h>
+#include <libhal-storage.h>
 #ifdef HAVE_POLKIT
 #include <libpolkit.h>
 #endif

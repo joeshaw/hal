@@ -1453,8 +1453,12 @@ out:
 
 
 
-static int 
+static int
+#ifdef __GLIBC__
 my_alphasort(const void *a, const void *b)
+#else
+my_alphasort(const struct dirent **a, const struct dirent **b)
+#endif
 {
 	return -alphasort (a, b);
 }
