@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+<?xml version="1.0" encoding="UTF-8"?>
 
 <!-- Example: This device information file matches an USB Mass Storage based MP3 player 
               by the matching on the USB vendor and product identifiers. -->

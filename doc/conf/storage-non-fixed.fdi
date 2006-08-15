@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+<?xml version="1.0" encoding="UTF-8"?>
 
 <!-- This .fdi files makes sure no fixed storage device gets tagged as
      mountable except if it's a floppy or optical drive -->
