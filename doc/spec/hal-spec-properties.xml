@@ -962,6 +962,74 @@
               <entry>Yes</entry>
               <entry>SCSI Logical Unit Number</entry>
             </row>
+            <row>
+              <entry>
+                <literal>scsi.type</literal> (string)
+              </entry>
+              <entry>Example: disk</entry>
+              <entry>Yes</entry>
+              <entry>SCSI device type</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>cdrom</entry>
+              <entry></entry>
+              <entry>This is a SCSI cdrom device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>comm</entry>
+              <entry></entry>
+              <entry>This is a SCSI communication device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>disk</entry>
+              <entry></entry>
+              <entry>This is a SCSI disk device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>medium_changer</entry>
+              <entry></entry>
+              <entry>This is a SCSI media changer (e.g. for CD/Tape).</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>printer</entry>
+              <entry></entry>
+              <entry>This is a SCSI printer.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>processor</entry>
+              <entry></entry>
+              <entry>This is a SCSI processor device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>raid</entry>
+              <entry></entry>
+              <entry>This is a SCSI raid device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>scanner</entry>
+              <entry></entry>
+              <entry>This is a SCSI scanner.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>tape</entry>
+              <entry></entry>
+              <entry>This is a SCSI tape device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>unknown</entry>
+              <entry></entry>
+              <entry>The type of this SCSI device is unknwon.</entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
