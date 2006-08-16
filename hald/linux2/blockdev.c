@@ -26,49 +26,33 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <mntent.h>
-#include <errno.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/utsname.h>
-#include <unistd.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <linux/kdev_t.h>
-
 #include <limits.h>
-#include <errno.h>
+#include <linux/kdev_t.h>
+#include <mntent.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
 #include <syslog.h>
+#include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
 #include "../device_info.h"
+#include "../hald.h"
 #include "../hald_dbus.h"
-#include "../util.h"
 #include "../hald_runner.h"
-
-#include "osspec_linux.h"
+#include "../logger.h"
+#include "../osspec.h"
+#include "../util.h"
 
 #include "coldplug.h"
-#include "hotplug_helper.h"
-
 #include "hotplug.h"
+#include "hotplug_helper.h"
+#include "osspec_linux.h"
+
 #include "blockdev.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/

@@ -29,11 +29,12 @@
 #  include <config.h>
 #endif
 
+#include <linux/input.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-#include <linux/input.h>
+#include <unistd.h>
+
 #include <glib/gmain.h>
 
 #include "libhal/libhal.h"

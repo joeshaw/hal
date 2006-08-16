@@ -28,22 +28,17 @@
 #  include <config.h>
 #endif
 
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <stdint.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <ctype.h>
-#include <linux/kdev_t.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <linux/cdrom.h>
 #include <linux/fs.h>
-#include <time.h>
-#include <sys/time.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include <glib.h>
 #include <libvolume_id.h>

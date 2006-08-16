@@ -28,14 +28,13 @@
 #include <string.h>
 
 #include "../device_info.h"
-#include "../logger.h"
 #include "../hald_dbus.h"
+#include "../logger.h"
 #include "../util.h"
 
 #include "osspec_linux.h"
 
 #include "acpi.h"
-#include "hotplug.h"
 
 enum {
 	ACPI_TYPE_BATTERY,

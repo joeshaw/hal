@@ -27,28 +27,25 @@
 #  include <config.h>
 #endif
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <mntent.h>
-#include <errno.h>
-#include <stdint.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
 #include "../device_info.h"
+#include "../hald.h"
+#include "../logger.h"
+#include "../osspec.h"
 #include "../util.h"
 
 #include "osspec_linux.h"
+#include "hotplug.h"
 
 #include "coldplug.h"
-#include "hotplug.h"
 
 #define DMPREFIX "dm-"
 

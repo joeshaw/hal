@@ -28,18 +28,10 @@
 #endif
 
 #include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <mntent.h>
-#include <errno.h>
 #include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/utsname.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 

@@ -27,36 +27,26 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
 #include <string.h>
-#include <mntent.h>
-#include <errno.h>
 #include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/utsname.h>
 #include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
 #include "../device_info.h"
+#include "../hald.h"
+#include "../logger.h"
+#include "../osspec.h"
 #include "../util.h"
 
 #include "coldplug.h"
-#include "hotplug_helper.h"
-
 #include "hotplug.h"
-#include "physdev.h"
-
+#include "hotplug_helper.h"
 #include "ids.h"
-
 #include "osspec_linux.h"
+
+#include "physdev.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
 

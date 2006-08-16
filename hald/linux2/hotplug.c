@@ -28,35 +28,27 @@
 #endif
 
 #include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <mntent.h>
-#include <errno.h>
 #include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/utsname.h>
+#include <string.h>
 #include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
 #include "../device_info.h"
+#include "../hald.h"
+#include "../logger.h"
+#include "../osspec.h"
 
-#include "osspec_linux.h"
-
-#include "hotplug.h"
-#include "physdev.h"
-#include "classdev.h"
-#include "blockdev.h"
 #include "acpi.h"
 #include "apm.h"
+#include "blockdev.h"
+#include "classdev.h"
+#include "osspec_linux.h"
+#include "physdev.h"
 #include "pmu.h"
+
+#include "hotplug.h"
 
 /** Queue of ordered hotplug events */
 GQueue *hotplug_event_queue;

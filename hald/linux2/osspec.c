@@ -32,52 +32,37 @@
 #define _GNU_SOURCE 1
 
 #include <ctype.h>
-#include <stdio.h>
+#include <errno.h>
+#include <limits.h>
+#include <linux/types.h>
+#include <net/if_arp.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
-#include <assert.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <errno.h>
-#include <mntent.h>
-#include <signal.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/utsname.h>
 #include <unistd.h>
-#include <stdint.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <net/if_arp.h>
-#include <sys/socket.h>
-#include <linux/types.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <net/if.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
+#include "../device_info.h"
 #include "../hald.h"
 #include "../hald_dbus.h"
 #include "../hald_runner.h"
-#include "../device_info.h"
+#include "../logger.h"
+#include "../osspec.h"
 #include "../util.h"
 
-#include "hotplug.h"
-#include "coldplug.h"
-#include "ids.h"
 #include "acpi.h"
 #include "apm.h"
-#include "pmu.h"
 #include "blockdev.h"
+#include "coldplug.h"
+#include "hotplug.h"
+#include "ids.h"
+#include "pmu.h"
+
 #include "osspec_linux.h"
 
 static char *hal_sysfs_path;
