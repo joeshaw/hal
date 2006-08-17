@@ -40,6 +40,7 @@ enum {
 	APM_TYPE_AC_ADAPTER
 };
 
+int interval_poll_round = 0;
 
 typedef struct APMDevHandler_s
 {
@@ -201,11 +202,25 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 			remaining_time = i.battery_time * 60;
 		}
 
-		/* set the time on discharge, and remove property on charging because unknown on APM */
-		if (remaining_time > 0)
-			hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
-		else
+		/* set the time to discharge, or remove key for charging */
+		if (remaining_time > 0) {
+			/* switched from charging to discharging, set key */
+			if (!is_charging && is_discharging && !hal_device_has_property(d,"battery.remaining_time")) {
+				hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+				interval_poll_round = 0;
+			}
+			/* after 30 seconds (15*APM_POLL_INTERVAL) set key */
+			else if (interval_poll_round == 15) {
+				hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
+				interval_poll_round = 0;
+			}
+			/* else: only increment counter and set no key to avoid needless events/changes
+			   because APM produce with each read a new value for remaining time */
+			else
+				interval_poll_round++;
+		} else {
 			hal_device_property_remove (d, "battery.remaining_time");
+		}
 
 		/* set the correct charge states */
 		hal_device_property_set_bool (d, "battery.rechargeable.is_charging", is_charging);
