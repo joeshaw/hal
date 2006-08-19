@@ -352,8 +352,13 @@ main (int argc, char *argv[])
 		}
 
 		if (got_media) {
+			uint64_t size;
 			ret = 2;
 			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
+			if (ioctl (fd, BLKGETSIZE64, &size) == 0) {
+				dbg ("media size = %llu", size);
+				libhal_device_set_property_uint64 (ctx, udi, "storage.removable.media_size", size, &error);
+			}
 		} else {
 			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
 		}
@@ -365,6 +370,7 @@ main (int argc, char *argv[])
 		const gchar *partition;
 		const gchar *main_device;
 		size_t main_device_len;
+		uint64_t size;
 
 		dbg ("Checking for file system on %s", device_file);
 
@@ -384,6 +390,11 @@ main (int argc, char *argv[])
 
 		/* if we get to here, we have media */
 		libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
+
+		if (ioctl (fd, BLKGETSIZE64, &size) != 0)
+			size = 0;
+		
+		libhal_device_set_property_uint64 (ctx, udi, "storage.removable.media_size", size, &error);
 
 		/* if the kernel has created partitions, we don't look for a filesystem */
 		main_device = strrchr (sysfs_path, '/');
@@ -409,11 +420,6 @@ main (int argc, char *argv[])
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
-			uint64_t size;
-
-			if (ioctl(vid->fd, BLKGETSIZE64, &size) != 0)
-				size = 0;
-
 			if (volume_id_probe_all (vid, 0, size) == 0) {
 				/* signal to hald that we've found something and a fakevolume
 				 * should be added - see hald/linux2/blockdev.c:add_blockdev_probing_helper_done()

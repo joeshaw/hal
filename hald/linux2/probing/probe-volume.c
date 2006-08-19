@@ -103,9 +103,16 @@ strdup_valid_utf8 (const char *str)
 	 type == WIN98_EXTENDED_PARTITION ||	\
 	 type == LINUX_EXTENDED_PARTITION)
 
-static unsigned char *probe_msdos_part_table(int fd)
+struct msdos_part_entry {
+	uint8_t part_type;
+	uint64_t start;
+	uint64_t size;
+};
+
+static struct msdos_part_entry *
+probe_msdos_part_table(int fd)
 {
-	static unsigned char partition_id_index[256];
+	static struct msdos_part_entry partition_id_index[256];
 	unsigned int partition_count;
 	const uint8_t buf[BSIZE];
 	int i;
@@ -161,7 +168,10 @@ static unsigned char *probe_msdos_part_table(int fd)
 		if (plen == 0)
 			continue;
 
-		partition_id_index[i] = part[i].sys_ind;
+		partition_id_index[i].part_type = part[i].sys_ind;
+		partition_id_index[i].start = poff;
+		partition_id_index[i].size = plen;
+		dbg ("part %d -> type=%d off=%lld size=%lld", i, part[i].sys_ind, poff, plen);
 
 		if (is_extended(part[i].sys_ind)) {
 			dbg("found extended partition at 0x%llx", (unsigned long long) poff);
@@ -178,6 +188,8 @@ static unsigned char *probe_msdos_part_table(int fd)
 	limit = 255;
 	next = extended;
 	while (next != 0) {
+		uint64_t oldnext;
+
 		if (limit-- == 0) {
 			dbg("extended chain limit reached");
 			break;
@@ -195,6 +207,7 @@ static unsigned char *probe_msdos_part_table(int fd)
 		if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
 			break;
 
+		oldnext = next;
 		next = 0;
 
 		part = (struct msdos_partition_entry*) &buf[MSDOS_PARTTABLE_OFFSET];
@@ -213,7 +226,10 @@ static unsigned char *probe_msdos_part_table(int fd)
 				dbg("found 0x%x logical data partition at 0x%llx, len 0x%llx",
 					part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
 
-				partition_id_index[partition_count] = part[i].sys_ind;
+				partition_id_index[partition_count].part_type = part[i].sys_ind;
+				partition_id_index[partition_count].start = oldnext + poff;
+				partition_id_index[partition_count].size = plen;
+
 				partition_count++;
 			}
 		}
@@ -696,12 +712,38 @@ main (int argc, char *argv[])
 			} else {
 				libhal_changeset_set_property_string (changeset, "info.product", "Volume");
 			}
+
+			/* VOLUME_ID_UNUSED means vol_id didn't detect anything that it knows about - look if 
+			 * it's an extended msdos partition table 
+			 */
+			if (vid->usage_id == VOLUME_ID_UNUSED) {
+				unsigned char buf[2];
+
+				dbg ("looking whether partition is an extended msdos partition table", vid->usage_id);
+
+				/* TODO: Is it good enough to just look for this magic? Kay? */
+				lseek (fd, MSDOS_SIG_OFF, SEEK_SET);
+				if (read (fd, &buf, 2) != 2) {
+					dbg ("read failed (%s)", strerror (errno));
+				} else {
+					if (memcmp (buf, MSDOS_MAGIC, 2) == 0) {
+						dbg ("partition is an extended msdos partition table");
+
+						libhal_changeset_set_property_string (changeset, "volume.fsusage", "partitiontable");
+						libhal_changeset_set_property_string (changeset, "volume.fstype", "msdos_extended_partitiontable");
+						libhal_changeset_set_property_string (changeset, "volume.fsversion", "");
+						
+					}
+				}
+				
+			}
+
 			volume_id_close(vid);
 		}
 
 		/* get partition type number, if we find a msdos partition table */
-		if (partition_number_str != NULL) {
-			unsigned char *idx;
+		if (partition_number_str != NULL && partition_number <= 256 && partition_number > 0) {
+			struct msdos_part_entry *idx;
 			int fd;
 
 			if ((stordev_dev_file = libhal_device_get_property_string (
@@ -712,12 +754,20 @@ main (int argc, char *argv[])
 			if (fd >= 0) {
 				idx = probe_msdos_part_table(fd);
 				if (idx != NULL) {
+					uint64_t start;
+					uint64_t size;
 					unsigned char type;
 
-					type = idx[partition_number - 1];
+					type = idx[partition_number - 1].part_type;
+					start = idx[partition_number - 1].start;
+					size = idx[partition_number - 1].size;
 					if (type > 0) {
 						libhal_changeset_set_property_int (
 							changeset, "volume.partition.msdos_part_table_type", type);
+						libhal_changeset_set_property_uint64 (
+							changeset, "volume.partition.msdos_part_table_start", start);
+						libhal_changeset_set_property_uint64 (
+							changeset, "volume.partition.msdos_part_table_size", size);
 
 						/* NOTE: We trust the type from the partition table
 						 * if it explicitly got correct entries for RAID and

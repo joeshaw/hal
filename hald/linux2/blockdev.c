@@ -907,6 +907,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "storage.physical_device", parent->udi);
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
 		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
+		hal_device_property_set_uint64 (d, "storage.removable.media_size", 0);
 		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
 		hal_device_property_set_bool (d, "storage.requires_eject", FALSE);
 		hal_device_property_set_uint64 (d, "storage.size", 0);
@@ -1050,6 +1051,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 
 		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
+		hal_device_property_set_uint64 (d, "storage.removable.media_size", 0);
 		hal_device_property_set_bool (d, "storage.removable", is_removable);
 		/* set storage.size only if we have fixed media */
 		if (!is_removable) {

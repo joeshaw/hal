@@ -2220,7 +2220,11 @@
               <entry></entry>
               <entry>partitiontable</entry>
               <entry></entry>
-              <entry>The volume conatains a partitiontable</entry>
+              <entry>
+	        The volume contains a partitiontable. If an MS-DOS extended
+		partition table is found, then <literal>volume.fstype</literal> 
+		will be <literal>msdos_extended_partitiontable</literal>.
+	      </entry>
             </row>
             <row>
               <entry></entry>
@@ -2244,9 +2248,9 @@
               <entry>
                 <literal>volume.fstype</literal> (string)
               </entry>
-              <entry>example: ext3</entry>
-              <entry>Yes (is blank if the filesystem type is unknown)</entry>
-              <entry></entry>
+              <entry>examples: ext3, vfat, msdos_extended_partitiontable</entry>
+              <entry>Yes (is blank if the type is unknown)</entry>
+              <entry>The specific type of either the file system or what the volume is used for, cf. volume.fsusage</entry>
             </row>
             <row>
               <entry>
@@ -2358,6 +2362,39 @@
               <entry>
                 If available, this is the partition type if the disk for which
                 this volume stems from is using an MS-DOS-style partition table.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.partition.msdos_part_table_start</literal> (uint64)
+              </entry>
+              <entry></entry>
+              <entry>
+                No
+              </entry>
+              <entry>
+                If available, this is the partition start offset if the disk for which
+                this volume stems from is using an MS-DOS-style partition table.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.partition.msdos_part_table_size</literal> (uint64)
+              </entry>
+              <entry></entry>
+              <entry>
+                No
+              </entry>
+              <entry>
+                If available, this is the partition size if the disk for which
+                this volume stems from is using an MS-DOS-style partition table.
+		This information is derived from the partition table so it might
+		not be reliable and match e.g. <literal>volume.size</literal>.
+		Specifically, for MS-DOS extended partition tables, this number
+		will be larger as the actual volume is only e.g. 1 kilobyte
+		(e.g. <literal>volume.size</literal>) while 
+		<literal>volume.partition.msdos_part_table_size</literal>
+		will be the size enclosing all the logical partitions.
               </entry>
             </row>
             <row>
@@ -2911,6 +2948,14 @@
               <entry></entry>
               <entry>Yes</entry>
               <entry>true, if and only if, media have been detected in storage device</entry>
+            </row>
+            <row>
+              <entry>
+	        <literal>storage.removable.media_size</literal> (uint64)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Size of media in storage device. Available only if media have been detected in storage device.</entry>
             </row>
             <row>
               <entry>

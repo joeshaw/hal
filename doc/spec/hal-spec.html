@@ -609,12 +609,12 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN4006"
+HREF="#AEN4036"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DT
 ><A
-HREF="#AEN4025"
+HREF="#AEN4055"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ></DL
@@ -5579,7 +5579,16 @@ CLASS="literal"
 ><TD
 >&nbsp;</TD
 ><TD
->The volume conatains a partitiontable</TD
+>&#13;	        The volume contains a partitiontable. If an MS-DOS extended
+		partition table is found, then <TT
+CLASS="literal"
+>volume.fstype</TT
+> 
+		will be <TT
+CLASS="literal"
+>msdos_extended_partitiontable</TT
+>.
+	      </TD
 ></TR
 ><TR
 ><TD
@@ -5619,11 +5628,11 @@ CLASS="literal"
 > (string)
               </TD
 ><TD
->example: ext3</TD
+>examples: ext3, vfat, msdos_extended_partitiontable</TD
 ><TD
->Yes (is blank if the filesystem type is unknown)</TD
+>Yes (is blank if the type is unknown)</TD
 ><TD
->&nbsp;</TD
+>The specific type of either the file system or what the volume is used for, cf. volume.fsusage</TD
 ></TR
 ><TR
 ><TD
@@ -5755,6 +5764,24 @@ CLASS="literal"
 ><TD
 >&#13;                <TT
 CLASS="literal"
+>volume.linux.is_device_mapper</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes, but only on Linux</TD
+><TD
+>&#13;                If the volume stems from the Linux Device Mapper this property is set to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
 >volume.partition.number</TT
 > (int)
               </TD
@@ -5795,7 +5822,57 @@ CLASS="literal"
 ><TD
 >&#13;                <TT
 CLASS="literal"
->volume.partition.drive_size</TT
+>volume.partition.msdos_part_table_start</TT
+> (uint64)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                No
+              </TD
+><TD
+>&#13;                If available, this is the partition start offset if the disk for which
+                this volume stems from is using an MS-DOS-style partition table.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>volume.partition.msdos_part_table_size</TT
+> (uint64)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                No
+              </TD
+><TD
+>&#13;                If available, this is the partition size if the disk for which
+                this volume stems from is using an MS-DOS-style partition table.
+		This information is derived from the partition table so it might
+		not be reliable and match e.g. <TT
+CLASS="literal"
+>volume.size</TT
+>.
+		Specifically, for MS-DOS extended partition tables, this number
+		will be larger as the actual volume is only e.g. 1 kilobyte
+		(e.g. <TT
+CLASS="literal"
+>volume.size</TT
+>) while 
+		<TT
+CLASS="literal"
+>volume.partition.msdos_part_table_size</TT
+>
+		will be the size enclosing all the logical partitions.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>volume.partition.media_size</TT
 > (uint64)
               </TD
 ><TD
@@ -5851,7 +5928,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1757"
+NAME="AEN1781"
 ></A
 ><TABLE
 BORDER="1"
@@ -5991,7 +6068,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1800"
+NAME="AEN1824"
 ></A
 ><TABLE
 BORDER="1"
@@ -6165,7 +6242,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1858"
+NAME="AEN1882"
 ></A
 ><TABLE
 BORDER="1"
@@ -6547,7 +6624,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2019"
+NAME="AEN2043"
 ></A
 ><TABLE
 BORDER="1"
@@ -6778,6 +6855,20 @@ CLASS="literal"
 >Yes</TD
 ><TD
 >Media can be removed from the storage device</TD
+></TR
+><TR
+><TD
+>&#13;	        <TT
+CLASS="literal"
+>storage.removable.media_available</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>true, if and only if, media have been detected in storage device</TD
 ></TR
 ><TR
 ><TD
@@ -7062,7 +7153,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2219"
+NAME="AEN2249"
 ></A
 ><TABLE
 BORDER="1"
@@ -7396,7 +7487,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2353"
+NAME="AEN2383"
 ></A
 ><TABLE
 BORDER="1"
@@ -7556,7 +7647,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2411"
+NAME="AEN2441"
 ></A
 ><TABLE
 BORDER="1"
@@ -7692,7 +7783,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2453"
+NAME="AEN2483"
 ></A
 ><TABLE
 BORDER="1"
@@ -7764,7 +7855,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2475"
+NAME="AEN2505"
 ></A
 ><TABLE
 BORDER="1"
@@ -7830,7 +7921,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2495"
+NAME="AEN2525"
 ></A
 ><TABLE
 BORDER="1"
@@ -7894,7 +7985,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2515"
+NAME="AEN2545"
 ></A
 ><TABLE
 BORDER="1"
@@ -8038,7 +8129,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2565"
+NAME="AEN2595"
 ></A
 ><TABLE
 BORDER="1"
@@ -8253,7 +8344,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2637"
+NAME="AEN2667"
 ></A
 ><TABLE
 BORDER="1"
@@ -8517,7 +8608,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2733"
+NAME="AEN2763"
 ></A
 ><TABLE
 BORDER="1"
@@ -8769,7 +8860,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2822"
+NAME="AEN2852"
 ></A
 ><TABLE
 BORDER="1"
@@ -8890,7 +8981,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2864"
+NAME="AEN2894"
 ></A
 ><TABLE
 BORDER="1"
@@ -8978,7 +9069,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2893"
+NAME="AEN2923"
 ></A
 ><TABLE
 BORDER="1"
@@ -9075,7 +9166,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2921"
+NAME="AEN2951"
 ></A
 ><TABLE
 BORDER="1"
@@ -9225,7 +9316,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2980"
+NAME="AEN3010"
 ></A
 ><TABLE
 BORDER="1"
@@ -9305,7 +9396,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3006"
+NAME="AEN3036"
 ></A
 ><TABLE
 BORDER="1"
@@ -9372,7 +9463,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3026"
+NAME="AEN3056"
 ></A
 ><TABLE
 BORDER="1"
@@ -10290,7 +10381,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3344"
+NAME="AEN3374"
 ></A
 ><TABLE
 BORDER="1"
@@ -10405,7 +10496,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3388"
+NAME="AEN3418"
 ></A
 ><TABLE
 BORDER="1"
@@ -10473,7 +10564,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3409"
+NAME="AEN3439"
 ></A
 ><TABLE
 BORDER="1"
@@ -10568,7 +10659,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3441"
+NAME="AEN3471"
 ></A
 ><TABLE
 BORDER="1"
@@ -10680,7 +10771,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3483"
+NAME="AEN3513"
 ></A
 ><TABLE
 BORDER="1"
@@ -10819,7 +10910,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3539"
+NAME="AEN3569"
 ></A
 ><TABLE
 BORDER="1"
@@ -10957,7 +11048,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3583"
+NAME="AEN3613"
 ></A
 ><TABLE
 BORDER="1"
@@ -11045,7 +11136,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3609"
+NAME="AEN3639"
 ></A
 ><TABLE
 BORDER="1"
@@ -11138,7 +11229,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3637"
+NAME="AEN3667"
 ></A
 ><TABLE
 BORDER="1"
@@ -11306,7 +11397,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3689"
+NAME="AEN3719"
 ></A
 ><TABLE
 BORDER="1"
@@ -11441,7 +11532,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3730"
+NAME="AEN3760"
 ></A
 ><TABLE
 BORDER="1"
@@ -12386,7 +12477,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3964"
+NAME="AEN3994"
 ></A
 ><TABLE
 BORDER="1"
@@ -12549,7 +12640,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4006"
+NAME="AEN4036"
 >Interface org.freedesktop.Hal.Manager</A
 ></H3
 ><P
@@ -12653,7 +12744,7 @@ CLASS="sect3"
 ><HR><H4
 CLASS="sect3"
 ><A
-NAME="AEN4017"
+NAME="AEN4047"
 >Example</A
 ></H4
 ><P
@@ -12762,7 +12853,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4025"
+NAME="AEN4055"
 >Interface org.freedesktop.Hal.Device</A
 ></H3
 ><P

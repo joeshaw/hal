@@ -196,6 +196,7 @@ dbus_bool_t          libhal_drive_is_hotpluggable          (LibHalDrive      *dr
 dbus_bool_t          libhal_drive_uses_removable_media     (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_is_media_detected        (LibHalDrive      *drive);
 dbus_uint64_t        libhal_drive_get_size                 (LibHalDrive      *drive);
+dbus_uint64_t        libhal_drive_get_media_size           (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_no_partitions_hint       (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_requires_eject           (LibHalDrive      *drive);
 LibHalDriveType      libhal_drive_get_type                 (LibHalDrive      *drive);
@@ -247,7 +248,8 @@ typedef enum {
 	LIBHAL_VOLUME_USAGE_PARTITION_TABLE,
 	LIBHAL_VOLUME_USAGE_RAID_MEMBER,
 	LIBHAL_VOLUME_USAGE_CRYPTO,
-	LIBHAL_VOLUME_USAGE_UNKNOWN
+	LIBHAL_VOLUME_USAGE_UNKNOWN,
+	LIBHAL_VOLUME_USAGE_OTHER
 } LibHalVolumeUsage;
 
 typedef enum {
@@ -308,6 +310,8 @@ dbus_bool_t          libhal_volume_disc_is_appendable         (LibHalVolume     
 LibHalVolumeDiscType libhal_volume_get_disc_type              (LibHalVolume     *volume);
 
 int               libhal_volume_get_msdos_part_table_type     (LibHalVolume     *volume);
+dbus_uint64_t     libhal_volume_get_msdos_part_table_start    (LibHalVolume     *volume);
+dbus_uint64_t     libhal_volume_get_msdos_part_table_size     (LibHalVolume     *volume);
 
 dbus_bool_t       libhal_volume_should_ignore 	              (LibHalVolume     *volume);
 

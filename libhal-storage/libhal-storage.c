@@ -710,6 +710,7 @@ struct LibHalDrive_s {
 	dbus_bool_t no_partitions_hint;
 
 	dbus_uint64_t drive_size;
+	dbus_uint64_t drive_media_size;
 
 	LibHalContext *hal_ctx;
 
@@ -739,6 +740,8 @@ struct LibHalVolume_s {
 	unsigned int partition_number;
 
 	int msdos_part_table_type;
+	dbus_uint64_t msdos_part_table_start;
+	dbus_uint64_t msdos_part_table_size;
 	
 	dbus_bool_t is_disc;
 	LibHalVolumeDiscType disc_type;
@@ -935,6 +938,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.hotpluggable",      drive->is_hotpluggable);
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.removable",         drive->is_removable);
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.removable.media_available", drive->is_media_detected);
+		LIBHAL_PROP_EXTRACT_UINT64 ("storage.removable.media_size", drive->drive_media_size); 
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.requires_eject",    drive->requires_eject);
 
 		LIBHAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
@@ -1113,6 +1117,8 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.start", 		      vol->partition_start_offset); 
 		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.media_size",            vol->partition_media_size); 
 		LIBHAL_PROP_EXTRACT_INT    ("volume.partition.msdos_part_table_type", vol->msdos_part_table_type);
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.msdos_part_table_start", vol->msdos_part_table_start);
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.msdos_part_table_size", vol->msdos_part_table_size);
 
 		LIBHAL_PROP_EXTRACT_INT    ("block.minor",               vol->device_minor);
 		LIBHAL_PROP_EXTRACT_INT    ("block.major",               vol->device_major);
@@ -1198,6 +1204,8 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 			vol->fsusage = LIBHAL_VOLUME_USAGE_RAID_MEMBER;
 		} else if (strcmp (vol_fsusage_textual, "crypto") == 0) {
 			vol->fsusage = LIBHAL_VOLUME_USAGE_CRYPTO;
+		} else if (strcmp (vol_fsusage_textual, "other") == 0) {
+			vol->fsusage = LIBHAL_VOLUME_USAGE_OTHER;
 		} else {
 			vol->fsusage = LIBHAL_VOLUME_USAGE_UNKNOWN;
 		} 
@@ -1229,6 +1237,34 @@ int
 libhal_volume_get_msdos_part_table_type (LibHalVolume *volume)
 {
 	return volume->msdos_part_table_type;
+}
+
+/** If the volume is on a drive with a MSDOS style partition table, return
+ *  the partition start offset according to the partition table.
+ *
+ *  @param  volume              Volume object
+ *  @return                     The partition start offset or -1 if volume isnt
+ *                              a partition or the media the volume stems from
+ *                              isn't partition with a MS DOS style table
+ */
+dbus_uint64_t
+libhal_volume_get_msdos_part_table_start (LibHalVolume *volume)
+{
+	return volume->msdos_part_table_start;
+}
+
+/** If the volume is on a drive with a MSDOS style partition table, return
+ *  the partition size according to the partition table.
+ *
+ *  @param  volume              Volume object
+ *  @return                     The partition size or -1 if volume is not
+ *                              a partition or the media the volume stems from
+ *                              isn't partition with a MS DOS style table
+ */
+dbus_uint64_t
+libhal_volume_get_msdos_part_table_size (LibHalVolume *volume)
+{
+	return volume->msdos_part_table_size;
 }
 
 /***********************************************************************/
@@ -1381,6 +1417,12 @@ dbus_uint64_t
 libhal_drive_get_size (LibHalDrive *drive)
 {
 	return drive->drive_size;
+}
+
+dbus_uint64_t
+libhal_drive_get_media_size (LibHalDrive *drive)
+{
+	return drive->drive_media_size;
 }
 
 LibHalDriveType
