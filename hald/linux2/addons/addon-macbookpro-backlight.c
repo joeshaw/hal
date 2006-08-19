@@ -25,21 +25,19 @@
  **************************************************************************/
 
 #include <config.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/io.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <pci/pci.h>
+#include <unistd.h> 
 
 #include <glib/gmain.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
-
-#include <sys/io.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h> 
-#include <pci/pci.h>
 
 #include "libhal/libhal.h"
 #include "../probing/shared.h"

@@ -28,17 +28,14 @@
 #  include <config.h>
 #endif
 
-#include <errno.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/ioctl.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <stdint.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <linux/serial.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include "libhal/libhal.h"
 

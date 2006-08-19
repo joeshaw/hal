@@ -25,18 +25,15 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include <errno.h>
-#include <string.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <fcntl.h>
 #include <linux/adb.h>
 #include <linux/pmu.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "libhal/libhal.h"
 

@@ -1,5 +1,4 @@
 <!-- Document Type for FreeDesktop.org Device Information Files -->
-<!-- CVSID: $Id$ -->
 
 <!-- <deviceinfo> is the top-level element of an fdi file. -->
 <!ELEMENT deviceinfo (device*) >

@@ -49,8 +49,8 @@
 #include <errno.h>
 #include <syslog.h>
 
-#include <libhal/libhal.h>
-#include <libhal-storage/libhal-storage.h>
+#include <libhal.h>
+#include <libhal-storage.h>
 #ifdef HAVE_POLKIT
 #include <libpolkit.h>
 #endif

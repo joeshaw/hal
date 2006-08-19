@@ -27,16 +27,14 @@
 #  include <config.h>
 #endif
 
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
-
-#include <linux/input.h>
 
 #include "libhal/libhal.h"
 

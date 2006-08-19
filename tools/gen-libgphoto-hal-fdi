@@ -7,7 +7,7 @@
 # tweaked by David Zeuthen <david@fubar.dk>. 
 
 cat <<EOF
-<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- --> 
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 To get back the original script which generated this file, use:
   cat libgphoto2.fdi | uudecode | gunzip >gen-libgphoto-hal-fdi

@@ -45,7 +45,7 @@
 #endif
 
 #include <dbus/dbus.h>
-#include <libhal/libhal.h>
+#include <libhal.h>
 
 typedef struct {
 	char *udi;

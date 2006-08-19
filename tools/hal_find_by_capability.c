@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <getopt.h>
 
-#include <libhal/libhal.h>
+#include <libhal.h>
 
 
 /** Print out program usage.

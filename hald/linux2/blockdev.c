@@ -26,49 +26,33 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <mntent.h>
-#include <errno.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/utsname.h>
-#include <unistd.h>
 #include <ctype.h>
-#include <unistd.h>
-#include <linux/kdev_t.h>
-
 #include <limits.h>
-#include <errno.h>
+#include <linux/kdev_t.h>
+#include <mntent.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
 #include <syslog.h>
+#include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
 #include "../device_info.h"
+#include "../hald.h"
 #include "../hald_dbus.h"
-#include "../util.h"
 #include "../hald_runner.h"
-
-#include "osspec_linux.h"
+#include "../logger.h"
+#include "../osspec.h"
+#include "../util.h"
 
 #include "coldplug.h"
-#include "hotplug_helper.h"
-
 #include "hotplug.h"
+#include "hotplug_helper.h"
+#include "osspec_linux.h"
+
 #include "blockdev.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -170,117 +154,6 @@ cleanup_mountpoint_cb (HalDevice *d, guint32 exit_type,
 	char *mount_point = (char *) data1;
 	HAL_INFO (("In cleanup_mountpoint_cb for '%s'", mount_point));
 	g_free (mount_point);
-}
-
-static gboolean
-is_mounted_by_hald (const char *mount_point)
-{
-	int i;
-	FILE *hal_mtab;
-	int hal_mtab_len;
-	int num_read;
-	char *hal_mtab_buf;
-	char **lines;
-	gboolean found;
-	int lock_mtab_fd;
-
-	hal_mtab = NULL;
-	hal_mtab_buf = NULL;
-	found = FALSE;
-
-	/* take the lock on /media/.hal-mtab-lock so we don't race with the Mount() and Unmount() methods */
-	
-	/* do not attempt to create the file; tools/hal-storage-shared.c will create it and 
-	 * set the correct ownership so this unprivileged process (running as haldaemon) can
-	 * lock it too
-	 */
-	lock_mtab_fd = open ("/media/.hal-mtab-lock", 0);
-	if (lock_mtab_fd < 0) {
-		HAL_INFO (("Cannot open /media/.hal-mtab for locking"));
-		goto out;
-	}
-
-tryagain:
-	if (flock (lock_mtab_fd, LOCK_EX) != 0) {
-		if (errno == EINTR)
-			goto tryagain;
-		HAL_ERROR (("Cannot obtain lock on /media/.hal-mtab"));
-		goto out;
-	}
-
-	/*HAL_DEBUG (("examining /media/.hal-mtab for %s", mount_point));*/
-
-	hal_mtab = fopen ("/media/.hal-mtab", "r");
-	if (hal_mtab == NULL) {
-		HAL_ERROR (("Cannot open /media/.hal-mtab"));
-		goto out;
-	}
-	if (fseek (hal_mtab, 0L, SEEK_END) != 0) {
-		HAL_ERROR (("Cannot seek to end of /media/.hal-mtab"));
-		goto out;
-	}
-	hal_mtab_len = ftell (hal_mtab);
-	if (hal_mtab_len < 0) {
-		HAL_ERROR (("Cannot determine size of /media/.hal-mtab"));
-		goto out;
-	}
-	rewind (hal_mtab);
-
-	hal_mtab_buf = g_new0 (char, hal_mtab_len + 1);
-	num_read = fread (hal_mtab_buf, 1, hal_mtab_len, hal_mtab);
-	if (num_read != hal_mtab_len) {
-		HAL_ERROR (("Cannot read from /media/.hal-mtab"));
-		goto out;
-	}
-	fclose (hal_mtab);
-	hal_mtab = NULL;
-
-	/*HAL_DEBUG (("hal_mtab = '%s'\n", hal_mtab_buf));*/
-
-	lines = g_strsplit (hal_mtab_buf, "\n", 0);
-	g_free (hal_mtab_buf);
-	hal_mtab_buf = NULL;
-
-	/* find the entry we're going to unmount */
-	for (i = 0; lines[i] != NULL && !found; i++) {
-		char **line_elements;
-
-		/*HAL_DEBUG ((" line = '%s'", lines[i]));*/
-
-		if ((lines[i])[0] == '#')
-			continue;
-
-		line_elements = g_strsplit (lines[i], "\t", 6);
-		if (g_strv_length (line_elements) == 6) {
-/*
-			HAL_DEBUG (("  devfile     = '%s'", line_elements[0]));
-			HAL_DEBUG (("  uid         = '%s'", line_elements[1]));
-			HAL_DEBUG (("  session id  = '%s'", line_elements[2]));
-			HAL_DEBUG (("  fs          = '%s'", line_elements[3]));
-			HAL_DEBUG (("  options     = '%s'", line_elements[4]));
-			HAL_DEBUG (("  mount_point = '%s'", line_elements[5]));
-			HAL_DEBUG (("  (comparing against '%s')", mount_point));
-*/
-
-			if (strcmp (line_elements[5], mount_point) == 0) {
-				found = TRUE;
-				/*HAL_INFO (("device at '%s' is indeed mounted by HAL's Mount()", mount_point));*/
-			}
-			
-		}
-
-		g_strfreev (line_elements);
-	}
-
-out:
-	if (lock_mtab_fd >= 0)
-		close (lock_mtab_fd);
-	if (hal_mtab != NULL)
-		fclose (hal_mtab);
-	if (hal_mtab_buf != NULL)
-		g_free (hal_mtab_buf);
-
-	return found;
 }
 
 void
@@ -409,7 +282,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		}
 
 		/* look up in /media/.hal-mtab to see if we mounted this one */
-		if (mount_point != NULL && strlen (mount_point) > 0 && is_mounted_by_hald (mount_point)) {
+		if (mount_point != NULL && strlen (mount_point) > 0 && hal_util_is_mounted_by_hald (mount_point)) {
 			char *cleanup_stdin;
 			char *extra_env[2];
 
@@ -1319,7 +1192,7 @@ force_unmount (HalDevice *d, void *end_token)
 	mount_point = hal_device_property_get_string (d, "volume.mount_point");
 
 	/* look up in /media/.hal-mtab to see if we mounted this one */
-	if (mount_point != NULL && strlen (mount_point) > 0 && is_mounted_by_hald (mount_point)) {
+	if (mount_point != NULL && strlen (mount_point) > 0 && hal_util_is_mounted_by_hald (mount_point)) {
 		char *unmount_stdin;
 		char *extra_env[2];
 

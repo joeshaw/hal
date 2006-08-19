@@ -203,10 +203,10 @@ hal_device_store_remove (HalDeviceStore *store, HalDevice *device)
 	store->devices = g_slist_remove (store->devices, device);
 
 	g_signal_handlers_disconnect_by_func (device,
-					      emit_device_property_changed,
+					      (gpointer)emit_device_property_changed,
 					      store);
 	g_signal_handlers_disconnect_by_func (device,
-					      emit_device_capability_added,
+					      (gpointer)emit_device_capability_added,
 					      store);
 
 	g_signal_emit (store, signals[STORE_CHANGED], 0, device, FALSE);

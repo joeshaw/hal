@@ -28,14 +28,12 @@
 #  include <config.h>
 #endif
 
+#include <ctype.h>
+#include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "libhal/libhal.h"
 #include "shared.h"

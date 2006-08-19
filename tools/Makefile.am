@@ -20,7 +20,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_SCRIPT_DIR=\""$(datadir)/hal/scripts"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
-	-I$(top_srcdir) -I$(top_srcdir)/libhal \
+	-I$(top_srcdir) -I$(top_srcdir)/libhal -I$(top_srcdir)/libhal-storage \
 	@DBUS_CFLAGS@ @GLIB_CFLAGS@ @POLKIT_CFLAGS@
 
 bin_PROGRAMS =                    \

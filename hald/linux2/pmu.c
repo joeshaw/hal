@@ -31,14 +31,14 @@
 #include <unistd.h>
 
 #include "../device_info.h"
-#include "../logger.h"
 #include "../hald_dbus.h"
+#include "../logger.h"
 #include "../util.h"
 
+#include "hotplug.h"
 #include "osspec_linux.h"
 
 #include "pmu.h"
-#include "hotplug.h"
 
 enum {
 	PMU_TYPE_BATTERY,

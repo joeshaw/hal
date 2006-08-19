@@ -27,36 +27,26 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
 #include <string.h>
-#include <mntent.h>
-#include <errno.h>
 #include <stdint.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/utsname.h>
 #include <unistd.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../osspec.h"
-#include "../logger.h"
-#include "../hald.h"
 #include "../device_info.h"
+#include "../hald.h"
+#include "../logger.h"
+#include "../osspec.h"
 #include "../util.h"
 
 #include "coldplug.h"
-#include "hotplug_helper.h"
-
 #include "hotplug.h"
-#include "physdev.h"
-
+#include "hotplug_helper.h"
 #include "ids.h"
-
 #include "osspec_linux.h"
+
+#include "physdev.h"
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
@@ -684,24 +674,39 @@ scsi_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_util_get_int_from_file (sysfs_path, "type", &type, 0);
 	HAL_INFO (("%s/type -> %d (-> scsi.type)", sysfs_path, type));
 	switch (type) {
-	case 0:
-		/* Disk */
-	case 14:
-		/* TYPE_RBC (Reduced Block Commands)
-		 * Simple Direct Access Device, set it to disk
-		 * (some Firewire Disks use it)
-		 */
+	case 0:  /* TYPE_DISK (disk) */
+	case 7:  /* TYPE_MOD (Magneto-optical disk) */
+	case 14: /* TYPE_RBC (Reduced Block Commands)
+		  * Simple Direct Access Device, set it to disk
+		  * (some Firewire Disks use it)
+		  */
 		hal_device_property_set_string (d, "scsi.type", "disk");
 		break;
-	case 1:
-		/* Tape */
+	case 1: /* TYPE_TAPE (Tape) */
 		hal_device_property_set_string (d, "scsi.type", "tape");
 		break;
-	case 4:
-		/* WORM */
-	case 5:
-		/* CD-ROM */
+	case 2:
+		/* TYPE_PRINTER (Tape) */
+		hal_device_property_set_string (d, "scsi.type", "printer");
+		break;
+	case 3:  /* TYPE_PROCESSOR */
+		hal_device_property_set_string (d, "scsi.type", "processor");
+		break;
+	case 4: /* TYPE_WORM */
+	case 5: /* TYPE_ROM (CD-ROM) */
 		hal_device_property_set_string (d, "scsi.type", "cdrom");
+		break;
+	case 6: /* TYPE_SCANNER */
+		hal_device_property_set_string (d, "scsi.type", "scanner");
+		break;
+	case 8: /* TYPE_MEDIUM_CHANGER */
+		hal_device_property_set_string (d, "scsi.type", "medium_changer");
+		break;
+	case 9: /* TYPE_COMM */
+		hal_device_property_set_string (d, "scsi.type", "comm");
+		break;
+	case 12: /* TYPE_RAID */
+		hal_device_property_set_string (d, "scsi.type", "raid");
 		break;
 	default:
 		hal_device_property_set_string (d, "scsi.type", "unknown");

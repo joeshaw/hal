@@ -33,7 +33,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <sys/time.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 
 #include "logger.h"
 
