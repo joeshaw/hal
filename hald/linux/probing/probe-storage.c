@@ -399,8 +399,8 @@ main (int argc, char *argv[])
 		if (vid != NULL) {
 			if (volume_id_probe_all (vid, 0, size) == 0) {
 				/* signal to hald that we've found something and a fakevolume
-				 * should be added - see hald/linux2/blockdev.c:add_blockdev_probing_helper_done()
-				 * and hald/linux2/blockdev.c:block_rescan_storage_done().
+				 * should be added - see hald/linux/blockdev.c:add_blockdev_probing_helper_done()
+				 * and hald/linux/blockdev.c:block_rescan_storage_done().
 				 */
 				if (vid->usage_id == VOLUME_ID_FILESYSTEM ||
 				    vid->usage_id == VOLUME_ID_RAID ||

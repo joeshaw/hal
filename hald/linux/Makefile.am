@@ -10,11 +10,11 @@ INCLUDES = \
 	-I$(top_srcdir) -I.. \
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
-if HALD_COMPILE_LINUX2
-noinst_LTLIBRARIES = libhald_linux2.la
+if HALD_COMPILE_LINUX
+noinst_LTLIBRARIES = libhald_linux.la
 endif
 
-libhald_linux2_la_SOURCES =					\
+libhald_linux_la_SOURCES =					\
 				osspec.c			\
 	osspec_linux.h						\
 	hotplug.h		hotplug.c			\

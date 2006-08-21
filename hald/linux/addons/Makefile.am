@@ -8,7 +8,7 @@ INCLUDES = \
         -I$(top_srcdir) -I$(top_srcdir)/hald \
         @GLIB_CFLAGS@ @DBUS_CFLAGS@
 
-if HALD_COMPILE_LINUX2
+if HALD_COMPILE_LINUX
 libexec_PROGRAMS  = 			\
 	hald-addon-acpi 		\
 	hald-addon-acpi-buttons-toshiba \

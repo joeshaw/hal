@@ -8,7 +8,7 @@ INCLUDES = \
 	-I$(top_srcdir) \
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
-if HALD_COMPILE_LINUX2
+if HALD_COMPILE_LINUX
 libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume hald-probe-printer \
 	           hald-probe-pc-floppy hald-probe-smbios hald-probe-serial
 endif

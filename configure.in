@@ -213,7 +213,7 @@ AC_CHECK_HEADERS(pci/pci.h, [
 	USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])
 
 
-AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux2/solaris/dummy)],
+AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux/solaris/dummy)],
                       [
                       backend=$withval
                       ]
@@ -229,7 +229,7 @@ else
                    HALD_BACKEND="freebsd"
                    ;;
 	*-linux*)
-		   HALD_BACKEND="linux2"
+		   HALD_BACKEND="linux"
       		   ;;
         *)
 		   HALD_BACKEND="dummy"
@@ -237,7 +237,7 @@ else
     esac
 fi
 AM_CONDITIONAL(HALD_COMPILE_DUMMY, test x$HALD_BACKEND = xdummy, [Compiling for Dummy backend])
-AM_CONDITIONAL(HALD_COMPILE_LINUX2, test x$HALD_BACKEND = xlinux2, [Compiling for Linux])
+AM_CONDITIONAL(HALD_COMPILE_LINUX, test x$HALD_BACKEND = xlinux, [Compiling for Linux])
 AM_CONDITIONAL(HALD_COMPILE_FREEBSD, test x$HALD_BACKEND = xfreebsd, [Compiling for FreeBSD])
 AM_CONDITIONAL(HALD_COMPILE_SOLARIS, test x$HALD_BACKEND = xsolaris, [Compiling for Solaris])
 AC_SUBST(HALD_BACKEND)
@@ -443,9 +443,9 @@ hal.conf
 Makefile
 hald/Makefile
 hald/dummy/Makefile
-hald/linux2/Makefile
-hald/linux2/probing/Makefile
-hald/linux2/addons/Makefile
+hald/linux/Makefile
+hald/linux/probing/Makefile
+hald/linux/addons/Makefile
 hald/solaris/Makefile
 hald/haldaemon
 hald-runner/Makefile

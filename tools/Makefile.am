@@ -3,7 +3,7 @@
 
 SUBDIRS = device-manager
 
-if HALD_COMPILE_LINUX2
+if HALD_COMPILE_LINUX
 SUBDIRS += linux
 endif
 if HALD_COMPILE_FREEBSD
