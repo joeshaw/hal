@@ -3123,6 +3123,22 @@ error:
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+static gboolean
+foreach_device_get_xml_node (HalDeviceStore *store, HalDevice *device,
+			     gpointer user_data)
+{
+	GString *xml = user_data;
+	const char *udi, *name;
+
+	udi = hal_device_get_udi (device);
+	name = strrchr(udi, '/')+1;
+
+	xml = g_string_append(xml, "  <node name=\"");
+	xml = g_string_append(xml, name);
+	xml = g_string_append(xml, "\"/>\n");
+
+	return TRUE;
+}
 
 static DBusHandlerResult
 do_introspect (DBusConnection  *connection, 
@@ -3147,7 +3163,34 @@ do_introspect (DBusConnection  *connection,
 			    "    </method>\n"
 			    "  </interface>\n");
 
-	if (strcmp (path, "/org/freedesktop/Hal/Manager") == 0) {
+	if (strcmp (path, "/") == 0) {
+
+		xml = g_string_append (xml,
+				       "  <node name=\"org\"/>\n");
+
+	} else if (strcmp (path, "/org") == 0) {
+
+		xml = g_string_append (xml,
+				       "  <node name=\"freedesktop\"/>\n");
+
+	} else if (strcmp (path, "/org/freedesktop") == 0) {
+
+		xml = g_string_append (xml,
+				       "  <node name=\"Hal\"/>\n");
+
+	} else if (strcmp (path, "/org/freedesktop/Hal") == 0) {
+
+		xml = g_string_append (xml,
+				       "  <node name=\"Manager\"/>\n"
+				       "  <node name=\"devices\"/>\n");
+
+	} else if (strcmp (path, "/org/freedesktop/Hal/devices") == 0) {
+
+		hal_device_store_foreach (hald_get_gdl (),
+					  foreach_device_get_xml_node,
+					  xml);
+
+	} else if (strcmp (path, "/org/freedesktop/Hal/Manager") == 0) {
 
 		xml = g_string_append (xml,
 				       "  <interface name=\"org.freedesktop.Hal.Manager\">\n"
