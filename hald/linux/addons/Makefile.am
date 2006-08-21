@@ -5,7 +5,7 @@ INCLUDES = \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
-        -I$(top_srcdir) -I$(top_srcdir)/hald \
+        -I$(top_srcdir) \
         @GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 if HALD_COMPILE_LINUX
