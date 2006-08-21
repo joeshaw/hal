@@ -333,7 +333,7 @@ main (int argc, char *argv[])
 			ret = 2;
 			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
 			if (ioctl (fd, BLKGETSIZE64, &size) == 0) {
-				dbg ("media size = %llu", size);
+				HAL_DEBUG (("media size = %llu", size));
 				libhal_device_set_property_uint64 (ctx, udi, "storage.removable.media_size", size, &error);
 			}
 		} else {

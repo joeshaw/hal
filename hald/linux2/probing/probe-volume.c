@@ -166,7 +166,7 @@ probe_msdos_part_table(int fd)
 		partition_id_index[i].part_type = part[i].sys_ind;
 		partition_id_index[i].start = poff;
 		partition_id_index[i].size = plen;
-		dbg ("part %d -> type=%d off=%lld size=%lld", i, part[i].sys_ind, poff, plen);
+		HAL_DEBUG (("part %d -> type=%d off=%lld size=%lld", i, part[i].sys_ind, poff, plen));
 
 		if (is_extended(part[i].sys_ind)) {
 			HAL_DEBUG (("found extended partition at 0x%llx", (unsigned long long) poff));
@@ -714,15 +714,15 @@ main (int argc, char *argv[])
 			if (vid->usage_id == VOLUME_ID_UNUSED) {
 				unsigned char buf[2];
 
-				dbg ("looking whether partition is an extended msdos partition table", vid->usage_id);
+				HAL_DEBUG (("looking whether partition is an extended msdos partition table", vid->usage_id));
 
 				/* TODO: Is it good enough to just look for this magic? Kay? */
 				lseek (fd, MSDOS_SIG_OFF, SEEK_SET);
 				if (read (fd, &buf, 2) != 2) {
-					dbg ("read failed (%s)", strerror (errno));
+					HAL_DEBUG (("read failed (%s)", strerror (errno)));
 				} else {
 					if (memcmp (buf, MSDOS_MAGIC, 2) == 0) {
-						dbg ("partition is an extended msdos partition table");
+						HAL_DEBUG (("partition is an extended msdos partition table"));
 
 						libhal_changeset_set_property_string (changeset, "volume.fsusage", "partitiontable");
 						libhal_changeset_set_property_string (changeset, "volume.fstype", "msdos_extended_partitiontable");
