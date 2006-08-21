@@ -151,13 +151,13 @@ battery_refresh_poll (HalDevice *d)
 		voltage = hal_device_property_get_int (d, "battery.voltage.current");
 
 		/* Just in case we don't get design voltage information, then
-		 * this will pretend that we have 1mV.  This degrades our
+		 * this will pretend that we have 1V.  This degrades our
 		 * ability to report accurate times on multi-battery systems
 		 * but will always prevent negative charge levels and allow
 		 * accurate reporting on single-battery systems.
 		 */
 		if (design_voltage <= 0)
-			design_voltage = 1;
+			design_voltage = 1000; /* mV */
 
 		/* If the current voltage is unknown or greater than design,
 		 * then use design voltage.
@@ -165,9 +165,9 @@ battery_refresh_poll (HalDevice *d)
 		if (voltage <= 0 || voltage > design_voltage)
 			voltage = design_voltage;
 
-		normalised_current = reporting_current * voltage;
-		normalised_lastfull = reporting_lastfull * voltage;
-		normalised_rate = reporting_rate * voltage;
+		normalised_current = (reporting_current * voltage) / 1000;
+		normalised_lastfull = (reporting_lastfull * voltage) / 1000;
+		normalised_rate = (reporting_rate * voltage) / 1000;
 	} else {
 		/*
 		 * handle as if mWh, which is the most common case.
@@ -516,21 +516,21 @@ battery_refresh_add (HalDevice *d, const char *path)
 	} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
 		voltage_design = hal_device_property_get_int (d, "battery.voltage.design");
 	
-		/* If design voltage is unknown, use 1mV. */
+		/* If design voltage is unknown, use 1V. */
 		if (voltage_design <= 0)
-			voltage_design = 1;
+			voltage_design = 1000; /* mV */;
 
 		/* scale by factor battery.voltage.design */
 		hal_device_property_set_int (d, "battery.charge_level.design",
-			reporting_design * voltage_design);
+			(reporting_design * voltage_design) / 1000);
 		hal_device_property_set_int (d, "battery.charge_level.warning",
-			reporting_warning * voltage_design);
+			(reporting_warning * voltage_design) / 1000);
 		hal_device_property_set_int (d, "battery.charge_level.low",
-			reporting_low * voltage_design);
+			(reporting_low * voltage_design) / 1000);
 		hal_device_property_set_int (d, "battery.charge_level.granularity_1",
-			reporting_gran1 * voltage_design);
+			(reporting_gran1 * voltage_design) / 1000);
 		hal_device_property_set_int (d, "battery.charge_level.granularity_2",
-			reporting_gran2 * voltage_design);
+			(reporting_gran2 * voltage_design) / 1000);
 
 		/* set unit */
 		hal_device_property_set_string (d, "battery.charge_level.unit",
