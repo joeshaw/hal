@@ -39,7 +39,7 @@
 
 #include "libhal/libhal.h"
 
-#include "shared.h"
+#include "../../logger.h"
 
 int 
 main (int argc, char *argv[])
@@ -54,30 +54,35 @@ main (int argc, char *argv[])
 
 	/* assume failure */
 	ret = 1;
-
-	if ((udi = getenv ("UDI")) == NULL)
-		goto out;
-	if ((device_file = getenv ("HAL_PROP_SERIAL_DEVICE")) == NULL)
-		goto out;
-
-	_set_debug ();
 	
-	dbg ("Checking if %s is actually present", device_file);
+	setup_logger ();
+
+	if ((udi = getenv ("UDI")) == NULL) {
+		HAL_ERROR (("UDI not set"));
+		goto out;
+	}
+
+	if ((device_file = getenv ("HAL_PROP_SERIAL_DEVICE")) == NULL) {
+		HAL_ERROR (("HAL_PROP_SERIAL_DEVICE not set"));
+		goto out;
+	}
+
+	HAL_DEBUG (("Checking if %s is actually present", device_file));
 	
 	/* Check that there actually is a drive at the other end */
 	fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (fd < 0) {
-		dbg ("Could not open %s", device_file);
+		HAL_ERROR (("Could not open %s", device_file));
 		goto out;
 	}
 	
 	if (ioctl (fd, TIOCGSERIAL, &ss)) {
-		dbg ("TIOCGSERIAL failed for %s", device_file);
+		HAL_ERROR (("TIOCGSERIAL failed for %s", device_file));
 		goto out;
 	}
 	
 	if (ss.type == 0) {
-		dbg ("serial port %s seems not to exist", device_file);
+		HAL_ERROR (("serial port %s seems not to exist", device_file));
 		goto out;
 	}
 

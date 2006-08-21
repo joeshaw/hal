@@ -37,7 +37,8 @@
 
 #include "libhal/libhal.h"
 
-#include "../probing/shared.h"
+#include "../../logger.h"
+#include "../../util_helper.h"
 
 int
 main (int argc, char *argv[])
@@ -54,7 +55,7 @@ main (int argc, char *argv[])
 
 	fd = -1;
 
-	_set_debug ();
+	setup_logger ();
 
 	udi = getenv ("UDI");
 	if (udi == NULL)
@@ -67,7 +68,7 @@ main (int argc, char *argv[])
 
 	/* initial state */
 	if ((strstate = getenv ("HAL_PROP_BUTTON_STATE_VALUE")) == NULL) {
-		dbg ("Cannot get HAL_PROP_BUTTON_STATE_VALUE");
+		HAL_ERROR (("Cannot get HAL_PROP_BUTTON_STATE_VALUE"));
 		goto out;
 	}
 	if (strcmp (strstate, "true") == 0)
@@ -76,7 +77,7 @@ main (int argc, char *argv[])
 		state = FALSE;
 
 	if ((fd = open ("/dev/adb", O_RDWR)) < 0) {
-                dbg ("Cannot open /dev/adb");
+                HAL_ERROR (("Cannot open /dev/adb"));
                 goto out;
 	}
 
@@ -92,14 +93,14 @@ main (int argc, char *argv[])
 		if (n == 2) {
 			rd = read (fd, buf, sizeof (buf));
 			if (rd <= 0) {
-				dbg ("Error reading from fd; read returned %d; err=%s", errno, strerror (errno));
+				HAL_ERROR (("Error reading from fd; read returned %d; err=%s", errno, strerror (errno)));
 				goto out;
 			}
 
 #if 0
 			int i;
 			
-			dbg ("Read 0x%02x bytes", rd);				
+			HAL_DEBUG (("Read 0x%02x bytes", rd));				
 			for (i = 0; i < rd; i++) {
 				dbg ("%02x : 0x%02x", i, buf[i]);
 			}
@@ -109,7 +110,7 @@ main (int argc, char *argv[])
 				new_state = (((buf[1]) & 0x01) != 0);
 
 				if (new_state != state) {
-					dbg ("lid state change: %d", new_state);
+					HAL_DEBUG (("lid state change: %d", new_state));
 					dbus_error_init (&error);
 					libhal_device_set_property_bool (
 						ctx, udi, "button.state.value", new_state, &error);

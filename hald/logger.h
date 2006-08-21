@@ -49,12 +49,16 @@ enum {
 void logger_setup (int priority, const char *file, int line, const char *function);
 
 void logger_emit (const char *format, ...);
+//void logger_forward_debug (const char *format, va_list args);
+void logger_forward_debug (const char *format, ...);
 
 void logger_enable (void);
 void logger_disable (void);
 
 void logger_enable_syslog (void);
 void logger_disable_syslog (void);
+
+void setup_logger (void);
 
 #ifdef __SUNPRO_C
 #define __FUNCTION__ __func__

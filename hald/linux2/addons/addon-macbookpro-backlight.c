@@ -31,6 +31,7 @@
 #include <string.h>
 #include <sys/io.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <pci/pci.h>
 #include <unistd.h> 
@@ -40,7 +41,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #include "libhal/libhal.h"
-#include "../probing/shared.h"
+#include "../../logger.h"
 
 static LibHalContext *halctx = NULL;
 static GMainLoop *main_loop;
@@ -201,6 +202,7 @@ set_keyboard_backlight (char value)
 }
 
 
+#if 0
 static int
 read_keyboard_backlight (void)
 {
@@ -211,6 +213,7 @@ read_keyboard_backlight (void)
 	else
 		return -1;
 }
+#endif
 
 static int last_keyboard_brightness = -1;
 
@@ -404,18 +407,18 @@ main (int argc, char *argv[])
  	int state;
 	DBusError err;
 
-	_set_debug ();	
+	setup_logger ();
 	udi = getenv ("UDI");
 
-	dbg ("udi=%s", udi);
+	HAL_DEBUG (("udi=%s", udi));
 	if (udi == NULL) {
-		fprintf (stderr, "No device specified");
+		HAL_ERROR (("No device specified"));
 		return -2;
 	}
 
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
-		fprintf (stderr, "Cannot connect to hald");
+		HAL_ERROR (("Cannot connect to hald"));
 		return -3;
 	}
 
@@ -442,24 +445,24 @@ main (int argc, char *argv[])
  	}
  	pci_cleanup(pacc);
 
-	dbg ("addr 0x%x len=%d", address, length);
+	HAL_DEBUG (("addr 0x%x len=%d", address, length));
  
  	if (!address) {
- 		dbg ("Failed to detect ATI X1600, aborting...");
+ 		HAL_DEBUG (("Failed to detect ATI X1600, aborting..."));
  		return 1;
  	}
  
  	fd = open ("/dev/mem", O_RDWR);
  	
  	if (fd < 0) {
- 		dbg ("cannot open /dev/mem");
+ 		HAL_DEBUG (("cannot open /dev/mem"));
  		return 1;
  	}
  
  	memory = mmap (NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, address);
  
  	if (memory == MAP_FAILED) {
- 		perror ("mmap failed");
+ 		HAL_ERROR (("mmap failed"));
  		return 2;
  	}
  
@@ -469,7 +472,7 @@ main (int argc, char *argv[])
  	OUTREG(0x7ae4, state);
 
 	if (ioperm (0x300, 0x304, 1) < 0) {
-		perror("ioperm failed (you should be root).");
+		HAL_ERROR (("ioperm failed (you should be root)."));
 		exit(1);
 	}
 
@@ -485,7 +488,7 @@ main (int argc, char *argv[])
 					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"i\"/>\n"
 					    "    </method>\n",
 					    &err)) {
-		fprintf (stderr, "Cannot claim interface");
+		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
 		return -4;
 	}
 	if (!libhal_device_claim_interface (halctx, 
@@ -495,7 +498,7 @@ main (int argc, char *argv[])
 					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"ai\"/>\n"
 					    "    </method>\n",
 					    &err)) {
-		fprintf (stderr, "Cannot claim interface");
+		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LightSensor'"));
 		return -4;
 	}
 	if (!libhal_device_claim_interface (halctx, 
@@ -508,7 +511,7 @@ main (int argc, char *argv[])
 					    "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n"
 					    "    </method>\n",
 					    &err)) {
-		fprintf (stderr, "Cannot claim interface");
+		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.KeyboardBacklight'"));
 		return -4;
 	}
 

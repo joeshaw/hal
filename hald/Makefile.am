@@ -40,6 +40,8 @@ BUILT_SOURCES =		\
 hald_SOURCES =                                                          \
 	hald_marshal.h			hald_marshal.c			\
 	util.h				util.c				\
+	util_helper.h			util_helper.c			\
+	util_pm.h			util_pm.c			\
 	hald_runner.h			hald_runner.c			\
 	device.h			device.c			\
 	device_info.h			device_info.c			\
@@ -48,7 +50,7 @@ hald_SOURCES =                                                          \
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\
-	property.h			property.c
+	property.h			property.c			
 
 hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 

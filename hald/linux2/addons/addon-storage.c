@@ -42,7 +42,8 @@
 
 #include "libhal/libhal.h"
 
-#include "../probing/shared.h"
+#include "../../logger.h"
+#include "../../util_helper.h"
 
 static void 
 force_unmount (LibHalContext *ctx, const char *udi)
@@ -61,14 +62,14 @@ force_unmount (LibHalContext *ctx, const char *udi)
 					    "org.freedesktop.Hal.Device.Volume",
 					    "Unmount");
 	if (msg == NULL) {
-		dbg ("Could not create dbus message for %s", udi);
+		HAL_ERROR (("Could not create dbus message for %s", udi));
 		goto out;
 	}
 
 
 	options = calloc (1, sizeof (char *));
 	if (options == NULL) {
-		dbg ("Could not allocate options array");
+		HAL_ERROR (("Could not allocate options array"));
 		goto out;
 	}
 
@@ -77,33 +78,31 @@ force_unmount (LibHalContext *ctx, const char *udi)
 
 	device_file = libhal_device_get_property_string (ctx, udi, "block.device", NULL);
 	if (device_file != NULL) {
-		openlog ("hald", 0, LOG_DAEMON);
-		syslog (LOG_NOTICE, "forcibly attempting to lazy unmount %s as media was removed", device_file);
-		closelog ();
+		HAL_INFO(("forcibly attempting to lazy unmount %s as media was removed", device_file));
 		libhal_free_string (device_file);
 	}
 
 	if (!dbus_message_append_args (msg, 
 				       DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &options, num_options,
 				       DBUS_TYPE_INVALID)) {
-		dbg ("Could not append args to dbus message for %s", udi);
+		HAL_ERROR (("Could not append args to dbus message for %s", udi));
 		goto out;
 	}
 	
 	dbus_error_init (&error);
 	if (!(reply = dbus_connection_send_with_reply_and_block (dbus_connection, msg, -1, &error))) {
-		dbg ("Unmount failed for %s: %s : %s\n", udi, error.name, error.message);
+		HAL_ERROR (("Unmount failed for %s: %s : %s\n", udi, error.name, error.message));
 		dbus_error_free (&error);
 		goto out;
 	}
 
 	if (dbus_error_is_set (&error)) {
-		dbg ("Unmount failed for %s\n%s : %s\n", udi, error.name, error.message);
+		HAL_ERROR (("Unmount failed for %s\n%s : %s\n", udi, error.name, error.message));
 		dbus_error_free (&error);
 		goto out;
 	}
 
-	dbg ("Succesfully unmounted udi '%s'", udi);
+	HAL_DEBUG (("Succesfully unmounted udi '%s'", udi));
 
 out:
 	if (options != NULL)
@@ -142,7 +141,7 @@ unmount_cleartext_devices (LibHalContext *ctx, const char *udi)
 			clear_udi = clear_devices[i];
 			dbus_error_init (&error);
 			if (libhal_device_get_property_bool (ctx, clear_udi, "volume.is_mounted", &error)) {
-				dbg ("Forcing unmount of child '%s' (crypto)", clear_udi);
+				HAL_DEBUG (("Forcing unmount of child '%s' (crypto)", clear_udi));
 				force_unmount (ctx, clear_udi);
 			}
 		}
@@ -178,7 +177,7 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 
 				dbus_error_init (&error);
 				if (libhal_device_get_property_bool (ctx, vol_udi, "volume.is_mounted", &error)) {
-					dbg ("Forcing unmount of child '%s'", vol_udi);
+					HAL_DEBUG (("Forcing unmount of child '%s'", vol_udi));
 					force_unmount (ctx, vol_udi);
 				}
 
@@ -188,13 +187,13 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 					DBusMessage *reply = NULL;
 
 					/* tear down mapping */
-					dbg ("Teardown crypto for '%s'", vol_udi);
+					HAL_DEBUG (("Teardown crypto for '%s'", vol_udi));
 
 					msg = dbus_message_new_method_call ("org.freedesktop.Hal", vol_udi,
 									    "org.freedesktop.Hal.Device.Volume.Crypto",
 									    "Teardown");
 					if (msg == NULL) {
-						dbg ("Could not create dbus message for %s", vol_udi);
+						HAL_ERROR (("Could not create dbus message for %s", vol_udi));
 						goto teardown_failed;
 					}
 
@@ -202,8 +201,8 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 					if (!(reply = dbus_connection_send_with_reply_and_block (
 						      libhal_ctx_get_dbus_connection (ctx), msg, -1, &error)) || 
 					    dbus_error_is_set (&error)) {
-						dbg ("Teardown failed for %s: %s : %s\n", 
-						     udi, error.name, error.message);
+						HAL_DEBUG (("Teardown failed for %s: %s : %s\n", 
+						     udi, error.name, error.message));
 						dbus_error_free (&error);
 					}
 
@@ -291,7 +290,7 @@ main (int argc, char *argv[])
 	if ((drive_type = getenv ("HAL_PROP_STORAGE_DRIVE_TYPE")) == NULL)
 		goto out;
 
-	_set_debug ();
+	setup_logger ();
 
 	support_media_changed_str = getenv ("HAL_PROP_STORAGE_CDROM_SUPPORT_MEDIA_CHANGED");
 	if (support_media_changed_str != NULL && strcmp (support_media_changed_str, "true") == 0)
@@ -303,9 +302,9 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	dbg ("**************************************************");
-	dbg ("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi);
-	dbg ("**************************************************");
+	HAL_DEBUG (("**************************************************"));
+	HAL_DEBUG (("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi));
+	HAL_DEBUG (("**************************************************"));
 
 	hal_set_proc_title ("hald-addon-storage: polling %s", device_file);
 
@@ -343,7 +342,7 @@ main (int argc, char *argv[])
 			}
 
 			if (fd < 0) {
-				dbg ("open failed for %s: %s", device_file, strerror (errno)); 
+				HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
 				goto skip_check;
 			}
 
@@ -374,7 +373,7 @@ main (int argc, char *argv[])
 				break;
 
 			case -1:
-				dbg ("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno));
+				HAL_ERROR (("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
 				break;
 
 			default:
@@ -416,7 +415,7 @@ main (int argc, char *argv[])
 				got_media = TRUE;
 				close (fd);
 			} else {
-				dbg ("open failed for %s: %s", device_file, strerror (errno)); 
+				HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
 				close (fd);
 				goto skip_check;
 			}
@@ -427,7 +426,7 @@ main (int argc, char *argv[])
 			if (!got_media) {
 				DBusError error;
 				
-				dbg ("Media removal detected on %s", device_file);
+				HAL_DEBUG (("Media removal detected on %s", device_file));
 				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
 				
 				/* attempt to unmount all childs */
@@ -449,7 +448,7 @@ main (int argc, char *argv[])
 			if (got_media) {
 				DBusError error;
 
-				dbg ("Media insertion detected on %s", device_file);
+				HAL_DEBUG (("Media insertion detected on %s", device_file));
 				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);				/* our probe will trigger the appropriate hotplug events */
 
 				/* could have a fs on the main block device; do a rescan to add it */
@@ -470,7 +469,7 @@ main (int argc, char *argv[])
 		else
 			media_status = MEDIA_STATUS_NO_MEDIA;
 
-		/*dbg ("polling %s; got media=%d", device_file, got_media);*/
+		/*HAL_DEBUG (("polling %s; got media=%d", device_file, got_media));*/
 
 	skip_check:
 		sleep (2);

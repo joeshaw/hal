@@ -38,7 +38,7 @@
 #include <glib/gmain.h>
 
 #include "libhal/libhal.h"
-#include "../probing/shared.h"
+#include "../../logger.h"
 
 /** Toshiba ACPI key interface */
 #define TOSHIBA_ACPI_KEYS		"/proc/acpi/toshiba/keys"
@@ -57,7 +57,7 @@ toshiba_key_flush (void)
 	int value;
 	FILE *fp = fopen (TOSHIBA_ACPI_KEYS, "r+");
 	if (!fp) {
-		dbg ("Could not open %s!", TOSHIBA_ACPI_KEYS);
+		HAL_DEBUG (("Could not open %s!", TOSHIBA_ACPI_KEYS));
 		return;
 	}
 	while (hotkey_ready) {
@@ -65,7 +65,7 @@ toshiba_key_flush (void)
 		fclose (fp);
 		fp = fopen (TOSHIBA_ACPI_KEYS, "r+");
 		if (fscanf (fp, "hotkey_ready: %d\nhotkey: 0x%4x", &hotkey_ready, &value) < 2)
-			dbg ("Warning: failure while parse %s", TOSHIBA_ACPI_KEYS);
+			HAL_WARNING(("Warning: failure while parse %s", TOSHIBA_ACPI_KEYS));
 	}
 	if (fp)
 		fclose (fp);
@@ -86,7 +86,7 @@ toshiba_key_ready (int *value)
 		return FALSE;
 
 	if (fscanf (fp, "hotkey_ready: %1d\nhotkey: 0x%4x", &hotkey_ready, value) < 2)
-		dbg ("Warning: failure while parse %s", TOSHIBA_ACPI_KEYS); 
+		HAL_WARNING (("Warning: failure while parse %s", TOSHIBA_ACPI_KEYS)); 
 
 	if (hotkey_ready) {
 		fprintf (fp, "hotkey_ready:0\n");
@@ -130,11 +130,12 @@ toshiba_key_poll (void)
 			result = "wifi-power";
 
 		if (result) {
-			dbg ("Sending condition '%s'", result);
+			HAL_DEBUG (("Sending condition '%s'", result));
 			libhal_device_emit_condition (ctx, udi, "ButtonPressed", result, &error);
 			if (dbus_error_is_set (&error)) {
-				dbg ("Failed to send condition: %s", error.message);
+				HAL_ERROR (("Failed to send condition: %s", error.message));
 				dbus_error_free (&error);
+				return FALSE;
 			}
 		}
 	}
@@ -150,23 +151,23 @@ main (int argc, char **argv)
 	DBusError error;
 	FILE *fp;
 
-	if ((getenv ("HALD_VERBOSE")) != NULL)
-		is_verbose = TRUE;
+	setup_logger ();
+
 	udi = getenv ("UDI");
 	if (udi == NULL) {
-		dbg ("Failed to get UDI");
+		HAL_ERROR (("Failed to get UDI"));
 		return 1;
 	}
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
-		dbg ("Unable to initialise libhal context: %s", error.message);
+		HAL_ERROR (("Unable to initialise libhal context: %s", error.message));
 		return 1;
 	}
 
 	/* Check for Toshiba ACPI interface /proc/acpi/toshiba/keys */
 	fp = fopen (TOSHIBA_ACPI_KEYS, "r+");
 	if (!fp) {
-		dbg ("Could not open %s! Aborting.", TOSHIBA_ACPI_KEYS);
+		HAL_ERROR (("Could not open %s! Aborting.", TOSHIBA_ACPI_KEYS));
 		return 0;
 	}
 	fclose (fp);

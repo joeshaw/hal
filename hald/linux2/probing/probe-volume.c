@@ -45,7 +45,7 @@
 
 #include "libhal/libhal.h"
 #include "linux_dvd_rw_utils.h"
-#include "shared.h"
+#include "../../logger.h"
 
 static void vid_log(int priority, const char *file, int line, const char *format, ...)
 {
@@ -54,7 +54,7 @@ static void vid_log(int priority, const char *file, int line, const char *format
 
 	va_start(args, format);
 	vsnprintf(log_str, sizeof(log_str), format, args);
-	dbg("%s:%i %s", file, line, log_str);
+	logger_forward_debug("%s:%i %s", file, line, log_str);
 	va_end(args);
 }
 
@@ -131,11 +131,11 @@ probe_msdos_part_table(int fd)
 	} __attribute__((packed)) *part;
 
 	if (lseek(fd, 0, SEEK_SET) < 0) {
-		dbg("lseek failed (%s)", strerror(errno));
+		HAL_DEBUG (("lseek failed (%s)", strerror(errno)));
 		return NULL;
 	}
 	if (read(fd, &buf, BSIZE) < BSIZE) {
-		dbg("read failed (%s)", strerror(errno));
+		HAL_DEBUG (("read failed (%s)", strerror(errno)));
 		return NULL;
 	}
 	if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
@@ -169,12 +169,12 @@ probe_msdos_part_table(int fd)
 		dbg ("part %d -> type=%d off=%lld size=%lld", i, part[i].sys_ind, poff, plen);
 
 		if (is_extended(part[i].sys_ind)) {
-			dbg("found extended partition at 0x%llx", (unsigned long long) poff);
+			HAL_DEBUG (("found extended partition at 0x%llx", (unsigned long long) poff));
 			if (extended == 0)
 				extended = poff;
 		} else {
-			dbg("found 0x%x primary data partition at 0x%llx, len 0x%llx",
-			    part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
+			HAL_DEBUG (("found 0x%x primary data partition at 0x%llx, len 0x%llx",
+			    part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen));
 		}
 	}
 
@@ -186,17 +186,17 @@ probe_msdos_part_table(int fd)
 		uint64_t oldnext;
 
 		if (limit-- == 0) {
-			dbg("extended chain limit reached");
+			HAL_DEBUG(("extended chain limit reached"));
 			break;
 		}
 
-		dbg("read 0x%llx (%llu)", next, next);
+		HAL_DEBUG (("read 0x%llx (%llu)", next, next));
 		if (lseek(fd, next, SEEK_SET) < 0) {
-			dbg("lseek failed (%s)", strerror(errno));
+			HAL_DEBUG(("lseek failed (%s)", strerror(errno)));
 			return NULL;
 		}
 		if (read(fd, &buf, BSIZE) < BSIZE) {
-			dbg("read failed (%s)", strerror(errno));
+			HAL_DEBUG(("read failed (%s)", strerror(errno)));
 			return NULL;
 		}
 		if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) != 0)
@@ -214,12 +214,12 @@ probe_msdos_part_table(int fd)
 				continue;
 
 			if (is_extended(part[i].sys_ind)) {
-				dbg("found extended partition (chain) at 0x%llx", (unsigned long long) poff);
+				HAL_DEBUG(("found extended partition (chain) at 0x%llx", (unsigned long long) poff));
 				if (next == 0)
 					next = extended + poff;
 			} else {
-				dbg("found 0x%x logical data partition at 0x%llx, len 0x%llx",
-					part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen);
+				HAL_DEBUG(("found 0x%x logical data partition at 0x%llx, len 0x%llx",
+					part[i].sys_ind, (unsigned long long) poff, (unsigned long long) plen));
 
 				partition_id_index[partition_count].part_type = part[i].sys_ind;
 				partition_id_index[partition_count].start = oldnext + poff;
@@ -265,22 +265,22 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 	}
 
 	libhal_changeset_set_property_string (changes, "volume.fsusage", usage);
-	dbg ("volume.fsusage = '%s'", usage);
+	HAL_DEBUG (("volume.fsusage = '%s'", usage));
 
 	libhal_changeset_set_property_string (changes, "volume.fstype", vid->type);
-	dbg ("volume.fstype = '%s'", vid->type);
+	HAL_DEBUG(("volume.fstype = '%s'", vid->type));
 	if (vid->type_version[0] != '\0') {
 		libhal_changeset_set_property_string (changes, "volume.fsversion", vid->type_version);
-		dbg ("volume.fsversion = '%s'", vid->type_version);
+		HAL_DEBUG(("volume.fsversion = '%s'", vid->type_version));
 	}
 	libhal_changeset_set_property_string (changes, "volume.uuid", vid->uuid);
-	dbg ("volume.uuid = '%s'", vid->uuid);
+	HAL_DEBUG(("volume.uuid = '%s'", vid->uuid));
 
 	/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
 	volume_label = strdup_valid_utf8 (vid->label);
 	if( volume_label != NULL ) {
 		libhal_changeset_set_property_string (changes, "volume.label", volume_label);
-		dbg ("volume.label = '%s'", volume_label);
+		HAL_DEBUG(("volume.label = '%s'", volume_label));
 		
 		if (strlen(volume_label) > 0) {	
 			libhal_changeset_set_property_string (changes, "info.product", volume_label);
@@ -331,7 +331,7 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 	lseek (fd, 0x8080, SEEK_CUR);
 	if (read (fd, &bs, 2) != 2)
 	{
-		dbg ("Advanced probing on %s failed while reading block size", device_file);
+		HAL_DEBUG(("Advanced probing on %s failed while reading block size", device_file));
 		goto out;
 	}
 
@@ -339,7 +339,7 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 	lseek (fd, 2, SEEK_CUR);
 	if (read (fd, &ts, 2) != 2)
 	{
-		dbg ("Advanced probing on %s failed while reading path table size", device_file);
+		HAL_DEBUG(("Advanced probing on %s failed while reading path table size", device_file));
 		goto out;
 	}
 
@@ -347,7 +347,7 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 	lseek (fd, 6, SEEK_CUR);
 	if (read (fd, &tl, 4) != 4)
 	{
-		dbg ("Advanced probing on %s failed while reading path table block", device_file);
+		HAL_DEBUG(("Advanced probing on %s failed while reading path table block", device_file));
 		goto out;
 	}
 
@@ -360,7 +360,7 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 		/* get the length of the filename of the current entry */
 		if (read (fd, &len_di, 1) != 1)
 		{
-			dbg ("Advanced probing on %s failed, cannot read more entries", device_file);
+			HAL_DEBUG(("Advanced probing on %s failed, cannot read more entries", device_file));
 			break;
 		}
 
@@ -369,14 +369,14 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 		lseek (fd, 5, SEEK_CUR);
 		if (read (fd, &parent, 2) != 2)
 		{
-			dbg ("Advanced probing on %s failed, couldn't read parent entry", device_file);
+			HAL_DEBUG(("Advanced probing on %s failed, couldn't read parent entry", device_file));
 			break;
 		}
 		
 		/* read the name */
 		if (read (fd, dirname, len_di) != len_di)
 		{
-			dbg ("Advanced probing on %s failed, couldn't read the entry name", device_file);
+			HAL_DEBUG(("Advanced probing on %s failed, couldn't read the entry name", device_file));
 			break;
 		}
 		dirname[len_di] = 0;
@@ -396,19 +396,19 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *chan
 			if (!strcmp (dirname, "VIDEO_TS"))
 			{
 				libhal_changeset_set_property_bool (changes, "volume.disc.is_videodvd", TRUE);
-				dbg ("Disc in %s is a Video DVD", device_file);
+				HAL_DEBUG(("Disc in %s is a Video DVD", device_file));
 				break;
 			}
 			else if (!strcmp (dirname, "VCD"))
 			{
 				libhal_changeset_set_property_bool (changes, "volume.disc.is_vcd", TRUE);
-				dbg ("Disc in %s is a Video CD", device_file);
+				HAL_DEBUG(("Disc in %s is a Video CD", device_file));
 				break;
 			}
 			else if (!strcmp (dirname, "SVCD"))
 			{
 				libhal_changeset_set_property_bool (changes, "volume.disc.is_svcd", TRUE);
-				dbg ("Disc in %s is a Super Video CD", device_file);
+				HAL_DEBUG(("Disc in %s is a Super Video CD", device_file));
 				break;
 			}
 		}
@@ -481,7 +481,7 @@ main (int argc, char *argv[])
 	else
 		is_disc = FALSE;
 
-	_set_debug ();
+	setup_logger ();
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
@@ -489,11 +489,11 @@ main (int argc, char *argv[])
 
 	changeset = libhal_device_new_changeset (udi);
 	if (changeset == NULL) {
-		dbg ("Cannot initialize changeset");
+		HAL_DEBUG(("Cannot initialize changeset"));
 		goto out;
 	}
 
-	dbg ("Doing probe-volume for %s\n", device_file);
+	HAL_DEBUG(("Doing probe-volume for %s\n", device_file));
 
 	fd = open (device_file, O_RDONLY);
 	if (fd < 0)
@@ -501,11 +501,11 @@ main (int argc, char *argv[])
 
 	/* block size and total size */
 	if (ioctl (fd, BLKSSZGET, &block_size) == 0) {
-		dbg ("volume.block_size = %d", block_size);
+		HAL_DEBUG(("volume.block_size = %d", block_size));
 		libhal_changeset_set_property_int (changeset, "volume.block_size", block_size);
 	}
 	if (ioctl (fd, BLKGETSIZE64, &vol_size) == 0) {
-		dbg ("volume.size = %llu", vol_size);
+		HAL_DEBUG(("volume.size = %llu", vol_size));
 		libhal_changeset_set_property_uint64 (changeset, "volume.size", vol_size);
 	} else
 		vol_size = 0;
@@ -536,33 +536,33 @@ main (int argc, char *argv[])
 		switch (type) {
 		case CDS_AUDIO:		/* audio CD */
 			libhal_changeset_set_property_bool (changeset, "volume.disc.has_audio", TRUE);
-			dbg ("Disc in %s has audio", device_file);
+			HAL_DEBUG(("Disc in %s has audio", device_file));
 			should_probe_for_fs = FALSE;
 			break;
 		case CDS_MIXED:		/* mixed mode CD */
 			libhal_changeset_set_property_bool (changeset, "volume.disc.has_audio", TRUE);
 			libhal_changeset_set_property_bool (changeset, "volume.disc.has_data", TRUE);
-			dbg ("Disc in %s has audio+data", device_file);
+			HAL_DEBUG(("Disc in %s has audio+data", device_file));
 			break;
 		case CDS_DATA_1:	/* data CD */
 		case CDS_DATA_2:
 		case CDS_XA_2_1:
 		case CDS_XA_2_2:
 			libhal_changeset_set_property_bool (changeset, "volume.disc.has_data", TRUE);
-			dbg ("Disc in %s has data", device_file);
+			HAL_DEBUG(("Disc in %s has data", device_file));
 			advanced_disc_detect (ctx, udi, changeset, fd, device_file);
 			break;
 		case CDS_NO_INFO:	/* blank or invalid CD */
 			libhal_changeset_set_property_bool (changeset, "volume.disc.is_blank", TRUE);
 			/* set the volume size to 0 if disc is blank and not as 4 from BLKGETSIZE64 */
 			libhal_changeset_set_property_int (changeset, "volume.block_size", 0);
-			dbg ("Disc in %s is blank", device_file);
+			HAL_DEBUG(("Disc in %s is blank", device_file));
 			should_probe_for_fs = FALSE;
 			break;
 			
 		default:		/* should never see this */
 			libhal_changeset_set_property_string (changeset, "volume.disc_type", "unknown");
-			dbg ("Disc in %s returned unknown CDROM_DISC_STATUS", device_file);
+			HAL_DEBUG(("Disc in %s returned unknown CDROM_DISC_STATUS", device_file));
 			should_probe_for_fs = FALSE;
 			break;
 		}
@@ -571,7 +571,7 @@ main (int argc, char *argv[])
 		 * http://www.t10.org/drafts.htm#mmc5
 		 */
 		type = get_disc_type (fd);
-		dbg ("get_disc_type returned 0x%02x", type);
+		HAL_DEBUG(("get_disc_type returned 0x%02x", type));
 		if (type != -1) {
 			switch (type) {
 			case 0x08: /* CD-ROM */
@@ -641,7 +641,7 @@ main (int argc, char *argv[])
 		}
 
 		if (get_disc_capacity_for_type (fd, type, &capacity) == 0) {
-			dbg ("volume.disc.capacity = %llu", capacity);
+			HAL_DEBUG(("volume.disc.capacity = %llu", capacity));
 			libhal_changeset_set_property_uint64 (changeset, "volume.disc.capacity", capacity);
 		}
 
@@ -664,7 +664,7 @@ main (int argc, char *argv[])
 			unsigned int vol_session_count = 0;
 
 			vol_session_count = toc_hdr.cdth_trk1;
-			dbg ("volume_session_count = %u", vol_session_count);
+			HAL_DEBUG(("volume_session_count = %u", vol_session_count));
 
 			/* read session header */
 			memset (&toc_entr, 0x00, sizeof (toc_entr));
@@ -672,7 +672,7 @@ main (int argc, char *argv[])
 			toc_entr.cdte_format = CDROM_LBA;
 			if (ioctl (fd, CDROMREADTOCENTRY, &toc_entr) == 0)
 				if ((toc_entr.cdte_ctrl & CDROM_DATA_TRACK) == 4) {
-					dbg ("last session starts at block = %u", toc_entr.cdte_addr.lba);
+					HAL_DEBUG(("last session starts at block = %u", toc_entr.cdte_addr.lba));
 					vol_probe_offset = toc_entr.cdte_addr.lba * block_size;
 				}
 		}

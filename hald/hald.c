@@ -56,6 +56,7 @@
 #include "hald_dbus.h"
 #include "util.h"
 #include "hald_runner.h"
+#include "util_helper.h"
 
 static void delete_pid(void)
 {
@@ -247,40 +248,6 @@ out:
 dbus_bool_t hald_is_initialising;
 
 static int startup_daemonize_pipe[2];
-
-/** Drop all but necessary privileges from hald when it runs as root.  Set the
- *  running user id to HAL_USER and group to HAL_GROUP
- */
-static void
-drop_privileges ()
-{
-    struct passwd *pw = NULL;
-    struct group *gr = NULL;
-
-    /* determine user id */
-    pw = getpwnam (HAL_USER);
-    if (!pw)  {
-	HAL_ERROR (("drop_privileges: user " HAL_USER " does not exist"));
-	exit (-1);
-    }
-
-    /* determine primary group id */
-    gr = getgrnam (HAL_GROUP);
-    if(!gr) {
-	HAL_ERROR (("drop_privileges: group " HAL_GROUP " does not exist"));
-	exit (-1);
-    }
-
-    if( setgid (gr->gr_gid) ) {
-	HAL_ERROR (("drop_privileges: could not set group id"));
-	exit (-1);
-    }
-
-    if( setuid (pw->pw_uid)) {
-	HAL_ERROR (("drop_privileges: could not set user id"));
-	exit (-1);
-    }
-}
 
 
 /*--------------------------------------------------------------------------------------------------*/
@@ -565,7 +532,7 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-	drop_privileges();
+	drop_privileges(0);
 
 	/* initialize operating system specific parts */
 	osspec_init ();

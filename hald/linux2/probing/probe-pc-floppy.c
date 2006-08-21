@@ -39,7 +39,7 @@
 
 #include "libhal/libhal.h"
 
-#include "shared.h"
+#include "../../logger.h"
 
 int 
 main (int argc, char *argv[])
@@ -61,32 +61,32 @@ main (int argc, char *argv[])
 	if ((device_file = getenv ("HAL_PROP_BLOCK_DEVICE")) == NULL)
 		goto out;
 
-	_set_debug ();
+	setup_logger ();
 	
-	dbg ("Checking if %s is actually present", device_file);
+	HAL_DEBUG (("Checking if %s is actually present", device_file));
 	
 	/* Check that there actually is a drive at the other end */
 	fd = open (device_file, O_RDONLY | O_NONBLOCK);
 	if (fd < 0) {
-		dbg ("Could not open %s", device_file);
+		HAL_ERROR (("Could not open %s", device_file));
 		goto out;
 	}
 	
 	/* @todo Could use the name here */
 	ioctl (fd, FDRESET, NULL);
 	if (ioctl (fd, FDGETDRVTYP, name) != 0) {
-		dbg ("FDGETDRVTYP failed for %s", device_file);
+		HAL_ERROR (("FDGETDRVTYP failed for %s", device_file));
 		goto out;
 	}
-	dbg ("floppy drive name is '%s'", name);
+	HAL_DEBUG (("floppy drive name is '%s'", name));
 
 	if (ioctl (fd, FDPOLLDRVSTAT, &ds)) {
-		dbg ("FDPOLLDRVSTAT failed for %s", device_file);
+		HAL_ERROR (("FDPOLLDRVSTAT failed for %s", device_file));
 		goto out;
 	}
 	
 	if (ds.track < 0) {
-		dbg ("floppy drive %s seems not to exist", device_file);
+		HAL_ERROR (("floppy drive %s seems not to exist", device_file));
 		goto out;
 	}
 

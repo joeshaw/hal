@@ -37,7 +37,8 @@
 
 #include "libhal/libhal.h"
 
-#include "../probing/shared.h"
+#include "../../logger.h"
+#include "../../util_helper.h"
 
 #ifdef ACPI_PROC
 static FILE *
@@ -48,7 +49,7 @@ acpi_get_event_fp_kernel (void)
 	fp = fopen ("/proc/acpi/event", "r");
 
 	if (fp == NULL)
-		dbg ("Cannot open /proc/acpi/event: %s", strerror (errno));
+		HAL_ERROR (("Cannot open /proc/acpi/event: %s", strerror (errno)));
 
 	return fp;
 }
@@ -64,7 +65,7 @@ acpi_get_event_fp_acpid (void)
 	int fd;
 
 	if( (fd = socket (AF_UNIX, SOCK_STREAM, 0)) < 0 ) {
-		dbg ("Cannot create socket: %s", strerror (errno));
+		HAL_ERROR (("Cannot create socket: %s", strerror (errno)));
 		return NULL;
 	}
 
@@ -73,14 +74,13 @@ acpi_get_event_fp_acpid (void)
 	strncpy (addr.sun_path, "/var/run/acpid.socket", sizeof addr.sun_path);
 
 	if (connect (fd, (struct sockaddr *) &addr, sizeof addr) < 0) {
-		dbg ("Cannot connect to acpid socket: %s", strerror (errno));
+		HAL_ERROR (("Cannot connect to acpid socket: %s", strerror (errno)));
 		close (fd);
 	} else {
 		fp = fdopen (fd, "r");
 
-		if (fp == NULL)
-		{
-			dbg ("fdopen failed: %s", strerror (errno));
+		if (fp == NULL) {
+			HAL_ERROR (("fdopen failed: %s", strerror (errno)));
 			close (fd);
 		}
 	}
@@ -104,7 +104,7 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 
 	while (fgets (event, sizeof event, eventfp))
 	{
-		dbg ("event is '%s'", event);
+		HAL_DEBUG (("event is '%s'", event));
 
 		if (sscanf (event, "%s %s %x %x", acpi_path, acpi_name, &acpi_num1, &acpi_num2) == 4) {
 			char udi[256];
@@ -114,7 +114,7 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 			if (strncmp (acpi_path, "button", sizeof ("button") - 1) == 0) {
 				char *type;
 
-				dbg ("button event");
+				HAL_DEBUG (("button event"));
 
 				/* TODO: only rescan if button got state */
 				libhal_device_rescan (ctx, udi, &error);
@@ -130,15 +130,15 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 					libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
 				}
 			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
-				dbg ("ac_adapter event");
+				HAL_DEBUG (("ac_adapter event"));
 				libhal_device_rescan (ctx, udi, &error);
 			} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
-				dbg ("battery event");
+				HAL_DEBUG (("battery event"));
 				libhal_device_rescan (ctx, udi, &error);
 			}
 
 		} else {
-			dbg ("cannot parse event");
+			HAL_DEBUG (("cannot parse event"));
 		}
 
 		if (dbus_error_is_set (&error)) {
@@ -167,12 +167,12 @@ main (int argc, char **argv)
 	drop_privileges (0);
 #endif
 
-	_set_debug ();
+	setup_logger ();
 
 	dbus_error_init (&error);
 
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
-		dbg ("Unable to initialise libhal context: %s", error.message);
+		HAL_ERROR (("Unable to initialise libhal context: %s", error.message));
 		return 1;
 	}
 
@@ -184,7 +184,7 @@ main (int argc, char **argv)
 	if (eventfp) {
 		hal_set_proc_title ("hald-addon-acpi: listening on acpi kernel interface /proc/acpi/event");
 		main_loop (ctx, eventfp);
-		dbg ("Lost connection to kernel acpi event source - exiting");
+		HAL_ERROR (("Lost connection to kernel acpi event source - exiting"));
 		return 1;
 	}
 #endif
@@ -196,7 +196,7 @@ main (int argc, char **argv)
 		if ((eventfp = acpi_get_event_fp_acpid ())) {
 			hal_set_proc_title ("hald-addon-acpi: listening on acpid socket /var/run/acpid.socket");
 			main_loop (ctx, eventfp);
-			dbg ("Cannot connect to acpid event socket - retry connect");
+			HAL_DEBUG (("Cannot connect to acpid event socket - retry connect"));
 		}
 #endif
 		

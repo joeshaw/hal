@@ -34,6 +34,7 @@
 #include "../hald_dbus.h"
 #include "../logger.h"
 #include "../util.h"
+#include "../util_pm.h"
 
 #include "hotplug.h"
 #include "osspec_linux.h"

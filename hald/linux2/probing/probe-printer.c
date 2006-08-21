@@ -36,7 +36,7 @@
 #include <glib.h>
 
 #include "libhal/libhal.h"
-#include "shared.h"
+#include "../../logger.h"
 
 /* Stolen from kernel 2.6.4, drivers/usb/class/usblp.c */
 #define IOCNR_GET_DEVICE_ID 1
@@ -65,28 +65,34 @@ main (int argc, char *argv[])
 	/* assume failure */
 	ret = 1;
 
+	setup_logger ();
+	
 	udi = getenv ("UDI");
-	if (udi == NULL)
+	if (udi == NULL) {
+		HAL_ERROR (("UDI not set"));	
 		goto out;
+	}
 
 	dbus_error_init (&error);
-	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
+		HAL_ERROR (("ctx init failed"));
 		goto out;
+	}
 
-	_set_debug ();
-	
 	device_file = getenv ("HAL_PROP_PRINTER_DEVICE");
-	if (device_file == NULL)
+	if (device_file == NULL) {
+		HAL_ERROR (("device_file == NULL"));
 		goto out;
+	}
 
 	fd = open (device_file, O_RDONLY);
 	if (fd < 0) {
-		dbg ("Cannot open %s", device_file);
+		HAL_ERROR (("Cannot open %s", device_file));
 		goto out;
 	}
 
 	if (ioctl (fd, LPIOC_GET_DEVICE_ID (sizeof (device_id)), device_id) < 0) {
-		dbg ("Cannot do LPIOC_GET_DEVICE_ID on %s", device_file);
+		HAL_ERROR (("Cannot do LPIOC_GET_DEVICE_ID on %s", device_file));
 		goto out;
 	} else
 
@@ -96,7 +102,7 @@ main (int argc, char *argv[])
 	desc = NULL;
 	cmd = NULL;
 
-	dbg ("device_id = %s", device_id + 2);
+	HAL_DEBUG (("device_id = %s", device_id + 2));
 
 	props = g_strsplit (device_id+2, ";", 0);
 	for (iter = props; *iter != NULL; iter++) {

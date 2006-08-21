@@ -40,13 +40,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 #include <glib.h>
 #include <libvolume_id.h>
 
 #include "libhal/libhal.h"
 #include "linux_dvd_rw_utils.h"
-#include "shared.h"
+
+#include "../../logger.h"
 
 static void vid_log(int priority, const char *file, int line, const char *format, ...)
 {
@@ -55,32 +57,10 @@ static void vid_log(int priority, const char *file, int line, const char *format
 
 	va_start(args, format);
 	vsnprintf(log_str, sizeof(log_str), format, args);
-	dbg("%s:%i %s", file, line, log_str);
+	logger_forward_debug("%s:%i %s", file, line, log_str);
 	va_end(args);
 }
 
-static char *
-strdup_valid_utf8 ( const char *String )
-{
-	char *endchar;
-	char *newString;
-	unsigned int count = 0;
-
-	if (String == NULL)
-		return NULL;
-
-	newString = g_strdup( String );
-
-	while (!g_utf8_validate (newString, -1, (const char **) &endchar)) {
-		*endchar = '?';
-		count++;
-	}
-
-	if (strlen(newString) == count)
-		return NULL;
-	else
-		return newString;
-}
 
 /** Check if a filesystem on a special device file is mounted
  *
@@ -148,7 +128,7 @@ main (int argc, char *argv[])
 	if ((sysfs_path = getenv ("HAL_PROP_LINUX_SYSFS_PATH")) == NULL)
 		goto out;
 
-	_set_debug ();
+	setup_logger ();
 
 	if (argc == 2 && strcmp (argv[1], "--only-check-for-media") == 0)
 		only_check_for_fs = TRUE;
@@ -159,8 +139,8 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	dbg ("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 
-	     device_file, bus, drive_type, udi, only_check_for_fs);
+	HAL_DEBUG (("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 
+	     device_file, bus, drive_type, udi, only_check_for_fs));
 
 	if (!only_check_for_fs) {
 		/* Get properties for CD-ROM drive */
@@ -169,16 +149,16 @@ main (int argc, char *argv[])
 			int read_speed, write_speed;
 			char *write_speeds;
 			
-			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
+			HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file));
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
 			if (fd < 0) {
-				dbg ("Cannot open %s: %s", device_file, strerror (errno));
+				HAL_ERROR (("Cannot open %s: %s", device_file, strerror (errno)));
 				goto out;
 			}
-			dbg ("Returned from open(2)");
+			HAL_DEBUG (("Returned from open(2)"));
 
 			if (ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0) {
-				dbg ("Error: CDROM_SET_OPTIONS failed: %s\n", strerror(errno));
+				HAL_ERROR (("Error: CDROM_SET_OPTIONS failed: %s\n", strerror(errno)));
 				close (fd);
 				goto out;
 			}
@@ -219,7 +199,7 @@ main (int argc, char *argv[])
 				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvd", TRUE, &error);
 
 				profile = get_dvd_r_rw_profile (fd);
-				dbg ("get_dvd_r_rw_profile returned: %d", profile);
+				HAL_DEBUG (("get_dvd_r_rw_profile returned: %d", profile));
 
 				if (profile & DRIVE_CDROM_CAPS_DVDRW)
 					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdrw", TRUE, &error);
@@ -280,7 +260,7 @@ main (int argc, char *argv[])
 		int got_media;
 		int drive;
 
-		dbg ("Checking for optical disc on %s", device_file);
+		HAL_DEBUG (("Checking for optical disc on %s", device_file));
 
 		support_media_changed_str = getenv ("HAL_PROP_STORAGE_CDROM_SUPPORT_MEDIA_CHANGED");
 		if (support_media_changed_str != NULL && strcmp (support_media_changed_str, "true") == 0)
@@ -288,7 +268,7 @@ main (int argc, char *argv[])
 		else
 			support_media_changed = FALSE;
 
-		dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK | O_EXCL)", device_file);
+		HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK | O_EXCL)", device_file));
 		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
 
 		if (fd < 0 && errno == EBUSY) {
@@ -303,12 +283,12 @@ main (int argc, char *argv[])
 			if (!is_mounted (device_file))
 				goto out;
 
-			dbg ("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file);
+			HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file));
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
 		}
 
 		if (fd < 0) {
-			dbg ("open failed for %s: %s", device_file, strerror (errno));
+			HAL_DEBUG (("open failed for %s: %s", device_file, strerror (errno)));
 			goto out;
 		}
 
@@ -341,7 +321,7 @@ main (int argc, char *argv[])
 			break;
 			
 		case -1:
-			dbg ("Error: CDROM_DRIVE_STATUS failed: %s\n", strerror(errno));
+			HAL_ERROR (("Error: CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
 			break;
 			
 		default:
@@ -369,21 +349,21 @@ main (int argc, char *argv[])
 		size_t main_device_len;
 		uint64_t size;
 
-		dbg ("Checking for file system on %s", device_file);
+		HAL_DEBUG (("Checking for file system on %s", device_file));
 
 		/* See if we got a file system on the main block device - which 
 		 * means doing a data (non O_NONBLOCK) open - this might fail, 
 		 * especially if we don't have any media...
 		 */
-		dbg ("Doing open (\"%s\", O_RDONLY)", device_file);
+		HAL_DEBUG (("Doing open (\"%s\", O_RDONLY)", device_file));
 		fd = open (device_file, O_RDONLY);
 		if (fd < 0) {
-			dbg ("Cannot open %s: %s", device_file, strerror (errno));
+			HAL_DEBUG (("Cannot open %s: %s", device_file, strerror (errno)));
 			/* no media */
 			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
 			goto out;
 		}
-		dbg ("Returned from open(2)");
+		HAL_DEBUG (("Returned from open(2)"));
 
 		/* if we get to here, we have media */
 		libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
@@ -399,15 +379,15 @@ main (int argc, char *argv[])
 			goto out;
 		main_device = &main_device[1];
 		main_device_len = strlen (main_device);
-		dbg ("look for existing partitions for %s", main_device);
+		HAL_DEBUG (("look for existing partitions for %s", main_device));
 		if ((dir = g_dir_open (sysfs_path, 0, NULL)) == NULL) {
-			dbg ("failed to open sysfs dir");
+			HAL_DEBUG (("failed to open sysfs dir"));
 			goto out;
 		}
 		while ((partition = g_dir_read_name (dir)) != NULL) {
 			if (strncmp (main_device, partition, main_device_len) == 0 &&
 			    isdigit (partition[main_device_len])) {
-				dbg ("partition %s found, skip probing for filesystem", partition);
+				HAL_DEBUG (("partition %s found, skip probing for filesystem", partition));
 				g_dir_close (dir);
 				goto out;
 			}

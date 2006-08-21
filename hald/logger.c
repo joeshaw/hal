@@ -4,6 +4,7 @@
  * logger.c : Logging 
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2006 Danny Kukawka, <danny.kukawka@web.de>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -34,6 +35,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "logger.h"
 
@@ -50,6 +52,7 @@ static const char *file;
 static int line;
 static const char *function;
 
+static int log_pid  = 0;
 static int is_enabled = 1;
 static int syslog_enabled = 0;
 
@@ -90,6 +93,25 @@ logger_disable_syslog (void)
 	syslog_enabled = 0;
 }
 
+/** allow setup logger from a addon/prober via the env 
+ *
+ */
+void
+setup_logger (void)
+{
+        if ((getenv ("HALD_VERBOSE")) != NULL) {
+                is_enabled = 1;
+		log_pid = 1;
+	}
+        else
+                is_enabled = 0;
+
+        if ((getenv ("HALD_USE_SYSLOG")) != NULL)
+		syslog_enabled = 1;
+        else
+                syslog_enabled = 0;
+}
+
 /** Setup logging entry
  *
  *  @param  priority            Logging priority, one of HAL_LOGPRI_*
@@ -118,9 +140,11 @@ logger_emit (const char *format, ...)
 	char buf[512];
 	char *pri;
 	char tbuf[256];
+	char logmsg[1024];
 	struct timeval tnow;
 	struct tm *tlocaltime;
 	struct timezone tzone;
+	static pid_t pid = -1;
 
 	if (!is_enabled)
 		return;
@@ -129,44 +153,52 @@ logger_emit (const char *format, ...)
 	vsnprintf (buf, sizeof (buf), format, args);
 
 	switch (priority) {
-	case HAL_LOGPRI_TRACE:
-		pri = "[T]";
-		break;
-	case HAL_LOGPRI_DEBUG:
-		pri = "[D]";
-		break;
-	case HAL_LOGPRI_INFO:
-		pri = "[I]";
-		break;
-	case HAL_LOGPRI_WARNING:
-		pri = "[W]";
-		break;
-	default:		/* explicit fallthrough */
-	case HAL_LOGPRI_ERROR:
-		pri = "[E]";
-		break;
+		case HAL_LOGPRI_TRACE:
+			pri = "[T]";
+			break;
+		case HAL_LOGPRI_DEBUG:
+			pri = "[D]";
+			break;
+		case HAL_LOGPRI_INFO:
+			pri = "[I]";
+			break;
+		case HAL_LOGPRI_WARNING:
+			pri = "[W]";
+			break;
+		default:		/* explicit fallthrough */
+		case HAL_LOGPRI_ERROR:
+			pri = "[E]";
+			break;
 	}
 
 	gettimeofday (&tnow, &tzone);
 	tlocaltime = localtime (&tnow.tv_sec);
 	strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
 
+	if (log_pid) {
+        	if ((int) pid == -1)
+                	pid = getpid ();
+		snprintf (logmsg, sizeof(logmsg), "[%d]: %s.%03d %s %s:%d: %s\n", pid, tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf);
+	} else {
+		snprintf (logmsg, sizeof(logmsg), "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf);
+	}
+		
 	/** @todo Make programmatic interface to logging */
 	if (priority != HAL_LOGPRI_TRACE && !syslog_enabled ) {
-		fprintf (stderr, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf);
+		fprintf (stderr, "%s", logmsg );
 	} else if (priority != HAL_LOGPRI_TRACE && syslog_enabled ) {   
 		/* use syslog for debug/log messages if HAL started as daemon */
 		switch (priority) {
 			case HAL_LOGPRI_DEBUG:
 			case HAL_LOGPRI_INFO:
-				syslog(LOG_INFO, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf );
-				break;			
+				syslog(LOG_INFO, "%s", logmsg );
+				break;
 			case HAL_LOGPRI_WARNING:
-				syslog(LOG_WARNING, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf );
+				syslog(LOG_WARNING, "%s", logmsg );
 				break;
 			default:		 /* explicit fallthrough */
 			case HAL_LOGPRI_ERROR:
-				syslog(LOG_ERR, "%s.%03d %s %s:%d: %s\n", tbuf, (int)(tnow.tv_usec/1000), pri, file, line, buf );
+				syslog(LOG_ERR, "%s", logmsg );
 				break;
 		}
 	}
@@ -174,5 +206,37 @@ logger_emit (const char *format, ...)
 	va_end (args);
 }
 
+void
+//logger_forward_debug (const char *format, va_list args)
+logger_forward_debug (const char *format, ...)
+{
+	va_list args;
+        char buf[512];
+        char tbuf[256];
+        struct timeval tnow;
+        struct tm *tlocaltime;
+        struct timezone tzone;
+        static pid_t pid = -1;
+
+        if (!is_enabled)
+                return;
+
+        if ((int) pid == -1)
+                pid = getpid ();
+
+	va_start (args, format);
+        vsnprintf (buf, sizeof (buf), format, args);
+
+        gettimeofday (&tnow, &tzone);
+        tlocaltime = localtime (&tnow.tv_sec);
+        strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
+
+        if (syslog_enabled)
+                syslog (LOG_INFO, "%d: %s.%03d: %s", pid, tbuf, (int)(tnow.tv_usec/1000), buf);
+        else
+                fprintf (stderr, "%d: %s.%03d: %s", pid, tbuf, (int)(tnow.tv_usec/1000), buf);
+
+        va_end (args);
+}
 
 /** @} */

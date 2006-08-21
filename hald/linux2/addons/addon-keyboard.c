@@ -36,7 +36,8 @@
 
 #include "libhal/libhal.h"
 
-#include "../probing/shared.h"
+#include "../../logger.h"
+#include "../../util_helper.h"
 
 static char *udi;
 
@@ -186,8 +187,7 @@ main (int argc, char **argv)
 
 	hal_set_proc_title_init (argc, argv);
 
-	if (getenv ("HALD_VERBOSE") != NULL)
-		is_verbose = TRUE;
+	/* setup_logger (); */
 
 	dbus_error_init (&error);
 

@@ -38,7 +38,7 @@
 
 #include "libhal/libhal.h"
 
-#include "shared.h"
+#include "../../logger.h"
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -56,17 +56,17 @@ check_abs (int fd, LibHalContext *ctx, const char *udi)
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_ABS, sizeof (bitmask)), bitmask) < 0) {
-		dbg ("ioctl EVIOCGBIT for EV_ABS failed");
+		HAL_DEBUG (("ioctl EVIOCGBIT for EV_ABS failed"));
 		goto out;
 	}
 
 	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask_touch)), bitmask_touch) < 0) {
-		dbg ("ioctl EVIOCGBIT for EV_KEY failed");
+		HAL_DEBUG (("ioctl EVIOCGBIT for EV_KEY failed"));
 		goto out;
 	}
 	
 	if (!test_bit(ABS_X, bitmask) || !test_bit(ABS_Y, bitmask)) {
-		dbg ("missing x or y absolute axes");
+		HAL_DEBUG (("missing x or y absolute axes"));
 		goto out;
 	}
 
@@ -90,7 +90,7 @@ check_key (int fd, LibHalContext *ctx, const char *udi)
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask)), bitmask) < 0) {
-		dbg ("ioctl EVIOCGBIT for EV_KEY failed");
+		HAL_DEBUG (("ioctl EVIOCGBIT for EV_KEY failed"));
 		goto out;
 	}
 
@@ -120,12 +120,12 @@ check_rel (int fd, LibHalContext *ctx, const char *udi)
 	DBusError error;
 
 	if (ioctl (fd, EVIOCGBIT(EV_REL, sizeof (bitmask)), bitmask) < 0) {
-		dbg ("ioctl EVIOCGBIT for EV_REL failed");
+		HAL_DEBUG (("ioctl EVIOCGBIT for EV_REL failed"));
 		goto out;
 	}
 
 	if (!test_bit (REL_X, bitmask) || !test_bit (REL_Y, bitmask)) {
-		dbg ("missing x or y relative axes");
+		HAL_DEBUG (("missing x or y relative axes"));
 		goto out;
 	}
 
@@ -149,7 +149,7 @@ main (int argc, char *argv[])
 	char name[128];
 	struct input_id id;
 
-	_set_debug ();
+	setup_logger ();
 
 	fd = -1;
 
@@ -168,12 +168,11 @@ main (int argc, char *argv[])
 	if (device_file == NULL)
 		goto out;
 
-	dbg ("Doing probe-input for %s (udi=%s)",
-	     device_file, udi);
+	HAL_DEBUG (("Doing probe-input for %s (udi=%s)", device_file, udi));
 
 	fd = open (device_file, O_RDONLY);
 	if (fd < 0) {
-		dbg ("Cannot open %s: %s", device_file, strerror (errno));
+		HAL_ERROR (("Cannot open %s: %s", device_file, strerror (errno)));
 		goto out;
 	}
 
@@ -181,12 +180,12 @@ main (int argc, char *argv[])
 	 * that we now aren't hotpluggable
 	 */
 	if (ioctl (fd, EVIOCGID, &id) < 0) {
-		dbg ("Error: EVIOCGID failed: %s\n", strerror(errno));
+		HAL_ERROR (("Error: EVIOCGID failed: %s\n", strerror(errno)));
 		goto out;
 	}
 	physical_device = getenv ("HAL_PROP_INPUT_PHYSICAL_DEVICE");
 
-	dbg ("probe-input: id.bustype=%i", id.bustype);
+	HAL_DEBUG (("probe-input: id.bustype=%i", id.bustype));
 	if (physical_device == NULL) {
 		switch (id.bustype) {
 		case BUS_I8042: /* x86 legacy port */
@@ -202,7 +201,7 @@ main (int argc, char *argv[])
 
 	/* only consider devices with the event interface */
 	if (ioctl (fd, EVIOCGNAME(sizeof (name)), name) < 0) {
-		dbg ("Error: EVIOCGNAME failed: %s\n", strerror(errno));
+		HAL_ERROR (("Error: EVIOCGNAME failed: %s\n", strerror(errno)));
 		goto out;
 	}
 	if (!libhal_device_set_property_string (ctx, udi, "info.product", name, &error))

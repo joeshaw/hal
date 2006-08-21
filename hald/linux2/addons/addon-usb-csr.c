@@ -34,7 +34,8 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #include "libhal/libhal.h"
-#include "../probing/shared.h"
+#include "../../logger.h"
+#include "../../util_helper.h"
 
 #define TIMEOUT         30L
 
@@ -79,7 +80,7 @@ property_cache_item_get (const char *hal_device_udi)
 	pci->bus_no_present = libhal_device_property_exists (halctx, hal_device_udi, 
 			"usb_device.bus_number", &err);
 	if (dbus_error_is_set (&err))
-		dbg ("Error: [%s]/[%s]", err.name, err.message);	
+		HAL_ERROR (("Error: [%s]/[%s]", err.name, err.message));	
 
 	if (pci->bus_no_present)
 		pci->bus_no = libhal_device_get_property_int (halctx, hal_device_udi, 
@@ -121,33 +122,33 @@ check_battery (const char *hal_device_udi, PropertyCacheItem *pci)
 	if (pci == NULL)
 		return;
 
-	dbg ("CSR device: [%s]", hal_device_udi);
+	HAL_DEBUG (("CSR device: [%s]", hal_device_udi));
 	is_dual = pci->csr_is_dual;
 
 	/* Which of subdevices to address */
-	dbg ("Is dual: %d", is_dual);
+	HAL_DEBUG (("Is dual: %d", is_dual));
 	addr = is_dual? 1<<8 : 0;
 
 	curr_device = find_device (hal_device_udi, pci);
 	if (curr_device == NULL)	{
-		fprintf (stderr, "Device %s not found", hal_device_udi);
+		HAL_ERROR (("Device %s not found", hal_device_udi));
 		return;
 	}
 
 	handle = usb_open (curr_device);
 	if (handle == NULL) {
-		perror ("Could not open usb device");
+		HAL_ERROR (("Could not open usb device"));
 		return;
 	}
 
 	if (!usb_control_msg (handle, 0xc0, 0x09, 0x03|addr, 0x00|addr,
 			 buf, 8, TIMEOUT) != 8)	{
 		if ((P0 == 0x3b) && (P4 == 0)) {
-			dbg ("Receiver busy, trying again later");
+			HAL_DEBUG (("Receiver busy, trying again later"));
 		} else {
 			int current_charge = P5 & 0x07;
 
-			dbg ("Charge level: %d->%d", pci->current_charge, current_charge);
+			HAL_DEBUG (("Charge level: %d->%d", pci->current_charge, current_charge));
 			if (current_charge != pci->current_charge) { 
 			pci->current_charge = current_charge; dbus_error_init (&err);
 		 		libhal_device_set_property_int (halctx, hal_device_udi, 
@@ -173,12 +174,12 @@ find_device (const char *hal_device_udi, PropertyCacheItem *pci)
 
 	if (!(pci->bus_no_present && pci->port_no_present)) {
 		/* no sysfs path */
-		fprintf (stderr, "No hal bus number and/or port number");
+		HAL_ERROR (("No hal bus number and/or port number"));
 		return NULL;
 	}
 	snprintf (LUdirname, sizeof (LUdirname), "%03d", pci->bus_no);
 	snprintf (LUfname, sizeof (LUfname), "%03d",pci->port_no);
-	dbg ("Looking for: [%s][%s]", LUdirname, LUfname);
+	HAL_DEBUG (("Looking for: [%s][%s]", LUdirname, LUfname));
 
 	for (curr_bus = usb_busses; curr_bus != NULL; curr_bus = curr_bus->next) {
  		struct usb_device *curr_device;
@@ -191,10 +192,10 @@ find_device (const char *hal_device_udi, PropertyCacheItem *pci)
 			/* dbg ("Checking port: [%s]", curr_device->filename); */
 			if (g_strcasecmp (LUfname, curr_device->filename))
 				continue;
-			dbg ("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname, 
+			HAL_DEBUG (("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname, 
 				curr_device->filename, 
 				curr_device->descriptor.idVendor, 
-				curr_device->descriptor.idProduct);
+				curr_device->descriptor.idProduct));
 			return curr_device;
 		}
 	}
@@ -204,7 +205,7 @@ find_device (const char *hal_device_udi, PropertyCacheItem *pci)
 static gboolean
 check_all_batteries (gpointer data)
 {
-	dbg ("** Check batteries");
+	HAL_DEBUG (("** Check batteries"));
 	/* TODO: make it configurable (not to rescan every time) */
 	usb_find_busses ();
 	usb_find_devices ();
@@ -223,7 +224,7 @@ device_removed (LibHalContext *ctx, const char *hal_device_udi)
 {
 	/* this device is removed */
 	if (is_the_device (hal_device_udi)) {
-		dbg ("** The device %s removed, exit", device_udi);
+		HAL_DEBUG (("** The device %s removed, exit", device_udi));
 		g_main_loop_quit (main_loop);
 	}
 }
@@ -238,7 +239,7 @@ property_modified (LibHalContext *ctx,
 	/* "Key" property modified */
 	if (!g_ascii_strcasecmp (key, "battery.command_interface")) {
 		if (is_removed) {
-			dbg ("** Main Property %s removed: %s", key, hal_device_udi);
+			HAL_DEBUG (("** Main Property %s removed: %s", key, hal_device_udi));
 			/* probably we'll have to exit if this is our device */
 			device_removed (ctx, hal_device_udi);
 		}
@@ -249,7 +250,7 @@ property_modified (LibHalContext *ctx,
 			if (!(g_ascii_strcasecmp (key, "usb_device.bus_number") &&
 			      g_ascii_strcasecmp (key, "usb_device.linux.device_number") &&
 	 		      g_ascii_strcasecmp (key, "battery.csr.is_dual"))) {
-				dbg ("** Property %s added/changed: %s", key, hal_device_udi);
+				HAL_DEBUG (("** Property %s added/changed: %s", key, hal_device_udi));
 				if (dev_props)
 					g_free (dev_props);
 				dev_props = property_cache_item_get (hal_device_udi);
@@ -263,20 +264,20 @@ main (int argc, char *argv[])
 	DBusError err;
 
 	hal_set_proc_title_init (argc, argv);
-	
-	_set_debug ();	
+
+	setup_logger ();	
 
 	device_udi = getenv ("UDI");
 
-	dbg ("device:[%s]", device_udi);
+	HAL_DEBUG (("device:[%s]", device_udi));
 	if (device_udi == NULL) {
-		fprintf (stderr, "No device specified");
+		HAL_ERROR (("No device specified"));
 		return -2;
 	}
 
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
-		fprintf (stderr, "Cannot connect to hald");
+		HAL_ERROR (("Cannot connect to hald"));
 		return -3;
 	}
 
@@ -302,7 +303,7 @@ main (int argc, char *argv[])
 
 	/* Initial fillup */
 	dev_props = property_cache_item_get (device_udi);
-	dbg ("** Initial fillup done");
+	HAL_ERROR (("** Initial fillup done"));
 
 	/* init usb */
 	usb_init ();
@@ -323,6 +324,6 @@ main (int argc, char *argv[])
 	g_main_loop_run (main_loop);
 
 	libhal_ctx_shutdown (halctx, &err);
-	dbg ("** Addon exits normally");
+	HAL_ERROR (("** Addon exits normally"));
 	return 0;
 }

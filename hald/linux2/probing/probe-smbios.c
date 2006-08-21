@@ -34,9 +34,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "libhal/libhal.h"
-#include "shared.h"
+#include "../../logger.h"
 
 #define DMIPARSER_STATE_IGNORE		0
 #define DMIPARSER_STATE_BIOS		1
@@ -67,7 +68,7 @@ setstr (char *buf, char *str, char *prop)
 		dbus_error_init (&error);
 		value = buf + strlen (str) + 1;
 		libhal_device_set_property_string (ctx, udi, prop, value, &error);
-		dbg ("Setting %s='%s'", prop, value);
+		HAL_DEBUG (("Setting %s='%s'", prop, value));
 		return TRUE;
 	}
 	return FALSE;
@@ -102,17 +103,17 @@ main (int argc, char *argv[])
 	/* assume failure */
 	ret = 1;
 
-	_set_debug ();
+	setup_logger ();
 	
 	udi = getenv ("UDI");
 	if (udi == NULL) {
-		dbg ("UDI not set");
+		HAL_ERROR (("UDI not set"));
 		goto out;
 	}
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
-		dbg ("ctx init failed");
+		HAL_ERROR (("ctx init failed"));
 		goto out;
 	}
 
@@ -134,11 +135,11 @@ main (int argc, char *argv[])
 		execl ("/usr/sbin/dmidecode", "/usr/sbin/dmidecode", NULL);
 		
 		/* throw an error if we ever reach this point */
-		dbg ("Failed to execute dmidecode!");
+		HAL_ERROR (("Failed to execute dmidecode!"));
 		exit (1);
 		break;
 	case -1:
-		dbg ("Cannot fork!");
+		HAL_ERROR (("Cannot fork!"));
 		break;
 	}
 	

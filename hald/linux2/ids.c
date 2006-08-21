@@ -258,6 +258,21 @@ ids_find_pci (int vendor_id, int product_id,
 	}
 }
 
+/** Free resources used by to store the PCI database
+ *
+ *  @param                      #FALSE if the PCI database wasn't loaded
+ */
+static dbus_bool_t
+pci_ids_free ()
+{
+	if (pci_ids != NULL) {
+		free (pci_ids);
+		pci_ids = NULL;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 /** Load the PCI database used for mapping vendor, product, subsys_vendor
  *  and subsys_product numbers into names.
  *
@@ -290,8 +305,7 @@ pci_ids_load (const char *path)
 	num_read = fread (pci_ids, sizeof (char), pci_ids_len, fp);
 	if (pci_ids_len != num_read) {
 		HAL_ERROR (("Error loading PCI database file"));
-		free (pci_ids);
-		pci_ids = NULL;
+		pci_ids_free();
 		fclose(fp);
 		return FALSE;
 	}
@@ -299,25 +313,6 @@ pci_ids_load (const char *path)
 	fclose(fp);
 	return TRUE;
 }
-
-/** Free resources used by to store the PCI database
- *
- *  @param                      #FALSE if the PCI database wasn't loaded
- */
-static dbus_bool_t
-pci_ids_free ()
-{
-	if (pci_ids != NULL) {
-		free (pci_ids);
-		pci_ids = NULL;
-		return TRUE;
-	}
-	return FALSE;
-}
-
-
-
-
 
 /*==========================================================================*/
 
@@ -480,6 +475,21 @@ ids_find_usb (int vendor_id, int product_id,
 	}
 }
 
+/** Free resources used by to store the USB database
+ *
+ *  @param                      #FALSE if the USB database wasn't loaded
+ */
+static dbus_bool_t
+usb_ids_free ()
+{
+	if (usb_ids != NULL) {
+		free (usb_ids);
+		usb_ids = NULL;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 /** Load the USB database used for mapping vendor, product, subsys_vendor
  *  and subsys_product numbers into names.
  *
@@ -515,8 +525,7 @@ usb_ids_load (const char *path)
 	num_read = fread (usb_ids, sizeof (char), usb_ids_len, fp);
 	if (usb_ids_len != num_read) {
 		printf ("Error loading USB database file\n");
-		free (usb_ids);
-		usb_ids = NULL;
+		usb_ids_free ();
 		fclose(fp);
 		return FALSE;
 	}
@@ -525,20 +534,6 @@ usb_ids_load (const char *path)
 	return TRUE;
 }
 
-/** Free resources used by to store the USB database
- *
- *  @param                      #FALSE if the USB database wasn't loaded
- */
-static dbus_bool_t
-usb_ids_free ()
-{
-	if (usb_ids != NULL) {
-		free (usb_ids);
-		usb_ids = NULL;
-		return TRUE;
-	}
-	return FALSE;
-}
 
 void 
 ids_init (void)

@@ -48,7 +48,8 @@
 
 #include "libhal/libhal.h"
 
-#include "../probing/shared.h"
+#include "../../util_helper.h"
+#include "../../logger.h"
 
 #define UPS_USAGE		0x840000
 #define UPS_SERIAL		0x8400fe
@@ -110,7 +111,7 @@ ups_get_string (int fd, int sindex)
 	if (ioctl (fd, HIDIOCGSTRING, &sdesc) < 0) {
 		return "";
 	}
-	dbg ("foo: '%s'", sdesc.value);
+	HAL_DEBUG (("foo: '%s'", sdesc.value));
 	return sdesc.value;
 }
 
@@ -272,8 +273,8 @@ main (int argc, char *argv[])
 
 	hal_set_proc_title_init (argc, argv);
 
-	_set_debug ();
-	
+	setup_logger ();	
+
 	udi = getenv ("UDI");
 	if (udi == NULL)
 		goto out;
