@@ -5634,17 +5634,6 @@
             </row>
             <row>
               <entry>
-                <literal>UnknownMethod</literal>
-              </entry>
-              <entry>
-	        The executed method doesn't exist.
-              </entry>
-	      <entry>
-	        The method which was tried to be executed.
-	      </entry>
-            </row>
-            <row>
-              <entry>
                 <literal>UnknownGovernor</literal>
               </entry>
               <entry>
@@ -5652,18 +5641,6 @@
               </entry>
 	      <entry>
 	        The governor which was tried be to set.
-	      </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>InvalidMessage</literal>
-              </entry>
-              <entry>
-	        The message that was sent to the interface is invalid.
-		For instance, a parameter is missing.
-              </entry>
-	      <entry>
-	        A DBus error message.
 	      </entry>
             </row>
             <row>

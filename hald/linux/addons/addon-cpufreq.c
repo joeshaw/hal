@@ -48,9 +48,7 @@
 #define DBUS_INTERFACE				"org.freedesktop.Hal.Device.CPUFreq"
 
 #define CPUFREQ_ERROR_GENERAL			"GeneralError"
-#define CPUFREQ_ERROR_UNKNOWN_METHOD		"UnknownMethod"
 #define CPUFREQ_ERROR_UNKNOWN_GOVERNOR		"UnknownGovernor"
-#define CPUFREQ_ERROR_INVALID_MESSAGE		"InvalidMessage"
 #define CPUFREQ_ERROR_PERMISSION_DENIED		"PermissionDenied"
 #define CPUFREQ_ERROR_NO_SUITABLE_GOVERNOR	"NoSuitableGovernor"
 #define CPUFREQ_ERROR_GOVERNOR_INIT_FAILED	"GovernorInitFailed"
@@ -939,7 +937,6 @@ static gboolean dbus_send_reply_strlist(DBusConnection *connection, DBusMessage 
 /** gets one argument from message with the given dbus_type and stores it
  * in arg
  *
- * @raises InvalidMessage
  */
 static gboolean dbus_get_argument(DBusConnection *connection, DBusMessage *message,
 				  DBusError *dbus_error, int dbus_type, void *arg)
@@ -949,10 +946,6 @@ static gboolean dbus_get_argument(DBusConnection *connection, DBusMessage *messa
 	if (dbus_error_is_set(dbus_error)) {
 		HAL_WARNING(("Could not get argument of DBus message: %s",
 			     dbus_error->message));
-
-		dbus_raise_error(connection, message, 
-				 CPUFREQ_ERROR_INVALID_MESSAGE,
-				 "%s", dbus_error->message);
 		dbus_error_free(dbus_error);
 		return FALSE;
 	}
@@ -987,7 +980,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 		if (!dbus_get_argument(connection, message, &dbus_error,
 				       DBUS_TYPE_STRING, &arg)) {
-			return DBUS_HANDLER_RESULT_HANDLED;
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
  		HAL_DEBUG(("Received argument: %s", arg));
 			
@@ -1000,7 +993,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 		if (!dbus_get_argument(connection, message, &dbus_error,
 				       DBUS_TYPE_INT32, &arg)) {
-			return DBUS_HANDLER_RESULT_HANDLED;
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
  		HAL_DEBUG(("Received argument: %d", arg));
 
@@ -1013,7 +1006,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 		if (!dbus_get_argument(connection, message, &dbus_error,
 				       DBUS_TYPE_BOOLEAN, &arg)) {
-			return DBUS_HANDLER_RESULT_HANDLED;
+			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
  		HAL_DEBUG(("Received argument: %d", arg));
 
@@ -1057,9 +1050,9 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 		dbus_connection_unref(connection);
 		g_timeout_add(5000, (GSourceFunc)dbus_init, NULL);
 
-	} else
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_UNKNOWN_METHOD,
-				 "No such method '%s'", member);
+	} else {
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	}
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
