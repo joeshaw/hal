@@ -286,6 +286,30 @@ logging
 main
 
 
+<!-- ##### SECTION ./tmpl/shared.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:Title ##### -->
+shared
+
+
 <!-- ##### SECTION ./tmpl/sysfs.sgml:Long_Description ##### -->
 <para>
 

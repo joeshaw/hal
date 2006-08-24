@@ -26,6 +26,8 @@
     <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
       <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.SystemPowerManagement</append>
 
+      <append key="info.addons" type="strlist">hald-addon-cpufreq</append>
+
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">Suspend</append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist">i</append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_argnames" type="strlist">num_seconds_to_sleep</append>

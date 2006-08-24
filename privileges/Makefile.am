@@ -9,7 +9,8 @@ dist_polkit_privilege_DATA =                              \
 	hal-power-suspend.privilege                       \
 	hal-power-hibernate.privilege                     \
 	hal-power-poweroff.privilege                      \
-	hal-power-reboot.privilege
+	hal-power-reboot.privilege                        \
+	hal-power-cpufreq.privilege
 
 clean-local :
 	rm -f *~

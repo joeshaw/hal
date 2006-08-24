@@ -5491,6 +5491,218 @@
           </tbody>
         </tgroup>
       </informaltable>
+      <para>
+        The following methods exist on the interface
+        <literal>org.freedesktop.Hal.Device.CPUFreq</literal>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Method (parameter types)</entry>
+              <entry>Parameters</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>SetCPUFreqGovernor</literal> (string)
+              </entry>
+              <entry>
+	        The name of the governor to set. Get a list of available governors
+		with the GetCPUFreqAvailableGovernors method.
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Sets a CPU frequency scaling governor for all CPUFreq
+		interfaces the kernel provides. If the userspace governor
+		is set, this interface also contains a proper scaling
+		mechanism. The default performance is set to 50.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>SetCPUFreqPerformance</literal> (integer)
+              </entry>
+              <entry>
+	        The performance between 1 and 100 to set in dynamic scaling modes.
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Sets the performance of the dynamic scaling mechanism. This method
+		summarizes and abstracts all the different settings which can be taken
+		for dynamic frequency adjustments, like at which load to switch up
+		frequency or how many steps the mechanism should traverse until
+		reaching the maximum frequency. The higher the value, the more
+		performance you get. Respectively, the higher the value, the sooner
+		and the more often the frequency is switched up.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>SetCPUFreqConsiderNice</literal> (boolean)
+              </entry>
+              <entry>
+	        Whether or not niced processes should be considered on CPU
+		load calculation.
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Whether or not niced processes should be considered on CPU
+		load calculation. If niced processes are considered, they can cause a
+		frequency increment although their absolute load percentage wouldn't
+		trigger the scaling mechanism to switch up the frequency. The default
+		setting is 'false'.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>GetCPUFreqGovernor</literal> (void)
+              </entry>
+              <entry>
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Get the current active governor for all CPU frequency interfaces (string).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>GetCPUFreqPerformance</literal> (void)
+              </entry>
+              <entry>
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Get the current active performance setting if a dynamic scaling
+		mechanism is in use (integer between 1 and 100).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>GetCPUFreqConsiderNice</literal> (void)
+              </entry>
+              <entry>
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Returns whether niced processed are considered during CPU load
+		calculation or not (returns boolean).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>GetCPUFreqAvailableGovernors</literal> (void)
+              </entry>
+              <entry>
+              </entry>
+              <entry>No</entry>
+              <entry>
+	        Returns a list of strings of all available governors which
+		could be set with the SetCPUFreqGovernor method.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+        The following errors maybe raised on the interface
+        <literal>org.freedesktop.Hal.Device.CPUFreq</literal>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Error</entry>
+              <entry>Description</entry>
+              <entry>Detail field</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>GeneralError</literal>
+              </entry>
+              <entry>
+	        A general error occured.
+              </entry>
+	      <entry>
+	        The exact error.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>UnknownMethod</literal>
+              </entry>
+              <entry>
+	        The executed method doesn't exist.
+              </entry>
+	      <entry>
+	        The method which was tried to be executed.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>UnknownGovernor</literal>
+              </entry>
+              <entry>
+	        The governor which was tried to be set doesn't exist.
+              </entry>
+	      <entry>
+	        The governor which was tried be to set.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>InvalidMessage</literal>
+              </entry>
+              <entry>
+	        The message that was sent to the interface is invalid.
+		For instance, a parameter is missing.
+              </entry>
+	      <entry>
+	        A DBus error message.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>PermissionDenied</literal>
+              </entry>
+              <entry>
+	        The caller doesn't have the privilege to execute this
+		method.
+              </entry>
+	      <entry>
+	        The privilege the caller needs to execute the method.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>NoSuitableGovernor</literal>
+              </entry>
+              <entry>
+	        The method executed doesn't exist for the current active governor.
+              </entry>
+	      <entry>
+	        The method which was tried to be executed.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>GovernorInitFailed</literal>
+              </entry>
+              <entry>
+	        The initialization of the governor failed.
+              </entry>
+	      <entry>
+	        The reason for the failure.
+	      </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
     </sect2>
     <sect2 id="device-properties-tape">
       <title>

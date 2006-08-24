@@ -38,32 +38,6 @@ util
 
 
 
-<!-- ##### FUNCTION util_compute_time_remaining ##### -->
-<para>
-
-</para>
-
-@id: 
-@chargeRate: 
-@chargeLevel: 
-@chargeLastFull: 
-@isDischarging: 
-@isCharging: 
-@guessChargeRate: 
-@Returns: 
-
-
-<!-- ##### FUNCTION util_compute_percentage_charge ##### -->
-<para>
-
-</para>
-
-@id: 
-@chargeLevel: 
-@chargeLastFull: 
-@Returns: 
-
-
 <!-- ##### FUNCTION hal_util_remove_trailing_slash ##### -->
 <para>
 
