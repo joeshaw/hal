@@ -1064,21 +1064,6 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static void dbus_add_method(LibHalContext *halctx, const char *method,
-				const char *signature)
-{
-	libhal_device_property_strlist_append(halctx,
-		      "/org/freedesktop/Hal/devices/computer",
-		      "org.freedesktop.Hal.Device.CPUFreq.method_names",
-		      method,
-		      NULL);
-	libhal_device_property_strlist_append(halctx,
-		      "/org/freedesktop/Hal/devices/computer",
-		      "org.freedesktop.Hal.Device.CPUFreq.method_signatures",
-		      signature,
-		      NULL);
-}
-
 static gboolean is_supported(void)
 {
 	char *governor_file = NULL;
@@ -1114,30 +1099,30 @@ gboolean dbus_init(void)
 
 	if (!libhal_device_claim_interface(halctx, udi,
 		"org.freedesktop.Hal.Device.CPUFreq", 
-		"    <method name=\"SetCPUFreqGovernor\">"
-		"      <arg name=\"governor_string\" direction=\"in\" type=\"s\"/>"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>"
-		"    </method>"
-		"    <method name=\"SetCPUFreqPerformance\">"
-		"      <arg name=\"value\" direction=\"in\" type=\"i\"/>"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>"
-		"    </method>"
-		"    <method name=\"SetCPUFreqConsiderNice\">"
-		"      <arg name=\"value\" direction=\"in\" type=\"b\"/>"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>"
-		"    </method>"
-		"    <method name=\"GetCPUFreqGovernor\">"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"s\"/>"
-		"    </method>"
-		"    <method name=\"GetCPUFreqPerformance\">"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>"
-		"    </method>"
-		"    <method name=\"GetCPUFreqConsiderNice\">"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"b\"/>"
-		"    </method>"
-		"    <method name=\"GetCPUFreqAvailableGovernors\">"
-		"      <arg name=\"return_code\" direction=\"out\" type=\"as\"/>"
-		"    </method>",
+		"    <method name=\"SetCPUFreqGovernor\">\n"
+		"      <arg name=\"governor_string\" direction=\"in\" type=\"s\"/>\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
+		"    </method>\n"
+		"    <method name=\"SetCPUFreqPerformance\">\n"
+		"      <arg name=\"value\" direction=\"in\" type=\"i\"/>\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
+		"    </method>\n"
+		"    <method name=\"SetCPUFreqConsiderNice\">\n"
+		"      <arg name=\"value\" direction=\"in\" type=\"b\"/>\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
+		"    </method>\n"
+		"    <method name=\"GetCPUFreqGovernor\">\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"s\"/>\n"
+		"    </method>\n"
+		"    <method name=\"GetCPUFreqPerformance\">\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
+		"    </method>\n"
+		"    <method name=\"GetCPUFreqConsiderNice\">\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"b\"/>\n"
+		"    </method>\n"
+		"    <method name=\"GetCPUFreqAvailableGovernors\">\n"
+		"      <arg name=\"return_code\" direction=\"out\" type=\"as\"/>\n"
+		"    </method>\n",
 		&dbus_error)) {
 
 		HAL_WARNING(("Cannot claim interface: %s", dbus_error.message));
@@ -1149,15 +1134,6 @@ gboolean dbus_init(void)
 				     "/org/freedesktop/Hal/devices/computer",
 				     "cpufreq_control",
 				     NULL);
-		
-	dbus_add_method(halctx, "SetCPUFreqGovernor", "s");
-	dbus_add_method(halctx, "SetCPUFreqPerformance", "i");
-	dbus_add_method(halctx, "SetCPUFreqConsiderNice", "b");
-	dbus_add_method(halctx, "GetCPUFreqGovernor", "");
-	dbus_add_method(halctx, "GetCPUFreqPerformance", "");
-	dbus_add_method(halctx, "GetCPUFreqConsiderNice", "");
-	dbus_add_method(halctx, "GetCPUFreqAvailableGovernors", "");
-
 
 	dbus_connection_setup_with_g_main(dbus_connection, NULL);
 	dbus_connection_add_filter(dbus_connection, dbus_filter_function, NULL, NULL);
