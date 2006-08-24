@@ -408,6 +408,7 @@ battery_refresh_remove (HalDevice *d)
 	hal_device_property_remove (d, "battery.vendor");
 	hal_device_property_remove (d, "battery.model");
 	hal_device_property_remove (d, "battery.serial");
+	hal_device_property_remove (d, "battery.reporting.technology");
 	hal_device_property_remove (d, "battery.technology");
 	hal_device_property_remove (d, "battery.vendor");
 	hal_device_property_remove (d, "battery.charge_level.unit");
@@ -454,6 +455,7 @@ battery_refresh_add (HalDevice *d, const char *path)
 	int voltage_design;
 
 	const char *reporting_unit;
+	const char *technology;
 
 	hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info",
 					    "OEM info", 0, TRUE);
@@ -461,10 +463,19 @@ battery_refresh_add (HalDevice *d, const char *path)
 					    "model number", 0, TRUE);
 	hal_util_set_string_elem_from_file (d, "battery.serial", path, "info",
 					    "serial number", 0, TRUE);
-	hal_util_set_string_elem_from_file (d, "battery.technology", path, "info",
-					    "battery type", 0, TRUE);
 	hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info",
 					    "OEM info", 0, TRUE);
+
+	/* This is needed as ACPI does not specify the description text for a
+	 *  battery, and so we have to calculate it from the hardware output */
+	technology = hal_util_grep_string_elem_from_file (path, "info",
+							  "battery type", 0, TRUE);
+	if (technology != NULL) {
+		hal_device_property_set_string (d, "battery.reporting.technology",
+						technology);
+		hal_device_property_set_string (d, "battery.technology",
+						util_get_battery_technology (technology));
+	}
 
 	/*
 	 * we'll use the .reporting prefix as we don't know

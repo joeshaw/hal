@@ -36,8 +36,8 @@ hald_addon_acpi_LDADD = $(top_builddir)/libhal/libhal.la
 hald_addon_acpi_buttons_toshiba_SOURCES = addon-acpi-buttons-toshiba.c ../../logger.c ../../util_helper.c
 hald_addon_acpi_buttons_toshiba_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
-hald_addon_hid_ups_SOURCES = addon-hid-ups.c ../../logger.c ../../util_helper.c
-hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la 
+hald_addon_hid_ups_SOURCES = addon-hid-ups.c ../../logger.c ../../util_helper.c ../../util_pm.c
+hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
 hald_addon_keyboard_SOURCES = addon-keyboard.c ../../logger.c ../../util_helper.c
 hald_addon_keyboard_LDADD = $(top_builddir)/libhal/libhal.la 

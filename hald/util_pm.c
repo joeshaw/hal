@@ -44,6 +44,39 @@ typedef struct {
 
 GHashTable *saved_battery_info = NULL;
 
+/** Convert the hardware reported value into a few sane choices
+ *
+ *  This is needed as ACPI does not specify the description text for a
+ *  battery, and so we have to calculate it from the hardware output
+ *
+ *  @param  type                The battery type recieved from the hardware
+ *  @return                     The battery technology which is one of:
+ *                              unknown, lithium-ion or lead-acid
+ */
+const char *
+util_get_battery_technology (const char *type)
+{
+	if (type == NULL) {
+		return "unknown";
+	}
+	/* every case combination of Li-Ion is commonly used.. */
+	if (strcasecmp (type, "li-ion") == 0 ||
+	    strcasecmp (type, "lion") == 0) {
+		return "lithium-ion";
+	}
+	if (strcasecmp (type, "pb") == 0 ||
+	    strcasecmp (type, "pbac") == 0) {
+		return "lead-acid";
+	}
+	if (strcasecmp (type, "lip") == 0) {
+		return "lithium-polymer";
+	}
+	if (strcasecmp (type, "nimh") == 0) {
+		return "nickel-metal-hydride";
+	}
+	return "unknown";
+}
+
 /** Given all the required parameters, this function will return the percentage
  *  charge remaining. There are lots of checks here as ACPI is often broken.
  *

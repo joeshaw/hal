@@ -5045,12 +5045,28 @@
             </row>
             <row>
               <entry>
-                <literal>battery.technology</literal> (string)
+                <literal>battery.reporting.technology</literal> (string)
               </entry>
               <entry>example: LION</entry>
               <entry>No</entry>
               <entry>
-                The technology of the battery.
+                The technology of the battery as reported by the hardware.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>battery.technology</literal> (string)
+              </entry>
+              <entry>
+                lead-acid, lithium-ion, lithium-polymer,
+                nickel-metal-hydride, unknown
+              </entry>
+              <entry>No</entry>
+              <entry>
+                The technology of the battery processed to a few standard types.
+                This key is needed as the hardware often does not specify the
+                description text for a battery, and so we have to calculate it
+                from the output of <literal>battery.reporting.technology</literal>.
               </entry>
             </row>
             <row>

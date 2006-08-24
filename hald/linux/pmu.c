@@ -87,6 +87,7 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 
 	hal_device_property_set_string (d, "info.product", "Battery Bay");
 	hal_device_property_set_string (d, "battery.type", "primary");
+	hal_device_property_set_string (d, "battery.technology", "unknown");
 	hal_device_property_set_string (d, "info.category", "battery");
 	hal_device_add_capability (d, "battery");
 

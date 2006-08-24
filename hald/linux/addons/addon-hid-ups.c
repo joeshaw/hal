@@ -46,9 +46,12 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <glib.h>
+
 #include "libhal/libhal.h"
 
 #include "../../util_helper.h"
+#include "../../util_pm.h"
 #include "../../logger.h"
 
 #define UPS_USAGE		0x840000
@@ -125,6 +128,7 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 	struct hiddev_usage_ref uref;
 	int rtype;
 	unsigned int i, j;
+	char *type;
 	DBusError error;
 
 	/* set to failure */
@@ -200,9 +204,13 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 						break;
 
 					case UPS_CHEMISTRY:
+						type = ups_get_string (fd, uref.value);
+						libhal_device_set_property_string (
+							ctx, udi, "battery.reporting.technology", 
+							type, &error);
 						libhal_device_set_property_string (
 							ctx, udi, "battery.technology", 
-							ups_get_string (fd, uref.value), &error);
+							util_get_battery_technology (type), &error);
 						break;
 
 					case UPS_RECHARGEABLE:

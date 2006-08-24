@@ -27,6 +27,8 @@
 #ifndef UTIL_PM_H
 #define UTIL_PM_H
 
+const char *util_get_battery_technology (const char *type);
+
 int util_compute_time_remaining (const char *id, int chargeRate, int chargeLevel, int chargeLastFull, 
 				 gboolean isDischarging, gboolean isCharging, gboolean guessChargeRate);
 
