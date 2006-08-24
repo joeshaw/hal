@@ -535,6 +535,112 @@ libhal
 @Returns: 
 
 
+<!-- ##### STRUCT LibHalChangeSet_s ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### TYPEDEF LibHalChangeSet ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION libhal_device_new_changeset ##### -->
+<para>
+
+</para>
+
+@udi: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_changeset_set_property_string ##### -->
+<para>
+
+</para>
+
+@changeset: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_changeset_set_property_int ##### -->
+<para>
+
+</para>
+
+@changeset: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_changeset_set_property_uint64 ##### -->
+<para>
+
+</para>
+
+@changeset: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_changeset_set_property_double ##### -->
+<para>
+
+</para>
+
+@changeset: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_changeset_set_property_bool ##### -->
+<para>
+
+</para>
+
+@changeset: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_changeset_set_property_strlist ##### -->
+<para>
+
+</para>
+
+@changeset: 
+@key: 
+@value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_device_commit_changeset ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@changeset: 
+@error: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_device_free_changeset ##### -->
+<para>
+
+</para>
+
+@changeset: 
+
+
 <!-- ##### STRUCT LibHalProperty_s ##### -->
 <para>
 

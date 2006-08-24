@@ -289,7 +289,25 @@ libhal-storage
 @Returns: 
 
 
+<!-- ##### FUNCTION libhal_drive_is_media_detected ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
 <!-- ##### FUNCTION libhal_drive_get_size ##### -->
+<para>
+
+</para>
+
+@drive: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_drive_get_media_size ##### -->
 <para>
 
 </para>
@@ -570,6 +588,7 @@ libhal-storage
 @LIBHAL_VOLUME_USAGE_RAID_MEMBER: 
 @LIBHAL_VOLUME_USAGE_CRYPTO: 
 @LIBHAL_VOLUME_USAGE_UNKNOWN: 
+@LIBHAL_VOLUME_USAGE_OTHER: 
 
 <!-- ##### ENUM LibHalVolumeDiscType ##### -->
 <para>
@@ -875,6 +894,24 @@ libhal-storage
 
 
 <!-- ##### FUNCTION libhal_volume_get_msdos_part_table_type ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_start ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_size ##### -->
 <para>
 
 </para>

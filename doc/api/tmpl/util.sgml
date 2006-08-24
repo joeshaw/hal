@@ -380,3 +380,12 @@ util
 @size: 
 
 
+<!-- ##### FUNCTION hal_util_is_mounted_by_hald ##### -->
+<para>
+
+</para>
+
+@mount_point: 
+@Returns: 
+
+

@@ -779,7 +779,6 @@ handle_spawn (ParsingContext * pc, const char **attr)
 	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
 
 	pc->merge_type = MERGE_TYPE_SPAWN;
-
 	return;
 }
 
@@ -883,6 +882,8 @@ start (ParsingContext * pc, const char *el, const char **attr)
 		return;
 
 	pc->cdata_buf_len = 0;
+
+	pc->merge_type = MERGE_TYPE_UNKNOWN;
 
 /*
     for (i = 0; i < pc->depth; i++)
