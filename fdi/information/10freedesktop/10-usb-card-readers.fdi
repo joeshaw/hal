@@ -73,6 +73,9 @@
       <match key="storage.model" contains="Storage-MMC">
         <merge key="storage.drive_type" type="string">sd_mmc</merge>
       </match>
+      <match key="storage.model" contains="Storage-SDC">
+        <merge key="storage.drive_type" type="string">sd_mmc</merge>
+      </match>
 
       <!-- Some noname USB2.0 Card Reader -->
       <match key="storage.model" string="IC1210        CF">
