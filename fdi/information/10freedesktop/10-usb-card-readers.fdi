@@ -74,8 +74,29 @@
         <merge key="storage.drive_type" type="string">sd_mmc</merge>
       </match>
 
+      <!-- Some noname USB2.0 Card Reader -->
+      <match key="storage.model" string="IC1210        CF">
+        <merge key="storage.drive_type" type="string">compact_flash</merge>
+      </match>
+      <match key="storage.model" string="IC1210        MS">
+        <merge key="storage.drive_type" type="string">memory_stick</merge>
+      </match>
+      <match key="storage.model" string="IC1210        SM">
+        <merge key="storage.drive_type" type="string">smart_media</merge>
+      </match>
+      <match key="storage.model" string="IC1210    MMC/SD">
+        <merge key="storage.drive_type" type="string">sd_mmc</merge>
+      </match>
+
       <!-- Lexar CF Reader -->
       <match key="@storage.physical_device:usb.vendor_id" int="0x05dc">
+        <match key="@storage.physical_device:usb.product_id" int="0x0002">
+          <merge key="storage.drive_type" type="string">compact_flash</merge>
+        </match>
+      </match>
+
+      <!-- SanDisk ImageMate II CF Reader -->
+      <match key="@storage.physical_device:usb.vendor_id" int="0x0781">
         <match key="@storage.physical_device:usb.product_id" int="0x0002">
           <merge key="storage.drive_type" type="string">compact_flash</merge>
         </match>
