@@ -218,10 +218,13 @@ laptop_panel_refresh (HalDevice *d, PMUDevHandler *handler)
 	hal_device_property_set_string (d, "laptop_panel.access_method", "pmu");
 	/*
 	 * We can set laptop_panel.num_levels as it will not change, 
-	 * all powerbooks have 15 steps for brightness, where state 0
+	 * all powerbooks have 16 steps for brightness, where state 0
 	 * is backlight disable.
+	 * In tools/hal-system-power-pmu.c we add 1 to the brightness
+	 * so we do not turn off the backlight, so we actually have 15
+	 * brightness steps inclusive (0-14).
 	 */
-	hal_device_property_set_int (d, "laptop_panel.num_levels", 14);
+	hal_device_property_set_int (d, "laptop_panel.num_levels", 15);
 	hal_device_add_capability (d, "laptop_panel");
 	return TRUE;
 }
