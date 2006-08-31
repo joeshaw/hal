@@ -657,6 +657,9 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 	
 			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
 			hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+
+			if (!hal_util_set_string_from_file (d, "alsa.pcm_class", sysfs_path, "pcm_class"))
+				 hal_device_property_set_string (d, "alsa.pcm_class", "unknown");
 	
 			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d/pcm%d%c", 
 				get_hal_proc_path (), cardnum, devicenum, type);

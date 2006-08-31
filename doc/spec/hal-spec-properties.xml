@@ -3912,6 +3912,66 @@
             </row>
             <row>
               <entry>
+                <literal>alsa.device_pcm_class</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The PCM class of the device.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>generic</entry>
+              <entry></entry>
+              <entry>
+                A standard PCM sound device (SND_PCM_CLASS_GENERIC).
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>multi</entry>
+              <entry></entry>
+              <entry>
+                A multichannel device PCM sound device (SND_PCM_CLASS_MULTI) which 
+		e.g. contains a generic and a modem device.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>digitizer</entry>
+              <entry></entry>
+              <entry>
+                A PCM digitizer device (SND_PCM_CLASS_DIGITIZER).
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>modem</entry>
+              <entry></entry>
+              <entry>
+                A PCM modem device (SND_PCM_CLASS_MODEM).
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>unknown</entry>
+              <entry></entry>
+              <entry>
+                The value is 'unknown' if the kernel provide no information about the 
+		PCM device class of the device (e.g. the file pcm_class is missing).
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>none</entry>
+              <entry></entry>
+              <entry>
+                The value is 'none' if this there is no PCM class for this device.
+              </entry>
+            </row>
+            <row>
+              <entry>
                 <literal>alsa.physical_device</literal> (string)
               </entry>
               <entry></entry>
