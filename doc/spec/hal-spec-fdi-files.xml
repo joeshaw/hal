@@ -89,7 +89,7 @@
       </listitem>
       <listitem>
         <para>
-          <literal>empty</literal> - can only be used on string properties
+          <literal>empty</literal> - can only be used on string or strlist properties
           with 'true' and 'false'.
           The semantics for 'true' is to match only when the string is non-empty.
         </para>
@@ -203,7 +203,7 @@
     The <literal>&#60;remove&#62;</literal>, directive require only a key and can be used with all keys.
     For <literal>strlist</literal> there is additionally a special syntax to remove a item from the
     string list. For example to remove item 'bla' from property 'foo.bar':
-    <literal>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/merge&#62;</literal>
+    <literal>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/remove&#62;</literal>
   </para>
   <para>
     Device Information files are stored in the following standard hierachy with the following default

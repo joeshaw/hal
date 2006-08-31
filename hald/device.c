@@ -1294,3 +1294,23 @@ hal_device_property_strlist_remove (HalDevice *device,
 	
 	return TRUE;
 }
+
+gboolean
+hal_device_property_strlist_is_empty (HalDevice    *device,
+				      const char   *key)
+{
+	GSList *strlist;
+
+	if ( hal_device_has_property (device, key)) {
+		strlist = hal_device_property_get_strlist (device, key);
+		if (strlist == NULL ) 
+			return TRUE;
+
+		if (g_slist_length (strlist) > 0) 
+			return FALSE;
+		else 
+			return TRUE;
+	}
+	return FALSE;
+}
+

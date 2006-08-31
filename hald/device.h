@@ -173,7 +173,8 @@ gboolean      hal_device_property_strlist_add (HalDevice    *device,
 gboolean      hal_device_property_strlist_remove (HalDevice    *device,
 						  const char   *key,
 						  const char *value);
-
+gboolean      hal_device_property_strlist_is_empty (HalDevice    *device,
+                                                    const char   *key);
 
 gboolean      hal_device_property_remove     (HalDevice    *device,
 					      const char   *key);

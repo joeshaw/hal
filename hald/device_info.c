@@ -460,19 +460,32 @@ handle_match (ParsingContext * pc, const char **attr)
 				return TRUE;
 		}
 	} else if (strcmp (attr[2], "empty") == 0) {
+		int type;
 		dbus_bool_t is_empty = TRUE;
 		dbus_bool_t should_be_empty = TRUE;
+
 
 		if (strcmp (attr[3], "false") == 0)
 			should_be_empty = FALSE;
 
-		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
+		type = hal_device_property_get_type (d, prop_to_check);
+		switch (type) {
+		case HAL_PROPERTY_TYPE_STRING: 
+			if (hal_device_has_property (d, prop_to_check))
+				if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
+					is_empty = FALSE;
+			break;
+		case HAL_PROPERTY_TYPE_STRLIST:
+			if (hal_device_has_property (d, prop_to_check))
+				if (!hal_device_property_strlist_is_empty(d, prop_to_check))
+					is_empty = FALSE;
+			break;
+		default:
+			/* explicit fallthrough */
 			return FALSE;
-
-		if (hal_device_has_property (d, prop_to_check))
-			if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
-				is_empty = FALSE;
-
+			break;
+		} 
+	
 		if (should_be_empty) {
 			if (is_empty)
 				return TRUE;
