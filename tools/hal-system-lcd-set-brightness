@@ -24,7 +24,7 @@ read value
 # Check for values outside range
 if [ ${value} -lt 0 ] || [ ${value} -ge $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS ]; then
 	echo "org.freedesktop.Hal.Device.LaptopPanel.Invalid" >&2
-	echo "Brightness has to be between 0 and $HAL_PROP_LAPTOP_PANEL_NUM_LEVELS!" >&2
+	echo "Brightness has to be between 0 and $((HAL_PROP_LAPTOP_PANEL_NUM_LEVELS - 1))" >&2
 	exit 1
 fi
 
