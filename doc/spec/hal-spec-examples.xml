@@ -348,6 +348,79 @@ void Condition(string condition, ...)
         signals for only a subset of the devices available.
       </para>
     </sect2>
+
+    <sect2>
+      <title>Interface org.freedesktop.Hal.Device.Volume</title>
+      <para>
+        The org.freedesktop.Hal.Device.Volume interface is used on objects
+        with the "volume" capability. This interface has the following methods.
+      </para>
+      <programlisting>
+# Mount volume
+#
+# @param  mountpoint            Desired mount point. If NULL, will be generated based on label.
+# @param  fstype                Filesystem type
+# @param  options               Mount options
+# @raises                       org.freedesktop.Hal.Device.Volume.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Volume.PermissionDenied
+#                               org.freedesktop.Hal.Device.Volume.AlreadyMounted
+#                               org.freedesktop.Hal.Device.Volume.InvalidMountOption
+#                               org.freedesktop.Hal.Device.Volume.UnknownFilesystemType
+#                               org.freedesktop.Hal.Device.Volume.InvalidMountpoint
+#                               org.freedesktop.Hal.Device.Volume.MountPointNotAvailable
+#                               org.freedesktop.Hal.Device.Volume.PermissionDeniedByPolicy
+#
+void Mount(string mountpoint, string fstype, array{string} options)
+# Unmount volume
+#
+# @param  options               Unmount options
+# @raises                       org.freedesktop.Hal.Device.Volume.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Volume.PermissionDenied
+#                               org.freedesktop.Hal.Device.Volume.InvalidUnmountOption
+#                               org.freedesktop.Hal.Device.Volume.InvalidMountpoint
+#                               org.freedesktop.Hal.Device.Volume.MountPointNotAvailable
+#                               org.freedesktop.Hal.Device.Volume.PermissionDeniedByPolicy
+#
+void Unmount(array{string} options)
+# Eject volume
+#
+# @param  ejectoptions          Eject options
+# @raises                       org.freedesktop.Hal.Device.Volume.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Volume.PermissionDenied
+#                               org.freedesktop.Hal.Device.Volume.InvalidEjectOption
+#                               org.freedesktop.Hal.Device.Volume.PermissionDeniedByPolicy
+#
+void Eject(array{string} options)
+      </programlisting>
+    </sect2>
+
+    <sect2>
+      <title>Interface org.freedesktop.Hal.Device.Storage</title>
+      <para>
+        The org.freedesktop.Hal.Device.Storage interface is used on objects
+        with the "storage" capability. This interface has the following methods.
+      </para>
+      <programlisting>
+# Eject media
+#
+# @param  ejectoptions          Eject options
+# @raises                       org.freedesktop.Hal.Device.Storage.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Storage.PermissionDenied
+#                               org.freedesktop.Hal.Device.Storage.InvalidEjectOption
+#                               org.freedesktop.Hal.Device.Storage.PermissionDeniedByPolicy
+#
+void Eject(array{string} options)
+# Close media tray
+#
+# @param  closetrayoptions      Close tray options
+# @raises                       org.freedesktop.Hal.Device.Storage.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Storage.PermissionDenied
+#                               org.freedesktop.Hal.Device.Storage.InvalidCloseTrayOption
+#                               org.freedesktop.Hal.Device.Storage.PermissionDeniedByPolicy
+#
+void CloseTray(array{string} options)
+      </programlisting>
+    </sect2>
   </sect1>
 
   <sect1 id="enforcing-policy">

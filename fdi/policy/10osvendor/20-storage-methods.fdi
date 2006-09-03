@@ -184,5 +184,20 @@
       <append key="volume.unmount.valid_options" type="strlist">lazy</append>
 
     </match>
+
+    <match key="storage.requires_eject" bool="true">
+        <!-- storage Eject causes eject on each volume on this storage -->
+        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Storage</append>
+        <append key="org.freedesktop.Hal.Device.Storage.method_names" type="strlist">Eject</append>
+        <append key="org.freedesktop.Hal.Device.Storage.method_signatures" type="strlist">as</append>
+	<append key="org.freedesktop.Hal.Device.Storage.method_argnames" type="strlist">extra_options</append>
+        <append key="org.freedesktop.Hal.Device.Storage.method_execpaths" type="strlist">hal-storage-eject</append>
+
+        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Storage</append>
+        <append key="org.freedesktop.Hal.Device.Storage.method_names" type="strlist">CloseTray</append>
+        <append key="org.freedesktop.Hal.Device.Storage.method_signatures" type="strlist">as</append>
+	<append key="org.freedesktop.Hal.Device.Storage.method_argnames" type="strlist">extra_options</append>
+        <append key="org.freedesktop.Hal.Device.Storage.method_execpaths" type="strlist">hal-storage-closetray</append>
+    </match>
   </device>
 </deviceinfo>

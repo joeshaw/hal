@@ -468,6 +468,79 @@ line_found:
 	g_free (mount_point_to_unmount);
 }
 
+#define EJECT "/usr/bin/eject"
+
+void
+handle_eject (LibHalContext *hal_ctx, 
+#ifdef HAVE_POLKIT
+	      LibPolKitContext *pol_ctx, 
+#endif
+	      const char *udi,
+	      LibHalDrive *drive, const char *device, 
+	      const char *invoked_by_uid, const char *invoked_by_syscon_name,
+	      gboolean closetray)
+{
+	GError *err = NULL;
+	char *sout = NULL;
+	char *serr = NULL;
+	int exit_status;
+	char *args[10];
+	int na;
+
+	/* TODO: should we require privileges here? */
+
+#ifdef DEBUG
+	printf ("device                           = %s\n", device);
+	printf ("invoked by uid                   = %s\n", invoked_by_uid);
+	printf ("invoked by system bus connection = %s\n", invoked_by_syscon_name);
+#endif
+
+	/* construct arguments to EJECT (e.g. /usr/bin/eject) */
+	na = 0;
+	args[na++] = EJECT;
+	if (closetray) {
+		args[na++] = "-t";
+	}
+	args[na++] = (char *) device;
+	args[na++] = NULL;
+
+#ifdef DEBUG
+	printf ("will eject %s\n", device);
+#endif
+
+	/* invoke eject command */
+	if (!g_spawn_sync ("/",
+			   args,
+			   NULL,
+			   0,
+			   NULL,
+			   NULL,
+			   &sout,
+			   &serr,
+			   &exit_status,
+			   &err)) {
+		printf ("Cannot execute %s\n", EJECT);
+		unknown_error ("Cannot spawn " EJECT);
+	}
+
+	/* check if eject was succesful */
+	if (exit_status != 0) {
+		printf ("%s error %d, stdout='%s', stderr='%s'\n", EJECT, exit_status, sout, serr);
+
+		unknown_error (serr);
+	}
+
+	/* eject was succesful... */
+
+#ifdef DEBUG
+	printf ("done ejecting\n");
+#endif
+
+	g_free (sout);
+	g_free (serr);
+}
+
+
 static int lock_mtab_fd = -1;
 
 gboolean

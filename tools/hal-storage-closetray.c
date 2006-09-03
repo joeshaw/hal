@@ -1,8 +1,9 @@
 /***************************************************************************
  *
- * hal-storage-eject.c : Eject method handler
+ * hal-storage-closetray.c : CloseTray method handler
  *
  * Copyright (C) 2006 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2006 Sun Microsystems, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +42,6 @@
 
 #include "hal-storage-shared.h"
 
-/* possible values: "Volume", "Storage" */
-static char *devtype = "Volume";
-
 
 static void
 usage (void)
@@ -54,21 +52,25 @@ usage (void)
 
 
 void static
-unknown_eject_error (const char *detail)
+unknown_closetray_error (const char *detail)
 {
-	fprintf (stderr, "org.freedesktop.Hal.Device.%s.UnknownFailure\n", devtype);
+	fprintf (stderr, "org.freedesktop.Hal.Device.Storage.UnknownFailure\n");
 	fprintf (stderr, "%s\n", detail);
 	exit (1);
 }
 
 
 static void
-invalid_eject_option (const char *option, const char *uid)
+invalid_closetray_option (const char *option, const char *uid)
 {
-	fprintf (stderr, "org.freedesktop.Hal.Device.Volume.InvalidEjectOption\n");
+	fprintf (stderr, "org.freedesktop.Hal.Device.Storage.InvalidCloseTrayOption\n");
 	fprintf (stderr, "The option '%s' is not allowed for uid=%s\n", option, uid);
 	exit (1);
 }
+
+#ifdef __FreeBSD__
+#error Need FreeBSD specific changes here
+#endif
 
 
 int
@@ -76,9 +78,7 @@ main (int argc, char *argv[])
 {
 	char *udi;
 	char *device;
-	const char *drive_udi;
 	LibHalDrive *drive;
-	LibHalVolume *volume;
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
 	DBusConnection *system_bus = NULL;
@@ -87,10 +87,8 @@ main (int argc, char *argv[])
 #endif
 	char *invoked_by_uid;
 	char *invoked_by_syscon_name;
-	char **volume_udis;
-	int num_volumes;
 	int i;
-	char eject_options[1024];
+	char closetray_options[1024];
 	char **given_options;
 	const char *end;
 
@@ -124,101 +122,44 @@ main (int argc, char *argv[])
 	pol_ctx = libpolkit_new_context (system_bus);
 	if (pol_ctx == NULL) {
 		printf ("Cannot get libpolkit context\n");
-		unknown_eject_error ("Cannot get libpolkit context");
+		unknown_closetray_error ("Cannot get libpolkit context");
 	}
 #endif
 
 	/* read from stdin */
-	if (strlen (fgets (eject_options, sizeof (eject_options), stdin)) > 0)
-		eject_options [strlen (eject_options) - 1] = '\0';
+	if (strlen (fgets (closetray_options, sizeof (closetray_options), stdin)) > 0)
+		closetray_options [strlen (closetray_options) - 1] = '\0';
 	/* validate that input from stdin is UTF-8 */
-	if (!g_utf8_validate (eject_options, -1, &end))
-		unknown_eject_error ("Error validating eject_options as UTF-8");
+	if (!g_utf8_validate (closetray_options, -1, &end))
+		unknown_closetray_error ("Error validating closetray_options as UTF-8");
 #ifdef DEBUG
-	printf ("eject_options  = '%s'\n", eject_options);
+	printf ("closetray_options  = '%s'\n", closetray_options);
 #endif
 
 	/* delete any trailing whitespace options from splitting the string */
-	given_options = g_strsplit (eject_options, "\t", 0);
+	given_options = g_strsplit (closetray_options, "\t", 0);
 	for (i = g_strv_length (given_options) - 1; i >= 0; --i) {
 		if (strlen (given_options[i]) > 0)
 			break;
 		given_options[i] = NULL;
 	}
 
-	/* check eject options */
+	/* check options */
 	for (i = 0; given_options[i] != NULL; i++) {
 		char *given = given_options[i];
 
 		/* none supported right now */
 
-		invalid_eject_option (given, invoked_by_uid);
+		invalid_closetray_option (given, invoked_by_uid);
 	}
 	g_strfreev (given_options);
 
-	/* should be either volume or storage */
-	if ((volume = libhal_volume_from_udi (hal_ctx, udi)) != NULL) {
-		drive_udi = libhal_volume_get_storage_device_udi (volume);
-	} else {
-		drive_udi = g_strdup (udi);
-		devtype = "Storage";
-	}
-	if (drive_udi == NULL) {
-		unknown_eject_error ("Cannot get drive udi");
-	}
-	if ((drive = libhal_drive_from_udi (hal_ctx, drive_udi)) == NULL) {
-		unknown_eject_error ("Cannot get drive from udi");
+	/* should be storage */
+	if ((drive = libhal_drive_from_udi (hal_ctx, udi)) == NULL) {
+		unknown_closetray_error ("Cannot get drive");
 	}
 
-	/* first, unmount all volumes */
-	volume_udis = libhal_drive_find_all_volumes (hal_ctx, drive, &num_volumes);
-	if (volume_udis == NULL)
-		unknown_eject_error ("Cannot get all enclosed volumes");
-	for (i = 0; i < num_volumes; i++) {
-		char *volume_udi;
-		LibHalVolume *volume_to_unmount;
-
-		volume_udi = volume_udis[i];
-			
-#ifdef DEBUG
-		printf ("processing drive's volume %s (%d of %d)\n", volume_udi, i + 1, num_volumes);
-#endif
-		volume_to_unmount = libhal_volume_from_udi (hal_ctx, volume_udi);
-		if (volume_to_unmount == NULL) {
-			unknown_eject_error ("Cannot get volume object");
-		}
-
-		if (libhal_volume_is_mounted (volume_to_unmount)) {
-#ifdef DEBUG
-			printf (" unmounting\n");
-#endif
-			/* only lock around unmount call because hald's /proc/mounts handler
-			 * will also want to lock the /media/.hal-mtab-lock file for peeking
-			 */
-			if (!lock_hal_mtab ()) {
-				unknown_eject_error ("Cannot obtain lock on /media/.hal-mtab");
-			}
-			handle_unmount (hal_ctx, 
-#ifdef HAVE_POLKIT
-					pol_ctx, 
-#endif
-					udi, volume_to_unmount, drive, 
-					libhal_volume_get_device_file (volume_to_unmount), 
-					invoked_by_uid, invoked_by_syscon_name,
-					FALSE, FALSE); /* use neither lazy nor force */
-			unlock_hal_mtab ();
-		} else {
-#ifdef DEBUG
-			printf (" not mounted\n");
-#endif
-		}
-
-		libhal_volume_free (volume_to_unmount);
-
-	}
-	libhal_free_string_array (volume_udis);
-
-	/* now attempt the eject */
+	/* use handle_eject() with the closetray option */
 	handle_eject (hal_ctx, 
 #ifdef HAVE_POLKIT
 		      pol_ctx, 
@@ -228,7 +169,7 @@ main (int argc, char *argv[])
 		      libhal_drive_get_device_file (drive),
 		      invoked_by_uid, 
 		      invoked_by_syscon_name,
-		      FALSE);
+		      TRUE /* closetray option */);
 
 	return 0;
 }

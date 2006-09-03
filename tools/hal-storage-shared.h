@@ -55,6 +55,14 @@ void handle_unmount (LibHalContext *hal_ctx,
 		     const char *invoked_by_uid, const char *invoked_by_syscon_name,
 		     gboolean option_lazy, gboolean option_force);
 
+void handle_eject (LibHalContext *hal_ctx, 
+#ifdef HAVE_POLKIT
+		   LibPolKitContext *pol_ctx, 
+#endif
+		   const char *udi,
+		   LibHalDrive *drive, const char *device, 
+		   const char *invoked_by_uid, const char *invoked_by_syscon_name,
+		   gboolean closetray);
 
 #endif /* HAL_STORAGE_SHARED_H */
 

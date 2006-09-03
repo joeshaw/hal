@@ -53,6 +53,7 @@ libexec_PROGRAMS =                          \
 	hal-storage-mount	            \
 	hal-storage-unmount 	            \
 	hal-storage-eject	            \
+	hal-storage-closetray	            \
 	hal-storage-cleanup-mountpoint      \
 	hal-storage-cleanup-all-mountpoints \
 	hal-system-power-pmu
@@ -65,6 +66,9 @@ hal_storage_unmount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir
 
 hal_storage_eject_SOURCES = hal-storage-eject.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_eject_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+
+hal_storage_closetray_SOURCES = hal-storage-closetray.c hal-storage-shared.c hal-storage-shared.h
+hal_storage_closetray_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
 hal_storage_cleanup_mountpoint_SOURCES = hal-storage-cleanup-mountpoint.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_cleanup_mountpoint_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
