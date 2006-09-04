@@ -1241,7 +1241,7 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token)
 {
 	HalDevice *d;
 
-	HAL_INFO (("block_rem: sysfs_path=%s is_part=%d", sysfs_path));
+	HAL_INFO (("block_rem: sysfs_path=%s", sysfs_path));
 
 	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
 	if (d == NULL) {
