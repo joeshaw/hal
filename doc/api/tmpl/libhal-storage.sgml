@@ -661,34 +661,6 @@ libhal-storage
 
 </para>
 
-@volume: 
-@Returns: 
-
-
-<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_start ##### -->
-<para>
-
-</para>
-
-@volume: 
-@Returns: 
-
-
-<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_size ##### -->
-<para>
-
-</para>
-
-@volume: 
-@Returns: 
-
-
-<!-- ##### FUNCTION libhal_volume_should_ignore ##### -->
-<para>
-
-</para>
-
-@volume: 
 @Returns: 
 
 

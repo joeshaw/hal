@@ -286,30 +286,6 @@ logging
 main
 
 
-<!-- ##### SECTION ./tmpl/shared.sgml:Long_Description ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### SECTION ./tmpl/shared.sgml:See_Also ##### -->
-<para>
-
-</para>
-
-
-<!-- ##### SECTION ./tmpl/shared.sgml:Short_Description ##### -->
-
-
-
-<!-- ##### SECTION ./tmpl/shared.sgml:Stability_Level ##### -->
-
-
-
-<!-- ##### SECTION ./tmpl/shared.sgml:Title ##### -->
-shared
-
-
 <!-- ##### SECTION ./tmpl/sysfs.sgml:Long_Description ##### -->
 <para>
 
@@ -1458,6 +1434,22 @@ sysfs
 @udi: 
 @Returns: 
 
+<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_size ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+<!-- ##### FUNCTION libhal_volume_get_msdos_part_table_start ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
 <!-- ##### FUNCTION libhal_volume_policy_compute_display_name ##### -->
 <para>
 
@@ -1537,6 +1529,22 @@ sysfs
 @target_mount_point: 
 @Returns: 
 
+<!-- ##### FUNCTION libhal_volume_should_ignore ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+<!-- ##### FUNCTION logger_forward_debug ##### -->
+<para>
+
+</para>
+
+@format: 
+@Varargs: 
+
 <!-- ##### FUNCTION lstat ##### -->
 <para>
 
@@ -1598,6 +1606,12 @@ sysfs
 @naming_func: 
 @namespace: 
 @Returns: 
+
+<!-- ##### FUNCTION setup_logger ##### -->
+<para>
+
+</para>
+
 
 <!-- ##### FUNCTION visit_class_device_block ##### -->
 <para>

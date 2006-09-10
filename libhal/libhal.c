@@ -3773,6 +3773,10 @@ libhal_device_commit_changeset (LibHalContext *ctx, LibHalChangeSet *changeset, 
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
 
+	if (changeset->head == NULL) {
+		return TRUE;
+	}
+
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", changeset->udi,
 						"org.freedesktop.Hal.Device",
 						"SetMultipleProperties");

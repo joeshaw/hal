@@ -37,15 +37,6 @@ logger
 @Varargs: 
 
 
-<!-- ##### FUNCTION logger_forward_debug ##### -->
-<para>
-
-</para>
-
-@format: 
-@Varargs: 
-
-
 <!-- ##### FUNCTION logger_enable ##### -->
 <para>
 
@@ -68,13 +59,6 @@ logger
 
 
 <!-- ##### FUNCTION logger_disable_syslog ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION setup_logger ##### -->
 <para>
 
 </para>

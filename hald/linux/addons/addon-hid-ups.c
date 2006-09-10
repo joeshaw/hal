@@ -120,7 +120,11 @@ ups_get_string (int fd, int sindex)
 
 
 static dbus_bool_t
-ups_get_static (LibHalContext *ctx, const char *udi, int fd)
+ups_get_static (LibHalContext *ctx, const char *udi, int fd, 
+		dbus_int32_t *prop_remaining,
+		dbus_int32_t *prop_runtime,
+		dbus_bool_t *prop_charging,
+		dbus_bool_t *prop_discharging)
 {
 	int ret;
 	struct hiddev_report_info rinfo;
@@ -130,6 +134,14 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 	unsigned int i, j;
 	char *type;
 	DBusError error;
+	LibHalChangeSet *cs;
+
+	cs = libhal_device_new_changeset (udi);
+	if (cs == NULL) {
+		HAL_ERROR (("Cannot initialize changeset"));
+		goto out;
+	}
+
 
 	/* set to failure */
 	ret = FALSE;
@@ -158,93 +170,95 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 					ioctl (fd, HIDIOCGUCODE, &uref);
 					ioctl (fd, HIDIOCGUSAGE, &uref);
 
-					dbus_error_init (&error);
-
 					switch (uref.usage_code) {
 
 					case UPS_REMAINING_CAPACITY:
-						libhal_device_set_property_int (
-							ctx, udi, "battery.charge_level.current", uref.value, &error);
-						libhal_device_set_property_int (
-							ctx, udi, "battery.charge_level.percentage", uref.value, &error);
-						libhal_device_set_property_string (
-							ctx, udi, "battery.charge_level.unit", "percent", &error);
-						libhal_device_set_property_int (
-							ctx, udi, "battery.reporting.current", uref.value, &error);
-						libhal_device_set_property_int (
-							ctx, udi, "battery.reporting.percentage", uref.value, &error);
-						libhal_device_set_property_string (
-							ctx, udi, "battery.reporting.unit", "percent", &error);
+						libhal_changeset_set_property_int (
+							cs, "battery.charge_level.current", uref.value);
+						libhal_changeset_set_property_int (
+							cs, "battery.charge_level.percentage", uref.value);
+						libhal_changeset_set_property_string (
+							cs, "battery.charge_level.unit", "percent");
+						libhal_changeset_set_property_int (
+							cs, "battery.reporting.current", uref.value);
+						libhal_changeset_set_property_int (
+							cs, "battery.reporting.percentage", uref.value);
+						libhal_changeset_set_property_string (
+							cs, "battery.reporting.unit", "percent");
+						*prop_remaining = uref.value;
 						break;
 
 					case UPS_RUNTIME_TO_EMPTY:
-						libhal_device_set_property_int (
-							ctx, udi, "battery.remaining_time", uref.value, &error);
+						libhal_changeset_set_property_int (
+							cs, "battery.remaining_time", uref.value);
+						*prop_runtime = uref.value;
 						break;
 
 					case UPS_CHARGING:
-						libhal_device_set_property_bool (
-							ctx, udi, "battery.rechargeable.is_charging", uref.value != 0, &error);
+						libhal_changeset_set_property_bool (
+							cs, "battery.rechargeable.is_charging", uref.value != 0);
+						*prop_charging = uref.value != 0;
 						break;
 
 					case UPS_DISCHARGING:
-						libhal_device_set_property_bool (
-							ctx, udi, "battery.rechargeable.is_discharging", uref.value != 0, &error);
+						libhal_changeset_set_property_bool (
+							cs, "battery.rechargeable.is_discharging", uref.value != 0);
+						*prop_discharging = uref.value != 0;
 						break;
 
 					case UPS_BATTERYPRESENT:
-						libhal_device_set_property_bool (
-							ctx, udi, "battery.present", uref.value != 0, &error);
+						libhal_changeset_set_property_bool (
+							cs, "battery.present", uref.value != 0);
 						break;
 
 					case UPS_DEVICENAME:
-						libhal_device_set_property_string (
-							ctx, udi, "foo", 
-							ups_get_string (fd, uref.value), &error);
+						libhal_changeset_set_property_string (
+							cs, "foo", 
+							ups_get_string (fd, uref.value));
 						break;
 
 					case UPS_CHEMISTRY:
 						type = ups_get_string (fd, uref.value);
-						libhal_device_set_property_string (
-							ctx, udi, "battery.reporting.technology", 
-							type, &error);
-						libhal_device_set_property_string (
-							ctx, udi, "battery.technology", 
-							util_get_battery_technology (type), &error);
+						libhal_changeset_set_property_string (
+							cs, "battery.reporting.technology", 
+							type);
+						libhal_changeset_set_property_string (
+							cs, "battery.technology", 
+							util_get_battery_technology (type));
 						break;
 
 					case UPS_RECHARGEABLE:
-						libhal_device_set_property_bool (
-							ctx, udi, "battery.is_rechargeable", uref.value != 0, &error);
+						libhal_changeset_set_property_bool (
+							cs, "battery.is_rechargeable", uref.value != 0);
 						break;
 
 					case UPS_OEMINFORMATION:
-						libhal_device_set_property_string (
-							ctx, udi, "battery.vendor", 
-							ups_get_string (fd, uref.value), &error);
+						libhal_changeset_set_property_string (
+							cs, "battery.vendor", 
+							ups_get_string (fd, uref.value));
 						break;
 
 					case UPS_PRODUCT:
-						libhal_device_set_property_string (
-							ctx, udi, "battery.model", 
-							ups_get_string (fd, uref.value), &error);
+						libhal_changeset_set_property_string (
+							cs, "battery.model", 
+							ups_get_string (fd, uref.value));
 						break;
 
 					case UPS_SERIALNUMBER:
-						libhal_device_set_property_string (
-							ctx, udi, "battery.serial", 
-							ups_get_string (fd, uref.value), &error);
+						libhal_changeset_set_property_string (
+							cs, "battery.serial", 
+							ups_get_string (fd, uref.value));
 						break;
 
 					case UPS_DESIGNCAPACITY:
-						libhal_device_set_property_int (
-							ctx, udi, "battery.charge_level.design", uref.value, &error);
-						libhal_device_set_property_int (
-							ctx, udi, "battery.charge_level.last_full", uref.value, &error);
-						libhal_device_set_property_int (
-							ctx, udi, "battery.reporting.design", uref.value, &error);
-						libhal_device_set_property_int (
-							ctx, udi, "battery.reporting.last_full", uref.value, &error);
+						libhal_changeset_set_property_int (
+							cs, "battery.charge_level.design", uref.value);
+						libhal_changeset_set_property_int (
+							cs, "battery.charge_level.last_full", uref.value);
+						libhal_changeset_set_property_int (
+							cs, "battery.reporting.design", uref.value);
+						libhal_changeset_set_property_int (
+							cs, "battery.reporting.last_full", uref.value);
 						break;
 
 					default:
@@ -256,8 +270,14 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd)
 		}
 	}
 
-	libhal_device_set_property_bool (ctx, udi, "battery.present", TRUE, &error);
-	libhal_device_set_property_string (ctx, udi, "battery.type", "ups", &error);
+	libhal_changeset_set_property_bool (cs, "battery.present", TRUE);
+	libhal_changeset_set_property_string (cs, "battery.type", "ups");
+
+	dbus_error_init (&error);
+	libhal_device_commit_changeset (ctx, cs, &error);
+	libhal_device_free_changeset (cs);
+
+	dbus_error_init (&error);
 	libhal_device_add_capability (ctx, udi, "battery", &error);
 
 	ret = TRUE;
@@ -278,6 +298,10 @@ main (int argc, char *argv[])
 	fd_set fdset;
 	struct hiddev_event ev[64];
 	int rd;
+	dbus_int32_t prop_remaining = 0;
+	dbus_int32_t prop_runtime = 0;
+	dbus_bool_t prop_charging = FALSE;
+	dbus_bool_t prop_discharging = FALSE;
 
 	hal_set_proc_title_init (argc, argv);
 
@@ -299,8 +323,9 @@ main (int argc, char *argv[])
 	if (fd < 0)
 		goto out;
 
-	if (!ups_get_static (ctx, udi, fd))
+	if (!ups_get_static (ctx, udi, fd, &prop_remaining, &prop_runtime, &prop_charging, &prop_discharging))
 		goto out;
+
 
 	hal_set_proc_title ("hald-addon-hid-ups: listening on %s", device_file);
 
@@ -308,49 +333,74 @@ main (int argc, char *argv[])
 	while (1) {
 		FD_SET(fd, &fdset);
 		rd = select(fd+1, &fdset, NULL, NULL, NULL);
+
 		
 		if (rd > 0) {
+			DBusError error;
+			LibHalChangeSet *cs;
+
 			rd = read(fd, ev, sizeof(ev));
 			if (rd < (int) sizeof(ev[0])) {
 				close(fd);
 				goto out;
 			}
 
-			for (i = 0; i < rd / sizeof(ev[0]); i++) {
-				DBusError error;
-				
-				dbus_error_init (&error);
+			cs = libhal_device_new_changeset (udi);
+			if (cs == NULL) {
+				HAL_ERROR (("Cannot initialize changeset"));
+				goto out;
+			}
+
+			for (i = 0; i < rd / sizeof(ev[0]); i++) {				
 				switch (ev[i].hid) {
 				case UPS_REMAINING_CAPACITY:
-					libhal_device_set_property_int (
-						ctx, udi, "battery.charge_level.current", ev[i].value, &error);
-					libhal_device_set_property_int (
-						ctx, udi, "battery.charge_level.percentage", ev[i].value, &error);
-					libhal_device_set_property_int (
-						ctx, udi, "battery.reporting.current", ev[i].value, &error);
-					libhal_device_set_property_int (
-						ctx, udi, "battery.reporting.percentage", ev[i].value, &error);
+					if (ev[i].value != prop_remaining) {
+						prop_remaining = ev[i].value;
+						libhal_changeset_set_property_int (
+							cs, "battery.charge_level.current", ev[i].value);
+						libhal_changeset_set_property_int (
+							cs, "battery.charge_level.percentage", ev[i].value);
+						libhal_changeset_set_property_int (
+							cs, "battery.reporting.current", ev[i].value);
+						libhal_changeset_set_property_int (
+							cs, "battery.reporting.percentage", ev[i].value);
+					}
 					break;
 					
 				case UPS_RUNTIME_TO_EMPTY:
-					libhal_device_set_property_int (
-						ctx, udi, "battery.remaining_time", ev[i].value, &error);
+					if (ev[i].value != prop_runtime) {
+						prop_runtime = ev[i].value;
+						libhal_changeset_set_property_int (
+							cs, "battery.remaining_time", ev[i].value);
+					}
 					break;
 					
 				case UPS_CHARGING:
-					libhal_device_set_property_bool (
-						ctx, udi, "battery.rechargeable.is_charging", ev[i].value != 0, &error);
+					if ((ev[i].value != 0) != prop_charging) {
+						prop_charging = (ev[i].value != 0);
+						libhal_changeset_set_property_bool (
+							cs, "battery.rechargeable.is_charging", ev[i].value != 0);
+					}
 					break;
 					
 				case UPS_DISCHARGING:
-					libhal_device_set_property_bool (
-						ctx, udi, "battery.rechargeable.is_discharging", ev[i].value != 0, &error);
+					if ((ev[i].value != 0) != prop_discharging) {
+						prop_discharging = (ev[i].value != 0);
+						libhal_changeset_set_property_bool (
+							cs, "battery.rechargeable.is_discharging", ev[i].value != 0);
+					}
 					break;
 					
 				default:
 					break;
 				}
 			}
+
+			dbus_error_init (&error);
+			/* NOTE: commit_changeset won't do IPC if set is empty */
+			libhal_device_commit_changeset (ctx, cs, &error);
+			libhal_device_free_changeset (cs);
+
 		}
 	}
 
