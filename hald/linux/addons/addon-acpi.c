@@ -170,9 +170,13 @@ main (int argc, char **argv)
 	setup_logger ();
 
 	dbus_error_init (&error);
-
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
 		HAL_ERROR (("Unable to initialise libhal context: %s", error.message));
+		return 1;
+	}
+
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx, getenv ("UDI"), &error)) {
 		return 1;
 	}
 

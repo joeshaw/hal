@@ -43,7 +43,7 @@ run_request *new_run_request(void);
 void del_run_request(run_request *r);
 
 /* Run the given request and reply it's result on msg */
-gboolean run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg);
+gboolean run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg, GPid *out_pid);
 
 /* Kill all running request for a udi */
 void run_kill_udi(gchar *udi);

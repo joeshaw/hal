@@ -35,6 +35,7 @@
 #include "device.h"
 #include "hald_marshal.h"
 #include "logger.h"
+#include "hald_runner.h"
 
 static GObjectClass *parent_class;
 
@@ -57,10 +58,13 @@ hal_device_finalize (GObject *obj)
 {
 	HalDevice *device = HAL_DEVICE (obj);
 
+	runner_device_finalized (device);
+
 #ifdef HALD_MEMLEAK_DBG
 	dbg_hal_device_object_delta--;
 	printf ("************* in finalize for udi=%s\n", device->udi);
 #endif
+
 
 	g_slist_foreach (device->properties, (GFunc) hal_property_free, NULL);
 
@@ -132,6 +136,8 @@ hal_device_init (HalDevice *device)
 
 	device->udi = g_strdup_printf ("/org/freedesktop/Hal/devices/temp/%d",
 				       temp_device_counter++);
+	device->num_addons = 0;
+	device->num_addons_ready = 0;
 }
 
 GType
@@ -1314,3 +1320,31 @@ hal_device_property_strlist_is_empty (HalDevice    *device,
 	return FALSE;
 }
 
+void
+hal_device_inc_num_addons (HalDevice *device)
+{
+	device->num_addons++;
+}
+
+gboolean
+hal_device_inc_num_ready_addons (HalDevice *device)
+{
+	if (hal_device_are_all_addons_ready (device)) {
+		HAL_ERROR (("In hal_device_inc_num_ready_addons for udi=%s but all addons are already ready!", 
+			    device->udi));
+		return FALSE;
+	}
+
+	device->num_addons_ready++;
+	return TRUE;
+}
+
+gboolean
+hal_device_are_all_addons_ready (HalDevice *device)
+{
+	if (device->num_addons_ready == device->num_addons) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}

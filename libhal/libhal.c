@@ -3379,6 +3379,70 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 }
 
 /** 
+ * libhal_device_addon_is_ready:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ *
+ * HAL addon's must call this method when they are done initializing the device object. The HAL
+ * daemon will wait for all addon's to call this.
+ *
+ * Can only be used from hald helpers.
+ *
+ * Returns: TRUE if the HAL daemon received the message, FALSE otherwise
+ */
+dbus_bool_t
+libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessageIter reply_iter;
+	DBusMessage *reply;
+	dbus_bool_t result;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"AddonIsReady");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return FALSE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &result);
+
+	dbus_message_unref (reply);
+	return result;	
+}
+
+/** 
  * libhal_device_claim_interface:
  * @ctx: the context for the connection to hald
  * @udi: the Unique Device Id

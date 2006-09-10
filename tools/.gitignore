@@ -19,5 +19,6 @@ hal-storage-cleanup-all-mountpoints
 hal-storage-cleanup-mountpoint
 hal-storage-eject
 hal-storage-unmount
+hal-storage-closetray
 *.o
 *~

@@ -66,6 +66,12 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+		goto out;
+	}
+
+
 	/* initial state */
 	if ((strstate = getenv ("HAL_PROP_BUTTON_STATE_VALUE")) == NULL) {
 		HAL_ERROR (("Cannot get HAL_PROP_BUTTON_STATE_VALUE"));

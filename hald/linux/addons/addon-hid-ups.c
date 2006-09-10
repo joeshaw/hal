@@ -142,7 +142,6 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd,
 		goto out;
 	}
 
-
 	/* set to failure */
 	ret = FALSE;
 
@@ -326,8 +325,12 @@ main (int argc, char *argv[])
 	if (!ups_get_static (ctx, udi, fd, &prop_remaining, &prop_runtime, &prop_charging, &prop_discharging))
 		goto out;
 
-
 	hal_set_proc_title ("hald-addon-hid-ups: listening on %s", device_file);
+
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+		goto out;
+	}
 
 	FD_ZERO(&fdset);
 	while (1) {
@@ -336,7 +339,6 @@ main (int argc, char *argv[])
 
 		
 		if (rd > 0) {
-			DBusError error;
 			LibHalChangeSet *cs;
 
 			rd = read(fd, ev, sizeof(ev));

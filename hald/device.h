@@ -41,6 +41,9 @@ struct _HalDevice {
 	char *udi;
 	
 	GSList *properties;
+
+	int num_addons;
+	int num_addons_ready;
 };
 
 struct _HalDeviceClass {
@@ -201,5 +204,12 @@ gboolean      hal_device_property_set_attribute (HalDevice *device,
 						 const char *key,
 						 enum PropertyAttribute attr,
 						 gboolean persistence);
+
+void          hal_device_inc_num_addons (HalDevice *device);
+
+gboolean      hal_device_inc_num_ready_addons (HalDevice *device);
+
+gboolean      hal_device_are_all_addons_ready (HalDevice *device);
+
 
 #endif /* DEVICE_H */

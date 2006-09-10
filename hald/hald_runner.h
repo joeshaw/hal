@@ -49,10 +49,13 @@ typedef void (*HalRunTerminatedCB) (HalDevice *d, guint32 exit_type,
 gboolean
 hald_runner_start_runner(void);
 
-/* Start a helper, returns true on a successfull start */
+/* Start a helper, returns true on a successfull start. 
+ * cb will be called on abnormal or premature termination
+ * only 
+ */
 gboolean
-hald_runner_start(HalDevice *device, const gchar *command_line, 
-                  char **extra_env);
+hald_runner_start (HalDevice *device, const gchar *command_line, char **extra_env, 
+		   HalRunTerminatedCB cb, gpointer data1, gpointer data2);
 
 /* Run a helper program using the commandline, with input as infomation on
  * stdin */
@@ -72,5 +75,8 @@ hald_runner_run_method(HalDevice *device,
 
 void hald_runner_kill_device(HalDevice *device);
 void hald_runner_kill_all();
+
+/* called by the core to tell the runner a device was finalized */
+void runner_device_finalized (HalDevice *device);
 
 #endif 

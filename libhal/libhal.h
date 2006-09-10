@@ -593,6 +593,9 @@ dbus_bool_t libhal_device_claim_interface (LibHalContext *ctx,
 					   const char *introspection_xml,
 					   DBusError *error);
 
+/* hald waits for all addons to call this function before announcing the addon (for hald helpers only) */
+dbus_bool_t libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *error);
+
 
 #if defined(__cplusplus)
 }

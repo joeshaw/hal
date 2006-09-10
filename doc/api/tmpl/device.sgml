@@ -25,6 +25,8 @@ HalDevice
 @parent: 
 @udi: 
 @properties: 
+@num_addons: 
+@num_addons_ready: 
 
 <!-- ##### USER_FUNCTION HalDeviceAsyncCallback ##### -->
 <para>

@@ -281,6 +281,7 @@ main (int argc, char *argv[])
 		return -3;
 	}
 
+
 	/* update_properties */
 	dbus_error_init (&err);
 	libhal_device_set_property_bool (halctx, device_udi, 
@@ -314,6 +315,11 @@ main (int argc, char *argv[])
 	/* only add capability when initial charge_level key has been set */
 	dbus_error_init (&err);
 	libhal_device_add_capability (halctx, device_udi, "battery", &err);
+
+	dbus_error_init (&err);
+	if (!libhal_device_addon_is_ready (halctx, device_udi, &err)) {
+		return -4;
+	}
 
 	hal_set_proc_title ("hald-addon-usb-csr: listening on '%s'", 
 			    libhal_device_get_property_string(halctx, device_udi,

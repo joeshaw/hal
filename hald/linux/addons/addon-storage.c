@@ -302,6 +302,11 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+		goto out;
+	}
+
 	HAL_DEBUG (("**************************************************"));
 	HAL_DEBUG (("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi));
 	HAL_DEBUG (("**************************************************"));

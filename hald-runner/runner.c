@@ -58,6 +58,7 @@ typedef struct {
 	guint watch;
 	guint timeout;
 	gboolean sent_kill;
+	gboolean emit_pid_exited;
 } run_data;
 
 static void
@@ -155,9 +156,7 @@ run_exited(GPid pid, gint status, gpointer data)
 	if (!WIFEXITED(status)) {
 		/* No not normal termination ? crash ? */
 		send_reply(rd->con, rd->msg, HALD_RUN_FAILED, 0, NULL);
-		remove_from_hash_table(rd);
-		del_run_data(rd);
-		return;
+		goto out;
 	}
 	/* normal exit */
 	if (rd->stderr_v >= 0) {
@@ -169,7 +168,22 @@ run_exited(GPid pid, gint status, gpointer data)
 	if (rd->msg != NULL)
 		send_reply(rd->con, rd->msg, HALD_RUN_SUCCESS, WEXITSTATUS(status), error);
 	free_string_array(error);
+
+out:
 	remove_from_hash_table(rd);
+		
+	/* emit a signal that this PID exited */
+	if(rd->con != NULL && rd->emit_pid_exited) {
+		DBusMessage *signal;
+		signal = dbus_message_new_signal ("/org/freedesktop/HalRunner",
+						  "org.freedesktop.HalRunner",
+						  "StartedProcessExited");
+		dbus_message_append_args (signal, 
+					  DBUS_TYPE_INT64, &(rd->pid),
+					  DBUS_TYPE_INVALID);
+		dbus_connection_send(rd->con, signal, NULL);
+	}
+	
 	del_run_data(rd);
 }
 
@@ -217,7 +231,7 @@ find_program(char **argv)
 
 /* Run the given request and reply it's result on msg */
 gboolean
-run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg)
+run_request_run (run_request *r, DBusConnection *con, DBusMessage *msg, GPid *out_pid)
 {
 	GPid pid;
 	GError *error = NULL;
@@ -292,6 +306,12 @@ run_request_run(run_request *r, DBusConnection *con, DBusMessage *msg)
 
 	/* The hash table will take care to not leak the dupped string */
 	g_hash_table_insert(udi_hash, g_strdup(r->udi), list);
+
+	/* send back PID if requested.. and only emit StartedProcessExited in this case */
+	if (out_pid != NULL) {
+		*out_pid = pid;
+		rd->emit_pid_exited = TRUE;
+	}
 	return TRUE;
 }
 

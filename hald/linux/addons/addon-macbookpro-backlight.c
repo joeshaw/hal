@@ -422,6 +422,12 @@ main (int argc, char *argv[])
 		return -3;
 	}
 
+	dbus_error_init (&err);
+	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
+		return -4;
+	}
+
+
 	conn = libhal_ctx_get_dbus_connection (halctx);
 	dbus_connection_setup_with_g_main (conn, NULL);
 

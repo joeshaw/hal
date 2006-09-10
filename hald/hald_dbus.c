@@ -2505,6 +2505,70 @@ device_claim_interface (DBusConnection * connection, DBusMessage * message, dbus
 }
 
 
+
+static DBusHandlerResult
+addon_is_ready (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *device;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	DBusError error;
+	const char *interface_name;
+	const char *introspection_xml;
+	dbus_bool_t res;
+	
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	if (!local_interface) {
+		raise_permission_denied (connection, message, "AddonIsReady: only allowed for helpers");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	HAL_DEBUG (("udi=%s", udi));
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "AddonIsReady");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	device = hal_device_store_find (hald_get_gdl (), udi);
+	if (device == NULL)
+		device = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (device == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (hal_device_inc_num_ready_addons (device)) {
+		if (hal_device_are_all_addons_ready (device)) {
+			manager_send_signal_device_added (device);
+		}
+	}
+
+	res = TRUE;
+
+	HAL_INFO (("AddonIsReady on udi '%s'", udi));
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &res);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
 /*
  * Create new device in tdl. Return temporary udi.
  */
@@ -3331,6 +3395,7 @@ do_introspect (DBusConnection  *connection,
 				       "    <method name=\"EmitCondition\">\n"
 				       "      <arg name=\"condition_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"condition_details\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"rc\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
 
 				       "    <method name=\"Rescan\">\n"
@@ -3343,6 +3408,11 @@ do_introspect (DBusConnection  *connection,
 				       "    <method name=\"ClaimInterface\">\n"
 				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"introspection_xml\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"rc\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
+
+				       "    <method name=\"AddonIsReady\">\n"
+				       "      <arg name=\"rc\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
 
 				       "  </interface>\n");
@@ -3665,6 +3735,10 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"ReleaseInterface")) {
 		return device_release_interface (connection, message, local_interface);
 #endif
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"AddonIsReady")) {
+		return addon_is_ready (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.DBus.Introspectable",
 						"Introspect")) {

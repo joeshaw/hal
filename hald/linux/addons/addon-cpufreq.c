@@ -1090,6 +1090,12 @@ gboolean dbus_init(void)
 		goto Error;
 	}
 
+	dbus_error_init (&dbus_error);
+	if (!libhal_device_addon_is_ready (halctx, udi, &dbus_error)) {
+		goto Error;
+	}
+
+
 	if (!libhal_device_claim_interface(halctx, udi,
 		"org.freedesktop.Hal.Device.CPUFreq", 
 		"    <method name=\"SetCPUFreqGovernor\">\n"

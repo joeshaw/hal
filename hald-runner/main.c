@@ -94,7 +94,7 @@ handle_run(DBusConnection *con, DBusMessage *msg)
 	dbus_message_iter_get_basic(&iter, &(r->timeout));
 
 	/* let run_request_run handle the reply */
-	run_request_run(r, con, msg);
+	run_request_run(r, con, msg, NULL);
 	return;
 
 malformed:
@@ -111,6 +111,7 @@ handle_start(DBusConnection *con, DBusMessage *msg)
 	DBusMessage *reply;
 	DBusMessageIter iter;
 	run_request *r;
+	GPid pid;
 
 	r = new_run_request();
 	g_assert(dbus_message_iter_init(msg, &iter));
@@ -118,8 +119,12 @@ handle_start(DBusConnection *con, DBusMessage *msg)
 	if (!dbus_message_iter_init(msg, &iter) || !parse_first_part(r, msg, &iter))
 		goto malformed;
 
-	if (run_request_run(r, NULL, NULL)) {
+	if (run_request_run(r, con, NULL, &pid)) {
 		reply = dbus_message_new_method_return(msg);
+		dbus_message_append_args (reply, 
+					  DBUS_TYPE_INT64, &pid,
+					  DBUS_TYPE_INVALID);
+					  
 	} else {
 		reply = dbus_message_new_error(msg, "org.freedesktop.HalRunner.Failed",
 					       "Start request failed");

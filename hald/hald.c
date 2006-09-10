@@ -73,6 +73,29 @@ static HalDeviceStore *global_device_list = NULL;
 
 static HalDeviceStore *temporary_device_list = NULL;
 
+
+static void
+addon_terminated (HalDevice *device, guint32 exit_type, 
+		  gint return_code, gchar **error,
+		  gpointer data1, gpointer data2)
+{
+	HAL_INFO (("in addon_terminated for udi=%s", device->udi));
+
+	/* TODO: log to syslog - addons shouldn't just terminate, this is a bug with the addon */
+
+	/* however, the world can stop, mark this addon as ready 
+	 * (TODO: potential bug if the addon crashed after calling libhal_device_addon_is_ready())
+	 */
+	if (hal_device_inc_num_ready_addons (device)) {
+		if (hal_device_are_all_addons_ready (device)) {
+			manager_send_signal_device_added (device);
+		}
+	}
+}
+
+
+
+
 static void
 gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 		   gboolean is_added, gpointer user_data)
@@ -84,29 +107,38 @@ gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 
 		if ((addons = hal_device_property_get_strlist (device, "info.addons")) != NULL) {
 			GSList *i;
-			
+
 			for (i = addons; i != NULL; i = g_slist_next (i)) {
 				const gchar *command_line;
 				gchar *extra_env[2] = {"HALD_ACTION=addon", NULL};
 
 				command_line = (const gchar *) i->data;
-				hald_runner_start (device, command_line, extra_env);
-
-				HAL_INFO (("Started addon %s for udi %s", 
-				           command_line, hal_device_get_udi(device)));
+				if (hald_runner_start(device, command_line, extra_env, addon_terminated, NULL, NULL)) {
+					HAL_INFO (("Started addon %s for udi %s", 
+						   command_line, hal_device_get_udi(device)));
+					hal_device_inc_num_addons (device);
+				} else {
+					HAL_ERROR (("Cannot start addon %s for udi %s", 
+						    command_line, hal_device_get_udi(device)));
+				}
 			}
 		}
 	} else {
 		HAL_INFO (("Removed device from GDL; udi=%s", hal_device_get_udi(device)));
-    hald_runner_kill_device(device);
+		hald_runner_kill_device(device);
 	}
 
 	/*hal_device_print (device);*/
 
-	if (is_added)
-		manager_send_signal_device_added (device);
-	else
-		manager_send_signal_device_removed (device);
+	if (is_added) {
+		if (hal_device_are_all_addons_ready (device)) {
+			manager_send_signal_device_added (device);
+		}
+	} else {
+		if (hal_device_are_all_addons_ready (device)) {
+			manager_send_signal_device_removed (device);
+		}
+	}
 }
 
 static void
@@ -114,7 +146,9 @@ gdl_property_changed (HalDeviceStore *store, HalDevice *device,
 		      const char *key, gboolean added, gboolean removed,
 		      gpointer user_data)
 {
-	device_send_signal_property_modified (device, key, removed, added);
+	if (hal_device_are_all_addons_ready (device)) {
+		device_send_signal_property_modified (device, key, removed, added);
+	}
 
 	/* only execute the callouts if the property _changed_ */
 	if (added == FALSE && removed == FALSE)
@@ -125,7 +159,9 @@ static void
 gdl_capability_added (HalDeviceStore *store, HalDevice *device,
 		      const char *capability, gpointer user_data)
 {
-	manager_send_signal_new_capability (device, capability);
+	if (hal_device_are_all_addons_ready (device)) {
+		manager_send_signal_new_capability (device, capability);
+	}
 	/*hal_callout_capability (device, capability, TRUE)*/;
 }
 

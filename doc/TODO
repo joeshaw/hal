@@ -15,12 +15,6 @@ Ongoing items that always need work
 Items specifically planned for 0.5.8
 ------------------------------------
 
- - Provide a libhal_device_set_all_properties plus functions to construct
-   a LibHalPropertySet
-
- - Require that addons poke hald before the device is visible - this is for
-   addons that also probes the hardware and provide the initial state..
-
  - Move /usr/libexec to /usr/lib/hal/ - drop /usr/lib/hal/scripts -
    use /usr/lib/hal/methods
 

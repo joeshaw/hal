@@ -164,6 +164,11 @@ main (int argc, char **argv)
 		return 1;
 	}
 
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+		return 1;
+	}
+
 	/* Check for Toshiba ACPI interface /proc/acpi/toshiba/keys */
 	fp = fopen (TOSHIBA_ACPI_KEYS, "r+");
 	if (!fp) {

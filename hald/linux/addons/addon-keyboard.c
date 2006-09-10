@@ -200,6 +200,12 @@ main (int argc, char **argv)
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
                 goto out;
 
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+		goto out;
+	}
+
+
 	eventfp = fopen(device_file, "r");	
 
 	if (!eventfp)
