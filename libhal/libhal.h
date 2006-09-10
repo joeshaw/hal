@@ -35,6 +35,13 @@ extern "C" {
 #endif
 #endif
 
+#if defined(__GNUC__)
+#define LIBHAL_DEPRECATED __attribute__ ((deprecated))  
+#else  
+#define LIBHAL_DEPRECATED  
+#endif 
+
+
 #define LIBHAL_FREE_DBUS_ERROR(_dbus_error_)					\
 	do {									\
 		if (dbus_error_is_set(_dbus_error_))				\

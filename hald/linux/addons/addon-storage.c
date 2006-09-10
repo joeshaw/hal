@@ -427,7 +427,9 @@ main (int argc, char *argv[])
 				DBusError error;
 				
 				HAL_DEBUG (("Media removal detected on %s", device_file));
-				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
+				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, NULL);
+				libhal_device_set_property_string (ctx, udi, "storage.partitioning_scheme", "", NULL);
+
 				
 				/* attempt to unmount all childs */
 				unmount_childs (ctx, udi);
@@ -449,7 +451,10 @@ main (int argc, char *argv[])
 				DBusError error;
 
 				HAL_DEBUG (("Media insertion detected on %s", device_file));
-				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);				/* our probe will trigger the appropriate hotplug events */
+
+				/* our probe will trigger the appropriate hotplug events */
+				libhal_device_set_property_bool (
+					ctx, udi, "storage.removable.media_available", TRUE, NULL);
 
 				/* could have a fs on the main block device; do a rescan to add it */
 				dbus_error_init (&error);

@@ -46,6 +46,7 @@
 #include <libvolume_id.h>
 
 #include "libhal/libhal.h"
+#include "partutil/partutil.h"
 #include "linux_dvd_rw_utils.h"
 
 #include "../../logger.h"
@@ -57,7 +58,7 @@ static void vid_log(int priority, const char *file, int line, const char *format
 
 	va_start(args, format);
 	vsnprintf(log_str, sizeof(log_str), format, args);
-	logger_forward_debug("%s:%i %s", file, line, log_str);
+	logger_forward_debug("%s:%i %s\n", file, line, log_str);
 	va_end(args);
 }
 
@@ -95,6 +96,62 @@ out:
 	return rc;
 }
 
+#define BSIZE 0x200
+#define MSDOS_MAGIC			"\x55\xaa"
+#define MSDOS_SIG_OFF			0x01fe
+#define MSDOS_PARTTABLE_OFFSET		0x01be
+
+#define MAC_MAGIC                       "\x45\x52"
+#define MAC_SIG_OFF                     0x0000
+
+enum {
+	PART_TABLE_UNKNOWN,
+	PART_TABLE_MBR,
+	PART_TABLE_APM,
+	PART_TABLE_GPT
+};
+
+/* Detect partition table scheme */
+static int
+probe_for_part_scheme (LibHalChangeSet *changeset, int fd)
+{
+	int res;
+	const uint8_t buf[BSIZE];
+
+	res = PART_TABLE_UNKNOWN;
+
+	if (lseek(fd, 0, SEEK_SET) < 0) {
+		dbg("lseek failed (%s)", strerror(errno));
+		goto out;
+	}
+	if (read(fd, &buf, BSIZE) < BSIZE) {
+		dbg("read failed (%s)", strerror(errno));
+		goto out;
+	}
+
+	if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) == 0) {
+		/* if the first partition have type 0xee, it's a GUID Partitioning Table */
+		if (buf[MSDOS_PARTTABLE_OFFSET + 4] == 0xee) {
+			dbg("foo1");
+			res = PART_TABLE_GPT;
+		} else {
+			dbg("foo2");
+			res = PART_TABLE_MBR;
+		}
+		goto out;
+	}
+
+	if (memcmp(&buf[MAC_SIG_OFF], MAC_MAGIC, 2) == 0) {
+		dbg("foo3");
+		res = PART_TABLE_APM;
+		goto out;
+	}
+
+
+out:
+	return res;
+}
+
 int 
 main (int argc, char *argv[])
 {
@@ -108,6 +165,8 @@ main (int argc, char *argv[])
 	char *drive_type;
 	char *sysfs_path;
 	dbus_bool_t only_check_for_fs;
+	LibHalChangeSet *cs;
+
 
 	fd = -1;
 
@@ -139,6 +198,12 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
+	cs = libhal_device_new_changeset (udi);
+	if (cs == NULL) {
+		HAL_DEBUG(("Cannot initialize changeset"));
+		goto out;
+	}
+
 	HAL_DEBUG (("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 
 	     device_file, bus, drive_type, udi, only_check_for_fs));
 
@@ -169,83 +234,85 @@ main (int argc, char *argv[])
 				goto out;
 			}
 			
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdr", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdrw", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvd", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdr", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdrw", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdram", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusr", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrwdl", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bd", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bdr", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.bdre", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.hddvd", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.hddvdr", FALSE, &error);
-			libhal_device_set_property_bool (ctx, udi, "storage.cdrom.hddvdrw", FALSE, &error);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.cdr", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.cdrw", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvd", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdr", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdrw", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdram", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusr", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrw", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrwdl", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrdl", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.bd", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.bdr", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.bdre", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvd", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvdr", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvdrw", FALSE);
 			
 			if (capabilities & CDC_CD_R) {
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdr", TRUE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.cdr", TRUE);
 			}
 			
 			if (capabilities & CDC_CD_RW) {
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.cdrw", TRUE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.cdrw", TRUE);
 			}
 			if (capabilities & CDC_DVD) {
 				int profile;
 				
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvd", TRUE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.dvd", TRUE);
 
 				profile = get_dvd_r_rw_profile (fd);
 				HAL_DEBUG (("get_dvd_r_rw_profile returned: %d", profile));
 
 				if (profile & DRIVE_CDROM_CAPS_DVDRW)
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdrw", TRUE, &error);
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdrw", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSR)
-					libhal_device_set_property_bool(ctx, udi, "storage.cdrom.dvdplusr", TRUE, &error);
+					libhal_changeset_set_property_bool(cs, "storage.cdrom.dvdplusr", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRW)
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrw", TRUE, &error);
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrw", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRWDL)
-					libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrwdl", TRUE, &error);
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrwdl", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRDL)
-                                        libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdplusrdl", TRUE, &error);
+                                        libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrdl", TRUE);
 			}
 			if (capabilities & CDC_DVD_R) {
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdr", TRUE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdr", TRUE);
 			}
 			if (capabilities & CDC_DVD_RAM) {
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.dvdram", TRUE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdram", TRUE);
 			}
 			
 			/* while we're at it, check if we support media changed */
 			if (capabilities & CDC_MEDIA_CHANGED) {
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.support_media_changed", TRUE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.support_media_changed", TRUE);
 			} else {
-				libhal_device_set_property_bool (ctx, udi, "storage.cdrom.support_media_changed", FALSE, &error);
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.support_media_changed", FALSE);
 			}
 			
 			if (get_read_write_speed(fd, &read_speed, &write_speed, &write_speeds) >= 0) {
-				libhal_device_set_property_int (ctx, udi, "storage.cdrom.read_speed", read_speed, &error);
+				libhal_changeset_set_property_int (cs, "storage.cdrom.read_speed", read_speed);
 				if (write_speed > 0) {
-					libhal_device_set_property_int (ctx, udi, "storage.cdrom.write_speed", write_speed, &error);
+					libhal_changeset_set_property_int (
+						cs, "storage.cdrom.write_speed", write_speed);
+					
 					if (write_speeds != NULL)
 					{
 						gchar **wspeeds;
-						int i;
-						wspeeds = g_strsplit_set (write_speeds, ",", -1);
-						for (i = 0 ; wspeeds[i] != NULL; i++) {
-					                if (strlen (wspeeds[i]) > 0)
-								libhal_device_property_strlist_append (ctx, udi, "storage.cdrom.write_speeds", wspeeds[i], &error);
-						}
+ 						wspeeds = g_strsplit_set (write_speeds, ",", -1);
+						libhal_changeset_set_property_strlist (cs, 
+										       "storage.cdrom.write_speeds", 
+										       (const char **) wspeeds);
+						g_strfreev (wspeeds);
 						free (write_speeds);
 					}
-				}	
-				else
-					libhal_device_set_property_int (ctx, udi, "storage.cdrom.write_speed", 0, &error);
+				} else {
+					libhal_changeset_set_property_int (cs, "storage.cdrom.write_speed", 0);
+					libhal_changeset_set_property_strlist (cs, "storage.cdrom.write_speeds", NULL);
+				}
 			}
-
+			
 			close (fd);
 		}
 		
@@ -331,13 +398,13 @@ main (int argc, char *argv[])
 		if (got_media) {
 			uint64_t size;
 			ret = 2;
-			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
+			libhal_changeset_set_property_bool (cs, "storage.removable.media_available", TRUE);
 			if (ioctl (fd, BLKGETSIZE64, &size) == 0) {
 				HAL_DEBUG (("media size = %llu", size));
-				libhal_device_set_property_uint64 (ctx, udi, "storage.removable.media_size", size, &error);
+				libhal_changeset_set_property_uint64 (cs, "storage.removable.media_size", size);
 			}
 		} else {
-			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
+			libhal_changeset_set_property_bool (cs, "storage.removable.media_available", FALSE);
 		}
 
 		close (fd);
@@ -360,18 +427,18 @@ main (int argc, char *argv[])
 		if (fd < 0) {
 			HAL_DEBUG (("Cannot open %s: %s", device_file, strerror (errno)));
 			/* no media */
-			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, &error);
+			libhal_changeset_set_property_bool (cs, "storage.removable.media_available", FALSE);
 			goto out;
 		}
 		HAL_DEBUG (("Returned from open(2)"));
 
 		/* if we get to here, we have media */
-		libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", TRUE, &error);
+		libhal_changeset_set_property_bool (cs, "storage.removable.media_available", TRUE);
 
 		if (ioctl (fd, BLKGETSIZE64, &size) != 0)
 			size = 0;
 		
-		libhal_device_set_property_uint64 (ctx, udi, "storage.removable.media_size", size, &error);
+		libhal_changeset_set_property_uint64 (cs, "storage.removable.media_size", size);
 
 		/* if the kernel has created partitions, we don't look for a filesystem */
 		main_device = strrchr (sysfs_path, '/');
@@ -387,12 +454,29 @@ main (int argc, char *argv[])
 		while ((partition = g_dir_read_name (dir)) != NULL) {
 			if (strncmp (main_device, partition, main_device_len) == 0 &&
 			    isdigit (partition[main_device_len])) {
+				PartitionTable *p;
+
 				HAL_DEBUG (("partition %s found, skip probing for filesystem", partition));
 				g_dir_close (dir);
+
+				/* probe for partition table type */
+				p = part_table_load_from_disk (device_file);
+				if (p != NULL) {
+
+					libhal_changeset_set_property_string (
+						cs, 
+						"storage.partitioning_scheme", 
+						part_get_scheme_name (part_table_get_scheme (p)));
+
+					part_table_free (p);
+				}
+
 				goto out;
 			}
 		}
 		g_dir_close (dir);
+
+		libhal_changeset_set_property_string (cs, "storage.partitioning_scheme", "none");
 
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
@@ -416,6 +500,10 @@ main (int argc, char *argv[])
 	}
 	
 out:
+	if (cs != NULL) {
+		libhal_device_commit_changeset (ctx, cs, &error);
+		libhal_device_free_changeset (cs);
+	}
 
 	if (ctx != NULL) {
 		dbus_error_init (&error);

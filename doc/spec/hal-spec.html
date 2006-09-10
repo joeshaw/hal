@@ -609,13 +609,23 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN4036"
+HREF="#AEN4328"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DT
 ><A
-HREF="#AEN4055"
+HREF="#AEN4347"
 >Interface org.freedesktop.Hal.Device</A
+></DT
+><DT
+><A
+HREF="#AEN4356"
+>Interface org.freedesktop.Hal.Device.Volume</A
+></DT
+><DT
+><A
+HREF="#AEN4360"
+>Interface org.freedesktop.Hal.Device.Storage</A
 ></DT
 ></DL
 ></DD
@@ -3159,6 +3169,120 @@ CLASS="literal"
 ><TD
 >SCSI Logical Unit Number</TD
 ></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>scsi.type</TT
+> (string)
+              </TD
+><TD
+>Example: disk</TD
+><TD
+>Yes</TD
+><TD
+>SCSI device type</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>cdrom</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI cdrom device.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>comm</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI communication device.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>disk</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI disk device.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>medium_changer</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI media changer (e.g. for CD/Tape).</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>printer</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI printer.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>processor</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI processor device.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>raid</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI raid device.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>scanner</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI scanner.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>tape</TD
+><TD
+>&nbsp;</TD
+><TD
+>This is a SCSI tape device.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>unknown</TD
+><TD
+>&nbsp;</TD
+><TD
+>The type of this SCSI device is unknwon.</TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -3193,7 +3317,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN804"
+NAME="AEN860"
 ></A
 ><TABLE
 BORDER="1"
@@ -3318,7 +3442,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN849"
+NAME="AEN905"
 ></A
 ><TABLE
 BORDER="1"
@@ -3442,7 +3566,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN894"
+NAME="AEN950"
 ></A
 ><TABLE
 BORDER="1"
@@ -3511,7 +3635,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN915"
+NAME="AEN971"
 ></A
 ><TABLE
 BORDER="1"
@@ -3580,7 +3704,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN936"
+NAME="AEN992"
 ></A
 ><TABLE
 BORDER="1"
@@ -3763,7 +3887,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1005"
+NAME="AEN1061"
 ></A
 ><TABLE
 BORDER="1"
@@ -3953,7 +4077,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1079"
+NAME="AEN1135"
 ></A
 ><TABLE
 BORDER="1"
@@ -4045,7 +4169,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1111"
+NAME="AEN1167"
 ></A
 ><TABLE
 BORDER="1"
@@ -4119,7 +4243,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1136"
+NAME="AEN1192"
 ></A
 ><TABLE
 BORDER="1"
@@ -4230,7 +4354,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1175"
+NAME="AEN1231"
 ></A
 ><TABLE
 BORDER="1"
@@ -4330,7 +4454,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1209"
+NAME="AEN1265"
 ></A
 ><TABLE
 BORDER="1"
@@ -4402,7 +4526,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1234"
+NAME="AEN1290"
 ></A
 ><TABLE
 BORDER="1"
@@ -4687,7 +4811,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1343"
+NAME="AEN1399"
 ></A
 ><TABLE
 BORDER="1"
@@ -4773,7 +4897,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1374"
+NAME="AEN1430"
 ></A
 ><TABLE
 BORDER="1"
@@ -4859,7 +4983,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1405"
+NAME="AEN1461"
 ></A
 ><TABLE
 BORDER="1"
@@ -5016,7 +5140,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1465"
+NAME="AEN1521"
 ></A
 ><TABLE
 BORDER="1"
@@ -5074,7 +5198,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1484"
+NAME="AEN1540"
 ></A
 ><TABLE
 BORDER="1"
@@ -5160,7 +5284,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1512"
+NAME="AEN1568"
 ></A
 ><TABLE
 BORDER="1"
@@ -5339,7 +5463,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1568"
+NAME="AEN1624"
 ></A
 ><TABLE
 BORDER="1"
@@ -5460,7 +5584,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1606"
+NAME="AEN1662"
 ></A
 ><TABLE
 BORDER="1"
@@ -5579,15 +5703,7 @@ CLASS="literal"
 ><TD
 >&nbsp;</TD
 ><TD
->&#13;	        The volume contains a partitiontable. If an MS-DOS extended
-		partition table is found, then <TT
-CLASS="literal"
->volume.fstype</TT
-> 
-		will be <TT
-CLASS="literal"
->msdos_extended_partitiontable</TT
->.
+>&#13;	        The volume contains a partitiontable.
 	      </TD
 ></TR
 ><TR
@@ -5628,7 +5744,7 @@ CLASS="literal"
 > (string)
               </TD
 ><TD
->examples: ext3, vfat, msdos_extended_partitiontable</TD
+>examples: ext3, vfat</TD
 ><TD
 >Yes (is blank if the type is unknown)</TD
 ><TD
@@ -5805,67 +5921,288 @@ CLASS="literal"
 ><TD
 >&#13;                <TT
 CLASS="literal"
->volume.partition.msdos_part_table_type</TT
-> (int)
-              </TD
-><TD
->examples: 0x83, 0xfd, 0x8e</TD
-><TD
->&#13;                No
-              </TD
-><TD
->&#13;                If available, this is the partition type if the disk for which
-                this volume stems from is using an MS-DOS-style partition table.
-              </TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->volume.partition.msdos_part_table_start</TT
-> (uint64)
+>volume.partition.label</TT
+> (string)
               </TD
 ><TD
 >&nbsp;</TD
 ><TD
->&#13;                No
-              </TD
-><TD
->&#13;                If available, this is the partition start offset if the disk for which
-                this volume stems from is using an MS-DOS-style partition table.
-              </TD
-></TR
-><TR
-><TD
->&#13;                <TT
+>&#13;                If, and only if, <TT
 CLASS="literal"
->volume.partition.msdos_part_table_size</TT
-> (uint64)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->&#13;                No
-              </TD
-><TD
->&#13;                If available, this is the partition size if the disk for which
-                this volume stems from is using an MS-DOS-style partition table.
-		This information is derived from the partition table so it might
-		not be reliable and match e.g. <TT
+>volume.is_partition</TT
+>
+                is set to <TT
 CLASS="literal"
->volume.size</TT
+>TRUE</TT
 >.
-		Specifically, for MS-DOS extended partition tables, this number
-		will be larger as the actual volume is only e.g. 1 kilobyte
-		(e.g. <TT
+              </TD
+><TD
+>&#13;	        Label of partition. Only available for "apm" and "gpt"
+		partition tables. Note that this is not the same as the
+		file system label defined in <TT
 CLASS="literal"
->volume.size</TT
->) while 
+>volume.label</TT
+>.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>volume.partition.uuid</TT
+> (string)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                If, and only if, <TT
+CLASS="literal"
+>volume.is_partition</TT
+>
+                is set to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+              </TD
+><TD
+>&#13;                The UUID or GUID of the partition table entry. Only available for
+		"gpt" partition tables.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>volume.partition.scheme</TT
+> (string)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                If, and only if, <TT
+CLASS="literal"
+>volume.is_partition</TT
+>
+                is set to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+              </TD
+><TD
+>&#13;                The scheme of the partition table this entry is part of.
+		Note that this is not necessarily the same as 
 		<TT
 CLASS="literal"
->volume.partition.msdos_part_table_size</TT
+>storage.partitioning_scheme</TT
+> as 
+		some partition tables can embed other partition tables.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>mbr</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                Master Boot Record
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>embr</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                Extended Master Boot Record
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>gpt</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                GUID Partition Table as defined by EFI
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>apm</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                Apple Partition Map
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>volume.partition.type</TT
+> (string)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                If, and only if, <TT
+CLASS="literal"
+>volume.is_partition</TT
 >
-		will be the size enclosing all the logical partitions.
+                is set to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+              </TD
+><TD
+>&#13;                The type of the partition table entry. Depends on 
+		<TT
+CLASS="literal"
+>volume.partition.scheme</TT
+>.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>mbr</TT
+> and <TT
+CLASS="literal"
+>embr</TT
+> entries</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;	        The hexadecimal encoding of the 8-bit partition type, see 
+		http://www.win.tue.nl/~aeb/partitions/partition_types-1.html
+		for a list. For example the Linux partition type is represented
+		as the string "0x83".
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>gpt</TT
+> entries</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;	        The GUID encoded as a string. See http://en.wikipedia.org/wiki/GUID_Partition_Table
+		for a list of well-known GUID's.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>apm</TT
+> entries</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;	        Defined in http://developer.apple.com/documentation/mac/Devices/Devices-126.html.
+		Also note that for FAT file systems, it appears that "DOS_FAT_32", "DOS_FAT_16" 
+		and "DOS_FAT_12" are also recognized under Mac OS X (I've tested this too) cf. 
+		http://lists.apple.com/archives/Darwin-drivers/2003/May/msg00021.html
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>volume.partition.flags</TT
+> (strlist)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                If, and only if, <TT
+CLASS="literal"
+>volume.is_partition</TT
+>
+                is set to <TT
+CLASS="literal"
+>TRUE</TT
+>.
+              </TD
+><TD
+>&#13;	        Flags conveying specific information about the partition
+		entry. Dependent on the partitioning scheme.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>mbr</TT
+> and <TT
+CLASS="literal"
+>embr</TT
+> entries</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;	        Only one flag, "boot", is defined. This is used by some BIOS'es and
+		boot loaders to populate a boot menu. It means that a partition is
+		bootable.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>gpt</TT
+> entries</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;	        Only the flag "required" is recognized. This corresponds to
+		bit 0 of the attibutes (at offset 48), meaning 
+		"Required for the platform to function. The system cannot 
+		function normally if this partition is removed. This
+		partition should be considered as part of the hardware of the
+		system, and if it is removed the system may not boot. It may
+		contain diagnostics, recovery tools, or other code or data that is
+		critical to the functioning of a system independent of any OS."
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+><TT
+CLASS="literal"
+>apm</TT
+> entries</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;	        The following flags are recognized: 
+		"allocated" if the partition is already allocated; and
+		"in_use" if the partition is in use; may be cleared after a system reset; and
+		"boot" if partition contains valid boot information; and
+		"allow_read" if partition allows reading; and
+		"allow_write"; if partition allows writing; and
+		"boot_code_is_pic"; if boot code is position independent
               </TD
 ></TR
 ><TR
@@ -5928,7 +6265,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1781"
+NAME="AEN1915"
 ></A
 ><TABLE
 BORDER="1"
@@ -6068,7 +6405,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1824"
+NAME="AEN1958"
 ></A
 ><TABLE
 BORDER="1"
@@ -6242,7 +6579,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1882"
+NAME="AEN2016"
 ></A
 ><TABLE
 BORDER="1"
@@ -6624,7 +6961,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2043"
+NAME="AEN2177"
 ></A
 ><TABLE
 BORDER="1"
@@ -6869,6 +7206,64 @@ CLASS="literal"
 >Yes</TD
 ><TD
 >true, if and only if, media have been detected in storage device</TD
+></TR
+><TR
+><TD
+>&#13;	        <TT
+CLASS="literal"
+>storage.removable.media_size</TT
+> (uint64)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>Size of media in storage device. Available only if media have been detected in storage device.</TD
+></TR
+><TR
+><TD
+>&#13;	        <TT
+CLASS="literal"
+>storage.partitioning_scheme</TT
+> (string)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Only when media is inserted and is partitioned</TD
+><TD
+>The partitioning scheme of the media.</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>mbr</TD
+><TD
+>&nbsp;</TD
+><TD
+>Master Boot Record partitioning scheme used in most PC's</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>gpt</TD
+><TD
+>&nbsp;</TD
+><TD
+>GUID Partitioning Table as defined by UEFI</TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>apm</TD
+><TD
+>&nbsp;</TD
+><TD
+>Apple Partition Map, used in non-Intel Apple computers</TD
 ></TR
 ><TR
 ><TD
@@ -7153,7 +7548,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2249"
+NAME="AEN2410"
 ></A
 ><TABLE
 BORDER="1"
@@ -7487,7 +7882,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2383"
+NAME="AEN2544"
 ></A
 ><TABLE
 BORDER="1"
@@ -7647,7 +8042,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2441"
+NAME="AEN2602"
 ></A
 ><TABLE
 BORDER="1"
@@ -7783,7 +8178,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2483"
+NAME="AEN2644"
 ></A
 ><TABLE
 BORDER="1"
@@ -7855,7 +8250,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2505"
+NAME="AEN2666"
 ></A
 ><TABLE
 BORDER="1"
@@ -7921,7 +8316,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2525"
+NAME="AEN2686"
 ></A
 ><TABLE
 BORDER="1"
@@ -7985,7 +8380,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2545"
+NAME="AEN2706"
 ></A
 ><TABLE
 BORDER="1"
@@ -8129,7 +8524,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2595"
+NAME="AEN2756"
 ></A
 ><TABLE
 BORDER="1"
@@ -8344,7 +8739,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2667"
+NAME="AEN2828"
 ></A
 ><TABLE
 BORDER="1"
@@ -8449,6 +8844,89 @@ CLASS="literal"
 >No</TD
 ><TD
 >&#13;                Textual description of the specific device for a card
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>alsa.device_pcm_class</TT
+> (string)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                The PCM class of the device.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>generic</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                A standard PCM sound device (SND_PCM_CLASS_GENERIC).
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>multi</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                A multichannel device PCM sound device (SND_PCM_CLASS_MULTI) which 
+		e.g. contains a generic and a modem device.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>digitizer</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                A PCM digitizer device (SND_PCM_CLASS_DIGITIZER).
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>modem</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                A PCM modem device (SND_PCM_CLASS_MODEM).
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>unknown</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The value is 'unknown' if the kernel provide no information about the 
+		PCM device class of the device (e.g. the file pcm_class is missing).
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>none</TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The value is 'none' if this there is no PCM class for this device.
               </TD
 ></TR
 ><TR
@@ -8608,7 +9086,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2763"
+NAME="AEN2960"
 ></A
 ><TABLE
 BORDER="1"
@@ -8860,7 +9338,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2852"
+NAME="AEN3049"
 ></A
 ><TABLE
 BORDER="1"
@@ -8981,7 +9459,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2894"
+NAME="AEN3091"
 ></A
 ><TABLE
 BORDER="1"
@@ -9069,7 +9547,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2923"
+NAME="AEN3120"
 ></A
 ><TABLE
 BORDER="1"
@@ -9166,7 +9644,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2951"
+NAME="AEN3148"
 ></A
 ><TABLE
 BORDER="1"
@@ -9316,7 +9794,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3010"
+NAME="AEN3207"
 ></A
 ><TABLE
 BORDER="1"
@@ -9396,7 +9874,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3036"
+NAME="AEN3233"
 ></A
 ><TABLE
 BORDER="1"
@@ -9463,7 +9941,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3056"
+NAME="AEN3253"
 ></A
 ><TABLE
 BORDER="1"
@@ -10325,7 +10803,7 @@ CLASS="literal"
 ><TD
 >&#13;                <TT
 CLASS="literal"
->battery.technology</TT
+>battery.reporting.technology</TT
 > (string)
               </TD
 ><TD
@@ -10333,7 +10811,30 @@ CLASS="literal"
 ><TD
 >No</TD
 ><TD
->&#13;                The technology of the battery.
+>&#13;                The technology of the battery as reported by the hardware.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>battery.technology</TT
+> (string)
+              </TD
+><TD
+>&#13;                lead-acid, lithium-ion, lithium-polymer,
+                nickel-metal-hydride, unknown
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;                The technology of the battery processed to a few standard types.
+                This key is needed as the hardware often does not specify the
+                description text for a battery, and so we have to calculate it
+                from the output of <TT
+CLASS="literal"
+>battery.reporting.technology</TT
+>.
               </TD
 ></TR
 ><TR
@@ -10381,7 +10882,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3374"
+NAME="AEN3578"
 ></A
 ><TABLE
 BORDER="1"
@@ -10496,7 +10997,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3418"
+NAME="AEN3622"
 ></A
 ><TABLE
 BORDER="1"
@@ -10564,7 +11065,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3439"
+NAME="AEN3643"
 ></A
 ><TABLE
 BORDER="1"
@@ -10659,7 +11160,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3471"
+NAME="AEN3675"
 ></A
 ><TABLE
 BORDER="1"
@@ -10771,7 +11272,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3513"
+NAME="AEN3717"
 ></A
 ><TABLE
 BORDER="1"
@@ -10910,7 +11411,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3569"
+NAME="AEN3773"
 ></A
 ><TABLE
 BORDER="1"
@@ -11048,7 +11549,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3613"
+NAME="AEN3817"
 ></A
 ><TABLE
 BORDER="1"
@@ -11112,6 +11613,277 @@ CLASS="literal"
 ><P
 ></P
 ></DIV
+><P
+>&#13;        The following methods exist on the interface
+        <TT
+CLASS="literal"
+>org.freedesktop.Hal.Device.CPUFreq</TT
+>.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN3840"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Method (parameter types)</TH
+><TH
+>Parameters</TH
+><TH
+>Mandatory</TH
+><TH
+>Description</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>SetCPUFreqGovernor</TT
+> (string)
+              </TD
+><TD
+>&#13;	        The name of the governor to set. Get a list of available governors
+		with the GetCPUFreqAvailableGovernors method.
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;	        Sets a CPU frequency scaling governor for all CPUFreq
+		interfaces the kernel provides. If the userspace governor
+		is set, this interface also contains a proper scaling
+		mechanism. The default performance is set to 50.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>SetCPUFreqPerformance</TT
+> (integer)
+              </TD
+><TD
+>&#13;	        The performance between 1 and 100 to set in dynamic scaling modes.
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;	        Sets the performance of the dynamic scaling mechanism. This method
+		summarizes and abstracts all the different settings which can be taken
+		for dynamic frequency adjustments, like at which load to switch up
+		frequency or how many steps the mechanism should traverse until
+		reaching the maximum frequency. The higher the value, the more
+		performance you get. Respectively, the higher the value, the sooner
+		and the more often the frequency is switched up.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>SetCPUFreqConsiderNice</TT
+> (boolean)
+              </TD
+><TD
+>&#13;	        Whether or not niced processes should be considered on CPU
+		load calculation.
+              </TD
+><TD
+>No</TD
+><TD
+>&#13;	        Whether or not niced processes should be considered on CPU
+		load calculation. If niced processes are considered, they can cause a
+		frequency increment although their absolute load percentage wouldn't
+		trigger the scaling mechanism to switch up the frequency. The default
+		setting is 'false'.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>GetCPUFreqGovernor</TT
+> (void)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;	        Get the current active governor for all CPU frequency interfaces (string).
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>GetCPUFreqPerformance</TT
+> (void)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;	        Get the current active performance setting if a dynamic scaling
+		mechanism is in use (integer between 1 and 100).
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>GetCPUFreqConsiderNice</TT
+> (void)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;	        Returns whether niced processed are considered during CPU load
+		calculation or not (returns boolean).
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>GetCPUFreqAvailableGovernors</TT
+> (void)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;	        Returns a list of strings of all available governors which
+		could be set with the SetCPUFreqGovernor method.
+              </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;        The following errors maybe raised on the interface
+        <TT
+CLASS="literal"
+>org.freedesktop.Hal.Device.CPUFreq</TT
+>.
+      </P
+><DIV
+CLASS="informaltable"
+><P
+></P
+><A
+NAME="AEN3893"
+></A
+><TABLE
+BORDER="1"
+BGCOLOR="#E0E0E0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+>Error</TH
+><TH
+>Description</TH
+><TH
+>Detail field</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>GeneralError</TT
+>
+              </TD
+><TD
+>&#13;	        A general error occured.
+              </TD
+><TD
+>&#13;	        The exact error.
+	      </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>UnknownGovernor</TT
+>
+              </TD
+><TD
+>&#13;	        The governor which was tried to be set doesn't exist.
+              </TD
+><TD
+>&#13;	        The governor which was tried be to set.
+	      </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>PermissionDenied</TT
+>
+              </TD
+><TD
+>&#13;	        The caller doesn't have the privilege to execute this
+		method.
+              </TD
+><TD
+>&#13;	        The privilege the caller needs to execute the method.
+	      </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>NoSuitableGovernor</TT
+>
+              </TD
+><TD
+>&#13;	        The method executed doesn't exist for the current active governor.
+              </TD
+><TD
+>&#13;	        The method which was tried to be executed.
+	      </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>GovernorInitFailed</TT
+>
+              </TD
+><TD
+>&#13;	        The initialization of the governor failed.
+              </TD
+><TD
+>&#13;	        The reason for the failure.
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
 ></DIV
 ><DIV
 CLASS="sect2"
@@ -11136,7 +11908,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3639"
+NAME="AEN3931"
 ></A
 ><TABLE
 BORDER="1"
@@ -11229,7 +12001,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3667"
+NAME="AEN3959"
 ></A
 ><TABLE
 BORDER="1"
@@ -11397,7 +12169,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3719"
+NAME="AEN4011"
 ></A
 ><TABLE
 BORDER="1"
@@ -11532,7 +12304,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3760"
+NAME="AEN4052"
 ></A
 ><TABLE
 BORDER="1"
@@ -11795,7 +12567,7 @@ CLASS="literal"
 >&#13;          <TT
 CLASS="literal"
 >empty</TT
-> - can only be used on string properties
+> - can only be used on string or strlist properties
           with 'true' and 'false'.
           The semantics for 'true' is to match only when the string is non-empty.
         </P
@@ -12014,7 +12786,7 @@ CLASS="literal"
     string list. For example to remove item 'bla' from property 'foo.bar':
     <TT
 CLASS="literal"
->&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/merge&#62;</TT
+>&#60;remove key="foo.bar" type="strlist"&#62;bla&#60;/remove&#62;</TT
 >
   </P
 ><P
@@ -12178,7 +12950,7 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;        &#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+>&#13;        &#60;?xml version="1.0" encoding="UTF-8"?&#62;
 
 &#60;!-- Example: This device information file matches an USB Mass Storage based MP3 player 
               by the matching on the USB vendor and product identifiers. --&#62;
@@ -12226,7 +12998,7 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;        &#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+>&#13;        &#60;?xml version="1.0" encoding="UTF-8"?&#62;
 
 &#60;!-- Example: This device information file matches a Sony digital still 
               camera by matching on the USB vendor and product identifers.  --&#62;
@@ -12272,7 +13044,7 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;        &#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+>&#13;        &#60;?xml version="1.0" encoding="UTF-8"?&#62;
 
 &#60;!-- Example: This device information file matches a memory card reader with 
               multiple storage ports that can be active at the same time. --&#62;
@@ -12393,7 +13165,7 @@ WIDTH="100%"
 ><TD
 ><PRE
 CLASS="programlisting"
->&#13;        &#60;?xml version="1.0" encoding="ISO-8859-1"?&#62; &#60;!-- -*- SGML -*- --&#62; 
+>&#13;        &#60;?xml version="1.0" encoding="UTF-8"?&#62;
 
 &#60;deviceinfo version="0.2"&#62;
 
@@ -12477,7 +13249,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3994"
+NAME="AEN4286"
 ></A
 ><TABLE
 BORDER="1"
@@ -12640,7 +13412,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4036"
+NAME="AEN4328"
 >Interface org.freedesktop.Hal.Manager</A
 ></H3
 ><P
@@ -12744,7 +13516,7 @@ CLASS="sect3"
 ><HR><H4
 CLASS="sect3"
 ><A
-NAME="AEN4047"
+NAME="AEN4339"
 >Example</A
 ></H4
 ><P
@@ -12853,7 +13625,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4055"
+NAME="AEN4347"
 >Interface org.freedesktop.Hal.Device</A
 ></H3
 ><P
@@ -12998,6 +13770,109 @@ void Condition(string condition, ...)
 >&#13;        Note that D-BUS supports that applications can opt to receive
         signals for only a subset of the devices available.
       </P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN4356"
+>Interface org.freedesktop.Hal.Device.Volume</A
+></H3
+><P
+>&#13;        The org.freedesktop.Hal.Device.Volume interface is used on objects
+        with the "volume" capability. This interface has the following methods.
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;# Mount volume
+#
+# @param  mountpoint            Desired mount point. If NULL, will be generated based on label.
+# @param  fstype                Filesystem type
+# @param  options               Mount options
+# @raises                       org.freedesktop.Hal.Device.Volume.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Volume.PermissionDenied
+#                               org.freedesktop.Hal.Device.Volume.AlreadyMounted
+#                               org.freedesktop.Hal.Device.Volume.InvalidMountOption
+#                               org.freedesktop.Hal.Device.Volume.UnknownFilesystemType
+#                               org.freedesktop.Hal.Device.Volume.InvalidMountpoint
+#                               org.freedesktop.Hal.Device.Volume.MountPointNotAvailable
+#                               org.freedesktop.Hal.Device.Volume.PermissionDeniedByPolicy
+#
+void Mount(string mountpoint, string fstype, array{string} options)
+# Unmount volume
+#
+# @param  options               Unmount options
+# @raises                       org.freedesktop.Hal.Device.Volume.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Volume.PermissionDenied
+#                               org.freedesktop.Hal.Device.Volume.InvalidUnmountOption
+#                               org.freedesktop.Hal.Device.Volume.InvalidMountpoint
+#                               org.freedesktop.Hal.Device.Volume.MountPointNotAvailable
+#                               org.freedesktop.Hal.Device.Volume.PermissionDeniedByPolicy
+#
+void Unmount(array{string} options)
+# Eject volume
+#
+# @param  ejectoptions          Eject options
+# @raises                       org.freedesktop.Hal.Device.Volume.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Volume.PermissionDenied
+#                               org.freedesktop.Hal.Device.Volume.InvalidEjectOption
+#                               org.freedesktop.Hal.Device.Volume.PermissionDeniedByPolicy
+#
+void Eject(array{string} options)
+      </PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN4360"
+>Interface org.freedesktop.Hal.Device.Storage</A
+></H3
+><P
+>&#13;        The org.freedesktop.Hal.Device.Storage interface is used on objects
+        with the "storage" capability. This interface has the following methods.
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;# Eject media
+#
+# @param  ejectoptions          Eject options
+# @raises                       org.freedesktop.Hal.Device.Storage.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Storage.PermissionDenied
+#                               org.freedesktop.Hal.Device.Storage.InvalidEjectOption
+#                               org.freedesktop.Hal.Device.Storage.PermissionDeniedByPolicy
+#
+void Eject(array{string} options)
+# Close media tray
+#
+# @param  closetrayoptions      Close tray options
+# @raises                       org.freedesktop.Hal.Device.Storage.NoSuchDevice
+#                               org.freedesktop.Hal.Device.Storage.PermissionDenied
+#                               org.freedesktop.Hal.Device.Storage.InvalidCloseTrayOption
+#                               org.freedesktop.Hal.Device.Storage.PermissionDeniedByPolicy
+#
+void CloseTray(array{string} options)
+      </PRE
+></TD
+></TR
+></TABLE
 ></DIV
 ></DIV
 ><DIV

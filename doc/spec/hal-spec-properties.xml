@@ -2288,9 +2288,7 @@
               <entry>partitiontable</entry>
               <entry></entry>
               <entry>
-	        The volume contains a partitiontable. If an MS-DOS extended
-		partition table is found, then <literal>volume.fstype</literal> 
-		will be <literal>msdos_extended_partitiontable</literal>.
+	        The volume contains a partitiontable.
 	      </entry>
             </row>
             <row>
@@ -2315,7 +2313,7 @@
               <entry>
                 <literal>volume.fstype</literal> (string)
               </entry>
-              <entry>examples: ext3, vfat, msdos_extended_partitiontable</entry>
+              <entry>examples: ext3, vfat</entry>
               <entry>Yes (is blank if the type is unknown)</entry>
               <entry>The specific type of either the file system or what the volume is used for, cf. volume.fsusage</entry>
             </row>
@@ -2405,6 +2403,7 @@
                 If the volume stems from the Linux Device Mapper this property is set to <literal>TRUE</literal>.
               </entry>
             </row>
+
             <row>
               <entry>
                 <literal>volume.partition.number</literal> (int)
@@ -2418,52 +2417,187 @@
                 The number of the partition.
               </entry>
             </row>
+
+
             <row>
               <entry>
-                <literal>volume.partition.msdos_part_table_type</literal> (int)
-              </entry>
-              <entry>examples: 0x83, 0xfd, 0x8e</entry>
-              <entry>
-                No
-              </entry>
-              <entry>
-                If available, this is the partition type if the disk for which
-                this volume stems from is using an MS-DOS-style partition table.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>volume.partition.msdos_part_table_start</literal> (uint64)
+                <literal>volume.partition.label</literal> (string)
               </entry>
               <entry></entry>
               <entry>
-                No
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
               </entry>
               <entry>
-                If available, this is the partition start offset if the disk for which
-                this volume stems from is using an MS-DOS-style partition table.
+	        Label of partition. Only available for "apm" and "gpt"
+		partition tables. Note that this is not the same as the
+		file system label defined in <literal>volume.label</literal>.
               </entry>
             </row>
             <row>
               <entry>
-                <literal>volume.partition.msdos_part_table_size</literal> (uint64)
+                <literal>volume.partition.uuid</literal> (string)
               </entry>
               <entry></entry>
               <entry>
-                No
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
               </entry>
               <entry>
-                If available, this is the partition size if the disk for which
-                this volume stems from is using an MS-DOS-style partition table.
-		This information is derived from the partition table so it might
-		not be reliable and match e.g. <literal>volume.size</literal>.
-		Specifically, for MS-DOS extended partition tables, this number
-		will be larger as the actual volume is only e.g. 1 kilobyte
-		(e.g. <literal>volume.size</literal>) while 
-		<literal>volume.partition.msdos_part_table_size</literal>
-		will be the size enclosing all the logical partitions.
+                The UUID or GUID of the partition table entry. Only available for
+		"gpt" partition tables.
               </entry>
             </row>
+
+            <row>
+              <entry>
+                <literal>volume.partition.scheme</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
+              </entry>
+              <entry>
+                The scheme of the partition table this entry is part of.
+		Note that this is not necessarily the same as 
+		<literal>storage.partitioning_scheme</literal> as 
+		some partition tables can embed other partition tables.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>mbr</entry>
+              <entry></entry>
+              <entry>
+                Master Boot Record
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>embr</entry>
+              <entry></entry>
+              <entry>
+                Extended Master Boot Record
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>gpt</entry>
+              <entry></entry>
+              <entry>
+                GUID Partition Table as defined by EFI
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>apm</entry>
+              <entry></entry>
+              <entry>
+                Apple Partition Map
+              </entry>
+            </row>
+
+            <row>
+              <entry>
+                <literal>volume.partition.type</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
+              </entry>
+              <entry>
+                The type of the partition table entry. Depends on 
+		<literal>volume.partition.scheme</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><literal>mbr</literal> and <literal>embr</literal> entries</entry>
+              <entry></entry>
+              <entry>
+	        The hexadecimal encoding of the 8-bit partition type, see 
+		http://www.win.tue.nl/~aeb/partitions/partition_types-1.html
+		for a list. For example the Linux partition type is represented
+		as the string "0x83".
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><literal>gpt</literal> entries</entry>
+              <entry></entry>
+              <entry>
+	        The GUID encoded as a string. See http://en.wikipedia.org/wiki/GUID_Partition_Table
+		for a list of well-known GUID's.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><literal>apm</literal> entries</entry>
+              <entry></entry>
+              <entry>
+	        Defined in http://developer.apple.com/documentation/mac/Devices/Devices-126.html.
+		Also note that for FAT file systems, it appears that "DOS_FAT_32", "DOS_FAT_16" 
+		and "DOS_FAT_12" are also recognized under Mac OS X (I've tested this too) cf. 
+		http://lists.apple.com/archives/Darwin-drivers/2003/May/msg00021.html
+              </entry>
+            </row>
+
+            <row>
+              <entry>
+                <literal>volume.partition.flags</literal> (strlist)
+              </entry>
+              <entry></entry>
+              <entry>
+                If, and only if, <literal>volume.is_partition</literal>
+                is set to <literal>TRUE</literal>.
+              </entry>
+              <entry>
+	        Flags conveying specific information about the partition
+		entry. Dependent on the partitioning scheme.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><literal>mbr</literal> and <literal>embr</literal> entries</entry>
+              <entry></entry>
+              <entry>
+	        Only one flag, "boot", is defined. This is used by some BIOS'es and
+		boot loaders to populate a boot menu. It means that a partition is
+		bootable.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><literal>gpt</literal> entries</entry>
+              <entry></entry>
+              <entry>
+	        Only the flag "required" is recognized. This corresponds to
+		bit 0 of the attibutes (at offset 48), meaning 
+		"Required for the platform to function. The system cannot 
+		function normally if this partition is removed. This
+		partition should be considered as part of the hardware of the
+		system, and if it is removed the system may not boot. It may
+		contain diagnostics, recovery tools, or other code or data that is
+		critical to the functioning of a system independent of any OS."
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><literal>apm</literal> entries</entry>
+              <entry></entry>
+              <entry>
+	        The following flags are recognized: 
+		"allocated" if the partition is already allocated; and
+		"in_use" if the partition is in use; may be cleared after a system reset; and
+		"boot" if partition contains valid boot information; and
+		"allow_read" if partition allows reading; and
+		"allow_write"; if partition allows writing; and
+		"boot_code_is_pic"; if boot code is position independent
+              </entry>
+            </row>
+
             <row>
               <entry>
                 <literal>volume.partition.media_size</literal> (uint64)
@@ -3023,6 +3157,32 @@
               <entry></entry>
               <entry>Yes</entry>
               <entry>Size of media in storage device. Available only if media have been detected in storage device.</entry>
+            </row>
+            <row>
+              <entry>
+	        <literal>storage.partitioning_scheme</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Only when media is inserted and is partitioned</entry>
+              <entry>The partitioning scheme of the media.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>mbr</entry>
+              <entry></entry>
+              <entry>Master Boot Record partitioning scheme used in most PC's</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>gpt</entry>
+              <entry></entry>
+              <entry>GUID Partitioning Table as defined by UEFI</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>apm</entry>
+              <entry></entry>
+              <entry>Apple Partition Map, used in non-Intel Apple computers</entry>
             </row>
             <row>
               <entry>

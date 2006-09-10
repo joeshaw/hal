@@ -711,6 +711,7 @@ struct LibHalDrive_s {
 
 	dbus_uint64_t drive_size;
 	dbus_uint64_t drive_media_size;
+	char *partition_scheme;
 
 	LibHalContext *hal_ctx;
 
@@ -738,6 +739,11 @@ struct LibHalVolume_s {
 
 	dbus_bool_t is_partition;
 	unsigned int partition_number;
+	char *partition_scheme;
+	char *partition_type;
+	char *partition_label;
+	char *partition_uuid;
+	char **partition_flags;
 
 	int msdos_part_table_type;
 	dbus_uint64_t msdos_part_table_start;
@@ -806,6 +812,7 @@ libhal_drive_free (LibHalDrive *drive)
 	libhal_free_string (drive->desired_mount_point);
 	libhal_free_string (drive->mount_filesystem);
 	libhal_free_string_array (drive->capabilities);
+	libhal_free_string (drive->partition_scheme);
 
 	free (drive);
 }
@@ -832,6 +839,12 @@ libhal_volume_free (LibHalVolume *vol)
 	libhal_free_string (vol->mount_filesystem);
 	libhal_free_string (vol->crypto_backing_volume);
 	libhal_free_string (vol->storage_device);
+
+	libhal_free_string (vol->partition_scheme);
+	libhal_free_string (vol->partition_type);
+	libhal_free_string (vol->partition_label);
+	libhal_free_string (vol->partition_uuid);
+	libhal_free_string (vol->partition_flags);
 
 	free (vol);
 }
@@ -940,6 +953,8 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.removable.media_available", drive->is_media_detected);
 		LIBHAL_PROP_EXTRACT_UINT64 ("storage.removable.media_size", drive->drive_media_size); 
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.requires_eject",    drive->requires_eject);
+
+		LIBHAL_PROP_EXTRACT_STRING ("storage.partitioning_scheme", drive->partition_scheme); 
 
 		LIBHAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.firmware_version",  drive->firmware_version);
@@ -1114,6 +1129,12 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("volume.is_partition",                    vol->is_partition);
 		LIBHAL_PROP_EXTRACT_INT    ("volume.partition.number",                vol->partition_number);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.partition.scheme",                vol->partition_scheme);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.partition.type",                  vol->partition_type);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.partition.label",                 vol->partition_label);
+		LIBHAL_PROP_EXTRACT_STRING ("volume.partition.uuid",                  vol->partition_uuid);
+		LIBHAL_PROP_EXTRACT_STRLIST ("volume.partition.flags",                vol->partition_flags);
+
 		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.start", 		      vol->partition_start_offset); 
 		LIBHAL_PROP_EXTRACT_UINT64 ("volume.partition.media_size",            vol->partition_media_size); 
 		LIBHAL_PROP_EXTRACT_INT    ("volume.partition.msdos_part_table_type", vol->msdos_part_table_type);
@@ -1425,6 +1446,13 @@ libhal_drive_get_media_size (LibHalDrive *drive)
 	return drive->drive_media_size;
 }
 
+const char *
+libhal_drive_get_partition_scheme (LibHalDrive *drive)
+{
+	return drive->partition_scheme;
+}
+
+
 LibHalDriveType
 libhal_drive_get_type (LibHalDrive *drive)
 {
@@ -1568,6 +1596,37 @@ libhal_volume_get_partition_number (LibHalVolume *volume)
 {
 	return volume->partition_number;
 }
+
+const char *
+libhal_volume_get_partition_scheme (LibHalVolume *volume)
+{
+	return volume->partition_scheme;
+}
+
+const char *
+libhal_volume_get_partition_type (LibHalVolume *volume)
+{
+	return volume->partition_type;
+}
+
+const char *
+libhal_volume_get_partition_label (LibHalVolume *volume)
+{
+	return volume->partition_label;
+}
+
+const char *
+libhal_volume_get_partition_uuid (LibHalVolume *volume)
+{
+	return volume->partition_uuid;
+}
+
+const char **
+libhal_volume_get_partition_flags (LibHalVolume *volume)
+{
+	return volume->partition_flags;
+}
+
 
 dbus_uint64_t 
 libhal_volume_get_partition_start_offset (LibHalVolume *volume)
