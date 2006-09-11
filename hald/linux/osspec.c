@@ -161,41 +161,50 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		else if (strncmp(key, "IFINDEX=", 8) == 0)
 			hotplug_event->sysfs.net_ifindex = strtoul(&key[8], NULL, 10);
 		else if (strncmp(key, "ID_VENDOR=", 10) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[10]);
-			g_strlcpy (hotplug_event->sysfs.vendor, str, sizeof(hotplug_event->sysfs.vendor));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[10])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.vendor, str, sizeof(hotplug_event->sysfs.vendor));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_MODEL=", 9) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[9]);
-			g_strlcpy (hotplug_event->sysfs.model, str, sizeof(hotplug_event->sysfs.model));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[9])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.model, str, sizeof(hotplug_event->sysfs.model));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_REVISION=", 12) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[12]);
-			g_strlcpy (hotplug_event->sysfs.revision, str, sizeof(hotplug_event->sysfs.revision));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[12])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.revision, str, sizeof(hotplug_event->sysfs.revision));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_SERIAL=", 10) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[10]);
-			g_strlcpy (hotplug_event->sysfs.serial, str, sizeof(hotplug_event->sysfs.serial));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[10])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.serial, str, sizeof(hotplug_event->sysfs.serial));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_FS_USAGE=", 12) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[12]);
-			g_strlcpy (hotplug_event->sysfs.fsusage, str, sizeof(hotplug_event->sysfs.fsusage));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[12])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.fsusage, str, sizeof(hotplug_event->sysfs.fsusage));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_FS_TYPE=", 11) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[11]);
-			g_strlcpy (hotplug_event->sysfs.fstype, str, sizeof(hotplug_event->sysfs.fstype));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[11])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.fstype, str, sizeof(hotplug_event->sysfs.fstype));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_FS_VERSION=", 14) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[14]);
-			g_strlcpy (hotplug_event->sysfs.fsversion, str, sizeof(hotplug_event->sysfs.fsversion));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[14])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.fsversion, str, sizeof(hotplug_event->sysfs.fsversion));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_FS_UUID=", 11) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[11]);
-			g_strlcpy (hotplug_event->sysfs.fsuuid, str, sizeof(hotplug_event->sysfs.fsuuid));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[11])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.fsuuid, str, sizeof(hotplug_event->sysfs.fsuuid));
+				g_free (str);
+			}
 		} else if (strncmp(key, "ID_FS_LABEL=", 12) == 0) {
-			str = hal_util_strdup_valid_utf8(&key[12]);
-			g_strlcpy (hotplug_event->sysfs.fslabel, str, sizeof(hotplug_event->sysfs.fslabel));
-			g_free (str);
+			if ((str = hal_util_strdup_valid_utf8(&key[12])) != NULL ) {
+				g_strlcpy (hotplug_event->sysfs.fslabel, str, sizeof(hotplug_event->sysfs.fslabel));
+				g_free (str);
+			}
 		}
 	}
 
