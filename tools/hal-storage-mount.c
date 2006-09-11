@@ -135,6 +135,14 @@ mount_point_not_available (const char *mount_point)
 }
 
 
+static void
+cannot_remount (const char *device)
+{
+	fprintf (stderr, "org.freedesktop.Hal.Device.Volume.CannotRemount\n");
+	fprintf (stderr, "%s not mounted already\n", device);
+	exit (1);
+}
+
 #ifdef HAVE_POLKIT
 static void
 permission_denied_privilege (const char *privilege, const char *uid)
@@ -379,18 +387,21 @@ bailout_if_in_fstab (LibHalContext *hal_ctx, const char *device, const char *lab
 	fstab_close (handle);
 }
 
-static void
-bailout_if_mounted (const char *device)
+static gboolean
+device_is_mounted (const char *device, char **mount_point)
 {
 	gpointer handle;
 	char *entry;
+	gboolean ret;
+
+	ret = FALSE;
 
 	/* check if /proc/mounts mentions this device... (with symlinks etc) */
 	if (! mtab_open (&handle)) {
 		printf ("cannot open mount list\n");
 		unknown_error ("Cannot open /etc/mtab or equivalent");		
 	}
-	while ((entry = mtab_next (handle)) != NULL) {
+	while (((entry = mtab_next (handle, mount_point)) != NULL) && (ret == FALSE)) {
 		char *resolved;
 
 		resolved = resolve_symlink (entry);
@@ -399,12 +410,13 @@ bailout_if_mounted (const char *device)
 #endif
 		if (strcmp (device, resolved) == 0) {
 			printf ("%s (-> %s) found in mount list. Not mounting.\n", entry, resolved);
-			already_mounted (device);
+			ret = TRUE;
 		}
 
 		g_free (resolved);
 	}
 	mtab_close (handle);
+	return ret;
 }
 
 /* maps volume_id fs types to the appropriate -t mount option */
@@ -456,6 +468,7 @@ handle_mount (LibHalContext *hal_ctx,
 	gboolean pol_is_fixed;
 	gboolean pol_change_uid;
 	char *privilege;
+	gboolean is_remount;
 #ifdef HAVE_POLKIT
 	gboolean allowed_by_privilege;
 	gboolean is_temporary_privilege;
@@ -476,11 +489,7 @@ handle_mount (LibHalContext *hal_ctx,
 	printf ("invoked by system bus connection = %s\n", invoked_by_syscon_name);
 #endif
 
-	if (volume != NULL) {
-		if (libhal_volume_is_mounted (volume)) {
-			already_mounted (device);
-		}
-		
+	if (volume != NULL) {		
 		dbus_error_init (&error);
 		if (libhal_device_get_property_bool (hal_ctx, udi, "volume.ignore", &error) || 
 		    dbus_error_is_set (&error)) {
@@ -491,7 +500,6 @@ handle_mount (LibHalContext *hal_ctx,
 		label = libhal_volume_get_label (volume);
 		uuid = libhal_volume_get_uuid (volume);
 	} else {
-		bailout_if_mounted (device);
 		label = NULL;
 		uuid = NULL;
 	}
@@ -536,70 +544,109 @@ handle_mount (LibHalContext *hal_ctx,
 		given_options[i] = NULL;
 	}
 
-	/* figure out mount point if no mount point is given... */
-	explicit_mount_point_given = FALSE;
-	if (strlen (mount_point) == 0) {
-		char *p;
-		const char *label;
+	/* is option 'remount' included? */
+	is_remount = FALSE;
+	for (i = 0; i < (int) g_strv_length (given_options); i++) {
+		if (strcmp (given_options[i], "remount") == 0) {
+			is_remount = TRUE;
+		}
+	}
 
-		if (volume != NULL)
-			label = libhal_volume_get_label (volume);
-		else
-			label = NULL;
-
-		if (label != NULL) {
-			/* best - use label */
-			g_strlcpy (mount_point, label, sizeof (mount_point));
-
-			/* TODO: use drive type */
-
+	mount_dir = NULL;
+	if (is_remount) {
+		if (volume != NULL) {
+			if (!libhal_volume_is_mounted (volume)) {
+				cannot_remount (device);
+			}
+			mount_dir = g_strdup (libhal_volume_get_mount_point (volume));
 		} else {
-			/* fallback - use "disk" */
-			g_snprintf (mount_point, sizeof (mount_point), "disk");
+			if (!device_is_mounted (device, &mount_dir)) {
+				cannot_remount (device);
+			}
 		}
 
-		/* sanitize computed mount point name, e.g. replace invalid chars with '-' */
-		p = mount_point;
-		while (TRUE) {
-			p = g_utf8_strchr (mount_point, -1, G_DIR_SEPARATOR);
-			if (p == NULL)
-				break;
-			*p = '-';
-		};
+		if (mount_dir == NULL) {
+			unknown_error ("Cannot get mount_dir for remount even though volume is mounted!");
+		}
 
 	} else {
-		explicit_mount_point_given = TRUE;
+		if (volume != NULL) {
+			if (libhal_volume_is_mounted (volume)) {
+				already_mounted (device);
+			}
+		} else {
+			if (device_is_mounted (device, NULL)) {
+				already_mounted (device);
+			}
+		}
 	}
 
-	/* check mount point name - only forbid separators */
-	if (g_utf8_strchr (mount_point, -1, G_DIR_SEPARATOR) != NULL) {
-		printf ("'%s' is an invalid mount point\n", mount_point);
-		invalid_mount_point (mount_point);
-	}
+	if (!is_remount) {
+		/* figure out mount point if no mount point is given... */
+		explicit_mount_point_given = FALSE;
+		if (strlen (mount_point) == 0) {
+			char *p;
+			const char *label;
+			
+			if (volume != NULL)
+				label = libhal_volume_get_label (volume);
+			else
+				label = NULL;
+			
+			if (label != NULL) {
+				/* best - use label */
+				g_strlcpy (mount_point, label, sizeof (mount_point));
+				
+				/* TODO: use drive type */
+				
+			} else {
+				/* fallback - use "disk" */
+				g_snprintf (mount_point, sizeof (mount_point), "disk");
+			}
+			
+			/* sanitize computed mount point name, e.g. replace invalid chars with '-' */
+			p = mount_point;
+			while (TRUE) {
+				p = g_utf8_strchr (mount_point, -1, G_DIR_SEPARATOR);
+				if (p == NULL)
+					break;
+				*p = '-';
+			};
+			
+		} else {
+			explicit_mount_point_given = TRUE;
+		}
 
-	/* check if mount point is available - append number to mount point */
-	i = 0;
-	mount_dir = NULL;
-	while (TRUE) {
-		g_free (mount_dir);
-		if (i == 0)
-			mount_dir = g_strdup_printf ("/media/%s", mount_point);
-		else
-			mount_dir = g_strdup_printf ("/media/%s-%d", mount_point, i);
-
+		/* check mount point name - only forbid separators */
+		if (g_utf8_strchr (mount_point, -1, G_DIR_SEPARATOR) != NULL) {
+			printf ("'%s' is an invalid mount point\n", mount_point);
+			invalid_mount_point (mount_point);
+		}
+		
+		/* check if mount point is available - append number to mount point */
+		i = 0;
+		mount_dir = NULL;
+		while (TRUE) {
+			g_free (mount_dir);
+			if (i == 0)
+				mount_dir = g_strdup_printf ("/media/%s", mount_point);
+			else
+				mount_dir = g_strdup_printf ("/media/%s-%d", mount_point, i);
+			
 #ifdef DEBUG
-		printf ("trying dir %s\n", mount_dir);
+			printf ("trying dir %s\n", mount_dir);
 #endif
-
-		if (!g_file_test (mount_dir, G_FILE_TEST_EXISTS)) {
-			break;
+			
+			if (!g_file_test (mount_dir, G_FILE_TEST_EXISTS)) {
+				break;
+			}
+			
+			if (explicit_mount_point_given) {
+				mount_point_not_available (mount_dir);
+			}
+			
+			i++;
 		}
-
-		if (explicit_mount_point_given) {
-			mount_point_not_available (mount_dir);
-		}
-
-		i++;
 	}
 
 	dbus_error_init (&error);
@@ -728,27 +775,29 @@ handle_mount (LibHalContext *hal_ctx,
 	printf ("passed privilege\n");
 #endif
 
-	/* create directory */
-	if (g_mkdir (mount_dir, 0700) != 0) {
-		printf ("Cannot create '%s'\n", mount_dir);
-		unknown_error ("Cannot create mount directory");
-	}
-
+	if (!is_remount) {
+		/* create directory */
+		if (g_mkdir (mount_dir, 0700) != 0) {
+			printf ("Cannot create '%s'\n", mount_dir);
+			unknown_error ("Cannot create mount directory");
+		}
+		
 #ifdef __FreeBSD__
-	calling_uid = (uid_t) strtol (invoked_by_uid, (char **) NULL, 10);
-	pw = getpwuid (calling_uid);
-	if (pw != NULL) {
-		calling_gid = pw->pw_gid;
-	} else {
-		calling_gid = 0;
-	}
-	if (chown (mount_dir, calling_uid, calling_gid) != 0) {
-		printf ("Cannot chown '%s' to uid: %d, gid: %d\n", mount_dir,
-		        calling_uid, calling_gid);
-		g_rmdir (mount_dir);
-		unknown_error ();
-	}
+		calling_uid = (uid_t) strtol (invoked_by_uid, (char **) NULL, 10);
+		pw = getpwuid (calling_uid);
+		if (pw != NULL) {
+			calling_gid = pw->pw_gid;
+		} else {
+			calling_gid = 0;
+		}
+		if (chown (mount_dir, calling_uid, calling_gid) != 0) {
+			printf ("Cannot chown '%s' to uid: %d, gid: %d\n", mount_dir,
+				calling_uid, calling_gid);
+			g_rmdir (mount_dir);
+			unknown_error ();
+		}
 #endif
+	}
 
 	char *mount_option_commasep = NULL;
 	char *mount_do_fstype = "auto";
@@ -768,7 +817,7 @@ handle_mount (LibHalContext *hal_ctx,
 	args[na++] = mount_do_fstype;
 
 	args[na++] = "-o";
-	mount_option_str = g_string_new(MOUNT_OPTIONS);
+	mount_option_str = g_string_new (MOUNT_OPTIONS);
 	for (i = 0; given_options[i] != NULL; i++) {
 		g_string_append (mount_option_str, ",");
 		g_string_append (mount_option_str, given_options[i]);
@@ -779,78 +828,82 @@ handle_mount (LibHalContext *hal_ctx,
 	args[na++] = mount_dir;
 	args[na++] = NULL;
 
-	FILE *hal_mtab;
-	char *mount_dir_escaped;
-
-	/* Maintain a list in /media/.hal-mtab with entries of the following format
-	 *
-	 *  <device_file>\t<uid>\t<session-id>\t<fstype>\t<options_sep_by_comma>\t<mount point>\n
-	 *
-	 * where session-id currently is unused and thus set to 0.
-	 *
-	 * Example:
-	 *
-	 *  /dev/sda2	500	0	hfsplus	noexec,nosuid,nodev	/media/Macintosh HD
-	 *  /dev/sda4	500	0	ntfs	noexec,nosuid,nodev,umask=222	/media/Windows
-	 *  /dev/sdb1	500	0	vfat	noexec,nosuid,nodev,shortname=winnt,uid=500	/media/davidz
-	 */
-
-	FILE *hal_mtab_orig;
-	int hal_mtab_orig_len;
-	int num_read;
-	char *hal_mtab_buf;
-	char *hal_mtab_buf_old;
-
-	if (g_file_test ("/media/.hal-mtab", G_FILE_TEST_EXISTS)) {
-		hal_mtab_orig = fopen ("/media/.hal-mtab", "r");
-		if (hal_mtab_orig == NULL) {
-			unknown_error ("Cannot open /media/.hal-mtab");
+	/* TODO FIXME XXX HACK: OK, so we should rewrite the options in /media/.hal-mtab .. 
+	 *                      but it doesn't really matter much at this point */
+	if (!is_remount) {
+		FILE *hal_mtab;
+		char *mount_dir_escaped;
+		FILE *hal_mtab_orig;
+		int hal_mtab_orig_len;
+		int num_read;
+		char *hal_mtab_buf;
+		char *hal_mtab_buf_old;
+		
+		/* Maintain a list in /media/.hal-mtab with entries of the following format
+		 *
+		 *  <device_file>\t<uid>\t<session-id>\t<fstype>\t<options_sep_by_comma>\t<mount point>\n
+		 *
+		 * where session-id currently is unused and thus set to 0.
+		 *
+		 * Example:
+		 *
+		 *  /dev/sda2	500	0	hfsplus	noexec,nosuid,nodev	/media/Macintosh HD
+		 *  /dev/sda4	500	0	ntfs	noexec,nosuid,nodev,umask=222	/media/Windows
+		 *  /dev/sdb1	500	0	vfat	noexec,nosuid,nodev,shortname=winnt,uid=500	/media/davidz
+		 */
+		
+		
+		if (g_file_test ("/media/.hal-mtab", G_FILE_TEST_EXISTS)) {
+			hal_mtab_orig = fopen ("/media/.hal-mtab", "r");
+			if (hal_mtab_orig == NULL) {
+				unknown_error ("Cannot open /media/.hal-mtab");
+			}
+			if (fseek (hal_mtab_orig, 0L, SEEK_END) != 0) {
+				unknown_error ("Cannot seek to end of /media/.hal-mtab");
+			}
+			hal_mtab_orig_len = ftell (hal_mtab_orig);
+			if (hal_mtab_orig_len < 0) {
+				unknown_error ("Cannot determine size of /media/.hal-mtab");
+			}
+			rewind (hal_mtab_orig);
+			hal_mtab_buf = g_new0 (char, hal_mtab_orig_len + 1);
+			num_read = fread (hal_mtab_buf, 1, hal_mtab_orig_len, hal_mtab_orig);
+			if (num_read != hal_mtab_orig_len) {
+				unknown_error ("Cannot read from /media/.hal-mtab");
+			}
+			fclose (hal_mtab_orig);
+		} else {
+			hal_mtab_buf = g_strdup ("");
 		}
-		if (fseek (hal_mtab_orig, 0L, SEEK_END) != 0) {
-			unknown_error ("Cannot seek to end of /media/.hal-mtab");
-		}
-		hal_mtab_orig_len = ftell (hal_mtab_orig);
-		if (hal_mtab_orig_len < 0) {
-			unknown_error ("Cannot determine size of /media/.hal-mtab");
-		}
-		rewind (hal_mtab_orig);
-		hal_mtab_buf = g_new0 (char, hal_mtab_orig_len + 1);
-		num_read = fread (hal_mtab_buf, 1, hal_mtab_orig_len, hal_mtab_orig);
-		if (num_read != hal_mtab_orig_len) {
-			unknown_error ("Cannot read from /media/.hal-mtab");
-		}
-		fclose (hal_mtab_orig);
-	} else {
-		hal_mtab_buf = g_strdup ("");
-	}
-	
-	mount_dir_escaped = g_strescape (mount_dir, NULL);
+		
+		mount_dir_escaped = g_strescape (mount_dir, NULL);
 #ifdef DEBUG
-	printf ("%d: XYA creating /media/.hal-mtab~\n", getpid ());
+		printf ("%d: XYA creating /media/.hal-mtab~\n", getpid ());
 #endif
-	hal_mtab = fopen ("/media/.hal-mtab~", "w");
-	if (hal_mtab == NULL) {
-		unknown_error ("Cannot create /media/.hal-mtab~");
-	}
-	hal_mtab_buf_old = hal_mtab_buf;
-	hal_mtab_buf = g_strdup_printf ("%s%s\t%s\t0\t%s\t%s\t%s\n", 
-					hal_mtab_buf_old,
-					device, invoked_by_uid, mount_do_fstype, 
-					mount_option_commasep, mount_dir_escaped);
-	g_free (hal_mtab_buf_old);
-	if (hal_mtab_buf_old == NULL) {
-		unknown_error ("Out of memory appending to /media/.hal-mtab~");
-	}
-	if (fwrite (hal_mtab_buf, 1, strlen (hal_mtab_buf), hal_mtab) != strlen (hal_mtab_buf)) {
-		unknown_error ("Cannot write to /media/.hal-mtab~");
-	}
-	fclose (hal_mtab);
-	g_free (hal_mtab_buf);
-	g_free (mount_dir_escaped);
+		hal_mtab = fopen ("/media/.hal-mtab~", "w");
+		if (hal_mtab == NULL) {
+			unknown_error ("Cannot create /media/.hal-mtab~");
+		}
+		hal_mtab_buf_old = hal_mtab_buf;
+		hal_mtab_buf = g_strdup_printf ("%s%s\t%s\t0\t%s\t%s\t%s\n", 
+						hal_mtab_buf_old,
+						device, invoked_by_uid, mount_do_fstype, 
+						mount_option_commasep, mount_dir_escaped);
+		g_free (hal_mtab_buf_old);
+		if (hal_mtab_buf_old == NULL) {
+			unknown_error ("Out of memory appending to /media/.hal-mtab~");
+		}
+		if (fwrite (hal_mtab_buf, 1, strlen (hal_mtab_buf), hal_mtab) != strlen (hal_mtab_buf)) {
+			unknown_error ("Cannot write to /media/.hal-mtab~");
+		}
+		fclose (hal_mtab);
+		g_free (hal_mtab_buf);
+		g_free (mount_dir_escaped);
 #ifdef DEBUG
-	printf ("%d: XYA closing /media/.hal-mtab~\n", getpid ());
+		printf ("%d: XYA closing /media/.hal-mtab~\n", getpid ());
 #endif
-
+	} /* !is_remount */
+		
 	/* now try to mount */
 	if (!g_spawn_sync ("/",
 			   args,
@@ -874,8 +927,10 @@ handle_mount (LibHalContext *hal_ctx,
 
 		printf ("%s error %d, stdout='%s', stderr='%s'\n", MOUNT, exit_status, sout, serr);
 
-		g_rmdir (mount_dir);
-		unlink ("/media/.hal-mtab~");
+		if (!is_remount) {
+			g_rmdir (mount_dir);
+			unlink ("/media/.hal-mtab~");
+		}
 
 		if (strncmp (errstr, serr, sizeof (errstr) - 1) == 0) {
 			unknown_filesystem (strlen (mount_fstype) > 0 ? 
@@ -892,20 +947,26 @@ handle_mount (LibHalContext *hal_ctx,
 		}
 	}
 
-	if (rename ("/media/.hal-mtab~", "/media/.hal-mtab") != 0) {
-		printf ("rename(2) failed, errno=%d -> '%s'\n", errno, strerror (errno));
-		unlink ("/media/.hal-mtab~");
+	if (!is_remount) {
+		if (rename ("/media/.hal-mtab~", "/media/.hal-mtab") != 0) {
+			printf ("rename(2) failed, errno=%d -> '%s'\n", errno, strerror (errno));
+			unlink ("/media/.hal-mtab~");
 #ifdef DEBUG
-	printf ("%d: XYA failed renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
+			printf ("%d: XYA failed renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
 #endif
-		unknown_error ("Cannot rename /media/.hal-mtab~ to /media/.hal-mtab");
+			unknown_error ("Cannot rename /media/.hal-mtab~ to /media/.hal-mtab");
+		}
+#ifdef DEBUG
+		printf ("%d: XYA done renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
+#endif
 	}
-#ifdef DEBUG
-	printf ("%d: XYA done renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
-#endif
 
 	openlog ("hald", 0, LOG_DAEMON);
-	syslog (LOG_INFO, "mounted %s at '%s' on behalf of uid %s", device, mount_dir, invoked_by_uid);
+	if (is_remount) {
+		syslog (LOG_INFO, "mounted %s at '%s' on behalf of uid %s", device, mount_dir, invoked_by_uid);
+	} else {
+		syslog (LOG_INFO, "remounted %s on behalf of uid %s", device, invoked_by_uid);
+	}
 	closelog ();
 
 	g_free (sout);
@@ -996,7 +1057,7 @@ main (int argc, char *argv[])
 		drive = libhal_drive_from_udi (hal_ctx, drive_udi);
 		if (drive == NULL)
 			unknown_error ("Cannot get drive from hal");
-
+		
 		handle_mount (hal_ctx, 
 #ifdef HAVE_POLKIT
 			      pol_ctx, 

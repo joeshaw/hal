@@ -34,7 +34,7 @@
 #define DEBUG
 
 gboolean mtab_open (gpointer *handle);
-char *mtab_next (gpointer handle);
+char *mtab_next (gpointer handle, char **mount_point);
 void mtab_close (gpointer handle);
 
 gboolean fstab_open (gpointer *handle);

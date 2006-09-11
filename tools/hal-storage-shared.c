@@ -88,7 +88,7 @@ mtab_open (gpointer *handle)
 }
 
 char *
-mtab_next (gpointer handle)
+mtab_next (gpointer handle, char **mount_point)
 {
 #ifdef __FreeBSD__
 	struct mtab_handle *mtab = handle;
@@ -97,16 +97,25 @@ mtab_next (gpointer handle)
 		return mtab->mounts[mtab->iter++].f_mntfromname;
 	else
 		return NULL;
+#error TODO: set *mount_point to g_strdup()-ed value if mount_point!=NULL
 #elif sun
 	static struct mnttab mnt;
 
 	return getmntent (handle, &mnt) == 0 ? mnt.mnt_special : NULL;
+#error TODO: set *mount_point to g_strdup()-ed value if mount_point!=NULL
 #else
 	struct mntent *mnt;
 
 	mnt = getmntent (handle);
 
-	return mnt ? mnt->mnt_fsname : NULL;
+	if (mnt != NULL) {
+		if (mount_point != NULL) {
+			*mount_point = g_strdup (mnt->mnt_dir);
+		}
+		return mnt->mnt_fsname;
+	} else {
+		return NULL;
+	}
 #endif
 }
 
