@@ -225,6 +225,7 @@ get_le_guid (const guint8 *buf)
 			       guid->data4[7]);
 }
 
+#ifdef USE_PARTED
 static gboolean
 set_le_guid (guint8 *buf, const char *source)
 {
@@ -278,6 +279,7 @@ set_le_guid (guint8 *buf, const char *source)
 out:
 	return ret;
 }
+#endif
 
 static PartitionEntry *
 part_entry_new (PartitionTable *e_part_table, const guint8 *data, int length, guint64 offset)

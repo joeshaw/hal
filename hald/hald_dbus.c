@@ -2514,8 +2514,6 @@ addon_is_ready (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 	DBusMessageIter iter;
 	DBusMessage *reply;
 	DBusError error;
-	const char *interface_name;
-	const char *introspection_xml;
 	dbus_bool_t res;
 	
 	HAL_TRACE (("entering"));

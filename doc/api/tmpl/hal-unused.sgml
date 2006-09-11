@@ -286,6 +286,30 @@ logging
 main
 
 
+<!-- ##### SECTION ./tmpl/shared.sgml:Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:Short_Description ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:Stability_Level ##### -->
+
+
+
+<!-- ##### SECTION ./tmpl/shared.sgml:Title ##### -->
+shared
+
+
 <!-- ##### SECTION ./tmpl/sysfs.sgml:Long_Description ##### -->
 <para>
 
@@ -1537,14 +1561,6 @@ sysfs
 @volume: 
 @Returns: 
 
-<!-- ##### FUNCTION logger_forward_debug ##### -->
-<para>
-
-</para>
-
-@format: 
-@Varargs: 
-
 <!-- ##### FUNCTION lstat ##### -->
 <para>
 
@@ -1606,12 +1622,6 @@ sysfs
 @naming_func: 
 @namespace: 
 @Returns: 
-
-<!-- ##### FUNCTION setup_logger ##### -->
-<para>
-
-</para>
-
 
 <!-- ##### FUNCTION visit_class_device_block ##### -->
 <para>

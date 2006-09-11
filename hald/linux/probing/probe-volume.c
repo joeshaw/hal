@@ -607,8 +607,6 @@ main (int argc, char *argv[])
 		if (partition_number_str != NULL && 
 		    partition_number <= 256 && partition_number > 0 &&
 		    partition_start > 0) {
-			struct msdos_part_entry *idx;
-			int fd;
 			PartitionTable *p;
 
 			if ((stordev_dev_file = libhal_device_get_property_string (
@@ -652,7 +650,7 @@ main (int argc, char *argv[])
 					libhal_changeset_set_property_string (cs, "volume.partition.type", type);
 					libhal_changeset_set_property_string (cs, "volume.partition.label", label);
 					libhal_changeset_set_property_string (cs, "volume.partition.uuid", uuid);
-					libhal_changeset_set_property_strlist (cs, "volume.partition.flags", flags);
+					libhal_changeset_set_property_strlist (cs, "volume.partition.flags", (const char **) flags);
 					
 					/* NOTE: We trust the type from the partition table
 					 * if it explicitly got correct entries for RAID and

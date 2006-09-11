@@ -96,62 +96,6 @@ out:
 	return rc;
 }
 
-#define BSIZE 0x200
-#define MSDOS_MAGIC			"\x55\xaa"
-#define MSDOS_SIG_OFF			0x01fe
-#define MSDOS_PARTTABLE_OFFSET		0x01be
-
-#define MAC_MAGIC                       "\x45\x52"
-#define MAC_SIG_OFF                     0x0000
-
-enum {
-	PART_TABLE_UNKNOWN,
-	PART_TABLE_MBR,
-	PART_TABLE_APM,
-	PART_TABLE_GPT
-};
-
-/* Detect partition table scheme */
-static int
-probe_for_part_scheme (LibHalChangeSet *changeset, int fd)
-{
-	int res;
-	const uint8_t buf[BSIZE];
-
-	res = PART_TABLE_UNKNOWN;
-
-	if (lseek(fd, 0, SEEK_SET) < 0) {
-		dbg("lseek failed (%s)", strerror(errno));
-		goto out;
-	}
-	if (read(fd, &buf, BSIZE) < BSIZE) {
-		dbg("read failed (%s)", strerror(errno));
-		goto out;
-	}
-
-	if (memcmp(&buf[MSDOS_SIG_OFF], MSDOS_MAGIC, 2) == 0) {
-		/* if the first partition have type 0xee, it's a GUID Partitioning Table */
-		if (buf[MSDOS_PARTTABLE_OFFSET + 4] == 0xee) {
-			dbg("foo1");
-			res = PART_TABLE_GPT;
-		} else {
-			dbg("foo2");
-			res = PART_TABLE_MBR;
-		}
-		goto out;
-	}
-
-	if (memcmp(&buf[MAC_SIG_OFF], MAC_MAGIC, 2) == 0) {
-		dbg("foo3");
-		res = PART_TABLE_APM;
-		goto out;
-	}
-
-
-out:
-	return res;
-}
-
 int 
 main (int argc, char *argv[])
 {
@@ -167,6 +111,7 @@ main (int argc, char *argv[])
 	dbus_bool_t only_check_for_fs;
 	LibHalChangeSet *cs;
 
+	cs = NULL;
 
 	fd = -1;
 

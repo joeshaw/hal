@@ -136,14 +136,14 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd,
 	DBusError error;
 	LibHalChangeSet *cs;
 
+	/* set to failure */
+	ret = FALSE;
+
 	cs = libhal_device_new_changeset (udi);
 	if (cs == NULL) {
 		HAL_ERROR (("Cannot initialize changeset"));
 		goto out;
 	}
-
-	/* set to failure */
-	ret = FALSE;
 
 	/* first check that we are an UPS */
 	if (!is_ups (fd))

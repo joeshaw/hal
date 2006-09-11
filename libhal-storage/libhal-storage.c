@@ -844,7 +844,7 @@ libhal_volume_free (LibHalVolume *vol)
 	libhal_free_string (vol->partition_type);
 	libhal_free_string (vol->partition_label);
 	libhal_free_string (vol->partition_uuid);
-	libhal_free_string (vol->partition_flags);
+	libhal_free_string_array (vol->partition_flags);
 
 	free (vol);
 }
@@ -1626,7 +1626,7 @@ libhal_volume_get_partition_uuid (LibHalVolume *volume)
 const char **
 libhal_volume_get_partition_flags (LibHalVolume *volume)
 {
-	return volume->partition_flags;
+	return (const char **) volume->partition_flags;
 }
 
 
