@@ -387,6 +387,16 @@ HalDevice
 @Returns: 
 
 
+<!-- ##### FUNCTION hal_device_property_strlist_is_empty ##### -->
+<para>
+
+</para>
+
+@device: 
+@key: 
+@Returns: 
+
+
 <!-- ##### FUNCTION hal_device_property_remove ##### -->
 <para>
 
@@ -454,6 +464,32 @@ HalDevice
 @key: 
 @attr: 
 @persistence: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_inc_num_addons ##### -->
+<para>
+
+</para>
+
+@device: 
+
+
+<!-- ##### FUNCTION hal_device_inc_num_ready_addons ##### -->
+<para>
+
+</para>
+
+@device: 
+@Returns: 
+
+
+<!-- ##### FUNCTION hal_device_are_all_addons_ready ##### -->
+<para>
+
+</para>
+
+@device: 
 @Returns: 
 
 

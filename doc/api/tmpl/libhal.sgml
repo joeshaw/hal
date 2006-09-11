@@ -17,6 +17,13 @@ libhal
 <!-- ##### SECTION Stability_Level ##### -->
 
 
+<!-- ##### MACRO LIBHAL_DEPRECATED ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO LIBHAL_FREE_DBUS_ERROR ##### -->
 <para>
 
@@ -1040,6 +1047,17 @@ libhal
 @udi: 
 @interface_name: 
 @introspection_xml: 
+@error: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libhal_device_addon_is_ready ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@udi: 
 @error: 
 @Returns: 
 
