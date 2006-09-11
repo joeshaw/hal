@@ -1238,7 +1238,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 	return vol;
 error:
 	if (dbus_error_is_set (&error)) {
-		LIBHAL_FREE_DBUS_ERROR(&error);
+		dbus_error_free (&error);
 	}
 	libhal_free_string (vol_fsusage_textual);
 	libhal_free_string (disc_type_textual);
