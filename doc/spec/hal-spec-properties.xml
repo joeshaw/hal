@@ -3711,6 +3711,36 @@
       <para>
       </para>
     </sect2>
+    <sect2 id="device-properties-net-irda">
+      <title>
+        <literal>net.irda</literal> namespace
+      </title>
+      <para>
+        IrDA (Infrared Data Association) Networking devices are described in 
+	this namespace for device objects with the capability
+        <literal>net.irda</literal>.
+        Note that device objects can only have the <literal>net.irda</literal> 
+	capability if they already have the capability <literal>net</literal>.
+      </para>
+      <para>
+      </para>
+    </sect2>
+    <sect2 id="device-properties-net-80211control">
+      <title>
+        <literal>net.80211control</literal> namespace
+      </title>
+      <para>
+        Control devices for Wireless ethernet networking devices are described in 
+	this namespace for device objects with the capability
+        <literal>net.80211control</literal>.
+        Note that device objects can only have the <literal>net.80211control</literal> 
+	capability if they already have the capability <literal>net</literal>.
+	Warning: You should know what you do if you touch this devices. They are 
+	not always stable and can cause (kernel) crashes (on linux).
+      </para>
+      <para>
+      </para>
+    </sect2>
     <sect2 id="device-properties-input">
       <title>
         <literal>input</literal> namespace

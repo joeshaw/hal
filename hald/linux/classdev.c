@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <dbus/dbus.h>
@@ -189,53 +190,22 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 
 	media_type = hal_device_property_get_int (d, "net.arp_proto_hw_id");
 	if (media_type == ARPHRD_ETHER) {
-		FILE *f;
-		gboolean is_wireless;
 		const char *addr;
+		char wireless_path[HAL_PATH_MAX];
+		gboolean is_wireless;
+		struct stat s;
 
-		is_wireless = FALSE;
-
-		f = fopen ("/proc/net/wireless", "ro");
-		if (f != NULL) {
-			unsigned int i;
-			unsigned int ifname_len;
-			char buf[128];
-
-			ifname_len = strlen (ifname);
-
-			do {
-				if (fgets (buf, sizeof (buf), f) == NULL)
-					break;
-
-				for (i=0; i < sizeof (buf); i++) {
-					if (isspace (buf[i]))
-						continue;
-					else
-						break;
-				}
-
-				if (strncmp (ifname, buf + i, ifname_len) == 0) {
-					is_wireless = TRUE;
-					break;
-				}
-
-			} while (TRUE);
-			fclose (f);
-		}
-
-		if (is_wireless) {
-		/* Check to see if this interface supports wireless extensions */
-		/*
-		snprintf (wireless_path, SYSFS_PATH_MAX, "%s/wireless", sysfs_path);
-		if (stat (wireless_path, &statbuf) == 0) {
-		*/
+		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
+                if (stat (wireless_path, &s) == 0 && (s.st_mode & S_IFDIR)) { 
 			hal_device_property_set_string (d, "info.product", "WLAN Interface");
 			hal_device_property_set_string (d, "info.category", "net.80211");
 			hal_device_add_capability (d, "net.80211");
+			is_wireless = TRUE;
 		} else {
 			hal_device_property_set_string (d, "info.product", "Networking Interface");
 			hal_device_property_set_string (d, "info.category", "net.80203");
 			hal_device_add_capability (d, "net.80203");
+			is_wireless = FALSE;
 		}
 
 		addr = hal_device_property_get_string (d, "net.address");
@@ -259,6 +229,15 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 								mac_address);
 			}
 		}
+	} else if (media_type == ARPHRD_IRDA) {
+		hal_device_property_set_string (d, "info.product", "Networking Interface");
+		hal_device_property_set_string (d, "info.category", "net.irda");
+		hal_device_add_capability (d, "net.irda");
+	} else if (media_type == ARPHRD_IEEE80211 || media_type == ARPHRD_IEEE80211_PRISM || 
+		   media_type == ARPHRD_IEEE80211_RADIOTAP) {
+		hal_device_property_set_string (d, "info.product", "Networking Wireless Control Interface");
+		hal_device_property_set_string (d, "info.category", "net.80211control");
+		hal_device_add_capability (d, "net.80211control");
 	}
 
 	return d;
