@@ -1,8 +1,276 @@
 ==========
-HAL 0.5.8 ""
+HAL 0.5.8 "The Skynet Funding Bill is passed."
 ==========
 
-Requirements for HAL 0.5.8 "" (and HEAD)
+Released September 11, 2006
+
+Contributors to this release
+
+Artem Kachitchkine:
+      check for getgrouplist() and use the local version if not provided by the
+      use AM_CFLAGS instead of CFLAGS
+      *** empty log message ***
+          * configure.in: don't PKG_CHECK volume_id on Solaris
+      share is_mounted_by_hald() and non-gcc nits
+      CloseTray() method (eject -t)
+
+Dan Nicholson:
+      corrects the location of the hal scripts directory
+
+Dan Williams:
+      Added ROKR e2 to USB Music Players
+
+Danny Kukawka:
+      fixed spec for portable_audio_player namespace properties which not use
+      fixed to be sure that the prober is only called for ttyS* devices. Only
+      Added several USB mp3 player to fdi file:
+      applied patches and added new devices from fd.o bugs: 6101, 6139,
+      fixed remaining_time property, remove the key if battery is charging
+      applied slightly adopted patch and added new device from fd.o bugs:
+      added new translation file for Khmer from SUSE/Novell translation team
+      Added Khmer translation to ALL_LINGUAS
+      Applied slightly adopted patches from fd.o bugs 6317, 6462, 6464, 6561.
+      Moved hal scripts to $(libdir)/hal/scripts instead of
+      Skip stat nfs mounts. This should solve blocked hald (and failing
+      added property for DVD+RW DL to spec
+      fixed problem with parse information from output of dmidecode where the
+      Added support for --use-syslog option to prober and addons. This should
+      Added new mp3-player from fd.o bug #6646
+      removed unneeded code and validate the returned string directly.
+      replaced fprintf () with dbg ()
+      cleanup: s/;;/;/
+      removed (again) unneeded code and validate the returned string directly.
+      Fixed path to the helper of the related backends, added several messages as
+      Added check for bash syntax in scipts to the new backend dirs.
+      Fixed mapping of system.formfactor from smbios.chassis.type. Added a check
+      removed net.interface_up property because we never refresh the value, since
+      set pointer adress to NULL after free()
+      set volume.block_size for blank CD/DVD to 0 to avoid stange values for
+      Fixed libhal_volume_get_size to return volume.size if available instead of
+      Added checks if vbetool is available and executable in /usr/sbin/, added
+      Patch from <chris.hollenbeck@gmail.com> to fix fd.o bug #7029 and correct
+      Added slightly adopted patch from Bob Copeland <me@bobcopeland.com> to add
+      fix configure and remove no longer available volume_id/Makefile from
+      Fixed build hal-spec.html to avoid invalid chars in the html page and
+      *** empty log message ***
+      fixed compiler warning about incompatible pointer types
+      fixed building of hal-spec.html
+      Removed Doxygen related files because  hal does no longer use
+      Close memory leaks from not freed DBusError in libhal and libhal-storage
+      Close memory leaks from not freed DBusError in tools src dir
+      Fixed possible crash in hal_util_get_normalized_path ()
+      fixed compiler warnings and added doc/api/tmpl/.gitignore
+      Export hal user and group in pkg-config file
+      fixed several compiler warnings (warn_unused_result and format stuff)
+      set proc title for acpi/hid-ups/usb-csr addons
+      replaced LIBHAL_FREE_DBUS_ERROR with dbus_error_free()
+      fixed build of HAL
+      cleanup includes in hald/linux2/*
+      add more scsi.type mapping and add property info to spec
+      reduce useless changes on APM battery.remaining_time
+      remove shared.h for addons/prober and some little fixes
+      fix overseen left dbg() calls in probe-{storage,volume}.c
+      move hald/linux2 to hald/linux and renamed backend
+      fixed make for hald/linux/addons
+      add support for attribute 'empty' for strlist to <match> tag
+      add property alsa.device_pcm_classi
+      Added Panasonic SV-MP31V to USB Music Players
+      added detection of a SDC Card reader
+      performance patch to speed up mapping of pnp_ids to description
+      replaced LIBHAL_FREE_DBUS_ERROR with dbus_error_free()
+      removed not needed dir from repository
+      fixed usage of unchecked returnval from hal_util_strdup_valid_utf8
+      change detection of wireless, add net.irda and net.80211control
+
+David Zeuthen:
+      add cryptsetup-luks dep
+      Post-release version bump to 0.5.8
+      Fix for /usr/sbin/pm-powersave for Fedora pm-utils 0.10-1
+      New file
+      Convert doc comments from Doxygen to gtk-doc
+      New file
+      Add back typedefs for LibHalPropertySetIterator and LibHalContext as they
+      New directory
+      Write requirements for HAL 0.5.8 (and CVS HEAD)
+      Add build rules for hal-policy-is-privileged
+      Generate policy/Makefile and policy/txt/Makefile
+      policy/txt/power-hibernate.policy (Allow),
+      forgot reboot
+      Use new policy framework to enforce policy. Always throw the same exception
+      New file
+      Add entry for my wireless mouse+keyboard combo
+      Move libhal-policy to a dedicated package PolicyKit (available in HAL CVS).
+      Remove libhal-policy bits
+      Patch from Gabriel Burt <gabriel.burt@gmail.com>. Add some useful keys for
+      Patch from Christian Neumair <chris@gnome-de.org>.
+      Use new suffix .privilege instead of .policy and prefix privilege files
+      s/--policy/--privilege/ and s/--uid/--user/
+      Fix for RH bug #185557
+      Patch from Gabriel Burt <gabriel.burt@gmail.com>.
+      Update to new PolicyKit API.
+      Patch from Joe Marcus Clarke <marcus@freebsd.org>. Move sockets to
+      This patch fixes endian-ness issues with the input device support of hal,
+      In Ubuntu we got several bug reports about device label gibberish, for
+      Don't stat autofs mounts. Patch from John (J5) Palmieri <johnp@redhat.com>.
+      Export a new environment variable with the unique name for callers system
+      Patch from Joe Marcus Clarke <marcus@freebsd.org> and Danny Kukawka
+      Be explicit about DIST_SUBDIRS as otherwise 'make distcheck' breaks.
+      Set capability volume.disc as required by the spec. Patch from Kevin Ottens
+      Add introspection support to hald.
+      Adds code so addons can claim interfaces and handle the methods on them in
+      Check properly for libpci. Patch from Frederic Peters <fpeters@0d.be>.
+      Handle LABEL= and UUID= in this function. (handle_mount): Also allow uid=
+      git stuff, mount/umount/eject all in C, .hal-mtab usage, light_sensor
+      (forgot to pass -a the first time) git stuff, mount/umount/eject all
+      Forgot to tweak tools/[linux/,freebsd/,]Makefile.am and remove old files.
+      Remove unused stuff.
+      Remove more unused stuff.
+      Remove examples from SUBDIRS; there is no examples/Makefile anymore.
+      Remove unused .fdi files.
+      Fix up LUKS stuff by using new kernel feature in Linux 2.6.17.
+      Change license of hald/linux2/blockdev.c to GPL only as I just
+      update HACKING file to mention git and commit format
+      add *~ to all .gitignore files for emacs users
+      clarify how to get a diff between your local repo and the master repo
+      introduce new option --disable-policy-kit and streamline the build
+      add properties required by a hypothetical disk utility and some bug fixes
+      fix device mapper block device handling as last commit broke this
+      add script examples/watch-mount-state.sh for monitoring key state files
+      update TODO list so it fits in with reality
+      add notes about new power saving mechanisms we should add
+      make a note of runtime power management in the TODO list
+      add note to doc/TODO about making Mount support option 'remount'
+      add note to doc/TODO about the o.fd.Hal.Device.VideoAdapterPM properties
+      add some more notes to doc/TODO
+      fix up device mapper device handling
+      use a more robust way of detecting partitions and fix block.is_volume
+      sleep before looking for slaves/ in sysfs for device mapper
+      fix removal of fakevolume objects and remove special handling for ide-cs
+      actually remove the ide-cs special handling code
+      add API to hald (and libhal) to change multiple properties at once
+      free dbus error freeing in lshal
+      fix up how we handle non-partitioned volumes
+      introduce some new properties for MS-DOS partition tables
+      fix uninitialized pc->merge_type
+      fix up hal interface claiming in cpufreq addon
+      make cpufreq addon use standard D-Bus expections for unknown methods
+      add new partition probing code and adapt hal code to use it
+      make addon-hip-ups use LibHalChangeSet
+      require addons to call libhal_device_addon_is_ready() to make device visible
+      make Mount() support option remount
+      fix some compiler warnings
+      fixup libparted detection
+
+Frederic Crozat:
+      add support for Mandriva's tools for suspend and hibernate
+
+Gabriel Burt:
+      Clarify what portable_audio_player.folder_depth means.
+
+Holger Macht:
+      add cpu frequency scaling support to hal
+
+Joe Marcus Clarke:
+      Split out the tools scripts into an OS-independent wrapper, and an
+      Add scripts to EXTRA_DIST
+      Remove a script which is only found in the OS-independent section. Spotted
+      Rename hal-luks-remove.in-linux to hal-luks-remove-linux.in to preserve the
+
+Julien Sobrier:
+      add Archos Gmini 400 to USB Music Players
+
+Julio M. Merino Vidal:
+      make libhal link against libintl for NetBSD (bug #6471)
+      do not use GNU specific == operator in calls to test(1) (bug 6467)
+
+Kai Willadsen:
+      add Samsung U2Z to USB Music Players
+
+Kay Sievers:
+      Add squashfs detection.
+      Add printer command set returned by 1284 query. "Each key will have at
+      Read name of cpu from /proc/cpuinfo. Some day we will have this in sysfs,
+      Add "COMMANDSET:" to the printer query parsing.
+      getline() expects size_t; fix alignment warning
+      fix typo
+      Prepare for new class devices showing up in /sys/devices instead of
+      Depend on external shared version of libvolume_id.
+      If HAL finds already created partitions, it will not longer probe for a
+      Remove internal copy of libvolume_id.
+      remove left over file from volume_id
+      Increase HAL_PATH_MAX from 256 to 512.
+      Remove dead code.
+      remove dead files after dead code removal
+      Replace dbus_connection_disconnect() with dbus_connection_close() (D-BUS
+      Fix requirements. The 'hotplug multiplexer' is gone long time ago.
+      .cvsignore -> .gitignore
+      add .o files to .gitignore
+      ISO-8859-1 -> UTF-8
+
+Kevin Ottens:
+      correct the introspection to list all objects
+
+Lennart Poettering:
+      added some USB card reader from fd.o bug #7749
+
+Mark McLoughlin:
+      add support for Xen devices
+
+Michael Burns:
+      fix ACPI acpid/proc configure options
+
+Patrick Cherry:
+      add Samsung YP-Z5 to USB Music Players
+
+Richard:
+      Add some more temp files to the .gitignore files.
+      Correct the error name, obviously a copy/paste error that's lived undetected in CVS for years.
+      Check for the new suspend2 sysfs location. Advised by Nigel Cunningham, many thanks.
+
+Richard Hughes:
+      Fix build by including the new policy directory in the tarball, and by
+      Convert the key names to include a central dash between words, e.g.
+      Build hald-addon-acpi-buttons-toshiba. When the acpi->input patches get
+      Append hald-addon-acpi-buttons-toshiba
+      Ammend the spec as now button.has_state and button.type are not mandatory.
+      Patch from Paolo Borelli <pborelli@katamail.com>.
+      Refresh device types button, battery and ac_adapter on resume, as a suspend
+      Added new Logitech csr mice, mainly from Bastien Nocera for fd.o 6397. Also
+      Add --print-reply to dbus-send else the Rescan does not work. This should
+      Update the patch from http://bugs.freedesktop.org/show_bug.cgi?id=6397 as
+      Patch from Bastien Nocera <hadess@hadess.net>:
+      Patch from Bastien Nocera <hadess@hadess.net>:
+      Patch from Bastien Nocera <hadess@hadess.net>:
+      * hald/linux2/osspec.c: (set_suspend_hibernate_keys): Depreciate the keys
+      * doc/spec/hal-spec.html: * doc/spec/hal-spec.xml.in: *
+      Add org.freedesktop.Hal.Device.LaptopPanel.GetBrightness and
+      Rework a patch from Joe Marcus Clarke <marcus@FreeBSD.org> to fix a typo in
+      On some laptops, the brightness control is all done in hardware but the
+      Change the docbook2html check in the configure script to check for xmlto.
+      Re-add --print-reply to dbus-send else the Rescan does not work. This fixes
+      Add the video_adapter_pm namespace key descriptions for video power
+      Only allow org.freedesktop.Hal.Device.VideoAdapterPM to be used by root.
+      This adds a css style file to the generated html file. It makes the tables
+      Add the video adapter suspend and resume functionality so we can just drop
+      Update these with the new files to keep cvs diff happy.
+      As found in http://bugzilla.gnome.org/show_bug.cgi?id=345257 the hal
+      add spawn to dtd so make distcheck works
+      Add more files to .gitignore
+      properly convert mAh to mWh rather than uWh
+      modify battery.technology to one of a few present values
+      fix message when we try to set a brightness above range
+      fix the maximum brightness level for pmu hardware
+
+S.ÃƒÂ‡aÃ„ÂŸlar Onur:
+      added Turkish translations
+
+Sjoerd Simons:
+      Also recognize mute, volume up/down buttons, switchvideo mode button and
+      Add Catalan translation
+      hald-runner/runner.c: Close the stderr filedescriptor after reading it to
+      hald/linux/blockdev.c: Don't print things we don't have the arguments for. In
+
+Requirements for HAL 0.5.8 "The Skynet Funding Bill is passed."
 
  - Linux kernel     >= 2.6.17
  - util-linux       >= 2.12r1
@@ -12,8 +280,10 @@ Requirements for HAL 0.5.8 "" (and HEAD)
  - glib             >= 2.6.0
  - expat            >= 1.95.8
  - libusb           >= 0 0.1.10a (optional)
+ - pciutils         >= 2.2.3     (optional
  - dmidecode        >= 2.7       (optional)
- - cryptsetup-luks  => 1.0.1     (optional, needs LUKS patches)
+ - parted           == 1.7.1     (optional)
+ - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
 
 ==========
 HAL 0.5.7 "Dead as Dillinger."
@@ -35,7 +305,7 @@ Released February 24, 2006
  - Remove drive_id and use udev data on coldplug (Kay Sievers)
  - Switch eject detection to SG_IO interface, Novell #145147 (Kay Sievers)
  - Start scripts in the directory they exist in (David Zeuthen)
- - Don't use card id in ALSA and OSS UDI's (Jürg Billeter)
+ - Don't use card id in ALSA and OSS UDI's (JÃ¼rg Billeter)
  - Laptop panel objects and fixes (Richard Hughes)
  - Pseudo bus for scsi_debug support (Kay Sievers)
  - Samsung YP-U1 music player fdi file (Andrew Smith)
@@ -164,7 +434,7 @@ Released November 14, 2005
 
  - Handle invalid UTF-8 from serial numbers of storage devices (Danny Kukawka)
  - Try reconnect to acpid (Danny Kukawka)
- - Calculate rate when not reported (Søren Hansen, Danny Kukawka)
+ - Calculate rate when not reported (SÃ¸ren Hansen, Danny Kukawka)
  - fd.o bugs #4871, #2850, #2121, #3954, #4266, #4644, #2115, 
    #3036(Danny Kukawka, Others)
  - Major rework of lshal (Pierre Ossman)
@@ -377,7 +647,7 @@ Released Nov 2, 2004
    added to e.g. /etc/fstab
  - Refine PCMCIA socket location to better work with strict SELinux
    (from Dan Walsh)
- - Make configure.in require libcap development headers (Tim Müller)
+ - Make configure.in require libcap development headers (Tim MÃ¼ller)
  - Change default storage policy to not add fixed non-hotpluggable disks
    to e.g. /etc/fstab (as ATARAID detection is not yet complete)
  - Support PCMCIA 16-bit network devices (Dan Williams)
@@ -436,7 +706,7 @@ Released Oct 17, 2004
  - Fix end-of-marker and FAT UUID conversion (Kay Sievers) 
  - storage.icon.drive, storage.icon.volume properties (David Zeuthen)
  - storage.require_eject property (David Zeuthen)
- - French libhal-storage translations (Jérôme Lodewyck)
+ - French libhal-storage translations (JÃ©rÃ´me Lodewyck)
  - LVM2/RAID detection fixes (Kay Sievers)
  - New libhal-storage library and i18n support (David Zeuthen)
  - Partition id fixes (Kay Sievers)

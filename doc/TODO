@@ -12,7 +12,7 @@ Ongoing items that always need work
  - Audit all code and drop privileges in helpers where appropriate
 
 
-Items specifically planned for 0.5.8
+Items specifically planned for 0.5.9
 ------------------------------------
 
  - Move /usr/libexec to /usr/lib/hal/ - drop /usr/lib/hal/scripts -
@@ -26,8 +26,14 @@ Items specifically planned for 0.5.8
  - Finalize the work on org.freedesktop.Hal.Device.VideoAdapterPM
    including the XML file format matching most adapters
 
-Other items
------------
+ - LVM support
+   https://bugs.freedesktop.org/show_bug.cgi?id=6427
+
+ - Format volume methods
+
+ - Disk partitioning methods
+
+ - File system label renaming
 
  - Provide mechanism for polling storage devices we can't poll regulary
    e.g. PC floppy drives and Zip drives. When that it is, actually go back
@@ -52,19 +58,8 @@ Other items
    one bullet. Feel free to provide patches to this file to break it up
    after some analysis.
 
- - It would be nice if method calls could return string, bool int etc.
-   Perhaps use dbus-send style, e.g. int32:<number>' or 'string:the_string'
-   or 'bool:true'. Granted, this is already possible today through addons
-   so maybe not important.
-
- - Finish up and merge mjg59's Bluetooth code
-
- - Configuration of serial and other legacy ports
-
- - Device firmware. It would be nice to export a property and some 
-   DeviceCondition when a device asked for firmware that was missing
-   and is such in a state where it cannot operate. Might need kernel
-   work.
+ - Configuration of serial and other legacy ports, see
+   http://lists.freedesktop.org/archives/hal/2006-August/005784.html
 
  - Devices with device files should export an interface with for
    requesting / dropping access to the device, e.g. 
@@ -74,24 +69,28 @@ Other items
 
    which will change device file ownership or add/remove an ACL.
 
+Other items
+-----------
+
+ - It would be nice if method calls could return string, bool int etc.
+   Perhaps use dbus-send style, e.g. int32:<number>' or 'string:the_string'
+   or 'bool:true'. Granted, this is already possible today through addons
+   so maybe not important.
+
+ - Finish up and merge mjg59's Bluetooth code
+
+ - Device firmware. It would be nice to export a property and some 
+   DeviceCondition when a device asked for firmware that was missing
+   and is such in a state where it cannot operate. Might need kernel
+   work.
+
  - Take a few days out of the calender and give some love to the spec
 
  - Export ink levels for printers
    https://bugs.freedesktop.org/show_bug.cgi?id=2295
 
- - LVM support
-   https://bugs.freedesktop.org/show_bug.cgi?id=6427
-
  - Signal when a USB device doesn't have enough power
    https://bugs.freedesktop.org/show_bug.cgi?id=4452
-
- - Format volume methods
-
- - Disk partitioning methods
-
- - File system label renaming
-
- - CPU frequency stuff from hmacht
 
  - Teach HAL about multisession and partitioned optical discs - may
    require reworking the 'fakevolume' code as we'd be adding more
