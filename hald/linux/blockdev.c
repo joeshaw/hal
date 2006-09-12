@@ -281,24 +281,37 @@ blockdev_refresh_mount_state (HalDevice *d)
 			autofs_node = autofs_node->next;
 		}
 
-		/* look up in /media/.hal-mtab to see if we mounted this one */
-		if (mount_point != NULL && strlen (mount_point) > 0 && hal_util_is_mounted_by_hald (mount_point)) {
-			char *cleanup_stdin;
-			char *extra_env[2];
-
-			HAL_INFO (("Cleaning up directory '%s' since it was created by HAL's Mount()", mount_point));
-
-			extra_env[0] = g_strdup_printf ("HALD_CLEANUP=%s", mount_point);
-			extra_env[1] = NULL;
-			cleanup_stdin = "\n";
-
-			hald_runner_run_method (dev, 
-						"hal-storage-cleanup-mountpoint", 
-						extra_env, 
-						cleanup_stdin, TRUE,
-						0,
-						cleanup_mountpoint_cb,
-						g_strdup (mount_point), NULL);
+		/* look up in /media/.hal-mtab to see if we mounted this one - unless there is a
+		 * Unmount() method on the device already being processed. Because, if there is,
+		 * the Unmount() method will hold the lock /media/.hal-mtab and then the function
+		 * hal_util_is_mounted_by_hald() will block until Unmount() returns. 
+		 *
+		 * And this is a problem because on Linux /proc/mounts is changed immediately, e.g.
+		 * we get to here but umount(8) don't return until much later. This is normally
+		 * not a problem, it only surfaces under circumstances described in 
+		 * https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=194296, e.g. when there
+		 * is a lot of data waiting to be written.
+		 */
+		if (!device_is_executing_method (dev, "Unmount")) {
+			if (mount_point != NULL && strlen (mount_point) > 0 && 
+			    hal_util_is_mounted_by_hald (mount_point)) {
+				char *cleanup_stdin;
+				char *extra_env[2];
+				
+				HAL_INFO (("Cleaning up directory '%s' since it was created by HAL's Mount()", mount_point));
+				
+				extra_env[0] = g_strdup_printf ("HALD_CLEANUP=%s", mount_point);
+				extra_env[1] = NULL;
+				cleanup_stdin = "\n";
+				
+				hald_runner_run_method (dev, 
+							"hal-storage-cleanup-mountpoint", 
+							extra_env, 
+							cleanup_stdin, TRUE,
+							0,
+							cleanup_mountpoint_cb,
+							g_strdup (mount_point), NULL);
+			}
 		}
 
 		g_free (mount_point);

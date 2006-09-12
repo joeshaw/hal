@@ -2829,6 +2829,7 @@ typedef struct {
 	char *execpath;
 	char **extra_env;
 	char *mstdin;
+	char *member;
 	DBusMessage *message;
 	DBusConnection *connection;
 } MethodInvocation;
@@ -2842,10 +2843,12 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 static void
 hald_exec_method_free_mi (MethodInvocation *mi)
 {
+	/* hald_runner_run_method() assumes ownership of mi->message.. so we don't free it here */
 	g_free (mi->udi);
 	g_free (mi->execpath);
 	g_strfreev (mi->extra_env);
 	g_free (mi->mstdin);
+	g_free (mi->member);
 	g_free (mi);
 }
 
@@ -2887,6 +2890,31 @@ hald_exec_method_do_invocation (MethodInvocation *mi)
 
 static GHashTable *udi_to_method_queue = NULL;
 
+
+gboolean 
+device_is_executing_method (HalDevice *d, const char *method_name)
+{
+	gpointer origkey;
+	gboolean ret;
+	GList *queue;
+
+	ret = FALSE;
+
+	if (g_hash_table_lookup_extended (udi_to_method_queue, d->udi, &origkey, (gpointer) &queue)) {
+
+		if (queue != NULL) {
+			MethodInvocation *mi;
+			mi = (MethodInvocation *) queue->data;
+			if (strcmp (mi->member, method_name) == 0) {
+				ret = TRUE;
+			}
+		}
+
+		ret = TRUE;
+	}
+	return ret;
+}
+
 static void 
 hald_exec_method_process_queue (const char *udi);
 
@@ -2911,7 +2939,6 @@ hald_exec_method_enqueue (MethodInvocation *mi)
 		g_hash_table_insert (udi_to_method_queue, g_strdup (mi->udi), queue);
 
 		hald_exec_method_do_invocation (mi);
-		hald_exec_method_free_mi (mi);
 	}
 }
 
@@ -2921,30 +2948,30 @@ hald_exec_method_process_queue (const char *udi)
 {
 	gpointer origkey;
 	GList *queue;
+	MethodInvocation *mi;
 
 	if (g_hash_table_lookup_extended (udi_to_method_queue, udi, &origkey, (gpointer) &queue)) {
+
+		/* clean the top of the list */
 		if (queue != NULL) {
+			mi = (MethodInvocation *) queue->data;
+			hald_exec_method_free_mi (mi);
 			queue = g_list_delete_link (queue, queue);
 		}
 
+		/* process the rest of the list */
 		if (queue == NULL) {
 			HAL_INFO (("No more methods in queue"));
 			g_hash_table_remove (udi_to_method_queue, udi);
 		} else {
-			MethodInvocation *mi;
-
 			HAL_INFO (("Execing next method in queue"));
 			g_hash_table_replace (udi_to_method_queue, g_strdup (udi), queue);
 
 			mi = (MethodInvocation *) queue->data;
-
 			if (!hald_exec_method_do_invocation (mi)) {
 				/* the device went away before we got to it... */
 				hald_exec_method_process_queue (mi->udi);
 			}
-
-			hald_exec_method_free_mi (mi);
-
 		}
 	}
 }
@@ -3173,6 +3200,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 	mi->mstdin = g_strdup (stdin_str->str);
 	mi->message = message;
 	mi->connection = connection;
+	mi->member = g_strdup (dbus_message_get_member (message));
 	hald_exec_method_enqueue (mi);
 
 	dbus_message_ref (message);
@@ -3566,14 +3594,12 @@ static DBusHandlerResult
 hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *message, 
 				 void *user_data, dbus_bool_t local_interface)
 {
-	/*
-	  HAL_INFO (("connection=0x%x obj_path=%s interface=%s method=%s local_interface=%d", 
+	/*HAL_INFO (("connection=0x%x obj_path=%s interface=%s method=%s local_interface=%d", 
 		   connection,
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
 		   dbus_message_get_member (message),
-		   local_interface));
-	*/
+		   local_interface));*/
 
 	if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Manager",
