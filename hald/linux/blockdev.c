@@ -287,10 +287,23 @@ blockdev_refresh_mount_state (HalDevice *d)
 		 * hal_util_is_mounted_by_hald() will block until Unmount() returns. 
 		 *
 		 * And this is a problem because on Linux /proc/mounts is changed immediately, e.g.
-		 * we get to here but umount(8) don't return until much later. This is normally
+		 * we get to here... but umount(8) don't return until much later. This is normally
 		 * not a problem, it only surfaces under circumstances described in 
 		 * https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=194296, e.g. when there
 		 * is a lot of data waiting to be written.
+		 *
+		 * Actually, when we do the "is Unmount() executing on this device" check, there is
+		 * no need to lock the file to check to see if we're unmounted. Because either
+		 * a) we're executing Unmount => Unmount() unmounting this => Unmount() cleaning up
+		 * the /media mount point => hald needs to do nothing. Or b) we're not executing 
+		 * Unmount() on this device, so Unmount() already done this => Unmount() not 
+		 * currently modifying the .hal-mtab entry for this device => safe for hald to look 
+		 * at this entry.
+		 * 
+		 * This will also take care of nasty lock-ups in the event some long-running 
+		 * Unmount() method, executing on another device, is holding the lock. So since 
+		 * we do this check, no locking is necessary. Hence, we've now 
+		 * changed hal_util_is_mounted_by_hald() to not lock.
 		 */
 		if (!device_is_executing_method (dev, "Unmount")) {
 			if (mount_point != NULL && strlen (mount_point) > 0 && 

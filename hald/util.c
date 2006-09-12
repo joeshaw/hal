@@ -986,35 +986,10 @@ hal_util_is_mounted_by_hald (const char *mount_point)
 	char *hal_mtab_buf;
 	char **lines;
 	gboolean found;
-	int lock_mtab_fd;
 
 	hal_mtab = NULL;
 	hal_mtab_buf = NULL;
 	found = FALSE;
-
-	/* take the lock on /media/.hal-mtab-lock so we don't race with the Mount() and Unmount() methods */
-
-	/* do not attempt to create the file; tools/hal-storage-shared.c will create it and
-	 * set the correct ownership so this unprivileged process (running as haldaemon) can
-	 * lock it too
-	 */
-	lock_mtab_fd = open ("/media/.hal-mtab-lock", 0);
-	if (lock_mtab_fd < 0) {
-		HAL_INFO (("Cannot open /media/.hal-mtab for locking"));
-		goto out;
-	}
-
-tryagain:
-#ifdef sun
-	if (lockf (lock_mtab_fd, F_LOCK, 0) != 0) {
-#else
-	if (flock (lock_mtab_fd, LOCK_EX) != 0) {
-#endif
-		if (errno == EINTR)
-			goto tryagain;
-		HAL_ERROR (("Cannot obtain lock on /media/.hal-mtab"));
-		goto out;
-	}
 
 	/*HAL_DEBUG (("examining /media/.hal-mtab for %s", mount_point));*/
 
@@ -1081,8 +1056,6 @@ tryagain:
 	}
 
 out:
-	if (lock_mtab_fd >= 0)
-		close (lock_mtab_fd);
 	if (hal_mtab != NULL)
 		fclose (hal_mtab);
 	if (hal_mtab_buf != NULL)
