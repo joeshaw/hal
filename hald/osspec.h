@@ -45,6 +45,9 @@ gboolean osspec_device_rescan (HalDevice *d);
 
 gboolean osspec_device_reprobe (HalDevice *d);
 
+/* Called to refresh mount state for a device object of capability volume */
+void osspec_refresh_mount_state_for_block_device (HalDevice *d);
+
 /** Called when the org.freedesktop.Hal service receives a messaged that the generic daemon 
  *  doesn't handle. Can be used for intercepting messages from kernel or core OS components.
  *

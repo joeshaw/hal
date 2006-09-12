@@ -255,57 +255,33 @@ blockdev_refresh_mount_state (HalDevice *d)
 		}
 	}
 
+	g_slist_foreach (autofs_mounts, (GFunc) g_free, NULL);
+	g_slist_free (autofs_mounts);
+
 	/* all remaining volumes are not mounted */
 	for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
 		HalDevice *dev;
-		char *mount_point;
-		GSList *autofs_node;
 
 		dev = HAL_DEVICE (volume->data);
-		mount_point = g_strdup (hal_device_property_get_string (dev, "volume.mount_point"));
-		device_property_atomic_update_begin ();
-		hal_device_property_set_bool (dev, "volume.is_mounted", FALSE);
-		hal_device_property_set_bool (dev, "volume.is_mounted_read_only", FALSE);
-		hal_device_property_set_string (dev, "volume.mount_point", "");
-		device_property_atomic_update_end ();
-		/*HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));*/
-
-		/* check to see if mount point falls under autofs */
-		autofs_node = autofs_mounts;
-		while (autofs_node != NULL) {
-			char *am = (char *)autofs_node->data;
-
-			if (strncmp (am, mount_point, strlen (am)) == 0);
-				break;
-
-			autofs_node = autofs_node->next;
-		}
-
-		/* look up in /media/.hal-mtab to see if we mounted this one - unless there is a
-		 * Unmount() method on the device already being processed. Because, if there is,
-		 * the Unmount() method will hold the lock /media/.hal-mtab and then the function
-		 * hal_util_is_mounted_by_hald() will block until Unmount() returns. 
-		 *
-		 * And this is a problem because on Linux /proc/mounts is changed immediately, e.g.
-		 * we get to here... but umount(8) don't return until much later. This is normally
-		 * not a problem, it only surfaces under circumstances described in 
-		 * https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=194296, e.g. when there
-		 * is a lot of data waiting to be written.
-		 *
-		 * Actually, when we do the "is Unmount() executing on this device" check, there is
-		 * no need to lock the file to check to see if we're unmounted. Because either
-		 * a) we're executing Unmount => Unmount() unmounting this => Unmount() cleaning up
-		 * the /media mount point => hald needs to do nothing. Or b) we're not executing 
-		 * Unmount() on this device, so Unmount() already done this => Unmount() not 
-		 * currently modifying the .hal-mtab entry for this device => safe for hald to look 
-		 * at this entry.
-		 * 
-		 * This will also take care of nasty lock-ups in the event some long-running 
-		 * Unmount() method, executing on another device, is holding the lock. So since 
-		 * we do this check, no locking is necessary. Hence, we've now 
-		 * changed hal_util_is_mounted_by_hald() to not lock.
+		/* do nothing if we have a Unmount() method running on the object. This is
+		 * is because on Linux /proc/mounts is changed immediately while umount(8)
+		 * doesn't return until the block cache is flushed. Note that when Unmount()
+		 * terminates we'll be checking /proc/mounts again so this event is not
+		 * lost... it is merely delayed...
 		 */
-		if (!device_is_executing_method (dev, "Unmount")) {
+		if (device_is_executing_method (dev, "org.freedesktop.Hal.Device.Volume", "Unmount")) {
+			HAL_INFO (("/proc/mounts tells that %s is unmounted - waiting for Unmount() to complete to change mount state", dev->udi));
+		} else {
+			char *mount_point;
+
+			mount_point = g_strdup (hal_device_property_get_string (dev, "volume.mount_point"));
+			device_property_atomic_update_begin ();
+			hal_device_property_set_bool (dev, "volume.is_mounted", FALSE);
+			hal_device_property_set_bool (dev, "volume.is_mounted_read_only", FALSE);
+			hal_device_property_set_string (dev, "volume.mount_point", "");
+			device_property_atomic_update_end ();
+			/*HAL_INFO (("set %s to unmounted", hal_device_get_udi (dev)));*/
+			
 			if (mount_point != NULL && strlen (mount_point) > 0 && 
 			    hal_util_is_mounted_by_hald (mount_point)) {
 				char *cleanup_stdin;
@@ -325,13 +301,12 @@ blockdev_refresh_mount_state (HalDevice *d)
 							cleanup_mountpoint_cb,
 							g_strdup (mount_point), NULL);
 			}
+
+			g_free (mount_point);
 		}
 
-		g_free (mount_point);
 	}
 	g_slist_free (volumes);
-	g_slist_foreach (autofs_mounts, (GFunc) g_free, NULL);
-	g_slist_free (autofs_mounts);
 exit:
 	endmntent (f);
 }

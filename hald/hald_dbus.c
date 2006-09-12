@@ -2830,6 +2830,7 @@ typedef struct {
 	char **extra_env;
 	char *mstdin;
 	char *member;
+	char *interface;
 	DBusMessage *message;
 	DBusConnection *connection;
 } MethodInvocation;
@@ -2849,6 +2850,7 @@ hald_exec_method_free_mi (MethodInvocation *mi)
 	g_strfreev (mi->extra_env);
 	g_free (mi->mstdin);
 	g_free (mi->member);
+	g_free (mi->interface);
 	g_free (mi);
 }
 
@@ -2892,7 +2894,7 @@ static GHashTable *udi_to_method_queue = NULL;
 
 
 gboolean 
-device_is_executing_method (HalDevice *d, const char *method_name)
+device_is_executing_method (HalDevice *d, const char *interface_name, const char *method_name)
 {
 	gpointer origkey;
 	gboolean ret;
@@ -2905,7 +2907,8 @@ device_is_executing_method (HalDevice *d, const char *method_name)
 		if (queue != NULL) {
 			MethodInvocation *mi;
 			mi = (MethodInvocation *) queue->data;
-			if (strcmp (mi->member, method_name) == 0) {
+			if ((strcmp (mi->interface, interface_name) == 0) &&
+			    (strcmp (mi->member, method_name) == 0)) {
 				ret = TRUE;
 			}
 		}
@@ -2955,15 +2958,36 @@ hald_exec_method_process_queue (const char *udi)
 		/* clean the top of the list */
 		if (queue != NULL) {
 			mi = (MethodInvocation *) queue->data;
-			hald_exec_method_free_mi (mi);
 			queue = g_list_delete_link (queue, queue);
+			if (queue == NULL) {
+				g_hash_table_remove (udi_to_method_queue, udi);
+				HAL_INFO (("No more methods in queue"));
+			}
+
+			/* if method was Volume.Unmount() then refresh mount state */
+			if (strcmp (mi->interface, "org.freedesktop.Hal.Device.Volume") == 0 &&
+			    strcmp (mi->member, "Unmount") == 0) {
+				HalDevice *d;
+
+				HAL_INFO (("Refreshing mount state for %s since Unmount() completed", mi->udi));
+
+				d = hal_device_store_find (hald_get_gdl (), mi->udi);
+				if (d == NULL) {
+					d = hal_device_store_find (hald_get_tdl (), mi->udi);
+				}
+
+				if (d != NULL) {
+					osspec_refresh_mount_state_for_block_device (d);
+				} else {
+					HAL_WARNING ((" Cannot find device object for %s", mi->udi));
+				}
+			}
+
+			hald_exec_method_free_mi (mi);
 		}
 
 		/* process the rest of the list */
-		if (queue == NULL) {
-			HAL_INFO (("No more methods in queue"));
-			g_hash_table_remove (udi_to_method_queue, udi);
-		} else {
+		if (queue != NULL) {
 			HAL_INFO (("Execing next method in queue"));
 			g_hash_table_replace (udi_to_method_queue, g_strdup (udi), queue);
 
@@ -3201,6 +3225,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 	mi->message = message;
 	mi->connection = connection;
 	mi->member = g_strdup (dbus_message_get_member (message));
+	mi->interface = g_strdup (dbus_message_get_interface (message));
 	hald_exec_method_enqueue (mi);
 
 	dbus_message_ref (message);

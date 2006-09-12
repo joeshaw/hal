@@ -639,3 +639,8 @@ hal_util_find_closest_ancestor (const gchar *sysfs_path)
 	return parent;
 }
 
+void 
+osspec_refresh_mount_state_for_block_device (HalDevice *d)
+{
+	blockdev_refresh_mount_state (d);
+}
