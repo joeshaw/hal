@@ -1,4 +1,5 @@
 
+if HAVE_POLKIT
 polkit_privilegedir = $(sysconfdir)/PolicyKit/privilege.d
 
 dist_polkit_privilege_DATA =                              \
@@ -11,6 +12,7 @@ dist_polkit_privilege_DATA =                              \
 	hal-power-poweroff.privilege                      \
 	hal-power-reboot.privilege                        \
 	hal-power-cpufreq.privilege
+endif
 
 clean-local :
 	rm -f *~
