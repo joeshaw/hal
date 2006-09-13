@@ -963,9 +963,9 @@ handle_mount (LibHalContext *hal_ctx,
 
 	openlog ("hald", 0, LOG_DAEMON);
 	if (is_remount) {
-		syslog (LOG_INFO, "mounted %s at '%s' on behalf of uid %s", device, mount_dir, invoked_by_uid);
+		syslog (LOG_INFO, "remounted %s at '%s' on behalf of uid %s", device, mount_dir, invoked_by_uid);
 	} else {
-		syslog (LOG_INFO, "remounted %s on behalf of uid %s", device, invoked_by_uid);
+		syslog (LOG_INFO, "mounted %s on behalf of uid %s", device, invoked_by_uid);
 	}
 	closelog ();
 
