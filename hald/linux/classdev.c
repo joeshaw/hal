@@ -234,12 +234,17 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 		hal_device_property_set_string (d, "info.product", "Networking Interface");
 		hal_device_property_set_string (d, "info.category", "net.irda");
 		hal_device_add_capability (d, "net.irda");
-	} else if (media_type == ARPHRD_IEEE80211 || media_type == ARPHRD_IEEE80211_PRISM || 
+	}
+#if defined(ARPHRD_IEEE80211_RADIOTAP) && defined(ARPHRD_IEEE80211_PRISM)
+	else if (media_type == ARPHRD_IEEE80211 || media_type == ARPHRD_IEEE80211_PRISM || 
 		   media_type == ARPHRD_IEEE80211_RADIOTAP) {
 		hal_device_property_set_string (d, "info.product", "Networking Wireless Control Interface");
 		hal_device_property_set_string (d, "info.category", "net.80211control");
 		hal_device_add_capability (d, "net.80211control");
 	}
+#else
+#warning ARPHRD_IEEE80211_RADIOTAP and/or ARPHRD_IEEE80211_PRISM not defined!
+#endif
 
 	return d;
 error:
