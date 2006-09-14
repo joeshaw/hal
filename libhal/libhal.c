@@ -3588,9 +3588,6 @@ libhal_changeset_append (LibHalChangeSet *changeset, LibHalChangeSetElement *ele
 		elem->prev->next = elem;
 		changeset->tail = elem;
 	}
-
-	//elem->next = changeset->head;
-	//changeset->head = elem;
 }
 
 
