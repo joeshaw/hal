@@ -127,8 +127,6 @@ runner_server_message_handler (DBusConnection *connection,
 			}
 		}
 	}
-	HAL_INFO (("foo2"));
-
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
