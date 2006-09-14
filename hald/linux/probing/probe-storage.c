@@ -178,6 +178,7 @@ main (int argc, char *argv[])
 				close (fd);
 				goto out;
 			}
+			HAL_DEBUG (("CDROM_GET_CAPABILITY returned: 0x%08x", capabilities));
 			
 			libhal_changeset_set_property_bool (cs, "storage.cdrom.cdr", FALSE);
 			libhal_changeset_set_property_bool (cs, "storage.cdrom.cdrw", FALSE);

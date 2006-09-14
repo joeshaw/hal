@@ -3533,11 +3533,13 @@ struct LibHalChangeSetElement_s {
 		char **val_strlist;
 	} value;
 	LibHalChangeSetElement *next;
+	LibHalChangeSetElement *prev;
 };
 
 struct LibHalChangeSet_s {
 	char *udi;
 	LibHalChangeSetElement *head;
+	LibHalChangeSetElement *tail;
 };
 
 /**
@@ -3566,10 +3568,31 @@ libhal_device_new_changeset (const char *udi)
 	}
 
 	changeset->head = NULL;
+	changeset->tail = NULL;
 
 out:
 	return changeset;
 }
+
+static void
+libhal_changeset_append (LibHalChangeSet *changeset, LibHalChangeSetElement *elem)
+{
+	if (changeset->head == NULL) {
+		changeset->head = elem;
+		changeset->tail = elem;
+		elem->next = NULL;
+		elem->prev = NULL;
+	} else {
+		elem->prev = changeset->tail;
+		elem->next = NULL;
+		elem->prev->next = elem;
+		changeset->tail = elem;
+	}
+
+	//elem->next = changeset->head;
+	//changeset->head = elem;
+}
+
 
 /**
  * libhal_device_set_property_string:
@@ -3605,8 +3628,7 @@ libhal_changeset_set_property_string (LibHalChangeSet *changeset, const char *ke
 		goto out;
 	}
 
-	elem->next = changeset->head;
-	changeset->head = elem;
+	libhal_changeset_append (changeset, elem);
 out:
 	return elem != NULL;
 }
@@ -3639,8 +3661,7 @@ libhal_changeset_set_property_int (LibHalChangeSet *changeset, const char *key, 
 	elem->change_type = LIBHAL_PROPERTY_TYPE_INT32;
 	elem->value.val_int = value;
 
-	elem->next = changeset->head;
-	changeset->head = elem;
+	libhal_changeset_append (changeset, elem);
 out:
 	return elem != NULL;
 }
@@ -3673,8 +3694,7 @@ libhal_changeset_set_property_uint64 (LibHalChangeSet *changeset, const char *ke
 	elem->change_type = LIBHAL_PROPERTY_TYPE_UINT64;
 	elem->value.val_uint64 = value;
 
-	elem->next = changeset->head;
-	changeset->head = elem;
+	libhal_changeset_append (changeset, elem);
 out:
 	return elem != NULL;
 }
@@ -3707,8 +3727,7 @@ libhal_changeset_set_property_double (LibHalChangeSet *changeset, const char *ke
 	elem->change_type = LIBHAL_PROPERTY_TYPE_DOUBLE;
 	elem->value.val_double = value;
 
-	elem->next = changeset->head;
-	changeset->head = elem;
+	libhal_changeset_append (changeset, elem);
 out:
 	return elem != NULL;
 }
@@ -3741,8 +3760,7 @@ libhal_changeset_set_property_bool (LibHalChangeSet *changeset, const char *key,
 	elem->change_type = LIBHAL_PROPERTY_TYPE_BOOLEAN;
 	elem->value.val_bool = value;
 
-	elem->next = changeset->head;
-	changeset->head = elem;
+	libhal_changeset_append (changeset, elem);
 out:
 	return elem != NULL;
 }
@@ -3805,8 +3823,7 @@ libhal_changeset_set_property_strlist (LibHalChangeSet *changeset, const char *k
 	elem->change_type = LIBHAL_PROPERTY_TYPE_STRLIST;
 	elem->value.val_strlist = value_copy;
 
-	elem->next = changeset->head;
-	changeset->head = elem;
+	libhal_changeset_append (changeset, elem);
 out:
 	return elem != NULL;
 }
@@ -3861,7 +3878,6 @@ libhal_device_commit_changeset (LibHalContext *ctx, LibHalChangeSet *changeset, 
 					  &sub);
 
 	for (elem = changeset->head; elem != NULL; elem = elem->next) {
-
 		dbus_message_iter_open_container (&sub,
 						  DBUS_TYPE_DICT_ENTRY,
 						  NULL,
