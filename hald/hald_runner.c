@@ -104,20 +104,21 @@ runner_server_message_handler (DBusConnection *connection,
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
 		   dbus_message_get_member (message)));*/
-
 	if (dbus_message_is_signal (message, 
 				    "org.freedesktop.HalRunner", 
 				    "StartedProcessExited")) {
-		GPid pid;
+		dbus_uint64_t dpid;
 		DBusError error;
 		dbus_error_init (&error);
 		if (dbus_message_get_args (message, &error,
-				   DBUS_TYPE_INT64, &pid,
-				   DBUS_TYPE_INVALID)) {
+					   DBUS_TYPE_INT64, &dpid,
+					   DBUS_TYPE_INVALID)) {
 			RunningProcess *rp;
+			GPid pid;
+
+			pid = (GPid) dpid;
 
 			/*HAL_INFO (("Previously started process with pid %d exited", pid));*/
-
 			rp = g_hash_table_lookup (running_processes, (gpointer) pid);
 			if (rp != NULL) {
 				rp->cb (rp->device, 0, 0, NULL, rp->data1, rp->data2);
@@ -125,9 +126,8 @@ runner_server_message_handler (DBusConnection *connection,
 				g_free (rp);
 			}
 		}
-		
 	}
-
+	HAL_INFO (("foo2"));
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
