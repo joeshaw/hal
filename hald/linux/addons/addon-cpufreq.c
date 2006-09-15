@@ -450,7 +450,7 @@ static gboolean set_performance(DBusConnection *connection, DBusMessage *message
 
 	if (cpufreq_objs == NULL) {
 		dbus_raise_no_suitable_governor(connection, message,
-						"CPUFreqSetPerformance");
+						"SetCPUFreqPerformance");
 		return FALSE;
 	}
 
@@ -492,7 +492,7 @@ static gboolean get_performance(DBusConnection *connection, DBusMessage *message
 
 	if (cpufreq_objs == NULL) {
 		dbus_raise_no_suitable_governor(connection, message,
-						"CPUFreqGetPerformance");
+						"GetCPUFreqPerformance");
 		return FALSE;
 	}
 
@@ -531,7 +531,7 @@ static gboolean set_consider_nice(DBusConnection *connection, DBusMessage *messa
 
 	if (cpufreq_objs == NULL) {
 		dbus_raise_no_suitable_governor(connection, message,
-						"CPUFreqSetConsiderNice");
+						"SetCPUFreqConsiderNice");
 		return FALSE;
 	}
 
@@ -553,7 +553,7 @@ static gboolean get_consider_nice(DBusConnection *connection, DBusMessage *messa
 
 	if (cpufreq_objs == NULL) {
 		dbus_raise_no_suitable_governor(connection, message,
-						"CPUFreqGetConsiderNice");
+						"GetCPUFreqConsiderNice");
 		return FALSE;
 	}
 	obj = cpufreq_objs->data;
