@@ -189,6 +189,17 @@
 
     </match>
 
+    <!-- make sure we export Eject on discs where we don't recognize the file system -->
+    <match key="volume.is_disc" bool="true">
+      <match key="volume.fsusage" string="">
+        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+	<append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
+        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
+      </match>
+    </match>
+
     <match key="storage.requires_eject" bool="true">
         <!-- storage Eject causes eject on each volume on this storage -->
         <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Storage</append>
