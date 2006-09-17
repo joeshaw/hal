@@ -553,7 +553,7 @@ main (int argc, char *argv[])
 				}
 			}
 		}
-
+		
 		/* try again, to get last session that way */
 		if (vol_probe_offset == 0) {
 			struct cdrom_multisession ms_info;
@@ -570,12 +570,18 @@ main (int argc, char *argv[])
 
 	if (should_probe_for_fs) {
 
+		if ((stordev_dev_file = libhal_device_get_property_string (
+			     ctx, parent_udi, "block.device", &error)) == NULL) {
+			goto out;
+		}
+
 		/* Optical discs have problems reporting the exact
 		 * size so we should never look for data there since
 		 * it causes problems with the broken ide-cd driver
 		 */
-		if (is_disc)
+		if (is_disc) {
 			vol_size = 0;
+		}
 
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
@@ -586,32 +592,49 @@ main (int argc, char *argv[])
 				libhal_changeset_set_property_string (cs, "info.product", "Volume");
 			}
 
-			/* VOLUME_ID_UNUSED means vol_id didn't detect anything that it knows about - look if 
-			 * it's an extended msdos partition table 
+			/* VOLUME_ID_UNUSED means vol_id didn't detect anything that it knows about
+			 * if it's a disc.. look whether it's a partition table (some Apple discs
+			 * uses Apple Partition Map) and look at partitions
+			 *
+			 * (kind of a hack - ugh  - we ought to export all these as fakevolumes... but
+			 *  this is good enough for now... the only discs I know of that does this
+			 *  is in fact Apple's install disc.)
 			 */
-#if 0
-			if (vid->usage_id == VOLUME_ID_UNUSED) {
-				unsigned char buf[2];
+			if (vid->usage_id == VOLUME_ID_UNUSED && is_disc) {
+				PartitionTable *p;
+				p = part_table_load_from_disk (stordev_dev_file);
+				if (p != NULL) {
+					int i;
 
-				HAL_DEBUG (("looking whether partition is an extended msdos partition table", vid->usage_id));
+					HAL_INFO (("Partition table with scheme '%s' on optical disc",
+						   part_get_scheme_name (part_table_get_scheme (p))));
 
-				/* TODO: Is it good enough to just look for this magic? Kay? */
-				lseek (fd, MSDOS_SIG_OFF, SEEK_SET);
-				if (read (fd, &buf, 2) != 2) {
-					HAL_DEBUG (("read failed (%s)", strerror (errno)));
-				} else {
-					if (memcmp (buf, MSDOS_MAGIC, 2) == 0) {
-						HAL_DEBUG (("partition is an extended msdos partition table"));
+					for (i = 0; i < part_table_get_num_entries (p); i++) {
+						char *part_type;
 
-						libhal_changeset_set_property_string (cs, "volume.fsusage", "partitiontable");
-						libhal_changeset_set_property_string (cs, "volume.fstype", "msdos_extended_partitiontable");
-						libhal_changeset_set_property_string (cs, "volume.fsversion", "");
-						
+						part_type = part_table_entry_get_type (p, i);
+						HAL_INFO ((" partition %d has type '%s'", i, part_type));
+						if (strcmp (part_type, "Apple_HFS") == 0) {
+							guint64 part_offset;
+
+							part_offset = part_table_entry_get_offset (p, i);
+							if (volume_id_probe_all (
+								    vid, vol_probe_offset + part_offset, 0) == 0) {
+
+								set_volume_id_values(ctx, udi, cs, vid);
+							}
+
+							/* and we're done */
+							break;
+						}
+						g_free (part_type);
 					}
+					
+
+					HAL_INFO (("Done looking at part table"));
+					part_table_free (p);
 				}
-				
 			}
-#endif
 
 			volume_id_close(vid);
 		}
@@ -621,11 +644,6 @@ main (int argc, char *argv[])
 		    partition_number <= 256 && partition_number > 0 &&
 		    partition_start > 0) {
 			PartitionTable *p;
-
-			if ((stordev_dev_file = libhal_device_get_property_string (
-					ctx, parent_udi, "block.device", &error)) == NULL) {
-				goto out;
-			}
 
 			HAL_INFO (("Loading part table"));
 			p = part_table_load_from_disk (stordev_dev_file);
