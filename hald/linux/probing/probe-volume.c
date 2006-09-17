@@ -380,7 +380,7 @@ main (int argc, char *argv[])
 	if (is_disc) {
 		int type;
 		guint64 capacity;
-		struct cdrom_tochdr; /* toc_hdr; */
+		struct cdrom_tochdr toc_hdr;
 
 		/* defaults */
 		libhal_changeset_set_property_string (cs, "volume.disc.type", "unknown");
@@ -519,11 +519,22 @@ main (int argc, char *argv[])
 			libhal_changeset_set_property_bool (cs, "volume.disc.is_appendable", TRUE);
 		}
 
-#if 0
-		/* This seems to cause problems on some drives with broken firmware,
-		 * comment it out until we really need multisession support */
+		/* In November 2005, Kay wrote:
+		 *
+		 *  "This seems to cause problems on some drives with broken firmware,
+		 *   comment it out until we really need multisession support."
+		 *
+		 * However, we really need this for
+		 *
+		 *  - supporting mixed CD's - we want to probe the data track which
+		 *    may not be the first track; normally it's the last one...
+		 *  - getting the right label for multi-session discs (fd.o bug #2860)
+		 *
+		 * So if there are still drives around with broken firmware we need
+		 * to blacklist them.
+		 */
 
-		/* check for multisession disks */
+		/* check if last track is a data track */
 		if (ioctl (fd, CDROMREADTOCHDR, &toc_hdr) == 0) {
 			struct cdrom_tocentry toc_entr;
 			unsigned int vol_session_count = 0;
@@ -535,13 +546,13 @@ main (int argc, char *argv[])
 			memset (&toc_entr, 0x00, sizeof (toc_entr));
 			toc_entr.cdte_track = vol_session_count;
 			toc_entr.cdte_format = CDROM_LBA;
-			if (ioctl (fd, CDROMREADTOCENTRY, &toc_entr) == 0)
-				if ((toc_entr.cdte_ctrl & CDROM_DATA_TRACK) == 4) {
-					HAL_DEBUG(("last session starts at block = %u", toc_entr.cdte_addr.lba));
+			if (ioctl (fd, CDROMREADTOCENTRY, &toc_entr) == 0) {
+				if (toc_entr.cdte_ctrl & CDROM_DATA_TRACK) {
+					HAL_DEBUG (("last session starts at block = %u", toc_entr.cdte_addr.lba));
 					vol_probe_offset = toc_entr.cdte_addr.lba * block_size;
 				}
+			}
 		}
-#endif
 
 		/* try again, to get last session that way */
 		if (vol_probe_offset == 0) {
@@ -549,9 +560,11 @@ main (int argc, char *argv[])
 
 			memset(&ms_info, 0x00, sizeof(ms_info));
 			ms_info.addr_format = CDROM_LBA;
-			if (ioctl(fd, CDROMMULTISESSION, &ms_info) == 0)
-				if (!ms_info.xa_flag)
+			if (ioctl(fd, CDROMMULTISESSION, &ms_info) == 0) {
+				if (!ms_info.xa_flag) {
 					vol_probe_offset = ms_info.addr.lba * block_size;
+				}
+			}
 		}
 	}
 
