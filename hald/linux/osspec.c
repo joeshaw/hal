@@ -346,6 +346,10 @@ hotplug_queue_now_empty (void)
 static void
 computer_probing_helper_done (HalDevice *d)
 {
+	/* if not set, set a default value */
+	if (!hal_device_has_property (d, "system.formfactor")) {
+		hal_device_property_set_string (d, "system.formfactor", "unknown");
+	}
 	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
 	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 
@@ -363,9 +367,6 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 	const char *system_version;
 
 	if (exit_type == HALD_RUN_FAILED) {
-		/* set a default value */
-		if (!hal_device_has_property (d, "system.formfactor"))
-			hal_device_property_set_string (d, "system.formfactor", "unknown");
 		goto out;
 	}
 
@@ -433,10 +434,7 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 				}
 			}
 		       
-		} else {
-			/* set a default value */
-			hal_device_property_set_string (d, "system.formfactor", "unknown");
-		}
+		} 
 	}
 out:
 	computer_probing_helper_done (d);
@@ -554,11 +552,9 @@ osspec_probe (void)
 		hald_runner_run (root, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
         	                 computer_probing_pcbios_helper_done, NULL, NULL);
 	} else {
-		/* set a default value, can be overridden by others */
-		hal_device_property_set_string (root, "system.formfactor", "unknown");
 		/* no probing */
 		computer_probing_helper_done (root);
-  	}
+	}
 }
 
 DBusHandlerResult
