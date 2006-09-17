@@ -475,6 +475,11 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_hibernate = TRUE;
 	free (poweroptions);
 
+	if (!strcmp(hal_device_property_get_string(d, "power_management.type"), "pmu")) {
+		/* We got our own helper for suspend PMU machines */
+		can_suspend = TRUE;
+	}
+
 	/* check for the presence of suspend2 */
 	if (access ("/proc/software_suspend", F_OK) == 0)
 		can_hibernate = TRUE;
