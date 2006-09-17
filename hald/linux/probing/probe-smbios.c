@@ -140,7 +140,7 @@ main (int argc, char *argv[])
 		break;
 	case -1:
 		HAL_ERROR (("Cannot fork!"));
-		break;
+		goto out;
 	}
 	
 	/* parent continues from here */
@@ -199,6 +199,10 @@ main (int argc, char *argv[])
 		if (dmiparser_state == DMIPARSER_STATE_IGNORE)
 			continue;
 
+		/* return success only if there was something usefull to parse */
+		ret = 0;
+
+
 		/* removes the leading tab */
 		nbuf = &buf[1];
 
@@ -227,9 +231,6 @@ main (int argc, char *argv[])
 
 	/* as read to EOF, close */
 	fclose (f);
-
-	/* return success */
-	ret = 0;
 
 out:
 	/* free ctx */
