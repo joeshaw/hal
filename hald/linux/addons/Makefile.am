@@ -18,7 +18,7 @@ libexec_PROGRAMS  = 			\
 	hald-addon-storage		\
 	hald-addon-cpufreq
 
-if HAVE_LIBPCI
+if BUILD_MACBOOKPRO
 libexec_PROGRAMS += hald-addon-macbookpro-backlight
 endif
 if HAVE_LIBUSB
@@ -42,7 +42,7 @@ hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 hald_addon_keyboard_SOURCES = addon-keyboard.c ../../logger.c ../../util_helper.c
 hald_addon_keyboard_LDADD = $(top_builddir)/libhal/libhal.la 
 
-if HAVE_LIBPCI
+if BUILD_MACBOOKPRO
 hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../logger.c
 hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
 endif
