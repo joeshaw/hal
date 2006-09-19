@@ -308,7 +308,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 							"Error poking hardware");
 			dbus_connection_send (connection, reply, NULL);
 		} else {
-			int **pb = &brightness;
+			int (*pb)[] = &brightness;
 
 			reply = dbus_message_new_method_return (message);
 			if (reply == NULL)
