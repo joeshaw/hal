@@ -606,40 +606,79 @@ hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_
 	return ret;
 }
 
-/** Find the closest ancestor by looking at sysfs paths
- *
- *  @param  sysfs_path           Path into sysfs, e.g. /sys/devices/pci0000:00/0000:00:1d.7/usb1/1-0:1.0
- *  @return                      Parent Hal Device Object or #NULL if there is none
- */
-HalDevice *
-hal_util_find_closest_ancestor (const gchar *sysfs_path)
-{	
-	gchar buf[512];
-	HalDevice *parent;
+static gboolean get_parent_device(char *path)
+{
+	/* go up one directory */
+	if (!hal_util_path_ascend (path))
+		return FALSE;
+	if (g_str_has_suffix (path, "/class"))
+		return FALSE;
+	if (g_str_has_suffix (path, "/block"))
+		return FALSE;
+	if (g_str_has_suffix (path, "/devices"))
+		return FALSE;
+	return TRUE;
+}
+/* return the first already known parent device */
+gboolean
+hal_util_find_known_parent (const gchar *sysfs_path, HalDevice **parent, gchar **parent_path)
+{
+	gchar *target;
+	HalDevice *parent_dev = NULL;
+	gchar *parent_devpath;
+	char parentdevpath[HAL_PATH_MAX];
+	gboolean retval = FALSE;
 
-	parent = NULL;
-
-	strncpy (buf, sysfs_path, sizeof (buf));
-	do {
-		char *p;
-
-		p = strrchr (buf, '/');
-		if (p == NULL)
+	parent_devpath = g_strdup (sysfs_path);
+	while (TRUE) {
+		if (!get_parent_device (parent_devpath))
 			break;
-		*p = '\0';
 
-		parent = hal_device_store_match_key_value_string (hald_get_gdl (), 
-								  "linux.sysfs_path_device", 
-								  buf);
-		if (parent != NULL)
-			break;
+		parent_dev = hal_device_store_match_key_value_string (hald_get_gdl (),
+								      "linux.sysfs_path_device",
+								      parent_devpath);
+		if (parent_dev != NULL)
+			goto out;
+	}
+	g_free (parent_devpath);
+	parent_devpath = NULL;
 
-	} while (TRUE);
+	/* try if the parent chain is constructed by the device-link */
+	g_snprintf (parentdevpath, HAL_PATH_MAX, "%s/device", sysfs_path);
+	if (((target = g_file_read_link (parentdevpath, NULL)) != NULL)) {
+		parent_devpath = hal_util_get_normalized_path (sysfs_path, target);
+		g_free (target);
 
-	return parent;
+		while (TRUE) {
+			parent_dev = hal_device_store_match_key_value_string (hald_get_gdl (),
+									      "linux.sysfs_path_device",
+									      parent_devpath);
+			if (parent_dev != NULL)
+				goto out;
+
+			/* go up one directory */
+			if (!get_parent_device (parent_devpath))
+				break;
+		}
+		g_free (parent_devpath);
+		parent_devpath = NULL;
+	}
+
+out:
+	if (parent_dev != NULL) {
+		HAL_INFO (("hal_util_find_known_parent: '%s'->'%s'", sysfs_path, parent_devpath));
+		retval = TRUE;
+	}
+	if (parent != NULL)
+		*parent = parent_dev;
+	if (parent_path != NULL)
+		*parent_path = parent_devpath;
+	else
+		g_free (parent_devpath);
+	return retval;
 }
 
-void 
+void
 osspec_refresh_mount_state_for_block_device (HalDevice *d)
 {
 	blockdev_refresh_mount_state (d);

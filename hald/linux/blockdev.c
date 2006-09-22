@@ -326,7 +326,7 @@ generate_fakevolume_hotplug_event_add_for_storage_device (HalDevice *d)
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
-	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
+	hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
 	g_strlcpy (hotplug_event->sysfs.sysfs_path, fake_sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
 	if (device_file != NULL)
