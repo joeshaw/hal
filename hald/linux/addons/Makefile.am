@@ -15,20 +15,25 @@ libexec_PROGRAMS  = 			\
 	hald-addon-hid-ups 		\
 	hald-addon-keyboard 		\
 	hald-addon-pmu			\
-	hald-addon-storage		\
-	hald-addon-cpufreq
+	hald-addon-storage
 
 if BUILD_MACBOOKPRO
 libexec_PROGRAMS += hald-addon-macbookpro-backlight
+hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../logger.c
+hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
 endif
+
+if BUILD_CPUFREQ
+libexec_PROGRAMS += hald-addon-cpufreq
+hald_addon_cpufreq_SOURCES = addon-cpufreq.c addon-cpufreq.h addon-cpufreq-userspace.h \
+	                     addon-cpufreq-userspace.c ../../logger.c
+hald_addon_cpufreq_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@ @POLKIT_LIBS@
+endif
+
 if HAVE_LIBUSB
 libexec_PROGRAMS += hald-addon-usb-csr
 endif
 endif
-
-hald_addon_cpufreq_SOURCES = addon-cpufreq.c addon-cpufreq.h addon-cpufreq-userspace.h \
-	                     addon-cpufreq-userspace.c ../../logger.c
-hald_addon_cpufreq_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@ @POLKIT_LIBS@
 
 hald_addon_acpi_SOURCES = addon-acpi.c ../../logger.c ../../util_helper.c
 hald_addon_acpi_LDADD = $(top_builddir)/libhal/libhal.la
@@ -41,11 +46,6 @@ hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
 hald_addon_keyboard_SOURCES = addon-keyboard.c ../../logger.c ../../util_helper.c
 hald_addon_keyboard_LDADD = $(top_builddir)/libhal/libhal.la 
-
-if BUILD_MACBOOKPRO
-hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../logger.c
-hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
-endif
 
 hald_addon_pmu_SOURCES = addon-pmu.c ../../logger.c ../../util_helper.c
 hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la

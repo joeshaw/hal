@@ -247,24 +247,6 @@ AC_CHECK_HEADERS(pci/pci.h, [
 		USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
 	USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])
 
-dnl see if we should build macbookpro utils
-AC_ARG_WITH(macbookpro,     [  --with-macbookpro       Whether to build Macbook Pro utils (auto)])
-BUILD_MACBOOKPRO=no
-if test "x$use_macbookpro" = "xyes" ; then
-   BUILD_MACBOOKPRO=yes
-elif test "x$use_macbookpro" = "x" ; then
-  if test "$HAVE_LIBPCI" != "false" ; then
-    case "${host}" in
-      i[[3456]]86-*-linux*)
-        BUILD_MACBOOKPRO=yes
-        ;;
-      *)
-        ;;
-      esac
-   fi
-fi
-AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
-
 AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux/solaris/dummy)],
                       [
                       backend=$withval
@@ -488,6 +470,50 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Name of the gettext pac
 AC_PROG_INTLTOOL([0.22])
 AM_GLIB_GNU_GETTEXT
 
+dnl
+dnl SUBSETTING START
+dnl
+
+dnl macbookpro utils
+AC_ARG_WITH(macbookpro,     [  --with-macbookpro       Whether to build Macbook Pro utils (auto)])
+BUILD_MACBOOKPRO=no
+if test "x$with_macbookpro" = "xyes" ; then
+   BUILD_MACBOOKPRO=yes
+elif test "x$with_macbookpro" = "x" ; then
+  if test "$HAVE_LIBPCI" != "false" ; then
+    case "${HALD_BACKEND}" in
+      linux)
+        BUILD_MACBOOKPRO=yes
+        ;;
+      *)
+        ;;
+    esac
+   fi
+fi
+AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
+
+dnl cpufreq
+AC_ARG_WITH(cpufreq,        [  --with-cpufreq          Whether to build cpufreq utils (auto)])
+BUILD_CPUFREQ=no
+if test "x$with_cpufreq" = "xyes" ; then
+   BUILD_CPUFREQ=yes
+elif test "x$with_cpufreq" = "x" ; then
+  case "${HALD_BACKEND}" in
+    linux)
+      BUILD_CPUFREQ=yes
+      ;;
+    *)
+      ;;
+  esac
+fi
+AM_CONDITIONAL(BUILD_CPUFREQ, test x$BUILD_CPUFREQ = xyes)
+
+
+dnl
+dnl SUBSETTING END
+dnl
+
+
 AC_OUTPUT([
 hal.pc
 hal-storage.pc
@@ -558,16 +584,18 @@ echo "
         Group for HAL:              ${HAL_GROUP}
         hald pidfile:               ${HALD_PID_FILE}
         hald socket dir:            ${HALD_SOCKET_DIR}
-        hald backend:               ${HALD_BACKEND}
+
+        OS backend:                 ${HALD_BACKEND}
+
         use acpi kernel interface:  ${acpi_proc}
         use acpid interface:        ${acpi_acpid}
         use libusb:                 ${USE_LIBUSB}
         use libpci:                 ${USE_LIBPCI}
         use libparted:              ${USE_PARTED}
-
         use PolicyKit:              ${msg_polkit}
 
-        build Macbook Pro utils:    ${BUILD_MACBOOKPRO}
+        Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, requires libpci)
+        CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}

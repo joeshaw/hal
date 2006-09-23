@@ -9,6 +9,10 @@ dist_fdi_DATA = 			\
 	15-storage-luks.fdi		\
 	20-storage-methods.fdi
 
+if BUILD_CPUFREQ
+dist_fdi_DATA += 10-cpufreq.fdi
+endif
+
 check:
 	for f in $(dist_fdi_DATA); do \
             echo -n "Validate XML in $$f : "; \
