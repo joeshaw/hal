@@ -483,7 +483,13 @@ elif test "x$with_macbookpro" = "x" ; then
   if test "$HAVE_LIBPCI" != "false" ; then
     case "${HALD_BACKEND}" in
       linux)
-        BUILD_MACBOOKPRO=yes
+        case "${host}" in
+	  i[[3456]]86-*-*)
+            BUILD_MACBOOKPRO=yes
+	    ;;
+	  *)
+	    ;;
+	esac
         ;;
       *)
         ;;
@@ -594,7 +600,7 @@ echo "
         use libparted:              ${USE_PARTED}
         use PolicyKit:              ${msg_polkit}
 
-        Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, requires libpci)
+        Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
