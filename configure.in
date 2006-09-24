@@ -514,6 +514,24 @@ elif test "x$with_cpufreq" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_CPUFREQ, test x$BUILD_CPUFREQ = xyes)
 
+dnl USB CSR (battery reading of power)
+AC_ARG_WITH(usb-csr,        [  --with-usb-csr          Whether to build addon for wireless USB mice (auto)])
+BUILD_USBCSR=no
+if test "x$with_cpufreq" = "xyes" ; then
+   BUILD_USBCSR=yes
+elif test "x$with_cpufreq" = "x" ; then
+  if test "$HAVE_LIBUSB" != "false" ; then
+    case "${HALD_BACKEND}" in
+      linux)
+        BUILD_USBCSR=yes
+        ;;
+      *)
+        ;;
+    esac
+  fi
+fi
+AM_CONDITIONAL(BUILD_USBCSR, test x$BUILD_USBCSR = xyes)
+
 
 dnl
 dnl SUBSETTING END
@@ -602,6 +620,7 @@ echo "
 
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
+	USB wireless mouse power:   ${BUILD_USBCSR} (Linux only, requires libusb)
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}

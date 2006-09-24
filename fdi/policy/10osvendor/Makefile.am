@@ -12,8 +12,13 @@ dist_fdi_DATA = 			\
 if BUILD_MACBOOKPRO
 dist_fdi_DATA += 10-macbookpro-utils.fdi
 endif
+
 if BUILD_CPUFREQ
 dist_fdi_DATA += 10-cpufreq.fdi
+endif
+
+if BUILD_USBCSR
+dist_fdi_DATA += 10-usbcsr-mice.fdi
 endif
 
 check:

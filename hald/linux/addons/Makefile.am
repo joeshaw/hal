@@ -30,8 +30,10 @@ hald_addon_cpufreq_SOURCES = addon-cpufreq.c addon-cpufreq.h addon-cpufreq-users
 hald_addon_cpufreq_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@ @POLKIT_LIBS@
 endif
 
-if HAVE_LIBUSB
+if BUILD_USBCSR
 libexec_PROGRAMS += hald-addon-usb-csr
+hald_addon_usb_csr_SOURCES = addon-usb-csr.c ../../logger.c ../../util_helper.c
+hald_addon_usb_csr_LDADD = $(top_builddir)/libhal/libhal.la -lusb @GLIB_LIBS@
 endif
 endif
 
@@ -52,8 +54,3 @@ hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_addon_storage_SOURCES = addon-storage.c ../../logger.c ../../util_helper.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la
-
-if HAVE_LIBUSB
-hald_addon_usb_csr_SOURCES = addon-usb-csr.c ../../logger.c ../../util_helper.c
-hald_addon_usb_csr_LDADD = $(top_builddir)/libhal/libhal.la -lusb @GLIB_LIBS@
-endif

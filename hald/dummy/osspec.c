@@ -79,3 +79,21 @@ osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *
 {
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
+
+gboolean
+osspec_device_rescan (HalDevice *d)
+{
+	return FALSE;
+}
+
+gboolean
+osspec_device_reprobe (HalDevice *d)
+{
+	return FALSE;
+}
+
+void
+osspec_refresh_mount_state_for_block_device (HalDevice *d)
+{
+}
+
