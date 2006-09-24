@@ -25,13 +25,5 @@ libhald_linux_la_SOURCES =					\
 	blockdev.h		blockdev.c			\
 	acpi.h			acpi.c				\
 	apm.h			apm.c				\
-	pmu.h			pmu.c				\
-	ids.h			ids.c
-
-
-
-
-
-
-
+	pmu.h			pmu.c				
 

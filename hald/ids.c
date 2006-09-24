@@ -35,7 +35,7 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
-#include "../logger.h"
+#include "logger.h"
 
 #include "ids.h"
 

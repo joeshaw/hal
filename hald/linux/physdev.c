@@ -39,11 +39,11 @@
 #include "../logger.h"
 #include "../osspec.h"
 #include "../util.h"
+#include "../ids.h"
 
 #include "coldplug.h"
 #include "hotplug.h"
 #include "hotplug_helper.h"
-#include "ids.h"
 #include "osspec_linux.h"
 
 #include "physdev.h"

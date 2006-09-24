@@ -34,7 +34,7 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
-#include "../libhal/libhal.h"
+#include <libhal.h>
 #include "libhal-storage.h"
 
 

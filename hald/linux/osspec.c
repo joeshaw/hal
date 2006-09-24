@@ -54,13 +54,13 @@
 #include "../logger.h"
 #include "../osspec.h"
 #include "../util.h"
+#include "../ids.h"
 
 #include "acpi.h"
 #include "apm.h"
 #include "blockdev.h"
 #include "coldplug.h"
 #include "hotplug.h"
-#include "ids.h"
 #include "pmu.h"
 
 #include "osspec_linux.h"

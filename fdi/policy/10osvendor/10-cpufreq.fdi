@@ -6,4 +6,4 @@
       <append key="info.addons" type="strlist">hald-addon-cpufreq</append>
     </match>
   </device>
-</device>
+</deviceinfo>
