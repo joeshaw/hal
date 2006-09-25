@@ -8,3 +8,4 @@ hald_marshal.c
 hald_marshal.h
 *.o
 *~
+.local-fdi
