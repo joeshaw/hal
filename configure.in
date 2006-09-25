@@ -514,12 +514,12 @@ elif test "x$with_cpufreq" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_CPUFREQ, test x$BUILD_CPUFREQ = xyes)
 
-dnl USB CSR (battery reading of power)
+dnl USB CSR (for reading battery of USB wireless mice)
 AC_ARG_WITH(usb-csr,        [  --with-usb-csr          Whether to build addon for wireless USB mice (auto)])
 BUILD_USBCSR=no
-if test "x$with_cpufreq" = "xyes" ; then
+if test "x$with_usb_csr" = "xyes" ; then
    BUILD_USBCSR=yes
-elif test "x$with_cpufreq" = "x" ; then
+elif test "x$with_usb_csr" = "x" ; then
   if test "$HAVE_LIBUSB" != "false" ; then
     case "${HALD_BACKEND}" in
       linux)
