@@ -254,8 +254,10 @@ main (int argc, char *argv[])
 						free (write_speeds);
 					}
 				} else {
+					gchar *wspeeds[1] = {NULL};
 					libhal_changeset_set_property_int (cs, "storage.cdrom.write_speed", 0);
-					libhal_changeset_set_property_strlist (cs, "storage.cdrom.write_speeds", NULL);
+					libhal_changeset_set_property_strlist (cs, "storage.cdrom.write_speeds", 
+									       (const char **) wspeeds);
 				}
 			}
 			
