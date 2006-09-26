@@ -101,8 +101,14 @@ mtab_next (gpointer handle, char **mount_point)
 #elif sun
 	static struct mnttab mnt;
 
-	return getmntent (handle, &mnt) == 0 ? mnt.mnt_special : NULL;
-#error TODO: set *mount_point to g_strdup()-ed value if mount_point!=NULL
+	if (getmntent (handle, &mnt) == 0) {
+		if (mount_point != NULL) {
+			*mount_point = g_strdup (mnt->mnt_mountp);
+		}
+		return mnt.mnt_special;
+	} else {
+		return NULL;
+	}
 #else
 	struct mntent *mnt;
 

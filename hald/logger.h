@@ -49,7 +49,7 @@ enum {
 void logger_setup (int priority, const char *file, int line, const char *function);
 
 void logger_emit (const char *format, ...);
-//void logger_forward_debug (const char *format, va_list args);
+/* void logger_forward_debug (const char *format, va_list args); */
 void logger_forward_debug (const char *format, ...);
 
 void logger_enable (void);

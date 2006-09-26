@@ -138,8 +138,13 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		return;
 	}
 
+	/* subsystem "block" are all block devices */
+	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS)
+		if (strcmp(hotplug_event->sysfs.subsystem, "block") == 0)
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+
 	/* get device type from already known device object */
-	if (d != NULL) {
+	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS && d != NULL) {
 		HotplugEventType type;
 
 		type = hal_device_property_get_int (d, "linux.hotplug_type");
@@ -164,15 +169,15 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		g_snprintf (subsystem, HAL_PATH_MAX, "%s/subsystem", hotplug_event->sysfs.sysfs_path);
 		subsystem_target = g_file_read_link (subsystem, NULL);
 		if (subsystem_target != NULL) {
-			if (strstr(subsystem_target, "/bus/") != NULL) {
+			if (strstr(subsystem_target, "/block") != NULL) {
+				HAL_INFO (("%s is a block device (subsystem)", hotplug_event->sysfs.sysfs_path));
+				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+			} else if (strstr(subsystem_target, "/bus/") != NULL) {
 				HAL_INFO (("%s is a bus device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
 			} else if (strstr(subsystem_target, "/class/") != NULL) {
 				HAL_INFO (("%s is a class device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
-			} else if (strstr(subsystem_target, "/block") != NULL) {
-				HAL_INFO (("%s is a block device (subsystem)", hotplug_event->sysfs.sysfs_path));
-				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
 			}
 			g_free (subsystem_target);
 		}
@@ -206,7 +211,8 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BUS) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent;
-			parent = hal_util_find_closest_ancestor (hotplug_event->sysfs.sysfs_path);
+
+			hal_util_find_known_parent (hotplug_event->sysfs.sysfs_path, &parent, NULL);
 			hotplug_event_begin_add_physdev (hotplug_event->sysfs.subsystem, 
 							 hotplug_event->sysfs.sysfs_path, 
 							 parent,
@@ -218,53 +224,23 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		}
 	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_CLASS) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
-			gchar *target;
-			HalDevice *physdev;
-			char physdevpath[HAL_PATH_MAX];
-			gchar *sysfs_path_in_devices;
-
-			sysfs_path_in_devices = NULL;
+			HalDevice *parent;
+			gchar *parent_path;
 
 			/* /sbin/ifrename may be called from a hotplug handler before we process this,
 			 * so if index doesn't match, go ahead and find a new sysfs path
 			 */
 			fixup_net_device_for_renaming (hotplug_event);
 
-			g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
-			if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
-				gchar *normalized_target;
-
-				normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs.sysfs_path, target);
-				g_free (target);
-
-				sysfs_path_in_devices = g_strdup (normalized_target);
-
-				/* there may be ''holes'' in /sys/devices so try hard to find the closest match */
-				do {
-					physdev = hal_device_store_match_key_value_string (hald_get_gdl (), 
-											   "linux.sysfs_path_device", 
-											   normalized_target);
-					if (physdev != NULL)
-						break;
-
-					/* go up one directory */
-					if (!hal_util_path_ascend (normalized_target))
-						break;
-				} while (physdev == NULL);
-				g_free (normalized_target);
-			} else {
-				physdev = NULL;
-			}
-
+			hal_util_find_known_parent (hotplug_event->sysfs.sysfs_path,
+							&parent, &parent_path);
 			hotplug_event_begin_add_classdev (hotplug_event->sysfs.subsystem,
 							  hotplug_event->sysfs.sysfs_path,
 							  hotplug_event->sysfs.device_file,
-							  physdev,
-							  sysfs_path_in_devices,
+							  parent,
+							  parent_path,
 							  (void *) hotplug_event);
-
-			g_free (sysfs_path_in_devices);
-
+			g_free (parent_path);
 		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 			hotplug_event_begin_remove_classdev (hotplug_event->sysfs.subsystem,
 							     hotplug_event->sysfs.sysfs_path,
@@ -272,11 +248,10 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		}
 	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
-			HalDevice *parent = NULL;
+			HalDevice *parent;
 			int range;
 			gboolean is_partition;
-			gboolean is_fakevolume;
-			
+
 			/* it's a partition if and only if it doesn't have the range file...
 			 *
 			 * notably the device mapper partitions do have a range file, but that's
@@ -285,42 +260,13 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			 * also, if the sysfs ends with "fakevolume" the hotplug event is synthesized
 			 * from within HAL for partitions on the main block device
 			 */
-			is_fakevolume = FALSE;
-			if (strcmp (hal_util_get_last_element (hotplug_event->sysfs.sysfs_path), "fakevolume") == 0) {
-				is_fakevolume = TRUE;
-			}
-			is_partition = TRUE;
-			if (is_fakevolume ||
-			    hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0)) {
+			if ((strstr (hotplug_event->sysfs.sysfs_path, "/fakevolume") != NULL) ||
+			    hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0))
 				is_partition = FALSE;
-			}
+			else
+				is_partition = TRUE;
 
-			if (is_partition || is_fakevolume) {
-				gchar *parent_path;
-
-				parent_path = hal_util_get_parent_path (hotplug_event->sysfs.sysfs_path);
-
-				parent = hal_device_store_match_key_value_string (hald_get_gdl (),
-										  "linux.sysfs_path_device",
-										  parent_path);
-				g_free (parent_path);
-			} else {
-				gchar *target;
-				char physdevpath[HAL_PATH_MAX];
-
-				g_snprintf (physdevpath, HAL_PATH_MAX, "%s/device", hotplug_event->sysfs.sysfs_path);
-				if (((target = g_file_read_link (physdevpath, NULL)) != NULL)) {
-					gchar *normalized_target;
-
-					normalized_target = hal_util_get_normalized_path (hotplug_event->sysfs.sysfs_path, target);
-					g_free (target);
-					parent = hal_device_store_match_key_value_string (hald_get_gdl (),
-											  "linux.sysfs_path_device",
-											  normalized_target);
-					g_free (normalized_target);
-				}
-			}
-
+			hal_util_find_known_parent (hotplug_event->sysfs.sysfs_path, &parent, NULL);
 			hotplug_event_begin_add_blockdev (hotplug_event->sysfs.sysfs_path,
 							  hotplug_event->sysfs.device_file,
 							  is_partition,

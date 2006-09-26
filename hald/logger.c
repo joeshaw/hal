@@ -207,7 +207,7 @@ logger_emit (const char *format, ...)
 }
 
 void
-//logger_forward_debug (const char *format, va_list args)
+/* logger_forward_debug (const char *format, va_list args) */
 logger_forward_debug (const char *format, ...)
 {
 	va_list args;

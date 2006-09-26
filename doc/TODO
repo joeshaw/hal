@@ -15,6 +15,9 @@ Ongoing items that always need work
 Items specifically planned for 0.5.9
 ------------------------------------
 
+ - Make sure we check if the optical drives supports the commands
+   we are sending to it (proposed by pjones)
+
  - Move /usr/libexec to /usr/lib/hal/ - drop /usr/lib/hal/scripts -
    use /usr/lib/hal/methods
 

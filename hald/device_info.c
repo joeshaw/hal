@@ -36,6 +36,7 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <math.h>
+#include <errno.h>
 
 #include "hald.h"
 #include "logger.h"
@@ -1498,7 +1499,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 
 	num_entries = scandir (dir, &name_list, 0, my_alphasort);
 	if (num_entries == -1) {
-		perror ("scandir");
+		HAL_ERROR (("scandir failed for '%s' (errno=%d '%s')", dir, errno, strerror (errno)));
 		return FALSE;
 	}
 
