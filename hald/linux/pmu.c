@@ -381,9 +381,6 @@ pmu_synthesize_hotplug_events (void)
 		/* Add Laptop Panel */
 		snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
 		pmu_synthesize_item (path, PMU_TYPE_LAPTOP_PANEL);
-
-		/* If the machine has got battery bays then this is a laptop. */
-		hal_device_property_set_string (computer, "system.formfactor", "laptop");
 	}
 
 	/* setup timer for things that we need to poll */

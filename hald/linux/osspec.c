@@ -496,6 +496,68 @@ out:
 	hal_device_property_set_bool (d, "power_management.can_suspend_to_disk", can_hibernate);
 }
 
+static void
+get_openfirmware_entry(HalDevice *d, char *property, char *entry, 
+                       gboolean multivalue) {
+	char *contents;
+	gsize length;
+	if (!g_file_get_contents(entry, &contents, &length, NULL)) {
+		return;
+	}
+	if (multivalue) {
+		gsize offset = 0;
+		while (offset < length) { 
+			hal_device_property_strlist_append(d, property, contents + offset);
+			for (; offset < length - 1 && contents[offset] != '\0'; offset++)
+				;
+			offset++;
+		}
+	} else {
+		hal_device_property_set_string(d, property, contents);
+	}
+	free(contents);
+}
+
+static void
+detect_openfirmware_formfactor(HalDevice *root) {
+	int x;
+	struct { gchar *model; gchar *formfactor; } model_formfactor[] =
+		{ 
+			{ "RackMac"   , "server" },
+			{ "AAPL,3400" , "laptop"  },
+			{ "AAPL,3500" , "laptop"  },
+			{ "PowerBook" , "laptop"  },
+			{ "AAPL"      , "desktop" },
+			{ "iMac"      , "desktop" },
+			{ "PowerMac"  , "desktop" },
+			{NULL, NULL }
+		};
+	const gchar *model =
+	  hal_device_property_get_string(root, "openfirmware.model");
+
+	for (x = 0 ; model_formfactor[x].model ; x++) {
+		if (strstr(model, model_formfactor[x].model)) {
+			hal_device_property_set_string (root, "system.formfactor",
+				model_formfactor[x].formfactor);
+			break;
+		}
+	}
+}
+
+static void
+probe_openfirmware(HalDevice *root) {
+#define DEVICE_TREE "/proc/device-tree/"
+	if (!g_file_test(DEVICE_TREE, G_FILE_TEST_IS_DIR)) {
+		return;
+	}
+	get_openfirmware_entry(root, "openfirmware.model", 
+		DEVICE_TREE "model", FALSE);
+	get_openfirmware_entry(root, "openfirmware.compatible", 
+		DEVICE_TREE "compatible", TRUE);
+	detect_openfirmware_formfactor(root);
+}
+
+
 void 
 osspec_probe (void)
 {
@@ -547,12 +609,12 @@ osspec_probe (void)
 	 */
 	set_suspend_hibernate_keys (root);
 
-	/* TODO: add prober for PowerMac's */
 	if (should_decode_dmi) {
 		hald_runner_run (root, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
         	                 computer_probing_pcbios_helper_done, NULL, NULL);
 	} else {
 		/* no probing */
+		probe_openfirmware(root);
 		computer_probing_helper_done (root);
 	}
 }
