@@ -473,7 +473,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_hibernate = TRUE;
 	free (poweroptions);
 
-	if (!strcmp(hal_device_property_get_string(d, "power_management.type"), "pmu")) {
+	if (strcmp(hal_device_property_get_string(d, "power_management.type"), "pmu") == 0) {
 		/* We got our own helper for suspend PMU machines */
 		can_suspend = TRUE;
 	}
@@ -498,7 +498,8 @@ out:
 
 static void
 get_openfirmware_entry(HalDevice *d, char *property, char *entry, 
-                       gboolean multivalue) {
+                       gboolean multivalue) 
+{
 	char *contents;
 	gsize length;
 	if (!g_file_get_contents(entry, &contents, &length, NULL)) {
@@ -519,7 +520,8 @@ get_openfirmware_entry(HalDevice *d, char *property, char *entry,
 }
 
 static void
-detect_openfirmware_formfactor(HalDevice *root) {
+detect_openfirmware_formfactor(HalDevice *root) 
+{
 	int x;
 	struct { gchar *model; gchar *formfactor; } model_formfactor[] =
 		{ 
@@ -534,7 +536,8 @@ detect_openfirmware_formfactor(HalDevice *root) {
 		};
 	const gchar *model =
 	  hal_device_property_get_string(root, "openfirmware.model");
-
+	if (model == NULL) 
+		return;
 	for (x = 0 ; model_formfactor[x].model ; x++) {
 		if (strstr(model, model_formfactor[x].model)) {
 			hal_device_property_set_string (root, "system.formfactor",
@@ -545,7 +548,8 @@ detect_openfirmware_formfactor(HalDevice *root) {
 }
 
 static void
-probe_openfirmware(HalDevice *root) {
+probe_openfirmware(HalDevice *root) 
+{
 #define DEVICE_TREE "/proc/device-tree/"
 	if (!g_file_test(DEVICE_TREE, G_FILE_TEST_IS_DIR)) {
 		return;
