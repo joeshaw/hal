@@ -448,6 +448,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 	ssize_t read;
 	size_t len;
 	char *poweroptions;
+	char *pmtype;
 	FILE *fp;
 
 	can_suspend = FALSE;
@@ -473,7 +474,8 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_hibernate = TRUE;
 	free (poweroptions);
 
-	if (strcmp(hal_device_property_get_string(d, "power_management.type"), "pmu") == 0) {
+	pmtype = hal_device_property_get_string(d, "power_management.type");
+	if (pmtype != NULL && strcmp(pmtype, "pmu") == 0) {
 		/* We got our own helper for suspend PMU machines */
 		can_suspend = TRUE;
 	}
@@ -532,6 +534,7 @@ detect_openfirmware_formfactor(HalDevice *root)
 			{ "AAPL"      , "desktop" },
 			{ "iMac"      , "desktop" },
 			{ "PowerMac"  , "desktop" },
+			{ "Pegasos"   , "desktop" },
 			{NULL, NULL }
 		};
 	const gchar *model =
