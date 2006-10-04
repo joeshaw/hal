@@ -585,7 +585,9 @@ part_table_parse_msdos (int fd, guint64 offset, guint64 size, gboolean *found_gp
 
 		//HAL_INFO (("pe = %p", pe));
 
-		p->entries = g_slist_append (p->entries, pe);
+		if (pe != NULL) {
+			p->entries = g_slist_append (p->entries, pe);
+		}
 	}
 
 out:
