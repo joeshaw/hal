@@ -212,13 +212,15 @@ usage ()
 	fprintf (stderr, "\n" "usage : hald [--daemon=yes|no] [--verbose=yes|no] [--help]\n");
 	fprintf (stderr,
 		 "\n"
-		 "        --daemon=yes|no      Become a daemon\n"
-		 "        --verbose=yes|no     Print out debug (overrides HALD_VERBOSE)\n"
- 		 "        --use-syslog         Print out debug messages to syslog instead of stderr.\n"
-		 "                             Use this option to get debug messages if HAL runs as\n"
-		 "                             daemon.\n"
-		 "        --help               Show this information and exit\n"
-		 "        --version            Output version information and exit"
+		 "        --daemon=yes|no       Become a daemon\n"
+		 "        --verbose=yes|no      Print out debug (overrides HALD_VERBOSE)\n"
+ 		 "        --use-syslog          Print out debug messages to syslog instead of\n"
+		 "                              stderr. Use this option to get debug messages\n"
+		 "                              if hald runs as a daemon.\n"
+		 "        --help                Show this information and exit\n"
+		 "        --version             Output version information and exit\n"
+		 "        --exit-after-probing  Exit when probing is complete. Useful only\n"
+		 "                              when profiling hald.\n"
 		 "\n"
 		 "The HAL daemon detects devices present in the system and provides the\n"
 		 "org.freedesktop.Hal service through the system-wide message bus provided\n"
@@ -234,6 +236,7 @@ static dbus_bool_t opt_become_daemon = TRUE;
 /** If #TRUE, we will spew out debug */
 dbus_bool_t hald_is_verbose = FALSE;
 dbus_bool_t hald_use_syslog = FALSE;
+dbus_bool_t hald_debug_exit_after_probing = FALSE;
 
 static int sigterm_unix_signal_pipe_fds[2];
 static GIOChannel *sigterm_iochn;
@@ -399,6 +402,7 @@ main (int argc, char *argv[])
 		int option_index = 0;
 		const char *opt;
 		static struct option long_options[] = {
+			{"exit-after-probing", 0, NULL, 0},
 			{"daemon", 1, NULL, 0},
 			{"verbose", 1, NULL, 0},
 			{"use-syslog", 0, NULL, 0},
@@ -422,6 +426,8 @@ main (int argc, char *argv[])
 			} else if (strcmp (opt, "version") == 0) {
 				fprintf (stderr, "HAL package version: " PACKAGE_VERSION "\n");
 				return 0;
+			} else if (strcmp (opt, "exit-after-probing") == 0) {
+				hald_debug_exit_after_probing = TRUE;
 			} else if (strcmp (opt, "daemon") == 0) {
 				if (strcmp ("yes", optarg) == 0) {
 					opt_become_daemon = TRUE;
@@ -617,6 +623,13 @@ osspec_probe_done (void)
 	char buf[1] = {0};
 
 	HAL_INFO (("Device probing completed"));
+
+	if (hald_debug_exit_after_probing) {
+		HAL_INFO (("Exiting on user request (--exit-after-probing)"));
+		hald_runner_kill_all();
+		exit (0);
+	}
+
 
 	if (!hald_dbus_init ()) {
 		hald_runner_kill_all();
