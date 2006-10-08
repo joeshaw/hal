@@ -99,12 +99,37 @@ Other items
    require reworking the 'fakevolume' code as we'd be adding more
    than one fakevolume
 
-Items that might be interesting or maybe not:
----------------------------------------------
+Optimization
+------------
 
- - Port hal daemon core to use dbus-glib bindings? I'm not convinced this
-   will buy us much, the core code is already done, debugged and working
-   plus dbus-glib bindings only support one interface per proxy...
+ - Don't load, parse all fdi files 4 times for every device object
+   added. It's wasteful to parse the same file over and over agin
+   - load, parse fdi file into "rule object", see
+     http://lists.freedesktop.org/archives/hal/2006-July/005672.html
+   - load all rule objects at startup into cache
+   - evict all cache items after startup
+   - expire cache items after timeout / LRU scheme
+
+ - Don't load pci.ids, usb.ids into memory (pci.ids 426333 bytes, usb.ids
+   is 153540 bytes) at startup (even without parsing it); it costs
+   580K right now. It's wasteful to parse the same file over and over again.
+   - load, parse file into efficient lookup tree
+   - free tree when no longer used?
+
+ - Device Store lookup cleanups
+
+ - Device Object property cleanups
+
+ - Port hal daemon core to use dbus glib bindings
+   - One proxy per hal device object
+   - hal device object is an GObject
+   - wants to export multiple D-Bus interfaces for a single GObject
+   - for some interfaces... need/want to handle all messages on myself
+     (for forwarding to addons)
+   - ie. need to partipate in Introspection() on "DBusGProxy" stuff
+
+ - Linux: Optionally drop sysfs coldplug code
+   - for starting up before udev and piggy tailing on udev's coldplug code
 
 External projects:
 ------------------
