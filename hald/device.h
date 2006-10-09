@@ -30,8 +30,6 @@
 #include <glib-object.h>
 #include <dbus/dbus.h>
 
-#include "property.h"
-
 struct _HalDevicePrivate;
 typedef struct _HalDevicePrivate HalDevicePrivate;
 
@@ -67,9 +65,18 @@ struct _HalDeviceClass {
 #define HAL_IS_DEVICE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), \
                                      HAL_TYPE_DEVICE))
 
+#define HAL_PROPERTY_TYPE_INVALID     DBUS_TYPE_INVALID
+#define HAL_PROPERTY_TYPE_INT32       DBUS_TYPE_INT32
+#define HAL_PROPERTY_TYPE_UINT64      DBUS_TYPE_UINT64
+#define HAL_PROPERTY_TYPE_DOUBLE      DBUS_TYPE_DOUBLE
+#define HAL_PROPERTY_TYPE_BOOLEAN     DBUS_TYPE_BOOLEAN
+#define HAL_PROPERTY_TYPE_STRING      DBUS_TYPE_STRING
+#define HAL_PROPERTY_TYPE_STRLIST     ((int) (DBUS_TYPE_STRING<<8)+('l'))
+
+
 /* Return value of FALSE means that the foreach should be short-circuited */
 typedef gboolean (*HalDevicePropertyForeachFn) (HalDevice *device,
-						HalProperty *property,
+						const char *key,
 						gpointer user_data);
 
 GType         hal_device_get_type            (void);
@@ -99,8 +106,7 @@ gboolean      hal_device_has_capability      (HalDevice    *device,
 
 gboolean      hal_device_has_property        (HalDevice    *device,
 					      const char   *key);
-HalProperty  *hal_device_property_find       (HalDevice    *device,
-					      const char   *key);
+
 int           hal_device_num_properties      (HalDevice    *device);
 char *        hal_device_property_to_string  (HalDevice    *device,
 					      const char   *key);

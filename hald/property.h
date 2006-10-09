@@ -31,14 +31,6 @@
 
 typedef struct _HalProperty HalProperty;
 
-#define HAL_PROPERTY_TYPE_INVALID         DBUS_TYPE_INVALID
-#define HAL_PROPERTY_TYPE_INT32       DBUS_TYPE_INT32
-#define HAL_PROPERTY_TYPE_UINT64      DBUS_TYPE_UINT64
-#define HAL_PROPERTY_TYPE_DOUBLE      DBUS_TYPE_DOUBLE
-#define HAL_PROPERTY_TYPE_BOOLEAN     DBUS_TYPE_BOOLEAN
-#define HAL_PROPERTY_TYPE_STRING      DBUS_TYPE_STRING
-#define HAL_PROPERTY_TYPE_STRLIST     ((int) (DBUS_TYPE_STRING<<8)+('l'))
-
 void          hal_property_free               (HalProperty  *prop);
 
 HalProperty *hal_property_new_string          (const char   *key,

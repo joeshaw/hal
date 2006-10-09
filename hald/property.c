@@ -31,6 +31,7 @@
 #include <string.h>
 #include <glib.h>
 
+#include "device.h"
 #include "logger.h"
 #include "property.h"
 

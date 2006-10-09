@@ -675,12 +675,12 @@ out:
  */
 
 static gboolean
-foreach_property_append (HalDevice *device, HalProperty *p,
+foreach_property_append (HalDevice *device, 
+			 const char *key,
 			 gpointer user_data)
 {
 	DBusMessageIter *iter;
 	DBusMessageIter iter_dict_entry;
-	const char *key;
 	int type;
 
 	iter = (DBusMessageIter *)user_data;
@@ -690,8 +690,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 					  NULL,
 					  &iter_dict_entry);
 
-	key = hal_property_get_key (p);
-	type = hal_property_get_type (p);
+	type = hal_device_property_get_type (device, key);
 
 	dbus_message_iter_append_basic (&iter_dict_entry, DBUS_TYPE_STRING, &key);
 
@@ -701,7 +700,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 		DBusMessageIter iter_var;
 		const char *v;
 
-		v = hal_property_get_string (p);
+		v = hal_device_property_get_string (device, key);
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -721,7 +720,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 		DBusMessageIter iter_var;
 		dbus_int32_t v;
 
-		v = hal_property_get_int (p);
+		v = hal_device_property_get_int (device, key);
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -741,7 +740,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 		DBusMessageIter iter_var;
 		dbus_uint64_t v;
 
-		v = hal_property_get_uint64 (p);
+		v = hal_device_property_get_uint64 (device, key);
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -761,7 +760,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 		DBusMessageIter iter_var;
 		double v;
 
-		v = hal_property_get_double (p);
+		v = hal_device_property_get_double (device, key);
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -781,7 +780,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 		DBusMessageIter iter_var;
 		dbus_bool_t v;
 
-		v = hal_property_get_bool (p);
+		v = hal_device_property_get_bool (device, key);
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -812,7 +811,7 @@ foreach_property_append (HalDevice *device, HalProperty *p,
 						  DBUS_TYPE_STRING_AS_STRING,
 						  &iter_array);
 
-		for (iter = hal_property_get_strlist (p); iter != NULL; iter = iter->next) {
+		for (iter = hal_device_property_get_strlist (device, key); iter != NULL; iter = iter->next) {
 				     
 			const char *v;
 			v = (const char *) iter->data;
@@ -1125,11 +1124,10 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 	const char *udi;
 	char *key;
 	int type;
-	HalProperty *p;
 
 	udi = dbus_message_get_path (message);
 
-	HAL_TRACE (("entering, udi=%s", udi));
+     	HAL_TRACE (("entering, udi=%s", udi));
 
 	d = hal_device_store_find (hald_get_gdl (), udi);
 	if (d == NULL)
@@ -1148,8 +1146,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	p = hal_device_property_find (d, key);
-	if (p == NULL) {
+	if (!hal_device_has_property (d, key)) {
 		raise_no_such_property (connection, message, udi, key);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1160,40 +1157,40 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 
 	dbus_message_iter_init_append (reply, &iter);
 
-	type = hal_property_get_type (p);
+	type = hal_device_property_get_type (d, key);
 	switch (type) {
 	case HAL_PROPERTY_TYPE_STRING:
 	{
 		const char *s;
-		s = hal_property_get_string (p);
+		s = hal_device_property_get_string (d, key);
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &s);
 		break;
 	}
 	case HAL_PROPERTY_TYPE_INT32:
 	{
 		dbus_int32_t i;
-		i = hal_property_get_int (p);
+		i = hal_device_property_get_int (d, key);
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &i);
 		break;
 	}
 	case HAL_PROPERTY_TYPE_UINT64:
 	{
 		dbus_uint64_t ul;
-		ul = hal_property_get_uint64 (p);
+		ul = hal_device_property_get_uint64 (d, key);
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT64, &ul);
 		break;
 	}
 	case HAL_PROPERTY_TYPE_DOUBLE:
 	{
-		double d;
-		d = hal_property_get_double (p);
-		dbus_message_iter_append_basic (&iter, DBUS_TYPE_DOUBLE, &d);
+		double vd;
+		vd = hal_device_property_get_double (d, key);
+		dbus_message_iter_append_basic (&iter, DBUS_TYPE_DOUBLE, &vd);
 		break;
 	}
 	case HAL_PROPERTY_TYPE_BOOLEAN:
 	{
 		dbus_bool_t b;
-		b = hal_property_get_bool (p);
+		b = hal_device_property_get_bool (d, key);
 		dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &b);
 		break;
 	}
@@ -1207,7 +1204,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 						  DBUS_TYPE_STRING_AS_STRING,
 						  &iter_array);
 
-		for (l = hal_property_get_strlist (p); l != NULL; l = g_slist_next (l)) {
+		for (l = hal_device_property_get_strlist (d, key); l != NULL; l = g_slist_next (l)) {
 			dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, &(l->data));
 		}
 
@@ -1252,7 +1249,6 @@ device_get_property_type (DBusConnection * connection,
 	HalDevice *d;
 	const char *udi;
 	char *key;
-	HalProperty *p;
 	dbus_int32_t i;
 
 	udi = dbus_message_get_path (message);
@@ -1276,8 +1272,7 @@ device_get_property_type (DBusConnection * connection,
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	p = hal_device_property_find (d, key);
-	if (p == NULL) {
+	if (!hal_device_has_property (d, key)) {
 		raise_no_such_property (connection, message, udi, key);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1286,7 +1281,7 @@ device_get_property_type (DBusConnection * connection,
 	if (reply == NULL)
 		DIE (("No memory"));
 
-	i = hal_property_get_type (p);
+	i = hal_device_property_get_type (d, key);
 	dbus_message_iter_init_append (reply, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &i);
 

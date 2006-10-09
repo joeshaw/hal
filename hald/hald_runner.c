@@ -289,15 +289,16 @@ error:
 }
 
 static gboolean
-add_property_to_msg (HalDevice *device, HalProperty *property, 
-                                     gpointer user_data)
+add_property_to_msg (HalDevice *device, 
+		     const char *key, 
+		     gpointer user_data)
 {
   char *prop_upper, *value;
   char *c;
   gchar *env;
   DBusMessageIter *iter = (DBusMessageIter *)user_data;
   
-  prop_upper = g_ascii_strup (hal_property_get_key (property), -1);
+  prop_upper = g_ascii_strup (key, -1);
  
   /* periods aren't valid in the environment, so replace them with
    * underscores. */
@@ -306,7 +307,7 @@ add_property_to_msg (HalDevice *device, HalProperty *property,
       *c = '_';
   }
 
-  value = hal_property_to_string (property);
+  value = hal_device_property_to_string (device, key);
   env = g_strdup_printf ("HAL_PROP_%s=%s", prop_upper, value);
   dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &env);
 

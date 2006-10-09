@@ -33,6 +33,7 @@
 
 #include "hald.h"
 #include "device.h"
+#include "property.h"
 #include "hald_marshal.h"
 #include "logger.h"
 #include "hald_runner.h"
@@ -443,15 +444,6 @@ hal_device_has_capability (HalDevice *device, const char *capability)
 	return matched;
 }
 
-gboolean
-hal_device_has_property (HalDevice *device, const char *key)
-{
-	g_return_val_if_fail (device != NULL, FALSE);
-	g_return_val_if_fail (key != NULL, FALSE);
-
-	return hal_device_property_find (device, key) != NULL;
-}
-
 int
 hal_device_num_properties (HalDevice *device)
 {
@@ -460,7 +452,7 @@ hal_device_num_properties (HalDevice *device)
 	return g_slist_length (device->private->properties);
 }
 
-HalProperty *
+static HalProperty *
 hal_device_property_find (HalDevice *device, const char *key)
 {
 	GSList *iter;
@@ -471,11 +463,21 @@ hal_device_property_find (HalDevice *device, const char *key)
 	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
 
-		if (strcmp (hal_property_get_key (p), key) == 0)
+		if (strcmp (hal_property_get_key (p), key) == 0) {
 			return p;
+		}
 	}
 
 	return NULL;
+}
+
+gboolean
+hal_device_has_property (HalDevice *device, const char *key)
+{
+	g_return_val_if_fail (device != NULL, FALSE);
+	g_return_val_if_fail (key != NULL, FALSE);
+	
+	return hal_device_property_find (device, key) != NULL;
 }
 
 char *
@@ -504,7 +506,7 @@ hal_device_property_foreach (HalDevice *device,
 		HalProperty *p = iter->data;
 		gboolean cont;
 
-		cont = callback (device, p, user_data);
+		cont = callback (device, hal_property_get_key (p), user_data);
 
 		if (cont == FALSE)
 			return;
