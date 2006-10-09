@@ -50,8 +50,6 @@ struct _HalDevicePrivate
 enum {
 	PROPERTY_CHANGED,
 	CAPABILITY_ADDED,
-	CALLOUTS_FINISHED,
-	CANCELLED,
 	LAST_SIGNAL
 };
 
@@ -117,26 +115,6 @@ hal_device_class_init (HalDeviceClass *klass)
 			      hald_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1,
 			      G_TYPE_STRING);
-
-	signals[CALLOUTS_FINISHED] =
-		g_signal_new ("callouts_finished",
-			      G_TYPE_FROM_CLASS (klass),
-			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (HalDeviceClass,
-					       callouts_finished),
-			      NULL, NULL,
-			      hald_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
-
-	signals[CANCELLED] =
-		g_signal_new ("cancelled",
-			      G_TYPE_FROM_CLASS (klass),
-			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (HalDeviceClass,
-					       cancelled),
-			      NULL, NULL,
-			      hald_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 }
 
 static void
@@ -920,22 +898,6 @@ hal_device_property_remove (HalDevice *device, const char *key)
 	return TRUE;
 }
 
-gboolean
-hal_device_property_set_attribute (HalDevice *device,
-				   const char *key,
-				   enum PropertyAttribute attr,
-				   gboolean val)
-{
-	HalProperty *prop;
-
-	prop = hal_device_property_find (device, key);
-
-	if (prop == NULL)
-		return FALSE;
-
-	return TRUE;
-}
-
 void
 hal_device_print (HalDevice *device)
 {
@@ -987,110 +949,6 @@ hal_device_print (HalDevice *device)
         }
         fprintf (stderr, "\n");
 }
-
-
-typedef struct {
-	char *key;
-	HalDevice *device;
-	HalDeviceAsyncCallback callback;
-	gpointer user_data;
-
-	guint prop_signal_id;
-	guint timeout_id;
-} AsyncMatchInfo;
-
-static void
-destroy_async_match_info (AsyncMatchInfo *ai)
-{
-	g_free (ai->key);
-	g_signal_handler_disconnect (ai->device, ai->prop_signal_id);
-	g_source_remove (ai->timeout_id);
-	g_object_unref (ai->device);
-	g_free (ai);
-}
-
-static void
-prop_changed_cb (HalDevice *device, const char *key,
-		 gboolean removed, gboolean added, gpointer user_data)
-{
-	AsyncMatchInfo *ai = user_data;
-
-	if (strcmp (key, ai->key) != 0)
-		return;
-
-	/* the property is no longer there */
-	if (removed)
-		goto cleanup;
-
-
-	ai->callback (ai->device, ai->user_data, TRUE);
-
-cleanup:
-	destroy_async_match_info (ai);
-}
-
-
-static gboolean
-async_wait_timeout (gpointer user_data)
-{
-	AsyncMatchInfo *ai = (AsyncMatchInfo *) user_data;
-
-	ai->callback (ai->device, ai->user_data, FALSE);
-
-	destroy_async_match_info (ai);
-
-	return FALSE;
-}
-
-void
-hal_device_async_wait_property (HalDevice    *device,
-				const char   *key,
-				HalDeviceAsyncCallback callback,
-				gpointer     user_data,
-				int          timeout)
-{
-	HalProperty *prop;
-	AsyncMatchInfo *ai;
-
-	/* check if property already exists */
-	prop = hal_device_property_find (device, key);
-
-	if (prop != NULL || timeout==0) {
-		callback (device, user_data, prop != NULL);
-		return;
-	}
-
-	ai = g_new0 (AsyncMatchInfo, 1);
-
-	ai->device = g_object_ref (device);
-	ai->key = g_strdup (key);
-	ai->callback = callback;
-	ai->user_data = user_data;
-
-	ai->prop_signal_id = g_signal_connect (device, "property_changed",
-					       G_CALLBACK (prop_changed_cb),
-					       ai);
-
-	ai->timeout_id = g_timeout_add (timeout, async_wait_timeout, ai);
-}
-
-void
-hal_device_callouts_finished (HalDevice *device)
-{
-	g_signal_emit (device, signals[CALLOUTS_FINISHED], 0);
-}
-
-/** Used when giving up on a device, e.g. if no device file appeared
- */
-void
-hal_device_cancel (HalDevice *device)
-{
-	HAL_INFO (("udi=%s", device->private->udi));
-	g_signal_emit (device, signals[CANCELLED], 0);
-}
-
-
-
 
 GSList *
 hal_device_property_get_strlist (HalDevice    *device, 

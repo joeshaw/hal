@@ -55,10 +55,6 @@ struct _HalDeviceClass {
 
 	void (*capability_added) (HalDevice *device,
 				  const char *capability);
-
-	void (*callouts_finished) (HalDevice *device);
-
-	void (*cancelled) (HalDevice *device);
 };
 
 #define HAL_TYPE_DEVICE             (hal_device_get_type ())
@@ -70,10 +66,6 @@ struct _HalDeviceClass {
                                      HAL_TYPE_DEVICE))
 #define HAL_IS_DEVICE_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), \
                                      HAL_TYPE_DEVICE))
-
-typedef void     (*HalDeviceAsyncCallback) (HalDevice *device,
-					    gpointer user_data,
-					    gboolean prop_exists);
 
 /* Return value of FALSE means that the foreach should be short-circuited */
 typedef gboolean (*HalDevicePropertyForeachFn) (HalDevice *device,
@@ -180,28 +172,13 @@ gboolean      hal_device_property_strlist_is_empty (HalDevice    *device,
 gboolean      hal_device_property_remove     (HalDevice    *device,
 					      const char   *key);
 
+
+void          hal_device_print               (HalDevice    *device);
+
 gboolean      hal_device_copy_property       (HalDevice *from_device, 
 					      const char *from,
 					      HalDevice *to_device,
 					      const char *to);
-
-
-void          hal_device_print               (HalDevice    *device);
-
-void          hal_device_async_wait_property (HalDevice    *device,
-					      const char   *key,
-					      HalDeviceAsyncCallback callback,
-					      gpointer      user_data,
-					      int           timeout);
-
-void          hal_device_callouts_finished    (HalDevice    *device);
-
-void          hal_device_cancel               (HalDevice    *device);
-
-gboolean      hal_device_property_set_attribute (HalDevice *device,
-						 const char *key,
-						 enum PropertyAttribute attr,
-						 gboolean persistence);
 
 void          hal_device_inc_num_addons (HalDevice *device);
 

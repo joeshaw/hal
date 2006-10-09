@@ -37,8 +37,6 @@
 struct _HalProperty {
 	char *key;
 
-	void *foo;
-
 	int type;
 	union {
 		char *str_value;
@@ -48,9 +46,6 @@ struct _HalProperty {
 		double double_value;
 		GSList *strlist_value;
 	} v;
-	gboolean readonly;
-	gboolean persistence;
-	gboolean callout;
 };
 
 void
@@ -341,44 +336,6 @@ hal_property_set_double (HalProperty *prop, double value)
 
 	prop->type = HAL_PROPERTY_TYPE_DOUBLE;
 	prop->v.double_value = value;
-}
-
-void
-hal_property_set_attribute (HalProperty *prop,
-			    enum PropertyAttribute attr,
-			    gboolean val)
-{
-	g_return_if_fail (prop != NULL);
-
-	switch (attr) {
-	case READONLY:
-		prop->readonly = val;
-		break;
-	case PERSISTENCE:
-		prop->persistence = val;
-		break;
-	case CALLOUT:
-		prop->callout = val;
-		break;
-	}
-}
-
-gboolean
-hal_property_get_attribute (HalProperty *prop,
-			    enum PropertyAttribute attr)
-{
-	g_return_val_if_fail (prop != NULL, -1);
-
-	switch (attr) {
-	case READONLY:
-		return prop->readonly;
-	case PERSISTENCE:
-		return prop->persistence;
-	case CALLOUT:
-		return prop->callout;
-	default:
-		return -1;
-	}
 }
 
 HalProperty *

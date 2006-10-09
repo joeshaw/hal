@@ -227,6 +227,7 @@ static HotplugEvent
 	struct stat statbuf;
 	gboolean from_pool = FALSE;
 
+	/* TODO: FIXME: this is experimental code */
 	if (pool == NULL) {
 		pool = g_new0 (HotplugEvent, pool_size);
 		pool_next_free = 0;

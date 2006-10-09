@@ -448,7 +448,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 	ssize_t read;
 	size_t len;
 	char *poweroptions;
-	char *pmtype;
+	const char *pmtype;
 	FILE *fp;
 
 	can_suspend = FALSE;
@@ -474,7 +474,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_hibernate = TRUE;
 	free (poweroptions);
 
-	pmtype = hal_device_property_get_string(d, "power_management.type");
+	pmtype = hal_device_property_get_string (d, "power_management.type");
 	if (pmtype != NULL && strcmp(pmtype, "pmu") == 0) {
 		/* We got our own helper for suspend PMU machines */
 		can_suspend = TRUE;

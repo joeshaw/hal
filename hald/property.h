@@ -39,12 +39,6 @@ typedef struct _HalProperty HalProperty;
 #define HAL_PROPERTY_TYPE_STRING      DBUS_TYPE_STRING
 #define HAL_PROPERTY_TYPE_STRLIST     ((int) (DBUS_TYPE_STRING<<8)+('l'))
 
-enum PropertyAttribute {
-	READONLY,
-	PERSISTENCE,
-	CALLOUT
-};
-
 void          hal_property_free               (HalProperty  *prop);
 
 HalProperty *hal_property_new_string          (const char   *key,
@@ -93,11 +87,5 @@ gboolean      hal_property_strlist_remove     (HalProperty  *prop,
 					       const char *value);
 gboolean      hal_property_strlist_clear      (HalProperty  *prop);
 
-
-void          hal_property_set_attribute      (HalProperty *prop,
-					       enum PropertyAttribute attr,
-					       gboolean val);
-gboolean      hal_property_get_attribute      (HalProperty *prop,
-					       enum PropertyAttribute attr);
 
 #endif /* PROPERTY_H */
