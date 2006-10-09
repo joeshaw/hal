@@ -342,7 +342,7 @@ foreach_device_match_get_udi_tdl (HalDeviceStore *store, HalDevice *device,
 	const char *dev_value;
 
 	/* skip devices in the TDL that hasn't got a real UDI yet */
-	if (strncmp (device->udi, "/org/freedesktop/Hal/devices/temp",
+	if (strncmp (hal_device_get_udi (device), "/org/freedesktop/Hal/devices/temp",
 		     sizeof ("/org/freedesktop/Hal/devices/temp")) == 0)
 		return TRUE;
 
@@ -444,9 +444,11 @@ foreach_device_by_capability (HalDeviceStore *store, HalDevice *device, gpointer
 	DeviceCapabilityInfo *info = (DeviceCapabilityInfo *) user_data;
 
 	if (hal_device_has_capability (device, info->capability)) {
+		const char *udi;
+		udi = hal_device_get_udi (device);
 		dbus_message_iter_append_basic (info->iter,
 						DBUS_TYPE_STRING,
-						&(device->udi));
+						&udi);
 	}
 
 	return TRUE;
@@ -2125,7 +2127,7 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 
 /*
     HAL_INFO(("Entering, udi=%s, key=%s, in_gdl=%s, removed=%s added=%s",
-              device->udi, key, 
+              hal_device_get_udi (device), key, 
               in_gdl ? "true" : "false",
               removed ? "true" : "false",
               added ? "true" : "false"));
@@ -2629,7 +2631,7 @@ manager_new_device (DBusConnection * connection, DBusMessage * message, dbus_boo
 static void 
 manager_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+	HAL_INFO (("Remove callouts completed udi=%s", hal_device_get_udi (d)));
 
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
@@ -2708,7 +2710,7 @@ manager_remove (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 static void
 manager_commit_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 }
 
 /*
@@ -2902,7 +2904,7 @@ device_is_executing_method (HalDevice *d, const char *interface_name, const char
 
 	ret = FALSE;
 
-	if (g_hash_table_lookup_extended (udi_to_method_queue, d->udi, &origkey, (gpointer) &queue)) {
+	if (g_hash_table_lookup_extended (udi_to_method_queue, hal_device_get_udi (d), &origkey, (gpointer) &queue)) {
 
 		if (queue != NULL) {
 			MethodInvocation *mi;
@@ -3013,7 +3015,7 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 	gchar *exp_name = NULL;
 	gchar *exp_detail = NULL;
 
-	hald_exec_method_process_queue (d->udi);
+	hald_exec_method_process_queue (hal_device_get_udi (d));
 
 	message = (DBusMessage *) data1;
 	conn = (DBusConnection *) data2;
@@ -3218,7 +3220,7 @@ hald_exec_method (HalDevice *d, DBusConnection *connection, dbus_bool_t local_in
 	}
 
 	mi = g_new0 (MethodInvocation, 1);
-	mi->udi = g_strdup (d->udi);
+	mi->udi = g_strdup (hal_device_get_udi (d));
 	mi->execpath = g_strdup (execpath);
 	mi->extra_env = g_strdupv (extra_env);
 	mi->mstdin = g_strdup (stdin_str->str);
@@ -3943,11 +3945,11 @@ local_server_message_handler (DBusConnection *connection,
 			      DBusMessage *message, 
 			      void *user_data)
 {
-	/*HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
+	HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
 		   dbus_message_get_destination (message), 
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
-		   dbus_message_get_member (message)));*/
+		   dbus_message_get_member (message)));
 
 	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
 		DBusMessage *reply;
@@ -3965,7 +3967,9 @@ local_server_message_handler (DBusConnection *connection,
 		GSList *i;
 		GSList *j;
 		
-		HAL_INFO (("Client to local_server was disconnected"));
+		HAL_INFO (("************************"));
+		HAL_INFO (("Client to local_server was disconnected for %x", connection));
+		HAL_INFO (("************************"));
 
 		for (i = helper_interface_handlers; i != NULL; i = j) {
 			HelperInterfaceHandler *hih = i->data;
@@ -3993,7 +3997,9 @@ local_server_message_handler (DBusConnection *connection,
 		}
 		dbus_message_unref (copy);
 	} else {
-		return hald_dbus_filter_handle_methods (connection, message, user_data, TRUE);
+		DBusHandlerResult ret;
+		ret = hald_dbus_filter_handle_methods (connection, message, user_data, TRUE);
+		return ret;
 	}
 
 	return DBUS_HANDLER_RESULT_HANDLED;
@@ -4002,7 +4008,9 @@ local_server_message_handler (DBusConnection *connection,
 static void
 local_server_unregister_handler (DBusConnection *connection, void *user_data)
 {
-	HAL_INFO (("unregistered"));
+	HAL_INFO (("***************************"));
+	HAL_INFO (("********* unregistered %x", connection));
+	HAL_INFO (("***************************"));
 }
 
 static void
@@ -4014,8 +4022,9 @@ local_server_handle_connection (DBusServer *server,
 					&local_server_message_handler, 
 					NULL, NULL, NULL, NULL};
 
-	HAL_INFO (("%d: Got a connection", getpid ()));
-	HAL_INFO (("dbus_connection_get_is_connected = %d", dbus_connection_get_is_connected (new_connection)));
+	HAL_INFO (("***************************"));
+	HAL_INFO (("********* got a connection %x", new_connection));
+	HAL_INFO (("***************************"));
 
 	/*dbus_connection_add_filter (new_connection, server_filter_function, NULL, NULL);*/
 
@@ -4029,14 +4038,12 @@ local_server_handle_connection (DBusServer *server,
 
 
 static DBusServer *local_server = NULL;
+static char *local_server_address = NULL;
 
 char *
 hald_dbus_local_server_addr (void)
 {
-	if (local_server == NULL)
-		return NULL;
-
-	return dbus_server_get_address (local_server);
+	return local_server_address;
 }
 
 gboolean
@@ -4055,7 +4062,8 @@ hald_dbus_local_server_init (void)
 		HAL_ERROR (("Cannot create D-BUS server"));
 		goto out;
 	}
-	HAL_INFO (("local server is listening at %s", dbus_server_get_address (local_server)));
+	local_server_address = dbus_server_get_address (local_server);
+	HAL_INFO (("local server is listening at %s", local_server_address));
 	dbus_server_setup_with_g_main (local_server, NULL);
 	dbus_server_set_new_connection_function (local_server, local_server_handle_connection, NULL, NULL);	
 
@@ -4063,6 +4071,19 @@ hald_dbus_local_server_init (void)
 
 out:
 	return ret;
+}
+
+void
+hald_dbus_local_server_shutdown (void)
+{
+	if (local_server != NULL) {
+		HAL_INFO (("Shutting down local server"));
+		dbus_server_disconnect (local_server);
+		dbus_server_unref (local_server);
+		local_server = NULL;
+		dbus_free (local_server_address);
+		local_server_address = NULL;
+	}
 }
 
 gboolean

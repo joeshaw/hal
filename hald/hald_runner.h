@@ -49,6 +49,10 @@ typedef void (*HalRunTerminatedCB) (HalDevice *d, guint32 exit_type,
 gboolean
 hald_runner_start_runner(void);
 
+/* Stop the runner daemon */
+void
+hald_runner_stop_runner(void);
+
 /* Start a helper, returns true on a successfull start. 
  * cb will be called on abnormal or premature termination
  * only 

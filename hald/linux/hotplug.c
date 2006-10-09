@@ -62,7 +62,12 @@ hotplug_event_end (void *end_token)
 	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
 
 	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
-	g_free (hotplug_event);
+
+	if (hotplug_event->free_function != NULL) {
+		hotplug_event->free_function (hotplug_event);
+	} else {
+		g_free (hotplug_event);
+	}
 	hotplug_event_process_queue ();
 }
 
@@ -438,7 +443,7 @@ hotplug_rescan_device (HalDevice *d)
 		break;
 
 	default:
-		HAL_INFO (("Unknown hotplug type for udi=%s", d->udi));
+		HAL_INFO (("Unknown hotplug type for udi=%s", hal_device_get_udi (d)));
 		ret = FALSE;
 		break;
 	}
@@ -454,7 +459,7 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 	HotplugEvent *e;
 
 	/* first remove childs */
-	childs = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", d->udi);
+	childs = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", hal_device_get_udi (d));
 	for (i = childs; i != NULL; i = g_slist_next (i)) {
 		HalDevice *child;
 
@@ -463,7 +468,7 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 	}
 
 	/* then remove self */
-	HAL_INFO (("Generate remove event for udi %s", d->udi));
+	HAL_INFO (("Generate remove event for udi %s", hal_device_get_udi (d)));
 	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
 	case HOTPLUG_EVENT_SYSFS_BUS:
 		e = physdev_generate_remove_hotplug_event (d);
@@ -491,7 +496,7 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 
 	default:
 		e = NULL;
-		HAL_INFO (("Unknown hotplug type for udi=%s", d->udi));
+		HAL_INFO (("Unknown hotplug type for udi=%s", hal_device_get_udi (d)));
 		break;
 	}
 
@@ -508,7 +513,7 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 	HotplugEvent *e;
 
 	/* first add self */
-	HAL_INFO (("Generate add event for udi %s", d->udi));
+	HAL_INFO (("Generate add event for udi %s", hal_device_get_udi (d)));
 	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
 	case HOTPLUG_EVENT_SYSFS_BUS:
 		e = physdev_generate_add_hotplug_event (d);
@@ -536,7 +541,7 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 
 	default:
 		e = NULL;
-		HAL_INFO (("Unknown hotplug type for udi=%s", d->udi));
+		HAL_INFO (("Unknown hotplug type for udi=%s", hal_device_get_udi (d)));
 		break;
 	}
 
@@ -545,7 +550,7 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 	}
 
 	/* then add childs */
-	childs = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", d->udi);
+	childs = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), "info.parent", hal_device_get_udi (d));
 	for (i = childs; i != NULL; i = g_slist_next (i)) {
 		HalDevice *child;
 

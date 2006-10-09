@@ -180,6 +180,10 @@ filter(DBusConnection *con, DBusMessage *msg, void *user_data)
 	} else if (dbus_message_is_method_call(msg, "org.freedesktop.HalRunner", "Kill")) {
 		handle_kill(con, msg);
 		return DBUS_HANDLER_RESULT_HANDLED;
+	} else if (dbus_message_is_method_call(msg, "org.freedesktop.HalRunner", "Shutdown")) {
+		run_kill_all ();
+		exit (0);
+		return DBUS_HANDLER_RESULT_HANDLED;
 	} else if (dbus_message_is_method_call(msg, "org.freedesktop.HalRunner", "KillAll")) {
 		run_kill_all();
 		/* alwasy successfull */

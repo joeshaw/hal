@@ -131,14 +131,14 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 
 		/* TODO: could read some pmu file? */
 		remaining_time = util_compute_time_remaining (
-					d->udi,
+					hal_device_get_udi (d),
 					hal_device_property_get_int (d, "battery.charge_level.rate"),
 					current,
 					last_full,
 					hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
 					hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
 					hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
-		remaining_percentage = util_compute_percentage_charge (d->udi, current, last_full);
+		remaining_percentage = util_compute_percentage_charge (hal_device_get_udi (d), current, last_full);
 		/*
 		 * Only set keys if no error (signified with negative return value)
 		 * Scrict checking is needed to ensure that the values presented by HAL
@@ -400,7 +400,7 @@ pmu_generic_add (const gchar *pmu_path, HalDevice *parent, PMUDevHandler *handle
 	hal_device_property_set_string (d, "linux.pmu_path", pmu_path);
 	hal_device_property_set_int (d, "linux.pmu_type", handler->pmu_type);
 	if (parent != NULL)
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	else
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	if (handler->refresh == NULL || !handler->refresh (d, handler)) {
@@ -580,7 +580,7 @@ pmu_rescan_device (HalDevice *d)
 		}
 	}
 
-	HAL_WARNING (("Didn't find a rescan handler for udi %s", d->udi));
+	HAL_WARNING (("Didn't find a rescan handler for udi %s", hal_device_get_udi (d)));
 
 out:
 	return ret;

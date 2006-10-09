@@ -39,6 +39,14 @@
 
 static GObjectClass *parent_class;
 
+struct _HalDevicePrivate
+{
+	char *udi;	
+	int num_addons;
+	int num_addons_ready;
+	GSList *properties;
+};
+
 enum {
 	PROPERTY_CHANGED,
 	CAPABILITY_ADDED,
@@ -62,17 +70,19 @@ hal_device_finalize (GObject *obj)
 
 #ifdef HALD_MEMLEAK_DBG
 	dbg_hal_device_object_delta--;
-	printf ("************* in finalize for udi=%s\n", device->udi);
+	printf ("************* in finalize for udi=%s\n", device->private->udi);
 #endif
 
 
-	g_slist_foreach (device->properties, (GFunc) hal_property_free, NULL);
+	g_slist_foreach (device->private->properties, (GFunc) hal_property_free, NULL);
+	g_slist_free (device->private->properties);
 
-	g_free (device->udi);
+	g_free (device->private->udi);
+
+	g_free (device->private);
 
 	if (parent_class->finalize)
 		parent_class->finalize (obj);
-
 }
 
 static void
@@ -134,10 +144,12 @@ hal_device_init (HalDevice *device)
 {
 	static int temp_device_counter = 0;
 
-	device->udi = g_strdup_printf ("/org/freedesktop/Hal/devices/temp/%d",
+	device->private = g_new0 (HalDevicePrivate, 1);
+
+	device->private->udi = g_strdup_printf ("/org/freedesktop/Hal/devices/temp/%d",
 				       temp_device_counter++);
-	device->num_addons = 0;
-	device->num_addons_ready = 0;
+	device->private->num_addons = 0;
+	device->private->num_addons_ready = 0;
 }
 
 GType
@@ -204,7 +216,7 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 
 	/* device_property_atomic_update_begin (); */
 
-	for (iter = source->properties; iter != NULL; iter = iter->next) {
+	for (iter = source->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
 		int type;
 		const char *key;
@@ -279,7 +291,7 @@ hal_device_merge (HalDevice *target, HalDevice *source)
 
 	/* device_property_atomic_update_begin (); */
 
-	for (iter = source->properties; iter != NULL; iter = iter->next) {
+	for (iter = source->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
 		int type;
 		const char *key;
@@ -353,7 +365,7 @@ hal_device_matches (HalDevice *device1, HalDevice *device2,
 
 	len = strlen (namespace);
 
-	for (iter = device1->properties; iter != NULL; iter = iter->next) {
+	for (iter = device1->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p;
 		const char *key;
 		int type;
@@ -413,15 +425,15 @@ hal_device_matches (HalDevice *device1, HalDevice *device2,
 const char *
 hal_device_get_udi (HalDevice *device)
 {
-	return device->udi;
+	return device->private->udi;
 }
 
 void
 hal_device_set_udi (HalDevice *device, const char *udi)
 {
-	if (device->udi != NULL)
-		g_free (device->udi);
-	device->udi = g_strdup (udi);
+	if (device->private->udi != NULL)
+		g_free (device->private->udi);
+	device->private->udi = g_strdup (udi);
 }
 
 void
@@ -467,7 +479,7 @@ hal_device_num_properties (HalDevice *device)
 {
 	g_return_val_if_fail (device != NULL, -1);
 
-	return g_slist_length (device->properties);
+	return g_slist_length (device->private->properties);
 }
 
 HalProperty *
@@ -478,7 +490,7 @@ hal_device_property_find (HalDevice *device, const char *key)
 	g_return_val_if_fail (device != NULL, NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 
-	for (iter = device->properties; iter != NULL; iter = iter->next) {
+	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
 
 		if (strcmp (hal_property_get_key (p), key) == 0)
@@ -510,7 +522,7 @@ hal_device_property_foreach (HalDevice *device,
 	g_return_if_fail (device != NULL);
 	g_return_if_fail (callback != NULL);
 
-	for (iter = device->properties; iter != NULL; iter = iter->next) {
+	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
 		gboolean cont;
 
@@ -708,7 +720,7 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 
 		prop = hal_property_new_string (key, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -742,7 +754,7 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new_int (key, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -776,7 +788,7 @@ hal_device_property_set_uint64 (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new_uint64 (key, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -810,7 +822,7 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new_bool (key, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -844,7 +856,7 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new_double (key, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -898,7 +910,7 @@ hal_device_property_remove (HalDevice *device, const char *key)
 	if (prop == NULL)
 		return FALSE;
 
-	device->properties = g_slist_remove (device->properties, prop);
+	device->private->properties = g_slist_remove (device->private->properties, prop);
 
 	hal_property_free (prop);
 
@@ -931,7 +943,7 @@ hal_device_print (HalDevice *device)
 
         fprintf (stderr, "device udi = %s\n", hal_device_get_udi (device));
 
-	for (iter = device->properties; iter != NULL; iter = iter->next) {
+	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
 		HalProperty *p = iter->data;
                 int type;
                 const char *key;
@@ -1073,7 +1085,7 @@ hal_device_callouts_finished (HalDevice *device)
 void
 hal_device_cancel (HalDevice *device)
 {
-	HAL_INFO (("udi=%s", device->udi));
+	HAL_INFO (("udi=%s", device->private->udi));
 	g_signal_emit (device, signals[CANCELLED], 0);
 }
 
@@ -1139,7 +1151,7 @@ hal_device_property_strlist_append (HalDevice    *device,
 		prop = hal_property_new_strlist (key);
 		hal_property_strlist_append (prop, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1171,7 +1183,7 @@ hal_device_property_strlist_prepend (HalDevice    *device,
 		prop = hal_property_new_strlist (key);
 		hal_property_strlist_prepend (prop, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1217,7 +1229,7 @@ hal_device_property_strlist_clear (HalDevice    *device,
 	if (prop == NULL) {
 		prop = hal_property_new_strlist (key);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1265,7 +1277,7 @@ hal_device_property_strlist_add (HalDevice *device,
 		prop = hal_property_new_strlist (key);
 		hal_property_strlist_prepend (prop, value);
 
-		device->properties = g_slist_prepend (device->properties, prop);
+		device->private->properties = g_slist_prepend (device->private->properties, prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1323,7 +1335,7 @@ hal_device_property_strlist_is_empty (HalDevice    *device,
 void
 hal_device_inc_num_addons (HalDevice *device)
 {
-	device->num_addons++;
+	device->private->num_addons++;
 }
 
 gboolean
@@ -1331,18 +1343,18 @@ hal_device_inc_num_ready_addons (HalDevice *device)
 {
 	if (hal_device_are_all_addons_ready (device)) {
 		HAL_ERROR (("In hal_device_inc_num_ready_addons for udi=%s but all addons are already ready!", 
-			    device->udi));
+			    device->private->udi));
 		return FALSE;
 	}
 
-	device->num_addons_ready++;
+	device->private->num_addons_ready++;
 	return TRUE;
 }
 
 gboolean
 hal_device_are_all_addons_ready (HalDevice *device)
 {
-	if (device->num_addons_ready == device->num_addons) {
+	if (device->private->num_addons_ready == device->private->num_addons) {
 		return TRUE;
 	} else {
 		return FALSE;

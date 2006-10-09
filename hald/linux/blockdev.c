@@ -122,7 +122,7 @@ blockdev_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -136,7 +136,7 @@ blockdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userda
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+	HAL_INFO (("Remove callouts completed udi=%s", hal_device_get_udi (d)));
 
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
@@ -247,7 +247,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		 * lost... it is merely delayed...
 		 */
 		if (device_is_executing_method (dev, "org.freedesktop.Hal.Device.Volume", "Unmount")) {
-			HAL_INFO (("/proc/mounts tells that %s is unmounted - waiting for Unmount() to complete to change mount state", dev->udi));
+			HAL_INFO (("/proc/mounts tells that %s is unmounted - waiting for Unmount() to complete to change mount state", hal_device_get_udi (dev)));
 		} else {
 			char *mount_point;
 
@@ -697,8 +697,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 							HAL_INFO ((" slave_volume_stordev_udi='%s'!", slave_volume_stordev_udi));
 							parent = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
 							if (parent != NULL) {
-								HAL_INFO ((" parent='%s'!", parent->udi));
-								hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", slave_volume->udi);
+								HAL_INFO ((" parent='%s'!", hal_device_get_udi (parent)));
+								hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", hal_device_get_udi (slave_volume));
 								is_device_mapper = TRUE;
 							}
 						}
@@ -725,7 +725,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_BLOCK);
 
 	hal_device_property_set_string (d, "block.device", device_file);
@@ -755,7 +755,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "info.vendor", "");
 		hal_device_property_set_string (d, "info.product", "PC Floppy Drive");
 		hal_device_property_set_string (d, "storage.drive_type", "floppy");
-		hal_device_property_set_string (d, "storage.physical_device", parent->udi);
+		hal_device_property_set_string (d, "storage.physical_device", hal_device_get_udi (parent));
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
 		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
 		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
@@ -820,7 +820,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		/* walk up the device chain to find the physical device, 
 		 * start with our parent. On the way, optionally pick up
 		 * the scsi if it exists */
-		udi_it = parent->udi;
+		udi_it = hal_device_get_udi (parent);
 		while (udi_it != NULL) {
 			HalDevice *d_it;
 
@@ -1034,7 +1034,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 * VOLUMES
 		 *
 		 ************************/
-		hal_device_property_set_string (d, "block.storage_device", parent->udi);
+		hal_device_property_set_string (d, "block.storage_device", hal_device_get_udi (parent));
 
 		/* defaults */
 		hal_device_property_set_string (d, "storage.model", "");
@@ -1140,7 +1140,7 @@ force_unmount_cb (HalDevice *d, guint32 exit_type,
 {
 	void *end_token = (void *) data1;
 
-	HAL_INFO (("force_unmount_cb for udi='%s', exit_type=%d, return_code=%d", d->udi, exit_type, return_code));
+	HAL_INFO (("force_unmount_cb for udi='%s', exit_type=%d, return_code=%d", hal_device_get_udi (d), exit_type, return_code));
 
 	if (exit_type == HALD_RUN_SUCCESS && error != NULL && 
 	    error[0] != NULL && error[1] != NULL) {
@@ -1175,7 +1175,7 @@ force_unmount (HalDevice *d, void *end_token)
 		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
 		extra_env[1] = NULL;
 		
-		HAL_INFO (("force_unmount for udi='%s'", d->udi));
+		HAL_INFO (("force_unmount for udi='%s'", hal_device_get_udi (d)));
 		syslog (LOG_NOTICE, "forcibly attempting to lazy unmount %s as enclosing drive was disconnected", device_file);
 		
 		unmount_stdin = "lazy\n";
@@ -1235,7 +1235,7 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token)
 		if (fakevolume != NULL) {
 			HotplugEvent *hotplug_event;
 			HAL_INFO (("Storage device with a fakevolume is going away; "
-				   "synthesizing hotplug rem for fakevolume %s", fakevolume->udi));
+				   "synthesizing hotplug rem for fakevolume %s", hal_device_get_udi (fakevolume)));
 			hotplug_event = blockdev_generate_remove_hotplug_event (fakevolume);
 			if (hotplug_event != NULL) {
 				/* push synthesized event at front of queue and repost this event... this is such that
@@ -1295,7 +1295,8 @@ block_rescan_storage_done (HalDevice *d, guint32 exit_type,
 		if (fakevolume != NULL) {
 			/* generate hotplug event to remove the fakevolume */
 			HotplugEvent *hotplug_event;
-			HAL_INFO (("Media removal detected; synthesizing hotplug rem for fakevolume %s", fakevolume->udi));
+			HAL_INFO (("Media removal detected; synthesizing hotplug rem for fakevolume %s", 
+				   hal_device_get_udi (fakevolume)));
 			hotplug_event = blockdev_generate_remove_hotplug_event (fakevolume);
 			if (hotplug_event != NULL) {
 				hotplug_event_enqueue (hotplug_event);
@@ -1315,11 +1316,11 @@ blockdev_rescan_device (HalDevice *d)
 
 	ret = FALSE;
 
-	HAL_INFO (("Entering, udi=%s", d->udi));
+	HAL_INFO (("Entering, udi=%s", hal_device_get_udi (d)));
 
 	/* This only makes sense on storage devices */
 	if (hal_device_property_get_bool (d, "block.is_volume")) {
-		HAL_INFO (("No action on volumes", d->udi));
+		HAL_INFO (("No action on volumes", hal_device_get_udi (d)));
 		goto out;
 	}
 

@@ -174,7 +174,7 @@ hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 {
 	const char buf[] = "/org/freedesktop/Hal/devices/";
 
-	if (strncmp(device->udi, buf, sizeof (buf) - 1) != 0) {
+	if (strncmp(hal_device_get_udi (device), buf, sizeof (buf) - 1) != 0) {
 		
 		HAL_ERROR(("Can't add HalDevice with incorrect UDI. Valid "
 			   "UDI must start with '/org/freedesktop/Hal/devices/'"));

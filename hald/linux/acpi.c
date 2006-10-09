@@ -211,11 +211,13 @@ battery_refresh_poll (HalDevice *d)
 	hal_device_property_set_int (d, "battery.charge_level.last_full", normalised_lastfull);
 	hal_device_property_set_int (d, "battery.charge_level.rate", normalised_rate);
 
-	remaining_time = util_compute_time_remaining (d->udi, normalised_rate, normalised_current, normalised_lastfull,
-				hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-				hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
-				hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
-	remaining_percentage = util_compute_percentage_charge (d->udi, normalised_current, normalised_lastfull);
+	remaining_time = util_compute_time_remaining (
+		hal_device_get_udi (d), 
+		normalised_rate, normalised_current, normalised_lastfull,
+		hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
+		hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
+		hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
+	remaining_percentage = util_compute_percentage_charge (hal_device_get_udi (d), normalised_current, normalised_lastfull);
 	/*
 	 * Only set keys if no error (signified with negative return value)
 	 * Scrict checking is needed to ensure that the values presented by HAL
@@ -1065,7 +1067,7 @@ acpi_generic_add (const gchar *acpi_path, HalDevice *parent, ACPIDevHandler *han
 	hal_device_property_set_string (d, "linux.acpi_path", acpi_path);
 	hal_device_property_set_int (d, "linux.acpi_type", handler->acpi_type);
 	if (parent != NULL)
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	else
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	if (handler->refresh == NULL || !handler->refresh (d, handler)) {
@@ -1211,7 +1213,7 @@ acpi_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -1225,7 +1227,7 @@ acpi_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+	HAL_INFO (("Remove callouts completed udi=%s", hal_device_get_udi (d)));
 
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
@@ -1331,7 +1333,7 @@ acpi_rescan_device (HalDevice *d)
 		}
 	}
 
-	HAL_WARNING (("Didn't find a rescan handler for udi %s", d->udi));
+	HAL_WARNING (("Didn't find a rescan handler for udi %s", hal_device_get_udi (d)));
 	return TRUE;
 }
 

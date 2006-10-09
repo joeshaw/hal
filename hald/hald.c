@@ -79,7 +79,7 @@ addon_terminated (HalDevice *device, guint32 exit_type,
 		  gint return_code, gchar **error,
 		  gpointer data1, gpointer data2)
 {
-	HAL_INFO (("in addon_terminated for udi=%s", device->udi));
+	HAL_INFO (("in addon_terminated for udi=%s", hal_device_get_udi (device)));
 
 	/* TODO: log to syslog - addons shouldn't just terminate, this is a bug with the addon */
 
@@ -371,6 +371,10 @@ main (int argc, char *argv[])
 
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
+#ifdef HALD_MEMLEAK_DBG
+	g_mem_set_vtable (glib_mem_profiler_table);
+#endif
+
 	g_type_init ();
 
 	if (getenv ("HALD_VERBOSE"))
@@ -473,6 +477,7 @@ main (int argc, char *argv[])
 	/*master_slave_setup ();
 	  sleep (100000000);*/
 
+
 	loop = g_main_loop_new (NULL, FALSE);
 
 	HAL_INFO ((PACKAGE_STRING));
@@ -543,7 +548,6 @@ main (int argc, char *argv[])
 		HAL_INFO (("Will not daemonize"));
 	}
 
-
 	/* we need to do stuff when we are expected to terminate, thus
 	 * this involves looking for SIGTERM; UNIX signal handlers are
 	 * evil though, so set up a pipe to transmit the signal.
@@ -569,6 +573,7 @@ main (int argc, char *argv[])
 	/* set up the local dbus server */
 	if (!hald_dbus_local_server_init ())
 		return 1;
+
 	/* Start the runner helper daemon */
 	if (!hald_runner_start_runner ()) {
 		return 1;
@@ -595,12 +600,21 @@ extern int dbg_hal_device_object_delta;
 
 /* useful for valgrinding; see below */
 static gboolean
+my_shutdown2 (gpointer data)
+{
+	g_mem_profile ();
+	sleep (10000);
+	/*exit (1);*/
+	return FALSE;
+}
+
+static gboolean
 my_shutdown (gpointer data)
 {
 	HalDeviceStore *gdl;
 	
-	printf ("Num devices in TDL: %d\n", g_slist_length ((hald_get_tdl ())->devices));
-	printf ("Num devices in GDL: %d\n", g_slist_length ((hald_get_gdl ())->devices));
+	HAL_INFO (("Num devices in TDL: %d", g_slist_length ((hald_get_tdl ())->devices)));
+	HAL_INFO (("Num devices in GDL: %d", g_slist_length ((hald_get_gdl ())->devices)));
 	
 	gdl = hald_get_gdl ();
 next:
@@ -609,10 +623,19 @@ next:
 		hal_device_store_remove (gdl, d);
 		g_object_unref (d);
 		goto next;
-	}
-	
-	printf ("hal_device_object_delta = %d (should be zero)\n", dbg_hal_device_object_delta);
-	exit (1);
+	}	
+
+	HAL_INFO (("hal_device_object_delta = %d (should be zero)", dbg_hal_device_object_delta));
+
+	hald_dbus_local_server_shutdown ();
+	hald_runner_stop_runner ();
+
+	HAL_INFO (("Shutting down in five seconds"));
+	g_timeout_add (5 * 1000,
+		       my_shutdown2,
+		       NULL);
+
+	return FALSE;
 }
 #endif
 

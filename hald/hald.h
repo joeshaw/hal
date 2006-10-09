@@ -56,7 +56,7 @@ extern dbus_bool_t hald_is_shutting_down;
  *
  * Use hald/valgrind-hald.sh for this
  */
-/*#define HALD_MEMLEAK_DBG 60*/
+/*#define HALD_MEMLEAK_DBG 10*/
 
 /**
  *  @}

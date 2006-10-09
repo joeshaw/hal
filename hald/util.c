@@ -868,7 +868,7 @@ hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer us
 		goto out;
 	}	
 
-	HAL_INFO (("Add callouts for udi=%s", d->udi));
+	HAL_INFO (("Add callouts for udi=%s", hal_device_get_udi (d)));
 
 	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:
@@ -886,7 +886,7 @@ hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer
 		goto out;
 	}	
 
-	HAL_INFO (("Remove callouts for udi=%s", d->udi));
+	HAL_INFO (("Remove callouts for udi=%s", hal_device_get_udi (d)));
 
 	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:
@@ -904,7 +904,7 @@ hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpoint
 		goto out;
 	}	
 
-	HAL_INFO (("Preprobe callouts for udi=%s", d->udi));
+	HAL_INFO (("Preprobe callouts for udi=%s", hal_device_get_udi (d)));
 
 	hal_callout_device (d, callback, userdata1, userdata2, programs, extra_env);
 out:

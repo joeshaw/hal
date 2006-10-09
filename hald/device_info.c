@@ -345,10 +345,10 @@ handle_match (ParsingContext * pc, const char **attr)
 
 	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
 	if (!resolve_udiprop_path (key,
-				   pc->device->udi,
+				   hal_device_get_udi (pc->device),
 				   udi_to_check, sizeof (udi_to_check),
 				   prop_to_check, sizeof (prop_to_check))) {
-		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, pc->device->udi));
+		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, hal_device_get_udi (pc->device)));
 		return FALSE;
 	}
 
@@ -537,7 +537,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		if (strcmp (attr[3], "false") == 0)
 			should_be_absolute_path = FALSE;
 
-		/*HAL_INFO (("d->udi='%s', prop_to_check='%s'", d->udi, prop_to_check));*/
+		/*HAL_INFO (("hal_device_get_udi (d)='%s', prop_to_check='%s'", hal_device_get_udi (d), prop_to_check));*/
 
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
@@ -1074,7 +1074,7 @@ start (ParsingContext * pc, const char *el, const char **attr)
 static void 
 spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -1165,10 +1165,11 @@ end (ParsingContext * pc, const char *el)
 			 * '@prop.here.is.an.udi:with.prop.name'
 			 */
 			if (!resolve_udiprop_path (pc->cdata_buf,
-						   pc->device->udi,
+						   hal_device_get_udi (pc->device),
 						   udi_to_merge_from, sizeof (udi_to_merge_from),
 						   prop_to_merge, sizeof (prop_to_merge))) {
-				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", pc->cdata_buf, pc->device->udi));
+				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", pc->cdata_buf, 
+					    hal_device_get_udi (pc->device)));
 			} else {
 				HalDevice *d;
 
@@ -1286,12 +1287,12 @@ end (ParsingContext * pc, const char *el)
 
 		if (spawned == NULL) {
 			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'", 
-				   pc->merge_key, pc->device->udi));
+				   pc->merge_key, hal_device_get_udi (pc->device)));
 
 			spawned = hal_device_new ();
 			hal_device_property_set_string (spawned, "info.bus", "unknown");
 			hal_device_property_set_string (spawned, "info.udi", pc->merge_key);
-			hal_device_property_set_string (spawned, "info.parent", pc->device->udi);
+			hal_device_property_set_string (spawned, "info.parent", hal_device_get_udi (pc->device));
 			hal_device_set_udi (spawned, pc->merge_key);
 			
 			hal_device_store_add (hald_get_tdl (), spawned);

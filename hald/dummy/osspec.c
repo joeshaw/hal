@@ -45,7 +45,7 @@ osspec_init (void)
 static void 
 computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);

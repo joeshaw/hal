@@ -32,18 +32,16 @@
 
 #include "property.h"
 
+struct _HalDevicePrivate;
+typedef struct _HalDevicePrivate HalDevicePrivate;
+
+
 typedef struct _HalDevice      HalDevice;
 typedef struct _HalDeviceClass HalDeviceClass;
 
 struct _HalDevice {
 	GObject parent;
-
-	char *udi;
-	
-	GSList *properties;
-
-	int num_addons;
-	int num_addons_ready;
+	HalDevicePrivate *private;
 };
 
 struct _HalDeviceClass {
@@ -84,7 +82,7 @@ typedef gboolean (*HalDevicePropertyForeachFn) (HalDevice *device,
 
 GType         hal_device_get_type            (void);
 
-HalDevice   *hal_device_new                  (void);
+HalDevice    *hal_device_new                 (void);
 
 void          hal_device_merge               (HalDevice    *target,
 					      HalDevice    *source);

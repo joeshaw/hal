@@ -229,7 +229,7 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		hal_device_property_set_bool (d, "battery.rechargeable.is_discharging", is_discharging);
 
 		/* set the percentage charge, easy. */
-		remaining_percentage = util_compute_percentage_charge (d->udi, i.battery_percentage, 100);
+		remaining_percentage = util_compute_percentage_charge (hal_device_get_udi (d), i.battery_percentage, 100);
 	
 		/* Only set keys if no error (signified with negative return value) */
 		if (remaining_percentage > 0)
@@ -328,7 +328,7 @@ apm_generic_add (const gchar *apm_path, HalDevice *parent, APMDevHandler *handle
 	hal_device_property_set_string (d, "linux.apm_path", apm_path);
 	hal_device_property_set_int (d, "linux.apm_type", handler->apm_type);
 	if (parent != NULL)
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	else
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	if (handler->refresh == NULL || !handler->refresh (d, handler)) {
@@ -500,7 +500,7 @@ apm_rescan_device (HalDevice *d)
 		}
 	}
 
-	HAL_WARNING (("Didn't find a rescan handler for udi %s", d->udi));
+	HAL_WARNING (("Didn't find a rescan handler for udi %s", hal_device_get_udi (d)));
 
 out:
 	return ret;

@@ -33,6 +33,10 @@
 #include <glib.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
+#include <string.h>
+
+#include <sys/types.h>
+#include <signal.h>
 
 #include "hald.h"
 #include "util.h"
@@ -61,7 +65,7 @@ typedef struct
 } RunningProcess;
 
 /* mapping from PID to RunningProcess */
-static GHashTable *running_processes;
+static GHashTable *running_processes = NULL;
 
 static gboolean
 rprd_foreach (gpointer key,
@@ -72,7 +76,7 @@ rprd_foreach (gpointer key,
 	RunningProcess *rp = value;
 	HalDevice *device = user_data;
 
-	if (rp->device == device) {
+	if (device == NULL || rp->device == device) {
 		remove = TRUE;
 		g_free (rp);
 	}
@@ -83,7 +87,9 @@ rprd_foreach (gpointer key,
 static void
 running_processes_remove_device (HalDevice *device)
 {
-	g_hash_table_foreach_remove (running_processes, rprd_foreach, device);
+	if (running_processes != NULL) {
+		g_hash_table_foreach_remove (running_processes, rprd_foreach, device);
+	}
 }
 
 void
@@ -99,11 +105,11 @@ runner_server_message_handler (DBusConnection *connection,
 			       void *user_data)
 {
 
-	/*HAL_INFO (("runner_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
+	HAL_INFO (("runner_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
 		   dbus_message_get_destination (message), 
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
-		   dbus_message_get_member (message)));*/
+		   dbus_message_get_member (message)));
 	if (dbus_message_is_signal (message, 
 				    "org.freedesktop.HalRunner", 
 				    "StartedProcessExited")) {
@@ -118,22 +124,33 @@ runner_server_message_handler (DBusConnection *connection,
 
 			pid = (GPid) dpid;
 
-			/*HAL_INFO (("Previously started process with pid %d exited", pid));*/
-			rp = g_hash_table_lookup (running_processes, (gpointer) pid);
-			if (rp != NULL) {
-				rp->cb (rp->device, 0, 0, NULL, rp->data1, rp->data2);
-				g_hash_table_remove (running_processes, (gpointer) pid);
-				g_free (rp);
+			if (running_processes != NULL) {
+				/*HAL_INFO (("Previously started process with pid %d exited", pid));*/
+				rp = g_hash_table_lookup (running_processes, (gpointer) pid);
+				if (rp != NULL) {
+					rp->cb (rp->device, 0, 0, NULL, rp->data1, rp->data2);
+					g_hash_table_remove (running_processes, (gpointer) pid);
+					g_free (rp);
+				}
 			}
 		}
+	} else if (dbus_message_is_signal (message, 
+					   DBUS_INTERFACE_LOCAL, 
+					   "Disconnected") &&
+		   strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
+		HAL_INFO (("runner process disconnected"));
+		dbus_connection_unref (connection);
 	}
+
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 static void
 runner_server_unregister_handler (DBusConnection *connection, void *user_data)
 {
-	HAL_INFO (("unregistered"));
+	HAL_INFO (("========================================"));
+	HAL_INFO (("runner_server_unregister_handler"));
+	HAL_INFO (("========================================"));
 }
 
 
@@ -152,6 +169,8 @@ handle_connection(DBusServer *server,
 		dbus_connection_ref (new_connection);
 		dbus_connection_setup_with_g_main (new_connection, NULL);
 
+		HAL_INFO (("runner connection is %p", new_connection));
+
 		dbus_connection_register_fallback (new_connection, 
 						   "/org/freedesktop",
 						   &vtable,
@@ -162,40 +181,79 @@ handle_connection(DBusServer *server,
 	}
 }
 
+static GPid runner_pid;
+static DBusServer *runner_server = NULL;
+static guint runner_watch;
+
+
 static void
-runner_died(GPid pid, gint status, gpointer data) {
-  g_spawn_close_pid (pid);
-  DIE (("Runner died"));
+runner_died(GPid pid, gint status, gpointer data)
+{
+	g_spawn_close_pid (pid);
+	DIE (("Runner died"));
+}
+
+void
+hald_runner_stop_runner (void)
+{
+	if (runner_server != NULL) {
+		DBusMessage *msg;
+
+		/* Don't care about running processes anymore */
+		g_hash_table_foreach_remove (running_processes, rprd_foreach, NULL);
+		g_hash_table_destroy (running_processes);
+		running_processes = NULL;
+
+		HAL_INFO (("Killing runner with pid %d", runner_pid));
+
+		g_source_remove (runner_watch);
+		g_spawn_close_pid (runner_pid);
+
+		msg = dbus_message_new_method_call("org.freedesktop.HalRunner",
+						   "/org/freedesktop/HalRunner",
+						   "org.freedesktop.HalRunner",
+						   "Shutdown");
+		if (msg == NULL) 
+			DIE(("No memory"));
+		dbus_connection_send (runner_connection, msg, NULL);
+		dbus_message_unref(msg);
+
+		dbus_server_disconnect (runner_server);
+		dbus_server_unref (runner_server);
+		runner_server = NULL;
+
+	}
 }
 
 gboolean
 hald_runner_start_runner(void)
 {
-  DBusServer *server = NULL;
   DBusError err;
   GError *error = NULL;
-  GPid pid;
   char *argv[] = { NULL, NULL};
   char *env[] =  { NULL, NULL, NULL, NULL};
   const char *hald_runner_path;
+  char *server_address;
 
   running_processes = g_hash_table_new (g_direct_hash, g_direct_equal);
 
   dbus_error_init(&err);
-  server = dbus_server_listen(DBUS_SERVER_ADDRESS, &err);
-  if (server == NULL) {
+  runner_server = dbus_server_listen(DBUS_SERVER_ADDRESS, &err);
+  if (runner_server == NULL) {
     HAL_ERROR (("Cannot create D-BUS server for the runner"));
     goto error;
   }
 
-  dbus_server_setup_with_g_main(server, NULL);
-  dbus_server_set_new_connection_function(server, handle_connection, 
+  dbus_server_setup_with_g_main(runner_server, NULL);
+  dbus_server_set_new_connection_function(runner_server, handle_connection, 
                                           NULL, NULL);
 
 
   argv[0] = "hald-runner";
+  server_address = dbus_server_get_address(runner_server);
   env[0] = g_strdup_printf("HALD_RUNNER_DBUS_ADDRESS=%s",
-             dbus_server_get_address(server));
+			   server_address);
+  dbus_free (server_address);
   hald_runner_path = g_getenv("HALD_RUNNER_PATH");
   if (hald_runner_path != NULL) {
 	  env[1] = g_strdup_printf ("PATH=%s:" PACKAGE_LIBEXEC_DIR ":" PACKAGE_SCRIPT_DIR ":" PACKAGE_BIN_DIR, hald_runner_path);
@@ -207,7 +265,7 @@ hald_runner_start_runner(void)
   
   
   if (!g_spawn_async(NULL, argv, env, G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, 
-        NULL, NULL, &pid, &error)) {
+        NULL, NULL, &runner_pid, &error)) {
     HAL_ERROR (("Could not spawn runner : '%s'", error->message));
     g_error_free (error);
     goto error;
@@ -215,18 +273,18 @@ hald_runner_start_runner(void)
   g_free(env[0]);
   g_free(env[1]);
 
-  HAL_INFO (("Runner has pid %d", pid));
+  HAL_INFO (("Runner has pid %d", runner_pid));
 
-  g_child_watch_add(pid, runner_died, NULL);
+  runner_watch = g_child_watch_add(runner_pid, runner_died, NULL);
   while (runner_connection == NULL) {
     /* Wait for the runner */
-    g_main_context_iteration(NULL, TRUE);
+    g_main_context_iteration (NULL, TRUE);
   }
   return TRUE;
 
 error:
-  if (server != NULL)
-    dbus_server_unref(server);
+  if (runner_server != NULL)
+    dbus_server_unref(runner_server);
   return FALSE;
 }
 
@@ -389,7 +447,7 @@ hald_runner_start (HalDevice *device, const gchar *command_line, char **extra_en
 	if (dbus_message_get_args (reply, &err,
 				   DBUS_TYPE_INT64, &pid_from_runner,
 				   DBUS_TYPE_INVALID)) {
-		if (cb != NULL) {
+		if (cb != NULL && running_processes != NULL) {
 			RunningProcess *rp;
 			rp = g_new0 (RunningProcess, 1);
 			rp->pid = (GPid) pid_from_runner;
@@ -454,8 +512,11 @@ call_notify(DBusPendingCall *pending, void *user_data)
   g_object_unref (hb->d);
 
   dbus_message_unref(m);
-  g_array_free(error, FALSE);
+  g_array_free(error, TRUE);
 
+  g_free (hb);
+
+  dbus_pending_call_unref (pending);
   return;
 malformed:
   /* Send a Fail callback on malformed messages */
@@ -465,7 +526,11 @@ malformed:
   g_object_unref (hb->d);
 
   dbus_message_unref(m);
-  g_array_free(error, FALSE);
+  g_array_free(error, TRUE);
+
+  g_free (hb);
+
+  dbus_pending_call_unref (pending);
 }
 
 /* Run a helper program using the commandline, with input as infomation on
@@ -481,6 +546,7 @@ hald_runner_run_method(HalDevice *device,
   DBusMessageIter iter;
   DBusPendingCall *call;
   HelperData *hd = NULL;
+
   msg = dbus_message_new_method_call("org.freedesktop.HalRunner",
                              "/org/freedesktop/HalRunner",
                              "org.freedesktop.HalRunner",
@@ -500,7 +566,7 @@ hald_runner_run_method(HalDevice *device,
                                               msg, &call, INT_MAX))
     DIE (("No memory"));
 
-  hd = malloc(sizeof(HelperData));
+  hd = g_new0 (HelperData, 1);
   hd->d = device;
   hd->cb = cb;
   hd->data1 = data1;
@@ -508,12 +574,12 @@ hald_runner_run_method(HalDevice *device,
 
   g_object_ref (device);
 
-  dbus_pending_call_set_notify(call, call_notify, hd, free);
+  dbus_pending_call_set_notify(call, call_notify, hd, NULL);
   dbus_message_unref(msg);
   return;
 error:
   dbus_message_unref(msg);
-  free(hd);
+  g_free(hd);
   cb(device, HALD_RUN_FAILED, 0, NULL, data1, data2);
 }
 

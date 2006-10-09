@@ -61,7 +61,7 @@ pci_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pci");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -225,7 +225,7 @@ usb_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	}
 
 	/* only USB interfaces got a : in the bus_id */
@@ -376,7 +376,7 @@ ide_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ide");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -427,7 +427,7 @@ pnp_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pnp");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -483,7 +483,7 @@ platform_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "platform");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -528,7 +528,7 @@ serio_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "serio");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -576,7 +576,7 @@ pcmcia_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pcmcia");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -656,7 +656,7 @@ scsi_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "scsi");
-	hal_device_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 
 	bus_id = hal_util_get_last_element (sysfs_path);
 	sscanf (bus_id, "%d:%d:%d:%d", &host_num, &bus_num, &target_num, &lun_num);
@@ -750,7 +750,7 @@ mmc_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "mmc");
-	hal_device_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
@@ -826,7 +826,7 @@ xen_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "xen");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -899,7 +899,7 @@ ieee1394_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ieee1394");
-	hal_device_property_set_string (d, "info.parent", parent->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
@@ -1038,7 +1038,7 @@ ccw_add (const gchar *sysfs_path, HalDevice *parent)
 					sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ccw");
 	if (parent != NULL)
-                hal_device_property_set_string (d, "info.parent", parent->udi);
+                hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
         else
                 hal_device_property_set_string
 		  (d, "info.parent",
@@ -1210,7 +1210,7 @@ ccwgroup_add (const gchar *sysfs_path, HalDevice *parent)
 					sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ccwgroup");
 	if (parent != NULL)
-                hal_device_property_set_string (d, "info.parent", parent->udi);
+                hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
         else
                 hal_device_property_set_string
 		  (d, "info.parent",
@@ -1277,7 +1277,7 @@ iucv_add (const gchar *sysfs_path, HalDevice *parent)
 					sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "iucv");
 	if (parent != NULL)
-                hal_device_property_set_string (d, "info.parent", parent->udi);
+                hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
         else
                 hal_device_property_set_string
 		  (d, "info.parent",
@@ -1323,7 +1323,7 @@ pseudo_add (const gchar *sysfs_path, HalDevice *parent)
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pseudo");
 	if (parent != NULL) {
-		hal_device_property_set_string (d, "info.parent", parent->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -1505,7 +1505,7 @@ physdev_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -1519,7 +1519,7 @@ physdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdat
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+	HAL_INFO (("Remove callouts completed udi=%s", hal_device_get_udi (d)));
 
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));

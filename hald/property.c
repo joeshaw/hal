@@ -37,6 +37,8 @@
 struct _HalProperty {
 	char *key;
 
+	void *foo;
+
 	int type;
 	union {
 		char *str_value;
@@ -54,7 +56,6 @@ struct _HalProperty {
 void
 hal_property_free (HalProperty *prop)
 {
-
 	g_free (prop->key);
 
 	if (prop->type == HAL_PROPERTY_TYPE_STRING) {
@@ -70,6 +71,14 @@ hal_property_free (HalProperty *prop)
 	g_free (prop);
 }
 
+static inline HalProperty *
+hal_property_new (void)
+{
+	HalProperty *prop;
+	prop = g_new0 (HalProperty, 1); 
+	return prop;
+}
+
 HalProperty *
 hal_property_new_string (const char *key, const char *value)
 {
@@ -77,7 +86,7 @@ hal_property_new_string (const char *key, const char *value)
 	char *endchar;
 	gboolean validated = TRUE;
 
-	prop = g_new0 (HalProperty, 1);
+	prop = hal_property_new ();
 
 	prop->type = HAL_PROPERTY_TYPE_STRING;
 	prop->key = g_strdup (key);
@@ -102,7 +111,7 @@ hal_property_new_int (const char *key, dbus_int32_t value)
 {
 	HalProperty *prop;
 
-	prop = g_new0 (HalProperty, 1);
+	prop = hal_property_new ();
 
 	prop->type = HAL_PROPERTY_TYPE_INT32;
 	prop->key = g_strdup (key);
@@ -116,7 +125,7 @@ hal_property_new_uint64 (const char *key, dbus_uint64_t value)
 {
 	HalProperty *prop;
 
-	prop = g_new0 (HalProperty, 1);
+	prop = hal_property_new ();
 
 	prop->type = HAL_PROPERTY_TYPE_UINT64;
 	prop->key = g_strdup (key);
@@ -130,7 +139,7 @@ hal_property_new_bool (const char *key, dbus_bool_t value)
 {
 	HalProperty *prop;
 
-	prop = g_new0 (HalProperty, 1);
+	prop = hal_property_new ();
 
 	prop->type = HAL_PROPERTY_TYPE_BOOLEAN;
 	prop->key = g_strdup (key);
@@ -144,7 +153,7 @@ hal_property_new_double (const char *key, double value)
 {
 	HalProperty *prop;
 
-	prop = g_new0 (HalProperty, 1);
+	prop = hal_property_new ();
 
 	prop->type = HAL_PROPERTY_TYPE_DOUBLE;
 	prop->key = g_strdup (key);
@@ -377,7 +386,7 @@ hal_property_new_strlist (const char *key)
 {
 	HalProperty *prop;
 
-	prop = g_new0 (HalProperty, 1);
+	prop = hal_property_new ();
 
 	prop->type = HAL_PROPERTY_TYPE_STRLIST;
 	prop->key = g_strdup (key);

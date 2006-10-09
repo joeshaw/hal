@@ -90,6 +90,7 @@ void device_property_atomic_update_end   (void);
 gboolean hald_dbus_init (void);
 
 gboolean hald_dbus_local_server_init (void);
+void hald_dbus_local_server_shutdown (void);
 
 DBusHandlerResult hald_dbus_filter_function (DBusConnection * connection, DBusMessage * message, void *user_data);
 

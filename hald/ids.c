@@ -545,7 +545,6 @@ ids_init (void)
 	usb_ids_load (HWDATA_DIR "/usb.ids");
 }
 
-
 /* This, somewhat incomplete, list is from this sources:
  * http://www.plasma-online.de/english/identify/serial/pnp_id_pnp.html 
  * http://www-pc.uni-regensburg.de/hardware/TECHNIK/PCI_PNP/pnpid.txt
@@ -555,7 +554,7 @@ ids_init (void)
 struct pnp_id {
 	char *id;
    	char *desc;
-} static pnp_ids_list[] = {
+} static  pnp_ids_list[] = {
 	/* Crystal Semiconductor devices */
 	{"CSC0000", "Crystal Semiconductor CS423x sound -- SB/WSS/OPL3 emulation"},
 	{"CSC0001", "Crystal Semiconductor CS423x sound -- joystick"},

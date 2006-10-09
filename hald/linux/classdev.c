@@ -67,8 +67,8 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	if (physdev != NULL) {
-		hal_device_property_set_string (d, "input.physical_device", physdev->udi);
-		hal_device_property_set_string (d, "info.parent", physdev->udi);
+		hal_device_property_set_string (d, "input.physical_device", hal_device_get_udi (physdev));
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	}
@@ -122,12 +122,12 @@ bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 
 	hal_device_property_set_string (d, "info.category", "bluetooth_hci");
 	hal_device_add_capability (d, "bluetooth_hci");
 
-	hal_device_property_set_string (d, "bluetooth_hci.physical_device", physdev->udi);
+	hal_device_property_set_string (d, "bluetooth_hci.physical_device", hal_device_get_udi (physdev));
 	hal_util_set_string_from_file (d, "bluetooth_hci.interface_name", sysfs_path, "name");
 
 	hal_device_property_set_string (d, "info.product", "Bluetooth Host Controller Interface");
@@ -166,12 +166,12 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 
 	hal_device_property_set_string (d, "info.category", "net");
 	hal_device_add_capability (d, "net");
 
-	hal_device_property_set_string (d, "net.physical_device", physdev->udi);
+	hal_device_property_set_string (d, "net.physical_device", hal_device_get_udi (physdev));
 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
@@ -290,7 +290,7 @@ scsi_generic_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "info.category", "scsi_generic");
 	hal_device_add_capability (d, "scsi_generic");
 	hal_device_property_set_string (d, "info.product", "SCSI Generic Interface");
@@ -332,7 +332,7 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
 	
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 
 	hal_device_property_set_string (d, "info.category", "scsi_host");
 	hal_device_add_capability (d, "scsi_host");
@@ -381,7 +381,7 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phys
 		d = hal_device_new ();
 		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 		hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
-		hal_device_property_set_string (d, "info.parent", physdev->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 
 		hal_device_property_set_string (d, "info.category", "hiddev");
 		hal_device_add_capability (d, "hiddev");
@@ -394,7 +394,7 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phys
 		d = hal_device_new ();
 		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 		hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
-		hal_device_property_set_string (d, "info.parent", physdev->udi);
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 
 		hal_device_property_set_string (d, "info.category", "printer");
 		hal_device_add_capability (d, "printer");
@@ -402,7 +402,7 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phys
 		hal_device_property_set_string (d, "info.product", "Printer");
 		hal_device_property_set_string (d, "printer.device", device_file);
 
-		hal_device_property_set_string (d, "printer.physical_device", physdev->udi);
+		hal_device_property_set_string (d, "printer.physical_device", hal_device_get_udi (physdev));
 	}
 
 out:
@@ -460,7 +460,7 @@ usbraw_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "info.category", "usbraw");
 	hal_device_add_capability (d, "usbraw");
 	hal_device_property_set_string (d, "info.product", "USB Raw Device Access");
@@ -498,7 +498,7 @@ video4linux_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *p
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "info.category", "video4linux");
 	hal_device_add_capability (d, "video4linux");
 	hal_device_property_set_string (d, "info.product", "Video Device");
@@ -536,7 +536,7 @@ dvb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev, 
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "info.category", "dvb");
 	hal_device_add_capability (d, "dvb");
 	hal_device_property_set_string (d, "info.product", "DVB Device");
@@ -618,8 +618,8 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 			hal_device_property_set_string (d, "info.category", "alsa");
 			hal_device_add_capability (d, "alsa");
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
-			hal_device_property_set_string (d, "info.parent", physdev->udi);
-			hal_device_property_set_string (d, "alsa.physical_device", physdev->udi);
+			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
+			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (physdev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_string (d, "alsa.type", "control");
 	
@@ -635,8 +635,8 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 			hal_device_property_set_string (d, "info.category", "alsa");
 			hal_device_add_capability (d, "alsa");
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
-			hal_device_property_set_string (d, "info.parent", physdev->udi);
-			hal_device_property_set_string (d, "alsa.physical_device", physdev->udi);
+			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
+			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (physdev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
@@ -708,8 +708,8 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev
 			hal_device_property_set_string (d, "info.category", "oss");
 			hal_device_add_capability (d, "oss");
 			hal_device_property_set_string (d, "oss.device_file", device_file);
-			hal_device_property_set_string (d, "info.parent", physdev->udi);
-			hal_device_property_set_string (d, "oss.physical_device", physdev->udi);
+			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
+			hal_device_property_set_string (d, "oss.physical_device", hal_device_get_udi (physdev));
 			hal_device_property_set_int (d, "oss.card", cardnum);
 	
 			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
@@ -843,10 +843,10 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physde
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "info.category", "serial");
 	hal_device_add_capability (d, "serial");
-	hal_device_property_set_string (d, "serial.physical_device", physdev->udi);
+	hal_device_property_set_string (d, "serial.physical_device", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "serial.device", device_file);
 
 	last_elem = hal_util_get_last_element(sysfs_path);
@@ -932,7 +932,7 @@ tape_add (const gchar *sysfs_path, const gchar *device_file,
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 	hal_device_property_set_string (d, "info.category", "tape");
 	hal_device_add_capability (d, "tape");
 	hal_device_add_capability (physdev, "tape");
@@ -987,7 +987,7 @@ mmc_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phys
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path_in_devices);
 
-	hal_device_property_set_string (d, "info.parent", physdev->udi);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (physdev));
 
 	hal_device_property_set_string (d, "info.category", "mmc_host");
 	hal_device_add_capability (d, "mmc_host");
@@ -1205,7 +1205,7 @@ classdev_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -1219,7 +1219,7 @@ classdev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userda
 {
 	void *end_token = (void *) userdata1;
 
-	HAL_INFO (("Remove callouts completed udi=%s", d->udi));
+	HAL_INFO (("Remove callouts completed udi=%s", hal_device_get_udi (d)));
 
 	if (!hal_device_store_remove (hald_get_gdl (), d)) {
 		HAL_WARNING (("Error removing device"));
