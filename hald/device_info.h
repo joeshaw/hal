@@ -38,6 +38,8 @@ typedef enum {
 	DEVICE_INFO_TYPE_POLICY
 } DeviceInfoType;
 
-dbus_bool_t di_search_and_merge (HalDevice *d, DeviceInfoType type);
+extern void di_rules_init (void);
+extern void di_rules_cleanup (void);
+extern gboolean di_search_and_merge (HalDevice *d, DeviceInfoType type);
 
 #endif				/* DEVICE_INFO_H */

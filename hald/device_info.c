@@ -1,9 +1,11 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * device_store.c : Search for .fdi files and merge on match
+ * device_store.c : Parse .fdi files and match/merge device properties.
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2006 Kay Sievers, <kay.sievers@vrfy.org>
+ * Copyright (C) 2006 Richard Hughes <richard@hughsie.com>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -31,10 +33,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <expat.h>
 #include <assert.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
+#include <sys/stat.h>
 #include <math.h>
 
 #include "hald.h"
@@ -43,122 +47,257 @@
 #include "device_store.h"
 #include "util.h"
 
-/**
- * @defgroup DeviceInfo Device Info File Parsing
- * @ingroup HalDaemon
- * @brief Parsing of device info files
- * @{
- */
+#define MAX_INDENT_DEPTH		64
 
+/* pre-parsed rules to keep in memory */
+static GSList *fdi_rules_preprobe;
+static GSList *fdi_rules_information;
+static GSList *fdi_rules_policy;
 
-/** Maximum nesting depth */
-#define MAX_DEPTH 32
-
-/** Maximum amount of CDATA */
-#define CDATA_BUF_SIZE  1024
-
-/** Max length of property key */
-#define MAX_KEY_SIZE 128
-
-/** Possible elements the parser can process */
-enum {
-	/** Not processing a known tag */
-	CURELEM_UNKNOWN = -1,
-
-	/** Processing a deviceinfo element */
-	CURELEM_DEVICE_INFO = 0,
-
-	/** Processing a device element */
-	CURELEM_DEVICE = 1,
-
-	/** Processing a match element */
-	CURELEM_MATCH = 2,
-
-	/** Processing a merge element */
-	CURELEM_MERGE = 3,
-
-	/** Processing an append element */
-	CURELEM_APPEND = 4,
-
-	/** Processing a prepend element */
-	CURELEM_PREPEND = 5,
-
-	/** Processing a remove element */
-	CURELEM_REMOVE = 6,
-
-	/** Processing a clear element */
-	CURELEM_CLEAR = 7,
-
-	/** Processing a spawn element */
-	CURELEM_SPAWN = 8
+/* rule type to process */
+enum rule_type {
+	RULE_UNKNOWN,
+	RULE_MATCH,
+	RULE_MERGE,
+	RULE_APPEND,
+	RULE_PREPEND,
+	RULE_REMOVE,
+	RULE_CLEAR,
+	RULE_SPAWN,
+	RULE_EOF,
 };
 
-/** What and how to merge */
-enum {
-	MERGE_TYPE_UNKNOWN       = 0,
-	MERGE_TYPE_STRING        = 1,
-	MERGE_TYPE_BOOLEAN       = 2,
-	MERGE_TYPE_INT32         = 3,
-	MERGE_TYPE_UINT64        = 4,
-	MERGE_TYPE_DOUBLE        = 5,
-	MERGE_TYPE_COPY_PROPERTY = 6,
-	MERGE_TYPE_STRLIST       = 7,
-	MERGE_TYPE_REMOVE        = 8,
-	MERGE_TYPE_CLEAR         = 9,
-	MERGE_TYPE_SPAWN         = 10
+/* type of merge command */
+enum merge_type {
+	MERGE_UNKNOWN,
+	MERGE_STRING,
+	MERGE_BOOLEAN,
+	MERGE_INT32,
+	MERGE_UINT64,
+	MERGE_DOUBLE,
+	MERGE_COPY_PROPERTY,
+	MERGE_STRLIST,
+	MERGE_REMOVE,
 };
 
-/** Parsing Context
- */
-typedef struct {
-	/** Name of file being parsed */
-	char *file;
+/* type of match command */
+enum
+match_type {
+	MATCH_UNKNOWN,
+	MATCH_STRING,
+	MATCH_INT,
+	MATCH_UINT64,
+	MATCH_BOOL,
+	MATCH_EXISTS,
+	MATCH_EMPTY,
+	MATCH_ISASCII,
+	MATCH_IS_ABS_PATH,
+	MATCH_CONTAINS,
+	MATCH_CONTAINS_NCASE,
+	MATCH_COMPARE_LT,
+	MATCH_COMPARE_LE,
+	MATCH_COMPARE_GT,
+	MATCH_COMPARE_GE,
+};
 
-	/** Parser object */
-	XML_Parser parser;
+/* a "rule" structure that is a generic node of the fdi file */
+struct rule {
+	/* typ of tule in the list */
+	enum rule_type rtype;
 
-	/** Device we are trying to match*/
-	HalDevice *device;
+	/* all rules have a key */
+	char *key;
 
-	/** Buffer to put CDATA in */
-	char cdata_buf[CDATA_BUF_SIZE];
+	/* "match" or "merge" rule */
+	enum match_type type_match;
+	enum merge_type type_merge;
 
-	/** Current length of CDATA buffer */
-	int cdata_buf_len;
-	
-	/** Current depth we are parsing at */
+	char *value;
+	int value_len;
+
+	/* if rule does not match, skip to this rule */
+	struct rule *next_rule;
+};
+
+/* ctx of the current fdi file used for parsing */
+struct fdi_context {
 	int depth;
+	struct rule *match_at_depth[MAX_INDENT_DEPTH];
 
-	/** Element currently being processed */
-	int curelem;
+	/* current rule */
+	struct rule *rule;
 
-	/** Stack of elements being processed */
-	int curelem_stack[MAX_DEPTH];
+	/* all rules */
+	GSList* rules;
+};
 
-	/** #TRUE if parsing of document have been aborted */
-	dbus_bool_t aborted;
+static enum
+rule_type get_rule_type (const char *str)
+{
+	if (strcmp (str, "match") == 0)
+		return RULE_MATCH;
+	if (strcmp (str, "merge") == 0)
+		return RULE_MERGE;
+	if (strcmp (str, "append") == 0)
+		return RULE_APPEND;
+	if (strcmp (str, "prepend") == 0)
+		return RULE_PREPEND;
+	if (strcmp (str, "remove") == 0)
+		return RULE_REMOVE;
+	if (strcmp (str, "clear") == 0)
+		return RULE_CLEAR;
+	if (strcmp (str, "spawn") == 0)
+		return RULE_SPAWN;
+	return RULE_UNKNOWN;
+}
 
+static char *
+get_rule_type_str (enum rule_type type)
+{
+	switch (type) {
+	case RULE_MATCH:
+		return "match";
+	case RULE_MERGE:
+		return "merge";
+	case RULE_APPEND:
+		return "append";
+	case RULE_PREPEND:
+		return "prepend";
+	case RULE_REMOVE:
+		return "remove";
+	case RULE_CLEAR:
+		return "clear";
+	case RULE_SPAWN:
+		return "spawn";
+	case RULE_EOF:
+		return "eof";
+	case RULE_UNKNOWN:
+		return "unknown rule type";
+	}
+	return "invalid rule type";
+}
 
-	/** Depth of match-fail */
-	int match_depth_first_fail;
+static enum
+merge_type get_merge_type (const char *str)
+{
+	if (strcmp (str, "string") == 0)
+		return MERGE_STRING;
+	if (strcmp (str, "bool") == 0)
+		return MERGE_BOOLEAN;
+	if (strcmp (str, "int") == 0)
+		return MERGE_INT32;
+	if (strcmp (str, "unint64") == 0)
+		return MERGE_UINT64;
+	if (strcmp (str, "double") == 0)
+		return MERGE_DOUBLE;
+	if (strcmp (str, "strlist") == 0)
+		return MERGE_STRLIST;
+	if (strcmp (str, "copy_property") == 0)
+		return MERGE_COPY_PROPERTY;
+	if (strcmp (str, "remove") == 0)
+		return MERGE_REMOVE;
+	return MERGE_UNKNOWN;
+}
 
-	/** #TRUE if all matches on prior depths have been OK */
-	dbus_bool_t match_ok;
+static char *
+get_merge_type_str (enum merge_type type)
+{
+	switch (type) {
+	case MERGE_STRING:
+		return "string";
+	case MERGE_BOOLEAN:
+		return "bool";
+	case MERGE_INT32:
+		return "int";
+	case MERGE_UINT64:
+		return "unint64";
+	case MERGE_DOUBLE:
+		return "double";
+	case MERGE_STRLIST:
+		return "strlist";
+	case MERGE_COPY_PROPERTY:
+		return "copy_property";
+	case MERGE_REMOVE:
+		return "remove";
+	case MERGE_UNKNOWN:
+		return "unknown merge type";
+	}
+	return "invalid merge type";
+}
 
+static enum
+match_type get_match_type(const char *str)
+{
+	if (strcmp (str, "string") == 0)
+		return MATCH_STRING;
+	if (strcmp (str, "int") == 0)
+		return MATCH_INT;
+	if (strcmp (str, "uint64") == 0)
+		return MATCH_UINT64;
+	if (strcmp (str, "bool") == 0)
+		return MATCH_BOOL;
+	if (strcmp (str, "exists") == 0)
+		return MATCH_EXISTS;
+	if (strcmp (str, "empty") == 0)
+		return MATCH_EMPTY;
+	if (strcmp (str, "is_ascii") == 0)
+		return MATCH_ISASCII;
+	if (strcmp (str, "is_absolute_path") == 0)
+		return MATCH_IS_ABS_PATH;
+	if (strcmp (str, "contains") == 0)
+		return MATCH_CONTAINS;
+	if (strcmp (str, "contains_ncase") == 0)
+		return MATCH_CONTAINS_NCASE;
+	if (strcmp (str, "compare_lt") == 0)
+		return MATCH_COMPARE_LT;
+	if (strcmp (str, "compare_le") == 0)
+		return MATCH_COMPARE_LE;
+	if (strcmp (str, "compare_gt") == 0)
+		return MATCH_COMPARE_GT;
+	if (strcmp (str, "compare_ge") == 0)
+		return MATCH_COMPARE_GE;
+	return MATCH_UNKNOWN;
+}
 
+static char *
+get_match_type_str (enum match_type type)
+{
+	switch (type) {
+	case MATCH_STRING:
+		return "string";
+	case MATCH_INT:
+		return "int";
+	case MATCH_UINT64:
+		return "uint64";
+	case MATCH_BOOL:
+		return "bool";
+	case MATCH_EXISTS:
+		return "exists";
+	case MATCH_EMPTY:
+		return "empty";
+	case MATCH_ISASCII:
+		return "is_ascii";
+	case MATCH_IS_ABS_PATH:
+		return "is_absolute_path";
+	case MATCH_CONTAINS:
+		return "contains";
+	case MATCH_CONTAINS_NCASE:
+		return "contains_ncase";
+	case MATCH_COMPARE_LT:
+		return "compare_lt";
+	case MATCH_COMPARE_LE:
+		return "compare_le";
+	case MATCH_COMPARE_GT:
+		return "compare_gt";
+	case MATCH_COMPARE_GE:
+		return "compare_ge";
+	case MATCH_UNKNOWN:
+		return "unknown match type";
+	}
+	return "invalid match type";
+}
 
-	/** When merging, the key to store the value in */
-	char merge_key[MAX_KEY_SIZE];
-
-	/** Type to merge*/
-	int merge_type;
-
-	/** Set to #TRUE if a device is matched */
-	dbus_bool_t device_matched;
-
-} ParsingContext;
-
-/** Resolve a udi-property path as used in .fdi files. 
+/** Resolve a udi-property path as used in .fdi files.
  *
  *  Examples of udi-property paths:
  *
@@ -177,16 +316,12 @@ typedef struct {
  */
 static gboolean
 resolve_udiprop_path (const char *path, const char *source_udi,
-		      char *udi_result, size_t udi_result_size, 
+		      char *udi_result, size_t udi_result_size,
 		      char *prop_result, size_t prop_result_size)
 {
 	int i;
 	gchar **tokens = NULL;
-	gboolean rc;
-
-	rc = FALSE;
-
-	/*HAL_INFO (("Looking at '%s' for udi='%s'", path, source_udi));*/
+	gboolean rc = FALSE;
 
 	/* Split up path into ':' tokens */
 	tokens = g_strsplit (path, ":", 64);
@@ -235,26 +370,15 @@ resolve_udiprop_path (const char *path, const char *source_udi,
 			if (newudi == NULL)
 				goto out;
 
-			/*HAL_INFO (("new_udi = '%s' (from indirection)", newudi));*/
-
 			strncpy (udi_result, newudi, udi_result_size);
 		} else {
-			/*HAL_INFO (("new_udi = '%s'", curtoken));*/
 			strncpy (udi_result, curtoken, udi_result_size);
 		}
 
 	}
 
 out:
-
-/*
-	HAL_INFO (("success     = '%s'", rc ? "yes" : "no"));
-	HAL_INFO (("udi_result  = '%s'", udi_result));
-	HAL_INFO (("prop_result = '%s'", prop_result));
-*/
-
 	g_strfreev (tokens);
-
 	return rc;
 }
 
@@ -317,135 +441,86 @@ out:
 	return rc;
 }
 
-/** Called when the match element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  attr                Attribute key/value pairs
- *  @return                     #FALSE if the device in question didn't
- *                              match the data in the attributes
- */
-static dbus_bool_t
-handle_match (ParsingContext * pc, const char **attr)
+static gboolean
+handle_match (struct rule *rule, HalDevice *d)
 {
-	char udi_to_check[256];
-	char prop_to_check[256];
-	const char *key;
-	int num_attrib;
-	HalDevice *d;
-
-	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++);
-
-	if (num_attrib != 4)
-		return FALSE;
-
-	if (strcmp (attr[0], "key") != 0)
-		return FALSE;
-	key = attr[1];
+	char udi_to_check[HAL_PATH_MAX];
+	char prop_to_check[HAL_PATH_MAX];
+	const char *key = rule->key;
+	const char *value = rule->value;
 
 	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
 	if (!resolve_udiprop_path (key,
-				   pc->device->udi,
+				   hal_device_get_udi (d),
 				   udi_to_check, sizeof (udi_to_check),
 				   prop_to_check, sizeof (prop_to_check))) {
-		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, pc->device->udi));
+		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, value));
 		return FALSE;
 	}
 
 	d = hal_device_store_find (hald_get_gdl (), udi_to_check);
-	if (d == NULL) {
+	if (d == NULL)
 		d = hal_device_store_find (hald_get_tdl (), udi_to_check);
-	}
 	if (d == NULL) {
 		HAL_ERROR (("Could not find device with udi '%s'", udi_to_check));
 		return FALSE;
 	}
-	
 
-	if (strcmp (attr[2], "string") == 0) {
-		const char *value;
-
-		/* match string property */
-
-		value = attr[3];
-
-		/*HAL_INFO(("Checking that key='%s' is a string that "
-		  "equals '%s'", key, value)); */
-
+	switch (rule->type_match) {
+	case MATCH_STRING:
+	{
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
-
-		if (strcmp (hal_device_property_get_string (d, prop_to_check),
-			    value) != 0)
+		if (strcmp (hal_device_property_get_string (d, prop_to_check), value) != 0)
 			return FALSE;
-
-		/*HAL_INFO (("*** string match for key %s", key));*/
 		return TRUE;
-	} else if (strcmp (attr[2], "int") == 0) {
-		dbus_int32_t value;
+	}
 
-		/* match integer property */
-		value = strtol (attr[3], NULL, 0);
-		
-		/** @todo Check error condition */
-
-		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
-		  key, value));*/
+	case MATCH_INT:
+	{
+		int val = strtol (value, NULL, 0);
 
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_INT32)
 			return FALSE;
-
-		if (hal_device_property_get_int (d, prop_to_check) != value) {
+		if (hal_device_property_get_int (d, prop_to_check) != val)
 			return FALSE;
-		}
-
 		return TRUE;
-	} else if (strcmp (attr[2], "uint64") == 0) {
-		dbus_uint64_t value;
+	}
 
-		/* match integer property */
-		value = strtoull (attr[3], NULL, 0);
-		
-		/** @todo Check error condition */
-
-		/*HAL_INFO (("Checking that key='%s' is a int that equals %d", 
-		  key, value));*/
+	case MATCH_UINT64:
+	{
+		dbus_uint64_t val = strtol (value, NULL, 0);
 
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_UINT64)
 			return FALSE;
-
-		if (hal_device_property_get_uint64 (d, prop_to_check) != value) {
+		if (hal_device_property_get_uint64 (d, prop_to_check) != val)
 			return FALSE;
-		}
-
 		return TRUE;
-	} else if (strcmp (attr[2], "bool") == 0) {
-		dbus_bool_t value;
+	}
 
-		/* match string property */
+	case MATCH_BOOL:
+	{
+		dbus_bool_t val;
 
-		if (strcmp (attr[3], "false") == 0)
-			value = FALSE;
-		else if (strcmp (attr[3], "true") == 0)
-			value = TRUE;
+		if (strcmp (value, "false") == 0)
+			val = FALSE;
+		else if (strcmp (value, "true") == 0)
+			val = TRUE;
 		else
 			return FALSE;
 
-		/*HAL_INFO (("Checking that key='%s' is a bool that equals %s", 
-		  key, value ? "TRUE" : "FALSE"));*/
-
-		if (hal_device_property_get_type (d, prop_to_check) != 
-		    HAL_PROPERTY_TYPE_BOOLEAN)
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_BOOLEAN)
 			return FALSE;
-
-		if (hal_device_property_get_bool (d, prop_to_check) != value)
+		if (hal_device_property_get_bool (d, prop_to_check) != val)
 			return FALSE;
-
-		/*HAL_INFO (("*** bool match for key %s", key));*/
 		return TRUE;
-	} else if (strcmp (attr[2], "exists") == 0) {
+	}
+
+	case MATCH_EXISTS:
+	{
 		dbus_bool_t should_exist = TRUE;
 
-		if (strcmp (attr[3], "false") == 0)
+		if (strcmp (value, "false") == 0)
 			should_exist = FALSE;
 
 		if (should_exist) {
@@ -459,16 +534,17 @@ handle_match (ParsingContext * pc, const char **attr)
 			else
 				return TRUE;
 		}
-	} else if (strcmp (attr[2], "empty") == 0) {
+	}
+
+	case MATCH_EMPTY:
+	{
 		dbus_bool_t is_empty = TRUE;
 		dbus_bool_t should_be_empty = TRUE;
 
-		if (strcmp (attr[3], "false") == 0)
+		if (strcmp (value, "false") == 0)
 			should_be_empty = FALSE;
-
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
-
 		if (hal_device_has_property (d, prop_to_check))
 			if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
 				is_empty = FALSE;
@@ -484,13 +560,16 @@ handle_match (ParsingContext * pc, const char **attr)
 			else
 				return TRUE;
 		}
-	} else if (strcmp (attr[2], "is_ascii") == 0) {
+	}
+
+	case MATCH_ISASCII:
+	{
 		dbus_bool_t is_ascii = TRUE;
 		dbus_bool_t should_be_ascii = TRUE;
 		unsigned int i;
 		const char *str;
 
-		if (strcmp (attr[3], "false") == 0)
+		if (strcmp (value, "false") == 0)
 			should_be_ascii = FALSE;
 
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
@@ -515,15 +594,16 @@ handle_match (ParsingContext * pc, const char **attr)
 			else
 				return TRUE;
 		}
-	} else if (strcmp (attr[2], "is_absolute_path") == 0) {
+	}
+
+	case MATCH_IS_ABS_PATH:
+	{
 		const char *path = NULL;
 		dbus_bool_t is_absolute_path = FALSE;
 		dbus_bool_t should_be_absolute_path = TRUE;
 
-		if (strcmp (attr[3], "false") == 0)
+		if (strcmp (value, "false") == 0)
 			should_be_absolute_path = FALSE;
-
-		/*HAL_INFO (("d->udi='%s', prop_to_check='%s'", d->udi, prop_to_check));*/
 
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
@@ -533,8 +613,6 @@ handle_match (ParsingContext * pc, const char **attr)
 			if (g_path_is_absolute (path))
 				is_absolute_path = TRUE;
 		}
-
-		/*HAL_INFO (("is_absolute=%d, should_be=%d, path='%s'", is_absolute_path, should_be_absolute_path, path));*/
 
 		if (should_be_absolute_path) {
 			if (is_absolute_path)
@@ -547,31 +625,28 @@ handle_match (ParsingContext * pc, const char **attr)
 			else
 				return TRUE;
 		}
-	} else if (strcmp (attr[2], "contains") == 0) {
-		const char *needle;
-		dbus_bool_t contains = FALSE;
+	}
 
-		needle = attr[3];
+	case MATCH_CONTAINS:
+	{
+		dbus_bool_t contains = FALSE;
 
 		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
 			if (hal_device_has_property (d, prop_to_check)) {
 				const char *haystack;
-				
-				haystack = hal_device_property_get_string (d, prop_to_check);
-				if (needle != NULL && haystack != NULL && strstr (haystack, needle)) {
-					contains = TRUE;
-				}
-				
-			}
-		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
-			   needle != NULL) {
-			GSList *i;
-			GSList *value;
 
-			value = hal_device_property_get_strlist (d, prop_to_check);
-			for (i = value; i != NULL; i = g_slist_next (i)) {
+				haystack = hal_device_property_get_string (d, prop_to_check);
+				if (value != NULL && haystack != NULL && strstr (haystack, value))
+					contains = TRUE;
+			}
+		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
+			GSList *list;
+			GSList *i;
+
+			list = hal_device_property_get_strlist (d, prop_to_check);
+			for (i = list; i != NULL; i = g_slist_next (i)) {
 				const char *str = i->data;
-				if (strcmp (str, needle) == 0) {
+				if (strcmp (str, value) == 0) {
 					contains = TRUE;
 					break;
 				}
@@ -581,482 +656,93 @@ handle_match (ParsingContext * pc, const char **attr)
 		}
 
 		return contains;
-	} else if (strcmp (attr[2], "contains_ncase") == 0) {
-		const char *needle;
-		dbus_bool_t contains_ncase = FALSE;
+	}
 
-		needle = attr[3];
+	case MATCH_CONTAINS_NCASE:
+	{
+		dbus_bool_t contains_ncase = FALSE;
 
 		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
 			if (hal_device_has_property (d, prop_to_check)) {
-				char *needle_lowercase;
+				char *value_lowercase;
 				char *haystack_lowercase;
-				
-				needle_lowercase   = g_utf8_strdown (needle, -1);
+
+				value_lowercase   = g_utf8_strdown (value, -1);
 				haystack_lowercase = g_utf8_strdown (hal_device_property_get_string (d, prop_to_check), -1);
-				if (needle_lowercase != NULL && haystack_lowercase != NULL && strstr (haystack_lowercase, needle_lowercase)) {
+				if (value_lowercase != NULL && haystack_lowercase != NULL &&
+				    strstr (haystack_lowercase, value_lowercase))
 					contains_ncase = TRUE;
-				}
-				
-				g_free (needle_lowercase);
+
+				g_free (value_lowercase);
 				g_free (haystack_lowercase);
 			}
-		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
-			   needle != NULL) {
+		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
+			GSList *list;
 			GSList *i;
-			GSList *value;
 
-			value = hal_device_property_get_strlist (d, prop_to_check);
-			for (i = value; i != NULL; i = g_slist_next (i)) {
+			list = hal_device_property_get_strlist (d, prop_to_check);
+			for (i = list; i != NULL; i = g_slist_next (i)) {
 				const char *str = i->data;
-				if (g_ascii_strcasecmp (str, needle) == 0) {
+				if (g_ascii_strcasecmp (str, value) == 0) {
 					contains_ncase = TRUE;
 					break;
 				}
 			}
-		} else {
+		} else
 			return FALSE;
-		}
-
 		return contains_ncase;
-	} else if (strcmp (attr[2], "compare_lt") == 0) {
+	}
+
+	case MATCH_COMPARE_LT:
+	{
 		dbus_int64_t result;
-		if (!match_compare_property (d, prop_to_check, attr[3], &result)) {
+
+		if (!match_compare_property (d, prop_to_check, value, &result))
 			return FALSE;
-		} else {
+		else
 			return result < 0;
-		}
-	} else if (strcmp (attr[2], "compare_le") == 0) {
+	}
+
+	case MATCH_COMPARE_LE:
+	{
 		dbus_int64_t result;
-		if (!match_compare_property (d, prop_to_check, attr[3], &result))
+
+		if (!match_compare_property (d, prop_to_check, value, &result))
 			return FALSE;
 		else
 			return result <= 0;
-	} else if (strcmp (attr[2], "compare_gt") == 0) {
+	}
+
+	case MATCH_COMPARE_GT:
+	{
 		dbus_int64_t result;
-		if (!match_compare_property (d, prop_to_check, attr[3], &result))
+
+		if (!match_compare_property (d, prop_to_check, value, &result))
 			return FALSE;
 		else
 			return result > 0;
-	} else if (strcmp (attr[2], "compare_ge") == 0) {
+	}
+
+	case MATCH_COMPARE_GE:
+	{
 		dbus_int64_t result;
-		if (!match_compare_property (d, prop_to_check, attr[3], &result))
+
+		if (!match_compare_property (d, prop_to_check, value, &result))
 			return FALSE;
 		else
 			return result >= 0;
 	}
-	
+
+	default:
+		HAL_INFO(("match ERROR"));
+		return FALSE;
+	}
+
 	return FALSE;
 }
 
-
-/** Called when the merge element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  attr                Attribute key/value pairs
- */
+/* we have finished the callouts for a device, now add it to the gdl */
 static void
-handle_merge (ParsingContext * pc, const char **attr)
-{
-	int num_attrib;
-
-	pc->merge_type = MERGE_TYPE_UNKNOWN;
-
-
-	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
-		;
-	}
-
-	if (num_attrib != 4)
-		return;
-
-	if (strcmp (attr[0], "key") != 0)
-		return;
-	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
-
-	if (strcmp (attr[2], "type") != 0)
-		return;
-
-	if (strcmp (attr[3], "string") == 0) {
-		/* match string property */
-		pc->merge_type = MERGE_TYPE_STRING;
-		return;
-	} else if (strcmp (attr[3], "bool") == 0) {
-		/* match string property */
-		pc->merge_type = MERGE_TYPE_BOOLEAN;
-		return;
-	} else if (strcmp (attr[3], "int") == 0) {
-		/* match string property */
-		pc->merge_type = MERGE_TYPE_INT32;
-		return;
-	} else if (strcmp (attr[3], "uint64") == 0) {
-		/* match string property */
-		pc->merge_type = MERGE_TYPE_UINT64;
-		return;
-	} else if (strcmp (attr[3], "double") == 0) {
-		/* match string property */
-		pc->merge_type = MERGE_TYPE_DOUBLE;
-		return;
-	} else if (strcmp (attr[3], "strlist") == 0) {
-		/* match string property */
-		pc->merge_type = MERGE_TYPE_STRLIST;
-		return;
-	} else if (strcmp (attr[3], "copy_property") == 0) {
-		/* copy another property */
-		pc->merge_type = MERGE_TYPE_COPY_PROPERTY;
-		return;
-	}
-
-	return;
-}
-
-/** Called when the append or prepend element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  attr                Attribute key/value pairs
- */
-static void
-handle_append_prepend (ParsingContext * pc, const char **attr)
-{
-	int num_attrib;
-
-	pc->merge_type = MERGE_TYPE_UNKNOWN;
-
-	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
-		;
-	}
-
-	if (num_attrib != 4)
-		return;
-
-	if (strcmp (attr[0], "key") != 0)
-		return;
-	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
-
-	if (strcmp (attr[2], "type") != 0)
-		return;
-
-	if (strcmp (attr[3], "string") == 0) {
-		/* append to a string */
-		pc->merge_type = MERGE_TYPE_STRING;
-		return;
-	} else if (strcmp (attr[3], "strlist") == 0) {
-		/* append to a string list*/
-		pc->merge_type = MERGE_TYPE_STRLIST;
-		return;
-	} else if (strcmp (attr[3], "copy_property") == 0) {
-		/* copy another property */
-		pc->merge_type = MERGE_TYPE_COPY_PROPERTY;
-		return;
-	}
-
-	return;
-}
-
-
-/** Called when the spawn element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  attr                Attribute key/value pairs
- */
-static void
-handle_spawn (ParsingContext * pc, const char **attr)
-{
-	int num_attrib;
-
-	pc->merge_type = MERGE_TYPE_UNKNOWN;
-
-	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
-		;
-	}
-
-	if (num_attrib != 2)
-		return;
-
-	if (strcmp (attr[0], "udi") != 0)
-		return;
-
-	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
-
-	pc->merge_type = MERGE_TYPE_SPAWN;
-
-	return;
-}
-
-/** Called when the remove element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  attr                Attribute key/value pairs
- */
-static void
-handle_remove (ParsingContext * pc, const char **attr)
-{
-	int num_attrib;
-
-	pc->merge_type = MERGE_TYPE_UNKNOWN;
-
-	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
-		;
-	}
-
-	if (num_attrib != 2 && num_attrib != 4)
-		return;
-
-	if (strcmp (attr[0], "key") != 0)
-		return;
-	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
-
-	if (num_attrib == 4) {
-		if (strcmp (attr[2], "type") != 0)
-			return;
-
-		if (strcmp (attr[3], "strlist") == 0) {
-			/* remove from strlist */
-			pc->merge_type = MERGE_TYPE_STRLIST;
-			return;
-		} else {
-			pc->merge_type = MERGE_TYPE_UNKNOWN;
-			return;
-		}
-	} else {
-		pc->merge_type = MERGE_TYPE_REMOVE;
-	}
-
-	return;
-}
-
-/** Called when the clear element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  attr                Attribute key/value pairs
- */
-static void
-handle_clear (ParsingContext * pc, const char **attr)
-{
-	int num_attrib;
-
-	pc->merge_type = MERGE_TYPE_UNKNOWN;
-
-	for (num_attrib = 0; attr[num_attrib] != NULL; num_attrib++) {
-		;
-	}
-
-	if (num_attrib != 4)
-		return;
-	
-	if (strcmp (attr[0], "key") != 0)
-		return;
-
-
-	if (strcmp (attr[3], "strlist") != 0)
-		return;
-	
-	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
-	
-	pc->merge_type = MERGE_TYPE_CLEAR;
-
-	return;
-}
-
-/** Abort parsing of document
- *
- *  @param  pc                  Parsing context
- */
-static void
-parsing_abort (ParsingContext * pc)
-{
-	/* Grr, expat can't abort parsing */
-	HAL_ERROR (("Aborting parsing of document"));
-	pc->aborted = TRUE;
-}
-
-/** Called by expat when an element begins.
- *
- *  @param  pc                  Parsing context
- *  @param  el                  Element name
- *  @param  attr                Attribute key/value pairs
- */
-static void
-start (ParsingContext * pc, const char *el, const char **attr)
-{
-	if (pc->aborted)
-		return;
-
-	pc->cdata_buf_len = 0;
-
-/*
-    for (i = 0; i < pc->depth; i++)
-        printf("  ");
-    
-    printf("%s", el);
-    
-    for (i = 0; attr[i]; i += 2) {
-        printf(" %s='%s'", attr[i], attr[i + 1]);
-    }
-
-    printf("   curelem=%d\n", pc->curelem);
-*/
-
-	if (strcmp (el, "match") == 0) {
-		if (pc->curelem != CURELEM_DEVICE
-		    && pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <match> can only be "
-				    "inside <device> and <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_MATCH;
-
-		/* don't bother checking if matching at lower depths failed */
-		if (pc->match_ok) {
-			if (!handle_match (pc, attr)) {
-				/* No match */
-				pc->match_depth_first_fail = pc->depth;
-				pc->match_ok = FALSE;
-			}
-		}
-	} else if (strcmp (el, "merge") == 0) {
-		if (pc->curelem != CURELEM_DEVICE
-		    && pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <merge> can only be "
-				    "inside <device> and <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_MERGE;
-		if (pc->match_ok) {
-			handle_merge (pc, attr);
-		} else {
-			/*HAL_INFO(("No merge!")); */
-		}
-	} else if (strcmp (el, "append") == 0) {
-		if (pc->curelem != CURELEM_DEVICE
-		    && pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <append> can only be "
-				    "inside <device> and <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_APPEND;
-		if (pc->match_ok) {
-			handle_append_prepend (pc, attr);
-		} else {
-			/*HAL_INFO(("No merge!")); */
-		}
-	} else if (strcmp (el, "prepend") == 0) {
-		if (pc->curelem != CURELEM_DEVICE
-		    && pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <prepend> can only be "
-				    "inside <device> and <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_PREPEND;
-		if (pc->match_ok) {
-			handle_append_prepend (pc, attr);
-		} else {
-			/*HAL_INFO(("No merge!")); */
-		}
-	} else if (strcmp (el, "remove") == 0) {
-		if (pc->curelem != CURELEM_DEVICE
-		    && pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <remove> can only be "
-				    "inside <device> and <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_REMOVE;
-		if (pc->match_ok) {
-			handle_remove (pc, attr);
-		} else {
-			/*HAL_INFO(("No merge!")); */
-		}
-	} else if (strcmp (el, "clear") == 0) {
-		if (pc->curelem != CURELEM_DEVICE
-		    && pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <remove> can only be "
-				    "inside <device> and <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_CLEAR;
-		if (pc->match_ok) {
-			handle_clear (pc, attr);
-		} else {
-			/*HAL_INFO(("No merge!")); */
-		}
-	} else if (strcmp (el, "device") == 0) {
-		if (pc->curelem != CURELEM_DEVICE_INFO) {
-			HAL_ERROR (("%s:%d:%d: Element <device> can only be "
-				    "inside <deviceinfo>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-		pc->curelem = CURELEM_DEVICE;
-	} else if (strcmp (el, "deviceinfo") == 0) {
-		if (pc->curelem != CURELEM_UNKNOWN) {
-			HAL_ERROR (("%s:%d:%d: Element <deviceinfo> must be "
-				    "a top-level element", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-		pc->curelem = CURELEM_DEVICE_INFO;
-	} else if (strcmp (el, "spawn") == 0) {
-		if (pc->curelem != CURELEM_MATCH) {
-			HAL_ERROR (("%s:%d:%d: Element <spawn> can only be "
-				    "inside <match>", 
-				    pc->file, 
-				    XML_GetCurrentLineNumber (pc->parser), 
-				    XML_GetCurrentColumnNumber (pc->parser)));
-			parsing_abort (pc);
-		}
-
-		pc->curelem = CURELEM_SPAWN;
-		if (pc->match_ok) {
-			handle_spawn (pc, attr);
-		} 
-
-	} else {
-		HAL_ERROR (("%s:%d:%d: Unknown element <%s>",
-			    pc->file,
-			    XML_GetCurrentLineNumber (pc->parser),
-			    XML_GetCurrentColumnNumber (pc->parser), el));
-		parsing_abort (pc);
-	}
-
-	/* Nasty hack */
-	assert (pc->depth < MAX_DEPTH);
-
-	pc->depth++;
-
-	/* store depth */
-	pc->curelem_stack[pc->depth] = pc->curelem;
-
-}
-
-static void 
 spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
 	HAL_INFO (("Add callouts completed udi=%s", d->udi));
@@ -1064,96 +750,55 @@ spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer use
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
 	hal_device_store_add (hald_get_gdl (), d);
-
 }
 
-/** Called by expat when an element ends.
- *
- *  @param  pc                  Parsing context
- *  @param  el                  Element name
- */
-static void
-end (ParsingContext * pc, const char *el)
+/* for this device, process the rule */
+static gboolean
+handle_merge (struct rule *rule, HalDevice *d)
 {
-	if (pc->aborted)
-		return;
+	const char *key = rule->key;
+	const char *value = rule->value;
 
-	pc->cdata_buf[pc->cdata_buf_len] = '\0';
+	if (rule->rtype == RULE_MERGE) {
 
-/*    printf("   curelem=%d\n", pc->curelem);*/
+		if (rule->type_merge == MERGE_STRING) {
+			hal_device_property_set_string (d, key, value);
 
-	if (pc->curelem == CURELEM_MERGE && pc->match_ok) {
-		/* As soon as we are merging, we have matched the device... */
-		pc->device_matched = TRUE;
+		} else if (rule->type_merge == MERGE_STRLIST) {
+			int type = hal_device_property_get_type (d, key);
 
-		switch (pc->merge_type) {
-		case MERGE_TYPE_STRING:
-			hal_device_property_set_string (pc->device, pc->merge_key, pc->cdata_buf);
-			break;
-
-		case MERGE_TYPE_STRLIST:
-		{
-			int type = hal_device_property_get_type (pc->device, pc->merge_key);
 			if (type == HAL_PROPERTY_TYPE_STRLIST || type == HAL_PROPERTY_TYPE_INVALID) {
-				hal_device_property_remove (pc->device, pc->merge_key);
-				hal_device_property_strlist_append (pc->device, pc->merge_key, pc->cdata_buf);
-			}
-			break;
-		}
-
-		case MERGE_TYPE_INT32:
-			{
-				dbus_int32_t value;
-
-				/* match integer property */
-				value = strtol (pc->cdata_buf, NULL, 0);
-
-				/** @todo FIXME: Check error condition */
-
-				hal_device_property_set_int (pc->device,
-						     pc->merge_key, value);
-				break;
+				hal_device_property_remove (d, key);
+				hal_device_property_strlist_append (d, key, value);
 			}
 
-		case MERGE_TYPE_UINT64:
-			{
-				dbus_uint64_t value;
+		} else if (rule->type_merge == MERGE_INT32) {
+			dbus_int32_t val = strtol (value, NULL, 0);
+			hal_device_property_set_int (d, key, val);
 
-				/* match integer property */
-				value = strtoull (pc->cdata_buf, NULL, 0);
+		} else if (rule->type_merge == MERGE_UINT64) {
+			dbus_uint64_t val = strtoull (value, NULL, 0);
+			hal_device_property_set_uint64 (d, key, val);
 
-				/** @todo FIXME: Check error condition */
+		} else if (rule->type_merge == MERGE_BOOLEAN) {
+			hal_device_property_set_bool (d, key, (strcmp (value, "true") == 0) ? TRUE : FALSE);
 
-				hal_device_property_set_uint64 (pc->device,
-						     pc->merge_key, value);
-				break;
-			}
+		} else if (rule->type_merge == MERGE_DOUBLE) {
+			hal_device_property_set_double (d, key, atof (value));
 
-		case MERGE_TYPE_BOOLEAN:
-			hal_device_property_set_bool (pc->device, pc->merge_key,
-					      (strcmp (pc->cdata_buf,
-						       "true") == 0) 
-					      ? TRUE : FALSE);
-			break;
+		} else if (rule->type_merge == MERGE_COPY_PROPERTY) {
 
-		case MERGE_TYPE_DOUBLE:
-			hal_device_property_set_double (pc->device, pc->merge_key,
-						atof (pc->cdata_buf));
-			break;
+			char udi_to_merge_from[HAL_PATH_MAX];
+			char prop_to_merge[HAL_PATH_MAX];
 
-		case MERGE_TYPE_COPY_PROPERTY:
-		{
-			char udi_to_merge_from[256];
-			char prop_to_merge[256];
-
-			/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' 
+			/* Resolve key paths like 'someudi/foo/bar/baz:prop.name'
 			 * '@prop.here.is.an.udi:with.prop.name'
 			 */
-			if (!resolve_udiprop_path (pc->cdata_buf,
-						   pc->device->udi,
+			if (!resolve_udiprop_path (value,
+						   hal_device_get_udi (d),
 						   udi_to_merge_from, sizeof (udi_to_merge_from),
 						   prop_to_merge, sizeof (prop_to_merge))) {
-				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", pc->cdata_buf, pc->device->udi));
+				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", value, hal_device_get_udi (d)));
 			} else {
 				HalDevice *d;
 
@@ -1164,386 +809,380 @@ end (ParsingContext * pc, const char *el)
 				if (d == NULL) {
 					HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge_from));
 				} else {
-					hal_device_copy_property (d, prop_to_merge, pc->device, pc->merge_key);
+					hal_device_copy_property (d, prop_to_merge, d, key);
 				}
 			}
-			break;
+
+		} else {
+			HAL_ERROR (("unknown merge type (%u)", rule->type_merge));
 		}
 
-		default:
-			HAL_ERROR (("Unknown merge_type=%d='%c'",
-				    pc->merge_type, pc->merge_type));
-			break;
+	} else if (rule->rtype == RULE_APPEND) {
+		char buf[HAL_PATH_MAX];
+		char buf2[HAL_PATH_MAX];
+
+		if (hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRING &&
+		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRLIST &&
+		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_INVALID) {
+			HAL_ERROR (("invalid key type"));
+			return FALSE;
 		}
-	} else if (pc->curelem == CURELEM_APPEND && pc->match_ok && 
-		   (hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING ||
-		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRLIST ||
-		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_INVALID)) {
-		char buf[256];
-		char buf2[256];
 
-		/* As soon as we are appending, we have matched the device... */
-		pc->device_matched = TRUE;
-
-		if (pc->merge_type == MERGE_TYPE_STRLIST) {
-			hal_device_property_strlist_append (pc->device, pc->merge_key, pc->cdata_buf);
+		if (rule->type_merge == MERGE_STRLIST) {
+			hal_device_property_strlist_append (d, key, value);
 		} else {
 			const char *existing_string;
-			
-			switch (pc->merge_type) {
-			case MERGE_TYPE_STRING:
-				strncpy (buf, pc->cdata_buf, sizeof (buf));
+
+			switch (rule->type_merge) {
+			case MERGE_STRING:
+				strncpy (buf, value, sizeof (buf));
 				break;
-				
-			case MERGE_TYPE_COPY_PROPERTY:
-				hal_device_property_get_as_string (pc->device, pc->cdata_buf, buf, sizeof (buf));
+
+			case MERGE_COPY_PROPERTY:
+				hal_device_property_get_as_string (d, value, buf, sizeof (buf));
 				break;
-				
+
 			default:
-				HAL_ERROR (("Unknown merge_type=%d='%c'", pc->merge_type, pc->merge_type));
 				break;
 			}
-			
-			existing_string = hal_device_property_get_string (pc->device, pc->merge_key);
+
+			existing_string = hal_device_property_get_string (d, key);
 			if (existing_string != NULL) {
 				strncpy (buf2, existing_string, sizeof (buf2));
 				strncat (buf2, buf, sizeof (buf2) - strlen(buf2));
-			} else {
+			} else
 				strncpy (buf2, buf, sizeof (buf2));
-			}
-			hal_device_property_set_string (pc->device, pc->merge_key, buf2);
+			hal_device_property_set_string (d, key, buf2);
 		}
-	} else if (pc->curelem == CURELEM_PREPEND && pc->match_ok && 
-		   (hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRING ||
-		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_STRLIST ||
-		    hal_device_property_get_type (pc->device, pc->merge_key) == HAL_PROPERTY_TYPE_INVALID)) {
-		char buf[256];
-		char buf2[256];
 
-		/* As soon as we are prepending, we have matched the device... */
-		pc->device_matched = TRUE;
+	} else if (rule->rtype == RULE_PREPEND) {
+		char buf[HAL_PATH_MAX];
+		char buf2[HAL_PATH_MAX];
 
-		if (pc->merge_type == MERGE_TYPE_STRLIST) {
-			hal_device_property_strlist_prepend (pc->device, pc->merge_key, pc->cdata_buf);
+		if (hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRING &&
+		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRLIST &&
+		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_INVALID) {
+			HAL_ERROR (("invalid key type"));
+			return FALSE;
+		}
+
+		if (rule->type_merge == MERGE_STRLIST) {
+			hal_device_property_strlist_prepend (d, key, value);
 		} else {
 			const char *existing_string;
-			
-			switch (pc->merge_type) {
-			case MERGE_TYPE_STRING:
-				strncpy (buf, pc->cdata_buf, sizeof (buf));
-				break;
-				
-			case MERGE_TYPE_COPY_PROPERTY:
-				hal_device_property_get_as_string (pc->device, pc->cdata_buf, buf, sizeof (buf));
-				break;
-				
-			default:
-				HAL_ERROR (("Unknown merge_type=%d='%c'", pc->merge_type, pc->merge_type));
-				break;
+
+			if (rule->type_merge == MERGE_STRING) {
+				strncpy (buf, value, sizeof (buf));
+
+			} else if (rule->type_merge == MERGE_COPY_PROPERTY) {
+				hal_device_property_get_as_string (d, value, buf, sizeof (buf));
+
 			}
-			
-			existing_string = hal_device_property_get_string (pc->device, pc->merge_key);
+
+			existing_string = hal_device_property_get_string (d, key);
 			if (existing_string != NULL) {
 				strncpy (buf2, buf, sizeof (buf2));
 				strncat (buf2, existing_string, sizeof (buf2) - strlen(buf2));
 			} else {
 				strncpy (buf2, buf, sizeof (buf2));
 			}
-			hal_device_property_set_string (pc->device, pc->merge_key, buf2);
+			hal_device_property_set_string (d, key, buf2);
 		}
-	} else if (pc->curelem == CURELEM_REMOVE && pc->match_ok) {
 
-		if (pc->merge_type == MERGE_TYPE_STRLIST) {
+	} else if (rule->rtype == RULE_REMOVE) {
+
+		if (rule->type_merge == MERGE_STRLIST) {
 			/* covers <remove key="foobar" type="strlist">blah</remove> */
-			hal_device_property_strlist_remove (pc->device, pc->merge_key, pc->cdata_buf);
+			hal_device_property_strlist_remove (d, key, value);
+
 		} else {
 			/* only allow <remove key="foobar"/>, not <remove key="foobar">blah</remove> */
-			if (strlen (pc->cdata_buf) == 0) {
-				hal_device_property_remove (pc->device, pc->merge_key);
-			}
+			if (strlen (value) == 0)
+				hal_device_property_remove (d, key);
 		}
-	} else if (pc->merge_type == MERGE_TYPE_SPAWN) {
-		HalDevice *spawned;
 
-		spawned = hal_device_store_find (hald_get_gdl (), pc->merge_key);
+	} else if (rule->rtype == RULE_SPAWN) {
+		HalDevice *spawned;
+		spawned = hal_device_store_find (hald_get_gdl (), key);
 		if (spawned == NULL)
-			spawned = hal_device_store_find (hald_get_tdl (), pc->merge_key);
+			spawned = hal_device_store_find (hald_get_tdl (), key);
 
 		if (spawned == NULL) {
-			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'", 
-				   pc->merge_key, pc->device->udi));
-
+			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'",
+				   key, d->udi));
 			spawned = hal_device_new ();
 			hal_device_property_set_string (spawned, "info.bus", "unknown");
-			hal_device_property_set_string (spawned, "info.udi", pc->merge_key);
-			hal_device_property_set_string (spawned, "info.parent", pc->device->udi);
-			hal_device_set_udi (spawned, pc->merge_key);
-			
+			hal_device_property_set_string (spawned, "info.udi", key);
+			hal_device_property_set_string (spawned, "info.parent", d->udi);
+			hal_device_set_udi (spawned, key);
+
 			hal_device_store_add (hald_get_tdl (), spawned);
-			
+
 			di_search_and_merge (spawned, DEVICE_INFO_TYPE_INFORMATION);
 			di_search_and_merge (spawned, DEVICE_INFO_TYPE_POLICY);
-			
+
 			hal_util_callout_device_add (spawned, spawned_device_callouts_add_done, NULL, NULL);
 		}
 
-	} else if (pc->curelem == CURELEM_CLEAR && pc->match_ok) {
-		if (pc->merge_type == MERGE_TYPE_CLEAR) {
-			hal_device_property_strlist_clear (pc->device, pc->merge_key);
+	} else {
+		HAL_ERROR (("Unknown rule type (%u)", rule->rtype));
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/* for each node, free memory and it's own list of nodes */
+static void
+rules_cleanup_list (GSList *fdi_rules)
+{
+	GSList *elem;
+
+	for (elem = fdi_rules; elem != NULL; elem = g_slist_next (elem)) {
+		struct rule *rule = elem->data;
+
+		g_free (rule->key);
+		g_free (rule->value);
+		g_free (rule);
+	}
+	g_slist_free (fdi_rules);
+	fdi_rules = NULL;
+}
+
+/* expat cb for start, e.g. <match foo=bar */
+static void
+start (void *data, const char *el, const char **attr)
+{
+	struct fdi_context *fdi_ctx = data;
+	enum rule_type rtype = get_rule_type (el);
+	int i;
+
+	if (rtype == RULE_UNKNOWN)
+		return;
+
+	if (fdi_ctx->rule == NULL)
+		return;
+
+	/* get key and attribute for current rule */
+	for (i = 0; attr[i] != NULL; i+=2) {
+		if (strcmp (attr[i], "key") == 0) {
+			fdi_ctx->rule->key = g_strdup (attr[1]);
+			continue;
+		}
+		if (rtype == RULE_SPAWN) {
+			if (strcmp (attr[i], "udi") == 0) {
+				fdi_ctx->rule->key = g_strdup (attr[1]);
+				continue;
+			}
+		} else if (rtype == RULE_MATCH) {
+			fdi_ctx->rule->type_match = get_match_type (attr[i]);
+			if (fdi_ctx->rule->type_match == MATCH_UNKNOWN)
+				continue;
+			fdi_ctx->rule->value = g_strdup (attr[i+1]);
+		} else {
+			if (strcmp (attr[i], "type") != 0)
+				continue;
+			fdi_ctx->rule->type_merge = get_merge_type (attr[i+1]);
+			if (fdi_ctx->rule->type_merge == MERGE_UNKNOWN)
+				return;
 		}
 	}
 
-
-	pc->cdata_buf_len = 0;
-	pc->depth--;
-
-	/* maintain curelem */
-	pc->curelem = pc->curelem_stack[pc->depth];
-
-	/* maintain pc->match_ok */
-	if (pc->depth <= pc->match_depth_first_fail)
-		pc->match_ok = TRUE;
-}
-
-/** Called when there is CDATA 
- *
- *  @param  pc                  Parsing context
- *  @param  s                   Pointer to data
- *  @param  len                 Length of data
- */
-static void
-cdata (ParsingContext * pc, const char *s, int len)
-{
-	int bytes_left;
-	int bytes_to_copy;
-
-	if (pc->aborted)
+	if (fdi_ctx->rule->key[0] == '\0')
 		return;
 
-	bytes_left = CDATA_BUF_SIZE - pc->cdata_buf_len;
-	if (len > bytes_left) {
-		HAL_ERROR (("CDATA in element larger than %d",
-			    CDATA_BUF_SIZE));
+	fdi_ctx->rule->rtype = rtype;
+
+	/* match rules remember the current nesting and the label to jump to if not matching */
+	if (rtype == RULE_MATCH) {
+		/* remember current nesting */
+		fdi_ctx->depth++;
+
+		/* remember rule at nesting level nesting */
+		fdi_ctx->match_at_depth[fdi_ctx->depth] = fdi_ctx->rule;
+
+		/* insert match rule into list and get new rule */
+		fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
+		fdi_ctx->rule = g_new0 (struct rule ,1);
 	}
-
-	bytes_to_copy = len;
-	if (bytes_to_copy > bytes_left)
-		bytes_to_copy = bytes_left;
-
-	if (bytes_to_copy > 0)
-		memcpy (pc->cdata_buf + pc->cdata_buf_len, s,
-			bytes_to_copy);
-
-	pc->cdata_buf_len += bytes_to_copy;
 }
 
-
-/** Process a device information info file.
- *
- *  @param  dir                 Directory file resides in
- *  @param  filename            File name
- *  @param  device              Device to match on
- *  @return                     #TRUE if file matched device and information
- *                              was merged
- */
-static dbus_bool_t
-process_fdi_file (const char *dir, const char *filename,
-		  HalDevice * device)
+/* expat cb for character data, i.e. the text data in between tags */
+static void
+cdata (void *data, const char *s, int len)
 {
-	int rc;
-	char buf[512];
-	FILE *file;
-	int filesize;
-	size_t read;
-	char *filebuf;
-	dbus_bool_t device_matched;
-	XML_Parser parser;
-	ParsingContext *parsing_context;
+	struct fdi_context *fdi_ctx = data;
 
-	file = NULL;
-	filebuf = NULL;
-	parser = NULL;
-	parsing_context = NULL;
+	if (fdi_ctx->rule == NULL)
+		return;
 
-	device_matched = FALSE;
+	if (fdi_ctx->rule->rtype != RULE_MERGE &&
+	    fdi_ctx->rule->rtype != RULE_PREPEND &&
+	    fdi_ctx->rule->rtype != RULE_APPEND &&
+	    fdi_ctx->rule->rtype != RULE_REMOVE &&
+	    fdi_ctx->rule->rtype != RULE_SPAWN)
+		return;
 
-	snprintf (buf, sizeof (buf), "%s/%s", dir, filename);
+	if (len < 1)
+		return;
 
-	/*HAL_INFO(("analyzing file %s", buf));*/
-
-	/* open file and read it into a buffer; it's a small file... */
-	file = fopen (buf, "r");
-	if (file == NULL) {
-		HAL_ERROR (("Could not open file %s", buf));
-		goto out;
-	}
-
-	fseek (file, 0L, SEEK_END);
-	filesize = (int) ftell (file);
-	rewind (file);
-	filebuf = (char *) malloc (filesize);
-	if (filebuf == NULL) {
-		HAL_ERROR (("Could not allocate %d bytes for file %s", filesize, buf));
-		goto out;
-	}
-	read = fread (filebuf, sizeof (char), filesize, file);
-
-	/* initialize parsing context */
-	parsing_context =
-	    (ParsingContext *) malloc (sizeof (ParsingContext));
-	if (parsing_context == NULL) {
-		HAL_ERROR (("Could not allocate parsing context"));
-		goto out;
-	}
-
-	/* TODO: reuse parser
-	 */
-	parser = XML_ParserCreate (NULL);
-	if (parser == NULL) {
-		HAL_ERROR (("Could not allocate XML parser"));
-		goto out;
-	}
-
-	parsing_context->depth = 0;
-	parsing_context->device_matched = FALSE;
-	parsing_context->match_ok = TRUE;
-	parsing_context->curelem = CURELEM_UNKNOWN;
-	parsing_context->aborted = FALSE;
-	parsing_context->file = buf;
-	parsing_context->parser = parser;
-	parsing_context->device = device;
-	parsing_context->match_depth_first_fail = -1;
-
-	XML_SetElementHandler (parser,
-			       (XML_StartElementHandler) start,
-			       (XML_EndElementHandler) end);
-	XML_SetCharacterDataHandler (parser,
-				     (XML_CharacterDataHandler) cdata);
-	XML_SetUserData (parser, parsing_context);
-
-	rc = XML_Parse (parser, filebuf, filesize, 1);
-	/*printf("XML_Parse rc=%d\r\n", rc); */
-
-	if (rc == 0) {
-		/* error parsing document */
-		HAL_ERROR (("Error parsing XML document %s at line %d, "
-			    "column %d : %s", 
-			    buf, 
-			    XML_GetCurrentLineNumber (parser), 
-			    XML_GetCurrentColumnNumber (parser), 
-			    XML_ErrorString (XML_GetErrorCode (parser))));
-		device_matched = FALSE;
-	} else {
-		/* document parsed ok */
-		device_matched = parsing_context->device_matched;
-	}
-
-out:
-	if (filebuf != NULL)
-		free (filebuf);
-	if (file != NULL)
-		fclose (file);
-	if (parser != NULL)
-		XML_ParserFree (parser);
-	if (parsing_context != NULL)
-		free (parsing_context);
-
-	return device_matched;
+	/* copy cdata in current context */
+	fdi_ctx->rule->value = g_realloc (fdi_ctx->rule->value, fdi_ctx->rule->value_len + len+1);
+	memcpy (&fdi_ctx->rule->value[fdi_ctx->rule->value_len], s, len);
+	fdi_ctx->rule->value_len += len;
+	fdi_ctx->rule->value[fdi_ctx->rule->value_len] = '\0';
 }
 
+/* expat cb for end, e.g. </device> */
+static void
+end (void *data, const char *el)
+{
+	struct fdi_context *fdi_ctx = data;
+	enum rule_type rtype = get_rule_type (el);
 
+	if (rtype == RULE_UNKNOWN)
+		return;
 
-static int 
-my_alphasort(const void *a, const void *b)
+	if (rtype == RULE_MATCH) {
+		if (fdi_ctx->depth <= 0)
+			return;
+
+		/* get corresponding match rule and set the rule to skip to */
+		fdi_ctx->match_at_depth[fdi_ctx->depth]->next_rule = fdi_ctx->rule;
+		fdi_ctx->depth--;
+		return;
+	}
+
+	/* only valid if element is in the current context */
+	if (fdi_ctx->rule->rtype != rtype)
+		return;
+
+	/* set empty value to empty string */
+	if (fdi_ctx->rule->value == NULL)
+		fdi_ctx->rule->value = "";
+
+	/* insert merge rule into list and get new rule */
+	fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
+	fdi_ctx->rule = g_new0 (struct rule, 1);
+}
+
+/* decompile an fdi file into a list of rules as this is quicker than opening then each time we want to search */
+static int
+rules_add_fdi_file (GSList **fdi_rules, const char *filename)
+{
+	struct fdi_context *fdi_ctx;
+	char *buf;
+	gsize buflen;
+	int rc;
+
+	if (!g_file_get_contents (filename, &buf, &buflen, NULL))
+		return -1;
+
+	/* get context and first rule */
+	fdi_ctx = g_new0 (struct fdi_context ,1);
+	fdi_ctx->rule = g_new0 (struct rule ,1);
+
+	XML_Parser parser = XML_ParserCreate (NULL);
+	if (parser == NULL) {
+		fprintf (stderr, "Couldn't allocate memory for parser\n");
+		return -1;
+	}
+	XML_SetUserData (parser, fdi_ctx);
+	XML_SetElementHandler (parser, start, end);
+	XML_SetCharacterDataHandler (parser, cdata);
+	rc = XML_Parse (parser, buf, buflen, 1);
+	if (rc == 0)
+		fprintf (stderr, "Parse error at line %i:\n%s\n",
+			(int) XML_GetCurrentLineNumber (parser),
+			XML_ErrorString (XML_GetErrorCode (parser)));
+	XML_ParserFree (parser);
+	g_free (buf);
+
+	/* insert last dummy rule into list */
+	fdi_ctx->rule->rtype = RULE_EOF;
+	fdi_ctx->rule->key = g_strdup (filename);
+	fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
+
+	/* add rules to external list */
+	if (rc == 0)
+		rules_cleanup_list (fdi_ctx->rules);
+	else
+		*fdi_rules = g_slist_concat (*fdi_rules, fdi_ctx->rules);
+
+	g_free (fdi_ctx);
+
+	if (rc == 0)
+		return -1;
+	return 0;
+}
+
+/* print the rules to screen, mainly useful for debugging */
+static void
+rules_dump (GSList *fdi_rules)
+{
+	GSList *elem;
+
+	for (elem = fdi_rules; elem != NULL; elem = g_slist_next (elem)) {
+		struct rule *rule = elem->data;
+
+		if (rule->rtype == RULE_EOF) {
+			printf ("%p: eof %s\n", rule, rule->key);
+		} else if (rule->rtype == RULE_MATCH) {
+			printf ("\n");
+			printf ("%p: match '%s' (%s) '%s' (skip to %p)\n",
+				rule, rule->key, get_match_type_str (rule->type_match),
+				rule->value, rule->next_rule);
+		} else {
+			printf ("%p: %s '%s' (%s) '%s'\n",
+				rule, get_rule_type_str (rule->rtype), rule->key,
+				get_merge_type_str (rule->type_merge), rule->value);
+		}
+	}
+}
+
+/* modified alphasort to count downwards */
+static int
+_alphasort(const void *a, const void *b)
 {
 	return -alphasort (a, b);
 }
 
-
-/** Scan all directories and subdirectories in the given directory and
- *  process each *.fdi file
- *
- *  @param  d                   Device to merge information into
- *  @return                     #TRUE if information was merged
- */
-static dbus_bool_t
-scan_fdi_files (const char *dir, HalDevice * d)
+/* recurse a directory tree, searching and adding fdi files */
+static int
+rules_search_and_add_fdi_files (GSList **fdi_rules, const char *dir)
 {
 	int i;
 	int num_entries;
-	dbus_bool_t found_fdi_file;
 	struct dirent **name_list;
 
-	found_fdi_file = 0;
-
-	/*HAL_INFO(("scan_fdi_files: Processing dir '%s'", dir));*/
-
-	num_entries = scandir (dir, &name_list, 0, my_alphasort);
-	if (num_entries == -1) {
-		perror ("scandir");
-		return FALSE;
-	}
+	num_entries = scandir (dir, &name_list, 0, _alphasort);
+	if (num_entries == -1)
+		return -1;
 
 	for (i = num_entries - 1; i >= 0; i--) {
 		int len;
 		char *filename;
-		gchar *full_path;					     
+		gchar *full_path;
 
 		filename = name_list[i]->d_name;
 		len = strlen (filename);
-
 		full_path = g_strdup_printf ("%s/%s", dir, filename);
-		/*HAL_INFO (("Full path = %s", full_path));*/
-
-		/* Mmm, d_type can be DT_UNKNOWN, use glib to determine
-		 * the type
-		 */
 		if (g_file_test (full_path, (G_FILE_TEST_IS_REGULAR))) {
-			/* regular file */
-
-			if (len >= 5 &&
-			    filename[len - 4] == '.' &&
-			    filename[len - 3] == 'f' &&
-			    filename[len - 2] == 'd' &&
-			    filename[len - 1] == 'i') {
-				/*HAL_INFO (("scan_fdi_files: Processing file '%s'", filename));*/
-				found_fdi_file = process_fdi_file (dir, filename, d);
-				if (found_fdi_file) {
-					HAL_INFO (("*** Matched file %s/%s", dir, filename));
-					/*break;*/
-				}
-			}
-
-		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) 
-			   && strcmp (filename, ".") != 0
-			   && strcmp (filename, "..") != 0) {
+			if (len >= 5 && strcmp(&filename[len - 4], ".fdi") == 0)
+				rules_add_fdi_file (fdi_rules, full_path);
+		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) && filename[0] != '.') {
 			int num_bytes;
 			char *dirname;
 
-			/* Directory; do the recursion thingy but not 
-			 * for . and ..
-			 */
-
 			num_bytes = len + strlen (dir) + 1 + 1;
 			dirname = (char *) malloc (num_bytes);
-			if (dirname == NULL) {
-				HAL_ERROR (("couldn't allocated %d bytes",
-					    num_bytes));
+			if (dirname == NULL)
 				break;
-			}
 
-			snprintf (dirname, num_bytes, "%s/%s", dir,
-				  filename);
-			found_fdi_file = scan_fdi_files (dirname, d);
+			snprintf (dirname, num_bytes, "%s/%s", dir, filename);
+			rules_search_and_add_fdi_files (fdi_rules, dirname);
 			free (dirname);
-			/*
-			if (found_fdi_file)
-				break;
-			*/
 		}
-
 		g_free (full_path);
-
 		free (name_list[i]);
 	}
 
@@ -1552,80 +1191,129 @@ scan_fdi_files (const char *dir, HalDevice * d)
 	}
 
 	free (name_list);
-
-	return found_fdi_file;
+	return 0;
 }
 
-/** Search the device info file repository for a .fdi file to merge
- *  more information into the device object.
- *
- *  @param  d                   Device to merge information into
- *  @return                     #TRUE if information was merged
- */
-dbus_bool_t
-di_search_and_merge (HalDevice *d, DeviceInfoType type)
+/* setup the location of the rules */
+void
+di_rules_init (void)
 {
-	static gboolean have_checked_hal_fdi_source = FALSE;
-	static char *hal_fdi_source_preprobe = NULL;
-	static char *hal_fdi_source_information = NULL;
-	static char *hal_fdi_source_policy = NULL;
-	dbus_bool_t ret;
-	char *s1;
-	char *s2;
+	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
+	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
+	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
 
-	ret = FALSE;
-
-	if (!have_checked_hal_fdi_source) {
-		hal_fdi_source_preprobe    = getenv ("HAL_FDI_SOURCE_PREPROBE");
-		hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
-		hal_fdi_source_policy      = getenv ("HAL_FDI_SOURCE_POLICY");
-		have_checked_hal_fdi_source = TRUE;
+	if (hal_fdi_source_preprobe != NULL)
+		rules_search_and_add_fdi_files (&fdi_rules_preprobe, hal_fdi_source_preprobe);
+	else {
+		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_DATA_DIR "/hal/fdi/preprobe");
+		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe");
 	}
 
+	if (hal_fdi_source_information != NULL)
+		rules_search_and_add_fdi_files (&fdi_rules_information, hal_fdi_source_information);
+	else {
+		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_DATA_DIR "/hal/fdi/information");
+		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_SYSCONF_DIR "/hal/fdi/information");
+	}
+
+	if (hal_fdi_source_policy != NULL)
+		rules_search_and_add_fdi_files (&fdi_rules_policy, hal_fdi_source_policy);
+	else {
+		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_DATA_DIR "/hal/fdi/policy");
+		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_SYSCONF_DIR "/hal/fdi/policy");
+	}
+
+	/* only dump the rules if we are being verbose as this is expensive */
+	if (getenv ("HALD_VERBOSE") != NULL) {
+		rules_dump (fdi_rules_preprobe);
+		rules_dump (fdi_rules_information);
+		rules_dump (fdi_rules_policy);
+	}
+}
+
+/* cleanup the rules */
+void
+di_rules_cleanup (void)
+{
+	rules_cleanup_list (fdi_rules_preprobe);
+	rules_cleanup_list (fdi_rules_information);
+	rules_cleanup_list (fdi_rules_policy);
+	fdi_rules_preprobe = NULL;
+	fdi_rules_information = NULL;
+	fdi_rules_policy = NULL;
+}
+
+/* process a match and merge comand for a device */
+static void
+rules_match_and_merge_device (GSList *fdi_rules, HalDevice *d)
+{
+	GSList *elem;
+
+	if (fdi_rules == NULL) {
+		di_rules_cleanup ();
+		di_rules_init ();
+	}
+
+	elem = fdi_rules;
+	while (elem != NULL) {
+		struct rule *rule = elem->data;
+
+		switch (rule->rtype) {
+		case RULE_MATCH:
+			/* skip non-matching rules block */
+			HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));
+			if (!handle_match (rule, d)) {
+				HAL_INFO(("no match, skip to rule %s (%p)", get_rule_type_str (rule->next_rule->rtype), rule->next_rule));
+				elem = g_slist_find (elem, rule->next_rule);
+				continue;
+			}
+			break;
+
+		case RULE_APPEND:
+		case RULE_PREPEND:
+		case RULE_REMOVE:
+		case RULE_CLEAR:
+		case RULE_SPAWN:
+		case RULE_MERGE:
+			HAL_INFO(("%p merge '%s' at %s", rule, rule->key, hal_device_get_udi (d)));
+			handle_merge (rule, d);
+			break;
+
+		case RULE_EOF:
+			HAL_INFO(("%p fdi file '%s' finished", rule, rule->key));
+			break;
+
+		default:
+			HAL_WARNING(("Unhandled rule (%i)!", rule->rtype));
+			break;
+		}
+		elem = g_slist_next (elem);
+	}
+}
+
+/* merge the device info type, either preprobe, info or policy */
+gboolean
+di_search_and_merge (HalDevice *d, DeviceInfoType type)
+{
 	switch (type) {
 	case DEVICE_INFO_TYPE_PREPROBE:
-		if (hal_fdi_source_preprobe != NULL) {
-			s1 = hal_fdi_source_preprobe;
-			s2 = NULL;
-		} else {
-			s1 = PACKAGE_DATA_DIR "/hal/fdi/preprobe";
-			s2 = PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe";
-		}
+		HAL_INFO(("apply fdi preprobe to device %p", d));
+		rules_match_and_merge_device (fdi_rules_preprobe, d);
 		break;
 
 	case DEVICE_INFO_TYPE_INFORMATION:
-		if (hal_fdi_source_information != NULL) {
-			s1 = hal_fdi_source_information;
-			s2 = NULL;
-		} else {
-			s1 = PACKAGE_DATA_DIR "/hal/fdi/information";
-			s2 = PACKAGE_SYSCONF_DIR "/hal/fdi/information";
-		}
+		HAL_INFO(("apply fdi info to device %p", d));
+		rules_match_and_merge_device (fdi_rules_information, d);
 		break;
 
 	case DEVICE_INFO_TYPE_POLICY:
-		if (hal_fdi_source_policy != NULL) {
-			s1 = hal_fdi_source_policy;
-			s2 = NULL;
-		} else {
-			s1 = PACKAGE_DATA_DIR "/hal/fdi/policy";
-			s2 = PACKAGE_SYSCONF_DIR "/hal/fdi/policy";
-		}
+		HAL_INFO(("apply fdi policy to device %p", d));
+		rules_match_and_merge_device (fdi_rules_policy, d);
 		break;
 
 	default:
-		s1 = NULL;
-		s2 = NULL;
-		HAL_ERROR (("Bogus device information type %d", type));
 		break;
 	}
 
-	if (s1 != NULL)
-		ret = scan_fdi_files (s1, d) || ret;
-	if (s2 != NULL)
-		ret = scan_fdi_files (s2, d) || ret;
-
-	return ret;
+	return TRUE;
 }
-
-/** @} */
