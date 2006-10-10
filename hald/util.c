@@ -841,7 +841,7 @@ callout_do_next (Callout *c)
 
 static void
 hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2, 
-		    GSList *programs, gchar **extra_env)
+		    char **programs, gchar **extra_env)
 {
 	Callout *c;
 
@@ -850,7 +850,7 @@ hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, 
 	c->callback = callback;
 	c->userdata1 = userdata1;
 	c->userdata2 = userdata2;
-	c->programs = hal_util_dup_strv_from_g_slist (programs);
+	c->programs = programs;
 	c->extra_env = g_strdupv (extra_env);
 	c->next_program = 0;
 
@@ -860,13 +860,15 @@ hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, 
 void
 hal_util_callout_device_add (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2)
 {
-	GSList *programs;
+	char **programs;
 	gchar *extra_env[2] = {"HALD_ACTION=add", NULL};
 
-	if ((programs = hal_device_property_get_strlist (d, "info.callouts.add")) == NULL) {
+	programs = hal_device_property_dup_strlist_as_strv (d, "info.callouts.add");
+	if (programs == NULL) {
 		callback (d, userdata1, userdata2);
 		goto out;
 	}	
+
 
 	HAL_INFO (("Add callouts for udi=%s", hal_device_get_udi (d)));
 
@@ -878,10 +880,11 @@ out:
 void
 hal_util_callout_device_remove (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2)
 {
-	GSList *programs;
+	char **programs;
 	gchar *extra_env[2] = {"HALD_ACTION=remove", NULL};
 
-	if ((programs = hal_device_property_get_strlist (d, "info.callouts.remove")) == NULL) {
+	programs = hal_device_property_dup_strlist_as_strv (d, "info.callouts.remove");
+	if (programs == NULL) {
 		callback (d, userdata1, userdata2);
 		goto out;
 	}	
@@ -896,10 +899,11 @@ out:
 void
 hal_util_callout_device_preprobe (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2)
 {
-	GSList *programs;
+	char **programs;
 	gchar *extra_env[2] = {"HALD_ACTION=preprobe", NULL};
 
-	if ((programs = hal_device_property_get_strlist (d, "info.callouts.preprobe")) == NULL) {
+	programs = hal_device_property_dup_strlist_as_strv (d, "info.callouts.preprobe");
+	if (programs == NULL) {
 		callback (d, userdata1, userdata2);
 		goto out;
 	}	

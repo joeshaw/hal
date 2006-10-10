@@ -101,26 +101,25 @@ gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 		   gboolean is_added, gpointer user_data)
 {
 	if (is_added) {
-		GSList *addons;
+		HalDeviceStrListIter iter;
 
 		HAL_INFO (("Added device to GDL; udi=%s", hal_device_get_udi(device)));
 
-		if ((addons = hal_device_property_get_strlist (device, "info.addons")) != NULL) {
-			GSList *i;
+		for (hal_device_property_strlist_iter_init (device, "info.addons", &iter);
+		     hal_device_property_strlist_iter_is_valid (&iter);
+		     hal_device_property_strlist_iter_next (&iter)) {
+			const gchar *command_line;
+			gchar *extra_env[2] = {"HALD_ACTION=addon", NULL};
+			
+			command_line = hal_device_property_strlist_iter_get_value (&iter);
 
-			for (i = addons; i != NULL; i = g_slist_next (i)) {
-				const gchar *command_line;
-				gchar *extra_env[2] = {"HALD_ACTION=addon", NULL};
-
-				command_line = (const gchar *) i->data;
-				if (hald_runner_start(device, command_line, extra_env, addon_terminated, NULL, NULL)) {
-					HAL_INFO (("Started addon %s for udi %s", 
-						   command_line, hal_device_get_udi(device)));
-					hal_device_inc_num_addons (device);
-				} else {
-					HAL_ERROR (("Cannot start addon %s for udi %s", 
-						    command_line, hal_device_get_udi(device)));
-				}
+			if (hald_runner_start(device, command_line, extra_env, addon_terminated, NULL, NULL)) {
+				HAL_INFO (("Started addon %s for udi %s", 
+					   command_line, hal_device_get_udi(device)));
+				hal_device_inc_num_addons (device);
+			} else {
+				HAL_ERROR (("Cannot start addon %s for udi %s", 
+					    command_line, hal_device_get_udi(device)));
 			}
 		}
 	} else {

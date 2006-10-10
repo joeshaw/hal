@@ -579,12 +579,12 @@ handle_match (ParsingContext * pc, const char **attr)
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
 			   needle != NULL) {
-			GSList *i;
-			GSList *value;
+			guint i;
+			guint num_elems;
 
-			value = hal_device_property_get_strlist (d, prop_to_check);
-			for (i = value; i != NULL; i = g_slist_next (i)) {
-				const char *str = i->data;
+			num_elems = hal_device_property_get_strlist_length (d, prop_to_check);
+			for (i = 0; i < num_elems; i++) {
+				const char *str = hal_device_property_get_strlist_elem (d, prop_to_check, i);
 				if (strcmp (str, needle) == 0) {
 					contains = TRUE;
 					break;
@@ -617,12 +617,12 @@ handle_match (ParsingContext * pc, const char **attr)
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
 			   needle != NULL) {
-			GSList *i;
-			GSList *value;
-
-			value = hal_device_property_get_strlist (d, prop_to_check);
-			for (i = value; i != NULL; i = g_slist_next (i)) {
-				const char *str = i->data;
+			guint i;
+			guint num_elems;
+			
+			num_elems = hal_device_property_get_strlist_length (d, prop_to_check);
+			for (i = 0; i < num_elems; i++) {
+				const char *str = hal_device_property_get_strlist_elem (d, prop_to_check, i);
 				if (g_ascii_strcasecmp (str, needle) == 0) {
 					contains_ncase = TRUE;
 					break;

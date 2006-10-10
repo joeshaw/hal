@@ -798,7 +798,7 @@ foreach_property_append (HalDevice *device,
 	case HAL_PROPERTY_TYPE_STRLIST:
 	{
 		DBusMessageIter iter_var, iter_array;
-		GSList *iter;
+		HalDeviceStrListIter iter;
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -811,10 +811,11 @@ foreach_property_append (HalDevice *device,
 						  DBUS_TYPE_STRING_AS_STRING,
 						  &iter_array);
 
-		for (iter = hal_device_property_get_strlist (device, key); iter != NULL; iter = iter->next) {
-				     
+		for (hal_device_property_strlist_iter_init (device, key, &iter);
+		     hal_device_property_strlist_iter_is_valid (&iter);
+		     hal_device_property_strlist_iter_next (&iter)) {
 			const char *v;
-			v = (const char *) iter->data;
+			v = hal_device_property_strlist_iter_get_value (&iter);
 
 			dbus_message_iter_append_basic (&iter_array, 
 							DBUS_TYPE_STRING,
@@ -1196,7 +1197,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 	}
 	case HAL_PROPERTY_TYPE_STRLIST:
 	{
-		GSList *l;
+		HalDeviceStrListIter striter;
 		DBusMessageIter iter_array;
 
 		dbus_message_iter_open_container (&iter, 
@@ -1204,8 +1205,12 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 						  DBUS_TYPE_STRING_AS_STRING,
 						  &iter_array);
 
-		for (l = hal_device_property_get_strlist (d, key); l != NULL; l = g_slist_next (l)) {
-			dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, &(l->data));
+		for (hal_device_property_strlist_iter_init (d, key, &striter);
+		     hal_device_property_strlist_iter_is_valid (&striter);
+		     hal_device_property_strlist_iter_next (&striter)) {
+			const char *v;
+			v = hal_device_property_strlist_iter_get_value (&striter);
+			dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, v);
 		}
 
 		dbus_message_iter_close_container (&iter, &iter_array);
@@ -1742,7 +1747,7 @@ device_query_capability (DBusConnection * connection,
 {
 	dbus_bool_t rc;
 	const char *udi;
-	GSList *caps;
+	HalDeviceStrListIter striter;
 	char *capability;
 	HalDevice *d;
 	DBusMessage *reply;
@@ -1775,15 +1780,12 @@ device_query_capability (DBusConnection * connection,
 		DIE (("No memory"));
 
 	rc = FALSE;
-	caps = hal_device_property_get_strlist (d, "info.capabilities");
-	if (caps != NULL) {
-		GSList *iter;
-
-		for (iter = caps; iter != NULL; iter=g_slist_next(iter)) {
-			if (strcmp (iter->data, capability) == 0) {
-				rc = TRUE;
-				break;
-			}
+	for (hal_device_property_strlist_iter_init (d, "info.capabilities", &striter);
+	     hal_device_property_strlist_iter_is_valid (&striter);
+	     hal_device_property_strlist_iter_next (&striter)) {
+		if (strcmp (hal_device_property_strlist_iter_get_value (&striter), capability) == 0) {
+			rc = TRUE;
+			break;
 		}
 	}
 
@@ -3464,49 +3466,45 @@ do_introspect (DBusConnection  *connection,
 				       "    </method>\n"
 
 				       "  </interface>\n");
+			HalDeviceStrListIter if_iter;
 
-			GSList *interfaces;
-			GSList *i;
+			for (hal_device_property_strlist_iter_init (d, "info.interfaces", &if_iter);
+			     hal_device_property_strlist_iter_is_valid (&if_iter);
+			     hal_device_property_strlist_iter_next (&if_iter)) {
+				const char *ifname;
+				char *method_name_prop;
+				char *method_sign_prop;
+				char *method_argn_prop;
+				GSList *i;
+				HalDeviceStrListIter name_iter;
+				HalDeviceStrListIter sign_iter;
+				HalDeviceStrListIter argn_iter;
 
-			interfaces = hal_device_property_get_strlist (d, "info.interfaces");
-			for (i = interfaces; i != NULL; i = g_slist_next (i)) {
-				const char *ifname = (const char *) i->data;
-				char *method_names_prop;
-				char *method_signatures_prop;
-				char *method_argnames_prop;
-				GSList *method_names;
-				GSList *method_signatures;
-				GSList *method_argnames;
-				GSList *j;
-				GSList *k;
-				GSList *l;
+				ifname = hal_device_property_strlist_iter_get_value (&if_iter);
 
 				g_string_append_printf (xml, "  <interface name=\"%s\">\n", ifname);
 
-				method_names_prop = g_strdup_printf ("%s.method_names", ifname);
-				method_signatures_prop = g_strdup_printf ("%s.method_signatures", ifname);
-				method_argnames_prop = g_strdup_printf ("%s.method_argnames", ifname);
-
-				method_names = hal_device_property_get_strlist (d, method_names_prop);
-				method_signatures = hal_device_property_get_strlist (d, method_signatures_prop);
-				method_argnames = hal_device_property_get_strlist (d, method_argnames_prop);
+				method_name_prop = g_strdup_printf ("%s.method_names", ifname);
+				method_sign_prop = g_strdup_printf ("%s.method_signatures", ifname);
+				method_argn_prop = g_strdup_printf ("%s.method_argnames", ifname);
 
 				/* consult local list */
-				if (method_names == NULL) {
-					GSList *i;
-
-					for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
-						HelperInterfaceHandler *hih = i->data;
-						if (strcmp (hih->udi, path) == 0) {
-							xml = g_string_append (xml, hih->introspection_xml);
-						}
+				for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
+					HelperInterfaceHandler *hih = i->data;
+					if (strcmp (hih->udi, path) == 0) {
+						xml = g_string_append (xml, hih->introspection_xml);
 					}
-					
 				}
-
-				for (j = method_names, k = method_signatures, l = method_argnames;
-				     j != NULL && k != NULL && l != NULL;
-				     j = g_slist_next (j), k = g_slist_next (k), l = g_slist_next (l)) {
+				
+				for (hal_device_property_strlist_iter_init (d, method_name_prop, &name_iter),
+					     hal_device_property_strlist_iter_init (d, method_sign_prop, &sign_iter),
+					     hal_device_property_strlist_iter_init (d, method_argn_prop, &argn_iter);
+				     hal_device_property_strlist_iter_is_valid (&name_iter) &&
+					     hal_device_property_strlist_iter_is_valid (&sign_iter) &&
+					     hal_device_property_strlist_iter_is_valid (&argn_iter);
+				     hal_device_property_strlist_iter_next (&name_iter),
+					     hal_device_property_strlist_iter_next (&sign_iter),
+					     hal_device_property_strlist_iter_next (&argn_iter)) {
 					const char *name;
 					const char *sig;
 					const char *argnames;
@@ -3514,9 +3512,9 @@ do_introspect (DBusConnection  *connection,
 					unsigned int n;
 					unsigned int m;
 
-					name = j->data;
-					sig = k->data;
-					argnames = l->data;
+					name     = hal_device_property_strlist_iter_get_value (&name_iter);
+					sig      = hal_device_property_strlist_iter_get_value (&sign_iter);
+					argnames = hal_device_property_strlist_iter_get_value (&argn_iter);
 
 					args = g_strsplit (argnames, " ", 0);
 
@@ -3558,9 +3556,9 @@ do_introspect (DBusConnection  *connection,
 
 				xml = g_string_append (xml, "  </interface>\n");
 
-				g_free (method_names_prop);
-				g_free (method_signatures_prop);
-				g_free (method_argnames_prop);
+				g_free (method_name_prop);
+				g_free (method_sign_prop);
+				g_free (method_argn_prop);
 			}		
 
 	}
@@ -3848,23 +3846,26 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		} 
 
 		if (d != NULL && interface != NULL && method != NULL && signature != NULL) {
-			GSList *interfaces;
-			GSList *i;
-
-			interfaces = hal_device_property_get_strlist (d, "info.interfaces");
-			for (i = interfaces; i != NULL; i = g_slist_next (i)) {
-				const char *ifname = (const char *) i->data;
+			HalDeviceStrListIter if_iter;
+			
+			for (hal_device_property_strlist_iter_init (d, "info.interfaces", &if_iter);
+			     hal_device_property_strlist_iter_is_valid (&if_iter);
+			     hal_device_property_strlist_iter_next (&if_iter)) {
+				const char *ifname = hal_device_property_strlist_iter_get_value (&if_iter);
 
 				if (strcmp (ifname, interface) == 0) {
 					guint num;
-					GSList *method_names;
+					HalDeviceStrListIter name_iter;
 					char *s;
 
 					s = g_strdup_printf ("%s.method_names", interface);
-					method_names = hal_device_property_get_strlist (d, s);
+					hal_device_property_strlist_iter_init (d, s, &name_iter);
 					g_free (s);
-					for (i = method_names, num = 0; i != NULL; i = g_slist_next (i), num++) {
-						const char *methodname = (const char *) i->data;
+					for (num = 0; 
+					     hal_device_property_strlist_iter_is_valid (&name_iter);
+					     hal_device_property_strlist_iter_next (&name_iter), num++) {
+						const char *methodname;
+						methodname = hal_device_property_strlist_iter_get_value (&name_iter);
 						if (strcmp (methodname, method) == 0) {
 							const char *execpath;
 							const char *sig;

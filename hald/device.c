@@ -262,6 +262,128 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 
 }
 
+static HalProperty *
+hal_device_property_find (HalDevice *device, const char *key)
+{
+	GSList *iter;
+
+	g_return_val_if_fail (device != NULL, NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+
+	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
+		HalProperty *p = iter->data;
+
+		if (strcmp (hal_property_get_key (p), key) == 0) {
+			return p;
+		}
+	}
+
+	return NULL;
+}
+
+static GSList *
+hal_device_property_get_strlist (HalDevice    *device, 
+				 const char   *key)
+{
+	HalProperty *prop;
+
+	g_return_val_if_fail (device != NULL, NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL)
+		return hal_property_get_strlist (prop);
+	else
+		return NULL;
+}
+
+guint
+hal_device_property_get_strlist_length (HalDevice    *device,
+					const char   *key)
+{
+	GSList *i;
+
+	i = hal_device_property_get_strlist (device, key);
+	if (i != NULL)
+		return g_slist_length (i);
+	else
+		return 0;
+}
+
+void
+hal_device_property_strlist_iter_init (HalDevice    *device,
+				       const char   *key,
+				       HalDeviceStrListIter *iter)
+{
+	HalProperty *prop;
+
+	g_return_if_fail (device != NULL);
+	g_return_if_fail (key != NULL);
+
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL)
+		iter->i = hal_property_get_strlist (prop);
+	else
+		iter->i = NULL;
+}
+
+const char *
+hal_device_property_strlist_iter_get_value (HalDeviceStrListIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, NULL);
+	g_return_val_if_fail (iter->i != NULL, NULL);
+	return iter->i->data;
+}
+
+void
+hal_device_property_strlist_iter_next (HalDeviceStrListIter *iter)
+{
+	g_return_if_fail (iter != NULL);
+	g_return_if_fail (iter->i != NULL);
+	iter->i = g_slist_next (iter->i);
+}
+
+gboolean
+hal_device_property_strlist_iter_is_valid (HalDeviceStrListIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, FALSE);
+	g_return_val_if_fail (iter->i != NULL, FALSE);
+	return TRUE;
+}
+
+char **
+hal_device_property_dup_strlist_as_strv (HalDevice    *device,
+					 const char   *key)
+{
+	guint j;
+	guint len;
+	gchar **strv;
+	GSList *i;
+
+	strv = NULL;
+
+	i = hal_device_property_get_strlist (device, key);
+	if (i == NULL)
+		goto out;
+
+	len = g_slist_length (i);
+	if (len == 0)
+		goto out;
+
+	strv = g_new (char *, len + 1);
+
+	for (j = 0; i != NULL; i = g_slist_next (i), j++) {
+		strv[j] = g_strdup ((const gchar *) i->data);
+	}
+	strv[j] = NULL;
+
+out:
+	return strv;	
+}
+
+
 void
 hal_device_merge (HalDevice *target, HalDevice *source)
 {
@@ -450,25 +572,6 @@ hal_device_num_properties (HalDevice *device)
 	g_return_val_if_fail (device != NULL, -1);
 
 	return g_slist_length (device->private->properties);
-}
-
-static HalProperty *
-hal_device_property_find (HalDevice *device, const char *key)
-{
-	GSList *iter;
-
-	g_return_val_if_fail (device != NULL, NULL);
-	g_return_val_if_fail (key != NULL, NULL);
-
-	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p = iter->data;
-
-		if (strcmp (hal_property_get_key (p), key) == 0) {
-			return p;
-		}
-	}
-
-	return NULL;
 }
 
 gboolean
@@ -950,23 +1053,6 @@ hal_device_print (HalDevice *device)
                 }
         }
         fprintf (stderr, "\n");
-}
-
-GSList *
-hal_device_property_get_strlist (HalDevice    *device, 
-				 const char   *key)
-{
-	HalProperty *prop;
-
-	g_return_val_if_fail (device != NULL, NULL);
-	g_return_val_if_fail (key != NULL, NULL);
-
-	prop = hal_device_property_find (device, key);
-
-	if (prop != NULL)
-		return hal_property_get_strlist (prop);
-	else
-		return NULL;
 }
 
 const char *

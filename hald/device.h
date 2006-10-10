@@ -74,6 +74,13 @@ struct _HalDeviceClass {
 #define HAL_PROPERTY_TYPE_STRLIST     ((int) (DBUS_TYPE_STRING<<8)+('l'))
 
 
+/* private; do not access; might change in the future */
+typedef struct _HalDeviceStrListIter      HalDeviceStrListIter;
+struct _HalDeviceStrListIter {
+	GSList *i;
+};
+
+
 /* Return value of FALSE means that the foreach should be short-circuited */
 typedef gboolean (*HalDevicePropertyForeachFn) (HalDevice *device,
 						const char *key,
@@ -132,11 +139,20 @@ dbus_bool_t   hal_device_property_get_bool   (HalDevice    *device,
 					      const char   *key);
 double        hal_device_property_get_double (HalDevice    *device,
 					      const char   *key);
-GSList       *hal_device_property_get_strlist (HalDevice    *device,
-					       const char   *key);
 const char   *hal_device_property_get_strlist_elem (HalDevice    *device,
 						    const char   *key,
 						    guint index);
+guint         hal_device_property_get_strlist_length (HalDevice    *device,
+						      const char   *key);
+char        **hal_device_property_dup_strlist_as_strv (HalDevice    *device,
+						       const char   *key);
+
+void          hal_device_property_strlist_iter_init (HalDevice    *device,
+						     const char   *key,
+						     HalDeviceStrListIter *iter);
+const char   *hal_device_property_strlist_iter_get_value (HalDeviceStrListIter *iter);
+void          hal_device_property_strlist_iter_next (HalDeviceStrListIter *iter);
+gboolean      hal_device_property_strlist_iter_is_valid (HalDeviceStrListIter *iter);
 
 
 
