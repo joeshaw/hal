@@ -1210,7 +1210,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 		     hal_device_property_strlist_iter_next (&striter)) {
 			const char *v;
 			v = hal_device_property_strlist_iter_get_value (&striter);
-			dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, v);
+			dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, &v);
 		}
 
 		dbus_message_iter_close_container (&iter, &iter_array);
