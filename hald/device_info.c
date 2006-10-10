@@ -36,7 +36,6 @@
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <math.h>
-#include <errno.h>
 
 #include "hald.h"
 #include "logger.h"
@@ -345,10 +344,10 @@ handle_match (ParsingContext * pc, const char **attr)
 
 	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
 	if (!resolve_udiprop_path (key,
-				   hal_device_get_udi (pc->device),
+				   pc->device->udi,
 				   udi_to_check, sizeof (udi_to_check),
 				   prop_to_check, sizeof (prop_to_check))) {
-		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, hal_device_get_udi (pc->device)));
+		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, pc->device->udi));
 		return FALSE;
 	}
 
@@ -461,32 +460,19 @@ handle_match (ParsingContext * pc, const char **attr)
 				return TRUE;
 		}
 	} else if (strcmp (attr[2], "empty") == 0) {
-		int type;
 		dbus_bool_t is_empty = TRUE;
 		dbus_bool_t should_be_empty = TRUE;
-
 
 		if (strcmp (attr[3], "false") == 0)
 			should_be_empty = FALSE;
 
-		type = hal_device_property_get_type (d, prop_to_check);
-		switch (type) {
-		case HAL_PROPERTY_TYPE_STRING: 
-			if (hal_device_has_property (d, prop_to_check))
-				if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
-					is_empty = FALSE;
-			break;
-		case HAL_PROPERTY_TYPE_STRLIST:
-			if (hal_device_has_property (d, prop_to_check))
-				if (!hal_device_property_strlist_is_empty(d, prop_to_check))
-					is_empty = FALSE;
-			break;
-		default:
-			/* explicit fallthrough */
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
-			break;
-		} 
-	
+
+		if (hal_device_has_property (d, prop_to_check))
+			if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
+				is_empty = FALSE;
+
 		if (should_be_empty) {
 			if (is_empty)
 				return TRUE;
@@ -537,7 +523,7 @@ handle_match (ParsingContext * pc, const char **attr)
 		if (strcmp (attr[3], "false") == 0)
 			should_be_absolute_path = FALSE;
 
-		/*HAL_INFO (("hal_device_get_udi (d)='%s', prop_to_check='%s'", hal_device_get_udi (d), prop_to_check));*/
+		/*HAL_INFO (("d->udi='%s', prop_to_check='%s'", d->udi, prop_to_check));*/
 
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
@@ -579,12 +565,12 @@ handle_match (ParsingContext * pc, const char **attr)
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
 			   needle != NULL) {
-			HalDeviceStrListIter iter;
+			GSList *i;
+			GSList *value;
 
-			for (hal_device_property_strlist_iter_init (d, prop_to_check, &iter);
-			     hal_device_property_strlist_iter_is_valid (&iter);
-			     hal_device_property_strlist_iter_next (&iter)) {
-				const char *str = hal_device_property_strlist_iter_get_value (&iter);
+			value = hal_device_property_get_strlist (d, prop_to_check);
+			for (i = value; i != NULL; i = g_slist_next (i)) {
+				const char *str = i->data;
 				if (strcmp (str, needle) == 0) {
 					contains = TRUE;
 					break;
@@ -617,12 +603,12 @@ handle_match (ParsingContext * pc, const char **attr)
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && 
 			   needle != NULL) {
-			HalDeviceStrListIter iter;
+			GSList *i;
+			GSList *value;
 
-			for (hal_device_property_strlist_iter_init (d, prop_to_check, &iter);
-			     hal_device_property_strlist_iter_is_valid (&iter);
-			     hal_device_property_strlist_iter_next (&iter)) {
-				const char *str = hal_device_property_strlist_iter_get_value (&iter);
+			value = hal_device_property_get_strlist (d, prop_to_check);
+			for (i = value; i != NULL; i = g_slist_next (i)) {
+				const char *str = i->data;
 				if (g_ascii_strcasecmp (str, needle) == 0) {
 					contains_ncase = TRUE;
 					break;
@@ -793,6 +779,7 @@ handle_spawn (ParsingContext * pc, const char **attr)
 	strncpy (pc->merge_key, attr[1], MAX_KEY_SIZE);
 
 	pc->merge_type = MERGE_TYPE_SPAWN;
+
 	return;
 }
 
@@ -896,8 +883,6 @@ start (ParsingContext * pc, const char *el, const char **attr)
 		return;
 
 	pc->cdata_buf_len = 0;
-
-	pc->merge_type = MERGE_TYPE_UNKNOWN;
 
 /*
     for (i = 0; i < pc->depth; i++)
@@ -1074,7 +1059,7 @@ start (ParsingContext * pc, const char *el, const char **attr)
 static void 
 spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
+	HAL_INFO (("Add callouts completed udi=%s", d->udi));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -1165,11 +1150,10 @@ end (ParsingContext * pc, const char *el)
 			 * '@prop.here.is.an.udi:with.prop.name'
 			 */
 			if (!resolve_udiprop_path (pc->cdata_buf,
-						   hal_device_get_udi (pc->device),
+						   pc->device->udi,
 						   udi_to_merge_from, sizeof (udi_to_merge_from),
 						   prop_to_merge, sizeof (prop_to_merge))) {
-				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", pc->cdata_buf, 
-					    hal_device_get_udi (pc->device)));
+				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", pc->cdata_buf, pc->device->udi));
 			} else {
 				HalDevice *d;
 
@@ -1287,12 +1271,12 @@ end (ParsingContext * pc, const char *el)
 
 		if (spawned == NULL) {
 			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'", 
-				   pc->merge_key, hal_device_get_udi (pc->device)));
+				   pc->merge_key, pc->device->udi));
 
 			spawned = hal_device_new ();
 			hal_device_property_set_string (spawned, "info.bus", "unknown");
 			hal_device_property_set_string (spawned, "info.udi", pc->merge_key);
-			hal_device_property_set_string (spawned, "info.parent", hal_device_get_udi (pc->device));
+			hal_device_property_set_string (spawned, "info.parent", pc->device->udi);
 			hal_device_set_udi (spawned, pc->merge_key);
 			
 			hal_device_store_add (hald_get_tdl (), spawned);
@@ -1469,12 +1453,8 @@ out:
 
 
 
-static int
-#ifdef __GLIBC__
+static int 
 my_alphasort(const void *a, const void *b)
-#else
-my_alphasort(const struct dirent **a, const struct dirent **b)
-#endif
 {
 	return -alphasort (a, b);
 }
@@ -1500,7 +1480,7 @@ scan_fdi_files (const char *dir, HalDevice * d)
 
 	num_entries = scandir (dir, &name_list, 0, my_alphasort);
 	if (num_entries == -1) {
-		HAL_ERROR (("scandir failed for '%s' (errno=%d '%s')", dir, errno, strerror (errno)));
+		perror ("scandir");
 		return FALSE;
 	}
 
