@@ -564,6 +564,20 @@ hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file,
 	if (((line = hal_util_grep_file (directory, file, linestart, reuse)) == NULL) || (strlen (line) == 0))
 		goto out;
 
+	/* this means take all elements, e.g. "DELL Y7637" */
+	if (elem == G_MAXUINT) {
+		/* just a null string ": " we want to discard */
+		if (strlen (line) < 2) {
+			res = NULL;
+			goto out;
+		}
+		/* strip leading spaces, missing out the ":" first char */
+		line = g_strchug (line + 1);
+		strncpy (buf, line, sizeof (buf));
+		res = buf;
+		goto out;
+	}
+
 	tokens = g_strsplit_set (line, " \t:", 0);
 	for (i = 0, j = 0; tokens[i] != NULL; i++) {
 		if (strlen (tokens[i]) == 0)
@@ -579,7 +593,6 @@ hal_util_grep_string_elem_from_file (const gchar *directory, const gchar *file,
 out:
 	if (tokens != NULL)
 		g_strfreev (tokens);
-
 	return res;
 }
 
@@ -626,6 +639,7 @@ out:
  *  @param  linestart           Start of line, e.g. "design voltage"
  *  @param  elem                Element number after linestart to extract
  *                              excluding whitespace and ':' characters.
+ *				If set to G_MAXUINT then all elements are set
  *  @return                     TRUE, if, and only if, the value could be
  *                              extracted and the property was set
  */
