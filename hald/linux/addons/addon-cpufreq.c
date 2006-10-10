@@ -313,7 +313,7 @@ gboolean write_governor(char *new_governor, int cpu_id)
 		goto Out;
 
 	governor_file = g_strdup_printf(SYSFS_GOVERNOR_FILE, cpu_id); 
-	HAL_DEBUG(("Trying ot write governor %s", new_governor));
+	HAL_DEBUG(("Trying to write governor %s", new_governor));
 
 	if (!write_line(governor_file, "%s", new_governor)) {
 		ret = FALSE;

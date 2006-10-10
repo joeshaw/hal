@@ -81,7 +81,7 @@ msgstr "DVD-ROM"
 
 #: ../libhal-storage/libhal-storage.c:413
 msgid "Blank DVD-RAM"
-msgstr "Boi DVD-RAM"
+msgstr "Boş DVD-RAM"
 
 #: ../libhal-storage/libhal-storage.c:415
 msgid "DVD-RAM"
@@ -105,7 +105,7 @@ msgstr "DVD-RW"
 
 #: ../libhal-storage/libhal-storage.c:434
 msgid "Blank DVD+R"
-msgstr "Boi DVD+R"
+msgstr "Boş DVD+R"
 
 #: ../libhal-storage/libhal-storage.c:436
 msgid "DVD+R"
@@ -113,7 +113,7 @@ msgstr "DVD+R"
 
 #: ../libhal-storage/libhal-storage.c:441
 msgid "Blank DVD+RW"
-msgstr "Boi DVD+RW"
+msgstr "Boş DVD+RW"
 
 #: ../libhal-storage/libhal-storage.c:443
 msgid "DVD+RW"
@@ -133,7 +133,7 @@ msgstr "BD-ROM"
 
 #: ../libhal-storage/libhal-storage.c:459
 msgid "Blank BD-R"
-msgstr "Boi BD-R"
+msgstr "Boş BD-R"
 
 #: ../libhal-storage/libhal-storage.c:461
 msgid "BD-R"
