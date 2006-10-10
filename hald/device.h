@@ -98,10 +98,6 @@ void          hal_device_merge_with_rewrite  (HalDevice    *target,
 					      const char   *target_namespace,
 					      const char   *source_namespace);
 
-gboolean      hal_device_matches             (HalDevice    *device1,
-					      HalDevice    *device2,
-					      const char   *namespace);
-
 const char   *hal_device_get_udi             (HalDevice    *device);
 void          hal_device_set_udi             (HalDevice    *device,
 					      const char   *udi);

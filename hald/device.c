@@ -45,7 +45,8 @@ struct _HalDevicePrivate
 	char *udi;	
 	int num_addons;
 	int num_addons_ready;
-	GSList *properties;
+
+	GHashTable *props;
 };
 
 enum {
@@ -72,13 +73,11 @@ hal_device_finalize (GObject *obj)
 	printf ("************* in finalize for udi=%s\n", device->private->udi);
 #endif
 
-
-	g_slist_foreach (device->private->properties, (GFunc) hal_property_free, NULL);
-	g_slist_free (device->private->properties);
-
 	g_free (device->private->udi);
 
 	g_free (device->private);
+
+	g_hash_table_destroy (device->private->props);
 
 	if (parent_class->finalize)
 		parent_class->finalize (obj);
@@ -129,6 +128,11 @@ hal_device_init (HalDevice *device)
 				       temp_device_counter++);
 	device->private->num_addons = 0;
 	device->private->num_addons_ready = 0;
+
+	device->private->props = g_hash_table_new_full (g_str_hash, 
+							g_str_equal, 
+							g_free, 
+							(GDestroyNotify) hal_property_free);
 }
 
 GType
@@ -186,6 +190,8 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 				const char   *target_namespace,
 				const char   *source_namespace)
 {
+#if 0
+#warning FIXME
 	GSList *iter;
 	size_t source_ns_len;
 
@@ -259,29 +265,19 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 	}
 
 	/* device_property_atomic_update_end (); */
-
+#endif
 }
 
-static HalProperty *
+static inline HalProperty *
 hal_device_property_find (HalDevice *device, const char *key)
 {
-	GSList *iter;
-
 	g_return_val_if_fail (device != NULL, NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 
-	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p = iter->data;
-
-		if (strcmp (hal_property_get_key (p), key) == 0) {
-			return p;
-		}
-	}
-
-	return NULL;
+	return g_hash_table_lookup (device->private->props, key);
 }
 
-static GSList *
+static inline GSList *
 hal_device_property_get_strlist (HalDevice    *device, 
 				 const char   *key)
 {
@@ -291,7 +287,6 @@ hal_device_property_get_strlist (HalDevice    *device,
 	g_return_val_if_fail (key != NULL, NULL);
 
 	prop = hal_device_property_find (device, key);
-
 	if (prop != NULL)
 		return hal_property_get_strlist (prop);
 	else
@@ -390,6 +385,8 @@ out:
 void
 hal_device_merge (HalDevice *target, HalDevice *source)
 {
+#if 0
+#warning TODO
 	GSList *iter;
 	GSList *caps;
 
@@ -458,72 +455,7 @@ hal_device_merge (HalDevice *target, HalDevice *source)
 		if (!hal_device_has_capability (target, iter->data))
 			hal_device_add_capability (target, iter->data);
 	}
-}
-
-gboolean
-hal_device_matches (HalDevice *device1, HalDevice *device2,
-		    const char *namespace)
-{
-	int len;
-	GSList *iter;
-
-	len = strlen (namespace);
-
-	for (iter = device1->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p;
-		const char *key;
-		int type;
-
-		p = (HalProperty *) iter->data;
-		key = hal_property_get_key (p);
-		type = hal_property_get_type (p);
-
-		if (strncmp (key, namespace, len) != 0)
-			continue;
-
-		if (!hal_device_has_property (device2, key))
-			return FALSE;
-
-		switch (type) {
-
-		case HAL_PROPERTY_TYPE_STRING:
-			if (strcmp (hal_property_get_string (p),
-				    hal_device_property_get_string (device2,
-								    key)) != 0)
-				return FALSE;
-			break;
-
-		case HAL_PROPERTY_TYPE_INT32:
-			if (hal_property_get_int (p) !=
-			    hal_device_property_get_int (device2, key))
-				return FALSE;
-			break;
-
-		case HAL_PROPERTY_TYPE_UINT64:
-			if (hal_property_get_uint64 (p) !=
-				hal_device_property_get_uint64 (device2, key))
-				return FALSE;
-			break;
-
-		case HAL_PROPERTY_TYPE_BOOLEAN:
-			if (hal_property_get_bool (p) !=
-			    hal_device_property_get_bool (device2, key))
-				return FALSE;
-			break;
-
-		case HAL_PROPERTY_TYPE_DOUBLE:
-			if (hal_property_get_double (p) !=
-			    hal_device_property_get_double (device2, key))
-				return FALSE;
-			break;
-
-		default:
-			HAL_WARNING (("Unknown property type %d", type));
-			break;
-		}
-	}
-
-	return TRUE;
+#endif
 }
 
 const char *
@@ -574,7 +506,7 @@ hal_device_num_properties (HalDevice *device)
 {
 	g_return_val_if_fail (device != NULL, -1);
 
-	return g_slist_length (device->private->properties);
+	return g_hash_table_size (device->private->props);
 }
 
 gboolean
@@ -598,25 +530,42 @@ hal_device_property_to_string (HalDevice *device, const char *key)
 	return hal_property_to_string (prop);
 }
 
+typedef struct 
+{
+	HalDevice *device;
+	HalDevicePropertyForeachFn callback;
+	gpointer user_data;
+} hdpfe_ud_t;
+
+static void
+hdpfe (gpointer key,
+       gpointer value,
+       gpointer user_data)
+{
+	hdpfe_ud_t *c;
+	HalProperty *prop;
+
+	c = (hdpfe_ud_t *) user_data;
+	prop = (HalProperty *) value;
+
+	c->callback (c->device, (const char *) key, c->user_data);
+}
+
 void
 hal_device_property_foreach (HalDevice *device,
 			     HalDevicePropertyForeachFn callback,
 			     gpointer user_data)
 {
-	GSList *iter;
+	hdpfe_ud_t c;
 
 	g_return_if_fail (device != NULL);
 	g_return_if_fail (callback != NULL);
 
-	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p = iter->data;
-		gboolean cont;
+	c.device = device;
+	c.callback = callback;
+	c.user_data = user_data;
 
-		cont = callback (device, hal_property_get_key (p), user_data);
-
-		if (cont == FALSE)
-			return;
-	}
+	g_hash_table_foreach (device->private->props, hdpfe, &c);
 }
 
 int
@@ -803,10 +752,10 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 			       key, FALSE, FALSE);
 
 	} else {
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRING);
+		hal_property_set_string (prop, value);
 
-		prop = hal_property_new_string (key, value);
-
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -838,9 +787,9 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 			       key, FALSE, FALSE);
 
 	} else {
-		prop = hal_property_new_int (key, value);
-
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_INT32);
+		hal_property_set_int (prop, value);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -872,9 +821,9 @@ hal_device_property_set_uint64 (HalDevice *device, const char *key,
 			       key, FALSE, FALSE);
 
 	} else {
-		prop = hal_property_new_uint64 (key, value);
-
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_UINT64);
+		hal_property_set_uint64 (prop, value);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -906,9 +855,9 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 			       key, FALSE, FALSE);
 
 	} else {
-		prop = hal_property_new_bool (key, value);
-
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_BOOLEAN);
+		hal_property_set_bool (prop, value);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -940,9 +889,9 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 			       key, FALSE, FALSE);
 
 	} else {
-		prop = hal_property_new_double (key, value);
-
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_DOUBLE);
+		hal_property_set_double (prop, value);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -989,26 +938,19 @@ hal_device_copy_property (HalDevice *from_device, const char *from, HalDevice *t
 gboolean
 hal_device_property_remove (HalDevice *device, const char *key)
 {
-	HalProperty *prop;
-
-	prop = hal_device_property_find (device, key);
-
-	if (prop == NULL)
-		return FALSE;
-
-	device->private->properties = g_slist_remove (device->private->properties, prop);
-
-	hal_property_free (prop);
-
-	g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-		       key, TRUE, FALSE);
-
-	return TRUE;
+	if (g_hash_table_remove (device->private->props, key)) {
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, TRUE, FALSE);
+		return TRUE;
+	}
+	return FALSE;
 }
 
 void
 hal_device_print (HalDevice *device)
 {
+#if 0
+#warning TODO
 	GSList *iter;
 
         fprintf (stderr, "device udi = %s\n", hal_device_get_udi (device));
@@ -1056,6 +998,7 @@ hal_device_print (HalDevice *device)
                 }
         }
         fprintf (stderr, "\n");
+#endif
 }
 
 const char *
@@ -1097,10 +1040,10 @@ hal_device_property_strlist_append (HalDevice    *device,
 			       key, FALSE, FALSE);
 
 	} else {
-		prop = hal_property_new_strlist (key);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		hal_property_strlist_append (prop, value);
 
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1129,10 +1072,10 @@ hal_device_property_strlist_prepend (HalDevice    *device,
 			       key, FALSE, FALSE);
 
 	} else {
-		prop = hal_property_new_strlist (key);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		hal_property_strlist_prepend (prop, value);
 
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1176,13 +1119,11 @@ hal_device_property_strlist_clear (HalDevice    *device,
 	prop = hal_device_property_find (device, key);
 
 	if (prop == NULL) {
-		prop = hal_property_new_strlist (key);
-
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
-
 		return TRUE;
 	}
 
@@ -1223,10 +1164,10 @@ hal_device_property_strlist_add (HalDevice *device,
 		}
 
 	} else {
-		prop = hal_property_new_strlist (key);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		hal_property_strlist_prepend (prop, value);
 
-		device->private->properties = g_slist_prepend (device->private->properties, prop);
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
