@@ -37,7 +37,6 @@
 #include "logger.h"
 #include "hald_runner.h"
 
-
 struct _HalProperty {
 	int type;
 	union {
@@ -382,9 +381,9 @@ hal_device_finalize (GObject *obj)
 
 	g_free (device->private->udi);
 
-	g_free (device->private);
-
 	g_hash_table_destroy (device->private->props);
+
+	g_free (device->private);
 
 	if (parent_class->finalize)
 		parent_class->finalize (obj);
