@@ -83,6 +83,15 @@
 	    <append key="portable_audio_player.output_formats" type="strlist">audio/x-wav</append>
 	    <append key="portable_audio_player.input_formats" type="strlist">audio/x-wav</append>
 	  </match>
+	  <!-- Zen Nano -->
+          <match key="@storage.physical_device:usb.product_id" int="0x412c">
+	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
+            <merge key="info.category" type="string">portable_audio_player</merge>
+            <merge key="portable_audio_player.type" type="string">generic</merge>
+            <merge key="portable_audio_player.access_method" type="string">storage</merge>
+            <merge key="portable_audio_player.storage_device" type="copy_property">info.udi</merge>
+            <append key="portable_audio_player.output_formats" type="strlist">audio/mpeg</append>
+          </match>
 	  <!-- NOMAD Jukebox Zen Xtra -->
 	  <match key="@storage.physical_device:usb.product_id" int="0x4128">
 	    <append key="info.capabilities" type="strlist">portable_audio_player</append>
