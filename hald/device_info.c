@@ -640,12 +640,11 @@ handle_match (struct rule *rule, HalDevice *d)
 					contains = TRUE;
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
-			GSList *list;
-			GSList *i;
-
-			list = hal_device_property_get_strlist (d, prop_to_check);
-			for (i = list; i != NULL; i = g_slist_next (i)) {
-				const char *str = i->data;
+			HalDeviceStrListIter iter;
+			for (hal_device_property_strlist_iter_init (d, prop_to_check, &iter);
+			     hal_device_property_strlist_iter_is_valid (&iter);
+			     hal_device_property_strlist_iter_next (&iter)) {
+				const char *str = hal_device_property_strlist_iter_get_value (&iter);
 				if (strcmp (str, value) == 0) {
 					contains = TRUE;
 					break;
@@ -677,12 +676,11 @@ handle_match (struct rule *rule, HalDevice *d)
 				g_free (haystack_lowercase);
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
-			GSList *list;
-			GSList *i;
-
-			list = hal_device_property_get_strlist (d, prop_to_check);
-			for (i = list; i != NULL; i = g_slist_next (i)) {
-				const char *str = i->data;
+			HalDeviceStrListIter iter;
+			for (hal_device_property_strlist_iter_init (d, prop_to_check, &iter);
+			     hal_device_property_strlist_iter_is_valid (&iter);
+			     hal_device_property_strlist_iter_next (&iter)) {
+				const char *str = hal_device_property_strlist_iter_get_value (&iter);
 				if (g_ascii_strcasecmp (str, value) == 0) {
 					contains_ncase = TRUE;
 					break;
@@ -745,7 +743,7 @@ handle_match (struct rule *rule, HalDevice *d)
 static void
 spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Add callouts completed udi=%s", d->udi));
+	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -909,11 +907,11 @@ handle_merge (struct rule *rule, HalDevice *d)
 
 		if (spawned == NULL) {
 			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'",
-				   key, d->udi));
+				   key, hal_device_get_udi (d)));
 			spawned = hal_device_new ();
 			hal_device_property_set_string (spawned, "info.bus", "unknown");
 			hal_device_property_set_string (spawned, "info.udi", key);
-			hal_device_property_set_string (spawned, "info.parent", d->udi);
+			hal_device_property_set_string (spawned, "info.parent", hal_device_get_udi (d));
 			hal_device_set_udi (spawned, key);
 
 			hal_device_store_add (hald_get_tdl (), spawned);
@@ -1141,7 +1139,11 @@ rules_dump (GSList *fdi_rules)
 
 /* modified alphasort to count downwards */
 static int
+#ifdef __GLIBC__
 _alphasort(const void *a, const void *b)
+#else
+_alphasort(const struct dirent **a, const struct dirent **b)
+#endif
 {
 	return -alphasort (a, b);
 }
