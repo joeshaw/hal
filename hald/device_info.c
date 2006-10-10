@@ -1056,7 +1056,7 @@ end (void *data, const char *el)
 
 	/* set empty value to empty string */
 	if (fdi_ctx->rule->value == NULL)
-		fdi_ctx->rule->value = "";
+		fdi_ctx->rule->value = g_strdup ("");
 
 	/* insert merge rule into list and get new rule */
 	fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
@@ -1204,6 +1204,8 @@ di_rules_init (void)
 	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
 	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
 
+	HAL_INFO (("Loading rules"));
+
 	if (hal_fdi_source_preprobe != NULL)
 		rules_search_and_add_fdi_files (&fdi_rules_preprobe, hal_fdi_source_preprobe);
 	else {
@@ -1231,6 +1233,8 @@ di_rules_init (void)
 		rules_dump (fdi_rules_information);
 		rules_dump (fdi_rules_policy);
 	}
+
+	HAL_INFO (("Loading rules done"));
 }
 
 /* cleanup the rules */
