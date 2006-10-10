@@ -349,8 +349,11 @@ gboolean
 hal_device_property_strlist_iter_is_valid (HalDeviceStrListIter *iter)
 {
 	g_return_val_if_fail (iter != NULL, FALSE);
-	g_return_val_if_fail (iter->i != NULL, FALSE);
-	return TRUE;
+	if (iter->i == NULL) {
+		return FALSE;
+	} else {
+		return TRUE;
+	}
 }
 
 char **
