@@ -674,7 +674,7 @@ out:
  * @{
  */
 
-static gboolean
+static void
 foreach_property_append (HalDevice *device, 
 			 const char *key,
 			 gpointer user_data)
@@ -836,9 +836,6 @@ foreach_property_append (HalDevice *device,
 	}
 
 	dbus_message_iter_close_container (iter, &iter_dict_entry);
-
-
-	return TRUE;
 }
 		
 	

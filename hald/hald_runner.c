@@ -288,7 +288,7 @@ error:
   return FALSE;
 }
 
-static gboolean
+static void
 add_property_to_msg (HalDevice *device, 
 		     const char *key, 
 		     gpointer user_data)
@@ -314,8 +314,6 @@ add_property_to_msg (HalDevice *device,
   g_free (env);
   g_free (value);
   g_free (prop_upper);
-
-  return TRUE;
 }
 
 static void

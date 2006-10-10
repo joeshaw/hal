@@ -81,17 +81,13 @@ struct _HalDeviceStrListIter {
 };
 
 
-/* Return value of FALSE means that the foreach should be short-circuited */
-typedef gboolean (*HalDevicePropertyForeachFn) (HalDevice *device,
-						const char *key,
-						gpointer user_data);
+typedef void (*HalDevicePropertyForeachFn) (HalDevice *device,
+					    const char *key,
+					    gpointer user_data);
 
 GType         hal_device_get_type            (void);
 
 HalDevice    *hal_device_new                 (void);
-
-void          hal_device_merge               (HalDevice    *target,
-					      HalDevice    *source);
 
 void          hal_device_merge_with_rewrite  (HalDevice    *target,
 					      HalDevice    *source,

@@ -175,6 +175,85 @@ hal_device_new (void)
 	return device;
 }
 
+static inline HalProperty *
+hal_device_property_find (HalDevice *device, const char *key)
+{
+	g_return_val_if_fail (device != NULL, NULL);
+	g_return_val_if_fail (key != NULL, NULL);
+
+	return g_hash_table_lookup (device->private->props, key);
+}
+
+typedef struct 
+{
+	HalDevice *target;
+	const char *source_namespace;
+	const char *target_namespace;
+	size_t source_ns_len;
+} merge_rewrite_ud_t;
+
+static void
+merge_device_rewrite_cb (HalDevice *source,
+			 const char *key,
+			 gpointer user_data)
+{
+	int type;
+	merge_rewrite_ud_t *ud;
+	HalProperty *p;
+	int target_type;
+	gchar *target_key;
+
+	ud = (merge_rewrite_ud_t *) user_data;
+
+	/* only care about properties that match source namespace */
+	if (strncmp(key, ud->source_namespace, ud->source_ns_len) != 0)
+		goto out;
+	
+	target_key = g_strdup_printf("%s%s", ud->target_namespace, key + ud->source_ns_len);
+
+	type = hal_device_property_get_type (source, key);
+
+	p = hal_device_property_find (source, key);
+
+	/* only remove target if it exists with a different type */
+	target_type = hal_device_property_get_type (ud->target, target_key);
+	if (target_type != HAL_PROPERTY_TYPE_INVALID && target_type != type) {
+		hal_device_property_remove (ud->target, target_key);
+	}
+
+	switch (type) {
+	case HAL_PROPERTY_TYPE_STRING:
+		hal_device_property_set_string (ud->target, target_key, hal_property_get_string (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_INT32:
+		hal_device_property_set_int (ud->target, target_key, hal_property_get_int (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_UINT64:
+		hal_device_property_set_uint64 (ud->target, target_key, hal_property_get_uint64 (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_BOOLEAN:
+		hal_device_property_set_bool (ud->target, target_key, hal_property_get_bool (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_DOUBLE:
+		hal_device_property_set_double (ud->target, target_key, hal_property_get_double (p));
+		break;
+
+	/* TODO: handle strlist */
+		
+	default:
+		HAL_WARNING (("Unknown property type %d", type));
+		break;
+	}
+
+	g_free (target_key);
+out:
+	;
+}
+
 /** Merge all properties from source where the key starts with 
  *  source_namespace and put them onto target replacing source_namespace
  *  with target_namespace
@@ -190,91 +269,19 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 				const char   *target_namespace,
 				const char   *source_namespace)
 {
-#if 0
-#warning FIXME
-	GSList *iter;
-	size_t source_ns_len;
+	merge_rewrite_ud_t ud;
 
-	source_ns_len = strlen (source_namespace);
+	ud.target = target;
+	ud.source_namespace = source_namespace;
+	ud.target_namespace = target_namespace;
+	ud.source_ns_len = strlen (source_namespace);
 
-	/* doesn't handle info.capabilities */
-
+	/* doesn't handle info.capabilities - TODO: should use atomic update? */
 	/* device_property_atomic_update_begin (); */
 
-	for (iter = source->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p = iter->data;
-		int type;
-		const char *key;
-		int target_type;
-		gchar *target_key;
-
-		key = hal_property_get_key (p);
-
-		/* only care about properties that match source namespace */
-		if (strncmp(key, source_namespace, source_ns_len) != 0)
-			continue;
-
-		target_key = g_strdup_printf("%s%s", target_namespace,
-					     key+source_ns_len);
-
-		type = hal_property_get_type (p);
-
-		/* only remove target if it exists with a different type */
-		target_type = hal_device_property_get_type (target, key);
-		if (target_type != HAL_PROPERTY_TYPE_INVALID && target_type != type)
-			hal_device_property_remove (target, key);
-
-		switch (type) {
-
-		case HAL_PROPERTY_TYPE_STRING:
-			hal_device_property_set_string (
-				target, target_key,
-				hal_property_get_string (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_INT32:
-			hal_device_property_set_int (
-				target, target_key,
-				hal_property_get_int (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_UINT64:
-			hal_device_property_set_uint64 (
-				target, target_key,
-				hal_property_get_uint64 (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_BOOLEAN:
-			hal_device_property_set_bool (
-				target, target_key,
-				hal_property_get_bool (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_DOUBLE:
-			hal_device_property_set_double (
-				target, target_key,
-				hal_property_get_double (p));
-			break;
-
-		default:
-			HAL_WARNING (("Unknown property type %d", type));
-			break;
-		}
-
-		g_free (target_key);
-	}
+	hal_device_property_foreach (source, merge_device_rewrite_cb, &ud);
 
 	/* device_property_atomic_update_end (); */
-#endif
-}
-
-static inline HalProperty *
-hal_device_property_find (HalDevice *device, const char *key)
-{
-	g_return_val_if_fail (device != NULL, NULL);
-	g_return_val_if_fail (key != NULL, NULL);
-
-	return g_hash_table_lookup (device->private->props, key);
 }
 
 static inline GSList *
@@ -379,83 +386,6 @@ hal_device_property_dup_strlist_as_strv (HalDevice    *device,
 
 out:
 	return strv;	
-}
-
-
-void
-hal_device_merge (HalDevice *target, HalDevice *source)
-{
-#if 0
-#warning TODO
-	GSList *iter;
-	GSList *caps;
-
-	/* device_property_atomic_update_begin (); */
-
-	for (iter = source->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p = iter->data;
-		int type;
-		const char *key;
-		int target_type;
-
-		key = hal_property_get_key (p);
-		type = hal_property_get_type (p);
-
-		/* handle info.capabilities in a special way */
-		if (strcmp (key, "info.capabilities") == 0)
-			continue;
-
-		/* only remove target if it exists with a different type */
-		target_type = hal_device_property_get_type (target, key);
-		if (target_type != HAL_PROPERTY_TYPE_INVALID && target_type != type)
-			hal_device_property_remove (target, key);
-
-		switch (type) {
-
-		case HAL_PROPERTY_TYPE_STRING:
-			hal_device_property_set_string (
-				target, key,
-				hal_property_get_string (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_INT32:
-			hal_device_property_set_int (
-				target, key,
-				hal_property_get_int (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_UINT64:
-			hal_device_property_set_uint64 (
-				target, key,
-				hal_property_get_uint64 (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_BOOLEAN:
-			hal_device_property_set_bool (
-				target, key,
-				hal_property_get_bool (p));
-			break;
-
-		case HAL_PROPERTY_TYPE_DOUBLE:
-			hal_device_property_set_double (
-				target, key,
-				hal_property_get_double (p));
-			break;
-
-		default:
-			HAL_WARNING (("Unknown property type %d", type));
-			break;
-		}
-	}
-
-	/* device_property_atomic_update_end (); */
-
-	caps = hal_device_property_get_strlist (source, "info.capabilities");
-	for (iter = caps; iter != NULL; iter = iter->next) {
-		if (!hal_device_has_capability (target, iter->data))
-			hal_device_add_capability (target, iter->data);
-	}
-#endif
 }
 
 const char *
@@ -946,59 +876,67 @@ hal_device_property_remove (HalDevice *device, const char *key)
 	return FALSE;
 }
 
+static void
+hal_device_print_foreach_cb (HalDevice *device,
+			     const char *key,
+			     gpointer user_data)
+{
+	int type;
+	HalProperty *p;
+
+	p = hal_device_property_find (device, key);
+	if (p == NULL) {
+		goto out;
+	}
+
+	type = hal_property_get_type (p);
+	
+	switch (type) {
+	case HAL_PROPERTY_TYPE_STRING:
+		fprintf (stderr, "  %s = '%s'  (string)\n", key,
+			 hal_property_get_string (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_INT32:
+                        fprintf (stderr, "  %s = %d  0x%x  (int)\n", key,
+				 hal_property_get_int (p),
+				 hal_property_get_int (p));
+                        break;
+			
+	case HAL_PROPERTY_TYPE_UINT64:
+		fprintf (stderr, "  %s = %llu  0x%llx  (uint64)\n", key,
+			 (long long unsigned int) hal_property_get_uint64 (p),
+			 (long long unsigned int) hal_property_get_uint64 (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_DOUBLE:
+		fprintf (stderr, "  %s = %g  (double)\n", key,
+			 hal_property_get_double (p));
+		break;
+		
+	case HAL_PROPERTY_TYPE_BOOLEAN:
+		fprintf (stderr, "  %s = %s  (bool)\n", key,
+			 (hal_property_get_bool (p) ? "true" :
+			  "false"));
+		break;
+		
+		/* TODO: strlist */
+		
+	default:
+		HAL_WARNING (("Unknown property type %d", type));
+		break;
+	}
+
+out:
+	;
+}
+
 void
 hal_device_print (HalDevice *device)
 {
-#if 0
-#warning TODO
-	GSList *iter;
-
         fprintf (stderr, "device udi = %s\n", hal_device_get_udi (device));
-
-	for (iter = device->private->properties; iter != NULL; iter = iter->next) {
-		HalProperty *p = iter->data;
-                int type;
-                const char *key;
-
-                key = hal_property_get_key (p);
-                type = hal_property_get_type (p);
-
-                switch (type) {
-                case HAL_PROPERTY_TYPE_STRING:
-                        fprintf (stderr, "  %s = '%s'  (string)\n", key,
-                                hal_property_get_string (p));
-                        break;
- 
-                case HAL_PROPERTY_TYPE_INT32:
-                        fprintf (stderr, "  %s = %d  0x%x  (int)\n", key,
-                                hal_property_get_int (p),
-                                hal_property_get_int (p));
-                        break;
- 
-                case HAL_PROPERTY_TYPE_UINT64:
-                        fprintf (stderr, "  %s = %llu  0x%llx  (uint64)\n", key,
-                                (long long unsigned int) hal_property_get_uint64 (p),
-                                (long long unsigned int) hal_property_get_uint64 (p));
-                        break;
- 
-                case HAL_PROPERTY_TYPE_DOUBLE:
-                        fprintf (stderr, "  %s = %g  (double)\n", key,
-                                hal_property_get_double (p));
-                        break;
- 
-                case HAL_PROPERTY_TYPE_BOOLEAN:
-                        fprintf (stderr, "  %s = %s  (bool)\n", key,
-                                (hal_property_get_bool (p) ? "true" :
-                                 "false"));
-                        break;
- 
-                default:
-                        HAL_WARNING (("Unknown property type %d", type));
-                        break;
-                }
-        }
+	hal_device_property_foreach (device, hal_device_print_foreach_cb, NULL);
         fprintf (stderr, "\n");
-#endif
 }
 
 const char *
