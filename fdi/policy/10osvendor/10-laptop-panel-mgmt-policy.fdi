@@ -37,6 +37,12 @@
         <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad T60">
           <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
         </match>
+        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad X60">
+          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
+        </match>
+        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad X60s">
+          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
+        </match>
       </match>
     </match>
   </device>
