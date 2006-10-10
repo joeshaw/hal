@@ -109,13 +109,6 @@ GSList         *hal_device_store_match_multiple_key_value_string (HalDeviceStore
 								  const char *key,
 								  const char *value);
 
-void           hal_device_store_match_key_value_string_async (HalDeviceStore *store,
-							      const char *key,
-							      const char *value,
-							      HalDeviceStoreAsyncCallback callback,
-							      gpointer user_data,
-							      int timeout);
-
 void hal_device_store_print (HalDeviceStore *store);
 
 
