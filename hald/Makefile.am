@@ -21,7 +21,6 @@ INCLUDES = \
 #	device_info.h			device_info.c			\
 #	device_store.h			device_store.c			\
 #	logger.h			logger.c			\
-#	property.h			property.c                      \
 #	hald_dbus.h			hald_dbus.c			\
 #	hald_test.c							\
 #	hald_test_libhal.c
@@ -50,7 +49,6 @@ hald_SOURCES =                                                          \
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\
-	property.h			property.c			\
 	ids.h				ids.c			
 
 hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
