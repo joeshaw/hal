@@ -64,31 +64,26 @@ typedef struct
 	gpointer data2;
 } RunningProcess;
 
-/* mapping from PID to RunningProcess */
-static GHashTable *running_processes = NULL;
-
-static gboolean
-rprd_foreach (gpointer key,
-	      gpointer value,
-	      gpointer user_data)
-{
-	gboolean remove;
-	RunningProcess *rp = value;
-	HalDevice *device = user_data;
-
-	if (device == NULL || rp->device == device) {
-		remove = TRUE;
-		g_free (rp);
-	}
-
-	return remove;
-}
+/* list of RunningProcess */
+static GSList *running_processes = NULL;
 
 static void
 running_processes_remove_device (HalDevice *device)
 {
-	if (running_processes != NULL) {
-		g_hash_table_foreach_remove (running_processes, rprd_foreach, device);
+	GSList *i;
+	GSList *j;
+
+	for (i = running_processes; i != NULL; i = j) {
+		RunningProcess *rp;
+
+		j = g_slist_next (i);
+		rp = i->data;
+
+		if (rp->device == device) {
+			g_free (rp);
+			running_processes = g_slist_delete_link (running_processes, i);
+		}
+
 	}
 }
 
@@ -119,18 +114,23 @@ runner_server_message_handler (DBusConnection *connection,
 		if (dbus_message_get_args (message, &error,
 					   DBUS_TYPE_INT64, &dpid,
 					   DBUS_TYPE_INVALID)) {
-			RunningProcess *rp;
+			GSList *i;
 			GPid pid;
 
 			pid = (GPid) dpid;
 
-			if (running_processes != NULL) {
-				/*HAL_INFO (("Previously started process with pid %d exited", pid));*/
-				rp = g_hash_table_lookup (running_processes, (gpointer) pid);
-				if (rp != NULL) {
+			HAL_INFO (("Previously started process with pid %d exited", pid));
+
+			for (i = running_processes; i != NULL; i = g_slist_next (i)) {
+				RunningProcess *rp;
+
+				rp = i->data;
+
+				if (rp->pid == pid) {
 					rp->cb (rp->device, 0, 0, NULL, rp->data1, rp->data2);
-					g_hash_table_remove (running_processes, (gpointer) pid);
 					g_free (rp);
+					running_processes = g_slist_delete_link (running_processes, i);
+					break;
 				}
 			}
 		}
@@ -200,8 +200,11 @@ hald_runner_stop_runner (void)
 		DBusMessage *msg;
 
 		/* Don't care about running processes anymore */
-		g_hash_table_foreach_remove (running_processes, rprd_foreach, NULL);
-		g_hash_table_destroy (running_processes);
+		
+		HAL_INFO (("running_processes %p, num = %d", running_processes, g_slist_length (running_processes)));
+
+		g_slist_foreach (running_processes, (GFunc) g_free, NULL);
+		g_slist_free (running_processes);
 		running_processes = NULL;
 
 		HAL_INFO (("Killing runner with pid %d", runner_pid));
@@ -235,7 +238,7 @@ hald_runner_start_runner(void)
   const char *hald_runner_path;
   char *server_address;
 
-  running_processes = g_hash_table_new (g_direct_hash, g_direct_equal);
+  running_processes = NULL;
 
   dbus_error_init(&err);
   runner_server = dbus_server_listen(DBUS_SERVER_ADDRESS, &err);
@@ -446,7 +449,7 @@ hald_runner_start (HalDevice *device, const gchar *command_line, char **extra_en
 	if (dbus_message_get_args (reply, &err,
 				   DBUS_TYPE_INT64, &pid_from_runner,
 				   DBUS_TYPE_INVALID)) {
-		if (cb != NULL && running_processes != NULL) {
+		if (cb != NULL) {
 			RunningProcess *rp;
 			rp = g_new0 (RunningProcess, 1);
 			rp->pid = (GPid) pid_from_runner;
@@ -455,7 +458,8 @@ hald_runner_start (HalDevice *device, const gchar *command_line, char **extra_en
 			rp->data1 = data1;
 			rp->data2 = data2;
 
-			g_hash_table_insert (running_processes, (gpointer) rp->pid, rp);
+			running_processes = g_slist_prepend (running_processes, rp);
+			HAL_INFO (("running_processes %p, num = %d", running_processes, g_slist_length (running_processes)));
 		}
 	} else {
 	  HAL_ERROR (("Error extracting out_pid from runner's Start()"));

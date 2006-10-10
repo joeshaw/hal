@@ -371,7 +371,7 @@ main (int argc, char *argv[])
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
 #ifdef HALD_MEMLEAK_DBG
-	g_mem_set_vtable (glib_mem_profiler_table);
+	/*g_mem_set_vtable (glib_mem_profiler_table);*/
 #endif
 
 	g_type_init ();
@@ -601,9 +601,9 @@ extern int dbg_hal_device_object_delta;
 static gboolean
 my_shutdown2 (gpointer data)
 {
-	g_mem_profile ();
-	sleep (10000);
-	/*exit (1);*/
+	/*g_mem_profile ();*/
+	/*sleep (10000);*/
+	exit (1);
 	return FALSE;
 }
 

@@ -932,10 +932,12 @@ hal_util_strdup_valid_utf8 (const char *str)
 		count++;
 	}
 	
-	if (strlen(newstr) == count)
+	if (strlen(newstr) == count) {
+		g_free (newstr);
 		return NULL;
-	else
+	} else {
 		return newstr;
+	}
 }
 
 void
