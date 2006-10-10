@@ -39,13 +39,12 @@ typedef enum {
 } HotplugActionType;
 
 typedef enum {
-	HOTPLUG_EVENT_SYSFS       = 0,
-	HOTPLUG_EVENT_SYSFS_BUS   = 1,
-	HOTPLUG_EVENT_SYSFS_CLASS = 2,
-	HOTPLUG_EVENT_SYSFS_BLOCK = 3,
-	HOTPLUG_EVENT_ACPI        = 4,
-	HOTPLUG_EVENT_APM         = 5,
-	HOTPLUG_EVENT_PMU         = 6
+	HOTPLUG_EVENT_SYSFS        = 0,
+	HOTPLUG_EVENT_SYSFS_DEVICE = 2,
+	HOTPLUG_EVENT_SYSFS_BLOCK  = 3,
+	HOTPLUG_EVENT_ACPI         = 4,
+	HOTPLUG_EVENT_APM          = 5,
+	HOTPLUG_EVENT_PMU          = 6
 } HotplugEventType;
 
 /** Data structure representing a hotplug event; also used for

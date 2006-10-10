@@ -462,7 +462,7 @@ battery_refresh_add (HalDevice *d, const char *path)
 	hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info",
 					    "OEM info", 0, TRUE);
 	hal_util_set_string_elem_from_file (d, "battery.model", path, "info",
-					    "model number", 0, TRUE);
+					    "model number", G_MAXUINT, TRUE);
 	hal_util_set_string_elem_from_file (d, "battery.serial", path, "info",
 					    "serial number", 0, TRUE);
 	hal_util_set_string_elem_from_file (d, "battery.vendor", path, "info",

@@ -370,7 +370,7 @@ static void scan_bus(void)
 					g_strlcpy(dirname2, dirname, sizeof(dirname2));
 					g_strlcat(dirname2, "/", sizeof(dirname2));
 					g_strlcat(dirname2, dent2->d_name, sizeof(dirname2));
-					device_list_insert(dirname2, dent->d_name, HOTPLUG_EVENT_SYSFS_BUS);
+					device_list_insert(dirname2, dent->d_name, HOTPLUG_EVENT_SYSFS_DEVICE);
 				}
 				closedir(dir2);
 			}
@@ -469,7 +469,7 @@ static void scan_class(void)
 					g_strlcpy(dirname2, dirname, sizeof(dirname2));
 					g_strlcat(dirname2, "/", sizeof(dirname2));
 					g_strlcat(dirname2, dent2->d_name, sizeof(dirname2));
-					device_list_insert(dirname2, dent->d_name, HOTPLUG_EVENT_SYSFS_CLASS);
+					device_list_insert(dirname2, dent->d_name, HOTPLUG_EVENT_SYSFS_DEVICE);
 				}
 				closedir(dir2);
 			}
