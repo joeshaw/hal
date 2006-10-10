@@ -43,9 +43,8 @@
 #include "acpi.h"
 #include "apm.h"
 #include "blockdev.h"
-#include "classdev.h"
+#include "device.h"
 #include "osspec_linux.h"
-#include "physdev.h"
 #include "pmu.h"
 
 #include "hotplug.h"
@@ -81,51 +80,6 @@ hotplug_event_reposted (void *end_token)
 }
 
 static void
-fixup_net_device_for_renaming (HotplugEvent *hotplug_event)
-{
-	/* fixup net devices by looking at ifindex */
-	if (strcmp (hotplug_event->sysfs.subsystem, "net") == 0 && hotplug_event->sysfs.net_ifindex != -1) {
-		int ifindex;
-		
-		if (!hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "ifindex", &ifindex, 10) ||
-		    (ifindex != hotplug_event->sysfs.net_ifindex)) {
-			GDir *dir;
-			char path[HAL_PATH_MAX];
-			char path1[HAL_PATH_MAX];
-			GError *err = NULL;
-			const gchar *f;
-			
-			/* search for new name */
-			HAL_WARNING (("Net interface @ %s with ifindex %d was probably renamed",
-				      hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.net_ifindex));
-			
-			g_snprintf (path, HAL_PATH_MAX, "%s/class/net" , get_hal_sysfs_path());
-			if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-				HAL_ERROR (("Unable to open %s/class/net: %s", get_hal_sysfs_path(), err->message));
-				g_error_free (err);
-				goto out;
-			}
-			while ((f = g_dir_read_name (dir)) != NULL) {
-				g_snprintf (path1, HAL_PATH_MAX, "%s/class/net/%s" , get_hal_sysfs_path (), f);
-				if (hal_util_get_int_from_file (path1, "ifindex", &ifindex, 10)) {
-					if (ifindex == hotplug_event->sysfs.net_ifindex) {
-						HAL_INFO (("Using sysfs path %s for ifindex %d", path1, ifindex));
-						strncpy (hotplug_event->sysfs.sysfs_path, path1, HAL_PATH_MAX);
-						g_dir_close (dir);
-						goto out;
-					}
-				}
-				
-			}
-			g_dir_close (dir);
-		}
-	}
-out:
-	return;
-}
-
-
-static void
 hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 {
 	HalDevice *d;
@@ -153,12 +107,9 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		HotplugEventType type;
 
 		type = hal_device_property_get_int (d, "linux.hotplug_type");
-		if (type == HOTPLUG_EVENT_SYSFS_BUS) {
-			HAL_INFO (("%s is a bus device (store)", hotplug_event->sysfs.sysfs_path));
-			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
-		} else if (type == HOTPLUG_EVENT_SYSFS_CLASS) {
+		if (type == HOTPLUG_EVENT_SYSFS_DEVICE) {
 			HAL_INFO (("%s is a class device (store)", hotplug_event->sysfs.sysfs_path));
-			hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 		} else if (type == HOTPLUG_EVENT_SYSFS_BLOCK) {
 			HAL_INFO (("%s is a block device (store)", hotplug_event->sysfs.sysfs_path));
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
@@ -168,7 +119,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	/*
 	 * determine device type by "subsystem" link (from kernel 2.6.18, class devices
 	 * start to move from /class to /devices and have a "subsystem" link pointing
-	 * back to the "class" or "bus" directory
+	 * back to the subsystem
 	 */
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS) {
 		g_snprintf (subsystem, HAL_PATH_MAX, "%s/subsystem", hotplug_event->sysfs.sysfs_path);
@@ -177,12 +128,9 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			if (strstr(subsystem_target, "/block") != NULL) {
 				HAL_INFO (("%s is a block device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
-			} else if (strstr(subsystem_target, "/bus/") != NULL) {
-				HAL_INFO (("%s is a bus device (subsystem)", hotplug_event->sysfs.sysfs_path));
-				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
-			} else if (strstr(subsystem_target, "/class/") != NULL) {
+			} else {
 				HAL_INFO (("%s is a class device (subsystem)", hotplug_event->sysfs.sysfs_path));
-				hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
+				hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 			}
 			g_free (subsystem_target);
 		}
@@ -201,45 +149,21 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
 		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
 
-		if (strncmp (hotplug_event->sysfs.sysfs_path, sys_devices_path, sys_devices_path_len) == 0) {
-			HAL_INFO (("%s is a bus device (devpath)", hotplug_event->sysfs.sysfs_path));
-			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BUS;
-		} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_class_path, sys_class_path_len) == 0) {
-			HAL_INFO (("%s is a class device (devpath)", hotplug_event->sysfs.sysfs_path));
-			hotplug_event->type = HOTPLUG_EVENT_SYSFS_CLASS;
-		} else if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
+		if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
 			HAL_INFO (("%s is a block device (devpath)", hotplug_event->sysfs.sysfs_path));
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
-		}
+		} else
+			hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 	}
 
-	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BUS) {
-		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
-			HalDevice *parent;
-
-			hal_util_find_known_parent (hotplug_event->sysfs.sysfs_path, &parent, NULL);
-			hotplug_event_begin_add_physdev (hotplug_event->sysfs.subsystem, 
-							 hotplug_event->sysfs.sysfs_path, 
-							 parent,
-							 (void *) hotplug_event);
-		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
-			hotplug_event_begin_remove_physdev (hotplug_event->sysfs.subsystem, 
-							    hotplug_event->sysfs.sysfs_path, 
-							    (void *) hotplug_event);
-		}
-	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_CLASS) {
+	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_DEVICE) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
 			HalDevice *parent;
 			gchar *parent_path;
 
-			/* /sbin/ifrename may be called from a hotplug handler before we process this,
-			 * so if index doesn't match, go ahead and find a new sysfs path
-			 */
-			fixup_net_device_for_renaming (hotplug_event);
-
 			hal_util_find_known_parent (hotplug_event->sysfs.sysfs_path,
 							&parent, &parent_path);
-			hotplug_event_begin_add_classdev (hotplug_event->sysfs.subsystem,
+			hotplug_event_begin_add_dev (hotplug_event->sysfs.subsystem,
 							  hotplug_event->sysfs.sysfs_path,
 							  hotplug_event->sysfs.device_file,
 							  parent,
@@ -247,7 +171,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							  (void *) hotplug_event);
 			g_free (parent_path);
 		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
-			hotplug_event_begin_remove_classdev (hotplug_event->sysfs.subsystem,
+			hotplug_event_begin_remove_dev (hotplug_event->sysfs.subsystem,
 							     hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
 		}
@@ -339,8 +263,7 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 
 	/* explicit fallthrough */
 	case HOTPLUG_EVENT_SYSFS:
-	case HOTPLUG_EVENT_SYSFS_BUS:
-	case HOTPLUG_EVENT_SYSFS_CLASS:
+	case HOTPLUG_EVENT_SYSFS_DEVICE:
 	case HOTPLUG_EVENT_SYSFS_BLOCK:
 		hotplug_event_begin_sysfs (hotplug_event);
 		break;
@@ -418,12 +341,8 @@ hotplug_rescan_device (HalDevice *d)
 	gboolean ret;
 
 	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
-	case HOTPLUG_EVENT_SYSFS_BUS:
-		ret = physdev_rescan_device (d);
-		break;
-
-	case HOTPLUG_EVENT_SYSFS_CLASS:
-		ret = classdev_rescan_device (d);
+	case HOTPLUG_EVENT_SYSFS_DEVICE:
+		ret = dev_rescan_device (d);
 		break;
 
 	case HOTPLUG_EVENT_SYSFS_BLOCK:
@@ -470,12 +389,8 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 	/* then remove self */
 	HAL_INFO (("Generate remove event for udi %s", hal_device_get_udi (d)));
 	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
-	case HOTPLUG_EVENT_SYSFS_BUS:
-		e = physdev_generate_remove_hotplug_event (d);
-		break;
-
-	case HOTPLUG_EVENT_SYSFS_CLASS:
-		e = classdev_generate_remove_hotplug_event (d);
+	case HOTPLUG_EVENT_SYSFS_DEVICE:
+		e = dev_generate_remove_hotplug_event (d);
 		break;
 
 	case HOTPLUG_EVENT_SYSFS_BLOCK:
@@ -515,12 +430,8 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 	/* first add self */
 	HAL_INFO (("Generate add event for udi %s", hal_device_get_udi (d)));
 	switch (hal_device_property_get_int (d, "linux.hotplug_type")) {
-	case HOTPLUG_EVENT_SYSFS_BUS:
-		e = physdev_generate_add_hotplug_event (d);
-		break;
-
-	case HOTPLUG_EVENT_SYSFS_CLASS:
-		e = classdev_generate_add_hotplug_event (d);
+	case HOTPLUG_EVENT_SYSFS_DEVICE:
+		e = dev_generate_add_hotplug_event (d);
 		break;
 
 	case HOTPLUG_EVENT_SYSFS_BLOCK:

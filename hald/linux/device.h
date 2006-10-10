@@ -1,11 +1,8 @@
 /***************************************************************************
- * CVSID: $Id$
- *
- * physdev.h : Handling of physical kernel devices
+ * Linux kernel device handling
  *
  * Copyright (C) 2004 David Zeuthen, <david@fubar.dk>
- *
- * Licensed under the Academic Free License version 2.1
+ * Copyright (C) 2006 Kay Sievers <kay.sievers@novell.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +20,32 @@
  *
  **************************************************************************/
 
-#ifndef PHYSDEV_H
-#define PHYSDEV_H
+#ifndef DEV_H
+#define DEV_H
 
 #include <glib.h>
 #include "hotplug.h"
 
-void hotplug_event_begin_add_physdev (const gchar *subsystem, const gchar *sysfs_path, HalDevice *parent, void *end_token);
+typedef enum {
+	OSS_DEVICE_TYPE_DSP,
+	OSS_DEVICE_TYPE_ADSP,
+	OSS_DEVICE_TYPE_MIDI,
+	OSS_DEVICE_TYPE_AMIDI,
+	OSS_DEVICE_TYPE_AUDIO,
+	OSS_DEVICE_TYPE_MIXER,
+	OSS_DEVICE_TYPE_UNKNOWN
+} ClassDevOSSDeviceTypes;
 
-void hotplug_event_begin_remove_physdev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
+void hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, const gchar *device_file,
+				  HalDevice *parent_dev, const gchar *parent_path,
+				  void *end_token);
 
-gboolean physdev_rescan_device (HalDevice *d);
+void hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
 
-HotplugEvent *physdev_generate_add_hotplug_event (HalDevice *d);
+gboolean dev_rescan_device (HalDevice *d);
 
-HotplugEvent *physdev_generate_remove_hotplug_event (HalDevice *d);
+HotplugEvent *dev_generate_add_hotplug_event (HalDevice *d);
 
-#endif /* PHYSDEV_H */
+HotplugEvent *dev_generate_remove_hotplug_event (HalDevice *d);
+
+#endif

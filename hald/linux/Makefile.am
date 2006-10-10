@@ -20,10 +20,9 @@ libhald_linux_la_SOURCES =					\
 	hotplug.h		hotplug.c			\
 	hotplug_helper.h					\
 	coldplug.h		coldplug.c			\
-	physdev.h		physdev.c			\
-	classdev.h		classdev.c			\
+	device.h		device.c			\
 	blockdev.h		blockdev.c			\
 	acpi.h			acpi.c				\
 	apm.h			apm.c				\
-	pmu.h			pmu.c				
+	pmu.h			pmu.c
 
