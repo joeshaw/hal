@@ -127,6 +127,8 @@ struct fdi_context {
 	/* current rule */
 	struct rule *rule;
 
+	int fdi_rule_size;
+
 	/* all rules */
 	GSList* rules;
 };
@@ -1058,6 +1060,13 @@ end (void *data, const char *el)
 	if (fdi_ctx->rule->value == NULL)
 		fdi_ctx->rule->value = g_strdup ("");
 
+	if (fdi_ctx->fdi_rule_size >= 0) {
+		fdi_ctx->fdi_rule_size += 
+			sizeof (struct rule) + 
+			strlen (fdi_ctx->rule->key) + 
+			fdi_ctx->rule->value_len;
+	}
+
 	/* insert merge rule into list and get new rule */
 	fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
 	fdi_ctx->rule = g_new0 (struct rule, 1);
@@ -1065,12 +1074,13 @@ end (void *data, const char *el)
 
 /* decompile an fdi file into a list of rules as this is quicker than opening then each time we want to search */
 static int
-rules_add_fdi_file (GSList **fdi_rules, const char *filename)
+rules_add_fdi_file (GSList **fdi_rules, const char *filename, gboolean compute_rule_size)
 {
 	struct fdi_context *fdi_ctx;
 	char *buf;
 	gsize buflen;
 	int rc;
+	int fdi_rule_size;
 
 	if (!g_file_get_contents (filename, &buf, &buflen, NULL))
 		return -1;
@@ -1078,6 +1088,7 @@ rules_add_fdi_file (GSList **fdi_rules, const char *filename)
 	/* get context and first rule */
 	fdi_ctx = g_new0 (struct fdi_context ,1);
 	fdi_ctx->rule = g_new0 (struct rule ,1);
+	fdi_ctx->fdi_rule_size = compute_rule_size ? 0 : -1;
 
 	XML_Parser parser = XML_ParserCreate (NULL);
 	if (parser == NULL) {
@@ -1106,14 +1117,88 @@ rules_add_fdi_file (GSList **fdi_rules, const char *filename)
 	else
 		*fdi_rules = g_slist_concat (*fdi_rules, fdi_ctx->rules);
 
+	fdi_rule_size = (gint64) fdi_ctx->fdi_rule_size;
+
 	g_free (fdi_ctx);
 
 	if (rc == 0)
 		return -1;
+
+	return compute_rule_size ? fdi_rule_size : 0;
+}
+
+/* modified alphasort to count downwards */
+static int
+#ifdef __GLIBC__
+_alphasort(const void *a, const void *b)
+#else
+_alphasort(const struct dirent **a, const struct dirent **b)
+#endif
+{
+	return -alphasort (a, b);
+}
+
+/* recurse a directory tree, searching and adding fdi files */
+static int
+rules_search_and_add_fdi_files (GSList **fdi_rules, const char *dir, int *rules_size)
+{
+	int i;
+	int num_entries;
+	struct dirent **name_list;
+
+	num_entries = scandir (dir, &name_list, 0, _alphasort);
+	if (num_entries == -1)
+		return -1;
+
+	for (i = num_entries - 1; i >= 0; i--) {
+		int len;
+		char *filename;
+		gchar *full_path;
+
+		filename = name_list[i]->d_name;
+		len = strlen (filename);
+		full_path = g_strdup_printf ("%s/%s", dir, filename);
+		if (g_file_test (full_path, (G_FILE_TEST_IS_REGULAR))) {
+			if (len >= 5 && strcmp(&filename[len - 4], ".fdi") == 0) {
+				int fdi_rules_size;
+				fdi_rules_size = rules_add_fdi_file (fdi_rules, full_path, rules_size != NULL);
+				if (fdi_rules_size >= 0) {
+					if (rules_size != NULL) {
+						*rules_size += fdi_rules_size;
+						HAL_INFO (("fdi file '%s' -> %d bytes of rules", 
+							   full_path, fdi_rules_size));
+					}
+				} else {
+					HAL_WARNING (("error processing fdi file '%s'", full_path));
+				}
+			}
+		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) && filename[0] != '.') {
+			int num_bytes;
+			char *dirname;
+
+			num_bytes = len + strlen (dir) + 1 + 1;
+			dirname = (char *) malloc (num_bytes);
+			if (dirname == NULL)
+				break;
+
+			snprintf (dirname, num_bytes, "%s/%s", dir, filename);
+			rules_search_and_add_fdi_files (fdi_rules, dirname, rules_size);
+			free (dirname);
+		}
+		g_free (full_path);
+		free (name_list[i]);
+	}
+
+	for (; i >= 0; i--) {
+		free (name_list[i]);
+	}
+
+	free (name_list);
 	return 0;
 }
 
 /* print the rules to screen, mainly useful for debugging */
+#if 0
 static void
 rules_dump (GSList *fdi_rules)
 {
@@ -1136,105 +1221,49 @@ rules_dump (GSList *fdi_rules)
 		}
 	}
 }
-
-/* modified alphasort to count downwards */
-static int
-#ifdef __GLIBC__
-_alphasort(const void *a, const void *b)
-#else
-_alphasort(const struct dirent **a, const struct dirent **b)
 #endif
-{
-	return -alphasort (a, b);
-}
-
-/* recurse a directory tree, searching and adding fdi files */
-static int
-rules_search_and_add_fdi_files (GSList **fdi_rules, const char *dir)
-{
-	int i;
-	int num_entries;
-	struct dirent **name_list;
-
-	num_entries = scandir (dir, &name_list, 0, _alphasort);
-	if (num_entries == -1)
-		return -1;
-
-	for (i = num_entries - 1; i >= 0; i--) {
-		int len;
-		char *filename;
-		gchar *full_path;
-
-		filename = name_list[i]->d_name;
-		len = strlen (filename);
-		full_path = g_strdup_printf ("%s/%s", dir, filename);
-		if (g_file_test (full_path, (G_FILE_TEST_IS_REGULAR))) {
-			if (len >= 5 && strcmp(&filename[len - 4], ".fdi") == 0)
-				rules_add_fdi_file (fdi_rules, full_path);
-		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) && filename[0] != '.') {
-			int num_bytes;
-			char *dirname;
-
-			num_bytes = len + strlen (dir) + 1 + 1;
-			dirname = (char *) malloc (num_bytes);
-			if (dirname == NULL)
-				break;
-
-			snprintf (dirname, num_bytes, "%s/%s", dir, filename);
-			rules_search_and_add_fdi_files (fdi_rules, dirname);
-			free (dirname);
-		}
-		g_free (full_path);
-		free (name_list[i]);
-	}
-
-	for (; i >= 0; i--) {
-		free (name_list[i]);
-	}
-
-	free (name_list);
-	return 0;
-}
 
 /* setup the location of the rules */
 void
 di_rules_init (void)
 {
+	int size;
 	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
 	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
 	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
 
 	HAL_INFO (("Loading rules"));
 
+	size = 0;
+
 	if (hal_fdi_source_preprobe != NULL)
-		rules_search_and_add_fdi_files (&fdi_rules_preprobe, hal_fdi_source_preprobe);
+		rules_search_and_add_fdi_files (&fdi_rules_preprobe, hal_fdi_source_preprobe, &size);
 	else {
-		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_DATA_DIR "/hal/fdi/preprobe");
-		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe");
+		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_DATA_DIR "/hal/fdi/preprobe", &size);
+		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", &size);
 	}
 
 	if (hal_fdi_source_information != NULL)
-		rules_search_and_add_fdi_files (&fdi_rules_information, hal_fdi_source_information);
+		rules_search_and_add_fdi_files (&fdi_rules_information, hal_fdi_source_information, &size);
 	else {
-		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_DATA_DIR "/hal/fdi/information");
-		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_SYSCONF_DIR "/hal/fdi/information");
+		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_DATA_DIR "/hal/fdi/information", &size);
+		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_SYSCONF_DIR "/hal/fdi/information", &size);
 	}
 
 	if (hal_fdi_source_policy != NULL)
-		rules_search_and_add_fdi_files (&fdi_rules_policy, hal_fdi_source_policy);
+		rules_search_and_add_fdi_files (&fdi_rules_policy, hal_fdi_source_policy, &size);
 	else {
-		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_DATA_DIR "/hal/fdi/policy");
-		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_SYSCONF_DIR "/hal/fdi/policy");
+		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_DATA_DIR "/hal/fdi/policy", &size);
+		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_SYSCONF_DIR "/hal/fdi/policy", &size);
 	}
 
-	/* only dump the rules if we are being verbose as this is expensive */
-	if (getenv ("HALD_VERBOSE") != NULL) {
-		rules_dump (fdi_rules_preprobe);
-		rules_dump (fdi_rules_information);
-		rules_dump (fdi_rules_policy);
-	}
+	/* dump the rules (commented out as this is expensive) */
+	/*rules_dump (fdi_rules_preprobe);
+	  rules_dump (fdi_rules_information);
+	  rules_dump (fdi_rules_policy);
+	*/
 
-	HAL_INFO (("Loading rules done"));
+	HAL_INFO (("Loading rules done (occupying %d bytes)", size));
 }
 
 /* cleanup the rules */
