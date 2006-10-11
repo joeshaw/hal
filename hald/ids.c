@@ -527,9 +527,9 @@ ids_init (void)
  * Keep this sorted!
  */
 struct pnp_id {
-	char *id;
-   	char *desc;
-} static  pnp_ids_list[] = {
+	const char *id;
+   	const char *desc;
+} static const pnp_ids_list[] = {
 	/* Crystal Semiconductor devices */
 	{"CSC0000", "Crystal Semiconductor CS423x sound -- SB/WSS/OPL3 emulation"},
 	{"CSC0001", "Crystal Semiconductor CS423x sound -- joystick"},
@@ -948,22 +948,14 @@ ids_comp_pnp(const void *id1, const void *id2) {
 void
 ids_find_pnp (const char *pnp_id, char **pnp_description)
 {
-	static gboolean sorted = FALSE;
 	struct pnp_id search, *res;
-        
-	if (!sorted) {
-		/* sort the list, to be sure that all is in correc order */
-		qsort(pnp_ids_list, sizeof(pnp_ids_list)/sizeof(pnp_ids_list[0]), 
-		      sizeof(struct pnp_id), ids_comp_pnp);
-		sorted = TRUE;
-	}
 
         search.id = (char *) pnp_id;
         res = bsearch(&search, pnp_ids_list, sizeof(pnp_ids_list)/sizeof(pnp_ids_list[0]), 
 		      sizeof(struct pnp_id), ids_comp_pnp);
 
         if (res != NULL)
-        	*pnp_description = res->desc;
+        	*pnp_description = (char *) res->desc;
 	else
         	*pnp_description = NULL; 
         return;
