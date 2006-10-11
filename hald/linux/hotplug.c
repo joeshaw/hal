@@ -108,7 +108,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 
 		type = hal_device_property_get_int (d, "linux.hotplug_type");
 		if (type == HOTPLUG_EVENT_SYSFS_DEVICE) {
-			HAL_INFO (("%s is a class device (store)", hotplug_event->sysfs.sysfs_path));
+			HAL_INFO (("%s is a device (store)", hotplug_event->sysfs.sysfs_path));
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 		} else if (type == HOTPLUG_EVENT_SYSFS_BLOCK) {
 			HAL_INFO (("%s is a block device (store)", hotplug_event->sysfs.sysfs_path));
@@ -129,7 +129,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 				HAL_INFO (("%s is a block device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
 			} else {
-				HAL_INFO (("%s is a class device (subsystem)", hotplug_event->sysfs.sysfs_path));
+				HAL_INFO (("%s is a device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 			}
 			g_free (subsystem_target);
@@ -138,17 +138,10 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 
 	/* older kernels get the device type from the devpath */
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS) {
-		char sys_devices_path[HAL_PATH_MAX];
-		char sys_class_path[HAL_PATH_MAX];
 		char sys_block_path[HAL_PATH_MAX];
-		gsize sys_devices_path_len;
-		gsize sys_class_path_len;
 		gsize sys_block_path_len;
 
-		sys_devices_path_len = g_snprintf (sys_devices_path, HAL_PATH_MAX, "%s/devices", get_hal_sysfs_path ());
-		sys_class_path_len   = g_snprintf (sys_class_path, HAL_PATH_MAX, "%s/class", get_hal_sysfs_path ());
 		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
-
 		if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
 			HAL_INFO (("%s is a block device (devpath)", hotplug_event->sysfs.sysfs_path));
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;

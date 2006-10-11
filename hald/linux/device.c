@@ -2774,7 +2774,7 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 {
 	guint i;
 
-	HAL_INFO (("class_add: subsys=%s sysfs_path=%s dev=%s parent_dev=0x%08x", subsystem, sysfs_path, device_file, parent_dev));
+	HAL_INFO (("add_dev: subsys=%s sysfs_path=%s dev=%s parent_dev=0x%08x", subsystem, sysfs_path, device_file, parent_dev));
 
 	/* update driver property of the parent device, cause manual driver bind/unbind
 	 * may change change this without sending events for the bus device
@@ -2783,7 +2783,7 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 		hal_util_set_driver (parent_dev, "info.linux.driver", parent_path);
 
 	if (parent_dev != NULL && hal_device_property_get_bool (parent_dev, "info.ignore")) {
-		HAL_INFO (("Ignoring class_add since parent_dev has info.ignore==TRUE"));
+		HAL_INFO (("Ignoring add_dev since parent_dev has info.ignore==TRUE"));
 		hotplug_event_end (end_token);
 		goto out;
 	}
@@ -2834,7 +2834,7 @@ hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path,
 	HalDevice *d;
 
 
-	HAL_INFO (("class_rem: subsys=%s sysfs_path=%s", subsystem, sysfs_path));
+	HAL_INFO (("remove_dev: subsys=%s sysfs_path=%s", subsystem, sysfs_path));
 
 	d = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path);
 	if (d == NULL) {
