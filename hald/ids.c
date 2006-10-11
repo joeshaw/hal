@@ -31,6 +31,11 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -43,10 +48,10 @@
 static char *pci_ids = NULL;
 
 /** Length of data store at at pci_ids */
-static unsigned int pci_ids_len;
+static size_t pci_ids_len;
 
 /** Iterator position into pci_ids */
-static unsigned int pci_ids_iter_pos;
+static size_t pci_ids_iter_pos;
 
 /** Initialize the pci.ids line iterator to the beginning of the file */
 static void
@@ -258,20 +263,6 @@ ids_find_pci (int vendor_id, int product_id,
 	}
 }
 
-/** Free resources used by to store the PCI database
- *
- *  @param                      #FALSE if the PCI database wasn't loaded
- */
-static dbus_bool_t
-pci_ids_free ()
-{
-	if (pci_ids != NULL) {
-		free (pci_ids);
-		pci_ids = NULL;
-		return TRUE;
-	}
-	return FALSE;
-}
 
 /** Load the PCI database used for mapping vendor, product, subsys_vendor
  *  and subsys_product numbers into names.
@@ -283,35 +274,36 @@ pci_ids_free ()
 static dbus_bool_t
 pci_ids_load (const char *path)
 {
-	FILE *fp;
-	unsigned int num_read;
+	int fd;
+	struct stat statbuf;
+	gboolean ret;
 
-	fp = fopen (path, "r");
-	if (fp == NULL) {
-		HAL_ERROR (("couldn't open PCI database at %s,", path));
-		return FALSE;
+	ret = FALSE;
+
+	if (stat (path, &statbuf) != 0) {
+		HAL_WARNING (("Couldn't stat pci.ids file '%s', errno=%d: %s", path, errno, strerror (errno)));
+		goto out;
+	}
+	pci_ids_len = statbuf.st_size;
+
+	fd = open (path, O_RDONLY);
+	if (fd < 0) {
+		HAL_WARNING (("Couldn't open pci.ids file '%s', errno=%d: %s", path, errno, strerror (errno)));
+		goto out;
 	}
 
-	fseek (fp, 0, SEEK_END);
-	pci_ids_len = ftell (fp);
-	fseek (fp, 0, SEEK_SET);
-
-	pci_ids = malloc (pci_ids_len);
-	if (pci_ids == NULL) {
-		DIE (("Couldn't allocate %d bytes for PCI database file\n",
-		      pci_ids_len));
+	pci_ids = mmap (NULL, pci_ids_len, PROT_READ, MAP_SHARED, fd, 0);
+	if (pci_ids == MAP_FAILED) {
+		HAL_WARNING (("Couldn't mmap pci.ids file '%s', errno=%d: %s", path, errno, strerror (errno)));
+		close (fd);
+		goto out;
 	}
 
-	num_read = fread (pci_ids, sizeof (char), pci_ids_len, fp);
-	if (pci_ids_len != num_read) {
-		HAL_ERROR (("Error loading PCI database file"));
-		pci_ids_free();
-		fclose(fp);
-		return FALSE;
-	}
+	ret = TRUE;
 
-	fclose(fp);
-	return TRUE;
+	close (fd);
+out:
+	return ret;
 }
 
 /*==========================================================================*/
@@ -320,10 +312,10 @@ pci_ids_load (const char *path)
 static char *usb_ids = NULL;
 
 /** Length of data store at at usb_ids */
-static unsigned int usb_ids_len;
+static size_t usb_ids_len;
 
 /** Iterator position into usb_ids */
-static unsigned int usb_ids_iter_pos;
+static size_t usb_ids_iter_pos;
 
 /** Initialize the usb.ids line iterator to the beginning of the file */
 static void
@@ -475,21 +467,6 @@ ids_find_usb (int vendor_id, int product_id,
 	}
 }
 
-/** Free resources used by to store the USB database
- *
- *  @param                      #FALSE if the USB database wasn't loaded
- */
-static dbus_bool_t
-usb_ids_free ()
-{
-	if (usb_ids != NULL) {
-		free (usb_ids);
-		usb_ids = NULL;
-		return TRUE;
-	}
-	return FALSE;
-}
-
 /** Load the USB database used for mapping vendor, product, subsys_vendor
  *  and subsys_product numbers into names.
  *
@@ -500,38 +477,36 @@ usb_ids_free ()
 static dbus_bool_t
 usb_ids_load (const char *path)
 {
-	FILE *fp;
-	unsigned int num_read;
+	int fd;
+	struct stat statbuf;
+	gboolean ret;
 
-	fp = fopen (path, "r");
-	if (fp == NULL) {
-		printf ("couldn't open USB database at %s,", path);
-		return FALSE;
+	ret = FALSE;
+
+	if (stat (path, &statbuf) != 0) {
+		HAL_WARNING (("Couldn't stat usb.ids file '%s', errno=%d: %s", path, errno, strerror (errno)));
+		goto out;
+	}
+	usb_ids_len = statbuf.st_size;
+
+	fd = open (path, O_RDONLY);
+	if (fd < 0) {
+		HAL_WARNING (("Couldn't open usb.ids file '%s', errno=%d: %s", path, errno, strerror (errno)));
+		goto out;
 	}
 
-	fseek (fp, 0, SEEK_END);
-	usb_ids_len = ftell (fp);
-	fseek (fp, 0, SEEK_SET);
-
-	usb_ids = malloc (usb_ids_len);
-	if (usb_ids == NULL) {
-		printf
-		    ("Couldn't allocate %d bytes for USB database file\n",
-		     usb_ids_len);
-		fclose(fp);
-		return FALSE;
+	usb_ids = mmap (NULL, usb_ids_len, PROT_READ, MAP_SHARED, fd, 0);
+	if (usb_ids == MAP_FAILED) {
+		HAL_WARNING (("Couldn't mmap usb.ids file '%s', errno=%d: %s", path, errno, strerror (errno)));
+		close (fd);
+		goto out;
 	}
 
-	num_read = fread (usb_ids, sizeof (char), usb_ids_len, fp);
-	if (usb_ids_len != num_read) {
-		printf ("Error loading USB database file\n");
-		usb_ids_free ();
-		fclose(fp);
-		return FALSE;
-	}
+	ret = TRUE;
 
-	fclose(fp);
-	return TRUE;
+	close (fd);
+out:
+	return ret;
 }
 
 
