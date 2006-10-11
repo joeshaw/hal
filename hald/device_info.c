@@ -153,6 +153,7 @@ rule_type get_rule_type (const char *str)
 	return RULE_UNKNOWN;
 }
 
+/*
 static char *
 get_rule_type_str (enum rule_type type)
 {
@@ -178,6 +179,7 @@ get_rule_type_str (enum rule_type type)
 	}
 	return "invalid rule type";
 }
+*/
 
 static enum
 merge_type get_merge_type (const char *str)
@@ -201,6 +203,7 @@ merge_type get_merge_type (const char *str)
 	return MERGE_UNKNOWN;
 }
 
+/*
 static char *
 get_merge_type_str (enum merge_type type)
 {
@@ -226,6 +229,7 @@ get_merge_type_str (enum merge_type type)
 	}
 	return "invalid merge type";
 }
+*/
 
 static enum
 match_type get_match_type(const char *str)
@@ -261,6 +265,7 @@ match_type get_match_type(const char *str)
 	return MATCH_UNKNOWN;
 }
 
+/*
 static char *
 get_match_type_str (enum match_type type)
 {
@@ -298,6 +303,7 @@ get_match_type_str (enum match_type type)
 	}
 	return "invalid match type";
 }
+*/
 
 /** Resolve a udi-property path as used in .fdi files.
  *
@@ -1296,9 +1302,9 @@ rules_match_and_merge_device (GSList *fdi_rules, HalDevice *d)
 		switch (rule->rtype) {
 		case RULE_MATCH:
 			/* skip non-matching rules block */
-			HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));
+			/*HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));*/
 			if (!handle_match (rule, d)) {
-				HAL_INFO(("no match, skip to rule %s (%p)", get_rule_type_str (rule->next_rule->rtype), rule->next_rule));
+				/*HAL_INFO(("no match, skip to rule %s (%p)", get_rule_type_str (rule->next_rule->rtype), rule->next_rule));*/
 				elem = g_slist_find (elem, rule->next_rule);
 				continue;
 			}
@@ -1310,12 +1316,12 @@ rules_match_and_merge_device (GSList *fdi_rules, HalDevice *d)
 		case RULE_CLEAR:
 		case RULE_SPAWN:
 		case RULE_MERGE:
-			HAL_INFO(("%p merge '%s' at %s", rule, rule->key, hal_device_get_udi (d)));
+			/*HAL_INFO(("%p merge '%s' at %s", rule, rule->key, hal_device_get_udi (d)));*/
 			handle_merge (rule, d);
 			break;
 
 		case RULE_EOF:
-			HAL_INFO(("%p fdi file '%s' finished", rule, rule->key));
+			/*HAL_INFO(("%p fdi file '%s' finished", rule, rule->key));*/
 			break;
 
 		default:
@@ -1332,17 +1338,17 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type)
 {
 	switch (type) {
 	case DEVICE_INFO_TYPE_PREPROBE:
-		HAL_INFO(("apply fdi preprobe to device %p", d));
+		/*HAL_INFO(("apply fdi preprobe to device %p", d));*/
 		rules_match_and_merge_device (fdi_rules_preprobe, d);
 		break;
 
 	case DEVICE_INFO_TYPE_INFORMATION:
-		HAL_INFO(("apply fdi info to device %p", d));
+		/*HAL_INFO(("apply fdi info to device %p", d));*/
 		rules_match_and_merge_device (fdi_rules_information, d);
 		break;
 
 	case DEVICE_INFO_TYPE_POLICY:
-		HAL_INFO(("apply fdi policy to device %p", d));
+		/*HAL_INFO(("apply fdi policy to device %p", d));*/
 		rules_match_and_merge_device (fdi_rules_policy, d);
 		break;
 
