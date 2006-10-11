@@ -334,14 +334,15 @@ error:
 	return -1;
 }
 
-static void scan_bus(void)
+static void scan_subsystem(const char *subsys)
 {
 	char base[HAL_PATH_MAX];
 	DIR *dir;
 	struct dirent *dent;
 
 	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-	g_strlcat(base, "/bus", sizeof(base));
+	g_strlcat(base, "/", sizeof(base));
+	g_strlcat(base, subsys, sizeof(base));
 
 	dir = opendir(base);
 	if (dir != NULL) {
@@ -384,13 +385,6 @@ static void scan_block(void)
 	char base[HAL_PATH_MAX];
 	DIR *dir;
 	struct dirent *dent;
-	struct stat statbuf;
-
-	/* skip if "block" is already a "class" */
-	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-	g_strlcat(base, "/class/block", sizeof(base));
-	if (stat(base, &statbuf) == 0)
-		return;
 
 	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
 	g_strlcat(base, "/block", sizeof(base));
@@ -518,22 +512,39 @@ static int _device_order (const void *d1, const void *d2)
 gboolean
 coldplug_synthesize_events (void)
 {
+	char base[HAL_PATH_MAX];
+	struct stat statbuf;
+
 	if (hal_util_init_sysfs_to_udev_map () == FALSE) {
 		HAL_ERROR (("Unable to get sysfs to dev map"));
 		goto error;
 	}
 
-	scan_bus ();
-	device_list = g_slist_sort (device_list, _device_order);
-	queue_events ();
+	/* if we have /sys/subsystem, forget all the old stuff */
+	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
+	g_strlcat(base, "/subsystem", sizeof(base));
+	if (stat(base, &statbuf) == 0) {
+		scan_subsystem ("subsystem");
+		device_list = g_slist_sort (device_list, _device_order);
+		queue_events ();
+	} else {
+		scan_subsystem ("bus");
+		device_list = g_slist_sort (device_list, _device_order);
+		queue_events ();
 
-	scan_class ();
-	device_list = g_slist_sort (device_list, _device_order);
-	queue_events ();
+		scan_class ();
+		device_list = g_slist_sort (device_list, _device_order);
+		queue_events ();
 
-	scan_block ();
-	device_list = g_slist_sort (device_list, _device_order);
-	queue_events ();
+		/* scan /sys/block, if it isn't already a class */
+		g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
+		g_strlcat(base, "/class/block", sizeof(base));
+		if (stat(base, &statbuf) != 0) {
+			scan_block ();
+			device_list = g_slist_sort (device_list, _device_order);
+			queue_events ();
+		}
+	}
 
 	g_hash_table_destroy (sysfs_to_udev_map);
 	return TRUE;
