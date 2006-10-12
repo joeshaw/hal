@@ -75,6 +75,11 @@ Items specifically planned for 0.5.9
 Other items
 -----------
 
+ - It appears Nero is adding empty dummy sessions when leaving the disc
+   open, see https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=206669
+   Perhaps it would be useful to probe earlier sessions for file systems
+   too. Need to look into the various standards a bit more.
+
  - It would be nice if method calls could return string, bool int etc.
    Perhaps use dbus-send style, e.g. int32:<number>' or 'string:the_string'
    or 'bool:true'. Granted, this is already possible today through addons
