@@ -2924,8 +2924,10 @@ hald_exec_method_enqueue (MethodInvocation *mi)
 	GList *queue;
 
 	if (udi_to_method_queue == NULL) {
-		udi_to_method_queue = g_hash_table_new (g_str_hash,
-							g_str_equal);
+		udi_to_method_queue = g_hash_table_new_full (g_str_hash,
+							     g_str_equal,
+							     g_free,
+							     NULL);
 	}
 
 	if (g_hash_table_lookup_extended (udi_to_method_queue, mi->udi, &origkey, (gpointer) &queue)) {
