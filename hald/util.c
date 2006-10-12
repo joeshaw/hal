@@ -1075,6 +1075,8 @@ hal_util_is_mounted_by_hald (const char *mount_point)
 		g_strfreev (line_elements);
 	}
 
+	g_strfreev (lines);
+
 out:
 	if (hal_mtab != NULL)
 		fclose (hal_mtab);
