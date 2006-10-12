@@ -136,12 +136,16 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
-	// fprintf(stderr, "connected to: %s\n", dbus_bus_get_unique_name(conn));
+	/* fprintf(stderr, "connected to: %s\n", dbus_bus_get_unique_name(conn)); */
 	if (!(hal_ctx = libhal_ctx_new())) return 3;
 	if (!libhal_ctx_set_dbus_connection(hal_ctx, conn)) return 4;
 	if (!libhal_ctx_init(hal_ctx, &error)) {
-		fprintf(stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
-		LIBHAL_FREE_DBUS_ERROR (&error);
+		if (dbus_error_is_set(&error)) {
+			fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+			LIBHAL_FREE_DBUS_ERROR (&error);
+		}
+		fprintf (stderr, "Could not initialise connection to hald.\n"
+				 "Normally this means the HAL daemon (hald) is not running or not ready.\n");
 		return 5;
 	}
 
