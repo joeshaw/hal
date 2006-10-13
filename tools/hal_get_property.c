@@ -165,7 +165,7 @@ main (int argc, char *argv[])
 	if (!libhal_ctx_init (hal_ctx, &error)) {
 		if (dbus_error_is_set(&error)) {
 			fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
-			LIBHAL_FREE_DBUS_ERROR (&error);
+			dbus_error_free (&error);
 		}
 		fprintf (stderr, "Could not initialise connection to hald.\n"
 				 "Normally this means the HAL daemon (hald) is not running or not ready.\n");
