@@ -137,12 +137,7 @@ battery_refresh_poll (HalDevice *d)
 	 *
 	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=309944
 	 */
-	if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
-		/* units do not need conversion */
-		normalised_current = reporting_current;
-		normalised_lastfull = reporting_lastfull;
-		normalised_rate = reporting_rate;
-	} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
+	if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
 		/* convert mAh to mWh by multiplying by voltage.  due to the
 		 * general wonkiness of ACPI implementations, this is a lot
 		 * harder than it should have to be...
@@ -160,18 +155,20 @@ battery_refresh_poll (HalDevice *d)
 		if (design_voltage <= 0)
 			design_voltage = 1000; /* mV */
 
-		/* If the current voltage is unknown or greater than design,
-		 * then use design voltage.
+		/* If the current voltage is unknown, smaller than 50% of design voltage (fd.o #8593) 
+		 * or greater than design, then use design voltage.
 		 */
-		if (voltage <= 0 || voltage > design_voltage)
+		if (voltage < (design_voltage/2)  || voltage > design_voltage) {
+			HAL_DEBUG (("Current voltage is unknown, smaller than 50% or greater than design"));
 			voltage = design_voltage;
+		}
 
 		normalised_current = (reporting_current * voltage) / 1000;
 		normalised_lastfull = (reporting_lastfull * voltage) / 1000;
 		normalised_rate = (reporting_rate * voltage) / 1000;
 	} else {
 		/*
-		 * handle as if mWh, which is the most common case.
+		 * handle as if mWh (which don't need conversion), which is the most common case.
 		 */
 		normalised_current = reporting_current;
 		normalised_lastfull = reporting_lastfull;
@@ -517,17 +514,7 @@ battery_refresh_add (HalDevice *d, const char *path)
 	reporting_gran1 = hal_device_property_get_int (d, "battery.reporting.granularity_1");
 	reporting_gran2 = hal_device_property_get_int (d, "battery.reporting.granularity_2");
 
-	if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
-		/* do not scale */
-		hal_device_property_set_int (d, "battery.charge_level.design", reporting_design);
-		hal_device_property_set_int (d, "battery.charge_level.warning", reporting_warning);
-		hal_device_property_set_int (d, "battery.charge_level.low", reporting_low);
-		hal_device_property_set_int (d, "battery.charge_level.granularity_1", reporting_gran1);
-		hal_device_property_set_int (d, "battery.charge_level.granularity_2", reporting_gran2);
-
-		/* set unit */
-		hal_device_property_set_string (d, "battery.charge_level.unit", "mWh");
-	} else if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
+	if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
 		voltage_design = hal_device_property_get_int (d, "battery.voltage.design");
 	
 		/* If design voltage is unknown, use 1V. */
@@ -547,30 +534,26 @@ battery_refresh_add (HalDevice *d, const char *path)
 			(reporting_gran2 * voltage_design) / 1000);
 
 		/* set unit */
-		hal_device_property_set_string (d, "battery.charge_level.unit",
-			"mWh"); /* not mAh! */
+		hal_device_property_set_string (d, "battery.charge_level.unit", "mWh"); /* not mAh! */
 	} else {
 		/*
-		 * Some ACPI BIOS's do not report the unit,
-		 * so we'll assume they are mWh.
-		 * We will report the guessing with the
-		 * battery.charge_level.unit key.
+		 * Some ACPI BIOS's do not report the unit, so we'll assume they are mWh.
+		 * We will report the guessing with the battery.charge_level.unit key.
 		 */
-		hal_device_property_set_int (d,
-			"battery.charge_level.design", reporting_design);
-		hal_device_property_set_int (d,
-			"battery.charge_level.warning", reporting_warning);
-		hal_device_property_set_int (d,
-			"battery.charge_level.low", reporting_low);
-		hal_device_property_set_int (d,
-			"battery.charge_level.granularity_1", reporting_gran1);
-		hal_device_property_set_int (d,
-			"battery.charge_level.granularity_2", reporting_gran2);
+		hal_device_property_set_int (d, "battery.charge_level.design", reporting_design);
+		hal_device_property_set_int (d, "battery.charge_level.warning", reporting_warning);
+		hal_device_property_set_int (d, "battery.charge_level.low", reporting_low);
+		hal_device_property_set_int (d, "battery.charge_level.granularity_1", reporting_gran1);
+		hal_device_property_set_int (d, "battery.charge_level.granularity_2", reporting_gran2);
 
-		/* set "Unknown ACPI Unit" unit so we can debug */
-		HAL_WARNING (("Unknown ACPI Unit!"));
-		hal_device_property_set_string (d, "battery.charge_level.unit",
-			"unknown");
+		/* set unit */
+		if (reporting_unit && strcmp (reporting_unit, "mWh") == 0) {
+			hal_device_property_set_string (d, "battery.charge_level.unit", "mWh");
+		} else {
+			/* set "Unknown ACPI Unit" unit so we can debug */
+			HAL_WARNING (("Unknown ACPI Unit!"));
+			hal_device_property_set_string (d, "battery.charge_level.unit", "unknown");
+		}
 	}
 
 	/* set alarm if present */
