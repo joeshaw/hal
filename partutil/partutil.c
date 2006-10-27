@@ -491,7 +491,7 @@ static PartitionTable *
 part_table_parse_msdos (int fd, guint64 offset, guint64 size, gboolean *found_gpt)
 {
 	int n;
-	const guint8 mbr[512];
+	const guint8 mbr[512] __attribute__ ((aligned));
 	PartitionTable *p;
 
 	//HAL_INFO (("Entering MS-DOS parser"));

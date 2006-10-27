@@ -111,7 +111,7 @@ handle_start(DBusConnection *con, DBusMessage *msg)
 	DBusMessage *reply;
 	DBusMessageIter iter;
 	run_request *r;
-	GPid pid;
+	GPid pid __attribute__ ((aligned));
 
 	r = new_run_request();
 	g_assert(dbus_message_iter_init(msg, &iter));
