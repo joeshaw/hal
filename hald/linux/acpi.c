@@ -132,6 +132,17 @@ battery_refresh_poll (HalDevice *d)
 					"battery.reporting.rate");
 
 	/*
+	 * ACPI gives out the special 'Ones' value for rate when it's unable
+	 * to calculate the true rate. We should set the rate zero, and wait
+	 * for the BIOS to stabilise.
+	 *
+	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=348201
+	 */
+	if (reporting_rate == 0xffff) {
+		reporting_rate = 0;
+	}
+
+	/*
 	 * We are converting the unknown units into mWh because of ACPI's nature
 	 * of not having a standard "energy" unit.
 	 *
