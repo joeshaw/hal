@@ -71,16 +71,12 @@ EXTRA_DIST =			\
 	hald_marshal.list
 
 hald_marshal.h: hald_marshal.list
-	cd $(srcdir) \
-	&& glib-genmarshal --prefix=hald_marshal hald_marshal.list --header >> xgen-gmh \
-	&& (cmp -s xgen-gmh hald_marshal.h || cp xgen-gmh hald_marshal.h) \
-	&& rm -f xgen-gmh xgen-gmh~
+	glib-genmarshal $< --prefix=hald_marshal --header > $@
 
 hald_marshal.c: hald_marshal.list
-	cd $(srcdir) \
-	&& glib-genmarshal --prefix=hald_marshal hald_marshal.list --body >> xgen-gmc \
-	&& (cmp -s xgen-gmc hald_marshal.c || cp xgen-gmc hald_marshal.c) \
-	&& rm -f xgen-gmc xgen-gmc~
+	echo "#include \"hald_marshal.h\"" > $@ && \
+	glib-genmarshal $< --prefix=hald_marshal --body >> $@
+
 
 install-data-local:
 	-$(mkdir_p) $(HALD_SOCKET_DIR)
