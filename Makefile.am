@@ -33,6 +33,8 @@ $(srcdir)/ChangeLog:
 
 DISTCLEANFILES = hal.pc hal-storage.pc intltool-extract intltool-merge intltool-update
 
+DISTCHECK_CONFIGURE_FLAGS = --disable-policy-kit
+
 EXTRA_DIST = HACKING hal.pc.in hal-storage.pc.in hal.conf.in intltool-extract.in intltool-merge.in intltool-update.in mkinstalldirs ChangeLog
 
 clean-local :
