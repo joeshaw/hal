@@ -69,4 +69,6 @@ gboolean	write_governor		(char *new_governor,
 
 gboolean	dbus_init		(void);
 
+gboolean	dbus_init_local		(void);
+
 #endif /* ADDON_CPUFREQ_H */

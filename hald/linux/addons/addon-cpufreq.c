@@ -815,7 +815,7 @@ static gboolean dbus_is_privileged(DBusConnection *connection, DBusMessage *mess
 	gboolean		out_is_allowed;
 	gboolean		out_is_temporary;
 	LibPolKitResult		res;
-    
+
 	connection_new = dbus_bus_get(DBUS_BUS_SYSTEM, error);
 	if (dbus_error_is_set(error)) {
 		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
@@ -952,6 +952,19 @@ static gboolean dbus_get_argument(DBusConnection *connection, DBusMessage *messa
 	return TRUE;
 }
 
+static DBusHandlerResult dbus_filter_function_local(DBusConnection *connection,
+						    DBusMessage *message,
+						    void *user_data)
+{
+	if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL,
+				   "Disconnected")) {
+		HAL_DEBUG(("DBus daemon disconnected. Trying to reconnect..."));
+		dbus_connection_unref(connection);
+		g_timeout_add(5000, (GSourceFunc)dbus_init_local, NULL);
+	}
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 /** dbus filter function
  *
  * @raises UnknownMethod
@@ -1043,13 +1056,6 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 			dbus_send_reply_strlist(connection, message, governors);
 		g_strfreev(governors);
 
-	} else if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL,
-					  "Disconnected")) {
-		HAL_DEBUG(("DBus daemon disconnected. Trying to reconnect..."));
-		dbus_connection_close(connection);
-		dbus_connection_unref(connection);
-		g_timeout_add(5000, (GSourceFunc)dbus_init, NULL);
-
 	} else {
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	}
@@ -1071,6 +1077,26 @@ static gboolean is_supported(void)
 }
 
 /** returns FALSE on success because it's used as a callback */
+gboolean dbus_init_local(void)
+{
+	DBusConnection	*dbus_connection;
+	DBusError	dbus_error;
+
+	dbus_error_init(&dbus_error);
+
+	dbus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
+	if (dbus_error_is_set(&dbus_error)) {
+		HAL_WARNING(("Cannot get D-Bus connection"));
+		return TRUE;
+	}
+
+	dbus_connection_setup_with_g_main(dbus_connection, NULL);
+	dbus_connection_add_filter(dbus_connection, dbus_filter_function_local,
+				   NULL, NULL);
+	dbus_connection_set_exit_on_disconnect(dbus_connection, 0);
+	return FALSE;
+}
+
 gboolean dbus_init(void)
 {
 	DBusError	dbus_error;
@@ -1090,11 +1116,9 @@ gboolean dbus_init(void)
 		goto Error;
 	}
 
-	dbus_error_init (&dbus_error);
 	if (!libhal_device_addon_is_ready (halctx, udi, &dbus_error)) {
 		goto Error;
 	}
-
 
 	if (!libhal_device_claim_interface(halctx, udi,
 		"org.freedesktop.Hal.Device.CPUFreq", 
@@ -1137,11 +1161,11 @@ gboolean dbus_init(void)
 	dbus_connection_setup_with_g_main(dbus_connection, NULL);
 	dbus_connection_add_filter(dbus_connection, dbus_filter_function, NULL, NULL);
 	dbus_connection_set_exit_on_disconnect(dbus_connection, 0);
-	return FALSE;
+	return TRUE;
 
 Error:
 	dbus_error_free(&dbus_error);
-	return TRUE;
+	return FALSE;
 }
 /********************* DBus end *********************/
 
@@ -1179,7 +1203,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	if (dbus_init())
+	if (!dbus_init() || dbus_init_local())
 		exit(EXIT_FAILURE);
 
 	gmain = g_main_loop_new(NULL, FALSE);
