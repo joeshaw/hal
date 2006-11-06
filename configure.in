@@ -12,7 +12,7 @@ AM_INIT_AUTOMAKE(hal, 0.5.9)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
-glib_module="glib-2.0 >= 2.6.0 dbus-glib-1 >= 0.61"
+glib_module="glib-2.0 >= 2.6.0 gobject-2.0 > 2.6.0 dbus-glib-1 >= 0.61"
 dbus_module="dbus-1 >= 0.61"
 volume_id_module="libvolume_id >= 0.61"
 polkit_module="polkit >= 0.2"
@@ -316,6 +316,14 @@ case "$host" in
 	AC_SUBST(VOLUME_ID_LIBS)
 esac
 
+# OS specific libs
+case "$host" in
+*-*-solaris*)
+	HALD_OS_LIBS="-lsysevent -lnvpair -ldevinfo"
+	AC_SUBST(HALD_OS_LIBS)
+	;;
+esac
+
 # Check for BLKGETSIZE64
 AC_CHECK_TYPE(pgoff_t, ,
               [AC_DEFINE(pgoff_t, unsigned long, [Index into the pagecache])],
@@ -549,6 +557,8 @@ hald/linux/Makefile
 hald/linux/probing/Makefile
 hald/linux/addons/Makefile
 hald/solaris/Makefile
+hald/solaris/probing/Makefile
+hald/solaris/addons/Makefile
 hald/haldaemon
 hald-runner/Makefile
 libhal/Makefile

@@ -46,6 +46,50 @@ extern char **environ;
 static char **argv_buffer = NULL;
 static size_t argv_size = 0;
 
+#ifdef sun
+#include <priv.h>
+void
+drop_privileges (int keep_auxgroups)
+{
+	priv_set_t *pPrivSet = NULL;
+	priv_set_t *lPrivSet = NULL;
+
+	/*
+	 * Start with the 'basic' privilege set and then remove any
+	 * of the 'basic' privileges that will not be needed.
+	 */
+	if ((pPrivSet = priv_str_to_set("basic", ",", NULL)) == NULL) {
+		return;
+	}
+
+	/* Clear privileges we will not need from the 'basic' set */
+	(void) priv_delset(pPrivSet, PRIV_FILE_LINK_ANY);
+	(void) priv_delset(pPrivSet, PRIV_PROC_INFO);
+	(void) priv_delset(pPrivSet, PRIV_PROC_SESSION);
+
+	/* for sysevent need to be root and have this privilege */
+	(void) priv_addset(pPrivSet, PRIV_SYS_CONFIG);
+
+	/* Set the permitted privilege set. */
+	if (setppriv(PRIV_SET, PRIV_PERMITTED, pPrivSet) != 0) {
+		return;
+	}
+
+	/* Clear the limit set. */
+	if ((lPrivSet = priv_allocset()) == NULL) {
+		return;
+	}
+
+	priv_emptyset(lPrivSet);
+
+	if (setppriv(PRIV_SET, PRIV_LIMIT, lPrivSet) != 0) {
+		return;
+	}
+
+	priv_freeset(lPrivSet);
+}
+#else /* !sun */
+
 /** Drop root privileges: Set the running user id to HAL_USER and
  *  group to HAL_GROUP, and optionally retain auxiliary groups of HAL_USER.
  */
@@ -86,6 +130,7 @@ drop_privileges (int keep_auxgroups)
 		exit (-1);
 	}
 }
+#endif /* !sun */
 
 void
 hal_set_proc_title_init (int argc, char *argv[])

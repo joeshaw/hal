@@ -31,6 +31,10 @@
 #include "utils.h"
 #include "runner.h"
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 static gboolean
 parse_first_part(run_request *r, DBusMessage *msg, DBusMessageIter *iter)
 {

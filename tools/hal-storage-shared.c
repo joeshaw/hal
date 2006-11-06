@@ -103,7 +103,7 @@ mtab_next (gpointer handle, char **mount_point)
 
 	if (getmntent (handle, &mnt) == 0) {
 		if (mount_point != NULL) {
-			*mount_point = g_strdup (mnt->mnt_mountp);
+			*mount_point = g_strdup (mnt.mnt_mountp);
 		}
 		return mnt.mnt_special;
 	} else {

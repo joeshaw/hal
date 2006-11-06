@@ -1,3 +1,6 @@
+
+SUBDIRS = probing addons .
+
 INCLUDES = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -12,5 +15,6 @@ noinst_LTLIBRARIES = libhald_solaris.la
 endif
 
 libhald_solaris_la_SOURCES = \
-osspec.c 
+	devinfo.c devinfo_ieee1394.c devinfo_misc.c devinfo_pci.c devinfo_storage.c devinfo_usb.c \
+	hotplug.c osspec.c sysevent.c
 

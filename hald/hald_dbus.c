@@ -3941,10 +3941,10 @@ local_server_message_handler (DBusConnection *connection,
 			      void *user_data)
 {
 	HAL_INFO (("local_server_message_handler: destination=%s obj_path=%s interface=%s method=%s", 
-		   dbus_message_get_destination (message), 
-		   dbus_message_get_path (message), 
-		   dbus_message_get_interface (message),
-		   dbus_message_get_member (message)));
+		   dbus_message_get_destination (message) ? dbus_message_get_destination (message) : "",
+		   dbus_message_get_path (message) ?  dbus_message_get_path (message) : "" , 
+		   dbus_message_get_interface (message) ? dbus_message_get_interface (message) : "",
+		   dbus_message_get_member (message) ? dbus_message_get_member (message) : ""));
 
 	if (dbus_message_is_method_call (message, "org.freedesktop.DBus", "AddMatch")) {
 		DBusMessage *reply;

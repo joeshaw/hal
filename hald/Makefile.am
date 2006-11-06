@@ -51,7 +51,7 @@ hald_SOURCES =                                                          \
 	osspec.h							\
 	ids.h				ids.c			
 
-hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in
