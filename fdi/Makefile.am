@@ -1,5 +1,5 @@
 
-SUBDIRS = information policy preprobe
+SUBDIRS = policy preprobe
 
 EXTRA_DIST = fdi.dtd fdi.rng
 
