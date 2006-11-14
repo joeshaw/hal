@@ -678,6 +678,24 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 				} else
 					hal_device_property_set_string (d, "info.product", "ALSA Device");
 			}
+		} else if (sscanf (device, "hwC%dD%d", &cardnum, &devicenum) == 2) {
+			
+			hal_device_property_set_string (d, "info.category", "alsa");
+			hal_device_add_capability (d, "alsa");
+			hal_device_property_set_string (d, "alsa.device_file", device_file);
+			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
+			hal_device_property_set_int (d, "alsa.card", cardnum);
+			hal_device_property_set_int (d, "alsa.device", devicenum);
+	
+			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
+			hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+
+			hal_device_property_set_string (d, "alsa.type", "hw_specific");
+			
+			snprintf (buf, sizeof (buf), "%s ALSA hardware specific Device", hal_device_property_get_string (d, "alsa.card_id"));
+			hal_device_property_set_string (d, "info.product", buf);
+	
 		} else if (!strncmp (device, "dsp", 3) || !strncmp (device, "adsp", 4) || 
 			   !strncmp (device, "midi", 4) || !strncmp (device, "amidi", 5) ||
 			   !strncmp (device, "audio", 5) || !strncmp (device, "mixer", 5)) {

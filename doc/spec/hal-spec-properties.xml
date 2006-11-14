@@ -4137,7 +4137,7 @@
                 <literal>alsa.device_pcm_class</literal> (string)
               </entry>
               <entry></entry>
-              <entry>Yes</entry>
+              <entry>No</entry>
               <entry>
                 The PCM class of the device.
               </entry>
@@ -4240,6 +4240,28 @@
               <entry></entry>
               <entry>
                 Stream is playback device.
+              </entry>
+            </row>
+	    <row>
+              <entry></entry>
+              <entry>
+                <literal>unknown</literal>
+              </entry>
+              <entry></entry>
+              <entry>
+                The type of the device is unknown.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>
+                <literal>hw_specific</literal>
+              </entry>
+              <entry></entry>
+              <entry>
+                This is a hardware specific device (as e.g. from snd_fm801 for Fortemedia FM801 
+		PCI Audio). The driver can use it freely for purposes that are not covered by 
+		standard ALSA API. 
               </entry>
             </row>
             <row>
