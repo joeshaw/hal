@@ -158,6 +158,38 @@
               </entry>
               <entry>The base D-BUS service of the process holding the lock.</entry>
             </row>
+            <row>
+              <entry>
+                <literal>info.is_recalled</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                This is set if the hardware may be recalled and should
+                be checked for any potential problem.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.recall.vendor</literal> (string)
+              </entry>
+              <entry>Dell, Sony, HP, Panasonic, etc.</entry>
+              <entry>Yes, if <literal>info.is_recalled</literal> is TRUE</entry>
+              <entry>
+                The vendor responsible for the hardware recall.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.recall.website_url</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes, if <literal>info.is_recalled</literal> is TRUE</entry>
+              <entry>
+                Users should check this website for more details and if their
+                hardware may affected by any possible fault.
+              </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
