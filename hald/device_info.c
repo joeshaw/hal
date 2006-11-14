@@ -806,16 +806,16 @@ handle_merge (struct rule *rule, HalDevice *d)
 						   prop_to_merge, sizeof (prop_to_merge))) {
 				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", value, hal_device_get_udi (d)));
 			} else {
-				HalDevice *d;
+				HalDevice *copyfrom;
 
-				d = hal_device_store_find (hald_get_gdl (), udi_to_merge_from);
-				if (d == NULL) {
-					d = hal_device_store_find (hald_get_tdl (), udi_to_merge_from);
+				copyfrom = hal_device_store_find (hald_get_gdl (), udi_to_merge_from);
+				if (copyfrom == NULL) {
+					copyfrom = hal_device_store_find (hald_get_tdl (), udi_to_merge_from);
 				}
-				if (d == NULL) {
+				if (copyfrom == NULL) {
 					HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge_from));
 				} else {
-					hal_device_copy_property (d, prop_to_merge, d, key);
+					hal_device_copy_property (copyfrom, prop_to_merge, d, key);
 				}
 			}
 
