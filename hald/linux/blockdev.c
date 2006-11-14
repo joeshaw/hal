@@ -832,7 +832,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 			/* Find device */
 			d_it = hal_device_store_find (hald_get_gdl (), udi_it);
-			g_assert (d_it != NULL);
+			if (d_it == NULL) { 
+				d_it = hal_device_store_find (hald_get_tdl (), udi_it);
+				if (d_it == NULL) {
+					HAL_WARNING (("Could not get device '%s' from gdl or tdl.", udi_it));
+					goto error;
+				}
+			}
 
 			/* Check info.bus */
 			if ((bus = hal_device_property_get_string (d_it, "info.bus")) != NULL) {
