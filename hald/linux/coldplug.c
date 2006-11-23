@@ -3,7 +3,7 @@
  * Synthesize device events when starting up
  *
  * Copyright (C) 2004 David Zeuthen, <david@fubar.dk>
- * Copyright (C) 2005-2006 Kay Sievers <kay.sievers@novell.com>
+ * Copyright (C) 2005-2006 Kay Sievers <kay.sievers@vrfy.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
