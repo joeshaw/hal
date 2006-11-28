@@ -172,7 +172,7 @@ logger_emit (const char *format, ...)
 	}
 
 	gettimeofday (&tnow, &tzone);
-	tlocaltime = localtime (&tnow.tv_sec);
+	tlocaltime = localtime ((time_t *) &tnow.tv_sec);
 	strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
 
 	if (log_pid) {
@@ -228,7 +228,7 @@ logger_forward_debug (const char *format, ...)
         vsnprintf (buf, sizeof (buf), format, args);
 
         gettimeofday (&tnow, &tzone);
-        tlocaltime = localtime (&tnow.tv_sec);
+        tlocaltime = localtime ((time_t *) &tnow.tv_sec);
         strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
 
         if (syslog_enabled)
