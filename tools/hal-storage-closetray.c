@@ -68,11 +68,6 @@ invalid_closetray_option (const char *option, const char *uid)
 	exit (1);
 }
 
-#ifdef __FreeBSD__
-#error Need FreeBSD specific changes here
-#endif
-
-
 int
 main (int argc, char *argv[])
 {
