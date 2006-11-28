@@ -193,7 +193,7 @@ hal_property_set_string (HalProperty *prop, const char *value)
 	prop->type = HAL_PROPERTY_TYPE_STRING;
 	if (prop->v.str_value != NULL)
 		g_free (prop->v.str_value);
-	prop->v.str_value = g_strdup (value);
+	prop->v.str_value = g_strdup (value != NULL ? value : "");
 
 	while (!g_utf8_validate (prop->v.str_value, -1,
 				 (const char **) &endchar)) {
@@ -548,8 +548,16 @@ merge_device_rewrite_cb (HalDevice *source,
 		hal_device_property_set_double (ud->target, target_key, hal_property_get_double (p));
 		break;
 
-	/* TODO: handle strlist */
-		
+	case HAL_PROPERTY_TYPE_STRLIST:
+		{
+			GSList *l;
+
+			hal_device_property_strlist_clear (ud->target, target_key);
+			for (l = hal_property_get_strlist (p); l != NULL; l = l->next)
+				hal_device_property_strlist_append (ud->target, target_key, l->data);
+		}
+		break;
+
 	default:
 		HAL_WARNING (("Unknown property type %d", type));
 		break;
@@ -978,8 +986,7 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 			return FALSE;
 
 		/* don't bother setting the same value */
-		if (value != NULL &&
-		    strcmp (hal_property_get_string (prop), value) == 0)
+		if (strcmp (hal_property_get_string (prop), value != NULL ? value : "") == 0)
 			return TRUE;
 
 		hal_property_set_string (prop, value);
