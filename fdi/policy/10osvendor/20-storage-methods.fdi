@@ -49,23 +49,28 @@
         <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
 
         <!-- allow these mount options for all file systems -->
-        <append key="volume.mount.valid_options" type="strlist">ro</append>
-        <append key="volume.mount.valid_options" type="strlist">sync</append>
-        <append key="volume.mount.valid_options" type="strlist">dirsync</append>
-        <append key="volume.mount.valid_options" type="strlist">noatime</append>
-        <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
-        <append key="volume.mount.valid_options" type="strlist">noexec</append>
-        <append key="volume.mount.valid_options" type="strlist">quiet</append>
-        <append key="volume.mount.valid_options" type="strlist">remount</append>
-	<append key="volume.mount.valid_options" type="strlist">exec</append>
-        <!-- As this is removable media give some leeway -->
-	<append key="volume.mount.valid_options" type="strlist">utf8</append>
-	<append key="volume.mount.valid_options" type="strlist">shortname=</append>
-	<append key="volume.mount.valid_options" type="strlist">codepage=</append>
-	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
-	<append key="volume.mount.valid_options" type="strlist">umask=</append>
-	<append key="volume.mount.valid_options" type="strlist">uid=</append>
-
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+          <append key="volume.mount.valid_options" type="strlist">ro</append>
+          <append key="volume.mount.valid_options" type="strlist">sync</append>
+          <append key="volume.mount.valid_options" type="strlist">dirsync</append>
+          <append key="volume.mount.valid_options" type="strlist">noatime</append>
+          <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
+          <append key="volume.mount.valid_options" type="strlist">noexec</append>
+          <append key="volume.mount.valid_options" type="strlist">quiet</append>
+          <append key="volume.mount.valid_options" type="strlist">remount</append>
+	  <append key="volume.mount.valid_options" type="strlist">exec</append>
+          <!-- As this is removable media give some leeway -->
+	  <append key="volume.mount.valid_options" type="strlist">utf8</append>
+	  <append key="volume.mount.valid_options" type="strlist">shortname=</append>
+	  <append key="volume.mount.valid_options" type="strlist">codepage=</append>
+	  <append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+	  <append key="volume.mount.valid_options" type="strlist">umask=</append>
+	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
+	</match>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
+	  <append key="volume.mount.valid_options" type="strlist">ro</append>
+	  <append key="volume.mount.valid_options" type="strlist">noexec</append>
+	</match>
       </match>
     </match>
 
@@ -123,26 +128,40 @@
       <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
 
       <!-- allow these mount options for all file systems -->
-      <append key="volume.mount.valid_options" type="strlist">ro</append>
-      <append key="volume.mount.valid_options" type="strlist">sync</append>
-      <append key="volume.mount.valid_options" type="strlist">dirsync</append>
-      <append key="volume.mount.valid_options" type="strlist">noatime</append>
-      <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
-      <append key="volume.mount.valid_options" type="strlist">noexec</append>
-      <append key="volume.mount.valid_options" type="strlist">quiet</append>
-      <append key="volume.mount.valid_options" type="strlist">remount</append>
-      <append key="volume.mount.valid_options" type="strlist">exec</append>
+      <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+        <append key="volume.mount.valid_options" type="strlist">ro</append>
+        <append key="volume.mount.valid_options" type="strlist">sync</append>
+        <append key="volume.mount.valid_options" type="strlist">dirsync</append>
+        <append key="volume.mount.valid_options" type="strlist">noatime</append>
+        <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
+        <append key="volume.mount.valid_options" type="strlist">noexec</append>
+        <append key="volume.mount.valid_options" type="strlist">quiet</append>
+        <append key="volume.mount.valid_options" type="strlist">remount</append>
+        <append key="volume.mount.valid_options" type="strlist">exec</append>
+      </match>
+      <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
+        <append key="volume.mount.valid_options" type="strlist">ro</append>
+	<append key="volume.mount.valid_options" type="strlist">noexec</append>
+      </match>
 
       <!-- allow these mount options for vfat -->
       <match key="volume.fstype" string="vfat">
-	<append key="volume.mount.valid_options" type="strlist">utf8</append>
-	<append key="volume.mount.valid_options" type="strlist">shortname=</append>
-	<append key="volume.mount.valid_options" type="strlist">codepage=</append>
-	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
-	<append key="volume.mount.valid_options" type="strlist">umask=</append>
-	<append key="volume.mount.valid_options" type="strlist">dmask=</append>
-	<append key="volume.mount.valid_options" type="strlist">fmask=</append>
-	<append key="volume.mount.valid_options" type="strlist">uid=</append>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+	  <append key="volume.mount.valid_options" type="strlist">utf8</append>
+	  <append key="volume.mount.valid_options" type="strlist">shortname=</append>
+	  <append key="volume.mount.valid_options" type="strlist">codepage=</append>
+	  <append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+	  <append key="volume.mount.valid_options" type="strlist">umask=</append>
+	  <append key="volume.mount.valid_options" type="strlist">dmask=</append>
+	  <append key="volume.mount.valid_options" type="strlist">fmask=</append>
+	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
+	</match>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
+	  <append key="volume.mount.valid_options" type="strlist">longnames</append>
+	  <append key="volume.mount.valid_options" type="strlist">shortnames</append>
+	  <append key="volume.mount.valid_options" type="strlist">nowin95</append>
+	  <append key"volume.mount.valid_options" type="strlist">-u=</append>
+	</match>
       </match>
 
 
@@ -160,9 +179,16 @@
 
       <!-- allow these mount options for ntfs -->
       <match key="volume.fstype" string="ntfs">
-	<append key="volume.mount.valid_options" type="strlist">uid=</append>
-	<append key="volume.mount.valid_options" type="strlist">gid=</append>
-	<append key="volume.mount.valid_options" type="strlist">umask=</append>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
+	  <append key="volume.mount.valid_options" type="strlist">gid=</append>
+	  <append key="volume.mount.valid_options" type="strlist">umask=</append>
+	</match>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
+	  <append key="volume.mount.valid_options" type="strlist">-u=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-g=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-m=</append>
+	</match>
       </match>
 
       <!-- allow these mount options for ext3 -->
@@ -172,20 +198,33 @@
 
       <!-- udf -->
       <match key="volume.fstype" string="udf">
-	<append key="volume.mount.valid_options" type="strlist">uid=</append>
-	<append key="volume.mount.valid_options" type="strlist">umask=</append>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
+	  <append key="volume.mount.valid_options" type="strlist">umask=</append>
+	</match>
       </match>
 
       <!-- iso9660 -->
       <match key="volume.fstype" string="iso9660">
-	<append key="volume.mount.valid_options" type="strlist">utf8</append>
-	<append key="volume.mount.valid_options" type="strlist">uid=</append>
-	<append key="volume.mount.valid_options" type="strlist">mode=</append>
-	<append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+	  <append key="volume.mount.valid_options" type="strlist">utf8</append>
+	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
+	  <append key="volume.mount.valid_options" type="strlist">mode=</append>
+	  <append key="volume.mount.valid_options" type="strlist">iocharset=</append>
+	</match>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
+	  <append key="volume.mount.valid_options" type="strlist">extatt</append>
+	  <append key="volume.mount.valid_options" type="strlist">gens</append>
+	  <append key="volume.mount.valid_options" type="strlist">nojoliet</append>
+	  <append key="volume.mount.valid_options" type="strlist">norrip</append>
+	  <append key="volume.mount.valid_options" type="strlist">nostrictjoliet</append>
+	</match>
       </match>
 
       <!-- allow these unmount options -->
-      <append key="volume.unmount.valid_options" type="strlist">lazy</append>
+      <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+        <append key="volume.unmount.valid_options" type="strlist">lazy</append>
+      </match>
 
     </match>
 
