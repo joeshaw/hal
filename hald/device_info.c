@@ -94,6 +94,10 @@ match_type {
 	MATCH_IS_ABS_PATH,
 	MATCH_CONTAINS,
 	MATCH_CONTAINS_NCASE,
+	MATCH_PREFIX,
+	MATCH_PREFIX_NCASE,
+	MATCH_SUFFIX,
+	MATCH_SUFFIX_NCASE,
 	MATCH_COMPARE_LT,
 	MATCH_COMPARE_LE,
 	MATCH_COMPARE_GT,
@@ -254,6 +258,14 @@ match_type get_match_type(const char *str)
 		return MATCH_CONTAINS;
 	if (strcmp (str, "contains_ncase") == 0)
 		return MATCH_CONTAINS_NCASE;
+	if (strcmp (str, "prefix") == 0)
+		return MATCH_PREFIX;
+	if (strcmp (str, "prefix_ncase") == 0)
+		return MATCH_PREFIX_NCASE;
+	if (strcmp (str, "suffix") == 0)
+		return MATCH_SUFFIX;
+	if (strcmp (str, "suffix_ncase") == 0)
+		return MATCH_SUFFIX_NCASE;
 	if (strcmp (str, "compare_lt") == 0)
 		return MATCH_COMPARE_LT;
 	if (strcmp (str, "compare_le") == 0)
@@ -290,6 +302,14 @@ get_match_type_str (enum match_type type)
 		return "contains";
 	case MATCH_CONTAINS_NCASE:
 		return "contains_ncase";
+	case MATCH_PREFIX:
+		return "prefix";
+	case MATCH_PREFIX_NCASE:
+		return "prefix_ncase";
+	case MATCH_SUFFIX:
+		return "suffix";
+	case MATCH_SUFFIX_NCASE:
+		return "suffix_ncase";
 	case MATCH_COMPARE_LT:
 		return "compare_lt";
 	case MATCH_COMPARE_LE:
@@ -694,9 +714,96 @@ handle_match (struct rule *rule, HalDevice *d)
 					break;
 				}
 			}
-		} else
+		} else {
 			return FALSE;
+		}
 		return contains_ncase;
+	}
+
+	case MATCH_PREFIX:
+	{
+		dbus_bool_t prefix = FALSE;
+
+		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+			if (hal_device_has_property (d, prop_to_check)) {
+				const char *haystack;
+				haystack = hal_device_property_get_string (d, prop_to_check);
+				if (value != NULL && haystack != NULL &&
+				    g_str_has_prefix (haystack, value)) {
+					prefix = TRUE;
+				}
+			}
+		} else {
+			return FALSE;
+		}
+
+		return prefix;
+	}
+
+	case MATCH_PREFIX_NCASE:
+	{
+		dbus_bool_t prefix_ncase = FALSE;
+
+		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+			if (hal_device_has_property (d, prop_to_check)) {
+				char *value_lowercase;
+				char *haystack_lowercase;
+				value_lowercase   = g_utf8_strdown (value, -1);
+				haystack_lowercase = g_utf8_strdown (hal_device_property_get_string (d, prop_to_check), -1);
+				if (value_lowercase != NULL && haystack_lowercase != NULL &&
+				    g_str_has_prefix (haystack_lowercase, value_lowercase)) {
+					prefix_ncase = TRUE;
+				}
+				g_free (value_lowercase);
+				g_free (haystack_lowercase);
+			}
+		} else {
+			return FALSE;
+		}
+		return prefix_ncase;
+	}
+
+	case MATCH_SUFFIX:
+	{
+		dbus_bool_t suffix = FALSE;
+
+		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+			if (hal_device_has_property (d, prop_to_check)) {
+				const char *haystack;
+				haystack = hal_device_property_get_string (d, prop_to_check);
+				if (value != NULL && haystack != NULL &&
+				    g_str_has_suffix (haystack, value)) {
+					suffix = TRUE;
+				}
+			}
+		} else {
+			return FALSE;
+		}
+
+		return suffix;
+	}
+
+	case MATCH_SUFFIX_NCASE:
+	{
+		dbus_bool_t suffix_ncase = FALSE;
+
+		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+			if (hal_device_has_property (d, prop_to_check)) {
+				char *value_lowercase;
+				char *haystack_lowercase;
+				value_lowercase   = g_utf8_strdown (value, -1);
+				haystack_lowercase = g_utf8_strdown (hal_device_property_get_string (d, prop_to_check), -1);
+				if (value_lowercase != NULL && haystack_lowercase != NULL &&
+				    g_str_has_suffix (haystack_lowercase, value_lowercase)) {
+					suffix_ncase = TRUE;
+				}
+				g_free (value_lowercase);
+				g_free (haystack_lowercase);
+			}
+		} else {
+			return FALSE;
+		}
+		return suffix_ncase;
 	}
 
 	case MATCH_COMPARE_LT:
