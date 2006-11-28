@@ -578,6 +578,9 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
+	/* initialize privileged operating system specific parts */
+	osspec_privileged_init ();
+
 	drop_privileges(0);
 
 	/* initialize operating system specific parts */
