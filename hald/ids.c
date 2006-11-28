@@ -509,15 +509,25 @@ out:
 	return ret;
 }
 
+void
+pci_ids_init (void)
+{
+	/* Load /usr/share/hwdata/pci.ids */
+	pci_ids_load (HWDATA_DIR "/pci.ids");
+}
+
+void
+usb_ids_init (void)
+{
+	/* Load /usr/share/hwdata/usb.ids */
+	usb_ids_load (HWDATA_DIR "/usb.ids");
+}
 
 void 
 ids_init (void)
 {
-	/* Load /usr/share/hwdata/pci.ids */
-	pci_ids_load (HWDATA_DIR "/pci.ids");
-
-	/* Load /usr/share/hwdata/usb.ids */
-	usb_ids_load (HWDATA_DIR "/usb.ids");
+	pci_ids_init ();
+	usb_ids_init ();
 }
 
 /* This, somewhat incomplete, list is from this sources:
