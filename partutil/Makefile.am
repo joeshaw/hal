@@ -1,4 +1,4 @@
-if !HALD_COMPILE_SOLARIS
+if !HALD_COMPILE_SOLARIS && !HALD_COMPILE_FREEBSD
 
 INCLUDES = @GLIB_CFLAGS@
 
@@ -10,5 +10,4 @@ libpartutil_la_LIBADD = @GLIB_LIBS@ @PARTED_LIBS@
 
 clean-local :
 	rm -f *~
-
 endif
