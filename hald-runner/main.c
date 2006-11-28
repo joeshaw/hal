@@ -52,7 +52,11 @@ parse_first_part(run_request *r, DBusMessage *msg, DBusMessageIter *iter)
 		goto malformed;
 	dbus_message_iter_recurse(iter, &sub_iter);
 	/* Add default path for the programs we start */
+#if defined(__FreeBSD__)
+	tmpstr = g_strdup_printf("PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/sbin:/usr/X11R6/sbin:/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin:%s", getenv("PATH"));
+#else
 	tmpstr = g_strdup_printf("PATH=/sbin:/usr/sbin:/bin:/usr/bin:%s", getenv("PATH"));
+#endif
 	r->environment = get_string_array(&sub_iter, tmpstr);
 
 	/* Then argv */
