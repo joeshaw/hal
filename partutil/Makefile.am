@@ -1,4 +1,8 @@
-if !HALD_COMPILE_SOLARIS && !HALD_COMPILE_FREEBSD
+if HALD_COMPILE_SOLARIS 
+# do nothing
+else if HALD_COMPILE_FREEBSD
+# do nothing
+else 
 
 INCLUDES = @GLIB_CFLAGS@
 
