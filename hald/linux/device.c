@@ -200,7 +200,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		snprintf (wiphy_path, HAL_PATH_MAX, "%s/wiphy", sysfs_path);
 
                 if ((stat (wireless_path, &s) == 0 && (s.st_mode & S_IFDIR)) ||
-		    (stat (wiphy_path, &s) == 0) && (s.st_mode & S_IFDIR)) { 
+		    (stat (wiphy_path, &s) == 0 && (s.st_mode & S_IFDIR))) { 
 			hal_device_property_set_string (d, "info.product", "WLAN Interface");
 			hal_device_property_set_string (d, "info.category", "net.80211");
 			hal_device_add_capability (d, "net.80211");
