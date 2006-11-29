@@ -160,7 +160,7 @@
 	  <append key="volume.mount.valid_options" type="strlist">longnames</append>
 	  <append key="volume.mount.valid_options" type="strlist">shortnames</append>
 	  <append key="volume.mount.valid_options" type="strlist">nowin95</append>
-	  <append key"volume.mount.valid_options" type="strlist">-u=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-u=</append>
 	</match>
       </match>
 
