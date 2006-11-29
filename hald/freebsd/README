@@ -1,0 +1,28 @@
+===============================================================================
+ Hardware Abstraction Layer
+ FreeBSD notes
+
+ Jean-Yves Lefort <jylefort@FreeBSD.org>
+ September 11, 2006
+===============================================================================
+
+1. Handling of atapicam devices
+
+By default, when an ATAPI device is available through both ata(4) and
+atapicam(4), the HAL daemon will use the ata interface and mark the
+virtual SCSI device as ignored (info.ignore=true).
+
+If you want the HAL daemon to use the atapicam interface for a
+particular device, add a fdi rule for ignoring the ata device (create
+/usr/local/share/hal/fdi/preprobe/20thirdparty/10-atapi-device.fdi
+with the following contents).
+
+  <?xml version="1.0" encoding="UTF-8"?>
+  <deviceinfo version="0.2">
+    <device>
+      <!-- ignore /dev/acd0; we want hald to use the atapicam interface -->
+      <match key="block.device" string="/dev/acd0">
+        <merge key="info.ignore" type="bool">true</merge>
+      </match>
+    </device>
+  </deviceinfo>
