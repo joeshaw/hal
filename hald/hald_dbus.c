@@ -2898,6 +2898,10 @@ device_is_executing_method (HalDevice *d, const char *interface_name, const char
 
 	ret = FALSE;
 
+	if (udi_to_method_queue == NULL) {
+		goto out;
+	}
+
 	if (g_hash_table_lookup_extended (udi_to_method_queue, hal_device_get_udi (d), &origkey, (gpointer) &queue)) {
 
 		if (queue != NULL) {
@@ -2911,6 +2915,7 @@ device_is_executing_method (HalDevice *d, const char *interface_name, const char
 
 		ret = TRUE;
 	}
+out:
 	return ret;
 }
 
