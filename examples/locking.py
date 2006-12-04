@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Simple program to test locking; will acquire a lock on the hal device
 # object representing the computer.

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """This is the main executable for DeviceManager. GTK+/Glade code is based
 on simplepy from Shannon -jj Behrens <jjinux@yahoo.com>"""

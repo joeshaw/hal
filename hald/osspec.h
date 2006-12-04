@@ -32,6 +32,9 @@
 
 #include "device.h"
 
+/** Initialize the kernel specific parts of the daemon, as root */
+void osspec_privileged_init (void);
+
 /** Initialize the kernel specific parts of the daemon */
 void osspec_init (void);
 

@@ -93,11 +93,14 @@ mtab_next (gpointer handle, char **mount_point)
 #ifdef __FreeBSD__
 	struct mtab_handle *mtab = handle;
 
-	if (mtab->iter < mtab->n_mounts)
+	if (mtab->iter < mtab->n_mounts) {
+		if (mount_point != NULL) {
+			*mount_point = g_strdup (mtab->mounts[mtab->iter].f_mntonname);
+		}
 		return mtab->mounts[mtab->iter++].f_mntfromname;
-	else
+	} else {
 		return NULL;
-#error TODO: set *mount_point to g_strdup()-ed value if mount_point!=NULL
+	}
 #elif sun
 	static struct mnttab mnt;
 

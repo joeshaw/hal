@@ -260,6 +260,11 @@ mount_tree_changed_event (GIOChannel *channel, GIOCondition cond,
 }
 
 void
+osspec_privileged_init (void)
+{
+}
+
+void
 osspec_init (void)
 {
 	gchar path[HAL_PATH_MAX];

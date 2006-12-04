@@ -213,6 +213,7 @@ usage ()
 		 "\n"
 		 "        --daemon=yes|no       Become a daemon\n"
 		 "        --verbose=yes|no      Print out debug (overrides HALD_VERBOSE)\n"
+		 "        --retain-privileges   Retain privileges (for debugging)\n"
  		 "        --use-syslog          Print out debug messages to syslog instead of\n"
 		 "                              stderr. Use this option to get debug messages\n"
 		 "                              if hald runs as a daemon.\n"
@@ -231,6 +232,9 @@ usage ()
 
 /** If #TRUE, we will daemonize */
 static dbus_bool_t opt_become_daemon = TRUE;
+
+/** If #TRUE, we will retain privs */
+static dbus_bool_t opt_retain_privileges = FALSE;
 
 /** If #TRUE, we will spew out debug */
 dbus_bool_t hald_is_verbose = FALSE;
@@ -408,6 +412,7 @@ main (int argc, char *argv[])
 			{"exit-after-probing", 0, NULL, 0},
 			{"daemon", 1, NULL, 0},
 			{"verbose", 1, NULL, 0},
+			{"retain-privileges", 0, NULL, 0},
 			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
@@ -449,6 +454,8 @@ main (int argc, char *argv[])
 					usage ();
 					return 1;
 				}
+			} else if (strcmp (opt, "retain-privileges") == 0) {
+                                opt_retain_privileges = TRUE;
 			} else if (strcmp (opt, "use-syslog") == 0) {
                                 hald_use_syslog = TRUE;
 			}
@@ -578,7 +585,14 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-	drop_privileges(0);
+	/* initialize privileged operating system specific parts */
+	osspec_privileged_init ();
+
+	/* sometimes we don't want to drop root privs, for instance
+	   if we are profiling memory usage */
+	if (opt_retain_privileges == FALSE) {
+		drop_privileges(0);
+	}
 
 	/* initialize operating system specific parts */
 	osspec_init ();

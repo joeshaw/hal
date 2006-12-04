@@ -1,6 +1,11 @@
 #!/bin/sh
 
-export HALD_RUNNER_PATH=`pwd`/linux:`pwd`/linux/probing:`pwd`/linux/addons:`pwd`/.:`pwd`/../tools:`pwd`/../tools/linux
+case `uname -s` in
+    FreeBSD)	backend=freebsd ;;
+    SunOS)	backend=solaris ;;
+    *)		backend=linux ;;
+esac
+export HALD_RUNNER_PATH=`pwd`/$backend:`pwd`/$backend/probing:`pwd`/$backend/addons:`pwd`/.:`pwd`/../tools:`pwd`/../tools/$backend
 export PATH=`pwd`/../hald-runner:$PATH
 
 if [ "$1" = "--skip-fdi-install" ] ; then

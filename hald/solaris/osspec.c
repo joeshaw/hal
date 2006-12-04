@@ -50,6 +50,11 @@ osspec_init (void)
 }
 
 void
+osspec_privileged_init (void)
+{
+}
+
+void
 hotplug_queue_now_empty (void)
 {
         if (hald_is_initialising) {

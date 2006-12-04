@@ -794,7 +794,7 @@ handle_mount (LibHalContext *hal_ctx,
 			printf ("Cannot chown '%s' to uid: %d, gid: %d\n", mount_dir,
 				calling_uid, calling_gid);
 			g_rmdir (mount_dir);
-			unknown_error ();
+			unknown_error ("Failed to chown mount directory");
 		}
 #endif
 	}

@@ -28,6 +28,10 @@
 
 #include <glib.h>
 
+void pci_ids_init (void);
+
+void usb_ids_init (void);
+
 void ids_init (void);
 
 void

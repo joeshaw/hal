@@ -1,0 +1,3 @@
+- Fix volume_id so that it always reads a multiple of the sector
+  size. This is a restriction of raw disk devices on FreeBSD; currently
+  some volume_id probers will fail because of that.
