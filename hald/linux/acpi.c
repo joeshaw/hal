@@ -743,6 +743,10 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 	char *type = NULL;
 	char *desc = NULL;
 	int br_levels = -1;
+	
+	if ((hal_device_store_find (hald_get_gdl (),
+				    "/org/freedesktop/Hal/devices/computer_backlight")) != NULL)
+		return FALSE;
 
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)

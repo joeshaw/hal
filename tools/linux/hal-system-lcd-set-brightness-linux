@@ -7,6 +7,12 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+# we have /sys/class/backlight
+if [ -w "$HAL_PROP_LINUX_SYSFS_PATH/brightness" ]; then
+	echo "$value" > $HAL_PROP_LINUX_SYSFS_PATH/brightness
+	exit 0
+fi
+
 if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "pmu" ]; then
 	hal-system-power-pmu setlcd $value
 	if [ $? -ne 0 ]; then
