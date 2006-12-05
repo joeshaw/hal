@@ -52,7 +52,7 @@
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-set-power-save</append>
 
       <!-- Consider that we're not saving power at startup -->
-      <append key="power_management.is_powersave_set" type="boolean">false</append>
+      <merge key="power_management.is_powersave_set" type="bool">false</merge>
     </match>
   </device>
       
