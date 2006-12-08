@@ -335,9 +335,6 @@ computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
 	hal_device_store_add (hald_get_gdl (), d);
-
-	/* start processing events */
-	hotplug_event_process_queue ();
 }
 
 void
@@ -579,6 +576,8 @@ osspec_probe (void)
 
 	should_decode_dmi = FALSE;
 
+	hald_runner_set_method_run_notify (hotplug_event_process_queue,
+					   NULL);
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.bus", "unknown");
 	hal_device_property_set_string (root, "info.product", "Computer");

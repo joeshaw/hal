@@ -54,6 +54,8 @@ typedef struct {
 #define DBUS_SERVER_ADDRESS "unix:tmpdir=" HALD_SOCKET_DIR
 
 static DBusConnection *runner_connection = NULL;
+static HaldRunnerRunNotify method_run_notify = NULL;
+static gpointer method_run_notify_userdata = NULL;
 
 typedef struct
 {
@@ -526,7 +528,9 @@ call_notify(DBusPendingCall *pending, void *user_data)
   g_free (hb);
 
   dbus_pending_call_unref (pending);
-  return;
+
+  goto out;
+
 malformed:
   /* Send a Fail callback on malformed messages */
   HAL_ERROR (("Malformed or unexpected reply message"));
@@ -541,6 +545,10 @@ malformed:
   g_free (hb);
 
   dbus_pending_call_unref (pending);
+
+out:
+  if (method_run_notify)
+    method_run_notify (method_run_notify_userdata);
 }
 
 /* Run a helper program using the commandline, with input as infomation on
@@ -660,4 +668,11 @@ hald_runner_kill_all(HalDevice *device) {
   }
 
   dbus_message_unref(msg);
+}
+
+void
+hald_runner_set_method_run_notify (HaldRunnerRunNotify cb, gpointer user_data)
+{
+  method_run_notify = cb;
+  method_run_notify_userdata = user_data;
 }

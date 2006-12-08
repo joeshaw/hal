@@ -67,7 +67,6 @@ hotplug_event_end (void *end_token)
 	} else {
 		g_free (hotplug_event);
 	}
-	hotplug_event_process_queue ();
 }
 
 void 
@@ -76,7 +75,6 @@ hotplug_event_reposted (void *end_token)
 	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
 
 	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
-	hotplug_event_process_queue ();
 }
 
 static void
@@ -305,29 +303,29 @@ hotplug_event_process_queue (void)
 {
 	HotplugEvent *hotplug_event;
 
-	if (hotplug_events_in_progress == NULL && 
-	    (hotplug_event_queue == NULL || g_queue_is_empty (hotplug_event_queue))) {
-		hotplug_queue_now_empty ();
-		goto out;
+        while (hotplug_events_in_progress != NULL ||
+		(hotplug_event_queue != NULL &&
+		 !g_queue_is_empty (hotplug_event_queue))) {
+
+		/* do not process events if some other event is in progress 
+		 *
+		 * TODO: optimize so we can do add events in parallel by inspecting the
+		 *       wait_for_sysfs_path parameter and hotplug_events_in_progress list
+		 */
+		if (hotplug_events_in_progress != NULL && g_slist_length (hotplug_events_in_progress) > 0)
+			goto out;
+
+		hotplug_event = g_queue_pop_head (hotplug_event_queue);
+		if (hotplug_event == NULL)
+			goto out;
+
+		hotplug_events_in_progress = g_slist_append (hotplug_events_in_progress, hotplug_event);
+		hotplug_event_begin (hotplug_event);
 	}
 
-	/* do not process events if some other event is in progress 
-	 *
-	 * TODO: optimize so we can do add events in parallel by inspecting the
-	 *       wait_for_sysfs_path parameter and hotplug_events_in_progress list
-	 */
-	if (hotplug_events_in_progress != NULL && g_slist_length (hotplug_events_in_progress) > 0)
-		goto out;
-
-	hotplug_event = g_queue_pop_head (hotplug_event_queue);
-	if (hotplug_event == NULL)
-		goto out;
-
-	hotplug_events_in_progress = g_slist_append (hotplug_events_in_progress, hotplug_event);
-	hotplug_event_begin (hotplug_event);
-
+	hotplug_queue_now_empty ();
 out:
-	;	
+        ;
 }
 
 gboolean 

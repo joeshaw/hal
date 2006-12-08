@@ -83,4 +83,7 @@ void hald_runner_kill_all();
 /* called by the core to tell the runner a device was finalized */
 void runner_device_finalized (HalDevice *device);
 
+typedef void (*HaldRunnerRunNotify)(gpointer user_data);
+void hald_runner_set_method_run_notify (HaldRunnerRunNotify cb, gpointer user_data);
+
 #endif 

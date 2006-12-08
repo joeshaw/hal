@@ -315,7 +315,6 @@ generate_fakevolume_hotplug_event_add_for_storage_device (HalDevice *d)
 	hotplug_event->sysfs.net_ifindex = -1;
 
 	hotplug_event_enqueue (hotplug_event);
-	hotplug_event_process_queue ();
 }
 
 static void 
@@ -1303,7 +1302,6 @@ block_rescan_storage_done (HalDevice *d, guint32 exit_type,
 			hotplug_event = blockdev_generate_remove_hotplug_event (fakevolume);
 			if (hotplug_event != NULL) {
 				hotplug_event_enqueue (hotplug_event);
-				hotplug_event_process_queue ();
 			}
 		}
 	}
