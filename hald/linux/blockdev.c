@@ -564,16 +564,15 @@ canonicalize_filename (gchar *filename)
 static char *
 resolve_symlink (const char *file)
 {
-	GError *error;
 	char *dir;
-	gchar link[HAL_PATH_MAX] ;
+	gchar link[HAL_PATH_MAX];
 	char *f;
 	char *f1;
 
 	f = g_strdup (file);
 	memset(link, 0, HAL_PATH_MAX);
 	while (g_file_test (f, G_FILE_TEST_IS_SYMLINK)) {
-		if(readlink(f, link, HAL_PATH_MAX-1)<0) {
+		if(readlink(f, link, HAL_PATH_MAX - 1) < 0) {
 			g_warning ("Cannot resolve symlink %s: %s", f, strerror(errno));
 			g_free (f);
 			f = NULL;

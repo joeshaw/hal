@@ -135,7 +135,6 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 				HAL_INFO (("%s is a device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 			}
-			g_free (subsystem_target);
 		}
 	}
 

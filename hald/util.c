@@ -1087,3 +1087,14 @@ out:
 }
 
 
+static gchar path_buffer [HAL_PATH_MAX];
+
+char *
+hal_util_readlink (const char *link)
+{
+	memset (path_buffer, 0, HAL_PATH_MAX);
+	if(readlink(link, path_buffer, HAL_PATH_MAX-1) < 0)
+		return NULL;
+	
+	return path_buffer;
+}

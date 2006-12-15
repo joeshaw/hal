@@ -694,17 +694,6 @@ static gboolean get_parent_device(char *path)
 		return FALSE;
 	return TRUE;
 }
-static gchar path_buffer [HAL_PATH_MAX];
-
-gchar *
-hal_util_readlink(gchar * link)
-{
- memset(path_buffer, 0, HAL_PATH_MAX);
- if(readlink(link, path_buffer, HAL_PATH_MAX-1)<0)
-    return NULL;
-    
- return path_buffer;
-}
 
 /* return the first already known parent device */
 gboolean
