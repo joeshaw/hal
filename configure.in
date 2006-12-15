@@ -108,7 +108,7 @@ if test "x$use_parted" = "xyes" ; then
    AC_DEFINE(USE_PARTED,1,[Whether libparted is to be used])
    AC_CHECK_LIB(uuid, uuid_generate, [], AC_MSG_ERROR([*** uuid library (libuuid) not found]))
    AC_CHECK_LIB(dl, dlopen,          [], AC_MSG_ERROR([*** dl library (libdl) not found]))
-   AC_MSG_CHECKING(for libparted == 1.7.1)
+   AC_MSG_CHECKING(for libparted == 1.7.1, 1.8.0, 1.8.1)
    LDFLAGS=-lparted
    AC_TRY_RUN(
    #include <stdio.h>
@@ -122,7 +122,12 @@ if test "x$use_parted" = "xyes" ; then
 	if ( sscanf( ped_get_version(), "%d.%d.%d", &major, &minor, &micro ) == 3 )
 		printf( "Found libparted %s", ped_get_version() ) ;
 
-        return ! ( major == 1 && minor == 7 && micro == 1 ) ;
+	if ((major == 1 && minor == 7 && micro == 1) ||
+	    (major == 1 && minor == 8 && micro == 0)
+	    (major == 1 && minor == 8 && micro == 1))
+	   return 0;
+
+	return 1;
     }
 	,AC_MSG_RESULT( ),AC_MSG_ERROR(*** Requires libparted == 1.7.1) )
     PARTED_LIBS=-lparted
@@ -243,9 +248,9 @@ fi
 dnl Check for libpci
 AC_CHECK_HEADERS(pci/pci.h, [
 	AC_CHECK_LIB(pci, pci_init, [
-		USE_LIBPCI=yes AM_CONDITIONAL(HAVE_LIBPCI,true)], [
-		USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
-	USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])
+		USE_LIBPCI=yes; AM_CONDITIONAL(HAVE_LIBPCI,true)], [
+		USE_LIBPCI=no; AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
+	USE_LIBPCI=no; AM_CONDITIONAL(HAVE_LIBPCI,false)])
 
 AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux/solaris/freebsd/dummy)],
                       [
