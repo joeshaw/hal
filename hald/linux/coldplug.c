@@ -310,13 +310,12 @@ static int device_list_insert(const char *path, const char *subsystem,
 	if (S_ISLNK(statbuf.st_mode)) {
 		gchar *target;
 
-		if ((target = g_file_read_link (path, NULL)) != NULL) {
+		if ((target = hal_util_readlink (path)) != NULL) {
 			gchar *normalized_target;
 
 			g_strlcpy(filename, path, sizeof(filename));
 			hal_util_path_ascend (filename);
 			normalized_target = hal_util_get_normalized_path (filename, target);
-			g_free (target);
 			sysfs_dev->path = normalized_target;
 			goto found;
 		}
