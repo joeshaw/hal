@@ -359,6 +359,7 @@ fi
 
 AC_CHECK_FUNCS(getgrouplist)
 AC_CHECK_FUNCS(asprintf)
+AC_CHECK_FUNCS(mallopt)
 
 # DocBook Documentation
 

@@ -41,7 +41,9 @@
 #include <signal.h>
 #include <grp.h>
 #include <syslog.h>
-
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <malloc.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -373,6 +375,19 @@ main (int argc, char *argv[])
 	char newpath[512];
 
 	openlog ("hald", LOG_PID, LOG_DAEMON);
+
+#ifdef HAVE_MALLOPT
+
+#define HAL_MMAP_THRESHOLD 100
+#define HAL_TRIM_THRESHOLD 100
+
+	/* We use memory in small chunks, thus optimize
+	   it this way.
+	 */
+	mallopt(M_MMAP_THRESHOLD, HAL_MMAP_THRESHOLD);
+	mallopt(M_TRIM_THRESHOLD, HAL_TRIM_THRESHOLD);
+
+#endif
 
 #ifdef HALD_MEMLEAK_DBG
 	/*g_mem_set_vtable (glib_mem_profiler_table);*/
