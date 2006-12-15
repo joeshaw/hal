@@ -383,7 +383,7 @@ static gboolean ondemand_set_consider_nice(void *data, gboolean consider)
 
 	consider_file = g_strdup_printf(ONDEMAND_IGNORE_NICE_LOAD_FILE, iface->base_cpu); 
 
-        if(!write_line(consider_file, "%u", consider)){
+        if(!write_line(consider_file, "%u", !consider)){
                 HAL_WARNING(("Could not set ignore_nice_load to: %u kHz; %s", consider,
 			     strerror(errno)));
 		g_free(consider_file);
@@ -410,7 +410,7 @@ static gboolean ondemand_get_consider_nice(void)
 	}
 	g_free(governor_file);
 
-	return consider;
+	return !consider;
 }
 
 static gboolean ondemand_init(struct ondemand_interface *iface, GSList *cores)
