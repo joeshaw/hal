@@ -831,15 +831,22 @@ static gboolean dbus_is_privileged(DBusConnection *connection, DBusMessage *mess
 	}
 
 	caller_dbus_name = dbus_message_get_sender(message);
+	if (caller_dbus_name == NULL) {
+		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
+				 "Cannot get D-Bus connection name of caller");
+		goto Error;
+	}
+		
 	caller_unix_user = dbus_bus_get_unix_user(connection_new, caller_dbus_name, error);
-	HAL_DEBUG(("Connection name of caller: %s", caller_dbus_name));
-	HAL_DEBUG(("Unix user id of caller: %ld", caller_unix_user));
 	if (dbus_error_is_set(error)) {
 		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
 				 "Cannot get unix user of caller");
 		dbus_error_free(error);
 		goto Error;
 	}
+
+	HAL_DEBUG(("Connection name of caller: %s", caller_dbus_name));
+	HAL_DEBUG(("Unix user id of caller: %ld", caller_unix_user));
 
 	caller_unix_user_str = g_strdup_printf("%ld", caller_unix_user);
 	res = libpolkit_is_uid_allowed_for_privilege(polctx,
