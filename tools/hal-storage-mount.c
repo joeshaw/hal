@@ -143,7 +143,6 @@ cannot_remount (const char *device)
 	exit (1);
 }
 
-#ifdef HAVE_POLKIT
 static void
 permission_denied_privilege (const char *privilege, const char *uid)
 {
@@ -151,7 +150,6 @@ permission_denied_privilege (const char *privilege, const char *uid)
 	fprintf (stderr, "%s refused uid %s\n", privilege, uid);
 	exit (1);
 }
-#endif
 
 
 /* borrowed from gtk/gtkfilesystemunix.c in GTK+ on 02/23/2006 */
@@ -769,6 +767,12 @@ handle_mount (LibHalContext *hal_ctx,
 		printf ("caller don't possess privilege\n");
 		permission_denied_privilege (privilege, invoked_by_uid);
 	}
+#else
+        /* root can do everything; only allow handling removable devices
+         * without uid change to non-root users */
+        if (!invoked_by_uid || strcmp(invoked_by_uid, "0"))
+                if (!privilege || strcmp (privilege, "hal-storage-removable-mount"))
+                        permission_denied_privilege (privilege, invoked_by_uid);
 #endif
 
 #ifdef DEBUG
