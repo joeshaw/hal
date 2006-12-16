@@ -301,6 +301,29 @@ if test "x$enable_policy_kit" != "xno"; then
 	fi
 fi
 
+# what extra hotplug backends to use (ACPI, APM, PMU etc)
+AC_ARG_ENABLE(have_acpi, [  --disable-acpi          Build without ACPI support])
+msg_acpi=no
+if test "x$enable_acpi" != "xno"; then
+	msg_acpi=yes
+  	AC_DEFINE(HAVE_ACPI, [], [Set if we have ACPI support])
+fi
+AM_CONDITIONAL(HAVE_ACPI, test x$msg_acpi = xyes, [Compiling ACPI])
+AC_ARG_ENABLE(have_apm, [  --disable-apm           Build without APM support])
+msg_apm=no
+if test "x$enable_apm" != "xno"; then
+	msg_apm=yes
+  	AC_DEFINE(HAVE_APM, [], [Set if we have APM support])
+fi
+AM_CONDITIONAL(HAVE_APM, test x$msg_apm = xyes, [Compiling APM])
+AC_ARG_ENABLE(have_pmu, [  --disable-pmu           Build without PMU support])
+msg_pmu=no
+if test "x$enable_pmu" != "xno"; then
+	msg_pmu=yes
+  	AC_DEFINE(HAVE_PMU, [], [Set if we have PMU support])
+fi
+AM_CONDITIONAL(HAVE_PMU, test x$msg_pmu = xyes, [Compiling PMU])
+
 # D-Bus libs
 PKG_CHECK_MODULES(DBUS, [$dbus_module])
 AC_SUBST(DBUS_CFLAGS)
@@ -633,6 +656,9 @@ echo "
         use libpci:                 ${USE_LIBPCI}
         use libparted:              ${USE_PARTED}
         use PolicyKit:              ${msg_polkit}
+        use ACPI:                   ${msg_acpi}
+        use PMU:                    ${msg_pmu}
+        use APM:                    ${msg_apm}
 
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)

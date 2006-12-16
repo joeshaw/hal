@@ -15,14 +15,32 @@ noinst_LTLIBRARIES = libhald_linux.la
 endif
 
 libhald_linux_la_SOURCES =					\
-				osspec.c			\
+	acpi.h							\
+	apm.h							\
+	pmu.h							\
+	osspec.c						\
 	osspec_linux.h						\
-	hotplug.h		hotplug.c			\
+	hotplug.h						\
+	hotplug.c						\
 	hotplug_helper.h					\
-	coldplug.h		coldplug.c			\
-	device.h		device.c			\
-	blockdev.h		blockdev.c			\
-	acpi.h			acpi.c				\
-	apm.h			apm.c				\
-	pmu.h			pmu.c
+	coldplug.h						\
+	coldplug.c						\
+	device.h						\
+	device.c						\
+	blockdev.h						\
+	blockdev.c
 
+if HAVE_ACPI
+libhald_linux_la_SOURCES +=					\
+	acpi.c
+endif
+
+if HAVE_APM
+libhald_linux_la_SOURCES +=					\
+	apm.c
+endif
+
+if HAVE_PMU
+libhald_linux_la_SOURCES +=					\
+	pmu.c
+endif

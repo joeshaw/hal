@@ -10,12 +10,16 @@ INCLUDES = \
 
 if HALD_COMPILE_LINUX
 libexec_PROGRAMS  = 			\
-	hald-addon-acpi 		\
-	hald-addon-acpi-buttons-toshiba \
 	hald-addon-hid-ups 		\
 	hald-addon-keyboard 		\
 	hald-addon-pmu			\
 	hald-addon-storage
+
+if HAVE_ACPI
+libexec_PROGRAMS  += 			\
+	hald-addon-acpi 		\
+	hald-addon-acpi-buttons-toshiba
+endif
 
 if BUILD_MACBOOKPRO
 libexec_PROGRAMS += hald-addon-macbookpro-backlight
