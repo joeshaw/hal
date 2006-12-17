@@ -12,8 +12,12 @@ if HALD_COMPILE_LINUX
 libexec_PROGRAMS  = 			\
 	hald-addon-hid-ups 		\
 	hald-addon-keyboard 		\
-	hald-addon-pmu			\
 	hald-addon-storage
+
+if HAVE_PMU
+libexec_PROGRAMS  += 			\
+	hald-addon-pmu
+endif
 
 if HAVE_ACPI
 libexec_PROGRAMS  += 			\
