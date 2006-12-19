@@ -2,6 +2,8 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
+haluser=@HAL_USER@
+halgroup=@HAL_GROUP@
 
 Name: hal
 Description: Free desktop hardware abstraction layer
@@ -9,5 +11,3 @@ Version: @VERSION@
 Requires: dbus-1
 Libs: -L${libdir} -lhal
 Cflags: -DDBUS_API_SUBJECT_TO_CHANGE -I${includedir}/hal
-Haluser: @HAL_USER@
-Halgroup: @HAL_GROUP@
