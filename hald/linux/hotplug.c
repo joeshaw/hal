@@ -123,7 +123,10 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	 */
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS) {
 		g_snprintf (subsystem, HAL_PATH_MAX, "%s/subsystem", hotplug_event->sysfs.sysfs_path);
-		subsystem_target = g_file_read_link (subsystem, NULL);
+		/* g_file_read_link leaks memory. We alloc lots of trash here but return NULL, damn
+		   Re-implemented this using POSIX readlink() */
+		/* subsystem_target = g_file_read_link (subsystem, NULL); */
+		subsystem_target = hal_util_readlink(subsystem);
 		if (subsystem_target != NULL) {
 			if (strstr(subsystem_target, "/block") != NULL) {
 				HAL_INFO (("%s is a block device (subsystem)", hotplug_event->sysfs.sysfs_path));
@@ -132,7 +135,6 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 				HAL_INFO (("%s is a device (subsystem)", hotplug_event->sysfs.sysfs_path));
 				hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 			}
-			g_free (subsystem_target);
 		}
 	}
 

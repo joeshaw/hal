@@ -41,7 +41,9 @@
 #include <signal.h>
 #include <grp.h>
 #include <syslog.h>
-
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <malloc.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -213,6 +215,7 @@ usage ()
 		 "\n"
 		 "        --daemon=yes|no       Become a daemon\n"
 		 "        --verbose=yes|no      Print out debug (overrides HALD_VERBOSE)\n"
+		 "        --retain-privileges   Retain privileges (for debugging)\n"
  		 "        --use-syslog          Print out debug messages to syslog instead of\n"
 		 "                              stderr. Use this option to get debug messages\n"
 		 "                              if hald runs as a daemon.\n"
@@ -231,6 +234,9 @@ usage ()
 
 /** If #TRUE, we will daemonize */
 static dbus_bool_t opt_become_daemon = TRUE;
+
+/** If #TRUE, we will retain privs */
+static dbus_bool_t opt_retain_privileges = FALSE;
 
 /** If #TRUE, we will spew out debug */
 dbus_bool_t hald_is_verbose = FALSE;
@@ -370,6 +376,19 @@ main (int argc, char *argv[])
 
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
+#ifdef HAVE_MALLOPT
+
+#define HAL_MMAP_THRESHOLD 100
+#define HAL_TRIM_THRESHOLD 100
+
+	/* We use memory in small chunks, thus optimize
+	   it this way.
+	 */
+	mallopt(M_MMAP_THRESHOLD, HAL_MMAP_THRESHOLD);
+	mallopt(M_TRIM_THRESHOLD, HAL_TRIM_THRESHOLD);
+
+#endif
+
 #ifdef HALD_MEMLEAK_DBG
 	/*g_mem_set_vtable (glib_mem_profiler_table);*/
 #endif
@@ -408,6 +427,7 @@ main (int argc, char *argv[])
 			{"exit-after-probing", 0, NULL, 0},
 			{"daemon", 1, NULL, 0},
 			{"verbose", 1, NULL, 0},
+			{"retain-privileges", 0, NULL, 0},
 			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
@@ -449,6 +469,8 @@ main (int argc, char *argv[])
 					usage ();
 					return 1;
 				}
+			} else if (strcmp (opt, "retain-privileges") == 0) {
+                                opt_retain_privileges = TRUE;
 			} else if (strcmp (opt, "use-syslog") == 0) {
                                 hald_use_syslog = TRUE;
 			}
@@ -581,7 +603,11 @@ main (int argc, char *argv[])
 	/* initialize privileged operating system specific parts */
 	osspec_privileged_init ();
 
-	drop_privileges(0);
+	/* sometimes we don't want to drop root privs, for instance
+	   if we are profiling memory usage */
+	if (opt_retain_privileges == FALSE) {
+		drop_privileges(0);
+	}
 
 	/* initialize operating system specific parts */
 	osspec_init ();

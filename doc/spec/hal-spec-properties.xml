@@ -5761,6 +5761,16 @@
                 should be used in its place. This key will be removed, but not before May 1st 2007.
               </entry>
             </row>
+            <row>
+              <entry>
+                <literal>power_management.is_powersave_set</literal> (bool)
+              </entry>
+              <entry/>
+              <entry>Yes</entry>
+              <entry>
+                Is the last value passed to the SetPowerSave method.
+              </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>

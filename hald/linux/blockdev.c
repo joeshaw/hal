@@ -36,6 +36,7 @@
 #include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -563,19 +564,16 @@ canonicalize_filename (gchar *filename)
 static char *
 resolve_symlink (const char *file)
 {
-	GError *error;
 	char *dir;
-	char *link;
+	gchar link[HAL_PATH_MAX];
 	char *f;
 	char *f1;
 
 	f = g_strdup (file);
-
+	memset(link, 0, HAL_PATH_MAX);
 	while (g_file_test (f, G_FILE_TEST_IS_SYMLINK)) {
-		link = g_file_read_link (f, &error);
-		if (link == NULL) {
-			g_warning ("Cannot resolve symlink %s: %s", f, error->message);
-			g_error_free (error);
+		if(readlink(f, link, HAL_PATH_MAX - 1) < 0) {
+			g_warning ("Cannot resolve symlink %s: %s", f, strerror(errno));
 			g_free (f);
 			f = NULL;
 			goto out;
@@ -584,7 +582,6 @@ resolve_symlink (const char *file)
 		dir = g_path_get_dirname (f);
 		f1 = g_strdup_printf ("%s/%s", dir, link);
 		g_free (dir);
-		g_free (link);
 		g_free (f);
 		f = f1;
 	}

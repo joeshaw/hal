@@ -587,22 +587,16 @@ hf_storage_conftxt_timeout_cb (gpointer data)
 		{
 		  /* disk changed */
 		  device = hf_devtree_find_from_name(hald_get_gdl(), disk->name);
-		  if (device)
-		    {
-		      g_assert(hal_device_has_capability(device, "storage"));
-		      hf_storage_device_rescan_real(device);
-		    }
+		  if (device && hal_device_has_capability(device, "storage"))
+		    hf_storage_device_rescan_real(device);
 		}
 	    }
 	  else
 	    {
 	      /* disk removed */
 	      device = hf_devtree_find_from_name(hald_get_gdl(), disk->name);
-	      if (device)
-		{
-		  g_assert(hal_device_has_capability(device, "storage"));
-		  hf_device_remove_tree(device);
-		}
+	      if (device && hal_device_has_capability(device, "storage"))
+	        hf_device_remove_tree(device);
 	    }
 	}
     }

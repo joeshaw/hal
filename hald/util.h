@@ -106,4 +106,6 @@ void hal_util_hexdump (const void *buf, unsigned int size);
 
 gboolean hal_util_is_mounted_by_hald (const char *mount_point);
 
+char *hal_util_readlink (const char *link);
+
 #endif /* UTIL_H */

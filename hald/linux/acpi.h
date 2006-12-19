@@ -26,16 +26,20 @@
 #include "../hald.h"
 #include "hotplug.h"
 
+#ifdef HAVE_ACPI
 gboolean acpi_synthesize_hotplug_events (void);
-
 void hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *parent, void *end_token);
-
 void hotplug_event_begin_remove_acpi (const gchar *acpi_path, int acpi_type, void *end_token);
-
 gboolean acpi_rescan_device (HalDevice *d);
-
 HotplugEvent *acpi_generate_add_hotplug_event (HalDevice *d);
-
 HotplugEvent *acpi_generate_remove_hotplug_event (HalDevice *d);
+#else /* HAVE_ACPI */
+static inline gboolean acpi_synthesize_hotplug_events (void) {return FALSE;}
+static inline void hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *parent, void *end_token) {return;}
+static inline void hotplug_event_begin_remove_acpi (const gchar *acpi_path, int acpi_type, void *end_token) {return;}
+static inline gboolean acpi_rescan_device (HalDevice *d) {return FALSE;}
+static inline HotplugEvent *acpi_generate_add_hotplug_event (HalDevice *d) {return NULL;}
+static inline HotplugEvent *acpi_generate_remove_hotplug_event (HalDevice *d) {return NULL;}
+#endif /* HAVE_ACPI */
 
 #endif /* ACPI_H */

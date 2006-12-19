@@ -108,7 +108,7 @@ if test "x$use_parted" = "xyes" ; then
    AC_DEFINE(USE_PARTED,1,[Whether libparted is to be used])
    AC_CHECK_LIB(uuid, uuid_generate, [], AC_MSG_ERROR([*** uuid library (libuuid) not found]))
    AC_CHECK_LIB(dl, dlopen,          [], AC_MSG_ERROR([*** dl library (libdl) not found]))
-   AC_MSG_CHECKING(for libparted == 1.7.1)
+   AC_MSG_CHECKING(for libparted == 1.7.1, 1.8.0, 1.8.1)
    LDFLAGS=-lparted
    AC_TRY_RUN(
    #include <stdio.h>
@@ -122,7 +122,12 @@ if test "x$use_parted" = "xyes" ; then
 	if ( sscanf( ped_get_version(), "%d.%d.%d", &major, &minor, &micro ) == 3 )
 		printf( "Found libparted %s", ped_get_version() ) ;
 
-        return ! ( major == 1 && minor == 7 && micro == 1 ) ;
+	if ((major == 1 && minor == 7 && micro == 1) ||
+	    (major == 1 && minor == 8 && micro == 0) ||
+	    (major == 1 && minor == 8 && micro == 1))
+	   return 0;
+
+	return 1;
     }
 	,AC_MSG_RESULT( ),AC_MSG_ERROR(*** Requires libparted == 1.7.1) )
     PARTED_LIBS=-lparted
@@ -243,9 +248,9 @@ fi
 dnl Check for libpci
 AC_CHECK_HEADERS(pci/pci.h, [
 	AC_CHECK_LIB(pci, pci_init, [
-		USE_LIBPCI=yes AM_CONDITIONAL(HAVE_LIBPCI,true)], [
-		USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
-	USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI,false)])
+		USE_LIBPCI=yes; AM_CONDITIONAL(HAVE_LIBPCI,true)], [
+		USE_LIBPCI=no; AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
+	USE_LIBPCI=no; AM_CONDITIONAL(HAVE_LIBPCI,false)])
 
 AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux/solaris/freebsd/dummy)],
                       [
@@ -295,6 +300,29 @@ if test "x$enable_policy_kit" != "xno"; then
 	   AC_MSG_ERROR([PolicyKit not explicitly disabled and no PolicyKit found])
 	fi
 fi
+
+# what extra hotplug backends to use (ACPI, APM, PMU etc)
+AC_ARG_ENABLE(have_acpi, [  --disable-acpi          Build without ACPI support])
+msg_acpi=no
+if test "x$enable_acpi" != "xno"; then
+	msg_acpi=yes
+  	AC_DEFINE(HAVE_ACPI, [], [Set if we have ACPI support])
+fi
+AM_CONDITIONAL(HAVE_ACPI, test x$msg_acpi = xyes, [Compiling ACPI])
+AC_ARG_ENABLE(have_apm, [  --disable-apm           Build without APM support])
+msg_apm=no
+if test "x$enable_apm" != "xno"; then
+	msg_apm=yes
+  	AC_DEFINE(HAVE_APM, [], [Set if we have APM support])
+fi
+AM_CONDITIONAL(HAVE_APM, test x$msg_apm = xyes, [Compiling APM])
+AC_ARG_ENABLE(have_pmu, [  --disable-pmu           Build without PMU support])
+msg_pmu=no
+if test "x$enable_pmu" != "xno"; then
+	msg_pmu=yes
+  	AC_DEFINE(HAVE_PMU, [], [Set if we have PMU support])
+fi
+AM_CONDITIONAL(HAVE_PMU, test x$msg_pmu = xyes, [Compiling PMU])
 
 # D-Bus libs
 PKG_CHECK_MODULES(DBUS, [$dbus_module])
@@ -354,6 +382,7 @@ fi
 
 AC_CHECK_FUNCS(getgrouplist)
 AC_CHECK_FUNCS(asprintf)
+AC_CHECK_FUNCS(mallopt)
 
 # DocBook Documentation
 
@@ -627,6 +656,9 @@ echo "
         use libpci:                 ${USE_LIBPCI}
         use libparted:              ${USE_PARTED}
         use PolicyKit:              ${msg_polkit}
+        use ACPI:                   ${msg_acpi}
+        use PMU:                    ${msg_pmu}
+        use APM:                    ${msg_apm}
 
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)

@@ -694,6 +694,7 @@ static gboolean get_parent_device(char *path)
 		return FALSE;
 	return TRUE;
 }
+
 /* return the first already known parent device */
 gboolean
 hal_util_find_known_parent (const gchar *sysfs_path, HalDevice **parent, gchar **parent_path)
@@ -720,9 +721,8 @@ hal_util_find_known_parent (const gchar *sysfs_path, HalDevice **parent, gchar *
 
 	/* try if the parent chain is constructed by the device-link */
 	g_snprintf (parentdevpath, HAL_PATH_MAX, "%s/device", sysfs_path);
-	if (((target = g_file_read_link (parentdevpath, NULL)) != NULL)) {
+	if ((target = hal_util_readlink (parentdevpath)) != NULL) {
 		parent_devpath = hal_util_get_normalized_path (sysfs_path, target);
-		g_free (target);
 
 		while (TRUE) {
 			parent_dev = hal_device_store_match_key_value_string (hald_get_gdl (),

@@ -9,3 +9,4 @@ hald_marshal.h
 *.o
 *~
 .local-fdi
+massif.*

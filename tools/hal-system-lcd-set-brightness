@@ -8,7 +8,7 @@
 # (at your option) any later version.
 
 # Check for environment variables
-if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" ] || 
+if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" -a -z "$HAL_PROP_LINUX_SYSFS_PATH" ] || 
    [ -z "$HAL_PROP_LAPTOP_PANEL_NUM_LEVELS" ] ; then
         echo "org.freedesktop.Hal.Device.UnknownError" >&2
         echo "Missing or empty environment variable(s)." >&2
