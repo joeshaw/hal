@@ -415,13 +415,11 @@ main (int argc, char *argv[])
 			fd = open (device_file, O_RDONLY);
 			if (fd < 0 && errno == ENOMEDIUM) {
 				got_media = FALSE;
-				close (fd);
 			} else if (fd >= 0) {
 				got_media = TRUE;
 				close (fd);
 			} else {
 				HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
-				close (fd);
 				goto skip_check;
 			}
 		}
@@ -445,9 +443,10 @@ main (int argc, char *argv[])
 				
 				/* have to this to trigger appropriate hotplug events */
 				fd = open (device_file, O_RDONLY | O_NONBLOCK);
-				if (fd >= 0)
+				if (fd >= 0) {
 					ioctl (fd, BLKRRPART);
-				close (fd);
+					close (fd);
+				}
 			}
 			break;
 
