@@ -145,8 +145,8 @@ typedef struct
   u_int16_t   reserved4;
 } HFPCDROMCapabilities;
 
-HFPCDROM *hfp_cdrom_new (const char *path);
-HFPCDROM *hfp_cdrom_new_from_fd (int fd, const char *path);
+HFPCDROM *hfp_cdrom_new (const char *path, const char *parent);
+HFPCDROM *hfp_cdrom_new_from_fd (int fd, const char *path, const char *parent);
 
 boolean hfp_cdrom_send_ccb (HFPCDROM *cdrom,
 			    char ccb[16],

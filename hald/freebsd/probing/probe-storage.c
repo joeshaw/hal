@@ -43,7 +43,8 @@
 #include "freebsd_dvd_rw_utils.h"
 
 static void
-hf_probe_storage_get_cdrom_capabilities (const char *device_file)
+hf_probe_storage_get_cdrom_capabilities (const char *device_file,
+                                         const char *parent)
 {
   HFPCDROM *cdrom;
   HFPCDROMCapabilities caps;
@@ -54,8 +55,9 @@ hf_probe_storage_get_cdrom_capabilities (const char *device_file)
   char *write_speeds;
 
   g_return_if_fail(device_file != NULL);
+  g_return_if_fail(parent != NULL);
 
-  cdrom = hfp_cdrom_new(device_file);
+  cdrom = hfp_cdrom_new(device_file, parent);
   if (! cdrom)
     {
       hfp_warning("unable to open CD-ROM device %s", device_file);
@@ -150,6 +152,7 @@ main (int argc, char **argv)
 {
   char *device_file;
   char *drive_type;
+  char *parent;
   int ret = 0;			/* no media/filesystem */
   gboolean has_children;
   gboolean only_check_for_media;
@@ -166,6 +169,10 @@ main (int argc, char **argv)
   if (! drive_type)
     goto end;
 
+  parent = getenv("HAL_PROP_INFO_PARENT");
+  if (! parent)
+    goto end;
+
   /* give a meaningful process title for ps(1) */
   setproctitle("%s", device_file);
 
@@ -175,13 +182,13 @@ main (int argc, char **argv)
   is_cdrom = ! strcmp(drive_type, "cdrom");
 
   if (! only_check_for_media && is_cdrom)
-    hf_probe_storage_get_cdrom_capabilities(device_file);
+    hf_probe_storage_get_cdrom_capabilities(device_file, parent);
 
   if (is_cdrom)
     {
       HFPCDROM *cdrom;
 
-      cdrom = hfp_cdrom_new(device_file);
+      cdrom = hfp_cdrom_new(device_file, parent);
       if (! cdrom)
 	goto end;
 

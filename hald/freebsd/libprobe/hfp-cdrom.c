@@ -42,18 +42,24 @@
 
 struct _HFPCDROM
 {
-  struct cam_device	*cam;	/* for SCSI drives */
-  int			fd;	/* for ATAPI drives */
+  struct cam_device	*cam;		/* for SCSI drives */
+  int			fd;		/* for ATAPI drives */
+  int			channel;	/* for ATAPI on 5.X */
+  int			device;		/* for ATAPI on 5.X */
   boolean		fd_owned;
 };
 
 static HFPCDROM *
-hfp_cdrom_new_real (boolean has_fd, int fd, const char *path)
+hfp_cdrom_new_real (boolean has_fd,
+                    int fd,
+                    const char *path,
+                    const char *parent)
 {
   HFPCDROM *cdrom = NULL;
   struct cam_device *cam;
 
   assert(path != NULL);
+  assert(parent != NULL);
 
   /* cam_open_device() fails unless we use O_RDWR */
   cam = cam_open_device(path, O_RDWR);
@@ -65,13 +71,33 @@ hfp_cdrom_new_real (boolean has_fd, int fd, const char *path)
     }
   else
     {
+#ifndef IOCATAREQUEST
+      fd = open("/dev/ata", O_RDONLY);
+#else
       if (! has_fd)
 	fd = open(path, O_RDONLY);
+#endif
       if (fd >= 0)
 	{
 	  cdrom = hfp_new0(HFPCDROM, 1);
 	  cdrom->fd = fd;
+#ifndef IOCATAREQUEST
+          cdrom->fd_owned = TRUE;
+          cdrom->channel = libhal_device_get_property_int(hfp_ctx,
+                                                          parent,
+							  "ide.host",
+							  &hfp_error);
+	  dbus_error_free(&hfp_error);
+	  cdrom->device = libhal_device_get_property_int(hfp_ctx,
+                                                         parent,
+							 "ide.channel",
+							 &hfp_error);
+	  dbus_error_free(&hfp_error);
+#else
 	  cdrom->fd_owned = ! has_fd;
+	  cdrom->channel = -1;
+	  cdrom->device = -1;
+#endif
 	}
     }
 
@@ -79,19 +105,21 @@ hfp_cdrom_new_real (boolean has_fd, int fd, const char *path)
 }
 
 HFPCDROM *
-hfp_cdrom_new (const char *path)
+hfp_cdrom_new (const char *path, const char *parent)
 {
   assert(path != NULL);
+  assert(parent != NULL);
 
-  return hfp_cdrom_new_real(FALSE, -1, path);
+  return hfp_cdrom_new_real(FALSE, -1, path, parent);
 }
 
 HFPCDROM *
-hfp_cdrom_new_from_fd (int fd, const char *path)
+hfp_cdrom_new_from_fd (int fd, const char *path, const char *parent)
 {
   assert(path != NULL);
+  assert(parent != NULL);
 
-  return hfp_cdrom_new_real(TRUE, fd, path);
+  return hfp_cdrom_new_real(TRUE, fd, path, parent);
 }
 
 boolean
@@ -144,11 +172,17 @@ hfp_cdrom_send_ccb (HFPCDROM *cdrom,
 #else
       struct ata_cmd iocmd;
 
+      /* Better to assert here than panic the machine. */
+      /* XXX Should this be a conditional?  How likely is this? */
+      assert(cdrom->channel >= 0);
+      assert(cdrom->device >= 0 && cdrom->device < 2);
+
       memset(&iocmd, 0, sizeof(iocmd));
       iocmd.u.request.flags = ATA_CMD_ATAPI;
       iocmd.u.request.timeout = timeout;
       iocmd.cmd = ATAREQUEST;
-      iocmd.device = -1;
+      iocmd.channel = cdrom->channel;
+      iocmd.device = cdrom->device;
       memcpy(iocmd.u.request.u.atapi.ccb, ccb, 16);
 
       if (data)
