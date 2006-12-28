@@ -28,11 +28,9 @@
 
 #include <glib.h>
 
+#ifdef USE_PCI_IDS
+
 void pci_ids_init (void);
-
-void usb_ids_init (void);
-
-void ids_init (void);
 
 void
 ids_find_pci (int vendor_id, int product_id,
@@ -40,12 +38,41 @@ ids_find_pci (int vendor_id, int product_id,
 	      char **vendor_name, char **product_name,
 	      char **subsys_vendor_name, char **subsys_product_name);
 
-void
-ids_find_usb (int vendor_id, int product_id,
-	      char **vendor_name, char **product_name);
+#else /*USE_PCI_IDS*/
+static inline void pci_ids_init (void) {return;};
+
+static inline void
+ids_find_pci (int vendor_id, int product_id,
+	      int subsys_vendor_id, int subsys_product_id,
+	      char **vendor_name, char **product_name,
+	      char **subsys_vendor_name, char **subsys_product_name) {return;}
+#endif /*USE_PCI_IDS*/
+
+#ifdef USE_PNP_IDS
 
 void
 ids_find_pnp (const char *pnp_id, char **pnp_description);
 
+#else /*USE_PNP_IDS*/
+static inline void
+ids_find_pnp (const char *pnp_id, char **pnp_description) {return;}
+#endif /*USE_PNP_IDS*/
+
+#ifdef USE_USB_IDS
+
+void usb_ids_init (void);
+
+void
+ids_find_usb (int vendor_id, int product_id,
+	      char **vendor_name, char **product_name);
+
+#else /*USE_USB_IDS*/
+static inline void usb_ids_init (void) {return;}
+static inline void
+ids_find_usb (int vendor_id, int product_id,
+	      char **vendor_name, char **product_name) {return;}
+#endif /*USE_USB_IDS*/
+
+void ids_init (void);
 
 #endif /* IDS_H */

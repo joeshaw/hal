@@ -44,6 +44,7 @@
 
 #include "ids.h"
 
+#ifdef USE_PCI_IDS
 /** Pointer to where the pci.ids file is loaded */
 static char *pci_ids = NULL;
 
@@ -306,8 +307,18 @@ out:
 	return ret;
 }
 
+void
+pci_ids_init (void)
+{
+	/* Load /usr/share/hwdata/pci.ids */
+	pci_ids_load (PCI_IDS_DIR "/pci.ids");
+}
+
+#endif /*USE_PCI_IDS*/
+
 /*==========================================================================*/
 
+#ifdef USE_USB_IDS
 /** Pointer to where the usb.ids file is loaded */
 static char *usb_ids = NULL;
 
@@ -510,25 +521,17 @@ out:
 }
 
 void
-pci_ids_init (void)
-{
-	/* Load /usr/share/hwdata/pci.ids */
-	pci_ids_load (HWDATA_DIR "/pci.ids");
-}
-
-void
 usb_ids_init (void)
 {
 	/* Load /usr/share/hwdata/usb.ids */
-	usb_ids_load (HWDATA_DIR "/usb.ids");
+	usb_ids_load (USB_IDS_DIR "/usb.ids");
 }
 
-void 
-ids_init (void)
-{
-	pci_ids_init ();
-	usb_ids_init ();
-}
+#endif /*USE_USB_IDS*/
+
+/*==========================================================================*/
+
+#ifdef USE_PNP_IDS
 
 /* This, somewhat incomplete, list is from this sources:
  * http://www.plasma-online.de/english/identify/serial/pnp_id_pnp.html 
@@ -969,4 +972,14 @@ ids_find_pnp (const char *pnp_id, char **pnp_description)
 	else
         	*pnp_description = NULL; 
         return;
+}
+
+#endif /*USE_PNP_IDS*/
+
+/*==========================================================================*/
+
+ids_init (void)
+{
+	pci_ids_init ();
+	usb_ids_init ();
 }

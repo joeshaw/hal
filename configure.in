@@ -42,20 +42,61 @@ AC_CHECK_HEADERS([sys/ioccom.h])
 
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
-AC_ARG_WITH(hwdata,[  --with-hwdata=<dir>     where PCI and USB IDs are found (auto)])
+
+AC_ARG_WITH(hwdata, AC_HELP_STRING([--with-hwdata=<dir>], [Where PCI and USB IDs are found]))
+AC_ARG_WITH(pci-ids, AC_HELP_STRING([--with-pci-ids=<dir>], [Where PCI IDs are found (overrides --with-hwdata)]))
+AC_ARG_WITH(usb-ids, AC_HELP_STRING([--with-usb-ids=<dir>], [Where USB IDs are found (overrides --with-hwdata)]))
+AC_ARG_ENABLE([pci-ids], AC_HELP_STRING([--disable-pci-ids], [Do not build with PCI IDs support]), [enable_pci_ids=$enableval], [enable_pci_ids=yes])
+AC_ARG_ENABLE([usb-ids], AC_HELP_STRING([--disable-usb-ids], [Do not build with USB IDs support]), [enable_usb_ids=$enableval], [enable_usb_ids=yes])
+AC_ARG_ENABLE([pnp-ids], AC_HELP_STRING([--disable-pnp-ids], [Do not build with PNP IDs support]), [enable_pnp_ids=$enableval], [enable_pnp_ids=yes])
+
+AC_ARG_WITH(socket-dir,[  --with-socket-dir=<dir>  Location of the HAL D-BUS listening sockets (auto)])
 AC_ARG_WITH(socket-dir,[  --with-socket-dir=<dir>  Location of the HAL D-BUS listening sockets (auto)])
 if ! test -z "$with_hwdata" ; then
-   HWDATA_DIR="$with_hwdata"
+  PCI_IDS_DIR="$with_hwdata"
+  USB_IDS_DIR="$with_hwdata"
+fi
+if ! test -z "$with_pci_ids" ; then
+  PCI_IDS_DIR="$with_pci_ids"
+fi
+if ! test -z "$with_usb_ids" ; then
+  USB_IDS_DIR="$with_usb_ids"
+fi
+
+if test "x$enable_pci_ids" = "xno" ; then
+  USE_PCI_IDS=no
 else
-   for dir in /usr/share/hwdata /usr/share/misc /usr/share /var/lib/misc; do
-      AC_CHECK_FILE($dir/pci.ids,HWDATA_DIR=$dir)
-   done
+   if test -z "$PCI_IDS_DIR"; then
+     AC_ERROR([cannot find pci.ids. Use --with-pci-ids to specify location])
+   fi
+   USE_PCI_IDS=yes
+   AC_DEFINE(USE_PCI_IDS,1,[Whether pci.ids is to be used])
 fi
-if test -z "$HWDATA_DIR"; then
-   AC_ERROR(cannot find pci.ids. Use --with-hwdata to specify location)
+
+if test "x$enable_usb_ids" = "xno" ; then
+  USE_PCI_IDS=no
+else 
+   if test -z "$USB_IDS_DIR"; then
+     AC_ERROR([cannot find usb.ids. Use --with-usb-ids to specify location])
+   fi
+   USE_PCI_IDS=yes
+   AC_DEFINE(USE_USB_IDS,1,[Whether usb.ids is to be used])
 fi
-AC_SUBST(HWDATA_DIR)
-AC_DEFINE_UNQUOTED(HWDATA_DIR,"$HWDATA_DIR", [Where PCI and USB IDs are found])
+
+if test "x$enable_pnp_ids" = "xno" ; then
+  USE_PNP_IDS=no
+else
+  USE_PNP_IDS=yes
+  AC_DEFINE(USE_PNP_IDS,1,[Whether builtin PNP IDs are to be used])
+fi
+
+AC_DEFINE_UNQUOTED(PCI_IDS_DIR,"$PCI_IDS_DIR", [Where PCI IDs are found])
+AC_DEFINE_UNQUOTED(USB_IDS_DIR,"$USB_IDS_DIR", [Where USB IDs are found])
+AC_SUBST(PCI_IDS_DIR)
+AC_SUBST(USB_IDS_DIR)
+AC_SUBST(USE_PCI_IDS)
+AC_SUBST(USE_USB_IDS)
+AC_SUBST(USE_PNP_IDS)
 
 
 AC_ARG_WITH(hal_user,[  --with-hal-user=<user>  User for running the HAL daemon (haldaemon)])
@@ -328,6 +369,13 @@ if test "x$enable_pmu" != "xno"; then
   	AC_DEFINE(HAVE_PMU, [], [Set if we have PMU support])
 fi
 AM_CONDITIONAL(HAVE_PMU, test x$msg_pmu = xyes, [Compiling PMU])
+
+AC_ARG_ENABLE(have_pci, [  --disable-pci          Build without PCI support])
+msg_pci=no
+if test "x$enable_pci" != "xno"; then
+	msg_pci=yes
+ 	AC_DEFINE(HAVE_PCI, [], [Set if we have ACPI support])
+fi
 
 # D-Bus libs
 PKG_CHECK_MODULES(DBUS, [$dbus_module])
@@ -671,7 +719,8 @@ echo "
         localstatedir:              ${LOCALSTATEDIR}
         docdir:                     ${DOCDIR}
         dbus-1 system.d dir:        ${DBUS_SYS_DIR}
-        pci.ids, usb.ids dir:       ${HWDATA_DIR}
+        pci.ids dir:                ${PCI_IDS_DIR}
+        usb.ids dir:                ${USB_IDS_DIR}
 
         compiler:                   ${CC}
         cflags:                     ${CFLAGS}
