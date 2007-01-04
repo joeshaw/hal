@@ -450,14 +450,6 @@ CLASS="literal"
 ></DT
 ><DT
 ><A
-HREF="#device-properties-video_adapter_pm"
-><TT
-CLASS="literal"
->video_adapter_pm</TT
-> namespace</A
-></DT
-><DT
-><A
 HREF="#device-properties-ac_adaptor"
 ><TT
 CLASS="literal"
@@ -625,22 +617,22 @@ HREF="#dbus-api"
 ><DL
 ><DT
 ><A
-HREF="#AEN4344"
+HREF="#AEN4345"
 >Interface org.freedesktop.Hal.Manager</A
 ></DT
 ><DT
 ><A
-HREF="#AEN4363"
+HREF="#AEN4364"
 >Interface org.freedesktop.Hal.Device</A
 ></DT
 ><DT
 ><A
-HREF="#AEN4372"
+HREF="#AEN4373"
 >Interface org.freedesktop.Hal.Device.Volume</A
 ></DT
 ><DT
 ><A
-HREF="#AEN4376"
+HREF="#AEN4377"
 >Interface org.freedesktop.Hal.Device.Storage</A
 ></DT
 ></DL
@@ -1682,6 +1674,59 @@ CLASS="literal"
 ><TD
 >The base D-BUS service of the process holding the lock.</TD
 ></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>info.is_recalled</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>&#13;                This is set if the hardware may be recalled and should
+                be checked for any potential problem.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>info.recall.vendor</TT
+> (string)
+              </TD
+><TD
+>Dell, Sony, HP, Panasonic, etc.</TD
+><TD
+>Yes, if <TT
+CLASS="literal"
+>info.is_recalled</TT
+> is TRUE</TD
+><TD
+>&#13;                The vendor responsible for the hardware recall.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>info.recall.website_url</TT
+> (string)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes, if <TT
+CLASS="literal"
+>info.is_recalled</TT
+> is TRUE</TD
+><TD
+>&#13;                Users should check this website for more details and if their
+                hardware may affected by any possible fault.
+              </TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -1708,7 +1753,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN269"
+NAME="AEN289"
 ></A
 ><TABLE
 BORDER="1"
@@ -1880,7 +1925,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN325"
+NAME="AEN345"
 ></A
 ><TABLE
 BORDER="1"
@@ -2103,7 +2148,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN412"
+NAME="AEN432"
 ></A
 ><TABLE
 BORDER="1"
@@ -2224,7 +2269,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN453"
+NAME="AEN473"
 ></A
 ><TABLE
 BORDER="1"
@@ -2645,7 +2690,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN616"
+NAME="AEN636"
 ></A
 ><TABLE
 BORDER="1"
@@ -2775,7 +2820,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN662"
+NAME="AEN682"
 ></A
 ><TABLE
 BORDER="1"
@@ -2848,7 +2893,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN684"
+NAME="AEN704"
 ></A
 ><TABLE
 BORDER="1"
@@ -2934,7 +2979,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN712"
+NAME="AEN732"
 ></A
 ><TABLE
 BORDER="1"
@@ -3031,7 +3076,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN742"
+NAME="AEN762"
 ></A
 ><TABLE
 BORDER="1"
@@ -3099,7 +3144,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN763"
+NAME="AEN783"
 ></A
 ><TABLE
 BORDER="1"
@@ -3333,7 +3378,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN860"
+NAME="AEN880"
 ></A
 ><TABLE
 BORDER="1"
@@ -3458,7 +3503,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN905"
+NAME="AEN925"
 ></A
 ><TABLE
 BORDER="1"
@@ -3582,7 +3627,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN950"
+NAME="AEN970"
 ></A
 ><TABLE
 BORDER="1"
@@ -3651,7 +3696,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN971"
+NAME="AEN991"
 ></A
 ><TABLE
 BORDER="1"
@@ -3720,7 +3765,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN992"
+NAME="AEN1012"
 ></A
 ><TABLE
 BORDER="1"
@@ -3903,7 +3948,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1061"
+NAME="AEN1081"
 ></A
 ><TABLE
 BORDER="1"
@@ -4093,7 +4138,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1135"
+NAME="AEN1155"
 ></A
 ><TABLE
 BORDER="1"
@@ -4185,7 +4230,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1167"
+NAME="AEN1187"
 ></A
 ><TABLE
 BORDER="1"
@@ -4259,7 +4304,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1192"
+NAME="AEN1212"
 ></A
 ><TABLE
 BORDER="1"
@@ -4370,7 +4415,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1231"
+NAME="AEN1251"
 ></A
 ><TABLE
 BORDER="1"
@@ -4470,7 +4515,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1265"
+NAME="AEN1285"
 ></A
 ><TABLE
 BORDER="1"
@@ -4542,7 +4587,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1290"
+NAME="AEN1310"
 ></A
 ><TABLE
 BORDER="1"
@@ -4827,7 +4872,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1399"
+NAME="AEN1419"
 ></A
 ><TABLE
 BORDER="1"
@@ -4913,7 +4958,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1430"
+NAME="AEN1450"
 ></A
 ><TABLE
 BORDER="1"
@@ -4999,7 +5044,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1461"
+NAME="AEN1481"
 ></A
 ><TABLE
 BORDER="1"
@@ -5156,7 +5201,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1521"
+NAME="AEN1541"
 ></A
 ><TABLE
 BORDER="1"
@@ -5214,7 +5259,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1540"
+NAME="AEN1560"
 ></A
 ><TABLE
 BORDER="1"
@@ -5300,7 +5345,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1568"
+NAME="AEN1588"
 ></A
 ><TABLE
 BORDER="1"
@@ -5479,7 +5524,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1624"
+NAME="AEN1644"
 ></A
 ><TABLE
 BORDER="1"
@@ -5600,7 +5645,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1662"
+NAME="AEN1682"
 ></A
 ><TABLE
 BORDER="1"
@@ -6281,7 +6326,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1915"
+NAME="AEN1935"
 ></A
 ><TABLE
 BORDER="1"
@@ -6421,7 +6466,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN1958"
+NAME="AEN1978"
 ></A
 ><TABLE
 BORDER="1"
@@ -6595,7 +6640,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2016"
+NAME="AEN2036"
 ></A
 ><TABLE
 BORDER="1"
@@ -6977,7 +7022,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2177"
+NAME="AEN2197"
 ></A
 ><TABLE
 BORDER="1"
@@ -7564,7 +7609,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2410"
+NAME="AEN2430"
 ></A
 ><TABLE
 BORDER="1"
@@ -7898,7 +7943,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2544"
+NAME="AEN2564"
 ></A
 ><TABLE
 BORDER="1"
@@ -8058,7 +8103,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2602"
+NAME="AEN2622"
 ></A
 ><TABLE
 BORDER="1"
@@ -8194,7 +8239,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2644"
+NAME="AEN2664"
 ></A
 ><TABLE
 BORDER="1"
@@ -8328,7 +8373,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2682"
+NAME="AEN2702"
 ></A
 ><TABLE
 BORDER="1"
@@ -8394,7 +8439,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2702"
+NAME="AEN2722"
 ></A
 ><TABLE
 BORDER="1"
@@ -8458,7 +8503,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2722"
+NAME="AEN2742"
 ></A
 ><TABLE
 BORDER="1"
@@ -8602,7 +8647,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2772"
+NAME="AEN2792"
 ></A
 ><TABLE
 BORDER="1"
@@ -8817,7 +8862,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2844"
+NAME="AEN2864"
 ></A
 ><TABLE
 BORDER="1"
@@ -8934,7 +8979,7 @@ CLASS="literal"
 ><TD
 >&nbsp;</TD
 ><TD
->Yes</TD
+>No</TD
 ><TD
 >&#13;                The PCM class of the device.
               </TD
@@ -9088,6 +9133,38 @@ CLASS="literal"
 ><TD
 >&#13;                <TT
 CLASS="literal"
+>unknown</TT
+>
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                The type of the device is unknown.
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                <TT
+CLASS="literal"
+>hw_specific</TT
+>
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                This is a hardware specific device (as e.g. from snd_fm801 for Fortemedia FM801 
+		PCI Audio). The driver can use it freely for purposes that are not covered by 
+		standard ALSA API. 
+              </TD
+></TR
+><TR
+><TD
+>&nbsp;</TD
+><TD
+>&#13;                <TT
+CLASS="literal"
 >timer</TT
 >
               </TD
@@ -9164,7 +9241,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN2976"
+NAME="AEN3008"
 ></A
 ><TABLE
 BORDER="1"
@@ -9416,7 +9493,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3065"
+NAME="AEN3097"
 ></A
 ><TABLE
 BORDER="1"
@@ -9537,7 +9614,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3107"
+NAME="AEN3139"
 ></A
 ><TABLE
 BORDER="1"
@@ -9625,7 +9702,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3136"
+NAME="AEN3168"
 ></A
 ><TABLE
 BORDER="1"
@@ -9703,237 +9780,6 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="device-properties-video_adapter_pm"
-><TT
-CLASS="literal"
->video_adapter_pm</TT
-> namespace</A
-></H3
-><P
->&#13;        Device objects with the capability <TT
-CLASS="literal"
->video_adapter_pm</TT
->
-        represent video adapters that need to be suspended or resumed in device
-        specific ways.
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN3164"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Key (type)</TH
-><TH
->Values</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.s3_bios</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Use the S3_BIOS kernel command for suspend.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.s3_mode</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Use the S3_MODE kernel command for suspend.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.dpms_suspend</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Suspend the video card via DPMS.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.vga_mode_3</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Reset the VGA text mode to mode 3 on resume.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.dpms_on</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Reactivate the screen with DPMS on resume.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.vbe_post</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Run the VGA BIOS Power On Self Test (POST) on resume.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.vbestate_restore</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Save the VGA BIOS state before suspend, and restore it on resume.</TD
-></TR
-><TR
-><TD
->&#13;                <TT
-CLASS="literal"
->video_adapter_pm.vbemode_restore</TT
-> (bool)
-              </TD
-><TD
->&nbsp;</TD
-><TD
->No</TD
-><TD
->Save the VGA BIOS mode before suspend, and restore it on resume.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-><P
->&#13;        The following methods exist on the interface
-        <TT
-CLASS="literal"
->org.freedesktop.Hal.Device.VideoAdapterPM</TT
->.
-      </P
-><DIV
-CLASS="informaltable"
-><P
-></P
-><A
-NAME="AEN3223"
-></A
-><TABLE
-BORDER="1"
-BGCOLOR="#E0E0E0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><THEAD
-><TR
-><TH
->Method (parameter types)</TH
-><TH
->Parameters</TH
-><TH
->Mandatory</TH
-><TH
->Description</TH
-></TR
-></THEAD
-><TBODY
-><TR
-><TD
->&#13;                void <TT
-CLASS="literal"
->SuspendVideo</TT
-> (void)
-              </TD
-><TD
->None</TD
-><TD
->No</TD
-><TD
->&#13;                Suspends the video adapter using the quirks specified.
-              </TD
-></TR
-><TR
-><TD
->&#13;                void <TT
-CLASS="literal"
->ResumeVideo</TT
-> (void)
-              </TD
-><TD
->None</TD
-><TD
->No</TD
-><TD
->&#13;                Resumes the video adapter using the quirks specified.
-              </TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
 NAME="device-properties-ac_adaptor"
 ><TT
 CLASS="literal"
@@ -9952,7 +9798,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3249"
+NAME="AEN3196"
 ></A
 ><TABLE
 BORDER="1"
@@ -10019,7 +9865,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3269"
+NAME="AEN3216"
 ></A
 ><TABLE
 BORDER="1"
@@ -10960,7 +10806,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3594"
+NAME="AEN3541"
 ></A
 ><TABLE
 BORDER="1"
@@ -11075,7 +10921,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3638"
+NAME="AEN3585"
 ></A
 ><TABLE
 BORDER="1"
@@ -11143,7 +10989,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3659"
+NAME="AEN3606"
 ></A
 ><TABLE
 BORDER="1"
@@ -11238,7 +11084,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3691"
+NAME="AEN3638"
 ></A
 ><TABLE
 BORDER="1"
@@ -11350,7 +11196,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3733"
+NAME="AEN3680"
 ></A
 ><TABLE
 BORDER="1"
@@ -11489,7 +11335,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3789"
+NAME="AEN3736"
 ></A
 ><TABLE
 BORDER="1"
@@ -11610,6 +11456,133 @@ CLASS="literal"
                 should be used in its place. This key will be removed, but not before May 1st 2007.
               </TD
 ></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.is_powersave_set</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>Yes</TD
+><TD
+>&#13;                Is the last value passed to the SetPowerSave method.
+              </TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.s3_bios</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Use the S3_BIOS kernel command for suspend.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.s3_mode</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Use the S3_MODE kernel command for suspend.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.dpms_suspend</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Suspend the video card via DPMS on suspend.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.vga_mode_3</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Reset the VGA text mode to mode 3 on resume.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.dpms_on</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Reactivate the screen with DPMS on resume.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.vbe_post</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Run the VGA BIOS Power On Self Test (POST) on resume.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.vbestate_restore</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Save the VGA BIOS state before suspend, and restore it on resume.</TD
+></TR
+><TR
+><TD
+>&#13;                <TT
+CLASS="literal"
+>power_management.quirk.vbemode_restore</TT
+> (bool)
+              </TD
+><TD
+>&nbsp;</TD
+><TD
+>No</TD
+><TD
+>Save the VGA BIOS mode before suspend, and restore it on resume.</TD
+></TR
 ></TBODY
 ></TABLE
 ><P
@@ -11627,7 +11600,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3833"
+NAME="AEN3834"
 ></A
 ><TABLE
 BORDER="1"
@@ -11703,7 +11676,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3856"
+NAME="AEN3857"
 ></A
 ><TABLE
 BORDER="1"
@@ -11867,7 +11840,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3909"
+NAME="AEN3910"
 ></A
 ><TABLE
 BORDER="1"
@@ -11986,7 +11959,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3947"
+NAME="AEN3948"
 ></A
 ><TABLE
 BORDER="1"
@@ -12079,7 +12052,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN3975"
+NAME="AEN3976"
 ></A
 ><TABLE
 BORDER="1"
@@ -12247,7 +12220,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN4027"
+NAME="AEN4028"
 ></A
 ><TABLE
 BORDER="1"
@@ -12382,7 +12355,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN4068"
+NAME="AEN4069"
 ></A
 ><TABLE
 BORDER="1"
@@ -13327,7 +13300,7 @@ CLASS="informaltable"
 ><P
 ></P
 ><A
-NAME="AEN4302"
+NAME="AEN4303"
 ></A
 ><TABLE
 BORDER="1"
@@ -13490,7 +13463,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4344"
+NAME="AEN4345"
 >Interface org.freedesktop.Hal.Manager</A
 ></H3
 ><P
@@ -13594,7 +13567,7 @@ CLASS="sect3"
 ><HR><H4
 CLASS="sect3"
 ><A
-NAME="AEN4355"
+NAME="AEN4356"
 >Example</A
 ></H4
 ><P
@@ -13612,20 +13585,18 @@ CLASS="programlisting"
  
 import gtk
 import dbus
+import dbus.glib
 
-def device_added(interface, signal_name, service, path, message):
-    [udi] = message.get_args_list ()
+def device_added(udi):
     print 'Device %s was added'%udi
 
-def device_removed(interface, signal_name, service, path, message):
-    [udi] = message.get_args_list ()
+def device_removed(udi):
     print 'Device %s was removed'%udi
 
  
 bus = dbus.Bus (dbus.Bus.TYPE_SYSTEM)
-hal_service = bus.get_service ('org.freedesktop.Hal')
-hal_manager = hal_service.get_object ('/org/freedesktop/Hal/Manager',
-				      'org.freedesktop.Hal.Manager')
+hal_manager = bus.get_object ('org.freedesktop.Hal',
+                              '/org/freedesktop/Hal/Manager')
 
 devices = hal_manager.GetAllDevices ()
 for d in devices:
@@ -13703,7 +13674,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4363"
+NAME="AEN4364"
 >Interface org.freedesktop.Hal.Device</A
 ></H3
 ><P
@@ -13854,7 +13825,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4372"
+NAME="AEN4373"
 >Interface org.freedesktop.Hal.Device.Volume</A
 ></H3
 ><P
@@ -13914,7 +13885,7 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN4376"
+NAME="AEN4377"
 >Interface org.freedesktop.Hal.Device.Storage</A
 ></H3
 ><P

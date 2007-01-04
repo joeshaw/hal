@@ -170,7 +170,7 @@ battery_refresh_poll (HalDevice *d)
 		 * or greater than design, then use design voltage.
 		 */
 		if (voltage < (design_voltage/2)  || voltage > design_voltage) {
-			HAL_DEBUG (("Current voltage is unknown, smaller than 50% or greater than design"));
+			HAL_DEBUG (("Current voltage is unknown, smaller than 50%% or greater than design"));
 			voltage = design_voltage;
 		}
 
