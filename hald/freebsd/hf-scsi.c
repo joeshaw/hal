@@ -3,7 +3,7 @@
  *
  * hf-scsi.c : SCSI support
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@
 #include "../logger.h"
 
 #include "hf-scsi.h"
+#include "hf-ata.h"
 #include "hf-block.h"
 #include "hf-devtree.h"
 #include "hf-storage.h"
@@ -273,14 +274,17 @@ static HalDevice *
 hf_scsi_get_atapi_device (HalDevice *ata_channel, int lun)
 {
   HalDevice *device = NULL;
-  GSList *children;
-  GSList *l;
+  GList *l;
 
   g_return_val_if_fail(HAL_IS_DEVICE(ata_channel), NULL);
   g_return_val_if_fail(lun == 0 || lun == 1, NULL); /* ATA master or slave*/
 
-  children = hf_device_store_get_children(hald_get_gdl(), ata_channel);
-  HF_LIST_FOREACH(l, children)
+  /*
+   * If there's an ATAPI device it will be in hf_ata_pending_devices,
+   * since we haven't called hf_ata_add_pending_devices() yet.
+   */
+
+  HF_LIST_FOREACH(l, hf_ata_pending_devices)
     {
       HalDevice *child = l->data;
       const char *driver;
@@ -294,7 +298,6 @@ hf_scsi_get_atapi_device (HalDevice *ata_channel, int lun)
 	    break;		/* we wanted the first device, done */
 	}
     }
-  g_slist_free(children);
 
   return device;
 }
@@ -313,16 +316,16 @@ hf_scsi_handle_pending_device (struct device_match_result **match,
       parent = hal_device_store_match_key_value_int(hald_get_gdl(), "scsi_host.host", (*match)->path_id);
       if (! parent || ! hal_device_property_get_bool(parent, "info.ignore"))
 	{
+	  HalDevice *atapi_device = NULL;
 	  HalDevice *scsi_device;
-	  gboolean ignore = FALSE;
 	  int type;
 
 	  /*
 	   * If the device's parent (the SCSI bus) is an atapicam(4)
-	   * bus, we shall ignore the device unless its corresponding
-	   * ATAPI device was ignored. This is to ensure that the same
-	   * physical device will only be handled once (through ATA or
-	   * SCSI).
+	   * bus, we shall ignore the corresponding ATAPI device
+	   * unless this device was ignored. This is to ensure that
+	   * the same physical device will only be handled once
+	   * (through ATA or SCSI).
 	   */
 	  if (parent)
 	    {
@@ -331,8 +334,6 @@ hf_scsi_handle_pending_device (struct device_match_result **match,
 	      ata_channel = hf_scsi_get_ata_channel(parent);
 	      if (ata_channel)
 		{
-		  HalDevice *atapi_device;
-
 		  atapi_device = hf_scsi_get_atapi_device(ata_channel, (*match)->target_lun);
 		  if (atapi_device)
                     {
@@ -345,9 +346,6 @@ hf_scsi_handle_pending_device (struct device_match_result **match,
 		      hal_device_property_set_string(atapi_device, "block.freebsd.cam_path", scsi_path);
 		      g_free(cam_devname);
 		      g_free(scsi_path);
-
-		      if (! hal_device_property_get_bool(atapi_device, "info.ignore"))
-		        ignore = TRUE; /* ATAPI device not ignored, so ignore this one */
 		    }
 		}
 	    }
@@ -359,22 +357,24 @@ hf_scsi_handle_pending_device (struct device_match_result **match,
 	      hf_scsi_is_cdrom(type)))
 	    {
 	      HalDevice *block_device;
+	      char *scsi_path;
 
 	      block_device = hf_scsi_block_device_new(scsi_device, *match, *devname);
-	      if (ignore)
-                {
-		  hal_device_property_set_bool(block_device, "info.ignore", TRUE);
-		}
-	      else
-                {
-                  char *scsi_path;
 
-		  scsi_path = g_strdup_printf("%d,%d,%d", (*match)->path_id, (*match)->target_id, (*match)->target_lun);
-                  hal_device_property_set_string(block_device, "block.freebsd.cam_path", scsi_path);
-		  g_free(scsi_path);
-		}
+	      scsi_path = g_strdup_printf("%d,%d,%d", (*match)->path_id, (*match)->target_id, (*match)->target_lun);
+	      hal_device_property_set_string(block_device, "block.freebsd.cam_path", scsi_path);
+	      g_free(scsi_path);
+
 	      if (hf_device_preprobe(block_device))
 		{
+		  /*
+		   * The device was not ignored. If there is a
+		   * corresponding ATAPI device, ignore it (see above
+		   * comment).
+		   */
+		  if (atapi_device)
+		    hal_device_property_set_bool(atapi_device, "info.ignore", TRUE);
+
 		  hf_runner_run_sync(block_device, 0, "hald-probe-scsi", NULL);
 
 		  /*
@@ -407,7 +407,7 @@ hf_scsi_probe (void)
   char *pending_devname = NULL;
 
   if (hf_scsi_fd < 0)
-    return;			/* already warned in hf_scsi_init() */
+    goto end;			/* already warned in hf_scsi_init() */
 
   memset(&ccb, 0, sizeof(ccb));
 
@@ -537,6 +537,14 @@ hf_scsi_probe (void)
   hf_scsi_handle_pending_device(&pending_device, &pending_devname);
 
   g_free(ccb.cdm.matches);
+
+ end:
+  /*
+   * Now that we have probed the SCSI devices and ignored the ATAPI
+   * devices as necessary, it is time to add the pending ATA block
+   * devices.
+   */
+  hf_ata_add_pending_devices();
 }
 
 HFHandler hf_scsi_handler = {

@@ -3,7 +3,7 @@
  *
  * hf-ata.c : ATA support
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,6 +44,8 @@
 #define HF_ATA_DEVICE			"/dev/ata"
 
 static int hf_ata_fd;
+
+GList *hf_ata_pending_devices = NULL;
 
 /* adapted from ad_describe() in sys/dev/ata/atadisk.c */
 static char *
@@ -222,9 +224,30 @@ hf_ata_probe_devices (HalDevice *ide_host)
 	    HalDevice *block_device;
 
 	    block_device = hf_ata_block_device_new(ide_device, i, &devices);
-	    hf_storage_device_add(block_device);
+
+	    /*
+	     * hf-scsi might need to ignore the device, so we cannot
+	     * add it immediately (we cannot ignore a device after it
+	     * was added). We will therefore add the device to a
+	     * pending list, and let hf-scsi call
+	     * hf_ata_add_pending_devices() to add the pending
+	     * devices.
+	     */
+	    hf_ata_pending_devices = g_list_append(hf_ata_pending_devices, block_device);
 	  }
       }
+}
+
+void
+hf_ata_add_pending_devices (void)
+{
+  GList *l;
+
+  HF_LIST_FOREACH(l, hf_ata_pending_devices)
+    hf_storage_device_add(l->data);
+
+  g_list_free(hf_ata_pending_devices);
+  hf_ata_pending_devices = NULL;
 }
 
 static void
@@ -240,6 +263,13 @@ hf_ata_probe (void)
 {
   GSList *gdl_devices;
   GSList *l;
+
+  /*
+   * There must be no pending device, otherwise hf-scsi did not call
+   * hf_ata_add_pending_devices() during the previous probe and there
+   * is a bug somewhere.
+   */
+  g_assert(hf_ata_pending_devices == NULL);
 
   if (hf_ata_fd < 0)
     return;
