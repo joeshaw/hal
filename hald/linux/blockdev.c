@@ -638,7 +638,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
 	if (parent == NULL && !is_partition && !is_fakevolume) {
-		GError *err = NULL;
 		DIR * dir;
 		struct dirent *dp;
 		
@@ -664,7 +663,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		if ((dir = opendir (path)) == NULL) {
 			HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
 		} else {
-			const char *f;
 			while (((dp = readdir (dir)) != NULL) && (parent == NULL)) {
 				char *link;
 				char *target;
