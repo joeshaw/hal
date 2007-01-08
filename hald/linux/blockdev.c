@@ -32,6 +32,7 @@
 #include <mntent.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <syslog.h>
@@ -637,8 +638,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
 	if (parent == NULL && !is_partition && !is_fakevolume) {
-		GDir *dir;
 		GError *err = NULL;
+		DIR * dir;
+		struct dirent *dp;
+		
 		char path[HAL_PATH_MAX];
 
 
@@ -657,16 +660,16 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
 		HAL_INFO (("Looking in %s", path));
-		if ((dir = g_dir_open (path, 0, &err)) == NULL) {
-			HAL_WARNING (("Unable to open %s: %s", path, err->message));
-			g_error_free (err);
+
+		if ((dir = opendir (path)) == NULL) {
+			HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
 		} else {
 			const char *f;
-			while (((f = g_dir_read_name (dir)) != NULL) && (parent == NULL)) {
+			while (((dp = readdir (dir)) != NULL) && (parent == NULL)) {
 				char *link;
 				char *target;
 
-				link = g_strdup_printf ("%s/%s", path, f);
+				link = g_strdup_printf ("%s/%s", path, dp->d_name);
 				target = resolve_symlink (link);
 				HAL_INFO ((" %s -> %s", link, target));
 
@@ -703,7 +706,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				}
 				g_free (target);
 			}
-			g_dir_close (dir);
+			closedir(dir);
 			HAL_INFO (("Done looking in %s", path));
 		}
 		
