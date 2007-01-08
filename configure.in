@@ -535,6 +535,13 @@ elif test "x$with_macbookpro" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
 
+AC_ARG_WITH(nokia770,     [  --with-nokia770       Whether to build Nokia 770 utils (no)])
+BUILD_N770=no
+if test "x$with_nokia770" = "xyes"; then
+    BUILD_N770=yes
+fi
+AM_CONDITIONAL(BUILD_N770, test x$BUILD_N770 = xyes)
+
 dnl cpufreq
 AC_ARG_WITH(cpufreq,        [  --with-cpufreq          Whether to build cpufreq utils (auto)])
 BUILD_CPUFREQ=no
