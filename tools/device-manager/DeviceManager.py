@@ -360,7 +360,7 @@ class DeviceManager(LibGladeApplication):
 	    category.set_label("Unknown")
 
 	if device.properties.has_key("info.capabilities"):
-            capabilities.set_label("%s"%device.properties["info.capabilities"])
+            capabilities.set_label(", ".join(device.properties["info.capabilities"]))
 	else:
 	    capabilities.set_label("Unknown")
 
@@ -454,6 +454,8 @@ class DeviceManager(LibGladeApplication):
                     store.set(iter, 0, p, 1, "bool", 2, "false")
             elif ptype==float:
                 store.set(iter, 0, p, 1, "float", 2, "%f"%val)
+	    elif ptype==list:
+		store.set(iter, 0, p, 1, "list", 2, ", ".join(val))
 	    else:
 		# assume strlist
 		store.set(iter, 0, p, 1, "strlist", 2, val)
