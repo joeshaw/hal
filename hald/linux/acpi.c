@@ -777,7 +777,7 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 	} else if (acpi_type == ACPI_TYPE_OMNIBOOK_DISPLAY) {
 		type = "omnibook";
 		desc = "Omnibook LCD Panel";
-		br_levels = 8;
+		br_levels = 11;
 	} else if (acpi_type == ACPI_TYPE_SONYPI_DISPLAY) {
 		type = "sonypi";
 		desc = "Sony LCD Panel";
