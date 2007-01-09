@@ -70,6 +70,7 @@
 	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
 	  <append key="volume.mount.valid_options" type="strlist">ro</append>
 	  <append key="volume.mount.valid_options" type="strlist">noexec</append>
+	  <append key="volume.mount.valid_options" type="strlist">noatime</append>
 	</match>
       </match>
     </match>
@@ -142,6 +143,7 @@
       <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
         <append key="volume.mount.valid_options" type="strlist">ro</append>
 	<append key="volume.mount.valid_options" type="strlist">noexec</append>
+	<append key="volume.mount.valid_options" type="strlist">noatime</append>
       </match>
 
       <!-- allow these mount options for vfat -->
@@ -161,6 +163,11 @@
 	  <append key="volume.mount.valid_options" type="strlist">shortnames</append>
 	  <append key="volume.mount.valid_options" type="strlist">nowin95</append>
 	  <append key="volume.mount.valid_options" type="strlist">-u=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-g=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-m=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-M=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-L=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-D=</append>
 	</match>
       </match>
 
@@ -188,6 +195,10 @@
 	  <append key="volume.mount.valid_options" type="strlist">-u=</append>
 	  <append key="volume.mount.valid_options" type="strlist">-g=</append>
 	  <append key="volume.mount.valid_options" type="strlist">-m=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-a</append>
+	  <append key="volume.mount.valid_options" type="strlist">-i</append>
+	  <append key="volume.mount.valid_options" type="strlist">-C=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-W=</append>
 	</match>
       </match>
 
@@ -201,6 +212,10 @@
 	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
 	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
 	  <append key="volume.mount.valid_options" type="strlist">umask=</append>
+	</match>
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
+	  <append key="volume.mount.valid_options" type="strlist">-C=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-v</append>
 	</match>
       </match>
 
@@ -218,6 +233,9 @@
 	  <append key="volume.mount.valid_options" type="strlist">nojoliet</append>
 	  <append key="volume.mount.valid_options" type="strlist">norrip</append>
 	  <append key="volume.mount.valid_options" type="strlist">nostrictjoliet</append>
+	  <append key="volume.mount.valid_options" type="strlist">-s=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-C=</append>
+	  <append key="volume.mount.valid_options" type="strlist">-v</append>
 	</match>
       </match>
 

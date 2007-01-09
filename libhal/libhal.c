@@ -3592,7 +3592,7 @@ libhal_changeset_append (LibHalChangeSet *changeset, LibHalChangeSetElement *ele
 
 
 /**
- * libhal_device_set_property_string:
+ * libhal_changeset_set_property_string:
  * @changeset: the changeset
  * @key: key of property 
  * @value: the value to set
@@ -3631,7 +3631,7 @@ out:
 }
 
 /**
- * libhal_device_set_property_int:
+ * libhal_changeset_set_property_int:
  * @changeset: the changeset
  * @key: key of property 
  * @value: the value to set
@@ -3664,7 +3664,7 @@ out:
 }
 
 /**
- * libhal_device_set_property_uint64:
+ * libhal_changeset_set_property_uint64:
  * @changeset: the changeset
  * @key: key of property 
  * @value: the value to set
@@ -3697,7 +3697,7 @@ out:
 }
 
 /**
- * libhal_device_set_property_double:
+ * libhal_changeset_set_property_double:
  * @changeset: the changeset
  * @key: key of property 
  * @value: the value to set
@@ -3730,7 +3730,7 @@ out:
 }
 
 /**
- * libhal_device_set_property_bool:
+ * libhal_changeset_set_property_bool:
  * @changeset: the changeset
  * @key: key of property 
  * @value: the value to set

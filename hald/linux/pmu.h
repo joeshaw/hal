@@ -25,16 +25,20 @@
 #include "../hald.h"
 #include "hotplug.h"
 
+#ifdef HAVE_PMU
 gboolean pmu_synthesize_hotplug_events (void);
-
 void hotplug_event_begin_add_pmu (const gchar *pmu_path, int pmu_type, HalDevice *parent, void *end_token);
-
 void hotplug_event_begin_remove_pmu (const gchar *pmu_path, int pmu_type, void *end_token);
-
 gboolean pmu_rescan_device (HalDevice *d);
-
 HotplugEvent *pmu_generate_add_hotplug_event (HalDevice *d);
-
 HotplugEvent *pmu_generate_remove_hotplug_event (HalDevice *d);
+#else /* HAVE_PMU */
+static inline gboolean pmu_synthesize_hotplug_events (void) {return FALSE;}
+static inline void hotplug_event_begin_add_pmu (const gchar *pmu_path, int pmu_type, HalDevice *parent, void *end_token) {return;}
+static inline void hotplug_event_begin_remove_pmu (const gchar *pmu_path, int pmu_type, void *end_token) {return;}
+static inline gboolean pmu_rescan_device (HalDevice *d) {return FALSE;}
+static inline HotplugEvent *pmu_generate_add_hotplug_event (HalDevice *d) {return NULL;}
+static inline HotplugEvent *pmu_generate_remove_hotplug_event (HalDevice *d) {return NULL;}
+#endif /* HAVE_PMU */
 
 #endif /* PMU_H */

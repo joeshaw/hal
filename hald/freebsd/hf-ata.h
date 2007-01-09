@@ -3,7 +3,7 @@
  *
  * hf-ata.h : ATA support
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,10 @@
 #include "hf-osspec.h"
 
 extern HFHandler hf_ata_handler;
+
+extern GList *hf_ata_pending_devices;
+
+void hf_ata_add_pending_devices (void);
 
 void hf_ata_channel_set_properties (HalDevice *device);
 

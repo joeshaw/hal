@@ -1,3 +1,41 @@
+hal-info
+===
+
+The information FDI scripts have been moved to a subpackage called hal-info.
+
+Q: What is it?
+A: hal-info is just a small hal package that provides hardware data and quirks.
+   These quirks are currently things like what mice support reporting battery
+   status, what music players are supported and what cameras are detected.
+   This could also include a list of display adaptors that need resuming
+   or a list of broken batteries that might explode.
+
+Q: Why split the information data from the main tarball?
+A: Well, policy and probing information is still in the daemon package where
+   they belong. Hal is released every few months with updated
+   dependencies and lots of snazzy new features.
+   Users love this, stable distributions hate it, and don't update HAL,
+   missing the newest hardware quirk updates. This means that new hardware
+   often won't work out of the box until the next version of the distro
+   is released.
+
+So, for example, stable distro 'x' ships HAL 0.5.9 with no intention
+of updating it other than for security fixes. Stable distro 'x'
+does however update from hal-info-20061107 to hal-info-{date} as there
+are no new features, minimal risk of breaking, and lots of chance that
+more hardware that didn't work now will.
+
+What does this mean for:
+
+ * An end user: Not much - all the fdi files are installed in the
+   same places as they used to be.
+ * A distro packager: hal should depend on hal-info, of any version.
+   Existing patches to the fdi files in fdi/information should be moved
+   to the hal-info product.
+ * Release architect: updating hal-info shouldn't break anything
+   that already works or add new dependencies.
+ * Developer: hal-info should be checked out in the same level
+   directory as hal if you intend to use ./run-hald.sh
 
 SCM
 ===

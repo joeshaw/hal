@@ -10,12 +10,25 @@ INCLUDES = \
 
 if HALD_COMPILE_LINUX
 libexec_PROGRAMS  = 			\
-	hald-addon-acpi 		\
-	hald-addon-acpi-buttons-toshiba \
 	hald-addon-hid-ups 		\
 	hald-addon-keyboard 		\
-	hald-addon-pmu			\
 	hald-addon-storage
+
+if HAVE_PMU
+libexec_PROGRAMS  += 			\
+	hald-addon-pmu
+endif
+
+if HAVE_ACPI
+libexec_PROGRAMS  += 			\
+	hald-addon-acpi 		\
+	hald-addon-acpi-buttons-toshiba
+endif
+
+if BUILD_N770
+libexec_PROGRAMS  +=			\
+	hald-addon-nokia770-backlight
+endif
 
 if BUILD_MACBOOKPRO
 libexec_PROGRAMS += hald-addon-macbookpro-backlight
@@ -54,3 +67,8 @@ hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_addon_storage_SOURCES = addon-storage.c ../../logger.c ../../util_helper.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la
+
+if BUILD_N770
+hald_addon_nokia770_backlight_SOURCES = addon-nokia770-backlight.c ../../logger.c ../../util_helper.c
+hald_addon_nokia770_backlight_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
+endif

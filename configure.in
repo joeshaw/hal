@@ -123,7 +123,7 @@ if test "x$use_parted" = "xyes" ; then
 		printf( "Found libparted %s", ped_get_version() ) ;
 
 	if ((major == 1 && minor == 7 && micro == 1) ||
-	    (major == 1 && minor == 8 && micro == 0)
+	    (major == 1 && minor == 8 && micro == 0) ||
 	    (major == 1 && minor == 8 && micro == 1))
 	   return 0;
 
@@ -300,6 +300,29 @@ if test "x$enable_policy_kit" != "xno"; then
 	   AC_MSG_ERROR([PolicyKit not explicitly disabled and no PolicyKit found])
 	fi
 fi
+
+# what extra hotplug backends to use (ACPI, APM, PMU etc)
+AC_ARG_ENABLE(have_acpi, [  --disable-acpi          Build without ACPI support])
+msg_acpi=no
+if test "x$enable_acpi" != "xno"; then
+	msg_acpi=yes
+  	AC_DEFINE(HAVE_ACPI, [], [Set if we have ACPI support])
+fi
+AM_CONDITIONAL(HAVE_ACPI, test x$msg_acpi = xyes, [Compiling ACPI])
+AC_ARG_ENABLE(have_apm, [  --disable-apm           Build without APM support])
+msg_apm=no
+if test "x$enable_apm" != "xno"; then
+	msg_apm=yes
+  	AC_DEFINE(HAVE_APM, [], [Set if we have APM support])
+fi
+AM_CONDITIONAL(HAVE_APM, test x$msg_apm = xyes, [Compiling APM])
+AC_ARG_ENABLE(have_pmu, [  --disable-pmu           Build without PMU support])
+msg_pmu=no
+if test "x$enable_pmu" != "xno"; then
+	msg_pmu=yes
+  	AC_DEFINE(HAVE_PMU, [], [Set if we have PMU support])
+fi
+AM_CONDITIONAL(HAVE_PMU, test x$msg_pmu = xyes, [Compiling PMU])
 
 # D-Bus libs
 PKG_CHECK_MODULES(DBUS, [$dbus_module])
@@ -512,6 +535,13 @@ elif test "x$with_macbookpro" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
 
+AC_ARG_WITH(nokia770,     [  --with-nokia770       Whether to build Nokia 770 utils (no)])
+BUILD_N770=no
+if test "x$with_nokia770" = "xyes"; then
+    BUILD_N770=yes
+fi
+AM_CONDITIONAL(BUILD_N770, test x$BUILD_N770 = xyes)
+
 dnl cpufreq
 AC_ARG_WITH(cpufreq,        [  --with-cpufreq          Whether to build cpufreq utils (auto)])
 BUILD_CPUFREQ=no
@@ -633,6 +663,9 @@ echo "
         use libpci:                 ${USE_LIBPCI}
         use libparted:              ${USE_PARTED}
         use PolicyKit:              ${msg_polkit}
+        use ACPI:                   ${msg_acpi}
+        use PMU:                    ${msg_pmu}
+        use APM:                    ${msg_apm}
 
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)

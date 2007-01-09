@@ -364,7 +364,7 @@ main (int argc, char **argv)
 
       /* the following code was adapted from linux's probe-volume.c */
 
-      cdrom = hfp_cdrom_new_from_fd(fd, device_file);
+      cdrom = hfp_cdrom_new_from_fd(fd, device_file, parent_udi);
       if (cdrom)
 	{
 	  type = get_disc_type(cdrom);

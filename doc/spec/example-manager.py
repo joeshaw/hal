@@ -2,20 +2,18 @@
  
 import gtk
 import dbus
+import dbus.glib
 
-def device_added(interface, signal_name, service, path, message):
-    [udi] = message.get_args_list ()
+def device_added(udi):
     print 'Device %s was added'%udi
 
-def device_removed(interface, signal_name, service, path, message):
-    [udi] = message.get_args_list ()
+def device_removed(udi):
     print 'Device %s was removed'%udi
 
  
 bus = dbus.Bus (dbus.Bus.TYPE_SYSTEM)
-hal_service = bus.get_service ('org.freedesktop.Hal')
-hal_manager = hal_service.get_object ('/org/freedesktop/Hal/Manager',
-				      'org.freedesktop.Hal.Manager')
+hal_manager = bus.get_object ('org.freedesktop.Hal',
+                              '/org/freedesktop/Hal/Manager')
 
 devices = hal_manager.GetAllDevices ()
 for d in devices:

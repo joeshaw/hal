@@ -40,6 +40,7 @@ static struct
 {
   const struct timeval	update_interval;
   char			*device_file;
+  char			*parent;
   boolean		is_cdrom;
   boolean		had_media;
   struct timeval	next_update;
@@ -78,7 +79,7 @@ hf_addon_storage_update (void)
     {
       HFPCDROM *cdrom;
 
-      cdrom = hfp_cdrom_new(addon.device_file);
+      cdrom = hfp_cdrom_new(addon.device_file, addon.parent);
       if (cdrom)
 	{
 	  if (hfp_cdrom_test_unit_ready(cdrom))
@@ -126,6 +127,10 @@ main (int argc, char **argv)
 
   drive_type = getenv("HAL_PROP_STORAGE_DRIVE_TYPE");
   if (! drive_type)
+    goto end;
+
+  addon.parent = getenv("HAL_PROP_INFO_PARENT");
+  if (! addon.parent)
     goto end;
 
   /* give a meaningful process title for ps(1) */

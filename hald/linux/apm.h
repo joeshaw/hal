@@ -26,16 +26,20 @@
 #include "../hald.h"
 #include "hotplug.h"
 
+#ifdef HAVE_APM
 gboolean apm_synthesize_hotplug_events (void);
-
 void hotplug_event_begin_add_apm (const gchar *apm_path, int apm_type, HalDevice *parent, void *end_token);
-
 void hotplug_event_begin_remove_apm (const gchar *apm_path, int apm_type, void *end_token);
-
 gboolean apm_rescan_device (HalDevice *d);
-
 HotplugEvent *apm_generate_add_hotplug_event (HalDevice *d);
-
 HotplugEvent *apm_generate_remove_hotplug_event (HalDevice *d);
+#else /* HAVE_APM */
+static inline gboolean apm_synthesize_hotplug_events (void) {return FALSE;}
+static inline void hotplug_event_begin_add_apm (const gchar *apm_path, int apm_type, HalDevice *parent, void *end_token) {return;}
+static inline void hotplug_event_begin_remove_apm (const gchar *apm_path, int apm_type, void *end_token) {return;}
+static inline gboolean apm_rescan_device (HalDevice *d) {return FALSE;}
+static inline HotplugEvent *apm_generate_add_hotplug_event (HalDevice *d) {return NULL;}
+static inline HotplugEvent *apm_generate_remove_hotplug_event (HalDevice *d) {return NULL;}
+#endif /* HAVE_APM */
 
 #endif /* APM_H */

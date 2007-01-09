@@ -21,6 +21,10 @@ if BUILD_USBCSR
 dist_fdi_DATA += 10-usbcsr-mice.fdi
 endif
 
+if BUILD_N770
+dist_fdi_DATA += 10-nokia770-backlight.fdi
+endif
+
 check:
 	for f in $(dist_fdi_DATA); do \
             echo -n "Validate XML in $$f : "; \

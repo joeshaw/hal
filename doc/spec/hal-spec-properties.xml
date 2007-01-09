@@ -4642,132 +4642,6 @@
         </tgroup>
       </informaltable>
     </sect2>
-    <sect2 id="device-properties-video_adapter_pm">
-      <title>
-        <literal>video_adapter_pm</literal> namespace
-      </title>
-      <para>
-        Device objects with the capability <literal>video_adapter_pm</literal>
-        represent video adapters that need to be suspended or resumed in device
-        specific ways.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.s3_bios</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Use the S3_BIOS kernel command for suspend.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.s3_mode</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Use the S3_MODE kernel command for suspend.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.dpms_suspend</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Suspend the video card via DPMS.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.vga_mode_3</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Reset the VGA text mode to mode 3 on resume.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.dpms_on</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Reactivate the screen with DPMS on resume.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.vbe_post</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Run the VGA BIOS Power On Self Test (POST) on resume.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.vbestate_restore</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Save the VGA BIOS state before suspend, and restore it on resume.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>video_adapter_pm.vbemode_restore</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Save the VGA BIOS mode before suspend, and restore it on resume.</entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-      <para>
-        The following methods exist on the interface
-        <literal>org.freedesktop.Hal.Device.VideoAdapterPM</literal>.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Method (parameter types)</entry>
-              <entry>Parameters</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                void <literal>SuspendVideo</literal> (void)
-              </entry>
-              <entry>None</entry>
-              <entry>No</entry>
-              <entry>
-                Suspends the video adapter using the quirks specified.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                void <literal>ResumeVideo</literal> (void)
-              </entry>
-              <entry>None</entry>
-              <entry>No</entry>
-              <entry>
-                Resumes the video adapter using the quirks specified.
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
     <sect2 id="device-properties-ac_adaptor">
       <title>
         <literal>ac_adaptor</literal> namespace
@@ -5770,6 +5644,70 @@
               <entry>
                 Is the last value passed to the SetPowerSave method.
               </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.s3_bios</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Use the S3_BIOS kernel command for suspend.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.s3_mode</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Use the S3_MODE kernel command for suspend.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.dpms_suspend</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Suspend the video card via DPMS on suspend.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.vga_mode_3</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Reset the VGA text mode to mode 3 on resume.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.dpms_on</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Reactivate the screen with DPMS on resume.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.vbe_post</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Run the VGA BIOS Power On Self Test (POST) on resume.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.vbestate_restore</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Save the VGA BIOS state before suspend, and restore it on resume.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.vbemode_restore</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Save the VGA BIOS mode before suspend, and restore it on resume.</entry>
             </row>
           </tbody>
         </tgroup>
