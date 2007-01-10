@@ -48,6 +48,12 @@ libexec_PROGRAMS += hald-addon-usb-csr
 hald_addon_usb_csr_SOURCES = addon-usb-csr.c ../../logger.c ../../util_helper.c
 hald_addon_usb_csr_LDADD = $(top_builddir)/libhal/libhal.la -lusb @GLIB_LIBS@
 endif
+
+if BUILD_DELL
+libexec_PROGRAMS += hald-addon-dell-backlight
+hald_addon_dell_backlight_SOURCES = addon-dell-backlight.cpp ../../logger.c 
+hald_addon_dell_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lsmbios @GLIB_LIBS@ 
+endif
 endif
 
 hald_addon_acpi_SOURCES = addon-acpi.c ../../logger.c ../../util_helper.c

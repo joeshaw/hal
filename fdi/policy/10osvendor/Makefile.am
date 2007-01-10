@@ -25,6 +25,10 @@ if BUILD_N770
 dist_fdi_DATA += 10-nokia770-backlight.fdi
 endif
 
+if BUILD_DELL
+dist_fdi_DATA += 10-dell-laptop-brightness.fdi
+endif
+
 check:
 	for f in $(dist_fdi_DATA); do \
             echo -n "Validate XML in $$f : "; \

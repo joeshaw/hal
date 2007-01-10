@@ -245,6 +245,9 @@ else
 	AM_CONDITIONAL(HAVE_LIBUSB,false)
 fi
 
+dnl Check for libsmbios 
+AC_CHECK_LIB(smbios, SMBIOSFreeMemory, [AM_CONDITIONAL(HAVE_SMBIOS, true)], [AM_CONDITIONAL(HAVE_SMBIOS, false)])
+
 dnl Check for libpci
 AC_CHECK_HEADERS(pci/pci.h, [
 	AC_CHECK_LIB(pci, pci_init, [
@@ -576,6 +579,29 @@ elif test "x$with_usb_csr" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_USBCSR, test x$BUILD_USBCSR = xyes)
 
+dnl Dell backlight 
+AC_ARG_WITH(dell-backlight,     [  --with-dell-backlight   Whether to build Dell backlight support (auto)])
+BUILD_DELL=no
+if test "x$with_dell_backlight" = "xyes" ; then
+   BUILD_DELL=yes
+elif test "x$with_dell_backlight" = "x" ; then
+  if test "$HAVE_SMBIOS" != "false" ; then
+    case "${HALD_BACKEND}" in
+      linux)
+        case "${host}" in
+	  i[[3456]]86-*-*)
+            BUILD_DELL=yes
+	    ;;
+	  *)
+	    ;;
+	esac
+        ;;
+      *)
+        ;;
+    esac
+   fi
+fi
+AM_CONDITIONAL(BUILD_DELL, test x$BUILD_DELL = xyes)
 
 dnl
 dnl SUBSETTING END
@@ -670,6 +696,7 @@ echo "
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
 	USB wireless mouse power:   ${BUILD_USBCSR} (Linux only, requires libusb)
+	Dell Backlight              ${BUILD_DELL} (Linux only, requires libsmbios)
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}

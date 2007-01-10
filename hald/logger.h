@@ -23,6 +23,10 @@
  *
  **************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef LOGGER_H
 #define LOGGER_H
 
@@ -85,3 +89,8 @@ void setup_logger (void);
 /** @} */
 
 #endif				/* LOGGER_H */
+
+#ifdef __cplusplus
+}
+#endif
+
