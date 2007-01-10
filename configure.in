@@ -246,7 +246,9 @@ else
 fi
 
 dnl Check for libsmbios 
-AC_CHECK_LIB(smbios, SMBIOSFreeMemory, [AM_CONDITIONAL(HAVE_SMBIOS, true)], [AM_CONDITIONAL(HAVE_SMBIOS, false)])
+AC_CHECK_LIB(smbios, SMBIOSFreeMemory, [
+		     USE_SMBIOS=yes; AM_CONDITIONAL(HAVE_SMBIOS,true)], [
+		     USE_SMBIOS=no; AM_CONDITIONAL(HAVE_SMBIOS,false)])
 
 dnl Check for libpci
 AC_CHECK_HEADERS(pci/pci.h, [
@@ -585,7 +587,7 @@ BUILD_DELL=no
 if test "x$with_dell_backlight" = "xyes" ; then
    BUILD_DELL=yes
 elif test "x$with_dell_backlight" = "x" ; then
-  if test "$HAVE_SMBIOS" != "false" ; then
+  if test "$USE_SMBIOS" = "yes" ; then
     case "${HALD_BACKEND}" in
       linux)
         case "${host}" in
