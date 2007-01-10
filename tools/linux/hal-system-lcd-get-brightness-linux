@@ -52,7 +52,7 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "sony" ]; then
 	# cat /proc/acpi/sony/brightness
 	#  5
 	value="`cat $HAL_PROP_LINUX_ACPI_PATH`"
-	let "value = ${value} - 1"
+	value=$(($value-1))
 elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "omnibook" ]; then
 	# cat /proc/omnibook/lcd
 	#  LCD brightness:  7
