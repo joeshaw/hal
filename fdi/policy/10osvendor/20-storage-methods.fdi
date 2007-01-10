@@ -83,33 +83,28 @@
       <!-- amd mount programs (e.g. Mount() on HAL) to respect volume.ignore -->
       <merge key="volume.ignore" type="bool">false</merge>
 
-      <match key="@block.storage_device:storage.removable" bool="false">
-
-        <!-- Should always ignore Apple Bootstrap partitions (it would be -->
-	<!-- a security hole to mount it) - TODO: should use the bootable -->
-  	<!-- flag from the Mac partition table instead -->
-        <match key="volume.fstype" string="hfs">
-	  <match key="volume.label" string="bootstrap">
-    	    <merge key="volume.ignore" type="bool">true</merge>
-	  </match>
-        </match>
+      <!-- Should always ignore Apple Bootstrap partitions (it would be -->
+      <!-- a security hole to mount it) - TODO: should use the bootable -->
+      <!-- flag from the Mac partition table instead -->
+      <match key="volume.fstype" string="hfs">
+	<match key="volume.label" string="bootstrap">
+          <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+      </match>
 	
-        <!-- HP ships desktops with a recovery partition -->
-        <match key="volume.fstype" string="vfat">
-	  <match key="volume.label" string="HP_RECOVERY">
-	    <merge key="volume.ignore" type="bool">true</merge>
-	  </match>
-        </match>
-
-        <!-- EFI firmware partitions -->
-        <match key="volume.fstype" string="vfat">
-	  <match key="volume.label" string="EFI">
-	    <merge key="volume.ignore" type="bool">true</merge>
-	  </match>
-        </match>
-	
+      <!-- HP ships desktops with a recovery partition -->
+      <match key="volume.fstype" string="vfat">
+	<match key="volume.label" string="HP_RECOVERY">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
       </match>
 
+      <!-- EFI firmware partitions -->
+      <match key="volume.fstype" string="vfat">
+	<match key="volume.label" string="EFI">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+      </match>
 
       <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
 
