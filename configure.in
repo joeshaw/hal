@@ -522,7 +522,7 @@ BUILD_MACBOOKPRO=no
 if test "x$with_macbookpro" = "xyes" ; then
    BUILD_MACBOOKPRO=yes
 elif test "x$with_macbookpro" = "x" ; then
-  if test "$HAVE_LIBPCI" != "false" ; then
+  if test "x$USE_LIBPCI" != "xno" ; then
     case "${HALD_BACKEND}" in
       linux)
         case "${host}" in

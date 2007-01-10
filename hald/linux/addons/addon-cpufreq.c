@@ -40,7 +40,7 @@
 #include "../../logger.h"
 
 #ifdef HAVE_POLKIT
-#include <libpolkit/libpolkit.h>
+#include <libpolkit.h>
 #endif
 
 #define MAX_LINE_SIZE				255
