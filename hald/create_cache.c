@@ -513,7 +513,8 @@ di_rules_init (void)
 	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
 
 	cachename = getenv ("HAL_FDI_CACHE_NAME");
-	if(!cachename) cachename = CACHE_FILE;
+	if(cachename == NULL)
+		cachename = HALD_CACHE_FILE;
 	HAL_INFO (("Loading rules"));
 	
 	if(haldc_force_recreate && !stat(cachename, &st)) {

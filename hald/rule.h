@@ -106,4 +106,6 @@ struct cache_header {
 
 #define HAL_MAX_INDENT_DEPTH		64
 
+#define HALD_CACHE_FILE PACKAGE_LOCALSTATEDIR "/cache/hald/fdi-cache"
+
 #endif

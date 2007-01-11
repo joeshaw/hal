@@ -43,6 +43,7 @@
 #include "logger.h"
 #include "rule.h"
 #include "mmap_cache.h"
+#include "hald_runner.h"
 
 extern void *rules_ptr;
 
@@ -53,7 +54,8 @@ void di_rules_init(void){
 	struct stat		statbuf;
 
 	cachename = getenv ("HAL_FDI_CACHE_NAME");
-	if(!cachename) cachename = CACHE_FILE;
+	if(cachename == NULL) 
+		cachename = HALD_CACHE_FILE;
 
 	if((fd = open(cachename, O_RDONLY)) < 0)
 		DIE(("Unable to open cache %s\n", cachename));
@@ -78,83 +80,160 @@ void di_rules_init(void){
 
 static void dir_mtime(const char * path, time_t * mt)
 {
-    struct dirent **namelist;
-    struct stat st;
-    int n;
-    char cpath[PATH_MAX];
-
-    if (!stat(path, &st)) {
-	if(st.st_mtime > *mt)
-	    *mt = st.st_mtime;
-
-	if(S_ISDIR(st.st_mode)) {
-    		n = scandir(path, &namelist, 0, alphasort);
-    		if (n < 0)
-        		return;
-    		else {
-            		while(n--) {
+	struct dirent **namelist;
+	struct stat st;
+	int n;
+	char cpath[PATH_MAX];
+	
+	if (!stat(path, &st)) {
+		if(st.st_mtime > *mt)
+			*mt = st.st_mtime;
+		
+		if(S_ISDIR(st.st_mode)) {
+			n = scandir(path, &namelist, 0, alphasort);
+			if (n < 0)
+				return;
+			else {
+				while(n--) {
 #ifdef HAVE_SNPRINTF
-			    snprintf(cpath, PATH_MAX, "%s/%s", path, namelist[n]->d_name);
+					snprintf(cpath, PATH_MAX, "%s/%s", path, namelist[n]->d_name);
 #else
-			    sprintf(cpath, "%s/%s", path, namelist[n]->d_name);
+					sprintf(cpath, "%s/%s", path, namelist[n]->d_name);
 #endif
-			    if(namelist[n]->d_name[0] != '.')
-				    dir_mtime(cpath, mt);
-
-                	    free(namelist[n]);
-            	    }
-            	    free(namelist);
-    		}
+					if(namelist[n]->d_name[0] != '.')
+						dir_mtime(cpath, mt);
+					
+					free(namelist[n]);
+				}
+				free(namelist);
+			}
+		}
 	}
-    }
 }
 
-static void regen_cache(void)
+
+static gboolean regen_cache_done;
+static gint regen_cache_success;
+
+static void 
+regen_cache_cb (HalDevice *d, 
+		guint32 exit_type, 
+		gint return_code, 
+		gchar **error,
+		gpointer data1, 
+		gpointer data2)
 {
-    int ret;
-    struct stat st;
-    char cmd [PATH_MAX + 9];
-    char * c;
-    
-    if((c = getenv("HALD_CACHE_BIN")) == NULL) {
-	c = HALD_CACHE_BIN;
-    }
-#ifdef HAVE_SNPRINTF
-    snprintf(cmd, PATH_MAX + 8, "%s --force", c);
-#else
-    sprintf(cmd, "%s --force", c);
-#endif
+	HAL_INFO (("In regen_cache_cb exit_type=%d, return_code=%d", exit_type, return_code));
 
-    if(!stat(c, &st) && (ret = system(cmd)) !=- 1) {
+	if (exit_type != HALD_RUN_SUCCESS || return_code != 0) {
+		regen_cache_success = FALSE;
+	} else {
+		regen_cache_success = TRUE;
+	}
 
-	if(WTERMSIG(ret) == SIGQUIT || WTERMSIG(ret) == SIGINT)
-		DIE(("Cache creation was interrupted"));
-
-	if(WEXITSTATUS(ret) == 0)
-		HAL_INFO(("Subprocess terminated normally, cache generated."));
-    }
-    else {
-	HAL_INFO(("Unable to generate cache"));
-    }
+	regen_cache_done = TRUE;
 }
-void cache_coherency_check(void)
+
+
+static void 
+regen_cache (void)
 {
- time_t mt;
- struct stat st;
- dir_mtime(PACKAGE_DATA_DIR "/hal/fdi/preprobe", &mt);
- dir_mtime(PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", &mt);
- dir_mtime(PACKAGE_DATA_DIR "/hal/fdi/information", &mt);
- dir_mtime(PACKAGE_SYSCONF_DIR "/hal/fdi/information", &mt);
- dir_mtime(PACKAGE_DATA_DIR "/hal/fdi/policy", &mt);
- dir_mtime(PACKAGE_SYSCONF_DIR "/hal/fdi/policy", &mt);
- if(!stat(CACHE_FILE, &st)) {
-	if(st.st_mtime < mt) {
-		HAL_INFO(("Cache needs update"));
+	int n, m;
+	char *extra_env[5] = {NULL, NULL, NULL, NULL, NULL};
+	char *env_names[5] = {"HAL_FDI_SOURCE_PREPROBE", 
+			      "HAL_FDI_SOURCE_INFORMATION", 
+			      "HAL_FDI_SOURCE_POLICY",
+			      "HAL_FDI_CACHE_NAME",
+			      NULL};
+
+	HAL_INFO (("Regenerating fdi cache.."));
+
+	/* pass these variables to the helper */
+	for (n = 0, m = 0; env_names[n] != NULL; n++) {
+		char *name;
+		char *val;
+
+		name = env_names[n];
+		val = getenv(name);
+		if (val != NULL) {
+			extra_env [m++] = g_strdup_printf ("%s=%s", name, val);
+		}
+	}
+
+	regen_cache_done = FALSE;
+
+	hald_runner_run (NULL, 
+			 "hald-generate-fdi-cache --force",
+			 extra_env,
+			 10000,
+			 regen_cache_cb,
+			 NULL,
+			 NULL);
+
+	for (n = 0; extra_env[n] != NULL; n++) {
+		g_free (extra_env[n]);
+	}
+
+	while (!regen_cache_done) {
+		g_main_context_iteration (NULL, TRUE);
+	}
+
+	if (!regen_cache_success) {
+		DIE (("fdi cache regeneration failed!"));
+	}
+
+	HAL_INFO (("fdi cache generation done"));
+}
+
+void 
+di_cache_coherency_check (void)
+{
+	char *hal_fdi_source_preprobe;
+	char *hal_fdi_source_information;
+	char *hal_fdi_source_policy;
+	char *cachename;
+	time_t mt;
+	struct stat st;
+
+	mt = 0;
+
+	hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
+	hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
+	hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
+
+	if (hal_fdi_source_preprobe != NULL) {
+		dir_mtime (hal_fdi_source_preprobe, &mt);
+	} else {
+		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/preprobe", &mt);
+		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", &mt);
+	}
+
+	if (hal_fdi_source_information != NULL) {
+		dir_mtime (hal_fdi_source_information, &mt);
+	} else {
+		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/information", &mt);
+		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/information", &mt);
+	}
+
+	if (hal_fdi_source_policy != NULL) {
+		dir_mtime (hal_fdi_source_policy, &mt);
+	} else {
+		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/policy", &mt);
+		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", &mt);
+	}
+
+	cachename = getenv ("HAL_FDI_CACHE_NAME");
+	if(cachename == NULL)
+		cachename = HALD_CACHE_FILE;
+
+	if(stat (cachename, &st) == 0) {
+		if(st.st_mtime < mt) {
+			HAL_INFO(("Cache needs update"));
+			regen_cache();
+		}
+	} else {
 		regen_cache();
 	}
- }
- else
-	regen_cache();
-
- HAL_INFO(("cache mtime is %d",mt));
+	
+	HAL_INFO(("cache mtime is %d",mt));
 }

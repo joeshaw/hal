@@ -397,14 +397,19 @@ add_first_part(DBusMessageIter *iter, HalDevice *device,
   DBusMessageIter array_iter;
   const char *udi;
 
-  udi = hal_device_get_udi(device);
+  if (device != NULL)
+	  udi = hal_device_get_udi(device);
+  else
+	  udi = "";
+
   dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &udi);
 
   dbus_message_iter_open_container(iter, 
                                    DBUS_TYPE_ARRAY,
                                    DBUS_TYPE_STRING_AS_STRING,
                                    &array_iter);
-  hal_device_property_foreach (device, add_property_to_msg, &array_iter);
+  if (device != NULL)
+	  hal_device_property_foreach (device, add_property_to_msg, &array_iter);
   add_basic_env(&array_iter, udi);
   add_extra_env(&array_iter, extra_env);
   dbus_message_iter_close_container(iter, &array_iter);
@@ -512,7 +517,8 @@ call_notify(DBusPendingCall *pending, void *user_data)
   hb->cb(hb->d, exitt, return_code, 
       (gchar **)error->data, hb->data1, hb->data2);
 
-  g_object_unref (hb->d);
+  if (hb->d != NULL)
+	  g_object_unref (hb->d);
 
   dbus_message_unref(m);
   g_array_free(error, TRUE);
@@ -526,7 +532,8 @@ malformed:
   HAL_ERROR (("Malformed or unexpected reply message"));
   hb->cb(hb->d, HALD_RUN_FAILED, return_code, NULL, hb->data1, hb->data2);
 
-  g_object_unref (hb->d);
+  if (hb->d != NULL)
+	  g_object_unref (hb->d);
 
   dbus_message_unref(m);
   g_array_free(error, TRUE);
@@ -575,7 +582,8 @@ hald_runner_run_method(HalDevice *device,
   hd->data1 = data1;
   hd->data2 = data2;
 
-  g_object_ref (device);
+  if (device != NULL)
+	  g_object_ref (device);
 
   dbus_pending_call_set_notify(call, call_notify, hd, NULL);
   dbus_message_unref(msg);

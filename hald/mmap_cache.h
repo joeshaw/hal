@@ -31,7 +31,7 @@
 #ifndef __MMAP_CACHE_H__
 
 void di_rules_init(void);
-void cache_coherency_check(void);
+void di_cache_coherency_check(void);
 
 #define RULES_PTR(x) ((void *)((unsigned char *) rules_ptr + x))
 #endif

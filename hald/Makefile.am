@@ -30,19 +30,15 @@ INCLUDES = \
 # TESTS = hald-test
 
 
-sbin_PROGRAMS = hald hald-cache
+sbin_PROGRAMS = hald
+libexec_PROGRAMS = hald-generate-fdi-cache
 
 BUILT_SOURCES =		\
 	hald_marshal.h	\
 	hald_marshal.c
 
-noinst_PROGRAMS = hald-cache-test
-
-hald_cache_SOURCES = create_cache.c logger.h logger.c rule.h
-hald_cache_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
-
-hald_cache_test_SOURCES = cache_test.c logger.h logger.c rule.h mmap_cache.c mmap_cache.h
-hald_cache_test_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+hald_generate_fdi_cache_SOURCES = create_cache.c logger.h logger.c rule.h
+hald_generate_fdi_cache_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 hald_SOURCES =                                                          \
 	hald_marshal.h			hald_marshal.c			\
@@ -91,11 +87,13 @@ hald_marshal.c: hald_marshal.list
 
 
 install-data-local:
-	-$(mkdir_p) $(HALD_SOCKET_DIR)
-	-chown $(HAL_USER):$(HAL_GROUP) $(HALD_SOCKET_DIR)
-	-chmod 0755 $(HALD_SOCKET_DIR)
-	-$(mkdir_p) $(HALD_SOCKET_DIR)/hald-local
-	-$(mkdir_p) $(HALD_SOCKET_DIR)/hald-runner
+	-$(mkdir_p) $(DESTDIR)$(HALD_SOCKET_DIR)
+	-chown $(HAL_USER):$(HAL_GROUP) $(DESTDIR)$(HALD_SOCKET_DIR)
+	-chmod 0755 $(DESTDIR)$(HALD_SOCKET_DIR)
+	-$(mkdir_p) $(DESTDIR)$(HALD_SOCKET_DIR)/hald-local
+	-$(mkdir_p) $(DESTDIR)$(HALD_SOCKET_DIR)/hald-runner
+	-$(mkdir_p) $(DESTDIR)$(localstatedir)/cache/hald
+	-chown $(HAL_USER):$(HAL_GROUP) $(DESTDIR)$(localstatedir)/cache/hald
 
 clean-local:
 	rm -f *~

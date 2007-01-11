@@ -505,8 +505,6 @@ main (int argc, char *argv[])
 
 	HAL_INFO ((PACKAGE_STRING));
 	
-	cache_coherency_check();
-
 	if (opt_become_daemon) {
 		int child_pid;
 		int dev_null_fd;
@@ -613,10 +611,13 @@ main (int argc, char *argv[])
 		drop_privileges(0);
 	}
 
+	hald_is_initialising = TRUE;
+
+	/* make sure our fdi rule cache is up to date */
+	di_cache_coherency_check();
+
 	/* initialize operating system specific parts */
 	osspec_init ();
-
-	hald_is_initialising = TRUE;
 
 	/* Init FDI files */
 	di_rules_init();
