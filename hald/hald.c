@@ -59,6 +59,7 @@
 #include "util.h"
 #include "hald_runner.h"
 #include "util_helper.h"
+#include "mmap_cache.h"
 
 static void delete_pid(void)
 {
@@ -418,6 +419,7 @@ main (int argc, char *argv[])
 	g_strlcat (newpath, PACKAGE_SCRIPT_DIR, sizeof (newpath));
 
 	setenv ("PATH", newpath, TRUE);
+	
 
 	while (1) {
 		int c;
@@ -502,6 +504,8 @@ main (int argc, char *argv[])
 	loop = g_main_loop_new (NULL, FALSE);
 
 	HAL_INFO ((PACKAGE_STRING));
+	
+	cache_coherency_check();
 
 	if (opt_become_daemon) {
 		int child_pid;
@@ -613,6 +617,9 @@ main (int argc, char *argv[])
 	osspec_init ();
 
 	hald_is_initialising = TRUE;
+
+	/* Init FDI files */
+	di_rules_init();
 
 	/* detect devices */
 	osspec_probe ();

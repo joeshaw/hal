@@ -388,6 +388,7 @@ fi
 AC_CHECK_FUNCS(getgrouplist)
 AC_CHECK_FUNCS(asprintf)
 AC_CHECK_FUNCS(mallopt)
+AC_CHECK_FUNCS(strndup)
 
 # DocBook Documentation
 
@@ -449,6 +450,11 @@ fi
 AC_SUBST(DBUS_SYS_DIR)
 AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
 
+AC_SUBST(CACHE_FILE)
+AC_DEFINE_UNQUOTED(CACHE_FILE,"$LOCALSTATEDIR/cache/hald/fdi_cache", [Where FDI cache file is stored])
+
+AC_SUBST(HALD_CACHE_BIN)
+AC_DEFINE_UNQUOTED(HALD_CACHE_BIN,"$SBINDIR/hald-cache", [Cache generator binary])
 
 #### Check our operating system (distro-tweaks required)
 operating_system=unknown

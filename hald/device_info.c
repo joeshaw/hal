@@ -1,11 +1,13 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * device_store.c : Parse .fdi files and match/merge device properties.
+ * device_info.c : match/merge device properties.
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  * Copyright (C) 2006 Kay Sievers, <kay.sievers@vrfy.org>
  * Copyright (C) 2006 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2007 Mikhail Kshevetskiy <mikhail.kshevetskiy@gmail.com>
+ * Copyright (C) 2007 Sergey Lapin <slapinid@gmail.com>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -38,246 +40,24 @@
 #include <assert.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <math.h>
+#include <sys/mman.h>
+#include <errno.h>
 
 #include "hald.h"
 #include "logger.h"
+#include "mmap_cache.h"
 #include "device_info.h"
 #include "device_store.h"
 #include "util.h"
+#include "rule.h"
 
-#define MAX_INDENT_DEPTH		64
+void	*rules_ptr = NULL;
 
-/* pre-parsed rules to keep in memory */
-static GSList *fdi_rules_preprobe;
-static GSList *fdi_rules_information;
-static GSList *fdi_rules_policy;
-
-/* rule type to process */
-enum rule_type {
-	RULE_UNKNOWN,
-	RULE_MATCH,
-	RULE_MERGE,
-	RULE_APPEND,
-	RULE_PREPEND,
-	RULE_REMOVE,
-	RULE_CLEAR,
-	RULE_SPAWN,
-	RULE_EOF,
-};
-
-/* type of merge command */
-enum merge_type {
-	MERGE_UNKNOWN,
-	MERGE_STRING,
-	MERGE_BOOLEAN,
-	MERGE_INT32,
-	MERGE_UINT64,
-	MERGE_DOUBLE,
-	MERGE_COPY_PROPERTY,
-	MERGE_STRLIST,
-	MERGE_REMOVE,
-};
-
-/* type of match command */
-enum
-match_type {
-	MATCH_UNKNOWN,
-	MATCH_STRING,
-	MATCH_INT,
-	MATCH_UINT64,
-	MATCH_BOOL,
-	MATCH_EXISTS,
-	MATCH_EMPTY,
-	MATCH_ISASCII,
-	MATCH_IS_ABS_PATH,
-	MATCH_CONTAINS,
-	MATCH_CONTAINS_NCASE,
-	MATCH_PREFIX,
-	MATCH_PREFIX_NCASE,
-	MATCH_SUFFIX,
-	MATCH_SUFFIX_NCASE,
-	MATCH_COMPARE_LT,
-	MATCH_COMPARE_LE,
-	MATCH_COMPARE_GT,
-	MATCH_COMPARE_GE,
-};
-
-/* a "rule" structure that is a generic node of the fdi file */
-struct rule {
-	/* typ of tule in the list */
-	enum rule_type rtype;
-
-	/* all rules have a key */
-	char *key;
-
-	/* "match" or "merge" rule */
-	enum match_type type_match;
-	enum merge_type type_merge;
-
-	char *value;
-	int value_len;
-
-	/* if rule does not match, skip to this rule */
-	struct rule *next_rule;
-};
-
-/* ctx of the current fdi file used for parsing */
-struct fdi_context {
-	int depth;
-	struct rule *match_at_depth[MAX_INDENT_DEPTH];
-
-	/* current rule */
-	struct rule *rule;
-
-	int fdi_rule_size;
-
-	/* all rules */
-	GSList* rules;
-};
-
-static enum
-rule_type get_rule_type (const char *str)
-{
-	if (strcmp (str, "match") == 0)
-		return RULE_MATCH;
-	if (strcmp (str, "merge") == 0)
-		return RULE_MERGE;
-	if (strcmp (str, "append") == 0)
-		return RULE_APPEND;
-	if (strcmp (str, "prepend") == 0)
-		return RULE_PREPEND;
-	if (strcmp (str, "remove") == 0)
-		return RULE_REMOVE;
-	if (strcmp (str, "clear") == 0)
-		return RULE_CLEAR;
-	if (strcmp (str, "spawn") == 0)
-		return RULE_SPAWN;
-	return RULE_UNKNOWN;
-}
-
-/*
-static char *
-get_rule_type_str (enum rule_type type)
-{
-	switch (type) {
-	case RULE_MATCH:
-		return "match";
-	case RULE_MERGE:
-		return "merge";
-	case RULE_APPEND:
-		return "append";
-	case RULE_PREPEND:
-		return "prepend";
-	case RULE_REMOVE:
-		return "remove";
-	case RULE_CLEAR:
-		return "clear";
-	case RULE_SPAWN:
-		return "spawn";
-	case RULE_EOF:
-		return "eof";
-	case RULE_UNKNOWN:
-		return "unknown rule type";
-	}
-	return "invalid rule type";
-}
-*/
-
-static enum
-merge_type get_merge_type (const char *str)
-{
-	if (strcmp (str, "string") == 0)
-		return MERGE_STRING;
-	if (strcmp (str, "bool") == 0)
-		return MERGE_BOOLEAN;
-	if (strcmp (str, "int") == 0)
-		return MERGE_INT32;
-	if (strcmp (str, "unint64") == 0)
-		return MERGE_UINT64;
-	if (strcmp (str, "double") == 0)
-		return MERGE_DOUBLE;
-	if (strcmp (str, "strlist") == 0)
-		return MERGE_STRLIST;
-	if (strcmp (str, "copy_property") == 0)
-		return MERGE_COPY_PROPERTY;
-	if (strcmp (str, "remove") == 0)
-		return MERGE_REMOVE;
-	return MERGE_UNKNOWN;
-}
-
-/*
-static char *
-get_merge_type_str (enum merge_type type)
-{
-	switch (type) {
-	case MERGE_STRING:
-		return "string";
-	case MERGE_BOOLEAN:
-		return "bool";
-	case MERGE_INT32:
-		return "int";
-	case MERGE_UINT64:
-		return "unint64";
-	case MERGE_DOUBLE:
-		return "double";
-	case MERGE_STRLIST:
-		return "strlist";
-	case MERGE_COPY_PROPERTY:
-		return "copy_property";
-	case MERGE_REMOVE:
-		return "remove";
-	case MERGE_UNKNOWN:
-		return "unknown merge type";
-	}
-	return "invalid merge type";
-}
-*/
-
-static enum
-match_type get_match_type(const char *str)
-{
-	if (strcmp (str, "string") == 0)
-		return MATCH_STRING;
-	if (strcmp (str, "int") == 0)
-		return MATCH_INT;
-	if (strcmp (str, "uint64") == 0)
-		return MATCH_UINT64;
-	if (strcmp (str, "bool") == 0)
-		return MATCH_BOOL;
-	if (strcmp (str, "exists") == 0)
-		return MATCH_EXISTS;
-	if (strcmp (str, "empty") == 0)
-		return MATCH_EMPTY;
-	if (strcmp (str, "is_ascii") == 0)
-		return MATCH_ISASCII;
-	if (strcmp (str, "is_absolute_path") == 0)
-		return MATCH_IS_ABS_PATH;
-	if (strcmp (str, "contains") == 0)
-		return MATCH_CONTAINS;
-	if (strcmp (str, "contains_ncase") == 0)
-		return MATCH_CONTAINS_NCASE;
-	if (strcmp (str, "prefix") == 0)
-		return MATCH_PREFIX;
-	if (strcmp (str, "prefix_ncase") == 0)
-		return MATCH_PREFIX_NCASE;
-	if (strcmp (str, "suffix") == 0)
-		return MATCH_SUFFIX;
-	if (strcmp (str, "suffix_ncase") == 0)
-		return MATCH_SUFFIX_NCASE;
-	if (strcmp (str, "compare_lt") == 0)
-		return MATCH_COMPARE_LT;
-	if (strcmp (str, "compare_le") == 0)
-		return MATCH_COMPARE_LE;
-	if (strcmp (str, "compare_gt") == 0)
-		return MATCH_COMPARE_GT;
-	if (strcmp (str, "compare_ge") == 0)
-		return MATCH_COMPARE_GE;
-	return MATCH_UNKNOWN;
-}
-
-/*
+#ifdef DUMP_RULES
 static char *
 get_match_type_str (enum match_type type)
 {
@@ -323,7 +103,7 @@ get_match_type_str (enum match_type type)
 	}
 	return "invalid match type";
 }
-*/
+#endif
 
 /** Resolve a udi-property path as used in .fdi files.
  *
@@ -475,7 +255,7 @@ handle_match (struct rule *rule, HalDevice *d)
 	char udi_to_check[HAL_PATH_MAX];
 	char prop_to_check[HAL_PATH_MAX];
 	const char *key = rule->key;
-	const char *value = rule->value;
+	const char *value = (char *)RULES_PTR(rule->value_offset);
 
 	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
 	if (!resolve_udiprop_path (key,
@@ -870,7 +650,7 @@ static gboolean
 handle_merge (struct rule *rule, HalDevice *d)
 {
 	const char *key = rule->key;
-	const char *value = rule->value;
+	const char *value = (char *)RULES_PTR(rule->value_offset);
 
 	if (rule->rtype == RULE_MERGE) {
 
@@ -1044,375 +824,53 @@ handle_merge (struct rule *rule, HalDevice *d)
 	return TRUE;
 }
 
-/* for each node, free memory and it's own list of nodes */
-static void
-rules_cleanup_list (GSList *fdi_rules)
-{
-	GSList *elem;
+static struct rule *di_next(struct rule *rule){
+	struct cache_header	*header = (struct cache_header*) RULES_PTR(0);
+	size_t			offset = (char *)rule - (char*)rules_ptr;
+	size_t			next = offset + rule->rule_size;
 
-	for (elem = fdi_rules; elem != NULL; elem = g_slist_next (elem)) {
-		struct rule *rule = elem->data;
-
-		g_free (rule->key);
-		g_free (rule->value);
-		g_free (rule);
+	if (((offset >= header->fdi_rules_preprobe) && (next < header->fdi_rules_information)) ||
+	    ((offset >= header->fdi_rules_information) && (next < header->fdi_rules_policy)) ||
+	    ((offset >= header->fdi_rules_policy) && (next < header->all_rules_size))){
+		return (struct rule*) RULES_PTR(next);
 	}
-	g_slist_free (fdi_rules);
-	fdi_rules = NULL;
+	return NULL;
 }
 
-/* expat cb for start, e.g. <match foo=bar */
-static void
-start (void *data, const char *el, const char **attr)
-{
-	struct fdi_context *fdi_ctx = data;
-	enum rule_type rtype = get_rule_type (el);
-	int i;
+static struct rule *di_jump(struct rule *rule){
+	struct cache_header	*header = (struct cache_header*) RULES_PTR(0);
+	size_t			offset = (char *)rule - (char*)rules_ptr;
+	size_t			next = rule->jump_position;
 
-	if (rtype == RULE_UNKNOWN)
-		return;
-
-	if (fdi_ctx->rule == NULL)
-		return;
-
-	/* get key and attribute for current rule */
-	for (i = 0; attr[i] != NULL; i+=2) {
-		if (strcmp (attr[i], "key") == 0) {
-			fdi_ctx->rule->key = g_strdup (attr[1]);
-			continue;
-		}
-		if (rtype == RULE_SPAWN) {
-			if (strcmp (attr[i], "udi") == 0) {
-				fdi_ctx->rule->key = g_strdup (attr[1]);
-				continue;
-			}
-		} else if (rtype == RULE_MATCH) {
-			fdi_ctx->rule->type_match = get_match_type (attr[i]);
-			if (fdi_ctx->rule->type_match == MATCH_UNKNOWN)
-				continue;
-			fdi_ctx->rule->value = g_strdup (attr[i+1]);
-		} else {
-			if (strcmp (attr[i], "type") != 0)
-				continue;
-			fdi_ctx->rule->type_merge = get_merge_type (attr[i+1]);
-			if (fdi_ctx->rule->type_merge == MERGE_UNKNOWN)
-				return;
-		}
+	if (next == 0) return NULL;
+	if (((offset >= header->fdi_rules_preprobe) && (next < header->fdi_rules_information)) ||
+	    ((offset >= header->fdi_rules_information) && (next < header->fdi_rules_policy)) ||
+	    ((offset >= header->fdi_rules_policy) && (next < header->all_rules_size))){
+		return (struct rule*) RULES_PTR(next);
 	}
-
-	if (fdi_ctx->rule->key[0] == '\0')
-		return;
-
-	fdi_ctx->rule->rtype = rtype;
-
-	/* match rules remember the current nesting and the label to jump to if not matching */
-	if (rtype == RULE_MATCH) {
-		/* remember current nesting */
-		fdi_ctx->depth++;
-
-		/* remember rule at nesting level nesting */
-		fdi_ctx->match_at_depth[fdi_ctx->depth] = fdi_ctx->rule;
-
-		/* insert match rule into list and get new rule */
-		fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
-		fdi_ctx->rule = g_new0 (struct rule ,1);
-	}
+	return NULL;
 }
 
-/* expat cb for character data, i.e. the text data in between tags */
-static void
-cdata (void *data, const char *s, int len)
-{
-	struct fdi_context *fdi_ctx = data;
-
-	if (fdi_ctx->rule == NULL)
-		return;
-
-	if (fdi_ctx->rule->rtype != RULE_MERGE &&
-	    fdi_ctx->rule->rtype != RULE_PREPEND &&
-	    fdi_ctx->rule->rtype != RULE_APPEND &&
-	    fdi_ctx->rule->rtype != RULE_REMOVE &&
-	    fdi_ctx->rule->rtype != RULE_SPAWN)
-		return;
-
-	if (len < 1)
-		return;
-
-	/* copy cdata in current context */
-	fdi_ctx->rule->value = g_realloc (fdi_ctx->rule->value, fdi_ctx->rule->value_len + len+1);
-	memcpy (&fdi_ctx->rule->value[fdi_ctx->rule->value_len], s, len);
-	fdi_ctx->rule->value_len += len;
-	fdi_ctx->rule->value[fdi_ctx->rule->value_len] = '\0';
-}
-
-/* expat cb for end, e.g. </device> */
-static void
-end (void *data, const char *el)
-{
-	struct fdi_context *fdi_ctx = data;
-	enum rule_type rtype = get_rule_type (el);
-
-	if (rtype == RULE_UNKNOWN)
-		return;
-
-	if (rtype == RULE_MATCH) {
-		if (fdi_ctx->depth <= 0)
-			return;
-
-		/* get corresponding match rule and set the rule to skip to */
-		fdi_ctx->match_at_depth[fdi_ctx->depth]->next_rule = fdi_ctx->rule;
-		fdi_ctx->depth--;
-		return;
-	}
-
-	/* only valid if element is in the current context */
-	if (fdi_ctx->rule->rtype != rtype)
-		return;
-
-	/* set empty value to empty string */
-	if (fdi_ctx->rule->value == NULL)
-		fdi_ctx->rule->value = g_strdup ("");
-
-	if (fdi_ctx->fdi_rule_size >= 0) {
-		fdi_ctx->fdi_rule_size += 
-			sizeof (struct rule) + 
-			strlen (fdi_ctx->rule->key) + 
-			fdi_ctx->rule->value_len;
-	}
-
-	/* insert merge rule into list and get new rule */
-	fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
-	fdi_ctx->rule = g_new0 (struct rule, 1);
-}
-
-/* decompile an fdi file into a list of rules as this is quicker than opening then each time we want to search */
-static int
-rules_add_fdi_file (GSList **fdi_rules, const char *filename, gboolean compute_rule_size)
-{
-	struct fdi_context *fdi_ctx;
-	char *buf;
-	gsize buflen;
-	int rc;
-	int fdi_rule_size;
-
-	if (!g_file_get_contents (filename, &buf, &buflen, NULL))
-		return -1;
-
-	/* get context and first rule */
-	fdi_ctx = g_new0 (struct fdi_context ,1);
-	fdi_ctx->rule = g_new0 (struct rule ,1);
-	fdi_ctx->fdi_rule_size = compute_rule_size ? 0 : -1;
-
-	XML_Parser parser = XML_ParserCreate (NULL);
-	if (parser == NULL) {
-		fprintf (stderr, "Couldn't allocate memory for parser\n");
-		return -1;
-	}
-	XML_SetUserData (parser, fdi_ctx);
-	XML_SetElementHandler (parser, start, end);
-	XML_SetCharacterDataHandler (parser, cdata);
-	rc = XML_Parse (parser, buf, buflen, 1);
-	if (rc == 0)
-		fprintf (stderr, "Parse error at line %i:\n%s\n",
-			(int) XML_GetCurrentLineNumber (parser),
-			XML_ErrorString (XML_GetErrorCode (parser)));
-	XML_ParserFree (parser);
-	g_free (buf);
-
-	/* insert last dummy rule into list */
-	fdi_ctx->rule->rtype = RULE_EOF;
-	fdi_ctx->rule->key = g_strdup (filename);
-	fdi_ctx->rules = g_slist_append (fdi_ctx->rules, fdi_ctx->rule);
-
-	/* add rules to external list */
-	if (rc == 0)
-		rules_cleanup_list (fdi_ctx->rules);
-	else
-		*fdi_rules = g_slist_concat (*fdi_rules, fdi_ctx->rules);
-
-	fdi_rule_size = (gint64) fdi_ctx->fdi_rule_size;
-
-	g_free (fdi_ctx);
-
-	if (rc == 0)
-		return -1;
-
-	return compute_rule_size ? fdi_rule_size : 0;
-}
-
-/* modified alphasort to count downwards */
-static int
-#ifdef __GLIBC__
-_alphasort(const void *a, const void *b)
-#else
-_alphasort(const struct dirent **a, const struct dirent **b)
-#endif
-{
-	return -alphasort (a, b);
-}
-
-/* recurse a directory tree, searching and adding fdi files */
-static int
-rules_search_and_add_fdi_files (GSList **fdi_rules, const char *dir, int *rules_size)
-{
-	int i;
-	int num_entries;
-	struct dirent **name_list;
-
-	num_entries = scandir (dir, &name_list, 0, _alphasort);
-	if (num_entries == -1)
-		return -1;
-
-	for (i = num_entries - 1; i >= 0; i--) {
-		int len;
-		char *filename;
-		gchar *full_path;
-
-		filename = name_list[i]->d_name;
-		len = strlen (filename);
-		full_path = g_strdup_printf ("%s/%s", dir, filename);
-		if (g_file_test (full_path, (G_FILE_TEST_IS_REGULAR))) {
-			if (len >= 5 && strcmp(&filename[len - 4], ".fdi") == 0) {
-				int fdi_rules_size;
-				fdi_rules_size = rules_add_fdi_file (fdi_rules, full_path, rules_size != NULL);
-				if (fdi_rules_size >= 0) {
-					if (rules_size != NULL) {
-						*rules_size += fdi_rules_size;
-						HAL_INFO (("fdi file '%s' -> %d bytes of rules", 
-							   full_path, fdi_rules_size));
-					}
-				} else {
-					HAL_WARNING (("error processing fdi file '%s'", full_path));
-				}
-			}
-		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) && filename[0] != '.') {
-			int num_bytes;
-			char *dirname;
-
-			num_bytes = len + strlen (dir) + 1 + 1;
-			dirname = (char *) malloc (num_bytes);
-			if (dirname == NULL)
-				break;
-
-			snprintf (dirname, num_bytes, "%s/%s", dir, filename);
-			rules_search_and_add_fdi_files (fdi_rules, dirname, rules_size);
-			free (dirname);
-		}
-		g_free (full_path);
-		free (name_list[i]);
-	}
-
-	for (; i >= 0; i--) {
-		free (name_list[i]);
-	}
-
-	free (name_list);
-	return 0;
-}
-
-/* print the rules to screen, mainly useful for debugging */
-#if 0
-static void
-rules_dump (GSList *fdi_rules)
-{
-	GSList *elem;
-
-	for (elem = fdi_rules; elem != NULL; elem = g_slist_next (elem)) {
-		struct rule *rule = elem->data;
-
-		if (rule->rtype == RULE_EOF) {
-			printf ("%p: eof %s\n", rule, rule->key);
-		} else if (rule->rtype == RULE_MATCH) {
-			printf ("\n");
-			printf ("%p: match '%s' (%s) '%s' (skip to %p)\n",
-				rule, rule->key, get_match_type_str (rule->type_match),
-				rule->value, rule->next_rule);
-		} else {
-			printf ("%p: %s '%s' (%s) '%s'\n",
-				rule, get_rule_type_str (rule->rtype), rule->key,
-				get_merge_type_str (rule->type_merge), rule->value);
-		}
-	}
-}
-#endif
-
-/* setup the location of the rules */
-void
-di_rules_init (void)
-{
-	int size;
-	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
-	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
-	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
-
-	HAL_INFO (("Loading rules"));
-
-	size = 0;
-
-	if (hal_fdi_source_preprobe != NULL)
-		rules_search_and_add_fdi_files (&fdi_rules_preprobe, hal_fdi_source_preprobe, &size);
-	else {
-		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_DATA_DIR "/hal/fdi/preprobe", &size);
-		rules_search_and_add_fdi_files (&fdi_rules_preprobe, PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", &size);
-	}
-
-	if (hal_fdi_source_information != NULL)
-		rules_search_and_add_fdi_files (&fdi_rules_information, hal_fdi_source_information, &size);
-	else {
-		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_DATA_DIR "/hal/fdi/information", &size);
-		rules_search_and_add_fdi_files (&fdi_rules_information, PACKAGE_SYSCONF_DIR "/hal/fdi/information", &size);
-	}
-
-	if (hal_fdi_source_policy != NULL)
-		rules_search_and_add_fdi_files (&fdi_rules_policy, hal_fdi_source_policy, &size);
-	else {
-		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_DATA_DIR "/hal/fdi/policy", &size);
-		rules_search_and_add_fdi_files (&fdi_rules_policy, PACKAGE_SYSCONF_DIR "/hal/fdi/policy", &size);
-	}
-
-	/* dump the rules (commented out as this is expensive) */
-	/*rules_dump (fdi_rules_preprobe);
-	  rules_dump (fdi_rules_information);
-	  rules_dump (fdi_rules_policy);
-	*/
-
-	HAL_INFO (("Loading rules done (occupying %d bytes)", size));
-}
-
-/* cleanup the rules */
-void
-di_rules_cleanup (void)
-{
-	rules_cleanup_list (fdi_rules_preprobe);
-	rules_cleanup_list (fdi_rules_information);
-	rules_cleanup_list (fdi_rules_policy);
-	fdi_rules_preprobe = NULL;
-	fdi_rules_information = NULL;
-	fdi_rules_policy = NULL;
-}
 
 /* process a match and merge comand for a device */
 static void
-rules_match_and_merge_device (GSList *fdi_rules, HalDevice *d)
+rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 {
-	GSList *elem;
-
-	if (fdi_rules == NULL) {
-		di_rules_cleanup ();
-		di_rules_init ();
-	}
-
-	elem = fdi_rules;
-	while (elem != NULL) {
-		struct rule *rule = elem->data;
+	struct rule *rule = fdi_rules_list;
+	while (rule != NULL){
+		HAL_INFO(("== Iterating rules =="));
 
 		switch (rule->rtype) {
 		case RULE_MATCH:
 			/* skip non-matching rules block */
-			/*HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));*/
+			HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));
 			if (!handle_match (rule, d)) {
-				/*HAL_INFO(("no match, skip to rule %s (%p)", get_rule_type_str (rule->next_rule->rtype), rule->next_rule));*/
-				elem = g_slist_find (elem, rule->next_rule);
+				HAL_INFO(("no match, skip to rule (%llx)", rule->jump_position));
+				rule = di_jump(rule);
+
+				if(rule == NULL)
+					DIE(("Rule is NULL on jump"));
+
 				continue;
 			}
 			break;
@@ -1435,28 +893,48 @@ rules_match_and_merge_device (GSList *fdi_rules, HalDevice *d)
 			HAL_WARNING(("Unhandled rule (%i)!", rule->rtype));
 			break;
 		}
-		elem = g_slist_next (elem);
+		rule = di_next(rule);
 	}
 }
 
+
 /* merge the device info type, either preprobe, info or policy */
 gboolean
-di_search_and_merge (HalDevice *d, DeviceInfoType type)
-{
+di_search_and_merge (HalDevice *d, DeviceInfoType type){
+	struct cache_header	*header = (struct cache_header*) RULES_PTR(0);
+
 	switch (type) {
 	case DEVICE_INFO_TYPE_PREPROBE:
-		/*HAL_INFO(("apply fdi preprobe to device %p", d));*/
-		rules_match_and_merge_device (fdi_rules_preprobe, d);
+		/* Checking if we have at least one preprobe rule */
+		if(header->fdi_rules_information > header->fdi_rules_preprobe)
+		{
+			HAL_INFO(("preprobe rules offset: %ld", header->fdi_rules_preprobe));
+			HAL_INFO(("preprobe rules size: %ld",
+				header->fdi_rules_information - header->fdi_rules_preprobe));
+			rules_match_and_merge_device (RULES_PTR(header->fdi_rules_preprobe), d);
+		}
 		break;
 
 	case DEVICE_INFO_TYPE_INFORMATION:
-		/*HAL_INFO(("apply fdi info to device %p", d));*/
-		rules_match_and_merge_device (fdi_rules_information, d);
+		/* Checking if we have at least one information rule */
+		if(header->fdi_rules_policy > header->fdi_rules_information)
+		{
+			HAL_INFO(("information rules offset: %ld", header->fdi_rules_information));
+			HAL_INFO(("information rules size: %ld",
+				header->fdi_rules_policy - header->fdi_rules_information));
+			rules_match_and_merge_device (RULES_PTR(header->fdi_rules_information), d);
+		}
 		break;
 
 	case DEVICE_INFO_TYPE_POLICY:
-		/*HAL_INFO(("apply fdi policy to device %p", d));*/
-		rules_match_and_merge_device (fdi_rules_policy, d);
+		/* Checking if we have at least one policy rule */
+		if(header->all_rules_size > header->fdi_rules_policy)
+		{
+			HAL_INFO(("policy rules offset: %ld", header->fdi_rules_policy));
+			HAL_INFO(("policy rules size: %ld",
+				header->all_rules_size - header->fdi_rules_policy));
+			rules_match_and_merge_device (RULES_PTR(header->fdi_rules_policy), d);
+		}
 		break;
 
 	default:

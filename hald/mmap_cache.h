@@ -1,9 +1,13 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * device_store.c : Search for .fdi files and merge on match
+ * mmap_cache.h : cache routine and macros declarations.
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2006 Kay Sievers, <kay.sievers@vrfy.org>
+ * Copyright (C) 2006 Richard Hughes <richard@hughsie.com>
+ * Copyright (C) 2007 Mikhail Kshevetskiy <mikhail.kshevetskiy@gmail.com>
+ * Copyright (C) 2007 Sergey Lapin <slapinid@gmail.com>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -23,24 +27,11 @@
  *
  **************************************************************************/
 
-#ifndef DEVICE_INFO_H
-#define DEVICE_INFO_H
 
-#include <stdarg.h>
-#include <stdint.h>
-#include <dbus/dbus.h>
+#ifndef __MMAP_CACHE_H__
 
-#include "device_store.h"
+void di_rules_init(void);
+void cache_coherency_check(void);
 
-
-typedef enum {
-	DEVICE_INFO_TYPE_PREPROBE,
-	DEVICE_INFO_TYPE_INFORMATION,
-	DEVICE_INFO_TYPE_POLICY
-} DeviceInfoType;
-
-extern void di_rules_init (void);
-extern void di_rules_cleanup (void);
-extern gboolean di_search_and_merge (HalDevice *d, DeviceInfoType type);
-
-#endif				/* DEVICE_INFO_H */
+#define RULES_PTR(x) ((void *)((unsigned char *) rules_ptr + x))
+#endif

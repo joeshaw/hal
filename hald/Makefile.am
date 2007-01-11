@@ -30,11 +30,19 @@ INCLUDES = \
 # TESTS = hald-test
 
 
-sbin_PROGRAMS = hald
+sbin_PROGRAMS = hald hald-cache
 
 BUILT_SOURCES =		\
 	hald_marshal.h	\
 	hald_marshal.c
+
+noinst_PROGRAMS = hald-cache-test
+
+hald_cache_SOURCES = create_cache.c logger.h logger.c rule.h
+hald_cache_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+
+hald_cache_test_SOURCES = cache_test.c logger.h logger.c rule.h mmap_cache.c mmap_cache.h
+hald_cache_test_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 hald_SOURCES =                                                          \
 	hald_marshal.h			hald_marshal.c			\
@@ -49,9 +57,13 @@ hald_SOURCES =                                                          \
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\
-	ids.h				ids.c			
+	ids.h				ids.c				\
+	rule.h				mmap_cache.c			\
+	mmap_cache.h
 
-hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+
+
+hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in
