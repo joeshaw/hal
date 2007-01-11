@@ -61,7 +61,6 @@ osspec_probe (void)
 
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.bus", "unknown");
-	hal_device_property_set_string (root, "linux.sysfs_path_device", "(none)");
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");

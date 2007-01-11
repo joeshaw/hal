@@ -722,7 +722,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	}
 
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_BLOCK);
 

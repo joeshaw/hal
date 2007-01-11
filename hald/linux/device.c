@@ -333,7 +333,6 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", parent_path);
 	
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
@@ -383,7 +382,6 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 		d = hal_device_new ();
 		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-		hal_device_property_set_string (d, "linux.sysfs_path_device", parent_path);
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 		hal_device_property_set_string (d, "info.category", "hiddev");
@@ -396,7 +394,6 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 		d = hal_device_new ();
 		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-		hal_device_property_set_string (d, "linux.sysfs_path_device", parent_path);
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 		hal_device_property_set_string (d, "info.category", "printer");
@@ -1006,7 +1003,6 @@ mmc_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", parent_path);
 
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
@@ -1044,7 +1040,6 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pci");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1209,7 +1204,6 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	}
@@ -1359,7 +1353,6 @@ ide_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ide");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1410,7 +1403,6 @@ pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pnp");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1466,7 +1458,6 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "platform");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1511,7 +1502,6 @@ serio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "serio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1559,7 +1549,6 @@ pcmcia_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pcmcia");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1640,7 +1629,6 @@ scsi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "scsi");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
@@ -1734,7 +1722,6 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "mmc");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
@@ -1809,7 +1796,6 @@ xen_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "xen");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -1887,7 +1873,6 @@ ieee1394_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ieee1394");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
@@ -2024,8 +2009,6 @@ ccw_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device",
-					sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ccw");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -2196,8 +2179,6 @@ ccwgroup_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device",
-					sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "ccwgroup");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -2263,8 +2244,6 @@ iucv_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device",
-					sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "iucv");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
@@ -2348,7 +2327,6 @@ pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
 	hal_device_property_set_string (d, "info.bus", "pseudo");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));

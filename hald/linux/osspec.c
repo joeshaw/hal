@@ -581,7 +581,6 @@ osspec_probe (void)
 
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.bus", "unknown");
-	hal_device_property_set_string (root, "linux.sysfs_path_device", "(none)");
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
@@ -711,7 +710,7 @@ hal_util_find_known_parent (const gchar *sysfs_path, HalDevice **parent, gchar *
 			break;
 
 		parent_dev = hal_device_store_match_key_value_string (hald_get_gdl (),
-								      "linux.sysfs_path_device",
+								      "linux.sysfs_path",
 								      parent_devpath);
 		if (parent_dev != NULL)
 			goto out;
@@ -726,7 +725,7 @@ hal_util_find_known_parent (const gchar *sysfs_path, HalDevice **parent, gchar *
 
 		while (TRUE) {
 			parent_dev = hal_device_store_match_key_value_string (hald_get_gdl (),
-									      "linux.sysfs_path_device",
+									      "linux.sysfs_path",
 									      parent_devpath);
 			if (parent_dev != NULL)
 				goto out;

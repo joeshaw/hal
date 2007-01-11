@@ -225,18 +225,6 @@
             </row>
             <row>
               <entry>
-                <literal>linux.sysfs_path_device</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>Yes (only if available for the device) </entry>
-              <entry>Normally this property assumes the same value as
-                linux.sysfs_path, however for some devices it assumes an
-                alternate location in the sysfs filesystem. It is used
-                internally in HAL
-              </entry>
-            </row>
-            <row>
-              <entry>
                 <literal>linux.acpi_path</literal> (string)
               </entry>
               <entry>example: /proc/acpi/button/power/PWRF, /proc/pmu/battery_0</entry>
