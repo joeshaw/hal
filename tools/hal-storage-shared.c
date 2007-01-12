@@ -289,12 +289,13 @@ handle_unmount (LibHalContext *hal_ctx,
 
 	if (volume != NULL) {
 		dbus_error_init (&error);
-		if (libhal_device_get_property_bool (hal_ctx, udi, "volume.ignore", &error) || 
-		    dbus_error_is_set (&error)) {
-			if (dbus_error_is_set (&error)) {
-				dbus_error_free (&error);
-			}
+		if (libhal_device_get_property_bool (hal_ctx, udi, "volume.ignore", &error)) { 
 			permission_denied_volume_ignore (device);
+		}
+
+		if (dbus_error_is_set (&error)) {
+			dbus_error_free(&error);
+			unknown_error("Error while get volume.ignore");
 		}
 
 		if (!libhal_volume_is_mounted (volume)) {
