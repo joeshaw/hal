@@ -1811,20 +1811,24 @@ xen_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_util_set_string_from_file (d, "xen.path", sysfs_path, "nodename");
 
 	devtype = hal_util_get_string_from_file (sysfs_path, "devtype");
-	hal_device_property_set_string (d, "xen.type", devtype);
+	if (devtype != NULL) {
+		hal_device_property_set_string (d, "xen.type", devtype);
 
-	if (strcmp (devtype, "pci") == 0) {
-		hal_device_property_set_string (d, "info.product", "Xen PCI Device");
-	} else if (strcmp (devtype, "vbd") == 0) {
-		hal_device_property_set_string (d, "info.product", "Xen Virtual Block Device");
-	} else if (strcmp (devtype, "vif") == 0) {
-		hal_device_property_set_string (d, "info.product", "Xen Virtual Network Device");
-	} else if (strcmp (devtype, "vtpm") == 0) {
-		hal_device_property_set_string (d, "info.product", "Xen Virtual Trusted Platform Module");
+		if (strcmp (devtype, "pci") == 0) {
+			hal_device_property_set_string (d, "info.product", "Xen PCI Device");
+		} else if (strcmp (devtype, "vbd") == 0) {
+			hal_device_property_set_string (d, "info.product", "Xen Virtual Block Device");
+		} else if (strcmp (devtype, "vif") == 0) {
+			hal_device_property_set_string (d, "info.product", "Xen Virtual Network Device");
+		} else if (strcmp (devtype, "vtpm") == 0) {
+			hal_device_property_set_string (d, "info.product", "Xen Virtual Trusted Platform Module");
+		} else {
+			char buf[64];
+			g_snprintf (buf, sizeof (buf), "Xen Device (%s)", devtype);
+			hal_device_property_set_string (d, "info.product", buf);
+		}
 	} else {
-		char buf[64];
-		g_snprintf (buf, sizeof (buf), "Xen Device (%s)", devtype);
-		hal_device_property_set_string (d, "info.product", buf);
+		 hal_device_property_set_string (d, "info.product", "Xen Device (unknown)");
 	}
 
 	return d;
