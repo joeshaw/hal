@@ -2727,11 +2727,11 @@ manager_commit_preprobing_done (HalDevice *d, gpointer userdata1, gpointer userd
 		return;
 	}
 
+	hal_util_callout_device_add (d, manager_commit_done, NULL, NULL);
+	
 	/* Merge properties from .fdi files */
 	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
 	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
-
-	hal_util_callout_device_add (d, manager_commit_done, NULL, NULL);
 }
 
 

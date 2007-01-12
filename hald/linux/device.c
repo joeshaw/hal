@@ -2716,10 +2716,6 @@ dev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 static void 
 add_dev_after_probing (HalDevice *d, DevHandler *handler, void *end_token)
 {
-	/* Merge properties from .fdi files */
-	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
-	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
-
 	/* Compute UDI */
 	if (!handler->compute_udi (d)) {
 		hal_device_store_remove (hald_get_tdl (), d);
@@ -2727,6 +2723,10 @@ add_dev_after_probing (HalDevice *d, DevHandler *handler, void *end_token)
 		hotplug_event_end (end_token);
 		goto out;
 	}
+	
+	/* Merge properties from .fdi files */
+	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 	
 	/* TODO: Merge persistent properties */
 

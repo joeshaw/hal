@@ -499,12 +499,6 @@ hotplug_event_begin_add_pmu (const gchar *pmu_path, int pmu_type, HalDevice *par
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
 
-			/* Merge properties from .fdi files */
-			di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
-			di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
-
-			/* TODO: Run callouts */
-			
 			/* Compute UDI */
 			if (!handler->compute_udi (d, handler)) {
 				hal_device_store_remove (hald_get_tdl (), d);
@@ -512,6 +506,12 @@ hotplug_event_begin_add_pmu (const gchar *pmu_path, int pmu_type, HalDevice *par
 				goto out;
 			}
 
+			/* Merge properties from .fdi files */
+			di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+			di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
+
+			/* TODO: Run callouts */
+			
 			/* Move from temporary to global device store */
 			hal_device_store_remove (hald_get_tdl (), d);
 			hal_device_store_add (hald_get_gdl (), d);

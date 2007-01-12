@@ -1260,11 +1260,6 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 			/* Add to temporary device store */
 			hal_device_store_add (hald_get_tdl (), d);
 
-			/* Merge properties from .fdi files */
-			di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
-			di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
-
-			
 			/* Compute UDI */
 			if (!handler->compute_udi (d, handler)) {
 				hal_device_store_remove (hald_get_tdl (), d);
@@ -1272,6 +1267,10 @@ hotplug_event_begin_add_acpi (const gchar *acpi_path, int acpi_type, HalDevice *
 				return;
 			}
 
+			/* Merge properties from .fdi files */
+			di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
+			di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
+			
 			/* Run callouts */
 			hal_util_callout_device_add (d, acpi_callouts_add_done, end_token, NULL);
 			return;
