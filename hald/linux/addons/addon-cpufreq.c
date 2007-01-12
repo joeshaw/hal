@@ -1163,8 +1163,13 @@ gboolean dbus_init(void)
 	libhal_device_add_capability(halctx,
 				     "/org/freedesktop/Hal/devices/computer",
 				     "cpufreq_control",
-				     NULL);
+				     &dbus_error);
 
+	if (dbus_error_is_set(&dbus_error)) {
+		HAL_WARNING(("Cannot add capability cpufreq_control: %s", dbus_error.message));
+		goto Error;
+	}
+	
 	dbus_connection_setup_with_g_main(dbus_connection, NULL);
 	dbus_connection_add_filter(dbus_connection, dbus_filter_function, NULL, NULL);
 	dbus_connection_set_exit_on_disconnect(dbus_connection, 0);
