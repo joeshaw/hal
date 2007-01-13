@@ -15,6 +15,8 @@ INCLUDES = \
 
 ## check_PROGRAMS = hald-test
 
+check_PROGRAMS = hald-cache-test
+
 #hald_test_SOURCES =                                                     \
 #	hald_marshal.h			hald_marshal.c			\
 #	device.h			device.c			\
@@ -28,7 +30,7 @@ INCLUDES = \
 # hald_test_LDADD = @PACKAGE_LIBS@ -lm @EXPAT_LIB@ $(top_builddir)/libhal/libhal.la
 
 # TESTS = hald-test
-
+TESTS = hald-cache-test.sh
 
 sbin_PROGRAMS = hald
 libexec_PROGRAMS = hald-generate-fdi-cache
@@ -39,6 +41,9 @@ BUILT_SOURCES =		\
 
 hald_generate_fdi_cache_SOURCES = create_cache.c logger.h logger.c rule.h
 hald_generate_fdi_cache_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @EXPAT_LIB@ @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+
+hald_cache_test_SOURCES = cache_test.c logger.h logger.c rule.h
+hald_cache_test_LDADD = @GLIB_LIBS@ -lm @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 hald_SOURCES =                                                          \
 	hald_marshal.h			hald_marshal.c			\
