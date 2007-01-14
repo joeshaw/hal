@@ -36,5 +36,5 @@ dist_devicemanager_DATA =                                          \
 #	- rm -f $(DESTDIR)$(bindir)/hal-device-manager
 
 clean-local :
-	rm -f *~
+	rm -f *~ *.pyc *.pyo
 	rm -f hal-device-manager.glade.h

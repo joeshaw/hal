@@ -11,3 +11,6 @@ export HAL_FDI_SOURCE_PREPROBE HAL_FDI_SOURCE_INFORMATION \
 
 ./hald-generate-fdi-cache || exit 2
 ./hald-cache-test || exit 2
+
+#required by distcheck
+rm -Rf .local-fdi

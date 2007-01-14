@@ -81,7 +81,7 @@ endif
  ## Red Hat end
 
 EXTRA_DIST =			\
-	hald_marshal.list
+	hald_marshal.list hald-cache-test.sh
 
 hald_marshal.h: hald_marshal.list
 	glib-genmarshal $< --prefix=hald_marshal --header > $@
