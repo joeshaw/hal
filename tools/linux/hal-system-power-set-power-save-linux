@@ -8,8 +8,8 @@ unsupported() {
 	exit 1
 }
 
-#SuSE and ALTLinux only support powersave
-if [ -f /etc/altlinux-release ] || [ -f /etc/SuSE-release ] ; then
+#ALTLinux only supports powersave
+if [ -f /etc/altlinux-release ] ; then
 	if [ -x "/usr/bin/powersave" ] ; then
 		if [ $value = "true" ]; then
 			/usr/bin/powersave -e Powersave
@@ -22,8 +22,9 @@ if [ -f /etc/altlinux-release ] || [ -f /etc/SuSE-release ] ; then
 		unsupported
 	fi
 
-#RedHat/Fedora only support pm-utils
-elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] ; then
+#RedHat/Fedora and SUSE support pm-utils
+elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] \
+		|| [ -f /etc/SuSE-release ] ; then
 	if [ -x "/usr/sbin/pm-powersave" ] ; then
 		if [ $value = "true" ]; then
 			/usr/sbin/pm-powersave true
