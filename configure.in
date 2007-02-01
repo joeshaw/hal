@@ -67,19 +67,33 @@ if test "x$enable_pci_ids" = "xno" ; then
   USE_PCI_IDS=no
 else
    if test -z "$PCI_IDS_DIR"; then
-     AC_ERROR([cannot find pci.ids. Use --with-pci-ids to specify location])
+     for dir in /usr/share/hwdata /usr/share/misc /usr/share /var/lib/misc; do
+       AC_CHECK_FILE($dir/pci.ids,PCI_IDS_DIR=$dir)
+     done
+     if test -z "$PCI_IDS_DIR"; then
+       AC_ERROR([cannot find pci.ids. Use --with-pci-ids to specify location])
+     else
+       AC_WARN([Autodetected pci.ids in $PCI_IDS_DIR])
+     fi
    fi
    USE_PCI_IDS=yes
    AC_DEFINE(USE_PCI_IDS,1,[Whether pci.ids is to be used])
 fi
 
 if test "x$enable_usb_ids" = "xno" ; then
-  USE_PCI_IDS=no
+  USE_USB_IDS=no
 else 
    if test -z "$USB_IDS_DIR"; then
-     AC_ERROR([cannot find usb.ids. Use --with-usb-ids to specify location])
+     for dir in /usr/share/hwdata /usr/share/misc /usr/share /var/lib/misc; do
+       AC_CHECK_FILE($dir/usb.ids,USB_IDS_DIR=$dir)
+     done
+     if test -z "$USB_IDS_DIR"; then
+       AC_ERROR([cannot find usb.ids. Use --with-usb-ids to specify location])
+     else
+       AC_WARN([Autodetected usb.ids in $USB_IDS_DIR])
+     fi
    fi
-   USE_PCI_IDS=yes
+   USE_USB_IDS=yes
    AC_DEFINE(USE_USB_IDS,1,[Whether usb.ids is to be used])
 fi
 
