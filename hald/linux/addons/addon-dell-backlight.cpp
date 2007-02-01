@@ -41,82 +41,82 @@ static char *udi;
 static DBusConnection *conn;
 static const int DELL_LCD_BRIGHTNESS_TOKEN = 0x007d;
 
+static u32 minValue = 0;
+static u32 maxValue = 0;
+
 using namespace std;
 using namespace smi;
 
 typedef u32 (*readfn)(u32 location, u32 *minValue, u32 *maxValue);
-typedef u32 (*writefn)(const std::string &password, u32 location, u32 value, u32 *minValue, u32 *maxValue);
+typedef u32 (*writefn)(const string &password, u32 location, u32 value, u32 *minValue, u32 *maxValue);
 
 static u32 
-read_backlight(dbus_bool_t ACon)
+read_backlight (dbus_bool_t onAC)
 {
 	u8  location = 0;
-	u32 minValue = 0;
-	u32 maxValue = 0;
 	u32 curValue;
 	readfn readFunction;
 	
-	if (ACon) 
+	if (onAC) 
                 readFunction = &smi::readACModeSetting;
     	else 
                 readFunction = &smi::readBatteryModeSetting;
 	
-	smbios::TokenTableFactory *ttFactory = smbios::TokenTableFactory::getFactory() ;
-        smbios::ITokenTable *tokenTable = ttFactory->getSingleton();
+	smbios::TokenTableFactory *ttFactory = smbios::TokenTableFactory::getFactory () ;
+        smbios::ITokenTable *tokenTable = ttFactory->getSingleton ();
         smbios::IToken *token = &(*((*tokenTable)[ DELL_LCD_BRIGHTNESS_TOKEN ]));
-        dynamic_cast< smbios::ISmiToken * >(token)->getSmiDetails( static_cast<u16*>(0), static_cast<u8*>(0), &location );
+        dynamic_cast< smbios::ISmiToken * >(token)->getSmiDetails (static_cast<u16*>(0), static_cast<u8*>(0), &location);
 
 	try 
 	{ 
-        	curValue = readFunction(location, &minValue, &maxValue);
+        	curValue = readFunction (location, &minValue, &maxValue);
 	}
-	catch( const exception &e ) 
+	catch (const exception &e) 
 	{
-        	HAL_ERROR(("Could not access the dcdbas kernel module. Please make sure it is loaded"));
-		return 7;
+        	HAL_ERROR (("Could not access the dcdbas kernel module. Please make sure it is loaded"));
+		return maxValue;
     	}
 
-	if(ACon) 
-		HAL_DEBUG(("Reading %d from the AC backlight register", curValue));	
+	if (onAC) 
+		HAL_DEBUG (("Reading %d from the AC backlight register", curValue));	
 	else 
-		HAL_DEBUG(("Reading %d from the BAT backlight register", curValue));
+		HAL_DEBUG (("Reading %d from the BAT backlight register", curValue));
 
 	return curValue;
 }
 
 static void 
-write_backlight (u32 newBacklightValue, dbus_bool_t ACon) 
+write_backlight (u32 newBacklightValue, dbus_bool_t onAC) 
 {	
 	u8  location = 0;
-	u32 minValue = 0;
-	u32 maxValue = 0;	
 	u32 curValue;
 	writefn writeFunction;
-	string password(""); //FIXME: Implement password support
+	string password(""); /* FIXME: Implement password support */
 	
-	if (ACon) 
+	if (onAC) 
                 writeFunction = &smi::writeACModeSetting;
     	else 
                 writeFunction = &smi::writeBatteryModeSetting;
 
-	smbios::TokenTableFactory *ttFactory = smbios::TokenTableFactory::getFactory();
-        smbios::ITokenTable *tokenTable = ttFactory->getSingleton();
+	smbios::TokenTableFactory *ttFactory = smbios::TokenTableFactory::getFactory ();
+        smbios::ITokenTable *tokenTable = ttFactory->getSingleton ();
         smbios::IToken *token = &(*((*tokenTable)[ DELL_LCD_BRIGHTNESS_TOKEN ]));
-        dynamic_cast< smbios::ISmiToken * >(token)->getSmiDetails( static_cast<u16*>(0), static_cast<u8*>(0), &location );
+        dynamic_cast< smbios::ISmiToken * >(token)->getSmiDetails ( static_cast<u16*>(0), static_cast<u8*>(0), &location );
 
 	try 
 	{
 		curValue = writeFunction(password, location, newBacklightValue, &minValue, &maxValue); 
 	}
-	catch( const exception &e )
+	catch (const exception &e)
     	{
-        	HAL_ERROR(("Could not access the dcdbas kernel module. Please make sure it is loaded"));
+        	HAL_ERROR (("Could not access the dcdbas kernel module. Please make sure it is loaded"));
 		return;
     	}
-	if(ACon)
-		HAL_DEBUG(("Wrote %d to the AC backlight", curValue));
+
+	if (onAC)
+		HAL_DEBUG (("Wrote %d to the AC backlight", curValue));
 	else
-		HAL_DEBUG(("Wrote %d to the BAT backlight", curValue));
+		HAL_DEBUG (("Wrote %d to the BAT backlight", curValue));
 }
 
 static DBusHandlerResult
@@ -138,16 +138,16 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					 "SetBrightness")) {
 		int brightness;
 		
-		HAL_DEBUG(("Received SetBrightness DBus call"));
+		HAL_DEBUG (("Received SetBrightness DBus call"));
 
 		if (dbus_message_get_args (message, 
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
 					   DBUS_TYPE_INVALID)) {
-			if (brightness < 0 || brightness > 7) {
+			if (brightness < minValue || brightness > maxValue) {
 				reply = dbus_message_new_error (message,
 								"org.freedesktop.Hal.Device.LaptopPanel.Invalid",
-								"Brightness has to be between 0 and 7!");
+								"Brightness level is invalid");
 
 			} else {
 				int return_code;
@@ -171,16 +171,17 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	} else if (dbus_message_is_method_call (message, 
 						"org.freedesktop.Hal.Device.LaptopPanel", 
 						"GetBrightness")) {
-		HAL_DEBUG(("Received GetBrightness DBUS call"));
+		HAL_DEBUG (("Received GetBrightness DBUS call"));
 		
 		if (dbus_message_get_args (message, 
 					   &err,
 					   DBUS_TYPE_INVALID)) {
-			int brightness = read_backlight(AC);
-			if (brightness < 0)
-				brightness = 0;
-			else if (brightness > 7)
-				brightness = 7;
+			int brightness = read_backlight (AC);
+
+			if (brightness < minValue)
+				brightness = minValue;
+			else if (brightness > maxValue)
+				brightness = maxValue;
 
 			reply = dbus_message_new_method_return (message);
 			if (reply == NULL)
@@ -221,7 +222,7 @@ main (int argc, char *argv[])
 	}
 
 	dbus_error_init (&err);
-	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
+	if (!libhal_device_addon_is_ready(halctx, udi, &err)) {
 		return -4;
 	}
 
@@ -229,6 +230,18 @@ main (int argc, char *argv[])
 	dbus_connection_setup_with_g_main (conn, NULL);
 
 	dbus_connection_add_filter (conn, filter_function, NULL, NULL);
+
+	read_backlight (TRUE); /* Fill min- & maxValue with the correct values */
+	
+	if (!libhal_device_set_property_int (halctx, 
+					    "/org/freedesktop/Hal/devices/dell_lcd_panel",
+					    "laptop_panel.num_levels",
+					    maxValue + 1,
+					    &err)) {
+		HAL_ERROR (("Could not set 'laptop_panel.numlevels' to %d", maxValue));
+		return -4;
+	}
+	HAL_DEBUG (("laptop_panel.numlevels is set to %d", maxValue + 1));
 
 	/* this works because we hardcoded the udi's in the <spawn> in the fdi files */
 	if (!libhal_device_claim_interface (halctx, 

@@ -292,12 +292,18 @@ class DeviceManager(LibGladeApplication):
         category = self.xml.get_widget("ns_device_category")
         capabilities = self.xml.get_widget("ns_device_capabilities")
 
-	if not device.properties.has_key("info.bus"):
-            product.set_label("Unknown")
-            vendor.set_label("Unknown")
-	else:
-	    bus.set_label(Const.BUS_NAMES[device.properties["info.bus"]])	    
+        product.set_label("Unknown")
+        vendor.set_label("Unknown")
         #state.set_label(Const.STATE_NAMES[device.properties["State"]])
+
+        # walk up the device tree to find the bus type
+        bus.set_label("Unknown")
+        d = device
+        while d:
+            if d.properties.has_key("info.bus"):
+                bus.set_label(Const.BUS_NAMES[d.properties["info.bus"]])
+                break
+            d = self.udi_to_device(d.properties["info.parent"])
 
         # guestimate product and vendor if we have no device information file
         if device.properties.has_key("info.bus") and device.properties["info.bus"]=="usb":

@@ -153,7 +153,19 @@ static char *key_name[KEY_MAX + 1] = {
 #ifndef KEY_KBDILLUMUP
 #define KEY_KBDILLUMUP		230
 #endif
-	[KEY_KBDILLUMUP] = "kbd-illum-up"
+	[KEY_KBDILLUMUP] = "kbd-illum-up",
+#ifndef KEY_BATTERY
+#define KEY_BATTERY 236
+#endif
+	[KEY_BATTERY] = "battery",
+#ifndef KEY_BLUETOOTH
+#define KEY_BLUETOOTH 237
+#endif
+	[KEY_BLUETOOTH] = "bluetooth",
+#ifndef KEY_WLAN
+#define KEY_WLAN 238
+#endif
+	[KEY_WLAN] = "wlan"
 };
 
 static void
