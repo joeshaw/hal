@@ -559,6 +559,26 @@ dvb_compute_udi (HalDevice *d)
 	return TRUE;
 }
 
+static void
+asound_card_id_set (int cardnum, HalDevice *d, const char *propertyname)
+{
+	char aprocdir[256];
+	char linestart[5];
+	gchar *alsaname;
+
+	snprintf (aprocdir, sizeof (aprocdir), "%s/asound", get_hal_proc_path ());
+	snprintf (linestart, sizeof (linestart), "%2d [", cardnum);
+	alsaname = hal_util_grep_file_next_line (aprocdir, "cards", linestart, TRUE);
+	if (alsaname != NULL) {
+		gchar *end;
+		end = strstr (alsaname, " at ");
+		if (end != NULL) {
+			end[0] = '\0';
+		}
+		alsaname = g_strstrip (alsaname);
+		hal_device_property_set_string (d, propertyname, alsaname);
+	}
+}
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
@@ -623,8 +643,7 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_string (d, "alsa.type", "control");
 	
-			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
-			hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+			asound_card_id_set (cardnum, d, "alsa.card_id");
 	
 			snprintf (buf, sizeof (buf), "%s ALSA Control Device", 
 				hal_device_property_get_string (d, "alsa.card_id"));
@@ -640,8 +659,7 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
-			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
-			hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+			asound_card_id_set (cardnum, d, "alsa.card_id");
 
 			if (!hal_util_set_string_from_file (d, "alsa.pcm_class", sysfs_path, "pcm_class"))
 				 hal_device_property_set_string (d, "alsa.pcm_class", "unknown");
@@ -685,8 +703,7 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
-			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
-			hal_util_set_string_from_file (d, "alsa.card_id", aprocdir, "id");
+			asound_card_id_set (cardnum, d, "alsa.card_id");
 
 			hal_device_property_set_string (d, "alsa.type", "hw_specific");
 			
@@ -730,8 +747,7 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "oss.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "oss.card", cardnum);
 	
-			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d", get_hal_proc_path (), cardnum);
-			hal_util_set_string_from_file (d, "oss.card_id", aprocdir, "id");
+			asound_card_id_set (cardnum, d, "oss.card_id");
 	
 			snprintf (aprocdir, sizeof (aprocdir), "%s/asound/card%d/pcm0p", 
 				get_hal_proc_path (), cardnum);

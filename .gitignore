@@ -10,6 +10,7 @@ config.log
 config.status
 config.sub
 configure
+compile
 hal.conf
 hal.pc
 hal-policy.pc
