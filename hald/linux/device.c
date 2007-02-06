@@ -2305,14 +2305,14 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 	HalDevice *d;
 	int max_brightness;
 
-	d = NULL;
 	d = hal_device_new ();
 	hal_device_add_capability (d, "laptop_panel");
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
-	
 	hal_device_property_set_string (d, "info.category", "laptop_panel");
-	
+	hal_device_property_set_string (d, "info.product", "Generic Backlight Device");
+	hal_device_property_set_string (d, "laptop_panel.access_method", "general");
+
 	hal_util_get_int_from_file (sysfs_path, "max_brightness", &max_brightness, 10);
 	hal_device_property_set_int (d, "laptop_panel.num_levels", max_brightness + 1);
 	return d;

@@ -212,6 +212,10 @@ lid_button_refresh (HalDevice *d, PMUDevHandler *handler)
 static gboolean
 laptop_panel_refresh (HalDevice *d, PMUDevHandler *handler)
 {
+	if ((hal_device_store_find (hald_get_gdl (),
+				    "/org/freedesktop/Hal/devices/computer_backlight")) != NULL)
+		return FALSE;
+
 	hal_device_property_set_string (d, "info.category", "laptop_panel");
 	hal_device_property_set_string (d, "info.product", "Apple Laptop Panel");
 
