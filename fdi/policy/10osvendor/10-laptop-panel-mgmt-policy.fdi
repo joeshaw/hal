@@ -18,33 +18,4 @@
     </match>
   </device>
 
-  <!-- On some borken laptops, the brightness control is all done in hardware
-       but the hardware also synthesizes keypresses when the brightness is
-       changed. This gives power manager software problems as the brightness
-       can get into a feedback state so the panel flashes uncontrollably.
-       This is a hardware "feature" seen on some IBM and Lenovo laptops. -->
-  <device>
-    <match key="info.category" string="laptop_panel">
-      <match key="/org/freedesktop/Hal/devices/computer:smbios.system.manufacturer" string="IBM">
-        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad X31">
-          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
-        </match>
-      </match>
-      <match key="/org/freedesktop/Hal/devices/computer:smbios.system.manufacturer" string="LENOVO">
-        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad Z31t">
-          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
-        </match>
-        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad T60">
-          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
-        </match>
-        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad X60">
-          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
-        </match>
-        <match key="/org/freedesktop/Hal/devices/computer:smbios.system.version" string="ThinkPad X60s">
-          <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
-        </match>
-      </match>
-    </match>
-  </device>
-
 </deviceinfo>
