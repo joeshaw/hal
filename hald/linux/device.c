@@ -568,7 +568,7 @@ asound_card_id_set (int cardnum, HalDevice *d, const char *propertyname)
 
 	snprintf (aprocdir, sizeof (aprocdir), "%s/asound", get_hal_proc_path ());
 	snprintf (linestart, sizeof (linestart), "%2d [", cardnum);
-	alsaname = hal_util_grep_file_next_line (aprocdir, "cards", linestart, TRUE);
+	alsaname = hal_util_grep_file_next_line (aprocdir, "cards", linestart, FALSE);
 	if (alsaname != NULL) {
 		gchar *end;
 		end = strstr (alsaname, " at ");
