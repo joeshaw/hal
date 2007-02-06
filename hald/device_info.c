@@ -638,7 +638,7 @@ handle_match (struct rule *rule, HalDevice *d)
 static void
 spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 {
-	HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));
+	/*HAL_INFO (("Add callouts completed udi=%s", hal_device_get_udi (d)));*/
 
 	/* Move from temporary to global device store */
 	hal_device_store_remove (hald_get_tdl (), d);
@@ -858,14 +858,14 @@ rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 {
 	struct rule *rule = fdi_rules_list;
 	while (rule != NULL){
-		HAL_INFO(("== Iterating rules =="));
+		/*HAL_INFO(("== Iterating rules =="));*/
 
 		switch (rule->rtype) {
 		case RULE_MATCH:
 			/* skip non-matching rules block */
-			HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));
+			/*HAL_INFO(("%p match '%s' at %s", rule, rule->key, hal_device_get_udi (d)));*/
 			if (!handle_match (rule, d)) {
-				HAL_INFO(("no match, skip to rule (%llx)", rule->jump_position));
+				/*HAL_INFO(("no match, skip to rule (%llx)", rule->jump_position));*/
 				rule = di_jump(rule);
 
 				if(rule == NULL)
@@ -908,9 +908,9 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type){
 		/* Checking if we have at least one preprobe rule */
 		if(header->fdi_rules_information > header->fdi_rules_preprobe)
 		{
-			HAL_INFO(("preprobe rules offset: %ld", header->fdi_rules_preprobe));
+			/*HAL_INFO(("preprobe rules offset: %ld", header->fdi_rules_preprobe));
 			HAL_INFO(("preprobe rules size: %ld",
-				header->fdi_rules_information - header->fdi_rules_preprobe));
+			header->fdi_rules_information - header->fdi_rules_preprobe));*/
 			rules_match_and_merge_device (RULES_PTR(header->fdi_rules_preprobe), d);
 		}
 		break;
@@ -919,9 +919,9 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type){
 		/* Checking if we have at least one information rule */
 		if(header->fdi_rules_policy > header->fdi_rules_information)
 		{
-			HAL_INFO(("information rules offset: %ld", header->fdi_rules_information));
+			/*HAL_INFO(("information rules offset: %ld", header->fdi_rules_information));
 			HAL_INFO(("information rules size: %ld",
-				header->fdi_rules_policy - header->fdi_rules_information));
+			header->fdi_rules_policy - header->fdi_rules_information));*/
 			rules_match_and_merge_device (RULES_PTR(header->fdi_rules_information), d);
 		}
 		break;
@@ -930,9 +930,9 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type){
 		/* Checking if we have at least one policy rule */
 		if(header->all_rules_size > header->fdi_rules_policy)
 		{
-			HAL_INFO(("policy rules offset: %ld", header->fdi_rules_policy));
+			/*HAL_INFO(("policy rules offset: %ld", header->fdi_rules_policy));
 			HAL_INFO(("policy rules size: %ld",
-				header->all_rules_size - header->fdi_rules_policy));
+			header->all_rules_size - header->fdi_rules_policy));*/
 			rules_match_and_merge_device (RULES_PTR(header->fdi_rules_policy), d);
 		}
 		break;
