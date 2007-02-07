@@ -61,7 +61,17 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "sonypi" ]; then
 	# spicctrl -B
 	# 70
 	# 0..255
-	value="`/usr/sbin/spicctrl -B`"
+	if [ -x /usr/sbin/spicctrl ]; then
+		SPICCRTL="/usr/sbin/spicctrl"
+        elif [ -x /usr/bin/spicctrl ]; then
+		SPICCRTL="/usr/bin/spicctrl"
+	else
+                echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
+                echo "spicctrl not found or not executable" >&2
+                exit 1;
+        fi
+
+	value="`$SPICCRTL -B`"
 	RETVAL=$?
 	if [ $RETVAL != 0 ]; then
 		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
