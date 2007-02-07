@@ -92,6 +92,7 @@ hf_pci_device_new (HalDevice *parent, const struct pci_conf *p, int secondary_bu
   device = hf_device_new(parent);
 
   hf_device_set_udi(device, "pci_%.4x_%.4x", p->pc_vendor, p->pc_device);
+  hal_device_property_set_string(device, "info.subsystem", "pci");
   hal_device_property_set_string(device, "info.bus", "pci");
   hal_device_property_set_int(device, "pci.device_class", p->pc_class);
   hal_device_property_set_int(device, "pci.device_subclass", p->pc_subclass);

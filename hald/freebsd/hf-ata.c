@@ -77,6 +77,7 @@ hf_ata_ide_device_new (HalDevice *parent, int ms)
   host = hal_device_property_get_int(parent, "ide_host.number");
   hf_device_set_udi(device, "ide_%i_%i", host, ms);
 
+  hal_device_property_set_string(device, "info.subsystem", "ide");
   hal_device_property_set_string(device, "info.bus", "ide");
   hf_device_property_set_string_printf(device, "info.product", "IDE Device (%s)", ms == 0 ? "Master" : "Slave");
 
@@ -148,6 +149,7 @@ hf_ata_block_device_new (HalDevice *parent,
   if ((params->support.command1 & ATA_SUPPORT_REMOVABLE) != 0)
     hal_device_property_set_bool(device, "storage.removable", TRUE);
 
+  hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "storage.model", params->model);
   hal_device_property_set_string(device, "storage.vendor", vendor);
@@ -295,6 +297,7 @@ hf_ata_channel_set_properties (HalDevice *device)
 
   hf_device_set_udi(device, "ide_host_%i", unit);
 
+  hal_device_property_set_string(device, "info.subsystem", "ide_host");
   hal_device_property_set_string(device, "info.bus", "ide_host");
   hal_device_property_set_int(device, "ide_host.number", unit);
 }

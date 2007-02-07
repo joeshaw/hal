@@ -7,7 +7,7 @@
     Device information files (<literal>.fdi</literal> files is a
     shorthand) are used to merge arbitrary properties onto device
     objects. The way device information files works is that once all
-    physical properties are merged onto a device object it is tried
+    device properties are merged onto a device object it is tried
     against the set of installed device information files.  Device
     information files are used for both merging facts and policy
     settings about devices.
@@ -44,7 +44,7 @@
     <literal>info.parent</literal> should be used to query the
     property <literal>baz</literal>. It is also possible to use
     multiple indirections, e.g. for a volume on a USB memory stick
-    the indirection <literal>@block.storage_device:@storage.physical_device:usb.vendor_id</literal>
+    the indirection <literal>@block.storage_device:@storage.originating_device:usb.vendor_id</literal>
     will reference the <literal>usb.vendor_id</literal> property
     on the device object representing the USB interface.
   </para>
@@ -318,7 +318,7 @@
       </programlisting>
       <para>
         As described in the documentation for the
-        <literal>storage.physical_device</literal> property in
+        <literal>storage.originating_device</literal> property in
         <xref linkend="device-properties-storage"/> this device information
         file export information about each storage port through the
         property <literal>storage.drive_type</literal>. Thus, one

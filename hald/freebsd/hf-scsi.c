@@ -67,6 +67,7 @@ hf_scsi_bus_device_new (HalDevice *parent,
 
   device = hf_device_new(parent);
 
+  hal_device_property_set_string(device, "info.subsystem", "scsi_host");
   hal_device_property_set_string(device, "info.bus", "scsi_host");
   hal_device_property_set_int(device, "scsi_host.host", match->path_id);
   hal_device_property_set_string(device, "info.product", "SCSI Host Adapter");
@@ -91,6 +92,7 @@ hf_scsi_scsi_device_new (HalDevice *parent,
 
   device = hf_device_new(parent);
 
+  hal_device_property_set_string(device, "info.subsystem", "scsi");
   hal_device_property_set_string(device, "info.bus", "scsi");
   hal_device_property_set_int(device, "scsi.host", match->path_id);
   hal_device_property_set_int(device, "scsi.bus", match->path_id);
@@ -210,12 +212,13 @@ hf_scsi_block_device_new (HalDevice *parent,
       const char *bus;
       const char *parent_udi;
 
-      bus = hal_device_property_get_string(parent, "info.bus");
+      bus = hal_device_property_get_string(parent, "info.subsystem");
       if (bus)
 	{
 	  if (! strcmp(bus, "scsi"))
 	    {
 	      hal_device_property_set_string(device, "storage.bus", "scsi");
+	      hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
 	      hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
 	      hal_device_copy_property(parent, "scsi.lun", device, "storage.lun");
 	      /* do not stop here, in case it's an umass device */
@@ -223,6 +226,7 @@ hf_scsi_block_device_new (HalDevice *parent,
 	  else if (! strcmp(bus, "usb"))
 	    {
 	      hal_device_property_set_string(device, "storage.bus", "usb");
+	      hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
 	      hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
 	      hal_device_property_set_bool(device, "storage.hotpluggable", TRUE);
 	      break;		/* done */

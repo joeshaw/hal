@@ -142,6 +142,7 @@ void
 hf_pcmcia_set_properties (HalDevice *device)
 {
 
+  hal_device_property_set_string(device, "info.subsystem", "pcmcia");
   hal_device_property_set_string(device, "info.bus", "pcmcia");
   hal_device_add_capability(device, "pcmcia_socket");
   hal_device_property_set_string(device, "info.category", "pcmcia_socket");

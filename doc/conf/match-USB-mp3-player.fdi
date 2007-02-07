@@ -5,7 +5,7 @@
 
 <deviceinfo version="0.2">
   <device>
-    <match key="info.bus" string="usb">
+    <match key="info.subsystem" string="usb">
       <match key="usb.vendor_id" int="0x066f">
         <match key="usb.product_id" int="0x8000">
           <merge key="info.category" type="string">portable_audio_player</merge>

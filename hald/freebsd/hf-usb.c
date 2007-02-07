@@ -314,6 +314,7 @@ hf_usb_device_new (HalDevice *parent,
 
   device = hf_device_new(parent);
 
+  hal_device_property_set_string(device, "info.subsystem", "usb_device");
   hal_device_property_set_string(device, "info.bus", "usb_device");
 
   hal_device_property_set_string(device, "info.product", di->udi_product);

@@ -956,7 +956,7 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 
 		LIBHAL_PROP_EXTRACT_STRING ("storage.partitioning_scheme", drive->partition_scheme); 
 
-		LIBHAL_PROP_EXTRACT_STRING ("storage.physical_device",   drive->physical_device);
+		LIBHAL_PROP_EXTRACT_STRING ("storage.originating_device",   drive->physical_device);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.firmware_version",  drive->firmware_version);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.serial",            drive->serial);
 

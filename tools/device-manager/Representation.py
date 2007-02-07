@@ -57,9 +57,9 @@ class Representation:
         if product=="Computer":
             return self.icons["computer"]
 
-        # First look at bus type, every device got Bus property
-        if device.properties.has_key("info.bus"):
-	    bus = device.properties["info.bus"]
+        # First look at bus type, every device got subsystem property
+        if device.properties.has_key("info.subsystem"):
+	    bus = device.properties["info.subsystem"]
 	    if bus=="usb_device":
 		icon = self.icons["bus_usb"]
 	    elif bus=="pci":

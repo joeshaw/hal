@@ -124,6 +124,7 @@ hf_computer_device_add (void)
 
   device = hal_device_new();
   hf_device_set_udi(device, "computer");
+  hal_device_property_set_string(device, "info.subsystem", "unknown");
   hal_device_property_set_string(device, "info.bus", "unknown");
   hal_device_property_set_string(device, "info.product", "Computer");
 

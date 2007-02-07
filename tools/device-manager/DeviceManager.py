@@ -300,13 +300,13 @@ class DeviceManager(LibGladeApplication):
         bus.set_label("Unknown")
         d = device
         while d:
-            if d.properties.has_key("info.bus"):
-                bus.set_label(Const.BUS_NAMES[d.properties["info.bus"]])
+            if d.properties.has_key("info.subsystem"):
+                bus.set_label(Const.BUS_NAMES[d.properties["info.subsystem"]])
                 break
             d = self.udi_to_device(d.properties["info.parent"])
 
         # guestimate product and vendor if we have no device information file
-        if device.properties.has_key("info.bus") and device.properties["info.bus"]=="usb":
+        if device.properties.has_key("info.subsystem") and device.properties["info.subsystem"]=="usb":
             if device.properties.has_key("info.product"):
                 product.set_label("%s"%device.properties["info.product"])
             elif device.properties.has_key("usb.product"):
@@ -326,7 +326,7 @@ class DeviceManager(LibGladeApplication):
                 vendor.set_label("Unknown")
 
 
-        elif device.properties.has_key("info.bus") and device.properties["info.bus"]=="pci":
+        elif device.properties.has_key("info.subsystem") and device.properties["info.subsystem"]=="pci":
             if device.properties.has_key("info.product"):
                 product.set_label("%s"%device.properties["info.product"])
             elif device.properties.has_key("pci.product"):
@@ -344,7 +344,7 @@ class DeviceManager(LibGladeApplication):
                 vendor.set_label("Unknown (0x%x)"%device.properties["pci.vendor_id"])
             else:
                 vendor.set_label("Unknown")
-        elif device.properties.has_key("info.bus") and device.properties["info.bus"]=="block":
+        elif device.properties.has_key("info.subsystem") and device.properties["info.subsystem"]=="block":
             if device.properties.has_key("info.product"):
                 product.set_label("%s"%device.properties["info.product"])
             else:
@@ -373,7 +373,7 @@ class DeviceManager(LibGladeApplication):
     def update_tab_usb(self, device):
         """Updates the 'USB' tab given a Device object; may hide it"""
         page = self.xml.get_widget("device_notebook").get_nth_page(1)
-        if not device.properties.has_key("info.bus") or device.properties["info.bus"]!="usb":
+        if not device.properties.has_key("info.subsystem") or device.properties["info.subsystem"]!="usb":
             page.hide_all()
             return
 
@@ -407,7 +407,7 @@ class DeviceManager(LibGladeApplication):
     def update_tab_pci(self, device):
         """Updates the 'PCI' tab given a Device object; may hide it"""
         page = self.xml.get_widget("device_notebook").get_nth_page(2)
-        if not device.properties.has_key("info.bus") or device.properties["info.bus"]!="pci":
+        if not device.properties.has_key("info.subsystem") or device.properties["info.subsystem"]!="pci":
             page.hide_all()
             return
 

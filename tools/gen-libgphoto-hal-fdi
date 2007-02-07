@@ -18,7 +18,7 @@ cat <<EOF
 -->
 <deviceinfo version="0.2">
   <device>
-    <match key="info.bus" string="usb">
+    <match key="info.subsystem" string="usb">
 EOF
 
 /usr/lib/libgphoto2/print-usb-usermap | grep -v '^#' | tr -s ' ' | cut -d' ' -f 3,4 | sort -u | grep -v "^0x0000" | while read ven dev; do

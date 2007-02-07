@@ -52,7 +52,7 @@ HalDevice *devinfo_pci_add (HalDevice *parent, di_node_t node, char *devfs_path,
 		if (parent == NULL) {
 			return (NULL);
 		} else {
-			s = (char *)hal_device_property_get_string (parent, "info.bus");
+			s = (char *)hal_device_property_get_string (parent, "info.subsystem");
 			if ((s == NULL) || (strcmp (s, "pci") != 0)) {
 				return (NULL);
 			}
@@ -62,6 +62,7 @@ HalDevice *devinfo_pci_add (HalDevice *parent, di_node_t node, char *devfs_path,
 	d = hal_device_new ();
 	devinfo_set_default_properties (d, parent, node, devfs_path);
 
+	hal_device_property_set_string (d, "info.subsystem", "pci");
 	hal_device_property_set_string (d, "info.bus", "pci");
 
 	vid = pid = svid = spid = 0;

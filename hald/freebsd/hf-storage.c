@@ -651,6 +651,7 @@ hf_storage_device_enable (HalDevice *device)
   hal_device_property_set_bool(device, "storage.automount_enabled_hint", TRUE);
   hal_device_property_set_bool(device, "storage.no_partitions_hint", FALSE);
 
+  hal_device_property_set_string(device, "storage.originating_device", NULL);
   hal_device_property_set_string(device, "storage.physical_device", NULL);
   hal_device_property_set_string(device, "storage.model", NULL);
   hal_device_property_set_string(device, "storage.vendor", NULL);

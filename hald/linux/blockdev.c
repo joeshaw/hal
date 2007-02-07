@@ -108,7 +108,7 @@ blockdev_compute_udi (HalDevice *d)
 		} else {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "%s_storage", 
-					      hal_device_property_get_string (d, "storage.physical_device"));
+					      hal_device_property_get_string (d, "storage.originating_device"));
 		}
 	}
 
@@ -735,8 +735,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	hal_device_property_set_int (d, "block.minor", minor);
 	hal_device_property_set_bool (d, "block.is_volume", is_partition || is_device_mapper || is_fakevolume);
 
-	if (hal_device_has_property(parent, "info.bus") &&
-		(strcmp(hal_device_property_get_string(parent, "info.bus"), "platform") == 0) &&
+	if (hal_device_has_property(parent, "info.subsystem") &&
+		(strcmp(hal_device_property_get_string(parent, "info.subsystem"), "platform") == 0) &&
 		(sscanf(hal_device_property_get_string(parent, "platform.id"), "floppy.%d", &floppy_num) == 1)) {
 		/* for now, just cheat here for floppy drives */
 
@@ -751,6 +751,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "info.vendor", "");
 		hal_device_property_set_string (d, "info.product", "PC Floppy Drive");
 		hal_device_property_set_string (d, "storage.drive_type", "floppy");
+		hal_device_property_set_string (d, "storage.originating_device", hal_device_get_udi (parent));
 		hal_device_property_set_string (d, "storage.physical_device", hal_device_get_udi (parent));
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
 		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
@@ -836,8 +837,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				}
 			}
 
-			/* Check info.bus */
-			if ((bus = hal_device_property_get_string (d_it, "info.bus")) != NULL) {
+			/* Check info.subsystem */
+			if ((bus = hal_device_property_get_string (d_it, "info.subsystem")) != NULL) {
 				if (strcmp (bus, "scsi") == 0) {
 					scsidev = d_it;
 					physdev = d_it;
@@ -895,6 +896,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			goto error;
 		}
 
+		hal_device_property_set_string (d, "storage.originating_device", physdev_udi);
 		hal_device_property_set_string (d, "storage.physical_device", physdev_udi);
 
 		if (!hal_util_get_int_from_file (sysfs_path, "removable", (gint *) &is_removable, 10)) {
@@ -922,7 +924,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 */
 		hal_device_property_set_bool (d, "storage.media_check_enabled", is_removable);
 
-		parent_bus = hal_device_property_get_string (parent, "info.bus");
+		parent_bus = hal_device_property_get_string (parent, "info.subsystem");
 		if (parent_bus == NULL) {
 			HAL_INFO (("parent_bus is NULL - wrong parent?"));
 			goto error;

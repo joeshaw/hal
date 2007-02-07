@@ -100,7 +100,7 @@ hf_block_device_compute_udi (HalDevice *device)
 
       model = hal_device_property_get_string(device, "storage.model");
       serial = hal_device_property_get_string(device, "storage.serial");
-      physical_device = hal_device_property_get_string(device, "storage.physical_device");
+      physical_device = hal_device_property_get_string(device, "storage.originating_device");
 
       if (serial && *serial)
 	hf_device_set_udi(device, "storage_serial_%s", serial);
@@ -153,6 +153,7 @@ hf_block_device_enable (HalDevice *device, const char *devname)
 
   hal_device_add_capability(device, "block");
 
+  hal_device_property_set_string(device, "info.subsystem", "block");
   hal_device_property_set_string(device, "info.bus", "block");
   hal_device_property_set_string(device, "info.category", "block"); /* FIXME? */
 

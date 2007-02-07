@@ -131,6 +131,7 @@ hf_net_device_new (const char *interface, HalDevice *parent, GError **err)
   hal_device_add_capability(device, "net");
   hal_device_property_set_string(device, "net.address", mac ? mac : "00:00:00:00:00:00");
   hal_device_property_set_string(device, "net.interface", interface);
+  hal_device_property_set_string(device, "net.originating_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "net.physical_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "net.media", media);
   if (hf_devtree_is_driver(interface, "fwe"))

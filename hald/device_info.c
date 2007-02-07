@@ -112,7 +112,7 @@ get_match_type_str (enum match_type type)
  *   info.udi
  *   /org/freedesktop/Hal/devices/computer:kernel.name
  *   @block.storage_device:storage.bus
- *   @block.storage_device:@storage.physical_device:ide.channel
+ *   @block.storage_device:@storage.originating_device:ide.channel
  *
  *  @param  source_udi          UDI of source device
  *  @param  path                The given path
@@ -804,6 +804,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 			HAL_INFO (("Spawning new device object '%s' caused by <spawn> on udi '%s'",
 				   key, hal_device_get_udi (d)));
 			spawned = hal_device_new ();
+			hal_device_property_set_string (spawned, "info.subsystem", "unknown");
 			hal_device_property_set_string (spawned, "info.bus", "unknown");
 			hal_device_property_set_string (spawned, "info.udi", key);
 			hal_device_property_set_string (spawned, "info.parent", hal_device_get_udi (d));

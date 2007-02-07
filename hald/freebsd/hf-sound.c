@@ -72,6 +72,7 @@ hf_sound_oss_device_new (HalDevice *parent,
 
   device = hf_device_new(parent);
 
+  hal_device_property_set_string(device, "oss.originating_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "oss.physical_device", hal_device_get_udi(parent));
 
   pproduct = hal_device_property_get_string(parent, "info.product");

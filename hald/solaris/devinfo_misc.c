@@ -69,6 +69,7 @@ devinfo_computer_add(HalDevice *parent, di_node_t node, char *devfs_path, char *
 
 	d = hal_device_new ();
 
+        hal_device_property_set_string (d, "info.subsystem", "unknown");
         hal_device_property_set_string (d, "info.bus", "unknown");
         hal_device_property_set_string (d, "info.product", "Computer");
         hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/computer");
@@ -87,6 +88,7 @@ devinfo_computer_add(HalDevice *parent, di_node_t node, char *devfs_path, char *
 	local_d = hal_device_new ();
 
 	hal_device_property_set_string (local_d, "info.parent", hal_device_get_udi (d));
+        hal_device_property_set_string (local_d, "info.subsystem", "unknown");
         hal_device_property_set_string (local_d, "info.bus", "unknown");
         hal_device_property_set_string (local_d, "info.product", "Local devices");
         hal_device_property_set_string (local_d, "info.udi", "/org/freedesktop/Hal/devices/local");

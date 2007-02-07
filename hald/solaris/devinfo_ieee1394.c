@@ -80,6 +80,7 @@ devinfo_scsa1394_add(HalDevice *parent, di_node_t node, gchar *devfs_path)
 	d = hal_device_new ();
 
 	devinfo_set_default_properties (d, parent, node, devfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "ieee1394");
 	hal_device_property_set_string (d, "info.bus", "ieee1394");
 	hal_device_property_set_string (d, "info.product", "FireWire SBP-2 device");
 

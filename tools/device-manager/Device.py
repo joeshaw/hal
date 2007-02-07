@@ -24,7 +24,7 @@ class Device:
             try:
                 if self.properties["info.virtual"]:
                     # do show all block devices, ide channels
-                    if not self.properties["info.bus"] in ["block", "ide_host"]:
+                    if not self.properties["info.subsystem"] in ["block", "ide_host"]:
                         self.row = self.parent_device.row
                         # and recurse the childs
                         for c in self.children:

@@ -183,7 +183,7 @@ main (int argc, char *argv[])
 		HAL_ERROR (("Error: EVIOCGID failed: %s\n", strerror(errno)));
 		goto out;
 	}
-	physical_device = getenv ("HAL_PROP_INPUT_PHYSICAL_DEVICE");
+	physical_device = getenv ("HAL_PROP_INPUT_ORIGINATING_DEVICE");
 
 	HAL_DEBUG (("probe-input: id.bustype=%i", id.bustype));
 	if (physical_device == NULL) {

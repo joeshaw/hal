@@ -267,9 +267,9 @@ hf_devtree_device_new (HalDevice *parent, const Handler *handler, int unit)
   if (handler->set_properties)
     handler->set_properties(device);
 
-  if (! hal_device_has_property(device, "info.bus"))
+  if (! hal_device_has_property(device, "info.subsystem"))
     {
-      hal_device_property_set_string(device, "info.bus", "platform");
+      hal_device_property_set_string(device, "info.subsystem", "platform");
       hf_device_property_set_string_printf(device, "platform.id", "%s.%i", handler->driver, unit);
     }
 
