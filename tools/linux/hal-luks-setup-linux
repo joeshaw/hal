@@ -12,7 +12,7 @@ PASSWORD=${PASSWORD//[^[:alnum:]_=[:space:]:.+-]/@}
 CRYPTSETUP=/sbin/cryptsetup
 
 if [ ! -f $CRYPTSETUP ]; then
-    echo org.freedesktop.Hal.Device.Volume.Crypto.SetupError >&2
+    echo org.freedesktop.Hal.Device.Volume.Crypto.CryptSetupMissing >&2
     echo Error setting up $HAL_PROP_BLOCK_DEVICE - $CRYPTSETUP not found >&2
     exit 1
 fi
