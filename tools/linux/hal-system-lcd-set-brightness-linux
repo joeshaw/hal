@@ -49,7 +49,7 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "sony" ]; then
 	# http://popies.net/sonypi/2.6-sony_acpi4.patch
 	echo "$((value + 1))" > $HAL_PROP_LINUX_ACPI_PATH
 elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "omnibook" ]; then
-	# echo "{0..7}" > /proc/omnibook/lcd
+	# echo "{0..7} || {0...11}" > /proc/omnibook/lcd
 	# http://bugzilla.gnome.org/show_bug.cgi?id=331458
 	echo "$value" > $HAL_PROP_LINUX_ACPI_PATH
 elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "sonypi" ]; then

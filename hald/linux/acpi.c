@@ -775,9 +775,25 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 		desc = "Sony LCD Panel";
 		br_levels = 8;
 	} else if (acpi_type == ACPI_TYPE_OMNIBOOK_DISPLAY) {
+		gchar *proc_lcd;
+		gchar proc_path[HAL_PATH_MAX];	
+		int current = -1;
+		int max = -1;
+
 		type = "omnibook";
 		desc = "Omnibook LCD Panel";
-		br_levels = 11;
+		/* 
+		 * There are different support brightness level, depending on 
+		 * the hardware and the kernel module version.
+		 */
+		snprintf (proc_path, sizeof (proc_path), "%s/%s", get_hal_proc_path (), "omnibook");
+		proc_lcd = hal_util_grep_file(proc_path, "lcd", "LCD brightness:", FALSE);
+		proc_lcd = g_strstrip (proc_lcd);
+		if (sscanf (proc_lcd, "%d (max value: %d)", &current, &max) == 2) {	
+			br_levels = max + 1;
+		} else {	
+			br_levels = 11;
+		}
 	} else if (acpi_type == ACPI_TYPE_SONYPI_DISPLAY) {
 		type = "sonypi";
 		desc = "Sony LCD Panel";
