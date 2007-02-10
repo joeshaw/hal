@@ -264,6 +264,7 @@ main (int argc, char **argv)
 {
   char *device_file;
   char *parent_udi;
+  char *grandparent_udi;
   char *parent_drive_type;
   int fd = -1;
   struct volume_id *vid = NULL;
@@ -302,6 +303,9 @@ main (int argc, char **argv)
     goto end;
 
   parent_drive_type = libhal_device_get_property_string(hfp_ctx, parent_udi, "storage.drive_type", &hfp_error);
+  dbus_error_free(&hfp_error);
+
+  grandparent_udi = libhal_device_get_property_string(hfp_ctx, parent_udi, "info.parent", &hfp_error);
   dbus_error_free(&hfp_error);
 
   is_cdrom = parent_drive_type && ! strcmp(parent_drive_type, "cdrom");
@@ -364,7 +368,7 @@ main (int argc, char **argv)
 
       /* the following code was adapted from linux's probe-volume.c */
 
-      cdrom = hfp_cdrom_new_from_fd(fd, device_file, parent_udi);
+      cdrom = hfp_cdrom_new_from_fd(fd, device_file, grandparent_udi);
       if (cdrom)
 	{
 	  type = get_disc_type(cdrom);
