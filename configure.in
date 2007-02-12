@@ -37,6 +37,7 @@ AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AM_PATH_PYTHON
 AC_SYS_LARGEFILE
+PKG_PROG_PKG_CONFIG
 
 AC_CHECK_HEADERS([sys/ioccom.h])
 
@@ -300,10 +301,12 @@ else
 	AM_CONDITIONAL(HAVE_LIBUSB,false)
 fi
 
-dnl Check for libsmbios 
+dnl Check for libsmbios
+AC_LANG_PUSH([C++])
 AC_CHECK_LIB(smbios, SMBIOSFreeMemory, LIB_SMBIOS=yes , LIB_SMBIOS=no )
-if test "$LIB_SMBIOS" = "yes" ; then 
-   AC_MSG_CHECKING(for libsmbios >= 0.11.6 )	
+AC_LANG_POP([C++])
+if test "$LIB_SMBIOS" = "yes" ; then
+   AC_MSG_CHECKING(for libsmbios >= 0.11.6 )
    AC_TRY_RUN(
    #include <smbios/version.h>
    int main ()
@@ -311,15 +314,15 @@ if test "$LIB_SMBIOS" = "yes" ; then
         int major ;
         int minor ;
         int micro ;
-	
+
         if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
 	    if ((major == 0 && minor == 11 && micro >= 6) ||
                (major >= 0 && minor > 11)) {
-		return 0; 
-	    } 
+		return 0;
+	    }
 	}
 	return 1;
-   } , [USE_SMBIOS=yes; AC_MSG_RESULT(yes); AM_CONDITIONAL(HAVE_SMBIOS,true)], 
+   } , [USE_SMBIOS=yes; AC_MSG_RESULT(yes); AM_CONDITIONAL(HAVE_SMBIOS,true)],
        [USE_SMBIOS=no; AC_MSG_RESULT(failed); AM_CONDITIONAL(HAVE_SMBIOS,false)])
 else
   USE_SMBIOS=no
