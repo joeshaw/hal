@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * addon-nokia770-backlight.c : daemon, handling Nokia 770
+ * addon-omap-backlight.c : daemon, handling OMAP
  * non-standard backlight. Based on macbookpro addon by
  * David Zeuthen and Nicolas Boichat
  *
@@ -129,7 +129,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	DBusError err;
 	DBusMessage *reply;
 
-#ifdef DEBUG_N770_BL
+#ifdef DEBUG_OMAP_BL
 	dbg ("filter_function: sender=%s destination=%s obj_path=%s interface=%s method=%s", 
 	     dbus_message_get_sender (message), 
 	     dbus_message_get_destination (message), 

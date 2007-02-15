@@ -646,12 +646,28 @@ elif test "x$with_macbookpro" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
 
-AC_ARG_WITH(nokia770,     [  --with-nokia770         Whether to build Nokia 770 utils (no)])
-BUILD_N770=no
-if test "x$with_nokia770" = "xyes"; then
-    BUILD_N770=yes
+AC_ARG_WITH([omap],
+	    [AS_HELP_STRING([--with-omap],
+			    [Whether to build OMAP utils (auto)])])
+BUILD_OMAP=no
+if test "x$with_omap" = "xyes" ; then
+    BUILD_OMAP=yes
+elif test "x$with_omap" = "x" ; then
+    case "${HALD_BACKEND}" in
+    linux)
+	case "${host}" in
+	arm*-*-*)
+	    BUILD_OMAP=yes
+	    ;;
+	*)
+	    ;;
+	esac
+	;;
+    *)
+	;;
+    esac
 fi
-AM_CONDITIONAL(BUILD_N770, test x$BUILD_N770 = xyes)
+AM_CONDITIONAL(BUILD_OMAP, [test x$BUILD_OMAP = xyes])
 
 dnl cpufreq
 AC_ARG_WITH(cpufreq,        [  --with-cpufreq          Whether to build cpufreq utils (auto)])
@@ -802,6 +818,7 @@ echo "
         use APM:                    ${msg_apm}
 
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
+        OMAP utils:                 ${BUILD_OMAP} (Linux only, arm only)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
 	USB wireless mouse power:   ${BUILD_USBCSR} (Linux only, requires libusb)
 	Dell Backlight              ${BUILD_DELL} (Linux only, requires libsmbios >= 0.11.6)
