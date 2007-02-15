@@ -114,12 +114,22 @@
       GDL (global device list) and first then it becomes ''visible'' for
       desktop applications.
     </para>
-
+    <para>
+      Using D-BUS terminology, the HAL daemon provides the D-BUS
+      service <literal>org.freedesktop.Hal</literal>. This service may
+      be used to communicate with the HAL daemon, to get or set device
+      properties and to perform some action on the devices. In the 
+      following sections, this D-BUS interface is expanded.
+    </para>
+    <para>
+      A <literal>C</literal> API is provided by the libhal library.
+      This API hides most of the D-BUS complexity and presents the D-BUS 
+      interface as function call or callbacks.
+    </para>
     <sect2>
       <title>Interface org.freedesktop.Hal.Manager</title>
       <para>
-        Using D-BUS terminology, the HAL daemon provides the D-BUS
-        service <literal>org.freedesktop.Hal</literal>. This service
+        The <literal>org.freedesktop.Hal</literal> D-BUS service
         offers a D-BUS object at a well-known
         location <literal>/org/freedesktop/Hal/Manager</literal>. This
         object offers a D-BUS
