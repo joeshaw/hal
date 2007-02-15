@@ -29,6 +29,10 @@ if BUILD_DELL
 dist_fdi_DATA += 10-dell-laptop-brightness.fdi
 endif
 
+if HAVE_ACLMGMT
+dist_fdi_DATA += 20-acl-management.fdi
+endif
+
 check:
 	for f in $(dist_fdi_DATA); do \
             echo -n "Validate XML in $$f : "; \

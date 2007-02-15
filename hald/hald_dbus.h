@@ -87,6 +87,8 @@ void device_send_signal_condition (HalDevice *device,
 void device_property_atomic_update_begin (void);
 void device_property_atomic_update_end   (void);
 
+gboolean hald_dbus_init_preprobe (void);
+
 gboolean hald_dbus_init (void);
 
 gboolean hald_dbus_local_server_init (void);

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deviceinfo version="0.2">
+  <device>
+
+    <!-- allow local sessions to access ALSA device files -->
+    <match key="info.capabilities" contains="alsa">
+      <merge key="acl.is_managed" type="bool">true</merge>
+      <merge key="acl.grant_local_session" type="bool">true</merge>
+      <merge key="acl.file" type="copy_property">alsa.device_file</merge>
+    </match>
+
+    <!-- allow local sessions to access OSS device files -->
+    <match key="info.capabilities" contains="oss">
+      <merge key="acl.is_managed" type="bool">true</merge>
+      <merge key="acl.grant_local_session" type="bool">true</merge>
+      <merge key="acl.file" type="copy_property">oss.device_file</merge>
+    </match>
+
+    <!-- TODO: add more rules for adding/removing ACL's (e.g. webcam, cd drive etc.) -->
+
+    <!-- remove all previously added ACL's on start-up -->
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+      <append key="info.callouts.add" type="strlist">hal-acl-remove --remove-all</append>
+    </match>
+
+    <!-- add and remove ACL's when devices are added and removed -->
+    <match key="acl.is_managed" bool="true">
+      <append key="info.callouts.add" type="strlist">hal-acl-add</append>
+      <append key="info.callouts.remove" type="strlist">hal-acl-remove</append>
+    </match>
+
+  </device>
+</deviceinfo>

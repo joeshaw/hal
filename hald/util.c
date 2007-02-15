@@ -942,9 +942,9 @@ callout_do_next (Callout *c)
 		callback (d, userdata1, userdata2);
 
 	} else {
-    hald_runner_run(c->d, c->programs[c->next_program], c->extra_env,
-                    HAL_HELPER_TIMEOUT, callout_terminated,
-                    (gpointer)c, NULL);
+		hald_runner_run(c->d, c->programs[c->next_program], c->extra_env,
+				HAL_HELPER_TIMEOUT, callout_terminated,
+				(gpointer)c, NULL);
 		c->next_program++;
 	}
 }

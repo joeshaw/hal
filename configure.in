@@ -392,6 +392,16 @@ if test "x$enable_console_kit" != "xno"; then
    msg_conkit=yes
 fi
 
+# check for ACL handling
+AM_CONDITIONAL(HAVE_ACLMGMT, false)
+AC_ARG_ENABLE(acl-management, [  --enable-acl-management ACL management],enable_acl_management=$enableval,enable_acl_management=no)
+msg_aclmgmt=no
+if test "x$enable_acl_management" != "xno"; then
+   AM_CONDITIONAL(HAVE_ACLMGMT, true)
+   AC_DEFINE(HAVE_ACLMGMT, [], [Set if we manage ACL's])
+   msg_aclmgmt=yes
+fi
+
 # what extra hotplug backends to use (ACPI, APM, PMU etc)
 AC_ARG_ENABLE(have_acpi, [  --disable-acpi          Build without ACPI support])
 msg_acpi=no
@@ -783,6 +793,7 @@ echo "
         use libparted:              ${USE_PARTED}
         use PolicyKit:              ${msg_polkit}
         use ConsoleKit:             ${msg_conkit}
+        use ACL management:         ${msg_aclmgmt}
         use ACPI:                   ${msg_acpi}
         use PMU:                    ${msg_pmu}
         use APM:                    ${msg_apm}

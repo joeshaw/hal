@@ -48,9 +48,12 @@
 #include "util.h"
 #include "hald_runner.h"
 
+#include "ck-tracker.h"
+
 #define HALD_DBUS_ADDRESS "unix:tmpdir=" HALD_SOCKET_DIR
 
 static DBusConnection *dbus_connection = NULL;
+static CKTracker *ck_tracker = NULL;
 
 static void
 raise_error (DBusConnection *connection,
@@ -576,7 +579,7 @@ manager_send_signal_device_added (HalDevice *device)
 	DBusMessage *message;
 	DBusMessageIter iter;
 
-	if (dbus_connection == NULL)
+	if (dbus_connection == NULL || hald_is_initialising)
 		goto out;
 
 	HAL_TRACE (("entering, udi=%s", udi));
@@ -609,7 +612,7 @@ manager_send_signal_device_removed (HalDevice *device)
 	DBusMessage *message;
 	DBusMessageIter iter;
 
-	if (dbus_connection == NULL)
+	if (dbus_connection == NULL || hald_is_initialising)
 		goto out;
 
 	HAL_TRACE (("entering, udi=%s", udi));
@@ -644,7 +647,7 @@ manager_send_signal_new_capability (HalDevice *device,
 	DBusMessage *message;
 	DBusMessageIter iter;
 
-	if (dbus_connection == NULL)
+	if (dbus_connection == NULL || hald_is_initialising)
 		goto out;
 
 	HAL_TRACE (("entering, udi=%s, cap=%s", udi, capability));
@@ -931,7 +934,8 @@ caller_info_free (CallerInfo *ci)
 	g_free (ci);
 }
 
-GHashTable *connection_name_to_caller_info;
+static GHashTable *connection_name_to_caller_info;
+
 
 static void
 ci_tracker_init (void)
@@ -2364,7 +2368,7 @@ device_send_signal_property_modified (HalDevice *device, const char *key,
 		DBusMessageIter iter_struct;
 		DBusMessageIter iter_array;
 
-		if (dbus_connection == NULL)
+		if (dbus_connection == NULL || hald_is_initialising)
 			goto out;
 		
 		message = dbus_message_new_signal (udi,
@@ -2431,7 +2435,7 @@ device_send_signal_condition (HalDevice *device, const char *condition_name, con
 	DBusMessage *message;
 	DBusMessageIter iter;
 
-	if (dbus_connection == NULL)
+	if (dbus_connection == NULL || hald_is_initialising)
 		goto out;
 
 	message = dbus_message_new_signal (udi,
@@ -4159,7 +4163,8 @@ no_caller:
 }
 
 /** Message handler for method invocations. All invocations on any object
- *  or interface is routed through this function.
+ *  or interface is routed through this function. *ONLY* messages from the
+ *  system bus goes through this method.
  *
  *  @param  connection          D-BUS connection
  *  @param  message             Message
@@ -4170,6 +4175,13 @@ DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
 			   DBusMessage * message, void *user_data)
 {
+#ifdef HAVE_CONKIT
+	/* TODO: only push the appropriate messages to the tracker; see ck-tracker.h */
+	if (ck_tracker != NULL) {
+		ck_tracker_process_system_bus_message (ck_tracker, message);
+	}
+#endif
+
 	if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
 	    strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
 
@@ -4388,12 +4400,37 @@ hald_dbus_local_server_shutdown (void)
 	}
 }
 
-gboolean
-hald_dbus_init (void)
+static void 
+hald_dbus_session_added (CKTracker *tracker, CKSession *session, void *user_data)
 {
+	HAL_INFO (("In hald_dbus_session_added for session '%s' on seat '%s'", 
+		   ck_session_get_id (session),
+		   ck_session_get_seat (session) != NULL ? ck_seat_get_id (ck_session_get_seat (session)) : "(NONE)"));
+}
+
+static void 
+hald_dbus_session_removed (CKTracker *tracker, CKSession *session, void *user_data)
+{
+	HAL_INFO (("In hald_dbus_session_removed for session '%s' on seat '%s'", 
+		   ck_session_get_id (session),
+		   ck_session_get_seat (session) != NULL ? ck_seat_get_id (ck_session_get_seat (session)) : "(NONE)"));
+}
+
+static void 
+hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *user_data)
+{
+	HAL_INFO (("In hald_dbus_session_active_changed for session '%s': %s", 
+		   ck_session_get_id (session),
+		   ck_session_is_active (session) ? "ACTIVE" : "INACTIVE"));
+}
+
+gboolean
+hald_dbus_init_preprobe (void)
+{
+	gboolean ret;
 	DBusError dbus_error;
 
-	HAL_INFO (("entering"));
+	ret = FALSE;
 
 	dbus_connection_set_change_sigpipe (TRUE);
 
@@ -4401,21 +4438,14 @@ hald_dbus_init (void)
 	dbus_connection = dbus_bus_get (DBUS_BUS_SYSTEM, &dbus_error);
 	if (dbus_connection == NULL) {
 		HAL_ERROR (("dbus_bus_get(): %s", dbus_error.message));
-		return FALSE;
+		goto out;
 	}
 
 	dbus_connection_setup_with_g_main (dbus_connection, NULL);
 	dbus_connection_set_exit_on_disconnect (dbus_connection, FALSE);
 
-	dbus_bus_request_name (dbus_connection, "org.freedesktop.Hal",
-				  0, &dbus_error);
-	if (dbus_error_is_set (&dbus_error)) {
-		HAL_ERROR (("dbus_bus_request_name(): %s",
-			    dbus_error.message));
-		return FALSE;
-	}
-
 	dbus_connection_add_filter (dbus_connection, hald_dbus_filter_function, NULL, NULL);
+
 
 	dbus_bus_add_match (dbus_connection,
 			    "type='signal'"
@@ -4431,9 +4461,53 @@ hald_dbus_init (void)
 			    ",sender='org.freedesktop.ConsoleKit'"
 			    ",member='ActiveChanged'",
 			    NULL);
+	dbus_bus_add_match (dbus_connection,
+			    "type='signal'"
+			    ",interface='org.freedesktop.ConsoleKit.Seat'"
+			    ",sender='org.freedesktop.ConsoleKit'"
+			    ",member='SessionAdded'",
+			    NULL);
+	dbus_bus_add_match (dbus_connection,
+			    "type='signal'"
+			    ",interface='org.freedesktop.ConsoleKit.Seat'"
+			    ",sender='org.freedesktop.ConsoleKit'"
+			    ",member='SessionRemoved'",
+			    NULL);
+
+	ck_tracker = ck_tracker_new ();
+	ck_tracker_set_system_bus_connection (ck_tracker, dbus_connection);
+	ck_tracker_set_session_added_cb (ck_tracker, hald_dbus_session_added);
+	ck_tracker_set_session_removed_cb (ck_tracker, hald_dbus_session_removed);
+	ck_tracker_set_session_active_changed_cb (ck_tracker, hald_dbus_session_active_changed);
+	if (!ck_tracker_init (ck_tracker)) {
+		ck_tracker_unref (ck_tracker);
+		DIE (("Could not initialize seats and sessions from ConsoleKit"));
+	}
+
 #endif /* HAVE_CONKIT */
 
 	ci_tracker_init ();
+
+	ret = TRUE;
+
+out:
+	return ret;
+}
+
+gboolean
+hald_dbus_init (void)
+{
+	DBusError dbus_error;
+
+	HAL_INFO (("entering"));
+
+	dbus_error_init (&dbus_error);
+	dbus_bus_request_name (dbus_connection, "org.freedesktop.Hal", 0, &dbus_error);
+	if (dbus_error_is_set (&dbus_error)) {
+		HAL_ERROR (("dbus_bus_request_name(): %s",
+			    dbus_error.message));
+		return FALSE;
+	}
 
 	return TRUE;
 }

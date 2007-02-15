@@ -597,6 +597,10 @@ main (int argc, char *argv[])
 	if (!hald_dbus_local_server_init ())
 		return 1;
 
+	if (!hald_dbus_init_preprobe ()) {
+		return 1;
+	}
+
 	/* Start the runner helper daemon */
 	if (!hald_runner_start_runner ()) {
 		return 1;

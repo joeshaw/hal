@@ -62,6 +62,9 @@ hald_SOURCES =                                                          \
 	rule.h				mmap_cache.c			\
 	mmap_cache.h
 
+if HAVE_CONKIT
+hald_SOURCES += ck-tracker.h ck-tracker.c
+endif
 
 
 hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la

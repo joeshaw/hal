@@ -58,6 +58,15 @@ libexec_PROGRAMS =                          \
 	hal-storage-cleanup-all-mountpoints \
 	hal-system-power-pmu
 
+if HAVE_ACLMGMT
+libexec_PROGRAMS += hal-acl-add hal-acl-remove
+
+hal_acl_add_SOURCES = hal-acl-add.c
+hal_acl_remove_SOURCES = hal-acl-remove.c
+endif
+
+
+
 hal_storage_mount_SOURCES = hal-storage-mount.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_mount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
