@@ -55,8 +55,12 @@ libexec_PROGRAMS =                          \
 	hal-storage-eject	            \
 	hal-storage-closetray	            \
 	hal-storage-cleanup-mountpoint      \
-	hal-storage-cleanup-all-mountpoints \
+	hal-storage-cleanup-all-mountpoints
+
+if HAVE_PMU
+libexec_PROGRAMS +=			    \
 	hal-system-power-pmu
+endif
 
 if HAVE_ACLMGMT
 libexec_PROGRAMS += hal-acl-add hal-acl-remove
@@ -85,8 +89,10 @@ hal_storage_cleanup_mountpoint_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(t
 hal_storage_cleanup_all_mountpoints_SOURCES = hal-storage-cleanup-all-mountpoints.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_cleanup_all_mountpoints_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 
+if HAVE_PMU
 hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
 hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+endif
 
 scriptdir = $(libdir)/hal/scripts
 
