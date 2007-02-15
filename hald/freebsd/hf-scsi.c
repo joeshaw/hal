@@ -275,13 +275,13 @@ hf_scsi_get_ata_channel (HalDevice *scsi_bus)
 }
 
 static HalDevice *
-hf_scsi_get_atapi_device (HalDevice *ata_channel, int lun)
+hf_scsi_get_atapi_device (HalDevice *ata_channel, int target_id)
 {
   HalDevice *device = NULL;
   GList *l;
 
   g_return_val_if_fail(HAL_IS_DEVICE(ata_channel), NULL);
-  g_return_val_if_fail(lun == 0 || lun == 1, NULL); /* ATA master or slave*/
+  g_return_val_if_fail(target_id == 0 || target_id == 1, NULL); /* ATA master or slave*/
 
   /*
    * If there's an ATAPI device it will be in hf_ata_pending_devices,
@@ -298,7 +298,7 @@ hf_scsi_get_atapi_device (HalDevice *ata_channel, int lun)
       if (driver && (! strcmp(driver, "acd") || ! strcmp(driver, "ast") || ! strcmp(driver, "afd")))
 	{
 	  device = child;
-	  if (lun == 0)
+	  if (target_id == 0)
 	    break;		/* we wanted the first device, done */
 	}
     }
@@ -338,7 +338,7 @@ hf_scsi_handle_pending_device (struct device_match_result **match,
 	      ata_channel = hf_scsi_get_ata_channel(parent);
 	      if (ata_channel)
 		{
-		  atapi_device = hf_scsi_get_atapi_device(ata_channel, (*match)->target_lun);
+		  atapi_device = hf_scsi_get_atapi_device(ata_channel, (*match)->target_id);
 		  if (atapi_device)
                     {
 		      char *cam_devname;

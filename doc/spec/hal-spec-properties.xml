@@ -5592,34 +5592,6 @@
             </row>
             <row>
               <entry>
-                <literal>power_management.can_suspend_to_ram</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                If suspend support is compiled into the kernel.
-                NB. This may not mean the machine is able to suspend
-                successfully.
-                WARNING: This key is depreciated and power_management.can_suspend
-                should be used in its place. This key will be removed, but not before May 1st 2007.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>power_management.can_suspend_to_disk</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                If hibernation support is compiled into the kernel.
-                NB. This may not mean the machine is able to hibernate
-                successfully.
-                WARNING: This key is depreciated and power_management.can_hibernate
-                should be used in its place. This key will be removed, but not before May 1st 2007.
-              </entry>
-            </row>
-            <row>
-              <entry>
                 <literal>power_management.is_powersave_set</literal> (bool)
               </entry>
               <entry/>
@@ -6221,6 +6193,51 @@
         </tgroup>
       </informaltable>
     </sect2>
+  </sect1>
+  <sect1 id="properties-deprecated">
+    <title>Deprecated Properties</title>
+    <para>
+      The section represents properties that are deprecated and should be no longer used. 
+      The properties/keys will be removed, but not before the date in the following table:
+    </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Replacement</entry>
+              <entry>Remove (date)</entry>
+              <entry>Notes</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>info.bus</literal> (string)</entry>
+              <entry><literal>info.bus</literal></entry>
+              <entry>2008-03-01</entry>
+              <entry>Renamed to something more abstract, available until removed.</entry>
+            </row>
+            <row>
+              <entry><literal>*.physical_device</literal> (string)</entry>
+              <entry><literal>*.originating_device</literal></entry>
+              <entry>2008-03-01</entry>
+              <entry>Renamed to something more abstract, available until removed.</entry>
+            </row>
+            <row>
+              <entry><literal>power_management.can_suspend_to_ram</literal> (bool)</entry>
+              <entry><literal>power_management.can_suspend</literal></entry>
+              <entry>2007-05-01</entry>
+              <entry></entry>
+            </row>
+            <row>
+              <entry><literal>power_management.can_suspend_to_disk</literal> (bool)</entry>
+              <entry><literal>power_management.can_hibernate</literal></entry>
+              <entry>2007-05-01</entry>
+              <entry></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
   </sect1>
 
 </chapter>
