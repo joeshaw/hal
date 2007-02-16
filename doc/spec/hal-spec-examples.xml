@@ -69,6 +69,42 @@
               the callouts from <literal>info.callouts.add</literal> are executed.
             </entry>
           </row>
+          <row>
+            <entry>
+              <literal>info.callouts.session_add</literal> (string list)
+            </entry>
+            <entry/>
+            <entry>No</entry>
+            <entry>
+              A string list with all programs/callouts which should be
+              executed (with <literal>HALD_ACTION=session_add</literal>) when
+              a session is added. Can only be set on the root computer
+	      device object. 
+	      The environment also contains the variables
+	      <literal>HALD_SESSION_ADD_SESSION_ID</literal>, 
+	      <literal>HALD_SESSION_ADD_SESSION_UID</literal> and
+	      <literal>HALD_SESSION_ADD_SESSION_IS_ACTIVE</literal>
+	      to identify the session.
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <literal>info.callouts.session_remove</literal> (string list)
+            </entry>
+            <entry/>
+            <entry>No</entry>
+            <entry>
+              A string list with all programs/callouts which should be
+              executed (with <literal>HALD_ACTION=session_remove</literal>) when
+              a session is removed. Can only be set on the root computer
+	      device object.
+	      The environment also contains the variables
+	      <literal>HALD_SESSION_REMOVE_SESSION_ID</literal>, 
+	      <literal>HALD_SESSION_REMOVE_SESSION_UID</literal> and
+	      <literal>HALD_SESSION_REMOVE_SESSION_IS_ACTIVE</literal>
+	      to identify the session.
+            </entry>
+          </row>
         </tbody>
       </tgroup>
     </informaltable>
@@ -84,6 +120,13 @@
         HALD_SHUTDOWN
       </literal>
       is set to environment.
+      If ConsoleKit support is enabled, the variables
+      <literal>CK_SEATS</literal> (tab sep. list of seat-id's),
+      <literal>CK_SEAT_IS_LOCAL_seat-id</literal> (whether a seat is local),
+      <literal>CK_SEAT_seat-id</literal> (tab sep. list of session-id's for a seat),
+      <literal>CK_SESSION_IS_ACTIVE_session-id</literal> (whether a given session is active) and
+      <literal>CK_SESSION_UID_session-id</literal> (the user of the session)
+      will be exported as well.
     </para>
     <para>
       The HAL daemon isn't suspended while callouts are executing. Thus,

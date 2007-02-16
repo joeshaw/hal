@@ -100,4 +100,10 @@ char *hald_dbus_local_server_addr (void);
 
 gboolean device_is_executing_method (HalDevice *d, const char *interface_name, const char *method_name);
 
+#ifdef HAVE_CONKIT
+#include "ck-tracker.h"
+
+CKTracker *hald_dbus_get_ck_tracker (void);
+#endif
+
 #endif /* HAL_DBUS_H */

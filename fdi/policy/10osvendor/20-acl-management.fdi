@@ -19,15 +19,19 @@
 
     <!-- TODO: add more rules for adding/removing ACL's (e.g. webcam, cd drive etc.) -->
 
-    <!-- remove all previously added ACL's on start-up -->
-    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
-      <append key="info.callouts.add" type="strlist">hal-acl-remove --remove-all</append>
-    </match>
-
     <!-- add and remove ACL's when devices are added and removed -->
     <match key="acl.is_managed" bool="true">
-      <append key="info.callouts.add" type="strlist">hal-acl-add</append>
-      <append key="info.callouts.remove" type="strlist">hal-acl-remove</append>
+      <append key="info.callouts.add" type="strlist">hal-acl-add --device</append>
+      <append key="info.callouts.remove" type="strlist">hal-acl-remove --device</append>
+    </match>
+
+    <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+      <!-- remove all previously added ACL's on start-up -->
+      <append key="info.callouts.add" type="strlist">hal-acl-remove --remove-all</append>
+
+      <!-- add and remove ACL's when sessions are added and removed -->
+      <append key="info.callouts.session_add" type="strlist">hal-acl-add --session</append>
+      <append key="info.callouts.session_remove" type="strlist">hal-acl-remove --session</append>
     </match>
 
   </device>

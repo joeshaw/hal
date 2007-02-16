@@ -44,6 +44,10 @@
 #include "hald_dbus.h"
 #include "hald_runner.h"
 
+#ifdef HAVE_CONKIT
+#include "ck-tracker.h"
+#endif
+
 typedef struct {
 	HalDevice *d;
 	HalRunTerminatedCB cb;
@@ -347,6 +351,9 @@ static void
 add_basic_env (DBusMessageIter * iter, const gchar * udi)
 {
 	struct utsname un;
+#ifdef HAVE_CONKIT
+	CKTracker *ck_tracker;
+#endif
 
 	if (hald_is_verbose) {
 		add_env (iter, "HALD_VERBOSE", "1");
@@ -362,6 +369,97 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 #ifdef HAVE_POLKIT
 	add_env (iter, "HAVE_POLKIT", "1");
 #endif
+
+
+#ifdef HAVE_CONKIT
+	ck_tracker = hald_dbus_get_ck_tracker ();
+	if (ck_tracker != NULL) {
+		GSList *i;
+		GSList *seats;
+		GString *seats_string;
+		char *s;
+		char *p;
+
+		seats_string = g_string_new ("");
+
+		seats = ck_tracker_get_seats (ck_tracker);
+		for (i = seats; i != NULL; i = g_slist_next (i)) {
+			GSList *j;
+			CKSeat *seat;
+			GSList *sessions;
+			const char *seat_id;
+			GString *sessions_string;
+
+			sessions_string = g_string_new ("");
+
+			seat = i->data;
+
+			/* use the basename as Id, e.g. Seat1 rather than /org/freedesktop/ConsoleKit/Seat1 */
+			seat_id = ck_seat_get_id (seat);
+
+			/* append to CK_SEATS */
+			if (seats_string->len > 0) {
+				g_string_append_c (seats_string, '\t');
+			}
+			g_string_append (seats_string, seat_id);
+
+			/* for each Seat, export IS_LOCAL 
+			 *
+			 * CK_SEAT_IS_LOCAL_SEAT1=true|false
+			 */
+			s = g_strdup_printf ("CK_SEAT_IS_LOCAL_%s", seat_id);
+			add_env (iter, s, ck_seat_is_local (seat) ? "true" : "false");
+			g_free (s);
+			
+			sessions = ck_seat_get_sessions (seat);
+			for (j = sessions; j != NULL; j = g_slist_next (j)) {
+				CKSession *session;
+				char *session_id;
+
+				session = j->data;
+				/* basename again; e.g. Session1 rather than /org/freedesktop/ConsoleKit/Session1 */
+				session_id = ck_session_get_id (session);
+
+				if (sessions_string->len > 0) {
+					g_string_append_c (sessions_string, '\t');
+				}
+				g_string_append (sessions_string, session_id);
+
+				/* for each Session, export IS_ACTIVE and UID 
+				 *
+				 * CK_SESSION_IS_ACTIVE_Session2=true|false
+				 * CK_SESSION_UID_Session2=501
+				 */
+				s = g_strdup_printf ("CK_SESSION_IS_ACTIVE_%s", session_id);
+				add_env (iter, s, ck_session_is_active (session) ? "true" : "false");
+				g_free (s);
+				s = g_strdup_printf ("CK_SESSION_UID_%s", session_id);
+				p = g_strdup_printf ("%d", ck_session_get_user (session));
+				add_env (iter, s, p);
+				g_free (s);
+				g_free (p);
+
+			}
+
+			/* for each Seat, export sessions on each seat 
+			 *
+			 * CK_SEAT_Seat1=Session1 Session3 Session7
+			 */
+			s = g_strdup_printf ("CK_SEAT_%s", seat_id);
+			add_env (iter, s, sessions_string->str);
+			g_string_free (sessions_string, TRUE);
+			g_free (s);
+
+		}
+
+		/* Export all detected seats 
+		 *
+		 * CK_SEATS=Seat1 Seat3 Seat4
+		 */
+		add_env (iter, "CK_SEATS", seats_string->str);
+		g_string_free (seats_string, TRUE);
+	}
+#endif /* HAVE_CONKIT */
 
 	if (uname (&un) == 0) {
 		char *sysname;

@@ -434,10 +434,10 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 	CKSeat *seat;
 	CKSession *session;
 
-	HAL_INFO (("In ck_tracker_process_system_bus_message objpath=%s interface=%s method=%s", 
+	/*HAL_INFO (("In ck_tracker_process_system_bus_message objpath=%s interface=%s method=%s", 
 		   dbus_message_get_path (message), 
 		   dbus_message_get_interface (message),
-		   dbus_message_get_member (message)));
+		   dbus_message_get_member (message)));*/
 
 	/* TODO: also handle SeatRemoved and SeatAdded */
 
@@ -579,7 +579,7 @@ ck_seat_get_sessions (CKSeat *seat)
 const char *
 ck_seat_get_id (CKSeat *seat)
 {
-	return seat->seat_objpath;
+	return g_basename (seat->seat_objpath);
 }
 
 gboolean
@@ -597,7 +597,7 @@ ck_session_get_seat (CKSession *session)
 const char *
 ck_session_get_id (CKSession *session)
 {
-	return session->session_objpath;
+	return g_basename (session->session_objpath);
 }
 
 uid_t

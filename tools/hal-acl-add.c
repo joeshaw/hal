@@ -86,6 +86,12 @@ typedef struct HalACL_s {
 int 
 main (int argc, char *argv[])
 {
-	fprintf (stderr, "hal-acl-add\n");
+	int i;
+
+	fprintf (stderr, "hal-acl-add %d\n", argc);
+	for (i = 0; i < argc; i++) {
+		fprintf (stderr, " arg %2d: %s\n", i, argv[i]);		
+	}
+	system ("env |sort");
 	return 0;
 }

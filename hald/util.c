@@ -939,7 +939,9 @@ callout_do_next (Callout *c)
 		g_strfreev (c->extra_env);
 		g_free (c);
 
-		callback (d, userdata1, userdata2);
+		if (callback != NULL) {
+			callback (d, userdata1, userdata2);
+		}
 
 	} else {
 		hald_runner_run(c->d, c->programs[c->next_program], c->extra_env,
@@ -949,7 +951,7 @@ callout_do_next (Callout *c)
 	}
 }
 
-static void
+void
 hal_callout_device (HalDevice *d, HalCalloutsDone callback, gpointer userdata1, gpointer userdata2, 
 		    char **programs, gchar **extra_env)
 {

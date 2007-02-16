@@ -11,5 +11,6 @@ main (int argc, char *argv[])
 	for (i = 0; i < argc; i++) {
 		fprintf (stderr, " arg %2d: %s\n", i, argv[i]);		
 	}
+	system ("env |sort");
 	return 0;
 }
