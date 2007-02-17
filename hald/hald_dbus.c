@@ -4499,7 +4499,7 @@ hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *
 {
 	HalDevice *d;
 	char **programs;
-	char *extra_env[5] = {"HALD_ACTION=session_remove", 
+	char *extra_env[5] = {"HALD_ACTION=session_active_changed", 
 			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=" */,
 			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=" */,
 			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_IS_ACTIVE=" */,
