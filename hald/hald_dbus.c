@@ -4215,7 +4215,7 @@ hald_dbus_filter_function (DBusConnection * connection,
 			goto out;
 		}
 
-		HAL_INFO (("NameOwnerChanged name=%s old=%s new=%s", name, old_service_name, new_service_name));
+		/*HAL_INFO (("NameOwnerChanged name=%s old=%s new=%s", name, old_service_name, new_service_name));*/
 
 		ci_tracker_name_owner_changed (name, old_service_name, new_service_name);
 
@@ -4497,9 +4497,49 @@ out:
 static void 
 hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *user_data)
 {
+	HalDevice *d;
+	char **programs;
+	char *extra_env[5] = {"HALD_ACTION=session_remove", 
+			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=" */,
+			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=" */,
+			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_IS_ACTIVE=" */,
+			      NULL};
+
 	HAL_INFO (("In hald_dbus_session_active_changed for session '%s': %s", 
 		   ck_session_get_id (session),
 		   ck_session_is_active (session) ? "ACTIVE" : "INACTIVE"));
+
+	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	if (d == NULL) {
+		d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+	}
+	if (d == NULL) {
+		goto out;
+	}
+
+	programs = hal_device_property_dup_strlist_as_strv (d, 
+							    ck_session_is_active (session) ?
+							    "info.callouts.session_active" :
+							    "info.callouts.session_inactive");
+	if (programs == NULL) {
+		goto out;
+	}
+
+	extra_env[1] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=%s", ck_session_get_id (session));
+	extra_env[2] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=%d", ck_session_get_user (session));
+	extra_env[3] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_IS_ACTIVE=%s", 
+					ck_session_is_active (session) ? "true" : "false");
+	hal_callout_device (d, 
+			    NULL /* callback */,
+			    NULL /* userdata1 */,
+			    NULL /* userdata2 */, 
+			    programs, 
+			    extra_env);
+	g_free (extra_env[1]);
+	g_free (extra_env[2]);
+	g_free (extra_env[3]);
+out:
+	;
 }
 
 gboolean

@@ -63,10 +63,10 @@ libexec_PROGRAMS +=			    \
 endif
 
 if HAVE_ACLMGMT
-libexec_PROGRAMS += hal-acl-add hal-acl-remove
+libexec_PROGRAMS += hal-acl-tool
 
-hal_acl_add_SOURCES = hal-acl-add.c
-hal_acl_remove_SOURCES = hal-acl-remove.c
+hal_acl_tool_SOURCES = hal-acl-tool.c
+hal_acl_tool_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
 endif
 
 

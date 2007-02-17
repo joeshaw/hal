@@ -573,6 +573,7 @@ lock_hal_mtab (void)
 	printf ("%d: XYA attempting to get lock on /media/.hal-mtab-lock\n", getpid ());
 
 	lock_mtab_fd = open ("/media/.hal-mtab-lock", O_CREAT | O_RDWR);
+	/* TODO: set correct mode, owner etc. */
 
 	if (lock_mtab_fd < 0)
 		return FALSE;

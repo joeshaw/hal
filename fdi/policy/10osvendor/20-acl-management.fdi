@@ -5,33 +5,40 @@
 
     <!-- allow local sessions to access ALSA device files -->
     <match key="info.capabilities" contains="alsa">
-      <merge key="acl.is_managed" type="bool">true</merge>
-      <merge key="acl.grant_local_session" type="bool">true</merge>
-      <merge key="acl.file" type="copy_property">alsa.device_file</merge>
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.grant_local_session" type="bool">true</merge>
+      <merge key="access_control.file" type="copy_property">alsa.device_file</merge>
     </match>
 
     <!-- allow local sessions to access OSS device files -->
     <match key="info.capabilities" contains="oss">
-      <merge key="acl.is_managed" type="bool">true</merge>
-      <merge key="acl.grant_local_session" type="bool">true</merge>
-      <merge key="acl.file" type="copy_property">oss.device_file</merge>
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.grant_local_session" type="bool">true</merge>
+      <merge key="access_control.file" type="copy_property">oss.device_file</merge>
     </match>
 
     <!-- TODO: add more rules for adding/removing ACL's (e.g. webcam, cd drive etc.) -->
 
-    <!-- add and remove ACL's when devices are added and removed -->
-    <match key="acl.is_managed" bool="true">
-      <append key="info.callouts.add" type="strlist">hal-acl-add --device</append>
-      <append key="info.callouts.remove" type="strlist">hal-acl-remove --device</append>
+    <!-- add / remove ACL's when devices are added and removed -->
+    <match key="info.capabilities" contains="access_control">
+      <append key="info.callouts.add" type="strlist">hal-acl-tool --add-device</append>
+      <append key="info.callouts.remove" type="strlist">hal-acl-tool --remove-device</append>
     </match>
 
     <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
       <!-- remove all previously added ACL's on start-up -->
-      <append key="info.callouts.add" type="strlist">hal-acl-remove --remove-all</append>
+      <append key="info.callouts.add" type="strlist">hal-acl-tool --remove-all</append>
 
-      <!-- add and remove ACL's when sessions are added and removed -->
-      <append key="info.callouts.session_add" type="strlist">hal-acl-add --session</append>
-      <append key="info.callouts.session_remove" type="strlist">hal-acl-remove --session</append>
+      <!-- reconfigure all ACL's sessions are added and removed -->
+      <append key="info.callouts.session_add" type="strlist">hal-acl-tool --reconfigure</append>
+      <append key="info.callouts.session_remove" type="strlist">hal-acl-tool --reconfigure</append>
+
+      <!-- reconfigure all ACL's when a session becomes active -->
+      <append key="info.callouts.session_active" type="strlist">hal-acl-tool --reconfigure</append>
+
+      <!-- reconfigure all ACL's when a session becomes inactive -->
+      <append key="info.callouts.session_inactive" type="strlist">hal-acl-tool --reconfigure</append>
+
     </match>
 
   </device>

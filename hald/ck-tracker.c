@@ -496,10 +496,6 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 			session = (CKSession *) i->data;
 			if (strcmp (session->session_objpath, session_objpath) == 0) {
 
-				if (tracker->session_removed_cb != NULL) {
-					tracker->session_removed_cb (tracker, session, tracker->user_data);
-				}
-
 				if (session->seat == NULL) {
 					HAL_ERROR (("Session '%s' to be removed is not attached to a seat", 
 						    session_objpath));
@@ -508,6 +504,10 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 				}
 				tracker->sessions = g_slist_remove (tracker->sessions, session);
 				ck_session_unref (session);
+
+				if (tracker->session_removed_cb != NULL) {
+					tracker->session_removed_cb (tracker, session, tracker->user_data);
+				}
 
 				break;
 			}
