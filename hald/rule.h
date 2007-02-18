@@ -78,6 +78,7 @@ match_type {
 	MATCH_COMPARE_LE,
 	MATCH_COMPARE_GT,
 	MATCH_COMPARE_GE,
+	MATCH_SIBLING_CONTAINS
 };
 
 /* a "rule" structure that is a generic node of the fdi file */

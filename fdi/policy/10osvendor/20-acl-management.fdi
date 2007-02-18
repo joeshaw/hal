@@ -3,21 +3,61 @@
 <deviceinfo version="0.2">
   <device>
 
-    <!-- allow local sessions to access ALSA device files -->
+
+    <!-- classification of devices where access can be controlled goes here -->
+
+    <!-- sound card (ALSA) -->
     <match key="info.capabilities" contains="alsa">
       <append key="info.capabilities" type="strlist">access_control</append>
-      <merge key="access_control.grant_local_session" type="bool">true</merge>
       <merge key="access_control.file" type="copy_property">alsa.device_file</merge>
     </match>
 
-    <!-- allow local sessions to access OSS device files -->
+    <!-- sound card (OSS) -->
     <match key="info.capabilities" contains="oss">
       <append key="info.capabilities" type="strlist">access_control</append>
-      <merge key="access_control.grant_local_session" type="bool">true</merge>
       <merge key="access_control.file" type="copy_property">oss.device_file</merge>
     </match>
 
-    <!-- TODO: add more rules for adding/removing ACL's (e.g. webcam, cd drive etc.) -->
+    <!-- video4linux devices -->
+    <match key="info.capabilities" contains="video4linux">
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.file" type="copy_property">video4linux.device</merge>
+    </match>
+
+    <!-- optical drives -->
+    <match key="info.capabilities" contains="storage.cdrom">
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.file" type="copy_property">block.device</merge>
+    </match>
+
+    <!-- DVB cards -->
+    <match key="info.capabilities" contains="dvb">
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.file" type="copy_property">dvb.device</merge>
+    </match>
+
+    <!-- usb cameras -->
+    <match key="info.capabilities" contains="usbraw">
+      <match key="info.capabilities" sibling_contains="camera">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
+      </match>
+    </match>
+
+
+    <!-- policy goes here - this can be amended by 3rd party packages,
+         e.g.  the flumotion package may provide a fdi-file that
+         appends the 'flumotion' user to access_control.grant_user for
+         e.g. webcam's or audio devices - see RH bug #140853 for
+         details. -->
+
+    <!-- grant access to local session whether it's active or not -->
+    <match key="info.capabilities" contains="access_control">
+      <merge key="access_control.grant_local_session" type="bool">true</merge>
+    </match>
+
+
+    <!-- enforcement of policy goes here -->
 
     <!-- add / remove ACL's when devices are added and removed -->
     <match key="info.capabilities" contains="access_control">
@@ -26,6 +66,7 @@
     </match>
 
     <match key="info.udi" string="/org/freedesktop/Hal/devices/computer">
+
       <!-- remove all previously added ACL's on start-up -->
       <append key="info.callouts.add" type="strlist">hal-acl-tool --remove-all</append>
 

@@ -78,6 +78,8 @@ get_match_type_str (enum match_type type)
 		return "is_ascii";
 	case MATCH_IS_ABS_PATH:
 		return "is_absolute_path";
+	case MATCH_SIBLING_CONTAINS:
+		return "sibling_contains";
 	case MATCH_CONTAINS:
 		return "contains";
 	case MATCH_CONTAINS_NCASE:
@@ -460,6 +462,58 @@ handle_match (struct rule *rule, HalDevice *d)
 			}
 		} else {
 			return FALSE;
+		}
+
+		return contains;
+	}
+
+	case MATCH_SIBLING_CONTAINS:
+	{
+		dbus_bool_t contains = FALSE;
+		const char *parent_udi;
+
+		parent_udi = hal_device_property_get_string (d, "info.parent");
+		if (parent_udi != NULL) {
+			GSList *i;
+			GSList *siblings;
+
+			siblings = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+										     "info.parent",
+										     parent_udi);
+			for (i = siblings; i != NULL; i = g_slist_next (i)) {
+				HalDevice *sib = HAL_DEVICE (i->data);
+
+				if (sib == d)
+					continue;
+
+				HAL_INFO (("Checking sibling '%s' of '%s' whether '%s' contains '%s'",
+					   hal_device_get_udi (sib), hal_device_get_udi (d), prop_to_check, value));
+
+				if (hal_device_property_get_type (sib, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+					if (hal_device_has_property (sib, prop_to_check)) {
+						const char *haystack;
+						
+						haystack = hal_device_property_get_string (sib, prop_to_check);
+						if (value != NULL && haystack != NULL && strstr (haystack, value))
+							contains = TRUE;
+					}
+				} else if (hal_device_property_get_type (sib, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
+					HalDeviceStrListIter iter;
+					for (hal_device_property_strlist_iter_init (sib, prop_to_check, &iter);
+					     hal_device_property_strlist_iter_is_valid (&iter);
+					     hal_device_property_strlist_iter_next (&iter)) {
+						const char *str = hal_device_property_strlist_iter_get_value (&iter);
+						if (strcmp (str, value) == 0) {
+							contains = TRUE;
+							break;
+						}
+					}
+				}
+
+				if (contains)
+					break;
+
+			} /* for all siblings */
 		}
 
 		return contains;

@@ -107,6 +107,8 @@ match_type get_match_type(const char *str)
 		return MATCH_ISASCII;
 	if (strcmp (str, "is_absolute_path") == 0)
 		return MATCH_IS_ABS_PATH;
+	if (strcmp (str, "sibling_contains") == 0)
+		return MATCH_SIBLING_CONTAINS;
 	if (strcmp (str, "contains") == 0)
 		return MATCH_CONTAINS;
 	if (strcmp (str, "contains_ncase") == 0)
