@@ -644,8 +644,10 @@ call_notify (DBusPendingCall * pending, void *user_data)
 		g_array_append_vals (error, &value, 1);
 	}
 
-	hb->cb (hb->d, exitt, return_code,
-		(gchar **) error->data, hb->data1, hb->data2);
+	if (hb->cb != NULL) {
+		hb->cb (hb->d, exitt, return_code,
+			(gchar **) error->data, hb->data1, hb->data2);
+	}
 
 	if (hb->d != NULL)
 		g_object_unref (hb->d);
@@ -662,8 +664,10 @@ call_notify (DBusPendingCall * pending, void *user_data)
       malformed:
 	/* Send a Fail callback on malformed messages */
 	HAL_ERROR (("Malformed or unexpected reply message"));
-	hb->cb (hb->d, HALD_RUN_FAILED, return_code, NULL, hb->data1,
-		hb->data2);
+	if (hb->cb != NULL) {
+		hb->cb (hb->d, HALD_RUN_FAILED, return_code, NULL, hb->data1,
+			hb->data2);
+	}
 
 	if (hb->d != NULL)
 		g_object_unref (hb->d);

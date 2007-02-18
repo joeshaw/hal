@@ -41,6 +41,8 @@ typedef struct CKSession_s CKSession;
 typedef void (*CKSessionAddedCB) (CKTracker *tracker, CKSession *session, void *user_data);
 typedef void (*CKSessionRemovedCB) (CKTracker *tracker, CKSession *session, void *user_data);
 typedef void (*CKSessionActiveChangedCB) (CKTracker *tracker, CKSession *session, void *user_data);
+typedef void (*CKServiceDisappearedCB) (CKTracker *tracker, void *user_data);
+typedef void (*CKServiceAppearedCB) (CKTracker *tracker, void *user_data);
 
 CKTracker  *ck_tracker_new                        (void);
 void        ck_tracker_set_system_bus_connection     (CKTracker *tracker, DBusConnection *system_bus_connection);
@@ -48,6 +50,8 @@ void        ck_tracker_set_user_data                 (CKTracker *tracker, void *
 void        ck_tracker_set_session_added_cb          (CKTracker *tracker, CKSessionAddedCB cb);
 void        ck_tracker_set_session_removed_cb        (CKTracker *tracker, CKSessionRemovedCB cb);
 void        ck_tracker_set_session_active_changed_cb (CKTracker *tracker, CKSessionActiveChangedCB cb);
+void        ck_tracker_set_service_disappeared_cb (CKTracker *tracker, CKServiceDisappearedCB cb);
+void        ck_tracker_set_service_appeared_cb    (CKTracker *tracker, CKServiceAppearedCB cb);
 /* TODO: also handle seat_added, seat_removed */
 gboolean    ck_tracker_init                          (CKTracker *tracker);
 

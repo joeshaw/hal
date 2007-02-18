@@ -4404,6 +4404,8 @@ hald_dbus_local_server_shutdown (void)
 	}
 }
 
+#ifdef HAVE_CONKIT
+
 static void 
 hald_dbus_session_added (CKTracker *tracker, CKSession *session, void *user_data)
 {
@@ -4542,6 +4544,48 @@ out:
 	;
 }
 
+static void
+hald_dbus_ck_availability_changed (gboolean ck_available)
+{
+	HalDevice *d;
+	char *extra_env[1] = {NULL};
+
+	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	if (d == NULL) {
+		d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+	}
+	if (d == NULL) {
+		HAL_ERROR (("No computer object?!?"));
+		goto out;
+	}
+
+	hald_runner_run (d,
+			 "hal-acl-tool --reconfigure", 
+			 extra_env,
+			 HAL_HELPER_TIMEOUT, 
+			 NULL, /* run_terminated_cb */
+			 NULL  /* userdata1 */, 
+			 NULL  /* userdata2 */ );
+out:
+	;
+}
+
+static void
+hald_dbus_ck_disappeared (CKTracker *tracker, void *user_data)
+{
+	HAL_INFO (("In hald_dbus_ck_disappeared"));
+	hald_dbus_ck_availability_changed (FALSE);
+}
+
+static void
+hald_dbus_ck_appeared (CKTracker *tracker, void *user_data)
+{
+	HAL_INFO (("In hald_dbus_ck_appeared"));
+	hald_dbus_ck_availability_changed (TRUE);
+}
+
+#endif /* HAVE_CONKIT */
+
 gboolean
 hald_dbus_init_preprobe (void)
 {
@@ -4597,9 +4641,10 @@ hald_dbus_init_preprobe (void)
 	ck_tracker_set_session_added_cb (ck_tracker, hald_dbus_session_added);
 	ck_tracker_set_session_removed_cb (ck_tracker, hald_dbus_session_removed);
 	ck_tracker_set_session_active_changed_cb (ck_tracker, hald_dbus_session_active_changed);
+	ck_tracker_set_service_disappeared_cb (ck_tracker, hald_dbus_ck_disappeared);
+	ck_tracker_set_service_appeared_cb (ck_tracker, hald_dbus_ck_appeared);
 	if (!ck_tracker_init (ck_tracker)) {
-		ck_tracker_unref (ck_tracker);
-		DIE (("Could not initialize seats and sessions from ConsoleKit"));
+		HAL_WARNING (("Could not initialize seats and sessions from ConsoleKit"));
 	}
 
 #endif /* HAVE_CONKIT */

@@ -63,6 +63,8 @@ struct CKTracker_s {
 	CKSessionAddedCB session_added_cb;
 	CKSessionRemovedCB session_removed_cb;
 	CKSessionActiveChangedCB session_active_changed_cb;
+	CKServiceDisappearedCB service_disappeared_cb;
+	CKServiceAppearedCB service_appeared_cb;
 	GSList *seats;
 	GSList *sessions;
 };
@@ -371,24 +373,33 @@ ck_tracker_ref (CKTracker *tracker)
 	tracker->refcount++;
 }
 
+static void
+ck_tracker_remove_all_seats_and_sessions (CKTracker *tracker)
+{
+	GSList *i;
+	
+	for (i = tracker->sessions; i != NULL; i = g_slist_next (i)) {
+		CKSession *session = (CKSession *) i->data;
+		ck_session_unref (session);
+	}
+	g_slist_free (tracker->sessions);
+	tracker->sessions = NULL;
+	
+	for (i = tracker->seats; i != NULL; i = g_slist_next (i)) {
+		CKSeat *seat = (CKSeat *) i->data;
+		ck_seat_unref (seat);
+	}
+	g_slist_free (tracker->seats);
+	tracker->seats = NULL;
+}
+
 void
 ck_tracker_unref (CKTracker *tracker)
 {
 	tracker->refcount--;
 
 	if (tracker->refcount == 0) {
-		GSList *i;
-
-		for (i = tracker->sessions; i != NULL; i = g_slist_next (i)) {
-			CKSession *session = (CKSession *) i->data;
-			ck_session_unref (session);
-		}
-		
-		for (i = tracker->seats; i != NULL; i = g_slist_next (i)) {
-			CKSeat *seat = (CKSeat *) i->data;
-			ck_seat_unref (seat);
-		}
-		
+		ck_tracker_remove_all_seats_and_sessions (tracker);
 		tracker->dbus_connection = NULL;
 	}
 }
@@ -423,6 +434,17 @@ ck_tracker_set_session_active_changed_cb (CKTracker *tracker, CKSessionActiveCha
 	tracker->session_active_changed_cb = cb;
 }
 
+void
+ck_tracker_set_service_disappeared_cb  (CKTracker *tracker, CKServiceDisappearedCB cb)
+{
+	tracker->service_disappeared_cb = cb;
+}
+
+void
+ck_tracker_set_service_appeared_cb  (CKTracker *tracker, CKServiceAppearedCB cb)
+{
+	tracker->service_appeared_cb = cb;
+}
 
 void
 ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
@@ -546,8 +568,39 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 		if (i == NULL) {
 			HAL_ERROR (("No such session '%s'", session_objpath));
 		}
+	} else if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
+		char *name;
+		char *old_service_name;
+		char *new_service_name;
+
+		if (!dbus_message_get_args (message, NULL,
+					    DBUS_TYPE_STRING, &name,
+					    DBUS_TYPE_STRING, &old_service_name,
+					    DBUS_TYPE_STRING, &new_service_name,
+					    DBUS_TYPE_INVALID)) {
+			HAL_ERROR (("Invalid NameOwnerChanged signal from bus!"));
+			goto out;
+		}
+
+		if (strlen (new_service_name) == 0 && strcmp (name, "org.freedesktop.ConsoleKit") == 0) {
+			HAL_INFO (("uh, oh, ConsoleKit went away!"));
+			ck_tracker_remove_all_seats_and_sessions (tracker);
+			if (tracker->service_disappeared_cb != NULL) {
+				tracker->service_disappeared_cb (tracker, tracker->user_data);
+			}
+		}
+
+		if (strlen (old_service_name) == 0 && strcmp (name, "org.freedesktop.ConsoleKit") == 0) {
+			HAL_INFO (("ConsoleKit reappeared!"));
+			ck_tracker_init (tracker);
+			if (tracker->service_appeared_cb != NULL) {
+				tracker->service_appeared_cb (tracker, tracker->user_data);
+			}
+		}
+
 
 	}
+
 out:
 	;
 }

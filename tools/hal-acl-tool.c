@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <sys/file.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -218,7 +219,7 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 	}
 
 	/* success; now atomically set the new list */
-	g_file_set_contents ("/var/lib/hal/acl-list", 
+	g_file_set_contents (PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list", 
 			     new_acl_file_contents, 
 			     strlen (new_acl_file_contents),
 			     NULL);
@@ -247,9 +248,9 @@ get_current_acl_list (GSList **l)
 	f = NULL;
 	ret = FALSE;
 
-	f = fopen ("/var/lib/hal/acl-list", "r");
+	f = fopen (PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list", "r");
 	if (f == NULL) {
-		printf ("%d: cannot open /var/lib/hal/acl-list\n", getpid ());
+		printf ("%d: cannot open " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 		goto out;
 	}
 
@@ -982,15 +983,14 @@ acl_lock (void)
 	if (lock_acl_fd >= 0)
 		return TRUE;
 
-	printf ("%d: attempting to get lock on /var/lib/hal/acl-list\n", getpid ());
+	printf ("%d: attempting to get lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 
-	lock_acl_fd = open ("/var/lib/hal/acl-list", O_CREAT | O_RDWR);
-	/* TODO: set correct mode, owner etc. */
-
+	lock_acl_fd = open (PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list", O_CREAT | O_RDWR);
 	if (lock_acl_fd < 0) {
-		printf ("%d: error opening/creating /var/lib/hal/acl-list\n", getpid ());
+		printf ("%d: error opening/creating " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 		return FALSE;
 	}
+	
 
 tryagain:
 #if sun
@@ -1004,7 +1004,7 @@ tryagain:
 		return FALSE;
 	}
 	
-	printf ("%d: got lock on /var/lib/hal/acl-list\n", getpid ());
+	printf ("%d: got lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 	return TRUE;
 }
 
@@ -1018,7 +1018,7 @@ acl_unlock (void)
 #endif
 	close (lock_acl_fd);
 	lock_acl_fd = -1;
-	printf ("%d: released lock on /var/lib/hal/acl-list\n", getpid ());
+	printf ("%d: released lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 }
 
 
