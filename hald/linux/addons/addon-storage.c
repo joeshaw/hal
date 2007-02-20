@@ -58,7 +58,7 @@ static LibHalContext *ctx = NULL;
 static DBusConnection *con = NULL;
 static guint poll_timer = -1;
 static GMainLoop *loop;
-static gboolean system_is_idle;
+static gboolean system_is_idle = FALSE;
 
 static void 
 force_unmount (LibHalContext *ctx, const char *udi)
@@ -477,6 +477,7 @@ skip_check:
 	return TRUE;
 }
 
+#ifdef HAVE_CONKIT
 static gboolean
 get_system_idle_from_ck (void)
 {
@@ -514,10 +515,12 @@ get_system_idle_from_ck (void)
 error:
 	return ret;
 }
+#endif /* HAVE_CONKIT */
 
 static DBusHandlerResult
 dbus_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
+#ifdef HAVE_CONKIT
 	gboolean system_is_idle_new;
 
 	if (dbus_message_is_signal (message, 
@@ -536,6 +539,8 @@ dbus_filter_function (DBusConnection *connection, DBusMessage *message, void *us
 		}
 	}
 out:
+#endif /* HAVE_CONKIT */
+
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -600,19 +605,21 @@ main (int argc, char *argv[])
 
 	media_status = MEDIA_STATUS_UNKNOWN;
 
+#ifdef HAVE_CONKIT
 	/* TODO: ideally we should track the sessions on the seats on
 	 * which the device belongs to. But right now we don't really
 	 * do multi-seat so I'm going to punt on this for now.
 	 */
 	get_system_idle_from_ck ();
 
-	dbus_connection_add_filter (con, dbus_filter_function, NULL, NULL);
 	dbus_bus_add_match (con,
 			    "type='signal'"
 			    ",interface='org.freedesktop.ConsoleKit.Manager'"
 			    ",sender='org.freedesktop.ConsoleKit'"
 			    ",member='SystemIdleHintChanged'",
 			    NULL);
+#endif
+	dbus_connection_add_filter (con, dbus_filter_function, NULL, NULL);
 
 	update_polling_interval ();
 	g_main_loop_run (loop);
