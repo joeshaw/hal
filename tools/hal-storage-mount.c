@@ -825,7 +825,11 @@ handle_mount (LibHalContext *hal_ctx,
 	args[na++] = mount_do_fstype;
 
 	args[na++] = "-o";
+#ifdef HAVE_UMOUNT_HAL
+	mount_option_str = g_string_new (MOUNT_OPTIONS ",uhelper=hal");
+#else
 	mount_option_str = g_string_new (MOUNT_OPTIONS);
+#endif
 	for (i = 0; given_options[i] != NULL; i++) {
 		g_string_append (mount_option_str, ",");
 		g_string_append (mount_option_str, given_options[i]);

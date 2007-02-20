@@ -405,6 +405,16 @@ if test "x$enable_acl_management" != "xno"; then
    msg_aclmgmt=yes
 fi
 
+# check for umount.hal
+AM_CONDITIONAL(HAVE_UMOUNT_HAL, false)
+AC_ARG_ENABLE(umount-helper,  [  --enable-umount-helper  Provide umount.hal helper],enable_umount_hal=$enableval,enable_umount_hal=no)
+msg_umount_hal=no
+if test "x$enable_umount_hal" != "xno"; then
+   AM_CONDITIONAL(HAVE_UMOUNT_HAL, true)
+   AC_DEFINE(HAVE_UMOUNT_HAL, [], [Set if we should provide and use the /sbin/umount.hal helper ])
+   msg_umount_hal=yes
+fi
+
 # what extra hotplug backends to use (ACPI, APM, PMU etc)
 AC_ARG_ENABLE(have_acpi, [  --disable-acpi          Build without ACPI support])
 msg_acpi=no
@@ -813,6 +823,7 @@ echo "
         use PolicyKit:              ${msg_polkit}
         use ConsoleKit:             ${msg_conkit}
         use ACL management:         ${msg_aclmgmt}
+        use umount.hal helper:      ${msg_umount_hal}
         use ACPI:                   ${msg_acpi}
         use PMU:                    ${msg_pmu}
         use APM:                    ${msg_apm}

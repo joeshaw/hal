@@ -110,6 +110,14 @@ script_SCRIPTS =				\
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 
+if HAVE_UMOUNT_HAL
+slashsbindir = /sbin
+slashsbin_PROGRAMS = umount.hal
+
+umount_hal_SOURCES = umount-hal.c
+umount_hal_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+endif
+
 check:
 	for f in $(script_SCRIPTS); do \
             echo -n "Validate bash syntax in $$f : "; \
