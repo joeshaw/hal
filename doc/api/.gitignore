@@ -8,6 +8,7 @@ hal.interfaces
 hal.prerequisites
 hal.signals
 *.txt
+*.bak
 *.args
 *.stamp
 *.o
