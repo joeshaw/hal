@@ -978,6 +978,7 @@ ids_find_pnp (const char *pnp_id, char **pnp_description)
 
 /*==========================================================================*/
 
+void
 ids_init (void)
 {
 	pci_ids_init ();

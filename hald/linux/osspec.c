@@ -576,8 +576,7 @@ osspec_probe (void)
 
 	should_decode_dmi = FALSE;
 
-	hald_runner_set_method_run_notify
-          ((HaldRunnerRunNotify*) hotplug_event_process_queue, NULL);
+	hald_runner_set_method_run_notify ((HaldRunnerRunNotify) hotplug_event_process_queue, NULL);
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.subsystem", "unknown");
 	hal_device_property_set_string (root, "info.bus", "unknown");
