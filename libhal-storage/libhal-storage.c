@@ -1356,6 +1356,53 @@ out:
 }
 
 
+/** Get the volume object for a given mount point
+ *
+ *  @param  hal_ctx             libhal context to use
+ *  @param  device_file         Name of mount point without terminting slash, e.g. '/media/disk'
+ *  @return                     LibHalVolume object or NULL if it doesn't exist
+ */
+LibHalVolume *
+libhal_volume_from_mount_point              (LibHalContext *hal_ctx, 
+					     const char *mount_point)
+{
+	int i;
+	char **hal_udis;
+	int num_hal_udis;
+	LibHalVolume *result;
+	char *found_udi;
+	DBusError error;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(hal_ctx, NULL);
+
+	result = NULL;
+	found_udi = NULL;
+
+	dbus_error_init (&error);
+	if ((hal_udis = libhal_manager_find_device_string_match (hal_ctx, "volume.mount_point", 
+								 mount_point, &num_hal_udis, &error)) == NULL)
+		goto out;
+
+	for (i = 0; i < num_hal_udis; i++) {
+		char *udi;
+		udi = hal_udis[i];
+		if (libhal_device_query_capability (hal_ctx, udi, "volume", &error)) {
+			found_udi = strdup (udi);
+			break;
+		}
+	}
+
+	libhal_free_string_array (hal_udis);
+
+	if (found_udi != NULL)
+		result = libhal_volume_from_udi (hal_ctx, found_udi);
+
+	free (found_udi);
+out:
+	LIBHAL_FREE_DBUS_ERROR(&error);
+	return result;
+}
+
 /** Get the volume object for a given device file.
  *
  *  @param  hal_ctx             libhal context to use

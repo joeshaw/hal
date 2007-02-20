@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <libhal.h>
 #include <libhal-storage.h>
 
@@ -35,7 +36,7 @@ int
 main (int argc, char *argv[])
 {
 	int ret;
-	char *device_file;
+	char *device_file_or_mount_point;
 	DBusError error;
 	DBusConnection *con;
 	LibHalContext *hal_ctx;
@@ -48,16 +49,16 @@ main (int argc, char *argv[])
 
 	ret = 1;
 
-	if (argc < 2) {
+	if (argc < 2 || strlen (argv[1]) == 0) {
 		fprintf (stderr, "%s: this program is only supposed to be invoked by umount(8).\n", argv[0]);
 		goto out;
 	}
 
-	/* it appears the device file is always the first argument.
-	 * TODO XXX FIXME: we ought to honor umount(8) options like
-	 * -v for verbose.
+	/* it appears the device file / mount point is always the
+	 * first argument.  TODO XXX FIXME: we ought to honor
+	 * umount(8) options like -v for verbose.
 	 */
-	device_file = argv[1];
+	device_file_or_mount_point = argv[1];
 
 	dbus_error_init (&error);
 	con = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
@@ -72,14 +73,24 @@ main (int argc, char *argv[])
 		if (dbus_error_is_set(&error)) {
 			fprintf (stderr, "%s: libhal_ctx_init: %s: %s\n", argv[0], error.name, error.message);
 			dbus_error_free (&error);
+		} else {
+			fprintf (stderr, "%s: libhal_ctx_init failed. Is hald running?\n", argv[0]);
 		}
 		goto out;
 	}
 
-	vol = libhal_volume_from_device_file (hal_ctx, device_file);
+	vol = libhal_volume_from_device_file (hal_ctx, device_file_or_mount_point);
 	if (vol == NULL) {
-		fprintf (stderr, "%s: %s is not recognized by hal\n", argv[0], device_file);
-		goto out;
+
+		/* it might be a mount point! */
+		if (device_file_or_mount_point[strlen (device_file_or_mount_point) - 1] == '/') {
+			device_file_or_mount_point[strlen (device_file_or_mount_point) - 1] = '\0';
+		}
+		vol = libhal_volume_from_mount_point (hal_ctx, device_file_or_mount_point);
+		if (vol == NULL) {
+			fprintf (stderr, "%s: %s is not recognized by hal\n", argv[0], device_file_or_mount_point);
+			goto out;
+		}
 	}
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", 
@@ -102,7 +113,7 @@ main (int argc, char *argv[])
 								 -1,
 								 &error)) || dbus_error_is_set (&error)) {
 		fprintf (stderr, "%s: Unmounting %s failed: %s: %s\n", 
-			 argv[0], device_file, error.name, error.message);
+			 argv[0], device_file_or_mount_point, error.name, error.message);
 		goto out;
 	}
 
