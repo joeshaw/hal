@@ -13,5 +13,6 @@ hald-addon-keyboard
 hald-addon-acpi-buttons-toshiba
 hald-addon-macbookpro-backlight
 hald-addon-cpufreq
+hald-addon-dell-backlight
 *.o
 *~
