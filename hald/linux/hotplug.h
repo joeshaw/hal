@@ -61,7 +61,7 @@ typedef struct
 		struct {
 			char subsystem[HAL_NAME_MAX];		/* Kernel subsystem the device belongs to */
 			char sysfs_path[HAL_PATH_MAX];		/* Kernel device devpath */
-			char device_file[HAL_PATH_MAX];	/* Device node for the device */
+			char device_file[HAL_PATH_MAX];	        /* Device node for the device */
 			unsigned long long seqnum;		/* kernel uevent sequence number */
 			int net_ifindex;			/* Kernel ifindex for network devices */
 

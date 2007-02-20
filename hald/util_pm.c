@@ -44,14 +44,16 @@ typedef struct {
 
 GHashTable *saved_battery_info = NULL;
 
-/** Convert the hardware reported value into a few sane choices
+/**  
+ *  util_get_battery_technology_
+ *  @type:                The battery type recieved from the hardware
+ *
+ *  Returns:              The battery technology which is one of: unknown, lithium-ion or lead-acid
+ *
+ *  Convert the hardware reported value into a few sane choices
  *
  *  This is needed as ACPI does not specify the description text for a
  *  battery, and so we have to calculate it from the hardware output
- *
- *  @param  type                The battery type recieved from the hardware
- *  @return                     The battery technology which is one of:
- *                              unknown, lithium-ion or lead-acid
  */
 const char *
 util_get_battery_technology (const char *type)
@@ -77,13 +79,15 @@ util_get_battery_technology (const char *type)
 	return "unknown";
 }
 
-/** Given all the required parameters, this function will return the percentage
- *  charge remaining. There are lots of checks here as ACPI is often broken.
+/**  
+ *  util_compute_percentage_charge:
+ *  @id:                 Optional ID given to this battery. Unused at present.
+ *  @chargeLevel:        The current charge level of the battery (typically mWh)
+ *  @chargeLastFull:     The last "full" charge of the battery (typically mWh)
+ *  Returns:             Percentage, -1 if invalid
  *
- *  @param  id                  Optional ID given to this battery. Unused at present.
- *  @param  chargeLevel         The current charge level of the battery (typically mWh)
- *  @param  chargeLastFull      The last "full" charge of the battery (typically mWh)
- *  @return                     Percentage, -1 if invalid
+ *  Given all the required parameters, this function will return the percentage
+ *  charge remaining. There are lots of checks here as ACPI is often broken.
  */
 int 
 util_compute_percentage_charge (const char *id,
@@ -116,18 +120,21 @@ util_compute_percentage_charge (const char *id,
 	return percentage;
 }
 
-/** Given all the required parameters, this function will return the number 
+/**  
+ *  util_compute_time_remaining:
+ *  @id:                 Optional ID given to this battery. Unused at present.
+ *  @chargeRate:         The "rate" (typically mW)
+ *  @chargeLevel:        The current charge level of the battery (typically mWh)
+ *  @chargeLastFull:     The last "full" charge of the battery (typically mWh)
+ *  @isDischarging:      If battery is discharging
+ *  @isCharging:         If battery is charging
+ *  @guessChargeRate:    If ignore chargeRate and guess them.
+ *
+ *  Returns:                     Number of seconds, or -1 if invalid
+ *
+ *  Given all the required parameters, this function will return the number 
  *  of seconds until the battery is charged (if charging) or the number
  *  of seconds until empty (if discharging)
- *
- *  @param  id                  Optional ID given to this battery. Unused at present.
- *  @param  chargeRate          The "rate" (typically mW)
- *  @param  chargeLevel         The current charge level of the battery (typically mWh)
- *  @param  chargeLastFull      The last "full" charge of the battery (typically mWh)
- *  @param  isDischarging       If battery is discharging
- *  @param  isCharging          If battery is charging
- *  @param  guessChargeRate     If ignore chargeRate and guess them.
- *  @return                     Number of seconds, or -1 if invalid
  */
 int 
 util_compute_time_remaining (const char *id,

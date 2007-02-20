@@ -603,7 +603,7 @@ handle_mount (LibHalContext *hal_ctx,
 				
 			} else {
 				/* fallback - use "disk" */
-				g_snprintf (mount_point, sizeof (mount_point), "disk");
+				g_snprintf (mount_point, sizeof (mount_point), "%s", "disk");
 			}
 			
 			/* sanitize computed mount point name, e.g. replace invalid chars with '-' */

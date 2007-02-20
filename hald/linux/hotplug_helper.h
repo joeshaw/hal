@@ -32,14 +32,14 @@
 
 struct hald_helper_msg
 {
-	unsigned int magic;			/**< magic */
-	unsigned long long seqnum;		/**< Sequence number (may be 0 if for dev if udev has no support) */
-	char action[HALD_HELPER_STRLEN];	/**< hotplug action */
-	char subsystem[HALD_HELPER_STRLEN];	/**< subsystem e.g. usb, pci (only for hotplug msg) */
-	char sysfs_path[HALD_HELPER_STRLEN];	/**< path into sysfs without sysfs mountpoint, e.g. /block/sda */
-	char device_name[HALD_HELPER_STRLEN];	/**< absolute path of device node (only for device msg) */
-	int net_ifindex;                        /**< For networking class devices only; the value of the ifindex file*/
-	time_t time_stamp;                      /**< Time of day we received the hotplug event */
+	unsigned int magic;			/* magic */
+	unsigned long long seqnum;		/* Sequence number (may be 0 if for dev if udev has no support) */
+	char action[HALD_HELPER_STRLEN];	/* hotplug action */
+	char subsystem[HALD_HELPER_STRLEN];	/* subsystem e.g. usb, pci (only for hotplug msg) */
+	char sysfs_path[HALD_HELPER_STRLEN];	/* path into sysfs without sysfs mountpoint, e.g. /block/sda */
+	char device_name[HALD_HELPER_STRLEN];	/* absolute path of device node (only for device msg) */
+	int net_ifindex;                        /* For networking class devices only; the value of the ifindex file*/
+	time_t time_stamp;                      /* Time of day we received the hotplug event */
 };
 
 #endif /* HALD_HELPER_H */

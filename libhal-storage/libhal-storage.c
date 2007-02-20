@@ -586,21 +586,22 @@ out:
 		return NULL;
 }
 
-/** Policy function to determine if a volume should be visible in a desktop 
+/**  
+ *  libhal_volume_policy_should_be_visible:
+ *  @drive:               Drive that the volume is stemming from
+ *  @volume:              Volume
+ *  @policy:              Policy object
+ *  @target_mount_point:  The mount point that the volume is expected to
+ *                        be mounted at if not already mounted. This may
+ *                        e.g. stem from /etc/fstab. If this is NULL the
+ *                        then mount point isn't taking into account when
+ *                        evaluating whether the volume should be visible
+ *  Returns:              Whether the volume should be shown in a desktop
+ *                        environment.
+ *  Policy function to determine if a volume should be visible in a desktop 
  *  environment. This is useful to hide certain system volumes as bootstrap
  *  partitions, the /usr partition, swap partitions and other volumes that
  *  a unprivileged desktop user shouldn't know even exists.
- *
- *  @param  drive               Drive that the volume is stemming from
- *  @param  volume              Volume
- *  @param  policy              Policy object
- *  @param  target_mount_point  The mount point that the volume is expected to
- *                              be mounted at if not already mounted. This may
- *                              e.g. stem from /etc/fstab. If this is NULL the
- *                              then mount point isn't taking into account when
- *                              evaluating whether the volume should be visible
- *  @return                     Whether the volume should be shown in a desktop
- *                              environment.
  */
 dbus_bool_t
 libhal_volume_policy_should_be_visible (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy, 
@@ -789,9 +790,11 @@ libhal_drive_get_dedicated_icon_volume (LibHalDrive *drive)
 	return drive->dedicated_icon_volume;
 }
 
-/** Free all resources used by a LibHalDrive object.
+/** 
+ *  libhal_drive_free:
+ *  @drive:              Object to free
  *
- *  @param  drive               Object to free
+ *  Free all resources used by a LibHalDrive object. 
  */
 void
 libhal_drive_free (LibHalDrive *drive)
@@ -818,35 +821,37 @@ libhal_drive_free (LibHalDrive *drive)
 }
 
 
-/** Free all resources used by a LibHalVolume object.
+/** 
+ *  libhal_volume_free:
+ *  @volume:              Object to free
  *
- *  @param  vol              Object to free
+ *  Free all resources used by a LibHalVolume object. 
  */
 void
-libhal_volume_free (LibHalVolume *vol)
+libhal_volume_free (LibHalVolume *volume)
 {
-	if (vol == NULL )
+	if (volume == NULL )
 		return;
 
-	free (vol->udi);
-	libhal_free_string (vol->device_file);
-	libhal_free_string (vol->volume_label);
-	libhal_free_string (vol->fstype);
-	libhal_free_string (vol->mount_point);
-	libhal_free_string (vol->fsversion);
-	libhal_free_string (vol->uuid);
-	libhal_free_string (vol->desired_mount_point);
-	libhal_free_string (vol->mount_filesystem);
-	libhal_free_string (vol->crypto_backing_volume);
-	libhal_free_string (vol->storage_device);
+	free (volume->udi);
+	libhal_free_string (volume->device_file);
+	libhal_free_string (volume->volume_label);
+	libhal_free_string (volume->fstype);
+	libhal_free_string (volume->mount_point);
+	libhal_free_string (volume->fsversion);
+	libhal_free_string (volume->uuid);
+	libhal_free_string (volume->desired_mount_point);
+	libhal_free_string (volume->mount_filesystem);
+	libhal_free_string (volume->crypto_backing_volume);
+	libhal_free_string (volume->storage_device);
 
-	libhal_free_string (vol->partition_scheme);
-	libhal_free_string (vol->partition_type);
-	libhal_free_string (vol->partition_label);
-	libhal_free_string (vol->partition_uuid);
-	libhal_free_string_array (vol->partition_flags);
+	libhal_free_string (volume->partition_scheme);
+	libhal_free_string (volume->partition_type);
+	libhal_free_string (volume->partition_label);
+	libhal_free_string (volume->partition_uuid);
+	libhal_free_string_array (volume->partition_flags);
 
-	free (vol);
+	free (volume);
 }
 
 
@@ -883,13 +888,16 @@ out:
 #define LIBHAL_PROP_EXTRACT_BOOL_BITFIELD(_property_, _where_, _field_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_BOOLEAN) _where_ |= libhal_psi_get_bool (&it) ? _field_ : 0
 #define LIBHAL_PROP_EXTRACT_STRLIST(_property_, _where_) else if (strcmp (key, _property_) == 0 && type == LIBHAL_PROPERTY_TYPE_STRLIST) _where_ = my_strvdup (libhal_psi_get_strlist (&it))
 
-/** Given a UDI for a HAL device of capability 'storage', this
+/**  
+ *  libhal_drive_from_udi:
+ *  @hal_ctx:             libhal context
+ *  @udi:                 HAL UDI
+ *
+ *  Returns:              LibHalDrive object or NULL if UDI is invalid
+ *
+ *  Given a UDI for a HAL device of capability 'storage', this
  *  function retrieves all the relevant properties into convenient
  *  in-process data structures.
- *
- *  @param  hal_ctx             libhal context
- *  @param  udi                 HAL UDI
- *  @return                     LibHalDrive object or NULL if UDI is invalid
  */
 LibHalDrive *
 libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
@@ -1077,13 +1085,16 @@ libhal_drive_requires_eject (LibHalDrive *drive)
 	return drive->requires_eject;
 }
 
-/** Given a UDI for a LIBHAL device of capability 'volume', this
+/**  
+ *  libhal_volume_from_udi:
+ *  @hal_ctx:            libhal context
+ *  @udi:                HAL UDI
+ *
+ *  Returns:             LibHalVolume object or NULL if UDI is invalid
+ *
+ *  Given a UDI for a LIBHAL device of capability 'volume', this
  *  function retrieves all the relevant properties into convenient
  *  in-process data structures.
- *
- *  @param  hal_ctx             libhal context
- *  @param  udi                 HAL UDI
- *  @return                     LibHalVolume object or NULL if UDI is invalid
  */
 LibHalVolume *
 libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
@@ -1248,13 +1259,16 @@ error:
 }
 
 
-/** If the volume is on a drive with a MSDOS style partition table, return
+/**  
+ *  libhal_volume_get_msdos_part_table_type:
+ *  @volume:		  Volume object
+ *  
+ *  Returns:              The partition type or -1 if volume is not
+ *                        a partition or the media the volume stems from
+ *                        isn't partition with a MS DOS style table
+ * 
+ *  If the volume is on a drive with a MSDOS style partition table, return
  *  the partition table id.
- *
- *  @param  volume              Volume object
- *  @return                     The partition type or -1 if volume is not
- *                              a partition or the media the volume stems from
- *                              isn't partition with a MS DOS style table
  */
 int
 libhal_volume_get_msdos_part_table_type (LibHalVolume *volume)
@@ -1262,13 +1276,16 @@ libhal_volume_get_msdos_part_table_type (LibHalVolume *volume)
 	return volume->msdos_part_table_type;
 }
 
-/** If the volume is on a drive with a MSDOS style partition table, return
- *  the partition start offset according to the partition table.
+/**  
+ *  libhal_volume_get_msdos_part_table_start:
+ *  @volume:              Volume object
  *
- *  @param  volume              Volume object
- *  @return                     The partition start offset or -1 if volume isnt
- *                              a partition or the media the volume stems from
- *                              isn't partition with a MS DOS style table
+ *  Returns:              The partition start offset or -1 if volume isnt
+ *                        a partition or the media the volume stems from
+ *                        isn't partition with a MS DOS style table
+ *
+ *  If the volume is on a drive with a MSDOS style partition table, return
+ *  the partition start offset according to the partition table.
  */
 dbus_uint64_t
 libhal_volume_get_msdos_part_table_start (LibHalVolume *volume)
@@ -1276,13 +1293,16 @@ libhal_volume_get_msdos_part_table_start (LibHalVolume *volume)
 	return volume->msdos_part_table_start;
 }
 
-/** If the volume is on a drive with a MSDOS style partition table, return
- *  the partition size according to the partition table.
+/**  
+ *  libhal_volume_get_msdos_part_table_size:
+ *  @volume:              Volume object
  *
- *  @param  volume              Volume object
- *  @return                     The partition size or -1 if volume is not
- *                              a partition or the media the volume stems from
- *                              isn't partition with a MS DOS style table
+ *  Returns:              The partition size or -1 if volume is not
+ *                        a partition or the media the volume stems from
+ *                        isn't partition with a MS DOS style table
+ *
+ *  If the volume is on a drive with a MSDOS style partition table, return
+ *  the partition size according to the partition table.
  */
 dbus_uint64_t
 libhal_volume_get_msdos_part_table_size (LibHalVolume *volume)
@@ -1292,12 +1312,15 @@ libhal_volume_get_msdos_part_table_size (LibHalVolume *volume)
 
 /***********************************************************************/
 
-/** Get the drive object that either is (when given e.g. /dev/sdb) or contains
- *  (when given e.g. /dev/sdb1) the given device file.
+/** 
+ *  libhal_drive_from_device_file:
+ *  @hal_ctx:             libhal context to use
+ *  @device_file:         Name of special device file, e.g. '/dev/hdc'
+ * 
+ *  Returns:              LibHalDrive object or NULL if it doesn't exist
  *
- *  @param  hal_ctx             libhal context to use
- *  @param  device_file         Name of special device file, e.g. '/dev/hdc'
- *  @return                     LibHalDrive object or NULL if it doesn't exist
+ *  Get the drive object that either is (when given e.g. /dev/sdb) or contains
+ *  (when given e.g. /dev/sdb1) the given device file. 
  */
 LibHalDrive *
 libhal_drive_from_device_file (LibHalContext *hal_ctx, const char *device_file)
@@ -1403,11 +1426,13 @@ out:
 	return result;
 }
 
-/** Get the volume object for a given device file.
+/** 
+ *  libhal_volume_from_device_file:
+ *  @hal_ctx:            libhal context to use
+ *  @device_file:        Name of special device file, e.g. '/dev/hda5'
+ *  Returns:             LibHalVolume object or NULL if it doesn't exist
  *
- *  @param  hal_ctx             libhal context to use
- *  @param  device_file         Name of special device file, e.g. '/dev/hda5'
- *  @return                     LibHalVolume object or NULL if it doesn't exist
+ *  Get the volume object for a given device file.
  */
 LibHalVolume *
 libhal_volume_from_device_file (LibHalContext *hal_ctx, const char *device_file)
@@ -2080,5 +2105,3 @@ libhal_drive_no_partitions_hint (LibHalDrive *drive)
 {
 	return drive->no_partitions_hint;
 }
-
-/** @} */

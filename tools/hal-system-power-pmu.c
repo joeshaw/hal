@@ -43,18 +43,12 @@
 #define PMUDEV		"/dev/pmu"
 #define __u32		unsigned int
 
-/**
- * @defgroup HalSystemPowerPmu  Use PMU specific ioctls
- * @ingroup HalMisc
+/** 
+ *  pmac_sleep:
  *
- * @brief A commandline tool for running PMU specific ioctl's. Uses libhal
+ *  Returns:		Success, TRUE or FALSE
  *
- * @{
- */
-
-/** Issues a sleep ioctl
- *
- *  @return			Success, TRUE or FALSE
+ *  Issues a sleep ioctl 
  */
 static int
 pmac_sleep (void)
@@ -83,10 +77,13 @@ pmac_sleep (void)
 #endif /* ! __FreeBSD__ */
 }
 
-/** Gets the LCD brightness
+/** 
+ *  pmac_get_lcd_brightness:
+ *  @val:	The returned brightness value, 0..15
  *
- *  @param	val		The returned brightness value, 0..15
- *  @return			Success, TRUE or FALSE
+ *  Returns:	Success, TRUE or FALSE
+ *
+ *  Gets the LCD brightness 
  */
 static int
 pmac_get_lcd_brightness (int *val)
@@ -115,10 +112,13 @@ pmac_get_lcd_brightness (int *val)
 #endif /* ! __FreeBSD__ */
 }
 
-/** Sets the LCD brightness
+/** 
+ *  pmac_set_lcd_brightness:
+ *  @val:		The brightness value we want to set, 0..15
+ *  
+ *  Returns:		Success, TRUE or FALSE
  *
- *  @param	val		The brightness value we want to set, 0..15
- *  @return			Success, TRUE or FALSE
+ *  Sets the LCD brightness 
  */
 static int
 pmac_set_lcd_brightness (int val)
@@ -147,10 +147,12 @@ pmac_set_lcd_brightness (int val)
 #endif /* ! __FreeBSD__ */
 }
 
-/** Print out program usage.
+/** 
+ *  usage:
+ *  @argc:	Number of arguments given to program
+ *  @argv:	Arguments given to program
  *
- *  @param  argc                Number of arguments given to program
- *  @param  argv                Arguments given to program
+ *  Print out program usage. 
  */
 static void
 usage (int argc, char *argv[])
@@ -168,11 +170,14 @@ usage (int argc, char *argv[])
  "This program calls PMU specific ioctls from within scripts run by HAL.\n");
 }
 
-/** Entry point
+/** 
+ *  main:
+ *  @argc:        Number of arguments given to program
+ *  @argv:        Arguments given to program
  *
- *  @param  argc                Number of arguments given to program
- *  @param  argv                Arguments given to program
- *  @return                     Return code
+ *  @return       Return code
+ *
+ *  Main entry point 
  */
 int
 main (int argc, char *argv[])
@@ -214,7 +219,3 @@ main (int argc, char *argv[])
 	usage (argc, argv);
 	return EXIT_SUCCESS;
 }
-
-/**
- * @}
- */

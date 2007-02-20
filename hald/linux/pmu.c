@@ -203,11 +203,15 @@ lid_button_refresh (HalDevice *d, PMUDevHandler *handler)
 	return TRUE;
 }
 
-/** Refreshes a laptop screen connected to a PMU controller.
- *  This is much simpler than ACPI as we have a *standard* ioctl to use.
+/** 
+ *  laptop_panel_refresh:
+ *  @d:			The hal device
+ *  @handler:		What to do
  *
- *  @param	d		The hal device
- *  @param	handler		What to do
+ *  Returns: 		TRUE/FALSE as result of the operation
+ *
+ *  Refreshes a laptop screen connected to a PMU controller.
+ *  This is much simpler than ACPI as we have a *standard* ioctl to use. 
  */
 static gboolean
 laptop_panel_refresh (HalDevice *d, PMUDevHandler *handler)
@@ -294,10 +298,12 @@ pmu_poll (gpointer data)
 	return TRUE;
 }
 
-/** Synthesizes a *specific* PMU object.
+/** 
+ *  pmu_synthesize_item:
+ *  @fullpath:		The PMU path, e.g. "/dev/pmu/info"
+ *  @pmu_type:		The type of device, e.g. PMU_TYPE_BATTERY
  *
- *  @param	fullpath	The PMU path, e.g. "/dev/pmu/info"
- *  @param	pmu_type	The type of device, e.g. PMU_TYPE_BATTERY
+ *  Synthesizes a *specific* PMU object. 
  */
 static void
 pmu_synthesize_item (const gchar *fullpath, int pmu_type)
@@ -312,11 +318,13 @@ pmu_synthesize_item (const gchar *fullpath, int pmu_type)
 	hotplug_event_enqueue (hotplug_event);
 }
 
-/** Scan the data structures exported by the kernel and add hotplug
- *  events for adding PMU objects.
+/**
+ *  pmu_synthesize_hotplug_events  
  *
- *  @param                      TRUE if, and only if, PMU capabilities
- *                              were detected
+ *  Returns:              TRUE if, and only if, PMU capabilities were detected
+ *
+ *  Scan the data structures exported by the kernel and add hotplug
+ *  events for adding PMU objects.
  */
 gboolean
 pmu_synthesize_hotplug_events (void)

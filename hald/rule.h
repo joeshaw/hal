@@ -31,7 +31,7 @@
 #define __RULE__H__
 
 /* rule type to process */
-enum rule_type {
+typedef enum {
 	RULE_UNKNOWN,
 	RULE_MATCH,
 	RULE_MERGE,
@@ -41,10 +41,10 @@ enum rule_type {
 	RULE_CLEAR,
 	RULE_SPAWN,
 	RULE_EOF,
-};
+} rule_type;
 
 /* type of merge command */
-enum merge_type {
+typedef enum {
 	MERGE_UNKNOWN,
 	MERGE_STRING,
 	MERGE_BOOLEAN,
@@ -54,11 +54,10 @@ enum merge_type {
 	MERGE_COPY_PROPERTY,
 	MERGE_STRLIST,
 	MERGE_REMOVE,
-};
+} merge_type;
 
 /* type of match command */
-enum
-match_type {
+typedef enum {
 	MATCH_UNKNOWN,
 	MATCH_STRING,
 	MATCH_INT,
@@ -79,16 +78,16 @@ match_type {
 	MATCH_COMPARE_GT,
 	MATCH_COMPARE_GE,
 	MATCH_SIBLING_CONTAINS
-};
+} match_type;
 
 /* a "rule" structure that is a generic node of the fdi file */
 struct rule {
 	size_t		rule_size;	/* offset to next rule in the list (aligned to 4 bytes) */
 	u_int32_t	jump_position;	/* the rule to jumo position (aligned to 4 bytes) */
 
-	enum rule_type	rtype;		/* type of rule */
-	enum match_type type_match;
-	enum merge_type type_merge;
+	rule_type	rtype;		/* type of rule */
+	match_type      type_match;
+	merge_type      type_merge;
 
 	u_int32_t	value_offset;	/* offset to keys value (aligned to 4 bytes) */
 	size_t		value_len;	/* length of keys value */

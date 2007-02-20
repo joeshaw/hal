@@ -71,7 +71,7 @@ gboolean hal_util_path_ascend (gchar *path);
 
 void hal_util_grep_discard_existing_data (void);
 
-gchar *hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse_file);
+gchar *hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse);
 gchar *hal_util_grep_file_next_line (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse);
 
 gint hal_util_grep_int_elem_from_file (const gchar *directory, const gchar *file, 

@@ -49,7 +49,11 @@
 static LibHalContext *ctx = NULL;
 static char* udi;
 
-/** Flush keys from the Toshiba hotkey register */
+/** 
+ * toshiba_key_flush:
+ * 
+ * Flush keys from the Toshiba hotkey register 
+ */
 static void
 toshiba_key_flush (void)
 {
@@ -71,10 +75,13 @@ toshiba_key_flush (void)
 		fclose (fp);
 }
 
-/** Check whether there is a new event in the hotkey register
+/** 
+ *  toshiba_key_ready:
+ *  @value:	The key id pressed, passed by reference
+ * 
+ *  Returns:	TRUE if there is an event pending, FALSE if no event pending.
  *
- *  @param	value	The key id pressed, passed by reference
- *  @returns		TRUE if there is an event pending, FALSE if no event pending.
+ *  Check whether there is a new event in the hotkey register
  */
 static gboolean
 toshiba_key_ready (int *value)
@@ -97,9 +104,12 @@ toshiba_key_ready (int *value)
 	return FALSE;
 }
 
-/** Callback to poll hotkey register and report occuring events.
+/** 
+ *  toshiba_key_poll:
  *
- *  @returns		TRUE on success, else FALSE.
+ *  Returns:		TRUE on success, else FALSE.
+ * 
+ *  Callback to poll hotkey register and report occuring events. 
  */
 static gboolean
 toshiba_key_poll (void)
@@ -142,8 +152,7 @@ toshiba_key_poll (void)
 	return TRUE;
 }
 
-/** Main program
- */
+/* Main program */
 int
 main (int argc, char **argv)
 {

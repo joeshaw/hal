@@ -90,10 +90,13 @@ osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-/** Find the closest ancestor by looking at devfs paths
+/** 
+ *  hal_util_find_closest_ancestor:
+ *  @devfs_path:           Path into devfs, e.g. /pci@0,0/pci1025,57@10,2/storage@1
  *
- *  @param  devfs_path           Path into devfs, e.g. /pci@0,0/pci1025,57@10,2/storage@1
- *  @return                      Parent Hal Device Object or #NULL if there is none
+ *  Returns:               Parent Hal Device Object or #NULL if there is none
+ *
+ *  Find the closest ancestor by looking at devfs paths
  */
 HalDevice *
 hal_util_find_closest_ancestor (const gchar *devfs_path, gchar **ancestor_devfs_path, gchar **hotplug_devfs_path)

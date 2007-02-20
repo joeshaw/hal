@@ -34,14 +34,14 @@
 #include "addon-cpufreq-userspace.h"
 #include "../../logger.h"
 
-/** at which load difference (in percent) we should immediately switch to
+/* at which load difference (in percent) we should immediately switch to
  * the maximum possible frequency */
 #define JUMP_CPUFREQ_LIMIT_MIN		20
-/** the load difference at which we jump up to the maximum freq
+/* the load difference at which we jump up to the maximum freq
  * immediately is calculated by the UP_THRESHOLD multiplied with this
  * relation value */
 #define THRESHOLD_JUMP_LIMIT_RELATION	0.625
-/** how many frequency steps we should consider */
+/* how many frequency steps we should consider */
 #define HYSTERESIS			5
 #define DEFAULT_CONSIDER_NICE		FALSE
 #define PROC_STAT_FILE			"/proc/stat"
@@ -52,7 +52,7 @@ const char SYSFS_SCALING_SETSPEED_FILE[] =
 const char SYSFS_SCALING_AVAILABLE_FREQS_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/scaling_available_frequencies";
 
-/** shortcut for g_array_index */
+/* shortcut for g_array_index */
 #define g_a_i(a,i)	g_array_index(a, unsigned, i)
 
 struct userspace_config {
@@ -79,7 +79,11 @@ static struct cpuload_data cpuload = { -1,
 				       NULL,
 				       NULL };
 
-/** frees data needed for CPU load calculation */
+/** 
+ * free_cpu_load_data:
+ * 
+ * frees data needed for CPU load calculation 
+ */
 void free_cpu_load_data(void)
 {
 	if (cpuload.num_cpus != -1) {
@@ -93,7 +97,14 @@ void free_cpu_load_data(void)
 	}
 }
 
-/** calculates current cpu load and stores it in cpuload_data object */
+/** 
+ * calc_cpu_load:
+ * @consider_nice:
+ * 
+ * Returns:
+ * 
+ * calculates current cpu load and stores it in cpuload_data object 
+ */
 static int calc_cpu_load(const int consider_nice)
 {
 	unsigned long	total_elapsed, working_elapsed;
@@ -187,7 +198,14 @@ static int calc_cpu_load(const int consider_nice)
 	return 0;
 }
 
-/** returns current cpuload which has been caluclated before */
+/** 
+ * get_cpu_load:
+ * @cpu_id:	The ID of the CPU
+ * 
+ * Returns:     returns current cpuload which has been caluclated before 
+ *
+ * To get the current CPU load for a given CPU.
+ */
 static int get_cpu_load(const int cpu_id)
 {
 	if (cpu_id < -1) {
@@ -239,7 +257,15 @@ static void reinit_speed(struct userspace_interface *iface, int current_speed)
 	HAL_DEBUG(("forced speed to %d kHz", g_a_i(iface->speeds_kHz, current_speed)));
 }
 
-/** @brief set a speed with traversing all intermediary speeds */
+/**
+ * set_speed:
+ * @iface: 		struct with the userspace interface
+ * @target_speed	the speed to set
+ *
+ * Returns:		the current speed as integer value
+ *
+ * Set a speed with traversing all intermediary speeds 
+ */
 static int set_speed(struct userspace_interface *iface, int target_speed)
 {
 	int delta;
@@ -261,12 +287,16 @@ static int set_speed(struct userspace_interface *iface, int target_speed)
 	return current_speed;
 }
 
-/** @brief set speed to the next higher supported value
+/** 
+ * increase_speed:
+ * @iface:	struct with the userspace interface
  *
- * @return integer with result of increase speed
- * @retval 0 if maximum is already reached
- * @retval 1 if new speed could be set
- * @retval -1 if mode is not userspace
+ * Returns:	integer with result of increase speed
+ * 		0 if maximum is already reached
+ * 		1 if new speed could be set
+ * 		-1 if mode is not userspace
+ *
+ * set speed to the next higher supported value
  */
 static int increase_speed(struct userspace_interface *iface)
 {
@@ -285,12 +315,13 @@ static int increase_speed(struct userspace_interface *iface)
 	return new_speed;
 }
 
-/** @brief set speed to the next lower supported value
+/** 
+ * decrease_speed:
+ * @iface:	struct with the userspace interface
  *
- * @return integer with result of increase speed
- * @retval 0 if maximum is already reached
- * @retval 1 if new speed could be set
- * @retval -1 if mode is not userspace
+ * Returns:	integer with result of decrease speed
+ *
+ * set speed to the next lower supported value
  */
 static int decrease_speed(struct userspace_interface *iface)
 {
@@ -310,7 +341,14 @@ static int decrease_speed(struct userspace_interface *iface)
 	return new_speed;
 }
 
-/** increases and decreases speeds */
+/** 
+ * adjust_speed:
+ * @iface:	struct with the userspace interface
+ *
+ * Returns:	TRUE/FALSE
+ *
+ * increases and decreases speeds
+ */
 static gboolean adjust_speed(struct userspace_interface *iface)
 {
 	GSList		*cpus	 = (GSList*)iface->cpus;
@@ -362,7 +400,7 @@ static gboolean adjust_speed(struct userspace_interface *iface)
 	return TRUE;
 }
 
-/** @brief create the hysteresis array */
+/* create the hysteresis array */
 static void create_hysteresis_array(struct userspace_interface *iface)
 {
 	g_array_free(iface->demotion, TRUE);
@@ -425,7 +463,14 @@ static gboolean read_frequencies(struct userspace_interface *iface)
 	return TRUE;
 }
 
-/** calculates current cpu load and traverses all existing interfaces */
+/** 
+ * userspace_adjust_speeds:
+ * @cpufreq_objs:	List with with CPU Freq objects
+ *
+ * Returns:		Result of the call (TRUE/FALSE)
+ *
+ * calculates current cpu load and traverses all existing interfaces 
+ */
 gboolean userspace_adjust_speeds(GSList *cpufreq_objs)
 {
 	GSList *it = NULL;
@@ -445,8 +490,16 @@ gboolean userspace_adjust_speeds(GSList *cpufreq_objs)
 	return TRUE;
 }
 
-/** inits one userspace interface with the given cores list. iface has to
- * be allocated before passing it to that fucntion */
+/** 
+ * userspace_init:
+ * @iface:	allocated struct with the userspace interface
+ * @cpus:	list of CPU cores
+ *
+ * Returns:     TRUE/FALSE
+ *
+ * Inits one userspace interface with the given cores list. iface has to
+ * be allocated before passing it to that fucntion 
+ */
 gboolean userspace_init(struct userspace_interface *iface, GSList *cpus)
 {
 	if (iface == NULL)
@@ -473,7 +526,12 @@ gboolean userspace_init(struct userspace_interface *iface, GSList *cpus)
 	return TRUE;
 }
 
-/** frees the userspace data */
+/** 
+ * userspace_free:
+ * @data:	userspace interface object to free
+ * 
+ * frees the userspace data 
+ */
 void userspace_free(void *data)
 {
 	struct userspace_interface *iface = data;
@@ -482,8 +540,15 @@ void userspace_free(void *data)
 	g_array_free(iface->demotion, TRUE);
 }
 
-/** sets the performance of the userspace governor. num has to be between
- * 1 and 100 */
+/** 
+ * userspace_set_performance:
+ * @data:		userspace interface struct
+ * @up_threshold:	performance value for the userspace governor
+ * 
+ * Returns:		TRUE/FALSE
+ * 
+ * Sets the performance of the userspace governor. num has to be between 1 and 100 
+ */
 gboolean userspace_set_performance(void *data, int up_threshold)
 {
 	struct userspace_interface *iface = data;
@@ -502,14 +567,27 @@ gboolean userspace_set_performance(void *data, int up_threshold)
 	return TRUE;
 }
 
-/** return the current performance setting */
+/** 
+ * userspace_get_performance:
+ * 
+ * Returns:	current performance setting
+ *
+ * Return the current performance setting 
+ */
 int userspace_get_performance(void)
 {
 	return config.up_threshold;
 }
 
-/** sets whether niced processes should be considered when calculating CPU
- * load */
+/** 
+ * userspace_set_consider_nice_
+ * @data:	void pointer
+ * @consider:   if process should be considered nice
+ * 
+ * Returns:	TRUE/FALSE
+ * 
+ * sets whether niced processes should be considered when calculating CPU load 
+*/
 gboolean userspace_set_consider_nice(void *data, gboolean consider)
 {
 	HAL_DEBUG(("consider nice set to %d for userspace", consider));
@@ -517,7 +595,13 @@ gboolean userspace_set_consider_nice(void *data, gboolean consider)
 	return TRUE;
 }
 
-/** return the current consider nice setting */
+/** 
+ * userspace_get_consider_nice:
+ * 
+ * Returns:	TRUE/FALSE
+ * 
+ * Return the current consider nice setting.
+ */
 gboolean userspace_get_consider_nice(void)
 {
 	return config.consider_nice;

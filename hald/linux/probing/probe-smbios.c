@@ -51,13 +51,16 @@
 char *udi = NULL;
 LibHalContext *ctx = NULL;
 
-/** Finds the start of a null terminated string and sets HAL
- *  property if valid.
+/** 
+ *  setstr:
+ *  @buf:		The non tabbed prefixed, null terminated string
+ *  @str:		The strings to compare with e.g. "Vendor:"
+ *  @prop:		The HAL property to set
  *
- *  @param	buf		The non tabbed prefixed, null terminated string
- *  @param	str		The strings to compare with e.g. "Vendor:"
- *  @param	prop		The HAL property to set
- *  @return			TRUE is found, FALSE otherwise.
+ *  Returns:		TRUE is found, FALSE otherwise.
+ *
+ *  Finds the start of a null terminated string and sets HAL
+ *  property if valid.
  */
 static int
 setstr (char *buf, char *str, char *prop)
@@ -75,11 +78,14 @@ setstr (char *buf, char *str, char *prop)
 	return FALSE;
 }
 
-/** Main entry point
+/** 
+ *  main:
+ *  @argc:	Number of arguments given to program
+ *  @argv:	Arguments given to program
  *
- *  @param	argc		Number of arguments given to program
- *  @param	argv		Arguments given to program
- *  @return			Return code
+ *  Returns: 	Return code
+ * 
+ *  Main entry point
  */
 int 
 main (int argc, char *argv[])
