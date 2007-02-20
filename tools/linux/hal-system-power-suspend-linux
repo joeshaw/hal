@@ -30,6 +30,7 @@ QUIRKS=""
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VBEMODE_RESTORE" = "true" ] && QUIRKS="$QUIRKS --quirk-vbemode"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VGA_MODE_3" = "true" ] && QUIRKS="$QUIRKS --quirk-vga-mode3"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VBE_POST" = "true" ] && QUIRKS="$QUIRKS --quirk-vbepost"
+[ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_RADEON_OFF" = "true" ] && QUIRKS="$QUIRKS --quirk-radeon-off"
 
 #PMU systems cannot use /sys/power/state yet, so use a helper to issue an ioctl
 if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "pmu" ]; then
