@@ -4225,14 +4225,17 @@ no_caller:
 	return osspec_filter_function (connection, message, user_data);
 }
 
-/** Message handler for method invocations. All invocations on any object
+/**  
+ *  hald_dbus_filter_function:
+ *  @connection:          D-BUS connection
+ *  @message:             Message
+ *  @user_data:           User data
+ *
+ *  Returns:              What to do with the message
+ *
+ *  Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function. *ONLY* messages from the
  *  system bus goes through this method.
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @param  user_data           User data
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,

@@ -1379,11 +1379,14 @@ out:
 }
 
 
-/** Get the volume object for a given mount point
+/** 
+ *  libhal_volume_from_mount_point:
+ *  @hal_ctx:             libhal context to use
+ *  @device_file:         Name of mount point without terminting slash, e.g. '/media/disk'
+ * 
+ *  Returns:              LibHalVolume object or NULL if it doesn't exist
  *
- *  @param  hal_ctx             libhal context to use
- *  @param  device_file         Name of mount point without terminting slash, e.g. '/media/disk'
- *  @return                     LibHalVolume object or NULL if it doesn't exist
+ *  Get the volume object for a given mount point 
  */
 LibHalVolume *
 libhal_volume_from_mount_point              (LibHalContext *hal_ctx, 
@@ -1430,6 +1433,7 @@ out:
  *  libhal_volume_from_device_file:
  *  @hal_ctx:            libhal context to use
  *  @device_file:        Name of special device file, e.g. '/dev/hda5'
+ *
  *  Returns:             LibHalVolume object or NULL if it doesn't exist
  *
  *  Get the volume object for a given device file.
