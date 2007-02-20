@@ -844,7 +844,6 @@ handle_mount (LibHalContext *hal_ctx,
 	 *                      but it doesn't really matter much at this point */
 	if (!is_remount) {
 		FILE *hal_mtab;
-		char *mount_dir_escaped;
 		FILE *hal_mtab_orig;
 		int hal_mtab_orig_len;
 		int num_read;
@@ -888,7 +887,6 @@ handle_mount (LibHalContext *hal_ctx,
 			hal_mtab_buf = g_strdup ("");
 		}
 		
-		mount_dir_escaped = g_strescape (mount_dir, NULL);
 #ifdef DEBUG
 		printf ("%d: XYA creating /media/.hal-mtab~\n", getpid ());
 #endif
@@ -900,7 +898,7 @@ handle_mount (LibHalContext *hal_ctx,
 		hal_mtab_buf = g_strdup_printf ("%s%s\t%s\t0\t%s\t%s\t%s\n", 
 						hal_mtab_buf_old,
 						device, invoked_by_uid, mount_do_fstype, 
-						mount_option_commasep, mount_dir_escaped);
+						mount_option_commasep, mount_dir);
 		g_free (hal_mtab_buf_old);
 		if (hal_mtab_buf_old == NULL) {
 			unknown_error ("Out of memory appending to /media/.hal-mtab~");
@@ -910,7 +908,6 @@ handle_mount (LibHalContext *hal_ctx,
 		}
 		fclose (hal_mtab);
 		g_free (hal_mtab_buf);
-		g_free (mount_dir_escaped);
 #ifdef DEBUG
 		printf ("%d: XYA closing /media/.hal-mtab~\n", getpid ());
 #endif
