@@ -1,5 +1,6 @@
 Makefile
 Makefile.in
 hal-spec.xml
+hal-spec.html
 *.o
 *~
