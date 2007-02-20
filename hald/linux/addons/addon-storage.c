@@ -39,11 +39,26 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <glib/gmain.h>
+#include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 #include "libhal/libhal.h"
 
 #include "../../logger.h"
 #include "../../util_helper.h"
+
+
+static char *udi;
+static char *device_file;
+static int media_status;
+static int is_cdrom;
+static int support_media_changed;
+static LibHalContext *ctx = NULL;
+static DBusConnection *con = NULL;
+static guint poll_timer = -1;
+static GMainLoop *loop;
+static gboolean system_is_idle;
 
 static void 
 force_unmount (LibHalContext *ctx, const char *udi)
@@ -260,19 +275,277 @@ enum {
 	MEDIA_STATUS_NO_MEDIA = 2
 };
 
+static gboolean poll_for_media (gpointer user_data);
+
+static void
+update_polling_interval (void)
+{
+	int interval_in_seconds;
+
+	/* TODO: ideally we want all things that do polling to do it
+	 * at the same time.. such as to minimize battery
+	 * usage. Suppose we want to wake up to do poll_for_media()
+	 * every N seconds.  Suppose M is the number of seconds since
+	 * epoch. The fix is to wake up at exactly when M is divisible
+	 * by N... plus some system wide offset (ideally read from
+	 * /sys so kernel threads can use the same offset) to make Xen
+	 * + friends work.... 
+	 *
+	 * Also, the polling intervals should be powers of two to
+	 * ensure that wakeup's with different intervals happen at the
+	 * same time when possible.
+	 *
+	 * This is sorta-kinda what g_timeout_source_new_seconds()
+	 * tries to achieve, not enough I think, and it's only
+	 * available in glib >= 2.14. Too little, too late? *shrug*
+	 */
+
+	if (system_is_idle)
+		interval_in_seconds = 16;
+	else
+		interval_in_seconds = 2;
+
+	if (poll_timer > 0)
+		g_source_remove (poll_timer);
+	poll_timer = g_timeout_add (interval_in_seconds * 1000, poll_for_media, NULL);
+	hal_set_proc_title ("hald-addon-storage: polling %s (every %d sec)", device_file, interval_in_seconds);
+}
+
+static gboolean
+poll_for_media (gpointer user_data)
+{
+	int fd;
+	int got_media;
+	
+	got_media = FALSE;
+	
+	if (is_cdrom) {
+		int drive;
+		
+		fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
+		
+		if (fd < 0 && errno == EBUSY) {
+			/* this means the disc is mounted or some other app,
+			 * like a cd burner, has already opened O_EXCL */
+			
+			/* HOWEVER, when starting hald, a disc may be
+			 * mounted; so check /etc/mtab to see if it
+			 * actually is mounted. If it is we retry to open
+			 * without O_EXCL
+			 */
+			if (!is_mounted (device_file))
+				goto skip_check;
+			
+			fd = open (device_file, O_RDONLY | O_NONBLOCK);
+		}
+		
+		if (fd < 0) {
+			HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
+			goto skip_check;
+		}
+		
+		
+		/* Check if a disc is in the drive
+		 *
+		 * @todo Use MMC-2 API if applicable
+		 */
+		drive = ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
+		switch (drive) {
+		case CDS_NO_INFO:
+		case CDS_NO_DISC:
+		case CDS_TRAY_OPEN:
+		case CDS_DRIVE_NOT_READY:
+			break;
+			
+		case CDS_DISC_OK:
+			/* some CD-ROMs report CDS_DISK_OK even with an open
+			 * tray; if media check has the same value two times in
+			 * a row then this seems to be the case and we must not
+			 * report that there is a media in it. */
+			if (support_media_changed &&
+			    ioctl (fd, CDROM_MEDIA_CHANGED, CDSL_CURRENT) && 
+			    ioctl (fd, CDROM_MEDIA_CHANGED, CDSL_CURRENT)) {
+			} else {
+				got_media = TRUE;
+			}
+			break;
+			
+		case -1:
+			HAL_ERROR (("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
+			break;
+			
+		default:
+			break;
+		}
+		
+		/* check if eject button was pressed */
+		if (got_media) {
+			unsigned char cdb[10] = { 0x4a, 1, 0, 0, 16, 0, 0, 0, 8, 0};
+			unsigned char buffer[8];
+			struct sg_io_hdr sg_h;
+			int retval;
+			
+			memset(buffer, 0, sizeof(buffer));
+			memset(&sg_h, 0, sizeof(struct sg_io_hdr));
+			sg_h.interface_id = 'S';
+			sg_h.cmd_len = sizeof(cdb);
+			sg_h.dxfer_direction = SG_DXFER_FROM_DEV;
+			sg_h.dxfer_len = sizeof(buffer);
+			sg_h.dxferp = buffer;
+			sg_h.cmdp = cdb;
+			sg_h.timeout = 5000;
+			retval = ioctl(fd, SG_IO, &sg_h);
+			if (retval == 0 && sg_h.status == 0 && (buffer[4] & 0x0f) == 0x01) {
+				DBusError error;
+				
+				/* emit signal from drive device object */
+				dbus_error_init (&error);
+				libhal_device_emit_condition (ctx, udi, "EjectPressed", "", &error);
+			}
+		}
+		close (fd);
+	} else {
+		fd = open (device_file, O_RDONLY);
+		if (fd < 0 && errno == ENOMEDIUM) {
+			got_media = FALSE;
+		} else if (fd >= 0) {
+			got_media = TRUE;
+			close (fd);
+		} else {
+			HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
+			goto skip_check;
+		}
+	}
+	
+	switch (media_status) {
+	case MEDIA_STATUS_GOT_MEDIA:
+		if (!got_media) {
+			DBusError error;
+			
+			HAL_DEBUG (("Media removal detected on %s", device_file));
+			libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, NULL);
+			libhal_device_set_property_string (ctx, udi, "storage.partitioning_scheme", "", NULL);
+			
+			
+			/* attempt to unmount all childs */
+			unmount_childs (ctx, udi);
+			
+			/* could have a fs on the main block device; do a rescan to remove it */
+			dbus_error_init (&error);
+			libhal_device_rescan (ctx, udi, &error);
+			
+			/* have to this to trigger appropriate hotplug events */
+			fd = open (device_file, O_RDONLY | O_NONBLOCK);
+			if (fd >= 0) {
+				ioctl (fd, BLKRRPART);
+				close (fd);
+			}
+		}
+		break;
+		
+	case MEDIA_STATUS_NO_MEDIA:
+		if (got_media) {
+			DBusError error;
+			
+			HAL_DEBUG (("Media insertion detected on %s", device_file));
+			
+			/* our probe will trigger the appropriate hotplug events */
+			libhal_device_set_property_bool (
+				ctx, udi, "storage.removable.media_available", TRUE, NULL);
+			
+			/* could have a fs on the main block device; do a rescan to add it */
+			dbus_error_init (&error);
+			libhal_device_rescan (ctx, udi, &error);
+			
+		}
+		break;
+		
+	case MEDIA_STATUS_UNKNOWN:
+	default:
+		break;
+	}
+	
+	/* update our current status */
+	if (got_media)
+		media_status = MEDIA_STATUS_GOT_MEDIA;
+	else
+		media_status = MEDIA_STATUS_NO_MEDIA;
+	
+	/*HAL_DEBUG (("polling %s; got media=%d", device_file, got_media));*/
+	
+skip_check:
+	return TRUE;
+}
+
+static gboolean
+get_system_idle_from_ck (void)
+{
+	gboolean ret;
+	DBusError error;
+	DBusMessage *message;
+	DBusMessage *reply;
+
+	ret = FALSE;
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						"/org/freedesktop/ConsoleKit/Manager",
+						"org.freedesktop.ConsoleKit.Manager",
+						"GetSystemIdleHint");
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (con, message, -1, &error);
+	if (reply == NULL || dbus_error_is_set (&error)) {
+		HAL_ERROR (("Error doing Manager.GetSystemIdleHint on ConsoleKit: %s: %s", error.name, error.message));
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto error;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_BOOLEAN, &(system_is_idle),
+				    DBUS_TYPE_INVALID)) {
+		HAL_ERROR (("Invalid GetSystemIdleHint reply from CK"));
+		goto error;
+	}
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+	ret = TRUE;
+
+error:
+	return ret;
+}
+
+static DBusHandlerResult
+dbus_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
+{
+	gboolean system_is_idle_new;
+
+	if (dbus_message_is_signal (message, 
+				    "org.freedesktop.ConsoleKit.Manager", 
+				    "SystemIdleHintChanged")) {
+		if (!dbus_message_get_args (message, NULL,
+					    DBUS_TYPE_BOOLEAN, &system_is_idle_new,
+					    DBUS_TYPE_INVALID)) {
+			HAL_ERROR (("Invalid SystemIdleHintChanged signal from CK"));
+			goto out;
+		}
+
+		if (system_is_idle_new != system_is_idle) {
+			system_is_idle = system_is_idle_new;
+			update_polling_interval ();
+		}
+	}
+out:
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 int
 main (int argc, char *argv[])
 {
-	char *udi;
-	char *device_file;
-	LibHalContext *ctx = NULL;
 	DBusError error;
 	char *bus;
 	char *drive_type;
-	int is_cdrom;
-	int media_status;
 	char *support_media_changed_str;
-	int support_media_changed;
 
 	hal_set_proc_title_init (argc, argv);
 
@@ -299,6 +572,15 @@ main (int argc, char *argv[])
 		support_media_changed = FALSE;
 
 	dbus_error_init (&error);
+	con = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (con == NULL) {
+		HAL_ERROR (("Cannot connect to system bus"));
+		goto out;
+	}
+	loop = g_main_loop_new (NULL, FALSE);
+	dbus_connection_setup_with_g_main (con, NULL);
+
+	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
@@ -311,8 +593,6 @@ main (int argc, char *argv[])
 	HAL_DEBUG (("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi));
 	HAL_DEBUG (("**************************************************"));
 
-	hal_set_proc_title ("hald-addon-storage: polling %s", device_file);
-
 	if (strcmp (drive_type, "cdrom") == 0)
 		is_cdrom = 1;
 	else
@@ -320,169 +600,22 @@ main (int argc, char *argv[])
 
 	media_status = MEDIA_STATUS_UNKNOWN;
 
-	while (TRUE) {
-		int fd;
-		int got_media;
+	/* TODO: ideally we should track the sessions on the seats on
+	 * which the device belongs to. But right now we don't really
+	 * do multi-seat so I'm going to punt on this for now.
+	 */
+	get_system_idle_from_ck ();
 
-		got_media = FALSE;
+	dbus_connection_add_filter (con, dbus_filter_function, NULL, NULL);
+	dbus_bus_add_match (con,
+			    "type='signal'"
+			    ",interface='org.freedesktop.ConsoleKit.Manager'"
+			    ",sender='org.freedesktop.ConsoleKit'"
+			    ",member='SystemIdleHintChanged'",
+			    NULL);
 
-		if (is_cdrom) {
-			int drive;
-
-			fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
-
-			if (fd < 0 && errno == EBUSY) {
-				/* this means the disc is mounted or some other app,
-				 * like a cd burner, has already opened O_EXCL */
-
-				/* HOWEVER, when starting hald, a disc may be
-				 * mounted; so check /etc/mtab to see if it
-				 * actually is mounted. If it is we retry to open
-				 * without O_EXCL
-				 */
-				if (!is_mounted (device_file))
-					goto skip_check;
-
-				fd = open (device_file, O_RDONLY | O_NONBLOCK);
-			}
-
-			if (fd < 0) {
-				HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
-				goto skip_check;
-			}
-
-
-			/* Check if a disc is in the drive
-			 *
-			 * @todo Use MMC-2 API if applicable
-			 */
-			drive = ioctl (fd, CDROM_DRIVE_STATUS, CDSL_CURRENT);
-			switch (drive) {
-			case CDS_NO_INFO:
-			case CDS_NO_DISC:
-			case CDS_TRAY_OPEN:
-			case CDS_DRIVE_NOT_READY:
-				break;
-
-			case CDS_DISC_OK:
-				/* some CD-ROMs report CDS_DISK_OK even with an open
-				 * tray; if media check has the same value two times in
-				 * a row then this seems to be the case and we must not
-				 * report that there is a media in it. */
-				if (support_media_changed &&
-				    ioctl (fd, CDROM_MEDIA_CHANGED, CDSL_CURRENT) && 
-				    ioctl (fd, CDROM_MEDIA_CHANGED, CDSL_CURRENT)) {
-				} else {
-					got_media = TRUE;
-				}
-				break;
-
-			case -1:
-				HAL_ERROR (("CDROM_DRIVE_STATUS failed: %s\n", strerror(errno)));
-				break;
-
-			default:
-				break;
-			}
-
-			/* check if eject button was pressed */
-			if (got_media) {
-				unsigned char cdb[10] = { 0x4a, 1, 0, 0, 16, 0, 0, 0, 8, 0};
-				unsigned char buffer[8];
-				struct sg_io_hdr sg_h;
-				int retval;
-
-				memset(buffer, 0, sizeof(buffer));
-				memset(&sg_h, 0, sizeof(struct sg_io_hdr));
-				sg_h.interface_id = 'S';
-				sg_h.cmd_len = sizeof(cdb);
-				sg_h.dxfer_direction = SG_DXFER_FROM_DEV;
-				sg_h.dxfer_len = sizeof(buffer);
-				sg_h.dxferp = buffer;
-				sg_h.cmdp = cdb;
-				sg_h.timeout = 5000;
-				retval = ioctl(fd, SG_IO, &sg_h);
-				if (retval == 0 && sg_h.status == 0 && (buffer[4] & 0x0f) == 0x01) {
-					DBusError error;
-
-					/* emit signal from drive device object */
-					dbus_error_init (&error);
-					libhal_device_emit_condition (ctx, udi, "EjectPressed", "", &error);
-				}
-			}
-			close (fd);
-		} else {
-			fd = open (device_file, O_RDONLY);
-			if (fd < 0 && errno == ENOMEDIUM) {
-				got_media = FALSE;
-			} else if (fd >= 0) {
-				got_media = TRUE;
-				close (fd);
-			} else {
-				HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
-				goto skip_check;
-			}
-		}
-
-		switch (media_status) {
-		case MEDIA_STATUS_GOT_MEDIA:
-			if (!got_media) {
-				DBusError error;
-				
-				HAL_DEBUG (("Media removal detected on %s", device_file));
-				libhal_device_set_property_bool (ctx, udi, "storage.removable.media_available", FALSE, NULL);
-				libhal_device_set_property_string (ctx, udi, "storage.partitioning_scheme", "", NULL);
-
-				
-				/* attempt to unmount all childs */
-				unmount_childs (ctx, udi);
-				
-				/* could have a fs on the main block device; do a rescan to remove it */
-				dbus_error_init (&error);
-				libhal_device_rescan (ctx, udi, &error);
-				
-				/* have to this to trigger appropriate hotplug events */
-				fd = open (device_file, O_RDONLY | O_NONBLOCK);
-				if (fd >= 0) {
-					ioctl (fd, BLKRRPART);
-					close (fd);
-				}
-			}
-			break;
-
-		case MEDIA_STATUS_NO_MEDIA:
-			if (got_media) {
-				DBusError error;
-
-				HAL_DEBUG (("Media insertion detected on %s", device_file));
-
-				/* our probe will trigger the appropriate hotplug events */
-				libhal_device_set_property_bool (
-					ctx, udi, "storage.removable.media_available", TRUE, NULL);
-
-				/* could have a fs on the main block device; do a rescan to add it */
-				dbus_error_init (&error);
-				libhal_device_rescan (ctx, udi, &error);
-				
-			}
-			break;
-
-		case MEDIA_STATUS_UNKNOWN:
-		default:
-			break;
-		}
-
-		/* update our current status */
-		if (got_media)
-			media_status = MEDIA_STATUS_GOT_MEDIA;
-		else
-			media_status = MEDIA_STATUS_NO_MEDIA;
-
-		/*HAL_DEBUG (("polling %s; got media=%d", device_file, got_media));*/
-
-	skip_check:
-		sleep (2);
-	}
+	update_polling_interval ();
+	g_main_loop_run (loop);
 
 out:
 	if (ctx != NULL) {
