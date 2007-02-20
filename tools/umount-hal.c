@@ -48,11 +48,15 @@ main (int argc, char *argv[])
 
 	ret = 1;
 
-	if (argc != 2) {
-		fprintf (stderr, "%s: program is supposed to be called with only one argument.", argv[0]);
+	if (argc < 2) {
+		fprintf (stderr, "%s: this program is only supposed to be invoked by umount(8).\n", argv[0]);
 		goto out;
 	}
 
+	/* it appears the device file is always the first argument.
+	 * TODO XXX FIXME: we ought to honor umount(8) options like
+	 * -v for verbose.
+	 */
 	device_file = argv[1];
 
 	dbus_error_init (&error);
