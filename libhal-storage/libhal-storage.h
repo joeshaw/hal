@@ -322,9 +322,9 @@ dbus_bool_t          libhal_volume_disc_is_rewritable         (LibHalVolume     
 dbus_bool_t          libhal_volume_disc_is_appendable         (LibHalVolume     *volume);
 LibHalVolumeDiscType libhal_volume_get_disc_type              (LibHalVolume     *volume);
 
-int               libhal_volume_get_msdos_part_table_type     (LibHalVolume     *volume)  LIBHAL_DEPRECATED;
-dbus_uint64_t     libhal_volume_get_msdos_part_table_start    (LibHalVolume     *volume)  LIBHAL_DEPRECATED;
-dbus_uint64_t     libhal_volume_get_msdos_part_table_size     (LibHalVolume     *volume)  LIBHAL_DEPRECATED;
+int               libhal_volume_get_msdos_part_table_type     (LibHalVolume     *volume) LIBHAL_DEPRECATED;
+dbus_uint64_t     libhal_volume_get_msdos_part_table_start    (LibHalVolume     *volume) LIBHAL_DEPRECATED;
+dbus_uint64_t     libhal_volume_get_msdos_part_table_size     (LibHalVolume     *volume) LIBHAL_DEPRECATED;
 	
 
 dbus_bool_t       libhal_volume_should_ignore 	              (LibHalVolume     *volume);

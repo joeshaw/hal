@@ -147,8 +147,16 @@ gboolean write_line(const char *filename, const char *fmt, ...)
 	return TRUE;
 }
 
-/** reads one line from filename, splits it by delim and returns a two
- * dimension array of strings or NULL on error */
+/** 
+ * read_line_str_split:
+ * @filename:	Filename
+ * @delim:      The delimiter to split
+ *
+ * Returns:     The splitted line as array
+ * 
+ * Reads one line from filename, splits it by delim and returns a two
+ * dimension array of strings or NULL on error 
+ */
 static gchar **read_line_str_split(char *filename, gchar *delim)
 {
 	gchar	line[MAX_LINE_SIZE];
@@ -177,8 +185,17 @@ static gchar **read_line_str_split(char *filename, gchar *delim)
 	return l;
 }
 
-/** reads one line from filename, splits its integers by delim and stores
- * all items in the given list */
+/** 
+ * read_line_int_split:
+ * @filename:	Filename
+ * @delim:      The delimiter to split
+ * @list:       List with the splitted integers 
+ *
+ * Returns:     TRUE/FALSE
+ *
+ * Reads one line from filename, splits its integers by delim and stores
+ * all items in the given list 
+ */
 gboolean read_line_int_split(char *filename, gchar *delim, GSList **list)
 {
 	gchar	**l;
@@ -186,6 +203,9 @@ gboolean read_line_int_split(char *filename, gchar *delim, GSList **list)
 
 	l = read_line_str_split(filename, delim);
 
+        if (l == NULL)
+                return FALSE;
+	
 	for (i = 0; l[i] != NULL; i++) {
 		int value = atoi(l[i]);
 		*list = g_slist_append(*list, GINT_TO_POINTER(value));
@@ -437,9 +457,17 @@ static void ondemand_free(void *data)
 
 /********************* main interface *********************/
 
-/** sets the performance for all cpufreq objects
+/**
+ * set_performance: 
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @performance:	performance value to set
+ *
+ * Returns: 		TRUE/FALSE
  *
  * @raises NoSuitableGoveror
+ *
+ * sets the performance for all cpufreq objects
  */
 static gboolean set_performance(DBusConnection *connection, DBusMessage *message,
 				int performance)
@@ -478,9 +506,17 @@ static gboolean set_performance(DBusConnection *connection, DBusMessage *message
 	return TRUE;
 }
 
-/** sets the performance for all cpufreq objects
+/** 
+ * get_performance:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @performance:	pointer to return the current performance value
+ *
+ * Returns: 		TRUE/FALSE
  *
  * @raises (NoSuitableGoveror|GeneralError)
+ * 
+ * sets the performance for all cpufreq objects
  */
 static gboolean get_performance(DBusConnection *connection, DBusMessage *message,
 				int *performance)
@@ -520,9 +556,17 @@ static gboolean get_performance(DBusConnection *connection, DBusMessage *message
 	return TRUE;
 }
 
-/** sets the performance for all cpufreq objects
+/** 
+ * set_consider_nice:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @consider:		TRUE if should set consider nice
+ *
+ * Returns: 		TRUE/FALSE
  *
  * @raises NoSuitableGoveror
+ * 
+ * sets consider nice to all cpufreq opjects. 
  */
 static gboolean set_consider_nice(DBusConnection *connection, DBusMessage *message,
 				  gboolean consider)
@@ -542,9 +586,17 @@ static gboolean set_consider_nice(DBusConnection *connection, DBusMessage *messa
 	return TRUE;
 }
 
-/** sets the performance for all cpufreq objects
+/** 
+ * get_consider_nice:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @consider:		pointer to return the current state of consider nice
+ *
+ * Returns: 		TRUE/FALSE
  *
  * @raises NoSuitableGoveror
+ * 
+ * Gets consider nice state. 
  */
 static gboolean get_consider_nice(DBusConnection *connection, DBusMessage *message,
 				  int *consider)
@@ -563,9 +615,17 @@ static gboolean get_consider_nice(DBusConnection *connection, DBusMessage *messa
 	return TRUE;
 }
 
-/** stores a list of all available governors in the given list.
+/** 
+ * get_available_governors:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @governors:		to return the current available governors.
+ *
+ * Returns: 		TRUE/FALSE
  *
  * @raises GeneralError
+ * 
+ * Gets the names of all availabe governors. 
  */
 static gboolean get_available_governors(DBusConnection *connection, DBusMessage *message,
 					gchar ***governors)
@@ -585,9 +645,17 @@ static gboolean get_available_governors(DBusConnection *connection, DBusMessage 
 	return TRUE;
 }
 
-/** sets a governor for all cpufreq objects
+/** 
+ * set_governors:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @governor:		name of the governor to set
  *
- * @raises (GeneralError|UnknownGovernor|GovernorInitFailed)
+ * Returns: 		TRUE/FALSE
+ *
+ * @raises (GeneralError|UnknownGovernor|GovernorInitFailed) 
+ * 
+ * sets a governor for all cpufreq objects. 
  */
 static gboolean set_governors(DBusConnection *connection, DBusMessage *message,
 				       const char *governor)
@@ -715,9 +783,17 @@ static gboolean set_governors(DBusConnection *connection, DBusMessage *message,
 	return TRUE;
 }
 
-/** gets the current governor which is set for all cpufreq objects
+/** 
+ * get_governors:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @governor:		pointer to the name of the current set governor
  *
- * @raises GeneralError
+ * Returns: 		TRUE/FALSE
+ *
+ * @raises GeneralError 
+ * 
+ * gets the current governor which is set for all cpufreq objects
  */
 static gboolean get_governors(DBusConnection *connection, DBusMessage *message,
 			   char *governor)
@@ -744,8 +820,17 @@ static gboolean get_governors(DBusConnection *connection, DBusMessage *message,
 
 /********************* DBus stuff *********************/
 
-/** raises the NoSuitableGovernor error with the given method in the
- * detail field */
+/** 
+ * dbus_raise_no_suitable_governor:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @method:		name of the method
+ *
+ * Returns: 		TRUE/FALSE
+ *
+ * Raises the NoSuitableGovernor error with the given method in the
+ * detail field
+ */
 static gboolean dbus_raise_no_suitable_governor(DBusConnection *connection,
 						DBusMessage *message,
 						char *method)
@@ -756,8 +841,17 @@ static gboolean dbus_raise_no_suitable_governor(DBusConnection *connection,
 				method);
 }
 
-/** raises the GovernorInitFailed error with the given governor in the
- * detail field */
+/** 
+ * dbus_raise_governor_init_failed:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @governor:		name of the governor
+ *
+ * Returns: 		TRUE/FALSE
+ *
+ * Raises the GovernorInitFailed error with the given governor in the
+ * detail field
+ */
 static gboolean dbus_raise_governor_init_failed(DBusConnection *connection,
 						DBusMessage *message,
 						char *governor)
@@ -768,7 +862,18 @@ static gboolean dbus_raise_governor_init_failed(DBusConnection *connection,
 				governor);
 }
 
-/** raises the given error_name with the format in the detail field */
+/** 
+ * dbus_raise_error:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @error_name:		name of the error
+ * @format:             to format the error message
+ * @...:		more args
+ *
+ * Returns: 		TRUE/FALSE
+ *
+ * Raises the given error_name with the format in the detail field
+ */
 static gboolean dbus_raise_error(DBusConnection *connection, DBusMessage *message,
 				 const char *error_name, char *format, ...)
 {
@@ -803,7 +908,16 @@ static gboolean dbus_raise_error(DBusConnection *connection, DBusMessage *messag
 }
 
 #ifdef HAVE_POLKIT
-/** checks if caller of message possesses the CPUFREQ_POLKIT_PRIVILGE */
+/** 
+ * dbus_is_privileged:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @error:		the error
+ *
+ * Returns: 		TRUE if the caller is privileged
+ *
+ * checks if caller of message possesses the CPUFREQ_POLKIT_PRIVILGE 
+ */
 static gboolean dbus_is_privileged(DBusConnection *connection, DBusMessage *message,
 				   DBusError *error)
 {
@@ -881,7 +995,17 @@ Error:
 }
 #endif
 
-/** sends a reply to message with the given data and its dbus_type */
+/** 
+ * dbus_send_reply:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @type:               the type of data param
+ * @data:		data to send
+ *
+ * Returns: 		TRUE/FALSE
+ *
+ * sends a reply to message with the given data and its dbus_type 
+ */
 static gboolean dbus_send_reply(DBusConnection *connection, DBusMessage *message,
 				int dbus_type, void *data)
 {
@@ -905,7 +1029,16 @@ static gboolean dbus_send_reply(DBusConnection *connection, DBusMessage *message
 	return TRUE;
 }
 
-/** sends a reply to message appending a list of strings */
+/** 
+ * dbus_send_reply:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @list:               list to send
+ *
+ * Returns: 		TRUE/FALSE
+ *
+ * sends a reply to message appending a list of strings 
+ */
 static gboolean dbus_send_reply_strlist(DBusConnection *connection, DBusMessage *message,
 					gchar **list)
 {
@@ -941,9 +1074,17 @@ static gboolean dbus_send_reply_strlist(DBusConnection *connection, DBusMessage 
 	return TRUE;
 }
 
-/** gets one argument from message with the given dbus_type and stores it
- * in arg
+/** 
+ * dbus_get_argument:
+ * @connection:		connection to D-Bus
+ * @message:		Message
+ * @dbus_error:         the D-Bus error
+ * @type:               the type of arg param
+ * @arg:		the value to get from the message
  *
+ * Returns: 		TRUE/FALSE
+ *
+ * gets one argument from message with the given dbus_type and stores it in arg
  */
 static gboolean dbus_get_argument(DBusConnection *connection, DBusMessage *message,
 				  DBusError *dbus_error, int dbus_type, void *arg)
@@ -972,9 +1113,17 @@ static DBusHandlerResult dbus_filter_function_local(DBusConnection *connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/** dbus filter function
+/** 
+ * dbus_filter_function:
+ * @connection:		connection to D-Bus
+ * @message:		message
+ * @user_data:          pointer to the data
  *
+ * Returns: 		the result
+ * 
  * @raises UnknownMethod
+ *
+ * D-Bus filter function
  */
 static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 					      DBusMessage *message,
@@ -1083,7 +1232,7 @@ static gboolean is_supported(void)
 	return TRUE;
 }
 
-/** returns FALSE on success because it's used as a callback */
+/* returns FALSE on success because it's used as a callback */
 gboolean dbus_init_local(void)
 {
 	DBusConnection	*dbus_connection;

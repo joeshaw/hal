@@ -342,7 +342,8 @@ gboolean              part_add_partition (char *device,
 					  int geometry_hps, int geometry_spt);
 
 /**
- * @device: name of device file for entire disk, e.g. /dev/sda
+ * part_change_partition:
+ * @device_file: name of device file for entire disk, e.g. /dev/sda
  * @start: start offset of existing partition, in bytes
  * @new_start: new start offset of partition, in bytes
  * @new_size: new size of partition, in bytes

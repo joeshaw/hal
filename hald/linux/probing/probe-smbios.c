@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "libhal/libhal.h"
@@ -50,13 +51,16 @@
 char *udi = NULL;
 LibHalContext *ctx = NULL;
 
-/** Finds the start of a null terminated string and sets HAL
- *  property if valid.
+/** 
+ *  setstr:
+ *  @buf:		The non tabbed prefixed, null terminated string
+ *  @str:		The strings to compare with e.g. "Vendor:"
+ *  @prop:		The HAL property to set
  *
- *  @param	buf		The non tabbed prefixed, null terminated string
- *  @param	str		The strings to compare with e.g. "Vendor:"
- *  @param	prop		The HAL property to set
- *  @return			TRUE is found, FALSE otherwise.
+ *  Returns:		TRUE is found, FALSE otherwise.
+ *
+ *  Finds the start of a null terminated string and sets HAL
+ *  property if valid.
  */
 static int
 setstr (char *buf, char *str, char *prop)
@@ -74,11 +78,14 @@ setstr (char *buf, char *str, char *prop)
 	return FALSE;
 }
 
-/** Main entry point
+/** 
+ *  main:
+ *  @argc:	Number of arguments given to program
+ *  @argv:	Arguments given to program
  *
- *  @param	argc		Number of arguments given to program
- *  @param	argv		Arguments given to program
- *  @return			Return code
+ *  Returns: 	Return code
+ * 
+ *  Main entry point
  */
 int 
 main (int argc, char *argv[])
@@ -100,6 +107,16 @@ main (int argc, char *argv[])
 	int dmiparser_done_system = FALSE;
 	int dmiparser_done_chassis = FALSE;
 
+	uint i;
+	struct stat s;
+	const char *path = NULL;
+	const char *possible_paths[] = {
+		"/usr/sbin/dmidecode",
+		"/bin/dmidecode",
+		"/sbin/dmidecode",
+		"/usr/local/sbin/dmidecode",
+        };
+
 	/* assume failure */
 	ret = 1;
 
@@ -117,6 +134,20 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
+
+	/* find the path to dmidecode */
+        for (i = 0; i < sizeof (possible_paths) / sizeof (char *); i++) {
+                if (stat (possible_paths[i], &s) == 0 && S_ISREG (s.st_mode)) {
+                        path = possible_paths[i];
+                        break;
+                }
+        }
+
+        if (path == NULL) {
+                HAL_ERROR(("Could not find dmidecode, exit!"));
+		exit(1);
+	}
+
 	tmp_ret = pipe (dmipipe);	
 	f = fdopen (dmipipe[0], "r");
 	nullfd = open ("/dev/null", O_RDONLY);
@@ -132,7 +163,7 @@ main (int argc, char *argv[])
 		close (dmipipe[1]);
 		
 		/* execute the child */
-		execl ("/usr/sbin/dmidecode", "/usr/sbin/dmidecode", NULL);
+		execl (path, path, NULL);
 		
 		/* throw an error if we ever reach this point */
 		HAL_ERROR (("Failed to execute dmidecode!"));

@@ -63,9 +63,11 @@ typedef struct ACPIDevHandler_s
 	gboolean (*refresh) (HalDevice *d, struct ACPIDevHandler_s *handler);
 } ACPIDevHandler;
 
-/** Just sets the ac_adapter.present key when called
+/** 
+ *  ac_adapter_refresh_poll
+ *  @d:		valid ac_adaptor HalDevice
  *
- *  @param	d		valid ac_adaptor HalDevice
+ * Just sets the ac_adapter.present key when called 
  */
 static void
 ac_adapter_refresh_poll (HalDevice *d)
@@ -243,13 +245,15 @@ battery_refresh_poll (HalDevice *d)
 		hal_device_property_remove (d, "battery.charge_level.percentage");
 }
 
-/** Recalculates the battery.reporting.last_full key as this may drift
- *  over time.
+/** 
+ *  battery_poll_infrequently:
+ *  @data:		Ignored
+ *  Returns:  		TRUE if we updated values
  *
- *  @param	data		Ignored
- *  @return			TRUE if we updated values
+ *  Recalculates the battery.reporting.last_full key as this may drift
+ *  over time. 
  *
- *  @note	This is called 120x less often than battery_refresh_poll
+ *  Note: This is called 120x less often than battery_refresh_poll
  */
 static gboolean
 battery_poll_infrequently (gpointer data) {
@@ -282,11 +286,14 @@ battery_poll_infrequently (gpointer data) {
 }
 
 
-/** Fallback polling method to refresh battery objects is plugged in
+/** 
+ *  acpi_poll_battery:
  *
  *  @return			TRUE
  *
- *  @note	This just calls battery_refresh_poll for each battery
+ * Fallback polling method to refresh battery objects is plugged in 
+ *
+ * Note: This just calls battery_refresh_poll for each battery
  */
 static gboolean
 acpi_poll_battery (void)
@@ -317,11 +324,14 @@ acpi_poll_battery (void)
 	return TRUE;
 }
 
-/** Fallback polling method to detect if the ac_adaptor is plugged in
+/** 
+ *  acpi_poll_acadap:
+ * 
+ *  Returns:			TRUE
  *
- *  @return			TRUE
+ *  Fallback polling method to detect if the ac_adaptor is plugged in 
  *
- *  @note	This just calls ac_adapter_refresh_poll for each ac_adapter
+ *  Note: This just calls ac_adapter_refresh_poll for each ac_adapter
  */
 static gboolean
 acpi_poll_acadap (void)
@@ -350,13 +360,16 @@ acpi_poll_acadap (void)
 	return TRUE;
 }
 
-/** Fallback polling method called every minute.
+/** 
+ *  acpi_poll:
+ *  @data:		Ignored
  *
- *  @param	data		Ignored
- *  @return			TRUE
+ *  Returns:		TRUE
  *
- *  @note	This just forces a poll refresh for *every* ac_adaptor
- *		and primary battery in the system.
+ *  Fallback polling method called every minute. 
+ *
+ *  Note: This just forces a poll refresh for *every* ac_adaptor
+ *        and primary battery in the system.
  */
 static gboolean
 acpi_poll (gpointer data)
@@ -403,11 +416,13 @@ ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
-/** Removes all the possible battery.* keys.
+/** 
+ *  battery_refresh_remove:
+ *  @d:		Valid battery HalDevice
  *
- *  @param	d		Valid battery HalDevice
+ *  Removes all the possible battery.* keys. 
  *
- *  @note	Removing a key that doesn't exist is OK.
+ *  Note: Removing a key that doesn't exist is OK.
  */
 static void
 battery_refresh_remove (HalDevice *d)
@@ -449,10 +464,12 @@ battery_refresh_remove (HalDevice *d)
 	hal_device_property_remove (d, "battery.remaining_time");
 }
 
-/** Adds all the possible battery.* keys and does coldplug (slowpath)
- *  type calculations.
+/** 
+ *  battery_refresh_add:
+ *  @d:		Valid battery HalDevice
  *
- *  @param	d		Valid battery HalDevice
+ *  Adds all the possible battery.* keys and does coldplug (slowpath)
+ *  type calculations. 
  */
 static gboolean
 battery_refresh_add (HalDevice *d, const char *path)
@@ -578,6 +595,15 @@ battery_refresh_add (HalDevice *d, const char *path)
 	return TRUE;
 }
 
+/** 
+ *  battery_refresh:
+ *  @d:		Valid battery HalDevice
+ *  @handler:	The ACPIDevHandler.
+ *  
+ *  Returns:    TRUE/FALSE
+ *
+ *  Refresh the battery device information. 
+ */
 static gboolean
 battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 {
@@ -626,6 +652,14 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
+/** 
+ *  get_processor_model_name:
+ *  @proc_num:	Number of processor
+ *  
+ *  Returns:    Name of the processor model
+ *
+ *  Give the model name of the processor. 
+ */
 static gchar *
 get_processor_model_name (gint proc_num)
 {
@@ -856,10 +890,12 @@ button_refresh (HalDevice *d, ACPIDevHandler *handler)
 	return TRUE;
 }
 
-/** Synthesizes a *specific* acpi object.
+/** 
+ *  acpi_synthesize_item:
+ *  @fullpath:		The ACPI path, e.g. "/proc/acpi/battery/BAT1"
+ *  @acpi_type:		The type of device, e.g. ACPI_TYPE_BATTERY
  *
- *  @param	fullpath	The ACPI path, e.g. "/proc/acpi/battery/BAT1"
- *  @param	acpi_type	The type of device, e.g. ACPI_TYPE_BATTERY
+ *  Synthesizes a *specific* acpi object.
  */
 static void
 acpi_synthesize_item (const gchar *fullpath, int acpi_type)
@@ -874,12 +910,14 @@ acpi_synthesize_item (const gchar *fullpath, int acpi_type)
 	hotplug_event_enqueue (hotplug_event);
 }
 
-/** Synthesizes generic acpi objects, i.e. registers all the objects of type
- *  into HAL. This lets us have more than one type of device e.g. BATx
- *  in the same battery class.
+/** 
+ *  acpi_synthesize:
+ *  @path:		The ACPI path, e.g. "/proc/acpi/battery"
+ *  @acpi_type:		The type of device, e.g. ACPI_TYPE_BATTERY
  *
- *  @param	path		The ACPI path, e.g. "/proc/acpi/battery"
- *  @param	acpi_type	The type of device, e.g. ACPI_TYPE_BATTERY
+ *  Synthesizes generic acpi objects, i.e. registers all the objects of type
+ *  into HAL. This lets us have more than one type of device e.g. BATx
+ *  in the same battery class. 
  */
 static void
 acpi_synthesize (const gchar *path, int acpi_type)
@@ -931,12 +969,14 @@ acpi_synthesize (const gchar *path, int acpi_type)
 	g_dir_close (dir);
 }
 
-/** If {procfs_path}/acpi/{vendor}/{display} is found, then add the
- *  LaptopPanel device.
+/** 
+ *  acpi_synthesize_display:
+ *  @vendor:		The vendor name, e.g. sony
+ *  @display:		The *possible* name of the brightness file
+ *  @method:		The HAL enumerated type.
  *
- *  @param	vendor		The vendor name, e.g. sony
- *  @param	display		The *possible* name of the brightness file
- *  @param	method		The HAL enumerated type.
+ *  If {procfs_path}/acpi/{vendor}/{display} is found, then add the
+ *  LaptopPanel device. 
  */
 static void
 acpi_synthesize_display (char *vendor, char *display, int method)
@@ -953,7 +993,10 @@ acpi_synthesize_display (char *vendor, char *display, int method)
 
 static int sonypi_irq_list[] = { 11, 10, 9, 6, 5 };
 
-/** Synthesizes a sonypi object.
+/** 
+ *  acpi_synthesize_sonypi_display:
+ *
+ *  Synthesizes a sonypi object.
  */
 static void
 acpi_synthesize_sonypi_display (void)
@@ -994,11 +1037,14 @@ acpi_synthesize_sonypi_display (void)
 	g_free (path);
 }
 
-/** Scan the data structures exported by the kernel and add hotplug
- *  events for adding ACPI objects.
+/** 
+ *  acpi_synthesize_hotplug_events:
  *
- *  @return			TRUE if, and only if, ACPI capabilities
- *				were detected
+ *  Returns:		TRUE if, and only if, ACPI capabilities
+ *			were detected
+ *
+ *  Scan the data structures exported by the kernel and add hotplug
+ *  events for adding ACPI objects. 
  */
 gboolean
 acpi_synthesize_hotplug_events (void)

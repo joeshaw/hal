@@ -36,10 +36,12 @@
 #include <libhal.h>
 
 
-/** Print out program usage.
+/** 
+ *  usage:
+ *  @argc:                Number of arguments given to program
+ *  @argv:                Arguments given to program
  *
- *  @param  argc                Number of arguments given to program
- *  @param  argv                Arguments given to program
+ *  Print out program usage.
  */
 static void
 usage (int argc, char *argv[])
@@ -62,11 +64,14 @@ usage (int argc, char *argv[])
  "\n");
 }
 
-/** Entry point
+/** 
+ *  main:
+ *  @argc:                Number of arguments given to program
+ *  @argv:                Arguments given to program
  *
- *  @param  argc                Number of arguments given to program
- *  @param  argv                Arguments given to program
- *  @return                     Return code
+ *  Returns:              Return code
+ *
+ *  Main entry point 
  */
 int
 main (int argc, char *argv[])
@@ -181,6 +186,3 @@ main (int argc, char *argv[])
 	return 0;
 }
 
-/**
- * @}
- */

@@ -64,12 +64,14 @@ pci_ids_line_iter_init ()
 /** Maximum length of lines in pci.ids */
 #define PCI_IDS_MAX_LINE_LEN 512
 
-/** Get the next line from pci.ids
+/**  
+ *  pci_ids_line_iter_get_line:
+ *  @line_len:           Pointer to where number of bytes in line will
+ *                       be stored
+ *  Returns:             Pointer to the line; only valid until the
+ *                       next invocation of this function
  *
- *  @param  line_len            Pointer to where number of bytes in line will
- *                              be stored
- *  @return                     Pointer to the line; only valid until the
- *                              next invocation of this function
+ *  Get the next line from pci.ids
  */
 static char *
 pci_ids_line_iter_get_line (unsigned int *line_len)
@@ -93,9 +95,12 @@ pci_ids_line_iter_get_line (unsigned int *line_len)
 	return line;
 }
 
-/** See if there are more lines to process in pci.ids
+/** 
+ *  pci_ids_line_iter_has_more:
  *
- *  @return                     #TRUE iff there are more lines to process
+ *  Returns:              #TRUE iff there are more lines to process
+ *
+ *  See if there are more lines to process in pci.ids 
  */
 static dbus_bool_t
 pci_ids_line_iter_has_more ()
@@ -104,19 +109,21 @@ pci_ids_line_iter_has_more ()
 }
 
 
-/** Find the names for a PCI device.
+/** 
+ *  ids_find_pci:
+ *  @vendor_id:           PCI vendor id or 0 if unknown
+ *  @product_id:          PCI product id or 0 if unknown
+ *  @subsys_vendor_id:    PCI subsystem vendor id or 0 if unknown
+ *  @subsys_product_id:   PCI subsystem product id or 0 if unknown
+ *  @vendor_name:         Set to pointer of result or NULL
+ *  @product_name:        Set to pointer of result or NULL
+ *  @subsys_vendor_name:  Set to pointer of result or NULL
+ *  @subsys_product_name: Set to pointer of result or NULL
+ *
+ *  Find the names for a PCI device.
  *
  *  The pointers returned are only valid until the next invocation of this
  *  function.
- *
- *  @param  vendor_id           PCI vendor id or 0 if unknown
- *  @param  product_id          PCI product id or 0 if unknown
- *  @param  subsys_vendor_id    PCI subsystem vendor id or 0 if unknown
- *  @param  subsys_product_id   PCI subsystem product id or 0 if unknown
- *  @param  vendor_name         Set to pointer of result or NULL
- *  @param  product_name        Set to pointer of result or NULL
- *  @param  subsys_vendor_name  Set to pointer of result or NULL
- *  @param  subsys_product_name Set to pointer of result or NULL
  */
 void
 ids_find_pci (int vendor_id, int product_id,
@@ -265,12 +272,14 @@ ids_find_pci (int vendor_id, int product_id,
 }
 
 
-/** Load the PCI database used for mapping vendor, product, subsys_vendor
- *  and subsys_product numbers into names.
+/**  
+ *  pci_ids_load:
+ *  @path:               Path of the pci.ids file, e.g. /usr/share/hwdata/pci.ids
+ *  
+ *  Returns:             #TRUE if the file was succesfully loaded
  *
- *  @param  path                Path of the pci.ids file, e.g. 
- *                              /usr/share/hwdata/pci.ids
- *  @return                     #TRUE if the file was succesfully loaded
+ *  Load the PCI database used for mapping vendor, product, subsys_vendor
+ *  and subsys_product numbers into names.
  */
 static dbus_bool_t
 pci_ids_load (const char *path)
@@ -338,12 +347,14 @@ usb_ids_line_iter_init ()
 /** Maximum length of lines in usb.ids */
 #define USB_IDS_MAX_LINE_LEN 512
 
-/** Get the next line from usb.ids
+/** 
+ *  usb_ids_line_iter_get_line:
+ *  @line_len:            Pointer to where number of bytes in line will
+ *                        be stored
+ *  Returns:              Pointer to the line; only valid until the
+ *                        next invocation of this function
  *
- *  @param  line_len            Pointer to where number of bytes in line will
- *                              be stored
- *  @return                     Pointer to the line; only valid until the
- *                              next invocation of this function
+ *  Get the next line from usb.ids 
  */
 static char *
 usb_ids_line_iter_get_line (unsigned int *line_len)
@@ -367,9 +378,12 @@ usb_ids_line_iter_get_line (unsigned int *line_len)
 	return line;
 }
 
-/** See if there are more lines to process in usb.ids
+/**  
+ *  usb_ids_line_iter_has_more:
+ *  
+ *  Returns:              #TRUE iff there are more lines to process
  *
- *  @return                     #TRUE iff there are more lines to process
+ *  See if there are more lines to process in usb.ids
  */
 static dbus_bool_t
 usb_ids_line_iter_has_more ()
@@ -377,15 +391,17 @@ usb_ids_line_iter_has_more ()
 	return usb_ids_iter_pos < usb_ids_len;
 }
 
-/** Find the names for a USB device.
+/** 
+ *  ids_find_usb:
+ *  @vendor_id:          USB vendor id or 0 if unknown
+ *  @product_id:         USB product id or 0 if unknown
+ *  @vendor_name:        Set to pointer of result or NULL
+ *  @product_name:       Set to pointer of result or NULL
+ *
+ *  Find the names for a USB device.
  *
  *  The pointers returned are only valid until the next invocation of this
  *  function.
- *
- *  @param  vendor_id           USB vendor id or 0 if unknown
- *  @param  product_id          USB product id or 0 if unknown
- *  @param  vendor_name         Set to pointer of result or NULL
- *  @param  product_name        Set to pointer of result or NULL
  */
 void
 ids_find_usb (int vendor_id, int product_id,
@@ -478,12 +494,13 @@ ids_find_usb (int vendor_id, int product_id,
 	}
 }
 
-/** Load the USB database used for mapping vendor, product, subsys_vendor
- *  and subsys_product numbers into names.
+/**  
+ *  usb_ids_load:
+ *  @path:               Path of the usb.ids file, e.g. /usr/share/hwdata/usb.ids
+ *  Returns:             #TRUE if the file was succesfully loaded
  *
- *  @param  path                Path of the usb.ids file, e.g. 
- *                              /usr/share/hwdata/usb.ids
- *  @return                     #TRUE if the file was succesfully loaded
+ *  Load the USB database used for mapping vendor, product, subsys_vendor
+ *  and subsys_product numbers into names.
  */
 static dbus_bool_t
 usb_ids_load (const char *path)
@@ -978,6 +995,7 @@ ids_find_pnp (const char *pnp_id, char **pnp_description)
 
 /*==========================================================================*/
 
+void
 ids_init (void)
 {
 	pci_ids_init ();

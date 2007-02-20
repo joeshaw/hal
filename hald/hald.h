@@ -32,12 +32,6 @@
 
 #include "device_store.h"
 
-/**
- *  @addtogroup HalDaemon
- *
- *  @{
- */
-
 HalDeviceStore *hald_get_gdl (void);
 HalDeviceStore *hald_get_tdl (void);
 
@@ -57,9 +51,5 @@ extern dbus_bool_t hald_is_shutting_down;
  * Use hald/valgrind-hald.sh for this
  */
 /*#define HALD_MEMLEAK_DBG 10*/
-
-/**
- *  @}
- */
 
 #endif				/* HALD_H */

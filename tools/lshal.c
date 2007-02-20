@@ -44,17 +44,7 @@
 #define __FUNCTION__ __func__
 #endif
 
-/**
- * @defgroup HalLsHal  List HAL devices
- * @ingroup HalMisc
- *
- * @brief A commandline tool, lshal, for displaying and, optionally,
- *        monitor the devices managed by the HAL daemon. Uses libhal.
- *
- * @{
- */
-
-/** Macro for terminating the program on an unrecoverable error */
+/* Macro for terminating the program on an unrecoverable error */
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
 
 #define UDI_BASE "/org/freedesktop/Hal/devices/"
@@ -70,9 +60,13 @@ struct Device {
 	char *parent;
 };
 
-/** Generate a short name for a device
+/** 
+ *  short_name:
+ *  @udi:               Universal Device Id
+ * 
+ *  Returns:		short name of a device
  *
- *  @param  udi                 Universal Device Id
+ *  Generate a short name for a device 
  */
 static const char *
 short_name (const char *udi)
@@ -80,11 +74,12 @@ short_name (const char *udi)
 	return &udi[sizeof(UDI_BASE) - 1];
 }
 
-/** Print all properties of a device
+/** 
+ *  print_props:
+ *  @udi:                Universal Device Id
  *
- *  @param  udi                 Universal Device Id
+ *  Print all properties of a device 
  */
-
 static void
 print_props (const char *udi)
 {
@@ -170,11 +165,12 @@ print_props (const char *udi)
 	libhal_free_property_set (props);
 }
 
-/** Dumps information about a single device
+/** 
+ *  dump_device:
+ *  @udi:                 Universal Device Id
  *
- *  @param  udi                 Universal Device Id
+ *  Dumps information about a single device 
  */
-
 static void
 dump_device (const char *udi)
 {
@@ -197,14 +193,15 @@ dump_device (const char *udi)
 		printf ("%s\n", short_name (udi));
 }
 
-/** Dump all children of device
+/** 
+ *  dump_children:
+ *  @udi:                 Universal Device Id of parent
+ *  @num_devices:         Total number of devices in device list
+ *  @devices:             List of devices
+ *  @depth:               Current recursion depth
  *
- *  @param  udi                 Universal Device Id of parent
- *  @param  num_devices         Total number of devices in device list
- *  @param  devices             List of devices
- *  @param  depth               Current recursion depth
+ *  Dump all children of device 
  */
-
 static void
 dump_children (char *udi, int num_devices, struct Device *devices, int depth)
 {
@@ -242,8 +239,10 @@ dump_children (char *udi, int num_devices, struct Device *devices, int depth)
 	}
 }
 
-/** Dump all devices to stdout
- *
+/** 
+ *  dump_devices:
+ *  
+ *  Dump all devices to stdout
  */
 static void
 dump_devices (void)
@@ -307,10 +306,13 @@ dump_devices (void)
 	}
 }
 
-/** Invoked when a device is added to the Global Device List. Simply prints
- *  a message on stdout.
+/** 
+ *  device_added:
+ *  @ctx:		The HAL Context
+ *  @udi:                Universal Device Id
  *
- *  @param  udi                 Universal Device Id
+ *  Invoked when a device is added to the Global Device List. Simply prints
+ *  a message on stdout. 
  */
 static void
 device_added (LibHalContext *ctx,
@@ -326,10 +328,13 @@ device_added (LibHalContext *ctx,
 		printf ("%s added\n", short_name (udi));
 }
 
-/** Invoked when a device is removed from the Global Device List. Simply
- *  prints a message on stdout.
+/** 
+ *  device_removed:
+ *  @ctx:		The HAL Context
+ *  @udi:               Universal Device Id
  *
- *  @param  udi                 Universal Device Id
+ *  Invoked when a device is removed from the Global Device List. Simply
+ *  prints a message on stdout. 
  */
 static void
 device_removed (LibHalContext *ctx,
@@ -344,11 +349,14 @@ device_removed (LibHalContext *ctx,
 		printf ("%s removed\n", short_name (udi));
 }
 
-/** Invoked when device in the Global Device List acquires a new capability.
- *  Prints the name of the capability to stdout.
+/** 
+ *  device_new_capability:
+ *  @ctx:		The HAL Context
+ *  @udi:               Universal Device Id
+ *  @capability:        Name of capability
  *
- *  @param  udi                 Universal Device Id
- *  @param  capability          Name of capability
+ *  Invoked when device in the Global Device List acquires a new capability.
+ *  Prints the name of the capability to stdout. 
  */
 static void
 device_new_capability (LibHalContext *ctx,
@@ -366,11 +374,14 @@ device_new_capability (LibHalContext *ctx,
 			capability);
 }
 
-/** Invoked when device in the Global Device List loses a capability.
- *  Prints the name of the capability to stdout.
- *
- *  @param  udi                 Universal Device Id
- *  @param  capability          Name of capability
+/** 
+ *  device_lost_capability:
+ *  @ctx:		The HAL Context
+ *  @udi:               Universal Device Id
+ *  @capability:        Name of capability
+ * 
+ *  Invoked when device in the Global Device List loses a capability.
+ *  Prints the name of the capability to stdout. 
  */
 static void
 device_lost_capability (LibHalContext *ctx,
@@ -388,10 +399,12 @@ device_lost_capability (LibHalContext *ctx,
 			capability);
 }
 
-/** Acquires and prints the value of of a property to stdout.
+/** 
+ *  print_property:
+ *  @udi:                 Universal Device Id
+ *  @key:                 Key of property
  *
- *  @param  udi                 Universal Device Id
- *  @param  key                 Key of property
+ *  Acquires and prints the value of of a property to stdout. 
  */
 static void
 print_property (const char *udi, const char *key)
@@ -465,11 +478,16 @@ print_property (const char *udi, const char *key)
 		dbus_error_free (&error);
 }
 
-/** Invoked when a property of a device in the Global Device List is
- *  changed, and we have we have subscribed to changes for that device.
- *
- *  @param  udi                 Univerisal Device Id
- *  @param  key                 Key of property
+/** 
+ *  property_modified:
+ *  @ctx:		The HAL Context
+ *  @udi:               Univerisal Device Id
+ *  @key:               Key of property
+ *  @is_removed:        if the property was removed
+ *  @is_added:          if the property was added
+ * 
+ *  Invoked when a property of a device in the Global Device List is
+ *  changed, and we have we have subscribed to changes for that device. 
  */
 static void
 property_modified (LibHalContext *ctx,
@@ -506,12 +524,15 @@ property_modified (LibHalContext *ctx,
 }
 
 
-/** Invoked when a property of a device in the Global Device List is
- *  changed, and we have we have subscribed to changes for that device.
+/** 
+ *  device_condition:
+ *  @ctx:                 The HAL Context
+ *  @udi:                 Univerisal Device Id
+ *  @condition_name:      Name of condition
+ *  @message:             D-BUS message with parameters
  *
- *  @param  udi                 Univerisal Device Id
- *  @param  condition_name      Name of condition
- *  @param  message             D-BUS message with parameters
+ *  Invoked when a property of a device in the Global Device List is
+ *  changed, and we have we have subscribed to changes for that device. 
  */
 static void
 device_condition (LibHalContext *ctx,
@@ -534,10 +555,12 @@ device_condition (LibHalContext *ctx,
 }
 
 
-/** Print out program usage.
+/** 
+ *  usage:
+ *  @argc:                Number of arguments given to program
+ *  @argv:                Arguments given to program
  *
- *  @param  argc                Number of arguments given to program
- *  @param  argv                Arguments given to program
+ *  Print out program usage. 
  */
 static void
 usage (int argc, char *argv[])
@@ -564,11 +587,14 @@ usage (int argc, char *argv[])
 		 "\n");
 }
 
-/** Entry point
+/** 
+ *  main:
+ *  @argc:                Number of arguments given to program
+ *  @argv:                Arguments given to program
  *
- *  @param  argc                Number of arguments given to program
- *  @param  argv                Arguments given to program
- *  @return                     Return code
+ *  Returns:              Return code
+ *
+ *  Main entry point 
  */
 int
 main (int argc, char *argv[])
@@ -731,6 +757,3 @@ main (int argc, char *argv[])
 	return 0;
 }
 
-/**
- * @}
- */

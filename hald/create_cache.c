@@ -68,8 +68,8 @@ _alphasort(const struct dirent **a, const struct dirent **b)
 }
 
 
-static enum
-rule_type get_rule_type (const char *str)
+static rule_type 
+get_rule_type (const char *str)
 {
 	if (strcmp (str, "match") == 0)
 		return RULE_MATCH;
@@ -88,8 +88,8 @@ rule_type get_rule_type (const char *str)
 	return RULE_UNKNOWN;
 }
 
-static enum
-match_type get_match_type(const char *str)
+static match_type 
+get_match_type(const char *str)
 {
 	if (strcmp (str, "string") == 0)
 		return MATCH_STRING;
@@ -132,8 +132,8 @@ match_type get_match_type(const char *str)
 	return MATCH_UNKNOWN;
 }
 
-static enum
-merge_type get_merge_type (const char *str)
+static merge_type 
+get_merge_type (const char *str)
 {
 	if (strcmp (str, "string") == 0)
 		return MERGE_STRING;
@@ -385,7 +385,7 @@ cdata (void *data, const char *s, int len){
 static void
 end (void *data, const char *el){
 	struct fdi_context *fdi_ctx = data;
-	enum rule_type rtype = get_rule_type(el);
+	rule_type rtype = get_rule_type(el);
 
 	if (rtype == RULE_UNKNOWN) return;
 	if (rtype == RULE_MATCH){
@@ -571,7 +571,10 @@ di_rules_init (void)
 	HAL_INFO (("Loading rules done (occupying %d bytes)", header.all_rules_size));
 }
 
-/** Print out program usage.
+/**
+ * usage: 
+ * 
+ * Print out program usage.
  *
  */
 static void

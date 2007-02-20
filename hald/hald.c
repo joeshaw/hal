@@ -66,12 +66,6 @@ static void delete_pid(void)
 	unlink(HALD_PID_FILE);
 }
 
-/**
- * @defgroup HalDaemon HAL daemon
- * @brief The HAL daemon manages persistent device objects available through
- *        a D-BUS network API
- */
-
 static HalDeviceStore *global_device_list = NULL;
 
 static HalDeviceStore *temporary_device_list = NULL;
@@ -198,15 +192,10 @@ hald_get_tdl (void)
 	return temporary_device_list;
 }
 
-/**
- * @defgroup MainDaemon Basic functions
- * @ingroup HalDaemon
- * @brief Basic functions in the HAL daemon
- * @{
- */
-
-/** Print out program usage.
+/** 
+ * usage: 
  *
+ * Print out program usage.
  */
 static void
 usage ()
@@ -361,11 +350,13 @@ out:
 
 /*--------------------------------------------------------------------------------------------------*/
 
-/** Entry point for HAL daemon
+/**  
+ *  main:
+ *  @argc:               Number of arguments
+ *  @argv:               Array of arguments
+ *  Returns:             Exit code
  *
- *  @param  argc                Number of arguments
- *  @param  argv                Array of arguments
- *  @return                     Exit code
+ *  Entry point for HAL daemon
  */
 int
 main (int argc, char *argv[])
@@ -713,5 +704,3 @@ osspec_probe_done (void)
 #endif
 }
 
-
-/** @} */

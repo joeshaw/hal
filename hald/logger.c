@@ -39,14 +39,6 @@
 
 #include "logger.h"
 
-/**
- * @defgroup HalDaemonLogging Logging system
- * @ingroup HalDaemon
- * @brief Logging system for the HAL daemon
- * @{
- */
-
-
 static int priority;
 static const char *file;
 static int line;
@@ -57,7 +49,10 @@ static int is_enabled = 1;
 static int syslog_enabled = 0;
 
 
-/** Disable all logging
+/** 
+ * logger_disable:
+ * 
+ * Disable all logging
  *
  */
 void 
@@ -66,7 +61,10 @@ logger_disable (void)
 	is_enabled = 0;
 }
 
-/** Enable all logging
+/** 
+ * logger_enable:
+ *
+ *  Enable all logging
  *
  */
 void 
@@ -75,7 +73,10 @@ logger_enable (void)
 	is_enabled = 1;
 }
 
-/** enable usage of syslog for logging  
+/** 
+ * logger_enable_syslog:
+ *
+ * enable usage of syslog for logging  
  *
  */
 void 
@@ -84,7 +85,10 @@ logger_enable_syslog (void)
 	syslog_enabled = 1;
 }
 
-/** disable usage of syslog for logging  
+/** 
+ * logger_disable_syslog:
+ *
+ * disable usage of syslog for logging  
  *
  */
 void 
@@ -93,7 +97,10 @@ logger_disable_syslog (void)
 	syslog_enabled = 0;
 }
 
-/** allow setup logger from a addon/prober via the env 
+/** 
+ * setup_logger
+ * 
+ * allow setup logger from a addon/prober via the env 
  *
  */
 void
@@ -112,12 +119,14 @@ setup_logger (void)
                 syslog_enabled = 0;
 }
 
-/** Setup logging entry
+/**  
+ *  logger_setup:
+ *  @priority:           Logging priority, one of HAL_LOGPRI_*
+ *  @file:               Name of file where the log entry originated
+ *  @line:               Line number of file
+ *  @function:           Name of function
  *
- *  @param  priority            Logging priority, one of HAL_LOGPRI_*
- *  @param  file                Name of file where the log entry originated
- *  @param  line                Line number of file
- *  @param  function            Name of function
+ *  Setup logging entry
  */
 void
 logger_setup (int _priority, const char *_file, int _line, const char *_function)
@@ -128,10 +137,12 @@ logger_setup (int _priority, const char *_file, int _line, const char *_function
 	function = _function;
 }
 
-/** Emit logging entry
+/** 
+ *  logger_emit:
+ *  @format:             Message format string, printf style
+ *  @...:                Parameters for message, printf style
  *
- *  @param  format              Message format string, printf style
- *  @param  ...                 Parameters for message, printf style
+ *  Emit logging entry 
  */
 void
 logger_emit (const char *format, ...)
@@ -206,8 +217,14 @@ logger_emit (const char *format, ...)
 	va_end (args);
 }
 
+/**
+ * logger_forward_debug:
+ *  @format:             Message format string, printf style
+ *  @...:                Parameters for message, printf style
+ *
+ * Forward debug messages as e.g. from udev/libvolume_id.
+ */
 void
-/* logger_forward_debug (const char *format, va_list args) */
 logger_forward_debug (const char *format, ...)
 {
 	va_list args;
@@ -238,5 +255,3 @@ logger_forward_debug (const char *format, ...)
 
         va_end (args);
 }
-
-/** @} */

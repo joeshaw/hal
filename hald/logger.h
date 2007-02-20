@@ -33,15 +33,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
-/**
- * @addtogroup HalDaemonLogging
- *
- * @{
- */
-
-
-/** Logging levels for HAL daemon
- */
+/* Logging levels for HAL daemon */
 enum {
 	HAL_LOGPRI_TRACE = (1 << 0),   /**< function call sequences */
 	HAL_LOGPRI_DEBUG = (1 << 1),   /**< debug statements in code */
@@ -85,8 +77,6 @@ void setup_logger (void);
 
 /** Macro for terminating the program on an unrecoverable error */
 #define DIE(expr) do {printf("*** [DIE] %s:%s():%d : ", __FILE__, __FUNCTION__, __LINE__); printf expr; printf("\n"); exit(1); } while(0)
-
-/** @} */
 
 #endif				/* LOGGER_H */
 

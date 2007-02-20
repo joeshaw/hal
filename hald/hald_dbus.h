@@ -30,46 +30,53 @@
 
 #include "device.h"
 
-DBusHandlerResult manager_get_all_devices           (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult manager_find_device_string_match  (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult manager_find_device_by_capability (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult manager_device_exists             (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_get_all_properties         (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_get_property               (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_get_property_type          (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_set_property               (DBusConnection *conn,
-						     DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult device_add_capability             (DBusConnection *conn,
-						     DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult device_remove_capability          (DBusConnection *conn,
-						     DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult device_remove_property            (DBusConnection *conn,
-						     DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult device_property_exists            (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_query_capability           (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_lock                       (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult device_unlock                     (DBusConnection *conn,
-						     DBusMessage    *msg);
-DBusHandlerResult manager_new_device          (DBusConnection *conn,
-					       DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult manager_commit_to_gdl       (DBusConnection *conn,
-					       DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult manager_remove              (DBusConnection *conn,
-					       DBusMessage    *msg, dbus_bool_t local_interface);
-DBusHandlerResult merge_properties            (DBusConnection *conn,
-					       DBusMessage    *msg);
-DBusHandlerResult device_matches              (DBusConnection *conn,
-					       DBusMessage    *msg);
+DBusHandlerResult manager_get_all_devices           (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult manager_find_device_string_match  (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult manager_find_device_by_capability (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult manager_device_exists             (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_get_all_properties         (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_get_property               (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_get_property_type          (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_set_property               (DBusConnection *connection,
+						     DBusMessage    *message, 
+						     dbus_bool_t    local_interface);
+DBusHandlerResult device_add_capability             (DBusConnection *connection,
+						     DBusMessage    *message, 
+						     dbus_bool_t    local_interface);
+DBusHandlerResult device_remove_capability          (DBusConnection *connection,
+						     DBusMessage    *message, 
+						     dbus_bool_t    local_interface);
+DBusHandlerResult device_remove_property            (DBusConnection *connection,
+						     DBusMessage    *message, 
+						     dbus_bool_t    local_interface);
+DBusHandlerResult device_property_exists            (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_query_capability           (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_lock                       (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult device_unlock                     (DBusConnection *connection,
+						     DBusMessage    *message);
+DBusHandlerResult manager_new_device          (DBusConnection *connection,
+					       DBusMessage    *message, 
+					       dbus_bool_t    local_interface);
+DBusHandlerResult manager_commit_to_gdl       (DBusConnection *connection,
+					       DBusMessage    *message, 
+					       dbus_bool_t    local_interface);
+DBusHandlerResult manager_remove              (DBusConnection *connection,
+					       DBusMessage    *message, 
+					       dbus_bool_t    local_interface);
+DBusHandlerResult merge_properties            (DBusConnection *connection,
+					       DBusMessage    *message);
+DBusHandlerResult device_matches              (DBusConnection *connection,
+					       DBusMessage    *message);
 
 void manager_send_signal_device_added   (HalDevice *device);
 void manager_send_signal_device_removed (HalDevice *device);

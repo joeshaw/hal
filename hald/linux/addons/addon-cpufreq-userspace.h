@@ -45,7 +45,7 @@ gboolean	userspace_init			(struct userspace_interface *iface,
 						 GSList *cpus);
 
 gboolean	userspace_set_performance	(void *data,
-						 int performance);
+						 int up_threshold);
 
 int		userspace_get_performance	(void);
 

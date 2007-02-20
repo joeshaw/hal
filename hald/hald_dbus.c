@@ -65,19 +65,14 @@ raise_error (DBusConnection *connection,
 	     const char *error_name,
 	     char *format, ...) __attribute__((format (printf, 4, 5)));
 
-/**
- * @defgroup DaemonErrors Error conditions
- * @ingroup HalDaemon
- * @brief Various error messages the HAL daemon can raise
- * @{
- */
-
-/** Raise HAL error
+/** 
+ *  raise_error:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @error_name:         D-Bus error name
+ *  @format:             printf-style format for error message
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  error_name          D-Bus error name
- *  @param  format              printf-style format for error message
+ *  Raise HAL error  
  */
 static void
 raise_error (DBusConnection *connection,
@@ -102,11 +97,13 @@ raise_error (DBusConnection *connection,
 	dbus_message_unref (reply);
 }
 
-/** Raise the org.freedesktop.Hal.NoSuchDevice error
+/** 
+ *  raise_no_such_device:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @udi:                Unique device id given
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  udi                 Unique device id given
+ *  Raise the org.freedesktop.Hal.NoSuchDevice error 
  */
 static void
 raise_no_such_device (DBusConnection *connection,
@@ -120,12 +117,14 @@ raise_no_such_device (DBusConnection *connection,
 	);
 }
 
-/** Raise the org.freedesktop.Hal.NoSuchProperty error
+/** 
+ *  raise_no_such_property:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @device_id:          Id of the device
+ *  @key:                Key of the property that didn't exist
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  device_id           Id of the device
- *  @param  key                 Key of the property that didn't exist
+ *  Raise the org.freedesktop.Hal.NoSuchProperty error 
  */
 static void
 raise_no_such_property (DBusConnection *connection,
@@ -140,12 +139,14 @@ raise_no_such_property (DBusConnection *connection,
 	);
 }
 
-/** Raise the org.freedesktop.Hal.TypeMismatch error
+/** 
+ *  raise_property_type_error:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @device_id:          Id of the device
+ *  @key:                Key of the property
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  device_id           Id of the device
- *  @param  key                 Key of the property
+ *  Raise the org.freedesktop.Hal.TypeMismatch error 
  */
 static void
 raise_property_type_error (DBusConnection *connection,
@@ -160,12 +161,14 @@ raise_property_type_error (DBusConnection *connection,
 	);
 }
 
-/** Raise the org.freedesktop.Hal.SyntaxError error
+/** 
+ *  raise_syntax:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @method_name:        Name of the method that was invoked with
+ *                       the wrong signature
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  method_name         Name of the method that was invoked with
- *                              the wrong signature
+ *  Raise the org.freedesktop.Hal.SyntaxError error 
  */
 static void
 raise_syntax (DBusConnection *connection,
@@ -179,11 +182,13 @@ raise_syntax (DBusConnection *connection,
 	);
 }
 
-/** Raise the org.freedesktop.Hal.DeviceNotLocked error
+/** 
+ *  raise_device_not_locked:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @device:             device which isn't locked
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  device              device which isn't locked
+ *  Raise the org.freedesktop.Hal.DeviceNotLocked error 
  */
 static void
 raise_device_not_locked (DBusConnection *connection,
@@ -198,11 +203,13 @@ raise_device_not_locked (DBusConnection *connection,
 	);
 }
 
-/** Raise the org.freedesktop.Hal.DeviceAlreadyLocked error
+/** 
+ *  raise_device_already_locked:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @device:             device which isn't locked
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  device              device which isn't locked
+ *  Raise the org.freedesktop.Hal.DeviceAlreadyLocked error 
  */
 static void
 raise_device_already_locked (DBusConnection *connection,
@@ -227,11 +234,13 @@ raise_device_already_locked (DBusConnection *connection,
 	dbus_message_unref (reply);
 }
 
-/** Raise the org.freedesktop.Hal.PermissionDenied error
+/** 
+ *  raise_permission_denied:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @message:            what you're not allowed to do
  *
- *  @param  connection          D-Bus connection
- *  @param  in_reply_to         message to report error on
- *  @param  message             what you're not allowed to do
+ *  Raise the org.freedesktop.Hal.PermissionDenied error 
  */
 static void
 raise_permission_denied (DBusConnection *connection,
@@ -246,15 +255,6 @@ raise_permission_denied (DBusConnection *connection,
 	);
 }
 
-/** @} */
-
-/**
- * @defgroup ManagerInterface D-BUS interface org.freedesktop.Hal.Manager
- * @ingroup HalDaemon
- * @brief D-BUS interface for querying device objects
- *
- * @{
- */
 
 static gboolean
 foreach_device_get_udi (HalDeviceStore *store, HalDevice *device,
@@ -269,15 +269,19 @@ foreach_device_get_udi (HalDeviceStore *store, HalDevice *device,
 	return TRUE;
 }
 
-/** Get all devices.
+/** 
+ *  manager_get_all_devices: 
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Get all devices.
  *
  *  <pre>
  *  array{object_reference} Manager.GetAllDevices()
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 manager_get_all_devices (DBusConnection * connection,
@@ -371,7 +375,14 @@ foreach_device_match_get_udi_tdl (HalDeviceStore *store, HalDevice *device,
 	return TRUE;
 }
 
-/** Find devices in the GDL where a single string property matches a given
+/**  
+ *  manager_find_device_string_match:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *  
+ *  Returns:             What to do with the message
+ *
+ *  Find devices in the GDL where a single string property matches a given
  *  value. Also returns devices in the TDL that has a non-tmp UDI.
  *
  *  <pre>
@@ -379,9 +390,6 @@ foreach_device_match_get_udi_tdl (HalDeviceStore *store, HalDevice *device,
  *                                                        string value)
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 manager_find_device_string_match (DBusConnection * connection,
@@ -461,15 +469,19 @@ foreach_device_by_capability (HalDeviceStore *store, HalDevice *device, gpointer
 	return TRUE;
 }
 
-/** Find devices in the GDL with a given capability.
+/**  
+ *  manager_find_device_by_capability:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Find devices in the GDL with a given capability.
  *
  *  <pre>
  *  array{object_reference} Manager.FindDeviceByCapability(string capability)
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 manager_find_device_by_capability (DBusConnection * connection,
@@ -521,15 +533,19 @@ manager_find_device_by_capability (DBusConnection * connection,
 }
 
 
-/** Determine if a device exists.
+/**  
+ *  manager_device_exists:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Determine if a device exists.
  *
  *  <pre>
  *  bool Manager.DeviceExists(string udi)
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 manager_device_exists (DBusConnection * connection, DBusMessage * message)
@@ -571,10 +587,13 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/** Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
+/** 
+ *  manager_send_signal_device_added:
+ *  @device:             The HalDevice added
+ *
+ *  Send signal DeviceAdded(string udi) on the org.freedesktop.Hal.Manager
  *  interface on the object /org/freedesktop/Hal/Manager.
  *
- *  @param  device              The HalDevice added
  */
 void
 manager_send_signal_device_added (HalDevice *device)
@@ -604,10 +623,13 @@ out:
 	;
 }
 
-/** Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
+/** 
+ *  manager_send_signal_device_removed:
+ *  @device:             The HalDevice removed
+ *
+ *  Send signal DeviceRemoved(string udi) on the org.freedesktop.Hal.Manager
  *  interface on the object /org/freedesktop/Hal/Manager.
  *
- *  @param  device              The HalDevice removed
  */
 void
 manager_send_signal_device_removed (HalDevice *device)
@@ -636,12 +658,15 @@ out:
 	;
 }
 
-/** Send signal NewCapability(string udi, string capability) on the 
+/**  
+ *  manager_send_signal_new_capability:
+ *  @device:             HAL device
+ *  @capability:         Capability
+ *
+ *  Send signal NewCapability(string udi, string capability) on the 
  *  org.freedesktop.Hal.Manager interface on the object 
  *  /org/freedesktop/Hal/Manager.
  *
- *  @param  udi                 Unique Device Id
- *  @param  capability          Capability
  */
 void
 manager_send_signal_new_capability (HalDevice *device,
@@ -671,15 +696,6 @@ manager_send_signal_new_capability (HalDevice *device,
 out:
 	;
 }
-
-/** @} */
-
-/**
- * @defgroup DeviceInterface D-BUS interface org.freedesktop.Hal.Device
- * @ingroup HalDaemon
- * @brief D-BUS interface for generic device operations
- * @{
- */
 
 static void
 foreach_property_append (HalDevice *device, 
@@ -847,7 +863,14 @@ foreach_property_append (HalDevice *device,
 		
 	
 	
-/** Get all properties on a device.
+/**  
+ *  device_get_all_properties:
+ *  @connection:         D-BUS connection
+ *  @message:            D-Bus Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Get all properties on a device.
  *
  *  <pre>
  *  map{string, any} Device.GetAllProperties()
@@ -855,9 +878,6 @@ foreach_property_append (HalDevice *device,
  *    raises org.freedesktop.Hal.NoSuchDevice
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_get_all_properties (DBusConnection * connection,
@@ -1171,7 +1191,14 @@ out:
 }
 
 
-/** Set multiple properties on a device in an atomic fashion.
+/** *
+ *  device_set_multiple_properties:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Set multiple properties on a device in an atomic fashion.
  *
  *  <pre>
  *  Device.GetAllProperties(map{string, any} properties)
@@ -1179,9 +1206,6 @@ out:
  *    raises org.freedesktop.Hal.NoSuchDevice
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 static DBusHandlerResult
 device_set_multiple_properties (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
@@ -1323,7 +1347,14 @@ device_set_multiple_properties (DBusConnection *connection, DBusMessage *message
 }
 
 
-/** Get a property on a device.
+/** 
+ *  device_get_property:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Get a property on a device.
  *
  *  <pre>
  *  any Device.GetProperty(string key)
@@ -1336,9 +1367,6 @@ device_set_multiple_properties (DBusConnection *connection, DBusMessage *message
  *           org.freedesktop.Hal.NoSuchProperty
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_get_property (DBusConnection * connection, DBusMessage * message)
@@ -1456,7 +1484,14 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 }
 
 
-/** Get the type of a property on a device.
+/** 
+ *  device_get_property_type: 
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Get the type of a property on a device.
  *
  *  <pre>
  *  int Device.GetPropertyType(string key)
@@ -1465,9 +1500,6 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
  *           org.freedesktop.Hal.NoSuchProperty
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_get_property_type (DBusConnection * connection,
@@ -1523,7 +1555,14 @@ device_get_property_type (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/** Set a property on a device.
+/**
+ *  device_set_property:  
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ * Set a property on a device.
  *
  *  <pre>
  *  void Device.SetProperty(string key, any value)
@@ -1536,10 +1575,6 @@ device_get_property_type (DBusConnection * connection,
  *           org.freedesktop.Hal.NoSuchProperty
  *           org.freedesktop.Hal.TypeMismatch
  *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_set_property (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
@@ -1643,7 +1678,14 @@ device_set_property (DBusConnection * connection, DBusMessage * message, dbus_bo
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/** This function is used to modify the Capabilities property. The reason
+/** 
+ *  device_add_capability: 
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  This function is used to modify the Capabilities property. The reason
  *  for having a dedicated function is that the HAL daemon will broadcast
  *  a signal on the Manager interface to tell applications that the device
  *  have got a new capability.
@@ -1665,10 +1707,6 @@ device_set_property (DBusConnection * connection, DBusMessage * message, dbus_bo
  *    raises org.freedesktop.Hal.NoSuchDevice, 
  *    raises org.freedesktop.Hal.PermissionDenied, 
  *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_add_capability (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
@@ -1827,7 +1865,14 @@ device_string_list_remove (DBusConnection * connection, DBusMessage * message)
 
 
 
-/** Remove a property on a device.
+/**  
+ *  device_remove_property:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Remove a property on a device.
  *
  *  <pre>
  *  void Device.RemoveProperty(string key)
@@ -1836,10 +1881,6 @@ device_string_list_remove (DBusConnection * connection, DBusMessage * message)
  *           org.freedesktop.Hal.NoSuchProperty
  *           org.freedesktop.Hal.PermissionDenied
  *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_remove_property (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
@@ -1894,17 +1935,20 @@ device_remove_property (DBusConnection * connection, DBusMessage * message, dbus
 }
 
 
-/** Determine if a property exists
+/** 
+ *  device_property_exists:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Determine if a property exists
  *
  *  <pre>
  *  bool Device.PropertyExists(string key)
  *
  *    raises org.freedesktop.Hal.NoSuchDevice, 
  *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_property_exists (DBusConnection * connection, DBusMessage * message)
@@ -1954,7 +1998,14 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 }
 
 
-/** Determine if a device has a capability
+/**  
+ *  device_query_capability:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Determine if a device has a capability
  *
  *  <pre>
  *  bool Device.QueryCapability(string capability_name)
@@ -1962,9 +2013,6 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
  *    raises org.freedesktop.Hal.NoSuchDevice, 
  *  </pre>
  *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_query_capability (DBusConnection * connection,
@@ -2026,7 +2074,14 @@ device_query_capability (DBusConnection * connection,
 
 static GHashTable *services_with_locks = NULL;
 
-/** Grab an advisory lock on a device.
+/**  
+ *  device_lock:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ * 
+ *  Returns:             What to do with the message
+ *
+ *  Grab an advisory lock on a device.
  *
  *  <pre>
  *  bool Device.Lock(string reason)
@@ -2034,10 +2089,6 @@ static GHashTable *services_with_locks = NULL;
  *    raises org.freedesktop.Hal.NoSuchDevice, 
  *           org.freedesktop.Hal.DeviceAlreadyLocked
  *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 device_lock (DBusConnection * connection,
@@ -2108,23 +2159,26 @@ device_lock (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/** Release an advisory lock on a device.
+/** 
+ *  device_unlock: 
+ *  @connection:         D-BUS connection
+ *  @message:            Message
  *
- *  <pre>
+ *  Returns:             What to do with the message
+ *
+ *  Release an advisory lock on a device.
+ *
+ *  </pre>
  *  bool Device.Unlock()
  *
  *    raises org.freedesktop.Hal.NoSuchDevice, 
  *           org.freedesktop.Hal.DeviceNotLocked,
  *           org.freedesktop.Hal.PermissionDenied
  *  </pre>
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @return                     What to do with the message
  */
 DBusHandlerResult
-device_unlock (DBusConnection * connection,
-	       DBusMessage * message)
+device_unlock (DBusConnection *connection, 
+ 	       DBusMessage *message)
 {
 	dbus_bool_t rc;
 	const char *udi;
@@ -2217,7 +2271,10 @@ typedef struct PendingUpdate_s {
 
 static PendingUpdate *pending_updates_head = NULL;
 
-/** Begin an atomic update - this is useful for updating several properties
+/** 
+ *  device_property_atomic_update_begin:
+ *
+ *  Begin an atomic update - this is useful for updating several properties
  *  in one go.
  *
  *  Note that an atomic update is recursive - use with caution!
@@ -2228,7 +2285,10 @@ device_property_atomic_update_begin (void)
 	atomic_count++;
 }
 
-/** End an atomic update.
+/** 
+ *  device_property_atomic_update_end:
+ *
+ *  End an atomic update.
  *
  *  Note that an atomic update is recursive - use with caution!
  */
@@ -2413,7 +2473,13 @@ out:
 	;
 }
 
-/** Emits a condition on a device; the device has to be in the GDL for
+/**  
+ * device_send_signal_condition:
+ * @device:                  The device
+ * @condition_name:          Name of condition
+ * @condition_details:       Details of the condition as e.g. the button name
+ *
+ *  Emits a condition on a device; the device has to be in the GDL for
  *  this function to have effect.
  *
  *  Is intended for non-continuous events on the device like
@@ -2424,13 +2490,6 @@ out:
  *  This function accepts a number of parameters that are passed along
  *  in the D-BUS message. The recipient is supposed to extract the parameters
  *  himself, by looking at the HAL specification.
- *
- * @param  udi                  The UDI for this device
- * @param  condition_name       Name of condition
- * @param  first_arg_type       Type of the first argument
- * @param  ...                  value of first argument, list of additional
- *                              type-value pairs. Must be terminated with
- *                              DBUS_TYPE_INVALID
  */
 void
 device_send_signal_condition (HalDevice *device, const char *condition_name, const char *condition_details)
@@ -4166,14 +4225,17 @@ no_caller:
 	return osspec_filter_function (connection, message, user_data);
 }
 
-/** Message handler for method invocations. All invocations on any object
+/**  
+ *  hald_dbus_filter_function:
+ *  @connection:          D-BUS connection
+ *  @message:             Message
+ *  @user_data:           User data
+ *
+ *  Returns:              What to do with the message
+ *
+ *  Message handler for method invocations. All invocations on any object
  *  or interface is routed through this function. *ONLY* messages from the
  *  system bus goes through this method.
- *
- *  @param  connection          D-BUS connection
- *  @param  message             Message
- *  @param  user_data           User data
- *  @return                     What to do with the message
  */
 DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
@@ -4683,4 +4745,3 @@ hald_dbus_init (void)
 	return TRUE;
 }
 
-/** @} */

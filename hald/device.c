@@ -568,14 +568,16 @@ out:
 	;
 }
 
-/** Merge all properties from source where the key starts with 
+/**  
+ *  hal_device_merge_with_rewrite:
+ *  @target:             Device to put properties onto
+ *  @source:             Device to retrieve properties from
+ *  @target_namespace:   Replace source namespace with this namespace
+ *  @source_namespace:   Source namespace that property keys must match
+ *
+ *  Merge all properties from source where the key starts with 
  *  source_namespace and put them onto target replacing source_namespace
  *  with target_namespace
- *
- *  @param  target              Device to put properties onto
- *  @param  source              Device to retrieve properties from
- *  @param  target_namespace    Replace source namespace with this namespace
- *  @param  source_namespace    Source namespace that property keys must match
  */
 void
 hal_device_merge_with_rewrite  (HalDevice    *target,

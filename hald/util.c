@@ -459,22 +459,21 @@ hal_util_grep_discard_existing_data (void)
 	_grep_can_reuse = FALSE;
 }
 
-/** Given a directory and filename, open the file and search for the
+/**  
+ *  hal_util_grep_file:
+ *  @directory:          Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @file:               File, e.g. "info"
+ *  @linestart:          Start of line, e.g. "serial number"
+ *  @reuse:              Whether we should reuse the file contents if the file is the same; can be 
+ *                       cleared with hal_util_grep_discard_existing_data()
+ *  Returns:             NULL if not found, otherwise the remainder of the line, e.g. 
+ *                       ":           21805" if the file /proc/acpi/battery/BAT0 contains
+ *                       this line "serial number:           21805". The string is only valid 
+ *                       until the next invocation of this function.
+ *
+ *  Given a directory and filename, open the file and search for the
  *  first line that starts with the given linestart string. Returns
  *  the rest of the line as a string if found.
- *
- *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
- *  @param  file                File, e.g. "info"
- *  @param  linestart           Start of line, e.g. "serial number"
- *  @param  reuse               Whether we should reuse the file contents
- *                              if the file is the same; can be cleared
- *                              with hal_util_grep_discard_existing_data()
- *  @return                     NULL if not found, otherwise the remainder
- *                              of the line, e.g. ":           21805" if
- *                              the file /proc/acpi/battery/BAT0 contains
- *                              this line "serial number:           21805"
- *                              The string is only valid until the next
- *                              invocation of this function.
  */
 gchar *
 hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse)
@@ -548,20 +547,19 @@ out:
 	return result;
 }
 
-/** Given a directory and filename, open the file and search for the
+/**  
+ *  hal_util_grep_file_next_line:
+ *  @directory:          Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @file:               File, e.g. "info"
+ *  @linestart:          Start of line, e.g. "serial number"
+ *  @reuse:              Whether we should reuse the file contents if the file is the same; can be 
+ *                       cleared with hal_util_grep_discard_existing_data()
+ *  Returns:             NULL if not found, otherwise the next line. The string is only valid 
+ *                       until the next invocation of this function.
+ *
+ *  Given a directory and filename, open the file and search for the
  *  first line that starts with the given linestart string. Returns
  *  the next line as a string if found.
- *
- *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
- *  @param  file                File, e.g. "info"
- *  @param  linestart           Start of line, e.g. "serial number"
- *  @param  reuse               Whether we should reuse the file contents
- *                              if the file is the same; can be cleared
- *                              with hal_util_grep_discard_existing_data()
- *  @return                     NULL if not found, otherwise the next
- *                              line.
- *                              The string is only valid until the next
- *                              invocation of this function.
  */
 gchar *
 hal_util_grep_file_next_line (const gchar *directory, const gchar *file, const gchar *linestart, gboolean reuse)
@@ -716,7 +714,21 @@ out:
 	return value;
 }
 
-/** Get a string value from a formatted text file and assign it to
+/** 
+ *  hal_util_set_string_elem_from_file:  
+ *  @d:                  Device object
+ *  @key:                Property name
+ *  @directory:          Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @file:               File, e.g. "info"
+ *  @linestart:          Start of line, e.g. "design voltage"
+ *  @elem:               Element number after linestart to extract
+ *                       excluding whitespace and ':' characters.
+ *			 If set to G_MAXUINT then all elements are set
+ *
+ *  Returns:             TRUE, if, and only if, the value could be
+ *                       extracted and the property was set
+ *
+ *  Get a string value from a formatted text file and assign it to
  *  a property on a device object.
  *
  *  Example: Given that the file /proc/acpi/battery/BAT0/info contains
@@ -727,17 +739,6 @@ out:
  *  then hal_util_set_string_elem_from_file (d, "battery.foo",
  *  "/proc/acpi/battery/BAT0", "info", "design voltage", 1) will assign
  *  the string "mV" to the property "battery.foo" on d.
- *
- *  @param  d                   Device object
- *  @param  key                 Property name
- *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
- *  @param  file                File, e.g. "info"
- *  @param  linestart           Start of line, e.g. "design voltage"
- *  @param  elem                Element number after linestart to extract
- *                              excluding whitespace and ':' characters.
- *				If set to G_MAXUINT then all elements are set
- *  @return                     TRUE, if, and only if, the value could be
- *                              extracted and the property was set
  */
 gboolean
 hal_util_set_string_elem_from_file (HalDevice *d, const gchar *key, 
@@ -757,7 +758,20 @@ out:
 	return res;
 }
 
-/** Get an integer value from a formatted text file and assign it to
+/** 
+ *  hal_util_set_int_elem_from_file: 
+ *  @d:                  Device object
+ *  @key:                Property name
+ *  @directory:          Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @file:               File, e.g. "info"
+ *  @linestart:          Start of line, e.g. "design voltage"
+ *  @elem :              Element number after linestart to extract
+ *                       excluding whitespace and ':' characters.
+ *
+ *  Returns:             TRUE, if, and only if, the value could be
+ *                       extracted and the property was set
+ *
+ *  Get an integer value from a formatted text file and assign it to
  *  a property on a device object.
  *
  *  Example: Given that the file /proc/acpi/battery/BAT0/info contains
@@ -768,16 +782,6 @@ out:
  *  then hal_util_set_int_elem_from_file (d, "battery.foo",
  *  "/proc/acpi/battery/BAT0", "info", "design voltage", 0) will assign
  *  the integer 10800 to the property "battery.foo" on d.
- *
- *  @param  d                   Device object
- *  @param  key                 Property name
- *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
- *  @param  file                File, e.g. "info"
- *  @param  linestart           Start of line, e.g. "design voltage"
- *  @param  elem                Element number after linestart to extract
- *                              excluding whitespace and ':' characters.
- *  @return                     TRUE, if, and only if, the value could be
- *                              extracted and the property was set
  */
 gboolean
 hal_util_set_int_elem_from_file (HalDevice *d, const gchar *key, 
@@ -806,7 +810,21 @@ out:
 
 }
 
-/** Get a value from a formatted text file, test it against a given
+/**  
+ *  hal_util_set_bool_elem_from_file:
+ *  @d:                  Device object
+ *  @key:                Property name
+ *  @directory:          Directory, e.g. "/proc/acpi/battery/BAT0"
+ *  @file:               File, e.g. "info"
+ *  @linestart:          Start of line, e.g. "design voltage"
+ *  @elem:               Element number after linestart to extract
+ *                       excluding whitespace and ':' characters.
+ *  @expected:           Value to test against
+ *
+ *  Returns:             TRUE, if, and only if, the value could be
+ *                       extracted and the property was set
+ *
+ *  Get a value from a formatted text file, test it against a given
  *  value, and set a boolean property on a device object with the
  *  test result.
  *
@@ -824,17 +842,6 @@ out:
  *    "present:                 no"
  *
  *  the value assigned will be FALSE.
- *
- *  @param  d                   Device object
- *  @param  key                 Property name
- *  @param  directory           Directory, e.g. "/proc/acpi/battery/BAT0"
- *  @param  file                File, e.g. "info"
- *  @param  linestart           Start of line, e.g. "design voltage"
- *  @param  elem                Element number after linestart to extract
- *                              excluding whitespace and ':' characters.
- *  @param  expected            Value to test against
- *  @return                     TRUE, if, and only if, the value could be
- *                              extracted and the property was set
  */
 gboolean
 hal_util_set_bool_elem_from_file (HalDevice *d, const gchar *key, 
