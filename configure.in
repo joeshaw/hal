@@ -196,6 +196,12 @@ AC_SUBST(USE_PARTED)
 AM_CONDITIONAL(USE_PARTED, test x$use_parted == xyes)
 
 
+#### gcc linker flags
+
+if test "x$GCC" = "xyes"; then
+  LDFLAGS="-Wl,--as-needed $LDFLAGS"
+fi
+
 #### gcc warning flags
 
 if test "x$GCC" = "xyes"; then
@@ -805,6 +811,7 @@ echo "
 
         compiler:                   ${CC}
         cflags:                     ${CFLAGS}
+        ldflags:                    ${LDFLAGS}
         cppflags:                   ${CPPFLAGS}
 	docbook2html:               ${DOCBOOK}
 	xmllint:                    ${XMLLINT}
