@@ -83,15 +83,6 @@ elif [ -f "/etc/redhat-release" ] || [ -f "/etc/fedora-release" ] \
 		unsupported
 	fi
 
-#FreeBSD uses zzz to suspend for both ACPI and APM
-elif [ "x`uname -s`" = "xFreeBSD" ] ; then
-	if [ -x /usr/sbin/zzz ] ; then
-		/usr/sbin/zzz
-		RET=$?
-	else
-		unsupported
-	fi
-
 #Other distros just need to have *any* tools installed
 else
 	if [ -x "/usr/bin/powersave" ] ; then
