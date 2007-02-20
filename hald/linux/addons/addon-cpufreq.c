@@ -186,6 +186,9 @@ gboolean read_line_int_split(char *filename, gchar *delim, GSList **list)
 
 	l = read_line_str_split(filename, delim);
 
+        if (l == NULL)
+                return FALSE;
+	
 	for (i = 0; l[i] != NULL; i++) {
 		int value = atoi(l[i]);
 		*list = g_slist_append(*list, GINT_TO_POINTER(value));
