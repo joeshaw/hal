@@ -5,7 +5,7 @@ HAL 0.5.9 ""
 Requirements for HAL 0.5.9 ""
 
  - Linux kernel     >= 2.6.17
- - util-linux       >= 2.12r1
+ - util-linux       >= 2.12r1    (--enable-umount-helper requires patch from RH #188193)
  - bash             >= 2.0
  - udev             >= 089
  - dbus             >= 0.60      (with glib bindings)
@@ -17,6 +17,7 @@ Requirements for HAL 0.5.9 ""
  - dmidecode        >= 2.7       (optional)
  - parted           == 1.7.1     (optional)
  - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
+ - ConsoleKit       >= git version as of 20070220 (optional)
 
 ==========
 HAL 0.5.8 "The Skynet Funding Bill is passed."
