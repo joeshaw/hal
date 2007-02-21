@@ -444,11 +444,11 @@ if test "x$enable_pmu" != "xno"; then
 fi
 AM_CONDITIONAL(HAVE_PMU, test x$msg_pmu = xyes, [Compiling PMU])
 
-AC_ARG_ENABLE(have_pci, [  --disable-pci          Build without PCI support])
+AC_ARG_ENABLE(have_pci, [  --disable-pci           Build without PCI support])
 msg_pci=no
 if test "x$enable_pci" != "xno"; then
 	msg_pci=yes
- 	AC_DEFINE(HAVE_PCI, [], [Set if we have ACPI support])
+ 	AC_DEFINE(HAVE_PCI, [], [Set if we have PCI support])
 fi
 
 # D-Bus libs
@@ -740,6 +740,39 @@ elif test "x$with_dell_backlight" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_DELL, test x$BUILD_DELL = xyes)
 
+dnl Sony PIC support
+AC_ARG_ENABLE(sonypic,
+		AC_HELP_STRING([--enable-sonypic],[Build with Sony PIC support]),
+		[case "${enableval}" in
+		yes) ENABLE_SONYPIC=yes ;;
+		no) ENABLE_SONYPIC=no ;;
+	        *) AC_MSG_ERROR(bad value ${enableval} for --enable-sonypic) ;;
+		esac],
+		[ENABLE_SONYPIC=auto]) dnl Default value
+
+have_sonypic=no
+if test x$ENABLE_SONYPIC != "xno" ; then
+	AC_COMPILE_IFELSE([
+		#include <linux/sonypi.h>
+		int main(int argc,char **argv) {
+			return 0;
+		}
+	],
+	have_sonypic=yes
+	)
+	AC_MSG_CHECKING(for Sony PIC headers)
+	AC_MSG_RESULT([$have_sonypic])
+
+	if test "x$ENABLE_SONYPIC" = "xyes" && test "x$have_sonypic" != "xyes" ; then
+		AC_MSG_ERROR([Sony PIC support explicitly requested but no support found])
+	fi
+fi
+if test x"$have_sonypic" = "xyes" ; then
+        AC_DEFINE(HAVE_SONYPIC, 1, [Set if we have Sony PIC support])
+fi
+msg_sonypic=$have_sonypic
+AM_CONDITIONAL(HAVE_SONYPIC, test x$msg_sonypic = xyes, [Compiling Sony PIC])
+
 dnl
 dnl SUBSETTING END
 dnl
@@ -834,6 +867,7 @@ echo "
         use ACPI:                   ${msg_acpi}
         use PMU:                    ${msg_pmu}
         use APM:                    ${msg_apm}
+        use Sony PIC:               ${msg_sonypic}
 
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         OMAP utils:                 ${BUILD_OMAP} (Linux only, arm only)

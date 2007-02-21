@@ -62,6 +62,11 @@ libexec_PROGRAMS +=			    \
 	hal-system-power-pmu
 endif
 
+if HAVE_SONYPIC
+libexec_PROGRAMS +=		            \
+	hal-system-sonypic
+endif
+
 if HAVE_ACLMGMT
 libexec_PROGRAMS += hal-acl-tool
 
@@ -94,6 +99,11 @@ hal_system_power_pmu_SOURCES = hal-system-power-pmu.c
 hal_system_power_pmu_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 endif
 
+if HAVE_SONYPIC
+hal_system_sonypic_SOURCES = hal-system-sonypic.c
+hal_system_sonypic_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+endif
+
 scriptdir = $(libdir)/hal/scripts
 
 script_SCRIPTS =				\
@@ -106,7 +116,9 @@ script_SCRIPTS =				\
 	hal-system-power-reboot			\
 	hal-system-lcd-get-brightness		\
 	hal-system-lcd-set-brightness		\
-	hal-system-power-set-power-save
+	hal-system-power-set-power-save		\
+	hal-system-bluetooth-get-power		\
+	hal-system-bluetooth-set-power
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 

@@ -15,7 +15,9 @@ script_SCRIPTS =					\
 	hal-system-power-reboot-linux			\
 	hal-system-lcd-get-brightness-linux		\
 	hal-system-lcd-set-brightness-linux		\
-	hal-system-power-set-power-save-linux
+	hal-system-power-set-power-save-linux		\
+	hal-system-bluetooth-get-power-linux		\
+	hal-system-bluetooth-set-power-linux
 
 EXTRA_DIST = 90-hal.rules $(script_SCRIPTS)
 
