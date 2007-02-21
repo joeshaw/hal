@@ -4609,6 +4609,7 @@ out:
 static void
 hald_dbus_ck_availability_changed (gboolean ck_available)
 {
+#ifdef HAVE_ACLMGMT
 	HalDevice *d;
 	char *extra_env[1] = {NULL};
 
@@ -4630,6 +4631,7 @@ hald_dbus_ck_availability_changed (gboolean ck_available)
 			 NULL  /* userdata2 */ );
 out:
 	;
+#endif /* HAVE_ACLMGMT */
 }
 
 static void
