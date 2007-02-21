@@ -272,8 +272,8 @@ main (int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 
-			vid = (int) g_ascii_strtoll (usb_vendor_id, NULL, 0);
-			pid = (int) g_ascii_strtoll (usb_product_id, NULL, 0);
+			vid = (int) g_ascii_strtoull (usb_vendor_id, NULL, 0);
+			pid = (int) g_ascii_strtoull (usb_product_id, NULL, 0);
 			ret = sonypi_get_bluetooth_power (&power, vid, pid);
 
 			if (ret == FALSE)
