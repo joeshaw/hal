@@ -507,6 +507,50 @@ handle_eject (LibHalContext *hal_ctx,
 	int exit_status;
 	char *args[10];
 	int na;
+	int fd;
+	int num_excl_tries;
+
+	/* When called here all the file systems from this device is
+	 * already unmounted. That's actually guaranteed; see
+	 * tools/hal-storage-eject.c for details.
+	 *
+	 * Next thing to check is that we can open the device
+	 * exclusively; if we can't, it means that some app is holding
+	 * a file descriptor open using O_EXCL (we've already unmounted
+	 * all file systems). 
+	 * 
+	 * And that means our polling won't work. Thus ejecting the
+	 * disc will mean that the hal device database isn't
+	 * updated. 
+	 *
+	 * Sigh. 
+	 *
+	 * So better check that we can we can open O_EXCL.
+	 *
+	 * This is RH #207177 - https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=207177
+	 *
+	 * Credit goes to Bill Nottingham for suggesting this check.
+	 */
+
+	num_excl_tries = 5;
+try_open_excl_again:
+	fd = open (device, O_RDONLY | O_NONBLOCK | O_EXCL);
+	if (fd < 0 && errno == EBUSY) {
+
+		/* Hey, so this might just be because we're colliding
+		 * with the polling addon that also opens O_EXCL. We
+		 * know this only every two seconds (or less frequent)
+		 * so try to open the device a few times...
+		 */
+		usleep (100 * 1000); /* sleep 100 ms between each attempt */
+		if (num_excl_tries-- > 0)
+			goto try_open_excl_again;
+
+		/* Some other app, like gnome-cd, has already opened with O_EXCL. Refuse to eject.
+		 */
+		device_busy ("Some application is using the device");
+	}
+	close (fd);
 
 	/* TODO: should we require privileges here? */
 
