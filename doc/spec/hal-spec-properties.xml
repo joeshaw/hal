@@ -6221,7 +6221,7 @@
           <tbody>
             <row>
               <entry><literal>info.bus</literal> (string)</entry>
-              <entry><literal>info.bus</literal></entry>
+              <entry><literal>info.subsystem</literal></entry>
               <entry>2008-03-01</entry>
               <entry>Renamed to something more abstract, available until removed.</entry>
             </row>
