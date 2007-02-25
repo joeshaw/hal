@@ -305,10 +305,10 @@ out:
 }
 
 typedef void (*SeatSessionVisitor) (const char *seat_id, 
-				    gboolean seat_is_local,
 				    int num_sessions_on_seat,
 				    const char *session_id,     /* may be NULL */
 				    uid_t session_uid,
+				    gboolean seat_is_local,
 				    gboolean session_is_active, 
 				    gpointer user_data);
 
@@ -338,16 +338,6 @@ visit_seats_and_sessions (SeatSessionVisitor visitor_cb, gpointer user_data)
 		char *seat = seats[i];
 		char **sessions;
 		int num_sessions_on_seat;
-		gboolean seat_is_local;
-
-		p = g_strdup_printf ("CK_SEAT_IS_LOCAL_%s", seat);
-		if ((s = getenv (p)) == NULL) {
-			printf ("%d: CK_SEAT_IS_LOCAL_%s is not set!\n", getpid(), seat);
-			g_free (p);
-			goto out;
-		}
-		g_free (p);
-		seat_is_local = (strcmp (s, "true") == 0);
 
 		p = g_strdup_printf ("CK_SEAT_%s", seat);
 		if ((s = getenv (p)) == NULL) {
@@ -359,14 +349,24 @@ visit_seats_and_sessions (SeatSessionVisitor visitor_cb, gpointer user_data)
 		sessions = g_strsplit (s, "\t", 0);
 		num_sessions_on_seat = g_strv_length (sessions);
 
-		visitor_cb (seat, seat_is_local, num_sessions_on_seat, NULL, 0, FALSE, user_data);
+		visitor_cb (seat, num_sessions_on_seat, NULL, 0, FALSE, FALSE, user_data);
 
 		/* for all sessions on seat */
 		for (j = 0; sessions[j] != NULL; j++) {
 			char *session = sessions[j];
+			gboolean session_is_local;
 			gboolean session_is_active;
 			uid_t session_uid;
 			char *endptr;
+
+			p = g_strdup_printf ("CK_SESSION_IS_LOCAL_%s", session);
+			if ((s = getenv (p)) == NULL) {
+				printf ("%d: CK_SESSION_IS_LOCAL_%s is not set!\n", getpid(), session);
+				g_free (p);
+				goto out;
+			}
+			g_free (p);
+			session_is_local = (strcmp (s, "true") == 0);
 
 			p = g_strdup_printf ("CK_SESSION_IS_ACTIVE_%s", session);
 			if ((s = getenv (p)) == NULL) {
@@ -390,8 +390,8 @@ visit_seats_and_sessions (SeatSessionVisitor visitor_cb, gpointer user_data)
 				goto out;
 			}
 
-			visitor_cb (seat, seat_is_local, num_sessions_on_seat, 
-				    session, session_uid, session_is_active, user_data);
+			visitor_cb (seat, num_sessions_on_seat, 
+				    session, session_uid, session_is_local, session_is_active, user_data);
 
 		}
 		g_strfreev (sessions);
@@ -580,10 +580,10 @@ acl_for_device_free (ACLForDevice* afd)
 
 static void 
 acl_device_added_visitor (const char *seat_id, 
-			  gboolean seat_is_local,
 			  int num_sessions_on_seat,
 			  const char *session_id, 
 			  uid_t session_uid,
+			  gboolean session_is_local,
 			  gboolean session_is_active, 
 			  gpointer user_data)
 {
@@ -593,11 +593,11 @@ acl_device_added_visitor (const char *seat_id,
 #if 0
 	if (session_id == NULL) {
 		/* means we're just visiting the seat; each session on the seat will be visited accordingly */
-		printf ("Visiting seat '%s' (is_local=%d) with %d sessions\n", 
-			seat_id, seat_is_local, num_sessions_on_seat);
+		printf ("Visiting seat '%s' with %d sessions\n", 
+			seat_id, num_sessions_on_seat);
 	} else {
-		printf ("  %s: Visiting session '%s' with uid %d (is_active=%d)\n",
-			seat_id, session_id, session_uid, session_is_active);
+		printf ("  %s: Visiting session '%s' with uid %d  (is_local=%d) (is_active=%d)\n",
+			seat_id, session_id, session_uid, session_is_local, session_is_active);
 	}
 #endif
 
@@ -623,7 +623,7 @@ acl_device_added_visitor (const char *seat_id,
 		/* apply the policy defined by grant_to_local_seat and grant_to_local_seat_active_only */
 
 		/* we only grant access to local seats... */
-		if (!seat_is_local)
+		if (!session_is_local)
 			continue;
 
 		if (afd->grant_to_local_seat)

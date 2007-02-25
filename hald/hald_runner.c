@@ -403,18 +403,10 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 			}
 			g_string_append (seats_string, seat_id);
 
-			/* for each Seat, export IS_LOCAL 
-			 *
-			 * CK_SEAT_IS_LOCAL_SEAT1=true|false
-			 */
-			s = g_strdup_printf ("CK_SEAT_IS_LOCAL_%s", seat_id);
-			add_env (iter, s, ck_seat_is_local (seat) ? "true" : "false");
-			g_free (s);
-			
 			sessions = ck_seat_get_sessions (seat);
 			for (j = sessions; j != NULL; j = g_slist_next (j)) {
 				CKSession *session;
-				char *session_id;
+				const char *session_id;
 
 				session = j->data;
 				/* basename again; e.g. Session1 rather than /org/freedesktop/ConsoleKit/Session1 */
@@ -429,6 +421,8 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 				 *
 				 * CK_SESSION_IS_ACTIVE_Session2=true|false
 				 * CK_SESSION_UID_Session2=501
+				 * CK_SESSION_IS_LOCAL_Session2=true|false
+				 * CK_SESSION_HOSTNAME_Session2=192.168.1.112
 				 */
 				s = g_strdup_printf ("CK_SESSION_IS_ACTIVE_%s", session_id);
 				add_env (iter, s, ck_session_is_active (session) ? "true" : "false");
@@ -438,7 +432,14 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 				add_env (iter, s, p);
 				g_free (s);
 				g_free (p);
-
+				s = g_strdup_printf ("CK_SESSION_IS_LOCAL_%s", session_id);
+				add_env (iter, s, ck_session_is_local (session) ? "true" : "false");
+				g_free (s);
+				s = g_strdup_printf ("CK_SESSION_HOSTNAME_%s", session_id);
+				p = g_strdup_printf ("%s", ck_session_get_hostname (session));
+				add_env (iter, s, p);
+				g_free (s);
+				g_free (p);
 			}
 
 			/* for each Seat, export sessions on each seat 

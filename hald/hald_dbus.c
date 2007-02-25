@@ -4559,6 +4559,18 @@ out:
 }
 
 static void 
+hald_dbus_seat_added (CKTracker *tracker, CKSeat *seat, void *user_data)
+{
+	/* TODO: we could run callouts here... but they wouldn't do anything useful right now */
+}
+
+static void 
+hald_dbus_seat_removed (CKTracker *tracker, CKSeat *seat, void *user_data)
+{
+	/* TODO: we could run callouts here... but they wouldn't do anything useful right now */
+}
+
+static void 
 hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *user_data)
 {
 	HalDevice *d;
@@ -4699,9 +4711,23 @@ hald_dbus_init_preprobe (void)
 			    ",sender='org.freedesktop.ConsoleKit'"
 			    ",member='SessionRemoved'",
 			    NULL);
+	dbus_bus_add_match (dbus_connection,
+			    "type='signal'"
+			    ",interface='org.freedesktop.ConsoleKit.Manager'"
+			    ",sender='org.freedesktop.ConsoleKit'"
+			    ",member='SeatAdded'",
+			    NULL);
+	dbus_bus_add_match (dbus_connection,
+			    "type='signal'"
+			    ",interface='org.freedesktop.ConsoleKit.Manager'"
+			    ",sender='org.freedesktop.ConsoleKit'"
+			    ",member='SeatRemoved'",
+			    NULL);
 
 	ck_tracker = ck_tracker_new ();
 	ck_tracker_set_system_bus_connection (ck_tracker, dbus_connection);
+	ck_tracker_set_seat_added_cb (ck_tracker, hald_dbus_seat_added);
+	ck_tracker_set_seat_removed_cb (ck_tracker, hald_dbus_seat_removed);
 	ck_tracker_set_session_added_cb (ck_tracker, hald_dbus_session_added);
 	ck_tracker_set_session_removed_cb (ck_tracker, hald_dbus_session_removed);
 	ck_tracker_set_session_active_changed_cb (ck_tracker, hald_dbus_session_active_changed);

@@ -44,7 +44,6 @@
 struct CKSeat_s {
 	int refcount;
 	char *seat_objpath;           /* obj path of ConsoleKit seat */
-	gboolean is_local;            /* whether the seat is local */
 	GSList *sessions;             /* list of sessions on this seat */
 };
 
@@ -54,12 +53,16 @@ struct CKSession_s {
 	CKSeat *seat;                 /* seat that session belongs to */
 	gboolean is_active;           /* whether the session is active */
 	uid_t user;                   /* user id of the user the session belongs to */
+	gboolean is_local;            /* whether the session is on a local seat */
+	char *hostname;               /* name/address of the host the session is being displayed on */
 };
 
 struct CKTracker_s {
 	int refcount;
 	DBusConnection *dbus_connection;
 	void *user_data;
+	CKSeatAddedCB seat_added_cb;
+	CKSeatRemovedCB seat_removed_cb;
 	CKSessionAddedCB session_added_cb;
 	CKSessionRemovedCB session_removed_cb;
 	CKSessionActiveChangedCB session_active_changed_cb;
@@ -77,6 +80,8 @@ ck_session_new (const char *session_objpath)
 	session->refcount = 1;
 	session->session_objpath = g_strdup (session_objpath);
 	session->seat = NULL;
+	session->hostname = NULL;
+	session->is_local = FALSE;
 	return session;
 }
 
@@ -85,6 +90,7 @@ ck_session_unref (CKSession *session)
 {
 	session->refcount--;
 	if (session->refcount == 0) {
+		g_free (session->hostname);
 		g_free (session->session_objpath);
 		g_free (session);
 	}
@@ -154,8 +160,7 @@ ck_seat_ref (CKSeat *seat)
 static gboolean
 ck_seat_get_info (CKTracker *tracker, CKSeat *seat)
 {
-	/* TODO: replace with a D-Bus call to IsLocal() when that appears on ConsoleKit */
-	seat->is_local = TRUE;
+	/* currently no interesting info from CK to get */
 	return TRUE;
 }
 
@@ -166,6 +171,7 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 	DBusError error;
 	DBusMessage *message;
 	DBusMessage *reply;
+	char *hostname;
 
 	ret = FALSE;
 
@@ -188,6 +194,51 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 		HAL_ERROR (("Invalid IsActive reply from CK"));
 		goto error;
 	}
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						session->session_objpath,
+						"org.freedesktop.ConsoleKit.Session",
+						"IsLocal");
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (tracker->dbus_connection, message, -1, &error);
+	if (reply == NULL || dbus_error_is_set (&error)) {
+		HAL_ERROR (("Error doing Session.IsLocal on ConsoleKit: %s: %s", error.name, error.message));
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto error;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_BOOLEAN, &(session->is_local),
+				    DBUS_TYPE_INVALID)) {
+		HAL_ERROR (("Invalid IsLocal reply from CK"));
+		goto error;
+	}
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						session->session_objpath,
+						"org.freedesktop.ConsoleKit.Session",
+						"GetHostName");
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (tracker->dbus_connection, message, -1, &error);
+	if (reply == NULL || dbus_error_is_set (&error)) {
+		HAL_ERROR (("Error doing Session.GetHostName on ConsoleKit: %s: %s", error.name, error.message));
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto error;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_STRING, &hostname,
+				    DBUS_TYPE_INVALID)) {
+		HAL_ERROR (("Invalid GetHostName reply from CK"));
+		goto error;
+	}
+	session->hostname = g_strdup (hostname);
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
 
@@ -337,7 +388,7 @@ ck_tracker_init_get_seats_and_sessions (CKTracker *tracker)
 
 		seat = ck_seat_new (seat_objpath);
 
-		/* get information: is_local etc. */
+		/* get information */
 		if (!ck_seat_get_info (tracker, seat)) {
 			HAL_ERROR (("Could not get information for seat '%s'", seat_objpath));
 			dbus_message_unref (message);
@@ -417,6 +468,18 @@ ck_tracker_set_user_data (CKTracker *tracker, void *user_data)
 }
 
 void
+ck_tracker_set_seat_added_cb (CKTracker *tracker, CKSeatAddedCB cb)
+{
+	tracker->seat_added_cb = cb;
+}
+
+void
+ck_tracker_set_seat_removed_cb (CKTracker *tracker, CKSeatRemovedCB cb)
+{
+	tracker->seat_removed_cb = cb;
+}
+
+void
 ck_tracker_set_session_added_cb (CKTracker *tracker, CKSessionAddedCB cb)
 {
 	tracker->session_added_cb = cb;
@@ -463,7 +526,64 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 
 	/* TODO: also handle SeatRemoved and SeatAdded */
 
-	if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Seat", "SessionAdded")) {
+	if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Manager", "SeatAdded")) {
+
+		seat_objpath = dbus_message_get_path (message);
+
+		if (!dbus_message_get_args (message, NULL,
+					    DBUS_TYPE_STRING, &seat_objpath,
+					    DBUS_TYPE_INVALID)) {
+			HAL_ERROR (("Invalid SeatAdded signal from CK"));
+			goto out;
+		}
+
+		HAL_INFO (("Received SeatAdded '%s' from CK", seat_objpath));
+
+		seat = ck_seat_new (seat_objpath);
+
+		/* get information */
+		if (!ck_seat_get_info (tracker, seat)) {
+			HAL_ERROR (("Could not get information for seat '%s'", seat_objpath));
+			goto out;
+		}
+
+		tracker->seats = g_slist_prepend (tracker->seats, seat);
+
+		if (tracker->seat_added_cb != NULL) {
+			tracker->seat_added_cb (tracker, seat, tracker->user_data);
+		}
+
+	} else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Manager", "SeatRemoved")) {
+
+		seat_objpath = dbus_message_get_path (message);
+
+		if (!dbus_message_get_args (message, NULL,
+					    DBUS_TYPE_STRING, &seat_objpath,
+					    DBUS_TYPE_INVALID)) {
+			HAL_ERROR (("Invalid SeatRemoved signal from CK"));
+			goto out;
+		}
+
+		HAL_INFO (("Received SeatRemoved '%s' from CK", seat_objpath));
+
+		for (i = tracker->seats; i != NULL; i = g_slist_next (i)) {
+			seat = (CKSeat *) i->data;
+			if (strcmp (seat->seat_objpath, seat_objpath) == 0) {
+
+				tracker->seats = g_slist_remove (tracker->seats, seat);
+
+				if (tracker->seat_removed_cb != NULL) {
+					tracker->seat_removed_cb (tracker, seat, tracker->user_data);
+				}
+
+				ck_seat_unref (seat);
+				break;
+			}
+		}
+		if (i == NULL) {
+			HAL_ERROR (("No such seat '%s'", seat_objpath));
+		}
+	} else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Seat", "SessionAdded")) {
 
 		seat_objpath = dbus_message_get_path (message);
 
@@ -499,8 +619,6 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 		if (i == NULL) {
 			HAL_ERROR (("No seat '%s for session '%s'", seat_objpath, session_objpath));
 		}
-
-
 	} else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Seat", "SessionRemoved")) {
 
 		seat_objpath = dbus_message_get_path (message);
@@ -518,6 +636,10 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 			session = (CKSession *) i->data;
 			if (strcmp (session->session_objpath, session_objpath) == 0) {
 
+				if (tracker->session_removed_cb != NULL) {
+					tracker->session_removed_cb (tracker, session, tracker->user_data);
+				}
+
 				if (session->seat == NULL) {
 					HAL_ERROR (("Session '%s' to be removed is not attached to a seat", 
 						    session_objpath));
@@ -526,18 +648,12 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 				}
 				tracker->sessions = g_slist_remove (tracker->sessions, session);
 				ck_session_unref (session);
-
-				if (tracker->session_removed_cb != NULL) {
-					tracker->session_removed_cb (tracker, session, tracker->user_data);
-				}
-
 				break;
 			}
 		}
 		if (i == NULL) {
 			HAL_ERROR (("No such session '%s'", session_objpath));
 		}
-
 	} else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Session", "ActiveChanged")) {
 
 		session_objpath = dbus_message_get_path (message);
@@ -617,12 +733,6 @@ ck_tracker_get_sessions (CKTracker *tracker)
 	return tracker->sessions;
 }
 
-gboolean
-ck_seat_is_local (CKSeat *seat)
-{
-	return seat->is_local;
-}
-
 GSList *
 ck_seat_get_sessions (CKSeat *seat)
 {
@@ -657,6 +767,18 @@ uid_t
 ck_session_get_user (CKSession *session)
 {
 	return session->user;
+}
+
+gboolean
+ck_session_is_local (CKSession *session)
+{
+	return session->is_local;
+}
+
+const char *
+ck_session_get_hostname (CKSession *session)
+{
+	return session->hostname;
 }
 
 gboolean

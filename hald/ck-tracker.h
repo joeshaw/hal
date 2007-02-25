@@ -38,6 +38,8 @@ typedef struct CKSeat_s CKSeat;
 struct CKSession_s;
 typedef struct CKSession_s CKSession;
 
+typedef void (*CKSeatAddedCB) (CKTracker *tracker, CKSeat *seat, void *user_data);
+typedef void (*CKSeatRemovedCB) (CKTracker *tracker, CKSeat *seat, void *user_data);
 typedef void (*CKSessionAddedCB) (CKTracker *tracker, CKSession *session, void *user_data);
 typedef void (*CKSessionRemovedCB) (CKTracker *tracker, CKSession *session, void *user_data);
 typedef void (*CKSessionActiveChangedCB) (CKTracker *tracker, CKSession *session, void *user_data);
@@ -47,6 +49,8 @@ typedef void (*CKServiceAppearedCB) (CKTracker *tracker, void *user_data);
 CKTracker  *ck_tracker_new                        (void);
 void        ck_tracker_set_system_bus_connection     (CKTracker *tracker, DBusConnection *system_bus_connection);
 void        ck_tracker_set_user_data                 (CKTracker *tracker, void *user_data);
+void        ck_tracker_set_seat_added_cb             (CKTracker *tracker, CKSeatAddedCB cb);
+void        ck_tracker_set_seat_removed_cb           (CKTracker *tracker, CKSeatRemovedCB cb);
 void        ck_tracker_set_session_added_cb          (CKTracker *tracker, CKSessionAddedCB cb);
 void        ck_tracker_set_session_removed_cb        (CKTracker *tracker, CKSessionRemovedCB cb);
 void        ck_tracker_set_session_active_changed_cb (CKTracker *tracker, CKSessionActiveChangedCB cb);
@@ -77,7 +81,6 @@ void        ck_tracker_unref                      (CKTracker *tracker);
 GSList     *ck_tracker_get_seats                  (CKTracker *tracker);
 GSList     *ck_tracker_get_sessions               (CKTracker *tracker);
 
-gboolean    ck_seat_is_local                      (CKSeat *seat);
 GSList     *ck_seat_get_sessions                  (CKSeat *seat);
 const char *ck_seat_get_id                        (CKSeat *seat);
 
@@ -85,6 +88,8 @@ gboolean    ck_session_is_active                  (CKSession *session);
 CKSeat     *ck_session_get_seat                   (CKSession *session);
 const char *ck_session_get_id                     (CKSession *session);
 uid_t       ck_session_get_user                   (CKSession *session);
+gboolean    ck_session_is_local                   (CKSession *session);
+const char *ck_session_get_hostname               (CKSession *session);
 
 
 #endif /* CK_TRACKER_H */
