@@ -39,6 +39,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <glib.h>
 #include <libvolume_id.h>
@@ -285,13 +286,21 @@ out:
 	lseek (fd, 0, SEEK_SET);
 }
 
+static char *device_file;
+
+static void
+handle_sigterm (int value)
+{
+	HAL_ERROR (("Timed out probing %s - broken device driver?", device_file));
+	exit (1);
+}
+
 int 
 main (int argc, char *argv[])
 {
 	int fd;
 	int ret;
 	char *udi;
-	char *device_file;
 	LibHalContext *ctx = NULL;
 	DBusError error;
 	char *parent_udi;
@@ -310,7 +319,6 @@ main (int argc, char *argv[])
 	dbus_uint64_t vol_probe_offset = 0;
 	LibHalChangeSet *cs;
 	fd = -1;
-
 
 	cs = NULL;
 
@@ -359,6 +367,9 @@ main (int argc, char *argv[])
 	}
 
 	HAL_DEBUG(("Doing probe-volume for %s\n", device_file));
+
+	/* set up signal handler in case I/O to the device takes too long and the runner kills us */
+	signal (SIGTERM, handle_sigterm);
 
 	fd = open (device_file, O_RDONLY);
 	if (fd < 0)
@@ -586,7 +597,11 @@ main (int argc, char *argv[])
 		/* probe for file system */
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
-			if (volume_id_probe_all (vid, vol_probe_offset , vol_size) == 0) {
+			int vid_ret;
+			HAL_INFO (("invoking volume_id_probe_all, offset=%d, size=%d", vol_probe_offset, vol_size));
+			vid_ret = volume_id_probe_all (vid, vol_probe_offset , vol_size);
+			HAL_INFO (("volume_id_probe_all returned %d"));
+			if (vid_ret == 0) {
 				set_volume_id_values(ctx, udi, cs, vid);
 			} else {
 				libhal_changeset_set_property_string (cs, "info.product", "Volume");
