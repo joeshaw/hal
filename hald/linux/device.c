@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <asm/byteorder.h>
 #include <fcntl.h>
+#include <linux/input.h>
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -59,10 +60,186 @@
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+/* this is kinda messy... but acpi.c + friends use this */
+gboolean _have_sysfs_lid_button = FALSE;
+gboolean _have_sysfs_power_button = FALSE;
+gboolean _have_sysfs_sleep_button = FALSE;
+
+/* we must use this kernel-compatible implementation */
+#define BITS_PER_LONG (sizeof(long) * 8)
+#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
+#define OFF(x)  ((x)%BITS_PER_LONG)
+#define BIT(x)  (1UL<<OFF(x))
+#define LONG(x) ((x)/BITS_PER_LONG)
+#define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
+
+static int
+input_str_to_bitmask (const char *s, long *bitmask, size_t max_size)
+{
+	int i, j;
+	char **v;
+	int num_bits_set = 0;
+
+	memset (bitmask, 0, max_size);
+	v = g_strsplit (s, " ", max_size);
+	for (i = g_strv_length (v) - 1, j = 0; i >= 0; i--, j++) {
+		unsigned long val;
+
+		val = strtoul (v[i], NULL, 16);
+		bitmask[j] = val;
+
+		while (val != 0) {
+			num_bits_set++;
+			val &= (val - 1);
+		}
+	}
+
+	return num_bits_set;
+}
+
+static void
+input_test_rel (HalDevice *d, const char *sysfs_path)
+{
+	char *s;
+	long bitmask[NBITS(REL_MAX)];
+	int num_bits;
+
+	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/rel");
+	if (s == NULL)
+		goto out;
+
+	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
+
+	/* TODO: this test can be improved */
+	if (test_bit (REL_X, bitmask) && test_bit (REL_Y, bitmask)) {
+		hal_device_add_capability (d, "input.mouse");
+	}
+out:
+	;
+}
+
+static void
+input_test_key (HalDevice *d, const char *sysfs_path)
+{
+	int i;
+	char *s;
+	long bitmask[NBITS(KEY_MAX)];
+	int num_bits;
+
+	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/key");
+	if (s == NULL)
+		goto out;
+
+	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
+
+	if (num_bits == 1) {
+		/* this is for input devices originating from the ACPI layer et. al. */
+
+		/* TODO: potentially test for BUS_HOST */
+
+		hal_device_add_capability (d, "button");
+		hal_device_property_set_bool (d, "button.has_state", FALSE);
+		if (test_bit (KEY_POWER, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "power");
+			_have_sysfs_power_button = TRUE;
+		} else if (test_bit (KEY_SLEEP, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "sleep");
+			_have_sysfs_sleep_button = TRUE;
+		} else if (test_bit (KEY_SUSPEND, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "hibernate");
+		}
+	} else {
+		/* TODO: we probably should require lots of bits set to classify as keyboard. Oh well */
+
+		/* All keys that are not buttons are less than BTN_MISC */
+		for (i = KEY_RESERVED + 1; i < BTN_MISC; i++) {
+			if (test_bit (i, bitmask)) {
+				hal_device_add_capability (d, "input.keyboard");
+				break;
+			}
+		}
+	}
+out:
+	;
+}
+
+static void
+input_test_switch (HalDevice *d, const char *sysfs_path)
+{
+	char *s;
+	long bitmask[NBITS(SW_MAX)];
+	int num_bits;
+
+	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/sw");
+	if (s == NULL)
+		goto out;
+
+	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
+	if (num_bits <= 0)
+		goto out;
+
+	hal_device_add_capability (d, "input.switch");
+	if (num_bits == 1) {
+		hal_device_add_capability (d, "button");
+		hal_device_property_set_bool (d, "button.has_state", TRUE);
+		/* NOTE: button.state.value will be set from our prober in hald/linux/probing/probe-input.c */
+		hal_device_property_set_bool (d, "button.state.value", FALSE);
+		if (test_bit (SW_LID, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "lid");
+			_have_sysfs_lid_button = TRUE;
+		} else if (test_bit (SW_TABLET_MODE, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "tablet_mode");
+		} else if (test_bit (SW_HEADPHONE_INSERT, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "headphone_insert");
+		}
+	}
+
+out:
+	;
+}
+
+static void
+input_test_abs (HalDevice *d, const char *sysfs_path)
+{
+	char *s;
+	long bitmask[NBITS(ABS_MAX)];
+	int num_bits;
+
+	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/abs");
+	if (s == NULL)
+		goto out;
+	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
+
+	if (test_bit(ABS_X, bitmask) && !test_bit(ABS_Y, bitmask)) {
+		long bitmask_touch[NBITS(KEY_MAX)];
+
+		hal_device_add_capability (d, "input.joystick");
+
+		s = hal_util_get_string_from_file (sysfs_path, "../capabilities/key");
+		if (s == NULL)
+			goto out;
+		input_str_to_bitmask (s, bitmask_touch, sizeof (bitmask_touch));
+
+		if (test_bit(BTN_TOUCH, bitmask_touch)) {
+			hal_device_add_capability (d, "input.tablet");
+		}
+	}
+out:
+	;
+}
+
 static HalDevice *
 input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
-	HalDevice *d;
+	int eventdev_num;
+	HalDevice *d = NULL;
+
+	if (device_file == NULL)
+		goto out;
+
+	/* only care about evdev input devices */
+	if (sscanf (hal_util_get_last_element (sysfs_path), "event%d", &eventdev_num) != 1)
+		goto out;
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
@@ -78,13 +255,36 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	hal_device_property_set_string (d, "input.device", device_file);
 
+	hal_util_set_string_from_file (d, "info.product", sysfs_path, "../name");
+	hal_util_set_string_from_file (d, "input.product", sysfs_path, "../name");
+
+	/* check for keys */
+	input_test_key (d, sysfs_path);
+
+	/* check for mice etc. */
+	input_test_rel (d, sysfs_path);
+
+	/* check for joysticks etc. */
+	input_test_abs (d, sysfs_path);
+
+	/* check for switches */
+	input_test_switch (d, sysfs_path);
+
+out:
 	return d;
 }
 
 static const gchar *
 input_get_prober (HalDevice *d)
 {
-	return "hald-probe-input";
+	const char *prober = NULL;
+
+	/* need privileges to check state of switch */
+	if (hal_device_property_get_bool (d, "button.has_state")) {
+		prober = "hald-probe-input";
+	}
+
+	return prober;
 }
 
 static gboolean
@@ -2482,7 +2682,7 @@ ccwgroup_add_qeth_properties (HalDevice *d, const gchar *sysfs_path)
 	hal_util_set_string_from_file (d, "ccwgroup.qeth.checksumming",
 				       sysfs_path, "checksumming");
 	if (!is_layer2) {
-		//CH: the next two are only valid for token ring devices
+		/* CH: the next two are only valid for token ring devices */
 		hal_util_set_int_from_file (d,
 					    "ccwgroup.qeth.canonical_macaddr",
 					    sysfs_path, "canonical_macaddr", 2);
@@ -2518,7 +2718,7 @@ ccwgroup_add_qeth_properties (HalDevice *d, const gchar *sysfs_path)
 static inline void
 ccwgroup_add_ctc_properties (HalDevice *d, const gchar *sysfs_path)
 {
-	//CH: use protocol descriptions?
+	/* CH: use protocol descriptions? */
 	hal_util_set_int_from_file (d, "ccwgroup.ctc.protocol", sysfs_path,
 				    "protocol", 2);
 	hal_util_set_string_from_file (d, "ccwgroup.ctc.type", sysfs_path,

@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include "libhal/libhal.h"
-
 #include "../../logger.h"
 
 /* we must use this kernel-compatible implementation */
@@ -48,94 +47,6 @@
 #define LONG(x) ((x)/BITS_PER_LONG)
 #define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
-static void 
-check_abs (int fd, LibHalContext *ctx, const char *udi)
-{
-	long bitmask[NBITS(ABS_MAX)];
-	long bitmask_touch[NBITS(KEY_MAX)];
-	DBusError error;
-
-	if (ioctl (fd, EVIOCGBIT(EV_ABS, sizeof (bitmask)), bitmask) < 0) {
-		HAL_DEBUG (("ioctl EVIOCGBIT for EV_ABS failed"));
-		goto out;
-	}
-
-	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask_touch)), bitmask_touch) < 0) {
-		HAL_DEBUG (("ioctl EVIOCGBIT for EV_KEY failed"));
-		goto out;
-	}
-	
-	if (!test_bit(ABS_X, bitmask) || !test_bit(ABS_Y, bitmask)) {
-		HAL_DEBUG (("missing x or y absolute axes"));
-		goto out;
-	}
-
-	dbus_error_init (&error);
-	if (test_bit(BTN_TOUCH, bitmask_touch) != 0) {
-		libhal_device_add_capability (ctx, udi, "input.tablet", &error);
-		goto out;
-	}
-	libhal_device_add_capability (ctx, udi, "input.joystick", &error);
-
-out:
-	;
-}
-
-static void 
-check_key (int fd, LibHalContext *ctx, const char *udi)
-{
-	unsigned int i;
-	long bitmask[NBITS(KEY_MAX)];
-	int is_keyboard;
-	DBusError error;
-
-	if (ioctl (fd, EVIOCGBIT(EV_KEY, sizeof (bitmask)), bitmask) < 0) {
-		HAL_DEBUG (("ioctl EVIOCGBIT for EV_KEY failed"));
-		goto out;
-	}
-
-	is_keyboard = FALSE;
-
-	/* All keys that are not buttons are less than BTN_MISC */
-	for (i = KEY_RESERVED + 1; i < BTN_MISC; i++) {
-		if (test_bit (i, bitmask)) {
-			is_keyboard = TRUE;
-			break;
-		}
-	}
-
-	if (is_keyboard) {
-		dbus_error_init (&error);
-		libhal_device_add_capability (ctx, udi, "input.keyboard", &error);
-	}
-
-out:
-	;
-}
-
-static void 
-check_rel (int fd, LibHalContext *ctx, const char *udi)
-{
-	long bitmask[NBITS(REL_MAX)];
-	DBusError error;
-
-	if (ioctl (fd, EVIOCGBIT(EV_REL, sizeof (bitmask)), bitmask) < 0) {
-		HAL_DEBUG (("ioctl EVIOCGBIT for EV_REL failed"));
-		goto out;
-	}
-
-	if (!test_bit (REL_X, bitmask) || !test_bit (REL_Y, bitmask)) {
-		HAL_DEBUG (("missing x or y relative axes"));
-		goto out;
-	}
-
-	dbus_error_init (&error);
-	libhal_device_add_capability (ctx, udi, "input.mouse", &error);
-
-out:
-	;
-}
-
 int 
 main (int argc, char *argv[])
 {
@@ -143,18 +54,34 @@ main (int argc, char *argv[])
 	int ret;
 	char *udi;
 	char *device_file;
-	char *physical_device;
+	char *button_type;
+	int sw;
 	LibHalContext *ctx = NULL;
 	DBusError error;
-	char name[128];
-	struct input_id id;
-
-	setup_logger ();
-
-	fd = -1;
+	long bitmask[NBITS(SW_MAX)];
 
 	/* assume failure */
 	ret = 1;
+	fd = -1;
+
+	setup_logger ();
+
+	button_type = getenv ("HAL_PROP_BUTTON_TYPE");
+	if (button_type == NULL)
+		goto out;
+
+	if (strcmp (button_type, "lid") == 0)
+		sw = SW_LID;
+	else if (strcmp (button_type, "tablet_mode") == 0)
+		sw = SW_TABLET_MODE;
+	else if (strcmp (button_type, "headphone_insert") == 0)
+		sw = SW_HEADPHONE_INSERT;
+	else
+		goto out;
+
+	device_file = getenv ("HAL_PROP_INPUT_DEVICE");
+	if (device_file == NULL)
+		goto out;
 
 	udi = getenv ("UDI");
 	if (udi == NULL)
@@ -162,10 +89,6 @@ main (int argc, char *argv[])
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
-		goto out;
-
-	device_file = getenv ("HAL_PROP_INPUT_DEVICE");
-	if (device_file == NULL)
 		goto out;
 
 	HAL_DEBUG (("Doing probe-input for %s (udi=%s)", device_file, udi));
@@ -176,44 +99,14 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	/* if we don't have a physical device then only accept input buses
-	 * that we now aren't hotpluggable
-	 */
-	if (ioctl (fd, EVIOCGID, &id) < 0) {
-		HAL_ERROR (("Error: EVIOCGID failed: %s\n", strerror(errno)));
+	if (ioctl (fd, EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
+		HAL_DEBUG (("ioctl EVIOCGSW failed"));
 		goto out;
 	}
-	physical_device = getenv ("HAL_PROP_INPUT_ORIGINATING_DEVICE");
 
-	HAL_DEBUG (("probe-input: id.bustype=%i", id.bustype));
-	if (physical_device == NULL) {
-		switch (id.bustype) {
-		case BUS_I8042: /* x86 legacy port */
-		case BUS_HOST: /* not hotpluggable */
-		case BUS_PARPORT: /* XXX: really needed? */
-		case BUS_ADB: /* ADB on Apple computers */
-			break;
-
-		default:
-			goto out;
-		}
-	}
-
-	/* only consider devices with the event interface */
-	if (ioctl (fd, EVIOCGNAME(sizeof (name)), name) < 0) {
-		HAL_ERROR (("Error: EVIOCGNAME failed: %s\n", strerror(errno)));
-		goto out;
-	}
-	if (!libhal_device_set_property_string (ctx, udi, "info.product", name, &error))
-		goto out;
-	if (!libhal_device_set_property_string (ctx, udi, "input.product", name, &error))
-		goto out;
-
-	check_abs (fd, ctx, udi);
-	check_rel (fd, ctx, udi);
-	check_key (fd, ctx, udi);
-
-	/* success */
+	dbus_error_init (&error);
+	libhal_device_set_property_bool (ctx, udi, "button.state.value", test_bit (sw, bitmask), &error);
+	
 	ret = 0;
 
 out:

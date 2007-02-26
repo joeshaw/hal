@@ -3,11 +3,13 @@
 <deviceinfo version="0.2">
 
   <device>
-    <match key="info.capabilities" contains="input.keyboard">
-      <append key="info.addons" type="strlist">hald-addon-keyboard</append>
-      <append key="info.capabilities" type="strlist">button</append>
-      <merge key="button.type" type="string"></merge>
-      <merge key="button.has_state" type="bool">false</merge>
+    <match key="info.capabilities" contains="input">
+      <match key="info.capabilities" contains="button">
+	<append key="info.addons" type="strlist">hald-addon-keyboard</append>
+      </match>
+      <match key="info.capabilities" contains="input.keyboard">
+	<append key="info.addons" type="strlist">hald-addon-keyboard</append>
+      </match>
     </match>
   </device>
 

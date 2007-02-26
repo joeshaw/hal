@@ -100,8 +100,6 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 	DBusError error;
 	char event[256];
 
-	dbus_error_init (&error);
-
 	while (fgets (event, sizeof event, eventfp))
 	{
 		HAL_DEBUG (("event is '%s'", event));
@@ -117,17 +115,19 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 				HAL_DEBUG (("button event"));
 
 				/* TODO: only rescan if button got state */
-				libhal_device_rescan (ctx, udi, &error);
-
-				type = libhal_device_get_property_string(ctx, udi, 
-									 "button.type",
-									 &error);
-				if (type != NULL) {
-					libhal_device_emit_condition (ctx, udi, "ButtonPressed",
-								      type, &error);
-					libhal_free_string(type);
-				} else {
-					libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
+				dbus_error_init (&error);
+				if (libhal_device_rescan (ctx, udi, &error)) {
+					dbus_error_init (&error);
+					type = libhal_device_get_property_string(ctx, udi, 
+										 "button.type",
+										 &error);
+					if (type != NULL) {
+						libhal_device_emit_condition (ctx, udi, "ButtonPressed",
+									      type, &error);
+						libhal_free_string(type);
+					} else {
+						libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
+					}
 				}
 			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
 				HAL_DEBUG (("ac_adapter event"));

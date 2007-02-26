@@ -40,6 +40,8 @@
 #include "../../util_helper.h"
 
 static char *udi;
+static int button_state = FALSE;
+static int button_has_state = FALSE;
 
 static char *key_name[KEY_MAX + 1] = {
 	[0 ... KEY_MAX] = NULL,
@@ -168,17 +170,82 @@ static char *key_name[KEY_MAX + 1] = {
 	[KEY_WLAN] = "wlan"
 };
 
+
+/* we must use this kernel-compatible implementation */
+#define BITS_PER_LONG (sizeof(long) * 8)
+#define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
+#define OFF(x)  ((x)%BITS_PER_LONG)
+#define BIT(x)  (1UL<<OFF(x))
+#define LONG(x) ((x)/BITS_PER_LONG)
+#define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
+
 static void
 main_loop (LibHalContext *ctx, FILE* eventfp)
 {
 	DBusError error;
 	struct input_event event;
 
-	dbus_error_init (&error);
 
 	while (fread (&event, sizeof(event), 1, eventfp)) {
-		/* dbg ("event.code = %d (0x%02x)", event.code); */
-		if (key_name[event.code] && event.value == 1) {
+
+		if (button_has_state && event.type == EV_SW) {
+			char *name = NULL;
+
+			HAL_INFO (("%s: event.value=%d ; event.code=%d (0x%02x)", 
+				   udi, event.value, event.code, event.code));
+
+
+			switch (event.code) {
+			case SW_LID:
+				name = "lid";
+				break;
+			case SW_TABLET_MODE:
+				name = "tablet_mode";
+				break;
+			case SW_HEADPHONE_INSERT:
+				name = "headphone_insert";
+				break;
+			}
+			if (name != NULL) {
+				long bitmask[NBITS(SW_MAX)];
+
+				/* check switch state - cuz apparently we get spurious events (or I don't know
+				 * how to use the input layer correctly)
+				 *
+				 * Lid close:
+				 * 19:08:22.911 [I] event.value=1 ; event.code=0 (0x00)
+				 * 19:08:22.914 [I] event.value=0 ; event.code=0 (0x00)
+				 *
+				 * Lid open:
+				 * 19:08:26.772 [I] event.value=0 ; event.code=0 (0x00)
+				 * 19:08:26.776 [I] event.value=0 ; event.code=0 (0x00)
+				 * 19:08:26.863 [I] event.value=1 ; event.code=0 (0x00)
+				 * 19:08:26.868 [I] event.value=0 ; event.code=0 (0x00)
+				 * 19:08:26.955 [I] event.value=0 ; event.code=0 (0x00)
+				 * 19:08:26.960 [I] event.value=0 ; event.code=0 (0x00)
+				 */
+
+				if (ioctl (fileno (eventfp), EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
+					HAL_DEBUG (("ioctl EVIOCGSW failed"));
+				} else {
+					int new_state = test_bit (event.code, bitmask);
+					if (new_state != button_state) {
+						button_state = new_state;
+						
+						dbus_error_init (&error);
+						libhal_device_set_property_bool (ctx, udi, "button.state.value", 
+										 button_state, &error);
+						
+						dbus_error_init (&error);
+						libhal_device_emit_condition (ctx, udi, 
+									      "ButtonPressed",
+									      name,
+									      &error);
+					}
+				}
+			}
+		} else if (event.type == EV_KEY && key_name[event.code] != NULL && event.value == 1) {
+			dbus_error_init (&error);
 			libhal_device_emit_condition (ctx, udi, 
 						      "ButtonPressed",
 						      key_name[event.code],
@@ -196,6 +263,7 @@ main (int argc, char **argv)
 	DBusError error;
 	char *device_file;
 	FILE *eventfp;
+	char *s;
 
 	hal_set_proc_title_init (argc, argv);
 
@@ -209,6 +277,14 @@ main (int argc, char **argv)
 	if ((device_file = getenv ("HAL_PROP_INPUT_DEVICE")) == NULL)
 		goto out;
 
+	s = getenv ("HAL_PROP_BUTTON_HAS_STATE");
+	if (s != NULL && strcmp (s, "true") == 0) {
+		button_has_state = TRUE;
+		if ((s = getenv ("HAL_PROP_BUTTON_STATE_VALUE")) == NULL)
+			goto out;
+		button_state = (strcmp (s, "true") == 0);
+	}
+
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
                 goto out;
 
@@ -216,7 +292,6 @@ main (int argc, char **argv)
 	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
 		goto out;
 	}
-
 
 	eventfp = fopen(device_file, "r");	
 
@@ -231,11 +306,10 @@ main (int argc, char **argv)
 	{
 		main_loop (ctx, eventfp);
 		
-		/* If main_loop exits sleep for 5s and try to reconnect (
-		   again). */
+		/* If main_loop exits sleep for 5s and try to reconnect (again). */
 		sleep (5);
 	}
-
+	
 	return 0;
 
  out:

@@ -36,6 +36,7 @@
 #include "osspec_linux.h"
 
 #include "acpi.h"
+#include "device.h"
 
 enum {
 	ACPI_TYPE_BATTERY,
@@ -947,6 +948,8 @@ acpi_synthesize (const gchar *path, int acpi_type)
 				snprintf (_path, sizeof (_path), "%s/acpi/button/lid", get_hal_proc_path ());
 				if ( strcmp (path, _path) == 0 )
 					is_laptop = TRUE;
+			} else if (_have_sysfs_lid_button) {
+				is_laptop = TRUE;
 			}
 		}
 		/* if there is a battery bay or LID, this is a laptop -> set the formfactor */
@@ -1137,6 +1140,28 @@ acpi_generic_add (const gchar *acpi_path, HalDevice *parent, ACPIDevHandler *han
 	return d;
 }
 
+static HalDevice *
+acpi_button_add (const gchar *acpi_path, HalDevice *parent, ACPIDevHandler *handler)
+{
+	char *parent_path;
+	const char *button_type;
+
+	parent_path = hal_util_get_parent_path (acpi_path);
+	button_type = hal_util_get_last_element (parent_path);
+	if (strcmp (button_type, "lid") == 0 && _have_sysfs_lid_button)
+		goto out;
+	else if (strcmp (button_type, "power") == 0 && _have_sysfs_power_button)
+		goto out;
+	else if (strcmp (button_type, "sleep") == 0 && _have_sysfs_sleep_button)
+		goto out;
+
+	g_free (parent_path);
+	return acpi_generic_add (acpi_path, parent, handler);
+
+out:
+	return NULL;
+}
+
 static gboolean
 acpi_generic_compute_udi (HalDevice *d, ACPIDevHandler *handler)
 {
@@ -1238,7 +1263,7 @@ static ACPIDevHandler acpidev_handler_laptop_panel_sonypi = {
 
 static ACPIDevHandler acpidev_handler_button = {
 	.acpi_type   = ACPI_TYPE_BUTTON,
-	.add         = acpi_generic_add,
+	.add         = acpi_button_add,
 	.compute_udi = acpi_generic_compute_udi,
 	.refresh     = button_refresh,
 	.remove      = acpi_generic_remove

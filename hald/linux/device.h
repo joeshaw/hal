@@ -48,4 +48,8 @@ HotplugEvent *dev_generate_add_hotplug_event (HalDevice *d);
 
 HotplugEvent *dev_generate_remove_hotplug_event (HalDevice *d);
 
+extern gboolean _have_sysfs_lid_button;
+extern gboolean _have_sysfs_power_button;
+extern gboolean _have_sysfs_sleep_button;
+
 #endif
