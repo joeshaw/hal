@@ -29,9 +29,12 @@
 
 
 #ifndef __MMAP_CACHE_H__
+#define __MMAP_CACHE_H__
+
+#include <glib.h>
 
 void di_rules_init(void);
-void di_cache_coherency_check(void);
+gboolean di_cache_coherency_check(void);
 
 #define RULES_PTR(x) ((void *)((unsigned char *) rules_ptr + x))
 #endif

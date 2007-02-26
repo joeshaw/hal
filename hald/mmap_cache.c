@@ -46,8 +46,11 @@
 #include "hald_runner.h"
 
 extern void *rules_ptr;
+static int rules_fd = -1;
+size_t rules_size = 0;
 
-void di_rules_init(void){
+void di_rules_init(void)
+{
 	struct cache_header	*header;
 	char 			*cachename;
 	int			fd;
@@ -57,11 +60,18 @@ void di_rules_init(void){
 	if(cachename == NULL) 
 		cachename = HALD_CACHE_FILE;
 
-	if((fd = open(cachename, O_RDONLY)) < 0)
+	if (rules_ptr != NULL) {
+		HAL_INFO (("Unmapping old cache file"));
+		munmap (rules_ptr, rules_size);
+	}
+
+	if((fd = open (cachename, O_RDONLY)) < 0)
 		DIE(("Unable to open cache %s\n", cachename));
 
-	if(fstat(fd,&statbuf) < 0)
+	if(fstat (fd,&statbuf) < 0)
 		DIE(("Unable to stat cache %s\n", cachename));
+
+	rules_size = statbuf.st_size;
 
 	rules_ptr = mmap (NULL, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
 	if(rules_ptr == MAP_FAILED)
@@ -185,7 +195,7 @@ regen_cache (void)
 	HAL_INFO (("fdi cache generation done"));
 }
 
-void 
+gboolean
 di_cache_coherency_check (void)
 {
 	char *hal_fdi_source_preprobe;
@@ -194,6 +204,9 @@ di_cache_coherency_check (void)
 	char *cachename;
 	time_t mt;
 	struct stat st;
+	gboolean did_regen;
+
+	did_regen = FALSE;
 
 	mt = 0;
 
@@ -230,10 +243,14 @@ di_cache_coherency_check (void)
 		if(st.st_mtime < mt) {
 			HAL_INFO(("Cache needs update"));
 			regen_cache();
+			did_regen = TRUE;
 		}
 	} else {
 		regen_cache();
+		did_regen = TRUE;
 	}
 	
 	HAL_INFO(("cache mtime is %d",mt));
+
+	return did_regen;
 }

@@ -56,7 +56,7 @@
 #include "rule.h"
 #include "osspec.h"
 
-void	*rules_ptr = NULL;
+void *rules_ptr = NULL;
 
 #ifdef DUMP_RULES
 static char *
@@ -963,7 +963,8 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type){
 
 	if (fdi_cache_invalidated) {
 		/* make sure our fdi rule cache is up to date */
-		di_cache_coherency_check ();
+		if (di_cache_coherency_check ())
+			di_rules_init ();
 		fdi_cache_invalidated = FALSE;
 	}
 
