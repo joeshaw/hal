@@ -3505,10 +3505,41 @@ out:
 	;
 }
 
+static void 
+dev_rescan_device_done (HalDevice *d, 
+			guint32 exit_type, 
+			gint return_code, 
+			char **error,
+			gpointer data1, 
+			gpointer data2) 
+{
+	HAL_INFO (("dev_rescan_device_done: exit_type=%d, return_code=%d", exit_type, return_code));
+}
+
 gboolean
 dev_rescan_device (HalDevice *d)
 {
-	return FALSE;
+	gboolean ret;
+
+	ret = FALSE;
+
+	/* rescan button state on Rescan() */
+	if (hal_device_property_get_bool (d, "button.has_state")) {
+
+		hald_runner_run (d, 
+				 "hald-probe-input", 
+				 NULL,
+				 HAL_HELPER_TIMEOUT, 
+				 dev_rescan_device_done,
+				 NULL, 
+				 NULL);
+		
+		ret = TRUE;
+		goto out;
+	}
+
+out:
+	return ret;
 }
 
 
