@@ -46,8 +46,7 @@
 #include "hald_runner.h"
 
 extern void *rules_ptr;
-static int rules_fd = -1;
-size_t rules_size = 0;
+static size_t rules_size = 0;
 
 void di_rules_init(void)
 {
