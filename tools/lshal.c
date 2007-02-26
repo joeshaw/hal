@@ -34,6 +34,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include <glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
@@ -72,6 +74,25 @@ static const char *
 short_name (const char *udi)
 {
 	return &udi[sizeof(UDI_BASE) - 1];
+}
+
+static char *
+get_time (void)
+{
+	struct timeval tnow;
+	struct tm *tlocaltime;
+	struct timezone tzone;
+	static char tbuf[256];
+	static char buf[256];
+	GTimeVal t;
+
+	gettimeofday (&tnow, &tzone);
+	tlocaltime = localtime ((time_t *) &tnow.tv_sec);
+	strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
+
+	g_get_current_time (&t);
+	g_snprintf (buf, sizeof(buf), "%s.%03d", tbuf, (int) (t.tv_usec / 1000));
+	return buf;
 }
 
 /** 
@@ -322,10 +343,10 @@ device_added (LibHalContext *ctx,
 		return;
 
 	if (long_list) {
-		printf ("*** lshal: device_added, udi='%s'\n", udi);
+		printf ("*** %s: lshal: device_added, udi='%s'\n", get_time (), udi);
 		print_props (udi);
 	} else
-		printf ("%s added\n", short_name (udi));
+		printf ("%s: %s added\n", get_time (), short_name (udi));
 }
 
 /** 
@@ -344,9 +365,9 @@ device_removed (LibHalContext *ctx,
 		return;
 
 	if (long_list)
-		printf ("*** lshal: device_removed, udi='%s'\n", udi);
+		printf ("*** %s: lshal: device_removed, udi='%s'\n", get_time (), udi);
 	else
-		printf ("%s removed\n", short_name (udi));
+		printf ("%s: %s removed\n", get_time (), short_name (udi));
 }
 
 /** 
@@ -367,10 +388,10 @@ device_new_capability (LibHalContext *ctx,
 		return;
 
 	if (long_list) {
-		printf ("*** lshal: new_capability, udi='%s'\n", udi);
+		printf ("*** %s: lshal: new_capability, udi='%s'\n", get_time (), udi);
 		printf ("*** capability: %s\n", capability);
 	} else
-		printf ("%s capability %s added\n", short_name (udi),
+		printf ("%s: %s capability %s added\n", get_time (), short_name (udi),
 			capability);
 }
 
@@ -392,10 +413,10 @@ device_lost_capability (LibHalContext *ctx,
 		return;
 
 	if (long_list) {
-		printf ("*** lshal: lost_capability, udi='%s'\n", udi);
+		printf ("*** %s: lshal: lost_capability, udi='%s'\n", get_time (), udi);
 		printf ("*** capability: %s\n", capability);
 	} else
-		printf ("%s capability %s lost\n", short_name (udi),
+		printf ("%s: %s capability %s lost\n", get_time (), short_name (udi),
 			capability);
 }
 
@@ -500,8 +521,8 @@ property_modified (LibHalContext *ctx,
 		return;
 
 	if (long_list) {
-		printf ("*** lshal: property_modified, udi=%s, key=%s\n",
-			udi, key);
+		printf ("*** %s: lshal: property_modified, udi=%s, key=%s\n",
+			get_time (), udi, key);
 		printf ("           is_removed=%s, is_added=%s\n",
 			is_removed ? "true" : "false",
 			is_added ? "true" : "false");
@@ -509,7 +530,7 @@ property_modified (LibHalContext *ctx,
 			print_property (udi, key);
 		printf ("\n");
 	} else {
-		printf ("%s property %s ", short_name (udi), key);
+		printf ("%s: %s property %s ", get_time (), short_name (udi), key);
 		if (is_removed)
 			printf ("removed");
 		else {
@@ -544,12 +565,12 @@ device_condition (LibHalContext *ctx,
 		return;
 
 	if (long_list) {
-		printf ("*** lshal: device_condition, udi=%s\n", udi);
+		printf ("*** %s: lshal: device_condition, udi=%s\n", get_time (), udi);
 		printf ("           condition_name=%s\n", condition_name);
 		printf ("           condition_details=%s\n", condition_details);
 		printf ("\n");
 	} else {
-		printf ("%s condition %s = %s\n", short_name (udi),
+		printf ("%s: %s condition %s = %s\n", get_time (), short_name (udi),
 			condition_name, condition_details);
 	}
 }
