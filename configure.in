@@ -336,12 +336,22 @@ else
   AM_CONDITIONAL(HAVE_SMBIOS,false)
 fi
 
-dnl Check for libpci
-AC_CHECK_HEADERS(pci/pci.h, [
-	AC_CHECK_LIB(pci, pci_init, [
-		USE_LIBPCI=yes; AM_CONDITIONAL(HAVE_LIBPCI,true)], [
-		USE_LIBPCI=no; AM_CONDITIONAL(HAVE_LIBPCI,false)])], [
-	USE_LIBPCI=no; AM_CONDITIONAL(HAVE_LIBPCI,false)])
+AC_ARG_WITH([libpci],
+  [AS_HELP_STRING([--without-libpci],
+    [Compile without pci support])],
+  [],
+  [with_libpci=yes])
+
+AS_IF([test "x$with_libpci" != xno],
+  [dnl Check for libpci
+   AC_CHECK_HEADERS([pci/pci.h], [
+     AC_CHECK_LIB(pci, pci_init, [
+       USE_LIBPCI=yes AM_CONDITIONAL(HAVE_LIBPCI, true)], [
+       USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI, false)])], [
+     USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI, false)])
+  ], [
+    USE_LIBPCI=no AM_CONDITIONAL(HAVE_LIBPCI, false)
+  ])
 
 AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux/solaris/freebsd/dummy)],
                       [
