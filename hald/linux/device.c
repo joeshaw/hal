@@ -2487,6 +2487,26 @@ out:
 	return d;
 }
 
+static const gchar *
+firewire_get_prober (HalDevice *d)
+{
+	const char *prober = NULL;
+
+	/* run prober only for AVC devices */
+	if (hal_device_has_capability (d, "ieee1394_unit.avc")) {
+		prober = "hald-probe-ieee1394-unit";
+	}
+
+	return prober;
+}
+
+static gboolean
+firewire_post_probing (HalDevice *d)
+{
+	return TRUE;
+}
+
+
 static gboolean
 firewire_compute_udi (HalDevice *d)
 {
@@ -3186,10 +3206,12 @@ static DevHandler dev_handler_ieee1394 = {
 
 /* krh's new firewire stack */
 static DevHandler dev_handler_firewire = { 
-	.subsystem   = "firewire",
-	.add         = firewire_add,
-	.compute_udi = firewire_compute_udi,
-	.remove      = dev_remove
+	.subsystem    = "firewire",
+	.add          = firewire_add,
+	.get_prober   = firewire_get_prober,
+	.post_probing = firewire_post_probing,
+	.compute_udi  = firewire_compute_udi,
+	.remove       = dev_remove
 };
 
 static DevHandler dev_handler_xen = {
