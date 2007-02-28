@@ -2772,19 +2772,18 @@
               <entry>Yes</entry>
               <entry>
                 The formfactor of the system. Usually the equivalent of
-                <literal>smbios.chassis.type</literal> or set from information
+                <literal>system.chassis.type</literal> or set from information
                 about ACPI/APM/PMU properties.
               </entry>
             </row>
             <row>
               <entry>
-                <literal>system.vendor</literal> (string)
+                <literal>system.hardware.vendor</literal> (string)
               </entry>
               <entry></entry>
               <entry>No</entry>
               <entry>
-                The name of the manufacturer of the machine. Usually the equivalent of
-                <literal>smbios.system.manufacturer</literal>.
+                The name of the manufacturer of the machine.
               </entry>
             </row>
             <row>
@@ -2794,9 +2793,87 @@
               <entry></entry>
               <entry>No</entry>
               <entry>
-                The product name of the machine. Usually the equivalent of
-                <literal>smbios.system.product</literal> and
-                <literal>smbios.system.version</literal>.
+                The product name of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.version</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The version of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.serial</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The serial number of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.uuid</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The unique ID of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.firmware.vendor</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The firmware vendor.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.firmware.version</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The firmware version.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.firmware.release_date</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The release date of the firmware.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.chassis.manufacturer</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The manufacturer of the chassis.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.chassis.type</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The chassis type of the machine.
               </entry>
             </row>
           </tbody>
@@ -6242,6 +6319,72 @@
               <entry><literal>power_management.can_hibernate</literal></entry>
               <entry>2007-05-01</entry>
               <entry></entry>
+            </row>
+            <row>
+              <entry><literal>smbios.system.manufacturer</literal> (string)</entry>
+              <entry><literal>system.hardware.vendor</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.system.product</literal> (string)</entry>
+              <entry><literal>system.hardware.product</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.system.version</literal> (string)</entry>
+              <entry><literal>system.hardware.version</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.system.serial</literal> (string)</entry>
+              <entry><literal>system.hardware.serial</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.system.uuid</literal> (string)</entry>
+              <entry><literal>system.hardware.uuid</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.bios.vendor</literal> (string)</entry>
+              <entry><literal>system.firmware.vendor</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.bios.version</literal> (string)</entry>
+              <entry><literal>system.firmware.version</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.bios.release_date</literal> (string)</entry>
+              <entry><literal>system.firmware.release_date</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.chassis.manufacturer</literal> (string)</entry>
+              <entry><literal>system.chassis.manufacturer</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>smbios.chassis.type</literal> (string)</entry>
+              <entry><literal>system.chassis.type</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Renamed to something more abstract.</entry>
+            </row>
+            <row>
+              <entry><literal>system.vendor</literal> (string)</entry>
+              <entry><literal>system.hardware.vendor</literal></entry>
+              <entry>2008-02-28</entry>
+              <entry>Duplicate of system.hardware.vendor.</entry>
             </row>
           </tbody>
         </tgroup>

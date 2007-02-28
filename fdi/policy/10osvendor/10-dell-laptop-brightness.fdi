@@ -10,7 +10,7 @@
        See http://bugs.freedesktop.org/show_bug.cgi?id=7221 for details. -->
   <device>
     <match key="system.kernel.name" string="Linux"> 
-      <match key="smbios.system.manufacturer" string="Dell Computer Corporation">
+      <match key="system.hardware.vendor" string="Dell Computer Corporation">
         <match key="system.formfactor" string="laptop">
            <spawn udi="/org/freedesktop/Hal/devices/dell_lcd_panel"/>
         </match>
@@ -20,7 +20,7 @@
 
   <device>
     <match key="system.kernel.name" string="Linux"> 
-      <match key="smbios.system.manufacturer" string="Dell Inc.">
+      <match key="system.hardware.vendor" string="Dell Inc.">
         <match key="system.formfactor" string="laptop">
            <spawn udi="/org/freedesktop/Hal/devices/dell_lcd_panel"/>
         </match>

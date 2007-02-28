@@ -79,6 +79,25 @@ setstr (char *buf, char *str, char *prop)
 }
 
 /** 
+ *  copykeyval:
+ *  @key:		The new HAL key
+ *  @compat_key:	The compatibility key, to be copied if key exists
+ *
+ *  Copies a key value into the compatibility value, if it exists.
+ */
+static void
+copykeyval (char *key, char *compat_key)
+{
+	char *value;
+
+	value = libhal_device_get_property_string (ctx, udi, key, NULL);
+	if (value != NULL) {
+		HAL_DEBUG (("Copying %s -> %s", key, compat_key));
+		libhal_device_set_property_string (ctx, udi, compat_key, value, NULL);
+	}
+}
+
+/** 
  *  main:
  *  @argc:	Number of arguments given to program
  *  @argv:	Arguments given to program
@@ -242,26 +261,38 @@ main (int argc, char *argv[])
 			nbuf[i] = '\0';
 
 		if (dmiparser_state == DMIPARSER_STATE_BIOS) {
-			setstr (nbuf, "Vendor:", "smbios.bios.vendor");
-			setstr (nbuf, "Version:", "smbios.bios.version");
-			setstr (nbuf, "Release Date:", "smbios.bios.release_date");
+			setstr (nbuf, "Vendor:", "system.firmware.vendor");
+			setstr (nbuf, "Version:", "system.firmware.version");
+			setstr (nbuf, "Release Date:", "system.firmware.release_date");
 			dmiparser_done_bios = TRUE;
 		} else if (dmiparser_state == DMIPARSER_STATE_SYSTEM) {
-			setstr (nbuf, "Manufacturer:", "smbios.system.manufacturer");
-			setstr (nbuf, "Product Name:", "smbios.system.product");
-			setstr (nbuf, "Version:", "smbios.system.version");
-			setstr (nbuf, "Serial Number:", "smbios.system.serial");
-			setstr (nbuf, "UUID:", "smbios.system.uuid");
+			setstr (nbuf, "Manufacturer:", "system.hardware.vendor");
+			setstr (nbuf, "Product Name:", "system.hardware.product");
+			setstr (nbuf, "Version:", "system.hardware.version");
+			setstr (nbuf, "Serial Number:", "system.hardware.serial");
+			setstr (nbuf, "UUID:", "system.hardware.uuid");
 			dmiparser_done_system = TRUE;
 		} else if (dmiparser_state == DMIPARSER_STATE_CHASSIS) {
-			setstr (nbuf, "Manufacturer:", "smbios.chassis.manufacturer");
-			setstr (nbuf, "Type:", "smbios.chassis.type");
+			setstr (nbuf, "Manufacturer:", "system.chassis.manufacturer");
+			setstr (nbuf, "Type:", "system.chassis.type");
 			dmiparser_done_chassis = TRUE;
 		}
 	}
 
 	/* as read to EOF, close */
 	fclose (f);
+
+	/* compatibility keys, remove 28 Feb 2008 */
+	copykeyval ("system.hardware.vendor", "smbios.system.manufacturer");
+	copykeyval ("system.hardware.product", "smbios.system.product");
+	copykeyval ("system.hardware.version", "smbios.system.version");
+	copykeyval ("system.hardware.serial", "smbios.system.serial");
+	copykeyval ("system.hardware.uuid", "smbios.system.uuid");
+	copykeyval ("system.firmware.vendor", "smbios.bios.vendor");
+	copykeyval ("system.firmware.version", "smbios.bios.version");
+	copykeyval ("system.firmware.release_date", "smbios.bios.release_date");
+	copykeyval ("system.chassis.manufacturer", "smbios.chassis.manufacturer");
+	copykeyval ("system.chassis.type", "smbios.chassis.type");
 
 out:
 	/* free ctx */

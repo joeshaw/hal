@@ -45,9 +45,9 @@ hf_computer_device_probe (HalDevice *device)
 
   hf_runner_run_sync(device, 0, "hald-probe-smbios", NULL);
 
-  sys_manufacturer = hal_device_property_get_string(device, "smbios.system.manufacturer");
-  sys_product = hal_device_property_get_string(device, "smbios.system.product");
-  sys_version = hal_device_property_get_string(device, "smbios.system.version");
+  sys_manufacturer = hal_device_property_get_string(device, "system.hardware.vendor");
+  sys_product = hal_device_property_get_string(device, "system.hardware.product");
+  sys_version = hal_device_property_get_string(device, "system.hardware.version");
 
   if (sys_manufacturer && sys_product && sys_version)
     {
@@ -59,7 +59,7 @@ hf_computer_device_probe (HalDevice *device)
 	hal_device_property_set_string(device, "system.product", sys_product);
     }
 
-  chassis_type = hal_device_property_get_string(device, "smbios.chassis.type");
+  chassis_type = hal_device_property_get_string(device, "system.chassis.type");
   formfactor = hal_device_property_get_string(device, "system.formfactor");
 
   if (chassis_type && (! formfactor || ! strcmp(formfactor, "unknown")))

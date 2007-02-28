@@ -495,11 +495,12 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 		goto out;
 	}
 
-	if ((system_manufacturer = hal_device_property_get_string (d, "smbios.system.manufacturer")) != NULL &&
-	    (system_product = hal_device_property_get_string (d, "smbios.system.product")) != NULL &&
-	    (system_version = hal_device_property_get_string (d, "smbios.system.version")) != NULL) {
+	if ((system_manufacturer = hal_device_property_get_string (d, "system.hardware.vendor")) != NULL &&
+	    (system_product = hal_device_property_get_string (d, "system.hardware.product")) != NULL &&
+	    (system_version = hal_device_property_get_string (d, "system.hardware.version")) != NULL) {
 		char buf[128];
 
+		/* depricated 2008-02-28 */
 		hal_device_property_set_string (d, "system.vendor", system_manufacturer);
 
 		if (strcmp(system_version, "Not Specified" ) != 0 ) {
