@@ -61,7 +61,7 @@ typedef struct ACPIDevHandler_s
 	HalDevice *(*add) (const gchar *acpi_path, HalDevice *parent, struct ACPIDevHandler_s *handler);
 	gboolean (*compute_udi) (HalDevice *d, struct ACPIDevHandler_s *handler);
 	gboolean (*remove) (HalDevice *d, struct ACPIDevHandler_s *handler);
-	gboolean (*refresh) (HalDevice *d, struct ACPIDevHandler_s *handler);
+	gboolean (*refresh) (HalDevice *d, struct ACPIDevHandler_s *handler, gboolean force_full_refresh);
 } ACPIDevHandler;
 
 /** 
@@ -385,7 +385,7 @@ acpi_poll (gpointer data)
 }
 
 static gboolean
-ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler)
+ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refresh)
 {
 	const char *path;
 	path = hal_device_property_get_string (d, "linux.acpi_path");
@@ -606,7 +606,7 @@ battery_refresh_add (HalDevice *d, const char *path)
  *  Refresh the battery device information. 
  */
 static gboolean
-battery_refresh (HalDevice *d, ACPIDevHandler *handler)
+battery_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refresh)
 {
 	const char *path;
 
@@ -636,7 +636,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler)
 		 * /proc/acpi/battery/BAT%d/[info|state] so don't read
 		 * static data that won't change
 		 */
-		if (!hal_device_has_property (d, "battery.vendor")) {
+		if (force_full_refresh || !hal_device_has_property (d, "battery.vendor")) {
 			/* battery has no information, so coldplug */
 			battery_refresh_add (d, path);
 		}
@@ -715,7 +715,7 @@ get_processor_model_name (gint proc_num)
 }
 
 static gboolean
-processor_refresh (HalDevice *d, ACPIDevHandler *handler)
+processor_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refresh)
 {
 	const char *path;
 
@@ -749,7 +749,7 @@ processor_refresh (HalDevice *d, ACPIDevHandler *handler)
 }
 
 static gboolean
-fan_refresh (HalDevice *d, ACPIDevHandler *handler)
+fan_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refresh)
 {
 	const char *path;
 
@@ -771,7 +771,7 @@ fan_refresh (HalDevice *d, ACPIDevHandler *handler)
  * Using /proc/acpi/video does not work, this method is much more reliable.
  */
 static gboolean
-laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
+laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refresh)
 {
 	const char *path;
 	int acpi_type;
@@ -856,7 +856,7 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler)
 }
 
 static gboolean
-button_refresh (HalDevice *d, ACPIDevHandler *handler)
+button_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refresh)
 {
 	const char *path;
 	gchar *parent_path;
@@ -1133,7 +1133,7 @@ acpi_generic_add (const gchar *acpi_path, HalDevice *parent, ACPIDevHandler *han
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	else
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
-	if (handler->refresh == NULL || !handler->refresh (d, handler)) {
+	if (handler->refresh == NULL || !handler->refresh (d, handler, FALSE)) {
 		g_object_unref (d);
 		d = NULL;
 	}
@@ -1413,7 +1413,7 @@ acpi_rescan_device (HalDevice *d)
 
 		handler = acpi_handlers[i];
 		if (handler->acpi_type == acpi_type) {
-			return handler->refresh (d, handler);
+			return handler->refresh (d, handler, TRUE);
 		}
 	}
 
