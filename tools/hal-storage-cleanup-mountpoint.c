@@ -154,11 +154,15 @@ do_cleanup (const char *mount_point)
 
 	g_strfreev (lines);
 
+	printf ("removing directory", mount_point);
+
 	/* remove directory */
 	if (g_rmdir (mount_point) != 0) {
 		unlink ("/media/.hal-mtab~");
 		unknown_error ("Cannot remove directory");
 	}
+
+	printf ("atomically creating new /media/.hal-mtab file");
 
 	/* set new .hal-mtab file */
 	if (rename ("/media/.hal-mtab~", "/media/.hal-mtab") != 0) {
@@ -166,6 +170,7 @@ do_cleanup (const char *mount_point)
 		unknown_error ("Cannot rename /media/.hal-mtab~ to /media/.hal-mtab");
 	}
 
+	printf ("hal-storage-cleanup-mountpoint done for %s", mount_point);
 }
 
 int

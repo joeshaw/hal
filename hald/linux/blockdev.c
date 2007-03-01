@@ -189,6 +189,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 	/* loop over /proc/mounts */
 	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
 		struct stat statbuf;
+		gboolean use_device_name_for_match;
 
 		/*HAL_INFO ((" * /proc/mounts contain dev %s - type %s", mnt.mnt_fsname, mnt.mnt_type));*/
 
@@ -200,27 +201,60 @@ blockdev_refresh_mount_state (HalDevice *d)
 		if (strcmp(mnt.mnt_type, "nfs") == 0)
 			continue;
 
+		use_device_name_for_match = FALSE;
 		/* get major:minor of special device file */
-		if (stat (mnt.mnt_fsname, &statbuf) != 0)
-			continue;
-
-		if (major (statbuf.st_rdev) == 0)
-			continue;
+		if (stat (mnt.mnt_fsname, &statbuf) != 0) {
+			/* DING DING DING... device node may have been deleted by udev 
+			 * but device is still mounted and we haven't processed the uevent
+			 * for that deletion from udev.. 
+			 * 
+			 * So in this case... fall back to comparing on device names 
+			 * rather than pretending the device is not mounted as that's
+			 * what will happen if we just skip this /proc/mounts entry.
+			 *
+			 * The reason it's nicer to compare on major:minor is that
+			 * /proc/mounts is broken - it contains the *device name*
+			 * passed to mount(2) which in some cases may be a symlink
+			 * (on many distros it's common to see /proc/mounts contain
+			 * /dev/root as the device for /). Sigh...
+			 */
+			use_device_name_for_match = TRUE;
+		} else {
+			if (major (statbuf.st_rdev) == 0)
+				continue;
+		}
 
 		/*HAL_INFO (("* found mounts dev %s (%i:%i)", mnt.mnt_fsname, major (statbuf.st_rdev), minor (statbuf.st_rdev)));*/
 		/* match against all hal volumes */
 		for (volume = volumes; volume != NULL; volume = g_slist_next (volume)) {
 			HalDevice *dev;
+			gboolean is_match;
 
+			is_match = FALSE;
 			dev = HAL_DEVICE (volume->data);
-			major = hal_device_property_get_int (dev, "block.major");
-			if (major == 0)
-				continue;
-			minor = hal_device_property_get_int (dev, "block.minor");
-			devt = makedev (major, minor);
-			/*HAL_INFO (("  match %s (%i:%i)", hal_device_get_udi (dev), major, minor));*/
 
-			if (statbuf.st_rdev == devt) {
+			if (use_device_name_for_match) {
+				const char *device_name;
+
+				device_name = hal_device_property_get_string (dev, "block.device");
+				if (device_name == NULL)
+					continue;
+
+				if (strcmp (device_name, mnt.mnt_fsname) == 0)
+					is_match = TRUE;
+			} else {
+				major = hal_device_property_get_int (dev, "block.major");
+				if (major == 0)
+					continue;
+				minor = hal_device_property_get_int (dev, "block.minor");
+				devt = makedev (major, minor);
+				/*HAL_INFO (("  match %s (%i:%i)", hal_device_get_udi (dev), major, minor));*/
+
+				if (statbuf.st_rdev == devt)
+					is_match = TRUE;
+			}
+
+			if (is_match) {
 				/* found entry for this device in /proc/mounts */
 				device_property_atomic_update_begin ();
 				hal_device_property_set_bool (dev, "volume.is_mounted", TRUE);
@@ -229,7 +263,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 				hal_device_property_set_string (dev, "volume.mount_point", mnt.mnt_dir);
 				device_property_atomic_update_end ();
 				/*HAL_INFO (("  set %s to be mounted at %s (%s)",
-					   hal_device_get_udi (dev), mnt.mnt_dir,
+				  hal_device_get_udi (dev), mnt.mnt_dir,
 					   hasmntopt (&mnt, MNTOPT_RO) ? "ro" : "rw"));*/
 				volumes = g_slist_delete_link (volumes, volume);
 				break;
@@ -639,22 +673,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	if (parent == NULL && !is_partition && !is_fakevolume) {
 		DIR * dir;
 		struct dirent *dp;
-		
 		char path[HAL_PATH_MAX];
-
-
-		/* sleep one second since device mapper needs additional
-		 * time before the device file is ready
-		 *
-		 * this is a hack and will only affect device mapper block
-		 * devices. It can go away once the kernel emits a "changed"
-		 * event for the device file (this is about to go upstream)
-		 * and we can depend on a released kernel with this feature.
-		 */
-		if (strncmp (hal_util_get_last_element (sysfs_path), "dm-", 3) == 0) {
-			HAL_INFO (("Waiting 1000ms to wait for device mapper to be ready", path));
-			usleep (1000 * 1000);
-		}
 
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
 		HAL_INFO (("Looking in %s", path));
@@ -1171,6 +1190,8 @@ force_unmount (HalDevice *d, void *end_token)
 	device_file = hal_device_property_get_string (d, "block.device");
 	mount_point = hal_device_property_get_string (d, "volume.mount_point");
 
+	HAL_INFO (("in force_unmount for %s %s", device_file, mount_point));
+
 	/* look up in /media/.hal-mtab to see if we mounted this one */
 	if (mount_point != NULL && strlen (mount_point) > 0 && hal_util_is_mounted_by_hald (mount_point)) {
 		char *unmount_stdin;
@@ -1259,6 +1280,7 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token)
 		if (hal_device_property_get_bool (d, "volume.is_mounted")) {
 			force_unmount (d, end_token);
 		} else {
+			HAL_INFO (("device at sysfs_path %s is not mounted", sysfs_path));
 			hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
 		}
 	}
