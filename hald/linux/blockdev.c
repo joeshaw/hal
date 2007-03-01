@@ -1181,7 +1181,7 @@ force_unmount_cb (HalDevice *d, guint32 exit_type,
 
 }
 
-static void
+static gboolean
 force_unmount (HalDevice *d, void *end_token)
 {
 	const char *device_file;
@@ -1189,8 +1189,6 @@ force_unmount (HalDevice *d, void *end_token)
 
 	device_file = hal_device_property_get_string (d, "block.device");
 	mount_point = hal_device_property_get_string (d, "volume.mount_point");
-
-	HAL_INFO (("in force_unmount for %s %s", device_file, mount_point));
 
 	/* look up in /media/.hal-mtab to see if we mounted this one */
 	if (mount_point != NULL && strlen (mount_point) > 0 && hal_util_is_mounted_by_hald (mount_point)) {
@@ -1213,28 +1211,10 @@ force_unmount (HalDevice *d, void *end_token)
 					0,
 					force_unmount_cb,
 					end_token, NULL);
-
-/*
-		char *cleanup_stdin;
-		char *extra_env[2];
-		
-		HAL_INFO (("Cleaning up directory '%s' since it was created by HAL's Mount()", mount_point));
-		
-		extra_env[0] = g_strdup_printf ("HALD_CLEANUP=%s", mount_point);
-		extra_env[1] = NULL;
-		cleanup_stdin = "\n";
-		
-		hald_runner_run_method (dev, 
-					"hal-storage-cleanup-mountpoint", 
-					extra_env, 
-					cleanup_stdin, TRUE,
-					0,
-					cleanup_mountpoint_cb,
-					g_strdup (mount_point), NULL);
-*/
+		return TRUE;
+	} else {
+		return FALSE;
 	}
-
-
 }
 
 void
@@ -1278,7 +1258,11 @@ hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token)
 		
 		/* if we're mounted, then do a lazy unmount so the system can gracefully recover */
 		if (hal_device_property_get_bool (d, "volume.is_mounted")) {
-			force_unmount (d, end_token);
+			if (!force_unmount (d, end_token)) {
+				/* this wasn't mounted by us... carry on */
+				HAL_INFO (("device at sysfs_path %s is mounted, but not by HAL", sysfs_path));
+				hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
+			}
 		} else {
 			HAL_INFO (("device at sysfs_path %s is not mounted", sysfs_path));
 			hal_util_callout_device_remove (d, blockdev_callouts_remove_done, end_token, NULL);
