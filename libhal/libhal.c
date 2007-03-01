@@ -493,6 +493,46 @@ oom:
 	return NULL;
 }
 
+/* libhal_property_set_sort:
+ * @set: property-set to sort
+ *
+ * sort all properties according to property name 
+ */
+void 
+libhal_property_set_sort (LibHalPropertySet *set)
+{
+	unsigned int i;
+	unsigned int num_elements;
+	LibHalProperty *p;
+	LibHalProperty *q;
+	LibHalProperty **r;
+
+	/* TODO: for the sake of gods; do something smarter than a slow bubble-sort!! */
+
+	num_elements = libhal_property_set_get_num_elems (set);
+	for (i = 0; i < num_elements; i++) {
+		for (p = set->properties_head, r = &(set->properties_head); p != NULL; p = q) {
+			q = p->next;
+
+			if (q == NULL)
+				continue;
+
+			if (strcmp (p->key, q->key) > 0) {
+				/* switch p and q */
+				p->next = q->next;
+				q->next = p;
+				*r = q;
+				
+				r = &(q->next);
+				q = p;
+			} else {
+				/* do nothing */
+				r = &(p->next);
+			}
+		}
+	}
+}
+
 /** 
  * libhal_free_property_set:
  * @set: property-set to free

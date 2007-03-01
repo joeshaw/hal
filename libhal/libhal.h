@@ -407,6 +407,10 @@ LibHalPropertySet *libhal_device_get_all_properties (LibHalContext *ctx,
 						     const char *udi,
 						     DBusError *error);
 
+
+/* sort all properties according to property name */
+void libhal_property_set_sort (LibHalPropertySet *set);
+
 /* Free a property set earlier obtained with libhal_device_get_all_properties(). */
 void libhal_free_property_set (LibHalPropertySet *set);
 

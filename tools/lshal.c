@@ -124,6 +124,8 @@ print_props (const char *udi)
 		return;
 	}
 
+	libhal_property_set_sort (props);
+
 	for (libhal_psi_init (&it, props); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
 		type = libhal_psi_get_type (&it);
 		switch (type) {
