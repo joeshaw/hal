@@ -1055,7 +1055,7 @@ acpi_synthesize_hotplug_events (void)
 	HalDevice *computer;
 	gchar path[HAL_PATH_MAX];
 
-	if (!g_file_test ("/proc/acpi/info", G_FILE_TEST_EXISTS))
+	if (!g_file_test ("/proc/acpi/", G_FILE_TEST_IS_DIR))
 		return FALSE;
 
 	if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) == NULL &&
@@ -1066,8 +1066,16 @@ acpi_synthesize_hotplug_events (void)
 
 	/* Set appropriate properties on the computer object */
 	hal_device_property_set_string (computer, "power_management.type", "acpi");
-	hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
-					    "/proc/acpi", "info", "version", 0, FALSE);
+	if (g_file_test ("/proc/acpi/info", G_FILE_TEST_EXISTS)) {
+		hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
+						    "/proc/acpi", "info", "version", 0, FALSE);
+	} else {
+		gchar *firmware_path;
+		firmware_path = g_strdup_printf ("%s/firmware/acpi", get_hal_sysfs_path ());
+		hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
+						    firmware_path, "info", "version", 0, FALSE);
+		g_free (firmware_path);
+	}
 
 	/* collect batteries */
 	snprintf (path, sizeof (path), "%s/acpi/battery", get_hal_proc_path ());
