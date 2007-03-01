@@ -810,7 +810,7 @@ partutil/Makefile
 privileges/Makefile
 fdi/Makefile
 fdi/preprobe/Makefile
-fdi/preprobe/10osvendor/Makefile
+fdi/preprobe/10freedesktop/Makefile
 fdi/preprobe/20thirdparty/Makefile
 fdi/preprobe/30user/Makefile
 fdi/policy/Makefile
