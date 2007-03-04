@@ -171,20 +171,16 @@ regen_cache (void)
 
 	regen_cache_done = FALSE;
 
-	hald_runner_run (NULL, 
-			 "hald-generate-fdi-cache --force",
-			 extra_env,
-			 10000,
-			 regen_cache_cb,
-			 NULL,
-			 NULL);
+	hald_runner_run_sync (NULL, 
+			      "hald-generate-fdi-cache --force",
+			      extra_env,
+			      10000,
+			      regen_cache_cb,
+			      NULL,
+			      NULL);
 
 	for (n = 0; extra_env[n] != NULL; n++) {
 		g_free (extra_env[n]);
-	}
-
-	while (!regen_cache_done) {
-		g_main_context_iteration (NULL, TRUE);
 	}
 
 	if (!regen_cache_success) {

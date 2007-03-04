@@ -64,11 +64,19 @@ hald_runner_start (HalDevice *device, const gchar *command_line, char **extra_en
 /* Run a helper program using the commandline, with input as infomation on
  * stdin */
 void
-hald_runner_run(HalDevice *device,
-               const gchar *command_line, char **extra_env, 
-               guint32 timeout,
-               HalRunTerminatedCB cb,
-               gpointer data1, gpointer data2);
+hald_runner_run (HalDevice *device,
+		 const gchar *command_line, char **extra_env, 
+		 guint32 timeout,
+		 HalRunTerminatedCB cb,
+		 gpointer data1, gpointer data2);
+
+void
+hald_runner_run_sync (HalDevice *device,
+		      const gchar *command_line, char **extra_env, 
+		      guint32 timeout,
+		      HalRunTerminatedCB cb,
+		      gpointer data1, gpointer data2);
+
 void
 hald_runner_run_method(HalDevice *device,                                                              
 		       const gchar *command_line, char **extra_env, 

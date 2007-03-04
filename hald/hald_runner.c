@@ -612,18 +612,15 @@ hald_runner_start (HalDevice * device, const gchar * command_line,
 }
 
 static void
-call_notify (DBusPendingCall * pending, void *user_data)
+process_reply (DBusMessage *m, HelperData *hb)
 {
-	HelperData *hb = (HelperData *) user_data;
 	dbus_uint32_t exitt = HALD_RUN_SUCCESS;
 	dbus_int32_t return_code = 0;
-	DBusMessage *m;
 	GArray *error = NULL;
 	DBusMessageIter iter;
 
 	error = g_array_new (TRUE, FALSE, sizeof (char *));
 
-	m = dbus_pending_call_steal_reply (pending);
 	if (dbus_message_get_type (m) != DBUS_MESSAGE_TYPE_METHOD_RETURN)
 		goto malformed;
 
@@ -658,8 +655,6 @@ call_notify (DBusPendingCall * pending, void *user_data)
 
 	g_free (hb);
 
-	dbus_pending_call_unref (pending);
-
 	goto out;
 
       malformed:
@@ -678,11 +673,22 @@ call_notify (DBusPendingCall * pending, void *user_data)
 
 	g_free (hb);
 
-	dbus_pending_call_unref (pending);
-
       out:
 	if (method_run_notify)
 		method_run_notify (method_run_notify_userdata);
+}
+
+
+static void
+call_notify (DBusPendingCall * pending, void *user_data)
+{
+	HelperData *hb = (HelperData *) user_data;
+	DBusMessage *m;
+
+	m = dbus_pending_call_steal_reply (pending);
+	process_reply (m, hb);
+	dbus_pending_call_unref (pending);
+
 }
 
 /* Run a helper program using the commandline, with input as infomation on
@@ -732,7 +738,7 @@ hald_runner_run_method (HalDevice * device,
 	dbus_pending_call_set_notify (call, call_notify, hd, NULL);
 	dbus_message_unref (msg);
 	return;
-      error:
+error:
 	dbus_message_unref (msg);
 	g_free (hd);
 	cb (device, HALD_RUN_FAILED, 0, NULL, data1, data2);
@@ -748,6 +754,63 @@ hald_runner_run (HalDevice * device,
 				"", FALSE, timeout, cb, data1, data2);
 }
 
+void
+hald_runner_run_sync (HalDevice * device,
+		      const gchar * command_line, char **extra_env,
+		      guint timeout,
+		      HalRunTerminatedCB cb, gpointer data1, gpointer data2)
+{
+	DBusMessage *msg;
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	HelperData *hd = NULL;
+	const char *input = "";
+	gboolean error_on_stderr = FALSE;
+	DBusError error;
+
+	msg = dbus_message_new_method_call ("org.freedesktop.HalRunner",
+					    "/org/freedesktop/HalRunner",
+					    "org.freedesktop.HalRunner",
+					    "Run");
+	if (msg == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init_append (msg, &iter);
+
+	if (!add_first_part (&iter, device, command_line, extra_env))
+		goto error;
+
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &input);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &error_on_stderr);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &timeout);
+
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (runner_connection, msg, INT_MAX, &error);
+	if (reply == NULL) {
+		if (dbus_error_is_set (&error)) {
+			HAL_ERROR (("Error running '%s': %s: %s", command_line, error.name, error.message));
+		}
+		goto error;
+	}
+
+	hd = g_new0 (HelperData, 1);
+	hd->d = device;
+	hd->cb = cb;
+	hd->data1 = data1;
+	hd->data2 = data2;
+
+	/* this will free the HelperData and unref the reply (it's
+	 * used also by the async version) 
+	 */
+	process_reply (reply, hd);
+
+	dbus_message_unref (msg);
+	return;
+
+error:
+	dbus_message_unref (msg);
+	g_free (hd);
+	cb (device, HALD_RUN_FAILED, 0, NULL, data1, data2);
+}
 
 
 void
