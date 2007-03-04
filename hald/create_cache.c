@@ -509,7 +509,7 @@ di_rules_init (void)
 	int fd;
 	struct cache_header header;
 	struct stat st;
-	char namebuf [PATH_MAX+1];
+	char cachename_temp [PATH_MAX+1];
 	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
 	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
 	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
@@ -519,16 +519,13 @@ di_rules_init (void)
 		cachename = HALD_CACHE_FILE;
 	HAL_INFO (("Loading rules"));
 	
-	if(haldc_force_recreate && !stat(cachename, &st)) {
-	    strncpy(namebuf, cachename, PATH_MAX);
-	    strncat(namebuf, ".bak", PATH_MAX);
-	    if(rename(cachename, namebuf) < 0)
-		DIE(("Unable to rename file %s to file %s", cachename, namebuf));
-	}
+	strncpy(cachename_temp, cachename, PATH_MAX);
+	strncat(cachename_temp, "~", PATH_MAX);
 
-	fd = open(cachename, O_CREAT|O_RDWR|O_EXCL|O_TRUNC, 0644);
-	if(fd < 0) DIE(("Unable to open fdi cache %s file for writing: %s",
-		cachename, strerror(errno)));
+	fd = open(cachename_temp, O_CREAT|O_RDWR|O_EXCL|O_TRUNC, 0644);
+	if(fd < 0) {
+		DIE(("Unable to open fdi cache '%s' file for writing: %s", cachename, strerror(errno)));
+	}
 
 	memset(&header, 0, sizeof(struct cache_header));
 	pad32_write(fd, 0, &header, sizeof(struct cache_header));
@@ -560,6 +557,10 @@ di_rules_init (void)
 	header.all_rules_size = lseek(fd, 0, SEEK_END);
 	pad32_write(fd, 0, &header, sizeof(struct cache_header));
 	close(fd);
+	if (rename (cachename_temp, cachename) != 0) {
+		unlink (cachename_temp);
+		DIE (("Cannot rename '%s' to '%s'", cachename_temp, cachename));
+	}
 	
 	HAL_INFO(("preprobe: offset=%08lx, size=%d", header.fdi_rules_preprobe,
 		header.fdi_rules_information - header.fdi_rules_preprobe));
@@ -568,7 +569,7 @@ di_rules_init (void)
 	HAL_INFO(("policy: offset=%08lx, size=%d", header.fdi_rules_policy,
 		header.all_rules_size - header.fdi_rules_policy));
 
-	HAL_INFO (("Loading rules done (occupying %d bytes)", header.all_rules_size));
+	HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
 }
 
 /**
