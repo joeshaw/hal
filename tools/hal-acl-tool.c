@@ -626,6 +626,10 @@ acl_device_added_visitor (const char *seat_id,
 		if (!session_is_local)
 			continue;
 
+		/* don't bother giving ACL's to root - he's almighty anyway */
+		if (session_uid == 0)
+			continue;
+
 		if (afd->grant_to_local_seat)
 			afd_grant_to_uid (afd, session_uid);
 		else {
