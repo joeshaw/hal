@@ -1,5 +1,7 @@
 #!/bin/sh
 
+information_fdidir="../../hal-info/fdi"
+
 case `uname -s` in
     FreeBSD)	backend=freebsd ;;
     SunOS)	backend=solaris ;;
@@ -12,7 +14,13 @@ if [ "$1" = "--skip-fdi-install" ] ; then
     shift
 else
     rm -rf .local-fdi
-    make -C ../fdi install DESTDIR=`pwd`/.local-fdi prefix=/
+    make -C ../fdi install DESTDIR=`pwd`/.local-fdi prefix=/ && \
+    if [ ! -d $information_fdidir ] ; then
+    	echo "ERROR: You need to checkout hal-info in the same level"
+    	echo "directory as hal to get the information fdi files."
+    	exit
+    fi
+    make -C $information_fdidir install DESTDIR=`pwd`/.local-fdi prefix=/
 fi
 export HAL_FDI_SOURCE_PREPROBE=.local-fdi/share/hal/fdi/preprobe
 export HAL_FDI_SOURCE_INFORMATION=.local-fdi/share/hal/fdi/information
