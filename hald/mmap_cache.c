@@ -184,7 +184,7 @@ regen_cache (void)
 	}
 
 	if (!regen_cache_success) {
-		DIE (("fdi cache regeneration failed!"));
+		HAL_ERROR (("fdi cache regeneration failed!"));
 	}
 
 	HAL_INFO (("fdi cache generation done"));

@@ -47,6 +47,9 @@
 #include "logger.h"
 #include "rule.h"
 
+static XML_Parser parser;
+static char s_error[256];
+
 /* ctx of the current fdi file used for parsing */
 struct fdi_context {
 	int		depth;
@@ -199,7 +202,7 @@ static void store_key(struct fdi_context *fdi_ctx, const char *key)
 	pad32_write(fdi_ctx->cache_fd, fdi_ctx->position + sizeof(struct rule),
 	    (void*)key, fdi_ctx->rule.key_len);
 
-	HAL_INFO(("Storing key '%s' at rule=%08lx", key, fdi_ctx->position));
+	/*HAL_INFO(("Storing key '%s' at rule=%08lx", key, fdi_ctx->position));*/
 }
 
 /* stores value string to data file which we'll mmap next */
@@ -238,8 +241,8 @@ static void store_value(struct fdi_context *fdi_ctx, const char *value, size_t v
 	memcpy(p, value, value_len);
 	p[value_len] = '\0';
 	
-	HAL_INFO(("Storing value '%s', value_len=%d, at rule=%08lx, offset=%08lx",
-		p, value_len, fdi_ctx->position, offset));
+	/*HAL_INFO(("Storing value '%s', value_len=%d, at rule=%08lx, offset=%08lx",
+	  p, value_len, fdi_ctx->position, offset));*/
 
 	free(p);
 }
@@ -256,6 +259,7 @@ static void store_rule(struct fdi_context *fdi_ctx)
 	pad32_write(fdi_ctx->cache_fd, fdi_ctx->position,
 		&fdi_ctx->rule, sizeof(struct rule));
 
+/*
 	HAL_INFO(("rule=%08lx, rule_size=%d, rtype=%d",
 		fdi_ctx->position, fdi_ctx->rule.rule_size, fdi_ctx->rule.rtype));
 
@@ -266,6 +270,7 @@ static void store_rule(struct fdi_context *fdi_ctx)
 
 	HAL_INFO(("  value_len=%d, value_offset=%08lx",
 		fdi_ctx->rule.value_len, fdi_ctx->rule.value_offset));
+*/
 
 	init_rule_struct(&fdi_ctx->rule);
 }
@@ -289,9 +294,10 @@ static void set_jump_position(struct fdi_context *fdi_ctx)
 	pad32_write(fdi_ctx->cache_fd,
 		fdi_ctx->match_at_depth[fdi_ctx->depth] + offsetof(struct rule, jump_position),
 		&offset, sizeof(fdi_ctx->rule.jump_position));
-
+/*
 	HAL_INFO(("modify rule=0x%08x, set jump to 0x%08x",
 		fdi_ctx->match_at_depth[fdi_ctx->depth], offset));
+*/
 }
 
 /* expat cb for start, e.g. <match foo=bar */
@@ -313,16 +319,22 @@ start (void *data, const char *el, const char **attr)
 	/* get key and attribute for current rule */
 	for (i = 0; attr[i] != NULL; i+=2) {
 		if (strcmp (attr[i], "key") == 0) {
-			if (fdi_ctx->rule.key_len > 0)
-				DIE(("Bad rule: key already defined"));
+			if (fdi_ctx->rule.key_len > 0) {
+				snprintf (s_error, sizeof (s_error), "Bad rule: key already defined");
+				XML_StopParser (parser, FALSE);
+				return;
+			}
 
 			store_key(fdi_ctx, attr[i + 1]);
 			continue;
 		}
 		if (fdi_ctx->rule.rtype == RULE_SPAWN) {
 			if (strcmp(attr[i], "udi") == 0) {
-				if (fdi_ctx->rule.key_len > 0)
-					DIE(("Bad rule: key already defined"));
+				if (fdi_ctx->rule.key_len > 0) {
+					snprintf (s_error, sizeof (s_error), "Bad rule: key already defined");
+					XML_StopParser (parser, FALSE);
+					return;
+				}
 
 				store_key(fdi_ctx, attr[i + 1]);
 				continue;
@@ -331,13 +343,19 @@ start (void *data, const char *el, const char **attr)
 			continue;
 		} else if (fdi_ctx->rule.rtype == RULE_MATCH) {
 
-			if (fdi_ctx->rule.key_len == 0)
-				DIE(("Bad rule: value without a key"));
+			if (fdi_ctx->rule.key_len == 0) {
+				snprintf (s_error, sizeof (s_error), "Bad rule: value without a key");
+				XML_StopParser (parser, FALSE);
+				return;
+			}
 
 			fdi_ctx->rule.type_match = get_match_type(attr[i]);
 
-			if (fdi_ctx->rule.type_match == MATCH_UNKNOWN)
-				DIE(("Bad rule: unknown type_match"));
+			if (fdi_ctx->rule.type_match == MATCH_UNKNOWN) {
+				snprintf (s_error, sizeof (s_error), "Bad rule: unknown type_match");
+				XML_StopParser (parser, FALSE);
+				return;
+			}
 
 			store_value(fdi_ctx, attr[i + 1], strlen(attr[i + 1]));
 			continue;
@@ -348,15 +366,21 @@ start (void *data, const char *el, const char **attr)
 			}
 			fdi_ctx->rule.type_merge = get_merge_type(attr[i + 1]);
 
-			if (fdi_ctx->rule.type_merge == MERGE_UNKNOWN)
-				DIE(("Bad rule: unknown type_merge"));
+			if (fdi_ctx->rule.type_merge == MERGE_UNKNOWN) {
+				snprintf (s_error, sizeof (s_error), "Bad rule: unknown type_merge");
+				XML_StopParser (parser, FALSE);
+				return;
+			}
 
 			continue;
 		}
 	}
 
-	if (fdi_ctx->rule.key_len == 0)
-	    DIE(("Bad rule: key not found"));
+	if (fdi_ctx->rule.key_len == 0) {
+		snprintf (s_error, sizeof (s_error), "Bad rule: key not found");
+		XML_StopParser (parser, FALSE);
+		return;
+	}
 
 	/* match rules remember the current nesting and
 	   the label to jump to if not matching */
@@ -394,21 +418,28 @@ end (void *data, const char *el){
 	}
 
 	/* only valid if element is in the current context */
-	if (fdi_ctx->rule.rtype != rtype){
-		DIE(("Unexpected tag '%s'", el));
+	if (fdi_ctx->rule.rtype != rtype) {
+		snprintf (s_error, sizeof (s_error), "Unexpected tag '%s'", el);
+		XML_StopParser (parser, FALSE);
+		return;
 	}
 	store_rule(fdi_ctx);
 }
 
 /* decompile an fdi file into a list of rules as this is quicker than opening then each time we want to search */
 static int
-rules_add_fdi_file (const char *filename, int fd){
-	struct fdi_context	*fdi_ctx;
-	char			*buf;
-	gsize			buflen;
-	int			rc;
+rules_add_fdi_file (const char *filename, int fd)
+{
+	struct fdi_context *fdi_ctx;
+	char *buf;
+	gsize buflen;
+	int rc;
+	int ret;
 
-	if (!g_file_get_contents (filename, &buf, &buflen, NULL)) return -1;
+	ret = -1;
+
+	if (!g_file_get_contents (filename, &buf, &buflen, NULL)) 
+		goto out;
 
 	/* create new context */
 	fdi_ctx = g_new0 (struct fdi_context, 1);
@@ -416,19 +447,44 @@ rules_add_fdi_file (const char *filename, int fd){
 	init_rule_struct(&fdi_ctx->rule);
 	fdi_ctx->cache_fd = fd;
 
-	XML_Parser parser = XML_ParserCreate (NULL);
+	parser = XML_ParserCreate (NULL);
 	if (parser == NULL) {
-		fprintf (stderr, "Couldn't allocate memory for parser\n");
-		return -1;
+		HAL_ERROR (("Couldn't allocate memory for parser"));
+		goto out;
 	}
 	XML_SetUserData (parser, fdi_ctx);
 	XML_SetElementHandler (parser, start, end);
 	XML_SetCharacterDataHandler (parser, cdata);
 	rc = XML_Parse (parser, buf, buflen, 1);
-	if (rc == 0)
-		fprintf (stderr, "Parse error at line %i:\n%s\n",
-			(int) XML_GetCurrentLineNumber (parser),
-			XML_ErrorString (XML_GetErrorCode (parser)));
+	if (rc == 0) {
+		if (XML_GetErrorCode (parser) == XML_ERROR_ABORTED) {
+			HAL_ERROR (("%s:%d: semantic error: %s",
+				    filename, 
+				    (int) XML_GetCurrentLineNumber (parser),
+				    s_error));
+			syslog (LOG_ERR, 
+				"error in fdi file %s:%d: %s",
+				filename, 
+				(int) XML_GetCurrentLineNumber (parser),
+				s_error);
+
+		} else {
+			HAL_ERROR (("%s:%d: XML parse error: %s",
+				    filename, 
+				    (int) XML_GetCurrentLineNumber (parser),
+				    XML_ErrorString (XML_GetErrorCode (parser))));
+			syslog (LOG_ERR, 
+				"error in fdi file %s:%d: %s",
+				filename, 
+				(int) XML_GetCurrentLineNumber (parser),
+				XML_ErrorString (XML_GetErrorCode (parser)));
+		}
+
+		XML_ParserFree (parser);
+		g_free (buf);
+		g_free (fdi_ctx);
+		goto out;
+	}
 	XML_ParserFree (parser);
 	g_free (buf);
 
@@ -439,25 +495,30 @@ rules_add_fdi_file (const char *filename, int fd){
 	store_key(fdi_ctx, filename);
 	store_value(fdi_ctx, "", 0);
 	store_rule(fdi_ctx);
-
 	g_free (fdi_ctx);
+	ret = lseek(fd, 0, SEEK_END);
+out:
+	return ret;
 
-	if (rc == 0) return -1;
-	return lseek(fd, 0, SEEK_END);
 }
 
 
 /* recurse a directory tree, searching and adding fdi files */
-static int
+static gboolean
 rules_search_and_add_fdi_files (const char *dir, int fd)
 {
 	int i;
 	int num_entries;
 	struct dirent **name_list;
+	gboolean ret;
+
+	ret = FALSE;
 	
 	num_entries = scandir (dir, &name_list, 0, _alphasort);
-	if (num_entries == -1)
-		return -1;
+	if (num_entries == -1) {
+		HAL_ERROR (("Cannot scan '%s': %s", strerror (errno)));
+		goto out;
+	}
 
 	for (i = num_entries - 1; i >= 0; i--) {
 		int len;
@@ -470,9 +531,19 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 		if (g_file_test (full_path, (G_FILE_TEST_IS_REGULAR))) {
 			if (len >= 5 && strcmp(&filename[len - 4], ".fdi") == 0) {
 				int fdi_rules_size;
+				off_t offset_before;
+				offset_before = lseek (fd, 0, SEEK_CUR);
 				fdi_rules_size = rules_add_fdi_file (full_path, fd);
-				if (fdi_rules_size < 0)
-					HAL_WARNING (("error processing fdi file '%s'", full_path));
+				if (fdi_rules_size < 0) {
+					HAL_ERROR (("error processing fdi file '%s'", full_path));
+					/* try to just skip this file */
+					if (ftruncate (fd, offset_before) != 0) {
+						HAL_ERROR (("Cannot truncate rules fdi"));
+						goto out;
+					}
+					lseek (fd, 0, SEEK_END);
+					HAL_INFO (("skipped fdi file '%s'", full_path));
+				}
 			}
 		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) && filename[0] != '.') {
 			int num_bytes;
@@ -484,21 +555,24 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 				break;
 
 			snprintf (dirname, num_bytes, "%s/%s", dir, filename);
-			rules_search_and_add_fdi_files (dirname, fd);
+			if (!rules_search_and_add_fdi_files (dirname, fd))
+				goto out;
 			free (dirname);
 		}
 		g_free (full_path);
 		free (name_list[i]);
 	}
 
-	for (; i >= 0; i--) free (name_list[i]);
+	for (; i >= 0; i--) {
+		free (name_list[i]);
+	}
 	free (name_list);
-	return 0;
+	ret = TRUE;
+out:
+	return ret;
 }
 
 
-int haldc_is_verbose = 0;
-int haldc_use_syslog = 0;
 int haldc_force_recreate = 0;
 
 
@@ -506,9 +580,8 @@ static void
 di_rules_init (void)
 {
 	char * cachename;
-	int fd;
+	int fd = -1;
 	struct cache_header header;
-	struct stat st;
 	char cachename_temp [PATH_MAX+1];
 	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
 	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
@@ -522,36 +595,46 @@ di_rules_init (void)
 	strncpy(cachename_temp, cachename, PATH_MAX);
 	strncat(cachename_temp, "~", PATH_MAX);
 
-	fd = open(cachename_temp, O_CREAT|O_RDWR|O_EXCL|O_TRUNC, 0644);
+	fd = open(cachename_temp, O_CREAT|O_RDWR|O_TRUNC, 0644);
 	if(fd < 0) {
-		DIE(("Unable to open fdi cache '%s' file for writing: %s", cachename, strerror(errno)));
+		HAL_ERROR (("Unable to open fdi cache '%s' file for writing: %s", cachename_temp, strerror(errno)));
+		goto error;
 	}
 
 	memset(&header, 0, sizeof(struct cache_header));
 	pad32_write(fd, 0, &header, sizeof(struct cache_header));
 
 	header.fdi_rules_preprobe = lseek(fd, 0, SEEK_END);
-	if (hal_fdi_source_preprobe != NULL)
-		rules_search_and_add_fdi_files (hal_fdi_source_preprobe, fd);
-	else{
-		rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/preprobe", fd);
-		rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", fd);
+	if (hal_fdi_source_preprobe != NULL) {
+		if (!rules_search_and_add_fdi_files (hal_fdi_source_preprobe, fd))
+			goto error;
+	} else {
+		if (!rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/preprobe", fd))
+			goto error;
+		if (!rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", fd))
+			goto error;
 	}
 
 	header.fdi_rules_information = lseek(fd, 0, SEEK_END);
-	if (hal_fdi_source_information != NULL)
-		rules_search_and_add_fdi_files (hal_fdi_source_information, fd);
-	else {
-		rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/information", fd);
-		rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/information", fd);
+	if (hal_fdi_source_information != NULL) {
+		if (!rules_search_and_add_fdi_files (hal_fdi_source_information, fd))
+			goto error;
+	} else {
+		if (!rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/information", fd))
+			goto error;
+		if (!rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/information", fd))
+			goto error;
 	}
 
 	header.fdi_rules_policy = lseek(fd, 0, SEEK_END);
-	if (hal_fdi_source_policy != NULL)
-		rules_search_and_add_fdi_files (hal_fdi_source_policy, fd);
-	else {
-		rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/policy", fd);
-		rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", fd);
+	if (hal_fdi_source_policy != NULL) {
+		if (!rules_search_and_add_fdi_files (hal_fdi_source_policy, fd))
+			goto error;
+	} else {
+		if (!rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/policy", fd))
+			goto error;
+		if (!rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", fd))
+			goto error;
 	}
 
 	header.all_rules_size = lseek(fd, 0, SEEK_END);
@@ -559,7 +642,8 @@ di_rules_init (void)
 	close(fd);
 	if (rename (cachename_temp, cachename) != 0) {
 		unlink (cachename_temp);
-		DIE (("Cannot rename '%s' to '%s'", cachename_temp, cachename));
+		HAL_ERROR (("Cannot rename '%s' to '%s': %s", cachename_temp, cachename, strerror (errno)));
+		return;
 	}
 	
 	HAL_INFO(("preprobe: offset=%08lx, size=%d", header.fdi_rules_preprobe,
@@ -570,6 +654,12 @@ di_rules_init (void)
 		header.all_rules_size - header.fdi_rules_policy));
 
 	HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
+	return;
+error:
+	HAL_ERROR (("Error generating fdi cache"));
+	if (fd < 0)
+		close (fd);
+	unlink (cachename_temp);
 }
 
 /**
@@ -584,9 +674,6 @@ usage ()
 	fprintf (stderr, "\n" "usage : hald-cache [--verbose=yes|no] [--use-syslog] [--help]\n");
 	fprintf (stderr,
 		 "\n"
-		 "        --verbose=yes|no      Print out debug (overrides HALD_VERBOSE).\n"
- 		 "        --use-syslog          Print out debug messages to syslog instead of\n"
-		 "                              stderr. Use this option to get debug messages.\n"
 		 "        --force               Force regeneration of cache.\n"
 		 "        --help                Show this information and exit.\n"
 		 "        --version             Output version information and exit.\n"
@@ -600,7 +687,7 @@ usage ()
 
 int main(int argc, char * argv[])
 {
-	openlog ("hald-cache", LOG_PID, LOG_DAEMON);
+	openlog ("hald", LOG_PID, LOG_DAEMON);
 
 	while (1) {
 		int c;
@@ -608,10 +695,6 @@ int main(int argc, char * argv[])
 		const char *opt;
 		static struct option long_options[] = {
 			{"exit-after-probing", 0, NULL, 0},
-			{"daemon", 1, NULL, 0},
-			{"verbose", 1, NULL, 0},
-			{"retain-privileges", 0, NULL, 0},
-			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"force", 0, NULL, 0},
@@ -633,17 +716,6 @@ int main(int argc, char * argv[])
 			} else if (strcmp (opt, "version") == 0) {
 				fprintf (stderr, "HAL package version: " PACKAGE_VERSION "\n");
 				return 0;
-			} else if (strcmp (opt, "verbose") == 0) {
-				if (strcmp ("yes", optarg) == 0) {
-					haldc_is_verbose = 1;
-				} else if (strcmp ("no", optarg) == 0) {
-					haldc_is_verbose = 0;
-				} else {
-					usage ();
-					return 1;
-				}
-			} else if (strcmp (opt, "use-syslog") == 0) {
-                                haldc_use_syslog = 1;
 			} else if (strcmp (opt, "force") == 0) {
                                 haldc_force_recreate = 1;
 			}
@@ -656,16 +728,6 @@ int main(int argc, char * argv[])
 			break;
 		}
 	}
-
-	if (haldc_is_verbose)
-		logger_enable ();
-	else
-		logger_disable ();
-
-	if (haldc_use_syslog)
-		logger_enable_syslog ();
-	else
-		logger_disable_syslog ();
 
 	di_rules_init();
 	return 0;
