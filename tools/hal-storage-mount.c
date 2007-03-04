@@ -67,7 +67,7 @@
 #define MOUNT_TYPE_OPT	"-F"
 #else
 #define MOUNT		"/bin/mount"
-#define MOUNT_OPTIONS	"noexec,nosuid,nodev"
+#define MOUNT_OPTIONS	"nosuid,nodev"
 #define MOUNT_TYPE_OPT	"-t"
 #endif
 
