@@ -2877,8 +2877,8 @@ libhal_ctx_new (void)
 	ctx = calloc (1, sizeof (LibHalContext));
 	if (ctx == NULL) {
 		fprintf (stderr, 
-			 "%s %d : Failed to allocate %d bytes\n",
-			 __FILE__, __LINE__, sizeof (LibHalContext));
+			 "%s %d : Failed to allocate %lu bytes\n",
+			 __FILE__, __LINE__, (unsigned long) sizeof (LibHalContext));
 		return NULL;
 	}
 
