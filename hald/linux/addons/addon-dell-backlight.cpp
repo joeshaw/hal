@@ -144,7 +144,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
 					   DBUS_TYPE_INVALID)) {
-			if (brightness < minValue || brightness > maxValue) {
+			if (brightness < (int) minValue || brightness > (int) maxValue) {
 				reply = dbus_message_new_error (message,
 								"org.freedesktop.Hal.Device.LaptopPanel.Invalid",
 								"Brightness level is invalid");
@@ -178,9 +178,9 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					   DBUS_TYPE_INVALID)) {
 			int brightness = read_backlight (AC);
 
-			if (brightness < minValue)
+			if (brightness < (int) minValue)
 				brightness = minValue;
-			else if (brightness > maxValue)
+			else if (brightness > (int) maxValue)
 				brightness = maxValue;
 
 			reply = dbus_message_new_method_return (message);
