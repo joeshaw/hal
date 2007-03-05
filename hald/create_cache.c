@@ -238,7 +238,7 @@ static void store_value(struct fdi_context *fdi_ctx, const char *value, size_t v
 	p = malloc(value_len + 1);
 
 	if(!p)
-	    DIE(("Could not allocate %d bytes", value_len + 1));
+	    DIE(("Could not allocate %ul bytes", value_len + 1));
 
 	memcpy(p, value, value_len);
 	p[value_len] = '\0';
