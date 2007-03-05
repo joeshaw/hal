@@ -135,6 +135,12 @@
       </listitem>
       <listitem>
         <para>
+          <literal>compare_ne</literal> - like <literal>compare_lt</literal>
+          but matches when not equal.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           <literal>contains</literal> - can only be used with string and
           strlist (string list).
           For a string key this matches when the property contains the given

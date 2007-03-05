@@ -101,6 +101,8 @@ get_match_type_str (enum match_type type)
 		return "compare_gt";
 	case MATCH_COMPARE_GE:
 		return "compare_ge";
+	case MATCH_COMPARE_NE:
+		return "compare_ne";
 	case MATCH_UNKNOWN:
 		return "unknown match type";
 	}
@@ -680,6 +682,17 @@ handle_match (struct rule *rule, HalDevice *d)
 		else
 			return result >= 0;
 	}
+
+	case MATCH_COMPARE_NE:
+	{
+		dbus_int64_t result;
+
+		if (!match_compare_property (d, prop_to_check, value, &result))
+			return FALSE;
+		else
+			return result != 0;
+	}
+
 
 	default:
 		HAL_INFO(("match ERROR"));
