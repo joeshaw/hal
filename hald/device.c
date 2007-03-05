@@ -1146,6 +1146,65 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 }
 
 gboolean
+hal_device_property_set_strlist (HalDevice *device, const char *key,
+			 	 GSList *value)
+{
+	HalProperty *prop;
+	GSList *l;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		GSList *current;
+
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST) 
+			return FALSE;
+
+		/* don't bother setting the same value */
+		current = hal_property_get_strlist (prop);
+		if (g_slist_length (value) == g_slist_length (current)) {
+			gboolean equal = TRUE;		
+			for (l = value; l != NULL; l = l->next, current = current->next) {
+				if (strcmp (l->data, current->data) != 0) {
+ 					equal = FALSE;
+					break;
+				} 
+			}
+			if (equal) return TRUE;
+		}
+
+		/* TODO: check why  hal_property_strlist_clear (prop) not work and why
+		 *       we need to remove the key and a new one to get this running:
+		 *	 - multiple copy calls mixed with e.g. append rules   
+		 */
+
+		g_hash_table_remove (device->private->props, key);
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
+		for (l = value ; l != NULL; l = l->next) {
+			hal_property_strlist_append (prop, l->data);
+		}
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, FALSE);
+
+	} else {
+		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
+		for (l = value ; l != NULL; l = l->next) {
+			hal_property_strlist_append (prop, l->data);
+		}
+		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, TRUE);
+	}
+
+	return TRUE;
+}
+
+
+gboolean
 hal_device_copy_property (HalDevice *from_device, const char *from, HalDevice *to_device, const char *to)
 {
 	gboolean rc;
@@ -1174,6 +1233,11 @@ hal_device_copy_property (HalDevice *from_device, const char *from, HalDevice *t
 			rc = hal_device_property_set_double (
 				to_device, to, hal_device_property_get_double (from_device, from));
 			break;
+		case HAL_PROPERTY_TYPE_STRLIST:
+			rc = hal_device_property_set_strlist(
+				to_device, to, hal_device_property_get_strlist (from_device, from));
+			break;
+		break;
 		}
 	}
 

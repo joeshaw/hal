@@ -166,7 +166,9 @@
           <literal>strlist</literal> - For <literal>&#60;merge&#62;</literal> the value is
           copied to the property and the current property will be overwritten. For
           <literal>&#60;append&#62;</literal> and <literal>&#60;prepend&#62;</literal> the
-          value is append or prepend to the list as new item.
+          value is append or prepend to the list as new item. Usage of 
+	  <literal>&#60;copy_property&#62;</literal> overwrite the complete list with the 
+	  value of the given property to copy from.
         </para>
       </listitem>
       <listitem>

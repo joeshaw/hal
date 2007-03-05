@@ -163,6 +163,9 @@ gboolean      hal_device_property_set_bool   (HalDevice    *device,
 gboolean      hal_device_property_set_double (HalDevice    *device,
 					      const char   *key,
 					      double        value);
+gboolean      hal_device_property_set_strlist (HalDevice *device, 
+					       const char *key,
+                                 	       GSList *value);
 gboolean      hal_device_property_strlist_append (HalDevice    *device,
 						  const char   *key,
 						  const char *value);
