@@ -40,6 +40,8 @@ hal-device-manager: hal-device-manager.in Makefile
 
 CLEANFILES = Const.py hal-device-manager
 
+EXTRA_DIST = Const.py.in hal-device-manager.in
+
 # symlink into $(bindir) for convenience
 #install-data-local :
 #	$(mkinstalldirs) $(DESTDIR)$(bindir)

@@ -516,7 +516,7 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 	
 	num_entries = scandir (dir, &name_list, 0, _alphasort);
 	if (num_entries == -1) {
-		HAL_ERROR (("Cannot scan '%s': %s", strerror (errno)));
+		HAL_ERROR (("Cannot scan '%s': %s", dir, strerror (errno)));
 		goto out;
 	}
 
