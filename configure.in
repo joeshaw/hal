@@ -803,9 +803,7 @@ libhal-storage/Makefile
 tools/Makefile
 tools/freebsd/Makefile
 tools/linux/Makefile
-tools/device-manager/hal-device-manager
 tools/device-manager/Makefile
-tools/device-manager/Const.py
 partutil/Makefile
 privileges/Makefile
 fdi/Makefile

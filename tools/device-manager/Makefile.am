@@ -27,6 +27,19 @@ dist_devicemanager_DATA =                                          \
                        hal-computer.png      hal-serial-port.png   \
                        hal-device-manager.glade
 
+Const.py: Const.py.in Makefile
+	sed -e 's|[@]DATADIR[@]|$(datadir)|g' \
+	    -e 's|[@]PACKAGE[@]|$(PACKAGE)|g' \
+	    -e 's|[@]VERSION[@]|$(VERSION)|g' \
+	    < $(srcdir)/$@.in > $@
+
+hal-device-manager: hal-device-manager.in Makefile
+	sed -e 's|[@]DATADIR[@]|$(datadir)|g' \
+	    -e 's|[@]PACKAGE[@]|$(PACKAGE)|g' \
+	    < $(srcdir)/$@.in > $@
+
+CLEANFILES = Const.py hal-device-manager
+
 # symlink into $(bindir) for convenience
 #install-data-local :
 #	$(mkinstalldirs) $(DESTDIR)$(bindir)
