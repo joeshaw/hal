@@ -154,7 +154,7 @@ do_cleanup (const char *mount_point)
 
 	g_strfreev (lines);
 
-	printf ("removing directory", mount_point);
+	printf ("removing directory: %s", mount_point);
 
 	/* remove directory */
 	if (g_rmdir (mount_point) != 0) {
