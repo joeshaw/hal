@@ -33,4 +33,6 @@ INSTALL
 *.o
 *.tar.gz
 *~
-
+*.pyo
+*.pyc
+*.gcno
