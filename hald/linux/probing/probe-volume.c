@@ -318,9 +318,11 @@ main (int argc, char *argv[])
 	dbus_bool_t should_probe_for_fs;
 	dbus_uint64_t vol_probe_offset = 0;
 	LibHalChangeSet *cs;
+	gboolean disc_may_have_data;
 	fd = -1;
 
 	cs = NULL;
+	disc_may_have_data = FALSE;
 
 	/* hook in our debug into libvolume_id */
 	volume_id_log_fn = vid_log;
@@ -432,8 +434,19 @@ main (int argc, char *argv[])
 			libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", TRUE);
 			/* set the volume size to 0 if disc is blank and not as 4 from BLKGETSIZE64 */
 			libhal_changeset_set_property_int (cs, "volume.block_size", 0);
-			HAL_DEBUG(("Disc in %s is blank", device_file));
-			should_probe_for_fs = FALSE;
+			HAL_DEBUG(("Disc in %s probably blank", device_file));
+			/* 
+			 * blank discs normally return 0x0800 (probably for the TOC) - if it's larger,
+			 * it probably means that the drive/firmware is bad and CDROM_DISC_STATUS lies.
+			 * In this case, actually try to probe for a file system. See RH #186334 for
+			 * details: https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=186334
+			 */
+			if (vol_size > 0x800) {
+				should_probe_for_fs = TRUE;
+				disc_may_have_data = TRUE;
+			} else {
+				should_probe_for_fs = FALSE;
+			}
 			break;
 			
 		default:		/* should never see this */
@@ -603,6 +616,10 @@ main (int argc, char *argv[])
 			HAL_INFO (("volume_id_probe_all returned %d"));
 			if (vid_ret == 0) {
 				set_volume_id_values(ctx, udi, cs, vid);
+				if (disc_may_have_data) {
+					libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", FALSE);
+					libhal_changeset_set_property_bool (cs, "volume.disc.has_data", TRUE);
+				}
 			} else {
 				libhal_changeset_set_property_string (cs, "info.product", "Volume");
 			}
