@@ -105,6 +105,8 @@ get_match_type_str (enum match_type type)
 		return "compare_ne";
 	case MATCH_UNKNOWN:
 		return "unknown match type";
+	case MATCH_CONTAINS_NOT:
+		return "contains_not";
 	}
 	return "invalid match type";
 }
@@ -441,6 +443,7 @@ handle_match (struct rule *rule, HalDevice *d)
 	}
 
 	case MATCH_CONTAINS:
+	case MATCH_CONTAINS_NOT:
 	{
 		dbus_bool_t contains = FALSE;
 
@@ -449,7 +452,7 @@ handle_match (struct rule *rule, HalDevice *d)
 				const char *haystack;
 
 				haystack = hal_device_property_get_string (d, prop_to_check);
-				if (value != NULL && haystack != NULL && strstr (haystack, value))
+				if (value != NULL && haystack != NULL &&  (strstr(haystack, value) != NULL))
 					contains = TRUE;
 			}
 		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
@@ -466,8 +469,12 @@ handle_match (struct rule *rule, HalDevice *d)
 		} else {
 			return FALSE;
 		}
-
-		return contains;
+	
+		if (rule->type_match == MATCH_CONTAINS) {	
+			return contains;
+		} else {
+			return !contains; /* rule->type_match == MATCH_CONTAINS_NOT  */
+		}
 	}
 
 	case MATCH_SIBLING_CONTAINS:

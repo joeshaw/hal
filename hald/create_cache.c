@@ -134,6 +134,8 @@ get_match_type(const char *str)
 		return MATCH_COMPARE_GE;
 	if (strcmp (str, "compare_ne") == 0)
 		return MATCH_COMPARE_NE;
+	if (strcmp (str, "contains_not") == 0)
+		return MATCH_CONTAINS_NOT;
 	return MATCH_UNKNOWN;
 }
 
