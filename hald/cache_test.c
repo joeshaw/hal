@@ -66,7 +66,8 @@ static void test_cache(u_int32_t offset, size_t size)
     }
 }
 
-void di_rules_init(void)
+int 
+di_rules_init (void)
 {
 	struct cache_header	*header;
 	char 			*cachename;
@@ -96,6 +97,8 @@ void di_rules_init(void)
 		header->all_rules_size - header->fdi_rules_policy));
 
 	close(fd);
+
+	return 0;
 }
 
 

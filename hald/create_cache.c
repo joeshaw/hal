@@ -507,21 +507,23 @@ out:
 }
 
 
-/* recurse a directory tree, searching and adding fdi files */
-static gboolean
+/* recurse a directory tree, searching and adding fdi files - returns
+ * number of skipped fdi files or -1 on unrecoverable errors
+ */
+static int
 rules_search_and_add_fdi_files (const char *dir, int fd)
 {
 	int i;
 	int num_entries;
 	struct dirent **name_list;
-	gboolean ret;
+	int num_skipped_fdi_files;
 
-	ret = FALSE;
+	num_skipped_fdi_files = 0;
 	
 	num_entries = scandir (dir, &name_list, 0, _alphasort);
 	if (num_entries == -1) {
 		HAL_ERROR (("Cannot scan '%s': %s", dir, strerror (errno)));
-		goto out;
+		goto error;
 	}
 
 	for (i = num_entries - 1; i >= 0; i--) {
@@ -543,15 +545,17 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 					/* try to just skip this file */
 					if (ftruncate (fd, offset_before) != 0) {
 						HAL_ERROR (("Cannot truncate rules fdi"));
-						goto out;
+						goto error;
 					}
 					lseek (fd, 0, SEEK_END);
 					HAL_INFO (("skipped fdi file '%s'", full_path));
+					num_skipped_fdi_files++;
 				}
 			}
 		} else if (g_file_test (full_path, (G_FILE_TEST_IS_DIR)) && filename[0] != '.') {
 			int num_bytes;
 			char *dirname;
+			int ret;
 
 			num_bytes = len + strlen (dir) + 1 + 1;
 			dirname = (char *) malloc (num_bytes);
@@ -559,8 +563,10 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 				break;
 
 			snprintf (dirname, num_bytes, "%s/%s", dir, filename);
-			if (!rules_search_and_add_fdi_files (dirname, fd))
-				goto out;
+			ret = rules_search_and_add_fdi_files (dirname, fd);
+			if (ret == -1)
+				goto error;
+			num_skipped_fdi_files += ret;
 			free (dirname);
 		}
 		g_free (full_path);
@@ -571,16 +577,17 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 		free (name_list[i]);
 	}
 	free (name_list);
-	ret = TRUE;
-out:
-	return ret;
+
+	return num_skipped_fdi_files;
+error:
+	return -1;
 }
 
 
 int haldc_force_recreate = 0;
 
-
-static void
+/* returns number of skipped fdi files or -1 on unrecoverable errors */
+static int
 di_rules_init (void)
 {
 	char * cachename;
@@ -590,6 +597,10 @@ di_rules_init (void)
 	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
 	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
 	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
+	int n;
+	int num_skipped_fdi_files;
+
+	num_skipped_fdi_files = 0;
 
 	cachename = getenv ("HAL_FDI_CACHE_NAME");
 	if(cachename == NULL)
@@ -610,35 +621,44 @@ di_rules_init (void)
 
 	header.fdi_rules_preprobe = lseek(fd, 0, SEEK_END);
 	if (hal_fdi_source_preprobe != NULL) {
-		if (!rules_search_and_add_fdi_files (hal_fdi_source_preprobe, fd))
+		if ((n = rules_search_and_add_fdi_files (hal_fdi_source_preprobe, fd)) == -1)
 			goto error;
+		num_skipped_fdi_files += n;
 	} else {
-		if (!rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/preprobe", fd))
+		if ((n = rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/preprobe", fd)) == -1)
 			goto error;
-		if (!rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", fd))
+		num_skipped_fdi_files += n;
+		if ((n = rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", fd)) == -1)
 			goto error;
+		num_skipped_fdi_files += n;
 	}
 
 	header.fdi_rules_information = lseek(fd, 0, SEEK_END);
 	if (hal_fdi_source_information != NULL) {
-		if (!rules_search_and_add_fdi_files (hal_fdi_source_information, fd))
+		if ((n = rules_search_and_add_fdi_files (hal_fdi_source_information, fd)) == -1)
 			goto error;
+		num_skipped_fdi_files += n;
 	} else {
-		if (!rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/information", fd))
+		if ((n = rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/information", fd)) == -1)
 			goto error;
-		if (!rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/information", fd))
+		num_skipped_fdi_files += n;
+		if ((n = rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/information", fd)) == -1)
 			goto error;
+		num_skipped_fdi_files += n;
 	}
 
 	header.fdi_rules_policy = lseek(fd, 0, SEEK_END);
 	if (hal_fdi_source_policy != NULL) {
-		if (!rules_search_and_add_fdi_files (hal_fdi_source_policy, fd))
+		if ((n = rules_search_and_add_fdi_files (hal_fdi_source_policy, fd)) == -1)
 			goto error;
+		num_skipped_fdi_files += n;
 	} else {
-		if (!rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/policy", fd))
+		if ((n = rules_search_and_add_fdi_files (PACKAGE_DATA_DIR "/hal/fdi/policy", fd)) == -1)
 			goto error;
-		if (!rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", fd))
+		num_skipped_fdi_files += n;
+		if ((n = rules_search_and_add_fdi_files (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", fd)) == -1)
 			goto error;
+		num_skipped_fdi_files += n;
 	}
 
 	header.all_rules_size = lseek(fd, 0, SEEK_END);
@@ -647,7 +667,7 @@ di_rules_init (void)
 	if (rename (cachename_temp, cachename) != 0) {
 		unlink (cachename_temp);
 		HAL_ERROR (("Cannot rename '%s' to '%s': %s", cachename_temp, cachename, strerror (errno)));
-		return;
+		return -1;
 	}
 	
 	HAL_INFO(("preprobe: offset=%08lx, size=%d", header.fdi_rules_preprobe,
@@ -658,12 +678,13 @@ di_rules_init (void)
 		header.all_rules_size - header.fdi_rules_policy));
 
 	HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
-	return;
+	return num_skipped_fdi_files;
 error:
 	HAL_ERROR (("Error generating fdi cache"));
 	if (fd < 0)
 		close (fd);
 	unlink (cachename_temp);
+	return -1;
 }
 
 /**
@@ -691,6 +712,7 @@ usage ()
 
 int main(int argc, char * argv[])
 {
+	int num_skipped_fdi_files;
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
 	while (1) {
@@ -733,6 +755,16 @@ int main(int argc, char * argv[])
 		}
 	}
 
-	di_rules_init();
-	return 0;
+	num_skipped_fdi_files = di_rules_init();
+	if (num_skipped_fdi_files == 0) {
+		/* no skipped fdi files */
+		return 0;
+	} else if (num_skipped_fdi_files == -1) {
+		/* error */
+		return 1;
+	} else {
+		/* skipped some fdi files */
+		fprintf (stderr, "Skipped %d fdi files\n", num_skipped_fdi_files);
+		return 2;
+	}
 }

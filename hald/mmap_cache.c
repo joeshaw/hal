@@ -48,7 +48,7 @@
 extern void *rules_ptr;
 static size_t rules_size = 0;
 
-void di_rules_init(void)
+int di_rules_init (void)
 {
 	struct cache_header	*header;
 	char 			*cachename;
@@ -85,6 +85,8 @@ void di_rules_init(void)
 		header->all_rules_size - header->fdi_rules_policy));
 
 	close(fd);
+
+	return 0;
 }
 
 static void dir_mtime(const char * path, time_t * mt)
@@ -134,7 +136,8 @@ regen_cache_cb (HalDevice *d,
 {
 	HAL_INFO (("In regen_cache_cb exit_type=%d, return_code=%d", exit_type, return_code));
 
-	if (exit_type != HALD_RUN_SUCCESS || return_code != 0) {
+	/* see create_cache.c - rc==0 means success - rc==2 means "success, but some fdi files skipped" */
+	if (exit_type != HALD_RUN_SUCCESS || return_code != 0 || return_code != 2) {
 		regen_cache_success = FALSE;
 	} else {
 		regen_cache_success = TRUE;

@@ -33,8 +33,8 @@
 
 #include <glib.h>
 
-void di_rules_init(void);
-gboolean di_cache_coherency_check(void);
+int di_rules_init (void);
+gboolean di_cache_coherency_check (void);
 
 #define RULES_PTR(x) ((void *)((unsigned char *) rules_ptr + x))
 #endif
