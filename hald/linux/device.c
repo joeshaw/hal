@@ -523,6 +523,57 @@ scsi_generic_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+/* scsi-sysfs totally sucks, we don't get events for the devices in the
+ * devpath, but totally useless class devices; we hook into the scsi_device
+ * event, and synthesize the missing host event
+ */
+static gboolean
+missing_scsi_host (const gchar *sysfs_path, HotplugEvent *device_event, HotplugActionType action)
+{
+	gchar path[HAL_PATH_MAX];
+	HalDevice *d;
+	HotplugEvent *host_event;
+	int rc = FALSE;
+
+	g_strlcpy(path, sysfs_path, sizeof(path));
+	/* skip device */
+	if (!hal_util_path_ascend (path))
+		goto out;
+	/* skip target */
+	if (!hal_util_path_ascend (path))
+		goto out;
+	if (strstr (path, "/host") == NULL)
+		goto out;
+
+	d = hal_device_store_match_key_value_string (hald_get_gdl (),
+						     "linux.sysfs_path",
+						     path);
+	if (action == HOTPLUG_ACTION_ADD && d != NULL)
+		goto out;
+	if (action == HOTPLUG_ACTION_REMOVE && d == NULL)
+		goto out;
+	rc = TRUE;
+
+	host_event = g_new0 (HotplugEvent, 1);
+	host_event->action = action;
+	host_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
+	g_strlcpy (host_event->sysfs.subsystem, "scsi_host", sizeof (host_event->sysfs.subsystem));
+	g_strlcpy (host_event->sysfs.sysfs_path, path, sizeof (host_event->sysfs.sysfs_path));
+	host_event->sysfs.net_ifindex = -1;
+
+	if (action == HOTPLUG_ACTION_ADD) {
+		hotplug_event_enqueue_at_front (device_event);
+		hotplug_event_enqueue_at_front (host_event);
+		hotplug_event_reposted (device_event);
+		goto out;
+	}
+	if (action == HOTPLUG_ACTION_REMOVE)
+		hotplug_event_enqueue (host_event);
+
+out:
+	return rc;
+}
+
 static HalDevice *
 scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
@@ -536,20 +587,21 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 		goto out;
 	}
 
-	d = hal_device_new ();
-	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	
-	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
-
-	hal_device_property_set_string (d, "info.category", "scsi_host");
-	hal_device_add_capability (d, "scsi_host");
-
-	hal_device_property_set_string (d, "info.product", "SCSI Host Adapter");
+	/* ignore useless class device */
+	if (strstr(sysfs_path, "class/scsi_host") != NULL)
+		goto out;
 
 	last_elem = hal_util_get_last_element (sysfs_path);
-	sscanf (last_elem, "host%d", &host_num);
-	hal_device_property_set_int (d, "scsi_host.host", host_num);
+	if (sscanf (last_elem, "host%d", &host_num) != 1)
+		goto out;
 
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_int (d, "scsi_host.host", host_num);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	hal_device_property_set_string (d, "info.category", "scsi_host");
+	hal_device_add_capability (d, "scsi_host");
+	hal_device_property_set_string (d, "info.product", "SCSI Host Adapter");
 out:
 	return d;
 }
@@ -1852,24 +1904,23 @@ pcmcia_compute_udi (HalDevice *d)
 static HalDevice *
 scsi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
-	HalDevice *d;
+	HalDevice *d = NULL;
 	const gchar *bus_id;
 	gint host_num, bus_num, target_num, lun_num;
 	int type;
 
-	if (parent_dev == NULL) {
-		d = NULL;
+	if (parent_dev == NULL)
 		goto out;
-	}
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	if (sscanf (bus_id, "%d:%d:%d:%d", &host_num, &bus_num, &target_num, &lun_num) != 4)
+		goto out;
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "scsi");
 	hal_device_property_set_string (d, "info.bus", "scsi");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
-
-	bus_id = hal_util_get_last_element (sysfs_path);
-	sscanf (bus_id, "%d:%d:%d:%d", &host_num, &bus_num, &target_num, &lun_num);
 	hal_device_property_set_int (d, "scsi.host", host_num);
 	hal_device_property_set_int (d, "scsi.bus", bus_num);
 	hal_device_property_set_int (d, "scsi.target", target_num);
@@ -3462,6 +3513,10 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 		if (strcmp (handler->subsystem, subsystem) == 0) {
 			HalDevice *d;
 
+			if (strcmp (subsystem, "scsi") == 0)
+				if (missing_scsi_host(sysfs_path, (HotplugEvent *)end_token, HOTPLUG_ACTION_ADD))
+					goto out;
+
 			/* attempt to add the device */
 			d = handler->add (sysfs_path, device_file, parent_dev, parent_path);
 			if (d == NULL) {
@@ -3472,7 +3527,7 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 
 			hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_DEVICE);
 			hal_device_property_set_string (d, "linux.subsystem", subsystem);
-			
+
 			if (device_file != NULL && strlen (device_file) > 0)
 				hal_device_property_set_string (d, "linux.device_file", device_file);
 
@@ -3507,14 +3562,15 @@ hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path,
 	if (d == NULL) {
 		HAL_WARNING (("Error removing device"));
 	} else {
-
 		for (i = 0; dev_handlers [i] != NULL; i++) {
 			DevHandler *handler;
-			
+
 			handler = dev_handlers[i];
 			if (strcmp (handler->subsystem, subsystem) == 0) {
-				handler->remove (d);
+				if (strcmp (subsystem, "scsi") == 0)
+					missing_scsi_host(sysfs_path, (HotplugEvent *)end_token, HOTPLUG_ACTION_REMOVE);
 
+				handler->remove (d);
 				hal_util_callout_device_remove (d, dev_callouts_remove_done, end_token, NULL);
 				goto out;
 			}
