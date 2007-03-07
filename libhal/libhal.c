@@ -53,10 +53,28 @@
 # define N_(String) (String)
 #endif
 
+/**
+ * LIBHAL_CHECK_PARAM_VALID:
+ * @_param_: the prameter to check for 
+ * @_name_:  the name of the prameter (for debug output) 
+ * @_ret_:   what to use for return value if the prameter is NULL
+ *
+ * Handy macro for checking whether a parameter is valid and not NULL.
+ */
+#define LIBHAL_CHECK_PARAM_VALID(_param_,_name_,_ret_)				\
+	do {									\
+		if (_param_ == NULL) {						\
+			fprintf (stderr,					\
+				 "%s %d : invalid paramater. %s is NULL.\n",  	\
+				 __FILE__, __LINE__, _name_);	 		\
+			return _ret_;						\
+		}								\
+	} while(0)
+
+
 static char **libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements);
 
 static dbus_bool_t libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var_iter);
-
 
 
 /** 
@@ -375,6 +393,7 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", NULL);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -952,6 +971,8 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, LIBHAL_PROPERTY_TYPE_INVALID); /* or return NULL? */
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", LIBHAL_PROPERTY_TYPE_INVALID);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", LIBHAL_PROPERTY_TYPE_INVALID);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1012,6 +1033,8 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 	DBusError _error;
 	
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", NULL);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", NULL);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1083,6 +1106,8 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", NULL);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", NULL);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1159,6 +1184,8 @@ libhal_device_get_property_int (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, -1);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", -1);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", -1);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1230,6 +1257,8 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, -1);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", -1);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", -1);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1300,6 +1329,8 @@ libhal_device_get_property_double (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, -1.0);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", -1.0);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", -1.0);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1370,6 +1401,8 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1438,6 +1471,8 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 	char *method_name = NULL;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	/** @todo  sanity check incoming params */
 	switch (type) {
@@ -1533,6 +1568,10 @@ libhal_device_set_property_string (LibHalContext *ctx,
 				   const char *value,
 				   DBusError *error)
 {
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
 	return libhal_device_set_property_helper (ctx, udi, key,
 						  DBUS_TYPE_STRING,
 						  value, 0, 0, 0.0f, FALSE, error);
@@ -1555,6 +1594,10 @@ dbus_bool_t
 libhal_device_set_property_int (LibHalContext *ctx, const char *udi,
 				const char *key, dbus_int32_t value, DBusError *error)
 {
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
 	return libhal_device_set_property_helper (ctx, udi, key,
 						  DBUS_TYPE_INT32,
 						  NULL, value, 0, 0.0f, FALSE, error);
@@ -1577,6 +1620,10 @@ dbus_bool_t
 libhal_device_set_property_uint64 (LibHalContext *ctx, const char *udi,
 				   const char *key, dbus_uint64_t value, DBusError *error)
 {
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
 	return libhal_device_set_property_helper (ctx, udi, key,
 						  DBUS_TYPE_UINT64,
 						  NULL, 0, value, 0.0f, FALSE, error);
@@ -1599,6 +1646,10 @@ dbus_bool_t
 libhal_device_set_property_double (LibHalContext *ctx, const char *udi,
 				   const char *key, double value, DBusError *error)
 {
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
 	return libhal_device_set_property_helper (ctx, udi, key,
 						  DBUS_TYPE_DOUBLE,
 						  NULL, 0, 0, value, FALSE, error);
@@ -1621,6 +1672,10 @@ dbus_bool_t
 libhal_device_set_property_bool (LibHalContext *ctx, const char *udi,
 				 const char *key, dbus_bool_t value, DBusError *error)
 {
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
 	return libhal_device_set_property_helper (ctx, udi, key,
 						  DBUS_TYPE_BOOLEAN,
 						  NULL, 0, 0, 0.0f, value, error);
@@ -1643,6 +1698,10 @@ dbus_bool_t
 libhal_device_remove_property (LibHalContext *ctx, 
 			       const char *udi, const char *key, DBusError *error)
 {
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
 	return libhal_device_set_property_helper (ctx, udi, key, DBUS_TYPE_INVALID,	
 						  /* DBUS_TYPE_INVALID means remove */
 						  NULL, 0, 0, 0.0f, FALSE, error);
@@ -1673,6 +1732,8 @@ libhal_device_property_strlist_append (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1726,6 +1787,8 @@ libhal_device_property_strlist_prepend (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1779,6 +1842,8 @@ libhal_device_property_strlist_remove_index (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1831,6 +1896,8 @@ libhal_device_property_strlist_remove (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -1883,6 +1950,7 @@ libhal_device_lock (LibHalContext *ctx,
 	DBusMessage *reply;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	if (reason_why_locked != NULL)
 		*reason_why_locked = NULL;
@@ -1950,6 +2018,7 @@ libhal_device_unlock (LibHalContext *ctx,
 	DBusMessage *reply;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -2086,6 +2155,8 @@ libhal_device_commit_to_gdl (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(temp_udi, "*temop_udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2143,6 +2214,7 @@ libhal_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2196,6 +2268,7 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2267,6 +2340,8 @@ libhal_device_property_exists (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -2334,6 +2409,8 @@ libhal_merge_properties (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(target_udi, "*target_udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(source_udi, "*sourcE_udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2401,6 +2478,9 @@ libhal_device_matches (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi1, "*udi1", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi2, "*udi2", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(property_namespace, "*property_namespace", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2470,6 +2550,7 @@ libhal_device_print (LibHalContext *ctx, const char *udi, DBusError *error)
 	LibHalPropertySetIterator i;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	printf ("device_id = %s\n", udi);
 
@@ -2557,6 +2638,7 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", NULL);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2626,6 +2708,8 @@ libhal_device_add_capability (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(capability, "*capability", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -2679,6 +2763,8 @@ libhal_device_query_capability (LibHalContext *ctx, const char *udi, const char 
 	dbus_bool_t ret;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(capability, "*capability", FALSE);
 
 	ret = FALSE;
 
@@ -2718,6 +2804,7 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
+	LIBHAL_CHECK_PARAM_VALID(capability, "*capability", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -2811,6 +2898,7 @@ libhal_device_add_property_watch (LibHalContext *ctx, const char *udi, DBusError
 	char buf[512];
 	
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	snprintf (buf, 512,
 		  "type='signal',"
@@ -2841,6 +2929,7 @@ libhal_device_remove_property_watch (LibHalContext *ctx, const char *udi, DBusEr
 	char buf[512];
 	
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	snprintf (buf, 512,
 		  "type='signal',"
@@ -3247,6 +3336,7 @@ libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 	dbus_bool_t result;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal", udi,
 						"org.freedesktop.Hal.Device",
@@ -3306,6 +3396,7 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 	dbus_bool_t result;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3373,6 +3464,8 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 	dbus_bool_t result;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(condition_name, "*condition_name", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3441,6 +3534,7 @@ libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *er
 	dbus_bool_t result;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3510,6 +3604,8 @@ libhal_device_claim_interface (LibHalContext *ctx,
 	dbus_bool_t result;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(interface_name, "*interface_name", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,
@@ -3595,6 +3691,8 @@ LibHalChangeSet *
 libhal_device_new_changeset (const char *udi)
 {
 	LibHalChangeSet *changeset;
+
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", NULL);
 
 	changeset = calloc (1, sizeof (LibHalChangeSet));
 	if (changeset == NULL)
