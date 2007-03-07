@@ -931,7 +931,7 @@ device_get_all_properties (DBusConnection * connection,
 }
 
 typedef struct {
-	uid_t  uid;                   /* uid of caller */
+	unsigned long  uid;           /* uid of caller */
 #ifdef HAVE_CONKIT
 	pid_t  pid;                   /* process ID of caller */
 	gboolean in_active_session;   /* caller is in an active session */
@@ -1059,7 +1059,7 @@ ci_tracker_get_info (const char *system_bus_unique_name)
 
 	dbus_error_init (&error);
 	ci->uid = dbus_bus_get_unix_user (dbus_connection, system_bus_unique_name, &error);
-	if (ci->uid == (unsigned long) -1 || dbus_error_is_set (&error)) {
+	if (ci->uid == ((unsigned long) -1) || dbus_error_is_set (&error)) {
 		HAL_WARNING (("Could not get uid for connection: %s %s", error.name, error.message));
 		dbus_error_free (&error);
 		goto error;
@@ -3385,7 +3385,7 @@ hald_exec_method (HalDevice *d, CallerInfo *ci, DBusConnection *connection, dbus
 		}
 #endif /* HAVE_CONKIT */
 		
-		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%d", ci->uid);
+		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", ci->uid);
 		extra_env[0] = uid_export;
 		snprintf (sender_export, sizeof (sender_export), 
 			  "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=%s", dbus_message_get_sender (message));

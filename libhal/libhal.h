@@ -42,6 +42,13 @@ extern "C" {
 #endif 
 
 
+/**
+ * LIBHAL_LIBHAL_FREE_DBUS_ERROR:
+ * @_dbus_error_: the DBusError
+ *
+ * Handy macro for checking whether a DBusError is set and free the error if
+ * the error is set.
+ */
 #define LIBHAL_FREE_DBUS_ERROR(_dbus_error_)					\
 	do {									\
 		if (dbus_error_is_set(_dbus_error_))				\
