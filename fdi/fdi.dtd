@@ -29,6 +29,7 @@
     compare_gt       CDATA #IMPLIED
     compare_ge       CDATA #IMPLIED
     compare_ne       CDATA #IMPLIED
+    sibling_contains CDATA #IMPLIED
 >
 
 <!ELEMENT merge (#PCDATA) >

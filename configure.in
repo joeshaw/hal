@@ -827,6 +827,10 @@ fdi/policy/20thirdparty/Makefile
 fdi/policy/30user/Makefile
 doc/Makefile
 doc/api/Makefile
+doc/api/libhal/Makefile
+doc/api/libhal/version.xml
+doc/api/libhal-storage/Makefile
+doc/api/libhal-storage/version.xml
 doc/conf/Makefile
 doc/spec/Makefile
 doc/spec/hal-spec.xml
