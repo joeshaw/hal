@@ -1382,7 +1382,7 @@ out:
 /** 
  *  libhal_volume_from_mount_point:
  *  @hal_ctx:             libhal context to use
- *  @device_file:         Name of mount point without terminting slash, e.g. '/media/disk'
+ *  @mount_point:         Name of mount point without terminting slash, e.g. '/media/disk'
  * 
  *  Returns:              LibHalVolume object or NULL if it doesn't exist
  *
