@@ -1,0 +1,15 @@
+Makefile
+Makefile.in
+html
+xml
+libhal.hierarchy
+libhal.interfaces
+libhal.prerequisites
+libhal.signals
+*.txt
+*.bak
+*.args
+*.stamp
+*.o
+tmpl
+*~
