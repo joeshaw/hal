@@ -2,6 +2,7 @@ Makefile
 Makefile.in
 html
 xml
+version.xml
 libhal.hierarchy
 libhal.interfaces
 libhal.prerequisites

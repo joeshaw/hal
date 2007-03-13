@@ -2,6 +2,7 @@ Makefile
 Makefile.in
 html
 xml
+version.xml
 libhal-storage.hierarchy
 libhal-storage.interfaces
 libhal-storage.prerequisites
