@@ -28,7 +28,8 @@ libhald_linux_la_SOURCES =					\
 	device.h						\
 	device.c						\
 	blockdev.h						\
-	blockdev.c
+	blockdev.c						\
+	inotify_local.h
 
 if HAVE_ACPI
 libhald_linux_la_SOURCES +=					\

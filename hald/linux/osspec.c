@@ -43,7 +43,12 @@
 #include <sys/un.h>
 #include <sys/utsname.h>
 #include <unistd.h>
+
+#ifdef HAVE_SYS_INOTIFY_H
 #include <sys/inotify.h>
+#else
+#include "inotify_local.h"
+#endif
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>

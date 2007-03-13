@@ -39,7 +39,7 @@ AM_PATH_PYTHON
 AC_SYS_LARGEFILE
 PKG_PROG_PKG_CONFIG
 
-AC_CHECK_HEADERS([sys/ioccom.h])
+AC_CHECK_HEADERS([sys/ioccom.h sys/inotify.h])
 
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
