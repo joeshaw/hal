@@ -222,11 +222,11 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
 						session->session_objpath,
 						"org.freedesktop.ConsoleKit.Session",
-						"GetHostName");
+						"GetRemoteHostName");
 	dbus_error_init (&error);
 	reply = dbus_connection_send_with_reply_and_block (tracker->dbus_connection, message, -1, &error);
 	if (reply == NULL || dbus_error_is_set (&error)) {
-		HAL_ERROR (("Error doing Session.GetHostName on ConsoleKit: %s: %s", error.name, error.message));
+		HAL_ERROR (("Error doing Session.GetRemoteHostName on ConsoleKit: %s: %s", error.name, error.message));
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -235,7 +235,7 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 	if (!dbus_message_get_args (reply, NULL,
 				    DBUS_TYPE_STRING, &hostname,
 				    DBUS_TYPE_INVALID)) {
-		HAL_ERROR (("Invalid GetHostName reply from CK"));
+		HAL_ERROR (("Invalid GetRemoteHostName reply from CK"));
 		goto error;
 	}
 	session->hostname = g_strdup (hostname);
@@ -245,11 +245,11 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
 						session->session_objpath,
 						"org.freedesktop.ConsoleKit.Session",
-						"GetUser");
+						"GetUnixUser");
 	dbus_error_init (&error);
 	reply = dbus_connection_send_with_reply_and_block (tracker->dbus_connection, message, -1, &error);
 	if (reply == NULL || dbus_error_is_set (&error)) {
-		HAL_ERROR (("Error doing Session.GetUser on ConsoleKit: %s: %s", error.name, error.message));
+		HAL_ERROR (("Error doing Session.GetUnixUser on ConsoleKit: %s: %s", error.name, error.message));
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -258,7 +258,7 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 	if (!dbus_message_get_args (reply, NULL,
 				    DBUS_TYPE_INT32, &(session->user),
 				    DBUS_TYPE_INVALID)) {
-		HAL_ERROR (("Invalid GetUser reply from CK"));
+		HAL_ERROR (("Invalid GetUnixUser reply from CK"));
 		goto error;
 	}
 	dbus_message_unref (message);
