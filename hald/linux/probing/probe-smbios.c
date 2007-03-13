@@ -71,10 +71,14 @@ setstr (char *buf, char *str, char *prop)
 	if (strbegin (buf, str)) {
 		dbus_error_init (&error);
 		value = buf + strlen (str) + 1;
+		if (strcmp (value, "Not Specified") == 0)
+			goto out;
+
 		libhal_device_set_property_string (ctx, udi, prop, value, &error);
 		HAL_DEBUG (("Setting %s='%s'", prop, value));
 		return TRUE;
 	}
+out:
 	return FALSE;
 }
 
