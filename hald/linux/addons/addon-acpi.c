@@ -131,9 +131,11 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 				}
 			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
 				HAL_DEBUG (("ac_adapter event"));
+				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 			} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
 				HAL_DEBUG (("battery event"));
+				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 			}
 
