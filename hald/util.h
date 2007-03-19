@@ -112,4 +112,6 @@ gboolean hal_util_is_mounted_by_hald (const char *mount_point);
 
 char *hal_util_readlink (const char *link);
 
+gboolean is_valid_interface_name (const char *name);
+
 #endif /* UTIL_H */

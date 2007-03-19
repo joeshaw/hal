@@ -54,6 +54,26 @@
 
 #include "util.h"
 
+/**
+ * Determine wether the given character is valid as the first character
+ * in a name.
+ */
+#define VALID_INITIAL_NAME_CHARACTER(c)         \
+  ( ((c) >= 'A' && (c) <= 'Z') ||               \
+    ((c) >= 'a' && (c) <= 'z') ||               \
+    ((c) == '_') )
+
+/**
+ * Determine wether the given character is valid as a second or later
+ * character in a name
+ */
+#define VALID_NAME_CHARACTER(c)                 \
+  ( ((c) >= '0' && (c) <= '9') ||               \
+    ((c) >= 'A' && (c) <= 'Z') ||               \
+    ((c) >= 'a' && (c) <= 'z') ||               \
+    ((c) == '_') )
+ 
+
 gboolean 
 hal_util_remove_trailing_slash (gchar *path)
 {
@@ -1203,3 +1223,44 @@ hal_util_readlink (const char *link)
 	
 	return path_buffer;
 }
+
+gboolean
+is_valid_interface_name (const char *name) {
+
+	const char *end;
+	const char *last_dot;
+
+	last_dot = NULL;
+
+	if (strlen(name) == 0)
+		return FALSE;	
+
+	end = name + strlen(name);
+
+	if (*name == '.') /* disallow starting with a . */
+		return FALSE;
+	else if (!VALID_INITIAL_NAME_CHARACTER (*name))
+		return FALSE;
+  	else
+    		++name;
+
+  	while (name != end) {
+      		if (*name == '.') {
+          		if ((name + 1) == end)
+            			return FALSE;
+          		else if (!VALID_INITIAL_NAME_CHARACTER (*(name + 1)))
+            			return FALSE;
+          		last_dot = name;
+          		++name; /* we just validated the next char, so skip two */
+        	}
+      		else if (!VALID_NAME_CHARACTER (*name)) {
+          		return FALSE;
+        	}
+      		++name;
+    	}
+	if (last_dot == NULL)
+		return FALSE;
+
+  	return TRUE;
+}
+
