@@ -953,7 +953,8 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 				} else
 					hal_device_property_set_string (d, "info.product", "ALSA Device");
 			}
-		} else if (sscanf (device, "hwC%dD%d", &cardnum, &devicenum) == 2) {
+		} else if ((sscanf (device, "hwC%dD%d", &cardnum, &devicenum) == 2) ||
+			   (sscanf (device, "midiC%dD%d", &cardnum, &devicenum) == 2)) {
 			
 			hal_device_property_set_string (d, "info.category", "alsa");
 			hal_device_add_capability (d, "alsa");
@@ -966,9 +967,13 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	
 			asound_card_id_set (cardnum, d, "alsa.card_id");
 
-			hal_device_property_set_string (d, "alsa.type", "hw_specific");
-			
-			snprintf (buf, sizeof (buf), "%s ALSA hardware specific Device", hal_device_property_get_string (d, "alsa.card_id"));
+			if (!strncmp (device, "hwC", 3)) {
+				hal_device_property_set_string (d, "alsa.type", "hw_specific");
+				snprintf (buf, sizeof (buf), "%s ALSA hardware specific Device", hal_device_property_get_string (d, "alsa.card_id"));
+			} else if (!strncmp (device, "midiC", 5)) {
+				hal_device_property_set_string (d, "alsa.type", "midi");
+				snprintf (buf, sizeof (buf), "%s ALSA MIDI Device", hal_device_property_get_string (d, "alsa.card_id"));
+			}
 			hal_device_property_set_string (d, "info.product", buf);
 	
 		} else if (!strncmp (device, "dsp", 3) || !strncmp (device, "adsp", 4) || 
@@ -1100,7 +1105,7 @@ sound_compute_udi (HalDevice *d)
 				      hal_device_property_get_string (d, "oss.type"),
 				      hal_device_property_get_int (d, "oss.device"));
 	} else if (hal_device_has_property(d, "alsa.type")) {
-		/* handle global ALAS devices */
+		/* handle global ALSA devices */
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 				      "%s_alsa_%s",
 				      hal_device_property_get_string (d, "info.parent"),
