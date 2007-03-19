@@ -1361,7 +1361,6 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		} else {
 			g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", 
 				    hal_device_property_get_int (d, "pci.vendor_id"));
-			hal_device_property_set_string (d, "pci.vendor", buf);
 			hal_device_property_set_string (d, "info.vendor", buf);
 		}
 
@@ -1371,24 +1370,14 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		} else {
 			g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", 
 				    hal_device_property_get_int (d, "pci.product_id"));
-			hal_device_property_set_string (d, "pci.product", buf);
 			hal_device_property_set_string (d, "info.product", buf);
 		}
 
 		if (subsys_vendor_name != NULL) {
 			hal_device_property_set_string (d, "pci.subsys_vendor", subsys_vendor_name);
-		} else {
-			g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", 
-				    hal_device_property_get_int (d, "pci.subsys_vendor_id"));
-			hal_device_property_set_string (d, "pci.subsys_vendor", buf);
-		}
-
+		} 
 		if (subsys_product_name != NULL) {
 			hal_device_property_set_string (d, "pci.subsys_product", subsys_product_name);
-		} else {
-			g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", 
-				    hal_device_property_get_int (d, "pci.subsys_product_id"));
-			hal_device_property_set_string (d, "pci.subsys_product", buf);
 		}
 	}
 
@@ -1522,29 +1511,35 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 			if (vendor_name != NULL) {
 				hal_device_property_set_string (d, "usb_device.vendor", vendor_name);
+				hal_device_property_set_string (d, "info.vendor", vendor_name);
 			} else {
 				if (!hal_util_set_string_from_file (d, "usb_device.vendor", 
 								    sysfs_path, "manufacturer")) {
 					g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", 
 						    hal_device_property_get_int (d, "usb_device.vendor_id"));
-					hal_device_property_set_string (d, "usb_device.vendor", buf); 
-				}
+					hal_device_property_set_string (d, "info.vendor", buf); 
+				} else {
+                                        hal_device_property_set_string (
+                                                d, "info.vendor",
+                                                hal_device_property_get_string (d, "usb_device.vendor"));
+                                }
 			}
-			hal_device_property_set_string (d, "info.vendor",
-							hal_device_property_get_string (d, "usb_device.vendor"));
 
 			if (product_name != NULL) {
 				hal_device_property_set_string (d, "usb_device.product", product_name);
+				hal_device_property_set_string (d, "info.product", product_name);
 			} else {
 				if (!hal_util_set_string_from_file (d, "usb_device.product", 
 								    sysfs_path, "product")) {
 					g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", 
 						    hal_device_property_get_int (d, "usb_device.product_id"));
-					hal_device_property_set_string (d, "usb_device.product", buf); 
-				}
+					hal_device_property_set_string (d, "info.product", buf); 
+				} else {
+                                        hal_device_property_set_string (
+                                                d, "info.product",
+                                                hal_device_property_get_string (d, "usb_device.product"));
+                                }
 			}
-			hal_device_property_set_string (d, "info.product",
-							hal_device_property_get_string (d, "usb_device.product"));
 		}
 
 		hal_util_set_int_from_file (d, "usb_device.device_revision_bcd", sysfs_path, "bcdDevice", 16);
@@ -1865,6 +1860,7 @@ pcmcia_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	/* Provide best-guess of vendor, goes in Vendor property */
 	if (prod_id1 != NULL) {
+		hal_device_property_set_string (d, "pcmcia.vendor", prod_id1);
 		hal_device_property_set_string (d, "info.vendor", prod_id1);
 	} else {
 		char buf[50];
@@ -1874,6 +1870,7 @@ pcmcia_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	/* Provide best-guess of name, goes in Product property */
 	if (prod_id2 != NULL) {
+		hal_device_property_set_string (d, "pcmcia.product", prod_id1);
 		hal_device_property_set_string (d, "info.product", prod_id2);
 	} else {
 		char buf[50];
@@ -2031,20 +2028,23 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	}
 
 	if (!hal_util_set_string_from_file (d, "info.product", sysfs_path, "name")) {
-		if (scr != NULL)
+		if (scr != NULL) {
 			hal_device_property_set_string (d, "info.product", "SD Card");
-		else
-			hal_device_property_set_string (d, "info.product", "MMC Card");
+			hal_device_property_set_string (d, "mmc.product", "SD Card");
+		} else {
+			hal_device_property_set_string (d, "mmc.product", "MMC Card");
+                }
 	}
 	
 	if (hal_util_get_int_from_file (sysfs_path, "manfid", &manfid, 16)) {
-		/* Here we should have a mapping to a name */
+		/* TODO: Here we should have a mapping to a name */
 		char vendor[256];
 		snprintf(vendor, 256, "Unknown (%d)", manfid);
 		hal_device_property_set_string (d, "info.vendor", vendor);
+		hal_device_property_set_string (d, "mmc.vendor", vendor);
 	}
 	if (hal_util_get_int_from_file (sysfs_path, "oemid", &oemid, 16)) {
-		/* Here we should have a mapping to a name */
+		/* TODO: Here we should have a mapping to a name */
 		char oem[256];
 		snprintf(oem, 256, "Unknown (%d)", oemid);
 		hal_device_property_set_string (d, "mmc.oem", oem);
