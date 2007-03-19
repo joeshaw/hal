@@ -203,12 +203,6 @@ msgstr "Avansert"
 msgid "Bus Type"
 msgstr "Busstype"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:16
-msgid ""
-"Capabilties this might be a pretty long list so blablabla yada yda dyadhsk "
-"hdks jdhsk dks hdks hdks"
-msgstr ""
-
 #: ../tools/device-manager/hal-device-manager.glade.h:17
 msgid "Device"
 msgstr "Enhet"

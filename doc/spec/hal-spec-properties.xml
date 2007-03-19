@@ -4300,6 +4300,16 @@
             <row>
               <entry></entry>
               <entry>
+                <literal>midi</literal>
+              </entry>
+              <entry></entry>
+              <entry>
+                Stream is MIDI device.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>
                 <literal>playback</literal>
               </entry>
               <entry></entry>

@@ -38,6 +38,12 @@ hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../log
 hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
 endif
 
+if BUILD_MACBOOK
+libexec_PROGRAMS += hald-addon-macbook-backlight
+hald_addon_macbook_backlight_SOURCES = addon-macbook-backlight.c ../../logger.c ../../util_helper.c
+hald_addon_macbook_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
+endif
+
 if BUILD_CPUFREQ
 libexec_PROGRAMS += hald-addon-cpufreq
 hald_addon_cpufreq_SOURCES = addon-cpufreq.c addon-cpufreq.h addon-cpufreq-userspace.h \

@@ -637,7 +637,7 @@ fi
 AC_SUBST(DOCDIR)
 
 
-ALL_LINGUAS="ca cs da de el es eu fi fr hu it ja km ko lt nb nl pa pl pt_BR pt ru sl_SI tr uk zh_CN zh_TW"
+ALL_LINGUAS="ca cs da de el es et eu fi fr hu it ja km ko lt nb nl pa pl pt_BR pt ru sl_SI tr uk zh_CN zh_TW"
 AC_SUBST(ALL_LINGUAS)
 
 GETTEXT_PACKAGE=AC_PACKAGE_NAME
@@ -674,6 +674,30 @@ elif test "x$with_macbookpro" = "x" ; then
    fi
 fi
 AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
+
+dnl macbook backlight support
+AC_ARG_WITH(macbook,     [  --with-macbook          Include support for Macbook backlight (auto)])
+BUILD_MACBOOK=no
+if test "x$with_macbook" = "xyes" ; then
+   BUILD_MACBOOK=yes
+elif test "x$with_macbook" = "x" ; then
+  if test "x$USE_LIBPCI" != "xno" ; then
+    case "${HALD_BACKEND}" in
+      linux)
+        case "${host}" in
+	  i[[3456]]86-*-*)
+            BUILD_MACBOOK=yes
+	    ;;
+	  *)
+	    ;;
+	esac
+        ;;
+      *)
+        ;;
+    esac
+   fi
+fi
+AM_CONDITIONAL(BUILD_MACBOOK, test x$BUILD_MACBOOK = xyes)
 
 AC_ARG_WITH([omap],
 	    [AS_HELP_STRING([--with-omap],
@@ -884,6 +908,7 @@ echo "
         use APM:                    ${msg_apm}
         use Sony PIC:               ${msg_sonypic}
 
+        Macbook backlight support:  ${BUILD_MACBOOK} (Linux only, x86 only, requires libpci)
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         OMAP utils:                 ${BUILD_OMAP} (Linux only, arm only)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)

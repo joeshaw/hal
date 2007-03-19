@@ -11,6 +11,7 @@ hald-addon-storage
 hald-addon-usb-csr
 hald-addon-keyboard
 hald-addon-acpi-buttons-toshiba
+hald-addon-macbook-backlight
 hald-addon-macbookpro-backlight
 hald-addon-cpufreq
 hald-addon-dell-backlight

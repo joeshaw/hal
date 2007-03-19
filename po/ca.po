@@ -250,12 +250,6 @@ msgstr "Avançat"
 msgid "Bus Type"
 msgstr "Tipus de bus"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:16
-msgid ""
-"Capabilties this might be a pretty long list so blablabla yada yda dyadhsk "
-"hdks jdhsk dks hdks hdks"
-msgstr ""
-
 #: ../tools/device-manager/hal-device-manager.glade.h:17
 msgid "Device"
 msgstr "Dispositiu"
@@ -471,3 +465,4 @@ msgstr "Dispositius _virtuals"
 
 #~ msgid "%d: %s exiting; %s udi=%s\n"
 #~ msgstr "%d: %s està sortint; %s udi=%s\n"
+
