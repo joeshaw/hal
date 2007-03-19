@@ -14,6 +14,10 @@ if BUILD_MACBOOKPRO
 dist_fdi_DATA += 10-macbookpro-utils.fdi
 endif
 
+if BUILD_MACBOOK
+dist_fdi_DATA += 10-macbook-backlight.fdi
+endif
+
 if BUILD_CPUFREQ
 dist_fdi_DATA += 10-cpufreq.fdi
 endif
