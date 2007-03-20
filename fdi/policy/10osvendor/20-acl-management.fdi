@@ -44,6 +44,14 @@
       </match>
     </match>
 
+    <!-- usb scanners -->
+    <match key="info.capabilities" contains="usbraw">
+      <match key="info.capabilities" sibling_contains="scanner">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
+      </match>
+    </match>
+
     <!-- Firewire devices are mostly driven by userspace libraries -->
     <match key="info.capabilities" contains="ieee1394_unit.iidc">
       <append key="info.capabilities" type="strlist">access_control</append>
