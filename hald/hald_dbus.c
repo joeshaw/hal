@@ -2526,6 +2526,8 @@ static gboolean
 reinit_dbus (gpointer user_data)
 {
 	HAL_INFO (("entering!"));
+	if (dbus_connection == NULL) 
+		hald_dbus_init_preprobe ();
 	if (hald_dbus_init ())
 		return FALSE;
 	else
@@ -4762,6 +4764,11 @@ hald_dbus_init (void)
 	DBusError dbus_error;
 
 	HAL_INFO (("entering"));
+
+	if (dbus_connection == NULL) {
+		HAL_ERROR(("not connected to system bus"));
+		return FALSE;
+	}
 
 	dbus_error_init (&dbus_error);
 	dbus_bus_request_name (dbus_connection, "org.freedesktop.Hal", 0, &dbus_error);
