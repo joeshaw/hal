@@ -4604,6 +4604,57 @@
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-scanner">
+      <title>
+        <literal>scanner</literal> namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>scanner</literal>
+        represent image scanners. This capability should be merged
+        on the appropriate device object that represents the
+        addressable piece of hardware that is the digital still
+        camera; for USB devices this would be the device object
+        representing the appropriate USB interface. The following
+        properties are available:
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>scanner.access_method</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>This property defines how the device is accessed </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>proprietary</entry>
+              <entry></entry>
+              <entry>
+                The device is accessed from userspace through
+                a userspace driver such as SANE.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+              <entry></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-laptop-panel">
       <title>
         <literal>laptop_panel</literal> namespace
