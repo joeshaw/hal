@@ -3286,7 +3286,7 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 	    error[0] != NULL && error[1] != NULL) {
 		exp_name = error[0];
 		if (error[0] != NULL) {
-			exp_detail = error[1];
+			exp_detail = g_strdup (error[1]);
 		}
 		HAL_INFO (("failed with '%s' '%s'", exp_name, exp_detail));
 	}
@@ -3300,16 +3300,12 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 		dbus_message_unref (reply);
 	} else if (exp_name != NULL && exp_detail != NULL) {
 		if (!is_valid_interface_name (exp_name)) {
-			exp_detail = g_strconcat (exp_name, " \n ", exp_detail, NULL); 	
+			exp_detail = g_strconcat (exp_name, " \n ", exp_detail, NULL);
 			exp_name = "org.freedesktop.Hal.Device.UnknownError";
 		}
 		reply = dbus_message_new_error (message, exp_name, exp_detail);
-		if (reply == NULL) {
-			/* error name may be invalid - assume caller fucked up and use a generic HAL error name */
-			reply = dbus_message_new_error (message, "org.freedesktop.Hal.Device.UnknownError", "An unknown error occured");
-			if (reply == NULL) {
-				DIE (("No memory"));
-			}
+                if (reply == NULL) {
+                        DIE (("No memory"));
 		}
 		if (conn != NULL) {
 			if (!dbus_connection_send (conn, reply, NULL))
