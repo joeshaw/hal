@@ -55,7 +55,8 @@ libexec_PROGRAMS =                          \
 	hal-storage-eject	            \
 	hal-storage-closetray	            \
 	hal-storage-cleanup-mountpoint      \
-	hal-storage-cleanup-all-mountpoints
+	hal-storage-cleanup-all-mountpoints \
+	hal-system-power-pm-is-supported
 
 if HAVE_PMU
 libexec_PROGRAMS +=			    \
@@ -74,7 +75,8 @@ hal_acl_tool_SOURCES = hal-acl-tool.c
 hal_acl_tool_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
 endif
 
-
+hal_system_power_pm_is_supported_SOURCES = hal-system-power-pm-is-supported.c
+hal_system_power_pm_is_supported_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_storage_mount_SOURCES = hal-storage-mount.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_mount_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
@@ -111,6 +113,7 @@ script_SCRIPTS =				\
 	hal-luks-teardown                       \
 	hal-luks-remove		                \
 	hal-system-power-suspend		\
+	hal-system-power-suspend-hybrid		\
 	hal-system-power-hibernate		\
 	hal-system-power-shutdown		\
 	hal-system-power-reboot			\

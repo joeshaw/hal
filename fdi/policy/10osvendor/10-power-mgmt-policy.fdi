@@ -31,6 +31,11 @@
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_argnames" type="strlist">num_seconds_to_sleep</append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-suspend</append>
 
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">SuspendHybrid</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist">i</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_argnames" type="strlist">num_seconds_to_sleep</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-suspend-hybrid</append>
+
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">Hibernate</append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist"></append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_argnames" type="strlist"></append>

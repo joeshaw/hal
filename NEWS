@@ -18,6 +18,7 @@ Requirements for HAL 0.5.9 ""
  - parted           == 1.7.1     (optional)
  - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
  - ConsoleKit       >= git version as of 20070220 (optional)
+ - pm-utils         >= 0.99.2 or newer
 
 ==========
 HAL 0.5.8 "The Skynet Funding Bill is passed."

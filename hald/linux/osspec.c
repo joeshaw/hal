@@ -620,6 +620,7 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_hibernate = TRUE;
 out:
 	hal_device_property_set_bool (d, "power_management.can_suspend", can_suspend);
+	hal_device_property_set_bool (d, "power_management.can_suspend_hybrid", FALSE);
 	hal_device_property_set_bool (d, "power_management.can_hibernate", can_hibernate);
 
 	/* WARNING: These keys are depreciated and power_management.can_suspend
@@ -695,15 +696,37 @@ probe_openfirmware(HalDevice *root)
 	detect_openfirmware_formfactor(root);
 }
 
+static void
+decode_dmi (HalDevice *d)
+{
+        if (g_file_test ("/usr/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
+            g_file_test ("/bin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
+            g_file_test ("/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
+            g_file_test ("/usr/local/sbin//dmidecode", G_FILE_TEST_IS_EXECUTABLE)) {
+                hald_runner_run (d, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
+                                 computer_probing_pcbios_helper_done, NULL, NULL);
+        } else {
+                /* no probing */
+                probe_openfirmware (d);
+                computer_probing_helper_done (d);
+        }
+
+}
+
+static void 
+computer_probing_pm_is_supported_helper_done (HalDevice *d, guint32 exit_type, 
+                                              gint return_code, gchar **error, 
+                                              gpointer data1, gpointer data2)
+{
+        HAL_INFO (("In computer_probing_pm_is_supported_helper_done"));
+        decode_dmi (d);
+}
 
 void 
 osspec_probe (void)
 {
 	HalDevice *root;
 	struct utsname un;
-	gboolean should_decode_dmi;
-
-	should_decode_dmi = FALSE;
 
 	hald_runner_set_method_run_notify ((HaldRunnerRunNotify) hotplug_event_process_queue, NULL);
 	root = hal_device_new ();
@@ -729,12 +752,10 @@ osspec_probe (void)
 	HAL_INFO (("Synthesizing powermgmt events..."));
 	if (acpi_synthesize_hotplug_events ()) {
 		HAL_INFO (("ACPI capabilities found"));
-		should_decode_dmi = TRUE;
 	} else if (pmu_synthesize_hotplug_events ()) {
 		HAL_INFO (("PMU capabilities found"));		
 	} else if (apm_synthesize_hotplug_events ()) {
 		HAL_INFO (("APM capabilities found"));		
-		should_decode_dmi = TRUE;
 	} else {
 		HAL_INFO (("No powermgmt capabilities"));		
 	}
@@ -748,14 +769,14 @@ osspec_probe (void)
 	 */
 	set_suspend_hibernate_keys (root);
 
-	if (should_decode_dmi) {
-		hald_runner_run (root, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
-        	                 computer_probing_pcbios_helper_done, NULL, NULL);
-	} else {
-		/* no probing */
-		probe_openfirmware(root);
-		computer_probing_helper_done (root);
-	}
+        /* Try and set the suspend/hibernate keys using pm-is-supported
+         */
+        if (g_file_test ("/usr/bin/pm-is-supported", G_FILE_TEST_IS_EXECUTABLE)) {
+                hald_runner_run (root, "hal-system-power-pm-is-supported", NULL, HAL_HELPER_TIMEOUT,
+                                 computer_probing_pm_is_supported_helper_done, NULL, NULL);
+        } else {
+                decode_dmi (root);
+        }
 }
 
 DBusHandlerResult
