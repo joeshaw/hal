@@ -592,19 +592,19 @@
             </row>
             <row>
               <entry>
-                <literal>usb_device.speed_bcd</literal> (int)
+                <literal>usb_device.speed</literal> (double)
               </entry>
-              <entry>examples: 0x00150, 0x01200, 0x48000</entry>
+              <entry>examples: 1.5, 12.0, 480.0</entry>
               <entry>Yes</entry>
-              <entry>Speed of device, in Mbit/s, in BCD with two decimals</entry>
+              <entry>Speed of device, in Mbit/s</entry>
             </row>
             <row>
               <entry>
-                <literal>usb_device.version_bcd</literal> (int)
+                <literal>usb_device.version</literal> (double)
               </entry>
-              <entry>examples: 0x0100, 0x0110, 0x0200</entry>
+              <entry>examples: 1.0, 1.1, 2.0</entry>
               <entry>Yes</entry>
-              <entry>USB version of device in BCD with two decimals</entry>
+              <entry>USB version of device</entry>
             </row>
             <row>
               <entry>
@@ -6446,6 +6446,18 @@
               <entry><literal>system.hardware.vendor</literal></entry>
               <entry>2008-02-28</entry>
               <entry>Duplicate of system.hardware.vendor.</entry>
+            </row>
+            <row>
+              <entry><literal>usb_device.speed_bcd</literal> (int)</entry>
+              <entry><literal>usb_device.speed</literal> (double)</entry>
+              <entry>2008-03-21</entry>
+              <entry>changed from 'BCD with two decimals' to double</entry>
+            </row>
+            <row>
+              <entry><literal>usb_device.version_bcd</literal> (int)</entry>
+              <entry><literal>usb_device.version</literal> (double)</entry>
+              <entry>2008-03-21</entry>
+              <entry>changed from 'BCD with two decimals' to double</entry>
             </row>
           </tbody>
         </tgroup>

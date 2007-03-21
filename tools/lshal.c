@@ -150,8 +150,9 @@ print_props (const char *udi)
 			break;
 
 		case LIBHAL_PROPERTY_TYPE_DOUBLE:
-			printf ("  %s = %g  (double)\n",
+			printf ("  %s = %.1f (%g) (double)\n",
 				libhal_psi_get_key (&it),
+				libhal_psi_get_double (&it),
 				libhal_psi_get_double (&it));
 			break;
 

@@ -65,6 +65,8 @@ gboolean hal_util_get_bcd2_from_file (const gchar *directory, const gchar *file,
 
 gboolean hal_util_set_bcd2_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file);
 
+gboolean hal_util_set_double_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file);
+
 void hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...);
 
 gboolean hal_util_path_ascend (gchar *path);

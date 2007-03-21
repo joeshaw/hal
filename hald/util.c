@@ -423,6 +423,25 @@ hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *dire
 	return ret;
 }
 
+gboolean
+hal_util_set_double_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file)
+{
+	double value;
+	gchar *buf, *end;
+	gboolean ret;
+
+	ret = FALSE;
+
+	if ((buf = hal_util_get_string_from_file (directory, file)) != NULL) {
+		value = strtod(buf, &end);
+		if (errno != ERANGE) {
+			ret = hal_device_property_set_double (d, key, value);
+		}
+	}
+	
+	return ret;
+}
+
 void
 hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...)
 {

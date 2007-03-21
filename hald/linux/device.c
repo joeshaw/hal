@@ -1557,7 +1557,9 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 		hal_util_set_string_from_file (d, "usb_device.serial", sysfs_path, "serial");
 		hal_util_set_bcd2_from_file (d, "usb_device.speed_bcd", sysfs_path, "speed");
+		hal_util_set_double_from_file (d, "usb_device.speed", sysfs_path, "speed");
 		hal_util_set_bcd2_from_file (d, "usb_device.version_bcd", sysfs_path, "version");
+		hal_util_set_double_from_file (d, "usb_device.version", sysfs_path, "version");
 
 		hal_util_get_int_from_file (sysfs_path, "bmAttributes", &bmAttributes, 16);
 		hal_device_property_set_bool (d, "usb_device.is_self_powered", (bmAttributes & 0x40) != 0);
