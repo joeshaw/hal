@@ -22,5 +22,6 @@ hal-storage-cleanup-mountpoint
 hal-storage-eject
 hal-storage-unmount
 hal-storage-closetray
+hal-system-power-pm-is-supported
 *.o
 *~
