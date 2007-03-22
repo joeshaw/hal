@@ -119,7 +119,7 @@ main (int argc, char *argv[])
 
 	if (!dbus_message_get_args (reply, 
 				    &error,
-				    DBUS_TYPE_INT32, &hal_retcode,
+				    DBUS_TYPE_UINT32, &hal_retcode,
 				    DBUS_TYPE_INVALID)) {
 		/* should never happen */
 		goto out;
