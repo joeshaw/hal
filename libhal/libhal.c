@@ -2155,7 +2155,7 @@ libhal_device_commit_to_gdl (LibHalContext *ctx,
 	DBusMessageIter iter;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	LIBHAL_CHECK_PARAM_VALID(temp_udi, "*temop_udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(temp_udi, "*temp_udi", FALSE);
 	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
