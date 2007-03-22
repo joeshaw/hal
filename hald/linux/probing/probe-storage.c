@@ -99,7 +99,7 @@ out:
 int 
 main (int argc, char *argv[])
 {
-	int fd;
+	int fd, num_excl_tries = 5;
 	int ret;
 	char *udi;
 	char *device_file;
@@ -295,18 +295,25 @@ main (int argc, char *argv[])
 			 * actually is mounted. If it is we retry to open
 			 * without O_EXCL
 			 */
-			if (!is_mounted (device_file))
-				goto out;
-
-			HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file));
-			fd = open (device_file, O_RDONLY | O_NONBLOCK);
+            HAL_DEBUG (("Open failed - Device Busy"));
+			if (!is_mounted (device_file)) {
+                do {
+                    usleep(100 * 1000);
+                    HAL_DEBUG (("Attempting open w/ O_EXCL again"));
+                    fd = open (device_file, O_RDONLY | O_NONBLOCK | O_EXCL);
+                    num_excl_tries--;
+                } while (fd < 0 && num_excl_tries > 0);
+            } else {
+                HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file));
+                fd = open (device_file, O_RDONLY | O_NONBLOCK);
+            }
 		}
 
 		if (fd < 0) {
 			HAL_DEBUG (("open failed for %s: %s", device_file, strerror (errno)));
 			goto out;
 		}
-
+        HAL_DEBUG (("PROBE HAS EXCLUSIVE LOCK ON CDROM"));
 		got_media = FALSE;
 
 		/* Check if a disc is in the drive
@@ -356,6 +363,7 @@ main (int argc, char *argv[])
 		}
 
 		close (fd);
+        HAL_DEBUG (("PROBE CLOSED LOCK ON CDROM"));
 	} else {
 		struct volume_id *vid;
 		GDir *dir;
