@@ -11,7 +11,7 @@ Requirements for HAL 0.5.9 ""
  - dbus             >= 0.60      (with glib bindings)
  - glib             >= 2.6.0
  - expat            >= 1.95.8
- - hal-info         >= git version as of 20070228
+ - hal-info         >= git version as of 20070323
  - libusb           >= 0 0.1.10a (optional)
  - pciutils         >= 2.2.3     (optional
  - dmidecode        >= 2.7       (optional)

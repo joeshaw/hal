@@ -120,8 +120,8 @@ script_SCRIPTS =				\
 	hal-system-lcd-get-brightness		\
 	hal-system-lcd-set-brightness		\
 	hal-system-power-set-power-save		\
-	hal-system-bluetooth-get-power		\
-	hal-system-bluetooth-set-power
+	hal-system-killswitch-get-power		\
+	hal-system-killswitch-set-power
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 

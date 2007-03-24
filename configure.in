@@ -325,8 +325,8 @@ if test "$LIB_SMBIOS" = "yes" ; then
         int micro ;
 
         if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
-	    if ((major == 0 && minor == 11 && micro >= 6) ||
-               (major >= 0 && minor > 11)) {
+	    if ((major == 0 && minor == 13 && micro >= 4) ||
+               (major >= 0 && minor > 13)) {
 		return 0;
 	    }
 	}
@@ -777,6 +777,30 @@ elif test "x$with_dell_backlight" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_DELL, test x$BUILD_DELL = xyes)
 
+dnl Dell RF KILL
+AC_ARG_WITH(dell-rfkill,        [  --with-dell-rfkill      Whether to build Dell RF-kill support (auto)])
+BUILD_DELL_RFKILL=no
+if test "x$with_dell_rfkill" = "xyes" ; then
+   BUILD_DELL=yes
+elif test "x$with_dell_rfkill" = "x" ; then
+  if test "$USE_SMBIOS" = "yes" ; then
+    case "${HALD_BACKEND}" in
+      linux)
+        case "${host}" in
+	  i[[3456]]86-*-*)
+            BUILD_DELL_RFKILL=yes
+	    ;;
+	  *)
+	    ;;
+	esac
+        ;;
+      *)
+        ;;
+    esac
+   fi
+fi
+AM_CONDITIONAL(BUILD_DELL_RFKILL, test x$BUILD_DELL_RFKILL = xyes)
+
 dnl Sony PIC support
 AC_ARG_ENABLE(sonypic,
 		AC_HELP_STRING([--enable-sonypic],[Build with Sony PIC support]),
@@ -913,7 +937,8 @@ echo "
         OMAP utils:                 ${BUILD_OMAP} (Linux only, arm only)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
 	USB wireless mouse power:   ${BUILD_USBCSR} (Linux only, requires libusb)
-	Dell Backlight              ${BUILD_DELL} (Linux only, requires libsmbios >= 0.11.6)
+	Dell Backlight:             ${BUILD_DELL} (Linux only, requires libsmbios >= 0.13.4)
+	Dell RF Kill:               ${BUILD_DELL_RFKILL} (Linux only, requires libsmbios >= 0.13.4)
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
