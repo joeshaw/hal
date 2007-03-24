@@ -136,6 +136,9 @@ const char   *hal_device_property_get_strlist_elem (HalDevice    *device,
 						    guint index);
 guint         hal_device_property_get_strlist_length (HalDevice    *device,
 						      const char   *key);
+gboolean      hal_device_property_strlist_contains (HalDevice    *device,
+						    const char   *key,
+						    const char   *value);
 char        **hal_device_property_dup_strlist_as_strv (HalDevice    *device,
 						       const char   *key);
 
@@ -203,5 +206,11 @@ gboolean      hal_device_inc_num_ready_addons (HalDevice *device);
 
 gboolean      hal_device_are_all_addons_ready (HalDevice *device);
 
+gboolean      hal_device_acquire_lock (HalDevice *device, const char *lock_name, const char *sender);
+
+gboolean      hal_device_release_lock (HalDevice *device, const char *lock_name, const char *sender);
+
+/* static method */
+void          hal_device_client_disconnected (const char *sender);
 
 #endif /* DEVICE_H */

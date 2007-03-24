@@ -64,6 +64,10 @@ DBusHandlerResult device_lock                       (DBusConnection *connection,
 						     DBusMessage    *message);
 DBusHandlerResult device_unlock                     (DBusConnection *connection,
 						     DBusMessage    *message);
+DBusHandlerResult device_acquire_mandatory_lock     (DBusConnection *connection, 
+						     DBusMessage *message);
+DBusHandlerResult device_release_mandatory_lock     (DBusConnection *connection, 
+						     DBusMessage *message);
 DBusHandlerResult manager_new_device          (DBusConnection *connection,
 					       DBusMessage    *message, 
 					       dbus_bool_t    local_interface);

@@ -37,6 +37,24 @@
 #include "logger.h"
 #include "hald_runner.h"
 
+static GSList *locked_devices = NULL;
+
+static void
+add_to_locked_set (HalDevice *device)
+{
+        if (g_slist_find (locked_devices, device) != NULL)
+                return;
+
+        locked_devices = g_slist_prepend (locked_devices, device);
+}
+
+
+static void
+remove_from_locked_set (HalDevice *device)
+{
+        locked_devices = g_slist_remove (locked_devices, device);
+}
+
 struct _HalProperty {
 	int type;
 	union {
@@ -374,6 +392,8 @@ hal_device_finalize (GObject *obj)
 
 	runner_device_finalized (device);
 
+        remove_from_locked_set (device);
+
 #ifdef HALD_MEMLEAK_DBG
 	dbg_hal_device_object_delta--;
 	printf ("************* in finalize for udi=%s\n", device->private->udi);
@@ -628,6 +648,29 @@ hal_device_property_get_strlist_length (HalDevice    *device,
 	else
 		return 0;
 }
+
+gboolean
+hal_device_property_strlist_contains (HalDevice  *device,
+				      const char *key,
+				      const char *value)
+{
+	GSList *i;
+	GSList *elems;
+	gboolean ret;
+
+	ret = FALSE;
+
+	elems = hal_device_property_get_strlist (device, key);
+	for (i = elems; i != NULL; i = g_slist_next (i)) {
+		if (strcmp (i->data, value) == 0) {
+			ret = TRUE;
+			break;
+		}
+	}
+
+	return ret;
+}
+
 
 void
 hal_device_property_strlist_iter_init (HalDevice    *device,
@@ -1567,3 +1610,131 @@ hal_device_are_all_addons_ready (HalDevice *device)
 		return FALSE;
 	}
 }
+
+/**
+ * hal_device_acquire_lock:
+ * @device: the device to acquire a lock on
+ * @lock_name: name of the lock
+ * @sender: the caller to acquire the lock
+ *
+ * Acquires a named lock on a device.
+ *
+ * Returns: FALSE if the caller already holds this lock. TRUE if the caller got the lock.
+ */
+gboolean
+hal_device_acquire_lock (HalDevice *device, const char *lock_name, const char *sender)
+{
+        gboolean ret;
+        char buf[256];
+
+        ret = FALSE;
+
+	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
+	if (hal_device_property_strlist_contains (device, buf, sender)) {
+                /* already locked */
+                goto out;
+        }
+	hal_device_property_strlist_append (device, buf, sender);
+	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
+	hal_device_property_set_bool (device, buf, TRUE);
+
+	hal_device_property_strlist_append (device, "info.named_locks", lock_name);
+
+        add_to_locked_set (device);
+
+        ret = TRUE;
+out:
+        return ret;
+}
+
+/**
+ * hal_device_release_lock:
+ * @device: the device to acquire a lock on
+ * @lock_name: name of the lock
+ * @sender: the caller to acquire the lock
+ *
+ * Releases a named lock on a device.
+ *
+ * Returns: FALSE if the caller didn't hold this lock. True if the lock was removed.
+ */
+gboolean
+hal_device_release_lock (HalDevice *device, const char *lock_name, const char *sender)
+{
+        gboolean ret;
+        char buf[256];
+
+        ret = FALSE;
+
+        HAL_INFO (("Removing lock '%s' from '%s'", lock_name, sender));
+
+	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
+	if (!hal_device_property_get_bool (device, buf)) {
+                /* not locked */
+                goto out;
+	}
+
+	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
+	if (!hal_device_property_strlist_contains (device, buf, sender)) {
+                /* not locked by sender */
+                goto out;
+	}
+
+	if (hal_device_property_get_strlist_length (device, buf) == 1) {
+                /* last one to hold the lock */
+		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
+		hal_device_property_remove (device, buf);
+		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
+		hal_device_property_remove (device, buf);
+
+                if (hal_device_property_get_strlist_length (device, "info.named_locks") == 1) {
+                        hal_device_property_remove (device, "info.named_locks");
+                        remove_from_locked_set (device);
+                } else {
+                        hal_device_property_strlist_remove (device, "info.named_locks", lock_name);
+                }
+	} else {
+                /* there are additional holders */
+		hal_device_property_strlist_remove (device, buf, sender);
+	}
+
+        ret = TRUE;
+
+out:
+        return ret;
+}
+
+/**
+ * hal_device_client_disconnected:
+ * @sender: the client that disconnected from the bus
+ *
+ * Will remove locks held by this client on locked devices. This is a
+ * static class method that affects all devices that are locked.
+ *
+ */
+void
+hal_device_client_disconnected (const char *sender)
+{
+        GSList *i;
+
+        HAL_INFO (("Removing locks from '%s'", sender));
+
+        for (i = locked_devices; i != NULL; i = g_slist_next (i)) {
+                HalDevice *device = i->data;
+                GSList *locks;
+                GSList *j;
+                GSList *k;
+
+                HAL_INFO (("Looking at udi '%s'", device->private->udi));
+
+                locks = hal_device_property_get_strlist (device, "info.named_locks");
+                for (j = locks; j != NULL; j = k) {
+                        char *lock_name = j->data;
+                        k = g_slist_next (j);
+
+                        HAL_INFO (("Lock '%s'", lock_name));
+
+                        hal_device_release_lock (device, lock_name, sender);
+                }
+        }
+}
+
