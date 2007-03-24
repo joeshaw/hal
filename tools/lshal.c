@@ -480,16 +480,19 @@ print_property (const char *udi, const char *key)
 			printf ("{");
 
 		strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
-		for (i = 0; strlist[i] != 0; i++) {
-			printf ("'%s'", strlist[i]);
-			if (strlist[i+1] != NULL)
-				printf (", ");
-		}
-		if (long_list)
-			printf ("}  (string list)\n");
-		else
-			printf ("}");
-		libhal_free_string_array (strlist);
+                /* may be NULL because property may have been removed */
+                if (strlist != NULL) {
+                        for (i = 0; strlist[i] != 0; i++) {
+                                printf ("'%s'", strlist[i]);
+                                if (strlist[i+1] != NULL)
+                                        printf (", ");
+                        }
+                        if (long_list)
+                                printf ("}  (string list)\n");
+                        else
+                                printf ("}");
+                        libhal_free_string_array (strlist);
+                }
 		break;
 	}
 
