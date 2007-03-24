@@ -88,7 +88,7 @@ raise_error (DBusConnection *connection,
 	vsnprintf(buf, sizeof buf, format, args);
 	va_end(args);
 
-	HAL_WARNING ((buf));
+	/*HAL_WARNING ((buf));*/
 	reply = dbus_message_new_error (in_reply_to, error_name, buf);
 	if (reply == NULL)
 		DIE (("No memory"));
