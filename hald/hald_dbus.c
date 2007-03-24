@@ -2072,62 +2072,6 @@ device_query_capability (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-#if 0
-/*  map: service name -> list of {lock_name, udi}
- */
-static GHashTable *services_with_mlocks = NULL;
-
-typedef struct
-{
-	char *lock_name;
-	char *udi;
-} MLockEntry;
-
-static void
-free_mlock_entry (MLockEntry *me)
-{
-	g_free (me->lock_name);
-	g_free (me->udi);
-	g_free (me);
-}
-
-static MLockEntry *
-new_mlock_entry (const char *lock_name, const char *udi)
-{
-	MLockEntry *me;
-	me = g_new0 (MLockEntry, 1);
-	me->lock_name = g_strdup (lock_name);
-	me->udi = g_strdup (udi);
-	return me;
-}
-
-static void
-free_mlock_list (GSList *mlock_list)
-{
-	g_slist_foreach (mlock_list, (GFunc) free_mlock_entry, NULL);
-	g_slist_free (mlock_list);
-}
-
-static void
-print_mlock_per_service (const char *service, GSList *mlock_list, gpointer userdata)
-{
-	GSList *i;
-	HAL_INFO (("  mlocks for service %s", service));
-	for (i = mlock_list; i != NULL; i = g_slist_next (i)) {
-		MLockEntry *me = i->data;
-		HAL_INFO (("    lock_name=%s   udi=%s", me->lock_name, me->udi));
-	}
-}
-
-static void
-dump_mlocks (void)
-{
-	HAL_INFO (("--- Dumping mlocks"));
-	g_hash_table_foreach (services_with_mlocks, (GHFunc) print_mlock_per_service, NULL);
-	HAL_INFO (("------------------"));
-}
-#endif
-
 /**  
  *  device_acquire_mandatory_lock:
  *  @connection:         D-BUS connection
@@ -2193,49 +2137,6 @@ device_acquire_mandatory_lock (DBusConnection *connection, DBusMessage *message)
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-
-#if 0
-	reply = dbus_message_new_method_return (message);
-	if (reply == NULL)
-		DIE (("No memory"));
-
-	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
-	if (hal_device_property_strlist_contains (d, buf, sender)) {
-		raise_device_already_locked (connection, message, d);
-		return DBUS_HANDLER_RESULT_HANDLED;
-	}
-	hal_device_property_strlist_append (d, buf, sender);
-	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
-	hal_device_property_set_bool (d, buf, TRUE);
-
-	GSList *mlock_list;
-	if (services_with_mlocks == NULL) {
-		services_with_mlocks = g_hash_table_new_full (g_str_hash,
-							      g_str_equal,
-							      g_free,
-							      (GDestroyNotify) free_mlock_list);
-		mlock_list = g_slist_append (NULL, new_mlock_entry (lock_name, udi));
-		g_hash_table_insert (services_with_mlocks, g_strdup (sender), mlock_list);
-	} else {
-		mlock_list = g_hash_table_lookup (services_with_mlocks, sender);
-		if (mlock_list != NULL) {
-			/* head is guarenteed not to change */
-			g_slist_append (mlock_list, new_mlock_entry (lock_name, udi));
-		} else {
-			mlock_list = g_slist_append (NULL, new_mlock_entry (lock_name, udi));
-			g_hash_table_insert (services_with_mlocks, g_strdup (sender), mlock_list);
-		}
-	}
-	dump_mlocks ();
-
-	if (!dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-
-	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_HANDLED;
-#endif
-
-
 /** 
  *  device_release_mandatory_lock: 
  *  @connection:         D-BUS connection
@@ -2300,60 +2201,6 @@ device_release_mandatory_lock (DBusConnection *connection, DBusMessage *message)
 	dbus_message_unref (reply);
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
-
-#if 0
-	reply = dbus_message_new_method_return (message);
-	if (reply == NULL)
-		DIE (("No memory"));
-
-	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
-	if (!hal_device_property_get_bool (d, buf)) {
-		raise_device_not_locked (connection, message, d);
-		return DBUS_HANDLER_RESULT_HANDLED;
-	}
-
-	sender = dbus_message_get_sender (message);
-
-	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
-	if (!hal_device_property_strlist_contains (d, buf, sender)) {
-		raise_permission_denied (connection, message, "Not locked by you");
-		return DBUS_HANDLER_RESULT_HANDLED;
-	}
-
-	if (hal_device_property_get_strlist_length (d, buf) == 1) {
-		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
-		hal_device_property_remove (d, buf);
-		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
-		hal_device_property_remove (d, buf);
-	} else {
-		hal_device_property_strlist_remove (d, buf, sender);
-	}
-
-	GSList *mlock_list;
-	mlock_list = g_hash_table_lookup (services_with_mlocks, sender);
-	if (mlock_list != NULL) {
-		GSList *i;
-		GSList *new_mlock_list = NULL;
-		for (i = mlock_list; i != NULL; i = g_slist_next (i)) {
-			MLockEntry *me = i->data;
-			if (!(strcmp (me->udi, udi) == 0 && strcmp (me->lock_name, lock_name) == 0)) {
-				new_mlock_list = g_slist_append (new_mlock_list, new_mlock_entry (lock_name, udi));
-			}
-		}
-		if (new_mlock_list != NULL)
-			g_hash_table_replace (services_with_mlocks, g_strdup (sender), new_mlock_list);
-		else
-			g_hash_table_remove (services_with_mlocks, sender);
-	}
-	dump_mlocks ();
-
-	if (!dbus_connection_send (connection, reply, NULL))
-		DIE (("No memory"));
-
-	dbus_message_unref (reply);
-	return DBUS_HANDLER_RESULT_HANDLED;
-}
-#endif
 
 /*------------------------------------------------------------------------*/
 
@@ -4597,27 +4444,6 @@ hald_dbus_filter_function (DBusConnection * connection,
 
                 if (strlen (old_service_name) > 0)
                         hal_device_client_disconnected (old_service_name);
-#if 0
-		if (services_with_mlocks != NULL) {
-			GSList *i;
-			GSList *mlock_list;
-			mlock_list = g_hash_table_lookup (services_with_mlocks, new_service_name);
-			for (i = mlock_list; i != NULL; i = g_slist_next (i)) {
-#if 0
-				if (hal_device_property_get_strlist_length (d, buf) == 1) {
-					g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
-					hal_device_property_remove (d, buf);
-					g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
-					hal_device_property_remove (d, buf);
-				} else {
-					hal_device_property_strlist_remove (d, buf, sender);
-				}
-#endif				
-			}
-			g_hash_table_remove (services_with_mlocks, new_service_name);
-			dump_mlocks ();
-		}
-#endif
 
 #ifdef HAVE_CONKIT
 	} else if (dbus_message_is_signal (message,
