@@ -1494,6 +1494,7 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 		hal_device_property_set_string (d, "usb_device.linux.sysfs_path", sysfs_path);
 
+		hal_util_set_string_from_file(d, "usb_device.configuration", sysfs_path, "configuration");
 		hal_util_set_int_from_file (d, "usb_device.configuration_value", sysfs_path, "bConfigurationValue", 10);
 		hal_util_set_int_from_file (d, "usb_device.num_configurations", sysfs_path, "bNumConfigurations", 10);
 		hal_util_set_int_from_file (d, "usb_device.num_interfaces", sysfs_path, "bNumInterfaces", 10);
@@ -1589,6 +1590,7 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		hal_util_set_int_from_file (d, "usb.interface.class", sysfs_path, "bInterfaceClass", 16);
 		hal_util_set_int_from_file (d, "usb.interface.subclass", sysfs_path, "bInterfaceSubClass", 16);
 		hal_util_set_int_from_file (d, "usb.interface.protocol", sysfs_path, "bInterfaceProtocol", 16);
+		hal_util_set_string_from_file(d, "usb.interface.description", sysfs_path, "interface");
 
 		usbif_set_name (d, 
 				hal_device_property_get_int (d, "usb.interface.class"),

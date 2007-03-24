@@ -371,6 +371,18 @@ hf_usb_device_new (HalDevice *parent,
     {
       can_wake_up = (config_desc.bmAttributes & UC_REMOTE_WAKEUP) != 0;
       num_interfaces = config_desc.bNumInterface;
+
+      if (config_desc->iConfiguration != 0)
+	{
+	  char *configuration;
+
+	  configuration = hf_usb_get_string_descriptor(controller->fd, di->udi_addr, config_desc->iConfiguration, NULL);
+	  if (configuration)
+	    {
+	      hal_device_property_set_string(device, "usb_device.configuration", configuration);
+	      g_free(configuration);
+	    }
+	}
     }
 
   hal_device_property_set_bool(device, "usb_device.can_wake_up", can_wake_up);
@@ -434,6 +446,19 @@ hf_usb_interface_device_new (HalDevice *parent,
   hal_device_property_set_int(device, "usb.interface.subclass", desc->bInterfaceSubClass);
   hal_device_property_set_int(device, "usb.interface.protocol", desc->bInterfaceProtocol);
   hal_device_property_set_int(device, "usb.interface.number", desc->bInterfaceNumber);
+
+  if (desc->iInterface != 0)
+    {
+      char *interface;
+
+      interface = hf_usb_get_string_descriptor(controller->fd, di->udi_addr, desc->iInterface, NULL);
+      if (interface)
+	{
+	  hal_device_property_set_string(device, "usb.interface.description", interface);
+	  g_free(interface);
+	}
+    }
+
 
   hf_usb_device_compute_udi(device);
 

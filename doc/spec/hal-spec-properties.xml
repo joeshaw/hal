@@ -508,6 +508,15 @@
             </row>
             <row>
               <entry>
+                <literal>usb_device.configuration</literal> (int)
+              </entry>
+              <entry>example: Bulk transfer configuration</entry>
+              <entry>No</entry>
+              <entry>Human-readable description of the current configuration the USB device is in
+              </entry>
+            </row>
+            <row>
+              <entry>
                 <literal>usb_device.num_configurations</literal> (int)
               </entry>
               <entry>example: 1</entry>
@@ -747,6 +756,14 @@
               <entry>example: 0x01</entry>
               <entry>Yes</entry>
               <entry>USB Protocol for the interface</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>usb.interface.description</literal> (int)
+              </entry>
+              <entry>example: SyncML interface</entry>
+              <entry>No</entry>
+              <entry>Human-readable description for the interface provided by the device</entry>
             </row>
             <row>
               <entry>
