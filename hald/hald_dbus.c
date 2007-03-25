@@ -47,8 +47,8 @@
 #include "osspec.h"
 #include "util.h"
 #include "hald_runner.h"
-
 #include "ci-tracker.h"
+#include "access-check.h"
 
 #ifdef HAVE_CONKIT
 #include "ck-tracker.h"
@@ -933,43 +933,7 @@ device_get_all_properties (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-static dbus_bool_t 
-sender_has_privileges (DBusConnection *connection, DBusMessage *message)
-{
-	const char *user_base_svc;
-	dbus_bool_t ret;
-	CICallerInfo *ci;
-
-	ret = FALSE;
-
-	user_base_svc = dbus_message_get_sender (message);
-	if (user_base_svc == NULL) {
-		HAL_WARNING (("Cannot determine base service of caller"));
-		goto out;
-	}
-
-	HAL_DEBUG (("base_svc = %s", user_base_svc));
-
-	ci = ci_tracker_get_info (ci_tracker, user_base_svc);
-	if (ci == NULL) {
-		goto out;
-	}
-
-	HAL_INFO (("uid for caller is %ld", ci_tracker_caller_get_uid (ci)));
-
-	if (ci_tracker_caller_get_uid (ci) != 0 && ci_tracker_caller_get_uid (ci) != geteuid()) {
-		HAL_WARNING (("uid %d is not privileged", ci_tracker_caller_get_uid (ci)));
-		goto out;
-	}
-
-	ret = TRUE;
-
-out:
-	return ret;
-}
-
-
-/** *
+/**
  *  device_set_multiple_properties:
  *  @connection:         D-BUS connection
  *  @message:            Message
@@ -1007,7 +971,7 @@ device_set_multiple_properties (DBusConnection *connection, DBusMessage *message
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "SetProperty: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1377,7 +1341,7 @@ device_set_property (DBusConnection * connection, DBusMessage * message, dbus_bo
 	}
 	dbus_message_iter_get_basic (&iter, &key);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "SetProperty: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1497,7 +1461,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message, dbus_
 
 	HAL_TRACE (("entering"));
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "AddCapability: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -1673,7 +1637,7 @@ device_remove_property (DBusConnection * connection, DBusMessage * message, dbus
 
 	udi = dbus_message_get_path (message);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "RemoveProperty: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2457,7 +2421,7 @@ device_rescan (DBusConnection * connection, DBusMessage * message, dbus_bool_t l
 
 	udi = dbus_message_get_path (message);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "Rescan: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2501,7 +2465,7 @@ device_reprobe (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 
 	udi = dbus_message_get_path (message);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "Reprobe: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2752,7 +2716,7 @@ manager_new_device (DBusConnection * connection, DBusMessage * message, dbus_boo
 
 	dbus_error_init (&error);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "NewDevice: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2821,7 +2785,7 @@ manager_remove (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 
 	dbus_error_init (&error);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "Remove: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -2922,7 +2886,7 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 
 	dbus_error_init (&error);
 
-	if (!local_interface && !sender_has_privileges (connection, message)) {
+	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "CommitToGdl: not privileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
@@ -3266,42 +3230,6 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
 		extra_env[1] = "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=0";
 	} else {
-
-#ifdef HAVE_CONKIT
-		/* TODO: we probably should let the handler itself decide if it wants
-		 * to service the session... by e.g. exporting some env variables
-		 * set from the CICallerInfo object
-		 */
-		if (ci_tracker_caller_get_uid (ci) != 0) {
-			if (ci_tracker_caller_get_ck_session_path (ci) == NULL) {
-				HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on exec'ed method %s for %s "
-					   "is not in any session; refusing service",
-					   dbus_message_get_sender (message), 
-                                           ci_tracker_caller_get_uid (ci), 
-                                           ci_tracker_caller_get_pid (ci), 
-					   dbus_message_get_interface (message), 
-					   dbus_message_get_member (message), 
-					   dbus_message_get_path (message)));
-				raise_permission_denied (connection, message, "Not in active session");
-				goto out;
-			}
-		
-			if (!ci_tracker_caller_in_active_session (ci)) {
-				HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on exec'ed method %s for %s "
-					   "is not in an active session (%s); refusing service",
-					   dbus_message_get_sender (message), 
-                                           ci_tracker_caller_get_uid (ci), 
-                                           ci_tracker_caller_get_pid (ci), 
-					   dbus_message_get_interface (message), 
-					   dbus_message_get_member (message), 
-					   dbus_message_get_path (message), 
-					   ci_tracker_caller_get_ck_session_path (ci)));
-				raise_permission_denied (connection, message, "Not in active session");
-				goto out;
-			}
-		}
-#endif /* HAVE_CONKIT */
-		
 		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%u", ci_tracker_caller_get_uid (ci));
 		extra_env[0] = uid_export;
 		snprintf (sender_export, sizeof (sender_export), 
@@ -3431,9 +3359,6 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 
 	dbus_message_ref (message);
 	g_string_free (stdin_str, TRUE);
-#ifdef HAVE_CONKIT
-out:
-#endif
 	return DBUS_HANDLER_RESULT_HANDLED;
 
 error:
@@ -4033,8 +3958,10 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		const char *method;
 		const char *signature;
 		const char *caller;
-		CICallerInfo *ci;
 		HalDevice *d;
+                GSList *i;
+                HalDeviceStrListIter if_iter;
+                CICallerInfo *ci;
 
 		/* check for device-specific interfaces that individual objects may support */
 
@@ -4043,6 +3970,9 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		method = dbus_message_get_member (message);
 		signature = dbus_message_get_signature (message);
 
+                if (udi == NULL || method == NULL || signature == NULL || interface == NULL)
+                        goto out;
+
 		caller = dbus_message_get_sender (message);
 		if (local_interface) {
 			ci = NULL;
@@ -4050,141 +3980,105 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 			ci = ci_tracker_get_info (ci_tracker, caller);
 			if (ci == NULL) {
 				HAL_ERROR (("Cannot get caller info for %s", caller));
-				goto no_caller;
+				goto out;
 			}
 		}
 
 		d = NULL;
+                d = hal_device_store_find (hald_get_gdl (), udi);
+                if (d == NULL)
+                        d = hal_device_store_find (hald_get_tdl (), udi);
+                if (d == NULL)
+                        goto out;
 
-		if (udi != NULL) {
-			d = hal_device_store_find (hald_get_gdl (), udi);
-			if (d == NULL)
-				d = hal_device_store_find (hald_get_tdl (), udi);
-		}
+                /* bypass security checks on direct connections */
+                if (!local_interface) {
+                        if (!access_check_caller_have_access_to_device (ci_tracker, d, caller)) {
+                                HAL_INFO (("Caller '%s' does not have access to device '%s'", caller, udi));
+                                /* TODO: need to fix up reason */
+                                raise_permission_denied (connection, message, "Not in active session");
+                                return DBUS_HANDLER_RESULT_HANDLED;
+                        }
+                }
 
-		if (d != NULL && interface != NULL) {
-			GSList *i;
+                /* first see if an addon grabbed the interface */
+                for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
+                        HelperInterfaceHandler *hih = i->data;
+                        if (strcmp (hih->udi, udi) == 0 &&
+                            strcmp (hih->interface_name, interface) == 0) {
+                                DBusPendingCall *pending_call;
+                                DBusMessage *copy;
 
-			for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
-				HelperInterfaceHandler *hih = i->data;
-				if (strcmp (hih->udi, udi) == 0 &&
-				    strcmp (hih->interface_name, interface) == 0) {
-					DBusPendingCall *pending_call;
-					DBusMessage *copy;
+                                /*HAL_INFO (("forwarding method to connection 0x%x", hih->connection));*/
 
-#ifdef HAVE_CONKIT
-					/* TODO: we probably should let the add-on itself decide if it wants
-					 * to service the session...
-					 */
-					if (!local_interface && ci_tracker_caller_get_uid (ci) != 0) {
-						if (ci_tracker_caller_get_ck_session_path (ci) == NULL) {
-							HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on "
-								   "add-on method %s for %s is not in any session; "
-								   "refusing service",
-								   caller, 
-                                                                   ci_tracker_caller_get_uid (ci), 
-                                                                   ci_tracker_caller_get_pid (ci), 
-                                                                   interface, 
-                                                                   method,
-								   udi, 
-                                                                   ci_tracker_caller_get_ck_session_path (ci)));
-							raise_permission_denied (connection, message, "Not in active session");
-							return DBUS_HANDLER_RESULT_HANDLED;
-						}
+                                dbus_message_ref (message);
+                                
+                                /* send a copy of the message */
+                                copy = dbus_message_copy (message);
+                                if (!dbus_connection_send_with_reply (hih->connection,
+                                                                      copy,
+                                                                      &pending_call,
+                                                                      /*-1*/ 8000)) {
+                                        /* TODO: handle error */
+                                } else {
+                                        /*HAL_INFO (("connection=%x message=%x", connection, message));*/
+                                        dbus_pending_call_set_notify (pending_call,
+                                                                      reply_from_fwd_message,
+                                                                      (void *) message,
+                                                                      NULL);
+                                }
+                                
+                                dbus_message_unref (copy);
+                                return DBUS_HANDLER_RESULT_HANDLED;
+                        }
+                }
 
-						if (!ci_tracker_caller_in_active_session (ci)) {
-							HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on "
-								   "add-on method %s for %s is not in an active "
-								   "session (%s); refusing service",
-								   caller, 
-                                                                   ci_tracker_caller_get_uid (ci), 
-                                                                   ci_tracker_caller_get_pid (ci), 
-                                                                   interface, 
-                                                                   method, 
-								   udi, 
-                                                                   ci_tracker_caller_get_ck_session_path (ci)));
-							raise_permission_denied (connection, message, "Not in active session");
-							return DBUS_HANDLER_RESULT_HANDLED;
-						}
-					}
-#endif /* HAVE_CONKIT */
-
-					/*HAL_INFO (("forwarding method to connection 0x%x", hih->connection));*/
-
-					dbus_message_ref (message);
-
-					/* send a copy of the message */
-					copy = dbus_message_copy (message);
-					if (!dbus_connection_send_with_reply (hih->connection,
-									      copy,
-									      &pending_call,
-									      /*-1*/ 8000)) {
-						/* TODO: handle error */
-					} else {
-						/*HAL_INFO (("connection=%x message=%x", connection, message));*/
-						dbus_pending_call_set_notify (pending_call,
-									      reply_from_fwd_message,
-									      (void *) message,
-									      NULL);
-					}
-
-					dbus_message_unref (copy);
-
-					return DBUS_HANDLER_RESULT_HANDLED;
-				}
-			}
-		} 
-
-		if (d != NULL && interface != NULL && method != NULL && signature != NULL) {
-			HalDeviceStrListIter if_iter;
-			
-			for (hal_device_property_strlist_iter_init (d, "info.interfaces", &if_iter);
-			     hal_device_property_strlist_iter_is_valid (&if_iter);
-			     hal_device_property_strlist_iter_next (&if_iter)) {
-				const char *ifname = hal_device_property_strlist_iter_get_value (&if_iter);
-
-				if (strcmp (ifname, interface) == 0) {
-					guint num;
-					HalDeviceStrListIter name_iter;
-					char *s;
-
-					s = g_strdup_printf ("%s.method_names", interface);
-					hal_device_property_strlist_iter_init (d, s, &name_iter);
-					g_free (s);
-					for (num = 0; 
-					     hal_device_property_strlist_iter_is_valid (&name_iter);
-					     hal_device_property_strlist_iter_next (&name_iter), num++) {
-						const char *methodname;
-						methodname = hal_device_property_strlist_iter_get_value (&name_iter);
-						if (strcmp (methodname, method) == 0) {
-							const char *execpath;
-							const char *sig;
-
-							s = g_strdup_printf ("%s.method_execpaths", interface);
-							execpath = hal_device_property_get_strlist_elem (d, s, num);
-							g_free (s);
-							s = g_strdup_printf ("%s.method_signatures", interface);
-							sig = hal_device_property_get_strlist_elem (d, s, num);
-							g_free (s);
-							
-							if (execpath != NULL && sig != NULL && 
-							    strcmp (sig, signature) == 0) {
-
-								HAL_INFO (("OK for method '%s' with signature '%s' on interface '%s' for UDI '%s' and execpath '%s'", method, signature, interface, udi, execpath));
-
-								return hald_exec_method (d, ci, connection, 
-											 local_interface,
-											 message, execpath);
-							}
-							
-						}
-					}
-				}
-			}
-			
-		}
-	}		
-no_caller:
+                /* nope, see if we have a program to run.. */        
+                for (hal_device_property_strlist_iter_init (d, "info.interfaces", &if_iter);
+                     hal_device_property_strlist_iter_is_valid (&if_iter);
+                     hal_device_property_strlist_iter_next (&if_iter)) {
+                        const char *ifname = hal_device_property_strlist_iter_get_value (&if_iter);
+                        
+                        if (strcmp (ifname, interface) == 0) {
+                                guint num;
+                                HalDeviceStrListIter name_iter;
+                                char *s;
+                                
+                                s = g_strdup_printf ("%s.method_names", interface);
+                                hal_device_property_strlist_iter_init (d, s, &name_iter);
+                                g_free (s);
+                                for (num = 0; 
+                                     hal_device_property_strlist_iter_is_valid (&name_iter);
+                                     hal_device_property_strlist_iter_next (&name_iter), num++) {
+                                        const char *methodname;
+                                        methodname = hal_device_property_strlist_iter_get_value (&name_iter);
+                                        if (strcmp (methodname, method) == 0) {
+                                                const char *execpath;
+                                                const char *sig;
+                                                
+                                                s = g_strdup_printf ("%s.method_execpaths", interface);
+                                                execpath = hal_device_property_get_strlist_elem (d, s, num);
+                                                g_free (s);
+                                                s = g_strdup_printf ("%s.method_signatures", interface);
+                                                sig = hal_device_property_get_strlist_elem (d, s, num);
+                                                g_free (s);
+                                                
+                                                if (execpath != NULL && sig != NULL && 
+                                                    strcmp (sig, signature) == 0) {
+                                                        
+                                                        HAL_INFO (("OK for method '%s' with signature '%s' on interface '%s' for UDI '%s' and execpath '%s'", method, signature, interface, udi, execpath));
+                                                        
+                                                        return hald_exec_method (d, ci, connection, 
+                                                                                 local_interface,
+                                                                                 message, execpath);
+                                                }
+                                                
+                                        }
+                                }
+                        }
+                }
+	}
+out:
 	return osspec_filter_function (connection, message, user_data);
 }
 
