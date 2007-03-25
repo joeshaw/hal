@@ -3756,6 +3756,18 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"temporary_udi\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"global_udi\" direction=\"in\" type=\"s\"/>\n"
 				       "    </method>\n"
+
+				       "    <signal name=\"DeviceAdded\">\n"
+				       "      <arg name=\"udi\" type=\"s\"/>\n"
+				       "    </signal>\n"
+				       "    <signal name=\"DeviceRemoved\">\n"
+				       "      <arg name=\"udi\" type=\"s\"/>\n"
+				       "    </signal>\n"
+				       "    <signal name=\"NewCapability\">\n"
+				       "      <arg name=\"udi\" type=\"s\"/>\n"
+				       "      <arg name=\"cap_name\" type=\"s\"/>\n"
+				       "    </signal>\n"
+
 				       "  </interface>\n");
 	} else {
 		HalDevice *d;
@@ -3893,6 +3905,14 @@ do_introspect (DBusConnection  *connection,
 				       "    <method name=\"AddonIsReady\">\n"
 				       "      <arg name=\"rc\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
+				       "    <signal name=\"PropertyModified\">\n"
+				       "      <arg name=\"num_updates\" type=\"i\"/>\n"
+				       "      <arg name=\"updates\" type=\"a(sbb)\"/>\n"
+				       "    </signal>\n"
+				       "    <signal name=\"Condition\">\n"
+				       "      <arg name=\"cond_name\" type=\"s\"/>\n"
+				       "      <arg name=\"cond_details\" type=\"s\"/>\n"
+				       "    </signal>\n"
 
 				       "  </interface>\n");
 			HalDeviceStrListIter if_iter;
@@ -3920,7 +3940,8 @@ do_introspect (DBusConnection  *connection,
 				/* consult local list */
 				for (i = helper_interface_handlers; i != NULL; i = g_slist_next (i)) {
 					HelperInterfaceHandler *hih = i->data;
-					if (strcmp (hih->udi, path) == 0) {
+					if (strcmp (hih->udi, path) == 0 &&
+                                            strcmp (hih->interface_name, ifname) == 0) {
 						xml = g_string_append (xml, hih->introspection_xml);
 					}
 				}
