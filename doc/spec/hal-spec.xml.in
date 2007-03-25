@@ -5,7 +5,7 @@
   <bookinfo>
     <title>HAL @VERSION@ Specification</title>
     <releaseinfo>Version @VERSION@</releaseinfo>
-    <date>May 9th, 2006</date> <!-- Update this manually -->
+    <date>March 24th, 2007</date> <!-- Update this manually -->
     <authorgroup>
       <author>
         <firstname>David</firstname>
@@ -22,6 +22,6 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-introduction.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-properties.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-fdi-files.xml" />
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-examples.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-interfaces.xml" />
   
 </book>

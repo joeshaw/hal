@@ -1,0 +1,1099 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="interfaces">
+  <title>D-Bus interfaces</title>
+
+  <para>
+    All of the HAL D-Bus interfaces are introspectable using the
+    standard D-Bus introspection methods (e.g. they all implement
+    the <literal>org.freedesktop.DBus.Introspectable</literal>
+    interface). For example, a command like
+    <programlisting>
+$ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
+            /org/freedesktop/Hal/devices/computer             \
+            org.freedesktop.DBus.Introspectable.Introspect
+    </programlisting>
+    will print out the introspection XML for what interfaces
+    (ie. methods and signals) the given hal device object
+    supports. For brevity, the <literal>org.freedesktop.Hal</literal>
+    prefix have been stripped from the exceptions listed in the
+    following sections. Also note that other exceptions than the ones
+    listed may be thrown.
+  </para>
+
+  <sect1 id="interface-manager">
+    <title>org.freedesktop.Hal.Manager interface</title>
+    <para>
+      Only the <literal>/org/freedesktop/Hal/Manager</literal> object
+      implements this interface. It's primarily used to discover
+      devices. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetAllDevices</entry>
+            <entry>Objref[]</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Get all UDI's in the database.
+            </entry>
+          </row>
+          <row>
+            <entry>DeviceExists</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Determines if a given object exists.
+            </entry>
+          </row>
+          <row>
+            <entry>FindDeviceStringMatch</entry>
+            <entry>Objref[]</entry>
+            <entry>String key, String value</entry>
+            <entry></entry>
+            <entry>
+              Find devices for which the given string property assumes the given value.
+            </entry>
+          </row>
+          <row>
+            <entry>FindDeviceByCapability</entry>
+            <entry>Objref[]</entry>
+            <entry>String capability</entry>
+            <entry></entry>
+            <entry>
+              Finds devices of the given capability.
+            </entry>
+          </row>
+          <row>
+            <entry>NewDevice</entry>
+            <entry>Objref</entry>
+            <entry></entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Creates a new device object in the temporary device list
+              (TDL) and return the UDI. Caller must be uid 0.
+            </entry>
+          </row>
+          <row>
+            <entry>Remove</entry>
+            <entry></entry>
+            <entry>Objref tmp_udi</entry>
+            <entry>NoSuchDevice, PermissionDenied</entry>
+            <entry>
+              Removes a device object that was created in the
+              TDL. Caller must be uid 0.
+            </entry>
+          </row>
+          <row>
+            <entry>CommitToGdl</entry>
+            <entry></entry>
+            <entry>Objref tmp_udi, Objref udi</entry>
+            <entry>NoSuchDevice, PermissionDenied</entry>
+            <entry>
+              Moves a device from the temporary device list (TDL) to
+              the global device list (GDL). Caller must be uid 0.
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      The following signals are emitted:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Signal</entry>
+            <entry>Parameters</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>DeviceAdded</entry>
+            <entry>Objref obj</entry>
+            <entry>
+              A device was added to the global device list (GDL).
+            </entry>
+          </row>
+          <row>
+            <entry>DeviceRemoved</entry>
+            <entry>Objref obj</entry>
+            <entry>
+              A device was removed from the global device list (GDL).
+            </entry>
+          </row>
+          <row>
+            <entry>NewCapability</entry>
+            <entry>Objref obj, String cap</entry>
+            <entry>
+              A device gained a new capability.
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+  </sect1>
+
+
+  <sect1 id="interface-device">
+    <title>org.freedesktop.Hal.Device interface</title>
+    <para>
+      Every hal device object (e.g. objects where the object path is
+      prefixed with <literal>/org/freedesktop/Hal/devices/</literal>)
+      implements this interface. It provides generic
+      functionality. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+
+          <row>
+            <entry>GetProperty</entry>
+            <entry>Variant</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+          <row>
+            <entry>GetPropertyString</entry>
+            <entry>String</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, TypeMismatch</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+          <row>
+            <entry>GetPropertyStringList</entry>
+            <entry>String[]</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, TypeMismatch</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+          <row>
+            <entry>GetPropertyInteger</entry>
+            <entry>Int</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, TypeMismatch</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+          <row>
+            <entry>GetPropertyUInt64</entry>
+            <entry>UInt64</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, TypeMismatch</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+          <row>
+            <entry>GetPropertyBoolean</entry>
+            <entry>Bool</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, TypeMismatch</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+          <row>
+            <entry>GetPropertyDouble</entry>
+            <entry>Double</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, TypeMismatch</entry>
+            <entry>
+              Get property.
+            </entry>
+          </row>
+
+
+          <row>
+            <entry>SetProperty</entry>
+            <entry>Variant</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPropertyString</entry>
+            <entry>String</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPropertyStringList</entry>
+            <entry>String[]</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPropertyInteger</entry>
+            <entry>Int</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPropertyUInt64</entry>
+            <entry>UInt64</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPropertyBoolean</entry>
+            <entry>Bool</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPropertyDouble</entry>
+            <entry>Double</entry>
+            <entry>String key</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Set property.
+            </entry>
+          </row>
+
+          <row>
+            <entry>RemoveProperty</entry>
+            <entry></entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty, PermissionDenied</entry>
+            <entry>
+              Remove a property.
+            </entry>
+          </row>
+
+          <row>
+            <entry>GetPropertyType</entry>
+            <entry>Int</entry>
+            <entry>String key</entry>
+            <entry>NoSuchProperty</entry>
+            <entry>
+              Get the type of a property. Returns the D-Bus type as an integer.
+            </entry>
+          </row>
+
+          <row>
+            <entry>PropertyExists</entry>
+            <entry>Bool</entry>
+            <entry>String key</entry>
+            <entry></entry>
+            <entry>
+              Determine if a property exists.
+            </entry>
+          </row>
+
+          <row>
+            <entry>AddCapability</entry>
+            <entry></entry>
+            <entry>String capability</entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Adds a capability to a device.
+            </entry>
+          </row>
+
+          <row>
+            <entry>QueryCapability</entry>
+            <entry>Bool</entry>
+            <entry>String capability</entry>
+            <entry></entry>
+            <entry>
+              Determine if a device have a capability.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Lock</entry>
+            <entry>Bool</entry>
+            <entry>String reason</entry>
+            <entry>DeviceAlreadyLocked</entry>
+            <entry>
+              Acquires an advisory lock on the device. Returns TRUE if the lock was acquired.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Unlock</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>DeviceNotLocked</entry>
+            <entry>
+              Releases an advisory lock on the device. Returns TRUE if the lock was released.
+            </entry>
+          </row>
+
+          <row>
+            <entry>AcquireMandatoryLock</entry>
+            <entry></entry>
+            <entry>String lock_name</entry>
+            <entry>PermissionDenied, DeviceAlreadyLocked</entry>
+            <entry>
+              Acquires a named mandatory lock. The lock is recursive
+              (multiple callers may hold the lock). See TODO for how
+              mandatory locks work.
+            </entry>
+          </row>
+
+          <row>
+            <entry>ReleaseMandatoryLock</entry>
+            <entry></entry>
+            <entry>String lock_name</entry>
+            <entry>PermissionDenied, DeviceNotLocked</entry>
+            <entry>
+              Releases a named mandatory lock. The lock is recursive
+              (multiple callers may hold the lock). See TODO for how
+              mandatory locks work.
+            </entry>
+          </row>
+
+          <row>
+            <entry>StringListAppend</entry>
+            <entry></entry>
+            <entry>String key, String value</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Appends an item to a string list.
+            </entry>
+          </row>
+
+          <row>
+            <entry>StringListPrepend</entry>
+            <entry></entry>
+            <entry>String key, String value</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Prepends an item to a string list.
+            </entry>
+          </row>
+
+          <row>
+            <entry>StringListRemove</entry>
+            <entry></entry>
+            <entry>String key, String value</entry>
+            <entry>PermissionDenied, TypeMismatch</entry>
+            <entry>
+              Removes an item from a string list.
+            </entry>
+          </row>
+
+          <row>
+            <entry>EmitCondition</entry>
+            <entry>Bool</entry>
+            <entry>String name, String details</entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Emit a condition on a device object.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Rescan</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Force an updates of the properties of a device object by
+              rereading data that is not monitored for changes.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Reprobe</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Cause a synthetic remove and subsequent add of the given
+              device object including all children beneath it. Will
+              generate at least one pair of DeviceRemoved() and
+              DeviceAdded() signals on the Manager interface.
+            </entry>
+          </row>
+
+          <row>
+            <entry>ClaimInterface</entry>
+            <entry>Bool</entry>
+            <entry>String name, String introspection_xml</entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              An addon can use this method for making the HAL daemon
+              route all D-Bus calls on the given interface to the
+              addon via the peer to peer D-Bus connection between the
+              addon and the HAL daemon.
+            </entry>
+          </row>
+
+          <row>
+            <entry>AddonIsReady</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              An addon needs to call this method when it's ready for
+              the device to be announced on D-Bus. The rationale for
+              this method is to allow an addon to modify the device
+              object and claim interfaces before the device is
+              announced on D-Bus.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      The following signals are emitted:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Signal</entry>
+            <entry>Parameters</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>PropertyModified</entry>
+            <entry>Int num_changes, Array of struct {String property_name, Bool added, Bool removed}</entry>
+            <entry>
+              One or more properties on the device object have changed.
+            </entry>
+          </row>
+          <row>
+            <entry>Condition</entry>
+            <entry>String name, String details</entry>
+            <entry>
+              A generic mechanism used to specify a device condition
+              that cannot be expressed in device properties. (NOTE:
+              newly written code should use dedicated signals on a
+              dedicated interface.).
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+  </sect1>
+
+
+  <sect1 id="interface-device-systempower">
+    <title>org.freedesktop.Hal.Device.SystemPowerManagement interface</title>
+    <para>
+      This interface provides a mechanism to affect system-wide power
+      management. Normally only the root computer device object
+      (<literal>/org/freedesktop/Hal/devices/computer</literal>)
+      implements this interface. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Suspend</entry>
+            <entry>Int</entry>
+            <entry>Int num_secs_to_wakeup</entry>
+            <entry>SystemPowerManagement.NotSupported, SystemPowerManagement.AlarmNotSupported</entry>
+            <entry>
+              Puts the system in a suspended state (typically ACPI S3)
+              for <literal>num_secs_to_wakeup</literal> seconds. If
+              the given time is zero, the system is put in the
+              suspended state indefinitely. If wake-up isn't supported
+              the the AlarmNotSupported exception is thrown. Latency
+              for the system to return to an operational state is in
+              the order of magnitude of 5 seconds.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Hibernate</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              Save system state to persistent storage and power off
+              the system (typically ACPI S4). Latency for the system
+              to return to an operational state is in the order of
+              magnitude of one minute.
+            </entry>
+          </row>
+
+          <row>
+            <entry>SuspendHybrid</entry>
+            <entry>Int</entry>
+            <entry>Int num_secs_to_wakeup</entry>
+            <entry>SystemPowerManagement.NotSupported, SystemPowerManagement.AlarmNotSupported</entry>
+            <entry>
+              Puts the system in a suspended state (typically ACPI S3)
+              for <literal>num_secs_to_wakeup</literal> seconds but
+              also write the system state to persistent storage so the
+              system can resume even if power is removed. Like with
+              Suspend(), if the given time is zero, the system is put
+              in the suspended state indefinitely. If wake-up isn't
+              supported the the AlarmNotSupported exception is thrown.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Shutdown</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              Shut down the system.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Reboot</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              Reboot the system.
+            </entry>
+          </row>
+
+          <row>
+            <entry>SetPowerSave</entry>
+            <entry>Int</entry>
+            <entry>Bool should_save_power</entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              If the boolean passed is TRUE, the system will be
+              configured to save as much power as possible by
+              e.g. enabling <literal>laptop mode</literal> to avoid
+              spinning up disks. Typically, power management daemons
+              will call this method when it determines that the system
+              is running on battery power.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-cpufreq">
+    <title>org.freedesktop.Hal.Device.CPUFreq interface</title>
+    <para>
+      This interface provides a mechanism to configure CPU frequency
+      scaling. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetCPUFreqAvailableGovernors</entry>
+            <entry>String[]</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Retrieves a list of available CPU scaling governors.
+            </entry>
+          </row>
+          <row>
+            <entry>GetCPUFreqGovernor</entry>
+            <entry>String</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Get currently selected CPU Frequency governor.
+            </entry>
+          </row>
+          <row>
+            <entry>SetCPUFreqGovernor</entry>
+            <entry>Int</entry>
+            <entry>String governor</entry>
+            <entry>CPUFreq.UnknownGovernor</entry>
+            <entry>
+              Selects a CPU Frequency governor to use.
+            </entry>
+          </row>
+          <row>
+            <entry>SetCPUFreqPerformance</entry>
+            <entry>Int</entry>
+            <entry>Int percent</entry>
+            <entry>CPUFreq.NoSuitableGovernor</entry>
+            <entry>
+              Sets the performance of the dynamic scaling
+              mechanism. This method summarizes and abstracts all the
+              different settings which can be taken for dynamic
+              frequency adjustments, like at which load to switch up
+              frequency or how many steps the mechanism should
+              traverse until reaching the maximum frequency. The
+              higher the value, the more performance you
+              get. Respectively, the higher the value, the sooner and
+              the more often the frequency is switched up.
+            </entry>
+          </row>
+          <row>
+            <entry>GetCPUFreqPerformance</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>CPUFreq.NoSuitableGovernor</entry>
+            <entry>
+              Get the tuning value for the governor.
+            </entry>
+          </row>
+          <row>
+            <entry>SetCPUFreqConsiderNice</entry>
+            <entry>Int</entry>
+            <entry>Bool consider_niced_processes</entry>
+            <entry>CPUFreq.NoSuitableGovernor</entry>
+            <entry>
+              Whether or not niced processes should be considered on
+              CPU load calculation. If niced processes are considered,
+              they can cause a frequency increment although their
+              absolute load percentage wouldn't trigger the scaling
+              mechanism to switch up the frequency. The default
+              setting is 'false'.
+            </entry>
+          </row>
+          <row>
+            <entry>SetCPUFreqConsiderNice</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>CPUFreq.NoSuitableGovernor</entry>
+            <entry>
+              Whether nice'ed processes are considered by the governor.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-laptop-panel">
+    <title>org.freedesktop.Hal.Device.LaptopPanel interface</title>
+    <para>
+      This interface provides a mechanism to get/set the brightness of
+      a laptop panel. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetBrightness</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Get the current brightness.
+            </entry>
+          </row>
+          <row>
+            <entry>SetBrightness</entry>
+            <entry></entry>
+            <entry>Int brightness</entry>
+            <entry></entry>
+            <entry>
+              Set the current brightness.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-keyboard-backlight">
+    <title>org.freedesktop.Hal.Device.KeyboardBacklight interface</title>
+    <para>
+      This interface provides a mechanism to get/set the brightness of
+      the keyboard backlight. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetBrightness</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Get the current brightness.
+            </entry>
+          </row>
+          <row>
+            <entry>SetBrightness</entry>
+            <entry></entry>
+            <entry>Int brightness</entry>
+            <entry></entry>
+            <entry>
+              Set the current brightness.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-light-sensor">
+    <title>org.freedesktop.Hal.Device.LightSensor interface</title>
+    <para>
+      This interface provides a mechanism to get information from a
+      light sensor. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetBrightness</entry>
+            <entry>Int[]</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              The current brightness as measured by the light sensor.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-storage">
+    <title>org.freedesktop.Hal.Device.Storage interface</title>
+    <para>
+      This interface provides a mechanism to interact with a storage
+      device. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Eject</entry>
+            <entry>Int</entry>
+            <entry>String[] options</entry>
+            <entry>Volume.PermissionDenied, Volume.NotMounted, Volume.NotMountedByHal, Volume.Busy, Volume.InvalidEjectOption</entry>
+            <entry>
+              Unmounts all volumes and possibly ejects the media. Note
+              that this method is not only restricted to optical
+              drives.
+            </entry>
+          </row>
+          <row>
+            <entry>CloseTray</entry>
+            <entry>Int</entry>
+            <entry>String[] options</entry>
+            <entry>Storage.InvalidCloseTrayOption</entry>
+            <entry>
+              Attempts to close the tray. Only really makes sense for
+              (optical) drives that uses a tray loading mechanism.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-volume">
+    <title>org.freedesktop.Hal.Device.Volume interface</title>
+    <para>
+      This interface provides a mechanism to interact with a volume
+      that has a mountable file system. The following methods are
+      available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Mount</entry>
+            <entry>Int</entry>
+            <entry>String mount_point, String fstype, String[] options</entry>
+            <entry>Volume.PermissionDenied, Volume.AlreadyMounted, Volume.InvalidMountOption, Volume.UnknownFilesystemType, Volume.InvalidMountPoint, Volume.MountPointNotAvailable, Volume.CannotRemount</entry>
+            <entry>
+              Mounts a volume.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Unmount</entry>
+            <entry>Int</entry>
+            <entry>String[] options</entry>
+            <entry>Volume.PermissionDenied, Volume.NotMounted, Volume.NotMountedByHal, Volume.Busy, Volume.InvalidUnmountOption</entry>
+            <entry>
+              Unmount a volume.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Eject</entry>
+            <entry>Int</entry>
+            <entry>String[] options</entry>
+            <entry>Volume.PermissionDenied, Volume.NotMounted, Volume.NotMountedByHal, Volume.Busy, Volume.InvalidEjectOption</entry>
+            <entry>
+              Unmounts all volumes from the originating drive and
+              possibly ejects the media. Note that this method is not
+              only restricted to optical drives.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-volume-crypto">
+    <title>org.freedesktop.Hal.Device.Volume.Crypto interface</title>
+    <para>
+      This interface provides a mechanism to interact with a volume that
+      is encrypted at the block layer. The following methods are
+      available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Setup</entry>
+            <entry>Int</entry>
+            <entry>String passphrase</entry>
+            <entry>Volume.Crypto.CryptSetupMissing, Volume.Crypto.SetupError, Volume.Crypto.SetupPasswordError</entry>
+            <entry>
+              Unlocks an encrypted file system. If successful, a cleartext volume will appear.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Teardown</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>Volume.Crypto.TeardownError</entry>
+            <entry>
+              Teardown the cleartext volume.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+<!--
+  <sect1 id="interface-device-foo">
+    <title>org.freedesktop.Hal.Device.Foo interface</title>
+    <para>
+      This interface provides a mechanism...  The following methods
+      are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry></entry>
+            <entry></entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      The following signals are emitted:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Signal</entry>
+            <entry>Parameters</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+  </sect1>
+-->
+
+</chapter>

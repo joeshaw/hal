@@ -527,13 +527,13 @@ AC_CHECK_FUNCS(strndup)
 
 # DocBook Documentation
 
-AC_PATH_PROG(DOCBOOK, docbook2html, no)
+AC_PATH_PROG(XMLTO, xmlto, no)
 AC_MSG_CHECKING([whether to build DocBook documentation])
 
-if test x$DOCBOOK = xno ; then
-    have_docbook=no
+if test x$XMLTO = xno ; then
+    have_xmlto=no
 else
-    have_docbook=yes
+    have_xmlto=yes
 fi
 
 AC_PATH_PROG(XMLLINT, xmllint, no)
@@ -545,7 +545,7 @@ else
 fi
 
 if test x$enable_docbook_docs = xauto ; then
-    if test x$have_docbook = xno || test x$have_xmllint = xno ; then
+    if test x$have_xmlto = xno || test x$have_xmllint = xno ; then
         enable_docbook_docs=no
     else
         enable_docbook_docs=yes
@@ -553,8 +553,8 @@ if test x$enable_docbook_docs = xauto ; then
 fi
 
 if test x$enable_docbook_docs = xyes; then
-    if test x$have_docbook = xno; then
-        AC_MSG_ERROR([Building DocBook docs explicitly required, but DocBook not found])
+    if test x$have_xmlto = xno; then
+        AC_MSG_ERROR([Building DocBook docs explicitly required, but xmlto not found])
     fi
     if test x$ve_xmllint = xno; then
         AC_MSG_ERROR([Building DocBook docs explicitly required, but xmllint not found])
@@ -909,7 +909,7 @@ echo "
         cflags:                     ${CFLAGS}
         ldflags:                    ${LDFLAGS}
         cppflags:                   ${CPPFLAGS}
-	docbook2html:               ${DOCBOOK}
+        xmlto:                      ${XMLTO}
 	xmllint:                    ${XMLLINT}
         User for HAL:               ${HAL_USER}
         Group for HAL:              ${HAL_GROUP}

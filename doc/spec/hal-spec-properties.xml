@@ -8,11 +8,12 @@
     and are key/value pairs. The value may assume different types; currently
     int32, double, bool, UTF8 strings and UTF8 string lists are supported.
     The key of a property is always an ASCII string without any whitespace.
-    The properties are updated in real-time.
+    When a property changes, HAL will emit a D-Bus signal that applications
+    can catch.
   </para>
 
-  <sect1 id="properties-metadata">
-    <title>Metadata Properties</title>
+  <sect1 id="properties-general">
+    <title>General Properties</title>
     <para>
       The section represents properties that aren't tied to either
       physical or functional characteristics of what the device
@@ -20,7 +21,7 @@
     </para>
     <sect2 id="device-properties-info">
       <title>
-        <literal>info</literal> namespace
+        info namespace
       </title>
       <para>
         The <literal>info</literal> namespace contain properties that
@@ -56,28 +57,6 @@
             </row>
             <row>
               <entry>
-                <literal>info.persistent</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>
-                No, but required if <literal>info.not_available</literal> is set to TRUE
-              </entry>
-              <entry>If this property is set, the device will remain in the
-                the GDL even if the device is unplugged. NOTE: property not implemented yet
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>info.not_available</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>The device is currently not available (it may be unplugged
-                or powered down) NOTE: property not implemented yet
-              </entry>
-            </row>
-            <row>
-              <entry>
                 <literal>info.capabilities</literal> (strlist)
               </entry>
               <entry>example: 'block, storage, storage.cdrom'</entry>
@@ -98,7 +77,7 @@
               </entry>
               <entry>examples: ''SleekKeyboard'', ''MouseMan 2003'', ''Volume'', ''LS-120 SLIM3 00 UHD Floppy''</entry>
               <entry>No</entry>
-              <entry>The name of the device</entry>
+              <entry>The name of the device; should not be used in any UI; use subsystem / capability specific properties instead.</entry>
             </row>
             <row>
               <entry>
@@ -106,13 +85,13 @@
               </entry>
               <entry>examples: Logitch, Mustek</entry>
               <entry>No</entry>
-              <entry>The name of the vendor of the device</entry>
+              <entry>The name of the vendor of the device; should not be used in any UI; use subsystem / capability specific properties instead.</entry>
             </row>
             <row>
               <entry>
                 <literal>info.parent</literal> (string)
               </entry>
-              <entry>example: /org/freedesktop/Hal/devices/ide_1_0</entry>
+              <entry>example: /org/freedesktop/Hal/devices/computer</entry>
               <entry>Yes, for all non-root device objects</entry>
               <entry>The UDI of the device object that this device object
                 is connected to.
@@ -193,15 +172,59 @@
           </tbody>
         </tgroup>
       </informaltable>
+
     </sect2>
-    <sect2 id="device-properties-linux">
-      <title>
-        <literal>linux</literal> namespace
-      </title>
+    <sect2 id="device-properties-info-callouts">
+      <title>Callouts</title>
+      
       <para>
-        This namespace is used to store Linux-specific metadata about the
-        device object and is only available on Linux systems.
+        Callouts are programs invoked when the device object are added
+        and removed. As such, callouts can be used to maintain
+        system-wide policy (that may be specific to the particular OS)
+        such as changing permissions on device nodes, updating the
+        systemwide
+        <literal>/etc/fstab</literal> file or configuring the networking
+        subsystem.
       </para>
+      <para>
+        There are three different classes of callouts. A callout
+        involves sequentially invoking all executable programs in the
+        string list in listed order.
+      </para>
+      
+      <para>
+        All callouts execute in a minimal environment. In addition, the
+        UDI of the device object is exported in the environment
+        variable <literal>UDI</literal>. All properties of the device
+        object are exported in the environment prefixed
+        with <literal>HAL_PROP_</literal>. If a device is added or removed is
+        exported in the environment variable <literal>HALD_ACTION
+        </literal>.
+      </para>
+      <para>
+        If ConsoleKit support is enabled, the variables
+        <literal>CK_SEATS</literal> (tab sep. list of seat-id's),
+        <literal>CK_SEAT_seat-id</literal> (tab sep. list of session-id's for a seat),
+        <literal>CK_SESSION_IS_ACTIVE_session-id</literal> (whether a given session is active) and
+        <literal>CK_SESSION_UID_session-id</literal> (the user of the session)
+        <literal>CK_SESSION_IS_LOCAL_session-id</literal> (whether a session is local),
+        will be exported as well.
+      </para>
+      <para>
+        The HAL daemon is not suspended while callouts are executing. Thus,
+        callouts can communicate with the HAL daemon using the D-BUS network
+        API. Hence, one application of callouts is to merge or modify
+        properties on a device object.
+      </para>
+
+      <para>
+        To reduce round trips and increase privacy, callouts can (and
+        should) communicate with the HAL daemon using a peer to peer
+        D-Bus connection specified by
+        the <literal>HALD_DIRECT_ADDR</literal> environment
+        variable. There is convience API in libhal to do this.
+      </para>
+      
       <informaltable>
         <tgroup cols="2">
           <thead>
@@ -215,61 +238,291 @@
           <tbody>
             <row>
               <entry>
-                <literal>linux.sysfs_path</literal> (string)
-              </entry>
-              <entry>examples: /sys/block/sda/sda1, /sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0</entry>
-              <entry>Yes (only if available for the device) </entry>
-              <entry>A fully-qualified path into the sysfs filesystem for the
-                device
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>linux.acpi_path</literal> (string)
-              </entry>
-              <entry>example: /proc/acpi/button/power/PWRF, /proc/pmu/battery_0</entry>
-              <entry>No</entry>
-              <entry>
-                A fully-qualified path into the procfs filesystem for a
-                device object representing an ACPI abstraction.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>linux.driver</literal> (string)
-              </entry>
-              <entry>examples: agpgart-intel, yenta_cardbus, usb, hub, usbhid</entry>
-              <entry>No</entry>
-              <entry>Name of the driver bound to this device</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>linux.kernel_devname</literal> (string)
-              </entry>
-              <entry>example: usb-0000:00:07.2-1.2</entry>
-              <entry>No</entry>
-              <entry>A name used internally in the Linux kernel to identify
-                the device. Used internally in HAL.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>linux.is_selinux_enabled</literal> (bool)
+                <literal>info.callouts.add</literal> (string list)
               </entry>
               <entry></entry>
-              <entry>No; can only appear on the root computer device object</entry>
-              <entry>Whether SELinux is enabled on the system</entry>
+              <entry>No</entry>
+              <entry>
+                A string list with the programs which should be
+                executed (with <literal>HALD_ACTION=add</literal>)
+                when the device is added to the GDL (global device
+                list) but just before it is announced through the
+                D-BUS network API.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.callouts.remove</literal> (string list)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                A string list with the programs that should be
+                executed (with <literal>HALD_ACTION=remove</literal>)
+                when the device is removed from the GDL (global device
+                list). The device isn't removed before the last
+                callout has finished.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.callouts.preprobe</literal> (string list)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                A string list with the programs that should be
+                executed
+                (with <literal>HALD_ACTION=preprobe</literal>) before
+                the device is probed (e.g. investigated) and can be
+                used to avoid causing unnecessary I/O.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.callouts.session_add</literal> (string list)
+              </entry>
+              <entry/>
+              <entry>No</entry>
+              <entry>
+                A string list with all programs that should be
+                executed
+                (with <literal>HALD_ACTION=session_add</literal>) when
+                a session is added. Can only be set on the root
+                computer device object.  The environment also contains
+                the variables
+	        <literal>HALD_SESSION_ADD_SESSION_ID</literal>, 
+	        <literal>HALD_SESSION_ADD_SESSION_UID</literal> and
+	        <literal>HALD_SESSION_ADD_SESSION_IS_ACTIVE</literal>
+	        to identify the session. This is only used when HAL is
+	        built with ConsoleKit support.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.callouts.session_remove</literal> (string list)
+              </entry>
+              <entry/>
+              <entry>No</entry>
+              <entry>
+                A string list with all programs which should be
+                executed
+                (with <literal>HALD_ACTION=session_remove</literal>)
+                when a session is removed. Can only be set on the root
+                computer device object.  The environment also contains
+                the variables
+	        <literal>HALD_SESSION_REMOVE_SESSION_ID</literal>, 
+	        <literal>HALD_SESSION_REMOVE_SESSION_UID</literal> and
+	        <literal>HALD_SESSION_REMOVE_SESSION_IS_ACTIVE</literal>
+	        to identify the session. This is only used when HAL is
+	        built with ConsoleKit support.
+              </entry>
+            </row>
+            
+          </tbody>
+        </tgroup>
+      </informaltable>
+      
+    </sect2>
+    <sect2 id="device-properties-info-addons">
+      <title>Addons</title>
+      
+      <para>
+        Addons are programs that run for the life time of the device
+        object. They execute in the same environment as callouts
+        (e.g. with <literal>HAL_PROP_*</literal> set in the
+        environment to represent the device properties) and are
+        launched just before the device is announced on D-Bus (but
+        just after the last add callouts have finished). When the
+        device object goes away, HAL will send
+        a <literal>SIGTERM</literal> to the process.
+      </para>
+      
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>info.addons</literal> (strlist)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                List of programs to run when device is added. Each
+                program will need to call
+                the <literal>AddonIsReady()</literal> method in order
+                for the device to show up on D-Bus.
+              </entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>
+      
+    </sect2>
+    <sect2 id="device-properties-info-method-calls">
+      <title>Method calls</title>
+      
       <para>
+        Method calls on a specific interface on a device object can be
+        implemented by the HAL daemon running a program. Note that
+        this is not the only way to implement support for method
+        calls; if you expect a lot of method calls it is preferable to
+        implement an addon and use
+        the <literal>ClaimInterface()</literal> API since it reduces
+        the overhead of spawning a process and it can handle both
+        complex incoming and return types as well. See <xref linkend="interface-device"/> for
+        details on claiming interfaces via an addon..
+      </para>
+      
+      <para>
+        Note that method calls implemented via running a program are
+        limited to the return type being an a signed 32-bit integer
+        (this will change in a future release). The incoming
+        parameters are limited to only basic types and arrays of
+        strings. The parameters are passed via stdin using a textual
+        representation. As such, there is a lot of overhead with
+        handling method calls by spawning programs and as such it
+        should only be used for situtations where the nature of the
+        method call is that it will not be frequently used.
+      </para>
+      
+      <para>
+        As with addons, method calls execute in the same minimal
+        environment as callouts
+        (e.g. with <literal>HAL_PROP_*</literal> set in the
+        environment to represent the device properties) and in
+        addition the environment variables
+        <literal>HAL_METHOD_INVOKED_BY_UID</literal> (the uid of the caller)
+        and
+        <literal>HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME</literal>
+        (the unique system bus connection name of the caller) are
+        set (If HAL, or a HAL addon, is invoking a method, then these
+        variables will both assume the value 0.)
+      </para>
+      
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>info.interfaces</literal> (strlist)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                A list of D-Bus interfaces that the device object
+                supports apart from the
+                standard <literal>org.freedesktop.Hal.Device</literal>
+                interface.
+              </entry>
+            </row>
+            
+            <row>
+              <entry>
+                <literal>&#60;iface&#62;.method_names</literal> (strlist)
+              </entry>
+              <entry>example: <literal>'Foo', 'Bar', 'Baz'</literal></entry>
+              <entry>No</entry>
+              <entry>
+                If a D-Bus interface is implemented by executing a
+                program for every method, this property contains an
+                ordered list of the method names. 
+              </entry>
+            </row>
+            
+            <row>
+              <entry>
+                <literal>&#60;iface&#62;.method_argnames</literal> (strlist)
+              </entry>
+              <entry>example: <literal>'foo_arg1 foo_arg2', '', 'baz_arg1'</literal></entry>
+              <entry>No</entry>
+              <entry>
+                This property contains the names of the arguments for
+                each method. Each entry is a white-space separated
+                list for that particular method.
+              </entry>
+            </row>
+            
+            <row>
+              <entry>
+                <literal>&#60;iface&#62;.method_signatures</literal> (strlist)
+              </entry>
+              <entry>example: <literal>'si', '', 'as'</literal></entry>
+              <entry>No</entry>
+              <entry>
+                This property contains the D-Bus signature for each
+                method. The signature should only cover incoming
+                arguments; each method is defined as returning an
+                integer.
+              </entry>
+            </row>
+            
+            <row>
+              <entry>
+                <literal>&#60;iface&#62;.method_execpaths</literal> (strlist)
+              </entry>
+              <entry>example: <literal>'foo-binary', 'bar-binary', 'baz-binary'</literal></entry>
+              <entry>No</entry>
+              <entry>
+                This property contains the name of the program to
+                execute when this method is called. The return code
+                of the program will be passed as the integer result
+                to the D-Bus caller. 
+                
+                If a program wants to return an error, it just needs
+                to write two lines to stderr; the first line is the
+                exception name to throw and the second line is the
+                exception detail.
+              </entry>
+            </row>
+            
+          </tbody>
+        </tgroup>
+      </informaltable>
+      
+      <para>
+        Items in the <literal>&#60;iface&#62;.*</literal> clearly must
+        correspond with each other. The whole mechanism is best
+        explained by an example:
+          
+        <programlisting>
+info.interfaces = {'org.freedesktop.Hal.Device.Volume'}
+org.freedesktop.Hal.Device.Volume.method_argnames = {'mount_point fstype extra_options', 'extra_options', 'extra_options'}
+org.freedesktop.Hal.Device.Volume.method_execpaths = {'hal-storage-mount', 'hal-storage-unmount', 'hal-storage-eject'}
+org.freedesktop.Hal.Device.Volume.method_names = {'Mount', 'Unmount', 'Eject'}
+org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
+        </programlisting>
+        
+        which, for example, shows that the <literal>Mount()</literal>
+        method on the
+        interface <literal>org.freedesktop.Hal.Device.Volume</literal>
+        takes three arguments: <literal>mount_point</literal> (a
+        string), <literal>fstype</literal> (a string)
+        and <literal>extra_options</literal> (an array of strings).
+        
       </para>
     </sect2>
+
   </sect1>
 
   <sect1 id="properties-subsystem">
-    <title>Properties</title>
+    <title>Subsystem-Specific Properties</title>
     <para>
       In this section properties for device objects that represent
       addressable hardware is described. Availability of
@@ -282,7 +535,7 @@
     </para>
     <sect2 id="device-properties-pci">
       <title>
-        <literal>pci</literal> namespace
+        pci namespace
       </title>
       <para>
         This namespace contains properties for device objects representing
@@ -408,7 +661,7 @@
     </sect2>
     <sect2 id="device-properties-serialif">
       <title>
-        <literal>serial</literal> namespace
+        serial namespace
       </title>
       <para>
         Device objects that represent serial devices (e.g. /dev/ttyS* or
@@ -468,7 +721,7 @@
     </sect2>
     <sect2 id="device-properties-usb">
       <title>
-        <literal>usb_device</literal> namespace
+        usb_device namespace
       </title>
       <para>
         For device objects representing USB devices the property
@@ -711,7 +964,7 @@
     </sect2>
     <sect2 id="device-properties-usbif">
       <title>
-        <literal>usb</literal> namespace
+        usb namespace
       </title>
       <para>
         Device objects that represent USB interfaces, ie. when
@@ -789,7 +1042,7 @@
     </sect2>
     <sect2 id="device-properties-platform">
       <title>
-        <literal>platform</literal> namespace
+        platform namespace
       </title>
       <para>
         Devices that are built into the platform or present on busses that
@@ -823,7 +1076,7 @@
     </sect2>
     <sect2 id="device-properties-ide-host">
       <title>
-        <literal>ide_host</literal> namespace
+        ide_host namespace
       </title>
       <para>
         The <literal>ide_host</literal> namespace is present for
@@ -867,7 +1120,7 @@
     </sect2>
     <sect2 id="device-properties-ide">
       <title>
-        <literal>ide</literal> namespace
+        ide namespace
       </title>
       <para>
         ATA and IDE drives are represented by device objects where
@@ -911,7 +1164,7 @@
     </sect2>
     <sect2 id="device-properties-scsi_host">
       <title>
-        <literal>scsi_host</literal> namespace
+        scsi_host namespace
       </title>
       <para>
         The <literal>scsi_host</literal> namespace is present for
@@ -945,7 +1198,7 @@
     </sect2>
     <sect2 id="device-properties-scsi">
       <title>
-        <literal>scsi</literal> namespace
+        scsi namespace
       </title>
       <para>
         SCSI devices are represented by device objects where
@@ -1073,7 +1326,7 @@
     </sect2>
     <sect2 id="device-properties-ieee1394_host">
       <title>
-        <literal>ieee1394_host</literal> namespace
+        ieee1394_host namespace
       </title>
       <para>
         Device objects with <literal>info.subsystem</literal> set to
@@ -1138,7 +1391,7 @@
     </sect2>
     <sect2 id="device-properties-ieee1394_node">
       <title>
-        <literal>ieee1394_node</literal> namespace
+        ieee1394_node namespace
       </title>
       <para>
         Device objects with <literal>info.subsystem</literal> set to
@@ -1203,7 +1456,7 @@
     </sect2>
     <sect2 id="device-properties-ieee1394">
       <title>
-        <literal>ieee1394</literal> namespace
+        ieee1394 namespace
       </title>
       <para>
         Device objects with <literal>info.subsystem</literal> set to
@@ -1235,7 +1488,7 @@
     </sect2>
     <sect2 id="device-properties-mmc_host">
       <title>
-        <literal>mmc_host</literal> namespace
+        mmc_host namespace
       </title>
       <para>
         Device objects with <literal>info.subsystem</literal> set to
@@ -1268,7 +1521,7 @@
     </sect2>
     <sect2 id="device-properties-mmc">
       <title>
-        <literal>mmc</literal> namespace
+        mmc namespace
       </title>
       <para>
         Device objects with <literal>info.subsystem</literal> set to
@@ -1367,7 +1620,7 @@
     </sect2>
     <sect2 id="device-properties-ccw">
       <title>
-        <literal>ccw</literal> namespace
+        ccw namespace
       </title>
       <para>
         Device objects that represent s390 ccw devices (when <literal>info.subsystem
@@ -1656,7 +1909,7 @@
     </sect2>
     <sect2 id="device-properties-ccwgroup">
       <title>
-        <literal>ccwgroup</literal> namespace
+        ccwgroup namespace
       </title>
       <para>
         Device objects that represent groups of <literal>ccw</literal> devices
@@ -2021,7 +2274,7 @@
     </sect2>
     <sect2 id="device-properties-iucv">
       <title>
-        <literal>iucv</literal> namespace
+        iucv namespace
       </title>
       <para>
         Device objects with <literal>info.subsystem</literal> set to <literal>iucv
@@ -2088,7 +2341,7 @@
     </sect2>
     <sect2 id="device-properties-block">
       <title>
-        <literal>block</literal> namespace
+        block namespace
       </title>
       <para>
         Device objects representing addressable block devices, such as
@@ -2185,7 +2438,7 @@
       </informaltable>
     </sect2>
     <sect2 id="device-properties-xen">
-      <title><literal>xen</literal> namespace</title>
+      <title>xen namespace</title>
       <para>
 	Device objects representing virtual devices under the Xen
 	Virtual Machine Monitor, such as frontend network or block
@@ -2239,9 +2492,180 @@
       however, as HAL can merge properties from anywhere, they
       may have been merged from device information files or callouts.
     </para>
+
+    <sect2 id="device-properties-kernel">
+      <title>
+        system namespace
+      </title>
+      <para>
+        This namespace is found on the toplevel "Computer" device,
+        and represents information about the system and the currently
+        running kernel.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>system.kernel.name</literal> (string)
+              </entry>
+              <entry>example: Linux</entry>
+              <entry>No</entry>
+              <entry>
+                The name of the kernel, usually the equivalent of
+                <literal>uname -s</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.kernel.version</literal> (string)
+              </entry>
+              <entry>example: 2.6.5-7.104-default</entry>
+              <entry>No</entry>
+              <entry>
+                The version of the currently running kernel.  Usually
+                the equivalent of <literal>uname -r</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.kernel.machine</literal> (string)
+              </entry>
+              <entry>example: i686</entry>
+              <entry>No</entry>
+              <entry>
+                The "machine hardware name" of the currently running kernel.
+                Usually the equivalent of <literal>uname -m</literal>.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.formfactor</literal> (string)
+              </entry>
+              <entry>example: laptop, desktop, server, unknown</entry>
+              <entry>Yes</entry>
+              <entry>
+                The formfactor of the system. Usually the equivalent of
+                <literal>system.chassis.type</literal> or set from information
+                about ACPI/APM/PMU properties.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.vendor</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The name of the manufacturer of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.product</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The product name of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.version</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The version of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.serial</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The serial number of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.uuid</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The unique ID of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.firmware.vendor</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The firmware vendor.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.firmware.version</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The firmware version.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.firmware.release_date</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The release date of the firmware.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.chassis.manufacturer</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The manufacturer of the chassis.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.chassis.type</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The chassis type of the machine.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     <sect2 id="device-properties-volume">
       <title>
-        <literal>volume</literal> namespace
+        volume namespace
       </title>
       <para>
         This namespace is for device objects that represent storage
@@ -2728,178 +3152,9 @@
         </tgroup>
       </informaltable>
     </sect2>
-    <sect2 id="device-properties-kernel">
-      <title>
-        <literal>system</literal> namespace
-      </title>
-      <para>
-        This namespace is found on the toplevel "Computer" device,
-        and represents information about the system and the currently
-        running kernel.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>system.kernel.name</literal> (string)
-              </entry>
-              <entry>example: Linux</entry>
-              <entry>No</entry>
-              <entry>
-                The name of the kernel, usually the equivalent of
-                <literal>uname -s</literal>.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.kernel.version</literal> (string)
-              </entry>
-              <entry>example: 2.6.5-7.104-default</entry>
-              <entry>No</entry>
-              <entry>
-                The version of the currently running kernel.  Usually
-                the equivalent of <literal>uname -r</literal>.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.kernel.machine</literal> (string)
-              </entry>
-              <entry>example: i686</entry>
-              <entry>No</entry>
-              <entry>
-                The "machine hardware name" of the currently running kernel.
-                Usually the equivalent of <literal>uname -m</literal>.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.formfactor</literal> (string)
-              </entry>
-              <entry>example: laptop, desktop, server, unknown</entry>
-              <entry>Yes</entry>
-              <entry>
-                The formfactor of the system. Usually the equivalent of
-                <literal>system.chassis.type</literal> or set from information
-                about ACPI/APM/PMU properties.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.hardware.vendor</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The name of the manufacturer of the machine.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.product</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The product name of the machine.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.hardware.version</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The version of the machine.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.hardware.serial</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The serial number of the machine.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.hardware.uuid</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The unique ID of the machine.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.firmware.vendor</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The firmware vendor.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.firmware.version</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The firmware version.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.firmware.release_date</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The release date of the firmware.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.chassis.manufacturer</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The manufacturer of the chassis.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>system.chassis.type</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The chassis type of the machine.
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
     <sect2 id="device-properties-volume-disc">
       <title>
-        <literal>volume.disc</literal> namespace
+        volume.disc namespace
       </title>
       <para>
         This namespace is for device objects that represent optical
@@ -3100,7 +3355,7 @@
     </sect2>
     <sect2 id="device-properties-storage">
       <title>
-        <literal>storage</literal> namespace
+        storage namespace
       </title>
       <para>
         This namespace is used to describe storage devices
@@ -3369,16 +3624,7 @@
               <entry>
                 This contains the UDI of the device object
                 representing the device or blank if
-                there is no such device (which is TRUE for legacy
-                devices such as x86 floppy drives). Additionally, a
-                number of properties are merged from that device
-                object. Specifically, all properties prefixed
-                with <literal>storage</literal> and, if the
-                device has several storage ports,
-                <literal>storage_lunX</literal> (where X is number of
-                the port starting from zero) are merged and will have
-                the prefix <literal>storage</literal>.
-                See <xref linkend="fdi-example-6in1"/> for an example.
+                there is no such device.
               </entry>
             </row>
             <row>
@@ -3449,7 +3695,7 @@
     </sect2>
     <sect2 id="device-properties-storage-cdrom">
       <title>
-        <literal>storage.cdrom</literal> namespace
+        storage.cdrom namespace
       </title>
       <para>
         This namespace is used to describe optical storage drives
@@ -3636,7 +3882,7 @@
     </sect2>
     <sect2 id="device-properties-net">
       <title>
-        <literal>net</literal> namespace
+        net namespace
       </title>
       <para>
         This namespace is used to describe networking devices and
@@ -3721,7 +3967,7 @@
     </sect2>
     <sect2 id="device-properties-net-80203">
       <title>
-        <literal>net.80203</literal> namespace
+        net.80203 namespace
       </title>
       <para>
         Ethernet networking devices is described in this namespace
@@ -3788,7 +4034,7 @@
     </sect2>
     <sect2 id="device-properties-net-80211">
       <title>
-        <literal>net.80211</literal> namespace
+        net.80211 namespace
       </title>
       <para>
         Wireless ethernet networking devices is described in this namespace
@@ -3827,7 +4073,7 @@
     </sect2>
     <sect2 id="device-properties-net-irda">
       <title>
-        <literal>net.irda</literal> namespace
+        net.irda namespace
       </title>
       <para>
         IrDA (Infrared Data Association) Networking devices are described in 
@@ -3841,7 +4087,7 @@
     </sect2>
     <sect2 id="device-properties-net-80211control">
       <title>
-        <literal>net.80211control</literal> namespace
+        net.80211control namespace
       </title>
       <para>
         Control devices for Wireless ethernet networking devices are described in 
@@ -3857,7 +4103,7 @@
     </sect2>
     <sect2 id="device-properties-input">
       <title>
-        <literal>input</literal> namespace
+        input namespace
       </title>
       <para>
         This namespace is concerned with human input devices such as
@@ -3890,7 +4136,7 @@
     </sect2>
     <sect2 id="device-properties-pcmcia_socket">
       <title>
-        <literal>pcmcia_socket namespace</literal>
+        pcmcia_socket namespace
       </title>
       <para>
         Device objects with the capability <literal>pcmcia_socket</literal>
@@ -3923,7 +4169,7 @@
     </sect2>
     <sect2 id="device-properties-printer">
       <title>
-        <literal>printer</literal> namespace
+        printer namespace
       </title>
       <para>
         Device objects with the capability <literal>printer</literal>
@@ -3994,7 +4240,7 @@
     </sect2>
     <sect2 id="device-properties-portable_audio_player">
       <title>
-        <literal>portable_audio_player</literal> namespace
+        portable_audio_player namespace
       </title>
       <para>
         Device objects with the capability
@@ -4143,7 +4389,7 @@
     </sect2>
     <sect2 id="device-properties-alsa">
       <title>
-        <literal>alsa</literal> namespace
+        alsa namespace
       </title>
       <para>
         Device objects with the capability <literal>alsa</literal>
@@ -4394,7 +4640,7 @@
     </sect2>
     <sect2 id="device-properties-oss">
       <title>
-        <literal>oss</literal> namespace
+        oss namespace
       </title>
       <para>
         Device objects with the capability <literal>oss</literal>
@@ -4543,7 +4789,7 @@
     </sect2>
     <sect2 id="device-properties-camera">
       <title>
-        <literal>camera</literal> namespace
+        camera namespace
       </title>
       <para>
         Device objects with the capability <literal>camera</literal>
@@ -4623,7 +4869,7 @@
     </sect2>
     <sect2 id="device-properties-scanner">
       <title>
-        <literal>scanner</literal> namespace
+        scanner namespace
       </title>
       <para>
         Device objects with the capability <literal>scanner</literal>
@@ -4674,7 +4920,7 @@
     </sect2>
     <sect2 id="device-properties-laptop-panel">
       <title>
-        <literal>laptop_panel</literal> namespace
+        laptop_panel namespace
       </title>
       <para>
         Device objects with the capability <literal>laptop_panel</literal>
@@ -4782,7 +5028,7 @@
     </sect2>
     <sect2 id="device-properties-ac_adaptor">
       <title>
-        <literal>ac_adaptor</literal> namespace
+        ac_adaptor namespace
       </title>
       <para>
         Device objects with the capability <literal>ac_adaptor</literal>
@@ -4816,7 +5062,7 @@
     </sect2>
     <sect2 id="device-properties-battery">
       <title>
-        <literal>battery</literal> namespace
+        battery namespace
       </title>
       <para>
         Device objects with the capability <literal>battery</literal>
@@ -5402,7 +5648,7 @@
     </sect2>
     <sect2 id="device-properties-button">
       <title>
-        <literal>button</literal> namespace
+        button namespace
       </title>
       <para>
         Device objects with the capability <literal>button</literal>
@@ -5503,7 +5749,7 @@
     </sect2>
     <sect2 id="device-properties-processor">
       <title>
-        <literal>processor</literal> namespace
+        processor namespace
       </title>
       <para>
         Device objects with the capability <literal>processor</literal>
@@ -5553,72 +5799,13 @@
         </tgroup>
       </informaltable>
     </sect2>
-    <sect2 id="device-properties-display_device">
+    <sect2 id="device-properties-light-sensor">
       <title>
-        <literal>display_device</literal> namespace
-      </title>
-      <para>
-        Device objects with the capability <literal>display_device</literal>
-        represent display devices attached to the system.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>display_device.type</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>The type of display device</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>lcd</entry>
-              <entry></entry>
-              <entry>LCD panel</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>crt</entry>
-              <entry></entry>
-              <entry>CRT tube</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>tv_out</entry>
-              <entry></entry>
-              <entry>TV Out</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>display_device.lcd.brightness</literal> (int)
-              </entry>
-              <entry></entry>
-              <entry>
-                Only if <literal>display_device.type</literal> is lcd
-              </entry>
-              <entry>Brightness level in percent</entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
-    <sect2 id="device-properties-sensor">
-      <title>
-        <literal>sensor</literal> namespace
+        light_sensor namespace
       </title>
       <para>
         Device objects with the capability <literal>sensor</literal>
-        represent light or temperature sensors in the system.
+        represent light sensors in the system.
       </para>
       <informaltable>
         <tgroup cols="2">
@@ -5633,55 +5820,27 @@
           <tbody>
             <row>
               <entry>
-                <literal>sensor.type</literal> (string)
+                <literal>light_sensor.sensor_locations</literal> (strlist)
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>The type of sensor device</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>light</entry>
-              <entry></entry>
-              <entry>Light sensor</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>temperature</entry>
-              <entry></entry>
-              <entry>Temperature sensor</entry>
+              <entry>The locations of the sensors</entry>
             </row>
             <row>
               <entry>
-                <literal>sensor.location</literal> (string)
+                <literal>light_sensor.num_sensors</literal> (int)
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>The location of the sensor device</entry>
+              <entry>Number of physical sensors</entry>
             </row>
             <row>
+              <entry>
+                <literal>light_sensor.num_levels</literal> (int)
+              </entry>
               <entry></entry>
-              <entry>gpu</entry>
-              <entry></entry>
-              <entry>Measures GPU source</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>cpu</entry>
-              <entry></entry>
-              <entry>Measures CPU source</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>external</entry>
-              <entry></entry>
-              <entry>Measures external source</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>unknown</entry>
-              <entry></entry>
-              <entry>Measuring other source</entry>
+              <entry>Yes</entry>
+              <entry>The number of levels of the sensors</entry>
             </row>
           </tbody>
         </tgroup>
@@ -5689,12 +5848,12 @@
     </sect2>
     <sect2 id="device-properties-power-management">
       <title>
-        <literal>power_management</literal> namespace
+        power_management namespace
       </title>
       <para>
         Keys with the prefix <literal>power_management</literal>
         provide information about power management supported by
-        your computer.
+        the system.
       </para>
       <informaltable>
         <tgroup cols="2">
@@ -5731,6 +5890,16 @@
                 If suspend support is compiled into the kernel.
                 NB. This may not mean the machine is able to suspend
                 successfully.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>power_management.can_suspend_hybrid</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                If the system is capable of hybrid suspend.
               </entry>
             </row>
             <row>
@@ -5830,246 +5999,10 @@
           </tbody>
         </tgroup>
       </informaltable>
-      <para>
-        The following methods exist on the interface
-        <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Method (parameter types)</entry>
-              <entry>Parameters</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>Suspend</literal> (integer)
-              </entry>
-              <entry>
-                The number of seconds until we resume automatically, or zero if
-                we should not auto-resume.
-              </entry>
-              <entry>No</entry>
-              <entry>
-                This method puts the system in a state where little power is consumed.
-                The system is not operational while in this state.
-                Latency for the system to return to an operational state is in
-                the order of magnitude of 5 seconds.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>Hibernate</literal> (void)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                This method puts the system in a state where no power is consumed.
-                The system is not operational while in this state.
-                Latency for the system to return to an operational state is in
-                the order of magnitude of one minute.
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-      <para>
-        The following methods exist on the interface
-        <literal>org.freedesktop.Hal.Device.CPUFreq</literal>.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Method (parameter types)</entry>
-              <entry>Parameters</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>SetCPUFreqGovernor</literal> (string)
-              </entry>
-              <entry>
-	        The name of the governor to set. Get a list of available governors
-		with the GetCPUFreqAvailableGovernors method.
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Sets a CPU frequency scaling governor for all CPUFreq
-		interfaces the kernel provides. If the userspace governor
-		is set, this interface also contains a proper scaling
-		mechanism. The default performance is set to 50.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>SetCPUFreqPerformance</literal> (integer)
-              </entry>
-              <entry>
-	        The performance between 1 and 100 to set in dynamic scaling modes.
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Sets the performance of the dynamic scaling mechanism. This method
-		summarizes and abstracts all the different settings which can be taken
-		for dynamic frequency adjustments, like at which load to switch up
-		frequency or how many steps the mechanism should traverse until
-		reaching the maximum frequency. The higher the value, the more
-		performance you get. Respectively, the higher the value, the sooner
-		and the more often the frequency is switched up.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>SetCPUFreqConsiderNice</literal> (boolean)
-              </entry>
-              <entry>
-	        Whether or not niced processes should be considered on CPU
-		load calculation.
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Whether or not niced processes should be considered on CPU
-		load calculation. If niced processes are considered, they can cause a
-		frequency increment although their absolute load percentage wouldn't
-		trigger the scaling mechanism to switch up the frequency. The default
-		setting is 'false'.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>GetCPUFreqGovernor</literal> (void)
-              </entry>
-              <entry>
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Get the current active governor for all CPU frequency interfaces (string).
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>GetCPUFreqPerformance</literal> (void)
-              </entry>
-              <entry>
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Get the current active performance setting if a dynamic scaling
-		mechanism is in use (integer between 1 and 100).
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>GetCPUFreqConsiderNice</literal> (void)
-              </entry>
-              <entry>
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Returns whether niced processed are considered during CPU load
-		calculation or not (returns boolean).
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>GetCPUFreqAvailableGovernors</literal> (void)
-              </entry>
-              <entry>
-              </entry>
-              <entry>No</entry>
-              <entry>
-	        Returns a list of strings of all available governors which
-		could be set with the SetCPUFreqGovernor method.
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-      <para>
-        The following errors maybe raised on the interface
-        <literal>org.freedesktop.Hal.Device.CPUFreq</literal>.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Error</entry>
-              <entry>Description</entry>
-              <entry>Detail field</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>GeneralError</literal>
-              </entry>
-              <entry>
-	        A general error occured.
-              </entry>
-	      <entry>
-	        The exact error.
-	      </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>UnknownGovernor</literal>
-              </entry>
-              <entry>
-	        The governor which was tried to be set doesn't exist.
-              </entry>
-	      <entry>
-	        The governor which was tried be to set.
-	      </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>PermissionDenied</literal>
-              </entry>
-              <entry>
-	        The caller doesn't have the privilege to execute this
-		method.
-              </entry>
-	      <entry>
-	        The privilege the caller needs to execute the method.
-	      </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>NoSuitableGovernor</literal>
-              </entry>
-              <entry>
-	        The method executed doesn't exist for the current active governor.
-              </entry>
-	      <entry>
-	        The method which was tried to be executed.
-	      </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>GovernorInitFailed</literal>
-              </entry>
-              <entry>
-	        The initialization of the governor failed.
-              </entry>
-	      <entry>
-	        The reason for the failure.
-	      </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
     </sect2>
     <sect2 id="device-properties-tape">
       <title>
-        <literal>tape</literal> namespace
+        tape namespace
       </title>
       <para>
         Device objects with the capability <literal>tape</literal>
@@ -6108,255 +6041,6 @@
     </sect2>
   </sect1>
 
-  <sect1 id="properties-policy">
-    <title>Policy Properties</title>
-    <para>
-      The properties on a hal device object can be used to express
-      certain policies about how the device is to be used. This
-      information can be used by either programs querying hal
-      directly or by hal callouts. Default policy (e.g. always
-      mount a file system with the option 'exec') can also be
-      merged on the root computer device object.
-    </para>
-    <sect2 id="device-properties-storage-policy-default">
-      <title>
-        <literal>storage.policy.default</literal> namespace
-      </title>
-      <para>
-        This namespace specifies the default policy for storage
-        devices - these properties should be merged on the root computer
-        device object.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>storage.policy.default.use_managed_keyword</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                Whether to use a <emphasis>managed no
-                  operation
-                </emphasis>
-                keyword when adding entries to
-                the File Systems file (<literal>/etc/fstab</literal>) -
-                this is used to identify entries added by a program
-                that modifies this file.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.default.managed_keyword.primary</literal> (string)
-              </entry>
-              <entry>Example: 'managed'</entry>
-              <entry>No</entry>
-              <entry>No-op keyword to use when adding entries to the file systems file</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.default.managed_keyword.secondary</literal> (string)
-              </entry>
-              <entry>Example: 'kudzu'</entry>
-              <entry>No</entry>
-              <entry>
-                Secondary no-op keyword that identifies entries added
-                to the file systems file. The secondary keyword is never
-                written; only read. This is useful when making a transition
-                from one managed keyword to another.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.default.mount_option.*</literal> (bool)
-              </entry>
-              <entry>Examples:
-                <literal>.noauto</literal>,
-                <literal>.exec</literal>,
-                <literal>.console</literal>,
-                <literal>.fscontext=system_u:object_r:removable_t</literal>
-              </entry>
-              <entry>No</entry>
-              <entry>
-                This is actually an entire namespace that specifies
-                what options a storage device should be mounted with,
-                e.g. the example <literal>.exec</literal> should be read as
-                <literal>storage.policy.default.mount_option.exec</literal>
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.default.mount_root</literal> (string)
-              </entry>
-              <entry>
-                Example: <literal>/media</literal>
-              </entry>
-              <entry>No</entry>
-              <entry>
-                The default mount root to use when computing what
-                mount point to use for a storage device
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
-    <sect2 id="device-properties-storage-policy">
-      <title>
-        <literal>storage.policy</literal> namespace
-      </title>
-      <para>
-        This namespace contains properties that can be merged on
-        individual storage devices to specify how and if the storage
-        device should be mounted.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>storage.policy.should_mount</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Whether any volumes from this storage device
-                should be mounted
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.desired_mount_point</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>
-                No (only applicable if the
-                property <literal>storage.no_partitions_hint</literal>
-                is set to TRUE)
-              </entry>
-              <entry>
-                The desired mount point for this storage device. The
-                path must not be fully qualified and there is no
-                guarantee that and storage policy agents, such as
-                policy mount wrappers or programs modifying the file
-                systems file will use this mount point.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.mount_option.*</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>
-                No (only applicable if the
-                property <literal>storage.no_partitions_hint</literal>
-                is set to TRUE)
-              </entry>
-              <entry>
-                Mount options to use, see property
-                <literal>storage.policy.default.mount_option.*</literal>
-                for details.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>storage.policy.mount_filesystem</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>
-                No (only applicable if the
-                property <literal>storage.no_partitions_hint</literal>
-                is set to TRUE)
-              </entry>
-              <entry>File system to use when mounting the storage device.</entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
-    <sect2 id="device-properties-volume-policy">
-      <title>
-        <literal>volume.policy</literal> namespace
-      </title>
-      <para>
-        This namespace contains properties that can be merged on
-        individual volumes to specify how and if the volume
-        should be mounted.
-      </para>
-      <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>Key (type)</entry>
-              <entry>Values</entry>
-              <entry>Mandatory</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry>
-                <literal>volume.policy.should_mount</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>Whether this volume should be mounted at all</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>volume.policy.mount_filesystem</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>File system to use when mounting the volume.</entry>
-            </row>
-            <row>
-              <entry>
-                <literal>volume.policy.desired_mount_point</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                The desired mount point for this volume. The
-                path must not be fully qualified and there is no
-                guarantee that and storage policy agents, such as
-                policy mount wrappers or programs modifying the file
-                systems file will use this mount point.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>volume.policy.mount_option.*</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                Mount options to use, see property 
-                <literal>storage.policy.default.mount_option.*</literal>
-                for details.
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </sect2>
-  </sect1>
   <sect1 id="properties-deprecated">
     <title>Deprecated Properties</title>
     <para>
