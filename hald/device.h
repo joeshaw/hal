@@ -206,9 +206,11 @@ gboolean      hal_device_inc_num_ready_addons (HalDevice *device);
 
 gboolean      hal_device_are_all_addons_ready (HalDevice *device);
 
-gboolean      hal_device_acquire_lock (HalDevice *device, const char *lock_name, const char *sender);
+gboolean      hal_device_acquire_lock (HalDevice *device, const char *lock_name, gboolean exclusive, const char *sender);
 
 gboolean      hal_device_release_lock (HalDevice *device, const char *lock_name, const char *sender);
+
+char        **hal_device_get_lock_holders (HalDevice *device, const char *lock_name);
 
 /* static method */
 void          hal_device_client_disconnected (const char *sender);

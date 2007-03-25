@@ -603,6 +603,36 @@ dbus_bool_t libhal_device_claim_interface (LibHalContext *ctx,
 dbus_bool_t libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *error);
 
 
+/* Take a mandatory lock on an interface on a device. */
+dbus_bool_t libhal_device_acquire_interface_lock (LibHalContext *ctx,
+                                                  const char *udi,
+                                                  const char *interface,
+                                                  DBusError *error);
+
+/* Release a mandatory lock on an interface on a device. */
+dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
+                                                  const char *udi,
+                                                  const char *interface,
+                                                  DBusError *error);
+
+/* Take a mandatory lock on an interface (the lock affects all devices the caller have access to). */
+dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
+                                                  const char *interface,
+                                                  DBusError *error);
+
+/* Release a mandatory lock on an interface (affects all devices the caller have access to). */
+dbus_bool_t libhal_release_global_interface_lock (LibHalContext *ctx,
+                                                  const char *interface,
+                                                  DBusError *error);
+
+/* Determine if a given caller is locked out of a given interface on a given device */
+dbus_bool_t libhal_device_is_caller_locked_out (LibHalContext *ctx,
+                                                const char *udi,
+                                                const char *interface,
+                                                const char *caller,
+                                                DBusError *error);
+
+
 #if defined(__cplusplus)
 }
 #endif

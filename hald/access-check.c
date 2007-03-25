@@ -38,6 +38,7 @@
 #include <dbus/dbus.h>
 #include <glib.h>
 
+#include "hald.h"
 #include "logger.h"
 #include "access-check.h"
 
@@ -107,6 +108,7 @@ out:
 
 /**
  * access_check_caller_have_access_to_device:
+ * @cit: the CITracker object
  * @device: The device to check for
  * @caller_unique_sysbus_name: The unique system bus connection name (e.g. ":1.43") of the caller
  *
@@ -169,3 +171,114 @@ out:
         return TRUE;
 }
 #endif
+
+/**
+ * access_check_caller_locked_out:
+ * @cit: the CITracker object
+ * @device: The device to check for
+ * @caller_unique_sysbus_name: The unique system bus connection name (e.g. ":1.43") of the caller
+ * @interface_name: the interface to check for
+ *
+ * This method determines if a caller is locked out to access a given
+ * interface on a given device. A caller is locked out when:
+ *
+ * 1. Another caller is holding a lock on the interface on the device
+ *    non-withstanding that the caller to check for holds the lock
+ *    himself.
+ *
+ * 2. Another caller is holding the global lock for the interface on
+ *    the root computer device object and that other caller has
+ *    access to the device in question.
+ *
+ *    (In other words, a client Foo can grab a lock on the root
+ *    computer device object, but that doesn't mean Foo can lock
+ *    other clients out of devices that Foo doesn't have access to.)
+ *
+ * Specifically a caller is not locked out if he has locked the
+ * interface and he is the only one holding the lock. However, if two
+ * clients have a lock on a device neither of them can access the
+ * device.
+ * 
+ * Returns: TRUE iff the caller is locked out
+ */
+gboolean
+access_check_caller_locked_out (CITracker   *cit,
+                                HalDevice   *device,
+                                const char  *caller_unique_sysbus_name,
+                                const char  *interface_name)
+{
+        int n;
+        gboolean ret;
+        char *global_lock_name;
+        char **holders;
+        char **global_holders;
+        HalDevice *computer;
+
+        global_lock_name = NULL;
+        holders = NULL;
+        global_holders = NULL;
+        ret = TRUE;
+
+	computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	if (computer == NULL)
+		computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+	if (computer == NULL)
+		goto out;
+
+        global_lock_name = g_strdup_printf ("Global.%s", interface_name);
+
+        holders = hal_device_get_lock_holders (device, interface_name);
+        global_holders = hal_device_get_lock_holders (computer, global_lock_name);
+
+        /* check if there are other holders than us - these are
+         * assumed to have access to the device since they got to hold
+         * the lock in the first place. 
+         */
+        if (holders != NULL) {
+                for (n = 0; holders[n] != NULL; n++) {
+                        if (strcmp (holders[n], caller_unique_sysbus_name) != 0) {
+                                /* Yup, there's someone else... can't do it Sally */
+                                HAL_INFO (("Caller '%s' is locked out of interface '%s' on device '%s' "
+                                           "because caller '%s' got a lock on the interface on the device",
+                                           caller_unique_sysbus_name,
+                                           interface_name,
+                                           hal_device_get_udi (device),
+                                           holders[n]));
+                                goto out;
+                        }
+                }
+        }
+
+        if (global_holders != NULL) {
+                for (n = 0; global_holders[n] != NULL; n++) {
+                        if (strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
+                                /* Someone else is holding the global
+                                 * lock.. check if that someone actually have
+                                 * access to the device...
+                                 */
+                                if (access_check_caller_have_access_to_device (cit, device, global_holders[n])) {
+                                        /* They certainly do. Give up. */
+                                        
+                                        HAL_INFO (("Caller '%s' is locked out of interface '%s' on device '%s' "
+                                                   "because caller '%s' got a lock on the global interface and "
+                                                   "have access to the device",
+                                                   caller_unique_sysbus_name,
+                                                   interface_name,
+                                                   hal_device_get_udi (device),
+                                                   global_holders[n]));
+                                        goto out;
+                                }
+                        }
+                }
+        }
+
+        /* done all the checks so we're not locked out */
+        ret = FALSE;
+
+out:
+        g_strfreev (global_holders);
+        g_strfreev (holders);
+        g_free (global_lock_name);
+        return ret;
+}
+

@@ -204,6 +204,26 @@ fstab_close (gpointer handle)
 #endif
 
 void
+bailout_if_drive_is_locked (LibHalContext *hal_ctx, LibHalDrive *drive, const char *invoked_by_syscon_name)
+{
+        DBusError error;
+
+        if (drive != NULL) {
+                dbus_error_init (&error);
+                if (libhal_device_is_caller_locked_out (hal_ctx, 
+                                                        libhal_drive_get_udi (drive),
+                                                        "org.freedesktop.Hal.Device.Storage",
+                                                        invoked_by_syscon_name,
+                                                        &error)) {
+                        fprintf (stderr, "org.freedesktop.Hal.Device.InterfaceLocked\n");
+                        fprintf (stderr, "The enclosing drive for the volume is locked\n");
+                        exit (1);
+                }
+        }
+}
+
+
+void
 unknown_error (const char *detail)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.Volume.UnknownFailure\n");
@@ -303,6 +323,7 @@ handle_unmount (LibHalContext *hal_ctx,
 		}
 	}
 
+        bailout_if_drive_is_locked (hal_ctx, drive, invoked_by_syscon_name);
 
 	/* check hal's mtab file to verify the device to unmount is actually mounted by hal */
 	hal_mtab_orig = fopen ("/media/.hal-mtab", "r");
@@ -559,6 +580,8 @@ try_open_excl_again:
 	printf ("invoked by uid                   = %s\n", invoked_by_uid);
 	printf ("invoked by system bus connection = %s\n", invoked_by_syscon_name);
 #endif
+
+        bailout_if_drive_is_locked (hal_ctx, drive, invoked_by_syscon_name);
 
 	/* construct arguments to EJECT (e.g. /usr/bin/eject) */
 	na = 0;

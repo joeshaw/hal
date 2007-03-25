@@ -1622,23 +1622,31 @@ hal_device_are_all_addons_ready (HalDevice *device)
  * Returns: FALSE if the caller already holds this lock. TRUE if the caller got the lock.
  */
 gboolean
-hal_device_acquire_lock (HalDevice *device, const char *lock_name, const char *sender)
+hal_device_acquire_lock (HalDevice *device, const char *lock_name, gboolean exclusive, const char *sender)
 {
         gboolean ret;
         char buf[256];
 
         ret = FALSE;
 
+	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.exclusive", lock_name);
+	if (hal_device_property_get_bool (device, buf) == TRUE) {
+            /* exclusively locked */
+            goto out;
+        }
+	hal_device_property_set_bool (device, buf, exclusive);
+
 	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
 	if (hal_device_property_strlist_contains (device, buf, sender)) {
                 /* already locked */
                 goto out;
         }
+
 	hal_device_property_strlist_append (device, buf, sender);
 	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
 	hal_device_property_set_bool (device, buf, TRUE);
 
-	hal_device_property_strlist_append (device, "info.named_locks", lock_name);
+	hal_device_property_strlist_add (device, "info.named_locks", lock_name);
 
         add_to_locked_set (device);
 
@@ -1681,6 +1689,8 @@ hal_device_release_lock (HalDevice *device, const char *lock_name, const char *s
 
 	if (hal_device_property_get_strlist_length (device, buf) == 1) {
                 /* last one to hold the lock */
+		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.exclusive", lock_name);
+		hal_device_property_remove (device, buf);
 		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
 		hal_device_property_remove (device, buf);
 		g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
@@ -1700,6 +1710,28 @@ hal_device_release_lock (HalDevice *device, const char *lock_name, const char *s
         ret = TRUE;
 
 out:
+        return ret;
+}
+
+/**
+ * hal_device_get_lock_holders:
+ * @device: the device to check for
+ * @lock_name: the lock name
+ *
+ * Get the lock holders on a device.
+ *
+ * Returns: NULL if there are no lock holders; otherwise a
+ * NULL-terminated array of strings with the dbus names of the
+ * holders. Caller must free this with g_strfreev().
+ */
+char **
+hal_device_get_lock_holders (HalDevice *device, const char *lock_name)
+{
+        char **ret;
+        char buf[256];
+        
+        g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
+        ret = hal_device_property_dup_strlist_as_strv (device, buf);
         return ret;
 }
 

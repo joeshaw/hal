@@ -46,6 +46,8 @@ void unlock_hal_mtab (void);
 
 void unknown_error (const char *detail);
 
+void bailout_if_drive_is_locked (LibHalContext *hal_ctx, LibHalDrive *drive, const char *invoked_by_syscon_name);
+
 void handle_unmount (LibHalContext *hal_ctx, 
 #ifdef HAVE_POLKIT
 		     LibPolKitContext *pol_ctx, 

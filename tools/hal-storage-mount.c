@@ -509,6 +509,8 @@ handle_mount (LibHalContext *hal_ctx,
 
 	bailout_if_in_fstab (hal_ctx, device, label, uuid);
 
+        bailout_if_drive_is_locked (hal_ctx, drive, invoked_by_syscon_name);
+
 	/* TODO: sanity check that what hal exports is correct (cf. Martin Pitt's email) */
 
 	/* read from stdin */

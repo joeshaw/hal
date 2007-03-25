@@ -4128,3 +4128,246 @@ libhal_device_free_changeset (LibHalChangeSet *changeset)
 	free (changeset->udi);
 	free (changeset);
 }
+
+
+dbus_bool_t 
+libhal_device_acquire_interface_lock (LibHalContext *ctx,
+                                      const char *udi,
+                                      const char *interface,
+                                      DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"AcquireInterfaceLock");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_unref (reply);
+	return TRUE;
+}
+
+dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
+                                                  const char *udi,
+                                                  const char *interface,
+                                                  DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"ReleaseInterfaceLock");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_unref (reply);
+	return TRUE;
+}
+
+dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
+                                                  const char *interface,
+                                                  DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						"/org/freedesktop/Hal/Manager",
+						"org.freedesktop.Hal.Device",
+						"AcquireGlobalInterfaceLock");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_unref (reply);
+	return TRUE;
+}
+
+dbus_bool_t libhal_release_global_interface_lock (LibHalContext *ctx,
+                                                  const char *interface,
+                                                  DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						"/org/freedesktop/Hal/Manager",
+						"org.freedesktop.Hal.Device",
+						"ReleaseGlobalInterfaceLock");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return FALSE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return FALSE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return FALSE;
+
+	dbus_message_unref (reply);
+	return TRUE;
+}
+
+dbus_bool_t
+libhal_device_is_caller_locked_out (LibHalContext *ctx,
+                                    const char *udi,
+                                    const char *interface,
+                                    const char *caller,
+                                    DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	DBusMessageIter reply_iter;
+        dbus_bool_t value;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(caller, "*caller", FALSE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"IsCallerLockedOut");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return TRUE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &caller);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return TRUE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return TRUE;
+
+	/* now analyze reply */
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return TRUE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &value);
+	dbus_message_unref (reply);
+	return value;
+}
+

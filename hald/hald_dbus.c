@@ -223,13 +223,16 @@ raise_device_already_locked (DBusConnection *connection,
 	const char *reason;
 
 	reason = hal_device_property_get_string (device, "info.locked.reason");
-	HAL_WARNING (("Device %s is already locked: %s",
-		      hal_device_get_udi (device), reason));
+        if (reason != NULL) {
+                HAL_WARNING (("Device %s is already locked: %s", hal_device_get_udi (device), reason));
+        } else {
+                HAL_WARNING (("Device %s is already locked", hal_device_get_udi (device)));
+        }
 
 
 	reply = dbus_message_new_error (in_reply_to,
 					"org.freedesktop.Hal.DeviceAlreadyLocked",
-					reason);
+					reason != NULL ? reason : "Device is already locked");
 
 	if (reply == NULL || !dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -237,7 +240,7 @@ raise_device_already_locked (DBusConnection *connection,
 	dbus_message_unref (reply);
 }
 
-/** 
+/**
  *  raise_permission_denied:
  *  @connection:         D-Bus connection
  *  @in_reply_to:        message to report error on
@@ -256,6 +259,64 @@ raise_permission_denied (DBusConnection *connection,
 		"Permission denied: %s",
 		 reason
 	);
+}
+
+
+/**
+ *  raise_interface_locked:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @interface:          the interface that is locked
+ *
+ *  Raise the org.freedesktop.Hal.Device.InterfaceLocked error 
+ */
+static void
+raise_interface_locked (DBusConnection *connection,
+                        DBusMessage    *in_reply_to,
+                        const char     *interface)
+{
+	raise_error (connection, in_reply_to,
+                     "org.freedesktop.Hal.Device.InterfaceLocked",
+                     "The interface %s is locked by someone else",
+                     interface);
+}
+
+/**
+ *  raise_interface_locked:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @interface:          the interface that is locked
+ *
+ *  Raise the org.freedesktop.Hal.Device.InterfaceLocked error 
+ */
+static void
+raise_interface_already_locked (DBusConnection *connection,
+                                DBusMessage    *in_reply_to,
+                                const char     *interface)
+{
+	raise_error (connection, in_reply_to,
+                     "org.freedesktop.Hal.Device.InterfaceAlreadyLocked",
+                     "The interface %s is already exclusively locked either by someone else or it's already locked by yourself",
+                     interface);
+}
+
+/**
+ *  raise_interface_locked:
+ *  @connection:         D-Bus connection
+ *  @in_reply_to:        message to report error on
+ *  @interface:          the interface that is locked
+ *
+ *  Raise the org.freedesktop.Hal.Device.InterfaceLocked error 
+ */
+static void
+raise_interface_not_locked (DBusConnection *connection,
+                                DBusMessage    *in_reply_to,
+                                const char     *interface)
+{
+	raise_error (connection, in_reply_to,
+                     "org.freedesktop.Hal.Device.InterfaceNotLocked",
+                     "The interface %s is not locked by you",
+                     interface);
 }
 
 
@@ -1814,31 +1875,17 @@ device_query_capability (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/**  
- *  device_acquire_mandatory_lock:
- *  @connection:         D-BUS connection
- *  @message:            Message
- * 
- *  Returns:             What to do with the message
- *
- *  Acquire a named mandatory lock on a device.
- *
- *  <pre>
- *  void Device.AcquireMandatoryLock(string lock_name)
- *
- *  raises org.freedesktop.Hal.NoSuchDevice, 
- *        org.freedesktop.Hal.DeviceAlreadyLocked (if the caller already got a lock on the device with the given name)
- *  </pre>
- */
-DBusHandlerResult
-device_acquire_mandatory_lock (DBusConnection *connection, DBusMessage *message)
+/*------------------------------------------------------------------------*/
+static DBusHandlerResult
+device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	HalDevice *d;
 	DBusMessage *reply;
 	DBusError error;
-	char *lock_name;
+	char *interface_name;
 	const char *sender;
+        gboolean exclusive;
 
 	HAL_TRACE (("entering"));
 
@@ -1853,18 +1900,26 @@ device_acquire_mandatory_lock (DBusConnection *connection, DBusMessage *message)
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
+	sender = dbus_message_get_sender (message);
+
+        if (!local_interface) {
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, sender)) {
+                        raise_permission_denied (connection, message, "AcquireInterfaceLock: no access to device");
+                        return DBUS_HANDLER_RESULT_HANDLED;
+                }
+        }
+
 	dbus_error_init (&error);
 	if (!dbus_message_get_args (message, &error,
-				    DBUS_TYPE_STRING, &lock_name,
+				    DBUS_TYPE_STRING, &interface_name,
+				    DBUS_TYPE_BOOLEAN, &exclusive,
 				    DBUS_TYPE_INVALID)) {
-		raise_syntax (connection, message, "AqcuireMandatoryLock");
+		raise_syntax (connection, message, "AqcuireInterfaceLock");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	sender = dbus_message_get_sender (message);
-
-        if (!hal_device_acquire_lock (d, lock_name, sender)) {
-		raise_device_already_locked (connection, message, d);
+        if (!hal_device_acquire_lock (d, interface_name, exclusive, sender)) {
+		raise_interface_already_locked (connection, message, interface_name);
 		return DBUS_HANDLER_RESULT_HANDLED;
         }
 
@@ -1879,31 +1934,15 @@ device_acquire_mandatory_lock (DBusConnection *connection, DBusMessage *message)
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-/** 
- *  device_release_mandatory_lock: 
- *  @connection:         D-BUS connection
- *  @message:            Message
- *
- *  Returns:             What to do with the message
- *
- *  Released a named mandatory lock on a device.
- *
- *  <pre>
- *  void Device.ReleaseMandatoryLock(string lock_name)
- *
- *  raises org.freedesktop.Hal.NoSuchDevice, 
- *         org.freedesktop.Hal.DeviceNotLocked (if the caller haven't a lock on the device with the given name)
- *  </pre>
- */
-DBusHandlerResult
-device_release_mandatory_lock (DBusConnection *connection, DBusMessage *message)
+static DBusHandlerResult
+device_release_interface_lock (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
 {
 	const char *udi;
 	HalDevice *d;
 	DBusMessage *reply;
 	DBusError error;
 	const char *sender;
-	char *lock_name;
+	char *interface_name;
 
 	HAL_TRACE (("entering"));
 
@@ -1918,20 +1957,214 @@ device_release_mandatory_lock (DBusConnection *connection, DBusMessage *message)
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
+	sender = dbus_message_get_sender (message);
+
+        if (!local_interface) {
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, sender)) {
+                        raise_permission_denied (connection, message, "ReleaseInterfaceLock: no access to device");
+                        return DBUS_HANDLER_RESULT_HANDLED;
+                }
+        }
+
 	dbus_error_init (&error);
 	if (!dbus_message_get_args (message, &error,
-				    DBUS_TYPE_STRING, &lock_name,
+				    DBUS_TYPE_STRING, &interface_name,
 				    DBUS_TYPE_INVALID)) {
-		raise_syntax (connection, message, "ReleaseMandatoryLock");
+		raise_syntax (connection, message, "ReleaseInterfaceLock");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+        if (!hal_device_release_lock (d, interface_name, sender)) {
+		raise_interface_not_locked (connection, message, interface_name);
+		return DBUS_HANDLER_RESULT_HANDLED;
+        }
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+static DBusHandlerResult
+device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	const char *sender;
+	char *interface_name;
+	char *caller_sysbus_name;
+        dbus_bool_t result;
+        DBusMessageIter iter;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	sender = dbus_message_get_sender (message);
 
-        if (!hal_device_release_lock (d, lock_name, sender)) {
-		raise_device_already_locked (connection, message, d);
+        /* only allow HAL helpers to ask this question */
+        if (!local_interface) {
+                raise_permission_denied (connection, message, "IsCallerLockedOut: not privileged");
+        }
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &interface_name,
+				    DBUS_TYPE_STRING, &caller_sysbus_name,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "ReleaseInterfaceLock");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+        result = access_check_caller_locked_out (ci_tracker, d, caller_sysbus_name, interface_name);
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &result);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+/*------------------------------------------------------------------------*/
+
+static DBusHandlerResult
+device_acquire_global_interface_lock (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	char *interface_name;
+	char *lock_name;
+	const char *sender;
+        gboolean exclusive;
+
+	HAL_TRACE (("entering"));
+
+	udi = "/org/freedesktop/Hal/devices/computer";
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	sender = dbus_message_get_sender (message);
+
+        /* no security checks; global locks are special; anyone can
+         * take them but it might not have any effect... a global lock
+         * will only have effect if a lock owner have access to the
+         * device - see the function
+         *
+         *  hald/access-check.c:access_check_caller_locked_out()
+         *
+         * for details.
+         */
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &interface_name,
+				    DBUS_TYPE_BOOLEAN, &exclusive,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "AqcuireGlobalInterfaceLock");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+        lock_name = g_strdup_printf ("Global.%s", interface_name);
+        if (!hal_device_acquire_lock (d, lock_name, exclusive, sender)) {
+		raise_interface_already_locked (connection, message, interface_name);
+                g_free (lock_name);
 		return DBUS_HANDLER_RESULT_HANDLED;
         }
+        g_free (lock_name);
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static DBusHandlerResult
+device_release_global_interface_lock (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	const char *sender;
+	char *interface_name;
+        char *lock_name;
+
+	HAL_TRACE (("entering"));
+
+	udi = "/org/freedesktop/Hal/devices/computer";
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	sender = dbus_message_get_sender (message);
+
+        /* no security checks; global locks are special; anyone can
+         * take them but it might not have any effect... a global lock
+         * will only have effect if a lock owner have access to the
+         * device - see the function
+         *
+         *  hald/access-check.c:access_check_caller_locked_out()
+         *
+         * for details.
+         */
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &interface_name,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "ReleaseGlobalInterfaceLock");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+        lock_name = g_strdup_printf ("Global.%s", interface_name);
+        if (!hal_device_release_lock (d, interface_name, sender)) {
+		raise_interface_not_locked (connection, message, interface_name);
+                g_free (lock_name);
+		return DBUS_HANDLER_RESULT_HANDLED;
+        }
+        g_free (lock_name);
 
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
@@ -3464,6 +3697,14 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"global_udi\" direction=\"in\" type=\"s\"/>\n"
 				       "    </method>\n"
 
+				       "    <method name=\"AcquireGlobalInterfaceLock\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"exclusive\" direction=\"in\" type=\"b\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"ReleaseGlobalInterfaceLock\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+
 				       "    <signal name=\"DeviceAdded\">\n"
 				       "      <arg name=\"udi\" type=\"s\"/>\n"
 				       "    </signal>\n"
@@ -3571,11 +3812,17 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"released_lock\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
 
-				       "    <method name=\"AcquireMandatoryLock\">\n"
-				       "      <arg name=\"lock_name\" direction=\"in\" type=\"s\"/>\n"
+				       "    <method name=\"AcquireInterfaceLock\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"exclusive\" direction=\"in\" type=\"b\"/>\n"
 				       "    </method>\n"
-				       "    <method name=\"ReleaseMandatoryLock\">\n"
-				       "      <arg name=\"lock_name\" direction=\"in\" type=\"s\"/>\n"
+				       "    <method name=\"ReleaseInterfaceLock\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
+				       "    <method name=\"IsCallerLockedOut\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"caller_sysbus_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"whether_caller_is_locked_out\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
 
 				       "    <method name=\"StringListAppend\">\n"
@@ -3822,6 +4069,31 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		   strcmp (dbus_message_get_path (message),
 			    "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_commit_to_gdl (connection, message, local_interface);
+
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Manager",
+						"AcquireGlobalInterfaceLock") &&
+                   strcmp (dbus_message_get_path (message), "/org/freedesktop/Hal/Manager") == 0) {
+		return device_acquire_global_interface_lock (connection, message, local_interface);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Manager",
+						"ReleaseGlobalInterfaceLock") &&
+                   strcmp (dbus_message_get_path (message), "/org/freedesktop/Hal/Manager") == 0) {
+		return device_release_global_interface_lock (connection, message, local_interface);
+                
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"AcquireInterfaceLock")) {
+		return device_acquire_interface_lock (connection, message, local_interface);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"ReleaseInterfaceLock")) {
+		return device_release_interface_lock (connection, message, local_interface);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"IsCallerLockedOut")) {
+		return device_is_caller_locked_out (connection, message, local_interface);
+
 	} else if (dbus_message_is_method_call (message,
 					      "org.freedesktop.Hal.Device",
 					      "GetAllProperties")) {
@@ -3902,14 +4174,6 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"org.freedesktop.Hal.Device",
 						"Unlock")) {
 		return device_unlock (connection, message);
-	} else if (dbus_message_is_method_call (message,
-						"org.freedesktop.Hal.Device",
-						"AcquireMandatoryLock")) {
-		return device_acquire_mandatory_lock (connection, message);
-	} else if (dbus_message_is_method_call (message,
-						"org.freedesktop.Hal.Device",
-						"ReleaseMandatoryLock")) {
-		return device_release_mandatory_lock (connection, message);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"StringListAppend")) {
@@ -3999,6 +4263,18 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
                                 raise_permission_denied (connection, message, "Not in active session");
                                 return DBUS_HANDLER_RESULT_HANDLED;
                         }
+                }
+
+                /* check if the interface on the device is locked by someone else 
+                 *
+                 * Note that method implementations can and will do their own
+                 * checks too; e.g. operations on org.freedesktop.Hal.Device.Volume
+                 * will check if the interface org.freedesktop.Hal.Device.Storage
+                 * is locked on the enclosing drive.
+                 */
+                if (access_check_caller_locked_out (ci_tracker, d, caller, interface)) {
+                        raise_interface_locked (connection, message, interface);
+                        return DBUS_HANDLER_RESULT_HANDLED;
                 }
 
                 /* first see if an addon grabbed the interface */
