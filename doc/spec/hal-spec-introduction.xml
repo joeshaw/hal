@@ -202,10 +202,10 @@
       the operating system kernel, such as SCSI emulation for USB
       Storage Devices, are also considered device objects in HAL. This
       implies that operating system kernel specific bits leak into the
-      device object database. However users of HAL won't notice, such
-      device objects are not referenced anywhere in the device objects
-      that users are interested in; they are merely used as glue to
-      build the device tree.
+      device object database. However applications using HAL will not
+      notice this, such device objects are not referenced anywhere in
+      the device objects that users are interested in; they are merely
+      used as glue to build the device tree.
     </para>
     <para>
       In addition to provide information about what kind of hardware a
@@ -230,7 +230,13 @@
       for details.
     </para>
     <para>
-      An HAL device object is comprised by
+      Finally, HAL provides one or more <emphasis>D-Bus
+      interfaces</emphasis> for applications to configure and/or use
+      the device. These interfaces are discussed in
+      <xref linkend="interfaces"/>.
+    </para>
+    <para>
+      Summarizing, a device object is comprised by
     </para>
     <itemizedlist>
       <listitem>
@@ -254,7 +260,8 @@
         <para>
           Each device object got a set of properties which are
           key/value pairs.  The key is an ASCII string while the value
-          can be one of several types
+          can be one of several types, see below. Properties are
+          arranged into name spaces using ''.'' as a separator.
           <itemizedlist>
             <listitem>
               <para>
@@ -288,6 +295,16 @@
               </para>
             </listitem>
           </itemizedlist>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <emphasis>Interfaces</emphasis>
+        </para>
+        <para>
+          Applications can configure and/or use a device using D-Bus
+          interfaces. Typically, there's a one-to-one relationship
+          between capabilities/namespaces and interfaces.
         </para>
       </listitem>
     </itemizedlist>
