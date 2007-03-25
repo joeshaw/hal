@@ -4324,10 +4324,10 @@ libhal_device_is_caller_locked_out (LibHalContext *ctx,
 	DBusMessageIter reply_iter;
         dbus_bool_t value;
 
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
-	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", FALSE);
-	LIBHAL_CHECK_PARAM_VALID(caller, "*caller", FALSE);
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, TRUE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", TRUE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", TRUE);
+	LIBHAL_CHECK_PARAM_VALID(caller, "*caller", TRUE);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						udi,

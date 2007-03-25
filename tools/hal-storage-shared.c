@@ -208,7 +208,7 @@ bailout_if_drive_is_locked (LibHalContext *hal_ctx, LibHalDrive *drive, const ch
 {
         DBusError error;
 
-        if (drive != NULL) {
+        if (drive != NULL && invoked_by_syscon_name != NULL) {
                 dbus_error_init (&error);
                 if (libhal_device_is_caller_locked_out (hal_ctx, 
                                                         libhal_drive_get_udi (drive),

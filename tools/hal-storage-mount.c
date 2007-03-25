@@ -758,22 +758,24 @@ handle_mount (LibHalContext *hal_ctx,
 #endif
 
 #ifdef HAVE_POLKIT
-	if (libpolkit_is_uid_allowed_for_privilege (pol_ctx, 
-						    invoked_by_syscon_name,
-						    invoked_by_uid,
-						    privilege,
-						    udi,
-						    &allowed_by_privilege,
-						    &is_temporary_privilege,
-						    NULL) != LIBPOLKIT_RESULT_OK) {
-		printf ("cannot lookup privilege\n");
-		unknown_error ("Cannot lookup privilege from PolicyKit");
-	}
+        if (invoked_by_syscon_name != NULL) {
+                if (libpolkit_is_uid_allowed_for_privilege (pol_ctx, 
+                                                            invoked_by_syscon_name,
+                                                            invoked_by_uid,
+                                                            privilege,
+                                                            udi,
+                                                            &allowed_by_privilege,
+                                                            &is_temporary_privilege,
+                                                            NULL) != LIBPOLKIT_RESULT_OK) {
+                        printf ("cannot lookup privilege\n");
+                        unknown_error ("Cannot lookup privilege from PolicyKit");
+                }
 
-	if (!allowed_by_privilege) {
-		printf ("caller don't possess privilege\n");
-		permission_denied_privilege (privilege, invoked_by_uid);
-	}
+                if (!allowed_by_privilege) {
+                        printf ("caller don't possess privilege\n");
+                        permission_denied_privilege (privilege, invoked_by_uid);
+                }
+        }
 #endif
 
 #ifdef DEBUG

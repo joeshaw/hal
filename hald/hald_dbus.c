@@ -3459,9 +3459,9 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 	/* add calling uid */
 	extra_env[0] = NULL;
 	extra_env[1] = NULL;
+	extra_env[2] = NULL;
 	if (local_interface) {
 		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
-		extra_env[1] = "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=0";
 	} else {
 		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%u", ci_tracker_caller_get_uid (ci));
 		extra_env[0] = uid_export;
@@ -3469,14 +3469,6 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 			  "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=%s", dbus_message_get_sender (message));
 		extra_env[1] = sender_export;
 	}
-
-	if (extra_env[0] == NULL)
-		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=nobody";
-	if (extra_env[1] == NULL)
-		extra_env[1] = "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=0";
-
-
-	extra_env[2] = NULL;
 
 	/* prepare stdin with parameters */
 	stdin_str = g_string_sized_new (256); /* default size for passing params; can grow */
