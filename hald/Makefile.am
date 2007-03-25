@@ -60,7 +60,8 @@ hald_SOURCES =                                                          \
 	osspec.h							\
 	ids.h				ids.c				\
 	rule.h				mmap_cache.c			\
-	mmap_cache.h
+	mmap_cache.h							\
+	ci-tracker.h			ci-tracker.c
 
 if HAVE_CONKIT
 hald_SOURCES += ck-tracker.h ck-tracker.c

@@ -48,6 +48,8 @@
 #include "util.h"
 #include "hald_runner.h"
 
+#include "ci-tracker.h"
+
 #ifdef HAVE_CONKIT
 #include "ck-tracker.h"
 #endif
@@ -55,6 +57,7 @@
 #define HALD_DBUS_ADDRESS "unix:tmpdir=" HALD_SOCKET_DIR
 
 static DBusConnection *dbus_connection = NULL;
+static CITracker *ci_tracker = NULL;
 #ifdef HAVE_CONKIT
 static CKTracker *ck_tracker = NULL;
 #endif
@@ -930,237 +933,12 @@ device_get_all_properties (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-typedef struct {
-	unsigned long  uid;           /* uid of caller */
-#ifdef HAVE_CONKIT
-	pid_t  pid;                   /* process ID of caller */
-	gboolean in_active_session;   /* caller is in an active session */
-	char *session_objpath;        /* obj path of ConsoleKit session */
-#endif
-	char *system_bus_unique_name; /* unique name of caller on the system bus */
-} CallerInfo;
-
-static CallerInfo *
-caller_info_new (void)
-{
-	CallerInfo *ci;
-	ci = g_new0 (CallerInfo, 1);
-	return ci;
-}
-
-static void 
-caller_info_free (CallerInfo *ci)
-{
-#ifdef HAVE_CONKIT
-	g_free (ci->session_objpath);
-#endif
-	g_free (ci->system_bus_unique_name);
-	g_free (ci);
-}
-
-static GHashTable *connection_name_to_caller_info;
-
-
-static void
-ci_tracker_init (void)
-{
-	connection_name_to_caller_info = g_hash_table_new_full (g_str_hash,
-								g_str_equal,
-								NULL, /* a pointer to a CallerInfo object */
-								(GFreeFunc) caller_info_free);
-}
-
-static void 
-ci_tracker_name_owner_changed (const char *name, const char *old_service_name, const char *new_service_name)
-{
-	if (strlen (old_service_name) > 0) {
-		CallerInfo *caller_info;
-
-		/* evict CallerInfo from cache */
-		caller_info = (CallerInfo *) g_hash_table_lookup (connection_name_to_caller_info, 
-								  old_service_name);
-		if (caller_info != NULL) {
-			g_hash_table_remove (connection_name_to_caller_info, old_service_name);
-			HAL_INFO (("Removing CallerInfo object for %s", old_service_name));
-		}
-	}
-}
-
-#ifdef HAVE_CONKIT
-static void
-ci_tracker_set_active (gpointer key, gpointer value, gpointer user_data)
-{
-	CallerInfo *ci = (CallerInfo*) value;
-	char *session_objpath = (char *) user_data;
-
-	if (ci->session_objpath != NULL && strcmp (ci->session_objpath, session_objpath) == 0) {
-		ci->in_active_session = TRUE;
-		HAL_INFO (("Set in_active_session=TRUE in CallerInfo for %s @ %s (uid %d, pid %d)",
-			   ci->system_bus_unique_name, ci->session_objpath, ci->uid, ci->pid));
-	}
-}
-
-static void
-ci_tracker_clear_active (gpointer key, gpointer value, gpointer user_data)
-{
-	CallerInfo *ci = (CallerInfo*) value;
-	char *session_objpath = (char *) user_data;
-
-	if (ci->session_objpath != NULL && strcmp (ci->session_objpath, session_objpath) == 0) {
-		ci->in_active_session = FALSE;
-		HAL_INFO (("Set in_active_session=FALSE in CallerInfo for %s @ %s (uid %d, pid %d)",
-			   ci->system_bus_unique_name, ci->session_objpath, ci->uid, ci->pid));
-	}
-}
-
-static void 
-ci_tracker_active_changed (const char *session_objpath, gboolean is_active)
-{
-	if (is_active) {
-		g_hash_table_foreach (connection_name_to_caller_info, 
-				      ci_tracker_set_active, (gpointer) session_objpath);
-	} else {
-		g_hash_table_foreach (connection_name_to_caller_info, 
-				      ci_tracker_clear_active, (gpointer) session_objpath);
-	}
-}
-#endif /* HAVE_CONKIT */
-
-static CallerInfo *
-ci_tracker_get_info (const char *system_bus_unique_name)
-{
-	CallerInfo *ci;
-	DBusError error;
-#ifdef HAVE_CONKIT
-	DBusMessage *message;
-	DBusMessage *reply;
-	DBusMessageIter iter;
-	char *dbus_session_name;
-#endif /* HAVE_CONKIT */
-	
-	ci = NULL;
-	
-	if (system_bus_unique_name == NULL)
-		goto error;
-
-	/*HAL_INFO (("========================="));
-	  HAL_INFO (("Looking up CallerInfo for system_bus_unique_name = %s", system_bus_unique_name));*/
-
-	ci = g_hash_table_lookup (connection_name_to_caller_info,
-				  system_bus_unique_name);
-	if (ci != NULL) {
-		/*HAL_INFO (("(using cached information)"));*/
-		goto got_caller_info;
-	}
-	/*HAL_INFO (("(retrieving info from system bus and ConsoleKit)"));*/
-	
-	ci = caller_info_new ();
-	ci->system_bus_unique_name = g_strdup (system_bus_unique_name);
-
-	dbus_error_init (&error);
-	ci->uid = dbus_bus_get_unix_user (dbus_connection, system_bus_unique_name, &error);
-	if (ci->uid == ((unsigned long) -1) || dbus_error_is_set (&error)) {
-		HAL_WARNING (("Could not get uid for connection: %s %s", error.name, error.message));
-		dbus_error_free (&error);
-		goto error;
-	}
-
-#ifdef HAVE_CONKIT
-	message = dbus_message_new_method_call ("org.freedesktop.DBus", 
-						"/org/freedesktop/DBus/Bus",
-						"org.freedesktop.DBus",
-						"GetConnectionUnixProcessID");
-	dbus_message_iter_init_append (message, &iter);
-	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &system_bus_unique_name);
-	dbus_error_init (&error);
-	reply = dbus_connection_send_with_reply_and_block (dbus_connection, message, -1, &error);
-	if (reply == NULL || dbus_error_is_set (&error)) {
-		HAL_WARNING (("Error doing GetConnectionUnixProcessID on Bus: %s: %s", error.name, error.message));
-		dbus_message_unref (message);
-		if (reply != NULL)
-			dbus_message_unref (reply);
-		goto error;
-	}
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_get_basic (&iter, &ci->pid);
-	dbus_message_unref (message);
-	dbus_message_unref (reply);
-
-	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
-						"/org/freedesktop/ConsoleKit/Manager",
-						"org.freedesktop.ConsoleKit.Manager",
-						"GetSessionForUnixProcess");
-	dbus_message_iter_init_append (message, &iter);
-	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &ci->pid);
-	dbus_error_init (&error);
-	reply = dbus_connection_send_with_reply_and_block (dbus_connection, message, -1, &error);
-	if (reply == NULL || dbus_error_is_set (&error)) {
-		HAL_WARNING (("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error.name, error.message));
-		dbus_message_unref (message);
-		if (reply != NULL)
-			dbus_message_unref (reply);
-		/* OK, this is not a catastrophe; just means the caller is not a member of any session.. */
-		goto store_caller_info;
-	}
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_get_basic (&iter, &dbus_session_name);
-	ci->session_objpath = g_strdup (dbus_session_name);
-	dbus_message_unref (message);
-	dbus_message_unref (reply);
-
-	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
-						ci->session_objpath,
-						"org.freedesktop.ConsoleKit.Session",
-						"IsActive");
-	dbus_error_init (&error);
-	reply = dbus_connection_send_with_reply_and_block (dbus_connection, message, -1, &error);
-	if (reply == NULL || dbus_error_is_set (&error)) {
-		HAL_WARNING (("Error doing IsActive on ConsoleKit: %s: %s", error.name, error.message));
-		dbus_message_unref (message);
-		if (reply != NULL)
-			dbus_message_unref (reply);
-		goto error;
-	}
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_get_basic (&iter, &ci->in_active_session);
-	dbus_message_unref (message);
-	dbus_message_unref (reply);
-	
-store_caller_info:
-#endif /* HAVE_CONKIT */
-
-	g_hash_table_insert (connection_name_to_caller_info,
-			     ci->system_bus_unique_name,
-			     ci);
-
-got_caller_info:
-	/*HAL_INFO (("system_bus_unique_name = %s", ci->system_bus_unique_name));
-	HAL_INFO (("uid                    = %d", ci->uid));
-	HAL_INFO (("pid                    = %d", ci->pid));
-	if (ci->session_objpath != NULL) {
-		HAL_INFO (("session_objpath        = %s", ci->session_objpath));
-		HAL_INFO (("in_active_session      = %d", ci->in_active_session));
-	} else {
-		HAL_INFO (("  (Caller is not in any session)"));
-	}
-	HAL_INFO (("  (keeping CallerInfo for %d connections)", g_hash_table_size (connection_name_to_caller_info)));
-	HAL_INFO (("========================="));*/
-	return ci;
-
-error:
-	/*HAL_INFO (("========================="));*/
-	if (ci != NULL)
-		caller_info_free (ci);
-	return NULL;
-}
-
-
 static dbus_bool_t 
 sender_has_privileges (DBusConnection *connection, DBusMessage *message)
 {
 	const char *user_base_svc;
 	dbus_bool_t ret;
-	CallerInfo *ci;
+	CICallerInfo *ci;
 
 	ret = FALSE;
 
@@ -1172,15 +950,15 @@ sender_has_privileges (DBusConnection *connection, DBusMessage *message)
 
 	HAL_DEBUG (("base_svc = %s", user_base_svc));
 
-	ci = ci_tracker_get_info (user_base_svc);
+	ci = ci_tracker_get_info (ci_tracker, user_base_svc);
 	if (ci == NULL) {
 		goto out;
 	}
 
-	HAL_INFO (("uid for caller is %ld", ci->uid));
+	HAL_INFO (("uid for caller is %ld", ci_tracker_caller_get_uid (ci)));
 
-	if (ci->uid != 0 && ci->uid != geteuid()) {
-		HAL_WARNING (("uid %d is not privileged", ci->uid));
+	if (ci_tracker_caller_get_uid (ci) != 0 && ci_tracker_caller_get_uid (ci) != geteuid()) {
+		HAL_WARNING (("uid %d is not privileged", ci_tracker_caller_get_uid (ci)));
 		goto out;
 	}
 
@@ -3470,7 +3248,7 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 }
 
 static DBusHandlerResult
-hald_exec_method (HalDevice *d, CallerInfo *ci, DBusConnection *connection, dbus_bool_t local_interface, 
+hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, dbus_bool_t local_interface, 
 		  DBusMessage *message, const char *execpath)
 {
 	int type;
@@ -3492,13 +3270,15 @@ hald_exec_method (HalDevice *d, CallerInfo *ci, DBusConnection *connection, dbus
 #ifdef HAVE_CONKIT
 		/* TODO: we probably should let the handler itself decide if it wants
 		 * to service the session... by e.g. exporting some env variables
-		 * set from the CallerInfo object
+		 * set from the CICallerInfo object
 		 */
-		if (ci->uid != 0) {
-			if (ci->session_objpath == NULL) {
+		if (ci_tracker_caller_get_uid (ci) != 0) {
+			if (ci_tracker_caller_get_ck_session_path (ci) == NULL) {
 				HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on exec'ed method %s for %s "
 					   "is not in any session; refusing service",
-					   dbus_message_get_sender (message), ci->uid, ci->pid, 
+					   dbus_message_get_sender (message), 
+                                           ci_tracker_caller_get_uid (ci), 
+                                           ci_tracker_caller_get_pid (ci), 
 					   dbus_message_get_interface (message), 
 					   dbus_message_get_member (message), 
 					   dbus_message_get_path (message)));
@@ -3506,21 +3286,23 @@ hald_exec_method (HalDevice *d, CallerInfo *ci, DBusConnection *connection, dbus
 				goto out;
 			}
 		
-			if (!ci->in_active_session) {
+			if (!ci_tracker_caller_in_active_session (ci)) {
 				HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on exec'ed method %s for %s "
 					   "is not in an active session (%s); refusing service",
-					   dbus_message_get_sender (message), ci->uid, ci->pid, 
+					   dbus_message_get_sender (message), 
+                                           ci_tracker_caller_get_uid (ci), 
+                                           ci_tracker_caller_get_pid (ci), 
 					   dbus_message_get_interface (message), 
 					   dbus_message_get_member (message), 
 					   dbus_message_get_path (message), 
-					   ci->session_objpath));
+					   ci_tracker_caller_get_ck_session_path (ci)));
 				raise_permission_denied (connection, message, "Not in active session");
 				goto out;
 			}
 		}
 #endif /* HAVE_CONKIT */
 		
-		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%lu", ci->uid);
+		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%u", ci_tracker_caller_get_uid (ci));
 		extra_env[0] = uid_export;
 		snprintf (sender_export, sizeof (sender_export), 
 			  "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=%s", dbus_message_get_sender (message));
@@ -4251,7 +4033,7 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		const char *method;
 		const char *signature;
 		const char *caller;
-		CallerInfo *ci;
+		CICallerInfo *ci;
 		HalDevice *d;
 
 		/* check for device-specific interfaces that individual objects may support */
@@ -4265,7 +4047,7 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		if (local_interface) {
 			ci = NULL;
 		} else {
-			ci = ci_tracker_get_info (caller);
+			ci = ci_tracker_get_info (ci_tracker, caller);
 			if (ci == NULL) {
 				HAL_ERROR (("Cannot get caller info for %s", caller));
 				goto no_caller;
@@ -4294,23 +4076,33 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 					/* TODO: we probably should let the add-on itself decide if it wants
 					 * to service the session...
 					 */
-					if (!local_interface && ci->uid != 0) {
-						if (ci->session_objpath == NULL) {
+					if (!local_interface && ci_tracker_caller_get_uid (ci) != 0) {
+						if (ci_tracker_caller_get_ck_session_path (ci) == NULL) {
 							HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on "
 								   "add-on method %s for %s is not in any session; "
 								   "refusing service",
-								   caller, ci->uid, ci->pid, interface, method,
-								   udi, ci->session_objpath));
+								   caller, 
+                                                                   ci_tracker_caller_get_uid (ci), 
+                                                                   ci_tracker_caller_get_pid (ci), 
+                                                                   interface, 
+                                                                   method,
+								   udi, 
+                                                                   ci_tracker_caller_get_ck_session_path (ci)));
 							raise_permission_denied (connection, message, "Not in active session");
 							return DBUS_HANDLER_RESULT_HANDLED;
 						}
 
-						if (!ci->in_active_session) {
+						if (!ci_tracker_caller_in_active_session (ci)) {
 							HAL_INFO (("Caller %s (uid %d, pid %d) for interface %s on "
 								   "add-on method %s for %s is not in an active "
 								   "session (%s); refusing service",
-								   caller, ci->uid, ci->pid, interface, method, 
-								   udi, ci->session_objpath));
+								   caller, 
+                                                                   ci_tracker_caller_get_uid (ci), 
+                                                                   ci_tracker_caller_get_pid (ci), 
+                                                                   interface, 
+                                                                   method, 
+								   udi, 
+                                                                   ci_tracker_caller_get_ck_session_path (ci)));
 							raise_permission_denied (connection, message, "Not in active session");
 							return DBUS_HANDLER_RESULT_HANDLED;
 						}
@@ -4450,7 +4242,7 @@ hald_dbus_filter_function (DBusConnection * connection,
 
 		/*HAL_INFO (("NameOwnerChanged name=%s old=%s new=%s", name, old_service_name, new_service_name));*/
 
-		ci_tracker_name_owner_changed (name, old_service_name, new_service_name);
+		ci_tracker_name_owner_changed (ci_tracker, name, old_service_name, new_service_name);
 
 		if (services_with_locks != NULL) {
 			d = g_hash_table_lookup (services_with_locks, new_service_name);
@@ -4483,7 +4275,7 @@ hald_dbus_filter_function (DBusConnection * connection,
 		session_objpath = dbus_message_get_path (message);
 
 		HAL_INFO (("active=%d for session %s", is_active, session_objpath));
-		ci_tracker_active_changed (session_objpath, is_active);
+		ci_tracker_active_changed (ci_tracker, session_objpath, is_active);
 #endif /* HAVE_CONKIT */
 	} else 
 		return hald_dbus_filter_handle_methods (connection, message, user_data, FALSE);
@@ -4913,7 +4705,9 @@ hald_dbus_init_preprobe (void)
 
 #endif /* HAVE_CONKIT */
 
-	ci_tracker_init ();
+	ci_tracker = ci_tracker_new ();
+	ci_tracker_set_system_bus_connection (ci_tracker, dbus_connection);
+	ci_tracker_init (ci_tracker);
 
 	ret = TRUE;
 
