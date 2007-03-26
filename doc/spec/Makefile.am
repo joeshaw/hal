@@ -4,10 +4,11 @@ FIGURE_FILES =				\
 	hal-devices1.png
 
 SPEC_XML_EXTRA_FILES =			\
-	hal-spec-interfaces.xml		\
 	hal-spec-introduction.xml	\
 	hal-spec-fdi-files.xml		\
-	hal-spec-properties.xml
+	hal-spec-properties.xml		\
+	hal-spec-locking.xml		\
+	hal-spec-interfaces.xml	
 
 if DOCBOOK_DOCS_ENABLED
 

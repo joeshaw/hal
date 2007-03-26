@@ -19,7 +19,11 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     supports. For brevity, the <literal>org.freedesktop.Hal</literal>
     prefix have been stripped from the exceptions listed in the
     following sections. Also note that other exceptions than the ones
-    listed may be thrown.
+    listed may be thrown; for example
+    the <literal>org.freedesktop.Hal.Device.InterfaceLocked</literal>
+    exception may be thrown regardless of how the interface is
+    implemented depending on if some other process is holding a lock
+    on the device cf. <xref linkend="locking"/>.
   </para>
 
   <sect1 id="interface-manager">
@@ -375,26 +379,37 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
           </row>
 
           <row>
-            <entry>AcquireMandatoryLock</entry>
+            <entry>AcquireInterfaceLock</entry>
             <entry></entry>
-            <entry>String lock_name</entry>
-            <entry>PermissionDenied, DeviceAlreadyLocked</entry>
+            <entry>String interface_name, Bool exclusive</entry>
+            <entry>PermissionDenied, Device.InterfaceAlreadyLocked</entry>
             <entry>
-              Acquires a named mandatory lock. The lock is recursive
-              (multiple callers may hold the lock). See TODO for how
-              mandatory locks work.
+              Acquires a lock on an interface for a specific
+              device. See <xref linkend="locking"/> for details.
             </entry>
           </row>
 
           <row>
-            <entry>ReleaseMandatoryLock</entry>
+            <entry>ReleaseInterfaceLock</entry>
             <entry></entry>
-            <entry>String lock_name</entry>
-            <entry>PermissionDenied, DeviceNotLocked</entry>
+            <entry>String interface_name</entry>
+            <entry>PermissionDenied, Device.InterfaceNotLocked</entry>
             <entry>
-              Releases a named mandatory lock. The lock is recursive
-              (multiple callers may hold the lock). See TODO for how
-              mandatory locks work.
+              Releases a lock on an interface for a specific device. See
+              <xref linkend="locking"/> for details.
+            </entry>
+          </row>
+
+          <row>
+            <entry>IsCallerLockedOut</entry>
+            <entry>Bool</entry>
+            <entry>String interface_name, String caller_unique_name</entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Determines whether a given process on the system message
+              bus is locked out from an interface on a specific
+              device. Only HAL helpers are privileged to use this
+              method. See <xref linkend="locking"/> for details.
             </entry>
           </row>
 
@@ -985,6 +1000,19 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
 
     <para>
       This interface does not emit any signals.
+    </para>
+
+    <para>
+      If a volume originates from a storage device (and all volumes
+      do), it also is checked whether the caller is locked out of the
+      <literal>org.freedesktop.Hal.Device.Storage</literal> interface
+      of the originating storage device. As a corollary, it is
+      sufficient to just either a) lock the storage device; or b)
+      globally lock
+      the <literal>org.freedesktop.Hal.Device.Storage</literal>
+      interface if one wants to lock out callers from mounting
+      volumes from either a specific drive or all drives.
+
     </para>
   </sect1>
 

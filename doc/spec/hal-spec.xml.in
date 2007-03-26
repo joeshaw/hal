@@ -12,7 +12,7 @@
         <surname>Zeuthen</surname>
         <affiliation>
           <address>
-            <email>david@fubar.dk</email>
+           <email>david@fubar.dk</email>
           </address>
         </affiliation>
       </author>
@@ -22,6 +22,7 @@
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-introduction.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-properties.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-fdi-files.xml" />
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-locking.xml" />
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hal-spec-interfaces.xml" />
   
 </book>

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="locking">
+  <title>Locking</title>
+
+  <para>
+    As HAL enables programs in a desktop session to automatically
+    enforce the policy of the users choice, unexpected things can
+    happen. For example, if the user is in the middle of partitioning
+    a disk drive, it is desirable to keep the desktop from mounting
+    partitions that have not yet been prepared with a suitable file
+    system. In fact, in such a situation data loss may be the result
+    if a volume have an old file system signature indicating it's
+    mountable and, simultenously, another tool is writing to the raw
+    block device. The mechanism that automounters use, HAL, provides
+    locking primitives to avoid this.
+  </para>
+
+  <para>
+    Further, for multi-user systems, several desktop sessions may run
+    on a system each on their own display. Suppose that one session
+    becomes idle and the power management daemon in that session
+    decides to suspend the suspend according to user preferences. Then
+    users at other seats will see the system suspend and this is not
+    desirable. The power management daemons need to cooperate to
+    ensure that the system only suspends when e.g. all sessions are
+    idle or not at all. The mechanism that each power management
+    daemon uses, HAL, provides locking primitives that can be used to
+    achieve this.
+  </para>
+
+  <sect1 id="locking-overview">
+    <title>Overview</title>
+    <para>
+      HAL provides a mechanism to lock a specific D-Bus interface
+      either for a specific device or for all the devices the caller
+      have access to. 
+    </para>
+    <para>
+      The former is achieved by using
+      the <literal>AcquireInterfaceLock()</literal>
+      and <literal>ReleaseInterfaceLock()</literal> methods on
+      the <literal>org.freedesktop.Hal.Device</literal> interface that
+      every device object implements (see
+      <xref linkend="interface-device"/>). By using this API, a caller
+      can prevent any other caller from invoking methods on the given
+      interface for the given device object - other callers will
+      simply see
+      the <literal>org.freedesktop.Hal.Device.InterfaceLocked</literal>
+      exception if they attempt to invoke a method on the given
+      interface on the given device. The locker can specify whether
+      the lock is <emphasis>exclusive</emphasis> meaning if multiple
+      clients clients can hold the lock or if only one client can hold
+      the lock at one time. If a client don't have access to a device,
+      attempts to lock will fail with
+      a <literal>org.freedesktop.Hal.PermissionDenied</literal>
+      exception. If another client already holds the lock exclusively,
+      attempts from other clients to acquire the lock will fail with
+      the <literal>org.freedesktop.Hal.Device.InterfaceAlreadyLocked</literal>
+      exception even if they have access to the device.
+    </para>
+    
+    <para>
+      In addition, a client may opt to lock all devices that he got
+      access to by using
+      the <literal>AcquireGlobalInterfaceLock()</literal>
+      and <literal>ReleaseGlobalInterfaceLock()</literal> methods on
+      the <literal>org.freedesktop.Hal.Manager</literal> interface on
+      the <literal>/org/freedesktop/Hal/Manager</literal> object (see
+      <xref linkend="interface-manager"/>). Global interface locks can
+      also be obtained exclusively if the caller so desires. Unlike
+      per-device interface locking, it is not checked at locking time
+      whether the locker have access to a given device; instead
+      checking is done when callers attempt to access the interface.
+    </para>
+
+    <para>
+      The algorithm used for determining if a caller is locked out is
+      shown below. A caller is locked out if:
+    </para>
+
+    <orderedlist>
+      <listitem> 
+	<para>
+          another caller is holding a lock on the interface on the
+          device (non-withstanding that the caller to check for holds
+          the lock himself).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Another caller is holding the global lock for the interface
+          and that other caller has access to the device in question.
+        </para>
+      </listitem>
+    </orderedlist>
+
+    <para>
+      In other words, a client Foo can grab a global lock, but that
+      doesn't mean Foo can lock other clients out of devices that Foo
+      doesn't have access to. Specifically a caller is not locked out
+      if he has locked an interface and he is the only one holding the
+      lock. However, if two clients have a lock on a device neither of
+      them can access the device.
+    </para>
+
+    <para>
+      Note that certain interfaces will also check whether other locks
+      are being held on other device objects. This is specified on a
+      per-interface basis in <xref linkend="interfaces"/>.
+    </para>
+
+    <para>
+      If a process holding locks disconnects from the system bus, the
+      locks being held by that process will be released.
+    </para>
+  </sect1>
+
+  <sect1 id="locking-guidelines">
+    <title>Guidelines</title>
+    <para>
+      Locking is only useful if applications requiring exclusive
+      access actually use the locking primitives to cooperate with
+      other applications. Here is a list of guidelines.
+    </para>
+
+    <itemizedlist>
+      <listitem><para>
+          <emphasis>Disk Management / Partitioning</emphasis>
+        </para>
+        <para>
+          In order to prevent HAL-based automounters from mounting
+          partitions that are being prepared, applications that access
+          block devices directly (and pokes the kernel to reload the
+          partitioning table) should lock out automounters by either
+          a) obtaining
+          the <literal>org.freedesktop.Hal.Device.Storage</literal> on
+          each drive being processed; or b) obtaintaing the global
+          <literal>org.freedesktop.Hal.Device.Storage</literal>
+          lock. This includes programs like fdisk, gparted, parted and
+          operating system installers. See also
+          <xref linkend="interface-device-volume"/>.
+        </para>
+      </listitem>
+
+      <listitem><para>
+          <emphasis>System-wide Power Management</emphasis>
+        </para>
+        <para>
+          (this guideline is not finalized!)
+        </para>
+      </listitem>
+      
+    </itemizedlist>
+
+  </sect1>
+
+</chapter>
+
