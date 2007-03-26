@@ -17,9 +17,9 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	    exit 1
 	fi
 	exit ${value}
-    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" ]; then
+    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x /usr/bin/dellWirelessCtl ]; then
 	# TODO: write our own binary that links with libsmbios?
-	dellWirelessCtl --st_bt
+	/usr/bin/dellWirelessCtl --st_bt
 	value=$?
 	if [ "$value" = "0" ]; then
 	    exit 1
@@ -35,9 +35,9 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x /usr/bin/dellWirelessCtl ]; then
 	# TODO: write our own binary that links with libsmbios?
-	dellWirelessCtl --st_wlan
+	/usr/bin/dellWirelessCtl --st_wlan
 	value=$?
 	if [ "$value" = "0" ]; then
 	    exit 1
