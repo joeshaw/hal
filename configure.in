@@ -755,7 +755,7 @@ elif test "x$with_dell_backlight" = "x" ; then
     case "${HALD_BACKEND}" in
       linux)
         case "${host}" in
-	  i[[3456]]86-*-*)
+	  i*86-*-*|x86_64-*-*)
             BUILD_DELL=yes
 	    ;;
 	  *)
@@ -768,30 +768,6 @@ elif test "x$with_dell_backlight" = "x" ; then
    fi
 fi
 AM_CONDITIONAL(BUILD_DELL, test x$BUILD_DELL = xyes)
-
-dnl Dell RF KILL
-AC_ARG_WITH(dell-rfkill,        [  --with-dell-rfkill      Whether to build Dell RF-kill support (auto)])
-BUILD_DELL_RFKILL=no
-if test "x$with_dell_rfkill" = "xyes" ; then
-   BUILD_DELL=yes
-elif test "x$with_dell_rfkill" = "x" ; then
-  if test "$USE_SMBIOS" = "yes" ; then
-    case "${HALD_BACKEND}" in
-      linux)
-        case "${host}" in
-	  i[[3456]]86-*-*)
-            BUILD_DELL_RFKILL=yes
-	    ;;
-	  *)
-	    ;;
-	esac
-        ;;
-      *)
-        ;;
-    esac
-   fi
-fi
-AM_CONDITIONAL(BUILD_DELL_RFKILL, test x$BUILD_DELL_RFKILL = xyes)
 
 dnl Sony PIC support
 AC_ARG_ENABLE(sonypic,
@@ -929,7 +905,6 @@ echo "
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
 	USB wireless mouse power:   ${BUILD_USBCSR} (Linux only, requires libusb)
 	Dell Backlight:             ${BUILD_DELL} (Linux only, requires libsmbios >= 0.13.4)
-	Dell RF Kill:               ${BUILD_DELL_RFKILL} (Linux only, requires libsmbios >= 0.13.4)
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
