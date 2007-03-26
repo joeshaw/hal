@@ -1,7 +1,7 @@
 
 EXTRA_DIST = TODO
 
-SUBDIRS = api spec conf
+SUBDIRS = api spec
 
 MAINTAINERCLEANFILES =		\
 	*~			\

@@ -881,7 +881,6 @@ doc/api/libhal/Makefile
 doc/api/libhal/version.xml
 doc/api/libhal-storage/Makefile
 doc/api/libhal-storage/version.xml
-doc/conf/Makefile
 doc/spec/Makefile
 doc/spec/hal-spec.xml
 po/Makefile.in
