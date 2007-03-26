@@ -315,7 +315,7 @@ AC_LANG_PUSH([C++])
 AC_CHECK_LIB(smbios, SMBIOSFreeMemory, LIB_SMBIOS=yes , LIB_SMBIOS=no )
 AC_LANG_POP([C++])
 if test "$LIB_SMBIOS" = "yes" ; then
-   AC_MSG_CHECKING(for libsmbios >= 0.11.6 )
+   AC_MSG_CHECKING(for libsmbios >= 0.13.4 )
    AC_TRY_RUN(
    #include <smbios/version.h>
    int main ()
