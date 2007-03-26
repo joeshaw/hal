@@ -35,13 +35,13 @@ endif
 if BUILD_MACBOOKPRO
 libexec_PROGRAMS += hald-addon-macbookpro-backlight
 hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../logger.c
-hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
+hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci -lz @GLIB_LIBS@
 endif
 
 if BUILD_MACBOOK
 libexec_PROGRAMS += hald-addon-macbook-backlight
 hald_addon_macbook_backlight_SOURCES = addon-macbook-backlight.c ../../logger.c ../../util_helper.c
-hald_addon_macbook_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci @GLIB_LIBS@
+hald_addon_macbook_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci -lz @GLIB_LIBS@
 endif
 
 if BUILD_CPUFREQ
