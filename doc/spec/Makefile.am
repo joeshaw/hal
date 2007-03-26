@@ -32,7 +32,6 @@ EXTRA_DIST =				\
 	config.xsl			\
 	docbook.css			\
 	$(SPEC_XML_EXTRA_FILES)		\
-	example-manager.py		\
 	hal-arch.dia			\
 	hal-linux26.dia			\
 	$(FIGURE_FILES)
