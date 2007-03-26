@@ -3323,6 +3323,7 @@ static DevHandler dev_handler_pseudo = {
 
 static DevHandler *dev_handlers[] = {
 	&dev_handler_pci,
+	&dev_handler_usbclass,
 	&dev_handler_usb,
 	&dev_handler_ide,
 	&dev_handler_pnp,
@@ -3342,7 +3343,6 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_net,
 	&dev_handler_scsi_generic,
 	&dev_handler_scsi_host,
-	&dev_handler_usbclass,
 	&dev_handler_usbraw,
 	&dev_handler_video4linux,
 	&dev_handler_dvb,
@@ -3523,15 +3523,14 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 			HalDevice *d;
 
 			if (strcmp (subsystem, "scsi") == 0)
-				if (missing_scsi_host(sysfs_path, (HotplugEvent *)end_token, HOTPLUG_ACTION_ADD))
+				if (missing_scsi_host (sysfs_path, (HotplugEvent *)end_token, HOTPLUG_ACTION_ADD))
 					goto out;
 
 			/* attempt to add the device */
 			d = handler->add (sysfs_path, device_file, parent_dev, parent_path);
 			if (d == NULL) {
-				/* didn't find anything - thus, ignore this hotplug event */
-				hotplug_event_end (end_token);
-				goto out;
+				/* didn't match - there may be a later handler for the device though */
+				continue;
 			}
 
 			hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_DEVICE);
