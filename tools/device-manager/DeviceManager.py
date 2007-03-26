@@ -29,8 +29,12 @@ class DeviceManager(LibGladeApplication):
 
     def on_about_activate(self, w):
         """Show the about dialog."""
-        gnome.ui.About(Const.NAME_LONG, Const.VERSION, Const.COPYRIGHT,
-                       Const.INFO, Const.AUTHORS).show()
+    	try:
+            self.about.destroy()
+        finally:
+            self.about = gnome.ui.About(Const.NAME_LONG, Const.VERSION, Const.COPYRIGHT,
+                                        Const.INFO, Const.AUTHORS).show()
+            self.about.show()
 
     def on_virtual_devices_activate(self, obj):
         self.dont_show_virtual = 1 - self.dont_show_virtual
