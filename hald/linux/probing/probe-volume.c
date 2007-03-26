@@ -613,7 +613,16 @@ main (int argc, char *argv[])
 			int vid_ret;
 			HAL_INFO (("invoking volume_id_probe_all, offset=%d, size=%d", vol_probe_offset, vol_size));
 			vid_ret = volume_id_probe_all (vid, vol_probe_offset , vol_size);
-			HAL_INFO (("volume_id_probe_all returned %d"));
+			HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
+
+			if (vid_ret != 0 && is_disc && vol_probe_offset != 0) {
+				/* Some cd-rom drives report the offset of the session in the cd's TOC
+				 * wrong.  Fallback to probing at offset 0, just to be sure */
+				HAL_INFO (("invoking volume_id_probe_all, offset=0, size=%d", vol_size));
+				vid_ret = volume_id_probe_all (vid, 0 , vol_size);
+				HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
+			}
+
 			if (vid_ret == 0) {
 				set_volume_id_values(ctx, udi, cs, vid);
 				if (disc_may_have_data) {
