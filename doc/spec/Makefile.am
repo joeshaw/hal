@@ -33,5 +33,4 @@ EXTRA_DIST =				\
 	docbook.css			\
 	$(SPEC_XML_EXTRA_FILES)		\
 	hal-arch.dia			\
-	hal-linux26.dia			\
 	$(FIGURE_FILES)
