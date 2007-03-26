@@ -21,13 +21,13 @@
     Further, for multi-user systems, several desktop sessions may run
     on a system each on their own display. Suppose that one session
     becomes idle and the power management daemon in that session
-    decides to suspend the suspend according to user preferences. Then
-    users at other seats will see the system suspend and this is not
-    desirable. The power management daemons need to cooperate to
-    ensure that the system only suspends when e.g. all sessions are
-    idle or not at all. The mechanism that each power management
-    daemon uses, HAL, provides locking primitives that can be used to
-    achieve this.
+    decides to suspend the system according to user preferences in the
+    idle session. The result is that users at other seats will see the
+    system suspend and this is not desirable. The power management
+    daemons in all sessions need to cooperate to ensure that the
+    system only suspends when e.g. all sessions are idle or not at
+    all. The mechanism that each power management daemon uses, HAL,
+    provides locking primitives that can be used to achieve this.
   </para>
 
   <sect1 id="locking-overview">
