@@ -250,7 +250,7 @@
         </listitem>
         <listitem>
           <para>
-            <literal>/etc/hal/fdi</literal> - for files provided by the system administrator
+            <literal>/etc/hal/fdi</literal> - for files provided by the system administrator / user
           </para>
         </listitem>
       </itemizedlist>
@@ -299,7 +299,7 @@
         </listitem>
         <listitem>
           <para>
-            <literal>preprobe</literal> - device information files to information before probe devices
+            <literal>preprobe</literal> - device information files read before probing devices
             <itemizedlist>
               <listitem>
                 <para>
@@ -315,8 +315,113 @@
           </para>
         </listitem>
       </itemizedlist>
+
+      As evident, third party packages should drop device information files in
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            <literal>/usr/share/hal/fdi/information/20thirdparty</literal>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>/usr/share/hal/fdi/policy/20thirdparty</literal>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>/usr/share/hal/fdi/preprobe/20thirdparty</literal>
+          </para>
+        </listitem>
+      </itemizedlist>
+
+    </para>
+    <para>
+      The <literal>/etc/hal/fdi</literal> tree uses this layout
       
-      All device information files are matched for every hal device object.
+      <itemizedlist>
+        <listitem>
+          <para>
+            <literal>information</literal> - device information files used to merge device information
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>policy</literal> - device information files to merge policy properties such as addons or callouts.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>preprobe</literal> - device information files to read before probing devices
+          </para>
+        </listitem>
+      </itemizedlist>
+      
+      All device information files are matched for every hal device
+      object in the following order.
+
+    <orderedlist>
+      <listitem> 
+	<para>
+          When a device is discovered, the <literal>preprobe</literal>
+          device information files (e.g. all files
+          from <literal>/usr/share/hal/fdi/preprobe</literal>
+          and <literal>/etc/hal/fdi/preprobe</literal>) are
+          processed.
+        </para>
+        <para> 
+          Typically, this class of device information files is used to
+          tell HAL to leave the device alone by setting the bool
+          property <literal>info.ignore</literal> to TRUE. It can also
+          be used to run programs, preprobe callouts, prior to normal
+          device investigation.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          HAL now runs the preprobe callouts.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          HAL now probes/investigates the device.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          All the <literal>information</literal> device information
+          files (e.g. all files
+          from <literal>/usr/share/hal/fdi/information</literal>
+          and <literal>/etc/hal/fdi/information</literal>) are
+          processed.
+        </para>
+        <para>
+          These device information files are typically used to
+          associate extra information with a device object.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          All the <literal>policy</literal> policy information
+          files (e.g. all files
+          from <literal>/usr/share/hal/fdi/policy</literal>
+          and <literal>/etc/hal/fdi/policy</literal>) are
+          processed.
+        </para>
+        <para>
+          These device information files are typically used to
+          associate callouts and addons with a device object.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          HAL now runs the callouts, starts addons, and then finally
+          announces the device on the system message bus.
+        </para>
+      </listitem>
+    </orderedlist>
+
     </para>
   </sect1>
 </chapter>
