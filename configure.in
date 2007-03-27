@@ -167,7 +167,7 @@ if test "x$use_parted" = "xyes" ; then
    AC_DEFINE(USE_PARTED,1,[Whether libparted is to be used])
    AC_CHECK_LIB(uuid, uuid_generate, [], AC_MSG_ERROR([*** uuid library (libuuid) not found]))
    AC_CHECK_LIB(dl, dlopen,          [], AC_MSG_ERROR([*** dl library (libdl) not found]))
-   AC_MSG_CHECKING(for libparted == 1.7.1, 1.8.0, 1.8.1, 1.8.2)
+   AC_MSG_CHECKING(for libparted == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.8.6)
    LDFLAGS=-lparted
    AC_TRY_RUN(
    #include <stdio.h>
@@ -184,7 +184,8 @@ if test "x$use_parted" = "xyes" ; then
 	if ((major == 1 && minor == 7 && micro == 1) ||
 	    (major == 1 && minor == 8 && micro == 0) ||
 	    (major == 1 && minor == 8 && micro == 1) ||
-	    (major == 1 && minor == 8 && micro == 2))
+	    (major == 1 && minor == 8 && micro == 2) ||
+	    (major == 1 && minor == 8 && micro == 6))
 	   return 0;
 
 	return 1;
