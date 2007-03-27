@@ -282,7 +282,7 @@ get_unit_info (int fd)
 	}
 	
 	fds[0].fd = fd;
-	fds[1].events = POLLIN;
+	fds[0].events = POLLIN;
 	
 	while (TRUE) {
 		if (poll (fds, 1, AVC_TIMEOUT) < 0) {
