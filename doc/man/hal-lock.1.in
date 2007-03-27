@@ -58,14 +58,13 @@ not be run.
 .SH NOTES
 .PP
 This program is only useful for launching software that doesn't use
-HAL to lock devices; for example a partition table editor
+HAL at all (since such software launched using 
+.I hal-lock 
+would be locked out itself); for example a partition table editor
 .I part-foo
-may used this wrapper script
+may use wrapper script like this
 
-For scripts, this tool can be used as follows
-
-.I /bin/bash
-.I hal-lock --interface org.freedesktop.Hal.Storage --exclusive --run /usr/lib/part-foo/real-part-foo-binary
+.I hal-lock --interface org.freedesktop.Hal.Storage --exclusive --run /path/to/part-foo-program
 
 .SH BUGS
 .PP
