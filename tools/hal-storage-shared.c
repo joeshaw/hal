@@ -510,8 +510,6 @@ line_found:
 	g_free (mount_point_to_unmount);
 }
 
-#define EJECT "/usr/bin/eject"
-
 void
 handle_eject (LibHalContext *hal_ctx, 
 #ifdef HAVE_POLKIT
@@ -583,9 +581,9 @@ try_open_excl_again:
 
         bailout_if_drive_is_locked (hal_ctx, drive, invoked_by_syscon_name);
 
-	/* construct arguments to EJECT (e.g. /usr/bin/eject) */
+	/* construct arguments to EJECT_PROGRAM (e.g. /usr/bin/eject) */
 	na = 0;
-	args[na++] = EJECT;
+	args[na++] = EJECT_PROGRAM;
 	if (closetray) {
 		args[na++] = "-t";
 	}
@@ -607,13 +605,13 @@ try_open_excl_again:
 			   &serr,
 			   &exit_status,
 			   &err)) {
-		printf ("Cannot execute %s\n", EJECT);
-		unknown_error ("Cannot spawn " EJECT);
+		printf ("Cannot execute %s\n", EJECT_PROGRAM);
+		unknown_error ("Cannot spawn " EJECT_PROGRAM);
 	}
 
 	/* check if eject was succesful */
 	if (exit_status != 0) {
-		printf ("%s error %d, stdout='%s', stderr='%s'\n", EJECT, exit_status, sout, serr);
+		printf ("%s error %d, stdout='%s', stderr='%s'\n", EJECT_PROGRAM, exit_status, sout, serr);
 
 		unknown_error (serr);
 	}
