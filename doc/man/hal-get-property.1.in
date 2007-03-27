@@ -1,0 +1,72 @@
+.\" 
+.\" hal-get-property manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH HAL-GET-PROPERTY 1
+.SH NAME
+hal-get-property \- get a property from a device object
+.SH SYNOPSIS
+.PP
+.B hal-get-property
+[options]
+
+.SH DESCRIPTION
+
+\fIhal-get-property\fP retrieves a property from a device object in
+the
+.B HAL 
+device database. For
+more information about both the big picture and specific
+.B HAL
+properties, refer to the \fIHAL spec\fP which can be found in
+.I "/usr/share/doc/hal-0.5.9/spec/hal-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "--udi"
+The UDI (\fIUnique Device Identifier\fP) of the device object.
+.TP
+.I "--key"
+The name of the property.
+.TP
+.I "--hex"
+Show int32/uint64 values in hex (without a leading 0x).
+.TP
+.I "--verbose"
+Verbose output.
+.TP
+.I "--help"
+Print out usage.
+.TP
+.I "--version"
+Print the version.
+
+.SH RETURN VALUE
+.PP
+If both the property and device object exists the value of the
+property is printed on
+.I stdout
+and the program will exit with exit code 0. Otherwise the exit code
+will be non-zero.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIhald\fR\|(1), 
+\&\fIlshal\fR\|(1), 
+\&\fIhal-set-property\fR\|(1),
+\&\fIhal-find-by-property\fR\|(1),
+\&\fIhal-find-by-capability\fR\|(1)
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+

@@ -1,0 +1,104 @@
+.\" 
+.\" hald manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH HALD 1
+.SH NAME
+hald \- HAL daemon
+.SH SYNOPSIS
+.PP
+.B hald
+[options]
+
+.SH DESCRIPTION
+
+\fIhald\fP is a daemon that maintains a database of the devices
+connected to the system system in real-time. The daemon connects to
+the \fID-Bus\fP system message bus to provide an API that applications
+can use to discover, monitor and invoke operations on devices. For
+more information about both the big picture and specific API details,
+refer to the \fIHAL spec\fP which can be found in
+.I "/usr/share/doc/hal-@VERSION@/spec/hal-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "--daemon=yes|no"
+Specify whether to run in the foreground or the background.
+.TP
+.I "--verbose=yes|no"
+Enable verbose debug output.
+.TP
+.I "--help"
+Print out usage.
+.TP
+.I "--version"
+Print the version of the daemon and exit.
+
+.SH BUGS AND DEBUGGING
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+First, to obtain useful debug traces you will need to have
+.B debuginfo
+packages installed. On a Fedora system this is in the 
+.B hal-debuginfo 
+package and can be installed via the
+.I yum
+update program. 
+
+Second, shut down the existing 
+.B hald
+daemon instance; on a Fedora system this is achieved by
+
+.I "/etc/init.d/haldaemon stop"
+
+After having shut down the daemon, you might want to run
+
+.I "pkill hald"
+
+to ensure that all the helper processe of
+.B hald
+are killed too. To start the HAL daemon, use
+
+.I "/usr/sbin/hald --daemon=no --verbose=yes"
+
+If the daemon crashes, you can start it under a debugger via
+
+.I "gdb /usr/sbin/hald"
+
+and then typing
+
+.I "run --daemon=no --verbose=yes"
+
+at the 
+.B "(gdb)"
+prompt. To capture a back trace, use the
+.B "bt"
+command and attach this to the bug report.
+
+Please also attach the output of \&\fIlshal\fR\|(1) in the bug report
+if possible (it's not possible if the
+.B "hald"
+daemon crashed). If the nature of the bug has to do with hotplugging,
+attach two outputs of \&\fIlshal\fR\|(1) - one before the device
+hotplug event and one after.
+
+.SH SEE ALSO
+.PP
+\&\fIudev\fR\|(7), 
+\&\fIdbus-daemon\fR\|(1), 
+\&\fIlshal\fR\|(1), 
+\&\fIhal-set-property\fR\|(1),
+\&\fIhal-get-property\fR\|(1),
+\&\fIhal-find-by-property\fR\|(1),
+\&\fIhal-find-by-capability\fR\|(1)
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+

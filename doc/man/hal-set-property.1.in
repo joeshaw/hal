@@ -1,0 +1,106 @@
+.\" 
+.\" hal-set-property manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH HAL-SET-PROPERTY 1
+.SH NAME
+hal-set-property \- set a property on a device object
+.SH SYNOPSIS
+.PP
+.B hal-set-property
+[options]
+
+.SH DESCRIPTION
+
+\fIhal-set-property\fP sets a property on a device object in
+the
+.B HAL 
+device database. For
+more information about both the big picture and specific
+.B HAL
+properties, refer to the \fIHAL spec\fP which can be found in
+.I "/usr/share/doc/hal-0.5.9/spec/hal-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "--udi"
+The UDI (\fIUnique Device Identifier\fP) of the device object.
+.TP
+.I "--key"
+The name of the property.
+.TP
+.I "--int"
+Set value property of the property to a 32-bit signed integer. The
+value passed is assumed to be decimal unless it's prefixed with
+.B 0x
+or
+.B x
+for hexadecimal values.
+.TP
+.I "--uint64"
+Set value property of the property to a 64-bit unsigned integer. The
+value passed is assumed to be decimal unless it's prefixed with
+.B 0x
+or
+.B x
+for hexadecimal values.
+.TP
+.I "--string"
+Set value property of the property to a string.
+.TP
+.I "--double"
+Set value property of the property to a floating point number.
+.TP
+.I "--bool"
+Set value property of the property to boolean, e.g. 
+.B true 
+or 
+.B false.
+.TP
+.I "--strlist-pre"
+Prepend an item to a string list.
+.TP
+.I "--strlist-post"
+Append an item to a string list.
+.TP
+.I "--strlist-rem"
+Remove an item from a string list.
+.TP
+.I "--remove"
+Remove a property.
+.TP
+.I "--help"
+Print out usage.
+.TP
+.I "--version"
+Print the version.
+
+.SH RETURN VALUE
+.PP
+If setting the property succeeds, this program will exit with exit
+code 0. On errors a non-zero the program will exit with a non-zero
+exit code. Note that setting properties on the
+.B HAL
+device database usually requires super user privileges.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIhald\fR\|(1), 
+\&\fIlshal\fR\|(1), 
+\&\fIhal-get-property\fR\|(1),
+\&\fIhal-find-by-property\fR\|(1),
+\&\fIhal-find-by-capability\fR\|(1)
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+

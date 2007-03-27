@@ -1,0 +1,61 @@
+.\" 
+.\" lshal manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH LSHAL 1
+.SH NAME
+lshal \- list HAL devices
+.SH SYNOPSIS
+.PP
+.B lshal
+[options]
+
+.SH DESCRIPTION
+
+\fIlshal\fP is a utility for displaying items in the
+.B HAL 
+device database. For
+more information about both the big picture and specific
+.B HAL
+properties, refer to the \fIHAL spec\fP which can be found in
+.I "/usr/share/doc/hal-@VERSION@/spec/hal-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "-m, --monitor"
+Print changes emitted by the
+.B hald
+daemon.
+.TP
+.I "-s, --short"
+Short output.
+.TP
+.I "-t, --tree"
+Display the devices organized in a tree.
+.TP
+.I "-u, --show"
+Show only the given UDI (\fIUnique Device Identifier\fP).
+.TP
+.I "-h, --help"
+Print out usage.
+.TP
+.I "-V, --version"
+Print the version.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIhald\fR\|(1), \&\fIudev\fR\|(7), \&\fIdbus-daemon\fR\|(1)
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+
