@@ -1637,6 +1637,10 @@ hal_device_acquire_lock (HalDevice *device, const char *lock_name, gboolean excl
 	hal_device_property_set_bool (device, buf, exclusive);
 
 	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.dbus_name", lock_name);
+        if (exclusive && hal_device_has_property (device, buf)) {
+                /* cannot obtain exclusive lock */
+                goto out;
+        }
 	if (hal_device_property_strlist_contains (device, buf, sender)) {
                 /* already locked */
                 goto out;
