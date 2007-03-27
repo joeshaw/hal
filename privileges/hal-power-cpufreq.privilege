@@ -3,9 +3,9 @@
 # via the org.freedesktop.Hal.Device.CPUFreq interface
 
 [Privilege]
-RequiredPrivileges=desktop-console
-SufficientPrivileges=
-Allow=uid:__all__
+RequiredPrivileges=
+SufficientPrivileges=desktop-console
+Allow=uid:root
 Deny=
 CanObtain=True
 CanGrant=True

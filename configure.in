@@ -167,7 +167,7 @@ if test "x$use_parted" = "xyes" ; then
    AC_DEFINE(USE_PARTED,1,[Whether libparted is to be used])
    AC_CHECK_LIB(uuid, uuid_generate, [], AC_MSG_ERROR([*** uuid library (libuuid) not found]))
    AC_CHECK_LIB(dl, dlopen,          [], AC_MSG_ERROR([*** dl library (libdl) not found]))
-   AC_MSG_CHECKING(for libparted == 1.7.1, 1.8.0, 1.8.1, 1.8.2)
+   AC_MSG_CHECKING([for libparted == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.8.6])
    LDFLAGS=-lparted
    AC_TRY_RUN(
    #include <stdio.h>
@@ -184,12 +184,13 @@ if test "x$use_parted" = "xyes" ; then
 	if ((major == 1 && minor == 7 && micro == 1) ||
 	    (major == 1 && minor == 8 && micro == 0) ||
 	    (major == 1 && minor == 8 && micro == 1) ||
-	    (major == 1 && minor == 8 && micro == 2))
+	    (major == 1 && minor == 8 && micro == 2) ||
+	    (major == 1 && minor == 8 && micro == 6))
 	   return 0;
 
 	return 1;
     }
-	,AC_MSG_RESULT( ),AC_MSG_ERROR(*** Requires libparted == 1.7.1) )
+	,AC_MSG_RESULT( ),AC_MSG_ERROR([*** Requires libparted == 1.7.1/1.8.0/1.8.1/1.8.2 or 1.8.6]) )
     PARTED_LIBS=-lparted
     AC_SUBST(PARTED_LIBS)
     LDFLAGS=
@@ -318,7 +319,7 @@ AC_LANG_PUSH([C++])
 AC_CHECK_LIB(smbios, SMBIOSFreeMemory, LIB_SMBIOS=yes , LIB_SMBIOS=no )
 AC_LANG_POP([C++])
 if test "$LIB_SMBIOS" = "yes" ; then
-   AC_MSG_CHECKING(for libsmbios >= 0.13.4 )
+   AC_MSG_CHECKING([for libsmbios >= 0.13.4])
    AC_TRY_RUN(
    #include <smbios/version.h>
    int main ()
@@ -491,7 +492,7 @@ esac
 AC_CHECK_TYPE(pgoff_t, ,
               [AC_DEFINE(pgoff_t, unsigned long, [Index into the pagecache])],
                /usr/include/sys/types.h)
-AC_MSG_CHECKING(for BLKGETSIZE64)
+AC_MSG_CHECKING([for BLKGETSIZE64])
 AC_TRY_COMPILE(
 [#include <sys/types.h>
 #include <linux/ioctl.h>
@@ -792,7 +793,7 @@ if test x$ENABLE_SONYPIC != "xno" ; then
 	],
 	have_sonypic=yes
 	)
-	AC_MSG_CHECKING(for Sony PIC headers)
+	AC_MSG_CHECKING([for Sony PIC headers])
 	AC_MSG_RESULT([$have_sonypic])
 
 	if test "x$ENABLE_SONYPIC" = "xyes" && test "x$have_sonypic" != "xyes" ; then
