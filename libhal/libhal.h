@@ -607,6 +607,7 @@ dbus_bool_t libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, D
 dbus_bool_t libhal_device_acquire_interface_lock (LibHalContext *ctx,
                                                   const char *udi,
                                                   const char *interface,
+                                                  dbus_bool_t exclusive,
                                                   DBusError *error);
 
 /* Release a mandatory lock on an interface on a device. */
@@ -618,6 +619,7 @@ dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
 /* Take a mandatory lock on an interface (the lock affects all devices the caller have access to). */
 dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
                                                   const char *interface,
+                                                  dbus_bool_t exclusive,
                                                   DBusError *error);
 
 /* Release a mandatory lock on an interface (affects all devices the caller have access to). */

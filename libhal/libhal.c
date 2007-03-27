@@ -4134,6 +4134,7 @@ dbus_bool_t
 libhal_device_acquire_interface_lock (LibHalContext *ctx,
                                       const char *udi,
                                       const char *interface,
+                                      dbus_bool_t exclusive,
                                       DBusError *error)
 {
 	DBusMessage *message;
@@ -4158,6 +4159,7 @@ libhal_device_acquire_interface_lock (LibHalContext *ctx,
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &exclusive);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -4225,6 +4227,7 @@ dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
 
 dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
                                                   const char *interface,
+                                                  dbus_bool_t exclusive,
                                                   DBusError *error)
 {
 	DBusMessage *message;
@@ -4236,7 +4239,7 @@ dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.Device",
+						"org.freedesktop.Hal.Manager",
 						"AcquireGlobalInterfaceLock");
 
 	if (message == NULL) {
@@ -4248,6 +4251,7 @@ dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &exclusive);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
@@ -4280,7 +4284,7 @@ dbus_bool_t libhal_release_global_interface_lock (LibHalContext *ctx,
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.Device",
+						"org.freedesktop.Hal.Manager",
 						"ReleaseGlobalInterfaceLock");
 
 	if (message == NULL) {
