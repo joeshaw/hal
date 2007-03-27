@@ -926,8 +926,8 @@ echo "
 
 
 if test x$enable_umount_hal = xyes; then
-   echo "NOTE: Without a patched umount(8) this will have no effect. See "
-   echo "      https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=188193 "
+   echo "NOTE: Without a patched umount(8) --enable-umount-helper have no effect."
+   echo "      See https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=188193"
    echo "      for a suitable patch for util-linux. "
    echo
 fi
