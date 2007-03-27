@@ -2159,7 +2159,7 @@ device_release_global_interface_lock (DBusConnection *connection, DBusMessage *m
 	}
 
         lock_name = g_strdup_printf ("Global.%s", interface_name);
-        if (!hal_device_release_lock (d, interface_name, sender)) {
+        if (!hal_device_release_lock (d, lock_name, sender)) {
 		raise_interface_not_locked (connection, message, interface_name);
                 g_free (lock_name);
 		return DBUS_HANDLER_RESULT_HANDLED;
