@@ -209,6 +209,7 @@ static const char * const unit_names[] = {
 
 enum {
 	AVC_OPCODE_UNIT_INFO = 0x30,
+	AVC_OPCODE_SUBUNIT_INFO = 0x31,
 };
 
 enum {
@@ -244,6 +245,7 @@ handle_request (int fd, struct fw_cdev_event_request *request)
 	} *response;
 	unsigned int unit_type;
 	char capname[256];
+	int i;
 
 	if (request->tcode != TCODE_WRITE_BLOCK_REQUEST ||
 	    request->offset != CSR_FCP_RESPONSE) {
@@ -262,20 +264,27 @@ handle_request (int fd, struct fw_cdev_event_request *request)
 
 	if (response->frame.ctype == AVC_RESPONSE_INTERIM) {
 		HAL_ERROR (("got interim"));
-		/* Returning -1 here will make get_unit_info() go back into
+		/* Returning -1 here will make get_subunit_info() go back into
 		 * poll() and wait for up to 200ms. */
 		return -1;
 	}
 	
-	unit_type = response->operands[0] >> 3;
-	if (unit_type > ARRAY_LENGTH(unit_names) || unit_names[unit_type] == NULL) {
-		HAL_ERROR (("unknown unit type"));
-		return -1;
+	for (i = 0; i < 4; i++) {
+		if (response->operands[i] == 0xff)
+			break;
+
+		unit_type = response->operands[i] >> 3;
+		if (unit_type > ARRAY_LENGTH(unit_names) ||
+		    unit_names[unit_type] == NULL) {
+			HAL_ERROR (("unknown unit type"));
+			return -1;
+		}
+
+		snprintf (capname, sizeof (capname),
+			  "ieee1394_unit.avc.%s", unit_names[unit_type]);
+		libhal_device_add_capability (ctx, udi, capname, NULL);
 	}
 
-	snprintf (capname, sizeof (capname), "ieee1394_unit.avc.%s", unit_names[unit_type]);
-	libhal_device_add_capability (ctx, udi, capname, NULL);
-	
 	return 0;
 }
 
@@ -283,7 +292,7 @@ handle_request (int fd, struct fw_cdev_event_request *request)
 #define AVC_TIMEOUT 200
 
 static int
-get_unit_info (int fd, int generation)
+get_subunit_info (int fd, int generation)
 {
 	struct {
 		struct avc_frame frame;
@@ -307,7 +316,7 @@ get_unit_info (int fd, int generation)
 	payload.frame.ctype = AVC_COMMAND_STATUS;
 	payload.frame.subunit_type = AVC_SUBUNIT_UNIT;
 	payload.frame.subunit_id = AVC_SUBUNIT_ID_UNIT;
-	payload.frame.opcode = AVC_OPCODE_UNIT_INFO;
+	payload.frame.opcode = AVC_OPCODE_SUBUNIT_INFO;
 	payload.frame.operand0 = 0xff;
 	payload.operands[0] = 0xff;
 	payload.operands[1] = 0xff;
@@ -426,7 +435,7 @@ int main (int argc, char *argv[])
 
 	/* Retry the command three times. */
 	for (i = 0; i < 3; i++) {
-		if (get_unit_info(fd, bus_reset.generation) == 0)
+		if (get_subunit_info(fd, bus_reset.generation) == 0)
 			break;
 		poll (NULL, 0, 500); /* take a 500ms nap */
 	}
