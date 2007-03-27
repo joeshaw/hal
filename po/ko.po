@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hal 0.5.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-08-23 12:58+0900\n"
+"POT-Creation-Date: 2007-03-19 22:51-0400\n"
 "PO-Revision-Date: 2005-08-23 13:58+0900\n"
 "Last-Translator: Young-Ho Cha <ganadist at gmail dot com>\n"
 "Language-Team: GNOME Korea <gnome-kr-hackers@lists.kldp.net>\n"
@@ -15,133 +15,182 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../libhal-storage/libhal-storage.c:296
+#: ../libhal-storage/libhal-storage.c:301
 #, c-format
 msgid "External %s%s Drive"
 msgstr "외장 %s%s 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:299
+#: ../libhal-storage/libhal-storage.c:304
 #, c-format
 msgid "%s%s Drive"
 msgstr "%s%s 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:308
+#: ../libhal-storage/libhal-storage.c:313
 msgid "External Floppy Drive"
 msgstr "외장 플로피 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:310
+#: ../libhal-storage/libhal-storage.c:315
 msgid "Floppy Drive"
 msgstr "플로피 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:317
+#: ../libhal-storage/libhal-storage.c:322
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "%s 외장 하드 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:320
+#: ../libhal-storage/libhal-storage.c:325
 #, c-format
 msgid "%s Hard Drive"
 msgstr "%s 하드 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:325
+#: ../libhal-storage/libhal-storage.c:330
 msgid "External Hard Drive"
 msgstr "외장 하드 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:327
+#: ../libhal-storage/libhal-storage.c:332
 msgid "Hard Drive"
 msgstr "하드 드라이브"
 
-#: ../libhal-storage/libhal-storage.c:336
+#: ../libhal-storage/libhal-storage.c:341
 msgid "Drive"
 msgstr "드라이브"
 
-#: ../libhal-storage/libhal-storage.c:385
+#: ../libhal-storage/libhal-storage.c:390
 msgid "CD-ROM "
 msgstr "CD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:390
+#: ../libhal-storage/libhal-storage.c:395
 msgid "Blank CD-R"
 msgstr "빈 CD-R"
 
-#: ../libhal-storage/libhal-storage.c:392
+#: ../libhal-storage/libhal-storage.c:397
 msgid "CD-R"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:397
+#: ../libhal-storage/libhal-storage.c:402
 msgid "Blank CD-RW"
 msgstr "빈 CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:399
+#: ../libhal-storage/libhal-storage.c:404
 msgid "CD-RW"
 msgstr "CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:403
+#: ../libhal-storage/libhal-storage.c:408
 msgid "DVD-ROM"
 msgstr "DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:408
+#: ../libhal-storage/libhal-storage.c:413
 msgid "Blank DVD-RAM"
 msgstr "빈 DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:410
+#: ../libhal-storage/libhal-storage.c:415
 msgid "DVD-RAM"
 msgstr "DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:415
+#: ../libhal-storage/libhal-storage.c:420
 msgid "Blank DVD-R"
 msgstr "빈 DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:417
+#: ../libhal-storage/libhal-storage.c:422
 msgid "DVD-R"
 msgstr "DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:422
+#: ../libhal-storage/libhal-storage.c:427
 msgid "Blank DVD-RW"
 msgstr "빈 DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:424
+#: ../libhal-storage/libhal-storage.c:429
 msgid "DVD-RW"
 msgstr "DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:429
+#: ../libhal-storage/libhal-storage.c:434
 msgid "Blank DVD+R"
 msgstr "빈 DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:431
+#: ../libhal-storage/libhal-storage.c:436
 msgid "DVD+R"
 msgstr "DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:436
+#: ../libhal-storage/libhal-storage.c:441
 msgid "Blank DVD+RW"
 msgstr "빈 DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:438
+#: ../libhal-storage/libhal-storage.c:443
 msgid "DVD+RW"
 msgstr "DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:443
+#: ../libhal-storage/libhal-storage.c:448
 msgid "Blank DVD+R Dual-Layer"
 msgstr "빈 DVD+R 듀얼-레이어"
 
-#: ../libhal-storage/libhal-storage.c:445
+#: ../libhal-storage/libhal-storage.c:450
 msgid "DVD+R Dual-Layer"
 msgstr "DVD+R 듀얼-레이어"
 
-#: ../libhal-storage/libhal-storage.c:452
+#: ../libhal-storage/libhal-storage.c:454
+#, fuzzy
+msgid "BD-ROM"
+msgstr "CD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:459
+#, fuzzy
+msgid "Blank BD-R"
+msgstr "빈 CD-R"
+
+#: ../libhal-storage/libhal-storage.c:461
+#, fuzzy
+msgid "BD-R"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:466
+#, fuzzy
+msgid "Blank BD-RE"
+msgstr "빈 CD-R"
+
+#: ../libhal-storage/libhal-storage.c:468
+#, fuzzy
+msgid "BD-RE"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:472
+#, fuzzy
+msgid "HD DVD-ROM"
+msgstr "DVD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:477
+#, fuzzy
+msgid "Blank HD DVD-R"
+msgstr "빈 DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:479
+#, fuzzy
+msgid "HD DVD-R"
+msgstr "DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:484
+#, fuzzy
+msgid "Blank HD DVD-RW"
+msgstr "빈 DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:486
+#, fuzzy
+msgid "HD DVD-RW"
+msgstr "DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:494
 msgid "Audio CD"
 msgstr "오디오 CD"
 
-#: ../libhal-storage/libhal-storage.c:460
+#: ../libhal-storage/libhal-storage.c:502
 #, c-format
 msgid "%s Removable Media"
 msgstr "%s 이동식 매체"
 
-#: ../libhal-storage/libhal-storage.c:463
+#: ../libhal-storage/libhal-storage.c:505
 #, c-format
 msgid "%s Media"
 msgstr "%s 매체"
 
-#. * @}
 #: ../tools/device-manager/hal-device-manager.glade.h:1
 msgid "<b>Bandwidth:</b>"
 msgstr "<b>대역폭:</b>"
@@ -202,289 +251,210 @@ msgstr "고급"
 msgid "Bus Type"
 msgstr "버스 형식"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:17
+#: ../tools/device-manager/hal-device-manager.glade.h:16
 msgid "Device"
 msgstr "장치"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:18
+#: ../tools/device-manager/hal-device-manager.glade.h:17
 msgid "Device Manager"
 msgstr "장치 관리자"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:19
+#: ../tools/device-manager/hal-device-manager.glade.h:18
 msgid "Device Name"
 msgstr "장치 이름"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:20
+#: ../tools/device-manager/hal-device-manager.glade.h:19
 msgid "Device Type"
 msgstr "장치 형식"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:21
+#: ../tools/device-manager/hal-device-manager.glade.h:20
 msgid "Device Vendor"
 msgstr "장치 제조사"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:22
+#: ../tools/device-manager/hal-device-manager.glade.h:21
 msgid "Manufacturer ID"
 msgstr "제조사 ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:23
+#: ../tools/device-manager/hal-device-manager.glade.h:22
 msgid "Max \tPower Drain"
 msgstr "최대 \t전원 소모"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:24
+#: ../tools/device-manager/hal-device-manager.glade.h:23
 msgid "OEM Manufacturer ID"
 msgstr "OEM 제조사 ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:25
+#: ../tools/device-manager/hal-device-manager.glade.h:24
 msgid "OEM Product ID"
 msgstr "OEM 제품 ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:26
+#: ../tools/device-manager/hal-device-manager.glade.h:25
 msgid "PCI"
 msgstr "PCI"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:27
+#: ../tools/device-manager/hal-device-manager.glade.h:26
 msgid "Product ID"
 msgstr "제품 ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:28
+#: ../tools/device-manager/hal-device-manager.glade.h:27
 msgid "Product Revision"
 msgstr "제품 개정"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:29
+#: ../tools/device-manager/hal-device-manager.glade.h:28
 msgid "Status"
 msgstr "상태"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:30
+#: ../tools/device-manager/hal-device-manager.glade.h:29
 msgid "USB"
 msgstr "USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:31
+#: ../tools/device-manager/hal-device-manager.glade.h:30
 msgid "USB Bandwidth"
 msgstr "USB 대역폭"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:32
+#: ../tools/device-manager/hal-device-manager.glade.h:31
 msgid "USB Version"
 msgstr "USB 버젼"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:33
+#: ../tools/device-manager/hal-device-manager.glade.h:32
 msgid "_Virtual Devices"
 msgstr "가상 장치(_V)"
 
-#: ../tools/fstab-sync.c:439
-#, c-format
-msgid "%d: Could not read from '%s': %s\n"
-msgstr "%d: '%s'(으)로 부터 읽을 수 없습니다: %s\n"
+#~ msgid "%d: Could not read from '%s': %s\n"
+#~ msgstr "%d: '%s'(으)로 부터 읽을 수 없습니다: %s\n"
 
-#: ../tools/fstab-sync.c:446
-#, c-format
-msgid "%d: Could not parse data from '%s'\n"
-msgstr "%d: '%s'(으)로 부터 데이터를 분석할 수 없습니다\n"
+#~ msgid "%d: Could not parse data from '%s'\n"
+#~ msgstr "%d: '%s'(으)로 부터 데이터를 분석할 수 없습니다\n"
 
-#: ../tools/fstab-sync.c:483
-#, c-format
-msgid "%d: Could not write to temporary file: %s\n"
-msgstr "%d: 임시 파일을 만들 수 없습니다: %s\n"
+#~ msgid "%d: Could not write to temporary file: %s\n"
+#~ msgstr "%d: 임시 파일을 만들 수 없습니다: %s\n"
 
-#: ../tools/fstab-sync.c:580 ../tools/fstab-sync.c:622
-#, c-format
-msgid "%d: Line ended prematurely\n"
-msgstr "%d: 줄이 너무 빨리 끝났습니다\n"
+#~ msgid "%d: Line ended prematurely\n"
+#~ msgstr "%d: 줄이 너무 빨리 끝났습니다\n"
 
-#: ../tools/fstab-sync.c:772
-#, c-format
-msgid "%d: using temporary file '%s'\n"
-msgstr "%d: 임시 파일 '%s'(을)를 사용합니다\n"
+#~ msgid "%d: using temporary file '%s'\n"
+#~ msgstr "%d: 임시 파일 '%s'(을)를 사용합니다\n"
 
-#: ../tools/fstab-sync.c:780
-#, c-format
-msgid "%d: Could not open temporary file for writing in directory '%s': %s\n"
-msgstr "%d: 임시파일을 쓸 디렉토리 '%s'(이)가 열 수 없습니다:%s\n"
+#~ msgid ""
+#~ "%d: Could not open temporary file for writing in directory '%s': %s\n"
+#~ msgstr "%d: 임시파일을 쓸 디렉토리 '%s'(이)가 열 수 없습니다:%s\n"
 
-#. update block.device with new value
-#: ../tools/fstab-sync.c:893
-#, c-format
-msgid "%d: Found %s pointing to %s in"
-msgstr "%01d: %03s(을)를 가르키는 %02s(을)를 발견했습니다"
+#~ msgid "%d: Found %s pointing to %s in"
+#~ msgstr "%01d: %03s(을)를 가르키는 %02s(을)를 발견했습니다"
 
-#: ../tools/fstab-sync.c:1047
-#, c-format
-msgid "%d: Could not stat '%s': %s\n"
-msgstr "%d: '%s'의 상태를 얻을 수 없습니다: %s\n"
+#~ msgid "%d: Could not stat '%s': %s\n"
+#~ msgstr "%d: '%s'의 상태를 얻을 수 없습니다: %s\n"
 
-#: ../tools/fstab-sync.c:1158
-#, c-format
-msgid "%d: entering add_hal_device, udi='%s'\n"
-msgstr "%d: add_hal_device로 들어감, udi='%s'\n"
+#~ msgid "%d: entering add_hal_device, udi='%s'\n"
+#~ msgstr "%d: add_hal_device로 들어감, udi='%s'\n"
 
-#: ../tools/fstab-sync.c:1195
-#, c-format
-msgid "%d: device_file=%s\n"
-msgstr "%d: device_file=%s\n"
+#~ msgid "%d: device_file=%s\n"
+#~ msgstr "%d: device_file=%s\n"
 
-#. no label
-#: ../tools/fstab-sync.c:1198 ../tools/fstab-sync.c:1265
-#, c-format
-msgid "%d: Could not add entry to fstab file: block device %s already listed\n"
-msgstr ""
-"%d: fstab파일에 항목을 더할 수 없습니다: 블럭장치 %s(이)가 이미 있습니다\n"
+#~ msgid ""
+#~ "%d: Could not add entry to fstab file: block device %s already listed\n"
+#~ msgstr ""
+#~ "%d: fstab파일에 항목을 더할 수 없습니다: 블럭장치 %s(이)가 이미 있습니다\n"
 
-#: ../tools/fstab-sync.c:1228 ../tools/fstab-sync.c:1298
-#, c-format
-msgid ""
-"%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s', normalized_desired_mount_point='%s'\n"
-msgstr ""
-"%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s', normalized_desired_mount_point='%s'\n"
+#~ msgid ""
+#~ "%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s', normalized_desired_mount_point='%s'\n"
+#~ msgstr ""
+#~ "%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s', normalized_desired_mount_point='%s'\n"
 
-#: ../tools/fstab-sync.c:1289
-#, c-format
-msgid ""
-"%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s'\n"
-msgstr ""
-"%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s'\n"
+#~ msgid ""
+#~ "%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s'\n"
+#~ msgstr ""
+#~ "%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s'\n"
 
-#: ../tools/fstab-sync.c:1373 ../tools/fstab-sync.c:1488
-#: ../tools/fstab-sync.c:1639
-#, c-format
-msgid "%d: Failed to rename '%s' to '%s': %s\n"
-msgstr "%d: '%s'(을)를 '%s'(으)로 바꾸는데 실패했습니다: %s\n"
+#~ msgid "%d: Failed to rename '%s' to '%s': %s\n"
+#~ msgstr "%d: '%s'(을)를 '%s'(으)로 바꾸는데 실패했습니다: %s\n"
 
-#: ../tools/fstab-sync.c:1384
-#, c-format
-msgid "%d: added mount point '%s' for device '%s'\n"
-msgstr "%01d: 장치 '%03s'에 대한 마운트 위치 '%02s'(을)를 더합니다\n"
+#~ msgid "%d: added mount point '%s' for device '%s'\n"
+#~ msgstr "%01d: 장치 '%03s'에 대한 마운트 위치 '%02s'(을)를 더합니다\n"
 
-#: ../tools/fstab-sync.c:1386
-#, c-format
-msgid "added mount point %s for %s"
-msgstr "%02s의 마운트 위치 %01s(을)를 더합니다"
+#~ msgid "added mount point %s for %s"
+#~ msgstr "%02s의 마운트 위치 %01s(을)를 더합니다"
 
-#: ../tools/fstab-sync.c:1455
-#, c-format
-msgid ""
-"%d: Could not remove device '%s' with UDI '%s' from fs table: not found\n"
-msgstr ""
-"%01d: 파일시스템 테이블에서 UDI '%03s'(으)로 장치 '%02s'(을)를 지울 수 "
-"없습니다: 찾을 수 없습니다\n"
+#~ msgid ""
+#~ "%d: Could not remove device '%s' with UDI '%s' from fs table: not found\n"
+#~ msgstr ""
+#~ "%01d: 파일시스템 테이블에서 UDI '%03s'(으)로 장치 '%02s'(을)를 지울 수 없"
+#~ "습니다: 찾을 수 없습니다\n"
 
-#: ../tools/fstab-sync.c:1465 ../tools/fstab-sync.c:1567
-#, c-format
-msgid "%d: Failed to remove mount point '%s': %s\n"
-msgstr "%d: 마운트 위치 '%s'(을)를 지우는데 실패했습니다: %s\n"
+#~ msgid "%d: Failed to remove mount point '%s': %s\n"
+#~ msgstr "%d: 마운트 위치 '%s'(을)를 지우는데 실패했습니다: %s\n"
 
-#: ../tools/fstab-sync.c:1493
-#, c-format
-msgid "%d: removed mount point for device '%s'\n"
-msgstr "%d: 장치 '%s'의 마운트 위치를 지웠습니다\n"
+#~ msgid "%d: removed mount point for device '%s'\n"
+#~ msgstr "%d: 장치 '%s'의 마운트 위치를 지웠습니다\n"
 
-#: ../tools/fstab-sync.c:1495
-#, c-format
-msgid "removed mount point %s for %s"
-msgstr "%02s의 마운트 위치 %01s(을)를 지웠습니다"
+#~ msgid "removed mount point %s for %s"
+#~ msgstr "%02s의 마운트 위치 %01s(을)를 지웠습니다"
 
-#: ../tools/fstab-sync.c:1558
-#, c-format
-msgid "%d: Seeing if line for dev='%s',mnt='%s' should be removed\n"
-msgstr "%d: dev='%s', mnt='%s' 줄이 지워지는 것을 감시합니다\n"
+#~ msgid "%d: Seeing if line for dev='%s',mnt='%s' should be removed\n"
+#~ msgstr "%d: dev='%s', mnt='%s' 줄이 지워지는 것을 감시합니다\n"
 
-#: ../tools/fstab-sync.c:1559
-#, c-format
-msgid "%d: is_generated=%d, is_mounted=%d\n"
-msgstr "%d: is_generated=%d, is_mounted=%d\n"
+#~ msgid "%d: is_generated=%d, is_mounted=%d\n"
+#~ msgstr "%d: is_generated=%d, is_mounted=%d\n"
 
-#: ../tools/fstab-sync.c:1646
-msgid "removed all generated mount points"
-msgstr "만들어진 마운트 위치를 모두 지웠습니다"
+#~ msgid "removed all generated mount points"
+#~ msgstr "만들어진 마운트 위치를 모두 지웠습니다"
 
-#: ../tools/fstab-sync.c:1677
-msgid "Add an entry to fstab"
-msgstr "fstab에 항목을 더합니다"
+#~ msgid "Add an entry to fstab"
+#~ msgstr "fstab에 항목을 더합니다"
 
-#: ../tools/fstab-sync.c:1677 ../tools/fstab-sync.c:1678
-msgid "UDI"
-msgstr "UDI"
+#~ msgid "UDI"
+#~ msgstr "UDI"
 
-#: ../tools/fstab-sync.c:1678
-msgid "Remove an entry from fstab"
-msgstr "fstab에서 항목을 지웁니다"
+#~ msgid "Remove an entry from fstab"
+#~ msgstr "fstab에서 항목을 지웁니다"
 
-#: ../tools/fstab-sync.c:1679
-msgid "Remove all generated entries from fstab"
-msgstr "fstab에서 생성된 항목을 모두 지웁니다"
+#~ msgid "Remove all generated entries from fstab"
+#~ msgstr "fstab에서 생성된 항목을 모두 지웁니다"
 
-#: ../tools/fstab-sync.c:1680
-msgid "Report detailed information about operation progress"
-msgstr "동작 진행에 관한 자세한 정보를 알려줍니다"
+#~ msgid "Report detailed information about operation progress"
+#~ msgstr "동작 진행에 관한 자세한 정보를 알려줍니다"
 
-#: ../tools/fstab-sync.c:1752
-#, c-format
-msgid "%d: %s entering; %s udi=%s\n"
-msgstr "%d: %s 들어감; %s udi=%s\n"
+#~ msgid "%d: %s entering; %s udi=%s\n"
+#~ msgstr "%d: %s 들어감; %s udi=%s\n"
 
-#: ../tools/fstab-sync.c:1757
-#, c-format
-msgid "%d: couldn't open %s O_RDONLY; bailing out\n"
-msgstr "%d: %s(을)를 읽기 전용으로 열 수 없습니다; 빠져나갑니다\n"
+#~ msgid "%d: couldn't open %s O_RDONLY; bailing out\n"
+#~ msgstr "%d: %s(을)를 읽기 전용으로 열 수 없습니다; 빠져나갑니다\n"
 
-#: ../tools/fstab-sync.c:1762
-#, c-format
-msgid "%d: Acquiring advisory lock on "
-msgstr "%d: 권고 잠금 얻는 중 "
+#~ msgid "%d: Acquiring advisory lock on "
+#~ msgstr "%d: 권고 잠금 얻는 중 "
 
-#: ../tools/fstab-sync.c:1763 ../tools/fstab-sync.c:1847
-msgid "\n"
-msgstr "\n"
+#~ msgid "\n"
+#~ msgstr "\n"
 
-#: ../tools/fstab-sync.c:1765
-#, c-format
-msgid "%d: Error acquiring lock '%s'; bailing out\n"
-msgstr "%d: '%s' 잠금 얻는데 오류; 빠져나갑니다\n"
+#~ msgid "%d: Error acquiring lock '%s'; bailing out\n"
+#~ msgstr "%d: '%s' 잠금 얻는데 오류; 빠져나갑니다\n"
 
-#: ../tools/fstab-sync.c:1770
-#, c-format
-msgid "%d: Lock acquired\n"
-msgstr "%d: 잠금을 얻었습니다\n"
+#~ msgid "%d: Lock acquired\n"
+#~ msgstr "%d: 잠금을 얻었습니다\n"
 
-#: ../tools/fstab-sync.c:1799
-#, c-format
-msgid "%d: mount_root='%s'\n"
-msgstr "%d: mount_root='%s'\n"
+#~ msgid "%d: mount_root='%s'\n"
+#~ msgstr "%d: mount_root='%s'\n"
 
-#: ../tools/fstab-sync.c:1801
-#, c-format
-msgid "%d: use_managed=%d\n"
-msgstr "%d: use_managed=%d\n"
+#~ msgid "%d: use_managed=%d\n"
+#~ msgstr "%d: use_managed=%d\n"
 
-#: ../tools/fstab-sync.c:1807
-#, c-format
-msgid "%d: managed primary='%s'\n"
-msgstr "%d: managed primary='%s'\n"
+#~ msgid "%d: managed primary='%s'\n"
+#~ msgstr "%d: managed primary='%s'\n"
 
-#: ../tools/fstab-sync.c:1808
-#, c-format
-msgid "%d: managed secondary='%s'\n"
-msgstr "%d: managed secondary='%s'\n"
+#~ msgid "%d: managed secondary='%s'\n"
+#~ msgstr "%d: managed secondary='%s'\n"
 
-#: ../tools/fstab-sync.c:1832
-#, c-format
-msgid "%d: Releasing advisory lock on %s\n"
-msgstr "%d: %s 권고 잠금 푸는 중\n"
+#~ msgid "%d: Releasing advisory lock on %s\n"
+#~ msgstr "%d: %s 권고 잠금 푸는 중\n"
 
-#: ../tools/fstab-sync.c:1835
-#, c-format
-msgid "%d: Error releasing lock '%s'\n"
-msgstr "%d: '%s' 잠금 푸는데 오류\n"
+#~ msgid "%d: Error releasing lock '%s'\n"
+#~ msgstr "%d: '%s' 잠금 푸는데 오류\n"
 
-#: ../tools/fstab-sync.c:1839
-#, c-format
-msgid "%d: Lock released\n"
-msgstr "%d: 잠금 풀림\n"
+#~ msgid "%d: Lock released\n"
+#~ msgstr "%d: 잠금 풀림\n"
 
-#: ../tools/fstab-sync.c:1843
-#, c-format
-msgid "%d: %s exiting; %s udi=%s\n"
-msgstr "%d: %s 빠져나감; %s udi=%s\n"
-
+#~ msgid "%d: %s exiting; %s udi=%s\n"
+#~ msgstr "%d: %s 빠져나감; %s udi=%s\n"

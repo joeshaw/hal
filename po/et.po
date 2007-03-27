@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
-"Report-Msgid-Bugs-To: GNOME-et <gnome-et@linux.ee> \n"
-"POT-Creation-Date: 2006-10-27 22:57+0300\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-03-19 22:51-0400\n"
 "PO-Revision-Date: 2006-10-27 23:04+0200\n"
 "Last-Translator: Priit Laes <plaes@plaes.org>\n"
 "Language-Team: Estonian <gnome-et@linux.ee>\n"
@@ -182,7 +182,6 @@ msgstr "%s eemaldatav andmekandja"
 msgid "%s Media"
 msgstr "%s andmekandja"
 
-#. * @}
 #: ../tools/device-manager/hal-device-manager.glade.h:1
 msgid "<b>Bandwidth:</b>"
 msgstr "<b>Läbilaskevõime:</b>"
@@ -310,4 +309,3 @@ msgstr "USB versioon"
 #: ../tools/device-manager/hal-device-manager.glade.h:32
 msgid "_Virtual Devices"
 msgstr "_Virtuaalseadmed"
-

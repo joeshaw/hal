@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
-"Report-Msgid-Bugs-To:\n"
-"POT-Creation-Date: 2006-05-22 15:01+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-03-19 22:51-0400\n"
 "PO-Revision-Date: 2006-05-24 17:28+0000\n"
 "Last-Translator: Jordi Mallach <jordi@canonical.com>\n"
 "Language-Team: Catalan <ca@dodds.net>\n"
@@ -15,177 +15,168 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../../debian/hal-device-manager.desktop.in.h:1
-#: ../tools/device-manager/hal-device-manager.glade.h:18
-msgid "Device Manager"
-msgstr "Gestor de dispositius"
-
-#: ../../../debian/hal-device-manager.desktop.in.h:2
-msgid "View hardware information"
-msgstr "Visualizeu informació sobre el maquinari"
-
-#: ../libhal-storage/libhal-storage.c:311
+#: ../libhal-storage/libhal-storage.c:301
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Unitat %s%s externa"
 
-#: ../libhal-storage/libhal-storage.c:314
+#: ../libhal-storage/libhal-storage.c:304
 #, c-format
 msgid "%s%s Drive"
 msgstr "Unitat %s%s"
 
-#: ../libhal-storage/libhal-storage.c:323
+#: ../libhal-storage/libhal-storage.c:313
 msgid "External Floppy Drive"
 msgstr "Disquetera externa"
 
-#: ../libhal-storage/libhal-storage.c:325
+#: ../libhal-storage/libhal-storage.c:315
 msgid "Floppy Drive"
 msgstr "Disquetera"
 
-#: ../libhal-storage/libhal-storage.c:332
+#: ../libhal-storage/libhal-storage.c:322
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "Disc dur extern %s"
 
-#: ../libhal-storage/libhal-storage.c:335
+#: ../libhal-storage/libhal-storage.c:325
 #, c-format
 msgid "%s Hard Drive"
 msgstr "Disc dur %s"
 
-#: ../libhal-storage/libhal-storage.c:340
+#: ../libhal-storage/libhal-storage.c:330
 msgid "External Hard Drive"
 msgstr "Disc dur extern"
 
-#: ../libhal-storage/libhal-storage.c:342
+#: ../libhal-storage/libhal-storage.c:332
 msgid "Hard Drive"
 msgstr "Disc dur"
 
-#: ../libhal-storage/libhal-storage.c:351
+#: ../libhal-storage/libhal-storage.c:341
 msgid "Drive"
 msgstr "Unitat"
 
-#: ../libhal-storage/libhal-storage.c:400
+#: ../libhal-storage/libhal-storage.c:390
 msgid "CD-ROM "
 msgstr "CD-ROM "
 
-#: ../libhal-storage/libhal-storage.c:405
+#: ../libhal-storage/libhal-storage.c:395
 msgid "Blank CD-R"
 msgstr "CD-R buit"
 
-#: ../libhal-storage/libhal-storage.c:407
+#: ../libhal-storage/libhal-storage.c:397
 msgid "CD-R"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:412
+#: ../libhal-storage/libhal-storage.c:402
 msgid "Blank CD-RW"
 msgstr "CD-RW en blanc"
 
-#: ../libhal-storage/libhal-storage.c:414
+#: ../libhal-storage/libhal-storage.c:404
 msgid "CD-RW"
 msgstr "CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:418
+#: ../libhal-storage/libhal-storage.c:408
 msgid "DVD-ROM"
 msgstr "DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:423
+#: ../libhal-storage/libhal-storage.c:413
 msgid "Blank DVD-RAM"
 msgstr "DVD-ROM en blanc"
 
-#: ../libhal-storage/libhal-storage.c:425
+#: ../libhal-storage/libhal-storage.c:415
 msgid "DVD-RAM"
 msgstr "DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:430
+#: ../libhal-storage/libhal-storage.c:420
 msgid "Blank DVD-R"
 msgstr "DVD-R en blanc"
 
-#: ../libhal-storage/libhal-storage.c:432
+#: ../libhal-storage/libhal-storage.c:422
 msgid "DVD-R"
 msgstr "DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:437
+#: ../libhal-storage/libhal-storage.c:427
 msgid "Blank DVD-RW"
 msgstr "DVD-RW en blanc"
 
-#: ../libhal-storage/libhal-storage.c:439
+#: ../libhal-storage/libhal-storage.c:429
 msgid "DVD-RW"
 msgstr "DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:444
+#: ../libhal-storage/libhal-storage.c:434
 msgid "Blank DVD+R"
 msgstr "DVD+R en blanc"
 
-#: ../libhal-storage/libhal-storage.c:446
+#: ../libhal-storage/libhal-storage.c:436
 msgid "DVD+R"
 msgstr "DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:451
+#: ../libhal-storage/libhal-storage.c:441
 msgid "Blank DVD+RW"
 msgstr "DVD+RW en blanc"
 
-#: ../libhal-storage/libhal-storage.c:453
+#: ../libhal-storage/libhal-storage.c:443
 msgid "DVD+RW"
 msgstr "DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:458
+#: ../libhal-storage/libhal-storage.c:448
 msgid "Blank DVD+R Dual-Layer"
 msgstr "DVD+R de doble capa en blanc"
 
-#: ../libhal-storage/libhal-storage.c:460
+#: ../libhal-storage/libhal-storage.c:450
 msgid "DVD+R Dual-Layer"
 msgstr "DVD+R de doble capa"
 
-#: ../libhal-storage/libhal-storage.c:464
+#: ../libhal-storage/libhal-storage.c:454
 msgid "BD-ROM"
 msgstr "BD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:469
+#: ../libhal-storage/libhal-storage.c:459
 msgid "Blank BD-R"
 msgstr "BD-R buit"
 
-#: ../libhal-storage/libhal-storage.c:471
+#: ../libhal-storage/libhal-storage.c:461
 msgid "BD-R"
 msgstr "BD-R"
 
-#: ../libhal-storage/libhal-storage.c:476
+#: ../libhal-storage/libhal-storage.c:466
 msgid "Blank BD-RE"
 msgstr "BD-RE buit"
 
-#: ../libhal-storage/libhal-storage.c:478
+#: ../libhal-storage/libhal-storage.c:468
 msgid "BD-RE"
 msgstr "BD-RE"
 
-#: ../libhal-storage/libhal-storage.c:482
+#: ../libhal-storage/libhal-storage.c:472
 msgid "HD DVD-ROM"
 msgstr "HD DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:487
+#: ../libhal-storage/libhal-storage.c:477
 msgid "Blank HD DVD-R"
 msgstr "HD DVD-R buit"
 
-#: ../libhal-storage/libhal-storage.c:489
+#: ../libhal-storage/libhal-storage.c:479
 msgid "HD DVD-R"
 msgstr "HD DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:494
+#: ../libhal-storage/libhal-storage.c:484
 msgid "Blank HD DVD-RW"
 msgstr "HD DVD-RW buit"
 
-#: ../libhal-storage/libhal-storage.c:496
+#: ../libhal-storage/libhal-storage.c:486
 msgid "HD DVD-RW"
 msgstr "HD DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:504
+#: ../libhal-storage/libhal-storage.c:494
 msgid "Audio CD"
 msgstr "CD d'àudio"
 
-#: ../libhal-storage/libhal-storage.c:512
+#: ../libhal-storage/libhal-storage.c:502
 #, c-format
 msgid "%s Removable Media"
 msgstr "Medi extraïble %s"
 
-#: ../libhal-storage/libhal-storage.c:515
+#: ../libhal-storage/libhal-storage.c:505
 #, c-format
 msgid "%s Media"
 msgstr "Medi %s"
@@ -250,73 +241,79 @@ msgstr "Avançat"
 msgid "Bus Type"
 msgstr "Tipus de bus"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:17
+#: ../tools/device-manager/hal-device-manager.glade.h:16
 msgid "Device"
 msgstr "Dispositiu"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:19
+#: ../tools/device-manager/hal-device-manager.glade.h:17
+msgid "Device Manager"
+msgstr "Gestor de dispositius"
+
+#: ../tools/device-manager/hal-device-manager.glade.h:18
 msgid "Device Name"
 msgstr "Nom del dispositiu"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:20
+#: ../tools/device-manager/hal-device-manager.glade.h:19
 msgid "Device Type"
 msgstr "Tipus de dispositiu"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:21
+#: ../tools/device-manager/hal-device-manager.glade.h:20
 msgid "Device Vendor"
 msgstr "Venedor del dispositiu"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:22
+#: ../tools/device-manager/hal-device-manager.glade.h:21
 msgid "Manufacturer ID"
 msgstr "ID del fabricant"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:23
+#: ../tools/device-manager/hal-device-manager.glade.h:22
 msgid "Max \tPower Drain"
 msgstr ""
 
-#: ../tools/device-manager/hal-device-manager.glade.h:24
+#: ../tools/device-manager/hal-device-manager.glade.h:23
 msgid "OEM Manufacturer ID"
 msgstr "ID del fabricant OEM"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:25
+#: ../tools/device-manager/hal-device-manager.glade.h:24
 msgid "OEM Product ID"
 msgstr "ID del producte OEM"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:26
+#: ../tools/device-manager/hal-device-manager.glade.h:25
 msgid "PCI"
 msgstr "PCI"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:27
+#: ../tools/device-manager/hal-device-manager.glade.h:26
 msgid "Product ID"
 msgstr "ID del producte"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:28
+#: ../tools/device-manager/hal-device-manager.glade.h:27
 msgid "Product Revision"
 msgstr "Revisió del producte"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:29
+#: ../tools/device-manager/hal-device-manager.glade.h:28
 msgid "Status"
 msgstr "Estat"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:30
+#: ../tools/device-manager/hal-device-manager.glade.h:29
 msgid "USB"
 msgstr "USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:31
+#: ../tools/device-manager/hal-device-manager.glade.h:30
 msgid "USB Bandwidth"
 msgstr "Ample de banda de l'USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:32
+#: ../tools/device-manager/hal-device-manager.glade.h:31
 msgid "USB Version"
 msgstr "Versió d'USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:33
-msgid "Ubuntu Device Database"
-msgstr "Base de dades de dispositius d'Ubuntu"
-
-#: ../tools/device-manager/hal-device-manager.glade.h:34
+#: ../tools/device-manager/hal-device-manager.glade.h:32
 msgid "_Virtual Devices"
 msgstr "Dispositius _virtuals"
+
+#~ msgid "View hardware information"
+#~ msgstr "Visualizeu informació sobre el maquinari"
+
+#~ msgid "Ubuntu Device Database"
+#~ msgstr "Base de dades de dispositius d'Ubuntu"
 
 #~ msgid "%d: Could not read from '%s': %s\n"
 #~ msgstr "%d: No s'ha pogut llegir de «%s»: %s\n"
@@ -333,10 +330,11 @@ msgstr "Dispositius _virtuals"
 #~ msgid "%d: using temporary file '%s'\n"
 #~ msgstr "%d: s'està utilitzant el fitxer temporal «%s»\n"
 
-#~ msgid "%d: Could not open temporary file for writing in directory '%s': %s\n"
+#~ msgid ""
+#~ "%d: Could not open temporary file for writing in directory '%s': %s\n"
 #~ msgstr ""
-#~ "%d No s'ha pogut obrir un fitxer temporal per a escriure al directori «%s»: "
-#~ "%s\n"
+#~ "%d No s'ha pogut obrir un fitxer temporal per a escriure al directori «%"
+#~ "s»: %s\n"
 
 #~ msgid "%d: Found %s pointing to %s in"
 #~ msgstr "%d: S'ha trobat %s que apunta a %s en"
@@ -353,8 +351,8 @@ msgstr "Dispositius _virtuals"
 #~ msgid ""
 #~ "%d: Could not add entry to fstab file: block device %s already listed\n"
 #~ msgstr ""
-#~ "%d: No s'ha pogut afegir una entrada al fitxer fstab: el dispositiu de blocs "
-#~ "%s ja està llistat\n"
+#~ "%d: No s'ha pogut afegir una entrada al fitxer fstab: el dispositiu de "
+#~ "blocs %s ja està llistat\n"
 
 #~ msgid ""
 #~ "%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
@@ -465,4 +463,3 @@ msgstr "Dispositius _virtuals"
 
 #~ msgid "%d: %s exiting; %s udi=%s\n"
 #~ msgstr "%d: %s està sortint; %s udi=%s\n"
-

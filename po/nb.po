@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HAL 0.5.x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-10-10 09:13+0200\n"
+"POT-Creation-Date: 2007-03-19 22:51-0400\n"
 "PO-Revision-Date: 2005-10-10 09:18+0200\n"
 "Last-Translator: Kjartan Maraas <kmaraas@gnome.org>\n"
 "Language-Team:  <i18n-nb@lister.ping.uio.no>\n"
@@ -16,133 +16,182 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../libhal-storage/libhal-storage.c:296
+#: ../libhal-storage/libhal-storage.c:301
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Ekstern %s%s-stasjon"
 
-#: ../libhal-storage/libhal-storage.c:299
+#: ../libhal-storage/libhal-storage.c:304
 #, c-format
 msgid "%s%s Drive"
 msgstr "%s%s-stasjon"
 
-#: ../libhal-storage/libhal-storage.c:308
+#: ../libhal-storage/libhal-storage.c:313
 msgid "External Floppy Drive"
 msgstr "Ekstern diskettstasjon"
 
-#: ../libhal-storage/libhal-storage.c:310
+#: ../libhal-storage/libhal-storage.c:315
 msgid "Floppy Drive"
 msgstr "Diskettstasjon"
 
-#: ../libhal-storage/libhal-storage.c:317
+#: ../libhal-storage/libhal-storage.c:322
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "%s ekstern harddisk"
 
-#: ../libhal-storage/libhal-storage.c:320
+#: ../libhal-storage/libhal-storage.c:325
 #, c-format
 msgid "%s Hard Drive"
 msgstr "%s harddisk"
 
-#: ../libhal-storage/libhal-storage.c:325
+#: ../libhal-storage/libhal-storage.c:330
 msgid "External Hard Drive"
 msgstr "Ekstern harddisk"
 
-#: ../libhal-storage/libhal-storage.c:327
+#: ../libhal-storage/libhal-storage.c:332
 msgid "Hard Drive"
 msgstr "Harddisk"
 
-#: ../libhal-storage/libhal-storage.c:336
+#: ../libhal-storage/libhal-storage.c:341
 msgid "Drive"
 msgstr "Stasjon"
 
-#: ../libhal-storage/libhal-storage.c:385
+#: ../libhal-storage/libhal-storage.c:390
 msgid "CD-ROM "
 msgstr "CD-ROM "
 
-#: ../libhal-storage/libhal-storage.c:390
+#: ../libhal-storage/libhal-storage.c:395
 msgid "Blank CD-R"
 msgstr "Tom CD-R"
 
-#: ../libhal-storage/libhal-storage.c:392
+#: ../libhal-storage/libhal-storage.c:397
 msgid "CD-R"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:397
+#: ../libhal-storage/libhal-storage.c:402
 msgid "Blank CD-RW"
 msgstr "Tom CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:399
+#: ../libhal-storage/libhal-storage.c:404
 msgid "CD-RW"
 msgstr "CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:403
+#: ../libhal-storage/libhal-storage.c:408
 msgid "DVD-ROM"
 msgstr "DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:408
+#: ../libhal-storage/libhal-storage.c:413
 msgid "Blank DVD-RAM"
 msgstr "Tom DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:410
+#: ../libhal-storage/libhal-storage.c:415
 msgid "DVD-RAM"
 msgstr "DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:415
+#: ../libhal-storage/libhal-storage.c:420
 msgid "Blank DVD-R"
 msgstr "Tom DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:417
+#: ../libhal-storage/libhal-storage.c:422
 msgid "DVD-R"
 msgstr "DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:422
+#: ../libhal-storage/libhal-storage.c:427
 msgid "Blank DVD-RW"
 msgstr "Tom DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:424
+#: ../libhal-storage/libhal-storage.c:429
 msgid "DVD-RW"
 msgstr "DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:429
+#: ../libhal-storage/libhal-storage.c:434
 msgid "Blank DVD+R"
 msgstr "Tom DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:431
+#: ../libhal-storage/libhal-storage.c:436
 msgid "DVD+R"
 msgstr "DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:436
+#: ../libhal-storage/libhal-storage.c:441
 msgid "Blank DVD+RW"
 msgstr "Tom DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:438
+#: ../libhal-storage/libhal-storage.c:443
 msgid "DVD+RW"
 msgstr "DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:443
+#: ../libhal-storage/libhal-storage.c:448
 msgid "Blank DVD+R Dual-Layer"
 msgstr "Tom DVD+R tolags"
 
-#: ../libhal-storage/libhal-storage.c:445
+#: ../libhal-storage/libhal-storage.c:450
 msgid "DVD+R Dual-Layer"
 msgstr "DVD+R tolags"
 
-#: ../libhal-storage/libhal-storage.c:452
+#: ../libhal-storage/libhal-storage.c:454
+#, fuzzy
+msgid "BD-ROM"
+msgstr "CD-ROM "
+
+#: ../libhal-storage/libhal-storage.c:459
+#, fuzzy
+msgid "Blank BD-R"
+msgstr "Tom CD-R"
+
+#: ../libhal-storage/libhal-storage.c:461
+#, fuzzy
+msgid "BD-R"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:466
+#, fuzzy
+msgid "Blank BD-RE"
+msgstr "Tom CD-R"
+
+#: ../libhal-storage/libhal-storage.c:468
+#, fuzzy
+msgid "BD-RE"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:472
+#, fuzzy
+msgid "HD DVD-ROM"
+msgstr "DVD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:477
+#, fuzzy
+msgid "Blank HD DVD-R"
+msgstr "Tom DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:479
+#, fuzzy
+msgid "HD DVD-R"
+msgstr "DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:484
+#, fuzzy
+msgid "Blank HD DVD-RW"
+msgstr "Tom DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:486
+#, fuzzy
+msgid "HD DVD-RW"
+msgstr "DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:494
 msgid "Audio CD"
 msgstr "Lyd-CD"
 
-#: ../libhal-storage/libhal-storage.c:460
+#: ../libhal-storage/libhal-storage.c:502
 #, c-format
 msgid "%s Removable Media"
 msgstr "%s avtagbart medie"
 
-#: ../libhal-storage/libhal-storage.c:463
+#: ../libhal-storage/libhal-storage.c:505
 #, c-format
 msgid "%s Media"
 msgstr "%s medie"
 
-#. * @}
 #: ../tools/device-manager/hal-device-manager.glade.h:1
 msgid "<b>Bandwidth:</b>"
 msgstr "<b>Båndbredde:</b>"
@@ -203,286 +252,115 @@ msgstr "Avansert"
 msgid "Bus Type"
 msgstr "Busstype"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:17
+#: ../tools/device-manager/hal-device-manager.glade.h:16
 msgid "Device"
 msgstr "Enhet"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:18
+#: ../tools/device-manager/hal-device-manager.glade.h:17
 msgid "Device Manager"
 msgstr "Enhetshåndterer"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:19
+#: ../tools/device-manager/hal-device-manager.glade.h:18
 msgid "Device Name"
 msgstr "Enhetsnavn"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:20
+#: ../tools/device-manager/hal-device-manager.glade.h:19
 msgid "Device Type"
 msgstr "Enhetstype"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:21
+#: ../tools/device-manager/hal-device-manager.glade.h:20
 msgid "Device Vendor"
 msgstr "Leverandør av ehnet"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:22
+#: ../tools/device-manager/hal-device-manager.glade.h:21
 msgid "Manufacturer ID"
 msgstr "Produsent-ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:23
+#: ../tools/device-manager/hal-device-manager.glade.h:22
 msgid "Max \tPower Drain"
 msgstr "Maks. \tstrømforbruk"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:24
+#: ../tools/device-manager/hal-device-manager.glade.h:23
 msgid "OEM Manufacturer ID"
 msgstr "OEM-produsent-ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:25
+#: ../tools/device-manager/hal-device-manager.glade.h:24
 msgid "OEM Product ID"
 msgstr "OEM-produkt-ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:26
+#: ../tools/device-manager/hal-device-manager.glade.h:25
 msgid "PCI"
 msgstr "PCI"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:27
+#: ../tools/device-manager/hal-device-manager.glade.h:26
 msgid "Product ID"
 msgstr "Produkt-ID"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:28
+#: ../tools/device-manager/hal-device-manager.glade.h:27
 msgid "Product Revision"
 msgstr "Produktversjon"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:29
+#: ../tools/device-manager/hal-device-manager.glade.h:28
 msgid "Status"
 msgstr "Status"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:30
+#: ../tools/device-manager/hal-device-manager.glade.h:29
 msgid "USB"
 msgstr "USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:31
+#: ../tools/device-manager/hal-device-manager.glade.h:30
 msgid "USB Bandwidth"
 msgstr "USB-båndbredde"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:32
+#: ../tools/device-manager/hal-device-manager.glade.h:31
 msgid "USB Version"
 msgstr "USB-versjon"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:33
+#: ../tools/device-manager/hal-device-manager.glade.h:32
 msgid "_Virtual Devices"
 msgstr "_Virtuelle enheter"
 
-#: ../tools/fstab-sync.c:439
-#, c-format
-msgid "%d: Could not read from '%s': %s\n"
-msgstr ""
+#~ msgid "removed mount point %s for %s"
+#~ msgstr "fjernet monteringspunkt %s for %s"
 
-#: ../tools/fstab-sync.c:446
-#, c-format
-msgid "%d: Could not parse data from '%s'\n"
-msgstr ""
+#~ msgid "%d: is_generated=%d, is_mounted=%d\n"
+#~ msgstr "%d: is_generated=%d, is_mounted=%d\n"
 
-#: ../tools/fstab-sync.c:483
-#, c-format
-msgid "%d: Could not write to temporary file: %s\n"
-msgstr ""
+#~ msgid "removed all generated mount points"
+#~ msgstr "fjernet alle genererte monteringspunkter"
 
-#: ../tools/fstab-sync.c:580 ../tools/fstab-sync.c:622
-#, c-format
-msgid "%d: Line ended prematurely\n"
-msgstr ""
+#~ msgid "Add an entry to fstab"
+#~ msgstr "Legg til en oppføring i fstab"
 
-#: ../tools/fstab-sync.c:772
-#, c-format
-msgid "%d: using temporary file '%s'\n"
-msgstr ""
+#~ msgid "UDI"
+#~ msgstr "UDI"
 
-#: ../tools/fstab-sync.c:780
-#, c-format
-msgid "%d: Could not open temporary file for writing in directory '%s': %s\n"
-msgstr ""
+#~ msgid "Remove an entry from fstab"
+#~ msgstr "Fjern en oppføring fra fstab"
 
-#. update block.device with new value
-#: ../tools/fstab-sync.c:893
-#, c-format
-msgid "%d: Found %s pointing to %s in"
-msgstr ""
+#~ msgid "Remove all generated entries from fstab"
+#~ msgstr "Fjern alle generete oppføringer fra fstab"
 
-#: ../tools/fstab-sync.c:1047
-#, c-format
-msgid "%d: Could not stat '%s': %s\n"
-msgstr ""
+#~ msgid "Report detailed information about operation progress"
+#~ msgstr "Gi detaljert informasjon om forløpet"
 
-#: ../tools/fstab-sync.c:1158
-#, c-format
-msgid "%d: entering add_hal_device, udi='%s'\n"
-msgstr ""
+#~ msgid "%d: ###################################\n"
+#~ msgstr "%d: ###################################\n"
 
-#: ../tools/fstab-sync.c:1195
-#, c-format
-msgid "%d: device_file=%s\n"
-msgstr ""
+#~ msgid "%d: %s entering; %s udi=%s\n"
+#~ msgstr "%d: %s går inn i; %s udi=%s\n"
 
-#. no label
-#: ../tools/fstab-sync.c:1198 ../tools/fstab-sync.c:1265
-#, c-format
-msgid "%d: Could not add entry to fstab file: block device %s already listed\n"
-msgstr ""
+#~ msgid "%d: couldn't open %s O_RDONLY; bailing out\n"
+#~ msgstr "%d: kunne ikke åpne %s O_RDONLY; stopper her\n"
 
-#: ../tools/fstab-sync.c:1228 ../tools/fstab-sync.c:1298
-#, c-format
-msgid ""
-"%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s', normalized_desired_mount_point='%s'\n"
-msgstr ""
+#~ msgid "%d: Acquiring advisory lock on "
+#~ msgstr "%d: Henter lås på "
 
-#: ../tools/fstab-sync.c:1289
-#, c-format
-msgid ""
-"%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s'\n"
-msgstr ""
+#~ msgid "\n"
+#~ msgstr "\n"
 
-#: ../tools/fstab-sync.c:1373 ../tools/fstab-sync.c:1488
-#: ../tools/fstab-sync.c:1639
-#, c-format
-msgid "%d: Failed to rename '%s' to '%s': %s\n"
-msgstr ""
+#~ msgid "%d: Lock acquired\n"
+#~ msgstr "%d: Lås tatt\n"
 
-#: ../tools/fstab-sync.c:1384
-#, c-format
-msgid "%d: added mount point '%s' for device '%s'\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1386
-#, c-format
-msgid "added mount point %s for %s"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1455
-#, c-format
-msgid ""
-"%d: Could not remove device '%s' with UDI '%s' from fs table: not found\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1465 ../tools/fstab-sync.c:1567
-#, c-format
-msgid "%d: Failed to remove mount point '%s': %s\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1493
-#, c-format
-msgid "%d: removed mount point for device '%s'\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1495
-#, c-format
-msgid "removed mount point %s for %s"
-msgstr "fjernet monteringspunkt %s for %s"
-
-#: ../tools/fstab-sync.c:1558
-#, c-format
-msgid "%d: Seeing if line for dev='%s',mnt='%s' should be removed\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1559
-#, c-format
-msgid "%d: is_generated=%d, is_mounted=%d\n"
-msgstr "%d: is_generated=%d, is_mounted=%d\n"
-
-#: ../tools/fstab-sync.c:1646
-msgid "removed all generated mount points"
-msgstr "fjernet alle genererte monteringspunkter"
-
-#: ../tools/fstab-sync.c:1677
-msgid "Add an entry to fstab"
-msgstr "Legg til en oppføring i fstab"
-
-#: ../tools/fstab-sync.c:1677 ../tools/fstab-sync.c:1678
-msgid "UDI"
-msgstr "UDI"
-
-#: ../tools/fstab-sync.c:1678
-msgid "Remove an entry from fstab"
-msgstr "Fjern en oppføring fra fstab"
-
-#: ../tools/fstab-sync.c:1679
-msgid "Remove all generated entries from fstab"
-msgstr "Fjern alle generete oppføringer fra fstab"
-
-#: ../tools/fstab-sync.c:1680
-msgid "Report detailed information about operation progress"
-msgstr "Gi detaljert informasjon om forløpet"
-
-#: ../tools/fstab-sync.c:1751 ../tools/fstab-sync.c:1846
-#, c-format
-msgid "%d: ###################################\n"
-msgstr "%d: ###################################\n"
-
-#: ../tools/fstab-sync.c:1752
-#, c-format
-msgid "%d: %s entering; %s udi=%s\n"
-msgstr "%d: %s går inn i; %s udi=%s\n"
-
-#: ../tools/fstab-sync.c:1757
-#, c-format
-msgid "%d: couldn't open %s O_RDONLY; bailing out\n"
-msgstr "%d: kunne ikke åpne %s O_RDONLY; stopper her\n"
-
-#: ../tools/fstab-sync.c:1762
-#, c-format
-msgid "%d: Acquiring advisory lock on "
-msgstr "%d: Henter lås på "
-
-#: ../tools/fstab-sync.c:1763 ../tools/fstab-sync.c:1847
-msgid "\n"
-msgstr "\n"
-
-#: ../tools/fstab-sync.c:1765
-#, c-format
-msgid "%d: Error acquiring lock '%s'; bailing out\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1770
-#, c-format
-msgid "%d: Lock acquired\n"
-msgstr "%d: Lås tatt\n"
-
-#: ../tools/fstab-sync.c:1799
-#, c-format
-msgid "%d: mount_root='%s'\n"
-msgstr "%d: mount_root=«%s»\n"
-
-#: ../tools/fstab-sync.c:1801
-#, c-format
-msgid "%d: use_managed=%d\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1807
-#, c-format
-msgid "%d: managed primary='%s'\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1808
-#, c-format
-msgid "%d: managed secondary='%s'\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1832
-#, c-format
-msgid "%d: Releasing advisory lock on %s\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1835
-#, c-format
-msgid "%d: Error releasing lock '%s'\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1839
-#, c-format
-msgid "%d: Lock released\n"
-msgstr ""
-
-#: ../tools/fstab-sync.c:1843
-#, c-format
-msgid "%d: %s exiting; %s udi=%s\n"
-msgstr ""
+#~ msgid "%d: mount_root='%s'\n"
+#~ msgstr "%d: mount_root=«%s»\n"

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-10-21 09:18+0200\n"
+"POT-Creation-Date: 2007-03-19 22:51-0400\n"
 "PO-Revision-Date: 2005-10-21 10:18+0200\n"
 "Last-Translator: Francisco Javier Fernandez <serrador@hispafuentes.com>\n"
 "Language-Team: Spanish <l10n@hispafuentes.com>\n"
@@ -19,133 +19,182 @@ msgstr ""
 "X-Generator: KBabel 1.10.2\n"
 "Plural-Forms:  nplurals=2; plural=(n != 1);\n"
 
-#: ../libhal-storage/libhal-storage.c:296
+#: ../libhal-storage/libhal-storage.c:301
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Unidad %s%s externa"
 
-#: ../libhal-storage/libhal-storage.c:299
+#: ../libhal-storage/libhal-storage.c:304
 #, c-format
 msgid "%s%s Drive"
 msgstr "Unidad %s%s"
 
-#: ../libhal-storage/libhal-storage.c:308
+#: ../libhal-storage/libhal-storage.c:313
 msgid "External Floppy Drive"
 msgstr "Unidad de disquetes externa"
 
-#: ../libhal-storage/libhal-storage.c:310
+#: ../libhal-storage/libhal-storage.c:315
 msgid "Floppy Drive"
 msgstr "Unidad de disquetes"
 
-#: ../libhal-storage/libhal-storage.c:317
+#: ../libhal-storage/libhal-storage.c:322
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "Disco duro externo %s"
 
-#: ../libhal-storage/libhal-storage.c:320
+#: ../libhal-storage/libhal-storage.c:325
 #, c-format
 msgid "%s Hard Drive"
 msgstr "Disco duro %s"
 
-#: ../libhal-storage/libhal-storage.c:325
+#: ../libhal-storage/libhal-storage.c:330
 msgid "External Hard Drive"
 msgstr "Disco duro externo"
 
-#: ../libhal-storage/libhal-storage.c:327
+#: ../libhal-storage/libhal-storage.c:332
 msgid "Hard Drive"
 msgstr "Disco duro"
 
-#: ../libhal-storage/libhal-storage.c:336
+#: ../libhal-storage/libhal-storage.c:341
 msgid "Drive"
 msgstr "Unidad"
 
-#: ../libhal-storage/libhal-storage.c:385
+#: ../libhal-storage/libhal-storage.c:390
 msgid "CD-ROM "
 msgstr "CD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:390
+#: ../libhal-storage/libhal-storage.c:395
 msgid "Blank CD-R"
 msgstr "CD-R virgen"
 
-#: ../libhal-storage/libhal-storage.c:392
+#: ../libhal-storage/libhal-storage.c:397
 msgid "CD-R"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:397
+#: ../libhal-storage/libhal-storage.c:402
 msgid "Blank CD-RW"
 msgstr "CD-RW virgen"
 
-#: ../libhal-storage/libhal-storage.c:399
+#: ../libhal-storage/libhal-storage.c:404
 msgid "CD-RW"
 msgstr "CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:403
+#: ../libhal-storage/libhal-storage.c:408
 msgid "DVD-ROM"
 msgstr "DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:408
+#: ../libhal-storage/libhal-storage.c:413
 msgid "Blank DVD-RAM"
 msgstr "DVD-RAM virgen"
 
-#: ../libhal-storage/libhal-storage.c:410
+#: ../libhal-storage/libhal-storage.c:415
 msgid "DVD-RAM"
 msgstr "DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:415
+#: ../libhal-storage/libhal-storage.c:420
 msgid "Blank DVD-R"
 msgstr "DVD-R virgen"
 
-#: ../libhal-storage/libhal-storage.c:417
+#: ../libhal-storage/libhal-storage.c:422
 msgid "DVD-R"
 msgstr "DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:422
+#: ../libhal-storage/libhal-storage.c:427
 msgid "Blank DVD-RW"
 msgstr "DVD-RW virgen"
 
-#: ../libhal-storage/libhal-storage.c:424
+#: ../libhal-storage/libhal-storage.c:429
 msgid "DVD-RW"
 msgstr "DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:429
+#: ../libhal-storage/libhal-storage.c:434
 msgid "Blank DVD+R"
 msgstr "DVD+R virgen"
 
-#: ../libhal-storage/libhal-storage.c:431
+#: ../libhal-storage/libhal-storage.c:436
 msgid "DVD+R"
 msgstr "DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:436
+#: ../libhal-storage/libhal-storage.c:441
 msgid "Blank DVD+RW"
 msgstr "DVD+RW virgen"
 
-#: ../libhal-storage/libhal-storage.c:438
+#: ../libhal-storage/libhal-storage.c:443
 msgid "DVD+RW"
 msgstr "DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:443
+#: ../libhal-storage/libhal-storage.c:448
 msgid "Blank DVD+R Dual-Layer"
 msgstr "DVD+R de doble capa virgen"
 
-#: ../libhal-storage/libhal-storage.c:445
+#: ../libhal-storage/libhal-storage.c:450
 msgid "DVD+R Dual-Layer"
 msgstr "DVD+R de doble capa"
 
-#: ../libhal-storage/libhal-storage.c:452
+#: ../libhal-storage/libhal-storage.c:454
+#, fuzzy
+msgid "BD-ROM"
+msgstr "CD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:459
+#, fuzzy
+msgid "Blank BD-R"
+msgstr "CD-R virgen"
+
+#: ../libhal-storage/libhal-storage.c:461
+#, fuzzy
+msgid "BD-R"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:466
+#, fuzzy
+msgid "Blank BD-RE"
+msgstr "CD-R virgen"
+
+#: ../libhal-storage/libhal-storage.c:468
+#, fuzzy
+msgid "BD-RE"
+msgstr "CD-R"
+
+#: ../libhal-storage/libhal-storage.c:472
+#, fuzzy
+msgid "HD DVD-ROM"
+msgstr "DVD-ROM"
+
+#: ../libhal-storage/libhal-storage.c:477
+#, fuzzy
+msgid "Blank HD DVD-R"
+msgstr "DVD-R virgen"
+
+#: ../libhal-storage/libhal-storage.c:479
+#, fuzzy
+msgid "HD DVD-R"
+msgstr "DVD-R"
+
+#: ../libhal-storage/libhal-storage.c:484
+#, fuzzy
+msgid "Blank HD DVD-RW"
+msgstr "DVD-RW virgen"
+
+#: ../libhal-storage/libhal-storage.c:486
+#, fuzzy
+msgid "HD DVD-RW"
+msgstr "DVD-RW"
+
+#: ../libhal-storage/libhal-storage.c:494
 msgid "Audio CD"
 msgstr "CD de audio"
 
-#: ../libhal-storage/libhal-storage.c:460
+#: ../libhal-storage/libhal-storage.c:502
 #, c-format
 msgid "%s Removable Media"
 msgstr "Soporte extraíble %s"
 
-#: ../libhal-storage/libhal-storage.c:463
+#: ../libhal-storage/libhal-storage.c:505
 #, c-format
 msgid "%s Media"
 msgstr "Soporte %s"
 
-#. * @}
 #: ../tools/device-manager/hal-device-manager.glade.h:1
 msgid "<b>Bandwidth:</b>"
 msgstr "<b>Ancho de banda:</b>"
@@ -206,256 +255,197 @@ msgstr "Avanzado"
 msgid "Bus Type"
 msgstr "Tipo de bus"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:17
+#: ../tools/device-manager/hal-device-manager.glade.h:16
 msgid "Device"
 msgstr "Dispositivo"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:18
+#: ../tools/device-manager/hal-device-manager.glade.h:17
 msgid "Device Manager"
 msgstr "Administrador de dispositivos"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:19
+#: ../tools/device-manager/hal-device-manager.glade.h:18
 msgid "Device Name"
 msgstr "Nombre del dispositivo"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:20
+#: ../tools/device-manager/hal-device-manager.glade.h:19
 msgid "Device Type"
 msgstr "Tipo de dispositivo"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:21
+#: ../tools/device-manager/hal-device-manager.glade.h:20
 msgid "Device Vendor"
 msgstr "Fabricante del dispositivo"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:22
+#: ../tools/device-manager/hal-device-manager.glade.h:21
 msgid "Manufacturer ID"
 msgstr "ID del fabricante"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:23
+#: ../tools/device-manager/hal-device-manager.glade.h:22
 msgid "Max \tPower Drain"
 msgstr "Máximo \tconsumo energético"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:24
+#: ../tools/device-manager/hal-device-manager.glade.h:23
 msgid "OEM Manufacturer ID"
 msgstr "ID del fabricante OEM"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:25
+#: ../tools/device-manager/hal-device-manager.glade.h:24
 msgid "OEM Product ID"
 msgstr "ID del producto OEM"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:26
+#: ../tools/device-manager/hal-device-manager.glade.h:25
 msgid "PCI"
 msgstr "PCI"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:27
+#: ../tools/device-manager/hal-device-manager.glade.h:26
 msgid "Product ID"
 msgstr "ID del producto"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:28
+#: ../tools/device-manager/hal-device-manager.glade.h:27
 msgid "Product Revision"
 msgstr "Revisión del producto"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:29
+#: ../tools/device-manager/hal-device-manager.glade.h:28
 msgid "Status"
 msgstr "Estado"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:30
+#: ../tools/device-manager/hal-device-manager.glade.h:29
 msgid "USB"
 msgstr "USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:31
+#: ../tools/device-manager/hal-device-manager.glade.h:30
 msgid "USB Bandwidth"
 msgstr "Ancho de banda USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:32
+#: ../tools/device-manager/hal-device-manager.glade.h:31
 msgid "USB Version"
 msgstr "Versión USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:33
+#: ../tools/device-manager/hal-device-manager.glade.h:32
 msgid "_Virtual Devices"
 msgstr "Dispositivos _virtuales"
 
-#: ../tools/fstab-sync.c:439
-#, c-format
-msgid "%d: Could not read from '%s': %s\n"
-msgstr "%d: No se pudo leer de«%s»: %s\n"
+#~ msgid "%d: Could not read from '%s': %s\n"
+#~ msgstr "%d: No se pudo leer de«%s»: %s\n"
 
-#: ../tools/fstab-sync.c:446
-#, c-format
-msgid "%d: Could not parse data from '%s'\n"
-msgstr "%d: No se pudo analizar los datos de «%s»\n"
+#~ msgid "%d: Could not parse data from '%s'\n"
+#~ msgstr "%d: No se pudo analizar los datos de «%s»\n"
 
-#: ../tools/fstab-sync.c:483
-#, c-format
-msgid "%d: Could not write to temporary file: %s\n"
-msgstr "%d: No se pudo escribir al archivo temporal: %s\n"
+#~ msgid "%d: Could not write to temporary file: %s\n"
+#~ msgstr "%d: No se pudo escribir al archivo temporal: %s\n"
 
-#: ../tools/fstab-sync.c:581 ../tools/fstab-sync.c:630
-#, c-format
-msgid "%d: Line ended prematurely\n"
-msgstr "%d: La línea terminó prematuramente\n"
+#~ msgid "%d: Line ended prematurely\n"
+#~ msgstr "%d: La línea terminó prematuramente\n"
 
-#: ../tools/fstab-sync.c:780
-#, c-format
-msgid "%d: using temporary file '%s'\n"
-msgstr "%d: usando archivo temporal «%s»\n"
+#~ msgid "%d: using temporary file '%s'\n"
+#~ msgstr "%d: usando archivo temporal «%s»\n"
 
-#: ../tools/fstab-sync.c:788
-#, c-format
-msgid "%d: Could not open temporary file for writing in directory '%s': %s\n"
-msgstr "%d: No se pudo abrir el archivo temporal para escribir en el directorio «%s»: %s\n"
+#~ msgid ""
+#~ "%d: Could not open temporary file for writing in directory '%s': %s\n"
+#~ msgstr ""
+#~ "%d: No se pudo abrir el archivo temporal para escribir en el directorio «%"
+#~ "s»: %s\n"
 
-#. update block.device with new value
-#: ../tools/fstab-sync.c:901
-#, c-format
-msgid "%d: Found %s pointing to %s in"
-msgstr "%d: Se encontró %s apuntando a %s"
+#~ msgid "%d: Found %s pointing to %s in"
+#~ msgstr "%d: Se encontró %s apuntando a %s"
 
-#: ../tools/fstab-sync.c:1055
-#, c-format
-msgid "%d: Could not stat '%s': %s\n"
-msgstr "%d: No se pudo acceder a «%s»: %s\n"
+#~ msgid "%d: Could not stat '%s': %s\n"
+#~ msgstr "%d: No se pudo acceder a «%s»: %s\n"
 
-#: ../tools/fstab-sync.c:1166
-#, c-format
-msgid "%d: entering add_hal_device, udi='%s'\n"
-msgstr "%d: entrando add_hal_device, udi=«%s»\n"
+#~ msgid "%d: entering add_hal_device, udi='%s'\n"
+#~ msgstr "%d: entrando add_hal_device, udi=«%s»\n"
 
-#. no label
-#: ../tools/fstab-sync.c:1206 ../tools/fstab-sync.c:1273
-#, c-format
-msgid "%d: Could not add entry to fstab file: block device %s already listed\n"
-msgstr "%d: No se pudo añadir la entrada al archivo fstab: el dispositivo de bloques %s ya está listado\n"
+#~ msgid ""
+#~ "%d: Could not add entry to fstab file: block device %s already listed\n"
+#~ msgstr ""
+#~ "%d: No se pudo añadir la entrada al archivo fstab: el dispositivo de "
+#~ "bloques %s ya está listado\n"
 
-#: ../tools/fstab-sync.c:1236 ../tools/fstab-sync.c:1306
-#, c-format
-msgid ""
-"%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s', normalized_desired_mount_point='%s'\n"
-msgstr ""
-"%d: Unidad: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s', normalized_desired_mount_point='%s'\n"
+#~ msgid ""
+#~ "%d: drive: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s', normalized_desired_mount_point='%s'\n"
+#~ msgstr ""
+#~ "%d: Unidad: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s', normalized_desired_mount_point='%s'\n"
 
-#: ../tools/fstab-sync.c:1297
-#, c-format
-msgid ""
-"%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s'\n"
-msgstr ""
-"%d: volumen: desired_mount_point='%s', fstype='%s', options='%s', "
-"mount_point='%s'\n"
+#~ msgid ""
+#~ "%d: volume: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s'\n"
+#~ msgstr ""
+#~ "%d: volumen: desired_mount_point='%s', fstype='%s', options='%s', "
+#~ "mount_point='%s'\n"
 
-#: ../tools/fstab-sync.c:1381 ../tools/fstab-sync.c:1496
-#: ../tools/fstab-sync.c:1647
-#, c-format
-msgid "%d: Failed to rename '%s' to '%s': %s\n"
-msgstr "%d: Falló al renombrar «%s» a «%s»: %s\n"
+#~ msgid "%d: Failed to rename '%s' to '%s': %s\n"
+#~ msgstr "%d: Falló al renombrar «%s» a «%s»: %s\n"
 
-#: ../tools/fstab-sync.c:1392
-#, c-format
-msgid "%d: added mount point '%s' for device '%s'\n"
-msgstr "%d: añadió el punto de montaje «%s» para el dispositivo «%s»\n"
+#~ msgid "%d: added mount point '%s' for device '%s'\n"
+#~ msgstr "%d: añadió el punto de montaje «%s» para el dispositivo «%s»\n"
 
-#: ../tools/fstab-sync.c:1394
-#, c-format
-msgid "added mount point %s for %s"
-msgstr "añadió un punto de montaje %s para %s"
+#~ msgid "added mount point %s for %s"
+#~ msgstr "añadió un punto de montaje %s para %s"
 
-#: ../tools/fstab-sync.c:1463
-#, c-format
-msgid "%d: Could not remove device '%s' with UDI '%s' from fs table: not found\n"
-msgstr "%d: No se pudo eliminar el dispositivo «%s» con UDI «%s» de la tabla de sistemas de archivos: no se encontró\n"
+#~ msgid ""
+#~ "%d: Could not remove device '%s' with UDI '%s' from fs table: not found\n"
+#~ msgstr ""
+#~ "%d: No se pudo eliminar el dispositivo «%s» con UDI «%s» de la tabla de "
+#~ "sistemas de archivos: no se encontró\n"
 
-#: ../tools/fstab-sync.c:1473 ../tools/fstab-sync.c:1575
-#, c-format
-msgid "%d: Failed to remove mount point '%s': %s\n"
-msgstr "%d: Falló al eliminar el punto de montaje para «%s»: %s\n"
+#~ msgid "%d: Failed to remove mount point '%s': %s\n"
+#~ msgstr "%d: Falló al eliminar el punto de montaje para «%s»: %s\n"
 
-#: ../tools/fstab-sync.c:1501
-#, c-format
-msgid "%d: removed mount point for device '%s'\n"
-msgstr "%d: eliminó el punto de montaje para el dispositivo «%s»\n"
+#~ msgid "%d: removed mount point for device '%s'\n"
+#~ msgstr "%d: eliminó el punto de montaje para el dispositivo «%s»\n"
 
-#: ../tools/fstab-sync.c:1503
-#, c-format
-msgid "removed mount point %s for %s"
-msgstr "eliminó el punto de montaje %s para %s"
+#~ msgid "removed mount point %s for %s"
+#~ msgstr "eliminó el punto de montaje %s para %s"
 
-#: ../tools/fstab-sync.c:1566
-#, c-format
-msgid "%d: Seeing if line for dev='%s',mnt='%s' should be removed\n"
-msgstr "%d: Viendo si la línea para dev=«%s»,mnt=«%s» debería ser eliminada\n"
+#~ msgid "%d: Seeing if line for dev='%s',mnt='%s' should be removed\n"
+#~ msgstr ""
+#~ "%d: Viendo si la línea para dev=«%s»,mnt=«%s» debería ser eliminada\n"
 
-#: ../tools/fstab-sync.c:1567
-#, c-format
-msgid "%d: is_generated=%d, is_mounted=%d\n"
-msgstr "%d: is_generated=%d, is_mounted=%d\n"
+#~ msgid "%d: is_generated=%d, is_mounted=%d\n"
+#~ msgstr "%d: is_generated=%d, is_mounted=%d\n"
 
-#: ../tools/fstab-sync.c:1654
-msgid "removed all generated mount points"
-msgstr "eliminó todos los puntos de montaje generados"
+#~ msgid "removed all generated mount points"
+#~ msgstr "eliminó todos los puntos de montaje generados"
 
-#: ../tools/fstab-sync.c:1685
-msgid "Add an entry to fstab"
-msgstr "Añadir una entrada a fstab"
+#~ msgid "Add an entry to fstab"
+#~ msgstr "Añadir una entrada a fstab"
 
-#: ../tools/fstab-sync.c:1685 ../tools/fstab-sync.c:1686
-msgid "UDI"
-msgstr "UDI"
+#~ msgid "UDI"
+#~ msgstr "UDI"
 
-#: ../tools/fstab-sync.c:1686
-msgid "Remove an entry from fstab"
-msgstr "Eliminar una entrada de fstab"
+#~ msgid "Remove an entry from fstab"
+#~ msgstr "Eliminar una entrada de fstab"
 
-#: ../tools/fstab-sync.c:1687
-msgid "Remove all generated entries from fstab"
-msgstr "Eliminar todas las entradas generadas de fstab"
+#~ msgid "Remove all generated entries from fstab"
+#~ msgstr "Eliminar todas las entradas generadas de fstab"
 
-#: ../tools/fstab-sync.c:1688
-msgid "Report detailed information about operation progress"
-msgstr "Proporcionar información detallada sobre el progreso de las operaciones"
+#~ msgid "Report detailed information about operation progress"
+#~ msgstr ""
+#~ "Proporcionar información detallada sobre el progreso de las operaciones"
 
-#: ../tools/fstab-sync.c:1760
-#, c-format
-msgid "%d: %s entering; %s udi=%s\n"
-msgstr "%d: %s entrando; %s udi=%s\n"
+#~ msgid "%d: %s entering; %s udi=%s\n"
+#~ msgstr "%d: %s entrando; %s udi=%s\n"
 
-#: ../tools/fstab-sync.c:1765
-#, c-format
-msgid "%d: couldn't open %s O_RDONLY; bailing out\n"
-msgstr "%d: no se pudo abrir %s O_RDONLY; saliendo\n"
+#~ msgid "%d: couldn't open %s O_RDONLY; bailing out\n"
+#~ msgstr "%d: no se pudo abrir %s O_RDONLY; saliendo\n"
 
-#: ../tools/fstab-sync.c:1770
-#, c-format
-msgid "%d: Acquiring advisory lock on "
-msgstr "%d: Adquiriendo aviso de bloqueo en"
+#~ msgid "%d: Acquiring advisory lock on "
+#~ msgstr "%d: Adquiriendo aviso de bloqueo en"
 
-#: ../tools/fstab-sync.c:1773
-#, c-format
-msgid "%d: Error acquiring lock '%s'; bailing out\n"
-msgstr "%d: Error adquiriendo el bloqueo de «%s»; saliendo\n"
+#~ msgid "%d: Error acquiring lock '%s'; bailing out\n"
+#~ msgstr "%d: Error adquiriendo el bloqueo de «%s»; saliendo\n"
 
-#: ../tools/fstab-sync.c:1778
-#, c-format
-msgid "%d: Lock acquired\n"
-msgstr "%d: Bloqueo adquirido\n"
+#~ msgid "%d: Lock acquired\n"
+#~ msgstr "%d: Bloqueo adquirido\n"
 
-#: ../tools/fstab-sync.c:1840
-#, c-format
-msgid "%d: Releasing advisory lock on %s\n"
-msgstr "%d: Soltando aviso de bloqueo en %s\n"
+#~ msgid "%d: Releasing advisory lock on %s\n"
+#~ msgstr "%d: Soltando aviso de bloqueo en %s\n"
 
-#: ../tools/fstab-sync.c:1843
-#, c-format
-msgid "%d: Error releasing lock '%s'\n"
-msgstr "%d: Error soltando bloqueo«%s»\n"
+#~ msgid "%d: Error releasing lock '%s'\n"
+#~ msgstr "%d: Error soltando bloqueo«%s»\n"
 
-#: ../tools/fstab-sync.c:1847
-#, c-format
-msgid "%d: Lock released\n"
-msgstr "%d: Bloqueo soltado\n"
+#~ msgid "%d: Lock released\n"
+#~ msgstr "%d: Bloqueo soltado\n"
 
-#: ../tools/fstab-sync.c:1851
-#, c-format
-msgid "%d: %s exiting; %s udi=%s\n"
-msgstr "%d: %s saliendo; %s udi=%s\n"
-
+#~ msgid "%d: %s exiting; %s udi=%s\n"
+#~ msgstr "%d: %s saliendo; %s udi=%s\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-08-27 22:01+0200\n"
+"POT-Creation-Date: 2007-03-19 22:51-0400\n"
 "PO-Revision-Date: 2006-08-27 22:01+0200\n"
 "Last-Translator: S.Çağlar Onur <caglar@pardus.org.tr>\n"
 "Language-Team: TR <tr@li.org>\n"
@@ -181,7 +181,6 @@ msgstr "%s Çıkartılabilir Depolama Ortamı"
 msgid "%s Media"
 msgstr "%s Depolama Ortamı"
 
-#. * @}
 #: ../tools/device-manager/hal-device-manager.glade.h:1
 msgid "<b>Bandwidth:</b>"
 msgstr "<b>Band genişliği:</b>"
@@ -242,70 +241,70 @@ msgstr "Gelişmiş"
 msgid "Bus Type"
 msgstr "Veri Yolu Tipi"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:17
+#: ../tools/device-manager/hal-device-manager.glade.h:16
 msgid "Device"
 msgstr "Aygıt"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:18
+#: ../tools/device-manager/hal-device-manager.glade.h:17
 msgid "Device Manager"
 msgstr "Aygıt Yöneticisi"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:19
+#: ../tools/device-manager/hal-device-manager.glade.h:18
 msgid "Device Name"
 msgstr "Aygıt İsmi"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:20
+#: ../tools/device-manager/hal-device-manager.glade.h:19
 msgid "Device Type"
 msgstr "Aygıt Tipi"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:21
+#: ../tools/device-manager/hal-device-manager.glade.h:20
 msgid "Device Vendor"
 msgstr "Aygıt Üreticisi"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:22
+#: ../tools/device-manager/hal-device-manager.glade.h:21
 msgid "Manufacturer ID"
 msgstr "Üretici NO"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:23
+#: ../tools/device-manager/hal-device-manager.glade.h:22
 msgid "Max \tPower Drain"
 msgstr "En Fazla \tGüç Tüketimi"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:24
+#: ../tools/device-manager/hal-device-manager.glade.h:23
 msgid "OEM Manufacturer ID"
 msgstr "OEM Üretici NO"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:25
+#: ../tools/device-manager/hal-device-manager.glade.h:24
 msgid "OEM Product ID"
 msgstr "OEM Ürün ID'si"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:26
+#: ../tools/device-manager/hal-device-manager.glade.h:25
 msgid "PCI"
 msgstr "PCI"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:27
+#: ../tools/device-manager/hal-device-manager.glade.h:26
 msgid "Product ID"
 msgstr "Ürün No"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:28
+#: ../tools/device-manager/hal-device-manager.glade.h:27
 msgid "Product Revision"
 msgstr "Ürün Revizyonu"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:29
+#: ../tools/device-manager/hal-device-manager.glade.h:28
 msgid "Status"
 msgstr "Durum"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:30
+#: ../tools/device-manager/hal-device-manager.glade.h:29
 msgid "USB"
 msgstr "USB"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:31
+#: ../tools/device-manager/hal-device-manager.glade.h:30
 msgid "USB Bandwidth"
 msgstr "USB Band Genişliği"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:32
+#: ../tools/device-manager/hal-device-manager.glade.h:31
 msgid "USB Version"
 msgstr "USB Versiyonu"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:33
+#: ../tools/device-manager/hal-device-manager.glade.h:32
 msgid "_Virtual Devices"
 msgstr "_Sanal Aygıtlar"
