@@ -2230,182 +2230,69 @@ ieee1394_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
-#define CSR_OFFSET	0x40
-#define CSR_LEAF	0x80
-#define CSR_DIRECTORY	0xc0
-
-#define CSR_DESCRIPTOR		0x01
-#define CSR_VENDOR		0x03
-#define CSR_HARDWARE_VERSION	0x04
-#define CSR_NODE_CAPABILITIES	0x0c
-#define CSR_UNIT		0x11
-#define CSR_SPECIFIER_ID	0x12
-#define CSR_VERSION		0x13
-#define CSR_DEPENDENT_INFO	0x14
-#define CSR_MODEL		0x17
-#define CSR_INSTANCE		0x18
-
-#define SBP2_COMMAND_SET_SPECIFIER	0x38
-#define SBP2_COMMAND_SET		0x39
-#define SBP2_COMMAND_SET_REVISION	0x3b
-#define SBP2_FIRMWARE_REVISION		0x3c
-
-static char *
-decode_textual_descriptor(uint32_t *block, char *buffer, size_t size)
+static HalDevice *
+firewire_add_device (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev)
 {
-	unsigned int length;
-	uint32_t *p, *end;
-	
-	length = block[0] >> 16;
-	if (block[1] != 0 || block[2] != 0) {
-		snprintf(buffer, length, "unknown encoding/language: 0x%08x/0x%08x\n",
-			 buffer[1], buffer[2]);
-		return buffer;
+	HalDevice *d = NULL;
+	gchar buf[64];
+
+	if (device_file == NULL)
+		goto out;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "ieee1394");
+	hal_device_property_set_string (d, "info.bus", "ieee1394");
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	hal_device_add_capability (d, "ieee1394");
+	hal_device_property_set_string (d, "ieee1394.device", device_file);
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_util_set_uint64_from_file (d, "ieee1394.guid", sysfs_path, "guid", 16);	
+	hal_util_set_int_from_file  (d, "ieee1394.vendor_id", sysfs_path, "vendor", 16);
+	hal_util_set_int_from_file  (d, "ieee1394.product_id", sysfs_path, "model", 16);
+	hal_util_set_int_from_file  (d, "ieee1394.harware_version", sysfs_path, "harware_version", 16);
+
+	if (!hal_util_set_string_from_file (d, "ieee1394.vendor", sysfs_path, "vendor_name")) {
+		/* FIXME: We should do a OUI lookup here, see
+		 * http://standards.ieee.org/regauth/oui/oui.txt */
+
+		g_snprintf (buf, sizeof (buf), "Unknown (0x%06x)", 
+			    hal_device_property_get_int (d, "ieee1394.vendor_id"));
+		hal_device_property_set_string (d, "ieee1394.vendor", buf);
 	}
-	
-	p = &block[3];
-	memset(buffer, 0, size);
-	if (length - 2 > size / 4)
-		end = &block[3 + size / 4];
-	else
-		end = &block[length + 1];
-	
-	while (p < end) {
-		* (uint32_t *) buffer = __cpu_to_be32(*p);
-		buffer += 4;
-		p++;
-	}
-	
-	return buffer;
+
+	hal_util_set_string_from_file (d, "ieee1394.product", sysfs_path, "model_name");
+
+ out:
+	return d;
 }
 
-#define ARRAY_LENGTH(a) (sizeof(a)/sizeof((a)[0]))
-
-
-struct csr_iterator {
-	uint32_t *p;
-	uint32_t *end;
-};
-
-static void
-csr_iterator_init(struct csr_iterator *ci, uint32_t *p)
+static HalDevice *
+firewire_add_unit (const gchar *sysfs_path, int unit_id, HalDevice *parent_dev)
 {
-	ci->p = p + 1;
-	ci->end = ci->p + (p[0] >> 16);
-}
-
-static int
-csr_iterator_next(struct csr_iterator *ci, int *key, int *value)
-{
-	*key = *ci->p >> 24;
-	*value = *ci->p & 0xffffff;
-
-	return ci->p++ < ci->end;
-}
-
-static void
-firewire_parse_config_rom (HalDevice *d, uint32_t *rom)
-{
-	struct csr_iterator ci;
-	int key, value, last_key = 0, vendor = 0, model = 0;
-	uint64_t guid;
-	char buffer[256];
-	
-	guid = ((__u64)rom[3] << 32) | rom[4];
-	hal_device_property_set_uint64 (d, "ieee1394.guid", guid);
-	
-	csr_iterator_init(&ci, rom + 5);
-	while (csr_iterator_next(&ci, &key, &value)) {
-		switch (key) {
-		case CSR_VENDOR:
-			vendor = value;
-			hal_device_property_set_int (d, "ieee1394.vendor_id", vendor);
-			break;
-		case CSR_MODEL:
-			model = value;
-			hal_device_property_set_int (d, "ieee1394.product_id", vendor);
-			break;
-		case CSR_DESCRIPTOR | CSR_LEAF:
-			if (last_key == CSR_VENDOR) {
-				decode_textual_descriptor(ci.p - 1 + value,
-							  buffer, sizeof buffer);
-				hal_device_property_set_string (d, "ieee1394.vendor", buffer);
-			} else if (last_key == CSR_MODEL) {
-				decode_textual_descriptor(ci.p - 1 + value,
-							  buffer, sizeof buffer);
-				hal_device_property_set_string (d, "ieee1394.product", buffer);
-			}
-			break;
-		case CSR_HARDWARE_VERSION:
-			hal_device_property_set_int (d, "ieee1394.hardware_version", value);
-			break;
-			
-		}
-
-		last_key = key;
-	}
-}
-
-
-static void
-decode_sbp2_entry (HalDevice *d, int key, int value)
-{
-	switch (key) {
-	case SBP2_FIRMWARE_REVISION:
-		hal_device_property_set_int (d, "ieee1394_unit.sbp2.firmware_revision", value);
-		break;
-	}
-}
-
-struct specifier {
 	int specifier_id;
 	int version;
-	void (*decode_entry) (HalDevice *d, int key, int value);
-} specifiers[] = {
-	{
-		0x00609e,
-		0x010483,
-		decode_sbp2_entry
-	}
-};
+	HalDevice *d;
 
-static void
-firewire_unit_parse_config_rom (HalDevice *d, uint32_t *rom, int index)
-{
-	struct csr_iterator ci;
-	unsigned int i;
-	int key;
-	int value;
-	int specifier_id = 0;
-	int version = 0;
-	
-	csr_iterator_init(&ci, rom + index);
-	while (csr_iterator_next(&ci, &key, &value)) {
-		switch (key) {
-		case CSR_SPECIFIER_ID:
-			specifier_id = value;
-			hal_device_property_set_int (d, "ieee1394_unit.specifier_id", specifier_id);
-			break;
-		case CSR_VERSION:
-			version = value;
-			hal_device_property_set_int (d, "ieee1394_unit.version", version);
-			break;
-			
-		default:
-			if (key < 0x38)
-				break;
-			
-			/* Specifier dependent key/value pair. */
-			for (i = 0; i < ARRAY_LENGTH(specifiers); i++) {
-				if (specifiers[i].specifier_id == specifier_id &&
-				    specifiers[i].version == version) {
-					specifiers[i].decode_entry (d, key, value);
-					break;
-				}
-			}
-		}
-	}
-	
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "ieee1394_unit");
+	hal_device_property_set_string (d, "info.bus", "ieee1394_unit");
+	hal_device_property_set_string (d, "info.parent",
+					hal_device_get_udi (parent_dev));
+	hal_device_property_set_string (d, "ieee1394_unit.originating_device", 
+					hal_device_get_udi (parent_dev));
+	hal_device_property_set_int (d, "ieee1394_unit.unit_index", unit_id);
+	hal_device_add_capability (d, "ieee1394_unit");
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_util_set_int_from_file  (d, "ieee1394.vendor_id", sysfs_path, "../vendor_id", 16);
+	hal_util_get_int_from_file  (sysfs_path, "specifier_id", &specifier_id, 16);
+	hal_device_property_set_int (d, "ieee1394_unit.specifier_id", specifier_id);
+	hal_util_get_int_from_file  (sysfs_path, "version", &version, 16);
+	hal_device_property_set_int (d, "ieee1394_unit.version", version);
+
 	if (specifier_id == 0x00609e && version == 0x010483) {
 		hal_device_add_capability (d, "ieee1394_unit.sbp2");
 	} else if (specifier_id == 0x00a02d) {
@@ -2424,127 +2311,28 @@ firewire_unit_parse_config_rom (HalDevice *d, uint32_t *rom, int index)
 		hal_device_add_capability (d, "ieee1394_unit.iidc");
 	}
 
-#if 0
-	/* TODO */
-
-	/* In the AV/C case we should send a unit info command to the
-	 * device to see what kind of AV/C device it is (audio, camcorder,
-	 * etc).  We might want to do this in a helper app.  And we need
-	 * the device file for this...  This will be another 200 lines of
-	 * code.
-	 */
-	if (specifier_id == 0x00a02d && (version & 0xff0001) == 0x010001) {
-		query_unit_info("/dev/fw1.0");
-	}
-#endif
+	return d;
 }
-
 
 static HalDevice *
 firewire_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
-	HalDevice *d;
 	int device_id;
 	int unit_id;
 	const char *bus_id;
-	gboolean is_device = FALSE;
-	gboolean is_unit = FALSE;
-	char rom[256];
-	ssize_t rom_size;
-	char *str;
-	int fd;
-
-	d = NULL;
 
 	if (parent_dev == NULL)
-		goto out;
+		return NULL;
 
 	bus_id = hal_util_get_last_element (sysfs_path);
 
 	if (sscanf (bus_id, "fw%d.%d", &device_id, &unit_id) == 2 ) {
-		is_unit = TRUE;
+		return firewire_add_unit (sysfs_path, unit_id, parent_dev);
 	} else if (sscanf (bus_id, "fw%d", &device_id) == 1) {
-		is_device = TRUE;
+		return firewire_add_device (sysfs_path, device_file, parent_dev);
 	} else {
-		goto out;
+		return NULL;
 	}
-
-	if (is_device) {
-
-		if (device_file == NULL)
-			goto out;
-
-		str = g_strdup_printf ("%s/config_rom", sysfs_path);
-		fd = open (str, O_RDONLY);
-		if (fd < 0) {
-			HAL_ERROR (("Cannot open firewire config rom at %s", str));
-			g_free (str);
-			goto out;
-		}
-		if ((rom_size = read (fd, rom, sizeof (rom))) < 0) {
-			HAL_ERROR (("Cannot read firewire config rom at %s", str));
-			g_free (str);
-			close (fd);
-			goto out;
-		}
-		g_free (str);
-		close (fd);
-
-		HAL_INFO (("firewire config rom is %d bytes", rom_size));
-
-		d = hal_device_new ();
-		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-		hal_device_property_set_string (d, "info.subsystem", "ieee1394");
-		hal_device_property_set_string (d, "info.bus", "ieee1394");
-		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
-		hal_device_add_capability (d, "ieee1394");
-		hal_device_property_set_string (d, "ieee1394.device", device_file);
-		hal_util_set_driver (d, "info.linux.driver", sysfs_path);
-
-		firewire_parse_config_rom (d, (uint32_t *) rom);
-	} else {
-		int rom_index;
-
-		str = g_strdup_printf ("%s/../config_rom", sysfs_path);
-		fd = open (str, O_RDONLY);
-		if (fd < 0) {
-			HAL_ERROR (("Cannot open firewire config rom at %s", str));
-			g_free (str);
-			goto out;
-		}
-		if ((rom_size = read (fd, rom, sizeof (rom))) < 0) {
-			HAL_ERROR (("Cannot read firewire config rom at %s", str));
-			g_free (str);
-			close (fd);
-			goto out;
-		}
-		g_free (str);
-		close (fd);
-
-		if (!hal_util_get_int_from_file (sysfs_path, "rom_index", &rom_index, 0)) {
-			HAL_ERROR (("Cannot read get %s/rom_index", sysfs_path));
-			goto out;
-		}
-
-		HAL_INFO (("firewire config rom is %d bytes - unit rom index is %d", rom_size, rom_index));
-
-		d = hal_device_new ();
-		hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-		hal_device_property_set_string (d, "info.subsystem", "ieee1394_unit");
-		hal_device_property_set_string (d, "info.bus", "ieee1394_unit");
-		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "ieee1394_unit.originating_device", 
-						hal_device_get_udi (parent_dev));
-		hal_device_property_set_int (d, "ieee1394_unit.unit_index", unit_id);
-		hal_device_add_capability (d, "ieee1394_unit");
-		hal_util_set_driver (d, "info.linux.driver", sysfs_path);
-
-		firewire_unit_parse_config_rom (d, (uint32_t *) rom, rom_index);
-	}
-
-
-out:
-	return d;
 }
 
 static const gchar *
@@ -2630,7 +2418,7 @@ ccw_add_tape_properties (HalDevice *d, const gchar *sysfs_path)
 	const gchar *state_text[3] = {"unknown", "loaded", "no medium"};
 
 	hal_util_set_string_from_file (d, "ccw.tape.state", sysfs_path, "state");
-	hal_util_set_string_from_file (d, "ccw.tape.operation", sysfs_path,
+    	hal_util_set_string_from_file (d, "ccw.tape.operation", sysfs_path,
 				       "operation");
 	/* The following properties are only valid for online devices. */
 	if (!hal_util_get_int_from_file (sysfs_path, "online", &online, 2))
