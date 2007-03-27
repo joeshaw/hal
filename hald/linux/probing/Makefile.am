@@ -6,7 +6,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-I$(top_srcdir) \
-	@GLIB_CFLAGS@ @DBUS_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@ @VOLUME_ID_CFLAGS@
 
 if HALD_COMPILE_LINUX
 libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume hald-probe-printer \
