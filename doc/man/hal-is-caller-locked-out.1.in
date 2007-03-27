@@ -1,0 +1,68 @@
+.\" 
+.\" hal-is-caller-locked-out manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH HAL-IS-CALLER-LOCKED-OUT 1
+.SH NAME
+hal-is-caller-locked-out \- determine if a caller is locked out
+.SH SYNOPSIS
+.PP
+.B hal-is-caller-locked-out
+[options]
+
+.SH DESCRIPTION
+
+\fIhal-is-caller-locked-out\fP determines if a specific caller is
+locked out of a specific D-Bus interface on a specific device. For
+more information about both the big picture and specific
+.B HAL
+properties, refer to the \fIHAL spec\fP which can be found in
+.I "/usr/share/doc/hal-0.5.9/spec/hal-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "--udi"
+The UDI (\fIUnique Device Identifier\fP) of the device object.
+.TP
+.I "--interface"
+The name of the interface to check fo.
+.TP
+.I "--caller"
+The unique D-Bus name on the system bus of the caller.
+.TP
+.I "--help"
+Print out usage.
+.TP
+.I "--version"
+Print the version.
+
+.SH RETURN VALUE
+.PP
+This program determines if a given process on the system bus is locked
+out of a D-Bus interface. If the process is locked out or an error
+occurs this program exits with exit code 1. Otherwise it exits with
+exit code 0. Note that only the super user (root) or other privileged
+users can use this tool.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIhald\fR\|(1), 
+\&\fIlshal\fR\|(1), 
+\&\fIhal-get-property\fR\|(1),
+\&\fIhal-set-property\fR\|(1),
+\&\fIhal-find-by-property\fR\|(1),
+\&\fIhal-find-by-capability\fR\|(1)
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+

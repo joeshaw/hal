@@ -2019,8 +2019,8 @@ device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, d
 
 	sender = dbus_message_get_sender (message);
 
-        /* only allow HAL helpers to ask this question */
-        if (!local_interface) {
+        /* only allow HAL helpers / privileged users to ask this question */
+        if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
                 raise_permission_denied (connection, message, "IsCallerLockedOut: not privileged");
         }
 
@@ -2029,7 +2029,7 @@ device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, d
 				    DBUS_TYPE_STRING, &interface_name,
 				    DBUS_TYPE_STRING, &caller_sysbus_name,
 				    DBUS_TYPE_INVALID)) {
-		raise_syntax (connection, message, "ReleaseInterfaceLock");
+		raise_syntax (connection, message, "IsCallerLockedOut");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 

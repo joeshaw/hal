@@ -96,7 +96,8 @@ hotplug event and one after.
 \&\fIhal-set-property\fR\|(1),
 \&\fIhal-get-property\fR\|(1),
 \&\fIhal-find-by-property\fR\|(1),
-\&\fIhal-find-by-capability\fR\|(1)
+\&\fIhal-find-by-capability\fR\|(1),
+\&\fIhal-is-caller-locked-out\fR\|(1)
 
 .SH AUTHOR
 Written by David Zeuthen <david@fubar.dk> with a lot of help from many

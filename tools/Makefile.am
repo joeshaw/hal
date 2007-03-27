@@ -29,7 +29,8 @@ bin_PROGRAMS =                    \
 	hal-set-property          \
 	hal-find-by-capability    \
 	hal-find-by-property      \
-	hal-device
+	hal-device		  \
+	hal-is-caller-locked-out
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -48,6 +49,9 @@ hal_find_by_property_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_device_SOURCES = hal-device.c
 hal_device_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+
+hal_is_caller_locked_out_SOURCES = hal-is-caller-locked-out.c
+hal_is_caller_locked_out_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 libexec_PROGRAMS =                          \
 	hal-storage-mount	            \
