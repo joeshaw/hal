@@ -54,27 +54,58 @@
 #define FW_CDEV_EVENT_REQUEST		0x02
 #define FW_CDEV_EVENT_ISO_INTERRUPT	0x03
 
+struct fw_cdev_event_bus_reset {
+	__u64 closure;
+	__u32 type;
+	__u32 node_id;
+	__u32 local_node_id;
+	__u32 bm_node_id;
+	__u32 irm_node_id;
+	__u32 root_node_id;
+	__u32 generation;
+};
+
 struct fw_cdev_event_response {
+	__u64 closure;
 	__u32 type;
 	__u32 rcode;
-	__u64 closure;
 	__u32 length;
 	__u32 data[0];
 };
 
 struct fw_cdev_event_request {
+	__u64 closure;
 	__u32 type;
 	__u32 tcode;
 	__u64 offset;
-	__u64 closure;
-	__u32 serial;
+	__u32 handle;
 	__u32 length;
 	__u32 data[0];
 };
 
+#define FW_CDEV_IOC_GET_INFO		_IO('#', 0x00)
 #define FW_CDEV_IOC_SEND_REQUEST	_IO('#', 0x01)
 #define FW_CDEV_IOC_ALLOCATE		_IO('#', 0x02)
-#define FW_CDEV_IOC_SEND_RESPONSE	_IO('#', 0x03)
+#define FW_CDEV_IOC_DEALLOCATE		_IO('#', 0x03)
+#define FW_CDEV_IOC_SEND_RESPONSE	_IO('#', 0x04)
+#define FW_CDEV_IOC_INITIATE_BUS_RESET	_IO('#', 0x05)
+#define FW_CDEV_IOC_ADD_DESCRIPTOR	_IO('#', 0x06)
+#define FW_CDEV_IOC_REMOVE_DESCRIPTOR	_IO('#', 0x07)
+
+/* FW_CDEV_VERSION History
+ *
+ * 1	Feb 18, 2007:  Initial version.
+ */
+#define FW_CDEV_VERSION		1
+
+struct fw_cdev_get_info {
+	__u32 version;
+	__u32 rom_length;
+	__u64 rom;
+	__u64 bus_reset;
+	__u64 bus_reset_closure;
+	__u32 card;
+};
 
 struct fw_cdev_send_request {
 	__u32 tcode;
@@ -82,19 +113,25 @@ struct fw_cdev_send_request {
 	__u64 offset;
 	__u64 closure;
 	__u64 data;
+	__u32 generation;
 };
 
 struct fw_cdev_send_response {
 	__u32 rcode;
 	__u32 length;
 	__u64 data;
-	__u32 serial;
+	__u32 handle;
 };
 
 struct fw_cdev_allocate {
 	__u64 offset;
 	__u64 closure;
 	__u32 length;
+	__u32 handle;
+};
+
+struct fw_cdev_deallocate {
+	__u32 handle;
 };
 
 /* end of code from fw-device-cdev.h */
@@ -183,12 +220,12 @@ static LibHalContext *ctx = NULL;
 
 
 static void
-send_response (int fd, __u32 serial, int rcode, void *data, size_t length)
+send_response (int fd, __u32 handle, int rcode, void *data, size_t length)
 {
 	struct fw_cdev_send_response response;
 	
 	response.length = length;
-	response.serial = serial;
+	response.handle = handle;
 	response.rcode  = rcode;
 	response.data   = ptr_to_u64(data);
 	
@@ -210,12 +247,12 @@ handle_request (int fd, struct fw_cdev_event_request *request)
 
 	if (request->tcode != TCODE_WRITE_BLOCK_REQUEST ||
 	    request->offset != CSR_FCP_RESPONSE) {
-		send_response (fd, request->serial, RCODE_TYPE_ERROR, NULL, 0);
+		send_response (fd, request->handle, RCODE_TYPE_ERROR, NULL, 0);
 		HAL_ERROR (("AVC response to wrong address"));
 		return -1;
 	}
 	
-	send_response (fd, request->serial, RCODE_COMPLETE, NULL, 0);
+	send_response (fd, request->handle, RCODE_COMPLETE, NULL, 0);
 	
 	response = (void *) request->data;
 	if (response->frame.cts != CTS_AVC) {
@@ -246,7 +283,7 @@ handle_request (int fd, struct fw_cdev_event_request *request)
 #define AVC_TIMEOUT 200
 
 static int
-get_unit_info (int fd)
+get_unit_info (int fd, int generation)
 {
 	struct {
 		struct avc_frame frame;
@@ -263,6 +300,7 @@ get_unit_info (int fd)
 	request.tcode = TCODE_WRITE_BLOCK_REQUEST;
 	request.offset = CSR_FCP_COMMAND;
 	request.length = 8;
+	request.generation = generation;
 	request.data = ptr_to_u64(&payload);
 	
 	payload.frame.cts = CTS_AVC;
@@ -332,6 +370,8 @@ int main (int argc, char *argv[])
 	int i;
 	int fd;
 	int ret;
+	struct fw_cdev_get_info get_info;
+	struct fw_cdev_event_bus_reset bus_reset;
 	struct fw_cdev_allocate request;
 	const char *device_file;
 	const char *ieee1394_udi;
@@ -362,21 +402,31 @@ int main (int argc, char *argv[])
 
 	fd = open (device_file, O_RDWR);
 	if (fd < 0) {
-		HAL_ERROR (("failed to open %s: %d", device_file, strerror (errno)));
+		HAL_ERROR (("failed to open %s: %s", device_file, strerror (errno)));
+		goto out;
+	}
+
+	get_info.version = FW_CDEV_VERSION;
+	get_info.rom = 0;
+	get_info.rom_length = 0;
+	get_info.bus_reset = ptr_to_u64(&bus_reset);
+	if (ioctl(fd, FW_CDEV_IOC_GET_INFO, &get_info) < 0) {
+		HAL_ERROR (("get config rom ioctl: %s", strerror(errno)));
 		goto out;
 	}
 
 	request.offset = CSR_FCP_RESPONSE;
 	request.length = 0x200;
-	request.closure = (__u64) NULL;
+	request.closure = 0;
 	if (ioctl (fd, FW_CDEV_IOC_ALLOCATE, &request) < 0) {
-		HAL_ERROR (("failed to allocate fcp response area: %s", device_file, strerror (errno)));
+		HAL_ERROR (("failed to allocate fcp response area: %s",
+			    strerror (errno)));
 		goto out;
 	}
 
 	/* Retry the command three times. */
 	for (i = 0; i < 3; i++) {
-		if (get_unit_info(fd) == 0)
+		if (get_unit_info(fd, bus_reset.generation) == 0)
 			break;
 		poll (NULL, 0, 500); /* take a 500ms nap */
 	}
