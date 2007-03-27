@@ -925,6 +925,13 @@ echo "
 
 
 
+if test x$enable_umount_hal = xyes; then
+   echo "NOTE: Without a patched umount(8) this will have no effect. See "
+   echo "      https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=188193 "
+   echo "      for a suitable patch for util-linux. "
+   echo
+fi
+
 if test x$enable_verbose_mode = xyes; then
    echo "NOTE: building with verbose mode increases library size, may slightly "
    echo "      increase security risk, and decreases performance."
