@@ -27,7 +27,7 @@ The following options are supported:
 The UDI (\fIUnique Device Identifier\fP) of the device object.
 .TP
 .I "--interface"
-The name of the interface to check fo.
+The name of the interface to check for.
 .TP
 .I "--caller"
 The unique D-Bus name on the system bus of the caller.
@@ -40,11 +40,10 @@ Print the version.
 
 .SH RETURN VALUE
 .PP
-This program determines if a given process on the system bus is locked
-out of a D-Bus interface. If the process is locked out or an error
-occurs this program exits with exit code 1. Otherwise it exits with
-exit code 0. Note that only the super user (root) or other privileged
-users can use this tool.
+If the given process is locked out or an error occurs, this program
+exits with exit code 1. Otherwise it exits with exit code 0. Note that
+only the super user (root) or other privileged users can use this
+tool.
 
 .SH BUGS
 .PP

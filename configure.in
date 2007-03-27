@@ -863,6 +863,7 @@ doc/man/hal-set-property.1
 doc/man/hal-find-by-property.1
 doc/man/hal-find-by-capability.1
 doc/man/hal-is-caller-locked-out.1
+doc/man/hal-lock.1
 po/Makefile.in
 ])
 
