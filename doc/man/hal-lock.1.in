@@ -64,7 +64,7 @@ would be locked out itself); for example a partition table editor
 .I part-foo
 may use wrapper script like this
 
-.I hal-lock --interface org.freedesktop.Hal.Storage --exclusive --run /path/to/part-foo-program
+.I hal-lock --interface org.freedesktop.Hal.Device.Storage --exclusive --run /path/to/part-foo-program
 
 .SH BUGS
 .PP
