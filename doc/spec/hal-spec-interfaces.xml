@@ -1063,6 +1063,17 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     <para>
       This interface does not emit any signals.
     </para>
+
+    <para>
+      For objects implementing this interface, it will also be checked
+      if the caller is locked out of the Volume interface on the
+      device (and per <xref linkend="interface-device-volume"/> this
+      includes checking whether the caller is locked out of
+      the <literal>org.freedesktop.Hal.Device.Storage</literal>
+      interface for the storage device that the volume originates
+      from).
+    </para>
+
   </sect1>
 
 <!--
