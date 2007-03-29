@@ -11,6 +11,8 @@ hal-find-by-property
 fstab-sync
 hal-acl-tool
 hal-device
+hal-is-caller-locked-out
+hal-lock
 hal-luks-remove
 hal-luks-setup
 hal-system-power-pmu
