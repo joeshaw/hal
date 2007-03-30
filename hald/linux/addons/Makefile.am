@@ -21,8 +21,11 @@ endif
 
 if HAVE_ACPI
 libexec_PROGRAMS  += 			\
-	hald-addon-acpi 		\
+	hald-addon-acpi 		
+if BUILD_ACPI_TOSHIBA
+libexec_PROGRAMS  +=                    \
 	hald-addon-acpi-buttons-toshiba
+endif
 endif
 
 if BUILD_OMAP
@@ -67,8 +70,10 @@ endif
 hald_addon_acpi_SOURCES = addon-acpi.c ../../logger.c ../../util_helper.c
 hald_addon_acpi_LDADD = $(top_builddir)/libhal/libhal.la
 
+if BUILD_ACPI_TOSHIBA
 hald_addon_acpi_buttons_toshiba_SOURCES = addon-acpi-buttons-toshiba.c ../../logger.c ../../util_helper.c
 hald_addon_acpi_buttons_toshiba_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
+endif
 
 hald_addon_hid_ups_SOURCES = addon-hid-ups.c ../../logger.c ../../util_helper.c ../../util_pm.c
 hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
