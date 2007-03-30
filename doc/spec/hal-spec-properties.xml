@@ -193,14 +193,51 @@
       </para>
       
       <para>
-        All callouts execute in a minimal environment. In addition, the
-        UDI of the device object is exported in the environment
+        All callouts are searched for and execute in a minimal
+        environment. In addition, the UDI of the device object is
+        exported in the environment
         variable <literal>UDI</literal>. All properties of the device
         object are exported in the environment prefixed
-        with <literal>HAL_PROP_</literal>. If a device is added or removed is
-        exported in the environment variable <literal>HALD_ACTION
-        </literal>.
+        with <literal>HAL_PROP_</literal>. If a device is added or
+        removed is exported in the environment
+        variable <literal>HALD_ACTION
+        </literal>. The search path for the callout includes the
+        following paths:
       </para>
+
+      <orderedlist>
+        <listitem> 
+	  <para>
+            <literal>$libexecdir</literal> (typically <literal>/usr/libexec</literal> (e.g. Red Hat) or  <literal>/usr/lib/hal</literal> (e.g. Debian))
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>$libdir/hal/scripts</literal> (typically <literal>/usr/lib/hal/scripts</literal> or 
+            <literal>/usr/lib64/hal/scripts</literal>)
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>$bindir/</literal> (typically <literal>/usr/bin</literal>)
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        including $PATH the HAL daemon was started with during system
+        initialization. Depending on the distribution, this typically
+        includes <literal>/sbin</literal>, 
+        <literal>/usr/sbin</literal>, 
+        <literal>/bin</literal>, 
+        <literal>/usr/sbin</literal>. If the program to run is not
+        found in any of these paths, the it <emphasis>will
+        not</emphasis> run even if the given path is absolute. To be
+        portable across operating systems, third party packages
+        providing callouts must therefore only
+        use <literal>$libdir/hal/scripts</literal>.
+      </para>
+        
       <para>
         If ConsoleKit support is enabled, the variables
         <literal>CK_SEATS</literal> (tab sep. list of seat-id's),
@@ -329,7 +366,8 @@
       
       <para>
         Addons are programs that run for the life time of the device
-        object. They execute in the same environment as callouts
+        object. They are searched for and execute in the same
+        environment as callouts
         (e.g. with <literal>HAL_PROP_*</literal> set in the
         environment to represent the device properties) and are
         launched just before the device is announced on D-Bus (but
@@ -395,8 +433,8 @@
       </para>
       
       <para>
-        As with addons, method calls execute in the same minimal
-        environment as callouts
+        As with addons, method calls are searched for and execute in
+        the same minimal environment as callouts
         (e.g. with <literal>HAL_PROP_*</literal> set in the
         environment to represent the device properties) and in
         addition the environment variables
