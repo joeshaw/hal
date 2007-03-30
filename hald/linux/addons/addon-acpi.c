@@ -96,8 +96,6 @@ handle_ibm_acpi_events (LibHalContext *ctx, int type, int event)
 	DBusError error;
 	char udi[256];
 	char *button;
-	char **devices;
-	int num_devices;
 	
 	dbus_error_init (&error);
 	button = NULL;
