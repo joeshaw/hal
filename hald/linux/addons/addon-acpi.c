@@ -89,6 +89,99 @@ acpi_get_event_fp_acpid (void)
 }
 #endif
 
+#ifdef ACPI_IBM_EVENTS
+static void
+handle_ibm_acpi_events (LibHalContext *ctx, int type, int event) 
+{
+	DBusError error;
+	char udi[256];
+	char *button;
+	char **devices;
+	int num_devices;
+	
+	dbus_error_init (&error);
+	button = NULL;
+	snprintf (udi, sizeof (udi), "/org/freedesktop/Hal/devices/computer");
+	
+	if (type == 128) {
+		switch (event) {
+			case 4097: /* Fn+F1 */
+				button = "Fn+F1";
+				break;
+			case 4098:
+				button = "Fn+F2";
+				break;
+			case 4099: /* dpms off */
+				button = "display_off";
+				break;
+			case 4100: /* sleep button */
+				button = "sleep";
+				devices = libhal_manager_find_device_string_match (ctx, "button.type",
+										   "sleep", &num_devices,
+								 		   &error);
+				if (devices != NULL && num_devices > 0) {
+					snprintf (udi, sizeof (udi), devices[0]);
+					libhal_free_string_array (devices);
+				}
+				if (dbus_error_is_set (&error)) 
+					dbus_error_free (&error);
+				break;
+			case 4101: /* wireless */
+				button = "wifi-power";
+				break;
+			case 4102:
+				button = "Fn+F6";
+				break;
+			case 4103: /* switch display */
+				button = "display_switch";
+				break;
+			case 4104:
+				button = "Fn+F8";
+				break;
+			case 4105: /* undock */
+				button = "undock";
+				break;
+			case 4106:
+				button = "Fn+F10";
+				break;
+			case 4107:
+				button = "Fn+F11";
+				break;
+			case 4108: /* Fn+F12 , hibernate/s2disk */ 
+				button = "hibernate";
+				break;
+			case 4109: /* Fn+Backspace*/
+				button = "Fn+Backspace";
+				break;
+			case 4110: /* Fn+Insert*/ 
+				button = "Fn=Insert";
+				break;
+			case 4111: /* Fn+Delete*/ 
+				button = "Fn+Delete";
+				break;
+			case 4112: /* Fn+Home*/ 
+				button = "brightness-up";
+				break;
+			case 20489: /* Tablet rotated */
+				button = "tabletpc_rotate_180";
+				break;
+			case 20490: /* Tablet rotated back*/
+				button = "tabletpc_rotate_normal";
+				break;
+			default:
+				break;
+			
+		}
+		
+		if (button) {
+			libhal_device_emit_condition (ctx, udi, "ButtonPressed",
+						      button, &error);
+			if (dbus_error_is_set (&error)) 
+				dbus_error_free (&error);
+		}
+	}
+}
+#endif
 
 static void
 main_loop (LibHalContext *ctx, FILE *eventfp)
@@ -137,7 +230,12 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 				HAL_DEBUG (("battery event"));
 				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
-			}
+#ifdef ACPI_IBM_EVENTS
+			} else if (strncmp (acpi_path, "ibm/hotkey", sizeof ("ibm/hotkey") -1) == 0) {
+				/* handle ibm ACPI hotkey events*/
+				handle_ibm_acpi_events(ctx, acpi_num1, acpi_num2);	
+#endif
+			} 
 
 		} else {
 			HAL_DEBUG (("cannot parse event"));

@@ -168,6 +168,14 @@ fi
 AC_SUBST(ACPI_PROC)
 AM_CONDITIONAL(ACPI_PROC, test x$acpi_proc = xyes)
 
+AC_ARG_ENABLE([acpi-ibm], AC_HELP_STRING([--enable-acpi-ibm], [catch IBM ACPI events]), [acpi_ibm=$enableval], [acpi_ibm=no])
+if test "x$acpi_proc" = "xyes" ; then
+   AC_DEFINE(ACPI_IBM_EVENTS,1,[catch and forward IBM ACPI hotkey and button events])
+fi
+AC_SUBST(ACPI_IBM_EVENTS)
+AM_CONDITIONAL(ACPI_IBM_EVENTS, test x$acpi_ibm = xyes)
+
+
 
 dnl libparted
 AC_ARG_ENABLE([parted], AC_HELP_STRING([--enable-parted], [Use libparted]), [use_parted=$enableval], [use_parted=no])
@@ -927,6 +935,7 @@ echo "
         Macbook Pro utils:          ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         OMAP utils:                 ${BUILD_OMAP} (Linux only, arm only)
         CPU frequency scaling:      ${BUILD_CPUFREQ} (Linux only)
+        catch IBM acpi events:      ${acpi_ibm} (Linux only)
 	USB wireless mouse power:   ${BUILD_USBCSR} (Linux only, requires libusb)
 	Dell Backlight:             ${BUILD_DELL} (Linux only, requires libsmbios >= 0.13.4)
 
