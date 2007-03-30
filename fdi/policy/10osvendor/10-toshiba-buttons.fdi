@@ -4,14 +4,9 @@
 
   <device>
     <match key="system.formfactor" string="laptop">
-      <!-- Only launch the addon for Toshiba laptops. -->
+      <!-- button capability for Toshiba laptops -->
       <match key="system.hardware.vendor" string="TOSHIBA">
         <append key="info.addons" type="strlist">hald-addon-acpi-buttons-toshiba</append>
-        <append key="info.capabilities" type="strlist">button</append>
-      </match>
-  
-      <!-- button capability for IBM laptops -->
-      <match key="system.hardware.vendor" string="IBM">
         <append key="info.capabilities" type="strlist">button</append>
       </match>
     </match>

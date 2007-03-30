@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<deviceinfo version="0.2">
+
+  <device>
+    <match key="system.formfactor" string="laptop">
+      <!-- button capability for IBM laptops -->
+      <match key="system.hardware.vendor" string="IBM">
+        <append key="info.capabilities" type="strlist">button</append>
+      </match>
+    </match>
+  </device>
+
+</deviceinfo>

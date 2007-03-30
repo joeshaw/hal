@@ -89,7 +89,7 @@ acpi_get_event_fp_acpid (void)
 }
 #endif
 
-#ifdef ACPI_IBM_EVENTS
+#ifdef BUILD_ACPI_IBM
 static void
 handle_ibm_acpi_events (LibHalContext *ctx, int type, int event) 
 {
@@ -116,15 +116,6 @@ handle_ibm_acpi_events (LibHalContext *ctx, int type, int event)
 				break;
 			case 4100: /* sleep button */
 				button = "sleep";
-				devices = libhal_manager_find_device_string_match (ctx, "button.type",
-										   "sleep", &num_devices,
-								 		   &error);
-				if (devices != NULL && num_devices > 0) {
-					snprintf (udi, sizeof (udi), devices[0]);
-					libhal_free_string_array (devices);
-				}
-				if (dbus_error_is_set (&error)) 
-					dbus_error_free (&error);
 				break;
 			case 4101: /* wireless */
 				button = "wifi-power";
@@ -230,7 +221,7 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 				HAL_DEBUG (("battery event"));
 				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
-#ifdef ACPI_IBM_EVENTS
+#ifdef BUILD_ACPI_IBM
 			} else if (strncmp (acpi_path, "ibm/hotkey", sizeof ("ibm/hotkey") -1) == 0) {
 				/* handle ibm ACPI hotkey events*/
 				handle_ibm_acpi_events(ctx, acpi_num1, acpi_num2);	

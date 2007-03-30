@@ -4,7 +4,6 @@ fdidir = $(datadir)/hal/fdi/policy/10osvendor
 dist_fdi_DATA = 			\
 	10-keyboard-policy.fdi		\
 	10-power-mgmt-policy.fdi	\
-	10-laptop-buttons.fdi		\
 	10-rfkill-switch.fdi		\
 	10-laptop-panel-mgmt-policy.fdi	\
 	15-storage-luks.fdi		\
@@ -32,6 +31,14 @@ endif
 
 if BUILD_DELL
 dist_fdi_DATA += 10-dell-laptop-brightness.fdi
+endif
+
+if BUILD_ACPI_TOSHIBA
+dist_fdi_DATA += 10-toshiba-buttons.fdi
+endif
+
+if BUILD_ACPI_IBM
+dist_fdi_DATA += 10-ibm-buttons.fdi
 endif
 
 if HAVE_ACLMGMT
