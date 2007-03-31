@@ -254,6 +254,7 @@ hf_device_set_udi (HalDevice *device, const char *format, ...)
 {
   va_list args;
   char *udi;
+  char *safe_str;
 
   g_return_if_fail(HAL_IS_DEVICE(device));
   g_return_if_fail(format != NULL);
@@ -262,8 +263,11 @@ hf_device_set_udi (HalDevice *device, const char *format, ...)
   udi = g_strdup_vprintf(format, args);
   va_end(args);
 
-  hf_device_set_full_udi(device, "/org/freedesktop/Hal/devices/%s", udi);
+  safe_str = hf_str_no_slashes(udi);
   g_free(udi);
+
+  hf_device_set_full_udi(device, "/org/freedesktop/Hal/devices/%s", safe_str);
+  g_free(safe_str);
 }
 
 void
@@ -665,4 +669,17 @@ hf_device_store_match (HalDeviceStore *store, ...)
   g_slist_free(props);
 
   return device;
+}
+
+char *
+hf_str_no_slashes (const char *str)
+{
+  char *safe_str;
+
+  g_return_val_if_fail(str != NULL, NULL);
+
+  safe_str = g_strdup(str);
+  safe_str = g_strdelimit(safe_str, "/", '_');
+
+  return safe_str;
 }

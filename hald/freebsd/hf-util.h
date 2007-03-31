@@ -3,7 +3,7 @@
  *
  * hf-util.h : utilities
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,6 +109,8 @@ char *hf_run (GError **err, const char *format, ...) G_GNUC_PRINTF(2, 3);
 int hf_runner_run_sync (HalDevice *device, int timeout, const char *command_line, ...);
 
 int hf_strv_find (char **strv, const char *elem);
+
+char *hf_str_no_slashes (const char *str);
 
 HalDevice *hf_device_store_match (HalDeviceStore *store, ...);
 
