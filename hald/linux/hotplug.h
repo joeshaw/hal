@@ -54,6 +54,7 @@ typedef struct
 {
 	HotplugActionType action;				/* Whether the event is add or remove */
 	HotplugEventType type;					/* Type of event */
+	gboolean reposted;					/* Avoid loops */
 
 	void (*free_function) (gpointer data);
 

@@ -74,6 +74,7 @@ hotplug_event_reposted (void *end_token)
 {
 	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
 
+	hotplug_event->reposted = TRUE;
 	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
 }
 
