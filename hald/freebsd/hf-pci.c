@@ -3,7 +3,7 @@
  *
  * hf-pci.c : enumerate PCI devices
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <bitstring.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -48,11 +49,16 @@
 
 /* from sys/dev/pci/pcireg.h */
 #define PCIR_SECBUS_1			0x19
+#define PCIR_HDRTYPE			0x0e
+#define PCIM_HDRTYPE_BRIDGE		0x01
+#define PCIM_HDRTYPE_CARDBUS		0x02
 
 typedef struct
 {
+  HalDevice		*device;
   struct pci_conf	p;
   int			secondary_bus;
+  int			header_type;
 } DeviceInfo;
 
 static int hf_pci_fd;
@@ -141,73 +147,41 @@ hf_pci_privileged_init (void)
     HAL_INFO(("unable to open %s: %s", HF_PCI_DEVICE, g_strerror(errno)));
 }
 
-static GSList *
-hf_pci_lookup (GSList *devices, int bus)
-{
-  if (bus != 0)
-    {
-      GSList *l;
-
-      HF_LIST_FOREACH(l, devices)
-	{
-	  DeviceInfo *info = l->data;
-
-	  if (info->secondary_bus == bus)
-	    return l;
-	}
-    }
-
-  return NULL;
-}
-
-static GSList *
-hf_pci_get_root (GSList *devices)
-{
-  GSList *root;
-  DeviceInfo *info;
-  int bus;
-
-  g_return_val_if_fail(devices != NULL, NULL);
-
-  root = devices;
-  info = root->data;
-
-  bus = info->p.pc_sel.pc_bus;
-  while (bus != -1)
-    {
-      GSList *new_root;
-
-      new_root = hf_pci_lookup(devices, bus);
-      bus = -1;
-
-      if (new_root)
-	{
-	  root = new_root;
-	  info = root->data;
-	  bus = info->p.pc_sel.pc_bus;
-	}
-    }
-
-  return root;
-}
-
 static void
-hf_pci_probe (void)
+hf_pci_probe_bus (HalDevice *parent, int bus, bitstr_t *busmap)
 {
+  struct pci_match_conf match_conf;
   struct pci_conf_io pc;
   struct pci_conf conf[255];
   struct pci_conf *p;
   GSList *devices = NULL;
+  GSList *l;
 
-  if (hf_pci_fd < 0)
-    return;
+  g_return_if_fail(busmap != NULL);
+  g_return_if_fail(bus >= 0 && bus <= 0xff);
+
+  /* test taken from sysutils/pciutils */
+  if (bit_test(busmap, bus))
+    {
+      HAL_WARNING(("PCI bus %.2x appearing twice (firmware bug), ignored", bus));
+      return;
+    }
+
+  bit_set(busmap, bus);
 
  start:
+  memset(&match_conf, 0, sizeof(match_conf));
+  match_conf.pc_sel.pc_bus = bus;
+  match_conf.flags = PCI_GETCONF_MATCH_BUS;
+
   memset(&pc, 0, sizeof(pc));
+  pc.pat_buf_len = sizeof(match_conf);
+  pc.num_patterns = 1;
+  pc.patterns = &match_conf;
   pc.match_buf_len = sizeof(conf);
   pc.matches = conf;
 
-  /* build a list of PCI devices */
+  /* get the devices located on the specified bus */
 
   do
     {
@@ -231,50 +205,64 @@ hf_pci_probe (void)
 	}
 
       for (p = conf; p < &conf[pc.num_matches]; p++)
-	  if (! hf_device_store_match(hald_get_gdl(),
-                                      "pci.freebsd.bus", HAL_PROPERTY_TYPE_INT32, p->pc_sel.pc_bus,
-				      "pci.freebsd.device", HAL_PROPERTY_TYPE_INT32, p->pc_sel.pc_dev,
-				      "pci.freebsd.function", HAL_PROPERTY_TYPE_INT32, p->pc_sel.pc_func,
-				      NULL))
-	    {
-	      DeviceInfo *info;
+        {
+          DeviceInfo *info;
 
-	      info = g_new(DeviceInfo, 1);
-	      info->p = *p;
-	      info->secondary_bus = hf_pci_get_register(p, PCIR_SECBUS_1);
+	  info = g_new(DeviceInfo, 1);
+	  info->device = hf_device_store_match(hald_get_gdl(),
+			                       hal_property_new_int("pci.freebsd.bus", p->pc_sel.pc_bus),
+					       hal_property_new_int("pci.freebsd.device", p->pc_sel.pc_dev),
+					       hal_property_new_int("pci.freebsd.function", p->pc_sel.pc_func),
+					       NULL);
+	  info->p = *p;
+	  info->secondary_bus = hf_pci_get_register(p, PCIR_SECBUS_1);
+	  info->header_type = hf_pci_get_register(p, PCIR_HDRTYPE);
 
-	      devices = g_slist_prepend(devices, info);
-	    }
+	  devices = g_slist_prepend(devices, info);
+	}
     }
   while (pc.status == PCI_GETCONF_MORE_DEVS);
 
-  /* add the devices (parents first) */
+  /* add the devices and probe the children of bridges */
 
-  while (devices)
+  HF_LIST_FOREACH(l, devices)
     {
-      GSList *root;
-      DeviceInfo *info;
-      HalDevice *parent = NULL;
+      DeviceInfo *info = l->data;
 
-      root = hf_pci_get_root(devices);
-      g_assert(root != NULL);
-
-      info = root->data;
-
-      if (info->p.pc_sel.pc_bus != 0)
-	parent = hal_device_store_match_key_value_int(hald_get_gdl(), "pci.freebsd.secondary_bus", info->p.pc_sel.pc_bus);
-
-      if (! parent || ! hal_device_property_get_bool(parent, "info.ignore"))
-	{
-	  HalDevice *device;
-
-	  device = hf_pci_device_new(parent, &info->p, info->secondary_bus);
-	  hf_device_preprobe_and_add(device);
+      /*
+       * If the device already exists, we are reprobing (from
+       * osspec_device_reprobe()). In this case we must not add it
+       * again, but only probe its children if it is a bridge.
+       */
+      if (! info->device)
+        {
+          info->device = hf_pci_device_new(parent, &info->p, info->secondary_bus);
+	  if (hf_device_preprobe(info->device))
+            hf_device_add(info->device);
+	  else
+            continue;	/* device ignored */
 	}
 
-      devices = g_slist_delete_link(devices, root);
-      g_free(info);
+      if (info->header_type == PCIM_HDRTYPE_BRIDGE || info->header_type == PCIM_HDRTYPE_CARDBUS)
+        /* a bridge or cardbus, probe its children */
+        hf_pci_probe_bus(info->device, info->secondary_bus, busmap);
     }
+
+  /* cleanup */
+
+  g_slist_foreach(devices, (GFunc) g_free, NULL);
+  g_slist_free(devices);
+}
+
+static void
+hf_pci_probe (void)
+{
+  bitstr_t bit_decl(busmap, 256) = { 0 };
+
+  if (hf_pci_fd < 0)
+    return;
+
+  hf_pci_probe_bus(NULL, 0, busmap);
 }
 
 HFHandler hf_pci_handler = {
