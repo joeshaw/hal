@@ -3,7 +3,7 @@
  *
  * hf-util.c : utilities
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include "../util.h"
 #include "../device_info.h"
 
+#include "hf-ata.h"
 #include "hf-util.h"
 
 typedef struct
@@ -212,6 +213,42 @@ hf_device_remove_tree (HalDevice *device)
   hf_device_remove(device);
 }
 
+/*
+ * Creates a device store containing the concatenation of the GDL and
+ * the ATA pending devices list. This device store differs from the
+ * GDL only between the ATA probe and the SCSI probe. It is used to
+ * compute an unique UDI in hf_device_set_full_udi().
+ */
+static HalDeviceStore *
+hf_pending_gdl_new (void)
+{
+  HalDeviceStore *store;
+  GList *l;
+  GSList *sl;
+
+  store = hal_device_store_new();
+
+  HF_LIST_FOREACH(sl, hald_get_gdl()->devices)
+    hal_device_store_add(store, sl->data);
+
+  HF_LIST_FOREACH(l, hf_ata_pending_devices)
+    hal_device_store_add(store, l->data);
+
+  return store;
+}
+
+static void
+hf_pending_gdl_free (HalDeviceStore *store)
+{
+  g_return_if_fail(HAL_IS_DEVICE_STORE(store));
+
+  /* the device store code fails to do this when a store is finalized */
+  while (store->devices)
+    hal_device_store_remove(store, store->devices->data);
+
+  g_object_unref(store);
+}
+
 void
 hf_device_set_udi (HalDevice *device, const char *format, ...)
 {
@@ -233,17 +270,27 @@ void
 hf_device_set_full_udi (HalDevice *device, const char *format, ...)
 {
   va_list args;
+  HalDeviceStore *pending_gdl;
   char *requested_udi;
   char actual_udi[256];
 
   g_return_if_fail(HAL_IS_DEVICE(device));
   g_return_if_fail(format != NULL);
 
+  /*
+   * To ensure an unique UDI, we must work against the GDL as well as
+   * the ATA pending devices list (since these devices will be added
+   * to the GDL at the end of the probe).
+   */
+  pending_gdl = hf_pending_gdl_new();
+
   va_start(args, format);
   requested_udi = g_strdup_vprintf(format, args);
   va_end(args);
 
-  hal_util_compute_udi(hald_get_gdl(), actual_udi, sizeof(actual_udi), "%s", requested_udi);
+  hal_util_compute_udi(pending_gdl, actual_udi, sizeof(actual_udi), "%s", requested_udi);
+
+  hf_pending_gdl_free(pending_gdl);
   g_free(requested_udi);
 
   hal_device_set_udi(device, actual_udi);
