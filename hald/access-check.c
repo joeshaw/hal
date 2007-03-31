@@ -180,24 +180,24 @@ out:
  * @interface_name: the interface to check for
  *
  * This method determines if a caller is locked out to access a given
- * interface on a given device. A caller is locked out when:
+ * interface on a given device. A caller A is locked out of an
+ * interface IFACE on a device object DEVICE if, and only if 
  *
- * 1. Another caller is holding a lock on the interface on the device
- *    non-withstanding that the caller to check for holds the lock
- *    himself.
+ * 1. Another caller B is holding a lock on the interface IFACE on
+ *    DEVICE and A don't have either a global lock on IFACE or a lock
+ *    on IFACE on DEVICE; or 
  *
- * 2. Another caller is holding the global lock for the interface on
- *    the root computer device object and that other caller has
- *    access to the device in question.
+ * 2. Another caller B is holding the global lock on the interface
+ *    IFACE and B has access to DEVICE and and A don't have either a
+ *    global lock on IFACE or a lock on IFACE on DEVICE.
  *
- *    (In other words, a client Foo can grab a lock on the root
- *    computer device object, but that doesn't mean Foo can lock
- *    other clients out of devices that Foo doesn't have access to.)
- *
- * Specifically a caller is not locked out if he has locked the
- * interface and he is the only one holding the lock. However, if two
- * clients have a lock on a device neither of them can access the
- * device.
+ * In other words, a caller A can grab a global lock, but that doesn't
+ * mean A can lock other clients out of devices that A doesn't have
+ * access to. Specifically a caller is never locked out if he has
+ * locked an interface either globally or on the device in
+ * question. However, if two clients have a lock on a device, then
+ * both can access it. To ensure that everyone else is locked out, a
+ * caller needs to use an exclusive lock.
  * 
  * Returns: TRUE iff the caller is locked out
  */
@@ -213,6 +213,8 @@ access_check_caller_locked_out (CITracker   *cit,
         char **holders;
         char **global_holders;
         HalDevice *computer;
+        gboolean is_locked;
+        gboolean is_locked_by_self;
 
         global_lock_name = NULL;
         holders = NULL;
@@ -234,16 +236,15 @@ access_check_caller_locked_out (CITracker   *cit,
          * assumed to have access to the device since they got to hold
          * the lock in the first place. 
          */
+        is_locked = FALSE;
+        is_locked_by_self = FALSE;
         if (holders != NULL) {
                 for (n = 0; holders[n] != NULL; n++) {
-                        if (strcmp (holders[n], caller_unique_sysbus_name) != 0) {
-                                /* Yup, there's someone else... can't do it Sally */
-                                HAL_INFO (("Caller '%s' is locked out of interface '%s' on device '%s' "
-                                           "because caller '%s' got a lock on the interface on the device",
-                                           caller_unique_sysbus_name,
-                                           interface_name,
-                                           hal_device_get_udi (device),
-                                           holders[n]));
+                        is_locked = TRUE;
+                        if (strcmp (holders[n], caller_unique_sysbus_name) == 0) {
+                                is_locked_by_self = TRUE;
+                                /* this is good enough; we are holding the lock ourselves */
+                                ret = FALSE;
                                 goto out;
                         }
                 }
@@ -251,25 +252,35 @@ access_check_caller_locked_out (CITracker   *cit,
 
         if (global_holders != NULL) {
                 for (n = 0; global_holders[n] != NULL; n++) {
-                        if (strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
-                                /* Someone else is holding the global
-                                 * lock.. check if that someone actually have
-                                 * access to the device...
+                        if (strcmp (global_holders[n], caller_unique_sysbus_name) == 0) {
+                                /* we are holding the global lock... */
+                                if (access_check_caller_have_access_to_device (cit, device, global_holders[n])) {
+                                        /* only applies if the caller can access the device... */
+                                        is_locked_by_self = TRUE;
+                                        /* this is good enough; we are holding the lock ourselves */
+                                        ret = FALSE;
+                                        goto out;
+                                }
+                        } else {
+                                /* Someone else is holding the global lock.. check if that someone
+                                 * actually have access to the device...
                                  */
                                 if (access_check_caller_have_access_to_device (cit, device, global_holders[n])) {
-                                        /* They certainly do. Give up. */
-                                        
-                                        HAL_INFO (("Caller '%s' is locked out of interface '%s' on device '%s' "
-                                                   "because caller '%s' got a lock on the global interface and "
-                                                   "have access to the device",
-                                                   caller_unique_sysbus_name,
-                                                   interface_name,
-                                                   hal_device_get_udi (device),
-                                                   global_holders[n]));
-                                        goto out;
+                                        /* They certainly do. Mark as locked. */
+                                        is_locked = TRUE;
                                 }
                         }
                 }
+        }
+
+        if (is_locked && !is_locked_by_self) {
+                /* Yup, there's someone else... can't do it Sally */
+                HAL_INFO (("Caller '%s' is locked out of interface '%s' on device '%s' "
+                           "because someone else got a lock on the interface on the device",
+                           caller_unique_sysbus_name,
+                           interface_name,
+                           hal_device_get_udi (device)));
+                goto out;
         }
 
         /* done all the checks so we're not locked out */

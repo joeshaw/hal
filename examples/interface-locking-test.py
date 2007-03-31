@@ -17,9 +17,16 @@ device = dbus.Interface(bus.get_object("org.freedesktop.Hal",
                                          "/org/freedesktop/Hal/devices/volume_uuid_2232_1F11"),
                           "org.freedesktop.Hal.Device")
 
-manager.AcquireGlobalInterfaceLock("org.freedesktop.Hal.Device.Storage", True)
-#device.AcquireInterfaceLock("org.freedesktop.Hal.Device.Volume", True)
+device_volume = dbus.Interface(bus.get_object("org.freedesktop.Hal",
+                                              "/org/freedesktop/Hal/devices/volume_uuid_2232_1F11"),
+                               "org.freedesktop.Hal.Device.Volume")
+
+#manager.AcquireGlobalInterfaceLock("org.freedesktop.Hal.Device.Storage", True)
+#time.sleep(2)
+#manager.ReleaseGlobalInterfaceLock("org.freedesktop.Hal.Device.Storage")
+
+device.AcquireInterfaceLock("org.freedesktop.Hal.Device.Volume", False)
+device_volume.Mount("", "", [])
 time.sleep(2)
-manager.ReleaseGlobalInterfaceLock("org.freedesktop.Hal.Device.Storage")
-#device.ReleaseInterfaceLock("org.freedesktop.Hal.Device.Volume")
+device.ReleaseInterfaceLock("org.freedesktop.Hal.Device.Volume")
 

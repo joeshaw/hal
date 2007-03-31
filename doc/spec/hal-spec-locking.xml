@@ -5,8 +5,8 @@
   <title>Locking</title>
 
   <para>
-    As HAL enables programs in a desktop session to automatically
-    enforce the policy of the users choice, unexpected things can
+    As HAL is a mechanism that enables programs in a desktop session
+    to enforce the policy of the users choice, unexpected things can
     happen. For example, if the user is in the middle of partitioning
     a disk drive, it is desirable to keep the desktop from mounting
     partitions that have not yet been prepared with a suitable file
@@ -72,37 +72,42 @@
       also be obtained exclusively if the caller so desires. Unlike
       per-device interface locking, it is not checked at locking time
       whether the locker have access to a given device; instead
-      checking is done when callers attempt to access the interface.
+      checking is done when callers attempt to access the
+      interface.
     </para>
 
     <para>
       The algorithm used for determining if a caller is locked out is
-      shown below. A caller is locked out if:
+      shown below. A caller A is locked out of an interface IFACE on a
+      device object DEVICE if, and only if,
     </para>
 
     <orderedlist>
       <listitem> 
 	<para>
-          another caller is holding a lock on the interface on the
-          device (non-withstanding that the caller to check for holds
-          the lock himself).
+          Another caller B is holding a lock on the interface IFACE on
+          DEVICE and A don't have either a global lock on IFACE or a
+          lock on IFACE on DEVICE; or
         </para>
       </listitem>
       <listitem>
         <para>
-          Another caller is holding the global lock for the interface
-          and that other caller has access to the device in question.
+          Another caller B is holding the global lock on the
+          interface IFACE and B has access to DEVICE and and A don't
+          have either a global lock on IFACE or a lock on IFACE on
+          DEVICE.
         </para>
       </listitem>
     </orderedlist>
 
     <para>
-      In other words, a client Foo can grab a global lock, but that
-      doesn't mean Foo can lock other clients out of devices that Foo
-      doesn't have access to. Specifically a caller is not locked out
-      if he has locked an interface and he is the only one holding the
-      lock. However, if two clients have a lock on a device neither of
-      them can access the device.
+      In other words, a caller A can grab a global lock, but that
+      doesn't mean A can lock other clients out of devices that A
+      doesn't have access to. Specifically a caller is never locked
+      out if he has locked an interface either globally or on the
+      device in question. However, if two clients have a lock on a
+      device, then both can access it. To ensure that everyone is
+      locked out, a caller needs to use an exclusive lock.
     </para>
 
     <para>
@@ -135,21 +140,148 @@
           block devices directly (and pokes the kernel to reload the
           partitioning table) should lock out automounters by either
           a) obtaining
-          the <literal>org.freedesktop.Hal.Device.Storage</literal> on
-          each drive being processed; or b) obtaintaing the global
+          the <literal>org.freedesktop.Hal.Device.Storage</literal>
+          lock on each drive being processed; or b) obtaintaing the
+          global
           <literal>org.freedesktop.Hal.Device.Storage</literal>
           lock. This includes programs like fdisk, gparted, parted and
           operating system installers. See also
-          <xref linkend="interface-device-volume"/>.
+          <xref linkend="interface-device-volume"/> and
+          the <literal>hal-lock</literal>(1) program and manual page.
         </para>
       </listitem>
 
       <listitem><para>
-          <emphasis>System-wide Power Management</emphasis>
+          <emphasis>Power Management</emphasis>
         </para>
         <para>
-          (this guideline is not finalized!)
+          Typically, a desktop session includes a session-wide power
+          management daemon that enforces the policy of the users
+          choice, e.g. whether the system should suspend to ram on lid
+          close, whether to hibernate the system after the user being
+          idle for 30 minutes and so on. In a multi-user setup (both
+          fast user switching and multi-seat), this can break in
+          various interesting ways unless the power management daemons
+          cooperate. Also, there may be software running at the system
+          level who will want to inhibit a desktop session power
+          management daemon from suspending / shutting down.
         </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+              System-level software that do not wish to be interrupted
+              by the effect of someone calling into the
+              <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface MUST hold the
+              <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              lock non-exclusively on the root computer device
+              object. For example, the YUM software updater should
+              hold the lock when doing an RPM transaction.
+            </para>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+          In addition, any power management session daemon instance
+        </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+              ... MUST hold the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal> lock
+              non-exclusively on the root computer device object
+              unless it is prepared to call into this interface
+              itself. This typically means that the PM daemon instance
+              simply acquires the lock on start up and releases it
+              just before it calls into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface. In other words, the PM daemon instance needs
+              to hold the lock exactly when it doesn't want other PM
+              daemon instances to call into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal> interface.
+              This means that if the user have configured the PM
+              daemon instance to go to sleep after 30 minutes of
+              inactivity, the lock should be released then.
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              ... MUST not hold the lock when the session is inactive
+              (fast user switching) UNLESS an application in the
+              session have explicitly called Inhibit() on
+              the <literal>org.freedesktop.PowerManagement</literal>
+              D-Bus session bus interface of the PM daemon.
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              ... MUST check that no other process is holding the lock
+              before calling into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface. If another process is holding the lock, it
+              means that either 1) another session is not prepared to
+              call into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface; OR 2) some system-level software is holding
+              the lock. The PM daemon instance MUST respect this by
+              not calling into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface itself.
+            </para>
+          </listitem>
+
+        </itemizedlist>
+        <para>
+          However, any Power management daemon instance
+        </para>
+        <itemizedlist>
+
+          <listitem>
+            <para>
+              ... MAY prompt the user, if applicable, to ask if she
+              still wants to perform the requested action (e.g. call
+              into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface) despite the fact that another process
+              (possibly from another user) is indicating that it does
+              not want the system to e.g. suspend. Only if the user
+              agrees, the power management instance should call into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface. Typically, it's only useful to prompt the
+              user with such questions if the request to call into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface originates from user input, e.g. either a
+              hotkey, the user clicking a suspend button in the UI or
+              an application invoking the <literal>Suspend()</literal> method on the 
+              <literal>org.freedesktop.PowerManagement</literal> D-Bus
+              session interface of the PM daemon.
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              ... MAY ignore that other processes are holding the lock
+              and call into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface anyway, but ONLY if if the request to call
+              into
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface originated from e.g. lid close, critically low
+              battery or other similar conditions.
+            </para>
+          </listitem>
+
+          <listitem>
+            <para>
+              ... MAY still call <literal>SetPowerSave()</literal> on
+              the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
+              interface even if other processes are holding the lock.
+            </para>
+          </listitem>
+        </itemizedlist>
       </listitem>
       
     </itemizedlist>

@@ -653,6 +653,12 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     <para>
       This interface does not emit any signals.
     </para>
+
+    <para>
+      Implementors of power management daemons should make sure that
+      their software respects the locking guidelines described in
+      <xref linkend="interfaces"/>.
+    </para>
   </sect1>
 
   <sect1 id="interface-cpufreq">
