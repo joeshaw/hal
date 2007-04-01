@@ -53,7 +53,7 @@ on how to subscribe.
 
 .SH SEE ALSO
 .PP
-\&\fIhald\fR\|(1), 
+\&\fIhald\fR\|(8), 
 \&\fIhal-get-property\fR\|(1),
 \&\fIhal-set-property\fR\|(1),
 \&\fIhal-find-by-property\fR\|(1),

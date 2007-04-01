@@ -885,7 +885,7 @@ doc/api/libhal-storage/version.xml
 doc/spec/Makefile
 doc/spec/hal-spec.xml.in
 doc/man/Makefile
-doc/man/hald.1
+doc/man/hald.8
 doc/man/lshal.1
 doc/man/hal-get-property.1
 doc/man/hal-set-property.1

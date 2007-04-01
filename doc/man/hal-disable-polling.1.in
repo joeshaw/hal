@@ -124,7 +124,7 @@ on how to subscribe.
 
 .SH SEE ALSO
 .PP
-\&\fIhald\fR\|(1),
+\&\fIhald\fR\|(8),
 \&\fIlshal\fR\|(1),
 \&\fIhal-lock\fR\|(1),
 \&\fIopen\fR\|(2),

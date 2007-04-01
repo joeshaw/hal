@@ -2,7 +2,7 @@
 .\" hald manual page.
 .\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
 .\"
-.TH HALD 1
+.TH HALD 8
 .SH NAME
 hald \- HAL daemon
 .SH SYNOPSIS
