@@ -22,11 +22,15 @@ device_volume = dbus.Interface(bus.get_object("org.freedesktop.Hal",
                                "org.freedesktop.Hal.Device.Volume")
 
 #manager.AcquireGlobalInterfaceLock("org.freedesktop.Hal.Device.Storage", True)
-#time.sleep(2)
+#time.sleep(10)
 #manager.ReleaseGlobalInterfaceLock("org.freedesktop.Hal.Device.Storage")
 
 device.AcquireInterfaceLock("org.freedesktop.Hal.Device.Volume", False)
-device_volume.Mount("", "", [])
-time.sleep(2)
+#device_volume.Mount("", "", [])
+if device.IsLockedByOthers("org.freedesktop.Hal.Device.Volume"):
+    print "device is locked by another process too!"
+else:
+    print "we are the only process locking the device"    
+time.sleep(10)
 device.ReleaseInterfaceLock("org.freedesktop.Hal.Device.Volume")
 

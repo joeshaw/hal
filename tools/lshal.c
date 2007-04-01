@@ -581,6 +581,77 @@ device_condition (LibHalContext *ctx,
 	}
 }
 
+static void
+do_interface_lock (LibHalContext *ctx,
+                   dbus_bool_t acquired,
+                   dbus_bool_t global,
+                   const char *udi,
+                   const char *interface_name,
+                   const char *lock_owner,
+                   int num_locks)
+{
+	if (show_device && strcmp(show_device, udi))
+		return;
+
+	if (long_list) {
+                if (global)
+                        printf ("*** %s: lshal: global_interface_lock_%s\n", get_time (), acquired ? "acquired" : "released");
+                else
+                        printf ("*** %s: lshal: interface_lock_%s, udi=%s\n", get_time (), acquired ? "acquired" : "released", udi);
+		printf ("           interface_name=%s\n", interface_name);
+		printf ("           lock_owner=%s\n", lock_owner);
+		printf ("           num_locks=%d\n", num_locks);
+		printf ("\n");
+	} else {
+                if (global)
+                        printf ("%s: global_interface_lock_%s %s by %s (%d lockers)\n", get_time (),
+                                acquired ? "acquired" : "released",
+                                interface_name, lock_owner, num_locks);
+                else
+                        printf ("%s: %s interface_lock_%s %s by %s (%d lockers)\n", get_time (), short_name (udi),
+                                acquired ? "acquired" : "released",
+                                interface_name, lock_owner, num_locks);
+	}
+}
+
+static void
+global_interface_lock_acquired (LibHalContext *ctx,
+                                const char *interface_name,
+                                const char *lock_owner,
+                                int num_locks)
+{
+        do_interface_lock (ctx, TRUE, TRUE, NULL, interface_name, lock_owner, num_locks);
+}
+
+static void
+global_interface_lock_released (LibHalContext *ctx,
+                                const char *interface_name,
+                                const char *lock_owner,
+                                int num_locks)
+{
+        do_interface_lock (ctx, FALSE, TRUE, NULL, interface_name, lock_owner, num_locks);
+}
+
+static void
+interface_lock_acquired (LibHalContext *ctx,
+                         const char *udi,
+                         const char *interface_name,
+                         const char *lock_owner,
+                         int num_locks)
+{
+        do_interface_lock (ctx, TRUE, FALSE, udi, interface_name, lock_owner, num_locks);
+}
+
+static void
+interface_lock_released (LibHalContext *ctx,
+                         const char *udi,
+                         const char *interface_name,
+                         const char *lock_owner,
+                         int num_locks)
+{
+        do_interface_lock (ctx, FALSE, FALSE, udi, interface_name, lock_owner, num_locks);
+}
+
 
 /** 
  *  usage:
@@ -750,6 +821,10 @@ main (int argc, char *argv[])
 	libhal_ctx_set_device_lost_capability (hal_ctx, device_lost_capability);
 	libhal_ctx_set_device_property_modified (hal_ctx, property_modified);
 	libhal_ctx_set_device_condition (hal_ctx, device_condition);
+	libhal_ctx_set_global_interface_lock_acquired (hal_ctx, global_interface_lock_acquired);
+	libhal_ctx_set_global_interface_lock_released (hal_ctx, global_interface_lock_released);
+	libhal_ctx_set_interface_lock_acquired (hal_ctx, interface_lock_acquired);
+	libhal_ctx_set_interface_lock_released (hal_ctx, interface_lock_released);
 
 	if (show_device)
 		dump_device (show_device);

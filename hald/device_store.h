@@ -58,6 +58,16 @@ struct _HalDeviceStoreClass {
 					 HalDevice *device,
 					 const char *capability);
 
+
+	void (*device_lock_acquired) (HalDeviceStore *store,
+                                      HalDevice *device,
+                                      const char *lock_name,
+                                      const char *lock_owner);
+
+	void (*device_lock_released) (HalDeviceStore *store,
+                                      HalDevice *device,
+                                      const char *lock_name,
+                                      const char *lock_owner);
 };
 
 #define HAL_TYPE_DEVICE_STORE              (hal_device_store_get_type ())

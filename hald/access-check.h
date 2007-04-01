@@ -35,8 +35,13 @@ gboolean access_check_message_caller_is_root_or_hal (CITracker   *cit,
                                                      DBusMessage *message);
 gboolean access_check_caller_have_access_to_device  (CITracker   *cit,
                                                      HalDevice   *device,
+                                                     const char  *privilege,
                                                      const char  *caller_unique_sysbus_name);
 gboolean access_check_caller_locked_out             (CITracker   *cit,
+                                                     HalDevice   *device,
+                                                     const char  *caller_unique_sysbus_name,
+                                                     const char  *interface_name);
+gboolean access_check_locked_by_others              (CITracker   *cit,
                                                      HalDevice   *device,
                                                      const char  *caller_unique_sysbus_name,
                                                      const char  *interface_name);

@@ -191,6 +191,67 @@ typedef void (*LibHalDeviceCondition) (LibHalContext *ctx,
 				       const char *condition_name,
 				       const char *condition_detail);
 
+/** 
+ * LibHalGlobalInterfaceLockAcquired:
+ * @ctx: context for connection to hald
+ * @interface_name: the name of the interface
+ * @lock_owner: what service acquired the lock
+ * @num_locks: number of locks on the interface
+ *
+ * Type for callback when someone acquires a global lock.
+ */
+typedef void (*LibHalGlobalInterfaceLockAcquired) (LibHalContext *ctx,
+                                                   const char *interface_name,
+                                                   const char *lock_owner,
+                                                   int         num_locks);
+
+/** 
+ * LibHalGlobalInterfaceLockReleased:
+ * @ctx: context for connection to hald
+ * @interface_name: the name of the interface
+ * @lock_owner: what service released the lock
+ * @num_locks: number of locks on the interface
+ *
+ * Type for callback when someone releases a global lock.
+ */
+typedef void (*LibHalGlobalInterfaceLockReleased) (LibHalContext *ctx,
+                                                   const char *interface_name,
+                                                   const char *lock_owner,
+                                                   int         num_locks);
+
+/** 
+ * LibHalInterfaceLockAcquired:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @interface_name: the name of the interface
+ * @lock_owner: what service acquired the lock
+ * @num_locks: number of locks on the interface
+ *
+ * Type for callback when someone acquires a lock on a device.
+ */
+typedef void (*LibHalInterfaceLockAcquired) (LibHalContext *ctx,
+                                             const char *udi,
+                                             const char *interface_name,
+                                             const char *lock_owner,
+                                             int         num_locks);
+
+/** 
+ * LibHalInterfaceLockReleased:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @interface_name: the name of the interface
+ * @lock_owner: what service released the lock
+ * @num_locks: number of locks on the interface
+ *
+ * Type for callback when someone acquires a lock on a device.
+ */
+typedef void (*LibHalInterfaceLockReleased) (LibHalContext *ctx,
+                                             const char *udi,
+                                             const char *interface_name,
+                                             const char *lock_owner,
+                                             int         num_locks);
+
+
 
 /* Create a new context for a connection with hald */
 LibHalContext *libhal_ctx_new                          (void);
@@ -227,6 +288,18 @@ dbus_bool_t    libhal_ctx_set_device_property_modified (LibHalContext *ctx, LibH
 
 /* Set the callback for when a device emits a condition */
 dbus_bool_t    libhal_ctx_set_device_condition         (LibHalContext *ctx, LibHalDeviceCondition callback);
+
+/* Set the callback for when a global interface lock is acquired  */
+dbus_bool_t    libhal_ctx_set_global_interface_lock_acquired (LibHalContext *ctx, LibHalGlobalInterfaceLockAcquired callback);
+
+/* Set the callback for when a global interface lock is released  */
+dbus_bool_t    libhal_ctx_set_global_interface_lock_released (LibHalContext *ctx, LibHalGlobalInterfaceLockReleased callback);
+
+/* Set the callback for when an interface lock is acquired  */
+dbus_bool_t    libhal_ctx_set_interface_lock_acquired (LibHalContext *ctx, LibHalInterfaceLockAcquired callback);
+
+/* Set the callback for when an interface lock is released  */
+dbus_bool_t    libhal_ctx_set_interface_lock_released (LibHalContext *ctx, LibHalInterfaceLockReleased callback);
 
 /* Initialize the connection to hald */
 dbus_bool_t    libhal_ctx_init                         (LibHalContext *ctx, DBusError *error);
@@ -633,6 +706,12 @@ dbus_bool_t libhal_device_is_caller_locked_out (LibHalContext *ctx,
                                                 const char *interface,
                                                 const char *caller,
                                                 DBusError *error);
+
+/* Determines whether a determines other processes than the caller holds a lock on the given device.  */
+dbus_bool_t libhal_device_is_locked_by_others (LibHalContext *ctx,
+                                               const char *udi,
+                                               const char *interface,
+                                               DBusError *error);
 
 
 #if defined(__cplusplus)

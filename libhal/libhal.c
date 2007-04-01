@@ -245,6 +245,18 @@ struct LibHalContext_s {
 
 	/** A non-continous event on the device occured  */
 	LibHalDeviceCondition device_condition;
+        
+        /** A global interface lock is acquired  */
+        LibHalGlobalInterfaceLockAcquired global_interface_lock_acquired;
+
+        /** A global interface lock is released  */
+        LibHalGlobalInterfaceLockReleased global_interface_lock_released;
+
+        /** An interface lock is acquired  */
+        LibHalInterfaceLockAcquired interface_lock_acquired;
+
+        /** An interface lock is released  */
+        LibHalInterfaceLockReleased interface_lock_released;
 
 	void *user_data;                      /**< User data */
 };
@@ -512,10 +524,11 @@ oom:
 	return NULL;
 }
 
-/* libhal_property_set_sort:
+/**
+ * libhal_property_set_sort:
  * @set: property-set to sort
  *
- * sort all properties according to property name 
+ * Sort all properties according to property name.
  */
 void 
 libhal_property_set_sort (LibHalPropertySet *set)
@@ -824,6 +837,38 @@ filter_func (DBusConnection * connection,
 			LIBHAL_FREE_DBUS_ERROR(&error);
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager","GlobalInterfaceLockAcquired")) {
+		char *lock_name;
+		char *lock_owner;
+                int num_locks;
+		if (dbus_message_get_args (message, &error,
+					   DBUS_TYPE_STRING, &lock_name,
+					   DBUS_TYPE_STRING, &lock_owner,
+					   DBUS_TYPE_INT32, &num_locks,
+					   DBUS_TYPE_INVALID)) {
+			if (ctx->global_interface_lock_acquired != NULL) {
+				ctx->global_interface_lock_acquired (ctx, lock_name, lock_owner, num_locks);
+			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
+		}
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager","GlobalInterfaceLockReleased")) {
+		char *lock_name;
+		char *lock_owner;
+                int num_locks;
+		if (dbus_message_get_args (message, &error,
+					   DBUS_TYPE_STRING, &lock_name,
+					   DBUS_TYPE_STRING, &lock_owner,
+					   DBUS_TYPE_INT32, &num_locks,
+					   DBUS_TYPE_INVALID)) {
+			if (ctx->global_interface_lock_released != NULL) {
+				ctx->global_interface_lock_released (ctx, lock_name, lock_owner, num_locks);
+			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
+		}
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device", "Condition")) {
 		char *condition_name;
 		char *condition_detail;
@@ -833,6 +878,38 @@ filter_func (DBusConnection * connection,
 					   DBUS_TYPE_INVALID)) {
 			if (ctx->device_condition != NULL) {
 				ctx->device_condition (ctx, object_path, condition_name, condition_detail);
+			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
+		}
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device","InterfaceLockAcquired")) {
+		char *lock_name;
+		char *lock_owner;
+                int num_locks;
+		if (dbus_message_get_args (message, &error,
+					   DBUS_TYPE_STRING, &lock_name,
+					   DBUS_TYPE_STRING, &lock_owner,
+					   DBUS_TYPE_INT32, &num_locks,
+					   DBUS_TYPE_INVALID)) {
+			if (ctx->interface_lock_acquired != NULL) {
+				ctx->interface_lock_acquired (ctx, object_path, lock_name, lock_owner, num_locks);
+			}
+		} else {
+			LIBHAL_FREE_DBUS_ERROR(&error);
+		}
+		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	} else if (dbus_message_is_signal (message, "org.freedesktop.Hal.Device","InterfaceLockReleased")) {
+		char *lock_name;
+		char *lock_owner;
+                int num_locks;
+		if (dbus_message_get_args (message, &error,
+					   DBUS_TYPE_STRING, &lock_name,
+					   DBUS_TYPE_STRING, &lock_owner,
+					   DBUS_TYPE_INT32, &num_locks,
+					   DBUS_TYPE_INVALID)) {
+			if (ctx->interface_lock_released != NULL) {
+				ctx->interface_lock_released (ctx, object_path, lock_name, lock_owner, num_locks);
 			}
 		} else {
 			LIBHAL_FREE_DBUS_ERROR(&error);
@@ -3901,7 +3978,7 @@ out:
 }
 
 /**
- * libhal_device_set_property_strlist:
+ * libhal_changeset_set_property_strlist:
  * @changeset: the changeset
  * @key: key of property 
  * @value: the value to set - NULL terminated array of strings
@@ -4130,6 +4207,18 @@ libhal_device_free_changeset (LibHalChangeSet *changeset)
 }
 
 
+/**
+ * libhal_device_acquire_interface_lock:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @interface: the intername name to lock
+ * @exclusive: whether the lock should be exclusive
+ * @error: pointer to an initialized dbus error object for returning errors
+ * 
+ * Releases a lock on an interface for a specific device. 
+ * 
+ * Returns: TRUE iff the lock was acquired
+ **/
 dbus_bool_t 
 libhal_device_acquire_interface_lock (LibHalContext *ctx,
                                       const char *udi,
@@ -4179,6 +4268,17 @@ libhal_device_acquire_interface_lock (LibHalContext *ctx,
 	return TRUE;
 }
 
+/**
+ * libhal_device_release_interface_lock:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @interface: the intername name to unlock
+ * @error: pointer to an initialized dbus error object for returning errors
+ * 
+ * Acquires a lock on an interface for a specific device.
+ * 
+ * Returns: TRUE iff the lock was released.
+ **/
 dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
                                                   const char *udi,
                                                   const char *interface,
@@ -4225,6 +4325,17 @@ dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
 	return TRUE;
 }
 
+/**
+ * libhal_acquire_global_interface_lock:
+ * @ctx: the context for the connection to hald
+ * @interface: the intername name to lock
+ * @exclusive: whether the lock should be exclusive
+ * @error: pointer to an initialized dbus error object for returning errors
+ * 
+ * Acquires a global lock on an interface.
+ * 
+ * Returns: TRUE iff the lock was acquired
+ **/
 dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
                                                   const char *interface,
                                                   dbus_bool_t exclusive,
@@ -4271,6 +4382,16 @@ dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
 	return TRUE;
 }
 
+/**
+ * libhal_release_global_interface_lock:
+ * @ctx: the context for the connection to hald
+ * @interface: the intername name to unlock
+ * @error: pointer to an initialized dbus error object for returning errors
+ * 
+ * Releases a global lock on an interface.
+ * 
+ * Returns: TRUE iff the lock was released
+ **/
 dbus_bool_t libhal_release_global_interface_lock (LibHalContext *ctx,
                                                   const char *interface,
                                                   DBusError *error)
@@ -4315,6 +4436,20 @@ dbus_bool_t libhal_release_global_interface_lock (LibHalContext *ctx,
 	return TRUE;
 }
 
+/**
+ * libhal_device_is_caller_locked_out:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @interface: the intername name to check
+ * @caller: the caller to check for
+ * @error: pointer to an initialized dbus error object for returning errors
+ * 
+ * Determines whether a given process on the system message bus is
+ * locked out from an interface on a specific device. Only HAL helpers
+ * are privileged to use this method.
+ * 
+ * Returns: Whether the given caller is locked out
+ **/
 dbus_bool_t
 libhal_device_is_caller_locked_out (LibHalContext *ctx,
                                     const char *udi,
@@ -4348,6 +4483,146 @@ libhal_device_is_caller_locked_out (LibHalContext *ctx,
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &caller);
+	
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
+							   message, -1,
+							   error);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		return TRUE;
+	}
+
+	dbus_message_unref (message);
+
+	if (reply == NULL)
+		return TRUE;
+
+	/* now analyze reply */
+	dbus_message_iter_init (reply, &reply_iter);
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
+		dbus_message_unref (message);
+		dbus_message_unref (reply);
+		return TRUE;
+	}
+	dbus_message_iter_get_basic (&reply_iter, &value);
+	dbus_message_unref (reply);
+	return value;
+}
+
+
+/** 
+ * libhal_ctx_set_global_interface_lock_acquired:
+ * @ctx: the context for the connection to hald
+ * @callback: the callback
+ *
+ * Set the callback for when a global interface lock is acquired.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
+ */
+dbus_bool_t
+libhal_ctx_set_global_interface_lock_acquired (LibHalContext *ctx, LibHalGlobalInterfaceLockAcquired callback)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+	ctx->global_interface_lock_acquired = callback;
+	return TRUE;
+}
+
+/** 
+ * libhal_ctx_set_global_interface_lock_released:
+ * @ctx: the context for the connection to hald
+ * @callback: the callback
+ *
+ * Set the callback for when a global interface lock is released.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
+ */
+dbus_bool_t
+libhal_ctx_set_global_interface_lock_released (LibHalContext *ctx, LibHalGlobalInterfaceLockReleased callback)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+	ctx->global_interface_lock_released = callback;
+	return TRUE;
+}
+
+
+/** 
+ * libhal_ctx_set_interface_lock_acquired:
+ * @ctx: the context for the connection to hald
+ * @callback: the callback
+ *
+ * Set the callback for when an interface lock is acquired.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
+ */
+dbus_bool_t
+libhal_ctx_set_interface_lock_acquired (LibHalContext *ctx, LibHalInterfaceLockAcquired callback)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+	ctx->interface_lock_acquired = callback;
+	return TRUE;
+}
+
+/** 
+ * libhal_ctx_set_interface_lock_released:
+ * @ctx: the context for the connection to hald
+ * @callback: the callback
+ *
+ * Set the callback for when an interface lock is released.
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
+ */
+dbus_bool_t
+libhal_ctx_set_interface_lock_released (LibHalContext *ctx, LibHalInterfaceLockReleased callback)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+	ctx->interface_lock_released = callback;
+	return TRUE;
+}
+
+
+
+/**
+ * libhal_device_is_locked_by_others:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique id of device
+ * @interface: the intername name to check
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ * 
+ * Determines whether a determines other processes than the caller holds a lock on the given device.
+ * 
+ * Returns: If another process is holding a lock on the device
+ **/
+dbus_bool_t 
+libhal_device_is_locked_by_others (LibHalContext *ctx,
+                                   const char *udi,
+                                   const char *interface,
+                                   DBusError *error)
+{
+	DBusMessage *message;
+	DBusMessageIter iter;
+	DBusMessage *reply;
+	DBusMessageIter reply_iter;
+        dbus_bool_t value;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, TRUE);
+	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", TRUE);
+	LIBHAL_CHECK_PARAM_VALID(interface, "*interface", TRUE);
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						udi,
+						"org.freedesktop.Hal.Device",
+						"IsLockedByOthers");
+
+	if (message == NULL) {
+		fprintf (stderr,
+			 "%s %d : Couldn't allocate D-BUS message\n",
+			 __FILE__, __LINE__);
+		return TRUE;
+	}
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,

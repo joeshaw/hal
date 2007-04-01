@@ -112,6 +112,28 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               the global device list (GDL). Caller must be uid 0.
             </entry>
           </row>
+
+          <row>
+            <entry>AcquireGlobalInterfaceLock</entry>
+            <entry></entry>
+            <entry>String interface_name, Bool exclusive</entry>
+            <entry>Device.InterfaceAlreadyLocked</entry>
+            <entry>
+              Acquires a global lock on an interface. See
+              <xref linkend="locking"/> for details.
+            </entry>
+          </row>
+          <row>
+            <entry>ReleaseGlobalInterfaceLock</entry>
+            <entry></entry>
+            <entry>String interface_name</entry>
+            <entry>Device.InterfaceNotLocked</entry>
+            <entry>
+              Releases a global lock on an interface. See
+              <xref linkend="locking"/> for details.
+            </entry>
+          </row>
+
         </tbody>
       </tgroup>
     </informaltable>
@@ -149,6 +171,20 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
             <entry>Objref obj, String cap</entry>
             <entry>
               A device gained a new capability.
+            </entry>
+          </row>
+          <row>
+            <entry>GlobalInterfaceLockAcquired</entry>
+            <entry>String lock_name, String lock_owner, Int num_holders</entry>
+            <entry>
+              Sent when a process acquires a global interface lock.
+            </entry>
+          </row>
+          <row>
+            <entry>GlobalInterfaceLockReleased</entry>
+            <entry>String lock_name, String lock_owner, Int num_holders</entry>
+            <entry>
+              Sent when a process releases a global interface lock.
             </entry>
           </row>
         </tbody>
@@ -377,7 +413,6 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               Releases an advisory lock on the device. Returns TRUE if the lock was released.
             </entry>
           </row>
-
           <row>
             <entry>AcquireInterfaceLock</entry>
             <entry></entry>
@@ -388,7 +423,6 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               device. See <xref linkend="locking"/> for details.
             </entry>
           </row>
-
           <row>
             <entry>ReleaseInterfaceLock</entry>
             <entry></entry>
@@ -399,7 +433,6 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               <xref linkend="locking"/> for details.
             </entry>
           </row>
-
           <row>
             <entry>IsCallerLockedOut</entry>
             <entry>Bool</entry>
@@ -410,6 +443,17 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               bus is locked out from an interface on a specific
               device. Only HAL helpers are privileged to use this
               method. See <xref linkend="locking"/> for details.
+            </entry>
+          </row>
+          <row>
+            <entry>IsLockedByOthers</entry>
+            <entry>Bool</entry>
+            <entry>String interface_name</entry>
+            <entry></entry>
+            <entry>
+              Determines whether a determines other processes than the
+              caller holds a lock on the given device. See
+              <xref linkend="locking"/> for details.
             </entry>
           </row>
 
@@ -537,6 +581,20 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               that cannot be expressed in device properties. (NOTE:
               newly written code should use dedicated signals on a
               dedicated interface.).
+            </entry>
+          </row>
+          <row>
+            <entry>InterfaceLockAcquired</entry>
+            <entry>String lock_name, String lock_owner, Int num_holders</entry>
+            <entry>
+              Sent when a process acquires an interface lock on the device.
+            </entry>
+          </row>
+          <row>
+            <entry>InterfaceLockReleased</entry>
+            <entry>String lock_name, String lock_owner, Int num_holders</entry>
+            <entry>
+              Sent when a process releases an interface lock on the device.
             </entry>
           </row>
         </tbody>

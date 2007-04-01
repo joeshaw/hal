@@ -19,7 +19,7 @@ device database by looking at device properties. For
 more information about both the big picture and specific
 .B HAL
 properties, refer to the \fIHAL spec\fP which can be found in
-.I "/usr/share/doc/hal-0.5.9/spec/hal-spec.html"
+.I "/usr/share/doc/hal-@VERSION@/spec/hal-spec.html"
 depending on the distribution.
 
 .SH OPTIONS

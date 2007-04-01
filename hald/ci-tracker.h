@@ -63,6 +63,7 @@ uid_t         ci_tracker_caller_get_uid                (CICallerInfo *ci);
 const char   *ci_tracker_caller_get_sysbus_unique_name (CICallerInfo *ci);
 #ifdef HAVE_CONKIT
 pid_t         ci_tracker_caller_get_pid                (CICallerInfo *ci);
+gboolean      ci_tracker_caller_is_local               (CICallerInfo *ci);
 gboolean      ci_tracker_caller_in_active_session      (CICallerInfo *ci);
 const char   *ci_tracker_caller_get_ck_session_path    (CICallerInfo *ci);
 #endif

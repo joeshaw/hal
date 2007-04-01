@@ -761,6 +761,146 @@ out:
 	;
 }
 
+void
+manager_send_signal_interface_lock_acquired (const char *interface_name, const char *sender)
+{
+        const char *udi;
+        char *lock_name;
+        int num_locks;
+        HalDevice *d;
+	DBusMessage *message;
+	DBusMessageIter iter;
+
+	if (dbus_connection == NULL || hald_is_initialising)
+		goto out;
+
+	udi = "/org/freedesktop/Hal/devices/computer";
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+        if (d == NULL)
+                goto out;
+
+        lock_name = g_strdup_printf ("Global.%s", interface_name);
+        num_locks = hal_device_get_num_lock_holders (d, lock_name);
+        g_free (lock_name);
+
+	message = dbus_message_new_signal ("/org/freedesktop/Hal/Manager",
+					   "org.freedesktop.Hal.Manager",
+					   "GlobalInterfaceLockAcquired");
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface_name);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &sender);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &num_locks);
+
+	if (!dbus_connection_send (dbus_connection, message, NULL))
+		DIE (("error broadcasting message"));
+
+	dbus_message_unref (message);
+out:
+	;
+}
+
+void
+manager_send_signal_interface_lock_released (const char *interface_name, const char *sender)
+{
+        const char *udi;
+        char *lock_name;
+        int num_locks;
+        HalDevice *d;
+	DBusMessage *message;
+	DBusMessageIter iter;
+
+	if (dbus_connection == NULL || hald_is_initialising)
+		goto out;
+
+	udi = "/org/freedesktop/Hal/devices/computer";
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+        if (d == NULL)
+                goto out;
+
+        lock_name = g_strdup_printf ("Global.%s", interface_name);
+        num_locks = hal_device_get_num_lock_holders (d, lock_name);
+        g_free (lock_name);
+
+	message = dbus_message_new_signal ("/org/freedesktop/Hal/Manager",
+					   "org.freedesktop.Hal.Manager",
+					   "GlobalInterfaceLockReleased");
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface_name);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &sender);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &num_locks);
+
+	if (!dbus_connection_send (dbus_connection, message, NULL))
+		DIE (("error broadcasting message"));
+
+	dbus_message_unref (message);
+out:
+	;
+}
+
+void
+device_send_signal_interface_lock_acquired (HalDevice *device, const char *interface_name, const char *sender)
+{
+        int num_locks;
+	DBusMessage *message;
+	DBusMessageIter iter;
+
+	if (dbus_connection == NULL || hald_is_initialising)
+		goto out;
+
+        num_locks = hal_device_get_num_lock_holders (device, interface_name);
+
+	message = dbus_message_new_signal (hal_device_get_udi (device),
+					   "org.freedesktop.Hal.Device",
+					   "InterfaceLockAcquired");
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface_name);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &sender);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &num_locks);
+
+	if (!dbus_connection_send (dbus_connection, message, NULL))
+		DIE (("error broadcasting message"));
+
+	dbus_message_unref (message);
+out:
+	;
+}
+
+void
+device_send_signal_interface_lock_released (HalDevice *device, const char *interface_name, const char *sender)
+{
+        int num_locks;
+	DBusMessage *message;
+	DBusMessageIter iter;
+
+	if (dbus_connection == NULL || hald_is_initialising)
+		goto out;
+
+        num_locks = hal_device_get_num_lock_holders (device, interface_name);
+
+	message = dbus_message_new_signal (hal_device_get_udi (device),
+					   "org.freedesktop.Hal.Device",
+					   "InterfaceLockReleased");
+
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &interface_name);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &sender);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_INT32, &num_locks);
+
+	if (!dbus_connection_send (dbus_connection, message, NULL))
+		DIE (("error broadcasting message"));
+
+	dbus_message_unref (message);
+out:
+	;
+}
+
 static void
 foreach_property_append (HalDevice *device, 
 			 const char *key,
@@ -1903,7 +2043,7 @@ device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message,
 	sender = dbus_message_get_sender (message);
 
         if (!local_interface) {
-                if (!access_check_caller_have_access_to_device (ci_tracker, d, sender)) {
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, "lock", sender)) {
                         raise_permission_denied (connection, message, "AcquireInterfaceLock: no access to device");
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
@@ -1960,7 +2100,7 @@ device_release_interface_lock (DBusConnection *connection, DBusMessage *message,
 	sender = dbus_message_get_sender (message);
 
         if (!local_interface) {
-                if (!access_check_caller_have_access_to_device (ci_tracker, d, sender)) {
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, "lock", sender)) {
                         raise_permission_denied (connection, message, "ReleaseInterfaceLock: no access to device");
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
@@ -1989,7 +2129,6 @@ device_release_interface_lock (DBusConnection *connection, DBusMessage *message,
 	dbus_message_unref (reply);
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
-
 
 static DBusHandlerResult
 device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
@@ -2034,6 +2173,62 @@ device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, d
 	}
 
         result = access_check_caller_locked_out (ci_tracker, d, caller_sysbus_name, interface_name);
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_BOOLEAN, &result);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
+/*------------------------------------------------------------------------*/
+
+static DBusHandlerResult
+device_is_locked_by_others (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	const char *sender;
+	char *interface_name;
+        dbus_bool_t result;
+        DBusMessageIter iter;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	sender = dbus_message_get_sender (message);
+
+        /* anyone can ask this question */
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &interface_name,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "IsLockedByOthers");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+        result = access_check_locked_by_others (ci_tracker, d, sender, interface_name);
 
 	reply = dbus_message_new_method_return (message);
 	if (reply == NULL)
@@ -3707,6 +3902,16 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"udi\" type=\"s\"/>\n"
 				       "      <arg name=\"cap_name\" type=\"s\"/>\n"
 				       "    </signal>\n"
+				       "    <signal name=\"GlobalInterfaceLockAcquired\">\n"
+				       "      <arg name=\"interface_name\" type=\"s\"/>\n"
+				       "      <arg name=\"lock_holder\" type=\"s\"/>\n"
+				       "      <arg name=\"num_locks\" type=\"i\"/>\n"
+				       "    </signal>\n"
+				       "    <signal name=\"GlobalInterfaceLockReleased\">\n"
+				       "      <arg name=\"interface_name\" type=\"s\"/>\n"
+				       "      <arg name=\"lock_holder\" type=\"s\"/>\n"
+				       "      <arg name=\"num_locks\" type=\"i\"/>\n"
+				       "    </signal>\n"
 
 				       "  </interface>\n");
 	} else {
@@ -3816,6 +4021,10 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"caller_sysbus_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"whether_caller_is_locked_out\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
+				       "    <method name=\"IsLockedByOthers\">\n"
+				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"whether_it_is_locked_by_others\" direction=\"out\" type=\"b\"/>\n"
+				       "    </method>\n"
 
 				       "    <method name=\"StringListAppend\">\n"
 				       "      <arg name=\"key\" direction=\"in\" type=\"s\"/>\n"
@@ -3858,6 +4067,17 @@ do_introspect (DBusConnection  *connection,
 				       "    <signal name=\"Condition\">\n"
 				       "      <arg name=\"cond_name\" type=\"s\"/>\n"
 				       "      <arg name=\"cond_details\" type=\"s\"/>\n"
+				       "    </signal>\n"
+
+				       "    <signal name=\"InterfaceLockAcquired\">\n"
+				       "      <arg name=\"interface_name\" type=\"s\"/>\n"
+				       "      <arg name=\"lock_holder\" type=\"s\"/>\n"
+				       "      <arg name=\"num_locks\" type=\"i\"/>\n"
+				       "    </signal>\n"
+				       "    <signal name=\"InterfaceLockReleased\">\n"
+				       "      <arg name=\"interface_name\" type=\"s\"/>\n"
+				       "      <arg name=\"lock_holder\" type=\"s\"/>\n"
+				       "      <arg name=\"num_locks\" type=\"i\"/>\n"
 				       "    </signal>\n"
 
 				       "  </interface>\n");
@@ -4085,7 +4305,10 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"org.freedesktop.Hal.Device",
 						"IsCallerLockedOut")) {
 		return device_is_caller_locked_out (connection, message, local_interface);
-
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
+						"IsLockedByOthers")) {
+		return device_is_locked_by_others (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 					      "org.freedesktop.Hal.Device",
 					      "GetAllProperties")) {
@@ -4249,7 +4472,7 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 
                 /* bypass security checks on direct connections */
                 if (!local_interface) {
-                        if (!access_check_caller_have_access_to_device (ci_tracker, d, caller)) {
+                        if (!access_check_caller_have_access_to_device (ci_tracker, d, NULL, caller)) {
                                 HAL_INFO (("Caller '%s' does not have access to device '%s'", caller, udi));
                                 /* TODO: need to fix up reason */
                                 raise_permission_denied (connection, message, "Not in active session");
@@ -4366,13 +4589,6 @@ DBusHandlerResult
 hald_dbus_filter_function (DBusConnection * connection,
 			   DBusMessage * message, void *user_data)
 {
-#ifdef HAVE_CONKIT
-	/* TODO: only push the appropriate messages to the tracker; see ck-tracker.h */
-	if (ck_tracker != NULL) {
-		ck_tracker_process_system_bus_message (ck_tracker, message);
-	}
-#endif
-
 	if (dbus_message_is_signal (message, DBUS_INTERFACE_LOCAL, "Disconnected") &&
 	    strcmp (dbus_message_get_path (message), DBUS_PATH_LOCAL) == 0) {
 
@@ -4439,10 +4655,26 @@ hald_dbus_filter_function (DBusConnection * connection,
 		HAL_INFO (("active=%d for session %s", is_active, session_objpath));
 		ci_tracker_active_changed (ci_tracker, session_objpath, is_active);
 #endif /* HAVE_CONKIT */
-	} else 
+	} else {
+
+#ifdef HAVE_CONKIT
+                /* TODO: only push the appropriate messages to the tracker; see ck-tracker.h */
+                if (ck_tracker != NULL) {
+                        ck_tracker_process_system_bus_message (ck_tracker, message);
+                }
+#endif
 		return hald_dbus_filter_handle_methods (connection, message, user_data, FALSE);
+        }
 
 out:
+
+#ifdef HAVE_CONKIT
+	/* TODO: only push the appropriate messages to the tracker; see ck-tracker.h */
+	if (ck_tracker != NULL) {
+		ck_tracker_process_system_bus_message (ck_tracker, message);
+	}
+#endif
+
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -4698,6 +4930,50 @@ hald_dbus_seat_removed (CKTracker *tracker, CKSeat *seat, void *user_data)
 	/* TODO: we could run callouts here... but they wouldn't do anything useful right now */
 }
 
+static gboolean
+validate_lock_for_device (HalDeviceStore *store,
+                          HalDevice      *device,
+                          gpointer        user_data)
+{
+        int n, m;
+        char **holders;
+        char **locked_interfaces;
+
+        locked_interfaces = hal_device_property_dup_strlist_as_strv (device, "info.named_locks");
+        if (locked_interfaces == NULL)
+                goto out;
+
+        for (n = 0; locked_interfaces[n] != NULL; n++) {
+                holders = hal_device_get_lock_holders (device, locked_interfaces[n]);
+                if (holders == NULL)
+                        continue;
+                for (m = 0; holders[m] != NULL; m++) {
+                        HAL_INFO (("Validating lock holder '%s' on interface '%s' on udi '%s'",
+                                   holders[m], locked_interfaces[n], hal_device_get_udi (device)));
+
+                        if (!access_check_caller_have_access_to_device (ci_tracker, device, "lock", holders[m])) {
+                                HAL_INFO (("Kicking out lock holder '%s' on interface '%s' on udi '%s' "
+                                           "as he no longer has access to the device",
+                                           holders[m], locked_interfaces[n], hal_device_get_udi (device)));
+                                hal_device_release_lock (device, locked_interfaces[n], holders[m]);
+                        }
+
+                }
+                g_strfreev (holders);
+        }
+
+        g_strfreev (locked_interfaces);
+out:
+        return TRUE;
+}
+
+static void
+validate_locks (void)
+{
+        hal_device_store_foreach (hald_get_tdl (), validate_lock_for_device, NULL);
+        hal_device_store_foreach (hald_get_gdl (), validate_lock_for_device, NULL);
+}
+
 static void 
 hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *user_data)
 {
@@ -4712,6 +4988,9 @@ hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *
 	HAL_INFO (("In hald_dbus_session_active_changed for session '%s': %s", 
 		   ck_session_get_id (session),
 		   ck_session_is_active (session) ? "ACTIVE" : "INACTIVE"));
+
+        /* revalidate all locks (to remove locks from callers in that session who no longer has access to devices */
+        validate_locks ();
 
 	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
 	if (d == NULL) {

@@ -131,3 +131,11 @@ Coding Style
    heuristically parse a file and accept not-well-formed
    data). Avoiding heuristics is also important for security reasons;
    if it looks funny, ignore it (or exit, or disconnect).
+
+Configuring the sources
+===
+
+To configure the HAL sources for a generic Linux desktop distribution
+using Linux 2.6.20, one should use
+
+--enable-console-kit --enable-acl-management --enable-docbook-docs --enable-acpi-ibm --enable-acpi-toshiba

@@ -53,6 +53,14 @@ struct _HalDeviceClass {
 
 	void (*capability_added) (HalDevice *device,
 				  const char *capability);
+
+	void (*lock_acquired) (HalDevice *device,
+                               const char *lock_name,
+                               const char *lock_owner);
+
+	void (*lock_released) (HalDevice *device,
+                               const char *lock_name,
+                               const char *lock_owner);
 };
 
 #define HAL_TYPE_DEVICE             (hal_device_get_type ())
@@ -211,6 +219,8 @@ gboolean      hal_device_acquire_lock (HalDevice *device, const char *lock_name,
 gboolean      hal_device_release_lock (HalDevice *device, const char *lock_name, const char *sender);
 
 char        **hal_device_get_lock_holders (HalDevice *device, const char *lock_name);
+
+int           hal_device_get_num_lock_holders (HalDevice *device, const char *lock_name);
 
 /* static method */
 void          hal_device_client_disconnected (const char *sender);

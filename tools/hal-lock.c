@@ -37,6 +37,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 #include "libhal.h"
 
@@ -56,6 +57,7 @@ usage (int argc, char *argv[])
                  "                 --run <program-and-args>\n"
                  "                 [--udi <udi>]\n"
                  "                 [--exclusive]\n"
+                 "                 [--exit-with-lock]"
                  "                 [--help] [--version]\n");
 	fprintf (stderr,
                  "\n"
@@ -64,6 +66,7 @@ usage (int argc, char *argv[])
                  "        --udi            Unique Device Id of device to lock. If\n"
                  "                         ommitted the global lock will be tried\n"
                  "        --exclusive      Whether the lock can be held by others\n"
+                 "        --exit-with-lock Kill the program if the acquired lock is lost\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
@@ -75,6 +78,35 @@ usage (int argc, char *argv[])
                  "error occured while taking the lock, this program will exit with a\n"
                  "non-zero exit code and the given program will not be run.\n"
                  "\n");
+}
+
+static char *udi = NULL;
+static char *interface = NULL;
+static const char *unique_name;
+static GPid child_pid;
+
+static void
+guardian (GPid pid, int status, gpointer data)
+{
+        /* exit along with the child */
+        exit (0);
+}
+
+static void
+interface_lock_released (LibHalContext *ctx,
+                         const char *_udi,
+                         const char *_interface,
+                         const char *lock_owner,
+                         int num_locks)
+{
+
+
+        if (strcmp (udi, _udi) == 0 &&
+            strcmp (interface, _interface) == 0 &&
+            strcmp (lock_owner, unique_name) == 0) {
+                fprintf (stderr, "Lost the lock; killing child...\n");
+                kill (child_pid, SIGTERM);
+        }
 }
 
 /** 
@@ -89,16 +121,17 @@ usage (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-	char *udi = NULL;
-	char *interface = NULL;
         char *run = NULL;
         dbus_bool_t is_version = FALSE;
         dbus_bool_t exclusive = FALSE;
         dbus_bool_t got_lock = FALSE;
+        dbus_bool_t exit_with_lock = FALSE;
+        DBusConnection *con;
 	DBusError error;
         LibHalContext *hal_ctx;
         int ret;
         GError *g_error = NULL;
+	GMainLoop *loop;
 
         ret = 1;
 
@@ -116,6 +149,7 @@ main (int argc, char *argv[])
 			{"interface", 1, NULL, 0},
 			{"run", 1, NULL, 0},
 			{"exclusive", 0, NULL, 0},
+			{"exit-with-lock", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
@@ -143,6 +177,8 @@ main (int argc, char *argv[])
                                 exclusive = TRUE;
 			} else if (strcmp (opt, "interface") == 0) {
 				interface = strdup (optarg);
+			} else if (strcmp (opt, "exit-with-lock") == 0) {
+				exit_with_lock = TRUE;
 			}
 			break;
 
@@ -164,17 +200,41 @@ main (int argc, char *argv[])
                 goto out;
 	}
 
+        if (exit_with_lock && udi == NULL) {
+                fprintf (stderr, "--exit-with-lock requires UDI to be given.\n");
+                usage (argc, argv);
+                goto out;
+        }
+
+	if (exit_with_lock)
+		loop = g_main_loop_new (NULL, FALSE);
+	else
+		loop = NULL;
+
 
         dbus_error_init (&error);	
         if ((hal_ctx = libhal_ctx_new ()) == NULL) {
                 fprintf (stderr, "error: libhal_ctx_new\n");
                 goto out;
         }
-        if (!libhal_ctx_set_dbus_connection (hal_ctx, dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
-                fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+        con = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+        if (con == NULL) {
+                fprintf (stderr, "error: dbus_bus_get: %s: %s\n", error.name, error.message);
                 LIBHAL_FREE_DBUS_ERROR (&error);
                 goto out;
         }
+        if (!libhal_ctx_set_dbus_connection (hal_ctx, con)) {
+                fprintf (stderr, "error: libhal_ctx_set_dbus_connection\n");
+                goto out;
+        }
+
+        if (exit_with_lock) {
+                unique_name = dbus_bus_get_unique_name (con);
+                fprintf (stderr, "unique name is '%s'\n", unique_name);
+                libhal_ctx_set_interface_lock_released (hal_ctx, interface_lock_released);
+		dbus_connection_setup_with_g_main (con, NULL);
+        }
+
         if (!libhal_ctx_init (hal_ctx, &error)) {
                 if (dbus_error_is_set(&error)) {
                         fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
@@ -184,6 +244,9 @@ main (int argc, char *argv[])
                          "Normally this means the HAL daemon (hald) is not running or not ready.\n");
                 goto out;
         }
+
+        if (exit_with_lock)
+                libhal_device_add_property_watch (hal_ctx, udi, &error);
         
         if (udi != NULL) {
                 got_lock = libhal_device_acquire_interface_lock (hal_ctx,
@@ -213,16 +276,43 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        /* now run the program while holding the lock */
-        if (!g_spawn_command_line_sync (run,
-                                        NULL,
-                                        NULL,
-                                        NULL,
-                                        &g_error)) {
+        if (exit_with_lock) {
+                int _argc;
+                char **_argv;
+
+                if (!g_shell_parse_argv (run, &_argc, &_argv, &g_error)) {
+                        fprintf (stderr, "error: g_shell_parse_argv: %s\n", g_error->message);
+                        g_error_free (g_error);
+                        goto out;
+                }
                 
-                fprintf (stderr, "error: g_spawn_command_line_sync: %s\n", g_error->message);
-                g_error_free (g_error);
-                goto out;
+                if (!g_spawn_async (NULL,
+                                    _argv,
+                                    NULL,
+                                    G_SPAWN_SEARCH_PATH | G_SPAWN_DO_NOT_REAP_CHILD,
+                                    NULL,
+                                    NULL,
+                                    &child_pid,
+                                    &g_error)) {
+                        fprintf (stderr, "error: g_spawn_command_line_async: %s\n", g_error->message);
+                        g_error_free (g_error);
+                        goto out;
+                }
+                g_child_watch_add (child_pid, guardian, NULL);
+		g_main_loop_run (loop);
+
+        } else {
+                /* now run the program while holding the lock */
+                if (!g_spawn_command_line_sync (run,
+                                                NULL,
+                                                NULL,
+                                                NULL,
+                                                &g_error)) {
+                        
+                        fprintf (stderr, "error: g_spawn_command_line_sync: %s\n", g_error->message);
+                        g_error_free (g_error);
+                        goto out;
+                }
         }
 
         ret = 0;

@@ -83,6 +83,12 @@ void manager_send_signal_device_removed (HalDevice *device);
 void manager_send_signal_new_capability (HalDevice *device,
 					 const char *capability);
 
+void manager_send_signal_interface_lock_acquired (const char *interface_name, const char *sender);
+void manager_send_signal_interface_lock_released (const char *interface_name, const char *sender);
+
+void device_send_signal_interface_lock_acquired (HalDevice *device, const char *interface_name, const char *sender);
+void device_send_signal_interface_lock_released (HalDevice *device, const char *interface_name, const char *sender);
+
 void device_send_signal_property_modified (HalDevice *device,
 					   const char *key,
 					   dbus_bool_t removed,

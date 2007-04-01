@@ -52,6 +52,7 @@ struct CICallerInfo_s {
 #ifdef HAVE_CONKIT
 	pid_t  pid;                   /* process ID of caller */
 	gboolean in_active_session;   /* caller is in an active session */
+        gboolean is_local;            /* session is on a local seat */
 	char *session_objpath;        /* obj path of ConsoleKit session */
 #endif
 	char *system_bus_unique_name; /* unique name of caller on the system bus */
@@ -261,6 +262,25 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 	dbus_message_iter_get_basic (&iter, &ci->in_active_session);
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
+
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						ci->session_objpath,
+						"org.freedesktop.ConsoleKit.Session",
+						"IsLocal");
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (cit->dbus_connection, message, -1, &error);
+	if (reply == NULL || dbus_error_is_set (&error)) {
+		HAL_WARNING (("Error doing IsLocal on ConsoleKit: %s: %s", error.name, error.message));
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto error;
+	}
+	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_get_basic (&iter, &ci->is_local);
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
 	
 store_caller_info:
 #endif /* HAVE_CONKIT */
@@ -308,6 +328,12 @@ pid_t
 ci_tracker_caller_get_pid (CICallerInfo *ci)
 {
         return ci->pid;
+}
+
+gboolean
+ci_tracker_caller_is_local (CICallerInfo *ci)
+{
+        return ci->is_local;
 }
 
 gboolean

@@ -110,17 +110,30 @@ out:
  * access_check_caller_have_access_to_device:
  * @cit: the CITracker object
  * @device: The device to check for
- * @caller_unique_sysbus_name: The unique system bus connection name (e.g. ":1.43") of the caller
+ * @privilege: the type of access; right now this can be #NULL or
+ * "lock"; will be replaced by PolicyKit privileges in the future
+ * @caller_unique_sysbus_name: The unique system bus connection
+ * name (e.g. ":1.43") of the caller
  *
  * Determine if a given caller should have access to a device. This
  * depends on how the security is set up and may change according to
  * how the system is configured.
  *
- * If ConsoleKit is used this function currently will return TRUE if,
- * and only if, the caller is in an active session. TODO: once
- * multi-seat is properly supported it will also depend on what seat
- * the device belongs to and what seat the caller's session belongs
- * to.
+ * If the privilege parameter is #NULL, it means "check if the caller
+ * can access D-Bus interfaces". If it is "lock" it means "check if
+ * the caller can lock an interface on the device".
+ *
+ * If ConsoleKit is used this function currently will return TRUE when
+ * privilege is #NULL if, and only if, the caller is in an active
+ * local session. If privilege is "lock" the only difference is that
+ * the it will always return TRUE for the root computer device
+ * object. This is used to ensure that any caller can always lock the
+ * SystemPowerManagement interface cf. the "Locking Guidelines"
+ * section of the HAL spec.
+ *
+ * (TODO: once PolicyKit and multi-seat is properly supported, this
+ * result from this function will also depend on what seat the device
+ * belongs to and what seat the caller's session belongs to.)
  *
  * If ConsoleKit is not used, this function will just return TRUE; the
  * OS vendor is supposed to have locked down access to HAL through OS
@@ -132,7 +145,7 @@ out:
  * Returns: TRUE iff the caller have access to the device.
  */
 gboolean
-access_check_caller_have_access_to_device (CITracker *cit, HalDevice *device, const char *caller_unique_sysbus_name)
+access_check_caller_have_access_to_device (CITracker *cit, HalDevice *device, const char *privilege, const char *caller_unique_sysbus_name)
 #ifdef HAVE_CONKIT
 {
         gboolean ret;
@@ -152,19 +165,30 @@ access_check_caller_have_access_to_device (CITracker *cit, HalDevice *device, co
                 goto out;
         }
 
+        /* must be tracked by ConsoleKit */
         if (ci_tracker_caller_get_ck_session_path (ci) == NULL) {
                 goto out;
         }
 
+        /* require caller to be local */
+        if (!ci_tracker_caller_is_local (ci))
+                goto out;
 
-        if (!ci_tracker_caller_in_active_session (ci)) {
+        /* allow inactive sessions to lock interfaces on root computer device object */
+        if (privilege != NULL && 
+            strcmp (privilege, "lock") == 0 && 
+            strcmp (hal_device_get_udi (device), "/org/freedesktop/Hal/devices/computer") == 0) {
+                ret = TRUE;
                 goto out;
         }
-
+        
+        /* require caller to be in active session */
+        if (!ci_tracker_caller_in_active_session (ci))
+                goto out;
+                
         ret = TRUE;
 out:
         return ret;
-
 }
 #else /* HAVE_CONKIT */
 {
@@ -254,7 +278,7 @@ access_check_caller_locked_out (CITracker   *cit,
                 for (n = 0; global_holders[n] != NULL; n++) {
                         if (strcmp (global_holders[n], caller_unique_sysbus_name) == 0) {
                                 /* we are holding the global lock... */
-                                if (access_check_caller_have_access_to_device (cit, device, global_holders[n])) {
+                                if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
                                         /* only applies if the caller can access the device... */
                                         is_locked_by_self = TRUE;
                                         /* this is good enough; we are holding the lock ourselves */
@@ -265,7 +289,7 @@ access_check_caller_locked_out (CITracker   *cit,
                                 /* Someone else is holding the global lock.. check if that someone
                                  * actually have access to the device...
                                  */
-                                if (access_check_caller_have_access_to_device (cit, device, global_holders[n])) {
+                                if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
                                         /* They certainly do. Mark as locked. */
                                         is_locked = TRUE;
                                 }
@@ -284,6 +308,80 @@ access_check_caller_locked_out (CITracker   *cit,
         }
 
         /* done all the checks so we're not locked out */
+        ret = FALSE;
+
+out:
+        g_strfreev (global_holders);
+        g_strfreev (holders);
+        g_free (global_lock_name);
+        return ret;
+}
+
+
+
+/**
+ * access_check_locked_by_others:
+ * @cit: the CITracker object
+ * @device: The device to check for
+ * @caller_unique_sysbus_name: The unique system bus connection name (e.g. ":1.43") of the caller
+ * @interface_name: the interface to check for
+ *
+ * This method determines other processes than the caller holds a lock
+ * on the given device.
+ * 
+ * Returns: TRUE iff other processes is holding a lock on the device
+ */
+gboolean
+access_check_locked_by_others (CITracker   *cit,
+                               HalDevice   *device,
+                               const char  *caller_unique_sysbus_name,
+                               const char  *interface_name)
+{
+        int n;
+        gboolean ret;
+        char *global_lock_name;
+        char **holders;
+        char **global_holders;
+        HalDevice *computer;
+
+        global_lock_name = NULL;
+        holders = NULL;
+        global_holders = NULL;
+        ret = TRUE;
+
+	computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	if (computer == NULL)
+		computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+	if (computer == NULL)
+		goto out;
+
+        global_lock_name = g_strdup_printf ("Global.%s", interface_name);
+
+        holders = hal_device_get_lock_holders (device, interface_name);
+        global_holders = hal_device_get_lock_holders (computer, global_lock_name);
+
+        if (holders != NULL) {
+                for (n = 0; holders[n] != NULL; n++) {
+                        if (strcmp (holders[n], caller_unique_sysbus_name) != 0) {
+                                /* someone else is holding the lock */
+                                goto out;
+                        }
+                }
+        }
+
+        if (global_holders != NULL) {
+                for (n = 0; global_holders[n] != NULL; n++) {
+                        if (strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
+                                /* someone else is holding the global lock... */
+                                if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
+                                        /* ... and they can can access the device */
+                                        goto out;
+                                }
+                        }
+                }
+        }
+
+        /* done all the checks so noone else is locking... */
         ret = FALSE;
 
 out:

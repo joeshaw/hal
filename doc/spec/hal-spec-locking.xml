@@ -52,11 +52,28 @@
       interface on the given device. The locker can specify whether
       the lock is <emphasis>exclusive</emphasis> meaning if multiple
       clients clients can hold the lock or if only one client can hold
-      the lock at one time. If a client don't have access to a device,
-      attempts to lock will fail with
+      the lock at one time. If a client don't have access to the
+      interface of the device, attempts to lock will fail with
       a <literal>org.freedesktop.Hal.PermissionDenied</literal>
-      exception. If another client already holds the lock exclusively,
-      attempts from other clients to acquire the lock will fail with
+      exception. If a client loses access to a device (say, if his
+      session is switched away from using fast user switching) while
+      holding a lock, he will lose the lock; this can be tracked by
+      listening to the <literal>InterfaceLockReleased</literal>
+      signal.
+    </para>
+
+    <para>
+      All local clients, whether they are active or not, can always
+      lock interfaces on the root computer device object (this doesn't
+      mean that they are privileged to use the interfaces though) -
+      the rationale is that this device object represents shared
+      infrastructure, e.g. power management, and even inactive
+      sessions needs to participate in managing this.
+    </para>
+
+    <para>
+      If another client already holds a lock exclusively, attempts
+      from other clients to acquire the lock will fail with
       the <literal>org.freedesktop.Hal.Device.InterfaceAlreadyLocked</literal>
       exception even if they have access to the device.
     </para>
@@ -218,7 +235,7 @@
 
           <listitem>
             <para>
-              ... MUST check that no other process is holding the lock
+              ... MUST check that no other process is holding the lock (using the <literal>IsLockedByOthers</literal> method on the standard <literal>org.freedesktop.Hal.Device</literal> interface)
               before calling into
               the <literal>org.freedesktop.Hal.Device.SystemPowerManagement</literal>
               interface. If another process is holding the lock, it

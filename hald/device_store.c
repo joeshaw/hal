@@ -41,6 +41,8 @@ enum {
 	STORE_CHANGED,
 	DEVICE_PROPERTY_CHANGED,
 	DEVICE_CAPABILITY_ADDED,
+        DEVICE_LOCK_ACQUIRED,
+        DEVICE_LOCK_RELEASED,
 	LAST_SIGNAL
 };
 
@@ -103,6 +105,33 @@ hal_device_store_class_init (HalDeviceStoreClass *klass)
 			      G_TYPE_NONE, 2,
 			      G_TYPE_OBJECT,
 			      G_TYPE_STRING);
+
+	signals[DEVICE_LOCK_ACQUIRED] =
+		g_signal_new ("device_lock_acquired",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceStoreClass,
+					       device_lock_acquired),
+			      NULL, NULL,
+			      hald_marshal_VOID__OBJECT_STRING_STRING,
+			      G_TYPE_NONE, 3,
+			      G_TYPE_OBJECT,
+			      G_TYPE_STRING,
+			      G_TYPE_STRING);
+
+	signals[DEVICE_LOCK_RELEASED] =
+		g_signal_new ("device_lock_released",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceStoreClass,
+					       device_lock_released),
+			      NULL, NULL,
+			      hald_marshal_VOID__OBJECT_STRING_STRING,
+			      G_TYPE_NONE, 3,
+			      G_TYPE_OBJECT,
+			      G_TYPE_STRING,
+			      G_TYPE_STRING);
+
 }
 
 static void
@@ -169,6 +198,30 @@ emit_device_capability_added (HalDevice *device,
 		       device, capability);
 }
 
+static void
+emit_device_lock_acquired (HalDevice *device,
+                           const char *lock_name,
+                           const char *lock_owner,
+                           gpointer data)
+{
+	HalDeviceStore *store = HAL_DEVICE_STORE (data);
+
+	g_signal_emit (store, signals[DEVICE_LOCK_ACQUIRED], 0,
+		       device, lock_name, lock_owner);
+}
+
+static void
+emit_device_lock_released (HalDevice *device,
+                           const char *lock_name,
+                           const char *lock_owner,
+                           gpointer data)
+{
+	HalDeviceStore *store = HAL_DEVICE_STORE (data);
+
+	g_signal_emit (store, signals[DEVICE_LOCK_RELEASED], 0,
+		       device, lock_name, lock_owner);
+}
+
 void
 hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 {
@@ -187,6 +240,10 @@ hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 			  G_CALLBACK (emit_device_property_changed), store);
 	g_signal_connect (device, "capability_added",
 			  G_CALLBACK (emit_device_capability_added), store);
+	g_signal_connect (device, "lock_acquired",
+			  G_CALLBACK (emit_device_lock_acquired), store);
+	g_signal_connect (device, "lock_released",
+			  G_CALLBACK (emit_device_lock_released), store);
 
 	g_signal_emit (store, signals[STORE_CHANGED], 0, device, TRUE);
 
@@ -207,6 +264,12 @@ hal_device_store_remove (HalDeviceStore *store, HalDevice *device)
 					      store);
 	g_signal_handlers_disconnect_by_func (device,
 					      (gpointer)emit_device_capability_added,
+					      store);
+	g_signal_handlers_disconnect_by_func (device,
+					      (gpointer)emit_device_lock_acquired,
+					      store);
+	g_signal_handlers_disconnect_by_func (device,
+					      (gpointer)emit_device_lock_released,
 					      store);
 
 	g_signal_emit (store, signals[STORE_CHANGED], 0, device, FALSE);

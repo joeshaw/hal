@@ -376,6 +376,8 @@ struct _HalDevicePrivate
 enum {
 	PROPERTY_CHANGED,
 	CAPABILITY_ADDED,
+        LOCK_ACQUIRED,
+        LOCK_RELEASED,
 	LAST_SIGNAL
 };
 
@@ -440,6 +442,30 @@ hal_device_class_init (HalDeviceClass *klass)
 			      NULL, NULL,
 			      hald_marshal_VOID__STRING,
 			      G_TYPE_NONE, 1,
+			      G_TYPE_STRING);
+
+	signals[LOCK_ACQUIRED] =
+		g_signal_new ("lock_acquired",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceClass,
+					       lock_acquired),
+			      NULL, NULL,
+			      hald_marshal_VOID__STRING_STRING,
+			      G_TYPE_NONE, 2,
+			      G_TYPE_STRING,
+			      G_TYPE_STRING);
+
+	signals[LOCK_RELEASED] =
+		g_signal_new ("lock_released",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceClass,
+					       lock_released),
+			      NULL, NULL,
+			      hald_marshal_VOID__STRING_STRING,
+			      G_TYPE_NONE, 2,
+			      G_TYPE_STRING,
 			      G_TYPE_STRING);
 }
 
@@ -1654,6 +1680,8 @@ hal_device_acquire_lock (HalDevice *device, const char *lock_name, gboolean excl
 
         add_to_locked_set (device);
 
+        g_signal_emit (device, signals[LOCK_ACQUIRED], 0, lock_name, sender);
+
         ret = TRUE;
 out:
         return ret;
@@ -1711,6 +1739,8 @@ hal_device_release_lock (HalDevice *device, const char *lock_name, const char *s
 		hal_device_property_strlist_remove (device, buf, sender);
 	}
 
+        g_signal_emit (device, signals[LOCK_RELEASED], 0, lock_name, sender);
+
         ret = TRUE;
 
 out:
@@ -1740,6 +1770,32 @@ hal_device_get_lock_holders (HalDevice *device, const char *lock_name)
 }
 
 /**
+ * hal_device_get_lock_holders:
+ * @device: the device to check for
+ * @lock_name: the lock name
+ *
+ * Get the number of lock holders on a device.
+ *
+ * Returns: Number of callers holding the given lock.
+ */
+int 
+hal_device_get_num_lock_holders (HalDevice *device, const char *lock_name)
+{
+        int num;
+        char **holders;
+
+        num = 0;
+        holders = hal_device_get_lock_holders (device, lock_name);
+        if (holders == NULL)
+                goto out;
+
+        num = g_strv_length (holders);
+        g_strfreev (holders);
+out:
+        return num;
+}
+
+/**
  * hal_device_client_disconnected:
  * @sender: the client that disconnected from the bus
  *
@@ -1756,20 +1812,19 @@ hal_device_client_disconnected (const char *sender)
 
         for (i = locked_devices; i != NULL; i = g_slist_next (i)) {
                 HalDevice *device = i->data;
-                GSList *locks;
-                GSList *j;
-                GSList *k;
+                char **locks;
+                int n;
 
                 HAL_INFO (("Looking at udi '%s'", device->private->udi));
 
-                locks = hal_device_property_get_strlist (device, "info.named_locks");
-                for (j = locks; j != NULL; j = k) {
-                        char *lock_name = j->data;
-                        k = g_slist_next (j);
-
-                        HAL_INFO (("Lock '%s'", lock_name));
-
-                        hal_device_release_lock (device, lock_name, sender);
+                locks = hal_device_property_dup_strlist_as_strv (device, "info.named_locks");
+                if (locks != NULL) {
+                        for (n = 0; locks[n] != NULL; n++) {
+                                char *lock_name = locks[n];
+                                HAL_INFO (("Lock '%s'", lock_name));
+                                hal_device_release_lock (device, lock_name, sender);
+                        }
+                        g_strfreev (locks);
                 }
         }
 }

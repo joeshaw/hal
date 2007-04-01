@@ -140,6 +140,7 @@ AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug
 AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build documentation (requires xmlto)],enable_docbook_docs=$enableval,enable_docbook_docs=no)
 AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
 AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
+AC_SUBST(MAN_PAGES_ENABLED)
 
 ## eject 
 AC_ARG_WITH(eject,              [  --with-eject=<path>     Specify eject program. (default /usr/bin/eject)])

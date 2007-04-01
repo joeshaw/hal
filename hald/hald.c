@@ -161,6 +161,32 @@ gdl_capability_added (HalDeviceStore *store, HalDevice *device,
 	/*hal_callout_capability (device, capability, TRUE)*/;
 }
 
+static void
+gdl_lock_acquired (HalDeviceStore *store, HalDevice *device, const char *lock_name, const char *lock_owner)
+{
+	if (hal_device_are_all_addons_ready (device)) {
+                if (strncmp (lock_name, "Global.", 7) == 0 && 
+                    strcmp (hal_device_get_udi (device), "/org/freedesktop/Hal/devices/computer") == 0) {
+                        manager_send_signal_interface_lock_acquired (lock_name + 7, lock_owner);
+                } else {
+                        device_send_signal_interface_lock_acquired (device, lock_name, lock_owner);
+                }
+	}
+}
+
+static void
+gdl_lock_released (HalDeviceStore *store, HalDevice *device, const char *lock_name, const char *lock_owner)
+{
+	if (hal_device_are_all_addons_ready (device)) {
+                if (strncmp (lock_name, "Global.", 7) == 0 && 
+                    strcmp (hal_device_get_udi (device), "/org/freedesktop/Hal/devices/computer") == 0) {
+                        manager_send_signal_interface_lock_released (lock_name + 7, lock_owner);
+                } else {
+                        device_send_signal_interface_lock_released (device, lock_name, lock_owner);
+                }
+	}
+}
+
 HalDeviceStore *
 hald_get_gdl (void)
 {
@@ -176,6 +202,15 @@ hald_get_gdl (void)
 		g_signal_connect (global_device_list,
 				  "device_capability_added",
 				  G_CALLBACK (gdl_capability_added), NULL);
+		g_signal_connect (global_device_list,
+				  "device_property_changed",
+				  G_CALLBACK (gdl_property_changed), NULL);
+		g_signal_connect (global_device_list,
+				  "device_lock_acquired",
+				  G_CALLBACK (gdl_lock_acquired), NULL);
+		g_signal_connect (global_device_list,
+				  "device_lock_released",
+				  G_CALLBACK (gdl_lock_released), NULL);
 	}
 
 	return global_device_list;
