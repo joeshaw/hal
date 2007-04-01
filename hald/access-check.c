@@ -362,7 +362,8 @@ access_check_locked_by_others (CITracker   *cit,
 
         if (holders != NULL) {
                 for (n = 0; holders[n] != NULL; n++) {
-                        if (strcmp (holders[n], caller_unique_sysbus_name) != 0) {
+                        if (caller_unique_sysbus_name == NULL || /* <-- callers using direct connection to hald */
+                            strcmp (holders[n], caller_unique_sysbus_name) != 0) {
                                 /* someone else is holding the lock */
                                 goto out;
                         }
@@ -371,7 +372,8 @@ access_check_locked_by_others (CITracker   *cit,
 
         if (global_holders != NULL) {
                 for (n = 0; global_holders[n] != NULL; n++) {
-                        if (strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
+                        if (caller_unique_sysbus_name == NULL || /* <-- callers using direct connection to hald */
+                            strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
                                 /* someone else is holding the global lock... */
                                 if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
                                         /* ... and they can can access the device */
