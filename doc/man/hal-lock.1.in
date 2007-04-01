@@ -41,6 +41,11 @@ Kill the program if the acquired lock is lost. This only makes sense if you pass
 .I UDI
 due to the semantics of HAL locks.
 .TP
+.I "--exit-with-dev"
+Kill the program if the device is removed. This only makes sense if you pass a specific
+.I UDI
+due to the semantics of HAL locks.
+.TP
 .I "--help"
 Print out usage.
 .TP

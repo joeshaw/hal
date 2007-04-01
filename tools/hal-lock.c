@@ -58,7 +58,7 @@ usage (int argc, char *argv[])
                  "                 [--udi <udi>]\n"
                  "                 [--exclusive]\n"
                  "                 [--exit-with-lock]\n"
-                 "                 [--exit-with-device]\n"
+                 "                 [--exit-with-dev]\n"
                  "                 [--help] [--version]\n");
 	fprintf (stderr,
                  "\n"
