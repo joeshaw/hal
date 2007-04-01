@@ -2,7 +2,8 @@ Makefile
 Makefile.in
 *.o
 *~
-hald.1
+hald.8
+hal-disable-polling.1
 hal-find-by-capability.1
 hal-find-by-property.1
 hal-get-property.1
