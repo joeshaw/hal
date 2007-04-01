@@ -123,7 +123,10 @@ typedef enum {
 	LIBHAL_STORAGE_ICON_DISC_BDRE                      = 0x3000c,
 	LIBHAL_STORAGE_ICON_DISC_HDDVDROM                  = 0x3000d,
 	LIBHAL_STORAGE_ICON_DISC_HDDVDR                    = 0x3000e,
-	LIBHAL_STORAGE_ICON_DISC_HDDVDRW                   = 0x3000f
+	LIBHAL_STORAGE_ICON_DISC_HDDVDRW                   = 0x3000f,
+	LIBHAL_STORAGE_ICON_DISC_MRW                       = 0x30010,
+	LIBHAL_STORAGE_ICON_DISC_MRWW                      = 0x30011,
+	LIBHAL_STORAGE_ICON_DISC_MO                        = 0x30012
 } LibHalStoragePolicyIcon;
 
 typedef struct {
@@ -166,7 +169,8 @@ typedef enum {
 	LIBHAL_DRIVE_TYPE_PORTABLE_AUDIO_PLAYER = 0x0a,
 	LIBHAL_DRIVE_TYPE_ZIP                   = 0x0b,
 	LIBHAL_DRIVE_TYPE_JAZ                   = 0x0c,
-	LIBHAL_DRIVE_TYPE_FLASHKEY              = 0x0d
+	LIBHAL_DRIVE_TYPE_FLASHKEY              = 0x0d,
+	LIBHAL_DRIVE_TYPE_MO                    = 0x0e
 } LibHalDriveType;
 
 typedef enum {
@@ -186,7 +190,10 @@ typedef enum {
 	LIBHAL_DRIVE_CDROM_CAPS_BDRE        = 0x02000,
 	LIBHAL_DRIVE_CDROM_CAPS_HDDVDROM    = 0x04000,
 	LIBHAL_DRIVE_CDROM_CAPS_HDDVDR      = 0x08000,
-	LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW     = 0x10000
+	LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW     = 0x10000,
+	LIBHAL_DRIVE_CDROM_CAPS_MRW         = 0x20000,
+	LIBHAL_DRIVE_CDROM_CAPS_MRWW        = 0x40000,
+	LIBHAL_DRIVE_CDROM_CAPS_MO          = 0x80000
 } LibHalDriveCdromCaps;
 
 LibHalDrive         *libhal_drive_from_udi                    (LibHalContext *hal_ctx, 
@@ -272,7 +279,8 @@ typedef enum {
 	LIBHAL_VOLUME_DISC_TYPE_BDRE        = 0x0c,
 	LIBHAL_VOLUME_DISC_TYPE_HDDVDROM    = 0x0d,
 	LIBHAL_VOLUME_DISC_TYPE_HDDVDR      = 0x0e,
-	LIBHAL_VOLUME_DISC_TYPE_HDDVDRW     = 0x0f
+	LIBHAL_VOLUME_DISC_TYPE_HDDVDRW     = 0x0f,
+	LIBHAL_VOLUME_DISC_TYPE_MO          = 0x10,
 } LibHalVolumeDiscType;
 
 LibHalVolume     *libhal_volume_from_udi                      (LibHalContext *hal_ctx, 

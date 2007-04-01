@@ -296,6 +296,10 @@ libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volu
 			second = "/HD DVD-R";
 		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW)
 			second = "/HD DVD-RW";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_MRW)
+			second = "/MRW";
+		if (drive_cdrom_caps & LIBHAL_DRIVE_CDROM_CAPS_MRWW)
+			second = "/MRW-W";
 
 		if (drive_is_hotpluggable) {
 			snprintf (buf, MAX_STRING_SZ, _("External %s%s Drive"), first, second);
@@ -305,6 +309,12 @@ libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volu
 			name = strdup (buf);
 		}
 			
+	} else if (drive_type==LIBHAL_DRIVE_TYPE_MO) {
+
+		if (drive_is_hotpluggable)
+			name = strdup (_("External Magneto Optical Drive"));
+		else
+			name = strdup (_("Magneto Optical Drive"));
 	} else if (drive_type==LIBHAL_DRIVE_TYPE_FLOPPY) {
 
 		/* Floppy Drive handling */
@@ -495,6 +505,13 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 		}
 
 		goto out;
+	} else if (drive_type==LIBHAL_DRIVE_TYPE_MO) {
+		if (libhal_volume_get_disc_type (volume) == LIBHAL_VOLUME_DISC_TYPE_MO) {
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank Magneto Optical"));
+			else
+				name = strdup (_("Magneto Optical"));
+		}
 	}
 
 	/* Fallback: size of media */
@@ -530,6 +547,7 @@ libhal_drive_policy_compute_icon_name (LibHalDrive *drive, LibHalVolume *volume,
 	case LIBHAL_DRIVE_TYPE_REMOVABLE_DISK:
 	case LIBHAL_DRIVE_TYPE_DISK:
 	case LIBHAL_DRIVE_TYPE_CDROM:
+	case LIBHAL_DRIVE_TYPE_MO:
 	case LIBHAL_DRIVE_TYPE_FLOPPY:
 		name = libhal_storage_policy_lookup_icon (policy, 0x10000 + drive_type*0x100 + bus);
 		break;
@@ -572,6 +590,7 @@ libhal_volume_policy_compute_icon_name (LibHalDrive *drive, LibHalVolume *volume
 	case LIBHAL_DRIVE_TYPE_REMOVABLE_DISK:
 	case LIBHAL_DRIVE_TYPE_DISK:
 	case LIBHAL_DRIVE_TYPE_CDROM:
+	case LIBHAL_DRIVE_TYPE_MO:
 	case LIBHAL_DRIVE_TYPE_FLOPPY:
 		name = libhal_storage_policy_lookup_icon (policy, 0x20000 + drive_type*0x100 + bus);
 		break;
@@ -984,6 +1003,9 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.hddvd", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_HDDVDROM);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.hddvdr", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_HDDVDR);
 		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.hddvdrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_HDDVDRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.mo", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_MO);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.mrw", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_MRW);
+		LIBHAL_PROP_EXTRACT_BOOL_BITFIELD ("storage.cdrom.mrw_w", drive->cdrom_caps, LIBHAL_DRIVE_CDROM_CAPS_MRWW);
 
 		LIBHAL_PROP_EXTRACT_BOOL   ("storage.policy.should_mount",        drive->should_mount);
 		LIBHAL_PROP_EXTRACT_STRING ("storage.policy.desired_mount_point", drive->desired_mount_point);
@@ -1000,6 +1022,8 @@ libhal_drive_from_udi (LibHalContext *hal_ctx, const char *udi)
 		if (strcmp (drive->type_textual, "cdrom") == 0) {
 			drive->cdrom_caps |= LIBHAL_DRIVE_CDROM_CAPS_CDROM;
 			drive->type = LIBHAL_DRIVE_TYPE_CDROM;
+		} else if (strcmp (drive->type_textual, "optical") == 0) {
+			drive->type = LIBHAL_DRIVE_TYPE_MO;
 		} else if (strcmp (drive->type_textual, "floppy") == 0) {
 			drive->type = LIBHAL_DRIVE_TYPE_FLOPPY;
 		} else if (strcmp (drive->type_textual, "disk") == 0) {
@@ -1223,6 +1247,8 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_HDDVDR;
 		} else if (strcmp (disc_type_textual, "hddvd_rw") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_HDDVDRW;
+		} else if (strcmp (disc_type_textual, "mo") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_MO;
 		}
 	}
 

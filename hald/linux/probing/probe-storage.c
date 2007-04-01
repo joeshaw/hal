@@ -196,6 +196,9 @@ main (int argc, char *argv[])
 			libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvd", FALSE);
 			libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvdr", FALSE);
 			libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvdrw", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.mo", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.mrw", FALSE);
+			libhal_changeset_set_property_bool (cs, "storage.cdrom.mrw_w", FALSE);
 			
 			if (capabilities & CDC_CD_R) {
 				libhal_changeset_set_property_bool (cs, "storage.cdrom.cdr", TRUE);
@@ -229,6 +232,15 @@ main (int argc, char *argv[])
 			if (capabilities & CDC_DVD_RAM) {
 				libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdram", TRUE);
 			}
+			if (capabilities & CDC_MO_DRIVE) {
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.mo", TRUE);
+			}
+			if (capabilities & CDC_MRW) {
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.mrw", TRUE);
+			}
+			if (capabilities & CDC_MRW_W) {
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.mrw_w", TRUE);
+			}
 			
 			/* while we're at it, check if we support media changed */
 			if (capabilities & CDC_MEDIA_CHANGED) {
@@ -236,7 +248,12 @@ main (int argc, char *argv[])
 			} else {
 				libhal_changeset_set_property_bool (cs, "storage.cdrom.support_media_changed", FALSE);
 			}
-			
+			if (capabilities & CDC_MULTI_SESSION) {
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.support_multisession", TRUE);
+			} else {
+				libhal_changeset_set_property_bool (cs, "storage.cdrom.support_multisession", FALSE);
+			}
+		
 			if (get_read_write_speed(fd, &read_speed, &write_speed, &write_speeds) >= 0) {
 				libhal_changeset_set_property_int (cs, "storage.cdrom.read_speed", read_speed);
 				if (write_speed > 0) {

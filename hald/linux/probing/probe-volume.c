@@ -463,6 +463,12 @@ main (int argc, char *argv[])
 		HAL_DEBUG(("get_disc_type returned 0x%02x", type));
 		if (type != -1) {
 			switch (type) {
+			case 0x03: /* Magneto-Optical disk with sector erase capability */
+			case 0x05: /* Advance Storage – Magneto-Optical */
+				libhal_changeset_set_property_string (cs, "volume.disc.type", "mo");
+				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);
+			case 0x04: /* Magneto Optical write once */
+				libhal_changeset_set_property_string (cs, "volume.disc.type", "mo");
 			case 0x08: /* CD-ROM */
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "cd_rom");
 				break;
@@ -484,9 +490,6 @@ main (int argc, char *argv[])
 				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);
 				break;
 			case 0x13: /* DVD-RW Restricted Overwrite */
-				libhal_changeset_set_property_string (cs, "volume.disc.type", "dvd_rw");
-				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);
-				break;
 			case 0x14: /* DVD-RW Sequential */
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "dvd_rw");
 				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);
@@ -505,8 +508,6 @@ main (int argc, char *argv[])
                           	libhal_changeset_set_property_string (cs, "volume.disc.type", "bd_rom");
 				break;
 			case 0x41: /* BD-R Sequential */
-                          	libhal_changeset_set_property_string (cs, "volume.disc.type", "bd_r");
-				break;
 			case 0x42: /* BD-R Random */
                           	libhal_changeset_set_property_string (cs, "volume.disc.type", "bd_r");
 				break;

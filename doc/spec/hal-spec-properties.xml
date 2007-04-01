@@ -3884,6 +3884,38 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>storage.cdrom.mrw</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can read MRW (Mount Rainier Rewrite) discs</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>storage.cdrom.mrw_w</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE when the optical drive can write MRW (Mount Rainier Rewrite) discs</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>storage.cdrom.mo</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>TRUE when the optical drive is a MO (Magneto Optical) device.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>storage.cdrom.support_multisession</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>TRUE if the drive can read multisession discs</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>storage.cdrom.support_media_changed</literal> (bool)
               </entry>
               <entry></entry>
