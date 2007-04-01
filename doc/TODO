@@ -1,5 +1,4 @@
 
-
 Ongoing items that always need work
 -----------------------------------
 
@@ -12,22 +11,44 @@ Ongoing items that always need work
  - Audit all code and drop privileges in helpers where appropriate
 
 
-Items specifically planned for 0.5.9
+Items specifically planned for 0.5.10 
+(TODO: need to go through and nominate things for 0.5.10)
 ------------------------------------
+
+ - Rip out translation framework (.po files) since only deprecated
+   functions in libhal-storage have relied on it since the 0.5.8
+   release.
+
+ - Rip out hal-device-manager for good now that there is a 
+   gnome-device-manager on the horizon
+
+ - Release engineering. Would be nice to have a set of Makefile
+   targets to automatically make a new release, upload it somewhere
+   and send announcement mail. Seems that cairo have something we
+   might be able to lift.
 
  - Make sure we check if the optical drives supports the commands
    we are sending to it (proposed by pjones)
 
+ - Singleton addons (s-addon); the idea that an add-on can attach to
+   several device objects at the same time. 
+    - A s-addon would just implement, say, the interface
+      org.freedesktop.Hal.SingletonAddon with methods DeviceAdded(),
+      DeviceRemoved() through the hald direct connection.  
+    - An s-addon would be identified by it's commandline; e.g.
+      info.s-addons = {"my-s-addon --foo", "my-s-addon --bar"} would
+      be two distinct addons.
+    - Bluez devs need this to start the Bluez daemon via HAL
+    - Can consolidate other things like hald-addon-keyboard
+
  - Move /usr/libexec to /usr/lib/hal/ - drop /usr/lib/hal/scripts -
-   use /usr/lib/hal/methods
+   use /usr/lib/hal/methods. Need to provide backwards compat
+   for 3rd party so we need to retain /usr/lib/hal/scripts
 
- - Think hard about the interfaces HAL exports to addons as out-of-tree
-   code like NUT now starts to use it. Includes interface stability thoughts
-   and what we guarantee and what we don't. Might have license implications
-   too.
-
- - Finalize the work on org.freedesktop.Hal.Device.VideoAdapterPM
-   including the XML file format matching most adapters
+ - Think hard about the interfaces HAL exports to addons as
+   out-of-tree code like NUT and Bluez now starts to use it. Includes
+   interface stability thoughts and what we guarantee and what we
+   don't. Might have license implications too.
 
  - LVM support
    https://bugs.freedesktop.org/show_bug.cgi?id=6427
@@ -47,58 +68,54 @@ Items specifically planned for 0.5.9
    several hundreds of megabyte so the drive only needs to spin up every
    e.g. 20 minutes while watching a DVD movie. This enables the kernel
    driver to put the drive in a low-power mode to get substantially better
-   battery life.
+   battery life. Probably requires kernel work since the pages would
+   have to be pinned?
 
- - Provide mechanism for making an application inhibit polling of a drive.
-   This is useful combined with the TODO right above. It will probably mean
-   that the eject button on the drive is rendered useless but that is
-   justified by the DVD player application displays a soft button for ejecting
-   the media.
-
- - Use udev data instead of probing (whenever possible)
-
- - Performance! Profile and optimize! Too big of a task to describe in
-   one bullet. Feel free to provide patches to this file to break it up
-   after some analysis.
+ - Use udev data instead of probing (whenever possible). Here we need
+   the raw serial from udev; for e.g. USB drives, udev prepends it
+   with the make/model of the usb device.
 
  - Configuration of serial and other legacy ports, see
    http://lists.freedesktop.org/archives/hal/2006-August/005784.html
 
- - Devices with device files should export an interface with for
-   requesting / dropping access to the device, e.g. 
+ - Clean up what the user did by invoking methods on HAL
+    - e.g. unmount storage devices
+    - other things
+    - we can now sanely do this thanks to ConsoleKit
+    - depends on PolicyKit
+
+ - Make HAL unconditionally depend on pm-utils and rip out support
+   for distro-specific tools
+
+ - Devices of capability access_control could export an interface with
+   for requesting / dropping access to the device, e.g. 
 
     RequestAccess()
     GiveupAccess()   (better naming welcome)
 
    which will change device file ownership or add/remove an ACL.
-
-Other items
------------
-
- - It appears Nero is adding empty dummy sessions when leaving the disc
-   open, see https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=206669
-   Perhaps it would be useful to probe earlier sessions for file systems
-   too. Need to look into the various standards a bit more.
+   Depends on PolicyKit
 
  - It would be nice if method calls could return string, bool int etc.
    Perhaps use dbus-send style, e.g. int32:<number>' or 'string:the_string'
    or 'bool:true'. Granted, this is already possible today through addons
    so maybe not important.
 
- - Finish up and merge mjg59's Bluetooth code
+Other items
+-----------
 
  - Device firmware. It would be nice to export a property and some 
    DeviceCondition when a device asked for firmware that was missing
    and is such in a state where it cannot operate. Might need kernel
-   work.
-
- - Take a few days out of the calender and give some love to the spec
+   work. Same goes for drivers.
 
  - Export ink levels for printers
    https://bugs.freedesktop.org/show_bug.cgi?id=2295
 
  - Signal when a USB device doesn't have enough power
    https://bugs.freedesktop.org/show_bug.cgi?id=4452
+   (it appears that this is true IFF the kernel leaves
+    bConfigurationValue as zero)
 
  - Teach HAL about multisession and partitioned optical discs - may
    require reworking the 'fakevolume' code as we'd be adding more
@@ -106,24 +123,6 @@ Other items
 
 Optimization
 ------------
-
- - Don't load, parse all fdi files 4 times for every device object
-   added. It's wasteful to parse the same file over and over agin
-   - load, parse fdi file into "rule object", see
-     http://lists.freedesktop.org/archives/hal/2006-July/005672.html
-   - load all rule objects at startup into cache
-   - evict all cache items after startup
-   - expire cache items after timeout / LRU scheme
-
- - Don't load pci.ids, usb.ids into memory (pci.ids 426333 bytes, usb.ids
-   is 153540 bytes) at startup (even without parsing it); it costs
-   580K right now. It's wasteful to parse the same file over and over again.
-   - load, parse file into efficient lookup tree
-   - free tree when no longer used?
-
- - Device Store lookup cleanups
-
- - Device Object property cleanups
 
  - Port hal daemon core to use dbus glib bindings
    - One proxy per hal device object
@@ -136,33 +135,16 @@ Optimization
  - Linux: Optionally drop sysfs coldplug code
    - for starting up before udev and piggy tailing on udev's coldplug code
 
+ - Performance! Profile and optimize! Too big of a task to describe in
+   one bullet. Feel free to provide patches to this file to break it up
+   after some analysis.
+
 External projects:
 ------------------
 
- - We need to finish PolicyKit, at least get 0.2 out and bring it to
-   1.0 rather fast (ideally before Spring 2007).
-
- - D-BUS needs to go to 1.0
-
- - We need secure ways to track user sessions and from what user
-   session a D-BUS call into HAL originates from. We also want
-   to know when a user session is inactive (e.g. fast user 
-   switching). This is Very Important, without this we cannot
-
-   - clean up what the user did by invoking methods on HAL
-     - e.g. unmount storage devices
-     - adjust ACL's cf. RequestAccess() and GiveupAccess() above
-     - other things
-
-   - refuse service to inactive sessions
-     - e.g. refuse Suspend() or Hibernate() from the inactive
-       user when another user is active on the same console from
-       e.g. fast-user-switching
-
- - pm-utils guys need to release their stuff - when a working
-   release is out give a grace period of a number of months for
-   distros to switch to pm-utils before ripping out the callouts
-   to distro specific scripts.
+ - We need to finish PolicyKit, at least get 0.3 out (in Spring 2007)
+   and work on bringing it to 1.0 rather fast (ideally before Fall
+   2007).
 
  - Runtime power management in the kernel. This is still ongoing
    and AFAIK there is no concrete idea about the user space interface.
