@@ -57,7 +57,8 @@ usage (int argc, char *argv[])
                  "                 --run <program-and-args>\n"
                  "                 [--udi <udi>]\n"
                  "                 [--exclusive]\n"
-                 "                 [--exit-with-lock]"
+                 "                 [--exit-with-lock]\n"
+                 "                 [--exit-with-device]\n"
                  "                 [--help] [--version]\n");
 	fprintf (stderr,
                  "\n"
@@ -67,6 +68,7 @@ usage (int argc, char *argv[])
                  "                         ommitted the global lock will be tried\n"
                  "        --exclusive      Whether the lock can be held by others\n"
                  "        --exit-with-lock Kill the program if the acquired lock is lost\n"
+                 "        --exit-with-dev  Kill the program if the locked device is removed\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
@@ -90,6 +92,15 @@ guardian (GPid pid, int status, gpointer data)
 {
         /* exit along with the child */
         exit (0);
+}
+
+static void
+device_removed (LibHalContext *ctx, const char *_udi)
+{
+        if (strcmp (udi, _udi) == 0) {
+                fprintf (stderr, "Lost the device; killing child...\n");
+                kill (child_pid, SIGTERM);
+        }
 }
 
 static void
@@ -126,6 +137,7 @@ main (int argc, char *argv[])
         dbus_bool_t exclusive = FALSE;
         dbus_bool_t got_lock = FALSE;
         dbus_bool_t exit_with_lock = FALSE;
+        dbus_bool_t exit_with_dev = FALSE;
         DBusConnection *con;
 	DBusError error;
         LibHalContext *hal_ctx;
@@ -150,6 +162,7 @@ main (int argc, char *argv[])
 			{"run", 1, NULL, 0},
 			{"exclusive", 0, NULL, 0},
 			{"exit-with-lock", 0, NULL, 0},
+			{"exit-with-dev", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
@@ -179,6 +192,8 @@ main (int argc, char *argv[])
 				interface = strdup (optarg);
 			} else if (strcmp (opt, "exit-with-lock") == 0) {
 				exit_with_lock = TRUE;
+			} else if (strcmp (opt, "exit-with-dev") == 0) {
+				exit_with_dev = TRUE;
 			}
 			break;
 
@@ -206,7 +221,13 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-	if (exit_with_lock)
+        if (exit_with_dev && udi == NULL) {
+                fprintf (stderr, "--exit-with-lock requires UDI to be given.\n");
+                usage (argc, argv);
+                goto out;
+        }
+
+	if (exit_with_lock || exit_with_dev)
 		loop = g_main_loop_new (NULL, FALSE);
 	else
 		loop = NULL;
@@ -228,12 +249,16 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        if (exit_with_lock) {
+        if (exit_with_lock || exit_with_dev) {
                 unique_name = dbus_bus_get_unique_name (con);
-                fprintf (stderr, "unique name is '%s'\n", unique_name);
-                libhal_ctx_set_interface_lock_released (hal_ctx, interface_lock_released);
 		dbus_connection_setup_with_g_main (con, NULL);
         }
+
+        if (exit_with_lock)
+                libhal_ctx_set_interface_lock_released (hal_ctx, interface_lock_released);
+
+        if (exit_with_dev)
+                libhal_ctx_set_device_removed (hal_ctx, device_removed);
 
         if (!libhal_ctx_init (hal_ctx, &error)) {
                 if (dbus_error_is_set(&error)) {
@@ -276,7 +301,7 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        if (exit_with_lock) {
+        if (exit_with_lock || exit_with_dev) {
                 int _argc;
                 char **_argv;
 
