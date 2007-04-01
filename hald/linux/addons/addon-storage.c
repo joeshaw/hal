@@ -59,6 +59,7 @@ static DBusConnection *con = NULL;
 static guint poll_timer = -1;
 static GMainLoop *loop;
 static gboolean system_is_idle = FALSE;
+static gboolean check_lock_state = TRUE;
 
 static void 
 force_unmount (LibHalContext *ctx, const char *udi)
@@ -277,11 +278,30 @@ enum {
 
 static gboolean poll_for_media (gpointer user_data);
 
+static int interval_in_seconds = 2;
+
+static gboolean is_locked_by_hal = FALSE;
+static gboolean is_locked_via_o_excl = FALSE;
+
+static void
+update_proc_title (void)
+{
+        if (is_locked_by_hal) {
+                if (is_locked_via_o_excl) {
+                        hal_set_proc_title ("hald-addon-storage: no polling because %s is locked via HAL and O_EXCL", device_file);
+                } else {
+                        hal_set_proc_title ("hald-addon-storage: no polling because %s is locked via HAL", device_file);
+                }
+        } else if (is_locked_via_o_excl) {
+                hal_set_proc_title ("hald-addon-storage: no polling because %s is locked via O_EXCL", device_file);
+        } else {
+                hal_set_proc_title ("hald-addon-storage: polling %s (every %d sec)", device_file, interval_in_seconds);
+        }
+}
+
 static void
 update_polling_interval (void)
 {
-	int interval_in_seconds;
-
 	/* TODO: ideally we want all things that do polling to do it
 	 * at the same time.. such as to minimize battery
 	 * usage. Suppose we want to wake up to do poll_for_media()
@@ -308,7 +328,8 @@ update_polling_interval (void)
 	if (poll_timer > 0)
 		g_source_remove (poll_timer);
 	poll_timer = g_timeout_add (interval_in_seconds * 1000, poll_for_media, NULL);
-	hal_set_proc_title ("hald-addon-storage: polling %s (every %d sec)", device_file, interval_in_seconds);
+
+        update_proc_title ();
 }
 
 static gboolean
@@ -316,6 +337,29 @@ poll_for_media (gpointer user_data)
 {
 	int fd;
 	int got_media;
+
+        if (check_lock_state) {
+                DBusError error;
+
+                check_lock_state = FALSE;
+
+                HAL_INFO (("Checking whether device %s is locked on HAL", device_file));
+                dbus_error_init (&error);
+                if (libhal_device_is_locked_by_others (ctx, udi, "org.freedesktop.Hal.Device.Storage", &error)) {
+                        HAL_INFO (("... device %s is locked on HAL", device_file));
+                        is_locked_by_hal = TRUE;
+                        update_proc_title ();
+                        goto skip_check;
+                } else {
+                        HAL_INFO (("... device %s is not locked on HAL", device_file));
+                        is_locked_by_hal = FALSE;
+                        update_proc_title ();
+                }
+        }
+
+        /* TODO: we could remove the timeout completely... */
+        if (is_locked_by_hal)
+                goto skip_check;
 	
 	got_media = FALSE;
 	
@@ -333,8 +377,15 @@ poll_for_media (gpointer user_data)
 			 * actually is mounted. If it is we retry to open
 			 * without O_EXCL
 			 */
-			if (!is_mounted (device_file))
+			if (!is_mounted (device_file)) {
+                                if (!is_locked_via_o_excl) {
+                                        is_locked_via_o_excl = TRUE;
+                                        update_proc_title ();
+                                } else {
+                                        is_locked_via_o_excl = TRUE;
+                                }
 				goto skip_check;
+                        }
 			
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
 		}
@@ -343,6 +394,11 @@ poll_for_media (gpointer user_data)
 			HAL_ERROR (("open failed for %s: %s", device_file, strerror (errno))); 
 			goto skip_check;
 		}
+
+                if (is_locked_via_o_excl) {
+                        is_locked_via_o_excl = FALSE;
+                        update_proc_title ();
+                }
 		
 		
 		/* Check if a disc is in the drive
@@ -517,6 +573,7 @@ error:
 }
 #endif /* HAVE_CONKIT */
 
+
 static DBusHandlerResult
 dbus_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
 {
@@ -538,8 +595,23 @@ dbus_filter_function (DBusConnection *connection, DBusMessage *message, void *us
 			update_polling_interval ();
 		}
 	}
+
 out:
 #endif /* HAVE_CONKIT */
+
+        /* Check, just before the next poll, whether lock state have changed; 
+         * 
+         * Note that we get called on at least these signals
+         *
+         * 1. CK.Manager  - SystemIdleHintChanged
+         * 2. CK.Seat     - ActiveSessionChanged
+         * 2. HAL.Manager - GlobalLockAcquired, GlobalLockReleased
+         * 3. HAL.Device  - LockAcquired, LockReleased
+         *
+         * meaning that every time the locking situation changes, we
+         * will get updated.
+         */
+        check_lock_state = TRUE;
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
@@ -551,6 +623,7 @@ main (int argc, char *argv[])
 	char *bus;
 	char *drive_type;
 	char *support_media_changed_str;
+        char *str;
 
 	hal_set_proc_title_init (argc, argv);
 
@@ -616,9 +689,39 @@ main (int argc, char *argv[])
 			    "type='signal'"
 			    ",interface='org.freedesktop.ConsoleKit.Manager'"
 			    ",sender='org.freedesktop.ConsoleKit'"
-			    ",member='SystemIdleHintChanged'",
+                            ",member='SystemIdleHintChanged'",
+			    NULL);
+	dbus_bus_add_match (con,
+			    "type='signal'"
+			    ",interface='org.freedesktop.ConsoleKit.Seat'"
+			    ",sender='org.freedesktop.ConsoleKit'"
+                            ",member='ActiveSessionChanged'",
 			    NULL);
 #endif
+
+        /* this is a bit weird; but we want to listen to signals about
+         * locking from hald.. and signals are not pushed over direct
+         * connections (for a good reason).
+         */
+	dbus_bus_add_match (con,
+			    "type='signal'"
+			    ",interface='org.freedesktop.Hal.Manager'"
+			    ",sender='org.freedesktop.Hal'",
+			    NULL);
+	dbus_bus_add_match (con,
+			    "type='signal'"
+			    ",interface='org.freedesktop.Hal.Manager'"
+			    ",sender='org.freedesktop.Hal'",
+			    NULL);
+        str = g_strdup_printf ("type='signal'"
+                               ",interface='org.freedesktop.Hal.Device'"
+                               ",sender='org.freedesktop.Hal'"
+                               ",path='%s'",
+                               udi);
+	dbus_bus_add_match (con,
+                            str,
+			    NULL);
+        g_free (str);
 	dbus_connection_add_filter (con, dbus_filter_function, NULL, NULL);
 
 	update_polling_interval ();
