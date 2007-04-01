@@ -20,6 +20,7 @@
     is_absolute_path (false|true) #IMPLIED
     contains         CDATA #IMPLIED
     contains_ncase   CDATA #IMPLIED
+    contains_not     CDATA #IMPLIED
     prefix           CDATA #IMPLIED
     prefix_ncase     CDATA #IMPLIED
     suffix           CDATA #IMPLIED

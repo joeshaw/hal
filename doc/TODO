@@ -15,6 +15,9 @@ Items specifically planned for 0.5.10
 (TODO: need to go through and nominate things for 0.5.10)
 ------------------------------------
 
+ - Should provide a hal-fdi-file-validate tool that validates fdi
+   files.
+
  - Rip out translation framework (.po files) since only deprecated
    functions in libhal-storage have relied on it since the 0.5.8
    release.

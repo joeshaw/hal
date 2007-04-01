@@ -1,8 +1,8 @@
 
 SUBDIRS = information policy preprobe
 
-EXTRA_DIST = fdi.dtd fdi.rng
+EXTRA_DIST = fdi.dtd
 
 fdidir = $(datadir)/hal/fdi
 
-dist_fdi_DATA = fdi.dtd fdi.rng
+dist_fdi_DATA = fdi.dtd
