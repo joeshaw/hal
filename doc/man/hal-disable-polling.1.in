@@ -1,0 +1,137 @@
+.\" 
+.\" hal-disable-polling manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH HAL-DISABLE-POLLING 1
+.SH NAME
+hal-disable-polling \- disable polling on drives with removable media
+.SH SYNOPSIS
+.PP
+.B hal-disable-polling
+[options]
+
+.SH DESCRIPTION
+
+\fIhal-disable-polling\fP can be used to to disable and enable media
+detection on drives with removable storage. For more information about
+both the big picture and specific
+.B HAL
+properties, refer to the \fIHAL spec\fP which can be found in
+.I "/usr/share/doc/hal-@VERSION@/spec/hal-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "--udi"
+The UDI (\fIUnique Device Identifier\fP) of the device object. 
+.TP
+.I "--device"
+The device file of the drive.
+.TP
+.I "--enable-polling"
+Enable polling instead of disabling it.
+.TP
+.I "--help"
+Print out usage.
+.TP
+.I "--version"
+Print the version.
+
+.SH NOTES
+.PP
+This program requires super user privileges.
+
+.SH RETURN VALUE
+.PP
+If the requested operation was successful, this program will exit with
+exit code 0.
+
+.SH HISTORY
+.PP
+Polling a storage drive is a necessary evil to detect when the user
+inserts or removes media. Human computer interaction studies have
+shown that a broad class of users expect their system to react within
+a few seconds of this. Thus, the
+.I hald
+daemon polls through the 
+.I hald-addon-storage
+addon (one instance for each drive with removable media).
+
+The purpose of the 
+.I hald-addon-storage
+addon is simply to open the special device file at a regular interval
+(either every 2 or every 16 seconds) to check for new media. This
+program tries to open the device file using the
+.B O_EXCL
+option which means that programs like \&\fIcdrecord\fR\|(1) that uses
+.B O_EXCL
+automatically prevents the 
+.I hald-addon-storage
+for interferring by continously opening the device file. In addition,
+if the drive is locked using HAL (see \&\fIhal-lock\fR\|(1)) the addon
+also stops polling.
+
+Unfortunately, polling a storage drive can have adverse side effects
+if the hardware and/or device driver for the hardware is
+malfunctioning. Additionally, the operating system kernel itself may
+offer multiple interfaces for the same device (e.g. \&\fI/dev/sg0\fR\|
+and \&\fI/dev/scd0\fR\|) so even
+.B O_EXCL
+won't work. Also, polling a drive may decrease throughput in certain
+(odd and/or broken) configurations; for example, if two IDE drives
+shares the same host (master/slave), bus traffic and contention caused
+by polling e.g. the optical drive (slave) can reduce throughput to the
+hard disk (master) and/or interfere with CD burning on another optical
+drive (master). Finally, polling a drive incurs an overhead both in
+the host system (processes get woken up often, preventing the CPU to
+stay in a deep power saving states) and it may prevent the actual
+drive from reaching deep power states as well. As a result, more power
+is consumed and this affects battery life for laptops.
+
+Despite the existence of support for asynchronous media change
+notification in recent MMC (Multi-Media Commands) specifications,
+virtually no optical drives are compliant with the
+specification. Fortunately newer SATA ATAPI hardware seems to support
+Asynchronous Notification (AN) and at this time of writing (March
+2007) work is underway to make both the
+.I Linux 
+operating system kernel and
+.I HAL
+take advantage of this.
+
+It is the position of the
+.I HAL
+team that polling should be avoided at all costs as long as it doesn't
+heavily impact the user experience in a negative way. This tool is
+provided as a stop-gap measure to use if a system is rendered useless
+due to bugs in drivers and/or hardware that is provoked by HAL polling
+the drive. If such a bug is encountered it should be reported (see the
+.B BUGS
+section below) so it can be fixed - historically
+.B hald
+have triggered a number of bugs in 
+.I Linux
+storage drivers and related subsystems (such as USB) that have later
+been fixed.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIhald\fR\|(1),
+\&\fIlshal\fR\|(1),
+\&\fIhal-lock\fR\|(1),
+\&\fIopen\fR\|(2),
+\&\fIhttp://www.t10.org/scsi-3.htm\fR\|,
+\&\fIhttps://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=halpolling\fR\|
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+

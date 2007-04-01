@@ -31,7 +31,8 @@ bin_PROGRAMS =                    \
 	hal-find-by-property      \
 	hal-device		  \
 	hal-is-caller-locked-out  \
-	hal-lock
+	hal-lock		  \
+	hal-disable-polling
 
 lshal_SOURCES = lshal.c
 lshal_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
@@ -56,6 +57,9 @@ hal_is_caller_locked_out_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hal_lock_SOURCES = hal-lock.c
 hal_lock_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+
+hal_disable_polling_SOURCES = hal-disable-polling.c
+hal_disable_polling_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
 libexec_PROGRAMS =                          \
 	hal-storage-mount	            \
