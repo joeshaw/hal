@@ -33,6 +33,14 @@ msgstr "Externes Diskettenlaufwerk"
 msgid "Floppy Drive"
 msgstr "Diskettenlaufwerk"
 
+#: ../libhal-storage/libhal-storage.c:315
+msgid "External Magneto Optical Drive"
+msgstr "Externes Magneto Optical Laufwerk"
+
+#: ../libhal-storage/libhal-storage.c:317
+msgid "Magneto Optical Drive"
+msgstr "Magneto Optical Laufwerk"
+
 #: ../libhal-storage/libhal-storage.c:322
 #, c-format
 msgid "%s External Hard Drive"
@@ -56,7 +64,6 @@ msgid "Drive"
 msgstr "Laufwerk"
 
 #: ../libhal-storage/libhal-storage.c:390
-#, fuzzy
 msgid "CD-ROM "
 msgstr "CD-ROM"
 
@@ -77,9 +84,8 @@ msgid "CD-RW"
 msgstr "CD-RW"
 
 #: ../libhal-storage/libhal-storage.c:408
-#, fuzzy
 msgid "DVD-ROM"
-msgstr "/DVD-ROM"
+msgstr "DVD-ROM"
 
 #: ../libhal-storage/libhal-storage.c:413
 msgid "Blank DVD-RAM"
@@ -130,58 +136,89 @@ msgid "DVD+R Dual-Layer"
 msgstr "DVD+R (Doppelschicht)"
 
 #: ../libhal-storage/libhal-storage.c:454
-#, fuzzy
 msgid "BD-ROM"
-msgstr "CD-ROM"
+msgstr "BD-ROM"
 
 #: ../libhal-storage/libhal-storage.c:459
-#, fuzzy
 msgid "Blank BD-R"
-msgstr "Leere CD-R"
+msgstr "Leere BD-R"
 
 #: ../libhal-storage/libhal-storage.c:461
-#, fuzzy
 msgid "BD-R"
-msgstr "CD-R"
+msgstr "BD-R"
 
 #: ../libhal-storage/libhal-storage.c:466
-#, fuzzy
 msgid "Blank BD-RE"
-msgstr "Leere CD-R"
+msgstr "Leere BD-RE"
 
 #: ../libhal-storage/libhal-storage.c:468
-#, fuzzy
 msgid "BD-RE"
-msgstr "CD-R"
+msgstr "BD-RE"
 
 #: ../libhal-storage/libhal-storage.c:472
-#, fuzzy
 msgid "HD DVD-ROM"
-msgstr "/DVD-ROM"
+msgstr "HD DVD-ROM"
 
 #: ../libhal-storage/libhal-storage.c:477
-#, fuzzy
 msgid "Blank HD DVD-R"
-msgstr "Leere DVD-R"
+msgstr "Leere HD DVD-R"
 
 #: ../libhal-storage/libhal-storage.c:479
-#, fuzzy
 msgid "HD DVD-R"
-msgstr "DVD-R"
+msgstr "HD DVD-R"
 
 #: ../libhal-storage/libhal-storage.c:484
-#, fuzzy
 msgid "Blank HD DVD-RW"
-msgstr "Leere DVD-RW"
+msgstr "Leere HD DVD-RW"
 
 #: ../libhal-storage/libhal-storage.c:486
-#, fuzzy
 msgid "HD DVD-RW"
-msgstr "DVD-RW"
+msgstr "HD DVD-RW"
 
 #: ../libhal-storage/libhal-storage.c:494
 msgid "Audio CD"
 msgstr "Audio-CD"
+
+#: ../libhal-storage/libhal-storage.c:511
+msgid "Blank Magneto Optical"
+msgstr "Leere Magneto Optical"
+
+#: ../libhal-storage/libhal-storage.c:513
+msgid "Magneto Optical"
+msgstr "Magneto Optical"
+
+msgid "/DVD+R"
+msgstr "/DVD+R"
+
+msgid "/DVD+RW"
+msgstr "/DVD+RW"
+
+msgid "/DVD-R"
+msgstr "/DVD-R"
+
+msgid "/DVD-RW"
+msgstr "/DVD-RW"
+
+msgid "/DVD-RAM"
+msgstr "/DVD-RAM"
+
+msgid "/DVD±R DL"
+msgstr "/DVD±R DL"
+
+msgid "/DVD±R"
+msgstr "/DVD±R"
+
+msgid "/DVD±RW DL"
+msgstr "/DVD±RW DL"
+
+msgid "/DVD±RW"
+msgstr "/DVD±RW"
+
+msgid "/MRW"
+msgstr "/MRW"
+
+msgid "/MRW-W"
+msgstr "/MRW-W"
 
 #: ../libhal-storage/libhal-storage.c:502
 #, c-format
@@ -317,72 +354,3 @@ msgstr "USB-Bandbreite"
 msgid "USB Version"
 msgstr "USB-Version"
 
-#: ../tools/device-manager/hal-device-manager.glade.h:32
-msgid "_Virtual Devices"
-msgstr ""
-
-#~ msgid "/DVD+R"
-#~ msgstr "/DVD+R"
-
-#~ msgid "/DVD+RW"
-#~ msgstr "/DVD+RW"
-
-#~ msgid "/DVD-R"
-#~ msgstr "/DVD-R"
-
-#~ msgid "/DVD-RW"
-#~ msgstr "/DVD-RW"
-
-#~ msgid "/DVD-RAM"
-#~ msgstr "/DVD-RAM"
-
-#~ msgid "/DVD±R DL"
-#~ msgstr "/DVD±R DL"
-
-#~ msgid "/DVD±R"
-#~ msgstr "/DVD±R"
-
-#~ msgid "/DVD±RW DL"
-#~ msgstr "/DVD±RW DL"
-
-#~ msgid "/DVD±RW"
-#~ msgstr "/DVD±RW"
-
-#~ msgid "Add an entry to fstab"
-#~ msgstr "Eintrag zu fstab hinzufügen"
-
-#~ msgid "Remove an entry from fstab"
-#~ msgstr "Eintrag aus fstab entfernen"
-
-#~ msgid "Remove all generated entries from fstab"
-#~ msgstr "Alle erstellten Einträge aus fstab entfernen"
-
-#~ msgid "Report detailed information about operation progress"
-#~ msgstr "Detaillierte Informationen zum Vorgangsverlauf melden"
-
-#~ msgid "CD-ROM Disc"
-#~ msgstr "CD-ROM Medium"
-
-#~ msgid "CD-R Disc"
-#~ msgstr "CD-R Medium"
-
-#~ msgid "CD-RW Disc"
-#~ msgstr "CD-RW Medium"
-
-#~ msgid "DVD-ROM Disc"
-#~ msgstr "DVD-ROM Medium"
-
-#~ msgid "DVD-RAM Disc"
-#~ msgstr "DVD-RAM Medium"
-
-#~ msgid "DVD-R Disc"
-#~ msgstr "DVD-R Medium"
-
-#~ msgid "DVD-RW Disc"
-#~ msgstr "DVD-RW Medium"
-
-#~ msgid "DVD+R Disc"
-#~ msgstr "DVD+R Medium"
-
-#~ msgid "DVD+RW Disc"
-#~ msgstr "DVD+RW Medium"
