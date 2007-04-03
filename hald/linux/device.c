@@ -118,10 +118,49 @@ out:
 	;
 }
 
+static gboolean
+input_test_keyboard (long *bitmask)
+{
+	int i;
+
+	for (i = KEY_Q; i <= KEY_P; i++) {
+		if (!test_bit (i, bitmask))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+input_test_keypad (long *bitmask)
+{
+	int i;
+
+	for (i = KEY_KP7; i <= KEY_KPDOT; i++) {
+		if (!test_bit (i, bitmask))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+input_test_keys (long *bitmask)
+{
+	int i;
+
+	/* All keys that are not buttons are less than BTN_MISC */
+	for (i = KEY_RESERVED + 1; i < BTN_MISC; i++) {
+		if (test_bit (i, bitmask))
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
 static void
 input_test_key (HalDevice *d, const char *sysfs_path)
 {
-	int i;
 	char *s;
 	long bitmask[NBITS(KEY_MAX)];
 	int num_bits;
@@ -149,15 +188,16 @@ input_test_key (HalDevice *d, const char *sysfs_path)
 			hal_device_property_set_string (d, "button.type", "hibernate");
 		}
 	} else {
-		/* TODO: we probably should require lots of bits set to classify as keyboard. Oh well */
+		gboolean is_keyboard = input_test_keyboard (bitmask);
+		gboolean is_keypad = input_test_keypad (bitmask);
 
-		/* All keys that are not buttons are less than BTN_MISC */
-		for (i = KEY_RESERVED + 1; i < BTN_MISC; i++) {
-			if (test_bit (i, bitmask)) {
-				hal_device_add_capability (d, "input.keyboard");
-				break;
-			}
-		}
+		if (is_keyboard)
+			hal_device_add_capability (d, "input.keyboard");
+		if (is_keypad)
+			hal_device_add_capability (d, "input.keypad");
+
+		if (is_keyboard || is_keypad || input_test_keys (bitmask))
+			hal_device_add_capability (d, "input.keys");
 	}
 out:
 	;
