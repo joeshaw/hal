@@ -23,17 +23,17 @@ fi
 # Respect the same locks as Mount()/Unmount() etc.
 if [ -n "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME" ] ; then
     hal-is-caller-locked-out --udi $HAL_PROP_INFO_UDI \
-        --interface org.freedesktop.Hal.Volume \
-        --caller $HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME
+        --interface org.freedesktop.Hal.Device.Volume \
+        --caller "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME"
     RET=$?
-    if [ "$RET" != "1" ] ; then
+    if [ "$RET" != "0" ] ; then
         locked_out
     fi
-    hal-is-caller-locked-out --udi $HAL_PROP_STORAGE_ORIGINATING_DEVICE \
-        --interface org.freedesktop.Hal.Storage \
-        --caller $HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME
+    hal-is-caller-locked-out --udi $HAL_PROP_BLOCK_STORAGE_DEVICE \
+        --interface org.freedesktop.Hal.Device.Storage \
+        --caller "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME"
     RET=$?
-    if [ "$RET" != "1" ] ; then
+    if [ "$RET" != "0" ] ; then
         locked_out
     fi
 fi
