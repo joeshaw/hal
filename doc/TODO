@@ -18,9 +18,6 @@ Items specifically planned for 0.5.10
  - Should provide a hal-fdi-file-validate tool that validates fdi
    files.
 
- - Rip out hal-device-manager for good now that there is a 
-   gnome-device-manager on the horizon
-
  - Release engineering. Would be nice to have a set of Makefile
    targets to automatically make a new release, upload it somewhere
    and send announcement mail. Seems that cairo have something we
