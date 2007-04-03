@@ -35,7 +35,7 @@
       Currently this HAL device information file specifies that all
       local users (e.g. logged in at the system console) will gain
       access to such devices. This hard coded policy is subject to
-      change in the future when the freedesktop.org PolicyKit project is
+      change in the future when the freedesktop.org PolicyKit project
       will be an optional dependency of HAL.
     </para>
     <para>
