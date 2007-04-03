@@ -6,7 +6,7 @@ dnl Process this file with autoconf to produce a configure script.
 # Patches for that is welcome.
 #
 
-AC_PREREQ(2.59)
+AC_PREREQ(2.59c)
 AC_INIT(hal, 0.5.9, david@fubar.dk)
 AM_INIT_AUTOMAKE(hal, 0.5.9)
 AM_CONFIG_HEADER(config.h)
