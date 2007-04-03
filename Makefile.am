@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 SUBDIRS = libhal libhal-storage partutil  hald hald-runner tools \
-          fdi doc po privileges
+          fdi doc privileges
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = hal.pc hal-storage.pc

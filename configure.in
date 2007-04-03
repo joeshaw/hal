@@ -635,17 +635,6 @@ fi
 
 AC_SUBST(HALD_SOCKET_DIR)
 
-
-ALL_LINGUAS="ca cs da de el es et eu fi fr hu it ja km ko lt nb nl pa pl pt_BR pt ru sl_SI sv tr uk zh_CN zh_TW"
-AC_SUBST(ALL_LINGUAS)
-
-GETTEXT_PACKAGE=AC_PACKAGE_NAME
-AC_SUBST(GETTEXT_PACKAGE)
-AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Name of the gettext package])
-
-AC_PROG_INTLTOOL([0.22])
-AM_GLIB_GNU_GETTEXT
-
 dnl
 dnl SUBSETTING START
 dnl
@@ -859,7 +848,6 @@ doc/api/libhal-storage/version.xml
 doc/spec/Makefile
 doc/spec/hal-spec.xml.in
 doc/man/Makefile
-po/Makefile.in
 ])
 
 dnl ==========================================================================

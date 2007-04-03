@@ -957,10 +957,6 @@ filter_func (DBusConnection * connection,
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-/* for i18n purposes */
-static dbus_bool_t libhal_already_initialized_once = FALSE;
-
-
 /** 
  * libhal_get_all_devices:
  * @ctx: the context for the connection to hald
@@ -3032,13 +3028,6 @@ LibHalContext *
 libhal_ctx_new (void)
 {
 	LibHalContext *ctx;
-
-	if (!libhal_already_initialized_once) {
-		bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
-		bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-		
-		libhal_already_initialized_once = TRUE;
-	}
 
 	ctx = calloc (1, sizeof (LibHalContext));
 	if (ctx == NULL) {
