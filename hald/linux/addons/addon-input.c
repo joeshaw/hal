@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * addon-keyboard.c : Listen to key events and modify hal device objects
+ * addon-input.c : Listen to key events and modify hal device objects
  *
  * Copyright (C) 2005 David Zeuthen, <david@fubar.dk>
  * Copyright (C) 2005 Ryan Lortie <desrt@desrt.ca>
@@ -300,7 +300,7 @@ main (int argc, char **argv)
 
 	drop_privileges (0);
 
-	hal_set_proc_title ("hald-addon-keyboard: listening on %s", device_file);
+	hal_set_proc_title ("hald-addon-input: listening on %s", device_file);
 
 	while (1)
 	{

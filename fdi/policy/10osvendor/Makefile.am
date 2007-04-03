@@ -2,7 +2,7 @@
 fdidir = $(datadir)/hal/fdi/policy/10osvendor
 
 dist_fdi_DATA = 			\
-	10-keyboard-policy.fdi		\
+	10-input-policy.fdi		\
 	10-power-mgmt-policy.fdi	\
 	10-rfkill-switch.fdi		\
 	10-laptop-panel-mgmt-policy.fdi	\

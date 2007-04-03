@@ -11,7 +11,7 @@ INCLUDES = \
 if HALD_COMPILE_LINUX
 libexec_PROGRAMS  = 			\
 	hald-addon-hid-ups 		\
-	hald-addon-keyboard 		\
+	hald-addon-input 		\
 	hald-addon-storage
 
 if HAVE_PMU
@@ -78,8 +78,8 @@ endif
 hald_addon_hid_ups_SOURCES = addon-hid-ups.c ../../logger.c ../../util_helper.c ../../util_pm.c
 hald_addon_hid_ups_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
-hald_addon_keyboard_SOURCES = addon-keyboard.c ../../logger.c ../../util_helper.c
-hald_addon_keyboard_LDADD = $(top_builddir)/libhal/libhal.la 
+hald_addon_input_SOURCES = addon-input.c ../../logger.c ../../util_helper.c
+hald_addon_input_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_addon_pmu_SOURCES = addon-pmu.c ../../logger.c ../../util_helper.c
 hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
