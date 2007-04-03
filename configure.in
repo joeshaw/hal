@@ -36,7 +36,6 @@ AC_HEADER_STDC
 AM_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
-AM_PATH_PYTHON
 AC_SYS_LARGEFILE
 PKG_PROG_PKG_CONFIG
 
@@ -826,7 +825,6 @@ libhal-storage/Makefile
 tools/Makefile
 tools/freebsd/Makefile
 tools/linux/Makefile
-tools/device-manager/Makefile
 partutil/Makefile
 privileges/Makefile
 fdi/Makefile

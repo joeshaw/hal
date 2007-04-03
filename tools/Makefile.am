@@ -1,7 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-
-SUBDIRS = device-manager
+SUBDIRS =
 
 if HALD_COMPILE_LINUX
 SUBDIRS += linux
