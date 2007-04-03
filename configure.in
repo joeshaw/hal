@@ -875,6 +875,7 @@ echo "
         datadir:                     ${datadir}
         sysconfdir:                  ${sysconfdir}
         localstatedir:               ${localstatedir}
+        docdir:                      ${docdir}
         dbus-1 system.d dir:         ${DBUS_SYS_DIR}
         pci.ids dir:                 ${PCI_IDS_DIR}
         usb.ids dir:                 ${USB_IDS_DIR}
