@@ -135,7 +135,7 @@ Coding Style
 Configuring the sources
 ===
 
-To configure the HAL sources for a generic Linux desktop distribution
-using Linux 2.6.20, one should use
+To configure the HAL sources for a generic modern Linux desktop
+distribution using Linux 2.6.20, one should use
 
---enable-console-kit --enable-acl-management --enable-docbook-docs --enable-acpi-ibm --enable-acpi-toshiba
+--enable-console-kit --enable-acl-management --enable-docbook-docs --enable-acpi-ibm --enable-acpi-toshiba --enable-umount-helper
