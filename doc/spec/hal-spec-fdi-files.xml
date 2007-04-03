@@ -13,7 +13,7 @@
     settings about devices.
   </para>
 
-  <sect1>
+  <sect1 id="fdi-matching">
     <title>Matching</title>
 
     <para>
@@ -172,7 +172,7 @@
     </para>
     
   </sect1>
-  <sect1>
+  <sect1 id="fdi-merging">
     <title>Merging</title>
     <para>
 
@@ -236,7 +236,7 @@
     </para>
 
   </sect1>
-  <sect1>
+  <sect1 id="fdi-search-paths">
     <title>Search Paths</title>
 
     <para>

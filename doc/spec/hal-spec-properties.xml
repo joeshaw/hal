@@ -6111,6 +6111,93 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
     </sect2>
   </sect1>
 
+  <sect1 id="properties-misc">
+    <title>Misc. Properties</title>
+    <sect2 id="device-properties-access-control">
+      <title>
+        access_control namespace
+      </title>
+      <para>
+        Device objects with the
+        capability <literal>access_control</literal> represent devices
+        where access to a special device file can be granted/revoked
+        to unprivileged users.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>access_control.file</literal> (string)
+              </entry>
+              <entry>Example: /dev/snd/pcmC0D1p</entry>
+              <entry>Yes</entry>
+              <entry>
+                Name of the special device file that access can be granted to.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>access_control.grant_user</literal> (strlist)
+              </entry>
+              <entry>Example: "gdm, flumotion"</entry>
+              <entry>No</entry>
+              <entry>
+                List of UNIX user names to always grant access to the
+                device. This is useful for 3rd party system-wide
+                packages that need access to a device to function
+                properly.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>access_control.grant_group</literal> (strlist)
+              </entry>
+              <entry>Example: "pvr_software, staff"</entry>
+              <entry>No</entry>
+              <entry>
+                List of UNIX group names to always grant access to the
+                device. This is useful for 3rd party system-wide
+                packages that need access to a device to function
+                properly.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>access_control.grant_local_session</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                If true, access to this device should be granted to local sessions.
+                (NOTE NOTE NOTE: this property is experimental and may disappear in the future).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>access_control.grant_local_active_session</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                If true, access to this device should be granted to active local sessions.
+                (NOTE NOTE NOTE: this property is experimental and may disappear in the future).
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+  </sect1>
+
   <sect1 id="properties-deprecated">
     <title>Deprecated Properties</title>
     <para>

@@ -4,7 +4,7 @@
 <chapter id="introduction">
   <title>Introduction</title>
 
-  <sect1>
+  <sect1 id="introduction-about">
     <title>About</title>
     <para>
       This document concerns the specification of HAL which is a
@@ -48,7 +48,7 @@
     </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="introduction-acknowledgements">
     <title>Acknowledgements</title>
     <para>
       Havoc Pennington's article
@@ -172,7 +172,7 @@
     </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="introduction-device-objects">
     <title>Device Objects</title>
     <para>
       It is important to precisely define the term HAL device

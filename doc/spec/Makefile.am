@@ -6,8 +6,9 @@ FIGURE_FILES =				\
 SPEC_XML_EXTRA_FILES =			\
 	hal-spec-introduction.xml	\
 	hal-spec-fdi-files.xml		\
-	hal-spec-properties.xml		\
 	hal-spec-locking.xml		\
+	hal-spec-access-control.xml	\
+	hal-spec-properties.xml		\
 	hal-spec-interfaces.xml	
 
 if DOCBOOK_DOCS_ENABLED

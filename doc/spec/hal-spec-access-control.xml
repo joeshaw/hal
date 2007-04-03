@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="access-control">
+  <title>Access Control</title>
+
+  <para>
+    Access to hardware by unprivileged users is traditionally granted
+    in two ways either by granting access to the <emphasis>special
+    device file</emphasis> or allowing access through another process,
+    using IPC acting on behalf of the user. HAL follows the latter
+    model and uses the system-wide message bus (D-Bus) as the IPC
+    mechanism. In addition, HAL has support for modifying the ACL's
+    (access control lists) on a device file to grant/revoke access to
+    users based on several criteria.
+  </para>
+
+  <sect1 id="access-control-device-file">
+    <title>Device Files</title>
+    <para>
+      If HAL is built with <literal>--enable-acl-management</literal>
+      (and also <literal>--enable-console-kit</literal>) then ACL's on
+      device objects with the
+      capability <literal>access_control</literal> are automatically
+      managed according to the properties defined in
+      <xref linkend="device-properties-access-control"/>. In addition,
+      for this configuration, HAL ships with a device information file
+      that merges this capability on device objects that are normally
+      accessed by unprivileged users through the device file. This
+      includes e.g. sound cards, webcams and other devices but
+      excludes drives and volumes as the latter two are normally
+      accessed by a user through mounting them into the file system.
+    </para>
+    <para>
+      Currently this HAL device information file specifies that all
+      local users (e.g. logged in at the system console) will gain
+      access to such devices. This hard coded policy is subject to
+      change in the future when the freedesktop.org PolicyKit project is
+      will be an optional dependency of HAL.
+    </para>
+    <para>
+      In addition, 3rd party packages can supply device information
+      files to specify (via
+      the <literal>access_control.grant_user</literal>
+      and <literal>access_control.grant_group</literal> properties)
+      that a given user or group should always have access to a device
+      file. This is useful for system-wide software (such as AV
+      streaming management) that runs as an unprivileged system
+      user. This interface is supposed to be stable so 3rd party
+      packages can depend on it.
+    </para>
+  </sect1>
+
+  <sect1 id="access-control-ipc">
+    <title>D-Bus method calls</title>
+    <para>
+      If HAL is built without ConsoleKit support
+      (e.g. without <literal>--enable-console-kit</literal>) access to
+      the various D-Bus interfaces that provides mechanisms is only
+      protected by the D-Bus security configuration files
+      (e.g. using <literal>at_console</literal> to restrict to console
+      user on Red Hat systems) and, in certain cases, restricted to
+      the super user.
+    </para>
+    <para>
+      If ConsoleKit support is enabled, access to D-Bus interfaces is
+      currently hardcoded to only allow active users at the system
+      console. This hard coded policy is subject to change in the
+      future when the freedesktop.org PolicyKit project is will be an
+      optional dependency of HAL.
+    </para>
+  </sect1>
+
+</chapter>
+
