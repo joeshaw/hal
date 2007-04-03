@@ -9,7 +9,7 @@ if HALD_COMPILE_FREEBSD
 SUBDIRS += freebsd
 endif
 
-DIST_SUBDIRS = device-manager freebsd linux
+DIST_SUBDIRS = freebsd linux
 
 INCLUDES = \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
