@@ -4204,6 +4204,69 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-input-keys">
+      <title>
+        input.keys namespace
+      </title>
+      <para>
+        The input device have keys that can be pressed. No namespace
+        specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-input-keypad">
+      <title>
+        input.keypad namespace
+      </title>
+      <para>
+        The input device have keypad keys. No namespace
+        specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-input-keyboard">
+      <title>
+        input.keyboard namespace
+      </title>
+      <para>
+        The input device is a normal keyboard. No namespace specific
+        properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-input-mouse">
+      <title>
+        input.mouse namespace
+      </title>
+      <para>
+        The input device is a mouse. No namespace specific
+        properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-input-switch">
+      <title>
+        input.switch namespace
+      </title>
+      <para>
+        The input device is a switch, e.g. it has buttons with
+        state. No namespace specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-input-joystick">
+      <title>
+        input.joystick namespace
+      </title>
+      <para>
+        The input device is a joystick. No namespace specific
+        properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-input-tablet">
+      <title>
+        input.tablet namespace
+      </title>
+      <para>
+        The input device is a tablet. No namespace specific
+        properties.
+      </para>
+    </sect2>
     <sect2 id="device-properties-pcmcia_socket">
       <title>
         pcmcia_socket namespace
