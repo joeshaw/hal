@@ -1,4 +1,29 @@
 ==========
+HAL 0.5.10 ""
+==========
+
+Requirements for HAL 0.5.10 "":
+
+ - Linux kernel     >= 2.6.17
+ - util-linux       >= 2.12r1    (--enable-umount-helper requires patch from RH #188193)
+ - bash             >= 2.0
+ - udev             >= 089
+ - dbus             >= 0.61      (with glib bindings)
+ - glib             >= 2.6.0
+ - expat            >= 1.95.8
+ - hal-info         >= 20070402
+ - libusb           >= 0 0.1.10a (optional)
+ - pciutils         >= 2.2.3     (optional
+ - dmidecode        >= 2.7       (optional)
+ - parted           == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.86 (optional)
+ - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
+ - libsmbios	    >= 0.13.4    (optional for DELL machines, Linux only)
+ - dellWirelessCtl  >= 0.13.4    (optional, for Dell machines, must live in /usr/bin/, Linux only)
+ - ConsoleKit       >= 0.2.0
+ - pm-utils         >= 0.99.2 or newer (optional)
+
+
+==========
 HAL 0.5.9 "Precipice"
 ==========
 
