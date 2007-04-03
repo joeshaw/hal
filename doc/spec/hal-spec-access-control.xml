@@ -52,7 +52,7 @@
   </sect1>
 
   <sect1 id="access-control-ipc">
-    <title>D-Bus method calls</title>
+    <title>D-Bus Interfaces</title>
     <para>
       If HAL is built without ConsoleKit support
       (e.g. without <literal>--enable-console-kit</literal>) access to
