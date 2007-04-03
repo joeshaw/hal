@@ -6109,6 +6109,57 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-killswitch">
+      <title>
+        killswitch namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>killswitch</literal>
+        represent switches to turn a radio on and off. See also <xref linkend="interface-device-killswitch"/>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>killswitch.type</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Type of the kill switch</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>wlan</entry>
+              <entry></entry>
+              <entry>Kill switch is for turning Wireless networking on/off</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>bluetooth</entry>
+              <entry></entry>
+              <entry>Kill switch is for turning Bluetooth on/off</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>killswitch.access_method</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>How HAL should program the switch</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
   </sect1>
 
   <sect1 id="properties-misc">

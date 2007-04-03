@@ -1140,6 +1140,55 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
 
   </sect1>
 
+  <sect1 id="interface-device-killswitch">
+    <title>org.freedesktop.Hal.Device.KillSwitch interface</title>
+    <para>
+      This interface provides a mechanism for both querying whether a
+      radio is on as well as turning it on and off.  The following
+      methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetPower</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Returns 1 if, and only if, the power is on.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPower</entry>
+            <entry></entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>
+              Set the power of the radio.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+
+  </sect1>
+
 <!--
   <sect1 id="interface-device-foo">
     <title>org.freedesktop.Hal.Device.Foo interface</title>
