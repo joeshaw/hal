@@ -106,8 +106,6 @@ else
   AC_DEFINE(USE_PNP_IDS,1,[Whether builtin PNP IDs are to be used])
 fi
 
-AC_DEFINE_UNQUOTED(PCI_IDS_DIR,"$PCI_IDS_DIR", [Where PCI IDs are found])
-AC_DEFINE_UNQUOTED(USB_IDS_DIR,"$USB_IDS_DIR", [Where USB IDs are found])
 AC_SUBST(PCI_IDS_DIR)
 AC_SUBST(USB_IDS_DIR)
 AC_SUBST(USE_PCI_IDS)
@@ -589,25 +587,14 @@ AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, test x$enable_docbook_docs = xyes)
 AC_MSG_RESULT(yes)
 
 
-
-AS_AC_EXPAND(LOCALSTATEDIR, $localstatedir)
-AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
-AS_AC_EXPAND(DATADIR, $datadir)
-AS_AC_EXPAND(BINDIR, $bindir)
-AS_AC_EXPAND(SBINDIR, $sbindir)
-AS_AC_EXPAND(LIBDIR, $libdir)
-AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
-
-
 AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is])
 
 if ! test -z "$with_dbus_sys" ; then
     DBUS_SYS_DIR="$with_dbus_sys"
 else
-    DBUS_SYS_DIR="$SYSCONFDIR/dbus-1/system.d"
+    DBUS_SYS_DIR="$sysconfdir/dbus-1/system.d"
 fi
 AC_SUBST(DBUS_SYS_DIR)
-AC_DEFINE_UNQUOTED(DBUS_SYSTEMD_DIR, "$DBUS_SYS_DIR", [Where system.d dir for DBUS is])
 
 #### Check our operating system (distro-tweaks required)
 operating_system=unknown
@@ -633,22 +620,20 @@ AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red H
 if ! test -z "$with_pid_file"; then
    HALD_PID_FILE=$with_pid_file
 elif test x$with_os_type = xredhat ; then
-   HALD_PID_FILE=${LOCALSTATEDIR}/run/haldaemon.pid
+   HALD_PID_FILE=${localstatedir}/run/haldaemon.pid
 else
-   HALD_PID_FILE=${LOCALSTATEDIR}/run/hald/pid
+   HALD_PID_FILE=${localstatedir}/run/hald/pid
 fi
 
 AC_SUBST(HALD_PID_FILE)
-AC_DEFINE_UNQUOTED(HALD_PID_FILE, "$HALD_PID_FILE", [pid file])
 
 if ! test -z "$with_socket_dir"; then
     HALD_SOCKET_DIR=$with_socket_dir
 else
-    HALD_SOCKET_DIR=${LOCALSTATEDIR}/run/hald
+    HALD_SOCKET_DIR=${localstatedir}/run/hald
 fi
 
 AC_SUBST(HALD_SOCKET_DIR)
-AC_DEFINE_UNQUOTED(HALD_SOCKET_DIR, "$HALD_SOCKET_DIR", [socket dir])
 
 
 ALL_LINGUAS="ca cs da de el es et eu fi fr hu it ja km ko lt nb nl pa pl pt_BR pt ru sl_SI sv tr uk zh_CN zh_TW"
@@ -846,7 +831,6 @@ hald/freebsd/Makefile
 hald/freebsd/probing/Makefile
 hald/freebsd/libprobe/Makefile
 hald/freebsd/addons/Makefile
-hald/haldaemon
 hald-runner/Makefile
 libhal/Makefile
 libhal-storage/Makefile
@@ -884,13 +868,13 @@ echo "
                   ==============
 
         prefix:                      ${prefix}
-        libdir:                      ${LIBDIR}
-        libexecdir:                  ${LIBEXECDIR}
-        bindir:                      ${BINDIR}
-        sbindir:                     ${SBINDIR}
-        datadir:                     ${DATADIR}
-        sysconfdir:                  ${SYSCONFDIR}
-        localstatedir:               ${LOCALSTATEDIR}
+        libdir:                      ${libdir}
+        libexecdir:                  ${libexecdir}
+        bindir:                      ${bindir}
+        sbindir:                     ${sbindir}
+        datadir:                     ${datadir}
+        sysconfdir:                  ${sysconfdir}
+        localstatedir:               ${localstatedir}
         dbus-1 system.d dir:         ${DBUS_SYS_DIR}
         pci.ids dir:                 ${PCI_IDS_DIR}
         usb.ids dir:                 ${USB_IDS_DIR}

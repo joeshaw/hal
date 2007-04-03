@@ -2,7 +2,7 @@
 
 INCLUDES = -I$(top_srcdir)/libhal \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	@DBUS_CFLAGS@
 
 lib_LTLIBRARIES=libhal-storage.la

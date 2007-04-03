@@ -7,9 +7,13 @@ INCLUDES = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_SCRIPT_DIR=\""$(libdir)/hal/scripts"\" \
+	-DHALD_SOCKET_DIR=\""$(HALD_SOCKET_DIR)"\" \
+	-DHALD_PID_FILE=\""$(HALD_PID_FILE)"\" \
+	-DPCI_IDS_DIR=\""$(PCI_IDS_DIR)"\" \
+	-DUSB_IDS_DIR=\""$(USB_IDS_DIR)"\" \
 	-I$(top_srcdir) \
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
@@ -74,6 +78,15 @@ hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @HALD_OS_LIBS@ $(top_builddir)/hald/$(H
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in
 
+haldaemon: haldaemon.in Makefile
+	$(edit) $< >$@
+
+edit = sed \
+	-e 's|@sbindir[@]|$(sbindir)|g' \
+	-e 's|@sysconfdir[@]|$(sysconfdir)|g' \
+	-e 's|@localstatedir[@]|$(localstatedir)|g' \
+	-e 's|@HALD_PID_FILE[@]|$(HALD_PID_FILE)|g'
+
 ## Red Hat start
 if OS_TYPE_RED_HAT
 
@@ -85,8 +98,9 @@ initd_SCRIPTS= 	\
 endif
  ## Red Hat end
 
-EXTRA_DIST =			\
-	hald_marshal.list hald-cache-test.sh
+EXTRA_DIST = \
+	hald_marshal.list hald-cache-test.sh \
+	$(SCRIPT_IN_FILES)
 
 hald_marshal.h: hald_marshal.list
 	glib-genmarshal $< --prefix=hald_marshal --header > $@
@@ -108,4 +122,5 @@ install-data-local:
 clean-local:
 	rm -f *~
 	rm -f hald_marshal.c hald_marshal.h
+	rm -f haldaemon
 

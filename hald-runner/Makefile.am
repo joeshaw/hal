@@ -4,9 +4,10 @@ INCLUDES = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_SCRIPT_DIR=\""$(libdir)/hal/scripts"\" \
+	-DHALD_SOCKET_DIR=\""$(HALD_SOCKET_DIR)"\" \
 	-I$(top_srcdir) \
 	@DBUS_CFLAGS@ @GLIB_CFLAGS@
 
