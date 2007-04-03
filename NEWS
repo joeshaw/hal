@@ -1,8 +1,10 @@
 ==========
-HAL 0.5.9 ""
+HAL 0.5.9 "Precipice"
 ==========
 
-Requirements for HAL 0.5.9 ""
+Released April 2, 2007.
+
+Requirements for HAL 0.5.9 "Precipice":
 
  - Linux kernel     >= 2.6.17
  - util-linux       >= 2.12r1    (--enable-umount-helper requires patch from RH #188193)
@@ -11,16 +13,528 @@ Requirements for HAL 0.5.9 ""
  - dbus             >= 0.61      (with glib bindings)
  - glib             >= 2.6.0
  - expat            >= 1.95.8
- - hal-info         >= git version as of 20070328
+ - hal-info         >= 20070402
  - libusb           >= 0 0.1.10a (optional)
  - pciutils         >= 2.2.3     (optional
  - dmidecode        >= 2.7       (optional)
- - parted           == 1.7.1     (optional)
+ - parted           == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.86 (optional)
  - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
  - libsmbios	    >= 0.13.4    (optional for DELL machines, Linux only)
  - dellWirelessCtl  >= 0.13.4    (optional, for Dell machines, must live in /usr/bin/, Linux only)
- - ConsoleKit       >= git version as of 20070220 (optional)
+ - ConsoleKit       >= 0.2.0
  - pm-utils         >= 0.99.2 or newer (optional)
+
+Contributors to HAL 0.5.9 "Precipice":
+
+Alex Kanavin (1):
+      provide textual interface description for USB devices
+
+Andreas Hanke (1):
+      fixes for AS_AC_EXPAND usage breaks hal-device-manager
+
+Artem Kachitchkine (5):
+      hald/linux/ids -> hald/ids and minor fixes
+      fix minor memory leaks
+      do not let tools coredump if HAL is not running
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+      solaris backend
+
+Bastien Nocera (1):
+      killswitch infrastructure for Bluetooth and use /dev/sonypi instead of spicctrl
+
+Dan Nicholson (1):
+      POSIX shells do not support '==' tests
+
+Daniel Nylander (1):
+      added Swedish translation file
+
+Danny Kukawka (63):
+      replaced LIBHAL_FREE_DBUS_ERROR with dbus_error_free()
+      fixed acpi problems with incorrect low current voltage values
+      fixed usage of dbus_error_is_set(error == NULL) due to D-Bus changes
+      fixed detection of wireless devices with dscape kernel stack
+      fix copy_property for merge in FDI files
+      replace usage of g_assert() with error handling
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      add hardware dependent/specific alsa sound devices to HAL
+      fixed compiler warning
+      fixed automake for linux
+      fixed typo in 20-storage-methods.fdi
+      remove unneeded close() calls
+      fixed code docu in libhal
+      removed not needed '.in' version of a luks script
+      fixed segmentation fault in xen code
+      Fix to guarantee that udi get generated before process FDI
+      changed error handling for hal-storage-shared.c
+      fixed detection of libsmbios to check for >= v0.11.6
+      changed D-Bus error if /sbin/cryptsetup is not available
+      remove sanitizing passwords for luks and prevent word splitting/path expansion
+      fix detection of max. available omnibook brightness levels
+      fix get/set brightness for sonypi/spiccrtl
+      added new section for deprecated properties to spec
+      fixed compiler warnings
+      fix .hal-mtab mountpoint handling
+      detect path to dmidecode on runtime (fd.o bug #9318)
+      added hald-addon-dell-backlight to .gitignore
+      fix gtk-doc code documentation
+      fix (more) gtk-doc code documentation
+      fixed typo in spec
+      add copy_property FDI directive for stringlist properties
+      fixed compiler warning in addon-dell-backlight
+      fixed compiler warning
+      fix compiler warning in libhal
+      fixed compiler warning in create_cache.c
+      fixed commit 882085a0, forgot cast to unsigned long
+      typo fix
+      fixed uid datatype in CallerInfo to unsigned long
+      added new fdi match attribute 'contains_not' for strings and strlist
+      added hald-probe-ieee1394-unit to .gitignore
+      libhal: validate parameter to be != NULL
+      fix expat detection in configure
+      fixed code documentation
+      added some files to .gitignore
+      removed not needed string from translation files
+      added support for ALSA MIDI devices
+      validate error D-Bus names returned on stderror
+      change usb*.version_bcd/usb*.speed_bcd to new double keys
+      added hal-system-power-pm-is-supported to .gitignore
+      fixed libsmbios search output to correct version
+      updated requirements in NEWS file
+      void hal-device-manager to open multiple about dialogs
+      fix for new pciutils which need to link against zlib
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      fix configure for DELL stuff
+      fixed quoting and added allowed libparted versions to error output
+      added .gitignore to new doc/man dir
+      update several .gitignore files
+      added optional support for IBM ACPI (hotkey) events.
+      added configure option to enable build Toshiba ACPI button addon
+      add more cdrom information
+      update .gitignore
+      updated German translation file
+
+David Woodhouse (1):
+      fix crash on PPC Pegasos that don't have PMU, ACPI or APM
+
+David Zeuthen (196):
+      post-release version bump to 0.5.9
+      fix race condition when unmounting a volume takes a very long time
+      don't lock the .hal-mtab file at all when checking mount status on unmount
+      don't update mount state until Unmount() returns
+      fix stupid typo in syslog reporting for Mount()
+      only install PolicyKit privilege files if we're using PolicyKit
+      only require libvolume_id >= 061
+      write new requirements for 0.5.9 including requiring udev >= 089
+      don't fail, print warning if ARPHRD_IEEE80211_{RADIOTAP,PRISM} is not defined
+      fix up overflow of 32-bit variable when getting 64-bit value
+      remove unneeded debug
+      send changes in correct order for LibHalChangeSet
+      remove dead code introduced by commit 0ae1aed74548fec563399d00100d621ce99b383b
+      enable looking for data track on optical discs
+      export Eject() even on discs where we can't detect a file system
+      probe for partitions on data discs where we fail to detect an fs
+      add a note about checking that optical drives supports the cmd's we are sending
+      don't build Macbook Pro utils on non-x86
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      remove gtk-doc tmpl files from source control
+      make cpufreq support optional
+      make Macbook Pro utils x86 only again
+      split out Macbook Pro matching into separate fdi file
+      make usb csr support optional
+      fix up typo in usb csr detection
+      stat special device file, not the mount point
+      don't crash on cd drives without write capabilities
+      don't add non-existing partition entries for MS-DOS disk labels
+      add some thoughts about optimization work needed
+      make it easier to measure startup time
+      some memory optimization work
+      clean up HalDevice and HalProperty a bit
+      make HalProperty private to HalDevice implementation (makes it easier to nuke)
+      use an iterator to iterate over strlist instead of using GSList
+      switch device_info.c to use strlist iterator
+      fix crasher in GetProperty() method
+      use a hash table for device properties
+      implement missing functions after move to hash table properties
+      removed unneeded and fragile async matching from device store
+      move property code into device object core
+      free hash table before the private object to prevent segfault
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      switch running_processes to using a list + fix a few memory leaks
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      revert hald/device_info.c back to state from June 2006
+      forward port changes made to hald/device_info.c since June 2006
+      fix segfault on cleaning up rules
+      report how much memory the rules use
+      comment out some debugging spew from fdi matching
+      use mmap to access pci.ids and usb.ids
+      make pnp.ids static to save writable memory
+      add note about possibly handling multi-session discs a bit better
+      fix setting power_management.is_powersave_set
+      misc build fixes for libparted and libpci
+      fix for freeing static memory + move hal_util_readlink() into hald/util.c
+      fix up compile warnings after last patch
+      call dbus_error_free() directly to avoid spew on stderr
+      fix up libsmbios detection
+      fix up how volume.ignore is set so it also applies to hotpluggable drives
+      fix up a few things with the new fdi cache
+      reduce debugging spew for fdi files
+      add optional support for ConsoleKit
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      make HAL track ConsoleKit seats and sessions and initial work on ACL mgmt
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      fix up coding style for hald_runner.c
+      more CK and ACL mgmt work
+      remove autogenarated HTML as it clutters up the commit logs
+      more ACL management work; now it's actually usuable
+      fix typo for HALD_ACTION for session changes
+      use $(localstatedir) instead of /var and make hald DTRT when CK goes away
+      add ACL management for remaining devices recognized by HAL
+      clean up some dangerous use of the LIBHAL_FREE_DBUS_ERROR macro
+      remove annoying LIBHAL_FREE_DBUS_ERROR spew to stderr
+      build time for /sbin/umount.hal and make our mount helper use this
+      make umount.hal work when options like -v are passed to umount
+      make /sbin/umount.hal handle mounts points as well
+      use -Wl,--as-needed by default for gcc
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      make hald-addon-storage use hints from ConsoleKit about session idleness
+      make hald-addon-storage usage of ConsoleKit depend on HAVE_CONKIT
+      update dependencies and versions for HAL
+      only invoke hal-acl-tool if HAVE_ACLMGMT is set
+      update NEWS to suggest latest hal-info (for bluetooth killswitch changes)
+      use g_ascii_strtoull() instead of g_ascii_strtoll()
+      refuse to eject if we can't open the device exclusively
+      with Linux's libata, IDE Zip drives can now be polled for media changes
+      add support for new Firewire stack on Linux
+      handle multiple / remote seats
+      make lshal print the current time
+      print out error if probe-volume hangs
+      fix input probing and discard /proc/acpi events if ACPI sysfs sources are used
+      make Device.Rescan() work for refreshing button state when using ACPI input
+      use inotify to watch fdi directories
+      map new fdi cache file post regeneration
+      minor fixes
+      probe firewire AVC devices
+      sort properties in lshal output
+      move preprobe fdi files to hal-info
+      fix detection of mounted volumes from yanked storage devices
+      fix device removal when mounted devices not mounted by HAL are yanked out
+      on Rescan() for ACPI batteries, retrieve all properties (slow path)
+      assign ACL's to Firewire IIDC (including iSight) and AVC devices
+      generate the fdi cache synchronously
+      avoid old .bak files for the fdi cache
+      relax error handling for fdi files
+      fix up debug- and valgrind- scripts to actually work
+      don't give ACL's to uid 0
+      Revert "without PolicyKit, allow only root to mount fixed disks"
+      stop using noexec by default on Linux
+      instead of assuming they're blank, probe unknown discs if they're large
+      some fixes to make distcheck work again
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      fix build
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      make the fdi cache test stricter by not allowing skipped fdi files
+      avoid "Not Specified" values as these stem from dmidecode itself
+      add workaround for gtk-doc for now (bgo #386508)
+      also make sure libhal.types is empty
+      avoid setting pci.vendor, pci.product, usb.vendor to useless "Unknown (XXX)"
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      fix up memory handling of exp_detail and remove dead code
+      define 'scanner' capability
+      add ACL's for scanners
+      add support for SuspendHybrid and make use of pm-is-supported
+      fix typo
+      fix umount.hal so correct return value is passed
+      use libsmbios to add support for bluetooth, wlan RF kill on Dell laptops
+      forgot to add 10-rfkill-switch.fdi (renamed from 10-bluetooth-switch.fdi)
+      avoid logging when client asks for non-existant property
+      fix segfault in lshal where strlist prop was removed just after it changed
+      add named mandatory locking API
+      remove dead code
+      switch to xmlto and heavily fix up the spec
+      fix up introspection bits
+      more spec changes
+      move caller tracking into it's own class
+      refactor access control checks into separate files
+      add interface locking and remove generic locking API committed yesterday
+      don't set INVOKED_BY_SYSTEMBUS_CONNECTION_NAME unless call is from bus
+      add docs for how locking work
+      fixup speling
+      for Dell, disable physical killswitch when setting power
+      don't disk example-manager.py as it doesn't exist anymore
+      don't dist hal-linux26.dia either since it has gone the way of the Dodo too
+      try usbclass handler before usb and try all handlers until we find something
+      remove doc/conf and remember to install the CSS stylesheet
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      check that dellWirelessCtl exists before using it
+      mention that dellWirelessCtl is optional
+      clarify search paths for device information files
+      ran 'make update-po'
+      create entire fdi file hierarchy according to spec including /etc/hal/fdi bits
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      fix build rules for spec
+      fix up spec generation a bit more
+      add manual pages
+      hint that a patch to util-linux is needed when using --enable-umount-helper
+      improve wording in note about --enable-umount-helper
+      enable docbook docs by default
+      use AM_PROG_CC_C_O to avoid warning when configuring sources
+      fix up SEE ALSO section in lshal's man page
+      allow mount options 'acl' and 'user_xattr' for ext3
+      clean up locking example
+      fix up ReleaseGlobalInterfaceLock() and improve locking example
+      make LUKS setup/teardown respect the standard .Volume and .Storage locks
+      make libhal locking API take 'bool exclusive' and fix a bug
+      only acquire a lock exclusively if no-one else is holding the lock
+      add new hal-lock(1) utility
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      fix up hal-lock manpage
+      don't build docs by default as it breaks distcheck
+      specify path to eject at build time
+      clarify locking on the Volume.Crypto interface
+      use the right interface in the example in hal-lock.1
+      fix IBM, Toshiba ACPI hotkey handling
+      clarify search path for callouts, addons and method calls.
+      remove unused variables
+      change locking semantics a bit and add guidelines for SystemPowerManagement
+      change locking semantics slightly and add missing locking bits
+      avoid crash if an addon is using IsLockedByOthers()
+      avoid polling when a drive is locked
+      make hal-lock(1) provide an --exit-with-dev option
+      update hal-lock(1)'s man page and fix usage()
+      add hal-disable-polling(1) program along with a man page
+      give back the "button" capability to keyboards
+      update hal-info requirement to 20070328
+      update TODO list
+      teach fdi.dtd about contains_not, rip out RNG scheme
+      use UTF-8 for the generated HTML
+      require autoconfig 2.59c or newer
+      mention umount helper as default options to use
+      add docs for access_control namespace
+      reword bit of the spec
+      fix typo
+      document the RF killswitch namespace and interface
+      ran 'make update-po'
+      print docdir in configure summary
+      update NEWS for 0.5.9 release
+
+Doug Chapman (1):
+      fix unaligned messages (RH Bug #210079)
+
+Erik Andrén (2):
+      add addon for backlight control on Dell computers
+      make the amount of Dell backlight levels dynamic
+
+Frederic Crozat (1):
+      handle system bus restarts
+
+Frederic Peters (1):
+      use VOLUME_ID_CFLAGS
+
+Guillem Jover (2):
+      respect --disable-pmu for hal-system-power-pmu
+      rename nokia770 to omap
+
+Holger Macht (12):
+      fixed typos in cpufreq addon
+      Fix the D-Bus restart case for the CPUFreq addon. The D-Bus connection you
+      add /sys/class/backlight/* interface support
+      Merge branch 'master' of git+ssh://homac@git.freedesktop.org/git/hal
+      revert logic for setting and getting "consider_nice" setting
+      throw exception if D-Bus connection of sender is NULL
+      Merge branch 'master' of git+ssh://homac@git.freedesktop.org/git/hal
+      additional error check
+      trigger pm-utils for hibernate, suspend and SetPowerSave on SUSE
+      Merge branch 'master' of git+ssh://homac@git.freedesktop.org/git/hal
+      allow hibernate, suspend and CPUFreq for the root user independent of desktop-console
+      Merge branch 'master' of git+ssh://homac@git.freedesktop.org/git/hal
+
+Jean-Yves Lefort (11):
+      fix python shebang line
+      add FreeBSD and Solaris support
+      implement HAL_PROPERTY_TYPE_STRLIST support in merge_device_rewrite_cb and fix some potential NULL-pointer dereferences
+      add a osspec_privileged_init function for initializing backend objects prior to dropping root privileges
+      add casts to fix build errors on FreeBSD
+      break out the PCI and USB IDs initialization into two separate functions
+      favor CAM devices over ATAPI devices
+      correct SCSI to atapi mapping
+      power down instead of halting the system
+      avoid an infinite loop with buggy PCI firmware
+      ensure that UDIs of ATA and SCSI devices are unique
+
+Joe Marcus Clarke (11):
+      add support for FreeBSD mount options
+      add FreeBSD support
+      disable partutil for FreeBSD
+      add FreeBSD support
+      add the FreeBSD backend
+      fix potnential crash when changing disc media
+      fix ATA support for FreeBSD 5.X
+      flesh out mount options for FreeBSD
+      Merge branch 'master' of ssh://marcus@git.freedesktop.org/git/hal
+      fix disc volume detection on FreeBSD 5.X
+      ensure there are no embedded slashes in UDI components
+
+John (J5) Palmieri (1):
+      use g_slist_remove_link instead of g_slist_remove
+
+Kareem Dana (1):
+      fix probe-storage and addon-storage competing for O_EXCL on cdrom device
+
+Kay Sievers (13):
+      fix casting to avoid compiler error
+      rework Linux coldplug to work with future kernel changes
+      merge Linux class and bus device handling
+      Merge branch 'master' of git+ssh://git.freedesktop.org/git/hal
+      store fdi files as rules object
+      remove left-over "class device" from debug output
+      linux coldplug: prepare for new sysfs layout
+      change email address
+      rename "bus" and "physical" properties to something more abstract
+      Merge branch 'master' of git+ssh://git.freedesktop.org/git/hal
+      fix scsi_host parent relationship
+      Merge branch 'master' of git+ssh://git.freedesktop.org/git/hal
+      fix scsi-device-handling for devices we probe but don't add
+
+Kevin Ottens (1):
+      add property for power save state
+
+Kristian Høgsberg (4):
+      initialize pollfd array correctly.
+      update ieee1394 prober to ioctl interface changes.
+      report AV/C subunits instead of AV/C unit in ieee1394 probe.
+      use sysfs attributes instead of parsing config rom file.
+
+Martin Pitt (7):
+      without PolicyKit, allow only root to mount fixed disks
+      allow 'locale=' NTFS mount option for Linux
+      h-d-m: beautify list values output
+      fix Omnibook LCD brightness levels
+      fix bashism in tools/linux/hal-system-lcd-get-brightness-linux
+      fix 'bus type' display in h-d-m
+      fix crash because of missing return value check
+
+Matthew Garrett (1):
+      add new battery, bluetooth, wireless key events
+
+Matthias Kretz (2):
+      better ALSA card name
+      reread /proc/cards to make hotplugging sound cards work
+
+Michael Biebl (5):
+      inotify support for systems without sys/inotify.h
+      inotify support for systems without sys/inotify.h
+      fix section for hald man page
+      properly use $(docdir)
+      as_ac_removal
+
+Patrice Dumas (1):
+      mention libhal in the docs
+
+Priit Laes (2):
+      added Estonian translation
+      removed translatable tag from value field of capabilties
+
+Richard Hughes (34):
+      Make sure we get all of a multi-word battery.model value.
+      allow build without PolicyKit
+      allow make distcheck to work with a readonly buildroot
+      ignore the special ACPI 'Ones' value for rate
+      move the information scripts to hal-info
+      move the information scripts to hal-info
+      split the logitec csr mice detection vids-pids into hal info
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      Add some information keys to the spec for hardware recalls.
+      add prefix and suffix to the fdi attribute list
+      add --retain-privileges so we can use massif
+      make the acpi, apm and pmu backends inclusion configurable
+      fix the libparted checking script
+      only build the pmu addon when we use pmu
+      add info about hal-info to HACKING and add dependency to NEWS
+      change trivial %% typo in the acpi battery code
+      move the power_management.quirk.* properties
+      add new files to .gitignore files
+      fix libusb detection
+      fix pmu laptop screen on new kernels
+      move laptop_panel.brightness_in_hardware data to hal-info
+      make the hal suspend and hibernate scripts use the quirk command line of pm-utils
+      remove hal-spec.html from the tarball
+      remove bak files from git-status output
+      remove the hal-system-video-*-linux files
+      remove the zzz script from suspend
+      add --quirk-radeon-off
+      allow use of libparted 1.8.2
+      fix the smbios.*.* keys to be a little more sane
+      fix acpi detection for very new kernels
+      Fix error initialisation in acpi addon to fix ac adapter event reporting
+      added hal-acl-tool executable to .gitignore
+      add support for the macbook backlight
+      add libparted v1.8.6 to configure
+
+Rob Taylor (15):
+      Make haldaemon and haluser vaiables in hal.pc
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+      Remove linux.sysfs_path_device key
+      Remove checking for run-time usb.ids and pci.ids at build time
+      Make hotplugging non-recursive.
+      Merge branch 'master' into to-push
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+      Add back autodetection of usb.ids and pci.ids when not specified.
+      Merge branch 'to-push'
+      Fix compile warning on PPC.
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+      ignore *.py[oc] and *.gcno
+      add option to build without libpci
+      add compare_ne to possible matchrules
+      Move COMPARE_NE to end of match_type enum.
+
+S.Çağlar Onur (3):
+      get ARPHRD_IEEE80211_RADIOTAP and similar from kernel, not glibc headers
+      patch corrects some typos in tr.po and addon-cpufreq.c
+      add pm-suspend to linux/hal-system-power-suspend-linux
+
+Sergey Lapin (9):
+      fix for crash in hald_dbus.c
+      use mallopt since we mostly allocate small chunks
+      reduce memory fragmentation by using POSIX readlink rather than glib
+      add Nokia 770 backlight addon
+      use POSIX readdir instead of g_dir_open
+      add file for Nokia 770 backlight
+      move fdi file parsing into a separate process
+      Returned back unit test executable.
+      Fixed distcheck problem
+
+Sjoerd Simons (9):
+      Always set power_management.can_suspend to true if the power_management.type is
+      Let probe-smbios only return successfully if it actually got something
+      Set system.formfactor fallback in exactly one place instead of three and be
+      Read out model and compatible property out of openfirmware if possible. And use the openfirmware module property to decide what formfactor the system has.
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+      * Fix some code-style issues that David commented on
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+      prevent hald-runner from printing unnecessary warning messages
+      work around cdrom devices giving invalid TOC info
+
+Steven Walter (1):
+      Add match for Creative Zen Nano USB music player
+
+Thomas Petazzoni (1):
+      fix python example to work with a recent dbus
+
+Timo Hoenig (1):
+      don't call dbus_connection_close() for some of our tools
+
+Tomasz Torcz (3):
+      Add Z31t to the list of laptops needing laptop_panel.brightness_in_hardware
+      Add ThinkPad T60 to the list of laptops needing laptop_panel.brightness_in_hardware
+      Add ThinkPad X60 and X60s to the list of laptops needing
+
+William Jon McCann (6):
+      build fixes
+      two build fixes
+      sizing fixes for device manager
+      improve api docs
+      fix api docs even more
+      hal updates for latest ConsoleKit
 
 ==========
 HAL 0.5.8 "The Skynet Funding Bill is passed."
