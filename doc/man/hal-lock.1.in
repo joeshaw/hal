@@ -17,7 +17,7 @@ either on a given device or globally. For more information about both
 the big picture and the semantics of 
 .B HAL
 locks, refer to the \fIHAL spec\fP which can be found in
-.I "/usr/share/doc/hal-@VERSION@/spec/hal-spec.html"
+.I "@docdir@/spec/hal-spec.html"
 depending on the distribution.
 
 .SH OPTIONS

@@ -6,7 +6,7 @@ dnl Process this file with autoconf to produce a configure script.
 # Patches for that is welcome.
 #
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.59)
 AC_INIT(hal, 0.5.9, david@fubar.dk)
 AM_INIT_AUTOMAKE(hal, 0.5.9)
 AM_CONFIG_HEADER(config.h)
@@ -650,16 +650,6 @@ fi
 AC_SUBST(HALD_SOCKET_DIR)
 AC_DEFINE_UNQUOTED(HALD_SOCKET_DIR, "$HALD_SOCKET_DIR", [socket dir])
 
-# documentation target
-AC_ARG_WITH(doc-dir,   [  --with-doc-dir=[dirname]  directory to install documentation])
-if ! test -z "$with_doc_dir"; then
-   DOCDIR=$with_doc_dir
-else
-   DOCDIR="$DATADIR/doc/hal-$VERSION"
-fi
-
-AC_SUBST(DOCDIR)
-
 
 ALL_LINGUAS="ca cs da de el es et eu fi fr hu it ja km ko lt nb nl pa pl pt_BR pt ru sl_SI sv tr uk zh_CN zh_TW"
 AC_SUBST(ALL_LINGUAS)
@@ -885,15 +875,6 @@ doc/api/libhal-storage/version.xml
 doc/spec/Makefile
 doc/spec/hal-spec.xml.in
 doc/man/Makefile
-doc/man/hald.8
-doc/man/lshal.1
-doc/man/hal-get-property.1
-doc/man/hal-set-property.1
-doc/man/hal-find-by-property.1
-doc/man/hal-find-by-capability.1
-doc/man/hal-is-caller-locked-out.1
-doc/man/hal-lock.1
-doc/man/hal-disable-polling.1
 po/Makefile.in
 ])
 
@@ -910,7 +891,6 @@ echo "
         datadir:                     ${DATADIR}
         sysconfdir:                  ${SYSCONFDIR}
         localstatedir:               ${LOCALSTATEDIR}
-        docdir:                      ${DOCDIR}
         dbus-1 system.d dir:         ${DBUS_SYS_DIR}
         pci.ids dir:                 ${PCI_IDS_DIR}
         usb.ids dir:                 ${USB_IDS_DIR}

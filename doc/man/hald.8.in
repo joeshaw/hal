@@ -18,7 +18,7 @@ the \fID-Bus\fP system message bus to provide an API that applications
 can use to discover, monitor and invoke operations on devices. For
 more information about both the big picture and specific API details,
 refer to the \fIHAL spec\fP which can be found in
-.I "/usr/share/doc/hal-@VERSION@/spec/hal-spec.html"
+.I "@docdir@/spec/hal-spec.html"
 depending on the distribution.
 
 .SH OPTIONS
@@ -55,7 +55,7 @@ Second, shut down the existing
 .B hald
 daemon instance; on a Fedora system this is achieved by
 
-.I "/etc/init.d/haldaemon stop"
+.I "@sysconfdir@/init.d/haldaemon stop"
 
 After having shut down the daemon, you might want to run
 
@@ -65,11 +65,11 @@ to ensure that all the helper processe of
 .B hald
 are killed too. To start the HAL daemon, use
 
-.I "/usr/sbin/hald --daemon=no --verbose=yes"
+.I "@sbindir@/hald --daemon=no --verbose=yes"
 
 If the daemon crashes, you can start it under a debugger via
 
-.I "gdb /usr/sbin/hald"
+.I "gdb @sbindir@/hald"
 
 and then typing
 

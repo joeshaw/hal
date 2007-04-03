@@ -12,7 +12,7 @@ SPEC_XML_EXTRA_FILES =			\
 
 if DOCBOOK_DOCS_ENABLED
 
-htmldocdir = $(DOCDIR)/spec
+htmldocdir = $(docdir)/spec
 htmldoc_DATA = hal-spec.html $(FIGURE_FILES) docbook.css
 
 hal-spec.html : hal-spec.xml.in $(FIGURE_FILES) $(SPEC_XML_EXTRA_FILES)
