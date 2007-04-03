@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-19 22:51-0400\n"
+"POT-Creation-Date: 2007-04-02 23:56-0400\n"
 "PO-Revision-Date: 2006-01-13 15:10+0100\n"
 "Last-Translator: Linas Spraunius <linas@operis.org>\n"
 "Language-Team: Lithunian <i18n@suse.de>\n"
@@ -15,180 +15,197 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../libhal-storage/libhal-storage.c:301
+#: ../libhal-storage/libhal-storage.c:305
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Išorinis %s%s diskasukis"
 
-#: ../libhal-storage/libhal-storage.c:304
+#: ../libhal-storage/libhal-storage.c:308
 #, c-format
 msgid "%s%s Drive"
 msgstr "%s%s diskasukis"
 
-#: ../libhal-storage/libhal-storage.c:313
+#: ../libhal-storage/libhal-storage.c:315
+#, fuzzy
+msgid "External Magneto Optical Drive"
+msgstr "Išorinis diskelių įrenginys"
+
+#: ../libhal-storage/libhal-storage.c:317
+msgid "Magneto Optical Drive"
+msgstr ""
+
+#: ../libhal-storage/libhal-storage.c:323
 msgid "External Floppy Drive"
 msgstr "Išorinis diskelių įrenginys"
 
-#: ../libhal-storage/libhal-storage.c:315
+#: ../libhal-storage/libhal-storage.c:325
 msgid "Floppy Drive"
 msgstr "Diskelių įrenginys"
 
-#: ../libhal-storage/libhal-storage.c:322
+#: ../libhal-storage/libhal-storage.c:332
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "%s Išorinis standusis diskas"
 
-#: ../libhal-storage/libhal-storage.c:325
+#: ../libhal-storage/libhal-storage.c:335
 #, c-format
 msgid "%s Hard Drive"
 msgstr "%s Standusis diskas"
 
-#: ../libhal-storage/libhal-storage.c:330
+#: ../libhal-storage/libhal-storage.c:340
 msgid "External Hard Drive"
 msgstr "Išorinis standusis diskas"
 
-#: ../libhal-storage/libhal-storage.c:332
+#: ../libhal-storage/libhal-storage.c:342
 msgid "Hard Drive"
 msgstr "Standusis diskas"
 
-#: ../libhal-storage/libhal-storage.c:341
+#: ../libhal-storage/libhal-storage.c:351
 msgid "Drive"
 msgstr "Diskasukis"
 
-#: ../libhal-storage/libhal-storage.c:390
+#: ../libhal-storage/libhal-storage.c:400
 #, fuzzy
 msgid "CD-ROM "
 msgstr "CD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:395
+#: ../libhal-storage/libhal-storage.c:405
 msgid "Blank CD-R"
 msgstr "Tuščias CD-R"
 
-#: ../libhal-storage/libhal-storage.c:397
+#: ../libhal-storage/libhal-storage.c:407
 msgid "CD-R"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:402
+#: ../libhal-storage/libhal-storage.c:412
 msgid "Blank CD-RW"
 msgstr "Tuščias CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:404
+#: ../libhal-storage/libhal-storage.c:414
 msgid "CD-RW"
 msgstr "CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:408
+#: ../libhal-storage/libhal-storage.c:418
 #, fuzzy
 msgid "DVD-ROM"
 msgstr "/DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:413
+#: ../libhal-storage/libhal-storage.c:423
 msgid "Blank DVD-RAM"
 msgstr "Tuščias DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:415
+#: ../libhal-storage/libhal-storage.c:425
 msgid "DVD-RAM"
 msgstr "DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:420
+#: ../libhal-storage/libhal-storage.c:430
 msgid "Blank DVD-R"
 msgstr "Tuščias DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:422
+#: ../libhal-storage/libhal-storage.c:432
 msgid "DVD-R"
 msgstr "DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:427
+#: ../libhal-storage/libhal-storage.c:437
 msgid "Blank DVD-RW"
 msgstr "Tuščias DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:429
+#: ../libhal-storage/libhal-storage.c:439
 msgid "DVD-RW"
 msgstr "DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:434
+#: ../libhal-storage/libhal-storage.c:444
 msgid "Blank DVD+R"
 msgstr "Tuščias DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:436
+#: ../libhal-storage/libhal-storage.c:446
 msgid "DVD+R"
 msgstr "DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:441
+#: ../libhal-storage/libhal-storage.c:451
 msgid "Blank DVD+RW"
 msgstr "Tuščias DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:443
+#: ../libhal-storage/libhal-storage.c:453
 msgid "DVD+RW"
 msgstr "DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:448
+#: ../libhal-storage/libhal-storage.c:458
 msgid "Blank DVD+R Dual-Layer"
 msgstr "Tuščias dvisluoksnis DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:450
+#: ../libhal-storage/libhal-storage.c:460
 msgid "DVD+R Dual-Layer"
 msgstr "Dvisluoksnis DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:454
+#: ../libhal-storage/libhal-storage.c:464
 #, fuzzy
 msgid "BD-ROM"
 msgstr "CD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:459
+#: ../libhal-storage/libhal-storage.c:469
 #, fuzzy
 msgid "Blank BD-R"
 msgstr "Tuščias CD-R"
 
-#: ../libhal-storage/libhal-storage.c:461
+#: ../libhal-storage/libhal-storage.c:471
 #, fuzzy
 msgid "BD-R"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:466
+#: ../libhal-storage/libhal-storage.c:476
 #, fuzzy
 msgid "Blank BD-RE"
 msgstr "Tuščias CD-R"
 
-#: ../libhal-storage/libhal-storage.c:468
+#: ../libhal-storage/libhal-storage.c:478
 #, fuzzy
 msgid "BD-RE"
 msgstr "CD-R"
 
-#: ../libhal-storage/libhal-storage.c:472
+#: ../libhal-storage/libhal-storage.c:482
 #, fuzzy
 msgid "HD DVD-ROM"
 msgstr "/DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:477
+#: ../libhal-storage/libhal-storage.c:487
 #, fuzzy
 msgid "Blank HD DVD-R"
 msgstr "Tuščias DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:479
+#: ../libhal-storage/libhal-storage.c:489
 #, fuzzy
 msgid "HD DVD-R"
 msgstr "DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:484
+#: ../libhal-storage/libhal-storage.c:494
 #, fuzzy
 msgid "Blank HD DVD-RW"
 msgstr "Tuščias DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:486
+#: ../libhal-storage/libhal-storage.c:496
 #, fuzzy
 msgid "HD DVD-RW"
 msgstr "DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:494
+#: ../libhal-storage/libhal-storage.c:504
 msgid "Audio CD"
 msgstr "Audio CD"
 
-#: ../libhal-storage/libhal-storage.c:502
+#: ../libhal-storage/libhal-storage.c:511
+msgid "Blank Magneto Optical"
+msgstr ""
+
+#: ../libhal-storage/libhal-storage.c:513
+msgid "Magneto Optical"
+msgstr ""
+
+#: ../libhal-storage/libhal-storage.c:519
 #, c-format
 msgid "%s Removable Media"
 msgstr "%s Keičiama laikmena"
 
-#: ../libhal-storage/libhal-storage.c:505
+#: ../libhal-storage/libhal-storage.c:522
 #, c-format
 msgid "%s Media"
 msgstr "%s Laikmena"

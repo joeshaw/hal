@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: hal\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-03-19 22:51-0400\n"
+"POT-Creation-Date: 2007-04-02 23:56-0400\n"
 "PO-Revision-Date: 2004-10-14 20:29+0300\n"
 "Last-Translator: Leonid Kanter <leon@asplinux.ru>\n"
 "Language-Team:  <ru@li.org>\n"
@@ -18,192 +18,209 @@ msgstr ""
 "Plural-Forms:  nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
 "10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ../libhal-storage/libhal-storage.c:301
+#: ../libhal-storage/libhal-storage.c:305
 #, c-format
 msgid "External %s%s Drive"
 msgstr "Внешний дисковод %s%s"
 
-#: ../libhal-storage/libhal-storage.c:304
+#: ../libhal-storage/libhal-storage.c:308
 #, c-format
 msgid "%s%s Drive"
 msgstr "Дисковод %s%s"
 
-#: ../libhal-storage/libhal-storage.c:313
+#: ../libhal-storage/libhal-storage.c:315
+#, fuzzy
+msgid "External Magneto Optical Drive"
+msgstr "Внешний флоппи-диск"
+
+#: ../libhal-storage/libhal-storage.c:317
+msgid "Magneto Optical Drive"
+msgstr ""
+
+#: ../libhal-storage/libhal-storage.c:323
 msgid "External Floppy Drive"
 msgstr "Внешний флоппи-диск"
 
-#: ../libhal-storage/libhal-storage.c:315
+#: ../libhal-storage/libhal-storage.c:325
 msgid "Floppy Drive"
 msgstr "Флоппи-диск"
 
-#: ../libhal-storage/libhal-storage.c:322
+#: ../libhal-storage/libhal-storage.c:332
 #, c-format
 msgid "%s External Hard Drive"
 msgstr "Внешний жесткий диск %s"
 
-#: ../libhal-storage/libhal-storage.c:325
+#: ../libhal-storage/libhal-storage.c:335
 #, c-format
 msgid "%s Hard Drive"
 msgstr "Жесткий диск %s"
 
-#: ../libhal-storage/libhal-storage.c:330
+#: ../libhal-storage/libhal-storage.c:340
 msgid "External Hard Drive"
 msgstr "Внешний жесткий диск"
 
-#: ../libhal-storage/libhal-storage.c:332
+#: ../libhal-storage/libhal-storage.c:342
 msgid "Hard Drive"
 msgstr "Жесткий диск"
 
-#: ../libhal-storage/libhal-storage.c:341
+#: ../libhal-storage/libhal-storage.c:351
 msgid "Drive"
 msgstr "Диск"
 
-#: ../libhal-storage/libhal-storage.c:390
+#: ../libhal-storage/libhal-storage.c:400
 #, fuzzy
 msgid "CD-ROM "
 msgstr "Диск CD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:395
+#: ../libhal-storage/libhal-storage.c:405
 #, fuzzy
 msgid "Blank CD-R"
 msgstr "Чистый диск CD-R"
 
-#: ../libhal-storage/libhal-storage.c:397
+#: ../libhal-storage/libhal-storage.c:407
 #, fuzzy
 msgid "CD-R"
 msgstr "Диск CD-R"
 
-#: ../libhal-storage/libhal-storage.c:402
+#: ../libhal-storage/libhal-storage.c:412
 #, fuzzy
 msgid "Blank CD-RW"
 msgstr "Чистый диск CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:404
+#: ../libhal-storage/libhal-storage.c:414
 #, fuzzy
 msgid "CD-RW"
 msgstr "Диск CD-RW"
 
-#: ../libhal-storage/libhal-storage.c:408
+#: ../libhal-storage/libhal-storage.c:418
 #, fuzzy
 msgid "DVD-ROM"
 msgstr "Диск DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:413
+#: ../libhal-storage/libhal-storage.c:423
 #, fuzzy
 msgid "Blank DVD-RAM"
 msgstr "Чистый диск DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:415
+#: ../libhal-storage/libhal-storage.c:425
 #, fuzzy
 msgid "DVD-RAM"
 msgstr "Диск DVD-RAM"
 
-#: ../libhal-storage/libhal-storage.c:420
+#: ../libhal-storage/libhal-storage.c:430
 #, fuzzy
 msgid "Blank DVD-R"
 msgstr "Чистый диск DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:422
+#: ../libhal-storage/libhal-storage.c:432
 #, fuzzy
 msgid "DVD-R"
 msgstr "Диск DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:427
+#: ../libhal-storage/libhal-storage.c:437
 #, fuzzy
 msgid "Blank DVD-RW"
 msgstr "Чистый диск DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:429
+#: ../libhal-storage/libhal-storage.c:439
 #, fuzzy
 msgid "DVD-RW"
 msgstr "Диск DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:434
+#: ../libhal-storage/libhal-storage.c:444
 #, fuzzy
 msgid "Blank DVD+R"
 msgstr "Чистый диск DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:436
+#: ../libhal-storage/libhal-storage.c:446
 #, fuzzy
 msgid "DVD+R"
 msgstr "Диск DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:441
+#: ../libhal-storage/libhal-storage.c:451
 #, fuzzy
 msgid "Blank DVD+RW"
 msgstr "Чистый диск DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:443
+#: ../libhal-storage/libhal-storage.c:453
 #, fuzzy
 msgid "DVD+RW"
 msgstr "Диск DVD+RW"
 
-#: ../libhal-storage/libhal-storage.c:448
+#: ../libhal-storage/libhal-storage.c:458
 #, fuzzy
 msgid "Blank DVD+R Dual-Layer"
 msgstr "Чистый диск DVD+R"
 
-#: ../libhal-storage/libhal-storage.c:450
+#: ../libhal-storage/libhal-storage.c:460
 msgid "DVD+R Dual-Layer"
 msgstr ""
 
-#: ../libhal-storage/libhal-storage.c:454
+#: ../libhal-storage/libhal-storage.c:464
 msgid "BD-ROM"
 msgstr ""
 
-#: ../libhal-storage/libhal-storage.c:459
+#: ../libhal-storage/libhal-storage.c:469
 #, fuzzy
 msgid "Blank BD-R"
 msgstr "Чистый диск CD-R"
 
-#: ../libhal-storage/libhal-storage.c:461
+#: ../libhal-storage/libhal-storage.c:471
 msgid "BD-R"
 msgstr ""
 
-#: ../libhal-storage/libhal-storage.c:466
+#: ../libhal-storage/libhal-storage.c:476
 #, fuzzy
 msgid "Blank BD-RE"
 msgstr "Чистый диск CD-R"
 
-#: ../libhal-storage/libhal-storage.c:468
+#: ../libhal-storage/libhal-storage.c:478
 msgid "BD-RE"
 msgstr ""
 
-#: ../libhal-storage/libhal-storage.c:472
+#: ../libhal-storage/libhal-storage.c:482
 #, fuzzy
 msgid "HD DVD-ROM"
 msgstr "Диск DVD-ROM"
 
-#: ../libhal-storage/libhal-storage.c:477
+#: ../libhal-storage/libhal-storage.c:487
 #, fuzzy
 msgid "Blank HD DVD-R"
 msgstr "Чистый диск DVD-R"
 
-#: ../libhal-storage/libhal-storage.c:479
+#: ../libhal-storage/libhal-storage.c:489
 msgid "HD DVD-R"
 msgstr ""
 
-#: ../libhal-storage/libhal-storage.c:484
+#: ../libhal-storage/libhal-storage.c:494
 #, fuzzy
 msgid "Blank HD DVD-RW"
 msgstr "Чистый диск DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:486
+#: ../libhal-storage/libhal-storage.c:496
 #, fuzzy
 msgid "HD DVD-RW"
 msgstr "Диск DVD-RW"
 
-#: ../libhal-storage/libhal-storage.c:494
+#: ../libhal-storage/libhal-storage.c:504
 #, fuzzy
 msgid "Audio CD"
 msgstr "Аудио CD"
 
-#: ../libhal-storage/libhal-storage.c:502
+#: ../libhal-storage/libhal-storage.c:511
+msgid "Blank Magneto Optical"
+msgstr ""
+
+#: ../libhal-storage/libhal-storage.c:513
+msgid "Magneto Optical"
+msgstr ""
+
+#: ../libhal-storage/libhal-storage.c:519
 #, c-format
 msgid "%s Removable Media"
 msgstr "Съемный носитель %s"
 
-#: ../libhal-storage/libhal-storage.c:505
+#: ../libhal-storage/libhal-storage.c:522
 #, c-format
 msgid "%s Media"
 msgstr "Носитель %s"
