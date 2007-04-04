@@ -203,9 +203,6 @@ hald_get_gdl (void)
 				  "device_capability_added",
 				  G_CALLBACK (gdl_capability_added), NULL);
 		g_signal_connect (global_device_list,
-				  "device_property_changed",
-				  G_CALLBACK (gdl_property_changed), NULL);
-		g_signal_connect (global_device_list,
 				  "device_lock_acquired",
 				  G_CALLBACK (gdl_lock_acquired), NULL);
 		g_signal_connect (global_device_list,
