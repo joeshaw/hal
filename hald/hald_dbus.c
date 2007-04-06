@@ -3752,10 +3752,12 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 	DBusMessageIter iter;
 	char *extra_env[6];
 	char uid_export[256];
+	char sender_export[256];
+#ifdef HAVE_CONKIT
         char pid_export[256];
         char selinux_context_export[256];
-	char sender_export[256];
         char ck_session_path_export[256];
+#endif
 	MethodInvocation *mi;
 
 	/* add extra information about the caller... */
@@ -3769,8 +3771,10 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
 	} else {
                 int n;
+#ifdef HAVE_CONKIT
                 const char *selinux_context;
                 const char *ck_session_path;
+#endif
 
                 n = 0;
 		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%u", ci_tracker_caller_get_uid (ci));

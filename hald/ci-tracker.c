@@ -72,9 +72,9 @@ caller_info_free (CICallerInfo *ci)
 {
 #ifdef HAVE_CONKIT
 	g_free (ci->session_objpath);
+        g_free (ci->selinux_context);
 #endif
 	g_free (ci->system_bus_unique_name);
-        g_free (ci->selinux_context);
 	g_free (ci);
 }
 
