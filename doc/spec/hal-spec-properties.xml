@@ -6311,6 +6311,20 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>access_control.type</literal> (string)
+              </entry>
+              <entry>Example: cdrom</entry>
+              <entry>Yes</entry>
+              <entry>
+                Type of access - only makes sense when PolicyKit
+                support is enabled; it's used by PolicyKit to compute
+                what privilege to check for by
+                prepending <literal>hal-device-file-</literal> to the
+                value.
+              </entry>
+            </row>
+            <row>
+              <entry>
                 <literal>access_control.grant_user</literal> (strlist)
               </entry>
               <entry>Example: "gdm, flumotion"</entry>
@@ -6333,28 +6347,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 device. This is useful for 3rd party system-wide
                 packages that need access to a device to function
                 properly.
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>access_control.grant_local_session</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                If true, access to this device should be granted to local sessions.
-                (NOTE NOTE NOTE: this property is experimental and may disappear in the future).
-              </entry>
-            </row>
-            <row>
-              <entry>
-                <literal>access_control.grant_local_active_session</literal> (bool)
-              </entry>
-              <entry></entry>
-              <entry>No</entry>
-              <entry>
-                If true, access to this device should be granted to active local sessions.
-                (NOTE NOTE NOTE: this property is experimental and may disappear in the future).
               </entry>
             </row>
           </tbody>

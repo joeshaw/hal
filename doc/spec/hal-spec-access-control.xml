@@ -19,12 +19,14 @@
     <title>Device Files</title>
     <para>
       If HAL is built with <literal>--enable-acl-management</literal>
-      (and also <literal>--enable-console-kit</literal>) then ACL's on
-      device objects with the
-      capability <literal>access_control</literal> are automatically
-      managed according to the properties defined in
+      (requires both <literal>--enable-console-kit</literal>
+      and <literal>--enable-policy-kit</literal>) then ACL's on device
+      objects with the capability <literal>access_control</literal>
+      are automatically managed according to the properties defined in
       <xref linkend="device-properties-access-control"/>. In addition,
       for this configuration, HAL ships with a device information file
+      (normally installed in
+      <literal>/usr/share/hal/fdi/policy/10osvendor/20-acl-management.fdi</literal>)
       that merges this capability on device objects that are normally
       accessed by unprivileged users through the device file. This
       includes e.g. sound cards, webcams and other devices but
@@ -32,11 +34,12 @@
       accessed by a user through mounting them into the file system.
     </para>
     <para>
-      Currently this HAL device information file specifies that all
-      local users (e.g. logged in at the system console) will gain
-      access to such devices. This hard coded policy is subject to
-      change in the future when the freedesktop.org PolicyKit project
-      will be an optional dependency of HAL.
+      HAL uses PolicyKit to decide what users should have access
+      according to PolicyKit configuration; see the PolicyKit
+      privilege definition
+      file <literal>/etc/PolicyKit/privileges/hal-device-file.priv</literal>
+      on a system with HAL installed for the default access suggested
+      by the HAL package and/or OS vendor.
     </para>
     <para>
       In addition, 3rd party packages can supply device information
@@ -65,9 +68,12 @@
     <para>
       If ConsoleKit support is enabled, access to D-Bus interfaces is
       currently hardcoded to only allow active users at the system
-      console. This hard coded policy is subject to change in the
-      future when the freedesktop.org PolicyKit project is will be an
-      optional dependency of HAL.
+      console. If PolicyKit support is enabled, the PolicyKit library
+      will be in charge of determining access; see the PolicyKit
+      privilege definition files
+      in <literal>/etc/PolicyKit/privileges</literal> on a system with
+      HAL installed for the default access suggested by the HAL
+      package and/or OS vendor.
     </para>
   </sect1>
 
