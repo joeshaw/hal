@@ -18,9 +18,6 @@ unsupported() {
 
 read seconds_to_sleep
 
-echo "safety valve; exiting here... TODO: remove me"
-exit 0
-
 # Make a suitable command line argument so that the tools can do the correct
 # quirks for video resume.
 # Passing the quirks to the tool allows the tool to not depend on HAL for data.

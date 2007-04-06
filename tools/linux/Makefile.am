@@ -37,3 +37,5 @@ check:
             fi; \
         done;
 
+clean-local :
+	rm -f *~

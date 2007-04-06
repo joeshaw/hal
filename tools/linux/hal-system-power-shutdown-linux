@@ -1,8 +1,5 @@
 #!/bin/sh
 
-echo "safety valve; exiting here... TODO: remove me"
-exit 0
-
 unsupported() {
 	echo "org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported" >&2
 	echo "No shutdown command found" >&2

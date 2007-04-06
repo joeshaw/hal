@@ -14,9 +14,6 @@ unsupported() {
 
 read seconds_to_sleep
 
-echo "safety valve; exiting here... TODO: remove me"
-exit 0
-
 if [ -x "/usr/sbin/pm-suspend-hybrid" ] ; then
     if [ $seconds_to_sleep != "0" ] ; then
 	alarm_not_supported

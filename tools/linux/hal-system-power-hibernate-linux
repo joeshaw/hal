@@ -1,8 +1,5 @@
 #!/bin/sh
 
-echo "safety valve; exiting here... TODO: remove me"
-exit 0
-
 POWERSAVED_SUSPEND2DISK="dbus-send --system --dest=com.novell.powersave \
                          --print-reply /com/novell/powersave \
                          com.novell.powersave.action.SuspendToDisk"
