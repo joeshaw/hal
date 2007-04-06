@@ -1,15 +1,11 @@
 #!/bin/sh
 
+. hal-functions
+
 read value
 
-if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-system-power-set-power-save-$HALD_UNAME_S ]; then
-    ./$HALD_UNAME_S/hal-system-power-set-power-save-$HALD_UNAME_S $value
-    if [ "x$?" = "x0" ]; then
-        hal-set-property --udi $HAL_PROP_INFO_UDI \
-        --key "power_management.is_powersave_set" --bool "$value"
-    fi
-else
-    echo "org.freedesktop.Hal.Device.UnknownError" >&2
-    echo "No back-end for your operating system" >&2
-    exit 1
+hal_check_priv hal-power-set-powersave
+hal_call_backend $value
+if [ "$?" = "0" ]; then
+    hal-set-property --udi $UDI --key "power_management.is_powersave_set" --bool "$value"
 fi

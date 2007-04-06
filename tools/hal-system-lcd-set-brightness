@@ -7,6 +7,8 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+. hal-functions
+
 # Check for environment variables
 if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" -a -z "$HAL_PROP_LINUX_SYSFS_PATH" ] || 
    [ -z "$HAL_PROP_LAPTOP_PANEL_NUM_LEVELS" ] ; then
@@ -15,8 +17,6 @@ if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" -a -z "$HAL_PROP_LINUX_SYSFS_PATH
         echo "This script should be started by hald." >&2
         exit 1
 fi
-
-# TODO: check privilege
 
 # read value for set brightness
 read value
@@ -30,10 +30,5 @@ fi
 
 export value
 
-if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-system-lcd-set-brightness-$HALD_UNAME_S ]; then
-    exec ./$HALD_UNAME_S/hal-system-lcd-set-brightness-$HALD_UNAME_S $@
-else
-    echo "org.freedesktop.Hal.Device.UnknownError" >&2
-    echo "No back-end for your operating system" >&2
-    exit 1
-fi
+hal_check_priv hal-power-lcd-panel
+hal_exec_backend

@@ -15,7 +15,7 @@ INCLUDES = \
 	-DPCI_IDS_DIR=\""$(PCI_IDS_DIR)"\" \
 	-DUSB_IDS_DIR=\""$(USB_IDS_DIR)"\" \
 	-I$(top_srcdir) \
-	@GLIB_CFLAGS@ @DBUS_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@ @POLKIT_CFLAGS@
 
 ## check_PROGRAMS = hald-test
 
@@ -72,8 +72,7 @@ if HAVE_CONKIT
 hald_SOURCES += ck-tracker.h ck-tracker.c
 endif
 
-
-hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ -lm @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
+hald_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ @POLKIT_LIBS@ -lm @HALD_OS_LIBS@ $(top_builddir)/hald/$(HALD_BACKEND)/libhald_$(HALD_BACKEND).la
 
 #### Init scripts fun
 SCRIPT_IN_FILES=haldaemon.in

@@ -259,10 +259,10 @@ not_mounted_by_hal (const char *detail)
 }
 
 static void
-permission_denied_privilege (const char *privilege, const char *uid)
+permission_denied_privilege (const char *privilege, const char *result)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.PermissionDeniedByPolicy\n");
-	fprintf (stderr, "%s refused uid %s\n", privilege, uid);
+	fprintf (stderr, "%s %s <-- (privilege, result)\n", privilege, result);
 	exit (1);
 }
 
@@ -276,9 +276,6 @@ permission_denied_volume_ignore (const char *device)
 
 void
 handle_unmount (LibHalContext *hal_ctx, 
-#ifdef HAVE_POLKIT
-		LibPolKitContext *pol_ctx, 
-#endif
 		const char *udi,
 		LibHalVolume *volume, LibHalDrive *drive, const char *device, 
 		const char *invoked_by_uid, const char *invoked_by_syscon_name,
@@ -410,14 +407,39 @@ line_found:
 		not_mounted_by_hal ("Device to unmount is not in /media/.hal-mtab so it is not mounted by HAL");
 	}
 
-	/* bail out, unless if we got the "hal-storage-can-unmount-volumes-mounted-by-others" privilege only
-	 * if mounted_by_other_uid==TRUE 
+        /* NOTE: it doesn't make sense to require a privilege a'la
+         * "hal-storage-unmount" because we only allow user to unmount
+         * volumes mounted by himself in the first place... and it
+         * would be odd to allow Mount() but disallow Unmount()...
+         */
+
+	/* if mounted_by_other_uid==TRUE: bail out, unless if we got the 
+         *                                "hal-storage-unmount-volumes-mounted-by-others"
 	 *
 	 * We allow uid 0 to actually ensure that Unmount(options=["lazy"], "/dev/blah") works from addon-storage.
 	 */
 	if ((strcmp (invoked_by_uid, "0") != 0) && mounted_by_other_uid) {
-		/* TODO: actually check for privilege "hal-storage-can-unmount-volumes-mounted-by-others" */
-		permission_denied_privilege ("hal-storage-can-unmount-volumes-mounted-by-others", invoked_by_uid);
+                const char *privilege = "hal-storage-unmount-others";
+#ifdef HAVE_POLKIT
+                if (invoked_by_syscon_name != NULL) {
+                        char *polkit_result;
+                        dbus_error_init (&error);
+                        polkit_result = libhal_device_is_caller_privileged (hal_ctx,
+                                                                            udi,
+                                                                            privilege,
+                                                                            invoked_by_syscon_name,
+                                                                            &error);
+                        if (polkit_result == NULL){
+                                unknown_error ("IsCallerPrivileged() failed");
+                        }
+                        if (strcmp (polkit_result, "yes") != 0) {
+                                permission_denied_privilege (privilege, polkit_result);
+                        }
+                        libhal_free_string (polkit_result);
+                }
+#else
+                permission_denied_privilege (privilege, "no");
+#endif
 	}
 
 	/* create new .hal-mtab~ file without the entry we're going to unmount */
@@ -512,9 +534,6 @@ line_found:
 
 void
 handle_eject (LibHalContext *hal_ctx, 
-#ifdef HAVE_POLKIT
-	      LibPolKitContext *pol_ctx, 
-#endif
 	      const char *udi,
 	      LibHalDrive *drive, const char *device, 
 	      const char *invoked_by_uid, const char *invoked_by_syscon_name,
@@ -528,6 +547,7 @@ handle_eject (LibHalContext *hal_ctx,
 	int na;
 	int fd;
 	int num_excl_tries;
+        DBusError error;
 
 	/* When called here all the file systems from this device is
 	 * already unmounted. That's actually guaranteed; see
@@ -571,7 +591,25 @@ try_open_excl_again:
 	}
 	close (fd);
 
-	/* TODO: should we require privileges here? */
+#ifdef HAVE_POLKIT
+        if (invoked_by_syscon_name != NULL) {
+                char *polkit_result;
+                const char *privilege = "hal-storage-eject";
+                dbus_error_init (&error);
+                polkit_result = libhal_device_is_caller_privileged (hal_ctx,
+                                                                    udi,
+                                                                    privilege,
+                                                                    invoked_by_syscon_name,
+                                                                    &error);
+                if (polkit_result == NULL){
+                        unknown_error ("IsCallerPrivileged() failed");
+                }
+                if (strcmp (polkit_result, "yes") != 0) {
+                        permission_denied_privilege (privilege, polkit_result);
+                }
+                libhal_free_string (polkit_result);
+        }
+#endif
 
 #ifdef DEBUG
 	printf ("device                           = %s\n", device);

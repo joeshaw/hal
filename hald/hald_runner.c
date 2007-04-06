@@ -341,10 +341,12 @@ add_property_to_msg (HalDevice * device,
 static void
 add_env (DBusMessageIter * iter, const gchar * key, const gchar * value)
 {
-	gchar *env;
-	env = g_strdup_printf ("%s=%s", key, value);
-	dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &env);
-	g_free (env);
+        if (value != NULL) {
+                gchar *env;
+                env = g_strdup_printf ("%s=%s", key, value);
+                dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &env);
+                g_free (env);
+        }
 }
 
 static void
@@ -366,8 +368,14 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 	}
 	add_env (iter, "UDI", udi);
 	add_env (iter, "HALD_DIRECT_ADDR", hald_dbus_local_server_addr ());
+
+        /* I'm sure it would be easy to remove use of getenv(3) to add these variables... */
+
+	add_env (iter, "LD_LIBRARY_PATH", getenv ("LD_LIBRARY_PATH"));
 #ifdef HAVE_POLKIT
 	add_env (iter, "HAVE_POLKIT", "1");
+        add_env (iter, "POLKIT_PRIVILEGE_DIR", getenv ("POLKIT_PRIVILEGE_DIR"));
+        add_env (iter, "POLKIT_DEBUG", getenv ("POLKIT_DEBUG"));
 #endif
 
 
@@ -379,16 +387,21 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 		GString *seats_string;
 		char *s;
 		char *p;
+                int num_seats;
+                int num_sessions_total;
 
 		seats_string = g_string_new ("");
 
 		seats = ck_tracker_get_seats (ck_tracker);
+                num_seats = g_slist_length (seats);
+                num_sessions_total = 0;
 		for (i = seats; i != NULL; i = g_slist_next (i)) {
 			GSList *j;
 			CKSeat *seat;
 			GSList *sessions;
 			const char *seat_id;
 			GString *sessions_string;
+                        int num_sessions;
 
 			sessions_string = g_string_new ("");
 
@@ -404,9 +417,12 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 			g_string_append (seats_string, seat_id);
 
 			sessions = ck_seat_get_sessions (seat);
+                        num_sessions = g_slist_length (sessions);
+                        num_sessions_total += num_sessions;
 			for (j = sessions; j != NULL; j = g_slist_next (j)) {
 				CKSession *session;
 				const char *session_id;
+                                const char *q;
 
 				session = j->data;
 				/* basename again; e.g. Session1 rather than /org/freedesktop/ConsoleKit/Session1 */
@@ -417,13 +433,17 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 				}
 				g_string_append (sessions_string, session_id);
 
-				/* for each Session, export IS_ACTIVE and UID 
+				/* for each Session, export IS_ACTIVE, UID, IS_LOCAL, HOSTNAME
 				 *
+                                 * CK_SESSION_SEAT_Session2=Seat1
 				 * CK_SESSION_IS_ACTIVE_Session2=true|false
 				 * CK_SESSION_UID_Session2=501
 				 * CK_SESSION_IS_LOCAL_Session2=true|false
 				 * CK_SESSION_HOSTNAME_Session2=192.168.1.112
 				 */
+				s = g_strdup_printf ("CK_SESSION_SEAT_%s", session_id);
+				add_env (iter, s, seat_id);
+				g_free (s);
 				s = g_strdup_printf ("CK_SESSION_IS_ACTIVE_%s", session_id);
 				add_env (iter, s, ck_session_is_active (session) ? "true" : "false");
 				g_free (s);
@@ -435,20 +455,28 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 				s = g_strdup_printf ("CK_SESSION_IS_LOCAL_%s", session_id);
 				add_env (iter, s, ck_session_is_local (session) ? "true" : "false");
 				g_free (s);
-				s = g_strdup_printf ("CK_SESSION_HOSTNAME_%s", session_id);
-				p = g_strdup_printf ("%s", ck_session_get_hostname (session));
-				add_env (iter, s, p);
-				g_free (s);
-				g_free (p);
+				q = ck_session_get_hostname (session);
+                                if (q != NULL && strlen (q) > 0) {
+                                        s = g_strdup_printf ("CK_SESSION_HOSTNAME_%s", session_id);
+                                        add_env (iter, s, q);
+                                        g_free (s);
+                                }
 			}
 
 			/* for each Seat, export sessions on each seat 
 			 *
 			 * CK_SEAT_Seat1=Session1 Session3 Session7
+                         * CK_SEAT_NUM_SESSIONS_Seat1=3
 			 */
 			s = g_strdup_printf ("CK_SEAT_%s", seat_id);
 			add_env (iter, s, sessions_string->str);
 			g_string_free (sessions_string, TRUE);
+			g_free (s);
+
+			s = g_strdup_printf ("CK_SEAT_NUM_SESSIONS_%s", seat_id);
+                        p = g_strdup_printf ("%d", num_sessions);
+                        add_env (iter, s, p);
+                        g_free (p);
 			g_free (s);
 
 		}
@@ -459,6 +487,23 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 		 */
 		add_env (iter, "CK_SEATS", seats_string->str);
 		g_string_free (seats_string, TRUE);
+
+		/* Export total number of sessions
+		 *
+		 * CK_NUM_SESSIONS=5
+		 */
+                p = g_strdup_printf ("%d", num_sessions_total);
+                add_env (iter, "CK_NUM_SESSIONS", p);
+                g_free (p);
+
+		/* Export number of seats
+		 *
+		 * CK_NUM_SEATS=5
+		 */
+                p = g_strdup_printf ("%d", num_seats);
+                add_env (iter, "CK_NUM_SEATS", p);
+                g_free (p);
+
 	}
 #endif /* HAVE_CONKIT */
 

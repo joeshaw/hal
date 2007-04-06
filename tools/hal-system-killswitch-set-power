@@ -7,6 +7,8 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+. hal-functions
+
 # Check for environment variables
 if [ -z "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" ] ; then
         echo "org.freedesktop.Hal.Device.UnknownError" >&2
@@ -15,16 +17,9 @@ if [ -z "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" ] ; then
         exit 1
 fi
 
-# TODO: check privilege
-
-# read value for set bluetooth power
+# read value for setting power
 read value
 export value
 
-if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-system-killswitch-set-power-$HALD_UNAME_S ]; then
-    exec ./$HALD_UNAME_S/hal-system-killswitch-set-power-$HALD_UNAME_S $@
-else
-    echo "org.freedesktop.Hal.Device.UnknownError" >&2
-    echo "No back-end for your operating system" >&2
-    exit 1
-fi
+hal_check_priv hal-killswitch-$HAL_PROP_KILLSWITCH_TYPE
+hal_exec_backend

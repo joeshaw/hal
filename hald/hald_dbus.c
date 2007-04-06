@@ -2042,13 +2042,6 @@ device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message,
 
 	sender = dbus_message_get_sender (message);
 
-        if (!local_interface) {
-                if (!access_check_caller_have_access_to_device (ci_tracker, d, "lock", sender)) {
-                        raise_permission_denied (connection, message, "AcquireInterfaceLock: no access to device");
-                        return DBUS_HANDLER_RESULT_HANDLED;
-                }
-        }
-
 	dbus_error_init (&error);
 	if (!dbus_message_get_args (message, &error,
 				    DBUS_TYPE_STRING, &interface_name,
@@ -2057,6 +2050,17 @@ device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message,
 		raise_syntax (connection, message, "AqcuireInterfaceLock");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
+
+        if (!local_interface) {
+                char *privilege;
+                privilege = g_strdup_printf ("hal-lock:%s", interface_name);
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, privilege, sender, NULL)) {
+                        g_free (privilege);
+                        raise_permission_denied (connection, message, "AcquireInterfaceLock: no access to device");
+                        return DBUS_HANDLER_RESULT_HANDLED;
+                }
+                g_free (privilege);
+        }
 
         if (!hal_device_acquire_lock (d, interface_name, exclusive, sender)) {
 		raise_interface_already_locked (connection, message, interface_name);
@@ -2099,13 +2103,6 @@ device_release_interface_lock (DBusConnection *connection, DBusMessage *message,
 
 	sender = dbus_message_get_sender (message);
 
-        if (!local_interface) {
-                if (!access_check_caller_have_access_to_device (ci_tracker, d, "lock", sender)) {
-                        raise_permission_denied (connection, message, "ReleaseInterfaceLock: no access to device");
-                        return DBUS_HANDLER_RESULT_HANDLED;
-                }
-        }
-
 	dbus_error_init (&error);
 	if (!dbus_message_get_args (message, &error,
 				    DBUS_TYPE_STRING, &interface_name,
@@ -2113,6 +2110,8 @@ device_release_interface_lock (DBusConnection *connection, DBusMessage *message,
 		raise_syntax (connection, message, "ReleaseInterfaceLock");
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
+
+        /* don't require privileges to _release_ a lock */
 
         if (!hal_device_release_lock (d, interface_name, sender)) {
 		raise_interface_not_locked (connection, message, interface_name);
@@ -2161,6 +2160,7 @@ device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, d
         /* only allow HAL helpers / privileged users to ask this question */
         if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
                 raise_permission_denied (connection, message, "IsCallerLockedOut: not privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
         }
 
 	dbus_error_init (&error);
@@ -2188,6 +2188,110 @@ device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, d
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+/*------------------------------------------------------------------------*/
+
+#ifdef HAVE_POLKIT
+static DBusHandlerResult
+device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+	const char *udi;
+	HalDevice *d;
+	DBusMessage *reply;
+	DBusError error;
+	const char *sender;
+	char *privilege;
+	char *caller_sysbus_name;
+        int polkit_result;
+        const char *result;
+        DBusMessageIter iter;
+
+	HAL_TRACE (("entering"));
+
+	udi = dbus_message_get_path (message);
+
+	d = hal_device_store_find (hald_get_gdl (), udi);
+	if (d == NULL)
+		d = hal_device_store_find (hald_get_tdl (), udi);
+
+	if (d == NULL) {
+		raise_no_such_device (connection, message, udi);
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	sender = dbus_message_get_sender (message);
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &privilege,
+				    DBUS_TYPE_STRING, &caller_sysbus_name,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "IsCallerPrivileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+        /* check whether we want to answer this question... */
+        if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
+                CICallerInfo *ci_sender;
+                CICallerInfo *ci_target;
+
+                if ((ci_sender = ci_tracker_get_info (ci_tracker, sender)) == NULL) {
+                        raise_error (connection, message, 
+                                     "org.freedesktop.Hal.Error", 
+                                     "Could not determine caller info for sender");
+                        return DBUS_HANDLER_RESULT_HANDLED;
+                }
+                if ((ci_target = ci_tracker_get_info (ci_tracker, caller_sysbus_name)) == NULL) {
+                        raise_error (connection, message, 
+                                     "org.freedesktop.Hal.Error", 
+                                     "Could not determine caller info for target");
+                        return DBUS_HANDLER_RESULT_HANDLED;
+                }
+
+                /* now check that sender uid(name) == uid(caller_sysbus_name)... */
+                if (ci_tracker_caller_get_uid (ci_sender) != ci_tracker_caller_get_uid (ci_target)) {
+                        raise_permission_denied (connection, message, 
+                                                 "IsCallerPrivileged: not privileged/authorized to know");
+                        return DBUS_HANDLER_RESULT_HANDLED;
+                }
+        }
+
+
+        polkit_result = -1;
+        access_check_caller_have_access_to_device (
+                ci_tracker, d, privilege, caller_sysbus_name, &polkit_result);
+        result = libpolkit_result_to_string_representation (polkit_result);
+
+        if (polkit_result < 0 || result == NULL) {
+		raise_error (connection, message, 
+                             "org.freedesktop.Hal.Error", 
+                             "Could not determine whether caller is privileged");
+		return DBUS_HANDLER_RESULT_HANDLED;
+        }
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &result);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+#else /* HAVE_POLKIT */
+static DBusHandlerResult
+device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, dbus_bool_t local_interface)
+{
+        /* we don't have PolicyKit */
+        raise_error (connection, message, 
+                     "org.freedesktop.Hal.Device.Error", 
+                     "HAL is not built with PolicyKit support");
+        return DBUS_HANDLER_RESULT_HANDLED;
+}
+#endif /* HAVE_POLKIT */
 
 /*------------------------------------------------------------------------*/
 
@@ -3646,23 +3750,52 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
 	int type;
 	GString *stdin_str = NULL;
 	DBusMessageIter iter;
-	char *extra_env[3];
-	char uid_export[128];
-	char sender_export[128];
+	char *extra_env[6];
+	char uid_export[256];
+        char pid_export[256];
+        char selinux_context_export[256];
+	char sender_export[256];
+        char ck_session_path_export[256];
 	MethodInvocation *mi;
 
-	/* add calling uid */
+	/* add extra information about the caller... */
 	extra_env[0] = NULL;
 	extra_env[1] = NULL;
 	extra_env[2] = NULL;
+	extra_env[3] = NULL;
+	extra_env[4] = NULL;
+	extra_env[5] = NULL;
 	if (local_interface) {
 		extra_env[0] = "HAL_METHOD_INVOKED_BY_UID=0";
 	} else {
+                int n;
+                const char *selinux_context;
+                const char *ck_session_path;
+
+                n = 0;
 		sprintf (uid_export, "HAL_METHOD_INVOKED_BY_UID=%u", ci_tracker_caller_get_uid (ci));
-		extra_env[0] = uid_export;
+		extra_env[n++] = uid_export;
 		snprintf (sender_export, sizeof (sender_export), 
-			  "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=%s", dbus_message_get_sender (message));
-		extra_env[1] = sender_export;
+			  "HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=%s", 
+                          dbus_message_get_sender (message));
+		extra_env[n++] = sender_export;
+#ifdef HAVE_CONKIT
+		sprintf (pid_export, "HAL_METHOD_INVOKED_BY_PID=%u", ci_tracker_caller_get_pid (ci));
+		extra_env[n++] = pid_export;
+                selinux_context = ci_tracker_caller_get_selinux_context (ci);
+                if (selinux_context != NULL) {
+                        sprintf (selinux_context_export, "HAL_METHOD_INVOKED_BY_SELINUX_CONTEXT=%s", selinux_context);
+                        extra_env[n++] = selinux_context_export;
+                }
+
+                /* caller may, or may not, be in a session.. if he is, export the session he belongs to... */
+                ck_session_path = ci_tracker_caller_get_ck_session_path (ci);
+                if (ck_session_path != NULL) {
+                        sprintf (ck_session_path_export, "HAL_METHOD_INVOKED_BY_SESSION=%s", 
+                                 g_basename (ck_session_path));
+                        extra_env[n++] = ck_session_path_export;
+                }
+#endif /* HAVE_CONKIT */
 	}
 
 	/* prepare stdin with parameters */
@@ -4021,6 +4154,11 @@ do_introspect (DBusConnection  *connection,
 				       "      <arg name=\"caller_sysbus_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"whether_caller_is_locked_out\" direction=\"out\" type=\"b\"/>\n"
 				       "    </method>\n"
+				       "    <method name=\"IsCallerPrivileged\">\n"
+				       "      <arg name=\"privilege\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"caller_sysbus_name\" direction=\"in\" type=\"s\"/>\n"
+				       "      <arg name=\"result\" direction=\"out\" type=\"s\"/>\n"
+				       "    </method>\n"
 				       "    <method name=\"IsLockedByOthers\">\n"
 				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"whether_it_is_locked_by_others\" direction=\"out\" type=\"b\"/>\n"
@@ -4307,6 +4445,10 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		return device_is_caller_locked_out (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
+						"IsCallerPrivileged")) {
+		return device_is_caller_privileged (connection, message, local_interface);
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device",
 						"IsLockedByOthers")) {
 		return device_is_locked_by_others (connection, message, local_interface);
 	} else if (dbus_message_is_method_call (message,
@@ -4470,15 +4612,9 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
                 if (d == NULL)
                         goto out;
 
-                /* bypass security checks on direct connections */
-                if (!local_interface) {
-                        if (!access_check_caller_have_access_to_device (ci_tracker, d, NULL, caller)) {
-                                HAL_INFO (("Caller '%s' does not have access to device '%s'", caller, udi));
-                                /* TODO: need to fix up reason */
-                                raise_permission_denied (connection, message, "Not in active session");
-                                return DBUS_HANDLER_RESULT_HANDLED;
-                        }
-                }
+                /* no security checks; each method implementation is supposed to 
+                 * check this (with e.g. PolicyKit) itself... 
+                 */
 
                 /* check if the interface on the device is locked by someone else 
                  *
@@ -4947,16 +5083,22 @@ validate_lock_for_device (HalDeviceStore *store,
                 holders = hal_device_get_lock_holders (device, locked_interfaces[n]);
                 if (holders == NULL)
                         continue;
+
                 for (m = 0; holders[m] != NULL; m++) {
+                        char *privilege;
+
                         HAL_INFO (("Validating lock holder '%s' on interface '%s' on udi '%s'",
                                    holders[m], locked_interfaces[n], hal_device_get_udi (device)));
 
-                        if (!access_check_caller_have_access_to_device (ci_tracker, device, "lock", holders[m])) {
+                        privilege = g_strdup_printf ("hal-lock:%s", locked_interfaces[n]);
+                        if (!access_check_caller_have_access_to_device (
+                                    ci_tracker, device, privilege, holders[m], NULL)) {
                                 HAL_INFO (("Kicking out lock holder '%s' on interface '%s' on udi '%s' "
                                            "as he no longer has access to the device",
                                            holders[m], locked_interfaces[n], hal_device_get_udi (device)));
                                 hal_device_release_lock (device, locked_interfaces[n], holders[m]);
                         }
+                        g_free (privilege);
 
                 }
                 g_strfreev (holders);

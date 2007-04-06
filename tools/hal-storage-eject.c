@@ -35,9 +35,6 @@
 
 #include <libhal.h>
 #include <libhal-storage.h>
-#ifdef HAVE_POLKIT
-#include <libpolkit.h>
-#endif
 
 #include "hal-storage-shared.h"
 
@@ -82,9 +79,6 @@ main (int argc, char *argv[])
 	DBusError error;
 	LibHalContext *hal_ctx = NULL;
 	DBusConnection *system_bus = NULL;
-#ifdef HAVE_POLKIT
-	LibPolKitContext *pol_ctx = NULL;
-#endif
 	char *invoked_by_uid;
 	char *invoked_by_syscon_name;
 	char **volume_udis;
@@ -124,13 +118,6 @@ main (int argc, char *argv[])
 		}
 		usage ();
 	}
-#ifdef HAVE_POLKIT
-	pol_ctx = libpolkit_new_context (system_bus);
-	if (pol_ctx == NULL) {
-		printf ("Cannot get libpolkit context\n");
-		unknown_eject_error ("Cannot get libpolkit context");
-	}
-#endif
 
 	/* read from stdin */
 	if (strlen (fgets (eject_options, sizeof (eject_options), stdin)) > 0)
@@ -203,9 +190,6 @@ main (int argc, char *argv[])
 				unknown_eject_error ("Cannot obtain lock on /media/.hal-mtab");
 			}
 			handle_unmount (hal_ctx, 
-#ifdef HAVE_POLKIT
-					pol_ctx, 
-#endif
 					udi, volume_to_unmount, drive, 
 					libhal_volume_get_device_file (volume_to_unmount), 
 					invoked_by_uid, invoked_by_syscon_name,
@@ -224,9 +208,6 @@ main (int argc, char *argv[])
 
 	/* now attempt the eject */
 	handle_eject (hal_ctx, 
-#ifdef HAVE_POLKIT
-		      pol_ctx, 
-#endif
 		      libhal_drive_get_udi (drive),
 		      drive,
 		      libhal_drive_get_device_file (drive),

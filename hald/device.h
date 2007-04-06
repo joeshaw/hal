@@ -218,6 +218,8 @@ gboolean      hal_device_acquire_lock (HalDevice *device, const char *lock_name,
 
 gboolean      hal_device_release_lock (HalDevice *device, const char *lock_name, const char *sender);
 
+gboolean      hal_device_is_lock_exclusive (HalDevice *device, const char *lock_name);
+
 char        **hal_device_get_lock_holders (HalDevice *device, const char *lock_name);
 
 int           hal_device_get_num_lock_holders (HalDevice *device, const char *lock_name);

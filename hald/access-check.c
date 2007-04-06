@@ -38,7 +38,12 @@
 #include <dbus/dbus.h>
 #include <glib.h>
 
+#ifdef HAVE_POLKIT
+#include <libpolkit/libpolkit.h>
+#endif
+
 #include "hald.h"
+#include "hald_dbus.h"
 #include "logger.h"
 #include "access-check.h"
 
@@ -106,14 +111,102 @@ out:
 	return ret;
 }
 
+#ifdef HAVE_POLKIT
+static PolKitSeat *
+get_pk_seat_from_ck_seat (CKSeat *seat)
+{
+        PolKitSeat *pk_seat;
+        pk_seat = libpolkit_seat_new ();
+        libpolkit_seat_set_ck_objref (pk_seat, ck_seat_get_id (seat));
+        return pk_seat;
+}
+
+static PolKitSession *
+get_pk_session_from_ck_session (CKSession *session)
+{
+        CKSeat *seat;
+        PolKitSeat *pk_seat;
+        PolKitSession *pk_session;
+
+        seat = ck_session_get_seat (session);
+        if (seat == NULL) {
+                pk_seat = NULL;
+        } else {
+                pk_seat = get_pk_seat_from_ck_seat (seat);
+        }
+
+        pk_session = libpolkit_session_new ();
+        if (pk_seat != NULL) {
+                libpolkit_session_set_seat (pk_session, pk_seat);
+                libpolkit_seat_unref (pk_seat);
+        }
+        libpolkit_session_set_ck_objref (pk_session, ck_session_get_id (session));
+        libpolkit_session_set_uid (pk_session, ck_session_get_user (session));
+        libpolkit_session_set_ck_is_active (pk_session, ck_session_is_active (session));
+        libpolkit_session_set_ck_is_local (pk_session, ck_session_is_local (session));
+        if (!ck_session_is_local (session)) {
+                libpolkit_session_set_ck_remote_host (pk_session, ck_session_get_hostname (session));
+        }
+        return pk_session;
+}
+
+static PolKitCaller *
+get_pk_caller_from_ci_tracker (CITracker *cit, const char *caller_unique_sysbus_name)
+{
+        CICallerInfo *ci;
+        PolKitSession *pk_session;
+        PolKitCaller *pk_caller;
+        const char *ck_session_objpath;
+        
+        pk_caller = NULL;
+
+        ci = ci_tracker_get_info (cit, caller_unique_sysbus_name);
+        if (ci == NULL) {
+                HAL_ERROR (("Cannot get caller info for %s", caller_unique_sysbus_name));
+                goto out;
+        }
+        
+        ck_session_objpath = ci_tracker_caller_get_ck_session_path (ci);
+        if (ck_session_objpath == NULL) {
+                pk_session = NULL;
+        } else {
+                CKSession *session;
+                
+                session = ck_tracker_find_session (hald_dbus_get_ck_tracker (), ck_session_objpath);
+                if (session == NULL) {
+                        /* this should never happen */
+                        HAL_ERROR (("ck_session_objpath is not NULL, but CKTracker don't know about the session!"));
+                        goto out;
+                }
+                
+                pk_session = get_pk_session_from_ck_session (session);
+        }
+
+        pk_caller = libpolkit_caller_new ();
+        libpolkit_caller_set_dbus_name (pk_caller, caller_unique_sysbus_name);
+        libpolkit_caller_set_uid (pk_caller, ci_tracker_caller_get_uid (ci));
+        libpolkit_caller_set_pid (pk_caller, ci_tracker_caller_get_pid (ci));
+        libpolkit_caller_set_selinux_context (pk_caller, ci_tracker_caller_get_selinux_context (ci));
+        if (pk_session != NULL) {
+                libpolkit_caller_set_ck_session (pk_caller, pk_session);
+                libpolkit_session_unref (pk_session);
+        }
+
+out:
+        return pk_caller;
+}
+#endif
+
 /**
  * access_check_caller_have_access_to_device:
  * @cit: the CITracker object
- * @device: The device to check for
- * @privilege: the type of access; right now this can be #NULL or
- * "lock"; will be replaced by PolicyKit privileges in the future
+ * @device: the device to check for
+ * @privilege: the PolicyKit privilege to check for
  * @caller_unique_sysbus_name: The unique system bus connection
  * name (e.g. ":1.43") of the caller
+ * @polkit_result_out: where to store the #PolicyKitResult return 
+ * code. Will be ignored if HAL is not built with PolicyKit support
+ * or if it's #NULL.
  *
  * Determine if a given caller should have access to a device. This
  * depends on how the security is set up and may change according to
@@ -145,11 +238,21 @@ out:
  * Returns: TRUE iff the caller have access to the device.
  */
 gboolean
-access_check_caller_have_access_to_device (CITracker *cit, HalDevice *device, const char *privilege, const char *caller_unique_sysbus_name)
+access_check_caller_have_access_to_device (CITracker *cit, 
+                                           HalDevice *device, 
+                                           const char *privilege, 
+                                           const char *caller_unique_sysbus_name,
+                                           int        *polkit_result_out)
 #ifdef HAVE_CONKIT
 {
         gboolean ret;
         CICallerInfo *ci;
+#ifdef HAVE_POLKIT
+        PolKitCaller *pk_caller = NULL;
+        PolKitResource *pk_resource = NULL;
+        PolKitPrivilege *pk_privilege = NULL;
+        PolKitResult pk_result;
+#endif
 
         ret = FALSE;
 
@@ -159,35 +262,80 @@ access_check_caller_have_access_to_device (CITracker *cit, HalDevice *device, co
                 goto out;
         }
 
+        /* HAL user and uid 0 are always allowed
+         * (TODO: is this sane? probably needs to go through PolicyKit too..) 
+         */
         if (ci_tracker_caller_get_uid (ci) == 0 ||
             ci_tracker_caller_get_uid (ci) == geteuid ()) {
                 ret = TRUE;
+#ifdef HAVE_POLKIT
+                if (polkit_result_out != NULL)
+                        *polkit_result_out = LIBPOLKIT_RESULT_YES;
+#endif
                 goto out;
         }
 
+        /* allow inactive sessions to lock interfaces on root computer device object 
+         * (TODO FIXME: restrict to local sessions?)
+         */
+        if (privilege != NULL && 
+            g_str_has_prefix (privilege, "hal-lock") && 
+            strcmp (hal_device_get_udi (device), "/org/freedesktop/Hal/devices/computer") == 0) {
+                ret = TRUE;
+#ifdef HAVE_POLKIT
+                if (polkit_result_out != NULL)
+                        *polkit_result_out = LIBPOLKIT_RESULT_YES;
+#endif
+                goto out;
+        }
+
+#ifdef HAVE_POLKIT
+        pk_caller = get_pk_caller_from_ci_tracker (cit, caller_unique_sysbus_name);
+        if (pk_caller == NULL)
+                goto out;
+
+        pk_resource = libpolkit_resource_new ();
+        libpolkit_resource_set_resource_type (pk_resource, "hal");
+        libpolkit_resource_set_resource_id (pk_resource, hal_device_get_udi (device));
+
+        pk_privilege = libpolkit_privilege_new ();
+        libpolkit_privilege_set_privilege_id (pk_privilege, privilege);
+
+        pk_result = libpolkit_can_caller_access_resource (pk_context,
+                                                          pk_privilege,
+                                                          pk_resource,
+                                                          pk_caller);
+
+        if (polkit_result_out != NULL)
+                *polkit_result_out = pk_result;
+
+        if (pk_result != LIBPOLKIT_RESULT_YES)
+                goto out;
+#else
         /* must be tracked by ConsoleKit */
         if (ci_tracker_caller_get_ck_session_path (ci) == NULL) {
                 goto out;
         }
-
+        
         /* require caller to be local */
         if (!ci_tracker_caller_is_local (ci))
                 goto out;
-
-        /* allow inactive sessions to lock interfaces on root computer device object */
-        if (privilege != NULL && 
-            strcmp (privilege, "lock") == 0 && 
-            strcmp (hal_device_get_udi (device), "/org/freedesktop/Hal/devices/computer") == 0) {
-                ret = TRUE;
-                goto out;
-        }
         
         /* require caller to be in active session */
         if (!ci_tracker_caller_in_active_session (ci))
-                goto out;
+                        goto out;
+#endif
                 
         ret = TRUE;
 out:
+#ifdef HAVE_POLKIT
+        if (pk_caller != NULL)
+                libpolkit_caller_unref (pk_caller);
+        if (pk_resource != NULL)
+                libpolkit_resource_unref (pk_resource);
+        if (pk_privilege != NULL)
+                libpolkit_privilege_unref (pk_privilege);
+#endif
         return ret;
 }
 #else /* HAVE_CONKIT */
@@ -239,6 +387,9 @@ access_check_caller_locked_out (CITracker   *cit,
         HalDevice *computer;
         gboolean is_locked;
         gboolean is_locked_by_self;
+        char *priv;
+
+        priv = g_strdup_printf ("hal-lock:%s", interface_name);
 
         global_lock_name = NULL;
         holders = NULL;
@@ -278,7 +429,8 @@ access_check_caller_locked_out (CITracker   *cit,
                 for (n = 0; global_holders[n] != NULL; n++) {
                         if (strcmp (global_holders[n], caller_unique_sysbus_name) == 0) {
                                 /* we are holding the global lock... */
-                                if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
+                                if (access_check_caller_have_access_to_device (
+                                            cit, device, priv, global_holders[n], NULL)) {
                                         /* only applies if the caller can access the device... */
                                         is_locked_by_self = TRUE;
                                         /* this is good enough; we are holding the lock ourselves */
@@ -289,7 +441,8 @@ access_check_caller_locked_out (CITracker   *cit,
                                 /* Someone else is holding the global lock.. check if that someone
                                  * actually have access to the device...
                                  */
-                                if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
+                                if (access_check_caller_have_access_to_device (
+                                            cit, device, priv, global_holders[n], NULL)) {
                                         /* They certainly do. Mark as locked. */
                                         is_locked = TRUE;
                                 }
@@ -314,6 +467,7 @@ out:
         g_strfreev (global_holders);
         g_strfreev (holders);
         g_free (global_lock_name);
+        g_free (priv);
         return ret;
 }
 
@@ -343,6 +497,9 @@ access_check_locked_by_others (CITracker   *cit,
         char **holders;
         char **global_holders;
         HalDevice *computer;
+        char *priv;
+
+        priv = g_strdup_printf ("hal-lock:%s", interface_name);
 
         global_lock_name = NULL;
         holders = NULL;
@@ -375,7 +532,8 @@ access_check_locked_by_others (CITracker   *cit,
                         if (caller_unique_sysbus_name == NULL || /* <-- callers using direct connection to hald */
                             strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
                                 /* someone else is holding the global lock... */
-                                if (access_check_caller_have_access_to_device (cit, device, NULL, global_holders[n])) {
+                                if (access_check_caller_have_access_to_device (
+                                            cit, device, priv, global_holders[n], NULL)) {
                                         /* ... and they can can access the device */
                                         goto out;
                                 }
@@ -390,6 +548,7 @@ out:
         g_strfreev (global_holders);
         g_strfreev (holders);
         g_free (global_lock_name);
+        g_free (priv);
         return ret;
 }
 

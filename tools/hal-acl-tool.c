@@ -33,6 +33,7 @@
 
 #include <glib.h>
 #include <libhal.h>
+#include <libpolkit/libpolkit.h>
 
 /* How this works (or "An introduction to this code")
  *
@@ -110,6 +111,8 @@ enum {
 	HAL_ACL_UID,
 	HAL_ACL_GID
 };
+
+static PolKitContext *pk_context = NULL;
 
 static void
 hal_acl_free (ACLCurrent *ha)
@@ -336,6 +339,7 @@ visit_seats_and_sessions (SeatSessionVisitor visitor_cb, gpointer user_data)
 	/* for all seats */
 	for (i = 0; seats[i] != NULL; i++) {
 		char *seat = seats[i];
+                char *seat_id;
 		char **sessions;
 		int num_sessions_on_seat;
 
@@ -349,11 +353,13 @@ visit_seats_and_sessions (SeatSessionVisitor visitor_cb, gpointer user_data)
 		sessions = g_strsplit (s, "\t", 0);
 		num_sessions_on_seat = g_strv_length (sessions);
 
-		visitor_cb (seat, num_sessions_on_seat, NULL, 0, FALSE, FALSE, user_data);
+                seat_id = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", seat);
+		visitor_cb (seat_id, num_sessions_on_seat, NULL, 0, FALSE, FALSE, user_data);
 
 		/* for all sessions on seat */
 		for (j = 0; sessions[j] != NULL; j++) {
 			char *session = sessions[j];
+                        char *session_id;
 			gboolean session_is_local;
 			gboolean session_is_active;
 			uid_t session_uid;
@@ -390,11 +396,15 @@ visit_seats_and_sessions (SeatSessionVisitor visitor_cb, gpointer user_data)
 				goto out;
 			}
 
-			visitor_cb (seat, num_sessions_on_seat, 
-				    session, session_uid, session_is_local, session_is_active, user_data);
+                        session_id = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", session);
 
+			visitor_cb (seat_id, num_sessions_on_seat, 
+				    session_id, session_uid, session_is_local, session_is_active, user_data);
+
+                        g_free (session_id);
 		}
 		g_strfreev (sessions);
+                g_free (seat_id);
 	}
 	g_strfreev (seats);
 
@@ -409,14 +419,7 @@ typedef struct {
 	/* identifying the device */
 	char *udi;      /* HAL UDI of device */
 	char *device;   /* device file */
-
-	/* policy for how to apply ACL's (must be set by the caller prior to visiting the device) */
-
-	/* access is granted to any session on a local seat */
-	gboolean grant_to_local_seat;
-
-	/* access is granted only to active sessions on local seats */
-	gboolean grant_to_local_seat_active_only;
+        char *type;     /* type of device, access_control.type - used by PolicyKit */
 
 	/* will be set by the visitor */
 	GSList *uid;    /* list of uid's (int) that should have access to this device */
@@ -569,10 +572,17 @@ acl_for_device_set_device (ACLForDevice *afd, const char *device)
 }
 
 static void
+acl_for_device_set_type (ACLForDevice *afd, const char *type)
+{
+	afd->type = g_strdup (type);
+}
+
+static void
 acl_for_device_free (ACLForDevice* afd)
 {
 	g_free (afd->udi);
 	g_free (afd->device);
+	g_free (afd->type);
 	g_slist_free (afd->uid);
 	g_slist_free (afd->gid);
 	g_free (afd);
@@ -607,6 +617,12 @@ acl_device_added_visitor (const char *seat_id,
 	 */
 	for (i = afd_list; i != NULL; i = g_slist_next (i)) {
 		ACLForDevice *afd = (ACLForDevice *) i->data;
+                PolKitResult pk_result;
+                PolKitSeat *pk_seat;
+                PolKitSession *pk_session;
+                PolKitResource *pk_resource;
+                PolKitPrivilege *pk_privilege;
+                char *priv_name;
 
 		if (session_id == NULL) {
 			/* we only grant access to sessions - someone suggested that if a device is tied
@@ -619,26 +635,39 @@ acl_device_added_visitor (const char *seat_id,
 			continue;
 		}
 
+                pk_seat = libpolkit_seat_new ();
+                libpolkit_seat_set_ck_objref (pk_seat, seat_id);
 
-		/* apply the policy defined by grant_to_local_seat and grant_to_local_seat_active_only */
+                pk_session = libpolkit_session_new ();
+                libpolkit_session_set_seat (pk_session, pk_seat);
+                libpolkit_seat_unref (pk_seat);
+                libpolkit_session_set_ck_objref (pk_session, session_id);
+                libpolkit_session_set_uid (pk_session, session_uid);
+                libpolkit_session_set_ck_is_active (pk_session, session_is_active);
+                libpolkit_session_set_ck_is_local (pk_session, session_is_local);
+                /* TODO: FIXME: libpolkit_session_set_ck_remote_host (pk_session, );*/ 
 
-		/* we only grant access to local seats... */
-		if (!session_is_local)
-			continue;
+                pk_resource = libpolkit_resource_new();
+                libpolkit_resource_set_resource_type (pk_resource, "hal");
+                libpolkit_resource_set_resource_id (pk_resource, afd->udi);
 
-		/* don't bother giving ACL's to root - he's almighty anyway */
-		if (session_uid == 0)
-			continue;
+                pk_privilege = libpolkit_privilege_new();
+                priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
+                libpolkit_privilege_set_privilege_id (pk_privilege, priv_name);
+                g_free (priv_name);
 
-		if (afd->grant_to_local_seat)
+                /* Now ask PolicyKit if the given session should have access */
+                pk_result = libpolkit_can_session_access_resource (pk_context, 
+                                                                   pk_privilege,
+                                                                   pk_resource,
+                                                                   pk_session);
+                if (pk_result == LIBPOLKIT_RESULT_YES) {
 			afd_grant_to_uid (afd, session_uid);
-		else {
-			if (afd->grant_to_local_seat_active_only) {
-				if (session_is_active) {
-					afd_grant_to_uid (afd, session_uid);
-				}
-			}
-		}
+                }
+
+                libpolkit_privilege_unref (pk_privilege);
+                libpolkit_resource_unref (pk_resource);
+                libpolkit_session_unref (pk_session);
 	}
 
 }
@@ -778,6 +807,7 @@ acl_device_added (void)
 	char *s;
 	char *udi;
 	char *device;
+	char *type;
 	GSList *afd_list = NULL;
 	ACLForDevice *afd = NULL;
 
@@ -789,17 +819,15 @@ acl_device_added (void)
 	if ((device = getenv ("HAL_PROP_ACCESS_CONTROL_FILE")) == NULL)
 		goto out;
 
+	if ((type = getenv ("HAL_PROP_ACCESS_CONTROL_TYPE")) == NULL)
+		goto out;
+
 	afd = acl_for_device_new (udi);
 	acl_for_device_set_device (afd, device);
+	acl_for_device_set_type (afd, type);
 	afd_list = g_slist_prepend (NULL, afd);
 
 	/* get ACL granting policy from HAL properties */
-	if ((s = getenv ("HAL_PROP_ACCESS_CONTROL_GRANT_LOCAL_SESSION")) != NULL) {
-		afd->grant_to_local_seat = (strcmp (s, "true") == 0);
-	}
-	if ((s = getenv ("HAL_PROP_ACCESS_CONTROL_GRANT_LOCAL_ACTIVE_SESSION")) != NULL) {
-		afd->grant_to_local_seat_active_only = (strcmp (s, "true") == 0);
-	}
 	if ((s = getenv ("HAL_PROP_ACCESS_CONTROL_GRANT_USER")) != NULL) {
 		char **sv;
 		sv = g_strsplit (s, "\t", 0);
@@ -900,6 +928,7 @@ acl_reconfigure_all (void)
 		LibHalPropertySet *props;
 		LibHalPropertySetIterator psi;
 		char *device = NULL;
+                char *type = NULL;
 		ACLForDevice *afd;
 		char **sv;
 
@@ -916,10 +945,8 @@ acl_reconfigure_all (void)
 			key = libhal_psi_get_key (&psi);
 			if (strcmp (key, "access_control.file") == 0) {
 				device = libhal_psi_get_string (&psi);
-			} else if (strcmp (key, "access_control.grant_local_session") == 0) {
-				afd->grant_to_local_seat = libhal_psi_get_bool (&psi);
-			} else if (strcmp (key, "access_control.grant_local_active_session") == 0) {
-				afd->grant_to_local_seat_active_only = libhal_psi_get_bool (&psi);
+			} else if (strcmp (key, "access_control.type") == 0) {
+				type = libhal_psi_get_string (&psi);
 			} else if (strcmp (key, "access_control.grant_user") == 0) {
 				sv = libhal_psi_get_strlist (&psi);
 				afd_grant_to_uid_from_userlist (afd, sv);
@@ -933,10 +960,16 @@ acl_reconfigure_all (void)
 		if (device == NULL) {
 			printf ("%d: access_control.file not set for '%s'\n", getpid (), udis[i]);
 			goto out;
-		} else {
-			acl_for_device_set_device (afd, device);
-			afd_list = g_slist_prepend (afd_list, afd);
 		}
+
+		if (type == NULL) {
+			printf ("%d: access_control.type not set for '%s'\n", getpid (), udis[i]);
+			goto out;
+		}
+
+                acl_for_device_set_device (afd, device);
+                acl_for_device_set_type (afd, type);
+                afd_list = g_slist_prepend (afd_list, afd);
 
 		libhal_free_property_set (props);
 	}
@@ -1025,10 +1058,11 @@ acl_unlock (void)
 	printf ("%d: released lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 }
 
-
 int
 main (int argc, char *argv[])
 {
+        GError *g_error;
+
 	if (argc != 2) {
 		printf ("hal-acl-tool should only be invoked by hald\n");
 		goto out;
@@ -1037,6 +1071,15 @@ main (int argc, char *argv[])
 	if (!acl_lock ()) {
 		goto out;
 	}
+
+        printf ("foo='%s'\n", getenv ("POLKIT_PRIVILEGE_DIR"));
+
+        g_error = NULL;
+        pk_context = libpolkit_context_new (&g_error);
+        if (pk_context == NULL) {
+                printf ("Could not create PolicyKit context: %s", g_error->message);
+                goto out;
+        }
 
 	if (strcmp (argv[1], "--add-device") == 0) {
 		acl_device_added ();

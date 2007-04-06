@@ -81,6 +81,8 @@ void        ck_tracker_unref                      (CKTracker *tracker);
 GSList     *ck_tracker_get_seats                  (CKTracker *tracker);
 GSList     *ck_tracker_get_sessions               (CKTracker *tracker);
 
+CKSession  *ck_tracker_find_session               (CKTracker *tracker, const char *ck_session_objpath);
+
 GSList     *ck_seat_get_sessions                  (CKSeat *seat);
 const char *ck_seat_get_id                        (CKSeat *seat);
 

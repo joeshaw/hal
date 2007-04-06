@@ -18,6 +18,9 @@ unsupported() {
 
 read seconds_to_sleep
 
+echo "safety valve; exiting here... TODO: remove me"
+exit 0
+
 # Make a suitable command line argument so that the tools can do the correct
 # quirks for video resume.
 # Passing the quirks to the tool allows the tool to not depend on HAL for data.
@@ -32,7 +35,7 @@ QUIRKS=""
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VBE_POST" = "true" ] && QUIRKS="$QUIRKS --quirk-vbepost"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_RADEON_OFF" = "true" ] && QUIRKS="$QUIRKS --quirk-radeon-off"
 
-#PMU systems cannot use /sys/power/state yet, so use a helper to issue an ioctl
+# PMU systems cannot use /sys/power/state yet, so use a helper to issue an ioctl
 if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "pmu" ]; then
 	hal-system-power-pmu sleep
 	if [ $? -ne 0 ]; then
@@ -42,7 +45,7 @@ if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "pmu" ]; then
 	exit 0
 fi
 
-#ALTLinux only supports powersave
+# ALTLinux only supports powersave
 if [ -f "/etc/altlinux-release" ]; then
 	if [ -x /usr/bin/powersave ] ; then
 	        $POWERSAVED_SUSPEND2RAM
@@ -52,7 +55,7 @@ if [ -f "/etc/altlinux-release" ]; then
 		unsupported
 	fi
 
-#Mandriva supports suspend-scripts 
+# Mandriva supports suspend-scripts 
 elif [ -f "/etc/mandriva-release" ] ; then 
     # TODO: fix pmsuspend to take a --wakeup-alarm argument 
     if [ $seconds_to_sleep != "0" ] ; then 
@@ -67,7 +70,7 @@ elif [ -f "/etc/mandriva-release" ] ; then
 	unsupported 
     fi 
 
-#RedHat/Fedora and SUSE support pm-utils
+# RedHat/Fedora and SUSE support pm-utils
 elif [ -f "/etc/redhat-release" ] || [ -f "/etc/fedora-release" ] \
 		|| [ -f "/etc/SuSE-release" ] ; then
 	# TODO: fix pm-suspend to take a --wakeup-alarm argument
@@ -84,7 +87,7 @@ elif [ -f "/etc/redhat-release" ] || [ -f "/etc/fedora-release" ] \
 		unsupported
 	fi
 
-#Other distros just need to have *any* tools installed
+# Other distros just need to have *any* tools installed
 else
 	if [ -x "/usr/bin/powersave" ] ; then
 	    $POWERSAVED_SUSPEND2RAM
@@ -105,7 +108,7 @@ else
 	    fi
 	fi
 
-#Refresh devices as a resume can do funny things
+# Refresh devices as a resume can do funny things
 for type in button battery ac_adapter
 do
 	devices=`hal-find-by-capability --capability $type`

@@ -33,6 +33,10 @@ bin_PROGRAMS =                    \
 	hal-lock		  \
 	hal-disable-polling
 
+if HAVE_POLKIT
+bin_PROGRAMS += hal-is-caller-privileged
+endif
+
 lshal_SOURCES = lshal.c
 lshal_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
 
@@ -60,6 +64,11 @@ hal_lock_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 hal_disable_polling_SOURCES = hal-disable-polling.c
 hal_disable_polling_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 
+if HAVE_POLKIT
+hal_is_caller_privileged_SOURCES = hal-is-caller-privileged.c
+hal_is_caller_privileged_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+endif
+
 libexec_PROGRAMS =                          \
 	hal-storage-mount	            \
 	hal-storage-unmount 	            \
@@ -83,7 +92,7 @@ if HAVE_ACLMGMT
 libexec_PROGRAMS += hal-acl-tool
 
 hal_acl_tool_SOURCES = hal-acl-tool.c
-hal_acl_tool_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
+hal_acl_tool_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ $(top_builddir)/libhal/libhal.la
 endif
 
 hal_system_power_pm_is_supported_SOURCES = hal-system-power-pm-is-supported.c
@@ -132,7 +141,8 @@ script_SCRIPTS =				\
 	hal-system-lcd-set-brightness		\
 	hal-system-power-set-power-save		\
 	hal-system-killswitch-get-power		\
-	hal-system-killswitch-set-power
+	hal-system-killswitch-set-power		\
+	hal-functions
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)
 

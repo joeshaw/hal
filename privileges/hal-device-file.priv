@@ -1,0 +1,70 @@
+# -*- Conf -*-
+#
+# Privilege definitions for HAL's ACL management mechanism.
+#
+# Copyright (c) 2007 David Zeuthen <david@fubar.dk>
+# 
+# HAL is licensed to you under your choice of the the Academic Free
+# License Version 2.1, or the GNU General Public License version
+# 2. Some individual source files may be under the GPL only. See
+# COPYING for details.
+#
+# NOTE: If you make changes to this file, make sure to validate the
+# file using the polkit-privilege-file-validate(1) tool. Changes made
+# to this file are applied instantly.
+
+# Directly access sound devices
+[Privilege hal-device-file-sound]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access video4linux devices
+[Privilege hal-device-file-video4linux]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access optical drives
+[Privilege hal-device-file-cdrom]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=yes
+AllowLocalActive=yes
+
+# Directly access DVB devices
+[Privilege hal-device-file-dvb]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access digital cameras
+[Privilege hal-device-file-camera]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access scanners
+[Privilege hal-device-file-scanner]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access Firewire IIDC devices
+[Privilege hal-device-file-ieee1394-iidc]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access Firewire AVC devices
+[Privilege hal-device-file-ieee1394-avc]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes

@@ -810,3 +810,19 @@ ck_tracker_new (void)
 	tracker->refcount = 1;
 	return tracker;
 }
+
+CKSession *
+ck_tracker_find_session (CKTracker *tracker, const char *ck_session_objpath)
+{
+        CKSession *session;
+        GSList *i;
+        for (i = tracker->sessions; i != NULL; i = g_slist_next (i)) {
+                session = i->data;
+                if (strcmp (session->session_objpath, ck_session_objpath) == 0) {
+                        goto out;
+                }
+        }
+        session = NULL;
+out:
+        return session;
+}

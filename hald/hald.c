@@ -265,6 +265,10 @@ dbus_bool_t hald_is_verbose = FALSE;
 dbus_bool_t hald_use_syslog = FALSE;
 dbus_bool_t hald_debug_exit_after_probing = FALSE;
 
+#ifdef HAVE_POLKIT
+PolKitContext *pk_context;
+#endif
+
 static int sigterm_unix_signal_pipe_fds[2];
 static GIOChannel *sigterm_iochn;
 
@@ -397,6 +401,7 @@ main (int argc, char *argv[])
 	guint sigterm_iochn_listener_source_id;
 	char *path;
 	char newpath[512];
+        GError *g_error;
 
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
@@ -615,6 +620,13 @@ main (int argc, char *argv[])
 	
 	/* Finally, setup unix signal handler for TERM */
 	signal (SIGTERM, handle_sigterm);
+
+#ifdef HAVE_POLKIT
+        g_error = NULL;
+        pk_context = libpolkit_context_new (&g_error);
+        if (pk_context == NULL)
+                DIE (("Could not create PolicyKit context: %s", g_error->message));
+#endif
 
 	/* set up the local dbus server */
 	if (!hald_dbus_local_server_init ())

@@ -26,9 +26,6 @@
 
 #include <libhal.h>
 #include <libhal-storage.h>
-#ifdef HAVE_POLKIT
-#include <libpolkit.h>
-#endif
 
 /*#define DEBUG*/
 #define DEBUG
@@ -49,18 +46,12 @@ void unknown_error (const char *detail);
 void bailout_if_drive_is_locked (LibHalContext *hal_ctx, LibHalDrive *drive, const char *invoked_by_syscon_name);
 
 void handle_unmount (LibHalContext *hal_ctx, 
-#ifdef HAVE_POLKIT
-		     LibPolKitContext *pol_ctx, 
-#endif
 		     const char *udi,
 		     LibHalVolume *volume, LibHalDrive *drive, const char *device, 
 		     const char *invoked_by_uid, const char *invoked_by_syscon_name,
 		     gboolean option_lazy, gboolean option_force);
 
 void handle_eject (LibHalContext *hal_ctx, 
-#ifdef HAVE_POLKIT
-		   LibPolKitContext *pol_ctx, 
-#endif
 		   const char *udi,
 		   LibHalDrive *drive, const char *device, 
 		   const char *invoked_by_uid, const char *invoked_by_syscon_name,

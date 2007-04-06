@@ -54,6 +54,7 @@ struct CICallerInfo_s {
 	gboolean in_active_session;   /* caller is in an active session */
         gboolean is_local;            /* session is on a local seat */
 	char *session_objpath;        /* obj path of ConsoleKit session */
+        char *selinux_context;        /* SELinux security context */
 #endif
 	char *system_bus_unique_name; /* unique name of caller on the system bus */
 };
@@ -73,6 +74,7 @@ caller_info_free (CICallerInfo *ci)
 	g_free (ci->session_objpath);
 #endif
 	g_free (ci->system_bus_unique_name);
+        g_free (ci->selinux_context);
 	g_free (ci);
 }
 
@@ -172,7 +174,10 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter iter;
+	DBusMessageIter sub_iter;
 	char *dbus_session_name;
+        char *str;
+        int num_elems;
 #endif /* HAVE_CONKIT */
 	
 	ci = NULL;
@@ -222,6 +227,38 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 	dbus_message_iter_get_basic (&iter, &ci->pid);
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
+
+	message = dbus_message_new_method_call ("org.freedesktop.DBus", 
+						"/org/freedesktop/DBus/Bus",
+						"org.freedesktop.DBus",
+						"GetConnectionSELinuxSecurityContext");
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &system_bus_unique_name);
+	reply = dbus_connection_send_with_reply_and_block (cit->dbus_connection, message, -1, &error);
+        /* SELinux might not be enabled */
+        if (dbus_error_is_set (&error) && 
+            strcmp (error.name, "org.freedesktop.DBus.Error.SELinuxSecurityContextUnknown") == 0) {
+                dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+                dbus_error_init (&error);
+        } else if (reply == NULL || dbus_error_is_set (&error)) {
+                g_warning ("Error doing GetConnectionSELinuxSecurityContext on Bus: %s: %s", error.name, error.message);
+                dbus_message_unref (message);
+                if (reply != NULL)
+                        dbus_message_unref (reply);
+                goto error;
+        } else {
+                /* TODO: verify signature */
+                dbus_message_iter_init (reply, &iter);
+                dbus_message_iter_recurse (&iter, &sub_iter);
+                dbus_message_iter_get_fixed_array (&sub_iter, (void *) &str, &num_elems);
+                if (str != NULL && num_elems > 0)
+                        ci->selinux_context = g_strndup (str, num_elems);
+                dbus_message_unref (message);
+                dbus_message_unref (reply);
+        }
+
 
 	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
 						"/org/freedesktop/ConsoleKit/Manager",
@@ -347,4 +384,11 @@ ci_tracker_caller_get_ck_session_path (CICallerInfo *ci)
 {
         return ci->session_objpath;
 }
+
+const char *
+ci_tracker_caller_get_selinux_context (CICallerInfo *ci)
+{
+        return ci->selinux_context;
+}
+
 #endif

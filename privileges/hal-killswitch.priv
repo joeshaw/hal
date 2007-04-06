@@ -1,0 +1,28 @@
+# -*- Conf -*-
+#
+# Privilege definitions for HAL's RF kill switching mechanism.
+#
+# Copyright (c) 2007 David Zeuthen <david@fubar.dk>
+# 
+# HAL is licensed to you under your choice of the the Academic Free
+# License Version 2.1, or the GNU General Public License version
+# 2. Some individual source files may be under the GPL only. See
+# COPYING for details.
+#
+# NOTE: If you make changes to this file, make sure to validate the
+# file using the polkit-privilege-file-validate(1) tool. Changes made
+# to this file are applied instantly.
+
+# Turn Bluetooth radio on/off
+[Privilege hal-killswitch-bluetooth]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Turn Wireless 802.11 radio on/off
+[Privilege hal-killswitch-wlan]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes

@@ -446,6 +446,38 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
             </entry>
           </row>
           <row>
+            <entry>IsCallerPrivileged</entry>
+            <entry>String</entry>
+            <entry>String privilege, String caller_unique_name</entry>
+            <entry>PermissionDenied, Error</entry>
+            <entry>
+              <para>
+                Determines whether a given process on the system
+                message bus is authorized according to PolicyKit on a
+                specific device for a specific PolicyKit
+                privilege. Unprivileged callers (e.g. with a non-zero
+                uid) can only ask
+                about <literal>caller_unique_name</literal> that
+                matches their own uid; if this is violated
+                <literal>PermissionDenied</literal> will be
+                thrown. This can be used ahead of time to see if a
+                given call will succeed or if it requires privilege
+                elevation (TODO: clarify this once PolicyKit can auth
+                over D-Bus).
+              </para>
+              <para>
+                Returns the textual representation of a PolKitResult
+                value on success. 
+              </para>
+              <para>
+                If HAL is not built with PolicyKit support, this
+                method always throws
+                the <literal>org.freedesktop.Hal.Device.Error</literal>
+                exception.
+              </para>
+            </entry>
+          </row>
+          <row>
             <entry>IsLockedByOthers</entry>
             <entry>Bool</entry>
             <entry>String interface_name</entry>

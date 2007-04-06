@@ -408,23 +408,6 @@ AC_SUBST(HALD_BACKEND)
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
 
-# check for PolicyKit
-AM_CONDITIONAL(HAVE_POLKIT, false)
-AC_ARG_ENABLE(policy-kit, [  --enable-policy-kit     Use PolicyKit],enable_policy_kit=$enableval,enable_policy_kit=no)
-msg_polkit=no
-if test "x$enable_policy_kit" != "xno"; then
-	PKG_CHECK_MODULES(POLKIT, polkit >= 0.2,
-		  	[AM_CONDITIONAL(HAVE_POLKIT, true)
-		   	AC_DEFINE(HAVE_POLKIT, [], [Set if we use PolicyKit])]
-                        msg_polkit=yes,
-	          	[AM_CONDITIONAL(HAVE_POLKIT, false)])
-	AC_SUBST(POLKIT_CFLAGS)
-	AC_SUBST(POLKIT_LIBS)
-	if test "x$msg_polkit" != "xyes"; then
-	   AC_MSG_ERROR([PolicyKit not explicitly disabled and no PolicyKit found])
-	fi
-fi
-
 # check for ConsoleKit
 AM_CONDITIONAL(HAVE_CONKIT, false)
 AC_ARG_ENABLE(console-kit, [  --enable-console-kit    Use ConsoleKit],enable_console_kit=$enableval,enable_console_kit=no)
@@ -435,11 +418,39 @@ if test "x$enable_console_kit" != "xno"; then
    msg_conkit=yes
 fi
 
+# check for PolicyKit
+AM_CONDITIONAL(HAVE_POLKIT, false)
+AC_ARG_ENABLE(policy-kit, [  --enable-policy-kit     Use PolicyKit],enable_policy_kit=$enableval,enable_policy_kit=no)
+msg_polkit=no
+if test "x$enable_policy_kit" != "xno"; then
+   if test "x$enable_console_kit" = "xno"; then
+      AC_MSG_ERROR([PolicyKit support requires building with ConsoleKit support too])
+   fi
+   PKG_CHECK_MODULES(POLKIT, libpolkit >= 0.3,
+		  	[AM_CONDITIONAL(HAVE_POLKIT, true)
+		   	AC_DEFINE(HAVE_POLKIT, [], [Set if we use PolicyKit])]
+                        msg_polkit=yes,
+	          	[AM_CONDITIONAL(HAVE_POLKIT, false)])
+   AC_SUBST(POLKIT_CFLAGS)
+   AC_SUBST(POLKIT_LIBS)
+   if test "x$msg_polkit" != "xyes"; then
+      AC_MSG_ERROR([PolicyKit not explicitly disabled and no PolicyKit found])
+   fi
+
+   AC_CHECK_PROG(POLKIT_PRIVILEGE_FILE_VALIDATE, polkit-privilege-file-validate, polkit-privilege-file-validate)
+   if test -z "$POLKIT_PRIVILEGE_FILE_VALIDATE"; then
+      AC_MSG_ERROR([polkit-privilege-file-validate not found])
+   fi
+fi
+
 # check for ACL handling
 AM_CONDITIONAL(HAVE_ACLMGMT, false)
 AC_ARG_ENABLE(acl-management, [  --enable-acl-management ACL management],enable_acl_management=$enableval,enable_acl_management=no)
 msg_aclmgmt=no
 if test "x$enable_acl_management" != "xno"; then
+   if test "x$enable_policy_kit" = "xno"; then
+      AC_MSG_ERROR([ACL management support requires building with PolicyKit support])
+   fi
    AM_CONDITIONAL(HAVE_ACLMGMT, true)
    AC_DEFINE(HAVE_ACLMGMT, [], [Set if we manage ACL's])
    msg_aclmgmt=yes

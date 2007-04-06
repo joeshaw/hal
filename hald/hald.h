@@ -29,8 +29,16 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <dbus/dbus.h>
+#ifdef HAVE_POLKIT
+#include <libpolkit/libpolkit.h>
+#endif
 
 #include "device_store.h"
+
+#ifdef HAVE_POLKIT
+extern PolKitContext *pk_context;
+#endif
+
 
 HalDeviceStore *hald_get_gdl (void);
 HalDeviceStore *hald_get_tdl (void);

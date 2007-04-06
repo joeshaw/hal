@@ -38,10 +38,7 @@ if [ -n "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME" ] ; then
     fi
 fi
 
-if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-luks-teardown-$HALD_UNAME_S ]; then
-    exec ./$HALD_UNAME_S/hal-luks-teardown-$HALD_UNAME_S $@
-else
-    echo "org.freedesktop.Hal.Device.UnknownError" >&2
-    echo "No back-end for your operating system" >&2
-    exit 1
-fi
+# TODO: this is a little sketchy; we should check for hal-storage-crypto-teardown-others
+hal_check_priv hal-storage-crypto-setup
+
+hal_exec_backend

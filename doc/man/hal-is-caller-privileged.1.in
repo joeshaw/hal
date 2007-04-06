@@ -1,0 +1,70 @@
+.\" 
+.\" hal-is-caller-privileged manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH HAL-IS-CALLER-PRIVILEGED 1
+.SH NAME
+hal-is-caller-privileged \- determine if a caller is privileged
+.SH SYNOPSIS
+.PP
+.B hal-is-caller-privileged
+[options]
+
+.SH DESCRIPTION
+
+\fIhal-is-caller-privileged\fP determines if a specific caller has
+a given 
+.B PolicyKit
+privilege on given device. For
+more information about both the big picture,
+.B HAL
+and
+.B PolicyKit
+, refer to the \fIHAL spec\fP  (which can be found in 
+.I @docdir@/spec/hal-spec.html
+depending on the distribution) and also the 
+.B PolicyKit
+documentation.
+
+.SH OPTIONS
+The following options are supported:
+.TP
+.I "--udi"
+The UDI (\fIUnique Device Identifier\fP) of the device object.
+.TP
+.I "--privilege"
+The name of the privilege to check for.
+.TP
+.I "--caller"
+The unique D-Bus name on the system bus of the caller.
+.TP
+.I "--help"
+Print out usage.
+.TP
+.I "--version"
+Print the version.
+
+.SH RETURN VALUE
+.PP
+If an error occurs this program exits with a non-zero exit
+code. Otherwise the textual reply will be printed on stdout and this
+program will exit with exit code 0. Unprivileged callers (e.g. with a
+non-zero uid) can only ask about callers/processes that matches their
+own uid.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIhald\fR\|(8), 
+\&\fIpolkit-check-caller\fR\|(1)
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.
+

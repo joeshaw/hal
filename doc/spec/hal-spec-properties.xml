@@ -240,13 +240,42 @@
         
       <para>
         If ConsoleKit support is enabled, the variables
+        <literal>CK_NUM_SEATS</literal> (number of seats),        
+        <literal>CK_NUM_SESSIONS</literal> (number of sessions),        
         <literal>CK_SEATS</literal> (tab sep. list of seat-id's),
         <literal>CK_SEAT_seat-id</literal> (tab sep. list of session-id's for a seat),
+        <literal>CK_SEAT_NUM_SESSIONS_seat-id</literal> (number of sessions on a seat),        
+        <literal>CK_SESSION_SEAT_session-id</literal> (the seat that a session belongs to) and
         <literal>CK_SESSION_IS_ACTIVE_session-id</literal> (whether a given session is active) and
-        <literal>CK_SESSION_UID_session-id</literal> (the user of the session)
+        <literal>CK_SESSION_UID_session-id</literal> (the user of the session) and
         <literal>CK_SESSION_IS_LOCAL_session-id</literal> (whether a session is local),
-        will be exported as well.
+        <literal>CK_SESSION_HOSTNAME_session-id</literal> (host name of session's display if it's not local),
+        will be exported as well. Example:
       </para>
+
+      <programlisting>
+CK_NUM_SEATS=1
+CK_NUM_SESSIONS=2
+CK_SEATS=Seat1
+CK_SEAT_Seat1=Session1  Session3
+CK_SEAT_NUM_SESSIONS_Seat1=2
+CK_SESSION_IS_ACTIVE_Session1=true
+CK_SESSION_IS_ACTIVE_Session3=false
+CK_SESSION_IS_LOCAL_Session1=true
+CK_SESSION_IS_LOCAL_Session3=true
+CK_SESSION_SEAT_Session1=Seat1
+CK_SESSION_SEAT_Session3=Seat1
+CK_SESSION_UID_Session1=500
+CK_SESSION_UID_Session3=501
+      </programlisting>
+      
+      <para>
+        Note that all ConsoleKit object paths given are just base
+        names; the real D-Bus object path can be reconstructed by
+        appending <literal>/org/freedesktop/ConsoleKit/</literal>
+        prepended to the given identifer.
+      </para>
+
       <para>
         The HAL daemon is not suspended while callouts are executing. Thus,
         callouts can communicate with the HAL daemon using the D-BUS network
@@ -442,10 +471,32 @@
         and
         <literal>HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME</literal>
         (the unique system bus connection name of the caller) are
-        set (If HAL, or a HAL addon, is invoking a method, then these
-        variables will both assume the value 0.)
+        set. Additionally, if HAL is built with ConsoleKit support, 
+        <literal>HAL_METHOD_INVOKED_BY_PID</literal> and
+        <literal>HAL_METHOD_INVOKED_BY_SELINUX_CONTEXT</literal> (but
+        only if the running system have SELinux enabled) will be
+        set. If HAL itself, or a HAL addon, is invoking a method, then
+        these variables will not be present. Here's an example
       </para>
-      
+
+      <programlisting>
+HAL_METHOD_INVOKED_BY_UID=500
+HAL_METHOD_INVOKED_BY_PID=22553
+HAL_METHOD_INVOKED_BY_SELINUX_CONTEXT=user_u:system_r:unconfined_t
+HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME=:1.138
+      </programlisting>
+
+      <para>
+        In addition, with ConsoleKit
+        support, <literal>HAL_METHOD_INVOKED_BY_SESSION</literal> will
+        be set to (the basename) of the ConsoleKit session object path
+        but only if the caller is in a session. The method handler can
+        then use the previously
+        mentioned <literal>CK_SESSION_*</literal> to learn everything
+        about the context of the caller.
+        
+      </para>
+
       <informaltable>
         <tgroup cols="2">
           <thead>

@@ -10,6 +10,7 @@ script_SCRIPTS =					\
 	hal-luks-teardown-linux                       	\
 	hal-luks-remove-linux		                \
 	hal-system-power-suspend-linux			\
+	hal-system-power-suspend-hybrid-linux		\
 	hal-system-power-hibernate-linux		\
 	hal-system-power-shutdown-linux			\
 	hal-system-power-reboot-linux			\

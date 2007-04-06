@@ -39,10 +39,6 @@
 #include "libhal/libhal.h"
 #include "../../logger.h"
 
-#ifdef HAVE_POLKIT
-#include <libpolkit.h>
-#endif
-
 #define MAX_LINE_SIZE				255
 #define CPUFREQ_POLKIT_PRIVILEGE		"hal-power-cpufreq"
 #define DBUS_INTERFACE				"org.freedesktop.Hal.Device.CPUFreq"
@@ -84,6 +80,10 @@ static gboolean dbus_raise_governor_init_failed(DBusConnection *connection,
 
 /** list holding all cpufreq objects (userspace, ondemand, etc.) */
 static GSList *cpufreq_objs = NULL;
+
+static LibHalContext *halctx = NULL;
+
+static char *udi = NULL;
 
 /******************** helper functions **********************/
 
@@ -918,80 +918,43 @@ static gboolean dbus_raise_error(DBusConnection *connection, DBusMessage *messag
  *
  * checks if caller of message possesses the CPUFREQ_POLKIT_PRIVILGE 
  */
-static gboolean dbus_is_privileged(DBusConnection *connection, DBusMessage *message,
-				   DBusError *error)
+static gboolean 
+dbus_is_privileged (DBusConnection *connection, DBusMessage *message, DBusError *error)
 {
-	LibPolKitContext	*polctx			= NULL;
-	char			*caller_unix_user_str;
-	const char		*caller_dbus_name;
-	unsigned long		caller_unix_user;
-	DBusConnection		*connection_new;
-	gboolean		out_is_allowed;
-	gboolean		out_is_temporary;
-	LibPolKitResult		res;
+        gboolean ret;
+        char *polkit_result;
+        const char *invoked_by_syscon_name;
 
-	connection_new = dbus_bus_get(DBUS_BUS_SYSTEM, error);
-	if (dbus_error_is_set(error)) {
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
-				 "Cannot get connection to system bus");
-		return FALSE;
-	}
+        ret = FALSE;
+        polkit_result = NULL;
 
-	polctx = libpolkit_new_context(connection_new);
-	if (polctx == NULL) {
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
-				 "Cannot get PolicyKit context");
-		return FALSE;
-	}
+        invoked_by_syscon_name = dbus_message_get_sender (message);
+        
+        polkit_result = libhal_device_is_caller_privileged (halctx,
+                                                            udi,
+                                                            CPUFREQ_POLKIT_PRIVILEGE,
+                                                            invoked_by_syscon_name,
+                                                            error);
+        if (polkit_result == NULL) {
+		dbus_raise_error (connection, message, CPUFREQ_ERROR_GENERAL,
+                                  "Cannot determine if caller is privileged");
+                goto out;
+        }
+        if (strcmp (polkit_result, "yes") != 0) {
 
-	caller_dbus_name = dbus_message_get_sender(message);
-	if (caller_dbus_name == NULL) {
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
-				 "Cannot get D-Bus connection name of caller");
-		goto Error;
-	}
-		
-	caller_unix_user = dbus_bus_get_unix_user(connection_new, caller_dbus_name, error);
-	if (dbus_error_is_set(error)) {
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
-				 "Cannot get unix user of caller");
-		dbus_error_free(error);
-		goto Error;
-	}
+		dbus_raise_error (connection, message, 
+                                  "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
+                                  "%s %s <-- (privilege, result)",
+                                  CPUFREQ_POLKIT_PRIVILEGE, polkit_result);
+                goto out;
+        }
 
-	HAL_DEBUG(("Connection name of caller: %s", caller_dbus_name));
-	HAL_DEBUG(("Unix user id of caller: %ld", caller_unix_user));
+        ret = TRUE;
 
-	caller_unix_user_str = g_strdup_printf("%ld", caller_unix_user);
-	res = libpolkit_is_uid_allowed_for_privilege(polctx,
-						     caller_dbus_name,
-						     caller_unix_user_str,
-						     CPUFREQ_POLKIT_PRIVILEGE,
-						     getenv("UDI"),
-						     &out_is_allowed,
-						     &out_is_temporary,
-						     NULL);
-	g_free(caller_unix_user_str);
-
-	if (res != LIBPOLKIT_RESULT_OK) {
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_GENERAL,
-				 "Cannot lookup privilege: %d", res);
-		goto Error;
-	}
-	
-	if (!out_is_allowed) {
-		HAL_DEBUG(("caller don't possess privilege"));
-		dbus_raise_error(connection, message, CPUFREQ_ERROR_PERMISSION_DENIED,
-				 "%s refused uid %d", CPUFREQ_POLKIT_PRIVILEGE, caller_unix_user);
-		goto Error;
-	}
-
-	HAL_DEBUG(("Caller is privileged"));
-	return out_is_allowed;
-
-Error:
-	libpolkit_free_context(polctx);
-	return FALSE;
+out:
+        if (polkit_result != NULL)
+                libhal_free_string (polkit_result);
+        return ret;
 }
 #endif
 
@@ -1257,8 +1220,8 @@ gboolean dbus_init(void)
 {
 	DBusError	dbus_error;
 	DBusConnection	*dbus_connection;
-	char		*udi		= getenv("UDI");
-	LibHalContext	*halctx		= NULL;
+
+        udi = getenv("UDI");
 
 	dbus_error_init(&dbus_error);
 

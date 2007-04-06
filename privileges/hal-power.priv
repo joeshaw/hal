@@ -1,0 +1,91 @@
+# -*- Conf -*-
+#
+# Privilege definitions for HAL's power management mechanisms.
+#
+# Copyright (c) 2007 David Zeuthen <david@fubar.dk>
+# 
+# HAL is licensed to you under your choice of the the Academic Free
+# License Version 2.1, or the GNU General Public License version
+# 2. Some individual source files may be under the GPL only. See
+# COPYING for details.
+#
+# NOTE: If you make changes to this file, make sure to validate the
+# file using the polkit-privilege-file-validate(1) tool. Changes made
+# to this file are applied instantly.
+
+# Shutdown the computer
+[Privilege hal-power-shutdown]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Shutdown computer when multiple users are logged in
+[Privilege hal-power-shutdown-multiple-sessions]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_root
+
+# Reboot the computer
+[Privilege hal-power-reboot]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Reboot the computer when multiple users are logged in
+[Privilege hal-power-reboot-multiple-sessions]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_root
+
+# Configure the system to prefer power savings
+[Privilege hal-power-set-powersave]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Suspend the system
+[Privilege hal-power-suspend]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Hibernate the system
+[Privilege hal-power-hibernate]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Configure CPU frequency scaling
+[Privilege hal-power-cpufreq]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Set laptop panel brightness
+[Privilege hal-power-lcd-panel]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Read values from ambient light sensor
+[Privilege hal-power-light-sensor]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Set the keyboard backlight
+[Privilege hal-power-keyboard-backlight]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes

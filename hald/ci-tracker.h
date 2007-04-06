@@ -66,6 +66,7 @@ pid_t         ci_tracker_caller_get_pid                (CICallerInfo *ci);
 gboolean      ci_tracker_caller_is_local               (CICallerInfo *ci);
 gboolean      ci_tracker_caller_in_active_session      (CICallerInfo *ci);
 const char   *ci_tracker_caller_get_ck_session_path    (CICallerInfo *ci);
+const char   *ci_tracker_caller_get_selinux_context    (CICallerInfo *ci);
 #endif
 
 #endif /* CALLER_INFO_H */

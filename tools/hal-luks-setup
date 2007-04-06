@@ -6,6 +6,8 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2.
 
+. hal-functions
+
 locked_out() {
 	echo "org.freedesktop.Hal.Device.InterfaceLocked" >&2
 	echo "Enclosing drive/volume is locked" >&2
@@ -37,10 +39,6 @@ if [ -n "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME" ] ; then
     fi
 fi
 
-if [ -n "$HALD_UNAME_S" -a -x ./$HALD_UNAME_S/hal-luks-setup-$HALD_UNAME_S ]; then
-    exec ./$HALD_UNAME_S/hal-luks-setup-$HALD_UNAME_S $@
-else
-    echo "org.freedesktop.Hal.Device.UnknownError" >&2
-    echo "No back-end for your operating system" >&2
-    exit 1
-fi
+hal_check_priv hal-storage-crypto-setup
+
+hal_exec_backend

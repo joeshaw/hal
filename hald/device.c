@@ -1829,3 +1829,11 @@ hal_device_client_disconnected (const char *sender)
         }
 }
 
+gboolean 
+hal_device_is_lock_exclusive (HalDevice *device, const char *lock_name)
+{
+        char buf[256];
+	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.exclusive", lock_name);
+	return hal_device_property_get_bool (device, buf);
+}
+
