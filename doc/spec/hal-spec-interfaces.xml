@@ -18,12 +18,21 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     (ie. methods and signals) the given hal device object
     supports. For brevity, the <literal>org.freedesktop.Hal</literal>
     prefix have been stripped from the exceptions listed in the
-    following sections. Also note that other exceptions than the ones
-    listed may be thrown; for example
+    following sections.
+  </para>
+  <para>
+    Also note that other exceptions than the ones listed may be
+    thrown; for example
     the <literal>org.freedesktop.Hal.Device.InterfaceLocked</literal>
     exception may be thrown regardless of how the interface is
-    implemented depending on if some other process is holding a lock
-    on the device cf. <xref linkend="locking"/>.
+    implemented (depending on if some other process is holding a lock
+    on the device cf. <xref linkend="locking"/>); if PolicyKit support
+    is enabled,
+    the <literal>org.freedesktop.Hal.Device.PermissionDeniedByPolicy</literal>
+    exception may be thrown (the two first words in the exception
+    detail is resp. a) the privilege the caller didn't have; b) the
+    textual result code from PolicyKit specifying if the caller can
+    obtain the privilege) if the caller is not privileged and so on.
   </para>
 
   <sect1 id="interface-manager">
