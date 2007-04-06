@@ -10,25 +10,28 @@ esac
 export HALD_RUNNER_PATH=`pwd`/$backend:`pwd`/$backend/probing:`pwd`/$backend/addons:`pwd`/.:`pwd`/../tools:`pwd`/../tools/$backend
 export PATH=`pwd`/../hald-runner:$PATH
 
+HALD_TMPDIR=/tmp/run-hald-$USER
+
 if [ "$1" = "--skip-fdi-install" ] ; then
     shift
 else
-    rm -rf .local-fdi
-    make -C ../privileges install DESTDIR=`pwd`/.local-fdi prefix=/
+    rm -rf $HALD_TMPDIR
+    mkdir -p $HALD_TMPDIR
+    make -C ../privileges install DESTDIR=$HALD_TMPDIR prefix=/
 
-    make -C ../fdi install DESTDIR=`pwd`/.local-fdi prefix=/ && \
+    make -C ../fdi install DESTDIR=$HALD_TMPDIR prefix=/ && \
     if [ ! -d $information_fdidir ] ; then
     	echo "ERROR: You need to checkout hal-info in the same level"
     	echo "directory as hal to get the information fdi files."
     	exit
     fi
-    make -C $information_fdidir install DESTDIR=`pwd`/.local-fdi prefix=/
+    make -C $information_fdidir install DESTDIR=$HALD_TMPDIR prefix=/
 fi
-export HAL_FDI_SOURCE_PREPROBE=.local-fdi/share/hal/fdi/preprobe
-export HAL_FDI_SOURCE_INFORMATION=.local-fdi/share/hal/fdi/information
-export HAL_FDI_SOURCE_POLICY=.local-fdi/share/hal/fdi/policy
-export HAL_FDI_CACHE_NAME=.local-fdi/hald-local-fdi-cache
-export POLKIT_PRIVILEGE_DIR=`pwd`/.local-fdi/etc/PolicyKit/privileges
+export HAL_FDI_SOURCE_PREPROBE=$HALD_TMPDIR/share/hal/fdi/preprobe
+export HAL_FDI_SOURCE_INFORMATION=$HALD_TMPDIR/share/hal/fdi/information
+export HAL_FDI_SOURCE_POLICY=$HALD_TMPDIR/share/hal/fdi/policy
+export HAL_FDI_CACHE_NAME=$HALD_TMPDIR/hald-local-fdi-cache
+export POLKIT_PRIVILEGE_DIR=$HALD_TMPDIR/etc/PolicyKit/privileges
 
 ./hald --daemon=no --verbose=yes $@
 #./hald --daemon=no
