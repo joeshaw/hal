@@ -20,12 +20,26 @@ AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=auth_self_keep_always
 
+# Mount file systems from internal drives using options not explicitly granted
+[Privilege hal-storage-mount-fixed-extra-options]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_self_keep_always
+
 # Mount file systems from removable/hotpluggable drives
 [Privilege hal-storage-mount-removable]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
+
+# Mount file systems from internal drives using options not explicitly granted
+[Privilege hal-storage-mount-removable-extra-options]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_self_keep_always
 
 # Unmount file systems mounted by other users
 [Privilege hal-storage-unmount-others]
