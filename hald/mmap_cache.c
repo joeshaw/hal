@@ -44,6 +44,8 @@
 #include "rule.h"
 #include "mmap_cache.h"
 #include "hald_runner.h"
+#include "hal-file-monitor.h"
+#include "osspec.h"
 
 extern void *rules_ptr;
 static size_t rules_size = 0;
@@ -88,40 +90,6 @@ int di_rules_init (void)
 
 	return 0;
 }
-
-static void dir_mtime(const char * path, time_t * mt)
-{
-	struct dirent **namelist;
-	struct stat st;
-	int n;
-	char cpath[PATH_MAX];
-	
-	if (!stat(path, &st)) {
-		if(st.st_mtime > *mt)
-			*mt = st.st_mtime;
-		
-		if(S_ISDIR(st.st_mode)) {
-			n = scandir(path, &namelist, 0, alphasort);
-			if (n < 0)
-				return;
-			else {
-				while(n--) {
-#ifdef HAVE_SNPRINTF
-					snprintf(cpath, PATH_MAX, "%s/%s", path, namelist[n]->d_name);
-#else
-					sprintf(cpath, "%s/%s", path, namelist[n]->d_name);
-#endif
-					if(namelist[n]->d_name[0] != '.')
-						dir_mtime(cpath, mt);
-					
-					free(namelist[n]);
-				}
-				free(namelist);
-			}
-		}
-	}
-}
-
 
 static gboolean regen_cache_done;
 static gint regen_cache_success;
@@ -193,8 +161,69 @@ regen_cache (void)
 	HAL_INFO (("fdi cache generation done"));
 }
 
+static gboolean cache_valid = FALSE;
+
+static void
+cache_invalidated (HalFileMonitor      *monitor,
+                   HalFileMonitorEvent  event,
+                   const char          *path,
+                   gpointer             user_data)
+{
+        HAL_INFO (("dir '%s' changed - marking fdi cache as invalid", path));
+        cache_valid = FALSE;
+}
+
+static void 
+dir_mtime (const char *path, time_t *mt, gboolean setup_watches)
+{
+	struct dirent **namelist;
+	struct stat st;
+	int n;
+	char cpath[PATH_MAX];
+
+        if (setup_watches) {
+                HalFileMonitor *file_monitor;
+
+                file_monitor = osspec_get_file_monitor ();
+                if (file_monitor != NULL) {
+                        hal_file_monitor_add_notify (file_monitor,
+                                                     path,
+                                                     HAL_FILE_MONITOR_EVENT_CREATE|
+                                                     HAL_FILE_MONITOR_EVENT_DELETE|
+                                                     HAL_FILE_MONITOR_EVENT_CHANGE,
+                                                     cache_invalidated,
+                                                     NULL);
+                }
+        }
+	
+	if (!stat(path, &st)) {
+		if(st.st_mtime > *mt)
+			*mt = st.st_mtime;
+		
+		if(S_ISDIR(st.st_mode)) {
+			n = scandir(path, &namelist, 0, alphasort);
+			if (n < 0)
+				return;
+			else {
+				while(n--) {
+#ifdef HAVE_SNPRINTF
+					snprintf(cpath, PATH_MAX, "%s/%s", path, namelist[n]->d_name);
+#else
+					sprintf(cpath, "%s/%s", path, namelist[n]->d_name);
+#endif
+					if(namelist[n]->d_name[0] != '.')
+						dir_mtime(cpath, mt, setup_watches);
+					
+					free(namelist[n]);
+				}
+				free(namelist);
+			}
+		}
+	}
+}
+
 gboolean
-di_cache_coherency_check (void)
+di_cache_coherency_check (gboolean setup_watches)
 {
 	char *hal_fdi_source_preprobe;
 	char *hal_fdi_source_information;
@@ -204,33 +233,35 @@ di_cache_coherency_check (void)
 	struct stat st;
 	gboolean did_regen;
 
+        if (cache_valid)
+                return FALSE;
+
 	did_regen = FALSE;
 
 	mt = 0;
-
 	hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
 	hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
 	hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
 
 	if (hal_fdi_source_preprobe != NULL) {
-		dir_mtime (hal_fdi_source_preprobe, &mt);
+		dir_mtime (hal_fdi_source_preprobe, &mt, setup_watches);
 	} else {
-		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/preprobe", &mt);
-		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", &mt);
+		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/preprobe", &mt, setup_watches);
+		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/preprobe", &mt, setup_watches);
 	}
 
 	if (hal_fdi_source_information != NULL) {
-		dir_mtime (hal_fdi_source_information, &mt);
+		dir_mtime (hal_fdi_source_information, &mt, setup_watches);
 	} else {
-		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/information", &mt);
-		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/information", &mt);
+		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/information", &mt, setup_watches);
+		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/information", &mt, setup_watches);
 	}
 
 	if (hal_fdi_source_policy != NULL) {
-		dir_mtime (hal_fdi_source_policy, &mt);
+		dir_mtime (hal_fdi_source_policy, &mt, setup_watches);
 	} else {
-		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/policy", &mt);
-		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", &mt);
+		dir_mtime (PACKAGE_DATA_DIR "/hal/fdi/policy", &mt, setup_watches);
+		dir_mtime (PACKAGE_SYSCONF_DIR "/hal/fdi/policy", &mt, setup_watches);
 	}
 
 	cachename = getenv ("HAL_FDI_CACHE_NAME");
@@ -249,6 +280,8 @@ di_cache_coherency_check (void)
 	}
 	
 	HAL_INFO(("cache mtime is %d",mt));
+
+        cache_valid = TRUE;
 
 	return did_regen;
 }

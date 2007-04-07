@@ -768,8 +768,8 @@ main (int argc, char *argv[])
 
 	hald_is_initialising = TRUE;
 
-	/* make sure our fdi rule cache is up to date */
-	di_cache_coherency_check();
+	/* make sure our fdi rule cache is up to date and setup file monitoring */
+	di_cache_coherency_check(TRUE);
 
 	/* initialize operating system specific parts */
 	osspec_init ();

@@ -34,7 +34,7 @@
 #include <glib.h>
 
 int di_rules_init (void);
-gboolean di_cache_coherency_check (void);
+gboolean di_cache_coherency_check (gboolean setup_watches);
 
 #define RULES_PTR(x) ((void *)((unsigned char *) rules_ptr + x))
 #endif

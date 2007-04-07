@@ -52,9 +52,6 @@ gboolean osspec_device_reprobe (HalDevice *d);
 /* Called to refresh mount state for a device object of capability volume */
 void osspec_refresh_mount_state_for_block_device (HalDevice *d);
 
-/* Called by OS specific code to tell that the fdi cache is invalid */
-void osspec_fdi_cache_invalid (void);
-
 /** Called when the org.freedesktop.Hal service receives a messaged that the generic daemon 
  *  doesn't handle. Can be used for intercepting messages from kernel or core OS components.
  *

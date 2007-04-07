@@ -973,19 +973,14 @@ rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 	}
 }
 
-static gboolean fdi_cache_invalidated = FALSE;
-
-
 /* merge the device info type, either preprobe, info or policy */
 gboolean
 di_search_and_merge (HalDevice *d, DeviceInfoType type){
 	struct cache_header *header = (struct cache_header*) RULES_PTR(0);
 
-	if (fdi_cache_invalidated) {
-		/* make sure our fdi rule cache is up to date */
-		if (di_cache_coherency_check ())
-			di_rules_init ();
-		fdi_cache_invalidated = FALSE;
+        /* make sure our fdi rule cache is up to date */
+        if (di_cache_coherency_check (FALSE)) {
+                di_rules_init ();
 	}
 
 	switch (type) {
@@ -1028,12 +1023,3 @@ di_search_and_merge (HalDevice *d, DeviceInfoType type){
 
 	return TRUE;
 }
-
-/* Called by OS specific code to tell that the fdi cache is invalid */
-void 
-osspec_fdi_cache_invalid (void)
-{
-	HAL_INFO (("invalidating fdi cache"));
-	fdi_cache_invalidated = TRUE;
-}
-
