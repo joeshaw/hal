@@ -208,7 +208,7 @@ file_monitor_add_watch_for_path (HalFileMonitor *monitor,
         imask = our_event_mask_to_inotify_mask (mask);
 
         mask_str = imask_to_string (imask);
-        g_debug ("adding inotify watch %s", mask_str);
+        /*g_debug ("adding inotify watch %s", mask_str);*/
         g_free (mask_str);
 
         wd = inotify_add_watch (monitor->priv->inotify_fd, path, IN_MASK_ADD | imask);
@@ -388,7 +388,7 @@ handle_inotify_event (HalFileMonitor        *monitor,
         }
 
         mask_str = imask_to_string (ievent->mask);
-        g_debug ("handing inotify event %s for %s", mask_str, path);
+        /*g_debug ("handing inotify event %s for %s", mask_str, path);*/
         g_free (mask_str);
 
         event = HAL_FILE_MONITOR_EVENT_NONE;
@@ -420,7 +420,7 @@ inotify_data_pending (GIOChannel    *source,
         int len;
         int i;
 
-        g_debug ("Inotify data pending");
+        /*g_debug ("Inotify data pending");*/
 
         g_assert (monitor->priv->inotify_fd > 0);
         g_assert (monitor->priv->buffer != NULL);
@@ -443,26 +443,26 @@ inotify_data_pending (GIOChannel    *source,
                         goto error_cancel;
                 }
 
-                g_debug ("Buffer size %u too small, trying again at %u\n",
-                         monitor->priv->buflen, monitor->priv->buflen << 1);
+                /*g_debug ("Buffer size %u too small, trying again at %u\n",
+                  monitor->priv->buflen, monitor->priv->buflen << 1);*/
 
                 monitor->priv->buflen <<= 1;
                 monitor->priv->buffer = g_realloc (monitor->priv->buffer, monitor->priv->buflen);
         } while (TRUE);
 
-        g_debug ("Inotify buffer filled");
+        /*g_debug ("Inotify buffer filled");*/
 
         i = 0;
         while (i < len) {
                 struct inotify_event *ievent = (struct inotify_event *) &monitor->priv->buffer [i];
                 FileInotifyWatch     *watch;
 
-                g_debug ("Got event wd = %d, mask = 0x%x, cookie = %d, len = %d, name= %s\n",
+                /*g_debug ("Got event wd = %d, mask = 0x%x, cookie = %d, len = %d, name= %s\n",
                          ievent->wd,
                          ievent->mask,
                          ievent->cookie,
                          ievent->len,
-                         ievent->len > 0 ? ievent->name : "<none>");
+                         ievent->len > 0 ? ievent->name : "<none>");*/
 
                 watch = g_hash_table_lookup (monitor->priv->wd_to_watch,
                                              GINT_TO_POINTER (ievent->wd));
@@ -504,7 +504,7 @@ file_monitor_add_notify_for_path (HalFileMonitor          *monitor,
                 notify->watch = watch;
                 notify->mask = mask;
 
-                g_debug ("Adding notify for %s mask:%d", path, mask);
+                /*g_debug ("Adding notify for %s mask:%d", path, mask);*/
 
                 g_hash_table_insert (monitor->priv->notifies, GUINT_TO_POINTER (notify->id), notify);
                 watch->notifies = g_slist_prepend (watch->notifies, GUINT_TO_POINTER (notify->id));
@@ -519,7 +519,7 @@ file_monitor_remove_notify (HalFileMonitor *monitor,
 {
         FileMonitorNotify *notify;
 
-        g_debug ("removing notify for %u", id);
+        /*g_debug ("removing notify for %u", id);*/
 
         notify = g_hash_table_lookup (monitor->priv->notifies,
                                       GUINT_TO_POINTER (id));
