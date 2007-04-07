@@ -12,14 +12,7 @@ dist_polkit_privilege_DATA += hal-device-file.priv
 endif
 
 check:
-	for f in $(dist_polkit_privilege_DATA); do \
-          echo "Validating privilege file: $$f"; \
-          $(POLKIT_PRIVILEGE_FILE_VALIDATE) --file $(srcdir)/$$f; \
-          if [ "$$?" != "0" ]; then \
-            echo "failed"; \
-            exit 1; \
-          fi; \
-        done
+	$(POLKIT_PRIVILEGE_FILE_VALIDATE) $(dist_polkit_privilege_DATA)
 
 endif
 

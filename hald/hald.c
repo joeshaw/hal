@@ -386,6 +386,114 @@ out:
 
 /*--------------------------------------------------------------------------------------------------*/
 
+#ifdef HAVE_POLKIT
+
+typedef struct
+{
+        PolKitContextFileMonitorNotifyFunc notify_cb;
+        gpointer user_data;
+} PolkitFMClosure;
+
+static void
+_polkit_fm_notify_func (HalFileMonitor      *monitor,
+                        HalFileMonitorEvent  event,
+                        const char          *path,
+                        gpointer             user_data)
+{
+        PolkitFMClosure *closure = user_data;
+        if (closure->notify_cb != NULL) {
+                closure->notify_cb (pk_context,
+                                    event, /* binary compatible */
+                                    path,
+                                    closure->user_data);
+        }
+}
+
+static unsigned int
+_polkit_fm_add_watch (PolKitContext                     *pk_context,
+                      const char                        *path,
+                      PolKitContextFileMonitorEvent      event_mask,
+                      PolKitContextFileMonitorNotifyFunc notify_cb,
+                      gpointer                           user_data)
+{
+        unsigned int ret;
+        HalFileMonitor *file_monitor;
+        PolkitFMClosure *closure;
+
+        ret = 0;
+
+        file_monitor = osspec_get_file_monitor ();
+        if (file_monitor == NULL)
+                goto out;
+
+        closure = g_new0 (PolkitFMClosure, 1);
+        closure->notify_cb = notify_cb;
+        closure->user_data = user_data;
+
+        /* TODO FIXME: ugh, we probably leak this... too bad. */
+
+        ret = hal_file_monitor_add_notify (file_monitor,
+                                           path,
+                                           event_mask, /* binary compatible */
+                                           _polkit_fm_notify_func,
+                                           closure);
+        if (ret == 0) {
+                g_free (closure);
+        }
+
+out:
+        return ret;
+}
+
+static void 
+_polkit_fm_remove_watch (PolKitContext *pk_context,
+                         unsigned int   watch_id)
+{
+        HalFileMonitor *file_monitor;
+
+        file_monitor = osspec_get_file_monitor ();
+        if (file_monitor == NULL)
+                goto out;
+
+        hal_file_monitor_remove_notify (file_monitor, watch_id);
+
+out:
+        ;
+}
+
+static guint _polkit_cooloff_timer = 0;
+
+static gboolean
+_polkit_config_really_changed (gpointer user_data)
+{
+        HAL_INFO (("Acting on PolicyKit config change"));
+        _polkit_cooloff_timer = 0;
+        reconfigure_all_policy ();
+        return FALSE;
+}
+
+static void
+_polkit_config_changed_cb (PolKitContext *pk_context, gpointer user_data)
+{
+        HAL_INFO (("PolicyKit reports that the config have changed; starting cool-off timer"));
+
+        /* Start a cool-off timer since we get a lot of events within
+         * a short time-frame...
+         */
+
+        if (_polkit_cooloff_timer > 0) {
+                /* cancel old cool-off timer */
+                g_source_remove (_polkit_cooloff_timer);
+                HAL_INFO (("restarting cool-off timer"));
+        }
+        _polkit_cooloff_timer = g_timeout_add (1000, /* one second... */
+                                               _polkit_config_really_changed,
+                                               NULL);
+}
+
+#endif /* HAVE_POLKIT */
+
+
 /**  
  *  main:
  *  @argc:               Number of arguments
@@ -621,13 +729,6 @@ main (int argc, char *argv[])
 	/* Finally, setup unix signal handler for TERM */
 	signal (SIGTERM, handle_sigterm);
 
-#ifdef HAVE_POLKIT
-        g_error = NULL;
-        pk_context = libpolkit_context_new (&g_error);
-        if (pk_context == NULL)
-                DIE (("Could not create PolicyKit context: %s", g_error->message));
-#endif
-
 	/* set up the local dbus server */
 	if (!hald_dbus_local_server_init ())
 		return 1;
@@ -643,6 +744,21 @@ main (int argc, char *argv[])
 
 	/* initialize privileged operating system specific parts */
 	osspec_privileged_init ();
+
+#ifdef HAVE_POLKIT
+        g_error = NULL;
+        pk_context = libpolkit_context_new ();
+        if (pk_context == NULL)
+                DIE (("Could not create PolicyKit context"));
+        libpolkit_context_set_config_changed (pk_context,
+                                              _polkit_config_changed_cb,
+                                              NULL);
+        libpolkit_context_set_file_monitor (pk_context, 
+                                            _polkit_fm_add_watch,
+                                            _polkit_fm_remove_watch);
+        if (!libpolkit_context_init (pk_context, &g_error))
+                DIE (("Could not init PolicyKit context: %s", g_error->message));
+#endif
 
 	/* sometimes we don't want to drop root privs, for instance
 	   if we are profiling memory usage */

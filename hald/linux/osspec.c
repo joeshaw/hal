@@ -44,12 +44,6 @@
 #include <sys/utsname.h>
 #include <unistd.h>
 
-#ifdef HAVE_SYS_INOTIFY_H
-#include <sys/inotify.h>
-#else
-#include "inotify_local.h"
-#endif
-
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
@@ -61,6 +55,8 @@
 #include "../osspec.h"
 #include "../util.h"
 #include "../ids.h"
+
+#include "hal-file-monitor.h"
 
 #include "acpi.h"
 #include "apm.h"
@@ -265,11 +261,7 @@ mount_tree_changed_event (GIOChannel *channel, GIOCondition cond,
 	return TRUE;
 }
 
-void
-osspec_privileged_init (void)
-{
-}
-
+#if 0
 static gboolean
 inotify_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 {
@@ -353,7 +345,6 @@ watch_fdi_files (void)
 	g_io_add_watch (inotify_channel, G_IO_IN, inotify_data, NULL);
 	g_io_channel_unref (inotify_channel);
 
-
 	if (hal_fdi_source_preprobe != NULL) {
 		if (!add_fdi_watch (inotify_fd, hal_fdi_source_preprobe))
 			goto out;
@@ -387,6 +378,24 @@ watch_fdi_files (void)
 	return;
 out:
 	DIE (("Error watching fdi files"));
+}
+#endif
+
+static HalFileMonitor *file_monitor = NULL;
+
+HalFileMonitor *
+osspec_get_file_monitor (void)
+{
+        return file_monitor;
+}
+
+void
+osspec_privileged_init (void)
+{
+        file_monitor = hal_file_monitor_new ();
+        if (file_monitor == NULL) {
+                DIE (("Cannot initialize file monitor"));
+        }
 }
 
 void
@@ -452,8 +461,10 @@ osspec_init (void)
 	ids_init ();
 
 	/* watch fdi directories */
-	watch_fdi_files ();	
+	/* TODO: temporarily disabled... 
+           watch_fdi_files (); */
 }
+
 
 static void 
 computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2)

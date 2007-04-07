@@ -100,6 +100,8 @@ void device_send_signal_condition (HalDevice *device,
 void device_property_atomic_update_begin (void);
 void device_property_atomic_update_end   (void);
 
+void reconfigure_all_policy (void);
+
 gboolean hald_dbus_init_preprobe (void);
 
 gboolean hald_dbus_init (void);

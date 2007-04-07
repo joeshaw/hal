@@ -1072,12 +1072,10 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-        printf ("foo='%s'\n", getenv ("POLKIT_PRIVILEGE_DIR"));
-
         g_error = NULL;
-        pk_context = libpolkit_context_new (&g_error);
-        if (pk_context == NULL) {
-                printf ("Could not create PolicyKit context: %s", g_error->message);
+        pk_context = libpolkit_context_new ();
+        if (!libpolkit_context_init (pk_context, &g_error)) {
+                printf ("Could not init PolicyKit context: %s", g_error->message);
                 goto out;
         }
 

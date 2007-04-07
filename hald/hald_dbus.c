@@ -5120,6 +5120,47 @@ validate_locks (void)
         hal_device_store_foreach (hald_get_gdl (), validate_lock_for_device, NULL);
 }
 
+static void
+reconfigure_acl (void)
+{
+#ifdef HAVE_ACLMGMT
+	HalDevice *d;
+	char *extra_env[1] = {NULL};
+
+	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	if (d == NULL) {
+		d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+	}
+	if (d == NULL) {
+		HAL_ERROR (("No computer object?!?"));
+		goto out;
+	}
+
+	hald_runner_run (d,
+			 "hal-acl-tool --reconfigure", 
+			 extra_env,
+			 HAL_HELPER_TIMEOUT, 
+			 NULL, /* run_terminated_cb */
+			 NULL  /* userdata1 */, 
+			 NULL  /* userdata2 */ );
+out:
+	;
+#endif /* HAVE_ACLMGMT */
+}
+
+/* this function is normally called in response to when PolicyKit says the policy have changed */
+void
+reconfigure_all_policy (void)
+{
+        HAL_INFO (("Reconfiguring all policy"));
+
+        /* first, validate all the locks */
+        validate_locks ();
+
+        /* second, reconfigure all ACL's */
+        reconfigure_acl ();
+}
+
 static void 
 hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *user_data)
 {
@@ -5172,45 +5213,17 @@ out:
 }
 
 static void
-hald_dbus_ck_availability_changed (gboolean ck_available)
-{
-#ifdef HAVE_ACLMGMT
-	HalDevice *d;
-	char *extra_env[1] = {NULL};
-
-	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
-	if (d == NULL) {
-		d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
-	}
-	if (d == NULL) {
-		HAL_ERROR (("No computer object?!?"));
-		goto out;
-	}
-
-	hald_runner_run (d,
-			 "hal-acl-tool --reconfigure", 
-			 extra_env,
-			 HAL_HELPER_TIMEOUT, 
-			 NULL, /* run_terminated_cb */
-			 NULL  /* userdata1 */, 
-			 NULL  /* userdata2 */ );
-out:
-	;
-#endif /* HAVE_ACLMGMT */
-}
-
-static void
 hald_dbus_ck_disappeared (CKTracker *tracker, void *user_data)
 {
 	HAL_INFO (("In hald_dbus_ck_disappeared"));
-	hald_dbus_ck_availability_changed (FALSE);
+        reconfigure_acl ();
 }
 
 static void
 hald_dbus_ck_appeared (CKTracker *tracker, void *user_data)
 {
 	HAL_INFO (("In hald_dbus_ck_appeared"));
-	hald_dbus_ck_availability_changed (TRUE);
+        reconfigure_acl ();
 }
 
 #endif /* HAVE_CONKIT */

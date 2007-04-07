@@ -66,7 +66,8 @@ hald_SOURCES =                                                          \
 	rule.h				mmap_cache.c			\
 	mmap_cache.h							\
 	ci-tracker.h			ci-tracker.c			\
-	access-check.h			access-check.c
+	access-check.h			access-check.c			\
+	hal-file-monitor.h
 
 if HAVE_CONKIT
 hald_SOURCES += ck-tracker.h ck-tracker.c

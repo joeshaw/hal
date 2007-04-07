@@ -62,6 +62,13 @@ static HFHandler *handlers[] = {
   &hf_devd_handler
 };
 
+HalFileMonitor *
+osspec_get_file_monitor (void)
+{
+#warning Please implement
+        return NULL;
+}
+
 void
 osspec_privileged_init (void)
 {

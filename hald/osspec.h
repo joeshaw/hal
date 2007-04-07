@@ -31,6 +31,7 @@
 #include <dbus/dbus.h>
 
 #include "device.h"
+#include "hal-file-monitor.h"
 
 /** Initialize the kernel specific parts of the daemon, as root */
 void osspec_privileged_init (void);
@@ -63,5 +64,7 @@ void osspec_fdi_cache_invalid (void);
  *  @return                     What to do with the message
  */
 DBusHandlerResult osspec_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data);
+
+HalFileMonitor *osspec_get_file_monitor (void);
 
 #endif /* OSSPEC_H */

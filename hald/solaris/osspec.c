@@ -41,6 +41,13 @@
 static void mnttab_event_init ();
 static gboolean mnttab_event (GIOChannel *channel, GIOCondition cond, gpointer user_data);
 
+HalFileMonitor *
+osspec_get_file_monitor (void)
+{
+#warning Please implement
+        return NULL;
+}
+
 void
 osspec_init (void)
 {
