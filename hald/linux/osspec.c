@@ -56,8 +56,6 @@
 #include "../util.h"
 #include "../ids.h"
 
-#include "hal-file-monitor.h"
-
 #include "acpi.h"
 #include "apm.h"
 #include "blockdev.h"
