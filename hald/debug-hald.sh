@@ -31,7 +31,7 @@ export HAL_FDI_SOURCE_PREPROBE=$HALD_TMPDIR/share/hal/fdi/preprobe
 export HAL_FDI_SOURCE_INFORMATION=$HALD_TMPDIR/share/hal/fdi/information
 export HAL_FDI_SOURCE_POLICY=$HALD_TMPDIR/share/hal/fdi/policy
 export HAL_FDI_CACHE_NAME=$HALD_TMPDIR/hald-local-fdi-cache
-export POLKIT_PRIVILEGE_DIR=$HALD_TMPDIR/etc/PolicyKit/privileges
+export POLKIT_POLICY_DIR=$HALD_TMPDIR/etc/PolicyKit/policy
 
 echo ========================================
 echo Just type \'run\' to start debugging hald

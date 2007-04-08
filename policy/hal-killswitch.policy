@@ -1,6 +1,6 @@
 # -*- Conf -*-
 #
-# Privilege definitions for HAL's RF kill switching mechanism.
+# Policy definitions for HAL's RF kill switching mechanism.
 #
 # Copyright (c) 2007 David Zeuthen <david@fubar.dk>
 # 
@@ -14,14 +14,14 @@
 # to this file are applied instantly.
 
 # Turn Bluetooth radio on/off
-[Privilege hal-killswitch-bluetooth]
+[Action hal-killswitch-bluetooth]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Turn Wireless 802.11 radio on/off
-[Privilege hal-killswitch-wlan]
+[Action hal-killswitch-wlan]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no

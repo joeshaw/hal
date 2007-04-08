@@ -437,9 +437,9 @@ if test "x$enable_policy_kit" != "xno"; then
       AC_MSG_ERROR([PolicyKit not explicitly disabled and no PolicyKit found])
    fi
 
-   AC_CHECK_PROG(POLKIT_PRIVILEGE_FILE_VALIDATE, polkit-privilege-file-validate, polkit-privilege-file-validate)
-   if test -z "$POLKIT_PRIVILEGE_FILE_VALIDATE"; then
-      AC_MSG_ERROR([polkit-privilege-file-validate not found])
+   AC_CHECK_PROG(POLKIT_POLICY_FILE_VALIDATE, polkit-policy-file-validate, polkit-policy-file-validate)
+   if test -z "$POLKIT_POLICY_FILE_VALIDATE"; then
+      AC_MSG_ERROR([polkit-policy-file-validate not found])
    fi
 fi
 
@@ -837,7 +837,7 @@ tools/Makefile
 tools/freebsd/Makefile
 tools/linux/Makefile
 partutil/Makefile
-privileges/Makefile
+policy/Makefile
 fdi/Makefile
 fdi/information/Makefile
 fdi/information/10freedesktop/Makefile

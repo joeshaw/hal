@@ -1,0 +1,63 @@
+# -*- Conf -*-
+#
+# Policy definitions for HAL's drives/media mechanims.
+#
+# Copyright (c) 2007 David Zeuthen <david@fubar.dk>
+# 
+# HAL is licensed to you under your choice of the the Academic Free
+# License Version 2.1, or the GNU General Public License version
+# 2. Some individual source files may be under the GPL only. See
+# COPYING for details.
+#
+# NOTE: If you make changes to this file, make sure to validate the
+# file using the polkit-privilege-file-validate(1) tool. Changes made
+# to this file are instantly applied.
+
+# Mount file systems from internal drives
+[Action hal-storage-mount-fixed]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_self_keep_always
+
+# Mount file systems from internal drives using options not explicitly granted
+[Action hal-storage-mount-fixed-extra-options]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_self_keep_always
+
+# Mount file systems from removable/hotpluggable drives
+[Action hal-storage-mount-removable]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Mount file systems from internal drives using options not explicitly granted
+[Action hal-storage-mount-removable-extra-options]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_self_keep_always
+
+# Unmount file systems mounted by other users
+[Action hal-storage-unmount-others]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_self_keep_always
+
+# Eject media from drives
+[Action hal-storage-eject]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Set up decryption for encrypted storage devices
+[Action hal-storage-crypto-setup]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes

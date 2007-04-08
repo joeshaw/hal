@@ -1,6 +1,6 @@
 # -*- Conf -*-
 #
-# Privilege definitions for HAL's drives/media mechanims.
+# Policy definitions for HAL's ACL management mechanism.
 #
 # Copyright (c) 2007 David Zeuthen <david@fubar.dk>
 # 
@@ -11,52 +11,59 @@
 #
 # NOTE: If you make changes to this file, make sure to validate the
 # file using the polkit-privilege-file-validate(1) tool. Changes made
-# to this file are instantly applied.
+# to this file are applied instantly.
 
-# Mount file systems from internal drives
-[Privilege hal-storage-mount-fixed]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
-
-# Mount file systems from internal drives using options not explicitly granted
-[Privilege hal-storage-mount-fixed-extra-options]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
-
-# Mount file systems from removable/hotpluggable drives
-[Privilege hal-storage-mount-removable]
+# Directly access sound devices
+[Action hal-device-file-sound]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Mount file systems from internal drives using options not explicitly granted
-[Privilege hal-storage-mount-removable-extra-options]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
-
-# Unmount file systems mounted by other users
-[Privilege hal-storage-unmount-others]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
-
-# Eject media from drives
-[Privilege hal-storage-eject]
+# Directly access video4linux devices
+[Action hal-device-file-video4linux]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Set up decryption for encrypted storage devices
-[Privilege hal-storage-crypto-setup]
+# Directly access optical drives
+[Action hal-device-file-cdrom]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=yes
+AllowLocalActive=yes
+
+# Directly access DVB devices
+[Action hal-device-file-dvb]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access digital cameras
+[Action hal-device-file-camera]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access scanners
+[Action hal-device-file-scanner]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access Firewire IIDC devices
+[Action hal-device-file-ieee1394-iidc]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Directly access Firewire AVC devices
+[Action hal-device-file-ieee1394-avc]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no

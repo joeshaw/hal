@@ -256,7 +256,7 @@ access_check_caller_have_access_to_device (CITracker *cit,
 #ifdef HAVE_POLKIT
         PolKitCaller *pk_caller = NULL;
         PolKitResource *pk_resource = NULL;
-        PolKitPrivilege *pk_privilege = NULL;
+        PolKitAction *pk_action = NULL;
         PolKitResult pk_result;
 #endif
 
@@ -304,11 +304,11 @@ access_check_caller_have_access_to_device (CITracker *cit,
         libpolkit_resource_set_resource_type (pk_resource, "hal");
         libpolkit_resource_set_resource_id (pk_resource, hal_device_get_udi (device));
 
-        pk_privilege = libpolkit_privilege_new ();
-        libpolkit_privilege_set_privilege_id (pk_privilege, privilege);
+        pk_action = libpolkit_action_new ();
+        libpolkit_action_set_action_id (pk_action, privilege);
 
         pk_result = libpolkit_context_can_caller_access_resource (pk_context,
-                                                                  pk_privilege,
+                                                                  pk_action,
                                                                   pk_resource,
                                                                   pk_caller);
 
@@ -339,8 +339,8 @@ out:
                 libpolkit_caller_unref (pk_caller);
         if (pk_resource != NULL)
                 libpolkit_resource_unref (pk_resource);
-        if (pk_privilege != NULL)
-                libpolkit_privilege_unref (pk_privilege);
+        if (pk_action != NULL)
+                libpolkit_action_unref (pk_action);
 #endif
         return ret;
 }

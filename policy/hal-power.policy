@@ -1,6 +1,6 @@
 # -*- Conf -*-
 #
-# Privilege definitions for HAL's ACL management mechanism.
+# Policy definitions for HAL's power management mechanisms.
 #
 # Copyright (c) 2007 David Zeuthen <david@fubar.dk>
 # 
@@ -13,57 +13,78 @@
 # file using the polkit-privilege-file-validate(1) tool. Changes made
 # to this file are applied instantly.
 
-# Directly access sound devices
-[Privilege hal-device-file-sound]
+# Shutdown the computer
+[Action hal-power-shutdown]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Directly access video4linux devices
-[Privilege hal-device-file-video4linux]
+# Shutdown computer when multiple users are logged in
+[Action hal-power-shutdown-multiple-sessions]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=auth_root
+
+# Reboot the computer
+[Action hal-power-reboot]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Directly access optical drives
-[Privilege hal-device-file-cdrom]
+# Reboot the computer when multiple users are logged in
+[Action hal-power-reboot-multiple-sessions]
 AllowRemoteInactive=no
 AllowRemoteActive=no
-AllowLocalInactive=yes
-AllowLocalActive=yes
+AllowLocalInactive=no
+AllowLocalActive=auth_root
 
-# Directly access DVB devices
-[Privilege hal-device-file-dvb]
+# Configure the system to prefer power savings
+[Action hal-power-set-powersave]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Directly access digital cameras
-[Privilege hal-device-file-camera]
+# Suspend the system
+[Action hal-power-suspend]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Directly access scanners
-[Privilege hal-device-file-scanner]
+# Hibernate the system
+[Action hal-power-hibernate]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Directly access Firewire IIDC devices
-[Privilege hal-device-file-ieee1394-iidc]
+# Configure CPU frequency scaling
+[Action hal-power-cpufreq]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no
 AllowLocalActive=yes
 
-# Directly access Firewire AVC devices
-[Privilege hal-device-file-ieee1394-avc]
+# Set laptop panel brightness
+[Action hal-power-lcd-panel]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Read values from ambient light sensor
+[Action hal-power-light-sensor]
+AllowRemoteInactive=no
+AllowRemoteActive=no
+AllowLocalInactive=no
+AllowLocalActive=yes
+
+# Set the keyboard backlight
+[Action hal-power-keyboard-backlight]
 AllowRemoteInactive=no
 AllowRemoteActive=no
 AllowLocalInactive=no

@@ -621,7 +621,7 @@ acl_device_added_visitor (const char *seat_id,
                 PolKitSeat *pk_seat;
                 PolKitSession *pk_session;
                 PolKitResource *pk_resource;
-                PolKitPrivilege *pk_privilege;
+                PolKitAction *pk_action;
                 char *priv_name;
 
 		if (session_id == NULL) {
@@ -651,21 +651,21 @@ acl_device_added_visitor (const char *seat_id,
                 libpolkit_resource_set_resource_type (pk_resource, "hal");
                 libpolkit_resource_set_resource_id (pk_resource, afd->udi);
 
-                pk_privilege = libpolkit_privilege_new();
+                pk_action = libpolkit_action_new();
                 priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
-                libpolkit_privilege_set_privilege_id (pk_privilege, priv_name);
+                libpolkit_action_set_action_id (pk_action, priv_name);
                 g_free (priv_name);
 
                 /* Now ask PolicyKit if the given session should have access */
                 pk_result = libpolkit_context_can_session_access_resource (pk_context, 
-                                                                           pk_privilege,
+                                                                           pk_action,
                                                                            pk_resource,
                                                                            pk_session);
                 if (pk_result == LIBPOLKIT_RESULT_YES) {
 			afd_grant_to_uid (afd, session_uid);
                 }
 
-                libpolkit_privilege_unref (pk_privilege);
+                libpolkit_action_unref (pk_action);
                 libpolkit_resource_unref (pk_resource);
                 libpolkit_session_unref (pk_session);
 	}
