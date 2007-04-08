@@ -115,15 +115,19 @@ out:
 static PolKitSeat *
 get_pk_seat_from_ck_seat (CKSeat *seat)
 {
+        char *str;
         PolKitSeat *pk_seat;
         pk_seat = libpolkit_seat_new ();
-        libpolkit_seat_set_ck_objref (pk_seat, ck_seat_get_id (seat));
+        str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_seat_get_id (seat));
+        libpolkit_seat_set_ck_objref (pk_seat, str);
+        g_free (str);
         return pk_seat;
 }
 
 static PolKitSession *
 get_pk_session_from_ck_session (CKSession *session)
 {
+        char *str;
         CKSeat *seat;
         PolKitSeat *pk_seat;
         PolKitSession *pk_session;
@@ -140,7 +144,9 @@ get_pk_session_from_ck_session (CKSession *session)
                 libpolkit_session_set_seat (pk_session, pk_seat);
                 libpolkit_seat_unref (pk_seat);
         }
-        libpolkit_session_set_ck_objref (pk_session, ck_session_get_id (session));
+        str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_session_get_id (session));
+        libpolkit_session_set_ck_objref (pk_session, str);
+        g_free (str);
         libpolkit_session_set_uid (pk_session, ck_session_get_user (session));
         libpolkit_session_set_ck_is_active (pk_session, ck_session_is_active (session));
         libpolkit_session_set_ck_is_local (pk_session, ck_session_is_local (session));
