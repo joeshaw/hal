@@ -657,10 +657,10 @@ acl_device_added_visitor (const char *seat_id,
                 g_free (priv_name);
 
                 /* Now ask PolicyKit if the given session should have access */
-                pk_result = libpolkit_can_session_access_resource (pk_context, 
-                                                                   pk_privilege,
-                                                                   pk_resource,
-                                                                   pk_session);
+                pk_result = libpolkit_context_can_session_access_resource (pk_context, 
+                                                                           pk_privilege,
+                                                                           pk_resource,
+                                                                           pk_session);
                 if (pk_result == LIBPOLKIT_RESULT_YES) {
 			afd_grant_to_uid (afd, session_uid);
                 }

@@ -301,10 +301,10 @@ access_check_caller_have_access_to_device (CITracker *cit,
         pk_privilege = libpolkit_privilege_new ();
         libpolkit_privilege_set_privilege_id (pk_privilege, privilege);
 
-        pk_result = libpolkit_can_caller_access_resource (pk_context,
-                                                          pk_privilege,
-                                                          pk_resource,
-                                                          pk_caller);
+        pk_result = libpolkit_context_can_caller_access_resource (pk_context,
+                                                                  pk_privilege,
+                                                                  pk_resource,
+                                                                  pk_caller);
 
         if (polkit_result_out != NULL)
                 *polkit_result_out = pk_result;
