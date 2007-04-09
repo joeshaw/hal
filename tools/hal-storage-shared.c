@@ -419,21 +419,22 @@ line_found:
 	 * We allow uid 0 to actually ensure that Unmount(options=["lazy"], "/dev/blah") works from addon-storage.
 	 */
 	if ((strcmp (invoked_by_uid, "0") != 0) && mounted_by_other_uid) {
-                const char *privilege = "hal-storage-unmount-others";
+                const char *action = "hal-storage-unmount-others";
 #ifdef HAVE_POLKIT
                 if (invoked_by_syscon_name != NULL) {
                         char *polkit_result;
                         dbus_error_init (&error);
                         polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                                             udi,
-                                                                            privilege,
+                                                                            action,
+                                                                            NULL, /* TODO: FIXME: */
                                                                             invoked_by_syscon_name,
                                                                             &error);
                         if (polkit_result == NULL){
                                 unknown_error ("IsCallerPrivileged() failed");
                         }
                         if (strcmp (polkit_result, "yes") != 0) {
-                                permission_denied_privilege (privilege, polkit_result);
+                                permission_denied_privilege (action, polkit_result);
                         }
                         libhal_free_string (polkit_result);
                 }
@@ -594,18 +595,19 @@ try_open_excl_again:
 #ifdef HAVE_POLKIT
         if (invoked_by_syscon_name != NULL) {
                 char *polkit_result;
-                const char *privilege = "hal-storage-eject";
+                const char *action = "hal-storage-eject";
                 dbus_error_init (&error);
                 polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                                     udi,
-                                                                    privilege,
+                                                                    action,
+                                                                    NULL,
                                                                     invoked_by_syscon_name,
                                                                     &error);
                 if (polkit_result == NULL){
                         unknown_error ("IsCallerPrivileged() failed");
                 }
                 if (strcmp (polkit_result, "yes") != 0) {
-                        permission_denied_privilege (privilege, polkit_result);
+                        permission_denied_privilege (action, polkit_result);
                 }
                 libhal_free_string (polkit_result);
         }

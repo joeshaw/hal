@@ -14,6 +14,8 @@
 # to this file are applied instantly.
 
 # Directly access sound devices
+#
+#  device-file: special device file
 [Action hal-device-file-sound]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -21,6 +23,8 @@ AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Directly access video4linux devices
+#
+#  device-file: special device file
 [Action hal-device-file-video4linux]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -28,6 +32,8 @@ AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Directly access optical drives
+#
+#  device-file: special device file
 [Action hal-device-file-cdrom]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -35,6 +41,8 @@ AllowLocalInactive=yes
 AllowLocalActive=yes
 
 # Directly access DVB devices
+#
+#  device-file: special device file
 [Action hal-device-file-dvb]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -42,6 +50,8 @@ AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Directly access digital cameras
+#
+#  device-file: special device file
 [Action hal-device-file-camera]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -49,6 +59,8 @@ AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Directly access scanners
+#
+#  device-file: special device file
 [Action hal-device-file-scanner]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -56,6 +68,8 @@ AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Directly access Firewire IIDC devices
+#
+#  device-file: special device file
 [Action hal-device-file-ieee1394-iidc]
 AllowRemoteInactive=no
 AllowRemoteActive=no
@@ -63,6 +77,8 @@ AllowLocalInactive=no
 AllowLocalActive=yes
 
 # Directly access Firewire AVC devices
+#
+#  device-file: special device file
 [Action hal-device-file-ieee1394-avc]
 AllowRemoteInactive=no
 AllowRemoteActive=no

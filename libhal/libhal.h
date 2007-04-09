@@ -716,7 +716,8 @@ dbus_bool_t libhal_device_is_locked_by_others (LibHalContext *ctx,
 /* Determine if a given caller is privileged (requires HAL to be built with PolicyKit support) */
 char* libhal_device_is_caller_privileged (LibHalContext *ctx,
                                           const char *udi,
-                                          const char *privilege,
+                                          const char *action,
+                                          char **action_parameters,
                                           const char *caller,
                                           DBusError *error);
 

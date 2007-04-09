@@ -142,10 +142,10 @@ cannot_remount (const char *device)
 
 #ifdef HAVE_POLKIT
 static void
-permission_denied_privilege (const char *privilege, const char *result)
+permission_denied_action (const char *action, const char *result)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.PermissionDeniedByPolicy\n");
-	fprintf (stderr, "%s %s <-- (privilege, result)\n", privilege, result);
+	fprintf (stderr, "%s %s <-- (action, result)\n", action, result);
 	exit (1);
 }
 #endif
@@ -462,7 +462,7 @@ handle_mount (LibHalContext *hal_ctx,
 	GString *mount_option_str;
 	gboolean pol_is_fixed;
 	gboolean pol_change_uid;
-	char *privilege;
+	char *action;
 	gboolean is_remount;
 	gboolean explicit_mount_point_given;
 	const char *end;
@@ -728,71 +728,6 @@ handle_mount (LibHalContext *hal_ctx,
 		}
 	}
 
-	if (pol_is_fixed) {
-		if (pol_change_uid) {
-			privilege = "hal-storage-mount-fixed-extra-options";
-		} else {
-			privilege = "hal-storage-mount-fixed";
-		}
-	} else {
-		if (pol_change_uid) {
-			privilege = "hal-storage-mount-removable-extra-options"; /* TODO: rethink "extra-options" */
-		} else {
-			privilege = "hal-storage-mount-removable";
-		}
-	}
-
-#ifdef DEBUG
-	printf ("using privilege %s for uid %s, system_bus_connection %s\n", privilege, invoked_by_uid, 
-		invoked_by_syscon_name);
-#endif
-
-#ifdef HAVE_POLKIT
-        if (invoked_by_syscon_name != NULL) {
-                char *polkit_result;
-                dbus_error_init (&error);
-                polkit_result = libhal_device_is_caller_privileged (hal_ctx,
-                                                                    udi,
-                                                                    privilege,
-                                                                    invoked_by_syscon_name,
-                                                                    &error);
-                if (polkit_result == NULL){
-                        unknown_error ("IsCallerPrivileged() failed");
-                }
-                if (strcmp (polkit_result, "yes") != 0) {
-                        permission_denied_privilege (privilege, polkit_result);
-                }
-                libhal_free_string (polkit_result);
-        }
-#endif
-
-#ifdef DEBUG
-	printf ("passed privilege\n");
-#endif
-
-	if (!is_remount) {
-		/* create directory */
-		if (g_mkdir (mount_dir, 0700) != 0) {
-			printf ("Cannot create '%s'\n", mount_dir);
-			unknown_error ("Cannot create mount directory");
-		}
-		
-#ifdef __FreeBSD__
-		calling_uid = (uid_t) strtol (invoked_by_uid, (char **) NULL, 10);
-		pw = getpwuid (calling_uid);
-		if (pw != NULL) {
-			calling_gid = pw->pw_gid;
-		} else {
-			calling_gid = 0;
-		}
-		if (chown (mount_dir, calling_uid, calling_gid) != 0) {
-			printf ("Cannot chown '%s' to uid: %d, gid: %d\n", mount_dir,
-				calling_uid, calling_gid);
-			g_rmdir (mount_dir);
-			unknown_error ("Failed to chown mount directory");
-		}
-#endif
-	}
 
 	char *mount_option_commasep = NULL;
 	char *mount_do_fstype = "auto";
@@ -826,6 +761,84 @@ handle_mount (LibHalContext *hal_ctx,
 	args[na++] = (char *) device;
 	args[na++] = mount_dir;
 	args[na++] = NULL;
+
+	if (pol_is_fixed) {
+		if (pol_change_uid) {
+			action = "hal-storage-mount-fixed-extra-options";
+		} else {
+			action = "hal-storage-mount-fixed";
+		}
+	} else {
+		if (pol_change_uid) {
+			action = "hal-storage-mount-removable-extra-options"; /* TODO: rethink "extra-options" */
+		} else {
+			action = "hal-storage-mount-removable";
+		}
+	}
+
+#ifdef DEBUG
+	printf ("using action %s for uid %s, system_bus_connection %s\n", action, invoked_by_uid, 
+		invoked_by_syscon_name);
+#endif
+
+#ifdef HAVE_POLKIT
+        if (invoked_by_syscon_name != NULL) {
+                char *polkit_result;
+                char *action_params[] = {
+                        "fstype", "",
+                        "mount-point", "",
+                        "mount-options", "",
+                        NULL};
+
+                action_params[1] = mount_do_fstype;
+                action_params[3] = mount_dir;
+                action_params[5] = mount_option_commasep;
+
+                dbus_error_init (&error);
+                polkit_result = libhal_device_is_caller_privileged (hal_ctx,
+                                                                    udi,
+                                                                    action,
+                                                                    action_params,
+                                                                    invoked_by_syscon_name,
+                                                                    &error);
+                if (polkit_result == NULL){
+                        unknown_error ("IsCallerPrivileged() failed");
+                }
+                if (strcmp (polkit_result, "yes") != 0) {
+                        permission_denied_action (action, polkit_result);
+                }
+                libhal_free_string (polkit_result);
+        }
+#endif
+
+#ifdef DEBUG
+	printf ("passed privilege\n");
+#endif
+
+	if (!is_remount) {
+		/* create directory */
+		if (g_mkdir (mount_dir, 0700) != 0) {
+			printf ("Cannot create '%s'\n", mount_dir);
+			unknown_error ("Cannot create mount directory");
+		}
+		
+#ifdef __FreeBSD__
+		calling_uid = (uid_t) strtol (invoked_by_uid, (char **) NULL, 10);
+		pw = getpwuid (calling_uid);
+		if (pw != NULL) {
+			calling_gid = pw->pw_gid;
+		} else {
+			calling_gid = 0;
+		}
+		if (chown (mount_dir, calling_uid, calling_gid) != 0) {
+			printf ("Cannot chown '%s' to uid: %d, gid: %d\n", mount_dir,
+				calling_uid, calling_gid);
+			g_rmdir (mount_dir);
+			unknown_error ("Failed to chown mount directory");
+		}
+#endif
+	}
+
 
 	/* TODO FIXME XXX HACK: OK, so we should rewrite the options in /media/.hal-mtab .. 
 	 *                      but it doesn't really matter much at this point */

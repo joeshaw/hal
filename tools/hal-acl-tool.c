@@ -654,6 +654,7 @@ acl_device_added_visitor (const char *seat_id,
                 pk_action = libpolkit_action_new();
                 priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
                 libpolkit_action_set_action_id (pk_action, priv_name);
+                libpolkit_action_set_param (pk_action, "device-file", afd->device);
                 g_free (priv_name);
 
                 /* Now ask PolicyKit if the given session should have access */

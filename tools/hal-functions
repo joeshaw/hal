@@ -5,11 +5,11 @@
 
 hal_check_priv() {
     if [ "$HAVE_POLKIT" = "1" -a -n $HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME ]; then
-        local PRIVILEGE
+        local ACTION
         local PK_RESULT
         local RET
-        PRIVILEGE=$1
-        PK_RESULT=`hal-is-caller-privileged --udi $UDI --privilege $PRIVILEGE \
+        ACTION=$1
+        PK_RESULT=`hal-is-caller-privileged --udi $UDI --action $ACTION \
             --caller $HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME`
         RET=$?
         if [ "$RET" != "0" ]; then
@@ -19,7 +19,7 @@ hal_check_priv() {
         fi
         if [ "$PK_RESULT" != "yes" ] ;then
             echo "org.freedesktop.Hal.Device.PermissionDeniedByPolicy" >&2
-            echo "$PRIVILEGE $PK_RESULT <-- (privilege, result)" >&2
+            echo "$ACTION $PK_RESULT <-- (action, result)" >&2
             exit 1
         fi
     fi

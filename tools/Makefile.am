@@ -66,7 +66,7 @@ hal_disable_polling_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libha
 
 if HAVE_POLKIT
 hal_is_caller_privileged_SOURCES = hal-is-caller-privileged.c
-hal_is_caller_privileged_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+hal_is_caller_privileged_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 endif
 
 libexec_PROGRAMS =                          \

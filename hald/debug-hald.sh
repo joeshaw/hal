@@ -17,8 +17,7 @@ if [ "$1" = "--skip-fdi-install" ] ; then
 else
     rm -rf $HALD_TMPDIR
     mkdir -p $HALD_TMPDIR
-    make -C ../privileges install DESTDIR=$HALD_TMPDIR prefix=/
-
+    make -C ../policy install DESTDIR=$HALD_TMPDIR prefix=/
     make -C ../fdi install DESTDIR=$HALD_TMPDIR prefix=/ && \
     if [ ! -d $information_fdidir ] ; then
     	echo "ERROR: You need to checkout hal-info in the same level"

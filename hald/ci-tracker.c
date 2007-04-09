@@ -41,6 +41,97 @@
 #include "logger.h"
 #include "ci-tracker.h"
 
+/* ripped from dbus/dbus-marshal-validate.c and adapted */
+
+/**
+ * Determine wether the given character is valid as the first character
+ * in a bus name.
+ */
+#define VALID_INITIAL_BUS_NAME_CHARACTER(c)         \
+  ( ((c) >= 'A' && (c) <= 'Z') ||               \
+    ((c) >= 'a' && (c) <= 'z') ||               \
+    ((c) == '_') || ((c) == '-'))
+
+
+/**
+ * Determine wether the given character is valid as a second or later
+ * character in a bus name
+ */
+#define VALID_BUS_NAME_CHARACTER(c)                 \
+  ( ((c) >= '0' && (c) <= '9') ||               \
+    ((c) >= 'A' && (c) <= 'Z') ||               \
+    ((c) >= 'a' && (c) <= 'z') ||               \
+    ((c) == '_') || ((c) == '-'))
+
+static gboolean
+validate_bus_name (const char *name)
+{
+        int len;
+        const char *s;
+        const char *end;
+        const char *last_dot;
+        gboolean ret;
+
+        s = name;
+        len = strlen (name);
+        end = name + len;
+        last_dot = NULL;
+
+        ret = FALSE;
+
+        /* check special cases of first char so it doesn't have to be done
+         * in the loop. Note we know len > 0
+         */
+        if (*s == ':') {
+                /* unique name */
+                ++s;
+                while (s != end) {
+                        if (*s == '.') {
+                                if (G_UNLIKELY ((s + 1) == end))
+                                        goto error;
+                                if (G_UNLIKELY (!VALID_BUS_NAME_CHARACTER (*(s + 1))))
+                                        goto error;
+                                ++s; /* we just validated the next char, so skip two */
+                        } else if (G_UNLIKELY (!VALID_BUS_NAME_CHARACTER (*s))) {
+                                goto error;
+                        }
+                        ++s;
+                }
+                return TRUE;
+        } else if (G_UNLIKELY (*s == '.')) /* disallow starting with a . */ {
+                goto error;
+        } else if (G_UNLIKELY (!VALID_INITIAL_BUS_NAME_CHARACTER (*s))) {
+                goto error;
+        } else {
+                ++s;
+        }
+        
+        while (s != end) {
+                if (*s == '.') {
+                        if (G_UNLIKELY ((s + 1) == end))
+                                goto error;
+                        else if (G_UNLIKELY (!VALID_INITIAL_BUS_NAME_CHARACTER (*(s + 1))))
+                                goto error;
+                        last_dot = s;
+                        ++s; /* we just validated the next char, so skip two */
+                } else if (G_UNLIKELY (!VALID_BUS_NAME_CHARACTER (*s))) {
+                        goto error;
+                }
+                ++s;
+        }
+        
+        if (G_UNLIKELY (last_dot == NULL))
+                goto error;
+
+        ret = TRUE;
+
+error:
+        if (!ret)
+                HAL_INFO (("name '%s' did not validate", name));
+        return ret;
+}
+
+
 struct CITracker_s {
         GHashTable *connection_name_to_caller_info;
         DBusConnection *dbus_connection;
@@ -184,6 +275,9 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 	
 	if (system_bus_unique_name == NULL)
 		goto error;
+
+        if (!validate_bus_name (system_bus_unique_name))
+                goto error;
 
 	/*HAL_INFO (("========================="));
 	  HAL_INFO (("Looking up CICallerInfo for system_bus_unique_name = %s", system_bus_unique_name));*/

@@ -933,6 +933,7 @@ dbus_is_privileged (DBusConnection *connection, DBusMessage *message, DBusError 
         polkit_result = libhal_device_is_caller_privileged (halctx,
                                                             udi,
                                                             CPUFREQ_POLKIT_PRIVILEGE,
+                                                            NULL,
                                                             invoked_by_syscon_name,
                                                             error);
         if (polkit_result == NULL) {
@@ -944,7 +945,7 @@ dbus_is_privileged (DBusConnection *connection, DBusMessage *message, DBusError 
 
 		dbus_raise_error (connection, message, 
                                   "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
-                                  "%s %s <-- (privilege, result)",
+                                  "%s %s <-- (action, result)",
                                   CPUFREQ_POLKIT_PRIVILEGE, polkit_result);
                 goto out;
         }

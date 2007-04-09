@@ -120,7 +120,7 @@ write_backlight (u32 newBacklightValue, dbus_bool_t onAC)
 }
 
 static gboolean
-check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, const char *privilege)
+check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, const char *action)
 #ifdef HAVE_POLKIT
 {
         gboolean ret;
@@ -137,14 +137,15 @@ check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, c
         dbus_error_init (&error);
         polkit_result = libhal_device_is_caller_privileged (halctx,
                                                             udi,
-                                                            privilege,
+                                                            action,
+                                                            NULL,
                                                             invoked_by_syscon_name,
                                                             &error);
         if (polkit_result == NULL) {
                 reply = dbus_message_new_error_printf (message,
                                                        "org.freedesktop.Hal.Device.Error",
                                                        "Cannot determine if caller is privileged",
-                                                       privilege, polkit_result);
+                                                       action, polkit_result);
                 dbus_connection_send (connection, reply, NULL);
                 goto out;
         }
@@ -152,8 +153,8 @@ check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, c
 
                 reply = dbus_message_new_error_printf (message,
                                                        "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
-                                                       "%s %s <-- (privilege, result)",
-                                                       privilege, polkit_result);
+                                                       "%s %s <-- (action, result)",
+                                                       action, polkit_result);
                 dbus_connection_send (connection, reply, NULL);
                 goto out;
         }
