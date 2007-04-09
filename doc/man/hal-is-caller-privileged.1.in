@@ -12,10 +12,10 @@ hal-is-caller-privileged \- determine if a caller is privileged
 
 .SH DESCRIPTION
 
-\fIhal-is-caller-privileged\fP determines if a specific caller has
-a given 
+\fIhal-is-caller-privileged\fP determines if a specific caller is
+privileged for a given
 .B PolicyKit
-privilege on given device. For
+action on given device. For
 more information about both the big picture,
 .B HAL
 and
@@ -32,8 +32,11 @@ The following options are supported:
 .I "--udi"
 The UDI (\fIUnique Device Identifier\fP) of the device object.
 .TP
-.I "--privilege"
-The name of the privilege to check for.
+.I "--action"
+PolicyKit action to check for.
+.TP
+.I "--action-param <key>=<value>"
+Append parameters to action. This option may occur multiple times.
 .TP
 .I "--caller"
 The unique D-Bus name on the system bus of the caller.
