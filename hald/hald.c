@@ -409,7 +409,7 @@ _polkit_fm_notify_func (HalFileMonitor      *monitor,
         }
 }
 
-static unsigned int
+static int
 _polkit_fm_add_watch (PolKitContext                     *pk_context,
                       const char                        *path,
                       PolKitContextFileMonitorEvent      event_mask,
@@ -442,12 +442,12 @@ _polkit_fm_add_watch (PolKitContext                     *pk_context,
         }
 
 out:
-        return ret;
+        return (int) ret;
 }
 
 static void 
 _polkit_fm_remove_watch (PolKitContext *pk_context,
-                         unsigned int   watch_id)
+                         int   watch_id)
 {
         HalFileMonitor *file_monitor;
 
@@ -455,7 +455,7 @@ _polkit_fm_remove_watch (PolKitContext *pk_context,
         if (file_monitor == NULL)
                 goto out;
 
-        hal_file_monitor_remove_notify (file_monitor, watch_id);
+        hal_file_monitor_remove_notify (file_monitor, (guint) watch_id);
 
 out:
         ;
@@ -509,7 +509,7 @@ main (int argc, char *argv[])
 	guint sigterm_iochn_listener_source_id;
 	char *path;
 	char newpath[512];
-        GError *g_error;
+        PolKitError *p_error;
 
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
@@ -746,7 +746,7 @@ main (int argc, char *argv[])
 	osspec_privileged_init ();
 
 #ifdef HAVE_POLKIT
-        g_error = NULL;
+        p_error = NULL;
         pk_context = libpolkit_context_new ();
         if (pk_context == NULL)
                 DIE (("Could not create PolicyKit context"));
@@ -756,8 +756,8 @@ main (int argc, char *argv[])
         libpolkit_context_set_file_monitor (pk_context, 
                                             _polkit_fm_add_watch,
                                             _polkit_fm_remove_watch);
-        if (!libpolkit_context_init (pk_context, &g_error))
-                DIE (("Could not init PolicyKit context: %s", g_error->message));
+        if (!libpolkit_context_init (pk_context, &p_error))
+                DIE (("Could not init PolicyKit context: %s", polkit_error_get_error_message (p_error)));
 #endif
 
 	/* sometimes we don't want to drop root privs, for instance
