@@ -105,10 +105,10 @@ regen_cache_cb (HalDevice *d,
 	HAL_INFO (("In regen_cache_cb exit_type=%d, return_code=%d", exit_type, return_code));
 
 	/* see create_cache.c - rc==0 means success - rc==2 means "success, but some fdi files skipped" */
-	if (exit_type != HALD_RUN_SUCCESS || return_code != 0 || return_code != 2) {
-		regen_cache_success = FALSE;
-	} else {
+	if (exit_type == HALD_RUN_SUCCESS && ( return_code == 0 || return_code == 2)) {
 		regen_cache_success = TRUE;
+	} else {
+		regen_cache_success = FALSE;
 	}
 
 	regen_cache_done = TRUE;
