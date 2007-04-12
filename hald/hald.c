@@ -30,6 +30,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef HAVE_MALLOPT
+#include <malloc.h>
+#endif
+
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -43,7 +48,6 @@
 #include <syslog.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <malloc.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
