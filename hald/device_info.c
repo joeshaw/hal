@@ -447,27 +447,28 @@ handle_match (struct rule *rule, HalDevice *d)
 	{
 		dbus_bool_t contains = FALSE;
 
-		if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
-			if (hal_device_has_property (d, prop_to_check)) {
+		if (hal_device_has_property (d, prop_to_check) && value != NULL) {
+
+			if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
 				const char *haystack;
 
 				haystack = hal_device_property_get_string (d, prop_to_check);
-				if (value != NULL && haystack != NULL &&  (strstr(haystack, value) != NULL))
+				if (haystack != NULL &&  (strstr(haystack, value) != NULL))
 					contains = TRUE;
-			}
-		} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST && value != NULL) {
-			HalDeviceStrListIter iter;
-			for (hal_device_property_strlist_iter_init (d, prop_to_check, &iter);
-			     hal_device_property_strlist_iter_is_valid (&iter);
-			     hal_device_property_strlist_iter_next (&iter)) {
-				const char *str = hal_device_property_strlist_iter_get_value (&iter);
-				if (strcmp (str, value) == 0) {
-					contains = TRUE;
-					break;
+			} else if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRLIST) {
+				HalDeviceStrListIter iter;
+				for (hal_device_property_strlist_iter_init (d, prop_to_check, &iter);
+				     hal_device_property_strlist_iter_is_valid (&iter);
+				     hal_device_property_strlist_iter_next (&iter)) {
+					const char *str = hal_device_property_strlist_iter_get_value (&iter);
+					if (strcmp (str, value) == 0) {
+						contains = TRUE;
+						break;
+					}
 				}
+			} else {
+				return FALSE;
 			}
-		} else {
-			return FALSE;
 		}
 	
 		if (rule->type_match == MATCH_CONTAINS) {	

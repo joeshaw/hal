@@ -156,10 +156,10 @@
           <para>
             <literal>contains_not</literal> - can only be used with strlist (string list) 
 	    and string properties.
-            For a string list this match if the given string is not match any of the
-            item of the list for a string this match of the property not contains the
-	    (sub-)string. You can use this attribute to construct if/else blocks together 
-	    with e.g. <literal>contains</literal>.
+            For a string list this match if the given string not match any of the
+            item of the list (or the property is not set for the device). For a string  
+	    this match of the property not contains the (sub-)string. You can use this 
+	    attribute to construct if/else blocks together with e.g. <literal>contains</literal>.
           </para>
         </listitem>
         <listitem>
