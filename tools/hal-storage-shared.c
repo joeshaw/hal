@@ -439,7 +439,7 @@ line_found:
                         libhal_free_string (polkit_result);
                 }
 #else
-                permission_denied_privilege (privilege, "no");
+                permission_denied_privilege (action, "no");
 #endif
 	}
 
@@ -548,7 +548,9 @@ handle_eject (LibHalContext *hal_ctx,
 	int na;
 	int fd;
 	int num_excl_tries;
+#ifdef HAVE_POLKIT
         DBusError error;
+#endif
 
 	/* When called here all the file systems from this device is
 	 * already unmounted. That's actually guaranteed; see

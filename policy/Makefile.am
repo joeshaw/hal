@@ -5,8 +5,7 @@ polkit_privilegedir = $(sysconfdir)/PolicyKit/policy
 dist_polkit_privilege_DATA =    \
 	hal-storage.policy	\
 	hal-power.policy	\
-	hal-killswitch.policy	\
-	hal-lock.policy
+	hal-killswitch.policy	
 
 if HAVE_ACLMGMT
 dist_polkit_privilege_DATA += hal-device-file.policy

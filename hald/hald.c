@@ -509,8 +509,9 @@ main (int argc, char *argv[])
 	guint sigterm_iochn_listener_source_id;
 	char *path;
 	char newpath[512];
+#ifdef HAVE_POLKIT
         PolKitError *p_error;
-
+#endif
 	openlog ("hald", LOG_PID, LOG_DAEMON);
 
 #ifdef HAVE_MALLOPT
