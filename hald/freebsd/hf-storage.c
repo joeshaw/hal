@@ -65,6 +65,7 @@ static GNode *hf_storage_geom_tree = NULL;
 static GHashTable *hf_storage_geom_hash = NULL;
 
 static void hf_storage_init_geom (void);
+static gboolean hf_storage_device_has_addon (HalDevice *device);
 
 static void
 hf_storage_geom_free (gpointer data)
@@ -587,7 +588,8 @@ hf_storage_conftxt_timeout_cb (gpointer data)
 		{
 		  /* disk changed */
 		  device = hf_devtree_find_from_name(hald_get_gdl(), disk->name);
-		  if (device && hal_device_has_capability(device, "storage"))
+		  if (device && hal_device_has_capability(device, "storage") &&
+		      ! hf_storage_device_has_addon(device))
 		    hf_storage_device_rescan_real(device);
 		}
 	    }
@@ -766,6 +768,28 @@ hf_storage_device_rescan (HalDevice *device)
     }
   else
     return FALSE;
+}
+
+static gboolean
+hf_storage_device_has_addon (HalDevice *device)
+{
+  HalDeviceStrListIter iter;
+
+  g_return_val_if_fail(device != NULL, FALSE);
+
+  for (hal_device_property_strlist_iter_init(device, "info.addons", &iter);
+       hal_device_property_strlist_iter_is_valid(&iter);
+       hal_device_property_strlist_iter_next(&iter))
+    {
+      const char *addon;
+
+      addon = hal_device_property_strlist_iter_get_value(&iter);
+
+      if (! strcmp(addon, "hald-addon-storage"))
+        return TRUE;
+    }
+
+  return FALSE;
 }
 
 HFHandler hf_storage_handler = {
