@@ -38,6 +38,7 @@
 
 #include "../hald.h"
 #include "../ids.h"
+#include "../device.h"
 #include "../logger.h"
 #include "../util.h"
 
@@ -210,9 +211,15 @@ hf_pci_probe_bus (HalDevice *parent, int bus, bitstr_t *busmap)
 
 	  info = g_new(DeviceInfo, 1);
 	  info->device = hf_device_store_match(hald_get_gdl(),
-			                       hal_property_new_int("pci.freebsd.bus", p->pc_sel.pc_bus),
-					       hal_property_new_int("pci.freebsd.device", p->pc_sel.pc_dev),
-					       hal_property_new_int("pci.freebsd.function", p->pc_sel.pc_func),
+			  		       "pci.freebsd.bus",
+					       HAL_PROPERTY_TYPE_INT32,
+					       p->pc_sel.pc_bus,
+					       "pci.freebsd.device",
+					       HAL_PROPERTY_TYPE_INT32,
+					       p->pc_sel.pc_dev,
+					       "pci.freebsd.function",
+					       HAL_PROPERTY_TYPE_INT32,
+					       p->pc_sel.pc_func,
 					       NULL);
 	  info->p = *p;
 	  info->secondary_bus = hf_pci_get_register(p, PCIR_SECBUS_1);

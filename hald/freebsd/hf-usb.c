@@ -372,11 +372,11 @@ hf_usb_device_new (HalDevice *parent,
       can_wake_up = (config_desc.bmAttributes & UC_REMOTE_WAKEUP) != 0;
       num_interfaces = config_desc.bNumInterface;
 
-      if (config_desc->iConfiguration != 0)
+      if (config_desc.iConfiguration != 0)
 	{
 	  char *configuration;
 
-	  configuration = hf_usb_get_string_descriptor(controller->fd, di->udi_addr, config_desc->iConfiguration, NULL);
+	  configuration = hf_usb_get_string_descriptor(controller->fd, di->udi_addr, config_desc.iConfiguration, NULL);
 	  if (configuration)
 	    {
 	      hal_device_property_set_string(device, "usb_device.configuration", configuration);
@@ -424,6 +424,8 @@ hf_usb_device_new (HalDevice *parent,
 
 static HalDevice *
 hf_usb_interface_device_new (HalDevice *parent,
+			     Controller *controller,
+			     const struct usb_device_info *di,
 			     const usb_interface_descriptor_t *desc)
 {
   HalDevice *device;
@@ -576,7 +578,7 @@ hf_usb_probe_device (HalDevice *parent,
 	      break;
 	    }
 
-	  if_device = hf_usb_interface_device_new(device, if_desc);
+	  if_device = hf_usb_interface_device_new(device, controller, device_info, if_desc);
 	  hf_device_preprobe_and_add(if_device);
 
 	  p += USB_INTERFACE_DESCRIPTOR_SIZE + if_desc->bNumEndpoints * USB_ENDPOINT_DESCRIPTOR_SIZE;
