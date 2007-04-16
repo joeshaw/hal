@@ -654,7 +654,6 @@ acl_device_added_visitor (const char *seat_id,
                 pk_action = libpolkit_action_new();
                 priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
                 libpolkit_action_set_action_id (pk_action, priv_name);
-                libpolkit_action_set_param (pk_action, "device-file", afd->device);
                 g_free (priv_name);
 
                 /* Now ask PolicyKit if the given session should have access */
@@ -1062,7 +1061,7 @@ acl_unlock (void)
 int
 main (int argc, char *argv[])
 {
-        GError *g_error;
+        PolKitError *p_error;
 
 	if (argc != 2) {
 		printf ("hal-acl-tool should only be invoked by hald\n");
@@ -1073,10 +1072,10 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-        g_error = NULL;
+        p_error = NULL;
         pk_context = libpolkit_context_new ();
-        if (!libpolkit_context_init (pk_context, &g_error)) {
-                printf ("Could not init PolicyKit context: %s", g_error->message);
+        if (!libpolkit_context_init (pk_context, &p_error)) {
+                printf ("Could not init PolicyKit context: %s\n", polkit_error_get_error_message (p_error));
                 goto out;
         }
 

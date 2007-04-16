@@ -208,7 +208,6 @@ out:
  * @cit: the CITracker object
  * @device: the device to check for
  * @action: the PolicyKit action to check for
- * @action_params: parameters (a #NULL terminated list of key/value pairs) to the action or #NULL
  * @caller_unique_sysbus_name: The unique system bus connection
  * name (e.g. ":1.43") of the caller
  * @polkit_result_out: where to store the #PolicyKitResult return 
@@ -248,12 +247,10 @@ gboolean
 access_check_caller_have_access_to_device (CITracker   *cit, 
                                            HalDevice   *device, 
                                            const char  *action, 
-                                           const char **action_params,
                                            const char  *caller_unique_sysbus_name,
                                            int         *polkit_result_out)
 #ifdef HAVE_CONKIT
 {
-        int n;
         gboolean ret;
         CICallerInfo *ci;
 #ifdef HAVE_POLKIT
@@ -301,9 +298,6 @@ access_check_caller_have_access_to_device (CITracker   *cit,
 #ifdef HAVE_POLKIT
         pk_action = libpolkit_action_new ();
         libpolkit_action_set_action_id (pk_action, action);
-        for (n = 0; action_params[n] != NULL; n += 2) {
-                libpolkit_action_set_param (pk_action, action_params[n], action_params[n+1]);
-        }
         
         pk_caller = get_pk_caller_from_ci_tracker (cit, caller_unique_sysbus_name);
         if (pk_caller == NULL)
@@ -399,9 +393,6 @@ access_check_caller_locked_out (CITracker   *cit,
         HalDevice *computer;
         gboolean is_locked;
         gboolean is_locked_by_self;
-        const char *action_params[3] = {"interface", "", NULL};
-
-        action_params[1] = interface_name;
 
         global_lock_name = NULL;
         holders = NULL;
@@ -442,7 +433,7 @@ access_check_caller_locked_out (CITracker   *cit,
                         if (strcmp (global_holders[n], caller_unique_sysbus_name) == 0) {
                                 /* we are holding the global lock... */
                                 if (access_check_caller_have_access_to_device (
-                                            cit, device, "hal-lock", action_params, global_holders[n], NULL)) {
+                                            cit, device, "hal-lock", global_holders[n], NULL)) {
                                         /* only applies if the caller can access the device... */
                                         is_locked_by_self = TRUE;
                                         /* this is good enough; we are holding the lock ourselves */
@@ -454,7 +445,7 @@ access_check_caller_locked_out (CITracker   *cit,
                                  * actually have access to the device...
                                  */
                                 if (access_check_caller_have_access_to_device (
-                                            cit, device, "hal-lock", action_params, global_holders[n], NULL)) {
+                                            cit, device, "hal-lock", global_holders[n], NULL)) {
                                         /* They certainly do. Mark as locked. */
                                         is_locked = TRUE;
                                 }
@@ -508,12 +499,6 @@ access_check_locked_by_others (CITracker   *cit,
         char **holders;
         char **global_holders;
         HalDevice *computer;
-        char *priv;
-        const char *action_params[3] = {"interface", "", NULL};
-
-        action_params[1] = interface_name;
-
-        priv = g_strdup_printf ("hal-lock:%s", interface_name);
 
         global_lock_name = NULL;
         holders = NULL;
@@ -547,7 +532,7 @@ access_check_locked_by_others (CITracker   *cit,
                             strcmp (global_holders[n], caller_unique_sysbus_name) != 0) {
                                 /* someone else is holding the global lock... */
                                 if (access_check_caller_have_access_to_device (
-                                            cit, device, "hal-lock", action_params, global_holders[n], NULL)) {
+                                            cit, device, "hal-lock", global_holders[n], NULL)) {
                                         /* ... and they can can access the device */
                                         goto out;
                                 }
@@ -562,7 +547,6 @@ out:
         g_strfreev (global_holders);
         g_strfreev (holders);
         g_free (global_lock_name);
-        g_free (priv);
         return ret;
 }
 

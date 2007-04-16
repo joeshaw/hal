@@ -219,8 +219,7 @@ static gboolean
 check_priv (DBusConnection *connection, 
             DBusMessage *message, 
             const char *udi, 
-            const char *action,
-            char **action_params)
+            const char *action)
 #ifdef HAVE_POLKIT
 {
         gboolean ret;
@@ -238,7 +237,6 @@ check_priv (DBusConnection *connection,
         polkit_result = libhal_device_is_caller_privileged (halctx,
                                                             udi,
                                                             action,
-                                                            action_params,
                                                             invoked_by_syscon_name,
                                                             &error);
         if (polkit_result == NULL) {
@@ -297,7 +295,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					 "SetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "hal-power-lcd-panel", NULL))
+                if (!check_priv (connection, message, udi, "hal-power-lcd-panel"))
                         goto error;
 
 		dbus_error_init (&err);
@@ -334,7 +332,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "hal-power-lcd-panel", NULL))
+                if (!check_priv (connection, message, udi, "hal-power-lcd-panel"))
                         goto error;
 
 		dbus_error_init (&err);
@@ -365,7 +363,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness[2];
 
-                if (!check_priv (connection, message, udi, "hal-power-light-sensor", NULL))
+                if (!check_priv (connection, message, udi, "hal-power-light-sensor"))
                         goto error;
 
 		brightness[0] = read_light_sensor (FALSE); /* right */
@@ -392,7 +390,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"org.freedesktop.Hal.Device.KeyboardBacklight", 
 						"GetBrightness")) {
 
-                if (!check_priv (connection, message, udi, "hal-power-keyboard-backlight", NULL))
+                if (!check_priv (connection, message, udi, "hal-power-keyboard-backlight"))
                         goto error;
 
 		/* I can't get this working so just cache last SetBrightness value :-/ */
@@ -437,7 +435,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"SetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "hal-power-keyboard-backlight", NULL))
+                if (!check_priv (connection, message, udi, "hal-power-keyboard-backlight"))
                         goto error;
 
 		dbus_error_init (&err);

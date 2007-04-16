@@ -4644,7 +4644,6 @@ libhal_device_is_locked_by_others (LibHalContext *ctx,
  * @ctx: the context for the connection to hald
  * @udi: the Unique id of device
  * @action: the action to check for
- * @action_param: A #NULL terminated list of action parameters or #NULL if there are no parameters
  * @caller: the caller to check for
  * @error: pointer to an initialized dbus error object for returning errors
  * 
@@ -4661,13 +4660,11 @@ char*
 libhal_device_is_caller_privileged (LibHalContext *ctx,
                                     const char *udi,
                                     const char *action,
-                                    char **action_parameters,
                                     const char *caller,
                                     DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessageIter iter;
-	DBusMessageIter iter_array;
 	DBusMessage *reply;
 	DBusMessageIter reply_iter;
         char *dbus_str;
@@ -4692,19 +4689,6 @@ libhal_device_is_caller_privileged (LibHalContext *ctx,
 
 	dbus_message_iter_init_append (message, &iter);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &action);
-	dbus_message_iter_open_container (&iter, 
-					  DBUS_TYPE_ARRAY,
-					  DBUS_TYPE_STRING_AS_STRING,
-					  &iter_array);
-
-        if (action_parameters != NULL) {
-                int n;
-                for (n = 0; action_parameters[n] != NULL; n++) {
-                        dbus_message_iter_append_basic (&iter_array, DBUS_TYPE_STRING, &(action_parameters[n]));
-                }
-        }
-
-        dbus_message_iter_close_container (&iter, &iter_array);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &caller);
 	
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,

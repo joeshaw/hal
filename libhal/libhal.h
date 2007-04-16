@@ -717,7 +717,6 @@ dbus_bool_t libhal_device_is_locked_by_others (LibHalContext *ctx,
 char* libhal_device_is_caller_privileged (LibHalContext *ctx,
                                           const char *udi,
                                           const char *action,
-                                          char **action_parameters,
                                           const char *caller,
                                           DBusError *error);
 

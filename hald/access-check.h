@@ -36,7 +36,6 @@ gboolean access_check_message_caller_is_root_or_hal (CITracker   *cit,
 gboolean access_check_caller_have_access_to_device  (CITracker   *cit,
                                                      HalDevice   *device,
                                                      const char  *action,
-                                                     const char **action_params,
                                                      const char  *caller_unique_sysbus_name,
                                                      int         *polkit_result_out);
 gboolean access_check_caller_locked_out             (CITracker   *cit,

@@ -35,9 +35,6 @@ The UDI (\fIUnique Device Identifier\fP) of the device object.
 .I "--action"
 PolicyKit action to check for.
 .TP
-.I "--action-param <key>=<value>"
-Append parameters to action. This option may occur multiple times.
-.TP
 .I "--caller"
 The unique D-Bus name on the system bus of the caller.
 .TP

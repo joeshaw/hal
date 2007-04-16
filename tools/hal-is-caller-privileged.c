@@ -49,14 +49,12 @@ usage (int argc, char *argv[])
 	fprintf (stderr,
                  "\n"
                  "usage : hal-is-caller-privileged --udi <udi> --action <action>\n"
-                 "                                 [--action-param <key>=<value>]\n"
                  "                                 --caller <caller-name>\n"
                  "                                 [--help] [--version]\n");
 	fprintf (stderr,
                  "\n"
                  "        --udi            Unique Device Id\n"
                  "        --action         PolicyKit action to check for\n"
-                 "        --action-param   Action parameters (may occur multiple times)\n"
                  "        --caller         The name of the caller\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
@@ -89,18 +87,12 @@ main (int argc, char *argv[])
         char *polkit_result;
 	DBusError error;
         LibHalContext *hal_ctx;
-        GPtrArray *params;
-        int n;
-        char *param_key;
-        char *param_value;
-        char **action_params;
 
 	if (argc <= 1) {
 		usage (argc, argv);
 		return 1;
 	}
 
-        params = g_ptr_array_new ();
 	while (1) {
 		int c;
 		int option_index = 0;
@@ -108,7 +100,6 @@ main (int argc, char *argv[])
 		static struct option long_options[] = {
 			{"udi", 1, NULL, 0},
 			{"action", 1, NULL, 0},
-			{"action-param", 1, NULL, 0},
 			{"caller", 1, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
@@ -135,18 +126,6 @@ main (int argc, char *argv[])
 				caller = strdup (optarg);
 			} else if (strcmp (opt, "action") == 0) {
 				action = strdup (optarg);
-			} else if (strcmp (opt, "action-param") == 0) {
-				param_key = strdup (optarg);
-                                param_value = NULL;
-                                for (n = 0; param_key[n] != '=' && param_key[n] != '\0'; n++)
-                                        ;
-                                if (param_key[n] == '\0')
-                                        usage (argc, argv);
-                                param_key[n] = '\0';
-                                param_value = param_key + n + 1;
-                                g_ptr_array_add (params, g_strdup (param_key));
-                                g_ptr_array_add (params, g_strdup (param_value));
-                                g_free (param_key);
 			}
 			break;
 
@@ -187,17 +166,9 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-        if (params->len > 0) {
-                g_ptr_array_add (params, NULL);
-                action_params = (char **) g_ptr_array_free (params, FALSE);
-        } else {
-                action_params = NULL;
-        }
-
         polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                             udi,
                                                             action,
-                                                            action_params,
                                                             caller,
                                                             &error);
         if (dbus_error_is_set (&error)) {

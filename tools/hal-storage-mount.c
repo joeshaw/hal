@@ -798,7 +798,6 @@ handle_mount (LibHalContext *hal_ctx,
                 polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                                     udi,
                                                                     action,
-                                                                    action_params,
                                                                     invoked_by_syscon_name,
                                                                     &error);
                 if (polkit_result == NULL){

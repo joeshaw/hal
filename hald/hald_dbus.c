@@ -2052,10 +2052,7 @@ device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message,
 	}
 
         if (!local_interface) {
-                const char *action_params[3] = {"interface", "", NULL};
-                action_params[1] = interface_name;
-                if (!access_check_caller_have_access_to_device (ci_tracker, d, "hal-lock", 
-                                                                action_params, sender, NULL)) {
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, "hal-lock", sender, NULL)) {
                         raise_permission_denied (connection, message, "AcquireInterfaceLock: no access to device");
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
@@ -2203,8 +2200,6 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
         int polkit_result;
         const char *result;
         DBusMessageIter iter;
-        DBusMessageIter array_iter;
-        GPtrArray *params;
 
 	HAL_TRACE (("entering"));
 
@@ -2221,25 +2216,14 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
 
 	sender = dbus_message_get_sender (message);
 
-        if (strcmp (dbus_message_get_signature (message), "sass") != 0) {
+        if (strcmp (dbus_message_get_signature (message), "ss") != 0) {
  		raise_syntax (connection, message, "IsCallerPrivileged");
 		return DBUS_HANDLER_RESULT_HANDLED;
         }
 
-        params = g_ptr_array_new ();
-
 	dbus_error_init (&error);
         dbus_message_iter_init (message, &iter);
         dbus_message_iter_get_basic (&iter, &action);
-        dbus_message_iter_next (&iter);
-        dbus_message_iter_recurse (&iter, &array_iter);
-        while (dbus_message_iter_get_arg_type (&array_iter) == DBUS_TYPE_STRING) {
-                const char *param;
-                dbus_message_iter_get_basic (&array_iter, &param);
-                g_ptr_array_add (params, g_strdup (param));
-                dbus_message_iter_next (&array_iter);
-        }
-        g_ptr_array_add (params, NULL);
         dbus_message_iter_next (&iter);
         dbus_message_iter_get_basic (&iter, &caller_sysbus_name);
 
@@ -2252,16 +2236,12 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
                         raise_error (connection, message, 
                                      "org.freedesktop.Hal.Error", 
                                      "Could not determine caller info for sender");
-                        g_ptr_array_foreach (params, (GFunc) g_free, NULL);
-                        g_ptr_array_free (params, TRUE);
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
                 if ((ci_target = ci_tracker_get_info (ci_tracker, caller_sysbus_name)) == NULL) {
                         raise_error (connection, message, 
                                      "org.freedesktop.Hal.Error", 
                                      "Could not determine caller info for target");
-                        g_ptr_array_foreach (params, (GFunc) g_free, NULL);
-                        g_ptr_array_free (params, TRUE);
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
 
@@ -2269,8 +2249,6 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
                 if (ci_tracker_caller_get_uid (ci_sender) != ci_tracker_caller_get_uid (ci_target)) {
                         raise_permission_denied (connection, message, 
                                                  "IsCallerPrivileged: not privileged/authorized to know");
-                        g_ptr_array_foreach (params, (GFunc) g_free, NULL);
-                        g_ptr_array_free (params, TRUE);
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
         }
@@ -2278,11 +2256,8 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
 
         polkit_result = -1;
         access_check_caller_have_access_to_device (
-                ci_tracker, d, action, (const char **) params->pdata, caller_sysbus_name, &polkit_result);
+                ci_tracker, d, action, caller_sysbus_name, &polkit_result);
         result = libpolkit_result_to_string_representation (polkit_result);
-
-                        g_ptr_array_foreach (params, (GFunc) g_free, NULL);
-                        g_ptr_array_free (params, TRUE);
 
         if (polkit_result < 0 || result == NULL) {
 		raise_error (connection, message, 
@@ -5113,14 +5088,12 @@ validate_lock_for_device (HalDeviceStore *store,
                         continue;
 
                 for (m = 0; holders[m] != NULL; m++) {
-                        const char *action_params[3] = {"interface", "", NULL};
-                        action_params[1] = locked_interfaces[n];
 
                         HAL_INFO (("Validating lock holder '%s' on interface '%s' on udi '%s'",
                                    holders[m], locked_interfaces[n], hal_device_get_udi (device)));
 
                         if (!access_check_caller_have_access_to_device (
-                                    ci_tracker, device, "hal-lock", action_params, holders[m], NULL)) {
+                                    ci_tracker, device, "hal-lock", holders[m], NULL)) {
                                 HAL_INFO (("Kicking out lock holder '%s' on interface '%s' on udi '%s' "
                                            "as he no longer has access to the device",
                                            holders[m], locked_interfaces[n], hal_device_get_udi (device)));

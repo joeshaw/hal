@@ -933,7 +933,6 @@ dbus_is_privileged (DBusConnection *connection, DBusMessage *message, DBusError 
         polkit_result = libhal_device_is_caller_privileged (halctx,
                                                             udi,
                                                             CPUFREQ_POLKIT_PRIVILEGE,
-                                                            NULL,
                                                             invoked_by_syscon_name,
                                                             error);
         if (polkit_result == NULL) {

@@ -427,7 +427,6 @@ line_found:
                         polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                                             udi,
                                                                             action,
-                                                                            NULL, /* TODO: FIXME: */
                                                                             invoked_by_syscon_name,
                                                                             &error);
                         if (polkit_result == NULL){
@@ -602,7 +601,6 @@ try_open_excl_again:
                 polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                                     udi,
                                                                     action,
-                                                                    NULL,
                                                                     invoked_by_syscon_name,
                                                                     &error);
                 if (polkit_result == NULL){

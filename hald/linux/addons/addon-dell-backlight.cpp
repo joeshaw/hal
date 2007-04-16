@@ -138,7 +138,6 @@ check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, c
         polkit_result = libhal_device_is_caller_privileged (halctx,
                                                             udi,
                                                             action,
-                                                            NULL,
                                                             invoked_by_syscon_name,
                                                             &error);
         if (polkit_result == NULL) {
