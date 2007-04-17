@@ -39,7 +39,7 @@
 #include <glib.h>
 
 #ifdef HAVE_POLKIT
-#include <libpolkit/libpolkit.h>
+#include <polkit/polkit.h>
 #endif
 
 #include "hald.h"
@@ -117,9 +117,9 @@ get_pk_seat_from_ck_seat (CKSeat *seat)
 {
         char *str;
         PolKitSeat *pk_seat;
-        pk_seat = libpolkit_seat_new ();
+        pk_seat = polkit_seat_new ();
         str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_seat_get_id (seat));
-        libpolkit_seat_set_ck_objref (pk_seat, str);
+        polkit_seat_set_ck_objref (pk_seat, str);
         g_free (str);
         return pk_seat;
 }
@@ -139,19 +139,19 @@ get_pk_session_from_ck_session (CKSession *session)
                 pk_seat = get_pk_seat_from_ck_seat (seat);
         }
 
-        pk_session = libpolkit_session_new ();
+        pk_session = polkit_session_new ();
         if (pk_seat != NULL) {
-                libpolkit_session_set_seat (pk_session, pk_seat);
-                libpolkit_seat_unref (pk_seat);
+                polkit_session_set_seat (pk_session, pk_seat);
+                polkit_seat_unref (pk_seat);
         }
         str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_session_get_id (session));
-        libpolkit_session_set_ck_objref (pk_session, str);
+        polkit_session_set_ck_objref (pk_session, str);
         g_free (str);
-        libpolkit_session_set_uid (pk_session, ck_session_get_user (session));
-        libpolkit_session_set_ck_is_active (pk_session, ck_session_is_active (session));
-        libpolkit_session_set_ck_is_local (pk_session, ck_session_is_local (session));
+        polkit_session_set_uid (pk_session, ck_session_get_user (session));
+        polkit_session_set_ck_is_active (pk_session, ck_session_is_active (session));
+        polkit_session_set_ck_is_local (pk_session, ck_session_is_local (session));
         if (!ck_session_is_local (session)) {
-                libpolkit_session_set_ck_remote_host (pk_session, ck_session_get_hostname (session));
+                polkit_session_set_ck_remote_host (pk_session, ck_session_get_hostname (session));
         }
         return pk_session;
 }
@@ -188,14 +188,14 @@ get_pk_caller_from_ci_tracker (CITracker *cit, const char *caller_unique_sysbus_
                 pk_session = get_pk_session_from_ck_session (session);
         }
 
-        pk_caller = libpolkit_caller_new ();
-        libpolkit_caller_set_dbus_name (pk_caller, caller_unique_sysbus_name);
-        libpolkit_caller_set_uid (pk_caller, ci_tracker_caller_get_uid (ci));
-        libpolkit_caller_set_pid (pk_caller, ci_tracker_caller_get_pid (ci));
-        libpolkit_caller_set_selinux_context (pk_caller, ci_tracker_caller_get_selinux_context (ci));
+        pk_caller = polkit_caller_new ();
+        polkit_caller_set_dbus_name (pk_caller, caller_unique_sysbus_name);
+        polkit_caller_set_uid (pk_caller, ci_tracker_caller_get_uid (ci));
+        polkit_caller_set_pid (pk_caller, ci_tracker_caller_get_pid (ci));
+        polkit_caller_set_selinux_context (pk_caller, ci_tracker_caller_get_selinux_context (ci));
         if (pk_session != NULL) {
-                libpolkit_caller_set_ck_session (pk_caller, pk_session);
-                libpolkit_session_unref (pk_session);
+                polkit_caller_set_ck_session (pk_caller, pk_session);
+                polkit_session_unref (pk_session);
         }
 
 out:
@@ -276,7 +276,7 @@ access_check_caller_have_access_to_device (CITracker   *cit,
                 ret = TRUE;
 #ifdef HAVE_POLKIT
                 if (polkit_result_out != NULL)
-                        *polkit_result_out = LIBPOLKIT_RESULT_YES;
+                        *polkit_result_out = POLKIT_RESULT_YES;
 #endif
                 goto out;
         }
@@ -290,24 +290,24 @@ access_check_caller_have_access_to_device (CITracker   *cit,
                 ret = TRUE;
 #ifdef HAVE_POLKIT
                 if (polkit_result_out != NULL)
-                        *polkit_result_out = LIBPOLKIT_RESULT_YES;
+                        *polkit_result_out = POLKIT_RESULT_YES;
 #endif
                 goto out;
         }
 
 #ifdef HAVE_POLKIT
-        pk_action = libpolkit_action_new ();
-        libpolkit_action_set_action_id (pk_action, action);
+        pk_action = polkit_action_new ();
+        polkit_action_set_action_id (pk_action, action);
         
         pk_caller = get_pk_caller_from_ci_tracker (cit, caller_unique_sysbus_name);
         if (pk_caller == NULL)
                 goto out;
 
-        pk_resource = libpolkit_resource_new ();
-        libpolkit_resource_set_resource_type (pk_resource, "hal");
-        libpolkit_resource_set_resource_id (pk_resource, hal_device_get_udi (device));
+        pk_resource = polkit_resource_new ();
+        polkit_resource_set_resource_type (pk_resource, "hal");
+        polkit_resource_set_resource_id (pk_resource, hal_device_get_udi (device));
 
-        pk_result = libpolkit_context_can_caller_access_resource (pk_context,
+        pk_result = polkit_context_can_caller_access_resource (pk_context,
                                                                   pk_action,
                                                                   pk_resource,
                                                                   pk_caller);
@@ -315,7 +315,7 @@ access_check_caller_have_access_to_device (CITracker   *cit,
         if (polkit_result_out != NULL)
                 *polkit_result_out = pk_result;
 
-        if (pk_result != LIBPOLKIT_RESULT_YES)
+        if (pk_result != POLKIT_RESULT_YES)
                 goto out;
 #else
         /* must be tracked by ConsoleKit */
@@ -336,11 +336,11 @@ access_check_caller_have_access_to_device (CITracker   *cit,
 out:
 #ifdef HAVE_POLKIT
         if (pk_caller != NULL)
-                libpolkit_caller_unref (pk_caller);
+                polkit_caller_unref (pk_caller);
         if (pk_resource != NULL)
-                libpolkit_resource_unref (pk_resource);
+                polkit_resource_unref (pk_resource);
         if (pk_action != NULL)
-                libpolkit_action_unref (pk_action);
+                polkit_action_unref (pk_action);
 #endif
         return ret;
 }

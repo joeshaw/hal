@@ -426,7 +426,7 @@ if test "x$enable_policy_kit" != "xno"; then
    if test "x$enable_console_kit" = "xno"; then
       AC_MSG_ERROR([PolicyKit support requires building with ConsoleKit support too])
    fi
-   PKG_CHECK_MODULES(POLKIT, libpolkit >= 0.3,
+   PKG_CHECK_MODULES(POLKIT, polkit >= 0.3,
 		  	[AM_CONDITIONAL(HAVE_POLKIT, true)
 		   	AC_DEFINE(HAVE_POLKIT, [], [Set if we use PolicyKit])]
                         msg_polkit=yes,

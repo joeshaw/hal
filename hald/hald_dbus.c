@@ -2257,7 +2257,7 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
         polkit_result = -1;
         access_check_caller_have_access_to_device (
                 ci_tracker, d, action, caller_sysbus_name, &polkit_result);
-        result = libpolkit_result_to_string_representation (polkit_result);
+        result = polkit_result_to_string_representation (polkit_result);
 
         if (polkit_result < 0 || result == NULL) {
 		raise_error (connection, message, 

@@ -752,16 +752,16 @@ main (int argc, char *argv[])
 
 #ifdef HAVE_POLKIT
         p_error = NULL;
-        pk_context = libpolkit_context_new ();
+        pk_context = polkit_context_new ();
         if (pk_context == NULL)
                 DIE (("Could not create PolicyKit context"));
-        libpolkit_context_set_config_changed (pk_context,
-                                              _polkit_config_changed_cb,
-                                              NULL);
-        libpolkit_context_set_file_monitor (pk_context, 
-                                            _polkit_fm_add_watch,
-                                            _polkit_fm_remove_watch);
-        if (!libpolkit_context_init (pk_context, &p_error))
+        polkit_context_set_config_changed (pk_context,
+                                           _polkit_config_changed_cb,
+                                           NULL);
+        polkit_context_set_file_monitor (pk_context, 
+                                         _polkit_fm_add_watch,
+                                         _polkit_fm_remove_watch);
+        if (!polkit_context_init (pk_context, &p_error))
                 DIE (("Could not init PolicyKit context: %s", polkit_error_get_error_message (p_error)));
 #endif
 

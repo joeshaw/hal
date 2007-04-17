@@ -7,7 +7,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-I$(top_srcdir) -I.. \
-	@GLIB_CFLAGS@ @DBUS_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@ @POLKIT_CFLAGS@
 
 if HALD_COMPILE_FREEBSD
 noinst_LTLIBRARIES = libhald_freebsd.la

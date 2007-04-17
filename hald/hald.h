@@ -30,7 +30,7 @@
 #include <stdint.h>
 #include <dbus/dbus.h>
 #ifdef HAVE_POLKIT
-#include <libpolkit/libpolkit.h>
+#include <polkit/polkit.h>
 #endif
 
 #include "device_store.h"

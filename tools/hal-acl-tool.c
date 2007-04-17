@@ -33,7 +33,7 @@
 
 #include <glib.h>
 #include <libhal.h>
-#include <libpolkit/libpolkit.h>
+#include <polkit/polkit.h>
 
 /* How this works (or "An introduction to this code")
  *
@@ -635,39 +635,39 @@ acl_device_added_visitor (const char *seat_id,
 			continue;
 		}
 
-                pk_seat = libpolkit_seat_new ();
-                libpolkit_seat_set_ck_objref (pk_seat, seat_id);
+                pk_seat = polkit_seat_new ();
+                polkit_seat_set_ck_objref (pk_seat, seat_id);
 
-                pk_session = libpolkit_session_new ();
-                libpolkit_session_set_seat (pk_session, pk_seat);
-                libpolkit_seat_unref (pk_seat);
-                libpolkit_session_set_ck_objref (pk_session, session_id);
-                libpolkit_session_set_uid (pk_session, session_uid);
-                libpolkit_session_set_ck_is_active (pk_session, session_is_active);
-                libpolkit_session_set_ck_is_local (pk_session, session_is_local);
-                /* TODO: FIXME: libpolkit_session_set_ck_remote_host (pk_session, );*/ 
+                pk_session = polkit_session_new ();
+                polkit_session_set_seat (pk_session, pk_seat);
+                polkit_seat_unref (pk_seat);
+                polkit_session_set_ck_objref (pk_session, session_id);
+                polkit_session_set_uid (pk_session, session_uid);
+                polkit_session_set_ck_is_active (pk_session, session_is_active);
+                polkit_session_set_ck_is_local (pk_session, session_is_local);
+                /* TODO: FIXME: polkit_session_set_ck_remote_host (pk_session, );*/ 
 
-                pk_resource = libpolkit_resource_new();
-                libpolkit_resource_set_resource_type (pk_resource, "hal");
-                libpolkit_resource_set_resource_id (pk_resource, afd->udi);
+                pk_resource = polkit_resource_new();
+                polkit_resource_set_resource_type (pk_resource, "hal");
+                polkit_resource_set_resource_id (pk_resource, afd->udi);
 
-                pk_action = libpolkit_action_new();
+                pk_action = polkit_action_new();
                 priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
-                libpolkit_action_set_action_id (pk_action, priv_name);
+                polkit_action_set_action_id (pk_action, priv_name);
                 g_free (priv_name);
 
                 /* Now ask PolicyKit if the given session should have access */
-                pk_result = libpolkit_context_can_session_access_resource (pk_context, 
+                pk_result = polkit_context_can_session_access_resource (pk_context, 
                                                                            pk_action,
                                                                            pk_resource,
                                                                            pk_session);
-                if (pk_result == LIBPOLKIT_RESULT_YES) {
+                if (pk_result == POLKIT_RESULT_YES) {
 			afd_grant_to_uid (afd, session_uid);
                 }
 
-                libpolkit_action_unref (pk_action);
-                libpolkit_resource_unref (pk_resource);
-                libpolkit_session_unref (pk_session);
+                polkit_action_unref (pk_action);
+                polkit_resource_unref (pk_resource);
+                polkit_session_unref (pk_session);
 	}
 
 }
@@ -1073,8 +1073,8 @@ main (int argc, char *argv[])
 	}
 
         p_error = NULL;
-        pk_context = libpolkit_context_new ();
-        if (!libpolkit_context_init (pk_context, &p_error)) {
+        pk_context = polkit_context_new ();
+        if (!polkit_context_init (pk_context, &p_error)) {
                 printf ("Could not init PolicyKit context: %s\n", polkit_error_get_error_message (p_error));
                 goto out;
         }
