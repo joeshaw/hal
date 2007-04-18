@@ -3810,6 +3810,9 @@ libhal_changeset_set_property_string (LibHalChangeSet *changeset, const char *ke
 {
 	LibHalChangeSetElement *elem;
 
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(value, "*value", FALSE);
+
 	elem = calloc (1, sizeof (LibHalChangeSetElement));
 	if (elem == NULL)
 		goto out;

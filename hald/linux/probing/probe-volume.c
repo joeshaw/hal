@@ -122,8 +122,11 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, 
 	libhal_changeset_set_property_string (cs, "volume.fsusage", usage);
 	HAL_DEBUG (("volume.fsusage = '%s'", usage));
 
-	libhal_changeset_set_property_string (cs, "volume.fstype", vid->type);
+	if (!libhal_changeset_set_property_string (cs, "volume.fstype", vid->type))
+		libhal_changeset_set_property_string (cs, "volume.fstype", "");
+
 	HAL_DEBUG(("volume.fstype = '%s'", vid->type));
+
 	if (vid->type_version[0] != '\0') {
 		libhal_changeset_set_property_string (cs, "volume.fsversion", vid->type_version);
 		HAL_DEBUG(("volume.fsversion = '%s'", vid->type_version));
@@ -141,12 +144,23 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, 
 			libhal_changeset_set_property_string (cs, "info.product", volume_label);
 		}
 		else {
-			snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+			if (vid->type != NULL) {
+				snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+			} else {
+				snprintf (buf, sizeof (buf), "Volume (unknown)");
+			}
+
 			libhal_changeset_set_property_string (cs, "info.product", buf);
+				
 		}
 		g_free(volume_label);
 	} else {
-		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+		if (vid->type != NULL) {
+			snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+		} else {
+			snprintf (buf, sizeof (buf), "Volume (unknown)");
+		}
+
 		libhal_changeset_set_property_string (cs, "info.product", buf);
 	}
 }
