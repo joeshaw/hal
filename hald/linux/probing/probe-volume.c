@@ -131,38 +131,34 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, 
 		libhal_changeset_set_property_string (cs, "volume.fsversion", vid->type_version);
 		HAL_DEBUG(("volume.fsversion = '%s'", vid->type_version));
 	}
+
 	libhal_changeset_set_property_string (cs, "volume.uuid", vid->uuid);
 	HAL_DEBUG(("volume.uuid = '%s'", vid->uuid));
 
-	/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
-	volume_label = strdup_valid_utf8 (vid->label);
-	if( volume_label != NULL ) {
-		libhal_changeset_set_property_string (cs, "volume.label", volume_label);
-		HAL_DEBUG(("volume.label = '%s'", volume_label));
+	if(vid->label != NULL && vid->label[0] != '\0') {
+		/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
+		volume_label = strdup_valid_utf8 (vid->label);
+		if( volume_label != NULL ) {
+			libhal_changeset_set_property_string (cs, "volume.label", volume_label);
+			HAL_DEBUG(("volume.label = '%s'", volume_label));
 		
-		if (strlen(volume_label) > 0) {	
-			libhal_changeset_set_property_string (cs, "info.product", volume_label);
-		}
-		else {
-			if (vid->type != NULL) {
-				snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
-			} else {
-				snprintf (buf, sizeof (buf), "Volume (unknown)");
+			if (strlen(volume_label) > 0) {	
+				libhal_changeset_set_property_string (cs, "info.product", volume_label);
+				g_free(volume_label);
+				return;
 			}
 
-			libhal_changeset_set_property_string (cs, "info.product", buf);
-				
+			g_free(volume_label);
 		}
-		g_free(volume_label);
-	} else {
-		if (vid->type != NULL) {
-			snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
-		} else {
-			snprintf (buf, sizeof (buf), "Volume (unknown)");
-		}
-
-		libhal_changeset_set_property_string (cs, "info.product", buf);
 	}
+
+	if (vid->type != NULL) {
+		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+	} else {
+		snprintf (buf, sizeof (buf), "Volume (unknown)");
+	}
+
+	libhal_changeset_set_property_string (cs, "info.product", buf);
 }
 
 static void
