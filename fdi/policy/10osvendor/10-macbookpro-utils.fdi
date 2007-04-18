@@ -11,6 +11,21 @@
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
         </match>
+        <match key="system.hardware.product" string="MacBookPro1,2">
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
+        </match>
+        <match key="system.hardware.product" string="MacBookPro2,1">
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
+        </match>
+        <match key="system.hardware.product" string="MacBookPro2,2">
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
+        </match>
       </match>
     </match>
   </device>
