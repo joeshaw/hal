@@ -3,6 +3,7 @@ if HAVE_POLKIT
 polkit_privilegedir = $(sysconfdir)/PolicyKit/policy
 
 dist_polkit_privilege_DATA =    \
+	hal-lock.policy		\
 	hal-storage.policy	\
 	hal-power.policy	\
 	hal-killswitch.policy	

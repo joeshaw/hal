@@ -374,7 +374,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 	add_env (iter, "LD_LIBRARY_PATH", getenv ("LD_LIBRARY_PATH"));
 #ifdef HAVE_POLKIT
 	add_env (iter, "HAVE_POLKIT", "1");
-        add_env (iter, "POLKIT_PRIVILEGE_DIR", getenv ("POLKIT_PRIVILEGE_DIR"));
+        add_env (iter, "POLKIT_POLICY_DIR", getenv ("POLKIT_POLICY_DIR"));
         add_env (iter, "POLKIT_DEBUG", getenv ("POLKIT_DEBUG"));
 #endif
 

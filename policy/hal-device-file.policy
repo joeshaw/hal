@@ -1,86 +1,122 @@
-# -*- Conf -*-
-#
-# Policy definitions for HAL's ACL management mechanism.
-#
-# Copyright (c) 2007 David Zeuthen <david@fubar.dk>
-# 
-# HAL is licensed to you under your choice of the the Academic Free
-# License Version 2.1, or the GNU General Public License version
-# 2. Some individual source files may be under the GPL only. See
-# COPYING for details.
-#
-# NOTE: If you make changes to this file, make sure to validate the
-# file using the polkit-privilege-file-validate(1) tool. Changes made
-# to this file are applied instantly.
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
-# Directly access sound devices
-#
-#  device-file: special device file
-[Action hal-device-file-sound]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+<!-- 
+Policy definitions for HAL's ACL Management mechanism
 
-# Directly access video4linux devices
-#
-#  device-file: special device file
-[Action hal-device-file-video4linux]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+Copyright (c) 2007 David Zeuthen <david@fubar.dk>
 
-# Directly access optical drives
-#
-#  device-file: special device file
-[Action hal-device-file-cdrom]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=yes
-AllowLocalActive=yes
+HAL is licensed to you under your choice of the the Academic Free
+License Version 2.1, or the GNU General Public License version 2. Some
+individual source files may be under the GPL only. See COPYING for
+details.
 
-# Directly access DVB devices
-#
-#  device-file: special device file
-[Action hal-device-file-dvb]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+NOTE: If you make changes to this file, make sure to validate the file
+using the polkit-policy-file-validate(1) tool. Changes made to this
+file are instantly applied.
+-->
 
-# Directly access digital cameras
-#
-#  device-file: special device file
-[Action hal-device-file-camera]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+<policyconfig>
+  <group id="hal-device-file">
+    <description>Raw device access</description>
+    <description_short>Raw device access</description_short>
 
-# Directly access scanners
-#
-#  device-file: special device file
-[Action hal-device-file-scanner]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+    <policy id="hal-device-file-sound">
+      <description>Directly access sound devices</description>
+      <missing>System policy prevents direct access to the sound device '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all sound devices</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
 
-# Directly access Firewire IIDC devices
-#
-#  device-file: special device file
-[Action hal-device-file-ieee1394-iidc]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+    <policy id="hal-device-file-video4linux">
+      <description>Directly access video capture devices</description>
+      <missing>System policy prevents direct access to the video capture device '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all video capture devices</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
 
-# Directly access Firewire AVC devices
-#
-#  device-file: special device file
-[Action hal-device-file-ieee1394-avc]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+    <policy id="hal-device-file-cdrom">
+      <description>Directly access optical drives</description>
+      <missing>System policy prevents direct access to the optical drive '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all video optical drives</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-device-file-dvb">
+      <description>Directly access DVB devices</description>
+      <missing>System policy prevents direct access to the DVB device '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all DVB devices</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-device-file-camera">
+      <description>Directly access digital cameras</description>
+      <missing>System policy prevents direct access to the digital camera '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all digital cameras</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-device-file-scanner">
+      <description>Directly access scanners</description>
+      <missing>System policy prevents direct access to the scanner '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all scanners</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-device-file-ieee1394-iidc">
+      <description>Directly access Firewire IIDC devices</description>
+      <missing>System policy prevents direct access to the Firewire IIDC device '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all Firewire IIDC devices</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-device-file-ieee1394-avc">
+      <description>Directly access Firewire AVC devices</description>
+      <missing>System policy prevents direct access to the Firewire AVC device '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all Firewire AVC devices</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+  </group>
+</policyconfig>

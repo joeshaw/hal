@@ -1,63 +1,86 @@
-# -*- Conf -*-
-#
-# Policy definitions for HAL's drives/media mechanims.
-#
-# Copyright (c) 2007 David Zeuthen <david@fubar.dk>
-# 
-# HAL is licensed to you under your choice of the the Academic Free
-# License Version 2.1, or the GNU General Public License version
-# 2. Some individual source files may be under the GPL only. See
-# COPYING for details.
-#
-# NOTE: If you make changes to this file, make sure to validate the
-# file using the polkit-privilege-file-validate(1) tool. Changes made
-# to this file are instantly applied.
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
-# Mount file systems from internal drives
-[Action hal-storage-mount-fixed]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
+<!-- 
+Policy definitions for HAL's drives/media mechanims.
 
-# Mount file systems from internal drives using options not explicitly granted
-[Action hal-storage-mount-fixed-extra-options]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
+Copyright (c) 2007 David Zeuthen <david@fubar.dk>
 
-# Mount file systems from removable/hotpluggable drives
-[Action hal-storage-mount-removable]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+HAL is licensed to you under your choice of the the Academic Free
+License Version 2.1, or the GNU General Public License version 2. Some
+individual source files may be under the GPL only. See COPYING for
+details.
 
-# Mount file systems from internal drives using options not explicitly granted
-[Action hal-storage-mount-removable-extra-options]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
+NOTE: If you make changes to this file, make sure to validate the file
+using the polkit-policy-file-validate(1) tool. Changes made to this
+file are instantly applied.
+-->
 
-# Unmount file systems mounted by other users
-[Action hal-storage-unmount-others]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=auth_self_keep_always
+<policyconfig>
+  <group id="hal-storage">
+    <description>Storage Drives and Media</description>
+    <description_short>Storage</description_short>
 
-# Eject media from drives
-[Action hal-storage-eject]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+    <policy id="hal-storage-mount-fixed">
+      <description>Mount file systems from internal drives.</description>
+      <missing>Mounting the volume '%s' is restricted by system policy.</missing>
+      <apply_to_all_mnemonic>Apply to all volumes from _fixed drives.</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>no</allow_local_inactive>
+        <allow_local_active>auth_root_keep_always</allow_local_active>
+      </defaults>
+    </policy>
 
-# Set up decryption for encrypted storage devices
-[Action hal-storage-crypto-setup]
-AllowRemoteInactive=no
-AllowRemoteActive=no
-AllowLocalInactive=no
-AllowLocalActive=yes
+    <policy id="hal-storage-mount-removable">
+      <description>Mount file systems from removable drives.</description>
+      <missing>Mounting the volume '%s' is restricted by system policy.</missing>
+      <apply_to_all_mnemonic>Apply to all volumes from _removable drives.</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>no</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-storage-unmount-others">
+      <description>Unmount file systems mounted by other users.</description>
+      <missing>The volume '%s' is mounting by another user.</missing>
+      <apply_to_all_mnemonic>Apply to all volumes.</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>no</allow_local_inactive>
+        <allow_local_active>auth_root_keep_always</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-storage-eject">
+      <description>Eject removable media.</description>
+      <missing>Ejecting the volume '%s' is restricted by system policy.</missing>
+      <apply_to_all_mnemonic>Apply to all volumes.</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>no</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-storage-crypto-setup">
+      <description>Set up decryption for encrypted storage devices.</description>
+      <missing>Decrypting the volume '%s' is restricted by system policy.</missing>
+      <apply_to_all_mnemonic>Apply to all volumes.</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>no</allow_local_inactive>
+        <allow_local_active>yes</allow_local_active>
+      </defaults>
+    </policy>
+
+  </group>
+</policyconfig>
