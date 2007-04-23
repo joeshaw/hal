@@ -330,14 +330,11 @@ AC_CHECK_LIB(expat,XML_ParserCreate,[EXPAT_LIB="-lexpat"],
 AC_SUBST(EXPAT_LIB)
 
 dnl Check libusb
-AC_PATH_PROG(LIBUSB_CONFIG, libusb-config)
-if test -n "${LIBUSB_CONFIG}"; then
-	USE_LIBUSB=yes
-	AM_CONDITIONAL(HAVE_LIBUSB,true)
-else
-	USE_LIBUSB=no
-	AM_CONDITIONAL(HAVE_LIBUSB,false)
+AC_CHECK_HEADERS(usb.h, USE_LIBUSB=yes, USE_LIBUSB=no)
+if test "x$USE_LIBUSB" = "xyes"; then
+	AC_CHECK_LIB(usb,usb_find_devices, , USE_LIBUSB=no)
 fi
+AM_CONDITIONAL([HAVE_LIBUSB],[test "x$USE_LIBUSB" = "xyes"])
 
 dnl Check for libsmbios
 AC_LANG_PUSH([C++])

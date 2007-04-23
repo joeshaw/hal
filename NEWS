@@ -12,7 +12,7 @@ Requirements for HAL 0.5.10 "":
  - glib             >= 2.6.0
  - expat            >= 1.95.8
  - hal-info         >= 20070402
- - libusb           >= 0 0.1.10a (optional)
+ - libusb           >= 0.1.10a (optional)
  - pciutils         >= 2.2.3     (optional
  - dmidecode        >= 2.7       (optional)
  - parted           == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.86 (optional)
@@ -39,7 +39,7 @@ Requirements for HAL 0.5.9 "Precipice":
  - glib             >= 2.6.0
  - expat            >= 1.95.8
  - hal-info         >= 20070402
- - libusb           >= 0 0.1.10a (optional)
+ - libusb           >= 0.1.10a (optional)
  - pciutils         >= 2.2.3     (optional
  - dmidecode        >= 2.7       (optional)
  - parted           == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.86 (optional)
@@ -842,7 +842,7 @@ Requirements for HAL 0.5.8 "The Skynet Funding Bill is passed."
  - dbus             >= 0.60      (with glib bindings)
  - glib             >= 2.6.0
  - expat            >= 1.95.8
- - libusb           >= 0 0.1.10a (optional)
+ - libusb           >= 0.1.10a (optional)
  - pciutils         >= 2.2.3     (optional
  - dmidecode        >= 2.7       (optional)
  - parted           == 1.7.1     (optional)
@@ -909,7 +909,7 @@ Requirements for HAL 0.5.7 "Dead as Dillinger."
  - dbus             >= 0.60      (with glib bindings)
  - glib             >= 2.6.0
  - expat            >= 1.95.8
- - libusb           >= 0 0.1.10a (optional)
+ - libusb           >= 0.1.10a (optional)
  - dmidecode        >= 2.7       (optional)
  - cryptsetup-luks  => 1.0.1     (optional, needs LUKS patches)
 
@@ -978,7 +978,7 @@ Requirements for HAL 0.5.6 "Leave the gun. Take the cannoli."
  - glib          >= 2.6.0
  - expat         >= 1.95.8
  - popt          >= 1.10.2    (optional)
- - libusb        >= 0 0.1.10a (optional)
+ - libusb        >= 0.1.10a (optional)
  - dmidecode     >= 2.7       (optional)
 
 ==========
