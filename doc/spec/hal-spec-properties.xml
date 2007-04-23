@@ -4117,7 +4117,8 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         capability <literal>net</literal> and they will export the
         properties below. This namespace only describe the generic
         aspect of networking devices; specific networking technologies
-        such as IEEE 802.3 and IEEE 802.11 have separate namespaces.
+        such as IEEE 802.3, IEEE 802.11 and Bluetooth have separate
+	namespaces.
       </para>
       <informaltable>
         <tgroup cols="2">
@@ -4291,6 +4292,65 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 Only if the <literal>net.80211</literal> capability is set
               </entry>
               <entry>48-bit address</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+      </para>
+    </sect2>
+    <sect2 id="device-properties-net-bluetooth">
+      <title>
+        net.bluetooth namespace
+      </title>
+      <para>
+        Bluetooth ethernet networking devices is described in this namespace
+        for device objects with the capability
+        <literal>net.bluetooth</literal>.
+        Note that device
+        objects can only have the <literal>net.bluetooth</literal> capability
+        if they already have the capability <literal>net</literal>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>net.bluetooth.mac_address</literal> (uint64)
+              </entry>
+              <entry>example: 0x0010605d8ef4</entry>
+              <entry>
+                Only if the <literal>net.bluetooth</literal> capability is set
+              </entry>
+              <entry>48-bit address</entry>
+            </row>
+           <row>
+              <entry>
+                <literal>net.bluetooth.name</literal> (string)
+              </entry>
+              <entry>example: Network Access Point Service</entry>
+              <entry>
+                Only if the <literal>net.bluetooth</literal> capability is set
+              </entry>
+              <entry>Displayable Name</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>net.bluetooth.uuid</literal> (string)
+              </entry>
+              <entry>example: 00001116-0000-1000-8000-00805f9b34fb</entry>
+              <entry>
+                Only if the <literal>net.bluetooth</literal> capability is set
+              </entry>
+              <entry>Universal Unique IDentifier</entry>
             </row>
           </tbody>
         </tgroup>

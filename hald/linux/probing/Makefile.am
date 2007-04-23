@@ -10,7 +10,7 @@ INCLUDES = \
 
 if HALD_COMPILE_LINUX
 libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume hald-probe-printer \
-	           hald-probe-pc-floppy hald-probe-smbios hald-probe-serial hald-probe-ieee1394-unit
+	           hald-probe-pc-floppy hald-probe-smbios hald-probe-serial hald-probe-ieee1394-unit hald-probe-net-bluetooth
 endif
 
 hald_probe_smbios_SOURCES = probe-smbios.c ../../logger.c
@@ -39,3 +39,6 @@ hald_probe_volume_LDADD = $(top_builddir)/libhal/libhal.la $(top_builddir)/partu
 
 hald_probe_ieee1394_unit_SOURCES = probe-ieee1394-unit.c ../../logger.c
 hald_probe_ieee1394_unit_LDADD = $(top_builddir)/libhal/libhal.la
+
+hald_probe_net_bluetooth_SOURCES = probe-net-bluetooth.c ../../logger.c
+hald_probe_net_bluetooth_LDADD = $(top_builddir)/libhal/libhal.la

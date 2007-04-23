@@ -480,48 +480,49 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	media_type = hal_device_property_get_int (d, "net.arp_proto_hw_id");
 	if (media_type == ARPHRD_ETHER) {
 		const char *addr;
+		const char *parent_subsys;
 		char wireless_path[HAL_PATH_MAX];
 		char wiphy_path[HAL_PATH_MAX];
-		gboolean is_wireless;
 		struct stat s;
-
-		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
-		/* wireless dscape stack e.g. from rt2500pci driver*/
-		snprintf (wiphy_path, HAL_PATH_MAX, "%s/wiphy", sysfs_path);
-
-                if ((stat (wireless_path, &s) == 0 && (s.st_mode & S_IFDIR)) ||
-		    (stat (wiphy_path, &s) == 0 && (s.st_mode & S_IFDIR))) { 
-			hal_device_property_set_string (d, "info.product", "WLAN Interface");
-			hal_device_property_set_string (d, "info.category", "net.80211");
-			hal_device_add_capability (d, "net.80211");
-			is_wireless = TRUE;
-		} else {
-			hal_device_property_set_string (d, "info.product", "Networking Interface");
-			hal_device_property_set_string (d, "info.category", "net.80203");
-			hal_device_add_capability (d, "net.80203");
-			is_wireless = FALSE;
-		}
+		dbus_uint64_t mac_address = 0;
 
 		addr = hal_device_property_get_string (d, "net.address");
 		if (addr != NULL) {
 			unsigned int a5, a4, a3, a2, a1, a0;
-			
+
 			if (sscanf (addr, "%x:%x:%x:%x:%x:%x",
 				    &a5, &a4, &a3, &a2, &a1, &a0) == 6) {
-				dbus_uint64_t mac_address;
-				
-				mac_address = 
+				mac_address =
 					((dbus_uint64_t)a5<<40) |
-					((dbus_uint64_t)a4<<32) | 
-					((dbus_uint64_t)a3<<24) | 
-					((dbus_uint64_t)a2<<16) | 
-					((dbus_uint64_t)a1<< 8) | 
+					((dbus_uint64_t)a4<<32) |
+					((dbus_uint64_t)a3<<24) |
+					((dbus_uint64_t)a2<<16) |
+					((dbus_uint64_t)a1<< 8) |
 					((dbus_uint64_t)a0<< 0);
-				
-				hal_device_property_set_uint64 (d, is_wireless ? "net.80211.mac_address" : 
-								"net.80203.mac_address",
-								mac_address);
 			}
+		}
+
+		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
+		/* wireless dscape stack e.g. from rt2500pci driver*/
+		snprintf (wiphy_path, HAL_PATH_MAX, "%s/wiphy", sysfs_path);
+		parent_subsys = hal_device_property_get_string (parent_dev, "linux.subsystem");
+
+		if (parent_subsys && strcmp(parent_subsys, "bluetooth") == 0) {
+			hal_device_property_set_string (d, "info.product", "Bluetooth Interface");
+			hal_device_property_set_string (d, "info.category", "net.bluetooth");
+			hal_device_add_capability (d, "net.bluetooth");
+			hal_device_property_set_uint64 (d, "net.bluetooth.mac_address", mac_address);
+		} else if ((stat (wireless_path, &s) == 0 && (s.st_mode & S_IFDIR)) ||
+			(stat (wiphy_path, &s) == 0 && (s.st_mode & S_IFDIR))) {
+			hal_device_property_set_string (d, "info.product", "WLAN Interface");
+			hal_device_property_set_string (d, "info.category", "net.80211");
+			hal_device_add_capability (d, "net.80211");
+			hal_device_property_set_uint64 (d, "net.80211.mac_address", mac_address);
+		} else {
+			hal_device_property_set_string (d, "info.product", "Networking Interface");
+			hal_device_property_set_string (d, "info.category", "net.80203");
+			hal_device_add_capability (d, "net.80203");
+			hal_device_property_set_uint64 (d, "net.80203.mac_address", mac_address);
 		}
 	} else if (media_type == ARPHRD_IRDA) {
 		hal_device_property_set_string (d, "info.product", "Networking Interface");
@@ -548,6 +549,24 @@ error:
 	}
 
 	return d;
+}
+static const char *
+net_get_prober (HalDevice *d)
+{
+	const char *prober = NULL;
+
+	/* run prober only for bluetooth devices */
+	if (hal_device_has_capability (d, "net.bluetooth")) {
+		prober = "hald-probe-net-bluetooth";
+	}
+
+	return prober;
+}
+
+static gboolean
+net_post_probing (HalDevice *d)
+{
+	return TRUE;
 }
 
 static gboolean
@@ -2978,8 +2997,8 @@ static DevHandler dev_handler_net =
 { 
 	.subsystem    = "net",
 	.add          = net_add,
-	.get_prober   = NULL,
-	.post_probing = NULL,
+	.get_prober   = net_get_prober,
+	.post_probing = net_post_probing,
 	.compute_udi  = net_compute_udi,
 	.remove       = dev_remove
 };
