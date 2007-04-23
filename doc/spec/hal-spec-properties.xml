@@ -2568,6 +2568,112 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+
+    <sect2 id="device-properties-bluetooth_hci">
+      <title>bluetooth_hci namespace</title>
+      <para>
+	Device objects representing a Bluetooth Host Controller Interface.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>bluetooth_hci.address</literal> (uint64)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Address of the host controller interface.</entry>
+            </row>
+            <row>
+              <entry><literal>bluetooth_hci.originating_device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The UDI of the physical device (e.g. an USB interface) that provides the HCI hardware.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-bluetooth_acl">
+      <title>bluetooth_acl namespace</title>
+      <para>
+	Device objects representing Asynchronous Connection-oriented Links.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>bluetooth_acl.address</literal> (uint64)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Address of the device at the other end of the connection.</entry>
+            </row>
+            <row>
+              <entry><literal>bluetooth_acl.originating_device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The UDI of the Bluetooth HCI (of
+              capability <literal>bluetooth_hci</literal>) that the
+              connection is made through.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-bluetooth_sco">
+      <title>bluetooth_sco namespace</title>
+      <para>
+	Device objects representing Synchronous Connection-Oriented links.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>bluetooth_sco.address</literal> (uint64)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Address of the device at the other end of the connection.</entry>
+            </row>
+            <row>
+              <entry><literal>bluetooth_sco.originating_device</literal> (string)</entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The UDI of the Bluetooth HCI (of
+              capability <literal>bluetooth_hci</literal>) that the
+              connection is made through.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
   </sect1>
 
   <sect1 id="properties-functional">

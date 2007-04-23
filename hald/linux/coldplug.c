@@ -333,6 +333,36 @@ error:
 	return -1;
 }
 
+static void
+scan_single_bus (const char *bus_name)
+{
+        char dirname[HAL_PATH_MAX];
+        DIR *dir2;
+        struct dirent *dent2;
+        
+        g_strlcpy(dirname, get_hal_sysfs_path (), sizeof(dirname));
+        g_strlcat(dirname, "/bus/", sizeof(dirname));
+        g_strlcat(dirname, bus_name, sizeof(dirname));
+        g_strlcat(dirname, "/devices", sizeof(dirname));
+        
+        /* look for devices */
+        dir2 = opendir(dirname);
+        if (dir2 != NULL) {
+                for (dent2 = readdir(dir2); dent2 != NULL; dent2 = readdir(dir2)) {
+                        char dirname2[HAL_PATH_MAX];
+                        
+                        if (dent2->d_name[0] == '.')
+                                continue;
+                        
+                        g_strlcpy(dirname2, dirname, sizeof(dirname2));
+                        g_strlcat(dirname2, "/", sizeof(dirname2));
+                        g_strlcat(dirname2, dent2->d_name, sizeof(dirname2));
+                        device_list_insert(dirname2, bus_name, HOTPLUG_EVENT_SYSFS_DEVICE);
+                }
+                closedir(dir2);
+        }
+}
+
 static void scan_subsystem(const char *subsys)
 {
 	char base[HAL_PATH_MAX];
@@ -500,9 +530,9 @@ static int _device_order (const void *d1, const void *d2)
 	const struct sysfs_device *dev2 = d2;
 
 	/* device mapper needs to be the last events, to have the other block devs already around */
-	if (strstr(dev2->path, "/" DMPREFIX))
+	if (strstr (dev2->path, "/" DMPREFIX))
 		return -1;
-	if (strstr(dev1->path, "/" DMPREFIX))
+	if (strstr (dev1->path, "/" DMPREFIX))
 		return 1;
 
 	return strcmp(dev1->path, dev2->path);
@@ -532,6 +562,7 @@ coldplug_synthesize_events (void)
 		queue_events ();
 
 		scan_class ();
+                scan_single_bus ("bluetooth");
 		device_list = g_slist_sort (device_list, _device_order);
 		queue_events ();
 

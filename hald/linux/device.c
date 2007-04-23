@@ -355,6 +355,9 @@ bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 {
 	HalDevice *d;
 	const char *type_entry;
+	const char *addr_entry;
+        unsigned int a5, a4, a3, a2, a1, a0;
+        dbus_uint64_t address;
 
 	d = NULL;
 
@@ -362,20 +365,39 @@ bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 		goto out;
 	}
 
+	addr_entry = hal_util_get_string_from_file (sysfs_path, "address");
+        if (addr_entry == NULL)
+                goto out;
+
+        if (sscanf (addr_entry, "%x:%x:%x:%x:%x:%x", &a5, &a4, &a3, &a2, &a1, &a0) != 6) {
+                goto out;
+        }
+        address = ((dbus_uint64_t)a5<<40) |
+                ((dbus_uint64_t)a4<<32) | 
+                ((dbus_uint64_t)a3<<24) | 
+                ((dbus_uint64_t)a2<<16) | 
+                ((dbus_uint64_t)a1<< 8) | 
+                ((dbus_uint64_t)a0<< 0);
+
+	type_entry = hal_util_get_string_from_file (sysfs_path, "type");
+        if (type_entry == NULL)
+                goto out;
+
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
-	type_entry = hal_util_get_string_from_file (sysfs_path, "type");
-
-	if (type_entry && strcmp (type_entry, "ACL") == 0) {
+	if (strcmp (type_entry, "ACL") == 0) {
 		hal_device_property_set_string (d, "info.category", "bluetooth_acl");
 		hal_device_add_capability (d, "bluetooth_acl");
+                hal_device_property_set_uint64 (d, "bluetooth_acl.address", address);
 		hal_device_property_set_string (d, "info.product", "Bluetooth Asynchronous Connection-oriented Link");
 		hal_device_property_set_string (d, "bluetooth_acl.originating_device", hal_device_get_udi (parent_dev));
-	} else if (type_entry && strcmp (type_entry, "SCO") == 0) {
+
+	} else if (strcmp (type_entry, "SCO") == 0) {
 		hal_device_property_set_string (d, "info.category", "bluetooth_sco");
 		hal_device_add_capability (d, "bluetooth_sco");
+                hal_device_property_set_uint64 (d, "bluetooth_sco.address", address);
 		hal_device_property_set_string (d, "info.product", "Bluetooth Synchronous Connection-oriented Link");
 		hal_device_property_set_string (d, "bluetooth_sco.originating_device", hal_device_get_udi (parent_dev));
 	} else {
@@ -383,7 +405,7 @@ bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 		hal_device_add_capability (d, "bluetooth_hci");
 		hal_device_property_set_string (d, "info.product", "Bluetooth Host Controller Interface");
 		hal_device_property_set_string (d, "bluetooth_hci.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "bluetooth_hci.physical_device", hal_device_get_udi (parent_dev));
+                hal_device_property_set_uint64 (d, "bluetooth_hci.address", address);
 	}
 
 out:
@@ -397,16 +419,17 @@ bluetooth_compute_udi (HalDevice *d)
 
 	if (hal_device_has_capability (d, "bluetooth_acl")) {
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_bluetooth_acl",
-			      hal_device_property_get_string (d, "info.parent"));
+                                      "/org/freedesktop/Hal/devices/bluetooth_acl_%0llx",
+                                      hal_device_property_get_uint64 (d, "bluetooth_acl.address"));
 	} else if (hal_device_has_capability (d, "bluetooth_sco")) {
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_bluetooth_sco",
-			      hal_device_property_get_string (d, "info.parent"));
+                                      "/org/freedesktop/Hal/devices/bluetooth_acl_%0llx",
+                                      hal_device_property_get_uint64 (d, "bluetooth_acl.address"));
 	} else {
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_bluetooth_hci",
-			      hal_device_property_get_string (d, "info.parent"));
+                                      "%s_bluetooth_hci_%0llx",
+                                      hal_device_property_get_string (d, "info.parent"),
+                                      hal_device_property_get_uint64 (d, "bluetooth_hci.address"));
 	}
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
