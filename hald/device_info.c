@@ -71,6 +71,8 @@ get_match_type_str (enum match_type type)
 		return "uint64";
 	case MATCH_BOOL:
 		return "bool";
+	case MATCH_DOUBLE:
+		return "double";
 	case MATCH_EXISTS:
 		return "exists";
 	case MATCH_EMPTY:
@@ -85,6 +87,8 @@ get_match_type_str (enum match_type type)
 		return "contains";
 	case MATCH_CONTAINS_NCASE:
 		return "contains_ncase";
+	case MATCH_CONTAINS_NOT:
+		return "contains_not";
 	case MATCH_PREFIX:
 		return "prefix";
 	case MATCH_PREFIX_NCASE:
@@ -105,8 +109,6 @@ get_match_type_str (enum match_type type)
 		return "compare_ne";
 	case MATCH_UNKNOWN:
 		return "unknown match type";
-	case MATCH_CONTAINS_NOT:
-		return "contains_not";
 	}
 	return "invalid match type";
 }
@@ -327,6 +329,17 @@ handle_match (struct rule *rule, HalDevice *d)
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_BOOLEAN)
 			return FALSE;
 		if (hal_device_property_get_bool (d, prop_to_check) != val)
+			return FALSE;
+		return TRUE;
+	}
+
+	case MATCH_DOUBLE:
+	{
+		double val = atof (value);
+
+		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_DOUBLE)
+			return FALSE;
+		if (hal_device_property_get_double (d, prop_to_check) != val)
 			return FALSE;
 		return TRUE;
 	}

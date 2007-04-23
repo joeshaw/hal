@@ -100,6 +100,12 @@
         </listitem>
         <listitem>
           <para>
+            <literal>is_ascii</literal> - matches only when a string property
+            contain only ASCII characters. Can be used with 'true' or 'false'.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
             <literal>is_absolute_path</literal> - matches only when a string
             property represents an absolute path (the path doesn't have to exist).
             Can be used with 'true' or 'false'.
@@ -107,8 +113,60 @@
         </listitem>
         <listitem>
           <para>
-            <literal>is_ascii</literal> - matches only when a string property
-            contain only ASCII characters. Can be used with 'true' or 'false'.
+            <literal>sibling_contains</literal> - can only be used with string and
+	    strlist (string list).
+            For a string key this matches when a sibling item contains the
+            (sub-)string in the same property. For a string list, this is if a string
+            matches an item in the list.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>contains</literal> - can only be used with string and
+            strlist (string list).
+            For a string key this matches when the property contains the given
+            (sub-)string. For a string list this match if the given string match
+            a item of the list.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>contains_ncase</literal> - like <literal>contains</literal>
+            but the property and the given key are converted to lowercase before check.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>contains_not</literal> - can only be used with strlist (string list)
+	    and string properties.
+            For a string list this match if the given string not match any of the
+            item of the list (or the property is not set for the device). For a string
+	    this match of the property not contains the (sub-)string. You can use this
+	    attribute to construct if/else blocks together with e.g. <literal>contains</literal>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>prefix</literal> - can only be used with string properties.
+            Matches if property begins with the key.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>prefix_ncase</literal> - like <literal>prefix</literal> but the
+            property and the given key are converted to lowercase before the check.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>suffix</literal> - can only be used with string properties.
+            Matches if property ends with the key.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>suffix_ncase</literal> - like <literal>suffix</literal> but the
+            property and the given key are converted to lowercase before the check.
           </para>
         </listitem>
         <listitem>
@@ -141,31 +199,6 @@
           <para>
             <literal>compare_ne</literal> - like <literal>compare_lt</literal>
             but matches when not equal.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>contains</literal> - can only be used with string and
-            strlist (string list).
-            For a string key this matches when the property contains the given
-            (sub-)string. For a string list this match if the given string match
-            a item of the list.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>contains_not</literal> - can only be used with strlist (string list) 
-	    and string properties.
-            For a string list this match if the given string not match any of the
-            item of the list (or the property is not set for the device). For a string  
-	    this match of the property not contains the (sub-)string. You can use this 
-	    attribute to construct if/else blocks together with e.g. <literal>contains</literal>.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>contains_ncase</literal> - like <literal>contains</literal>
-            but the property and the given key are converted to lowercase before check.
           </para>
         </listitem>
       </itemizedlist>
