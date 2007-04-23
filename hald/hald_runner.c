@@ -891,12 +891,10 @@ hald_runner_kill_device (HalDevice * device)
 }
 
 void
-hald_runner_kill_all (HalDevice * device)
+hald_runner_kill_all ()
 {
 	DBusMessage *msg, *reply;
 	DBusError err;
-
-	running_processes_remove_device (device);
 
 	msg = dbus_message_new_method_call ("org.freedesktop.HalRunner",
 					    "/org/freedesktop/HalRunner",
