@@ -88,7 +88,7 @@ get_properties (DBusConnection *conn, LibHalContext *ctx, const char *udi,
 		dbus_message_iter_next (&dict_entry_iter);
 		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
 
-		snprintf(prop, 32, "net.bluetooth.%s", key);
+                snprintf(prop, sizeof (prop), "net.bluetooth.bluez_%s", key);
 
 		/* Make any property found annouced by hal */
 		switch (dbus_message_iter_get_arg_type (&var_iter)) {
@@ -151,8 +151,7 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	iface = libhal_device_get_property_string (ctx, udi, "net.interface",
-												NULL);
+	iface = libhal_device_get_property_string (ctx, udi, "net.interface", NULL);
 
 	HAL_INFO (("Investigating '%s'", iface));
 
@@ -162,9 +161,7 @@ main (int argc, char *argv[])
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 		goto out;
 
-	msg = dbus_message_new_method_call (BLUEZ_SERVICE, BLUEZ_PATH,
-										BLUEZ_MANAGER_IFACE,
-										"ActivateService");
+	msg = dbus_message_new_method_call (BLUEZ_SERVICE, BLUEZ_PATH, BLUEZ_MANAGER_IFACE, "ActivateService");
 
 	if (msg == NULL)
 		goto out;
@@ -174,8 +171,7 @@ main (int argc, char *argv[])
 								DBUS_TYPE_INVALID);
 	reply = dbus_connection_send_with_reply_and_block (conn, msg, -1, &error);
 
-	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error,
-		reply)) {
+	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error, reply)) {
 		dbus_error_free (&error);
 		goto out;
 	}
@@ -183,8 +179,7 @@ main (int argc, char *argv[])
 	dbus_message_unref (msg);
 	msg = NULL;
 
-	dbus_message_get_args (reply, &error, DBUS_TYPE_STRING, &id,
-							DBUS_TYPE_INVALID);
+	dbus_message_get_args (reply, &error, DBUS_TYPE_STRING, &id, DBUS_TYPE_INVALID);
 	if (dbus_error_is_set (&error)) {
 		dbus_error_free (&error);
 		goto out;
@@ -195,9 +190,7 @@ main (int argc, char *argv[])
 
 	HAL_INFO (("Found Bluez Network service '%s'", id));
 
-	msg = dbus_message_new_method_call (id, BLUEZ_NET_PATH,
-										BLUEZ_NET_MANAGER_IFACE,
-										"FindConnection");
+	msg = dbus_message_new_method_call (id, BLUEZ_NET_PATH, BLUEZ_NET_MANAGER_IFACE, "FindConnection");
 
 	if (msg == NULL)
 		goto out;
