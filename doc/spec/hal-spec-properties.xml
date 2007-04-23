@@ -5376,12 +5376,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
-    <sect2 id="device-properties-ac_adaptor">
+    <sect2 id="device-properties-ac_adapter">
       <title>
-        ac_adaptor namespace
+        ac_adapter namespace
       </title>
       <para>
-        Device objects with the capability <literal>ac_adaptor</literal>
+        Device objects with the capability <literal>ac_adapter</literal>
         represent all the devices capable of powering the system from AC power
       </para>
       <informaltable>
@@ -5397,12 +5397,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           <tbody>
             <row>
               <entry>
-                <literal>ac_adaptor.present</literal> (bool)
+                <literal>ac_adapter.present</literal> (bool)
               </entry>
               <entry></entry>
               <entry>Yes</entry>
               <entry>
-                The state of the adaptor, i.e. whether it is providing power to
+                The state of the adapter, i.e. whether it is providing power to
                 the unit from mains power.
               </entry>
             </row>

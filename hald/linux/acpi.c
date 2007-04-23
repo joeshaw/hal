@@ -66,7 +66,7 @@ typedef struct ACPIDevHandler_s
 
 /** 
  *  ac_adapter_refresh_poll
- *  @d:		valid ac_adaptor HalDevice
+ *  @d:		valid ac_adapter HalDevice
  *
  * Just sets the ac_adapter.present key when called 
  */
@@ -330,7 +330,7 @@ acpi_poll_battery (void)
  * 
  *  Returns:			TRUE
  *
- *  Fallback polling method to detect if the ac_adaptor is plugged in 
+ *  Fallback polling method to detect if the ac_adapter is plugged in 
  *
  *  Note: This just calls ac_adapter_refresh_poll for each ac_adapter
  */
@@ -369,7 +369,7 @@ acpi_poll_acadap (void)
  *
  *  Fallback polling method called every minute. 
  *
- *  Note: This just forces a poll refresh for *every* ac_adaptor
+ *  Note: This just forces a poll refresh for *every* ac_adapter
  *        and primary battery in the system.
  */
 static gboolean
