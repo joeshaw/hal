@@ -250,6 +250,12 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 		goto out;
 	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
 
+	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask) && test_bit (ABS_PRESSURE, bitmask)) {
+		hal_device_add_capability (d, "input.touchpad");
+                goto out;
+        }
+
+        /* TODO: Hmm; this code looks sketchy... why do we do !test_bit on the Y axis ?? */
 	if (test_bit(ABS_X, bitmask) && !test_bit(ABS_Y, bitmask)) {
 		long bitmask_touch[NBITS(KEY_MAX)];
 
@@ -262,7 +268,7 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 
 		if (test_bit(BTN_TOUCH, bitmask_touch)) {
 			hal_device_add_capability (d, "input.tablet");
-		}
+                }
 	}
 out:
 	;
