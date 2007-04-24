@@ -88,7 +88,7 @@ get_properties (DBusConnection *conn, LibHalContext *ctx, const char *udi,
 		dbus_message_iter_next (&dict_entry_iter);
 		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
 
-                snprintf(prop, sizeof (prop), "net.bluetooth.bluez_%s", key);
+                snprintf(prop, sizeof (prop), "net.bluetooth.%s", key);
 
 		/* Make any property found annouced by hal */
 		switch (dbus_message_iter_get_arg_type (&var_iter)) {

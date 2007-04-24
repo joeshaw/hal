@@ -4334,23 +4334,23 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
            <row>
               <entry>
-                <literal>net.bluetooth.bluez_name</literal> (string)
+                <literal>net.bluetooth.name</literal> (string)
               </entry>
               <entry>example: Network Access Point Service</entry>
               <entry>
                 Only if the <literal>net.bluetooth</literal> capability is set and Bluez is being used.
               </entry>
-              <entry>Displayable Name according to Bluez</entry>
+              <entry>Displayable Name for network connection</entry>
             </row>
             <row>
               <entry>
-                <literal>net.bluetooth.bluez_uuid</literal> (string)
+                <literal>net.bluetooth.uuid</literal> (string)
               </entry>
               <entry>example: 00001116-0000-1000-8000-00805f9b34fb</entry>
               <entry>
                 Only if the <literal>net.bluetooth</literal> capability is set and Bluez is being used.
               </entry>
-              <entry>Universal Unique Identifier</entry>
+              <entry>Universal Unique Identifier for network connection</entry>
             </row>
           </tbody>
         </tgroup>
