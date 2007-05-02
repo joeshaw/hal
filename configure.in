@@ -8,8 +8,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
 AC_INIT(hal, 0.5.10, david@fubar.dk)
-AM_INIT_AUTOMAKE(hal, 0.5.10)
-AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE([gnu 1.5])
 AM_MAINTAINER_MODE
 
 glib_module="glib-2.0 >= 2.6.0 gobject-2.0 > 2.6.0 dbus-glib-1 >= 0.61"
@@ -30,10 +29,9 @@ AC_SUBST(LT_AGE)
 
 AC_ISC_POSIX
 AC_PROG_CC
-AM_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_HEADER_STDC
-AM_PROG_LIBTOOL
+AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AC_SYS_LARGEFILE
@@ -41,18 +39,40 @@ PKG_PROG_PKG_CONFIG
 
 AC_CHECK_HEADERS([sys/ioccom.h sys/inotify.h])
 
-AC_ARG_WITH(os-type,     [  --with-os-type=<os>     Distribution or OS (redhat)])
-AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>  PID file for HAL daemon])
+AC_ARG_WITH([os-type],
+	    AS_HELP_STRING([--with-os-type=<os>],
+			   [Distribution or OS (redhat)]))
+AC_ARG_WITH([pid-file],
+	    AS_HELP_STRING([--with-pid-file=<file>],
+			   [PID file for HAL daemon]))
 
-AC_ARG_WITH(hwdata, AC_HELP_STRING([--with-hwdata=<dir>], [Where PCI and USB IDs are found]))
-AC_ARG_WITH(pci-ids, AC_HELP_STRING([--with-pci-ids=<dir>], [Where PCI IDs are found (overrides --with-hwdata)]))
-AC_ARG_WITH(usb-ids, AC_HELP_STRING([--with-usb-ids=<dir>], [Where USB IDs are found (overrides --with-hwdata)]))
-AC_ARG_ENABLE([pci-ids], AC_HELP_STRING([--disable-pci-ids], [Do not build with PCI IDs support]), [enable_pci_ids=$enableval], [enable_pci_ids=yes])
-AC_ARG_ENABLE([usb-ids], AC_HELP_STRING([--disable-usb-ids], [Do not build with USB IDs support]), [enable_usb_ids=$enableval], [enable_usb_ids=yes])
-AC_ARG_ENABLE([pnp-ids], AC_HELP_STRING([--disable-pnp-ids], [Do not build with PNP IDs support]), [enable_pnp_ids=$enableval], [enable_pnp_ids=yes])
+AC_ARG_WITH([hwdata],
+	    AS_HELP_STRING([--with-hwdata=<dir>],
+			   [Where PCI and USB IDs are found]))
+AC_ARG_WITH([pci-ids],
+	    AS_HELP_STRING([--with-pci-ids=<dir>],
+			   [Where PCI IDs are found (overrides --with-hwdata)]))
+AC_ARG_WITH([usb-ids],
+	    AS_HELP_STRING([--with-usb-ids=<dir>],
+			   [Where USB IDs are found (overrides --with-hwdata)]))
 
-AC_ARG_WITH(socket-dir,[  --with-socket-dir=<dir>  Location of the HAL D-BUS listening sockets (auto)])
-AC_ARG_WITH(socket-dir,[  --with-socket-dir=<dir>  Location of the HAL D-BUS listening sockets (auto)])
+AC_ARG_ENABLE([pci-ids],
+	      AS_HELP_STRING([--disable-pci-ids],
+			     [Do not build with PCI IDs support]),
+	      [enable_pci_ids=$enableval], [enable_pci_ids=yes])
+AC_ARG_ENABLE([usb-ids],
+	      AS_HELP_STRING([--disable-usb-ids],
+			     [Do not build with USB IDs support]),
+	      [enable_usb_ids=$enableval], [enable_usb_ids=yes])
+AC_ARG_ENABLE([pnp-ids],
+	      AS_HELP_STRING([--disable-pnp-ids],
+			     [Do not build with PNP IDs support]),
+	      [enable_pnp_ids=$enableval], [enable_pnp_ids=yes])
+
+AC_ARG_WITH([socket-dir],
+	    AS_HELP_STRING([--with-socket-dir=<dir>],
+			   [Location of the HAL D-BUS listening sockets (auto)]))
+
 if ! test -z "$with_hwdata" ; then
   PCI_IDS_DIR="$with_hwdata"
   USB_IDS_DIR="$with_hwdata"
@@ -69,16 +89,16 @@ if test "x$enable_pci_ids" = "xno" ; then
 else
    if test -z "$PCI_IDS_DIR"; then
      for dir in /usr/share/hwdata /usr/share/misc /usr/share /var/lib/misc; do
-       AC_CHECK_FILE($dir/pci.ids,PCI_IDS_DIR=$dir)
+       AC_CHECK_FILE([$dir/pci.ids], [PCI_IDS_DIR=$dir])
      done
      if test -z "$PCI_IDS_DIR"; then
-       AC_ERROR([cannot find pci.ids. Use --with-pci-ids to specify location])
+       AC_MSG_ERROR([cannot find pci.ids. Use --with-pci-ids to specify location])
      else
-       AC_WARN([Autodetected pci.ids in $PCI_IDS_DIR])
+       AC_MSG_WARN([autodetected pci.ids in $PCI_IDS_DIR])
      fi
    fi
    USE_PCI_IDS=yes
-   AC_DEFINE(USE_PCI_IDS,1,[Whether pci.ids is to be used])
+   AC_DEFINE([USE_PCI_IDS], [1], [Whether pci.ids is to be used])
 fi
 
 if test "x$enable_usb_ids" = "xno" ; then
@@ -86,23 +106,23 @@ if test "x$enable_usb_ids" = "xno" ; then
 else 
    if test -z "$USB_IDS_DIR"; then
      for dir in /usr/share/hwdata /usr/share/misc /usr/share /var/lib/misc; do
-       AC_CHECK_FILE($dir/usb.ids,USB_IDS_DIR=$dir)
+       AC_CHECK_FILE([$dir/usb.ids], [USB_IDS_DIR=$dir])
      done
      if test -z "$USB_IDS_DIR"; then
-       AC_ERROR([cannot find usb.ids. Use --with-usb-ids to specify location])
+       AC_MSG_ERROR([cannot find usb.ids. Use --with-usb-ids to specify location])
      else
-       AC_WARN([Autodetected usb.ids in $USB_IDS_DIR])
+       AC_MSG_WARN([autodetected usb.ids in $USB_IDS_DIR])
      fi
    fi
    USE_USB_IDS=yes
-   AC_DEFINE(USE_USB_IDS,1,[Whether usb.ids is to be used])
+   AC_DEFINE([USE_USB_IDS], [1], [Whether usb.ids is to be used])
 fi
 
 if test "x$enable_pnp_ids" = "xno" ; then
   USE_PNP_IDS=no
 else
   USE_PNP_IDS=yes
-  AC_DEFINE(USE_PNP_IDS,1,[Whether builtin PNP IDs are to be used])
+  AC_DEFINE([USE_PNP_IDS], [1], [Whether builtin PNP IDs are to be used])
 fi
 
 AC_SUBST(PCI_IDS_DIR)
@@ -112,7 +132,9 @@ AC_SUBST(USE_USB_IDS)
 AC_SUBST(USE_PNP_IDS)
 
 
-AC_ARG_WITH(hal_user,[  --with-hal-user=<user>  User for running the HAL daemon (haldaemon)])
+AC_ARG_WITH([hal_user],
+	    AS_HELP_STRING([--with-hal-user=<user>],
+	                   [User for running the HAL daemon (haldaemon)]))
 if test -z "$with_hal_user" ; then
     HAL_USER=haldaemon
 else
@@ -121,7 +143,9 @@ fi
 AC_SUBST(HAL_USER)
 AC_DEFINE_UNQUOTED(HAL_USER,"$HAL_USER", [User for running the HAL daemon])
 
-AC_ARG_WITH(hal_group,[  --with-hal-group=<grp>  Group for HAL (haldaemon)])
+AC_ARG_WITH([hal_group],
+	    AS_HELP_STRING([--with-hal-group=<grp>],
+	                   [Group for HAL (haldaemon)]))
 if test -z "$with_hal_group" ; then
     HAL_GROUP=haldaemon
 else
@@ -132,15 +156,30 @@ AC_DEFINE_UNQUOTED(HAL_GROUP,"$HAL_GROUP", [Group for HAL])
 
 
 # Taken from dbus
-AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
-AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
-AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build documentation (requires xmlto)],enable_docbook_docs=$enableval,enable_docbook_docs=no)
-AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
-AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
+AC_ARG_ENABLE([ansi],
+	      AS_HELP_STRING([--enable-ansi],
+			     [enable -ansi -pedantic gcc flags]),
+	      [enable_ansi=$enableval], [enable_ansi=no])
+AC_ARG_ENABLE([verbose-mode],
+	      AS_HELP_STRING([--enable-verbose-mode],
+			     [support verbose debug mode]),
+	      [enable_verbose_mode=$enableval],
+	      [enable_verbose_mode=$USE_MAINTAINER_MODE])
+AC_ARG_ENABLE([docbook-docs],
+	      AS_HELP_STRING([--enable-docbook-docs],
+			     [build documentation (requires xmlto)]),
+	      [enable_docbook_docs=$enableval], [enable_docbook_docs=no])
+AC_ARG_ENABLE([man-pages],
+	      AS_HELP_STRING([--enable-man-pages],
+			     [build manual pages]),
+	      [enable_man_pages=$enableval], [enable_man_pages=yes])
+AM_CONDITIONAL(MAN_PAGES_ENABLED, [test x$enable_man_pages = xyes])
 AC_SUBST(MAN_PAGES_ENABLED)
 
 ## eject 
-AC_ARG_WITH(eject,              [  --with-eject=<path>     Specify eject program. (default /usr/bin/eject)])
+AC_ARG_WITH([eject],
+	    AS_HELP_STRING([--with-eject=<path>],
+			   [Specify eject program. (default /usr/bin/eject)]))
 if test -z "$with_eject"; then
   EJECT_PROGRAM=/usr/bin/eject
 else
@@ -152,41 +191,54 @@ AC_DEFINE_UNQUOTED(EJECT_PROGRAM, "$EJECT_PROGRAM", [Eject program to use])
 GTK_DOC_CHECK([1.3])
 
 # ACPI event source
-AC_ARG_ENABLE([acpi-acpid], AC_HELP_STRING([--disable-acpi-acpid], [Do not use ACPI daemon event source]), [acpi_acpid=$enableval], [acpi_acpid=yes])
+AC_ARG_ENABLE([acpi-acpid],
+	      AS_HELP_STRING([--disable-acpi-acpid],
+			     [Do not use ACPI daemon event source]),
+	      [acpi_acpid=$enableval], [acpi_acpid=yes])
 if test "x$acpi_acpid" = "xyes" ; then
    AC_DEFINE(ACPI_ACPID,1,[Common event source of ACPI events])
 fi
 AC_SUBST(ACPI_ACPID)
-AM_CONDITIONAL(ACPI_ACPID, test x$acpi_acpid != xyes)
+AM_CONDITIONAL(ACPI_ACPID, [test x$acpi_acpid != xyes])
 
-AC_ARG_ENABLE([acpi-proc], AC_HELP_STRING([--disable-acpi-proc], [Do not use ACPI kernel-interface directly]), [acpi_proc=$enableval], [acpi_proc=yes])
+AC_ARG_ENABLE([acpi-proc],
+	      AS_HELP_STRING([--disable-acpi-proc],
+			     [Do not use ACPI kernel-interface directly]),
+	      [acpi_proc=$enableval], [acpi_proc=yes])
 if test "x$acpi_proc" = "xyes" ; then
    AC_DEFINE(ACPI_PROC,1,[Direct kernel connection for ACPI events, the kernel interface is exclusive to one user only])
 fi
 AC_SUBST(ACPI_PROC)
-AM_CONDITIONAL(ACPI_PROC, test x$acpi_proc = xyes)
+AM_CONDITIONAL(ACPI_PROC, [test x$acpi_proc = xyes])
 
-AC_ARG_ENABLE([acpi-ibm], AC_HELP_STRING([--enable-acpi-ibm], [Forward IBM ACPI events]), [acpi_ibm=$enableval], [acpi_ibm=no])
+AC_ARG_ENABLE([acpi-ibm],
+	      AS_HELP_STRING([--enable-acpi-ibm], [Forward IBM ACPI events]),
+	      [acpi_ibm=$enableval], [acpi_ibm=no])
 BUILD_ACPI_IBM=no
 if test "x$acpi_ibm" = "xyes" ; then
   AC_DEFINE(BUILD_ACPI_IBM,1,[catch and forward IBM ACPI hotkey and button events])
   BUILD_ACPI_IBM=yes
 fi
 AC_SUBST(BUILD_ACPI_IBM)
-AM_CONDITIONAL(BUILD_ACPI_IBM, test x$acpi_ibm = xyes)
+AM_CONDITIONAL(BUILD_ACPI_IBM, [test x$acpi_ibm = xyes])
 
-AC_ARG_ENABLE([acpi-toshiba], AC_HELP_STRING([--enable-acpi-toshiba], [Forward Toshiba ACPI events]), [acpi_toshiba=$enableval], [acpi_toshiba=no])
+AC_ARG_ENABLE([acpi-toshiba],
+	      AS_HELP_STRING([--enable-acpi-toshiba],
+			     [Forward Toshiba ACPI events]),
+	      [acpi_toshiba=$enableval], [acpi_toshiba=no])
 BUILD_ACPI_TOSHIBA=no
 if test "x$acpi_toshiba" = "xyes" ; then
   AC_DEFINE(BUILD_ACPI_TOSHIBA,1,[catch and forward Toshiba ACPI hotkey and button events])
   BUILD_ACPI_TOSHIBA=yes
 fi
 AC_SUBST(BUILD_ACPI_TOSHIBA)
-AM_CONDITIONAL(BUILD_ACPI_TOSHIBA, test x$acpi_toshiba = xyes)
+AM_CONDITIONAL(BUILD_ACPI_TOSHIBA, [test x$acpi_toshiba = xyes])
 
 
 dnl libparted
-AC_ARG_ENABLE([parted], AC_HELP_STRING([--enable-parted], [Use libparted]), [use_parted=$enableval], [use_parted=no])
+AC_ARG_ENABLE([parted],
+	      AS_HELP_STRING([--enable-parted], [Use libparted]),
+	      [use_parted=$enableval], [use_parted=no])
 if test "x$use_parted" = "xyes" ; then
    USE_PARTED=yes
    AC_DEFINE(USE_PARTED,1,[Whether libparted is to be used])
@@ -194,7 +246,7 @@ if test "x$use_parted" = "xyes" ; then
    AC_CHECK_LIB(dl, dlopen,          [], AC_MSG_ERROR([*** dl library (libdl) not found]))
    AC_MSG_CHECKING([for libparted == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.8.6])
    LDFLAGS=-lparted
-   AC_TRY_RUN(
+   AC_RUN_IFELSE([AC_LANG_SOURCE([[
    #include <stdio.h>
    #include <parted/parted.h>
    int main ()
@@ -215,7 +267,8 @@ if test "x$use_parted" = "xyes" ; then
 
 	return 1;
     }
-	,AC_MSG_RESULT( ),AC_MSG_ERROR([*** Requires libparted == 1.7.1/1.8.0/1.8.1/1.8.2 or 1.8.6]) )
+    ]])], AC_MSG_RESULT([]),
+       AC_MSG_ERROR([*** Requires libparted == 1.7.1/1.8.0/1.8.1/1.8.2 or 1.8.6]))
     PARTED_LIBS=-lparted
     AC_SUBST(PARTED_LIBS)
     LDFLAGS=
@@ -223,7 +276,7 @@ else
    USE_PARTED=no
 fi
 AC_SUBST(USE_PARTED)
-AM_CONDITIONAL(USE_PARTED, test x$use_parted == xyes)
+AM_CONDITIONAL(USE_PARTED, [test x$use_parted == xyes])
 
 
 #### gcc linker flags
@@ -312,37 +365,36 @@ else
   fi
 fi
 
-AM_CONDITIONAL(GCOV, test x$enable_gcov = xyes)
+AM_CONDITIONAL(GCOV, [test x$enable_gcov = xyes])
 
 
 EXPAT_LIB=""
-AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
-                      [
-                      expat=$withval
-                      CPPFLAGS="$CPPFLAGS -I$withval/include"
-                      LDFLAGS="$LDFLAGS -L$withval/lib"
-                      ]
-                      )
-AC_CHECK_HEADERS(expat.h, [AC_DEFINE(HAVE_EXPAT_H)], 
+AC_ARG_WITH([expat],
+	    AS_HELP_STRING([--with-expat=<dir>],
+			   [Use expat from here]),
+	    [expat=$withval
+	     CPPFLAGS="$CPPFLAGS -I$withval/include"
+	     LDFLAGS="$LDFLAGS -L$withval/lib"])
+AC_CHECK_HEADERS([expat.h], [AC_DEFINE(HAVE_EXPAT_H)],
 		 [AC_MSG_ERROR([Can't find expat.h. Please install expat.])])
-AC_CHECK_LIB(expat,XML_ParserCreate,[EXPAT_LIB="-lexpat"],
+AC_CHECK_LIB([expat], [XML_ParserCreate], [EXPAT_LIB="-lexpat"],
 	     [AC_MSG_ERROR([Can't find expat library. Please install expat.])])
 AC_SUBST(EXPAT_LIB)
 
 dnl Check libusb
-AC_CHECK_HEADERS(usb.h, USE_LIBUSB=yes, USE_LIBUSB=no)
+AC_CHECK_HEADERS([usb.h], [USE_LIBUSB=yes], [USE_LIBUSB=no])
 if test "x$USE_LIBUSB" = "xyes"; then
-	AC_CHECK_LIB(usb,usb_find_devices, , USE_LIBUSB=no)
+	AC_CHECK_LIB([usb], [usb_find_devices], [], [USE_LIBUSB=no])
 fi
 AM_CONDITIONAL([HAVE_LIBUSB],[test "x$USE_LIBUSB" = "xyes"])
 
 dnl Check for libsmbios
 AC_LANG_PUSH([C++])
-AC_CHECK_LIB(smbios, SMBIOSFreeMemory, LIB_SMBIOS=yes , LIB_SMBIOS=no )
+AC_CHECK_LIB([smbios], [SMBIOSFreeMemory], [LIB_SMBIOS=yes], [LIB_SMBIOS=no])
 AC_LANG_POP([C++])
 if test "$LIB_SMBIOS" = "yes" ; then
    AC_MSG_CHECKING([for libsmbios >= 0.13.4])
-   AC_TRY_RUN(
+   AC_RUN_IFELSE([AC_LANG_SOURCE([[
    #include <smbios/version.h>
    int main ()
    {
@@ -357,27 +409,29 @@ if test "$LIB_SMBIOS" = "yes" ; then
 	    }
 	}
 	return 1;
-   } , [USE_SMBIOS=yes; AC_MSG_RESULT(yes); AM_CONDITIONAL(HAVE_SMBIOS,true)],
+   }]])], [USE_SMBIOS=yes; AC_MSG_RESULT(yes); AM_CONDITIONAL(HAVE_SMBIOS,true)],
        [USE_SMBIOS=no; AC_MSG_RESULT(failed); AM_CONDITIONAL(HAVE_SMBIOS,false)])
 else
   USE_SMBIOS=no
-  AM_CONDITIONAL(HAVE_SMBIOS,false)
+  AM_CONDITIONAL(HAVE_SMBIOS, [false])
 fi
 
 AC_ARG_WITH([libpci],
-  [AS_HELP_STRING([--without-libpci],
-    [Compile without pci support])],
-  [],
-  [with_libpci=yes])
+	    AS_HELP_STRING([--without-libpci], [Compile without pci support]),
+	    [], [with_libpci=yes])
 
 USE_LIBPCI="no"
 if test "x$with_libpci" != xno ; then
   dnl check for libpci
-  AC_CHECK_HEADERS([pci/pci.h], [AC_CHECK_LIB([pci], [pci_init], [USE_LIBPCI="yes"], , [-lz ]) ])
+  AC_CHECK_HEADERS([pci/pci.h],
+                   [AC_CHECK_LIB([pci], [pci_init], [USE_LIBPCI="yes"], [], [-lz])])
 fi 
 AM_CONDITIONAL([HAVE_LIBPCI], [test "x$USE_LIBPCI" = "xyes"])
 
-AC_ARG_WITH(backend, [  --with-backend=<name>   backend to use (linux/solaris/freebsd/dummy)], [ backend=$withval ])
+AC_ARG_WITH([backend],
+	    AS_HELP_STRING([--with-backend=<name>],
+	                   [backend to use (linux/solaris/freebsd/dummy)]),
+	    [backend=$withval])
 if ! test -z "$with_backend" ; then
     HALD_BACKEND="$with_backend"
 else
@@ -396,14 +450,14 @@ else
 		   ;;
     esac
 fi
-AM_CONDITIONAL(HALD_COMPILE_DUMMY, test x$HALD_BACKEND = xdummy, [Compiling for Dummy backend])
-AM_CONDITIONAL(HALD_COMPILE_LINUX, test x$HALD_BACKEND = xlinux, [Compiling for Linux])
-AM_CONDITIONAL(HALD_COMPILE_FREEBSD, test x$HALD_BACKEND = xfreebsd, [Compiling for FreeBSD])
-AM_CONDITIONAL(HALD_COMPILE_SOLARIS, test x$HALD_BACKEND = xsolaris, [Compiling for Solaris])
+AM_CONDITIONAL(HALD_COMPILE_DUMMY, [test x$HALD_BACKEND = xdummy], [Compiling for Dummy backend])
+AM_CONDITIONAL(HALD_COMPILE_LINUX, [test x$HALD_BACKEND = xlinux], [Compiling for Linux])
+AM_CONDITIONAL(HALD_COMPILE_FREEBSD, [test x$HALD_BACKEND = xfreebsd], [Compiling for FreeBSD])
+AM_CONDITIONAL(HALD_COMPILE_SOLARIS, [test x$HALD_BACKEND = xsolaris], [Compiling for Solaris])
 AC_SUBST(HALD_BACKEND)
 
 dnl DBUS API is subject to changes
-AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, ,DBUS API is subject to change)
+AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, [], [DBUS API is subject to change])
 
 # check for ConsoleKit
 AM_CONDITIONAL(HAVE_CONKIT, false)
@@ -416,77 +470,91 @@ if test "x$enable_console_kit" != "xno"; then
 fi
 
 # check for PolicyKit
-AM_CONDITIONAL(HAVE_POLKIT, false)
-AC_ARG_ENABLE(policy-kit, [  --enable-policy-kit     Use PolicyKit],enable_policy_kit=$enableval,enable_policy_kit=no)
+AM_CONDITIONAL(HAVE_POLKIT, [false])
+AC_ARG_ENABLE([policy-kit],
+	      AS_HELP_STRING([--enable-policy-kit], [Use PolicyKit]),
+	      [enable_policy_kit=$enableval], [enable_policy_kit=no])
 msg_polkit=no
 if test "x$enable_policy_kit" != "xno"; then
    if test "x$enable_console_kit" = "xno"; then
       AC_MSG_ERROR([PolicyKit support requires building with ConsoleKit support too])
    fi
-   PKG_CHECK_MODULES(POLKIT, polkit >= 0.3,
-		  	[AM_CONDITIONAL(HAVE_POLKIT, true)
-		   	AC_DEFINE(HAVE_POLKIT, [], [Set if we use PolicyKit])]
-                        msg_polkit=yes,
-	          	[AM_CONDITIONAL(HAVE_POLKIT, false)])
+   PKG_CHECK_MODULES([POLKIT], [polkit >= 0.3],
+			[AM_CONDITIONAL(HAVE_POLKIT, [true])
+			 AC_DEFINE(HAVE_POLKIT, [], [Set if we use PolicyKit])]
+			[msg_polkit=yes],
+			[AM_CONDITIONAL(HAVE_POLKIT, [false])])
    AC_SUBST(POLKIT_CFLAGS)
    AC_SUBST(POLKIT_LIBS)
    if test "x$msg_polkit" != "xyes"; then
       AC_MSG_ERROR([PolicyKit not explicitly disabled and no PolicyKit found])
    fi
 
-   AC_CHECK_PROG(POLKIT_POLICY_FILE_VALIDATE, polkit-policy-file-validate, polkit-policy-file-validate)
+   AC_CHECK_PROG([POLKIT_POLICY_FILE_VALIDATE],
+		 [polkit-policy-file-validate], [polkit-policy-file-validate])
    if test -z "$POLKIT_POLICY_FILE_VALIDATE"; then
       AC_MSG_ERROR([polkit-policy-file-validate not found])
    fi
 fi
 
 # check for ACL handling
-AM_CONDITIONAL(HAVE_ACLMGMT, false)
-AC_ARG_ENABLE(acl-management, [  --enable-acl-management ACL management],enable_acl_management=$enableval,enable_acl_management=no)
+AM_CONDITIONAL(HAVE_ACLMGMT, [false])
+AC_ARG_ENABLE([acl-management],
+	      AS_HELP_STRING([--enable-acl-management], [ACL management]),
+	      [enable_acl_management=$enableval],
+	      [enable_acl_management=no])
 msg_aclmgmt=no
 if test "x$enable_acl_management" != "xno"; then
    if test "x$enable_policy_kit" = "xno"; then
       AC_MSG_ERROR([ACL management support requires building with PolicyKit support])
    fi
-   AM_CONDITIONAL(HAVE_ACLMGMT, true)
+   AM_CONDITIONAL(HAVE_ACLMGMT, [true])
    AC_DEFINE(HAVE_ACLMGMT, [], [Set if we manage ACL's])
    msg_aclmgmt=yes
 fi
 
 # check for umount.hal
-AM_CONDITIONAL(HAVE_UMOUNT_HAL, false)
-AC_ARG_ENABLE(umount-helper,  [  --enable-umount-helper  Provide umount.hal helper],enable_umount_hal=$enableval,enable_umount_hal=no)
+AM_CONDITIONAL(HAVE_UMOUNT_HAL, [false])
+AC_ARG_ENABLE([umount-helper],
+	      AS_HELP_STRING([--enable-umount-helper],
+			     [Provide umount.hal helper]),
+	      [enable_umount_hal=$enableval], [enable_umount_hal=no])
 msg_umount_hal=no
 if test "x$enable_umount_hal" != "xno"; then
-   AM_CONDITIONAL(HAVE_UMOUNT_HAL, true)
-   AC_DEFINE(HAVE_UMOUNT_HAL, [], [Set if we should provide and use the /sbin/umount.hal helper ])
+   AM_CONDITIONAL(HAVE_UMOUNT_HAL, [true])
+   AC_DEFINE(HAVE_UMOUNT_HAL, [],
+             [Set if we should provide and use the /sbin/umount.hal helper])
    msg_umount_hal=yes
 fi
 
 # what extra hotplug backends to use (ACPI, APM, PMU etc)
-AC_ARG_ENABLE(have_acpi, [  --disable-acpi          Build without ACPI support])
+AC_ARG_ENABLE([have_acpi],
+	      AS_HELP_STRING([--disable-acpi], [Build without ACPI support]))
 msg_acpi=no
 if test "x$enable_acpi" != "xno"; then
 	msg_acpi=yes
   	AC_DEFINE(HAVE_ACPI, [], [Set if we have ACPI support])
 fi
-AM_CONDITIONAL(HAVE_ACPI, test x$msg_acpi = xyes, [Compiling ACPI])
-AC_ARG_ENABLE(have_apm, [  --disable-apm           Build without APM support])
+AM_CONDITIONAL(HAVE_ACPI, [test x$msg_acpi = xyes], [Compiling ACPI])
+AC_ARG_ENABLE([have_apm],
+	      AS_HELP_STRING([--disable-apm], [Build without APM support]))
 msg_apm=no
 if test "x$enable_apm" != "xno"; then
 	msg_apm=yes
   	AC_DEFINE(HAVE_APM, [], [Set if we have APM support])
 fi
-AM_CONDITIONAL(HAVE_APM, test x$msg_apm = xyes, [Compiling APM])
-AC_ARG_ENABLE(have_pmu, [  --disable-pmu           Build without PMU support])
+AM_CONDITIONAL(HAVE_APM, [test x$msg_apm = xyes], [Compiling APM])
+AC_ARG_ENABLE([have_pmu],
+	      AS_HELP_STRING([--disable-pmu], [Build without PMU support]))
 msg_pmu=no
 if test "x$enable_pmu" != "xno"; then
 	msg_pmu=yes
   	AC_DEFINE(HAVE_PMU, [], [Set if we have PMU support])
 fi
-AM_CONDITIONAL(HAVE_PMU, test x$msg_pmu = xyes, [Compiling PMU])
+AM_CONDITIONAL(HAVE_PMU, [test x$msg_pmu = xyes], [Compiling PMU])
 
-AC_ARG_ENABLE(have_pci, [  --disable-pci           Build without PCI support])
+AC_ARG_ENABLE([have_pci],
+	      AS_HELP_STRING([--disable-pci], [Build without PCI support]))
 msg_pci=no
 if test "x$enable_pci" != "xno"; then
 	msg_pci=yes
@@ -522,23 +590,24 @@ case "$host" in
 esac
 
 # Check for BLKGETSIZE64
-AC_CHECK_TYPE(pgoff_t, ,
-              [AC_DEFINE(pgoff_t, unsigned long, [Index into the pagecache])],
-               /usr/include/sys/types.h)
+AC_CHECK_TYPE([pgoff_t], [],
+	      [AC_DEFINE([pgoff_t], [unsigned long], [Index into the pagecache])],
+	      [/usr/include/sys/types.h])
 AC_MSG_CHECKING([for BLKGETSIZE64])
-AC_TRY_COMPILE(
-[#include <sys/types.h>
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <sys/types.h>
 #include <linux/ioctl.h>
-#include <linux/fs.h>],
-[int main(int argc, char *argv[])
+#include <linux/fs.h>
+]],
+[[int main(int argc, char *argv[])
 {
 	int fd = 0;
 	unsigned long long int n;
 	ioctl (fd, BLKGETSIZE64, &n);
 	return 0;
 }
-], have_size64=yes, have_size64=no)
-AC_MSG_RESULT($have_size64)
+]])], [have_size64=yes], [have_size64=no])
+AC_MSG_RESULT([$have_size64])
 if test x$have_size64 = xno; then
   case "$host" in
         *-*-linux*)
@@ -556,7 +625,7 @@ AC_CHECK_FUNCS(strndup)
 
 # DocBook Documentation
 
-AC_PATH_PROG(XMLTO, xmlto, no)
+AC_PATH_PROG(XMLTO, [xmlto], [no])
 AC_MSG_CHECKING([whether to build DocBook documentation])
 
 if test x$XMLTO = xno ; then
@@ -565,7 +634,7 @@ else
     have_xmlto=yes
 fi
 
-AC_PATH_PROG(XMLLINT, xmllint, no)
+AC_PATH_PROG(XMLLINT, [xmllint], [no])
 
 if test x$XMLLINT = xno ; then
     have_xmllint=no
@@ -590,11 +659,13 @@ if test x$enable_docbook_docs = xyes; then
     fi
 fi
 
-AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, test x$enable_docbook_docs = xyes)
+AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, [test x$enable_docbook_docs = xyes])
 AC_MSG_RESULT(yes)
 
 
-AC_ARG_WITH(dbus-sys, [  --with-dbus-sys=<dir>   where D-BUS system.d directory is])
+AC_ARG_WITH([dbus-sys],
+	    AS_HELP_STRING([--with-dbus-sys=<dir>],
+			   [where D-BUS system.d directory is]))
 
 if ! test -z "$with_dbus_sys" ; then
     DBUS_SYS_DIR="$with_dbus_sys"
@@ -620,8 +691,8 @@ if test x$with_os_type = x; then
 fi
 
 # (distro-tweaks required)
-AM_CONDITIONAL(OS_TYPE_UNKNOWN, test x$with_os_type = xunknown, [Running on unknown OS])
-AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red Hat OS'es])
+AM_CONDITIONAL(OS_TYPE_UNKNOWN, [test x$with_os_type = xunknown], [Running on unknown OS])
+AM_CONDITIONAL(OS_TYPE_RED_HAT, [test x$with_os_type = xredhat], [Running on Red Hat OS'es])
 
 #### Set up the pid file (distro-tweaks required)
 if ! test -z "$with_pid_file"; then
@@ -647,7 +718,9 @@ dnl SUBSETTING START
 dnl
 
 dnl macbookpro utils
-AC_ARG_WITH(macbookpro,     [  --with-macbookpro       Whether to build Macbook Pro utils (auto)])
+AC_ARG_WITH([macbookpro],
+            AS_HELP_STRING([--with-macbookpro],
+                           [Whether to build Macbook Pro utils (auto)]))
 BUILD_MACBOOKPRO=no
 if test "x$with_macbookpro" = "xyes" ; then
    BUILD_MACBOOKPRO=yes
@@ -668,10 +741,12 @@ elif test "x$with_macbookpro" = "x" ; then
     esac
    fi
 fi
-AM_CONDITIONAL(BUILD_MACBOOKPRO, test x$BUILD_MACBOOKPRO = xyes)
+AM_CONDITIONAL(BUILD_MACBOOKPRO, [test x$BUILD_MACBOOKPRO = xyes])
 
 dnl macbook backlight support
-AC_ARG_WITH(macbook,     [  --with-macbook          Include support for Macbook backlight (auto)])
+AC_ARG_WITH([macbook],
+	    AS_HELP_STRING([--with-macbook],
+			   [Include support for Macbook backlight (auto)]))
 BUILD_MACBOOK=no
 if test "x$with_macbook" = "xyes" ; then
    BUILD_MACBOOK=yes
@@ -692,11 +767,11 @@ elif test "x$with_macbook" = "x" ; then
     esac
    fi
 fi
-AM_CONDITIONAL(BUILD_MACBOOK, test x$BUILD_MACBOOK = xyes)
+AM_CONDITIONAL(BUILD_MACBOOK, [test x$BUILD_MACBOOK = xyes])
 
 AC_ARG_WITH([omap],
-	    [AS_HELP_STRING([--with-omap],
-			    [Whether to build OMAP utils (auto)])])
+	    AS_HELP_STRING([--with-omap],
+			   [Whether to build OMAP utils (auto)]))
 BUILD_OMAP=no
 if test "x$with_omap" = "xyes" ; then
     BUILD_OMAP=yes
@@ -718,7 +793,9 @@ fi
 AM_CONDITIONAL(BUILD_OMAP, [test x$BUILD_OMAP = xyes])
 
 dnl cpufreq
-AC_ARG_WITH(cpufreq,        [  --with-cpufreq          Whether to build cpufreq utils (auto)])
+AC_ARG_WITH([cpufreq],
+	    AS_HELP_STRING([--with-cpufreq],
+			   [Whether to build cpufreq utils (auto)]))
 BUILD_CPUFREQ=no
 if test "x$with_cpufreq" = "xyes" ; then
    BUILD_CPUFREQ=yes
@@ -731,10 +808,12 @@ elif test "x$with_cpufreq" = "x" ; then
       ;;
   esac
 fi
-AM_CONDITIONAL(BUILD_CPUFREQ, test x$BUILD_CPUFREQ = xyes)
+AM_CONDITIONAL(BUILD_CPUFREQ, [test x$BUILD_CPUFREQ = xyes])
 
 dnl USB CSR (for reading battery of USB wireless mice)
-AC_ARG_WITH(usb-csr,        [  --with-usb-csr          Whether to build addon for wireless USB mice (auto)])
+AC_ARG_WITH([usb-csr],
+	    AS_HELP_STRING([--with-usb-csr],
+			   [Whether to build addon for wireless USB mice (auto)]))
 BUILD_USBCSR=no
 if test "x${USE_LIBUSB}" == "xyes" ; then
    if test "x$with_usb_csr" = "xyes" ; then
@@ -746,10 +825,12 @@ if test "x${USE_LIBUSB}" == "xyes" ; then
       fi
    fi
 fi
-AM_CONDITIONAL(BUILD_USBCSR, test x$BUILD_USBCSR = xyes)
+AM_CONDITIONAL(BUILD_USBCSR, [test x$BUILD_USBCSR = xyes])
 
 dnl Dell backlight 
-AC_ARG_WITH(dell-backlight,     [  --with-dell-backlight   Whether to build Dell backlight support (auto)])
+AC_ARG_WITH([dell-backlight],
+	    AS_HELP_STRING([--with-dell-backlight],
+			   [Whether to build Dell backlight support (auto)]))
 BUILD_DELL=no
 if test "x$with_dell_backlight" = "xyes" ; then
    BUILD_DELL=yes
@@ -770,17 +851,17 @@ elif test "x$with_dell_backlight" = "x" ; then
     esac
    fi
 fi
-AM_CONDITIONAL(BUILD_DELL, test x$BUILD_DELL = xyes)
+AM_CONDITIONAL(BUILD_DELL, [test x$BUILD_DELL = xyes])
 
 dnl Sony PIC support
 AC_ARG_ENABLE(sonypic,
-		AC_HELP_STRING([--enable-sonypic],[Build with Sony PIC support]),
-		[case "${enableval}" in
-		yes) ENABLE_SONYPIC=yes ;;
-		no) ENABLE_SONYPIC=no ;;
-	        *) AC_MSG_ERROR(bad value ${enableval} for --enable-sonypic) ;;
-		esac],
-		[ENABLE_SONYPIC=auto]) dnl Default value
+	      AS_HELP_STRING([--enable-sonypic], [Build with Sony PIC support]),
+	      [case "${enableval}" in
+	       yes) ENABLE_SONYPIC=yes ;;
+	       no) ENABLE_SONYPIC=no ;;
+	       *) AC_MSG_ERROR([bad value ${enableval} for --enable-sonypic]) ;;
+	       esac
+	      ], [ENABLE_SONYPIC=auto]) dnl Default value
 
 have_sonypic=no
 if test x$ENABLE_SONYPIC != "xno" ; then
@@ -789,9 +870,7 @@ if test x$ENABLE_SONYPIC != "xno" ; then
 		int main(int argc,char **argv) {
 			return 0;
 		}
-	],
-	have_sonypic=yes
-	)
+	], [have_sonypic=yes])
 	AC_MSG_CHECKING([for Sony PIC headers])
 	AC_MSG_RESULT([$have_sonypic])
 
@@ -803,14 +882,15 @@ if test x"$have_sonypic" = "xyes" ; then
         AC_DEFINE(HAVE_SONYPIC, 1, [Set if we have Sony PIC support])
 fi
 msg_sonypic=$have_sonypic
-AM_CONDITIONAL(HAVE_SONYPIC, test x$msg_sonypic = xyes, [Compiling Sony PIC])
+AM_CONDITIONAL(HAVE_SONYPIC, [test x$msg_sonypic = xyes], [Compiling Sony PIC])
 
 dnl
 dnl SUBSETTING END
 dnl
 
+AC_CONFIG_HEADERS([config.h])
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 hal.pc
 hal-storage.pc
 hal.conf
@@ -855,6 +935,8 @@ doc/spec/Makefile
 doc/spec/hal-spec.xml.in
 doc/man/Makefile
 ])
+
+AC_OUTPUT
 
 dnl ==========================================================================
 echo "

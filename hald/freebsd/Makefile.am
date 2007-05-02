@@ -1,6 +1,6 @@
 SUBDIRS = libprobe probing addons .
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \

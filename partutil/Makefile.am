@@ -2,7 +2,7 @@ if HALD_COMPILE_LINUX
 noinst_LTLIBRARIES = libpartutil.la
 endif
 
-INCLUDES = @GLIB_CFLAGS@
+AM_CPPFLAGS = @GLIB_CFLAGS@
 
 libpartutil_la_SOURCES = partutil.h partutil.c ../hald/logger.c
 

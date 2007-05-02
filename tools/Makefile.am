@@ -11,7 +11,7 @@ endif
 
 DIST_SUBDIRS = freebsd linux
 
-INCLUDES = \
+AM_CPPFLAGS = \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-INCLUDES = -I$(top_srcdir)/libhal \
+AM_CPPFLAGS = -I$(top_srcdir)/libhal \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	@DBUS_CFLAGS@
