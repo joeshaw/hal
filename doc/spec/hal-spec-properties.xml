@@ -6346,6 +6346,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>No</entry>
               <entry>Turn off the Radeon DAC off before suspend.</entry>
             </row>
+            <row>
+              <entry>
+                <literal>power_management.quirk.none</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>No quirks are necessary for suspend or resume.</entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
