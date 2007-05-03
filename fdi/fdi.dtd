@@ -8,7 +8,7 @@
 
 <!ELEMENT device (match|merge)*  >
 
-<!ELEMENT match (match|merge|prepend|append|remove|spawn)* >
+<!ELEMENT match (match|merge|prepend|append|addset|remove|spawn)* >
 <!ATTLIST match 
     key              CDATA #REQUIRED
     string           CDATA #IMPLIED
@@ -47,6 +47,12 @@
 
 <!ELEMENT append (#PCDATA) >
 <!ATTLIST append 
+    key    CDATA #REQUIRED
+    type   (string|strlist|int|bool|double|copy_property) #REQUIRED
+>
+
+<!ELEMENT addset (#PCDATA) >
+<!ATTLIST addset 
     key    CDATA #REQUIRED
     type   (string|strlist|int|bool|double|copy_property) #REQUIRED
 >

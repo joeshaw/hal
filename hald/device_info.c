@@ -871,6 +871,19 @@ handle_merge (struct rule *rule, HalDevice *d)
 			hal_device_property_set_string (d, key, buf2);
 		}
 
+	} else if (rule->rtype == RULE_ADDSET) {
+
+		if (hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRLIST &&
+		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_INVALID) {
+			HAL_ERROR (("invalid key type"));
+			return FALSE;
+		}
+
+                if (!hal_device_has_property (d, key) ||
+                    !hal_device_property_strlist_contains (d, key, value)) {
+                        hal_device_property_strlist_append (d, key, value);
+                }
+
 	} else if (rule->rtype == RULE_REMOVE) {
 
 		if (rule->type_merge == MERGE_STRLIST) {
@@ -967,6 +980,7 @@ rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 
 		case RULE_APPEND:
 		case RULE_PREPEND:
+		case RULE_ADDSET:
 		case RULE_REMOVE:
 		case RULE_CLEAR:
 		case RULE_SPAWN:

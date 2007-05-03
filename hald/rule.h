@@ -41,6 +41,7 @@ typedef enum {
 	RULE_CLEAR,
 	RULE_SPAWN,
 	RULE_EOF,
+        RULE_ADDSET
 } rule_type;
 
 /* type of merge command */

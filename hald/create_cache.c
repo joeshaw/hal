@@ -82,6 +82,8 @@ get_rule_type (const char *str)
 		return RULE_APPEND;
 	if (strcmp (str, "prepend") == 0)
 		return RULE_PREPEND;
+	if (strcmp (str, "addset") == 0)
+		return RULE_ADDSET;
 	if (strcmp (str, "remove") == 0)
 		return RULE_REMOVE;
 	if (strcmp (str, "clear") == 0)
@@ -401,6 +403,7 @@ cdata (void *data, const char *s, int len){
 
 	if (fdi_ctx->rule.rtype != RULE_MERGE &&
 	    fdi_ctx->rule.rtype != RULE_PREPEND &&
+	    fdi_ctx->rule.rtype != RULE_ADDSET &&
 	    fdi_ctx->rule.rtype != RULE_APPEND &&
 	    fdi_ctx->rule.rtype != RULE_REMOVE &&
 	    fdi_ctx->rule.rtype != RULE_SPAWN)

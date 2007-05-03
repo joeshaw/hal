@@ -24,7 +24,7 @@
       directives
       that is tested against the properties of the device object. If
       all the match directives passes then the device information can
-      include <literal>&#60;[merge|append|prepend] key="some_property"
+      include <literal>&#60;[merge|append|prepend|addset] key="some_property"
         type="[string|int|bool|..]"&#62;
       </literal>
       directives to
@@ -35,12 +35,14 @@
     </para>
     <para>
       The <literal>&#60;match&#62;</literal>,
-      <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal>
-      and <literal>&#60;prepend&#62;</literal> directives always requires
-      the <literal>key</literal> attribute which must be either a
-      property name on the device object in question or a path to a
-      property on another device object. The latter case is expressed
-      either through direct specification of the UDI, such as
+      <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal>, 
+      <literal>&#60;prepend&#62;</literal>
+      and <literal>&#60;addset&#62;</literal> directives always
+      requires the <literal>key</literal> attribute which must be
+      either a property name on the device object in question or a
+      path to a property on another device object. The latter case is
+      expressed either through direct specification of the UDI, such
+      as
       <literal>/org/freedesktop/Hal/devices/computer:foo.bar</literal>
       or indirect references such as
       <literal>@info.parent:baz</literal> where the latter means that
@@ -209,8 +211,9 @@
     <title>Merging</title>
     <para>
 
-      The <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal>
-      and <literal>&#60;prepend&#62;</literal> directives all require
+      The <literal>&#60;merge&#62;</literal>, <literal>&#60;append&#62;</literal>, 
+      <literal>&#60;prepend&#62;</literal>
+      and <literal>&#60;addset&#62;</literal> directives all require
       the <literal>type</literal> attribute which specifies what to
       merge. The following values are supported
       <itemizedlist>
@@ -225,8 +228,12 @@
           <para>
             <literal>strlist</literal> - For <literal>&#60;merge&#62;</literal> the value is
             copied to the property and the current property will be overwritten. For
-            <literal>&#60;append&#62;</literal> and <literal>&#60;prepend&#62;</literal> the
-            value is append or prepend to the list as new item. Usage of 
+            <literal>&#60;append&#62;</literal>
+            and <literal>&#60;prepend&#62;</literal> the value is
+            append or prepend to the list as new
+            item. For <literal>&#60;addset&#62;</literal> the strlist
+            is treated as a set and the value is appended if, and only
+            if, the value doesn't exist already. Usage of
 	    <literal>&#60;copy_property&#62;</literal> overwrite the complete list with the 
 	    value of the given property to copy from.
           </para>
