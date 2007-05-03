@@ -152,6 +152,7 @@
 	  <append key="volume.mount.valid_options" type="strlist">dmask=</append>
 	  <append key="volume.mount.valid_options" type="strlist">fmask=</append>
 	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
+	  <append key="volume.mount.valid_options" type="strlist">flush</append>
 	</match>
 	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
 	  <append key="volume.mount.valid_options" type="strlist">longnames</append>
