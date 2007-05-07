@@ -712,9 +712,9 @@ refresh_md_state (HalDevice *d)
                 if ((str_completed = hal_util_get_string_from_file (sysfs_path, "md/sync_completed")) == NULL) {
                         HAL_WARNING (("Cannot get sync_completed for %s", sysfs_path));
                 } else {
-                        dbus_uint64_t sync_pos, sync_total;
+                        long long int sync_pos, sync_total;
 
-                        if (sscanf (str_completed, "%ld / %ld", &sync_pos, &sync_total) != 2) {
+                        if (sscanf (str_completed, "%lld / %lld", &sync_pos, &sync_total) != 2) {
                                 HAL_WARNING (("Malformed sync_completed '%s'", str_completed));
                         } else {
                                 double sync_progress;
