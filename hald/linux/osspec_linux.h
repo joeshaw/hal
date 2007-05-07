@@ -39,5 +39,7 @@ gboolean hal_util_set_driver (HalDevice *d, const char *property_name, const cha
 
 gboolean hal_util_find_known_parent (const gchar *sysfs_path, HalDevice **parent, gchar **parent_path);
 
+GIOChannel *get_mdstat_channel (void);
+
 
 #endif /* OSSPEC_LINUX_H */

@@ -4,7 +4,7 @@ HAL 0.5.10 ""
 
 Requirements for HAL 0.5.10 "":
 
- - Linux kernel     >= 2.6.17
+ - Linux kernel     >= 2.6.19
  - util-linux       >= 2.12r1    (--enable-umount-helper requires patch from RH #188193)
  - bash             >= 2.0
  - udev             >= 089

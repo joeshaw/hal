@@ -42,6 +42,7 @@
 #include "osspec_linux.h"
 #include "hotplug.h"
 #include "coldplug.h"
+#include "blockdev.h"
 
 #define DMPREFIX "dm-"
 
@@ -428,6 +429,12 @@ static void scan_block(void)
 			if (dent->d_name[0] == '.')
 				continue;
 
+                        /* md devices are handled via looking at /proc/mdstat */
+                        if (g_str_has_prefix (dent->d_name, "md")) {
+                                HAL_INFO (("skipping md event for %s", dent->d_name));
+                                continue;
+                        }
+
 			g_strlcpy(dirname, base, sizeof(dirname));
 			g_strlcat(dirname, "/", sizeof(dirname));
 			g_strlcat(dirname, dent->d_name, sizeof(dirname));
@@ -574,6 +581,9 @@ coldplug_synthesize_events (void)
 			device_list = g_slist_sort (device_list, _device_order);
 			queue_events ();
 		}
+
+                /* add events from reading /proc/mdstat */
+                blockdev_process_mdstat ();
 	}
 
 	g_hash_table_destroy (sysfs_to_udev_map);

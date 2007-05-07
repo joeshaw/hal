@@ -635,6 +635,198 @@ out:
 	return f;
 }
 
+static gboolean
+refresh_md_state (HalDevice *d);
+
+static gboolean
+md_check_sync_timeout (gpointer user_data)
+{
+        HalDevice *d;
+        char *sysfs_path = (char *) user_data;
+
+        HAL_INFO (("In md_check_sync_timeout for sysfs path %s", sysfs_path));
+
+        d = hal_device_store_match_key_value_string (hald_get_gdl (), 
+                                                     "storage.linux_raid.sysfs_path", 
+                                                     sysfs_path);
+        if (d == NULL)
+                d = hal_device_store_match_key_value_string (hald_get_tdl (), 
+                                                             "storage.linux_raid.sysfs_path", 
+                                                             sysfs_path);
+        if (d == NULL) {
+                HAL_WARNING (("Cannot find md device with sysfs path '%s'", sysfs_path));
+                goto out;
+        }
+
+        refresh_md_state (d);
+        
+out:
+        g_free (sysfs_path);
+        return FALSE;
+}
+
+static gboolean
+refresh_md_state (HalDevice *d)
+{
+        int n;
+        char *sync_action;
+        int num_components;
+        gboolean ret;
+        const char *sysfs_path;
+
+        ret = FALSE;
+
+        sysfs_path = hal_device_property_get_string (d, "storage.linux_raid.sysfs_path");
+        if (sysfs_path == NULL) {
+                HAL_WARNING (("Cannot get sysfs_path for udi %s", hal_device_get_udi (d)));
+                goto error;
+        }
+
+        HAL_INFO (("In refresh_md_state() for '%s'", sysfs_path));
+
+        sync_action = hal_util_get_string_from_file (sysfs_path, "md/sync_action");
+        if (sync_action == NULL) {
+                HAL_WARNING (("Cannot get sync_action for %s", sysfs_path));
+                goto error;
+        }
+        if (strcmp (sync_action, "idle") == 0) {
+                hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", FALSE);
+		hal_device_property_remove (d, "storage.linux_raid.sync.action");
+		hal_device_property_remove (d, "storage.linux_raid.sync.speed");
+		hal_device_property_remove (d, "storage.linux_raid.sync.progress");
+        } else {
+                int speed;
+                char *str_completed;
+
+                hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", TRUE);
+
+                hal_device_property_set_string (d, "storage.linux_raid.sync.action", sync_action);
+
+		if (!hal_util_get_int_from_file (sysfs_path, "md/sync_speed", &speed, 10)) {
+                        HAL_WARNING (("Cannot get sync_speed for %s", sysfs_path));
+                } else {
+                        hal_device_property_set_uint64 (d, "storage.linux_raid.sync.speed", speed);
+                }
+
+
+                if ((str_completed = hal_util_get_string_from_file (sysfs_path, "md/sync_completed")) == NULL) {
+                        HAL_WARNING (("Cannot get sync_completed for %s", sysfs_path));
+                } else {
+                        dbus_uint64_t sync_pos, sync_total;
+
+                        if (sscanf (str_completed, "%ld / %ld", &sync_pos, &sync_total) != 2) {
+                                HAL_WARNING (("Malformed sync_completed '%s'", str_completed));
+                        } else {
+                                double sync_progress;
+                                sync_progress = ((double) sync_pos) / ((double) sync_total);
+                                hal_device_property_set_double (d, "storage.linux_raid.sync.progress", sync_progress);
+                        }
+                }
+
+                /* check again in two seconds */
+                g_timeout_add (2000, md_check_sync_timeout, g_strdup (sysfs_path));
+        }
+        
+        if (!hal_util_get_int_from_file (sysfs_path, "md/raid_disks", &num_components, 0)) {
+                HAL_WARNING (("Cannot get number of RAID components"));
+                goto error;
+        }
+        hal_device_property_set_int (d, "storage.linux_raid.num_components", num_components);
+        
+        /* add all components */
+        for (n = 0; n < num_components; n++) {
+                char *s;
+                char *link;
+                char *target;
+                HalDevice *slave_volume;
+                const char *slave_volume_stordev_udi;
+                HalDevice *slave_volume_stordev;
+
+                s = g_strdup_printf ("%s/md/rd%d", sysfs_path, n);
+                if (!g_file_test (s, G_FILE_TEST_IS_SYMLINK)) {
+                        g_free (s);
+                        break;
+                }
+                g_free (s);
+                
+                link = g_strdup_printf ("%s/md/rd%d/block", sysfs_path, n);
+                target = resolve_symlink (link);
+                if (target == NULL) {
+                        HAL_WARNING (("Cannot resolve %s", link));
+                        g_free (link);
+                        goto error;
+                }
+                HAL_INFO (("link->target: '%s' -> '%s'", link, target));
+                
+                slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", target);
+                if (slave_volume == NULL) {
+                        HAL_WARNING (("No volume for sysfs path %s", target));
+                        g_free (target);
+                        g_free (link);
+                        goto error;
+                }
+                
+                
+                slave_volume_stordev_udi = hal_device_property_get_string (slave_volume, "block.storage_device");
+                if (slave_volume_stordev_udi == NULL) {
+                        HAL_WARNING (("No storage device for slave"));
+                        g_free (target);
+                        g_free (link);
+                        goto error;
+                }
+                slave_volume_stordev = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
+                if (slave_volume_stordev == NULL) {
+                        HAL_WARNING (("No storage device for slave"));
+                        g_free (target);
+                        g_free (link);
+                        goto error;
+                }
+                
+                
+                hal_device_property_strlist_add (d, "storage.linux_raid.components", hal_device_get_udi (slave_volume));
+                
+                /* derive 
+                 *
+                 * - hotpluggability (is that a word?) 
+                 * - array uuid
+                 *
+                 * Hmm.. every raid member (PV) get the array UUID. That's
+                 * probably.. wrong. TODO: check with Kay.
+                 *
+                 * from component 0.
+                 */
+                if (n == 0) {
+                        const char *uuid;
+
+                        hal_device_property_set_bool (
+                                d, "storage.hotpluggable",
+                                hal_device_property_get_bool (slave_volume_stordev, "storage.hotpluggable"));
+
+                        
+                        uuid = hal_device_property_get_string (
+                                slave_volume, "volume.uuid");
+                        if (uuid != NULL) {
+                                hal_device_property_set_string (
+                                        d, "storage.serial", uuid);
+                        }
+                }
+                
+                g_free (target);
+                g_free (link);
+                
+        } /* for all components */
+
+        hal_device_property_set_int (d, "storage.linux_raid.num_components_active", n);
+        
+        /* TODO: add more state here */
+
+        ret = TRUE;
+
+error:
+        return ret;
+}
+
+
 void
 hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_file, gboolean is_partition,
 				  HalDevice *parent, void *end_token)
@@ -647,8 +839,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	char *sysfs_path_real = NULL;
 	int floppy_num;
 	gboolean is_device_mapper;
+        gboolean is_md_device;
+        int md_number;
 
 	is_device_mapper = FALSE;
+        is_fakevolume = FALSE;
+        is_md_device = FALSE;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
@@ -659,11 +855,18 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	}
 
 	if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0) {
+		HAL_INFO (("Handling %s as fakevolume - sysfs_path_real=%s", device_file, sysfs_path_real));
 		is_fakevolume = TRUE;
 		sysfs_path_real = hal_util_get_parent_path (sysfs_path);
-		HAL_INFO (("Handling %s as fakevolume - sysfs_path_real=%s", device_file, sysfs_path_real));
+        } else if (sscanf (hal_util_get_last_element (sysfs_path), "md%d", &md_number) == 1) {
+		HAL_INFO (("Handling %s as MD device", device_file));
+                is_md_device = TRUE;
+		sysfs_path_real = g_strdup (sysfs_path);
+                /* set parent to root computer device object */
+                parent = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+                if (parent == NULL)
+                        d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
 	} else {
-		is_fakevolume = FALSE;
 		sysfs_path_real = g_strdup (sysfs_path);
 	}
 	
@@ -679,13 +882,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	d = hal_device_new ();
 
 	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
-	if (parent == NULL && !is_partition && !is_fakevolume) {
+	if (parent == NULL && !is_partition && !is_fakevolume && !hotplug_event->reposted) {
 		DIR * dir;
 		struct dirent *dp;
 		char path[HAL_PATH_MAX];
 
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
-		HAL_INFO (("Looking in %s", path));
+		HAL_INFO (("Looking in %s for Device Mapper", path));
 
 		if ((dir = opendir (path)) == NULL) {
 			HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
@@ -734,7 +937,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			closedir(dir);
 			HAL_INFO (("Done looking in %s", path));
 		}
-		
+
 	}
 
 	if (parent == NULL) {
@@ -865,6 +1068,53 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				}
 			}
 
+                        if (strcmp (udi_it, "/org/freedesktop/Hal/devices/computer") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+                                        if (is_md_device) {
+                                                char *level;
+                                                char *model_name;
+
+                                                hal_device_property_set_string (d, "storage.bus", "linux_raid");
+
+                                                level = hal_util_get_string_from_file (sysfs_path_real, "md/level");
+                                                if (level == NULL)
+                                                        goto error;
+                                                hal_device_property_set_string (d, "storage.linux_raid.level", level);
+
+                                                hal_device_property_set_string (d, "storage.linux_raid.sysfs_path", sysfs_path_real);
+
+                                                hal_device_property_set_string (d, "storage.vendor", "Linux");
+                                                if (strcmp (level, "linear") == 0) {
+                                                        model_name = g_strdup ("Software RAID (Linear)");
+                                                } else if (strcmp (level, "raid0") == 0) {
+                                                        model_name = g_strdup ("Software RAID-0 (Stripe)");
+                                                } else if (strcmp (level, "raid1") == 0) {
+                                                        model_name = g_strdup ("Software RAID-1 (Mirror)");
+                                                } else if (strcmp (level, "raid5") == 0) {
+                                                        model_name = g_strdup ("Software RAID-5");
+                                                } else {
+                                                        model_name = g_strdup_printf ("Software RAID (%s)", level);
+                                                }
+                                                hal_device_property_set_string (d, "storage.model", model_name);
+                                                g_free (model_name);
+
+                                                hal_util_set_string_from_file (
+                                                        d, "storage.firmware_version", 
+                                                        sysfs_path_real, "md/metadata_version");
+                                                
+                                                hal_device_add_capability (d, "storage.linux_raid");
+
+                                                if (!refresh_md_state (d))
+                                                        goto error;
+
+                                                is_hotpluggable = hal_device_property_get_bool (
+                                                        d, "storage.hotpluggable");
+
+                                        }
+                                        break;
+                        }
+
 			/* Check info.subsystem */
 			if ((bus = hal_device_property_get_string (d_it, "info.subsystem")) != NULL) {
 				if (strcmp (bus, "scsi") == 0) {
@@ -927,9 +1177,9 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "storage.originating_device", physdev_udi);
 		hal_device_property_set_string (d, "storage.physical_device", physdev_udi);
 
-		if (!hal_util_get_int_from_file (sysfs_path, "removable", (gint *) &is_removable, 10)) {
+		if (!hal_util_get_int_from_file (sysfs_path_real, "removable", (gint *) &is_removable, 10)) {
 			HAL_WARNING (("Cannot get 'removable' file"));
-			goto error;
+                        is_removable = FALSE;
 		}
 
 		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
@@ -937,7 +1187,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		/* set storage.size only if we have fixed media */
 		if (!is_removable) {
 			guint64 num_blocks;
-			if (hal_util_get_uint64_from_file (sysfs_path, "size", &num_blocks, 0)) {
+			if (hal_util_get_uint64_from_file (sysfs_path_real, "size", &num_blocks, 0)) {
 				/* TODO: sane to assume this is always 512 for non-removable? 
 				 * I think genhd.c guarantees this... */
 				hal_device_property_set_uint64 (d, "storage.size", num_blocks * 512);
@@ -972,7 +1222,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			 *
 			 * "disk", "cdrom", "tape", "floppy", "UNKNOWN"
 			 */
-			snprintf (buf, sizeof (buf), "%s/ide/%s", get_hal_proc_path (), hal_util_get_last_element (sysfs_path));
+			snprintf (buf, sizeof (buf), "%s/ide/%s", get_hal_proc_path (), hal_util_get_last_element (sysfs_path_real));
 			if ((media = hal_util_get_string_from_file (buf, "media")) != NULL) {
 				if (strcmp (media, "disk") == 0 ||
 				    strcmp (media, "cdrom") == 0 ||
@@ -1161,9 +1411,11 @@ error:
 	if (d != NULL)
 		g_object_unref (d);
 out:
-	hotplug_event_end (end_token);
+        hotplug_event_end (end_token);
 	g_free (sysfs_path_real);
+        return;
 }
+
 
 static void
 force_unmount_cb (HalDevice *d, guint32 exit_type, 
@@ -1411,4 +1663,219 @@ blockdev_generate_remove_hotplug_event (HalDevice *d)
 	hotplug_event->sysfs.net_ifindex = -1;
 
 	return hotplug_event;
+}
+
+static GSList *md_devs = NULL;
+
+static char *
+udev_get_device_file_for_sysfs_path (const char *sysfs_path)
+{
+        char *ret;
+        char *u_stdout;
+        int u_exit_status;
+        const char *argv[] = {"/usr/bin/udevinfo", "--root", "--query", "name", "--path", NULL, NULL};
+        GError *g_error;
+
+        ret = NULL;
+        argv[5] = sysfs_path;
+
+        g_error = NULL;
+
+        if (!g_spawn_sync("/", 
+                          (char **) argv, 
+                          NULL,           /* envp */
+                          0,              /* flags */
+                          NULL,           /* child_setup */
+                          NULL,           /* user_data */
+                          &u_stdout,
+                          NULL,           /* stderr */
+                          &u_exit_status,
+                          &g_error)) {
+                HAL_ERROR (("Error spawning udevinfo: %s", g_error->message));
+                g_error_free (g_error);
+                goto out;
+        }
+
+        if (u_exit_status != 0) {
+                HAL_ERROR (("udevinfo returned exit code %d", u_exit_status));
+                g_free (u_stdout);
+                goto out;
+        }
+
+        ret = u_stdout;
+        g_strchomp (ret);
+        HAL_INFO (("Got '%s'", ret));
+
+out:
+        return ret;
+}
+
+
+void 
+blockdev_process_mdstat (void)
+{
+	HotplugEvent *hotplug_event;
+        GIOChannel *channel;
+        GSList *read_md_devs;
+        GSList *i;
+        GSList *j;
+        GSList *k;
+
+        channel = get_mdstat_channel ();
+        if (channel == NULL)
+                goto error;
+
+        if (g_io_channel_seek (channel, 0, G_SEEK_SET) != G_IO_ERROR_NONE) {
+                HAL_ERROR (("Cannot seek in /proc/mdstat"));
+                goto error;
+        }
+
+        read_md_devs = NULL;
+        while (TRUE) {
+                int num;
+                char *line;
+
+                if (g_io_channel_read_line (channel, &line, NULL, NULL, NULL) != G_IO_STATUS_NORMAL)
+                        break;
+
+                if (sscanf (line, "md%d : ", &num) == 1) {
+                        char *sysfs_path;
+                        sysfs_path = g_strdup_printf ("%s/block/md%d", get_hal_sysfs_path (), num);
+                        read_md_devs = g_slist_prepend (read_md_devs, sysfs_path);
+                }
+
+                g_free (line);
+        }
+
+        /* now compute the delta */
+
+        /* add devices */
+        for (i = read_md_devs; i != NULL; i = i->next) {
+                gboolean should_add = TRUE;
+
+                for (j = md_devs; j != NULL && should_add; j = j->next) {
+                        if (strcmp (i->data, j->data) == 0) {
+                                should_add = FALSE;
+                        }
+                }
+
+                if (should_add) {
+                        char *sysfs_path = i->data;
+                        char *device_file;
+                        int num_tries;
+
+                        num_tries = 0;
+                retry_add:
+                        device_file = udev_get_device_file_for_sysfs_path (sysfs_path);
+                        if (device_file == NULL) {
+                                if (num_tries <= 6) {
+                                        int num_ms;
+                                        num_ms = 10 * (1<<num_tries);
+                                        HAL_INFO (("spinning %d ms waiting for device file for sysfs path %s", 
+                                                   num_ms, sysfs_path));
+                                        usleep (1000 * num_ms);
+                                        num_tries++;
+                                        goto retry_add;
+                                } else {
+                                        HAL_ERROR (("Cannot get device file for sysfs path %s", sysfs_path));
+                                }
+                        } else {
+                                HAL_INFO (("Adding md device at '%s' ('%s')", sysfs_path, device_file));
+
+                                hotplug_event = g_new0 (HotplugEvent, 1);
+                                hotplug_event->action = HOTPLUG_ACTION_ADD;
+                                hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+                                g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+                                g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+                                g_strlcpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+                                hotplug_event->sysfs.net_ifindex = -1;
+                                hotplug_event_enqueue (hotplug_event);
+                                
+                                md_devs = g_slist_prepend (md_devs, g_strdup (sysfs_path));
+
+                                g_free (device_file);
+                        }
+
+                }
+        }
+
+        /* remove devices */
+        for (i = md_devs; i != NULL; i = k) {
+                gboolean should_remove = TRUE;
+
+                k = i->next;
+
+                for (j = read_md_devs; j != NULL && should_remove; j = j->next) {
+                        if (strcmp (i->data, j->data) == 0) {
+                                should_remove = FALSE;
+                        }
+                }
+
+                if (should_remove) {
+                        char *sysfs_path = i->data;
+                        char *device_file;
+                        int num_tries;
+                        
+                        num_tries = 0;
+                retry_rem:
+                        device_file = udev_get_device_file_for_sysfs_path (sysfs_path);
+                        if (device_file == NULL) {
+                                if (num_tries <= 6) {
+                                        int num_ms;
+                                        num_ms = 10 * (1<<num_tries);
+                                        HAL_INFO (("spinning %d ms waiting for device file for sysfs path %s", 
+                                                   num_ms, sysfs_path));
+                                        usleep (1000 * num_ms);
+                                        num_tries++;
+                                        goto retry_rem;
+                                } else {
+                                        HAL_ERROR (("Cannot get device file for sysfs path %s", sysfs_path));
+                                }
+                        } else {
+                                
+                                HAL_INFO (("Removing md device at '%s' ('%s')", sysfs_path, device_file));
+
+                                hotplug_event = g_new0 (HotplugEvent, 1);
+                                hotplug_event->action = HOTPLUG_ACTION_REMOVE;
+                                hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
+                                g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
+                                g_strlcpy (hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path));
+                                g_strlcpy (hotplug_event->sysfs.device_file, device_file, sizeof (hotplug_event->sysfs.device_file));
+                                hotplug_event->sysfs.net_ifindex = -1;
+                                hotplug_event_enqueue (hotplug_event);
+                                
+                                md_devs = g_slist_remove_link (md_devs, i);
+                                g_free (i->data);
+                                g_slist_free (i);
+
+                                g_free (device_file);
+                        }
+
+                }
+        }
+
+        g_slist_foreach (read_md_devs, (GFunc) g_free, NULL);
+        g_slist_free (read_md_devs);
+
+        /* finally, refresh all md devices */
+        for (i = md_devs; i != NULL; i = i->next) {
+                char *sysfs_path = i->data;
+                HalDevice *d;
+
+                d = hal_device_store_match_key_value_string (hald_get_gdl (), 
+                                                             "storage.linux_raid.sysfs_path", 
+                                                             sysfs_path);
+                if (d == NULL)
+                        d = hal_device_store_match_key_value_string (hald_get_tdl (), 
+                                                                     "storage.linux_raid.sysfs_path", 
+                                                                     sysfs_path);
+                if (d != NULL)
+                        refresh_md_state (d);
+        }
+        
+
+        hotplug_event_process_queue ();
+
+error:
+        ;
 }

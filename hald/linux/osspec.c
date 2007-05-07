@@ -149,10 +149,17 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 
 		if (strncmp(key, "ACTION=", 7) == 0)
 			action = &key[7];
-		else if (strncmp(key, "DEVPATH=", 8) == 0)
+		else if (strncmp(key, "DEVPATH=", 8) == 0) {
+
+                        /* md devices are handled via looking at /proc/mdstat */
+                        if (g_str_has_prefix (key + 8, "/block/md")) {
+                                HAL_INFO (("skipping md event for %s", key + 8));
+                                goto invalid;
+                        }
+
 			g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path),
 				    "%s%s", hal_sysfs_path, &key[8]);
-		else if (strncmp(key, "SUBSYSTEM=", 10) == 0)
+		} else if (strncmp(key, "SUBSYSTEM=", 10) == 0)
 			g_strlcpy (hotplug_event->sysfs.subsystem, &key[10], sizeof (hotplug_event->sysfs.subsystem));
 		else if (strncmp(key, "DEVNAME=", 8) == 0)
 			g_strlcpy (hotplug_event->sysfs.device_file, &key[8], sizeof (hotplug_event->sysfs.device_file));
@@ -247,14 +254,26 @@ out:
 }
 
 static gboolean
-mount_tree_changed_event (GIOChannel *channel, GIOCondition cond,
-		    gpointer user_data)
+mount_tree_changed_event (GIOChannel *channel, GIOCondition cond, gpointer user_data)
 {
 	if (cond & ~G_IO_ERR)
 		return TRUE;
 
 	HAL_INFO (("/proc/mounts tells, that the mount has tree changed"));
 	blockdev_refresh_mount_state (NULL);
+
+	return TRUE;
+}
+
+static gboolean
+mdstat_changed_event (GIOChannel *channel, GIOCondition cond, gpointer user_data)
+{
+	if (cond & ~G_IO_PRI)
+		return TRUE;
+
+	HAL_INFO (("/proc/mdstat changed"));
+
+        blockdev_process_mdstat ();
 
 	return TRUE;
 }
@@ -267,6 +286,14 @@ osspec_get_file_monitor (void)
         return file_monitor;
 }
 
+static GIOChannel *mdstat_channel = NULL;
+
+GIOChannel *get_mdstat_channel (void)
+{
+        return mdstat_channel;
+}
+
+
 void
 osspec_privileged_init (void)
 {
@@ -274,6 +301,14 @@ osspec_privileged_init (void)
         if (file_monitor == NULL) {
                 DIE (("Cannot initialize file monitor"));
         }
+
+	/* watch /proc/mdstat for md changes
+	 * kernel 2.6.19 throws a POLLPRI event for every change
+	 */
+	mdstat_channel = g_io_channel_new_file ("/proc/mdstat", "r", NULL);
+	if (mdstat_channel == NULL)
+		DIE (("Unable to read /proc/mdstat"));
+	g_io_add_watch (mdstat_channel, G_IO_PRI, mdstat_changed_event, NULL);
 }
 
 void
@@ -323,8 +358,7 @@ osspec_init (void)
 	if (hal_proc_path == NULL)
 		hal_proc_path = "/proc";
 
-	/*
-	 * watch /proc/mounts for mount tree changes
+	/* watch /proc/mounts for mount tree changes
 	 * kernel 2.6.15 vfs throws a POLLERR event for every change
 	 */
 	g_snprintf (path, sizeof (path), "%s/mounts", get_hal_proc_path ());

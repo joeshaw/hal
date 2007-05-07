@@ -40,4 +40,6 @@ HotplugEvent *blockdev_generate_remove_hotplug_event (HalDevice *d);
 
 void blockdev_refresh_mount_state (HalDevice *d);
 
+void blockdev_process_mdstat (void);
+
 #endif /* BLOCKDEV_H */

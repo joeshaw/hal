@@ -184,10 +184,11 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			 * from within HAL for partitions on the main block device
 			 */
 			if ((strstr (hotplug_event->sysfs.sysfs_path, "/fakevolume") != NULL) ||
-			    hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0))
+                            hal_util_get_int_from_file (hotplug_event->sysfs.sysfs_path, "range", &range, 0)) {
 				is_partition = FALSE;
-			else
+			} else {
 				is_partition = TRUE;
+                        }
 
 			hal_util_find_known_parent (hotplug_event->sysfs.sysfs_path, &parent, NULL);
 			hotplug_event_begin_add_blockdev (hotplug_event->sysfs.sysfs_path,
