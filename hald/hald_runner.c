@@ -771,6 +771,13 @@ hald_runner_run_method (HalDevice * device,
 					      msg, &call, INT_MAX))
 		DIE (("No memory"));
 
+	/**
+	 * The connection was disconnected as per D-Bus API
+	 * This is an error condition and should not really happen
+	 */
+	if (call == NULL)
+		goto error;
+
 	hd = g_new0 (HelperData, 1);
 	hd->d = device;
 	hd->cb = cb;
