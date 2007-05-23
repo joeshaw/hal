@@ -4763,10 +4763,46 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
             </row>
             <row>
-              <entry></entry>
-              <entry></entry>
-              <entry></entry>
-              <entry></entry>
+              <entry>
+                <literal>portable_audio_player.access_method.protocols</literal> (strlist)
+              </entry>
+              <entry>example: storage ipod mtp ptp iriver karma</entry>
+              <entry>No</entry>
+              <entry>
+                Indicates transfer protocols that this device can speak.
+                <literal>storage</literal> indicates USB Mass Storage (UMS) is an access
+                protocol.  <literal>ipod</literal> indicates UMS plus an iTunes-style database.
+                <literal>ptp</literal> or <literal>mtp</literal> indicates a device using Microsoft's Picture Transfer
+                Protocol or its replacement, the newer Media Transfer Protocol.
+                Arbitrary values for newer or obscure protocols are allowed but
+                entities providing this information should try to ensure that
+                they are not duplicating protocols under a different name.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>portable_audio_player.access_method.drivers</literal> (strlist)
+              </entry>
+              <entry>example: libgpod, libmtp, libnjb, libifp, libkarma</entry>
+              <entry>No</entry>
+              <entry>
+                Indicates installed device driver libraries that can
+                handle this device.  These drivers can export information
+                in <literal>portable_audio_player.[drivername]</literal> sub-namespaces.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>portable_audio_player.[drivername].protocol</literal> (strlist)
+              </entry>
+              <entry>example: mtp</entry>
+              <entry>Yes</entry>
+              <entry>
+                This entry is required for drivers listed in
+                <literal>portable_audio_player.access_method.drivers</literal>. Indicates which
+                protocol in <literal>portable_audio_player.access_method.protocols</literal>
+                a particular driver will use.
+              </entry>
             </row>
             <row>
               <entry>
@@ -4776,7 +4812,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>Yes</entry>
               <entry>
                 A string list of MIME-types representing the kind of audio
-                formats that the device can play back
+                formats that the device can play back.
               </entry>
             </row>
             <row>
@@ -6672,6 +6708,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry><literal>*.originating_device</literal></entry>
               <entry>2008-03-01</entry>
               <entry>Renamed to something more abstract, available until removed.</entry>
+            </row>
+            <row>
+                <entry><literal>portable_audio_player.type</literal> (string)</entry>
+                <entry><literal>portable_audio_player.access_method.[drivers, protocols] (strlist)</literal></entry>
+                <entry>2008-05-03</entry>
+                <entry>New structure allows for better definition of access protocols and handlers.</entry>
             </row>
             <row>
               <entry><literal>power_management.can_suspend_to_ram</literal> (bool)</entry>
