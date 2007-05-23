@@ -32,6 +32,7 @@
   <device>
     <match key="info.udi" string="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel">
       <append key="info.capabilities" type="strlist">laptop_panel</append>
+      <merge key="info.category" type="string">laptop_panel</merge>
       <merge key="info.product" type="string">MacBook Pro Laptop Panel</merge>
       <merge key="laptop_panel.access_method" type="string">custom</merge>
       <merge key="laptop_panel.num_levels" type="int">229</merge>
