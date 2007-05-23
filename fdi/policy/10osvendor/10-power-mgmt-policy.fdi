@@ -52,7 +52,7 @@
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-reboot</append>
 
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_names" type="strlist">SetPowerSave</append>
-      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist">b</append>
+      <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_signatures" type="strlist">i</append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_argnames" type="strlist">enable_power_save</append>
       <append key="org.freedesktop.Hal.Device.SystemPowerManagement.method_execpaths" type="strlist">hal-system-power-set-power-save</append>
 
