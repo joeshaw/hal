@@ -8,6 +8,9 @@
       <match key="system.hardware.vendor" string="IBM">
         <append key="info.capabilities" type="strlist">button</append>
       </match>
+      <match key="system.hardware.vendor" string="LENOVO">
+        <append key="info.capabilities" type="strlist">button</append>
+      </match>
     </match>
   </device>
 
