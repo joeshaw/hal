@@ -148,9 +148,6 @@ handle_ibm_acpi_events (LibHalContext *ctx, int type, int event)
 			case 4111: /* Fn+Delete*/ 
 				button = "Fn+Delete";
 				break;
-			case 4112: /* Fn+Home*/ 
-				button = "brightness-up";
-				break;
 			case 20489: /* Tablet rotated */
 				button = "tabletpc_rotate_180";
 				break;
