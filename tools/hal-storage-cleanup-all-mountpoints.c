@@ -162,9 +162,8 @@ do_cleanup (void)
 int
 main (int argc, char *argv[])
 {
-	if (!lock_hal_mtab ()) {
-		unknown_error ("Cannot obtain lock on /media/.hal-mtab");
-	}
+
+        unlink ("/media/.hal-mtab-lock");
 
 	if (getenv ("HAL_PROP_INFO_UDI") == NULL)
 		usage ();
@@ -174,7 +173,5 @@ main (int argc, char *argv[])
 #endif
 	do_cleanup ();
 
-
-	unlock_hal_mtab ();
 	return 0;
 }
