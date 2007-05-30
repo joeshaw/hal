@@ -799,7 +799,7 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
           </row>
           <row>
             <entry>SetCPUFreqGovernor</entry>
-            <entry>Int</entry>
+            <entry>Void</entry>
             <entry>String governor</entry>
             <entry>CPUFreq.UnknownGovernor</entry>
             <entry>
@@ -808,8 +808,8 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
           </row>
           <row>
             <entry>SetCPUFreqPerformance</entry>
-            <entry>Int</entry>
-            <entry>Int percent</entry>
+            <entry>Void</entry>
+            <entry>Int (1 to 100)</entry>
             <entry>CPUFreq.NoSuitableGovernor</entry>
             <entry>
               Sets the performance of the dynamic scaling
@@ -834,7 +834,7 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
           </row>
           <row>
             <entry>SetCPUFreqConsiderNice</entry>
-            <entry>Int</entry>
+            <entry>Void</entry>
             <entry>Bool consider_niced_processes</entry>
             <entry>CPUFreq.NoSuitableGovernor</entry>
             <entry>
@@ -847,7 +847,7 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
             </entry>
           </row>
           <row>
-            <entry>SetCPUFreqConsiderNice</entry>
+            <entry>GetCPUFreqConsiderNice</entry>
             <entry>Bool</entry>
             <entry></entry>
             <entry>CPUFreq.NoSuitableGovernor</entry>
