@@ -803,7 +803,10 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
             <entry>String governor</entry>
             <entry>CPUFreq.UnknownGovernor</entry>
             <entry>
-              Selects a CPU Frequency governor to use.
+              Selects a CPU frequency scaling governor for all CPUFreq
+	      interfaces the kernel provides. If the userspace governor is
+	      set, this interface also contains a proper scaling
+	      mechanism.
             </entry>
           </row>
           <row>
