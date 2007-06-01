@@ -3675,7 +3675,7 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 		     gint return_code, gchar **error,
 		     gpointer data1, gpointer data2)
 {
-	dbus_uint32_t result;
+	dbus_int32_t result;
 	DBusMessage *reply = NULL;
 	DBusMessage *message;
 	DBusMessageIter iter;
