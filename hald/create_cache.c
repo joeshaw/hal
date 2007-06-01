@@ -699,14 +699,14 @@ error:
 static void
 usage ()
 {
-	fprintf (stderr, "\n" "usage : hald-cache [--verbose=yes|no] [--use-syslog] [--help]\n");
+	fprintf (stderr, "\n" "usage : hald-generate-fdi-cache [OPTION]\n");
 	fprintf (stderr,
 		 "\n"
 		 "        --force               Force regeneration of cache.\n"
 		 "        --help                Show this information and exit.\n"
 		 "        --version             Output version information and exit.\n"
 		 "\n"
-		 "hald-cache is a tool to generate binary cache from FDI files.\n"
+		 "hald-generate-fdi-cache is a tool to generate binary cache from FDI files.\n"
 		 "\n"
 		 "For more information visit http://freedesktop.org/Software/hal\n"
 		 "\n");
@@ -723,7 +723,6 @@ int main(int argc, char * argv[])
 		int option_index = 0;
 		const char *opt;
 		static struct option long_options[] = {
-			{"exit-after-probing", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"force", 0, NULL, 0},
