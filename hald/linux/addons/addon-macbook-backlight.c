@@ -160,6 +160,10 @@ backlight_set (long value)
 
 	max = register_get () >> 17;
 
+	/* after resume the register might be set to zero; fix this */
+	if (max == 0x00)
+		max = 0x94;
+
 	/* sanity check: this should always be 0x94 */
 	if (max != 0x94)
 		return FALSE;
