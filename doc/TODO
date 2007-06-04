@@ -121,6 +121,10 @@ Other items
    require reworking the 'fakevolume' code as we'd be adding more
    than one fakevolume
 
+ - Have a mechanism so an addon can do things on system suspend/resume;
+   such as saving/restoring the backlight value (macbook, macbookpro,
+   omap, dell addon's)
+
 Optimization
 ------------
 
