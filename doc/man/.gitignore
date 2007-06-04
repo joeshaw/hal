@@ -10,5 +10,6 @@ hal-get-property.1
 hal-is-caller-locked-out.1
 hal-lock.1
 hal-set-property.1
+hal-is-caller-privileged.1
 lshal.1
  
