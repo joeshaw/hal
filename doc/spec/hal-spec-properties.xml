@@ -4766,14 +4766,13 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>
                 <literal>portable_audio_player.access_method.protocols</literal> (strlist)
               </entry>
-              <entry>example: storage ipod mtp ptp iriver karma</entry>
+              <entry>example: storage ipod mtp pde iriver karma</entry>
               <entry>No</entry>
               <entry>
                 Indicates transfer protocols that this device can speak.
                 <literal>storage</literal> indicates USB Mass Storage (UMS) is an access
                 protocol.  <literal>ipod</literal> indicates UMS plus an iTunes-style database.
-                <literal>ptp</literal> or <literal>mtp</literal> indicates a device using Microsoft's Picture Transfer
-                Protocol or its replacement, the newer Media Transfer Protocol.
+                <literal>mtp</literal> indicates a device using Microsoft's Media Transfer Protocol.
                 Arbitrary values for newer or obscure protocols are allowed but
                 entities providing this information should try to ensure that
                 they are not duplicating protocols under a different name.
