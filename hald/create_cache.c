@@ -49,6 +49,7 @@
 
 static XML_Parser parser;
 static char s_error[256];
+static int haldc_verbose = 0;
 
 /* ctx of the current fdi file used for parsing */
 struct fdi_context {
@@ -71,7 +72,7 @@ _alphasort(const struct dirent **a, const struct dirent **b)
 }
 
 
-static rule_type 
+static rule_type
 get_rule_type (const char *str)
 {
 	if (strcmp (str, "match") == 0)
@@ -93,7 +94,7 @@ get_rule_type (const char *str)
 	return RULE_UNKNOWN;
 }
 
-static match_type 
+static match_type
 get_match_type(const char *str)
 {
 	if (strcmp (str, "string") == 0)
@@ -141,7 +142,7 @@ get_match_type(const char *str)
 	return MATCH_UNKNOWN;
 }
 
-static merge_type 
+static merge_type
 get_merge_type (const char *str)
 {
 	if (strcmp (str, "string") == 0)
@@ -208,7 +209,8 @@ static void store_key(struct fdi_context *fdi_ctx, const char *key)
 	pad32_write(fdi_ctx->cache_fd, fdi_ctx->position + sizeof(struct rule),
 	    (void*)key, fdi_ctx->rule.key_len);
 
-	/*HAL_INFO(("Storing key '%s' at rule=%08lx", key, fdi_ctx->position));*/
+	if (haldc_verbose)
+		HAL_INFO(("Storing key '%s' at rule=%08lx", key, fdi_ctx->position));
 }
 
 /* stores value string to data file which we'll mmap next */
@@ -246,9 +248,10 @@ static void store_value(struct fdi_context *fdi_ctx, const char *value, size_t v
 
 	memcpy(p, value, value_len);
 	p[value_len] = '\0';
-	
-	/*HAL_INFO(("Storing value '%s', value_len=%d, at rule=%08lx, offset=%08lx",
-	  p, value_len, fdi_ctx->position, offset));*/
+
+	if (haldc_verbose)
+		HAL_INFO(("Storing value '%s', value_len=%d, at rule=%08lx, offset=%08lx",
+		  p, value_len, fdi_ctx->position, offset));
 
 	free(p);
 }
@@ -257,7 +260,7 @@ static void store_rule(struct fdi_context *fdi_ctx)
 {
 	if (fdi_ctx->rule.rtype == RULE_UNKNOWN)
 		DIE(("I refuse to store garbage"));
-	
+
 	fdi_ctx->rule.rule_size = sizeof(struct rule) +
 		ROUND32(fdi_ctx->rule.key_len) +
 		ROUND32(fdi_ctx->rule.value_len);
@@ -265,18 +268,18 @@ static void store_rule(struct fdi_context *fdi_ctx)
 	pad32_write(fdi_ctx->cache_fd, fdi_ctx->position,
 		&fdi_ctx->rule, sizeof(struct rule));
 
-/*
-	HAL_INFO(("rule=%08lx, rule_size=%d, rtype=%d",
+	if (haldc_verbose) {
+		HAL_INFO(("rule=%08lx, rule_size=%d, rtype=%d",
 		fdi_ctx->position, fdi_ctx->rule.rule_size, fdi_ctx->rule.rtype));
 
-	HAL_INFO(("  jump_position=%08lx", fdi_ctx->rule.jump_position));
+		HAL_INFO(("  jump_position=%08lx", fdi_ctx->rule.jump_position));
 
-	HAL_INFO(("  key_len=%d, key_offset=%08lx",
-		fdi_ctx->rule.key_len, fdi_ctx->position + offsetof(struct rule, key)));
+		HAL_INFO(("  key_len=%d, key_offset=%08lx",
+			fdi_ctx->rule.key_len, fdi_ctx->position + offsetof(struct rule, key)));
 
-	HAL_INFO(("  value_len=%d, value_offset=%08lx",
-		fdi_ctx->rule.value_len, fdi_ctx->rule.value_offset));
-*/
+		HAL_INFO(("  value_len=%d, value_offset=%08lx",
+			fdi_ctx->rule.value_len, fdi_ctx->rule.value_offset));
+	}
 
 	init_rule_struct(&fdi_ctx->rule);
 }
@@ -300,10 +303,11 @@ static void set_jump_position(struct fdi_context *fdi_ctx)
 	pad32_write(fdi_ctx->cache_fd,
 		fdi_ctx->match_at_depth[fdi_ctx->depth] + offsetof(struct rule, jump_position),
 		&offset, sizeof(fdi_ctx->rule.jump_position));
-/*
-	HAL_INFO(("modify rule=0x%08x, set jump to 0x%08x",
-		fdi_ctx->match_at_depth[fdi_ctx->depth], offset));
-*/
+
+	if (haldc_verbose)
+		HAL_INFO(("modify rule=0x%08x, set jump to 0x%08x",
+			fdi_ctx->match_at_depth[fdi_ctx->depth], offset));
+
 }
 
 /* expat cb for start, e.g. <match foo=bar */
@@ -445,7 +449,7 @@ rules_add_fdi_file (const char *filename, int fd)
 
 	ret = -1;
 
-	if (!g_file_get_contents (filename, &buf, &buflen, NULL)) 
+	if (!g_file_get_contents (filename, &buf, &buflen, NULL))
 		goto out;
 
 	/* create new context */
@@ -466,23 +470,23 @@ rules_add_fdi_file (const char *filename, int fd)
 	if (rc == 0) {
 		if (XML_GetErrorCode (parser) == XML_ERROR_ABORTED) {
 			HAL_ERROR (("%s:%d: semantic error: %s",
-				    filename, 
+				    filename,
 				    (int) XML_GetCurrentLineNumber (parser),
 				    s_error));
-			syslog (LOG_ERR, 
+			syslog (LOG_ERR,
 				"error in fdi file %s:%d: %s",
-				filename, 
+				filename,
 				(int) XML_GetCurrentLineNumber (parser),
 				s_error);
 
 		} else {
 			HAL_ERROR (("%s:%d: XML parse error: %s",
-				    filename, 
+				    filename,
 				    (int) XML_GetCurrentLineNumber (parser),
 				    XML_ErrorString (XML_GetErrorCode (parser))));
-			syslog (LOG_ERR, 
+			syslog (LOG_ERR,
 				"error in fdi file %s:%d: %s",
-				filename, 
+				filename,
 				(int) XML_GetCurrentLineNumber (parser),
 				XML_ErrorString (XML_GetErrorCode (parser)));
 		}
@@ -522,7 +526,7 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 	int num_skipped_fdi_files;
 
 	num_skipped_fdi_files = 0;
-	
+
 	num_entries = scandir (dir, &name_list, 0, _alphasort);
 	if (num_entries == -1) {
 		HAL_ERROR (("Cannot scan '%s': %s", dir, strerror (errno)));
@@ -608,8 +612,9 @@ di_rules_init (void)
 	cachename = getenv ("HAL_FDI_CACHE_NAME");
 	if(cachename == NULL)
 		cachename = HALD_CACHE_FILE;
-	HAL_INFO (("Loading rules"));
-	
+	if (haldc_verbose)
+		HAL_INFO (("Loading rules"));
+
 	strncpy(cachename_temp, cachename, PATH_MAX);
 	strncat(cachename_temp, "~", PATH_MAX);
 
@@ -672,15 +677,17 @@ di_rules_init (void)
 		HAL_ERROR (("Cannot rename '%s' to '%s': %s", cachename_temp, cachename, strerror (errno)));
 		return -1;
 	}
-	
-	HAL_INFO(("preprobe: offset=%08lx, size=%d", header.fdi_rules_preprobe,
-		header.fdi_rules_information - header.fdi_rules_preprobe));
-	HAL_INFO(("information: offset=%08lx, size=%d", header.fdi_rules_information,
-		header.fdi_rules_policy - header.fdi_rules_information));
-	HAL_INFO(("policy: offset=%08lx, size=%d", header.fdi_rules_policy,
-		header.all_rules_size - header.fdi_rules_policy));
 
-	HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
+	if (haldc_verbose){
+		HAL_INFO(("preprobe: offset=%08lx, size=%d", header.fdi_rules_preprobe,
+			header.fdi_rules_information - header.fdi_rules_preprobe));
+		HAL_INFO(("information: offset=%08lx, size=%d", header.fdi_rules_information,
+			header.fdi_rules_policy - header.fdi_rules_information));
+		HAL_INFO(("policy: offset=%08lx, size=%d", header.fdi_rules_policy,
+			header.all_rules_size - header.fdi_rules_policy));
+		HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
+	}
+
 	return num_skipped_fdi_files;
 error:
 	HAL_ERROR (("Error generating fdi cache"));
@@ -691,8 +698,8 @@ error:
 }
 
 /**
- * usage: 
- * 
+ * usage:
+ *
  * Print out program usage.
  *
  */
@@ -702,9 +709,10 @@ usage ()
 	fprintf (stderr, "\n" "usage : hald-generate-fdi-cache [OPTION]\n");
 	fprintf (stderr,
 		 "\n"
-		 "        --force               Force regeneration of cache.\n"
-		 "        --help                Show this information and exit.\n"
-		 "        --version             Output version information and exit.\n"
+		 "	--force	       Force regeneration of cache.\n"
+		 "	--help		Show this information and exit.\n"
+		 "	--verbose	     Show verbose rule processing output.\n"
+		 "	--version	     Output version information and exit.\n"
 		 "\n"
 		 "hald-generate-fdi-cache is a tool to generate binary cache from FDI files.\n"
 		 "\n"
@@ -726,6 +734,7 @@ int main(int argc, char * argv[])
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"force", 0, NULL, 0},
+			{"verbose", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
 
@@ -744,10 +753,11 @@ int main(int argc, char * argv[])
 			} else if (strcmp (opt, "version") == 0) {
 				fprintf (stderr, "HAL package version: " PACKAGE_VERSION "\n");
 				return 0;
+			} else if (strcmp (opt, "verbose") == 0) {
+				haldc_verbose = 1;
 			} else if (strcmp (opt, "force") == 0) {
-                                haldc_force_recreate = 1;
+				haldc_force_recreate = 1;
 			}
-
 			break;
 
 		default:
