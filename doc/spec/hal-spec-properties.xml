@@ -6710,7 +6710,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
                 <entry><literal>portable_audio_player.type</literal> (string)</entry>
-                <entry><literal>portable_audio_player.access_method.[drivers, protocols] (strlist)</literal></entry>
+                <entry><literal>portable_audio_player.access_method.[drivers, protocols]</literal> (strlist)</entry>
                 <entry>2008-05-03</entry>
                 <entry>New structure allows for better definition of access protocols and handlers.</entry>
             </row>
