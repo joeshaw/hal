@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> <!-- -*- SGML -*- -->
+<deviceinfo version="0.2">
+  <device>
+    <match key="info.capabilities" contains="input.keymap">
+      <append key="info.callouts.add" type="strlist">hal-setup-keymap</append>
+    </match>
+  </device>
+</deviceinfo>
+

@@ -9,6 +9,10 @@ dist_fdi_DATA = 			\
 	15-storage-luks.fdi		\
 	20-storage-methods.fdi
 
+if BUILD_KEYMAPS
+dist_fdi_DATA += 10-keymap.fdi
+endif
+
 if BUILD_MACBOOKPRO
 dist_fdi_DATA += 10-macbookpro-utils.fdi
 endif

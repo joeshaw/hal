@@ -16,6 +16,9 @@ hal-is-caller-locked-out
 hal-lock
 hal-luks-remove
 hal-luks-setup
+hal-setup-keymap
+hal-setup-keymap-hash-name.gperf
+hal-setup-keymap-keys.txt
 hal-system-power-pmu
 hal-system-sonypic
 hal-policy-is-privileged

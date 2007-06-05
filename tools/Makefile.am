@@ -33,8 +33,15 @@ bin_PROGRAMS =                    \
 	hal-lock		  \
 	hal-disable-polling
 
+BUILT_SOURCES = 
+DISTCLEANFILES = 
+
 if HAVE_POLKIT
 bin_PROGRAMS += hal-is-caller-privileged
+endif
+
+if BUILD_KEYMAPS
+bin_PROGRAMS += hal-setup-keymap
 endif
 
 lshal_SOURCES = lshal.c
@@ -67,6 +74,22 @@ hal_disable_polling_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libha
 if HAVE_POLKIT
 hal_is_caller_privileged_SOURCES = hal-is-caller-privileged.c
 hal_is_caller_privileged_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+endif
+
+if BUILD_KEYMAPS
+
+hal-setup-keymap-keys.txt: /usr/include/linux/input.h
+	awk '/^#define.*KEY_/ { if ($$2 != "KEY_MAX") { print substr($$2, 5) } }' < $< > $@
+
+hal-setup-keymap-hash-name.gperf: hal-setup-keymap-keys.txt
+	awk 'BEGIN{ print "struct key { const char* name; unsigned short id; };"; print "%null-strings"; print "%%";} { print $$1 ", KEY_" $$1 }' < $< > $@
+
+hal-setup-keymap-hash-name.h: hal-setup-keymap-hash-name.gperf
+	gperf -t --ignore-case -N lookup_key -H hash_input_names -p -C < $< > $@
+
+hal_setup_keymap_SOURCES = hal-setup-keymap.c hal-setup-keymap-hash-name.h
+hal_setup_keymap_LDADD = $(top_builddir)/libhal/libhal.la
+
 endif
 
 libexec_PROGRAMS =                          \
@@ -153,6 +176,16 @@ slashsbin_PROGRAMS = umount.hal
 umount_hal_SOURCES = umount-hal.c
 umount_hal_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 endif
+
+DISTCLEANFILES += 				\
+	hal-setup-keymap-hash-name.h		\
+	hal-setup-keymap-hash-name.gperf	\
+	hal-setup-keymap-keys.txt
+
+BUILT_SOURCES += 				\
+	hal-setup-keymap-hash-name.h		\
+	hal-setup-keymap-hash-name.gperf	\
+	hal-setup-keymap-keys.txt
 
 check:
 	for f in $(script_SCRIPTS); do \

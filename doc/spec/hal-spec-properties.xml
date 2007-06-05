@@ -4599,6 +4599,45 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         properties.
       </para>
     </sect2>
+    <sect2 id="device-properties-input-keymap">
+      <title>
+        input.keymap namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>input.keymap</literal>
+        provide facilities to remap keyboard buttons.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>input.keymap.data</literal> (strlist)
+              </entry>
+              <entry>e.g. "e017:brightnessup"</entry>
+              <entry>No</entry>
+              <entry>
+                The scancode is represented in hex and the keycode name as
+                as string. The keycode name is not case sensitive.
+                On Linux, the keycode name should be the same constant as
+                present in /usr/include/linux/input.h with the 'KEY_'
+                prefix removed, e.g. 'KEY_SLEEP' -> 'sleep'.
+                You can append as many <literal>input.keymap.data</literal>
+                values as there are keys to remap.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-pcmcia_socket">
       <title>
         pcmcia_socket namespace
