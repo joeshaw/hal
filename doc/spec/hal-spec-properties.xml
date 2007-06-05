@@ -4774,36 +4774,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           <tbody>
             <row>
               <entry>
-                <literal>portable_audio_player.access_method</literal> (string)
-              </entry>
-              <entry></entry>
-              <entry>Yes</entry>
-              <entry>This property defines how the device is accessed </entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>storage</entry>
-              <entry></entry>
-              <entry>
-                The device is accessed as a Mass Storage device
-                through a kernel driver.  Application Developers
-                should descent down the device object tree to find the
-                device object of capability
-                <literal>storage</literal> in order to access the
-                device.
-              </entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>user</entry>
-              <entry></entry>
-              <entry>
-                The device is accessed from userspace through
-                a userspace driver.
-              </entry>
-            </row>
-            <row>
-              <entry>
                 <literal>portable_audio_player.access_method.protocols</literal> (strlist)
               </entry>
               <entry>example: storage ipod mtp pde iriver karma</entry>
@@ -6747,6 +6717,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry><literal>*.originating_device</literal></entry>
               <entry>2008-03-01</entry>
               <entry>Renamed to something more abstract, available until removed.</entry>
+            </row>
+            <row>
+                <entry><literal>portable_audio_player.access_method</literal> (string)</entry>
+                <entry><literal>portable_audio_player.access_method.[drivers, protocols]</literal> (strlist)</entry>
+                <entry>2008-05-03</entry>
+                <entry>Original entry can only indicate UMS or userspace driver devices, while some devices can be both.  New structure doesn't have this limitation.</entry>
             </row>
             <row>
                 <entry><literal>portable_audio_player.type</literal> (string)</entry>
