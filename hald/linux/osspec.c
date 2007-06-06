@@ -403,6 +403,26 @@ computer_probing_helper_done (HalDevice *d)
 	if (!hal_device_has_property (d, "system.formfactor")) {
 		hal_device_property_set_string (d, "system.formfactor", "unknown");
 	}
+
+	/* will enqueue hotplug events for entire system */
+	HAL_INFO (("Synthesizing sysfs events..."));
+	coldplug_synthesize_events ();
+
+	HAL_INFO (("Synthesizing powermgmt events..."));
+	if (acpi_synthesize_hotplug_events ()) {
+		HAL_INFO (("ACPI capabilities found"));
+	} else if (pmu_synthesize_hotplug_events ()) {
+		HAL_INFO (("PMU capabilities found"));		
+	} else if (apm_synthesize_hotplug_events ()) {
+		HAL_INFO (("APM capabilities found"));		
+	} else {
+		HAL_INFO (("No powermgmt capabilities"));		
+	}
+	HAL_INFO (("Done synthesizing events"));
+
+	/* we try again to match again on computer, now we have done coldplug
+	 * and completed probing. In an ideal world, we would do this before
+	 * _and_ after the coldplug, but this seems to work well. */
 	di_search_and_merge (d, DEVICE_INFO_TYPE_INFORMATION);
 	di_search_and_merge (d, DEVICE_INFO_TYPE_POLICY);
 
@@ -667,22 +687,6 @@ osspec_probe (void)
 
 	/* Let computer be in TDL while synthesizing all other events because some may write to the object */
 	hal_device_store_add (hald_get_tdl (), root);
-
-	/* will enqueue hotplug events for entire system */
-	HAL_INFO (("Synthesizing sysfs events..."));
-	coldplug_synthesize_events ();
-
-	HAL_INFO (("Synthesizing powermgmt events..."));
-	if (acpi_synthesize_hotplug_events ()) {
-		HAL_INFO (("ACPI capabilities found"));
-	} else if (pmu_synthesize_hotplug_events ()) {
-		HAL_INFO (("PMU capabilities found"));		
-	} else if (apm_synthesize_hotplug_events ()) {
-		HAL_INFO (("APM capabilities found"));		
-	} else {
-		HAL_INFO (("No powermgmt capabilities"));		
-	}
-	HAL_INFO (("Done synthesizing events"));
 
 	/*
 	 * Populate the powermgmt keys according to the kernel options.
