@@ -320,7 +320,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 
 				return_code = 0;
 				dbus_message_append_args (reply,
-							  DBUS_TYPE_INT32, &return_code,
+							  DBUS_TYPE_UINT32, &return_code,
 							  DBUS_TYPE_INVALID);
 			}
 
@@ -353,7 +353,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 				goto error;
 
 			dbus_message_append_args (reply,
-						  DBUS_TYPE_INT32, &brightness,
+						  DBUS_TYPE_UINT32, &brightness,
 						  DBUS_TYPE_INVALID);
 			dbus_connection_send (connection, reply, NULL);
 		}
@@ -560,10 +560,10 @@ main (int argc, char *argv[])
 					    "org.freedesktop.Hal.Device.LaptopPanel", 
 					    "    <method name=\"SetBrightness\">\n"
 					    "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n"
-					    "      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
+					    "      <arg name=\"return_code\" direction=\"out\" type=\"u\"/>\n"
 					    "    </method>\n"
 					    "    <method name=\"GetBrightness\">\n"
-					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"i\"/>\n"
+					    "      <arg name=\"brightness_value\" direction=\"out\" type=\"u\"/>\n"
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
