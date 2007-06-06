@@ -34,6 +34,7 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
+#include "uthash.h"
 #include "libhal.h"
 
 #ifdef ENABLE_NLS
@@ -184,10 +185,7 @@ libhal_free_string (char *str)
  * libhal_property_set_*() family of functions to access it.
  */
 struct LibHalPropertySet_s {
-	unsigned int num_properties; /**< Number of properties in set */
-	LibHalProperty *properties_head;
-				     /**< Pointer to first property or NULL
-				      *	  if there are no properties */
+	LibHalProperty *properties;
 };
 
 /**
@@ -213,8 +211,7 @@ struct LibHalProperty_s {
 		char **strlist_value; /**< List of UTF-8 zero-terminated strings */
 	} v;
 
-	LibHalProperty *next;	     /**< Next property or NULL if this is 
-				      *	  the last */
+	UT_hash_handle hh;		/*makes this hashable*/
 };
 
 /**
@@ -411,8 +408,7 @@ get_property_set (DBusMessageIter *iter)
     }
 */
 
-	result->properties_head = NULL;
-	result->num_properties = 0;
+	result->properties = NULL;
 
 	if (dbus_message_iter_get_arg_type (iter) != DBUS_TYPE_ARRAY  &&
 	    dbus_message_iter_get_element_type (iter) != DBUS_TYPE_DICT_ENTRY) {
@@ -439,16 +435,6 @@ get_property_set (DBusMessageIter *iter)
 		if (p == NULL)
 			goto oom;
 
-		p->next = NULL;
-
-		if (result->num_properties == 0)
-			result->properties_head = p;
-
-		if (p_last != NULL)
-			p_last->next = p;
-
-		p_last = p;
-
 		p->key = strdup (key);
 		if (p->key == NULL)
 			goto oom;
@@ -457,13 +443,12 @@ get_property_set (DBusMessageIter *iter)
 
 		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
 
-
 		p->type = dbus_message_iter_get_arg_type (&var_iter);
-	
-		result->num_properties++;
 
 		if(!libhal_property_fill_value_from_variant (p, &var_iter))
 			goto oom;
+
+                HASH_ADD_KEYPTR (hh, result->properties, p->key, strlen (p->key), p);
 
 		dbus_message_iter_next (&dict_iter);
 	}
@@ -541,6 +526,12 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 	return result;
 }
 
+static int
+key_sort (LibHalProperty *a, LibHalProperty *b)
+{
+	return strcmp (a->key, b->key);
+}
+
 /**
  * libhal_property_set_sort:
  * @set: property-set to sort
@@ -550,36 +541,7 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 void 
 libhal_property_set_sort (LibHalPropertySet *set)
 {
-	unsigned int i;
-	unsigned int num_elements;
-	LibHalProperty *p;
-	LibHalProperty *q;
-	LibHalProperty **r;
-
-	/* TODO: for the sake of gods; do something smarter than a slow bubble-sort!! */
-
-	num_elements = libhal_property_set_get_num_elems (set);
-	for (i = 0; i < num_elements; i++) {
-		for (p = set->properties_head, r = &(set->properties_head); p != NULL; p = q) {
-			q = p->next;
-
-			if (q == NULL)
-				continue;
-
-			if (strcmp (p->key, q->key) > 0) {
-				/* switch p and q */
-				p->next = q->next;
-				q->next = p;
-				*r = q;
-				
-				r = &(q->next);
-				q = p;
-			} else {
-				/* do nothing */
-				r = &(p->next);
-			}
-		}
-	}
+	HASH_SORT (set->properties, key_sort);
 }
 
 /**
@@ -592,18 +554,14 @@ void
 libhal_free_property_set (LibHalPropertySet * set)
 {
 	LibHalProperty *p;
-	LibHalProperty *q;
 
-	if (set == NULL)
-		return;
-
-	for (p = set->properties_head; p != NULL; p = q) {
+	for (p = set->properties; p != NULL; p=p->hh.next) {
+		HASH_DELETE (hh, set->properties, p);
 		free (p->key);
 		if (p->type == DBUS_TYPE_STRING)
 			free (p->v.str_value);
 		if (p->type == LIBHAL_PROPERTY_TYPE_STRLIST)
 			libhal_free_string_array (p->v.strlist_value);
-		q = p->next;
 		free (p);
 	}
 	free (set);
@@ -627,7 +585,7 @@ libhal_property_set_get_num_elems (LibHalPropertySet *set)
 		return 0;
 	
 	num_elems = 0;
-	for (p = set->properties_head; p != NULL; p = p->next)
+	for (p = set->properties; p != NULL; p = p->hh.next)
 		num_elems++;
 
 	return num_elems;
@@ -638,11 +596,8 @@ property_set_lookup (const LibHalPropertySet *set, const char *key)
 {
 	LibHalProperty *p;
 
-	for (p = set->properties_head; p != NULL; p = p->next) {
-		if (strcmp (p->key, key) == 0)
-			return p;
-	}
-	return NULL;
+	HASH_FIND_STR (set->properties, key, p);
+	return p;
 }
 
 /**
@@ -790,8 +745,8 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 		return;
 
 	iter->set = set;
-	iter->idx = 0;
-	iter->cur_prop = set->properties_head;
+	iter->idx = -1; //deprecated
+	iter->cur_prop = set->properties;
 }
 
 
@@ -806,7 +761,7 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 dbus_bool_t
 libhal_psi_has_more (LibHalPropertySetIterator * iter)
 {
-	return iter->idx < iter->set->num_properties;
+	return (iter->cur_prop->hh.next != NULL);
 }
 
 /**
@@ -818,8 +773,7 @@ libhal_psi_has_more (LibHalPropertySetIterator * iter)
 void
 libhal_psi_next (LibHalPropertySetIterator * iter)
 {
-	iter->idx++;
-	iter->cur_prop = iter->cur_prop->next;
+	iter->cur_prop = iter->cur_prop->hh.next;
 }
 
 /**

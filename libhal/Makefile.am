@@ -13,7 +13,9 @@ libhalinclude_HEADERS =                                   \
 	libhal.h
 
 libhal_la_SOURCES =                                       \
-	libhal.c                  libhal.h
+	libhal.c \
+	libhal.h \
+	uthash.h
 
 
 if GCOV
