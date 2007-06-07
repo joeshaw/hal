@@ -115,6 +115,9 @@ char *hald_dbus_local_server_addr (void);
 
 gboolean device_is_executing_method (HalDevice *d, const char *interface_name, const char *method_name);
 
+
+gboolean hald_singleton_device_added (const char * commandline, HalDevice *device);
+gboolean hald_singleton_device_removed (const char * commandline, HalDevice *device);
 #ifdef HAVE_CONKIT
 #include "ck-tracker.h"
 
