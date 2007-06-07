@@ -66,7 +66,7 @@ evdev_set_keycode (int fd, int scancode, int keycode)
 
 	ret = ioctl (fd, EVIOCSKEYCODE, codes);
 	if (ret < 0) {
-		fprintf (stderr, "hal-setup-keymap: failed to set scancode %x to keycode %d: %s",
+		fprintf (stderr, "hal-setup-keymap: failed to set scancode %x to keycode %d: %s\n",
 			 scancode, keycode, strerror(errno));
 		return -1;
 	}
@@ -90,12 +90,12 @@ main (int argc, char **argv)
 
 	udi = getenv ("UDI");
 	if (udi == NULL) {
-		fprintf (stderr, "hal-setup-keymap: Failed to get UDI");
+		fprintf (stderr, "hal-setup-keymap: Failed to get UDI\n");
 		return 1;
 	}
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
-		fprintf (stderr, "hal-setup-keymap: Unable to initialise libhal context: %s", error.message);
+		fprintf (stderr, "hal-setup-keymap: Unable to initialise libhal context: %s\n", error.message);
 		return 1;
 	}
 
@@ -108,21 +108,21 @@ main (int argc, char **argv)
 	dbus_error_init (&error);
 	keymap_list = libhal_device_get_property_strlist (ctx, udi, "input.keymap.data", &error);
 	if (dbus_error_is_set (&error) == TRUE) {
-		fprintf (stderr, "hal-setup-keymap: Failed to get keymap list: '%s'", error.message);
+		fprintf (stderr, "hal-setup-keymap: Failed to get keymap list: '%s'\n", error.message);
 		return 1;
 	}
 
 	/* get the device */
 	device = libhal_device_get_property_string (ctx, udi, "input.device", &error);
 	if (dbus_error_is_set (&error) == TRUE) {
-		fprintf (stderr, "hal-setup-keymap: Failed to get input device list: '%s'", error.message);
+		fprintf (stderr, "hal-setup-keymap: Failed to get input device list: '%s'\n", error.message);
 		return 1;
 	}
 
 	/* get a file descriptor to the device */
 	fd = evdev_open (device);
 	if (fd < 0) {
-		fprintf (stderr, "hal-setup-keymap: Could not open device");
+		fprintf (stderr, "hal-setup-keymap: Could not open device\n");
 		return 1;
 	}
 
@@ -134,14 +134,14 @@ main (int argc, char **argv)
 			name = lookup_key (keyname, strlen(keyname));
 			if (name != NULL) {
 				keycode = name->id;
-				fprintf (stderr, "hal-setup-keymap: parsed %s to (%x, %i)",
+				fprintf (stderr, "hal-setup-keymap: parsed %s to (%x, %i)\n",
 					 keymap_list[i], scancode, keycode);
 				evdev_set_keycode (fd, scancode, keycode);
 			} else {
-				fprintf (stderr, "hal-setup-keymap: failed to find key '%s'", keyname);
+				fprintf (stderr, "hal-setup-keymap: failed to find key '%s'\n", keyname);
 			}
 		} else {
-			fprintf (stderr, "hal-setup-keymap: Failed to parse %s", keymap_list[i]);
+			fprintf (stderr, "hal-setup-keymap: Failed to parse %s\n", keymap_list[i]);
 		}
 	} while (keymap_list[i++] != NULL);
 
