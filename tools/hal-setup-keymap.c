@@ -120,6 +120,7 @@ main (int argc, char **argv)
 	}
 
 	/* get a file descriptor to the device */
+	fprintf (stderr, "hal-setup-keymap: Using device %s\n", device);
 	fd = evdev_open (device);
 	if (fd < 0) {
 		fprintf (stderr, "hal-setup-keymap: Could not open device\n");
@@ -130,11 +131,19 @@ main (int argc, char **argv)
 	do {
 		values = sscanf (keymap_list[i], "%x:%s", &scancode, keyname);
 		if (values == 2) {
-			/* use gperf as it's really quick */
+			/* fix for high scancodes on i8042 KBD - we do this here
+			 * and not in the fdi as the high value is displayed in
+			 * dmesg and we don't want the user to do more work */
+			if (scancode > 127) {
+				scancode -= 0xe000;
+				scancode += 128;
+			}
+
+			/* use gperf to convert as it's really quick */
 			name = lookup_key (keyname, strlen(keyname));
 			if (name != NULL) {
 				keycode = name->id;
-				fprintf (stderr, "hal-setup-keymap: parsed %s to (%x, %i)\n",
+				fprintf (stderr, "hal-setup-keymap: parsed %s to (0x%x, %i)\n",
 					 keymap_list[i], scancode, keycode);
 				evdev_set_keycode (fd, scancode, keycode);
 			} else {
