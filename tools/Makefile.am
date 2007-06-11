@@ -78,6 +78,7 @@ endif
 
 if BUILD_KEYMAPS
 
+if HAVE_GPERF
 hal-setup-keymap-keys.txt: /usr/include/linux/input.h
 	awk '/^#define.*KEY_/ { if ($$2 != "KEY_MAX") { print substr($$2, 5) } }' < $< > $@
 
@@ -86,11 +87,12 @@ hal-setup-keymap-hash-name.gperf: hal-setup-keymap-keys.txt
 
 hal-setup-keymap-hash-name.h: hal-setup-keymap-hash-name.gperf
 	gperf -t --ignore-case -N lookup_key -H hash_input_names -p -C < $< > $@
+endif #HAVE_GPERF
 
 hal_setup_keymap_SOURCES = hal-setup-keymap.c hal-setup-keymap-hash-name.h
 hal_setup_keymap_LDADD = $(top_builddir)/libhal/libhal.la
 
-endif
+endif #BUILD_KEYMAPS
 
 libexec_PROGRAMS =                          \
 	hal-storage-mount	            \
@@ -177,6 +179,7 @@ umount_hal_SOURCES = umount-hal.c
 umount_hal_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 endif
 
+if HAVE_GPERF
 DISTCLEANFILES += 				\
 	hal-setup-keymap-hash-name.h		\
 	hal-setup-keymap-hash-name.gperf	\
@@ -186,6 +189,7 @@ BUILT_SOURCES += 				\
 	hal-setup-keymap-hash-name.h		\
 	hal-setup-keymap-hash-name.gperf	\
 	hal-setup-keymap-keys.txt
+endif
 
 check:
 	for f in $(script_SCRIPTS); do \

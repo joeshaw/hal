@@ -658,6 +658,16 @@ else
     have_xmllint=yes
 fi
 
+AC_PATH_PROG(GPERF, [gperf], [no])
+AC_MSG_CHECKING([whether to rebuild gperf header files])
+if test x$GPERF = xno ; then
+    have_gperf=no
+else
+    have_gperf=yes
+fi
+AC_SUBST(HAVE_GPERF)
+AM_CONDITIONAL(HAVE_GPERF, [test x$have_gperf = xyes])
+
 if test x$enable_docbook_docs = xauto ; then
     if test x$have_xmlto = xno || test x$have_xmllint = xno ; then
         enable_docbook_docs=no
