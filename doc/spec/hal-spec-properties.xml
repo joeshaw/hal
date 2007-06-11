@@ -4798,6 +4798,8 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 Indicates installed device driver libraries that can
                 handle this device.  These drivers can export information
                 in <literal>portable_audio_player.[drivername]</literal> sub-namespaces.
+                Can also be used by libraries or programs providing extra device information
+                to indicate the presence of this information in the appropriate sub-namespace.
               </entry>
             </row>
             <row>
@@ -4810,7 +4812,8 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 This entry is required for drivers listed in
                 <literal>portable_audio_player.access_method.drivers</literal>. Indicates which
                 protocol in <literal>portable_audio_player.access_method.protocols</literal>
-                a particular driver will use.
+                a particular driver will use.  If the driver is providing information only, this
+                should be set to <literal>information</literal>.
               </entry>
             </row>
             <row>
