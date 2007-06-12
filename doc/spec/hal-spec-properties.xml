@@ -6689,6 +6689,9 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           </tbody>
         </tgroup>
       </informaltable>
+      <para>
+        See also <xref linkend="interface-device-accesscontrol"/>.
+      </para>
     </sect2>
   </sect1>
 
