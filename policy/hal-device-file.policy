@@ -29,7 +29,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
@@ -41,7 +41,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
@@ -65,7 +65,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
@@ -77,7 +77,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
@@ -89,7 +89,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
@@ -101,7 +101,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
@@ -113,7 +113,7 @@ file are instantly applied.
       <defaults>
         <allow_remote_inactive>no</allow_remote_inactive>
         <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>yes</allow_local_inactive>
+        <allow_local_inactive>no</allow_local_inactive>
         <allow_local_active>yes</allow_local_active>
       </defaults>
     </policy>
