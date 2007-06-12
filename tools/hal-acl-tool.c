@@ -38,6 +38,7 @@
 /* How this works (or "An introduction to this code")
  *
  * - all ACL's granted by this tool is kept in /var/lib/hal/acl-list
+ *   See below for the format.
  *
  * - every time tool is launched we read this file and keep each line
  *   as an ACLCurrent instance. These are kept in a list.
@@ -53,6 +54,7 @@
  *     - ACL's to be added are appended to the list and add -> TRUE
  *   - we then compute the argument vector to setfacl(1) for adding /
  *     removing ACL's
+ *   - we emit signals ACLAdded and ACLRemoved
  *   - if setfacl(1) succeeds (rc == 0) then we write the new acl-current-list
  *
  * Notably, the HAL daemon will invoke us with --reconfigure on every
@@ -84,24 +86,24 @@
  * of ACL's that have been set by HAL and as such are currently
  * applied
  *
- *   <device-file>    <type>    <uid-or-gid>
+ *   <device-file>    <udi>    <type>    <uid-or-gid>
  *
  * where <type>='u'|'g' for respectively uid and gid (the spacing represent tabs).
  *
  * Example:
  *
- *   /dev/snd/controlC0    u    500
- *   /dev/snd/controlC0    u    501
- *   /dev/snd/controlC0    g    1001
+ *   /dev/snd/controlC0    /org/freedesktop/Hal/devices/pci_8086_27d8_alsa_control__1    u    500
+ *   /dev/snd/controlC0    /org/freedesktop/Hal/devices/pci_8086_27d8_alsa_control__1    u    501
+ *   /dev/snd/controlC0    /org/freedesktop/Hal/devices/pci_8086_27d8_alsa_control__1    g    1001
  */
 typedef struct ACLCurrent_s {
+        char *udi;
 	char *device;
 	int type;
 	union {
 		uid_t uid;
 		gid_t gid;
 	} v;
-
 	gboolean remove;
 	gboolean add;
 } ACLCurrent;
@@ -114,9 +116,39 @@ enum {
 
 static PolKitContext *pk_context = NULL;
 
+static LibHalContext *hal_ctx = NULL;
+
+static gboolean in_device_added = FALSE;
+
+static gboolean
+ensure_hal_ctx (void)
+{
+        gboolean ret;
+	DBusError error;
+
+        ret = FALSE;
+        if (hal_ctx != NULL) {
+                ret = TRUE;
+                goto out;
+        }
+
+	dbus_error_init (&error);
+	if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
+		printf ("%d: Cannot connect to hald: %s: %s\n", getpid (), error.name, error.message);
+		LIBHAL_FREE_DBUS_ERROR (&error);
+                goto out;
+	}
+
+        ret = TRUE;
+
+out:
+        return ret;
+}
+
 static void
 hal_acl_free (ACLCurrent *ha)
 {
+        g_free (ha->udi);
 	g_free (ha->device);
 	g_free (ha);
 }
@@ -138,6 +170,7 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 	gboolean ret;
 	GError *error = NULL;
 	int exit_status;
+        gboolean messages_were_sent = FALSE;
 
 	ret = FALSE;
 
@@ -159,7 +192,6 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 						(ha->type == HAL_ACL_UID) ? 'u' : 'g',
 						(ha->type == HAL_ACL_UID) ? ha->v.uid : ha->v.gid,
 						ha->device);
-			continue;
 		}
 
 		if (ha->add) {
@@ -170,13 +202,17 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 						(ha->type == HAL_ACL_UID) ? 'u' : 'g',
 						(ha->type == HAL_ACL_UID) ? ha->v.uid : ha->v.gid,
 						ha->device);
+
 		}
 
-		g_string_append_printf (str, 
-					"%s\t%c\t%d\n",
-					ha->device,
-					(ha->type == HAL_ACL_UID) ? 'u' : 'g',
-					(ha->type == HAL_ACL_UID) ? ha->v.uid : ha->v.gid);
+                if (!ha->remove) {
+                        g_string_append_printf (str, 
+                                                "%s\t%s\t%c\t%d\n",
+                                                ha->device,
+                                                ha->udi,
+                                                (ha->type == HAL_ACL_UID) ? 'u' : 'g',
+                                                (ha->type == HAL_ACL_UID) ? ha->v.uid : ha->v.gid);
+                }
 	}
 	new_acl_file_contents = g_string_free (str, FALSE);
 
@@ -227,6 +263,79 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 			     strlen (new_acl_file_contents),
 			     NULL);
 
+        /* now that we've added/removed ACL's: emit D-Bus signals.. we need to do this _after_ 
+         * having updated the ACL - to avoid possible race conditions 
+         */
+        messages_were_sent = FALSE;
+	for (i = new_acl_list; i != NULL; i = g_slist_next (i)) {
+		ACLCurrent *ha = (ACLCurrent *) i->data;
+
+                /* emit signal ACLGranted or ACLRemoved - but avoid doing it on device add because the device
+                 * object doesn't exist just yet
+                 */
+                if (ha->type == HAL_ACL_UID && ha->udi != NULL && (ha->add || ha->remove) && !in_device_added) {
+                        DBusMessage *message;
+                        DBusConnection *connection;
+
+                        printf ("Emmitting %s for udi %s, uid %d\n", 
+                                ha->add ? "ACLAdded" : "ACLRemoved",
+                                ha->udi,
+                                ha->v.uid);
+
+                        if (!ensure_hal_ctx ()) {
+				printf ("%d: cannot get libhal context\n", getpid ());
+                                goto no_dbus_signal;
+                        }
+
+                        connection = libhal_ctx_get_dbus_connection (hal_ctx);
+                        if (connection == NULL) {
+				printf ("%d: cannot get D-Bus connection\n", getpid());
+                                goto no_dbus_signal;
+                        }
+
+                        message = dbus_message_new_signal (ha->udi,
+                                                           "org.freedesktop.Hal.Device.AccessControl",
+                                                           ha->add ? "ACLAdded" : "ACLRemoved");
+                        if (message == NULL) {
+				printf ("%d: cannot create message\n", getpid());
+                                goto no_dbus_signal;
+                        }
+
+                        if (!dbus_message_append_args (message, 
+                                                       DBUS_TYPE_UINT32, &(ha->v.uid),
+                                                       DBUS_TYPE_INVALID)) {
+				printf ("%d: cannot append to message\n", getpid());
+                                dbus_message_unref (message);
+                                goto no_dbus_signal;
+                        }
+
+                        if (!dbus_connection_send (connection, message, NULL)) {
+				printf ("%d: cannot send message\n", getpid());
+                                dbus_message_unref (message);
+                                goto no_dbus_signal;
+                        }
+                        dbus_message_unref (message);
+
+                        messages_were_sent = TRUE;
+                }
+
+        no_dbus_signal:
+                ;
+        }
+
+        /* apparently we need to flush the signals - otherwise they
+         * may be lost because we're exiting right after this
+         */
+        if (messages_were_sent) {
+                if (ensure_hal_ctx ()) {
+                        DBusConnection *connection;
+                        connection = libhal_ctx_get_dbus_connection (hal_ctx);
+                        if (connection != NULL) {
+                                dbus_connection_flush (connection);
+                        }
+                }
+        }
+
 	ret = TRUE;
 
 out:
@@ -261,27 +370,45 @@ get_current_acl_list (GSList **l)
 		ACLCurrent *ha;
 		char **val;
 		char *endptr;
+                gboolean old_format = FALSE;
+                int n;
+
+                /* supporting the old format is important; because at hald startup we call hal-acl-tool --remove-all */
 
 		ha = g_new0 (ACLCurrent, 1);
 		val = g_strsplit(buf, "\t", 0);
-		if (g_strv_length (val) != 3) {
-			printf ("Line is malformed: '%s'\n", buf);
-			g_strfreev (val);
-			goto out;
-		}
+		if (g_strv_length (val) == 3) {
+			printf ("Line is from old format: '%s'\n", buf);
+                        old_format = TRUE;
+		} else {
+                        if (g_strv_length (val) != 4) {
+                                printf ("Line is malformed: '%s'\n", buf);
+                                g_strfreev (val);
+                                goto out;
+                        }
+                }
 
-		ha->device = g_strdup (val[0]);
-		if (strcmp (val[1], "u") == 0) {
+                n = 0;
+
+		ha->device = g_strdup (val[n++]);
+
+                if (old_format) {
+                        ha->udi = NULL;
+                } else {
+                        ha->udi = g_strdup (val[n++]);
+                }
+
+		if (strcmp (val[n], "u") == 0) {
 			ha->type = HAL_ACL_UID;
-			ha->v.uid = strtol (val[2], &endptr, 10);
+			ha->v.uid = strtol (val[n + 1], &endptr, 10);
 			if (*endptr != '\0' && *endptr != '\n') {
 				printf ("Line is malformed: '%s'\n", buf);
 				g_strfreev (val);
 				goto out;
 			}
-		} else if (strcmp (val[1], "g") == 0) {
+		} else if (strcmp (val[n], "g") == 0) {
 			ha->type = HAL_ACL_GID;
-			ha->v.gid = strtol (val[2], &endptr, 10);
+			ha->v.gid = strtol (val[n + 1], &endptr, 10);
 			if (*endptr != '\0' && *endptr != '\n') {
 				printf ("Line is malformed: '%s'\n", buf);
 				g_strfreev (val);
@@ -762,11 +889,19 @@ acl_compute_changes (GSList *afd_list, gboolean only_update_acllist)
 		 */
 		for (j = afd->uid; j != NULL; j = g_slist_next (j)) {
 			ACLCurrent *ha;
+                        uid_t uid;
+
+                        uid = GPOINTER_TO_INT (j->data);
+                        /* never grant ACL's to the super user */
+                        if (uid == 0)
+                                continue;
+
 			ha = g_new0 (ACLCurrent, 1);
 			ha->add = TRUE;
 			ha->device = g_strdup (afd->device);
+                        ha->udi = g_strdup (afd->udi);
 			ha->type = HAL_ACL_UID;
-			ha->v.uid = GPOINTER_TO_INT (j->data);
+			ha->v.uid = uid;
 			current_acl_list = g_slist_prepend (current_acl_list, ha);
 		}
 		for (j = afd->gid; j != NULL; j = g_slist_next (j)) {
@@ -774,6 +909,7 @@ acl_compute_changes (GSList *afd_list, gboolean only_update_acllist)
 			ha = g_new0 (ACLCurrent, 1);
 			ha->add = TRUE;
 			ha->device = g_strdup (afd->device);
+                        ha->udi = g_strdup (afd->udi);
 			ha->type = HAL_ACL_GID;
 			ha->v.gid = GPOINTER_TO_INT (j->data);
 			current_acl_list = g_slist_prepend (current_acl_list, ha);
@@ -810,6 +946,8 @@ acl_device_added (void)
 	char *type;
 	GSList *afd_list = NULL;
 	ACLForDevice *afd = NULL;
+
+        in_device_added = TRUE;
 
 	/* we can avoid round-trips to the HAL daemon by using what's in the environment */
 
@@ -907,18 +1045,14 @@ acl_reconfigure_all (void)
 	int num_devices;
 	char **udis;
 	DBusError error;
-	LibHalContext *hal_ctx;
 	GSList *afd_list = NULL;
 
 	printf ("%d: reconfiguring all ACL's\n", getpid ());
 
-	dbus_error_init (&error);
-	if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
-		printf ("%d: Cannot connect to hald: %s: %s\n", getpid (), error.name, error.message);
-		LIBHAL_FREE_DBUS_ERROR (&error);
-		goto out;
-	}
+        if (!ensure_hal_ctx ())
+                goto out;
 
+	dbus_error_init (&error);
 	if ((udis = libhal_find_device_by_capability (hal_ctx, "access_control", &num_devices, &error)) == NULL) {
 		printf ("%d: Cannot get list of devices of capability 'acl'\n", getpid ());
 		goto out;
