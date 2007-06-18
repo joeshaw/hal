@@ -7,6 +7,9 @@
         <match key="smbios.system.product" string="MacBook1,1">
           <spawn udi="/org/freedesktop/Hal/devices/macbook_backlight"/>
         </match>
+        <match key="smbios.system.product" string="MacBook2,1">
+          <spawn udi="/org/freedesktop/Hal/devices/macbook_backlight"/>
+        </match>
       </match>
     </match>
   </device>
