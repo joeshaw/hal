@@ -20,17 +20,12 @@ file are instantly applied.
 <policyconfig>
   <group id="hal-lock">
     <description>Locking of devices</description>
-    <description_short>Locking</description_short>
 
     <policy id="hal-lock">
       <description>Acquire locks on devices</description>
-      <missing>System policy prevents locking a device.</missing>
-      <apply_to_all_mnemonic>Apply to all devices</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 

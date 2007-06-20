@@ -20,137 +20,92 @@ file are instantly applied.
 <policyconfig>
   <group id="hal-power">
     <description>Power Management</description>
-    <description_short>Power Management</description_short>
 
     <policy id="hal-power-shutdown">
       <description>Shut down the system</description>
-      <missing>System policy prevents shutting down the system.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-shutdown-multiple-sessions">
       <description>Shut down the system when multiple users are logged in</description>
-      <missing>System policy prevents shutting down the system when multiple users are logged in.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>auth_root</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_root</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-reboot">
       <description>Reboot the system</description>
-      <missing>System policy prevents rebooting the system.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-reboot-multiple-sessions">
       <description>Reboot the system when multiple users are logged in</description>
-      <missing>System policy prevents rebooting the system when multiple users are logged in.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>auth_root</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_root</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-set-powersave">
       <description>Configure to system to prefer power savings</description>
-      <missing>System policy prevents configuring power savings on the system.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-suspend">
       <description>Suspend the system</description>
-      <missing>System policy prevents suspending the system.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-hibernate">
       <description>Hibernate the system</description>
-      <missing>System policy prevents hibernating the system.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-cpufreq">
       <description>Configure CPU frequency scaling</description>
-      <missing>System policy prevents configuration of CPU frequency scaling.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-lcd-panel">
       <description>Set laptop panel brightness</description>
-      <missing>System policy prevents setting laptop panel brightness.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-light-sensor">
       <description>Detect ambient light using light sensor</description>
-      <missing>System policy prevents detecting ambient light using the light sensor.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-power-keyboard-backlight">
       <description>Set keyboard backlight</description>
-      <missing>System policy prevents setting keyboard backlight.</missing>
-      <apply_to_all_mnemonic>Apply to all</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 

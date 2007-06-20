@@ -747,7 +747,6 @@ acl_device_added_visitor (const char *seat_id,
                 PolKitResult pk_result;
                 PolKitSeat *pk_seat;
                 PolKitSession *pk_session;
-                PolKitResource *pk_resource;
                 PolKitAction *pk_action;
                 char *priv_name;
 
@@ -774,26 +773,20 @@ acl_device_added_visitor (const char *seat_id,
                 polkit_session_set_ck_is_local (pk_session, session_is_local);
                 /* TODO: FIXME: polkit_session_set_ck_remote_host (pk_session, );*/ 
 
-                pk_resource = polkit_resource_new();
-                polkit_resource_set_resource_type (pk_resource, "hal");
-                polkit_resource_set_resource_id (pk_resource, afd->udi);
-
                 pk_action = polkit_action_new();
                 priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
                 polkit_action_set_action_id (pk_action, priv_name);
                 g_free (priv_name);
 
                 /* Now ask PolicyKit if the given session should have access */
-                pk_result = polkit_context_can_session_access_resource (pk_context, 
-                                                                           pk_action,
-                                                                           pk_resource,
-                                                                           pk_session);
+                pk_result = polkit_context_can_session_do_action (pk_context, 
+                                                                  pk_action,
+                                                                  pk_session);
                 if (pk_result == POLKIT_RESULT_YES) {
 			afd_grant_to_uid (afd, session_uid);
                 }
 
                 polkit_action_unref (pk_action);
-                polkit_resource_unref (pk_resource);
                 polkit_session_unref (pk_session);
 	}
 

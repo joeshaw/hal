@@ -1,19 +1,19 @@
 
 if HAVE_POLKIT
-polkit_privilegedir = $(sysconfdir)/PolicyKit/policy
+polkit_policydir = $(datadir)/PolicyKit/policy
 
-dist_polkit_privilege_DATA =    \
+dist_polkit_policy_DATA =    \
 	hal-lock.policy		\
 	hal-storage.policy	\
 	hal-power.policy	\
 	hal-killswitch.policy	
 
 if HAVE_ACLMGMT
-dist_polkit_privilege_DATA += hal-device-file.policy
+dist_polkit_policy_DATA += hal-device-file.policy
 endif
 
 check:
-	$(POLKIT_POLICY_FILE_VALIDATE) $(dist_polkit_privilege_DATA)
+	$(POLKIT_POLICY_FILE_VALIDATE) $(dist_polkit_policy_DATA)
 
 endif
 

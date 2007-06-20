@@ -20,29 +20,20 @@ file are instantly applied.
 <policyconfig>
   <group id="hal-killswitch">
     <description>Radio Killswitches</description>
-    <description_short>RF Killswitch</description_short>
 
     <policy id="hal-killswitch-bluetooth">
       <description>Turn Bluetooth radio On/Off</description>
-      <missing>Turning the Bluetooth radio On or Off is restricted by system policy.</missing>
-      <apply_to_all_mnemonic>Apply to all Bluetooth radios.</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
     <policy id="hal-killswitch-wlan">
       <description>Turn WLAN radio On/Off</description>
-      <missing>Turning the WLAN radio On or Off is restricted by system policy.</missing>
-      <apply_to_all_mnemonic>Apply to all WLAN radios.</apply_to_all_mnemonic>
       <defaults>
-        <allow_remote_inactive>no</allow_remote_inactive>
-        <allow_remote_active>no</allow_remote_active>
-        <allow_local_inactive>no</allow_local_inactive>
-        <allow_local_active>yes</allow_local_active>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>yes</allow_active>
       </defaults>
     </policy>
 
