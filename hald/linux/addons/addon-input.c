@@ -6,6 +6,7 @@
  * Copyright (C) 2005 David Zeuthen, <david@fubar.dk>
  * Copyright (C) 2005 Ryan Lortie <desrt@desrt.ca>
  * Copyright (C) 2006 Matthew Garrett <mjg59@srcf.ucam.org>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,16 +33,19 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <linux/input.h>
+#include <glib/gmain.h>
+#include <glib/gprintf.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 #include "libhal/libhal.h"
 
 #include "../../logger.h"
 #include "../../util_helper.h"
 
-static char *udi;
-static int button_state = FALSE;
-static int button_has_state = FALSE;
 
 static char *key_name[KEY_MAX + 1] = {
 	[0 ... KEY_MAX] = NULL,
@@ -179,23 +183,58 @@ static char *key_name[KEY_MAX + 1] = {
 #define LONG(x) ((x)/BITS_PER_LONG)
 #define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
-static void
-main_loop (LibHalContext *ctx, FILE* eventfp)
+typedef struct _InputData InputData;
+struct _InputData
 {
-	DBusError error;
 	struct input_event event;
+	gsize offset;
+	gboolean button_has_state;
+	gboolean button_state;
+	char udi[1];			/*variable size*/
+};
 
+static LibHalContext *ctx = NULL;
+static GMainLoop *gmain = NULL;
+static GHashTable *inputs = NULL;
+static GList *devices = NULL;
 
-	while (fread (&event, sizeof(event), 1, eventfp)) {
+static gboolean
+event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
+{
+	InputData *input_data = (InputData*) data;
+	DBusError error;
+	GError *gerror = NULL;
+	gsize read_bytes;
 
-		if (button_has_state && event.type == EV_SW) {
+	if (condition & (G_IO_HUP | G_IO_ERR))
+		return FALSE;
+
+	/** tbh, we can probably assume every time we read we have a whole
+	 * event availiable, but hey..*/
+	while (g_io_channel_read_chars (channel,
+			((gchar*)&input_data->event) + input_data->offset,
+			sizeof(struct input_event) - input_data->offset,
+			&read_bytes, &gerror) == G_IO_STATUS_NORMAL) {
+
+		if (input_data->offset + read_bytes < sizeof (struct input_event)) {
+			input_data->offset = input_data->offset + read_bytes;
+			HAL_DEBUG (("incomplete read"));
+			return TRUE;
+		} else {
+			input_data->offset = 0;
+		}
+
+		if (input_data->button_has_state &&
+		    input_data->event.type == EV_SW) {
 			char *name = NULL;
 
-			HAL_INFO (("%s: event.value=%d ; event.code=%d (0x%02x)", 
-				   udi, event.value, event.code, event.code));
+			HAL_INFO (("%s: event.value=%d ; event.code=%d (0x%02x)",
+				   input_data->udi, input_data->event.value,
+				   input_data->event.code,
+				   input_data->event.code));
 
 
-			switch (event.code) {
+			switch (input_data->event.code) {
 			case SW_LID:
 				name = "lid";
 				break;
@@ -225,100 +264,232 @@ main_loop (LibHalContext *ctx, FILE* eventfp)
 				 * 19:08:26.960 [I] event.value=0 ; event.code=0 (0x00)
 				 */
 
-				if (ioctl (fileno (eventfp), EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
+				if (ioctl (g_io_channel_unix_get_fd(channel), EVIOCGSW(sizeof (bitmask)), bitmask) < 0) {
 					HAL_DEBUG (("ioctl EVIOCGSW failed"));
 				} else {
-					int new_state = test_bit (event.code, bitmask);
-					if (new_state != button_state) {
-						button_state = new_state;
-						
+					int new_state = test_bit (input_data->event.code, bitmask);
+					if (new_state != input_data->button_state) {
+						input_data->button_state = new_state;
+
 						dbus_error_init (&error);
-						libhal_device_set_property_bool (ctx, udi, "button.state.value", 
-										 button_state, &error);
-						
+						libhal_device_set_property_bool (ctx, input_data->udi, "button.state.value",
+										 input_data->button_state, &error);
+
 						dbus_error_init (&error);
-						libhal_device_emit_condition (ctx, udi, 
+						libhal_device_emit_condition (ctx, input_data->udi,
 									      "ButtonPressed",
 									      name,
 									      &error);
+						dbus_error_free (&error);
 					}
 				}
 			}
-		} else if (event.type == EV_KEY && key_name[event.code] != NULL && event.value == 1) {
+		} else if (input_data->event.type == EV_KEY && key_name[input_data->event.code] != NULL && input_data->event.value == 1) {
 			dbus_error_init (&error);
-			libhal_device_emit_condition (ctx, udi, 
+			libhal_device_emit_condition (ctx, input_data->udi,
 						      "ButtonPressed",
-						      key_name[event.code],
+						      key_name[input_data->event.code],
 						      &error);
+			dbus_error_free (&error);
 		}
 	}
-	
-	dbus_error_free (&error);
+
+	return TRUE;
+}
+
+static void
+destroy_data (InputData *data)
+{
+	HAL_DEBUG (("Removing GIOChannel for'%s'", data->udi));
+
+	/* Null out the GIOChannel in the hash table, but
+	 * leave the key in for DeviceRemoved
+	 */
+	g_hash_table_replace (inputs, g_strdup(data->udi), NULL);
+
+	g_free (data);
+}
+
+
+static void
+update_proc_title ()
+{
+	GList *lp;
+	gchar *new_command_line, *p;
+	gint len = 0;
+
+	for (lp = devices; lp; lp = lp->next)
+		len = len + strlen (lp->data) + 1;
+
+	len += strlen ("hald-addon-input: Listening on");
+
+	new_command_line = g_malloc (len + 1);
+	p = new_command_line;
+	p += g_sprintf (new_command_line, "hald-addon-input: Listening on");
+
+	for (lp = g_list_last(devices); lp; lp = g_list_previous(lp))
+	{
+		p += g_sprintf (p, " %s", (gchar*) lp->data);
+	}
+
+	hal_set_proc_title (new_command_line);
+	g_free (new_command_line);
+}
+
+static void
+add_device (LibHalContext *ctx,
+	    const char *udi,
+	    const LibHalPropertySet *properties)
+{
+	int eventfp;
+	GIOChannel *channel;
+	InputData *data;
+	int len = strlen (udi);
+	const char* device_file;
+
+	data = (InputData*) g_malloc (sizeof (InputData) + len);
+
+	memcpy (&(data->udi), udi, len+1);
+
+	if ((device_file = libhal_ps_get_string (properties, "input.device")) == NULL) {
+		HAL_ERROR(("%s has no property input.device", udi));
+		return;
+	}
+
+	/* button_has_state will be false if the key isn't available*/
+	data->button_has_state = libhal_ps_get_bool (properties, "button.has_state");
+	if (data->button_has_state)
+		data->button_state = libhal_ps_get_bool (properties, "button.state.value");
+
+	data->offset = 0;
+	eventfp = open(device_file, O_RDONLY | O_NONBLOCK);
+	if (!eventfp) {
+		HAL_ERROR(("Unable to open %s for reading", device_file));
+		return;
+	}
+
+
+	HAL_DEBUG (("%s: Listening on %s", udi, device_file));
+
+	devices = g_list_prepend (devices, g_strdup (device_file));
+	update_proc_title ();
+
+	channel = g_io_channel_unix_new (eventfp);
+	g_io_channel_set_encoding (channel, NULL, NULL);
+
+	g_hash_table_insert (inputs, g_strdup(udi), channel);
+	g_io_add_watch_full (channel,
+			     G_PRIORITY_DEFAULT, G_IO_IN | G_IO_ERR | G_IO_HUP,
+			     event_io, data, (GDestroyNotify) destroy_data);
+}
+
+
+static void
+remove_device (LibHalContext *ctx,
+	    const char *udi,
+	    const LibHalPropertySet *properties)
+{
+
+	GIOChannel *channel, **p_channel = &channel;
+	const gchar *device_file;
+	GList *lp;
+	gboolean handling_udi;
+
+	HAL_DEBUG (("Removing channel for '%s'", udi));
+
+	handling_udi = g_hash_table_lookup_extended (inputs, udi, NULL, (gpointer *)p_channel);
+
+	if (!handling_udi) {
+		HAL_ERROR(("DeviceRemove called for unknown device: '%s'.", udi));
+		return;
+	}
+
+	if (channel)
+		g_io_channel_unref (channel);
+
+	g_hash_table_remove (inputs, udi);
+
+	if ((device_file = libhal_ps_get_string (properties, "input.device")) == NULL) {
+		HAL_ERROR(("%s has no property input.device", udi));
+		return;
+	}
+
+	lp = g_list_find_custom (devices, device_file, (GCompareFunc) strcmp);
+	if (lp) {
+		devices = g_list_remove_link (devices, lp);
+		g_free (lp->data);
+		g_list_free_1 (lp);
+		update_proc_title ();
+	}
+
+	if (g_hash_table_size (inputs) == 0) {
+		HAL_INFO(("no more devices, exiting"));
+		g_main_loop_quit (gmain);
+	}
+
+
 }
 
 int
 main (int argc, char **argv)
 {
-	LibHalContext *ctx = NULL;
+	DBusConnection *dbus_connection;
 	DBusError error;
-	char *device_file;
-	FILE *eventfp;
-	char *s;
+	const char *commandline;
 
 	hal_set_proc_title_init (argc, argv);
 
 	/* setup_logger (); */
 
 	dbus_error_init (&error);
-
-	if ((udi = getenv ("UDI")) == NULL)
+	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
+		HAL_WARNING (("Unable to init libhal context"));
 		goto out;
-	
-	if ((device_file = getenv ("HAL_PROP_INPUT_DEVICE")) == NULL)
-		goto out;
-
-	s = getenv ("HAL_PROP_BUTTON_HAS_STATE");
-	if (s != NULL && strcmp (s, "true") == 0) {
-		button_has_state = TRUE;
-		if ((s = getenv ("HAL_PROP_BUTTON_STATE_VALUE")) == NULL)
-			goto out;
-		button_state = (strcmp (s, "true") == 0);
 	}
 
-	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
-                goto out;
+	if ((dbus_connection = libhal_ctx_get_dbus_connection(ctx)) == NULL) {
+		HAL_WARNING (("Cannot get DBus connection"));
+		goto out;
+	}
+
+	if ((commandline = getenv ("SINGLETON_COMMAND_LINE")) == NULL) {
+		HAL_WARNING (("SINGLETON_COMMAND_LINE not set"));
+		goto out;
+	}
+
+	libhal_ctx_set_singleton_device_added (ctx, add_device);
+	libhal_ctx_set_singleton_device_removed (ctx, remove_device);
+
+	dbus_connection_setup_with_g_main (dbus_connection, NULL);
+	dbus_connection_set_exit_on_disconnect (dbus_connection, 0);
 
 	dbus_error_init (&error);
-	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+
+	if (!libhal_device_singleton_addon_is_ready (ctx, commandline, &error)) {
 		goto out;
 	}
 
-	eventfp = fopen(device_file, "r");	
+/*
+ * We should do real privilage dropping here, or we can do drop_privialages
+ * if haldaemon user can read input.
+ * drop_privileges (0);
+*/
 
-	if (!eventfp)
-		goto out;
+	inputs = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
-	drop_privileges (0);
+	gmain = g_main_loop_new (NULL, FALSE);
+	g_main_loop_run (gmain);
 
-	hal_set_proc_title ("hald-addon-input: listening on %s", device_file);
-
-	while (1)
-	{
-		main_loop (ctx, eventfp);
-		
-		/* If main_loop exits sleep for 5s and try to reconnect (again). */
-		sleep (5);
-	}
-	
 	return 0;
 
- out:
+out:
+	HAL_DEBUG (("An error occured, exiting cleanly"));
 	if (ctx != NULL) {
-                dbus_error_init (&error);
-                libhal_ctx_shutdown (ctx, &error);
-                libhal_ctx_free (ctx);
-        }
-	
+		dbus_error_init (&error);
+		libhal_ctx_shutdown (ctx, &error);
+		libhal_ctx_free (ctx);
+	}
+
 	return 0;
 }
 
