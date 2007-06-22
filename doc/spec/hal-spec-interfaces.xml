@@ -142,7 +142,18 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
               <xref linkend="locking"/> for details.
             </entry>
           </row>
-
+          <row>
+            <entry>SingletonAddonIsReady</entry>
+            <entry></entry>
+            <entry>String command_line</entry>
+            <entry>PermissionDenied, SyntaxError</entry>
+            <entry>
+              Called by singleton addons to signal that they are
+              ready to handle devices.  A singleton addon should
+              implement the <link linkend="interface-singleton-addon">
+                org.freedesktop.Hal.Singleton</link> interface.
+            </entry>
+          </row>
         </tbody>
       </tgroup>
     </informaltable>
@@ -642,7 +653,6 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
       </tgroup>
     </informaltable>
   </sect1>
-
 
   <sect1 id="interface-device-systempower">
     <title>org.freedesktop.Hal.Device.SystemPowerManagement interface</title>
@@ -1279,6 +1289,92 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
       This interface does not export any methods.
     </para>
 
+  </sect1>
+
+  <sect1 id="interface-singleton-addon">
+    <title><literal>org.freedesktop.Hal.SingletonAddon</literal> interface</title>
+    <para>
+      This interface is provided by singleton addons to allow the Manager to
+      request handling of new devices and removal of old ones.
+
+      This differs from other HAL interface definitions in that it
+      is provided by addon processes, rather than the HAL daemon itself.
+
+      It should be exported on the path
+      <literal>/org/freedesktop/Hal/Manager</literal>.
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>
+              <literal>DeviceAdded</literal>
+            </entry>
+            <entry>
+              <para><literal>String udi</literal></para>
+              <para><literal>Dict(String,Variant) property_set</literal></para>
+            </entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              <para>
+                Called by the HAL Manager when a device is added that has
+                this singleton listed in
+                <link linkend="device-properties-info-singleton-addons">
+                  <literal>info.addons.singleton</literal>
+                </link>
+              </para>
+              <para>
+                An addon implementing this function should start handling the
+                device before returning, and keep track that is is handling this
+                udi.
+              </para>
+            </entry>
+          </row>
+          <row>
+            <entry>
+              <literal>DeviceRemoved</literal>
+            </entry>
+            <entry>
+              <para><literal>String udi</literal></para>
+              <para><literal>Dict(String,Variant) property_set</literal></para>
+            </entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              <para>
+                Called by the HAL Manager when a device is added that has
+                this singleton listed in
+                <link linkend="device-properties-info-singleton-addons">
+                  <literal>info.addons.singleton</literal>
+                </link>
+              </para>
+              <para>
+                The implementer of this function should keep track of
+                which devices it is still handling and exit when no longer
+                handling any devices.
+              </para>
+            </entry>
+          </row>
+
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not export any methods.
+    </para>
   </sect1>
 
 <!--
