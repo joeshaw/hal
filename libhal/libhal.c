@@ -4191,6 +4191,7 @@ libhal_device_free_changeset (LibHalChangeSet *changeset)
 			fprintf (stderr, "%s %d : unknown change_type %d\n", __FILE__, __LINE__, elem->change_type);
 			break;
 		}
+		free (elem->key);
 		free (elem);
 	}
 
