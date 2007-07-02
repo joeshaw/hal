@@ -409,6 +409,24 @@ out:
 	return result;
 }
 
+/* return is success, true_val is the value expected for a true value, e.g. "1" or "True" */
+gboolean
+hal_util_get_bool_from_file (const gchar *directory, const gchar *file, gboolean *retval, const gchar *true_val)
+{
+	gchar *value;
+	value = hal_util_get_string_from_file (directory, file);
+	if (value == NULL) {
+		/* no need to free */
+		return FALSE;
+	}
+	if (strcmp (value, true_val) == 0) {
+		*retval = TRUE;
+	} else {
+		*retval = FALSE;
+	}
+	return TRUE;
+}
+
 gboolean
 hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file)
 {
