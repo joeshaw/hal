@@ -59,6 +59,8 @@ gboolean hal_util_set_uint64_from_file (HalDevice *d, const gchar *key, const gc
 
 gchar *hal_util_get_string_from_file (const gchar *directory, const gchar *file);
 
+gboolean hal_util_get_bool_from_file (const gchar *directory, const gchar *file, gboolean *retval, const char *true_val);
+
 gboolean hal_util_set_string_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file);
 
 gboolean hal_util_get_bcd2_from_file (const gchar *directory, const gchar *file, gint *result);
