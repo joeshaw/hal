@@ -1,9 +1,5 @@
 #!/bin/sh
 
-POWERSAVED_SUSPEND2DISK="dbus-send --system --dest=com.novell.powersave \
-                         --print-reply /com/novell/powersave \
-                         com.novell.powersave.action.SuspendToDisk"
-
 unsupported() {
 	echo org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported >&2
 	echo No hibernate script found >&2
@@ -24,57 +20,13 @@ QUIRKS=""
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VBE_POST" = "true" ] && QUIRKS="$QUIRKS --quirk-vbe-post"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_RADEON_OFF" = "true" ] && QUIRKS="$QUIRKS --quirk-radeon-off"
 
-#ALTLinux only supports powersave
-if [ -f /etc/altlinux-release ] ; then
-	if [ -x /usr/bin/powersave ] ; then
-	        $POWERSAVED_SUSPEND2DISK
-		RET=$?
-	else
-		unsupported
-	fi
-
-#Mandriva support suspend-scripts 
-elif [ -f /etc/mandriva-release ] ; then 
-    if [ -x /usr/sbin/pmsuspend ] ; then 
-	/usr/sbin/pmsuspend disk 
-	RET=$? 
-    else 
-	unsupported 
-    fi 
-
-#RedHat/Fedora and SUSE support support pm-utils
-elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] \
-		 || [ -f "/etc/SuSE-release" ] ; then
-	if [ -x /usr/sbin/pm-hibernate ] ; then
-		/usr/sbin/pm-hibernate $QUIRKS
-		RET=$?
-	else
-		unsupported
-	fi
-
-#Other distros just need to have *any* tools installed
+# We only support pm-utils
+if [ -x /usr/sbin/pm-hibernate ] ; then
+	/usr/sbin/pm-hibernate $QUIRKS
+	RET=$?
 else
-	if [ -x "/usr/bin/powersave" ] ; then
-	        $POWERSAVED_SUSPEND2DISK
-		RET=$?
-	elif [ -x "/usr/sbin/pmi" ] ; then
-		/usr/sbin/pmi action hibernate force
-		RET=$?
-	elif [ -x "/usr/sbin/pm-hibernate" ] ; then
-		/usr/sbin/pm-hibernate $QUIRKS
-		RET=$?
-	elif [ -x "/usr/sbin/hibernate" ] ; then
-		# Suspend2 tools installed
-		/usr/sbin/hibernate --force
-		RET=$?
-	elif [ -w "/sys/power/state" ] ; then
-		# Use the raw kernel sysfs interface
-		echo "disk" > /sys/power/state
-		RET=$?
-	else
-		unsupported
-		fi
-	fi
+	unsupported
+fi
 
 #Refresh devices as a resume can do funny things
 for type in button battery ac_adapter
