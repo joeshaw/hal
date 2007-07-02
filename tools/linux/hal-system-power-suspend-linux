@@ -1,9 +1,5 @@
 #!/bin/sh
 
-POWERSAVED_SUSPEND2RAM="dbus-send --system --dest=com.novell.powersave \
-                        --print-reply /com/novell/powersave \
-                        com.novell.powersave.action.SuspendToRam"
-
 alarm_not_supported() {
 	echo org.freedesktop.Hal.Device.SystemPowerManagement.AlarmNotSupported >&2
 	echo Waking the system up is not supported >&2
@@ -31,79 +27,21 @@ QUIRKS=""
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VGA_MODE_3" = "true" ] && QUIRKS="$QUIRKS --quirk-vga-mode3"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VBE_POST" = "true" ] && QUIRKS="$QUIRKS --quirk-vbe-post"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_RADEON_OFF" = "true" ] && QUIRKS="$QUIRKS --quirk-radeon-off"
+[ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_NONE" = "true" ] && QUIRKS="$QUIRKS --quirk-none"
 
-# PMU systems cannot use /sys/power/state yet, so use a helper to issue an ioctl
-if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "pmu" ]; then
-	hal-system-power-pmu sleep
-	if [ $? -ne 0 ]; then
-		echo "org.freedesktop.Hal.Device.SystemPowerManagement.NotSupported" >&2
-		exit 1
-	fi
-	exit 0
+# Urh. Do any BIOSen handle this correctly?
+if [ $seconds_to_sleep != "0" ] ; then
+	alarm_not_supported
 fi
 
-# ALTLinux only supports powersave
-if [ -f "/etc/altlinux-release" ]; then
-	if [ -x /usr/bin/powersave ] ; then
-	        $POWERSAVED_SUSPEND2RAM
-		RET=$?
-	else
-		# TODO: add support
-		unsupported
-	fi
-
-# Mandriva supports suspend-scripts 
-elif [ -f "/etc/mandriva-release" ] ; then 
-    # TODO: fix pmsuspend to take a --wakeup-alarm argument 
-    if [ $seconds_to_sleep != "0" ] ; then 
-	alarm_not_supported 
-    fi 
-    
-    if [ -x "/usr/sbin/pmsuspend" ] ; then 
-	/usr/sbin/pmsuspend memory
-	RET=$? 
-    else 
-        # TODO: add support 
-	unsupported 
-    fi 
-
-# RedHat/Fedora and SUSE support pm-utils
-elif [ -f "/etc/redhat-release" ] || [ -f "/etc/fedora-release" ] \
-		|| [ -f "/etc/SuSE-release" ] ; then
-	# TODO: fix pm-suspend to take a --wakeup-alarm argument
-	if [ $seconds_to_sleep != "0" ] ; then
-		alarm_not_supported
-	fi
-	# TODO: fixup pm-suspend to define erroc code (see alarm above) and throw
-	#	   the appropriate exception
-	if [ -x "/usr/sbin/pm-suspend" ] ; then
-		/usr/sbin/pm-suspend $QUIRKS
-		RET=$?
-	else
-		# TODO: add support
-		unsupported
-	fi
-
-# Other distros just need to have *any* tools installed
+# We only support pm-utils
+if [ -x "/usr/sbin/pm-suspend" ] ; then
+	/usr/sbin/pm-suspend $QUIRKS
+	RET=$?
 else
-	if [ -x "/usr/bin/powersave" ] ; then
-	    $POWERSAVED_SUSPEND2RAM
-	    RET=$?
-	elif [ -x "/usr/sbin/pmi" ] ; then
-	    /usr/sbin/pmi action suspend force
-	    RET=$?
-	elif [ -x "/usr/sbin/pm-suspend" ] ; then
-		/usr/sbin/pm-suspend $QUIRKS
-		RET=$?
-	elif [ -w "/sys/power/state" ] ; then
-	    # Use the raw kernel sysfs interface
-	    echo "mem" > /sys/power/state
-	    RET=$?
-	else
-	    # TODO: add other scripts support
-	    unsupported
-	    fi
-	fi
+	# TODO: add support
+	unsupported
+fi
 
 # Refresh devices as a resume can do funny things
 for type in button battery ac_adapter
