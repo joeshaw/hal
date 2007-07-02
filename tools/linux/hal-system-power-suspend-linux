@@ -27,6 +27,7 @@ QUIRKS=""
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VGA_MODE_3" = "true" ] && QUIRKS="$QUIRKS --quirk-vga-mode3"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_VBE_POST" = "true" ] && QUIRKS="$QUIRKS --quirk-vbe-post"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_RADEON_OFF" = "true" ] && QUIRKS="$QUIRKS --quirk-radeon-off"
+[ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_NONE" = "true" ] && QUIRKS="$QUIRKS --quirk-none"
 
 # Urh. Do any BIOSen handle this correctly?
 if [ $seconds_to_sleep != "0" ] ; then
