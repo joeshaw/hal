@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include "../device_info.h"
+#include "../device_pm.h"
 #include "../hald_dbus.h"
 #include "../logger.h"
 #include "../util.h"
@@ -78,8 +79,6 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 	const char *path;
 	int flags;
 	int last_full;
-	int remaining_time;
-	int remaining_percentage;
 
 	path = hal_device_property_get_string (d, "linux.pmu_path");
 	if (path == NULL)
@@ -130,39 +129,13 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		last_full = hal_device_property_get_int (d, "battery.charge_level.last_full");
 
 		/* TODO: could read some pmu file? */
-		remaining_time = util_compute_time_remaining (
-					hal_device_get_udi (d),
-					hal_device_property_get_int (d, "battery.charge_level.rate"),
-					current,
-					last_full,
-					hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-					hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
-					hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
-		remaining_percentage = util_compute_percentage_charge (hal_device_get_udi (d), current, last_full);
-		/*
-		 * Only set keys if no error (signified with negative return value)
-		 * Scrict checking is needed to ensure that the values presented by HAL
-		 * are 100% acurate.
-		 */
-		if (remaining_time > 0)
-			hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
-		else
-			hal_device_property_remove (d, "battery.remaining_time");
-		if (remaining_percentage > 0)
-			hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
-		else
-			hal_device_property_remove (d, "battery.charge_level.percentage");
+		device_pm_calculate_time (d);
+		device_pm_calculate_percentage (d);
 
 		device_property_atomic_update_end ();
 	} else {
 		device_property_atomic_update_begin ();
-		hal_device_property_remove (d, "battery.is_rechargeable");
-		hal_device_property_remove (d, "battery.rechargeable.is_charging");
-		hal_device_property_remove (d, "battery.rechargeable.is_discharging");
-		/*hal_device_property_remove (d, "battery.charge_level.unit");*/
-		hal_device_property_remove (d, "battery.charge_level.current");
-		hal_device_property_remove (d, "battery.charge_level.last_full");
-		hal_device_property_remove (d, "battery.charge_level.design");
+		device_pm_remove_optional_props (d);
 		device_property_atomic_update_end ();		
 	}
 
