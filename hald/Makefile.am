@@ -58,7 +58,8 @@ hald_SOURCES =                                                          \
 	device.h			device.c			\
 	device_info.h			device_info.c			\
 	device_store.h			device_store.c			\
-        hald.h				hald.c				\
+	device_pm.h			device_pm.c			\
+	hald.h				hald.c				\
 	hald_dbus.h			hald_dbus.c			\
 	logger.h			logger.c			\
 	osspec.h							\
