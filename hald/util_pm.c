@@ -70,11 +70,15 @@ util_get_battery_technology (const char *type)
 	    strcasecmp (type, "pbac") == 0) {
 		return "lead-acid";
 	}
-	if (strcasecmp (type, "lip") == 0) {
+	if (strcasecmp (type, "lip") == 0 ||
+	    strcasecmp (type, "lipo") == 0) {
 		return "lithium-polymer";
 	}
 	if (strcasecmp (type, "nimh") == 0) {
 		return "nickel-metal-hydride";
+	}
+	if (strcasecmp (type, "lifo") == 0) {
+		return "lithium-iron-phosphate";
 	}
 	return "unknown";
 }

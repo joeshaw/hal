@@ -4,6 +4,7 @@
  * dbus.c : D-BUS interface of HAL daemon
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -34,7 +35,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <sys/time.h>
-
+#include <glib.h>
+#include <glib/gprintf.h>
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib-lowlevel.h>
 
@@ -61,6 +63,7 @@ static CITracker *ci_tracker = NULL;
 #ifdef HAVE_CONKIT
 static CKTracker *ck_tracker = NULL;
 #endif
+static GHashTable *singletons = NULL;
 
 static void
 raise_error (DBusConnection *connection,
@@ -3229,6 +3232,313 @@ addon_is_ready (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+typedef struct _SingletonInfo SingletonInfo;
+struct _SingletonInfo
+{
+	DBusConnection *connection;
+	GList *devices;
+};
+
+static void
+singleton_info_destroy (SingletonInfo *info)
+{
+	if (info->devices) {
+		HAL_ERROR (("Singleton '%s' exited with devices still to handle"));
+		/*should we signal the devices that the addon's gone?*/
+		g_list_free (info->devices);
+	}
+	g_free(info);
+}
+
+static gboolean
+singleton_remove_by_connection (char *udi,
+			   SingletonInfo *info,
+			   DBusConnection *connection)
+{
+	if (info->connection == connection)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+typedef struct _SingletonDeviceChangedInfo SingletonDeviceChangedInfo;
+struct _SingletonDeviceChangedInfo
+{
+	gboolean added;
+	HalDevice *device;
+};
+
+static SingletonDeviceChangedInfo* new_sdci (gboolean added, HalDevice *device)
+{
+	SingletonDeviceChangedInfo* sdci;
+	sdci = g_new (SingletonDeviceChangedInfo, 1);
+	sdci->added = added;
+	sdci->device = device;
+	g_object_add_weak_pointer (G_OBJECT (device), (gpointer) &(sdci->device));
+	return sdci;
+}
+
+static
+void del_sdci (SingletonDeviceChangedInfo *sdci)
+{
+	if (sdci->device)
+		g_object_remove_weak_pointer (G_OBJECT (sdci->device),
+					      (gpointer)&(sdci->device));
+	g_free (sdci);
+}
+
+static void
+reply_from_singleton_device_changed (DBusPendingCall *pending_call,
+				     void            *user_data);
+
+static void
+singleton_signal_device_changed (DBusConnection *connection, HalDevice *device, gboolean added)
+{
+	DBusError error;
+	DBusMessage *message;
+	DBusMessageIter iter, iter_dict;
+	DBusPendingCall *pending_call;
+	const char *udi = hal_device_get_udi (device);
+
+	message = dbus_message_new_method_call (NULL,
+		"/org/freedesktop/Hal/SingletonAddon",
+		"org.freedesktop.Hal.SingletonAddon",
+		added ? "DeviceAdded" : "DeviceRemoved");
+
+	if (message == NULL)
+		DIE (("No memory"));
+	dbus_message_iter_init_append (message, &iter);
+
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING,
+					&udi);
+
+	dbus_message_iter_open_container (&iter,
+					  DBUS_TYPE_ARRAY,
+					  DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
+					  DBUS_TYPE_STRING_AS_STRING
+					  DBUS_TYPE_VARIANT_AS_STRING
+					  DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
+					  &iter_dict);
+
+	hal_device_property_foreach (device,
+				     foreach_property_append,
+				     &iter_dict);
+
+	dbus_message_iter_close_container (&iter, &iter_dict);
+
+	HAL_DEBUG (("%s about to send message to connection %p", G_STRFUNC, connection));
+	dbus_error_init (&error);
+
+	if (dbus_connection_send_with_reply (connection,
+					     message,
+					     &pending_call,
+					     /*-1*/ 8000)) {
+		/*HAL_INFO (("connection=%x message=%x", connection, message));*/
+		dbus_pending_call_set_notify (pending_call,
+					      reply_from_singleton_device_changed,
+					      (void *) new_sdci (added, device),
+					      (DBusFreeFunction) del_sdci);
+	}
+
+	dbus_message_unref (message);
+}
+
+static void
+reply_from_singleton_device_changed (DBusPendingCall *pending_call,
+				     void            *user_data)
+{
+	DBusMessage *reply;
+	DBusError error;
+	SingletonDeviceChangedInfo *data = (SingletonDeviceChangedInfo*) user_data;
+
+	reply = dbus_pending_call_steal_reply (pending_call);
+
+	if (dbus_message_get_type (reply) == DBUS_MESSAGE_TYPE_ERROR) {
+		dbus_set_error_from_message (&error, reply);
+
+		HAL_ERROR (("Error calling %s for %s on singleton: %s: %s",
+		      data->added ? "DeviceAdded" : "DeviceRemoved",
+		      data->device ? hal_device_get_udi (data->device)
+		                   : "a device that has been deleted",
+		      error.name, error.message));
+
+		dbus_error_free (&error);
+		goto out;
+	}
+
+	/* if the device has been destroyed, data->device will be null */
+	if (data->added && data->device) {
+		HAL_DEBUG (("incrementing ready addons for device"));
+		if (hal_device_inc_num_ready_addons (data->device)) {
+			if (hal_device_are_all_addons_ready (data->device)) {
+				manager_send_signal_device_added (data->device);
+			}
+		}
+	}
+
+out:
+	dbus_message_unref (reply);
+	dbus_pending_call_unref (pending_call);
+}
+
+/**
+ * hald_singleton_device_added:
+ * @command_line: command line identifying addon singleton
+ * @device: device being added
+ *
+ * Signal to a singleton addon that a device has been added
+ *
+ * Return: TRUE if successful
+ */
+gboolean
+hald_singleton_device_added (const char * command_line,
+			     HalDevice *device)
+{
+	SingletonInfo *info;
+	gchar *extra_env[2] = {NULL, NULL};
+
+	if (!singletons)
+		singletons = g_hash_table_new_full (
+				g_str_hash, g_str_equal,
+				g_free,
+				(GDestroyNotify) singleton_info_destroy);
+	info = g_hash_table_lookup (singletons, command_line);
+
+	if (!info) {
+		extra_env[0] = g_malloc (strlen (command_line) + 26);
+		g_sprintf (extra_env[0], "SINGLETON_COMMAND_LINE=%s", command_line);
+		if (hald_runner_start_singleton (command_line, extra_env, NULL, NULL, NULL)) {
+			HAL_INFO (("Started singleton addon %s for udi %s",
+				   command_line, hal_device_get_udi(device)));
+		} else {
+			HAL_ERROR (("Cannot start singleton addon %s for udi %s",
+				    command_line, hal_device_get_udi(device)));
+			return FALSE;
+		}
+		g_free (extra_env[0]);
+		info = g_new0 (SingletonInfo, 1);
+		g_hash_table_insert (singletons, g_strdup(command_line), info);
+	}
+
+	info->devices = g_list_prepend (info->devices, device);
+
+	if (info->connection) {
+		singleton_signal_device_changed (info->connection, device, TRUE);
+	} else {
+		HAL_DEBUG (("singleton not initialised yet"));
+	}
+
+        return TRUE;
+}
+
+/**
+ * hald_singleton_device_removed:
+ * @command_line: command line identifying addon singleton
+ * @device: device that is being removed
+ *
+ * Signal to a singleton addon that a device has been removed
+ *
+ * Return: TRUE if successful
+ */
+gboolean
+hald_singleton_device_removed (const char * command_line,
+			       HalDevice *device)
+{
+	SingletonInfo *info;
+	GList *lp;
+
+	if (G_UNLIKELY (!singletons)) {
+		HAL_ERROR (("Singleton table is not initialied"));
+		return FALSE;
+	}
+
+	info = g_hash_table_lookup (singletons, command_line);
+
+	if (G_UNLIKELY (!info)) {
+		HAL_WARNING (("Attempting to remove a device from an unknown singleton %s", command_line));
+		return FALSE;
+	}
+
+	lp = g_list_find (info->devices, device);
+	if (G_UNLIKELY (!lp)) {
+		HAL_WARNING (("Device was not in use by this singleton: %s", command_line));
+		return FALSE;
+	}
+
+	info->devices = g_list_remove_link (info->devices, lp);
+	g_list_free1 (lp);
+
+	if (G_LIKELY (info->connection)) {
+		singleton_signal_device_changed (info->connection, device, FALSE);
+	}
+
+	return TRUE;
+}
+
+static DBusHandlerResult
+singleton_addon_is_ready (DBusConnection * connection, DBusMessage * message, dbus_bool_t local_interface)
+{
+	HalDevice *device;
+	SingletonInfo *info;
+	DBusMessage *reply;
+	DBusError error;
+	const char *command_line;
+	GList *lp;
+
+	HAL_TRACE (("entering"));
+	HAL_DEBUG (("singleton_addon_is_ready"));
+
+	if (!local_interface) {
+		raise_permission_denied (connection, message, "SingletonAddonIsReady: only allowed for helpers");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	dbus_error_init (&error);
+	if (!dbus_message_get_args (message, &error,
+				    DBUS_TYPE_STRING, &command_line,
+				    DBUS_TYPE_INVALID)) {
+		raise_syntax (connection, message, "SingletonAddonIsReady");
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	if (G_UNLIKELY (!singletons)) {
+		HAL_ERROR (("Got SingletonIsReady with no known singletons"));
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	info = g_hash_table_lookup (singletons, command_line);
+
+	if (G_UNLIKELY (!info)) {
+		HAL_ERROR (("Got SingletonIsReady from unknown singleton"));
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
+
+	HAL_INFO (("SingletonAddonIsReady recieved for '%s'", command_line));
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+
+	info->connection = connection;
+
+	HAL_DEBUG (("Signalling device added for queued devices"));
+	for (lp = info->devices; lp; lp = lp->next) {
+		device = lp->data;
+
+		HAL_DEBUG (("device added for '%s'", hal_device_get_udi (device)));
+		singleton_signal_device_changed (connection, device, TRUE);
+
+	}
+
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 
 /*
  * Create new device in tdl. Return temporary udi.
@@ -4026,7 +4336,9 @@ do_introspect (DBusConnection  *connection,
 				       "    <method name=\"ReleaseGlobalInterfaceLock\">\n"
 				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
 				       "    </method>\n"
-
+				       "    <method name=\"SingletonAddonIsReady\">\n"
+				       "      <arg name=\"command_line\" direction=\"in\" type=\"s\"/>\n"
+				       "    </method>\n"
 				       "    <signal name=\"DeviceAdded\">\n"
 				       "      <arg name=\"udi\" type=\"s\"/>\n"
 				       "    </signal>\n"
@@ -4433,7 +4745,13 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 						"ReleaseGlobalInterfaceLock") &&
                    strcmp (dbus_message_get_path (message), "/org/freedesktop/Hal/Manager") == 0) {
 		return device_release_global_interface_lock (connection, message, local_interface);
-                
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Manager",
+						"SingletonAddonIsReady") &&
+		   strcmp (dbus_message_get_path (message),
+			    "/org/freedesktop/Hal/Manager") == 0) {
+		return singleton_addon_is_ready (connection, message, local_interface);
+
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Device",
 						"AcquireInterfaceLock")) {
@@ -4818,7 +5136,6 @@ out:
 }
 
 
-
 static DBusHandlerResult 
 local_server_message_handler (DBusConnection *connection, 
 			      DBusMessage *message, 
@@ -4863,6 +5180,8 @@ local_server_message_handler (DBusConnection *connection,
 				helper_interface_handlers = g_slist_remove_link (helper_interface_handlers, i);
 			}
 		}
+
+		g_hash_table_foreach_remove (singletons, (GHRFunc) singleton_remove_by_connection, connection);
 
 		dbus_connection_unref (connection);
 		return DBUS_HANDLER_RESULT_HANDLED;

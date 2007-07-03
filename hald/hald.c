@@ -5,6 +5,7 @@
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
  * Copyright (C) 2005 Danny Kukawka, <danny.kukawka@web.de>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -123,8 +124,33 @@ gdl_store_changed (HalDeviceStore *store, HalDevice *device,
 					    command_line, hal_device_get_udi(device)));
 			}
 		}
+		for (hal_device_property_strlist_iter_init (device, "info.addons.singleton", &iter);
+		     hal_device_property_strlist_iter_is_valid (&iter);
+		     hal_device_property_strlist_iter_next (&iter)) {
+			const gchar *command_line;
+
+			command_line = hal_device_property_strlist_iter_get_value (&iter);
+
+			if (hald_singleton_device_added (command_line, device))
+				hal_device_inc_num_addons (device);
+			else
+				HAL_ERROR(("Couldn't add device to singleton"));
+		}
+
 	} else {
+		HalDeviceStrListIter iter;
+
 		HAL_INFO (("Removed device from GDL; udi=%s", hal_device_get_udi(device)));
+		for (hal_device_property_strlist_iter_init (device, "info.addons.singleton", &iter);
+		     hal_device_property_strlist_iter_is_valid (&iter);
+		     hal_device_property_strlist_iter_next (&iter)) {
+			const gchar *command_line;
+
+			command_line = hal_device_property_strlist_iter_get_value (&iter);
+
+			hald_singleton_device_removed (command_line, device);
+		}
+
 		hald_runner_kill_device(device);
 	}
 

@@ -434,7 +434,80 @@ CK_SESSION_UID_Session3=501
       </informaltable>
       
     </sect2>
-    <sect2 id="device-properties-info-method-calls">
+    <sect2 id="device-properties-info-singleton-addons">
+      <title>Singleton Addons</title>
+      
+      <para>
+        Singleton Addons are programs that are started by HAL to
+        handle a set of devices. They are identified by the command line
+        used to start them. They MUST implement the
+	<link linkend="interface-singleton-addon">
+	  <literal>org.freedesktop.Hal.SingletonAddon</literal>
+	</link>
+	interface.  on the path
+	<literal>/org/freedesktop/Hal/Singleton</literal> path on
+        the direct connection to the HAL daemon.
+      </para>
+      <para>
+        When a device is added with an <literal>info.addons.singleton</literal>
+        string list key, the elements of that key are used as the command line
+        to start the singleton if the singleton is not already running.
+        Once the singleton has called <literal>SingletonAddonIsReady</literal> on
+	<link linkend="interface-manager">
+	  <literal>org.freedesktop.Hal.Manager</literal>
+	</link> interface, it will receive
+	<literal>DeviceAdded</literal> calls on its
+	<link linkend="interface-singleton-addon">
+	  <literal>org.freedesktop.Hal.SingletonAddon</literal>
+	</link>
+        interface for all devices that have
+        its commandline in <literal>info.addons.singletona</literal>.
+      </para>
+      <para>
+        If a device is added and the singleton specified in
+        <literal>info.addons.singleton</literal> is already running, the
+        singleton will recieve <literal>DeviceAdded</literal> on its
+	<link linkend="interface-singleton-addon">
+	  <literal>org.freedesktop.Hal.SingletonAddon</literal>
+	</link>
+	interface for that new device.  </para>
+      <para>
+        When a device is removed that is being handled by a singleton, the
+	singleton will recieve <literal>DeviceRemoved</literal> on
+	<link linkend="interface-singleton-addon">
+	  <literal>org.freedesktop.Hal.SingletonAddon</literal>
+	</link>.
+	When it is no longer handling any more devices it should exit cleanly.
+      </para>
+      
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>info.addons.singleton</literal> (strlist)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                A list of commandlines for singleton addons which should
+                service this device.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      
+    </sect2>
+     <sect2 id="device-properties-info-method-calls">
       <title>Method calls</title>
       
       <para>

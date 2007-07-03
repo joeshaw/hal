@@ -4,6 +4,7 @@
  * hald_runner.c - Interface to the hal runner helper daemon
  *
  * Copyright (C) 2006 Sjoerd Simons, <sjoerd@luon.net>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -65,6 +66,7 @@ typedef struct {
 	GPid pid;
 	HalDevice *device;
 	HalRunTerminatedCB cb;
+	gboolean is_singleton;
 	gpointer data1;
 	gpointer data2;
 } RunningProcess;
@@ -366,7 +368,8 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 	if (hald_use_syslog) {
 		add_env (iter, "HALD_USE_SYSLOG", "1");
 	}
-	add_env (iter, "UDI", udi);
+	if (udi)
+		add_env (iter, "UDI", udi);
 	add_env (iter, "HALD_DIRECT_ADDR", hald_dbus_local_server_addr ());
 
         /* I'm sure it would be easy to remove use of getenv(3) to add these variables... */
@@ -559,11 +562,9 @@ add_command (DBusMessageIter * iter, const gchar * command_line)
 	return TRUE;
 }
 
-static gboolean
-add_first_part (DBusMessageIter * iter, HalDevice * device,
-		const gchar * command_line, char **extra_env)
+static void
+add_udi (DBusMessageIter * iter, HalDevice * device)
 {
-	DBusMessageIter array_iter;
 	const char *udi;
 
 	if (device != NULL)
@@ -572,7 +573,13 @@ add_first_part (DBusMessageIter * iter, HalDevice * device,
 		udi = "";
 
 	dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &udi);
+}
 
+static gboolean
+add_environment (DBusMessageIter * iter, HalDevice * device,
+		const gchar * command_line, char **extra_env)
+{
+	DBusMessageIter array_iter;
 	dbus_message_iter_open_container (iter,
 					  DBUS_TYPE_ARRAY,
 					  DBUS_TYPE_STRING_AS_STRING,
@@ -580,7 +587,7 @@ add_first_part (DBusMessageIter * iter, HalDevice * device,
 	if (device != NULL)
 		hal_device_property_foreach (device, add_property_to_msg,
 					     &array_iter);
-	add_basic_env (&array_iter, udi);
+	add_basic_env (&array_iter, device ? hal_device_get_udi (device): NULL);
 	add_extra_env (&array_iter, extra_env);
 	dbus_message_iter_close_container (iter, &array_iter);
 
@@ -591,31 +598,37 @@ add_first_part (DBusMessageIter * iter, HalDevice * device,
 }
 
 /* Start a helper, returns true on a successfull start */
-gboolean
-hald_runner_start (HalDevice * device, const gchar * command_line,
-		   char **extra_env, HalRunTerminatedCB cb, gpointer data1,
-		   gpointer data2)
+static gboolean
+runner_start (HalDevice * device, const gchar * command_line,
+	      char **extra_env, gboolean singleton,
+	      HalRunTerminatedCB cb, gpointer data1, gpointer data2)
 {
 	DBusMessage *msg, *reply;
-	DBusError err;
+	DBusError error;
 	DBusMessageIter iter;
 
-	dbus_error_init (&err);
+	dbus_error_init (&error);
 	msg = dbus_message_new_method_call ("org.freedesktop.HalRunner",
 					    "/org/freedesktop/HalRunner",
 					    "org.freedesktop.HalRunner",
-					    "Start");
+					    singleton ? "StartSingleton" : "Start");
 	if (msg == NULL)
 		DIE (("No memory"));
 	dbus_message_iter_init_append (msg, &iter);
 
-	if (!add_first_part (&iter, device, command_line, extra_env))
+	if (!singleton)
+		add_udi (&iter, device);
+
+	if (!add_environment (&iter, device, command_line, extra_env)) {
+		HAL_ERROR (("Error adding environment, device =%p, singleton=%d",
+			device, singleton));
 		goto error;
+	}
 
 	/* Wait for the reply, should be almost instantanious */
 	reply =
 	    dbus_connection_send_with_reply_and_block (runner_connection,
-						       msg, -1, &err);
+						       msg, -1, &error);
 	if (reply) {
 		gboolean ret =
 		    (dbus_message_get_type (reply) ==
@@ -623,7 +636,7 @@ hald_runner_start (HalDevice * device, const gchar * command_line,
 
 		if (ret) {
 			dbus_int64_t pid_from_runner;
-			if (dbus_message_get_args (reply, &err,
+			if (dbus_message_get_args (reply, &error,
 						   DBUS_TYPE_INT64,
 						   &pid_from_runner,
 						   DBUS_TYPE_INVALID)) {
@@ -632,7 +645,11 @@ hald_runner_start (HalDevice * device, const gchar * command_line,
 					rp = g_new0 (RunningProcess, 1);
 					rp->pid = (GPid) pid_from_runner;
 					rp->cb = cb;
-					rp->device = device;
+					rp->is_singleton = singleton;
+					if (singleton)
+						rp->device = NULL;
+					else
+						rp->device = device;
 					rp->data1 = data1;
 					rp->data2 = data2;
 
@@ -649,12 +666,33 @@ hald_runner_start (HalDevice * device, const gchar * command_line,
 		dbus_message_unref (reply);
 		dbus_message_unref (msg);
 		return ret;
+	} else {
+		if (dbus_error_is_set (&error)) {
+			HAL_ERROR (("Error running '%s': %s: %s", command_line, error.name, error.message));
+		}
 	}
 
       error:
 	dbus_message_unref (msg);
 	return FALSE;
 }
+
+gboolean
+hald_runner_start (HalDevice * device, const gchar * command_line,
+		   char **extra_env, HalRunTerminatedCB cb,
+		   gpointer data1, gpointer data2)
+{
+	return runner_start (device, command_line, extra_env, FALSE, cb, data1, data2);
+}
+
+gboolean
+hald_runner_start_singleton (const gchar * command_line,
+			     char **extra_env, HalRunTerminatedCB cb,
+			     gpointer data1, gpointer data2)
+{
+	return runner_start (NULL, command_line, extra_env, TRUE, cb, data1, data2);
+}
+
 
 static void
 process_reply (DBusMessage *m, HelperData *hb)
@@ -759,7 +797,8 @@ hald_runner_run_method (HalDevice * device,
 		DIE (("No memory"));
 	dbus_message_iter_init_append (msg, &iter);
 
-	if (!add_first_part (&iter, device, command_line, extra_env))
+	add_udi (&iter, device);
+	if (!add_environment (&iter, device, command_line, extra_env))
 		goto error;
 
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &input);
@@ -828,7 +867,8 @@ hald_runner_run_sync (HalDevice * device,
 		DIE (("No memory"));
 	dbus_message_iter_init_append (msg, &iter);
 
-	if (!add_first_part (&iter, device, command_line, extra_env))
+	add_udi (&iter, device);
+	if (!add_environment (&iter, device, command_line, extra_env))
 		goto error;
 
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &input);

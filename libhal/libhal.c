@@ -4,6 +4,8 @@
  * libhal.c : HAL daemon C convenience library
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2006 Sjoerd Simons, <sjoerd@luon.net>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -32,6 +34,7 @@
 #include <string.h>
 #include <dbus/dbus.h>
 
+#include "uthash.h"
 #include "libhal.h"
 
 #ifdef ENABLE_NLS
@@ -182,10 +185,7 @@ libhal_free_string (char *str)
  * libhal_property_set_*() family of functions to access it.
  */
 struct LibHalPropertySet_s {
-	unsigned int num_properties; /**< Number of properties in set */
-	LibHalProperty *properties_head;
-				     /**< Pointer to first property or NULL
-				      *	  if there are no properties */
+	LibHalProperty *properties;
 };
 
 /**
@@ -211,8 +211,7 @@ struct LibHalProperty_s {
 		char **strlist_value; /**< List of UTF-8 zero-terminated strings */
 	} v;
 
-	LibHalProperty *next;	     /**< Next property or NULL if this is 
-				      *	  the last */
+	UT_hash_handle hh;		/*makes this hashable*/
 };
 
 /**
@@ -257,6 +256,12 @@ struct LibHalContext_s {
 
         /** An interface lock is released  */
         LibHalInterfaceLockReleased interface_lock_released;
+
+	/** Singleton device added */
+	LibHalSingletonDeviceAdded singleton_device_added;
+
+	/** Singleton device removed*/
+	LibHalSingletonDeviceRemoved singleton_device_removed;
 
 	void *user_data;                      /**< User data */
 };
@@ -383,6 +388,81 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
 	return TRUE;
 }
 
+static LibHalPropertySet *
+get_property_set (DBusMessageIter *iter)
+{
+	LibHalPropertySet *result;
+	LibHalProperty *p_last;
+	DBusMessageIter dict_iter;
+
+	result = malloc (sizeof (LibHalPropertySet));
+	if (result == NULL) 
+		goto oom;
+
+/*
+    result->properties = malloc(sizeof(LibHalProperty)*result->num_properties);
+    if( result->properties==NULL )
+    {
+    /// @todo  cleanup
+	return NULL;
+    }
+*/
+
+	result->properties = NULL;
+
+	if (dbus_message_iter_get_arg_type (iter) != DBUS_TYPE_ARRAY  &&
+	    dbus_message_iter_get_element_type (iter) != DBUS_TYPE_DICT_ENTRY) {
+		fprintf (stderr, "%s %d : error, expecting an array of dict entries\n",
+			 __FILE__, __LINE__);
+		return NULL;
+	}
+
+	dbus_message_iter_recurse (iter, &dict_iter);
+
+	p_last = NULL;
+
+	while (dbus_message_iter_get_arg_type (&dict_iter) == DBUS_TYPE_DICT_ENTRY)
+	{
+		DBusMessageIter dict_entry_iter, var_iter;
+		const char *key;
+		LibHalProperty *p;
+
+		dbus_message_iter_recurse (&dict_iter, &dict_entry_iter);
+
+		dbus_message_iter_get_basic (&dict_entry_iter, &key);
+
+		p = malloc (sizeof (LibHalProperty));
+		if (p == NULL)
+			goto oom;
+
+		p->key = strdup (key);
+		if (p->key == NULL)
+			goto oom;
+
+		dbus_message_iter_next (&dict_entry_iter);
+
+		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
+
+		p->type = dbus_message_iter_get_arg_type (&var_iter);
+
+		if(!libhal_property_fill_value_from_variant (p, &var_iter))
+			goto oom;
+
+                HASH_ADD_KEYPTR (hh, result->properties, p->key, strlen (p->key), p);
+
+		dbus_message_iter_next (&dict_iter);
+	}
+
+	return result;
+
+oom:
+	fprintf (stderr,
+		"%s %d : error allocating memory\n",
+		 __FILE__, __LINE__);
+		/** @todo FIXME cleanup */
+	return NULL;
+}
+
 /**
  * libhal_device_get_all_properties:
  * @ctx: the context for the connection to hald
@@ -395,13 +475,11 @@ libhal_property_fill_value_from_variant (LibHalProperty *p, DBusMessageIter *var
  */
 LibHalPropertySet *
 libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError *error)
-{	
+{
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter reply_iter;
-	DBusMessageIter dict_iter;
 	LibHalPropertySet *result;
-	LibHalProperty *p_last;
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
@@ -440,88 +518,18 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 
 	dbus_message_iter_init (reply, &reply_iter);
 
-	result = malloc (sizeof (LibHalPropertySet));
-	if (result == NULL) 
-		goto oom;
-/*
-    result->properties = malloc(sizeof(LibHalProperty)*result->num_properties);
-    if( result->properties==NULL )
-    {
-    /// @todo  cleanup
-	return NULL;
-    }
-*/
-
-	result->properties_head = NULL;
-	result->num_properties = 0;
-
-	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY  &&
-	    dbus_message_iter_get_element_type (&reply_iter) != DBUS_TYPE_DICT_ENTRY) {
-		fprintf (stderr, "%s %d : error, expecting an array of dict entries\n",
-			 __FILE__, __LINE__);
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return NULL;
-	}
-
-	dbus_message_iter_recurse (&reply_iter, &dict_iter);
-
-	p_last = NULL;
-
-	while (dbus_message_iter_get_arg_type (&dict_iter) == DBUS_TYPE_DICT_ENTRY)
-	{
-		DBusMessageIter dict_entry_iter, var_iter;
-		const char *key;
-		LibHalProperty *p;
-
-		dbus_message_iter_recurse (&dict_iter, &dict_entry_iter);
-
-		dbus_message_iter_get_basic (&dict_entry_iter, &key);
-
-		p = malloc (sizeof (LibHalProperty));
-		if (p == NULL)
-			goto oom;
-
-		p->next = NULL;
-
-		if (result->num_properties == 0)
-			result->properties_head = p;
-
-		if (p_last != NULL)
-			p_last->next = p;
-
-		p_last = p;
-
-		p->key = strdup (key);
-		if (p->key == NULL)
-			goto oom;
-
-		dbus_message_iter_next (&dict_entry_iter);
-
-		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
-
-
-		p->type = dbus_message_iter_get_arg_type (&var_iter);
-	
-		result->num_properties++;
-
-		if(!libhal_property_fill_value_from_variant (p, &var_iter))
-			goto oom;
-
-		dbus_message_iter_next (&dict_iter);
-	}
+	result = get_property_set (&reply_iter);
 
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
 
 	return result;
+}
 
-oom:
-	fprintf (stderr,
-		"%s %d : error allocating memory\n",
-		 __FILE__, __LINE__);
-		/** @todo FIXME cleanup */
-	return NULL;
+static int
+key_sort (LibHalProperty *a, LibHalProperty *b)
+{
+	return strcmp (a->key, b->key);
 }
 
 /**
@@ -533,36 +541,7 @@ oom:
 void 
 libhal_property_set_sort (LibHalPropertySet *set)
 {
-	unsigned int i;
-	unsigned int num_elements;
-	LibHalProperty *p;
-	LibHalProperty *q;
-	LibHalProperty **r;
-
-	/* TODO: for the sake of gods; do something smarter than a slow bubble-sort!! */
-
-	num_elements = libhal_property_set_get_num_elems (set);
-	for (i = 0; i < num_elements; i++) {
-		for (p = set->properties_head, r = &(set->properties_head); p != NULL; p = q) {
-			q = p->next;
-
-			if (q == NULL)
-				continue;
-
-			if (strcmp (p->key, q->key) > 0) {
-				/* switch p and q */
-				p->next = q->next;
-				q->next = p;
-				*r = q;
-				
-				r = &(q->next);
-				q = p;
-			} else {
-				/* do nothing */
-				r = &(p->next);
-			}
-		}
-	}
+	HASH_SORT (set->properties, key_sort);
 }
 
 /**
@@ -575,18 +554,14 @@ void
 libhal_free_property_set (LibHalPropertySet * set)
 {
 	LibHalProperty *p;
-	LibHalProperty *q;
 
-	if (set == NULL)
-		return;
-
-	for (p = set->properties_head; p != NULL; p = q) {
+	for (p = set->properties; p != NULL; p=p->hh.next) {
+		HASH_DELETE (hh, set->properties, p);
 		free (p->key);
 		if (p->type == DBUS_TYPE_STRING)
 			free (p->v.str_value);
 		if (p->type == LIBHAL_PROPERTY_TYPE_STRLIST)
 			libhal_free_string_array (p->v.strlist_value);
-		q = p->next;
 		free (p);
 	}
 	free (set);
@@ -610,15 +585,153 @@ libhal_property_set_get_num_elems (LibHalPropertySet *set)
 		return 0;
 	
 	num_elems = 0;
-	for (p = set->properties_head; p != NULL; p = p->next)
+	for (p = set->properties; p != NULL; p = p->hh.next)
 		num_elems++;
 
 	return num_elems;
 }
 
+static LibHalProperty *
+property_set_lookup (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p;
+
+	HASH_FIND_STR (set->properties, key, p);
+	return p;
+}
+
+/**
+ * libhal_ps_get_type:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the type of a given property. 
+ *
+ * Returns: the #LibHalPropertyType of the given property, 
+ * LIBHAL_PROPERTY_TYPE_INVALID if property is not in the set
+ */
+LibHalPropertyType
+libhal_ps_get_type (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p) return p->type;
+	else return LIBHAL_PROPERTY_TYPE_INVALID;
+}
+
+/**
+ * libhal_ps_get_string:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the value of a property of type string.
+ *
+ * Returns: UTF8 nul-terminated string. This pointer is only valid
+ * until libhal_free_property_set() is invoked on the property set
+ * this property belongs to. NULL if property is not in the set or not a string
+ */
+const char *
+libhal_ps_get_string  (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p && p->type == LIBHAL_PROPERTY_TYPE_STRING)
+		return p->v.str_value;
+	else return NULL;
+}
+
+/**
+ * libhal_ps_get_int:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the value of a property of type signed integer. 
+ *
+ * Returns: property value (32-bit signed integer)
+ */
+dbus_int32_t
+libhal_ps_get_int32 (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p && p->type == LIBHAL_PROPERTY_TYPE_INT32)
+		return p->v.int_value;
+	else return 0;
+}
+
+/**
+ * libhal_ps_get_uint64:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the value of a property of type unsigned integer. 
+ *
+ * Returns: property value (64-bit unsigned integer)
+ */
+dbus_uint64_t
+libhal_ps_get_uint64 (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p && p->type == LIBHAL_PROPERTY_TYPE_UINT64)
+		return p->v.uint64_value;
+	else return 0;
+}
+
+/**
+ * libhal_ps_get_double:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the value of a property of type double.
+ *
+ * Returns: property value (IEEE754 double precision float)
+ */
+double
+libhal_ps_get_double (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p && p->type == LIBHAL_PROPERTY_TYPE_DOUBLE)
+		return p->v.double_value;
+	else return 0.0;
+}
+
+/**
+ * libhal_ps_get_bool:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the value of a property of type bool. 
+ *
+ * Returns: property value (bool)
+ */
+dbus_bool_t
+libhal_ps_get_bool (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p && p->type == LIBHAL_PROPERTY_TYPE_BOOLEAN)
+		return p->v.bool_value;
+	else return FALSE;
+}
+
+/**
+ * libhal_ps_get_strlist:
+ * @set: property set
+ * @key: name of property to inspect
+ *
+ * Get the value of a property of type string list. 
+ *
+ * Returns: pointer to array of strings, this is owned by the property set
+ */
+const char *const *
+libhal_ps_get_strlist (const LibHalPropertySet *set, const char *key)
+{
+	LibHalProperty *p = property_set_lookup (set, key);
+	if (p && p->type == LIBHAL_PROPERTY_TYPE_STRLIST)
+		return (const char *const *) p->v.strlist_value;
+	else return NULL;
+}
+
 
 /**
  * libhal_psi_init:
+ * 1;3B
  * @iter: iterator object
  * @set: property set to iterate over
  *
@@ -632,8 +745,8 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 		return;
 
 	iter->set = set;
-	iter->idx = 0;
-	iter->cur_prop = set->properties_head;
+	iter->idx = -1; //deprecated
+	iter->cur_prop = set->properties;
 }
 
 
@@ -648,7 +761,7 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 dbus_bool_t
 libhal_psi_has_more (LibHalPropertySetIterator * iter)
 {
-	return iter->idx < iter->set->num_properties;
+	return (iter->cur_prop->hh.next != NULL);
 }
 
 /**
@@ -660,8 +773,7 @@ libhal_psi_has_more (LibHalPropertySetIterator * iter)
 void
 libhal_psi_next (LibHalPropertySetIterator * iter)
 {
-	iter->idx++;
-	iter->cur_prop = iter->cur_prop->next;
+	iter->cur_prop = iter->cur_prop->hh.next;
 }
 
 /**
@@ -780,6 +892,56 @@ libhal_psi_get_strlist (LibHalPropertySetIterator * iter)
 	return iter->cur_prop->v.strlist_value;
 }
 
+static DBusHandlerResult
+singleton_device_changed (LibHalContext *ctx, DBusConnection *connection, DBusMessage *msg, dbus_bool_t added)
+{
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	LibHalPropertySet *set;
+	const char *udi;
+
+	dbus_message_iter_init (msg, &iter);
+
+	/* First should be the device UDI */
+	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_STRING)
+		goto malformed;
+
+	dbus_message_iter_get_basic (&iter, &udi);
+
+	dbus_message_iter_next (&iter);
+
+	/* then the property set*/
+	set = get_property_set (&iter);
+
+	if (!set)
+		goto malformed;
+	if (added)
+		(ctx->singleton_device_added)(ctx, udi, set);
+	else
+		(ctx->singleton_device_removed)(ctx, udi, set);
+
+	libhal_free_property_set (set);
+
+	reply = dbus_message_new_method_return (msg);
+	if (reply == NULL)
+		goto oom;
+
+	if (!dbus_connection_send (connection, reply, NULL)) {
+		dbus_message_unref (reply);
+		goto oom;
+	}
+
+	dbus_message_unref (reply);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+
+malformed:
+	fprintf (stderr, "%s %d : singlton device changed message malformed\n", __FILE__, __LINE__);
+	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+oom:
+	fprintf (stderr, "%s %d : error allocating memory\n", __FILE__, __LINE__);
+	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
 
 static DBusHandlerResult
 filter_func (DBusConnection * connection,
@@ -796,7 +958,12 @@ filter_func (DBusConnection * connection,
 
 	object_path = dbus_message_get_path (message);
 
-	/*printf("*** in filter_func, object_path=%s\n", object_path);*/
+	/*fprintf (stderr, "*** libhal filer_func: connection=%p obj_path=%s interface=%s method=%s\n", 
+		   connection,
+		   dbus_message_get_path (message), 
+		   dbus_message_get_interface (message),
+		   dbus_message_get_member (message));
+        */
 
 	if (dbus_message_is_signal (message, "org.freedesktop.Hal.Manager",
 				    "DeviceAdded")) {
@@ -952,8 +1119,20 @@ filter_func (DBusConnection * connection,
 			
 		}
 		return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+	} else if (dbus_message_is_method_call (message,
+			"org.freedesktop.Hal.SingletonAddon",
+			"DeviceAdded") &&
+		    strcmp (dbus_message_get_path (message),
+			  "/org/freedesktop/Hal/SingletonAddon") == 0) {
+		return singleton_device_changed (ctx, connection, message, TRUE);
+	} else if (dbus_message_is_method_call (message,
+			"org.freedesktop.Hal.SingletonAddon",
+			"DeviceRemoved") &&
+		    strcmp (dbus_message_get_path (message),
+			  "/org/freedesktop/Hal/SingletonAddon") == 0) {
+		return singleton_device_changed (ctx, connection, message, FALSE);
 	}
-	
+
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
@@ -3187,6 +3366,11 @@ libhal_ctx_init_direct (DBusError *error)
 		goto out;
 	}
 
+	if (!dbus_connection_add_filter (ctx->connection, filter_func, ctx, NULL)) {
+		return FALSE;
+	}
+
+
 	ctx->is_initialized = TRUE;
 	ctx->is_direct = TRUE;
 
@@ -3357,6 +3541,42 @@ libhal_ctx_set_device_condition (LibHalContext *ctx, LibHalDeviceCondition callb
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
 
 	ctx->device_condition = callback;
+	return TRUE;
+}
+
+/**
+ * libhal_ctx_set_singleton_device_added:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device emits a condition
+ *
+ * Set the callback for when a singleton should handle a new device
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
+ */
+dbus_bool_t
+libhal_ctx_set_singleton_device_added (LibHalContext *ctx, LibHalSingletonDeviceAdded callback)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+
+	ctx->singleton_device_added = callback;
+	return TRUE;
+}
+
+/**
+ * libhal_ctx_set_singleton_device_removed:
+ * @ctx: the context for the connection to hald
+ * @callback: the function to call when a device emits a condition
+ *
+ * Set the callback for when a singleton should discard a device
+ *
+ * Returns: TRUE if callback was successfully set, FALSE otherwise
+ */
+dbus_bool_t
+libhal_ctx_set_singleton_device_removed (LibHalContext *ctx, LibHalSingletonDeviceRemoved callback)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+
+	ctx->singleton_device_removed = callback;
 	return TRUE;
 }
 
@@ -3554,20 +3774,30 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 							   error);
 
 	if (error != NULL && dbus_error_is_set (error)) {
+		fprintf (stderr,
+			 "%s %d : Failure sending D-BUS message: %s: %s\n",
+			 __FILE__, __LINE__, error->name, error->message);
 		dbus_message_unref (message);
 		return FALSE;
 	}
 
 	dbus_message_unref (message);
 
-	if (reply == NULL)
+	if (reply == NULL) {
+		fprintf (stderr,
+			 "%s %d : Got no reply\n",
+			 __FILE__, __LINE__);
 		return FALSE;
+	}
 
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_BOOLEAN) {
 		dbus_message_unref (message);
 		dbus_message_unref (reply);
+		fprintf (stderr,
+			 "%s %d : Malformed reply\n",
+			 __FILE__, __LINE__);
 		return FALSE;
 	}
 	dbus_message_iter_get_basic (&reply_iter, &result);
@@ -3577,35 +3807,27 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 	return result;	
 }
 
-/**
- * libhal_device_addon_is_ready:
- * @ctx: the context for the connection to hald
- * @udi: the Unique Device Id
- * @error: pointer to an initialized dbus error object for returning errors or NULL
- *
- * HAL addon's must call this method when they are done initializing the device object. The HAL
- * daemon will wait for all addon's to call this.
- *
- * Can only be used from hald helpers.
- *
- * Returns: TRUE if the HAL daemon received the message, FALSE otherwise
- */
-dbus_bool_t
-libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *error)
+static dbus_bool_t
+addon_is_ready(LibHalContext *ctx, const char *identifier,
+	       dbus_bool_t singleton, DBusError *error)
 {
 	DBusMessage *message;
 	DBusMessageIter iter;
-	DBusMessageIter reply_iter;
 	DBusMessage *reply;
-	dbus_bool_t result;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
-	LIBHAL_CHECK_PARAM_VALID(udi, "*udi", FALSE);
 
-	message = dbus_message_new_method_call ("org.freedesktop.Hal",
-						udi,
+        if (singleton) {
+        	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						"/org/freedesktop/Hal/Manager",
+						"org.freedesktop.Hal.Manager",
+						"SingletonAddonIsReady");
+        } else {
+        	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						identifier,
 						"org.freedesktop.Hal.Device",
 						"AddonIsReady");
+        }
 
 	if (message == NULL) {
 		fprintf (stderr,
@@ -3615,7 +3837,9 @@ libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *er
 	}
 
 	dbus_message_iter_init_append (message, &iter);
-	
+
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &identifier);
+
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
@@ -3630,17 +3854,53 @@ libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *er
 	if (reply == NULL)
 		return FALSE;
 
-	dbus_message_iter_init (reply, &reply_iter);
-	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
-		dbus_message_unref (reply);
-		return FALSE;
-	}
-	dbus_message_iter_get_basic (&reply_iter, &result);
-
 	dbus_message_unref (reply);
-	return result;	
+	return TRUE;
 }
+
+
+/**
+ * libhal_device_addon_is_ready:
+ * @ctx: the context for the connection to hald
+ * @udi: the Unique Device Id this addon is handling
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ *
+ * HAL addon's must call this method when they are done initializing the device object. The HAL
+ * daemon will wait for all addon's to call this.
+ *
+ * Can only be used from hald helpers.
+ *
+ * Returns: TRUE if the HAL daemon received the message, FALSE otherwise
+ */
+dbus_bool_t
+libhal_device_addon_is_ready (LibHalContext *ctx,
+			      const char *udi,
+			      DBusError *error)
+{
+	return addon_is_ready (ctx, udi, FALSE, error);
+}
+
+/**
+ * libhal_device_singleton_addon_is_ready:
+ * @ctx: the context for the connection to hald
+ * @commandline: commandline singleton was started with
+ * @error: pointer to an initialized dbus error object for returning errors or NULL
+ *
+ * HAL singleton addon's must call this method when they are done initializing the device object. The HAL
+ * daemon will wait for all addon's to call this.
+ *
+ * Can only be used from hald helpers.
+ *
+ * Returns: TRUE if the HAL daemon received the message, FALSE otherwise
+ */
+dbus_bool_t
+libhal_device_singleton_addon_is_ready (LibHalContext *ctx,
+					const char *command_line,
+					DBusError *error)
+{
+	return addon_is_ready (ctx, command_line, TRUE, error);
+}
+
 
 /**
  * libhal_device_claim_interface:

@@ -4,6 +4,7 @@
  * libhal.h : HAL daemon C convenience library headers
  *
  * Copyright (C) 2003 David Zeuthen, <david@fubar.dk>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -103,6 +104,9 @@ typedef enum {
 
 
 typedef struct LibHalContext_s LibHalContext;
+typedef struct LibHalProperty_s LibHalProperty;
+typedef struct LibHalPropertySet_s LibHalPropertySet;
+
 
 /** 
  * LibHalIntegrateDBusIntoMainLoop:
@@ -251,6 +255,30 @@ typedef void (*LibHalInterfaceLockReleased) (LibHalContext *ctx,
                                              const char *lock_owner,
                                              int         num_locks);
 
+/**
+ * LibHalSingletonDeviceAdded:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @properties: the device's properties
+ *
+ * Type for callback for addon singletons when a device is added
+ */
+typedef void (*LibHalSingletonDeviceAdded) (LibHalContext *ctx,
+					    const char *udi,
+					    const LibHalPropertySet *properties);
+
+/**
+ * LibHalSingletonDeviceRemoved:
+ * @ctx: context for connection to hald
+ * @udi: the Unique Device Id
+ * @properties: the device's properties
+ *
+ * Type for callback for addon singletons when a device is added
+ */
+typedef void (*LibHalSingletonDeviceRemoved) (LibHalContext *ctx,
+					    const char *udi,
+					    const LibHalPropertySet *properties);
+
 
 
 /* Create a new context for a connection with hald */
@@ -300,6 +328,12 @@ dbus_bool_t    libhal_ctx_set_interface_lock_acquired (LibHalContext *ctx, LibHa
 
 /* Set the callback for when an interface lock is released  */
 dbus_bool_t    libhal_ctx_set_interface_lock_released (LibHalContext *ctx, LibHalInterfaceLockReleased callback);
+
+/* Set the callback for addon singleton device added */
+dbus_bool_t    libhal_ctx_set_singleton_device_added (LibHalContext *ctx, LibHalSingletonDeviceAdded callback);
+
+/* Set the callback for addon singleton device removed*/
+dbus_bool_t    libhal_ctx_set_singleton_device_removed (LibHalContext *ctx, LibHalSingletonDeviceRemoved callback);
 
 /* Initialize the connection to hald */
 dbus_bool_t    libhal_ctx_init                         (LibHalContext *ctx, DBusError *error);
@@ -475,13 +509,6 @@ dbus_bool_t libhal_device_commit_changeset (LibHalContext *ctx,
 void libhal_device_free_changeset (LibHalChangeSet *changeset);
 
 
-struct LibHalProperty_s;
-typedef struct LibHalProperty_s LibHalProperty;
-
-struct LibHalPropertySet_s;
-typedef struct LibHalPropertySet_s LibHalPropertySet;
-
-
 /* Retrieve all the properties on a device. */
 LibHalPropertySet *libhal_device_get_all_properties (LibHalContext *ctx, 
 						     const char *udi,
@@ -496,6 +523,28 @@ void libhal_free_property_set (LibHalPropertySet *set);
 
 /* Get the number of properties in a property set. */
 unsigned int libhal_property_set_get_num_elems (LibHalPropertySet *set);
+
+/* Get type of property. */
+LibHalPropertyType libhal_ps_get_type (const LibHalPropertySet *set, const char *key);
+
+/* Get the value of a property of type string. */
+const char *libhal_ps_get_string  (const LibHalPropertySet *set, const char *key);
+
+/* Get the value of a property of type signed integer. */
+dbus_int32_t libhal_ps_get_int32 (const LibHalPropertySet *set, const char *key);
+
+/* Get the value of a property of type unsigned integer. */
+dbus_uint64_t libhal_ps_get_uint64 (const LibHalPropertySet *set, const char *key);
+
+/* Get the value of a property of type double. */
+double libhal_ps_get_double (const LibHalPropertySet *set, const char *key);
+
+/* Get the value of a property of type bool. */
+dbus_bool_t libhal_ps_get_bool (const LibHalPropertySet *set, const char *key);
+
+/* Get the value of a property of type string list. */
+const char * const *libhal_ps_get_strlist (const LibHalPropertySet *set, const char *key);
+
 
 /** 
  * LibHalPropertySetIterator: 
@@ -675,6 +724,7 @@ dbus_bool_t libhal_device_claim_interface (LibHalContext *ctx,
 /* hald waits for all addons to call this function before announcing the addon (for hald helpers only) */
 dbus_bool_t libhal_device_addon_is_ready (LibHalContext *ctx, const char *udi, DBusError *error);
 
+dbus_bool_t libhal_device_singleton_addon_is_ready (LibHalContext *ctx, const char *command_line, DBusError *error);
 
 /* Take a mandatory lock on an interface on a device. */
 dbus_bool_t libhal_device_acquire_interface_lock (LibHalContext *ctx,

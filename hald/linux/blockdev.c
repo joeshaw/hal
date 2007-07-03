@@ -67,16 +67,21 @@ blockdev_compute_udi (HalDevice *d)
 	if (hal_device_property_get_bool (d, "block.is_volume")) {
 		const char *label;
 		const char *uuid;
+		char *volumelabel;
 
 		label = hal_device_property_get_string (d, "volume.label");
+	        /* replace '/'  to avoid trouble if the string get part of the UDI see fd.o #11401 */
+		volumelabel = g_strdup(label);
+	        volumelabel = g_strdelimit (volumelabel, "/", '_');
+
 		uuid = hal_device_property_get_string (d, "volume.uuid");
 
 		if (uuid != NULL && strlen (uuid) > 0) {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "/org/freedesktop/Hal/devices/volume_uuid_%s", uuid);
-		} else if (label != NULL && strlen (label) > 0) {
+		} else if (volumelabel != NULL && strlen (volumelabel) > 0) {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_label_%s", label);
+					      "/org/freedesktop/Hal/devices/volume_label_%s", volumelabel);
 		} else if (hal_device_property_get_bool(d, "volume.is_disc") &&
 			   hal_device_property_get_bool(d, "volume.disc.is_blank")) {
 			/* this should be a empty CD/DVD */
