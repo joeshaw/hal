@@ -1009,7 +1009,7 @@ echo "
         use libusb:                  ${USE_LIBUSB}
         use libpci:                  ${USE_LIBPCI}
         use libparted:               ${USE_PARTED}
-        use gperf:                   ${HAVE_GPERF}
+        use gperf:                   ${have_gperf}
         use PolicyKit:               ${msg_polkit}
         use ConsoleKit:              ${msg_conkit}
         use ACL management:          ${msg_aclmgmt}
