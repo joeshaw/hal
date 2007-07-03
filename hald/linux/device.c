@@ -3356,6 +3356,8 @@ add_dev_probing_helper_done (HalDevice *d, guint32 exit_type,
 	/* Discard device if probing reports failure */
 	if (exit_type != HALD_RUN_SUCCESS || return_code != 0) {
 		hal_device_store_remove (hald_get_tdl (), d);
+		HAL_INFO (("device removed due to prober fail"));
+		hal_device_print (d);
 		g_object_unref (d);
 		hotplug_event_end (end_token);
 		goto out;

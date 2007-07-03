@@ -6584,6 +6584,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>power_management.quirk.reset_brightness</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Reset the brightness state after resume.</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>power_management.quirk.none</literal> (bool)
               </entry>
               <entry></entry>
