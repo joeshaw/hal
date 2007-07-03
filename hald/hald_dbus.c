@@ -3466,7 +3466,7 @@ hald_singleton_device_removed (const char * command_line,
 	}
 
 	info->devices = g_list_remove_link (info->devices, lp);
-	g_list_free1 (lp);
+	g_list_free_1 (lp);
 
 	if (G_LIKELY (info->connection)) {
 		singleton_signal_device_changed (info->connection, device, FALSE);
