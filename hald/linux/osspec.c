@@ -677,6 +677,38 @@ computer_probing_pm_is_supported_helper_done (HalDevice *d, guint32 exit_type,
         decode_dmi (d);
 }
 
+static void
+get_primary_videocard (HalDevice *d)
+{
+        GDir *dir;
+        const char *name;
+
+        dir = g_dir_open ("/sys/bus/pci/devices", 0, NULL);
+        if (dir == NULL)
+                goto out;
+        while ((name = g_dir_read_name (dir)) != NULL) {
+                int class;
+                char *path;
+                path = g_strdup_printf ("/sys/bus/pci/devices/%s", name);
+                if (hal_util_get_int_from_file (path, "class", &class, 0) && (class&0xffff00) == 0x030000 ) {
+                        int vendor, device;
+                        if (hal_util_get_int_from_file (path, "vendor", &vendor, 0) &&
+                            hal_util_get_int_from_file (path, "device", &device, 0)) {
+                                HAL_INFO (("got %x:%x as primary videocard", vendor, device));
+                                hal_device_property_set_int (d, "system.hardware.primary_video.vendor", vendor);
+                                hal_device_property_set_int (d, "system.hardware.primary_video.product", device);
+                                g_free (path);
+                                g_dir_close (dir);
+                                goto out;
+                        }
+                }
+                g_free (path);
+        }
+        g_dir_close (dir);
+out:
+        ;
+}
+
 void 
 osspec_probe (void)
 {
@@ -707,6 +739,9 @@ osspec_probe (void)
 	 *	 support compiled into the kernel.
 	 */
 	set_suspend_hibernate_keys (root);
+
+        /* set the vendor/product of primary video card */
+        get_primary_videocard (root);
 
         /* Try and set the suspend/hibernate keys using pm-is-supported
          */
