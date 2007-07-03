@@ -229,10 +229,10 @@ battery_refresh (HalDevice *d, APMDevHandler *handler)
 		hal_device_property_set_bool (d, "battery.rechargeable.is_discharging", is_discharging);
 
 		/* set the percentage charge, easy. */
-		remaining_percentage = util_compute_percentage_charge (hal_device_get_udi (d), i.battery_percentage, 100);
+		remaining_percentage = i.battery_percentage;
 	
 		/* Only set keys if no error (signified with negative return value) */
-		if (remaining_percentage > 0)
+		if (remaining_percentage >= 0 && remaining_percentage <= 100)
 			hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
 		else
 			hal_device_property_remove (d, "battery.charge_level.percentage");
