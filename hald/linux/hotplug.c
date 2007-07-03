@@ -89,9 +89,10 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 						     "linux.sysfs_path",
 						     hotplug_event->sysfs.sysfs_path);
 
-	/* FIXME: we should reprobe the device instead of skipping the event */
+	/* we should refresh the device when we get a uevent */
 	if (d != NULL && hotplug_event->action == HOTPLUG_ACTION_ADD) {
-		HAL_ERROR (("devpath %s already present in the store, ignore event", hotplug_event->sysfs.sysfs_path));
+		HAL_ERROR (("device %s already present in the store, so refreshing", hotplug_event->sysfs.sysfs_path));
+		hotplug_event_refresh_dev (hotplug_event->sysfs.subsystem, d, (void *) hotplug_event);
 		hotplug_event_end ((void *) hotplug_event);
 		return;
 	}

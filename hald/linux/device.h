@@ -41,6 +41,7 @@ void hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_pat
 				  void *end_token);
 
 void hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path, void *end_token);
+void hotplug_event_refresh_dev (const gchar *subsystem, HalDevice *d, void *end_token);
 
 gboolean dev_rescan_device (HalDevice *d);
 

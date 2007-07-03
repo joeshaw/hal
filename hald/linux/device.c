@@ -2974,6 +2974,7 @@ struct DevHandler_s
 	const gchar *(*get_prober)(HalDevice *d);
 	gboolean (*post_probing) (HalDevice *d);
 	gboolean (*compute_udi) (HalDevice *d);
+	gboolean (*refresh) (HalDevice *d);
 	gboolean (*remove) (HalDevice *d);
 };
 
@@ -3517,6 +3518,31 @@ hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path,
 out:
 	;
 }
+
+void
+hotplug_event_refresh_dev (const gchar *subsystem, HalDevice *d, void *end_token)
+{
+	guint i;
+	DevHandler *handler;
+
+	HAL_INFO (("remove_dev: subsys=%s", subsystem));
+
+	for (i = 0; dev_handlers [i] != NULL; i++) {
+		handler = dev_handlers[i];
+		if (strcmp (handler->subsystem, subsystem) == 0) {
+			if (handler->refresh != NULL) {
+				handler->refresh (d);
+			}
+			goto out;
+		}
+	}
+
+	/* didn't find anything - thus, ignore this hotplug event */
+	hotplug_event_end (end_token);
+out:
+	;
+}
+
 
 static void 
 dev_rescan_device_done (HalDevice *d, 
