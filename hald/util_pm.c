@@ -1,7 +1,7 @@
 /***************************************************************************
- * CVSID: $Id$
  *
- * utili_pm.c - Various Powermanagement related utilities
+ * util_pm.c - Various power management related utilities that do not need
+ *             to use HalDevice. This is suitable to use in addons and probers.
  *
  * Copyright (C) 2005 Richard Hughes <richard@hughsie.com>
  * Copyright (C) 2005 Danny Kukawka <danny.kukawka@web.de>
@@ -81,47 +81,6 @@ util_get_battery_technology (const char *type)
 		return "lithium-iron-phosphate";
 	}
 	return "unknown";
-}
-
-/**  
- *  util_compute_percentage_charge:
- *  @id:                 Optional ID given to this battery. Unused at present.
- *  @chargeLevel:        The current charge level of the battery (typically mWh)
- *  @chargeLastFull:     The last "full" charge of the battery (typically mWh)
- *  Returns:             Percentage, -1 if invalid
- *
- *  Given all the required parameters, this function will return the percentage
- *  charge remaining. There are lots of checks here as ACPI is often broken.
- */
-int 
-util_compute_percentage_charge (const char *id,
-			     int chargeLevel,
-			     int chargeLastFull)
-{
-	int percentage;
-	/* make sure we have chargelevel */
-	if (chargeLevel <= 0) {
-		HAL_WARNING (("chargeLevel %i, returning -1!", chargeLevel));
-		return -1;
-	}
-	/* make sure not division by zero */
-	if (chargeLastFull > 0)
-		percentage = ((double) chargeLevel / (double) chargeLastFull) * 100;
-	else {
-		HAL_WARNING (("chargeLastFull %i, percentage returning -1!", chargeLastFull));
-		return -1;
-	}
-	/* Some bios's will report this higher than 100, limit it here */
-	if (percentage > 100) {
-		HAL_WARNING (("Percentage %i, returning 100!", percentage));
-		return 100;
-	}
-	/* Something really isn't right if we get a negative... */
-	if (percentage < 0) {
-		HAL_WARNING (("Percentage %i, returning -1!", percentage));
-		return -1;
-	}
-	return percentage;
 }
 
 /**  
