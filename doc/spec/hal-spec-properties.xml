@@ -2879,6 +2879,26 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>system.hardware.primary_video.vendor</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The PCI vendor ID of the primary graphics card in the system.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.hardware.primary_video.product</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The PCI device ID of the primary graphics card in the system.
+              </entry>
+            </row>
+            <row>
+              <entry>
                 <literal>system.firmware.vendor</literal> (string)
               </entry>
               <entry></entry>
