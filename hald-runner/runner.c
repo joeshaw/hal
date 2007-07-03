@@ -4,6 +4,7 @@
  * runner.c - Process running code
  *
  * Copyright (C) 2006 Sjoerd Simons, <sjoerd@luon.net>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -48,6 +49,7 @@
 #define HALD_RUN_KILLED 0x4
 
 GHashTable *udi_hash = NULL;
+GList *singletons = NULL;
 
 typedef struct {
 	run_request *r;
@@ -128,15 +130,19 @@ send_reply(DBusConnection *con, DBusMessage *msg, guint32 exit_type, gint32 retu
 }
 
 static void
-remove_from_hash_table(run_data *rd)
+remove_run_data(run_data *rd)
 {
 	GList *list;
 
-	/* Remove to the hashtable */
-	list = (GList *)g_hash_table_lookup(udi_hash, rd->r->udi);
-	list = g_list_remove(list, rd);
-	/* The hash table will take care to not leak the dupped string */
-	g_hash_table_insert(udi_hash, g_strdup(rd->r->udi), list);
+	if (rd->r->is_singleton) {
+		singletons = g_list_remove(singletons, rd);
+	} else {
+		/* Remove to the hashtable */
+		list = (GList *)g_hash_table_lookup(udi_hash, rd->r->udi);
+		list = g_list_remove(list, rd);
+		/* The hash table will take care to not leak the dupped string */
+		g_hash_table_insert(udi_hash, g_strdup(rd->r->udi), list);
+	}
 }
 
 static void
@@ -170,7 +176,7 @@ run_exited(GPid pid, gint status, gpointer data)
 	free_string_array(error);
 
 out:
-	remove_from_hash_table(rd);
+	remove_run_data (rd);
 		
 	/* emit a signal that this PID exited */
 	if(rd->con != NULL && rd->emit_pid_exited) {
@@ -200,7 +206,7 @@ run_timedout(gpointer data) {
 	rd->sent_kill = TRUE;
 
 	send_reply(rd->con, rd->msg, HALD_RUN_TIMEOUT, 0, NULL);
-	remove_from_hash_table(rd);
+	remove_run_data (rd);
 	return FALSE;
 }
 
@@ -300,12 +306,16 @@ run_request_run (run_request *r, DBusConnection *con, DBusMessage *msg, GPid *ou
 	else
 		rd->timeout = 0;
 
-	/* Add to the hashtable */
-	list = (GList *)g_hash_table_lookup(udi_hash, r->udi);
-	list = g_list_prepend(list, rd);
+	if (r->is_singleton) {
+		singletons = g_list_prepend(singletons, rd);
+	} else {
+		/* Add to the hashtable */
+		list = (GList *)g_hash_table_lookup(udi_hash, r->udi);
+		list = g_list_prepend(list, rd);
 
-	/* The hash table will take care to not leak the dupped string */
-	g_hash_table_insert(udi_hash, g_strdup(r->udi), list);
+		/* The hash table will take care to not leak the dupped string */
+		g_hash_table_insert(udi_hash, g_strdup(r->udi), list);
+	}
 
 	/* send back PID if requested.. and only emit StartedProcessExited in this case */
 	if (out_pid != NULL) {
@@ -363,6 +373,7 @@ void
 run_kill_all()
 {
 	g_hash_table_foreach_remove(udi_hash, hash_kill_udi, NULL);
+	g_list_foreach(singletons, kill_rd, NULL);
 }
 
 void

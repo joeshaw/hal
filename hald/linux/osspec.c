@@ -297,6 +297,8 @@ GIOChannel *get_mdstat_channel (void)
 void
 osspec_privileged_init (void)
 {
+	GError *err = NULL;
+
         file_monitor = hal_file_monitor_new ();
         if (file_monitor == NULL) {
                 DIE (("Cannot initialize file monitor"));
@@ -305,10 +307,20 @@ osspec_privileged_init (void)
 	/* watch /proc/mdstat for md changes
 	 * kernel 2.6.19 throws a POLLPRI event for every change
 	 */
-	mdstat_channel = g_io_channel_new_file ("/proc/mdstat", "r", NULL);
-	if (mdstat_channel == NULL)
-		DIE (("Unable to read /proc/mdstat"));
-	g_io_add_watch (mdstat_channel, G_IO_PRI, mdstat_changed_event, NULL);
+	mdstat_channel = g_io_channel_new_file ("/proc/mdstat", "r", &err);
+	if (mdstat_channel != NULL) {
+		g_io_add_watch (mdstat_channel, G_IO_PRI, mdstat_changed_event, NULL);
+	} else {
+		if (err != NULL)
+			HAL_WARNING (("Unable to open /proc/mdstat: %s", err->message));
+
+		/* if its not a reasonable error, abort */
+		if (!g_error_matches (err, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+			DIE (("Unable to read /proc/mdstat"));
+	}
+	
+	if (err != NULL)
+		g_error_free (err);
 }
 
 void

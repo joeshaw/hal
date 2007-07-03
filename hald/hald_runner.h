@@ -5,6 +5,7 @@
  * hald_runner.h - Interface to the hal runner helper daemon
  *
  * Copyright (C) 2006 Sjoerd Simons <sjoerd@luon.net>
+ * Copyright (C) 2007 Codethink Ltd. Author Rob Taylor <rob.taylor@codethink.co.uk>
  *
  * Licensed under the Academic Free License version 2.1
  *
@@ -60,6 +61,11 @@ hald_runner_stop_runner(void);
 gboolean
 hald_runner_start (HalDevice *device, const gchar *command_line, char **extra_env, 
 		   HalRunTerminatedCB cb, gpointer data1, gpointer data2);
+
+gboolean
+hald_runner_start_singleton (const gchar * command_line,
+			     char **extra_env, HalRunTerminatedCB cb,
+			     gpointer data1, gpointer data2);
 
 /* Run a helper program using the commandline, with input as infomation on
  * stdin */

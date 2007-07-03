@@ -36,6 +36,7 @@ typedef struct {
 	gchar **argv;
 	gchar *input;
 	gboolean error_on_stderr;
+	gboolean is_singleton;
 	guint32 timeout;
 } run_request;
 

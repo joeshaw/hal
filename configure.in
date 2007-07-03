@@ -470,14 +470,32 @@ if test "x$enable_console_kit" != "xno"; then
    msg_conkit=yes
 fi
 
+AC_PATH_PROG(GPERF, [gperf], [no])
+AC_MSG_CHECKING([whether to rebuild gperf header files])
+if test x$GPERF = xno ; then
+    have_gperf=no
+else
+    have_gperf=yes
+fi
+AC_SUBST(HAVE_GPERF)
+AM_CONDITIONAL(HAVE_GPERF, [test x$have_gperf = xyes])
+
 AC_ARG_WITH([keymaps], AS_HELP_STRING([--with-keymaps], [Re-map multimedia keys (auto)]))
 BUILD_KEYMAPS=no
-if test "x$with_keymaps" = "xyes" ; then
-   BUILD_KEYMAPS=yes
+if test "x$with_keymaps" = "xyes"; then
+   if test "x$have_gperf" = "xyes"; then
+      BUILD_KEYMAPS=yes
+   else
+      BUILD_KEYMAPS=no
+   fi
 elif test "x$with_keymaps" = "x" ; then
   case "${HALD_BACKEND}" in
     linux)
-      BUILD_KEYMAPS=yes
+      if test "x$have_gperf" = "xyes"; then
+        BUILD_KEYMAPS=yes
+      else
+        BUILD_KEYMAPS=no
+      fi
       ;;
     *)
       ;;
@@ -657,16 +675,6 @@ if test x$XMLLINT = xno ; then
 else
     have_xmllint=yes
 fi
-
-AC_PATH_PROG(GPERF, [gperf], [no])
-AC_MSG_CHECKING([whether to rebuild gperf header files])
-if test x$GPERF = xno ; then
-    have_gperf=no
-else
-    have_gperf=yes
-fi
-AC_SUBST(HAVE_GPERF)
-AM_CONDITIONAL(HAVE_GPERF, [test x$have_gperf = xyes])
 
 if test x$enable_docbook_docs = xauto ; then
     if test x$have_xmlto = xno || test x$have_xmllint = xno ; then
@@ -1001,6 +1009,7 @@ echo "
         use libusb:                  ${USE_LIBUSB}
         use libpci:                  ${USE_LIBPCI}
         use libparted:               ${USE_PARTED}
+        use gperf:                   ${have_gperf}
         use PolicyKit:               ${msg_polkit}
         use ConsoleKit:              ${msg_conkit}
         use ACL management:          ${msg_aclmgmt}
@@ -1014,7 +1023,7 @@ echo "
         Macbook Pro utils:           ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
         OMAP utils:                  ${BUILD_OMAP} (Linux only, arm only)
         CPU frequency scaling:       ${BUILD_CPUFREQ} (Linux only)
-        Re-map multimedia keys:      ${BUILD_KEYMAPS} (Linux only)
+        Re-map multimedia keys:      ${BUILD_KEYMAPS} (Linux only, requires gperf)
         Forward IBM ACPI events:     ${BUILD_ACPI_IBM} (Linux only)
         Forward Toshiba ACPI events: ${BUILD_ACPI_TOSHIBA} (Linux only)
 	USB wireless mouse power:    ${BUILD_USBCSR} (Linux only, requires libusb)
