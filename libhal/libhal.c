@@ -3883,7 +3883,7 @@ libhal_device_addon_is_ready (LibHalContext *ctx,
 /**
  * libhal_device_singleton_addon_is_ready:
  * @ctx: the context for the connection to hald
- * @commandline: commandline singleton was started with
+ * @command_line: commandline singleton was started with
  * @error: pointer to an initialized dbus error object for returning errors or NULL
  *
  * HAL singleton addon's must call this method when they are done initializing the device object. The HAL
