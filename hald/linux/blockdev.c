@@ -95,6 +95,7 @@ blockdev_compute_udi (HalDevice *d)
 					      hal_device_property_get_int (d, "volume.partition.number"),
 					      hal_device_property_get_uint64 (d, "volume.size"));
 		}
+		g_free(volumelabel);
 	} else {
 		const char *model;
 		const char *serial;
