@@ -44,12 +44,15 @@
 #include <dbus/dbus-glib.h>
 
 #include "../device_info.h"
+#include "../device_pm.h"
 #include "../device_store.h"
 #include "../hald.h"
+#include "../hald_dbus.h"
 #include "../hald_runner.h"
 #include "../logger.h"
 #include "../osspec.h"
 #include "../util.h"
+#include "../util_pm.h"
 #include "../ids.h"
 
 #include "coldplug.h"
@@ -2891,6 +2894,316 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 }
 
 static gboolean
+power_supply_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	const char *dir;
+	const char *name;
+
+	dir = hal_device_property_get_string (d, "linux.sysfs_path");
+
+	name = hal_util_get_last_element(dir);
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_power_supply",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+static void
+refresh_ac_adapter (HalDevice *d)
+{
+	const char *path;
+	gboolean present = FALSE;
+
+	path = hal_device_property_get_string (d, "linux.sysfs_path");
+	if (path == NULL)
+		return;
+
+	if (hal_util_get_bool_from_file (path, "online", &present, "1") == FALSE) {
+		/* if we can't read the property, assume on ac */
+		present = TRUE;
+	}
+
+	hal_device_property_set_bool (d, "ac_adapter.present", present);
+}
+
+static void
+refresh_battery_fast (HalDevice *d)
+{
+	gint percentage = 0;
+	gint voltage_now = 0;
+	gint voltage_design = 0;
+	gint current = 0;
+	gint time = 0;
+	gint value_now = 0;
+	gint value_last_full = 0;
+	gint value_full_design = 0;
+	gboolean present = FALSE;
+	gboolean could_be_mah = TRUE;
+	gboolean could_be_mwh = TRUE;
+	gboolean is_mah = FALSE;
+	gboolean is_mwh = FALSE;
+	gboolean is_charging = FALSE;
+	gboolean is_discharging = FALSE;
+	gboolean got_time = FALSE;
+	gboolean got_percentage = FALSE;
+	const gchar *path;
+	const gchar *reporting_unit;
+	gchar *status;
+
+	path = hal_device_property_get_string (d, "linux.sysfs_path");
+	if (path == NULL)
+		return;
+
+	/* PRESENT */
+	if (hal_util_get_bool_from_file (path, "present", &present, "1")) {
+		hal_device_property_set_bool (d, "battery.present", present);
+	}
+	if (present == FALSE) {
+		/* remove all the optional keys associated with the cell */
+		device_pm_remove_optional_props (d);
+		return;
+	}
+
+	/* CAPACITY */
+	if (hal_util_get_int_from_file (path, "capacity", &percentage, 10)) {
+		/* sanity check */
+		if (percentage >= 0 && percentage <= 100)
+			got_percentage = TRUE;
+	}
+
+	/* VOLTAGE: we prefer the average if it exists, although present is still pretty good */
+	if (hal_util_get_int_from_file (path, "voltage_avg", &voltage_now, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.current", voltage_now / 1000);
+	} else if (hal_util_get_int_from_file (path, "voltage_now", &voltage_now, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.current", voltage_now / 1000);
+	}
+	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
+	}
+
+	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
+	if (hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
+		hal_device_property_set_int (d, "battery.current", current);
+	} else if (hal_util_get_int_from_file (path, "current_now", &current, 10)) {
+		hal_device_property_set_int (d, "battery.current", current);
+	}
+
+	/* STATUS: Convert to charging/discharging state */
+	status = hal_util_get_string_from_file (path, "status");
+	if (status != NULL) {
+		if (strcasecmp (status, "charging") == 0) {
+			is_charging = TRUE;
+		} else if (strcasecmp (status, "discharging") == 0) {
+			is_discharging = TRUE;
+		}
+		hal_device_property_set_bool (d, "battery.is_charging", is_charging);
+		hal_device_property_set_bool (d, "battery.is_charging", is_discharging);
+	}
+
+	/* TIME: Some batteries only provide time to discharge */
+	if (is_charging == TRUE) {
+		if (hal_util_get_int_from_file (path, "time_to_full_avg", &time, 10) ||
+		    hal_util_get_int_from_file (path, "time_to_full_now", &time, 10)) {
+			got_time = TRUE;
+		}
+	} else if (is_discharging == TRUE) {
+		if (hal_util_get_int_from_file (path, "time_to_empty_avg", &time, 10) ||
+		    hal_util_get_int_from_file (path, "time_to_empty_now", &time, 10)) {
+			got_time = TRUE;
+		}
+	}
+
+	/* Have we already got information about the reporting unit?
+	 * If we have, we can save a lots of file reads */
+	reporting_unit = hal_device_property_get_string (d, "battery.reporting.unit");
+	if (reporting_unit != NULL) {
+		if (strcasecmp (reporting_unit, "mah") == 0) {
+			could_be_mwh = FALSE;
+		} else if (strcasecmp (reporting_unit, "mwh") == 0) {
+			could_be_mah = FALSE;
+		}
+	}
+
+	/* ENERGY (reported in uWh, so need to convert to mWh) */
+	if (could_be_mwh) {
+		if (hal_util_get_int_from_file (path, "energy_avg", &value_now, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
+			is_mwh = TRUE;
+		} else if (hal_util_get_int_from_file (path, "energy_now", &value_now, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
+			is_mwh = TRUE;
+		}
+		if (hal_util_get_int_from_file (path, "energy_full", &value_last_full, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.last_full", value_last_full / 1000);
+			is_mwh = TRUE;
+		}
+		if (hal_util_get_int_from_file (path, "energy_full_design", &value_full_design, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
+			is_mwh = TRUE;
+		}
+	}
+
+	/* CHARGE (reported in uAh, so need to convert to mAh) */
+	if (could_be_mah) {
+		if (hal_util_get_int_from_file (path, "charge_avg", &value_now, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
+			is_mah = TRUE;
+		} else if (hal_util_get_int_from_file (path, "charge_now", &value_now, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
+			is_mah = TRUE;
+		}
+		if (hal_util_get_int_from_file (path, "charge_full", &value_last_full, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.last_full", value_last_full / 1000);
+			is_mah = TRUE;
+		}
+		if (hal_util_get_int_from_file (path, "charge_full_design", &value_full_design, 10)) {
+			hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
+			is_mah = TRUE;
+		}
+	}
+
+	/* record these for future savings */
+	if (is_mwh == TRUE) {
+		hal_device_property_set_string (d, "battery.reporting.unit", "mWh");
+	} else if (is_mah == TRUE) {
+		hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+	}
+
+	/* we've now got the 'reporting' keys, now we need to populate the
+	 * processed 'charge_level' keys so stuff like desktop power managers
+	 * do not have to deal with odd quirks */
+	device_pm_abstract_props (d);
+
+	/* if we have not read from the hardware, then calculate */
+	if (got_percentage) {
+		hal_device_property_set_int (d, "battery.charge_level.percentage", percentage);
+	} else {
+		device_pm_calculate_percentage (d);
+	}
+
+	/* if we havn't got time from the hardware, then try to calculate it */
+	if (got_time) {
+		/* zero time isn't displayed */
+		if (time > 0)
+			hal_device_property_set_int (d, "battery.remaining_time", time);
+		else
+			hal_device_property_remove (d, "battery.remaining_time");
+	} else {
+		device_pm_calculate_time (d);
+	}
+}
+
+static void
+refresh_battery_slow (HalDevice *d)
+{
+	const char *technology;
+	char *technology_raw;
+	char *model_name;
+	char *manufacturer;
+	const gchar *path;
+
+	path = hal_device_property_get_string (d, "linux.sysfs_path");
+	if (path == NULL)
+		return;
+
+	/* get battery technology */
+	technology_raw = hal_util_get_string_from_file (path, "technology");
+	if (technology_raw != NULL) {
+		hal_device_property_set_string (d, "battery.reporting.technology", technology_raw);
+	}
+	/* we set this, even if it's unknown */
+	technology = util_get_battery_technology (technology_raw);
+	hal_device_property_set_string (d, "battery.technology", technology);
+
+	/* get product name */
+	model_name = hal_util_get_string_from_file (path, "technology");
+	if (model_name != NULL) {
+		hal_device_property_set_string (d, "info.product", model_name);
+	} else {
+		hal_device_property_set_string (d, "info.product", "Generic Battery Device");
+	}
+
+	/* get manufacturer */
+	manufacturer = hal_util_get_string_from_file (path, "manufacturer");
+	if (manufacturer != NULL) {
+		hal_device_property_set_string (d, "battery.vendor", manufacturer);
+	}
+
+	/* now do stuff that happens quickly */
+	refresh_battery_fast (d);
+}
+
+static gboolean
+power_supply_refresh (HalDevice *d)
+{
+	const gchar *type;
+	type = hal_device_property_get_string (d, "info.category");
+	if (type == NULL) {
+		return FALSE;
+	}
+	if (strcmp (type, "ac_adapter") == 0) {
+		device_property_atomic_update_begin ();
+		refresh_ac_adapter (d);
+		device_property_atomic_update_end ();
+	} else if (strcmp (type, "battery") == 0) {
+		device_property_atomic_update_begin ();
+		refresh_battery_slow (d);
+		device_property_atomic_update_end ();
+	} else {
+		HAL_WARNING (("Could not recognise power_supply type!"));
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static HalDevice *
+power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev,
+		  const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d = NULL;
+	gboolean is_battery = FALSE;
+	gboolean is_ac_adapter = FALSE;
+	char *type = NULL;
+
+	/* power_supply devices are very odd, they might be batteries or ac-adapters */
+	type = hal_util_get_string_from_file (sysfs_path, "type");
+	if (type == NULL) {
+		/* we don't need to free */
+		goto finish;
+	}
+	if (strcasecmp (type, "battery") == 0) {
+		is_battery = TRUE;
+	} else if (strcasecmp (type, "mains") == 0) {
+		is_ac_adapter = TRUE;
+	} else {
+		HAL_WARNING (("Power supply is neither ac_adapter or battery!"));
+		goto finish;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+
+	if (is_battery == TRUE) {
+		hal_device_property_set_string (d, "info.category", "battery");
+		refresh_battery_slow (d);
+		hal_device_add_capability (d, "battery");
+	}
+
+	if (is_ac_adapter == TRUE) {
+		hal_device_property_set_string (d, "info.category", "ac_adapter");
+		hal_device_property_set_string (d, "info.product", "Generic AC Adapter Device");
+		refresh_ac_adapter (d);
+		hal_device_add_capability (d, "ac_adapter");
+	}
+finish:
+	return d;
+}
+
+static gboolean
 backlight_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
@@ -3237,6 +3550,15 @@ static DevHandler dev_handler_backlight =
        .remove       = dev_remove
 };
 
+static DevHandler dev_handler_power_supply =
+{
+       .subsystem    = "power_supply",
+       .add          = power_supply_add,
+       .refresh      = power_supply_refresh,
+       .compute_udi  = power_supply_compute_udi,
+       .remove       = dev_remove
+};
+
 /* SCSI debug, to test thousends of fake devices */
 static DevHandler dev_handler_pseudo = {
 	.subsystem   = "pseudo",
@@ -3279,6 +3601,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_mmc_host,
 	&dev_handler_backlight,
 	&dev_handler_firewire,
+	&dev_handler_power_supply,
 	NULL
 };
 
