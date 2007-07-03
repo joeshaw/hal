@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "../device_info.h"
+#include "../device_pm.h"
 #include "../hald_dbus.h"
 #include "../logger.h"
 #include "../util.h"
@@ -84,20 +85,6 @@ static void
 battery_refresh_poll (HalDevice *d)
 {
 	const char *path;
-	const char *reporting_unit;
-	int reporting_current;
-	int reporting_lastfull;
-	int reporting_rate;
-	int normalised_current;
-	int normalised_lastfull;
-	int normalised_rate;
-	int design_voltage;
-	int voltage;
-	int remaining_time;
-	int remaining_percentage;
-	gboolean charging;
-	gboolean discharging;
-
 	path = hal_device_property_get_string (d, "linux.acpi_path");
 	if (path == NULL)
 		return;
@@ -124,126 +111,17 @@ battery_refresh_poll (HalDevice *d)
 	 */
 	hal_util_set_int_elem_from_file (d, "battery.voltage.current", path,
 					 "state", "present voltage", 0, 10, TRUE);
-	/* get all the data we know */
-	reporting_unit = hal_device_property_get_string (d,
-					"battery.reporting.unit");
-	reporting_current = hal_device_property_get_int (d,
-					"battery.reporting.current");
-	reporting_lastfull = hal_device_property_get_int (d,
-					"battery.reporting.last_full");
-	reporting_rate = hal_device_property_get_int (d,
-					"battery.reporting.rate");
 
-	/*
-	 * ACPI gives out the special 'Ones' value for rate when it's unable
-	 * to calculate the true rate. We should set the rate zero, and wait
-	 * for the BIOS to stabilise.
-	 *
-	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=348201
-	 */
-	if (reporting_rate == 0xffff) {
-		reporting_rate = 0;
-	}
+	/* we've now got the 'reporting' keys, now we need to populate the
+	 * processed 'charge_level' keys so stuff like desktop power managers
+	 * do not have to deal with odd quirks */
+	device_pm_abstract_props (d);
 
-	/*
-	 * We are converting the unknown units into mWh because of ACPI's nature
-	 * of not having a standard "energy" unit.
-	 *
-	 * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=309944
-	 */
-	if (reporting_unit && strcmp (reporting_unit, "mAh") == 0) {
-		/* convert mAh to mWh by multiplying by voltage.  due to the
-		 * general wonkiness of ACPI implementations, this is a lot
-		 * harder than it should have to be...
-		 */
+	/* we calculate this more precisely */
+	device_pm_calculate_percentage (d);	
 
-		design_voltage = hal_device_property_get_int (d, "battery.voltage.design");
-		voltage = hal_device_property_get_int (d, "battery.voltage.current");
-
-		/* Just in case we don't get design voltage information, then
-		 * this will pretend that we have 1V.  This degrades our
-		 * ability to report accurate times on multi-battery systems
-		 * but will always prevent negative charge levels and allow
-		 * accurate reporting on single-battery systems.
-		 */
-		if (design_voltage <= 0)
-			design_voltage = 1000; /* mV */
-
-		/* If the current voltage is unknown, smaller than 50% of design voltage (fd.o #8593) 
-		 * or greater than design, then use design voltage.
-		 */
-		if (voltage < (design_voltage/2)  || voltage > design_voltage) {
-			HAL_DEBUG (("Current voltage is unknown, smaller than 50%% or greater than design"));
-			voltage = design_voltage;
-		}
-
-		normalised_current = (reporting_current * voltage) / 1000;
-		normalised_lastfull = (reporting_lastfull * voltage) / 1000;
-		normalised_rate = (reporting_rate * voltage) / 1000;
-	} else {
-		/*
-		 * handle as if mWh (which don't need conversion), which is the most common case.
-		 */
-		normalised_current = reporting_current;
-		normalised_lastfull = reporting_lastfull;
-		normalised_rate = reporting_rate;
-	}
-
-	/*
-	 * Set the normalised keys.
-	 */
-	if (normalised_current < 0)
-		normalised_current = 0;
-	if (normalised_lastfull < 0)
-		normalised_lastfull = 0;
-	if (normalised_rate < 0)
-		normalised_rate = 0;
-
-	/*
-	 * Some laptops report a rate even when not charging or discharging.
-	 * If not charging and not discharging force rate to be zero.
-         *
-         * http://bugzilla.gnome.org/show_bug.cgi?id=323186
-	 */
-	charging = hal_device_property_get_bool (d, "battery.rechargeable.is_charging");
-	discharging = hal_device_property_get_bool (d, "battery.rechargeable.is_discharging");
-
-	if (!charging && !discharging)
-		normalised_rate = 0;
-
-	/*
-	 * Some laptops report current charge much larger than
-	 * full charge when at 100%.  Clamp back down to 100%.
-	 */
-	if (normalised_current > normalised_lastfull)
-	  	normalised_current = normalised_lastfull;
-
-	hal_device_property_set_int (d, "battery.charge_level.current", normalised_current);
-	hal_device_property_set_int (d, "battery.charge_level.last_full", normalised_lastfull);
-	hal_device_property_set_int (d, "battery.charge_level.rate", normalised_rate);
-
-	remaining_time = util_compute_time_remaining (
-		hal_device_get_udi (d), 
-		normalised_rate, normalised_current, normalised_lastfull,
-		hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
-		hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
-		hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
-	remaining_percentage = util_compute_percentage_charge (hal_device_get_udi (d), normalised_current, normalised_lastfull);
-	/*
-	 * Only set keys if no error (signified with negative return value)
-	 * Scrict checking is needed to ensure that the values presented by HAL
-	 * are 100% acurate.
-	 */
-
-	if (remaining_time > 0)
-		hal_device_property_set_int (d, "battery.remaining_time", remaining_time);
-	else
-		hal_device_property_remove (d, "battery.remaining_time");
-
-	if (remaining_percentage > 0)
-		hal_device_property_set_int (d, "battery.charge_level.percentage", remaining_percentage);
-	else
-		hal_device_property_remove (d, "battery.charge_level.percentage");
+	/* try to calculate the time accurately (sic) using the rate */
+	device_pm_calculate_time (d);
 }
 
 /** 
@@ -418,54 +296,6 @@ ac_adapter_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_r
 }
 
 /** 
- *  battery_refresh_remove:
- *  @d:		Valid battery HalDevice
- *
- *  Removes all the possible battery.* keys. 
- *
- *  Note: Removing a key that doesn't exist is OK.
- */
-static void
-battery_refresh_remove (HalDevice *d)
-{
-	hal_device_property_remove (d, "battery.is_rechargeable");
-	hal_device_property_remove (d, "battery.rechargeable.is_charging");
-	hal_device_property_remove (d, "battery.rechargeable.is_discharging");
-	hal_device_property_remove (d, "battery.vendor");
-	hal_device_property_remove (d, "battery.model");
-	hal_device_property_remove (d, "battery.serial");
-	hal_device_property_remove (d, "battery.reporting.technology");
-	hal_device_property_remove (d, "battery.technology");
-	hal_device_property_remove (d, "battery.vendor");
-	hal_device_property_remove (d, "battery.charge_level.unit");
-	hal_device_property_remove (d, "battery.charge_level.current");
-	hal_device_property_remove (d, "battery.charge_level.percentage");
-	hal_device_property_remove (d, "battery.charge_level.last_full");
-	hal_device_property_remove (d, "battery.charge_level.design");
-	hal_device_property_remove (d, "battery.charge_level.capacity_state");
-	hal_device_property_remove (d, "battery.charge_level.warning");
-	hal_device_property_remove (d, "battery.charge_level.low");
-	hal_device_property_remove (d, "battery.charge_level.granularity_1");
-	hal_device_property_remove (d, "battery.charge_level.granularity_2");
-	hal_device_property_remove (d, "battery.charge_level.rate");
-	hal_device_property_remove (d, "battery.voltage.unit");
-	hal_device_property_remove (d, "battery.voltage.design");
-	hal_device_property_remove (d, "battery.voltage.current");
-	hal_device_property_remove (d, "battery.alarm.unit");
-	hal_device_property_remove (d, "battery.alarm.design");
-	hal_device_property_remove (d, "battery.reporting.current");
-	hal_device_property_remove (d, "battery.reporting.last_full");
-	hal_device_property_remove (d, "battery.reporting.design");
-	hal_device_property_remove (d, "battery.reporting.rate");
-	hal_device_property_remove (d, "battery.reporting.warning");
-	hal_device_property_remove (d, "battery.reporting.low");
-	hal_device_property_remove (d, "battery.reporting.granularity_1");
-	hal_device_property_remove (d, "battery.reporting.granularity_2");
-	hal_device_property_remove (d, "battery.reporting.unit");
-	hal_device_property_remove (d, "battery.remaining_time");
-}
-
-/** 
  *  battery_refresh_add:
  *  @d:		Valid battery HalDevice
  *
@@ -505,10 +335,8 @@ battery_refresh_add (HalDevice *d, const char *path)
 						util_get_battery_technology (technology));
 	}
 
-	/*
-	 * we'll use the .reporting prefix as we don't know
-	 * if this data is energy (mWh) or unit enery (mAh)
-	 */
+	/* we'll use the .reporting prefix as we don't know
+	 * if this data is energy (mWh) or unit enery (mAh) */
 	hal_util_set_string_elem_from_file (d, "battery.reporting.unit", path,
 					 "info", "design capacity", 1, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.reporting.last_full", path,
@@ -523,19 +351,15 @@ battery_refresh_add (HalDevice *d, const char *path)
 					 "info", "capacity granularity 1", 0, 10, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.reporting.granularity_2", path,
 					 "info", "capacity granularity 2", 0, 10, TRUE);
-	/*
-	 * we'll need this is we want to convert mAh to mWh
-	 */
+	/* we'll need this is we want to convert mAh to mWh */
 	hal_util_set_string_elem_from_file (d, "battery.voltage.unit", path, "info",
 					    "design voltage", 1, TRUE);
 	hal_util_set_int_elem_from_file (d, "battery.voltage.design", path,
 					 "info", "design voltage", 0, 10, TRUE);
-	/*
-	 * Convert the mWh or mAh units into mWh...
-	 * We'll do as many as we can here as the values
-	 * are not going to change.
-	 * We'll set the correct unit (or unknown) also.
-	 */
+
+	/* Convert the mWh or mAh units into mWh...
+	 * We'll do as many as we can here as the values are not going to change.
+	 * We'll set the correct unit (or unknown) also. */
 	reporting_unit = hal_device_property_get_string (d, "battery.reporting.unit");
 	reporting_design = hal_device_property_get_int (d, "battery.reporting.design");
 	reporting_warning = hal_device_property_get_int (d, "battery.reporting.warning");
@@ -565,10 +389,8 @@ battery_refresh_add (HalDevice *d, const char *path)
 		/* set unit */
 		hal_device_property_set_string (d, "battery.charge_level.unit", "mWh"); /* not mAh! */
 	} else {
-		/*
-		 * Some ACPI BIOS's do not report the unit, so we'll assume they are mWh.
-		 * We will report the guessing with the battery.charge_level.unit key.
-		 */
+		/* Some ACPI BIOS's do not report the unit, so we'll assume they are mWh.
+		 * We will report the guessing with the battery.charge_level.unit key. */
 		hal_device_property_set_int (d, "battery.charge_level.design", reporting_design);
 		hal_device_property_set_int (d, "battery.charge_level.warning", reporting_warning);
 		hal_device_property_set_int (d, "battery.charge_level.low", reporting_low);
@@ -593,6 +415,10 @@ battery_refresh_add (HalDevice *d, const char *path)
 
 	/* we are assuming a laptop battery is rechargeable */
 	hal_device_property_set_bool (d, "battery.is_rechargeable", TRUE);
+
+	/* we need to populate the processed 'charge_level' keys handling odd quirks */
+	device_pm_abstract_props (d);
+
 	return TRUE;
 }
 
@@ -626,7 +452,7 @@ battery_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full_refr
 	if (!hal_device_property_get_bool (d, "battery.present")) {
 		/* remove battery.* tags as battery not present */
 		device_property_atomic_update_begin ();
-		battery_refresh_remove (d);
+		device_pm_remove_optional_props (d);
 		device_property_atomic_update_end ();		
 	} else {
 		/* battery is present */
