@@ -33,6 +33,8 @@
 #include <glib.h>
 
 #include "logger.h"
+#include "util_pm.h"
+#include "device_pm.h"
 #include "device_store.h"
 
 /** 
@@ -54,8 +56,6 @@ device_pm_abstract_props (HalDevice *d)
 	int normalised_rate;
 	int design_voltage;
 	int voltage;
-	int remaining_time;
-	int remaining_percentage;
 	gboolean charging;
 	gboolean discharging;
 

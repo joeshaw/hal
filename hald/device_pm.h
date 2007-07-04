@@ -26,6 +26,8 @@
 #ifndef DEVICE_PM_H
 #define DEVICE_PM_H
 
+#include "device.h"
+
 void device_pm_remove_optional_props (HalDevice *d);
 void device_pm_abstract_props (HalDevice *d);
 void device_pm_calculate_percentage (HalDevice *d);
