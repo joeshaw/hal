@@ -3167,6 +3167,7 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 	gboolean is_battery = FALSE;
 	gboolean is_ac_adapter = FALSE;
 	char *type = NULL;
+	const char *battery_type = NULL;
 
 	/* power_supply devices are very odd, they might be batteries or ac-adapters */
 	type = hal_util_get_string_from_file (sysfs_path, "type");
@@ -3176,6 +3177,13 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 	}
 	if (strcasecmp (type, "battery") == 0) {
 		is_battery = TRUE;
+		battery_type = "primary";
+	} else if (strcasecmp (type, "ups") == 0) {
+		is_battery = TRUE;
+		battery_type = "ups";
+	} else if (strcasecmp (type, "usb") == 0) {
+		is_battery = TRUE;
+		battery_type = "usb";
 	} else if (strcasecmp (type, "mains") == 0) {
 		is_ac_adapter = TRUE;
 	} else {
@@ -3189,6 +3197,8 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 
 	if (is_battery == TRUE) {
 		hal_device_property_set_string (d, "info.category", "battery");
+		if (battery_type != NULL)
+			hal_device_property_set_string (d, "battery.type", battery_type);
 		refresh_battery_slow (d);
 		hal_device_add_capability (d, "battery");
 	}
