@@ -2986,9 +2986,9 @@ refresh_battery_fast (HalDevice *d)
 
 	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
 	if (hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
-		hal_device_property_set_int (d, "battery.current", current);
+		hal_device_property_set_int (d, "battery.current", current / 1000);
 	} else if (hal_util_get_int_from_file (path, "current_now", &current, 10)) {
-		hal_device_property_set_int (d, "battery.current", current);
+		hal_device_property_set_int (d, "battery.current", current / 1000);
 	}
 
 	/* STATUS: Convert to charging/discharging state */
