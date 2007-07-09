@@ -3,6 +3,25 @@
 udevrulesdir = $(sysconfdir)/udev/rules.d
 udevrules_DATA = 90-hal.rules
 
+
+AM_CPPFLAGS = \
+	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
+	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
+	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
+	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
+	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
+	-DPACKAGE_SCRIPT_DIR=\""$(libdir)/hal/scripts"\" \
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
+	-I$(top_srcdir) -I$(top_srcdir)/libhal -I$(top_srcdir)/libhal-storage \
+	@DBUS_CFLAGS@ @GLIB_CFLAGS@ @POLKIT_CFLAGS@
+
+bin_PROGRAMS =                    \
+	 hal-ipw-killswitch-linux
+
+hal_ipw_killswitch_linux_SOURCES = hal-ipw-killswitch-linux.c
+hal_ipw_killswitch_linux_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
+
+
 scriptdir = $(libdir)/hal/scripts/linux
 
 script_SCRIPTS =					\

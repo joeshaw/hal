@@ -52,6 +52,17 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	echo "Access type not supported" >&2
 	exit 1
     fi
+elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "ipw" ] && [ -x /usr/bin/hal-ipw-killswitch-linux ]; then
+		/usr/bin/hal-ipw-killswitch-linux getrfkill
+		value=$?
+		if [ "$value" = "0" ]; then
+		    exit 1
+		elif [ "$value" = "1" ]; then
+		    exit 0
+		else
+		    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+		    echo "hal-ipw-killswitch-linux returned $value" >&2
+		fi
 else
     echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
     echo "Killswitch type not supported" >&2
