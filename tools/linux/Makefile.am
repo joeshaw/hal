@@ -15,7 +15,7 @@ AM_CPPFLAGS = \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal -I$(top_srcdir)/libhal-storage \
 	@DBUS_CFLAGS@ @GLIB_CFLAGS@ @POLKIT_CFLAGS@
 
-bin_PROGRAMS =                    \
+libexec_PROGRAMS =                    \
 	 hal-ipw-killswitch-linux
 
 hal_ipw_killswitch_linux_SOURCES = hal-ipw-killswitch-linux.c
