@@ -21,10 +21,12 @@
  *
  **************************************************************************/
 
-#include <libhal.h>
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
+#include <stdlib.h>
+
+#include <libhal.h>
 
 static LibHalContext *hal_ctx;
 
@@ -119,7 +121,7 @@ int main(int argc,char** argv) {
 		ret = 0;
 	}
 	
-	libhal_ctx_free (ctx);	
+	libhal_ctx_free (hal_ctx);
 
 	if (dbus_error_is_set (&error)) {
 		fprintf (stderr, "error: %s: %s\n", error.name, error.message);
