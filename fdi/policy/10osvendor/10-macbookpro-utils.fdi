@@ -5,7 +5,7 @@
   <!-- this is for Macbook Pro (LCD panel, light sensor, keyboard backlight) -->
   <device>
     <match key="system.kernel.name" string="Linux">
-      <match key="system.hardware.vendor" string="Apple Computer, Inc.">
+      <match key="system.hardware.vendor" string="Apple">
         <match key="system.hardware.product" string="MacBookPro1,1">
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
