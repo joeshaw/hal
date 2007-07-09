@@ -17,7 +17,7 @@ if test -z "$*"; then
   echo
 fi
 
-autoreconf --force --install || exit 1
+(cd $srcdir && autoreconf --force --install) || exit 1
 
 conf_flags="--enable-maintainer-mode --enable-gtk-doc"
 
