@@ -2999,8 +2999,8 @@ refresh_battery_fast (HalDevice *d)
 		} else if (strcasecmp (status, "discharging") == 0) {
 			is_discharging = TRUE;
 		}
-		hal_device_property_set_bool (d, "battery.is_charging", is_charging);
-		hal_device_property_set_bool (d, "battery.is_charging", is_discharging);
+		hal_device_property_set_bool (d, "battery.rechargeable.is_charging", is_charging);
+		hal_device_property_set_bool (d, "battery.rechargeable.is_discharging", is_discharging);
 	}
 
 	/* TIME: Some batteries only provide time to discharge */
