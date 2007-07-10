@@ -93,56 +93,48 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, 
 {
 	char buf[256];
 	const char *usage;
-	char *volume_label;
+	const char *type;
+	const char *type_version;
+	const char *label;
+	const char *uuid;
 	DBusError error;
 
 	dbus_error_init (&error);
 
-	switch (vid->usage_id) {
-	case VOLUME_ID_FILESYSTEM:
-		usage = "filesystem";
-		break;
-	case VOLUME_ID_OTHER:
-		usage = "other";
-		break;
-	case VOLUME_ID_RAID:
-		usage = "raid";
-		break;
-	case VOLUME_ID_CRYPTO:
-		usage = "crypto";
-		break;
-	case VOLUME_ID_UNUSED:
-		libhal_changeset_set_property_string (cs, "info.product", "Volume (unused)");
-		usage = "unused";
-		return;
-	default:
+	if (!volume_id_get_usage(vid, &usage))
 		usage = "";
-	}
-
 	libhal_changeset_set_property_string (cs, "volume.fsusage", usage);
 	HAL_DEBUG (("volume.fsusage = '%s'", usage));
 
-	if (!libhal_changeset_set_property_string (cs, "volume.fstype", vid->type))
+	if (!volume_id_get_type(vid, &type))
+		type = "";
+	if (!libhal_changeset_set_property_string (cs, "volume.fstype", type))
 		libhal_changeset_set_property_string (cs, "volume.fstype", "");
+	HAL_DEBUG(("volume.fstype = '%s'", type));
 
-	HAL_DEBUG(("volume.fstype = '%s'", vid->type));
+	if (!volume_id_get_type_version(vid, &type_version))
+		type_version = "";
+	libhal_changeset_set_property_string (cs, "volume.fsversion", type_version);
+	HAL_DEBUG(("volume.fsversion = '%s'", type_version));
 
-	if (vid->type_version[0] != '\0') {
-		libhal_changeset_set_property_string (cs, "volume.fsversion", vid->type_version);
-		HAL_DEBUG(("volume.fsversion = '%s'", vid->type_version));
-	}
+	if (!volume_id_get_uuid(vid, &uuid))
+		uuid = "";
+	libhal_changeset_set_property_string (cs, "volume.uuid", uuid);
+	HAL_DEBUG(("volume.uuid = '%s'", uuid));
 
-	libhal_changeset_set_property_string (cs, "volume.uuid", vid->uuid);
-	HAL_DEBUG(("volume.uuid = '%s'", vid->uuid));
+	if (!volume_id_get_label(vid, &label))
+		label = "";
 
-	if(vid->label != NULL && vid->label[0] != '\0') {
+	if (label[0] != '\0') {
+		char *volume_label;
+
 		/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
-		volume_label = strdup_valid_utf8 (vid->label);
+		volume_label = strdup_valid_utf8 (label);
 		if( volume_label != NULL ) {
 			libhal_changeset_set_property_string (cs, "volume.label", volume_label);
 			HAL_DEBUG(("volume.label = '%s'", volume_label));
-		
-			if (strlen(volume_label) > 0) {	
+
+			if (volume_label[0] != '\0') {
 				libhal_changeset_set_property_string (cs, "info.product", volume_label);
 				g_free(volume_label);
 				return;
@@ -152,12 +144,11 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, 
 		}
 	}
 
-	if (vid->type != NULL) {
-		snprintf (buf, sizeof (buf), "Volume (%s)", vid->type);
+	if (type[0] != '\0') {
+		snprintf (buf, sizeof (buf), "Volume (%s)", type);
 	} else {
 		snprintf (buf, sizeof (buf), "Volume (unknown)");
 	}
-
 	libhal_changeset_set_property_string (cs, "info.product", buf);
 }
 
@@ -623,7 +614,7 @@ main (int argc, char *argv[])
 		if (vid != NULL) {
 			int vid_ret;
 			HAL_INFO (("invoking volume_id_probe_all, offset=%d, size=%d", vol_probe_offset, vol_size));
-			vid_ret = volume_id_probe_all (vid, vol_probe_offset , vol_size);
+			vid_ret = volume_id_probe_all (vid, vol_probe_offset, vol_size);
 			HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
 
 			if (vid_ret != 0 && is_disc && vol_probe_offset != 0) {
@@ -644,15 +635,14 @@ main (int argc, char *argv[])
 				libhal_changeset_set_property_string (cs, "info.product", "Volume");
 			}
 
-			/* VOLUME_ID_UNUSED means vol_id didn't detect anything that it knows about
-			 * if it's a disc.. look whether it's a partition table (some Apple discs
+			/* If we didn't detect anything, look whether it's a partition table (some Apple discs
 			 * uses Apple Partition Map) and look at partitions
 			 *
 			 * (kind of a hack - ugh  - we ought to export all these as fakevolumes... but
 			 *  this is good enough for now... the only discs I know of that does this
 			 *  is in fact Apple's install disc.)
 			 */
-			if (vid->usage_id == VOLUME_ID_UNUSED && is_disc) {
+			if (vid_ret != 0 && is_disc) {
 				PartitionTable *p;
 				p = part_table_load_from_disk (stordev_dev_file);
 				if (p != NULL) {
