@@ -5790,6 +5790,16 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             <row>
               <entry></entry>
               <entry>
+                <literal>usb</literal>
+              </entry>
+              <entry></entry>
+              <entry>
+                The device containing the battery is a generic usb device.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>
                 <literal>unknown</literal>
               </entry>
               <entry></entry>
