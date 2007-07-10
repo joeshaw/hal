@@ -455,14 +455,17 @@ main (int argc, char *argv[])
 		vid = volume_id_open_fd (fd);
 		if (vid != NULL) {
 			if (volume_id_probe_all (vid, 0, size) == 0) {
+				const char *usage;
 				/* signal to hald that we've found something and a fakevolume
 				 * should be added - see hald/linux/blockdev.c:add_blockdev_probing_helper_done()
 				 * and hald/linux/blockdev.c:block_rescan_storage_done().
 				 */
-				if (vid->usage_id == VOLUME_ID_FILESYSTEM ||
-				    vid->usage_id == VOLUME_ID_RAID ||
-				    vid->usage_id == VOLUME_ID_OTHER ||
-				    vid->usage_id == VOLUME_ID_CRYPTO)
+
+				if (volume_id_get_usage(vid, &usage) &&
+				    strcmp(usage, "filesystem") == 0 ||
+				    strcmp(usage, "raid") == 0 ||
+				    strcmp(usage, "other") == 0 ||
+				    strcmp(usage, "crypto") == 0)
 					ret = 2;
 			} else {
 				;
