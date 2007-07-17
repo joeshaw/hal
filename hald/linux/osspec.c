@@ -68,6 +68,8 @@
 static char *hal_sysfs_path;
 static char *hal_proc_path;
 
+static gboolean hald_done_synthesizing_coldplug = FALSE;
+
 const gchar *
 get_hal_sysfs_path (void)
 {
@@ -403,8 +405,9 @@ computer_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer userdata2
 void
 hotplug_queue_now_empty (void)
 {
-	if (hald_is_initialising)
+	if (hald_is_initialising && hald_done_synthesizing_coldplug) {
 		osspec_probe_done ();
+        }
 }
 
 
@@ -431,6 +434,8 @@ computer_probing_helper_done (HalDevice *d)
 		HAL_INFO (("No powermgmt capabilities"));		
 	}
 	HAL_INFO (("Done synthesizing events"));
+
+        hald_done_synthesizing_coldplug = TRUE;
 
 	/* we try again to match again on computer, now we have done coldplug
 	 * and completed probing. In an ideal world, we would do this before
