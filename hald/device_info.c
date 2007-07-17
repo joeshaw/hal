@@ -271,7 +271,7 @@ handle_match (struct rule *rule, HalDevice *d)
 				   hal_device_get_udi (d),
 				   udi_to_check, sizeof (udi_to_check),
 				   prop_to_check, sizeof (prop_to_check))) {
-		HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, value));
+		/*HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, value));*/
 		return FALSE;
 	}
 
