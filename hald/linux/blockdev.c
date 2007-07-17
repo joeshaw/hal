@@ -1220,6 +1220,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			char buf[256];
 			gchar *media;
 			gchar *model;
+			struct stat st;
 
 			/* Be conservative and don't poll IDE drives at all (except CD-ROM's, see below) */
 			hal_device_property_set_bool (d, "storage.media_check_enabled", FALSE);
@@ -1229,6 +1230,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			 * "disk", "cdrom", "tape", "floppy", "UNKNOWN"
 			 */
 			snprintf (buf, sizeof (buf), "%s/ide/%s", get_hal_proc_path (), hal_util_get_last_element (sysfs_path_real));
+			if (stat(buf, &st)) {
+				/*
+				 * /proc/ide does not exist; try with sysfs
+				 */
+				snprintf (buf, sizeof (buf), "%s/%s", sysfs_path_real, "device");
+			}
 			if ((media = hal_util_get_string_from_file (buf, "media")) != NULL) {
 				if (strcmp (media, "disk") == 0 ||
 				    strcmp (media, "cdrom") == 0 ||
