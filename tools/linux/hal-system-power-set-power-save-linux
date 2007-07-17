@@ -8,33 +8,14 @@ unsupported() {
 	exit 1
 }
 
-#ALTLinux only supports powersave
-if [ -f /etc/altlinux-release ] ; then
-	if [ -x "/usr/bin/powersave" ] ; then
-		if [ $value = "true" ]; then
-			/usr/bin/powersave -e Powersave
-			RET=$?
-		elif [ $value = "false" ]; then
-			/usr/bin/powersave -e Performance
-			RET=$?
-		fi
-	else
-		unsupported
-	fi
-
-#RedHat/Fedora and SUSE support pm-utils
-elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ] \
-		|| [ -f /etc/SuSE-release ] ; then
-	if [ -x "/usr/sbin/pm-powersave" ] ; then
-		if [ $value = "true" ]; then
-			/usr/sbin/pm-powersave true
-			RET=$?
-		elif [ $value = "false" ]; then
-			/usr/sbin/pm-powersave false
-			RET=$?
-		fi
-	else
-		unsupported
+# We only support pm-utils
+if [ -x "/usr/sbin/pm-powersave" ] ; then
+	if [ $value = "true" ]; then
+		/usr/sbin/pm-powersave true
+		RET=$?
+	elif [ $value = "false" ]; then
+		/usr/sbin/pm-powersave false
+		RET=$?
 	fi
 
 else
