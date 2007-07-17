@@ -418,77 +418,38 @@ out:
 
 #ifdef HAVE_POLKIT
 
-typedef struct
+static gboolean
+_polkit_io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
 {
-        PolKitContextFileMonitorNotifyFunc notify_cb;
-        gpointer user_data;
-} PolkitFMClosure;
-
-static void
-_polkit_fm_notify_func (HalFileMonitor      *monitor,
-                        HalFileMonitorEvent  event,
-                        const char          *path,
-                        gpointer             user_data)
-{
-        PolkitFMClosure *closure = user_data;
-        if (closure->notify_cb != NULL) {
-                closure->notify_cb (pk_context,
-                                    event, /* binary compatible */
-                                    path,
-                                    closure->user_data);
-        }
+        int fd;
+        PolKitContext *pk_context = user_data;
+        fd = g_io_channel_unix_get_fd (channel);
+        polkit_context_io_func (pk_context, fd);
+        return TRUE;
 }
 
-static int
-_polkit_fm_add_watch (PolKitContext                     *pk_context,
-                      const char                        *path,
-                      PolKitContextFileMonitorEvent      event_mask,
-                      PolKitContextFileMonitorNotifyFunc notify_cb,
-                      gpointer                           user_data)
+static int 
+_polkit_io_add_watch (PolKitContext *pk_context, int fd)
 {
-        unsigned int ret;
-        HalFileMonitor *file_monitor;
-        PolkitFMClosure *closure;
-
-        ret = 0;
-
-        file_monitor = osspec_get_file_monitor ();
-        if (file_monitor == NULL)
+        guint id = 0;
+        GIOChannel *channel;
+        channel = g_io_channel_unix_new (fd);
+        if (channel == NULL)
                 goto out;
-
-        closure = g_new0 (PolkitFMClosure, 1);
-        closure->notify_cb = notify_cb;
-        closure->user_data = user_data;
-
-        /* TODO FIXME: ugh, we probably leak this... too bad. */
-
-        ret = hal_file_monitor_add_notify (file_monitor,
-                                           path,
-                                           event_mask, /* binary compatible */
-                                           _polkit_fm_notify_func,
-                                           closure);
-        if (ret == 0) {
-                g_free (closure);
+        id = g_io_add_watch (channel, G_IO_IN, _polkit_io_watch_have_data, pk_context);
+        if (id == 0) {
+                g_io_channel_unref (channel);
+                goto out;
         }
-
+        g_io_channel_unref (channel);
 out:
-        return (int) ret;
+        return id;
 }
 
 static void 
-_polkit_fm_remove_watch (PolKitContext *pk_context,
-                         int   watch_id)
+_polkit_io_remove_watch (PolKitContext *pk_context, int watch_id)
 {
-        HalFileMonitor *file_monitor;
-
-        file_monitor = osspec_get_file_monitor ();
-        if (file_monitor == NULL)
-                goto out;
-
-        hal_file_monitor_remove_notify (file_monitor, (guint) watch_id);
-
-out:
-        ;
+        g_source_remove (watch_id);
 }
 
 static guint _polkit_cooloff_timer = 0;
@@ -784,9 +745,7 @@ main (int argc, char *argv[])
         polkit_context_set_config_changed (pk_context,
                                            _polkit_config_changed_cb,
                                            NULL);
-        polkit_context_set_file_monitor (pk_context, 
-                                         _polkit_fm_add_watch,
-                                         _polkit_fm_remove_watch);
+        polkit_context_set_io_watch_functions (pk_context, _polkit_io_add_watch, _polkit_io_remove_watch);
         if (!polkit_context_init (pk_context, &p_error))
                 DIE (("Could not init PolicyKit context: %s", polkit_error_get_error_message (p_error)));
 #endif

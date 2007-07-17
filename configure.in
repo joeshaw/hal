@@ -14,7 +14,7 @@ AM_MAINTAINER_MODE
 glib_module="glib-2.0 >= 2.6.0 gobject-2.0 > 2.6.0 dbus-glib-1 >= 0.61"
 dbus_module="dbus-1 >= 0.61"
 volume_id_module="libvolume_id >= 0.77"
-polkit_module="polkit >= 0.3"
+polkit_module="polkit >= 0.4"
 
 # libtool versioning - this applies to libhal and libhal-storage
 #
