@@ -1202,6 +1202,17 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			hal_device_property_set_uint64 (d, "storage.size", 0);
 		}
 
+                if (is_removable) {
+                        int sysfs_capability;
+                        gboolean support_an;
+
+                        support_an = 
+                                hal_util_get_int_from_file (sysfs_path, "capability", &sysfs_capability, 16) &&
+                                (sysfs_capability&4) != 0;
+                        
+                        hal_device_property_set_bool (d, "storage.removable.support_async_notification", support_an);
+                }
+
 		/* by default, do checks for media if, and only if, the removable file is set to 1
 		 *
 		 * Problematic buses, like IDE, may override this.
@@ -1546,6 +1557,20 @@ out:
 	;
 }
 
+void 
+hotplug_event_refresh_blockdev (gchar *sysfs_path, HalDevice *d, void *end_token)
+{
+	HAL_INFO (("block_change: sysfs_path=%s", sysfs_path));
+
+        if (hal_device_property_get_bool (d, "storage.removable.support_async_notification")) {
+                blockdev_rescan_device (d);
+        }
+
+	/* done with change event */
+	hotplug_event_end (end_token);
+}
+
+
 static void 
 block_rescan_storage_done (HalDevice *d, guint32 exit_type, 
                            gint return_code, gchar **error,
@@ -1599,7 +1624,7 @@ blockdev_rescan_device (HalDevice *d)
 
 	ret = FALSE;
 
-	HAL_INFO (("Entering, udi=%s", hal_device_get_udi (d)));
+	HAL_INFO (("blockdev_rescan_device: udi=%s", hal_device_get_udi (d)));
 
 	/* This only makes sense on storage devices */
 	if (hal_device_property_get_bool (d, "block.is_volume")) {

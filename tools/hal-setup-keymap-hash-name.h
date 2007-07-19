@@ -1,4 +1,4 @@
-/* C code produced by gperf version 3.0.2 */
+/* C code produced by gperf version 3.0.3 */
 /* Command-line: gperf -t --ignore-case -N lookup_key -H hash_input_names -p -C  */
 /* Computed positions: -k'1-3,5,$' */
 
@@ -145,6 +145,9 @@ hash_input_names (str, len)
 
 #ifdef __GNUC__
 __inline
+#ifdef __GNUC_STDC_INLINE__
+__attribute__ ((__gnu_inline__))
+#endif
 #endif
 const struct key *
 lookup_key (str, len)

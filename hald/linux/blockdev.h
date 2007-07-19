@@ -32,6 +32,8 @@ void hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const char *devi
 
 void hotplug_event_begin_remove_blockdev (const gchar *sysfs_path, void *end_token);
 
+void hotplug_event_refresh_blockdev (gchar *sysfs_path, HalDevice *d, void *end_token);
+
 gboolean blockdev_rescan_device (HalDevice *d);
 
 HotplugEvent *blockdev_generate_add_hotplug_event (HalDevice *d);

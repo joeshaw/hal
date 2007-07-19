@@ -234,8 +234,15 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		   hotplug_event->sysfs.seqnum, action, hotplug_event->sysfs.subsystem, hotplug_event->sysfs.sysfs_path,
 		   hotplug_event->sysfs.device_file, hotplug_event->sysfs.net_ifindex));
 
-	if (strcmp (action, "add") == 0 || strcmp (action, "change") == 0) {
+	if (strcmp (action, "add") == 0) {
 		hotplug_event->action = HOTPLUG_ACTION_ADD;
+		hotplug_event_enqueue (hotplug_event);
+		hotplug_event_process_queue ();
+		goto out;
+	}
+
+	if (strcmp (action, "change") == 0) {
+		hotplug_event->action = HOTPLUG_ACTION_CHANGE;
 		hotplug_event_enqueue (hotplug_event);
 		hotplug_event_process_queue ();
 		goto out;

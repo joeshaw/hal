@@ -89,13 +89,14 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 						     "linux.sysfs_path",
 						     hotplug_event->sysfs.sysfs_path);
 
-	/* we should refresh the device when we get a uevent */
+#if 0
+	/* we should refresh the device when we get "change" uevent */
 	if (d != NULL && hotplug_event->action == HOTPLUG_ACTION_ADD) {
 		HAL_ERROR (("device %s already present in the store, so refreshing", hotplug_event->sysfs.sysfs_path));
 		hotplug_event_refresh_dev (hotplug_event->sysfs.subsystem, d, (void *) hotplug_event);
-		hotplug_event_end ((void *) hotplug_event);
 		return;
 	}
+#endif
 
 	/* subsystem "block" are all block devices */
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS)
@@ -169,6 +170,11 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			hotplug_event_begin_remove_dev (hotplug_event->sysfs.subsystem,
 							     hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
+		} else if (hotplug_event->action == HOTPLUG_ACTION_CHANGE && d != NULL) {
+			hotplug_event_refresh_dev (hotplug_event->sysfs.subsystem,
+                                                   hotplug_event->sysfs.sysfs_path,
+                                                   d,
+                                                   (void *) hotplug_event);
 		}
 	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) {
 		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
@@ -200,6 +206,10 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		} else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE) {
 			hotplug_event_begin_remove_blockdev (hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
+		} else if (hotplug_event->action == HOTPLUG_ACTION_CHANGE && d != NULL) {
+			hotplug_event_refresh_blockdev (hotplug_event->sysfs.sysfs_path,
+                                                        d,
+                                                        (void *) hotplug_event);
 		}
 	} else {
 		/* just ignore this hotplug event */

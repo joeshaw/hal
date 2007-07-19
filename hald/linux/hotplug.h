@@ -36,6 +36,7 @@ typedef enum {
 	HOTPLUG_ACTION_REMOVE,
 	HOTPLUG_ACTION_ONLINE,
 	HOTPLUG_ACTION_OFFLINE,
+	HOTPLUG_ACTION_CHANGE,
 } HotplugActionType;
 
 typedef enum {

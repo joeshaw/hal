@@ -3853,12 +3853,12 @@ out:
 }
 
 void
-hotplug_event_refresh_dev (const gchar *subsystem, HalDevice *d, void *end_token)
+hotplug_event_refresh_dev (const gchar *subsystem, const gchar *sysfs_path, HalDevice *d, void *end_token)
 {
 	guint i;
 	DevHandler *handler;
 
-	HAL_INFO (("remove_dev: subsys=%s", subsystem));
+	HAL_INFO (("refresh_dev: subsys=%s", subsystem));
 
 	for (i = 0; dev_handlers [i] != NULL; i++) {
 		handler = dev_handlers[i];
@@ -3870,10 +3870,9 @@ hotplug_event_refresh_dev (const gchar *subsystem, HalDevice *d, void *end_token
 		}
 	}
 
-	/* didn't find anything - thus, ignore this hotplug event */
-	hotplug_event_end (end_token);
 out:
-	;
+	/* done with change event */
+	hotplug_event_end (end_token);
 }
 
 

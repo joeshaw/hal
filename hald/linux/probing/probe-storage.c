@@ -118,6 +118,8 @@ main (int argc, char *argv[])
 	/* hook in our debug into libvolume_id */
 	volume_id_log_fn = vid_log;
 
+        fprintf (stderr, "woohoo\n");
+
 	/* assume failure */
 	ret = 1;
 

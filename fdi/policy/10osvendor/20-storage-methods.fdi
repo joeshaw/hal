@@ -7,7 +7,9 @@
     </match>
 
     <match key="storage.media_check_enabled" bool="true">
-      <append key="info.addons" type="strlist">hald-addon-storage</append>
+      <match key="storage.removable.support_async_notification" bool="false">
+        <append key="info.addons" type="strlist">hald-addon-storage</append>
+      </match>
     </match>
 
     <match key="volume.is_disc" bool="true">
