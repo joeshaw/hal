@@ -3824,6 +3824,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+	        <literal>storage.removable.support_async_notification</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Whether the drive reports asynchronous notification for media change.</entry>
+            </row>
+            <row>
+              <entry>
 	        <literal>storage.partitioning_scheme</literal> (string)
               </entry>
               <entry></entry>
