@@ -128,6 +128,9 @@
 	<match key="volume.label" string="DellUtility">
 	  <merge key="volume.ignore" type="bool">true</merge>
 	</match>
+	<match key="volume.label" string="DellRestore">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
       </match>
 
       <!-- ASUS ships some desktop with a recovery partition -->
