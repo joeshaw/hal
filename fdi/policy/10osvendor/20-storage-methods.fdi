@@ -138,6 +138,14 @@
 	<match key="volume.label" string="RECOVERY">
 	  <merge key="volume.ignore" type="bool">true</merge>
 	</match>
+	<match key="volume.label" string="PQSERVICE">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+      </match>
+      <match key="volume.fstype" string="ntfs">
+	<match key="volume.label" string="PQSERVICE">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
       </match>
 
       <!-- EFI firmware partitions -->
