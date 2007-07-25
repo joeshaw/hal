@@ -23,6 +23,7 @@ file are instantly applied.
 
     <policy id="hal-power-shutdown">
       <description>Shut down the system</description>
+      <message>System policy prevents shutting down the system</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -31,6 +32,7 @@ file are instantly applied.
 
     <policy id="hal-power-shutdown-multiple-sessions">
       <description>Shut down the system when multiple users are logged in</description>
+      <message>System policy prevents shutting down the system while multiple users are logged in</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>auth_admin</allow_active>
@@ -39,6 +41,7 @@ file are instantly applied.
 
     <policy id="hal-power-reboot">
       <description>Reboot the system</description>
+      <message>System policy prevents rebooting the system</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -47,6 +50,7 @@ file are instantly applied.
 
     <policy id="hal-power-reboot-multiple-sessions">
       <description>Reboot the system when multiple users are logged in</description>
+      <message>System policy prevents rebooting the system while multiple users are logged in</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>auth_admin</allow_active>
@@ -55,6 +59,7 @@ file are instantly applied.
 
     <policy id="hal-power-set-powersave">
       <description>Configure to system to prefer power savings</description>
+      <message>System policy prevents enabling power savings</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -63,6 +68,7 @@ file are instantly applied.
 
     <policy id="hal-power-suspend">
       <description>Suspend the system</description>
+      <message>System policy prevents suspending the system</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -71,6 +77,7 @@ file are instantly applied.
 
     <policy id="hal-power-hibernate">
       <description>Hibernate the system</description>
+      <message>System policy prevents hibernating the system</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -79,6 +86,7 @@ file are instantly applied.
 
     <policy id="hal-power-cpufreq">
       <description>Configure CPU frequency scaling</description>
+      <message>System policy prevents CPU frequency scaling to be configured</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -87,6 +95,7 @@ file are instantly applied.
 
     <policy id="hal-power-lcd-panel">
       <description>Set laptop panel brightness</description>
+      <message>System policy prevents adjusting the laptop panel brightness</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -95,6 +104,7 @@ file are instantly applied.
 
     <policy id="hal-power-light-sensor">
       <description>Detect ambient light using light sensor</description>
+      <message>System policy prevents accessing the ambient light sensor</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -103,6 +113,7 @@ file are instantly applied.
 
     <policy id="hal-power-keyboard-backlight">
       <description>Set keyboard backlight</description>
+      <message>System policy prevents adjusting the keyboard backlight</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>

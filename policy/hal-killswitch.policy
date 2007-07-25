@@ -23,6 +23,7 @@ file are instantly applied.
 
     <policy id="hal-killswitch-bluetooth">
       <description>Turn Bluetooth radio On/Off</description>
+      <message>System policy prevents turning the Bluetooth radio On/Off</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -31,6 +32,7 @@ file are instantly applied.
 
     <policy id="hal-killswitch-wlan">
       <description>Turn WLAN radio On/Off</description>
+      <message>System policy prevents turning the WLAN radio On/Off</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>

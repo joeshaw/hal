@@ -23,6 +23,7 @@ file are instantly applied.
 
     <policy id="hal-lock">
       <description>Acquire locks on devices</description>
+      <message>System policy prevents locking devices</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>

@@ -23,6 +23,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-sound">
       <description>Directly access sound devices</description>
+      <message>System policy prevents access to the sound devices</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -31,6 +32,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-video4linux">
       <description>Directly access video capture devices</description>
+      <message>System policy prevents access to video capture devices</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -39,6 +41,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-cdrom">
       <description>Directly access optical drives</description>
+      <message>System policy prevents access to optical drives</message>
       <defaults>
         <allow_inactive>yes</allow_inactive>
         <allow_active>yes</allow_active>
@@ -47,6 +50,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-dvb">
       <description>Directly access DVB devices</description>
+      <message>System policy prevents access to DVB devices</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -55,6 +59,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-camera">
       <description>Directly access digital cameras</description>
+      <message>System policy prevents access to digital cameras</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -63,6 +68,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-scanner">
       <description>Directly access scanners</description>
+      <message>System policy prevents access to scanners</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -71,6 +77,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-ieee1394-iidc">
       <description>Directly access Firewire IIDC devices</description>
+      <message>System policy prevents access to Firewire IIDC devices</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
@@ -79,6 +86,7 @@ file are instantly applied.
 
     <policy id="hal-device-file-ieee1394-avc">
       <description>Directly access Firewire AVC devices</description>
+      <message>System policy prevents access to Firewire AVC devices</message>
       <defaults>
         <allow_inactive>no</allow_inactive>
         <allow_active>yes</allow_active>
