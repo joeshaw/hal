@@ -179,6 +179,7 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 	DBusError error;
 	char event[256];
 
+	dbus_error_init (&error);
 	while (fgets (event, sizeof event, eventfp))
 	{
 		HAL_DEBUG (("event is '%s'", event));
