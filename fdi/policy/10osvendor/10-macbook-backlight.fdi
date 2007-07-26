@@ -3,11 +3,11 @@
 <deviceinfo version="0.2">
   <device>
     <match key="system.kernel.name" string="Linux">
-      <match key="smbios.system.manufacturer" string="Apple">
-        <match key="smbios.system.product" string="MacBook1,1">
+      <match key="system.hardware.vendor" contains="Apple">
+        <match key="system.hardware.product" string="MacBook1,1">
           <spawn udi="/org/freedesktop/Hal/devices/macbook_backlight"/>
         </match>
-        <match key="smbios.system.product" string="MacBook2,1">
+        <match key="system.hardware.product" string="MacBook2,1">
           <spawn udi="/org/freedesktop/Hal/devices/macbook_backlight"/>
         </match>
       </match>
