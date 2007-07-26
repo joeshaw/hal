@@ -27,6 +27,10 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#ifndef DBUS_API_SUBJECT_TO_CHANGE
+#define DBUS_API_SUBJECT_TO_CHANGE
+#endif 
+
 #include <glib-object.h>
 #include <dbus/dbus.h>
 

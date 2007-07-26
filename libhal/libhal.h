@@ -27,6 +27,10 @@
 #ifndef LIBHAL_H
 #define LIBHAL_H
 
+#ifndef DBUS_API_SUBJECT_TO_CHANGE
+#define DBUS_API_SUBJECT_TO_CHANGE 
+#endif
+
 #include <dbus/dbus.h>
 
 #if defined(__cplusplus)
