@@ -30,7 +30,7 @@ export HAL_FDI_SOURCE_PREPROBE=$HALD_TMPDIR/share/hal/fdi/preprobe
 export HAL_FDI_SOURCE_INFORMATION=$HALD_TMPDIR/share/hal/fdi/information
 export HAL_FDI_SOURCE_POLICY=$HALD_TMPDIR/share/hal/fdi/policy
 export HAL_FDI_CACHE_NAME=$HALD_TMPDIR/hald-local-fdi-cache
-export POLKIT_POLICY_DIR=$HALD_TMPDIR/etc/PolicyKit/policy
+export POLKIT_POLICY_DIR=$HALD_TMPDIR/share/PolicyKit/policy
 
 #valgrind --num-callers=20 --show-reachable=yes --leak-check=yes --tool=memcheck ./hald --daemon=no --verbose=yes $@
 valgrind --show-reachable=yes --tool=memcheck --leak-check=full ./hald --daemon=no --verbose=yes $@
