@@ -464,10 +464,10 @@ main (int argc, char *argv[])
 				 */
 
 				if (volume_id_get_usage(vid, &usage) &&
-				    strcmp(usage, "filesystem") == 0 ||
-				    strcmp(usage, "raid") == 0 ||
-				    strcmp(usage, "other") == 0 ||
-				    strcmp(usage, "crypto") == 0)
+				    ( strcmp(usage, "filesystem") == 0 ||
+				      strcmp(usage, "raid") == 0 ||
+				      strcmp(usage, "other") == 0 ||
+				      strcmp(usage, "crypto") == 0))
 					ret = 2;
 			} else {
 				;
