@@ -288,6 +288,11 @@ main (int argc, char *argv[])
 	dbus_connection_add_filter (conn, filter_function, NULL, NULL);
 
 	read_backlight (TRUE); /* Fill min- & maxValue with the correct values */
+
+	if (maxValue == 0) {
+		HAL_ERROR (("This machine don't support set brightness."));
+		return -5;
+	}
 	
 	if (!libhal_device_set_property_int (halctx, 
 					    "/org/freedesktop/Hal/devices/dell_lcd_panel",
