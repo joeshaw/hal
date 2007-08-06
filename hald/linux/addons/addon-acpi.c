@@ -180,6 +180,7 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 	char event[256];
 
 	dbus_error_init (&error);
+
 	while (fgets (event, sizeof event, eventfp))
 	{
 		HAL_DEBUG (("event is '%s'", event));
@@ -195,12 +196,14 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 				HAL_DEBUG (("button event"));
 
 				/* TODO: only rescan if button got state */
-				dbus_error_init (&error);
 				if (libhal_device_rescan (ctx, udi, &error)) {
-					dbus_error_init (&error);
 					type = libhal_device_get_property_string(ctx, udi, 
 										 "button.type",
 										 &error);
+					if (dbus_error_is_set (&error)) {
+			                        dbus_error_free (&error);
+					}
+
 					if (type != NULL) {
 						libhal_device_emit_condition (ctx, udi, "ButtonPressed",
 									      type, &error);
@@ -211,11 +214,9 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 				}
 			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
 				HAL_DEBUG (("ac_adapter event"));
-				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 			} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
 				HAL_DEBUG (("battery event"));
-				dbus_error_init (&error);
 				libhal_device_rescan (ctx, udi, &error);
 #ifdef BUILD_ACPI_IBM
 			} else if (strncmp (acpi_path, "ibm/hotkey", sizeof ("ibm/hotkey") -1) == 0) {
@@ -235,7 +236,6 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 		}
 	}
 
-	dbus_error_free (&error);
 	fclose (eventfp);
 }
 
