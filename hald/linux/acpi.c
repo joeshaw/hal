@@ -896,11 +896,11 @@ acpi_synthesize_hotplug_events (void)
 		hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
 						    "/proc/acpi", "info", "version", 0, FALSE);
 	} else {
-		gchar *firmware_path;
-		firmware_path = g_strdup_printf ("%s/firmware/acpi", get_hal_sysfs_path ());
-		hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
-						    firmware_path, "info", "version", 0, FALSE);
-		g_free (firmware_path);
+		if (!hal_util_set_string_from_file (computer, "power_management.acpi.linux.version",
+						    "/sys/module/acpi/parameters", "acpica_version"))
+			/* Fallback for some older kernel version, can get removed if HAL depends on >= 2.6.21 */
+			hal_util_set_string_elem_from_file (computer, "power_management.acpi.linux.version",
+			       			            "/sys/firmware/acpi", "info", "version", 0, FALSE);
 	}
 
 	/* collect batteries */
