@@ -198,7 +198,8 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 			udi = arg;
 		} else {
 #ifdef HAVE_ASPRINTF
-			asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg);
+			if (asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg) == -1) 
+				return 30;
 #else
 			udi = calloc(1, sizeof ("/org/freedesktop/Hal/devices/%s") + strlen(arg));
 			sprintf(udi, "/org/freedesktop/Hal/devices/%s", arg);
@@ -306,13 +307,14 @@ int remove_udi(LibHalContext *hal_ctx, char *arg)
 	DBusError error;
 	char *udi;
 
-	if (!arg) return 11;
+	if (!arg) return 10;
 
 	if (*arg == '/') {
 		udi = arg;
 	} else {
 #ifdef HAVE_ASPRINTF
-		asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg);
+		if(asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg) == -1)
+			return 11;
 #else
 		udi = calloc(1, sizeof ("/org/freedesktop/Hal/devices/%s") + strlen(arg));
 		sprintf(udi, "/org/freedesktop/Hal/devices/%s", arg);
@@ -346,13 +348,14 @@ int add_udi(LibHalContext *hal_ctx, char *arg)
 	int err;
 
 	if (!arg)
-		return 21;
+		return 20;
 
 	if (*arg == '/') {
 		udi = arg;
 	} else {
 #ifdef HAVE_ASPRINTF
-		asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg);
+		if (asprintf(&udi, "/org/freedesktop/Hal/devices/%s", arg) == -1)
+			return 21;
 #else
 		udi = calloc(1, sizeof ("/org/freedesktop/Hal/devices/%s") + strlen(arg));
 		sprintf(udi, "/org/freedesktop/Hal/devices/%s", arg);
