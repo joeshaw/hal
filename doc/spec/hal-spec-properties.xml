@@ -4740,6 +4740,82 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-input-xkb">
+      <title>
+        input.xkb namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>input.keys</literal>
+        can provide information about their physical layout.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>input.xkb.rules</literal> (string)
+              </entry>
+              <entry>e.g. "base"</entry>
+              <entry>Yes</entry>
+              <entry>
+                XKB rules file to use; 'base' is standard, but 'xorg'
+                or 'xfree86' may be needed for backwards compatibility
+                with very old versions of XKB data.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>input.xkb.model</literal> (string)
+              </entry>
+              <entry>e.g. "logicdp"</entry>
+              <entry>Yes</entry>
+              <entry>
+                Physical keyboard model (e.g. Logitech Cordless Freedom
+                Pro), as given to XKB.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>input.xkb.layout</literal> (string)
+              </entry>
+              <entry>e.g. "us"</entry>
+              <entry>Yes</entry>
+              <entry>
+                Keyboard layout (as engraved on the keys).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>input.xkb.variant</literal> (string)
+              </entry>
+              <entry>e.g. "nodeadkeys"</entry>
+              <entry>No</entry>
+              <entry>
+                Variant of the XKB layout (if any) to use.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>input.xkb.options</literal> (strlist)
+              </entry>
+              <entry>e.g. "ctrl:nocaps"</entry>
+              <entry>No</entry>
+              <entry>
+                Options to be provided to XKB.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-pcmcia_socket">
       <title>
         pcmcia_socket namespace
