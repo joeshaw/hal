@@ -4634,6 +4634,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>Yes</entry>
               <entry>Special device file for recieving input events</entry>
             </row>
+            <row>
+              <entry>
+                <literal>input.x11_driver</literal> (string)
+              </entry>
+              <entry>e.g. "evdev"</entry>
+              <entry>No</entry>
+              <entry>X11 input driver to use</entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
