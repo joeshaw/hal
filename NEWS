@@ -20,7 +20,8 @@ Requirements for HAL 0.5.10 "":
  - libsmbios        >= 0.13.4    (optional, for DELL machines, Linux only)
  - dellWirelessCtl  >= 0.13.4    (optional, for Dell machines, must live in /usr/bin/, Linux only)
  - gperf            >= ??????    (optional, for Re-map multimedia keys, Linux only)
- - ConsoleKit       >= 0.2.0
+ - PolicyKit        >= 0.4       (optional)
+ - ConsoleKit       >= 0.2.0     (optional, needed if use PolicyKit)
  - pm-utils         >= 0.99.2 or newer (optional)
 
 
