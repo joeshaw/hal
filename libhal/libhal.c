@@ -3367,7 +3367,9 @@ libhal_ctx_init_direct (DBusError *error)
 	}
 
 	if (!dbus_connection_add_filter (ctx->connection, filter_func, ctx, NULL)) {
-		return FALSE;
+		libhal_ctx_free (ctx);
+		ctx = NULL;
+		goto out;
 	}
 
 
