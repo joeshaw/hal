@@ -1149,7 +1149,7 @@ acl_lock (void)
 
 	printf ("%d: attempting to get lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 
-	lock_acl_fd = open (PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list", O_CREAT | O_RDWR);
+	lock_acl_fd = open (PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list", O_CREAT | O_RDWR, 0644);
 	if (lock_acl_fd < 0) {
 		printf ("%d: error opening/creating " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 		return FALSE;
