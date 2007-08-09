@@ -278,7 +278,6 @@ apm_synthesize_hotplug_events (void)
 {
 	gboolean ret;
 	HalDevice *computer;
-	gchar path[HAL_PATH_MAX];
 	HotplugEvent *hotplug_event;
 
 	ret = FALSE;
@@ -297,18 +296,16 @@ apm_synthesize_hotplug_events (void)
 	/* Set appropriate properties on the computer object */
 	hal_device_property_set_string (computer, "power_management.type", "apm");
 
-	snprintf (path, sizeof (path), "%s/apm", get_hal_proc_path ());
-
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
-	g_strlcpy (hotplug_event->apm.apm_path, path, sizeof (hotplug_event->apm.apm_path));
+	g_strlcpy (hotplug_event->apm.apm_path, "/proc/apm", sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_BATTERY;
 	hotplug_event_enqueue (hotplug_event);
 
 	hotplug_event = g_new0 (HotplugEvent, 1);
 	hotplug_event->type = HOTPLUG_EVENT_APM;
-	g_strlcpy (hotplug_event->apm.apm_path, path, sizeof (hotplug_event->apm.apm_path));
+	g_strlcpy (hotplug_event->apm.apm_path, "/proc/apm", sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_AC_ADAPTER;
 	hotplug_event_enqueue (hotplug_event);
 

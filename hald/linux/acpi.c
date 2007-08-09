@@ -637,7 +637,6 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full
 		br_levels = 8;
 	} else if (acpi_type == ACPI_TYPE_OMNIBOOK_DISPLAY) {
 		gchar *proc_lcd;
-		gchar proc_path[HAL_PATH_MAX];	
 		int current = -1;
 		int max = -1;
 
@@ -647,8 +646,7 @@ laptop_panel_refresh (HalDevice *d, ACPIDevHandler *handler, gboolean force_full
 		 * There are different support brightness level, depending on 
 		 * the hardware and the kernel module version.
 		 */
-		snprintf (proc_path, sizeof (proc_path), "%s/%s", get_hal_proc_path (), "omnibook");
-		proc_lcd = hal_util_grep_file(proc_path, "lcd", "LCD brightness:", FALSE);
+		proc_lcd = hal_util_grep_file("/proc/omnibook", "lcd", "LCD brightness:", FALSE);
 		proc_lcd = g_strstrip (proc_lcd);
 		if (sscanf (proc_lcd, "%d (max value: %d)", &current, &max) == 2) {	
 			br_levels = max + 1;
@@ -750,7 +748,6 @@ static void
 acpi_synthesize (const gchar *path, int acpi_type)
 {
 	const gchar *f;
-	gchar _path[HAL_PATH_MAX];
 	gboolean is_laptop = FALSE;
 	GDir *dir;
 	GError *error = NULL;
@@ -771,8 +768,7 @@ acpi_synthesize (const gchar *path, int acpi_type)
 			if ( acpi_type == ACPI_TYPE_BATTERY ) { 
 				is_laptop = TRUE;
 			} else if ( acpi_type == ACPI_TYPE_BUTTON ) {
-				snprintf (_path, sizeof (_path), "%s/acpi/button/lid", get_hal_proc_path ());
-				if ( strcmp (path, _path) == 0 )
+				if ( strcmp (path, "/proc/acpi/button/lid") == 0 )
 					is_laptop = TRUE;
 			} else if (_have_sysfs_lid_button) {
 				is_laptop = TRUE;
@@ -811,7 +807,7 @@ static void
 acpi_synthesize_display (char *vendor, char *display, int method)
 {
 	gchar path[HAL_PATH_MAX];
-	snprintf (path, sizeof (path), "%s/%s/%s", get_hal_proc_path (), vendor, display);
+	snprintf (path, sizeof (path), "/proc/%s/%s", vendor, display);
 	/*
 	 * We do not use acpi_synthesize as the target is not a directory full
 	 * of directories, but a flat file list.
@@ -879,7 +875,6 @@ gboolean
 acpi_synthesize_hotplug_events (void)
 {
 	HalDevice *computer;
-	gchar path[HAL_PATH_MAX];
 
 	if (!g_file_test ("/proc/acpi/", G_FILE_TEST_IS_DIR))
 		return FALSE;
@@ -904,28 +899,18 @@ acpi_synthesize_hotplug_events (void)
 	}
 
 	/* collect batteries */
-	snprintf (path, sizeof (path), "%s/acpi/battery", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_BATTERY);
-
+	acpi_synthesize ("/proc/acpi/battery", ACPI_TYPE_BATTERY);
 	/* collect processors */
-	snprintf (path, sizeof (path), "%s/acpi/processor", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_PROCESSOR);
-
+	acpi_synthesize ("/proc/acpi/processor", ACPI_TYPE_PROCESSOR);
 	/* collect fans */
-	snprintf (path, sizeof (path), "%s/acpi/fan", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_FAN);
-
+	acpi_synthesize ("/proc/acpi/fan", ACPI_TYPE_FAN);
 	/* collect AC adapters */
-	snprintf (path, sizeof (path), "%s/acpi/ac_adapter", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_AC_ADAPTER);
+	acpi_synthesize ("/proc/acpi/ac_adapter", ACPI_TYPE_AC_ADAPTER);
 
 	/* collect buttons */
-	snprintf (path, sizeof (path), "%s/acpi/button/lid", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_BUTTON);
-	snprintf (path, sizeof (path), "%s/acpi/button/power", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_BUTTON);
-	snprintf (path, sizeof (path), "%s/acpi/button/sleep", get_hal_proc_path ());
-	acpi_synthesize (path, ACPI_TYPE_BUTTON);
+	acpi_synthesize ("/proc/acpi/button/lid", ACPI_TYPE_BUTTON);
+	acpi_synthesize ("/proc/acpi/button/power", ACPI_TYPE_BUTTON);
+	acpi_synthesize ("/proc/acpi/button/sleep", ACPI_TYPE_BUTTON);
 
 	/*
 	 * Collect video adaptors (from vendor added modules)

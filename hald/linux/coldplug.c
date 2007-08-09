@@ -133,7 +133,7 @@ hal_util_init_sysfs_to_udev_map (void)
 		/* new device */
 		if (strncmp(line, "P: ", 3) == 0) {
 			hotplug_event = g_new0 (HotplugEvent, 1);
-			g_strlcpy (hotplug_event->sysfs.sysfs_path, get_hal_sysfs_path (), sizeof(hotplug_event->sysfs.sysfs_path));
+			g_strlcpy (hotplug_event->sysfs.sysfs_path, "/sys", sizeof(hotplug_event->sysfs.sysfs_path));
 			g_strlcat (hotplug_event->sysfs.sysfs_path, &line[3], sizeof(hotplug_event->sysfs.sysfs_path));
 			continue;
 		}
@@ -341,8 +341,7 @@ scan_single_bus (const char *bus_name)
         DIR *dir2;
         struct dirent *dent2;
         
-        g_strlcpy(dirname, get_hal_sysfs_path (), sizeof(dirname));
-        g_strlcat(dirname, "/bus/", sizeof(dirname));
+        g_strlcpy(dirname, "/sys/bus/", sizeof(dirname));
         g_strlcat(dirname, bus_name, sizeof(dirname));
         g_strlcat(dirname, "/devices", sizeof(dirname));
         
@@ -370,8 +369,7 @@ static void scan_subsystem(const char *subsys)
 	DIR *dir;
 	struct dirent *dent;
 
-	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-	g_strlcat(base, "/", sizeof(base));
+	g_strlcpy(base, "/sys/", sizeof(base));
 	g_strlcat(base, subsys, sizeof(base));
 
 	dir = opendir(base);
@@ -412,14 +410,10 @@ static void scan_subsystem(const char *subsys)
 
 static void scan_block(void)
 {
-	char base[HAL_PATH_MAX];
 	DIR *dir;
 	struct dirent *dent;
 
-	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-	g_strlcat(base, "/block", sizeof(base));
-
-	dir = opendir(base);
+	dir = opendir("/sys/block");
 	if (dir != NULL) {
 		for (dent = readdir(dir); dent != NULL; dent = readdir(dir)) {
 			char dirname[HAL_PATH_MAX];
@@ -435,8 +429,7 @@ static void scan_block(void)
                                 continue;
                         }
 
-			g_strlcpy(dirname, base, sizeof(dirname));
-			g_strlcat(dirname, "/", sizeof(dirname));
+			g_strlcpy(dirname, "/sys/block/", sizeof(dirname));
 			g_strlcat(dirname, dent->d_name, sizeof(dirname));
 			if (device_list_insert(dirname, "block", HOTPLUG_EVENT_SYSFS_BLOCK) != 0)
 				continue;
@@ -466,14 +459,10 @@ static void scan_block(void)
 
 static void scan_class(void)
 {
-	char base[HAL_PATH_MAX];
 	DIR *dir;
 	struct dirent *dent;
 
-	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-	g_strlcat(base, "/class", sizeof(base));
-
-	dir = opendir(base);
+	dir = opendir("/sys/class");
 	if (dir != NULL) {
 		for (dent = readdir(dir); dent != NULL; dent = readdir(dir)) {
 			char dirname[HAL_PATH_MAX];
@@ -483,8 +472,7 @@ static void scan_class(void)
 			if (dent->d_name[0] == '.')
 				continue;
 
-			g_strlcpy(dirname, base, sizeof(dirname));
-			g_strlcat(dirname, "/", sizeof(dirname));
+			g_strlcpy(dirname, "/sys/class/", sizeof(dirname));
 			g_strlcat(dirname, dent->d_name, sizeof(dirname));
 			dir2 = opendir(dirname);
 			if (dir2 != NULL) {
@@ -548,7 +536,6 @@ static int _device_order (const void *d1, const void *d2)
 gboolean
 coldplug_synthesize_events (void)
 {
-	char base[HAL_PATH_MAX];
 	struct stat statbuf;
 
 	if (hal_util_init_sysfs_to_udev_map () == FALSE) {
@@ -557,9 +544,7 @@ coldplug_synthesize_events (void)
 	}
 
 	/* if we have /sys/subsystem, forget all the old stuff */
-	g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-	g_strlcat(base, "/subsystem", sizeof(base));
-	if (stat(base, &statbuf) == 0) {
+	if (stat("/sys/subsystem", &statbuf) == 0) {
 		scan_subsystem ("subsystem");
 		device_list = g_slist_sort (device_list, _device_order);
 		queue_events ();
@@ -574,9 +559,7 @@ coldplug_synthesize_events (void)
 		queue_events ();
 
 		/* scan /sys/block, if it isn't already a class */
-		g_strlcpy(base, get_hal_sysfs_path (), sizeof(base));
-		g_strlcat(base, "/class/block", sizeof(base));
-		if (stat(base, &statbuf) != 0) {
+		if (stat("/sys/class/block", &statbuf) != 0) {
 			scan_block ();
 			device_list = g_slist_sort (device_list, _device_order);
 			queue_events ();

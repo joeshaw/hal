@@ -144,7 +144,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 		char sys_block_path[HAL_PATH_MAX];
 		gsize sys_block_path_len;
 
-		sys_block_path_len   = g_snprintf (sys_block_path, HAL_PATH_MAX, "%s/block", get_hal_sysfs_path ());
+		sys_block_path_len = g_snprintf (sys_block_path, HAL_PATH_MAX, "/sys/block");
 		if (strncmp (hotplug_event->sysfs.sysfs_path, sys_block_path, sys_block_path_len) == 0) {
 			HAL_INFO (("%s is a block device (devpath)", hotplug_event->sysfs.sysfs_path));
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;

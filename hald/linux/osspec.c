@@ -65,22 +65,7 @@
 
 #include "osspec_linux.h"
 
-static char *hal_sysfs_path;
-static char *hal_proc_path;
-
 static gboolean hald_done_synthesizing_coldplug = FALSE;
-
-const gchar *
-get_hal_sysfs_path (void)
-{
-	return hal_sysfs_path;
-}
-
-const gchar *
-get_hal_proc_path (void)
-{
-	return hal_proc_path;
-}
 
 static gboolean
 hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
@@ -160,7 +145,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
                         }
 
 			g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path),
-				    "%s%s", hal_sysfs_path, &key[8]);
+				    "/sys%s", &key[8]);
 		} else if (strncmp(key, "SUBSYSTEM=", 10) == 0)
 			g_strlcpy (hotplug_event->sysfs.subsystem, &key[10], sizeof (hotplug_event->sysfs.subsystem));
 		else if (strncmp(key, "DEVNAME=", 8) == 0)
@@ -335,7 +320,6 @@ osspec_privileged_init (void)
 void
 osspec_init (void)
 {
-	gchar path[HAL_PATH_MAX];
 	int udev_socket;
 	struct sockaddr_un saddr;
 	socklen_t addrlen;
@@ -368,22 +352,10 @@ osspec_init (void)
 	g_io_add_watch (udev_channel, G_IO_IN, hald_udev_data, NULL);
 	g_io_channel_unref (udev_channel);
 
-	/*
-	 * set mount points for /proc and /sys, possibly overridden for testing
-	 */
-	hal_sysfs_path = getenv ("SYSFS_PATH");
-	if (hal_sysfs_path == NULL)
-		hal_sysfs_path = "/sys";
-
-	hal_proc_path = getenv ("PROC_PATH");
-	if (hal_proc_path == NULL)
-		hal_proc_path = "/proc";
-
 	/* watch /proc/mounts for mount tree changes
 	 * kernel 2.6.15 vfs throws a POLLERR event for every change
 	 */
-	g_snprintf (path, sizeof (path), "%s/mounts", get_hal_proc_path ());
-	mounts_channel = g_io_channel_new_file (path, "r", NULL);
+	mounts_channel = g_io_channel_new_file ("/proc/mounts", "r", NULL);
 	if (mounts_channel == NULL)
 		DIE (("Unable to read /proc/mounts"));
 	g_io_add_watch (mounts_channel, G_IO_ERR, mount_tree_changed_event, NULL);

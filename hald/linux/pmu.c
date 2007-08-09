@@ -106,9 +106,7 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 		hal_device_property_set_bool (d, "battery.rechargeable.is_charging", flags & PMU_BATT_CHARGING);
 		/* we're discharging if, and only if, we are not plugged into the wall */
 		{
-			char buf[HAL_PATH_MAX];
-			snprintf (buf, sizeof (buf), "%s/pmu/info", get_hal_proc_path ());
-			hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", buf, "", 
+			hal_util_set_bool_elem_from_file (d, "battery.rechargeable.is_discharging", "/proc/pmu/info", "", 
 							  "AC Power", 0, "0", FALSE);
 		}
 
@@ -304,7 +302,6 @@ pmu_synthesize_hotplug_events (void)
 {
 	gboolean ret;
 	HalDevice *computer;
-	gchar path[HAL_PATH_MAX];
 	GError *error;
 	GDir *dir;
 	gboolean has_battery_bays;
@@ -328,19 +325,17 @@ pmu_synthesize_hotplug_events (void)
 	hal_device_property_set_string (computer, "power_management.type", "pmu");
 
 	/* AC Adapter */
-	snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
-	pmu_synthesize_item (path, PMU_TYPE_AC_ADAPTER);
+	pmu_synthesize_item ("/proc/pmu/info", PMU_TYPE_AC_ADAPTER);
 
 	error = NULL;
-	snprintf (path, sizeof (path), "%s/pmu", get_hal_proc_path ());
-	dir = g_dir_open (path, 0, &error);
+	dir = g_dir_open ("/proc/pmu/info", 0, &error);
 	if (dir != NULL) {
 		const gchar *f;
 		while ((f = g_dir_read_name (dir)) != NULL) {
 			gchar buf[HAL_PATH_MAX];
 			int battery_num;
 
-			snprintf (buf, sizeof (buf), "%s/pmu/%s", get_hal_proc_path (), f);
+			snprintf (buf, sizeof (buf), "/proc/pmu/%s", f);
 			if (sscanf (f, "battery_%d", &battery_num) == 1) {
 				has_battery_bays = TRUE;
 				pmu_synthesize_item (buf, PMU_TYPE_BATTERY);
@@ -348,7 +343,7 @@ pmu_synthesize_hotplug_events (void)
 			
 		}
 	} else {
-		HAL_ERROR (("Couldn't open %s: %s", path, error->message));
+		HAL_ERROR (("Couldn't open /proc/pmu/info: %s", error->message));
 		g_error_free (error);
 	}
 
@@ -360,12 +355,10 @@ pmu_synthesize_hotplug_events (void)
 	 */
 	if (has_battery_bays) {
 		/* Add lid button */
-		snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
-		pmu_synthesize_item (path, PMU_TYPE_LID_BUTTON);
+		pmu_synthesize_item ("/proc/pmu/info", PMU_TYPE_LID_BUTTON);
 
 		/* Add Laptop Panel */
-		snprintf (path, sizeof (path), "%s/pmu/info", get_hal_proc_path ());
-		pmu_synthesize_item (path, PMU_TYPE_LAPTOP_PANEL);
+		pmu_synthesize_item ("/proc/pmu/info", PMU_TYPE_LAPTOP_PANEL);
 	}
 
 	/* setup timer for things that we need to poll */

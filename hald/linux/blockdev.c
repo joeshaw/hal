@@ -175,7 +175,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 	GSList *volume;
 
 	/* open /proc/mounts */
-	g_snprintf (buf, sizeof (buf), "%s/mounts", get_hal_proc_path ());
+	g_snprintf (buf, sizeof (buf), "%s/mounts", "/proc");
 	if ((f = setmntent (buf, "r")) == NULL) {
 		HAL_ERROR (("Could not open /proc/mounts"));
 		return;
@@ -1240,7 +1240,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			 *
 			 * "disk", "cdrom", "tape", "floppy", "UNKNOWN"
 			 */
-			snprintf (buf, sizeof (buf), "%s/ide/%s", get_hal_proc_path (), hal_util_get_last_element (sysfs_path_real));
+			snprintf (buf, sizeof (buf), "/proc/ide/%s", hal_util_get_last_element (sysfs_path_real));
 			if (stat(buf, &st)) {
 				/*
 				 * /proc/ide does not exist; try with sysfs
@@ -1778,7 +1778,7 @@ blockdev_process_mdstat (void)
 
                 if (sscanf (line, "md%d : ", &num) == 1) {
                         char *sysfs_path;
-                        sysfs_path = g_strdup_printf ("%s/block/md%d", get_hal_sysfs_path (), num);
+                        sysfs_path = g_strdup_printf ("/sys/block/md%d", num);
                         read_md_devs = g_slist_prepend (read_md_devs, sysfs_path);
                 }
 
