@@ -731,7 +731,6 @@ libhal_ps_get_strlist (const LibHalPropertySet *set, const char *key)
 
 /**
  * libhal_psi_init:
- * 1;3B
  * @iter: iterator object
  * @set: property set to iterate over
  *
