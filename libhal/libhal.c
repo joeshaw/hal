@@ -760,7 +760,7 @@ libhal_psi_init (LibHalPropertySetIterator * iter, LibHalPropertySet * set)
 dbus_bool_t
 libhal_psi_has_more (LibHalPropertySetIterator * iter)
 {
-	return (iter->cur_prop->hh.next != NULL);
+	return (iter->cur_prop != NULL);
 }
 
 /**
