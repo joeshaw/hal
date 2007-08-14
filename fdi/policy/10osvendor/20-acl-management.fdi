@@ -42,7 +42,7 @@
       <merge key="access_control.type" type="string">dvb</merge>
     </match>
 
-    <!-- usb cameras -->
+    <!-- support for Linux USB stack where device node is on a child of the main USB device -->
     <match key="info.capabilities" contains="usbraw">
       <match key="info.capabilities" sibling_contains="camera">
 	<append key="info.capabilities" type="strlist">access_control</append>
@@ -50,8 +50,6 @@
         <merge key="access_control.type" type="string">camera</merge>
       </match>
     </match>
-
-    <!-- usb scanners -->
     <match key="info.capabilities" contains="usbraw">
       <match key="info.capabilities" sibling_contains="scanner">
 	<append key="info.capabilities" type="strlist">access_control</append>
@@ -59,6 +57,23 @@
       <merge key="access_control.type" type="string">scanner</merge>
       </match>
     </match>
+
+    <!-- support for Linux USB stack where linux.device_file is set (e.g. device node is on the main usb device) -->
+    <match key="info.subsystem" string="usb">
+      <match key="@info.parent:linux.device_file" exists="true">
+        <match key="info.capabilities" contains="camera">
+          <append key="info.capabilities" type="strlist">access_control</append>
+          <merge key="access_control.type" type="string">camera</merge>
+          <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
+        </match>
+        <match key="info.capabilities" contains="scanner">
+          <append key="info.capabilities" type="strlist">access_control</append>
+          <merge key="access_control.type" type="string">scanner</merge>
+          <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
+        </match>
+      </match>
+    </match>
+
 
     <!-- Firewire devices are mostly driven by userspace libraries -->
     <match key="info.capabilities" contains="ieee1394_unit.iidc">
