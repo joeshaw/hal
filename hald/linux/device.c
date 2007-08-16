@@ -1333,7 +1333,7 @@ out:
 static const gchar *
 serial_get_prober (HalDevice *d)
 {
-	char *dev;
+	const gchar *dev;
 
 	/* FIXME TODO: check if there is an other way, to call the porber only
 		       on ttyS* devices, than check the name of the device file */
