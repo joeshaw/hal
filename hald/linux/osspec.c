@@ -393,6 +393,13 @@ hotplug_queue_now_empty (void)
 static void
 computer_probing_helper_done (HalDevice *d)
 {
+	/* check if this is may a laptop */
+	if (!hal_device_has_property (d, "system.formfactor") || 
+	    (strcmp (hal_device_property_get_string (d, "system.formfactor"), "laptop") != 0)) {
+		HAL_INFO (("Check if the machine is may a laptop ..."));
+		acpi_check_is_laptop("BATTERY");
+		acpi_check_is_laptop("LID");
+	}
 	/* if not set, set a default value */
 	if (!hal_device_has_property (d, "system.formfactor")) {
 		hal_device_property_set_string (d, "system.formfactor", "unknown");

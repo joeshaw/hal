@@ -739,13 +739,14 @@ acpi_synthesize_item (const gchar *fullpath, int acpi_type)
  *  acpi_synthesize:
  *  @path:		The ACPI path, e.g. "/proc/acpi/battery"
  *  @acpi_type:		The type of device, e.g. ACPI_TYPE_BATTERY
+ *  @synthesize:	If a device should get synthesized
  *
  *  Synthesizes generic acpi objects, i.e. registers all the objects of type
  *  into HAL. This lets us have more than one type of device e.g. BATx
  *  in the same battery class. 
  */
 static void
-acpi_synthesize (const gchar *path, int acpi_type)
+acpi_synthesize (const gchar *path, int acpi_type, gboolean synthesize)
 {
 	const gchar *f;
 	gboolean is_laptop = FALSE;
@@ -786,8 +787,10 @@ acpi_synthesize (const gchar *path, int acpi_type)
 			}
 		}
 
-		snprintf (buf, sizeof (buf), "%s/%s", path, f);
-		acpi_synthesize_item (buf, acpi_type);
+		if (synthesize) {
+			snprintf (buf, sizeof (buf), "%s/%s", path, f);
+			acpi_synthesize_item (buf, acpi_type);
+		}
 	}
 
 	/* close directory */
@@ -899,18 +902,18 @@ acpi_synthesize_hotplug_events (void)
 	}
 
 	/* collect batteries */
-	acpi_synthesize ("/proc/acpi/battery", ACPI_TYPE_BATTERY);
+	acpi_synthesize ("/proc/acpi/battery", ACPI_TYPE_BATTERY, TRUE);
 	/* collect processors */
-	acpi_synthesize ("/proc/acpi/processor", ACPI_TYPE_PROCESSOR);
+	acpi_synthesize ("/proc/acpi/processor", ACPI_TYPE_PROCESSOR, TRUE);
 	/* collect fans */
-	acpi_synthesize ("/proc/acpi/fan", ACPI_TYPE_FAN);
+	acpi_synthesize ("/proc/acpi/fan", ACPI_TYPE_FAN, TRUE);
 	/* collect AC adapters */
-	acpi_synthesize ("/proc/acpi/ac_adapter", ACPI_TYPE_AC_ADAPTER);
+	acpi_synthesize ("/proc/acpi/ac_adapter", ACPI_TYPE_AC_ADAPTER, TRUE);
 
 	/* collect buttons */
-	acpi_synthesize ("/proc/acpi/button/lid", ACPI_TYPE_BUTTON);
-	acpi_synthesize ("/proc/acpi/button/power", ACPI_TYPE_BUTTON);
-	acpi_synthesize ("/proc/acpi/button/sleep", ACPI_TYPE_BUTTON);
+	acpi_synthesize ("/proc/acpi/button/lid", ACPI_TYPE_BUTTON, TRUE);
+	acpi_synthesize ("/proc/acpi/button/power", ACPI_TYPE_BUTTON, TRUE);
+	acpi_synthesize ("/proc/acpi/button/sleep", ACPI_TYPE_BUTTON, TRUE);
 
 	/*
 	 * Collect video adaptors (from vendor added modules)
@@ -1274,4 +1277,17 @@ acpi_generate_remove_hotplug_event (HalDevice *d)
 	g_strlcpy (hotplug_event->acpi.acpi_path, acpi_path, sizeof (hotplug_event->acpi.acpi_path));
 	hotplug_event->acpi.acpi_type = acpi_type;
 	return hotplug_event;
+}
+
+void 
+acpi_check_is_laptop (const gchar *acpi_type) 
+{
+	if (acpi_type != NULL) {
+
+		if (strcmp (acpi_type, "BATTERY") == 0) {
+			acpi_synthesize ("/proc/acpi/battery", ACPI_TYPE_BATTERY, FALSE);
+		} else if (strcmp (acpi_type, "LID") == 0) {
+			acpi_synthesize ("/proc/acpi/button/lid", ACPI_TYPE_BUTTON, FALSE);
+		} 
+	}
 }
