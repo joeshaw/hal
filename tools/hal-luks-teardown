@@ -6,6 +6,8 @@
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2.
 
+. hal-functions
+
 locked_out() {
 	echo "org.freedesktop.Hal.Device.InterfaceLocked" >&2
 	echo "Enclosing drive/volume is locked" >&2
