@@ -87,12 +87,12 @@ int main(int argc,char** argv) {
 
 			switch(kill_status) {
 				case '0':
-					ret =  1;
+					ret = 0;
 				break;
 				case '1':
 				case '2':
 				case '3':
-					ret = 0;
+					ret = 1;
 				break;
 			}
 
