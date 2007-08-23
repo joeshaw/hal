@@ -718,11 +718,12 @@ handle_mount (LibHalContext *hal_ctx,
 	 * (since these drives normally use vfat)
 	 */
 	if (volume != NULL) {
-		/* don't consider uid= on vfat, iso9660, udf change-uid for the purpose of policy
+		/* don't consider uid= on vfat, iso9660, hfs and udf change-uid for the purpose of policy
 		 * (since these doesn't contain uid/gid bits) 
 		 */
 		if (strcmp (libhal_volume_get_fstype (volume), "vfat") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "iso9660") != 0 &&
+		    strcmp (libhal_volume_get_fstype (volume), "hfs") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "udf") != 0) {
 			pol_change_uid = wants_to_change_uid;
 		}

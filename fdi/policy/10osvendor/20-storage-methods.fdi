@@ -219,13 +219,13 @@
 
       <!-- allow these mount options for hfs -->
       <match key="volume.fstype" string="hfs">
+	<append key="volume.mount.valid_options" type="strlist">gid=</append>
 	<append key="volume.mount.valid_options" type="strlist">uid=</append>
 	<append key="volume.mount.valid_options" type="strlist">force</append>
       </match>
 
       <!-- allow these mount options for hfsplus -->
       <match key="volume.fstype" string="hfsplus">
-	<append key="volume.mount.valid_options" type="strlist">uid=</append>
 	<append key="volume.mount.valid_options" type="strlist">force</append>
       </match>
 
