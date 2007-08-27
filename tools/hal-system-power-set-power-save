@@ -4,7 +4,7 @@
 
 read value
 
-hal_check_priv hal-power-set-powersave
+hal_check_priv org.freedesktop.hal.power-management.set-powersave
 hal_call_backend $value
 if [ "$?" = "0" ]; then
     hal-set-property --udi $UDI --key "power_management.is_powersave_set" --bool "$value"

@@ -295,7 +295,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					 "SetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "hal-power-lcd-panel"))
+                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
                         goto error;
 
 		dbus_error_init (&err);
@@ -332,7 +332,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "hal-power-lcd-panel"))
+                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
                         goto error;
 
 		dbus_error_init (&err);
@@ -363,7 +363,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness[2];
 
-                if (!check_priv (connection, message, udi, "hal-power-light-sensor"))
+                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.light-sensor"))
                         goto error;
 
 		brightness[0] = read_light_sensor (FALSE); /* right */
@@ -390,7 +390,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"org.freedesktop.Hal.Device.KeyboardBacklight", 
 						"GetBrightness")) {
 
-                if (!check_priv (connection, message, udi, "hal-power-keyboard-backlight"))
+                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
                         goto error;
 
 		/* I can't get this working so just cache last SetBrightness value :-/ */
@@ -435,7 +435,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"SetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "hal-power-keyboard-backlight"))
+                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
                         goto error;
 
 		dbus_error_init (&err);

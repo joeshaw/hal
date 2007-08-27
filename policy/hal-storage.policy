@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE policyconfig PUBLIC
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
@@ -11,60 +12,53 @@ HAL is licensed to you under your choice of the the Academic Free
 License Version 2.1, or the GNU General Public License version 2. Some
 individual source files may be under the GPL only. See COPYING for
 details.
-
-NOTE: If you make changes to this file, make sure to validate the file
-using the polkit-policy-file-validate(1) tool. Changes made to this
-file are instantly applied.
 -->
 
 <policyconfig>
-  <group id="hal-storage">
-    <description>Storage Drives and Media</description>
 
-    <policy id="hal-storage-mount-fixed">
-      <description>Mount file systems from internal drives.</description>
-      <message>System policy prevents mounting internal media</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_admin_keep_always</allow_active>
-      </defaults>
-    </policy>
+  <action id="org.freedesktop.hal.storage.mount-fixed">
+    <description>Mount file systems from internal drives.</description>
+    <message>System policy prevents mounting internal media</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.storage.mount-removable">
+    <description>Mount file systems from removable drives.</description>
+    <message>System policy prevents mounting removable media</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.storage.unmount-others">
+    <description>Unmount file systems mounted by other users.</description>
+    <message>System policy prevents unmounting media mounted by other users</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.storage.eject">
+    <description>Eject removable media.</description>
+    <message>System policy prevents ejecting removable media</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.storage.crypto-setup">
+    <description>Set up decryption for encrypted storage devices.</description>
+    <message>System policy prevents accessing encrypted storage devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
 
-    <policy id="hal-storage-mount-removable">
-      <description>Mount file systems from removable drives.</description>
-      <message>System policy prevents mounting removable media</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-storage-unmount-others">
-      <description>Unmount file systems mounted by other users.</description>
-      <message>System policy prevents unmounting media mounted by other users</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_admin_keep_always</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-storage-eject">
-      <description>Eject removable media.</description>
-      <message>System policy prevents ejecting removable media</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-storage-crypto-setup">
-      <description>Set up decryption for encrypted storage devices.</description>
-      <message>System policy prevents accessing encrypted storage devices</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-  </group>
 </policyconfig>

@@ -40,7 +40,7 @@
 #include "../../logger.h"
 
 #define MAX_LINE_SIZE				255
-#define CPUFREQ_POLKIT_PRIVILEGE		"hal-power-cpufreq"
+#define CPUFREQ_POLKIT_PRIVILEGE		"org.freedesktop.hal.power-management.cpufreq"
 #define DBUS_INTERFACE				"org.freedesktop.Hal.Device.CPUFreq"
 
 #define CPUFREQ_ERROR_GENERAL			"GeneralError"

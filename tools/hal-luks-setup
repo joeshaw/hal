@@ -39,6 +39,6 @@ if [ -n "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME" ] ; then
     fi
 fi
 
-hal_check_priv hal-storage-crypto-setup
+hal_check_priv org.freedesktop.hal.storage.crypto-setup
 
 hal_exec_backend

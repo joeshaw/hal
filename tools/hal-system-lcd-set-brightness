@@ -30,5 +30,5 @@ fi
 
 export value
 
-hal_check_priv hal-power-lcd-panel
+hal_check_priv org.freedesktop.hal.power-management.lcd-panel
 hal_exec_backend

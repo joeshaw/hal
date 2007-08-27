@@ -2055,7 +2055,7 @@ device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message,
 	}
 
         if (!local_interface) {
-                if (!access_check_caller_have_access_to_device (ci_tracker, d, "hal-lock", sender, NULL)) {
+                if (!access_check_caller_have_access_to_device (ci_tracker, d, "org.freedesktop.hal.lock", sender, NULL)) {
                         raise_permission_denied (connection, message, "AcquireInterfaceLock: no access to device");
                         return DBUS_HANDLER_RESULT_HANDLED;
                 }
@@ -5412,7 +5412,7 @@ validate_lock_for_device (HalDeviceStore *store,
                                    holders[m], locked_interfaces[n], hal_device_get_udi (device)));
 
                         if (!access_check_caller_have_access_to_device (
-                                    ci_tracker, device, "hal-lock", holders[m], NULL)) {
+                                    ci_tracker, device, "org.freedesktop.hal.lock", holders[m], NULL)) {
                                 HAL_INFO (("Kicking out lock holder '%s' on interface '%s' on udi '%s' "
                                            "as he no longer has access to the device",
                                            holders[m], locked_interfaces[n], hal_device_get_udi (device)));

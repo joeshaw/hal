@@ -765,17 +765,20 @@ handle_mount (LibHalContext *hal_ctx,
 
 	if (pol_is_fixed) {
 		if (pol_change_uid) {
-			action = "hal-storage-mount-fixed-extra-options";
+			action = NULL; /* "hal-storage-mount-fixed-extra-options"; TODO: rethink */
 		} else {
-			action = "hal-storage-mount-fixed";
+			action = "org.freedesktop.hal.storage.mount-fixed";
 		}
 	} else {
 		if (pol_change_uid) {
-			action = "hal-storage-mount-removable-extra-options"; /* TODO: rethink "extra-options" */
+			action = NULL; /* "hal-storage-mount-removable-extra-options"; TODO: rethink "extra-options" */
 		} else {
-			action = "hal-storage-mount-removable";
+			action = "org.freedesktop.hal.storage.mount-removable";
 		}
 	}
+        if (action == NULL) {
+                unknown_error ("TODO: have to rethink extra options");
+        }
 
 #ifdef DEBUG
 	printf ("using action %s for uid %s, system_bus_connection %s\n", action, invoked_by_uid, 

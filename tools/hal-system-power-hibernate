@@ -2,5 +2,5 @@
 
 . hal-functions
 
-hal_check_priv hal-power-hibernate
+hal_check_priv org.freedesktop.hal.power-management.hibernate
 hal_exec_backend

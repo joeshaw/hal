@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE policyconfig PUBLIC
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
@@ -11,87 +12,80 @@ HAL is licensed to you under your choice of the the Academic Free
 License Version 2.1, or the GNU General Public License version 2. Some
 individual source files may be under the GPL only. See COPYING for
 details.
-
-NOTE: If you make changes to this file, make sure to validate the file
-using the polkit-policy-file-validate(1) tool. Changes made to this
-file are instantly applied.
 -->
 
 <policyconfig>
-  <group id="hal-device-file">
-    <description>Raw device access</description>
 
-    <policy id="hal-device-file-sound">
-      <description>Directly access sound devices</description>
-      <message>System policy prevents access to the sound devices</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
+  <action id="org.freedesktop.hal.device-access.sound">
+    <description>Directly access sound devices</description>
+    <message>System policy prevents access to the sound devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.video4linux">
+    <description>Directly access video capture devices</description>
+    <message>System policy prevents access to video capture devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.cdrom">
+    <description>Directly access optical drives</description>
+    <message>System policy prevents access to optical drives</message>
+    <defaults>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.dvb">
+    <description>Directly access DVB devices</description>
+    <message>System policy prevents access to DVB devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.camera">
+    <description>Directly access digital cameras</description>
+    <message>System policy prevents access to digital cameras</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.scanner">
+    <description>Directly access scanners</description>
+    <message>System policy prevents access to scanners</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.ieee1394-iidc">
+    <description>Directly access Firewire IIDC devices</description>
+    <message>System policy prevents access to Firewire IIDC devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.freedesktop.hal.device-access.ieee1394-avc">
+    <description>Directly access Firewire AVC devices</description>
+    <message>System policy prevents access to Firewire AVC devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
 
-    <policy id="hal-device-file-video4linux">
-      <description>Directly access video capture devices</description>
-      <message>System policy prevents access to video capture devices</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-device-file-cdrom">
-      <description>Directly access optical drives</description>
-      <message>System policy prevents access to optical drives</message>
-      <defaults>
-        <allow_inactive>yes</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-device-file-dvb">
-      <description>Directly access DVB devices</description>
-      <message>System policy prevents access to DVB devices</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-device-file-camera">
-      <description>Directly access digital cameras</description>
-      <message>System policy prevents access to digital cameras</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-device-file-scanner">
-      <description>Directly access scanners</description>
-      <message>System policy prevents access to scanners</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-device-file-ieee1394-iidc">
-      <description>Directly access Firewire IIDC devices</description>
-      <message>System policy prevents access to Firewire IIDC devices</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-device-file-ieee1394-avc">
-      <description>Directly access Firewire AVC devices</description>
-      <message>System policy prevents access to Firewire AVC devices</message>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>yes</allow_active>
-      </defaults>
-    </policy>
-
-  </group>
 </policyconfig>

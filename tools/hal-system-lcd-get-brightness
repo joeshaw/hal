@@ -17,5 +17,5 @@ if [ -z "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" -a -z "$HAL_PROP_LINUX_SYSFS_PATH
 	exit 1
 fi
 
-hal_check_priv hal-power-lcd-panel
+hal_check_priv org.freedesktop.hal.power-management.lcd-panel
 hal_exec_backend

@@ -419,7 +419,7 @@ line_found:
 	 * We allow uid 0 to actually ensure that Unmount(options=["lazy"], "/dev/blah") works from addon-storage.
 	 */
 	if ((strcmp (invoked_by_uid, "0") != 0) && mounted_by_other_uid) {
-                const char *action = "hal-storage-unmount-others";
+                const char *action = "org.freedesktop.hal.storage.unmount-others";
 #ifdef HAVE_POLKIT
                 if (invoked_by_syscon_name != NULL) {
                         char *polkit_result;
@@ -596,7 +596,7 @@ try_open_excl_again:
 #ifdef HAVE_POLKIT
         if (invoked_by_syscon_name != NULL) {
                 char *polkit_result;
-                const char *action = "hal-storage-eject";
+                const char *action = "org.freedesktop.hal.storage.eject";
                 dbus_error_init (&error);
                 polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                                     udi,

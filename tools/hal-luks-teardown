@@ -41,6 +41,6 @@ if [ -n "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME" ] ; then
 fi
 
 # TODO: this is a little sketchy; we should check for hal-storage-crypto-teardown-others
-hal_check_priv hal-storage-crypto-setup
+hal_check_priv org.freedesktop.hal.storage.crypto-setup
 
 hal_exec_backend

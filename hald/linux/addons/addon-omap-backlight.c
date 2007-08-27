@@ -182,7 +182,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	DBusError err;
 	DBusMessage *reply;
 
-        if (!check_priv (connection, message, dbus_message_get_path (message), "hal-power-lcd-panel")) {
+        if (!check_priv (connection, message, dbus_message_get_path (message), "org.freedesktop.hal.power-management.lcd-panel")) {
                 return DBUS_HANDLER_RESULT_HANDLED;
         }
 

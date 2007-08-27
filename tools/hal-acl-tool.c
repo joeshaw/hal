@@ -774,7 +774,7 @@ acl_device_added_visitor (const char *seat_id,
                 /* TODO: FIXME: polkit_session_set_ck_remote_host (pk_session, );*/ 
 
                 pk_action = polkit_action_new();
-                priv_name = g_strdup_printf ("hal-device-file-%s", afd->type);
+                priv_name = g_strdup_printf ("org.freedesktop.hal.device-access.%s", afd->type);
                 polkit_action_set_action_id (pk_action, priv_name);
                 g_free (priv_name);
 
