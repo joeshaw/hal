@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <glib.h>
+#include <stdlib.h>
 
 #include <libhal.h>
 
@@ -147,24 +148,34 @@ main (int argc, char *argv[])
 	}
 
 	dbus_error_init (&error);	
-	if ((hal_ctx = libhal_ctx_new ()) == NULL) {
-		fprintf (stderr, "error: libhal_ctx_new\n");
-		return 1;
-	}
-	if (!libhal_ctx_set_dbus_connection (hal_ctx, dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
-		fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
-		LIBHAL_FREE_DBUS_ERROR (&error);
-		return 1;
-	}
-	if (!libhal_ctx_init (hal_ctx, &error)) {
-		if (dbus_error_is_set(&error)) {
-			fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
-			dbus_error_free (&error);
-		}
-		fprintf (stderr, "Could not initialise connection to hald.\n"
+        if (getenv ("HALD_DIRECT_ADDR") != NULL) {
+                if ((hal_ctx = libhal_ctx_init_direct (&error)) == NULL) {
+                        fprintf (stderr, "Cannot connect to hald\n");
+                        if (dbus_error_is_set (&error)) {
+                                dbus_error_free (&error);
+                        }
+                        return 1;
+                }
+        } else {
+                if ((hal_ctx = libhal_ctx_new ()) == NULL) {
+                        fprintf (stderr, "error: libhal_ctx_new\n");
+                        return 1;
+                }
+                if (!libhal_ctx_set_dbus_connection (hal_ctx, dbus_bus_get (DBUS_BUS_SYSTEM, &error))) {
+                        fprintf (stderr, "error: libhal_ctx_set_dbus_connection: %s: %s\n", error.name, error.message);
+                        LIBHAL_FREE_DBUS_ERROR (&error);
+                        return 1;
+                }
+                if (!libhal_ctx_init (hal_ctx, &error)) {
+                        if (dbus_error_is_set(&error)) {
+                                fprintf (stderr, "error: libhal_ctx_init: %s: %s\n", error.name, error.message);
+                                dbus_error_free (&error);
+                        }
+                        fprintf (stderr, "Could not initialise connection to hald.\n"
 				 "Normally this means the HAL daemon (hald) is not running or not ready.\n");
-		return 1;
-	}
+                        return 1;
+                }
+        }
 
         polkit_result = libhal_device_is_caller_privileged (hal_ctx,
                                                             udi,
