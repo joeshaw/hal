@@ -163,6 +163,7 @@ get_pk_caller_from_ci_tracker (CITracker *cit, const char *caller_unique_sysbus_
         PolKitSession *pk_session;
         PolKitCaller *pk_caller;
         const char *ck_session_objpath;
+        const char *selinux_context;
         
         pk_caller = NULL;
 
@@ -192,7 +193,10 @@ get_pk_caller_from_ci_tracker (CITracker *cit, const char *caller_unique_sysbus_
         polkit_caller_set_dbus_name (pk_caller, caller_unique_sysbus_name);
         polkit_caller_set_uid (pk_caller, ci_tracker_caller_get_uid (ci));
         polkit_caller_set_pid (pk_caller, ci_tracker_caller_get_pid (ci));
-        polkit_caller_set_selinux_context (pk_caller, ci_tracker_caller_get_selinux_context (ci));
+        selinux_context = ci_tracker_caller_get_selinux_context (ci);
+        if (selinux_context != NULL) {
+                polkit_caller_set_selinux_context (pk_caller, selinux_context);
+        }
         if (pk_session != NULL) {
                 polkit_caller_set_ck_session (pk_caller, pk_session);
                 polkit_session_unref (pk_session);
