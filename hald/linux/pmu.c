@@ -328,7 +328,7 @@ pmu_synthesize_hotplug_events (void)
 	pmu_synthesize_item ("/proc/pmu/info", PMU_TYPE_AC_ADAPTER);
 
 	error = NULL;
-	dir = g_dir_open ("/proc/pmu/info", 0, &error);
+	dir = g_dir_open ("/proc/pmu", 0, &error);
 	if (dir != NULL) {
 		const gchar *f;
 		while ((f = g_dir_read_name (dir)) != NULL) {

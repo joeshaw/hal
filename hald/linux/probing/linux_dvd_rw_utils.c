@@ -58,6 +58,14 @@
 
 #include "linux_dvd_rw_utils.h"
 
+#if !defined(SG_FLAG_LUN_INHIBIT)
+# if defined(SG_FLAG_UNUSED_LUN_INHIBIT)
+#  define SG_FLAG_LUN_INHIBIT SG_FLAG_UNUSED_LUN_INHIBIT
+# else
+#  define SG_FLAG_LUN_INHIBIT 0
+# endif
+#endif
+
 typedef enum {
 	NONE = CGC_DATA_NONE,	// 3
 	READ = CGC_DATA_READ,	// 2
@@ -149,8 +157,8 @@ scsi_command_transport (ScsiCommand * cmd, Direction dir, void *buf,
 		errno = EIO;
 		ret = -1;
 		if (cmd->sg_io.masked_status & CHECK_CONDITION) {
-			CREAM_ON_ERRNO (cmd->sg_io.sbp);
-			ret = ERRCODE (cmd->sg_io.sbp);
+			CREAM_ON_ERRNO ((unsigned char*)cmd->sg_io.sbp);
+			ret = ERRCODE ((unsigned char*)cmd->sg_io.sbp);
 			if (ret == 0)
 				ret = -1;
 		}
