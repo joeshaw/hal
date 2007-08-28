@@ -13,6 +13,7 @@
     key              CDATA #REQUIRED
     string           CDATA #IMPLIED
     int              CDATA #IMPLIED
+    uint64           CDATA #IMPLIED
     bool             (false|true) #IMPLIED
     exists           (false|true) #IMPLIED
     empty            (false|true) #IMPLIED
