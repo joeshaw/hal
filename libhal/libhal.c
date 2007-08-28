@@ -541,6 +541,9 @@ key_sort (LibHalProperty *a, LibHalProperty *b)
 void 
 libhal_property_set_sort (LibHalPropertySet *set)
 {
+	if (set == NULL)
+		return;
+
 	HASH_SORT (set->properties, key_sort);
 }
 
@@ -554,6 +557,9 @@ void
 libhal_free_property_set (LibHalPropertySet * set)
 {
 	LibHalProperty *p;
+
+	if (set == NULL) 
+		return;
 
 	for (p = set->properties; p != NULL; p=p->hh.next) {
 		HASH_DELETE (hh, set->properties, p);
@@ -581,8 +587,7 @@ libhal_property_set_get_num_elems (LibHalPropertySet *set)
 	unsigned int num_elems;
 	LibHalProperty *p;
 
-	if (set == NULL)
-		return 0;
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", 0);
 	
 	num_elems = 0;
 	for (p = set->properties; p != NULL; p = p->hh.next)
@@ -595,6 +600,9 @@ static LibHalProperty *
 property_set_lookup (const LibHalPropertySet *set, const char *key)
 {
 	LibHalProperty *p;
+
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", NULL);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", NULL);
 
 	HASH_FIND_STR (set->properties, key, p);
 	return p;
@@ -614,6 +622,11 @@ LibHalPropertyType
 libhal_ps_get_type (const LibHalPropertySet *set, const char *key)
 {
 	LibHalProperty *p = property_set_lookup (set, key);
+
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", LIBHAL_PROPERTY_TYPE_INVALID);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", LIBHAL_PROPERTY_TYPE_INVALID);
+
+	p = property_set_lookup (set, key);
 	if (p) return p->type;
 	else return LIBHAL_PROPERTY_TYPE_INVALID;
 }
@@ -632,7 +645,12 @@ libhal_ps_get_type (const LibHalPropertySet *set, const char *key)
 const char *
 libhal_ps_get_string  (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
+	
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", NULL);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", NULL);
+
+	p = property_set_lookup (set, key);
 	if (p && p->type == LIBHAL_PROPERTY_TYPE_STRING)
 		return p->v.str_value;
 	else return NULL;
@@ -650,7 +668,12 @@ libhal_ps_get_string  (const LibHalPropertySet *set, const char *key)
 dbus_int32_t
 libhal_ps_get_int32 (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
+	
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", 0);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", 0);
+	
+	p = property_set_lookup (set, key);
 	if (p && p->type == LIBHAL_PROPERTY_TYPE_INT32)
 		return p->v.int_value;
 	else return 0;
@@ -668,7 +691,12 @@ libhal_ps_get_int32 (const LibHalPropertySet *set, const char *key)
 dbus_uint64_t
 libhal_ps_get_uint64 (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
+
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", 0);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", 0);
+
+	p = property_set_lookup (set, key);
 	if (p && p->type == LIBHAL_PROPERTY_TYPE_UINT64)
 		return p->v.uint64_value;
 	else return 0;
@@ -686,7 +714,12 @@ libhal_ps_get_uint64 (const LibHalPropertySet *set, const char *key)
 double
 libhal_ps_get_double (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
+
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", 0.0);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", 0.0);
+
+	p = property_set_lookup (set, key);
 	if (p && p->type == LIBHAL_PROPERTY_TYPE_DOUBLE)
 		return p->v.double_value;
 	else return 0.0;
@@ -704,7 +737,12 @@ libhal_ps_get_double (const LibHalPropertySet *set, const char *key)
 dbus_bool_t
 libhal_ps_get_bool (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
+
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", FALSE);
+	
+	p = property_set_lookup (set, key);
 	if (p && p->type == LIBHAL_PROPERTY_TYPE_BOOLEAN)
 		return p->v.bool_value;
 	else return FALSE;
@@ -722,7 +760,12 @@ libhal_ps_get_bool (const LibHalPropertySet *set, const char *key)
 const char *const *
 libhal_ps_get_strlist (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
+
+	LIBHAL_CHECK_PARAM_VALID(set, "*set", NULL);
+	LIBHAL_CHECK_PARAM_VALID(key, "*key", NULL);
+	
+	p = property_set_lookup (set, key);
 	if (p && p->type == LIBHAL_PROPERTY_TYPE_STRLIST)
 		return (const char *const *) p->v.strlist_value;
 	else return NULL;
@@ -898,6 +941,8 @@ singleton_device_changed (LibHalContext *ctx, DBusConnection *connection, DBusMe
 	DBusMessageIter iter;
 	LibHalPropertySet *set;
 	const char *udi;
+
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, DBUS_HANDLER_RESULT_NOT_YET_HANDLED);
 
 	dbus_message_iter_init (msg, &iter);
 
