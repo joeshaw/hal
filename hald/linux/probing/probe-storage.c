@@ -154,27 +154,27 @@ main (int argc, char *argv[])
 	HAL_DEBUG (("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 
 	     device_file, bus, drive_type, udi, only_check_for_fs));
 
-	if (!only_check_for_fs) {
-		/* Get properties for CD-ROM drive */
-		if (strcmp (drive_type, "cdrom") == 0) {
-			int capabilities;
-			int read_speed, write_speed;
-			char *write_speeds;
-			
-			HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file));
-			fd = open (device_file, O_RDONLY | O_NONBLOCK);
-			if (fd < 0) {
-				HAL_ERROR (("Cannot open %s: %s", device_file, strerror (errno)));
-				goto out;
-			}
-			HAL_DEBUG (("Returned from open(2)"));
+	/* Get properties for CD-ROM drive */
+	if (strcmp (drive_type, "cdrom") == 0) {
+		int capabilities;
+		int read_speed, write_speed;
+		char *write_speeds;
+		
+		HAL_DEBUG (("Doing open (\"%s\", O_RDONLY | O_NONBLOCK)", device_file));
+		fd = open (device_file, O_RDONLY | O_NONBLOCK);
+		if (fd < 0) {
+			HAL_ERROR (("Cannot open %s: %s", device_file, strerror (errno)));
+			goto out;
+		}
+		HAL_DEBUG (("Returned from open(2)"));
 
-			if (ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0) {
-				HAL_ERROR (("Error: CDROM_SET_OPTIONS failed: %s\n", strerror(errno)));
-				close (fd);
-				goto out;
-			}
-			
+		if (ioctl (fd, CDROM_SET_OPTIONS, CDO_USE_FFLAGS) < 0) {
+			HAL_ERROR (("Error: CDROM_SET_OPTIONS failed: %s\n", strerror(errno)));
+			close (fd);
+			goto out;
+		}
+		
+		if (!only_check_for_fs) {
 			capabilities = ioctl (fd, CDROM_GET_CAPABILITY, 0);
 			if (capabilities < 0) {
 				close (fd);
@@ -220,13 +220,13 @@ main (int argc, char *argv[])
 				if (profile & DRIVE_CDROM_CAPS_DVDRW)
 					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdrw", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSR)
-					libhal_changeset_set_property_bool(cs, "storage.cdrom.dvdplusr", TRUE);
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusr", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRW)
 					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrw", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRWDL)
 					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrwdl", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRDL)
-                                        libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrdl", TRUE);
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrdl", TRUE);
 			}
 			if (capabilities & CDC_DVD_R) {
 				libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdr", TRUE);
@@ -255,36 +255,37 @@ main (int argc, char *argv[])
 			} else {
 				libhal_changeset_set_property_bool (cs, "storage.cdrom.support_multisession", FALSE);
 			}
-		
-			if (get_read_write_speed(fd, &read_speed, &write_speed, &write_speeds) >= 0) {
-				libhal_changeset_set_property_int (cs, "storage.cdrom.read_speed", read_speed);
-				if (write_speed > 0) {
-					libhal_changeset_set_property_int (
-						cs, "storage.cdrom.write_speed", write_speed);
-					
-					if (write_speeds != NULL)
-					{
-						gchar **wspeeds;
- 						wspeeds = g_strsplit_set (write_speeds, ",", -1);
-						libhal_changeset_set_property_strlist (cs, 
-										       "storage.cdrom.write_speeds", 
-										       (const char **) wspeeds);
-						g_strfreev (wspeeds);
-						free (write_speeds);
-					}
-				} else {
-					gchar *wspeeds[1] = {NULL};
-					libhal_changeset_set_property_int (cs, "storage.cdrom.write_speed", 0);
+	
+		}
+
+		if (get_read_write_speed(fd, &read_speed, &write_speed, &write_speeds) >= 0) {
+			libhal_changeset_set_property_int (cs, "storage.cdrom.read_speed", read_speed);
+
+			if (write_speed > 0) {
+				libhal_changeset_set_property_int (cs, "storage.cdrom.write_speed", write_speed);
+				
+				if (write_speeds != NULL)
+				{
+					gchar **wspeeds;
+
+					wspeeds = g_strsplit_set (write_speeds, ",", -1);
 					libhal_changeset_set_property_strlist (cs, "storage.cdrom.write_speeds", 
 									       (const char **) wspeeds);
+					g_strfreev (wspeeds);
+					free (write_speeds);
+				
 				}
+			} else {
+				gchar *wspeeds[1] = {NULL};
+				libhal_changeset_set_property_int (cs, "storage.cdrom.write_speed", 0);
+				libhal_changeset_set_property_strlist (cs, "storage.cdrom.write_speeds", 
+								       (const char **) wspeeds);
 			}
-			
-			close (fd);
 		}
 		
-	} /* !only_check_for_fs */
-
+		close (fd);
+	}
+		
 	ret = 0;
 
 	/* Also return 2 if we're a cdrom and we got a disc */
