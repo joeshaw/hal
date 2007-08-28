@@ -12,7 +12,9 @@
 <!ATTLIST match 
     key              CDATA #REQUIRED
     string           CDATA #IMPLIED
+    string_outof     CDATA #IMPLIED
     int              CDATA #IMPLIED
+    int_outof        CDATA #IMPLIED
     uint64           CDATA #IMPLIED
     bool             (false|true) #IMPLIED
     exists           (false|true) #IMPLIED
@@ -22,8 +24,10 @@
     contains         CDATA #IMPLIED
     contains_ncase   CDATA #IMPLIED
     contains_not     CDATA #IMPLIED
+    contains_outof   CDATA #IMPLIED
     prefix           CDATA #IMPLIED
     prefix_ncase     CDATA #IMPLIED
+    prefix_outof     CDATA #IMPLIED
     suffix           CDATA #IMPLIED
     suffix_ncase     CDATA #IMPLIED
     compare_lt       CDATA #IMPLIED

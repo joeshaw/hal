@@ -65,8 +65,12 @@ get_match_type_str (enum match_type type)
 	switch (type) {
 	case MATCH_STRING:
 		return "string";
+	case MATCH_STRING_OUTOF:
+		return "string_outof";
 	case MATCH_INT:
 		return "int";
+	case MATCH_INT_OUTOF:
+		return "int_outof";
 	case MATCH_UINT64:
 		return "uint64";
 	case MATCH_BOOL:
@@ -89,10 +93,14 @@ get_match_type_str (enum match_type type)
 		return "contains_ncase";
 	case MATCH_CONTAINS_NOT:
 		return "contains_not";
+	case MATCH_CONTAINS_OUTOF:
+		return "contains_outof";
 	case MATCH_PREFIX:
 		return "prefix";
 	case MATCH_PREFIX_NCASE:
 		return "prefix_ncase";
+	case MATCH_PREFIX_OUTOF:
+		return "prefix_outof";
 	case MATCH_SUFFIX:
 		return "suffix";
 	case MATCH_SUFFIX_NCASE:
@@ -490,6 +498,81 @@ handle_match (struct rule *rule, HalDevice *d)
 			return !contains; /* rule->type_match == MATCH_CONTAINS_NOT  */
 		}
 	}
+	
+	case MATCH_CONTAINS_OUTOF:
+	case MATCH_PREFIX_OUTOF:
+	case MATCH_STRING_OUTOF:
+	{
+		dbus_bool_t contains = FALSE;
+
+		if (hal_device_has_property (d, prop_to_check) && value != NULL) {
+
+			if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_STRING) {
+				const char *haystack;
+				gchar **values;
+        			int i;
+
+                		values = g_strsplit (value, ";", 0);
+				
+				haystack = hal_device_property_get_string (d, prop_to_check);
+				if (haystack != NULL && values != NULL) {
+					for (i = 0; values [i] ; ++i) {
+						if (rule->type_match == MATCH_CONTAINS_OUTOF) {
+							if (strstr(haystack, values[i]) != NULL) {
+								contains = TRUE;
+								break;
+							}
+						}
+						else if (rule->type_match == MATCH_PREFIX_OUTOF) {
+							if (g_str_has_prefix (haystack, values[i])) {
+								contains = TRUE;
+								break;
+							}	
+						}
+						else if (rule->type_match == MATCH_STRING_OUTOF) {
+							if (strcmp (haystack, values[i]) == 0) {
+								contains = TRUE;
+								break;
+							}
+						}
+					}
+				}
+				g_strfreev (values);	
+			} 
+		}
+	
+		return contains;
+	}
+
+	case MATCH_INT_OUTOF:
+	{
+		dbus_bool_t contained = FALSE;
+
+		if (hal_device_has_property (d, prop_to_check) && value != NULL) {
+
+			if (hal_device_property_get_type (d, prop_to_check) == HAL_PROPERTY_TYPE_INT32) {
+				gchar **values;
+        			int i;
+				int to_check;
+
+                		values = g_strsplit (value, ";", 0);
+				to_check = hal_device_property_get_int (d, prop_to_check);				
+
+				if (values != NULL) {
+					for (i = 0; values [i] ; ++i) {
+                				if (to_check == strtol (values[i], NULL, 0)) {
+							contained = TRUE;
+							break;
+						}	
+					}
+				}
+				g_strfreev (values);	
+			} 
+		}
+	
+		return contained;
+	}
+
 
 	case MATCH_SIBLING_CONTAINS:
 	{

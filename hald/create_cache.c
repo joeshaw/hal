@@ -139,6 +139,14 @@ get_match_type(const char *str)
 		return MATCH_COMPARE_NE;
 	if (strcmp (str, "contains_not") == 0)
 		return MATCH_CONTAINS_NOT;
+	if (strcmp (str, "contains_outof") == 0)
+		return MATCH_CONTAINS_OUTOF;
+	if (strcmp (str, "int_outof") == 0)
+		return MATCH_CONTAINS_OUTOF;
+	if (strcmp (str, "prefix_outof") == 0)
+		return MATCH_PREFIX_OUTOF;
+	if (strcmp (str, "string_outof") == 0)
+		return MATCH_STRING_OUTOF;
 	return MATCH_UNKNOWN;
 }
 

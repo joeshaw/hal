@@ -81,7 +81,11 @@ typedef enum {
 	MATCH_SIBLING_CONTAINS,
 	MATCH_COMPARE_NE,
 	MATCH_CONTAINS_NOT,
-	MATCH_DOUBLE
+	MATCH_DOUBLE,
+	MATCH_CONTAINS_OUTOF,
+	MATCH_INT_OUTOF,
+	MATCH_PREFIX_OUTOF,
+	MATCH_STRING_OUTOF,
 } match_type;
 
 /* a "rule" structure that is a generic node of the fdi file */

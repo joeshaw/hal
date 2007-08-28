@@ -68,7 +68,26 @@
         </listitem>
         <listitem>
           <para>
+            <literal>string_outof</literal> - work like <literal>string</literal> but
+	    the match is done against a list of strings separated by ';'. 
+	    For example: 
+	    <literal>&#60;match key="system.hardware.product" string_outof="Satellite A30;Portable PC"&#62;</literal>	
+	    In this example the line matches if <literal>system.hardware.product</literal>
+	    is exactly 'Satellite A30' or 'Portable PC'.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
             <literal>int</literal> - match an integer property
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>int_outof</literal> - work like <literal>int</literal> but
+	    the match is done against a list of integer separated by ';'. 
+	    For example: 
+	    <literal>&#60;match key="usb.product_id" int_outof="0x1007;0x1008;0x1009"&#62;</literal>	
+	    In this example the line matches if <literal>usb.product_id</literal> is 0x1007, 0x1008 or 0x1009.
           </para>
         </listitem>
         <listitem>
@@ -149,6 +168,17 @@
         </listitem>
         <listitem>
           <para>
+            <literal>contains_outof</literal> - like <literal>contains</literal> but can be
+	    used only with strings and the match is done against a list of (sub-)strings 
+	    separated by ';'. 
+	    For example: 
+	    <literal>&#60;match key="system.hardware.product" contains_outof="D600;D610;C540"&#62;</literal>	
+	    In this example the line matches if <literal>system.hardware.product</literal>
+	    contains D600, D610 or C540.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
             <literal>prefix</literal> - can only be used with string properties.
             Matches if property begins with the key.
           </para>
@@ -157,6 +187,16 @@
           <para>
             <literal>prefix_ncase</literal> - like <literal>prefix</literal> but the
             property and the given key are converted to lowercase before the check.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <literal>prefix_outof</literal> - like <literal>prefix</literal> but the
+	    match is done against a list of prefixes separated by ';'. 
+	    For example: 
+	    <literal>&#60;match key="system.hardware.product" prefix_outof="1860;2366;2371"&#62;</literal>	
+	    In this example the line matches if <literal>system.hardware.product</literal>
+	    starts with 1860, 2366 or 2371.
           </para>
         </listitem>
         <listitem>
