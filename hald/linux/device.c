@@ -107,7 +107,7 @@ input_test_rel (HalDevice *d, const char *sysfs_path)
 	long bitmask[NBITS(REL_MAX)];
 	int num_bits;
 
-	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/rel");
+	s = hal_util_get_string_from_file (sysfs_path, "capabilities/rel");
 	if (s == NULL)
 		goto out;
 
@@ -168,7 +168,7 @@ input_test_key (HalDevice *d, const char *sysfs_path)
 	long bitmask[NBITS(KEY_MAX)];
 	int num_bits;
 
-	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/key");
+	s = hal_util_get_string_from_file (sysfs_path, "capabilities/key");
 	if (s == NULL)
 		goto out;
 
@@ -213,7 +213,7 @@ input_test_switch (HalDevice *d, const char *sysfs_path)
 	long bitmask[NBITS(SW_MAX)];
 	int num_bits;
 
-	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/sw");
+	s = hal_util_get_string_from_file (sysfs_path, "capabilities/sw");
 	if (s == NULL)
 		goto out;
 
@@ -248,7 +248,7 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 	long bitmask[NBITS(ABS_MAX)];
 	int num_bits;
 
-	s = hal_util_get_string_from_file (sysfs_path, "../capabilities/abs");
+	s = hal_util_get_string_from_file (sysfs_path, "capabilities/abs");
 	if (s == NULL)
 		goto out;
 	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
@@ -264,7 +264,7 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 
 		hal_device_add_capability (d, "input.joystick");
 
-		s = hal_util_get_string_from_file (sysfs_path, "../capabilities/key");
+		s = hal_util_get_string_from_file (sysfs_path, "capabilities/key");
 		if (s == NULL)
 			goto out;
 		input_str_to_bitmask (s, bitmask_touch, sizeof (bitmask_touch));
@@ -281,7 +281,11 @@ static HalDevice *
 input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	int eventdev_num;
-	HalDevice *d = NULL;
+	HalDevice *d;
+        char *attr_sysfs_path;
+        
+        d = NULL;
+        attr_sysfs_path = NULL;
 
 	if (device_file == NULL || device_file[0] == '\0')
 		goto out;
@@ -289,6 +293,24 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	/* only care about evdev input devices */
 	if (sscanf (hal_util_get_last_element (sysfs_path), "event%d", &eventdev_num) != 1)
 		goto out;
+        
+        /* Prior to 2.6.23pre event%d was a child of input%d - after that event%d
+         * moved to the same level with a device/ symlink... Handle both cases
+         */
+        attr_sysfs_path = g_strdup_printf ("%s/../capabilities", sysfs_path);
+        if (g_file_test (attr_sysfs_path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR)) {
+                g_free (attr_sysfs_path);
+                attr_sysfs_path = g_strdup_printf ("%s/../", sysfs_path);
+        } else {
+                g_free (attr_sysfs_path);
+                attr_sysfs_path = g_strdup_printf ("%s/device/capabilities", sysfs_path);
+                if (g_file_test (attr_sysfs_path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR)) {
+                        g_free (attr_sysfs_path);
+                        attr_sysfs_path = g_strdup_printf ("%s/device/", sysfs_path);
+                } else {
+                        goto out;
+                }
+        }
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
@@ -304,22 +326,23 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	hal_device_property_set_string (d, "input.device", device_file);
 
-	hal_util_set_string_from_file (d, "info.product", sysfs_path, "../name");
-	hal_util_set_string_from_file (d, "input.product", sysfs_path, "../name");
+	hal_util_set_string_from_file (d, "info.product", attr_sysfs_path, "name");
+	hal_util_set_string_from_file (d, "input.product", attr_sysfs_path, "name");
 
 	/* check for keys */
-	input_test_key (d, sysfs_path);
+	input_test_key (d, attr_sysfs_path);
 
 	/* check for mice etc. */
-	input_test_rel (d, sysfs_path);
+	input_test_rel (d, attr_sysfs_path);
 
 	/* check for joysticks etc. */
-	input_test_abs (d, sysfs_path);
+	input_test_abs (d, attr_sysfs_path);
 
 	/* check for switches */
-	input_test_switch (d, sysfs_path);
+        input_test_switch (d, attr_sysfs_path);
 
 out:
+        g_free (attr_sysfs_path);
 	return d;
 }
 
