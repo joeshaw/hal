@@ -751,7 +751,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 
 			if (type == HAL_PROPERTY_TYPE_STRLIST || type == HAL_PROPERTY_TYPE_INVALID) {
 				hal_device_property_remove (d, key);
-				hal_device_property_strlist_append (d, key, value);
+				hal_device_property_strlist_append (d, key, value, FALSE);
 			}
 
 		} else if (rule->type_merge == MERGE_INT32) {
@@ -811,7 +811,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 		}
 
 		if (rule->type_merge == MERGE_STRLIST) {
-			hal_device_property_strlist_append (d, key, value);
+			hal_device_property_strlist_append (d, key, value, FALSE);
 		} else {
 			const char *existing_string;
 
@@ -881,7 +881,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 
                 if (!hal_device_has_property (d, key) ||
                     !hal_device_property_strlist_contains (d, key, value)) {
-                        hal_device_property_strlist_append (d, key, value);
+                        hal_device_property_strlist_append (d, key, value, FALSE);
                 }
 
 	} else if (rule->rtype == RULE_REMOVE) {

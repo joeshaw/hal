@@ -167,7 +167,7 @@ check_properties (void)
 	printf ("PASSED\n");
 
 	printf ("strlist: ");
-	if (!hal_device_property_strlist_append (d, "test.strlist", "foostrlist0")) {
+	if (!hal_device_property_strlist_append (d, "test.strlist", "foostrlist0", FALSE)) {
 		printf ("FAILED00\n");
 		goto out;
 	}
@@ -184,7 +184,7 @@ check_properties (void)
 		goto out;
 	}
 	
-	if (!hal_device_property_strlist_append (d, "test.strlist", "foostrlist1")) {
+	if (!hal_device_property_strlist_append (d, "test.strlist", "foostrlist1", FALSE)) {
 		printf ("FAILED10\n");
 		goto out;
 	}

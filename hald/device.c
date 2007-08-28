@@ -355,7 +355,7 @@ hal_property_strlist_clear (HalProperty *prop)
 	}
 	g_slist_free (prop->v.strlist_value);
 
-	return FALSE;
+	return TRUE;
 }
 
 
@@ -598,9 +598,9 @@ merge_device_rewrite_cb (HalDevice *source,
 		{
 			GSList *l;
 
-			hal_device_property_strlist_clear (ud->target, target_key);
+			hal_device_property_strlist_clear (ud->target, target_key, FALSE);
 			for (l = hal_property_get_strlist (p); l != NULL; l = l->next)
-				hal_device_property_strlist_append (ud->target, target_key, l->data);
+				hal_device_property_strlist_append (ud->target, target_key, l->data, FALSE);
 		}
 		break;
 
@@ -1409,7 +1409,8 @@ hal_device_property_get_strlist_elem (HalDevice    *device,
 gboolean
 hal_device_property_strlist_append (HalDevice    *device,
 				    const char   *key,
-				    const char *value)
+				    const char   *value,
+				    gboolean     changeset)
 {
 	HalProperty *prop;
 
@@ -1421,9 +1422,10 @@ hal_device_property_strlist_append (HalDevice    *device,
 			return FALSE;
 
 		hal_property_strlist_append (prop, value);
-
-		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-			       key, FALSE, FALSE);
+		
+		if (!changeset) 
+			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+				       key, FALSE, FALSE);
 
 	} else {
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
@@ -1431,12 +1433,38 @@ hal_device_property_strlist_append (HalDevice    *device,
 
 		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
-		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-			       key, FALSE, TRUE);
+		if (!changeset)
+			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+				       key, FALSE, TRUE);
 	}
 
 	return TRUE;
 }
+
+gboolean
+hal_device_property_strlist_append_finish_changeset (HalDevice    *device,
+                                                     const char   *key,
+                                                     gboolean     is_added){
+
+	HalProperty *prop;
+
+	/* check if property already exists */
+	prop = hal_device_property_find (device, key);
+
+	if (prop != NULL) {
+		if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
+			return FALSE;
+
+		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+			       key, FALSE, is_added);
+
+	} else {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
 
 gboolean 
 hal_device_property_strlist_prepend (HalDevice    *device,
@@ -1497,7 +1525,8 @@ hal_device_property_strlist_remove_elem (HalDevice    *device,
 
 gboolean
 hal_device_property_strlist_clear (HalDevice    *device,
-				   const char   *key)
+				   const char   *key,
+				   gboolean     changeset)
 {
 	HalProperty *prop;
 
@@ -1508,21 +1537,26 @@ hal_device_property_strlist_clear (HalDevice    *device,
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		g_hash_table_insert (device->private->props, g_strdup (key), prop);
 
-		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-			       key, FALSE, TRUE);
+		if (!changeset)
+			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+				       key, FALSE, TRUE);
 		return TRUE;
 	}
 
 	if (hal_property_get_type (prop) != HAL_PROPERTY_TYPE_STRLIST)
 		return FALSE;
 	
-	if (hal_property_strlist_clear (prop)) {
+        /* TODO: check why  hal_property_strlist_clear (prop) not work */ 
+	g_hash_table_remove (device->private->props, key);
+	prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
+	g_hash_table_insert (device->private->props, g_strdup (key), prop);
+
+	if (!changeset) {
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
-		return TRUE;
 	}
-	
-	return FALSE;
+
+	return TRUE;
 }
 
 
@@ -1672,7 +1706,7 @@ hal_device_acquire_lock (HalDevice *device, const char *lock_name, gboolean excl
                 goto out;
         }
 
-	hal_device_property_strlist_append (device, buf, sender);
+	hal_device_property_strlist_append (device, buf, sender, FALSE);
 	g_snprintf (buf, sizeof (buf), "info.named_locks.%s.locked", lock_name);
 	hal_device_property_set_bool (device, buf, TRUE);
 

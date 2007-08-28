@@ -1619,10 +1619,10 @@ devinfo_storage_append_nickname (HalDevice *d, const char *media_type, int media
 	char buf[64];
 
 	if (media_num == 0) {
-		hal_device_property_strlist_append (d, "storage.solaris.nicknames", media_type);
+		hal_device_property_strlist_append (d, "storage.solaris.nicknames", media_type, FALSE);
 	}
 	snprintf(buf, sizeof (buf), "%s%d", media_type, media_num);
-	hal_device_property_strlist_append (d, "storage.solaris.nicknames", buf);
+	hal_device_property_strlist_append (d, "storage.solaris.nicknames", buf, FALSE);
 }
 
 static void

@@ -394,7 +394,7 @@ hf_usb_device_new (HalDevice *parent,
 	char *port;
 
 	port = g_strdup_printf("%i", di->udi_ports[i]);
-	hal_device_property_strlist_append(device, "usb_device.freebsd.ports", port);
+	hal_device_property_strlist_append(device, "usb_device.freebsd.ports", port, FALSE);
 	g_free(port);
       }
 

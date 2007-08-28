@@ -1212,22 +1212,40 @@ device_set_multiple_properties (DBusConnection *connection, DBusMessage *message
 
 		switch (change_type) {
 		case DBUS_TYPE_ARRAY:
+		{
+			gboolean _error;
+			gboolean _added;
+
+			_error = FALSE;
+			_added = TRUE;
+
 			if (dbus_message_iter_get_element_type (&var_iter) != DBUS_TYPE_STRING) {
 				/* TODO: error */
 			}
 			dbus_message_iter_recurse (&var_iter, &array_iter);
 
-			hal_device_property_strlist_clear (d, key);
+			if (hal_device_has_property(d, key)) {
+		 		if (hal_device_property_get_type(d, key) != HAL_PROPERTY_TYPE_STRLIST) {
+					_error = TRUE;
+				}
+				_added = FALSE;
+			} 
+
+			hal_device_property_strlist_clear (d, key, TRUE);
 
 			while (dbus_message_iter_get_arg_type (&array_iter) == DBUS_TYPE_STRING) {
 				const char *v;
 				dbus_message_iter_get_basic (&array_iter, &v);
 				HAL_INFO ((" strlist elem %s -> %s", key, v));
-				rc = hal_device_property_strlist_append (d, key, v);
+				rc = hal_device_property_strlist_append (d, key, v, TRUE);
 				dbus_message_iter_next (&array_iter);
 			}
+			
+			if (!_error)
+				hal_device_property_strlist_append_finish_changeset(d, key, _added);
 
 			break;
+		}
 		case DBUS_TYPE_STRING:
 		{
 			const char *v;
@@ -1741,7 +1759,7 @@ device_string_list_append_prepend (DBusConnection * connection, DBusMessage * me
 	if (do_prepend)
 		ret = hal_device_property_strlist_prepend (d, key, value);
 	else
-		ret = hal_device_property_strlist_append (d, key, value);
+		ret = hal_device_property_strlist_append (d, key, value, FALSE);
 	if (!ret) {
 		raise_property_type_error (connection, message, udi, key);
 		return DBUS_HANDLER_RESULT_HANDLED;
@@ -4667,12 +4685,14 @@ reply_from_fwd_message (DBusPendingCall *pending_call,
 	reply_from_addon = dbus_pending_call_steal_reply (pending_call);
 
 	reply = dbus_message_copy (reply_from_addon);
-	dbus_message_set_destination (reply, dbus_message_get_sender (method_from_caller));
-	dbus_message_set_reply_serial (reply, dbus_message_get_serial (method_from_caller));
+	if (reply != NULL) {
+		dbus_message_set_destination (reply, dbus_message_get_sender (method_from_caller));
+		dbus_message_set_reply_serial (reply, dbus_message_get_serial (method_from_caller));
 
-	if (dbus_connection != NULL)
-		dbus_connection_send (dbus_connection, reply, NULL);
+		if (dbus_connection != NULL)
+			dbus_connection_send (dbus_connection, reply, NULL);
 
+	}
 	dbus_message_unref (reply_from_addon);
 	dbus_message_unref (reply);
 	dbus_message_unref (method_from_caller);

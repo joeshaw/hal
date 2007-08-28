@@ -588,7 +588,7 @@ get_openfirmware_entry(HalDevice *d, char *property, char *entry,
 	if (multivalue) {
 		gsize offset = 0;
 		while (offset < length) { 
-			hal_device_property_strlist_append(d, property, contents + offset);
+			hal_device_property_strlist_append(d, property, contents + offset, FALSE);
 			for (; offset < length - 1 && contents[offset] != '\0'; offset++)
 				;
 			offset++;

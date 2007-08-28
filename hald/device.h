@@ -183,7 +183,11 @@ gboolean      hal_device_property_set_strlist (HalDevice *device,
                                  	       GSList *value);
 gboolean      hal_device_property_strlist_append (HalDevice    *device,
 						  const char   *key,
-						  const char *value);
+						  const char   *value,
+						  gboolean     changeset);
+gboolean      hal_device_property_strlist_append_finish_changeset (HalDevice    *device,
+						  		   const char   *key,
+						  		   gboolean     is_added);
 gboolean      hal_device_property_strlist_prepend (HalDevice    *device,
 						  const char   *key,
 						  const char *value);
@@ -191,7 +195,8 @@ gboolean      hal_device_property_strlist_remove_elem (HalDevice    *device,
 						       const char   *key,
 						       guint index);
 gboolean      hal_device_property_strlist_clear (HalDevice    *device,
-						 const char   *key);
+						 const char   *key,
+						 gboolean     changeset);
 gboolean      hal_device_property_strlist_add (HalDevice    *device,
 					       const char   *key,
 					       const char *value);
