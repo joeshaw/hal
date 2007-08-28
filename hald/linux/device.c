@@ -283,7 +283,7 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	int eventdev_num;
 	HalDevice *d = NULL;
 
-	if (device_file == NULL)
+	if (device_file == NULL || device_file[0] == '\0')
 		goto out;
 
 	/* only care about evdev input devices */
@@ -770,7 +770,7 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = NULL;
 
-	if (parent_dev == NULL || parent_path == NULL || device_file == NULL) {
+	if (parent_dev == NULL || parent_path == NULL || device_file == NULL || device_file[0] == '\0') {
 		goto out;
 	}
 
@@ -991,14 +991,30 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	d = NULL;
 
-	if (device_file == NULL) 
-		goto out;	
+	HAL_INFO (("sound_add: sysfs_path=%s device_file=%s parent_dev=0x%08x parent_path=%s", sysfs_path, device_file, parent_dev, parent_path));
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	device = hal_util_get_last_element(sysfs_path);
 
-	if (parent_dev == NULL || parent_path == NULL) {
+	if (device_file[0] == '\0' && parent_dev == NULL && parent_path == NULL) {
+		goto out;
+	} else if (device_file[0] == '\0' && parent_dev != NULL && parent_path != NULL) {
+		HAL_INFO(("sound_add: handle sound card %s", sysfs_path));
+		/* handle card devices */
+		hal_device_property_set_string (d, "info.category", "sound");
+		hal_device_add_capability (d, "sound");
+		hal_device_property_set_string (d, "sound.originating_device", hal_device_get_udi (parent_dev));
+		hal_device_property_set_string (d, "sound.physical_device", hal_device_get_udi (parent_dev));
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+
+		if (sscanf (device, "card%d", &cardnum) == 1) {
+			hal_device_property_set_int (d, "sound.card", cardnum);
+			asound_card_id_set (cardnum, d, "sound.card_id");
+			snprintf (buf, sizeof (buf), "%s Sound Card", hal_device_property_get_string (d, "sound.card_id"));
+			hal_device_property_set_string (d, "info.product", buf);
+		}
+	} else if (parent_dev == NULL || parent_path == NULL) {
  		/* handle global ALSA and OSS devices, these devices are for all ALSA/OSS Sound devices
 		   so we append them to /org/freedesktop/Hal/devices/computer */
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
@@ -1227,7 +1243,13 @@ sound_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	if (hal_device_has_property(d, "alsa.card")) {
+	if (hal_device_has_property(d, "sound.card")) {
+		/* don't include card number as it may not be persistent across reboots */
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_sound_card_%i",
+				      hal_device_property_get_string (d, "info.parent"),
+				      hal_device_property_get_string (d, "sound.card"));
+	} else if (hal_device_has_property(d, "alsa.card")) {
 		/* don't include card number as it may not be persistent across reboots */
 		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 				      "%s_alsa_%s_%i",
@@ -1275,7 +1297,7 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	d = NULL;
 
-	if (parent_dev == NULL || parent_path == NULL || device_file == NULL) {
+	if (parent_dev == NULL || parent_path == NULL || device_file == NULL || device_file[0] == '\0') {
 		goto out;
 	}
 
@@ -2376,7 +2398,7 @@ firewire_add_device (const gchar *sysfs_path, const gchar *device_file, HalDevic
 	HalDevice *d = NULL;
 	gchar buf[64];
 
-	if (device_file == NULL)
+	if (device_file == NULL || device_file[0] == '\0')
 		goto out;
 
 	d = hal_device_new ();
