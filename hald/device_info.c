@@ -853,15 +853,38 @@ handle_merge (struct rule *rule, HalDevice *d)
 			case MERGE_STRING:
 				strncpy (buf, value, sizeof (buf));
 				break;
-
 			case MERGE_COPY_PROPERTY:
-				hal_device_property_get_as_string (d, value, buf, sizeof (buf));
-				break;
+			{
+				char udi_to_merge_from[HAL_PATH_MAX];
+				char prop_to_merge[HAL_PATH_MAX];
 
+				/* Resolve key paths like 'someudi/foo/bar/baz:prop.name'
+				 * '@prop.here.is.an.udi:with.prop.name'
+				 */
+				if (!resolve_udiprop_path (value,
+							   hal_device_get_udi (d),
+							   udi_to_merge_from, sizeof (udi_to_merge_from),
+							   prop_to_merge, sizeof (prop_to_merge))) {
+					HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", value, hal_device_get_udi (d)));
+				} else {
+					HalDevice *copyfrom;
+
+					copyfrom = hal_device_store_find (hald_get_gdl (), udi_to_merge_from);
+					if (copyfrom == NULL) {
+						copyfrom = hal_device_store_find (hald_get_tdl (), udi_to_merge_from);
+					}
+					if (copyfrom == NULL) {
+						HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge_from));
+					} else {
+						hal_device_property_get_as_string (copyfrom, prop_to_merge, buf, sizeof (buf));
+					}
+				}
+				break;
+			}
 			default:
 				break;
 			}
-
+		
 			existing_string = hal_device_property_get_string (d, key);
 			if (existing_string != NULL) {
 				if (rule->rtype == RULE_APPEND) {
@@ -876,8 +899,8 @@ handle_merge (struct rule *rule, HalDevice *d)
 			}
 
 			hal_device_property_set_string (d, key, buf2);
+		
 		}
-
 	} else if (rule->rtype == RULE_ADDSET) {
 
 		if (hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRLIST &&
