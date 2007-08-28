@@ -738,8 +738,39 @@ spawned_device_callouts_add_done (HalDevice *d, gpointer userdata1, gpointer use
 static gboolean
 handle_merge (struct rule *rule, HalDevice *d)
 {
-	const char *key = rule->key;
 	const char *value = (char *)RULES_PTR(rule->value_offset);
+	const char *key;
+
+	if (rule->rtype == RULE_MERGE || rule->rtype == RULE_APPEND || 
+	    rule->rtype == RULE_PREPEND || rule->rtype == RULE_ADDSET ) {
+		char udi_to_merge[HAL_PATH_MAX];
+        	char key_to_merge[HAL_PATH_MAX];
+
+		/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
+                if (!resolve_udiprop_path (rule->key, hal_device_get_udi (d),
+                                           udi_to_merge, sizeof (udi_to_merge),
+                                           key_to_merge, sizeof (key_to_merge))) {
+                        HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", rule->key, hal_device_get_udi (d)));
+			return FALSE;
+		} else {
+			key = g_strdup(key_to_merge);	
+
+			if (strcmp(hal_device_get_udi (d), udi_to_merge) != 0) {
+
+				d = hal_device_store_find (hald_get_gdl (), udi_to_merge);
+				if (d == NULL) {
+					d = hal_device_store_find (hald_get_tdl (), udi_to_merge);
+
+					if (d == NULL) {
+						HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge));
+						return FALSE;
+					}
+				}
+			}
+		}
+	} else {
+		key = rule->key;
+	} 
 
 	if (rule->rtype == RULE_MERGE) {
 
@@ -799,7 +830,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 			HAL_ERROR (("unknown merge type (%u)", rule->type_merge));
 		}
 
-	} else if (rule->rtype == RULE_APPEND) {
+	} else if (rule->rtype == RULE_APPEND || rule->rtype == RULE_PREPEND) {
 		char buf[HAL_PATH_MAX];
 		char buf2[HAL_PATH_MAX];
 
@@ -811,8 +842,11 @@ handle_merge (struct rule *rule, HalDevice *d)
 		}
 
 		if (rule->type_merge == MERGE_STRLIST) {
-			hal_device_property_strlist_append (d, key, value, FALSE);
-		} else {
+			if (rule->rtype == RULE_APPEND)
+				hal_device_property_strlist_append (d, key, value, FALSE);
+			else	/* RULE_PREPEND */ 
+				hal_device_property_strlist_prepend (d, key, value);
+		} else { 
 			const char *existing_string;
 
 			switch (rule->type_merge) {
@@ -830,44 +864,17 @@ handle_merge (struct rule *rule, HalDevice *d)
 
 			existing_string = hal_device_property_get_string (d, key);
 			if (existing_string != NULL) {
-				strncpy (buf2, existing_string, sizeof (buf2));
-				strncat (buf2, buf, sizeof (buf2) - strlen(buf2));
-			} else
-				strncpy (buf2, buf, sizeof (buf2));
-			hal_device_property_set_string (d, key, buf2);
-		}
-
-	} else if (rule->rtype == RULE_PREPEND) {
-		char buf[HAL_PATH_MAX];
-		char buf2[HAL_PATH_MAX];
-
-		if (hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRING &&
-		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_STRLIST &&
-		    hal_device_property_get_type (d, key) != HAL_PROPERTY_TYPE_INVALID) {
-			HAL_ERROR (("invalid key type"));
-			return FALSE;
-		}
-
-		if (rule->type_merge == MERGE_STRLIST) {
-			hal_device_property_strlist_prepend (d, key, value);
-		} else {
-			const char *existing_string;
-
-			if (rule->type_merge == MERGE_STRING) {
-				strncpy (buf, value, sizeof (buf));
-
-			} else if (rule->type_merge == MERGE_COPY_PROPERTY) {
-				hal_device_property_get_as_string (d, value, buf, sizeof (buf));
-
-			}
-
-			existing_string = hal_device_property_get_string (d, key);
-			if (existing_string != NULL) {
-				strncpy (buf2, buf, sizeof (buf2));
-				strncat (buf2, existing_string, sizeof (buf2) - strlen(buf2));
+				if (rule->rtype == RULE_APPEND) {
+					strncpy (buf2, existing_string, sizeof (buf2));
+					strncat (buf2, buf, sizeof (buf2) - strlen(buf2));
+				} else { /* RULE_PREPEND */
+					strncpy (buf2, buf, sizeof (buf2));
+					strncat (buf2, existing_string, sizeof (buf2) - strlen(buf2));
+				}
 			} else {
 				strncpy (buf2, buf, sizeof (buf2));
 			}
+
 			hal_device_property_set_string (d, key, buf2);
 		}
 
