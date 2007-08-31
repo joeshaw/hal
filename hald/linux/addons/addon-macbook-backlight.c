@@ -241,10 +241,10 @@ out:
 #define INTERFACE_DESCRIPTION \
   "    <method name=\"SetBrightness\">\n" \
   "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n" \
-  "      <arg name=\"return_code\" direction=\"out\" type=\"u\"/>\n" \
+  "      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n" \
   "    </method>\n" \
   "    <method name=\"GetBrightness\">\n" \
-  "      <arg name=\"brightness_value\" direction=\"out\" type=\"u\"/>\n" \
+  "      <arg name=\"brightness_value\" direction=\"out\" type=\"i\"/>\n" \
   "    </method>\n"
 
 static DBusHandlerResult
@@ -271,7 +271,7 @@ filter_function (DBusConnection * connection, DBusMessage * message, void *userd
 			backlight_set (level + 0x1f);
 
 			if ((reply = dbus_message_new_method_return (message)))
-				dbus_message_append_args (reply, DBUS_TYPE_UINT32,
+				dbus_message_append_args (reply, DBUS_TYPE_INT32,
 							  &ret, DBUS_TYPE_INVALID);
 		}
 	} else if (dbus_message_is_method_call (message, BACKLIGHT_IFACE, "GetBrightness")) {
@@ -280,7 +280,7 @@ filter_function (DBusConnection * connection, DBusMessage * message, void *userd
 			level = CLAMP (level, 0, 117);
 
 			if ((reply = dbus_message_new_method_return (message)))
-				dbus_message_append_args (reply, DBUS_TYPE_UINT32,
+				dbus_message_append_args (reply, DBUS_TYPE_INT32,
 							  &level, DBUS_TYPE_INVALID);
 		}
 	}

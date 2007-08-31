@@ -524,15 +524,14 @@ CK_SESSION_UID_Session3=501
       
       <para>
         Note that method calls implemented via running a program are
-        limited to the return type being an unsigned 32-bit integer
-        (this will change in a future release so it's configurable per
-        method). The incoming parameters are limited to only basic
-        types and arrays of strings. The parameters are passed via
-        stdin using a textual representation. As such, there is a lot
-        of overhead with handling method calls by spawning programs
-        and as such it should only be used for situtations where the
-        nature of the method call is that it will not be frequently
-        used.
+        limited to the return type being an a signed 32-bit integer
+        (this will change in a future release). The incoming
+        parameters are limited to only basic types and arrays of
+        strings. The parameters are passed via stdin using a textual
+        representation. As such, there is a lot of overhead with
+        handling method calls by spawning programs and as such it
+        should only be used for situtations where the nature of the
+        method call is that it will not be frequently used.
       </para>
       
       <para>
