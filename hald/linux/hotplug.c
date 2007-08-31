@@ -153,7 +153,8 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	}
 
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_DEVICE) {
-		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
+		if (hotplug_event->action == HOTPLUG_ACTION_ADD ||
+		    (d == NULL && hotplug_event->action == HOTPLUG_ACTION_CHANGE)) {
 			HalDevice *parent;
 			gchar *parent_path;
 
@@ -175,9 +176,12 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
                                                    hotplug_event->sysfs.sysfs_path,
                                                    d,
                                                    (void *) hotplug_event);
+		} else {
+			hotplug_event_end ((void *) hotplug_event);
 		}
 	} else if (hotplug_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) {
-		if (hotplug_event->action == HOTPLUG_ACTION_ADD) {
+		if (hotplug_event->action == HOTPLUG_ACTION_ADD ||
+		    (d == NULL && hotplug_event->action == HOTPLUG_ACTION_CHANGE)) {
 			HalDevice *parent;
 			int range;
 			gboolean is_partition;
@@ -210,6 +214,8 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 			hotplug_event_refresh_blockdev (hotplug_event->sysfs.sysfs_path,
                                                         d,
                                                         (void *) hotplug_event);
+		} else {
+			hotplug_event_end ((void *) hotplug_event);
 		}
 	} else {
 		/* just ignore this hotplug event */
