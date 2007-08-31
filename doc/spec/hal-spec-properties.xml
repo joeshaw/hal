@@ -6630,6 +6630,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>power_management.quirk.no_fb</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>True if the machine can only suspend when not using framebuffer.</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>power_management.quirk.none</literal> (bool)
               </entry>
               <entry></entry>
