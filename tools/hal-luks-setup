@@ -14,11 +14,15 @@ locked_out() {
 	exit 1
 }
 
-if [ -z "$HAL_PROP_BLOCK_DEVICE" ] || [ -z "$HAL_PROP_INFO_UDI" ] || [ -z "$HAL_PROP_VOLUME_UUID" ] ; then
+unknown_error() {
         echo "org.freedesktop.Hal.Device.UnknownError" >&2
         echo "Missing or empty environment variable(s)." >&2
         echo "This script should be started by hald." >&2
         exit 1
+}
+
+if [ -z "$HAL_PROP_BLOCK_DEVICE" ] || [ -z "$HAL_PROP_INFO_UDI" ] || [ -z "$HAL_PROP_VOLUME_UUID" ] ; then
+    unknown_error
 fi
 
 # Respect the same locks as Mount()/Unmount() etc.
@@ -39,6 +43,14 @@ if [ -n "$HAL_METHOD_INVOKED_BY_SYSTEMBUS_CONNECTION_NAME" ] ; then
     fi
 fi
 
-hal_check_priv org.freedesktop.hal.storage.crypto-setup
+IS_HOTPLUGGABLE=`hal-get-property --udi $HAL_PROP_BLOCK_STORAGE_DEVICE --key storage.hotpluggable`
+if [ "$IS_HOTPLUGGABLE" == "true" ] ; then
+    ACTION="org.freedesktop.hal.storage.crypto-setup-removable"
+elif [ "$IS_HOTPLUGGABLE" == "false" ] ; then
+    ACTION="org.freedesktop.hal.storage.crypto-setup-fixed"
+else
+    unknown_error
+fi
 
+hal_check_priv $ACTION
 hal_exec_backend
