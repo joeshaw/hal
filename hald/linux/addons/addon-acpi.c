@@ -154,6 +154,9 @@ handle_ibm_acpi_events (LibHalContext *ctx, int type, int event)
 			case 20490: /* Tablet rotated back*/
 				button = "tabletpc_rotate_normal";
 				break;
+			case 28672: /* killswitch */
+				button = "killswitch";
+				break;
 			default:
 				break;
 			
