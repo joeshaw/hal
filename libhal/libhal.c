@@ -556,19 +556,21 @@ libhal_property_set_sort (LibHalPropertySet *set)
 void
 libhal_free_property_set (LibHalPropertySet * set)
 {
-	LibHalProperty *p;
+	LibHalProperty *p, *p_old;
 
 	if (set == NULL) 
 		return;
 
-	for (p = set->properties; p != NULL; p=p->hh.next) {
+	for (p = set->properties; p != NULL;) {
 		HASH_DELETE (hh, set->properties, p);
 		free (p->key);
 		if (p->type == DBUS_TYPE_STRING)
 			free (p->v.str_value);
 		if (p->type == LIBHAL_PROPERTY_TYPE_STRLIST)
 			libhal_free_string_array (p->v.strlist_value);
-		free (p);
+		p_old = p;
+		p = p->hh.next;
+		free (p_old);
 	}
 	free (set);
 }
