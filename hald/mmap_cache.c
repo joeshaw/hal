@@ -145,7 +145,7 @@ regen_cache (void)
 	hald_runner_run_sync (NULL, 
 			      "hald-generate-fdi-cache --force",
 			      extra_env,
-			      10000,
+			      60000,
 			      regen_cache_cb,
 			      NULL,
 			      NULL);
