@@ -146,6 +146,16 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 
 			g_snprintf (hotplug_event->sysfs.sysfs_path, sizeof (hotplug_event->sysfs.sysfs_path),
 				    "/sys%s", &key[8]);
+		} else if (strncmp(key, "DEVPATH_OLD=", 12) == 0) {
+
+                        /* md devices are handled via looking at /proc/mdstat */
+                        if (g_str_has_prefix (key + 12, "/block/md")) {
+                                HAL_INFO (("skipping md event for %s", key + 8));
+                                goto invalid;
+                        }
+
+			g_snprintf (hotplug_event->sysfs.sysfs_path_old, sizeof (hotplug_event->sysfs.sysfs_path_old),
+				    "/sys%s", &key[12]);
 		} else if (strncmp(key, "SUBSYSTEM=", 10) == 0)
 			g_strlcpy (hotplug_event->sysfs.subsystem, &key[10], sizeof (hotplug_event->sysfs.subsystem));
 		else if (strncmp(key, "DEVNAME=", 8) == 0)
@@ -228,6 +238,13 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 
 	if (strcmp (action, "change") == 0) {
 		hotplug_event->action = HOTPLUG_ACTION_CHANGE;
+		hotplug_event_enqueue (hotplug_event);
+		hotplug_event_process_queue ();
+		goto out;
+	}
+
+	if (strcmp (action, "move") == 0) {
+		hotplug_event->action = HOTPLUG_ACTION_MOVE;
 		hotplug_event_enqueue (hotplug_event);
 		hotplug_event_process_queue ();
 		goto out;

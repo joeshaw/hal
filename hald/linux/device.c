@@ -582,6 +582,18 @@ error:
 
 	return d;
 }
+
+static gboolean
+net_refresh (HalDevice *d)
+{
+	const gchar *path, *ifname;
+	
+	path = hal_device_property_get_string (d, "linux.sysfs_path");
+	ifname = hal_util_get_last_element (path);
+	hal_device_property_set_string (d, "net.interface", ifname);
+	return TRUE;
+}
+
 static const char *
 net_get_prober (HalDevice *d)
 {
@@ -3372,6 +3384,7 @@ static DevHandler dev_handler_net =
 { 
 	.subsystem    = "net",
 	.add          = net_add,
+	.refresh      = net_refresh,
 	.get_prober   = net_get_prober,
 	.post_probing = net_post_probing,
 	.compute_udi  = net_compute_udi,

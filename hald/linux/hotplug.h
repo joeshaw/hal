@@ -37,6 +37,7 @@ typedef enum {
 	HOTPLUG_ACTION_ONLINE,
 	HOTPLUG_ACTION_OFFLINE,
 	HOTPLUG_ACTION_CHANGE,
+	HOTPLUG_ACTION_MOVE
 } HotplugActionType;
 
 typedef enum {
@@ -63,6 +64,7 @@ typedef struct
 		struct {
 			char subsystem[HAL_NAME_MAX];		/* Kernel subsystem the device belongs to */
 			char sysfs_path[HAL_PATH_MAX];		/* Kernel device devpath */
+			char sysfs_path_old[HAL_PATH_MAX];	/* Old kernel device devpath (for 'move') */
 			char device_file[HAL_PATH_MAX];	        /* Device node for the device */
 			unsigned long long seqnum;		/* kernel uevent sequence number */
 			int net_ifindex;			/* Kernel ifindex for network devices */

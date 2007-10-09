@@ -88,6 +88,12 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	d = hal_device_store_match_key_value_string (hald_get_gdl (),
 						     "linux.sysfs_path",
 						     hotplug_event->sysfs.sysfs_path);
+	
+	if (d == NULL && hotplug_event->action == HOTPLUG_ACTION_MOVE) {
+		d = hal_device_store_match_key_value_string(hald_get_gdl (),
+							    "linux.sysfs_path",
+							    hotplug_event->sysfs.sysfs_path_old);
+	}
 
 #if 0
 	/* we should refresh the device when we get "change" uevent */
@@ -172,6 +178,12 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 							     hotplug_event->sysfs.sysfs_path,
 							     (void *) hotplug_event);
 		} else if (hotplug_event->action == HOTPLUG_ACTION_CHANGE && d != NULL) {
+			hotplug_event_refresh_dev (hotplug_event->sysfs.subsystem,
+                                                   hotplug_event->sysfs.sysfs_path,
+                                                   d,
+                                                   (void *) hotplug_event);
+		} else if (hotplug_event->action == HOTPLUG_ACTION_MOVE && d != NULL) {
+			hal_device_property_set_string (d, "linux.sysfs_path", hotplug_event->sysfs.sysfs_path);
 			hotplug_event_refresh_dev (hotplug_event->sysfs.subsystem,
                                                    hotplug_event->sysfs.sysfs_path,
                                                    d,
