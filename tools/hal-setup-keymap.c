@@ -152,7 +152,7 @@ main (int argc, char **argv)
 		} else {
 			fprintf (stderr, "hal-setup-keymap: Failed to parse %s\n", keymap_list[i]);
 		}
-	} while (keymap_list[i++] != NULL);
+	} while (keymap_list[++i] != NULL);
 
 	libhal_free_string_array (keymap_list);
 	close (fd);
