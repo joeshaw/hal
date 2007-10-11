@@ -1,28 +1,319 @@
 ==========
-HAL 0.5.10 ""
+HAL 0.5.10 "Humanity's children are returning home"
 ==========
 
-Requirements for HAL 0.5.10 "":
+Released October 11, 2007.
+
+Requirements for HAL 0.5.10 "Humanity's children are returning home":
 
  - Linux kernel     >= 2.6.19
- - util-linux       >= 2.12r1    (--enable-umount-helper requires patch from RH #188193)
+ - util-linux       >= 2.12r1    (--enable-umount-helper requires patch
+                                    from RH #188193; it's in util-linux-ng 2.13)
  - bash             >= 2.0
  - udev             >= 111       (Linux only)
  - dbus             >= 0.61      (with glib bindings)
  - glib             >= 2.6.0
  - expat            >= 1.95.8
- - hal-info         >= 20070402
+ - hal-info         >= 20071011  (older works too)
  - libusb           >= 0.1.10a   (optional)
  - pciutils         >= 2.2.3     (optional)
  - dmidecode        >= 2.7       (optional)
- - parted           == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.86 (optional)
+ - parted           == 1.7.1, 1.8.0, 1.8.1, 1.8.2, 1.86, 1.87 (optional)
  - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
  - libsmbios        >= 0.13.4    (optional, for DELL machines, Linux only)
- - dellWirelessCtl  >= 0.13.4    (optional, for Dell machines, must live in /usr/bin/, Linux only)
- - gperf            >= ??????    (optional, for Re-map multimedia keys, Linux only)
- - PolicyKit        >= 0.4       (optional)
+ - dellWirelessCtl  >= 0.13.4    (optional, for Dell machines, must live in
+                                 /usr/bin/, Linux only)
+ - gperf            >= 3.0.3-2   (optional, for Re-map multimedia keys, 
+                                  Linux only)
+ - PolicyKit        >= 0.5       (optional)
  - ConsoleKit       >= 0.2.0     (optional, needed if use PolicyKit)
  - pm-utils         >= 0.99.2 or newer (optional)
+
+Contributors to HAL 0.5.10 "Humanity's children are returning home":
+
+Adel Gadllah (1):
+      ipw killswitch support
+
+Andrey Borzenkov (1):
+      allow IDE media detection if /proc/ide is missing
+
+Bastien Nocera (2):
+      define new property power_management.quirk.none
+      add bluray support
+
+Bill Nottingham (1):
+      handle 'move' events for network devices
+
+Daniel Drake (1):
+      don't die if /proc/mdstat doesn't exist
+
+Daniel Stone (3):
+      autogen.sh: srcdir != objdir safety
+      add input.xkb properties
+      add input.x11_driver
+
+Danny Kukawka (47):
+      fix problem with repeated property-changed signals
+      fix build without policykit enabled/available
+      fixed make distcheck by remove hal-lock.policy from Makefile.am
+      fix contains_not fdi-directive
+      only start one hald-addon-input addon
+      fix possible segfault in probe-volume if vid->type == NULL
+      fix problems with case if vid->label[0] is '\0'
+      fix detection of libusb
+      fix hald_runner_kill_all()
+      remove brightness-up event from acpi addon for IBM
+      fix return type of SetPowerSave()
+      updated allowed libparted versions
+      set info.category='laptop_panel' for all laptop panels
+      don't compile Re-map keys without gperf
+      replace '/' in volume labels with '_' if part of UDI
+      s/HAVE_GPERF/have_gperf/ in configure results overview
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      fix usage of g_list_free1() to fit HAL requirements
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      free volumelabel from commit 2d1d72e8
+      fix API documentation of libhal
+      fix compiler warning and error in if statement
+      fix build errors with D-Bus versions < v1.0
+      cleanup DBusError handling in addon-acpi main_loop()
+      stop hald-addon-dell-backlight if needed kernel module isni't loaded
+      fixed compiler warning about unused return value of asprintf()
+      fixed PolicyKit detection to check for >= 0.4
+      fix get ACPI version from sysfs (fd.o #11290)
+      fixed return type of libhal_ctx_init_direct()
+      fixed libhal code docu
+      use hardcoded paths to sysfs and proc
+      fix possible segfault on serial device check
+      fix compilerwarning in serial_get_prober()
+      allow gid= for hfs, remove uid= for hfs+  and handle hfs like fat
+      source hal-functions in hal-luks-teardown
+      fix hal-ipw-killswitch-linux to return status of killswitch
+      fix detection of system.formfactor=laptop for ACPI machines
+      fixed typo in PMU code
+      fixed changeset handling for HAL_PROPERTY_TYPE_STRLIST
+      fix detection of storage.cdrom.*_speed* values (fd.o 10399)
+      fix indirections in fdi files
+      fix indirections in fdi files (prepend/append copy_property)
+      add more parameter checks to libhal
+      add new fdi directives *_outof
+      add soundcard device and fix device_file handling
+      added power_management.quirk.no_fb to spec
+      forward ThinkPad ACPI event for killswitch
+
+David Zeuthen (83):
+      post-release version bump to version 0.5.10
+      update spec to mention input.* capabilities
+      remove i18n support
+      remove hal-device-manager
+      remove TODO about about deleting hal-device-manager
+      fix lock checking for LUKS setup/teardown
+      port HAL over to use PolicyKit master
+      remote safety valves used in development
+      briefly note in the spec how the PermissionDeniedByPolicy exception works
+      clarify how access control now that our PolicyKit support works
+      add a note to the TODO about that we shouldn't use setfacl(1) directly
+      make distcheck happy again and remove ChangeLog from tarballs
+      for run-hald.sh + friends move fdi+privilege 'make install' to /tmp
+      file monitoring interface
+      use new file monitoring interface and integrate witk PK master
+      use the new file monitor abstraction to watch fdi directories
+      silence debug spew from the file monitor
+      add the "-extra-options" privileges for mounting
+      don't include hal-file-monitor.c in hald/linux/osspec.c
+      libpolkit changed a bit; update to new API
+      prefix CK object paths with /org/fd/CK so PolicyKit gets the right path
+      add back ChangeLog
+      changes to cope with PolicyKit mass renaming
+      take advantage of new parameter API in PolKitAction
+      also update man page for hal-is-caller-privileged
+      update to compile cleanly with PolicyKit master
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      remove use of "action parameters" now that they're going in PolicyKit
+      changes to compile against recent PolicyKit
+      policy definitions are now XML files in PolicKit master
+      document Bluetooth ACL / SCO, fixup UDI generation and make coldplug work
+      change namespace for bluez-specific properties
+      recognize touchpads + add TODO about sorting out input device classification
+      forgot to add hal-lock.policy
+      properties in net.bluetooth.* are not Bluez specific; remove bluez_ prefix
+      pass correct options to pm-suspend
+      also pass correct options for pm-hibernate
+      introduce new <addset> operator
+      incorporate autotools changes
+      recognize Linux MD aka Software RAID devices
+      use correct integer size
+      create lock file with predictable permissions
+      actually return INT32 rather than UINT32 to adhere to the spec
+      also change type from uint32_t to int32_t
+      add a note about making addons aware of suspend/resume
+      make return value for method calls implemented via programs be UINT32
+      add suport for ACLAdded and ACLRemoved signals on Device.AccessControl if
+      add the code in hal-acl-tool to emit ACLAdded and ACLRemoved signals
+      change PolicyKit policy such only active sessions have access to devices
+      add Macbook2,1 support for backlight control
+      update to new API in PolicyKit 0.3
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      set system.hardware.primary_video.[vendor,product] keys
+      add docs for new system.hardware.primary_video.* properties
+      only match on Apple, not "Apple Computer, Inc." for macbook (pro) backlight
+      fix up location of hal-ipw-killswitch-linux and add copyright+license header
+      fix build
+      work with PK head
+      avoid emitting hotplug events during coldplug
+      shut up some debugging info
+      avoid polling SATA AN capable drives and rely on "change" uevents
+      document the storage.removable.support_async_notification property
+      update to work with PK HEAD
+      include <message> elements in PK policy files
+      fix up how we detect Apple laptops
+      the PK policy files move to $datadir from $sysconfdir
+      use correct mode for open(3p)
+      fix libhal_psi_has_more() incorrect behavior
+      support for ACL on USB devices where the device node is on the real device
+      update to work with PolicyKit HEAD
+      use direct connection if available
+      avoid setting SELinux context on the PolKitCaller object if it's non-existant
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/hal
+      handle the fact that event%d is no longer a child of input%d
+      Revert "make return value for method calls implemented via programs be UINT32"
+      require PolicyKit 0.5
+      update hal-setup-keymap-hash-name.h
+      split the "can setup LUKS?" action into two actions (removable/fixed)
+      fix last commit for LUKS; forgot to refact error handling
+      bump fdi generation timeout to 60s
+      skip the ACL entry instead of bailing out when using bad fdi files
+      fix segfault when setting up keymap
+
+Dirk Mueller (1):
+      fix header to compile with -pedantic
+
+Dirk Müller (1):
+      fixed access of freed memory
+
+Doug Goldstein (8):
+      fix fdi cache regen logic error
+      use stdlib.h not malloc.h
+      fix how we build partutil
+      fdi spec fixes and correct implementation
+      the runner doesn't handle D-Bus disconnect properly
+      fix trivial bugs in hald-generate-fdi-cache
+      add missing uint64 matching to fdi.dtd
+      hal-disable-polling symlink support
+
+Faidon Liambotis (1):
+      fix misplacement of the ipw killswitch
+
+Frederic Crozat (3):
+      allow flush for vfat
+      allow acl, user_xattr on ext2
+      handle renaming of SG_FLAG_LUN_INHIBIT in sg.h
+
+Guillem Jover (3):
+      rename hal-addon-keyboard to hal-addon-input
+      generalize keyboard detection code
+      update configure.in and use autoreconf
+
+Holger Macht (2):
+      fixup return value documentation of CPUFreq interface
+      readd information about the SetCPUFreqGovernor method
+
+Jeff Mitchell (5):
+      New parts of the portable_audio_player spec as discussed on the ML.
+      More accurate information handed down to me from higher-ups.  Older pre-MTP devices are actually mostly PDE, not PTP.
+      Formatting fix
+      Deprecate portable_audio_player.access_method because recent spec changes have rendered it useless at best and misleading at worst.
+      Provide some extra information as to what information should be put in the sub-namespaces.
+
+Joe Marcus Clarke (2):
+      do not re-probe devices that are managed by hald-addon-storage
+      fix compilation on FreeBSD
+
+Julius Schulz-Zander (1):
+      fix speling of AC adapter
+
+Kay Sievers (4):
+      creating link /dev/root to device / is mounted from
+      volume_id: prepare for future API changes
+      volume_id: update version requirement in configure.in
+      hotplug: handle "change" events for unknown devices as "add"
+
+Kristian Høgsberg (1):
+      update firewire prober to use correct ioctl codes
+
+Luiz Augusto von Dentz (2):
+      properly recognize Bluetooth SCO and ACL devices
+      recognize bluetooth network capabilities
+
+Martin Pitt (2):
+      allow 'utf8' mount option for NTFS
+      support more Macbook Pro models
+
+Martin Szulecki (1):
+      fix Macbook Backlight not working after waking up from suspend to ram
+
+Michael Biebl (1):
+      install hal-is-caller-privileged.1 manpage conditionally
+
+Richard Hughes (40):
+      trivial, don't try to make device-manager
+      add special button device for LENOVO also
+      make verbosity optional in create cache.
+      fix some more .gitignore
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      add keymap capabilities into hal
+      make hal-setup-keymap.c use strerr rather than stdout
+      fix matching devices against dmi properties on the computer device
+      add newlines to error text in hal-setup-keymap.c
+      fix i8042 KBD keyboard mapping
+      fix build when gperf is not installed
+      add two more strings to the battery technology list
+      add hal_util_get_bool_from_file convenience helper
+      only allows the use of pm-utils for suspend, hibernate and suspend-hybrid
+      propagate --quirk-none to pm-utils
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      add power_management.quirk.reset_brightness
+      add debug message when we remove a device when the prober fails
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      add a refresh handler for linux devices
+      add device_pm.{c|h} to abstract out some of the common code
+      dont use util_compute_percentage_charge in apm
+      use device_pm_* in pmu.c
+      use device_pm_* in acpi.c
+      remove util_compute_percentage_charge
+      add the power_supply abstract battery
+      fix some warnings in the device_pm code
+      add ups and usb power supply types and set battery.type key
+      power_supply current is measured in ua not uw
+      correct two typos to the power_supply code
+      add battery type 'usb' into the spec
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      we only support pm-utils for SetLowPowerMode
+      fix the input parameter for the SetPowerSave method
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      update to latest keycode input from linus
+      add recovery partitions by other vendors
+      add another dell recovery partition
+      add two more recovery partitions for acer
+      initialise the error in the acpi watcher
+
+Rob Taylor (6):
+      add hald-runner support for singleton addons
+      hald core support for singleton addons
+      libhal support for addon singletons
+      convert libhal to use a hashtable for property sets
+      convert linux addon-input into a singleton addon
+      document singleton addons
+
+Ruediger Oertel (1):
+      fixed configure for macbook addons to build also on x86_64
+
+Sjoerd Simons (3):
+      free changeset elements keys
+      free changeset elements keys
+      Merge branch 'master' of ssh://git.freedesktop.org/git/hal
+
 
 
 ==========
