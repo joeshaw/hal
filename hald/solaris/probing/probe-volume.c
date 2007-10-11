@@ -279,8 +279,6 @@ probe_disc (int fd, LibHalContext *ctx, const char *udi, dbus_bool_t *should_pro
                         disc_type = "bd_rom";
 			break;
 		case 0x41: /* BD-R Sequential */
-                        disc_type = "bd_r";
-			break;
 		case 0x42: /* BD-R Random */
                         disc_type = "bd_r";
 			break;

@@ -180,6 +180,7 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs,
 	
 	/* set defaults */
 	libhal_changeset_set_property_bool (cs, "volume.disc.is_videodvd", FALSE);
+	libhal_changeset_set_property_bool (cs, "volume.disc.is_blurayvideo", FALSE);
 	libhal_changeset_set_property_bool (cs, "volume.disc.is_vcd", FALSE);
 	libhal_changeset_set_property_bool (cs, "volume.disc.is_svcd", FALSE);
 	
@@ -253,6 +254,12 @@ advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs,
 			{
 				libhal_changeset_set_property_bool (cs, "volume.disc.is_videodvd", TRUE);
 				HAL_DEBUG(("Disc in %s is a Video DVD", device_file));
+				break;
+			}
+			else if (!strcmp (dirname, "BDMV"))
+			{
+				libhal_changeset_set_property_bool (cs, "volume.disc.is_blurayvideo", TRUE);
+				HAL_DEBUG(("Disc in %s is a Blu-ray video disc", device_file));
 				break;
 			}
 			else if (!strcmp (dirname, "VCD"))

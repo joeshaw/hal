@@ -227,6 +227,18 @@ main (int argc, char *argv[])
 					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrwdl", TRUE);
 				if (profile & DRIVE_CDROM_CAPS_DVDPLUSRDL)
 					libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdplusrdl", TRUE);
+				if (profile & DRIVE_CDROM_CAPS_BDROM)
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.bd", TRUE);
+				if (profile & DRIVE_CDROM_CAPS_BDR)
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.bdr", TRUE);
+				if (profile & DRIVE_CDROM_CAPS_BDRE)
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.bdre", TRUE);
+				if (profile & DRIVE_CDROM_CAPS_HDDVDROM)
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvd", TRUE);
+				if (profile & DRIVE_CDROM_CAPS_HDDVDR)
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvdr", TRUE);
+				if (profile & DRIVE_CDROM_CAPS_HDDVDRW)
+					libhal_changeset_set_property_bool (cs, "storage.cdrom.hddvdrw", TRUE);
 			}
 			if (capabilities & CDC_DVD_R) {
 				libhal_changeset_set_property_bool (cs, "storage.cdrom.dvdr", TRUE);
