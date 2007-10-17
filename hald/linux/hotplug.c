@@ -409,6 +409,7 @@ hotplug_reprobe_generate_remove_events (HalDevice *d)
 		child = HAL_DEVICE (i->data);
 		hotplug_reprobe_generate_remove_events (child);
 	}
+	g_slist_free (childs);
 
 	/* then remove self */
 	HAL_INFO (("Generate remove event for udi %s", hal_device_get_udi (d)));
@@ -492,6 +493,7 @@ hotplug_reprobe_generate_add_events (HalDevice *d)
 		child = HAL_DEVICE (i->data);
 		hotplug_reprobe_generate_add_events (child);
 	}
+	g_slist_free (childs);
 }
 
 gboolean

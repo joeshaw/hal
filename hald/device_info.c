@@ -621,6 +621,7 @@ handle_match (struct rule *rule, HalDevice *d)
 					break;
 
 			} /* for all siblings */
+			g_slist_free (siblings);			
 		}
 
 		return contains;

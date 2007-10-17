@@ -81,6 +81,7 @@ apm_poll (gpointer data)
 		apm_rescan_device (d);
 	}
 
+	g_slist_free (devices);
 	return TRUE;
 }
 

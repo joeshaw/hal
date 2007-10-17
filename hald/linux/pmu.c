@@ -251,6 +251,7 @@ pmu_poll (gpointer data)
 		}
 	}
 
+	g_slist_free (devices);
 	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
 								    "info.category",
 								    "ac_adapter");
@@ -266,6 +267,7 @@ pmu_poll (gpointer data)
 		}
 	}
 
+	g_slist_free (devices);
 	return TRUE;
 }
 
