@@ -6,7 +6,8 @@ dist_polkit_policy_DATA =    \
 	hal-lock.policy		\
 	hal-storage.policy	\
 	hal-power.policy	\
-	hal-killswitch.policy	
+	hal-killswitch.policy	\
+	hal-wol.policy
 
 if HAVE_ACLMGMT
 dist_polkit_policy_DATA += hal-device-file.policy

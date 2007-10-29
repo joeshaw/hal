@@ -167,6 +167,9 @@ script_SCRIPTS =				\
 	hal-system-power-set-power-save		\
 	hal-system-killswitch-get-power		\
 	hal-system-killswitch-set-power		\
+	hal-system-wol-supported		\
+	hal-system-wol-enabled			\
+	hal-system-wol-enable			\
 	hal-functions
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)

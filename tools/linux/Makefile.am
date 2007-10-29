@@ -37,7 +37,8 @@ script_SCRIPTS =					\
 	hal-system-lcd-set-brightness-linux		\
 	hal-system-power-set-power-save-linux		\
 	hal-system-killswitch-get-power-linux		\
-	hal-system-killswitch-set-power-linux
+	hal-system-killswitch-set-power-linux		\
+	hal-system-wol-linux
 
 EXTRA_DIST = 90-hal.rules $(script_SCRIPTS)
 
@@ -58,3 +59,11 @@ check:
 
 clean-local :
 	rm -f *~
+
+install-data-local:
+	ln -sf $(DESTDIR)$(scriptdir)/hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-enable-linux
+	ln -sf $(DESTDIR)$(scriptdir)/hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-enabled-linux
+	ln -sf $(DESTDIR)$(scriptdir)/hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-supported-linux
+
+uninstall-local:
+	rm -f $(DESTDIR)$(scriptdir)/hal-system-wol-*

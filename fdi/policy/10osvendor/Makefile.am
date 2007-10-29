@@ -8,7 +8,8 @@ dist_fdi_DATA = 			\
 	10-rfkill-switch.fdi		\
 	10-laptop-panel-mgmt-policy.fdi	\
 	15-storage-luks.fdi		\
-	20-storage-methods.fdi
+	20-storage-methods.fdi		\
+	30-wol.fdi
 
 if BUILD_KEYMAPS
 dist_fdi_DATA += 10-keymap.fdi

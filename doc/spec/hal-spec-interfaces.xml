@@ -878,6 +878,61 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </para>
   </sect1>
 
+  <sect1 id="interface-wakeonlan">
+    <title>org.freedesktop.Hal.Device.WakeOnLan interface</title>
+    <para>
+      This interface provides a mechanism to configure Wake On LAN
+      capabilities. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetSupported</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>WakeOnLan.NoEthtool</entry>
+            <entry>
+	      Get if device supports Wake On LAN 
+            </entry>
+          </row>
+          <row>
+            <entry>GetEnabled</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>WakeOnLan.NoEthtool</entry>
+            <entry>
+              Get if Wake On LAN is enabled
+            </entry>
+          </row>
+          <row>
+            <entry>SetEnabled</entry>
+            <entry>Void</entry>
+            <entry>Bool</entry>
+            <entry>WakeOnLan.NoEthtool</entry>
+            <entry>
+	      Enable or disable Wake On LAN
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
   <sect1 id="interface-device-laptop-panel">
     <title>org.freedesktop.Hal.Device.LaptopPanel interface</title>
     <para>
