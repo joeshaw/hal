@@ -60,10 +60,10 @@ check:
 clean-local :
 	rm -f *~
 
-install-data-local:
-	ln -sf $(DESTDIR)$(scriptdir)/hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-enable-linux
-	ln -sf $(DESTDIR)$(scriptdir)/hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-enabled-linux
-	ln -sf $(DESTDIR)$(scriptdir)/hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-supported-linux
+install-data-hook:
+	ln -sf hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-enable-linux
+	ln -sf hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-enabled-linux
+	ln -sf hal-system-wol-linux $(DESTDIR)$(scriptdir)/hal-system-wol-supported-linux
 
-uninstall-local:
+uninstall-hook:
 	rm -f $(DESTDIR)$(scriptdir)/hal-system-wol-*
