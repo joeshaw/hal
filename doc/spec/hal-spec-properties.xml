@@ -5030,7 +5030,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>example: 1 (If the device only supports one sub-folder)</entry>
               <entry>No</entry>
               <entry>
-                If portable_audio_player.access_method = "storage",
+                If portable_audio_player.access_method.protocols contains "storage",
                 this tells applications exactly how deep of directory hierarchies
                 files should be placed in.  If all files are put in a
                 sub-folder (with the audio_folders property), only the depth within
@@ -5045,7 +5045,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>example: music/ voice/ linein/</entry>
               <entry>No</entry>
               <entry>
-                If portable_audio_player.access_method = "storage",
+                If portable_audio_player.access_method.protocols contains "storage",
                 this may contain a string list of folders in which music
                 can be found.  Paths are relative to the mount point of the
                 device. If there is one or more entry in this property, the
