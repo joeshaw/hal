@@ -142,7 +142,7 @@ get_match_type(const char *str)
 	if (strcmp (str, "contains_outof") == 0)
 		return MATCH_CONTAINS_OUTOF;
 	if (strcmp (str, "int_outof") == 0)
-		return MATCH_CONTAINS_OUTOF;
+		return MATCH_INT_OUTOF;
 	if (strcmp (str, "prefix_outof") == 0)
 		return MATCH_PREFIX_OUTOF;
 	if (strcmp (str, "string_outof") == 0)
