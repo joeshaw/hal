@@ -80,14 +80,14 @@ hal_property_free (HalProperty *prop)
 		}
 		g_slist_free (prop->v.strlist_value);
 	}
-	g_free (prop);
+	g_slice_free (HalProperty, prop);
 }
 
 static inline HalProperty *
 hal_property_new (int type)
 {
 	HalProperty *prop;
-	prop = g_new0 (HalProperty, 1);
+	prop = g_slice_new0 (HalProperty);
 	prop->type = type;
 	return prop;
 }
