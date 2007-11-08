@@ -361,7 +361,7 @@ generate_fakevolume_hotplug_event_add_for_storage_device (HalDevice *d)
 
 	snprintf (fake_sysfs_path, sizeof(fake_sysfs_path), "%s/fakevolume", sysfs_path);
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -955,6 +955,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 								is_device_mapper = TRUE;
 							}
 						}
+					} else {
+						HAL_INFO(("Couldn't find slave volume in devices"));
 					}
 				}
 				g_free (target);
@@ -1705,7 +1707,7 @@ blockdev_generate_add_hotplug_event (HalDevice *d)
 	serial      = hal_device_property_get_string (d, "storage.serial");
 	revision    = hal_device_property_get_string (d, "storage.firmware_revision");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -1730,7 +1732,7 @@ blockdev_generate_remove_hotplug_event (HalDevice *d)
 
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -1858,7 +1860,7 @@ blockdev_process_mdstat (void)
                         } else {
                                 HAL_INFO (("Adding md device at '%s' ('%s')", sysfs_path, device_file));
 
-                                hotplug_event = g_new0 (HotplugEvent, 1);
+                                hotplug_event = g_slice_new0 (HotplugEvent);
                                 hotplug_event->action = HOTPLUG_ACTION_ADD;
                                 hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
                                 g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -1911,7 +1913,7 @@ blockdev_process_mdstat (void)
                                 
                                 HAL_INFO (("Removing md device at '%s' ('%s')", sysfs_path, device_file));
 
-                                hotplug_event = g_new0 (HotplugEvent, 1);
+                                hotplug_event = g_slice_new0 (HotplugEvent);
                                 hotplug_event->action = HOTPLUG_ACTION_REMOVE;
                                 hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
                                 g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));

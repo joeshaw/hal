@@ -62,11 +62,7 @@ hotplug_event_end (void *end_token)
 
 	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
 
-	if (hotplug_event->free_function != NULL) {
-		hotplug_event->free_function (hotplug_event);
-	} else {
-		g_free (hotplug_event);
-	}
+	g_slice_free (HotplugEvent, hotplug_event);
 }
 
 void 

@@ -753,7 +753,7 @@ missing_scsi_host (const gchar *sysfs_path, HotplugEvent *device_event, HotplugA
 
 	/* fake host event */
 	rc = TRUE;
-	host_event = g_new0 (HotplugEvent, 1);
+	host_event = g_slice_new0 (HotplugEvent);
 	host_event->action = action;
 	host_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;
 	g_strlcpy (host_event->sysfs.subsystem, "scsi_host", sizeof (host_event->sysfs.subsystem));
@@ -4485,7 +4485,7 @@ dev_generate_add_hotplug_event (HalDevice *d)
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 	device_file = hal_device_property_get_string (d, "linux.device_file");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));
@@ -4509,7 +4509,7 @@ dev_generate_remove_hotplug_event (HalDevice *d)
 	subsystem = hal_device_property_get_string (d, "linux.subsystem");
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, subsystem, sizeof (hotplug_event->sysfs.subsystem));

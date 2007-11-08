@@ -56,6 +56,11 @@ static GHashTable *sysfs_to_udev_map;
 static GSList *device_list;
 static char dev_root[HAL_PATH_MAX];
 
+static void hotplug_event_free (HotplugEvent *ev)
+{
+	g_slice_free(HotplugEvent, ev);
+}
+
 static gboolean
 hal_util_init_sysfs_to_udev_map (void)
 {
@@ -66,7 +71,7 @@ hal_util_init_sysfs_to_udev_map (void)
 	HotplugEvent *hotplug_event = NULL;
 	char *p;
 
-	sysfs_to_udev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	sysfs_to_udev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, hotplug_event_free);
 
 	/* get udevroot */
 	if (g_spawn_sync ("/", udevroot_argv, NULL, 0, NULL, NULL,
@@ -132,7 +137,7 @@ hal_util_init_sysfs_to_udev_map (void)
 
 		/* new device */
 		if (strncmp(line, "P: ", 3) == 0) {
-			hotplug_event = g_new0 (HotplugEvent, 1);
+			hotplug_event = g_slice_new0 (HotplugEvent);
 			g_strlcpy (hotplug_event->sysfs.sysfs_path, "/sys", sizeof(hotplug_event->sysfs.sysfs_path));
 			g_strlcat (hotplug_event->sysfs.sysfs_path, &line[3], sizeof(hotplug_event->sysfs.sysfs_path));
 			continue;
@@ -203,22 +208,6 @@ error:
 	return FALSE;
 }
 
-static HotplugEvent *pool = NULL;
-static int pool_next_free = 0;
-static int pool_num_freed = 0;
-static int pool_size = 1000;
-
-static void 
-pool_free (gpointer data)
-{
-	HAL_INFO (("pool_num_freed = %d (of %d)", pool_num_freed, pool_next_free));
-	pool_num_freed++;
-	if (pool_num_freed == pool_next_free) {
-		HAL_INFO (("Freeing whole pool"));
-		g_free (pool);
-	}
-}
-
 static HotplugEvent
 *coldplug_get_hotplug_event(const gchar *sysfs_path, const gchar *subsystem, HotplugEventType type)
 {
@@ -226,30 +215,13 @@ static HotplugEvent
 	const char *pos;
 	gchar path[HAL_PATH_MAX];
 	struct stat statbuf;
-	gboolean from_pool = FALSE;
 
-	/* TODO: FIXME: this is experimental code */
-	if (pool == NULL) {
-		pool = g_new0 (HotplugEvent, pool_size);
-		pool_next_free = 0;
-		pool_num_freed = 0;
-	}
-
-	if (pool_next_free >= pool_size) {
-		hotplug_event = g_new0 (HotplugEvent, 1);
-	} else {
-		from_pool = TRUE;
-		hotplug_event = pool + pool_next_free++;
-		hotplug_event->free_function = pool_free;
-	}
+	hotplug_event = g_slice_new0 (HotplugEvent);
 
 	/* lookup if udev has something stored in its database */
 	hotplug_event_udev = (HotplugEvent *) g_hash_table_lookup (sysfs_to_udev_map, sysfs_path);
 	if (hotplug_event_udev != NULL) {
 		memcpy(hotplug_event, hotplug_event_udev, sizeof(HotplugEvent));
-		if (from_pool) {
-			hotplug_event->free_function = pool_free;
-		}
 		HAL_INFO (("new event (dev node from udev) '%s' '%s'", hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.device_file));
 	} else {
 		/* device is not in udev database */
@@ -301,7 +273,7 @@ static int device_list_insert(const char *path, const char *subsystem,
 	if (!(statbuf.st_mode & S_IWUSR))
 		goto error;
 
-	sysfs_dev = g_new0 (struct sysfs_device, 1);
+	sysfs_dev = g_slice_new0 (struct sysfs_device);
 	if (sysfs_dev == NULL)
 		goto error;
 
@@ -326,11 +298,11 @@ static int device_list_insert(const char *path, const char *subsystem,
 	sysfs_dev->path = g_strdup (path);
 found:
 	sysfs_dev->subsystem = g_strdup (subsystem);
-	device_list = g_slist_prepend (device_list, sysfs_dev);
+	device_list = g_slist_append (device_list, sysfs_dev);
 	return 0;
 
 error:
-	g_free (sysfs_dev);
+	g_slice_free (struct sysfs_device, sysfs_dev);
 	return -1;
 }
 
@@ -512,7 +484,7 @@ static void queue_events(void)
 
 		g_free (sysfs_dev->path);
 		g_free (sysfs_dev->subsystem);
-		g_free (sysfs_dev);
+		g_slice_free (struct sysfs_device, sysfs_dev);
 	}
 
 	g_slist_free (device_list);

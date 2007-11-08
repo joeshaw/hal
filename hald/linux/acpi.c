@@ -727,7 +727,7 @@ acpi_synthesize_item (const gchar *fullpath, int acpi_type)
 {
 	HotplugEvent *hotplug_event;
 	HAL_INFO (("Processing %s", fullpath));
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_ACPI;
 	g_strlcpy (hotplug_event->acpi.acpi_path, fullpath, sizeof (hotplug_event->acpi.acpi_path));
@@ -855,7 +855,7 @@ acpi_synthesize_sonypi_display (void)
 	if (!found)
 		return;
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_ACPI;
 	g_strlcpy (hotplug_event->acpi.acpi_path, path, sizeof (hotplug_event->acpi.acpi_path));
@@ -1271,7 +1271,7 @@ acpi_generate_add_hotplug_event (HalDevice *d)
 	acpi_path = hal_device_property_get_string (d, "linux.acpi_path");
 	acpi_type = hal_device_property_get_int (d, "linux.acpi_type");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_ACPI;
 	g_strlcpy (hotplug_event->acpi.acpi_path, acpi_path, sizeof (hotplug_event->acpi.acpi_path));
@@ -1289,7 +1289,7 @@ acpi_generate_remove_hotplug_event (HalDevice *d)
 	acpi_path = hal_device_property_get_string (d, "linux.acpi_path");
 	acpi_type = hal_device_property_get_int (d, "linux.acpi_type");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_ACPI;
 	g_strlcpy (hotplug_event->acpi.acpi_path, acpi_path, sizeof (hotplug_event->acpi.acpi_path));

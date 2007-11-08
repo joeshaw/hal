@@ -121,7 +121,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		goto out;
 	}
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 
 	while (bufpos < sizeof (buf)) {
@@ -273,7 +273,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 	}
 
 invalid:
-	g_free (hotplug_event);
+	g_slice_free (HotplugEvent, hotplug_event);
 
 out:
 	return TRUE;
