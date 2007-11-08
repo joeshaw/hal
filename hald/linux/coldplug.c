@@ -468,7 +468,7 @@ static void scan_class(void)
 	}
 }
 
-static void queue_events(void)
+static void process_coldplug_events(void)
 {
 	GSList *dev;
 
@@ -481,6 +481,7 @@ static void queue_events(void)
 							    sysfs_dev->subsystem,
 							    sysfs_dev->type);
 		hotplug_event_enqueue (hotplug_event);
+		hotplug_event_process_queue();
 
 		g_free (sysfs_dev->path);
 		g_free (sysfs_dev->subsystem);
@@ -519,22 +520,22 @@ coldplug_synthesize_events (void)
 	if (stat("/sys/subsystem", &statbuf) == 0) {
 		scan_subsystem ("subsystem");
 		device_list = g_slist_sort (device_list, _device_order);
-		queue_events ();
+		process_coldplug_events ();
 	} else {
 		scan_subsystem ("bus");
 		device_list = g_slist_sort (device_list, _device_order);
-		queue_events ();
+		process_coldplug_events ();
 
 		scan_class ();
                 scan_single_bus ("bluetooth");
 		device_list = g_slist_sort (device_list, _device_order);
-		queue_events ();
+		process_coldplug_events ();
 
 		/* scan /sys/block, if it isn't already a class */
 		if (stat("/sys/class/block", &statbuf) != 0) {
 			scan_block ();
 			device_list = g_slist_sort (device_list, _device_order);
-			queue_events ();
+			process_coldplug_events ();
 		}
 
                 /* add events from reading /proc/mdstat */
