@@ -16,9 +16,11 @@ export HAL_FDI_SOURCE_POLICY=.local-fdi/share/hal/fdi/policy
 #delete all old memory outputs, else we get hundreds
 rm massif.*
 
-valgrind --tool=massif --format=html --depth=10 \
-	 --alloc-fn=g_malloc --alloc-fn=g_realloc \
-	 --alloc-fn=g_try_malloc --alloc-fn=g_malloc0 --alloc-fn=g_mem_chunk_alloc \
+G_SLICE="always-malloc" valgrind --num-callers=24 --tool=massif --depth=24 --format=html \
+        --alloc-fn=g_malloc --alloc-fn=g_realloc \
+	--alloc-fn=g_try_malloc --alloc-fn=g_malloc0 --alloc-fn=g_mem_chunk_all \
+        --alloc-fn=g_slice_alloc0 --alloc-fn=g_slice_alloc \
+	--alloc-fn=dbus_realloc \
 	 ./hald --daemon=no --verbose=yes --retain-privileges --exit-after-probing
 
 #massif uses the pid file, which is hard to process.
