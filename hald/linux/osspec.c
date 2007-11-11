@@ -493,7 +493,7 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 			 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
 			 */
 			static const char *chassis_map[] = {
-				"Other",                 "unknown",
+				"Other",                 "unknown", /* 0x01 */
 				"Unknown",               "unknown",
 				"Desktop",               "desktop",
 				"Low Profile Desktop",   "desktop",
@@ -518,6 +518,8 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 				"Rack Mount Chassis",    "unknown",
 				"Sealed-case PC",        "unknown",
 				"Multi-system",          "unknown",
+				"CompactPCI",		 "unknonw",
+		                "AdvancedTCA",		 "unknown", /* 0x1B */
 				NULL
 			};
 			
