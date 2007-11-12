@@ -8,6 +8,13 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
+if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" ]; then
+    DELL_WCTL=/usr/bin/dellWirelessCtl
+    if [ -x /usr/sbin/dellWirelessCtl ]; then
+        DELL_WCTL=/usr/sbin/dellWirelessCtl
+    fi
+fi
+
 if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
     if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "sonypic" ]; then
 	hal-system-sonypic setbluetooth $value
@@ -16,16 +23,16 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	    exit 1
 	fi
 	exit 0
-    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x /usr/bin/dellWirelessCtl ]; then
+    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
 
 	# As a side effect we disable the physical kill switch
 
 	# TODO: write our own binary that links with libsmbios?
 	if [ "$value" = "true" ]; then
-	    /usr/bin/dellWirelessCtl --sw_bt 0 --bt 1
+	    $DELL_WCTL --sw_bt 0 --bt 1
 	    ret=$?
 	else
-	    /usr/bin/dellWirelessCtl --sw_bt 0 --bt 0
+	    $DELL_WCTL --sw_bt 0 --bt 0
 	    ret=$?
 	fi
 	if [ "$ret" != "0" ]; then
@@ -38,16 +45,16 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x /usr/bin/dellWirelessCtl ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
 
 	# As a side effect we disable the physical kill switch
 
 	# TODO: write our own binary that links with libsmbios?
 	if [ "$value" = "true" ]; then
-	    /usr/bin/dellWirelessCtl --sw_wlan 0 --wlan 1
+	    $DELL_WCTL --sw_wlan 0 --wlan 1
 	    ret=$?
 	else
-	    /usr/bin/dellWirelessCtl --sw_wlan 0 --wlan 0
+	    $DELL_WCTL --sw_wlan 0 --wlan 0
 	    ret=$?
 	fi
 	if [ "$ret" != "0" ]; then
