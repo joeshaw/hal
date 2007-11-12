@@ -205,7 +205,7 @@ main (int argc, char *argv[])
 	/* read the output of the child */
 	while(fgets (buf, sizeof(buf), f) != NULL)
 	{
-		unsigned int i;
+		int i;
 		unsigned int len;
 		unsigned int tabs = 0;
 
