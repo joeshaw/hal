@@ -50,17 +50,20 @@
 #include "hotplug.h"
 
 /** Queue of ordered hotplug events */
-static GQueue *hotplug_event_queue;
+static GQueue *hotplug_event_queue = NULL;
 
 /** List of HotplugEvent objects we are currently processing */
-static GSList *hotplug_events_in_progress = NULL;
+static GList *hotplug_events_in_progress = NULL;
+
+/** List of HotplugEvent objects that are blocked on a event in process */
+GList *hotplug_events_blocked = NULL;
 
 void
 hotplug_event_end (void *end_token)
 {
 	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
 
-	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
+	hotplug_events_in_progress = g_list_remove (hotplug_events_in_progress, hotplug_event);
 
 	g_slice_free (HotplugEvent, hotplug_event);
 }
@@ -71,7 +74,7 @@ hotplug_event_reposted (void *end_token)
 	HotplugEvent *hotplug_event = (HotplugEvent *) end_token;
 
 	hotplug_event->reposted = TRUE;
-	hotplug_events_in_progress = g_slist_remove (hotplug_events_in_progress, hotplug_event);
+	hotplug_events_in_progress = g_list_remove (hotplug_events_in_progress, hotplug_event);
 }
 
 static void
@@ -310,7 +313,7 @@ hotplug_event_begin (HotplugEvent *hotplug_event)
 void 
 hotplug_event_enqueue (HotplugEvent *hotplug_event)
 {
-	if (hotplug_event_queue == NULL)
+	if (G_UNLIKELY (hotplug_event_queue == NULL))
 		hotplug_event_queue = g_queue_new ();
 
 	g_queue_push_tail (hotplug_event_queue, hotplug_event);
@@ -319,40 +322,111 @@ hotplug_event_enqueue (HotplugEvent *hotplug_event)
 void 
 hotplug_event_enqueue_at_front (HotplugEvent *hotplug_event)
 {
-	if (hotplug_event_queue == NULL)
+	if (G_UNLIKELY (hotplug_event_queue == NULL))
 		hotplug_event_queue = g_queue_new ();
 
 	g_queue_push_head (hotplug_event_queue, hotplug_event);
 }
 
+static gboolean
+compare_sysfspath(const char *running, const char *waiting)
+{
+	int i;
+
+	for (i = 0; i < HAL_PATH_MAX; i++) {
+		/* identical device event found */
+		if (running[i] == '\0' && waiting[i] == '\0')
+			return TRUE;
+
+		/* parent device event found */
+		if (running[i] == '\0' && waiting[i] == '/')
+			return TRUE;
+
+		/* child device event found */
+		if (running[i] == '/' && waiting[i] == '\0')
+			return TRUE;
+
+		/* no matching event */
+		if (running[i] != waiting[i])
+			break;
+	}
+
+	return FALSE;
+}
+
+/*
+ * Returns TRUE if @eventl depends on @eventr
+ */
+static gboolean
+compare_event (HotplugEvent *eventl, HotplugEvent *eventr)
+{
+	if (*eventl->sysfs.sysfs_path_old != '\0')
+		if (strcmp (eventr->sysfs.sysfs_path_old, eventl->sysfs.sysfs_path_old) == 0)
+			return TRUE;
+	return compare_sysfspath (eventr->sysfs.sysfs_path, eventl->sysfs.sysfs_path);
+}
+
+/*
+ * Returns TRUE if @hotplug_event depends on any event in @events
+ */
+static gboolean
+compare_events (HotplugEvent *hotplug_event, GList *events)
+{
+	GList *lp;
+	HotplugEvent *loop_event;
+
+	switch (hotplug_event->type) {
+
+	/* explicit fallthrough */
+	case HOTPLUG_EVENT_SYSFS:
+	case HOTPLUG_EVENT_SYSFS_DEVICE:
+	case HOTPLUG_EVENT_SYSFS_BLOCK:
+
+		for (lp = events; lp; lp = g_list_next (lp)) {
+			loop_event = (HotplugEvent*) lp->data;
+			/* skip ourselves and all later events*/
+			if (loop_event->sysfs.seqnum >= hotplug_event->sysfs.seqnum)
+				break;
+			if (compare_event (hotplug_event, loop_event)) {
+				HAL_DEBUG (("event %s dependant on %s", hotplug_event->sysfs.sysfs_path, loop_event->sysfs.sysfs_path));
+				return TRUE;
+			}
+		}
+		return FALSE;
+
+	default:
+		return FALSE;
+	}
+}
+
+
 void 
 hotplug_event_process_queue (void)
 {
 	HotplugEvent *hotplug_event;
+	GList *lp, *lp2;
 
-        while (hotplug_events_in_progress != NULL ||
-		(hotplug_event_queue != NULL &&
-		 !g_queue_is_empty (hotplug_event_queue))) {
+	if (G_UNLIKELY (hotplug_event_queue == NULL))
+		return;
 
-		/* do not process events if some other event is in progress 
-		 *
-		 * TODO: optimize so we can do add events in parallel by inspecting the
-		 *       wait_for_sysfs_path parameter and hotplug_events_in_progress list
-		 */
-		if (hotplug_events_in_progress != NULL && g_slist_length (hotplug_events_in_progress) > 0)
-			goto out;
-
-		hotplug_event = g_queue_pop_head (hotplug_event_queue);
-		if (hotplug_event == NULL)
-			goto out;
-
-		hotplug_events_in_progress = g_slist_append (hotplug_events_in_progress, hotplug_event);
-		hotplug_event_begin (hotplug_event);
+	for (lp = hotplug_event_queue->head; lp; lp = g_list_next (lp) ) {
+		hotplug_event = lp->data;
+		HAL_INFO (("checking event %s", hotplug_event->sysfs.sysfs_path));
+		if (!compare_events (hotplug_event, hotplug_event_queue->head)
+		 && !compare_events (hotplug_event, hotplug_events_in_progress)) {
+			lp2 = lp->prev;
+			g_queue_unlink(hotplug_event_queue, lp);
+			hotplug_events_in_progress = g_list_concat (hotplug_events_in_progress, lp);
+			hotplug_event_begin (hotplug_event);
+			lp = lp2;
+		} else {
+			HAL_DEBUG (("event held back: %s", hotplug_event->sysfs.sysfs_path));
+		}
 	}
+	HAL_DEBUG (("events queued = %d, events in progress = %d", hotplug_event_queue->length, g_list_length (hotplug_events_in_progress)));
+
 
 	hotplug_queue_now_empty ();
-out:
-        ;
 }
 
 gboolean 

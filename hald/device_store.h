@@ -38,6 +38,7 @@ struct _HalDeviceStore {
 	GObject parent;
 
 	GSList *devices;
+	GHashTable *property_index;
 };
 
 struct _HalDeviceStoreClass {
@@ -121,5 +122,6 @@ GSList         *hal_device_store_match_multiple_key_value_string (HalDeviceStore
 
 void hal_device_store_print (HalDeviceStore *store);
 
+void		hal_device_store_index_property (HalDeviceStore *store, const char *key);
 
 #endif /* DEVICE_STORE_H */

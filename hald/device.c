@@ -370,6 +370,7 @@ enum {
 	CAPABILITY_ADDED,
         LOCK_ACQUIRED,
         LOCK_RELEASED,
+	PRE_PROPERTY_CHANGED,
 	LAST_SIGNAL
 };
 
@@ -424,6 +425,19 @@ hal_device_class_init (HalDeviceClass *klass)
 			      G_TYPE_STRING,
 			      G_TYPE_BOOLEAN,
 			      G_TYPE_BOOLEAN);
+
+	signals[PRE_PROPERTY_CHANGED] =
+		g_signal_new ("pre_property_changed",
+			      G_TYPE_FROM_CLASS (klass),
+			      G_SIGNAL_RUN_LAST,
+			      G_STRUCT_OFFSET (HalDeviceClass,
+					       property_changed),
+			      NULL, NULL,
+			      hald_marshal_VOID__STRING_BOOL,
+			      G_TYPE_NONE, 2,
+			      G_TYPE_STRING,
+			      G_TYPE_BOOLEAN);
+
 
 	signals[CAPABILITY_ADDED] =
 		g_signal_new ("capability_added",
@@ -1058,6 +1072,9 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 		if (strcmp (hal_property_get_string (prop), value != NULL ? value : "") == 0)
 			return TRUE;
 
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, FALSE);
+
 		hal_property_set_string (prop, value);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
@@ -1094,6 +1111,9 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 		if (hal_property_get_int (prop) == value)
 			return TRUE;
 
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, FALSE);
+
 		hal_property_set_int (prop, value);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
@@ -1128,6 +1148,9 @@ hal_device_property_set_uint64 (HalDevice *device, const char *key,
 		/* don't bother setting the same value */
 		if (hal_property_get_uint64 (prop) == value)
 			return TRUE;
+
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, FALSE);
 
 		hal_property_set_uint64 (prop, value);
 
@@ -1164,6 +1187,9 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 		if (hal_property_get_bool (prop) == value)
 			return TRUE;
 
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, FALSE);
+
 		hal_property_set_bool (prop, value);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
@@ -1198,6 +1224,9 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 		/* don't bother setting the same value */
 		if (hal_property_get_double (prop) == value)
 			return TRUE;
+
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, FALSE);
 
 		hal_property_set_double (prop, value);
 
@@ -1245,6 +1274,9 @@ hal_device_property_set_strlist (HalDevice *device, const char *key,
 			}
 			if (equal) return TRUE;
 		}
+
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, FALSE);
 
 		/* TODO: check why  hal_property_strlist_clear (prop) not work and why
 		 *       we need to remove the key and a new one to get this running:

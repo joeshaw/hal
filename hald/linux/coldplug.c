@@ -56,7 +56,7 @@ static GHashTable *sysfs_to_udev_map;
 static GSList *device_list;
 static char dev_root[HAL_PATH_MAX];
 static gchar *udevinfo_stdout = NULL;
-
+static unsigned long long coldplug_seqnum = 0;
 typedef struct _UdevInfo UdevInfo;
 
 struct _UdevInfo
@@ -309,6 +309,8 @@ no_node:
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = type;
 	hotplug_event->sysfs.net_ifindex = -1;
+	/*emulate sequence numbers for coldplug events*/
+	hotplug_event->sysfs.seqnum = coldplug_seqnum++;
 	return hotplug_event;
 }
 
