@@ -396,6 +396,9 @@ osspec_init (void)
 	/*
 	 * setup socket for listening from messages from udev
 	 */
+
+	hal_device_store_index_property (hald_get_gdl (), "linux.sysfs_path");
+
 	memset(&saddr, 0x00, sizeof(saddr));
 	saddr.sun_family = AF_LOCAL;
 	/* use abstract namespace for socket path */
