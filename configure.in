@@ -405,7 +405,8 @@ if test "$LIB_SMBIOS" = "yes" ; then
 
         if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
 	    if ((major == 0 && minor == 13 && micro >= 4) ||
-               (major >= 0 && minor > 13)) {
+               (major == 0 && minor > 13) ||
+               (major >= 0)) {
 		return 0;
 	    }
 	}
