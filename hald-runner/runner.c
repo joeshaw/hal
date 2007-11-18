@@ -181,11 +181,12 @@ out:
 	/* emit a signal that this PID exited */
 	if(rd->con != NULL && rd->emit_pid_exited) {
 		DBusMessage *signal;
+		gint64 ppid = rd->pid;
 		signal = dbus_message_new_signal ("/org/freedesktop/HalRunner",
 						  "org.freedesktop.HalRunner",
 						  "StartedProcessExited");
 		dbus_message_append_args (signal, 
-					  DBUS_TYPE_INT64, &(rd->pid),
+					  DBUS_TYPE_INT64, &(ppid),
 					  DBUS_TYPE_INVALID);
 		dbus_connection_send(rd->con, signal, NULL);
 	}

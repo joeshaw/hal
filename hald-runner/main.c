@@ -137,7 +137,7 @@ handle_start(DBusConnection *con, DBusMessage *msg, gboolean is_singleton)
 	DBusMessage *reply;
 	DBusMessageIter iter;
 	run_request *r;
-	GPid pid __attribute__ ((aligned));
+	GPid pid;
 
 	r = new_run_request();
 	r->is_singleton = is_singleton;
@@ -158,9 +158,10 @@ handle_start(DBusConnection *con, DBusMessage *msg, gboolean is_singleton)
 	}
 
 	if (run_request_run(r, con, NULL, &pid)) {
+		gint64 ppid = pid;
 		reply = dbus_message_new_method_return(msg);
 		dbus_message_append_args (reply, 
-					  DBUS_TYPE_INT64, &pid,
+					  DBUS_TYPE_INT64, &ppid,
 					  DBUS_TYPE_INVALID);
 					  
 	} else {
