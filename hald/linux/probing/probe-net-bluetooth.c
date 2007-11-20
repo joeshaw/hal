@@ -147,16 +147,13 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		goto out;
 
-	dbus_error_init (&error);
-	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
+	iface = getenv ("HAL_PROP_NET_INTERFACE");
+	if (iface == NULL)
 		goto out;
-
-	iface = libhal_device_get_property_string (ctx, udi, "net.interface", NULL);
 
 	HAL_INFO (("Investigating '%s'", iface));
 
-	if (iface == NULL)
-		goto out;
+	dbus_error_init (&error);
 
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 		goto out;
@@ -215,6 +212,10 @@ main (int argc, char *argv[])
 		dbus_error_free (&error);
 		goto out;
 	}
+
+	ctx = libhal_ctx_init_direct (&error);
+	if (ctx == NULL)
+		goto out;
 
 	get_properties (conn, ctx, udi, id, connection);
 
