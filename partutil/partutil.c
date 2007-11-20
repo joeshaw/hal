@@ -928,10 +928,12 @@ char *
 part_table_entry_get_type (PartitionTable *p, int entry)
 {
 	char *s = NULL;
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
 
 	if (p == NULL)
 		goto out;
+
+	pe = g_slist_nth_data (p->entries, entry);
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -959,10 +961,12 @@ char *
 part_table_entry_get_uuid (PartitionTable *p, int entry)
 {
 	char *s = NULL;
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
 
 	if (p == NULL)
 		goto out;
+
+	pe = g_slist_nth_data (p->entries, entry);
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -982,10 +986,12 @@ char *
 part_table_entry_get_label (PartitionTable *p, int entry)
 {
 	char *s = NULL;
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
 
 	if (p == NULL)
 		goto out;
+
+	pe = g_slist_nth_data (p->entries, entry);
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -1012,10 +1018,12 @@ part_table_entry_get_flags (PartitionTable *p, int entry)
 	char **ss = NULL;
 	guint32 apm_status;
 	guint64 gpt_attributes;
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
 
 	if (p == NULL)
 		goto out;
+
+	pe = g_slist_nth_data (p->entries, entry);
 
 	ss = g_new0 (char*, 6 + 1); /* hard coded to max items we'll return */
 	ss[0] = NULL;
@@ -1087,11 +1095,13 @@ guint64
 part_table_entry_get_offset (PartitionTable *p, int entry)
 {
 	guint64 val;
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
 
 	val = G_MAXUINT64;
 	if (p == NULL)
 		goto out;
+
+	pe = g_slist_nth_data (p->entries, entry);
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -1122,11 +1132,13 @@ guint64
 part_table_entry_get_size (PartitionTable *p, int entry)
 {
 	guint64 val;
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
 
 	val = G_MAXUINT64;
 	if (p == NULL)
 		goto out;
+
+	pe = g_slist_nth_data (p->entries, entry);
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
