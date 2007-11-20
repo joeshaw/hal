@@ -71,13 +71,19 @@ struct backlight bl_data;
 static int
 read_backlight (struct backlight * bl)
 {
-	int fd;
+	int fd, ret;
 
 	fd = open ("/sys/devices/platform/omapfb/panel/backlight_level", O_RDONLY);
-	if (fd < 0 || read (fd, buffer, NUM_BUF_LEN) < 0)
+	if (fd < 0)
 		return -1;
 
-	return atoi (buffer);
+	ret = read (fd, buffer, NUM_BUF_LEN)
+	close (fd);
+
+	if (ret >= 0)
+		return atoi (buffer);
+	else
+		return -1;
 }
 
 /* Read maximum bl level */
@@ -88,23 +94,25 @@ read_backlight (struct backlight * bl)
 static void
 backlight_init (struct backlight * bl)
 {
-	int fd;
+	int fd, ret;
 
 	/* Reading maximum backlight level */
 	fd = open ("/sys/devices/platform/omapfb/panel/backlight_max", O_RDONLY);
-
-	if (fd < 0 || read (fd, buffer, NUM_BUF_LEN - 1) < 0)
+	if (fd < 0)
 		return;
 
-	bl->bl_max = atoi (buffer);
-	close (fd);
+	ret = read(fd, buffer, NUM_BUF_LEN - 1);
+	close(fd);
+
+	if (ret >= 0)
+		bl->bl_max = atoi (buffer);
 }
 
 /* Setting backlight level */
 static void
 write_backlight (struct backlight * bl, int level)
 {
-	int fd, l;
+	int fd, l, ret;
 
 	/* sanity-checking level we're required to set */
 	if (level > bl->bl_max)
@@ -114,14 +122,14 @@ write_backlight (struct backlight * bl, int level)
 		level = bl->bl_min;
 
 	fd = open ("/sys/devices/platform/omapfb/panel/backlight_level", O_WRONLY);
+	if (fd < 0)
+		return;
+
 	l = snprintf (buffer, NUM_BUF_LEN - 1, "%d", level);
 
-	if (l >= (NUM_BUF_LEN - 1)) {
-		close (fd);
-		return;
-	}
+	if (l < (NUM_BUF_LEN - 1))
+		write (fd, buffer, l);
 
-	write (fd, buffer, l);
 	close (fd);
 }
 
