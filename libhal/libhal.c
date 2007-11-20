@@ -2279,6 +2279,8 @@ libhal_device_lock (LibHalContext *ctx,
 			if (reason_why_locked != NULL) {
 				*reason_why_locked =
 					dbus_malloc0 (strlen (error->message) + 1);
+				if (*reason_why_locked == NULL)
+					return FALSE;
 				strcpy (*reason_why_locked, error->message);
 			}
 		}
