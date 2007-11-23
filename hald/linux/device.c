@@ -992,6 +992,8 @@ dvb_compute_udi (HalDevice *d)
 	return TRUE;
 }
 
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static void
 asound_card_id_set (int cardnum, HalDevice *d, const char *propertyname)
 {
@@ -1010,8 +1012,6 @@ asound_card_id_set (int cardnum, HalDevice *d, const char *propertyname)
 		hal_device_property_set_string (d, propertyname, alsaname);
 	}
 }
-
-/*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
 sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
@@ -1512,6 +1512,8 @@ mmc_host_compute_udi (HalDevice *d)
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
+
+/*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
 pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
@@ -2930,6 +2932,8 @@ iucv_compute_udi (HalDevice *d)
 
 }
 
+/*--------------------------------------------------------------------------------------------------------------*/
+
 static HalDevice *
 backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev,
 	       const gchar *sysfs_path_in_devices)
@@ -2951,7 +2955,7 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 }
 
 static gboolean
-power_supply_compute_udi (HalDevice *d)
+backlight_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 	const char *dir;
@@ -2961,12 +2965,14 @@ power_supply_compute_udi (HalDevice *d)
 
 	name = hal_util_get_last_element(dir);
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_power_supply",
+			      "%s_backlight",
 			      hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
+
+/*--------------------------------------------------------------------------------------------------------------*/
 
 static void
 refresh_ac_adapter (HalDevice *d)
@@ -3271,7 +3277,7 @@ finish:
 }
 
 static gboolean
-backlight_compute_udi (HalDevice *d)
+power_supply_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 	const char *dir;
@@ -3281,7 +3287,7 @@ backlight_compute_udi (HalDevice *d)
 
 	name = hal_util_get_last_element(dir);
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_backlight",
+			      "%s_power_supply",
 			      hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
