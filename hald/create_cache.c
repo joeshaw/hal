@@ -699,8 +699,9 @@ di_rules_init (void)
 	return num_skipped_fdi_files;
 error:
 	HAL_ERROR (("Error generating fdi cache"));
-	if (fd < 0)
+	if (fd >= 0)
 		close (fd);
+
 	unlink (cachename_temp);
 	return -1;
 }

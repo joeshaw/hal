@@ -5200,8 +5200,12 @@ local_server_message_handler (DBusConnection *connection,
 				helper_interface_handlers = g_slist_remove_link (helper_interface_handlers, i);
 			}
 		}
-
-		g_hash_table_foreach_remove (singletons, (GHRFunc) singleton_remove_by_connection, connection);
+	
+		if (G_UNLIKELY (!singletons)) {
+			HAL_ERROR (("Singleton table is not initialied/ is NULL"));
+		} else {
+			g_hash_table_foreach_remove (singletons, (GHRFunc) singleton_remove_by_connection, connection);
+		}
 
 		dbus_connection_unref (connection);
 		return DBUS_HANDLER_RESULT_HANDLED;

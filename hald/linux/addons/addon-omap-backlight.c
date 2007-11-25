@@ -49,7 +49,7 @@
 
 static GMainLoop *main_loop;
 static LibHalContext *halctx = NULL;
-static char * udi;
+static char *udi;
 static DBusConnection *conn;
 
 #define NUM_BUF_LEN 11
@@ -58,25 +58,32 @@ static char buffer[NUM_BUF_LEN];
 
 struct backlight
 {
-    void (*set_backlight_level)(struct backlight * bl, int i);
-    int (*get_backlight_level)(struct backlight * bl);
-    void (*backlight_init)(struct backlight * bl);
-    int bl_min;
-    int bl_max;
+	void (*set_backlight_level) (struct backlight *bl, int i);
+	int (*get_backlight_level) (struct backlight *bl);
+	void (*backlight_init) (struct backlight *bl);
+	int bl_min;
+	int bl_max;
 };
 
 struct backlight bl_data;
 
 /* Reads backligh level */
-static int read_backlight(struct backlight * bl)
+static int
+read_backlight (struct backlight * bl)
 {
- int fd;
+	int fd, ret;
 
- fd = open("/sys/devices/platform/omapfb/panel/backlight_level", O_RDONLY);
- if(fd <0 || read(fd, buffer, NUM_BUF_LEN) < 0)
-    return -1;
+	fd = open ("/sys/devices/platform/omapfb/panel/backlight_level", O_RDONLY);
+	if (fd < 0)
+		return -1;
 
- return atoi(buffer);
+	ret = read (fd, buffer, NUM_BUF_LEN)
+	close (fd);
+
+	if (ret >= 0)
+		return atoi (buffer);
+	else
+		return -1;
 }
 
 /* Read maximum bl level */
@@ -84,96 +91,99 @@ static int read_backlight(struct backlight * bl)
    No we have fixed value in FDI file, but it
    is better to set it in addon code.
 */
-static void backlight_init(struct backlight * bl)
+static void
+backlight_init (struct backlight * bl)
 {
-    int fd;
+	int fd, ret;
 
-    /* Reading maximum backlight level */
-    fd = open("/sys/devices/platform/omapfb/panel/backlight_max", O_RDONLY);
+	/* Reading maximum backlight level */
+	fd = open ("/sys/devices/platform/omapfb/panel/backlight_max", O_RDONLY);
+	if (fd < 0)
+		return;
 
-    if(fd <0 || read(fd, buffer, NUM_BUF_LEN - 1) < 0)
-	return;
+	ret = read(fd, buffer, NUM_BUF_LEN - 1);
+	close(fd);
 
-    bl->bl_max = atoi(buffer);
-    close(fd);
+	if (ret >= 0)
+		bl->bl_max = atoi (buffer);
 }
 
 /* Setting backlight level */
-static void write_backlight(struct backlight * bl, int level)
+static void
+write_backlight (struct backlight * bl, int level)
 {
-    int fd, l;
+	int fd, l, ret;
 
-    /* sanity-checking level we're required to set */
-    if(level > bl->bl_max)
-	level = bl->bl_max;
+	/* sanity-checking level we're required to set */
+	if (level > bl->bl_max)
+		level = bl->bl_max;
 
-    if(level < bl->bl_min)
-	level = bl->bl_min;
+	if (level < bl->bl_min)
+		level = bl->bl_min;
 
-    fd = open("/sys/devices/platform/omapfb/panel/backlight_level", O_WRONLY);
-    l = snprintf(buffer, NUM_BUF_LEN - 1, "%d", level);
+	fd = open ("/sys/devices/platform/omapfb/panel/backlight_level", O_WRONLY);
+	if (fd < 0)
+		return;
 
-    if(l >= (NUM_BUF_LEN - 1)) {
-	close(fd);
-	return;
-    }
+	l = snprintf (buffer, NUM_BUF_LEN - 1, "%d", level);
 
-    write(fd, buffer, l);
-    close(fd);
+	if (l < (NUM_BUF_LEN - 1))
+		write (fd, buffer, l);
+
+	close (fd);
 }
 
 static gboolean
 check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, const char *privilege)
 #ifdef HAVE_POLKIT
 {
-        gboolean ret;
-        char *polkit_result;
-        const char *invoked_by_syscon_name;
-        DBusMessage *reply;
-        DBusError error;
+	gboolean ret;
+	char *polkit_result;
+	const char *invoked_by_syscon_name;
+	DBusMessage *reply;
+	DBusError error;
 
-        ret = FALSE;
-        polkit_result = NULL;
+	ret = FALSE;
+	polkit_result = NULL;
 
-        invoked_by_syscon_name = dbus_message_get_sender (message);
-        
-        dbus_error_init (&error);
-        polkit_result = libhal_device_is_caller_privileged (halctx,
-                                                            udi,
-                                                            privilege,
-                                                            invoked_by_syscon_name,
-                                                            &error);
-        if (polkit_result == NULL) {
-                reply = dbus_message_new_error_printf (message,
-                                                       "org.freedesktop.Hal.Device.Error",
-                                                       "Cannot determine if caller is privileged",
-                                                       privilege, polkit_result);
-                dbus_connection_send (connection, reply, NULL);
-                goto out;
-        }
-        if (strcmp (polkit_result, "yes") != 0) {
+	invoked_by_syscon_name = dbus_message_get_sender (message);
 
-                reply = dbus_message_new_error_printf (message,
-                                                       "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
-                                                       "%s %s <-- (privilege, result)",
-                                                       privilege, polkit_result);
-                dbus_connection_send (connection, reply, NULL);
-                goto out;
-        }
+	dbus_error_init (&error);
+	polkit_result = libhal_device_is_caller_privileged (halctx,
+	                                                    udi,
+	                                                    privilege,
+	                                                    invoked_by_syscon_name,
+	                                                    &error);
+	if (polkit_result == NULL) {
+		reply = dbus_message_new_error_printf (message,
+		                                       "org.freedesktop.Hal.Device.Error",
+		                                       "Cannot determine if caller is privileged",
+		                                       privilege, polkit_result);
+		dbus_connection_send (connection, reply, NULL);
+		goto out;
+	}
 
-        ret = TRUE;
+	if (strcmp (polkit_result, "yes") != 0) {
+		reply = dbus_message_new_error_printf (message,
+		                                       "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
+		                                       "%s %s <-- (privilege, result)",
+		                                       privilege, polkit_result);
+		dbus_connection_send (connection, reply, NULL);
+		goto out;
+	}
+
+	ret = TRUE;
 
 out:
-        if (polkit_result != NULL)
-                libhal_free_string (polkit_result);
-        return ret;
+	if (polkit_result != NULL)
+		libhal_free_string (polkit_result);
+	return ret;
 }
 #else
 {
-        return TRUE;
+	return TRUE;
 }
 #endif
-
 
 /* DBus filter function */
 static DBusHandlerResult
@@ -182,27 +192,28 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	DBusError err;
 	DBusMessage *reply;
 
-        if (!check_priv (connection, message, dbus_message_get_path (message), "org.freedesktop.hal.power-management.lcd-panel")) {
-                return DBUS_HANDLER_RESULT_HANDLED;
-        }
+	if (!check_priv (connection, message, dbus_message_get_path (message),
+	                 "org.freedesktop.hal.power-management.lcd-panel")) {
+		return DBUS_HANDLER_RESULT_HANDLED;
+	}
 
 #ifdef DEBUG_OMAP_BL
-	dbg ("filter_function: sender=%s destination=%s obj_path=%s interface=%s method=%s", 
-	     dbus_message_get_sender (message), 
-	     dbus_message_get_destination (message), 
-	     dbus_message_get_path (message), 
+	dbg ("filter_function: sender=%s destination=%s obj_path=%s interface=%s method=%s",
+	     dbus_message_get_sender (message),
+	     dbus_message_get_destination (message),
+	     dbus_message_get_path (message),
 	     dbus_message_get_interface (message),
 	     dbus_message_get_member (message));
 #endif
 	reply = NULL;
 
-	if (dbus_message_is_method_call (message, 
-					 "org.freedesktop.Hal.Device.LaptopPanel", 
+	if (dbus_message_is_method_call (message,
+					 "org.freedesktop.Hal.Device.LaptopPanel",
 					 "SetBrightness")) {
 		int brightness;
 
 		dbus_error_init (&err);
-		if (dbus_message_get_args (message, 
+		if (dbus_message_get_args (message,
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
 					   DBUS_TYPE_INVALID)) {
@@ -210,7 +221,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 				reply = dbus_message_new_error (message,
 								"org.freedesktop.Hal.Device.LaptopPanel.Invalid",
 								"Brightness has to be between 0 and 228!");
-
 			} else {
 				int return_code;
 
@@ -228,14 +238,13 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 
 			dbus_connection_send (connection, reply, NULL);
 		}
-		
-	} else if (dbus_message_is_method_call (message, 
-						"org.freedesktop.Hal.Device.LaptopPanel", 
+	} else if (dbus_message_is_method_call (message,
+						"org.freedesktop.Hal.Device.LaptopPanel",
 						"GetBrightness")) {
 		int brightness;
 
 		dbus_error_init (&err);
-		if (dbus_message_get_args (message, 
+		if (dbus_message_get_args (message,
 					   &err,
 					   DBUS_TYPE_INVALID)) {
 
@@ -256,9 +265,8 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						  DBUS_TYPE_INVALID);
 			dbus_connection_send (connection, reply, NULL);
 		}
-		
 	}
-	
+
 error:
 	if (reply != NULL)
 		dbus_message_unref (reply);
@@ -267,12 +275,13 @@ error:
 }
 
 /* Setting-up backlight structure */
-static void setup_cb(void)
+static void
+setup_cb (void)
 {
- memset(&bl_data, 0, sizeof(struct backlight));
- bl_data.backlight_init = backlight_init;
- bl_data.get_backlight_level = read_backlight;
- bl_data.set_backlight_level = write_backlight;
+	memset (&bl_data, 0, sizeof (struct backlight));
+	bl_data.backlight_init = backlight_init;
+	bl_data.get_backlight_level = read_backlight;
+	bl_data.set_backlight_level = write_backlight;
 }
 
 int
@@ -281,7 +290,7 @@ main (int argc, char *argv[])
 	DBusError err;
 
 	setup_logger ();
-	setup_cb();
+	setup_cb ();
 	udi = getenv ("UDI");
 
 	HAL_DEBUG (("udi=%s", udi));
@@ -296,16 +305,14 @@ main (int argc, char *argv[])
 		return -3;
 	}
 
-
-
 	conn = libhal_ctx_get_dbus_connection (halctx);
 	dbus_connection_setup_with_g_main (conn, NULL);
 
 	dbus_connection_add_filter (conn, filter_function, NULL, NULL);
 
-	if (!libhal_device_claim_interface (halctx, 
-					    "/org/freedesktop/Hal/devices/omapfb_bl", 
-					    "org.freedesktop.Hal.Device.LaptopPanel", 
+	if (!libhal_device_claim_interface (halctx,
+					    "/org/freedesktop/Hal/devices/omapfb_bl",
+					    "org.freedesktop.Hal.Device.LaptopPanel",
 					    "    <method name=\"SetBrightness\">\n"
 					    "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n"
 					    "      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
@@ -317,11 +324,13 @@ main (int argc, char *argv[])
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
 		return -4;
 	}
+
 	dbus_error_init (&err);
 	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
 		return -4;
 	}
-	bl_data.backlight_init(&bl_data);
+
+	bl_data.backlight_init (&bl_data);
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 	return 0;

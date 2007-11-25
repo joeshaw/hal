@@ -41,8 +41,8 @@
 #define BLUEZ_NET_SERVER_IFACE "org.bluez.network.Server"
 
 static void
-get_properties (DBusConnection *conn, LibHalContext *ctx, const char *udi,
-				const char *id, const char *path)
+get_properties (DBusConnection *conn, LibHalChangeSet *cs,
+                const char *id, const char *path)
 {
 	DBusMessage *msg;
 	DBusMessage *reply = NULL;
@@ -100,7 +100,7 @@ get_properties (DBusConnection *conn, LibHalContext *ctx, const char *udi,
 
 			HAL_INFO (("reply: %s:%s", key, value));
 
-			libhal_device_set_property_string (ctx, udi, prop, value, &error);
+			libhal_changeset_set_property_string (cs, prop, value);
 			break;
 		}
 		case DBUS_TYPE_INT32:
@@ -111,7 +111,7 @@ get_properties (DBusConnection *conn, LibHalContext *ctx, const char *udi,
 
 			HAL_INFO (("reply: %s:%d", key, value));
 
-			libhal_device_set_property_int (ctx, udi, prop, value, &error);
+			libhal_changeset_set_property_int (cs, prop, value);
 			break;
 		}
 		default:
@@ -138,6 +138,7 @@ main (int argc, char *argv[])
 	char network[8] = "network";
 	const char *pnetwork = network;
 	LibHalContext *ctx = NULL;
+	LibHalChangeSet *cs = NULL;
 	DBusConnection *conn;
 	DBusMessage *msg = NULL;
 	DBusMessage *reply = NULL;
@@ -147,16 +148,13 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		goto out;
 
-	dbus_error_init (&error);
-	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
+	iface = getenv ("HAL_PROP_NET_INTERFACE");
+	if (iface == NULL)
 		goto out;
-
-	iface = libhal_device_get_property_string (ctx, udi, "net.interface", NULL);
 
 	HAL_INFO (("Investigating '%s'", iface));
 
-	if (iface == NULL)
-		goto out;
+	dbus_error_init (&error);
 
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 		goto out;
@@ -216,13 +214,28 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	get_properties (conn, ctx, udi, id, connection);
+	ctx = libhal_ctx_init_direct (&error);
+	if (ctx == NULL)
+		goto out;
+
+	cs = libhal_device_new_changeset (udi);
+	if (cs == NULL) {
+		HAL_ERROR(("Cannot initialize changeset"));
+		goto out;
+	}
+
+	get_properties (conn, cs, id, connection);
 
 out:
 	if (msg)
 		dbus_message_unref (msg);
 	if (reply)
 		dbus_message_unref (reply);
+	if (cs != NULL) {
+		dbus_error_init (&error);
+		libhal_device_commit_changeset (ctx, cs, &error);
+		libhal_device_free_changeset (cs);
+	}
 	if (ctx != NULL) {
 		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
