@@ -5200,10 +5200,8 @@ local_server_message_handler (DBusConnection *connection,
 				helper_interface_handlers = g_slist_remove_link (helper_interface_handlers, i);
 			}
 		}
-	
-		if (G_UNLIKELY (!singletons)) {
-			HAL_ERROR (("Singleton table is not initialied/ is NULL"));
-		} else {
+
+		if (singletons)
 			g_hash_table_foreach_remove (singletons, (GHRFunc) singleton_remove_by_connection, connection);
 		}
 
