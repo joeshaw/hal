@@ -5203,7 +5203,6 @@ local_server_message_handler (DBusConnection *connection,
 
 		if (singletons)
 			g_hash_table_foreach_remove (singletons, (GHRFunc) singleton_remove_by_connection, connection);
-		}
 
 		dbus_connection_unref (connection);
 		return DBUS_HANDLER_RESULT_HANDLED;
