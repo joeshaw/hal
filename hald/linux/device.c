@@ -38,7 +38,12 @@
 #include <unistd.h>
 #include <asm/byteorder.h>
 #include <fcntl.h>
-#include <linux/input.h>
+
+#ifdef HAL_LINUX_INPUT_HEADER_H
+  #include HAL_LINUX_INPUT_HEADER_H
+#else
+  #include <linux/input.h>
+#endif
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>

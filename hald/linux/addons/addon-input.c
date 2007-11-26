@@ -36,7 +36,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include <linux/input.h>
+#ifdef HAL_LINUX_INPUT_HEADER_H
+  #include HAL_LINUX_INPUT_HEADER_H
+#else
+  #include <linux/input.h>
+#endif
 #include <glib/gmain.h>
 #include <glib/gprintf.h>
 #include <dbus/dbus-glib-lowlevel.h>

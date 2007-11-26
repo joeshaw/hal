@@ -31,7 +31,11 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
-#include <linux/input.h>
+#ifdef HAL_LINUX_INPUT_HEADER_H
+  #include HAL_LINUX_INPUT_HEADER_H
+#else
+  #include <linux/input.h>
+#endif
 
 #include "libhal/libhal.h"
 #include "hal-setup-keymap-hash-name.h"

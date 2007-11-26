@@ -29,12 +29,17 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/input.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef HAL_LINUX_INPUT_HEADER_H
+  #include HAL_LINUX_INPUT_HEADER_H
+#else
+  #include <linux/input.h>
+#endif
 
 #include "libhal/libhal.h"
 #include "../../logger.h"
