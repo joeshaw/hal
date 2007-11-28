@@ -325,6 +325,9 @@ part_table_free (PartitionTable *p)
 {
 	GSList *i;
 
+	if (p == NULL)
+		return;
+
 	for (i = p->entries; i != NULL; i = i->next) {
 		PartitionEntry *pe = i->data;
 		part_entry_free (pe);
@@ -914,7 +917,13 @@ part_table_get_size (PartitionTable *p)
 PartitionTable *
 part_table_entry_get_nested (PartitionTable *p, int entry)
 {
-	PartitionEntry *pe = g_slist_nth_data (p->entries, entry);
+	PartitionEntry *pe;
+	
+	if (p == NULL) 
+		return NULL;
+
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		return NULL;
 
 	if (pe->is_part_table)
 		return pe->part_table;
@@ -933,7 +942,8 @@ part_table_entry_get_type (PartitionTable *p, int entry)
 	if (p == NULL)
 		goto out;
 
-	pe = g_slist_nth_data (p->entries, entry);
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		goto out;
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -966,7 +976,8 @@ part_table_entry_get_uuid (PartitionTable *p, int entry)
 	if (p == NULL)
 		goto out;
 
-	pe = g_slist_nth_data (p->entries, entry);
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		goto out;
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -991,7 +1002,8 @@ part_table_entry_get_label (PartitionTable *p, int entry)
 	if (p == NULL)
 		goto out;
 
-	pe = g_slist_nth_data (p->entries, entry);
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		goto out;
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -1023,7 +1035,8 @@ part_table_entry_get_flags (PartitionTable *p, int entry)
 	if (p == NULL)
 		goto out;
 
-	pe = g_slist_nth_data (p->entries, entry);
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		goto out;
 
 	ss = g_new0 (char*, 6 + 1); /* hard coded to max items we'll return */
 	ss[0] = NULL;
@@ -1101,7 +1114,8 @@ part_table_entry_get_offset (PartitionTable *p, int entry)
 	if (p == NULL)
 		goto out;
 
-	pe = g_slist_nth_data (p->entries, entry);
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		goto out;
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
@@ -1138,7 +1152,8 @@ part_table_entry_get_size (PartitionTable *p, int entry)
 	if (p == NULL)
 		goto out;
 
-	pe = g_slist_nth_data (p->entries, entry);
+	if ((pe = g_slist_nth_data (p->entries, entry)) == NULL)
+		goto out;
 
 	switch (p->scheme) {
 	case PART_TYPE_GPT:
