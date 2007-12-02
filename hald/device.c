@@ -160,28 +160,19 @@ hal_property_to_string (HalProperty *prop)
 	case HAL_PROPERTY_TYPE_STRLIST:
 	{
 		GSList *iter;
-		guint i;
-		char buf[256];
+		GString *buf;
+
+		buf = g_string_new ("");
 		
-		i = 0;
-		buf[0] = '\0';
-		for (iter = hal_property_get_strlist (prop); 
-		     iter != NULL && i < sizeof(buf); 
+		for (iter = hal_property_get_strlist (prop); iter != NULL;
 		     iter = g_slist_next (iter)) {
-			guint len;
-			const char *str;
+			g_string_append (buf, (const char *) iter->data);
 			
-			str = (const char *) iter->data;
-			len = strlen (str);
-			strncpy (buf + i, str, sizeof(buf) - i);
-			i += len;
-			
-			if (g_slist_next (iter) != NULL && i < sizeof(buf)) {
-				buf[i] = '\t';
-				i++;
+			if (g_slist_next (iter) != NULL) {
+				g_string_append_c(buf, '\t');
 			}
 		}
-		return g_strdup (buf);
+		return g_string_free (buf, FALSE);
 	}
 
 	default:
