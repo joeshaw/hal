@@ -29,7 +29,12 @@
 #  include <config.h>
 #endif
 
-#include <linux/input.h>
+#ifdef HAL_LINUX_INPUT_HEADER_H
+ #include HAL_LINUX_INPUT_HEADER_H
+else
+ #include <linux/input.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

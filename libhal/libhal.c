@@ -116,6 +116,7 @@ libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements)
 {
 	int count;
 	char **buffer;
+	char **t;
 
 	count = 0;
 	buffer = (char **)malloc (sizeof (char *) * 8);
@@ -129,9 +130,11 @@ libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements)
 		char *str;
 		
 		if ((count % 8) == 0 && count != 0) {
-			buffer = realloc (buffer, sizeof (char *) * (count + 8));
-			if (buffer == NULL)
+			t = realloc (buffer, sizeof (char *) * (count + 8));
+			if (t == NULL)
 				goto oom;
+			else
+				buffer = t;
 		}
 		
 		dbus_message_iter_get_basic (iter, &value);
@@ -146,9 +149,11 @@ libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements)
 	}
 
 	if ((count % 8) == 0) {
-		buffer = realloc (buffer, sizeof (char *) * (count + 1));
-		if (buffer == NULL)
+		t = realloc (buffer, sizeof (char *) * (count + 1));
+		if (t == NULL)
 			goto oom;
+		else
+			buffer = t;
 	}
 
 	buffer[count] = NULL;
@@ -157,6 +162,8 @@ libhal_get_string_array_from_iter (DBusMessageIter *iter, int *num_elements)
 	return buffer;
 
 oom:
+	if (buffer != NULL)
+		free (buffer);
 	fprintf (stderr, "%s %d : error allocating memory\n", __FILE__, __LINE__);
 	return NULL;
 
@@ -414,6 +421,7 @@ get_property_set (DBusMessageIter *iter)
 	    dbus_message_iter_get_element_type (iter) != DBUS_TYPE_DICT_ENTRY) {
 		fprintf (stderr, "%s %d : error, expecting an array of dict entries\n",
 			 __FILE__, __LINE__);
+		free (result);
 		return NULL;
 	}
 
@@ -436,8 +444,10 @@ get_property_set (DBusMessageIter *iter)
 			goto oom;
 
 		p->key = strdup (key);
-		if (p->key == NULL)
+		if (p->key == NULL) {
+			free (p);
 			goto oom;
+		}
 
 		dbus_message_iter_next (&dict_entry_iter);
 
@@ -456,10 +466,13 @@ get_property_set (DBusMessageIter *iter)
 	return result;
 
 oom:
+	if (result != NULL)
+		libhal_free_property_set (result);
+
 	fprintf (stderr,
 		"%s %d : error allocating memory\n",
 		 __FILE__, __LINE__);
-		/** @todo FIXME cleanup */
+
 	return NULL;
 }
 

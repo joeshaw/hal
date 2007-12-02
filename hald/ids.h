@@ -45,7 +45,13 @@ static inline void
 ids_find_pci (int vendor_id, int product_id,
 	      int subsys_vendor_id, int subsys_product_id,
 	      char **vendor_name, char **product_name,
-	      char **subsys_vendor_name, char **subsys_product_name) {return;}
+	      char **subsys_vendor_name, char **subsys_product_name) {
+	*vendor_name = NULL;
+	*product_name = NULL;
+	*subsys_vendor_name = NULL;
+	*subsys_product_name = NULL;
+	return;
+}
 #endif /*USE_PCI_IDS*/
 
 #ifdef USE_PNP_IDS
@@ -55,7 +61,10 @@ ids_find_pnp (const char *pnp_id, char **pnp_description);
 
 #else /*USE_PNP_IDS*/
 static inline void
-ids_find_pnp (const char *pnp_id, char **pnp_description) {return;}
+ids_find_pnp (const char *pnp_id, char **pnp_description) {
+	*pnp_description = NULL;
+	return;
+}
 #endif /*USE_PNP_IDS*/
 
 #ifdef USE_USB_IDS
@@ -70,7 +79,11 @@ ids_find_usb (int vendor_id, int product_id,
 static inline void usb_ids_init (void) {return;}
 static inline void
 ids_find_usb (int vendor_id, int product_id,
-	      char **vendor_name, char **product_name) {return;}
+	      char **vendor_name, char **product_name) {
+	*vendor_name = NULL;
+	*product_name = NULL;
+	return;
+}
 #endif /*USE_USB_IDS*/
 
 void ids_init (void);

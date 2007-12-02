@@ -38,7 +38,12 @@
 #include <unistd.h>
 #include <asm/byteorder.h>
 #include <fcntl.h>
-#include <linux/input.h>
+
+#ifdef HAL_LINUX_INPUT_HEADER_H
+  #include HAL_LINUX_INPUT_HEADER_H
+#else
+  #include <linux/input.h>
+#endif
 
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
@@ -1548,10 +1553,10 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	{
 		gchar buf[64];
-		char *vendor_name;
-		char *product_name;
-		char *subsys_vendor_name;
-		char *subsys_product_name;
+		char *vendor_name = NULL;
+		char *product_name = NULL;
+		char *subsys_vendor_name = NULL;
+		char *subsys_product_name = NULL;
 
 		ids_find_pci (hal_device_property_get_int (d, "pci.vendor_id"), 
 			      hal_device_property_get_int (d, "pci.product_id"), 

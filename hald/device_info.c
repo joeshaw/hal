@@ -1109,6 +1109,7 @@ rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 
 		default:
 			HAL_WARNING(("Unhandled rule (%i)!", rule->rtype));
+			rule = di_jump(rule);
 			break;
 		}
 		rule = di_next(rule);

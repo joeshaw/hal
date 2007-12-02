@@ -919,6 +919,14 @@ fi
 msg_sonypic=$have_sonypic
 AM_CONDITIONAL(HAVE_SONYPIC, [test x$msg_sonypic = xyes], [Compiling Sony PIC])
 
+dnl use non-system input.h
+AC_ARG_WITH([linux-input-header],
+	    AS_HELP_STRING([--with-linux-input-header=<path>],
+			   [Use an given Linux input.h rather than that installed on the system (<linux/input.h>)]))
+if test "x$with_linux_input_header" != "x"; then
+	AC_DEFINE_UNQUOTED(HAL_LINUX_INPUT_HEADER_H, "$with_linux_input_header", [If set, the header to use instead of <linux/input.h>])
+fi
+
 dnl
 dnl SUBSETTING END
 dnl
