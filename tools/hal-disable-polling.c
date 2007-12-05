@@ -28,6 +28,7 @@
 #  include <config.h>
 #endif
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
 #include <stdlib.h>
