@@ -679,6 +679,7 @@ refresh_md_state (HalDevice *d)
         int num_components;
         gboolean ret;
         const char *sysfs_path;
+        const char *level;
 
         ret = FALSE;
 
@@ -689,49 +690,54 @@ refresh_md_state (HalDevice *d)
         }
 
         HAL_INFO (("In refresh_md_state() for '%s'", sysfs_path));
-
-        sync_action = hal_util_get_string_from_file (sysfs_path, "md/sync_action");
-        if (sync_action == NULL) {
-                HAL_WARNING (("Cannot get sync_action for %s", sysfs_path));
-                goto error;
-        }
-        if (strcmp (sync_action, "idle") == 0) {
+        level = hal_device_property_get_string (d, "storage.linux_raid.level");
+        HAL_INFO ((" MD Level is '%s'", level));
+		
+        /* MD linear device are not syncable */
+        if (strcmp (level, "linear") != 0) {
+	        sync_action = hal_util_get_string_from_file (sysfs_path, "md/sync_action");
+	        if (sync_action == NULL) {
+	                HAL_WARNING (("Cannot get sync_action for %s", sysfs_path));
+	                goto error;
+	        }
+	        if (strcmp (sync_action, "idle") == 0) {
+	                hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", FALSE);
+			hal_device_property_remove (d, "storage.linux_raid.sync.action");
+			hal_device_property_remove (d, "storage.linux_raid.sync.speed");
+			hal_device_property_remove (d, "storage.linux_raid.sync.progress");
+	        } else {
+	                int speed;
+	                char *str_completed;
+                        
+	                hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", TRUE);
+                        
+	                hal_device_property_set_string (d, "storage.linux_raid.sync.action", sync_action);
+                        
+			if (!hal_util_get_int_from_file (sysfs_path, "md/sync_speed", &speed, 10)) {
+	                        HAL_WARNING (("Cannot get sync_speed for %s", sysfs_path));
+	                } else {
+	                        hal_device_property_set_uint64 (d, "storage.linux_raid.sync.speed", speed);
+	                }
+                        
+	                if ((str_completed = hal_util_get_string_from_file (sysfs_path, "md/sync_completed")) == NULL) {
+	                        HAL_WARNING (("Cannot get sync_completed for %s", sysfs_path));
+	                } else {
+	                        long long int sync_pos, sync_total;
+                                
+	                        if (sscanf (str_completed, "%lld / %lld", &sync_pos, &sync_total) != 2) {
+	                                HAL_WARNING (("Malformed sync_completed '%s'", str_completed));
+	                        } else {
+	                                double sync_progress;
+	                                sync_progress = ((double) sync_pos) / ((double) sync_total);
+	                                hal_device_property_set_double (d, "storage.linux_raid.sync.progress", sync_progress);
+	                        }
+	                }
+                        
+	                /* check again in two seconds */
+	                g_timeout_add (2000, md_check_sync_timeout, g_strdup (sysfs_path));
+	        }
+        } else
                 hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", FALSE);
-		hal_device_property_remove (d, "storage.linux_raid.sync.action");
-		hal_device_property_remove (d, "storage.linux_raid.sync.speed");
-		hal_device_property_remove (d, "storage.linux_raid.sync.progress");
-        } else {
-                int speed;
-                char *str_completed;
-
-                hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", TRUE);
-
-                hal_device_property_set_string (d, "storage.linux_raid.sync.action", sync_action);
-
-		if (!hal_util_get_int_from_file (sysfs_path, "md/sync_speed", &speed, 10)) {
-                        HAL_WARNING (("Cannot get sync_speed for %s", sysfs_path));
-                } else {
-                        hal_device_property_set_uint64 (d, "storage.linux_raid.sync.speed", speed);
-                }
-
-
-                if ((str_completed = hal_util_get_string_from_file (sysfs_path, "md/sync_completed")) == NULL) {
-                        HAL_WARNING (("Cannot get sync_completed for %s", sysfs_path));
-                } else {
-                        long long int sync_pos, sync_total;
-
-                        if (sscanf (str_completed, "%lld / %lld", &sync_pos, &sync_total) != 2) {
-                                HAL_WARNING (("Malformed sync_completed '%s'", str_completed));
-                        } else {
-                                double sync_progress;
-                                sync_progress = ((double) sync_pos) / ((double) sync_total);
-                                hal_device_property_set_double (d, "storage.linux_raid.sync.progress", sync_progress);
-                        }
-                }
-
-                /* check again in two seconds */
-                g_timeout_add (2000, md_check_sync_timeout, g_strdup (sysfs_path));
-        }
         
         if (!hal_util_get_int_from_file (sysfs_path, "md/raid_disks", &num_components, 0)) {
                 HAL_WARNING (("Cannot get number of RAID components"));
