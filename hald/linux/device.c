@@ -3781,6 +3781,18 @@ dev_callouts_remove_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
 }
 
 static void 
+dev_callouts_remove_child_done (HalDevice *d, gpointer userdata1, gpointer userdata2)
+{
+	HAL_INFO (("Remove callouts completed udi=%s", hal_device_get_udi (d)));
+
+	if (!hal_device_store_remove (hald_get_gdl (), d)) {
+		HAL_WARNING (("Error removing device"));
+	}
+
+	g_object_unref (d);
+}
+static void 
+
 add_dev_after_probing (HalDevice *d, DevHandler *handler, void *end_token)
 {
 	/* Compute UDI */
@@ -3956,7 +3968,9 @@ hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path,
 {
 	guint i;
 	HalDevice *d;
-
+	HalDevice *child;
+	GSList *children;
+	GSList *tmp;
 
 	HAL_INFO (("remove_dev: subsys=%s sysfs_path=%s", subsystem, sysfs_path));
 
@@ -3969,8 +3983,21 @@ hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path,
 
 			handler = dev_handlers[i];
 			if (strcmp (handler->subsystem, subsystem) == 0) {
-				if (strcmp (subsystem, "scsi") == 0)
+				if (strcmp (subsystem, "scsi") == 0) {
 					missing_scsi_host(sysfs_path, (HotplugEvent *)end_token, HOTPLUG_ACTION_REMOVE);
+				}
+
+				/* check if there are children left before remove the device */
+				children = hal_device_store_match_multiple_key_value_string (hald_get_gdl (), 
+                        								     "info.parent",
+											     hal_device_get_udi(d));
+
+				for (tmp = children; tmp != NULL; tmp = g_slist_next (tmp)) {
+			                child = HAL_DEVICE (tmp->data);
+					HAL_INFO(("Remove now: %s as child of: %s", hal_device_get_udi(child), hal_device_get_udi(d)));
+					hal_util_callout_device_remove (child, dev_callouts_remove_child_done, NULL, NULL);
+                		}
+				g_slist_free (children);
 
 				handler->remove (d);
 				hal_util_callout_device_remove (d, dev_callouts_remove_done, end_token, NULL);
