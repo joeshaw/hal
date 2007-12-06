@@ -605,27 +605,16 @@ out:
 static void
 set_suspend_hibernate_keys (HalDevice *d)
 {
-	int can_suspend;
-	int can_hibernate;
-	ssize_t read;
-	size_t len;
+	gboolean can_suspend;
+	gboolean can_hibernate;
 	char *poweroptions;
 	const char *pmtype;
-	FILE *fp;
 
 	can_suspend = FALSE;
 	can_hibernate = FALSE;
 
 	/* try to find 'mem' and 'disk' in /sys/power/state */
-	fp = fopen ("/sys/power/state", "r");
-	if (fp == NULL) {
-		HAL_WARNING (("Could not open /sys/power/state"));
-		goto out;
-	}
-	poweroptions = NULL;
-	len = 0;
-	read = getline (&poweroptions, &len, fp);
-	fclose (fp);
+	poweroptions = hal_util_get_string_from_file("/sys/power/", "state");
 	if (poweroptions == NULL) {
 		HAL_WARNING (("Contents of /sys/power/state invalid"));
 		goto out;
@@ -634,21 +623,25 @@ set_suspend_hibernate_keys (HalDevice *d)
 		can_suspend = TRUE;
 	if (strstr (poweroptions, "disk"))
 		can_hibernate = TRUE;
-	free (poweroptions);
 
-	pmtype = hal_device_property_get_string (d, "power_management.type");
-	if (pmtype != NULL && strcmp(pmtype, "pmu") == 0) {
-		/* We got our own helper for suspend PMU machines */
-		can_suspend = TRUE;
+	if (!can_suspend) {
+		pmtype = hal_device_property_get_string (d, "power_management.type");
+		if (pmtype != NULL && strcmp(pmtype, "pmu") == 0) {
+			/* We got our own helper for suspend PMU machines */
+			can_suspend = TRUE;
+		}
 	}
 
-	/* check for the presence of suspend2 */
-	if (access ("/proc/software_suspend", F_OK) == 0)
-		can_hibernate = TRUE;
-	if (access ("/proc/suspend2", F_OK) == 0)
-		can_hibernate = TRUE;
-	if (access ("/sys/power/suspend2/version", F_OK) == 0)
-		can_hibernate = TRUE;
+	if (!can_hibernate) {
+		/* check for the presence of suspend2 */
+		if (access ("/proc/software_suspend", F_OK) == 0) {
+			can_hibernate = TRUE;
+		} else if (access ("/proc/suspend2", F_OK) == 0) {
+			can_hibernate = TRUE;
+		} else if (access ("/sys/power/suspend2/version", F_OK) == 0) {
+			can_hibernate = TRUE;
+		}
+	}
 out:
 	hal_device_property_set_bool (d, "power_management.can_suspend", can_suspend);
 	hal_device_property_set_bool (d, "power_management.can_suspend_hybrid", FALSE);
