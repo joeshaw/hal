@@ -9,20 +9,14 @@
        to work correctly.
        See http://bugs.freedesktop.org/show_bug.cgi?id=7221 for details. -->
   <device>
-    <match key="system.kernel.name" string="Linux"> 
-      <match key="system.hardware.vendor" string="Dell Computer Corporation">
-        <match key="system.formfactor" string="laptop">
-           <spawn udi="/org/freedesktop/Hal/devices/dell_lcd_panel"/>
-        </match>
-      </match>
-    </match>
-  </device>
-
-  <device>
-    <match key="system.kernel.name" string="Linux"> 
-      <match key="system.hardware.vendor" string="Dell Inc.">
-        <match key="system.formfactor" string="laptop">
-           <spawn udi="/org/freedesktop/Hal/devices/dell_lcd_panel"/>
+    <match key="info.bus" string="platform">
+      <match key="platform.id" string="dcdbas">
+        <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+          <match key="/org/freedesktop/Hal/devices/computer:system.hardware.vendor" prefix="Dell ">
+            <match key="/org/freedesktop/Hal/devices/computer:system.formfactor" string="laptop">
+              <spawn udi="/org/freedesktop/Hal/devices/dell_lcd_panel"/>
+            </match>
+          </match>
         </match>
       </match>
     </match>
