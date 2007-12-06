@@ -473,6 +473,14 @@ poll_for_media (gpointer user_data)
 		}
 	}
 	
+	/* set correct state on startup, this avoid endless loops if there was a media in the device on startup */
+	if (media_status == MEDIA_STATUS_UNKNOWN) {
+		if (got_media) 
+			media_status = MEDIA_STATUS_NO_MEDIA;
+		else 
+			media_status = MEDIA_STATUS_GOT_MEDIA;	
+	}
+
 	switch (media_status) {
 	case MEDIA_STATUS_GOT_MEDIA:
 		if (!got_media) {
