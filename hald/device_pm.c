@@ -32,6 +32,7 @@
 
 #include <glib.h>
 
+#include "hald.h"
 #include "logger.h"
 #include "util_pm.h"
 #include "device_pm.h"
@@ -127,8 +128,58 @@ device_pm_abstract_props (HalDevice *d)
 	charging = hal_device_property_get_bool (d, "battery.rechargeable.is_charging");
 	discharging = hal_device_property_get_bool (d, "battery.rechargeable.is_discharging");
 
-	if (!charging && !discharging)
-		normalised_rate = 0;
+	if (!charging && !discharging) {
+	        GSList *i;
+	        GSList *devices;
+        	HalDevice *_d;
+		gboolean online;
+		const char *bat_type;
+
+		online = FALSE;
+
+		/* check if this is a primary, mean laptop battery */
+		bat_type = hal_device_property_get_string (d, "battery.type");
+		if (bat_type != NULL && !strncmp (bat_type, "primary", 7)) { 
+
+			/* check if the machine is on AC or on battery */ 
+	       	 	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+                	                                                            "info.category",
+        	               		                                            "ac_adapter");
+			for (i = devices; i != NULL; i = g_slist_next (i)) {
+				_d = HAL_DEVICE (i->data);
+				if (hal_device_has_property (_d, "linux.acpi_type")) {
+					if (hal_device_property_get_bool (_d, "ac_adapter.present")) {
+						online = TRUE; 
+					}
+				}
+			}
+			g_slist_free (devices);
+
+			if (online) {
+				normalised_rate = 0;
+			} else {
+				/* check if there is an other battery already discharing, if so: set normalised_rate = 0 */ 
+				devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+											    "info.category",
+											    "battery");
+				for (i = devices; i != NULL; i = g_slist_next (i)) {
+					_d = HAL_DEVICE (i->data);
+					if (hal_device_has_property (_d, "linux.acpi_type")) {
+						bat_type = hal_device_property_get_string (_d, "battery.type");
+						if (bat_type != NULL && !strncmp (bat_type, "primary", 7)) {
+							if (strcmp (hal_device_get_udi(d), hal_device_get_udi(_d)) != 0) {
+								if (hal_device_property_get_bool (_d, "battery.rechargeable.is_discharging"))
+									normalised_rate = 0;
+							}	
+						}
+					}
+				}
+				g_slist_free(devices);
+			}
+		} else {
+			normalised_rate = 0;
+		}
+	}
 
 	/* Some laptops report current charge much larger than
 	 * full charge when at 100%.  Clamp back down to 100%. */
