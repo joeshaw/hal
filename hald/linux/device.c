@@ -1540,8 +1540,12 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
-	hal_util_set_int_from_file (d, "pci.product_id", sysfs_path, "device", 16);
-	hal_util_set_int_from_file (d, "pci.vendor_id", sysfs_path, "vendor", 16);
+	if(!hal_util_set_int_from_file (d, "pci.product_id", sysfs_path, "device", 16) ||
+	   !hal_util_set_int_from_file (d, "pci.vendor_id", sysfs_path, "vendor", 16)) {
+		HAL_ERROR(("Could not get PCI product or vendor ID, don't add device, this info is mandatory!"));
+		return NULL;
+	}
+
 	hal_util_set_int_from_file (d, "pci.subsys_product_id", sysfs_path, "subsystem_device", 16);
 	hal_util_set_int_from_file (d, "pci.subsys_vendor_id", sysfs_path, "subsystem_vendor", 16);
 
