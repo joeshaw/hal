@@ -3917,14 +3917,14 @@ addon_is_ready(LibHalContext *ctx, const char *identifier,
 
         if (singleton) {
         	message = dbus_message_new_method_call ("org.freedesktop.Hal",
-						"/org/freedesktop/Hal/Manager",
-						"org.freedesktop.Hal.Manager",
-						"SingletonAddonIsReady");
+							"/org/freedesktop/Hal/Manager",
+							"org.freedesktop.Hal.Manager",
+							"SingletonAddonIsReady");
         } else {
         	message = dbus_message_new_method_call ("org.freedesktop.Hal",
-						identifier,
-						"org.freedesktop.Hal.Device",
-						"AddonIsReady");
+							identifier,
+							"org.freedesktop.Hal.Device",
+							"AddonIsReady");
         }
 
 	if (message == NULL) {
@@ -4902,6 +4902,7 @@ dbus_bool_t
 libhal_ctx_set_global_interface_lock_acquired (LibHalContext *ctx, LibHalGlobalInterfaceLockAcquired callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+
 	ctx->global_interface_lock_acquired = callback;
 	return TRUE;
 }
@@ -4919,6 +4920,7 @@ dbus_bool_t
 libhal_ctx_set_global_interface_lock_released (LibHalContext *ctx, LibHalGlobalInterfaceLockReleased callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+
 	ctx->global_interface_lock_released = callback;
 	return TRUE;
 }
@@ -4937,6 +4939,7 @@ dbus_bool_t
 libhal_ctx_set_interface_lock_acquired (LibHalContext *ctx, LibHalInterfaceLockAcquired callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+
 	ctx->interface_lock_acquired = callback;
 	return TRUE;
 }
@@ -4954,6 +4957,7 @@ dbus_bool_t
 libhal_ctx_set_interface_lock_released (LibHalContext *ctx, LibHalInterfaceLockReleased callback)
 {
 	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+
 	ctx->interface_lock_released = callback;
 	return TRUE;
 }
