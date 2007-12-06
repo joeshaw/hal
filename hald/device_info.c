@@ -1119,12 +1119,14 @@ rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 /* merge the device info type, either preprobe, info or policy */
 gboolean
 di_search_and_merge (HalDevice *d, DeviceInfoType type){
-	struct cache_header *header = (struct cache_header*) RULES_PTR(0);
+	struct cache_header *header;
 
         /* make sure our fdi rule cache is up to date */
         if (di_cache_coherency_check (FALSE)) {
                 di_rules_init ();
 	}
+
+	header = (struct cache_header*) RULES_PTR(0);
 
 	switch (type) {
 	case DEVICE_INFO_TYPE_PREPROBE:
