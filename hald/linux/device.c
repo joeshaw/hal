@@ -3302,6 +3302,61 @@ power_supply_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+drm_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d = NULL;
+
+	d = hal_device_new ();
+
+	hal_device_add_capability (d, "drm");
+
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+		hal_device_copy_property( parent_dev, "info.vendor", d, "info.vendor");
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_device_property_set_string (d, "info.product", "Direct Rendering Manager Device");
+	hal_device_property_set_string (d, "info.category", "drm");
+	hal_device_property_set_string (d, "linux.device_file", device_file);
+	hal_device_property_set_string (d, "linux.subsystem", "drm");
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path); /* not sure if this is needed/set */
+	hal_util_set_string_from_file (d, "drm.dri_library", sysfs_path, "dri_library_name");
+	hal_util_set_string_from_file (d, "drm.version", sysfs_path, "../version");
+	
+	return d;
+}
+
+static gboolean
+drm_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	const char *dir;
+	const char *name;
+
+	dir = hal_device_property_get_string (d, "linux.sysfs_path");
+
+	name = hal_util_get_last_element(dir);
+
+	/* generate e.g.: /org/freedesktop/Hal/devices/pci_8086_2a02_drm_i915_card0 */
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_drm_%s_%s",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_string (d, "drm.dri_library"),
+			      name);
+
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -3638,6 +3693,14 @@ static DevHandler dev_handler_power_supply =
        .remove       = dev_remove
 };
 
+static DevHandler dev_handler_drm =
+{
+       .subsystem    = "drm",
+       .add          = drm_add,
+       .compute_udi  = drm_compute_udi,
+       .remove       = dev_remove
+};
+
 /* SCSI debug, to test thousends of fake devices */
 static DevHandler dev_handler_pseudo = {
 	.subsystem   = "pseudo",
@@ -3681,6 +3744,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_backlight,
 	&dev_handler_firewire,
 	&dev_handler_power_supply,
+	&dev_handler_drm,
 	NULL
 };
 
