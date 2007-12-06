@@ -320,6 +320,7 @@ main (int argc, char **argv)
 
 	conn = libhal_ctx_get_dbus_connection (halctx);
 	dbus_connection_setup_with_g_main (conn, NULL);
+	dbus_connection_set_exit_on_disconnect (conn, 0);
 
 	dbus_connection_add_filter (conn, filter_function, NULL, NULL);
 

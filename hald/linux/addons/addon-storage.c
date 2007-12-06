@@ -665,6 +665,7 @@ main (int argc, char *argv[])
 	}
 	loop = g_main_loop_new (NULL, FALSE);
 	dbus_connection_setup_with_g_main (con, NULL);
+	dbus_connection_set_exit_on_disconnect (con, 0);
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
