@@ -30,6 +30,7 @@
 #endif
 
 #define _GNU_SOURCE 1
+#define DMI_SYSFS_PATH "/sys/class/dmi/id"
 
 #include <ctype.h>
 #include <errno.h>
@@ -308,6 +309,38 @@ GIOChannel *get_mdstat_channel (void)
         return mdstat_channel;
 }
 
+/* 
+ * NOTE: We need to use this function to parse if HAL is privileged 
+ *       since some of the dmi keys in sysfs are only readable by root
+ */
+static void 
+osspec_privileged_init_preparse_set_dmi (gboolean set, HalDevice *d) 
+{
+	gchar *buf;
+	static char *product_serial;
+	static char *product_uuid;
+	static gboolean parsed = FALSE; 
+
+	if (g_file_test (DMI_SYSFS_PATH, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
+
+		if (!set){
+			if ((buf = hal_util_get_string_from_file(DMI_SYSFS_PATH, "product_serial")) != NULL)
+				product_serial = g_strdup ( buf );
+			if ((buf = hal_util_get_string_from_file(DMI_SYSFS_PATH, "product_uuid")) != NULL)
+				product_uuid = g_strdup ( buf );
+
+			parsed = TRUE;
+		} else {
+			if (d != NULL && parsed) {
+				hal_device_property_set_string (d, "system.hardware.serial", product_serial);		
+				hal_device_property_set_string (d, "system.hardware.uuid", product_uuid);
+				g_free (product_serial);
+				g_free (product_uuid);
+				parsed = FALSE;
+			}
+		}
+	}
+}
 
 void
 osspec_privileged_init (void)
@@ -336,6 +369,8 @@ osspec_privileged_init (void)
 	
 	if (err != NULL)
 		g_error_free (err);
+
+	osspec_privileged_init_preparse_set_dmi(FALSE, NULL);
 }
 
 void
@@ -454,11 +489,87 @@ computer_probing_helper_done (HalDevice *d)
 }
 
 static void 
+computer_dmi_map (HalDevice *d, gboolean dmidecode) 
+{
+	/* Map the chassis type from dmidecode.c to a sensible type used in hal 
+	 *
+	 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
+	 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
+	 *
+	 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
+	 */
+	static const char *chassis_map[] = {
+		"Other",                 "unknown", /* 0x01 */
+		"Unknown",               "unknown",
+		"Desktop",               "desktop",
+		"Low Profile Desktop",   "desktop",
+		"Pizza Box",             "server",
+		"Mini Tower",            "desktop",
+		"Tower",                 "desktop",
+		"Portable",              "laptop",
+		"Laptop",                "laptop",
+		"Notebook",              "laptop",
+		"Hand Held",             "handheld",
+		"Docking Station",       "laptop",
+		"All In One",            "unknown",
+		"Sub Notebook",          "laptop",
+		"Space-saving",          "unknown",
+		"Lunch Box",             "unknown",
+		"Main Server Chassis",   "server",
+		"Expansion Chassis",     "unknown",
+		"Sub Chassis",           "unknown",
+		"Bus Expansion Chassis", "unknown",
+		"Peripheral Chassis",    "unknown",
+		"RAID Chassis",          "unknown",
+		"Rack Mount Chassis",    "unknown",
+		"Sealed-case PC",        "unknown",
+		"Multi-system",          "unknown",
+		"CompactPCI",		 "unknonw",
+		"AdvancedTCA",		 "unknown", /* 0x1B */
+		NULL
+	};
+
+
+	if (dmidecode) {
+		/* do mapping from text to text type */ 
+		unsigned int i;
+		const char *chassis_type;
+
+		/* now map the smbios.* properties to our generic system.formfactor property */
+		if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
+			
+			for (i = 0; chassis_map[i] != NULL; i += 2) {
+				if (strcmp (chassis_map[i], chassis_type) == 0) {
+					hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
+					break;
+				}
+			}
+		} 
+	} else {
+		gint chassis_type;
+
+		/* do mapping from integer type to text type*/
+		/* get the chassis type and map it to the related text info */
+		if (hal_util_get_int_from_file(DMI_SYSFS_PATH, "chassis_type", &chassis_type, 10)) {
+
+			if ((chassis_type > 0) && (chassis_type < 28) && (chassis_map[(chassis_type-1)*2] != NULL)) {
+				hal_device_property_set_string (d, "system.chassis.type", chassis_map[((chassis_type-1)*2)]);
+				hal_device_property_set_string (d, "system.formfactor", chassis_map[((chassis_type-1)*2)+1]);
+			}
+
+		} else {
+			hal_device_property_set_string (d, "system.chassis.type", "Unknown");
+			hal_device_property_set_string (d, "system.formfactor", "unknown");
+		}
+	}
+
+}
+
+static void 
 computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type, 
 	                             gint return_code, gchar **error, 
 				     gpointer data1, gpointer data2)
 {
-	const char *chassis_type;
 	const char *system_manufacturer;
 	const char *system_product;
 	const char *system_version;
@@ -485,56 +596,7 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 
 
 	if (!hal_device_has_property (d, "system.formfactor")) {
-		/* now map the smbios.* properties to our generic system.formfactor property */
-		if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
-			unsigned int i;
-
-			/* Map the chassis type from dmidecode.c to a sensible type used in hal 
-			 *
-			 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
-			 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
-			 *
-			 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
-			 */
-			static const char *chassis_map[] = {
-				"Other",                 "unknown", /* 0x01 */
-				"Unknown",               "unknown",
-				"Desktop",               "desktop",
-				"Low Profile Desktop",   "desktop",
-				"Pizza Box",             "server",
-				"Mini Tower",            "desktop",
-				"Tower",                 "desktop",
-				"Portable",              "laptop",
-				"Laptop",                "laptop",
-				"Notebook",              "laptop",
-				"Hand Held",             "handheld",
-				"Docking Station",       "laptop",
-				"All In One",            "unknown",
-				"Sub Notebook",          "laptop",
-				"Space-saving",          "unknown",
-				"Lunch Box",             "unknown",
-				"Main Server Chassis",   "server",
-				"Expansion Chassis",     "unknown",
-				"Sub Chassis",           "unknown",
-				"Bus Expansion Chassis", "unknown",
-				"Peripheral Chassis",    "unknown",
-				"RAID Chassis",          "unknown",
-				"Rack Mount Chassis",    "unknown",
-				"Sealed-case PC",        "unknown",
-				"Multi-system",          "unknown",
-				"CompactPCI",		 "unknonw",
-		                "AdvancedTCA",		 "unknown", /* 0x1B */
-				NULL
-			};
-			
-			for (i = 0; chassis_map[i] != NULL; i += 2) {
-				if (strcmp (chassis_map[i], chassis_type) == 0) {
-					hal_device_property_set_string (d, "system.formfactor", chassis_map[i+1]);
-					break;
-				}
-			}
-		       
-		} 
+		computer_dmi_map (d, TRUE);
 	}
 out:
 	computer_probing_helper_done (d);
@@ -665,21 +727,59 @@ probe_openfirmware(HalDevice *root)
 	detect_openfirmware_formfactor(root);
 }
 
+static gboolean
+decode_dmi_from_sysfs (HalDevice *d)
+{
+	if (g_file_test (DMI_SYSFS_PATH, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
+
+		osspec_privileged_init_preparse_set_dmi(TRUE, d);
+		hal_util_set_string_from_file(d, "system.firmware.vendor", DMI_SYSFS_PATH, "bios_vendor");
+		hal_util_set_string_from_file(d, "system.firmware.version", DMI_SYSFS_PATH, "bios_version");
+		hal_util_set_string_from_file(d, "system.firmware.release_date", DMI_SYSFS_PATH, "bios_date");
+		hal_util_set_string_from_file(d, "system.hardware.vendor", DMI_SYSFS_PATH, "sys_vendor");
+		hal_util_set_string_from_file(d, "system.hardware.product", DMI_SYSFS_PATH, "product_name");
+		hal_util_set_string_from_file(d, "system.hardware.version", DMI_SYSFS_PATH, "product_version");
+		hal_util_set_string_from_file(d, "system.chassis.manufacturer", DMI_SYSFS_PATH, "chassis_vendor");
+		computer_dmi_map (d, FALSE);
+
+		/* compatibility keys, remove 28 Feb 2008 */
+		hal_device_copy_property (d, "system.hardware.vendor", d , "smbios.system.manufacturer");
+		hal_device_copy_property (d, "system.hardware.product", d , "smbios.system.product");
+		hal_device_copy_property (d, "system.hardware.version", d , "smbios.system.version");
+		hal_device_copy_property (d, "system.hardware.serial", d , "smbios.system.serial");
+		hal_device_copy_property (d, "system.hardware.uuid", d , "smbios.system.uuid");
+		hal_device_copy_property (d, "system.firmware.vendor", d , "smbios.bios.vendor");
+		hal_device_copy_property (d, "system.firmware.version", d , "smbios.bios.version");
+		hal_device_copy_property (d, "system.firmware.release_date", d , "smbios.bios.release_date");
+		hal_device_copy_property (d, "system.chassis.manufacturer", d , "smbios.chassis.manufacturer");
+		hal_device_copy_property (d, "system.chassis.type", d , "smbios.chassis.type");
+
+		computer_probing_helper_done (d);
+		return TRUE;
+
+	} else {
+		return FALSE;
+	}
+
+}
+
 static void
 decode_dmi (HalDevice *d)
 {
-        if (g_file_test ("/usr/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
-            g_file_test ("/bin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
-            g_file_test ("/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
-            g_file_test ("/usr/local/sbin//dmidecode", G_FILE_TEST_IS_EXECUTABLE)) {
-                hald_runner_run (d, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
-                                 computer_probing_pcbios_helper_done, NULL, NULL);
-        } else {
-                /* no probing */
-                probe_openfirmware (d);
-                computer_probing_helper_done (d);
-        }
-
+	/* try to get the dmi infos from sysfs instead of call dmidecode*/
+	if(!decode_dmi_from_sysfs(d)) {
+		if (g_file_test ("/usr/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
+		    g_file_test ("/bin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
+		    g_file_test ("/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
+		    g_file_test ("/usr/local/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE)) {
+			hald_runner_run (d, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
+					 computer_probing_pcbios_helper_done, NULL, NULL);
+		} else {
+			/* no probing */
+			probe_openfirmware (d);
+			computer_probing_helper_done (d);
+		}
+	}
 }
 
 static void 
@@ -687,8 +787,8 @@ computer_probing_pm_is_supported_helper_done (HalDevice *d, guint32 exit_type,
                                               gint return_code, gchar **error, 
                                               gpointer data1, gpointer data2)
 {
-        HAL_INFO (("In computer_probing_pm_is_supported_helper_done"));
-        decode_dmi (d);
+	HAL_INFO (("In computer_probing_pm_is_supported_helper_done"));
+	decode_dmi (d);
 }
 
 static void
