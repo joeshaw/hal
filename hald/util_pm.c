@@ -39,6 +39,7 @@
 typedef struct {
 	int last_level;
 	int last_chargeRate;
+	int high_time_warn_count;
 	time_t last_time;
 } batteryInfo;
 
@@ -160,7 +161,8 @@ util_compute_time_remaining (const char *id,
 			battery_info->last_level = chargeLevel;
 			battery_info->last_time = cur_time;
 			battery_info->last_chargeRate = 0;
- 			return -1;
+ 			battery_info->high_time_warn_count = 0;
+			return -1;
 		}
 	} 
 
@@ -188,7 +190,23 @@ util_compute_time_remaining (const char *id,
 	}
 	/* Battery life cannot be above 60 hours */
 	else if (remaining_time > 60*60*60) {
-		HAL_WARNING (("remaining_time *very* high, returning -1"));
+		batteryInfo *battery_info;
+
+		if (!(battery_info = g_hash_table_lookup(saved_battery_info, id))) {
+			battery_info = g_new0(batteryInfo, 1);
+			g_hash_table_insert(saved_battery_info, (char*) id, battery_info);
+			battery_info->last_level = -1;
+			battery_info->last_time = -1;
+			battery_info->last_chargeRate = -1;
+			battery_info->high_time_warn_count = 0;
+		}
+
+		/* display the warning only 10 times and then ever 100 calls , should  avoid to flood syslog */
+		if (battery_info->high_time_warn_count < 10 || !(battery_info->high_time_warn_count % 100)) {
+			HAL_WARNING (("remaining_time *very* high, returning -1"));
+			battery_info->high_time_warn_count += 1;
+		}
+
 		remaining_time = -1;
 	}
 
