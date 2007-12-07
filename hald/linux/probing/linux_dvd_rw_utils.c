@@ -784,6 +784,160 @@ get_disc_capacity_for_type (int fd,
 	return retval;
 }
 
+
+static int
+get_mmc_profile (int fd, int * isblank)
+{
+	ScsiCommand * cmd;
+	int retval = -1;
+	unsigned char formats[260],disc_info[32];
+	unsigned char page[20];
+	unsigned char buf[8],inq[128];
+	int profile=0,once=1,blank=0,err,erasable=0;
+	unsigned int len;
+	
+	cmd = scsi_command_new_from_fd (fd);
+
+	/* For valgrind */
+	memset (&page, 0, sizeof (page));
+	memset (&buf, 0, sizeof (buf));
+	memset (&inq, 0, sizeof (inq));
+	memset (&disc_info, 0, sizeof (disc_info));
+	memset (&formats, 0, sizeof (formats));
+	
+	/*
+	  INQUIRY is considered to be "non-intrusive" in a sense that it
+	  won't interfere with any other operation nor clear sense data,
+	  which might be important to retain for security reasons.
+	*/
+	
+	scsi_command_init(cmd,0,0x12);	/* INQUIRY */
+	scsi_command_init(cmd,4,36);
+	scsi_command_init(cmd,5,0);
+	if ((err=scsi_command_transport(cmd,READ,inq,36))) {
+		/*sperror ("INQUIRY",err);*/
+		goto bail;
+	}
+	
+	/* make sure we're talking to MMC unit, for security reasons... */
+	if ((inq[0]&0x1F) != 5) {
+		fprintf (stderr, "Could not determine drive profile: not an MMC unit!\n");
+		goto bail;
+	}
+	
+	do {
+		scsi_command_init(cmd,0,0x46);
+		scsi_command_init(cmd,8,sizeof(buf));
+		scsi_command_init(cmd,9,0);
+		if ((err=scsi_command_transport(cmd,READ,buf,sizeof(buf)))) {
+			/*sperror ("GET CONFIGURATION",err);*/
+			/* this is not a fatal error -- some older drives support MMC-1
+			 * but don't support the GET CONFIGURATION command (which is part
+			 * of the MMC-2 spec). */
+		} else {
+			if ((profile = buf[6]<<8|buf[7]) || !once) break;
+		}
+		
+		// no media?
+		scsi_command_init(cmd,0,0);	// TEST UNIT READY
+		scsi_command_init(cmd,5,0);
+		if ((scsi_command_transport(cmd,READ,buf,sizeof(buf))&0xFFF00) != 0x23A00) break;
+		
+		// try to load tray...
+		scsi_command_init(cmd,0,0x1B);	// START/STOP UNIT
+		scsi_command_init(cmd,4,0x3);	// "Load"
+		scsi_command_init(cmd,5,0);
+		if ((err=scsi_command_transport(cmd,READ,buf,sizeof(buf)))) {
+			/*sperror ("LOAD TRAY",err);*/
+			fprintf (stderr, "Could not determine drive profile: Error loading drive tray\n");
+			goto bail;
+		}
+		
+		/*    wait_for_unit (cmd);*/
+	} while (once--);
+	
+	scsi_command_init(cmd,0,0x51);	// READ DISC INFORMATION
+	scsi_command_init(cmd,8,sizeof(disc_info));
+	scsi_command_init(cmd,9,0);
+	if ((err=scsi_command_transport(cmd,READ,disc_info,sizeof(disc_info)))) {
+		/*sperror ("READ DISC INFORMATION",err);*/
+		fprintf (stderr, "Could not fully determine drive profile %x: Error reading disc information\n", profile);
+		goto bail;
+	}
+
+	// see if it's blank media
+	if ((disc_info[2]&3) == 0)	blank=1;
+	
+	if (!profile ) {
+		/* if the profile has not yet been set, we're dealing with an older
+		 * CD-R or CD-RW burner (which doesn't know the GET CONFIGURATION
+		 * command.  Do some digging into the disc type to figure out what's
+		 * in the drive */
+		erasable = ((disc_info[2] & 16));
+		if (blank && !erasable) {
+			profile = 0x09;  /* CD-R                        */
+		} else if (erasable) {
+			profile = 0x0a;  /* CD-RW                       */
+		} else if (disc_info[8] == 0x00) {
+			profile = 0x08;  /* Commercial CDs and Audio CD */
+		} else {
+			fprintf (stderr, "Could not determine profile or type of media\n");
+			goto bail;
+		}
+	}
+	
+	if ((profile != 0x1A && profile != 0x13 && profile != 0x12)) {
+		retval = profile;
+	}
+	else {
+		scsi_command_init(cmd,0,0x23);	// READ FORMAT CAPACITIES
+		scsi_command_init(cmd,8,12);
+		scsi_command_init(cmd,9,0);
+		if ((err=scsi_command_transport(cmd,READ,formats,12))) {
+			/*sperror ("READ FORMAT CAPACITIES",err);*/
+			fprintf (stderr, "Could not determine drive profile: "
+				 "Error reading format capacities\n");
+			goto bail;
+		}
+		
+		len = formats[3];
+		if (len&7 || len<16) {
+			fprintf (stderr, "Could not determine drive profile: "
+				 "Format allocation length isn't sane\n");
+			goto bail;
+		}
+		
+		scsi_command_init(cmd,0,0x23);	// READ FORMAT CAPACITIES
+		scsi_command_init(cmd,7,(4+len)>>8);
+		scsi_command_init(cmd,8,(4+len)&0xFF);
+		scsi_command_init(cmd,9,0);
+		if ((err=scsi_command_transport(cmd,READ,formats,4+len))) {
+			/*sperror ("READ FORMAT CAPACITIES",err);*/
+			fprintf (stderr, "Could not determine drive profile: "
+				 "Error reading format capacities (2)\n");
+			goto bail;
+		}
+		
+		if (len != formats[3]) {
+			fprintf (stderr, "Could not determine drive profile: "
+				 "parameter length inconsistency\n");
+			goto bail;
+		}
+		
+		// see if it's not formatted
+		if ((formats[8]&3) != 2) blank = 1;
+		
+		retval = profile;
+	}
+	
+	/* Only touch isblank if we have read the profile correctly. */
+	if ( retval != -1 ) {
+		*isblank = blank;
+	}
+bail:
+	  return retval;
+}
+
 int
 get_disc_type (int fd)
 {
@@ -798,13 +952,15 @@ get_disc_type (int fd)
 	scsi_command_init (cmd, 8, 8);
 	scsi_command_init (cmd, 9, 0);
 	if (scsi_command_transport (cmd, READ, header, 8)) {
+		int isblank;
 		/* GET CONFIGURATION failed */
 		scsi_command_free (cmd);
-		return -1;
+		/* Try alternative method */
+		retval = get_mmc_profile(fd,&isblank);
+		return retval;	/* get_mmc_profile returns -1 on error too. */
 	}
 	
 	retval = (header[6]<<8)|(header[7]);
-
 
 	scsi_command_free (cmd);
 	return retval;
