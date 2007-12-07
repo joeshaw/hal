@@ -288,7 +288,7 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 					}
 				}
 			}
-		} else if (input_data->event.type == EV_KEY && key_name[input_data->event.code] != NULL && input_data->event.value == 1) {
+		} else if (input_data->event.type == EV_KEY && key_name[input_data->event.code] != NULL && input_data->event.value) {
 			dbus_error_init (&error);
 			libhal_device_emit_condition (ctx, input_data->udi,
 						      "ButtonPressed",
