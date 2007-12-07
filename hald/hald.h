@@ -26,6 +26,10 @@
 #ifndef HALD_H
 #define HALD_H
 
+#ifndef DBUS_API_SUBJECT_TO_CHANGE
+#define DBUS_API_SUBJECT_TO_CHANGE
+#endif
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <dbus/dbus.h>
