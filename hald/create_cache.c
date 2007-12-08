@@ -608,7 +608,7 @@ di_rules_init (void)
 	char * cachename;
 	int fd = -1;
 	struct cache_header header;
-	char cachename_temp [PATH_MAX+1];
+	gchar *cachename_temp;
 	char *hal_fdi_source_preprobe = getenv ("HAL_FDI_SOURCE_PREPROBE");
 	char *hal_fdi_source_information = getenv ("HAL_FDI_SOURCE_INFORMATION");
 	char *hal_fdi_source_policy = getenv ("HAL_FDI_SOURCE_POLICY");
@@ -623,8 +623,7 @@ di_rules_init (void)
 	if (haldc_verbose)
 		HAL_INFO (("Loading rules"));
 
-	strncpy(cachename_temp, cachename, PATH_MAX);
-	strncat(cachename_temp, "~", PATH_MAX);
+	cachename_temp = g_strconcat (cachename, "~", NULL);
 
 	fd = open(cachename_temp, O_CREAT|O_RDWR|O_TRUNC, 0644);
 	if(fd < 0) {
@@ -681,9 +680,8 @@ di_rules_init (void)
 	pad32_write(fd, 0, &header, sizeof(struct cache_header));
 	close(fd);
 	if (rename (cachename_temp, cachename) != 0) {
-		unlink (cachename_temp);
 		HAL_ERROR (("Cannot rename '%s' to '%s': %s", cachename_temp, cachename, strerror (errno)));
-		return -1;
+		goto error;
 	}
 
 	if (haldc_verbose){
@@ -703,6 +701,7 @@ error:
 		close (fd);
 
 	unlink (cachename_temp);
+	g_free (cachename_temp);
 	return -1;
 }
 

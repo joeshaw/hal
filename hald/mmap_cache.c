@@ -179,7 +179,6 @@ dir_mtime (const char *path, time_t *mt, gboolean setup_watches)
 	struct dirent **namelist;
 	struct stat st;
 	int n;
-	char cpath[PATH_MAX];
 
         if (setup_watches) {
                 HalFileMonitor *file_monitor;
@@ -206,15 +205,13 @@ dir_mtime (const char *path, time_t *mt, gboolean setup_watches)
 				return;
 			else {
 				while(n--) {
-#ifdef HAVE_SNPRINTF
-					snprintf(cpath, PATH_MAX, "%s/%s", path, namelist[n]->d_name);
-#else
-					sprintf(cpath, "%s/%s", path, namelist[n]->d_name);
-#endif
+					gchar *cpath;
+					cpath = g_build_filename(path, namelist[n]->d_name, NULL);
 					if(namelist[n]->d_name[0] != '.')
 						dir_mtime(cpath, mt, setup_watches);
 					
 					free(namelist[n]);
+					g_free(cpath);
 				}
 				free(namelist);
 			}
