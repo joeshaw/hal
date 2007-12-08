@@ -38,6 +38,11 @@
 #include "../device_info.h"
 
 void
+osspec_privileged_init (void)
+{
+}
+
+void
 osspec_init (void)
 {
 }
