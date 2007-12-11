@@ -826,8 +826,10 @@ main (int argc, char *argv[])
 	libhal_ctx_set_interface_lock_acquired (hal_ctx, interface_lock_acquired);
 	libhal_ctx_set_interface_lock_released (hal_ctx, interface_lock_released);
 
-	if (show_device)
+	if (show_device) {
+		long_list = TRUE;
 		dump_device (show_device);
+	}
 	else if (!do_monitor)
 		dump_devices ();
 
