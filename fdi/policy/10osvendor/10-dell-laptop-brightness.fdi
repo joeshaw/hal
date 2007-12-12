@@ -28,7 +28,7 @@
       <merge key="info.category" type="string">laptop_panel</merge>
       <merge key="info.product" type="string">Dell Laptop Panel</merge>
       <merge key="laptop_panel.access_method" type="string">custom</merge>
-      <merge key="laptop_panel.brightness_in_hardware" type="bool">false</merge>
+      <merge key="laptop_panel.brightness_in_hardware" type="bool">true</merge>
       <append key="info.addons" type="strlist">hald-addon-dell-backlight</append>
     </match>
   </device>
