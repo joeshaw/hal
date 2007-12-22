@@ -432,6 +432,11 @@ end (void *data, const char *el){
 
 	if (rtype == RULE_UNKNOWN) return;
 	if (rtype == RULE_MATCH){
+		if (fdi_ctx->rule.rtype == RULE_MATCH) {
+			/* the match rule wasn't stored yet, store it now. So it's stored
+			* _before_ jump_position is written into the cache */
+			store_rule(fdi_ctx);
+		}
 		set_jump_position(fdi_ctx);
 		return;
 	}
