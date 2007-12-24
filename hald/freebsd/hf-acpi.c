@@ -172,6 +172,16 @@ hf_acpi_poll_batt (HalDevice *device)
 
   hal_device_property_set_string(device, "battery.charge_level.unit", "mWh");
 
+  /*
+   * ACPI gives out the special 'Ones' value for rate when it's unable
+   * to calculate the true rate. We should set the rate zero, and wait
+   * or the BIOS to stabilize.
+   *
+   * full details here: http://bugzilla.gnome.org/show_bug.cgi?id=348201
+   */
+  if (rate == 0xffff)
+    rate = 0;
+
   if (battif.bif.units == ACPI_BIF_UNITS_MA)
     {
        hal_device_property_set_string(device, "battery.reporting.units", "mAh");
