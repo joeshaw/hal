@@ -3,7 +3,7 @@
  *
  * probe-volume.c : volume prober
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,9 @@
 #include <sys/ioctl.h>
 #include <sys/disk.h>
 #include <sys/cdio.h>
+#include <sys/param.h>
+#include <sys/types.h>
+#include <isofs/cd9660/iso.h>
 #include <glib.h>
 #include <libvolume_id.h>
 
@@ -43,6 +46,32 @@
 #include "../libprobe/hfp.h"
 
 #include "freebsd_dvd_rw_utils.h"
+
+#define ISO_VOLDESC_SEC        16
+
+struct iso_path_table_entry
+{
+  char name_len               [ISODCL(1,1)];
+  char ext_attr_len           [ISODCL(2,2)];
+  char extent                 [ISODCL(3,6)];
+  char parent_no              [ISODCL(7,8)];
+  char name[1];
+};
+#define ISO_PATH_TABLE_ENTRY_SIZE         8
+
+#if __FreeBSD_version < 600101
+static uint32_t
+isonum_731(unsigned char *p)
+{
+  return (p[0] | p[1] << 8 | p[2] << 16 | p[3] << 24);
+}
+
+static uint32_t
+isonum_732(unsigned char *p)
+{
+  return (p[3] | p[2] << 8 | p[1] << 16 | p[0] << 24);
+}
+#endif
 
 static uintmax_t
 hf_probe_volume_getenv_uintmax (const char *name)
@@ -129,63 +158,76 @@ hf_probe_volume_get_disc_info (int fd,
 }
 
 static void
-hf_probe_volume_advanced_disc_detect (const char *device_file)
+hf_probe_volume_advanced_disc_detect (int fd)
 {
-  GError *err = NULL;
-  char *command;
-  int exit_status;
-  char *output;
-  char **lines;
-  int i;
+  size_t secsz = ISO_DEFAULT_BLOCK_SIZE;
+  int readoff;
+  struct iso_primary_descriptor desc;
+  u_char *ptbl;
+  int ptbl_size, ptbl_bsize;
+  int ptbl_lbn;
+  struct iso_path_table_entry *pte;
+  int pte_len;
+  int name_len;
+  int off;
 
-  g_return_if_fail(device_file != NULL);
-
-  command = g_strdup_printf("isoinfo -p -i %s", device_file);
-  if (! g_spawn_command_line_sync(command, &output, NULL, &exit_status, &err))
+  readoff = ISO_VOLDESC_SEC * secsz;
+  do
     {
-      hfp_warning("unable to run \"%s\": %s", command, err->message);
-      g_error_free(err);
-      goto end;
+      if (pread(fd, &desc, sizeof desc, readoff) != sizeof desc)
+        {
+          hfp_warning("volume descriptor read error");
+	  return;
+	}
+      if (isonum_711(desc.type) == ISO_VD_END)
+        return;
+      readoff += secsz;
     }
-  if (exit_status != 0)
+  while (isonum_711(desc.type) != ISO_VD_PRIMARY);
+
+  ptbl_size = isonum_733(desc.path_table_size);
+#if BYTE_ORDER == LITTLE_ENDIAN
+  ptbl_lbn = isonum_731(desc.type_l_path_table);
+#else
+  ptbl_lbn = isonum_732(desc.type_m_path_table);
+#endif
+  ptbl_bsize = (ptbl_size + secsz - 1) / secsz * secsz;
+  ptbl = g_malloc(ptbl_bsize);
+  if (ptbl == NULL)
     {
-      hfp_warning("\"%s\" returned with status %i", command, exit_status);
-      goto end;
+      hfp_warning("path table allocation failure");
+      return;
     }
-
-  lines = g_strsplit(output, "\n", 0);
-  g_free(output);
-
-  for (i = 0; lines[i]; i++)
+  readoff = ptbl_lbn * secsz;
+  if (pread(fd, ptbl, ptbl_bsize, readoff) != ptbl_bsize)
     {
-      int index;
-      int pindex;
-      int extent;
-      char dirname[strlen(lines[i]) + 1];
-
-      if (sscanf(lines[i], "%i: %i %x %s", &index, &pindex, &extent, dirname) == 4)
-	{
-	  if (! g_ascii_strcasecmp(dirname, "VIDEO_TS"))
-	    {
-	      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.disc.is_videodvd", TRUE, &hfp_error);
-	      break;
-	    }
-	  else if (! g_ascii_strcasecmp(dirname, "VCD"))
-	    {
-	      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.disc.is_vcd", TRUE, &hfp_error);
-	      break;
-	    }
-	  else if (! g_ascii_strcasecmp(dirname, "SVCD"))
-	    {
-	      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.disc.is_svcd", TRUE, &hfp_error);
-	      break;
-	    }
+      g_free(ptbl);
+      hfp_warning("path table read error");
+    }
+  for (off = 0; off < ptbl_size; off += pte_len)
+    {
+      pte = (struct iso_path_table_entry *)(ptbl + off);
+      name_len = *pte->name_len;
+      pte_len = ISO_PATH_TABLE_ENTRY_SIZE + name_len + (name_len % 2);
+      if (*(short *)pte->parent_no != 1)
+        continue;
+      if (name_len == 8 && strncmp(pte->name, "VIDEO_TS", 8) == 0)
+        {
+          libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.disc.is_videodvd", TRUE, &hfp_error);
+	  break;
+	}
+      else if (name_len == 3 && strncmp(pte->name, "VCD", 8) == 0)
+        {
+          libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.disc.is_vcd", TRUE, &hfp_error);
+	  break;
+	}
+      else if (name_len == 4 && strncmp(pte->name, "SVCD", 4) == 0)
+        {
+          libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.disc.is_svcd", TRUE, &hfp_error);
+	  break;
 	}
     }
-  g_strfreev(lines);
-
- end:
-  g_free(command);
+  g_free(ptbl);
 }
 
 static gboolean
@@ -206,6 +248,7 @@ hf_probe_volume_get_partition_info (const char *geom_class,
   g_return_val_if_fail(offset != NULL, FALSE);
 
   if (strcmp(geom_class, "MBR") &&
+      strcmp(geom_class, "MBREXT") &&
       strcmp(geom_class, "GPT") &&
       strcmp(geom_class, "SUN") &&
       strcmp(geom_class, "APPLE"))
@@ -241,7 +284,13 @@ hf_probe_volume_get_partition_info (const char *geom_class,
       *scheme = g_strdup("apm");
     }
 
-  if (! strcmp(*scheme, "mbr"))
+  if (! strcmp(*scheme, "mbrext"))
+    {
+      g_free(*scheme);
+      *scheme = g_strdup("embr");
+    }
+
+  if (! strcmp(*scheme, "mbr") || ! strcmp(*scheme, "embr"))
     *type = g_strdup_printf("0x%x",
                             hf_probe_volume_getenv_int("HF_VOLUME_PART_TYPE"));
   else
@@ -454,7 +503,7 @@ main (int argc, char **argv)
 	}
 
       if (has_data)
-	hf_probe_volume_advanced_disc_detect(device_file);
+        hf_probe_volume_advanced_disc_detect(fd);
     }
   else
     {
