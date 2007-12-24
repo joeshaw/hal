@@ -4,7 +4,7 @@
  * hf-net.c : networking device support
  *
  * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
- * Copyright (C) 2006 Joe Marcus Clarke <marcus@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,12 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+#include <sys/sysctl.h>
+#include <sys/time.h>
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_media.h>
+#include <net/if_mib.h>
 
 #include "../hald_dbus.h"
 #include "../logger.h"
@@ -68,6 +71,30 @@ hf_net_get_link_up (const char *interface)
   return is_up;
 }
 
+static guint64
+hf_net_get_rate (int ifindex)
+{
+  struct ifmibdata ifmd;
+  int oid[6];
+  size_t len;
+  guint64 result;
+
+  oid[0] = CTL_NET;
+  oid[1] = PF_LINK;
+  oid[2] = IFMIB_IFDATA;
+  oid[3] = ifindex;
+  oid[4] = IFDATA_GENERAL;
+
+  len = sizeof(ifmd);
+
+  if (sysctl(oid, sizeof(oid)/sizeof(int), &ifmd, &len, NULL, 0) == -1)
+    result = 0;
+  else
+    result = ifmd.ifmd_data.ifi_baudrate;
+
+  return result;
+}
+
 static void
 hf_net_device_set_link_up (HalDevice *device, gboolean is_up)
 {
@@ -84,6 +111,7 @@ hf_net_device_new (const char *interface, HalDevice *parent, GError **err)
   char *output;
   char **lines;
   int i;
+  int ifindex;
   GError *tmp_err = NULL;
   const char *mac = NULL;
   const char *media = NULL;
@@ -142,6 +170,9 @@ hf_net_device_new (const char *interface, HalDevice *parent, GError **err)
     hal_device_property_set_int(device, "net.arp_proto_hw_id", ARPHRD_IEEE802);
   /* FIXME Add additional net.arp_proto_hw_id support */
 
+  ifindex = if_nametoindex(interface);
+  hal_device_property_set_int(device, "net.freebsd.infindex", ifindex);
+
   if (is_ethernet)
     {
       dbus_uint64_t numeric_mac = 0;
@@ -168,6 +199,7 @@ hf_net_device_new (const char *interface, HalDevice *parent, GError **err)
           hal_device_add_capability(device, "net.80203");
           hal_device_property_set_string(device, "info.category", "net.80203");
           hal_device_property_set_uint64(device, "net.80203.mac_address", numeric_mac);
+	  hal_device_property_set_uint64(device, "net.80203.rate", hf_net_get_rate(ifindex));
         }
     }
   else
