@@ -42,6 +42,7 @@ static struct
   char			*device_file;
   char			*parent;
   boolean		is_cdrom;
+  boolean		is_scsi_removable;
   boolean		had_media;
   struct timeval	next_update;
 } addon = { { 2, 0 } };
@@ -71,6 +72,18 @@ hf_addon_storage_cdrom_eject_pressed (HFPCDROM *cdrom)
 }
 
 static boolean
+hf_addon_storage_scsi_read_capacity (HFPCDROM *scsi_device)
+{
+  unsigned char buf[8];
+  static char ccb[16] = { /*HFP_CDROM_READ_CAPACITY*/ 0x25 };
+
+  assert(scsi_device != NULL);
+
+  /* We only check for success or error and discard the data. */
+  return hfp_cdrom_send_ccb(scsi_device, ccb, 10, HFP_CDROM_DIRECTION_IN, buf, sizeof(buf), NULL);
+}
+
+static boolean
 hf_addon_storage_update (void)
 {
   boolean has_media = FALSE;
@@ -92,6 +105,31 @@ hf_addon_storage_update (void)
 	    }
 
 	  hfp_cdrom_free(cdrom);
+	}
+    }
+  else if (addon.is_scsi_removable)
+    {
+      /* (ab)use cdrom-specific routines:
+       * for what we are doing here there is no difference between
+       * a SCSI CD-ROM and any other disk-like SCSI device
+       * with removable media.
+       * This is a gentler check than trying to open the device.
+       */
+      HFPCDROM *scsi_device;
+
+      /* XXX hfp_cdrom_new_from_fd(-1) below is an ugly hack to prevent
+       * regular open() in case cam_open_device() fails.
+       */
+      scsi_device = hfp_cdrom_new_from_fd(-1, addon.device_file, addon.parent);
+      if (scsi_device)
+        {
+          /* some umass devices may lie in TEST UNIT READY
+	   * so do READ CAPACITY to be sure.
+	   */
+          if (hfp_cdrom_test_unit_ready(scsi_device) && hf_addon_storage_scsi_read_capacity(scsi_device))
+            has_media = TRUE;
+
+	  hfp_cdrom_free(scsi_device);
 	}
     }
   else
@@ -116,6 +154,9 @@ int
 main (int argc, char **argv)
 {
   char *drive_type;
+  char *removable;
+  char *bus;
+  char *driver;
   DBusConnection *connection;
 
   if (! hfp_init(argc, argv))
@@ -129,6 +170,18 @@ main (int argc, char **argv)
   if (! drive_type)
     goto end;
 
+  removable = getenv("HAL_PROP_STORAGE_REMOVABLE");
+  if (! removable)
+    goto end;
+
+  bus = getenv("HAL_PROP_STORAGE_BUS");
+  if (! bus)
+    goto end;
+
+  driver = getenv("HAL_PROP_FREEBSD_DRIVER");
+  if (! driver)
+    goto end;
+
   addon.parent = getenv("HAL_PROP_INFO_PARENT");
   if (! addon.parent)
     goto end;
@@ -137,6 +190,9 @@ main (int argc, char **argv)
   setproctitle("%s", addon.device_file);
 
   addon.is_cdrom = ! strcmp(drive_type, "cdrom");
+  addon.is_scsi_removable = (! strcmp(bus, "scsi") ||
+    (! strcmp(bus, "usb") && (! strcmp(driver, "da") || ! strcmp(driver, "sa") ||
+    ! strcmp(driver, "cd")))) && ! strcmp(removable, "true");
   addon.had_media = hf_addon_storage_update();
 
   connection = libhal_ctx_get_dbus_connection(hfp_ctx);
