@@ -3,7 +3,7 @@
  *
  * hf-acpi.c : poll for ACPI properties
  *
- * Copyright (C) 2006 Joe Marcus Clarke <marcus@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
