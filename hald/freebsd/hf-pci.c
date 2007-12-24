@@ -53,6 +53,7 @@
 #define PCIR_HDRTYPE			0x0e
 #define PCIM_HDRTYPE_BRIDGE		0x01
 #define PCIM_HDRTYPE_CARDBUS		0x02
+#define PCIM_MFDEV                      0x80
 
 typedef struct
 {
@@ -250,7 +251,7 @@ hf_pci_probe_bus (HalDevice *parent, int bus, bitstr_t *busmap)
             continue;	/* device ignored */
 	}
 
-      if (info->header_type == PCIM_HDRTYPE_BRIDGE || info->header_type == PCIM_HDRTYPE_CARDBUS)
+      if (info->header_type == PCIM_HDRTYPE_BRIDGE || info->header_type == PCIM_HDRTYPE_CARDBUS || (info->header_type & ~PCIM_MFDEV) == PCIM_HDRTYPE_BRIDGE || (info->header_type & ~PCIM_MFDEV) == PCIM_HDRTYPE_CARDBUS)
         /* a bridge or cardbus, probe its children */
         hf_pci_probe_bus(info->device, info->secondary_bus, busmap);
     }
