@@ -3,7 +3,7 @@
  *
  * hf-devd.c : process devd events
  *
- * Copyright (C) 2006 Joe Marcus Clarke <marcus@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,6 +56,10 @@ static HFDevdHandler *handlers[] = {
   &hf_acpi_devd_handler,
   &hf_pcmcia_devd_handler
 };
+
+static gboolean hf_devd_inited = FALSE;
+
+static void hf_devd_init (void);
 
 static GHashTable *
 hf_devd_parse_params (const char *str)
@@ -370,15 +374,32 @@ hf_devd_event_cb (GIOChannel *source, GIOCondition condition,
 {
   char *event;
   gsize terminator;
+  GIOStatus status;
 
   if (hf_is_waiting)
     return TRUE;
 
-  if (g_io_channel_read_line(source, &event, NULL, &terminator, NULL) == G_IO_STATUS_NORMAL)
+  status = g_io_channel_read_line(source, &event, NULL, &terminator, NULL);
+
+  if (status != G_IO_STATUS_NORMAL)
     {
       event[terminator] = 0;
       hf_devd_process_event(event);
       g_free(event);
+    }
+  else if (status != G_IO_STATUS_AGAIN)
+    {
+      hf_devd_init();
+      if (hf_devd_inited)
+        {
+          int fd;
+
+	  fd = g_io_channel_unix_get_fd(source);
+	  g_io_channel_shutdown(source, FALSE, NULL);
+	  close(fd);
+
+	  return FALSE;
+	}
     }
 
   return TRUE;
@@ -394,6 +415,7 @@ hf_devd_init (void)
   if (event_fd < 0)
     {
       HAL_WARNING(("failed to create event socket: %s", g_strerror(errno)));
+      hf_devd_inited = FALSE;
       return;
     }
 
@@ -405,12 +427,15 @@ hf_devd_init (void)
 
       channel = g_io_channel_unix_new(event_fd);
       g_io_add_watch(channel, G_IO_IN, hf_devd_event_cb, NULL);
+      g_io_channel_unref(channel);
+      hf_devd_inited = TRUE;
     }
   else
     {
       HAL_WARNING(("failed to connect to %s: %s", HF_DEVD_SOCK_PATH,
                    g_strerror(errno)));
       close(event_fd);
+      hf_devd_inited = FALSE;
     }
 }
 
