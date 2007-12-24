@@ -54,7 +54,7 @@ static int hf_scsi_fd;
 static gboolean
 hf_scsi_is_cdrom (int type)
 {
-  return (type == T_CDROM || type == T_WORM || type == T_CHANGER || type == T_OPTICAL);
+  return (type == T_CDROM || type == T_WORM || type == T_OPTICAL);
 }
 
 static HalDevice *
@@ -131,10 +131,12 @@ hf_scsi_scsi_device_new (HalDevice *parent,
       hal_device_property_set_string(device, "scsi.type", "processor");
       break;
     case T_WORM:
-    case T_CHANGER:
     case T_CDROM:
     case T_OPTICAL:
       hal_device_property_set_string(device, "scsi.type", "cdrom");
+      break;
+    case T_CHANGER:
+      hal_device_property_set_string(device, "scsi.type", "medium_changer");
       break;
     case T_SCANNER:
       hal_device_property_set_string(device, "scsi.type", "scanner");
