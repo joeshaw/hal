@@ -102,7 +102,9 @@ hf_storage_get_disk_names (GError **err)
 static gboolean
 hf_storage_class_is_partitionable (const char *geom_class)
 {
-  return (! strcmp(geom_class, "MBR") || ! strcmp(geom_class, "GPT") ||
+  return (! strcmp(geom_class, "MBR") ||
+          ! strcmp(geom_class, "MBREXT") ||
+	  ! strcmp(geom_class, "GPT") ||
           ! strcmp(geom_class, "APPLE") || ! strcmp(geom_class, "SUN"));
 }
 
@@ -143,7 +145,8 @@ hf_storage_geom_is_swap (const Geom_Object *geom_obj)
   g_return_val_if_fail(geom_obj != NULL, FALSE);
 
   return (! strcmp(geom_obj->class, "BSD") && geom_obj->type == FS_SWAP)
-    || (! strcmp(geom_obj->class, "MBR")
+	|| ((! strcmp(geom_obj->class, "MBR") ||
+             ! strcmp(geom_obj->class, "MBREXT"))
 	&& (geom_obj->type == 0x18		/* AST Windows swapfile */
 	    || geom_obj->type == 0x42		/* SFS or Linux swap */
 	    || geom_obj->type == 0x82		/* Linux swap or Solaris x86 */
