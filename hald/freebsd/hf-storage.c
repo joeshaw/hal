@@ -3,7 +3,7 @@
  *
  * hf-storage.c : storage device support
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2006, 2007 Jean-Yves Lefort <jylefort@FreeBSD.org>
  *                    Joe Marcus Clarke <marcus@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
