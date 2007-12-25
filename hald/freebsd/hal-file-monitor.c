@@ -78,7 +78,7 @@ struct HalFileMonitorPrivate
   GHashTable *fd_to_adata;
 };
 
-G_DEFINE_TYPE (HalFileMonitor, hal_file_monitor, G_TYPE_OBJECT);
+G_DEFINE_TYPE (HalFileMonitor, hal_file_monitor, G_TYPE_OBJECT)
 
 static gpointer monitor_object = NULL;
 
@@ -95,7 +95,7 @@ static gboolean remove_adata_foreach (gpointer fd, FileAccessData *data, HalFile
 static void setup_monitor (HalFileMonitor *monitor);
 static void close_monitor (HalFileMonitor *monitor);
 static gboolean hal_file_access_monitor (gpointer data);
-static char *fflags_to_str (int fflags);
+/*static char *fflags_to_str (int fflags);*/
 static void emit_monitor_event (HalFileMonitor *monitor, HalFileMonitorEvent event, const char *path, HalFileMonitorNotifyFunc func, gpointer udata);
 static gboolean handle_kqueue_event (GIOChannel *source, GIOCondition condition, gpointer udata);
 
@@ -144,7 +144,6 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
   struct kevent ev;
   struct stat *sb;
   int fd;
-  int kmask;
 
   if (! monitor->priv->initialized_kqueue)
     {
@@ -216,6 +215,7 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
           kdata->dir_contents = get_dir_contents (path);
         }
 
+      /*g_warning ("XXX: Adding event with mask %s", fflags_to_str (kmask));*/
       EV_SET (&ev, fd, EVFILT_VNODE, EV_ADD | EV_ENABLE | EV_CLEAR,
               kmask, 0, monitor);
       if (kevent (monitor->priv->kqueue_fd, &ev, 1, NULL, 0, NULL) < 0)
@@ -388,6 +388,8 @@ hal_file_access_monitor (gpointer data)
           emit_monitor_event (monitor, HAL_FILE_MONITOR_EVENT_ACCESS, adata->path, adata->func, adata->udata);
         }
     }
+
+  return TRUE;
 }
 
 static void
@@ -482,6 +484,7 @@ hal_file_monitor_new (void)
   return HAL_FILE_MONITOR (monitor_object);
 }
 
+/*
 static char *
 fflags_to_str (int fflags)
 {
@@ -521,6 +524,7 @@ fflags_to_str (int fflags)
 
   return g_string_free (out, FALSE);
 }
+*/
 
 static void
 emit_monitor_event (HalFileMonitor *monitor,
@@ -546,7 +550,6 @@ handle_kqueue_event (GIOChannel *source,
       0, 0
     };
   int nevents;
-  int event;
   HalFileMonitor *monitor;
 
   g_return_val_if_fail (HAL_IS_FILE_MONITOR (udata), FALSE);
