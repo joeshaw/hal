@@ -62,11 +62,12 @@ static HFHandler *handlers[] = {
   &hf_devd_handler
 };
 
+static HalFileMonitor *file_monitor = NULL;
+
 HalFileMonitor *
 osspec_get_file_monitor (void)
 {
-#warning Please implement
-        return NULL;
+  return file_monitor;
 }
 
 void
@@ -85,6 +86,12 @@ osspec_init (void)
   int i;
 
   pci_ids_init();
+
+  file_monitor = hal_file_monitor_new ();
+  if (file_monitor == NULL)
+    {
+      HAL_INFO(("Cannot initialize file monitor"));
+    }
 
   for (i = 0; i < (int) G_N_ELEMENTS(handlers); i++)
     if (handlers[i]->init)
