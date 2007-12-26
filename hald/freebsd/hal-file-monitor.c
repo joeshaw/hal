@@ -50,7 +50,6 @@
 typedef struct
 {
   char *path;
-  struct stat *stat;
   int omask;
   gboolean isdir;
   HalFileMonitorNotifyFunc func;
@@ -62,6 +61,7 @@ typedef struct
 {
   char *path;
   time_t atime;
+  gboolean owner;
   HalFileMonitorNotifyFunc func;
   gpointer udata;
 } FileAccessData;
@@ -92,6 +92,8 @@ static void monitor_release_kdata (HalFileMonitor *monitor, int fd, FileKqueueDa
 static void monitor_release_adata (HalFileMonitor *monitor, int fd, FileAccessData *data);
 static gboolean remove_kdata_foreach (gpointer fd, FileKqueueData *data, HalFileMonitor *monitor);
 static gboolean remove_adata_foreach (gpointer fd, FileAccessData *data, HalFileMonitor *monitor);
+static void hal_file_monitor_remove_kdata (HalFileMonitor *monitor, guint id);
+static void hal_file_monitor_remove_adata (HalFileMonitor *monitor, guint id);
 static void setup_monitor (HalFileMonitor *monitor);
 static void close_monitor (HalFileMonitor *monitor);
 static gboolean hal_file_access_monitor (gpointer data);
@@ -142,32 +144,25 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
                              gpointer data)
 {
   struct kevent ev;
-  struct stat *sb;
+  struct stat sb;
   int fd;
+  int id = 0;
 
   if (! monitor->priv->initialized_kqueue)
     {
-      return 0;
+      return id;
     }
 
   fd = open (path, O_RDONLY);
   if (fd < 0)
     {
-      return 0;
+      return id;
     }
 
-  sb = g_new (struct stat, 1);
-  if (sb == NULL)
+  if (fstat (fd, &sb) == -1)
     {
       close (fd);
-      return 0;
-    }
-
-  if (fstat (fd, sb) == -1)
-    {
-      close (fd);
-      g_free (sb);
-      return 0;
+      return id;
     }
 
   if (mask & HAL_FILE_MONITOR_EVENT_ACCESS)
@@ -175,13 +170,26 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
       FileAccessData *adata;
 
       adata = g_new0 (FileAccessData, 1);
+      if (adata == NULL)
+        {
+          /* If we can't allocate an adata, we might as well bail now. */
+          g_warning ("Failed to allocate memory for adata");
+          close (fd);
+          return id;
+        }
       adata->path = g_strdup (path);
-      adata->atime = sb->st_atime;
+      adata->atime = sb.st_atime;
       adata->func = notify_func;
       adata->udata = data;
+      if (mask == HAL_FILE_MONITOR_EVENT_ACCESS)
+        {
+          /* We will close the file descriptor when we release the adata. */
+          adata->owner = TRUE;
+        }
       g_hash_table_insert (monitor->priv->fd_to_adata,
                            GINT_TO_POINTER (fd),
                            adata);
+      id = fd;
     }
 
   if ((mask & HAL_FILE_MONITOR_EVENT_CREATE) ||
@@ -194,19 +202,21 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
 
       kmask = hal_mask_to_kmask (mask);
 
-      isdir = (sb->st_mode & S_IFDIR) != 0;
+      isdir = (sb.st_mode & S_IFDIR) != 0;
       if (! isdir && mask == HAL_FILE_MONITOR_EVENT_CREATE)
         {
           /* We can't monitor creation on a file. */
-          close (fd);
-          g_free (sb);
-          return 0;
+          goto done;
         }
 
       kdata = g_new0 (FileKqueueData, 1);
+      if (kdata == NULL)
+        {
+          g_warning ("Failed to allocate memory for kdata");
+          goto done;
+        }
       kdata->path = g_strdup (path);
       kdata->omask = mask;
-      kdata->stat = sb;
       kdata->isdir = isdir;
       kdata->func = notify_func;
       kdata->udata = data;
@@ -221,44 +231,58 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
       if (kevent (monitor->priv->kqueue_fd, &ev, 1, NULL, 0, NULL) < 0)
         {
           monitor_release_kdata (monitor, fd, kdata);
-          return 0;
+          goto done;
         }
       g_hash_table_insert (monitor->priv->fd_to_kdata,
                            GINT_TO_POINTER (fd),
                            kdata);
-    }
-  else
-    {
-      g_free (sb);
+      id = fd;
     }
 
-  return fd;
+done:
+  return id;
 }
 
-void
-hal_file_monitor_remove_notify (HalFileMonitor *monitor,
-                                guint id)
+static void
+hal_file_monitor_remove_kdata (HalFileMonitor *monitor,
+                               guint id)
 {
   FileKqueueData *kdata;
-  FileAccessData *adata;
-
-  if (! monitor->priv->initialized_kqueue)
-    return;
 
   kdata = (FileKqueueData *) g_hash_table_lookup (monitor->priv->fd_to_kdata, GINT_TO_POINTER (id));
-  adata = (FileAccessData *) g_hash_table_lookup (monitor->priv->fd_to_adata, GINT_TO_POINTER (id));
 
   if (kdata)
     {
       g_hash_table_remove (monitor->priv->fd_to_kdata, GINT_TO_POINTER (id));
       monitor_release_kdata (monitor, id, kdata);
     }
+}
+
+static void
+hal_file_monitor_remove_adata (HalFileMonitor *monitor,
+                               guint id)
+{
+  FileAccessData *adata;
+
+  adata = (FileAccessData *) g_hash_table_lookup (monitor->priv->fd_to_adata, GINT_TO_POINTER (id));
 
   if (adata)
     {
       g_hash_table_remove (monitor->priv->fd_to_adata, GINT_TO_POINTER (id));
       monitor_release_adata (monitor, id, adata);
     }
+}
+
+void
+hal_file_monitor_remove_notify (HalFileMonitor *monitor,
+                                guint id)
+{
+  if (! monitor->priv->initialized_kqueue)
+    return;
+
+  hal_file_monitor_remove_kdata (monitor, id);
+  hal_file_monitor_remove_adata (monitor, id);
+
 }
 
 static void
@@ -269,9 +293,6 @@ monitor_release_kdata (HalFileMonitor *monitor,
   g_free (data->path);
   data->path = NULL;
 
-  g_free (data->stat);
-  data->stat = NULL;
-
   if (data->dir_contents)
     {
       g_hash_table_remove_all (data->dir_contents);
@@ -280,6 +301,8 @@ monitor_release_kdata (HalFileMonitor *monitor,
   data->dir_contents = NULL;
 
   close (fd);
+
+  g_free (data);
 }
 
 static void
@@ -290,7 +313,12 @@ monitor_release_adata (HalFileMonitor *monitor,
   g_free (data->path);
   data->path = NULL;
 
-  close (fd);
+  if (data->owner)
+    {
+      close (fd);
+    }
+
+  g_free (data);
 }
 
 static gboolean
@@ -379,6 +407,8 @@ hal_file_access_monitor (gpointer data)
 
       if (fstat (fd, &sb) == -1)
         {
+          g_warning ("Failed to stat %s: %s", adata->path, g_strerror (errno));
+          hal_file_monitor_remove_adata (monitor, fd);
           continue;
         }
 
@@ -412,6 +442,11 @@ setup_monitor (HalFileMonitor *monitor)
 
   monitor->priv->kqueue_fd = fd;
 
+  monitor->priv->fd_to_kdata = g_hash_table_new (g_direct_hash,
+                               g_direct_equal);
+  monitor->priv->fd_to_adata = g_hash_table_new (g_direct_hash,
+                               g_direct_equal);
+
   io_channel = g_io_channel_unix_new (fd);
   monitor->priv->io_watch = g_io_add_watch (io_channel,
                             G_IO_IN|G_IO_PRI,
@@ -419,11 +454,7 @@ setup_monitor (HalFileMonitor *monitor)
                             monitor);
   g_io_channel_unref (io_channel);
 
-  monitor->priv->access_source = g_idle_add ((GSourceFunc) hal_file_access_monitor, monitor);
-  monitor->priv->fd_to_kdata = g_hash_table_new (g_direct_hash,
-                               g_direct_equal);
-  monitor->priv->fd_to_adata = g_hash_table_new (g_direct_hash,
-                               g_direct_equal);
+  monitor->priv->access_source = g_timeout_add (1000, (GSourceFunc) hal_file_access_monitor, monitor);
 
   monitor->priv->initialized_kqueue = TRUE;
 }
@@ -545,10 +576,7 @@ handle_kqueue_event (GIOChannel *source,
                      gpointer udata)
 {
   struct kevent ev;
-  struct timespec timeout =
-    {
-      0, 0
-    };
+  struct timespec timeout = { 0, 0 };
   int nevents;
   HalFileMonitor *monitor;
 
@@ -557,6 +585,8 @@ handle_kqueue_event (GIOChannel *source,
   monitor = HAL_FILE_MONITOR (udata);
 
   g_return_val_if_fail (monitor->priv != NULL, FALSE);
+
+  g_return_val_if_fail (monitor->priv->kqueue_fd > -1, FALSE);
 
   nevents = kevent (monitor->priv->kqueue_fd, NULL, 0, &ev, 1, &timeout);
   if (nevents == 1)
@@ -577,6 +607,7 @@ handle_kqueue_event (GIOChannel *source,
           (ev.fflags & VN_NOTE_DELETED))
         {
           emit_monitor_event (monitor, HAL_FILE_MONITOR_EVENT_DELETE, data->path, data->func, data->udata);
+          hal_file_monitor_remove_kdata (monitor, fd);
           return TRUE;
         }
 
@@ -589,6 +620,7 @@ handle_kqueue_event (GIOChannel *source,
               GSList *removed = NULL;
               GSList *l;
               GHashTable *table;
+              gboolean found_change = FALSE;
 
               table = diff_dir_contents (data, &added, &removed);
               if (data->omask & HAL_FILE_MONITOR_EVENT_CREATE)
@@ -620,11 +652,16 @@ handle_kqueue_event (GIOChannel *source,
                   g_hash_table_remove_all (data->dir_contents);
                   g_hash_table_destroy (data->dir_contents);
                   data->dir_contents = table;
+                  found_change = TRUE;
                 }
               else if (table)
                 {
                   g_hash_table_remove_all (table);
                   g_hash_table_destroy (table);
+                }
+              else
+                {
+                  hal_file_monitor_remove_kdata (monitor, fd);
                 }
 
               if (added)
@@ -636,6 +673,11 @@ handle_kqueue_event (GIOChannel *source,
                 {
                   g_slist_foreach (removed, (GFunc) g_free, NULL);
                   g_slist_free (removed);
+                }
+
+              if (found_change)
+                {
+                  return TRUE;
                 }
             }
         }
@@ -660,9 +702,10 @@ diff_dir_contents (FileKqueueData *data,
                    GSList **removed)
 {
   GDir *dir;
+  GError *err = NULL;
   GHashTable *table = NULL;
 
-  dir = g_dir_open (data->path, 0, NULL);
+  dir = g_dir_open (data->path, 0, &err);
   if (dir)
     {
       const char *fname;
@@ -682,6 +725,8 @@ diff_dir_contents (FileKqueueData *data,
           g_hash_table_insert (table, g_strdup (fname), GINT_TO_POINTER (TRUE));
         }
 
+      g_dir_close (dir);
+
       if (removed)
         {
           GList *keys;
@@ -698,6 +743,11 @@ diff_dir_contents (FileKqueueData *data,
             }
         }
 
+    }
+  else
+    {
+      g_warning ("Failed to open directory: %s", err->message);
+      g_error_free (err);
     }
 
   return table;
@@ -726,6 +776,7 @@ get_dir_contents (const char *path)
   else
     {
       g_warning ("Failed to open directory %s: %s\n", path, err->message);
+      g_error_free (err);
     }
 
   return table;
