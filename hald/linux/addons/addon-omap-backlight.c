@@ -77,7 +77,7 @@ read_backlight (struct backlight * bl)
 	if (fd < 0)
 		return -1;
 
-	ret = read (fd, buffer, NUM_BUF_LEN)
+	ret = read (fd, buffer, NUM_BUF_LEN);
 	close (fd);
 
 	if (ret >= 0)
