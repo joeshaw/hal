@@ -97,29 +97,7 @@ hf_volume_device_update_mount_properties (HalDevice *device,
 
   hal_device_property_set_bool(device, "volume.is_mounted", mount != NULL);
   hal_device_property_set_bool(device, "volume.is_mounted_read_only", mount && (mount->f_flags & MNT_RDONLY) != 0);
-  if (mount)
-    {
-      const char *vlabel;
-
-      vlabel = hal_device_property_get_string(device, "volume.label");
-      hal_device_property_set_string(device, "volume.mount_point", mount->f_mntonname);
-      if (! vlabel || ! strcmp(vlabel, ""))
-        {
-          char *last_part;
-
-	  last_part = strrchr(mount->f_mntonname, '/');
-	  if (! last_part)
-            vlabel = mount->f_mntonname;
-	  else if (*(last_part + 1) == '\0')
-            vlabel = "Root";
-	  else
-            vlabel = last_part + 1;
-
-          hal_device_property_set_string(device, "volume.label", vlabel);
-	}
-    }
-  else
-    hal_device_property_set_string(device, "volume.mount_point", NULL);
+  hal_device_property_set_string(device, "volume.mount_point", mount ? mount->f_mntonname : NULL);
 }
 
 HalDevice *
