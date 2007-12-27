@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "../ids.h"
+#include "../logger.h"
 #include "../osspec.h"
 
 #include "hf-util.h"
