@@ -426,6 +426,8 @@ map_fstype (const char *fstype)
 		return "cd9660";
 	else if (! strcmp (fstype, "ext2"))
 		return "ext2fs";
+	else if (! strcmp (fstype, "ext3"))
+		return "ext2fs";
 	else if (! strcmp (fstype, "vfat"))
 		return "msdosfs";
 #elif sun
