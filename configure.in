@@ -277,7 +277,7 @@ else
    USE_PARTED=no
 fi
 AC_SUBST(USE_PARTED)
-AM_CONDITIONAL(USE_PARTED, [test x$use_parted == xyes])
+AM_CONDITIONAL(USE_PARTED, [test x$use_parted = xyes])
 
 
 #### gcc linker flags
@@ -383,39 +383,54 @@ AC_CHECK_LIB([expat], [XML_ParserCreate], [EXPAT_LIB="-lexpat"],
 AC_SUBST(EXPAT_LIB)
 
 dnl Check libusb
-AC_CHECK_HEADERS([usb.h], [USE_LIBUSB=yes], [USE_LIBUSB=no])
-if test "x$USE_LIBUSB" = "xyes"; then
-	AC_CHECK_LIB([usb], [usb_find_devices], [], [USE_LIBUSB=no])
+AC_ARG_ENABLE([usb],
+	      AS_HELP_STRING([--disable-usb], [Do not use libusb]),
+	      [use_usb=$enableval], [use_usb=yes])
+if test "x$use_usb" = "xyes" ; then
+	AC_CHECK_HEADERS([usb.h], [USE_LIBUSB=yes], [USE_LIBUSB=no])
+	if test "x$USE_LIBUSB" = "xyes"; then
+		AC_CHECK_LIB([usb], [usb_find_devices], [], [USE_LIBUSB=no])
+	fi
+else
+    	USE_LIBUSB=no
 fi
 AM_CONDITIONAL([HAVE_LIBUSB],[test "x$USE_LIBUSB" = "xyes"])
 
 dnl Check for libsmbios
-AC_LANG_PUSH([C++])
-AC_CHECK_LIB([smbios], [SMBIOSFreeMemory], [LIB_SMBIOS=yes], [LIB_SMBIOS=no])
-AC_LANG_POP([C++])
-if test "$LIB_SMBIOS" = "yes" ; then
-   AC_MSG_CHECKING([for libsmbios >= 0.13.4])
-   AC_RUN_IFELSE([AC_LANG_SOURCE([[
-   #include <smbios/version.h>
-   int main ()
-   {
-        int major ;
-        int minor ;
-        int micro ;
+AC_ARG_ENABLE([smbios],
+	      AS_HELP_STRING([--disable-smbios], [Do not use libsmbios]),
+	      [use_smbios=$enableval], [use_smbios=yes])
+if test "x$use_smbios" = "xyes" ; then
+	AC_LANG_PUSH([C++])
+	AC_CHECK_LIB([smbios], [SMBIOSFreeMemory], [LIB_SMBIOS=yes], [LIB_SMBIOS=no])
+	AC_LANG_POP([C++])
+	if test "$LIB_SMBIOS" = "yes" ; then
+   		AC_MSG_CHECKING([for libsmbios >= 0.13.4])
+   		AC_RUN_IFELSE([AC_LANG_SOURCE([[
+   		#include <smbios/version.h>
+   		int main ()
+   		{
+        		int major ;
+        		int minor ;
+        		int micro ;
 
-        if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
-	    if ((major == 0 && minor == 13 && micro >= 4) ||
-               (major == 0 && minor > 13) ||
-               (major >= 0)) {
-		return 0;
-	    }
-	}
-	return 1;
-   }]])], [USE_SMBIOS=yes; AC_MSG_RESULT(yes); AM_CONDITIONAL(HAVE_SMBIOS,true)],
-       [USE_SMBIOS=no; AC_MSG_RESULT(failed); AM_CONDITIONAL(HAVE_SMBIOS,false)])
+        		if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
+	    		    if ((major == 0 && minor == 13 && micro >= 4) ||
+               		       (major == 0 && minor > 13) ||
+               		       (major >= 0)) {
+			         return 0;
+	    		    }
+			}
+			return 1;
+   		}]])], [USE_SMBIOS=yes; AC_MSG_RESULT(yes); AM_CONDITIONAL(HAVE_SMBIOS,true)],
+       		[USE_SMBIOS=no; AC_MSG_RESULT(failed); AM_CONDITIONAL(HAVE_SMBIOS,false)])
+	else
+  		USE_SMBIOS=no
+  		AM_CONDITIONAL(HAVE_SMBIOS, [false])
+	fi
 else
-  USE_SMBIOS=no
-  AM_CONDITIONAL(HAVE_SMBIOS, [false])
+    	USE_SMBIOS=no
+	AM_CONDITIONAL(HAVE_SMBIOS, [false])
 fi
 
 AC_ARG_WITH([libpci],
@@ -850,7 +865,7 @@ AC_ARG_WITH([usb-csr],
 	    AS_HELP_STRING([--with-usb-csr],
 			   [Whether to build addon for wireless USB mice (auto)]))
 BUILD_USBCSR=no
-if test "x${USE_LIBUSB}" == "xyes" ; then
+if test "x${USE_LIBUSB}" = "xyes" ; then
    if test "x$with_usb_csr" = "xyes" ; then
       BUILD_USBCSR=yes
    elif test "x$with_usb_csr" = "x" ; then
