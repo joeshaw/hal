@@ -182,16 +182,21 @@ umount_hal_SOURCES = umount-hal.c
 umount_hal_LDADD = @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
 endif
 
+if BUILD_KEYMAPS
+
 if HAVE_GPERF
 DISTCLEANFILES += 				\
 	hal-setup-keymap-hash-name.h		\
 	hal-setup-keymap-hash-name.gperf	\
 	hal-setup-keymap-keys.txt
 
+
 BUILT_SOURCES += 				\
 	hal-setup-keymap-hash-name.h		\
 	hal-setup-keymap-hash-name.gperf	\
 	hal-setup-keymap-keys.txt
+endif
+
 endif
 
 check:
