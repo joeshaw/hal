@@ -48,7 +48,7 @@ libhald_freebsd_la_SOURCES = 	\
 	hf-volume.c		\
 	hf-volume.h		\
 	osspec.c		\
-	hal-file-monitor.c	\
+	hal-file-monitor.c
 
 libhald_freebsd_la_LDFLAGS = -lcam
 
