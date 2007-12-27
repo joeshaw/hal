@@ -82,8 +82,6 @@ G_DEFINE_TYPE (HalFileMonitor, hal_file_monitor, G_TYPE_OBJECT)
 
 static gpointer monitor_object = NULL;
 
-static void hal_file_monitor_class_init (HalFileMonitorClass *klass);
-static void hal_file_monitor_init (HalFileMonitor *monitor);
 static void hal_file_monitor_finalize (GObject *object);
 static GHashTable *get_dir_contents (const char *path);
 static GHashTable *diff_dir_contents (FileKqueueData *data, GSList **added, GSList **removed);
