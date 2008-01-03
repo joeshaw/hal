@@ -99,6 +99,12 @@ hf_probe_storage_get_cdrom_capabilities (const char *device_file,
       gboolean rw;
       gboolean rdl;
       gboolean rwdl;
+      gboolean bd;
+      gboolean bdr;
+      gboolean bdre;
+      gboolean hdvd;
+      gboolean hdvdr;
+      gboolean hddvdrw;
 
       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvd", TRUE, &hfp_error);
 
@@ -107,11 +113,23 @@ hf_probe_storage_get_cdrom_capabilities (const char *device_file,
       rw = (profile & DRIVE_CDROM_CAPS_DVDRW) != 0;
       rdl = (profile & DRIVE_CDROM_CAPS_DVDPLUSRDL) != 0;
       rwdl = (profile & DRIVE_CDROM_CAPS_DVDPLUSRWDL) != 0;
+      bd = (profile & DRIVE_CDROM_CAPS_BDROM) != 0;
+      bdr = (profile & DRIVE_CDROM_CAPS_BDR) != 0;
+      bdre = (profile & DRIVE_CDROM_CAPS_BDRE) != 0;
+      hddvd = (profile & DRIVE_CDROM_CAPS_HDDVDROM) != 0;
+      hddvdr = (profile & DRIVE_CDROM_CAPS_HDDVDR) != 0;
+      hddvdrw = (profile & DRIVE_CDROM_CAPS_HDDVDRW) != 0;
 
       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvdplusr", r, &hfp_error);
       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvdplusrw", rw, &hfp_error);
       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvdplusrdl", rdl, &hfp_error);
       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvdplusrwdl", rwdl, &hfp_error);
+      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.bd", bd, &hfp_error);
+      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.bdr", bdr, &hfp_error);
+      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.bdre", bdre, &hfp_error);
+      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.hddvd", hddvd, &hfp_error);
+      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.hddvdr", hddvdr, &hfp_error);
+      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.hddvdrw", hddvdrw, &hfp_error);
     }
   if ((caps.media & HFP_CDROM_MST_WRITE_DVDR) != 0)
     libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvdr", TRUE, &hfp_error);

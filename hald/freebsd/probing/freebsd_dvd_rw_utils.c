@@ -116,6 +116,13 @@ get_dvd_r_rw_profile (HFPCDROM *cdrom)
 		 * 0x1A: DVD+RW
 		 * 0x2A: DVD+RW DL
 		 * 0x2B: DVD+R DL
+		 * 0x40: BD-ROM
+		 * 0x41: BD-R SRM
+		 * 0x42: BD-R RRM
+		 * 0x43: BD-RE
+		 * 0x50: HD DVD-ROM
+		 * 0x51: HD DVD-R
+		 * 0x52: HD DVD-Rewritable
 		 */
 
 		switch (profile) {
@@ -134,6 +141,25 @@ get_dvd_r_rw_profile (HFPCDROM *cdrom)
 				break;
 			case 0x2B:
 				retval |= DRIVE_CDROM_CAPS_DVDPLUSRDL;
+				break;
+			case 0x40:
+				retval |= DRIVE_CDROM_CAPS_BDROM;
+				break;
+			case 0x41:
+			case 0x42:
+				retval |= DRIVE_CDROM_CAPS_BDR;
+				break;
+			case 0x43:
+				retval |= DRIVE_CDROM_CAPS_BDRE;
+				break;
+			case 0x50:
+				retval |= DRIVE_CDROM_CAPS_HDDVDROM;
+				break;
+			case 0x51:
+				retval |= DRIVE_CDROM_CAPS_HDDVDR;
+				break;
+			case 0x52:
+				retval |= DRIVE_CDROM_CAPS_HDDVDRW;
 				break;
 			default:
 				break;
@@ -557,6 +583,7 @@ get_disc_capacity_dvdr_from_type (HFPCDROM *cdrom, int type, guint64 *size)
 	case 0x11:		/* DVD-R */
 	case 0x1B:		/* DVD+R */
 	case 0x2B:		/* DVD+R Double Layer */
+	case 0x41:		/* BD-R SRM */
 
 		/* READ TRACK INFORMATION */
 		scsi_command_init (cmd, 0, 0x52);
@@ -581,6 +608,13 @@ get_disc_capacity_dvdr_from_type (HFPCDROM *cdrom, int type, guint64 *size)
 		blocks |= buf [27];
 
 		retval = 0;
+		break;
+	case 0x43:	/* DB-RE */
+		/* Pull the formatted capacity */
+		blocks  = formats [4 + 0] << 24;
+		blocks |= formats [4 + 1] << 16;
+		blocks |= formats [4 + 2] << 8;
+		blocks |= formats [4 + 3];
 		break;
 	default:
 		blocks = 0;
@@ -624,6 +658,8 @@ get_disc_capacity_for_type (HFPCDROM *cdrom, int type, guint64 *size)
 	case 0x2B:
 	case 0x1A:
 	case 0x12:
+	case 0x41:
+	case 0x43:
 		retval = get_disc_capacity_dvdr_from_type (cdrom, type, size);
 		break;
 	default:
