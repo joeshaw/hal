@@ -102,8 +102,8 @@ hf_probe_storage_get_cdrom_capabilities (const char *device_file,
       gboolean bd;
       gboolean bdr;
       gboolean bdre;
-      gboolean hdvd;
-      gboolean hdvdr;
+      gboolean hddvd;
+      gboolean hddvdr;
       gboolean hddvdrw;
 
       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "storage.cdrom.dvd", TRUE, &hfp_error);
