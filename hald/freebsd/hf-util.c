@@ -647,10 +647,14 @@ hf_device_store_match (HalDeviceStore *store, ...)
           switch (bag->type)
             {
               case HAL_PROPERTY_TYPE_STRING:
-                if (strcmp(hal_device_property_get_string(device, bag->key),
-                           bag->strval))
-                  device = NULL;
-                break;
+	        {
+		  char *pstr;
+
+		  pstr = hal_device_property_get_string(device, bag->key);
+                  if (!pstr || strcmp(pstr, bag->strval))
+                    device = NULL;
+                  break;
+		}
               case HAL_PROPERTY_TYPE_INT32:
                 if (hal_device_property_get_int(device, bag->key) !=
                     bag->intval)
