@@ -377,7 +377,7 @@ main (int argc, char **argv)
    * is a swap partition, we probe it nevertheless in case the
    * partition type is incorrect.
    */
-  if (! has_children)
+  if (! has_children && ! (is_cdrom && ! has_data))
     {
       vid = volume_id_open_fd(fd);
       if (vid)
