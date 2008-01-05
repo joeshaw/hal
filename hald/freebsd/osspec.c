@@ -76,6 +76,12 @@ osspec_privileged_init (void)
 {
   int i;
 
+  file_monitor = hal_file_monitor_new ();
+  if (file_monitor == NULL)
+    {
+      HAL_INFO(("Cannot initialize file monitor"));
+    }
+
   for (i = 0; i < (int) G_N_ELEMENTS(handlers); i++)
     if (handlers[i]->privileged_init)
       handlers[i]->privileged_init();
@@ -87,12 +93,6 @@ osspec_init (void)
   int i;
 
   pci_ids_init();
-
-  file_monitor = hal_file_monitor_new ();
-  if (file_monitor == NULL)
-    {
-      HAL_INFO(("Cannot initialize file monitor"));
-    }
 
   for (i = 0; i < (int) G_N_ELEMENTS(handlers); i++)
     if (handlers[i]->init)
