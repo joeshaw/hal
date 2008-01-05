@@ -97,7 +97,9 @@ hf_computer_device_probe (HalDevice *device)
 	"RAID Chassis",			"unknown",
 	"Rack Mount Chassis",		"unknown",
 	"Sealed-case PC",		"unknown",
-	"Multi-system",			"unknown"
+	"Multi-system",			"unknown",
+	"CompactPCI",			"unknown",
+	"AdvancedTCA",			"unknown" /* 0x1B */
       };
 
       for (i = 0; i < (int) G_N_ELEMENTS(chassis_map); i += 2)
