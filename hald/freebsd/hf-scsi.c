@@ -188,6 +188,7 @@ hf_scsi_block_device_new (HalDevice *parent,
     {
       hal_device_property_set_bool(device, "storage.removable", TRUE);
       hal_device_property_set_bool(device, "storage.media_check_enabled", TRUE);
+      hal_device_property_set_bool(device, "storage.removable.support_async_notification", FALSE);
     }
 
   cam_strvis(revision, match->inq_data.revision, sizeof(match->inq_data.revision), sizeof(revision));
