@@ -639,19 +639,16 @@ hf_device_store_match (HalDeviceStore *store, ...)
         {
           PropertyBag *bag;
 
-          if (! device)
-            break;
-
           bag = (PropertyBag *) b->data;
 
           switch (bag->type)
             {
               case HAL_PROPERTY_TYPE_STRING:
 	        {
-		  char *pstr;
+		  const char *pstr;
 
 		  pstr = hal_device_property_get_string(device, bag->key);
-                  if (!pstr || strcmp(pstr, bag->strval))
+                  if (! pstr || strcmp(pstr, bag->strval))
                     device = NULL;
                   break;
 		}
@@ -663,6 +660,9 @@ hf_device_store_match (HalDeviceStore *store, ...)
               default:
                 g_assert_not_reached();
             }
+
+	  if (! device)
+	    break;
         }
 
       if (device)
