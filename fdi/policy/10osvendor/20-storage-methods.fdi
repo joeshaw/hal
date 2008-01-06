@@ -167,11 +167,20 @@
       <append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
       <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-unmount</append>
 
-      <match key="volume.linux.is_device_mapper" bool="false">
+      <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+        <match key="volume.linux.is_device_mapper" bool="false">
+          <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
+          <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+          <append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
+          <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
+        </match>
+      </match>
+
+      <match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
         <append key="org.freedesktop.Hal.Device.Volume.method_names" type="strlist">Eject</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
-        <append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
+	<append key="org.freedesktop.Hal.Device.Volume.method_signatures" type="strlist">as</append>
+	<append key="org.freedesktop.Hal.Device.Volume.method_argnames" type="strlist">extra_options</append>
+	<append key="org.freedesktop.Hal.Device.Volume.method_execpaths" type="strlist">hal-storage-eject</append>
       </match>
 
       <!-- allow these mount options for all file systems -->
