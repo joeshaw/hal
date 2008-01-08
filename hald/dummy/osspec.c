@@ -37,6 +37,27 @@
 #include "../util.h"
 #include "../device_info.h"
 
+HalFileMonitor *
+osspec_get_file_monitor (void)
+{
+	return NULL;
+}
+
+guint
+hal_file_monitor_add_notify (HalFileMonitor          *monitor,
+                            const char             *path,
+                            int                     mask,
+                            HalFileMonitorNotifyFunc notify_func,
+                            gpointer                data)
+{
+	return 0;
+}
+
+void
+osspec_privileged_init (void)
+{
+}
+
 void
 osspec_init (void)
 {

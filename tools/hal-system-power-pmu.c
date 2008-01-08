@@ -57,6 +57,8 @@ pmac_sleep (void)
 	return FALSE;			/* FIXME implement */
 #elif sun
 	return FALSE;			/* FIXME implement */
+#elif __GNU__
+	return FALSE;			/* FIXME implement */
 #else
 	int ret;
 	int fd;
@@ -92,6 +94,8 @@ pmac_get_lcd_brightness (int *val)
 	return FALSE;			/* FIXME implement */
 #elif sun
 	return FALSE;			/* FIXME implement */
+#elif __GNU__
+	return FALSE;			/* FIXME implement */
 #else
 	int ret;
 	int fd;
@@ -126,6 +130,8 @@ pmac_set_lcd_brightness (int val)
 #ifdef __FreeBSD__
 	return FALSE;			/* FIXME implement */
 #elif sun
+	return FALSE;			/* FIXME implement */
+#elif __GNU__
 	return FALSE;			/* FIXME implement */
 #else
 	int ret;
