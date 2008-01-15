@@ -205,19 +205,19 @@ device_pm_calculate_percentage (HalDevice *d)
 	int current;
 	int lastfull;
 
-	/* default to fully charge to avoid triggering low power warnings on
-	 * really broken batteries */
-	percentage = 100;
+	percentage = -1;
 
 	/* use the charge level compared to the last full amount */
 	current = hal_device_property_get_int (d, "battery.charge_level.current");
 	lastfull = hal_device_property_get_int (d, "battery.charge_level.last_full");
 
 	/* make sure we have current */
-	if (current <= 0) {
-		HAL_WARNING (("battery.charge_level.current %i, returning -1!", current));
+	if (current < 0) {
+		HAL_WARNING (("battery.charge_level.current %i, delete battery.charge_level.percentage", current));
+	} else if (current == 0) {
+		percentage = 0; /* battery is empty */
 	} else if (lastfull <= 0) {
-		HAL_WARNING (("battery.charge_level.lastfull %i, percentage returning -1!", lastfull));
+		HAL_WARNING (("battery.charge_level.lastfull %i, delete battery.charge_level.percentage", lastfull));
 	} else {
 		percentage = ((double) current / (double) lastfull) * 100;
 		/* Some bios's will report this out of range of 0..100, limit it here */
@@ -226,7 +226,11 @@ device_pm_calculate_percentage (HalDevice *d)
 		else if (percentage < 0)
 			percentage = 1;
 	}
-	hal_device_property_set_int (d, "battery.charge_level.percentage", percentage);
+
+	if (percentage < 0)
+		hal_device_property_remove (d, "battery.charge_level.percentage");
+	else 
+		hal_device_property_set_int (d, "battery.charge_level.percentage", percentage);
 }
 
 /** 
