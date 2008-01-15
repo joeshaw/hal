@@ -217,7 +217,7 @@ main (int argc, char *argv[])
 		
 		if ((strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error)) != NULL) {
 			
-			for (i = 0; strlist[i] != 0; i++) {
+			for (i = 0; strlist[i] != NULL; i++) {
 				printf ("%s", strlist[i]);
 				if (strlist[i+1] != NULL)
 					printf (" ");

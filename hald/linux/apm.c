@@ -41,7 +41,7 @@ enum {
 	APM_TYPE_AC_ADAPTER
 };
 
-int interval_poll_round = 0;
+static int interval_poll_round = 0;
 
 typedef struct APMDevHandler_s
 {

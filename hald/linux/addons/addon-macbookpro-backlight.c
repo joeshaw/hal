@@ -477,6 +477,9 @@ main (int argc, char *argv[])
  	size_t length = 0;
  	int fd;
  	int state;
+	struct pci_access *pacc;
+ 	struct pci_dev *dev;
+
 	DBusError err;
 
 	setup_logger ();
@@ -511,10 +514,9 @@ main (int argc, char *argv[])
  	/* address = 0x90300000; */
  	/* length = 0x20000; */
 
- 	struct pci_access *pacc = pci_alloc();
+ 	pacc = pci_alloc();
  	pci_init(pacc);
  	pci_scan_bus(pacc);
- 	struct pci_dev *dev;
  	for(dev=pacc->devices; dev; dev=dev->next) {	/* Iterate over all devices */
  		pci_fill_info(dev, PCI_FILL_IDENT | PCI_FILL_BASES);
  		if ((dev->vendor_id == 0x1002) && (dev->device_id == 0x71c5)) { // ATI X1600

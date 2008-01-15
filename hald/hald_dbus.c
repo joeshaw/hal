@@ -3127,6 +3127,7 @@ device_claim_interface (DBusConnection * connection, DBusMessage * message, dbus
 	DBusError error;
 	const char *interface_name;
 	const char *introspection_xml;
+	HelperInterfaceHandler *hih;
 	dbus_bool_t res;
 	
 	HAL_TRACE (("entering"));
@@ -3167,7 +3168,7 @@ device_claim_interface (DBusConnection * connection, DBusMessage * message, dbus
 
 	hal_device_property_strlist_add (device, "info.interfaces", interface_name);
 
-	HelperInterfaceHandler *hih = g_new0 (HelperInterfaceHandler, 1);
+	hih = g_new0 (HelperInterfaceHandler, 1);
 	hih->connection = connection;
 	hih->interface_name = g_strdup (interface_name);
 	hih->introspection_xml = g_strdup (introspection_xml);
@@ -4381,6 +4382,7 @@ do_introspect (DBusConnection  *connection,
 				       "  </interface>\n");
 	} else {
 		HalDevice *d;
+		HalDeviceStrListIter if_iter;
 
 		d = hal_device_store_find (hald_get_gdl (), path);
 		if (d == NULL)
@@ -4552,7 +4554,6 @@ do_introspect (DBusConnection  *connection,
 				       "    </signal>\n"
 
 				       "  </interface>\n");
-			HalDeviceStrListIter if_iter;
 
 			for (hal_device_property_strlist_iter_init (d, "info.interfaces", &if_iter);
 			     hal_device_property_strlist_iter_is_valid (&if_iter);

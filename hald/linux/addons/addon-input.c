@@ -311,7 +311,7 @@ destroy_data (InputData *data)
 
 
 static void
-update_proc_title ()
+update_proc_title (void)
 {
 	GList *lp;
 	gchar *new_command_line, *p;

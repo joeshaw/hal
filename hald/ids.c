@@ -56,7 +56,7 @@ static size_t pci_ids_iter_pos;
 
 /** Initialize the pci.ids line iterator to the beginning of the file */
 static void
-pci_ids_line_iter_init ()
+pci_ids_line_iter_init (void)
 {
 	pci_ids_iter_pos = 0;
 }
@@ -103,7 +103,7 @@ pci_ids_line_iter_get_line (unsigned int *line_len)
  *  See if there are more lines to process in pci.ids 
  */
 static dbus_bool_t
-pci_ids_line_iter_has_more ()
+pci_ids_line_iter_has_more (void)
 {
 	return pci_ids_iter_pos < pci_ids_len;
 }
@@ -339,7 +339,7 @@ static size_t usb_ids_iter_pos;
 
 /** Initialize the usb.ids line iterator to the beginning of the file */
 static void
-usb_ids_line_iter_init ()
+usb_ids_line_iter_init (void)
 {
 	usb_ids_iter_pos = 0;
 }
@@ -386,7 +386,7 @@ usb_ids_line_iter_get_line (unsigned int *line_len)
  *  See if there are more lines to process in usb.ids
  */
 static dbus_bool_t
-usb_ids_line_iter_has_more ()
+usb_ids_line_iter_has_more (void)
 {
 	return usb_ids_iter_pos < usb_ids_len;
 }

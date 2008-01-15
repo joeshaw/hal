@@ -49,22 +49,22 @@
 #define CPUFREQ_ERROR_NO_SUITABLE_GOVERNOR	"NoSuitableGovernor"
 #define CPUFREQ_ERROR_GOVERNOR_INIT_FAILED	"GovernorInitFailed"
 
-const char SYSFS_GOVERNOR_FILE[] =
+static const char SYSFS_GOVERNOR_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/scaling_governor";
 
-const char SYSFS_AVAILABLE_GOVERNORS_FILE[] =
+static const char SYSFS_AVAILABLE_GOVERNORS_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/scaling_available_governors";
 
-const char ONDEMAND_UP_THRESHOLD_FILE[] =
+static const char ONDEMAND_UP_THRESHOLD_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/ondemand/up_threshold";
 
-const char SYSFS_AFFECTED_CPUS_FILE[] =
+static const char SYSFS_AFFECTED_CPUS_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/affected_cpus";
 
-const char SYSFS_CPU_ONLINE_FILE[] =
+static const char SYSFS_CPU_ONLINE_FILE[] =
      "/sys/devices/system/cpu/cpu%u/online";
 
-const char ONDEMAND_IGNORE_NICE_LOAD_FILE[] =
+static const char ONDEMAND_IGNORE_NICE_LOAD_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/ondemand/ignore_nice_load";
 
 static gboolean dbus_raise_error(DBusConnection *connection, DBusMessage *message,
@@ -223,11 +223,12 @@ static void cpu_list_unique(gpointer data, gpointer whole_list)
 
 	for (it = *list; it != NULL; it = g_slist_next(it)) {
 		gboolean equal = TRUE;
+		GSList *list_it = NULL;
+		GSList *current_it = NULL;
+		
 		if (current == it->data)
 			continue;
 
-		GSList *list_it = NULL;
-		GSList *current_it = NULL;
 		for (list_it = it->data, current_it = current;
 		     list_it != NULL && current_it != NULL;
 		     list_it = g_slist_next(list_it), current_it = g_slist_next(current_it)) {
@@ -1315,9 +1316,9 @@ int main(int argc, char *argv[])
 	sigaddset(&signal_action.sa_mask, SIGTERM);
 	signal_action.sa_flags = SA_RESTART || SA_NOCLDSTOP;
 	signal_action.sa_handler = exit_handler;
-	sigaction(SIGINT, &signal_action, 0);
-	sigaction(SIGQUIT, &signal_action, 0);
-	sigaction(SIGTERM, &signal_action, 0);
+	sigaction(SIGINT, &signal_action, NULL);
+	sigaction(SIGQUIT, &signal_action, NULL);
+	sigaction(SIGTERM, &signal_action, NULL);
 
 	if (!is_supported()) {
 		HAL_WARNING(("CPUFreq not supported. Exiting..."));

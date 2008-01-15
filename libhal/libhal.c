@@ -3150,7 +3150,7 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
-	LIBHAL_CHECK_PARAM_VALID(capability, "*capability", FALSE);
+	LIBHAL_CHECK_PARAM_VALID(capability, "*capability", NULL);
 
 	message = dbus_message_new_method_call ("org.freedesktop.Hal",
 						"/org/freedesktop/Hal/Manager",
@@ -3369,7 +3369,7 @@ libhal_ctx_set_dbus_connection (LibHalContext *ctx, DBusConnection *conn)
 DBusConnection *
 libhal_ctx_get_dbus_connection (LibHalContext *ctx)
 {
-	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, NULL);
 
 	return ctx->connection;
 }
@@ -4123,7 +4123,7 @@ libhal_device_new_changeset (const char *udi)
 {
 	LibHalChangeSet *changeset;
 
-	LIBHAL_CHECK_UDI_VALID(udi, FALSE);
+	LIBHAL_CHECK_UDI_VALID(udi, NULL);
 
 	changeset = calloc (1, sizeof (LibHalChangeSet));
 	if (changeset == NULL)

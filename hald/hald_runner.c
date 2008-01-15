@@ -938,7 +938,7 @@ hald_runner_kill_device (HalDevice * device)
 }
 
 void
-hald_runner_kill_all ()
+hald_runner_kill_all (void)
 {
 	DBusMessage *msg, *reply;
 	DBusError err;

@@ -48,8 +48,8 @@
 #define strbegin(buf, str) (strncmp (buf, str, strlen (str)) == 0)
 
 /* global */
-char *udi = NULL;
-LibHalContext *ctx = NULL;
+static char *udi = NULL;
+static LibHalContext *ctx = NULL;
 
 /** 
  *  setstr:

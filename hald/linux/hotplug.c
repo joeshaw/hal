@@ -50,10 +50,10 @@
 #include "hotplug.h"
 
 /** Queue of ordered hotplug events */
-GQueue *hotplug_event_queue;
+static GQueue *hotplug_event_queue;
 
 /** List of HotplugEvent objects we are currently processing */
-GSList *hotplug_events_in_progress = NULL;
+static GSList *hotplug_events_in_progress = NULL;
 
 void
 hotplug_event_end (void *end_token)
