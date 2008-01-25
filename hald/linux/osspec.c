@@ -494,7 +494,8 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 	/* Map the chassis type from dmidecode.c to a sensible type used in hal 
 	 *
 	 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
-	 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
+	 * Version 2.6.1" (Preliminary Standard) document, available from 
+	 * http://www.dmtf.org/standards/smbios.
 	 *
 	 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
 	 */
@@ -513,7 +514,7 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 		"Docking Station",       "laptop",
 		"All In One",            "unknown",
 		"Sub Notebook",          "laptop",
-		"Space-saving",          "unknown",
+		"Space-saving",          "desktop",
 		"Lunch Box",             "unknown",
 		"Main Server Chassis",   "server",
 		"Expansion Chassis",     "unknown",
@@ -525,7 +526,9 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 		"Sealed-case PC",        "unknown",
 		"Multi-system",          "unknown",
 		"CompactPCI",		 "unknonw",
-		"AdvancedTCA",		 "unknown", /* 0x1B */
+		"AdvancedTCA",		 "unknown", 
+		"Blade",		 "server",
+		"Blade Enclosure"	 "unknown", /* 0x1D */
 		NULL
 	};
 
