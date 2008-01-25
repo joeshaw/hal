@@ -76,6 +76,28 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	echo "Access type not supported" >&2
 	exit 1
     fi
+elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wwan" ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x /usr/bin/dellWirelessCtl ]; then
+
+	# As a side effect we disable the physical kill switch
+
+	# TODO: write our own binary that links with libsmbios?
+	if [ "$value" = "true" ]; then
+	    /usr/bin/dellWirelessCtl --sw_wwan 0 --wwan 1
+	    ret=$?
+	else
+	    /usr/bin/dellWirelessCtl --sw_wwan 0 --wwan 0
+	    ret=$?
+	fi
+	if [ "$ret" != "0" ]; then
+	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	    echo "dellWirelessCtl returned $ret" >&2
+	fi
+    else
+	echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	echo "Access type not supported" >&2
+	exit 1
+    fi
 else
     echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
     echo "Killswitch type not supported" >&2

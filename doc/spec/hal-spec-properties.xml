@@ -6834,13 +6834,19 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry></entry>
               <entry>wlan</entry>
               <entry></entry>
-              <entry>Kill switch is for turning Wireless networking on/off</entry>
+              <entry>Kill switch is for turning Wireless LAN (WLAN) networking on/off</entry>
             </row>
             <row>
               <entry></entry>
               <entry>bluetooth</entry>
               <entry></entry>
               <entry>Kill switch is for turning Bluetooth on/off</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>wwan</entry>
+              <entry></entry>
+              <entry>Kill switch is for turning Wireless WAN (WWAN) networking on/off</entry>
             </row>
             <row>
               <entry>
