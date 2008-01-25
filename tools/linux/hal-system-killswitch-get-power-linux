@@ -69,9 +69,9 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wwan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x /usr/bin/dellWirelessCtl ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
 	# TODO: write our own binary that links with libsmbios?
-	/usr/bin/dellWirelessCtl --st_wwan
+	$DELL_WCTL --st_wwan
 	value=$?
 	if [ "$value" = "0" ]; then
 	    exit 1
