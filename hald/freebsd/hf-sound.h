@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * hf-net.h : sound (OSS) device support
+ * hf-sound.h : sound (OSS) device support
  *
  * Copyright (C) 2006 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
