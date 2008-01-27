@@ -369,6 +369,7 @@ static Handler handlers[] = {
   { "battery",		hf_acpi_battery_set_properties		},
   { "cardbus",		hf_pcmcia_set_properties		},
   { "cpu",		hf_devtree_cpu_set_properties		},
+  { "drm",		NULL					},
   { "fd",		hf_devtree_fd_set_properties		},
   { "fdc",		NULL					},
   { "joy",		hf_devtree_joy_set_properties		},
@@ -517,11 +518,18 @@ hf_devtree_find_parent_from_info (HalDeviceStore *store,
 void
 hf_devtree_device_set_info (HalDevice *device, const char *driver, int unit)
 {
+  char *devfile;
+
   g_return_if_fail(HAL_IS_DEVICE(device));
   g_return_if_fail(driver != NULL);
 
   hal_device_property_set_string(device, "freebsd.driver", driver);
   hal_device_property_set_int(device, "freebsd.unit", unit);
+
+  devfile = g_strdup_printf("/dev/%s%i", driver, unit);
+  if (g_file_test(devfile, G_FILE_TEST_EXISTS))
+    hf_device_property_set_string_printf(device, "freebsd.device_file", "/dev/%s%i", driver, unit);
+  g_free(devfile);
 }
 
 gboolean

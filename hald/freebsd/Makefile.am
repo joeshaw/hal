@@ -26,6 +26,8 @@ libhald_freebsd_la_SOURCES = 	\
 	hf-devd.h		\
 	hf-devtree.c		\
 	hf-devtree.h		\
+	hf-drm.c		\
+	hf-drm.h		\
 	hf-net.c		\
 	hf-net.h		\
 	hf-osspec.h		\

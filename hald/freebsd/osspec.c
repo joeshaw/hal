@@ -38,6 +38,7 @@
 #include "hf-computer.h"
 #include "hf-devd.h"
 #include "hf-devtree.h"
+#include "hf-drm.h"
 #include "hf-net.h"
 #include "hf-pci.h"
 #include "hf-scsi.h"
@@ -60,6 +61,7 @@ static HFHandler *handlers[] = {
   &hf_serial_handler,
   &hf_acpi_handler,
   &hf_sound_handler,
+  &hf_drm_handler,
   &hf_devd_handler
 };
 
