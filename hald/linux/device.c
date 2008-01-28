@@ -3232,6 +3232,11 @@ power_supply_refresh (HalDevice *d)
 	return TRUE;
 }
 
+/* don't bother looking for /proc/acpi batteries if they're in
+ * sysfs.
+ */
+gboolean _have_sysfs_power_supply = FALSE;
+
 static HalDevice *
 power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev,
 		  const gchar *sysfs_path_in_devices)
@@ -3282,6 +3287,8 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 		refresh_ac_adapter (d);
 		hal_device_add_capability (d, "ac_adapter");
 	}
+
+	_have_sysfs_power_supply = TRUE;
 finish:
 	return d;
 }
