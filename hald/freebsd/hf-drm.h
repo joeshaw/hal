@@ -32,4 +32,6 @@
 
 extern HFHandler hf_drm_handler;
 
+void hf_drm_set_properties (HalDevice *device);
+
 #endif /* _HF_DRM_H */

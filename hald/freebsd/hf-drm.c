@@ -59,7 +59,10 @@ typedef struct
 typedef struct
 {
   int			index;
-  hf_drm_version_t 	*drm_version;
+  char			*name;
+  char			*version;
+  char			*device_file;
+  char			*vendor;
 } Card;
 
 static GSList *cards = NULL;
@@ -92,6 +95,26 @@ hf_drm_version_free (hf_drm_version_t *vers)
   g_free(vers);
 }
 
+static void
+hf_drm_set_properties_real (HalDevice *device, Card *card)
+{
+  g_return_if_fail(HAL_IS_DEVICE(device));
+  g_return_if_fail(card != NULL);
+
+  hal_device_add_capability(device, "drm");
+
+  if (card->vendor)
+    hal_device_property_set_string(device, "info.vendor", card->vendor);
+  hal_device_property_set_string(device, "info.product", "Direct Rendering Manager Device");
+  hal_device_property_set_string(device, "info.subsystem", "drm");
+  hal_device_property_set_string(device, "info.category", "drm");
+  hf_device_property_set_string_printf(device, "freebsd.device_file", "%s%i", card->device_file, card->index);
+  hal_device_property_set_string(device, "drm.dri_library", card->name);
+  hal_device_property_set_string(device, "drm.version", card->version);
+
+  hf_device_set_full_udi(device, "%s_drm_%s_card%i", hal_device_property_get_string(device, "info.parent"), card->name, card->index);
+}
+
 static HalDevice *
 hf_drm_device_new (HalDevice *parent, Card *card)
 {
@@ -101,17 +124,7 @@ hf_drm_device_new (HalDevice *parent, Card *card)
 
   device = hf_device_new(parent);
 
-  hal_device_add_capability(device, "drm");
-
-  if (card->drm_version->desc)
-    hal_device_property_set_string(device, "info.vendor", card->drm_version->desc);
-  hal_device_property_set_string(device, "info.product", "Direct Rendering Manager Device");
-  hal_device_property_set_string(device, "info.category", "drm");
-  hf_device_property_set_string_printf(device, "freebsd.device_file", HF_DRM_DEVICE "%i", card->index);
-  hal_device_property_set_string(device, "drm.dri_library", card->drm_version->name);
-  hf_device_property_set_string_printf(device, "drm.version", "drm %i.%i.%i %s", card->drm_version->major, card->drm_version->minor, card->drm_version->patchlevel, card->drm_version->date);
-
-  hf_device_set_full_udi(device, "%s_drm_%s_card%i", hal_device_get_udi(parent), card->drm_version->name, card->index);
+  hf_drm_set_properties_real(device, card);
 
   return device;
 }
@@ -144,6 +157,7 @@ hf_drm_privileged_init (void)
           if (res)
             {
               hf_drm_version_free(drm_version);
+              g_free(card);
               close(fd);
               continue;
             }
@@ -156,10 +170,12 @@ hf_drm_privileged_init (void)
             drm_version->desc = g_malloc(drm_version->desc_len + 1);
 
           res = ioctl(fd, HF_DRM_VERSION_IOCTL, drm_version);
+          close(fd);
+
           if (res)
             {
               hf_drm_version_free(drm_version);
-              close(fd);
+              g_free(card);
               continue;
             }
 
@@ -173,29 +189,48 @@ hf_drm_privileged_init (void)
           if (! drm_version->name || ! drm_version->date)
             {
               hf_drm_version_free(drm_version);
-              close(fd);
+              g_free(card);
               continue;
             }
 
-          card->drm_version = drm_version;
-          close(fd);
+          card->version = g_strdup_printf("drm %i.%i.%i %s", drm_version->major, drm_version->minor, drm_version->patchlevel, drm_version->date);
+          card->device_file = g_strdup(HF_DRM_DEVICE);
+          card->name = g_strdup(drm_version->name);
+          if (drm_version->desc)
+            card->vendor = g_strdup(drm_version->desc);
+          hf_drm_version_free(drm_version);
 
           cards = g_slist_append(cards, card);
         }
     }
 }
 
-static void
-hf_drm_probe (void)
+void
+hf_drm_set_properties (HalDevice *device)
 {
-  GSList *drm_devices, *l;
+  Card *card;
+  int unit;
 
   if (! cards)
     return;
 
-  drm_devices = hal_device_store_match_multiple_key_value_string(hald_get_gdl(),
-                "freebsd.driver", "drm");
-  HF_LIST_FOREACH(l, drm_devices)
+  unit = hal_device_property_get_int(device, "freebsd.unit");
+  card = hf_drm_find_card(unit);
+
+  if (! card)
+    return;
+
+  hf_drm_set_properties_real(device, card);
+}
+
+static void
+hf_drm_probe (void)
+{
+  GSList *nvidia_devices, *l;
+
+  nvidia_devices = hal_device_store_match_multiple_key_value_string(hald_get_gdl(),
+                   "freebsd.driver", "nvidia");
+  HF_LIST_FOREACH(l, nvidia_devices)
   {
     HalDevice *parent = HAL_DEVICE(l->data);
 
@@ -206,18 +241,27 @@ hf_drm_probe (void)
         int unit;
 
         unit = hal_device_property_get_int(parent, "freebsd.unit");
-        card = hf_drm_find_card(unit);
+        card = g_new0(Card, 1);
 
-        if (! card)
-          continue;
+        card->index = unit;
+        card->name = g_strdup("nvidia");
+        card->vendor = g_strdup("nVidia Corporation");
+        card->device_file = g_strdup("/dev/nvidia");
+        card->version = hf_get_string_sysctl(NULL, "hw.nvidia.version");
 
         device = hf_drm_device_new(parent, card);
 
         if (device)
           hf_device_preprobe_and_add(device);
+
+        g_free(card->name);
+        g_free(card->version);
+        g_free(card->device_file);
+        g_free(card->vendor);
+        g_free(card);
       }
   }
-  g_slist_free(drm_devices);
+  g_slist_free(nvidia_devices);
 }
 
 HFHandler hf_drm_handler =

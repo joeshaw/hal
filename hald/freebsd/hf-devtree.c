@@ -35,6 +35,7 @@
 #include "hf-acpi.h"
 #include "hf-ata.h"
 #include "hf-block.h"
+#include "hf-drm.h"
 #include "hf-pcmcia.h"
 #include "hf-storage.h"
 #include "hf-util.h"
@@ -369,10 +370,11 @@ static Handler handlers[] = {
   { "battery",		hf_acpi_battery_set_properties		},
   { "cardbus",		hf_pcmcia_set_properties		},
   { "cpu",		hf_devtree_cpu_set_properties		},
-  { "drm",		NULL					},
+  { "drm",		hf_drm_set_properties			},
   { "fd",		hf_devtree_fd_set_properties		},
   { "fdc",		NULL					},
   { "joy",		hf_devtree_joy_set_properties		},
+  { "nvidia",		NULL					},
   { "pccard",		hf_pcmcia_set_properties		},
   { "pcm",		NULL					},
   { "psm",		hf_devtree_psm_set_properties		},
