@@ -179,6 +179,7 @@ hal_util_get_int_from_file (const gchar *directory, const gchar *file, gint *res
 	char buf[64];
 	gchar path[HAL_PATH_MAX];
 	gboolean ret;
+	gint _result;
 
 	f = NULL;
 	ret = FALSE;
@@ -196,9 +197,12 @@ hal_util_get_int_from_file (const gchar *directory, const gchar *file, gint *res
 		goto out;
 	}
 
-	/* TODO: handle error condition */
-	*result = strtol (buf, NULL, base);
-	ret = TRUE;
+	errno = 0;
+	_result = strtol (buf, NULL, base);
+	if (errno == 0) {
+		ret = TRUE;
+		*result = _result;
+	}
 
 out:
 	if (f != NULL)
@@ -229,6 +233,7 @@ hal_util_get_uint64_from_file (const gchar *directory, const gchar *file, guint6
 	char buf[64];
 	gchar path[HAL_PATH_MAX];
 	gboolean ret;
+	guint64 _result;
 
 	f = NULL;
 	ret = FALSE;
@@ -246,10 +251,12 @@ hal_util_get_uint64_from_file (const gchar *directory, const gchar *file, guint6
 		goto out;
 	}
 
-	/* TODO: handle error condition */
-	*result = strtoll (buf, NULL, base);
-
-	ret = TRUE;
+	errno = 0;
+	_result = strtoll (buf, NULL, base);
+	if (errno == 0) {
+		ret = TRUE;
+		*result = _result;
+	}
 
 out:
 	if (f != NULL)
@@ -451,6 +458,7 @@ hal_util_set_double_from_file (HalDevice *d, const gchar *key, const gchar *dire
 	ret = FALSE;
 
 	if ((buf = hal_util_get_string_from_file (directory, file)) != NULL) {
+		errno = 0;
 		value = strtod(buf, &end);
 		if (errno != ERANGE) {
 			ret = hal_device_property_set_double (d, key, value);
