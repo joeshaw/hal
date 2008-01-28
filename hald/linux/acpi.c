@@ -944,30 +944,23 @@ acpi_synthesize_hotplug_events (void)
 	return TRUE;
 }
 
-static gboolean
-is_power_supply(ACPIDevHandler *h)
-{
-	if (h && (h->acpi_type == ACPI_TYPE_BATTERY) ||
-	     (h->acpi_type == ACPI_TYPE_AC_ADAPTER))
-		return TRUE;
-	return FALSE;
-}
-
 static HalDevice *
 acpi_generic_add (const gchar *acpi_path, HalDevice *parent, ACPIDevHandler *handler)
 {
 	HalDevice *d;
 
-	if (is_power_supply(handler) && _have_sysfs_power_supply)
+	if (((handler->acpi_type == ACPI_TYPE_BATTERY) || (handler->acpi_type == ACPI_TYPE_AC_ADAPTER)) && _have_sysfs_power_supply)
 		return NULL;
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.acpi_path", acpi_path);
 	hal_device_property_set_int (d, "linux.acpi_type", handler->acpi_type);
+
 	if (parent != NULL)
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent));
 	else
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+
 	if (handler->refresh == NULL || !handler->refresh (d, handler, FALSE)) {
 		g_object_unref (d);
 		d = NULL;
