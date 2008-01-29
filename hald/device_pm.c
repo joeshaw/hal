@@ -51,9 +51,11 @@ device_pm_abstract_props (HalDevice *d)
 	const char *reporting_unit;
 	int reporting_current;
 	int reporting_lastfull;
+	int reporting_design;
 	int reporting_rate;
 	int normalised_current;
 	int normalised_lastfull;
+	int normalised_design;
 	int normalised_rate;
 	int design_voltage;
 	int voltage;
@@ -67,6 +69,8 @@ device_pm_abstract_props (HalDevice *d)
 					"battery.reporting.current");
 	reporting_lastfull = hal_device_property_get_int (d,
 					"battery.reporting.last_full");
+	reporting_design = hal_device_property_get_int (d,
+					"battery.reporting.design");
 	reporting_rate = hal_device_property_get_int (d,
 					"battery.reporting.rate");
 
@@ -104,12 +108,14 @@ device_pm_abstract_props (HalDevice *d)
 
 		normalised_current = (reporting_current * voltage) / 1000;
 		normalised_lastfull = (reporting_lastfull * voltage) / 1000;
+		normalised_design = (reporting_design * voltage) / 1000;
 		normalised_rate = (reporting_rate * voltage) / 1000;
 	} else {
 		/* handle as if mWh (which don't need conversion), which is
 		 * the most common case. */
 		normalised_current = reporting_current;
 		normalised_lastfull = reporting_lastfull;
+		normalised_design = reporting_design;
 		normalised_rate = reporting_rate;
 	}
 
@@ -120,6 +126,8 @@ device_pm_abstract_props (HalDevice *d)
 		normalised_current = 0;
 	if (normalised_lastfull < 0)
 		normalised_lastfull = 0;
+	if (normalised_design < 0)
+		normalised_design = 0;
 	if (normalised_rate < 0)
 		normalised_rate = 0;
 
@@ -142,6 +150,7 @@ device_pm_abstract_props (HalDevice *d)
 		if (bat_type != NULL && !strncmp (bat_type, "primary", 7)) { 
 
 			/* check if the machine is on AC or on battery */ 
+			/* TODO: rework for power_supply */
 	       	 	devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
                 	                                                            "info.category",
         	               		                                            "ac_adapter");
@@ -188,6 +197,7 @@ device_pm_abstract_props (HalDevice *d)
 
 	hal_device_property_set_int (d, "battery.charge_level.current", normalised_current);
 	hal_device_property_set_int (d, "battery.charge_level.last_full", normalised_lastfull);
+	hal_device_property_set_int (d, "battery.charge_level.design", normalised_design);
 	hal_device_property_set_int (d, "battery.charge_level.rate", normalised_rate);
 }
 
