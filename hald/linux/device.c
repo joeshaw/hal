@@ -3013,8 +3013,7 @@ refresh_battery_fast (HalDevice *d)
 	gint value_last_full = 0;
 	gint value_full_design = 0;
 	gboolean present = FALSE;
-	gboolean could_be_mah = TRUE;
-	gboolean could_be_mwh = TRUE;
+	gboolean unknown_unit = TRUE;
 	gboolean is_mah = FALSE;
 	gboolean is_mwh = FALSE;
 	gboolean is_charging = FALSE;
@@ -3059,11 +3058,9 @@ refresh_battery_fast (HalDevice *d)
 
 	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
 	if (!hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
-		hal_device_property_set_int (d, "battery.reporting.rate", current);
-		hal_device_property_set_int (d, "battery.charge_level.rate", current / 1000);
+		hal_device_property_set_int (d, "battery.reporting.rate", current / 1000);
 	} else if (hal_util_get_int_from_file (path, "current_now", &current, 10)) {
-		hal_device_property_set_int (d, "battery.reporting.rate", current);
-		hal_device_property_set_int (d, "battery.charge_level.rate", current / 1000);
+		hal_device_property_set_int (d, "battery.reporting.rate", current / 1000);
 	}
 
 	/* STATUS: Convert to charging/discharging state */
@@ -3097,14 +3094,16 @@ refresh_battery_fast (HalDevice *d)
 	reporting_unit = hal_device_property_get_string (d, "battery.reporting.unit");
 	if (reporting_unit != NULL) {
 		if (strcasecmp (reporting_unit, "mah") == 0) {
-			could_be_mwh = FALSE;
+			is_mah = TRUE;
+			unknown_unit = FALSE;
 		} else if (strcasecmp (reporting_unit, "mwh") == 0) {
-			could_be_mah = FALSE;
+			is_mah = TRUE;
+			unknown_unit = FALSE;
 		}
 	}
 
 	/* ENERGY (reported in uWh, so need to convert to mWh) */
-	if (could_be_mwh) {
+	if (unknown_unit || is_mwh) {
 		if (hal_util_get_int_from_file (path, "energy_avg", &value_now, 10)) {
 			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
 			is_mwh = TRUE;
@@ -3123,7 +3122,7 @@ refresh_battery_fast (HalDevice *d)
 	}
 
 	/* CHARGE (reported in uAh, so need to convert to mAh) */
-	if (could_be_mah) {
+	if ((unknown_unit && !is_mwh) || is_mah) {
 		if (hal_util_get_int_from_file (path, "charge_avg", &value_now, 10)) {
 			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
 			is_mah = TRUE;
@@ -3142,10 +3141,12 @@ refresh_battery_fast (HalDevice *d)
 	}
 
 	/* record these for future savings */
-	if (is_mwh == TRUE) {
-		hal_device_property_set_string (d, "battery.reporting.unit", "mWh");
-	} else if (is_mah == TRUE) {
-		hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+	if (unknown_unit) {
+		if (is_mwh == TRUE) {
+			hal_device_property_set_string (d, "battery.reporting.unit", "mWh");
+		} else if (is_mah == TRUE) {
+			hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+		}
 	}
 
 	/* we've now got the 'reporting' keys, now we need to populate the
