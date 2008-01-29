@@ -3054,13 +3054,16 @@ refresh_battery_fast (HalDevice *d)
 	}
 	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
 		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
+		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
 	}
 
 	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
-	if (hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
-		hal_device_property_set_int (d, "battery.current", current / 1000);
+	if (!hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
+		hal_device_property_set_int (d, "battery.reporting.rate", current);
+		hal_device_property_set_int (d, "battery.charge_level.rate", current / 1000);
 	} else if (hal_util_get_int_from_file (path, "current_now", &current, 10)) {
-		hal_device_property_set_int (d, "battery.current", current / 1000);
+		hal_device_property_set_int (d, "battery.reporting.rate", current);
+		hal_device_property_set_int (d, "battery.charge_level.rate", current / 1000);
 	}
 
 	/* STATUS: Convert to charging/discharging state */
