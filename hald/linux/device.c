@@ -3202,6 +3202,9 @@ refresh_battery_slow (HalDevice *d)
 	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
 		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
 		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
+	} else if (hal_util_get_int_from_file (path, "voltage_min_design", &voltage_design, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
+		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
 	}
 
 	/* try to get the design info and set the units */
