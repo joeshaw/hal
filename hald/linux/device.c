@@ -3223,7 +3223,7 @@ power_supply_refresh (HalDevice *d)
 		device_property_atomic_update_end ();
 	} else if (strcmp (type, "battery") == 0) {
 		device_property_atomic_update_begin ();
-		refresh_battery_slow (d);
+		refresh_battery_fast (d);
 		device_property_atomic_update_end ();
 	} else {
 		HAL_WARNING (("Could not recognise power_supply type!"));
