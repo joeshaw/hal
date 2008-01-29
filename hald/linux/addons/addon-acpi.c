@@ -193,39 +193,44 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 
 			snprintf (udi, sizeof (udi), "/org/freedesktop/Hal/devices/acpi_%s", acpi_name);
 
-			if (strncmp (acpi_path, "button", sizeof ("button") - 1) == 0) {
-				char *type;
-
-				HAL_DEBUG (("button event"));
-
-				/* TODO: only rescan if button got state */
-				if (libhal_device_rescan (ctx, udi, &error)) {
-					type = libhal_device_get_property_string(ctx, udi, 
-										 "button.type",
-										 &error);
-					if (dbus_error_is_set (&error)) {
-			                        dbus_error_free (&error);
-					}
-
-					if (type != NULL) {
-						libhal_device_emit_condition (ctx, udi, "ButtonPressed",
-									      type, &error);
-						libhal_free_string(type);
-					} else {
-						libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
-					}
-				}
-			} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
-				HAL_DEBUG (("ac_adapter event"));
-				libhal_device_rescan (ctx, udi, &error);
-			} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
-				HAL_DEBUG (("battery event"));
-				libhal_device_rescan (ctx, udi, &error);
 #ifdef BUILD_ACPI_IBM
-			} else if (strncmp (acpi_path, "ibm/hotkey", sizeof ("ibm/hotkey") -1) == 0) {
+			if (strncmp (acpi_path, "ibm/hotkey", sizeof ("ibm/hotkey") -1) == 0) {
 				/* handle ibm ACPI hotkey events*/
-				handle_ibm_acpi_events(ctx, acpi_num1, acpi_num2);	
+				handle_ibm_acpi_events(ctx, acpi_num1, acpi_num2);
+			} else 
 #endif
+			
+			if (libhal_device_exists(ctx, udi, &error)) {
+
+				if (strncmp (acpi_path, "button", sizeof ("button") - 1) == 0) {
+					char *type;
+
+					HAL_DEBUG (("button event"));
+
+					/* TODO: only rescan if button got state */
+					if (libhal_device_rescan (ctx, udi, &error)) {
+						type = libhal_device_get_property_string(ctx, udi, 
+											 "button.type",
+											 &error);
+						if (dbus_error_is_set (&error)) {
+							dbus_error_free (&error);
+						}
+
+						if (type != NULL) {
+							libhal_device_emit_condition (ctx, udi, "ButtonPressed",
+										      type, &error);
+							libhal_free_string(type);
+						} else {
+							libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
+						}
+					}
+				} else if (strncmp (acpi_path, "ac_adapter", sizeof ("ac_adapter") - 1) == 0) {
+					HAL_DEBUG (("ac_adapter event"));
+					libhal_device_rescan (ctx, udi, &error);
+				} else if (strncmp (acpi_path, "battery", sizeof ("battery") - 1) == 0) {
+					HAL_DEBUG (("battery event"));
+					libhal_device_rescan (ctx, udi, &error);
+				}
 			} 
 
 		} else {
