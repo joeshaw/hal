@@ -3006,12 +3006,10 @@ refresh_battery_fast (HalDevice *d)
 {
 	gint percentage = 0;
 	gint voltage_now = 0;
-	gint voltage_design = 0;
 	gint current = 0;
 	gint time = 0;
 	gint value_now = 0;
 	gint value_last_full = 0;
-	gint value_full_design = 0;
 	gboolean present = FALSE;
 	gboolean unknown_unit = TRUE;
 	gboolean is_mah = FALSE;
@@ -3050,10 +3048,6 @@ refresh_battery_fast (HalDevice *d)
 		hal_device_property_set_int (d, "battery.voltage.current", voltage_now / 1000);
 	} else if (hal_util_get_int_from_file (path, "voltage_now", &voltage_now, 10)) {
 		hal_device_property_set_int (d, "battery.voltage.current", voltage_now / 1000);
-	}
-	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
-		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
-		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
 	}
 
 	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
@@ -3115,10 +3109,6 @@ refresh_battery_fast (HalDevice *d)
 			hal_device_property_set_int (d, "battery.reporting.last_full", value_last_full / 1000);
 			is_mwh = TRUE;
 		}
-		if (hal_util_get_int_from_file (path, "energy_full_design", &value_full_design, 10)) {
-			hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
-			is_mwh = TRUE;
-		}
 	}
 
 	/* CHARGE (reported in uAh, so need to convert to mAh) */
@@ -3132,10 +3122,6 @@ refresh_battery_fast (HalDevice *d)
 		}
 		if (hal_util_get_int_from_file (path, "charge_full", &value_last_full, 10)) {
 			hal_device_property_set_int (d, "battery.reporting.last_full", value_last_full / 1000);
-			is_mah = TRUE;
-		}
-		if (hal_util_get_int_from_file (path, "charge_full_design", &value_full_design, 10)) {
-			hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
 			is_mah = TRUE;
 		}
 	}
@@ -3176,6 +3162,8 @@ refresh_battery_fast (HalDevice *d)
 static void
 refresh_battery_slow (HalDevice *d)
 {
+	gint voltage_design = 0;
+	gint value_full_design = 0;
 	char *technology_raw;
 	char *model_name;
 	char *manufacturer;
@@ -3205,6 +3193,21 @@ refresh_battery_slow (HalDevice *d)
 	manufacturer = hal_util_get_string_from_file (path, "manufacturer");
 	if (manufacturer != NULL) {
 		hal_device_property_set_string (d, "battery.vendor", manufacturer);
+	}
+
+	/* get stuff that never changes */
+	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
+		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
+	}
+
+	/* try to get the design info and set the units */
+	if (hal_util_get_int_from_file (path, "energy_full_design", &value_full_design, 10)) {
+		hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
+		hal_device_property_set_string (d, "battery.reporting.unit", "mWh");	
+	} else if (hal_util_get_int_from_file (path, "charge_full_design", &value_full_design, 10)) {
+		hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
+		hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
 	}
 
 	/* now do stuff that happens quickly */
