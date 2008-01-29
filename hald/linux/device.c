@@ -3172,7 +3172,6 @@ refresh_battery_fast (HalDevice *d)
 static void
 refresh_battery_slow (HalDevice *d)
 {
-	const char *technology;
 	char *technology_raw;
 	char *model_name;
 	char *manufacturer;
@@ -3187,13 +3186,12 @@ refresh_battery_slow (HalDevice *d)
 	if (technology_raw != NULL) {
 		hal_device_property_set_string (d, "battery.reporting.technology", technology_raw);
 	}
-	/* we set this, even if it's unknown */
-	technology = util_get_battery_technology (technology_raw);
-	hal_device_property_set_string (d, "battery.technology", technology);
+	hal_device_property_set_string (d, "battery.technology", util_get_battery_technology (technology_raw));
 
 	/* get product name */
-	model_name = hal_util_get_string_from_file (path, "technology");
+	model_name = hal_util_get_string_from_file (path, "model_name");
 	if (model_name != NULL) {
+		hal_device_property_set_string (d, "battery.model", model_name);
 		hal_device_property_set_string (d, "info.product", model_name);
 	} else {
 		hal_device_property_set_string (d, "info.product", "Generic Battery Device");
