@@ -72,6 +72,9 @@
 gboolean _have_sysfs_lid_button = FALSE;
 gboolean _have_sysfs_power_button = FALSE;
 gboolean _have_sysfs_sleep_button = FALSE;
+gboolean _have_sysfs_power_supply = FALSE; 
+
+#define POWER_SUPPLY_BATTERY_POLL_INTERVAL 30000
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -3237,10 +3240,36 @@ power_supply_refresh (HalDevice *d)
 	return TRUE;
 }
 
-/* don't bother looking for /proc/acpi batteries if they're in
- * sysfs.
- */
-gboolean _have_sysfs_power_supply = FALSE;
+
+static gboolean 
+power_supply_battery_poll (gpointer data) {
+
+	GSList *i;
+	GSList *battery_devices;
+	HalDevice *d;
+
+	/* for now do it only for primary batteries and extend if neede for the other types */
+	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+                                                                    	    "battery.type",
+ 	                                                                    "primary");
+
+	if (battery_devices) {
+		for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
+			const char *subsys;
+
+			d = HAL_DEVICE (i->data);
+			subsys = hal_device_property_get_string (d, "linux.subsystem");
+			if (subsys && (strcmp(subsys, "power_supply") == 0)) {
+				hal_util_grep_discard_existing_data();
+				device_property_atomic_update_begin ();
+				refresh_battery_fast(d);
+				device_property_atomic_update_end ();
+			}
+		}		
+	}
+	g_slist_free (battery_devices);
+	return TRUE;
+}
 
 static HalDevice *
 power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *physdev,
@@ -3284,6 +3313,11 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 			hal_device_property_set_string (d, "battery.type", battery_type);
 		refresh_battery_slow (d);
 		hal_device_add_capability (d, "battery");
+
+		/* setup timer for things that we need to poll */
+		g_timeout_add ( POWER_SUPPLY_BATTERY_POLL_INTERVAL,
+				power_supply_battery_poll,
+				NULL);
 	}
 
 	if (is_ac_adapter == TRUE) {
