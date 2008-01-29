@@ -3301,9 +3301,18 @@ power_supply_compute_udi (HalDevice *d)
 	dir = hal_device_property_get_string (d, "linux.sysfs_path");
 
 	name = hal_util_get_last_element(dir);
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_power_supply",
-			      hal_device_property_get_string (d, "info.parent"));
+	if (name) 
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_power_supply_%s_%s",
+				      hal_device_property_get_string (d, "info.parent"),
+				      hal_device_property_get_string (d, "info.category"),
+				      name);
+	else
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_power_supply_%s",
+				      hal_device_property_get_string (d, "info.parent"),
+				      hal_device_property_get_string (d, "info.category"));
+		
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
