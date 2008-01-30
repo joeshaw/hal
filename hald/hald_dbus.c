@@ -5079,6 +5079,9 @@ hald_dbus_filter_function (DBusConnection * connection,
 
 		g_timeout_add (3000, reinit_dbus, NULL);
 
+	} else if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameAcquired")){
+		/* we don't need to do anything atm with this signal ... */
+		return DBUS_HANDLER_RESULT_HANDLED; 
 	} else if (dbus_message_is_signal (message,
 					   DBUS_INTERFACE_DBUS,
 					   "NameOwnerChanged")) {
