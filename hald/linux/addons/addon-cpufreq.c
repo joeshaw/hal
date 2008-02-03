@@ -1102,6 +1102,11 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 	dbus_error_init(&dbus_error);
 
+	/* since we wait only for method calls with interface == DBUS_INTERFACE check 
+	   it and return if there are calls with other interfaces */
+	if (!dbus_message_has_interface(message, DBUS_INTERFACE)) 
+		return DBUS_HANDLER_RESULT_HANDLED;
+
 #ifdef HAVE_POLKIT
 	if (!dbus_is_privileged(connection, message, &dbus_error))
 		return DBUS_HANDLER_RESULT_HANDLED;
