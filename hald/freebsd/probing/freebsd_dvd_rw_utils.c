@@ -52,7 +52,8 @@ static void
 scsi_command_init (ScsiCommand * cmd, size_t i, int arg)
 {
 	cmd->ccb[i] = arg;
-	cmd->len = i + 1;
+	if (i == 0 || i >= cmd->len)
+		cmd->len = i + 1;
 }
 
 static int
