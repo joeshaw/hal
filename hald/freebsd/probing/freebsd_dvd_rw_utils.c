@@ -28,6 +28,7 @@ typedef struct ScsiCommand ScsiCommand;
 struct ScsiCommand {
 	HFPCDROM		*cdrom;
 	char			ccb[16];
+	int			len;
 };
 
 static ScsiCommand *
@@ -51,13 +52,14 @@ static void
 scsi_command_init (ScsiCommand * cmd, size_t i, int arg)
 {
 	cmd->ccb[i] = arg;
+	cmd->len = i + 1;
 }
 
 static int
 scsi_command_transport (ScsiCommand * cmd, Direction dir, void *buf,
 			size_t sz)
 {
-	if (hfp_cdrom_send_ccb(cmd->cdrom, cmd->ccb, 10, dir, buf, sz, NULL))
+	if (hfp_cdrom_send_ccb(cmd->cdrom, cmd->ccb, cmd->len, dir, buf, sz, NULL))
 		return 0;
 	else
 		return -1;
