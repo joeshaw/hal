@@ -147,15 +147,15 @@ hf_device_add (HalDevice *device)
 
   g_return_if_fail(HAL_IS_DEVICE(device));
 
+  /* process information and policy fdi files */
+  di_search_and_merge(device, DEVICE_INFO_TYPE_INFORMATION);
+  di_search_and_merge(device, DEVICE_INFO_TYPE_POLICY);
+
   /* run add callouts */
   hf_async_init(&async);
   hal_util_callout_device_add(device, hf_device_callout_done_cb, &async, NULL);
   hf_async_wait(&async);
 
-  /* process information and policy fdi files */
-  di_search_and_merge(device, DEVICE_INFO_TYPE_INFORMATION);
-  di_search_and_merge(device, DEVICE_INFO_TYPE_POLICY);
-  
   /* move from temporary to global device store */
   hal_device_store_remove(hald_get_tdl(), device);
   hal_device_store_add(hald_get_gdl(), device);
