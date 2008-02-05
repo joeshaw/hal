@@ -239,6 +239,9 @@ hf_usb_device_compute_udi (HalDevice *device)
   if (hal_device_has_capability(device, "hiddev"))
     hf_device_set_full_udi(device, "%s_hiddev",
 			   hal_device_property_get_string(device, "info.parent"));
+  else if (hal_device_has_capability(device, "video4linux"))
+    hf_device_set_full_udi(device, "%s_video4linux",
+		    	   hal_device_property_get_string(device, "info.parent"));
   else if (hal_device_has_property(device, "usb.interface.number"))
     hf_device_set_full_udi(device, "%s_if%i",
 			   hal_device_property_get_string(device, "info.parent"),
@@ -398,6 +401,13 @@ hf_usb_device_new (HalDevice *parent,
 	g_free(port);
       }
 
+  /*
+   * Register the first attached driver (if any) with devtree (mostly
+   * useful for allowing hf-scsi to find umass devices).
+   */
+  if (*di->udi_devnames[0])
+    hf_devtree_device_set_name(device, di->udi_devnames[0]);
+
   if ((devname = hf_usb_get_devname(di, "ukbd")))	/* USB keyboard */
     hf_device_set_input(device, "keyboard", devname);
   else if ((devname = hf_usb_get_devname(di, "ums")))	/* USB mouse */
@@ -409,13 +419,25 @@ hf_usb_device_new (HalDevice *parent,
       hf_device_property_set_string_printf(device, "hiddev.device", "/dev/%s", devname);
       hal_device_copy_property(device, "info.product", device, "hiddev.product");
     }
+  else if ((devname = hf_usb_get_devname(di, "ldev")))	/* Linux driver (webcam) */
+    {
+      /*
+       * XXX This is a hack.  Currently, all ldev devices are webcams.  However,
+       * that may not always be the case.  Hopefully, when other Linux driver
+       * support is added, there will be a sysctl or some other way to
+       * determine device class.
+       */
+      int unit;
 
-  /*
-   * Register the first attached driver (if any) with devtree (mostly
-   * useful for allowing hf-scsi to find umass devices).
-   */
-  if (*di->udi_devnames[0])
-    hf_devtree_device_set_name(device, di->udi_devnames[0]);
+      unit = hal_device_property_get_int(device, "freebsd.unit");
+      if (unit < 0)
+        unit = 0;
+
+      hal_device_property_set_string(device, "info.category", "video4linux");
+      hal_device_add_capability(device, "video4linux");
+      hf_device_property_set_string_printf(device, "video4linux.device", "/dev/video%i", unit);
+      hal_device_property_set_string(device, "info.product", "Video Device");
+    }
 
   hf_usb_device_compute_udi(device);
 
