@@ -3094,7 +3094,7 @@ refresh_battery_fast (HalDevice *d)
 			is_mah = TRUE;
 			unknown_unit = FALSE;
 		} else if (strcasecmp (reporting_unit, "mwh") == 0) {
-			is_mah = TRUE;
+			is_mwh = TRUE;
 			unknown_unit = FALSE;
 		}
 	}
