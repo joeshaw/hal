@@ -242,6 +242,10 @@ input_test_switch (HalDevice *d, const char *sysfs_path)
 			hal_device_property_set_string (d, "button.type", "tablet_mode");
 		} else if (test_bit (SW_HEADPHONE_INSERT, bitmask)) {
 			hal_device_property_set_string (d, "button.type", "headphone_insert");
+#ifdef SW_RADIO
+		} else if (test_bit (SW_RADIO, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "radio");
+#endif
 		}
 	}
 

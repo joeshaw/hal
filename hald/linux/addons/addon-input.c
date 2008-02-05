@@ -248,6 +248,11 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 			case SW_HEADPHONE_INSERT:
 				name = "headphone_insert";
 				break;
+#ifdef SW_RADIO
+			case SW_RADIO:
+				name = "radio";
+				break;
+#endif
 			}
 			if (name != NULL) {
 				long bitmask[NBITS(SW_MAX)];
