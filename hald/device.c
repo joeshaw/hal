@@ -211,7 +211,8 @@ hal_property_set_string (HalProperty *prop, const char *value)
 	}
 
 	if (!validated) {
-		HAL_WARNING (("Property has invalid UTF-8 string '%s'", value));
+		HAL_WARNING (("Property has invalid UTF-8 string '%s', it was changed to: '%s'", 
+			      value, prop->v.str_value));
 	}
 }
 
