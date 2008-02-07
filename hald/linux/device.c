@@ -1978,6 +1978,13 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	g_snprintf (buf, sizeof (buf), "Platform Device (%s)", hal_device_property_get_string (d, "platform.id"));
 	hal_device_property_set_string (d, "info.product", buf);
 
+	if (strncmp (dev_id, "dock", 4) == 0) {
+		int docked;
+
+		hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+		hal_device_property_set_bool (d, "info.docked", docked);
+	}
+
 	return d;
 }
 
@@ -1993,7 +2000,23 @@ platform_compute_udi (HalDevice *d)
 	hal_device_property_set_string (d, "info.udi", udi);
 
 	return TRUE;
+}
 
+static gboolean
+platform_refresh (HalDevice *d)
+{
+	const gchar *id, *sysfs_path;
+	int docked;
+
+	id = hal_device_property_get_string (d, "platform.id");
+	if (strncmp (id, "dock", 4) != 0)
+		return TRUE;
+
+	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
+	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+	hal_device_property_set_bool (d, "info.docked", docked);
+
+	return TRUE;
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -3665,6 +3688,7 @@ static DevHandler dev_handler_pnp = {
 static DevHandler dev_handler_platform = {
 	.subsystem   = "platform",
 	.add         = platform_add,
+	.refresh     = platform_refresh,
 	.compute_udi = platform_compute_udi,
 	.remove      = dev_remove
 };
