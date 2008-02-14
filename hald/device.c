@@ -473,9 +473,9 @@ hal_device_init (HalDevice *device)
 	device->private->num_addons = 0;
 	device->private->num_addons_ready = 0;
 
-	device->private->props = g_hash_table_new_full (g_str_hash, 
-							g_str_equal, 
-							g_free, 
+	device->private->props = g_hash_table_new_full (g_direct_hash,
+							g_direct_equal,
+							NULL,
 							(GDestroyNotify) hal_property_free);
 }
 
@@ -522,10 +522,15 @@ hal_device_new (void)
 static inline HalProperty *
 hal_device_property_find (HalDevice *device, const char *key)
 {
+	GQuark quark = g_quark_try_string (key);
+
 	g_return_val_if_fail (device != NULL, NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 
-	return g_hash_table_lookup (device->private->props, key);
+	if (quark)
+	    return g_hash_table_lookup (device->private->props, GINT_TO_POINTER(quark));
+	else
+	    return NULL;
 }
 
 typedef struct 
@@ -851,11 +856,12 @@ hdpfe (gpointer key,
 {
 	hdpfe_ud_t *c;
 	HalProperty *prop;
+	const gchar *key_string = g_quark_to_string ((GQuark) key);
 
 	c = (hdpfe_ud_t *) user_data;
 	prop = (HalProperty *) value;
 
-	c->callback (c->device, (const char *) key, c->user_data);
+	c->callback (c->device, key_string, c->user_data);
 }
 
 void
@@ -1061,7 +1067,8 @@ hal_device_property_set_string (HalDevice *device, const char *key,
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRING);
 		hal_property_set_string (prop, value);
 
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1095,7 +1102,8 @@ hal_device_property_set_int (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new (HAL_PROPERTY_TYPE_INT32);
 		hal_property_set_int (prop, value);
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1129,7 +1137,8 @@ hal_device_property_set_uint64 (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new (HAL_PROPERTY_TYPE_UINT64);
 		hal_property_set_uint64 (prop, value);
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1163,7 +1172,8 @@ hal_device_property_set_bool (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new (HAL_PROPERTY_TYPE_BOOLEAN);
 		hal_property_set_bool (prop, value);
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1197,7 +1207,8 @@ hal_device_property_set_double (HalDevice *device, const char *key,
 	} else {
 		prop = hal_property_new (HAL_PROPERTY_TYPE_DOUBLE);
 		hal_property_set_double (prop, value);
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1240,12 +1251,13 @@ hal_device_property_set_strlist (HalDevice *device, const char *key,
 		 *	 - multiple copy calls mixed with e.g. append rules   
 		 */
 
-		g_hash_table_remove (device->private->props, key);
+		g_hash_table_remove (device->private->props, GINT_TO_POINTER(g_quark_from_string(key)));
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		for (l = value ; l != NULL; l = l->next) {
 			hal_property_strlist_append (prop, l->data);
 		}
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props, GINT_TO_POINTER(g_quark_from_string (key)),
+				     prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, FALSE);
@@ -1255,7 +1267,8 @@ hal_device_property_set_strlist (HalDevice *device, const char *key,
 		for (l = value ; l != NULL; l = l->next) {
 			hal_property_strlist_append (prop, l->data);
 		}
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props, GINT_TO_POINTER(g_quark_from_string (key)),
+				     prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1308,10 +1321,17 @@ hal_device_copy_property (HalDevice *from_device, const char *from, HalDevice *t
 gboolean
 hal_device_property_remove (HalDevice *device, const char *key)
 {
-	if (g_hash_table_remove (device->private->props, key)) {
-		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
-			       key, TRUE, FALSE);
-		return TRUE;
+	GQuark quark = g_quark_try_string (key);
+	if (quark && g_hash_table_lookup (device->private->props, GINT_TO_POINTER(quark))) {
+		g_signal_emit (device, signals[PRE_PROPERTY_CHANGED], 0,
+			       key, TRUE);
+
+		if (g_hash_table_remove (device->private->props,
+					 GINT_TO_POINTER(quark))) {
+			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
+				       key, TRUE, FALSE);
+			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -1423,7 +1443,8 @@ hal_device_property_strlist_append (HalDevice    *device,
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		hal_property_strlist_append (prop, value);
 
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		if (!changeset)
 			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
@@ -1481,7 +1502,8 @@ hal_device_property_strlist_prepend (HalDevice    *device,
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		hal_property_strlist_prepend (prop, value);
 
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
@@ -1527,7 +1549,8 @@ hal_device_property_strlist_clear (HalDevice    *device,
 
 	if (prop == NULL) {
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		if (!changeset)
 			g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
@@ -1539,9 +1562,9 @@ hal_device_property_strlist_clear (HalDevice    *device,
 		return FALSE;
 	
         /* TODO: check why  hal_property_strlist_clear (prop) not work */ 
-	g_hash_table_remove (device->private->props, key);
+	g_hash_table_remove (device->private->props, GINT_TO_POINTER(g_quark_from_string(key)));
 	prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
-	g_hash_table_insert (device->private->props, g_strdup (key), prop);
+	g_hash_table_insert (device->private->props, GINT_TO_POINTER(g_quark_from_string(key)), prop);
 
 	if (!changeset) {
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
@@ -1579,7 +1602,8 @@ hal_device_property_strlist_add (HalDevice *device,
 		prop = hal_property_new (HAL_PROPERTY_TYPE_STRLIST);
 		hal_property_strlist_prepend (prop, value);
 
-		g_hash_table_insert (device->private->props, g_strdup (key), prop);
+		g_hash_table_insert (device->private->props,
+			GINT_TO_POINTER(g_quark_from_string (key)), prop);
 
 		g_signal_emit (device, signals[PROPERTY_CHANGED], 0,
 			       key, FALSE, TRUE);
