@@ -255,6 +255,23 @@ hf_usb_device_compute_udi (HalDevice *device)
 		      : "noserial");
 }
 
+static void
+hf_usb_add_webcam_properties (HalDevice *device)
+{
+  int unit;
+
+  g_return_if_fail(HAL_IS_DEVICE(device));
+
+  unit = hal_device_property_get_int(device, "freebsd.unit");
+  if (unit < 0)
+    unit = 0;
+
+  hal_device_property_set_string(device, "info.category", "video4linux");
+  hal_device_add_capability(device, "video4linux");
+  hf_device_property_set_string_printf(device, "video4linux.device", "/dev/video%i", unit);
+  hal_device_property_set_string(device, "info.product", "Video Device");
+}
+
 /* adapted from usbif_set_name() in linux2/physdev.c */
 static const char *
 hf_usb_get_interface_name (const usb_interface_descriptor_t *desc)
@@ -427,16 +444,11 @@ hf_usb_device_new (HalDevice *parent,
        * support is added, there will be a sysctl or some other way to
        * determine device class.
        */
-      int unit;
-
-      unit = hal_device_property_get_int(device, "freebsd.unit");
-      if (unit < 0)
-        unit = 0;
-
-      hal_device_property_set_string(device, "info.category", "video4linux");
-      hal_device_add_capability(device, "video4linux");
-      hf_device_property_set_string_printf(device, "video4linux.device", "/dev/video%i", unit);
-      hal_device_property_set_string(device, "info.product", "Video Device");
+      hf_usb_add_webcam_properties(device);
+    }
+  else if ((devname = hf_usb_get_devname(di, "pwc")))	/* Phillips Web Cam */
+    {
+      hf_usb_add_webcam_properties(device);
     }
 
   hf_usb_device_compute_udi(device);
