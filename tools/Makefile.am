@@ -170,6 +170,7 @@ script_SCRIPTS =				\
 	hal-system-wol-supported		\
 	hal-system-wol-enabled			\
 	hal-system-wol-enable			\
+	hal-dockstation-undock			\
 	hal-functions
 
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES) gen-libgphoto-hal-fdi $(script_SCRIPTS)

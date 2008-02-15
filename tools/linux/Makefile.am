@@ -38,6 +38,7 @@ script_SCRIPTS =					\
 	hal-system-power-set-power-save-linux		\
 	hal-system-killswitch-get-power-linux		\
 	hal-system-killswitch-set-power-linux		\
+	hal-dockstation-undock-linux			\
 	hal-system-wol-linux
 
 EXTRA_DIST = 90-hal.rules $(script_SCRIPTS)

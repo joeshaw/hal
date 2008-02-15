@@ -242,6 +242,10 @@ input_test_switch (HalDevice *d, const char *sysfs_path)
 			hal_device_property_set_string (d, "button.type", "tablet_mode");
 		} else if (test_bit (SW_HEADPHONE_INSERT, bitmask)) {
 			hal_device_property_set_string (d, "button.type", "headphone_insert");
+#ifdef SW_RADIO
+		} else if (test_bit (SW_RADIO, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "radio");
+#endif
 		}
 	}
 
@@ -1974,6 +1978,13 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	g_snprintf (buf, sizeof (buf), "Platform Device (%s)", hal_device_property_get_string (d, "platform.id"));
 	hal_device_property_set_string (d, "info.product", buf);
 
+	if (strncmp (dev_id, "dock", 4) == 0) {
+		int docked;
+
+		hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+		hal_device_property_set_bool (d, "info.docked", docked);
+	}
+
 	return d;
 }
 
@@ -1989,7 +2000,23 @@ platform_compute_udi (HalDevice *d)
 	hal_device_property_set_string (d, "info.udi", udi);
 
 	return TRUE;
+}
 
+static gboolean
+platform_refresh (HalDevice *d)
+{
+	const gchar *id, *sysfs_path;
+	int docked;
+
+	id = hal_device_property_get_string (d, "platform.id");
+	if (strncmp (id, "dock", 4) != 0)
+		return TRUE;
+
+	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
+	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+	hal_device_property_set_bool (d, "info.docked", docked);
+
+	return TRUE;
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -3054,7 +3081,7 @@ refresh_battery_fast (HalDevice *d)
 	}
 
 	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
-	if (!hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
+	if (hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
 		hal_device_property_set_int (d, "battery.reporting.rate", current / 1000);
 	} else if (hal_util_get_int_from_file (path, "current_now", &current, 10)) {
 		hal_device_property_set_int (d, "battery.reporting.rate", current / 1000);
@@ -3094,7 +3121,7 @@ refresh_battery_fast (HalDevice *d)
 			is_mah = TRUE;
 			unknown_unit = FALSE;
 		} else if (strcasecmp (reporting_unit, "mwh") == 0) {
-			is_mah = TRUE;
+			is_mwh = TRUE;
 			unknown_unit = FALSE;
 		}
 	}
@@ -3661,6 +3688,7 @@ static DevHandler dev_handler_pnp = {
 static DevHandler dev_handler_platform = {
 	.subsystem   = "platform",
 	.add         = platform_add,
+	.refresh     = platform_refresh,
 	.compute_udi = platform_compute_udi,
 	.remove      = dev_remove
 };

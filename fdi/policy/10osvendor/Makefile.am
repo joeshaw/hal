@@ -9,7 +9,8 @@ dist_fdi_DATA = 			\
 	10-laptop-panel-mgmt-policy.fdi	\
 	15-storage-luks.fdi		\
 	20-storage-methods.fdi		\
-	30-wol.fdi
+	30-wol.fdi			\
+	10-dockstation.fdi
 
 if BUILD_KEYMAPS
 dist_fdi_DATA += 10-keymap.fdi

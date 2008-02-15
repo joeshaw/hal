@@ -542,18 +542,17 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
 		fprintf (stderr,
 			 "%s %d : %s\n",
 			 __FILE__, __LINE__, error->message);
-
-		dbus_message_unref (message);
 		return NULL;
 	}
 
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 
@@ -561,7 +560,6 @@ libhal_device_get_all_properties (LibHalContext *ctx, const char *udi, DBusError
 
 	result = get_property_set (&reply_iter);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 
 	return result;
@@ -1260,13 +1258,13 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	dbus_error_init (&_error);
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection, message, -1, &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 
@@ -1275,6 +1273,7 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 
 	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
 		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
+		dbus_message_unref (reply);
 		return NULL;
 	}
 	
@@ -1283,8 +1282,6 @@ libhal_get_all_devices (LibHalContext *ctx, int *num_devices, DBusError *error)
 	hal_device_names = libhal_get_string_array_from_iter (&iter_array, num_devices);
 		      
 	dbus_message_unref (reply);
-	dbus_message_unref (message);
-
 	return hal_device_names;
 }
 
@@ -1329,22 +1326,20 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return LIBHAL_PROPERTY_TYPE_INVALID;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return LIBHAL_PROPERTY_TYPE_INVALID;
 	}
 
 	dbus_message_iter_init (reply, &reply_iter);
 	dbus_message_iter_get_basic (&reply_iter, &type);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
-
 	return type;
 }
 
@@ -1393,13 +1388,13 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	/* now analyse reply */
@@ -1407,6 +1402,7 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 
 	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
 		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
+		dbus_message_unref (reply);
 		return NULL;
 	}
 	
@@ -1415,8 +1411,6 @@ libhal_device_get_property_strlist (LibHalContext *ctx, const char *udi, const c
 	our_strings = libhal_get_string_array_from_iter (&iter_array, NULL);
 		      
 	dbus_message_unref (reply);
-	dbus_message_unref (message);
-
 	return our_strings;
 }
 
@@ -1467,13 +1461,13 @@ libhal_device_get_property_string (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 
@@ -1482,7 +1476,6 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	/* now analyze reply */
 	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_STRING) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return NULL;
 	}
@@ -1492,11 +1485,8 @@ libhal_device_get_property_string (LibHalContext *ctx,
 	if (value == NULL) {
 		fprintf (stderr, "%s %d : error allocating memory\n",
 			 __FILE__, __LINE__);
-		/** @todo FIXME cleanup */
-		return NULL;
 	}
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -1544,13 +1534,13 @@ libhal_device_get_property_int (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return -1;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return -1;
 	}
 
@@ -1563,13 +1553,11 @@ libhal_device_get_property_int (LibHalContext *ctx,
 			 "%s %d : property '%s' for device '%s' is not "
 			 "of type integer\n", __FILE__, __LINE__, key,
 			 udi);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return -1;
 	}
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -1616,14 +1604,14 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   &_error);
-	
+
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return -1;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return -1;
 	}
 
@@ -1635,13 +1623,11 @@ libhal_device_get_property_uint64 (LibHalContext *ctx,
 			 "%s %d : property '%s' for device '%s' is not "
 			 "of type integer\n", __FILE__, __LINE__, key,
 			 udi);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return -1;
 	}
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -1689,13 +1675,13 @@ libhal_device_get_property_double (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return -1.0f;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return -1.0f;
 	}
 
@@ -1707,13 +1693,11 @@ libhal_device_get_property_double (LibHalContext *ctx,
 		fprintf (stderr,
 			 "%s %d : property '%s' for device '%s' is not "
 			 "of type double\n", __FILE__, __LINE__, key, udi);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return -1.0f;
 	}
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return (double) value;
 }
@@ -1761,13 +1745,13 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
@@ -1779,13 +1763,11 @@ libhal_device_get_property_bool (LibHalContext *ctx,
 		fprintf (stderr,
 			 "%s %d : property '%s' for device '%s' is not "
 			 "of type bool\n", __FILE__, __LINE__, key, udi);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -1871,17 +1853,16 @@ libhal_device_set_property_helper (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
-	if (reply == NULL) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
 
 	dbus_message_unref (message);
+
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
+	if (reply == NULL) {
+		return FALSE;
+	}
+
 	dbus_message_unref (reply);
 
 	return TRUE;
@@ -2092,14 +2073,17 @@ libhal_device_property_strlist_append (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
+
+	dbus_message_unref (reply);
 	return TRUE;
 }
 
@@ -2148,14 +2132,17 @@ libhal_device_property_strlist_prepend (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
+
+	dbus_message_unref (reply);
 	return TRUE;
 }
 
@@ -2203,14 +2190,17 @@ libhal_device_property_strlist_remove_index (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
+
+	dbus_message_unref (reply);
 	return TRUE;
 }
 
@@ -2258,14 +2248,17 @@ libhal_device_property_strlist_remove (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
+
+	dbus_message_unref (reply);
 	return TRUE;
 }
 
@@ -2318,6 +2311,8 @@ libhal_device_lock (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
 		if (strcmp (error->name,
 			    "org.freedesktop.Hal.DeviceAlreadyLocked") == 0) {
@@ -2330,12 +2325,8 @@ libhal_device_lock (LibHalContext *ctx,
 			}
 		}
 
-		dbus_message_unref (message);
 		return FALSE;
 	}
-
-	dbus_message_unref (message);
-
 	if (reply == NULL)
 		return FALSE;
 
@@ -2382,13 +2373,11 @@ libhal_device_unlock (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
@@ -2437,12 +2426,13 @@ libhal_new_device (LibHalContext *ctx, DBusError *error)
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 
@@ -2453,7 +2443,6 @@ libhal_new_device (LibHalContext *ctx, DBusError *error)
 		fprintf (stderr,
 			 "%s %d : expected a string in reply to NewDevice\n",
 			 __FILE__, __LINE__);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return NULL;
 	}
@@ -2465,7 +2454,6 @@ libhal_new_device (LibHalContext *ctx, DBusError *error)
 			 __FILE__, __LINE__);
 	}
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -2522,16 +2510,16 @@ libhal_device_commit_to_gdl (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return TRUE;
 }
@@ -2579,16 +2567,16 @@ libhal_remove_device (LibHalContext *ctx, const char *udi, DBusError *error)
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return TRUE;
 }
@@ -2634,13 +2622,13 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
@@ -2651,14 +2639,12 @@ libhal_device_exists (LibHalContext *ctx, const char *udi, DBusError *error)
 		fprintf (stderr,
 			 "%s %d : expected a bool in reply to DeviceExists\n",
 			 __FILE__, __LINE__);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
 
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -2706,13 +2692,13 @@ libhal_device_property_exists (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
@@ -2722,14 +2708,12 @@ libhal_device_property_exists (LibHalContext *ctx,
 	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
 		fprintf (stderr, "%s %d : expected a bool in reply to "
 			 "PropertyExists\n", __FILE__, __LINE__);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
 
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -2776,16 +2760,16 @@ libhal_merge_properties (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return TRUE;
 }
@@ -2848,13 +2832,13 @@ libhal_device_matches (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 	/* now analyse reply */
@@ -2864,14 +2848,12 @@ libhal_device_matches (LibHalContext *ctx,
 		fprintf (stderr,
 			 "%s %d : expected a bool in reply to DeviceMatches\n",
 			 __FILE__, __LINE__);
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
 
 	dbus_message_iter_get_basic (&reply_iter, &value);
 
-	dbus_message_unref (message);
 	dbus_message_unref (reply);
 	return value;
 }
@@ -3006,13 +2988,13 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	/* now analyse reply */
@@ -3028,8 +3010,6 @@ libhal_manager_find_device_string_match (LibHalContext *ctx,
 	hal_device_names = libhal_get_string_array_from_iter (&iter_array, num_devices);
 		      
 	dbus_message_unref (reply);
-	dbus_message_unref (message);
-
 	return hal_device_names;
 }
 
@@ -3074,18 +3054,17 @@ libhal_device_add_capability (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   error);
+
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
-
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
 	dbus_message_unref (reply);
-	dbus_message_unref (message);
 	return TRUE;
 }
 
@@ -3170,14 +3149,14 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	reply = dbus_connection_send_with_reply_and_block (ctx->connection,
 							   message, -1,
 							   &_error);
-	
+
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return NULL;
 	}
 	/* now analyse reply */
@@ -3193,8 +3172,6 @@ libhal_find_device_by_capability (LibHalContext *ctx,
 	hal_device_names = libhal_get_string_array_from_iter (&iter_array, num_devices);
 		      
 	dbus_message_unref (reply);
-	dbus_message_unref (message);
-
 	return hal_device_names;
 }
 
@@ -3735,20 +3712,17 @@ libhal_device_rescan (LibHalContext *ctx, const char *udi, DBusError *error)
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
@@ -3796,20 +3770,17 @@ libhal_device_reprobe (LibHalContext *ctx, const char *udi, DBusError *error)
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
@@ -3870,15 +3841,14 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
+	dbus_message_unref (message);
+
 	if (error != NULL && dbus_error_is_set (error)) {
 		fprintf (stderr,
 			 "%s %d : Failure sending D-BUS message: %s: %s\n",
 			 __FILE__, __LINE__, error->name, error->message);
-		dbus_message_unref (message);
 		return FALSE;
 	}
-
-	dbus_message_unref (message);
 
 	if (reply == NULL) {
 		fprintf (stderr,
@@ -3890,7 +3860,6 @@ dbus_bool_t libhal_device_emit_condition (LibHalContext *ctx,
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		fprintf (stderr,
 			 "%s %d : Malformed reply\n",
@@ -3942,13 +3911,11 @@ addon_is_ready(LibHalContext *ctx, const char *identifier,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
@@ -4058,20 +4025,17 @@ libhal_device_claim_interface (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) !=
 		   DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return FALSE;
 	}
@@ -4526,21 +4490,21 @@ libhal_device_commit_changeset (LibHalContext *ctx, LibHalChangeSet *changeset, 
 							   message, -1,
 							   &_error);
 
+	dbus_message_unref (message);
+
 	dbus_move_error (&_error, error);
 	if (error != NULL && dbus_error_is_set (error)) {
 		fprintf (stderr,
 			 "%s %d : %s\n",
 			 __FILE__, __LINE__, error->message);
 
-		dbus_message_unref (message);
 		return FALSE;
 	}
-
 	if (reply == NULL) {
-		dbus_message_unref (message);
 		return FALSE;
 	}
 
+	dbus_message_unref (reply);
 	return TRUE;
 }
 
@@ -4632,13 +4596,11 @@ libhal_device_acquire_interface_lock (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
@@ -4689,13 +4651,11 @@ dbus_bool_t libhal_device_release_interface_lock (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
@@ -4746,13 +4706,11 @@ dbus_bool_t libhal_acquire_global_interface_lock (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
@@ -4800,13 +4758,11 @@ dbus_bool_t libhal_release_global_interface_lock (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return FALSE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
 	if (reply == NULL)
 		return FALSE;
 
@@ -4866,20 +4822,17 @@ libhal_device_is_caller_locked_out (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return TRUE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return TRUE;
+	}
 	if (reply == NULL)
 		return TRUE;
 
 	/* now analyze reply */
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return TRUE;
 	}
@@ -5010,20 +4963,17 @@ libhal_device_is_locked_by_others (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return TRUE;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return TRUE;
+	}
 	if (reply == NULL)
 		return TRUE;
 
 	/* now analyze reply */
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_BOOLEAN) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return TRUE;
 	}
@@ -5088,20 +5038,17 @@ libhal_device_is_caller_privileged (LibHalContext *ctx,
 							   message, -1,
 							   error);
 
-	if (error != NULL && dbus_error_is_set (error)) {
-		dbus_message_unref (message);
-		return NULL;
-	}
-
 	dbus_message_unref (message);
 
+	if (error != NULL && dbus_error_is_set (error)) {
+		return NULL;
+	}
 	if (reply == NULL)
 		return NULL;
 
 	/* now analyze reply */
 	dbus_message_iter_init (reply, &reply_iter);
 	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_STRING) {
-		dbus_message_unref (message);
 		dbus_message_unref (reply);
 		return NULL;
 	}
