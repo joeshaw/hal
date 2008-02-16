@@ -881,6 +881,63 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-modemif">
+      <title>
+        modem namespace
+      </title>
+      <para>
+        Serial device objectes that are known to be modems should also gain the
+        <literal>modem</literal> capability in their
+        <literal>info.capabilities</literal> list.  Modem device objects must
+        also be serial device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>modem.command_sets</literal> (string)
+              </entry>
+              <entry>example: GSM-07.07, GSM-07.05</entry>
+              <entry>Yes</entry>
+              <entry>This property defines the command sets the modem device supports.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>IS-707-A</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the IS-707-A standard AT commands (commonly used by CDMA cellular devices).  Implies V.250 support.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>GSM-07.07</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the GSM-07.07 standard AT commands (commonly used by GSM-based cellular devices).  Implies V.250 support.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>GSM-07.05</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the GSM-07.05 standard AT commands (commonly used by GSM-based cellular devices).  Implies V.250 support.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>ITU-V.250</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the ITU V.250 standard AT commands (also known as Hayes-compatible).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-usb">
       <title>
         usb_device namespace
