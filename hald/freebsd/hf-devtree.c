@@ -530,7 +530,7 @@ hf_devtree_device_set_info (HalDevice *device, const char *driver, int unit)
 
   devfile = g_strdup_printf("/dev/%s%i", driver, unit);
   if (g_file_test(devfile, G_FILE_TEST_EXISTS))
-    hf_device_property_set_string_printf(device, "freebsd.device_file", "/dev/%s%i", driver, unit);
+    hf_device_property_set_string_printf(device, "freebsd.device_file", devfile);
   g_free(devfile);
 }
 
