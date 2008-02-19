@@ -265,9 +265,18 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 		goto out;
 	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
 
-	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask) && test_bit (ABS_PRESSURE, bitmask)) {
-		hal_device_add_capability (d, "input.touchpad");
-                goto out;
+	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask)) {
+		if (test_bit (ABS_PRESSURE, bitmask)) {
+			hal_device_add_capability (d, "input.touchpad");
+			goto out;
+		} else {
+			/*
+			 * This path is taken by VMware's USB mouse, which has
+			 * absolute axes, but no touch/pressure button.
+			 */
+			hal_device_add_capability (d, "input.mouse");
+			goto out;
+		}
         }
 
         /* TODO: Hmm; this code looks sketchy... why do we do !test_bit on the Y axis ?? */
