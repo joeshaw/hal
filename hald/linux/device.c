@@ -3456,6 +3456,52 @@ drm_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+ps3_system_bus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev,
+		    const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	const gchar *dev_id;
+	gchar buf[64];
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "ps3_system_bus");
+	hal_device_property_set_string (d, "info.bus", "ps3_system_bus");
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	dev_id = hal_util_get_last_element (sysfs_path);
+
+	hal_device_property_set_string (d, "ps3_system_bus.id", dev_id);
+
+	g_snprintf (buf, sizeof (buf), "PS3 Device (%s)", hal_device_property_get_string (d, "ps3_system_bus.id"));
+	hal_device_property_set_string (d, "info.product", buf);
+
+	return d;
+}
+
+static gboolean
+ps3_system_bus_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ps3_system_bus_%s",
+			      hal_device_property_get_string (d, "ps3_system_bus.id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -3801,6 +3847,14 @@ static DevHandler dev_handler_drm =
        .remove       = dev_remove
 };
 
+static DevHandler dev_handler_ps3_system_bus =
+{
+	.subsystem   = "ps3_system_bus",
+	.add         = ps3_system_bus_add,
+	.compute_udi = ps3_system_bus_compute_udi,
+	.remove      = dev_remove
+};
+
 /* SCSI debug, to test thousends of fake devices */
 static DevHandler dev_handler_pseudo = {
 	.subsystem   = "pseudo",
@@ -3845,6 +3899,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_firewire,
 	&dev_handler_power_supply,
 	&dev_handler_drm,
+	&dev_handler_ps3_system_bus,
 	NULL
 };
 
