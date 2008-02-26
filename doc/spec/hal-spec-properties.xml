@@ -6676,6 +6676,59 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-pda">
+      <title>
+        PDA namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>pda</literal>
+        represent Personal Digital Assistant (PDA) devices.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>pda.platform</literal> (string)
+              </entry>
+              <entry>e.g. palm or pocketpc</entry>
+              <entry>Yes</entry>
+              <entry>The type of the PDA platform</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pda.palm.hotsync_interface</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		Path to the Palm hotsync interface e.g. a linux device file (e.g. USB) or a 
+		serial device.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pda.pocketpc.hotsync_interface</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		Path to the Pocket PC (e.g. HP iPAQ) hotsync interface e.g. a linux device file 
+		(e.g. USB) or a serial device.
+	      </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-power-management">
       <title>
         power_management namespace
