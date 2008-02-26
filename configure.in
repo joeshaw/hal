@@ -390,7 +390,7 @@ AC_ARG_ENABLE([usb],
 if test "x$use_usb" = "xyes" ; then
 	AC_CHECK_HEADERS([usb.h], [USE_LIBUSB=yes], [USE_LIBUSB=no])
 	if test "x$USE_LIBUSB" = "xyes"; then
-		AC_CHECK_LIB([usb], [usb_find_devices], [], [USE_LIBUSB=no])
+		AC_CHECK_LIB([usb], [usb_find_devices], [USE_LIBUSB=yes], [USE_LIBUSB=no])
 	fi
 else
     	USE_LIBUSB=no
