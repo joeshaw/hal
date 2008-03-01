@@ -3206,6 +3206,7 @@ refresh_battery_slow (HalDevice *d)
 	char *technology_raw;
 	char *model_name;
 	char *manufacturer;
+	char *serial;
 	const gchar *path;
 
 	path = hal_device_property_get_string (d, "linux.sysfs_path");
@@ -3250,6 +3251,12 @@ refresh_battery_slow (HalDevice *d)
 	} else if (hal_util_get_int_from_file (path, "charge_full_design", &value_full_design, 10)) {
 		hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
 		hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+	}
+
+	/* get serial */
+	serial = hal_util_get_string_from_file (path, "serial_number");
+	if (serial != NULL) {
+		hal_device_property_set_string (d, "battery.serial", serial);
 	}
 
 	/* now do stuff that happens quickly */
