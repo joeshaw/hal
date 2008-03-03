@@ -149,7 +149,6 @@ hf_ata_block_device_new (HalDevice *parent,
     hal_device_property_set_bool(device, "storage.removable", TRUE);
 
   hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
-  hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "storage.model", params->model);
   hal_device_property_set_string(device, "storage.vendor", vendor);
   if (*params->serial)

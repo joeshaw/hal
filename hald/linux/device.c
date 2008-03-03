@@ -337,7 +337,6 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "input.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "input.physical_device", hal_device_get_udi (parent_dev));
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
@@ -512,7 +511,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_device_add_capability (d, "net");
 
 	hal_device_property_set_string (d, "net.originating_device", hal_device_get_udi (parent_dev));
-	hal_device_property_set_string (d, "net.physical_device", hal_device_get_udi (parent_dev));
 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
@@ -856,7 +854,6 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 		hal_device_property_set_string (d, "printer.device", device_file);
 
 		hal_device_property_set_string (d, "printer.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "printer.physical_device", hal_device_get_udi (parent_dev));
 	}
 
 out:
@@ -1061,7 +1058,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 		hal_device_property_set_string (d, "info.category", "sound");
 		hal_device_add_capability (d, "sound");
 		hal_device_property_set_string (d, "sound.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "sound.physical_device", hal_device_get_udi (parent_dev));
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 		if (sscanf (device, "card%d", &cardnum) == 1) {
@@ -1108,7 +1104,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "alsa.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_string (d, "alsa.type", "control");
 	
@@ -1125,7 +1120,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "alsa.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
@@ -1171,7 +1165,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "alsa.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
@@ -1221,7 +1214,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "oss.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "oss.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "oss.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "oss.card", cardnum);
 	
 			asound_card_id_set (cardnum, d, "oss.card_id");
@@ -1363,7 +1355,6 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	hal_device_property_set_string (d, "info.category", "serial");
 	hal_device_add_capability (d, "serial");
 	hal_device_property_set_string (d, "serial.originating_device", hal_device_get_udi (parent_dev));
-	hal_device_property_set_string (d, "serial.physical_device", hal_device_get_udi (parent_dev));
 	hal_device_property_set_string (d, "serial.device", device_file);
 
 	last_elem = hal_util_get_last_element(sysfs_path);

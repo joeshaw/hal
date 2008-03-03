@@ -7105,12 +7105,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           </thead>
           <tbody>
             <row>
-              <entry><literal>*.physical_device</literal> (string)</entry>
-              <entry><literal>*.originating_device</literal></entry>
-              <entry>2008-03-01</entry>
-              <entry>Renamed to something more abstract, available until removed.</entry>
-            </row>
-            <row>
                 <entry><literal>portable_audio_player.access_method</literal> (string)</entry>
                 <entry><literal>portable_audio_player.access_method.[drivers, protocols]</literal> (strlist)</entry>
                 <entry>2008-05-03</entry>

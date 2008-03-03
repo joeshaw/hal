@@ -47,7 +47,6 @@ hf_serial_device_new (HalDevice *parent)
   hal_device_add_capability(device, "serial");
 
   hal_device_property_set_string(device, "serial.originating_device", hal_device_get_udi(parent));
-  hal_device_property_set_string(device, "serial.physical_device", hal_device_get_udi(parent));
 
   /* callin devices: /dev/ttyd[0-9a-v] -- see sio(4) */
   unit = hal_device_property_get_int(parent, "freebsd.unit");

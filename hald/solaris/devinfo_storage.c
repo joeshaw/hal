@@ -1134,7 +1134,6 @@ devinfo_storage_hotplug_begin_add (HalDevice *d, HalDevice *parent, DevinfoDevHa
 		goto error;
 	}
 	hal_device_property_set_string (d, "storage.originating_device", hal_device_get_udi (phys_d));
-	hal_device_property_set_string (d, "storage.physical_device", hal_device_get_udi (phys_d));
 	hal_device_property_set_string (d, "storage.bus", phys_bus);
 
 skip_bus:

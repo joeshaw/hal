@@ -220,7 +220,6 @@ hf_scsi_block_device_new (HalDevice *parent,
 	    {
 	      hal_device_property_set_string(device, "storage.bus", "scsi");
 	      hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
-	      hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
 	      hal_device_copy_property(parent, "scsi.lun", device, "storage.lun");
 	      /* do not stop here, in case it's an umass device */
 	    }
@@ -228,7 +227,6 @@ hf_scsi_block_device_new (HalDevice *parent,
 	    {
 	      hal_device_property_set_string(device, "storage.bus", "usb");
 	      hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
-	      hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
 	      hal_device_property_set_bool(device, "storage.hotpluggable", TRUE);
 	      break;		/* done */
 	    }
@@ -306,7 +304,7 @@ hf_scsi_get_atapi_device (HalDevice *ata_channel, int target_id)
       if (! driver || (strcmp(driver, "acd") && strcmp(driver, "ast") && strcmp(driver, "afd")))
         continue;
 
-      phys_device = hal_device_property_get_string(child, "storage.physical_device");
+      phys_device = hal_device_property_get_string(child, "storage.originating_device");
       if (! phys_device)
         continue;
 
