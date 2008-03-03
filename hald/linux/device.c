@@ -2314,6 +2314,62 @@ mmc_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+sdio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	gchar buf[256];
+	gint host_num, rca, card_id, vendor_id, product_id;
+
+	if (parent_dev == NULL)
+		return NULL;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "sdio");
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	sscanf (bus_id, "mmc%d:%x:%d", &host_num, &rca, &card_id);
+	hal_device_property_set_int (d, "sdio.rca", rca);
+	hal_device_property_set_int (d, "sdio.card_id", card_id);
+
+	hal_util_set_int_from_file (d, "sdio.vendor_id", sysfs_path, "vendor", 16);
+	hal_util_set_int_from_file (d, "sdio.product_id", sysfs_path, "device", 16);
+	hal_util_set_int_from_file (d, "sdio.class_id", sysfs_path, "class", 16);
+
+	/* TODO: Here we should have a mapping to a name */
+	g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", hal_device_property_get_int (d, "sdio.vendor_id"));
+	hal_device_property_set_string (d, "info.vendor", buf);
+	hal_device_property_set_string (d, "sdio.vendor", buf);
+
+	/* TODO: Here we should have a mapping to a name */
+	g_snprintf (buf, sizeof (buf), "Unknown (0x%04x)", hal_device_property_get_int (d, "sdio.product_id"));
+	hal_device_property_set_string (d, "info.product", buf);
+	hal_device_property_set_string (d, "sdio.product", buf);
+
+	return d;
+}
+
+static gboolean
+sdio_card_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_sdio%d",
+			      hal_device_property_get_string (d, "info.parent"),
+			      hal_device_property_get_int (d, "sdio.card_id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 xen_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -3801,6 +3857,13 @@ static DevHandler dev_handler_mmc = {
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_sdio = { 
+	.subsystem   = "sdio",
+	.add         = sdio_add,
+	.compute_udi = sdio_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_ieee1394 = { 
 	.subsystem   = "ieee1394",
 	.add         = ieee1394_add,
@@ -3909,6 +3972,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_pcmcia,
 	&dev_handler_scsi,
 	&dev_handler_mmc,
+	&dev_handler_sdio,
 	&dev_handler_ieee1394,
 	&dev_handler_xen,
 	&dev_handler_ccw,
