@@ -2870,6 +2870,40 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+
+    <sect2 id="device-properties-virtio">
+      <title>
+        virtio namespace
+      </title>
+      <para>
+        Devices on the VirtIO bus are represented by device
+        objects where <literal>info.subsystem</literal> equals
+        <literal>virtio</literal>. The following properties are
+        available for such device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>virtio.id</literal> (string)
+              </entry>
+              <entry>example: serial</entry>
+              <entry>Yes</entry>
+              <entry>Device identification</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
   </sect1>
 
   <sect1 id="properties-functional">
