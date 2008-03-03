@@ -995,7 +995,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "info.product", "PC Floppy Drive");
 		hal_device_property_set_string (d, "storage.drive_type", "floppy");
 		hal_device_property_set_string (d, "storage.originating_device", hal_device_get_udi (parent));
-		hal_device_property_set_string (d, "storage.physical_device", hal_device_get_udi (parent));
 		hal_device_property_set_bool (d, "storage.removable", TRUE);
 		hal_device_property_set_bool (d, "storage.removable.media_available", FALSE);
 		hal_device_property_set_bool (d, "storage.hotpluggable", FALSE);
@@ -1187,7 +1186,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		}
 
 		hal_device_property_set_string (d, "storage.originating_device", physdev_udi);
-		hal_device_property_set_string (d, "storage.physical_device", physdev_udi);
 
 		if (!hal_util_get_int_from_file (sysfs_path_real, "removable", (gint *) &is_removable, 10)) {
 			HAL_WARNING (("Cannot get 'removable' file"));

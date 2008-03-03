@@ -171,7 +171,7 @@ print_props (const char *udi)
 			printf ("  %s = {", libhal_psi_get_key (&it));
 
 			strlist = libhal_psi_get_strlist (&it);
-			for (i = 0; strlist[i] != 0; i++) {
+			for (i = 0; strlist[i] != NULL; i++) {
 				printf ("'%s'", strlist[i]);
 				if (strlist[i+1] != NULL)
 					printf (", ");
@@ -482,7 +482,7 @@ print_property (const char *udi, const char *key)
 		strlist = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
                 /* may be NULL because property may have been removed */
                 if (strlist != NULL) {
-                        for (i = 0; strlist[i] != 0; i++) {
+                        for (i = 0; strlist[i] != NULL; i++) {
                                 printf ("'%s'", strlist[i]);
                                 if (strlist[i+1] != NULL)
                                         printf (", ");

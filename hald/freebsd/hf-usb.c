@@ -239,6 +239,9 @@ hf_usb_device_compute_udi (HalDevice *device)
   if (hal_device_has_capability(device, "hiddev"))
     hf_device_set_full_udi(device, "%s_hiddev",
 			   hal_device_property_get_string(device, "info.parent"));
+  else if (hal_device_has_capability(device, "video4linux"))
+    hf_device_set_full_udi(device, "%s_video4linux",
+		    	   hal_device_property_get_string(device, "info.parent"));
   else if (hal_device_has_property(device, "usb.interface.number"))
     hf_device_set_full_udi(device, "%s_if%i",
 			   hal_device_property_get_string(device, "info.parent"),
@@ -250,6 +253,23 @@ hf_usb_device_compute_udi (HalDevice *device)
 		      hal_device_has_property(device, "usb_device.serial")
 		      ? hal_device_property_get_string(device, "usb_device.serial")
 		      : "noserial");
+}
+
+static void
+hf_usb_add_webcam_properties (HalDevice *device)
+{
+  int unit;
+
+  g_return_if_fail(HAL_IS_DEVICE(device));
+
+  unit = hal_device_property_get_int(device, "freebsd.unit");
+  if (unit < 0)
+    unit = 0;
+
+  hal_device_property_set_string(device, "info.category", "video4linux");
+  hal_device_add_capability(device, "video4linux");
+  hf_device_property_set_string_printf(device, "video4linux.device", "/dev/video%i", unit);
+  hal_device_property_set_string(device, "info.product", "Video Device");
 }
 
 /* adapted from usbif_set_name() in linux2/physdev.c */
@@ -315,8 +335,6 @@ hf_usb_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "usb_device");
-  hal_device_property_set_string(device, "info.bus", "usb_device");
-
   hal_device_property_set_string(device, "info.product", di->udi_product);
   hal_device_property_set_string(device, "info.vendor", di->udi_vendor);
 
@@ -398,6 +416,13 @@ hf_usb_device_new (HalDevice *parent,
 	g_free(port);
       }
 
+  /*
+   * Register the first attached driver (if any) with devtree (mostly
+   * useful for allowing hf-scsi to find umass devices).
+   */
+  if (*di->udi_devnames[0])
+    hf_devtree_device_set_name(device, di->udi_devnames[0]);
+
   if ((devname = hf_usb_get_devname(di, "ukbd")))	/* USB keyboard */
     hf_device_set_input(device, "keyboard", devname);
   else if ((devname = hf_usb_get_devname(di, "ums")))	/* USB mouse */
@@ -409,13 +434,20 @@ hf_usb_device_new (HalDevice *parent,
       hf_device_property_set_string_printf(device, "hiddev.device", "/dev/%s", devname);
       hal_device_copy_property(device, "info.product", device, "hiddev.product");
     }
-
-  /*
-   * Register the first attached driver (if any) with devtree (mostly
-   * useful for allowing hf-scsi to find umass devices).
-   */
-  if (*di->udi_devnames[0])
-    hf_devtree_device_set_name(device, di->udi_devnames[0]);
+  else if ((devname = hf_usb_get_devname(di, "ldev")))	/* Linux driver (webcam) */
+    {
+      /*
+       * XXX This is a hack.  Currently, all ldev devices are webcams.  However,
+       * that may not always be the case.  Hopefully, when other Linux driver
+       * support is added, there will be a sysctl or some other way to
+       * determine device class.
+       */
+      hf_usb_add_webcam_properties(device);
+    }
+  else if ((devname = hf_usb_get_devname(di, "pwc")))	/* Phillips Web Cam */
+    {
+      hf_usb_add_webcam_properties(device);
+    }
 
   hf_usb_device_compute_udi(device);
 
@@ -436,7 +468,7 @@ hf_usb_interface_device_new (HalDevice *parent,
 
   device = hf_device_new(parent);
 
-  hal_device_property_set_string(device, "info.bus", "usb");
+  hal_device_property_set_string(device, "info.subsystem", "usb");
 
   hal_device_merge_with_rewrite(device, parent, "usb.", "usb_device.");
 

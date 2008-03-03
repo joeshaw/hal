@@ -68,7 +68,6 @@ hf_scsi_bus_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "scsi_host");
-  hal_device_property_set_string(device, "info.bus", "scsi_host");
   hal_device_property_set_int(device, "scsi_host.host", match->path_id);
   hal_device_property_set_string(device, "info.product", "SCSI Host Adapter");
 
@@ -93,7 +92,6 @@ hf_scsi_scsi_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "scsi");
-  hal_device_property_set_string(device, "info.bus", "scsi");
   hal_device_property_set_int(device, "scsi.host", match->path_id);
   hal_device_property_set_int(device, "scsi.bus", match->path_id);
   hal_device_property_set_int(device, "scsi.target", match->target_id);
@@ -188,6 +186,7 @@ hf_scsi_block_device_new (HalDevice *parent,
     {
       hal_device_property_set_bool(device, "storage.removable", TRUE);
       hal_device_property_set_bool(device, "storage.media_check_enabled", TRUE);
+      hal_device_property_set_bool(device, "storage.removable.support_async_notification", FALSE);
     }
 
   cam_strvis(revision, match->inq_data.revision, sizeof(match->inq_data.revision), sizeof(revision));
@@ -221,7 +220,6 @@ hf_scsi_block_device_new (HalDevice *parent,
 	    {
 	      hal_device_property_set_string(device, "storage.bus", "scsi");
 	      hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
-	      hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
 	      hal_device_copy_property(parent, "scsi.lun", device, "storage.lun");
 	      /* do not stop here, in case it's an umass device */
 	    }
@@ -229,7 +227,6 @@ hf_scsi_block_device_new (HalDevice *parent,
 	    {
 	      hal_device_property_set_string(device, "storage.bus", "usb");
 	      hal_device_property_set_string(device, "storage.originating_device", hal_device_get_udi(parent));
-	      hal_device_property_set_string(device, "storage.physical_device", hal_device_get_udi(parent));
 	      hal_device_property_set_bool(device, "storage.hotpluggable", TRUE);
 	      break;		/* done */
 	    }
@@ -280,10 +277,13 @@ static HalDevice *
 hf_scsi_get_atapi_device (HalDevice *ata_channel, int target_id)
 {
   HalDevice *device = NULL;
+  int ide_host;
   GList *l;
 
   g_return_val_if_fail(HAL_IS_DEVICE(ata_channel), NULL);
-  g_return_val_if_fail(target_id == 0 || target_id == 1, NULL); /* ATA master or slave*/
+  g_return_val_if_fail(target_id == 0 || target_id == 1, NULL); /* ATA master or slave */
+
+  ide_host = hal_device_property_get_int(ata_channel, "ide_host.number");
 
   /*
    * If there's an ATAPI device it will be in hf_ata_pending_devices,
@@ -292,16 +292,35 @@ hf_scsi_get_atapi_device (HalDevice *ata_channel, int target_id)
 
   HF_LIST_FOREACH(l, hf_ata_pending_devices)
     {
-      HalDevice *child = l->data;
+      HalDevice *child = HAL_DEVICE(l->data);
+      HalDevice *parent;
       const char *driver;
+      const char *phys_device;
+      int host;
+      int channel;
 
       driver = hal_device_property_get_string(child, "freebsd.driver");
       /* ATAPI devices: CD-ROM (acd), tape (ast) or floppy (afd) */
-      if (driver && (! strcmp(driver, "acd") || ! strcmp(driver, "ast") || ! strcmp(driver, "afd")))
-	{
+      if (! driver || (strcmp(driver, "acd") && strcmp(driver, "ast") && strcmp(driver, "afd")))
+        continue;
+
+      phys_device = hal_device_property_get_string(child, "storage.originating_device");
+      if (! phys_device)
+        continue;
+
+      parent = hal_device_store_find(hald_get_gdl(), phys_device);
+      if (! parent)
+        continue;
+
+      host = hal_device_property_get_int(parent, "ide.host");
+      if (host != ide_host)
+        continue;
+
+      channel = hal_device_property_get_int(parent, "ide.channel");
+      if (target_id == channel)
+        {
 	  device = child;
-	  if (target_id == 0)
-	    break;		/* we wanted the first device, done */
+	  break;
 	}
     }
 

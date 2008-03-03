@@ -260,7 +260,7 @@ hald_get_tdl (void)
  * Print out program usage.
  */
 static void
-usage ()
+usage (void)
 {
 	fprintf (stderr, "\n" "usage : hald [--daemon=yes|no] [--verbose=yes|no] [--help]\n");
 	fprintf (stderr,
@@ -293,7 +293,7 @@ static dbus_bool_t opt_retain_privileges = FALSE;
 /** If #TRUE, we will spew out debug */
 dbus_bool_t hald_is_verbose = FALSE;
 dbus_bool_t hald_use_syslog = FALSE;
-dbus_bool_t hald_debug_exit_after_probing = FALSE;
+static dbus_bool_t hald_debug_exit_after_probing = FALSE;
 
 #ifdef HAVE_POLKIT
 PolKitContext *pk_context;

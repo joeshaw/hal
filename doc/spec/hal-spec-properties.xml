@@ -881,6 +881,63 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-modemif">
+      <title>
+        modem namespace
+      </title>
+      <para>
+        Serial device objectes that are known to be modems should also gain the
+        <literal>modem</literal> capability in their
+        <literal>info.capabilities</literal> list.  Modem device objects must
+        also be serial device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>modem.command_sets</literal> (string)
+              </entry>
+              <entry>example: GSM-07.07, GSM-07.05</entry>
+              <entry>Yes</entry>
+              <entry>This property defines the command sets the modem device supports.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>IS-707-A</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the IS-707-A standard AT commands (commonly used by CDMA cellular devices).  Implies V.250 support.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>GSM-07.07</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the GSM-07.07 standard AT commands (commonly used by GSM-based cellular devices).  Implies V.250 support.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>GSM-07.05</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the GSM-07.05 standard AT commands (commonly used by GSM-based cellular devices).  Implies V.250 support.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>ITU-V.250</entry>
+              <entry>Yes</entry>
+              <entry>This modem supports the ITU V.250 standard AT commands (also known as Hayes-compatible).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-usb">
       <title>
         usb_device namespace
@@ -2775,6 +2832,39 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry></entry>
               <entry>Yes</entry>
               <entry>The drm version (of the kernel module/diver).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+    <sect2 id="device-properties-ps3_system_bus">
+      <title>
+        ps3_system_bus namespace
+      </title>
+      <para>
+        Devices on the PlayStation 3 system bus are represented by device
+        objects where <literal>info.subsystem</literal> equals
+        <literal>ps3_system_bus</literal>. The following properties are
+        available for such device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>ps3_system_bus.id</literal> (string)
+              </entry>
+              <entry>example: serial</entry>
+              <entry>Yes</entry>
+              <entry>Device identification</entry>
             </row>
           </tbody>
         </tgroup>
@@ -6586,6 +6676,59 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-pda">
+      <title>
+        PDA namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>pda</literal>
+        represent Personal Digital Assistant (PDA) devices.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>pda.platform</literal> (string)
+              </entry>
+              <entry>e.g. palm or pocketpc</entry>
+              <entry>Yes</entry>
+              <entry>The type of the PDA platform</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pda.palm.hotsync_interface</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		Path to the Palm hotsync interface e.g. a linux device file (e.g. USB) or a 
+		serial device.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pda.pocketpc.hotsync_interface</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		Path to the Pocket PC (e.g. HP iPAQ) hotsync interface e.g. a linux device file 
+		(e.g. USB) or a serial device.
+	      </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-power-management">
       <title>
         power_management namespace
@@ -6834,13 +6977,19 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry></entry>
               <entry>wlan</entry>
               <entry></entry>
-              <entry>Kill switch is for turning Wireless networking on/off</entry>
+              <entry>Kill switch is for turning Wireless LAN (WLAN) networking on/off</entry>
             </row>
             <row>
               <entry></entry>
               <entry>bluetooth</entry>
               <entry></entry>
               <entry>Kill switch is for turning Bluetooth on/off</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>wwan</entry>
+              <entry></entry>
+              <entry>Kill switch is for turning Wireless WAN (WWAN) networking on/off</entry>
             </row>
             <row>
               <entry>
@@ -6956,18 +7105,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           </thead>
           <tbody>
             <row>
-              <entry><literal>info.bus</literal> (string)</entry>
-              <entry><literal>info.subsystem</literal></entry>
-              <entry>2008-03-01</entry>
-              <entry>Renamed to something more abstract, available until removed.</entry>
-            </row>
-            <row>
-              <entry><literal>*.physical_device</literal> (string)</entry>
-              <entry><literal>*.originating_device</literal></entry>
-              <entry>2008-03-01</entry>
-              <entry>Renamed to something more abstract, available until removed.</entry>
-            </row>
-            <row>
                 <entry><literal>portable_audio_player.access_method</literal> (string)</entry>
                 <entry><literal>portable_audio_player.access_method.[drivers, protocols]</literal> (strlist)</entry>
                 <entry>2008-05-03</entry>
@@ -6990,72 +7127,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry><literal>power_management.can_hibernate</literal></entry>
               <entry>2007-05-01</entry>
               <entry></entry>
-            </row>
-            <row>
-              <entry><literal>smbios.system.manufacturer</literal> (string)</entry>
-              <entry><literal>system.hardware.vendor</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.system.product</literal> (string)</entry>
-              <entry><literal>system.hardware.product</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.system.version</literal> (string)</entry>
-              <entry><literal>system.hardware.version</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.system.serial</literal> (string)</entry>
-              <entry><literal>system.hardware.serial</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.system.uuid</literal> (string)</entry>
-              <entry><literal>system.hardware.uuid</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.bios.vendor</literal> (string)</entry>
-              <entry><literal>system.firmware.vendor</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.bios.version</literal> (string)</entry>
-              <entry><literal>system.firmware.version</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.bios.release_date</literal> (string)</entry>
-              <entry><literal>system.firmware.release_date</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.chassis.manufacturer</literal> (string)</entry>
-              <entry><literal>system.chassis.manufacturer</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>smbios.chassis.type</literal> (string)</entry>
-              <entry><literal>system.chassis.type</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Renamed to something more abstract.</entry>
-            </row>
-            <row>
-              <entry><literal>system.vendor</literal> (string)</entry>
-              <entry><literal>system.hardware.vendor</literal></entry>
-              <entry>2008-02-28</entry>
-              <entry>Duplicate of system.hardware.vendor.</entry>
             </row>
             <row>
               <entry><literal>usb_device.speed_bcd</literal> (int)</entry>

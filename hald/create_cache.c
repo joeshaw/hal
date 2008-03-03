@@ -540,7 +540,7 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 
 	num_skipped_fdi_files = 0;
 
-	num_entries = scandir (dir, &name_list, 0, _alphasort);
+	num_entries = scandir (dir, &name_list, NULL, _alphasort);
 	if (num_entries == -1) {
 		HAL_ERROR (("Cannot scan '%s': %s", dir, strerror (errno)));
 		goto error;
@@ -603,8 +603,6 @@ error:
 	return -1;
 }
 
-
-int haldc_force_recreate = 0;
 
 /* returns number of skipped fdi files or -1 on unrecoverable errors */
 static int
@@ -717,15 +715,14 @@ error:
  *
  */
 static void
-usage ()
+usage (void)
 {
 	fprintf (stderr, "\n" "usage : hald-generate-fdi-cache [OPTION]\n");
 	fprintf (stderr,
 		 "\n"
-		 "	--force	       Force regeneration of cache.\n"
 		 "	--help		Show this information and exit.\n"
-		 "	--verbose	     Show verbose rule processing output.\n"
-		 "	--version	     Output version information and exit.\n"
+		 "	--verbose	Show verbose rule processing output.\n"
+		 "	--version	Output version information and exit.\n"
 		 "\n"
 		 "hald-generate-fdi-cache is a tool to generate binary cache from FDI files.\n"
 		 "\n"
@@ -746,7 +743,6 @@ int main(int argc, char * argv[])
 		static struct option long_options[] = {
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
-			{"force", 0, NULL, 0},
 			{"verbose", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
@@ -768,8 +764,6 @@ int main(int argc, char * argv[])
 				return 0;
 			} else if (strcmp (opt, "verbose") == 0) {
 				haldc_verbose = 1;
-			} else if (strcmp (opt, "force") == 0) {
-				haldc_force_recreate = 1;
 			}
 			break;
 

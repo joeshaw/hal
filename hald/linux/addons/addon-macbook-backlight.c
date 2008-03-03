@@ -72,7 +72,7 @@
 #define ACCESS_OFFSET         (REGISTER_OFFSET & PAGE_MASK)
 #define ACCESS_INDEX          (ACCESS_OFFSET >> 2)
 
-unsigned int *register_page;
+static unsigned int *register_page;
 
 static unsigned long
 determine_video_base_address (void)

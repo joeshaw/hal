@@ -655,9 +655,9 @@ hf_storage_device_enable (HalDevice *device)
   hal_device_property_set_bool(device, "storage.media_check_enabled", FALSE);
   hal_device_property_set_bool(device, "storage.automount_enabled_hint", TRUE);
   hal_device_property_set_bool(device, "storage.no_partitions_hint", FALSE);
+  hal_device_property_set_bool(device, "storage.removable.support_async_notification", FALSE);
 
   hal_device_property_set_string(device, "storage.originating_device", NULL);
-  hal_device_property_set_string(device, "storage.physical_device", NULL);
   hal_device_property_set_string(device, "storage.model", NULL);
   hal_device_property_set_string(device, "storage.vendor", NULL);
 
@@ -689,6 +689,8 @@ hf_storage_device_enable_cdrom (HalDevice *device)
   hal_device_property_set_bool(device, "storage.no_partitions_hint", TRUE);
   /* the linux backend sets this one */
   hal_device_property_set_bool(device, "storage.requires_eject", TRUE);
+  /* allow the storage addon to watch for media changes */
+  hal_device_property_set_bool(device, "storage.removable.support_async_notification", FALSE);
 
   /* some of these will be set by probe-storage */
   hal_device_property_set_bool(device, "storage.cdrom.cdr", FALSE);

@@ -51,8 +51,6 @@ hf_computer_device_probe (HalDevice *device)
 
   if (sys_manufacturer && sys_product && sys_version)
     {
-      hal_device_property_set_string(device, "system.vendor", sys_manufacturer);
-
       if (strcmp(sys_version, "Not Specified"))
 	hf_device_property_set_string_printf(device, "system.product", "%s %s", sys_product, sys_version);
       else
@@ -68,7 +66,8 @@ hf_computer_device_probe (HalDevice *device)
       /* Map the chassis type from dmidecode.c to a sensible type used in hal
        *
        * See also 3.3.4.1 of the "System Management BIOS Reference Specification,
-       * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
+       * Version 2.6.1" (Preliminary Standard) document, available from
+       * http://www.dmtf.org/standards/smbios.
        *
        * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
        */
@@ -87,7 +86,7 @@ hf_computer_device_probe (HalDevice *device)
 	"Docking Station",		"laptop",
 	"All In One",			"unknown",
 	"Sub Notebook",			"laptop",
-	"Space-saving",			"unknown",
+	"Space-saving",			"desktop",
 	"Lunch Box",			"unknown",
 	"Main Server Chassis",		"server",
 	"Expansion Chassis",		"unknown",
@@ -97,7 +96,11 @@ hf_computer_device_probe (HalDevice *device)
 	"RAID Chassis",			"unknown",
 	"Rack Mount Chassis",		"unknown",
 	"Sealed-case PC",		"unknown",
-	"Multi-system",			"unknown"
+	"Multi-system",			"unknown",
+	"CompactPCI",			"unknown",
+	"AdvancedTCA",			"unknown",
+	"Blade",                 	"server",
+	"Blade Enclosure"        	"unknown" /* 0x1D */
       };
 
       for (i = 0; i < (int) G_N_ELEMENTS(chassis_map); i += 2)
@@ -125,7 +128,6 @@ hf_computer_device_add (void)
   device = hal_device_new();
   hf_device_set_udi(device, "computer");
   hal_device_property_set_string(device, "info.subsystem", "unknown");
-  hal_device_property_set_string(device, "info.bus", "unknown");
   hal_device_property_set_string(device, "info.product", "Computer");
 
   if (uname(&un) == 0)

@@ -48,8 +48,8 @@
 #define strbegin(buf, str) (strncmp (buf, str, strlen (str)) == 0)
 
 /* global */
-char *udi = NULL;
-LibHalContext *ctx = NULL;
+static char *udi = NULL;
+static LibHalContext *ctx = NULL;
 
 /** 
  *  setstr:
@@ -82,24 +82,6 @@ out:
 	return FALSE;
 }
 
-/** 
- *  copykeyval:
- *  @key:		The new HAL key
- *  @compat_key:	The compatibility key, to be copied if key exists
- *
- *  Copies a key value into the compatibility value, if it exists.
- */
-static void
-copykeyval (char *key, char *compat_key)
-{
-	char *value;
-
-	value = libhal_device_get_property_string (ctx, udi, key, NULL);
-	if (value != NULL) {
-		HAL_DEBUG (("Copying %s -> %s", key, compat_key));
-		libhal_device_set_property_string (ctx, udi, compat_key, value, NULL);
-	}
-}
 
 /** 
  *  main:
@@ -285,18 +267,6 @@ main (int argc, char *argv[])
 
 	/* as read to EOF, close */
 	fclose (f);
-
-	/* compatibility keys, remove 28 Feb 2008 */
-	copykeyval ("system.hardware.vendor", "smbios.system.manufacturer");
-	copykeyval ("system.hardware.product", "smbios.system.product");
-	copykeyval ("system.hardware.version", "smbios.system.version");
-	copykeyval ("system.hardware.serial", "smbios.system.serial");
-	copykeyval ("system.hardware.uuid", "smbios.system.uuid");
-	copykeyval ("system.firmware.vendor", "smbios.bios.vendor");
-	copykeyval ("system.firmware.version", "smbios.bios.version");
-	copykeyval ("system.firmware.release_date", "smbios.bios.release_date");
-	copykeyval ("system.chassis.manufacturer", "smbios.chassis.manufacturer");
-	copykeyval ("system.chassis.type", "smbios.chassis.type");
 
 out:
 	/* free ctx */

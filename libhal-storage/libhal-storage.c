@@ -68,7 +68,7 @@ struct LibHalStoragePolicy_s {
 };
 
 LibHalStoragePolicy *
-libhal_storage_policy_new ()
+libhal_storage_policy_new (void)
 {
 	LibHalStoragePolicy *p;
 
@@ -1992,7 +1992,7 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 	LibHalPropertySetIterator it;
 	DBusError error;
 
-	if(hal_ctx == 0) {
+	if(hal_ctx == NULL) {
 		fprintf (stderr,"%s %d : LibHalContext *ctx is NULL\n",__FILE__, __LINE__);
 		return;
 	}

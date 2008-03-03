@@ -150,13 +150,17 @@ check_battery (const char *hal_device_udi, PropertyCacheItem *pci)
 
 			HAL_DEBUG (("Charge level: %d->%d", pci->current_charge, current_charge));
 			if (current_charge != pci->current_charge) { 
-			pci->current_charge = current_charge; dbus_error_init (&err);
+				pci->current_charge = current_charge; dbus_error_init (&err);
 		 		libhal_device_set_property_int (halctx, hal_device_udi, 
 		 			"battery.charge_level.current", current_charge, &err);
-		 		if (current_charge != 0)
+		 		if (current_charge != 0) {
 		 			percentage = (100.0 / 7.0) * current_charge;
-		 		libhal_device_set_property_int (halctx, hal_device_udi, 
-		 			"battery.charge_level.percentage", percentage, &err);
+		 			libhal_device_set_property_int (halctx, hal_device_udi, 
+		 				"battery.charge_level.percentage", percentage, &err);
+				} else {
+					libhal_device_remove_property(halctx, hal_device_udi,
+								      "battery.charge_level.percentage", &err);	
+				}
 			}
 		}
 	} else

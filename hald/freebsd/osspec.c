@@ -38,6 +38,7 @@
 #include "hf-computer.h"
 #include "hf-devd.h"
 #include "hf-devtree.h"
+#include "hf-drm.h"
 #include "hf-net.h"
 #include "hf-pci.h"
 #include "hf-scsi.h"
@@ -60,6 +61,7 @@ static HFHandler *handlers[] = {
   &hf_serial_handler,
   &hf_acpi_handler,
   &hf_sound_handler,
+  &hf_drm_handler,
   &hf_devd_handler
 };
 
@@ -76,6 +78,12 @@ osspec_privileged_init (void)
 {
   int i;
 
+  file_monitor = hal_file_monitor_new ();
+  if (file_monitor == NULL)
+    {
+      HAL_INFO(("Cannot initialize file monitor"));
+    }
+
   for (i = 0; i < (int) G_N_ELEMENTS(handlers); i++)
     if (handlers[i]->privileged_init)
       handlers[i]->privileged_init();
@@ -87,12 +95,6 @@ osspec_init (void)
   int i;
 
   pci_ids_init();
-
-  file_monitor = hal_file_monitor_new ();
-  if (file_monitor == NULL)
-    {
-      HAL_INFO(("Cannot initialize file monitor"));
-    }
 
   for (i = 0; i < (int) G_N_ELEMENTS(handlers); i++)
     if (handlers[i]->init)

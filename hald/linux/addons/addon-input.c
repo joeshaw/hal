@@ -248,6 +248,11 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 			case SW_HEADPHONE_INSERT:
 				name = "headphone_insert";
 				break;
+#ifdef SW_RADIO
+			case SW_RADIO:
+				name = "radio";
+				break;
+#endif
 			}
 			if (name != NULL) {
 				long bitmask[NBITS(SW_MAX)];
@@ -304,19 +309,14 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 static void
 destroy_data (InputData *data)
 {
-	HAL_DEBUG (("Removing GIOChannel for'%s'", data->udi));
-
-	/* Null out the GIOChannel in the hash table, but
-	 * leave the key in for DeviceRemoved
-	 */
-	g_hash_table_replace (inputs, g_strdup(data->udi), NULL);
+	HAL_DEBUG (("Input device '%s' destroyed, free data.", data->udi));
 
 	g_free (data);
 }
 
 
 static void
-update_proc_title ()
+update_proc_title (void)
 {
 	GList *lp;
 	gchar *new_command_line, *p;
@@ -408,8 +408,10 @@ remove_device (LibHalContext *ctx,
 		return;
 	}
 
-	if (channel)
+	if (channel) {
+		g_io_channel_shutdown(channel, FALSE, NULL);
 		g_io_channel_unref (channel);
+	}
 
 	g_hash_table_remove (inputs, udi);
 
@@ -443,7 +445,7 @@ main (int argc, char **argv)
 
 	hal_set_proc_title_init (argc, argv);
 
-	/* setup_logger (); */
+	setup_logger ();
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {

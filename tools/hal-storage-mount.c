@@ -458,6 +458,8 @@ handle_mount (LibHalContext *hal_ctx,
 	GError *err = NULL;
 	char *sout = NULL;
 	char *serr = NULL;
+	char *mount_option_commasep = NULL;
+	char *mount_do_fstype = NULL;
 	int exit_status;
 	char *args[10];
 	int na;
@@ -732,11 +734,9 @@ handle_mount (LibHalContext *hal_ctx,
 	}
 
 
-	char *mount_option_commasep = NULL;
-	char *mount_do_fstype = "auto";
-
 	/* construct arguments to mount */
 	na = 0;
+	
 	args[na++] = MOUNT;
 	if (strlen (mount_fstype) > 0) {
 		mount_do_fstype = (char *) map_fstype (mount_fstype);
@@ -745,6 +745,8 @@ handle_mount (LibHalContext *hal_ctx,
 		mount_do_fstype = "auto";
 	} else if (libhal_volume_get_fstype (volume) != NULL && strlen (libhal_volume_get_fstype (volume)) > 0) {
 		mount_do_fstype = (char *) map_fstype (libhal_volume_get_fstype (volume));
+	} else {
+		mount_do_fstype = "auto";
 	}
 	args[na++] = MOUNT_TYPE_OPT;
 	args[na++] = mount_do_fstype;

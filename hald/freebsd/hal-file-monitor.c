@@ -168,13 +168,6 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
       FileAccessData *adata;
 
       adata = g_new0 (FileAccessData, 1);
-      if (adata == NULL)
-        {
-          /* If we can't allocate an adata, we might as well bail now. */
-          g_warning ("Failed to allocate memory for adata");
-          close (fd);
-          return id;
-        }
       adata->path = g_strdup (path);
       adata->atime = sb.st_atime;
       adata->func = notify_func;
@@ -208,11 +201,6 @@ hal_file_monitor_add_notify (HalFileMonitor *monitor,
         }
 
       kdata = g_new0 (FileKqueueData, 1);
-      if (kdata == NULL)
-        {
-          g_warning ("Failed to allocate memory for kdata");
-          goto done;
-        }
       kdata->path = g_strdup (path);
       kdata->omask = mask;
       kdata->isdir = isdir;

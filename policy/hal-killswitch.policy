@@ -34,4 +34,13 @@ details.
     </defaults>
   </action>
 
+  <action id="org.freedesktop.hal.killswitch.wwan">
+    <description>Turn WWAN radio On/Off</description>
+    <message>System policy prevents turning the WWAN radio On/Off</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
 </policyconfig>

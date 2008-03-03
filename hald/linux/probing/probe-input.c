@@ -81,6 +81,10 @@ main (int argc, char *argv[])
 		sw = SW_TABLET_MODE;
 	else if (strcmp (button_type, "headphone_insert") == 0)
 		sw = SW_HEADPHONE_INSERT;
+#ifdef SW_RADIO
+	else if (strcmp (button_type, "radio") == 0)
+		sw = SW_RADIO;
+#endif
 	else
 		goto out;
 

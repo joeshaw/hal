@@ -72,6 +72,9 @@
 gboolean _have_sysfs_lid_button = FALSE;
 gboolean _have_sysfs_power_button = FALSE;
 gboolean _have_sysfs_sleep_button = FALSE;
+gboolean _have_sysfs_power_supply = FALSE; 
+
+#define POWER_SUPPLY_BATTERY_POLL_INTERVAL 30000
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -239,6 +242,10 @@ input_test_switch (HalDevice *d, const char *sysfs_path)
 			hal_device_property_set_string (d, "button.type", "tablet_mode");
 		} else if (test_bit (SW_HEADPHONE_INSERT, bitmask)) {
 			hal_device_property_set_string (d, "button.type", "headphone_insert");
+#ifdef SW_RADIO
+		} else if (test_bit (SW_RADIO, bitmask)) {
+			hal_device_property_set_string (d, "button.type", "radio");
+#endif
 		}
 	}
 
@@ -258,9 +265,18 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 		goto out;
 	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
 
-	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask) && test_bit (ABS_PRESSURE, bitmask)) {
-		hal_device_add_capability (d, "input.touchpad");
-                goto out;
+	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask)) {
+		if (test_bit (ABS_PRESSURE, bitmask)) {
+			hal_device_add_capability (d, "input.touchpad");
+			goto out;
+		} else {
+			/*
+			 * This path is taken by VMware's USB mouse, which has
+			 * absolute axes, but no touch/pressure button.
+			 */
+			hal_device_add_capability (d, "input.mouse");
+			goto out;
+		}
         }
 
         /* TODO: Hmm; this code looks sketchy... why do we do !test_bit on the Y axis ?? */
@@ -321,7 +337,6 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "input.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "input.physical_device", hal_device_get_udi (parent_dev));
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
@@ -496,7 +511,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_device_add_capability (d, "net");
 
 	hal_device_property_set_string (d, "net.originating_device", hal_device_get_udi (parent_dev));
-	hal_device_property_set_string (d, "net.physical_device", hal_device_get_udi (parent_dev));
 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
@@ -840,7 +854,6 @@ usbclass_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 		hal_device_property_set_string (d, "printer.device", device_file);
 
 		hal_device_property_set_string (d, "printer.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "printer.physical_device", hal_device_get_udi (parent_dev));
 	}
 
 out:
@@ -1045,7 +1058,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 		hal_device_property_set_string (d, "info.category", "sound");
 		hal_device_add_capability (d, "sound");
 		hal_device_property_set_string (d, "sound.originating_device", hal_device_get_udi (parent_dev));
-		hal_device_property_set_string (d, "sound.physical_device", hal_device_get_udi (parent_dev));
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 		if (sscanf (device, "card%d", &cardnum) == 1) {
@@ -1092,7 +1104,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "alsa.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_string (d, "alsa.type", "control");
 	
@@ -1109,7 +1120,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "alsa.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
@@ -1155,7 +1165,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "alsa.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "alsa.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "alsa.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "alsa.card", cardnum);
 			hal_device_property_set_int (d, "alsa.device", devicenum);
 	
@@ -1205,7 +1214,6 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 			hal_device_property_set_string (d, "oss.device_file", device_file);
 			hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 			hal_device_property_set_string (d, "oss.originating_device", hal_device_get_udi (parent_dev));
-			hal_device_property_set_string (d, "oss.physical_device", hal_device_get_udi (parent_dev));
 			hal_device_property_set_int (d, "oss.card", cardnum);
 	
 			asound_card_id_set (cardnum, d, "oss.card_id");
@@ -1347,7 +1355,6 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	hal_device_property_set_string (d, "info.category", "serial");
 	hal_device_add_capability (d, "serial");
 	hal_device_property_set_string (d, "serial.originating_device", hal_device_get_udi (parent_dev));
-	hal_device_property_set_string (d, "serial.physical_device", hal_device_get_udi (parent_dev));
 	hal_device_property_set_string (d, "serial.device", device_file);
 
 	last_elem = hal_util_get_last_element(sysfs_path);
@@ -1529,7 +1536,6 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "pci");
-	hal_device_property_set_string (d, "info.bus", "pci");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1696,7 +1702,6 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		gint bmAttributes;
 
 		hal_device_property_set_string (d, "info.subsystem", "usb_device");
-		hal_device_property_set_string (d, "info.bus", "usb_device");
 
 		hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
@@ -1783,7 +1788,6 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	} else {
 		hal_device_property_set_string (d, "info.subsystem", "usb");
-		hal_device_property_set_string (d, "info.bus", "usb");
 
 		/* take all usb_device.* properties from parent and make them usb.* on this object */
 		if (parent_dev != NULL)
@@ -1848,7 +1852,6 @@ ide_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "ide");
-	hal_device_property_set_string (d, "info.bus", "ide");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1899,7 +1902,6 @@ pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "pnp");
-	hal_device_property_set_string (d, "info.bus", "pnp");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1955,7 +1957,6 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "platform");
-	hal_device_property_set_string (d, "info.bus", "platform");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1970,6 +1971,13 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	g_snprintf (buf, sizeof (buf), "Platform Device (%s)", hal_device_property_get_string (d, "platform.id"));
 	hal_device_property_set_string (d, "info.product", buf);
+
+	if (strncmp (dev_id, "dock", 4) == 0) {
+		int docked;
+
+		hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+		hal_device_property_set_bool (d, "info.docked", docked);
+	}
 
 	return d;
 }
@@ -1986,7 +1994,23 @@ platform_compute_udi (HalDevice *d)
 	hal_device_property_set_string (d, "info.udi", udi);
 
 	return TRUE;
+}
 
+static gboolean
+platform_refresh (HalDevice *d)
+{
+	const gchar *id, *sysfs_path;
+	int docked;
+
+	id = hal_device_property_get_string (d, "platform.id");
+	if (strncmp (id, "dock", 4) != 0)
+		return TRUE;
+
+	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
+	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+	hal_device_property_set_bool (d, "info.docked", docked);
+
+	return TRUE;
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -2000,7 +2024,6 @@ serio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "serio");
-	hal_device_property_set_string (d, "info.bus", "serio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2048,7 +2071,6 @@ pcmcia_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "pcmcia");
-	hal_device_property_set_string (d, "info.bus", "pcmcia");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2133,7 +2155,6 @@ scsi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "scsi");
-	hal_device_property_set_string (d, "info.bus", "scsi");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	hal_device_property_set_int (d, "scsi.host", host_num);
 	hal_device_property_set_int (d, "scsi.bus", bus_num);
@@ -2224,7 +2245,6 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "mmc");
-	hal_device_property_set_string (d, "info.bus", "mmc");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
@@ -2302,7 +2322,6 @@ xen_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "xen");
-	hal_device_property_set_string (d, "info.bus", "xen");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2384,7 +2403,6 @@ ieee1394_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "ieee1394");
-	hal_device_property_set_string (d, "info.bus", "ieee1394");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
@@ -2450,7 +2468,6 @@ firewire_add_device (const gchar *sysfs_path, const gchar *device_file, HalDevic
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "ieee1394");
-	hal_device_property_set_string (d, "info.bus", "ieee1394");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	hal_device_add_capability (d, "ieee1394");
 	hal_device_property_set_string (d, "ieee1394.device", device_file);
@@ -2486,7 +2503,6 @@ firewire_add_unit (const gchar *sysfs_path, int unit_id, HalDevice *parent_dev)
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "ieee1394_unit");
-	hal_device_property_set_string (d, "info.bus", "ieee1394_unit");
 	hal_device_property_set_string (d, "info.parent",
 					hal_device_get_udi (parent_dev));
 	hal_device_property_set_string (d, "ieee1394_unit.originating_device", 
@@ -2670,7 +2686,6 @@ ccw_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "ccw");
-	hal_device_property_set_string (d, "info.bus", "ccw");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -2841,7 +2856,6 @@ ccwgroup_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "ccwgroup");
-	hal_device_property_set_string (d, "info.bus", "ccwgroup");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -2907,7 +2921,6 @@ iucv_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "iucv");
-	hal_device_property_set_string (d, "info.bus", "iucv");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -3006,15 +3019,12 @@ refresh_battery_fast (HalDevice *d)
 {
 	gint percentage = 0;
 	gint voltage_now = 0;
-	gint voltage_design = 0;
 	gint current = 0;
 	gint time = 0;
 	gint value_now = 0;
 	gint value_last_full = 0;
-	gint value_full_design = 0;
 	gboolean present = FALSE;
-	gboolean could_be_mah = TRUE;
-	gboolean could_be_mwh = TRUE;
+	gboolean unknown_unit = TRUE;
 	gboolean is_mah = FALSE;
 	gboolean is_mwh = FALSE;
 	gboolean is_charging = FALSE;
@@ -3052,15 +3062,12 @@ refresh_battery_fast (HalDevice *d)
 	} else if (hal_util_get_int_from_file (path, "voltage_now", &voltage_now, 10)) {
 		hal_device_property_set_int (d, "battery.voltage.current", voltage_now / 1000);
 	}
-	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
-		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
-	}
 
 	/* CURRENT: we prefer the average if it exists, although present is still pretty good */
 	if (hal_util_get_int_from_file (path, "current_avg", &current, 10)) {
-		hal_device_property_set_int (d, "battery.current", current / 1000);
+		hal_device_property_set_int (d, "battery.reporting.rate", current / 1000);
 	} else if (hal_util_get_int_from_file (path, "current_now", &current, 10)) {
-		hal_device_property_set_int (d, "battery.current", current / 1000);
+		hal_device_property_set_int (d, "battery.reporting.rate", current / 1000);
 	}
 
 	/* STATUS: Convert to charging/discharging state */
@@ -3094,14 +3101,16 @@ refresh_battery_fast (HalDevice *d)
 	reporting_unit = hal_device_property_get_string (d, "battery.reporting.unit");
 	if (reporting_unit != NULL) {
 		if (strcasecmp (reporting_unit, "mah") == 0) {
-			could_be_mwh = FALSE;
+			is_mah = TRUE;
+			unknown_unit = FALSE;
 		} else if (strcasecmp (reporting_unit, "mwh") == 0) {
-			could_be_mah = FALSE;
+			is_mwh = TRUE;
+			unknown_unit = FALSE;
 		}
 	}
 
 	/* ENERGY (reported in uWh, so need to convert to mWh) */
-	if (could_be_mwh) {
+	if (unknown_unit || is_mwh) {
 		if (hal_util_get_int_from_file (path, "energy_avg", &value_now, 10)) {
 			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
 			is_mwh = TRUE;
@@ -3113,14 +3122,10 @@ refresh_battery_fast (HalDevice *d)
 			hal_device_property_set_int (d, "battery.reporting.last_full", value_last_full / 1000);
 			is_mwh = TRUE;
 		}
-		if (hal_util_get_int_from_file (path, "energy_full_design", &value_full_design, 10)) {
-			hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
-			is_mwh = TRUE;
-		}
 	}
 
 	/* CHARGE (reported in uAh, so need to convert to mAh) */
-	if (could_be_mah) {
+	if ((unknown_unit && !is_mwh) || is_mah) {
 		if (hal_util_get_int_from_file (path, "charge_avg", &value_now, 10)) {
 			hal_device_property_set_int (d, "battery.reporting.current", value_now / 1000);
 			is_mah = TRUE;
@@ -3132,17 +3137,15 @@ refresh_battery_fast (HalDevice *d)
 			hal_device_property_set_int (d, "battery.reporting.last_full", value_last_full / 1000);
 			is_mah = TRUE;
 		}
-		if (hal_util_get_int_from_file (path, "charge_full_design", &value_full_design, 10)) {
-			hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
-			is_mah = TRUE;
-		}
 	}
 
 	/* record these for future savings */
-	if (is_mwh == TRUE) {
-		hal_device_property_set_string (d, "battery.reporting.unit", "mWh");
-	} else if (is_mah == TRUE) {
-		hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+	if (unknown_unit) {
+		if (is_mwh == TRUE) {
+			hal_device_property_set_string (d, "battery.reporting.unit", "mWh");
+		} else if (is_mah == TRUE) {
+			hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+		}
 	}
 
 	/* we've now got the 'reporting' keys, now we need to populate the
@@ -3172,10 +3175,12 @@ refresh_battery_fast (HalDevice *d)
 static void
 refresh_battery_slow (HalDevice *d)
 {
-	const char *technology;
+	gint voltage_design = 0;
+	gint value_full_design = 0;
 	char *technology_raw;
 	char *model_name;
 	char *manufacturer;
+	char *serial;
 	const gchar *path;
 
 	path = hal_device_property_get_string (d, "linux.sysfs_path");
@@ -3187,13 +3192,12 @@ refresh_battery_slow (HalDevice *d)
 	if (technology_raw != NULL) {
 		hal_device_property_set_string (d, "battery.reporting.technology", technology_raw);
 	}
-	/* we set this, even if it's unknown */
-	technology = util_get_battery_technology (technology_raw);
-	hal_device_property_set_string (d, "battery.technology", technology);
+	hal_device_property_set_string (d, "battery.technology", util_get_battery_technology (technology_raw));
 
 	/* get product name */
-	model_name = hal_util_get_string_from_file (path, "technology");
+	model_name = hal_util_get_string_from_file (path, "model_name");
 	if (model_name != NULL) {
+		hal_device_property_set_string (d, "battery.model", model_name);
 		hal_device_property_set_string (d, "info.product", model_name);
 	} else {
 		hal_device_property_set_string (d, "info.product", "Generic Battery Device");
@@ -3203,6 +3207,30 @@ refresh_battery_slow (HalDevice *d)
 	manufacturer = hal_util_get_string_from_file (path, "manufacturer");
 	if (manufacturer != NULL) {
 		hal_device_property_set_string (d, "battery.vendor", manufacturer);
+	}
+
+	/* get stuff that never changes */
+	if (hal_util_get_int_from_file (path, "voltage_max_design", &voltage_design, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
+		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
+	} else if (hal_util_get_int_from_file (path, "voltage_min_design", &voltage_design, 10)) {
+		hal_device_property_set_int (d, "battery.voltage.design", voltage_design / 1000);
+		hal_device_property_set_string (d, "battery.voltage.unit", "mV");
+	}
+
+	/* try to get the design info and set the units */
+	if (hal_util_get_int_from_file (path, "energy_full_design", &value_full_design, 10)) {
+		hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
+		hal_device_property_set_string (d, "battery.reporting.unit", "mWh");	
+	} else if (hal_util_get_int_from_file (path, "charge_full_design", &value_full_design, 10)) {
+		hal_device_property_set_int (d, "battery.reporting.design", value_full_design / 1000);
+		hal_device_property_set_string (d, "battery.reporting.unit", "mAh");
+	}
+
+	/* get serial */
+	serial = hal_util_get_string_from_file (path, "serial_number");
+	if (serial != NULL) {
+		hal_device_property_set_string (d, "battery.serial", serial);
 	}
 
 	/* now do stuff that happens quickly */
@@ -3223,12 +3251,43 @@ power_supply_refresh (HalDevice *d)
 		device_property_atomic_update_end ();
 	} else if (strcmp (type, "battery") == 0) {
 		device_property_atomic_update_begin ();
-		refresh_battery_slow (d);
+		refresh_battery_fast (d);
 		device_property_atomic_update_end ();
 	} else {
 		HAL_WARNING (("Could not recognise power_supply type!"));
 		return FALSE;
 	}
+	return TRUE;
+}
+
+
+static gboolean 
+power_supply_battery_poll (gpointer data) {
+
+	GSList *i;
+	GSList *battery_devices;
+	HalDevice *d;
+
+	/* for now do it only for primary batteries and extend if neede for the other types */
+	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
+                                                                    	    "battery.type",
+ 	                                                                    "primary");
+
+	if (battery_devices) {
+		for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
+			const char *subsys;
+
+			d = HAL_DEVICE (i->data);
+			subsys = hal_device_property_get_string (d, "linux.subsystem");
+			if (subsys && (strcmp(subsys, "power_supply") == 0)) {
+				hal_util_grep_discard_existing_data();
+				device_property_atomic_update_begin ();
+				refresh_battery_fast(d);
+				device_property_atomic_update_end ();
+			}
+		}		
+	}
+	g_slist_free (battery_devices);
 	return TRUE;
 }
 
@@ -3274,6 +3333,11 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 			hal_device_property_set_string (d, "battery.type", battery_type);
 		refresh_battery_slow (d);
 		hal_device_add_capability (d, "battery");
+
+		/* setup timer for things that we need to poll */
+		g_timeout_add ( POWER_SUPPLY_BATTERY_POLL_INTERVAL,
+				power_supply_battery_poll,
+				NULL);
 	}
 
 	if (is_ac_adapter == TRUE) {
@@ -3282,6 +3346,8 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 		refresh_ac_adapter (d);
 		hal_device_add_capability (d, "ac_adapter");
 	}
+
+	_have_sysfs_power_supply = TRUE;
 finish:
 	return d;
 }
@@ -3296,9 +3362,18 @@ power_supply_compute_udi (HalDevice *d)
 	dir = hal_device_property_get_string (d, "linux.sysfs_path");
 
 	name = hal_util_get_last_element(dir);
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_power_supply",
-			      hal_device_property_get_string (d, "info.parent"));
+	if (name) 
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_power_supply_%s_%s",
+				      hal_device_property_get_string (d, "info.parent"),
+				      hal_device_property_get_string (d, "info.category"),
+				      name);
+	else
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "%s_power_supply_%s",
+				      hal_device_property_get_string (d, "info.parent"),
+				      hal_device_property_get_string (d, "info.category"));
+		
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -3362,6 +3437,51 @@ drm_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+ps3_system_bus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev,
+		    const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	const gchar *dev_id;
+	gchar buf[64];
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "ps3_system_bus");
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	dev_id = hal_util_get_last_element (sysfs_path);
+
+	hal_device_property_set_string (d, "ps3_system_bus.id", dev_id);
+
+	g_snprintf (buf, sizeof (buf), "PS3 Device (%s)", hal_device_property_get_string (d, "ps3_system_bus.id"));
+	hal_device_property_set_string (d, "info.product", buf);
+
+	return d;
+}
+
+static gboolean
+ps3_system_bus_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ps3_system_bus_%s",
+			      hal_device_property_get_string (d, "ps3_system_bus.id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -3371,7 +3491,6 @@ pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "pseudo");
-	hal_device_property_set_string (d, "info.bus", "pseudo");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -3603,6 +3722,7 @@ static DevHandler dev_handler_pnp = {
 static DevHandler dev_handler_platform = {
 	.subsystem   = "platform",
 	.add         = platform_add,
+	.refresh     = platform_refresh,
 	.compute_udi = platform_compute_udi,
 	.remove      = dev_remove
 };
@@ -3706,6 +3826,14 @@ static DevHandler dev_handler_drm =
        .remove       = dev_remove
 };
 
+static DevHandler dev_handler_ps3_system_bus =
+{
+	.subsystem   = "ps3_system_bus",
+	.add         = ps3_system_bus_add,
+	.compute_udi = ps3_system_bus_compute_udi,
+	.remove      = dev_remove
+};
+
 /* SCSI debug, to test thousends of fake devices */
 static DevHandler dev_handler_pseudo = {
 	.subsystem   = "pseudo",
@@ -3750,6 +3878,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_firewire,
 	&dev_handler_power_supply,
 	&dev_handler_drm,
+	&dev_handler_ps3_system_bus,
 	NULL
 };
 

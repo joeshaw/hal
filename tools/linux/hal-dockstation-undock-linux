@@ -1,0 +1,11 @@
+#!/bin/sh
+
+DOCKED=`cat $HAL_PROP_LINUX_SYSFS_PATH/docked`
+if [ "$DOCKED" = "0" ]; then
+ 	echo "org.freedesktop.Hal.Device.DockStation.NotDocked"
+	exit 1
+fi
+
+RET=`echo 1 > $HAL_PROP_LINUX_SYSFS_PATH/undock`
+
+exit $RET

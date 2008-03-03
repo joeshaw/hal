@@ -46,10 +46,10 @@
 #define DEFAULT_CONSIDER_NICE		FALSE
 #define PROC_STAT_FILE			"/proc/stat"
 
-const char SYSFS_SCALING_SETSPEED_FILE[] =
+static const char SYSFS_SCALING_SETSPEED_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/scaling_setspeed";
 
-const char SYSFS_SCALING_AVAILABLE_FREQS_FILE[] =
+static const char SYSFS_SCALING_AVAILABLE_FREQS_FILE[] =
      "/sys/devices/system/cpu/cpu%u/cpufreq/scaling_available_frequencies";
 
 /* shortcut for g_array_index */
@@ -115,7 +115,7 @@ static int calc_cpu_load(const int consider_nice)
 	char		line[256];
 	char		cpu_string[7];
 	FILE		*fp;
-	int		new_num_cpus;
+	int		new_num_cpus, i;
 
 	new_num_cpus = sysconf(_SC_NPROCESSORS_CONF);
 	if (new_num_cpus == -1 || new_num_cpus != cpuload.num_cpus) {
@@ -141,8 +141,9 @@ static int calc_cpu_load(const int consider_nice)
 	/* start with the first line, "overall" cpu load */
 	/* if cpuload.num_cpus == 1, we do not need to evaluate "overall" and "per-cpu" load */
 	sprintf(cpu_string, "cpu ");
-	int i;
+
 	for (i = 0; i <= cpuload.num_cpus - (cpuload.num_cpus == 1); i++) {
+		unsigned long working_time;
 		
 		if (fgets(line,255,fp) == NULL) {
 			HAL_WARNING(("%s too short (%s)", PROC_STAT_FILE, cpu_string));
@@ -166,7 +167,6 @@ static int calc_cpu_load(const int consider_nice)
 			return -1;
 		}
 
-		unsigned long working_time;
 		if (consider_nice) {
 			working_time = user_time + system_time + nice_time;
 			idle_time += iowait_time;
@@ -403,10 +403,11 @@ static gboolean adjust_speed(struct userspace_interface *iface)
 /* create the hysteresis array */
 static void create_hysteresis_array(struct userspace_interface *iface)
 {
+	int i;
+	
 	g_array_free(iface->demotion, TRUE);
 	iface->demotion = g_array_new(TRUE, TRUE, sizeof(unsigned));
 
-	int i;
 	if (iface->last_step > 0) {
 		for (i = 0; i < iface->last_step; i++) {
 			int demotion = (config.up_threshold - HYSTERESIS) *

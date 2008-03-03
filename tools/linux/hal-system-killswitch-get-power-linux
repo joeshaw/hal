@@ -68,6 +68,24 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	echo "Access type not supported" >&2
 	exit 1
     fi
+elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wwan" ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
+	# TODO: write our own binary that links with libsmbios?
+	$DELL_WCTL --st_wwan
+	value=$?
+	if [ "$value" = "0" ]; then
+	    exit 1
+	elif [ "$value" = "1" ]; then
+	    exit 0
+	else
+	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	    echo "dellWirelessCtl returned $value" >&2
+	fi
+    else
+	echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	echo "Access type not supported" >&2
+	exit 1
+    fi
 else
     echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
     echo "Killswitch type not supported" >&2

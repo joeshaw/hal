@@ -81,9 +81,10 @@ hf_net_get_rate (int ifindex)
 
   oid[0] = CTL_NET;
   oid[1] = PF_LINK;
-  oid[2] = IFMIB_IFDATA;
-  oid[3] = ifindex;
-  oid[4] = IFDATA_GENERAL;
+  oid[2] = NETLINK_GENERIC;
+  oid[3] = IFMIB_IFDATA;
+  oid[4] = ifindex;
+  oid[5] = IFDATA_GENERAL;
 
   len = sizeof(ifmd);
 
@@ -160,7 +161,6 @@ hf_net_device_new (const char *interface, HalDevice *parent, GError **err)
   hal_device_property_set_string(device, "net.address", mac ? mac : "00:00:00:00:00:00");
   hal_device_property_set_string(device, "net.interface", interface);
   hal_device_property_set_string(device, "net.originating_device", hal_device_get_udi(parent));
-  hal_device_property_set_string(device, "net.physical_device", hal_device_get_udi(parent));
   hal_device_property_set_string(device, "net.media", media);
   if (hf_devtree_is_driver(interface, "fwe"))
     hal_device_property_set_int(device, "net.arp_proto_hw_id", ARPHRD_IEEE1394);
@@ -171,7 +171,7 @@ hf_net_device_new (const char *interface, HalDevice *parent, GError **err)
   /* FIXME Add additional net.arp_proto_hw_id support */
 
   ifindex = if_nametoindex(interface);
-  hal_device_property_set_int(device, "net.freebsd.infindex", ifindex);
+  hal_device_property_set_int(device, "net.freebsd.ifindex", ifindex);
 
   if (is_ethernet)
     {

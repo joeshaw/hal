@@ -22,6 +22,12 @@
 #define DRIVE_CDROM_CAPS_DVDPLUSRW	4
 #define DRIVE_CDROM_CAPS_DVDPLUSRWDL	8
 #define DRIVE_CDROM_CAPS_DVDPLUSRDL	16
+#define DRIVE_CDROM_CAPS_BDROM		32
+#define DRIVE_CDROM_CAPS_BDR		64
+#define DRIVE_CDROM_CAPS_BDRE		128
+#define DRIVE_CDROM_CAPS_HDDVDROM	256
+#define DRIVE_CDROM_CAPS_HDDVDR		512
+#define DRIVE_CDROM_CAPS_HDDVDRW	1024
 
 int get_dvd_r_rw_profile (HFPCDROM *cdrom);
 int get_read_write_speed (HFPCDROM *cdrom, int *read_speed, int *write_speed, char **write_speeds);

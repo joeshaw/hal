@@ -494,7 +494,8 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 	/* Map the chassis type from dmidecode.c to a sensible type used in hal 
 	 *
 	 * See also 3.3.4.1 of the "System Management BIOS Reference Specification, 
-	 * Version 2.3.4" document, available from http://www.dmtf.org/standards/smbios.
+	 * Version 2.6.1" (Preliminary Standard) document, available from 
+	 * http://www.dmtf.org/standards/smbios.
 	 *
 	 * TODO: figure out WTF the mapping should be; "Lunch Box"? Give me a break :-)
 	 */
@@ -513,7 +514,7 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 		"Docking Station",       "laptop",
 		"All In One",            "unknown",
 		"Sub Notebook",          "laptop",
-		"Space-saving",          "unknown",
+		"Space-saving",          "desktop",
 		"Lunch Box",             "unknown",
 		"Main Server Chassis",   "server",
 		"Expansion Chassis",     "unknown",
@@ -525,7 +526,9 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 		"Sealed-case PC",        "unknown",
 		"Multi-system",          "unknown",
 		"CompactPCI",		 "unknonw",
-		"AdvancedTCA",		 "unknown", /* 0x1B */
+		"AdvancedTCA",		 "unknown", 
+		"Blade",		 "server",
+		"Blade Enclosure"	 "unknown", /* 0x1D */
 		NULL
 	};
 
@@ -536,7 +539,7 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 		const char *chassis_type;
 
 		/* now map the smbios.* properties to our generic system.formfactor property */
-		if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
+		if ((chassis_type = hal_device_property_get_string (d, "system.chassis.type")) != NULL) {
 			
 			for (i = 0; chassis_map[i] != NULL; i += 2) {
 				if (strcmp (chassis_map[i], chassis_type) == 0) {
@@ -582,9 +585,6 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 	    (system_product = hal_device_property_get_string (d, "system.hardware.product")) != NULL &&
 	    (system_version = hal_device_property_get_string (d, "system.hardware.version")) != NULL) {
 		char buf[128];
-
-		/* depricated 2008-02-28 */
-		hal_device_property_set_string (d, "system.vendor", system_manufacturer);
 
 		if (strcmp(system_version, "Not Specified" ) != 0 ) {
 			g_snprintf (buf, sizeof (buf), "%s %s", system_product, system_version);
@@ -735,18 +735,6 @@ decode_dmi_from_sysfs (HalDevice *d)
 		hal_util_set_string_from_file(d, "system.chassis.manufacturer", DMI_SYSFS_PATH, "chassis_vendor");
 		computer_dmi_map (d, FALSE);
 
-		/* compatibility keys, remove 28 Feb 2008 */
-		hal_device_copy_property (d, "system.hardware.vendor", d , "smbios.system.manufacturer");
-		hal_device_copy_property (d, "system.hardware.product", d , "smbios.system.product");
-		hal_device_copy_property (d, "system.hardware.version", d , "smbios.system.version");
-		hal_device_copy_property (d, "system.hardware.serial", d , "smbios.system.serial");
-		hal_device_copy_property (d, "system.hardware.uuid", d , "smbios.system.uuid");
-		hal_device_copy_property (d, "system.firmware.vendor", d , "smbios.bios.vendor");
-		hal_device_copy_property (d, "system.firmware.version", d , "smbios.bios.version");
-		hal_device_copy_property (d, "system.firmware.release_date", d , "smbios.bios.release_date");
-		hal_device_copy_property (d, "system.chassis.manufacturer", d , "smbios.chassis.manufacturer");
-		hal_device_copy_property (d, "system.chassis.type", d , "smbios.chassis.type");
-
 		computer_probing_helper_done (d);
 		return TRUE;
 
@@ -825,7 +813,6 @@ osspec_probe (void)
 	hald_runner_set_method_run_notify ((HaldRunnerRunNotify) hotplug_event_process_queue, NULL);
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.subsystem", "unknown");
-	hal_device_property_set_string (root, "info.bus", "unknown");
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");

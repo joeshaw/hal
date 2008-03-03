@@ -467,8 +467,10 @@ line_found:
 	/* construct arguments to /bin/umount */
 	na = 0;
 	args[na++] = UMOUNT;
+#ifndef __FreeBSD__
 	if (option_lazy)
 		args[na++] = "-l";
+#endif
 	if (option_force)
 		args[na++] = "-f";
 	args[na++] = (char *) device;
@@ -625,10 +627,19 @@ try_open_excl_again:
 	/* construct arguments to EJECT_PROGRAM (e.g. /usr/bin/eject) */
 	na = 0;
 	args[na++] = EJECT_PROGRAM;
+#ifdef __FreeBSD__
+	args[na++] = "-f";
+	args[na++] = (char *) device;
+	if (closetray)
+		args[na++] = "close";
+	else
+		args[na++] = "eject";
+#else
 	if (closetray) {
 		args[na++] = "-t";
 	}
 	args[na++] = (char *) device;
+#endif
 	args[na++] = NULL;
 
 #ifdef DEBUG

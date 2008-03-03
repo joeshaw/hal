@@ -43,7 +43,7 @@ typedef struct {
 	time_t last_time;
 } batteryInfo;
 
-GHashTable *saved_battery_info = NULL;
+static GHashTable *saved_battery_info = NULL;
 
 /**  
  *  util_get_battery_technology_

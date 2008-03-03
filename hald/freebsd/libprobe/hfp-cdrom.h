@@ -149,8 +149,8 @@ HFPCDROM *hfp_cdrom_new (const char *path, const char *parent);
 HFPCDROM *hfp_cdrom_new_from_fd (int fd, const char *path, const char *parent);
 
 boolean hfp_cdrom_send_ccb (HFPCDROM *cdrom,
-			    char ccb[16],
-			    int timeout,
+			    const char *ccb,
+			    int ccb_len,
 			    HFPCDROMDirection direction,
 			    void *data,
 			    int len,

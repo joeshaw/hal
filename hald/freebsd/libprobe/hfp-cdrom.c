@@ -124,19 +124,23 @@ hfp_cdrom_new_from_fd (int fd, const char *path, const char *parent)
 
 boolean
 hfp_cdrom_send_ccb (HFPCDROM *cdrom,
-		    char ccb[16],
-		    int timeout,
+		    const char *ccb,
+		    int ccb_len,
 		    HFPCDROMDirection direction,
 		    void *data,
 		    int len,
 		    char **err)
 {
+  int timeout;
+
   assert(cdrom != NULL);
   assert(ccb != NULL);
   assert(direction == HFP_CDROM_DIRECTION_NONE
 	 || direction == HFP_CDROM_DIRECTION_IN
 	 || direction == HFP_CDROM_DIRECTION_OUT);
   assert(direction == HFP_CDROM_DIRECTION_NONE || data != NULL);
+
+  timeout = 10;
 
   if (cdrom->fd >= 0)		/* ATAPI transport */
     {
@@ -227,7 +231,7 @@ hfp_cdrom_send_ccb (HFPCDROM *cdrom,
 		    data,
 		    len,
 		    sizeof(cam_ccb.csio.sense_data),
-		    16,
+		    ccb_len,
 		    timeout * 1000);
 
       memcpy(cam_ccb.csio.cdb_io.cdb_bytes, ccb, 16);
@@ -255,7 +259,7 @@ hfp_cdrom_test_unit_ready (HFPCDROM *cdrom)
 
   assert(cdrom != NULL);
 
-  return hfp_cdrom_send_ccb(cdrom, ccb, 10, HFP_CDROM_DIRECTION_NONE, NULL, 0, NULL);
+  return hfp_cdrom_send_ccb(cdrom, ccb, 6, HFP_CDROM_DIRECTION_NONE, NULL, 0, NULL);
 }
 
 void
