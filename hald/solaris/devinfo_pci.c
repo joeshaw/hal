@@ -63,7 +63,6 @@ HalDevice *devinfo_pci_add (HalDevice *parent, di_node_t node, char *devfs_path,
 	devinfo_set_default_properties (d, parent, node, devfs_path);
 
 	hal_device_property_set_string (d, "info.subsystem", "pci");
-	hal_device_property_set_string (d, "info.bus", "pci");
 
 	vid = pid = svid = spid = 0;
         if (di_prop_lookup_ints (DDI_DEV_T_ANY, node, "vendor-id", &i) > 0) {

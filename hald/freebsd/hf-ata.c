@@ -78,7 +78,6 @@ hf_ata_ide_device_new (HalDevice *parent, int ms)
   hf_device_set_udi(device, "ide_%i_%i", host, ms);
 
   hal_device_property_set_string(device, "info.subsystem", "ide");
-  hal_device_property_set_string(device, "info.bus", "ide");
   hf_device_property_set_string_printf(device, "info.product", "IDE Device (%s)", ms == 0 ? "Master" : "Slave");
 
   hal_device_property_set_int(device, "ide.host", host);
@@ -298,7 +297,6 @@ hf_ata_channel_set_properties (HalDevice *device)
   hf_device_set_udi(device, "ide_host_%i", unit);
 
   hal_device_property_set_string(device, "info.subsystem", "ide_host");
-  hal_device_property_set_string(device, "info.bus", "ide_host");
   hal_device_property_set_int(device, "ide_host.number", unit);
 }
 

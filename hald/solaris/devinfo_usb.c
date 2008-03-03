@@ -67,7 +67,6 @@ devinfo_usb_add(HalDevice *parent, di_node_t node, char *devfs_path, char *devic
 
 	devinfo_set_default_properties (d, parent, node, devfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "usb_device");
-	hal_device_property_set_string (d, "info.bus", "usb_device");
 	PROP_STR(d, node, s, "usb-product-name", "info.product");
 	PROP_STR(d, node, s, "usb-product-name", "usb_device.product");
 	PROP_STR(d, node, s, "usb-vendor-name", "usb_device.vendor");
@@ -119,7 +118,6 @@ devinfo_usb_if_add(HalDevice *parent, di_node_t node, gchar *devfs_path, int ifn
 
 	devinfo_set_default_properties (d, parent, node, devfs_path);
         hal_device_property_set_string (d, "info.subsystem", "usb");
-        hal_device_property_set_string (d, "info.bus", "usb");
 
         hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 		"%s_if%d", hal_device_get_udi (parent), ifnum);

@@ -68,7 +68,6 @@ hf_scsi_bus_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "scsi_host");
-  hal_device_property_set_string(device, "info.bus", "scsi_host");
   hal_device_property_set_int(device, "scsi_host.host", match->path_id);
   hal_device_property_set_string(device, "info.product", "SCSI Host Adapter");
 
@@ -93,7 +92,6 @@ hf_scsi_scsi_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "scsi");
-  hal_device_property_set_string(device, "info.bus", "scsi");
   hal_device_property_set_int(device, "scsi.host", match->path_id);
   hal_device_property_set_int(device, "scsi.bus", match->path_id);
   hal_device_property_set_int(device, "scsi.target", match->target_id);

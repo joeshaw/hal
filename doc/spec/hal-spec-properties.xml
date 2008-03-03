@@ -7105,12 +7105,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           </thead>
           <tbody>
             <row>
-              <entry><literal>info.bus</literal> (string)</entry>
-              <entry><literal>info.subsystem</literal></entry>
-              <entry>2008-03-01</entry>
-              <entry>Renamed to something more abstract, available until removed.</entry>
-            </row>
-            <row>
               <entry><literal>*.physical_device</literal> (string)</entry>
               <entry><literal>*.originating_device</literal></entry>
               <entry>2008-03-01</entry>

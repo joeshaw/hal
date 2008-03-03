@@ -154,7 +154,6 @@ hf_block_device_enable (HalDevice *device, const char *devname)
   hal_device_add_capability(device, "block");
 
   hal_device_property_set_string(device, "info.subsystem", "block");
-  hal_device_property_set_string(device, "info.bus", "block");
   hal_device_property_set_string(device, "info.category", "block"); /* FIXME? */
 
   hf_device_property_set_string_printf(device, "block.device", "/dev/%s", devname);

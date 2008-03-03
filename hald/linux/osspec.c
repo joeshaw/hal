@@ -828,7 +828,6 @@ osspec_probe (void)
 	hald_runner_set_method_run_notify ((HaldRunnerRunNotify) hotplug_event_process_queue, NULL);
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.subsystem", "unknown");
-	hal_device_property_set_string (root, "info.bus", "unknown");
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
