@@ -622,6 +622,15 @@ PKG_CHECK_MODULES(GLIB, [$glib_module])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+AC_MSG_CHECKING([if GLib is version 2.14.0 or newer])
+if $PKG_CONFIG --atleast-version=2.14.0 glib-2.0; then
+  have_glib_2_14=yes
+  AC_DEFINE(HAVE_GLIB_2_14, 1, [Define to 1 if GLib is version 2.14 or newer])
+else
+  have_glib_2_14=no
+fi
+AC_MSG_RESULT($have_glib_2_14)
+
 # volume_id
 case "$host" in
 *-*-solaris*)

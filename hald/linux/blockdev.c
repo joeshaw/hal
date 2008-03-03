@@ -734,7 +734,11 @@ refresh_md_state (HalDevice *d)
 	                }
                         
 	                /* check again in two seconds */
+#ifdef HAVE_GLIB_2_14
+	                g_timeout_add_seconds (2, md_check_sync_timeout, g_strdup (sysfs_path));
+#else
 	                g_timeout_add (2000, md_check_sync_timeout, g_strdup (sysfs_path));
+#endif
 	        }
         } else
                 hal_device_property_set_bool (d, "storage.linux_raid.is_syncing", FALSE);

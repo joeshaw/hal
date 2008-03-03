@@ -54,7 +54,7 @@ enum {
 	ACPI_TYPE_BUTTON
 };
 
-#define ACPI_POLL_INTERVAL 30000
+#define ACPI_POLL_INTERVAL 30 /* in seconds */
 
 typedef struct ACPIDevHandler_s
 {
@@ -933,13 +933,25 @@ acpi_synthesize_hotplug_events (void)
 	acpi_synthesize_sonypi_display ();
 
 	/* setup timer for things that we need to poll */
-	g_timeout_add (ACPI_POLL_INTERVAL,
+#ifdef HAVE_GLIB_2_14
+	g_timeout_add_seconds (ACPI_POLL_INTERVAL,
+                               acpi_poll,
+                               NULL);
+#else
+	g_timeout_add (1000 * ACPI_POLL_INTERVAL,
 		       acpi_poll,
 		       NULL);
-	/* setup timer for things that we need only to poll infrequently*/
-	g_timeout_add ((ACPI_POLL_INTERVAL*120),
-		       battery_poll_infrequently,
-		       NULL);
+#endif
+
+	/* setup timer for things that we need only to poll infrequently */
+
+        /* don't use g_timeout_add_seconds() here as the related code path
+         * is possibly CPU and time eating and we don't want have any
+         * other timeout synced with this one
+         */
+	g_timeout_add (1000 * ACPI_POLL_INTERVAL * 120,
+                       battery_poll_infrequently,
+                       NULL);
 
 	return TRUE;
 }

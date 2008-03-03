@@ -333,7 +333,12 @@ update_polling_interval (void)
 
 	if (poll_timer > 0)
 		g_source_remove (poll_timer);
+
+#ifdef HAVE_GLIB_2_14
+	poll_timer = g_timeout_add_seconds (interval_in_seconds, poll_for_media, NULL);
+#else
 	poll_timer = g_timeout_add (interval_in_seconds * 1000, poll_for_media, NULL);
+#endif
 
         update_proc_title ();
 }

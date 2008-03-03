@@ -68,7 +68,7 @@ typedef struct PMUDevHandler_s
 #define PMU_BATT_TYPE_HOOPER	0x00000020	/* 3400/3500 */
 #define PMU_BATT_TYPE_COMET	0x00000030	/* 2400 */
 
-#define PMU_POLL_INTERVAL	2000
+#define PMU_POLL_INTERVAL	2  /* in seconds */
 
 #define PMUDEV			"/dev/pmu"
 
@@ -364,9 +364,15 @@ pmu_synthesize_hotplug_events (void)
 	}
 
 	/* setup timer for things that we need to poll */
-	g_timeout_add (PMU_POLL_INTERVAL,
+#ifdef HAVE_GLIB_2_14
+	g_timeout_add_seconds (PMU_POLL_INTERVAL,
+                               pmu_poll,
+                               NULL);
+#else
+	g_timeout_add (1000 * PMU_POLL_INTERVAL,
 		       pmu_poll,
 		       NULL);
+#endif
 
 out:
 	return ret;

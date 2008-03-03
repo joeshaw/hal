@@ -5167,8 +5167,11 @@ hald_dbus_filter_function (DBusConnection * connection,
 		dbus_connection_unref (dbus_connection);
 		dbus_connection = NULL;
 
+#ifdef HAVE_GLIB_2_14
+		g_timeout_add_seconds (3, reinit_dbus, NULL);
+#else
 		g_timeout_add (3000, reinit_dbus, NULL);
-
+#endif
 	} else if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameAcquired")){
 		/* we don't need to do anything atm with this signal ... */
 		return DBUS_HANDLER_RESULT_HANDLED; 

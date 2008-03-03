@@ -477,9 +477,15 @@ _polkit_config_changed_cb (PolKitContext *pk_context, gpointer user_data)
                 g_source_remove (_polkit_cooloff_timer);
                 HAL_INFO (("restarting cool-off timer"));
         }
+#ifdef HAVE_GLIB_2_14
+        _polkit_cooloff_timer = g_timeout_add_seconds (1,
+                                                       _polkit_config_really_changed,
+                                                       NULL);
+#else
         _polkit_cooloff_timer = g_timeout_add (1000, /* one second... */
                                                _polkit_config_really_changed,
                                                NULL);
+#endif
 }
 
 #endif /* HAVE_POLKIT */

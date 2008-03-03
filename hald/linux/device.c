@@ -74,7 +74,7 @@ gboolean _have_sysfs_power_button = FALSE;
 gboolean _have_sysfs_sleep_button = FALSE;
 gboolean _have_sysfs_power_supply = FALSE; 
 
-#define POWER_SUPPLY_BATTERY_POLL_INTERVAL 30000
+#define POWER_SUPPLY_BATTERY_POLL_INTERVAL 30  /* in seconds */
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -3408,9 +3408,16 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 		hal_device_add_capability (d, "battery");
 
 		/* setup timer for things that we need to poll */
-		g_timeout_add ( POWER_SUPPLY_BATTERY_POLL_INTERVAL,
-				power_supply_battery_poll,
-				NULL);
+#ifdef HAVE_GLIB_2_14
+		g_timeout_add_seconds (POWER_SUPPLY_BATTERY_POLL_INTERVAL,
+                                       power_supply_battery_poll,
+                                       NULL);
+#else
+		g_timeout_add (1000 * POWER_SUPPLY_BATTERY_POLL_INTERVAL,
+                               power_supply_battery_poll,
+                               NULL);
+#endif
+
 	}
 
 	if (is_ac_adapter == TRUE) {

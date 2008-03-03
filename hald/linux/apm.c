@@ -64,7 +64,7 @@ typedef struct {
 	int battery_time;
 } APMInfo;
 
-#define APM_POLL_INTERVAL 2000
+#define APM_POLL_INTERVAL 2  /* in seconds */
 
 static gboolean
 apm_poll (gpointer data)
@@ -310,9 +310,15 @@ apm_synthesize_hotplug_events (void)
 	hotplug_event->apm.apm_type = APM_TYPE_AC_ADAPTER;
 	hotplug_event_enqueue (hotplug_event);
 
-	g_timeout_add (APM_POLL_INTERVAL,
+#ifdef HAVE_GLIB_2_14
+	g_timeout_add_seconds (APM_POLL_INTERVAL,
+                               apm_poll,
+                               NULL);
+#else
+	g_timeout_add (1000 * APM_POLL_INTERVAL,
 		       apm_poll,
 		       NULL);
+#endif
 
 out:
 	return ret;

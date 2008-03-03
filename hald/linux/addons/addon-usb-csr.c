@@ -330,7 +330,11 @@ main (int argc, char *argv[])
 							      "info.product", &err));
 
 	main_loop = g_main_loop_new (NULL, FALSE);
+#ifdef HAVE_GLIB_2_14
+	g_timeout_add_seconds (TIMEOUT, check_all_batteries, NULL);
+#else
 	g_timeout_add (1000L * TIMEOUT, check_all_batteries, NULL);
+#endif
 	g_main_loop_run (main_loop);
 
 	libhal_ctx_shutdown (halctx, &err);
