@@ -65,6 +65,10 @@ static CKTracker *ck_tracker = NULL;
 #endif
 static GHashTable *singletons = NULL;
 
+static void foreach_property_append (HalDevice *device, 
+                                     const char *key,
+                                     gpointer user_data);
+
 static void
 raise_error (DBusConnection *connection,
 	     DBusMessage *in_reply_to,
@@ -334,6 +338,83 @@ foreach_device_get_udi (HalDeviceStore *store, HalDevice *device,
 	dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &udi);
 
 	return TRUE;
+}
+
+static gboolean
+foreach_device_get_udi_with_properties (HalDeviceStore *store, HalDevice *device, gpointer user_data)
+{
+	DBusMessageIter *iter = user_data;
+	DBusMessageIter iter_struct;
+	DBusMessageIter iter_dict;
+	const char *udi;
+
+        dbus_message_iter_open_container (iter,
+                                          DBUS_TYPE_STRUCT,
+                                          NULL,
+                                          &iter_struct);
+
+	udi = hal_device_get_udi (device);
+        dbus_message_iter_append_basic (&iter_struct, DBUS_TYPE_STRING, &udi);
+
+	dbus_message_iter_open_container (&iter_struct, 
+					  DBUS_TYPE_ARRAY,
+					  DBUS_DICT_ENTRY_BEGIN_CHAR_AS_STRING
+					  DBUS_TYPE_STRING_AS_STRING
+					  DBUS_TYPE_VARIANT_AS_STRING
+					  DBUS_DICT_ENTRY_END_CHAR_AS_STRING,
+					  &iter_dict);
+
+	hal_device_property_foreach (device, foreach_property_append, &iter_dict);
+
+	dbus_message_iter_close_container (&iter_struct, &iter_dict);
+        dbus_message_iter_close_container (iter, &iter_struct);
+	return TRUE;
+}
+
+/** 
+ *  manager_get_all_devices_with_properties:
+ *  @connection:         D-BUS connection
+ *  @message:            Message
+ *
+ *  Returns:             What to do with the message
+ *
+ *  Get all devices.
+ *
+ *  <pre>
+ *  array{struct {object_reference, map{string, any}}} Manager.GetAllDevicesWithProperties()
+ *  </pre>
+ *
+ */
+DBusHandlerResult
+manager_get_all_devices_with_properties (DBusConnection * connection,
+                                         DBusMessage * message)
+{
+	DBusMessage *reply;
+	DBusMessageIter iter;
+	DBusMessageIter iter_array;
+
+	reply = dbus_message_new_method_return (message);
+	if (reply == NULL)
+		DIE (("No memory"));
+
+	dbus_message_iter_init_append (reply, &iter);
+	dbus_message_iter_open_container (&iter, 
+					  DBUS_TYPE_ARRAY,
+                                          "(sa{sv})",
+					  &iter_array);
+
+	hal_device_store_foreach (hald_get_gdl (),
+				  foreach_device_get_udi_with_properties,
+				  &iter_array);
+
+	dbus_message_iter_close_container (&iter, &iter_array);
+
+	if (!dbus_connection_send (connection, reply, NULL))
+		DIE (("No memory"));
+
+	dbus_message_unref (reply);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 /** 
@@ -4323,6 +4404,9 @@ do_introspect (DBusConnection  *connection,
 				       "    <method name=\"GetAllDevices\">\n"
 				       "      <arg name=\"devices\" direction=\"out\" type=\"ao\"/>\n"
 				       "    </method>\n"
+				       "    <method name=\"GetAllDevicesWithProperties\">\n"
+				       "      <arg name=\"devices_with_props\" direction=\"out\" type=\"a(oa{sv})\"/>\n"
+				       "    </method>\n"
 				       "    <method name=\"DeviceExists\">\n"
 				       "      <arg name=\"does_it_exist\" direction=\"out\" type=\"b\"/>\n"
 				       "      <arg name=\"udi\" direction=\"in\" type=\"o\"/>\n"
@@ -4716,6 +4800,12 @@ hald_dbus_filter_handle_methods (DBusConnection *connection, DBusMessage *messag
 		   strcmp (dbus_message_get_path (message),
 			   "/org/freedesktop/Hal/Manager") == 0) {
 		return manager_get_all_devices (connection, message);
+	} else if (dbus_message_is_method_call (message,
+                                                "org.freedesktop.Hal.Manager",
+                                                "GetAllDevicesWithProperties") &&
+		   strcmp (dbus_message_get_path (message),
+			   "/org/freedesktop/Hal/Manager") == 0) {
+		return manager_get_all_devices_with_properties (connection, message);
 	} else if (dbus_message_is_method_call (message,
 						"org.freedesktop.Hal.Manager",
 						"DeviceExists") &&

@@ -518,6 +518,12 @@ LibHalPropertySet *libhal_device_get_all_properties (LibHalContext *ctx,
 						     const char *udi,
 						     DBusError *error);
 
+/* Get all devices and their properties */
+dbus_bool_t libhal_get_all_devices_with_properties (LibHalContext       *ctx, 
+                                                    int                 *out_num_devices, 
+                                                    char              ***out_udi,
+                                                    LibHalPropertySet ***out_properties, 
+                                                    DBusError           *error);
 
 /* sort all properties according to property name */
 void libhal_property_set_sort (LibHalPropertySet *set);

@@ -32,6 +32,8 @@
 
 DBusHandlerResult manager_get_all_devices           (DBusConnection *connection,
 						     DBusMessage    *message);
+DBusHandlerResult manager_get_all_devices_with_properties (DBusConnection *connection,
+						     DBusMessage    *message);
 DBusHandlerResult manager_find_device_string_match  (DBusConnection *connection,
 						     DBusMessage    *message);
 DBusHandlerResult manager_find_device_by_capability (DBusConnection *connection,

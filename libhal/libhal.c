@@ -5113,3 +5113,158 @@ libhal_device_is_caller_privileged (LibHalContext *ctx,
 	dbus_message_unref (reply);
 	return value;
 }
+
+/**
+ * libhal_get_all_devices_with_properties:
+ * @out_num_devices: Return location for number of devices
+ * @out_udi: Return location for array of of udi's. Caller should free this with libhal_free_string_array() when done with it.
+ * @out_properties: Return location for array of #LibHalPropertySet objects. Caller should free each one of them with libhal_free_property_set() when done with it
+ * @error: Return location for error
+ *
+ * Get all devices in the hal database as well as all properties for each device.
+ *
+ * Return: %TRUE if success; %FALSE and @error will be set.
+ **/
+dbus_bool_t libhal_get_all_devices_with_properties (LibHalContext       *ctx, 
+                                                    int                 *out_num_devices, 
+                                                    char              ***out_udi,
+                                                    LibHalPropertySet ***out_properties, 
+                                                    DBusError           *error)
+{
+
+	DBusMessage *message;
+	DBusMessage *reply;
+	DBusMessageIter iter_array, reply_iter;
+	DBusError _error;
+        char **udi_array;
+        char **_udi_array;
+        LibHalPropertySet **prop_array;
+        LibHalPropertySet **_prop_array;
+        size_t count;
+        unsigned int n;
+
+	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
+	LIBHAL_CHECK_LIBHALCONTEXT (out_num_devices, FALSE);
+	LIBHAL_CHECK_LIBHALCONTEXT (out_udi, FALSE);
+	LIBHAL_CHECK_LIBHALCONTEXT (out_properties, FALSE);
+
+	*out_num_devices = 0;
+        *out_udi = NULL;
+        *out_properties = NULL;
+
+        count = 0;
+        udi_array  = NULL;
+        prop_array = NULL;
+
+	message = dbus_message_new_method_call ("org.freedesktop.Hal",
+						"/org/freedesktop/Hal/Manager",
+						"org.freedesktop.Hal.Manager",
+						"GetAllDevicesWithProperties");
+	if (message == NULL) {
+		fprintf (stderr, "%s %d : Could not allocate D-BUS message\n", __FILE__, __LINE__);
+		goto fail;
+	}
+
+	dbus_error_init (&_error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection, message, -1, &_error);
+
+	dbus_move_error (&_error, error);
+	if (error != NULL && dbus_error_is_set (error)) {
+		dbus_message_unref (message);
+		goto fail;
+	}
+	if (reply == NULL) {
+		dbus_message_unref (message);
+		goto fail;
+	}
+
+	/* now analyze reply */
+	dbus_message_iter_init (reply, &reply_iter);
+
+	if (dbus_message_iter_get_arg_type (&reply_iter) != DBUS_TYPE_ARRAY) {
+		fprintf (stderr, "%s %d : wrong reply from hald.  Expecting an array.\n", __FILE__, __LINE__);
+		goto fail;
+	}
+	
+	dbus_message_iter_recurse (&reply_iter, &iter_array);
+
+        #define _BLOCK_SIZE 32
+
+        udi_array = (char **) malloc (sizeof (char*) * _BLOCK_SIZE);
+        if (udi_array == NULL)
+                goto fail;
+
+        prop_array = (LibHalPropertySet **) malloc (sizeof (void*) * _BLOCK_SIZE);
+        if (prop_array == NULL)
+                goto fail;
+
+	while (dbus_message_iter_get_arg_type (&iter_array) == DBUS_TYPE_STRUCT) {
+                DBusMessageIter iter_struct;
+		const char *value;
+                LibHalPropertySet *pset;
+		char *udi;
+
+		if ((count % _BLOCK_SIZE) == 0 && count > 0) {
+                        _udi_array = (char **) realloc (udi_array, sizeof (char*) * (count + _BLOCK_SIZE));
+                        _prop_array = (LibHalPropertySet **) realloc (prop_array, sizeof (void*) * (count+_BLOCK_SIZE));
+			if (_udi_array == NULL || _prop_array == NULL)
+				goto fail;
+                        udi_array = _udi_array;
+                        prop_array = _prop_array;
+		}
+
+                dbus_message_iter_recurse (&iter_array, &iter_struct);
+		
+		dbus_message_iter_get_basic (&iter_struct, &value);
+		udi = strdup (value);
+		if (udi == NULL)
+			goto fail;
+
+		dbus_message_iter_next(&iter_struct);
+
+                pset = get_property_set (&iter_struct);
+
+                udi_array[count] = udi;
+                prop_array[count] = pset;
+                count++;
+
+		dbus_message_iter_next (&iter_array);
+	}
+
+        if ((count % _BLOCK_SIZE) == 0 && count > 0) {
+                _udi_array = (char **) realloc (udi_array, sizeof (char*) * (count + _BLOCK_SIZE));
+                _prop_array = (LibHalPropertySet **) realloc (prop_array, sizeof (void*) * (count + _BLOCK_SIZE));
+                if (_udi_array == NULL || _prop_array == NULL)
+                        goto fail;
+                udi_array = _udi_array;
+                prop_array = _prop_array;
+        }
+        udi_array[count] = NULL;
+        prop_array[count] = NULL;
+
+	*out_num_devices = count;
+        *out_udi = udi_array;
+        *out_properties = prop_array;
+		      
+	dbus_message_unref (reply);
+	dbus_message_unref (message);
+
+	return TRUE;
+
+fail:
+        if (udi_array != NULL) {
+                for (n = 0; n < count; n++) {
+                        free (udi_array[n]);
+                }
+                free (udi_array);
+        }
+
+        if (prop_array != NULL) {
+                for (n = 0; n < count; n++) {
+                        free (prop_array[n]);
+                }
+                free (prop_array);
+        }
+
+        return FALSE;
+}
