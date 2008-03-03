@@ -1833,6 +1833,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>Yes</entry>
               <entry>Firmware revision</entry>
             </row>
+            <row>
+              <entry>
+                <literal>mmc.type</literal> (string)
+              </entry>
+              <entry>example: SDIO</entry>
+              <entry>No</entry>
+              <entry>Card type</entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>

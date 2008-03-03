@@ -2235,7 +2235,7 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	HalDevice *d;
 	const gchar *bus_id;
 	gint host_num, rca, manfid, oemid;
-	gchar *scr;
+	gchar *scr, *type;
 
 	if (parent_dev == NULL) {
 		d = NULL;
@@ -2256,6 +2256,11 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_util_set_string_from_file (d, "mmc.cid", sysfs_path, "cid");
 	hal_util_set_string_from_file (d, "mmc.csd", sysfs_path, "csd");
 	
+	type = hal_util_get_string_from_file (sysfs_path, "type");
+	if (type != NULL)
+		/* Possible MMC/SD/SDIO */
+		hal_device_property_set_string (d, "mmc.type", type);
+
 	scr = hal_util_get_string_from_file (sysfs_path, "scr");
 	if (scr != NULL) {
 		if (strcmp (scr, "0000000000000000") == 0)
@@ -2265,12 +2270,17 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	}
 
 	if (!hal_util_set_string_from_file (d, "info.product", sysfs_path, "name")) {
-		if (scr != NULL) {
-			hal_device_property_set_string (d, "info.product", "SD Card");
-			hal_device_property_set_string (d, "mmc.product", "SD Card");
+		gchar buf[64];
+		if (type != NULL) {
+			g_snprintf(buf, sizeof(buf), "%s Card", type);
+			hal_device_property_set_string (d, "info.product", buf);
+		} else if (scr != NULL) {
+			g_snprintf(buf, sizeof(buf), "SD Card");
+			hal_device_property_set_string (d, "info.product", buf);
 		} else {
-			hal_device_property_set_string (d, "mmc.product", "MMC Card");
+			g_snprintf(buf, sizeof(buf), "MMC Card");
                 }
+		hal_device_property_set_string (d, "mmc.product", buf);
 	}
 	
 	if (hal_util_get_int_from_file (sysfs_path, "manfid", &manfid, 16)) {
