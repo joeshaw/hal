@@ -4680,6 +4680,45 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       <para>
       </para>
     </sect2>
+    <sect2 id="device-properties-net-bridge">
+      <title>
+        net.bridge namespace
+      </title>
+      <para>
+        Bridge ethernet networking devices is described in this namespace
+        for device objects with the capability
+        <literal>net.bridge</literal>.
+        Note that device
+        objects can only have the <literal>net.bridge</literal> capability
+        if they already have the capability <literal>net</literal>.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>net.bridge.mac_address</literal> (uint64)
+              </entry>
+              <entry>example: 0x0010605d8ef4</entry>
+              <entry>
+                Only if the <literal>net.bridge</literal> capability is set
+              </entry>
+              <entry>48-bit address</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+      <para>
+      </para>
+    </sect2>
     <sect2 id="device-properties-net-bluetooth">
       <title>
         net.bluetooth namespace

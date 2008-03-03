@@ -532,6 +532,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	if (media_type == ARPHRD_ETHER) {
 		const char *addr;
 		const char *parent_subsys;
+		char bridge_path[HAL_PATH_MAX];
 		char wireless_path[HAL_PATH_MAX];
 		char wiphy_path[HAL_PATH_MAX];
 		struct stat s;
@@ -553,6 +554,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 			}
 		}
 
+		snprintf (bridge_path, HAL_PATH_MAX, "%s/bridge", sysfs_path);
 		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
 		/* wireless dscape stack e.g. from rt2500pci driver*/
 		snprintf (wiphy_path, HAL_PATH_MAX, "%s/wiphy", sysfs_path);
@@ -569,6 +571,11 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 			hal_device_property_set_string (d, "info.category", "net.80211");
 			hal_device_add_capability (d, "net.80211");
 			hal_device_property_set_uint64 (d, "net.80211.mac_address", mac_address);
+		} else if (stat (bridge_path, &s) == 0 && (s.st_mode & S_IFDIR)) {
+			hal_device_property_set_string (d, "info.product", "Bridge Interface");
+			hal_device_property_set_string (d, "info.category", "net.bridge");
+			hal_device_add_capability (d, "net.bridge");
+			hal_device_property_set_uint64 (d, "net.bridge.mac_address", mac_address);
 		} else {
 			hal_device_property_set_string (d, "info.product", "Networking Interface");
 			hal_device_property_set_string (d, "info.category", "net.80203");
