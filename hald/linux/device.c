@@ -2319,7 +2319,7 @@ sdio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 	HalDevice *d;
 	const gchar *bus_id;
 	gchar buf[256];
-	gint host_num, rca, card_id, vendor_id, product_id;
+	gint host_num, rca, card_id;
 
 	if (parent_dev == NULL)
 		return NULL;
@@ -2354,7 +2354,7 @@ sdio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 }
 
 static gboolean
-sdio_card_compute_udi (HalDevice *d)
+sdio_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
