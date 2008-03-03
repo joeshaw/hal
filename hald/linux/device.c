@@ -1709,6 +1709,7 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		gint bmAttributes;
 
 		hal_device_property_set_string (d, "info.subsystem", "usb_device");
+		hal_device_property_set_string (d, "info.bus", "usb_device");
 
 		hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
@@ -1795,6 +1796,7 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	} else {
 		hal_device_property_set_string (d, "info.subsystem", "usb");
+		hal_device_property_set_string (d, "info.bus", "usb");
 
 		/* take all usb_device.* properties from parent and make them usb.* on this object */
 		if (parent_dev != NULL)
