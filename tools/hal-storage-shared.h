@@ -51,7 +51,8 @@ void handle_unmount (LibHalContext *hal_ctx,
 		     const char *invoked_by_uid, const char *invoked_by_syscon_name,
 		     gboolean option_lazy, gboolean option_force);
 
-void handle_eject (LibHalContext *hal_ctx, 
+void handle_eject (DBusConnection *system_bus,
+                   LibHalContext *hal_ctx, 
 		   const char *udi,
 		   LibHalDrive *drive, const char *device, 
 		   const char *invoked_by_uid, const char *invoked_by_syscon_name,

@@ -207,7 +207,8 @@ main (int argc, char *argv[])
 	libhal_free_string_array (volume_udis);
 
 	/* now attempt the eject */
-	handle_eject (hal_ctx, 
+	handle_eject (system_bus,
+                      hal_ctx, 
 		      libhal_drive_get_udi (drive),
 		      drive,
 		      libhal_drive_get_device_file (drive),

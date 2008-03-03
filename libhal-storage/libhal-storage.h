@@ -205,6 +205,7 @@ void                 libhal_drive_free                        (LibHalDrive *driv
 dbus_bool_t          libhal_drive_is_hotpluggable          (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_uses_removable_media     (LibHalDrive      *drive);
 dbus_bool_t          libhal_drive_is_media_detected        (LibHalDrive      *drive);
+dbus_bool_t          libhal_drive_is_media_detection_automatic (LibHalDrive      *drive);
 dbus_uint64_t        libhal_drive_get_size                 (LibHalDrive      *drive);
 dbus_uint64_t        libhal_drive_get_media_size           (LibHalDrive      *drive);
 const char          *libhal_drive_get_partition_scheme     (LibHalDrive      *drive);

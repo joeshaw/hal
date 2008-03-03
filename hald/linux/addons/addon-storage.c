@@ -61,6 +61,8 @@ static GMainLoop *loop;
 static gboolean system_is_idle = FALSE;
 static gboolean check_lock_state = TRUE;
 
+static gboolean polling_disabled = FALSE;
+
 static void 
 force_unmount (LibHalContext *ctx, const char *udi)
 {
@@ -277,6 +279,7 @@ enum {
 };
 
 static gboolean poll_for_media (gpointer user_data);
+static gboolean poll_for_media_force ();
 
 static int interval_in_seconds = 2;
 
@@ -286,7 +289,10 @@ static gboolean is_locked_via_o_excl = FALSE;
 static void
 update_proc_title (void)
 {
-        if (is_locked_by_hal) {
+
+        if (polling_disabled) {
+                hal_set_proc_title ("hald-addon-storage: no polling on %s because it is explicitly disabled", device_file);
+        } else if (is_locked_by_hal) {
                 if (is_locked_via_o_excl) {
                         hal_set_proc_title ("hald-addon-storage: no polling because %s is locked via HAL and O_EXCL", device_file);
                 } else {
@@ -335,11 +341,9 @@ update_polling_interval (void)
 static gboolean
 poll_for_media (gpointer user_data)
 {
-	int fd;
-	int got_media;
-
         if (check_lock_state) {
                 DBusError error;
+                dbus_bool_t should_poll;
 
                 check_lock_state = FALSE;
 
@@ -355,14 +359,40 @@ poll_for_media (gpointer user_data)
                         is_locked_by_hal = FALSE;
                         update_proc_title ();
                 }
+
+                dbus_error_init (&error);
+                should_poll = libhal_device_get_property_bool (ctx, udi, "storage.media_check_enabled", &error);
+                if (should_poll) {
+                        polling_disabled = FALSE;
+                        update_proc_title ();
+                } else {
+                        polling_disabled = TRUE;
+                        update_proc_title ();
+                }
+
         }
 
         /* TODO: we could remove the timeout completely... */
-        if (is_locked_by_hal)
+        if (is_locked_by_hal || polling_disabled)
                 goto skip_check;
-	
+
+        poll_for_media_force ();
+
+skip_check:
+	return TRUE;
+}
+
+/* returns: whether the state changed */
+static gboolean
+poll_for_media_force ()
+{
+        int fd;
+        int got_media;
+        int old_media_status;
+
 	got_media = FALSE;
-	
+
+        old_media_status = media_status;
 	if (is_cdrom) {
 		int drive;
 		
@@ -538,49 +568,73 @@ poll_for_media (gpointer user_data)
 	/*HAL_DEBUG (("polling %s; got media=%d", device_file, got_media));*/
 	
 skip_check:
-	return TRUE;
+	return old_media_status != media_status;
 }
 
 #ifdef HAVE_CONKIT
 static gboolean
 get_system_idle_from_ck (void)
 {
-	gboolean ret;
-	DBusError error;
-	DBusMessage *message;
-	DBusMessage *reply;
+       gboolean ret;
+       DBusError error;
+       DBusMessage *message;
+       DBusMessage *reply;
 
-	ret = FALSE;
+       ret = FALSE;
 
-	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
-						"/org/freedesktop/ConsoleKit/Manager",
-						"org.freedesktop.ConsoleKit.Manager",
-						"GetSystemIdleHint");
-	dbus_error_init (&error);
-	reply = dbus_connection_send_with_reply_and_block (con, message, -1, &error);
-	if (reply == NULL || dbus_error_is_set (&error)) {
-		HAL_ERROR (("Error doing Manager.GetSystemIdleHint on ConsoleKit: %s: %s", error.name, error.message));
-		dbus_message_unref (message);
-		if (reply != NULL)
-			dbus_message_unref (reply);
-		goto error;
-	}
-	if (!dbus_message_get_args (reply, NULL,
-				    DBUS_TYPE_BOOLEAN, &(system_is_idle),
-				    DBUS_TYPE_INVALID)) {
-		HAL_ERROR (("Invalid GetSystemIdleHint reply from CK"));
-		goto error;
-	}
-	dbus_message_unref (message);
-	dbus_message_unref (reply);
+       message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+                                               "/org/freedesktop/ConsoleKit/Manager",
+                                               "org.freedesktop.ConsoleKit.Manager",
+                                               "GetSystemIdleHint");
+       dbus_error_init (&error);
+       reply = dbus_connection_send_with_reply_and_block (con, message, -1, &error);
+       if (reply == NULL || dbus_error_is_set (&error)) {
+               HAL_ERROR (("Error doing Manager.GetSystemIdleHint on ConsoleKit: %s: %s", error.name, error.message));
+               dbus_message_unref (message);
+               if (reply != NULL)
+                       dbus_message_unref (reply);
+               goto error;
+       }
+       if (!dbus_message_get_args (reply, NULL,
+                                   DBUS_TYPE_BOOLEAN, &(system_is_idle),
+                                   DBUS_TYPE_INVALID)) {
+               HAL_ERROR (("Invalid GetSystemIdleHint reply from CK"));
+               goto error;
+       }
+       dbus_message_unref (message);
+       dbus_message_unref (reply);
 
-	ret = TRUE;
+       ret = TRUE;
 
 error:
-	return ret;
+       return ret;
 }
 #endif /* HAVE_CONKIT */
 
+
+static DBusHandlerResult
+direct_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
+{
+	if (dbus_message_is_method_call (message, 
+					 "org.freedesktop.Hal.Device.Storage.Removable", 
+					 "CheckForMedia")) {
+                DBusMessage *reply;
+                dbus_bool_t call_had_sideeffect;
+
+                HAL_INFO (("Forcing poll for media becusse CheckForMedia() was called"));
+
+                call_had_sideeffect = poll_for_media_force ();
+
+                reply = dbus_message_new_method_return (message);
+                dbus_message_append_args (reply,
+                                          DBUS_TYPE_BOOLEAN, &call_had_sideeffect,
+                                          DBUS_TYPE_INVALID);
+                dbus_connection_send (connection, reply, NULL);
+                dbus_message_unref (reply);
+        }
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
 
 static DBusHandlerResult
 dbus_filter_function (DBusConnection *connection, DBusMessage *message, void *user_data)
@@ -667,6 +721,23 @@ main (int argc, char *argv[])
 	dbus_connection_setup_with_g_main (con, NULL);
 	dbus_connection_set_exit_on_disconnect (con, 0);
 
+        LibHalContext *ctx_direct;
+        DBusConnection *con_direct;
+	dbus_error_init (&error);
+	if ((ctx_direct = libhal_ctx_init_direct (&error)) == NULL) {
+		HAL_ERROR (("Cannot connect to hald"));
+                goto out;
+	}
+	dbus_error_init (&error);
+	if (!libhal_device_addon_is_ready (ctx_direct, udi, &error)) {
+                goto out;
+	}
+	con_direct = libhal_ctx_get_dbus_connection (ctx_direct);
+	dbus_connection_setup_with_g_main (con_direct, NULL);
+	dbus_connection_set_exit_on_disconnect (con_direct, 0);
+	dbus_connection_add_filter (con_direct, direct_filter_function, NULL, NULL);
+
+
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
@@ -686,6 +757,7 @@ main (int argc, char *argv[])
 		is_cdrom = 0;
 
 	media_status = MEDIA_STATUS_UNKNOWN;
+
 
 #ifdef HAVE_CONKIT
 	/* TODO: ideally we should track the sessions on the seats on
@@ -732,6 +804,18 @@ main (int argc, char *argv[])
 			    NULL);
         g_free (str);
 	dbus_connection_add_filter (con, dbus_filter_function, NULL, NULL);
+
+	if (!libhal_device_claim_interface (ctx,
+					    udi, 
+					    "org.freedesktop.Hal.Device.Storage.Removable", 
+					    "    <method name=\"CheckForMedia\">\n"
+					    "      <arg name=\"call_had_sideeffect\" direction=\"out\" type=\"b\"/>\n"
+					    "    </method>\n",
+					    &error)) {
+		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.Storage.Removable'"));
+                goto out;
+	}
+
 
 	update_polling_interval ();
 	g_main_loop_run (loop);

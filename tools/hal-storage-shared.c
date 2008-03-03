@@ -533,7 +533,8 @@ line_found:
 }
 
 void
-handle_eject (LibHalContext *hal_ctx, 
+handle_eject (DBusConnection *system_bus,
+              LibHalContext *hal_ctx, 
 	      const char *udi,
 	      LibHalDrive *drive, const char *device, 
 	      const char *invoked_by_uid, const char *invoked_by_syscon_name,
@@ -551,7 +552,7 @@ handle_eject (LibHalContext *hal_ctx,
         DBusError error;
 #endif
 
-	/* When called here all the file systems from this device is
+	/* When called here all the file systems from this device are
 	 * already unmounted. That's actually guaranteed; see
 	 * tools/hal-storage-eject.c for details.
 	 *
@@ -656,7 +657,22 @@ try_open_excl_again:
 		unknown_error (serr);
 	}
 
-	/* eject was succesful... */
+	/* eject was succesful... now.. if we're not polling the drive
+         * invoke CheckForMedia() to make sure the device database is
+         * properly updated...
+         */
+        if (!libhal_drive_is_media_detection_automatic (drive)) {
+                DBusMessage *message;
+                DBusMessage *reply;
+                DBusError error;
+
+                message = dbus_message_new_method_call ("org.freedesktop.Hal",
+                                                        udi,
+                                                        "org.freedesktop.Hal.Device.Storage.Removable",
+                                                        "CheckForMedia");
+                dbus_error_init (&error);
+                reply = dbus_connection_send_with_reply_and_block (system_bus, message, -1, &error);
+        }
 
 #ifdef DEBUG
 	printf ("done ejecting\n");

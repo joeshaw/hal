@@ -6,10 +6,9 @@
       <append key="info.callouts.add" type="strlist">hal-storage-cleanup-all-mountpoints</append>
     </match>
 
-    <match key="storage.media_check_enabled" bool="true">
-      <match key="storage.removable.support_async_notification" bool="false">
-        <append key="info.addons" type="strlist">hald-addon-storage</append>
-      </match>
+    <!-- poll drives with removable media -->
+    <match key="storage.removable" bool="true">
+      <append key="info.addons" type="strlist">hald-addon-storage</append>
     </match>
 
     <match key="volume.is_disc" bool="true">
