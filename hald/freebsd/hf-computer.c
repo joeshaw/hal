@@ -51,8 +51,6 @@ hf_computer_device_probe (HalDevice *device)
 
   if (sys_manufacturer && sys_product && sys_version)
     {
-      hal_device_property_set_string(device, "system.vendor", sys_manufacturer);
-
       if (strcmp(sys_version, "Not Specified"))
 	hf_device_property_set_string_printf(device, "system.product", "%s %s", sys_product, sys_version);
       else

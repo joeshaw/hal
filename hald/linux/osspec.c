@@ -539,7 +539,7 @@ computer_dmi_map (HalDevice *d, gboolean dmidecode)
 		const char *chassis_type;
 
 		/* now map the smbios.* properties to our generic system.formfactor property */
-		if ((chassis_type = hal_device_property_get_string (d, "smbios.chassis.type")) != NULL) {
+		if ((chassis_type = hal_device_property_get_string (d, "system.chassis.type")) != NULL) {
 			
 			for (i = 0; chassis_map[i] != NULL; i += 2) {
 				if (strcmp (chassis_map[i], chassis_type) == 0) {
@@ -585,9 +585,6 @@ computer_probing_pcbios_helper_done (HalDevice *d, guint32 exit_type,
 	    (system_product = hal_device_property_get_string (d, "system.hardware.product")) != NULL &&
 	    (system_version = hal_device_property_get_string (d, "system.hardware.version")) != NULL) {
 		char buf[128];
-
-		/* depricated 2008-02-28 */
-		hal_device_property_set_string (d, "system.vendor", system_manufacturer);
 
 		if (strcmp(system_version, "Not Specified" ) != 0 ) {
 			g_snprintf (buf, sizeof (buf), "%s %s", system_product, system_version);
@@ -737,18 +734,6 @@ decode_dmi_from_sysfs (HalDevice *d)
 		hal_util_set_string_from_file(d, "system.hardware.version", DMI_SYSFS_PATH, "product_version");
 		hal_util_set_string_from_file(d, "system.chassis.manufacturer", DMI_SYSFS_PATH, "chassis_vendor");
 		computer_dmi_map (d, FALSE);
-
-		/* compatibility keys, remove 28 Feb 2008 */
-		hal_device_copy_property (d, "system.hardware.vendor", d , "smbios.system.manufacturer");
-		hal_device_copy_property (d, "system.hardware.product", d , "smbios.system.product");
-		hal_device_copy_property (d, "system.hardware.version", d , "smbios.system.version");
-		hal_device_copy_property (d, "system.hardware.serial", d , "smbios.system.serial");
-		hal_device_copy_property (d, "system.hardware.uuid", d , "smbios.system.uuid");
-		hal_device_copy_property (d, "system.firmware.vendor", d , "smbios.bios.vendor");
-		hal_device_copy_property (d, "system.firmware.version", d , "smbios.bios.version");
-		hal_device_copy_property (d, "system.firmware.release_date", d , "smbios.bios.release_date");
-		hal_device_copy_property (d, "system.chassis.manufacturer", d , "smbios.chassis.manufacturer");
-		hal_device_copy_property (d, "system.chassis.type", d , "smbios.chassis.type");
 
 		computer_probing_helper_done (d);
 		return TRUE;

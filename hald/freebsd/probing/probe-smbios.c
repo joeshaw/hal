@@ -237,18 +237,6 @@ main (int argc, char *argv[])
 	/* as read to EOF, close */
 	fclose (f);
 
-	/* compatibility keys, remove 28 Feb 2008 */
-	copykeyval ("system.hardware.vendor", "smbios.system.manufacturer");
-	copykeyval ("system.hardware.product", "smbios.system.product");
-	copykeyval ("system.hardware.version", "smbios.system.version");
-	copykeyval ("system.hardware.serial", "smbios.system.serial");
-	copykeyval ("system.hardware.uuid", "smbios.system.uuid");
-	copykeyval ("system.firmware.vendor", "smbios.bios.vendor");
-	copykeyval ("system.firmware.version", "smbios.bios.version");
-	copykeyval ("system.firmware.release_date", "smbios.bios.release_date");
-	copykeyval ("system.chassis.manufacturer", "smbios.chassis.manufacturer");
-	copykeyval ("system.chassis.type", "smbios.chassis.type");
-
 	/* return success */
 	ret = 0;
 
