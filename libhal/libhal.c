@@ -5091,9 +5091,9 @@ dbus_bool_t libhal_get_all_devices_with_properties (LibHalContext       *ctx,
         unsigned int n;
 
 	LIBHAL_CHECK_LIBHALCONTEXT (ctx, FALSE);
-	LIBHAL_CHECK_LIBHALCONTEXT (out_num_devices, FALSE);
-	LIBHAL_CHECK_LIBHALCONTEXT (out_udi, FALSE);
-	LIBHAL_CHECK_LIBHALCONTEXT (out_properties, FALSE);
+	LIBHAL_CHECK_PARAM_VALID (out_num_devices, "*out_num_devices",FALSE);
+	LIBHAL_CHECK_PARAM_VALID (out_udi, "***out_udi", FALSE);
+	LIBHAL_CHECK_PARAM_VALID (out_properties, "***out_properties", FALSE);
 
 	*out_num_devices = 0;
         *out_udi = NULL;
