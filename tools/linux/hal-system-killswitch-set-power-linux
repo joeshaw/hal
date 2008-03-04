@@ -38,9 +38,14 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	    echo "dellWirelessCtl returned $ret" >&2
 	fi
     elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = thinkpad -a -w "$HAL_PROP_LINUX_SYSFS_PATH" ]; then
-        if [ "$value" = true ]; then bit=1; else bit=0; fi
+        if [ "$value" = "true" ]; then 
+	    bit=1; 
+	else 
+            bit=0; 
+        fi
         echo $bit >$HAL_PROP_LINUX_SYSFS_PATH
-        if [ $? -ne 0 ]; then
+	ret=$?
+        if [ "$ret" != "0" ]; then
             echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
 	    echo "cannot write $bit into $HAL_PROP_LINUX_SYSFS_PATH" >&2
 	    exit 1
