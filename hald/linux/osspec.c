@@ -226,6 +226,16 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		goto invalid;
 	}
 
+	/* This is a workaround for temporary cryptsetup devices, HAL should ignore them. 
+	 * There is already a fix for this issue in the udev git master as soon as a new
+	 * udev release is available and HAL starts to depend on the new version we should 
+	 * remove this again. (added 2008-03-04)
+	 */
+	if (strncmp (hotplug_event->sysfs.device_file, "/dev/mapper/temporary-cryptsetup-", 33) == 0) {
+		HAL_INFO (("Temporary workaround: ignoring temporary cryptsetup file"));
+		goto invalid;
+	}
+
 	HAL_INFO (("SEQNUM=%lld, ACTION=%s, SUBSYSTEM=%s, DEVPATH=%s, DEVNAME=%s, IFINDEX=%d",
 		   hotplug_event->sysfs.seqnum, action, hotplug_event->sysfs.subsystem, hotplug_event->sysfs.sysfs_path,
 		   hotplug_event->sysfs.device_file, hotplug_event->sysfs.net_ifindex));
