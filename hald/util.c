@@ -188,12 +188,12 @@ hal_util_get_int_from_file (const gchar *directory, const gchar *file, gint *res
 
 	f = fopen (path, "rb");
 	if (f == NULL) {
-		HAL_ERROR (("Cannot open '%s'", path));
+		//HAL_ERROR (("Cannot open '%s'", path));
 		goto out;
 	}
 
 	if (fgets (buf, sizeof (buf), f) == NULL) {
-		HAL_ERROR (("Cannot read from '%s'", path));
+		//HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
 	}
 
@@ -242,12 +242,12 @@ hal_util_get_uint64_from_file (const gchar *directory, const gchar *file, guint6
 
 	f = fopen (path, "rb");
 	if (f == NULL) {
-		HAL_ERROR (("Cannot open '%s'", path));
+		//HAL_ERROR (("Cannot open '%s'", path));
 		goto out;
 	}
 
 	if (fgets (buf, sizeof (buf), f) == NULL) {
-		HAL_ERROR (("Cannot read from '%s'", path));
+		//HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
 	}
 
@@ -301,12 +301,12 @@ hal_util_get_bcd2_from_file (const gchar *directory, const gchar *file, gint *re
 
 	f = fopen (path, "rb");
 	if (f == NULL) {
-		HAL_ERROR (("Cannot open '%s'", path));
+		//HAL_ERROR (("Cannot open '%s'", path));
 		goto out;
 	}
 
 	if (fgets (buf, sizeof (buf), f) == NULL) {
-		HAL_ERROR (("Cannot read from '%s'", path));
+		//HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
 	}
 
@@ -386,13 +386,13 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 
 	f = fopen (path, "rb");
 	if (f == NULL) {
-		HAL_ERROR (("Cannot open '%s'", path));
+		//HAL_ERROR (("Cannot open '%s'", path));
 		goto out;
 	}
 
 	buf[0] = '\0';
 	if (fgets (buf, sizeof (buf), f) == NULL) {
-		HAL_ERROR (("Cannot read from '%s'", path));
+		//HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
 	}
        
