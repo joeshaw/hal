@@ -178,17 +178,30 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	DBusError err;
 	DBusMessage *reply = NULL;
 	dbus_bool_t AC;
+	char **udis;
+	int i, num_devices;
+
 	dbus_error_init (&err);
 
         if (!check_priv (connection, message, dbus_message_get_path (message), "org.freedesktop.hal.power-management.lcd-panel")) {
                 return DBUS_HANDLER_RESULT_HANDLED;
         }
-
+	
+	/* set a default */
+	AC = TRUE; 
 	/* Mechanism to ensure that we always set the AC brightness when we are on AC-power etc. */
-	AC = libhal_device_get_property_bool (halctx, 
-					     "/org/freedesktop/Hal/devices/acpi_AC",
-					     "ac_adapter.present",
-					     &err);
+	if ((udis = libhal_find_device_by_capability(halctx, "ac_adapter", &num_devices, &err)) != NULL) {
+		for (i = 0; udis[i] != NULL; i++) {
+			if (dbus_error_is_set(&err)) 
+				dbus_error_free (&err);
+
+			if (libhal_device_property_exists (halctx, udis[i], "ac_adapter.present", &err)) {
+				AC = libhal_device_get_property_bool (halctx, udis[i], "ac_adapter.present", &err);
+				break; /* we found one AC device, leave the for-loop */
+			}
+		}
+		libhal_free_string_array(udis);
+	}
 
 	if (dbus_message_is_method_call (message, 
 					 "org.freedesktop.Hal.Device.LaptopPanel", 
@@ -196,6 +209,9 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 		int brightness;
 		
 		HAL_DEBUG (("Received SetBrightness DBus call"));
+
+		if (dbus_error_is_set(&err)) 
+			dbus_error_free (&err);
 
 		if (dbus_message_get_args (message, 
 					   &err,
