@@ -511,6 +511,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_device_add_capability (d, "net");
 
 	hal_device_property_set_string (d, "net.originating_device", hal_device_get_udi (parent_dev));
+	hal_device_property_set_string (d, "net.physical_device", hal_device_get_udi (parent_dev));
 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
