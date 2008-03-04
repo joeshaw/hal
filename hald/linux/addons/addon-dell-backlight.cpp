@@ -26,6 +26,7 @@
 #include <config.h>
 #include <string.h>
 
+#include <cstring>
 #include <glib/gmain.h>
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
