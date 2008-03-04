@@ -784,10 +784,6 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 
 	d = NULL;
 
-	if (parent_dev == NULL || parent_path == NULL) {
-		goto out;
-	}
-
 	/* ignore useless class device */
 	if (strstr(sysfs_path, "class/scsi_host") != NULL)
 		goto out;
@@ -799,7 +795,10 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_int (d, "scsi_host.host", host_num);
-	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+        if (parent_dev != NULL)
+                hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+        else
+                hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
 	hal_device_property_set_string (d, "info.category", "scsi_host");
 	hal_device_add_capability (d, "scsi_host");
 	hal_device_property_set_string (d, "info.product", "SCSI Host Adapter");
