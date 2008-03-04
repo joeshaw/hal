@@ -1845,6 +1845,87 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-sdio">
+      <title>
+        sdio namespace
+      </title>
+      <para>
+        Device objects with <literal>info.subsystem</literal> set to
+        <literal>sdio</literal> represent MultiMediaCard or Secure
+        Digital cards with SDIO interface. The following properties
+        are available for such device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>sdio.rca</literal> (int)
+              </entry>
+              <entry>example: 8083</entry>
+              <entry>Yes</entry>
+              <entry>Card bus address</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sdio.card_id</literal> (int)
+              </entry>
+              <entry>example: 1</entry>
+              <entry>Yes</entry>
+              <entry>SDIO Class for the interface</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sdio.class_id</literal> (int)
+              </entry>
+              <entry>example: 0x03</entry>
+              <entry>Yes</entry>
+              <entry>SDIO Class for the interface</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sdio.product_id</literal> (int)
+              </entry>
+              <entry>example: 0x046a</entry>
+              <entry>Yes</entry>
+              <entry>Product ID</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sdio.vendor_id</literal> (int)
+              </entry>
+              <entry>example: 0x039d</entry>
+              <entry>Yes</entry>
+              <entry>Vendor ID</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sdio.product</literal> (string)
+              </entry>
+              <entry>SQN1130 WiMAX Network Card</entry>
+              <entry>No</entry>
+              <entry>Name of the product per the SDIO database</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sdio.vendor</literal> (string)
+              </entry>
+              <entry>Sequans Communications</entry>
+              <entry>No</entry>
+              <entry>Name of the vendor per the SDIO database</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-ccw">
       <title>
         ccw namespace
