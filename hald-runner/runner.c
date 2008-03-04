@@ -151,7 +151,8 @@ run_exited(GPid pid, gint status, gpointer data)
 	run_data *rd = (run_data *)data;
 	char **error = NULL;
 
-	printf("%s exited\n", rd->r->argv[0]);
+	printf("pid %d: rc=%d signaled=%d: %s\n", 
+               pid, WEXITSTATUS(status), WIFSIGNALED(status), rd->r->argv[0]);
 	rd->watch = 0;
 	if (rd->sent_kill == TRUE) {
 		/* We send it a kill, so ignore */
