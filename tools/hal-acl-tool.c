@@ -1175,7 +1175,9 @@ tryagain:
 			goto tryagain;
 		return FALSE;
 	}
-	
+
+        printf ("\n");
+        printf ("****************************************************\n");
 	printf ("%d: got lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 	return TRUE;
 }
@@ -1183,6 +1185,9 @@ tryagain:
 static void
 acl_unlock (void)
 {
+        printf ("\n");
+        printf ("****************************************************\n");
+	printf ("%d: releasing lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 #if sun
 	lockf (lock_acl_fd, F_ULOCK, 0);
 #else
@@ -1190,7 +1195,6 @@ acl_unlock (void)
 #endif
 	close (lock_acl_fd);
 	lock_acl_fd = -1;
-	printf ("%d: released lock on " PACKAGE_LOCALSTATEDIR "/lib/hal/acl-list\n", getpid ());
 }
 
 int
