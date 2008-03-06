@@ -14,5 +14,6 @@ hald-probe-storage
 hald-probe-volume
 hald-probe-serial
 hald-probe-ieee1394-unit
+hald-probe-video4linux
 *.o
 *~

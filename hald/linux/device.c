@@ -958,11 +958,24 @@ video4linux_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *p
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	hal_device_property_set_string (d, "info.category", "video4linux");
 	hal_device_add_capability (d, "video4linux");
-	hal_device_property_set_string (d, "info.product", "Video Device");
+	hal_device_property_set_string (d, "info.product", "Multimedia Device");
 	hal_device_property_set_string (d, "video4linux.device", device_file);
 
 out:
 	return d;
+}
+
+static const gchar *
+video4linux_get_prober (HalDevice *d)
+{
+	const char *prober = NULL;
+
+	/* run prober only for video4linux devices */
+	if (hal_device_has_capability (d, "video4linux")) {
+		prober = "hald-probe-video4linux";
+	}
+
+	return prober;
 }
 
 static gboolean
@@ -3812,7 +3825,7 @@ static DevHandler dev_handler_video4linux =
 { 
 	.subsystem    = "video4linux",
 	.add          = video4linux_add,
-	.get_prober   = NULL,
+	.get_prober   = video4linux_get_prober,
 	.post_probing = NULL,
 	.compute_udi  = video4linux_compute_udi,
 	.remove       = dev_remove

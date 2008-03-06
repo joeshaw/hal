@@ -9,8 +9,18 @@ AM_CPPFLAGS = \
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@ @VOLUME_ID_CFLAGS@
 
 if HALD_COMPILE_LINUX
-libexec_PROGRAMS = hald-probe-input hald-probe-hiddev hald-probe-storage hald-probe-volume hald-probe-printer \
-	           hald-probe-pc-floppy hald-probe-smbios hald-probe-serial hald-probe-ieee1394-unit hald-probe-net-bluetooth
+libexec_PROGRAMS = 			\
+	hald-probe-input 		\
+	hald-probe-hiddev 		\
+	hald-probe-storage 		\
+	hald-probe-volume 		\
+	hald-probe-printer 		\
+	hald-probe-pc-floppy 		\
+	hald-probe-smbios 		\
+	hald-probe-serial 		\
+	hald-probe-ieee1394-unit 	\
+	hald-probe-net-bluetooth 	\
+	hald-probe-video4linux
 endif
 
 hald_probe_smbios_SOURCES = probe-smbios.c ../../logger.c
@@ -42,3 +52,7 @@ hald_probe_ieee1394_unit_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_probe_net_bluetooth_SOURCES = probe-net-bluetooth.c ../../logger.c
 hald_probe_net_bluetooth_LDADD = $(top_builddir)/libhal/libhal.la
+
+hald_probe_video4linux_SOURCES = probe-video4linux.c ../../logger.c
+hald_probe_video4linux_LDADD = $(top_builddir)/libhal/libhal.la
+

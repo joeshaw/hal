@@ -7231,6 +7231,102 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-video4linux">
+      <title>
+        video4linux namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>video4linux</literal>
+        represent Video4Linux devices.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>video4linux.device</literal> (string)
+              </entry>
+              <entry>Example: /dev/video0</entry>
+              <entry>Yes</entry>
+              <entry>The device node to access the Video4Linux device.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>video4linux.version</literal> (string)
+              </entry>
+              <entry>Example: 2</entry>
+              <entry>Yes</entry>
+              <entry>
+                The highest Video4Linux API version supported by the device.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+    <sect2 id="device-properties-video4linux-video-capture">
+      <title>
+        video4linux.video_capture namespace
+      </title>
+      <para>
+        The video4linux device can capture video.
+        No namespace specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-video4linux-video-output">
+      <title>
+        video4linux.video_output namespace
+      </title>
+      <para>
+        The video4linux device can output video.
+        No namespace specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-video4linux-video-overlay">
+      <title>
+        video4linux.video_overlay namespace
+      </title>
+      <para>
+        The video4linux device can overlay video.
+        No namespace specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-video4linux-audio">
+      <title>
+        video4linux.audio namespace
+      </title>
+      <para>
+        The video4linux device has audio inputs or outputs.
+        No namespace specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-video4linux-tuner">
+      <title>
+        video4linux.tuner namespace
+      </title>
+      <para>
+        The video4linux device has some sort of tuner or modulator to receive
+        or emit RF-modulated video signals.
+        No namespace specific properties.
+      </para>
+    </sect2>
+    <sect2 id="device-properties-video4linux-radio">
+      <title>
+        video4linux.radio namespace
+      </title>
+      <para>
+        The video4linux device is a radio device.
+        No namespace specific properties.
+      </para>
+    </sect2>
   </sect1>
 
   <sect1 id="properties-misc">
