@@ -11,7 +11,7 @@ AC_INIT(hal, 0.5.11, david@fubar.dk)
 AM_INIT_AUTOMAKE([gnu 1.9])
 AM_MAINTAINER_MODE
 
-glib_module="glib-2.0 >= 2.6.0 gobject-2.0 > 2.6.0 dbus-glib-1 >= 0.61"
+glib_module="glib-2.0 >= 2.10.0 gobject-2.0 > 2.10.0 dbus-glib-1 >= 0.61"
 dbus_module="dbus-1 >= 0.61"
 volume_id_module="libvolume_id >= 0.77"
 polkit_module="polkit >= 0.5"
