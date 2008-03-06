@@ -165,10 +165,6 @@ hf_computer_device_add (void)
   hal_device_property_set_bool(device, "power_management.can_suspend", can_suspend_to_ram);
   hal_device_property_set_bool(device, "power_management.can_hibernate", can_suspend_to_disk);
 
-  /* XXX: These following two keys are deprecated. */
-  hal_device_property_set_bool(device, "power_management.can_suspend_to_ram", can_suspend_to_ram);
-  hal_device_property_set_bool(device, "power_management.can_suspend_to_disk", can_suspend_to_disk);
-
   if (hf_device_preprobe(device))
     {
       if (should_decode_dmi)

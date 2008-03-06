@@ -1,7 +1,11 @@
 
 fdidir = $(datadir)/hal/fdi/information/10freedesktop
 
-dist_fdi_DATA = 
+dist_fdi_DATA = 		
+
+if BUILD_DEPRECATED_KEYS
+dist_fdi_DATA += 01-deprecated-keys.fdi 
+endif
 
 check:
 	for f in $(dist_fdi_DATA); do \

@@ -511,7 +511,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_device_add_capability (d, "net");
 
 	hal_device_property_set_string (d, "net.originating_device", hal_device_get_udi (parent_dev));
-	hal_device_property_set_string (d, "net.physical_device", hal_device_get_udi (parent_dev));
 
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
@@ -1709,7 +1708,6 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		gint bmAttributes;
 
 		hal_device_property_set_string (d, "info.subsystem", "usb_device");
-		hal_device_property_set_string (d, "info.bus", "usb_device");
 
 		hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
@@ -1796,7 +1794,6 @@ usb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	} else {
 		hal_device_property_set_string (d, "info.subsystem", "usb");
-		hal_device_property_set_string (d, "info.bus", "usb");
 
 		/* take all usb_device.* properties from parent and make them usb.* on this object */
 		if (parent_dev != NULL)
@@ -3574,7 +3571,6 @@ virtio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "virtio");
-	hal_device_property_set_string (d, "info.bus", "virtio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {

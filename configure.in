@@ -612,6 +612,15 @@ if test "x$enable_pci" != "xno"; then
  	AC_DEFINE(HAVE_PCI, [], [Set if we have PCI support])
 fi
 
+AC_ARG_WITH([deprecated-keys], AS_HELP_STRING([--with-deprecated-keys], [Add fdi-file to support deprecated/removed keys]))
+BUILD_DEPRECATED_KEYS=no
+if test "x$with_deprecated_keys" = "xyes"; then
+   BUILD_DEPRECATED_KEYS=yes
+else
+   BUILD_DEPRECATED_KEYS=no
+fi
+AM_CONDITIONAL(BUILD_DEPRECATED_KEYS, [test x$BUILD_DEPRECATED_KEYS = xyes])
+
 # D-Bus libs
 PKG_CHECK_MODULES(DBUS, [$dbus_module])
 AC_SUBST(DBUS_CFLAGS)
@@ -1011,63 +1020,65 @@ echo "
                     HAL $VERSION
                   ==============
 
-        prefix:                      ${prefix}
-        libdir:                      ${libdir}
-        libexecdir:                  ${libexecdir}
-        bindir:                      ${bindir}
-        sbindir:                     ${sbindir}
-        datadir:                     ${datadir}
-        sysconfdir:                  ${sysconfdir}
-        localstatedir:               ${localstatedir}
-        docdir:                      ${docdir}
-        dbus-1 system.d dir:         ${DBUS_SYS_DIR}
-        pci.ids dir:                 ${PCI_IDS_DIR}
-        usb.ids dir:                 ${USB_IDS_DIR}
+        prefix:                           ${prefix}
+        libdir:                           ${libdir}
+        libexecdir:                       ${libexecdir}
+        bindir:                           ${bindir}
+        sbindir:                          ${sbindir}
+        datadir:                          ${datadir}
+        sysconfdir:                       ${sysconfdir}
+        localstatedir:                    ${localstatedir}
+        docdir:                           ${docdir}
+        dbus-1 system.d dir:              ${DBUS_SYS_DIR}
+        pci.ids dir:                      ${PCI_IDS_DIR}
+        usb.ids dir:                      ${USB_IDS_DIR}
 
-        compiler:                    ${CC}
-        cflags:                      ${CFLAGS}
-        ldflags:                     ${LDFLAGS}
-        cppflags:                    ${CPPFLAGS}
-        xmlto:                       ${XMLTO}
-	xmllint:                     ${XMLLINT}
-        User for HAL:                ${HAL_USER}
-        Group for HAL:               ${HAL_GROUP}
-        hald pidfile:                ${HALD_PID_FILE}
-        hald socket dir:             ${HALD_SOCKET_DIR}
-        eject program:               ${EJECT_PROGRAM}
+        compiler:                         ${CC}
+        cflags:                           ${CFLAGS}
+        ldflags:                          ${LDFLAGS}
+        cppflags:                         ${CPPFLAGS}
+        xmlto:                            ${XMLTO}
+        xmllint:                          ${XMLLINT}
+        User for HAL:                     ${HAL_USER}
+        Group for HAL:                    ${HAL_GROUP}
+        hald pidfile:                     ${HALD_PID_FILE}
+        hald socket dir:                  ${HALD_SOCKET_DIR}
+        eject program:                    ${EJECT_PROGRAM}
 
-        OS backend:                  ${HALD_BACKEND}
+        OS backend:                       ${HALD_BACKEND}
 
-        use acpi kernel interface:   ${acpi_proc}
-        use acpid interface:         ${acpi_acpid}
-        use libusb:                  ${USE_LIBUSB}
-        use libpci:                  ${USE_LIBPCI}
-        use libparted:               ${USE_PARTED}
-        use gperf:                   ${have_gperf}
-        use PolicyKit:               ${msg_polkit}
-        use ConsoleKit:              ${msg_conkit}
-        use ACL management:          ${msg_aclmgmt}
-        use umount.hal helper:       ${msg_umount_hal}
-        use ACPI:                    ${msg_acpi}
-        use PMU:                     ${msg_pmu}
-        use APM:                     ${msg_apm}
-        use Sony PIC:                ${msg_sonypic}
+        use acpi kernel interface:        ${acpi_proc}
+        use acpid interface:              ${acpi_acpid}
+        use libusb:                       ${USE_LIBUSB}
+        use libpci:                       ${USE_LIBPCI}
+        use libparted:                    ${USE_PARTED}
+        use gperf:                        ${have_gperf}
+        use PolicyKit:                    ${msg_polkit}
+        use ConsoleKit:                   ${msg_conkit}
+        use ACL management:               ${msg_aclmgmt}
+        use umount.hal helper:            ${msg_umount_hal}
+        use ACPI:                         ${msg_acpi}
+        use PMU:                          ${msg_pmu}
+        use APM:                          ${msg_apm}
+        use Sony PIC:                     ${msg_sonypic}
 
-        Macbook backlight support:   ${BUILD_MACBOOK} (Linux only, x86 only, requires libpci)
-        Macbook Pro utils:           ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
-        OMAP utils:                  ${BUILD_OMAP} (Linux only, arm only)
-        CPU frequency scaling:       ${BUILD_CPUFREQ} (Linux only)
-        Re-map multimedia keys:      ${BUILD_KEYMAPS} (Linux only, requires gperf)
-        Forward IBM ACPI events:     ${BUILD_ACPI_IBM} (Linux only)
-        Forward Toshiba ACPI events: ${BUILD_ACPI_TOSHIBA} (Linux only)
-	USB wireless mouse power:    ${BUILD_USBCSR} (Linux only, requires libusb)
-	Dell Backlight:              ${BUILD_DELL} (Linux only, requires libsmbios >= 0.13.4)
+        Macbook backlight support:        ${BUILD_MACBOOK} (Linux only, x86 only, requires libpci)
+        Macbook Pro utils:                ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
+        OMAP utils:                       ${BUILD_OMAP} (Linux only, arm only)
+        CPU frequency scaling:            ${BUILD_CPUFREQ} (Linux only)
+        Re-map multimedia keys:           ${BUILD_KEYMAPS} (Linux only, requires gperf)
+        Forward IBM ACPI events:          ${BUILD_ACPI_IBM} (Linux only)
+        Forward Toshiba ACPI events:      ${BUILD_ACPI_TOSHIBA} (Linux only)
+	USB wireless mouse power:         ${BUILD_USBCSR} (Linux only, requires libusb)
+	Dell Backlight:                   ${BUILD_DELL} (Linux only, requires libsmbios >= 0.13.4)
 
-        Maintainer mode:             ${USE_MAINTAINER_MODE}
-        Building verbose mode:       ${enable_verbose_mode}
-        Building api docs:           ${enable_gtk_doc}
-        Building docs:               ${enable_docbook_docs}
-        Building man pages:          ${enable_man_pages}
+	Support deprecated(removed) keys: ${BUILD_DEPRECATED_KEYS} (via a FDI-file)
+
+        Maintainer mode:                  ${USE_MAINTAINER_MODE}
+        Building verbose mode:            ${enable_verbose_mode}
+        Building api docs:                ${enable_gtk_doc}
+        Building docs:                    ${enable_docbook_docs}
+        Building man pages:               ${enable_man_pages}
 "
 
 if test x$BUILD_ACPI_IBM = xyes; then
