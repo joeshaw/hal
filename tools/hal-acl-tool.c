@@ -803,7 +803,6 @@ acl_compute_changes (GSList *afd_list, gboolean only_update_acllist)
 	/* get the list of ACL's currently applied */
 	if (!get_current_acl_list (&current_acl_list)) {
 		printf ("Error getting ACL's currently applied\n");
-		goto out;
 	}
 
 	/* for each entry in ACLForDevice, we need to modify current_acl_list
