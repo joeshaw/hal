@@ -99,9 +99,13 @@ blockdev_compute_udi (HalDevice *d)
 	} else {
 		const char *model;
 		const char *serial;
+		const char *bus;
+		const char *type;
 
 		model = hal_device_property_get_string (d, "storage.model");
 		serial = hal_device_property_get_string (d, "storage.serial");
+		bus = hal_device_property_get_string (d, "storage.bus");
+		type = hal_device_property_get_string (d, "storage.drive_type");
 
 		if (serial != NULL) {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
@@ -111,6 +115,11 @@ blockdev_compute_udi (HalDevice *d)
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "/org/freedesktop/Hal/devices/storage_model_%s", 
 					      model);
+		} else if ((bus != NULL) && (type != NULL)){
+			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+					      "%s_storage_%s_%s", 
+					      hal_device_property_get_string (d, "storage.originating_device"),
+					      bus, type);
 		} else {
 			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 					      "%s_storage", 
