@@ -4558,8 +4558,9 @@ do_introspect (DBusConnection  *connection,
 				       "    </method>\n"
 				       "    <method name=\"Unlock\">\n"
 				       "      <arg name=\"released_lock\" direction=\"out\" type=\"b\"/>\n"
-				       "    </method>\n"
+				       "    </method>\n");
 
+		xml = g_string_append (xml,
 				       "    <method name=\"AcquireInterfaceLock\">\n"
 				       "      <arg name=\"interface_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"exclusive\" direction=\"in\" type=\"b\"/>\n"
