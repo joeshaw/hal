@@ -3019,9 +3019,17 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>
                 <literal>vio.id</literal> (string)
               </entry>
-              <entry>example: 30000003</entry>
+              <entry>example: 1,10,3d</entry>
               <entry>Yes</entry>
               <entry>Device identification</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>vio.type</literal> (string)
+              </entry>
+              <entry>example: viodasd, v-scsi, l-lan</entry>
+              <entry>Yes</entry>
+              <entry>Device type.</entry>
             </row>
           </tbody>
         </tgroup>

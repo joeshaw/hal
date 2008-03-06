@@ -3615,12 +3615,12 @@ vio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 {
 	HalDevice *d;
 	const gchar *dev_id;
+	const gchar *dev_type;
 	gchar buf[64];
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "vio");
-	hal_device_property_set_string (d, "info.bus", "vio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -3630,11 +3630,17 @@ vio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
 	dev_id = hal_util_get_last_element (sysfs_path);
-
 	hal_device_property_set_string (d, "vio.id", dev_id);
 
-	g_snprintf (buf, sizeof (buf), "Vio Device (%s)", hal_device_property_get_string (d, "vio.id"));
-	hal_device_property_set_string (d, "info.product", buf);
+	dev_type = hal_util_get_string_from_file (sysfs_path, "name");
+
+	if (dev_type) {
+		hal_device_property_set_string (d, "vio.type", dev_type);
+		g_snprintf (buf, sizeof (buf), "Vio %s Device (%s)", dev_type, dev_id);
+		hal_device_property_set_string (d, "info.product", buf);
+	} else {
+		hal_device_property_set_string (d, "info.product", "Vio Device (unknown)");
+	}
 
 	return d;
 }
@@ -3643,10 +3649,21 @@ static gboolean
 vio_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
+	const char *type;
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/vio_%s",
-			      hal_device_property_get_string (d, "vio.id"));
+	type = hal_device_property_get_string (d, "vio.type");
+
+	if (type) {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "/org/freedesktop/Hal/devices/vio_%s_%s",
+				      type,
+				      hal_device_property_get_string (d, "vio.id"));
+	} else {
+		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+				      "/org/freedesktop/Hal/devices/vio_%s",
+				      hal_device_property_get_string (d, "vio.id"));
+	}		
+
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
