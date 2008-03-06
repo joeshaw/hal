@@ -1176,6 +1176,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					is_hotpluggable = TRUE;
 					hal_device_property_set_string
 						(d, "storage.bus", "ccw");
+				} else if (strcmp (bus, "vio") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+					hal_device_property_set_string (d, "storage.bus", "vio");
 				}
 			}
 
@@ -1310,6 +1314,24 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 		} else if (strcmp (parent_bus, "mmc") == 0) {
 			hal_device_property_set_string (d, "storage.drive_type", "sd_mmc");
+		} else if (strcmp (parent_bus, "vio") == 0) {
+			char buf[256];
+			const gchar *prop;
+
+			snprintf(buf, sizeof(buf), "%s/device", sysfs_path_real);
+			prop = hal_util_get_string_from_file (buf, "name");
+			if (prop) {
+				if (strcmp (prop, "viocd") == 0) {
+					hal_device_property_set_string (d, "info.product", "Vio Virtual CD");
+					hal_device_property_set_string (d, "storage.drive_type", "cdrom");
+				} else if (strcmp (prop, "viodasd") == 0) {
+					hal_device_property_set_string (d, "info.product", "Vio Virtual Disk");
+					hal_device_property_set_string (d, "storage.drive_type", "disk");
+				} else if (strcmp (prop, "viotape") == 0) {
+					hal_device_property_set_string (d, "info.product", "Vio Virtual Tape");
+					hal_device_property_set_string (d, "storage.drive_type", "tape");
+				}
+			}
 		}
 
 		hal_device_property_set_string (d, "info.category", "storage");
