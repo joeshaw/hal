@@ -389,7 +389,7 @@ skip_check:
 
 /* returns: whether the state changed */
 static gboolean
-poll_for_media_force ()
+poll_for_media_force (void)
 {
         int fd;
         int got_media;
@@ -687,6 +687,8 @@ int
 main (int argc, char *argv[])
 {
 	DBusError error;
+        LibHalContext *ctx_direct;
+        DBusConnection *con_direct;
 	char *bus;
 	char *drive_type;
 	char *support_media_changed_str;
@@ -726,8 +728,6 @@ main (int argc, char *argv[])
 	dbus_connection_setup_with_g_main (con, NULL);
 	dbus_connection_set_exit_on_disconnect (con, 0);
 
-        LibHalContext *ctx_direct;
-        DBusConnection *con_direct;
 	dbus_error_init (&error);
 	if ((ctx_direct = libhal_ctx_init_direct (&error)) == NULL) {
 		HAL_ERROR (("Cannot connect to hald"));
