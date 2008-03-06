@@ -3854,7 +3854,7 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 	}
 
 	/* sanity check & avoid races */
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof udi, "%s", udi0);
+	hal_util_make_udi_unique (hald_get_gdl (), udi, sizeof udi, udi0);
 
 	if (hal_device_store_find (hald_get_gdl (), udi)) {
 		/* loose it */

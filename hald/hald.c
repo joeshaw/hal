@@ -254,6 +254,35 @@ hald_get_tdl (void)
 	return temporary_device_list;
 }
 
+void
+hald_compute_udi (gchar *dst, gsize dstsize, const gchar *format, ...)
+{
+	int i;
+	char buf[256];
+	va_list args;
+
+	va_start (args, format);
+	hal_util_compute_udi_valist (hald_get_gdl (), dst, dstsize, format, args);
+	va_end (args);
+
+	if (hal_device_store_find (hald_get_gdl (), dst) == NULL &&
+	    hal_device_store_find (hald_get_tdl (), dst) == NULL)
+		goto out;
+
+	for (i = 0; ; i++) {
+		g_snprintf (buf, sizeof(buf), "%s_%d", dst, i);
+		if (hal_device_store_find (hald_get_gdl (), buf) == NULL &&
+		    hal_device_store_find (hald_get_tdl (), buf) == NULL) {
+			g_strlcpy (dst, buf, dstsize);
+			goto out;
+		}
+	}
+
+out:
+	;
+
+}
+
 /** 
  * usage: 
  *

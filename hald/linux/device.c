@@ -390,9 +390,9 @@ input_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_logicaldev_input",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_logicaldev_input",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -470,18 +470,18 @@ bluetooth_compute_udi (HalDevice *d)
 	gchar udi[256];
 
 	if (hal_device_has_capability (d, "bluetooth_acl")) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                                      "/org/freedesktop/Hal/devices/bluetooth_acl_%0llx",
-                                      hal_device_property_get_uint64 (d, "bluetooth_acl.address"));
+		hald_compute_udi (udi, sizeof (udi),
+                                  "/org/freedesktop/Hal/devices/bluetooth_acl_%0llx",
+                                  hal_device_property_get_uint64 (d, "bluetooth_acl.address"));
 	} else if (hal_device_has_capability (d, "bluetooth_sco")) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                                      "/org/freedesktop/Hal/devices/bluetooth_acl_%0llx",
-                                      hal_device_property_get_uint64 (d, "bluetooth_acl.address"));
+		hald_compute_udi (udi, sizeof (udi),
+                                  "/org/freedesktop/Hal/devices/bluetooth_acl_%0llx",
+                                  hal_device_property_get_uint64 (d, "bluetooth_acl.address"));
 	} else {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                                      "%s_bluetooth_hci_%0llx",
-                                      hal_device_property_get_string (d, "info.parent"),
-                                      hal_device_property_get_uint64 (d, "bluetooth_hci.address"));
+		hald_compute_udi (udi, sizeof (udi),
+                                  "%s_bluetooth_hci_%0llx",
+                                  hal_device_property_get_string (d, "info.parent"),
+                                  hal_device_property_get_uint64 (d, "bluetooth_hci.address"));
 	}
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
@@ -650,9 +650,9 @@ net_compute_udi (HalDevice *d)
 		/* Need to fall back to something else if mac not available. */
 		id = hal_util_get_last_element(hal_device_property_get_string(d, "net.originating_device"));
 	}
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/net_%s",
-			      id);
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/net_%s",
+			  id);
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -687,9 +687,9 @@ scsi_generic_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_scsi_generic",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_scsi_generic",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -811,9 +811,9 @@ scsi_host_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_scsi_host",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_scsi_host",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -883,19 +883,19 @@ usbclass_compute_udi (HalDevice *d)
 	gchar udi[256];
 
 	if (hal_device_has_capability (d, "hiddev")) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_hiddev",
-				      hal_device_property_get_string (d, "info.parent"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_hiddev",
+				  hal_device_property_get_string (d, "info.parent"));
 		hal_device_set_udi (d, udi);
 		hal_device_property_set_string (d, "info.udi", udi);
 	} else if (hal_device_has_capability (d, "printer")) {
 		const char *serial;
 
 		serial = hal_device_property_get_string (d, "printer.serial");
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_printer_%s",
-				      hal_device_property_get_string (d, "info.parent"),
-				      serial != NULL ? serial : "noserial");
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_printer_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  serial != NULL ? serial : "noserial");
 		hal_device_set_udi (d, udi);
 		hal_device_property_set_string (d, "info.udi", udi);
 	}
@@ -932,8 +932,8 @@ usbraw_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi), "%s_usbraw",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi), "%s_usbraw",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -983,8 +983,8 @@ video4linux_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi), "%s_video4linux",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi), "%s_video4linux",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1021,8 +1021,8 @@ dvb_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi), "%s_dvb",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi), "%s_dvb",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1312,41 +1312,41 @@ sound_compute_udi (HalDevice *d)
 
 	if (hal_device_has_property(d, "sound.card")) {
 		/* don't include card number as it may not be persistent across reboots */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_sound_card_%i",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "sound.card"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_sound_card_%i",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "sound.card"));
 	} else if (hal_device_has_property(d, "alsa.card")) {
 		/* don't include card number as it may not be persistent across reboots */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_alsa_%s_%i",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "alsa.type"),
-				      hal_device_property_get_int (d, "alsa.device"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_alsa_%s_%i",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "alsa.type"),
+				  hal_device_property_get_int (d, "alsa.device"));
 	} else if (hal_device_has_property(d, "oss.card")) {
 		/* don't include card number as it may not be persistent across reboots */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_oss_%s_%i",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "oss.type"),
-				      hal_device_property_get_int (d, "oss.device"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_oss_%s_%i",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "oss.type"),
+				  hal_device_property_get_int (d, "oss.device"));
 	} else if (hal_device_has_property(d, "alsa.type")) {
 		/* handle global ALSA devices */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_alsa_%s",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "alsa.type"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_alsa_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "alsa.type"));
 	} else if (hal_device_has_property(d, "oss.type")) {
 		/* handle global OSS devices */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_oss_%s",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "oss.type"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_oss_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "oss.type"));
 	} else {
 		/* fallback */
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi), "%s_sound_unknown",
-				      hal_device_property_get_string (d, "info.parent"));
-	} 
+		hald_compute_udi (udi, sizeof (udi), "%s_sound_unknown",
+				  hal_device_property_get_string (d, "info.parent"));
+	}
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1437,11 +1437,11 @@ serial_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_serial_%s_%d",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_string (d, "serial.type"),
-			      hal_device_property_get_int (d, "serial.port"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_serial_%s_%d",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_string (d, "serial.type"),
+			  hal_device_property_get_int (d, "serial.port"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1489,9 +1489,9 @@ tape_compute_udi (HalDevice *d)
 						(d, "linux.sysfs_path"));
 	if (!sysfs_name)
 		return FALSE;
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/tape_%s",
-			      sysfs_name);
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/tape_%s",
+			  sysfs_name);
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1536,9 +1536,9 @@ mmc_host_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_mmc_host",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_mmc_host",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -1627,10 +1627,10 @@ pci_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pci_%x_%x",
-			      hal_device_property_get_int (d, "pci.vendor_id"),
-			      hal_device_property_get_int (d, "pci.product_id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pci_%x_%x",
+			  hal_device_property_get_int (d, "pci.vendor_id"),
+			  hal_device_property_get_int (d, "pci.product_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1838,20 +1838,20 @@ usb_compute_udi (HalDevice *d)
 	gchar udi[256];
 
 	if (hal_device_has_property (d, "usb.interface.number")) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_if%d",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_int (d, "usb.interface.number"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_if%d",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_int (d, "usb.interface.number"));
 		hal_device_set_udi (d, udi);
 		hal_device_property_set_string (d, "info.udi", udi);
 	} else {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/usb_device_%x_%x_%s",
-				      hal_device_property_get_int (d, "usb_device.vendor_id"),
-				      hal_device_property_get_int (d, "usb_device.product_id"),
-				      hal_device_has_property (d, "usb_device.serial") ?
-				        hal_device_property_get_string (d, "usb_device.serial") :
-				        "noserial");
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/usb_device_%x_%x_%s",
+				  hal_device_property_get_int (d, "usb_device.vendor_id"),
+				  hal_device_property_get_int (d, "usb_device.product_id"),
+				  hal_device_has_property (d, "usb_device.serial") ?
+				  hal_device_property_get_string (d, "usb_device.serial") :
+				  "noserial");
 		hal_device_set_udi (d, udi);
 		hal_device_property_set_string (d, "info.udi", udi);
 	}
@@ -1899,11 +1899,11 @@ ide_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_ide_%d_%d",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_int (d, "ide.host"),
-			      hal_device_property_get_int (d, "ide.channel"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_ide_%d_%d",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_int (d, "ide.host"),
+			  hal_device_property_get_int (d, "ide.channel"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -1993,9 +1993,9 @@ pnp_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pnp_%s",
-			      hal_device_property_get_string (d, "pnp.id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pnp_%s",
+			  hal_device_property_get_string (d, "pnp.id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -2045,9 +2045,9 @@ platform_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/platform_%s",
-			      hal_device_property_get_string (d, "platform.id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/platform_%s",
+			  hal_device_property_get_string (d, "platform.id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -2105,10 +2105,10 @@ serio_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_%s",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_string (d, "serio.description"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_%s",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_string (d, "serio.description"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2183,10 +2183,10 @@ pcmcia_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pcmcia_%d_%d",
-			      hal_device_property_get_int (d, "pcmcia.manfid1"),
-			      hal_device_property_get_int (d, "pcmcia.manfid2"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pcmcia_%d_%d",
+			  hal_device_property_get_int (d, "pcmcia.manfid1"),
+			  hal_device_property_get_int (d, "pcmcia.manfid2"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2275,10 +2275,10 @@ scsi_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_scsi_device_lun%d",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_int (d, "scsi.lun"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_scsi_device_lun%d",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_int (d, "scsi.lun"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2369,10 +2369,10 @@ mmc_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_mmc_card_rca%d",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_int (d, "mmc.rca"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_mmc_card_rca%d",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_int (d, "mmc.rca"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2426,10 +2426,10 @@ sdio_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_sdio%d",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_int (d, "sdio.card_id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_sdio%d",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_int (d, "sdio.card_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2488,9 +2488,9 @@ xen_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/xen_%s",
-			      hal_device_property_get_string (d, "xen.bus_id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/xen_%s",
+			  hal_device_property_get_string (d, "xen.bus_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2569,9 +2569,9 @@ ieee1394_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/ieee1394_guid_%0llx",
-			      hal_device_property_get_uint64 (d, "ieee1394.guid"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/ieee1394_guid_%0llx",
+			  hal_device_property_get_uint64 (d, "ieee1394.guid"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -2709,14 +2709,14 @@ firewire_compute_udi (HalDevice *d)
 	gchar udi[256];
 
 	if (hal_device_has_capability (d, "ieee1394")) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/ieee1394_guid%0llx",
-				      hal_device_property_get_uint64 (d, "ieee1394.guid"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/ieee1394_guid%0llx",
+				  hal_device_property_get_uint64 (d, "ieee1394.guid"));
 	} else {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_unit%d",
-				      hal_device_property_get_string (d, "ieee1394_unit.originating_device"),
-				      hal_device_property_get_int (d, "ieee1394_unit.unit_index"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_unit%d",
+				  hal_device_property_get_string (d, "ieee1394_unit.originating_device"),
+				  hal_device_property_get_int (d, "ieee1394_unit.unit_index"));
 	}
 
 	hal_device_set_udi (d, udi);
@@ -2870,10 +2870,10 @@ ccw_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/ccw_%s",
-			      hal_device_property_get_string
-			      (d, "ccw.bus_id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/ccw_%s",
+			  hal_device_property_get_string
+			  (d, "ccw.bus_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -3012,10 +3012,10 @@ ccwgroup_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/ccwgroup_%s",
-			      hal_device_property_get_string
-			      (d, "ccwgroup.bus_id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/ccwgroup_%s",
+			  hal_device_property_get_string
+			  (d, "ccwgroup.bus_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -3068,10 +3068,10 @@ iucv_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/iucv_%s",
-			      hal_device_property_get_string
-			      (d, "iucv.bus_id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/iucv_%s",
+			  hal_device_property_get_string
+			  (d, "iucv.bus_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -3110,9 +3110,9 @@ backlight_compute_udi (HalDevice *d)
 	dir = hal_device_property_get_string (d, "linux.sysfs_path");
 
 	name = hal_util_get_last_element(dir);
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_backlight",
-			      hal_device_property_get_string (d, "info.parent"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_backlight",
+			  hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -3494,17 +3494,17 @@ power_supply_compute_udi (HalDevice *d)
 
 	name = hal_util_get_last_element(dir);
 	if (name) 
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_power_supply_%s_%s",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "info.category"),
-				      name);
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_power_supply_%s_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "info.category"),
+				  name);
 	else
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "%s_power_supply_%s",
-				      hal_device_property_get_string (d, "info.parent"),
-				      hal_device_property_get_string (d, "info.category"));
-		
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_power_supply_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "info.category"));
+
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -3553,11 +3553,11 @@ drm_compute_udi (HalDevice *d)
 	name = hal_util_get_last_element(dir);
 
 	/* generate e.g.: /org/freedesktop/Hal/devices/pci_8086_2a02_drm_i915_card0 */
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "%s_drm_%s_%s",
-			      hal_device_property_get_string (d, "info.parent"),
-			      hal_device_property_get_string (d, "drm.dri_library"),
-			      name);
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_drm_%s_%s",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_string (d, "drm.dri_library"),
+			  name);
 
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
@@ -3601,9 +3601,9 @@ ps3_system_bus_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/ps3_system_bus_%s",
-			      hal_device_property_get_string (d, "ps3_system_bus.id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/ps3_system_bus_%s",
+			  hal_device_property_get_string (d, "ps3_system_bus.id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -3646,9 +3646,9 @@ virtio_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/virtio_%s",
-			      hal_device_property_get_string (d, "virtio.id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/virtio_%s",
+			  hal_device_property_get_string (d, "virtio.id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 
@@ -3702,15 +3702,15 @@ vio_compute_udi (HalDevice *d)
 	type = hal_device_property_get_string (d, "vio.type");
 
 	if (type) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/vio_%s_%s",
-				      type,
-				      hal_device_property_get_string (d, "vio.id"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/vio_%s_%s",
+				  type,
+				  hal_device_property_get_string (d, "vio.id"));
 	} else {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/vio_%s",
-				      hal_device_property_get_string (d, "vio.id"));
-	}		
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/vio_%s",
+				  hal_device_property_get_string (d, "vio.id"));
+	}
 
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
@@ -3752,9 +3752,9 @@ pseudo_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pseudo",
-			      hal_device_property_get_string (d, "platform.id"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pseudo",
+			  hal_device_property_get_string (d, "platform.id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 

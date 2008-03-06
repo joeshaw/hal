@@ -212,8 +212,8 @@ static gboolean
 pmu_lid_compute_udi (HalDevice *d, PMUDevHandler *handler)
 {
 	gchar udi[256];
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pmu_lid");
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pmu_lid");
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -223,8 +223,8 @@ static gboolean
 pmu_laptop_panel_compute_udi (HalDevice *d, PMUDevHandler *handler)
 {
 	gchar udi[256];
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pmu_lcd");
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pmu_lcd");
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
@@ -400,10 +400,10 @@ static gboolean
 pmu_generic_compute_udi (HalDevice *d, PMUDevHandler *handler)
 {
 	gchar udi[256];
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/pmu_%s_%d",
-			      hal_util_get_last_element (hal_device_property_get_string (d, "linux.pmu_path")),
-			      hal_device_property_get_int (d, "linux.pmu_type"));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/pmu_%s_%d",
+			  hal_util_get_last_element (hal_device_property_get_string (d, "linux.pmu_path")),
+			  hal_device_property_get_int (d, "linux.pmu_type"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;

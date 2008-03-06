@@ -348,16 +348,16 @@ apm_generic_compute_udi (HalDevice *d, APMDevHandler *handler)
 	gchar udi[256];
 
 	if (handler->apm_type == APM_TYPE_BATTERY ) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/apm_battery");
-	
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/apm_battery");
+
 	} else if (handler->apm_type == APM_TYPE_AC_ADAPTER ) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/apm_ac_adapter");
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/apm_ac_adapter");
 	} else {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/apm_%d",
-				      hal_device_property_get_int (d, "info.category"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/apm_%d",
+				  hal_device_property_get_int (d, "info.category"));
 	}
 
 	hal_device_set_udi (d, udi);

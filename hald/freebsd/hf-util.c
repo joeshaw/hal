@@ -292,7 +292,7 @@ hf_device_set_full_udi (HalDevice *device, const char *format, ...)
   requested_udi = g_strdup_vprintf(format, args);
   va_end(args);
 
-  hal_util_compute_udi(pending_gdl, actual_udi, sizeof(actual_udi), "%s", requested_udi);
+  hal_util_make_udi_unique (pending_gdl, actual_udi, sizeof(actual_udi), requested_udi);
 
   hf_pending_gdl_free(pending_gdl);
   g_free(requested_udi);

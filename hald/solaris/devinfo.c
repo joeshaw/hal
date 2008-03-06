@@ -95,10 +95,10 @@ devinfo_set_default_properties (HalDevice *d, HalDevice *parent, di_node_t node,
 		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/local");
 	}
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				"/org/freedesktop/Hal/devices%s_%d",
-				devfs_path,
-				di_instance (node));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices%s_%d",
+			  devfs_path,
+			  di_instance (node));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 

@@ -47,6 +47,8 @@ extern PolKitContext *pk_context;
 HalDeviceStore *hald_get_gdl (void);
 HalDeviceStore *hald_get_tdl (void);
 
+void hald_compute_udi (gchar *dst, gsize dstsize, const gchar *format, ...);
+
 void property_atomic_update_begin ();
 void property_atomic_update_end ();
 

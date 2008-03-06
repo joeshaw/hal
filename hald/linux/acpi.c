@@ -1006,9 +1006,9 @@ static gboolean
 acpi_generic_compute_udi (HalDevice *d, ACPIDevHandler *handler)
 {
 	gchar udi[256];
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/acpi_%s",
-			      hal_util_get_last_element (hal_device_property_get_string (d, "linux.acpi_path")));
+	hald_compute_udi (udi, sizeof (udi),
+			  "/org/freedesktop/Hal/devices/acpi_%s",
+			  hal_util_get_last_element (hal_device_property_get_string (d, "linux.acpi_path")));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;

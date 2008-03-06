@@ -77,23 +77,23 @@ blockdev_compute_udi (HalDevice *d)
 		uuid = hal_device_property_get_string (d, "volume.uuid");
 
 		if (uuid != NULL && strlen (uuid) > 0) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_uuid_%s", uuid);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/volume_uuid_%s", uuid);
 		} else if (volumelabel != NULL && strlen (volumelabel) > 0) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_label_%s", volumelabel);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/volume_label_%s", volumelabel);
 		} else if (hal_device_property_get_bool(d, "volume.is_disc") &&
 			   hal_device_property_get_bool(d, "volume.disc.is_blank")) {
 			/* this should be a empty CD/DVD */
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                                             "/org/freedesktop/Hal/devices/volume_empty_%s",
-					      hal_device_property_get_string (d, "volume.disc.type"));
+			hald_compute_udi (udi, sizeof (udi),
+                                          "/org/freedesktop/Hal/devices/volume_empty_%s",
+					  hal_device_property_get_string (d, "volume.disc.type"));
 		} else {
 			/* fallback to partition number, size */
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_part%d_size_%lld", 
-					      hal_device_property_get_int (d, "volume.partition.number"),
-					      hal_device_property_get_uint64 (d, "volume.size"));
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/volume_part%d_size_%lld",
+					  hal_device_property_get_int (d, "volume.partition.number"),
+					  hal_device_property_get_uint64 (d, "volume.size"));
 		}
 		g_free(volumelabel);
 	} else {
@@ -108,22 +108,22 @@ blockdev_compute_udi (HalDevice *d)
 		type = hal_device_property_get_string (d, "storage.drive_type");
 
 		if (serial != NULL) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/storage_serial_%s", 
-					      serial);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/storage_serial_%s",
+					  serial);
 		} else if ((model != NULL) && (strlen(model) != 0) ) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/storage_model_%s", 
-					      model);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/storage_model_%s",
+					  model);
 		} else if ((bus != NULL) && (type != NULL)){
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "%s_storage_%s_%s", 
-					      hal_device_property_get_string (d, "storage.originating_device"),
-					      bus, type);
+			hald_compute_udi (udi, sizeof (udi),
+					  "%s_storage_%s_%s",
+					  hal_device_property_get_string (d, "storage.originating_device"),
+					  bus, type);
 		} else {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "%s_storage", 
-					      hal_device_property_get_string (d, "storage.originating_device"));
+			hald_compute_udi (udi, sizeof (udi),
+					  "%s_storage",
+					  hal_device_property_get_string (d, "storage.originating_device"));
 		}
 	}
 

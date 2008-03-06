@@ -469,34 +469,47 @@ hal_util_set_double_from_file (HalDevice *d, const gchar *key, const gchar *dire
 }
 
 void
-hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...)
+hal_util_make_udi_unique (HalDeviceStore *store, gchar *udi, gsize udisize, const char *original_udi)
 {
-	guint i;
-	va_list args;
-	gchar buf[256];
+	int i;
 
-	va_start (args, format);
-	g_vsnprintf (buf, sizeof (buf), format, args);
-	va_end (args);
-
-	g_strcanon (buf, 
-		    "/_"
-		    "abcdefghijklmnopqrstuvwxyz"
-		    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		    "1234567890", '_');
-
-	g_strlcpy (dst, buf, dstsize);
-	if (hal_device_store_find (store, dst) == NULL)
+	if (hal_device_store_find (store, original_udi) == NULL) {
+		g_strlcpy (udi, original_udi, udisize);
 		goto out;
+	}
 
 	for (i = 0; ; i++) {
-		g_snprintf (dst, dstsize, "%s_%d", buf, i);
-		if (hal_device_store_find (store, dst) == NULL)
+		g_snprintf (udi, udisize, "%s_%d", original_udi, i);
+		if (hal_device_store_find (store, udi) == NULL) {
 			goto out;
+		}
 	}
 
 out:
 	;
+}
+
+void
+hal_util_compute_udi_valist (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, va_list args)
+{
+	g_vsnprintf (dst, dstsize, format, args);
+
+	g_strcanon (dst,
+		    "/_"
+		    "abcdefghijklmnopqrstuvwxyz"
+		    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		    "1234567890", '_');
+}
+
+
+void
+hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...)
+{
+	va_list args;
+
+	va_start (args, format);
+	hal_util_compute_udi_valist (store, dst, dstsize, format, args);
+	va_end (args);
 }
 
 

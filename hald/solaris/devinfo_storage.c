@@ -209,8 +209,9 @@ devinfo_ide_storage_add(HalDevice *grampa, HalDevice *parent, di_node_t node, ch
 	devinfo_set_default_properties (d, parent, node, devfs_path);
         hal_device_property_set_string (d, "info.category", "storage");
 
-        hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                "%s/%s%d", hal_device_get_udi (parent), driver_name, di_instance (node));
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s/%s%d", hal_device_get_udi (parent),
+			  driver_name, di_instance (node));
         hal_device_set_udi (d, udi);
         hal_device_property_set_string (d, "info.udi", udi);
 	PROP_STR(d, node, s, "devid", "info.product");
@@ -255,10 +256,11 @@ devinfo_scsi_add(HalDevice *parent, di_node_t node, char *devfs_path, char *devi
 	devinfo_set_default_properties (d, parent, node, devfs_path);
 	hal_device_property_set_string (d, "info.subsystem", "scsi");
 
-        hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                "%s/%s%d", hal_device_get_udi (parent), di_node_name(node), di_instance (node));
-        hal_device_set_udi (d, udi);
-        hal_device_property_set_string (d, "info.udi", udi);
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s/%s%d", hal_device_get_udi (parent),
+			  di_node_name(node), di_instance (node));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
 
 	hal_device_property_set_int (d, "scsi.host", 
 		hal_device_property_get_int (parent, "scsi_host.host"));
@@ -285,10 +287,11 @@ devinfo_scsi_storage_add(HalDevice *grampa, HalDevice *parent, di_node_t node, c
 	devinfo_set_default_properties (d, parent, node, devfs_path);
         hal_device_property_set_string (d, "info.category", "storage");
 
-        hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-		"%s/sd%d", hal_device_get_udi (parent), di_instance (node));
-        hal_device_set_udi (d, udi);
-        hal_device_property_set_string (d, "info.udi", udi);
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s/sd%d", hal_device_get_udi (parent),
+			  di_instance (node));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
 	PROP_STR(d, node, s, "inquiry-product-id", "info.product");
 
         hal_device_add_capability (d, "storage");
@@ -542,12 +545,13 @@ devinfo_lofi_add_major(HalDevice *parent, di_node_t node, char *devfs_path, char
 		devinfo_set_default_properties (d, parent, node, devfs_path);
 		hal_device_property_set_string (d, "info.subsystem", "pseudo");
 
-        	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                	"%s/%s%d", hal_device_get_udi (parent), di_node_name(node), di_instance (node));
-        	hal_device_set_udi (d, udi);
-        	hal_device_property_set_string (d, "info.udi", udi);
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s/%s%d", hal_device_get_udi (parent),
+			  di_node_name(node), di_instance (node));
+		hal_device_set_udi (d, udi);
+		hal_device_property_set_string (d, "info.udi", udi);
 
-        	devinfo_add_enqueue (d, devfs_path, &devinfo_lofi_handler);
+		devinfo_add_enqueue (d, devfs_path, &devinfo_lofi_handler);
 	} else {
 		d = lofi_d;
 	}
@@ -939,14 +943,14 @@ devinfo_volume_add(HalDevice *parent, di_node_t node, devinfo_storage_minor_t *m
 	devinfo_set_default_properties (d, parent, node, devfs_path);
         hal_device_property_set_string (d, "info.category", "volume");
 
-       	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-		"%s/%s", hal_device_get_udi (parent), slice);
-        hal_device_set_udi (d, udi);
-        hal_device_property_set_string (d, "info.udi", udi);
-        hal_device_property_set_string (d, "info.product", slice);
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s/%s", hal_device_get_udi (parent), slice);
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	hal_device_property_set_string (d, "info.product", slice);
 
-       	hal_device_add_capability (d, "volume");
-       	hal_device_add_capability (d, "block");
+	hal_device_add_capability (d, "volume");
+	hal_device_add_capability (d, "block");
 	hal_device_property_set_int (d, "block.major", major (dev));
 	hal_device_property_set_int (d, "block.minor", minor (dev));
 	hal_device_property_set_string (d, "block.device", devlink);
