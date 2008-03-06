@@ -1174,8 +1174,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev = d_it;
 					physdev_udi = udi_it;
 					is_hotpluggable = TRUE;
-					hal_device_property_set_string
-						(d, "storage.bus", "ccw");
+					hal_device_property_set_string (d, "storage.bus", "ccw");
 				} else if (strcmp (bus, "vio") == 0) {
 					physdev = d_it;
 					physdev_udi = udi_it;
