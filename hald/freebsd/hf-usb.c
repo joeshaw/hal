@@ -335,6 +335,7 @@ hf_usb_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "usb_device");
+  hal_device_property_set_string(device, "info.bus", "usb_device");
   hal_device_property_set_string(device, "info.product", di->udi_product);
   hal_device_property_set_string(device, "info.vendor", di->udi_vendor);
 
@@ -469,6 +470,7 @@ hf_usb_interface_device_new (HalDevice *parent,
   device = hf_device_new(parent);
 
   hal_device_property_set_string(device, "info.subsystem", "usb");
+  hal_device_property_set_string(device, "info.bus", "usb");
 
   hal_device_merge_with_rewrite(device, parent, "usb.", "usb_device.");
 
