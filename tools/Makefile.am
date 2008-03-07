@@ -34,7 +34,7 @@ bin_PROGRAMS =                    \
 	hal-disable-polling
 
 BUILT_SOURCES = 
-DISTCLEANFILES = 
+CLEANFILES = 
 
 if HAVE_POLKIT
 bin_PROGRAMS += hal-is-caller-privileged
@@ -89,7 +89,8 @@ hal-setup-keymap-hash-name.h: hal-setup-keymap-hash-name.gperf
 	gperf -t --ignore-case -N lookup_key -H hash_input_names -p -C < $< > $@
 endif #HAVE_GPERF
 
-hal_setup_keymap_SOURCES = hal-setup-keymap.c hal-setup-keymap-hash-name.h
+hal_setup_keymap_SOURCES = hal-setup-keymap.c
+nodist_hal_setup_keymap_SOURCES = hal-setup-keymap-hash-name.h
 hal_setup_keymap_LDADD = $(top_builddir)/libhal/libhal.la
 
 endif #BUILD_KEYMAPS
@@ -186,7 +187,7 @@ endif
 if BUILD_KEYMAPS
 
 if HAVE_GPERF
-DISTCLEANFILES += 				\
+CLEANFILES += 				\
 	hal-setup-keymap-hash-name.h		\
 	hal-setup-keymap-hash-name.gperf	\
 	hal-setup-keymap-keys.txt
