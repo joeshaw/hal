@@ -86,7 +86,7 @@ main (int argc, char *argv[])
 		                                      "video4linux.version", "2");
 
 		libhal_changeset_set_property_string (cset,
-		                                      "info.product", v2cap.card);
+		                                      "info.product", (const char *)v2cap.card);
 
 		if ((v2cap.capabilities & V4L2_CAP_VIDEO_CAPTURE) > 0)
 			libhal_device_add_capability (ctx, udi, "video4linux.video_capture", &error);
