@@ -5431,6 +5431,17 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 desired playlist file name, noting that it's use in this string is optional.
               </entry>
             </row>
+            <row>
+              <entry>
+                <literal>portable_audio_player.storage_device</literal> (string)
+              </entry>
+              <entry>examples: a udi</entry>
+              <entry>No</entry>
+              <entry>
+              	Set to the udi of the portable_audio_player device if portable_audio_player.access_method.protocols 
+		contains storage for a USB Mass Storage (UMS) music player. Mandatory for storage.
+	      </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
