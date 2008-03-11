@@ -143,10 +143,8 @@ util_compute_time_remaining (const char *id,
 				chargeRate = battery_info->last_chargeRate;
 			} else {
 				chargeRate = ((chargeLevel - battery_info->last_level) * 60 * 60) / (cur_time - battery_info->last_time);
-				/*
-				 * During discharging chargeRate would be negative, which would
-				 * mess up the the calculation below, so we make sure it's always
-				 * positive.
+				/* During discharging chargeRate would be negative, which would mess 
+				 * up the the calculation below, so we make sure it's always positive.
 				 */ 
 				chargeRate = (chargeRate > 0) ? chargeRate : -chargeRate;
 	
@@ -191,6 +189,10 @@ util_compute_time_remaining (const char *id,
 	/* Battery life cannot be above 60 hours */
 	else if (remaining_time > 60*60*60) {
 		batteryInfo *battery_info;
+
+		/* to be sure saved_battery_info is initialised */
+		if (!saved_battery_info) 
+			saved_battery_info = g_hash_table_new(g_str_hash, g_str_equal);
 
 		if (!(battery_info = g_hash_table_lookup(saved_battery_info, id))) {
 			battery_info = g_new0(batteryInfo, 1);
