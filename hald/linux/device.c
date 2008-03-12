@@ -1912,11 +1912,32 @@ ide_compute_udi (HalDevice *d)
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
+static void
+pnp_set_serial_info (const gchar *sysfs_path, HalDevice *d) {
+
+	hal_util_set_int_elem_from_file (d, "pnp.serial.irq", sysfs_path, "resources", "irq", 0, 10, TRUE);
+
+	if (hal_util_set_string_elem_from_file (d, "pnp.serial.port", sysfs_path, "resources", "io", 0, TRUE)) {
+		const char* port;
+		const char* _port;
+		_port = hal_device_property_get_string (d, "pnp.serial.port");
+		if(_port == NULL)
+			return;
+
+		port = strtok((char*) _port, "-");
+		if(port == NULL)
+			return;
+
+		hal_device_property_set_string (d, "pnp.serial.port", port);
+	}
+}
+
 
 static HalDevice *
 pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
+	HalDevice *computer;
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
@@ -1932,10 +1953,28 @@ pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_util_set_string_from_file (d, "pnp.id", sysfs_path, "id");
 	if (hal_device_has_property (d, "pnp.id")) {
 		gchar *pnp_description;
+		const char *pnp_id;
 		ids_find_pnp (hal_device_property_get_string (d, "pnp.id"), &pnp_description);
 		if (pnp_description != NULL) {
 			hal_device_property_set_string (d, "pnp.description", pnp_description);
 			hal_device_property_set_string (d, "info.product", pnp_description);
+		}
+		pnp_id = hal_device_property_get_string (d, "pnp.id");
+		if( !strncmp(pnp_id, "WACf00", 6) || !strcmp(pnp_id, "FUJ02e5") ||
+		    !strcmp(pnp_id, "FUJ02e6") || !strcmp(pnp_id, "FPI2004")) {
+			/* a internal serial tablet --> this should be a tablet pc */
+			hal_device_add_capability (d, "input");
+			hal_device_add_capability (d, "input.tablet");
+			hal_device_add_capability (d, "input.tablet.tabletPC");
+
+			if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) != NULL ||
+			    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) != NULL) {
+
+				hal_device_property_set_string (computer, "system.formfactor", "laptop");
+				hal_device_property_set_string (computer, "system.formfactor.subtype", "tabletpc");
+				/* collect info about serial port and irq etc. */
+				pnp_set_serial_info (sysfs_path, d);
+			}
 		}
 	}
 
