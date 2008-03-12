@@ -272,6 +272,13 @@
 	<append key="volume.mount.valid_options" type="strlist">user_xattr</append>
       </match>
 
+      <!-- allow these mount options for ufs -->
+      <match key="volume.fstype" string="ufs">
+	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
+	  <append key="volume.mount.valid_options" type="strlist">ufstype=</append>
+	</match>
+      </match>
+
       <!-- udf -->
       <match key="volume.fstype" string="udf">
 	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
