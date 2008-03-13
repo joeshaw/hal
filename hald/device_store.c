@@ -519,6 +519,23 @@ property_index_modify_string (HalDeviceStore *store, HalDevice *device,
 	g_hash_table_insert (index, (gpointer) value, devices);
 }
 
+#if GLIB_CHECK_VERSION (2,14,0)
+        /* Nothing */
+#else
+inline static void
+list_keys (gpointer key, gpointer value, GList **keys)
+{
+        *keys = g_list_append (*keys, key);
+}
+
+inline static GList*
+g_hash_table_get_keys (GHashTable *hash)
+{
+        GList *keys = NULL;
+        g_hash_table_foreach (hash, (GHFunc)list_values, &keys);
+        return keys;
+}
+#endif
 
 static void
 property_index_check_all (HalDeviceStore *store, HalDevice *device, gboolean added)
