@@ -55,9 +55,6 @@ static GQueue *hotplug_event_queue = NULL;
 /** List of HotplugEvent objects we are currently processing */
 static GList *hotplug_events_in_progress = NULL;
 
-/** List of HotplugEvent objects that are blocked on a event in process */
-GList *hotplug_events_blocked = NULL;
-
 void
 hotplug_event_end (void *end_token)
 {
