@@ -531,5 +531,6 @@ property_index_check_all (HalDeviceStore *store, HalDevice *device, gboolean add
 			property_index_modify_string (store, device, lp->data, added);
 		}
 	}
+	g_list_free (indexed_properties);
 }
 
