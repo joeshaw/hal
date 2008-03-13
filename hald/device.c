@@ -796,6 +796,7 @@ hal_device_set_udi (HalDevice *device, const char *udi)
 	if (device->private->udi != NULL)
 		g_free (device->private->udi);
 	device->private->udi = g_strdup (udi);
+	hal_device_property_set_string (device, "info.udi", udi);
 }
 
 void

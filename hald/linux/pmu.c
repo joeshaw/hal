@@ -215,7 +215,6 @@ pmu_lid_compute_udi (HalDevice *d, PMUDevHandler *handler)
 	hald_compute_udi (udi, sizeof (udi),
 			  "/org/freedesktop/Hal/devices/pmu_lid");
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 
@@ -226,7 +225,6 @@ pmu_laptop_panel_compute_udi (HalDevice *d, PMUDevHandler *handler)
 	hald_compute_udi (udi, sizeof (udi),
 			  "/org/freedesktop/Hal/devices/pmu_lcd");
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 
@@ -405,7 +403,6 @@ pmu_generic_compute_udi (HalDevice *d, PMUDevHandler *handler)
 			  hal_util_get_last_element (hal_device_property_get_string (d, "linux.pmu_path")),
 			  hal_device_property_get_int (d, "linux.pmu_type"));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 

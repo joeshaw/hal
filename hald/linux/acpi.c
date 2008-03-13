@@ -1010,7 +1010,6 @@ acpi_generic_compute_udi (HalDevice *d, ACPIDevHandler *handler)
 			  "/org/freedesktop/Hal/devices/acpi_%s",
 			  hal_util_get_last_element (hal_device_property_get_string (d, "linux.acpi_path")));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 

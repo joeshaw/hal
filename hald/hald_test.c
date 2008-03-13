@@ -376,7 +376,6 @@ check_properties (void)
 	printf ("PASSED\n");
 
 	hal_device_set_udi (d, "/org/freedesktop/Hal/devices/testobj1");
-	hal_device_property_set_string (d, "info.udi", "/org/freedesktop/Hal/devices/testobj1");
 
 	/* add this to the global device store */
 	hal_device_store_add (hald_get_gdl (), d);

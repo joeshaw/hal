@@ -213,7 +213,6 @@ devinfo_ide_storage_add(HalDevice *grampa, HalDevice *parent, di_node_t node, ch
 			  "%s/%s%d", hal_device_get_udi (parent),
 			  driver_name, di_instance (node));
         hal_device_set_udi (d, udi);
-        hal_device_property_set_string (d, "info.udi", udi);
 	PROP_STR(d, node, s, "devid", "info.product");
 
         hal_device_add_capability (d, "storage");
@@ -260,7 +259,6 @@ devinfo_scsi_add(HalDevice *parent, di_node_t node, char *devfs_path, char *devi
 			  "%s/%s%d", hal_device_get_udi (parent),
 			  di_node_name(node), di_instance (node));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	hal_device_property_set_int (d, "scsi.host", 
 		hal_device_property_get_int (parent, "scsi_host.host"));
@@ -291,7 +289,6 @@ devinfo_scsi_storage_add(HalDevice *grampa, HalDevice *parent, di_node_t node, c
 			  "%s/sd%d", hal_device_get_udi (parent),
 			  di_instance (node));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	PROP_STR(d, node, s, "inquiry-product-id", "info.product");
 
         hal_device_add_capability (d, "storage");
@@ -549,7 +546,6 @@ devinfo_lofi_add_major(HalDevice *parent, di_node_t node, char *devfs_path, char
 			  "%s/%s%d", hal_device_get_udi (parent),
 			  di_node_name(node), di_instance (node));
 		hal_device_set_udi (d, udi);
-		hal_device_property_set_string (d, "info.udi", udi);
 
 		devinfo_add_enqueue (d, devfs_path, &devinfo_lofi_handler);
 	} else {
@@ -946,7 +942,6 @@ devinfo_volume_add(HalDevice *parent, di_node_t node, devinfo_storage_minor_t *m
 	hald_compute_udi (udi, sizeof (udi),
 			  "%s/%s", hal_device_get_udi (parent), slice);
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	hal_device_property_set_string (d, "info.product", slice);
 
 	hal_device_add_capability (d, "volume");

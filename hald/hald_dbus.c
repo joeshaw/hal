@@ -3682,7 +3682,6 @@ manager_new_device (DBusConnection * connection, DBusMessage * message, dbus_boo
 	}
 
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	hal_device_store_add (hald_get_tdl (), d);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 	g_free (udi);
@@ -3867,7 +3866,6 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 	/* set new udi */
 	hal_device_property_remove (d, "info.udi");
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	/* FIXME:
 	 * 'RequireEnable' property?

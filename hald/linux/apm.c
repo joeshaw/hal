@@ -361,7 +361,6 @@ apm_generic_compute_udi (HalDevice *d, APMDevHandler *handler)
 	}
 
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 

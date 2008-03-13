@@ -100,7 +100,6 @@ devinfo_set_default_properties (HalDevice *d, HalDevice *parent, di_node_t node,
 			  devfs_path,
 			  di_instance (node));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	if (di_prop_lookup_strings (DDI_DEV_T_ANY, node, "model", &s) > 0) {
 		hal_device_property_set_string (d, "info.product", s);

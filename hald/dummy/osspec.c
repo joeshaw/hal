@@ -83,7 +83,6 @@ osspec_probe (void)
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.subsystem", "unknown");
 	hal_device_property_set_string (root, "info.product", "Computer");
-	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 
 	hal_device_store_add (hald_get_tdl (), root);

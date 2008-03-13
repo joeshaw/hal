@@ -128,7 +128,6 @@ blockdev_compute_udi (HalDevice *d)
 	}
 
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	return TRUE;
 }

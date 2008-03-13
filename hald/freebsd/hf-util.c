@@ -298,7 +298,6 @@ hf_device_set_full_udi (HalDevice *device, const char *format, ...)
   g_free(requested_udi);
 
   hal_device_set_udi(device, actual_udi);
-  hal_device_property_set_string(device, "info.udi", actual_udi);
 }
 
 void
