@@ -532,7 +532,7 @@ inline static GList*
 g_hash_table_get_keys (GHashTable *hash)
 {
         GList *keys = NULL;
-        g_hash_table_foreach (hash, (GHFunc)list_values, &keys);
+        g_hash_table_foreach (hash, (GHFunc)list_keys, &keys);
         return keys;
 }
 #endif
