@@ -25,6 +25,10 @@ if BUILD_MACBOOK
 dist_fdi_DATA += 10-macbook-backlight.fdi
 endif
 
+if BUILD_IMAC
+dist_fdi_DATA += 10-imac-backlight.fdi
+endif
+
 if BUILD_CPUFREQ
 dist_fdi_DATA += 10-cpufreq.fdi
 endif
