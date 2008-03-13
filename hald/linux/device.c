@@ -75,6 +75,7 @@ gboolean _have_sysfs_sleep_button = FALSE;
 gboolean _have_sysfs_power_supply = FALSE; 
 
 #define POWER_SUPPLY_BATTERY_POLL_INTERVAL 30  /* in seconds */
+#define DOCK_STATION_UNDOCK_POLL_INTERVAL 300  /* in milliseconds */
 
 /* we must use this kernel-compatible implementation */
 #define BITS_PER_LONG (sizeof(long) * 8)
@@ -2016,10 +2017,34 @@ platform_compute_udi (HalDevice *d)
 }
 
 static gboolean
+platform_refresh_undock (gpointer data)
+{
+	HalDevice *d;
+	gint flags, docked;
+	const gchar *sysfs_path;
+
+	if (data == NULL)
+		return FALSE;
+	d = (HalDevice *) data;
+
+	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
+	hal_util_get_int_from_file (sysfs_path, "flags", &flags, 0);
+
+	/* check for != 0, maybe the user did an immediate dock */
+	if (flags != 0)
+		return TRUE;
+
+	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+	hal_device_property_set_bool (d, "info.docked", docked);
+
+	return FALSE;
+}
+
+static gboolean
 platform_refresh (HalDevice *d)
 {
 	const gchar *id, *sysfs_path;
-	int docked;
+	gint docked, flags;
 
 	id = hal_device_property_get_string (d, "platform.id");
 	if (strncmp (id, "dock", 4) != 0)
@@ -2027,8 +2052,18 @@ platform_refresh (HalDevice *d)
 
 	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
 	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
-	hal_device_property_set_bool (d, "info.docked", docked);
 
+	if (docked == 1) {
+		/* undock still in progress? */
+		hal_util_get_int_from_file (sysfs_path, "flags", &flags, 0);
+		if (flags == 2) {
+			g_timeout_add (DOCK_STATION_UNDOCK_POLL_INTERVAL,
+				       platform_refresh_undock, d);
+			return TRUE;
+		}
+	}
+
+	hal_device_property_set_bool (d, "info.docked", docked);
 	return TRUE;
 }
 
