@@ -362,19 +362,12 @@ poll_for_media (gpointer user_data)
                 } else {
                         HAL_INFO (("... device %s is not locked on HAL", device_file));
                         is_locked_by_hal = FALSE;
-                        update_proc_title ();
                 }
 
                 dbus_error_init (&error);
                 should_poll = libhal_device_get_property_bool (ctx, udi, "storage.media_check_enabled", &error);
-                if (should_poll) {
-                        polling_disabled = FALSE;
-                        update_proc_title ();
-                } else {
-                        polling_disabled = TRUE;
-                        update_proc_title ();
-                }
-
+		polling_disabled = !should_poll;
+		update_proc_title ();
         }
 
         /* TODO: we could remove the timeout completely... */
