@@ -223,6 +223,7 @@
 	  <append key="volume.mount.valid_options" type="strlist">-M=</append>
 	  <append key="volume.mount.valid_options" type="strlist">-L=</append>
 	  <append key="volume.mount.valid_options" type="strlist">-D=</append>
+	  <append key="volume.mount.valid_options" type="strlist">large</append>
 	</match>
       </match>
 
