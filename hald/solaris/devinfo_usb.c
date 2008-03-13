@@ -119,11 +119,10 @@ devinfo_usb_if_add(HalDevice *parent, di_node_t node, gchar *devfs_path, int ifn
 	devinfo_set_default_properties (d, parent, node, devfs_path);
         hal_device_property_set_string (d, "info.subsystem", "usb");
 
-        hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-		"%s_if%d", hal_device_get_udi (parent), ifnum);
-        hal_device_set_udi (d, udi);
-        hal_device_property_set_string (d, "info.udi", udi);
-        hal_device_property_set_string (d, "info.product", "USB Device Interface");
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_if%d", hal_device_get_udi (parent), ifnum);
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.product", "USB Device Interface");
 
 	/* copy parent's usb_device.* properties */
 	hal_device_merge_with_rewrite (d, parent, "usb.", "usb_device.");
@@ -209,11 +208,10 @@ devinfo_usb_scsa2usb_add(HalDevice *usbd, di_node_t node, gchar *devfs_path)
         hal_device_property_set_string (d, "info.category", "scsi_host");
         hal_device_property_set_int (d, "scsi_host.host", 0);
 
-        hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-		"%s/scsi_host%d", hal_device_get_udi (usbd),
-		hal_device_property_get_int (d, "scsi_host.host"));
+	hald_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			  "%s/scsi_host%d", hal_device_get_udi (usbd),
+			  hal_device_property_get_int (d, "scsi_host.host"));
         hal_device_set_udi (d, udi);
-        hal_device_property_set_string (d, "info.udi", udi);
         hal_device_property_set_string (d, "info.product", "SCSI Host Adapter");
 
 	devinfo_add_enqueue (d, minor_path, &devinfo_usb_handler);

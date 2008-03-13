@@ -68,6 +68,10 @@ gboolean hal_util_set_bcd2_from_file (HalDevice *d, const gchar *key, const gcha
 
 gboolean hal_util_set_double_from_file (HalDevice *d, const gchar *key, const gchar *directory, const gchar *file);
 
+void hal_util_make_udi_unique (HalDeviceStore *store, gchar *udi, gsize udisize, const char *original_udi);
+
+void hal_util_compute_udi_valist (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, va_list args);
+
 void hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...);
 
 gboolean hal_util_path_ascend (gchar *path);

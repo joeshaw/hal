@@ -102,6 +102,7 @@ libexec_PROGRAMS =                          \
 	hal-storage-closetray	            \
 	hal-storage-cleanup-mountpoint      \
 	hal-storage-cleanup-all-mountpoints \
+	hal-system-setserial		    \
 	hal-system-power-pm-is-supported
 
 if HAVE_PMU
@@ -141,6 +142,9 @@ hal_storage_cleanup_mountpoint_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(t
 
 hal_storage_cleanup_all_mountpoints_SOURCES = hal-storage-cleanup-all-mountpoints.c hal-storage-shared.c hal-storage-shared.h
 hal_storage_cleanup_all_mountpoints_LDADD = @GLIB_LIBS@ @POLKIT_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/libhal-storage/libhal-storage.la
+
+hal_system_setserial_SOURCES = hal-system-setserial.c
+hal_system_setserial_LDADD = 
 
 if HAVE_PMU
 hal_system_power_pmu_SOURCES = hal-system-power-pmu.c

@@ -3,14 +3,15 @@ fdidir = $(datadir)/hal/fdi/policy/10osvendor
 
 dist_fdi_DATA = 			\
 	10-input-policy.fdi		\
-	10-x11-input.fdi		\
+	10-dockstation.fdi		\
+	10-laptop-panel-mgmt-policy.fdi	\
 	10-power-mgmt-policy.fdi	\
 	10-rfkill-switch.fdi		\
-	10-laptop-panel-mgmt-policy.fdi	\
+	10-tabletPCs.fdi		\
+	10-x11-input.fdi		\
 	15-storage-luks.fdi		\
 	20-storage-methods.fdi		\
-	30-wol.fdi			\
-	10-dockstation.fdi
+	30-wol.fdi
 
 if BUILD_KEYMAPS
 dist_fdi_DATA += 10-keymap.fdi
@@ -22,6 +23,10 @@ endif
 
 if BUILD_MACBOOK
 dist_fdi_DATA += 10-macbook-backlight.fdi
+endif
+
+if BUILD_IMAC
+dist_fdi_DATA += 10-imac-backlight.fdi
 endif
 
 if BUILD_CPUFREQ

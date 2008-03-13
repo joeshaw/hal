@@ -77,23 +77,23 @@ blockdev_compute_udi (HalDevice *d)
 		uuid = hal_device_property_get_string (d, "volume.uuid");
 
 		if (uuid != NULL && strlen (uuid) > 0) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_uuid_%s", uuid);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/volume_uuid_%s", uuid);
 		} else if (volumelabel != NULL && strlen (volumelabel) > 0) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_label_%s", volumelabel);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/volume_label_%s", volumelabel);
 		} else if (hal_device_property_get_bool(d, "volume.is_disc") &&
 			   hal_device_property_get_bool(d, "volume.disc.is_blank")) {
 			/* this should be a empty CD/DVD */
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-                                             "/org/freedesktop/Hal/devices/volume_empty_%s",
-					      hal_device_property_get_string (d, "volume.disc.type"));
+			hald_compute_udi (udi, sizeof (udi),
+                                          "/org/freedesktop/Hal/devices/volume_empty_%s",
+					  hal_device_property_get_string (d, "volume.disc.type"));
 		} else {
 			/* fallback to partition number, size */
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/volume_part%d_size_%lld", 
-					      hal_device_property_get_int (d, "volume.partition.number"),
-					      hal_device_property_get_uint64 (d, "volume.size"));
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/volume_part%d_size_%lld",
+					  hal_device_property_get_int (d, "volume.partition.number"),
+					  hal_device_property_get_uint64 (d, "volume.size"));
 		}
 		g_free(volumelabel);
 	} else {
@@ -108,27 +108,26 @@ blockdev_compute_udi (HalDevice *d)
 		type = hal_device_property_get_string (d, "storage.drive_type");
 
 		if (serial != NULL) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/storage_serial_%s", 
-					      serial);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/storage_serial_%s",
+					  serial);
 		} else if ((model != NULL) && (strlen(model) != 0) ) {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "/org/freedesktop/Hal/devices/storage_model_%s", 
-					      model);
+			hald_compute_udi (udi, sizeof (udi),
+					  "/org/freedesktop/Hal/devices/storage_model_%s",
+					  model);
 		} else if ((bus != NULL) && (type != NULL)){
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "%s_storage_%s_%s", 
-					      hal_device_property_get_string (d, "storage.originating_device"),
-					      bus, type);
+			hald_compute_udi (udi, sizeof (udi),
+					  "%s_storage_%s_%s",
+					  hal_device_property_get_string (d, "storage.originating_device"),
+					  bus, type);
 		} else {
-			hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-					      "%s_storage", 
-					      hal_device_property_get_string (d, "storage.originating_device"));
+			hald_compute_udi (udi, sizeof (udi),
+					  "%s_storage",
+					  hal_device_property_get_string (d, "storage.originating_device"));
 		}
 	}
 
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	return TRUE;
 }
@@ -361,7 +360,7 @@ generate_fakevolume_hotplug_event_add_for_storage_device (HalDevice *d)
 
 	snprintf (fake_sysfs_path, sizeof(fake_sysfs_path), "%s/fakevolume", sysfs_path);
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -955,6 +954,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 								is_device_mapper = TRUE;
 							}
 						}
+					} else {
+						HAL_INFO(("Couldn't find slave volume in devices"));
 					}
 				}
 				g_free (target);
@@ -1705,7 +1706,7 @@ blockdev_generate_add_hotplug_event (HalDevice *d)
 	serial      = hal_device_property_get_string (d, "storage.serial");
 	revision    = hal_device_property_get_string (d, "storage.firmware_revision");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -1730,7 +1731,7 @@ blockdev_generate_remove_hotplug_event (HalDevice *d)
 
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 	g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -1858,7 +1859,7 @@ blockdev_process_mdstat (void)
                         } else {
                                 HAL_INFO (("Adding md device at '%s' ('%s')", sysfs_path, device_file));
 
-                                hotplug_event = g_new0 (HotplugEvent, 1);
+                                hotplug_event = g_slice_new0 (HotplugEvent);
                                 hotplug_event->action = HOTPLUG_ACTION_ADD;
                                 hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
                                 g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));
@@ -1911,7 +1912,7 @@ blockdev_process_mdstat (void)
                                 
                                 HAL_INFO (("Removing md device at '%s' ('%s')", sysfs_path, device_file));
 
-                                hotplug_event = g_new0 (HotplugEvent, 1);
+                                hotplug_event = g_slice_new0 (HotplugEvent);
                                 hotplug_event->action = HOTPLUG_ACTION_REMOVE;
                                 hotplug_event->type = HOTPLUG_EVENT_SYSFS_BLOCK;
                                 g_strlcpy (hotplug_event->sysfs.subsystem, "block", sizeof (hotplug_event->sysfs.subsystem));

@@ -1021,7 +1021,6 @@ handle_merge (struct rule *rule, HalDevice *d)
 				   key, hal_device_get_udi (d)));
 			spawned = hal_device_new ();
 			hal_device_property_set_string (spawned, "info.subsystem", "unknown");
-			hal_device_property_set_string (spawned, "info.udi", key);
 			hal_device_property_set_string (spawned, "info.parent", hal_device_get_udi (d));
 			hal_device_set_udi (spawned, key);
 

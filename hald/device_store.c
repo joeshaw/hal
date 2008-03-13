@@ -137,6 +137,7 @@ hal_device_store_class_init (HalDeviceStoreClass *klass)
 static void
 hal_device_store_init (HalDeviceStore *device)
 {
+	device->property_index = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 }
 
 GType
@@ -175,6 +176,27 @@ hal_device_store_new (void)
 }
 
 static void
+property_index_check_all (HalDeviceStore *store, HalDevice *device, gboolean add);
+
+static void
+property_index_modify_string (HalDeviceStore *store, HalDevice *device,
+			      const char *key, gboolean added);
+
+static void
+device_pre_property_changed (HalDevice *device,
+			      const char *key,
+			      gboolean removed,
+			      gpointer data)
+{
+	HalDeviceStore *store = HAL_DEVICE_STORE (data);
+
+	if (hal_device_property_get_type (device, key) == HAL_PROPERTY_TYPE_STRING) {
+		property_index_modify_string(store, device, key, FALSE);
+	}
+}
+
+
+static void
 emit_device_property_changed (HalDevice *device,
 			      const char *key,
 			      gboolean added,
@@ -182,6 +204,10 @@ emit_device_property_changed (HalDevice *device,
 			      gpointer data)
 {
 	HalDeviceStore *store = HAL_DEVICE_STORE (data);
+
+	if (hal_device_property_get_type (device, key) == HAL_PROPERTY_TYPE_STRING) {
+		property_index_modify_string(store, device, key, TRUE);
+	}
 
 	g_signal_emit (store, signals[DEVICE_PROPERTY_CHANGED], 0,
 		       device, key, added, removed);
@@ -238,6 +264,8 @@ hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 
 	g_signal_connect (device, "property_changed",
 			  G_CALLBACK (emit_device_property_changed), store);
+	g_signal_connect (device, "pre_property_changed",
+			  G_CALLBACK (device_pre_property_changed), store);
 	g_signal_connect (device, "capability_added",
 			  G_CALLBACK (emit_device_capability_added), store);
 	g_signal_connect (device, "lock_acquired",
@@ -245,6 +273,7 @@ hal_device_store_add (HalDeviceStore *store, HalDevice *device)
 	g_signal_connect (device, "lock_released",
 			  G_CALLBACK (emit_device_lock_released), store);
 
+	property_index_check_all (store, device, TRUE);
 	g_signal_emit (store, signals[STORE_CHANGED], 0, device, TRUE);
 
 out:
@@ -271,6 +300,8 @@ hal_device_store_remove (HalDeviceStore *store, HalDevice *device)
 	g_signal_handlers_disconnect_by_func (device,
 					      (gpointer)emit_device_lock_released,
 					      store);
+
+	property_index_check_all (store, device, FALSE);
 
 	g_signal_emit (store, signals[STORE_CHANGED], 0, device, FALSE);
 
@@ -345,25 +376,37 @@ hal_device_store_match_key_value_string (HalDeviceStore *store,
 					 const char *value)
 {
 	GSList *iter;
+	GSList *devices;
+	GHashTable *index;
 
 	g_return_val_if_fail (store != NULL, NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 	g_return_val_if_fail (value != NULL, NULL);
 
-	for (iter = store->devices; iter != NULL; iter = iter->next) {
-		HalDevice *d = HAL_DEVICE (iter->data);
-		int type;
+	index = g_hash_table_lookup (store->property_index, key);
 
-		if (!hal_device_has_property (d, key))
-			continue;
+	if (index) {
+		devices = g_hash_table_lookup (index, value);
+		if (devices)
+			return (HalDevice*) devices->data;
+		else
+			return NULL;
+	} else {
+		for (iter = store->devices; iter != NULL; iter = iter->next) {
+			HalDevice *d = HAL_DEVICE (iter->data);
+			int type;
 
-		type = hal_device_property_get_type (d, key);
-		if (type != HAL_PROPERTY_TYPE_STRING)
-			continue;
+			if (!hal_device_has_property (d, key))
+				continue;
 
-		if (strcmp (hal_device_property_get_string (d, key),
-			    value) == 0)
-			return d;
+			type = hal_device_property_get_type (d, key);
+			if (type != HAL_PROPERTY_TYPE_STRING)
+				continue;
+
+			if (strcmp (hal_device_property_get_string (d, key),
+				    value) == 0)
+				return d;
+		}
 	}
 
 	return NULL;
@@ -404,26 +447,107 @@ hal_device_store_match_multiple_key_value_string (HalDeviceStore *store,
 {
 	GSList *iter;
 	GSList *matches = NULL;
+	GSList *devices;
+	GHashTable *index;
 
 	g_return_val_if_fail (store != NULL, NULL);
 	g_return_val_if_fail (key != NULL, NULL);
 	g_return_val_if_fail (value != NULL, NULL);
 
-	for (iter = store->devices; iter != NULL; iter = iter->next) {
-		HalDevice *d = HAL_DEVICE (iter->data);
-		int type;
+	index = g_hash_table_lookup (store->property_index, key);
 
-		if (!hal_device_has_property (d, key))
-			continue;
+	if (index) {
+		devices = g_hash_table_lookup (index, value);
+		return g_slist_copy(devices);
+	} else {
+		for (iter = store->devices; iter != NULL; iter = iter->next) {
+			HalDevice *d = HAL_DEVICE (iter->data);
+			int type;
 
-		type = hal_device_property_get_type (d, key);
-		if (type != HAL_PROPERTY_TYPE_STRING)
-			continue;
+			if (!hal_device_has_property (d, key))
+				continue;
 
-		if (strcmp (hal_device_property_get_string (d, key),
-			    value) == 0)
-			matches = g_slist_prepend (matches, d);
+			type = hal_device_property_get_type (d, key);
+			if (type != HAL_PROPERTY_TYPE_STRING)
+				continue;
+
+			if (strcmp (hal_device_property_get_string (d, key),
+				    value) == 0)
+				matches = g_slist_prepend (matches, d);
+		}
 	}
 
 	return matches;
 }
+
+
+void
+hal_device_store_index_property (HalDeviceStore *store, const char *key)
+{
+	GHashTable *index;
+
+	index = g_hash_table_lookup (store->property_index, key);
+
+	if (!index) {
+		index = g_hash_table_new (g_str_hash, g_str_equal);
+		g_hash_table_insert (store->property_index, g_strdup (key), index);
+	}
+}
+
+static void
+property_index_modify_string (HalDeviceStore *store, HalDevice *device,
+			      const char *key, gboolean added)
+{
+	GHashTable *index;
+	const char *value;
+	GSList *devices;
+
+	value = hal_device_property_get_string (device, key);
+	index = g_hash_table_lookup (store->property_index, key);
+
+	if (!index) return;
+
+	devices = g_hash_table_lookup (index, value);
+
+	if (added) { /*add*/
+		HAL_DEBUG (("adding %p to (%s,%s)", device, key, value));
+		devices = g_slist_prepend (devices, device);
+	} else { /*remove*/
+		HAL_DEBUG (("removing %p from (%s,%s)", device, key, value));
+		devices = g_slist_remove_all (devices, device);
+	}
+	g_hash_table_insert (index, (gpointer) value, devices);
+}
+
+#if GLIB_CHECK_VERSION (2,14,0)
+        /* Nothing */
+#else
+inline static void
+list_keys (gpointer key, gpointer value, GList **keys)
+{
+        *keys = g_list_append (*keys, key);
+}
+
+inline static GList*
+g_hash_table_get_keys (GHashTable *hash)
+{
+        GList *keys = NULL;
+        g_hash_table_foreach (hash, (GHFunc)list_keys, &keys);
+        return keys;
+}
+#endif
+
+static void
+property_index_check_all (HalDeviceStore *store, HalDevice *device, gboolean added)
+{
+	GList *indexed_properties, *lp;
+
+	indexed_properties = g_hash_table_get_keys (store->property_index);
+	for (lp = indexed_properties; lp; lp = g_list_next (lp)) {
+		if (hal_device_property_get_type (device, lp->data) == HAL_PROPERTY_TYPE_STRING) {
+			property_index_modify_string (store, device, lp->data, added);
+		}
+	}
+	g_list_free (indexed_properties);
+}
+

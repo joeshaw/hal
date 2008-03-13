@@ -3,7 +3,7 @@
 <deviceinfo version="0.2">
   <device>
 
-    <!-- NOTE: if you add a new access.type value, remember to update privileges/hal-device-files.priv -->
+    <!-- NOTE: if you add a new access.type value, remember to update policy/hal-device-file.policy -->
 
     <!-- classification of devices where access can be controlled goes here -->
 
@@ -90,6 +90,15 @@
       <append key="info.capabilities" type="strlist">access_control</append>
       <merge key="access_control.file" type="copy_property">@ieee1394_unit.originating_device:ieee1394.device</merge>
       <merge key="access_control.type" type="string">ieee1394-avc</merge>
+    </match>
+
+    <!-- PalmOS PDAs -->
+    <match key="info.capabilities" contains="pda">
+      <match key="pda.platform" string="palm">
+        <append key="info.capabilities" type="strlist">access_control</append>
+        <merge key="access_control.type" type="string">pda</merge>
+        <merge key="access_control.file" type="copy_property">pda.palm.hotsync_interface</merge>
+      </match>
     </match>
 
     <!-- enforcement of policy goes here -->

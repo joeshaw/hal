@@ -55,18 +55,107 @@ struct sysfs_device {
 static GHashTable *sysfs_to_udev_map;
 static GSList *device_list;
 static char dev_root[HAL_PATH_MAX];
+static gchar *udevinfo_stdout = NULL;
+static unsigned long long coldplug_seqnum = 0;
+typedef struct _UdevInfo UdevInfo;
+
+struct _UdevInfo
+{
+	const char *sysfs_path;
+	const char *device_file;
+	const char *vendor;
+	const char *model;
+	const char *revision;
+	const char *serial;
+	const char *fsusage;
+	const char *fstype;
+	const char *fsversion;
+	const char *fsuuid;
+	const char *fslabel;
+};
+
+static void udev_info_free (gpointer data)
+{
+	g_slice_free(UdevInfo, data);
+}
+
+
+static HotplugEvent*
+udev_info_to_hotplug_event (const UdevInfo *info)
+{
+	HotplugEvent *hotplug_event;
+	gchar *str;
+
+	hotplug_event = g_slice_new0 (HotplugEvent);
+	g_strlcpy (hotplug_event->sysfs.sysfs_path, "/sys", sizeof(hotplug_event->sysfs.sysfs_path));
+	g_strlcat (hotplug_event->sysfs.sysfs_path, info->sysfs_path, sizeof(hotplug_event->sysfs.sysfs_path));
+
+	HAL_INFO(("creating HotplugEvent for %s", hotplug_event->sysfs.sysfs_path));
+
+	if (info->device_file) {
+		g_snprintf (hotplug_event->sysfs.device_file, sizeof(hotplug_event->sysfs.device_file),
+			"%s/%s", dev_root, info->device_file);
+	HAL_INFO(("with device file %s", hotplug_event->sysfs.device_file));
+	}
+	if ((str = hal_util_strdup_valid_utf8(info->vendor)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.vendor, str, sizeof(hotplug_event->sysfs.vendor));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->model)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.model, str, sizeof(hotplug_event->sysfs.model));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->revision)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.revision, str, sizeof(hotplug_event->sysfs.revision));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->serial)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.serial, str, sizeof(hotplug_event->sysfs.serial));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->fsusage)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.fsusage, str, sizeof(hotplug_event->sysfs.fsusage));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->fstype)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.fstype, str, sizeof(hotplug_event->sysfs.fstype));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->fsversion)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.fsversion, str, sizeof(hotplug_event->sysfs.fsversion));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->fsuuid)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.fsuuid, str, sizeof(hotplug_event->sysfs.fsuuid));
+		g_free (str);
+	}
+
+	if ((str = hal_util_strdup_valid_utf8(info->fslabel)) != NULL) {
+		g_strlcpy (hotplug_event->sysfs.fslabel, str, sizeof(hotplug_event->sysfs.fslabel));
+		g_free (str);
+	}
+
+	return hotplug_event;
+}
+
 
 static gboolean
 hal_util_init_sysfs_to_udev_map (void)
 {
 	char *udevdb_export_argv[] = { "/usr/bin/udevinfo", "-e", NULL };
 	char *udevroot_argv[] = { "/usr/bin/udevinfo", "-r", NULL };
-	char *udevinfo_stdout;
 	int udevinfo_exitcode;
-	HotplugEvent *hotplug_event = NULL;
+	UdevInfo *info = NULL;
 	char *p;
 
-	sysfs_to_udev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	sysfs_to_udev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, udev_info_free);
 
 	/* get udevroot */
 	if (g_spawn_sync ("/", udevroot_argv, NULL, 0, NULL, NULL,
@@ -109,7 +198,6 @@ hal_util_init_sysfs_to_udev_map (void)
 	p = udevinfo_stdout;
 	while (p[0] != '\0') {
 		char *line, *end;
-		gchar *str;
 
 		/* get line, terminate and move to next line */
 		line = p;
@@ -121,79 +209,49 @@ hal_util_init_sysfs_to_udev_map (void)
 
 		/* insert device */
 		if (line[0] == '\0') {
-			if (hotplug_event != NULL) {
-				g_hash_table_insert (sysfs_to_udev_map, g_strdup (hotplug_event->sysfs.sysfs_path), hotplug_event);
-				HAL_INFO (("found (udevdb export) '%s' -> '%s'",
-					   hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.device_file));
-				hotplug_event = NULL;
+			if (info != NULL) {
+				g_hash_table_insert (sysfs_to_udev_map, g_strdup_printf ("/sys%s", info->sysfs_path), info);
+				HAL_INFO (("found (udevdb export) '/sys%s' -> '%s/%s'",
+					   info->sysfs_path, dev_root, info->device_file));
+				info = NULL;
 			}
 			continue;
 		}
 
 		/* new device */
 		if (strncmp(line, "P: ", 3) == 0) {
-			hotplug_event = g_new0 (HotplugEvent, 1);
-			g_strlcpy (hotplug_event->sysfs.sysfs_path, "/sys", sizeof(hotplug_event->sysfs.sysfs_path));
-			g_strlcat (hotplug_event->sysfs.sysfs_path, &line[3], sizeof(hotplug_event->sysfs.sysfs_path));
+			info = g_slice_new0 (UdevInfo);
+			info->sysfs_path = &line[3];
 			continue;
 		}
 
 		/* only valid if we have an actual device */
-		if (hotplug_event == NULL)
+		if (info == NULL)
 			continue;
 
 		if (strncmp(line, "N: ", 3) == 0) {
-			g_snprintf (hotplug_event->sysfs.device_file, sizeof(hotplug_event->sysfs.device_file),
-				    "%s/%s", dev_root, &line[3]);
+			info->device_file = &line[3];
 		} else if (strncmp(line, "E: ID_VENDOR=", 13) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[13])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.vendor, str, sizeof(hotplug_event->sysfs.vendor));
-				g_free (str);
-			}
+			info->vendor = &line[13];
 		} else if (strncmp(line, "E: ID_MODEL=", 12) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[12])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.model, str, sizeof(hotplug_event->sysfs.model));
-				g_free (str);
-			}
+			info->model = &line[12];
 		} else if (strncmp(line, "E: ID_REVISION=", 15) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[15])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.revision, str, sizeof(hotplug_event->sysfs.revision));
-				g_free (str);
-			}
+			info->revision = &line[15];
 		} else if (strncmp(line, "E: ID_SERIAL=", 13) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[13])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.serial, str, sizeof(hotplug_event->sysfs.serial));
-				g_free (str);
-			}
+			info->serial = &line[13];
 		} else if (strncmp(line, "E: ID_FS_USAGE=", 15) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[15])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.fsusage, str, sizeof(hotplug_event->sysfs.fsusage));
-				g_free (str);
-			}
+			info->fsusage = &line[15];
 		} else if (strncmp(line, "E: ID_FS_TYPE=", 14) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[14])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.fstype, str, sizeof(hotplug_event->sysfs.fstype));
-				g_free (str);
-			}
+			info->fstype = &line[14];
 		} else if (strncmp(line, "E: ID_FS_VERSION=", 17) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[17])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.fsversion, str, sizeof(hotplug_event->sysfs.fsversion));
-				g_free (str);
-			}
+			info->fsversion = &line[17];
 		} else if (strncmp(line, "E: ID_FS_UUID=", 14) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[14])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.fsuuid, str, sizeof(hotplug_event->sysfs.fsuuid));
-				g_free (str);
-			}
+			info->fsuuid = &line[14];
 		} else if (strncmp(line, "E: ID_FS_LABEL=", 15) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&line[15])) != NULL) {
-				g_strlcpy (hotplug_event->sysfs.fslabel, str, sizeof(hotplug_event->sysfs.fslabel));
-				g_free (str);
-			}
+			info->fslabel = &line[15];
 		}
 	}
 
-	g_free(udevinfo_stdout);
 	return TRUE;
 
 error:
@@ -203,55 +261,23 @@ error:
 	return FALSE;
 }
 
-static HotplugEvent *pool = NULL;
-static int pool_next_free = 0;
-static int pool_num_freed = 0;
-static int pool_size = 1000;
-
-static void 
-pool_free (gpointer data)
-{
-	HAL_INFO (("pool_num_freed = %d (of %d)", pool_num_freed, pool_next_free));
-	pool_num_freed++;
-	if (pool_num_freed == pool_next_free) {
-		HAL_INFO (("Freeing whole pool"));
-		g_free (pool);
-	}
-}
-
 static HotplugEvent
 *coldplug_get_hotplug_event(const gchar *sysfs_path, const gchar *subsystem, HotplugEventType type)
 {
-	HotplugEvent *hotplug_event, *hotplug_event_udev;
+	HotplugEvent *hotplug_event;
 	const char *pos;
 	gchar path[HAL_PATH_MAX];
 	struct stat statbuf;
-	gboolean from_pool = FALSE;
-
-	/* TODO: FIXME: this is experimental code */
-	if (pool == NULL) {
-		pool = g_new0 (HotplugEvent, pool_size);
-		pool_next_free = 0;
-		pool_num_freed = 0;
-	}
-
-	if (pool_next_free >= pool_size) {
-		hotplug_event = g_new0 (HotplugEvent, 1);
-	} else {
-		from_pool = TRUE;
-		hotplug_event = pool + pool_next_free++;
-		hotplug_event->free_function = pool_free;
-	}
+	UdevInfo *info;
 
 	/* lookup if udev has something stored in its database */
-	hotplug_event_udev = (HotplugEvent *) g_hash_table_lookup (sysfs_to_udev_map, sysfs_path);
-	if (hotplug_event_udev != NULL) {
-		memcpy(hotplug_event, hotplug_event_udev, sizeof(HotplugEvent));
-		if (from_pool) {
-			hotplug_event->free_function = pool_free;
-		}
+	info = (UdevInfo*) g_hash_table_lookup (sysfs_to_udev_map, sysfs_path);
+	if (info) {
+		hotplug_event = udev_info_to_hotplug_event (info);
 		HAL_INFO (("new event (dev node from udev) '%s' '%s'", hotplug_event->sysfs.sysfs_path, hotplug_event->sysfs.device_file));
 	} else {
+		hotplug_event = g_slice_new0 (HotplugEvent);
+
 		/* device is not in udev database */
 		g_strlcpy(hotplug_event->sysfs.sysfs_path, sysfs_path, sizeof(hotplug_event->sysfs.sysfs_path));
 
@@ -283,6 +309,8 @@ no_node:
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = type;
 	hotplug_event->sysfs.net_ifindex = -1;
+	/*emulate sequence numbers for coldplug events*/
+	hotplug_event->sysfs.seqnum = coldplug_seqnum++;
 	return hotplug_event;
 }
 
@@ -301,7 +329,7 @@ static int device_list_insert(const char *path, const char *subsystem,
 	if (!(statbuf.st_mode & S_IWUSR))
 		goto error;
 
-	sysfs_dev = g_new0 (struct sysfs_device, 1);
+	sysfs_dev = g_slice_new0 (struct sysfs_device);
 	if (sysfs_dev == NULL)
 		goto error;
 
@@ -326,11 +354,11 @@ static int device_list_insert(const char *path, const char *subsystem,
 	sysfs_dev->path = g_strdup (path);
 found:
 	sysfs_dev->subsystem = g_strdup (subsystem);
-	device_list = g_slist_prepend (device_list, sysfs_dev);
+	device_list = g_slist_append (device_list, sysfs_dev);
 	return 0;
 
 error:
-	g_free (sysfs_dev);
+	g_slice_free (struct sysfs_device, sysfs_dev);
 	return -1;
 }
 
@@ -496,7 +524,7 @@ static void scan_class(void)
 	}
 }
 
-static void queue_events(void)
+static void process_coldplug_events(void)
 {
 	GSList *dev;
 
@@ -509,10 +537,11 @@ static void queue_events(void)
 							    sysfs_dev->subsystem,
 							    sysfs_dev->type);
 		hotplug_event_enqueue (hotplug_event);
+		hotplug_event_process_queue();
 
 		g_free (sysfs_dev->path);
 		g_free (sysfs_dev->subsystem);
-		g_free (sysfs_dev);
+		g_slice_free (struct sysfs_device, sysfs_dev);
 	}
 
 	g_slist_free (device_list);
@@ -547,22 +576,22 @@ coldplug_synthesize_events (void)
 	if (stat("/sys/subsystem", &statbuf) == 0) {
 		scan_subsystem ("subsystem");
 		device_list = g_slist_sort (device_list, _device_order);
-		queue_events ();
+		process_coldplug_events ();
 	} else {
 		scan_subsystem ("bus");
 		device_list = g_slist_sort (device_list, _device_order);
-		queue_events ();
+		process_coldplug_events ();
 
 		scan_class ();
                 scan_single_bus ("bluetooth");
 		device_list = g_slist_sort (device_list, _device_order);
-		queue_events ();
+		process_coldplug_events ();
 
 		/* scan /sys/block, if it isn't already a class */
 		if (stat("/sys/class/block", &statbuf) != 0) {
 			scan_block ();
 			device_list = g_slist_sort (device_list, _device_order);
-			queue_events ();
+			process_coldplug_events ();
 		}
 
                 /* add events from reading /proc/mdstat */
@@ -570,6 +599,7 @@ coldplug_synthesize_events (void)
 	}
 
 	g_hash_table_destroy (sysfs_to_udev_map);
+	g_free (udevinfo_stdout);
 	return TRUE;
 
 error:

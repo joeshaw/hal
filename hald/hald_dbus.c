@@ -3682,7 +3682,6 @@ manager_new_device (DBusConnection * connection, DBusMessage * message, dbus_boo
 	}
 
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	hal_device_store_add (hald_get_tdl (), d);
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &udi);
 	g_free (udi);
@@ -3854,7 +3853,7 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 	}
 
 	/* sanity check & avoid races */
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof udi, "%s", udi0);
+	hal_util_make_udi_unique (hald_get_gdl (), udi, sizeof udi, udi0);
 
 	if (hal_device_store_find (hald_get_gdl (), udi)) {
 		/* loose it */
@@ -3867,7 +3866,6 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 	/* set new udi */
 	hal_device_property_remove (d, "info.udi");
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	/* FIXME:
 	 * 'RequireEnable' property?

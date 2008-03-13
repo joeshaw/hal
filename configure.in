@@ -838,6 +838,30 @@ elif test "x$with_macbook" = "x" ; then
 fi
 AM_CONDITIONAL(BUILD_MACBOOK, [test x$BUILD_MACBOOK = xyes])
 
+dnl imac backlight
+AC_ARG_WITH([imac],
+            AS_HELP_STRING([--with-imac],
+                           [Whether to build iMac (x86 only) backlight (auto)]))
+BUILD_IMAC=no
+if test "x$with_imac" = "xyes" ; then
+   BUILD_IMAC=yes
+elif test "x$with_imac" = "x" ; then
+    case "${HALD_BACKEND}" in
+      linux) 
+        case "${host}" in
+          i[[3456]]86-*-*|x86_64-*-*)
+            BUILD_IMAC=yes
+            ;;
+          *)
+            ;;
+        esac
+        ;;
+      *)
+        ;;
+    esac
+fi
+AM_CONDITIONAL(BUILD_IMAC, [test x$BUILD_IMAC = xyes])
+
 AC_ARG_WITH([omap],
 	    AS_HELP_STRING([--with-omap],
 			   [Whether to build OMAP utils (auto)]))
@@ -1064,6 +1088,7 @@ echo "
 
         Macbook backlight support:        ${BUILD_MACBOOK} (Linux only, x86 only, requires libpci)
         Macbook Pro utils:                ${BUILD_MACBOOKPRO} (Linux only, x86 only, requires libpci)
+        iMac backlight support:           ${BUILD_IMAC} (Linux only, x86)
         OMAP utils:                       ${BUILD_OMAP} (Linux only, arm only)
         CPU frequency scaling:            ${BUILD_CPUFREQ} (Linux only)
         Re-map multimedia keys:           ${BUILD_KEYMAPS} (Linux only, requires gperf)

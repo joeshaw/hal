@@ -121,7 +121,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		goto out;
 	}
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->type = HOTPLUG_EVENT_SYSFS;
 
 	while (bufpos < sizeof (buf)) {
@@ -273,7 +273,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 	}
 
 invalid:
-	g_free (hotplug_event);
+	g_slice_free (HotplugEvent, hotplug_event);
 
 out:
 	return TRUE;
@@ -396,6 +396,9 @@ osspec_init (void)
 	/*
 	 * setup socket for listening from messages from udev
 	 */
+
+	hal_device_store_index_property (hald_get_gdl (), "linux.sysfs_path");
+
 	memset(&saddr, 0x00, sizeof(saddr));
 	saddr.sun_family = AF_LOCAL;
 	/* use abstract namespace for socket path */
@@ -818,7 +821,6 @@ osspec_probe (void)
 	root = hal_device_new ();
 	hal_device_property_set_string (root, "info.subsystem", "unknown");
 	hal_device_property_set_string (root, "info.product", "Computer");
-	hal_device_property_set_string (root, "info.udi", "/org/freedesktop/Hal/devices/computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 
 	if (uname (&un) >= 0) {

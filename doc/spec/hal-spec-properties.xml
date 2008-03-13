@@ -881,6 +881,81 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-pnpif">
+      <title>
+        pnp namespace
+      </title>
+      <para>
+        Device objects that represent Plug and Play (PnP) devices (e.g. System Board or PS/2 Port for PS/2-style Mice).
+        For these devices info.subsystem is set to 'pnp'.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>pnp.id</literal> (string)
+              </entry>
+              <entry> example: PNP0a03 or SMCf010</entry>
+              <entry>Yes</entry>
+              <entry>This property contains the PnP ID of the device.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pnp.description</literal> (string)
+              </entry>
+              <entry> example: 'ECP printer port'</entry>
+              <entry>No</entry>
+              <entry>
+		Description from the pnp.ids file. Only available if: HAL was compiled with 
+		support for pnp.ids, if the file is available and if the ID was part of the file.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pnp.serial.irq</literal> (int)
+              </entry>
+              <entry> example: 5</entry>
+              <entry>No</entry>
+              <entry>
+		Only available if the PnP device is a serial device (as e.g. serial Wacom Tablet devices).
+		Contains the prefered irq of the device.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pnp.serial.port</literal> (string)
+              </entry>
+              <entry> example: 0x200</entry>
+              <entry>No</entry>
+              <entry>
+		Only available if the PnP device is a serial device (as e.g. serial Wacom Tablet devices).
+		contains info about the prefered serial port of the device.
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pnp.serial.baud_base</literal> (int)
+              </entry>
+              <entry> example: 38400</entry>
+              <entry>No</entry>
+              <entry>
+		Only available if the PnP device is a serial device (as e.g. serial Wacom Tablet devices).
+		Contains info about the needed baud_base to setup the device correctly.
+	      </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
     <sect2 id="device-properties-modemif">
       <title>
         modem namespace

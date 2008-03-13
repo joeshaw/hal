@@ -297,14 +297,14 @@ apm_synthesize_hotplug_events (void)
 	/* Set appropriate properties on the computer object */
 	hal_device_property_set_string (computer, "power_management.type", "apm");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, "/proc/apm", sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_BATTERY;
 	hotplug_event_enqueue (hotplug_event);
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, "/proc/apm", sizeof (hotplug_event->apm.apm_path));
 	hotplug_event->apm.apm_type = APM_TYPE_AC_ADAPTER;
@@ -348,20 +348,19 @@ apm_generic_compute_udi (HalDevice *d, APMDevHandler *handler)
 	gchar udi[256];
 
 	if (handler->apm_type == APM_TYPE_BATTERY ) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/apm_battery");
-	
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/apm_battery");
+
 	} else if (handler->apm_type == APM_TYPE_AC_ADAPTER ) {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/apm_ac_adapter");
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/apm_ac_adapter");
 	} else {
-		hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-				      "/org/freedesktop/Hal/devices/apm_%d",
-				      hal_device_property_get_int (d, "info.category"));
+		hald_compute_udi (udi, sizeof (udi),
+				  "/org/freedesktop/Hal/devices/apm_%d",
+				  hal_device_property_get_int (d, "info.category"));
 	}
 
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 
@@ -520,7 +519,7 @@ apm_generate_add_hotplug_event (HalDevice *d)
 	apm_path = hal_device_property_get_string (d, "linux.apm_path");
 	apm_type = hal_device_property_get_int (d, "linux.apm_type");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_ADD;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, apm_path, sizeof (hotplug_event->apm.apm_path));
@@ -538,7 +537,7 @@ apm_generate_remove_hotplug_event (HalDevice *d)
 	apm_path = hal_device_property_get_string (d, "linux.apm_path");
 	apm_type = hal_device_property_get_int (d, "linux.apm_type");
 
-	hotplug_event = g_new0 (HotplugEvent, 1);
+	hotplug_event = g_slice_new0 (HotplugEvent);
 	hotplug_event->action = HOTPLUG_ACTION_REMOVE;
 	hotplug_event->type = HOTPLUG_EVENT_APM;
 	g_strlcpy (hotplug_event->apm.apm_path, apm_path, sizeof (hotplug_event->apm.apm_path));
