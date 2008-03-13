@@ -15,5 +15,6 @@ hald-addon-macbook-backlight
 hald-addon-macbookpro-backlight
 hald-addon-cpufreq
 hald-addon-dell-backlight
+hald-addon-imac-backlight
 *.o
 *~
