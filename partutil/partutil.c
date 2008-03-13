@@ -146,27 +146,39 @@ part_table_find (PartitionTable *p, guint64 offset,
 static guint16
 get_le16 (const void *buf)
 {
-	return GUINT16_FROM_LE ( * ((guint16 *) buf) );
+	guint16 i;
+
+	memcpy (&i, buf, sizeof (i));
+	return GUINT16_FROM_LE (i);
 }
 
 
 static guint32
 get_le32 (const void *buf)
 {
-	return GUINT32_FROM_LE ( * ((guint32 *) buf) );
+	guint32 i;
+
+	memcpy (&i, buf, sizeof (i));
+	return GUINT32_FROM_LE (i);
 }
 
 static guint64
 get_le64 (const void *buf)
 {
-	return GUINT64_FROM_LE ( * ((guint64 *) buf) );
+	guint64 i;
+
+	memcpy (&i, buf, sizeof (i));
+	return GUINT64_FROM_LE (i);
 }
 
 
 static guint32
 get_be32 (const void *buf)
 {
-	return GUINT32_FROM_BE ( * ((guint32 *) buf) );
+	guint32 i;
+
+	memcpy (&i, buf, sizeof (i));
+	return GUINT32_FROM_BE (i);
 }
 
 /* see http://en.wikipedia.org/wiki/Globally_Unique_Identifier - excerpt
