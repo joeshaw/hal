@@ -20,8 +20,11 @@
  *
  */
 
-#include <config.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/io.h>
@@ -32,6 +35,8 @@
 
 #include "libhal/libhal.h"
 #include "../../logger.h"
+
+static LibHalContext *halctx = NULL;
 
 static void
 backlight_set(int value)
@@ -172,7 +177,6 @@ filter_function (DBusConnection * connection, DBusMessage * message, void *userd
 int
 main (int argc, char **argv)
 {
-	LibHalContext *halctx;
 	DBusConnection *conn;
 	GMainLoop *main_loop;
 	const char *udi;

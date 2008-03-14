@@ -48,15 +48,20 @@
  * of the backlight when it is enabled.
  */
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <pci/pci.h>
 
 #include <glib.h>
 
-#include <stdio.h>
-#include <sys/mman.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #define DBUS_API_SUBJECT_TO_CHANGE
 
@@ -73,6 +78,7 @@
 #define ACCESS_INDEX          (ACCESS_OFFSET >> 2)
 
 static unsigned int *register_page;
+static LibHalContext *halctx = NULL;
 
 static unsigned long
 determine_video_base_address (void)
@@ -296,7 +302,6 @@ filter_function (DBusConnection * connection, DBusMessage * message, void *userd
 int
 main (int argc, char **argv)
 {
-	LibHalContext *halctx;
 	DBusConnection *conn;
 	GMainLoop *main_loop;
 	const char *udi;
