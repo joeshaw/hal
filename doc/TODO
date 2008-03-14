@@ -73,9 +73,6 @@ Items specifically planned for 0.5.10
     - we can now sanely do this thanks to ConsoleKit
     - depends on PolicyKit
 
- - Make HAL unconditionally depend on pm-utils and rip out support
-   for distro-specific tools
-
  - Devices of capability access_control could export an interface with
    for requesting / dropping access to the device, e.g. 
 
