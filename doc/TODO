@@ -30,17 +30,6 @@ Items specifically planned for 0.5.10
  - Make sure we check if the optical drives supports the commands
    we are sending to it (proposed by pjones)
 
- - Singleton addons (s-addon); the idea that an add-on can attach to
-   several device objects at the same time. 
-    - A s-addon would just implement, say, the interface
-      org.freedesktop.Hal.SingletonAddon with methods DeviceAdded(),
-      DeviceRemoved() through the hald direct connection.  
-    - An s-addon would be identified by it's commandline; e.g.
-      info.s-addons = {"my-s-addon --foo", "my-s-addon --bar"} would
-      be two distinct addons.
-    - Bluez devs need this to start the Bluez daemon via HAL
-    - Can consolidate other things like hald-addon-keyboard
-
  - Move /usr/libexec to /usr/lib/hal/ - drop /usr/lib/hal/scripts -
    use /usr/lib/hal/methods. Need to provide backwards compat
    for 3rd party so we need to retain /usr/lib/hal/scripts
