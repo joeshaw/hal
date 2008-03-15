@@ -110,7 +110,7 @@ int hf_runner_run_sync (HalDevice *device, int timeout, const char *command_line
 
 int hf_strv_find (char **strv, const char *elem);
 
-char *hf_str_no_slashes (const char *str);
+char *hf_str_escape (const char *str);
 
 HalDevice *hf_device_store_match (HalDeviceStore *store, ...);
 
