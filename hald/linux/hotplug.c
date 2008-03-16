@@ -52,6 +52,9 @@
 /** Queue of ordered hotplug events */
 static GQueue *hotplug_event_queue = NULL;
 
+/* Flag indicating if the queue should be reprocessed from the start */
+static gboolean hotplug_event_queue_restart = FALSE;
+
 /** List of HotplugEvent objects we are currently processing */
 static GList *hotplug_events_in_progress = NULL;
 
@@ -63,6 +66,10 @@ hotplug_event_end (void *end_token)
 	hotplug_events_in_progress = g_list_remove (hotplug_events_in_progress, hotplug_event);
 
 	g_slice_free (HotplugEvent, hotplug_event);
+
+	/* An event is removed. So we need to restart from the beginning of the queue
+	 * as some events are ready to run now */
+	hotplug_event_queue_restart = TRUE;
 }
 
 void 
@@ -323,6 +330,10 @@ hotplug_event_enqueue_at_front (HotplugEvent *hotplug_event)
 		hotplug_event_queue = g_queue_new ();
 
 	g_queue_push_head (hotplug_event_queue, hotplug_event);
+
+	/* New event added at the start, restart processing of the queue from the
+	 * start */
+	hotplug_event_queue_restart = TRUE;
 }
 
 static gboolean
@@ -402,11 +413,18 @@ hotplug_event_process_queue (void)
 {
 	HotplugEvent *hotplug_event;
 	GList *lp, *lp2;
+	static gboolean processing = FALSE;
 
 	if (G_UNLIKELY (hotplug_event_queue == NULL))
 		return;
 
-	for (lp = hotplug_event_queue->head; lp; lp = g_list_next (lp) ) {
+	if (processing)
+		return;
+	
+	processing = TRUE;
+
+	lp = hotplug_event_queue->head;
+	while (lp != NULL) {
 		hotplug_event = lp->data;
 		HAL_INFO (("checking event %s", hotplug_event->sysfs.sysfs_path));
 		if (!compare_events (hotplug_event, hotplug_event_queue->head)
@@ -415,15 +433,23 @@ hotplug_event_process_queue (void)
 			g_queue_unlink(hotplug_event_queue, lp);
 			hotplug_events_in_progress = g_list_concat (hotplug_events_in_progress, lp);
 			hotplug_event_begin (hotplug_event);
-			lp = lp2;
+			if (lp2 == NULL || hotplug_event_queue_restart) {
+				lp = hotplug_event_queue->head;
+				hotplug_event_queue_restart = FALSE;
+			} else {
+				lp = g_list_next(lp2);
+			}
 		} else {
 			HAL_DEBUG (("event held back: %s", hotplug_event->sysfs.sysfs_path));
+			lp = g_list_next (lp);
 		}
 	}
 	HAL_DEBUG (("events queued = %d, events in progress = %d", hotplug_event_queue->length, g_list_length (hotplug_events_in_progress)));
 
+	processing = FALSE;
 
 	hotplug_queue_now_empty ();
+
 }
 
 gboolean 
