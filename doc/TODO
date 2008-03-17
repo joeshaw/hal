@@ -11,8 +11,8 @@ Ongoing items that always need work
  - Audit all code and drop privileges in helpers where appropriate
 
 
-Items specifically planned for 0.5.10 
-(TODO: need to go through and nominate things for 0.5.10)
+Items specifically planned for 0.5.12 
+(TODO: need to go through and nominate things for 0.5.12)
 ------------------------------------
 
  - Sort out input device classification mess
