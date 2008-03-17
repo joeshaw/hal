@@ -292,6 +292,9 @@ hal_device_store_remove (HalDeviceStore *store, HalDevice *device)
 					      (gpointer)emit_device_property_changed,
 					      store);
 	g_signal_handlers_disconnect_by_func (device,
+					      (gpointer)device_pre_property_changed,
+					      store);
+	g_signal_handlers_disconnect_by_func (device,
 					      (gpointer)emit_device_capability_added,
 					      store);
 	g_signal_handlers_disconnect_by_func (device,
