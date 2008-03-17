@@ -37,7 +37,7 @@
 
 /* How this works (or "An introduction to this code")
  *
- * - all ACL's granted by this tool is kept in /var/run/hal/acl-list
+ * - all ACL's granted by this tool is kept in /var/run/hald/acl-list
  *   See below for the format.
  *
  * - every time tool is launched we read this file and keep each line
@@ -82,7 +82,7 @@
  *
  */
 
-/* Each entry here represents a line in the /var/run/hal/acl-list file
+/* Each entry here represents a line in the /var/run/hald/acl-list file
  * of ACL's that have been set by HAL and as such are currently
  * applied
  *
@@ -220,7 +220,7 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 	 *
 	 * The variable 'only_update_acllist' is set to TRUE only on
 	 * device_remove events. It effectively means "only update the
-	 * /var/run/hal/acl-list, do not apply ACL's on disk". So this
+	 * /var/run/hald/acl-list, do not apply ACL's on disk". So this
 	 * is done for systems where /dev is dynamic and we know for
 	 * sure that the device file is gone. 
 	 *
@@ -258,7 +258,7 @@ acl_apply_changes (GSList *new_acl_list, gboolean only_update_acllist, gboolean 
 	}
 
 	/* success; now atomically set the new list */
-	g_file_set_contents (PACKAGE_LOCALSTATEDIR "/run/hal/acl-list", 
+	g_file_set_contents (PACKAGE_LOCALSTATEDIR "/run/hald/acl-list", 
 			     new_acl_file_contents, 
 			     strlen (new_acl_file_contents),
 			     NULL);
@@ -360,9 +360,9 @@ get_current_acl_list (GSList **l)
 	f = NULL;
 	ret = FALSE;
 
-	f = fopen (PACKAGE_LOCALSTATEDIR "/run/hal/acl-list", "r");
+	f = fopen (PACKAGE_LOCALSTATEDIR "/run/hald/acl-list", "r");
 	if (f == NULL) {
-		printf ("%d: cannot open " PACKAGE_LOCALSTATEDIR "/run/hal/acl-list\n", getpid ());
+		printf ("%d: cannot open " PACKAGE_LOCALSTATEDIR "/run/hald/acl-list\n", getpid ());
 		goto out;
 	}
 
@@ -1154,11 +1154,11 @@ acl_lock (void)
 	if (lock_acl_fd >= 0)
 		return TRUE;
 
-	printf ("%d: attempting to get lock on " PACKAGE_LOCALSTATEDIR "/run/hal/acl-list\n", getpid ());
+	printf ("%d: attempting to get lock on " PACKAGE_LOCALSTATEDIR "/run/hald/acl-list\n", getpid ());
 
-	lock_acl_fd = open (PACKAGE_LOCALSTATEDIR "/run/hal/acl-list", O_CREAT | O_RDWR, 0644);
+	lock_acl_fd = open (PACKAGE_LOCALSTATEDIR "/run/hald/acl-list", O_CREAT | O_RDWR, 0644);
 	if (lock_acl_fd < 0) {
-		printf ("%d: error opening/creating " PACKAGE_LOCALSTATEDIR "/run/hal/acl-list\n", getpid ());
+		printf ("%d: error opening/creating " PACKAGE_LOCALSTATEDIR "/run/hald/acl-list\n", getpid ());
 		return FALSE;
 	}
 	
@@ -1177,7 +1177,7 @@ tryagain:
 
         printf ("\n");
         printf ("****************************************************\n");
-	printf ("%d: got lock on " PACKAGE_LOCALSTATEDIR "/run/hal/acl-list\n", getpid ());
+	printf ("%d: got lock on " PACKAGE_LOCALSTATEDIR "/run/hald/acl-list\n", getpid ());
 	return TRUE;
 }
 
@@ -1186,7 +1186,7 @@ acl_unlock (void)
 {
         printf ("\n");
         printf ("****************************************************\n");
-	printf ("%d: releasing lock on " PACKAGE_LOCALSTATEDIR "/run/hal/acl-list\n", getpid ());
+	printf ("%d: releasing lock on " PACKAGE_LOCALSTATEDIR "/run/hald/acl-list\n", getpid ());
 #if sun
 	lockf (lock_acl_fd, F_ULOCK, 0);
 #else

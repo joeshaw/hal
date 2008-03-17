@@ -220,10 +220,5 @@ check:
             fi; \
         done;
 
-install-data-local:
-	-$(mkdir_p) $(DESTDIR)$(localstatedir)/lib/hal
-	-chown $(HAL_USER):$(HAL_GROUP) $(DESTDIR)$(localstatedir)/lib/hal
-	-chmod 0700 $(DESTDIR)$(localstatedir)/lib/hal
-
 clean-local :
 	rm -f *~
