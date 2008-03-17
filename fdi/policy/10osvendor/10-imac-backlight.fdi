@@ -4,16 +4,8 @@
   <device>
     <match key="system.kernel.name" string="Linux">
       <match key="system.hardware.vendor" contains="Apple">
-	<!-- iMac (Core 2 Duo) -->
-	<match key="system.hardware.product" string="iMac5,1">
-          <spawn udi="/org/freedesktop/Hal/devices/imac_backlight"/>
-        </match>
-	<!-- iMac (24-inch Core 2 Duo) -->
-	<match key="system.hardware.product" string="iMac6,1">
-          <spawn udi="/org/freedesktop/Hal/devices/imac_backlight"/>
-        </match>
-	<!-- iMac (Alu 24-inch Core 2 Duo) -->
-        <match key="system.hardware.product" string="iMac7,1">
+	<!-- iMac (Core 2 Duo), iMac (24-inch Core 2 Duo), iMac (Alu 24-inch Core 2 Duo) -->
+	<match key="system.hardware.product" string_outof="iMac5,1;iMac6,1;iMac7,1">
           <spawn udi="/org/freedesktop/Hal/devices/imac_backlight"/>
         </match>
       </match>

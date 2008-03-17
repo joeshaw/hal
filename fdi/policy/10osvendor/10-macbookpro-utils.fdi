@@ -6,27 +6,7 @@
   <device>
     <match key="system.kernel.name" string="Linux">
       <match key="system.hardware.vendor" contains="Apple">
-        <match key="system.hardware.product" string="MacBookPro1,1">
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
-        </match>
-        <match key="system.hardware.product" string="MacBookPro1,2">
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
-        </match>
-        <match key="system.hardware.product" string="MacBookPro2,1">
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
-        </match>
-        <match key="system.hardware.product" string="MacBookPro2,2">
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
-          <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
-        </match>
-        <match key="system.hardware.product" string="MacBookPro3,1">
+        <match key="system.hardware.product" string_outof="MacBookPro1,1;MacBookPro1,2;MacBookPro2,1;MacBookPro2,2;MacBookPro3,1">
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_light_sensor"/>
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight"/>
           <spawn udi="/org/freedesktop/Hal/devices/macbook_pro_lcd_panel"/>
