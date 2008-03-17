@@ -254,6 +254,31 @@ void
 device_pm_calculate_time (HalDevice *d)
 {
 	int time;
+	gboolean calculate_per_time;
+
+	calculate_per_time = hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time");
+	
+	/* check if we may need to calculate the remaining time because of special cases */
+	if (!calculate_per_time && hal_device_property_get_bool(d, "battery.rechargeable.is_charging")) {
+		const char *type;
+		const char *unit;
+
+		type = hal_device_property_get_string(d, "battery.type");
+		if ((type != NULL) && (strcmp(type, "primary") == 0)) {
+			unit = hal_device_property_get_string(d, "battery.charge_level.unit");
+			/* check if the unit is mWh */
+			if ((unit != NULL) && (strcmp(unit, "mWh") == 0)) {
+				/* check if the rate is higher than 50 Watt, this should be wrong
+				   better calculate the time based on time */
+				if (hal_device_property_get_int (d, "battery.charge_level.rate") > 50000) {
+					HAL_WARNING(("battery.charge_level.rate (%d) was > 50000 mWh, assume thats wrong, calculate from now based on time.", 
+						     hal_device_property_get_int (d, "battery.charge_level.rate")));
+					hal_device_property_set_bool (d, "battery.remaining_time.calculate_per_time", TRUE); 
+					calculate_per_time = TRUE;
+				} 
+			}
+		} 
+	}
 
 	time = util_compute_time_remaining (
 		hal_device_get_udi (d), 
@@ -262,7 +287,7 @@ device_pm_calculate_time (HalDevice *d)
 		hal_device_property_get_int (d, "battery.charge_level.last_full"),
 		hal_device_property_get_bool (d, "battery.rechargeable.is_discharging"),
 		hal_device_property_get_bool (d, "battery.rechargeable.is_charging"),
-		hal_device_property_get_bool (d, "battery.remaining_time.calculate_per_time"));
+		calculate_per_time);
 
 	/* zero time is unknown */
 	if (time > 0)
