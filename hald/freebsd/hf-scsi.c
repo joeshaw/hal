@@ -409,8 +409,8 @@ hf_scsi_handle_pending_device (struct device_match_result **match,
 		   */
 		  hf_block_device_complete(block_device, block_device, FALSE);
 
-		  hf_storage_device_probe(block_device, FALSE);
 		  hf_device_add(block_device);
+		  hf_storage_device_probe(block_device, FALSE);
 		}
 	    }
 	}
