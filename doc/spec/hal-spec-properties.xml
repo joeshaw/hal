@@ -5387,7 +5387,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 <literal>portable_audio_player.access_method.protocols</literal> (strlist)
               </entry>
               <entry>example: storage ipod mtp pde iriver karma</entry>
-              <entry>No</entry>
+              <entry>Yes</entry>
               <entry>
                 Indicates transfer protocols that this device can speak.
                 <literal>storage</literal> indicates USB Mass Storage (UMS) is an access
@@ -5417,7 +5417,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 <literal>portable_audio_player.[drivername].protocol</literal> (strlist)
               </entry>
               <entry>example: mtp</entry>
-              <entry>Yes</entry>
+              <entry>If portable_audio_player.drivers is set</entry>
               <entry>
                 This entry is required for drivers listed in
                 <literal>portable_audio_player.access_method.drivers</literal>. Indicates which
