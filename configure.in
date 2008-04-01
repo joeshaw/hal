@@ -479,7 +479,7 @@ AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, [], [DBUS API is subject to chang
 
 # check for ConsoleKit
 AM_CONDITIONAL(HAVE_CONKIT, false)
-AC_ARG_ENABLE(console-kit, [  --enable-console-kit    Use ConsoleKit],enable_console_kit=$enableval,enable_console_kit=no)
+AC_ARG_ENABLE(console-kit, [  --enable-console-kit    Use ConsoleKit],enable_console_kit=$enableval,enable_console_kit=yes)
 msg_conkit=no
 if test "x$enable_console_kit" != "xno"; then
    AM_CONDITIONAL(HAVE_CONKIT, true)
@@ -524,7 +524,7 @@ AM_CONDITIONAL(BUILD_KEYMAPS, [test x$BUILD_KEYMAPS = xyes])
 AM_CONDITIONAL(HAVE_POLKIT, [false])
 AC_ARG_ENABLE([policy-kit],
 	      AS_HELP_STRING([--enable-policy-kit], [Use PolicyKit]),
-	      [enable_policy_kit=$enableval], [enable_policy_kit=no])
+	      [enable_policy_kit=$enableval], [enable_policy_kit=yes])
 msg_polkit=no
 if test "x$enable_policy_kit" != "xno"; then
    if test "x$enable_console_kit" = "xno"; then
@@ -1105,6 +1105,15 @@ echo "
         Building docs:                    ${enable_docbook_docs}
         Building man pages:               ${enable_man_pages}
 "
+
+if test x${msg_polkit} = xno; then
+   echo "WARNING: PolicyKit is disabled. You need to manually edit the hal.conf"
+   echo "         file to lock down the service. Failure to do so allows any"
+   echo "         caller to make hald do work on their behalf which may be"
+   echo "         a huge SECURITY HOLE. I repeat: YOU NEED TO EDIT THE FILE"
+   echo "         hal.conf to match your distro/site to avoid NASTY SECURITY HOLES."
+   echo ""
+fi
 
 if test x$BUILD_ACPI_IBM = xyes; then
    echo "NOTE: Future Linux kernels may provide IBM ACPI events via a kernel."
