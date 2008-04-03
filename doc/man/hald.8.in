@@ -30,6 +30,10 @@ Specify whether to run in the foreground or the background.
 .I "--verbose=yes|no"
 Enable verbose debug output.
 .TP
+.I "--use-syslog"
+Enable logging of debug output to the syslog instead of stderr. Use 
+this option only together with --verbose.
+.TP
 .I "--help"
 Print out usage.
 .TP
