@@ -172,7 +172,9 @@ get_merge_type (const char *str)
 	return MERGE_UNKNOWN;
 }
 
-#define ROUND32(len) ((len + 3) & ~0x03)
+#define ROUND(len,align) ((len + align - 1) & -align)
+#define ROUND32(len) ROUND(len, 4)
+#define RULES_ROUND(off) ROUND(off, __alignof__(struct rule))
 
 static void pad32_write(int fd, off_t offset, void *data, size_t len)
 {
@@ -269,9 +271,10 @@ static void store_rule(struct fdi_context *fdi_ctx)
 	if (fdi_ctx->rule.rtype == RULE_UNKNOWN)
 		DIE(("I refuse to store garbage"));
 
-	fdi_ctx->rule.rule_size = sizeof(struct rule) +
-		ROUND32(fdi_ctx->rule.key_len) +
-		ROUND32(fdi_ctx->rule.value_len);
+	fdi_ctx->rule.rule_size =
+	  RULES_ROUND(sizeof(struct rule) +
+		      ROUND32(fdi_ctx->rule.key_len) +
+		      ROUND32(fdi_ctx->rule.value_len));
 
 	pad32_write(fdi_ctx->cache_fd, fdi_ctx->position,
 		&fdi_ctx->rule, sizeof(struct rule));
@@ -307,7 +310,7 @@ static void set_jump_position(struct fdi_context *fdi_ctx)
 		DIE(("Rule depth underrun"));
 
 	fdi_ctx->depth--;
-	offset = lseek(fdi_ctx->cache_fd, 0, SEEK_END);
+	offset = RULES_ROUND(lseek(fdi_ctx->cache_fd, 0, SEEK_END));
 	pad32_write(fdi_ctx->cache_fd,
 		fdi_ctx->match_at_depth[fdi_ctx->depth] + offsetof(struct rule, jump_position),
 		&offset, sizeof(fdi_ctx->rule.jump_position));
@@ -331,7 +334,7 @@ start (void *data, const char *el, const char **attr)
 
 	init_rule_struct(&fdi_ctx->rule);
 	fdi_ctx->rule.rtype = get_rule_type(el);
-	fdi_ctx->position = lseek(fdi_ctx->cache_fd, 0, SEEK_END);
+	fdi_ctx->position = RULES_ROUND(lseek(fdi_ctx->cache_fd, 0, SEEK_END));
 	if (fdi_ctx->rule.rtype == RULE_UNKNOWN) return;
 
 	/* get key and attribute for current rule */
@@ -515,7 +518,7 @@ rules_add_fdi_file (const char *filename, int fd)
 	/* insert last dummy rule into list */
 	init_rule_struct(&fdi_ctx->rule);
 	fdi_ctx->rule.rtype = RULE_EOF;
-	fdi_ctx->position = lseek(fdi_ctx->cache_fd, 0, SEEK_END);
+	fdi_ctx->position = RULES_ROUND(lseek(fdi_ctx->cache_fd, 0, SEEK_END));
 	store_key(fdi_ctx, filename);
 	store_value(fdi_ctx, "", 0);
 	store_rule(fdi_ctx);
@@ -637,7 +640,7 @@ di_rules_init (void)
 	memset(&header, 0, sizeof(struct cache_header));
 	pad32_write(fd, 0, &header, sizeof(struct cache_header));
 
-	header.fdi_rules_preprobe = lseek(fd, 0, SEEK_END);
+	header.fdi_rules_preprobe = RULES_ROUND(lseek(fd, 0, SEEK_END));
 	if (hal_fdi_source_preprobe != NULL) {
 		if ((n = rules_search_and_add_fdi_files (hal_fdi_source_preprobe, fd)) == -1)
 			goto error;
@@ -651,7 +654,7 @@ di_rules_init (void)
 		num_skipped_fdi_files += n;
 	}
 
-	header.fdi_rules_information = lseek(fd, 0, SEEK_END);
+	header.fdi_rules_information = RULES_ROUND(lseek(fd, 0, SEEK_END));
 	if (hal_fdi_source_information != NULL) {
 		if ((n = rules_search_and_add_fdi_files (hal_fdi_source_information, fd)) == -1)
 			goto error;
@@ -665,7 +668,7 @@ di_rules_init (void)
 		num_skipped_fdi_files += n;
 	}
 
-	header.fdi_rules_policy = lseek(fd, 0, SEEK_END);
+	header.fdi_rules_policy = RULES_ROUND(lseek(fd, 0, SEEK_END));
 	if (hal_fdi_source_policy != NULL) {
 		if ((n = rules_search_and_add_fdi_files (hal_fdi_source_policy, fd)) == -1)
 			goto error;
