@@ -5596,7 +5596,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
-                <literal>alsa.device_pcm_class</literal> (string)
+                <literal>alsa.pcm_class</literal> (string)
               </entry>
               <entry></entry>
               <entry>No</entry>
