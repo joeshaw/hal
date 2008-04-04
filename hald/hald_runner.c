@@ -510,7 +510,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 	}
 #endif /* HAVE_CONKIT */
 
-	if (uname (&un) == 0) {
+	if (uname (&un) >= 0) {
 		char *sysname;
 
 		sysname = g_ascii_strdown (un.sysname, -1);
