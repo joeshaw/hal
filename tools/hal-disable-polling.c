@@ -79,7 +79,7 @@ int
 main (int argc, char *argv[])
 {
 	char *udi = NULL;
-	char *device = NULL, *real_device;
+	char *device = NULL;
         dbus_bool_t is_version = FALSE;
         dbus_bool_t enable_polling = FALSE;
 	DBusError error;
@@ -182,8 +182,9 @@ main (int argc, char *argv[])
 
                 devices = libhal_manager_find_device_string_match (hal_ctx, "block.device", device, &num_devices, NULL);
 		if (devices == NULL || devices[0] == NULL) {
-                        real_device = realpath(device, NULL);
-                        if (real_device == NULL) {
+			char real_device[PATH_MAX];
+
+			if (realpath(device, real_device) == NULL) {
                                 fprintf (stderr, "Cannot find device %s.\n", device);
                                 return 1;
                         }
@@ -197,7 +198,6 @@ main (int argc, char *argv[])
                         }
 
                         fprintf (stderr, "Following symlink from %s to %s.\n", device, real_device);
-			free(real_device);
                 }
 
                 for (n = 0; devices[n] != NULL; n++) {
