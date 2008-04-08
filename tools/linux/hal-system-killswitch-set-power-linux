@@ -9,7 +9,7 @@
 # (at your option) any later version.
 
 DELL_WCTL=/usr/bin/dellWirelessCtl
-if [ -x /usr/sbin/dellWirelessCtl ]; then
+if [ -x "/usr/sbin/dellWirelessCtl" ]; then
     DELL_WCTL=/usr/sbin/dellWirelessCtl
 fi
 
@@ -21,7 +21,7 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	    exit 1
 	fi
 	exit 0
-    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
+    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x "$DELL_WCTL" ]; then
 
 	# As a side effect we disable the physical kill switch
 
@@ -56,7 +56,7 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x "$DELL_WCTL" ]; then
 
 	# As a side effect we disable the physical kill switch
 
@@ -90,7 +90,7 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wwan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x $DELL_WCTL ]; then
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x "$DELL_WCTL" ]; then
 
 	# As a side effect we disable the physical kill switch
 
