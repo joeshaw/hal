@@ -3719,6 +3719,73 @@ vio_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+vmbus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+	const gchar *class_id;
+	const gchar *device_id;
+
+	HAL_INFO (("vmbus_add: sysfs_path=%s device_file=%s parent_dev=0x%08x parent_path=%s", sysfs_path, device_file, parent_dev, parent_path));
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "vmbus");
+	hal_device_property_set_string (d, "info.vendor", "Microsoft/Citrix");
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+	
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	hal_device_property_set_string (d, "vmbus.bus_id", bus_id);
+	device_id = hal_util_get_string_from_file (sysfs_path, "device_id");
+	hal_device_property_set_string (d, "vmbus.device_id", device_id);
+	class_id = hal_util_get_string_from_file (sysfs_path, "class_id");
+	hal_device_property_set_string (d, "vmbus.class_id", class_id);
+
+	if (class_id != NULL) {
+		if (strcmp (class_id, "{f8615163-df3e-46c5-913ff2d2f965ed0e}") == 0) {
+			hal_device_property_set_string (d, "info.product", "Network Virtualization Service Client Device");
+		} else if (strcmp (class_id, "{ba6163d9-04a1-4d29-b60572e2ffb1dc7f}") == 0) {
+			hal_device_property_set_string (d, "info.product", "Storage Virtualization Service Client Device");
+		} else if (strcmp (class_id, "{c5295816-f63a-4d5f-8d1a4daf999ca185}") == 0) {
+			// root device of the bus
+			hal_device_property_set_string (d, "info.product", "Vmbus Device");
+		}
+	} 
+
+	if (!hal_device_has_property(d, "info.product")) {
+		char buf[64];
+		g_snprintf (buf, sizeof (buf), "Virtualization Service Client Device (%s)", bus_id);
+		hal_device_property_set_string (d, "info.product", buf);
+	}
+
+	return d;
+}
+
+static gboolean
+vmbus_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	
+	hal_util_compute_udi (hald_get_gdl(), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/vmbus_%s_%s",
+			      hal_device_property_get_string (d, "vmbus.bus_id"),
+			      hal_device_property_get_string (d, "vmbus.device_id"));
+
+	hal_device_set_udi (d, udi);
+	
+	return TRUE;
+}
+
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -4093,6 +4160,15 @@ static DevHandler dev_handler_vio =
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_vmbus =
+{
+	.subsystem   = "vmbus",
+	.add         = vmbus_add,
+	.compute_udi = vmbus_compute_udi,
+	.remove      = dev_remove
+};
+
+
 /* SCSI debug, to test thousends of fake devices */
 static DevHandler dev_handler_pseudo = {
 	.subsystem   = "pseudo",
@@ -4141,6 +4217,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_ps3_system_bus,
 	&dev_handler_virtio,
 	&dev_handler_vio,
+	&dev_handler_vmbus,
 	NULL
 };
 
