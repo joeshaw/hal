@@ -7591,18 +7591,6 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>2007-05-01</entry>
               <entry></entry>
             </row>
-            <row>
-              <entry><literal>usb_device.speed_bcd</literal> (int)</entry>
-              <entry><literal>usb_device.speed</literal> (double)</entry>
-              <entry>2008-03-21</entry>
-              <entry>changed from 'BCD with two decimals' to double</entry>
-            </row>
-            <row>
-              <entry><literal>usb_device.version_bcd</literal> (int)</entry>
-              <entry><literal>usb_device.version</literal> (double)</entry>
-              <entry>2008-03-21</entry>
-              <entry>changed from 'BCD with two decimals' to double</entry>
-            </row>
           </tbody>
         </tgroup>
       </informaltable>
