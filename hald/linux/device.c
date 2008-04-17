@@ -3769,9 +3769,8 @@ vmbus_compute_udi (HalDevice *d)
 	gchar udi[256];
 	
 	hal_util_compute_udi (hald_get_gdl(), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/vmbus_%s_%s",
-			      hal_device_property_get_string (d, "vmbus.bus_id"),
-			      hal_device_property_get_string (d, "vmbus.device_id"));
+			      "/org/freedesktop/Hal/devices/_%s",
+			      hal_device_property_get_string (d, "vmbus.bus_id"));
 
 	hal_device_set_udi (d, udi);
 	
