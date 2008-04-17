@@ -3110,6 +3110,59 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+
+    <sect2 id="device-properties-vmbus">
+      <title>
+        vmbus namespace
+      </title>
+      <para>
+	Virtual devices of the VMBus, which is part of the Hyper-V technologies 
+	(which is a hypervisor based virtualization solution) included in the 
+	Windows Server 2008, are represented by device objects where 
+	<literal>info.subsystem</literal> equals <literal>vmbus</literal>. 
+	The following properties are available for such device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>vmbus.bus_id</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>ID of the bus.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>vmbus.device_id</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>ID of the device.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>vmbus.class_id</literal> (string)
+              </entry>
+              <entry>example: {f8615163-df3e-46c5-913ff2d2f965ed0e}</entry>
+              <entry>Yes</entry>
+              <entry>Class identifier of the device.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
   </sect1>
 
   <sect1 id="properties-functional">
