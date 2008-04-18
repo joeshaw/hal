@@ -485,7 +485,7 @@ line_found:
 	if (!g_spawn_sync ("/",
 			   args,
 			   NULL,
-			   0,
+			   G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
 			   NULL,
 			   NULL,
 			   &sout,
@@ -550,9 +550,7 @@ handle_eject (DBusConnection *system_bus,
 	int na;
 	int fd;
 	int num_excl_tries;
-#ifdef HAVE_POLKIT
         DBusError error;
-#endif
 
 	/* When called here all the file systems from this device are
 	 * already unmounted. That's actually guaranteed; see
@@ -650,7 +648,7 @@ try_open_excl_again:
 	if (!g_spawn_sync ("/",
 			   args,
 			   NULL,
-			   0,
+			   G_SPAWN_LEAVE_DESCRIPTORS_OPEN,
 			   NULL,
 			   NULL,
 			   &sout,
@@ -675,7 +673,6 @@ try_open_excl_again:
         if (!libhal_drive_is_media_detection_automatic (drive)) {
                 DBusMessage *message;
                 DBusMessage *reply;
-                DBusError error;
 
                 message = dbus_message_new_method_call ("org.freedesktop.Hal",
                                                         udi,

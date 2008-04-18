@@ -37,8 +37,7 @@ int main(int argc,char** argv) {
 	char *udi;
 	char *parent;
 	char *iface;
-	int i;
-	char kill_status;
+	int i, kill_status;
 	char **udis;
 	int num_udis;
 	FILE *fd;

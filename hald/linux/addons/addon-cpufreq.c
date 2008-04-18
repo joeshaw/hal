@@ -689,9 +689,9 @@ static gboolean set_governors(DBusConnection *connection, DBusMessage *message,
 
 	/** clear all previous cpufreq_objs */
 	if (g_slist_length(cpufreq_objs) > 0) {
-		GSList *it = NULL;
- 		for (it = cpufreq_objs; it != NULL; it = g_slist_next(it)) {
-			struct cpufreq_obj *obj = it->data; 
+		GSList *iter = NULL;
+ 		for (iter = cpufreq_objs; iter != NULL; iter = g_slist_next(iter)) {
+			struct cpufreq_obj *obj = iter->data; 
 			obj->free(obj->iface);
 			free(obj->iface);
 			free(obj);

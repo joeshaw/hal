@@ -46,7 +46,6 @@ main (int argc, char *argv[])
 {
 	int fd;
 	int ret;
-	char *udi;
 	char *device_file;
 	char name[256];
 	struct floppy_drive_struct ds;
@@ -56,7 +55,7 @@ main (int argc, char *argv[])
 	/* assume failure */
 	ret = 1;
 
-	if ((udi = getenv ("UDI")) == NULL)
+	if (getenv ("UDI") == NULL)
 		goto out;
 	if ((device_file = getenv ("HAL_PROP_BLOCK_DEVICE")) == NULL)
 		goto out;

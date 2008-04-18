@@ -410,6 +410,8 @@ handle_inotify_event (HalFileMonitor        *monitor,
         if (ievent->mask & IN_IGNORED) {
                 file_monitor_remove_watch (monitor, watch);
         }
+	
+	g_free(freeme);
 }
 
 static gboolean

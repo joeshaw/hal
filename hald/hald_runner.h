@@ -92,7 +92,7 @@ hald_runner_run_method(HalDevice *device,
                        gpointer data1, gpointer data2);
 
 void hald_runner_kill_device(HalDevice *device);
-void hald_runner_kill_all();
+void hald_runner_kill_all(void);
 
 /* called by the core to tell the runner a device was finalized */
 void runner_device_finalized (HalDevice *device);

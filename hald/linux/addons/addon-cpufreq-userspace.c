@@ -353,7 +353,6 @@ static gboolean adjust_speed(struct userspace_interface *iface)
 {
 	GSList		*cpus	 = (GSList*)iface->cpus;
 	GSList		*it	 = NULL;
-	int		ret	 = 0;
 	int		cpu_load = 0;
 
 	for (it = cpus; it != NULL; it = g_slist_next(it)) {
@@ -380,19 +379,15 @@ static gboolean adjust_speed(struct userspace_interface *iface)
 			iface->current_speed = 0;
 			HAL_DEBUG(("jumped to max (%d kHz)", 
 				   g_a_i(iface->speeds_kHz, iface->current_speed)));
-			ret = 1;
 		}
 	} else if (cpu_load > config.up_threshold && iface->current_speed > 0) {
 		iface->current_speed = increase_speed(iface);
 		HAL_DEBUG(("increased to %d kHz", g_a_i(iface->speeds_kHz, iface->current_speed)));
-		ret = 1;
 	} else if (cpu_load < (int)g_a_i(iface->demotion, iface->current_speed) &&
 		   iface->current_speed < iface->last_step) {
 		iface->current_speed = decrease_speed(iface);
 		HAL_DEBUG(("decreased to %d kHz", g_a_i(iface->speeds_kHz, iface->current_speed)));
-		ret = -1;
 	} else {
-		ret = 0;
 		HAL_DEBUG(("Speed not changed"));
 	}
 

@@ -1056,7 +1056,7 @@ hal_util_hexdump (const void *mem, unsigned int size)
 	const char *buf = (const char *) mem;
 
 	n = 0;
-	printf ("Dumping %d=0x%x bytes\n", size, size);
+	printf ("Dumping %u=0x%x bytes\n", size, size);
 	while (n < size) {
 
 		printf ("0x%04x: ", n);

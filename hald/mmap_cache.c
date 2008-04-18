@@ -91,7 +91,6 @@ int di_rules_init (void)
 	return 0;
 }
 
-static gboolean regen_cache_done;
 static gint regen_cache_success;
 
 static void 
@@ -110,8 +109,6 @@ regen_cache_cb (HalDevice *d,
 	} else {
 		regen_cache_success = FALSE;
 	}
-
-	regen_cache_done = TRUE;
 }
 
 
@@ -139,8 +136,6 @@ regen_cache (void)
 			extra_env [m++] = g_strdup_printf ("%s=%s", name, val);
 		}
 	}
-
-	regen_cache_done = FALSE;
 
 	hald_runner_run_sync (NULL, 
 			      "hald-generate-fdi-cache",

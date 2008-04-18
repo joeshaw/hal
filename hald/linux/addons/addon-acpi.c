@@ -303,8 +303,6 @@ main (int argc, char **argv)
 		 * sleep for 5s and try to reconnect (again). */
 		sleep (5);
 	}
-
-	return 1;
 }
 
 /* vim:set sw=8 noet: */

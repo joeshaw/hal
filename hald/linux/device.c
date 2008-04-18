@@ -3104,12 +3104,7 @@ static gboolean
 backlight_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
-	const char *dir;
-	const char *name;
 
-	dir = hal_device_property_get_string (d, "linux.sysfs_path");
-
-	name = hal_util_get_last_element(dir);
 	hald_compute_udi (udi, sizeof (udi),
 			  "%s_backlight",
 			  hal_device_property_get_string (d, "info.parent"));

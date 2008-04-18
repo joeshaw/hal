@@ -300,7 +300,7 @@ static void remember_jump_position(struct fdi_context *fdi_ctx)
 	if (fdi_ctx->depth >= HAL_MAX_INDENT_DEPTH)
 		DIE(("Rule depth overflow"));
 	fdi_ctx->match_at_depth[fdi_ctx->depth++] = fdi_ctx->position;
-};
+}
 
 static void set_jump_position(struct fdi_context *fdi_ctx)
 {

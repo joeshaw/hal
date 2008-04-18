@@ -78,7 +78,6 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 {
 	const char *path;
 	int flags;
-	int last_full;
 
 	path = hal_device_property_get_string (d, "linux.pmu_path");
 	if (path == NULL)
@@ -122,9 +121,6 @@ battery_refresh (HalDevice *d, PMUDevHandler *handler)
 			hal_device_property_set_int (d, "battery.charge_level.rate", current);
 		else
 			hal_device_property_set_int (d, "battery.charge_level.rate", -current);
-
-		current = hal_device_property_get_int (d, "battery.charge_level.current");
-		last_full = hal_device_property_get_int (d, "battery.charge_level.last_full");
 
 		/* TODO: could read some pmu file? */
 		device_pm_calculate_time (d);

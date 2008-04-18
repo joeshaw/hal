@@ -451,7 +451,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 				add_env (iter, s, ck_session_is_active (session) ? "true" : "false");
 				g_free (s);
 				s = g_strdup_printf ("CK_SESSION_UID_%s", session_id);
-				p = g_strdup_printf ("%d", ck_session_get_user (session));
+				p = g_strdup_printf ("%u", ck_session_get_user (session));
 				add_env (iter, s, p);
 				g_free (s);
 				g_free (p);

@@ -585,12 +585,6 @@ handle_mount (LibHalContext *hal_ctx,
 		explicit_mount_point_given = FALSE;
 		if (strlen (mount_point) == 0) {
 			char *p;
-			const char *label;
-			
-			if (volume != NULL)
-				label = libhal_volume_get_label (volume);
-			else
-				label = NULL;
 			
 			if (label != NULL) {
 				/* best - use label */
@@ -693,7 +687,7 @@ handle_mount (LibHalContext *hal_ctx,
 						unknown_error ("option uid is malformed");
 					}
 #ifdef DEBUG
-					printf ("%s with uid %d\n", allow, uid);
+					printf ("%s with uid %u\n", allow, uid);
 #endif
 					wants_to_change_uid = TRUE;
 
@@ -792,15 +786,6 @@ handle_mount (LibHalContext *hal_ctx,
 #ifdef HAVE_POLKIT
         if (invoked_by_syscon_name != NULL) {
                 char *polkit_result;
-                char *action_params[] = {
-                        "fstype", "",
-                        "mount-point", "",
-                        "mount-options", "",
-                        NULL};
-
-                action_params[1] = mount_do_fstype;
-                action_params[3] = mount_dir;
-                action_params[5] = mount_option_commasep;
 
                 dbus_error_init (&error);
                 polkit_result = libhal_device_is_caller_privileged (hal_ctx,

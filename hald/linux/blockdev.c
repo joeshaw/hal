@@ -1760,12 +1760,12 @@ udev_get_device_file_for_sysfs_path (const char *sysfs_path)
 
         if (!g_spawn_sync("/", 
                           (char **) argv, 
-                          NULL,           /* envp */
-                          0,              /* flags */
-                          NULL,           /* child_setup */
-                          NULL,           /* user_data */
+                          NULL,           			/* envp */
+                          G_SPAWN_LEAVE_DESCRIPTORS_OPEN, 	/* flags */
+                          NULL,           			/* child_setup */
+                          NULL,           			/* user_data */
                           &u_stdout,
-                          NULL,           /* stderr */
+                          NULL,           			/* stderr */
                           &u_exit_status,
                           &g_error)) {
                 HAL_ERROR (("Error spawning udevinfo: %s", g_error->message));

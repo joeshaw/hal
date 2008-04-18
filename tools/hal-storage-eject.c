@@ -50,7 +50,7 @@ usage (void)
 }
 
 
-void static
+static void
 unknown_eject_error (const char *detail)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.%s.UnknownFailure\n", devtype);

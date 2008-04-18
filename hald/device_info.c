@@ -804,7 +804,7 @@ handle_match (struct rule *rule, HalDevice *d)
 		return FALSE;
 	}
 
-	return FALSE;
+	// return FALSE;
 }
 
 /* we have finished the callouts for a device, now add it to the gdl */

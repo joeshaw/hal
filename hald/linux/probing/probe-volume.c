@@ -89,7 +89,7 @@ strdup_valid_utf8 (const char *str)
 
 
 static void
-set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, struct volume_id *vid)
+set_volume_id_values (LibHalChangeSet *cs, struct volume_id *vid)
 {
 	char buf[256];
 	const char *usage;
@@ -153,8 +153,7 @@ set_volume_id_values (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs, 
 }
 
 static void
-advanced_disc_detect (LibHalContext *ctx, const char *udi, LibHalChangeSet *cs,
-                      int fd, const char *device_file)
+advanced_disc_detect (LibHalChangeSet *cs, int fd, const char *device_file)
 {
 	/* the discs block size */
 	unsigned short bs; 
@@ -312,7 +311,6 @@ main (int argc, char *argv[])
 	LibHalContext *ctx = NULL;
 	DBusError error;
 	char *parent_udi;
-	char *sysfs_path;
 	struct volume_id *vid;
 	char *stordev_dev_file;
 	char *partition_number_str;
@@ -346,7 +344,7 @@ main (int argc, char *argv[])
 		goto out;
 	if ((parent_udi = getenv ("HAL_PROP_INFO_PARENT")) == NULL)
 		goto out;
-	if ((sysfs_path = getenv ("HAL_PROP_LINUX_SYSFS_PATH")) == NULL)
+	if (getenv ("HAL_PROP_LINUX_SYSFS_PATH") == NULL)
 		goto out;
 	partition_number_str = getenv ("HAL_PROP_VOLUME_PARTITION_NUMBER");
 	if (partition_number_str != NULL)
@@ -436,7 +434,7 @@ main (int argc, char *argv[])
 		case CDS_XA_2_2:
 			libhal_changeset_set_property_bool (cs, "volume.disc.has_data", TRUE);
 			HAL_DEBUG(("Disc in %s has data", device_file));
-			advanced_disc_detect (ctx, udi, cs, fd, device_file);
+			advanced_disc_detect (cs, fd, device_file);
 			break;
 		case CDS_NO_INFO:	/* blank or invalid CD */
 			libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", TRUE);
@@ -633,7 +631,7 @@ main (int argc, char *argv[])
 			}
 
 			if (vid_ret == 0) {
-				set_volume_id_values(ctx, udi, cs, vid);
+				set_volume_id_values(cs, vid);
 				if (disc_may_have_data) {
 					libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", FALSE);
 					libhal_changeset_set_property_bool (cs, "volume.disc.has_data", TRUE);
@@ -670,7 +668,7 @@ main (int argc, char *argv[])
 							if (volume_id_probe_all (
 								    vid, vol_probe_offset + part_offset, 0) == 0) {
 
-								set_volume_id_values(ctx, udi, cs, vid);
+								set_volume_id_values(cs, vid);
 							}
 
 							/* and we're done */

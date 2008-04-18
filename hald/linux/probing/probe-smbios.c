@@ -29,6 +29,7 @@
 #endif
 
 #include <ctype.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -101,7 +102,6 @@ main (int argc, char *argv[])
 	char *nbuf;
 	int dmipipe[2];
 	int nullfd;
-	int tmp_ret;
 	FILE *f;
 	int dmiparser_state = DMIPARSER_STATE_IGNORE;
 
@@ -153,9 +153,20 @@ main (int argc, char *argv[])
 		exit(1);
 	}
 
-	tmp_ret = pipe (dmipipe);	
-	f = fdopen (dmipipe[0], "r");
-	nullfd = open ("/dev/null", O_RDONLY);
+	if(pipe (dmipipe) == -1) {
+		HAL_ERROR(("Could not create pipe (error: '%s'), exit!", strerror(errno)));
+		exit(1);
+	}	
+
+	if ((f = fdopen (dmipipe[0], "r")) == NULL) {
+		HAL_ERROR(("Could not open file (error: '%s'), exit!", strerror(errno)));
+		exit(1);
+	}
+
+	if ((nullfd = open ("/dev/null", O_RDONLY)) == -1){
+		HAL_ERROR(("Could not open /dev/null (error: '%s'), exit!", strerror(errno)));
+		exit(1);
+	}
 	
 	/* fork the child process */
 	switch (fork ()) {
@@ -187,7 +198,7 @@ main (int argc, char *argv[])
 	/* read the output of the child */
 	while(fgets (buf, sizeof(buf), f) != NULL)
 	{
-		int i;
+		int j;
 		unsigned int len;
 		unsigned int tabs = 0;
 
@@ -243,8 +254,8 @@ main (int argc, char *argv[])
 		nbuf = &buf[1];
 
 		/* removes the trailing spaces */
-		for (i = len - 2; isspace (nbuf[i]) && i >= 0; --i)
-			nbuf[i] = '\0';
+		for (j = len - 2; isspace (nbuf[j]) && j >= 0; --j)
+			nbuf[j] = '\0';
 
 		if (dmiparser_state == DMIPARSER_STATE_BIOS) {
 			setstr (nbuf, "Vendor:", "system.firmware.vendor");

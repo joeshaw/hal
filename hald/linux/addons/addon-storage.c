@@ -279,7 +279,7 @@ enum {
 };
 
 static gboolean poll_for_media (gpointer user_data);
-static gboolean poll_for_media_force ();
+static gboolean poll_for_media_force (void);
 
 static int interval_in_seconds = 2;
 

@@ -364,7 +364,7 @@ void
 hal_device_store_print (HalDeviceStore *store)
 {
 	fprintf (stderr, "===============================================\n");
-        fprintf (stderr, "Dumping %d devices\n", 
+        fprintf (stderr, "Dumping %u devices\n", 
 		 g_slist_length (store->devices));
 	fprintf (stderr, "===============================================\n");
 	hal_device_store_foreach (store, 

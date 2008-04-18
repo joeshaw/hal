@@ -49,8 +49,8 @@ HalDeviceStore *hald_get_tdl (void);
 
 void hald_compute_udi (gchar *dst, gsize dstsize, const gchar *format, ...);
 
-void property_atomic_update_begin ();
-void property_atomic_update_end ();
+void property_atomic_update_begin (void);
+void property_atomic_update_end (void);
 
 extern dbus_bool_t hald_is_verbose;
 extern dbus_bool_t hald_use_syslog;

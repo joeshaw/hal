@@ -68,7 +68,7 @@ static GMainLoop *main_loop;
 static const char *device_udi;
 
 /* prototypes */
-static struct usb_device *find_device (const char *hal_device_udi, PropertyCacheItem *pci);
+static struct usb_device *find_device (PropertyCacheItem *pci);
 
 static PropertyCacheItem* 
 property_cache_item_get (const char *hal_device_udi)
@@ -129,7 +129,7 @@ check_battery (const char *hal_device_udi, PropertyCacheItem *pci)
 	HAL_DEBUG (("Is dual: %d", is_dual));
 	addr = is_dual? 1<<8 : 0;
 
-	curr_device = find_device (hal_device_udi, pci);
+	curr_device = find_device (pci);
 	if (curr_device == NULL)	{
 		HAL_ERROR (("Device %s not found", hal_device_udi));
 		return;
@@ -170,7 +170,7 @@ check_battery (const char *hal_device_udi, PropertyCacheItem *pci)
 
 /* TODO: Is it linux-specific way to find the device? */
 static struct usb_device* 
-find_device (const char *hal_device_udi, PropertyCacheItem *pci)
+find_device (PropertyCacheItem *pci)
 {
 	struct usb_bus* curr_bus;
 	char LUdirname[5];
@@ -224,7 +224,7 @@ is_the_device (const char *hal_device_udi)
 }
 
 static void
-device_removed (LibHalContext *ctx, const char *hal_device_udi)
+device_removed (const char *hal_device_udi)
 {
 	/* this device is removed */
 	if (is_the_device (hal_device_udi)) {
@@ -245,7 +245,7 @@ property_modified (LibHalContext *ctx,
 		if (is_removed) {
 			HAL_DEBUG (("** Main Property %s removed: %s", key, hal_device_udi));
 			/* probably we'll have to exit if this is our device */
-			device_removed (ctx, hal_device_udi);
+			device_removed (hal_device_udi);
 		}
 	} else
 		/* "Secondary" property modified */

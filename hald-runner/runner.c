@@ -252,7 +252,7 @@ run_request_run (run_request *r, DBusConnection *con, DBusMessage *msg, GPid *ou
 	char *program_dir = NULL;
 	GList *list;
 
-	printf("Run started %s (%d) (%d) \n!", r->argv[0], r->timeout,
+	printf("Run started %s (%u) (%d) \n!", r->argv[0], r->timeout,
 		r->error_on_stderr);
 	if (r->input != NULL) {
 		stdin_p = &stdin_v; 

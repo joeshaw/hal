@@ -116,7 +116,7 @@ hotplug_event_begin_sysfs (HotplugEvent *hotplug_event)
 	if (hotplug_event->type == HOTPLUG_EVENT_SYSFS && d != NULL) {
 		HotplugEventType type;
 
-		type = hal_device_property_get_int (d, "linux.hotplug_type");
+		type = (HotplugEventType) hal_device_property_get_int (d, "linux.hotplug_type");
 		if (type == HOTPLUG_EVENT_SYSFS_DEVICE) {
 			HAL_INFO (("%s is a device (store)", hotplug_event->sysfs.sysfs_path));
 			hotplug_event->type = HOTPLUG_EVENT_SYSFS_DEVICE;

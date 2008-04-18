@@ -46,7 +46,6 @@ main (int argc, char *argv[])
 {
 	int fd;
 	int ret;
-	char *udi;
 	char *device_file;
 	struct serial_struct ss;
 
@@ -57,7 +56,7 @@ main (int argc, char *argv[])
 	
 	setup_logger ();
 
-	if ((udi = getenv ("UDI")) == NULL) {
+	if (getenv ("UDI") == NULL) {
 		HAL_ERROR (("UDI not set"));
 		goto out;
 	}

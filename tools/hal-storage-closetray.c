@@ -48,7 +48,7 @@ usage (void)
 }
 
 
-void static
+static void
 unknown_closetray_error (const char *detail)
 {
 	fprintf (stderr, "org.freedesktop.Hal.Device.Storage.UnknownFailure\n");

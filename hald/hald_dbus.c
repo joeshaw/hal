@@ -1109,7 +1109,7 @@ foreach_property_append (HalDevice *device,
 	case HAL_PROPERTY_TYPE_STRLIST:
 	{
 		DBusMessageIter iter_var, iter_array;
-		HalDeviceStrListIter iter;
+		HalDeviceStrListIter hd_iter;
 
 		dbus_message_iter_open_container (&iter_dict_entry,
 						  DBUS_TYPE_VARIANT,
@@ -1122,11 +1122,11 @@ foreach_property_append (HalDevice *device,
 						  DBUS_TYPE_STRING_AS_STRING,
 						  &iter_array);
 
-		for (hal_device_property_strlist_iter_init (device, key, &iter);
-		     hal_device_property_strlist_iter_is_valid (&iter);
-		     hal_device_property_strlist_iter_next (&iter)) {
+		for (hal_device_property_strlist_iter_init (device, key, &hd_iter);
+		     hal_device_property_strlist_iter_is_valid (&hd_iter);
+		     hal_device_property_strlist_iter_next (&hd_iter)) {
 			const char *v;
-			v = hal_device_property_strlist_iter_get_value (&iter);
+			v = hal_device_property_strlist_iter_get_value (&hd_iter);
 
 			dbus_message_iter_append_basic (&iter_array, 
 							DBUS_TYPE_STRING,
@@ -5618,7 +5618,7 @@ hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *
 	}
 
 	extra_env[1] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=%s", ck_session_get_id (session));
-	extra_env[2] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=%d", ck_session_get_user (session));
+	extra_env[2] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=%u", ck_session_get_user (session));
 	extra_env[3] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_IS_ACTIVE=%s", 
 					ck_session_is_active (session) ? "true" : "false");
 
@@ -5660,7 +5660,7 @@ hald_dbus_session_added (CKTracker *tracker, CKSession *session, void *user_data
 	}
 
 	extra_env[1] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_ID=%s", ck_session_get_id (session));
-	extra_env[2] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_UID=%d", ck_session_get_user (session));
+	extra_env[2] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_UID=%u", ck_session_get_user (session));
 	extra_env[3] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_IS_ACTIVE=%s", 
 					ck_session_is_active (session) ? "true" : "false");
 

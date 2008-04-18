@@ -191,15 +191,6 @@ out:
 	return result;
 }
 
-static void
-fixup_string (char *s)
-{
-	/* TODO: first strip leading and trailing whitespace */
-	/*g_strstrip (s);*/
-
-	/* TODO: could do nice things on all-upper case strings */
-}
-
 /* volume may be NULL (e.g. if drive supports removable media) */
 char *
 libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volume, LibHalStoragePolicy *policy)
@@ -240,8 +231,6 @@ libhal_drive_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *volu
 			vendormodel_str = strdup (buf);
 		}
 	}
-
-	fixup_string (vendormodel_str);
 
 	if (drive_type==LIBHAL_DRIVE_TYPE_CDROM) {
 
@@ -363,21 +352,13 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 	char *name;
 	char *size_str;
 	const char *volume_label;
-	const char *model;
-	const char *vendor;
 	LibHalDriveType drive_type;
-	dbus_bool_t drive_is_hotpluggable;
 	dbus_bool_t drive_is_removable;
-	LibHalDriveCdromCaps drive_cdrom_caps;
 	char buf[MAX_STRING_SZ];
 
 	volume_label = libhal_volume_get_label (volume);
-	model = libhal_drive_get_model (drive);
-	vendor = libhal_drive_get_vendor (drive);
 	drive_type = libhal_drive_get_type (drive);
-	drive_is_hotpluggable = libhal_drive_is_hotpluggable (drive);
 	drive_is_removable = libhal_drive_uses_removable_media (drive);
-	drive_cdrom_caps = libhal_drive_get_cdrom_caps (drive);
 
 	size_str = libhal_volume_policy_compute_size_as_string (volume);
 
@@ -1966,7 +1947,7 @@ libhal_drive_policy_default_get_managed_keyword_secondary (LibHalContext *hal_ct
 dbus_bool_t
 libhal_drive_policy_is_mountable (LibHalDrive *drive, LibHalStoragePolicy *policy)
 {
-	printf ("should_mount=%d, no_partitions_hint=%d\n", drive->should_mount, drive->no_partitions_hint);
+	printf ("should_mount=%u, no_partitions_hint=%u\n", drive->should_mount, drive->no_partitions_hint);
 
 	return drive->should_mount && drive->no_partitions_hint;
 }
@@ -2007,10 +1988,8 @@ mopts_collect (LibHalContext *hal_ctx, const char *namespace, int namespace_len,
 	}
 
 	for (libhal_psi_init (&it, properties); libhal_psi_has_more (&it); libhal_psi_next (&it)) {
-		int type;
 		char *key;
 		
-		type = libhal_psi_get_type (&it);
 		key = libhal_psi_get_key (&it);
 		if (libhal_psi_get_type (&it) == LIBHAL_PROPERTY_TYPE_BOOLEAN &&
 		    strncmp (key, namespace, namespace_len - 1) == 0) {

@@ -158,7 +158,7 @@ hal_util_init_sysfs_to_udev_map (void)
 	sysfs_to_udev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, udev_info_free);
 
 	/* get udevroot */
-	if (g_spawn_sync ("/", udevroot_argv, NULL, 0, NULL, NULL,
+	if (g_spawn_sync ("/", udevroot_argv, NULL, G_SPAWN_LEAVE_DESCRIPTORS_OPEN, NULL, NULL,
 			  &udevinfo_stdout,
 			  NULL,
 			  &udevinfo_exitcode,
@@ -179,7 +179,7 @@ hal_util_init_sysfs_to_udev_map (void)
 	HAL_INFO (("dev_root is %s", dev_root));
 
 	/* get udevdb export */
-	if (g_spawn_sync ("/", udevdb_export_argv, NULL, 0, NULL, NULL,
+	if (g_spawn_sync ("/", udevdb_export_argv, NULL, G_SPAWN_LEAVE_DESCRIPTORS_OPEN, NULL, NULL,
 			  &udevinfo_stdout,
 			  NULL,
 			  &udevinfo_exitcode,

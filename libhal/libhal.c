@@ -225,21 +225,17 @@ struct LibHalPropertySet_s {
  * Represents a property. Opaque.
  */
 struct LibHalProperty_s {
-	int type;		     /**< Type of property */
-	char *key;		     /**< ASCII string */
+	LibHalPropertyType type;	     	/**< Type of property */
+	char *key;		     		/**< ASCII string */
 
 	/** Possible values of the property */
 	union {
-		char *str_value;     /**< UTF-8 zero-terminated string */
-		dbus_int32_t int_value;
-				     /**< 32-bit signed integer */
-		dbus_uint64_t uint64_value;
-				     /**< 64-bit unsigned integer */
-		double double_value; /**< IEEE754 double precision float */
-		dbus_bool_t bool_value;
-				     /**< Truth value */
-
-		char **strlist_value; /**< List of UTF-8 zero-terminated strings */
+		char *str_value;     		/**< UTF-8 zero-terminated string */
+		dbus_int32_t int_value;         /**< 32-bit signed integer */
+		dbus_uint64_t uint64_value;     /**< 64-bit unsigned integer */
+		double double_value; 		/**< IEEE754 double precision float */
+		dbus_bool_t bool_value;		/**< Truth value */
+		char **strlist_value; 		/**< List of UTF-8 zero-terminated strings */
 	} v;
 
 	UT_hash_handle hh;		/*makes this hashable*/
@@ -427,7 +423,6 @@ static LibHalPropertySet *
 get_property_set (DBusMessageIter *iter)
 {
 	LibHalPropertySet *result;
-	LibHalProperty *p_last;
 	DBusMessageIter dict_iter;
 
 	result = malloc (sizeof (LibHalPropertySet));
@@ -455,8 +450,6 @@ get_property_set (DBusMessageIter *iter)
 
 	dbus_message_iter_recurse (iter, &dict_iter);
 
-	p_last = NULL;
-
 	while (dbus_message_iter_get_arg_type (&dict_iter) == DBUS_TYPE_DICT_ENTRY)
 	{
 		DBusMessageIter dict_entry_iter, var_iter;
@@ -481,7 +474,7 @@ get_property_set (DBusMessageIter *iter)
 
 		dbus_message_iter_recurse (&dict_entry_iter, &var_iter);
 
-		p->type = dbus_message_iter_get_arg_type (&var_iter);
+		p->type = (LibHalPropertyType) dbus_message_iter_get_arg_type (&var_iter);
 
 		if(!libhal_property_fill_value_from_variant (p, &var_iter))
 			goto oom;
@@ -1303,7 +1296,7 @@ libhal_device_get_property_type (LibHalContext *ctx, const char *udi, const char
 	DBusMessage *message;
 	DBusMessage *reply;
 	DBusMessageIter iter, reply_iter;
-	int type;
+	LibHalPropertyType type;
 	DBusError _error;
 
 	LIBHAL_CHECK_LIBHALCONTEXT(ctx, LIBHAL_PROPERTY_TYPE_INVALID); /* or return NULL? */
