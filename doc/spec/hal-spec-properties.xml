@@ -3137,17 +3137,33 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>
                 <literal>vmbus.bus_id</literal> (string)
               </entry>
-              <entry></entry>
+              <entry>example: vmbus_0_0, vmbus_0_1</entry>
               <entry>Yes</entry>
               <entry>ID of the bus.</entry>
             </row>
             <row>
               <entry>
-                <literal>vmbus.device_id</literal> (string)
+                <literal>vmbus.bus_number</literal> (int)
               </entry>
               <entry></entry>
               <entry>Yes</entry>
+              <entry>The VMBus the device is attached to.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>vmbus.device_id</literal> (string)
+              </entry>
+              <entry>example: {5558a04b-62a7-48f5-ae07f1d51ae62faa}</entry>
+              <entry>Yes</entry>
               <entry>ID of the device.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>vmbus.device_number</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The number of the device on a bus.</entry>
             </row>
             <row>
               <entry>

@@ -3721,6 +3721,7 @@ vmbus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	const gchar *bus_id;
 	const gchar *class_id;
 	const gchar *device_id;
+	int busnum, devicenum;
 
 	HAL_INFO (("vmbus_add: sysfs_path=%s device_file=%s parent_dev=0x%08x parent_path=%s", sysfs_path, device_file, parent_dev, parent_path));
 
@@ -3738,6 +3739,11 @@ vmbus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	bus_id = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "vmbus.bus_id", bus_id);
+	if (sscanf (bus_id, "vmbus_%d_%d", &busnum, &devicenum) == 2) {
+		hal_device_property_set_int (d, "vmbus.bus_number", busnum);
+		hal_device_property_set_int (d, "vmbus.device_number", devicenum);
+	}
+
 	device_id = hal_util_get_string_from_file (sysfs_path, "device_id");
 	hal_device_property_set_string (d, "vmbus.device_id", device_id);
 	class_id = hal_util_get_string_from_file (sysfs_path, "class_id");
