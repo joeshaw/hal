@@ -3782,6 +3782,51 @@ vmbus_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+of_platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev,
+		 const gchar *sysfs_path_in_devices)
+{
+	HalDevice *d;
+	const gchar *dev_id;
+	gchar buf[64];
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "of_platform");
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	dev_id = hal_util_get_last_element (sysfs_path);
+
+	hal_device_property_set_string (d, "of_platform.id", dev_id);
+
+	g_snprintf (buf, sizeof (buf), "OpenFirmware Platform Device (%s)", hal_device_property_get_string (d, "of_platform.id"));
+	hal_device_property_set_string (d, "info.product", buf);
+
+	return d;
+}
+
+static gboolean
+of_platform_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/of_platform_%s",
+			      hal_device_property_get_string (d, "of_platform.id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -4165,6 +4210,14 @@ static DevHandler dev_handler_vmbus =
 };
 
 
+static DevHandler dev_handler_of_platform =
+{
+	.subsystem   = "of_platform",
+	.add         = of_platform_add,
+	.compute_udi = of_platform_compute_udi,
+	.remove      = dev_remove
+};
+
 /* SCSI debug, to test thousends of fake devices */
 static DevHandler dev_handler_pseudo = {
 	.subsystem   = "pseudo",
@@ -4214,6 +4267,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_virtio,
 	&dev_handler_vio,
 	&dev_handler_vmbus,
+	&dev_handler_of_platform,
 	NULL
 };
 
