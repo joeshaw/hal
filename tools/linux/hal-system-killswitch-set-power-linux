@@ -16,8 +16,10 @@ fi
 if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
     if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "sonypic" ]; then
 	hal-system-sonypic setbluetooth $value
-	if [ $? -ne 0 ]; then
+	ret=$?
+	if [ "$ret" != "0" ]; then
 	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	    echo "hal-system-sonypic returned $ret" >&2
 	    exit 1
 	fi
 	exit 0
@@ -36,6 +38,7 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	if [ "$ret" != "0" ]; then
 	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
 	    echo "dellWirelessCtl returned $ret" >&2
+	    exit 1
 	fi
     elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = thinkpad -a -w "$HAL_PROP_LINUX_SYSFS_PATH" ]; then
         if [ "$value" = "true" ]; then 
@@ -71,6 +74,7 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	if [ "$ret" != "0" ]; then
 	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
 	    echo "dellWirelessCtl returned $ret" >&2
+            exit 1
 	fi
     elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "ipw" ]; then
 	if [ "$value" = "true" ]; then
@@ -83,6 +87,7 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	if [ "$ret" != "0" ]; then 
 		echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
 		echo "hal-ipw-killswitch-linux returned $value" >&2
+                exit 1
 	fi
     else
 	echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
@@ -105,6 +110,7 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wwan" ]; then
 	if [ "$ret" != "0" ]; then
 	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
 	    echo "dellWirelessCtl returned $ret" >&2
+            exit 1
 	fi
     else
 	echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2

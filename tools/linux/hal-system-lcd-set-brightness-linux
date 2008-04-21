@@ -17,6 +17,7 @@ if [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "pmu" ]; then
 	hal-system-power-pmu setlcd $value
 	if [ $? -ne 0 ]; then
 		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
+		echo "hal-system-power-pmu setlcd returned != 0" >&2
 		exit 1
 	fi
 	exit 0
@@ -24,6 +25,7 @@ elif [ "$HAL_PROP_LAPTOP_PANEL_ACCESS_METHOD" = "sonypi" ]; then
 	hal-system-sonypic setlcd $value
 	if [ $? -ne 0 ]; then
 		echo "org.freedesktop.Hal.Device.LaptopPanel.NotSupported" >&2
+		echo "hal-system-sonypic setlcd returned != 0" >&2
 		exit 1
 	fi
 	exit 0

@@ -8,6 +8,12 @@
 
 CRYPTSETUP=/sbin/cryptsetup
 
+if [ ! -f $CRYPTSETUP ]; then
+    echo org.freedesktop.Hal.Device.Volume.Crypto.CryptSetupMissing >&2
+    echo Error remove $HAL_PROP_BLOCK_DEVICE - $CRYPTSETUP not found >&2
+    exit 1
+fi
+
 echo LUKS cryptotext device $HAL_PROP_INFO_UDI is going away
 
 # make sure that the cleartext volume is unmounted
@@ -26,16 +32,19 @@ fi
 echo Tearing down LUKS cryptotext volume
 
 if [ ! -f $CRYPTSETUP ]; then
+	echo org.freedesktop.Hal.Device.Volume.Crypto.RemoveError >&2
 	echo Error removing $HAL_PROP_BLOCK_DEVICE - $CRYPTSETUP not found >&2
 	exit 1
 fi
 
 if [ -z $HAL_PROP_VOLUME_UUID ]; then
+	echo org.freedesktop.Hal.Device.Volume.Crypto.RemoveError >&2
 	echo Error determining UUID of $HAL_PROP_BLOCK_DEVICE >&2
 	exit 1
 fi
 
 if ! $CRYPTSETUP luksClose luks_crypto_$HAL_PROP_VOLUME_UUID 2> /dev/null; then
+	echo org.freedesktop.Hal.Device.Volume.Crypto.RemoveError >&2
 	echo Error removing luks_crypto_$HAL_PROP_VOLUME_UUID >&2
 	exit 1
 fi
