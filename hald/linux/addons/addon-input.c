@@ -210,7 +210,7 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 	GError *gerror = NULL;
 	gsize read_bytes;
 
-	if (condition & (G_IO_HUP | G_IO_ERR))
+	if (condition & (G_IO_HUP | G_IO_ERR | G_IO_NVAL))
 		return FALSE;
 
 	/** tbh, we can probably assume every time we read we have a whole
@@ -383,7 +383,7 @@ add_device (LibHalContext *ctx,
 
 	g_hash_table_insert (inputs, g_strdup(udi), channel);
 	g_io_add_watch_full (channel,
-			     G_PRIORITY_DEFAULT, G_IO_IN | G_IO_ERR | G_IO_HUP,
+			     G_PRIORITY_DEFAULT, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
 			     event_io, data, (GDestroyNotify) destroy_data);
 }
 
