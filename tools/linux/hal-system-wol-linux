@@ -13,7 +13,8 @@ IFACE="$HAL_PROP_NET_INTERFACE"
 wol_get_flags() {
     SUPPORT_FLAGS=`ethtool $IFACE | awk '/Supports Wake-on:/{if ($3 ~ /g/) print $3 }'`
     [ -n "$SUPPORT_FLAGS" ] && return 0
-    echo "org.freedesktop.Hal.Device.WakeOnLAN.NotSupported"
+    echo "org.freedesktop.Hal.Device.WakeOnLAN.NotSupported" >&2
+    echo "Network interface does not support Wake On LAN" >&2
     exit 1
 }
 
@@ -54,7 +55,8 @@ wol_disable() {
 
 which ethtool >/dev/null 2>&1
 if [ "$?" != "0" ]; then
-    echo "org.freedesktop.Hal.Device.WakeOnLan.NoEthtool"
+    echo "org.freedesktop.Hal.Device.WakeOnLan.NoEthtool" >&2
+    echo -e "No ethtool found in \$PATH" >&2
     exit 1
 fi
 
@@ -71,7 +73,8 @@ case "`basename $0`" in
 	elif [ "$enable" = "false" ]; then
 	    wol_disable
 	else
-	    echo "org.freedesktop.Hal.Device.WakeOnLAN.InvalidArgument"
+	    echo "org.freedesktop.Hal.Device.WakeOnLAN.InvalidArgument" >&2
+	    echo "argument must be of boolean type" >&2
 	    exit 1
 	fi
 	;;
