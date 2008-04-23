@@ -23,23 +23,28 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	    exit 1
 	fi
 	exit 0
-    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x "$DELL_WCTL" ]; then
+    elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" ]; then
+	if [ -x "$DELL_WCTL" ]; then
+	    # As a side effect we disable the physical kill switch
 
-	# As a side effect we disable the physical kill switch
-
-	# TODO: write our own binary that links with libsmbios?
-	if [ "$value" = "true" ]; then
-	    $DELL_WCTL --sw_bt 0 --bt 1
-	    ret=$?
-	else
-	    $DELL_WCTL --sw_bt 0 --bt 0
-	    ret=$?
-	fi
-	if [ "$ret" != "0" ]; then
-	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
-	    echo "dellWirelessCtl returned $ret" >&2
-	    exit 1
-	fi
+	    # TODO: write our own binary that links with libsmbios?
+	    if [ "$value" = "true" ]; then
+	        $DELL_WCTL --sw_bt 0 --bt 1
+	        ret=$?
+	    else
+	        $DELL_WCTL --sw_bt 0 --bt 0
+	        ret=$?
+	    fi
+	    if [ "$ret" != "0" ]; then
+	        echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	        echo "dellWirelessCtl returned $ret" >&2
+	        exit 1
+	    fi
+        else
+            echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+            echo "dellWirelessCtl ($DELL_WCTL) not available or executable" >&2
+            exit 1
+        fi
     elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = thinkpad -a -w "$HAL_PROP_LINUX_SYSFS_PATH" ]; then
         if [ "$value" = "true" ]; then 
 	    bit=1; 
@@ -59,23 +64,27 @@ if [ "$HAL_PROP_KILLSWITCH_TYPE" = "bluetooth" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x "$DELL_WCTL" ]; then
-
-	# As a side effect we disable the physical kill switch
-
-	# TODO: write our own binary that links with libsmbios?
-	if [ "$value" = "true" ]; then
-	    $DELL_WCTL --sw_wlan 0 --wlan 1
-	    ret=$?
-	else
-	    $DELL_WCTL --sw_wlan 0 --wlan 0
-	    ret=$?
-	fi
-	if [ "$ret" != "0" ]; then
-	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
-	    echo "dellWirelessCtl returned $ret" >&2
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" ]; then
+	if [ -x "$DELL_WCTL" ]; then
+	    # As a side effect we disable the physical kill switch
+	    # TODO: write our own binary that links with libsmbios?
+	    if [ "$value" = "true" ]; then
+	        $DELL_WCTL --sw_wlan 0 --wlan 1
+	        ret=$?
+	    else
+	        $DELL_WCTL --sw_wlan 0 --wlan 0
+	        ret=$?
+	    fi
+	    if [ "$ret" != "0" ]; then
+	        echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	        echo "dellWirelessCtl returned $ret" >&2
+                exit 1
+	    fi
+        else
+            echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+            echo "dellWirelessCtl ($DELL_WCTL) not available or executable" >&2
             exit 1
-	fi
+        fi
     elif [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "ipw" ]; then
 	if [ "$value" = "true" ]; then
 		rf_value=0
@@ -95,23 +104,27 @@ elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wlan" ]; then
 	exit 1
     fi
 elif [ "$HAL_PROP_KILLSWITCH_TYPE" = "wwan" ]; then
-    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" -a -x "$DELL_WCTL" ]; then
-
-	# As a side effect we disable the physical kill switch
-
-	# TODO: write our own binary that links with libsmbios?
-	if [ "$value" = "true" ]; then
-	    $DELL_WCTL --sw_wwan 0 --wwan 1
-	    ret=$?
-	else
-	    $DELL_WCTL --sw_wwan 0 --wwan 0
-	    ret=$?
-	fi
-	if [ "$ret" != "0" ]; then
-	    echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
-	    echo "dellWirelessCtl returned $ret" >&2
+    if [ "$HAL_PROP_KILLSWITCH_ACCESS_METHOD" = "dell" ]; then 
+	if [ -x "$DELL_WCTL" ]; then
+	    # As a side effect we disable the physical kill switch
+	    # TODO: write our own binary that links with libsmbios?
+	    if [ "$value" = "true" ]; then
+	        $DELL_WCTL --sw_wwan 0 --wwan 1
+	        ret=$?
+	    else
+	        $DELL_WCTL --sw_wwan 0 --wwan 0
+	        ret=$?
+	    fi
+	    if [ "$ret" != "0" ]; then
+	        echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+	        echo "dellWirelessCtl returned $ret" >&2
+                exit 1
+	    fi
+        else
+            echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
+            echo "dellWirelessCtl ($DELL_WCTL) not available or executable" >&2
             exit 1
-	fi
+        fi
     else
 	echo "org.freedesktop.Hal.Device.KillSwitch.NotSupported" >&2
 	echo "Access type not supported" >&2
