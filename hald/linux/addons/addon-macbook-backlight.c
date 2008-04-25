@@ -115,7 +115,7 @@ end:
 static gboolean
 map_register_page (void)
 {
-	long address;
+	unsigned long address;
 	int fd;
 
 	address = determine_video_base_address ();
