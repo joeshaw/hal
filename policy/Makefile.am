@@ -15,8 +15,18 @@ dist_polkit_policy_DATA += org.freedesktop.hal.device-access.policy
 endif
 
 check:
-	$(POLKIT_POLICY_FILE_VALIDATE) $(dist_polkit_policy_DATA)
-
+	for f in $(dist_polkit_policy_DATA); do \
+            echo -n "Validate PolicyKit policy in $$f : "; \
+            $(POLKIT_POLICY_FILE_VALIDATE) $(srcdir)/$$f ; \
+	    ret=$$?; \
+            if  [ "$$ret" == "0" ]; \
+	      then \
+                echo ok; \
+            else \
+                echo failed; \ 
+		exit 1; \
+            fi; \
+        done;
 endif
 
 clean-local :
