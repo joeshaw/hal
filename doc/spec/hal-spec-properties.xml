@@ -174,6 +174,106 @@
       </informaltable>
 
     </sect2>
+
+    <sect2 id="device-properties-info-linux">
+      <title>
+        linux namespace
+      </title>
+      <para>
+        The <literal>linux</literal> namespace contain properties that
+        can be considered metadata about device objects in Linux systems. These
+        properties are available only on Linux systems.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>linux.subsystem</literal> (string)
+              </entry>
+              <entry>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi</entry>
+              <entry>Yes</entry>
+              <entry>Describes what Linux subsystem the device is connected to. This can 
+                     differ from <literal>info.subsystem</literal></entry>
+            </row>
+            <row>
+              <entry>
+                <literal>linux.sysfs_path</literal> (string)
+              </entry>
+              <entry>for example: /sys/class/sound/seq</entry>
+              <entry>No</entry>
+              <entry>Path to the devuce in the sysfs. Could also be <literal>*.linux.sysfs_path</literal>
+                     depending on the subsystem in some cases.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>linux.device_file</literal> (string)
+              </entry>
+              <entry>for example: /dev/snd/pcmC0D1c or /dev/input/event6</entry>
+              <entry>No</entry>
+              <entry>Path to the corresponding device file in /dev/ on linux system.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>info.linux.driver</literal> (string)
+              </entry>
+              <entry>for example: pcspkr, vesafb, serial8250</entry>
+              <entry>No</entry>
+              <entry>Name of the driver/module corresponding to the device and/or subsystem.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>linux.hotplug_type</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>The type of hotplug event in a linux system.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>linux.acpi_type</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No (except for ACPI devices)</entry>
+              <entry>The type of ACPI device. Normaly only for HAL internal use.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>linux.apm_type</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No (except for APM devices)</entry>
+              <entry>The type of APM device. Normaly only for HAL internal use.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>linux.pmu_type</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No (except for PMU devices)</entry>
+              <entry>The type of PMU device. Normaly only for HAL internal use.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+    </sect2>
+
     <sect2 id="device-properties-info-callouts">
       <title>Callouts</title>
       
