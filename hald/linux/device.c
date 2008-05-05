@@ -557,7 +557,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
 		/* wireless dscape stack e.g. from rt2500pci driver*/
 		snprintf (wiphy_path, HAL_PATH_MAX, "%s/wiphy", sysfs_path);
-		parent_subsys = hal_device_property_get_string (parent_dev, "linux.subsystem");
+		parent_subsys = hal_device_property_get_string (parent_dev, "info.subsystem");
 
 		if (parent_subsys && strcmp(parent_subsys, "bluetooth") == 0) {
 			hal_device_property_set_string (d, "info.product", "Bluetooth Interface");
@@ -1541,7 +1541,6 @@ pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "pci");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1850,7 +1849,6 @@ ide_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "ide");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1920,7 +1918,6 @@ pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "pnp");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -1992,7 +1989,6 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "platform");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2092,7 +2088,6 @@ serio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "serio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2138,7 +2133,6 @@ pcmcia_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "pcmcia");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2221,7 +2215,6 @@ scsi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "scsi");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	hal_device_property_set_int (d, "scsi.host", host_num);
 	hal_device_property_set_int (d, "scsi.bus", bus_num);
@@ -2310,7 +2303,6 @@ mmc_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "mmc");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
@@ -2401,7 +2393,6 @@ sdio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "sdio");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
@@ -2451,7 +2442,6 @@ xen_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "xen");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -2531,7 +2521,6 @@ ieee1394_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "ieee1394");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
@@ -2812,7 +2801,6 @@ ccw_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "ccw");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -2981,7 +2969,6 @@ ccwgroup_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "ccwgroup");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -3045,7 +3032,6 @@ iucv_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "iucv");
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -3396,7 +3382,7 @@ power_supply_battery_poll (gpointer data) {
 			const char *subsys;
 
 			d = HAL_DEVICE (i->data);
-			subsys = hal_device_property_get_string (d, "linux.subsystem");
+			subsys = hal_device_property_get_string (d, "info.subsystem");
 			if (subsys && (strcmp(subsys, "power_supply") == 0)) {
 				hal_util_grep_discard_existing_data();
 				device_property_atomic_update_begin ();
@@ -3524,7 +3510,6 @@ drm_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	hal_device_property_set_string (d, "info.product", "Direct Rendering Manager Device");
 	hal_device_property_set_string (d, "info.category", "drm");
 	hal_device_property_set_string (d, "linux.device_file", device_file);
-	hal_device_property_set_string (d, "linux.subsystem", "drm");
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path); /* not sure if this is needed/set */
@@ -3569,7 +3554,6 @@ ps3_system_bus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "ps3_system_bus");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -3613,7 +3597,6 @@ virtio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "virtio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -3658,7 +3641,6 @@ vio_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "vio");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -3722,7 +3704,6 @@ vmbus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "vmbus");
 	hal_device_property_set_string (d, "info.vendor", "Microsoft/Citrix");
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 	
@@ -3791,7 +3772,6 @@ of_platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *p
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "of_platform");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -3835,7 +3815,6 @@ pseudo_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "pseudo");
 	if (parent_dev != NULL) {
 		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 	} else {
@@ -4464,6 +4443,11 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 
 			hal_device_property_set_int (d, "linux.hotplug_type", HOTPLUG_EVENT_SYSFS_DEVICE);
 			hal_device_property_set_string (d, "linux.subsystem", subsystem);
+			
+			/* only set info.subsystem if it's not set already to prevent trouble with usb/usb_device and other */
+			if (!hal_device_has_property(d, "info.subsystem")) {
+				hal_device_property_set_string (d, "info.subsystem", subsystem);
+			}
 
 			if (device_file != NULL && strlen (device_file) > 0)
 				hal_device_property_set_string (d, "linux.device_file", device_file);
@@ -4605,7 +4589,7 @@ dev_generate_add_hotplug_event (HalDevice *d)
 	const char *device_file;
 	HotplugEvent *hotplug_event;
 
-	subsystem = hal_device_property_get_string (d, "linux.subsystem");
+	subsystem = hal_device_property_get_string (d, "info.subsystem");
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 	device_file = hal_device_property_get_string (d, "linux.device_file");
 
@@ -4630,6 +4614,7 @@ dev_generate_remove_hotplug_event (HalDevice *d)
 	const char *sysfs_path;
 	HotplugEvent *hotplug_event;
 
+	/* be sure that we use linux.subsystem here because info.subsystem can differ see e.g. usb/usb_device */
 	subsystem = hal_device_property_get_string (d, "linux.subsystem");
 	sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path");
 
