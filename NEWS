@@ -1,4 +1,366 @@
 ==========
+HAL 0.5.11 
+==========
+
+Released May 08, 2008.
+
+Requirements for HAL 0.5.11:
+
+ - Linux kernel     >= 2.6.19
+ - util-linux       >= 2.12r1    (--enable-umount-helper requires patch
+                                    from RH #188193; it's in util-linux-ng 2.13)
+ - bash             >= 2.0
+ - udev             >= 111       (Linux only)
+ - dbus             >= 0.61      (with glib bindings)
+ - glib             >= 2.10.0
+ - expat            >= 1.95.8
+ - hal-info         >= 20080310  (older versions can work too)
+ - libusb           >= 0.1.10a   (optional)
+ - pciutils         >= 2.2.3     (optional)
+ - dmidecode        >= 2.7       (optional)
+ - parted           >= 1.7.1     (optional)
+ - cryptsetup-luks  >= 1.0.1     (optional, needs LUKS patches)
+ - libsmbios        >= 0.13.4    (optional, for DELL machines, Linux only)
+ - dellWirelessCtl  >= 0.13.4    (optional, for Dell machines, must live in
+                                 /usr/bin/, Linux only)
+ - gperf            >= 3.0.3-2   (optional, for Re-map multimedia keys,
+                                  Linux only)
+ - PolicyKit        >= 0.5       (optional)
+ - ConsoleKit       >= 0.2.0     (optional, needed if use PolicyKit)
+ - pm-utils         >= 0.99.2    or newer (optional)
+
+Contributors to HAL 0.5.11 :
+
+Andreas Schwab (1):
+      fixed broken alignment
+
+Andy Shevchenko (3):
+      add support for the SDIO bus
+      add support of the 'mmc.type' parameter
+      added properties description for the SDIO bus to SPEC
+
+Ben Liblit (2):
+      add support for SW_RADIO switches
+      added support for software bluetooth killswitch for ThinkPads
+
+Colin Watson (1):
+      add ps3 system bus support
+
+Dan Williams (1):
+      add a 'modem' capability and namespace
+
+Danny Kukawka (108):
+      fix GSList related memory leaks
+      added missing file from commit eb6d5b9c
+      make new scripts for WOL executable
+      quick fix for make dist/distcheck due to WOL
+      fixed missing includes partly for gcc 4.3
+      update dmi chassis types
+      fix hal to work with libsmbios v0.13.12
+      removed double definition of HAL_HELPER_TIMEOUT
+      fix possible segfault if singletons is NULL
+      cleanup device.c
+      fix endless loop on empty match rules in fdi-files
+      fix possible segfault if compiled without IDs
+      fix compiler error, remove braceright
+      added some more checks to partutil code
+      linux: add drm subsystem
+      add udi and some more checks to libhal
+      fix some whitespaces
+      remove all childs of a device if it get removed
+      don't Eject() on dm-devices
+      add Dell laptop panel device only if dcdbas is loaded
+      linux: ignore uevents for modules and driver
+      read dmi info from sysfs instead of call dmidecode
+      prevent flood syslog if battery remaining time is above 60 hours
+      cleanup set_suspend_hibernate_keys()
+      fix endless loop in storage-addon
+      don't add pci devices without pci vendor/product ID
+      fix possible segfault on fdi-cache recreation
+      fix normalised_rate if dis-/charging state is unknown
+      fix build errors with D-Bus versions < v1.0
+      lshal: use -l as default for --show
+      set laptop_panel.brightness_in_hardware=true for all Dell
+      fix percentage for empty batteries
+      close fd-leaks in hald-addon-input
+      fix fd.o bug 5865 - don't set percentag if chargelevel is 0
+      fix compiler warning from cgcc/sparse
+      fix configure for libparted
+      updated chassis types
+      fixed Dell WWAN part to work as e.g. WLAN part
+      remove function in acpi.c which get only called once
+      added error handling for hal_util_get_*int*_from_file()
+      fixed acpi addon to prevent unneeded calls
+      fixed power_supply_refresh() for batteries
+      fixed refresh_battery_slow() for power_supply batteries
+      fixed power_supply_compute_udi() to generate useful UDIs
+      fixed refresh_battery_fast() for power_supply: battery.*.rate
+      fixed device_pm_abstract_props() to set also battery.charge_level.design
+      fixed refresh_battery_fast() for power_supply devices
+      power_supply battery: moved static stuff to refresh_battery_slow()
+      fixed power_supply primary batteries to update values
+      get battery.voltage.design on ACPI power_supply batteries
+      ignore NameAcquired signal on org.freedesktop.DBus
+      fixed cpufreq addon to ignore nonrelevant messages
+      fix call hald-generate-fdi-cache, removed --force argument
+      add more useful debug output on UTF-8 problems
+      added already existing PDA namespace to the SPEC
+      removed deprecated and outdated info.bus
+      removed deprecated and outdated *.physical_device
+      removed deprecated and outdated smbios.* keys
+      fix hald-addon-dell-backlight AC detection
+      s/LIBHAL_CHECK_LIBHALCONTEXT/LIBHAL_CHECK_PARAM_VALID/
+      ignore temporary cryptsetup devices
+      added MacBook Pro 3,1 support for fdi-file
+      fix/cleanup ThinkPad bluetooth switch script code
+      vio bus: added type of vio bus and changed info.product/udi
+      updated spec for existing storage.bus types
+      generate better udis for virtual storage devices
+      fixed compiler warning from sparse/gcc
+      fixed an other compiler warning from cgcc/sparse
+      remove readded deprecated keys from code and provide a fdi-file instead
+      fixed compiler warning about different signed parameter
+      make crypto-setup policy description more clear
+      fixed possible segfault from fd.o bug #14947
+      added portable_audio_player.storage_device to spec
+      added support for Tablet PCs
+      document already existing pnp namespace in the spec
+      cleanup code, removed separate calls to set info.udi
+      cleanup poll_for_media() in addon-storage.c
+      fixed typo from commit d2b2baf9912b36def7856b6bfa5c60fc942bbcba
+      update .gitignore
+      removed unused GList *hotplug_events_blocked
+      fix policy file for org.freedesktop.hal.dockstation.*
+      update .gitignore for hald-addon-imac-backlight
+      add 10-imac-backlight.fdi to Makefile
+      Revert "fix building with g++ 4.3"
+      fixed compiler warning for 64bit related to usage of GQuark
+      fixed several addons to build correctly
+      cleanup TODO: remove implemented 'Singleton addon'
+      cleanup TODO: removed already implemented 'depends only on pm-utils'
+      autofix primary (ACPI) batteries which charge with a rate > 50 W
+      updated NEWS file for upcomming release
+      clean up Apple releted fdi-files
+      added --use-syslog option to man page
+      fixed usage of realpath()
+      fixed SPEC: s/alsa.device_pcm_class/alsa.pcm_class/
+      fixed check for return value of uname()
+      fixed quoting for DELL_WCTL
+      add support for VMBus
+      updated SPEC for VMBus
+      removed deprecated keys usb_device.*_bcd
+      fixed UDI generation for VMBus devices
+      fixed a bunch of compiler warnings from the Intel compiler
+      fixed error handling in linux scripts
+      cleaned up hal-ipw-killswitch-linux
+      fixed KillSwitch linux scripts for Dell to return better errormsg
+      fix macbook-backlight for ix86
+      fixed make distcheck for validating polkit policy files
+      fixed usage of info.subsystem and linux.subsystem
+      add documentation for the linux namespace to the spec
+
+David Woodhouse (2):
+      add vio support
+      add support for of_platform subsystem
+
+David Zeuthen (14):
+      add methods and libhal api to get all devices in properties in one call
+      provide a new org.fd.Hal.D.Storage.Removable interface for polling media
+      fix build
+      fix /sbin/umount.hal to avoid always returning error if it succeeded
+      cowardly adding back info.bus for usb and usb_device for now
+      support scsi hosts even when they don't have a physical device
+      fix warnings from polkit-policy-file-validate when using PolicyKit HEAD
+      post-release version bump to 0.5.11
+      print more debug information
+      comment out debugging spew for now
+      properly serialize the calls to 'hal-acl-tool --reconfigure'
+      also bring back a deprecated key to unbreak NetworkManager
+      remove use of at_console in the D-Bus configuration file
+      default to use CK and PK by default and print warning if PK is not found
+
+Faidon Liambotis (1):
+      add a WWAN (Wireless WAN/Cellular) killswitch for Dell laptops
+
+Florent Mertens (1):
+      linear MD device are not syncable
+
+Frederic Crozat (3):
+      fix for int_outof
+      fix addon exiting on system bus restart
+      fix crash in libhal_ctx_shutdown
+
+Georges Discry (1):
+      add ufstype= as allowed mount option for UFS
+
+Guillem Jover (12):
+      fixed possible inifinite loop when removing trailing spaces
+      fixed indentation
+      fix file descriptor leaks on error conditions
+      libhal: do not dereference *reason_why_locked if it's NULL
+      dereference pointer after checking it's not NULL
+      probe-net-bluetooth: get property from env instead of asking hald
+      switch probe-net-bluetooth to use changesets
+      libhal: fix memory leaks after out of memory conditions
+      add missing semicolon lost in the cleanup
+      libhal: unref DBusMessages as soon as possible
+      add a video4linux capabilities prober
+      partutil: make the get endian functions alignment aware
+
+Holger Macht (4):
+      add support for Wake On LAN
+      new interface org.freedesktop.Hal.Device.DockStation
+      fix dock station status detection on undock operation
+      output errors to stderr and provide a description
+
+Jeff Mitchell (1):
+      Saw that the description here hadn't been updated from long-ago changes.
+
+Jeremy Katz (1):
+      add suport for the virtio bus
+
+Joe Marcus Clarke (55):
+      handle the case where ACPI reports the rate as all ones
+      bump the copyright year
+      recover from devd being restarted
+      add support for net.80203.rate and net.freebsd.ifindex
+      probe all PCI buses
+      add support for medium_changer devices
+      add MBREXT support
+      bump the copyright year
+      remove the need for cdrtools and add MBREXT support
+      improve support for removable media USB SCSI devices
+      add a kqueue file monitor
+      add a kqueue file monitor
+      clean up some compiler warnings
+      correct a typo
+      fix numerours bugs, plug some leaks, and avoid a race condition
+      do not do volume label munging
+      remove errant '\'
+      include logger.h
+      fix build on non-Linux platforms
+      conditionalize some dependencies and fix bashisms
+      add ext3fs support for FreeBSD
+      remove redundant prototypes
+      do not check the return of g_new0
+      adapt mount and eject functions for FreeBSD
+      add Blu-Ray and HD-DVD support
+      fix a typo with HD-DVD support
+      fix a crash searching for devices
+      do not probe audio and blank CDs for file systems
+      correct some typos
+      add two new form factors
+      restore deprecated properties
+      initialize the file monitor in osspec_privileged_init
+      set the storage.removable.support_async_notification property
+      fix up the device store searching code
+      properly add the Eject method to Volumes on FreeBSD
+      correct a comment
+      add DRM device support
+      add nvidia support
+      call callouts after FDI mapping is complete
+      do not assume a SCSI cdb size of 16
+      don't shrink the cdb size
+      add video4linux support
+      add support for Philips webcam devices
+      avoid code duplication
+      properly map ATAPICAM devices to their underlying ATA device
+      re-add the info.bus properties
+      re-add net.physical_device property
+      re-remove deprecated keys
+      add large as a valid vfat mount option for FreeBSD
+      check storage.media_check_enabled before polling the device
+      properly escape the UDI
+      fix crash on 64-bit platforms
+      call libhal_device_addon_is_ready()
+      make sure the block device is added before probing it
+      add support for the CheckForMedia message
+
+Jon Oberheide (1):
+      fix input addon to handle G_IO_NVAL situations
+
+Kevin Page (1):
+      add ACL policy for Palm PDA device files
+
+Kyle McMartin (1):
+      fix hal see same battery twice from sysfs and proc
+
+Linus Walleij (1):
+      add acls to USB based audio players
+
+Lubomir Kundrak (3):
+      apply ACLs even if acl list reading failed
+      move acl-list from /var/lib/hal/ to /var/run/hal
+      fix for the acl-list patch change
+
+Marcel Holtmann (2):
+      fixed unneeded libusb linking within libhal
+      add bridge classification support
+
+Martin Pitt (1):
+      fix building with g++ 4.3
+
+Martin Szulecki (1):
+      add iMac (x86 linux) backlight addon
+
+Michael Biebl (1):
+      fix implicit pointer conversion
+
+Michael E Brown (1):
+      fix version check code for libmsbios in configure.in
+
+Olaf Hering (1):
+      added vio storage bus support
+
+Richard Hughes (1):
+      fix the battery reporting when using CONFIG_POWER_SUPPLY
+
+Rob Taylor (17):
+      add --with-linux-input-header configure switch
+      make massif-hald.sh give more useful output
+      the singleton hash not yet initialised is not an error
+      fix uninitialised memory usage in pci_add
+      bump GLib dependancy to 2.10
+      remove autogenerated file from git
+      use slices for HalProperty
+      use g_slice for hotplug events
+      process coldplug events as soon as they're generated
+      rework handling of data from udevinfo for more efficient memory usage
+      use GQuarks for property keys.
+      process non-dependant hotplug events in parallel
+      set 'linux.sysfs_path' as an indexed property
+      compute udis that are unique in the gdl and tdl
+      Fix memory leak in property_index_check_all
+      Add backwards compat wrapper for g_hash_table_get_keys
+      Revert "process non-dependant hotplug events in parallel"
+
+Sjoerd Simons (12):
+      assign pid to a gint64 before passing it as an _INT64 in a dbus message
+      use GString to convert a strlist propery to string instead of a static buffer
+      when initial disc type detection fails fall back to a alternate detection method
+      fix the keyboard addon to not ignore key repeat events
+      always define DELL_WCTL
+      implement osspec_privileged_init in the dummy backend
+      get rid of PATH_MAX users to allow compilation on the Hurd
+      let hal-system-power-pmu return FALSE on hurd
+      ensure match rules are always stored before writing the jump_position in the cache
+      add missing functions in the dummy osspec backend
+      get battery serial number from sysfs
+      make portable_audio_player.access_method.protocols mandatory and clarify  portable_audio_player.[drivername].protocol
+
+Sven Neumann (1):
+      use g_timeout_add_seconds() where appropriate if glib 2.14 is available
+
+Thadeu Lima de Souza Cascardo (2):
+      fixed a typo in variable name: is_mah -> is_mWh
+      fixed typo in power_supply code
+
+Vinay Reddy (1):
+      Add input.mouse capability to VMware's absolute USB mouse
+
+
+
+==========
 HAL 0.5.10 "Humanity's children are returning home"
 ==========
 
