@@ -3370,7 +3370,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
-                <literal>system.product</literal> (string)
+                <literal>system.hardware.product</literal> (string)
               </entry>
               <entry></entry>
               <entry>No</entry>
@@ -3476,6 +3476,46 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>No</entry>
               <entry>
                 The chassis type of the machine.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.board.vendor</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The name of the manufacturer of the base board.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.board.product</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The product name of the base board.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.board.version</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The version of the base board.
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.board.serial</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+                The serial number of the base board.
               </entry>
             </row>
           </tbody>

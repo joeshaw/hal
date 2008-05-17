@@ -45,6 +45,7 @@
 #define DMIPARSER_STATE_BIOS		1
 #define DMIPARSER_STATE_SYSTEM		2
 #define DMIPARSER_STATE_CHASSIS		3
+#define DMIPARSER_STATE_BOARD		4
 
 #define strbegin(buf, str) (strncmp (buf, str, strlen (str)) == 0)
 
@@ -233,6 +234,8 @@ main (int argc, char *argv[])
 				dmiparser_state = DMIPARSER_STATE_SYSTEM;
 			else if (!dmiparser_done_chassis && strbegin (buf, "Chassis Information"))
 				dmiparser_state = DMIPARSER_STATE_CHASSIS;
+			else if (!dmiparser_done_chassis && strbegin (buf, "Base Board Information"))
+				dmiparser_state = DMIPARSER_STATE_BOARD;
 			else
 				/*
 				 * We do not match the other sections,
@@ -273,6 +276,12 @@ main (int argc, char *argv[])
 			setstr (nbuf, "Manufacturer:", "system.chassis.manufacturer");
 			setstr (nbuf, "Type:", "system.chassis.type");
 			dmiparser_done_chassis = TRUE;
+		} else if (dmiparser_state == DMIPARSER_STATE_BOARD) {
+			setstr (nbuf, "Manufacturer:", "system.board.vendor");
+			setstr (nbuf, "Product Name:", "system.board.product");
+			setstr (nbuf, "Version:", "system.board.version");
+			setstr (nbuf, "Serial Number:", "system.board.serial");
+			dmiparser_done_system = TRUE;
 		}
 	}
 

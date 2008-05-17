@@ -329,6 +329,7 @@ osspec_privileged_init_preparse_set_dmi (gboolean set, HalDevice *d)
 	gchar *buf;
 	static char *product_serial;
 	static char *product_uuid;
+	static char *board_serial;
 	static gboolean parsed = FALSE; 
 
 	if (g_file_test (DMI_SYSFS_PATH, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
@@ -338,12 +339,15 @@ osspec_privileged_init_preparse_set_dmi (gboolean set, HalDevice *d)
 				product_serial = g_strdup ( buf );
 			if ((buf = hal_util_get_string_from_file(DMI_SYSFS_PATH, "product_uuid")) != NULL)
 				product_uuid = g_strdup ( buf );
+			if ((buf = hal_util_get_string_from_file(DMI_SYSFS_PATH, "board_serial")) != NULL)
+				board_serial = g_strdup ( buf );
 
 			parsed = TRUE;
 		} else {
 			if (d != NULL && parsed) {
 				hal_device_property_set_string (d, "system.hardware.serial", product_serial);		
 				hal_device_property_set_string (d, "system.hardware.uuid", product_uuid);
+				hal_device_property_set_string (d, "system.board.serial", board_serial);
 				g_free (product_serial);
 				g_free (product_uuid);
 				parsed = FALSE;
@@ -740,6 +744,9 @@ decode_dmi_from_sysfs (HalDevice *d)
 		hal_util_set_string_from_file(d, "system.hardware.product", DMI_SYSFS_PATH, "product_name");
 		hal_util_set_string_from_file(d, "system.hardware.version", DMI_SYSFS_PATH, "product_version");
 		hal_util_set_string_from_file(d, "system.chassis.manufacturer", DMI_SYSFS_PATH, "chassis_vendor");
+		hal_util_set_string_from_file(d, "system.board.product", DMI_SYSFS_PATH, "board_name");
+		hal_util_set_string_from_file(d, "system.board.version", DMI_SYSFS_PATH, "board_version");
+		hal_util_set_string_from_file(d, "system.board.vendor", DMI_SYSFS_PATH, "board_vendor");
 		computer_dmi_map (d, FALSE);
 
 		computer_probing_helper_done (d);
