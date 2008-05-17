@@ -43,7 +43,7 @@
               <entry>
                 <literal>info.subsystem</literal> (string)
               </entry>
-              <entry>pci, usb, ide_host, ide, block, usb, usbif, scsi_host, scsi</entry>
+              <entry>example: pci, usb, ide_host, ide, block, usbif, scsi_host, scsi</entry>
               <entry>Yes</entry>
               <entry>Describes what subsystem the device is connected to</entry>
             </row>
