@@ -372,17 +372,7 @@
     <para>
       The fundamental idea about HAL is that all ''interesting''
       information about hardware that a desktop application needs,
-      can be obtained by querying HAL. Below is a screenshot of a
-      simple device manager application shipped with HAL
-      called <literal>hal-device-manager</literal>.  This
-      application is communicating with the HAL daemon and displays
-      the tree of device objects. The shown properties are for a
-      device object representing a harddisk.
-    </para>
-    <para>
-      <inlinegraphic fileref="hal-devices1.png" format="PNG"/>
-    </para>
-    <para>
+      can be obtained by querying HAL. 
     </para>
   </sect1>
 

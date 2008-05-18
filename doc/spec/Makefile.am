@@ -1,7 +1,6 @@
 
 FIGURE_FILES =				\
-	hal-arch.png			\
-	hal-devices1.png
+	hal-arch.png
 
 SPEC_XML_EXTRA_FILES =			\
 	hal-spec-introduction.xml	\
