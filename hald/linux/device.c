@@ -533,7 +533,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		const char *parent_subsys;
 		char bridge_path[HAL_PATH_MAX];
 		char wireless_path[HAL_PATH_MAX];
-		char wiphy_path[HAL_PATH_MAX];
+		char phy80211_path[HAL_PATH_MAX];
 		struct stat s;
 		dbus_uint64_t mac_address = 0;
 
@@ -554,9 +554,10 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		}
 
 		snprintf (bridge_path, HAL_PATH_MAX, "%s/bridge", sysfs_path);
+		/* wireless extensions */
 		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
-		/* wireless dscape stack e.g. from rt2500pci driver*/
-		snprintf (wiphy_path, HAL_PATH_MAX, "%s/wiphy", sysfs_path);
+		/* cfg80211 */
+		snprintf (phy80211_path, HAL_PATH_MAX, "%s/phy80211", sysfs_path);
 		parent_subsys = hal_device_property_get_string (parent_dev, "info.subsystem");
 
 		if (parent_subsys && strcmp(parent_subsys, "bluetooth") == 0) {
@@ -565,7 +566,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 			hal_device_add_capability (d, "net.bluetooth");
 			hal_device_property_set_uint64 (d, "net.bluetooth.mac_address", mac_address);
 		} else if ((stat (wireless_path, &s) == 0 && (s.st_mode & S_IFDIR)) ||
-			(stat (wiphy_path, &s) == 0 && (s.st_mode & S_IFDIR))) {
+			(stat (phy80211_path, &s) == 0 && (s.st_mode & S_IFDIR))) {
 			hal_device_property_set_string (d, "info.product", "WLAN Interface");
 			hal_device_property_set_string (d, "info.category", "net.80211");
 			hal_device_add_capability (d, "net.80211");
