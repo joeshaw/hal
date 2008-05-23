@@ -45,6 +45,10 @@
   #include <linux/input.h>
 #endif
 
+/* for wireless extensions */
+#include <linux/if.h>
+#include <linux/wireless.h>
+
 #include <dbus/dbus.h>
 #include <dbus/dbus-glib.h>
 
@@ -532,10 +536,14 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		const char *addr;
 		const char *parent_subsys;
 		char bridge_path[HAL_PATH_MAX];
-		char wireless_path[HAL_PATH_MAX];
 		char phy80211_path[HAL_PATH_MAX];
 		struct stat s;
 		dbus_uint64_t mac_address = 0;
+		int ioctl_fd;
+		struct iwreq iwr;
+
+		ioctl_fd = socket (PF_INET, SOCK_DGRAM, 0);
+		strncpy (iwr.ifr_ifrn.ifrn_name, ifname, IFNAMSIZ);
 
 		addr = hal_device_property_get_string (d, "net.address");
 		if (addr != NULL) {
@@ -554,8 +562,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		}
 
 		snprintf (bridge_path, HAL_PATH_MAX, "%s/bridge", sysfs_path);
-		/* wireless extensions */
-		snprintf (wireless_path, HAL_PATH_MAX, "%s/wireless", sysfs_path);
 		/* cfg80211 */
 		snprintf (phy80211_path, HAL_PATH_MAX, "%s/phy80211", sysfs_path);
 		parent_subsys = hal_device_property_get_string (parent_dev, "info.subsystem");
@@ -565,7 +571,7 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 			hal_device_property_set_string (d, "info.category", "net.bluetooth");
 			hal_device_add_capability (d, "net.bluetooth");
 			hal_device_property_set_uint64 (d, "net.bluetooth.mac_address", mac_address);
-		} else if ((stat (wireless_path, &s) == 0 && (s.st_mode & S_IFDIR)) ||
+		} else if ((ioctl (ioctl_fd, SIOCGIWNAME, &iwr) == 0) ||
 			(stat (phy80211_path, &s) == 0 && (s.st_mode & S_IFDIR))) {
 			hal_device_property_set_string (d, "info.product", "WLAN Interface");
 			hal_device_property_set_string (d, "info.category", "net.80211");
@@ -582,6 +588,8 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 			hal_device_add_capability (d, "net.80203");
 			hal_device_property_set_uint64 (d, "net.80203.mac_address", mac_address);
 		}
+
+		close (ioctl_fd);
 	} else if (media_type == ARPHRD_IRDA) {
 		hal_device_property_set_string (d, "info.product", "Networking Interface");
 		hal_device_property_set_string (d, "info.category", "net.irda");
