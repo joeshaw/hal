@@ -706,6 +706,8 @@ lock_hal_mtab (void)
 	if (lock_mtab_fd < 0)
 		return FALSE;
 
+	fcntl(lock_mtab_fd, F_SETFD, FD_CLOEXEC);
+
 tryagain:
 #if sun
 	if (lockf (lock_mtab_fd, F_LOCK, 0) != 0) {
