@@ -143,10 +143,16 @@ handle_ibm_acpi_events (LibHalContext *ctx, int type, int event)
 				button = "Fn+Backspace";
 				break;
 			case 4110: /* Fn+Insert*/ 
-				button = "Fn=Insert";
+				button = "Fn+Insert";
 				break;
 			case 4111: /* Fn+Delete*/ 
 				button = "Fn+Delete";
+				break;
+			case 4116: /* Fn+Space */
+				button = "zoom";
+				break;
+			case 4120: /* ThinkPad */
+				button = "ThinkPad";
 				break;
 			case 20489: /* Tablet rotated */
 				button = "tabletpc_rotate_180";
