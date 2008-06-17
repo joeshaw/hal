@@ -65,7 +65,7 @@
 <!ELEMENT remove (#PCDATA) >
 <!ATTLIST remove
     key    CDATA #REQUIRED
-    type   (strlist) #REQUIRED
+    type   (strlist) #IMPLIED
 >
 
 <!ELEMENT spawn (#PCDATA) >
