@@ -4679,7 +4679,7 @@ do_introspect (DBusConnection  *connection,
 					const char *name;
 					const char *sig;
 					const char *argnames;
-					char **args;
+					gchar **args;
 					unsigned int n;
 					unsigned int m;
 
@@ -4722,6 +4722,7 @@ do_introspect (DBusConnection  *connection,
 						xml, 
 						"    </method>\n");
 
+					g_strfreev(args);
 				}
 				
 

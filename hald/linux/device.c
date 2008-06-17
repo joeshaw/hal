@@ -93,7 +93,7 @@ static int
 input_str_to_bitmask (const char *s, long *bitmask, size_t max_size)
 {
 	int i, j;
-	char **v;
+	gchar **v;
 	int num_bits_set = 0;
 
 	memset (bitmask, 0, max_size);
@@ -109,6 +109,7 @@ input_str_to_bitmask (const char *s, long *bitmask, size_t max_size)
 			val &= (val - 1);
 		}
 	}
+	g_strfreev(v);
 
 	return num_bits_set;
 }
