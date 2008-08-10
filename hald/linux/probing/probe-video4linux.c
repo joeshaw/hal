@@ -100,26 +100,28 @@ main (int argc, char *argv[])
 			libhal_device_add_capability (ctx, udi, "video4linux.tuner", &error);
 		if ((v2cap.capabilities & V4L2_CAP_RADIO) > 0)
 			libhal_device_add_capability (ctx, udi, "video4linux.radio", &error);
-	} else
+	} else {
 		HAL_DEBUG (("ioctl VIDIOC_QUERYCAP failed"));
 
-	if (ioctl (fd, VIDIOCGCAP, &v1cap) == 0) {
-		libhal_changeset_set_property_string (cset,
-		                                      "video4linux.version", "1");
+		if (ioctl (fd, VIDIOCGCAP, &v1cap) == 0) {
+			libhal_changeset_set_property_string (cset,
+			                                      "video4linux.version", "1");
 
-		libhal_changeset_set_property_string (cset,
-		                                      "info.product", v1cap.name);
+			libhal_changeset_set_property_string (cset,
+			                                      "info.product", v1cap.name);
 
-		if ((v1cap.type & VID_TYPE_CAPTURE) > 0)
-			libhal_device_add_capability (ctx, udi, "video4linux.video_capture", &error);
-		if ((v1cap.type & VID_TYPE_OVERLAY) > 0)
-			libhal_device_add_capability (ctx, udi, "video4linux.video_overlay", &error);
-		if (v1cap.audios > 0)
-			libhal_device_add_capability (ctx, udi, "video4linux.audio", &error);
-		if ((v1cap.type & VID_TYPE_TUNER) > 0)
-			libhal_device_add_capability (ctx, udi, "video4linux.tuner", &error);
-	} else
-		HAL_DEBUG (("ioctl VIDIOCGCAP failed"));
+			if ((v1cap.type & VID_TYPE_CAPTURE) > 0)
+				libhal_device_add_capability (ctx, udi, "video4linux.video_capture", &error);
+			if ((v1cap.type & VID_TYPE_OVERLAY) > 0)
+				libhal_device_add_capability (ctx, udi, "video4linux.video_overlay", &error);
+			if (v1cap.audios > 0)
+				libhal_device_add_capability (ctx, udi, "video4linux.audio", &error);
+			if ((v1cap.type & VID_TYPE_TUNER) > 0)
+				libhal_device_add_capability (ctx, udi, "video4linux.tuner", &error);
+		} else {
+			HAL_DEBUG (("ioctl VIDIOCGCAP failed"));
+		}
+	}
 
 	libhal_device_commit_changeset (ctx, cset, &error);
 	libhal_device_free_changeset (cset);
