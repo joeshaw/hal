@@ -1457,13 +1457,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 * (block size requires opening the device file)
 		 */
 		hal_device_property_set_int (d, "volume.block_size", 512);
-		if (!hal_util_set_int_from_file (d, "volume.num_blocks", sysfs_path_real, "size", 0)) {
+		if (!hal_util_set_uint64_from_file (d, "volume.num_blocks", sysfs_path_real, "size", 0)) {
 			HAL_INFO (("Ignoring hotplug event - cannot read 'size'"));
 			goto error;
 		}
 		hal_device_property_set_uint64 (
 			d, "volume.size",
-			((dbus_uint64_t)(512)) * ((dbus_uint64_t)(hal_device_property_get_int (d, "volume.num_blocks"))));
+			((dbus_uint64_t)(512)) * ((dbus_uint64_t)(hal_device_property_get_uint64 (d, "volume.num_blocks"))));
 		/* TODO: move to prober? */
 		if (is_physical_partition) {
 			guint64 start_block;
