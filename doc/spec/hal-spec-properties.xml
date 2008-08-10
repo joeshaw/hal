@@ -7396,6 +7396,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>power_management.quirk.pci_save</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>saving the PCI config space of the graphic card before suspend, restoring it after</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>power_management.quirk.radeon_off</literal> (bool)
               </entry>
               <entry></entry>
