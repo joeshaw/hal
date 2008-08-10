@@ -1342,6 +1342,27 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				}
 			}
 		}
+		else if (strcmp (parent_bus, "xen") == 0) {
+			char buf[256];
+			gchar *media;
+
+			snprintf (buf, sizeof (buf), "%s/%s", sysfs_path_real, "device");
+			if ((media = hal_util_get_string_from_file (buf, "media")) != NULL) {
+				if (strcmp (media, "cdrom") == 0) {
+					hal_device_property_set_string (d, "info.product", "Xen Virtual CD");
+					hal_device_property_set_string (d, "storage.drive_type", media);
+					hal_device_property_set_bool (d, "storage.media_check_enabled", FALSE);
+				} else if (strcmp (media, "floppy") == 0) {
+					hal_device_property_set_string (d, "info.product", "Xen Virtual Floppy");
+					hal_device_property_set_string (d, "storage.drive_type", media);
+					hal_device_property_set_bool (d, "storage.media_check_enabled", FALSE);
+				}
+				else {
+					hal_device_property_set_string (d, "info.product", "Xen Virtual Disk");
+					hal_device_property_set_string (d, "storage.drive_type", "disk");
+				}
+			}
+		}
 
 		hal_device_property_set_string (d, "info.category", "storage");
 		hal_device_add_capability (d, "storage");
