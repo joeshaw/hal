@@ -4511,8 +4511,11 @@ hotplug_event_begin_remove_dev (const gchar *subsystem, const gchar *sysfs_path,
 
 				for (tmp = children; tmp != NULL; tmp = g_slist_next (tmp)) {
 			                child = HAL_DEVICE (tmp->data);
-					HAL_INFO(("Remove now: %s as child of: %s", hal_device_get_udi(child), hal_device_get_udi(d)));
-					hal_util_callout_device_remove (child, dev_callouts_remove_child_done, NULL, NULL);
+					/* find childs without sysfs path as e.g. spawned devices*/
+					if (hal_device_property_get_string(child, "linux.sysfs_path") == NULL) {
+						HAL_INFO(("Remove now: %s as child of: %s", hal_device_get_udi(child), hal_device_get_udi(d)));
+						hal_util_callout_device_remove (child, dev_callouts_remove_child_done, NULL, NULL);
+					}
                 		}
 				g_slist_free (children);
 
