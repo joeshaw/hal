@@ -45,6 +45,7 @@
 
 #include "libhal/libhal.h"
 #include "../../logger.h"
+#include "../../util_helper_priv.h"
 
 static LibHalContext *halctx = NULL;
 static GMainLoop *main_loop;
@@ -218,60 +219,6 @@ read_keyboard_backlight (void)
 }
 #endif
 
-static gboolean
-check_priv (DBusConnection *connection, 
-            DBusMessage *message, 
-            const char *udi, 
-            const char *action)
-#ifdef HAVE_POLKIT
-{
-        gboolean ret;
-        char *polkit_result;
-        const char *invoked_by_syscon_name;
-        DBusMessage *reply;
-        DBusError error;
-
-        ret = FALSE;
-        polkit_result = NULL;
-
-        invoked_by_syscon_name = dbus_message_get_sender (message);
-        
-        dbus_error_init (&error);
-        polkit_result = libhal_device_is_caller_privileged (halctx,
-                                                            udi,
-                                                            action,
-                                                            invoked_by_syscon_name,
-                                                            &error);
-        if (polkit_result == NULL) {
-                reply = dbus_message_new_error_printf (message,
-                                                       "org.freedesktop.Hal.Device.Error",
-                                                       "Cannot determine if caller is privileged for action '%s'",
-                                                       action);
-                dbus_connection_send (connection, reply, NULL);
-                goto out;
-        }
-        if (strcmp (polkit_result, "yes") != 0) {
-
-                reply = dbus_message_new_error_printf (message,
-                                                       "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
-                                                       "%s %s <-- (action, result)",
-                                                       action, polkit_result);
-                dbus_connection_send (connection, reply, NULL);
-                goto out;
-        }
-
-        ret = TRUE;
-
-out:
-        if (polkit_result != NULL)
-                libhal_free_string (polkit_result);
-        return ret;
-}
-#else
-{
-        return TRUE;
-}
-#endif
 
 static int last_keyboard_brightness = -1;
 
@@ -298,7 +245,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					 "SetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
+                if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
                         goto error;
 
 		dbus_error_init (&err);
@@ -335,7 +282,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
+                if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
                         goto error;
 
 		dbus_error_init (&err);
@@ -366,7 +313,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness[2];
 
-                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.light-sensor"))
+                if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.light-sensor"))
                         goto error;
 
 		brightness[0] = read_light_sensor (FALSE); /* right */
@@ -393,7 +340,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"org.freedesktop.Hal.Device.KeyboardBacklight", 
 						"GetBrightness")) {
 
-                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
+                if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
                         goto error;
 
 		/* I can't get this working so just cache last SetBrightness value :-/ */
@@ -438,7 +385,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"SetBrightness")) {
 		int brightness;
 
-                if (!check_priv (connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
+                if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
                         goto error;
 
 		dbus_error_init (&err);

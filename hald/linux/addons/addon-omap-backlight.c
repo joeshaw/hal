@@ -48,7 +48,7 @@
 #include "libhal/libhal.h"
 #include "../../logger.h"
 #include "../../util_helper.h"
-
+#include "../../util_helper_priv.h"
 
 static GMainLoop *main_loop;
 static LibHalContext *halctx = NULL;
@@ -136,57 +136,6 @@ write_backlight (struct backlight * bl, int level)
 	close (fd);
 }
 
-static gboolean
-check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, const char *privilege)
-#ifdef HAVE_POLKIT
-{
-	gboolean ret;
-	char *polkit_result;
-	const char *invoked_by_syscon_name;
-	DBusMessage *reply;
-	DBusError error;
-
-	ret = FALSE;
-	polkit_result = NULL;
-
-	invoked_by_syscon_name = dbus_message_get_sender (message);
-
-	dbus_error_init (&error);
-	polkit_result = libhal_device_is_caller_privileged (halctx,
-	                                                    udi,
-	                                                    privilege,
-	                                                    invoked_by_syscon_name,
-	                                                    &error);
-	if (polkit_result == NULL) {
-		reply = dbus_message_new_error_printf (message,
-		                                       "org.freedesktop.Hal.Device.Error",
-		                                       "Cannot determine if caller is privileged",
-		                                       privilege, polkit_result);
-		dbus_connection_send (connection, reply, NULL);
-		goto out;
-	}
-
-	if (strcmp (polkit_result, "yes") != 0) {
-		reply = dbus_message_new_error_printf (message,
-		                                       "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
-		                                       "%s %s <-- (privilege, result)",
-		                                       privilege, polkit_result);
-		dbus_connection_send (connection, reply, NULL);
-		goto out;
-	}
-
-	ret = TRUE;
-
-out:
-	if (polkit_result != NULL)
-		libhal_free_string (polkit_result);
-	return ret;
-}
-#else
-{
-	return TRUE;
-}
-#endif
 
 /* DBus filter function */
 static DBusHandlerResult
@@ -195,7 +144,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	DBusError err;
 	DBusMessage *reply;
 
-	if (!check_priv (connection, message, dbus_message_get_path (message),
+	if (!check_priv (halctx, connection, message, dbus_message_get_path (message),
 	                 "org.freedesktop.hal.power-management.lcd-panel")) {
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}

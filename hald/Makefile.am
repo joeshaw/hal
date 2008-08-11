@@ -100,7 +100,8 @@ endif
  ## Red Hat end
 
 EXTRA_DIST = \
-	hald_marshal.list hald-cache-test.sh \
+	util_helper_priv.h	util_helper_priv.c	\
+	hald_marshal.list 	hald-cache-test.sh 	\
 	$(SCRIPT_IN_FILES)
 
 hald_marshal.h: hald_marshal.list

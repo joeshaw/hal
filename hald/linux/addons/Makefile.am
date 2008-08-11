@@ -31,32 +31,32 @@ endif
 if BUILD_OMAP
 libexec_PROGRAMS  +=			\
 	hald-addon-omap-backlight
-hald_addon_omap_backlight_SOURCES = addon-omap-backlight.c ../../logger.c ../../util_helper.c
+hald_addon_omap_backlight_SOURCES = addon-omap-backlight.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c
 hald_addon_omap_backlight_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 endif
 
 if BUILD_IMAC
 libexec_PROGRAMS += hald-addon-imac-backlight
-hald_addon_imac_backlight_SOURCES = addon-imac-backlight.c ../../logger.c
+hald_addon_imac_backlight_SOURCES = addon-imac-backlight.c ../../logger.c ../../util_helper_priv.c
 hald_addon_imac_backlight_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 endif
 
 if BUILD_MACBOOKPRO
 libexec_PROGRAMS += hald-addon-macbookpro-backlight
-hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../logger.c
+hald_addon_macbookpro_backlight_SOURCES = addon-macbookpro-backlight.c ../../logger.c ../../util_helper_priv.c
 hald_addon_macbookpro_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci -lz @GLIB_LIBS@
 endif
 
 if BUILD_MACBOOK
 libexec_PROGRAMS += hald-addon-macbook-backlight
-hald_addon_macbook_backlight_SOURCES = addon-macbook-backlight.c ../../logger.c ../../util_helper.c
+hald_addon_macbook_backlight_SOURCES = addon-macbook-backlight.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c
 hald_addon_macbook_backlight_LDADD = $(top_builddir)/libhal/libhal.la -lpci -lz @GLIB_LIBS@
 endif
 
 if BUILD_CPUFREQ
 libexec_PROGRAMS += hald-addon-cpufreq
 hald_addon_cpufreq_SOURCES = addon-cpufreq.c addon-cpufreq.h addon-cpufreq-userspace.h \
-	                     addon-cpufreq-userspace.c ../../logger.c
+	                     addon-cpufreq-userspace.c ../../logger.c ../../util_helper_priv.c
 hald_addon_cpufreq_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@ @POLKIT_LIBS@
 endif
 

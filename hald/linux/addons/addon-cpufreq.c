@@ -38,6 +38,7 @@
 #include "addon-cpufreq-userspace.h"
 #include "libhal/libhal.h"
 #include "../../logger.h"
+#include "../../util_helper_priv.h"
 
 #define MAX_LINE_SIZE				255
 #define CPUFREQ_POLKIT_PRIVILEGE		"org.freedesktop.hal.power-management.cpufreq"
@@ -908,56 +909,6 @@ static gboolean dbus_raise_error(DBusConnection *connection, DBusMessage *messag
 	return TRUE;
 }
 
-#ifdef HAVE_POLKIT
-/** 
- * dbus_is_privileged:
- * @connection:		connection to D-Bus
- * @message:		Message
- * @error:		the error
- *
- * Returns: 		TRUE if the caller is privileged
- *
- * checks if caller of message possesses the CPUFREQ_POLKIT_PRIVILGE 
- */
-static gboolean 
-dbus_is_privileged (DBusConnection *connection, DBusMessage *message, DBusError *error)
-{
-        gboolean ret;
-        char *polkit_result;
-        const char *invoked_by_syscon_name;
-
-        ret = FALSE;
-        polkit_result = NULL;
-
-        invoked_by_syscon_name = dbus_message_get_sender (message);
-        
-        polkit_result = libhal_device_is_caller_privileged (halctx,
-                                                            udi,
-                                                            CPUFREQ_POLKIT_PRIVILEGE,
-                                                            invoked_by_syscon_name,
-                                                            error);
-        if (polkit_result == NULL) {
-		dbus_raise_error (connection, message, CPUFREQ_ERROR_GENERAL,
-                                  "Cannot determine if caller is privileged");
-                goto out;
-        }
-        if (strcmp (polkit_result, "yes") != 0) {
-
-		dbus_raise_error (connection, message, 
-                                  "org.freedesktop.Hal.Device.PermissionDeniedByPolicy",
-                                  "%s %s <-- (action, result)",
-                                  CPUFREQ_POLKIT_PRIVILEGE, polkit_result);
-                goto out;
-        }
-
-        ret = TRUE;
-
-out:
-        if (polkit_result != NULL)
-                libhal_free_string (polkit_result);
-        return ret;
-}
-#endif
 
 /** 
  * dbus_send_reply:
@@ -1108,7 +1059,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 		return DBUS_HANDLER_RESULT_HANDLED;
 
 #ifdef HAVE_POLKIT
-	if (!dbus_is_privileged(connection, message, &dbus_error))
+	if (!check_priv (halctx, connection, message, dbus_message_get_path (message), CPUFREQ_POLKIT_PRIVILEGE))
 		return DBUS_HANDLER_RESULT_HANDLED;
 #endif
 
