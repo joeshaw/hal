@@ -10,6 +10,7 @@ AM_CPPFLAGS = \
 
 if HALD_COMPILE_LINUX
 libexec_PROGRAMS  = 			\
+	hald-addon-generic-backlight	\
 	hald-addon-hid-ups 		\
 	hald-addon-input 		\
 	hald-addon-storage
@@ -92,3 +93,7 @@ hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_addon_storage_SOURCES = addon-storage.c ../../logger.c ../../util_helper.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
+
+hald_addon_generic_backlight_SOURCES = addon-generic-backlight.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c 
+hald_addon_generic_backlight_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
+
