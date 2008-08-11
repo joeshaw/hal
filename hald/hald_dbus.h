@@ -93,8 +93,8 @@ void device_send_signal_interface_lock_released (HalDevice *device, const char *
 
 void device_send_signal_property_modified (HalDevice *device,
 					   const char *key,
-					   dbus_bool_t removed,
-					   dbus_bool_t added);
+					   dbus_bool_t added,
+					   dbus_bool_t removed);
 void device_send_signal_condition (HalDevice *device,
 				   const char *condition_name,
 				   const char *condition_details);

@@ -620,7 +620,7 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
         <tbody>
           <row>
             <entry>PropertyModified</entry>
-            <entry>Int num_changes, Array of struct {String property_name, Bool added, Bool removed}</entry>
+            <entry>Int num_changes, Array of struct {String property_name, Bool removed, Bool added}</entry>
             <entry>
               One or more properties on the device object have changed.
             </entry>
