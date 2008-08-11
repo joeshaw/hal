@@ -530,6 +530,10 @@ get_processor_model_name (gint proc_num)
 				}
 			}
 		}
+
+		if (lines) {
+			g_strfreev (lines);
+		}
 	}
 	else {
 		HAL_ERROR (("Couldn't open /proc/cpuinfo: %s", error->message));
