@@ -159,7 +159,7 @@ get_merge_type (const char *str)
 		return MERGE_BOOLEAN;
 	if (strcmp (str, "int") == 0)
 		return MERGE_INT32;
-	if (strcmp (str, "unint64") == 0)
+	if (strcmp (str, "uint64") == 0)
 		return MERGE_UINT64;
 	if (strcmp (str, "double") == 0)
 		return MERGE_DOUBLE;
