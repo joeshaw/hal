@@ -12,6 +12,7 @@ hal-find-by-property
 hal-get-property
 hal-set-property
 hal-is-caller-locked-out
+hal-is-caller-privileged
 hal-lock
 hal-luks-remove
 hal-luks-setup
