@@ -1403,7 +1403,6 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "block.storage_device", hal_device_get_udi (parent));
 
 		/* defaults */
-		hal_device_property_set_string (d, "storage.model", "");
 		hal_device_property_set_string (d, "volume.fstype", "");
 		hal_device_property_set_string (d, "volume.fsusage", "");
 		hal_device_property_set_string (d, "volume.fsversion", "");
