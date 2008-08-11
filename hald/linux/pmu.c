@@ -39,6 +39,7 @@
 
 #include "hotplug.h"
 #include "osspec_linux.h"
+#include "device.h"
 
 #include "pmu.h"
 
@@ -357,16 +358,18 @@ pmu_synthesize_hotplug_events (void)
 		pmu_synthesize_item ("/proc/pmu/info", PMU_TYPE_LAPTOP_PANEL);
 	}
 
-	/* setup timer for things that we need to poll */
+	if (!_have_sysfs_power_supply) {
+	  	/* setup timer for things that we need to poll */
 #ifdef HAVE_GLIB_2_14
-	g_timeout_add_seconds (PMU_POLL_INTERVAL,
-                               pmu_poll,
-                               NULL);
+		g_timeout_add_seconds (PMU_POLL_INTERVAL,
+                	               pmu_poll,
+                        	       NULL);
 #else
-	g_timeout_add (1000 * PMU_POLL_INTERVAL,
-		       pmu_poll,
-		       NULL);
+		g_timeout_add (1000 * PMU_POLL_INTERVAL,
+			       pmu_poll,
+			       NULL);
 #endif
+	}
 
 out:
 	return ret;
@@ -376,6 +379,10 @@ static HalDevice *
 pmu_generic_add (const gchar *pmu_path, HalDevice *parent, PMUDevHandler *handler)
 {
 	HalDevice *d;
+
+	if (((handler->pmu_type == PMU_TYPE_BATTERY) || (handler->pmu_type == PMU_TYPE_AC_ADAPTER)) && _have_sysfs_power_supply)
+		return NULL;
+
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.pmu_path", pmu_path);
 	hal_device_property_set_int (d, "linux.pmu_type", handler->pmu_type);
