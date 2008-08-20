@@ -273,22 +273,27 @@ handle_match (struct rule *rule, HalDevice *d)
 	char prop_to_check[HAL_PATH_MAX];
 	const char *key = rule->key;
 	const char *value = (char *)RULES_PTR(rule->value_offset);
+	const char *d_udi;
+	
+	d_udi = hal_device_get_udi (d);
 
 	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
 	if (!resolve_udiprop_path (key,
-				   hal_device_get_udi (d),
+				   d_udi,
 				   udi_to_check, sizeof (udi_to_check),
 				   prop_to_check, sizeof (prop_to_check))) {
 		/*HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, value));*/
 		return FALSE;
 	}
 
-	d = hal_device_store_find (hald_get_gdl (), udi_to_check);
-	if (d == NULL)
-		d = hal_device_store_find (hald_get_tdl (), udi_to_check);
-	if (d == NULL) {
-		HAL_ERROR (("Could not find device with udi '%s'", udi_to_check));
-		return FALSE;
+	if (strcmp(udi_to_check, d_udi)) {
+		d = hal_device_store_find (hald_get_gdl (), udi_to_check);
+		if (d == NULL)
+			d = hal_device_store_find (hald_get_tdl (), udi_to_check);
+		if (d == NULL) {
+			HAL_ERROR (("Could not find device with udi '%s'", udi_to_check));
+			return FALSE;
+		}
 	}
 
 	switch (rule->type_match) {
