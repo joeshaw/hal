@@ -7,6 +7,7 @@ Makefile.in
 hald-addon-acpi
 hald-addon-generic-backlight
 hald-addon-hid-ups
+hald-addon-ipw-killswitch
 hald-addon-pmu
 hald-addon-storage
 hald-addon-usb-csr
