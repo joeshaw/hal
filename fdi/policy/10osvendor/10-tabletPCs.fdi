@@ -26,13 +26,12 @@
       <!-- WACOM Tablets -->
       <match key="usb_device.product_id" int_outof="0x90;0x93;0x9a">
 	<!-- TabletPCs with USB Wacom Tablets -->
-          <match key="/org/freedesktop/Hal/devices/computer:system.formfactor" compare_ne="laptop">
-	    <!-- set the correct formfactor if not already laptop -->
-	    <merge key="/org/freedesktop/Hal/devices/computer:system.formfactor" type="string">laptop</merge> 
-	  </match>
-	  <!-- set the correct subtype -->
-	  <merge key="/org/freedesktop/Hal/devices/computer:system.formfactor.subtype" type="string">tabletpc</merge>
-        </match>
+        <match key="/org/freedesktop/Hal/devices/computer:system.formfactor" compare_ne="laptop">
+	  <!-- set the correct formfactor if not already laptop -->
+	  <merge key="/org/freedesktop/Hal/devices/computer:system.formfactor" type="string">laptop</merge> 
+	</match>
+	<!-- set the correct subtype -->
+	<merge key="/org/freedesktop/Hal/devices/computer:system.formfactor.subtype" type="string">tabletpc</merge>
       </match>
     </match>
 
