@@ -5,6 +5,7 @@ Makefile.in
 *.lo
 *.la
 hald-addon-acpi
+hald-addon-generic-backlight
 hald-addon-hid-ups
 hald-addon-pmu
 hald-addon-storage
