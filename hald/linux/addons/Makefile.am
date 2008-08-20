@@ -13,6 +13,7 @@ libexec_PROGRAMS  = 			\
 	hald-addon-generic-backlight	\
 	hald-addon-hid-ups 		\
 	hald-addon-input 		\
+	hald-addon-ipw-killswitch	\
 	hald-addon-storage
 
 if HAVE_PMU
@@ -96,4 +97,7 @@ hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
 hald_addon_generic_backlight_SOURCES = addon-generic-backlight.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c 
 hald_addon_generic_backlight_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
+
+hald_addon_ipw_killswitch_SOURCES = addon-ipw-killswitch.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c 
+hald_addon_ipw_killswitch_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
