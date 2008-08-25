@@ -256,7 +256,11 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 		goto error;
 	}
 	if (!dbus_message_get_args (reply, NULL,
+#ifdef HAVE_CK_0_3
+				    DBUS_TYPE_UINT32, &(session->user),
+#else
 				    DBUS_TYPE_INT32, &(session->user),
+#endif
 				    DBUS_TYPE_INVALID)) {
 		HAL_ERROR (("Invalid GetUnixUser reply from CK"));
 		goto error;
@@ -531,7 +535,11 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 		seat_objpath = dbus_message_get_path (message);
 
 		if (!dbus_message_get_args (message, NULL,
+#ifdef HAVE_CK_0_3
+					    DBUS_TYPE_OBJECT_PATH, &seat_objpath,
+#else
 					    DBUS_TYPE_STRING, &seat_objpath,
+#endif
 					    DBUS_TYPE_INVALID)) {
 			HAL_ERROR (("Invalid SeatAdded signal from CK"));
 			goto out;
@@ -558,7 +566,11 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 		seat_objpath = dbus_message_get_path (message);
 
 		if (!dbus_message_get_args (message, NULL,
+#ifdef HAVE_CK_0_3
+					    DBUS_TYPE_OBJECT_PATH, &seat_objpath,
+#else
 					    DBUS_TYPE_STRING, &seat_objpath,
+#endif
 					    DBUS_TYPE_INVALID)) {
 			HAL_ERROR (("Invalid SeatRemoved signal from CK"));
 			goto out;
@@ -588,7 +600,11 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 		seat_objpath = dbus_message_get_path (message);
 
 		if (!dbus_message_get_args (message, NULL,
+#ifdef HAVE_CK_0_3
+					    DBUS_TYPE_OBJECT_PATH, &session_objpath,
+#else
 					    DBUS_TYPE_STRING, &session_objpath,
+#endif
 					    DBUS_TYPE_INVALID)) {
 			HAL_ERROR (("Invalid SessionAdded signal from CK"));
 			goto out;
@@ -624,7 +640,11 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 		seat_objpath = dbus_message_get_path (message);
 
 		if (!dbus_message_get_args (message, NULL,
+#ifdef HAVE_CK_0_3
+					    DBUS_TYPE_OBJECT_PATH, &session_objpath,
+#else
 					    DBUS_TYPE_STRING, &session_objpath,
+#endif
 					    DBUS_TYPE_INVALID)) {
 			HAL_ERROR (("Invalid SessionRemoved signal from CK"));
 			goto out;
