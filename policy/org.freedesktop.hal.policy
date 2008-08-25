@@ -3,7 +3,7 @@
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
-<!-- 
+<!--
 Policy definitions for HAL's locking mechanism
 
 Copyright (c) 2007 David Zeuthen <david@fubar.dk>

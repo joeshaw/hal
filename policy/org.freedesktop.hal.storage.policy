@@ -3,7 +3,7 @@
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
-<!-- 
+<!--
 Policy definitions for HAL's drives/media mechanims.
 
 Copyright (c) 2007 David Zeuthen <david@fubar.dk>
@@ -24,7 +24,7 @@ details.
       <allow_active>auth_admin_keep_always</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.storage.mount-removable">
     <description>Mount file systems from removable drives.</description>
     <message>System policy prevents mounting removable media</message>
@@ -33,7 +33,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.storage.unmount-others">
     <description>Unmount file systems mounted by other users.</description>
     <message>System policy prevents unmounting media mounted by other users</message>
@@ -42,7 +42,7 @@ details.
       <allow_active>auth_admin_keep_always</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.storage.eject">
     <description>Eject removable media.</description>
     <message>System policy prevents ejecting removable media</message>
@@ -51,7 +51,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.storage.crypto-setup-fixed">
     <description>Set up decryption for encrypted fixed storage devices.</description>
     <message>System policy prevents accessing encrypted fixed media</message>

@@ -23,6 +23,6 @@
     <append key="org.freedesktop.Hal.Device.WakeOnLan.method_execpaths" type="strlist">hal-system-wol-enable</append>
 
    </match>
-      
+
   </device>
 </deviceinfo>

@@ -3,7 +3,7 @@
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
-<!-- 
+<!--
 Policy definitions for HAL's ACL Management mechanism
 
 Copyright (c) 2007 David Zeuthen <david@fubar.dk>
@@ -24,7 +24,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.video4linux">
     <description>Directly access video capture devices</description>
     <message>System policy prevents access to video capture devices</message>
@@ -33,7 +33,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.cdrom">
     <description>Directly access optical drives</description>
     <message>System policy prevents access to optical drives</message>
@@ -42,7 +42,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.dvb">
     <description>Directly access DVB devices</description>
     <message>System policy prevents access to DVB devices</message>
@@ -51,7 +51,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.camera">
     <description>Directly access digital cameras</description>
     <message>System policy prevents access to digital cameras</message>
@@ -60,7 +60,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.scanner">
     <description>Directly access scanners</description>
     <message>System policy prevents access to scanners</message>
@@ -78,7 +78,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.ieee1394-iidc">
     <description>Directly access Firewire IIDC devices</description>
     <message>System policy prevents access to Firewire IIDC devices</message>
@@ -87,7 +87,7 @@ details.
       <allow_active>yes</allow_active>
     </defaults>
   </action>
-  
+
   <action id="org.freedesktop.hal.device-access.ieee1394-avc">
     <description>Directly access Firewire AVC devices</description>
     <message>System policy prevents access to Firewire AVC devices</message>

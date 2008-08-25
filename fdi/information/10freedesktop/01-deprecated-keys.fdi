@@ -3,11 +3,11 @@
 <deviceinfo version="0.2">
   <device>
 
-    <!-- 
+    <!--
 	 Note: This fdi-file contains several deprecated keys, which get removed 12 months
-               after they get marked as deprecated in the HAL spec. 
-               For backward compability of some unported tools this file can contain for a 
-	       short time some already finally removed keys. 
+               after they get marked as deprecated in the HAL spec.
+               For backward compability of some unported tools this file can contain for a
+	       short time some already finally removed keys.
      -->
 
     <!-- temporary readded keys -->
@@ -22,7 +22,7 @@
       <match key="info.subsystem" contains="usb">
         <merge key="info.bus" type="copy_property">info.subsystem</merge>
       </match>
-    
+
     <!-- keys which are deprecated, but not removed finally -->
       <!-- power_management.can_suspend_to_ram - planed remove: 2007-05-01 -->
       <match key="power_management.can_suspend" exists="true">

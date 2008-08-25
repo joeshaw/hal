@@ -60,5 +60,5 @@
       <merge key="power_management.is_powersave_set" type="bool">false</merge>
     </match>
   </device>
-      
+
 </deviceinfo>
