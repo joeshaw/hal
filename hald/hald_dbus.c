@@ -2580,6 +2580,51 @@ device_release_global_interface_lock (DBusConnection *connection, DBusMessage *m
 
 static GHashTable *services_with_locks = NULL;
 
+static void
+services_with_locks_add_lock (const char* lock_owner, HalDevice *device) {
+
+	GSList *devices;
+
+	devices = g_hash_table_lookup (services_with_locks, lock_owner);
+
+        devices = g_slist_prepend (devices, device);
+
+	g_hash_table_insert (services_with_locks, strdup(lock_owner), devices);
+}
+
+static void 
+services_with_locks_remove_lock (const char* lock_owner, HalDevice *device) {
+	
+	GSList *devices;
+
+	devices = g_hash_table_lookup (services_with_locks, lock_owner);
+
+	devices = g_slist_remove (devices, device);
+
+	g_hash_table_insert (services_with_locks, strdup(lock_owner), devices);
+}
+
+static void 
+services_with_locks_remove_lockowner (const char* lock_owner) {
+	
+	GSList *devices;
+
+	devices = g_hash_table_lookup (services_with_locks, lock_owner);
+
+        if (devices != NULL) {
+		GSList *iter;
+
+		for (iter = devices; iter != NULL; iter = iter->next) {
+			HalDevice *d = iter->data;
+			hal_device_property_remove (d, "info.locked");
+			hal_device_property_remove (d, "info.locked.reason");
+			hal_device_property_remove (d, "info.locked.dbus_name");
+		}
+	}
+	g_hash_table_remove (services_with_locks, lock_owner);		
+}
+
+
 /**  
  *  device_lock:
  *  @connection:         D-BUS connection
@@ -2655,8 +2700,7 @@ device_lock (DBusConnection * connection,
 					       g_object_unref);
 	}
 
-	g_hash_table_insert (services_with_locks, g_strdup (sender),
-			     g_object_ref (d));
+	services_with_locks_add_lock (sender, d);
 
 	if (!dbus_connection_send (connection, reply, NULL))
 		DIE (("No memory"));
@@ -2741,9 +2785,9 @@ device_unlock (DBusConnection *connection,
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	if (g_hash_table_lookup (services_with_locks, sender))
-		g_hash_table_remove (services_with_locks, sender);
-	else {
+	if (g_hash_table_lookup (services_with_locks, sender)) {
+		services_with_locks_remove_lock (sender, d);
+	} else {
 		HAL_WARNING (("Service '%s' was not in the list of services "
 			      "with locks!", sender));
 	}
@@ -5181,7 +5225,6 @@ hald_dbus_filter_function (DBusConnection * connection,
 		char *name;
 		char *old_service_name;
 		char *new_service_name;
-		HalDevice *d;
 
 		if (!dbus_message_get_args (message, NULL,
 					    DBUS_TYPE_STRING, &name,
@@ -5196,16 +5239,8 @@ hald_dbus_filter_function (DBusConnection * connection,
 
 		ci_tracker_name_owner_changed (ci_tracker, name, old_service_name, new_service_name);
 
-		if (services_with_locks != NULL) {
-			d = g_hash_table_lookup (services_with_locks, new_service_name);
-			if (d != NULL) {
-				hal_device_property_remove (d, "info.locked");
-				hal_device_property_remove (d, "info.locked.reason");
-				hal_device_property_remove (d, "info.locked.dbus_name");
-				
-				g_hash_table_remove (services_with_locks, new_service_name);
-			}
-		}
+		if (services_with_locks != NULL)
+			services_with_locks_remove_lockowner(old_service_name);
 
                 if (strlen (old_service_name) > 0)
                         hal_device_client_disconnected (old_service_name);
