@@ -273,6 +273,12 @@
 	<append key="volume.mount.valid_options" type="strlist">user_xattr</append>
       </match>
 
+      <!-- allow these mount options for reiserfs -->
+      <match key="volume.fstype" string="reiserfs">
+	<append key="volume.mount.valid_options" type="strlist">acl</append>
+	<append key="volume.mount.valid_options" type="strlist">user_xattr</append>
+      </match>
+
       <!-- allow these mount options for ufs -->
       <match key="volume.fstype" string="ufs">
 	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="Linux">
