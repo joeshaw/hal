@@ -27,7 +27,7 @@
 #define HALD_HELPER_H
 
 #define HALD_HELPER_MAGIC 0x68616c64
-#define HALD_HELPER_SOCKET_PATH "/var/run/hal/hotplug_socket2"
+#define HALD_HELPER_SOCKET_PATH "/var/run/hald/hotplug_socket2"
 #define HALD_HELPER_STRLEN 256
 
 struct hald_helper_msg
