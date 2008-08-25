@@ -3,7 +3,7 @@
 <deviceinfo version="0.2">
   <device>
 
-    <!-- NOTE: if you add a new access.type value, remember to update policy/hal-device-file.policy -->
+    <!-- NOTE: if you add a new access.type value, remember to update policy/org.freedesktop.hal.device-access.policy -->
 
     <!-- classification of devices where access can be controlled goes here -->
 
@@ -35,6 +35,23 @@
       <merge key="access_control.type" type="string">cdrom</merge>
     </match>
 
+    <!-- scsi generic device for optical drives -->
+    <match key="info.capabilities" contains="scsi_generic">
+      <match key="@info.parent:scsi.type" string="cdrom">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
+	<merge key="access_control.type" type="string">cdrom</merge>
+      </match>
+      <!-- usb floppy bnc#336327 -->
+      <match key="@info.parent:@info.parent:@info.parent:usb.interface.class" int="8">
+	<match key="@info.parent:@info.parent:@info.parent:usb.interface.subclass" int="4">
+	  <append key="info.capabilities" type="strlist">access_control</append>
+	  <merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
+	  <merge key="access_control.type" type="string">floppy</merge>
+	</match>
+      </match>
+    </match>
+
     <!-- DVB cards -->
     <match key="info.capabilities" contains="dvb">
       <append key="info.capabilities" type="strlist">access_control</append>
@@ -54,7 +71,7 @@
       <match key="info.capabilities" sibling_contains="scanner">
 	<append key="info.capabilities" type="strlist">access_control</append>
 	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
-      <merge key="access_control.type" type="string">scanner</merge>
+	<merge key="access_control.type" type="string">scanner</merge>
       </match>
     </match>
 
@@ -97,8 +114,60 @@
       <match key="pda.platform" string="palm">
         <append key="info.capabilities" type="strlist">access_control</append>
         <merge key="access_control.type" type="string">pda</merge>
-        <merge key="access_control.file" type="copy_property">pda.palm.hotsync_interface</merge>
+        <merge key="access_control.file" type="copy_property">pda</merge>
       </match>
+    </match>
+
+
+    <!-- serial devices are assumed to be modems by default (no access) -->
+    <match key="info.category" string="serial">
+      <match key="serial.device" exists="true">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">serial.device</merge>
+	<merge key="access_control.type" type="string">modem</merge>
+      </match>
+    </match>
+
+    <!-- after serial to be able to override restrictive default -->
+    <!-- FIXME: check if redundant with above "PalmOS PDAs" section -->
+    <match key="pda.platform" exists="true">
+        <append key="info.capabilities" type="strlist">access_control</append>
+        <merge key="access_control.type" type="string">pda</merge>
+        <merge key="access_control.file" type="copy_property">pda</merge>
+    </match>
+
+    <!-- plain old floppy -->
+    <match key="storage.drive_type" string="floppy">
+      <match key="storage.no_partitions_hint" bool="true">
+	<match key="access_control.type" exists="false">
+	  <append key="info.capabilities" type="strlist">access_control</append>
+	  <merge key="access_control.file" type="copy_property">block.device</merge>
+	  <merge key="access_control.type" type="string">floppy</merge>
+	</match>
+      </match>
+    </match>
+
+    <!-- linux input devices (needed e.g. for games) -->
+    <match key="linux.subsystem" string="input">
+      <!-- joysticks -->
+      <match key="info.capabilities" contains="input.joystick">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">input.device</merge>
+	<merge key="access_control.type" type="string">joystick</merge>
+      </match>
+      <!-- mice -->
+      <match key="info.capabilities" contains="input.mouse">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">input.device</merge>
+	<merge key="access_control.type" type="string">mouse</merge>
+      </match>
+    </match>
+
+    <!-- graphics cards, e.g. for 3d accelleration -->
+    <match key="info.capabilities" contains="drm">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">input.device</merge>
+	<merge key="access_control.type" type="string">video</merge>
     </match>
 
     <!-- enforcement of policy goes here -->

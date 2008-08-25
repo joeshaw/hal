@@ -106,4 +106,49 @@ details.
     </defaults>
   </action>
 
+  <action id="org.freedesktop.hal.device-access.floppy">
+    <description>Directly access Floppy devices</description>
+    <message>System policy prevents access to Floppy devices</message>
+    <defaults>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.hal.device-access.modem">
+    <description>Directly access serial modem devices</description>
+    <message>System policy prevents access to serial modem devices</message>
+    <defaults>
+      <allow_inactive>auth_admin_keep_always</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.hal.device-access.joystick">
+    <description>Directly access Joystick devices</description>
+    <message>System policy prevents access to Joystick devices</message>
+    <defaults>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.hal.device-access.mouse">
+    <description>Directly access Mouse devices</description>
+    <message>System policy prevents access to Mouse devices</message>
+    <defaults>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.hal.device-access.video">
+    <description>Directly access Video devices</description>
+    <message>System policy prevents access to Video devices</message>
+    <defaults>
+      <allow_inactive>yes</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
 </policyconfig>
