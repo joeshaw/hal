@@ -68,6 +68,7 @@
 #include <dbus/dbus-glib.h>
 #include <dbus/dbus-glib-lowlevel.h>
 #include "libhal/libhal.h"
+#include "../../logger.h"
 #include "../../util_helper.h"
 #include "../../util_helper_priv.h"
 
@@ -122,14 +123,14 @@ map_register_page (void)
 	address = determine_video_base_address ();
 
 	if (address == 0) {
-		g_error ("Unable to locate video base address");
+		HAL_ERROR (("Unable to locate video base address"));
 		return FALSE;
 	}
 
 	fd = open ("/dev/mem", O_RDWR);
 
 	if (fd < 0) {
-		g_error ("failed to open /dev/mem");
+		HAL_ERROR (("failed to open /dev/mem"));
 		return FALSE;
 	}
 
@@ -141,7 +142,7 @@ map_register_page (void)
 	drop_privileges (FALSE);
 
 	if (register_page == MAP_FAILED) {
-		g_error ("failed to mmap");
+		HAL_ERROR (("failed to mmap"));
 		return FALSE;
 	}
 
@@ -256,21 +257,25 @@ main (int argc, char **argv)
 	const char *udi;
 	DBusError err;
 
+	setup_logger ();
 	udi = getenv ("UDI");
 
 	if (udi == NULL)
-		g_error ("no device specified");
+		HAL_ERROR (("no device specified"));
 
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL)
-		g_error ("cannot connect to hald");
+		HAL_ERROR (("cannot connect to hald"));
 
 	dbus_error_init (&err);
-	if (!libhal_device_addon_is_ready (halctx, udi, &err))
+	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
+		HAL_ERROR (("libhal_device_addon_is_ready returned false, exit now"));
 		return -4;
+	}
 
-	if (!map_register_page ())
-		g_error ("failed to gain access to the video card");
+	if (!map_register_page ()) {
+		HAL_ERROR (("failed to gain access to the video card"));
+	}
 
 	conn = libhal_ctx_get_dbus_connection (halctx);
 	dbus_connection_setup_with_g_main (conn, NULL);
@@ -280,7 +285,7 @@ main (int argc, char **argv)
 
 	if (!libhal_device_claim_interface (halctx, BACKLIGHT_OBJECT,
 					    BACKLIGHT_IFACE, INTERFACE_DESCRIPTION, &err))
-		g_error ("cannot claim interface");
+		HAL_ERROR (("cannot claim interface"));
 
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
