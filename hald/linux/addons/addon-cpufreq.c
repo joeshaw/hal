@@ -1276,6 +1276,8 @@ int main(int argc, char *argv[])
 	sigaction(SIGQUIT, &signal_action, NULL);
 	sigaction(SIGTERM, &signal_action, NULL);
 
+	setup_logger ();
+
 	if (!is_supported()) {
 		HAL_WARNING(("CPUFreq not supported. Exiting..."));
 		exit(EXIT_FAILURE);
