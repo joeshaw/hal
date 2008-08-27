@@ -430,6 +430,29 @@ if test "x$use_smbios" = "xyes" ; then
   		USE_SMBIOS=no
   		AM_CONDITIONAL(HAVE_SMBIOS, [false])
 	fi
+	# yes this is ugly, but there is AFAIK no other way to check for getPasswordStatus()
+	if test "x$USE_SMBIOS" = "xyes" ; then
+   		AC_MSG_CHECKING([for libsmbios >= 2.0.3])
+   		AC_RUN_IFELSE([AC_LANG_SOURCE([[
+   		#include <smbios/version.h>
+   		int main ()
+   		{
+        		int major ;
+        		int minor ;
+        		int micro ;
+
+        		if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
+	    		    if ((major == 2 && minor == 0 && micro >= 3) ||
+               		       (major == 2 && minor > 0) ||
+               		       (major >= 2)) {
+			         return 0;
+	    		    }
+			}
+			return 1;
+   		}]])], [AC_MSG_RESULT(yes); AC_DEFINE(HAVE_SMBIOS_2_0_3, 1 , [Set to 1 if we have libsmbios >= v2.0.3])],
+       		[AC_MSG_RESULT(failed)])
+	fi
+	
 else
     	USE_SMBIOS=no
 	AM_CONDITIONAL(HAVE_SMBIOS, [false])
