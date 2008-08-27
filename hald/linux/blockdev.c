@@ -1770,7 +1770,7 @@ udev_get_device_file_for_sysfs_path (const char *sysfs_path)
         char *ret;
         char *u_stdout;
         int u_exit_status;
-        const char *argv[] = {"/usr/bin/udevinfo", "--root", "--query", "name", "--path", NULL, NULL};
+        const char *argv[] = {"/sbin/udevadm", "info", "--root", "--query", "name", "--path", NULL, NULL};
         GError *g_error;
 
         ret = NULL;

@@ -149,8 +149,8 @@ udev_info_to_hotplug_event (const UdevInfo *info)
 static gboolean
 hal_util_init_sysfs_to_udev_map (void)
 {
-	char *udevdb_export_argv[] = { "/usr/bin/udevinfo", "-e", NULL };
-	char *udevroot_argv[] = { "/usr/bin/udevinfo", "-r", NULL };
+	char *udevdb_export_argv[] = { "/sbin/udevadm", "info", "-e", NULL };
+	char *udevroot_argv[] = { "/sbin/udevadm", "info", "-r", NULL };
 	int udevinfo_exitcode;
 	UdevInfo *info = NULL;
 	char *p;
