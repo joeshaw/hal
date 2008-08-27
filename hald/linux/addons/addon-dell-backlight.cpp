@@ -48,7 +48,9 @@ static const int DELL_LCD_BRIGHTNESS_TOKEN = 0x007d;
 static u32 minValue = 0;
 static u32 maxValue = 0;
 
+#ifdef HAVE_SMBIOS_2_0_3
 static bool hasPass = false;
+#endif
 
 using namespace std;
 using namespace smi;
@@ -91,12 +93,14 @@ read_backlight (dbus_bool_t onAC)
 	return curValue;
 }
 
+#ifdef HAVE_SMBIOS_2_0_3
 static void
 check_bios_password()
 {
 	if (smi::getPasswordStatus((u16)9) || smi::getPasswordStatus((u16)10))
 		hasPass=true;
 }
+#endif
 
 static void 
 write_backlight (u32 newBacklightValue, dbus_bool_t onAC) 
@@ -106,10 +110,12 @@ write_backlight (u32 newBacklightValue, dbus_bool_t onAC)
 	writefn writeFunction;
 	string password(""); /* FIXME: Implement password support */
 
+#ifdef HAVE_SMBIOS_2_0_3
 	if (hasPass) {
 		HAL_WARNING(("Setting brightness via SMI is not supported with a BIOS password"));
 		return;
 	}
+#endif
 	
 	if (onAC) 
                 writeFunction = &smi::writeACModeSetting;
@@ -323,7 +329,9 @@ main (int argc, char *argv[])
 
 	read_backlight (TRUE); /* Fill min- & maxValue with the correct values */
 
+#ifdef HAVE_SMBIOS_2_0_3
 	check_bios_password(); /* Find out about our BIOS pass capabilities */
+#endif
 
 	if (maxValue == 0) {
 		HAL_ERROR (("This machine don't support set brightness."));
