@@ -419,7 +419,7 @@ if test "x$use_smbios" = "xyes" ; then
         		if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
 	    		    if ((major == 0 && minor == 13 && micro >= 4) ||
                		       (major == 0 && minor > 13) ||
-               		       (major >= 0)) {
+               		       (major > 0)) {
 			         return 0;
 	    		    }
 			}
@@ -444,7 +444,7 @@ if test "x$use_smbios" = "xyes" ; then
         		if ( sscanf( LIBSMBIOS_RELEASE_VERSION , "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
 	    		    if ((major == 2 && minor == 0 && micro >= 3) ||
                		       (major == 2 && minor > 0) ||
-               		       (major >= 2)) {
+               		       (major > 2)) {
 			         return 0;
 	    		    }
 			}
