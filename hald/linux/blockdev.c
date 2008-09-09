@@ -1774,7 +1774,7 @@ udev_get_device_file_for_sysfs_path (const char *sysfs_path)
         GError *g_error;
 
         ret = NULL;
-        argv[5] = sysfs_path;
+        argv[6] = sysfs_path;
 
         g_error = NULL;
 
