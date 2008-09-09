@@ -3760,12 +3760,10 @@ vmbus_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 	
-	hal_util_compute_udi (hald_get_gdl(), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/_%s",
-			      hal_device_property_get_string (d, "vmbus.bus_id"));
-
+	hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/_%s",
+			 hal_device_property_get_string (d, "vmbus.bus_id"));
 	hal_device_set_udi (d, udi);
-	
+
 	return TRUE;
 }
 
@@ -3805,11 +3803,9 @@ of_platform_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/of_platform_%s",
-			      hal_device_property_get_string (d, "of_platform.id"));
+	hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/of_platform_%s",
+			 hal_device_property_get_string (d, "of_platform.id"));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 
 	return TRUE;
 }
