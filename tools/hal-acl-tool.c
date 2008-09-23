@@ -1085,18 +1085,12 @@ acl_reconfigure_all (void)
 
 		if (device == NULL) {
 			printf ("%d: access_control.file not set for '%s'\n", getpid (), udis[i]);
-                        if (type != NULL)
-                                libhal_free_string (type);
                         acl_for_device_free (afd);
                         goto skip;
 		}
 
 		if (type == NULL) {
 			printf ("%d: access_control.type not set for '%s'\n", getpid (), udis[i]);
-                        if (device != NULL)
-                                libhal_free_string (device);
-                        if (type != NULL)
-                                libhal_free_string (type);
                         acl_for_device_free (afd);
                         goto skip;
 		}
