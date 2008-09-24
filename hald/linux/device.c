@@ -3502,6 +3502,58 @@ power_supply_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+        gchar buf[64];
+	const gchar *type;
+
+	d = hal_device_new ();
+	hal_device_add_capability (d, "killswitch");
+	hal_device_property_set_string (d, "info.category", "killswitch");
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+		hal_device_copy_property( parent_dev, "info.vendor", d, "info.vendor");
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	type = hal_util_get_string_from_file (sysfs_path, "type");
+
+	if (strcasecmp (type, "wimax") == 0) {
+		hal_device_property_set_string (d, "killswitch.type", "wwan");
+	} else { 
+		hal_device_property_set_string (d, "killswitch.type", type);
+	}
+
+	hal_util_set_string_from_file (d, "killswitch.name", sysfs_path, "name");
+
+        g_snprintf(buf, sizeof(buf), "%s %s Killswitch", hal_device_property_get_string (d, "killswitch.name"),
+							 hal_device_property_get_string (d, "killswitch.type"));
+        hal_device_property_set_string (d, "info.product", buf);
+
+	return d;
+}
+
+static gboolean
+rfkill_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hald_compute_udi (udi, sizeof (udi),
+			  "%s_rfkill_%s_%s",
+			  hal_device_property_get_string (d, "info.parent"),
+			  hal_device_property_get_string (d, "killswitch.name"),
+			  hal_device_property_get_string (d, "killswitch.type"));
+	hal_device_set_udi (d, udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 drm_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d = NULL;
@@ -4154,6 +4206,15 @@ static DevHandler dev_handler_power_supply =
        .remove       = dev_remove
 };
 
+static DevHandler dev_handler_rfkill =
+{
+       .subsystem    = "rfkill",
+       .add          = rfkill_add,
+       .compute_udi  = rfkill_compute_udi,
+       .remove       = dev_remove
+};
+
+
 static DevHandler dev_handler_drm =
 {
        .subsystem    = "drm",
@@ -4247,6 +4308,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_backlight,
 	&dev_handler_firewire,
 	&dev_handler_power_supply,
+	&dev_handler_rfkill,
 	&dev_handler_drm,
 	&dev_handler_ps3_system_bus,
 	&dev_handler_virtio,

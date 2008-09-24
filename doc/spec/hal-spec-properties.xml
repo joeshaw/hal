@@ -7524,6 +7524,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>killswitch.name</literal> (string)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Name of the kill switch (as reported by the kernel).</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>killswitch.access_method</literal> (string)
               </entry>
               <entry></entry>

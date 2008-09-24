@@ -10,18 +10,19 @@
       </match>
 
       <!-- For all other KillSwitch devices -->
-        <match key="killswitch.access_method" contains_not="ipw">
-        <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.KillSwitch</append>
+      <match key="killswitch.access_method" contains_not="ipw">
+        <match key="info.subsystem" contains_not="rfkill">
+          <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.KillSwitch</append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_names" type="strlist">SetPower</append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_signatures" type="strlist">b</append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_argnames" type="strlist">power</append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_execpaths" type="strlist">hal-system-killswitch-set-power</append>
 
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_names" type="strlist">SetPower</append>
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_signatures" type="strlist">b</append>
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_argnames" type="strlist">power</append>
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_execpaths" type="strlist">hal-system-killswitch-set-power</append>
-
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_names" type="strlist">GetPower</append>
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_signatures" type="strlist"></append>
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_argnames" type="strlist"></append>
-        <append key="org.freedesktop.Hal.Device.KillSwitch.method_execpaths" type="strlist">hal-system-killswitch-get-power</append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_names" type="strlist">GetPower</append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_signatures" type="strlist"></append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_argnames" type="strlist"></append>
+          <append key="org.freedesktop.Hal.Device.KillSwitch.method_execpaths" type="strlist">hal-system-killswitch-get-power</append>
+        </match>
       </match>
 
     </match>
