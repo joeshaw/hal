@@ -500,6 +500,10 @@ main (int argc, char *argv[])
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "dvd_rw");
 				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);
 				break;
+			case 0x15: /* DVD-R Dual Layer Sequential */
+			case 0x16: /* DVD-R Dual Layer Jump */
+				libhal_changeset_set_property_string (cs, "volume.disc.type", "dvd_r_dl");
+				break;
 			case 0x1A: /* DVD+RW */
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "dvd_plus_rw");
 				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);

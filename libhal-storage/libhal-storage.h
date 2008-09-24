@@ -281,7 +281,8 @@ typedef enum {
 	LIBHAL_VOLUME_DISC_TYPE_HDDVDROM    = 0x0d,
 	LIBHAL_VOLUME_DISC_TYPE_HDDVDR      = 0x0e,
 	LIBHAL_VOLUME_DISC_TYPE_HDDVDRW     = 0x0f,
-	LIBHAL_VOLUME_DISC_TYPE_MO          = 0x10
+	LIBHAL_VOLUME_DISC_TYPE_MO          = 0x10,
+	LIBHAL_VOLUME_DISC_TYPE_DVDR_DL     = 0x11
 } LibHalVolumeDiscType;
 
 LibHalVolume     *libhal_volume_from_udi                      (LibHalContext *hal_ctx, 

@@ -696,6 +696,8 @@ get_disc_capacity_dvdr_from_type (int fd,
 		break;
 
 	case 0x11:		/* DVD-R */
+	case 0x15:		/* DVD-R Dual Layer Sequential */
+	case 0x16:		/* DVD-R Dual Layer Jump */
 	case 0x1B:		/* DVD+R */
 	case 0x2B:		/* DVD+R Double Layer */
 	case 0x41:		/* BD-R SRM */

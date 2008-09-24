@@ -412,7 +412,14 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 			else
 				name = strdup (_("DVD-R"));
 			break;
-			
+
+		case LIBHAL_VOLUME_DISC_TYPE_DVDR_DL:
+			if (libhal_volume_disc_is_blank (volume))
+				name = strdup (_("Blank DVD-R Dual-Layer"));
+			else
+				name = strdup (_("DVD-R Dual-Layer"));
+			break;
+
 		case LIBHAL_VOLUME_DISC_TYPE_DVDRW:
 			if (libhal_volume_disc_is_blank (volume))
 				name = strdup (_("Blank DVD-RW"));
@@ -1212,6 +1219,8 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDR;
 		} else if (strcmp (disc_type_textual, "dvd_rw") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDRW;
+		} else if (strcmp (disc_type_textual, "dvd_r_dl") == 0) {
+			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDR_DL;
 		} else if (strcmp (disc_type_textual, "dvd_plus_r") == 0) {
 			vol->disc_type = LIBHAL_VOLUME_DISC_TYPE_DVDPLUSR;
 		} else if (strcmp (disc_type_textual, "dvd_plus_rw") == 0) {
