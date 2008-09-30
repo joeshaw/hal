@@ -32,6 +32,7 @@ py-compile
 INSTALL
 *.o
 *.tar.gz
+*.tar.bz2
 *~
 *.pyo
 *.pyc
