@@ -305,15 +305,17 @@ static void remember_jump_position(struct fdi_context *fdi_ctx)
 static void set_jump_position(struct fdi_context *fdi_ctx)
 {
 	off_t	offset;
+	u_int32_t offset32;
 
 	if (fdi_ctx->depth <= 0)
 		DIE(("Rule depth underrun"));
 
 	fdi_ctx->depth--;
 	offset = RULES_ROUND(lseek(fdi_ctx->cache_fd, 0, SEEK_END));
+	offset32 = (u_int32_t)offset;
 	pad32_write(fdi_ctx->cache_fd,
 		fdi_ctx->match_at_depth[fdi_ctx->depth] + offsetof(struct rule, jump_position),
-		&offset, sizeof(fdi_ctx->rule.jump_position));
+		&offset32, sizeof(fdi_ctx->rule.jump_position));
 
 	if (haldc_verbose)
 		HAL_INFO(("modify rule=0x%08x, set jump to 0x%08x",
