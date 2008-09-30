@@ -31,13 +31,9 @@ QUIRKS=""
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_SAVE_PCI" = "true" ] && QUIRKS="$QUIRKS --quirk-save-pci"
 [ "$HAL_PROP_POWER_MANAGEMENT_QUIRK_NONE" = "true" ] && QUIRKS="$QUIRKS --quirk-none"
 
-# Urh. Do any BIOSen handle this correctly?
-if [ $seconds_to_sleep != "0" ] ; then
-	alarm_not_supported
-fi
-
 # We only support pm-utils
 if [ -x "/usr/sbin/pm-suspend" ] ; then
+	export NUM_SECONDS_TO_SLEEP=$seconds_to_sleep
 	/usr/sbin/pm-suspend $QUIRKS
 	RET=$?
 else

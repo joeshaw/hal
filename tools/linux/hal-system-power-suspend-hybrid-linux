@@ -32,9 +32,7 @@ QUIRKS=""
 
 # We only support pm-utils
 if [ -x "/usr/sbin/pm-suspend-hybrid" ] ; then
-    if [ $seconds_to_sleep != "0" ] ; then
-	alarm_not_supported
-    fi
+    export NUM_SECONDS_TO_SLEEP=$seconds_to_sleep
     /usr/sbin/pm-suspend-hybrid $QUIRKS
     RET=$?
 else
