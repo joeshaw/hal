@@ -132,6 +132,12 @@
 	</match>
       </match>
 
+      <match key="volume.fstype" string="ntfs">
+        <match key="volume.label" string="RECOVERY">
+          <merge key="volume.ignore" type="bool">true</merge>
+        </match>
+      </match>  
+
       <!-- ASUS ships some desktop with a recovery partition -->
       <match key="volume.fstype" string="vfat">
 	<match key="volume.label" string="RECOVERY">
