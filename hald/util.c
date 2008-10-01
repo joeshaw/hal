@@ -1022,31 +1022,6 @@ out:
 	;
 }
 
-gchar *
-hal_util_strdup_valid_utf8 (const char *str)
-{
-	char *endchar;
-	char *newstr;
-	unsigned int count = 0;
-
-	if (str == NULL)
-		return NULL;
-
-	newstr = g_strdup (str);
-
-	while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
-		*endchar = '?';
-		count++;
-	}
-	
-	if (strlen(newstr) == count) {
-		g_free (newstr);
-		return NULL;
-	} else {
-		return newstr;
-	}
-}
-
 void
 hal_util_hexdump (const void *mem, unsigned int size)
 {

@@ -39,6 +39,7 @@
 #include "../logger.h"
 #include "../osspec.h"
 #include "../util.h"
+#include "../util_helper.h"
 #include "osspec_linux.h"
 #include "hotplug.h"
 #include "coldplug.h"

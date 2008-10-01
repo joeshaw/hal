@@ -76,7 +76,7 @@ endif
 endif
 
 hald_addon_acpi_SOURCES = addon-acpi.c ../../logger.c ../../util_helper.c
-hald_addon_acpi_LDADD = $(top_builddir)/libhal/libhal.la
+hald_addon_acpi_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
 
 if BUILD_ACPI_TOSHIBA
 hald_addon_acpi_buttons_toshiba_SOURCES = addon-acpi-buttons-toshiba.c ../../logger.c ../../util_helper.c
@@ -90,7 +90,7 @@ hald_addon_input_SOURCES = addon-input.c ../../logger.c ../../util_helper.c
 hald_addon_input_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
 hald_addon_pmu_SOURCES = addon-pmu.c ../../logger.c ../../util_helper.c
-hald_addon_pmu_LDADD = $(top_builddir)/libhal/libhal.la
+hald_addon_pmu_LDADD = @GLIB_LIBS@ $(top_builddir)/libhal/libhal.la
 
 hald_addon_storage_SOURCES = addon-storage.c ../../logger.c ../../util_helper.c
 hald_addon_storage_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@

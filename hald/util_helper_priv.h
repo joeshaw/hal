@@ -28,9 +28,6 @@
 #include <glib.h>
 #include "../libhal/libhal.h"
 
-void drop_privileges (int keep_auxgroups);
-void hal_set_proc_title_init (int argc, char *argv[]);
-void hal_set_proc_title (const char *format, ...);
 gboolean check_priv ( LibHalContext *halctx, DBusConnection *connection, DBusMessage *message, const char *udi, const char *action);
 
 #endif /* UTIL_HELPER_PRIV_H */

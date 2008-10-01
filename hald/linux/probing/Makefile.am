@@ -39,8 +39,8 @@ hald_probe_hiddev_LDADD = $(top_builddir)/libhal/libhal.la
 hald_probe_serial_SOURCES = probe-serial.c ../../logger.c
 hald_probe_serial_LDADD = $(top_builddir)/libhal/libhal.la
 
-hald_probe_storage_SOURCES = probe-storage.c linux_dvd_rw_utils.c linux_dvd_rw_utils.h ../../logger.c
-hald_probe_storage_LDADD = $(top_builddir)/libhal/libhal.la $(top_builddir)/partutil/libpartutil.la @GLIB_LIBS@ @VOLUME_ID_LIBS@
+hald_probe_storage_SOURCES = probe-storage.c linux_dvd_rw_utils.c linux_dvd_rw_utils.h ../../util_helper.c ../../logger.c  
+hald_probe_storage_LDADD = @GLIB_LIBS@ @VOLUME_ID_LIBS@ $(top_builddir)/libhal/libhal.la $(top_builddir)/partutil/libpartutil.la 
 
 hald_probe_pc_floppy_SOURCES = probe-pc-floppy.c ../../logger.c
 

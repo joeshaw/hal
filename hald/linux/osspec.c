@@ -55,6 +55,7 @@
 #include "../logger.h"
 #include "../osspec.h"
 #include "../util.h"
+#include "../util_helper.h"
 #include "../ids.h"
 
 #include "acpi.h"

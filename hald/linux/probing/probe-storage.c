@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/kdev_t.h>
+#include <linux/hdreg.h>
 #include <linux/cdrom.h>
 #include <linux/fs.h>
 #include <mntent.h>
@@ -50,6 +51,8 @@
 #include "linux_dvd_rw_utils.h"
 
 #include "../../logger.h"
+#include "../../util_helper.h"
+
 
 static void vid_log(int priority, const char *file, int line, const char *format, ...)
 {
@@ -153,6 +156,49 @@ main (int argc, char *argv[])
 
 	HAL_DEBUG (("Doing probe-storage for %s (bus %s) (drive_type %s) (udi=%s) (--only-check-for-fs==%d)", 
 	     device_file, bus, drive_type, udi, only_check_for_fs));
+
+	/* get model from SCSI/IDE layer and not via sysfs to prevent truncated strings (see bnc#394390) */
+	if (strcmp (bus, "scsi") == 0){
+		struct hd_driveid id;
+		gchar *model = NULL;
+
+		fd = open(device_file, O_RDONLY|O_NONBLOCK);
+		if (fd < 0) {
+			HAL_WARNING(("unable to open '%s', error: '%s'", device_file, strerror (errno)));
+		} else {
+			if (ioctl(fd, HDIO_GET_IDENTITY, &id)) {
+				HAL_WARNING (("HDIO_GET_IDENTITY unsupported or failed for: '%s' with error: '%s'", device_file, strerror (errno)));
+			} else {
+				char str[41];
+				size_t i, len;
+
+				i = 0;			
+				len = 40; 
+				
+				while (len && isspace(id.model[len-1]))
+			                len--;
+				
+				while (i < len) {
+					str[i] = id.model[i];
+					i++;
+				}
+				str[i] = '\0';
+
+				g_strstrip(str);
+	
+				if ((model = hal_util_strdup_valid_utf8(str)) != NULL) {
+					model = g_strdelimit(model, "/", '_');
+				}
+			}
+			close(fd);
+		}
+		
+		if (model != NULL) {
+			libhal_changeset_set_property_string (cs, "storage.model", model);
+			libhal_changeset_set_property_string (cs, "info.product", model);
+			g_free (model);
+		}
+	}
 
 	/* Get properties for CD-ROM drive */
 	if (strcmp (drive_type, "cdrom") == 0) {
@@ -489,6 +535,7 @@ main (int argc, char *argv[])
 		}
 		close (fd);
 	}
+
 	
 out:
 	if (cs != NULL) {

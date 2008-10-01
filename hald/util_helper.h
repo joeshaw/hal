@@ -26,8 +26,11 @@
 #ifndef UTIL_HELPER_H
 #define UTIL_HELPER_H
 
+#include <glib.h>
+
 void drop_privileges (int keep_auxgroups);
 void hal_set_proc_title_init (int argc, char *argv[]);
 void hal_set_proc_title (const char *format, ...);
+gchar *hal_util_strdup_valid_utf8 (const char *str);
 
 #endif /* UTIL_HELPER_H */

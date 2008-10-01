@@ -35,6 +35,8 @@
 #include <pwd.h>
 #include <unistd.h>
 
+#include <glib.h>
+
 #include "logger.h"
 
 #include "util_helper.h"
@@ -185,4 +187,30 @@ out:
 	;
 #endif
 }
+
+gchar *
+hal_util_strdup_valid_utf8 (const char *str)
+{
+        char *endchar;
+        char *newstr;
+        unsigned int count = 0;
+
+        if (str == NULL)
+                return NULL;
+
+        newstr = g_strdup (str);
+
+        while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
+                *endchar = '?';
+                count++;
+        }
+
+        if (strlen(newstr) == count) {
+                g_free (newstr);
+                return NULL;
+        } else {
+                return newstr;
+        }
+}
+
 
