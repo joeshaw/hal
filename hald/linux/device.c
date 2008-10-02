@@ -3392,12 +3392,11 @@ power_supply_battery_poll (gpointer data) {
 	if (battery_devices) {
 		for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
 			const char *subsys;
-			gboolean need_poll;
 
 			d = HAL_DEVICE (i->data);
+
 			/* don't poll batteries if quirk is in place */
-			need_poll = !hal_device_property_get_bool (d, "battery.quirk.do_not_poll");
-			if (!need_poll)
+			if (hal_device_property_get_bool (d, "battery.quirk.do_not_poll"))
 				continue;
 
 			subsys = hal_device_property_get_string (d, "info.subsystem");
@@ -3410,7 +3409,9 @@ power_supply_battery_poll (gpointer data) {
 			}
 		}		
 	}
+
 	g_slist_free (battery_devices);
+
 	battery_poll_running = battery_polled;
 	return battery_polled;
 }
