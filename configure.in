@@ -503,7 +503,7 @@ AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, [], [DBUS API is subject to chang
 
 # check for ConsoleKit
 AM_CONDITIONAL(HAVE_CONKIT, false)
-AC_ARG_ENABLE(console-kit, [  --enable-console-kit    Use ConsoleKit],enable_console_kit=$enableval,enable_console_kit=yes)
+AC_ARG_ENABLE([console-kit], AS_HELP_STRING([--enable-console-kit], [Use ConsoleKit]), [enable_console_kit=$enableval,enable_console_kit=yes])
 msg_conkit=no
 if test "x$enable_console_kit" != "xno"; then
    AM_CONDITIONAL(HAVE_CONKIT, true)
@@ -617,7 +617,7 @@ if test "x$enable_umount_hal" != "xno"; then
 fi
 
 # what extra hotplug backends to use (ACPI, APM, PMU etc)
-AC_ARG_ENABLE([have_acpi],
+AC_ARG_ENABLE([acpi],
 	      AS_HELP_STRING([--disable-acpi], [Build without ACPI support]))
 msg_acpi=no
 if test "x$enable_acpi" != "xno"; then
@@ -625,7 +625,7 @@ if test "x$enable_acpi" != "xno"; then
   	AC_DEFINE(HAVE_ACPI, [], [Set if we have ACPI support])
 fi
 AM_CONDITIONAL(HAVE_ACPI, [test x$msg_acpi = xyes], [Compiling ACPI])
-AC_ARG_ENABLE([have_apm],
+AC_ARG_ENABLE([apm],
 	      AS_HELP_STRING([--disable-apm], [Build without APM support]))
 msg_apm=no
 if test "x$enable_apm" != "xno"; then
@@ -633,7 +633,7 @@ if test "x$enable_apm" != "xno"; then
   	AC_DEFINE(HAVE_APM, [], [Set if we have APM support])
 fi
 AM_CONDITIONAL(HAVE_APM, [test x$msg_apm = xyes], [Compiling APM])
-AC_ARG_ENABLE([have_pmu],
+AC_ARG_ENABLE([pmu],
 	      AS_HELP_STRING([--disable-pmu], [Build without PMU support]))
 msg_pmu=no
 if test "x$enable_pmu" != "xno"; then
@@ -642,7 +642,7 @@ if test "x$enable_pmu" != "xno"; then
 fi
 AM_CONDITIONAL(HAVE_PMU, [test x$msg_pmu = xyes], [Compiling PMU])
 
-AC_ARG_ENABLE([have_pci],
+AC_ARG_ENABLE([pci],
 	      AS_HELP_STRING([--disable-pci], [Build without PCI support]))
 msg_pci=no
 if test "x$enable_pci" != "xno"; then
