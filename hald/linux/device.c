@@ -77,6 +77,7 @@ gboolean _have_sysfs_lid_button = FALSE;
 gboolean _have_sysfs_power_button = FALSE;
 gboolean _have_sysfs_sleep_button = FALSE;
 gboolean _have_sysfs_power_supply = FALSE; 
+static gboolean battery_poll_running = FALSE;
 
 #define POWER_SUPPLY_BATTERY_POLL_INTERVAL 30  /* in seconds */
 #define DOCK_STATION_UNDOCK_POLL_INTERVAL 300  /* in milliseconds */
@@ -3381,6 +3382,7 @@ power_supply_battery_poll (gpointer data) {
 	GSList *i;
 	GSList *battery_devices;
 	HalDevice *d;
+	gboolean battery_polled = FALSE;
 
 	/* for now do it only for primary batteries and extend if neede for the other types */
 	battery_devices = hal_device_store_match_multiple_key_value_string (hald_get_gdl (),
@@ -3390,19 +3392,27 @@ power_supply_battery_poll (gpointer data) {
 	if (battery_devices) {
 		for (i = battery_devices; i != NULL; i = g_slist_next (i)) {
 			const char *subsys;
+			gboolean need_poll;
 
 			d = HAL_DEVICE (i->data);
+			/* don't poll batteries if quirk is in place */
+			need_poll = !hal_device_property_get_bool (d, "battery.quirk.do_not_poll");
+			if (!need_poll)
+				continue;
+
 			subsys = hal_device_property_get_string (d, "info.subsystem");
 			if (subsys && (strcmp(subsys, "power_supply") == 0)) {
 				hal_util_grep_discard_existing_data();
 				device_property_atomic_update_begin ();
 				refresh_battery_fast(d);
 				device_property_atomic_update_end ();
+				battery_polled = TRUE;
 			}
 		}		
 	}
 	g_slist_free (battery_devices);
-	return TRUE;
+	battery_poll_running = battery_polled;
+	return battery_polled;
 }
 
 static HalDevice *
@@ -3449,16 +3459,18 @@ power_supply_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *
 		hal_device_add_capability (d, "battery");
 
 		/* setup timer for things that we need to poll */
+		if (!battery_poll_running) {
 #ifdef HAVE_GLIB_2_14
-		g_timeout_add_seconds (POWER_SUPPLY_BATTERY_POLL_INTERVAL,
+			g_timeout_add_seconds (POWER_SUPPLY_BATTERY_POLL_INTERVAL,
+                                               power_supply_battery_poll,
+                                               NULL);
+#else
+			g_timeout_add (1000 * POWER_SUPPLY_BATTERY_POLL_INTERVAL,
                                        power_supply_battery_poll,
                                        NULL);
-#else
-		g_timeout_add (1000 * POWER_SUPPLY_BATTERY_POLL_INTERVAL,
-                               power_supply_battery_poll,
-                               NULL);
 #endif
-
+			battery_poll_running = TRUE;
+		}
 	}
 
 	if (is_ac_adapter == TRUE) {
