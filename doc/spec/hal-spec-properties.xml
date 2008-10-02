@@ -6995,6 +6995,17 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 it will be different for two (otherwise) identical batteries.
               </entry>
             </row>
+            <row>
+              <entry>
+                <literal>battery.quirk.do_not_poll</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		True if HAL should not poll the battery, False or not available at all
+		if HAL should show the default behavior.
+              </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
