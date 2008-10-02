@@ -7785,16 +7785,10 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
           </thead>
           <tbody>
             <row>
-                <entry><literal>portable_audio_player.access_method</literal> (string)</entry>
-                <entry><literal>portable_audio_player.access_method.[drivers, protocols]</literal> (strlist)</entry>
-                <entry>2008-05-03</entry>
-                <entry>Original entry can only indicate UMS or userspace driver devices, while some devices can be both.  New structure doesn't have this limitation.</entry>
-            </row>
-            <row>
-                <entry><literal>portable_audio_player.type</literal> (string)</entry>
-                <entry><literal>portable_audio_player.access_method.[drivers, protocols]</literal> (strlist)</entry>
-                <entry>2008-05-03</entry>
-                <entry>New structure allows for better definition of access protocols and handlers.</entry>
+                <entry><literal></literal> ()</entry>
+                <entry><literal></literal> ()</entry>
+                <entry>xxxx-xx-xx</entry>
+                <entry></entry>
             </row>
           </tbody>
         </tgroup>
