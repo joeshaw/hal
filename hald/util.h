@@ -70,6 +70,8 @@ void hal_util_compute_udi_valist (HalDeviceStore *store, gchar *dst, gsize dstsi
 
 void hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gchar *format, ...);
 
+void hal_util_validate_udi (gchar *udi, gsize size);
+
 gboolean hal_util_path_ascend (gchar *path);
 
 void hal_util_grep_discard_existing_data (void);

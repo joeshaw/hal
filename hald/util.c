@@ -422,6 +422,26 @@ hal_util_compute_udi (HalDeviceStore *store, gchar *dst, gsize dstsize, const gc
 	va_end (args);
 }
 
+void
+hal_util_validate_udi (gchar *udi, gsize size) {
+
+	char end[size];
+
+	if (sscanf (udi, "/org/freedesktop/Hal/devices/%s", end) == 1) {
+		if (strstr(end, "/") != NULL) {
+			HAL_DEBUG (("UDI end contains invalid char '/': '%s'", udi));
+
+			g_strcanon (end, "_"
+		    			 "abcdefghijklmnopqrstuvwxyz"
+		    			 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		   	 		 "1234567890", '_');
+			g_snprintf (udi, size, "/org/freedesktop/Hal/devices/%s", end);
+
+			HAL_DEBUG (("Fixed UDI, replaced '/', new UDI: %s", udi));
+		}
+	} 
+}
+
 
 gboolean
 hal_util_path_ascend (gchar *path)

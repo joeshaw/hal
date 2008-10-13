@@ -265,6 +265,8 @@ hald_compute_udi (gchar *dst, gsize dstsize, const gchar *format, ...)
 	hal_util_compute_udi_valist (hald_get_gdl (), dst, dstsize, format, args);
 	va_end (args);
 
+	hal_util_validate_udi (dst, dstsize);
+
 	if (hal_device_store_find (hald_get_gdl (), dst) == NULL &&
 	    hal_device_store_find (hald_get_tdl (), dst) == NULL)
 		goto out;
