@@ -2017,15 +2017,9 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	if (strncmp (dev_id, "dock", 4) == 0) {
 		int docked;
-		gchar *type;
 
-		type = hal_util_get_string_from_file (sysfs_path, "type");
-		if (strcmp (type, "dock_station") == 0) {
-			hal_device_property_set_string (d, "info.type", type);
-			hal_device_add_capability (d, "dock_station");
-			hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
-			hal_device_property_set_bool (d, "info.docked", docked);
-		}
+		hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
+		hal_device_property_set_bool (d, "info.docked", docked);
 	}
 
 	return d;
@@ -2058,8 +2052,8 @@ platform_refresh_undock (gpointer data)
 	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
 	hal_util_get_int_from_file (sysfs_path, "flags", &flags, 0);
 
-	/* check for != 16, maybe the user did an immediate dock */
-	if (flags != 16)
+	/* check for != 0, maybe the user did an immediate dock */
+	if (flags != 0)
 		return TRUE;
 
 	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
@@ -2071,15 +2065,11 @@ platform_refresh_undock (gpointer data)
 static gboolean
 platform_refresh (HalDevice *d)
 {
-	const gchar *id, *sysfs_path, *type;
+	const gchar *id, *sysfs_path;
 	gint docked, flags;
 
 	id = hal_device_property_get_string (d, "platform.id");
 	if (strncmp (id, "dock", 4) != 0)
-		return TRUE;
-
-	type = hal_device_property_get_string(d, "info.type");
-	if (strcmp (type, "dock_station") != 0)
 		return TRUE;
 
 	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
@@ -2088,7 +2078,7 @@ platform_refresh (HalDevice *d)
 	if (docked == 1) {
 		/* undock still in progress? */
 		hal_util_get_int_from_file (sysfs_path, "flags", &flags, 0);
-		if (flags == 18) {
+		if (flags == 2) {
 			g_timeout_add (DOCK_STATION_UNDOCK_POLL_INTERVAL,
 				       platform_refresh_undock, d);
 			return TRUE;
