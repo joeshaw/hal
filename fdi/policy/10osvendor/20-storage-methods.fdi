@@ -93,69 +93,35 @@
 	</match>
       </match>
 
-      <!-- Lenovo and IBM ship with a various recovery partitions -->
-      <match key="volume.fstype" string="vfat">
-	<match key="volume.label" string="SERVICEV001">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-	<match key="volume.label" string="IBM_SERVICE">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-      <match key="volume.fstype" string="ntfs">
-	<match key="volume.label" string="SERVICEV002">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-
-      <!-- HP ships desktops with a recovery partition -->
-      <match key="volume.fstype" string="vfat">
-	<match key="volume.label" string="HP_RECOVERY">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-
-      <!-- Sony ships laptops with a recovery partition -->
-      <match key="volume.fstype" string="ntfs">
-	<match key="volume.label" string="Recovery Partition">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-
-      <!-- DELL ships some laptops with a visible recovery partition -->
-      <match key="volume.fstype" string="vfat">
-	<match key="volume.label" string="DellUtility">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-	<match key="volume.label" string="DellRestore">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-
-      <match key="volume.fstype" string="ntfs">
-        <match key="volume.label" string="RECOVERY">
-          <merge key="volume.ignore" type="bool">true</merge>
-        </match>
-      </match>  
-
-      <!-- ASUS ships some desktop with a recovery partition -->
-      <match key="volume.fstype" string="vfat">
-	<match key="volume.label" string="RECOVERY">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-	<match key="volume.label" string="PQSERVICE">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-      <match key="volume.fstype" string="ntfs">
-	<match key="volume.label" string="PQSERVICE">
-	  <merge key="volume.ignore" type="bool">true</merge>
-	</match>
-      </match>
-
       <!-- EFI firmware partitions -->
       <match key="volume.fstype" string="vfat">
 	<match key="volume.label" string="EFI">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+      </match>
+
+      <match key="volume.fstype" string_outof="ntfs;vfat">
+        <match key="volume.label" string="RECOVERY">
+          <merge key="volume.ignore" type="bool">true</merge>
+        </match>
+        <!-- ASUS ships some desktop with a recovery partition -->
+	<match key="volume.label" string="PQSERVICE">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+        <!-- HP ships desktops with a recovery partition -->
+	<match key="volume.label" string="HP_RECOVERY">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+        <!-- Sony ships laptops with a recovery partition -->
+	<match key="volume.label" string="Recovery Partition">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+        <!-- DELL ships some laptops with a visible recovery partition -->
+	<match key="volume.label" string_outof="DellUtility;DellRestore">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
+        <!-- Lenovo and IBM ship with a various recovery partitions -->
+	<match key="volume.label" string_outof="IBM_SERVICE;SERVICEV001;SERVICEV002">
 	  <merge key="volume.ignore" type="bool">true</merge>
 	</match>
       </match>
