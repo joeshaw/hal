@@ -1953,6 +1953,50 @@ pnp_compute_udi (HalDevice *d)
 
 }
 
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+ppdev_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+
+	d = hal_device_new ();
+
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+	hal_device_add_capability (d, "ppdev");
+	hal_device_property_set_string (d, "info.category", "ppdev");
+	hal_device_property_set_string (d, "info.product", "Parallel Port Device");
+	
+	return d;
+}
+
+static gboolean
+ppdev_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	const char *name;
+
+	name = hal_util_get_last_element( hal_device_property_get_string(d, "linux.device_file"));
+
+	if (name) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/ppdev_%s", name);
+	} else {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/ppdev");
+	}
+
+	hal_device_set_udi (d, udi);
+
+	return TRUE;
+}
+
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static void
@@ -4106,6 +4150,13 @@ static DevHandler dev_handler_pnp = {
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_ppdev = { 
+	.subsystem   = "ppdev",
+	.add         = ppdev_add,
+	.compute_udi = ppdev_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_ps3_system_bus =
 {
 	.subsystem   = "ps3_system_bus",
@@ -4313,6 +4364,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_platform,
 	&dev_handler_pnp,
 	&dev_handler_power_supply,
+	&dev_handler_ppdev,
 	&dev_handler_ps3_system_bus,
 	&dev_handler_pseudo,
 	&dev_handler_rfkill,

@@ -1056,6 +1056,14 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+    <sect2 id="device-properties-ppdevif">
+      <title>
+        ppdev namespace
+      </title>
+      <para>
+        The namespace for parallel port devices. No namespace specific properties.
+      </para>
+    </sect2>
     <sect2 id="device-properties-modemif">
       <title>
         modem namespace
