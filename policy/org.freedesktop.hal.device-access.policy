@@ -151,4 +151,13 @@ details.
     </defaults>
   </action>
 
+  <action id="org.freedesktop.hal.device-access.obex">
+    <description>Directly access OBEX devices</description>
+    <message>System policy prevents access to OBEX devices</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
 </policyconfig>

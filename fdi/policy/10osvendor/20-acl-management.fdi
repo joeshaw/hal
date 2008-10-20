@@ -93,6 +93,11 @@
           <merge key="access_control.type" type="string">audio-player</merge>
           <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
         </match>
+        <match key="info.capabilities" contains="obex">
+          <append key="info.capabilities" type="strlist">access_control</append>
+          <merge key="access_control.type" type="string">obex</merge>
+          <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
+        </match>
       </match>
     </match>
 
