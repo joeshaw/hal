@@ -1388,25 +1388,35 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	const gchar *ifname;
 	guint media_type;
 	gint flags;
+	gint addr_len;
 
 	d = NULL;
-
-	if (parent_dev == NULL)
-		goto error;
-
 	d = hal_device_new ();
-	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+
+	if (parent_dev == NULL) {
+	        parent_dev = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+		if (parent_dev == NULL) {
+                	parent_dev = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+			if (parent_dev == NULL) {
+				HAL_ERROR (("Device '%s' has no parent and couldn't find computer root object."));
+				goto error;
+			}
+		}
+        }
+
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	hal_device_property_set_string (d, "net.originating_device", hal_device_get_udi (parent_dev));
 
 	hal_device_property_set_string (d, "info.category", "net");
 	hal_device_add_capability (d, "net");
 
-	hal_device_property_set_string (d, "net.originating_device", hal_device_get_udi (parent_dev));
-
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	ifname = hal_util_get_last_element (sysfs_path);
 	hal_device_property_set_string (d, "net.interface", ifname);
 
-	if (!hal_util_set_string_from_file (d, "net.address", sysfs_path, "address")) {
+	hal_util_get_int_from_file(sysfs_path, "addr_len", &addr_len, 0);
+
+	if (!addr_len || !hal_util_set_string_from_file (d, "net.address", sysfs_path, "address")) {
 		hal_device_property_set_string (d, "net.address", "00:00:00:00:00:00");	
 	}
 
@@ -1482,7 +1492,12 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		hal_device_property_set_string (d, "info.product", "Networking Interface");
 		hal_device_property_set_string (d, "info.category", "net.irda");
 		hal_device_add_capability (d, "net.irda");
+	} else if (media_type == ARPHRD_LOOPBACK) {
+		hal_device_property_set_string (d, "info.product", "Loopback device Interface");
+		hal_device_property_set_string (d, "info.category", "net.loopback");
+		hal_device_add_capability (d, "net.loopback");
 	}
+
 #if defined(ARPHRD_IEEE80211_RADIOTAP) && defined(ARPHRD_IEEE80211_PRISM)
 	else if (media_type == ARPHRD_IEEE80211 || media_type == ARPHRD_IEEE80211_PRISM || 
 		   media_type == ARPHRD_IEEE80211_RADIOTAP) {
@@ -1540,15 +1555,29 @@ net_compute_udi (HalDevice *d)
 {
 	gchar udi[256];
 	const gchar *id;
+	gboolean id_only = TRUE;
 
 	id = hal_device_property_get_string (d, "net.address");
+
 	if (id == NULL || (strcmp (id, "00:00:00:00:00:00") == 0)) {
 		/* Need to fall back to something else if mac not available. */
 		id = hal_util_get_last_element(hal_device_property_get_string(d, "net.originating_device"));
-	}
-	hald_compute_udi (udi, sizeof (udi),
-			  "/org/freedesktop/Hal/devices/net_%s",
-			  id);
+		if (!strcmp(id, "computer")) {
+			const gchar *cat;
+			char type[32];
+
+			/* virtual devices or devices without a parent for some reason */
+			if ((cat = hal_device_property_get_string(d, "info.category")) &&
+			    (sscanf (cat, "net.%s", type) == 1)) {
+				hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/net_%s_%s", id, type);
+				id_only = FALSE;
+			} 
+		} 
+	} 
+
+	if (id_only)
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/net_%s", id);
+
 	hal_device_set_udi (d, udi);
 	return TRUE;
 }

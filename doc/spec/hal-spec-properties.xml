@@ -5158,6 +5158,20 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       <para>
       </para>
     </sect2>
+    <sect2 id="device-properties-net-loopback">
+      <title>
+        net.loopback namespace
+      </title>
+      <para>
+        Loopback networking devices are described in this namespace
+        for device objects with the capability <literal>net.loopback</literal>.
+
+        Note that device objects can only have the <literal>net.loopback</literal> capability
+	if they already have the capability <literal>net</literal>.
+	
+	No namespace specific properties.
+      </para>
+    </sect2>
     <sect2 id="device-properties-net-bluetooth">
       <title>
         net.bluetooth namespace
