@@ -7705,6 +7705,75 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
         </tgroup>
       </informaltable>
     </sect2>
+
+    <sect2 id="device-properties-obex">
+      <title>
+        obex namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>obex</literal>
+        represent devices that have implemented OBject EXchange protocol for communication.
+        Typically such devices are mobile phones and the protocol is used to transfer files,
+        synchronize data and manage mobile phone configuration. No namespace specific properties.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>obex.type</literal> (sting)
+              </entry>
+              <entry>example: pcsuite, syncml</entry>
+              <entry>No</entry>
+              <entry>
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>pcsuite</entry>
+              <entry>No</entry>
+              <entry>
+		 Device is meant to be used with Nokia PC Suite application. Standardized OBEX file
+                 transfer is supported and possibly proprietary extensions.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>syncml</entry>
+              <entry>No</entry>
+              <entry>
+		Device supports SyncML over OBEX protocol.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>syncml-sync</entry>
+              <entry>No</entry>
+              <entry>
+		Device supports SyncML over OBEX protocol for data synchronization.
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>syncml-dm</entry>
+              <entry>No</entry>
+              <entry>
+		Device supports SyncML over OBEX protocol for data management.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
   </sect1>
 
   <sect1 id="properties-misc">
