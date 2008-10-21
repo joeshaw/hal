@@ -127,6 +127,15 @@ NOTE: Please keep the actions in alpabetical order
     </defaults>
   </action>
 
+  <action id="org.freedesktop.hal.device-access.ppdev">
+    <description>Directly access parallel port devices</description>
+    <message>System policy prevents access to parallel port devices</message>
+    <defaults>
+      <allow_inactive>auth_admin_keep_always</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.hal.device-access.scanner">
     <description>Directly access scanners</description>
     <message>System policy prevents access to scanners</message>

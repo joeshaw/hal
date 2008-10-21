@@ -123,13 +123,21 @@
       </match>
     </match>
 
-
     <!-- serial devices are assumed to be modems by default (no access) -->
     <match key="info.category" string="serial">
       <match key="serial.device" exists="true">
 	<append key="info.capabilities" type="strlist">access_control</append>
 	<merge key="access_control.file" type="copy_property">serial.device</merge>
 	<merge key="access_control.type" type="string">modem</merge>
+      </match>
+    </match>
+
+    <!-- serial devices are assumed to be modems by default (no access) -->
+    <match key="info.category" string="ppdev">
+      <match key="serial.device" exists="true">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">linux.device_file</merge>
+	<merge key="access_control.type" type="string">ppdev</merge>
       </match>
     </match>
 
