@@ -233,8 +233,10 @@ get_dvd_r_rw_profile (int fd)
 		int profile = (list[i] << 8 | list[i + 1]);
 		/* 0x13: DVD-RW Restricted Overwrite
 		 * 0x14: DVD-RW Sequential
-		 * 0x1B: DVD+R 
+		 * 0x15: DVD-R Dual Layer Sequential
+		 * 0x16: DVD-R Dual Layer Jump
 		 * 0x1A: DVD+RW  
+		 * 0x1B: DVD+R 
 		 * 0x2A: DVD+RW DL
 		 * 0x2B: DVD+R DL 
 		 * 0x40: BD-ROM
@@ -250,6 +252,10 @@ get_dvd_r_rw_profile (int fd)
 			case 0x13:
 			case 0x14:
 				retval |= DRIVE_CDROM_CAPS_DVDRW;
+				break;
+			case 0x15:
+			case 0x16:
+				retval |= DRIVE_CDROM_CAPS_DVDRDL;
 				break;
 			case 0x1B:
 				retval |= DRIVE_CDROM_CAPS_DVDPLUSR;
