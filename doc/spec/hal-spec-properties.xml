@@ -3179,7 +3179,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
 
     <sect2 id="device-properties-vio">
       <title>
-        virtio namespace
+        vio namespace
       </title>
       <para>
         Devices on the IBM pSeries/iSeries 'vio' bus are represented
