@@ -114,15 +114,6 @@
       <merge key="access_control.type" type="string">ieee1394-avc</merge>
     </match>
 
-    <!-- PalmOS PDAs -->
-    <match key="info.capabilities" contains="pda">
-      <match key="pda.platform" string="palm">
-        <append key="info.capabilities" type="strlist">access_control</append>
-        <merge key="access_control.type" type="string">pda</merge>
-        <merge key="access_control.file" type="copy_property">pda</merge>
-      </match>
-    </match>
-
     <!-- serial devices are assumed to be modems by default (no access) -->
     <match key="info.category" string="serial">
       <match key="serial.device" exists="true">
@@ -142,11 +133,17 @@
     </match>
 
     <!-- after serial to be able to override restrictive default -->
-    <!-- FIXME: check if redundant with above "PalmOS PDAs" section -->
-    <match key="pda.platform" exists="true">
-        <append key="info.capabilities" type="strlist">access_control</append>
-        <merge key="access_control.type" type="string">pda</merge>
-        <merge key="access_control.file" type="copy_property">pda</merge>
+    <match key="info.capabilities" contains="pda">
+      <!-- PalmOS PDAs -->
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.type" type="string">pda</merge>
+      <match key="pda.platform" string="palm">
+        <merge key="access_control.file" type="copy_property">pda.palm.hotsync_interface</merge>
+      </match>
+      <!-- PocketPC PDAs -->
+      <match key="pda.platform" string="pocketpc">
+        <merge key="access_control.file" type="copy_property">pda.pocketpc.hotsync_interface</merge>
+      </match>
     </match>
 
     <!-- plain old floppy -->
